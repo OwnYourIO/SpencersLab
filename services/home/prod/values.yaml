@@ -396,7 +396,7 @@ logitech-media-server:
               - *host
             secretName: wildcard-cert
     configMaps:
-      lms-init:
+      init:
         data: 
           custom-init.sh: |-
             !#/bin/bash
@@ -411,7 +411,7 @@ logitech-media-server:
         existingClaim: lms-music
       init-config-map:
         type: configMap
-        name: '{{ .Release.Name }}-lms-init'
+        name: '{{ .Release.Name }}-logitech-media-server-init'
         globalMounts:
           - path: /config/custom-init.sh
             subPath: custom-init.sh
