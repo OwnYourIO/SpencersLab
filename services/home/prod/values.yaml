@@ -347,6 +347,7 @@ logitech-media-server:
             env:
               TZ: America/Denver
               EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
+              SQUEEZE_VOL: /squeezebox
             resources:
               requests:
                 memory: 256Mi
@@ -410,6 +411,14 @@ logitech-media-server:
       config:
         existingClaim: lms-config
         globalMounts:
-          - path: /config
+          - path: /squeezebox
       music:
         existingClaim: lms-music
+        globalMounts:
+          - path: /music
+      init-config-map:
+        type: configMap
+        name: '{{ .Release.Name }}-logitech-media-server-init'
+        globalMounts:
+          - path: /squeezebox/custom-init.sh
+            subPath: custom-init.sh
