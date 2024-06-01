@@ -397,7 +397,8 @@ logitech-media-server:
             secretName: wildcard-cert
     configMaps:
       lms-init:
-        data: |-
+        data: 
+          custom-init.sh: |-
             !#/bin/bash
             echo "it ran at least" > /tmp/cool.txt
 
@@ -413,3 +414,4 @@ logitech-media-server:
         name: '{{ .Release.Name }}-lms-init'
         globalMounts:
           - path: /config/custom-init.sh
+            subPath: custom-init.sh
