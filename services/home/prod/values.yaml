@@ -400,8 +400,8 @@ logitech-media-server:
       init:
         data: 
           custom-init.sh: |-
-            !#/bin/bash
-            echo "it ran at least" > /tmp/cool.txt
+            #!/bin/bash
+            echo "it ran at least" > /tmp/cool2.txt
 
     persistence:
       playlists:
