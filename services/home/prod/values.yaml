@@ -409,9 +409,3 @@ logitech-media-server:
         existingClaim: lms-config
       music:
         existingClaim: lms-music
-      init-config-map:
-        type: configMap
-        name: '{{ .Release.Name }}-logitech-media-server-init'
-        globalMounts:
-          - path: /config/custom-init.sh
-            subPath: custom-init.sh
