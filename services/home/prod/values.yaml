@@ -405,7 +405,11 @@ logitech-media-server:
     persistence:
       playlists:
         existingClaim: lms-playlists
+        globalMounts:
+          - path: /playlists
       config:
         existingClaim: lms-config
+        globalMounts:
+          - path: /config
       music:
         existingClaim: lms-music
