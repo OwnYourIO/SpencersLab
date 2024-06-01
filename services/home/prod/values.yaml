@@ -422,3 +422,4 @@ logitech-media-server:
         globalMounts:
           - path: /squeezebox/custom-init.sh
             subPath: custom-init.sh
+            defaultMode: 0777
