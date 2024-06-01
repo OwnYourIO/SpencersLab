@@ -419,7 +419,7 @@ logitech-media-server:
       init-config-map:
         type: configMap
         name: '{{ .Release.Name }}-logitech-media-server-init'
+        defaultMode: 0777
         globalMounts:
           - path: /squeezebox/custom-init.sh
             subPath: custom-init.sh
-            defaultMode: 0777
