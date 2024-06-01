@@ -100,29 +100,6 @@ music-assistant:
             port: 1704
           control:
             port: 1705
-      lms:
-        type: LoadBalancer
-        controller: music-assistant
-        externalTrafficPolicy: Local
-        ports:
-          http3:
-            port: 9000
-          cli:
-            port: 9090
-          stream:
-            port: 1780
-          another:
-            port: 8095
-          another2:
-            port: 8097
-          another3:
-            port: 8098
-          slimproto-tcp:
-            port: 3483
-            protocol: TCP
-          slimproto-udp:
-            port: 3483
-            protocol: UDP
     
       srs:
         controller: srs
@@ -387,6 +364,20 @@ logitech-media-server:
         #    runAsGroup: 1000
         #    runAsNonRoot: true
         #    fsGroup: 1000
+    service:
+      lms:
+        type: LoadBalancer
+        controller: logitech-media-server
+        externalTrafficPolicy: Local
+        ports:
+          cli:
+            port: 9090
+          slimproto-tcp:
+            port: 3483
+            protocol: TCP
+          slimproto-udp:
+            port: 3483
+            protocol: UDP
     ingress:
       espresense:
         annotations:
