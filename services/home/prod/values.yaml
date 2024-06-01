@@ -345,8 +345,8 @@ logitech-media-server:
               repository: toertel/logitech-media-server
               tag: v8.4.0-1@sha256:07dde462237c0618034c9d2db33967f5bc0db34544558e8edaac32ef0614555a
             env:
-              AUDIO_DIR: &music /music
-              PLAYLIST_DIR: &playlist /playlists
+              TZ: America/Denver
+              EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
             resources:
               requests:
                 memory: 256Mi
@@ -395,7 +395,21 @@ logitech-media-server:
           - hosts:
               - *host
             secretName: wildcard-cert
+    configMaps:
+      lms-init:
+        data: |-
+            !#/bin/bash
+            echo "it ran at least" > /tmp/cool.txt
+
     persistence:
       playlists:
-        enabled: true
         existingClaim: lms-playlists
+      config:
+        existingClaim: lms-config
+      music:
+        existingClaim: lms-music
+      initConfigMap:
+        type: configMap
+        name: '{{ .Release.Name }}-lms-init'
+        globalMounts:
+          - path: /config/custom-init.sh
