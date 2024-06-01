@@ -409,7 +409,7 @@ logitech-media-server:
         existingClaim: lms-config
       music:
         existingClaim: lms-music
-      initConfigMap:
+      init-config-map:
         type: configMap
         name: '{{ .Release.Name }}-lms-init'
         globalMounts:
