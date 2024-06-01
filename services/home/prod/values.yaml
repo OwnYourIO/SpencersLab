@@ -411,13 +411,13 @@ logitech-media-server:
           custom-init.sh: |-
             #!/bin/bash
             apt update -qq
-            apt install pulseaudio alsa-utils
+            apt install -y pulseaudio alsa-utils
             
             mkdir -p /var/run/dbus
             dbus-uuidgen > /var/lib/dbus/machine-id
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
             rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse
-            pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit
+            pulseaudio --verbose --exit-idle-time=-1 --system --disallow-exit &
 
             pactl load-module module-rtp-recv  latency_msec=10 sap_address=0.0.0.0
 
