@@ -386,7 +386,7 @@ logitech-media-server:
             protocol: UDP
           pulse-audio-house-sink-tcp:
             port: 1337
-            protocol: tcp
+            protocol: TCP
 
     ingress:
       espresense:
