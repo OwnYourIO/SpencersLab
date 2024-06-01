@@ -374,6 +374,7 @@ logitech-media-server:
         ports:
           server:
             port: 9000
+            primary: true
           cli:
             port: 9090
           slimproto-tcp:
