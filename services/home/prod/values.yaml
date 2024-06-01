@@ -370,6 +370,8 @@ logitech-media-server:
         controller: logitech-media-server
         externalTrafficPolicy: Local
         ports:
+          server:
+            port: 9000
           cli:
             port: 9090
           slimproto-tcp:
