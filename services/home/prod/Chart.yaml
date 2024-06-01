@@ -31,9 +31,9 @@ dependencies:
 - name: ledfx
   version: 1.0.7
   repository: https://ownyourio.github.io/SpencersLab/
-#- name: logitech-media-server
-#  version: 1.0.11
-#  repository: https://ownyourio.github.io/SpencersLab/
+- name: logitech-media-server
+  version: 1.0.11
+  repository: https://ownyourio.github.io/SpencersLab/
 - name: music-assistant
   version: 1.0.10
   repository: https://ownyourio.github.io/SpencersLab/
