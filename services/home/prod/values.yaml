@@ -348,6 +348,8 @@ logitech-media-server:
               TZ: America/Denver
               EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
               SQUEEZE_VOL: /squeezebox
+              SQUEEZE_UID: 1000
+              SQUEEZE_GID: 1000
             resources:
               requests:
                 memory: 256Mi
@@ -360,12 +362,12 @@ logitech-media-server:
         #      capabilities:
         #        drop:
         #          - ALL
-        #pod:
-        #  securityContext:
-        #    runAsUser: 1000
-        #    runAsGroup: 1000
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
         #    runAsNonRoot: true
-        #    fsGroup: 1000
+            fsGroup: 1000
     service:
       lms:
         type: LoadBalancer
