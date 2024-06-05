@@ -349,7 +349,6 @@ logitech-media-server:
               EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
               SQUEEZE_VOL: /squeezebox
               SQUEEZE_UID: 1000
-              SQUEEZE_GID: 1000
             resources:
               requests:
                 memory: 256Mi
