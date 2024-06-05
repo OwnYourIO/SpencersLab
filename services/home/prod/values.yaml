@@ -354,6 +354,7 @@ logitech-media-server:
               SQUEEZE_VOL: /squeezebox
               SQUEEZE_UID: 1000
               SQUEEZE_GID: 1000
+              XDG_RUNTIME_DIR: /tmp 
             resources:
               requests:
                 memory: 256Mi
