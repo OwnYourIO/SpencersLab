@@ -345,12 +345,15 @@ logitech-media-server:
               repository: toertel/logitech-media-server
               tag: v8.4.0-1@sha256:07dde462237c0618034c9d2db33967f5bc0db34544558e8edaac32ef0614555a
             # All the stuff in the entrypoint built into the container is basically the docker version of securityContext. Don't need it here.
-            command: /bin/sh
-            args: ["start-squeezebox.sh"]
+            # ... And it actually runs! But I can't install any packages because there isn't root access... 
+            #command: /bin/sh
+            #args: ["start-squeezebox.sh"]
             env:
               TZ: America/Denver
               EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
               SQUEEZE_VOL: /squeezebox
+              SQUEEZE_UID: 1000
+              SQUEEZE_GID: 1000
             resources:
               requests:
                 memory: 256Mi
@@ -363,12 +366,12 @@ logitech-media-server:
         #      capabilities:
         #        drop:
         #          - ALL
-        pod:
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-        #    runAsNonRoot: true
-            fsGroup: 1000
+        #pod:
+        #  securityContext:
+        #    runAsUser: 1000
+        #    runAsGroup: 1000
+        ##    runAsNonRoot: true
+        #    fsGroup: 1000
     service:
       lms:
         type: LoadBalancer
