@@ -460,5 +460,5 @@ logitech-media-server:
         type: hostPath
         hostPath: /run/dbus/system_bus_socket
         globalMounts:
-          - path: DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/system_bus_socket
+          - path: /tmp/system_bus_socket
 
