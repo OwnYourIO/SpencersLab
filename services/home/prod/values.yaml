@@ -345,7 +345,7 @@ logitech-media-server:
               repository: toertel/logitech-media-server
               tag: v8.4.0-1@sha256:07dde462237c0618034c9d2db33967f5bc0db34544558e8edaac32ef0614555a
             # All the stuff in the entrypoint built into the container is basically the docker version of securityContext. Don't need it here.
-            command: start-squeezebox.sh
+            command: "/bin/sh start-squeezebox.sh"
             env:
               TZ: America/Denver
               EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
