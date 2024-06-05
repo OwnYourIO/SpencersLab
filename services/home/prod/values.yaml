@@ -451,11 +451,11 @@ logitech-media-server:
         globalMounts:
           - path: /squeezebox/custom-init.sh
             subPath: custom-init.sh
-      pipewire:
+      pulseaudio:
         type: hostPath
-        hostPath: /run/user/1000/pipewire-0
+        hostPath: /tmp/pulseaudio.socket
         globalMounts:
-          - path: /tmp/pipewire-0
+          - path: /tmp/pulseaudio.socket
       dbus:
         type: hostPath
         hostPath: /run/dbus/system_bus_socket
