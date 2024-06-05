@@ -443,3 +443,8 @@ logitech-media-server:
         globalMounts:
           - path: /squeezebox/custom-init.sh
             subPath: custom-init.sh
+      pipewire:
+        type: hostPath
+        hostPath: /run/user/1000/pipewire-0
+        globalMounts:
+          - path: /tmp/pipewire-0
