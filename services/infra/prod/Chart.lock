@@ -2,11 +2,14 @@ dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
   version: 3.61.0
-- name: gitea
-  repository: https://dl.gitea.com/charts/
-  version: 10.0.2
+- name: forgejo
+  repository: oci://code.forgejo.org/forgejo-helm
+  version: 7.0.0
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.1
-digest: sha256:c41e95b23a1ca7892d3e9911555da096f17efbd9cd0849541a6dfb036b89e21b
-generated: "2024-02-10T22:30:06.81242767-07:00"
+- name: keycloak
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 19.3.3
+digest: sha256:0c2f1ac62a8e54a2900a111a4cdfef14bbe3c84cb89f7efabb2a3c22582c666c
+generated: "2024-06-09T09:44:03.884294552-06:00"
