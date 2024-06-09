@@ -12,8 +12,14 @@ app-template:
           image:
             repository: nocturno/hyper-hdr
             tag: amd64-20.0.0.0
+          # TODO: From docker, translate these into k8 compatible ideas. 
+          #--net=host \
+          #--device=/PATH TO YOUR VIDEO DEVICE usually /dev/video0:/dev/video0 \
           env:
             TZ: Etc/UTC
+          #envFrom:
+          #  - secretRef:
+          #      name: hyperion-secret
           probes:
             liveness:
               enabled: true
@@ -22,8 +28,25 @@ app-template:
           resources:
             requests:
               cpu: 10m
+              memory: 140Mi
             limits:
-              memory: 256Mi
+              memory: 1Gi
+          #securityContext:
+          #  allowPrivilegeEscalation: false
+          #  readOnlyRootFilesystem: true
+          #  capabilities:
+          #    drop:
+          #      - ALL
+      #pod:
+      #  securityContext:
+      #    runAsUser: 568
+      #    runAsNonRoot: true
+      #    fsGroup: 568
+      #    fsGroupChangePolicy: OnRootMismatch
+      #    supplementalGroups:
+      #      # Dialout on MicroOS
+      #      - 492 
+      #      - 20
   service:
     hyperion:
       controller: hyperion
@@ -32,8 +55,7 @@ app-template:
           port: 8090
   ingress:
     hyperion:
-      annotations:
-        hajimari.io/url: https://hyperion.local
+      #annotations:
       hosts:
         - host: &host "hyperion.local"
           paths: &paths

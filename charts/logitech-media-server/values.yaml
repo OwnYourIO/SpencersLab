@@ -15,6 +15,9 @@ app-template:
           env:
             HTTP_PORT: 9000
             TZ: Etc/UTC
+          #envFrom:
+          #  - secretRef:
+          #      name: logitech-media-server-secret
           probes:
             liveness:
               enabled: true
@@ -38,6 +41,10 @@ app-template:
       #    #runAsNonRoot: true
       #    fsGroup: 1000
       #    #fsGroupChangePolicy: OnRootMismatch
+          #supplementalGroups:
+          #  # Dialout on MicroOS
+          #  - 492 
+          #  - 20
   service:
     logitech-media-server:
       controller: logitech-media-server
@@ -56,10 +63,10 @@ app-template:
           enabled: true
           port: 3483
           protocol: UDP
+
   ingress:
     logitech-media-server:
-      annotations:
-        hajimari.io/url: https://logitech-media-server.local
+      #annotations:
       hosts:
         - host: &host "logitech-media-server.local"
           paths: &paths
@@ -75,6 +82,8 @@ app-template:
             - *customHost
   persistence:
     config:
-      existingClaim: lms
+      existingClaim: lms-config
     playlists:
       existingClaim: lms-playlists
+    music:
+      existingClaim: lms-music

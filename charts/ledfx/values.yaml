@@ -15,6 +15,9 @@ app-template:
           env:
             TZ: Etc/UTC
             HOST: ledfx.local
+          #envFrom:
+          #  - secretRef:
+          #      name: ledfx-secret
           probes:
             liveness: &probes
               enabled: true
@@ -48,6 +51,10 @@ app-template:
       #    runAsNonRoot: true
       #    fsGroup: 568
       #    fsGroupChangePolicy: OnRootMismatch
+          #supplementalGroups:
+          #  # Dialout on MicroOS
+          #  - 492 
+          #  - 20
   service:
     ledfx:
       controller: ledfx
@@ -56,8 +63,7 @@ app-template:
           port: *port 
   ingress:
     ledfx:
-      annotations:
-        hajimari.io/url: https://ledfx.local
+      #annotations:
       hosts:
         - host: &host "ledfx.local"
           paths: &paths

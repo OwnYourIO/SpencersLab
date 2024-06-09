@@ -25,7 +25,8 @@ app-template:
               enabled: true
           resources:
             requests:
-              cpu: 10m
+              cpu: 20m
+              memory: 90Mi
             limits:
               memory: 256Mi
           securityContext:
@@ -48,8 +49,7 @@ app-template:
           port: 8267
   ingress:
     espresense:
-      annotations:
-        hajimari.io/url: https://espresense.local
+      #annotations:
       hosts:
         - host: &host "espresense.local"
           paths: &paths

@@ -94,6 +94,7 @@ music-assistant:
       snapcast:
         type: LoadBalancer
         controller: music-assistant
+        # https://metallb.universe.tf/usage/#local-traffic-policy
         externalTrafficPolicy: Local
         ports:
           stream:
@@ -129,6 +130,7 @@ music-assistant:
           docker.conf: |-
             listen              1935;
             max_connections     1000;
+            daemon              off;
             http_api {
                 enabled         on;
                 listen          1985;
@@ -211,7 +213,7 @@ music-assistant:
         enabled: true
         type: emptyDir
       config:
-        existingClaim: owncast-config
+        existingClaim: srs-config
         globalMounts:
           - path: /app/data
       srs-config:

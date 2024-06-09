@@ -1,5 +1,9 @@
 letsEncryptEmail: "tms@spencerslab.com"
 
+# It's expected that these will be overridden.
+domain: local
+clusterName: base
+
 cert-manager:
   installCRDs: true
 
