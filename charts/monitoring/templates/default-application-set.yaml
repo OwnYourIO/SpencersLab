@@ -15,7 +15,7 @@ spec:
                   ServerSideApply: "false"
                 - appName: monitoring
                   namespace: default
-                  ServerSideApply: "false"
+                  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
