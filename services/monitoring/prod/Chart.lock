@@ -7,6 +7,6 @@ dependencies:
   version: 2.10.2
 - name: monitoring-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.3
-digest: sha256:a613be785254ac2d805e084cd2d3f1441856d016aad5509296390ca809e53115
-generated: "2024-06-09T10:33:28.17365766-06:00"
+  version: 1.1.4
+digest: sha256:b7736bde5ef9c7cb483a129e677b80ed323034ce828e8b0a3168b13527cbeb57
+generated: "2024-06-09T11:25:39.36315143-06:00"
