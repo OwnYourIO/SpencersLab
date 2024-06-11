@@ -1,7 +1,7 @@
 dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 3.61.0
+  version: 3.68.0
 - name: forgejo
   repository: oci://code.forgejo.org/forgejo-helm
   version: 7.0.0
@@ -11,5 +11,5 @@ dependencies:
 - name: keycloak
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 19.3.3
-digest: sha256:0c2f1ac62a8e54a2900a111a4cdfef14bbe3c84cb89f7efabb2a3c22582c666c
-generated: "2024-06-09T09:44:03.884294552-06:00"
+digest: sha256:fb3472958db5fb1f0fe8fff4e461a15fbe7b5e77559fa64ec6f59e613e45e919
+generated: "2024-06-11T14:06:44.076888941Z"
