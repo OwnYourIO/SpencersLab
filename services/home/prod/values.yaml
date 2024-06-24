@@ -424,20 +424,36 @@ logitech-media-server:
     configMaps:
       init:
         data: 
-          custom-init.sh: |-
+          custom-entrypoint.sh: |-
             #!/bin/bash
+            : "${SQUEEZE_UID:=1000}"
+            : "${SQUEEZE_GID:=1000}"
+
+            groupadd -g "$QUEEZE_GID" squeezeboxserver
+
+            useradd -u "$SQUEEZE_UID" -g "$SQUEEZE_GID" \
+                -d /usr/share/squeezeboxserver/ \
+                -c 'Lyrion Media Server' \
+                squeezeboxserver
+
+            if [ "$SQUEEZE_VOL" ] && [ -d "$SQUEEZE_VOL" ]; then
+                for subdir in prefs logs cache; do
+                    mkdir -p "$SQUEEZE_VOL/$subdir"
+                done
+            fi
+
             apt update -qq
-            apt install -y pulseaudio alsa-utils
-            
-            mkdir -p /var/run/dbus
-            dbus-uuidgen > /var/lib/dbus/machine-id
-            dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
-            rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse
+            apt install -y ffmpeg pulseaudio alsa-utils cava vim
+            #pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit &
             pulseaudio --verbose --exit-idle-time=-1 --system --disallow-exit &
+
+            echo "it ran at least here" > /tmp/cool3.txt
 
             pactl load-module module-rtp-recv  latency_msec=10 sap_address=0.0.0.0
 
             echo "it ran at least" > /tmp/cool2.txt
+
+            exec runuser -u squeezeboxserver -- /start-squeezebox.sh "$@"
 
     persistence:
       playlists:
@@ -457,8 +473,8 @@ logitech-media-server:
         name: '{{ .Release.Name }}-logitech-media-server-init'
         defaultMode: 0777
         globalMounts:
-          - path: /squeezebox/custom-init.sh
-            subPath: custom-init.sh
+          - path: /entrypoint.sh
+            subPath: custom-entrypoint.sh
       pulseaudio:
         type: hostPath
         hostPath: /tmp/pulseaudio.socket
