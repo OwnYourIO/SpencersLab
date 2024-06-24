@@ -433,7 +433,7 @@ logitech-media-server:
 
             useradd -u "$SQUEEZE_UID" -g "$SQUEEZE_GID" \
                 -d /usr/share/squeezeboxserver/ \
-                -c 'Lyrion Media Server' \
+                -c 'Logitech Media Server' \
                 squeezeboxserver
 
             if [ "$SQUEEZE_VOL" ] && [ -d "$SQUEEZE_VOL" ]; then
