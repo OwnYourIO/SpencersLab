@@ -404,6 +404,9 @@ logitech-media-server:
           slimproto-udp:
             port: 3483
             protocol: UDP
+          pulseaudio-sap-port:
+            port: 9875
+            protocol: UDP
           pulse-audio-house-sink:
             port: 1338
             protocol: UDP
@@ -464,7 +467,7 @@ logitech-media-server:
             touch /var/run/pulse/.config/pulse/cookie
             exec runuser -u squeezeboxserver -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit &
 
-            #pactl load-module module-rtp-recv  latency_msec=10 sap_address=0.0.0.0
+            exec runuser -u squeezeboxserver -- pactl load-module module-rtp-recv latency_msec=10 sap_address=0.0.0.0
 
             exec runuser -u squeezeboxserver -- /start-squeezebox.sh "$@"
 
