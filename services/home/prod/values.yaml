@@ -484,11 +484,11 @@ logitech-media-server:
         globalMounts:
           - path: /entrypoint.sh
             subPath: custom-entrypoint.sh
-      pulseaudio:
-        type: hostPath
-        hostPath: /tmp/pulseaudio.socket
-        globalMounts:
-          - path: /tmp/pulseaudio.socket
+      #pulseaudio:
+      #  type: hostPath
+      #  hostPath: /tmp/pulseaudio.socket
+      #  globalMounts:
+      #    - path: /tmp/pulseaudio.socket
       dbus:
         type: hostPath
         hostPath: /run/dbus/system_bus_socket
