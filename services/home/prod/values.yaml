@@ -455,7 +455,7 @@ logitech-media-server:
             apt update -qq
             apt install -y ffmpeg pulseaudio alsa-utils cava vim
             #pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit &
-            pulseaudio --verbose --exit-idle-time=-1 --disallow-exit &
+            pulseaudio --verbose --exit-idle-time=-1 --system --disallow-exit &
             echo "it ran at least here" > /tmp/cool3.txt
 
             pactl load-module module-rtp-recv  latency_msec=10 sap_address=0.0.0.0
