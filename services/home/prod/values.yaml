@@ -362,7 +362,7 @@ logitech-media-server:
               SQUEEZE_VOL: /squeezebox
               SQUEEZE_UID: 1000
               SQUEEZE_GID: 1000
-              XDG_RUNTIME_DIR: /tmp 
+              #XDG_RUNTIME_DIR: /tmp 
               DBUS_SYSTEM_BUS_ADDRESS: unix:path=/tmp/system_bus_socket
             resources:
               requests:
