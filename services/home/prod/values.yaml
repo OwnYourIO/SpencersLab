@@ -374,7 +374,7 @@ logitech-media-server:
               startup:
                 enabled: true
                 spec:
-                  initialDelaySecords: 30
+                  initialDelaySecords: 120
         #    securityContext:
         #      allowPrivilegeEscalation: false
         #      readOnlyRootFilesystem: true
