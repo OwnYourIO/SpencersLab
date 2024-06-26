@@ -425,7 +425,7 @@ logitech-media-server:
       init:
         data: 
           custom-entrypoint.sh: |-
-            #!/bin/bash
+            #!/bin/sh
             : "${SQUEEZE_UID:=1000}"
             : "${SQUEEZE_GID:=1000}"
 
@@ -441,6 +441,11 @@ logitech-media-server:
                     mkdir -p "$SQUEEZE_VOL/$subdir"
                 done
             fi
+
+            # This has to happen every time in case our new uid/gid is different
+            # from what was previously used in the volume.
+            chown -R squeezeboxserver:squeezeboxserver "$SQUEEZE_VOL"
+
 
             apt update -qq
             apt install -y ffmpeg pulseaudio alsa-utils cava vim
