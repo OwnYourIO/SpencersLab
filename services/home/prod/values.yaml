@@ -458,12 +458,11 @@ logitech-media-server:
             mkdir -p /var/run/dbus
             dbus-uuidgen > /var/lib/dbus/machine-id
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
+            systemctl --global disable pulseaudio.service pulseaudio.socket
+            touch /var/run/pulse/.config/pulse/cookie
             pulseaudio --verbose --exit-idle-time=-1 --system --disallow-exit &
-            echo "it ran at least here" > /tmp/cool3.txt
 
-            pactl load-module module-rtp-recv  latency_msec=10 sap_address=0.0.0.0
-
-            echo "it ran at least" > /tmp/cool2.txt
+            #pactl load-module module-rtp-recv  latency_msec=10 sap_address=0.0.0.0
 
             exec runuser -u squeezeboxserver -- /start-squeezebox.sh "$@"
 
