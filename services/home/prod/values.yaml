@@ -455,6 +455,9 @@ logitech-media-server:
             apt update -qq
             apt install -y ffmpeg pulseaudio alsa-utils cava vim
             #pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit &
+            mkdir -p /var/run/dbus
+            dbus-uuidgen > /var/lib/dbus/machine-id
+            dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
             pulseaudio --verbose --exit-idle-time=-1 --system --disallow-exit &
             echo "it ran at least here" > /tmp/cool3.txt
 
