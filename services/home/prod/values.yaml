@@ -477,7 +477,7 @@ logitech-media-server:
         name: '{{ .Release.Name }}-logitech-media-server-init'
         defaultMode: 0777
         globalMounts:
-          - path: /entrypoint-new.sh
+          - path: /entrypoint.sh
             subPath: custom-entrypoint.sh
       pulseaudio:
         type: hostPath
