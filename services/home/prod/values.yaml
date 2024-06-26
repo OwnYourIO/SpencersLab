@@ -370,6 +370,11 @@ logitech-media-server:
               limits:
                 memory: 4096Mi
                 squat.ai/snd: 1
+            probes:
+              startup:
+                enabled: true
+                spec:
+                  initialDelaySecords: 30
         #    securityContext:
         #      allowPrivilegeEscalation: false
         #      readOnlyRootFilesystem: true
