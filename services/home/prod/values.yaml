@@ -465,7 +465,7 @@ logitech-media-server:
             usermod -aG audio root
             mkdir -p /var/run/pulse/.config/pulse/
             touch /var/run/pulse/.config/pulse/cookie
-            exec runuser -u squeezeboxserver -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="pactl load-module module-native-protocol-tcp auth-anonymous=true port=1337" &
+            exec runuser -u squeezeboxserver -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=1337" &
 
             #exec runuser -u squeezeboxserver -- pactl load-module module-rtp-recv latency_msec=10 sap_address=0.0.0.0
 
