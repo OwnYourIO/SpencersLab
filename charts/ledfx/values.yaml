@@ -36,8 +36,9 @@ app-template:
           resources:
             requests:
               cpu: 10m
+              memory: 250Mi
             limits:
-              memory: 256Mi
+              memory: 1000Mi
           #securityContext:
           #  allowPrivilegeEscalation: false
           #  readOnlyRootFilesystem: true
