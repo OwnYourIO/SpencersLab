@@ -80,7 +80,7 @@ jobs:
           done
       - name: Run chart-releaser
         # Check for newest version at: https://github.com/helm/chart-releaser-action/releases
-        uses: helm/chart-releaser-action@6203d709ca237fb26b724837f2c53716f244ee8c
+        uses: helm/chart-releaser-action@d1e09fd16821c091b45aa754f65bae4dd675d425
         with:
           skip_existing: true
           skip_upload: true
