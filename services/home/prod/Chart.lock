@@ -10,7 +10,7 @@ dependencies:
   version: 1.0.13
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.36
+  version: 1.0.37
 - name: espresense
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.10
@@ -26,5 +26,5 @@ dependencies:
 - name: music-assistant
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.11
-digest: sha256:9228d2f4d4bc1ae22afac077482344eb2230cac4bd72323e8dcd5a19703f4200
-generated: "2024-06-27T22:57:38.698728967-06:00"
+digest: sha256:406462258b42ca4c5c46d77296b6cf5fd4e217d5d43dea8f833078a768c4f139
+generated: "2024-07-01T19:09:50.463903848-06:00"
