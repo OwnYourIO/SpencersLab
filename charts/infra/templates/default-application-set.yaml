@@ -27,10 +27,15 @@ spec:
         repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
         targetRevision: main
         path: "{{ `{{ metadata.annotations.services.repo.path }}`}}/{{ `{{appName}}` }}/{{ `{{ metadata.annotations.stage }}` }}"
-        #helm:
-        #  valueFiles:
+        helm:
+          parameters:
+            - name: domain
+              value: "{{ `{{ metadata.annotations.domain }}` }}"
+            - name: clusterName
+              value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+          valueFiles:
         #    #- ../common.values.yaml
-        #    - values.yaml
+            - values.yaml
       destination:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
