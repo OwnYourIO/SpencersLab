@@ -7,9 +7,9 @@ dependencies:
   version: 7.0.0
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.1
+  version: 1.1.2
 - name: keycloak
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 19.3.3
-digest: sha256:0c2f1ac62a8e54a2900a111a4cdfef14bbe3c84cb89f7efabb2a3c22582c666c
-generated: "2024-06-09T09:44:03.884294552-06:00"
+digest: sha256:9f0d52edd073dd451b755cd89c0f44acf46cd37bbf9867a52d68e2ab1b3eea8c
+generated: "2024-07-04T11:42:30.3051679-06:00"
