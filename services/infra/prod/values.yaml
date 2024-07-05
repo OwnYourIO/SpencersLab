@@ -10,6 +10,7 @@ seaweedfs:
 
     logs:
     data:
+      type: "persistentVolumeClaim"
       size: 10Gi
     # Resource requests, limits, etc. for the master cluster placement. This
     # should map directly to the value of the resources field for a PodSpec,
