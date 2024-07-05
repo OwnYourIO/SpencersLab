@@ -31,7 +31,7 @@ annotations:
     - title: Admin interface
       url: https://goauthentik.io/img/screen_admin_light.jpg
 apiVersion: v2
-appVersion: 2023.10.16
+appVersion: 2023.10.17
 dependencies:
 - condition: postgresql.enabled
   name: postgresql
@@ -73,4 +73,4 @@ sources:
 - https://goauthentik.io/docs/
 - https://github.com/goauthentik/authentik
 type: application
-version: 2023.10.16
+version: 2023.10.17
