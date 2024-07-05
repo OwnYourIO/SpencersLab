@@ -72,6 +72,7 @@ seaweedfs:
 
     ingress:
       enabled: true
+      className: "traefik"
       host: "seaweedfs-master.infra.spencerslab.com"
       annotations: {}
       tls:
@@ -165,6 +166,7 @@ seaweedfs:
       size: "10Gi"
     ingress:
       enabled: true
+      className: "traefix"
       host: "seaweedfs-volume.infra.spencerslab.com"
       annotations: {}
       tls:
