@@ -12,6 +12,7 @@ dependencies:
 - name: infra-appset
   version: 1.1.2
   repository: https://ownyourio.github.io/SpencersLab/
-- name: keycloak
-  version: 21.4.5
-  repository: oci://registry-1.docker.io/bitnamicharts
+- name: keycloakx
+  version: 2.4.3
+  repository: https://codecentric.github.io/helm-charts
+  

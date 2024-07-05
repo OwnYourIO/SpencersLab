@@ -8,8 +8,8 @@ dependencies:
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.2
-- name: keycloak
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 21.4.5
-digest: sha256:54001935002d1f9a73f2a878210472078dbe1110f69853b6a15e55c3e25ef4e0
-generated: "2024-07-05T14:41:55.31541134Z"
+- name: keycloakx
+  repository: https://codecentric.github.io/helm-charts
+  version: 2.4.3
+digest: sha256:9ef43bcb4ecb33f72b56e3fdaa2e39b19f2a19d27b7d9e144a2e18e328822237
+generated: "2024-07-05T16:16:49.193610759-06:00"

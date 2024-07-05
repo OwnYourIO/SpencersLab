@@ -1,3 +1,17 @@
+keycloakx:
+
+    ingress:
+      enabled: true
+      rules:
+        - host: "auth.spencerslab.com"
+          paths:
+            - path: "/"
+              pathType: Prefix
+      tls:
+        - hosts:
+            - "auth.spencerslab.com"
+          secretName: wildcard-cert
+
 seaweedfs:
   global:
     createClusterRole: true
