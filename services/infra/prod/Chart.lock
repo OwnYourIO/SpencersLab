@@ -2,14 +2,11 @@ dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
   version: 3.68.0
-- name: forgejo
-  repository: oci://code.forgejo.org/forgejo-helm
-  version: 7.0.2
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.2
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 2.4.3
-digest: sha256:9ef43bcb4ecb33f72b56e3fdaa2e39b19f2a19d27b7d9e144a2e18e328822237
-generated: "2024-07-05T16:16:49.193610759-06:00"
+digest: sha256:a347a33bfd37f5e04d80e7bb22290126379ace110113fde9201d40cf06b995b5
+generated: "2024-07-05T16:44:12.837664358-06:00"
