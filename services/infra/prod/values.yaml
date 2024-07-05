@@ -29,7 +29,7 @@ seaweedfs:
       size: 10Gi
     logs:
       type: "existingClaim"
-      claimName: "data-master-seaweedfs-master-0"
+      claimName: "data-default-seaweedfs-master-0"
 #    # Resource requests, limits, etc. for the master cluster placement. This
 #    # should map directly to the value of the resources field for a PodSpec,
 #    # formatted as a multi-line string. By default no direct resource request
