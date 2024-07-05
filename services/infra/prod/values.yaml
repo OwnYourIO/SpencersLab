@@ -30,47 +30,65 @@ seaweedfs:
     logs:
       type: "existingClaim"
       claimName: "data-default-seaweedfs-master-0"
-#    # Resource requests, limits, etc. for the master cluster placement. This
-#    # should map directly to the value of the resources field for a PodSpec,
-#    # formatted as a multi-line string. By default no direct resource request
-#    # is made.
-#    resources: {}
-#
-#    # Affinity Settings
-#    # Commenting out or setting as empty the affinity variable, will allow
-#    # deployment to single node services such as Minikube
-#    affinity: {}
-#      #|
-#      #podAntiAffinity:
-#      #  requiredDuringSchedulingIgnoredDuringExecution:
-#      #    - labelSelector:
-#      #        matchLabels:
-#      #          app.kubernetes.io/name: {{ template "seaweedfs.name" . }}
-#      #          app.kubernetes.io/instance: {{ .Release.Name }}
-#      #          app.kubernetes.io/component: master
-#      #      topologyKey: kubernetes.io/hostname
-#
-#    # Configure security context for Pod
-#    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#    # Example:
-#    # podSecurityContext:
-#    #   enabled: true
-#    #   runAsUser: 1000
-#    #   runAsGroup: 3000
-#    #   fsGroup: 2000
-#    podSecurityContext: {}
-#
-#    # Configure security context for Container
-#    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#    # Example:
-#    # containerSecurityContext:
-#    #   enabled: true
-#    #   runAsUser: 2000
-#    #   allowPrivilegeEscalation: false
-#    containerSecurityContext: {}
-#
-#    ingress:
-#      enabled: true
+
+    # Resource requests, limits, etc. for the master cluster placement. This
+    # should map directly to the value of the resources field for a PodSpec,
+    # formatted as a multi-line string. By default no direct resource request
+    # is made.
+    resources: {}
+
+    # Affinity Settings
+    # Commenting out or setting as empty the affinity variable, will allow
+    # deployment to single node services such as Minikube
+    affinity: {}
+      #|
+      #podAntiAffinity:
+      #  requiredDuringSchedulingIgnoredDuringExecution:
+      #    - labelSelector:
+      #        matchLabels:
+      #          app.kubernetes.io/name: {{ template "seaweedfs.name" . }}
+      #          app.kubernetes.io/instance: {{ .Release.Name }}
+      #          app.kubernetes.io/component: master
+      #      topologyKey: kubernetes.io/hostname
+
+    # Configure security context for Pod
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    # Example:
+    # podSecurityContext:
+    #   enabled: true
+    #   runAsUser: 1000
+    #   runAsGroup: 3000
+    #   fsGroup: 2000
+    podSecurityContext: {}
+
+    # Configure security context for Container
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    # Example:
+    # containerSecurityContext:
+    #   enabled: true
+    #   runAsUser: 2000
+    #   allowPrivilegeEscalation: false
+    containerSecurityContext: {}
+
+    ingress:
+      enabled: true
+      host: "seaweedfs-master.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      annotations: {}
+      tls:
+        - hosts:
+            - "seaweedfs-master.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+          secretName: cluster-wildcard-cert
+          rules:
+          - host: "seaweedfs-master.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: seaweedfs-master
+                      port:
+                        number: 9333
 
   volume:
     index: leveldb
@@ -145,6 +163,26 @@ seaweedfs:
     idx:
       type: "persistentVolumeClaim"
       size: "10Gi"
+    ingress:
+      enabled: true
+      host: "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      annotations: {}
+      tls:
+        - hosts:
+            - "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+          secretName: cluster-wildcard-cert
+          rules:
+          - host: "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: seaweedfs-volume
+                      port:
+                        number: 8080
+
     # Volume server's rack name
     rack: infra.spencerslab.com
 
@@ -276,7 +314,24 @@ seaweedfs:
 
     ingress:
       enabled: true
-      host: "seaweedfs-filer.spencerslab.com"
+      host: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      annotations: {}
+      tls:
+        - hosts:
+            - "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+          secretName: cluster-wildcard-cert
+          rules:
+          - host: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: seaweedfs-filer
+                      port:
+                        number: 8888
+
     # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
     extraEnvironmentVars:
       WEED_LEVELDB2_ENABLED: "true"
