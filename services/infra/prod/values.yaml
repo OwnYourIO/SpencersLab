@@ -314,6 +314,7 @@ seaweedfs:
 
     ingress:
       enabled: true
+      className: "traefik"
       host: "seaweedfs-filer.infra.spencerslab.com"
       annotations: {}
       tls:
