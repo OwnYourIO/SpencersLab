@@ -200,6 +200,7 @@ seaweedfs:
     #  data:
     #    type: "emptyDir"
     data:
+      type: "persistentVolumeClaim"
       size: "10Gi"
 
     # Affinity Settings
