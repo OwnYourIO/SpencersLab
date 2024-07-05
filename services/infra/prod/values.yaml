@@ -124,6 +124,10 @@ seaweedfs:
     #  type: "emptyDir"
 
     # same applies to "logs"
+
+    idx:
+      type: "persistentVolumeClaim"
+      size: "10Gi"
     # Volume server's rack name
     rack: infra.spencerslab.com
 
