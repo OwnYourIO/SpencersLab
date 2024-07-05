@@ -72,14 +72,14 @@ seaweedfs:
 
     ingress:
       enabled: true
-      host: "seaweedfs-master.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      host: "seaweedfs-master.infra.spencerslab.com"
       annotations: {}
       tls:
         - hosts:
-            - "seaweedfs-master.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+            - "seaweedfs-master.infra.spencerslab.com"
           secretName: cluster-wildcard-cert
           rules:
-          - host: "seaweedfs-master.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+          - host: "seaweedfs-master.infra.spencerslab.com"
             http:
               paths:
                 - path: /
@@ -165,14 +165,14 @@ seaweedfs:
       size: "10Gi"
     ingress:
       enabled: true
-      host: "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      host: "seaweedfs-volume.infra.spencerslab.com"
       annotations: {}
       tls:
         - hosts:
-            - "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+            - "seaweedfs-volume.infra.spencerslab.com"
           secretName: cluster-wildcard-cert
           rules:
-          - host: "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+          - host: "seaweedfs-volume.infra.spencerslab.com"
             http:
               paths:
                 - path: /
@@ -314,14 +314,14 @@ seaweedfs:
 
     ingress:
       enabled: true
-      host: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      host: "seaweedfs-filer.infra.spencerslab.com"
       annotations: {}
       tls:
         - hosts:
-            - "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+            - "seaweedfs-filer.infra.spencerslab.com"
           secretName: cluster-wildcard-cert
           rules:
-          - host: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+          - host: "seaweedfs-filer.infra.spencerslab.com"
             http:
               paths:
                 - path: /
