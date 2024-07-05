@@ -91,7 +91,7 @@ seaweedfs:
     containerSecurityContext: {}
 
     ingress:
-      enabled: true
+      enabled: false
       className: "traefik"
       host: "seaweedfs-master.infra.spencerslab.com"
       annotations: {}
@@ -185,7 +185,7 @@ seaweedfs:
       type: "persistentVolumeClaim"
       size: "10Gi"
     ingress:
-      enabled: true
+      enabled: false
       className: "traefix"
       host: "seaweedfs-volume.infra.spencerslab.com"
       annotations: {}
@@ -335,7 +335,7 @@ seaweedfs:
     containerSecurityContext: {}
 
     ingress:
-      enabled: true
+      enabled: false
       className: "traefik"
       host: "seaweedfs-filer.infra.spencerslab.com"
       annotations: {}
