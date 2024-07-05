@@ -221,6 +221,9 @@ seaweedfs:
     data:
       type: "persistentVolumeClaim"
       size: "10Gi"
+    logs:
+      type: "existingClaim"
+      claimName: "data-filer-seaweedfs-filer-0"
 
     # Affinity Settings
     # Commenting out or setting as empty the affinity variable, will allow
