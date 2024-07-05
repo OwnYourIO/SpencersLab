@@ -357,3 +357,10 @@ seaweedfs:
     #   runAsUser: 2000
     #   allowPrivilegeEscalation: false
     containerSecurityContext: {}
+
+    # You can also use emptyDir storage:
+    #  logs:
+    #    type: "emptyDir"
+    logs:
+      type: "existingClaim"
+      claimName: "data-s3-seaweedfs-s3-0"
