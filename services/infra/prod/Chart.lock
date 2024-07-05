@@ -4,12 +4,12 @@ dependencies:
   version: 3.68.0
 - name: forgejo
   repository: oci://code.forgejo.org/forgejo-helm
-  version: 7.0.0
+  version: 7.0.2
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.2
 - name: keycloak
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 21.4.5
-digest: sha256:f3736d97a2840e070a8b1b2e4cfc1d667eebe199e690b9ee9de3492d3ca9f26c
-generated: "2024-07-05T14:40:18.114191997Z"
+digest: sha256:54001935002d1f9a73f2a878210472078dbe1110f69853b6a15e55c3e25ef4e0
+generated: "2024-07-05T14:41:55.31541134Z"
