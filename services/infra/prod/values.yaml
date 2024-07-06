@@ -27,6 +27,8 @@ keycloakx:
         value: "Admin"
       - name: KEYCLOAK_ADMIN_PASSWORD
         value: "Test123456"
+      - name: KC_HTTP_RELATIVE_PATH
+        value: "/"
     ingress:
       enabled: true
       rules:
