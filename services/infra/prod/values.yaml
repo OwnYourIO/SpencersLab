@@ -39,10 +39,12 @@ keycloakx:
           secretKeyRef:
             name: keycloak-secret
             key: KEYCLOAK_ADMIN_PASSWORD
-    extraVolumeMounts: |-
+    extraVolumes: |-
       - name: keycloak-data
         persistentVolumeClaim:
           claimName: keycloak
+    extraVolumeMounts: |-
+      - name: keycloak-data
         mountPath: /opt/keycloak/data/
 
     ingress:
