@@ -1,3 +1,6 @@
+
+bitwardenIds:
+  keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
 keycloakx:
 
     command:
@@ -27,9 +30,22 @@ keycloakx:
       - name: KC_LOG_LEVEL
         value: "org.keycloak.events:DEBUG,org.infinispan:INFO,org.jgroups:INFO"
       - name: KEYCLOAK_ADMIN
-        value: "Admin"
+        valueFrom:
+          secretKeyRef:
+            name: keycloak
+            key: KEYCLOAK_ADMIN
       - name: KEYCLOAK_ADMIN_PASSWORD
-        value: "Test123456"
+        valueFrom:
+          secretKeyRef:
+            name: keycloak
+            key: KEYCLOAK_ADMIN_PASSWORD
+    extraVolumes: |-
+      - name: keycloak-data
+        persistentVolumeClaim:
+          size: '5Gi'
+    extraVolumeMounts: |-
+      - name: keycloak-data
+        mountPath: /opt/keycloak/data/
 
     ingress:
       enabled: true
