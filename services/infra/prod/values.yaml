@@ -17,7 +17,7 @@ keycloakx:
       - name: KC_HTTP_ENABLED
         value: "true"
       - name: KC_HOSTNAME
-        value: auth.spencerslab.com
+        value: login.spencerslab.com
       - name: KC_HOSTNAME_STRICT
         value: "true"
       - name: KC_HOSTNAME_STRICT_HTTPS
