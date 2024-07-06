@@ -9,3 +9,26 @@ cert-manager:
 
 bitwardenIds:
   cloudflare-token: 0f8504eb-1339-4a32-861b-af440002801e
+
+argocd:
+  server:
+    authMode: sso
+    sso:
+      # -- Create SSO configuration. If you set `true` , please also set `.Values.server.authMode` as `sso`.
+      enabled: true
+      # -- The root URL of the OIDC identity provider
+      issuer: https://login.spencerslab.com
+      clientId:
+        # -- Name of secret to retrieve the app OIDC client ID
+        name: argocd-sso
+        # -- Key of secret to retrieve the app OIDC client ID
+        key: client-id
+      clientSecret:
+        # -- Name of a secret to retrieve the app OIDC client secret
+        name: argocd-sso
+        # -- Key of a secret to retrieve the app OIDC client secret
+        key: client-secret
+      # -- The OIDC redirect URL. Should be in the form <argo-root-url>/oauth2/callback.
+      redirectUrl: "https://cluster.infra.spencerslab.com/auth/callback"
+      scopes: 
+        - groups
