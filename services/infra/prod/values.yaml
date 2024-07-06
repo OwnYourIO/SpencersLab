@@ -31,13 +31,13 @@ keycloakx:
     ingress:
       enabled: true
       rules:
-        - host: "auth.spencerslab.com"
+        - host: "login.spencerslab.com"
           paths:
             - path: "/"
               pathType: Prefix
       tls:
         - hosts:
-            - "auth.spencerslab.com"
+            - "login.spencerslab.com"
           secretName: wildcard-cert
 
 seaweedfs:
