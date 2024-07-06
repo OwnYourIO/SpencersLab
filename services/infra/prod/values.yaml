@@ -14,7 +14,7 @@ keycloakx:
       - name: KC_HTTP_ENABLED
         value: "true"
       - name: KC_HTTP_PORT
-        value: "80"
+        value: "8080"
       - name: KC_HOSTNAME
         value: login.spencerslab.com
       - name: KC_HOSTNAME_STRICT
@@ -34,11 +34,6 @@ keycloakx:
           paths:
             - path: "/"
               pathType: Prefix
-              backend:
-                service:
-                  name: infra-keycloakx-http 
-                  port:
-                    number: 80
       tls:
         - hosts:
             - "login.spencerslab.com"
