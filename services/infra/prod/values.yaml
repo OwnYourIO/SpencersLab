@@ -41,8 +41,9 @@ keycloakx:
             key: KEYCLOAK_ADMIN_PASSWORD
     extraVolumeMounts: |-
       - name: keycloak-data
+        persistentVolumeClaim:
+          claimName: keycloak
         mountPath: /opt/keycloak/data/
-        existingClaim: keycloak
 
     ingress:
       enabled: true
