@@ -20,7 +20,9 @@ keycloakx:
       - name: JAVA_OPTS_APPEND
         value: "-Djgroups.dns.query=keycloak-headless"
       - name: KC_PROXY
-        value: edge
+        value: passthrough
+      - name: KC_PROXY_HEADERS
+        value: forwarded 
       - name: KC_HTTP_ENABLED
         value: "true"
       - name: KC_HTTP_PORT
