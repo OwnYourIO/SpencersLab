@@ -32,12 +32,12 @@ keycloakx:
       - name: KEYCLOAK_ADMIN
         valueFrom:
           secretKeyRef:
-            name: keycloak
+            name: keycloak-secret
             key: KEYCLOAK_ADMIN
       - name: KEYCLOAK_ADMIN_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: keycloak
+            name: keycloak-secret
             key: KEYCLOAK_ADMIN_PASSWORD
     extraVolumes: |-
       - name: keycloak-data
