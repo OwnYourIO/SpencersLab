@@ -34,6 +34,11 @@ keycloakx:
           paths:
             - path: "/"
               pathType: Prefix
+              backend:
+                service:
+                  name: infra-keycloakx-http 
+                  port:
+                    number: 80
       tls:
         - hosts:
             - "login.spencerslab.com"
