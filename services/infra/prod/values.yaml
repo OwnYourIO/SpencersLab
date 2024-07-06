@@ -1,13 +1,4 @@
 keycloakx:
-    livenessProbe:
-      httpGet:
-        path: /health/live
-    readinessProbe:
-      httpGet:
-        path: /health/ready
-    startupProbe:
-      httpGet:
-        path: /health
 
     command:
       - "/opt/keycloak/bin/kc.sh"
