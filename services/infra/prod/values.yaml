@@ -10,7 +10,7 @@ argocd:
     ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
       cm:
         oidc.config: |
-          name: 
+          name: ArgoCD
           issuer: https://login.spencerslab.com/auth
           clientId:
             # -- Name of secret to retrieve the app OIDC client ID
