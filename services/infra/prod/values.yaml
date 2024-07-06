@@ -2,7 +2,7 @@ keycloakx:
     command:
       - "/opt/keycloak/bin/kc.sh"
       - "--verbose"
-      - "start"
+      - "start-dev"
 
     extraEnv: |-
       - name: TZ
