@@ -41,8 +41,8 @@ keycloakx:
             key: KEYCLOAK_ADMIN_PASSWORD
     extraVolumes: |-
       - name: keycloak-data
-        persistentVolumeClaim:
-          size: '5Gi'
+        existingClaim:
+          name: 'keycloak'
     extraVolumeMounts: |-
       - name: keycloak-data
         mountPath: /opt/keycloak/data/
