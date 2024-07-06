@@ -7,6 +7,27 @@ keycloakx:
       - "--http-port=8080"
       - "--hostname-strict=false"
 
+    extraEnv: |-
+      - name: TZ
+        value: "America/Denver"
+      - name: JAVA_OPTS_APPEND
+        value: "-Djgroups.dns.query=keycloak-headless"
+      - name: KC_PROXY
+        value: edge
+      - name: KC_HTTP_ENABLED
+        value: "true"
+      - name: KC_HOSTNAME
+        value: auth.spencerslab.com
+      - name: KC_HOSTNAME_STRICT
+        value: "true"
+      - name: KC_HOSTNAME_STRICT_HTTPS
+        value: "true"
+      - name: KC_LOG_LEVEL
+        value: "org.keycloak.events:DEBUG,org.infinispan:INFO,org.jgroups:INFO"
+      - name: KEYCLOAK_ADMIN
+        value: "Admin"
+      - name: KEYCLOAK_ADMIN_PASSWORD
+        value: "Test123456"
     ingress:
       enabled: true
       rules:
