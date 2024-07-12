@@ -1,12 +1,12 @@
 dependencies:
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 60.5.0
+  version: 61.3.1
 - name: loki-stack
   repository: https://grafana.github.io/helm-charts
   version: 2.10.2
 - name: monitoring-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.4
-digest: sha256:37ec892882440e9c9700fe6e1ee98f2ddb8c4bebb01b01e4c1cc1e76c8713b43
-generated: "2024-07-05T14:55:48.285237952Z"
+digest: sha256:8e32271e882922c939b44bfb60f958d3440ea4dd382039d8d20f9034ccd74aa9
+generated: "2024-07-12T00:56:41.184921643Z"
