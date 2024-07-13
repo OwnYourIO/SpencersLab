@@ -242,17 +242,6 @@ seaweedfs:
         - hosts:
             - "seaweedfs-master.infra.spencerslab.com"
           secretName: cluster-wildcard-cert
-          rules:
-          - host: "seaweedfs-master.infra.spencerslab.com"
-            http:
-              paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: seaweedfs-master
-                      port:
-                        name: swfs-master
 
   volume:
     #port: 8080
