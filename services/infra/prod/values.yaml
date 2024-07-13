@@ -252,7 +252,7 @@ seaweedfs:
                     service:
                       name: seaweedfs-master
                       port:
-                        number: 9333
+                        name: swfs-master
 
   volume:
     #port: 8080
