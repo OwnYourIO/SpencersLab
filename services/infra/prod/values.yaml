@@ -236,7 +236,8 @@ seaweedfs:
       enabled: true
       className: "traefik"
       host: "seaweedfs-master.infra.spencerslab.com"
-      annotations: {}
+      annotations: 
+        anything: iguess
       tls:
         - hosts:
             - "seaweedfs-master.infra.spencerslab.com"
