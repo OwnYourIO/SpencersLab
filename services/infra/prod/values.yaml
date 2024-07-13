@@ -61,6 +61,8 @@ keycloakx:
         value: "true"
       - name: KC_HTTP_PORT
         value: "8080"
+      # - name: KC_HTTP_RELATIVE_PATH
+      #   value: /auth
       - name: KC_HOSTNAME
         value: https://login.spencerslab.com/auth
       - name: KC_HOSTNAME_STRICT
@@ -79,10 +81,49 @@ keycloakx:
           secretKeyRef:
             name: keycloak-secret
             key: KEYCLOAK_ADMIN_PASSWORD
+      # - name: KC_DB_USERNAME
+      #   value: "${POSTGRES_SSO_USERNAME}"
+      # - name: KC_DB_PASSWORD
+      #   value: "${POSTGRES_SSO_PASSWORD}"
+      # - name: KC_DB
+      #   value: postgres
+      # - name: KC_DB_URL_HOST
+      #   value: "postgresql.sso.svc.cluster.local"
+      # - name: KC_DB_URL_PORT
+      #   value: "5432"
+      # - name: KC_DB_URL_DATABASE
+      #   value: sso
+      
+      # TODO: Have a feeling I'll want a custom redirect like this eventually.
+      # These were taken from the quarks secret, which had a note we could use env instead. 
+      # quarkus.http.non-application-root-path=/
+      # # custom redirects
+      # quarkus.kc-routing.path-redirect./=/auth/realms/YOUR-REALM-NAME/account
+      # quarkus.kc-routing.path-redirect./auth=/auth/realms/YOUR-REALM-NAME/account
+      # quarkus.kc-routing.path-redirect./register=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/registrations?client_id=account&response_type=code
+      # quarkus.kc-routing.path-prefix./oauth/authorize=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/auth
+      # quarkus.kc-routing.path-filter./api/v4/user=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/userinfo
+      # quarkus.kc-routing.path-filter./oauth/token=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/token
+      # # block metrics and health enpoints from being exposed through the istio ingress
+      # quarkus.kc-routing.path-recursive-block./metrics=8443
+      # quarkus.kc-routing.path-recursive-block./health=8443
     extraVolumes: |-
       - name: keycloak-data
         persistentVolumeClaim:
           claimName: keycloak
+    # - name: customreg
+    #   secret:
+    #     secretName: {{ include "keycloak.fullname" . }}-customreg
+    # - name: realm
+    #   secret:
+    #     secretName: {{ include "keycloak.fullname" . }}-realm
+    # - name: plugin
+    #   emptyDir: {}
+    # - name: truststore
+    #   secret:
+    #     secretName: {{ include "keycloak.fullname" . }}-truststore
+    # - name: custom-theme
+    #   emptyDir: {}
     extraVolumeMounts: |-
       - name: keycloak-data
         mountPath: /opt/keycloak/data/
@@ -99,14 +140,34 @@ keycloakx:
             - "login.spencerslab.com"
           secretName: wildcard-cert
 
+    # TODO: Add DB.
+    #database:
+    #  vendor: "postgres"
+    #  hostname: "apps.postgresql.${INTERNAL_DOMAIN}"
+    #  port: "5432"
+    #  database: "keycloak"
+    #  user: "keycloak"
+    #  existingSecret: "keycloak-db"
+    #dbchecker:
+    #  enabled: true
+
 seaweedfs:
   global:
     createClusterRole: true
     monitoring:
-      enabled: false
+    # if enabled will use global.replicationPlacment and override master & filer defaultReplicaPlacement config
+    #enableReplication: false
+    #  replication type is XYZ:
+    # X number of replica in other data centers
+    # Y number of replica in other racks in the same data center
+    # Z number of replica in other servers in the same rack
+    #replicationPlacment: "001"
 
   master:
     enabled: true
+    #port: 9333
+    #grpcPort: 19333
+    #metricsPort: 9327
 #    defaultReplication: "000"
     # You may use ANY storage-class, example with local-path-provisioner
     # Annotations are optional.
@@ -193,6 +254,9 @@ seaweedfs:
                         number: 9333
 
   volume:
+    #port: 8080
+    #grpcPort: 18080
+    #metricsPort: 9327
     index: leveldb
     # For each data disk you may use ANY storage-class, example with local-path-provisioner
     # Annotations are optional.
@@ -331,6 +395,9 @@ seaweedfs:
     
   filer:
     enabled: true
+    #port: 8888
+    #grpcPort: 18888
+    #metricsPort: 9327
 
     #  replication type is XYZ:
     # X number of replica in other data centers
@@ -344,7 +411,6 @@ seaweedfs:
     # Disable http request, only gRpc operations are allowed
     disableHttp: false
 
-    
     # You may use ANY storage-class, example with local-path-provisioner
     # Annotations are optional.
     #  data:
@@ -362,6 +428,9 @@ seaweedfs:
     # You can also use emptyDir storage:
     #  data:
     #    type: "emptyDir"
+    # or hostpath?: 
+      #type: "hostPath"
+      #hostPathPrefix: /storage
     data:
       type: "persistentVolumeClaim"
       size: "10Gi"

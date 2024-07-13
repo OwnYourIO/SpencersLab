@@ -259,26 +259,6 @@ music-assistant:
           - hosts:
               - *host
 
-espresense:
-  bitwardenIds:
-    espresense: 1130d75e-e16c-428b-bf99-b15b0010e993
-  app-template:
-    ingress:
-      espresense:
-        annotations:
-          hajimari.io/url: https://espresense.spencerslab.com
-        hosts:
-          - host: &host "espresense.spencerslab.com"
-            paths: &paths
-              - path: /
-                service:
-                  identifier: espresense
-                  port: http
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
-
 ledfx:
   app-template:
     controllers:
@@ -286,7 +266,28 @@ ledfx:
         containers:
           main:
             env:
+              # TODO: Need to the squeezelite server in the config still.
+              # Maybe override the entrypoint?
+              # Probably need to do so to setup the snapcast client anyway.
               SQUEEZE: 1
+          #snapclient:
+          #  image:
+          #    repository: cthelight/snapclient
+          #    tag: v0.0.2
+          #  env:
+          #    TZ: America/Denver
+          #    #SNAPSERVER: home-music-assistant
+          #    #SNAPSERVER: home-music-assistant.default.svc.cluster.local
+          #    # TODO: This should probably be an internal name. Though it'll need an internal service to go along.
+          #    SNAPSERVER: music-assistant.spencerslab.com
+          #    #SND_DEVICE: 1
+          #    SND_DEVICE: 21
+          #    CLIENT_HOST_ID: "LedFx --player file > /app/ledfx-config/snapclient.fifo" 
+          #    # --user 494"
+          #  #command: sleep 300 
+          #  resources:
+          #    limits:
+          #      squat.ai/snd: 1
     ingress:
       ledfx:
         annotations:
