@@ -47,6 +47,10 @@ kube-prometheus-stack:
       enabled: true
       accessModes: ["ReadWriteOnce"]
       size: 500Mi
+    additionalDashboards: 
+      - name: SeaWeedFS
+        datasource: Prometheus
+        url: https://raw.githubusercontent.com/seaweedfs/seaweedfs/master/k8s/charts/seaweedfs/dashboards/seaweedfs-grafana-dashboard.json
     additionalDataSources: 
       - name: Loki
         type: loki
