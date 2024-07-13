@@ -232,6 +232,10 @@ seaweedfs:
     #   allowPrivilegeEscalation: false
     containerSecurityContext: {}
 
+
+    service:
+      enabled: true
+      type: ClusterIP
     ingress:
       enabled: true
       className: "traefik"
