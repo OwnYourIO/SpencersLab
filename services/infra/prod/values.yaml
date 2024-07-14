@@ -233,21 +233,9 @@ seaweedfs:
     containerSecurityContext: {}
 
 
-    service:
-      enabled: true
-      type: ClusterIP
     ingress:
+      # Disabled and done with template instead because this chart assumes nginx :/
       enabled: false
-      className: "traefik"
-      host: "seaweedfs-master.infra.spencerslab.com"
-      annotations: 
-        kubernetes.io/ingress.class: "traefik"
-        traefik.ingress.kubernetes.io/router.entrypoints: websecure
-        traefik.ingress.kubernetes.io/router.tls: "true"
-      tls:
-        - hosts:
-            - "seaweedfs-master.infra.spencerslab.com"
-          secretName: cluster-wildcard-cert
 
   volume:
     #port: 8080
@@ -325,26 +313,13 @@ seaweedfs:
     idx:
       type: "persistentVolumeClaim"
       size: "10Gi"
+
+    logs: 
+      type: "persistentVolumeClaim"
+      size: "10Gi"
+
     ingress:
-      enabled: true
-      className: "traefix"
-      host: "seaweedfs-volume.infra.spencerslab.com"
-      annotations: {}
-      tls:
-        - hosts:
-            - "seaweedfs-volume.infra.spencerslab.com"
-          secretName: cluster-wildcard-cert
-          rules:
-          - host: "seaweedfs-volume.infra.spencerslab.com"
-            http:
-              paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: seaweedfs-volume
-                      port:
-                        number: 8080
+      enabled: false
 
     # Volume server's rack name
     rack: infra.spencerslab.com

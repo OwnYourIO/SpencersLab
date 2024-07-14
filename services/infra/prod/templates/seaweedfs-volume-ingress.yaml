@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: seaweedfs-volume-ingress
+  namespace: default
+  labels:
+    app: default
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  tls:
+  - hosts:
+      - "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+    secretName: cluster-wildcard-cert
+  rules:
+    - host: "seaweedfs-volume.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: seaweedfs-volume
+                port:
+                  number: 8080
