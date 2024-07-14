@@ -237,7 +237,7 @@ seaweedfs:
       enabled: true
       type: ClusterIP
     ingress:
-      enabled: true
+      enabled: false
       className: "traefik"
       host: "seaweedfs-master.infra.spencerslab.com"
       annotations: 
