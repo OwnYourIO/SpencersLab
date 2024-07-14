@@ -458,24 +458,6 @@ seaweedfs:
 
     ingress:
       enabled: false
-      className: "traefik"
-      host: "seaweedfs-filer.infra.spencerslab.com"
-      annotations: {}
-      tls:
-        - hosts:
-            - "seaweedfs-filer.infra.spencerslab.com"
-          secretName: cluster-wildcard-cert
-          rules:
-          - host: "seaweedfs-filer.infra.spencerslab.com"
-            http:
-              paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: seaweedfs-filer
-                      port:
-                        number: 8888
 
     # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
     extraEnvironmentVars:
@@ -500,7 +482,7 @@ seaweedfs:
     enabled: true
     allowEmptyFolder: true
     # Suffix of the host name, {bucket}.{domainName}
-    domainName: "seaweedfs-s3.infra.spencerslab.com"
+    domainName: "s3.spencerslab.com"
     ingress:
       enabled: false
     #metricsPort: 9327

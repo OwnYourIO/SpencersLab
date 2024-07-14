@@ -12,10 +12,10 @@ metadata:
 spec:
   tls:
   - hosts:
-      - "seaweedfs-s3.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
-    secretName: cluster-wildcard-cert
+      - "s3.{{ $.Values.domain }}"
+    secretName: wildcard-cert
   rules:
-    - host: "seaweedfs-s3.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+    - host: "s3.{{ $.Values.domain }}"
       http:
         paths:
           - path: /
