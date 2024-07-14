@@ -107,6 +107,7 @@ keycloakx:
       # # block metrics and health enpoints from being exposed through the istio ingress
       # quarkus.kc-routing.path-recursive-block./metrics=8443
       # quarkus.kc-routing.path-recursive-block./health=8443
+
     extraVolumes: |-
       - name: keycloak-data
         persistentVolumeClaim:
@@ -495,82 +496,59 @@ seaweedfs:
         #   secretKeyRef:
         #     name: postgres-credentials
         #     key: password
-#    s3:
-#      enabled: true
-#      port: 8333
-#      httpsPort: 0
-#      allowEmptyFolder: true
-#      domainName: '{{ .seaweedfs_s3_hostname }}'
-#      enableAuth: true
-#
-#      # set to the name of an existing kubernetes Secret with the s3 json config file
-#      # should have a secret key called seaweedfs_s3_config with an inline json configure
-#      existingConfigSecret: seaweedfs-s3-secret
-#      # You may specify buckets to be created during the install process.
-#      # Buckets may be exposed publicly by setting `anonymousRead` to `true`
-#      createBuckets:
-#        - name: data_test
-#          anonymousRead: false
-#
-#  s3:
-#    enabled: true
-#    allowEmptyFolder: true
-#    # enable user & permission to s3 (need to inject to all services)
-#    enableAuth: true
-#    # Suffix of the host name, {bucket}.{domainName}
-#    domainName: "s3.spencerslab.com"
-#    ingress:
-#      enabled: true
-#    #replicas: 1
-#    #port: 8333
-#    # add additional https port
-#    #httpsPort: 0
-#    #metricsPort: 9327
-#
-#    # Resource requests, limits, etc. for the server cluster placement. This
-#    # should map directly to the value of the resources field for a PodSpec,
-#    # formatted as a multi-line string. By default no direct resource request
-#    # is made.
-#    resources: {}
-#
-#    # nodeSelector labels for server pod assignment, formatted as a muli-line string.
-#    # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
-#    # Example:
-#    #nodeSelector: |
-#    #  kubernetes.io/arch: amd64
-#    # nodeSelector: |
-#    #   sw-backend: "true"
-#
-#    # used to assign priority to server pods
-#    # ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
-#    #priorityClassName: ""
-#
-#    # used to assign a service account.
-#    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-#    #serviceAccountName: ""
-#
-#    # Configure security context for Pod
-#    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#    # Example:
-#    # podSecurityContext:
-#    #   enabled: true
-#    #   runAsUser: 1000
-#    #   runAsGroup: 3000
-#    #   fsGroup: 2000
-#    podSecurityContext: {}
-#
-#    # Configure security context for Container
-#    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#    # Example:
-#    # containerSecurityContext:
-#    #   enabled: true
-#    #   runAsUser: 2000
-#    #   allowPrivilegeEscalation: false
-#    containerSecurityContext: {}
-#
-#    # You can also use emptyDir storage:
-#    #  logs:
-#    #    type: "emptyDir"
-#    logs:
-#      type: "existingClaim"
-#      claimName: "data-s3-seaweedfs-s3-0"
+  s3:
+    enabled: true
+    allowEmptyFolder: true
+    # Suffix of the host name, {bucket}.{domainName}
+    domainName: "seaweedfs-s3.infra.spencerslab.com"
+    ingress:
+      enabled: false
+    #metricsPort: 9327
+
+    # Resource requests, limits, etc. for the server cluster placement. This
+    # should map directly to the value of the resources field for a PodSpec,
+    # formatted as a multi-line string. By default no direct resource request
+    # is made.
+    resources: {}
+
+    # nodeSelector labels for server pod assignment, formatted as a muli-line string.
+    # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+    # Example:
+    #nodeSelector: |
+    #  kubernetes.io/arch: amd64
+    # nodeSelector: |
+    #   sw-backend: "true"
+
+    # used to assign priority to server pods
+    # ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+    #priorityClassName: ""
+
+    # used to assign a service account.
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+    #serviceAccountName: ""
+
+    # Configure security context for Pod
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    # Example:
+    # podSecurityContext:
+    #   enabled: true
+    #   runAsUser: 1000
+    #   runAsGroup: 3000
+    #   fsGroup: 2000
+    podSecurityContext: {}
+
+    # Configure security context for Container
+    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    # Example:
+    # containerSecurityContext:
+    #   enabled: true
+    #   runAsUser: 2000
+    #   allowPrivilegeEscalation: false
+    containerSecurityContext: {}
+
+    # You can also use emptyDir storage:
+    #  logs:
+    #    type: "emptyDir"
+    logs:
+      type: "existingClaim"
+      claimName: "data-s3-seaweedfs-s3-0"
