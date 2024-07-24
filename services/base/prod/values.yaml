@@ -37,12 +37,12 @@ argocd:
             - profile
             - email
             - groups
-    rbac: 
-      create: true
-      policy.default: ''
-      policy.csv: |
-        g, SuperAdmin, role:admin
-      scopes: "[groups]"
+      rbac: 
+        create: true
+        policy.default: ''
+        policy.csv: |
+          g, SuperAdmin, role:admin
+        scopes: "[groups]"
 
     server:
       authMode: sso
