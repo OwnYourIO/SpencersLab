@@ -45,6 +45,7 @@ argocd:
         # -- The root URL of the OIDC identity provider
         issuer: https://login.spencerslab.com
         # -- The OIDC redirect URL. Should be in the form <argo-root-url>/oauth2/callback.
-        redirectUrl: "https://cluster.infra.spencerslab.com/auth/callback"
+        #redirectUrl: "https://cluster.infra.spencerslab.com/auth/callback"
+        redirectUrl: "https://cluster.infra.spencerslab.com/oauth2/callback"
         scopes: 
           - groups
