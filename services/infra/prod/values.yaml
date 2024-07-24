@@ -10,18 +10,18 @@ argocd:
     ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
       cm:
         oidc.config:
-          name: ArgoCD
-          issuer: https://login.spencerslab.com/auth
-          clientId:
-            # -- Name of secret to retrieve the app OIDC client ID
-            name: argocd-sso
-            # -- Key of secret to retrieve the app OIDC client ID
-            key: client-id
-          clientSecret:
-            # -- Name of a secret to retrieve the app OIDC client secret
-            name: argocd-sso
-            # -- Key of a secret to retrieve the app OIDC client secret
-            key: client-secret
+          name: Keycloak
+          issuer: https://login.spencerslab.com/auth/realms/master
+          clientId: argocd
+            ## -- Name of secret to retrieve the app OIDC client ID
+            #name: argocd-sso
+            ## -- Key of secret to retrieve the app OIDC client ID
+            #key: client-id
+          clientSecret: $oidc.keycloak.clientSecret
+            ## -- Name of a secret to retrieve the app OIDC client secret
+            #name: argocd-sso
+            ## -- Key of a secret to retrieve the app OIDC client secret
+            #key: client-secret
           requestedIDTokenClaims:
             groups:
               essential: true
@@ -29,6 +29,7 @@ argocd:
             - openid
             - profile
             - email
+            - groups
     server:
       authMode: sso
       sso:
