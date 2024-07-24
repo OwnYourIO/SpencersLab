@@ -37,9 +37,12 @@ argocd:
             - profile
             - email
             - groups
-      rbac-cm: 
-        policy.csv: |
-          g, SuperAdmin, role:admin
+    rbac: 
+      create: true
+      policy.default: ''
+      policy.csv: |
+        g, SuperAdmin, role:admin
+      scopes: "[groups]"
 
     server:
       authMode: sso
