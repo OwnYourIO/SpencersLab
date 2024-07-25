@@ -18,17 +18,9 @@ argocd:
       cm:
         oidc.config: |
           name: Keycloak
-          issuer: https://login.spencerslab.com/realms/master
-          clientId: 
-            # -- Name of secret to retrieve the app OIDC client ID
-            name: argocd-sso
-            # -- Key of secret to retrieve the app OIDC client ID
-            key: client-id
-          clientSecret: 
-            # -- Name of a secret to retrieve the app OIDC client secret
-            name: argocd-sso
-            # -- Key of a secret to retrieve the app OIDC client secret
-            key: client-secret
+          issuer: https://login.spencerslab.com/realms/SpencersLab
+          clientId: argocd
+          clientSecret: $argocd-sso:client-secret
           requestedIDTokenClaims:
             groups:
               essential: true
