@@ -28,8 +28,6 @@ keycloakx:
         value: "true"
       - name: KC_HTTP_PORT
         value: "8080"
-      - name: KC_HTTP_RELATIVE_PATH
-        value: "/"
       - name: KC_HOSTNAME
         value: https://login.spencerslab.com/
       - name: KC_HOSTNAME_STRICT
