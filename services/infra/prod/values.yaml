@@ -11,7 +11,7 @@ keycloakx:
       - "--verbose"
       - "start-dev"
 
-    extraEnv: |-
+    extraEnv: #|-
       - name: TZ
         value: "America/Denver"
       - name: JAVA_OPTS_APPEND
