@@ -16,11 +16,11 @@ argocd:
     # General Argo CD configuration
     ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
       cm:
-        url: https://cluster.infra.spencerslab.com/
+        url: $argocd-sso:argocd-url
         oidc.config: |
           name: Keycloak
-          issuer: https://login.spencerslab.com/realms/SpencersLab
-          clientId: argocd
+          issuer: $argocd-sso:issuer
+          clientId: $argocd-sso:client-id
           clientSecret: $argocd-sso:client-secret
           requestedIDTokenClaims:
             groups:
