@@ -33,7 +33,7 @@ argocd:
         create: true
         policy.default: ''
         policy.csv: |
-          g, SuperAdmin, role:admin
+          g, Admin, role:admin
         scopes: "[groups]"
 
     server:
