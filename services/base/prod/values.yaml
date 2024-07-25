@@ -16,6 +16,7 @@ argocd:
     # General Argo CD configuration
     ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
       cm:
+        url: https://login.spencerslab.com/
         oidc.config: |
           name: Keycloak
           issuer: https://login.spencerslab.com/realms/SpencersLab
