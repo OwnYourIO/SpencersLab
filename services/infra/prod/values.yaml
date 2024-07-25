@@ -15,7 +15,8 @@ keycloakx:
       - name: TZ
         value: "America/Denver"
       - name: JAVA_OPTS_APPEND
-        value: '-Djava.awt.headless=true -Djgroups.dns.query=keycloak-headless -XX:+UseContainerSupport'
+        value: >-
+          -Djgroups.dns.query=keycloak-headless
       - name: KC_PROXY
         value: passthrough
       - name: KC_PROXY_HEADERS
@@ -25,7 +26,7 @@ keycloakx:
       - name: KC_HTTP_PORT
         value: "8080"
       - name: KC_HTTP_RELATIVE_PATH
-        value: /
+        value: "/"
       - name: KC_HOSTNAME
         value: https://login.spencerslab.com/
       - name: KC_HOSTNAME_STRICT
