@@ -10,6 +10,9 @@ keycloakx:
       - "/opt/keycloak/bin/kc.sh"
       - "--verbose"
       - "start-dev"
+    
+    http:
+      relativePath: /
 
     extraEnv: |-
       - name: TZ
