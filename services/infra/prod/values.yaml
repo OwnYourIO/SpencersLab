@@ -15,7 +15,10 @@ keycloakx:
       - name: TZ
         value: "America/Denver"
       - name: JAVA_OPTS_APPEND
-        value: "-Djgroups.dns.query=keycloak-headless"
+        value: >-
+          -Djava.awt.headless=true
+          -Djgroups.dns.query=keycloak-headless
+          -XX:+UseContainerSupport
       - name: KC_PROXY
         value: passthrough
       - name: KC_PROXY_HEADERS
@@ -24,10 +27,10 @@ keycloakx:
         value: "true"
       - name: KC_HTTP_PORT
         value: "8080"
-      # - name: KC_HTTP_RELATIVE_PATH
-      #   value: /auth
+      - name: KC_HTTP_RELATIVE_PATH
+        value: /
       - name: KC_HOSTNAME
-        value: https://login.spencerslab.com/auth
+        value: https://login.spencerslab.com
       - name: KC_HOSTNAME_STRICT
         value: "true"
       - name: KC_HOSTNAME_STRICT_HTTPS
@@ -61,12 +64,12 @@ keycloakx:
       # These were taken from the quarks secret, which had a note we could use env instead. 
       # quarkus.http.non-application-root-path=/
       # # custom redirects
-      # quarkus.kc-routing.path-redirect./=/auth/realms/YOUR-REALM-NAME/account
-      # quarkus.kc-routing.path-redirect./auth=/auth/realms/YOUR-REALM-NAME/account
-      # quarkus.kc-routing.path-redirect./register=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/registrations?client_id=account&response_type=code
-      # quarkus.kc-routing.path-prefix./oauth/authorize=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/auth
-      # quarkus.kc-routing.path-filter./api/v4/user=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/userinfo
-      # quarkus.kc-routing.path-filter./oauth/token=/auth/realms/YOUR-REALM-NAME/protocol/openid-connect/token
+      # quarkus.kc-routing.path-redirect./=/realms/YOUR-REALM-NAME/account
+      # quarkus.kc-routing.path-redirect./auth=/realms/YOUR-REALM-NAME/account
+      # quarkus.kc-routing.path-redirect./register=/realms/YOUR-REALM-NAME/protocol/openid-connect/registrations?client_id=account&response_type=code
+      # quarkus.kc-routing.path-prefix./oauth/authorize=/realms/YOUR-REALM-NAME/protocol/openid-connect/auth
+      # quarkus.kc-routing.path-filter./api/v4/user=/realms/YOUR-REALM-NAME/protocol/openid-connect/userinfo
+      # quarkus.kc-routing.path-filter./oauth/token=/realms/YOUR-REALM-NAME/protocol/openid-connect/token
       # # block metrics and health enpoints from being exposed through the istio ingress
       # quarkus.kc-routing.path-recursive-block./metrics=8443
       # quarkus.kc-routing.path-recursive-block./health=8443

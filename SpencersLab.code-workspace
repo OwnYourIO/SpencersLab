@@ -5,9 +5,6 @@
     },
     {
       "path": "../IaC"
-    },
-    {
-      "path": "../authentik-helm"
     }
   ],
   "settings": {
