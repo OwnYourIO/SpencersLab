@@ -11,14 +11,11 @@ keycloakx:
       - "--verbose"
       - "start-dev"
 
-    extraEnv: #|-
+    extraEnv: |-
       - name: TZ
         value: "America/Denver"
       - name: JAVA_OPTS_APPEND
-        value: >-
-          -Djava.awt.headless=true
-          -Djgroups.dns.query=keycloak-headless
-          -XX:+UseContainerSupport
+        value: -Djava.awt.headless=true -Djgroups.dns.query=keycloak-headless -XX:+UseContainerSupport
       - name: KC_PROXY
         value: passthrough
       - name: KC_PROXY_HEADERS
