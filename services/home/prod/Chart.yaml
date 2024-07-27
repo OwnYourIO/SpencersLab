@@ -7,7 +7,7 @@ dependencies:
 #  version: 3.61.0
 #  repository: https://seaweedfs.github.io/seaweedfs/helm
 - name: home-appset
-  version: 1.1.7
+  version: 1.1.8
   repository: https://ownyourio.github.io/SpencersLab/
 - name: mosquitto
   version: 0.1.1
