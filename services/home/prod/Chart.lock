@@ -1,7 +1,7 @@
 dependencies:
 - name: home-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.8
+  version: 1.1.9
 - name: mosquitto
   repository: https://lmatfy.github.io/charts
   version: 0.1.1
@@ -26,5 +26,5 @@ dependencies:
 - name: music-assistant
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.11
-digest: sha256:8aab606c97d0c432fdd3f460c76c34a026ae3eafb7320dc7e7d026a04612944f
-generated: "2024-07-27T11:47:31.436811057-06:00"
+digest: sha256:e11a03afe3e95800c1a88d7e6242959903c71ac683a33873cdf87a5356ede47c
+generated: "2024-07-27T13:01:37.140113362-06:00"
