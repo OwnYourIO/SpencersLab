@@ -82,7 +82,7 @@ music-assistant:
           main:
             image:
               repository: ossrs/srs
-              tag: v5.0.213
+              tag: v6.0.145
             env:
               TZ: America/Denver
 
