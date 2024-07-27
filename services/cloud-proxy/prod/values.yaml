@@ -1,0 +1,4 @@
+
+# - IP Based filtering (Traefik?)
+# - Middleware for Traefik
+# - Maybe external routes/ingress/egress

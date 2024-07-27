@@ -16,7 +16,6 @@ argocd:
     # General Argo CD configuration
     ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
       cm:
-        url: $argocd-sso:argocd-url
         oidc.config: |
           name: Keycloak
           issuer: $argocd-sso:issuer
