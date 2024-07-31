@@ -252,7 +252,7 @@ music-assistant:
             paths: &paths
               - path: /
                 service:
-                  identifier: music-assistant
+                  identifier: snapcast
                   port: control
         tls:
           - hosts:
