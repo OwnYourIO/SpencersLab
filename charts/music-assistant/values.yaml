@@ -48,8 +48,6 @@ app-template:
         http:
           port: 8095
           primary: true
-        http2:
-          port: 1780
   ingress:
     music-assistant:
       #annotations:
