@@ -246,6 +246,18 @@ music-assistant:
           - hosts:
               - *host
             secretName: wildcard-cert
+      music-assistant-snapserver:
+        hosts:
+          - host: &host "music-assistant-snapserver.spencerslab.com"
+            paths: &paths
+              - path: /
+                service:
+                  identifier: music-assistant
+                  port: control
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert
       srs:
         hosts:
           - host: &host "stream.spencerslab.com"
