@@ -104,6 +104,8 @@ music-assistant:
             port: 1704
           control:
             port: 1705
+          websocket:
+            port: 1780
     
       srs:
         controller: srs
