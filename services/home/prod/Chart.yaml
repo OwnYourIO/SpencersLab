@@ -22,9 +22,6 @@ dependencies:
 #- name: zwavejs2mqtt
 #  version: 19.5.2
 #  repository: https://charts.truecharts.org
-- name: espresense
-  version: 1.0.10
-  repository: https://ownyourio.github.io/SpencersLab/
 - name: hyperion
   version: 1.0.11
   repository: https://ownyourio.github.io/SpencersLab/

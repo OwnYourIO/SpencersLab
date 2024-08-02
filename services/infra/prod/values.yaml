@@ -319,12 +319,11 @@ seaweedfs:
     # Configure security context for Pod
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
     # Example:
-    # podSecurityContext:
-    #   enabled: true
-    #   runAsUser: 1000
-    #   runAsGroup: 3000
-    #   fsGroup: 2000
-    podSecurityContext: {}
+    podSecurityContext:
+      enabled: true
+      runAsUser: 2000
+      runAsGroup: 2000
+      fsGroup: 2000
 
     # Configure security context for Container
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
@@ -337,9 +336,11 @@ seaweedfs:
     
   filer:
     enabled: true
+    #replicas: 1
     #port: 8888
     #grpcPort: 18888
     #metricsPort: 9327
+    #encryptVolumeData: false
 
     #  replication type is XYZ:
     # X number of replica in other data centers
