@@ -237,23 +237,23 @@ seaweedfs:
     dataDirs:
       - name: hdd1
         type: "hostPath"
-        hostPathPrefix: /mnt/drive1
+        hostPathPrefix: /var/mnt/drive1
         maxVolumes: 0
       - name: hdd2
         type: "hostPath"
-        hostPathPrefix: /mnt/drive2
+        hostPathPrefix: /var/mnt/drive2
         maxVolumes: 0
       - name: hdd3
         type: "hostPath"
-        hostPathPrefix: /mnt/drive3
+        hostPathPrefix: /var/mnt/drive3
         maxVolumes: 0
       - name: hdd4
         type: "hostPath"
-        hostPathPrefix: /mnt/drive4
+        hostPathPrefix: /var/mnt/drive4
         maxVolumes: 0
       - name: hdd5
         type: "hostPath"
-        hostPathPrefix: /mnt/drive5
+        hostPathPrefix: /var/mnt/drive5
         maxVolumes: 0
     # idx can be defined by:
     #
