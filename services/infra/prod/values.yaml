@@ -209,7 +209,8 @@ seaweedfs:
     #grpcPort: 18080
     #metricsPort: 9327
     index: leveldb
-    replicas: 5
+    # TODO: Pretty sure this should be more but it complains about duplicate mounts. 
+    replicas: 1
     #minFreeSpacePercent: 5
     #compactionMBps: "250"
 
