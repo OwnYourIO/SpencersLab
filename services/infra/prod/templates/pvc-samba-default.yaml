@@ -5,7 +5,17 @@ metadata:
   namespace: default
 spec:
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
   resources:
     requests:
       storage: 1Gi
+  csi:
+    driver: seaweedfs-csi-driver
+    volumeHandle: samba-data
+    volumeAttributes:
+      collection: default
+      replication: "001"
+      path: /samba
+    readOnly: false
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem 
