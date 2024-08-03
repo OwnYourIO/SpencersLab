@@ -586,22 +586,22 @@ samba:
 
     persistence:
       media:
-        existingClaim: media
+        existingClaim: samba
         globalMounts:
           - path: /mnt/media
-      player:
-        existingClaim: player
-        globalMounts:
-          - path: /mnt/player
-      pictures:
-        existingClaim: pictures
-        globalMounts:
-          - path: /mnt/pictures
-      documents:
-        existingClaim: documents
-        globalMounts:
-          - path: /mnt/documents
-      backups:
-        existingClaim: backups
-        globalMounts:
-          - path: /mnt/backups
+      #player:
+      #  existingClaim: player
+      #  globalMounts:
+      #    - path: /mnt/player
+      #pictures:
+      #  existingClaim: pictures
+      #  globalMounts:
+      #    - path: /mnt/pictures
+      #documents:
+      #  existingClaim: documents
+      #  globalMounts:
+      #    - path: /mnt/documents
+      #backups:
+      #  existingClaim: backups
+      #  globalMounts:
+      #    - path: /mnt/backups
