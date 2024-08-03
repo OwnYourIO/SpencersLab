@@ -506,3 +506,102 @@ seaweedfs:
     logs:
       type: "existingClaim"
       claimName: "data-s3-seaweedfs-s3-0"
+
+samba:
+  app-template:
+    controllers:
+      samba:
+        containers:
+          main:
+            env:
+              TZ: America/Denver
+              SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16"
+              SAMBA_SERVER_STRING: &serverstring "storage.spencerslab.com"
+              WSDD2_ENABLE: "1"
+              WSDD2_HOSTNAME: "storage"
+              WSDD2_NETBIOS_NAME: "storage"
+
+    configMaps:
+      samba-config:
+        data: 
+          samba.yaml: |-
+            ---
+            auth:
+              - user: spencer
+                group: spencer
+                uid: 1000
+                gid: 1000
+                password_file: /run/secret/spencer_password
+            share:
+              - name: Media
+                path: /mnt/media
+                browsable: yes
+                readonly: no
+                guestok: no
+                validusers: spencer
+                writelist: spencer
+                veto: no
+                hidefiles: /_*/
+                recycle: yes
+              - name: Player
+                path: /mnt/player
+                browsable: yes
+                readonly: no
+                guestok: no
+                validusers: spencer
+                writelist: spencer
+                veto: no
+                hidefiles: /_*/
+                recycle: yes
+              - name: Documents
+                path: /mnt/documents
+                browsable: yes
+                readonly: no
+                guestok: no
+                validusers: kashall
+                writelist: kashall
+                veto: no
+                hidefiles: /_*/
+                recycle: yes
+              - name: pictures
+                path: /mnt/pictures
+                browsable: yes
+                readonly: no
+                guestok: no
+                validusers: spencer
+                writelist: spencer
+                veto: no
+                hidefiles: /_*/
+                recycle: yes
+              - name: Backups
+                path: /mnt/loki/backups
+                browsable: yes
+                readonly: no
+                guestok: no
+                validusers: spencer
+                writelist: spencer
+                veto: no
+                hidefiles: /_*/
+                recycle: yes
+
+    persistence:
+      media:
+        existingClaim: media
+        globalMounts:
+          - path: /mnt/media
+      player:
+        existingClaim: player
+        globalMounts:
+          - path: /mnt/player
+      pictures:
+        existingClaim: pictures
+        globalMounts:
+          - path: /mnt/pictures
+      documents:
+        existingClaim: documents
+        globalMounts:
+          - path: /mnt/documents
+      backups:
+        existingClaim: backups
+        globalMounts:
+          - path: /mnt/backups

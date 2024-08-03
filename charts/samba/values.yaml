@@ -1,0 +1,101 @@
+global:
+  nameOverride: samba
+
+bitwardenIds:
+  samba-users: OVERRIDE_NEEDED
+
+app-template:
+  controllers:
+    samba:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/crazy-max/samba
+            tag: 4.19.6@sha256:d02680060b5366b696023ccbd8aa6809d0b7ad1c77da1a5db84262545cbab153
+          env:
+            TZ: Etc/Utc
+            SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/8 192.168.0.0/16"
+            SAMBA_SERVER_STRING: &serverstring "storage.localhost"
+            WSDD2_ENABLE: "1"
+            WSDD2_HOSTNAME: "storage"
+            WSDD2_NETBIOS_NAME: "storage"
+  service:
+    app:
+      controller: samba
+      type: LoadBalancer
+      #annotations:
+      #  external-dns.alpha.kubernetes.io/hostname: *serverstring
+      ports:
+        samba:
+          enabled: true
+          port: 445
+          targetPort: 445
+        samba-udp:
+          enabled: true
+          protocol: UDP
+          port: 445
+          targetPort: 445
+        wsdd:
+          enabled: true
+          port: 3702
+          targetPort: 3702
+        wsdd-udp:
+          enabled: true
+          protocol: UDP
+          port: 3702
+          targetPort: 3702
+        llmnr:
+          enabled: true
+          port: 55355
+          targetPort: 55355
+        llmnr-udp:
+          enabled: true
+          protocol: UDP
+          port: 55355
+          targetPort: 55355
+
+  configMaps:
+    samba-config:
+      data: 
+        samba.yaml: |-
+          ---
+          auth:
+            - user: admin
+              group: admin
+              uid: 1000
+              gid: 1000
+              password_file: /run/secrets/admin_password
+
+          share:
+            - name: All
+              path: /mnt/
+              browsable: yes
+              readonly: no
+              guestok: no
+              validusers: admin
+              writelist: admin
+              veto: no
+              hidefiles: /_*/
+              recycle: yes
+
+            - name: Backups
+              path: /mnt/backups
+              browsable: yes
+              readonly: no
+              guestok: no
+              validusers: admin
+              writelist: admin
+              veto: no
+              hidefiles: /_*/
+              recycle: yes
+
+  persistence:
+    config:
+      name: samba-config
+      type: configMap
+      advancedMounts:
+        samba:
+          app:
+            - path: /data/config.yml
+              subPath: samba.yaml
+              readOnly: true
