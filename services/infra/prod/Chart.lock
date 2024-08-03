@@ -8,5 +8,8 @@ dependencies:
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 2.4.3
-digest: sha256:40af6211a16029fc89488ebfefa0ed5df6e3a076e263b32bf409431871bd7d4f
-generated: "2024-07-27T12:54:36.948811154-06:00"
+- name: samba
+  repository: https://ownyourio.github.io/SpencersLab/
+  version: 1.0.1
+digest: sha256:e91be2fa3f1d73366a7a0c2642093dc9ffb38c31f9e68e17e9dc65b19d89d515
+generated: "2024-08-03T13:50:57.012797692-06:00"
