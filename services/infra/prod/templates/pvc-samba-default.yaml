@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: samba
+  name: media
   namespace: default
 spec:
   accessModes:
@@ -11,11 +11,11 @@ spec:
       storage: 1Gi
   csi:
     driver: seaweedfs-csi-driver
-    volumeHandle: samba-data
+    volumeHandle: media-data
     volumeAttributes:
       collection: default
       replication: "001"
-      path: /samba
+      path: /media
     readOnly: false
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem 
