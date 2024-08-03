@@ -117,6 +117,8 @@ keycloakx:
     #dbchecker:
     #  enabled: true
 
+seaweedfs-csi-driver:
+  seaweedfsFiler: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
 seaweedfs:
   global:
     createClusterRole: true
