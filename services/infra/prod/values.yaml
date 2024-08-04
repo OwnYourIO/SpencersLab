@@ -588,7 +588,7 @@ samba:
 
     persistence:
       media:
-        existingClaim: media
+        existingClaim: media-shared
         globalMounts:
           - path: /mnt/media
       #player:
