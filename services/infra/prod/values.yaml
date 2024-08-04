@@ -603,7 +603,7 @@ samba:
         name: keycloak-secret
         
       config:
-        name: samba-config
+        name: "{{ .Release.Name }}-samba-samba-config"
         type: configMap
         advancedMounts:
           samba:
