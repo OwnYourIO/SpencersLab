@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: backups-business-shared
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 1Gi
+  csi:
+    driver: seaweedfs-csi-driver
+    volumeHandle: backups-business-shared
+    volumeAttributes:
+      collection: backups-business
+      replication: "001"
+      #path: /path/to/files
+      #diskType: "ssd"
+    readOnly: false
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backups-business-shared
+spec:
+  storageClassName: ""
+  volumeName: backups-business-shared
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi

@@ -118,7 +118,9 @@ keycloakx:
     #  enabled: true
 
 seaweedfs-csi-driver:
+  #seaweedfsFiler: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
   seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default:8888"
+
 seaweedfs:
   global:
     createClusterRole: true
@@ -137,6 +139,11 @@ seaweedfs:
     #grpcPort: 19333
     #metricsPort: 9327
 #    defaultReplication: "000"
+
+    #config: |-
+    #  # Enter any extra configuration for master.toml here.
+    #  # It may be be a multi-line string.
+
     # You may use ANY storage-class, example with local-path-provisioner
     # Annotations are optional.
     #  data:
@@ -300,6 +307,10 @@ seaweedfs:
 
     # Volume server's data center name
     dataCenter: spencerslab.com
+
+    # Redirect moved or non-local volumes. (default proxy)
+    #readMode: proxy
+
     # Affinity Settings
     # Commenting out or setting as empty the affinity variable, will allow
     # deployment to single node services such as Minikube
@@ -560,8 +571,8 @@ samba:
                 browsable: yes
                 readonly: no
                 guestok: no
-                validusers: kashall
-                writelist: kashall
+                validusers: spencer
+                writelist: spencer
                 veto: no
                 hidefiles: /_*/
                 recycle: yes
@@ -576,7 +587,7 @@ samba:
                 hidefiles: /_*/
                 recycle: yes
               - name: Backups
-                path: /mnt/loki/backups
+                path: /mnt/backups
                 browsable: yes
                 readonly: no
                 guestok: no
@@ -591,19 +602,19 @@ samba:
         existingClaim: media-shared
         globalMounts:
           - path: /mnt/media
-      #player:
-      #  existingClaim: player
-      #  globalMounts:
-      #    - path: /mnt/player
-      #pictures:
-      #  existingClaim: pictures
-      #  globalMounts:
-      #    - path: /mnt/pictures
-      #documents:
-      #  existingClaim: documents
-      #  globalMounts:
-      #    - path: /mnt/documents
-      #backups:
-      #  existingClaim: backups
-      #  globalMounts:
-      #    - path: /mnt/backups
+      player:
+        existingClaim: player-shared
+        globalMounts:
+          - path: /mnt/player
+      pictures:
+        existingClaim: pictures-shared
+        globalMounts:
+          - path: /mnt/pictures
+      documents:
+        existingClaim: documents-shared
+        globalMounts:
+          - path: /mnt/documents-shared
+      backups:
+        existingClaim: backups-shared
+        globalMounts:
+          - path: /mnt/backups
