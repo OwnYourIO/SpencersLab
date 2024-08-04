@@ -598,6 +598,19 @@ samba:
                 recycle: yes
 
     persistence:
+      users:
+        type: secret
+        name: keycloak-secret
+        
+      config:
+        name: samba-config
+        type: configMap
+        advancedMounts:
+          samba:
+            main:
+              - path: /data/config.yml
+                subPath: samba.yaml
+                readOnly: true
       media:
         existingClaim: media-shared
         globalMounts:
