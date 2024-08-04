@@ -19,44 +19,15 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
 
-
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: media
-  namespace: default
-spec:
-  accessModes:
-  - ReadWriteMany
-  resources:
-    requests:
-      storage: 1Gi
-  csi:
-    driver: seaweedfs-csi-driver
-    volumeHandle: media-data
-    volumeAttributes:
-      collection: default
-      replication: "001"
-      path: /media
-      #diskType: "ssd"
-    readOnly: false
-  persistentVolumeReclaimPolicy: Retain
-  volumeMode: Filesystem 
-
-
-
-
-
 ---
 
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: seaweedfs-static
+  name: media-shared
 spec:
   storageClassName: ""
-  volumeName: seaweedfs-static
+  volumeName: media-shared
   accessModes:
   - ReadWriteMany
   resources:
