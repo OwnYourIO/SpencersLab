@@ -118,7 +118,7 @@ keycloakx:
     #  enabled: true
 
 seaweedfs-csi-driver:
-  seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default"
+  seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default:8888"
 seaweedfs:
   global:
     createClusterRole: true
