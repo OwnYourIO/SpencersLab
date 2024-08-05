@@ -546,9 +546,10 @@ samba:
                 gid: 1000
                 password_file: /run/secret/spencer_password
             share:
-              - name: Media
+              - name: media
                 path: /mnt/media
                 browsable: yes
+                writable: yes
                 readonly: no
                 guestok: no
                 validusers: spencer
@@ -556,17 +557,19 @@ samba:
                 veto: no
                 hidefiles: /_*/
                 recycle: yes
-              - name: Player
+              - name: player
                 path: /mnt/player
                 browsable: yes
                 readonly: no
                 guestok: no
+                public: yes
                 validusers: spencer
                 writelist: spencer
                 veto: no
                 hidefiles: /_*/
                 recycle: yes
-              - name: Documents
+              - name: documents
+                security: user
                 path: /mnt/documents
                 browsable: yes
                 readonly: no
@@ -586,7 +589,9 @@ samba:
                 veto: no
                 hidefiles: /_*/
                 recycle: yes
-              - name: Backups
+              - name: backups
+                create mask: 666
+                directory mask: 777
                 path: /mnt/backups
                 browsable: yes
                 readonly: no
