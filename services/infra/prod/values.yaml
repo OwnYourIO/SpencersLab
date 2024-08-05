@@ -557,6 +557,7 @@ samba:
                 veto: no
                 hidefiles: /_*/
                 recycle: yes
+                force user: 1000
               - name: player
                 path: /mnt/player
                 browsable: yes
@@ -568,6 +569,7 @@ samba:
                 veto: no
                 hidefiles: /_*/
                 recycle: yes
+                force user: spencer
               - name: documents
                 security: user
                 path: /mnt/documents
