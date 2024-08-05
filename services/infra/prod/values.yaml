@@ -530,9 +530,9 @@ samba:
               TZ: America/Denver
               SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16"
               SAMBA_SERVER_STRING: &serverstring "storage.spencerslab.com"
-              WSDD2_ENABLE: "1"
-              WSDD2_HOSTNAME: "storage"
-              WSDD2_NETBIOS_NAME: "storage"
+              #WSDD2_ENABLE: "1"
+              #WSDD2_HOSTNAME: "storage"
+              #WSDD2_NETBIOS_NAME: "storage"
 
     configMaps:
       samba-config:
