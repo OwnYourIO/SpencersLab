@@ -601,6 +601,12 @@ samba:
       users:
         type: secret
         name: keycloak-secret
+        advancedMounts:
+          samba:
+            main:
+              - path: /run/secrets/spencer_password
+                subPath: KEYCLOAK_ADMIN_PASSWORD
+                readOnly: true
         
       config:
         name: "{{ .Release.Name }}-samba-samba-config"
