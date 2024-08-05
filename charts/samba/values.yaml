@@ -23,6 +23,7 @@ app-template:
     app:
       controller: samba
       type: LoadBalancer
+      externalTrafficPolicy: Local
       #annotations:
       #  external-dns.alpha.kubernetes.io/hostname: *serverstring
       ports:
