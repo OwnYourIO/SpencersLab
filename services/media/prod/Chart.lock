@@ -1,9 +1,9 @@
 dependencies:
-- name: seaweedfs
-  repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 3.68.0
 - name: media-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.2
-digest: sha256:ae51f6cb7d8ebaa0334cb98faaf2a98808ba5e5c724aaed090e65def3b4586a3
-generated: "2024-08-05T19:29:54.599838435-06:00"
+- name: seaweedfs-csi-driver
+  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+  version: 0.2.2
+digest: sha256:56f976e67f250ce638896ffb6f4bcac027ba954175a2615392c7cba7ae5e0e4d
+generated: "2024-08-05T20:17:55.090392423-06:00"
