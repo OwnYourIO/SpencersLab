@@ -3,3 +3,28 @@ bitwardenIds:
 
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+
+jellyfin:
+  app-template:
+    controllers:
+      jellyfin:
+        containers:
+          app:
+            env:
+              JELLYFIN_PublishedServerUrl: https://jellyfin.spencerslab.com
+    service:
+      app:
+        controller: jellyfin
+        type: LoadBalancer
+        ports:
+          http:
+            port: *port
+    ingress:
+      app:
+        hosts:
+          - host: jellyfin.spencerslab.com
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
