@@ -1,5 +1,5 @@
 global:
-  nameOverride: samba
+  nameOverride: jellyfin
 
 bitwardenIds:
   samba-users: OVERRIDE_NEEDED
