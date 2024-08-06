@@ -4,6 +4,6 @@ dependencies:
   version: 3.68.0
 - name: media-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.1
-digest: sha256:a423765536abfd46b34220bbcdf0bcba6c8be598c6300308cca29344cf148037
-generated: "2024-07-04T17:44:29.707462181Z"
+  version: 1.1.2
+digest: sha256:ae51f6cb7d8ebaa0334cb98faaf2a98808ba5e5c724aaed090e65def3b4586a3
+generated: "2024-08-05T19:29:54.599838435-06:00"
