@@ -18,7 +18,7 @@ jellyfin:
         type: LoadBalancer
         ports:
           http:
-            port: *port
+            port: 8096
     ingress:
       app:
         hosts:
