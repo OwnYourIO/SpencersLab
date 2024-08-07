@@ -2,7 +2,7 @@ bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
 seaweedfs-csi-driver:
-  seaweedfsFiler: "https://seaweedfs-filer.infra.spencerslab.com"
+  seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com"
 
 jellyfin:
   app-template:
