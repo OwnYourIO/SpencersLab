@@ -4,7 +4,8 @@ metadata:
   name: seaweedfs-filer
   namespace: default
 spec:
-  type: ClusterIP
+  type: LoadBalancer
+  externalTrafficPolicy: Local
   ports:
     - name: swfs-filer                                                                                                                      
       port: 8888                                                    
