@@ -544,7 +544,7 @@ samba:
                 group: spencer
                 uid: 1000
                 gid: 1000
-                password_file: /run/secret/spencer_password
+                password_file: /run/secrets/spencer_password
             share:
               - name: media
                 path: /mnt/media
