@@ -366,7 +366,8 @@ seaweedfs:
     encryptVolumeData: false
 
     # Disable http request, only gRpc operations are allowed
-    disableHttp: true
+    # TODO: This has to be disabled because the health check is hard coded for HTTP.
+    disableHttp: false
 
     # used to configure livenessProbe on filer containers
     livenessProbe:
