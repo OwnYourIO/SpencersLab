@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: seaweedfs-filer
+  name: seaweedfs-filer-0
   namespace: default
 spec:
   type: LoadBalancer
