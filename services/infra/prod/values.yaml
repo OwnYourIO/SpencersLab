@@ -308,6 +308,10 @@ seaweedfs:
     # Volume server's data center name
     dataCenter: spencerslab.com
 
+    # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
+    extraEnvironmentVars:
+      PUBLICURL: "https://seaweedfs-volume.infra.spencerslab.com"
+
     # Redirect moved or non-local volumes. (default proxy)
     #readMode: proxy
 
