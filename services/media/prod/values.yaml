@@ -22,7 +22,7 @@ jellyfin:
     ingress:
       app:
         hosts:
-          - host: &host jellyfin.spencerslab.com
+          - host: &host "jellyfin.spencerslab.com"
             paths:
               - path: /
                 service:
