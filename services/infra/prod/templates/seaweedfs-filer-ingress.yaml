@@ -25,3 +25,5 @@ spec:
                 name: seaweedfs-filer
                 port:
                   number: 8888
+                scheme: h2c
+                passHostHeader: true

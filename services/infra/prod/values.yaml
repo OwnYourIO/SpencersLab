@@ -366,7 +366,7 @@ seaweedfs:
     encryptVolumeData: false
 
     # Disable http request, only gRpc operations are allowed
-    disableHttp: false
+    disableHttp: true
 
     # You may use ANY storage-class, example with local-path-provisioner
     # Annotations are optional.
