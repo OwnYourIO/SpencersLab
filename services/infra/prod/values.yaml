@@ -368,6 +368,16 @@ seaweedfs:
     # Disable http request, only gRpc operations are allowed
     disableHttp: true
 
+    # used to configure livenessProbe on filer containers
+    livenessProbe:
+      grpc:
+        port: 18888
+
+    # used to configure readinessProbe on filer containers
+    readinessProbe:
+      grpc:
+        port: 18888
+
     # You may use ANY storage-class, example with local-path-provisioner
     # Annotations are optional.
     #  data:
