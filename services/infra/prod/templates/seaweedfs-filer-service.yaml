@@ -5,7 +5,6 @@ metadata:
   namespace: default
 spec:
   type: ClusterIP
-  externalTrafficPolicy: Local
   ports:
     - name: swfs-filer-grpc                 
       port: 18888                            
