@@ -5,14 +5,10 @@ metadata:
   namespace: default
   labels:
     app: default
-    traefik.http.services.swfs-filer.loadbalancer.server.scheme: h2c
-    traefik.protocol: h2c
   annotations:
     kubernetes.io/ingress.class: "traefik"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.http.services.swfs-filer.loadbalancer.server.scheme: h2c
-    traefik.protocol: h2c
 spec:
   tls:
   - hosts:
@@ -28,4 +24,4 @@ spec:
               service:
                 name: seaweedfs-filer
                 port:
-                  number: 18888
+                  number: 8888

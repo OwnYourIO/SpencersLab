@@ -350,7 +350,7 @@ seaweedfs:
     
   filer:
     enabled: true
-    #replicas: 1
+    replicas: 5
     #port: 8888
     #grpcPort: 18888
     #metricsPort: 9327
