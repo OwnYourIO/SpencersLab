@@ -366,15 +366,17 @@ seaweedfs:
     encryptVolumeData: false
 
     # Disable http request, only gRpc operations are allowed
-    disableHttp: false
+    disableHttp: true
 
     # used to configure livenessProbe on filer containers
     livenessProbe:
+      enabled: false
       grpc:
         port: 18888
 
     # used to configure readinessProbe on filer containers
     readinessProbe:
+      enabled: false
       grpc:
         port: 18888
 
