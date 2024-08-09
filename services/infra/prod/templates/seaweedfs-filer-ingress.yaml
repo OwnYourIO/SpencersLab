@@ -9,6 +9,8 @@ metadata:
     kubernetes.io/ingress.class: "traefik"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.http.services.seaweedfs-filer.loadbalancer.server.scheme: h2c
+    traefik.protocol: h2c
 spec:
   tls:
   - hosts:
@@ -25,5 +27,3 @@ spec:
                 name: seaweedfs-filer
                 port:
                   number: 18888
-                scheme: h2c
-                passHostHeader: true
