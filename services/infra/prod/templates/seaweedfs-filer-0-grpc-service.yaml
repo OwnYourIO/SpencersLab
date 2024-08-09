@@ -14,4 +14,4 @@ spec:
   selector:
     app.kubernetes.io/component: filer
     app.kubernetes.io/name: seaweedfs
-    apps.kubernetes.io/pod-index: 0
+    apps.kubernetes.io/pod-index: "0"
