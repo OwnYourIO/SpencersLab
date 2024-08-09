@@ -22,9 +22,13 @@ jellyfin:
     ingress:
       app:
         hosts:
-          - host: jellyfin.spencerslab.com
+          - host: &host jellyfin.spencerslab.com
             paths:
               - path: /
                 service:
                   identifier: app
                   port: http
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert
