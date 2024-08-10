@@ -7,6 +7,6 @@ dependencies:
   version: 0.2.2
 - name: jellyfin
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.2
-digest: sha256:8510b7927201c40671b9e3ca454d93cc4afa9c0699893ee3d653807e6f10f7a0
-generated: "2024-08-05T22:49:59.483296827-06:00"
+  version: 1.0.3
+digest: sha256:f3e377a6a303e623855563351e0c0d197865c09ac26192fdcd432a57dea5dafa
+generated: "2024-08-10T12:25:24.910753173-06:00"
