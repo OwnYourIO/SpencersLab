@@ -11,7 +11,7 @@ jellyfin:
         pod:
           securityContext:
             runAsNonRoot: true
-            runAsUser: 568
+            runAsUser: 1000
             # Using gid 2000 as "shared" group.
             runAsGroup: 2000
             fsGroup: 2000
@@ -20,6 +20,7 @@ jellyfin:
             supplementalGroups:
               - 44 # video
               - 109 # render
+              - 105
               - 568
               - 1000
               - 2000
@@ -27,6 +28,9 @@ jellyfin:
           app:
             env:
               JELLYFIN_PublishedServerUrl: https://jellyfin.spencerslab.com
+              DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
+              JELLYFIN_FFmpeg__probesize: 50000000
+              JELLYFIN_FFmpeg__analyzeduration: 50000000
     service:
       app:
         controller: jellyfin
