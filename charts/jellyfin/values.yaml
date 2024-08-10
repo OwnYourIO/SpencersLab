@@ -13,8 +13,9 @@ app-template:
         securityContext:
           runAsNonRoot: true
           runAsUser: 568
-          runAsGroup: 568
-          fsGroup: 568
+          # Using gid 1000 as "shared" group.
+          runAsGroup: 1000
+          fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
           seccompProfile: { type: RuntimeDefault }
           supplementalGroups:
@@ -88,5 +89,4 @@ app-template:
     media:
       existingClaim: media-shared
       globalMounts:
-        - path: /mnt/media
-          #readOnly: true
+        - path: /media
