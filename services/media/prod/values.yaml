@@ -7,6 +7,21 @@ seaweedfs-csi-driver:
 jellyfin:
   app-template:
     controllers:
+      pod:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 568
+          # Using gid 2000 as "shared" group.
+          runAsGroup: 2000
+          fsGroup: 2000
+          fsGroupChangePolicy: OnRootMismatch
+          seccompProfile: { type: RuntimeDefault }
+          supplementalGroups:
+            - 44 # video
+            - 109 # render
+            - 568
+            - 1000
+            - 2000
       jellyfin:
         containers:
           app:
