@@ -21,6 +21,7 @@ app-template:
           supplementalGroups:
             - 44 # video
             - 109 # render
+            - 568
       containers:
         app:
           image:
