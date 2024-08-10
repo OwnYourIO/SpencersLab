@@ -10,5 +10,5 @@ dependencies:
   version: 0.2.2
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
 - name: jellyfin
-  version: 1.0.3
+  version: 1.0.4
   repository: https://ownyourio.github.io/SpencersLab/
