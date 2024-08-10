@@ -29,8 +29,8 @@ jellyfin:
             env:
               JELLYFIN_PublishedServerUrl: https://jellyfin.spencerslab.com
               DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
-              JELLYFIN_FFmpeg__probesize: 50000000
-              JELLYFIN_FFmpeg__analyzeduration: 50000000
+              JELLYFIN_FFmpeg__probesize: "50000000"
+              JELLYFIN_FFmpeg__analyzeduration: "50000000"
     service:
       app:
         controller: jellyfin
