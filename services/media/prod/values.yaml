@@ -13,8 +13,8 @@ jellyfin:
             runAsNonRoot: true
             runAsUser: 568
             # Using gid 2000 as "shared" group.
-            runAsGroup: 2000
-            fsGroup: 2000
+            runAsGroup: 568
+            fsGroup: 568
             fsGroupChangePolicy: OnRootMismatch
             seccompProfile: { type: RuntimeDefault }
             supplementalGroups:
