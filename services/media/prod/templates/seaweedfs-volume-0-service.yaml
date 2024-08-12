@@ -5,4 +5,4 @@ metadata:
   namespace: default
 spec:
   type: ExternalName
-  ExternalName: seaweedfs-volume.infra.spencerslab.com
+  externalName: seaweedfs-volume.infra.spencerslab.com
