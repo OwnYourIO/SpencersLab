@@ -29,10 +29,10 @@ app-template:
             tag: 10.9.9@sha256:d6f3d4aa59438ce951d85669f3c22426d20edb7a6b97604c509b5f4825bc8294
           env:
             JELLYFIN_PublishedServerUrl: https://jellyfin.local
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities: { drop: ["ALL"] }
+          #securityContext:
+          #  allowPrivilegeEscalation: false
+          #  readOnlyRootFilesystem: true
+          #  capabilities: { drop: ["ALL"] }
           probes:
             liveness: &probes
               enabled: true
