@@ -278,6 +278,8 @@ music-assistant:
 
 ledfx:
   app-template:
+    defaultPodOptions:
+      hostname: house-lights
     controllers:
       ledfx:
         containers:
