@@ -43,8 +43,8 @@ zigbee2mqtt:
               tag: 1.39.1
             env:
               TZ: America/Denver
-              DEBUG: zigbee-herdsman*
-              ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL: debug
+              #DEBUG: zigbee-herdsman*
+              #ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL: debug
               ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee2mqtt.spencerslab.com
               ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://home.spencerslab.com
               ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 4
