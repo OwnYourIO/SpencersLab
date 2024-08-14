@@ -88,8 +88,10 @@ music-assistant:
       music-assistant:
         primary: true
       snapcast-http:
-        type: ClusterIP
+        type: LoadBalancer
         controller: music-assistant
+        # https://metallb.universe.tf/usage/#local-traffic-policy
+        externalTrafficPolicy: Local
         ports:
           websocket:
             port: 1780
