@@ -80,20 +80,19 @@ music-assistant:
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
-      srs:
-        containers:
-          main:
-            image:
-              repository: ossrs/srs
-              tag: v5.0.213
-            env:
-              TZ: America/Denver
 
     pod: 
       hostNetwork: true
+
     service:
       music-assistant:
         primary: true
+      snapcast-http:
+        type: ClusterIP
+        controller: music-assistant
+        ports:
+          websocket:
+            port: 1780
       snapcast:
         type: LoadBalancer
         controller: music-assistant
@@ -104,134 +103,8 @@ music-assistant:
             port: 1704
           control:
             port: 1705
-          websocket:
-            port: 1780
-    
-      srs:
-        controller: srs
-        ports:
-          http:
-            port: 8080
-          api:
-            port: 1985
-            protocol: TCP
-      rtmp:
-        controller: srs
-        type: LoadBalancer
-        externalTrafficPolicy: Local
-        ports:
-          http:
-            port: 8080
-          rtmp:
-            enabled: true
-            port: 1935
-            protocol: TCP
-            
-    configMaps:
-      srs-config:
-        labels: {}
-        annotations: {}
-        data:
-          docker.conf: |-
-            listen              1935;
-            max_connections     1000;
-            daemon              off;
-            http_api {
-                enabled         on;
-                listen          1985;
-            }
-            http_server {
-                enabled         on;
-                listen          8080;
-            }
-            vhost __defaultVhost__ {
-                tcp_nodelay     on;
-                min_latency     on;
-                http_remux {
-                  # whether enable the http live streaming service for vhost.
-                  # Overwrite by env SRS_VHOST_HTTP_REMUX_ENABLED for all vhosts.
-                  # default: off
-                  enabled on;
-                  # Whether stream has audio track, used as default value for stream metadata, for example, FLV header contains
-                  # this flag. Sometimes you might want to force the metadata by disable guess_has_av.
-                  # For HTTP-FLV, use this as default value for FLV header audio flag. See https://github.com/ossrs/srs/issues/939#issuecomment-1351385460
-                  # For HTTP-TS, use this as default value for PMT table. See https://github.com/ossrs/srs/issues/939#issuecomment-1365086204
-                  # Overwrite by env SRS_VHOST_HTTP_REMUX_HAS_AUDIO for all vhosts.
-                  # Default: on
-                  has_audio on;
-                  # Whether stream has video track, used as default value for stream metadata, for example, FLV header contains
-                  # this flag. Sometimes you might want to force the metadata by disable guess_has_av.
-                  # For HTTP-FLV, use this as default value for FLV header video flag. See https://github.com/ossrs/srs/issues/939#issuecomment-1351385460
-                  # For HTTP-TS, use this as default value for PMT table. See https://github.com/ossrs/srs/issues/939#issuecomment-1365086204
-                  # Overwrite by env SRS_VHOST_HTTP_REMUX_HAS_VIDEO for all vhosts.
-                  # Default: on
-                  has_video off;
-                  # the stream mount for rtmp to remux to live streaming.
-                  # typical mount to [vhost]/[app]/[stream].flv
-                  # the variables:
-                  #       [vhost] current vhost for http live stream.
-                  #       [app] current app for http live stream.
-                  #       [stream] current stream for http live stream.
-                  # @remark the [vhost] is optional, used to mount at specified vhost.
-                  # the extension:
-                  #       .flv mount http live flv stream, use default gop cache.
-                  #       .ts mount http live ts stream, use default gop cache.
-                  #       .mp3 mount http live mp3 stream, ignore video and audio mp3 codec required.
-                  #       .aac mount http live aac stream, ignore video and audio aac codec required.
-                  # for example:
-                  #       mount to [vhost]/[app]/[stream].flv
-                  #           access by http://ossrs.net:8080/live/livestream.flv
-                  #       mount to /[app]/[stream].flv
-                  #           access by http://ossrs.net:8080/live/livestream.flv
-                  #           or by http://192.168.1.173:8080/live/livestream.flv
-                  #       mount to [vhost]/[app]/[stream].mp3
-                  #           access by http://ossrs.net:8080/live/livestream.mp3
-                  #       mount to [vhost]/[app]/[stream].aac
-                  #           access by http://ossrs.net:8080/live/livestream.aac
-                  #       mount to [vhost]/[app]/[stream].ts
-                  #           access by http://ossrs.net:8080/live/livestream.ts
-                  # @remark the port of http is specified by http_server section.
-                  # Overwrite by env SRS_VHOST_HTTP_REMUX_MOUNT for all vhosts.
-                  # default: [vhost]/[app]/[stream].flv
-                  mount [vhost]/[app]/[stream].flv;
-                }
-
-                hls {
-                  enabled  on;
-                  hls_fragment 2;
-                  hls_window 10;
-                }
-
-                play {
-                    gop_cache       off;
-                    queue_length    10;
-                    mw_latency      100;
-                }
-
-                publish {
-                    mr off;
-                }
-            }
-
-    persistence:
-      tmp:
-        enabled: true
-        type: emptyDir
-      config:
-        existingClaim: srs-config
-        globalMounts:
-          - path: /app/data
-      srs-config:
-        type: configMap
-        name: "{{ .Release.Name }}-music-assistant-srs-config"
-        globalMounts:
-          - path: /usr/local/srs/conf
-    #controllers:
-    #  music-assistant:
-    #    containers:
-    #      main: 
-    #        env: 
-    #          LOG_LEVEL: debug
+          snapserver:
+            port: 4953
 
     ingress:
       music-assistant:
@@ -254,27 +127,31 @@ music-assistant:
             paths: &paths
               - path: /
                 service:
-                  identifier: snapcast
-                  port: control
+                  identifier: snapcast-http
+                  port: websocket
         tls:
           - hosts:
               - *host
             secretName: wildcard-cert
-      srs:
-        hosts:
-          - host: &host "stream.spencerslab.com"
-            paths:
-              - path: /
-                service:
-                  identifier: srs
-                  port: http
-              - path: /api/
-                service:
-                  identifier: srs
-                  port: api
-        tls:
-          - hosts:
-              - *host
+
+    configMaps:
+      snapserver:
+        data:
+          snapserver.conf: |-
+            [stream]
+            source = pipe:///tmp/snapfifo?name=default
+            stream = tcp://0.0.0.0?name=Snapserver
+
+            [http]
+            doc_root = /usr/share/snapserver/snapweb
+
+    persistence:
+      snapserver:
+        type: configMap
+        name: "{{ .Release.Name }}-music-assistant-snapserver-config"
+        globalMounts:
+          - path: /etc/snapserver.conf
+            subpath: snapserver.conf
 
 ledfx:
   app-template:
