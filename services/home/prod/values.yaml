@@ -141,7 +141,6 @@ music-assistant:
         data:
           snapserver.conf: |-
             [stream]
-            stream = tcp://0.0.0.0?name=Snapserver
             source = pipe:///tmp/snapfifo?name=default
 
             [http]
