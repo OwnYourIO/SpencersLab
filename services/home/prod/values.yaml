@@ -135,7 +135,7 @@ music-assistant:
             secretName: wildcard-cert
 
     configMaps:
-      snapserver:
+      snapserver-conf:
         data:
           snapserver.conf: |-
             [stream]
@@ -148,7 +148,7 @@ music-assistant:
     persistence:
       snapserver:
         type: configMap
-        name: "{{ .Release.Name }}-music-assistant-snapserver-config"
+        name: "{{ .Release.Name }}-music-assistant-snapserver-conf"
         globalMounts:
           - path: /etc/snapserver.conf
             subPath: snapserver.conf
