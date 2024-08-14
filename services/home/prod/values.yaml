@@ -141,12 +141,16 @@ music-assistant:
         data:
           snapserver.conf: |-
             [stream]
+            stream = tcp://0.0.0.0?name=Snapserver
             source = pipe:///tmp/snapfifo?name=default
 
             [http]
             doc_root = /usr/share/snapserver/snapweb
 
     persistence:
+      tmp:
+        enabled: true
+        type: emptyDir
       snapserver:
         type: configMap
         name: "{{ .Release.Name }}-music-assistant-snapserver-conf"
