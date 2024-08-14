@@ -50,7 +50,7 @@ zigbee2mqtt:
               ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 4
               ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 57600
               ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyUSB1
-              ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ember
+              ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ezsp
     ingress:
       zigbee2mqtt:
         annotations:
