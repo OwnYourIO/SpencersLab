@@ -83,9 +83,10 @@ music-assistant:
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
-
-    pod: 
-      hostNetwork: true
+          pulseaudio:
+            image:
+                repository: debian
+                tag: 2.2.0b5
 
     service:
       music-assistant:
@@ -111,6 +112,15 @@ music-assistant:
           snapserver:
             port: 4953
 
+      pulseaudio:
+        type: LoadBalancer
+        externalTrafficPolicy: Local
+        controller: music-assistant
+        container: pulseaudio
+        ports:
+          audio-tcp:
+            port: 4713
+
     ingress:
       music-assistant:
         annotations:
@@ -126,9 +136,9 @@ music-assistant:
           - hosts:
               - *host
             secretName: wildcard-cert
-      music-assistant-snapserver:
+      snapserver:
         hosts:
-          - host: &host "music-assistant-snapserver.spencerslab.com"
+          - host: &host "snapserver.spencerslab.com"
             paths: &paths
               - path: /
                 service:
@@ -149,6 +159,21 @@ music-assistant:
 
             [http]
             doc_root = /usr/share/snapserver/snapweb
+      pulseaudio-init:
+        data: 
+          entrypoint.sh: |-
+            #!/bin/sh
+            : "${AUDIO_UID:=1000}"
+            : "${AUDIO_GID:=1000}"
+
+            useradd -u "$AUDIO_UID" -g "$AUDIO_GID" \
+                -d "$AUDIO_VOL" \
+                -c 'Audio User' \
+                audio
+
+            apt update -qq
+            apt install -y pulseaudio alsa-utils cava vim
+            exec runuser -u audio -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" 
 
     persistence:
       tmp:
@@ -160,6 +185,12 @@ music-assistant:
         globalMounts:
           - path: /etc/snapserver.conf
             subPath: snapserver.conf
+      pulseaudio-entrypoint:
+        type: configMap
+        name: "{{ .Release.Name }}-music-assistant-pulseaudio-init"
+        globalMounts:
+          - path: /entrypoint.sh
+            subPath: entrypoint.sh
 
 ledfx:
   app-template:
@@ -240,10 +271,6 @@ logitech-media-server:
             image:
               repository: toertel/logitech-media-server
               tag: v8.4.0-1@sha256:b54aca455eb07da2c97c555a8af6694ce962cea844e516d0d7147ff84005d55f
-            # All the stuff in the entrypoint built into the container is basically the docker version of securityContext. Don't need it here.
-            # ... And it actually runs! But I can't install any packages because there isn't root access... 
-            #command: /bin/sh
-            #args: ["start-squeezebox.sh"]
             env:
               TZ: America/Denver
               EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
@@ -263,18 +290,6 @@ logitech-media-server:
                 enabled: true
                 spec:
                   initialDelaySeconds: 60
-        #    securityContext:
-        #      allowPrivilegeEscalation: false
-        #      readOnlyRootFilesystem: true
-        #      capabilities:
-        #        drop:
-        #          - ALL
-        #pod:
-        #  securityContext:
-        #    runAsUser: 1000
-        #    runAsGroup: 1000
-        ##    runAsNonRoot: true
-        #    fsGroup: 1000
     service:
       lms:
         type: LoadBalancer
