@@ -151,7 +151,7 @@ music-assistant:
         name: "{{ .Release.Name }}-music-assistant-snapserver-config"
         globalMounts:
           - path: /etc/snapserver.conf
-            subpath: snapserver.conf
+            subPath: snapserver.conf
 
 ledfx:
   app-template:
