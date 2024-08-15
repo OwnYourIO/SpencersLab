@@ -130,7 +130,7 @@ music-assistant:
         externalTrafficPolicy: Local
         controller: music-assistant
         extraSelectorLabels:
-          app.kubernetes.io/component=pulseaudio
+          app.kubernetes.io/component: pulseaudio
           
         ports:
           audio-tcp:
