@@ -28,19 +28,20 @@ app-template:
               memory: 512Mi
             limits:
               memory: 1024Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
-      pod:
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
-          runAsNonRoot: true
-          fsGroup: 1000
-          fsGroupChangePolicy: OnRootMismatch
+      # Disable security for now. Renable once entrypoint.sh is build into an image.
+      #    securityContext:
+      #      allowPrivilegeEscalation: false
+      #      readOnlyRootFilesystem: true
+      #      capabilities:
+      #        drop:
+      #          - ALL
+      #pod:
+      #  securityContext:
+      #    runAsUser: 1000
+      #    runAsGroup: 1000
+      #    runAsNonRoot: true
+      #    fsGroup: 1000
+      #    fsGroupChangePolicy: OnRootMismatch
   service:
     music-assistant:
       controller: music-assistant
