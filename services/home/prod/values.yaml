@@ -176,7 +176,7 @@ music-assistant:
 
             groupadd -g "$AUDIO_GID" audio
 
-            useradd -u "$AUDIO_UID" -g "$AUDIO_GID" \
+            useradd -u "$AUDIO_UID" -g "audio" \
                 -d "$AUDIO_VOL" \
                 -c 'Audio User' \
                 audio
