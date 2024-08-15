@@ -83,7 +83,9 @@ music-assistant:
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
-          pulseaudio:
+      pulseaudio:
+        containers:
+          main:
             image:
                 repository: debian
                 tag: 2.2.0b5
@@ -115,8 +117,7 @@ music-assistant:
       pulseaudio:
         type: LoadBalancer
         externalTrafficPolicy: Local
-        controller: music-assistant
-        container: pulseaudio
+        controller: pulseaudio
         ports:
           audio-tcp:
             port: 4713
