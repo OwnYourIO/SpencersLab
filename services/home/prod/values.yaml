@@ -173,6 +173,7 @@ music-assistant:
             #!/bin/sh
             : "${AUDIO_UID:=1000}"
             : "${AUDIO_GID:=1000}"
+            : "${AUDIO_VOL:=/home/audio}"
 
             groupadd -g "$AUDIO_GID" audio
 
