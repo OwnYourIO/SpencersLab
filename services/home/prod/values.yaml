@@ -310,7 +310,6 @@ logitech-media-server:
                 memory: 256Mi
               limits:
                 memory: 4096Mi
-                squat.ai/snd: 1
             probes:
               startup:
                 enabled: true
