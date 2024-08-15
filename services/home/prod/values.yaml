@@ -180,21 +180,15 @@ music-assistant:
             #!/bin/sh
             : "${AUDIO_UID:=1000}"
             : "${AUDIO_GID:=1000}"
-            : "${AUDIO_VOL:=/home/audio}"
+            : "${AUDIO_VOL:=/tmp/audio}"
 
-            groupadd -g "$AUDIO_GID" audio
 
-            useradd -u "$AUDIO_UID" -g "audio" \
-                -d "$AUDIO_VOL" \
-                -c 'Audio User' \
-                audio
-            
             mkdir -p ${AUDIO_VOL}/.config/pulse/
             touch ${AUDIO_VOL}/.config/pulse/cookie
 
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
-            chown -R audio:audio "$AUDIO_VOL"
+            chown -R pulse:audio "$AUDIO_VOL"
 
             apt update -qq
             apt install -y pulseaudio alsa-utils cava vim
@@ -203,7 +197,7 @@ music-assistant:
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
             systemctl --global disable pulseaudio.service pulseaudio.socket
             usermod -aG audio root
-            exec runuser -u audio -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" 
+            exec runuser -u pulse -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" 
 
     persistence:
       tmp:
