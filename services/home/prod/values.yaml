@@ -88,7 +88,7 @@ music-assistant:
           main:
             image:
                 repository: debian
-                tag: 2.2.0b5
+                tag: 12-slim
 
     service:
       music-assistant:
