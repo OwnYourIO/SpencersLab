@@ -86,6 +86,7 @@ music-assistant:
       pulseaudio:
         containers:
           main:
+            entrypoint: /entrypoint.sh
             image:
                 repository: debian
                 tag: 12-slim
