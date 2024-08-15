@@ -182,6 +182,10 @@ music-assistant:
                 -c 'Audio User' \
                 audio
 
+            # This has to happen every time in case our new uid/gid is different
+            # from what was previously used in the volume.
+            chown -R audio:audio "$AUDIO_VOL"
+
             apt update -qq
             apt install -y pulseaudio alsa-utils cava vim
             mkdir -p /var/run/dbus
