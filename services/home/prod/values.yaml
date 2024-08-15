@@ -83,7 +83,16 @@ music-assistant:
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
-          pulseaudio:
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+      pulseaudio:
+        containers:
+          main:
             command: ["/bin/sh", "-c", "/entrypoint.sh"]
             image:
                 repository: debian
@@ -94,12 +103,6 @@ music-assistant:
               limits:
                 memory: 4096Mi
                 squat.ai/snd: 1
-        pod:
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
 
     service:
       music-assistant:
@@ -128,10 +131,7 @@ music-assistant:
       pulseaudio:
         type: LoadBalancer
         externalTrafficPolicy: Local
-        controller: music-assistant
-        extraSelectorLabels:
-          app.kubernetes.io/component: pulseaudio
-          
+        controller: pulseaudio
         ports:
           audio-tcp:
             port: 4713
@@ -182,7 +182,6 @@ music-assistant:
             : "${AUDIO_GID:=1000}"
             : "${AUDIO_VOL:=/run/pulse/}"
 
-
             mkdir -p ${AUDIO_VOL}/.config/pulse/
             touch ${AUDIO_VOL}/.config/pulse/cookie
 
@@ -203,7 +202,7 @@ music-assistant:
     persistence:
       tmp:
         enabled: true
-        type: emptyDir
+        existingClaim: music-assistant-tmp
       snapserver:
         type: configMap
         name: "{{ .Release.Name }}-music-assistant-snapserver-conf"
