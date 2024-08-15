@@ -96,7 +96,7 @@ music-assistant:
             command: ["/bin/sh", "-c", "/entrypoint.sh"]
             image:
                 repository: debian
-                tag: 12-slim
+                tag: 12
             resources:
               requests:
                 memory: 256Mi
