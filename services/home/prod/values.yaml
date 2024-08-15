@@ -96,6 +96,13 @@ music-assistant:
             image:
                 repository: debian
                 tag: 12-slim
+            resources:
+              requests:
+                memory: 256Mi
+              limits:
+                memory: 4096Mi
+                squat.ai/snd: 1
+
 
     service:
       music-assistant:
