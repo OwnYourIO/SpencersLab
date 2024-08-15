@@ -194,9 +194,6 @@ music-assistant:
             # from what was previously used in the volume.
             chown -R pulse:audio "$AUDIO_VOL"
 
-            apt update -qq
-            apt install -y pulseaudio alsa-utils cava vim
-            mkdir -p /var/run/dbus
             dbus-uuidgen > /var/lib/dbus/machine-id
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
             systemctl --global disable pulseaudio.service pulseaudio.socket
