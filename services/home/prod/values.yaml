@@ -193,7 +193,7 @@ music-assistant:
 
 
             apt update -qq
-            apt install -y pulseaudio alsa-utils cava vim libortp16
+            apt install -y pulseaudio alsa-utils cava vim libortp16 tcpdump
 
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
