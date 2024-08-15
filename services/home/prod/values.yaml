@@ -171,6 +171,7 @@ music-assistant:
             [stream]
             stream = tcp://0.0.0.0?name=Snapserver&port=4953
             source = pipe:///tmp/snapfifo?name=default
+            source = pipe:///tmp/tcpsink?name=tcp
 
             [http]
             doc_root = /usr/share/snapserver/snapweb
