@@ -32,5 +32,5 @@ dependencies:
   version: 1.0.12
   repository: https://ownyourio.github.io/SpencersLab/
 - name: music-assistant
-  version: 1.0.13
+  version: 1.0.14
   repository: https://ownyourio.github.io/SpencersLab/
