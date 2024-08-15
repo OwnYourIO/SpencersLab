@@ -83,15 +83,7 @@ music-assistant:
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
-        pod:
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-            fsGroupChangePolicy: OnRootMismatch
-      pulseaudio:
-        containers:
-          main:
+          pulseaudio:
             command: ["/bin/sh", "-c", "/entrypoint.sh"]
             image:
                 repository: debian
@@ -102,7 +94,12 @@ music-assistant:
               limits:
                 memory: 4096Mi
                 squat.ai/snd: 1
-
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
 
     service:
       music-assistant:
@@ -131,7 +128,10 @@ music-assistant:
       pulseaudio:
         type: LoadBalancer
         externalTrafficPolicy: Local
-        controller: pulseaudio
+        controller: music-assistant
+        extraSelectorLabels:
+          app.kubernetes.io/component=pulseaudio
+          
         ports:
           audio-tcp:
             port: 4713
@@ -198,7 +198,7 @@ music-assistant:
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
             systemctl --global disable pulseaudio.service pulseaudio.socket
             usermod -aG audio root
-            exec runuser -u pulse -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" 
+            exec runuser -u pulse -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" --load="module-pipe-sink file=/tmp/tcpsink" 
 
     persistence:
       tmp:
