@@ -83,6 +83,12 @@ music-assistant:
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
       pulseaudio:
         containers:
           main:
