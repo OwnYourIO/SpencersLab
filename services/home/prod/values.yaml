@@ -190,6 +190,7 @@ music-assistant:
       pulseaudio-entrypoint:
         type: configMap
         name: "{{ .Release.Name }}-music-assistant-pulseaudio-init"
+        defaultMode: 0777
         globalMounts:
           - path: /entrypoint.sh
             subPath: entrypoint.sh
