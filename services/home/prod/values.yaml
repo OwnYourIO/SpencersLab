@@ -181,6 +181,9 @@ music-assistant:
                 -d "$AUDIO_VOL" \
                 -c 'Audio User' \
                 audio
+            
+            mkdir -p ${AUDIO_VOL}/.config/pulse/
+            touch ${AUDIO_VOL}/.config/pulse/cookie
 
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
@@ -193,8 +196,6 @@ music-assistant:
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
             systemctl --global disable pulseaudio.service pulseaudio.socket
             usermod -aG audio root
-            mkdir -p ${AUDIO_VOL}/.config/pulse/
-            touch ${AUDIO_VOL}/.config/pulse/cookie
             exec runuser -u audio -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" 
 
     persistence:
