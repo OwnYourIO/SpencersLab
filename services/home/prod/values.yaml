@@ -135,6 +135,10 @@ music-assistant:
         ports:
           audio-tcp:
             port: 4713
+          audio-rtp:
+            port: 5004
+          audio-rtcp:
+            port: 5005
 
     ingress:
       music-assistant:
@@ -172,6 +176,7 @@ music-assistant:
             stream = tcp://0.0.0.0?name=Snapserver&port=4953
             source = pipe:///tmp/snapfifo?name=default
             source = pipe:///tmp/tcpsink?name=tcp
+            source = pipe:///tmp/rtpsink?name=rtp
 
             [http]
             doc_root = /usr/share/snapserver/snapweb
@@ -198,7 +203,13 @@ music-assistant:
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
             systemctl --global disable pulseaudio.service pulseaudio.socket
             usermod -aG audio root
-            exec runuser -u pulse -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" --load="module-pipe-sink file=/tmp/tcpsink" 
+            #exec runuser -u pulse -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=4713" --load="module-pipe-sink file=/tmp/tcpsink" 
+            exec runuser -u pulse -- pulseaudio \
+              --verbose \
+              --exit-idle-time=-1 \
+              --disallow-exit \
+              --load="module-tcp-recv sap_address=0.0.0.0 latency_msec=50" \
+              --load="module-pipe-sink file=/tmp/rtpsink" 
 
     persistence:
       tmp:
@@ -254,7 +265,6 @@ ledfx:
           ledfx:
             main:
               - path: /app/ledfx-config/
-
 
 hyperion:
   app-template:
@@ -335,12 +345,6 @@ logitech-media-server:
           pulseaudio-sap-port:
             port: 9875
             protocol: UDP
-          pulse-audio-house-sink:
-            port: 1338
-            protocol: UDP
-          pulse-audio-house-sink-tcp:
-            port: 1337
-            protocol: TCP
 
     ingress:
       espresense:
