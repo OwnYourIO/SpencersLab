@@ -180,7 +180,7 @@ music-assistant:
             #!/bin/sh
             : "${AUDIO_UID:=1000}"
             : "${AUDIO_GID:=1000}"
-            : "${AUDIO_VOL:=/tmp/audio}"
+            : "${AUDIO_VOL:=/run/pulse/}"
 
 
             mkdir -p ${AUDIO_VOL}/.config/pulse/
