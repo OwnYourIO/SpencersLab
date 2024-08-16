@@ -194,6 +194,7 @@ music-assistant:
             mkdir -p ${AUDIO_VOL}/.config/pulse/
             touch ${AUDIO_VOL}/.config/pulse/cookie
 
+            sleep 1000
 
             apk add pulseaudio alsa-utils cava vim 
             # This has to happen every time in case our new uid/gid is different
