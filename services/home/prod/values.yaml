@@ -95,8 +95,8 @@ music-assistant:
           main:
             command: ["/bin/sh", "-c", "/entrypoint.sh"]
             image:
-                repository: debian
-                tag: 12
+                repository: alpine
+                tag: 3.20
             resources:
               requests:
                 memory: 256Mi
@@ -196,8 +196,7 @@ music-assistant:
 
 
             apt update -qq
-            apt install -y pulseaudio alsa-utils cava vim libortp16 tcpdump
-
+            apt install -y pulseaudio alsa-utils cava vim 
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
             chown -R pulse:audio "$AUDIO_VOL"
