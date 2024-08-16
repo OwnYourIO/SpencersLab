@@ -195,8 +195,7 @@ music-assistant:
             touch ${AUDIO_VOL}/.config/pulse/cookie
 
 
-            apt update -qq
-            apt install -y pulseaudio alsa-utils cava vim 
+            apk add -y pulseaudio alsa-utils cava vim 
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
             chown -R pulse:audio "$AUDIO_VOL"
