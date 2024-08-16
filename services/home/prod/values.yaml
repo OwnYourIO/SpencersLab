@@ -194,13 +194,14 @@ music-assistant:
             mkdir -p ${AUDIO_VOL}/.config/pulse/
             touch ${AUDIO_VOL}/.config/pulse/cookie
 
-            sleep 1000
-
             apk add pulseaudio alsa-utils vim sox
             apk add roc-toolkit --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
             chown -R pulse:audio "$AUDIO_VOL"
+
+            sleep 1000
+
 
             dbus-uuidgen > /var/lib/dbus/machine-id
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
