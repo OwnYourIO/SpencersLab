@@ -211,7 +211,7 @@ music-assistant:
               -vv \
               --exit-idle-time=-1 \
               --disallow-exit \
-              --load="module-rtp-recv sap_address=10.0.2.78 latency_msec=50" \
+              --load="module-rtp-recv sap_address=0.0.0.0 latency_msec=50" \
               --load="module-pipe-sink file=/tmp/rtpsink" 
 
     persistence:
