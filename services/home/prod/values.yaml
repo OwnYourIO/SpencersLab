@@ -194,6 +194,7 @@ music-assistant:
             wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc_0.4.0_amd64.deb
             wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc-dev_0.4.0_amd64.deb
             apt install -y /*.deb
+            sleep 100000
 
             roc-recv -vvvv \
               --output=file:///tmp/rocsink \
