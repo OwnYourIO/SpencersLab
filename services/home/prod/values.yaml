@@ -96,7 +96,7 @@ music-assistant:
             command: ["/bin/sh", "-c", "/entrypoint.sh"]
             image:
                 repository: alpine
-                tag: 3.20
+                tag: 3.20.2
             resources:
               requests:
                 memory: 256Mi
