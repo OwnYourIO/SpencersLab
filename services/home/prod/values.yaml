@@ -345,9 +345,6 @@ logitech-media-server:
           slimproto-udp:
             port: 3483
             protocol: UDP
-          pulseaudio-sap-port:
-            port: 9875
-            protocol: UDP
 
     ingress:
       espresense:
