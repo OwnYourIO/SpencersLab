@@ -180,6 +180,7 @@ music-assistant:
             source = pipe:///tmp/snapfifo?name=default
             source = pipe:///tmp/tcpsink?name=tcp
             source = pipe:///tmp/rtpsink?name=rtp
+            source = pipe:///tmp/rocsink?name=roc
 
             [http]
             doc_root = /usr/share/snapserver/snapweb
