@@ -196,11 +196,11 @@ music-assistant:
             touch ${AUDIO_VOL}/.config/pulse/cookie
 
             apt-get update -qq
-            apt-get install vim wget
+            apt-get install -y vim wget
             wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/roc_0.4.0_amd64.deb
             wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc_0.4.0_amd64.deb
             wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc-dev_0.4.0_amd64.deb
-            apt install /*.deb
+            apt install -y /*.deb
             #apk add pulseaudio alsa-utils vim sox
 
             #apk add roc-toolkit --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
