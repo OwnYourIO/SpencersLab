@@ -139,6 +139,9 @@ music-assistant:
             port: 5004
           audio-rtcp:
             port: 5005
+          audio-announce:
+            port: 9875
+            protocol: UDP
 
     ingress:
       music-assistant:
