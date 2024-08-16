@@ -196,7 +196,8 @@ music-assistant:
 
             sleep 1000
 
-            apk add pulseaudio alsa-utils cava vim 
+            apk add pulseaudio alsa-utils vim sox
+            apk add roc-toolkit --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
             chown -R pulse:audio "$AUDIO_VOL"
