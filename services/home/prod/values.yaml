@@ -95,8 +95,8 @@ music-assistant:
           main:
             command: ["/bin/sh", "-c", "/entrypoint.sh"]
             image:
-                repository: alpine
-                tag: 3.20.2
+                repository: debian
+                tag: 12-slim
             resources:
               requests:
                 memory: 256Mi
@@ -195,11 +195,21 @@ music-assistant:
             mkdir -p ${AUDIO_VOL}/.config/pulse/
             touch ${AUDIO_VOL}/.config/pulse/cookie
 
-            apk add pulseaudio alsa-utils vim sox
-            apk add roc-toolkit --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+            apt-get update -qq
+            apt-get install vim wget
+            wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/roc_0.4.0_amd64.deb
+            wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc_0.4.0_amd64.deb
+            wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc-dev_0.4.0_amd64.deb
+            apt install /*.deb
+            #apk add pulseaudio alsa-utils vim sox
+
+            #apk add roc-toolkit --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
             # This has to happen every time in case our new uid/gid is different
             # from what was previously used in the volume.
-            chown -R pulse:audio "$AUDIO_VOL"
+            #chown -R pulse:audio "$AUDIO_VOL"
+            
+            #addgroup $USER audio
+            #addgroup root audio
 
             sleep 1000
 
