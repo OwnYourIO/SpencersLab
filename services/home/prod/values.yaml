@@ -168,6 +168,7 @@ music-assistant:
             source = pipe:///tmp/tcpsink?name=tcp
             source = pipe:///tmp/rtpsink?name=rtp
             source = process:///usr/bin/roc-recv?name=roc&buffer=200&params=--target-latency 200ms --rate 48000 --beep --output=file:- --output-format=s16 --source=rtp+rs8m://0.0.0.0:5004 --repair=rs8m://0.0.0.0:5005 --control=rtcp://0.0.0.0:4713
+            buffer = 200
             #source = pipe:///tmp/rocsink?name=rocfile
 
             [http]
