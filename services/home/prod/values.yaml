@@ -79,7 +79,8 @@ music-assistant:
               limits:
                 memory: 1024Mi
             image:
-                tag: 2.2.0b5
+                repository: ghcr.io/ownyourio/music-assistant/2.2.0b5
+                tag: latest
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
