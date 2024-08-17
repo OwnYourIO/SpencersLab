@@ -1,0 +1,71 @@
+name: Container Release
+# This workflow is triggered manually
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump_type:
+        description: 'Version Bump Type (major, minor, patch)'
+        required: true
+        default: 'patch'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      #- name: Bump version
+      #  id: bump_version
+      #  uses: packagrio/action-bumpr-go@master
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    version_bump_type: ${{ github.event.inputs.version_bump_type }}
+      #    github_token: ${{ secrets.GITHUB_TOKEN }}
+      #- name: Build
+      #- name: Commit Changes
+      #  id: commit
+      #  uses: packagrio/action-releasr-go@master
+      #  env:
+      #    # This is necessary in order to push a commit to the repo
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Leave this line unchanged
+      #- name: Publish Release
+      #  id: publish
+      #  uses: packagrio/action-publishr-go@master
+      #  env:
+      #    # This is necessary in order to push a commit to the repo
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Leave this line unchanged
+      #  with:
+      #    upload_assets: 'my-app-linux-amd64'
