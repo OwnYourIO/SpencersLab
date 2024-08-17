@@ -129,20 +129,17 @@ music-assistant:
           snapserver:
             port: 4953
 
-      pulseaudio:
+      roc-streaming:
         type: LoadBalancer
         externalTrafficPolicy: Local
-        controller: pulseaudio
+        controller: music-assistant
         ports:
-          audio-tcp:
-            port: 4713
-          audio-rtp:
+          roc-rtp:
             port: 5004
-          audio-rtcp:
+          roc-repair:
             port: 5005
-          audio-announce:
-            port: 9875
-            protocol: UDP
+          roc-control:
+            port: 4713
 
     ingress:
       music-assistant:
