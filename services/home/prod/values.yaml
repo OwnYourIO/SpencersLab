@@ -136,8 +136,10 @@ music-assistant:
         ports:
           roc-rtp:
             port: 5004
+            protocol: UDP
           roc-repair:
             port: 5005
+            protocol: UDP
           roc-control:
             port: 4713
 
