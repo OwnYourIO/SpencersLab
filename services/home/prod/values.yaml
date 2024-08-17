@@ -91,19 +91,6 @@ music-assistant:
             runAsNonRoot: true
             fsGroup: 1000
             fsGroupChangePolicy: OnRootMismatch
-      pulseaudio:
-        containers:
-          main:
-            command: ["/bin/sh", "-c", "/entrypoint.sh"]
-            image:
-                repository: debian
-                tag: 12-slim
-            resources:
-              requests:
-                memory: 256Mi
-              limits:
-                memory: 4096Mi
-                squat.ai/snd: 1
 
     service:
       music-assistant:
