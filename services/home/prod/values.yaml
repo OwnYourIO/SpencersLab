@@ -174,9 +174,6 @@ music-assistant:
             [http]
             doc_root = /usr/share/snapserver/snapweb
 
-            Buffer [ms]
-            buffer = 200
-
     persistence:
       tmp:
         enabled: true
