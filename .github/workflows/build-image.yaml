@@ -44,7 +44,7 @@ jobs:
           context: images/music-assistant
           push: true
           #tags: ${{ steps.meta.outputs.tags }}
-          tags: ghcr.io/ownwyourio/music-assistant/2.2.0b5
+          tags: ghcr.io/ownyourio/music-assistant/2.2.0b5
           labels: ${{ steps.meta.outputs.labels }}
 
       #- name: Bump version
