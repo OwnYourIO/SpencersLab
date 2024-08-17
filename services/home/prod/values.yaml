@@ -178,7 +178,7 @@ music-assistant:
             source = pipe:///tmp/snapfifo?name=default
             source = pipe:///tmp/tcpsink?name=tcp
             source = pipe:///tmp/rtpsink?name=rtp
-            source = pipe:///tmp/rocsink?name=roc
+            source = process:///usr/bin/roc-recv?name=roc&params=--output=file:- --output-format=s16 --source=rtp+ldpc://0.0.0.0:5004 --repair=ldpc://0.0.0.0:5005 --control=rtcp://0.0.0.0:4713
 
             [http]
             doc_root = /usr/share/snapserver/snapweb
