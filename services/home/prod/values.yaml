@@ -188,24 +188,6 @@ music-assistant:
 
             Buffer [ms]
             buffer = 200
-      pulseaudio-init:
-        data: 
-          entrypoint.sh: |-
-            #!/bin/sh
-            apt-get update -qq
-            apt-get install -y vim wget
-            wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/roc_0.4.0_amd64.deb
-            wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc_0.4.0_amd64.deb
-            wget https://github.com/roc-streaming/roc-toolkit/releases/download/v0.4.0/libroc-dev_0.4.0_amd64.deb
-            apt install -y /*.deb
-            sleep 100000
-
-            roc-recv -vvvv \
-              --output=file:///tmp/rocsink \
-              --output-format=wav \
-              --source=rtp+ldpc://0.0.0.0:5004 \
-              --repair=ldpc://0.0.0.0:5005 \
-              --control=rtcp://0.0.0.0:4713
 
     persistence:
       tmp:
@@ -217,13 +199,6 @@ music-assistant:
         globalMounts:
           - path: /etc/snapserver.conf
             subPath: snapserver.conf
-      pulseaudio-entrypoint:
-        type: configMap
-        name: "{{ .Release.Name }}-music-assistant-pulseaudio-init"
-        defaultMode: 0777
-        globalMounts:
-          - path: /entrypoint.sh
-            subPath: entrypoint.sh
 
 ledfx:
   app-template:
