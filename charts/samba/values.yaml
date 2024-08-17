@@ -96,7 +96,7 @@ app-template:
       type: configMap
       advancedMounts:
         samba:
-          app:
+          main:
             - path: /data/config.yml
               subPath: samba.yaml
               readOnly: true

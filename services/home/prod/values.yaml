@@ -300,7 +300,7 @@ logitech-media-server:
             protocol: UDP
 
     ingress:
-      espresense:
+      lms:
         annotations:
           hajimari.io/url: https://lms.spencerslab.com
         hosts:
@@ -342,7 +342,6 @@ logitech-media-server:
 
             apt update -qq
             apt install -y ffmpeg pulseaudio alsa-utils cava vim
-            #pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit &
             mkdir -p /var/run/dbus
             dbus-uuidgen > /var/lib/dbus/machine-id
             dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
@@ -351,8 +350,6 @@ logitech-media-server:
             mkdir -p /var/run/pulse/.config/pulse/
             touch /var/run/pulse/.config/pulse/cookie
             exec runuser -u squeezeboxserver -- pulseaudio --verbose --exit-idle-time=-1 --disallow-exit --load="module-native-protocol-tcp auth-anonymous=true port=1337" &
-
-            #exec runuser -u squeezeboxserver -- pactl load-module module-rtp-recv latency_msec=10 sap_address=0.0.0.0
 
             exec runuser -u squeezeboxserver -- /start-squeezebox.sh "$@"
 
