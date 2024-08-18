@@ -94,7 +94,15 @@ music-assistant:
 
     service:
       music-assistant:
-        primary: true
+        type: LoadBalancer
+        controller: music-assistant
+        # https://metallb.universe.tf/usage/#local-traffic-policy
+        externalTrafficPolicy: Local
+        ports:
+          # Even if no devices use this (because they're on snapcast)
+          # Home Assistant 100%. 
+          http-streaming:
+            port: 8097
       snapcast-http:
         type: LoadBalancer
         controller: music-assistant
