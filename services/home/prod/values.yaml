@@ -98,6 +98,7 @@ music-assistant:
         controller: music-assistant
         # https://metallb.universe.tf/usage/#local-traffic-policy
         externalTrafficPolicy: Local
+        primary: true
         ports:
           # Even if no devices use this (because they're on snapcast)
           # Home Assistant 100%. 
