@@ -34,3 +34,6 @@ dependencies:
 - name: music-assistant
   version: 1.0.14
   repository: https://ownyourio.github.io/SpencersLab/
+- name: snapcast
+  version: 1.0.1
+  repository: https://ownyourio.github.io/SpencersLab/

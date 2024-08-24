@@ -66,10 +66,10 @@ zigbee2mqtt:
           - hosts:
               - *host
             secretName: wildcard-cert
-music-assistant:
+snapcast:
   app-template:
     controllers:
-      music-assistant:
+      snapcast:
         containers:
           main:
             resources:
@@ -79,7 +79,7 @@ music-assistant:
               limits:
                 memory: 1024Mi
             image:
-                repository: ghcr.io/ownyourio/music-assistant/2.2.0b5
+                repository: ghcr.io/ownyourio/snapcast
                 tag: latest
             env:
               LOG_LEVEL: debug
@@ -93,17 +93,6 @@ music-assistant:
             fsGroupChangePolicy: OnRootMismatch
 
     service:
-      music-assistant:
-        type: LoadBalancer
-        controller: music-assistant
-        # https://metallb.universe.tf/usage/#local-traffic-policy
-        externalTrafficPolicy: Local
-        primary: true
-        ports:
-          # Even if no devices use this (because they're on snapcast)
-          # Home Assistant 100%. 
-          http-streaming:
-            port: 8097
       snapcast-http:
         type: LoadBalancer
         controller: music-assistant
@@ -128,7 +117,7 @@ music-assistant:
       roc-streaming:
         type: LoadBalancer
         externalTrafficPolicy: Local
-        controller: music-assistant
+        controller: snapcast
         ports:
           roc-rtp:
             port: 10001
@@ -140,20 +129,6 @@ music-assistant:
             port: 10003
 
     ingress:
-      music-assistant:
-        annotations:
-          hajimari.io/url: https://music-assistant.spencerslab.com
-        hosts:
-          - host: &host "music-assistant.spencerslab.com"
-            paths: &paths
-              - path: /
-                service:
-                  identifier: music-assistant
-                  port: http
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
       snapserver:
         hosts:
           - host: &host "snapserver.spencerslab.com"
@@ -187,6 +162,71 @@ music-assistant:
       tmp:
         enabled: true
         existingClaim: music-assistant-tmp
+      snapserver:
+        type: configMap
+        name: "{{ .Release.Name }}-snapcast-snapserver-conf"
+        globalMounts:
+          - path: /etc/snapserver.conf
+            subPath: snapserver.conf
+
+music-assistant:
+  app-template:
+    controllers:
+      music-assistant:
+        containers:
+          main:
+            resources:
+              requests:
+                cpu: 1000m
+                memory: 512Mi
+              limits:
+                memory: 1024Mi
+            image:
+                repository: ghcr.io/music-assistant/server
+                tag: 2.2.0b5
+            env:
+              LOG_LEVEL: debug
+              TZ: America/Denver
+        pod:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+
+    service:
+      music-assistant:
+        type: LoadBalancer
+        controller: music-assistant
+        # https://metallb.universe.tf/usage/#local-traffic-policy
+        externalTrafficPolicy: Local
+        primary: true
+        ports:
+          # Even if no devices use this (because they're on snapcast)
+          # Home Assistant 100%. 
+          http-streaming:
+            port: 8097
+
+    ingress:
+      music-assistant:
+        annotations:
+          hajimari.io/url: https://music-assistant.spencerslab.com
+        hosts:
+          - host: &host "music-assistant.spencerslab.com"
+            paths: &paths
+              - path: /
+                service:
+                  identifier: music-assistant
+                  port: http
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert
+    persistence:
+      tmp:
+        enabled: true
+        existingClaim: snapcast-tmp
       snapserver:
         type: configMap
         name: "{{ .Release.Name }}-music-assistant-snapserver-conf"

@@ -44,10 +44,10 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: images/music-assistant
+          context: images/snapcast
           push: true
           #tags: ${{ steps.meta.outputs.tags }}
-          tags: ghcr.io/ownyourio/music-assistant/2.2.0b5
+          tags: ghcr.io/ownyourio/snapcast
           labels: ${{ steps.meta.outputs.labels }}
 
       #- name: Bump version

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: music-assistant-tmp
+  name: snapcast-tmp
   namespace: default
 spec:
   accessModes:
