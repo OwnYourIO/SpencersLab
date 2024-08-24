@@ -19,7 +19,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get full-upgrade -y \
     && rm ./*deb \
     # cleanup
     && rm -rf /tmp/* \
+    && useradd -m -u 1000 -s /bin/bash snapserver \
+    && chmod -R snapserver:snapserver /var/lib/snapserver \
     && apt-get clean && rm -fR /var/lib/apt/lists
+USER snapserver
 CMD ["/usr/bin/snapserver"]
-LABEL VERSION=v1.0.0 \
+LABEL VERSION=v1.0.1 \
     TAG=snapcast
