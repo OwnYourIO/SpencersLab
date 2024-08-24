@@ -95,7 +95,7 @@ snapcast:
     service:
       snapcast-http:
         type: LoadBalancer
-        controller: music-assistant
+        controller: snapcast
         # https://metallb.universe.tf/usage/#local-traffic-policy
         externalTrafficPolicy: Local
         ports:
@@ -103,7 +103,7 @@ snapcast:
             port: 1780
       snapcast:
         type: LoadBalancer
-        controller: music-assistant
+        controller: snapcast
         # https://metallb.universe.tf/usage/#local-traffic-policy
         externalTrafficPolicy: Local
         ports:
