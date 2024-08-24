@@ -25,4 +25,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get full-upgrade -y \
 USER snapserver
 CMD ["/usr/bin/snapserver"]
 LABEL VERSION=v1.0.1 \
+    org.opencontainers.image.version=v1.0.1 \
     TAG=snapcast
