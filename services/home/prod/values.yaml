@@ -84,6 +84,7 @@ snapcast:
             env:
               LOG_LEVEL: debug
               TZ: America/Denver
+              HOME: /tmp/
         pod:
           securityContext:
             runAsUser: 1000
