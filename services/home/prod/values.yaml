@@ -85,6 +85,9 @@ snapcast:
               LOG_LEVEL: debug
               TZ: America/Denver
               HOME: /tmp/
+            command:
+              - /usr/bin/sleep 
+              - 1000
         pod:
           securityContext:
             runAsUser: 1000
