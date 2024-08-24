@@ -161,7 +161,7 @@ snapcast:
     persistence:
       tmp:
         enabled: true
-        existingClaim: music-assistant-tmp
+        existingClaim: snapcast-tmp
       snapserver:
         type: configMap
         name: "{{ .Release.Name }}-snapcast-snapserver-conf"
