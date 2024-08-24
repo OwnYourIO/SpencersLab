@@ -23,5 +23,8 @@ dependencies:
 - name: music-assistant
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.14
-digest: sha256:53f3aea8d548cd026a746fb0c0a517b12efe9fb997099e9c5b90980b4e0ee436
-generated: "2024-08-14T18:43:11.144708675-06:00"
+- name: snapcast
+  repository: https://ownyourio.github.io/SpencersLab/
+  version: 1.0.1
+digest: sha256:1c7ee123a3c1d8a7f2e9181632d4525467981ae0c929ef2bd837407b765cfeda
+generated: "2024-08-24T16:31:47.60032808-06:00"
