@@ -2,6 +2,7 @@ global:
   nameOverride: logitech-media-server
 bitwardenIds:
   logitech-media-server: OVERRIDE_NEEDED
+
 app-template:
   controllers:
     logitech-media-server:
@@ -10,11 +11,14 @@ app-template:
       containers:
         main:
           image:
-            repository: lmscommunity/logitechmediaserver
-            tag: 9.0.0
+            repository: toertel/logitech-media-server
+            tag: v8.4.0-1@sha256:b54aca455eb07da2c97c555a8af6694ce962cea844e516d0d7147ff84005d55f
           env:
             HTTP_PORT: 9000
             TZ: Etc/UTC
+            SQUEEZE_VOL: /squeezebox
+            SQUEEZE_UID: 1000
+            SQUEEZE_GID: 1000
           #envFrom:
           #  - secretRef:
           #      name: logitech-media-server-secret
@@ -25,9 +29,9 @@ app-template:
               enabled: true
           resources:
             requests:
-              cpu: 10m
-            limits:
               memory: 256Mi
+            limits:
+              memory: 4096Mi
           #securityContext:
           #  allowPrivilegeEscalation: false
           #  readOnlyRootFilesystem: true
@@ -55,6 +59,7 @@ app-template:
           enabled: true
           port: 9090
           protocol: TCP
+          primary: true
         slimproto:
           enabled: true
           port: 3483

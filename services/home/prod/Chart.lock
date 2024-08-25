@@ -20,11 +20,8 @@ dependencies:
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.12
-- name: music-assistant
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.14
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.1
-digest: sha256:1c7ee123a3c1d8a7f2e9181632d4525467981ae0c929ef2bd837407b765cfeda
-generated: "2024-08-24T16:31:47.60032808-06:00"
+digest: sha256:7fccd9edc6ee99db29c5c85e9d72bf2779fdef1a0ef8627428f82804c7718a49
+generated: "2024-08-24T20:44:51.123563461-06:00"
