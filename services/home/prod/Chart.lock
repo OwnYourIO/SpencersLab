@@ -19,9 +19,9 @@ dependencies:
   version: 1.0.9
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.12
+  version: 1.0.13
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.1
-digest: sha256:7fccd9edc6ee99db29c5c85e9d72bf2779fdef1a0ef8627428f82804c7718a49
-generated: "2024-08-24T20:44:51.123563461-06:00"
+  version: 1.0.2
+digest: sha256:5cca846e0bf994465aabd4d77080ac0b6f894aff7968e507b9b689a84db783e7
+generated: "2024-08-24T20:53:28.004392312-06:00"
