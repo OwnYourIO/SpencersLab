@@ -2,6 +2,9 @@ dependencies:
 - name: home-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.9
+- name: seaweedfs-csi-driver
+  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+  version: 0.2.2
 - name: mosquitto
   repository: https://lmatfy.github.io/charts
   version: 0.1.1
@@ -23,5 +26,5 @@ dependencies:
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.2
-digest: sha256:5cca846e0bf994465aabd4d77080ac0b6f894aff7968e507b9b689a84db783e7
-generated: "2024-08-24T20:53:28.004392312-06:00"
+digest: sha256:27fc2adb7897546ba873e47ffd49bae0413f8c69b6a47daede2dc184d3194a17
+generated: "2024-08-24T21:37:21.616322396-06:00"

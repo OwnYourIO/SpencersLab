@@ -9,6 +9,9 @@ dependencies:
 - name: home-appset
   version: 1.1.9
   repository: https://ownyourio.github.io/SpencersLab/
+- name: seaweedfs-csi-driver
+  version: 0.2.2
+  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
 - name: mosquitto
   version: 0.1.1
   repository: https://lmatfy.github.io/charts
