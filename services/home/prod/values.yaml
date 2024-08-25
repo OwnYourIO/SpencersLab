@@ -156,7 +156,7 @@ snapcast:
             source = pipe:///tmp/tcpsink?name=tcp
             source = pipe:///tmp/rtpsink?name=rtp
             source = process:///usr/bin/roc-recv?name=roc&buffer=200&params=--target-latency 200ms --rate 48000 --output=file:- --output-format=s16 --source=rtp+rs8m://0.0.0.0:10001 --repair=rs8m://0.0.0.0:10002 --control=rtcp://0.0.0.0:10003
-            source = process///usr/bin/squeezelite?name=LMS&params=-n "LMS" -s home-logitech-media-server-lms -o -
+            source = process:///usr/bin/squeezelite?name=LMS&params=-n "LMS" -s home-logitech-media-server-lms -o -
             buffer = 200
             #source = pipe:///tmp/rocsink?name=rocfile
 
