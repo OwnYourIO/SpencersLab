@@ -99,7 +99,7 @@ keycloakx:
         mountPath: /opt/keycloak/data/
 
     serviceMonitor:
-      enabled: false
+      enabled: true
 
     ingress:
       enabled: true
@@ -132,6 +132,7 @@ seaweedfs:
   global:
     createClusterRole: true
     monitoring:
+      enabled: true
     # if enabled will use global.replicationPlacment and override master & filer defaultReplicaPlacement config
     #enableReplication: false
     #  replication type is XYZ:
