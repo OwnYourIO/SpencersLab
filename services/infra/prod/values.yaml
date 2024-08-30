@@ -98,6 +98,9 @@ keycloakx:
       - name: keycloak-data
         mountPath: /opt/keycloak/data/
 
+    serviceMonitor:
+      enabled: false
+
     ingress:
       enabled: true
       rules:
