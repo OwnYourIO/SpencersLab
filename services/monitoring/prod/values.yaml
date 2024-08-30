@@ -229,7 +229,6 @@ grafana:
           url: http://thanos-query-frontend.monitoring.svc.cluster.local:10902
           jsonData:
             prometheusType: Thanos
-          isDefault: true
   dashboards:
     data:
       SeaWeedFS:
