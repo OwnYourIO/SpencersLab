@@ -529,6 +529,7 @@ grafana:
     enabled: true
     replicas: 3
   persistence:
-    enabled: false
+    type: emptyDir
+    enabled: true
   testFramework:
     enabled: false
