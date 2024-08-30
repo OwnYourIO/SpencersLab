@@ -136,18 +136,7 @@ grafana:
     GF_SECURITY_COOKIE_SAMESITE: grafana
     GF_SERVER_ROOT_URL: https://{{ .Release.Name }}.${PUBLIC_DOMAIN}
   ingress:
-    enabled: true
-    ingressClassName: traefik
-    port: 3000
-    hosts:
-      - grafana.spencerslab.com
-    paths:
-    - "/"
-    pathType: Prefix
-    tls:
-      - hosts:
-        - grafana.spencerslab.com
-        secretName: wildcard-cert
+    enabled: false
   grafana.ini:
     analytics:
       check_for_updates: false
