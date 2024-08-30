@@ -171,6 +171,47 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/default
+        - name: data
+          orgId: 1
+          folder: Data
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/data
+        - name: kubernetes
+          orgId: 1
+          folder: Kubernetes
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/kubernetes
+        - name: network
+          orgId: 1
+          folder: Network
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/network
+        - name: storage
+          orgId: 1
+          folder: Storage
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/storage
+        - name: system
+          orgId: 1
+          folder: System
+          type: file
+          disableDeletion: false
+          editable: true
+          allowUiUpdates: true
+          options:
+            path: /var/lib/grafana/dashboards/system
   datasources:
     datasources.yaml:
       apiVersion: 1
