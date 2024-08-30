@@ -218,9 +218,7 @@ grafana:
           type: prometheus
           uid: prometheus
           access: proxy
-          url: http://thanos-query-frontend.monitoring.svc.cluster.local:10902
-          jsonData:
-            prometheusType: Thanos
+          url: http://monitoring-kube-prometheus-prometheus.default:9090
   dashboards:
     data:
       SeaWeedFS:
