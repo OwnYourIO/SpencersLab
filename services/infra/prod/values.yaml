@@ -46,6 +46,10 @@ keycloakx:
           secretKeyRef:
             name: keycloak-secret
             key: KEYCLOAK_ADMIN_PASSWORD
+      - name: KC_METRICS_ENABLED
+        value: "true"
+      - name: KC_HEALTH_ENABLED
+        value: "true"
       # - name: KC_DB_USERNAME
       #   value: "${POSTGRES_SSO_USERNAME}"
       # - name: KC_DB_PASSWORD
