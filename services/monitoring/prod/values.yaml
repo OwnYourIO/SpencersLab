@@ -101,16 +101,6 @@ grafana:
     GF_AUTH_GENERIC_OAUTH_ENABLED: true
     GF_AUTH_GENERIC_OAUTH_NAME: Keycloak-Oauth
     GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: true
-    GF_AUTH_GENERIC_OAUTH_CLIENT_ID: 
-      valueFrom:
-        secretKeyRef:
-          name: grafana-sso
-          key: client-id
-    GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: 
-      valueFrom:
-        secretKeyRef:
-          name: grafana-sso
-          key: client-secret
     GF_AUTH_GENERIC_OAUTH_SCOPES: openid email profile offline_access roles
     GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_PATH: email
     GF_AUTH_GENERIC_OAUTH_LOGIN_ATTRIBUTE_PATH: username
@@ -136,6 +126,8 @@ grafana:
     GF_SECURITY_ANGULAR_SUPPORT_ENABLED: true # Ref: https://grafana.com/docs/grafana/latest/developers/angular_deprecation
     GF_SECURITY_COOKIE_SAMESITE: grafana
     GF_SERVER_ROOT_URL: https://{{ .Release.Name }}.${PUBLIC_DOMAIN}
+  envFromSecrets:
+    - name: grafana-sso
   ingress:
     enabled: false
   grafana.ini:
