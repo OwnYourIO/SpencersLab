@@ -138,8 +138,9 @@ grafana:
   ingress:
     enabled: true
     ingressClassName: traefik
+    port: 3000
     hosts:
-    - grafana.spencerslab.com
+      - grafana.spencerslab.com
     paths:
     - "/"
     pathType: Prefix
