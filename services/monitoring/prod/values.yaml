@@ -95,6 +95,7 @@ mailcow_exporter:
   bitwarden_id: 082a5ebe-78b1-4a1e-aefb-b101003c1765
 
 grafana:
+  enabled: true
   replicas: 3
   env:
     GF_AUTH_GENERIC_OAUTH_ENABLED: true
