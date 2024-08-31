@@ -72,6 +72,10 @@ kube-prometheus-stack:
         - hosts:
           - grafana.spencerslab.com
           secretName: wildcard-cert
+  prometheusOperator: 
+    admissionWebhooks:
+      patch:
+        ttlSecondsAfterFinished: 600
   prometheus:
     ingress:
       enabled: true
