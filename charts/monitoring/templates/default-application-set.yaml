@@ -46,7 +46,7 @@ spec:
           prune: true
           selfHeal: true
         syncOptions:
-          - PruneLast=true
+          - ApplyOutOfSyncOnly=true
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
