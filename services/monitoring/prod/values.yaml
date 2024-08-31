@@ -76,8 +76,6 @@ kube-prometheus-stack:
     admissionWebhooks:
       patch:
         ttlSecondsAfterFinished: 600
-  prometheusSpec: 
-    enableRemoteWriteReceiver: true
   prometheus:
     ingress:
       enabled: true
@@ -92,6 +90,7 @@ kube-prometheus-stack:
           - prometheus.spencerslab.com
           secretName: wildcard-cert
     prometheusSpec:
+      enableRemoteWriteReceiver: true
       scrapeConfigSelector:
         matchLabels:
           prometheus: system-monitoring-prometheus
