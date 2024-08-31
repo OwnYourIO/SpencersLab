@@ -7,9 +7,9 @@ dependencies:
   version: 2.10.2
 - name: monitoring-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.7
+  version: 1.1.8
 - name: grafana
   repository: https://grafana.github.io/helm-charts/
   version: 8.5.0
-digest: sha256:ea69eab09520132f2ffde66d880368665e199d49ccdbf3bf1be1a9b8ac70d52f
-generated: "2024-08-31T14:50:07.519035276-06:00"
+digest: sha256:6df21901820356708503ff0273102aba910878e0a2d551fecd34eef8ff63d21a
+generated: "2024-08-31T15:06:41.851999773-06:00"
