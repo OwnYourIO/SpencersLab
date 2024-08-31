@@ -36,6 +36,7 @@ spec:
             - name: argocd.argo-cd.configs.cm.url
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
           valueFiles:
+        #    #- ../common.values.yaml
             - values.yaml
       destination:
         name: "{{ `{{name}}` }}"
@@ -45,7 +46,7 @@ spec:
           prune: true
           selfHeal: true
         syncOptions:
+          - PruneLast=true
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
-          
