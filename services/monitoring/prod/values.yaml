@@ -76,6 +76,8 @@ kube-prometheus-stack:
     admissionWebhooks:
       patch:
         ttlSecondsAfterFinished: 600
+  prometheusSpec: 
+    enableRemoteWriteReceiver: true
   prometheus:
     ingress:
       enabled: true
