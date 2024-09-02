@@ -158,10 +158,9 @@ ledfx:
         containers:
           main:
             env:
-              # Woulda used a different name, but HOST clearly is for a snapcast.
-              # Had to hack the arg with "s to work around the images' entrypoint.sh not supporting anything other than HOST.
-              # TODO: Fix the image lol.
-              HOST: 'snapserver.spencerslab.com" --hostID "house-lights'
+              # Woulda used a different name, but looking through the entrypoint.sh HOST is clearly intended for a snapserver
+              HOST: snapserver.spencerslab.com
+              PLAYER_ID: house-lights
           #  resources:
           #    limits:
           #      squat.ai/snd: 1
@@ -180,6 +179,39 @@ ledfx:
           - hosts:
               - *host
             secretName: wildcard-cert
+    # TODO: Add this to the image.
+    configMaps:
+      entrypoint-override:
+        data: 
+          custom-entrypoint.sh: |-
+            #!/bin/bash
+
+            # Start avahi daemon for WLED auto discovery
+            avahi-daemon --daemonize --no-drop-root
+
+            # https://superuser.com/questions/1539634/pulseaudio-daemon-wont-start-inside-docker
+            # Start the pulseaudio server
+            rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse
+            pulseaudio -D --verbose --exit-idle-time=-1 --system --disallow-exit
+
+            if [[ -v FORMAT ]]; then
+                ./pipe-audio.sh
+            fi
+
+            if [[ -v HOST ]]; then
+                snapclient --host "$HOST" --hostID "${PLAYER_ID:-None}" --daemon 1
+            fi
+
+            if [[ -v SQUEEZE ]]; then
+                ./squeeze.sh
+            fi
+
+            mkdir /app/ledfx-config
+
+            mv -vn /app/config.yaml /app/ledfx-config/
+            mkdir /root/.ledfx
+            ledfx -c /app/ledfx-config
+
     persistence:
       config:
         existingClaim: ledfx
@@ -187,6 +219,14 @@ ledfx:
           ledfx:
             main:
               - path: /app/ledfx-config/
+      entrypoint-override:
+        type: configMap
+        name: '{{ .Release.Name }}-entrypoint-override'
+        defaultMode: 0777
+        globalMounts:
+          - path: /app/entrypoint.sh
+            subPath: custom-entrypoint.sh
+
 
 hyperion:
   app-template:
