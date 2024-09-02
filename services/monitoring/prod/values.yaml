@@ -103,7 +103,7 @@ exporter-mikrotik:
   bitwarden_id: 87082494-47f1-4efc-926e-b1df016b9428
   app-template:
     controllers:
-      logitech-media-server:
+      exporter-mikrotik:
         containers:
           main:
             env:
