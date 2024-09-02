@@ -6,7 +6,7 @@ bitwardenIds:
 
 app-template:
   controllers:
-    mikrotik:
+    exporter-mikrotik:
       annotations:
         reloader.stakater.com/auto: "true"
       containers:
@@ -40,7 +40,7 @@ app-template:
             readOnlyRootFilesystem: true
   service:
     exporter-mikrotik:
-      controller: mikrotik
+      controller: exporter-mikrotik
       annotations:
         prometheus.io/port: "49090"
         prometheus.io/scrape: "true"
