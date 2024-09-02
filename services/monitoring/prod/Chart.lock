@@ -8,8 +8,11 @@ dependencies:
 - name: monitoring-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.8
+- name: exporter-mikrotik
+  repository: https://ownyourio.github.io/SpencersLab/
+  version: 1.0.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts/
   version: 8.5.0
-digest: sha256:6df21901820356708503ff0273102aba910878e0a2d551fecd34eef8ff63d21a
-generated: "2024-08-31T15:06:41.851999773-06:00"
+digest: sha256:0f2af9924a78798fc7e07e8593358f3201a290d36f4c2cf8c8fc6dd5be1f6d5f
+generated: "2024-09-02T17:17:51.267347526-06:00"
