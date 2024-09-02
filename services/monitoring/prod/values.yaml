@@ -101,7 +101,7 @@ mailcow_exporter:
 
 exporter-mikrotik:
   bitwardenIds: 
-    mikrotik: 87082494-47f1-4efc-926e-b1df016b9428
+    exporter-mikrotik: 87082494-47f1-4efc-926e-b1df016b9428
   app-template:
     controllers:
       exporter-mikrotik:
