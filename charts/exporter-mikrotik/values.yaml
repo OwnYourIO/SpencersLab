@@ -2,7 +2,7 @@ global:
   nameOverride: mikrotik
 
 bitwardenIds:
-  mikrotik: 87082494-47f1-4efc-926e-b1df016b9428
+  mikrotik: OVERRIDE_NEEDED
 
 app-template:
   controllers:
