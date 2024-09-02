@@ -1,0 +1,162 @@
+global:
+  nameOverride: mikrotik
+
+bitwardenIds:
+  mikrotik: 87082494-47f1-4efc-926e-b1df016b9428
+
+app-template:
+  controllers:
+    mikrotik:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/akpw/mktxp
+            tag: gha-10485178964
+          env:
+            TZ: Etc/UTC
+            MIKROTIK_ADDRESS: 10.0.99.253
+            MIKROTIK_USERNAME:
+              secretKeyRef:
+                name: mikrotik-secret
+                key: username
+            MIKROTIK_PASSWORD:
+              secretKeyRef:
+                name: mikrotik-secret
+                key: password
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 10m
+            limits:
+              memory: 512Mi
+
+          securityContext:
+            readOnlyRootFilesystem: true
+  service:
+    exporter-mikrotik:
+      controller: mikrotik
+      annotations:
+        prometheus.io/port: "49090"
+        prometheus.io/scrape: "true"
+      ports:
+        http:
+          port: 49090
+
+  configMaps:
+    exporter-mikrotik:
+      data: 
+        custom-entrypoint.sh: |-
+          #!/bin/bash
+          envsubst /etc/mktxp.config > /mktxp_config/mktxp.config
+          envsubst /etc/_mktxp.config > /mktxp_config/_mktxp.config
+          sleep 1000
+          
+          /usr/local/bin/mktxp export --cfg-dir /mktxp_config export 
+        _mktxp.conf: |
+          ## Copyright (c) 2020 Arseniy Kuznetsov
+          ##
+          ## This program is free software; you can redistribute it and/or
+          ## modify it under the terms of the GNU General Public License
+          ## as published by the Free Software Foundation; either version 2
+          ## of the License, or (at your option) any later version.
+          ##
+          ## This program is distributed in the hope that it will be useful,
+          ## but WITHOUT ANY WARRANTY; without even the implied warranty of
+          ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+          ## GNU General Public License for more details.
+
+
+          [MKTXP]
+              listen = '0.0.0.0:49090'         # Space separated list of socket addresses to listen to, both IPV4 and IPV6
+              socket_timeout = 5
+              
+              initial_delay_on_failure = 120
+              max_delay_on_failure = 900
+              delay_inc_div = 5
+
+              bandwidth = False                # Turns metrics bandwidth metrics collection on / off    
+              bandwidth_test_interval = 600    # Interval for collecting bandwidth metrics
+              minimal_collect_interval = 5     # Minimal metric collection interval
+
+              verbose_mode = False             # Set it on for troubleshooting
+
+              fetch_routers_in_parallel = False   # Fetch metrics from multiple routers in parallel / sequentially 
+              max_worker_threads = 5              # Max number of worker threads that can fetch routers (parallel fetch only)
+              max_scrape_duration = 30            # Max duration of individual routers' metrics collection (parallel fetch only)
+              total_max_scrape_duration = 90      # Max overall duration of all metrics collection (parallel fetch only)
+
+              compact_default_conf_values = False  # Compact mktxp.conf, so only specific values are kept on the individual routers' level
+        mktxp.conf: |
+          ## Copyright (c) 2020 Arseniy Kuznetsov
+          ##
+          ## This program is free software; you can redistribute it and/or
+          ## modify it under the terms of the GNU General Public License
+          ## as published by the Free Software Foundation; either version 2
+          ## of the License, or (at your option) any later version.
+          ##
+          ## This program is distributed in the hope that it will be useful,
+          ## but WITHOUT ANY WARRANTY; without even the implied warranty of
+          ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+          ## GNU General Public License for more details.
+
+          [Switch]
+              # for specific configuration on the router level, change here the defaults values from below
+              hostname = ${MIKROTIK_ADDRESS}
+
+          [default]
+              # this affects configuration of all routers, unless overloaded on their specific levels
+
+              enabled = True          # turns metrics collection for this RouterOS device on / off
+              hostname = localhost    # RouterOS IP address
+              port = 8728             # RouterOS IP Port
+              
+              username = ${MIKROTIK_USERNAME}     # RouterOS user, needs to have 'read' and 'api' permissions
+              password = ${MIKROTIK_PASSWORD}
+              
+              use_ssl = False                 # enables connection via API-SSL servis
+              no_ssl_certificate = False      # enables API_SSL connect without router SSL certificate
+              ssl_certificate_verify = False  # turns SSL certificate verification on / off   
+              plaintext_login = True          # for legacy RouterOS versions below 6.43 use False
+
+              installed_packages = True       # Installed packages
+              connections = True              # IP connections metrics
+              connection_stats = False        # Open IP connections metrics 
+
+              interface = True                # Interfaces traffic metrics
+              
+              route = True                    # IPv4 Routes metrics
+              pool = True                     # IPv4 Pool metrics
+              neighbor = True                 # IPv4 Reachable Neighbors
+              poe = True                      # POE metrics
+              monitor = True                  # Interface monitor metrics
+              netwatch = True                 # Netwatch metrics
+              public_ip = True                # Public IP metrics
+              wireless = True                 # WLAN general metrics
+              wireless_clients = True         # WLAN clients metrics
+              switch_port = False             # Switch Port metrics
+
+              user = True                     # Active Users metrics
+              queue = True                    # Queues metrics
+  persistence:
+    config:
+      type: configMap
+      name: '{{ .Release.Name }}-exporter-mikrotik'
+      globalMounts:
+        - path: /etc/mktxp.config
+          subPath: mktxp.conf
+        - path: /etc/_mktxp.config
+          subPath: _mktxp.conf
+
+    entrypoint-override:
+      type: configMap
+      name: '{{ .Release.Name }}-exporter-mikrotik'
+      defaultMode: 0777
+      globalMounts:
+        - path: /entrypoint.sh
+          subPath: custom-entrypoint.sh
