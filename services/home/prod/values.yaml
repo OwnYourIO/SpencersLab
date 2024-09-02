@@ -221,7 +221,7 @@ ledfx:
               - path: /app/ledfx-config/
       entrypoint-override:
         type: configMap
-        name: '{{ .Release.Name }}-entrypoint-override'
+        name: '{{ .Release.Name }}-ledfx-entrypoint-override'
         defaultMode: 0777
         globalMounts:
           - path: /app/entrypoint.sh
