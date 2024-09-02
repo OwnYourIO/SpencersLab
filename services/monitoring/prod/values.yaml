@@ -99,6 +99,17 @@ mailcow_exporter:
   host: mail.spencerslab.com
   bitwarden_id: 082a5ebe-78b1-4a1e-aefb-b101003c1765
 
+exporter-mikrotik:
+  bitwarden_id: 87082494-47f1-4efc-926e-b1df016b9428
+  app-template:
+    controllers:
+      logitech-media-server:
+        containers:
+          main:
+            env:
+              TZ: America/Denver
+              MIKROTIK_ADDRESS: 10.0.99.253
+
 grafana:
   enabled: true
   replicas: 1
