@@ -1,6 +1,6 @@
 dependencies:
 - name: authentik
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 2023.10.14
-digest: sha256:633fd58b60ad38c102c196ab4826f54773aa1aa8bb66787663682605d48215f7
-generated: "2023-12-25T18:08:33.033672913-07:00"
+  version: 2023.10.18
+digest: sha256:754cfb793211b319425e8456ee5a0bf1e2111c060883e922d987ac283b53fdc0
+generated: "2024-09-02T18:47:01.165324586Z"
