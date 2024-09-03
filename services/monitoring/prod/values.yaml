@@ -134,6 +134,15 @@ exporter-mikrotik:
         globalMounts:
           - path: /mktxp_config
 
+    serviceMonitor:
+      main:
+        serviceName: exporter-mikrotik
+        endpoints:
+          - port: http
+            scheme: http
+            path: /metrics
+            scrapeTimeout: 1m
+
 grafana:
   enabled: true
   replicas: 1
