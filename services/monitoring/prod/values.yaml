@@ -138,7 +138,7 @@ exporter-mikrotik:
       exporter-mikrotik:
         serviceName: monitoring-exporter-mikrotik
         endpoints:
-          - port: http
+          - port: 49090
             scheme: http
             path: /metrics
             interval: 1m
