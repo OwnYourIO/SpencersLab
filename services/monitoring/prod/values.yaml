@@ -135,12 +135,12 @@ exporter-mikrotik:
           - path: /mktxp_config
 
     serviceMonitor:
-      main:
-        serviceName: monitoring-exporter-mikrotik
+      exporter-mikrotik:
         endpoints:
           - port: http
             scheme: http
             path: /metrics
+            interval: 1m
             scrapeTimeout: 1m
 
 grafana:
