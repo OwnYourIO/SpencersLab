@@ -53,11 +53,11 @@ app-template:
       data: 
         custom-entrypoint.sh: |-
           #!/bin/bash
-          cp /etc/mktxp.config  /mktxp_config/mktxp.config
-          cp /etc/_mktxp.config  /mktxp_config/_mktxp.config
-          sed -i "s/\${MIKROTIK_ADDRESS}/${MIKROTIK_ADDRESS}/g"   /mktxp_config/mktxp.config
-          sed -i "s/\${MIKROTIK_USERNAME}/${MIKROTIK_USERNAME}/g" /mktxp_config/mktxp.config
-          sed -i "s/\${MIKROTIK_PASSWORD}/${MIKROTIK_PASSWORD}/g" /mktxp_config/mktxp.config
+          cp /etc/mktxp.config  /mktxp_config/mktxp.conf
+          cp /etc/_mktxp.config  /mktxp_config/_mktxp.conf
+          sed -i "s/\${MIKROTIK_ADDRESS}/${MIKROTIK_ADDRESS}/g"   /mktxp_config/mktxp.conf
+          sed -i "s/\${MIKROTIK_USERNAME}/${MIKROTIK_USERNAME}/g" /mktxp_config/mktxp.conf
+          sed -i "s/\${MIKROTIK_PASSWORD}/${MIKROTIK_PASSWORD}/g" /mktxp_config/mktxp.conf
           
           /usr/local/bin/mktxp export --cfg-dir /mktxp_config export 
         _mktxp.conf: |
