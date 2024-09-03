@@ -111,6 +111,8 @@ exporter-mikrotik:
               repository: ghcr.io/akpw/mktxp
               tag: gha-10485178964@sha256:a759865921ff8d36c4949a5e959bdc58c565161f1f4d54477b15a967f8e02a36
             command:
+              - "sh"
+              - "-c"
               - "/entrypoint.sh"
             env:
               TZ: America/Denver
