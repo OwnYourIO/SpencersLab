@@ -123,6 +123,10 @@ exporter-mikrotik:
                   key: mikrotik-password
             securityContext:
               readOnlyRootFilesystem: false
+    persistence:
+      mktxp_config:
+        type: emptyDir
+        medium: Memory
 
 grafana:
   enabled: true
