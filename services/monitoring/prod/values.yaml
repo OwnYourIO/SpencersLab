@@ -116,11 +116,11 @@ exporter-mikrotik:
               MIKROTIK_USERNAME:
                 secretKeyRef:
                   name: exporter-mikrotik-secret
-                  key: username
+                  key: mikrotik-username
               MIKROTIK_PASSWORD:
                 secretKeyRef:
                   name: exporter-mikrotik-secret
-                  key: password
+                  key: mikrotik-password
 
 grafana:
   enabled: true
