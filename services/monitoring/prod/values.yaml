@@ -160,7 +160,7 @@ grafana:
     GF_AUTH_GENERIC_OAUTH_API_URL: https://login.spencerslab.com/realms/SpencersLab/protocol/openid-connect/userinfo
     GF_AUTH_GENERIC_OAUTH_SIGNOUT_REDIRECT_URL: https://login.spencerslab.com/auth/realms/SpencersLab/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2grafana.spencerslab.com%2Flogin
 
-    GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: contains(roles[*], 'GrafanaAdmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+    GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: contains(groups[*], 'GrafanaAdmin') && 'GrafanaAdmin' || groups(roles[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
     GF_AUTH_GENERIC_OAUTH_GROUPS_ATTRIBUTE_PATH: groups
     GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN: true
     GF_AUTH_GENERIC_OAUTH_USE_REFRESH_TOKEN: true
