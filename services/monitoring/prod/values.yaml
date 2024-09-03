@@ -549,6 +549,6 @@ grafana:
     enabled: true
     replicas: 3
   persistence:
-    enabled: false
+    enabled: true
   testFramework:
     enabled: false
