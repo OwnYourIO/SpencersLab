@@ -435,7 +435,9 @@ grafana:
         # renovate: depName="Mikrotik MKTXP Exporter"
         gnetId: 13679
         revision: 22
-        datasource: Prometheus
+        datasource:
+          - name: DS_PROMETHEUS
+            value: Prometheus
       node-exporter-full:
         # renovate: depName="Node Exporter Full"
         gnetId: 1860
