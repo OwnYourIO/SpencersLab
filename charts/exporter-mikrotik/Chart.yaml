@@ -1,7 +1,7 @@
 apiVersion: v2
 name: exporter-mikrotik
-version: 1.0.8
-appVersion: 1.0.8
+version: 1.0.9
+appVersion: 1.0.9
 dependencies:
 - name: app-template
   version: 3.2.1
