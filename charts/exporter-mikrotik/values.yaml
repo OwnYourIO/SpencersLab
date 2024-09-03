@@ -59,7 +59,7 @@ app-template:
           sed -i "s/\${MIKROTIK_USERNAME}/${MIKROTIK_USERNAME}/g" /mktxp_config/mktxp.conf
           sed -i "s/\${MIKROTIK_PASSWORD}/${MIKROTIK_PASSWORD}/g" /mktxp_config/mktxp.conf
           
-          /usr/local/bin/mktxp export --cfg-dir /mktxp_config export 
+          /usr/local/bin/mktxp --cfg-dir /mktxp_config export
         _mktxp.conf: |
           ## Copyright (c) 2020 Arseniy Kuznetsov
           ##
