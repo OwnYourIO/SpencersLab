@@ -136,6 +136,7 @@ exporter-mikrotik:
 
     serviceMonitor:
       exporter-mikrotik:
+        serviceName: monitoring-exporter-mikrotik
         endpoints:
           - port: http
             scheme: http
