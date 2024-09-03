@@ -431,6 +431,11 @@ grafana:
         gnetId: 11454
         revision: 14
         datasource: Prometheus
+      mikrotik:
+        # renovate: depName="Mikrotik MKTXP Exporter"
+        gnetId: 13679
+        revision: 22
+        datasource: Prometheus
       node-exporter-full:
         # renovate: depName="Node Exporter Full"
         gnetId: 1860
