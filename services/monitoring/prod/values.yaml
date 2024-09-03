@@ -121,6 +121,8 @@ exporter-mikrotik:
                 secretKeyRef:
                   name: exporter-mikrotik-secret
                   key: mikrotik-password
+            securityContext:
+              readOnlyRootFilesystem: false
 
 grafana:
   enabled: true

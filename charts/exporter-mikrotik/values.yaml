@@ -19,12 +19,12 @@ app-template:
             MIKROTIK_ADDRESS: 10.0.99.253
             MIKROTIK_USERNAME:
               secretKeyRef:
-                name: mikrotik-secret
-                key: username
+                name: exporter-mikrotik-secret
+                key: mikrotik-username
             MIKROTIK_PASSWORD:
               secretKeyRef:
-                name: mikrotik-secret
-                key: password
+                name: exporter-mikrotik-secret
+                key: mikrotik-password
           probes:
             liveness:
               enabled: true
