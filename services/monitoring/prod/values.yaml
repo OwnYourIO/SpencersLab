@@ -113,6 +113,14 @@ exporter-mikrotik:
             env:
               TZ: America/Denver
               MIKROTIK_ADDRESS: 10.0.99.253
+              MIKROTIK_USERNAME:
+                secretKeyRef:
+                  name: exporter-mikrotik-secret
+                  key: username
+              MIKROTIK_PASSWORD:
+                secretKeyRef:
+                  name: exporter-mikrotik-secret
+                  key: password
 
 grafana:
   enabled: true
