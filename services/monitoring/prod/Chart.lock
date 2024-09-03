@@ -10,9 +10,9 @@ dependencies:
   version: 1.1.8
 - name: exporter-mikrotik
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.4
+  version: 1.0.5
 - name: grafana
   repository: https://grafana.github.io/helm-charts/
   version: 8.5.0
-digest: sha256:3cab0b0a69ba85fa150b89c19ce7c5b38107e38de063762d02576b170d6e4f9a
-generated: "2024-09-02T17:58:52.158384683-06:00"
+digest: sha256:0c535849a6cef115c138a7c93966588d81c79a13bb77b3315d5bdf5681756af8
+generated: "2024-09-02T18:08:33.080772349-06:00"
