@@ -7,6 +7,6 @@ metadata:
     prometheus: system-monitoring-prometheus
 spec:
   staticConfigs:
-    - targets: [ 'exporter-mikrotik:49090' ]
+    - targets: [ 'monitoring-exporter-mikrotik:49090' ]
   params:
     host: [ 'Switch' ]
