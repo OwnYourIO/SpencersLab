@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: mktxp
+  labels:
+    release: prom
+    prometheus: system-monitoring-prometheus
+spec:
+  staticConfigs:
+    - targets: [ 'exporter-mikrotik:49090' ]
+  params:
+    host: [ 'Switch' ]
