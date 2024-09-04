@@ -91,9 +91,9 @@ kube-prometheus-stack:
           secretName: wildcard-cert
     prometheusSpec:
       enableRemoteWriteReceiver: true
-      scrapeConfigSelector:
-        matchLabels:
-          prometheus: system-monitoring-prometheus
+      #scrapeConfigSelector:
+      #  matchLabels:
+      #    prometheus: system-monitoring-prometheus
 
 mailcow_exporter:
   host: mail.spencerslab.com
