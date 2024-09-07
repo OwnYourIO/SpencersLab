@@ -43,35 +43,9 @@ loki-stack:
 
 kube-prometheus-stack: 
   crds:
-        enabled: true
+    enabled: true
   grafana:
     enabled: false
-    persistence:
-      type: pvc
-      enabled: true
-      accessModes: ["ReadWriteOnce"]
-      size: 500Mi
-    additionalDashboards: 
-      - name: SeaWeedFS
-        datasource: Prometheus
-        url: https://raw.githubusercontent.com/seaweedfs/seaweedfs/master/k8s/charts/seaweedfs/dashboards/seaweedfs-grafana-dashboard.json
-    additionalDataSources: 
-      - name: Loki
-        type: loki
-        url: http://monitoring-loki.default:3100
-        access: proxy
-    ingress:
-      enabled: true
-      ingressClassName: traefik
-      hosts:
-      - grafana.spencerslab.com
-      paths:
-      - "/"
-      pathType: Prefix
-      tls:
-        - hosts:
-          - grafana.spencerslab.com
-          secretName: wildcard-cert
   prometheusOperator: 
     admissionWebhooks:
       patch:

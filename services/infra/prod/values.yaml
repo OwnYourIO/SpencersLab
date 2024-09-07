@@ -673,3 +673,34 @@ samba:
         existingClaim: backups-shared
         globalMounts:
           - path: /mnt/backups
+
+kube-prometheus-stack: 
+  crds:
+    enabled: true
+  grafana:
+    enabled: false
+  prometheusOperator: 
+    admissionWebhooks:
+      patch:
+        ttlSecondsAfterFinished: 600
+  prometheus:
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      hosts:
+      - prometheus.infra.spencerslab.com
+      paths:
+      - "/"
+      pathType: Prefix
+      tls:
+        - hosts:
+          - prometheus.infra.spencerslab.com
+          secretName: cluster-wildcard-cert
+    agentMode: true
+    prometheusSpec:
+      scrapeConfigSelector:
+        matchLabels:
+          prometheus: system-monitoring-prometheus
+      remoteWrite:
+        - name: storage
+          url: https://prometheus.spencerslab.com/api/v1/write
