@@ -2,9 +2,6 @@ dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
   version: 3.68.0
-- name: kube-prometheus-stack
-  repository: https://prometheus-community.github.io/helm-charts
-  version: 61.3.1
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.9
@@ -17,5 +14,5 @@ dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-digest: sha256:37d102f3be9f2440f78914cb02b2c8c1c0b4211c790a39808cd0c2fe9a55d39f
-generated: "2024-09-07T14:26:24.812569766-06:00"
+digest: sha256:6ab81155bb744e669fdf08e09449f5ac6f2ed781ab5145728a8fbd019e04d99c
+generated: "2024-09-07T14:37:45.894691358-06:00"
