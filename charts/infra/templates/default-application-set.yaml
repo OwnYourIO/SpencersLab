@@ -23,6 +23,11 @@ spec:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
+      ignoreDifferences:
+        - group: storage.k8s.io
+          kind: CSIDriver
+          jqPathExpressions:
+            - .spec.seLinuxMount
       source:
         repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
         targetRevision: main
