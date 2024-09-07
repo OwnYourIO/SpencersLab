@@ -16,7 +16,7 @@ dependencies:
 #  version: 2.10.2
 #  repository: https://grafana.github.io/helm-charts
 - name: infra-appset
-  version: 1.1.5
+  version: 1.1.6
   repository: https://ownyourio.github.io/SpencersLab/
 - name: keycloakx
   version: 2.4.3
