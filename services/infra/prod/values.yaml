@@ -22,10 +22,6 @@ keycloakx:
           -Djgroups.dns.query=keycloak-headless
       - name: KC_PROXY
         value: passthrough
-      - name: KC_PROXY_HEADERS
-        value: forwarded 
-      - name: KC_HTTP_ENABLED
-        value: "true"
       - name: KC_HTTP_PORT
         value: "8080"
       - name: KC_HOSTNAME
@@ -46,10 +42,6 @@ keycloakx:
           secretKeyRef:
             name: keycloak-secret
             key: KEYCLOAK_ADMIN_PASSWORD
-      - name: KC_METRICS_ENABLED
-        value: "true"
-      - name: KC_HEALTH_ENABLED
-        value: "true"
       # - name: KC_DB_USERNAME
       #   value: "${POSTGRES_SSO_USERNAME}"
       # - name: KC_DB_PASSWORD
