@@ -163,7 +163,7 @@ seaweedfs:
     #  data:
     #    type: "emptyDir"
     data:
-      type: "persistentVolumeClaim"
+      type: "PersistentVolumeClaim"
       size: 10Gi
     logs:
       type: "existingClaim"
