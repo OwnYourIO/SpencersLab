@@ -9,9 +9,9 @@ dependencies:
 #- name: forgejo
 #  version: 7.0.2
 #  repository: oci://code.forgejo.org/forgejo-helm
-#- name: kube-prometheus-stack
-#  version: 61.3.1
-#  repository: https://prometheus-community.github.io/helm-charts
+- name: kube-prometheus-stack
+  version: 61.3.1
+  repository: https://prometheus-community.github.io/helm-charts
 #- name: loki-stack
 #  version: 2.10.2
 #  repository: https://grafana.github.io/helm-charts
