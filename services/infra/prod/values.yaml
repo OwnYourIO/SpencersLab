@@ -163,7 +163,7 @@ seaweedfs:
     #  data:
     #    type: "emptyDir"
     data:
-      type: "persistentVolumeClaim"
+      type: "PersistentVolumeClaim"
       size: 10Gi
     logs:
       type: "existingClaim"
@@ -293,11 +293,11 @@ seaweedfs:
     # same applies to "logs"
 
     idx:
-      type: "persistentVolumeClaim"
+      type: "PersistentVolumeClaim"
       size: "10Gi"
 
     logs: 
-      type: "persistentVolumeClaim"
+      type: "PersistentVolumeClaim"
       size: "10Gi"
 
     ingress:
