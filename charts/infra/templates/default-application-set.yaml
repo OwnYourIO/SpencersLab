@@ -15,7 +15,7 @@ spec:
                   ServerSideApply: "false"
                 - appName: infra
                   namespace: default
-                  ServerSideApply: "true"
+                  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
