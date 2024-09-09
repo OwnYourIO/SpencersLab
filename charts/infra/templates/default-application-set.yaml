@@ -15,6 +15,9 @@ spec:
                   ServerSideApply: "false"
                 - appName: infra
                   namespace: default
+                  ServerSideApply: "false"
+                - appName: monitoring-agent
+                  namespace: default
                   ServerSideApply: "true"
   template:
     metadata:

@@ -1,0 +1,15 @@
+kube-prometheus-stack: 
+  crds:
+    enabled: true
+  grafana:
+    enabled: false
+  prometheusOperator: 
+    admissionWebhooks:
+      patch:
+        ttlSecondsAfterFinished: 600
+  prometheus:
+    agentMode: true
+    prometheusSpec:
+      scrapeConfigSelector:
+        matchLabels:
+          prometheus: system-monitoring-prometheus
