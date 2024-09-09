@@ -44,9 +44,7 @@ spec:
             - name: argocd.argo-cd.configs.cm.url
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
             - name: monitoring-agent.kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite
-              value:
-                - name: storage
-                  url: https://prometheus.{{ metadata.annotations.domain }}/api/v1/write
+              value: '{storage: {url: https://prometheus.{{ metadata.annotations.domain }}/api/v1/write}}'
           valueFiles:
         #    #- ../common.values.yaml
             - values.yaml
