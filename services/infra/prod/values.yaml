@@ -164,7 +164,6 @@ seaweedfs:
     #    type: "emptyDir"
     data:
       type: "persistentVolumeClaim"
-      kind: "PersistentVolumeClaim"
       size: 10Gi
     logs:
       type: "existingClaim"
@@ -411,7 +410,7 @@ seaweedfs:
       #type: "hostPath"
       #hostPathPrefix: /storage
     data:
-      type: "PersistentVolumeClaim"
+      type: "persistentVolumeClaim"
       size: "10Gi"
     logs:
       type: "existingClaim"
