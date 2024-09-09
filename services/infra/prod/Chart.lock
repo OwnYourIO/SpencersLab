@@ -4,7 +4,7 @@ dependencies:
   version: 3.68.0
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.19
+  version: 1.1.20
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 2.4.3
@@ -14,5 +14,5 @@ dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-digest: sha256:b53dc71116c7186b667e549e58206d81ce57f8299bd9d5de5a33d3a9790f1208
-generated: "2024-09-09T08:06:26.969073726-06:00"
+digest: sha256:180c7fd46571755800d5d96a2c0011ab5cdc335c75346207ca83bbd6584eacbb
+generated: "2024-09-09T08:11:53.40305148-06:00"
