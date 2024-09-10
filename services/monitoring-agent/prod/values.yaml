@@ -11,4 +11,4 @@ kube-prometheus-stack:
     agentMode: true
     prometheusSpec:
       serviceMonitorSelector:
-        matchLabels: []
+        matchLabels: {}
