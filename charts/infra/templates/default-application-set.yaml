@@ -46,7 +46,7 @@ spec:
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
               value: "storage"
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
-              value: "{{ `https://prometheus.{{ metadata.annotations.domain }}` }}"
+              value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
           valueFiles:
         #    #- ../common.values.yaml
             - values.yaml
