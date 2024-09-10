@@ -9,7 +9,3 @@ kube-prometheus-stack:
         ttlSecondsAfterFinished: 600
   prometheus:
     agentMode: true
-    prometheusSpec:
-      scrapeConfigSelector:
-        matchLabels:
-          prometheus: system-monitoring-prometheus
