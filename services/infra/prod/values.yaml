@@ -126,6 +126,8 @@ seaweedfs:
     createClusterRole: true
     monitoring:
       enabled: true
+      gatewayHost: https://prometheus.spencerslab.com
+      gatewayPort: 443
     # if enabled will use global.replicationPlacment and override master & filer defaultReplicaPlacement config
     #enableReplication: false
     #  replication type is XYZ:
