@@ -10,4 +10,6 @@ kube-prometheus-stack:
   prometheus:
     agentMode: true
     prometheusSpec:
-      serviceMonitorSelector: {}
+      serviceMonitorSelector: 
+        matchLabels:
+          app.kubernetes.io/managed-by: Helm
