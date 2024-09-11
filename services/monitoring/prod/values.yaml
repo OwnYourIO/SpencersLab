@@ -318,6 +318,11 @@ grafana:
         url: https://raw.githubusercontent.com/ceph/ceph/main/monitoring/ceph-mixin/dashboards_out/hosts-overview.json
         datasource: Prometheus
     system:
+      keycloak:
+        # renovate: depName="Keycloak Metrics Dashboard"
+        gnetId: 19659
+        revision: 1
+        datasource: Prometheus
       node-exporter-full:
         # renovate: depName="Node Exporter Full"
         gnetId: 1860
