@@ -96,7 +96,7 @@ keycloakx:
 
     service:
       extraPorts:
-        metrics: '9000'
+        - metrics: '9000'
 
     serviceMonitor:
       enabled: true
