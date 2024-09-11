@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: seaweedfs-volume
   namespace: default
+  labels:
+    app.kubernetes.io/component: volume
+    app.kubernetes.io/name: seaweedfs
 spec:
   type: ClusterIP
   ports:
