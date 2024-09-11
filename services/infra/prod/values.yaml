@@ -220,7 +220,7 @@ seaweedfs:
     #enabled: true
     #port: 8080
     #grpcPort: 18080
-    metricsPort: 9328
+    metricsPort: 9327
     index: leveldb
     # TODO: Pretty sure this should be more but it complains about duplicate mounts. 
     replicas: 1
@@ -364,7 +364,7 @@ seaweedfs:
     replicas: 5
     #port: 8888
     #grpcPort: 18888
-    metricsPort: 9329
+    metricsPort: 9327
     #encryptVolumeData: false
 
     #  replication type is XYZ:
@@ -494,7 +494,7 @@ seaweedfs:
     domainName: "s3.spencerslab.com"
     ingress:
       enabled: false
-    metricsPort: 9330
+    metricsPort: 9327
 
     # Resource requests, limits, etc. for the server cluster placement. This
     # should map directly to the value of the resources field for a PodSpec,
