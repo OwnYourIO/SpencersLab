@@ -13,7 +13,7 @@ keycloakx:
     
     http:
       relativePath: /
-      internalPort: http
+      internalPort: metrics
 
     extraEnv: |-
       - name: TZ
