@@ -94,9 +94,13 @@ keycloakx:
     metrics:
       enabled: true
 
+    service:
+      extraPorts:
+        metrics: '9000'
+
     serviceMonitor:
       enabled: true
-      port: http
+      port: metrics
 
     ingress:
       enabled: true
