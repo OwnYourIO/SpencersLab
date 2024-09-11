@@ -121,9 +121,6 @@ seaweedfs-csi-driver:
   #seaweedfsFiler: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
   seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default:8888"
 
-volume:
-  metricsPort: 9328
-
 seaweedfs:
   global:
     createClusterRole: true
@@ -220,7 +217,7 @@ seaweedfs:
     #enabled: true
     #port: 8080
     #grpcPort: 18080
-    metricsPort: 9327
+    metricsPort: 9328
     index: leveldb
     # TODO: Pretty sure this should be more but it complains about duplicate mounts. 
     replicas: 1

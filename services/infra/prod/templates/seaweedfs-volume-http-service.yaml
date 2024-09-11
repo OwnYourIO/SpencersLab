@@ -11,9 +11,9 @@ spec:
       protocol: TCP
       targetPort: 8080
     - name: metrics
-      port: 9327
+      port: 9328
       protocol: TCP
-      targetPort: 9327
+      targetPort: 9328
   selector:
     app.kubernetes.io/component: volume
     app.kubernetes.io/name: seaweedfs
