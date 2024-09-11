@@ -90,9 +90,11 @@ keycloakx:
       - name: keycloak-data
         mountPath: /opt/keycloak/data/
 
+    metrics:
+      enabled: true
+
     serviceMonitor:
       enabled: true
-      port: '"9000"'
 
     ingress:
       enabled: true
