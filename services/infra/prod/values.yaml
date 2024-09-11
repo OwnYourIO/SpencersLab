@@ -96,6 +96,7 @@ keycloakx:
 
     serviceMonitor:
       enabled: true
+      port: http
 
     ingress:
       enabled: true
