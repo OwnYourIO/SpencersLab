@@ -110,6 +110,11 @@ keycloakx:
       enabled: true
       port: metrics
 
+    extraServiceMonitor:
+      enabled: true  
+      port: metrics
+      path: /realms/master/metrics
+
     ingress:
       enabled: true
       rules:
