@@ -5,6 +5,8 @@ bitwardenIds:
 
 
 keycloakx:
+    image:  
+      tag: 25.0.2
 
     command:
       - "/opt/keycloak/bin/kc.sh"
