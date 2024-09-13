@@ -76,6 +76,9 @@ keycloakx:
       - name: keycloak-data
         persistentVolumeClaim:
           claimName: keycloak
+      - name: keycloak-providers
+        persistentVolumeClaim:
+          claimName: keycloak-providers
     # - name: customreg
     #   secret:
     #     secretName: {{ include "keycloak.fullname" . }}-customreg
@@ -92,6 +95,8 @@ keycloakx:
     extraVolumeMounts: |-
       - name: keycloak-data
         mountPath: /opt/keycloak/data/
+      - name: keycloak-providers
+        mountPath: /opt/keycloak/providers/
 
     metrics:
       enabled: true
