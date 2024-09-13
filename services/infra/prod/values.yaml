@@ -113,7 +113,7 @@ keycloakx:
     extraServiceMonitor:
       enabled: true  
       port: http
-      path: /realms/master/metrics
+      path: /realms/SpencersLab/metrics
 
     ingress:
       enabled: true
