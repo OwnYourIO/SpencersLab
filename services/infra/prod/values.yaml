@@ -112,7 +112,7 @@ keycloakx:
 
     extraServiceMonitor:
       enabled: true  
-      port: metrics
+      port: http
       path: /realms/master/metrics
 
     ingress:
