@@ -4,6 +4,8 @@ bitwardenIds:
   openldap: f7b628ec-2544-4c28-a476-b1a501487d99
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
+global:
+  server: infra-openldap.default
 openldap-stack-ha:
   global:
     ldapDomain: "spencerslab.com"
@@ -17,6 +19,8 @@ openldap-stack-ha:
   persistence:
     enabled: true
   phpldapadmin:
+    global:
+      server: infra-openldap.default
     enabled: true
     env:
       PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT: "never"
