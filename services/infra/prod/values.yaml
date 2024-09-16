@@ -9,6 +9,7 @@ openldap-stack-ha:
     ldapDomain: "spencerslab.com"
     existingSecret: openldap-secret
     configUser: sl-admin
+    server: infra-openldap.default
   nameOverride: openldap
   customTLS:
     enabled: false
