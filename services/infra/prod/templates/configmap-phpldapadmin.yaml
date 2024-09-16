@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infra-phpldapadmin
+  labels:
+    app: phpldapadmin
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  LDAP_SKIP_DEFAULT_TREE: "yes"
+  PHPLDAPADMIN_HTTPS: "false"
+  PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT: never
+  PHPLDAPADMIN_TRUST_PROXY_SSL: "true"
+  PHPLDAPADMIN_LDAP_HOSTS: "#PYTHON2BASH:[{ 'infra-openldap.default'  : [{'server': [{'tls': True},{'port':1389}]},{'login': [{'bind_id': 'cn=sl-admin,dc=spencerslab,dc=com'  }]}]}]"
