@@ -1,12 +1,15 @@
 
 bitwardenIds:
   keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
+  openldap: f7b628ec-2544-4c28-a476-b1a501487d99
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
 openldap-stack-ha:
   global:
     ldapDomain: "spencerslab.com"
-    existingSecret: auth-openldap-secrets
+    existingSecret: openldap-secret
+    configUser: sl-admin
+  nameOverride: openldap
   customTLS:
     enabled: false
   replicaCount: 1
