@@ -18,6 +18,9 @@ dependencies:
 - name: keycloakx
   version: 2.5.1
   repository: https://codecentric.github.io/helm-charts
+- name: openldap-stack-ha
+  version: 4.2.5
+  repository: https://jp-gouin.github.io/helm-openldap
 - name: samba
   version: 1.0.2
   repository: https://ownyourio.github.io/SpencersLab/

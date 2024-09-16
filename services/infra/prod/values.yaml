@@ -3,6 +3,70 @@ bitwardenIds:
   keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
+openldap-stack-ha:
+  global:
+    ldapDomain: "spencerslab.com"
+    existingSecret: auth-openldap-secrets
+  customTLS:
+    enabled: false
+  replicaCount: 1
+  persistence:
+    enabled: true
+  phpldapadmin:
+    enabled: true
+    env:
+      PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT: "never"
+      LDAP_SKIP_DEFAULT_TREE: "yes"
+    ingress:
+      enabled: true
+      annotations: {}
+      path: /
+      pathType: Prefix
+      hosts:
+        - phpldapadmin.spencerslab.com
+      tls: 
+        - secretName: wildcard-cert
+          hosts:
+            - phpldapadmin.spencerslab.com
+  ltb-passwd:
+    enabled : false
+  customLdifFiles:
+    01-root.ldif: |-
+      dn: dc=spencerslab,dc=com
+      dc: spencerslab
+      o: SpencersLab
+      objectclass: top
+      objectclass: dcObject
+      objectclass: organization
+
+      dn: ou=people,dc=spencerslab,dc=com
+      objectClass: organizationalUnit
+      ou: people
+
+      dn: ou=groups,dc=spencerslab,dc=com
+      objectClass: organizationalUnit
+      ou: groups
+    10-spencer.ldif: |-
+      dn: cn=spencer,ou=groups,dc=spencerslab,dc=com
+      cn: spencer
+      gidNumber: 8742
+      objectclass: top
+      objectclass: posixGroup
+      
+      dn: uid=spencer,ou=people,dc=spencerslab,dc=com
+      cn: spencer
+      givenName: Spencer
+      sn: spencer
+      uid: spencer
+      uidNumber: 8742
+      gidNumber: 8742
+      homeDirectory: /home/spencer
+      loginShell: /bin/bash
+      mail: s@spencerslab.com
+      objectClass: top
+      objectClass: inetOrgPerson
+      objectClass: posixAccount
+      objectClass: shadowAccount
 
 keycloakx:
     image:  
