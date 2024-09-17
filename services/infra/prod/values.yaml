@@ -55,7 +55,6 @@ openldap-stack-ha:
       dn: dc=spencerslab,dc=com
       dc: spencerslab
       o: SpencersLab
-      objectclass: top
       objectclass: dcObject
       objectclass: organization
 
@@ -66,27 +65,6 @@ openldap-stack-ha:
       dn: ou=groups,dc=spencerslab,dc=com
       objectClass: organizationalUnit
       ou: groups
-    10-spencer.ldif: |-
-      dn: cn=spencer,ou=groups,dc=spencerslab,dc=com
-      cn: spencer
-      gidNumber: 8742
-      objectclass: top
-      objectclass: posixGroup
-      
-      dn: uid=spencer,ou=people,dc=spencerslab,dc=com
-      cn: spencer
-      givenName: Spencer
-      sn: spencer
-      uid: spencer
-      uidNumber: 8742
-      gidNumber: 8742
-      homeDirectory: /home/spencer
-      loginShell: /bin/bash
-      mail: s@spencerslab.com
-      objectClass: top
-      objectClass: inetOrgPerson
-      objectClass: posixAccount
-      objectClass: shadowAccount
 
 keycloakx:
     image:  
