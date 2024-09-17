@@ -51,20 +51,31 @@ openldap-stack-ha:
   ltb-passwd:
     enabled : false
   customLdifFiles:
-    01-root.ldif: |-
+    00-root.ldif: |-
+      # Root creation
       dn: dc=spencerslab,dc=com
-      dc: spencerslab
-      o: SpencersLab
-      objectclass: dcObject
-      objectclass: organization
-
-      dn: ou=people,dc=spencerslab,dc=com
-      objectClass: organizationalUnit
-      ou: people
-
-      dn: ou=groups,dc=spencerslab,dc=com
-      objectClass: organizationalUnit
-      ou: groups
+      objectClass: dcObject
+      objectClass: organization
+      o: Spencers Lab
+    01-default-group.ldif: |-
+      dn: cn=sl-users,dc=spencerslab,dc=com
+      cn: sl-users
+      gidnumber: 500
+      objectclass: posixGroup
+      objectclass: top
+    02-default-user.ldif: |-
+      dn: cn=sl-admin,dc=spencerslab,dc=com
+      cn: sl-admin
+      gidnumber: 500
+      givenname: admin
+      homedirectory: /home/users/sl-admin
+      objectclass: inetOrgPerson
+      objectclass: posixAccount
+      objectclass: top
+      sn: sl-admin
+      uid: sl-admin
+      uidnumber: 1000
+      userpassword: {MD5}KOULhzfBhPTq9k7a9XfCGw==
 
 keycloakx:
     image:  
