@@ -19,6 +19,7 @@ openldap-stack-ha:
   env:
     LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis"
     LDAP_ADMIN_USERNAME: server-admin
+    LDAP_CUSTOM_LDIF_DIR: "/ldifs"
   replication:
     enabled: false
   replicaCount: 1
