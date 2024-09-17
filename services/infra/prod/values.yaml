@@ -10,6 +10,7 @@ openldap-stack-ha:
   global:
     ldapDomain: "spencerslab.com"
     existingSecret: openldap-secret
+    configUserEnabled: true
     configUser: sl-admin
     adminUser: server-admin
     server: infra-openldap.default
