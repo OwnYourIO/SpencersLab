@@ -71,7 +71,7 @@ lldap:
   # will not be executed on subsequent deployments unless the job is deleted.
   # @default -- see below
   bootstrap:
-    enabled: false
+    enabled: true
     # -- Remove redundant users and groups which are not in the config below
     cleanup: false
     groups:
