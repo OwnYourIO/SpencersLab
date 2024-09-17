@@ -6,76 +6,86 @@ bitwardenIds:
 
 global:
   server: infra-openldap.default
-openldap-stack-ha:
-  global:
-    ldapDomain: dc=spencerslab,dc=com
-    existingSecret: openldap-secret
-    configUserEnabled: true
-    configUser: sl-admin
-    adminUser: admin
-    server: infra-openldap.default
-  nameOverride: openldap
-  customTLS:
+lldap:
+  # -- Base DN for LDAP.
+  # This is usually your domain name, and is used as a namespace for your users. The choice is
+  # arbitrary, but will be needed to configure the LDAP integration with other services. The sample
+  # value is for "example.com", but you can extend it with as many "dc" as you want, and you don't
+  # actually need to own the domain name.
+  baseDN: "dc=spencerslab,dc=com"
+
+  # -- Admin username.
+  # For the LDAP interface, a value of "admin" here will create the LDAP user
+  # "cn=admin,ou=people,dc=example,dc=com" (with the base DN above). For the administration
+  # interface, this is the username.
+  ldapUserDN: "admin"
+  
+  # -- Enable and configure postgresql database subchart under this key.
+  #    For more options see [postgresql chart documentation](https://github.com/bitnami/charts/tree/master/bitnami/postgresql)
+  # @default -- https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
+  postgresql:
     enabled: false
-  env:
-    LDAP_DOMAIN: spencerslab.com
-    LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis"
-    LDAP_ADMIN_USERNAME: admin
-    LDAP_CUSTOM_LDIF_DIR: "/ldifs"
-    LDAP_SKIP_DEFAULT_TREE: "yes"
-  replication:
-    enabled: false
-  replicaCount: 1
-  persistence:
+    primary:
+      persistence:
+        enabled: true
+        size: 1Gi
+      resources: {}
+
+  # -- Options to configure SMTP parameters, to send password reset emails.
+  # @default -- see below
+  smtp:
+    # -- Whether to enabled password reset via email, from LLDAP.
+    enablePasswordReset: true
+    # -- The SMTP server.
+    server: "mail.spencerslab.com"
+    # -- The SMTP port.
+    port: 587
+    # -- How the connection is encrypted, either "NONE" (no encryption), "TLS" or "STARTTLS".
+    smtpEncryption: "TLS"
+    # -- The SMTP user, usually your email address.
+    user: "ldap@spencerslab.com"
+    # -- The header field: how the sender appears in the email. The first
+    # is a free-form name, followed by an email between <>. Optional.
+    from: "LLDAP Admin <ldap@spencerslab.com>"
+    # -- Same for reply-to, optional.
+    replyTo: "Do not reply <noreply@spencerslab.com>"
+
+  # -- Enable and configure ingress settings for the chart under this key.
+  # @default -- See values.yaml
+  ingress:
     enabled: true
-  phpldapadmin:
-    global:
-      server: infra-openldap.default
+    hosts:
+      - host: ldap.spencerslab.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: 
+      - secretName: wildcard-cert
+        hosts:
+          - ldap.spencerslab.com
+
+  # -- Bootstrap (i.e. create) users and groups automatically.
+  # It is safe to run the bootstrap multiple times, however the one-shot
+  # Kubernetes job will be created on the first deployment, and the job
+  # will not be executed on subsequent deployments unless the job is deleted.
+  # @default -- see below
+  bootstrap:
     enabled: true
-    env:
-      PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT: "never"
-      LDAP_SKIP_DEFAULT_TREE: "yes"
-      PHPLDAPADMIN_LDAP_HOSTS: "#PYTHON2BASH:[{ 'infra-openldap.default'  : [{'server': [{'tls': True},{'port':389}]},{'login': [{'bind_id': 'cn=sl-admin,dc=spencerslab,dc=com'  }]}]}]"
-      
-    ingress:
-      enabled: true
-      annotations: {}
-      path: /
-      pathType: Prefix
-      hosts:
-        - phpldapadmin.spencerslab.com
-      tls: 
-        - secretName: wildcard-cert
-          hosts:
-            - phpldapadmin.spencerslab.com
-  ltb-passwd:
-    enabled : false
-  customLdifFiles:
-    00-root.ldif: |-
-      # Root creation
-      dn: dc=spencerslab,dc=com
-      objectClass: dcObject
-      objectClass: organization
-      o: Spencers Lab
-    01-default-group.ldif: |-
-      dn: cn=sl-users,dc=spencerslab,dc=com
-      cn: sl-users
-      gidnumber: 500
-      objectclass: posixGroup
-      objectclass: top
-    02-default-user.ldif: |-
-      dn: cn=sl-admin,dc=spencerslab,dc=com
-      cn: sl-admin
-      gidnumber: 500
-      givenname: admin
-      homedirectory: /home/users/sl-admin
-      objectclass: inetOrgPerson
-      objectclass: posixAccount
-      objectclass: top
-      sn: sl-admin
-      uid: sl-admin
-      uidnumber: 1000
-      userpassword: {MD5}KOULhzfBhPTq9k7a9XfCGw==
+    # -- Remove redundant users and groups which are not in the config below
+    cleanup: false
+    groups:
+      - users
+      - admins
+      - grafana-admins
+    users:
+      - id: "TheHackmeister"
+        email: "tms@spencerslab.com"
+        displayName: "Spencer"
+        firstName: "Spencer"
+        lastName: "H"
+        groups:
+          - admins
+          - grafana-admins
 
 keycloakx:
     image:  
