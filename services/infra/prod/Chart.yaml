@@ -22,7 +22,7 @@ dependencies:
   version: 0.3.6
   repository: https://djjudas21.github.io/charts/
 - name: samba
-  version: 1.0.2
+  version: 1.0.3
   repository: https://ownyourio.github.io/SpencersLab/
 - name: seaweedfs-csi-driver
   version: 0.2.2
