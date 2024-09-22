@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: freeipa
+  name: freeipa-data
   namespace: default
 spec:
   accessModes:
