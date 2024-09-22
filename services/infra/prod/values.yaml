@@ -1,15 +1,15 @@
 
 bitwardenIds:
   keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
-  freeipa: f7b628ec-2544-4c28-a476-b1a501487d99
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
   smtp: 876515bc-b0d6-43df-b9fa-b0dd000a601e
 
 global:
   server: infra-openldap.default
-ipa:
-  app_domain: freeipa.spencerslab.com
-  realm: "-r SpencersLab.com"
+
+freeipa:
+  bitwardenIds:
+    freeipa: f7b628ec-2544-4c28-a476-b1a501487d99
 
 keycloakx:
     image:  
