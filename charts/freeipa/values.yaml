@@ -109,11 +109,3 @@ app-template:
       medium: Memory
       globalMounts:
         - path: /var/log/journal
-
-    entrypoint-override:
-      type: configMap
-      name: '{{ .Release.Name }}-exporter-mikrotik-config'
-      defaultMode: 0777
-      globalMounts:
-        - path: /entrypoint.sh
-          subPath: custom-entrypoint.sh
