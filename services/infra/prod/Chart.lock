@@ -10,12 +10,12 @@ dependencies:
   version: 2.5.1
 - name: freeipa
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.4
+  version: 1.0.5
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.3
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-digest: sha256:36eeba7f919a2c2fabee12918c3056cc580ba4d24f250c05e9613a85002ea343
-generated: "2024-09-22T13:21:00.938963171-06:00"
+digest: sha256:f1f5f0be606e2f1ae333cd6e5139d24938e2bc984819812dfe7bc316c783cafd
+generated: "2024-09-22T13:25:07.543466249-06:00"
