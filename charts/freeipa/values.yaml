@@ -15,14 +15,19 @@ app-template:
             repository: quay.io/freeipa/freeipa-server
             tag: fedora-39-4.11.1
           env:
-            IPA_SERVER_HOSTNAME: freeipa.spencerslab.com
-            IPA_SERVER_INSTALL_OPTS: -U --setup-dns --no-forwarders --no-ntp -r SpencersLab.com
+            IPA_SERVER_HOSTNAME: freeipa.local
+            IPA_SERVER_INSTALL_OPTS: -U --setup-dns --no-forwarders --no-ntp
             PASSWORD:
               secretKeyRef:
                 name: freeipa-secret
                 key: admin-password
+          command:
+            - "/bin/sh"
           args:
-            - ipa-server-install
+            - "-c"
+            - "sleep 200"
+          #args:
+          #  - ipa-server-install
 
           probes:
             liveness:
