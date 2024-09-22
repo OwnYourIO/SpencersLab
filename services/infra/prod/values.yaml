@@ -7,86 +7,9 @@ bitwardenIds:
 
 global:
   server: infra-openldap.default
-lldap:
-  # -- Base DN for LDAP.
-  # This is usually your domain name, and is used as a namespace for your users. The choice is
-  # arbitrary, but will be needed to configure the LDAP integration with other services. The sample
-  # value is for "example.com", but you can extend it with as many "dc" as you want, and you don't
-  # actually need to own the domain name.
-  baseDN: "dc=spencerslab,dc=com"
-
-  # -- Admin username.
-  # For the LDAP interface, a value of "admin" here will create the LDAP user
-  # "cn=admin,ou=people,dc=example,dc=com" (with the base DN above). For the administration
-  # interface, this is the username.
-  ldapUserDN: "admin"
-  
-  # -- Enable and configure postgresql database subchart under this key.
-  #    For more options see [postgresql chart documentation](https://github.com/bitnami/charts/tree/master/bitnami/postgresql)
-  # @default -- https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
-  postgresql:
-    enabled: false
-    primary:
-      persistence:
-        enabled: true
-        size: 1Gi
-      resources: {}
-
-  # -- Options to configure SMTP parameters, to send password reset emails.
-  # @default -- see below
-  smtp:
-    # -- Whether to enabled password reset via email, from LLDAP.
-    enablePasswordReset: true
-    # -- The SMTP server.
-    server: "mail.spencerslab.com"
-    # -- The SMTP port.
-    port: 587
-    # -- How the connection is encrypted, either "NONE" (no encryption), "TLS" or "STARTTLS".
-    smtpEncryption: "TLS"
-    # -- The SMTP user, usually your email address.
-    user: "ldap@spencerslab.com"
-    # -- The header field: how the sender appears in the email. The first
-    # is a free-form name, followed by an email between <>. Optional.
-    from: "LLDAP Admin <ldap@spencerslab.com>"
-    # -- Same for reply-to, optional.
-    replyTo: "Do not reply <noreply@spencerslab.com>"
-
-  # -- Enable and configure ingress settings for the chart under this key.
-  # @default -- See values.yaml
-  ingress:
-    enabled: true
-    hosts:
-      - host: ldap.spencerslab.com
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-    tls: 
-      - secretName: wildcard-cert
-        hosts:
-          - ldap.spencerslab.com
-
-  # -- Bootstrap (i.e. create) users and groups automatically.
-  # It is safe to run the bootstrap multiple times, however the one-shot
-  # Kubernetes job will be created on the first deployment, and the job
-  # will not be executed on subsequent deployments unless the job is deleted.
-  # @default -- see below
-  bootstrap:
-    enabled: false
-    # -- Remove redundant users and groups which are not in the config below
-    cleanup: false
-    groups:
-      - users
-      - admins
-      - grafana-admins
-    users:
-      - id: "TheHackmeister"
-        email: "tms@spencerslab.com"
-        displayName: "Spencer"
-        firstName: "Spencer"
-        lastName: "H"
-        groups:
-          - admins
-          - grafana-admins
+ipa:
+  app_domain: freeipa.spencerslab.com
+  realm: "-r SpencersLab.com"
 
 keycloakx:
     image:  
