@@ -230,7 +230,11 @@ freeipa:
               IPA_SERVER_HOSTNAME: freeipa.spencerslab.com
               #IPA_SERVER_IP:
               IPA_SERVER_INSTALL_OPTS: -U --setup-dns --no-forwarders --no-ntp -r SpencersLab.com
-            cmd: /
+            command:
+              - "/bin/sh"
+            args:
+              - "-c"
+              - "sleep 200"
 
 keycloakx:
     image:  
