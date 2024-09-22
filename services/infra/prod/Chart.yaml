@@ -16,7 +16,7 @@ dependencies:
   version: 2.5.1
   repository: https://codecentric.github.io/helm-charts
 - name: freeipa
-  version: 1.0.3
+  version: 1.0.4
   repository: https://ownyourio.github.io/SpencersLab/
 - name: samba
   version: 1.0.3
