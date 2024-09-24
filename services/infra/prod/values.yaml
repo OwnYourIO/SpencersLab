@@ -236,7 +236,7 @@ freeipa:
               - "-c"
               - "sleep 200"
             resources:
-              limit:
+              limits:
                 memory: 4Gi
 
 keycloakx:
