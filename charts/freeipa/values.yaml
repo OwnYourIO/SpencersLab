@@ -16,7 +16,21 @@ app-template:
             tag: fedora-39-4.11.1
           env:
             IPA_SERVER_HOSTNAME: freeipa.local
-            IPA_SERVER_INSTALL_OPTS: -U --setup-dns --no-forwarders --no-ntp
+            #IPA_SERVER_IP:
+            IPA_SERVER_INSTALL_OPTS: |
+              --unattended 
+              --no-forwarders --no-ntp
+              --domain=spencerslab.com
+              --realm=spencerslab.com
+              --ds-password=$PASSWORD
+              --admin-password=$PASSWORD
+              --no-ntp
+              --no_hbac_allow
+              --setup-dns
+              --no-host-dns
+              --auto-reverse
+              --debug
+              --skip-mem-check
             PASSWORD:
               secretKeyRef:
                 name: freeipa-secret
@@ -34,12 +48,18 @@ app-template:
             privileged: true
             allowPrivilegeEscalation: true
             readOnlyRootFilesystem: false
+            seccompProfile:
+              type: Unconfined
+            capabilities:
+              add:
+                - SYS_TIME
 
           probes:
             liveness:
-              enabled: true
+              # TODO: Re-enable these
+              enabled: false
             readiness:
-              enabled: true
+              enabled: false
               spec:
                 exec:
                   command:
@@ -55,7 +75,7 @@ app-template:
             requests:
               cpu: 10m
             limits:
-              memory: 512Mi
+              memory: 2512Mi
 
   service:
     freeipa:
@@ -120,3 +140,8 @@ app-template:
       medium: Memory
       globalMounts:
         - path: /var/log/journal
+    # This is needed in order to get systemd to work right.
+    cgroup:
+      enabled: true
+      type: hostPath
+      hostPath: /sys/fs/cgroup

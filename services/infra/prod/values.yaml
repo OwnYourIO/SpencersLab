@@ -214,49 +214,6 @@ lldap:
           - admins
           - grafana-admins
 
-freeipa:
-  bitwardenIds:
-    freeipa: f7b628ec-2544-4c28-a476-b1a501487d99
-  app-template:
-    controllers:
-      freeipa:
-        containers:
-          main:
-            image:
-              repository: quay.io/freeipa/freeipa-server
-              tag: fedora-39-4.11.1
-            env:
-              # TODO: Fix this one:
-              IPA_SERVER_HOSTNAME: freeipa.spencerslab.com
-              IPA_SERVER_IP: 10.0.77.59
-              IPA_SERVER_INSTALL_OPTS: -U --setup-dns --no-forwarders --no-ntp -r SpencersLab.com
-            resources:
-              limits:
-                memory: 4Gi
-            args:
-              - "-c"
-              - "sleep 2000"
-            probes:
-              liveness:
-                enabled: false
-              readiness:
-                enabled: false
-            securityContext:
-              # -- Privileged mode is required to access devices
-              privileged: true
-              allowPrivilegeEscalation: true
-              readOnlyRootFilesystem: false
-              seccompProfile:
-                type: Unconfined
-              capabilities:
-                add:
-                  - SYS_TIME
-    persistence:
-      # This is needed in order to get systemd to work right.
-      cgroup:
-        enabled: true
-        type: hostPath
-        hostPath: /sys/fs/cgroup
 
 keycloakx:
     image:  
