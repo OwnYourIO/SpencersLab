@@ -218,8 +218,6 @@ freeipa:
   bitwardenIds:
     freeipa: f7b628ec-2544-4c28-a476-b1a501487d99
   app-template:
-    defaultPodOptions:
-      hostname: freeipa.spencerslab.com
     controllers:
       freeipa:
         containers:
@@ -230,7 +228,7 @@ freeipa:
             env:
               # TODO: Fix this one:
               IPA_SERVER_HOSTNAME: freeipa.spencerslab.com
-              #IPA_SERVER_IP:
+              IPA_SERVER_IP: 10.0.77.59
               IPA_SERVER_INSTALL_OPTS: -U --setup-dns --no-forwarders --no-ntp -r SpencersLab.com
             resources:
               limits:
