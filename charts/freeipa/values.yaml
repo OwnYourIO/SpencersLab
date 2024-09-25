@@ -29,6 +29,12 @@ app-template:
           #args:
           #  - ipa-server-install
 
+          securityContext:
+            # -- Privileged mode is required to access devices
+            privileged: true
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
+
           probes:
             liveness:
               enabled: true
