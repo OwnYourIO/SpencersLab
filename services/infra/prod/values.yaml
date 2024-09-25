@@ -233,6 +233,14 @@ freeipa:
             resources:
               limits:
                 memory: 4Gi
+            args:
+              - "-c"
+              - "sleep 2000"
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
 
 keycloakx:
     image:  
