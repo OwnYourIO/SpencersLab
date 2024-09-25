@@ -241,6 +241,25 @@ freeipa:
                 enabled: false
               readiness:
                 enabled: false
+            securityContext:
+              # -- Privileged mode is required to access devices
+              privileged: true
+              allowPrivilegeEscalation: true
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: Unconfined
+              capabilities:
+                add:
+                  - SYS_TIME
+            tty: true
+            stdin: true
+            hostname: ipa.spencerslab.com
+    persistence:
+      # This is needed in order to get systemd to work right.
+      cgroup:
+        enabled: true
+        type: hostPath
+        hostPath: /sys/fs/cgroup
 
 keycloakx:
     image:  
