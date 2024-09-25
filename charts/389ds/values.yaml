@@ -1,0 +1,121 @@
+global:
+  nameOverride: 389ds
+
+bitwardenIds:
+  389ds: OVERRIDE_NEEDED
+
+app-template:
+  controllers:
+    389ds:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: 389ds/dirsrv
+            tag: 3.1
+          env:
+            DS_DM_PASSWORD: 
+              secretKeyRef:
+                name: 389ds-secret
+                key: admin-password
+          command:
+            - "/bin/sh"
+          args:
+            - "-c"
+            - "sleep 200"
+
+          securityContext:
+            # -- Privileged mode is required to access devices
+            privileged: true
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
+
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+              spec:
+                exec:
+                  command:
+                  - "/usr/bin/systemctl"
+                  - status
+                  - ipa
+                timeoutSeconds: 10
+                periodSeconds: 10
+                successThreshold: 1
+                failureThreshold: 3
+                initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 10m
+            limits:
+              memory: 512Mi
+
+      pod:
+        securityContext:
+          runAsUser: 568
+          runAsNonRoot: true
+          fsGroup: 568
+          fsGroupChangePolicy: OnRootMismatch
+          supplementalGroups:
+            # Dialout on MicroOS
+            - 492 
+            - 20
+  service:
+    389ds:
+      controller: 389ds
+      ports:
+        dns-tcp:
+          protocol: TCP
+          port: 53
+          targetPort: 53
+        dns-udp:
+          protocol: UDP
+          port: 53
+          targetPort: 53
+        http:
+          protocol: TCP
+          port: 80
+          targetPort: 80
+        kerberos-tcp:
+          protocol: TCP
+          port: 88
+          targetPort: 88
+        kerberos-udp:
+          protocol: UDP
+          port: 88
+          targetPort: 88
+        ntp:
+          protocol: UDP
+          port: 123
+          targetPort: 123
+        ldap:
+          protocol: TCP
+          port: 389
+          targetPort: 389
+        https:
+          protocol: TCP
+          port: 443
+          targetPort: 443
+        kpasswd-tcp:
+          protocol: TCP
+          port: 464
+          targetPort: 464
+        kpasswd-udp:
+          protocol: UDP
+          port: 464
+          targetPort: 464
+        ldaps:
+          protocol: TCP
+          port: 636
+          targetPort: 636
+
+  persistence:
+    data:
+      existingClaim: 389ds-data
+    config:
+      type: configMap
+      globalMounts:
+        - path: /data/config/container.inf
