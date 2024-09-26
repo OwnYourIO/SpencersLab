@@ -1,3 +1,5 @@
+# gitea
+# - Maybe some better DNS management?
 
 bitwardenIds:
   keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
@@ -6,6 +8,211 @@ bitwardenIds:
 
 global:
   server: infra-openldap.default
+openldap-stack-ha:
+  global:
+    #ldapDomain: "spencerslab.com"
+    ldapDomain: dc=spencerslab,dc=com
+    existingSecret: openldap-secret
+    configUserEnabled: true
+    configUser: sl-admin
+    #adminUser: server-admin
+    adminUser: admin
+    server: infra-openldap.default
+  nameOverride: openldap
+  customTLS:
+    enabled: false
+  env:
+    LDAP_DOMAIN: spencerslab.com
+    LDAP_EXTRA_SCHEMAS: "cosine,inetorgperson,nis"
+    #LDAP_ADMIN_USERNAME: server-admin
+    LDAP_ADMIN_USERNAME: admin
+    LDAP_CUSTOM_LDIF_DIR: "/ldifs"
+    LDAP_SKIP_DEFAULT_TREE: "yes"
+  replication:
+    enabled: false
+  replicaCount: 1
+  persistence:
+    enabled: true
+  phpldapadmin:
+    global:
+      server: infra-openldap.default
+    enabled: true
+    env:
+      PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT: "never"
+      LDAP_SKIP_DEFAULT_TREE: "yes"
+      PHPLDAPADMIN_LDAP_HOSTS: "#PYTHON2BASH:[{ 'infra-openldap.default'  : [{'server': [{'tls': True},{'port':389}]},{'login': [{'bind_id': 'cn=sl-admin,dc=spencerslab,dc=com'  }]}]}]"
+      
+    ingress:
+      enabled: true
+      annotations: {}
+      path: /
+      pathType: Prefix
+      hosts:
+        - phpldapadmin.spencerslab.com
+      tls: 
+        - secretName: wildcard-cert
+          hosts:
+            - phpldapadmin.spencerslab.com
+  ltb-passwd:
+    enabled : false
+  customLdifFiles:
+    00-root.ldif: |-
+      # Root creation
+      dn: dc=spencerslab,dc=com
+      objectClass: dcObject
+      objectClass: organization
+      o: Spencers Lab
+    01-default-group.ldif: |-
+      dn: cn=sl-users,dc=spencerslab,dc=com
+      cn: sl-users
+      gidnumber: 500
+      objectclass: posixGroup
+      objectclass: top
+    02-default-user.ldif: |-
+      dn: cn=sl-admin,dc=spencerslab,dc=com
+      cn: sl-admin
+      gidnumber: 500
+      givenname: admin
+      homedirectory: /home/users/sl-admin
+      objectclass: inetOrgPerson
+      objectclass: posixAccount
+      objectclass: top
+      sn: sl-admin
+      uid: sl-admin
+      uidnumber: 1000
+      userpassword: {MD5}KOULhzfBhPTq9k7a9XfCGw==
+    01-root.ldif: |-
+      dn: dc=spencerslab,dc=com
+      dc: spencerslab
+      o: SpencersLab
+      objectclass: dcObject
+      objectclass: organization
+
+      dn: ou=people,dc=spencerslab,dc=com
+      objectClass: organizationalUnit
+      ou: people
+
+      dn: ou=groups,dc=spencerslab,dc=com
+      objectClass: organizationalUnit
+      ou: groups
+    10-spencer.ldif: |-
+      dn: cn=spencer,ou=groups,dc=spencerslab,dc=com
+      cn: spencer
+      gidNumber: 8742
+      objectclass: top
+      objectclass: posixGroup
+      
+      dn: uid=spencer,ou=people,dc=spencerslab,dc=com
+      cn: spencer
+      givenName: Spencer
+      sn: spencer
+      uid: spencer
+      uidNumber: 8742
+      gidNumber: 8742
+      homeDirectory: /home/spencer
+      loginShell: /bin/bash
+      mail: s@spencerslab.com
+      objectClass: top
+      objectClass: inetOrgPerson
+      objectClass: posixAccount
+      objectClass: shadowAccount
+      userPassword: {SSHA}x
+
+lldap:
+  # -- Base DN for LDAP.
+  # This is usually your domain name, and is used as a namespace for your users. The choice is
+  # arbitrary, but will be needed to configure the LDAP integration with other services. The sample
+  # value is for "example.com", but you can extend it with as many "dc" as you want, and you don't
+  # actually need to own the domain name.
+  baseDN: "dc=spencerslab,dc=com"
+
+  # -- Admin username.
+  # For the LDAP interface, a value of "admin" here will create the LDAP user
+  # "cn=admin,ou=people,dc=example,dc=com" (with the base DN above). For the administration
+  # interface, this is the username.
+  ldapUserDN: "admin"
+  
+  # -- Enable and configure postgresql database subchart under this key.
+  #    For more options see [postgresql chart documentation](https://github.com/bitnami/charts/tree/master/bitnami/postgresql)
+  # @default -- https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
+  postgresql:
+    enabled: false
+    auth:
+      postgresPassword:	lldapadminpw
+      username:	lldap
+      password:	lldap
+      database: lldap
+    primary:
+      persistence:
+        enabled: true
+        size: 1Gi
+      resources: {}
+
+  # -- Options to configure SMTP parameters, to send password reset emails.
+  # @default -- see below
+  smtp:
+    # -- Whether to enabled password reset via email, from LLDAP.
+    enablePasswordReset: true
+    # -- The SMTP server.
+    server: "mail.spencerslab.com"
+    # -- The SMTP port.
+    port: 587
+    # -- How the connection is encrypted, either "NONE" (no encryption), "TLS" or "STARTTLS".
+    smtpEncryption: "TLS"
+    # -- The SMTP user, usually your email address.
+    user: "ldap@spencerslab.com"
+    # -- The SMTP password.
+    password: "password"
+    # -- The header field: how the sender appears in the email. The first
+    # is a free-form name, followed by an email between <>. Optional.
+    from: "LLDAP Admin <ldap@spencerslab.com>"
+    # -- Same for reply-to, optional.
+    replyTo: "Do not reply <noreply@spencerslab.com>"
+
+  # -- Enable and configure ingress settings for the chart under this key.
+  # @default -- See values.yaml
+  ingress:
+    enabled: true
+    className: ""
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: ldap.spencerslab.com
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: 
+      - secretName: wildcard-cert
+        hosts:
+          - ldap.spencerslab.com
+
+  # -- Bootstrap (i.e. create) users and groups automatically.
+  # It is safe to run the bootstrap multiple times, however the one-shot
+  # Kubernetes job will be created on the first deployment, and the job
+  # will not be executed on subsequent deployments unless the job is deleted.
+  # @default -- see below
+  bootstrap:
+    enabled: false
+    # -- Remove redundant users and groups which are not in the config below
+    cleanup: false
+    groups:
+      - users
+      - admins
+      - grafana-admins
+    users:
+      - id: "TheHackmeister"
+        email: "tms@spencerslab.com"
+        password: "changeme"
+        displayName: "Spencer"
+        firstName: "Spencer"
+        lastName: "H"
+        avatar_url: "https://i.imgur.com/nbCxk3z.jpg"
+        gravatar_avatar: "false"
+        weserv_avatar: "false"
+        groups:
+          - admins
+          - grafana-admins
 
 389ds:
   bitwardenIds:
@@ -30,7 +237,9 @@ keycloakx:
         value: "America/Denver"
       - name: JAVA_OPTS_APPEND
         value: >-
+          -Djava.awt.headless=true
           -Djgroups.dns.query=keycloak-headless
+          -XX:+UseContainerSupport
       - name: KC_PROXY
         value: passthrough
       - name: KC_HTTP_PORT
@@ -513,13 +722,36 @@ seaweedfs:
         #   secretKeyRef:
         #     name: postgres-credentials
         #     key: password
+    #s3:
+    #  enabled: true
+    #  port: 8333
+    #  httpsPort: 0
+    #  allowEmptyFolder: true
+    #  domainName: 'seaweedfs-s3.infra.spencerslab.com'
+    #  enableAuth: true
+
+    #  # set to the name of an existing kubernetes Secret with the s3 json config file
+    #  # should have a secret key called seaweedfs_s3_config with an inline json configure
+    #  existingConfigSecret: seaweedfs-s3-secret
+    #  # You may specify buckets to be created during the install process.
+    #  # Buckets may be exposed publicly by setting `anonymousRead` to `true`
+    #  createBuckets:
+    #    - name: data_test
+    #      anonymousRead: false
+
   s3:
     enabled: true
     allowEmptyFolder: true
+    # enable user & permission to s3 (need to inject to all services)
+    enableAuth: true
     # Suffix of the host name, {bucket}.{domainName}
     domainName: "s3.spencerslab.com"
     ingress:
       enabled: false
+    #replicas: 1
+    #port: 8333
+    # add additional https port
+    #httpsPort: 0
     metricsPort: 9327
 
     # Resource requests, limits, etc. for the server cluster placement. This

@@ -10,12 +10,12 @@ dependencies:
   version: 2.5.1
 - name: 389ds
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.1
+  version: 1.0.2
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.3
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-digest: sha256:7397af14ff526fca45e92c9304fa8bafc7e0f948fd36d7eb3f105f900c8e0bac
-generated: "2024-09-25T18:02:35.934121365-06:00"
+digest: sha256:1414c95277cb3d295d584aec6954d05285151ac7795393bbc4efec3e2247e5e0
+generated: "2024-09-25T18:29:29.243541681-06:00"
