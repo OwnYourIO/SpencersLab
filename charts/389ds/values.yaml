@@ -38,7 +38,9 @@ app-template:
         ldap:
           protocol: TCP
           port: 389
-          targetPort: 389
+          targetPort: 3389
+        ldaps:
+          port: 3636
 
   persistence:
     data:
