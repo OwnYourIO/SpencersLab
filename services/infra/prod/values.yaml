@@ -9,7 +9,7 @@ global:
 
 389ds:
   bitwardenIds:
-    keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
+    389ds: f7b628ec-2544-4c28-a476-b1a501487d99
   
 
 keycloakx:
