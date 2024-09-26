@@ -10,7 +10,13 @@ global:
 389ds:
   bitwardenIds:
     389ds: f7b628ec-2544-4c28-a476-b1a501487d99
-  
+  app-template:
+    controllers:
+      389ds:
+        containers:
+          main:
+            env:
+              DS_SUFFIX_NAME: dc=spencerslab,dc=com
 
 keycloakx:
     image:  
