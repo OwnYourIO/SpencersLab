@@ -8,14 +8,14 @@ dependencies:
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 2.5.1
-- name: freeipa
+- name: 389ds
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.7
+  version: 1.0.1
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.3
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-digest: sha256:2638d632a48e4b6eefca390956ea83b630cbd915a25c3fd917760004cf097490
-generated: "2024-09-24T18:54:13.505366525-06:00"
+digest: sha256:7397af14ff526fca45e92c9304fa8bafc7e0f948fd36d7eb3f105f900c8e0bac
+generated: "2024-09-25T18:02:35.934121365-06:00"
