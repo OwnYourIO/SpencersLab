@@ -72,7 +72,7 @@ bitwardenIds:
         type: configMap
         name: '{{ .Release.Name }}-389ds-ldifs'
         globalMounts:
-          - path: /var/lib/dirsrv/slapd-localhost/ldif/
+          - path: /data/ldif/
 
 keycloakx:
     image:  
