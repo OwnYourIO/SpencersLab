@@ -17,6 +17,9 @@ bitwardenIds:
 
     configMaps:
       ldifs:
+        # TO initalize these, need to manually run something like:
+        #  dsconf slapd-localhost backend create --suffix "dc=spencerslab,dc=com" --be-name userRoot
+        #  ldapadd -x -D "cn=Directory Manager" -W -f /tmp/add_suffix.ldif -H ldap://localhost:3389
         data: 
           00-root.ldif: |-
             # Root creation
@@ -33,7 +36,10 @@ bitwardenIds:
             dn: ou=Groups,dc=spencerslab,dc=com
             objectClass: organizationalUnit
             ou: Groups
-
+  
+          # TODO: I think there is something wrong with these. Running
+          # dsidm localhost group list
+          # after creating these doesn't return anything.
           11-guest-group.ldif: |-
             dn: cn=Guests,ou=Groups,dc=spencerslab,dc=com
             changetype: add
