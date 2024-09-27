@@ -98,7 +98,9 @@ keycloakx:
         value: "America/Denver"
       - name: JAVA_OPTS_APPEND
         value: >-
+          -Djava.awt.headless=true
           -Djgroups.dns.query=keycloak-headless
+          -XX:+UseContainerSupport
       - name: KC_PROXY
         value: passthrough
       - name: KC_HTTP_PORT
