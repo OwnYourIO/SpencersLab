@@ -4,9 +4,6 @@ bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
   smtp: 876515bc-b0d6-43df-b9fa-b0dd000a601e
 
-global:
-  server: infra-openldap.default
-
 389ds:
   bitwardenIds:
     389ds: f7b628ec-2544-4c28-a476-b1a501487d99
@@ -17,6 +14,65 @@ global:
           main:
             env:
               DS_SUFFIX_NAME: dc=spencerslab,dc=com
+
+    configMaps:
+      ldifs:
+        data: 
+          00-root.ldif: |-
+            # Root creation
+            dn: dc=spencerslab,dc=com
+            objectClass: top
+            objectClass: domain
+            dc: SpencersLab
+
+          01-people-ou.ldif: |
+            dn: ou=People,dc=spencerslab,dc=com
+            objectClass: organizationalUnit
+            ou: People
+          02-groups-ou.ldif: |
+            dn: ou=Groups,dc=spencerslab,dc=com
+            objectClass: organizationalUnit
+            ou: Groups
+
+          11-guest-group.ldif: |-
+            dn: cn=Guests,ou=Groups,dc=spencerslab,dc=com
+            changetype: add
+            objectClass: top
+            objectClass: posixGroup
+            objectClass: groupOfUniqueNames
+            gidNumber: 12345
+            cn: Guests
+          12-user-group.ldif: |-
+            dn: cn=Users,ou=Groups,dc=spencerslab,dc=com
+            changetype: add
+            objectClass: top
+            objectClass: posixGroup
+            objectClass: groupOfUniqueNames
+            gidNumber: 12346
+            cn: Users
+          13-power-user-group.ldif: |-
+            dn: cn=PowerUsers,ou=Groups,dc=spencerslab,dc=com
+            changetype: add
+            objectClass: top
+            objectClass: posixGroup
+            objectClass: groupOfUniqueNames
+            gidNumber: 12347
+            cn: PowerUsers
+          14-admin-group.ldif: |-
+            dn: cn=Admins,ou=Groups,dc=spencerslab,dc=com
+            changetype: add
+            objectClass: top
+            objectClass: posixGroup
+            objectClass: groupOfUniqueNames
+            gidNumber: 12348
+            cn: Admins
+
+    persistence:
+      ldifs:
+        type: configMap
+        name: '{{ .Release.Name }}-389ds-ldifs'
+        globalMounts:
+          - path: /var/lib/dirsrv/slapd-localhost/ldif/
 
 keycloakx:
     image:  
