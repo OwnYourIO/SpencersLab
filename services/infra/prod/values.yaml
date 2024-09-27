@@ -3,7 +3,7 @@ bitwardenIds:
   keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
   smtp: 876515bc-b0d6-43df-b9fa-b0dd000a601e
-  gitea: 2ca2457b-dc62-413a-af99-b1f8017ef7cds
+  gitea: 2ca2457b-dc62-413a-af99-b1f8017ef7cd
 
 389ds:
   bitwardenIds:
