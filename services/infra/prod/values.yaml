@@ -797,14 +797,14 @@ forgejo:
         userFilter: sAMAccountName=%s
         adminFilter: CN=Admin,CN=Group,DC=spencerslab,DC=com
         emailAttribute: mail
-        existingSecret: infra-gitea-secret
+        existingSecret: gitea-secret
         usernameAttribute: CN
         publicSSHKeyAttribute: publicSSHKey
 
     oauth:
       - name: 'OAuth'
         provider: 'openidConnect'
-        existingSecret: infra-gitea-secret
+        existingSecret: gitea-secret
         autoDiscoverUrl: 'https://git.spencerslab.com/.well-known/openid-configuration'
 
   ingress:
