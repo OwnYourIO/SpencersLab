@@ -788,24 +788,24 @@ forgejo:
         ISSUE_INDEXER_TYPE: bleve
         REPO_INDEXER_ENABLED: true
 
-  ldap:
-    - name: LDAP
-      securityProtocol: unencrypted
-      host: 'infra-389ds.default'
-      port: '389'
-      userSearchBase: ou=Users,dc=spencerslab,dc=com
-      userFilter: sAMAccountName=%s
-      adminFilter: CN=Admin,CN=Group,DC=spencerslab,DC=com
-      emailAttribute: mail
-      existingSecret: infra-gitea-secret
-      usernameAttribute: CN
-      publicSSHKeyAttribute: publicSSHKey
+    ldap:
+      - name: LDAP
+        securityProtocol: unencrypted
+        host: 'infra-389ds.default'
+        port: '389'
+        userSearchBase: ou=Users,dc=spencerslab,dc=com
+        userFilter: sAMAccountName=%s
+        adminFilter: CN=Admin,CN=Group,DC=spencerslab,DC=com
+        emailAttribute: mail
+        existingSecret: infra-gitea-secret
+        usernameAttribute: CN
+        publicSSHKeyAttribute: publicSSHKey
 
-  oauth:
-    - name: 'OAuth'
-      provider: 'openidConnect'
-      existingSecret: infra-gitea-secret
-      autoDiscoverUrl: 'https://git.spencerslab.com/.well-known/openid-configuration'
+    oauth:
+      - name: 'OAuth'
+        provider: 'openidConnect'
+        existingSecret: infra-gitea-secret
+        autoDiscoverUrl: 'https://git.spencerslab.com/.well-known/openid-configuration'
 
   ingress:
     enabled: true
