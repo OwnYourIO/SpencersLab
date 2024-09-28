@@ -799,7 +799,7 @@ forgejo:
         host: 'infra-389ds.default'
         port: '389'
         userSearchBase: ou=Users,dc=spencerslab,dc=com
-        userFilter: sAMAccountName=%s
+        userFilter: (objectClass=person)
         adminFilter: CN=Admin,CN=Group,DC=spencerslab,DC=com
         emailAttribute: mail
         existingSecret: gitea-secret
