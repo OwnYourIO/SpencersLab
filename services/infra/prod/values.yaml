@@ -80,9 +80,6 @@ bitwardenIds:
         name: '{{ .Release.Name }}-389ds-ldifs'
         globalMounts:
           - path: /data/ldif/
-  deployment:
-    env:
-      DISABLE_REGISTRATION: true
 
 keycloakx:
     image:  
@@ -821,3 +818,7 @@ forgejo:
       - hosts:
           - "git.spencerslab.com"
         secretName: wildcard-cert
+
+  deployment:
+    env:
+      DISABLE_REGISTRATION: true
