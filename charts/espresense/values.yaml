@@ -11,7 +11,7 @@ app-template:
         main:
           image:
             repository: espresense/espresense-companion
-            tag: 0.6.5
+            tag: 1.0.1
           env:
             TZ: Etc/UTC
             CONFIG_DIR: "/config"
