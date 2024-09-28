@@ -800,7 +800,7 @@ forgejo:
         port: '389'
         userSearchBase: dc=spencerslab,dc=com
         userFilter: (objectClass=person)
-        adminFilter: CN=Admin,CN=Group,DC=spencerslab,DC=com
+        adminFilter: (CN=brenda)
         emailAttribute: mail
         existingSecret: gitea-secret
         usernameAttribute: CN
