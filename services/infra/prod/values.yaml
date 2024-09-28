@@ -821,6 +821,6 @@ forgejo:
 
   deployment:
     containers:
-      0:
+      '0':
         env:
           DISABLE_REGISTRATION: true
