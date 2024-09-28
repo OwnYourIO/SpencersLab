@@ -787,6 +787,17 @@ forgejo:
       indexer:
         ISSUE_INDEXER_TYPE: bleve
         REPO_INDEXER_ENABLED: true
+    ingress:
+      enabled: true
+      rules:
+        - host: "git.spencerslab.com"
+          paths:
+            - path: "/"
+              pathType: Prefix
+      tls:
+        - hosts:
+            - "git.spencerslab.com"
+          secretName: wildcard-cert
 
   ldap:
     - name: LDAP
@@ -806,15 +817,3 @@ forgejo:
       provider: 'openidConnect'
       existingSecret: infra-gitea-secret
       autoDiscoverUrl: 'https://git.spencerslab.com/.well-known/openid-configuration'
-
-  ingress:
-    enabled: true
-    rules:
-      - host: "git.spencerslab.com"
-        paths:
-          - path: "/"
-            pathType: Prefix
-    tls:
-      - hosts:
-          - "git.spencerslab.com"
-        secretName: wildcard-cert
