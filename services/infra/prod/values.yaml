@@ -820,5 +820,7 @@ forgejo:
         secretName: wildcard-cert
 
   deployment:
-    env:
-      DISABLE_REGISTRATION: true
+    containers:
+      0:
+        env:
+          DISABLE_REGISTRATION: true
