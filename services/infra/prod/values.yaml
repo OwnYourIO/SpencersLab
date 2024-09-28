@@ -805,7 +805,7 @@ forgejo:
       - name: 'OAuth'
         provider: 'openidConnect'
         existingSecret: gitea-secret
-        autoDiscoverUrl: 'https://git.spencerslab.com/.well-known/openid-configuration'
+        autoDiscoverUrl: 'https://login.spencerslab.com/realms/SpencersLab/.well-known/openid-configuration'
 
   ingress:
     enabled: true
