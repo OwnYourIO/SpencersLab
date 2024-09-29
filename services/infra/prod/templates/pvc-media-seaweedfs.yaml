@@ -12,7 +12,7 @@ spec:
     volumeHandle: media-shared
     volumeAttributes:
       collection: media
-      replication: "000"
+      replication: "002"
       #path: /path/to/files
       #diskType: "ssd"
     readOnly: false
