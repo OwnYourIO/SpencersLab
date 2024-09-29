@@ -109,7 +109,7 @@ snapcast:
             stream = meta:///SpencersStream/LMS/MusicAssistant/default?name=Spencer&mode=recent
             # Snapserver kinda just stops playing to a speaker if it can't keep up.
             # Have to extend this to 700ms to support BT speakers. 300 works if there are no BT considerations.
-            buffer = 1500
+            buffer = 3000
             #source = pipe:///tmp/rocsink?name=rocfile
 
             [http]
