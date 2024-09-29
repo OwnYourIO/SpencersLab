@@ -11,7 +11,7 @@ dependencies:
 #  version: 1.0.4
 #  repository: oci://codeberg.org/forgejo-contrib/forgejo
 - name: gitea 
-  version: 10.2.0
+  version: 10.4.1
   repository: https://dl.gitea.com/charts/
 - name: backups-appset
   version: 1.1.1
