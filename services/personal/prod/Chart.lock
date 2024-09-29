@@ -1,9 +1,9 @@
 dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 3.68.0
+  version: 4.0.0
 - name: personal-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.1
-digest: sha256:6880b98aeff0ef7d4d9c866be7a1c9ade7999bd843e0abe137763166c5db88c0
-generated: "2024-07-04T17:44:07.638256928Z"
+digest: sha256:f3398c113b3a17becda461a5a909e7f0581611d4f199d155aae40e573a5915bb
+generated: "2024-09-27T23:32:43.047190527Z"

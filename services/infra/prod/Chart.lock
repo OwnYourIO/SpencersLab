@@ -1,7 +1,7 @@
 dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 3.68.0
+  version: 4.0.0
 - name: forgejo
   repository: oci://code.forgejo.org/forgejo-helm
   version: 9.0.0
@@ -20,5 +20,5 @@ dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-digest: sha256:71fcd331c28d56b76b792ab66c06ed77d14f361e3e6c87e579c8ee4b9344fb05
-generated: "2024-09-27T17:31:38.363927071-06:00"
+digest: sha256:1673437fcde8a7764509f949a3a3950990335bb493e2e0280fc905e45f0f373d
+generated: "2024-09-27T23:32:32.410530316Z"
