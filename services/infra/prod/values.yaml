@@ -235,6 +235,11 @@ seaweedfs:
     # Z number of replica in other servers in the same rack
     #replicationPlacment: "001"
 
+    extraEnvironmentVars:
+      WEED_CLUSTER_DEFAULT: "sw"
+      WEED_CLUSTER_SW_MASTER: "seaweedfs-master.default:9333"
+      WEED_CLUSTER_SW_FILER: "seaweedfs-filer-client.default:8888"
+
   master:
     enabled: true
     #port: 9333
