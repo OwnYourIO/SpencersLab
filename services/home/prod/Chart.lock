@@ -19,12 +19,12 @@ dependencies:
   version: 1.0.11
 - name: ledfx
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.9
+  version: 1.0.10
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.14
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.2
-digest: sha256:1ca613da90959a90b32cee284babd0a106f9584d72472c00c1547777d290ed6b
-generated: "2024-09-29T17:00:20.288948658Z"
+digest: sha256:efdd3a901a4b4224772fe32fcece19e31ff6a2c508dcd4114f62247d66e0125f
+generated: "2024-09-30T00:30:03.998552513Z"
