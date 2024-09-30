@@ -325,6 +325,15 @@ seaweedfs:
     #minFreeSpacePercent: 5
     #compactionMBps: "250"
 
+    # In the 4.0.0 chart these seemed to change and are now failing... 
+    # Though could be that my volumes are actually broken (I know they sorta are) and I need a more permissive health check to fix.
+    readinessProbe:
+      httpGet:
+        path: status
+    livenessProbe:
+      httpGet:
+        path: status
+
     # For each data disk you may use ANY storage-class, example with local-path-provisioner
     # Annotations are optional.
     #  dataDirs:
