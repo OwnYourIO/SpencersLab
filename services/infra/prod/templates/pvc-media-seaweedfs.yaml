@@ -6,13 +6,13 @@ spec:
   accessModes:
   - ReadWriteMany
   capacity:
-    storage: 1Gi
+    storage: 32Gi
   csi:
     driver: seaweedfs-csi-driver
     volumeHandle: media-shared
     volumeAttributes:
       collection: media
-      replication: "000"
+      replication: "001"
       #path: /path/to/files
       #diskType: "ssd"
     readOnly: false
@@ -32,4 +32,4 @@ spec:
   - ReadWriteMany
   resources:
     requests:
-      storage: 1Gi
+      storage: 32Gi

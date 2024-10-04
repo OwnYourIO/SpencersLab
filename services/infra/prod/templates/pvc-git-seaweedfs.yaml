@@ -6,13 +6,13 @@ spec:
   accessModes:
   - ReadWriteMany
   capacity:
-    storage: 1Gi
+    storage: 32Gi
   csi:
     driver: seaweedfs-csi-driver
     volumeHandle: git-shared
     volumeAttributes:
       collection: git
-      replication: "001"
+      replication: "002"
       #path: /path/to/files
       #diskType: "ssd"
     readOnly: false
@@ -32,4 +32,4 @@ spec:
   - ReadWriteMany
   resources:
     requests:
-      storage: 1Gi
+      storage: 32Gi

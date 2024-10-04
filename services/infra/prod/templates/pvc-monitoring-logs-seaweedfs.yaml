@@ -6,7 +6,7 @@ spec:
   accessModes:
   - ReadWriteMany
   capacity:
-    storage: 1Gi
+    storage: 32Gi
   csi:
     driver: seaweedfs-csi-driver
     volumeHandle: monitoring-logs-shared
@@ -32,4 +32,4 @@ spec:
   - ReadWriteMany
   resources:
     requests:
-      storage: 1Gi
+      storage: 32Gi
