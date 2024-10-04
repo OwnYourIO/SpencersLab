@@ -228,7 +228,7 @@ seaweedfs:
     monitoring:
       enabled: true
     # if enabled will use global.replicationPlacment and override master & filer defaultReplicaPlacement config
-    #enableReplication: false
+    #enableReplication: true
     #  replication type is XYZ:
     # X number of replica in other data centers
     # Y number of replica in other racks in the same data center
@@ -245,7 +245,7 @@ seaweedfs:
     #port: 9333
     #grpcPort: 19333
     metricsPort: 9327
-#    defaultReplication: "000"
+    # defaultReplication: "000"
 
     #config: |-
     #  # Enter any extra configuration for master.toml here.
@@ -325,8 +325,7 @@ seaweedfs:
     #grpcPort: 18080
     metricsPort: 9328
     index: leveldb
-    # TODO: Pretty sure this should be more but it complains about duplicate mounts. 
-    replicas: 1
+    replicas: 5
     #minFreeSpacePercent: 5
     #compactionMBps: "250"
 
@@ -361,26 +360,11 @@ seaweedfs:
     #     type: "emptyDir"
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
     dataDirs:
-      - name: hdd1
+      - name: $(POD_NAME)
         type: "hostPath"
-        hostPathPrefix: /var/mnt/drive1
+        hostPathPrefix: /var/mnt/$(POD_NAME)
         maxVolumes: 0
-      - name: hdd2
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive2
-        maxVolumes: 0
-      - name: hdd3
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive3
-        maxVolumes: 0
-      - name: hdd4
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive4
-        maxVolumes: 0
-      - name: hdd5
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive5
-        maxVolumes: 0
+
     # idx can be defined by:
     #
     # idx:
@@ -430,6 +414,7 @@ seaweedfs:
       PUBLIC_URL: "seaweedfs-volume.infra.spencerslab.com:8080"
       WEED_PUBLICURL: "seaweedfs-volume.infra.spencerslab.com:8080"
       WEED_PUBLIC_URL: "seaweedfs-volume.infra.spencerslab.com:8080"
+      WEED_DISK: spinner
 
     # Redirect moved or non-local volumes. (default proxy)
     #readMode: proxy
