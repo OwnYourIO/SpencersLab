@@ -30,6 +30,3 @@ spec:
   volumeName: player-shared
   accessModes:
   - ReadWriteMany
-  resources:
-    requests:
-      storage: 2Gi
