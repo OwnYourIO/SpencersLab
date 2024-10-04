@@ -360,9 +360,9 @@ seaweedfs:
     #     type: "emptyDir"
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
     dataDirs:
-      - name: $(POD_NAME)
+      - name: ${POD_NAME}
         type: "hostPath"
-        hostPathPrefix: /var/mnt/$(POD_NAME)
+        hostPathPrefix: /var/mnt/${POD_NAME}
         maxVolumes: 0
 
     # idx can be defined by:
