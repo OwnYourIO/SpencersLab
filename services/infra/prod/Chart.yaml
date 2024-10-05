@@ -6,10 +6,10 @@ dependencies:
 - name: seaweedfs
   version: 4.0.0
   repository: https://seaweedfs.github.io/seaweedfs/helm
-#- name: seaweedfs
-#  version: 4.0.0
-#  repository: https://seaweedfs.github.io/seaweedfs/helm
-#  alias: seaweedfs-backups
+- name: seaweedfs
+  version: 4.0.0
+  repository: https://seaweedfs.github.io/seaweedfs/helm
+  alias: seaweedfs-volume-server-0
 - name: seaweedfs-csi-driver
   version: 0.2.2
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm

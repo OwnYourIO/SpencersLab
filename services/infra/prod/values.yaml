@@ -362,14 +362,6 @@ seaweedfs:
     #     type: "emptyDir"
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
     dataDirs:
-      - name: hdd1
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive1
-        maxVolumes: 0
-      - name: hdd2
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive2
-        maxVolumes: 0
       - name: hdd3
         type: "hostPath"
         hostPathPrefix: /var/mnt/drive3
@@ -657,7 +649,7 @@ seaweedfs:
       type: "existingClaim"
       claimName: "data-s3-seaweedfs-s3-0"
 
-seaweedfs-backups:
+seaweedfs-volume-server-0:
   global:
     monitoring:
       enabled: true
@@ -684,16 +676,14 @@ seaweedfs-backups:
         path: status
 
     dataDirs:
-      - name: backups-storage-0
+      - name: hdd1
         type: "hostPath"
-        hostPathPrefix: /var/mnt/backup-drive-0
+        hostPathPrefix: /var/mnt/drive1
         maxVolumes: 0
-      - name: backups-storage-1
+      - name: hdd2
         type: "hostPath"
-        hostPathPrefix: /var/mnt/backup-drive-1
-      - name: backups-storage-2
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/backup-drive-2
+        hostPathPrefix: /var/mnt/drive2
+        maxVolumes: 0
 
     idx:
       type: "persistentVolumeClaim"
@@ -707,15 +697,15 @@ seaweedfs-backups:
       enabled: false
 
     # Volume server's rack name
-    rack: infra-backups.spencerslab.com
+    rack: infra.spencerslab.com
 
     # Volume server's data center name
     dataCenter: spencerslab.com
 
     # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
     extraEnvironmentVars:
-      WEED_PUBLICURL: "seaweedfs-volume.infra.spencerslab.com:8080"
-      WEED_PUBLIC_URL: "seaweedfs-volume.infra.spencerslab.com:8080"
+      WEED_PUBLICURL: "seaweedfs-volume-0.infra.spencerslab.com:8080"
+      WEED_PUBLIC_URL: "seaweedfs-volume-0.infra.spencerslab.com:8080"
       # TODO: This doesn't work. Have to add the flag to the chart.
       WEED_DISK: backup
 
