@@ -385,6 +385,7 @@ seaweedfs:
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
     dataDirs:
       - name: drive
+        type: "none"
         maxVolumes: 0
 
     extraVolumeMounts: |
