@@ -385,10 +385,16 @@ seaweedfs:
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
     dataDirs:
       - name: drive
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive3
-        subPathExpr: $(POD_NAME)
         maxVolumes: 0
+
+    extraVolumeMounts: 
+      - name: drive
+        mountPath: /drive
+        subPathExpr: $(POD_NAME)
+    extraVolumes:
+      - name: drive
+        hostPath: 
+          path: /var/mnt/
 
     # idx can be defined by:
     #
