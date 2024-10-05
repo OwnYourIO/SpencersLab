@@ -245,7 +245,7 @@ seaweedfs:
     #port: 9333
     #grpcPort: 19333
     metricsPort: 9327
-    volumeSizeLimitMB: 32000
+    volumeSizeLimitMB: 30000
     # defaultReplication: "000"
 
     #config: |-
