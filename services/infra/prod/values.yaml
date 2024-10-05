@@ -661,6 +661,8 @@ seaweedfs-volume-server-0:
     enabled: false
   filer:  
     enabled: false
+    s3: 
+      enabled: false
 
   volume:
     #enabled: true
