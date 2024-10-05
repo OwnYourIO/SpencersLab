@@ -387,11 +387,11 @@ seaweedfs:
       - name: drive
         maxVolumes: 0
 
-    extraVolumeMounts: 
+    extraVolumeMounts: |
       - name: drive
         mountPath: /drive
         subPathExpr: $(POD_NAME)
-    extraVolumes:
+    extraVolumes: |
       - name: drive
         hostPath: 
           path: /var/mnt/
