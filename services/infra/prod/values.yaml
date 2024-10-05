@@ -389,7 +389,7 @@ seaweedfs:
 
     extraVolumeMounts: |
       - name: drive
-        mountPath: /drive
+        mountPath: /drive/
         subPathExpr: $(POD_NAME)
     extraVolumes: |
       - name: drive
