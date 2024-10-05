@@ -5,9 +5,6 @@ dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-- name: forgejo
-  repository: oci://code.forgejo.org/forgejo-helm
-  version: 9.0.0
 - name: infra-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.25
@@ -20,5 +17,5 @@ dependencies:
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.3
-digest: sha256:1e8b3096d0449a54db5fb73ccde4d834d3bff0219e817a034bf7a8845997d756
-generated: "2024-10-05T15:00:26.60319952-06:00"
+digest: sha256:badc86b399ead919c06957d8f136b0cc9a9796dc65ce85641cd4564eef8369b5
+generated: "2024-10-05T15:58:43.297004186-06:00"
