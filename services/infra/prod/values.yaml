@@ -386,11 +386,11 @@ seaweedfs:
     dataDirs: []
 
     extraVolumeMounts: |
-      - name: drive2
+      - name: drive
         mountPath: /drive2
         subPathExpr: $(POD_NAME)
     extraVolumes: |
-      - name: drive2
+      - name: drive
         hostPath: 
           path: /var/mnt/
 
@@ -441,6 +441,8 @@ seaweedfs:
     extraEnvironmentVars:
       PUBLICURL: "${POD_NAME}.infra.spencerslab.com:8080"
       WEED_PUBLICURL: "$(POD_NAME).infra.spencerslab.com:8080"
+      WEED_DIR: "/drive/"
+      WEED_MAX: 0
 
     # Redirect moved or non-local volumes. (default proxy)
     #readMode: proxy
