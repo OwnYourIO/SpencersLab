@@ -218,6 +218,28 @@ keycloakx:
     #dbchecker:
     #  enabled: true
 
+generic-device-plugin:
+  app-template:
+    configMaps:
+      config:
+        enabled: true
+        data:
+          devices.yaml: |-
+            devices:
+              - name: hdd
+                groups:
+                  - paths:
+                      - path: /var/mnt/drive1
+                        mountPath: /drive
+                      - path: /var/mnt/drive2
+                        mountPath: /drive
+                      - path: /var/mnt/drive3
+                        mountPath: /drive
+                      - path: /var/mnt/drive4
+                        mountPath: /drive
+                      - path: /var/mnt/drive5
+                        mountPath: /drive
+
 seaweedfs-csi-driver:
   #seaweedfsFiler: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
   seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default:8888"
@@ -327,7 +349,7 @@ seaweedfs:
     #grpcPort: 18080
     metricsPort: 9328
     index: leveldb
-    replicas: 1
+    replicas: 5
     #minFreeSpacePercent: 5
     #compactionMBps: "250"
 
@@ -362,17 +384,7 @@ seaweedfs:
     #     type: "emptyDir"
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
     dataDirs:
-      - name: hdd3
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive3
-        maxVolumes: 0
-      - name: hdd4
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive4
-        maxVolumes: 0
-      - name: hdd5
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive5
+      - name: drive
         maxVolumes: 0
 
     # idx can be defined by:
@@ -420,8 +432,8 @@ seaweedfs:
 
     # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
     extraEnvironmentVars:
-      PUBLICURL: "seaweedfs-volume.infra.spencerslab.com:8080"
-      WEED_PUBLICURL: "seaweedfs-volume.infra.spencerslab.com:8080"
+      PUBLICURL: "${POD_NAME}.infra.spencerslab.com:8080"
+      WEED_PUBLICURL: "$(POD_NAME).infra.spencerslab.com:8080"
 
     # Redirect moved or non-local volumes. (default proxy)
     #readMode: proxy
@@ -443,7 +455,9 @@ seaweedfs:
     # should map directly to the value of the resources field for a PodSpec,
     # formatted as a multi-line string. By default no direct resource request
     # is made.
-    resources: {}
+    resources:
+      limits:
+        squat.ai/hdd: 1
 
     # Configure security context for Pod
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
@@ -649,80 +663,80 @@ seaweedfs:
       type: "existingClaim"
       claimName: "data-s3-seaweedfs-s3-0"
 
-seaweedfs-volume-server-0:
-  global:
-    monitoring:
-      enabled: true
-    extraEnvironmentVars:
-      WEED_CLUSTER_DEFAULT: "sw"
-      WEED_CLUSTER_SW_MASTER: "seaweedfs-master.default:9333"
-      WEED_CLUSTER_SW_FILER: "seaweedfs-filer-client.default:8888"
-  master:
-    enabled: false
-  filer:  
-    enabled: false
-    s3: 
-      enabled: false
-
-  volume:
-    #enabled: true
-    #port: 8080
-    #grpcPort: 18080
-    metricsPort: 9328
-    index: leveldb
-    replicas: 1
-
-    # In the 4.0.0 chart these seemed to change and are now failing... 
-    # Though could be that my volumes are actually broken (I know they sorta are) and I need a more permissive health check to fix.
-    readinessProbe:
-      httpGet:
-        path: status
-    livenessProbe:
-      httpGet:
-        path: status
-
-    dataDirs:
-      - name: hdd1
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive1
-        maxVolumes: 0
-      - name: hdd2
-        type: "hostPath"
-        hostPathPrefix: /var/mnt/drive2
-        maxVolumes: 0
-
-    idx:
-      type: "persistentVolumeClaim"
-      size: "10Gi"
-
-    logs: 
-      type: "persistentVolumeClaim"
-      size: "2Gi"
-
-    ingress:
-      enabled: false
-
-    # Volume server's rack name
-    rack: infra.spencerslab.com
-
-    # Volume server's data center name
-    dataCenter: spencerslab.com
-
-    # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
-    extraEnvironmentVars:
-      WEED_PUBLICURL: "seaweedfs-volume-0.infra.spencerslab.com:8080"
-      WEED_PUBLIC_URL: "seaweedfs-volume-0.infra.spencerslab.com:8080"
-      # TODO: This doesn't work. Have to add the flag to the chart.
-      WEED_DISK: backup
-
-    # Configure security context for Pod
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    # Example:
-    podSecurityContext:
-      enabled: true
-      runAsUser: 2000
-      runAsGroup: 2000
-      fsGroup: 2000
+#seaweedfs-volume-server-0:
+#  global:
+#    monitoring:
+#      enabled: true
+#    extraEnvironmentVars:
+#      WEED_CLUSTER_DEFAULT: "sw"
+#      WEED_CLUSTER_SW_MASTER: "seaweedfs-master.default:9333"
+#      WEED_CLUSTER_SW_FILER: "seaweedfs-filer-client.default:8888"
+#  master:
+#    enabled: false
+#  filer:  
+#    enabled: false
+#    s3: 
+#      enabled: false
+#
+#  volume:
+#    #enabled: true
+#    #port: 8080
+#    #grpcPort: 18080
+#    metricsPort: 9328
+#    index: leveldb
+#    replicas: 1
+#
+#    # In the 4.0.0 chart these seemed to change and are now failing... 
+#    # Though could be that my volumes are actually broken (I know they sorta are) and I need a more permissive health check to fix.
+#    readinessProbe:
+#      httpGet:
+#        path: status
+#    livenessProbe:
+#      httpGet:
+#        path: status
+#
+#    dataDirs:
+#      - name: hdd1
+#        type: "hostPath"
+#        hostPathPrefix: /var/mnt/drive1
+#        maxVolumes: 0
+#      - name: hdd2
+#        type: "hostPath"
+#        hostPathPrefix: /var/mnt/drive2
+#        maxVolumes: 0
+#
+#    idx:
+#      type: "persistentVolumeClaim"
+#      size: "10Gi"
+#
+#    logs: 
+#      type: "persistentVolumeClaim"
+#      size: "2Gi"
+#
+#    ingress:
+#      enabled: false
+#
+#    # Volume server's rack name
+#    rack: infra.spencerslab.com
+#
+#    # Volume server's data center name
+#    dataCenter: spencerslab.com
+#
+#    # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
+#    extraEnvironmentVars:
+#      WEED_PUBLICURL: "seaweedfs-volume-0.infra.spencerslab.com:8080"
+#      WEED_PUBLIC_URL: "seaweedfs-volume-0.infra.spencerslab.com:8080"
+#      # TODO: This doesn't work. Have to add the flag to the chart.
+#      #WEED_DISK: backup
+#
+#    # Configure security context for Pod
+#    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#    # Example:
+#    podSecurityContext:
+#      enabled: true
+#      runAsUser: 2000
+#      runAsGroup: 2000
+#      fsGroup: 2000
 
 samba:
   app-template:

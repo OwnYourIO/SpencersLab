@@ -3,13 +3,16 @@ name: infra
 version: 1.0.0
 appVersion: 1.0.0
 dependencies:
+- name: generic-device-plugin
+  version: 1.0.13
+  repository: https://ownyourio.github.io/SpencersLab/
 - name: seaweedfs
   version: 4.0.0
   repository: https://seaweedfs.github.io/seaweedfs/helm
-- name: seaweedfs
-  version: 4.0.0
-  repository: https://seaweedfs.github.io/seaweedfs/helm
-  alias: seaweedfs-volume-server-0
+#- name: seaweedfs
+#  version: 4.0.0
+#  repository: https://seaweedfs.github.io/seaweedfs/helm
+#  alias: seaweedfs-volume-server-0
 - name: seaweedfs-csi-driver
   version: 0.2.2
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
