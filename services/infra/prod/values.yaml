@@ -657,6 +657,10 @@ seaweedfs-volume-server-0:
       WEED_CLUSTER_DEFAULT: "sw"
       WEED_CLUSTER_SW_MASTER: "seaweedfs-master.default:9333"
       WEED_CLUSTER_SW_FILER: "seaweedfs-filer-client.default:8888"
+  master:
+    enabled: false
+  filer:  
+    enabled: false
 
   volume:
     #enabled: true
