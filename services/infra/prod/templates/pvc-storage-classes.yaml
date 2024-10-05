@@ -3,9 +3,9 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: seaweedfs-extra
 provisioner: seaweedfs-csi-driver
+AllowVolumeExpansion: true
 parameters:
   replication: "002"
-  AllowVolumeExpansion: true
 
 ---
 
@@ -14,9 +14,9 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: seaweedfs-important
 provisioner: seaweedfs-csi-driver
+AllowVolumeExpansion: true
 parameters:
   replication: "003"
-  AllowVolumeExpansion: true
 
 ---
 
@@ -25,10 +25,10 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: seaweedfs-backup
 provisioner: seaweedfs-csi-driver
+AllowVolumeExpansion: true
 parameters:
   replication: "001"
   diskType: "backup"
-  AllowVolumeExpansion: true
 
 ---
 
@@ -37,7 +37,7 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: seaweedfs-backup-important
 provisioner: seaweedfs-csi-driver
+AllowVolumeExpansion: true
 parameters:
   replication: "002"
   diskType: "backup"
-  AllowVolumeExpansion: true
