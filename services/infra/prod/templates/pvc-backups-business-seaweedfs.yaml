@@ -4,7 +4,6 @@ metadata:
   name: backups-business-shared
 spec:
   storageClassName: seaweedfs-storage
-  volumeName: backups-business-shared
   accessModes:
   - ReadWriteMany
   resources:

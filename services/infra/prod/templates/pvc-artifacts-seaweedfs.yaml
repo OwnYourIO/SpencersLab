@@ -4,7 +4,6 @@ metadata:
   name: artifacts-shared
 spec:
   storageClassName: seaweedfs-storage
-  volumeName: artifacts-shared
   accessModes:
   - ReadWriteMany
   resources:

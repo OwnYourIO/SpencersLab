@@ -4,7 +4,6 @@ metadata:
   name: git-shared
 spec:
   storageClassName: seaweedfs-extra
-  volumeName: git-shared
   accessModes:
   - ReadWriteMany
   resources:

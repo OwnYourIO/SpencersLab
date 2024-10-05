@@ -4,7 +4,6 @@ metadata:
   name: monitoring-metrics-shared
 spec:
   storageClassName: seaweedfs-storage
-  volumeName: monitoring-metrics-shared
   accessModes:
   - ReadWriteMany
   resources:

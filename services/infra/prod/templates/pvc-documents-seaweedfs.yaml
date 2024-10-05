@@ -4,7 +4,6 @@ metadata:
   name: documents-shared
 spec:
   storageClassName: seaweedfs-important
-  volumeName: documents-shared
   accessModes:
   - ReadWriteMany
   resources:
