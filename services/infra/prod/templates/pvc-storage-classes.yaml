@@ -5,6 +5,7 @@ metadata:
 provisioner: seaweedfs-csi-driver
 parameters:
   replication: "002"
+  AllowVolumeExpansion: true
 
 ---
 
@@ -15,6 +16,7 @@ metadata:
 provisioner: seaweedfs-csi-driver
 parameters:
   replication: "003"
+  AllowVolumeExpansion: true
 
 ---
 
@@ -26,6 +28,7 @@ provisioner: seaweedfs-csi-driver
 parameters:
   replication: "001"
   diskType: "backup"
+  AllowVolumeExpansion: true
 
 ---
 
@@ -37,3 +40,4 @@ provisioner: seaweedfs-csi-driver
 parameters:
   replication: "002"
   diskType: "backup"
+  AllowVolumeExpansion: true
