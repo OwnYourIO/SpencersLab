@@ -442,7 +442,6 @@ seaweedfs:
       PUBLICURL: "${POD_NAME}.infra.spencerslab.com:8080"
       WEED_PUBLICURL: "$(POD_NAME).infra.spencerslab.com:8080"
       WEED_DIR: "/drive/"
-      WEED_MAX: 0
 
     # Redirect moved or non-local volumes. (default proxy)
     #readMode: proxy
