@@ -385,6 +385,9 @@ seaweedfs:
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
     dataDirs:
       - name: drive
+        type: "hostPath"
+        hostPathPrefix: /var/mnt/drive3
+        subPathExpr: $(POD_NAME)
         maxVolumes: 0
 
     # idx can be defined by:
@@ -455,9 +458,7 @@ seaweedfs:
     # should map directly to the value of the resources field for a PodSpec,
     # formatted as a multi-line string. By default no direct resource request
     # is made.
-    resources:
-      limits:
-        squat.ai/hdd: 1
+    resources: {}
 
     # Configure security context for Pod
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/

@@ -1,7 +1,4 @@
 dependencies:
-- name: generic-device-plugin
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.13
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
   version: 4.0.0
@@ -23,5 +20,5 @@ dependencies:
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.3
-digest: sha256:05b54a522cbd5b89b5577846ece06618ac751c0e5c3f04721e66428b0d201b68
-generated: "2024-10-05T14:11:38.838892722-06:00"
+digest: sha256:1e8b3096d0449a54db5fb73ccde4d834d3bff0219e817a034bf7a8845997d756
+generated: "2024-10-05T15:00:26.60319952-06:00"
