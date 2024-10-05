@@ -4,9 +4,8 @@ metadata:
   name: player-shared
 spec:
   storageClassName: seaweedfs-storage
-  volumeName: player-shared
   accessModes:
-  - ReadWriteOnceWithFSType
+  - ReadWriteOnce
   resources:
     requests:
       storage: 30Gi
