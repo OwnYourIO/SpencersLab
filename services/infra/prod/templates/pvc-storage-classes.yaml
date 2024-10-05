@@ -1,0 +1,39 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: seaweedfs-extra
+provisioner: seaweedfs-csi-driver
+parameters:
+  replication: "002"
+
+---
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: seaweedfs-important
+provisioner: seaweedfs-csi-driver
+parameters:
+  replication: "003"
+
+---
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: seaweedfs-backup
+provisioner: seaweedfs-csi-driver
+parameters:
+  replication: "001"
+  diskType: "backup"
+
+---
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: seaweedfs-backup-important
+provisioner: seaweedfs-csi-driver
+parameters:
+  replication: "002"
+  diskType: "backup"

@@ -1,35 +1,12 @@
 apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: documents-shared
-spec:
-  accessModes:
-  - ReadWriteMany
-  capacity:
-    storage: 32Gi
-  csi:
-    driver: seaweedfs-csi-driver
-    volumeHandle: documents-shared
-    volumeAttributes:
-      collection: documents
-      replication: "003"
-      #path: /path/to/files
-      #diskType: "ssd"
-    readOnly: false
-  persistentVolumeReclaimPolicy: Retain
-  volumeMode: Filesystem
-
----
-
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: documents-shared
 spec:
-  storageClassName: ""
+  storageClassName: seaweedfs-important
   volumeName: documents-shared
   accessModes:
   - ReadWriteMany
   resources:
     requests:
-      storage: 32Gi
+      storage: 30Gi

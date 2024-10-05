@@ -1,32 +1,9 @@
 apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: backups-shared
-spec:
-  accessModes:
-  - ReadWriteMany
-  capacity:
-    storage: 32Gi
-  csi:
-    driver: seaweedfs-csi-driver
-    volumeHandle: backups-shared
-    volumeAttributes:
-      collection: backups
-      replication: "002"
-      #path: /path/to/files
-      diskType: "backups"
-    readOnly: false
-  persistentVolumeReclaimPolicy: Retain
-  volumeMode: Filesystem
-
----
-
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: backups-shared
 spec:
-  storageClassName: ""
+  storageClassName: seaweedfs-backups
   volumeName: backups-shared
   accessModes:
   - ReadWriteMany
