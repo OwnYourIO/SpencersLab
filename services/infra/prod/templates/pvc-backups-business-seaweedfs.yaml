@@ -1,11 +1,34 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: backups-business-shared
+  name: backups-business
 spec:
-  storageClassName: seaweedfs-storage
+  storageClassName: ""
   accessModes:
   - ReadWriteMany
   resources:
     requests:
       storage: 30Gi
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: backups-business
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 30Gi
+  csi:
+    driver: seaweedfs-csi-driver
+    # volumeHandle doesn't seem to have an impact, but is required. For now, just matching volume name.
+    volumeHandle: backups-business
+    volumeAttributes:
+      collection: backups-business
+      replication: "001"
+      path: /buckets/backups-business
+      diskType: "backup"
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
