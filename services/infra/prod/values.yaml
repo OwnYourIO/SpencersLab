@@ -850,23 +850,23 @@ samba:
                 subPath: samba.yaml
                 readOnly: true
       media:
-        existingClaim: media-shared
+        existingClaim: media
         globalMounts:
           - path: /mnt/media
       player:
-        existingClaim: player-shared
+        existingClaim: player
         globalMounts:
           - path: /mnt/player
       pictures:
-        existingClaim: pictures-shared
+        existingClaim: pictures
         globalMounts:
           - path: /mnt/pictures
       documents:
-        existingClaim: documents-shared
+        existingClaim: documents
         globalMounts:
-          - path: /mnt/documents-shared
+          - path: /mnt/documents
       backups:
-        existingClaim: backups-shared
+        existingClaim: backups
         globalMounts:
           - path: /mnt/backups
 
