@@ -3,7 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: artifacts
 spec:
-  storageClassName: seaweedfs-storage
+  storageClassName: ""
   accessModes:
   - ReadWriteMany
   resources:
