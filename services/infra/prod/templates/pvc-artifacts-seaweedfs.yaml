@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: artifacts
+  name: artifacts-shared
 spec:
   storageClassName: ""
   accessModes:
@@ -15,7 +15,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: artifacts
+  name: artifacts-shared
 spec:
   accessModes:
   - ReadWriteMany
@@ -24,7 +24,7 @@ spec:
   csi:
     driver: seaweedfs-csi-driver
     # volumeHandle doesn't seem to have an impact, but is required. For now, just matching volume name.
-    volumeHandle: artifacts
+    volumeHandle: default/artifacts
     volumeAttributes:
       collection: artifacts
       replication: "001"
