@@ -24,7 +24,7 @@ spec:
   csi:
     driver: seaweedfs-csi-driver
     # volumeHandle doesn't seem to have an impact, but is required. For now, just matching volume name.
-    volumeHandle: backups
+    volumeHandle: default/backups
     volumeAttributes:
       collection: backups
       replication: "002"
