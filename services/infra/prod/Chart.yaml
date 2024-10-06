@@ -5,7 +5,7 @@ appVersion: 1.0.0
 dependencies:
 - name: seaweedfs
   version: 4.0.0
-  repository: https://seaweedfs.github.io/seaweedfs/helm
+  repository: https://ownyourio.github.io/SpencersLab/
 #- name: seaweedfs
 #  version: 4.0.0
 #  repository: https://seaweedfs.github.io/seaweedfs/helm

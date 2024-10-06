@@ -383,11 +383,14 @@ seaweedfs:
     #   - name: data
     #     type: "emptyDir"
     #     maxVolumes: 0  # If set to zero on non-windows OS, the limit will be auto configured. (default "7")
-    dataDir: /drive
+    dataDirs:
+      - name: drive
+        type: "custom"
+        maxVolumes: 0
 
     extraVolumeMounts: |
       - name: drive
-        mountPath: /drive2
+        mountPath: /drive
         subPathExpr: $(POD_NAME)
     extraVolumes: |
       - name: drive
