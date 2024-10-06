@@ -4,6 +4,7 @@ metadata:
   name: pictures
 spec:
   storageClassName: ""
+  volumeName: pictures
   accessModes:
   - ReadWriteMany
   resources:

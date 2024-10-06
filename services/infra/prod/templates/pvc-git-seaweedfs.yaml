@@ -4,6 +4,7 @@ metadata:
   name: git
 spec:
   storageClassName: ""
+  volumeName: git
   accessModes:
   - ReadWriteMany
   resources:

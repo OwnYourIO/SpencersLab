@@ -1,9 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: artifacts-shared
+  name: artifacts
 spec:
   storageClassName: ""
+  volumeName: artifacts
   accessModes:
   - ReadWriteMany
   resources:
@@ -15,7 +16,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: artifacts-shared
+  name: artifacts
 spec:
   accessModes:
   - ReadWriteMany

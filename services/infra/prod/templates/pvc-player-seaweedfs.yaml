@@ -4,6 +4,7 @@ metadata:
   name: player
 spec:
   storageClassName: ""
+  volumeName: player
   accessModes:
   - ReadWriteOnce
   resources:

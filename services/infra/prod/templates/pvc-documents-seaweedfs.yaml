@@ -4,6 +4,7 @@ metadata:
   name: documents
 spec:
   storageClassName: ""
+  volumeName: documents
   accessModes:
   - ReadWriteMany
   resources:

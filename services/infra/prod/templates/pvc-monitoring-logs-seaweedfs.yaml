@@ -4,6 +4,7 @@ metadata:
   name: monitoring-logs
 spec:
   storageClassName: ""
+  volumeName: monitoring-logs
   accessModes:
   - ReadWriteMany
   resources:

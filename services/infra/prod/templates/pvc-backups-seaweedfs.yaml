@@ -1,9 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: backups-shared
+  name: backups
 spec:
   storageClassName: ""
+  volumeName: backups
   accessModes:
   - ReadWriteMany
   resources:
@@ -15,7 +16,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: backups-shared
+  name: backups
 spec:
   accessModes:
   - ReadWriteMany
