@@ -4,7 +4,7 @@ version: 1.0.0
 appVersion: 1.0.0
 dependencies:
 - name: seaweedfs
-  version: 4.0.3753
+  version: 4.0.3759
   repository: https://ownyourio.github.io/SpencersLab/
 #- name: seaweedfs
 #  version: 4.0.0
