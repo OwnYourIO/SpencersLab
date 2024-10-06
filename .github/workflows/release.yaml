@@ -112,7 +112,7 @@ jobs:
           git pull
 
       - name: Bump Helm Chart Version for ${{ matrix.chart }}
-        uses: explorium-ai/bump-helm-chart-action@main
+        uses: EMAsphere/bump-helm-chart-action@main
         #if: steps.changes.outputs.charts == 'true'
         with:
           chart-path: charts/${{ matrix.chart }}
