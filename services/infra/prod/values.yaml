@@ -442,9 +442,7 @@ seaweedfs:
 
     # extraEnvVars is a list of extra enviroment variables to set with the stateful set.
     extraEnvironmentVars:
-      PUBLICURL: "${POD_NAME}.infra.spencerslab.com:8080"
-      WEED_PUBLICURL: "$(POD_NAME).infra.spencerslab.com:8080"
-      WEED_DIR: "/drive/"
+      PUBLICURL: "$(POD_NAME).infra.spencerslab.com:8080"
 
     # Redirect moved or non-local volumes. (default proxy)
     #readMode: proxy
