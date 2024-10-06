@@ -69,7 +69,7 @@ jobs:
         #if: steps.changes.outputs.charts == 'true'
         with:
           chart-path: charts/${{ matrix.chart }}
-          app_version: true
+          app_version: false
           level: patch
           
       # Addresses https://github.com/helm/chart-releaser-action/issues/74
