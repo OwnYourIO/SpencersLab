@@ -4,6 +4,7 @@ metadata:
   name: media-shared
 spec:
   storageClassName: seaweedfs-storage
+  volumeHandle: media-shared
   accessModes:
   - ReadWriteMany
   resources:
