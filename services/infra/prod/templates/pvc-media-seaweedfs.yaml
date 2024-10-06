@@ -24,7 +24,7 @@ spec:
     storage: 30Gi
   csi:
     driver: seaweedfs-csi-driver
-    volumeHandle: media-shared
+    volumeHandle: media
     volumeAttributes:
       collection: media-shared
       replication: "001"
