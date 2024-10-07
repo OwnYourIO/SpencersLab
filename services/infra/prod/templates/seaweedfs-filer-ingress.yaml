@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: seaweedfs-filer-ingress
+  name: seaweedfs-filer-https
   namespace: default
   labels:
     app: default
@@ -14,6 +14,31 @@ spec:
   - hosts:
       - "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
     secretName: cluster-wildcard-cert
+  rules:
+    - host: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: seaweedfs-filer
+                port:
+                  number: 8888
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: seaweedfs-filer-http
+  namespace: default
+  labels:
+    app: default
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.entrypoints: webs
+spec:
   rules:
     - host: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
       http:
