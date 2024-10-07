@@ -37,7 +37,7 @@ metadata:
     app: default
   annotations:
     kubernetes.io/ingress.class: "traefik"
-    traefik.ingress.kubernetes.io/router.entrypoints: webs
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
