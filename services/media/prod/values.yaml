@@ -61,6 +61,8 @@ jellyseerr:
     enabled: true
     hosts:
       - host: "jellyseerr.spencerslab.com"
+        paths:
+          - path: /
     tls:
       - secretName: wildcard-cert
         hosts:
