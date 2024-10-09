@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: media-shared
+  name: media
 spec:
   accessModes:
   - ReadWriteMany
@@ -9,12 +9,12 @@ spec:
     storage: 32Gi
   csi:
     driver: seaweedfs-csi-driver
-    volumeHandle: media-shared
+    volumeHandle: media
     volumeAttributes:
       collection: media
       replication: "001"
-      #path: /path/to/files
-      #diskType: "ssd"
+      path: /buckets/media
+      diskType: "hdd"
     readOnly: false
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
@@ -24,10 +24,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: media-shared
+  name: media
 spec:
   storageClassName: ""
-  volumeName: media-shared
+  volumeName: media
   accessModes:
   - ReadWriteMany
   resources:
