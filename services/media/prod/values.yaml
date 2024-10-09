@@ -51,3 +51,29 @@ jellyfin:
           - hosts:
               - *host
             secretName: wildcard-cert
+
+jellyseerr:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "jellyseerr.spencerslab.com"
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "jellyseerr.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: jellyseerr-config
+      persistentVolumeClaim:
+        claimName: jellyseerr
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: jellyseerr-config
+      mountPath: "/config"
+

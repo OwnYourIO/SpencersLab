@@ -12,3 +12,6 @@ dependencies:
 - name: jellyfin
   version: 1.0.6
   repository: https://ownyourio.github.io/SpencersLab/
+- name: jellyseerr
+  version: 0.2.0
+  repository: https://bubylou.github.io/Arr-Stack
