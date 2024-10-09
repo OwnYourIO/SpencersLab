@@ -29,11 +29,8 @@ dependencies:
 - name: readarr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.3.1
-- name: sonarr
-  repository: https://bubylou.github.io/Arr-Stack
-  version: 0.3.0
 - name: unpackerr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.4.2
-digest: sha256:e075d6d558630dffcafa44aa74262cb39df76f83c22aa01c30277dbabde2f6e5
-generated: "2024-10-08T21:33:10.090860577-06:00"
+digest: sha256:f6b042759419fd85c54af8de871f8e804a87959ca85494415fd32bbfc80387c6
+generated: "2024-10-08T21:47:21.195623828-06:00"

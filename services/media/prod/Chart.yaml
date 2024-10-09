@@ -39,9 +39,9 @@ dependencies:
 - name: readarr
   version: 0.3.1
   repository: https://bubylou.github.io/Arr-Stack
-- name: sonarr
-  version: 0.3.0
-  repository: https://bubylou.github.io/Arr-Stack
+#- name: sonarr
+#  version: 0.3.0
+#  repository: https://bubylou.github.io/Arr-Stack
 - name: unpackerr
   version: 0.4.2
   repository: https://bubylou.github.io/Arr-Stack
