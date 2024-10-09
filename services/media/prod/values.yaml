@@ -63,6 +63,7 @@ jellyseerr:
       - host: "jellyseerr.spencerslab.com"
         paths:
           - path: /
+            pathType: Prefix
     tls:
       - secretName: wildcard-cert
         hosts:
