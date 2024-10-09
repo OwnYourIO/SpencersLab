@@ -4,53 +4,87 @@ bitwardenIds:
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
 
+#jellyfin:
+#  app-template:
+#    controllers:
+#      jellyfin:
+#        pod:
+#          securityContext:
+#            runAsNonRoot: true
+#            runAsUser: 568
+#            # Using gid 2000 as "shared" group.
+#            runAsGroup: 568
+#            fsGroup: 568
+#            fsGroupChangePolicy: OnRootMismatch
+#            seccompProfile: { type: RuntimeDefault }
+#            supplementalGroups:
+#              - 44 # video
+#              - 109 # render
+#              - 105
+#              - 568
+#              - 1000
+#              - 2000
+#        containers:
+#          app:
+#            env:
+#              JELLYFIN_PublishedServerUrl: https://jellyfin.spencerslab.com
+#              DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
+#              JELLYFIN_FFmpeg__probesize: "50000000"
+#              JELLYFIN_FFmpeg__analyzeduration: "50000000"
+#    service:
+#      app:
+#        controller: jellyfin
+#        type: LoadBalancer
+#        ports:
+#          http:
+#            port: 8096
+#    ingress:
+#      app:
+#        hosts:
+#          - host: &host "jellyfin.spencerslab.com"
+#            paths:
+#              - path: /
+#                service:
+#                  identifier: app
+#                  port: http
+#        tls:
+#          - hosts:
+#              - *host
+#            secretName: wildcard-cert
+
 jellyfin:
-  app-template:
-    controllers:
-      jellyfin:
-        pod:
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 568
-            # Using gid 2000 as "shared" group.
-            runAsGroup: 568
-            fsGroup: 568
-            fsGroupChangePolicy: OnRootMismatch
-            seccompProfile: { type: RuntimeDefault }
-            supplementalGroups:
-              - 44 # video
-              - 109 # render
-              - 105
-              - 568
-              - 1000
-              - 2000
-        containers:
-          app:
-            env:
-              JELLYFIN_PublishedServerUrl: https://jellyfin.spencerslab.com
-              DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
-              JELLYFIN_FFmpeg__probesize: "50000000"
-              JELLYFIN_FFmpeg__analyzeduration: "50000000"
-    service:
-      app:
-        controller: jellyfin
-        type: LoadBalancer
-        ports:
-          http:
-            port: 8096
-    ingress:
-      app:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "jellyfin.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
         hosts:
-          - host: &host "jellyfin.spencerslab.com"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
+          - "jellyfin.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: jellyfin-config
+      persistentVolumeClaim:
+        claimName: jellyfin
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: jellyfin-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/
+      # subPath: 
 
 jellyseerr:
   env:
@@ -80,3 +114,283 @@ jellyseerr:
     - name: jellyseerr-config
       mountPath: "/config"
 
+lidarr:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "lidarr.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "lidarr.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: lidarr-config
+      persistentVolumeClaim:
+        claimName: lidarr
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: lidarr-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/
+      # subPath: 
+
+prowlarr:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "prowlarr.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "prowlarr.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: prowlarr-config
+      persistentVolumeClaim:
+        claimName: prowlarr
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: prowlarr-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/
+      # subPath: 
+
+navidrome:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "navidrome.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "navidrome.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: navidrome-config
+      persistentVolumeClaim:
+        claimName: navidrome
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: navidrome-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /music/
+      subPath: Music
+
+qbittorrent:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "qbittorrent.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "qbittorrent.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: qbittorrent-config
+      persistentVolumeClaim:
+        claimName: qbittorrent
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: qbittorrent-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/downloads
+      subPath: Downloads
+
+radarr:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "radarr.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "radarr.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: radarr-config
+      persistentVolumeClaim:
+        claimName: radarr
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: radarr-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/
+      # subPath: 
+
+readarr:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "readarr.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "readarr.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: readarr-config
+      persistentVolumeClaim:
+        claimName: readarr
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: readarr-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/
+      # subPath: 
+
+sonarr:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "sonarr.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "sonarr.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: sonarr-config
+      persistentVolumeClaim:
+        claimName: sonarr
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: sonarr-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/
+      # subPath: 
+
+unpackerr:
+  env:
+    - name: TZ
+      value: America/Denver
+  
+  lidarr:
+    enabled: true
+  radarr: 
+    enabled: true
+  readarr: 
+    enabled: true
+  sonarr:
+    enabled: true
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "unpackerr.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "unpackerr.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: unpackerr-config
+      persistentVolumeClaim:
+        claimName: unpackerr
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: unpackerr-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /data/
+      # subPath: 

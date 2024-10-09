@@ -6,10 +6,34 @@ dependencies:
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
 - name: jellyfin
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.6
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.2.2
 - name: jellyseerr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.2.0
-digest: sha256:af6a4b9e90f9b3086a10f8f54ccc04997209d60c02fb6652bd2dea9843dc1726
-generated: "2024-10-08T20:20:32.109506442-06:00"
+- name: lidarr
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.3.0
+- name: prowlarr
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.3.1
+- name: navidrome
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.1.1
+- name: qbittorrent
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.2.1
+- name: radarr
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.3.1
+- name: readarr
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.3.1
+- name: sonarr
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.3.0
+- name: unpackerr
+  repository: https://bubylou.github.io/Arr-Stack
+  version: 0.4.2
+digest: sha256:e075d6d558630dffcafa44aa74262cb39df76f83c22aa01c30277dbabde2f6e5
+generated: "2024-10-08T21:33:10.090860577-06:00"
