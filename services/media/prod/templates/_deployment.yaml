@@ -35,7 +35,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-          - name: {{ upper .Chart.Name }}__AUTH__APIKEY
+          #- name: {{ upper .Chart.Name }}__AUTH__APIKEY
+          - name: __AUTH__APIKEY
             valueFrom:
               secretKeyRef:
                 name: {{ include "app.fullname" . }}
