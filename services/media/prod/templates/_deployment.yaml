@@ -36,11 +36,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
           #- name: {{ upper .Chart.Name }}__AUTH__APIKEY
-          - name: __AUTH__APIKEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ include "app.fullname" . }}
-                key: api-key
+          #- name: __AUTH__APIKEY
+          #  valueFrom:
+          #    secretKeyRef:
+          #      name: {{ include "app.fullname" . }}
+          #      key: api-key
           {{- with $env := .Values.env }}{{ toYaml $env | nindent 12 }}{{- end }}
           ports:
             - name: http
