@@ -33,7 +33,8 @@ qbittorrent:
   # Additional volumeMounts on the output Deployment definition.
   volumeMounts:
     - name: qbittorrent-config
-      mountPath: "/config"
+      mountPath: "/config/config/qBittorrent.conf"
+      subPath: config
     - name: media
       mountPath: /media/Downloads
       subPath: Downloads
