@@ -1,6 +1,6 @@
 dependencies:
 - name: cloud-proxy-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.2
-digest: sha256:e8c9b7343ac17dac6a9b6af55449c67653450f3e4f5fffacbf584b139cf71b8f
-generated: "2024-02-10T22:52:11.696668288-07:00"
+  version: 1.1.3
+digest: sha256:d2f815d5034cc770a00cf26a3597f1df51f76328c391934ae144d5ff3be906ab
+generated: "2024-10-11T14:36:46.418176638-06:00"
