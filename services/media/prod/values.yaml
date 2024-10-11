@@ -216,40 +216,6 @@ navidrome:
       mountPath: /music/
       subPath: Music
 
-qbittorrent:
-  env:
-    - name: TZ
-      value: America/Denver
-
-  ingress:
-    enabled: true
-    hosts:
-      - host: "qbittorrent.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "qbittorrent.spencerslab.com"
-
-  # Additional volumes on the output Deployment definition.
-  volumes:
-    - name: qbittorrent-config
-      persistentVolumeClaim:
-        claimName: qbittorrent
-    - name: media
-      persistentVolumeClaim:
-        claimName: media
-
-  # Additional volumeMounts on the output Deployment definition.
-  volumeMounts:
-    - name: qbittorrent-config
-      mountPath: "/config"
-    - name: media
-      mountPath: /data/downloads
-      subPath: Downloads
-
 radarr:
   env:
     - name: TZ

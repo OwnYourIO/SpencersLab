@@ -30,9 +30,6 @@ dependencies:
 - name: navidrome
   version: 0.1.1
   repository: https://bubylou.github.io/Arr-Stack
-- name: qbittorrent
-  version: 0.2.1
-  repository: https://bubylou.github.io/Arr-Stack
 - name: radarr
   version: 0.3.1
   repository: https://bubylou.github.io/Arr-Stack

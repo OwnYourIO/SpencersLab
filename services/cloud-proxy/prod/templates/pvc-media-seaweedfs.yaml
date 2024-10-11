@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 32Gi
+  csi:
+    driver: seaweedfs-csi-driver
+    volumeHandle: media
+    volumeAttributes:
+      collection: media
+      replication: "001"
+      path: /buckets/media
+      diskType: "hdd"
+    readOnly: false
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media
+spec:
+  storageClassName: ""
+  volumeName: media
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 32Gi
+
+--- 
+# This is needed because the csi-driver can't currently set volumeServerAccess=publicURL
+# So this captures the internal DNS look up and directs it externally instead.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  log.override: |
+    rewrite name seaweedfs-volume-0.seaweedfs-volume.default seaweedfs-volume.infra.spencerslab.com

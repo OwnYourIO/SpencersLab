@@ -1,4 +1,39 @@
-
 # - IP Based filtering (Traefik?)
 # - Middleware for Traefik
 # - Maybe external routes/ingress/egress
+seaweedfs-csi-driver:
+  seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
+
+qbittorrent:
+  env:
+    - name: TZ
+      value: America/Denver
+
+  ingress:
+    enabled: true
+    hosts:
+      - host: "qbittorrent.spencerslab.com"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: wildcard-cert
+        hosts:
+          - "qbittorrent.spencerslab.com"
+
+  # Additional volumes on the output Deployment definition.
+  volumes:
+    - name: qbittorrent-config
+      persistentVolumeClaim:
+        claimName: qbittorrent
+    - name: media
+      persistentVolumeClaim:
+        claimName: media
+
+  # Additional volumeMounts on the output Deployment definition.
+  volumeMounts:
+    - name: qbittorrent-config
+      mountPath: "/config"
+    - name: media
+      mountPath: /media/Downloads
+      subPath: Downloads
