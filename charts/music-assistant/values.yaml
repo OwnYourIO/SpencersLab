@@ -4,7 +4,6 @@ bitwardenIds:
   music-assistant: OVERRIDE_NEEDED
   
 app-template:
-
   controllers:
     music-assistant:
       annotations:
