@@ -23,9 +23,6 @@ qbittorrent:
 
   # Additional volumes on the output Deployment definition.
   volumes:
-    - name: qbittorrent-config
-      configMap:
-        name: cloud-proxy-qbittorrent
     - name: qbittorrent-config-pvc
       persistentVolumeClaim:
         claimName: qbittorrent
@@ -37,9 +34,6 @@ qbittorrent:
   volumeMounts:
     - name: qbittorrent-config-pvc
       mountPath: "/config"
-    - name: qbittorrent-config
-      mountPath: "/config/config/qBittorrent.conf"
-      subPath: config
     - name: media
       mountPath: /media/Downloads
       subPath: Downloads
