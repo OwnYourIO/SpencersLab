@@ -35,7 +35,7 @@ qbittorrent:
 
   # Additional volumeMounts on the output Deployment definition.
   volumeMounts:
-    - name: qbittorrent-confi-pvc
+    - name: qbittorrent-config-pvc
       mountPath: "/config"
     - name: qbittorrent-config
       mountPath: "/config/config/qBittorrent.conf"
