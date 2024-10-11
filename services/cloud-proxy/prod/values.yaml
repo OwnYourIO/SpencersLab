@@ -26,12 +26,17 @@ qbittorrent:
     - name: qbittorrent-config
       configMap:
         name: cloud-proxy-qbittorrent
+    - name: qbittorrent-config-pvc
+      persistentVolumeClaim:
+        claimName: qbittorrent
     - name: media
       persistentVolumeClaim:
         claimName: media
 
   # Additional volumeMounts on the output Deployment definition.
   volumeMounts:
+    - name: qbittorrent-confi-pvc
+      mountPath: "/config"
     - name: qbittorrent-config
       mountPath: "/config/config/qBittorrent.conf"
       subPath: config
