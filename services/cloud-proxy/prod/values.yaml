@@ -24,8 +24,8 @@ qbittorrent:
   # Additional volumes on the output Deployment definition.
   volumes:
     - name: qbittorrent-config
-      persistentVolumeClaim:
-        claimName: qbittorrent
+      configMap:
+        name: cloud-proxy-qbittorrent
     - name: media
       persistentVolumeClaim:
         claimName: media
