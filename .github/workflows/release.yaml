@@ -49,7 +49,7 @@ jobs:
     permissions:
       # Needed because of this: https://github.com/helm/chart-releaser-action/issues/110
       contents: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     concurrency:
       # Only allow 1 to run at a time so that they get bumped correctly. 
       group: ${{ github.ref }}-test-build
