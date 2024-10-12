@@ -43,8 +43,8 @@ metadata:
   namespace: kube-system
 data:
   log.override: |
-    rewrite name seaweedfs-volume-0.seaweedfs-volume.default seaweedfs-volume.infra.spencerslab.com
-    rewrite name seaweedfs-volume-1.seaweedfs-volume.default seaweedfs-volume.infra.spencerslab.com
-    rewrite name seaweedfs-volume-2.seaweedfs-volume.default seaweedfs-volume.infra.spencerslab.com
-    rewrite name seaweedfs-volume-3.seaweedfs-volume.default seaweedfs-volume.infra.spencerslab.com
-    rewrite name seaweedfs-volume-4.seaweedfs-volume.default seaweedfs-volume.infra.spencerslab.com
+    rewrite name seaweedfs-volume-0.seaweedfs-volume.default seaweedfs-volume-0.infra.spencerslab.com
+    rewrite name seaweedfs-volume-1.seaweedfs-volume.default seaweedfs-volume-1.infra.spencerslab.com
+    rewrite name seaweedfs-volume-2.seaweedfs-volume.default seaweedfs-volume-2.infra.spencerslab.com
+    rewrite name seaweedfs-volume-3.seaweedfs-volume.default seaweedfs-volume-3.infra.spencerslab.com
+    rewrite name seaweedfs-volume-4.seaweedfs-volume.default seaweedfs-volume-4.infra.spencerslab.com
