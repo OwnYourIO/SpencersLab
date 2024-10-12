@@ -20,9 +20,6 @@ dependencies:
 - name: navidrome
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.1.1
-- name: qbittorrent
-  repository: https://bubylou.github.io/Arr-Stack
-  version: 0.2.1
 - name: radarr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.3.1
@@ -32,5 +29,5 @@ dependencies:
 - name: sonarr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.3.0
-digest: sha256:6c6608dedd6bbc61c7386d52cae9a64460674f069502d4d04c47ebbd94cd49af
-generated: "2024-10-10T16:03:48.931090016-06:00"
+digest: sha256:26a7b392d4db014cbb4787afcc580c4e0b228908e75860ab0af88a1eba8b02a1
+generated: "2024-10-12T14:20:07.749832885-06:00"
