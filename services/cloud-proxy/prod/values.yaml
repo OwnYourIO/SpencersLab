@@ -5,31 +5,50 @@ seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
 
 qbittorrent:
-  image:
-    repository: ghcr.io/onedr0p/qbittorrent
-    tag: 4.5.5@sha256:f4a1a5eece13beed61e579172d2a54b1fc2e7ff2bbdbd7ef22a4d9f6fc36e198
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/onedr0p/qbittorrent
+            tag: 4.5.5@sha256:f4a1a5eece13beed61e579172d2a54b1fc2e7ff2bbdbd7ef22a4d9f6fc36e198
 
-  env:
-    TZ: America/Denver
-    QBITTORRENT__PORT: &port 8080
-    QBITTORRENT__BT_PORT: &port-bt 58462
-    QBT_BitTorrent__Session__Interface: eth0
-    QBT_BitTorrent__Session__InterfaceAddress:
-      valueFrom:
-        fieldRef:
-          fieldPath: status.podIP
-    QBT_BitTorrent__Session__InterfaceName: eth0
-    QBT_Preferences__WebUI__AuthSubnetWhitelistEnabled: true
-    QBT_Preferences__WebUI__AuthSubnetWhitelist: |-
-      10.42.3.0/24, 10.42.0.0/24, 10.42.2.0/24, 10.42.1.0/24, 192.168.42.0/24, 192.168.1.0/24
+          env:
+            TZ: America/Denver
+            QBITTORRENT__PORT: &port 8080
+            QBITTORRENT__BT_PORT: &port-bt 58462
+            QBT_BitTorrent__Session__Interface: eth0
+            QBT_BitTorrent__Session__InterfaceAddress:
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            QBT_BitTorrent__Session__InterfaceName: eth0
+            QBT_Preferences__WebUI__AuthSubnetWhitelistEnabled: true
+            QBT_Preferences__WebUI__AuthSubnetWhitelist: |-
+              10.42.3.0/24, 10.42.0.0/24, 10.42.2.0/24, 10.42.1.0/24, 192.168.42.0/24, 192.168.1.0/24
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 8Gi
+      pod:
+        securityContext:
+          runAsUser: 568
+          runAsGroup: 568
+          fsGroup: 568
+          fsGroupChangePolicy: "OnRootMismatch"
+          supplementalGroups: [10000]
 
   service:
     main:
+      controller: main
       ports:
         http:
           port: *port
     bittorent:
       enabled: true
+      controller: main
       type: LoadBalancer
       ports:
         bittorrent:
@@ -47,17 +66,13 @@ qbittorrent:
           paths:
             - path: /
               pathType: Prefix
+              service: 
+                identifier: main
+                port: http
       tls:
         - secretName: wildcard-cert
           hosts:
             - "qbittorrent.spencerslab.com"
-
-  podSecurityContext:
-    runAsUser: 568
-    runAsGroup: 568
-    fsGroup: 568
-    fsGroupChangePolicy: "OnRootMismatch"
-    supplementalGroups: [10000]
 
   persistence:
     config:
@@ -67,6 +82,7 @@ qbittorrent:
         main:
           main:
           - path: /config
+
     media:
       enabled: true
       existingClaim: media
@@ -74,10 +90,3 @@ qbittorrent:
         main:
           main:
           - path: /media
-
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      memory: 8Gi
