@@ -2,11 +2,11 @@ dependencies:
 - name: cloud-proxy-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.3
-- name: qbittorrent
-  repository: https://bubylou.github.io/Arr-Stack
-  version: 0.2.1
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-digest: sha256:40496bb6bd50ee8e62ae2cb9c981ba423e02c4fb3b37d4fa13f60152dcb17fa2
-generated: "2024-10-11T15:20:36.32889795-06:00"
+- name: app-template
+  repository: https://bjw-s.github.io/helm-charts/
+  version: 3.5.1
+digest: sha256:0b2b2547f60b004b240a7c8853f33c7da0a4860bba895e38367f61033104794e
+generated: "2024-10-12T11:49:01.916459675-06:00"
