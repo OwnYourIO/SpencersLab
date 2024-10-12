@@ -83,8 +83,7 @@ jellyfin:
     - name: jellyfin-config
       mountPath: "/config"
     - name: media
-      mountPath: /data/
-      # subPath: 
+      mountPath: /media/
 
 jellyseerr:
   env:
@@ -145,7 +144,7 @@ lidarr:
     - name: lidarr-config
       mountPath: "/config"
     - name: media
-      mountPath: /data/
+      mountPath: /media/
       # subPath: 
 
 prowlarr:
@@ -179,7 +178,7 @@ prowlarr:
     - name: prowlarr-config
       mountPath: "/config"
     - name: media
-      mountPath: /data/
+      mountPath: /media/
       # subPath: 
 
 navidrome:
@@ -247,7 +246,7 @@ radarr:
     - name: radarr-config
       mountPath: "/config"
     - name: media
-      mountPath: /data/
+      mountPath: /media/
       # subPath: 
 
 readarr:
@@ -281,7 +280,7 @@ readarr:
     - name: readarr-config
       mountPath: "/config"
     - name: media
-      mountPath: /data/
+      mountPath: /media/
       # subPath: 
 
 sonarr:
@@ -315,7 +314,7 @@ sonarr:
     - name: sonarr-config
       mountPath: "/config"
     - name: media
-      mountPath: /data/
+      mountPath: /media/
       # subPath: 
 
 unpackerr:
@@ -358,5 +357,5 @@ unpackerr:
     - name: unpackerr-config
       mountPath: "/config"
     - name: media
-      mountPath: /data/
+      mountPath: /media/
       # subPath: 
