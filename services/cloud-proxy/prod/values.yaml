@@ -93,10 +93,8 @@ qbittorrent:
     config:
       enabled: true
       existingClaim: qbittorrent
-      advancedMounts:
-        main:
-          main:
-          - path: /config
+      globalMounts:
+        - path: /config
 
     media:
       enabled: true
