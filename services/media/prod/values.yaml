@@ -74,6 +74,9 @@ jellyfin:
     - name: jellyfin-config
       persistentVolumeClaim:
         claimName: jellyfin
+    - name: jellyfin-share
+      persistentVolumeClaim:
+        claimName: jellyfin-share
     - name: media
       persistentVolumeClaim:
         claimName: media
@@ -82,6 +85,8 @@ jellyfin:
   volumeMounts:
     - name: jellyfin-config
       mountPath: "/config"
+    - name: jellyfin-share
+      mountPath: "/share"
     - name: media
       mountPath: /media/
 
