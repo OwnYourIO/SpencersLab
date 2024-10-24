@@ -13,7 +13,7 @@ spec:
                 - appName: base
                   namespace: default
                   ServerSideApply: "false"
-                - appName: local-proxy
+                - appName: cloud-proxy
                   namespace: default
                   ServerSideApply: "false"
   template:
