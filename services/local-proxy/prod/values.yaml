@@ -114,7 +114,7 @@ autossh:
             TZ: America/Denver
             SSH_REMOTE_USER: proxy
             SSH_REMOTE_HOST: remote-proxy.spencerslab.com
-            SSH_REMOTE:PORT: 2222
+            SSH_REMOTE_PORT: 2222
             SSH_TUNNEL_PORT: 443
             SSH_TARGET_HOST: traefik.kube-system
             SSH_TARGET_PORT: 443
