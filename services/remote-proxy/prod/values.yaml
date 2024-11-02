@@ -35,6 +35,6 @@ remote-proxy:
       controller: main
       ports:
         ssh:
-          port: 22
+          port: 2222
           protocol: TCP
           targetPort: 2222
