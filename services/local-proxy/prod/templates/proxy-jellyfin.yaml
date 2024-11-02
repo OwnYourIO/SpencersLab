@@ -27,3 +27,7 @@ spec:
                   number: 443
             pathType: Prefix
             path: /
+  tls:
+    - hosts:
+      - "jellyfin.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
