@@ -4,6 +4,9 @@
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer-0.infra.spencerslab.com:8880,seaweedfs-filer-1.infra.spencerslab.com:8881,seaweedfs-filer-2.infra.spencerslab.com:8882,seaweedfs-filer-3.infra.spencerslab.com:8883,seaweedfs-filer-4.infra.spencerslab.com:8884"
 
+bitwardenIds:
+  argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+
 qbittorrent:
   nameOverride: "qbittorrent"
   controllers:
