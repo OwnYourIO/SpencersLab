@@ -1,3 +1,40 @@
 
 remote-proxy:
-  
+  global:
+    nameOverride: "remote-proxy"
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/linuxserver/openssh-server
+            tag: 9.7_p1-r4-ls171
+          env:
+            TZ: America/Denver
+            PUID: 2000
+            PGID: 2000
+            PUBLIC_KEY: #TODO: 
+            #PUBLIC_KEY_DIR:
+            USER_NAME: proxy
+
+          resources:
+            requests:
+              cpu: 500m
+              memory: 0.2Gi
+            limits:
+              memory: 4Gi
+      pod:
+        securityContext:
+          fsGroup: 2000
+          fsGroupChangePolicy: "OnRootMismatch"
+
+  service:
+    ssh:
+      type: LoadBalancer
+      externalTrafficPolicy: Local
+      controller: main
+      ports:
+        ssh:
+          port: 22
+          protocol: TCP
+          targetPort: 2222

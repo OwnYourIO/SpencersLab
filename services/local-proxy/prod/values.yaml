@@ -98,3 +98,29 @@ qbittorrent:
         main:
           main:
           - path: /media
+
+autossh:
+  global:
+    nameOverride: "autossh"
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/camptocamp/autossh
+            tag: master
+
+          env:
+            TZ: America/Denver
+            SSH_REMOTE_USER: proxy
+            SSH_REMOTE_HOST: remote-proxy.spencerslab.com
+            SSH_REMOTE:PORT: 2222
+            SSH_TUNNEL_PORT: 443
+            SSH_TARGET_HOST: traefik.kube-system
+            SSH_TARGET_PORT: 443
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 8Gi
