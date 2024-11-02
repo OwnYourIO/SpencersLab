@@ -25,9 +25,6 @@ qbittorrent:
               VUETORRENT_VERSION="v2.8.0"
               rm -rf /config/vuetorrent
               busybox wget -qO- "https://github.com/WDaan/VueTorrent/releases/download/$${VUETORRENT_VERSION}/vuetorrent.zip" | busybox unzip -d /config -
-          volumeMounts:
-            - name: config
-              mountPath: /config
       containers:
         main:
           image:
