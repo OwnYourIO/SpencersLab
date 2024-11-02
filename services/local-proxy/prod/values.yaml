@@ -8,7 +8,8 @@ bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
 qbittorrent:
-  nameOverride: "qbittorrent"
+  global:
+    nameOverride: "qbittorrent"
   controllers:
     main:
       initContainers:
