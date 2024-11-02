@@ -36,18 +36,6 @@ qbittorrent:
             TZ: America/Denver
             QBITTORRENT__PORT: &port 8080
             QBITTORRENT__BT_PORT: &port-bt 58462
-            QBT_BITTORRENT__SESSION__INTERFACE: eth0
-            QBT_BITTORRENT__SESSION__INTERFACEADDRESS:
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            QBT_BITTORRENT__SESSION__INTERFACENAME: eth0
-            QBT_PREFERENCES_WEBUI_AUTHSUBNETWHITELISTENABLED: true
-            QBT_PREFERENCES_WEBUI_AUTHSUBNETWHITELIST: |-
-              10.42.3.0/24, 10.42.0.0/24, 10.42.2.0/24, 10.42.1.0/24, 192.168.42.0/24, 192.168.1.0/24
-            QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELISTENABLED: true
-            QBT_PREFERENCES__WEBUI__AUTHSUBNETWHITELIST: |-
-              10.42.3.0/24, 10.42.0.0/24, 10.42.2.0/24, 10.42.1.0/24, 192.168.42.0/24, 192.168.1.0/24
           resources:
             requests:
               cpu: 500m
