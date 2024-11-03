@@ -13,7 +13,7 @@ remote-proxy:
             TZ: America/Denver
             PUID: 2000
             PGID: 2000
-            PUBLIC_KEY: #TODO: 
+            PUBLIC_KEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAy1rO5LsbzIrtqXCN6aJeLrJRlJIREC7nJZOUqsDaie 
             #PUBLIC_KEY_DIR:
             USER_NAME: proxy
 

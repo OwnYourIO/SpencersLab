@@ -6,6 +6,7 @@ seaweedfs-csi-driver:
 
 bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+  autossh-secret: 449d6ac2-847d-4b2b-b0f2-b21d00003fc1
 
 qbittorrent:
   global:
@@ -113,6 +114,10 @@ autossh:
           env:
             TZ: America/Denver
             SSH_REMOTE_USER: proxy
+            SSH_KEY: 
+              secretKeyRef:
+                name: autossh
+                key: private-key
             SSH_REMOTE_HOST: remote-proxy.spencerslab.com
             SSH_REMOTE_PORT: 2222
             SSH_TUNNEL_PORT: 443
