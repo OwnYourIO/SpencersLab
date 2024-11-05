@@ -39,3 +39,9 @@ remote-proxy:
           port: 2222
           protocol: TCP
           targetPort: 2222
+
+  persistence:
+    sshd:
+      existingClam: sshd
+    globalMounts:
+      - path: /etc/ssh
