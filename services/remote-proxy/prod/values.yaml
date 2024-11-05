@@ -16,6 +16,7 @@ remote-proxy:
             PUBLIC_KEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAy1rO5LsbzIrtqXCN6aJeLrJRlJIREC7nJZOUqsDaie 
             #PUBLIC_KEY_DIR:
             USER_NAME: proxy
+            DOCKER_MODS: linuxserver/mods:openssh-server-ssh-tunnel
 
           resources:
             requests:
