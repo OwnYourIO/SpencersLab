@@ -123,6 +123,7 @@ autossh:
             SSH_TUNNEL_PORT: 443
             SSH_TARGET_HOST: traefik.kube-system
             SSH_TARGET_PORT: 443
+            SSH_BIND_IP: 0.0.0.0
           resources:
             requests:
               cpu: 500m
