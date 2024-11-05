@@ -42,6 +42,6 @@ remote-proxy:
 
   persistence:
     sshd:
-      existingClam: sshd
+      existingClaim: sshd
       globalMounts:
         - path: /etc/ssh
