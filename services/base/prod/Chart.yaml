@@ -4,7 +4,7 @@ version: 1.0.36
 appVersion: 1.0.31
 dependencies:
 - name: argocd
-  version: 1.0.27
+  version: 1.0.30
   repository: https://ownyourio.github.io/SpencersLab/
 - name: cert-manager
   version: v1.15.3
