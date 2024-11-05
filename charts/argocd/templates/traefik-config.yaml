@@ -10,6 +10,7 @@ spec:
       - "--api.dashboard=true"
       - "--api.insecure=true"
       - "--log.level=DEBUG"
+      - "--serversTransport.insecureSkipVerify=true"
     dashboard: 
       enabled: true
     ports:
