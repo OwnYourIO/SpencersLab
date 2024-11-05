@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: login-ingress
+  name: jellyfin-ingress
   namespace: default
 spec:
   tls:
     - hosts:
-      - "login.{{ $.Values.domain }}"
+      - "jellyfin.spencerslab.com"
       secretName: cluster-wildcard-cert
   rules:
-    - host: login.spencerslab.com
+    - host: jellyfin.spencerslab.com
       http:
         paths:
           - path: /
