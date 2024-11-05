@@ -44,4 +44,4 @@ remote-proxy:
     sshd:
       existingClaim: sshd
       globalMounts:
-        - path: /etc/ssh/ssh_host_ed25516_key
+        - path: /config
