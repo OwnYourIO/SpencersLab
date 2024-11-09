@@ -13,7 +13,7 @@ spec:
     volumeAttributes:
       collection: media
       replication: "002"
-      path: /buckets/media-shared/Music
+      path: /buckets/media/Music
       #diskType: "ssd"
     readOnly: false
   persistentVolumeReclaimPolicy: Retain

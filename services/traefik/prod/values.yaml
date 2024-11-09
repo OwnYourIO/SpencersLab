@@ -19,3 +19,18 @@ traefik:
       geoblock:
         moduleName: "github.com/PascalMinder/geoblock"
         version: "v0.2.8"
+      traefik-oidc-relying-party:
+        moduleName: "github.com/alexdelprete/traefik-oidc-relying-party"
+        version: "v1.0.0-alpha.1"
+      crowdsec-bouncer-traefik-plugin:
+        moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+        version: "v1.3.5"
+
+  # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
+  volumes: 
+    - name: ClientID
+      mountPath: "/run/secrets/client_id"
+      type: secret
+    - name: ClientSecret
+      mountPath: "/run/secrets/client_secret"
+      type: secret
