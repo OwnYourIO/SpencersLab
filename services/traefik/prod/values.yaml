@@ -14,3 +14,8 @@ traefik:
     kubernetesIngress:
       allowEmptyServices: true
       allowExternalNameServices: true
+  experimental:
+    plugins:
+      geoblock:
+        moduleName: "github.com/PascalMinder/geoblock"
+        version: "v0.2.8"

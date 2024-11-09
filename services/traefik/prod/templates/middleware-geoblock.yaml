@@ -1,0 +1,21 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: geoBlock
+  namespace: kube-system
+spec:
+  plugin:
+    GeoBlock:
+      allowLocalRequests: true
+      logLocalRequests: true
+      logAllowedRequests: true
+      logApiRequests: true
+      api: https://get.geojs.io/v1/ip/country/{ip}
+      #apiTimeoutMs: 500
+      #cacheSize: 25
+      forceMonthlyUpdate: true
+      allowUnknownCountries: false
+      unknownCountryApiResponse: nil
+      countries:
+        - US
+        - CA
