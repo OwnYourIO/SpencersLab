@@ -11,8 +11,8 @@ spec:
       logAllowedRequests: true
       logApiRequests: true
       api: https://get.geojs.io/v1/ip/country/{ip}
-      #apiTimeoutMs: 500
-      #cacheSize: 25
+      apiTimeoutMs: 500
+      cacheSize: 25
       forceMonthlyUpdate: true
       allowUnknownCountries: false
       unknownCountryApiResponse: nil
