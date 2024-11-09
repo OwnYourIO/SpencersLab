@@ -1,0 +1,9 @@
+dependencies:
+- name: traefik
+  repository: https://traefik.github.io/charts
+  version: 33.0.0
+- name: traefik-appset
+  repository: https://ownyourio.github.io/SpencersLab/
+  version: 1.1.1
+digest: sha256:d6edff6c32f2b1a4ffc3bc6c80066c68b595ef1bbd08d5c25f63519a2ee26a57
+generated: "2024-11-09T07:36:50.523563597-07:00"

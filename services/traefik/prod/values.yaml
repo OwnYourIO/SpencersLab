@@ -1,0 +1,19 @@
+traefik:
+  additionalArguments:
+    - "--api"
+    - "--api.dashboard=true"
+    - "--api.insecure=true"
+    - "--log.level=DEBUG"
+    - "--serversTransport.insecureSkipVerify=true"
+  dashboard: 
+    enabled: true
+  ports:
+    traefik:
+      expose: true
+  providers:
+    kubernetesCRD:
+      allowCrossNamespace: true
+      allowExternalNameServices: true
+    kubernetesIngress:
+      allowEmptyServices: true
+      allowExternalNameServices: true
