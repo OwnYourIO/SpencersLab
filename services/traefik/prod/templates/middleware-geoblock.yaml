@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
 spec:
   plugin:
-    geoBlock:
+    geoblock:
       allowLocalRequests: true
       logLocalRequests: true
       logAllowedRequests: true
