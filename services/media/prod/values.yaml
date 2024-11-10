@@ -379,9 +379,9 @@ audiobookshelf:
           image:
             repository: ghcr.io/advplyr/audiobookshelf
             tag: 2.16.2
-          envFrom:
-            - secretRef:
-                name: *secret
+          #envFrom:
+          #  - secretRef:
+          #      name: audiobookshelf-secret
           env:
             TZ: America/Denver
             PORT: &port 8080
