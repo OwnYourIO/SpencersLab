@@ -364,3 +364,66 @@ unpackerr:
     - name: media
       mountPath: /media/
       # subPath: 
+  
+audiobookshelf:
+  controllers:
+    audiobookshelf:
+      pod:
+        securityContext:
+          runAsUser: &uid 568
+          runAsGroup: &gid 2000
+          fsGroup: 2000
+          fsGroupChangePolicy: OnRootMismatch
+      containers:
+        app:
+          image:
+            repository: ghcr.io/advplyr/audiobookshelf
+            tag: 2.16.2
+          envFrom:
+            - secretRef:
+                name: *secret
+          env:
+            TZ: America/Denver
+            PORT: &port 8080
+            AUDIOBOOKSHELF_UID: *uid
+            AUDIOBOOKSHELF_GID: *gid
+            CONFIG_PATH: /config
+            METADATA_PATH: /config/metadata
+          probes:
+            liveness: &probes
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /healthcheck
+                  port: *port
+            readiness: *probes
+          resources:
+            requests:
+              cpu: 50m
+              memory: 200Mi
+            limits:
+              memory: 600Mi
+  service:
+    app:
+      controller: audiobookshelf
+      ports:
+        http:
+          port: *port
+  ingress:
+    main:
+      hosts:
+        - host: &host audiobookshelf.spencerslab.com
+          paths:
+            - path: /
+              service:
+                identifier: app
+                port: http
+      tls: 
+        - secretName: wildcard-cert
+          hosts: 
+            - *host
+  persistence:
+    config:
+    media:
+      globalMounts:
