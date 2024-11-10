@@ -32,8 +32,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-- name: yt-dlp
-  repository: https://ppts-ai.github.io/apps/
-  version: 0.1.1
-digest: sha256:5aa74e05efc4c5ddb2b2fca5b91cd7ceac418352a03e81d5e438619eb2f20dd1
-generated: "2024-11-09T18:28:42.839756381-07:00"
+digest: sha256:5dd2f6761bc0d1240b5029d76b74cb0823c55f7f01372c1c08d28c4cca5f2a0f
+generated: "2024-11-09T21:05:07.721745052-07:00"
