@@ -29,8 +29,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.61.0
-- name: app-template
-  repository: https://bjw-s.github.io/helm-charts/
-  version: 3.5.1
-digest: sha256:fa880d501f6f744318756fd5e2f71d46385fde0eeb242cb3fbfc623f7ce0bd3e
-generated: "2024-11-09T18:19:51.611444875-07:00"
+digest: sha256:c33e0cc98bdd4ad1630a6cf4c02e2de9c508985f46a423f88a92b5ec94e93ec5
+generated: "2024-11-09T18:21:00.930227103-07:00"
