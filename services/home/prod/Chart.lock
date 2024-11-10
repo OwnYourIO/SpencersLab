@@ -26,9 +26,6 @@ dependencies:
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.2
-- name: immich
-  repository: https://immich-app.github.io/immich-charts
-  version: 0.8.4
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
@@ -38,5 +35,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-digest: sha256:65c70447165df579e9868595455c05a4b5aba7856b90a8802e9aba5955b85c98
-generated: "2024-11-09T16:16:48.925252085-07:00"
+digest: sha256:c96fb80212f8b476e713adf248a401e82a6269590c1a85fe59dc3c73e123edee
+generated: "2024-11-09T18:13:05.892236488-07:00"
