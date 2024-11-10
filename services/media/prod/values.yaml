@@ -425,5 +425,7 @@ audiobookshelf:
             - *host
   persistence:
     config:
+      existingClaim: audiobookshelf
     media:
-      globalMounts:
+      existingClaim: media
+      #globalMounts:
