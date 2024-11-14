@@ -29,13 +29,15 @@ traefik:
         version: "v1.3.5"
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
-  volumes: 
-    - name: ClientID
-      mountPath: "/run/secrets/client_id"
-      type: secret
-    - name: ClientSecret
-      mountPath: "/run/secrets/client_secret"
-      type: secret
+  #volumes: 
+  #  - name: client_id
+  #    mountPath: "/run/secrets/client_id"
+  #    type: secret
+  #    key: # TODO: 
+  #  - name: client_secret
+  #    mountPath: "/run/secrets/client_secret"
+  #    type: secret
+  #    key: # TODO:
 
 crowdsec:
   tls:
