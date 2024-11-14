@@ -34,3 +34,67 @@ traefik:
     - name: ClientSecret
       mountPath: "/run/secrets/client_secret"
       type: secret
+
+crowdsec:
+  tls:
+    enabled: true
+    crowdsec-bouncer-traefik-plugin:
+      reflector:
+        namespaces: ["kube-system"]
+  lapi:
+    env:
+      - name: TZ
+        value: America/Denver
+      - name: ENROLL_INSTANCE_NAME
+        value: remote-proxy
+      # Setting the enroll key after initial startup requires force enrollment which currently breaks the local API.
+      - name: ENROLL_KEY
+        valueFrom:
+          secretKeyRef:
+            name: crowdsec-keys
+            key: ENROLL_KEY
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+    persistentVolume:
+      # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
+      data:
+        enabled: true
+        accessModes:
+          - ReadWriteOnce
+        size: 1Gi
+      # -- Persistent volume for config folder. Stores e.g. online api credentials
+      config:
+        enabled: true
+        accessModes:
+          - ReadWriteOnce
+        size: 100Mi
+  agent:
+    acquisition:
+      - namespace: kube-system
+        podName: traefik-*
+        program: traefik
+    env:
+      - name: TZ
+        value: America/Denver
+      - name: COLLECTIONS
+        value: >-
+          crowdsecurity/linux
+          crowdsecurity/traefik
+          crowdsecurity/base-http-scenarios
+          crowdsecurity/http-cve
+      - name: PARSERS
+        value: >-
+          crowdsecurity/cri-logs
+    persistentVolume:
+      # -- Persistent volume for config folder. Stores local config (parsers, scenarios etc.)
+      config:
+        enabled: true
+        accessModes:
+          - ReadWriteMany
+        size: 100Mi 
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true

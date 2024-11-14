@@ -6,3 +6,6 @@ metadata:
 spec:
   plugin:
     crowdsec-bouncer-traefik-plugin:
+      enabled: true
+      CrowdsecLapiScheme: https
+      crowdsecLapiHost: crowdsec-service:8080
