@@ -1,3 +1,5 @@
+bitwardenIds:
+  crowdsec-secret: 9e144cd6-5e85-4ded-b913-b228003c68a0
 traefik:
   additionalArguments:
     - "--api"
