@@ -96,7 +96,7 @@ crowdsec:
       config:
         enabled: true
         accessModes:
-          - ReadWriteMany
+          - ReadWriteOnce
         size: 100Mi 
     metrics:
       enabled: true
