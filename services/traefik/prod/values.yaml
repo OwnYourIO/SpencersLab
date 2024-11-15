@@ -29,13 +29,12 @@ traefik:
         version: "v1.3.5" 
   volumes:
     - name: crowdsec-secret-volume
-      secret:
-        secretName: crowdsec-lapi-secrets
-  additionalVolumeMounts:
-    - name: crowdsec-secret-volume
+      type: secret
       mountPath: /run/secrets/lapi
       subpath: csLapiSecret
       readOnly: true
+      secret:
+        secretName: crowdsec-lapi-secrets
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   #volumes: 
