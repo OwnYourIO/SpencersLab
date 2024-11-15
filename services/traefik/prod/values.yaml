@@ -26,7 +26,16 @@ traefik:
         version: "v1.0.0-alpha.1"
       crowdsec-bouncer-traefik-plugin:
         moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
-        version: "v1.3.5"
+        version: "v1.3.5" 
+  volumes:
+    - name: crowdsec-secret-volume
+      secret:
+        secretName: crowdsec-lapi-secrets
+  additionalVolumeMounts:
+    - name: crowdsec-secret-volume
+      mountPath: /run/secrets/lapi
+      subpath: csLapiSecret
+      readOnly: true
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   #volumes: 
