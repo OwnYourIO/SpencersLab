@@ -28,13 +28,12 @@ traefik:
         moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
         version: "v1.3.5" 
   volumes:
-    - name: crowdsec-secret-volume
+    - name: crowdsec-lapi-secret
       type: secret
       mountPath: /run/secrets/lapi
       subpath: csLapiSecret
       readOnly: true
-      secret:
-        secretName: crowdsec-lapi-secrets
+
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   #volumes: 
