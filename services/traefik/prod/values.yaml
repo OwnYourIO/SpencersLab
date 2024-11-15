@@ -33,7 +33,9 @@ traefik:
       mountPath: /run/secrets/lapi
       subpath: csLapiSecret
       readOnly: true
-
+  logs:
+    general:
+      level: DEBUG
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   #volumes: 
