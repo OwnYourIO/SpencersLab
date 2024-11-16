@@ -7,9 +7,9 @@ spec:
   plugin:
     geoblock:
       allowLocalRequests: true
-      logLocalRequests: true
-      logAllowedRequests: true
-      logApiRequests: true
+      logLocalRequests: false
+      logAllowedRequests: false
+      logApiRequests: false
       api: https://get.geojs.io/v1/ip/country/{ip}
       apiTimeoutMs: 500
       cacheSize: 25
