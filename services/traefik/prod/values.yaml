@@ -72,6 +72,8 @@ crowdsec:
           secretKeyRef:
             name: crowdsec-keys
             key: ENROLL_KEY
+      - name: LEVEL_DEBUG
+        value: true
     metrics:
       enabled: true
       serviceMonitor:
