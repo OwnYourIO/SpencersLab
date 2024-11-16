@@ -91,6 +91,7 @@ crowdsec:
       - namespace: kube-system
         podName: traefik-[0-9]*
         program: traefik
+        poll_without_inotify: false
     env:
       - name: TZ
         value: America/Denver
