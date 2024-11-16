@@ -7,8 +7,6 @@ traefik:
     - "--api.insecure=true"
     - "--log.level=DEBUG"
     - "--serversTransport.insecureSkipVerify=true"
-    - "--log.format=json"
-    - "--accesslog.format=json"
   dashboard: 
     enabled: true
   providers:
@@ -48,9 +46,6 @@ traefik:
   #    key: # TODO:
 
   logs:
-    general:
-      level: DEBUG
-      format: json
     access:
       enabled: true
 
