@@ -5,7 +5,6 @@ traefik:
     - "--api"
     - "--api.dashboard=true"
     - "--api.insecure=true"
-    - "--log.level=DEBUG"
     - "--serversTransport.insecureSkipVerify=true"
     - "--log.format=json"
     - "--accesslog.format=json"
