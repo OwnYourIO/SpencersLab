@@ -32,10 +32,10 @@ traefik:
     externalTrafficPolicy: Local
 
   volumes:
-    - name: crowdsec-lapi-secrets
+    - name: crowdsec-keys
       type: secret
       mountPath: /run/secrets/lapi
-      subpath: csLapiSecret
+      subpath: ENROLL_KEY
       readOnly: true
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17

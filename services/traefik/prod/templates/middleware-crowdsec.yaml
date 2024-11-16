@@ -9,4 +9,4 @@ spec:
       enabled: true
       CrowdsecLapiScheme: https
       crowdsecLapiHost: crowdsec-service:8080
-      crowdsecLapiKeyFile: /run/secrets/lapi/csLapiSecret
+      crowdsecLapiKeyFile: /run/secrets/lapi/ENROLL_KEY
