@@ -7,6 +7,6 @@ spec:
   plugin:
     crowdsec-bouncer-traefik-plugin:
       enabled: true
-      CrowdsecLapiScheme: https
+      CrowdsecLapiScheme: http
       crowdsecLapiHost: crowdsec-service:8080
       crowdsecLapiKeyFile: /run/secrets/lapi/ENROLL_KEY
