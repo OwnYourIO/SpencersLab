@@ -93,6 +93,7 @@ crowdsec:
         podName: traefik-[0-9]*
         program: traefik
         poll_without_inotify: true
+        force_json: true
     env:
       - name: TZ
         value: America/Denver
