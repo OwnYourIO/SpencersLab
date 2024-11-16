@@ -91,14 +91,11 @@ crowdsec:
         size: 100Mi
   agent:
     acquisition:
-      config:
-        - filenames:
-            - /var/log/containers/traefik-[0-9]*_kube-system_*.log
-          labels:
-            type: traefik
-            program: traefik
-          force_inotify: true
-          poll_without_inotify: true
+      - namespace: kube-system
+        podName: traefik-[0-9]*
+        program: traefik
+        poll_without_inotify: true
+        type: traefik
     env:
       - name: TZ
         value: America/Denver
