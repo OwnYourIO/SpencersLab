@@ -89,7 +89,7 @@ crowdsec:
   agent:
     acquisition:
       - namespace: kube-system
-        podName: traefik-*
+        podName: traefik-[0-9]*
         program: traefik
     env:
       - name: TZ
