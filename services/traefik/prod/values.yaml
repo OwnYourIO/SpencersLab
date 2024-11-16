@@ -55,6 +55,7 @@ traefik:
       enabled: true
 
 crowdsec:
+  container_runtime: containerd
   tls:
     enabled: true
     crowdsec-bouncer-traefik-plugin:
