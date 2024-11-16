@@ -33,9 +33,6 @@ traefik:
       mountPath: /run/secrets/lapi
       subpath: csLapiSecret
       readOnly: true
-  logs:
-    general:
-      level: DEBUG
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   #volumes: 
@@ -47,6 +44,12 @@ traefik:
   #    mountPath: "/run/secrets/client_secret"
   #    type: secret
   #    key: # TODO:
+
+  logs:
+    general:
+      level: DEBUG
+    access:
+      enabled: true
 
 crowdsec:
   tls:
