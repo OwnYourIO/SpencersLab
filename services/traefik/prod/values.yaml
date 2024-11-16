@@ -6,8 +6,6 @@ traefik:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
-    - "--log.format=json"
-    - "--accesslog.format=json"
   dashboard: 
     enabled: true
   providers:
