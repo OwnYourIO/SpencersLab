@@ -7,5 +7,5 @@ spec:
   plugin:
     traefik-oidc-relying-party:
       ProviderURL: "https://login.spencerslab.com/realms/SpencersLab/"
-      ClientIDFile: "/run/secrets/oidc/ClientID"
-      ClientSecretFile: "/run/secrets/oidc/ClientSecret"
+      ClientIDFile: "/run/secrets/oidc/client-id"
+      ClientSecretFile: "/run/secrets/oidc/client-secret"
