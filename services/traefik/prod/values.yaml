@@ -1,5 +1,6 @@
 bitwardenIds:
   crowdsec-secret: 9e144cd6-5e85-4ded-b913-b228003c68a0
+  traefik-sso-secret: fa9bb676-c5a9-431e-903f-b22b0038bf5c
 traefik:
   additionalArguments:
     - "--api"
@@ -31,24 +32,17 @@ traefik:
   service:
     externalTrafficPolicy: Local
 
+  # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   volumes:
     - name: crowdsec-keys
       type: secret
       mountPath: /run/secrets/lapi
       subpath: ENROLL_KEY
       readOnly: true
-
-  # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
-  #volumes: 
-  #  - name: client_id
-  #    mountPath: "/run/secrets/client_id"
-  #    type: secret
-  #    key: # TODO: 
-  #  - name: client_secret
-  #    mountPath: "/run/secrets/client_secret"
-  #    type: secret
-  #    key: # TODO:
-
+    - name: traefik-sso
+      type: secret
+      mountPath: "/run/secrets/oidc"
+  
   logs:
     access:
       enabled: true
