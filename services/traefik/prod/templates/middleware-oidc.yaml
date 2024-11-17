@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
 spec:
   plugin:
-    traefik-oidc-relying-party:
+    oidc:
       ProviderURL: "https://login.spencerslab.com"
       ClientIDFile: "/run/secrets/oidc/client-id"
       ClientSecretFile: "/run/secrets/oidc/client-secret"
