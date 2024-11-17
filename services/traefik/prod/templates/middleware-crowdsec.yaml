@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
 spec:
   plugin:
-    crowdsec-bouncer-traefik-plugin:
+    crowdsec:
       enabled: true
       CrowdsecLapiScheme: http
       crowdsecLapiHost: traefik-service:8080
