@@ -22,10 +22,10 @@ traefik:
       geoblock:
         moduleName: "github.com/PascalMinder/geoblock"
         version: "v0.2.8"
-      traefik-oidc-relying-party:
+      oidc:
         moduleName: "github.com/alexdelprete/traefik-oidc-relying-party"
         version: "v1.0.0-alpha.1"
-      crowdsec-bouncer-traefik-plugin:
+      crowdsec:
         moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
         version: "v1.3.5" 
 
