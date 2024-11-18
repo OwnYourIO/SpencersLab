@@ -7,10 +7,10 @@ traefik:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
-    - "--entrypoints.web.http.middleware=kube-system-crowdsec@kubernetescrd"
-    - "--entrypoints.websecure.http.middleware=kube-system-crowdsec@kubernetescrd"
-    - "--entrypoints.web.http.middleware=kube-system-oidc@kubernetescrd"
-    - "--entrypoints.websecure.http.middleware=kube-system-oidc@kubernetescrd"
+    - "--entrypoints.web.http.middlewares=kube-system-crowdsec@kubernetescrd"
+    - "--entrypoints.websecure.http.middlewares=kube-system-crowdsec@kubernetescrd"
+    - "--entrypoints.web.http.middlewares=kube-system-oidc@kubernetescrd"
+    - "--entrypoints.websecure.http.middlewares=kube-system-oidc@kubernetescrd"
   dashboard: 
     enabled: true
   providers:
