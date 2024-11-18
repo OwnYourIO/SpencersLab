@@ -7,12 +7,6 @@ traefik:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
-    - "--experimental.plugins.crowdsec.moduleName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-    - "--experimental.plugins.crowdsec.version=v1.3.5"
-    - "--entrypoints.web.http.middlewares=kube-system-crowdsec@kubernetescrd"
-    - "--entrypoints.websecure.http.middlewares=kube-system-crowdsec@kubernetescrd"
-    - "--entrypoints.web.http.middlewares=kube-system-oidc@kubernetescrd"
-    - "--entrypoints.websecure.http.middlewares=kube-system-oidc@kubernetescrd"
   dashboard: 
     enabled: true
   providers:
