@@ -5,7 +5,11 @@ metadata:
   namespace: kube-system
 spec:
   plugin:
-    oidc:
-      ProviderURL: "https://login.spencerslab.com/realms/SpencersLab/protocol/openid-connect/auth"
+    keycloakopenid:
       ClientIDFile: "/run/secrets/oidc/client-id"
       ClientSecretFile: "/run/secrets/oidc/client-secret"
+      KeycloakRealm: SpencersLab
+      KeycloakURL: https://login.spencerslab.com
+      Scope: openid
+      TokenCookieName: AUTH_TOKEN
+      UseAuthHeader: "false"
