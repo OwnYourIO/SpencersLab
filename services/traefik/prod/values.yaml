@@ -64,8 +64,8 @@ traefik:
       mountPath: "/run/secrets/oidc"
   
   logs:
-    general:
-      level: DEBUG
+    #general:
+    #  level: DEBUG
     access:
       enabled: true
 
@@ -122,7 +122,7 @@ crowdsec:
           crowdsecurity/traefik
           crowdsecurity/base-http-scenarios
           crowdsecurity/http-cve
-      
+
     persistentVolume:
       # -- Persistent volume for config folder. Stores local config (parsers, scenarios etc.)
       config:
