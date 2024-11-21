@@ -31,6 +31,26 @@ traefik:
 
   service:
     externalTrafficPolicy: Local
+  ingressRoute:
+    dashboard:
+      enabled: true
+      matchRule: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
+      # -- The internal service used for the dashboard ingressRoute
+      services:
+        - name: api@internal
+          kind: TraefikService
+      # -- Specify the allowed entrypoints to use for the dashboard ingress route, (e.g. traefik, web, websecure).
+      # By default, it's using traefik entrypoint, which is not exposed.
+      # /!\ Do not expose your dashboard without any protection over the internet /!\
+      entryPoints: ["traefik", "websecure"]
+      # -- Additional ingressRoute middlewares (e.g. for authentication)
+      middlewares: []
+      # -- TLS options (e.g. secret containing certificate)
+      tls:
+        - hosts:
+          - traefik.monitoring.spencerslab.com
+          secretName: cluster-wildcard-cert
+
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   volumes:
