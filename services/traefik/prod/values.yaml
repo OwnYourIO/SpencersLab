@@ -47,9 +47,9 @@ traefik:
       middlewares: []
       # -- TLS options (e.g. secret containing certificate)
       tls:
-        - hosts:
+        hosts:
           - traefik.monitoring.spencerslab.com
-          secretName: cluster-wildcard-cert
+        secretName: cluster-wildcard-cert
 
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
