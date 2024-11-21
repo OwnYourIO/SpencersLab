@@ -34,7 +34,7 @@ traefik:
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   volumes:
-    - name: crowdsec-boncer-key
+    - name: crowdsec-bouncer-key
       type: secret
       mountPath: /run/secrets/lapi
       subpath: api_key
