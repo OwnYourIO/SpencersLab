@@ -10,3 +10,4 @@ spec:
       crowdsecLapiScheme: https
       crowdsecLapiHost: traefik-service:8080
       crowdsecLapiKeyFile: /run/secrets/lapi/api_key
+      CrowdsecLapiTLSInsecureVerify: true
