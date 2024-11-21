@@ -9,4 +9,4 @@ spec:
       enabled: true
       CrowdsecLapiScheme: http
       crowdsecLapiHost: traefik-service:8080
-      crowdsecLapiKeyFile: /run/secrets/lapi/ENROLL_KEY
+      crowdsecLapiKeyFile: /run/secrets/lapi/api_key

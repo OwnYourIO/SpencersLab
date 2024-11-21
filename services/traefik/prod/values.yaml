@@ -34,10 +34,10 @@ traefik:
 
   # From https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L331C1-L334C17
   volumes:
-    - name: crowdsec-keys
+    - name: crowdsec-boncer-key
       type: secret
       mountPath: /run/secrets/lapi
-      subpath: ENROLL_KEY
+      subpath: api_key
       readOnly: true
     - name: traefik-sso
       type: secret
