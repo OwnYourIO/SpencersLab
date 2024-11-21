@@ -33,7 +33,7 @@ traefik:
     externalTrafficPolicy: Local
   ingressRoute:
     dashboard:
-      enabled: true
+      enabled: false
       matchRule: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
       # -- The internal service used for the dashboard ingressRoute
       services:
@@ -64,6 +64,8 @@ traefik:
       mountPath: "/run/secrets/oidc"
   
   logs:
+    general:
+      level: DEBUG
     access:
       enabled: true
 
