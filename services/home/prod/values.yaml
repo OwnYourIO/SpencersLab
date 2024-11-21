@@ -481,6 +481,9 @@ wekan:
       - secretName: wildcard-cert
         hosts:
           - wekan.spencerslab.com
+  env:
+    - name: "MONGO_URL"
+      value: "mongodb://home-mongodb:27017"
 
 vikunja:
   controllers:
