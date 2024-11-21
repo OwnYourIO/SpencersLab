@@ -6,6 +6,7 @@ metadata:
 spec:
   plugin:
     oidc:
-      ProviderURL: "https://login.spencerslab.com/realms/SpencersLab/"
-      ClientIDFile: "/run/secrets/oidc/client-id"
-      ClientSecretFile: "/run/secrets/oidc/client-secret"
+      ProviderAuth:
+        ProviderURL: "https://login.spencerslab.com/realms/SpencersLab/"
+        ClientIDFile: "/run/secrets/oidc/client-id"
+        ClientSecretFile: "/run/secrets/oidc/client-secret"
