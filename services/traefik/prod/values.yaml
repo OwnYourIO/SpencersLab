@@ -25,6 +25,7 @@ traefik:
       keycloakopenid:
         moduleName: "github.com/jmcarbo/keycloakopenid"
         version: "v0.1.40"
+      crowdsec:
         moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
         version: "v1.3.5" 
 
