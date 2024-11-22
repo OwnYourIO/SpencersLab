@@ -507,7 +507,7 @@ wekan:
       value: "email"
   extraEnvFrom: |
     - secretRef:
-        name: "{{ template "wekan.fullname" $ }}-oidc-secret"
+        name: "wekan-sso"
 
 vikunja:
   controllers:
