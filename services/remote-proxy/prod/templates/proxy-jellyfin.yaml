@@ -4,7 +4,7 @@ metadata:
   name: jellyfin-ingress
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd,kube-system-oidc@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd,kube-system-oidc@kubernetescrd,kube-system-login-cors@kubernetescrd
 spec:
   tls:
     - hosts:
