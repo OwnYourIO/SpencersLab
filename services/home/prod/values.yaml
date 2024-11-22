@@ -1,5 +1,6 @@
 bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+  wekan-sso-secret: 68ce2bae-c00f-4293-8325-b23000060637
 
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
@@ -484,6 +485,29 @@ wekan:
   env:
     - name: "MONGO_URL"
       value: "mongodb://home-mongodb:27017"
+    - name: "DEBUG"
+      value: "true"
+    - name: "OAUTH2_ENABLED"
+      value: "true"
+    - name: "OAUTH2_SERVER_URL"
+      value: "https://login.spencerslab.com"
+    - name: "OAUTH2_AUTH_ENDPOINT"
+      value: "/realms/SpencersLab/protocol/openid-connect/auth"
+    - name: "OAUTH2_USERINFO_ENDPOINT"
+      value: "/realms/SpencersLab/protocol/openid-connect/userinfo"
+    - name: "OAUTH2_TOKEN_ENDPOINT"
+      value: "/realms/SpencersLab/protocol/openid-connect/token"
+    - name: "OAUTH2_ID_MAP"
+      value: "preferred_username"
+    - name: "OAUTH2_USERNAME_MAP"
+      value: "preferred_username"
+    - name: "OAUTH2_FULLNAME_MAP"
+      value: "given_name"
+    - name: "OAUTH2_EMAIL_MAP"
+      value: "email"
+  extraEnvFrom: |
+    - secretRef:
+        name: "{{ template "wekan.fullname" $ }}-oidc-secret"
 
 vikunja:
   controllers:
