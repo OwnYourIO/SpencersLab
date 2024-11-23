@@ -1,6 +1,6 @@
 apiVersion: v2
 name: logitech-media-server
-version: 1.0.15
+version: 1.0.16
 appVersion: 1.0.15
 dependencies:
 - name: app-template
