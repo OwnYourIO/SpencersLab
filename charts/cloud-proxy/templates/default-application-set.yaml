@@ -17,7 +17,7 @@ spec:
                   namespace: default
                   ServerSideApply: "false"
                 - appName: traefik
-                  namespace: default
+                  namespace: kube-system
                   ServerSideApply: "false"
   template:
     metadata:
