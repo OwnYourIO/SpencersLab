@@ -29,7 +29,7 @@ dependencies:
     version: 0.3.1
     repository: https://bubylou.github.io/Arr-Stack
   - name: readarr
-    version: 0.3.1
+    version: 0.3.2
     repository: https://bubylou.github.io/Arr-Stack
   - name: sonarr
     version: 0.3.1
