@@ -36,10 +36,10 @@ dependencies:
 #  version: 1.0.14
 #  repository: https://ownyourio.github.io/SpencersLab/
 - name: snapcast
-  version: 1.0.3
+  version: 1.0.4
   repository: https://ownyourio.github.io/SpencersLab/
 - name: paperless
-  version: 1.0.1
+  version: 1.0.2
   repository: https://ownyourio.github.io/SpencersLab/
 - name: wekan
   version: 7.67.0
