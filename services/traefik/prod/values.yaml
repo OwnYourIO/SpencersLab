@@ -21,13 +21,16 @@ traefik:
     plugins:
       geoblock:
         moduleName: "github.com/PascalMinder/geoblock"
-        version: "v0.2.8" # renovate: depName=github.com/PascalMinder/geoblock
+        # renovate: depName=github.com/PascalMinder/geoblock
+        version: "v0.2.8"
       keycloakopenid:
         moduleName: "github.com/jmcarbo/keycloakopenid"
-        version: "v0.1.40" # renovate: depName=github.com/jmcarbo/keycloakopenid
+        # renovate: depName=github.com/jmcarbo/keycloakopenid
+        version: "v0.1.40"
       crowdsec:
         moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
-        version: "v1.3.5" # renovate: depName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+        # renovate: depName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+        version: "v1.3.5"
 
   service:
     externalTrafficPolicy: Local
