@@ -11,5 +11,5 @@ spec:
       KeycloakRealm: SpencersLab
       KeycloakURL: https://login.spencerslab.com
       Scope: openid
-      TokenCookieName: Authorization
+      TokenCookieName: AUTH_TOKEN
       UseAuthHeader: "true"
