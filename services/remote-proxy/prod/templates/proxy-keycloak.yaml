@@ -16,8 +16,11 @@ spec:
         paths:
           - path: /realms/SpencersLab/
             pathType: Prefix
-            backend:
+            backend: &defaultBackend
               service:
                 name: proxy-service
                 port:
                   number: 443
+          - path: /resources/
+            pathType: Prefix
+            backend: *defaultBackend
