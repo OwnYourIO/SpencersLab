@@ -17,7 +17,7 @@ dependencies:
     version: 0.2.0
     repository: https://bubylou.github.io/Arr-Stack
   - name: lidarr
-    version: 0.3.0
+    version: 0.3.1
     repository: https://bubylou.github.io/Arr-Stack
   - name: prowlarr
     version: 0.3.1
