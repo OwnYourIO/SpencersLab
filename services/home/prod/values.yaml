@@ -399,7 +399,7 @@ paperless:
 
     persistence:
       data:
-        existingClaim: paperless-ngx-data
+        existingClaim: paperless
         globalMounts:
         - path: /paperless
 
