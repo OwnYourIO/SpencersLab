@@ -220,7 +220,7 @@ metube:
       seccompProfile: { type: RuntimeDefault }
   service:
     app:
-      controller: *app
+      controller: metube
       ports:
         http:
           port: 8081
