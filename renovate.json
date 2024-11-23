@@ -6,7 +6,7 @@
   "ignoreTests": true,
   "packageRules": [
     {
-      "matchPackageNames": ["traefik", "keycloakopenid", "keycloakx", "sshd"],
+      "matchPackageNames": ["traefik", "keycloakopenid", "keycloakx", "ghcr.io/linuxserver/openssh-server"],
       "automerge": true
     }
   ]
