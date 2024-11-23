@@ -1,0 +1,76 @@
+global:
+  nameOverride: paperless
+app-template:
+  controllers:
+    main:
+      containers:
+        main:
+          env:
+            COMPOSE_PROJECT_NAME: paperless-ngx
+            PAPERLESS_DBHOST: paperless-ngx-postgresql
+            PAPERLESS_DBNAME: paperless-ngx
+            PAPERLESS_DBUSER: paperless-ngx
+            USERMAP_UID: 33
+            USERMAP_GID: 33
+            PAPERLESS_FILENAME_FORMAT: "{created_year}/{correspondent}/{title}"
+            PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: true
+            PAPERLESS_CONSUMER_POLLING: 60
+            PAPERLESS_CONSUMER_DELETE_DUPLICATES: true
+            PAPERLESS_CONSUMER_RECURSIVE: true
+            PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: true
+            PAPERLESS_OCR_LANGUAGE: eng
+            PAPERLESS_ENABLE_HTTP_REMOTE_USER: 'true'
+            PAPERLESS_OCR_PAGES: 2
+            PAPERLESS_THREADS_PER_WORKER: 1
+            PAPERLESS_TIKA_ENABLED: 1
+            PAPERLESS_WEBSERVER_WORKERS: 1
+          probes:
+            liveness:
+              enabled: true
+              type: HTTP
+            readiness:
+              enabled: true
+              type: HTTP
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 30
+                periodSeconds: 5
+              type: HTTP
+          resources:
+            limits:
+              memory: 1.2Gi
+            requests:
+              cpu: 40m
+              memory: 1.2Gi
+        gotenburg:
+          env:
+            DISABLE_GOOGLE_CHROME: '1'
+          image:
+          resources:
+            limits:
+              memory: 30Mi
+            requests:
+              cpu: 10m
+              memory: 30Mi
+        redis:
+          resources:
+            limits:
+              memory: 50Mi
+            requests:
+              cpu: 10m
+              memory: 18Mi
+        tika:
+          resources:
+            limits:
+              memory: 220Mi
+            requests:
+              cpu: 10m
+              memory: 220Mi
+
+  service:
+    main:
+      controller: main
+      ports:
+        http:
+          port: 8000

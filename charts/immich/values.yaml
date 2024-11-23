@@ -1,0 +1,9 @@
+global:
+  nameOverride: immich
+app-template:
+  controllers:
+    immich:
+      containers:
+        main:
+          env:
+            TZ: Etc/UTC
