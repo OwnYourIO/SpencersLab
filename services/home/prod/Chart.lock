@@ -16,7 +16,7 @@ dependencies:
   version: 1.0.39
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.11
+  version: 1.0.13
 - name: ledfx
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.9
@@ -32,5 +32,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.67.0
-digest: sha256:a185401aad1ffccb6efb10e0efc4a24dd3e86882e58d1e4556f646e1a1a1cd7d
-generated: "2024-11-23T11:36:14.40934642-07:00"
+digest: sha256:f015a1800be0281225df732f4f6bcd25fff2aab87bfed07b24537d42cc39d852
+generated: "2024-11-23T18:39:53.026077433Z"
