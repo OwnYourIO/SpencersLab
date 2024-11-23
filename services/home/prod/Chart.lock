@@ -34,6 +34,6 @@ dependencies:
   version: 3.5.1
 - name: wekan
   repository: https://wekan.github.io/charts/
-  version: 7.61.0
-digest: sha256:c0e1d67c97829849938b4ea8ccb3c3268b202a433f512834f55228d79f02f957
-generated: "2024-11-22T20:25:32.23528207-07:00"
+  version: 7.67.0
+digest: sha256:32d1e30d64a7977fe5ff6c7f18d12bb5371b74bd741e9a2e61fc39d60440395e
+generated: "2024-11-23T03:31:36.657151443Z"
