@@ -1,11 +1,12 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: unpackerr
-  namespace: default
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+# Disable Unpackerr PVC until it's ready to be used.
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: unpackerr
+#  namespace: default
+#spec:
+#  accessModes:
+#  - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 1Gi
