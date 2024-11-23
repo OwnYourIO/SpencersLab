@@ -29,5 +29,8 @@ dependencies:
 - name: sonarr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.3.1
-digest: sha256:cdd274dcbfd93158182e2895c10f5513715e70a49dbfda61d72d24bccea35807
-generated: "2024-11-23T14:11:38.98116207-07:00"
+- name: app-template
+  repository: https://bjw-s.github.io/helm-charts/
+  version: 3.5.1
+digest: sha256:176070787e04075b285953b082b10265d03503c343e2d3702e70060b08bc3274
+generated: "2024-11-23T14:16:06.566396642-07:00"

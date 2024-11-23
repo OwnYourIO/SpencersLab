@@ -36,3 +36,7 @@ dependencies:
   #- name: unpackerr
   #  version: 0.4.2
   #  repository: https://bubylou.github.io/Arr-Stack
+  - name: app-template
+    version: 3.5.1
+    repository: https://bjw-s.github.io/helm-charts/
+    alias: audiobookshelf
