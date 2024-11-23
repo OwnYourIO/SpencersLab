@@ -229,6 +229,7 @@ metube:
   ingress:
     app:
       hosts:
+        - host: "metube.spencerslab.com"
           paths:
             - path: /
               service:
