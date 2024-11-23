@@ -46,7 +46,6 @@ app-template:
         gotenburg:
           env:
             DISABLE_GOOGLE_CHROME: '1'
-          image:
           resources:
             limits:
               memory: 30Mi
