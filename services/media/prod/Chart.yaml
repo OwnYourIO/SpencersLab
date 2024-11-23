@@ -14,7 +14,7 @@ dependencies:
     repository: https://bubylou.github.io/Arr-Stack
 
   - name: jellyseerr
-    version: 0.2.0
+    version: 0.2.1
     repository: https://bubylou.github.io/Arr-Stack
   - name: lidarr
     version: 0.3.1
