@@ -10,7 +10,7 @@ dependencies:
     version: 0.2.2
     repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   - name: jellyfin
-    version: 0.2.2
+    version: 0.2.3
     repository: https://bubylou.github.io/Arr-Stack
 
   - name: jellyseerr
