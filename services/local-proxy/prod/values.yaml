@@ -132,8 +132,9 @@ autossh:
               memory: 8Gi
       pod:
         securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
+          # Pod required to be root, otherwise it's work on /etc/passwd can't happen.
+          #runAsUser: 1000
+          #runAsGroup: 1000
           fsGroup: 1000
           fsGroupChangePolicy: "OnRootMismatch"
           supplementalGroups: [1000]
