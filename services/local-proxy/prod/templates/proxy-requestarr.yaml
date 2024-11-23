@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: requestarr-service
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: requestarr.spencerslab.com
+  ports:
+    - port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: requestarr-ingress
+  namespace: default
+  annotations:
+    # Traefik annotations
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc@kubernetescrd,kube-system-login-cors@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  tls:
+    - hosts:
+      - "requestarr.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
+  rules:
+    - host: requestarr.spencerslab.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: requestarr-service
+                port:
+                  number: 443

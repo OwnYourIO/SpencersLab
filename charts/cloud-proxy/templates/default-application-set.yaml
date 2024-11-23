@@ -16,6 +16,9 @@ spec:
                 - appName: local-proxy
                   namespace: default
                   ServerSideApply: "false"
+                - appName: traefik
+                  namespace: default
+                  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"

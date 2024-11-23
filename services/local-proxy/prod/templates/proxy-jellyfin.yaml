@@ -16,9 +16,7 @@ metadata:
   name: jellyfin-ingress
   namespace: default
   annotations:
-    # Traefik annotations
-    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc@kubernetescrd,kube-system-login-cors@kubernetescrd
 spec:
   tls:
     - hosts:
@@ -26,6 +24,29 @@ spec:
       secretName: cluster-wildcard-cert
   rules:
     - host: jellyfin.spencerslab.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jellyfin-service
+                port:
+                  number: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jellyfin-whitelist-ingress
+  namespace: default
+  annotations:
+spec:
+  tls:
+    - hosts:
+      - "jellyfin-whitelist.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
+  rules:
+    - host: jellyfin-whitelist.spencerslab.com
       http:
         paths:
           - path: /
