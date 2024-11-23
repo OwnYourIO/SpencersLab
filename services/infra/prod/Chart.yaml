@@ -13,7 +13,7 @@ dependencies:
   version: 1.1.25
   repository: https://ownyourio.github.io/SpencersLab/
 - name: keycloakx
-  version: 2.5.1
+  version: 2.6.0
   repository: https://codecentric.github.io/helm-charts
 - name: 389ds
   version: 1.0.3
