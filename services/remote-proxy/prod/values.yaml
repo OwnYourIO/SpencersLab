@@ -26,8 +26,9 @@ remote-proxy:
               memory: 4Gi
       pod:
         securityContext:
-          runAsUser: 2000
-          runAsGroup: 2000
+          # Have to run as root otherwise it can't create the proxy user.
+          #runAsUser: 2000
+          #runAsGroup: 2000
           fsGroup: 2000
           fsGroupChangePolicy: "OnRootMismatch"
 
