@@ -348,23 +348,6 @@ logitech-media-server:
           - path: /entrypoint.sh
             subPath: custom-entrypoint.sh
 
-immich:
-  postgresql:
-    enabled: true
-
-  server:
-    ingress:
-      main:
-        enabled: true
-        hosts:
-          - host: immich.local
-            paths:
-              - path: "/"
-        tls: []
-  persistence:
-    library:
-      existingClaim: immich-library
-
 paperless:
   controllers:
     main:

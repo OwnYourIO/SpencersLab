@@ -16,6 +16,10 @@ spec:
                 - appName: home
                   namespace: default
                   ServerSideApply: "false"
+                # Include immich this way because otherwise it doesn't play well with any chart of the bjw library charts.
+                - appName: immich
+                  namespace: default
+                  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"

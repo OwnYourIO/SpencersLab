@@ -1,0 +1,19 @@
+bitwardenIds:
+  immich-sso-secret: # TODO:
+
+immich:
+  postgresql:
+    enabled: true
+
+  server:
+    ingress:
+      main:
+        enabled: true
+        hosts:
+          - host: immich.local
+            paths:
+              - path: "/"
+        tls: []
+  persistence:
+    library:
+      existingClaim: immich-library
