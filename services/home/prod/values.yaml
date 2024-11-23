@@ -416,7 +416,7 @@ paperless:
             DISABLE_GOOGLE_CHROME: '1'
           image:
             repository: gotenberg/gotenberg
-            tag: 8.13.0@sha256:1917c80269a30d53979f8354bce6aabb8a2a62a38f727362c394edfbceaa7640
+            tag: 8.14.1@sha256:c81f625afc869ba10819622f7e7d6d76708b2a32645b3fb74fbee610bf030465
           resources:
             limits:
               memory: 30Mi
