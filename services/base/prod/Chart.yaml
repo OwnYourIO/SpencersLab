@@ -10,5 +10,5 @@ dependencies:
   version: v1.15.3
   repository: https://charts.jetstack.io
 - name: external-secrets
-  version: 0.10.4
+  version: 0.10.7
   repository: https://charts.external-secrets.io
