@@ -38,13 +38,13 @@ dependencies:
 - name: snapcast
   version: 1.0.2
   repository: https://ownyourio.github.io/SpencersLab/
-#- name: immich
-#  version: 0.8.4
-#  repository: https://immich-app.github.io/immich-charts
-#- name: app-template
-#  version: 3.5.1
-#  repository: https://bjw-s.github.io/helm-charts/
-#  alias: paperless
+- name: immich
+  version: 0.8.4
+  repository: https://immich-app.github.io/immich-charts
+- name: app-template
+  version: 3.5.1
+  repository: https://bjw-s.github.io/helm-charts/
+  alias: paperless
 - name: wekan
   version: 7.61.0
   repository: https://wekan.github.io/charts/
