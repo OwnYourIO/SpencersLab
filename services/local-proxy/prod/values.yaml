@@ -186,6 +186,8 @@ pinchflat:
           port: *port
   ingress:
     app:
+      hosts:
+        - host: "pinchflat.spencerslab.com"
           paths:
             - path: /
               service:
