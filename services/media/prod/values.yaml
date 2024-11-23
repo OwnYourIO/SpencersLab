@@ -378,7 +378,7 @@ audiobookshelf:
         app:
           image:
             repository: ghcr.io/advplyr/audiobookshelf
-            tag: 2.16.2
+            tag: 2.17.2
           #envFrom:
           #  - secretRef:
           #      name: audiobookshelf-secret
