@@ -36,7 +36,7 @@ dependencies:
 #  version: 1.0.14
 #  repository: https://ownyourio.github.io/SpencersLab/
 - name: snapcast
-  version: 1.0.2
+  version: 1.0.3
   repository: https://ownyourio.github.io/SpencersLab/
 - name: paperless
   version: 1.0.1
