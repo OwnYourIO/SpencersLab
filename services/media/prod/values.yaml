@@ -428,4 +428,3 @@ audiobookshelf:
       existingClaim: audiobookshelf
     media:
       existingClaim: media
-      #globalMounts:

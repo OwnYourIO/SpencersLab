@@ -41,6 +41,3 @@ dependencies:
     version: 3.5.1
     repository: https://bjw-s.github.io/helm-charts/
     alias: audiobookshelf
-  #- name: yt-dlp
-  #  version: 0.1.1
-  #  repository: https://ppts-ai.github.io/apps/

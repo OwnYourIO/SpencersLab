@@ -48,7 +48,3 @@ dependencies:
 - name: wekan
   version: 7.61.0
   repository: https://wekan.github.io/charts/
-#- name: app-template
-#  version: 3.5.1
-#  repository: https://bjw-s.github.io/helm-charts/
-#  alias: vikunja
