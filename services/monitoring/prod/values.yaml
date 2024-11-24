@@ -285,23 +285,9 @@ grafana:
         gnetId: 21689
         revision: 1
         datasource: Prometheus
-        __inputs:
-          - name: DS_PROMETHEUS
-            label: Prometheus
-            description: Prometheus datasource
-            type: datasource
-            pluginId: prometheus
-            value: Prometheus
       Crowdsec Details Per Machine:
         url: https://raw.githubusercontent.com/crowdsecurity/grafana-dashboards/refs/heads/master/dashboards_v5/Crowdsec%20Details%20per%20Machine.json
         datasource: Prometheus
-        __inputs:
-          - name: DS_PROMETHEUS
-            label: Prometheus
-            description: Prometheus datasource
-            type: datasource
-            pluginId: prometheus
-            value: Prometheus
       Crowdsec Insight:
         datasource: Prometheus
         url: https://raw.githubusercontent.com/crowdsecurity/grafana-dashboards/refs/heads/master/dashboards_v5/Crowdsec%20Insight.json
