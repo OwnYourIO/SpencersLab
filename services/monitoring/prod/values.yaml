@@ -271,8 +271,8 @@ grafana:
         gnetId: 21136
         revision: 1
         datasource: 
-          - { name: Prometheus, value: Prometheus }
-          - { name: Loki, value: Loki }
+          - { name: DS_PROMETHEUS, value: Prometheus }
+          - { name: DS_LOKI, value: Loki }
       Traefik:
         gnetId: 17347
         revision: 9
