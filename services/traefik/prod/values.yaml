@@ -58,6 +58,7 @@ traefik:
     prometheus:
       serviceMonitor:
         enabled: true
+        namespace: default
         additionalLabels:
           prometheus: system-monitoring-prometheus
 
