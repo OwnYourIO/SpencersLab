@@ -1,3 +1,5 @@
+prometheus:
+  serviceMonitorSelectorNilUsesHelmValues: false
 kube-prometheus-stack: 
   crds:
     enabled: true
