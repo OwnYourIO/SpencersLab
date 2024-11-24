@@ -106,6 +106,8 @@ crowdsec:
       enabled: true
       serviceMonitor:
         enabled: true
+        extraLabels:
+          release: monitoring
     persistentVolume:
       # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
       data:
@@ -146,3 +148,5 @@ crowdsec:
       enabled: true
       serviceMonitor:
         enabled: true
+        extraLabels:
+          release: monitoring
