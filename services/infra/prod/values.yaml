@@ -6,6 +6,9 @@ bitwardenIds:
   gitea: 2ca2457b-dc62-413a-af99-b1f8017ef7cd
   gitea-admin: f7b628ec-2544-4c28-a476-b1a501487d99
 
+prometheus:
+  serviceMonitorSelectorNilUsesHelmValues: false
+
 389ds:
   bitwardenIds:
     389ds: f7b628ec-2544-4c28-a476-b1a501487d99
