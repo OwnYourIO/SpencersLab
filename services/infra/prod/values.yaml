@@ -191,10 +191,14 @@ keycloakx:
 
     serviceMonitor:
       enabled: true
+      additionalLabels:
+        release: monitoring-agent
       port: metrics
 
     extraServiceMonitor:
       enabled: true  
+      extraLabels:
+        release: monitoring-agent
       port: http
       path: /realms/SpencersLab/metrics
 
