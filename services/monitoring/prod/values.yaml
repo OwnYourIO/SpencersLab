@@ -247,6 +247,32 @@ grafana:
           access: proxy
           url: http://monitoring-kube-prometheus-prometheus.default:9090
   dashboards:
+    its_alive:
+      Traefik:
+        gnetId: 17347
+        revision: 9
+        datasource: Prometheus
+      Keycloak:
+        gnetId: 19659
+        revision: 1
+        datasource: Prometheus
+      CrowdSec:
+        gnetId: 21689
+        revision: 1
+        datasource: Prometheus
+      Crowdsec Details Per Machine:
+        datasource: Prometheus
+        url: https://raw.githubusercontent.com/crowdsecurity/grafana-dashboards/refs/heads/master/dashboards_v5/Crowdsec%20Details%20per%20Machine.json
+      Crowdsec Insight:
+        datasource: Prometheus
+        url: https://raw.githubusercontent.com/crowdsecurity/grafana-dashboards/refs/heads/master/dashboards_v5/Crowdsec%20Insight.json
+      Crowdsec Overview:
+        datasource: Prometheus
+        url: https://raw.githubusercontent.com/crowdsecurity/grafana-dashboards/refs/heads/master/dashboards_v5/Crowdsec%20Overview.json
+      Crowdsec LAPI Metrics:
+        datasource: Prometheus
+        url: https://raw.githubusercontent.com/crowdsecurity/grafana-dashboards/refs/heads/master/dashboards_v5/LAPI%20Metrics.json
+
     data:
       SeaWeedFS:
         datasource: Prometheus
