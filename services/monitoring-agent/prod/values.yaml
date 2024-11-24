@@ -14,3 +14,4 @@ kube-prometheus-stack:
     prometheusSpec:
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelector: {}
+      serviceMonitorNamespaceSelector: {} 
