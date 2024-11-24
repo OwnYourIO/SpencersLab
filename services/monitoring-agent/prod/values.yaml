@@ -11,7 +11,7 @@ kube-prometheus-stack:
         ttlSecondsAfterFinished: 600
   prometheus:
     agentMode: true
-    prometheusSpec:
+    prometheusAgentSpec:
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelector: {}
       serviceMonitorNamespaceSelector: {} 
