@@ -17,3 +17,7 @@ kube-prometheus-stack:
       serviceMonitorNamespaceSelector: {} 
       enableFeatures:
         - agent
+      # This is defined by values set in the ArgoCD AppSet.
+      #remoteWrite: 
+      #  - name: storage
+      #    url: https://prometheus.spencerslab.com/api/v1/write
