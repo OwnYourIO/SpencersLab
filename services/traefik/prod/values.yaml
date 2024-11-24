@@ -60,6 +60,7 @@ traefik:
         enabled: true
         namespace: default
         additionalLabels:
+          release: monitoring
           prometheus: system-monitoring-prometheus-prometheus
 
   # To create this secret:
