@@ -68,6 +68,9 @@ kube-prometheus-stack:
       scrapeConfigSelector:
         matchLabels:
           prometheus: system-monitoring-prometheus
+      serviceMonitorSelector:
+        matchLabels:
+          prometheus: system-monitoring-prometheus
 
 mailcow_exporter:
   host: mail.spencerslab.com
