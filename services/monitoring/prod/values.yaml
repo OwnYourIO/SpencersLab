@@ -181,6 +181,14 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/default
+        - name: its-alive
+          orgId: 1
+          folder: Its Alive!
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/its-alive
         - name: data
           orgId: 1
           folder: Data
