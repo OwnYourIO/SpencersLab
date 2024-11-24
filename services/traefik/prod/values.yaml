@@ -54,6 +54,9 @@ traefik:
           - traefik.monitoring.spencerslab.com
         secretName: cluster-wildcard-cert
 
+  metrics:
+    prometheus:
+      serviceMonitor:
 
   # To create this secret:
   # kubectl create secret generic crowdsec-bouncer-key -n kube-system --from-literal="api_key=<THE_GENERATED_BOUNCER_API_KEY"
