@@ -70,7 +70,7 @@ kube-prometheus-stack:
           prometheus: system-monitoring-prometheus
       serviceMonitorSelector:
         matchLabels:
-          prometheus: system-monitoring-prometheus
+          prometheus: monitoring-kube-prometheus-prometheus
 
 mailcow_exporter:
   host: mail.spencerslab.com
