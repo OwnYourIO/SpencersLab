@@ -60,7 +60,7 @@ traefik:
         enabled: true
         namespace: default
         additionalLabels:
-          prometheus: system-monitoring-prometheus
+          prometheus: system-monitoring-prometheus-prometheus
 
   # To create this secret:
   # kubectl create secret generic crowdsec-bouncer-key -n kube-system --from-literal="api_key=<THE_GENERATED_BOUNCER_API_KEY"
