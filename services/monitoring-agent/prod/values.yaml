@@ -15,3 +15,5 @@ kube-prometheus-stack:
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelector: {}
       serviceMonitorNamespaceSelector: {} 
+      enableFeatures:
+        - agent
