@@ -19,6 +19,9 @@ spec:
                 - appName: traefik
                   namespace: kube-system
                   ServerSideApply: "false"
+                - appName: monitoring-agent
+                  namespace: default
+                  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
@@ -38,6 +41,10 @@ spec:
               value: "{{ `{{ metadata.annotations.clusterName }}` }}"
             - name: argocd.argo-cd.configs.cm.url
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
+            - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
+              value: "storage"
+            - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
+              value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
           valueFiles:
         #    #- ../common.values.yaml
             - values.yaml
