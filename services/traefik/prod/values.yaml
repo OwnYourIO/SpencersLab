@@ -60,7 +60,7 @@ traefik:
         enabled: true
         namespace: default
         additionalLabels:
-          release: monitoring
+          release: monitoring-agent
           prometheus: system-monitoring-prometheus-prometheus
 
   # To create this secret:
@@ -107,7 +107,7 @@ crowdsec:
       serviceMonitor:
         enabled: true
         additionalLabels:
-          release: monitoring
+          release: monitoring-agent
     persistentVolume:
       # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
       data:
