@@ -149,4 +149,4 @@ crowdsec:
       serviceMonitor:
         enabled: true
         additionalLabels:
-          release: monitoring
+          release: monitoring-agent
