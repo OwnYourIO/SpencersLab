@@ -267,12 +267,12 @@ grafana:
           url: http://monitoring-kube-prometheus-prometheus.default:9090
   dashboards:
     its-alive:
-      #Traefik-v3:
-      #  gnetId: 21136
-      #  revision: 1
-      #  datasource: 
-      #    - Prometheus
-      #    - Loki
+      TraefikV3:
+        gnetId: 21136
+        revision: 1
+        datasource: 
+          - { name: Prometheus, value: Prometheus }
+          - { name: Loki, value: Loki }
       Traefik:
         gnetId: 17347
         revision: 9
