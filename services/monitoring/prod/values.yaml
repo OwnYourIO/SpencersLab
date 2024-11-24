@@ -70,8 +70,7 @@ kube-prometheus-stack:
         matchLabels:
           prometheus: system-monitoring-prometheus
 
-      podMonitorNamespaceSelector:
-        any: true
+      podMonitorNamespaceSelector: {}
       podMonitorSelector: {}
       podMonitorSelectorNilUsesHelmValues: false
       ruleNamespaceSelector: {}
