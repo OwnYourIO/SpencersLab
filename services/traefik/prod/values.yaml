@@ -57,7 +57,8 @@ traefik:
   metrics:
     prometheus:
       serviceMonitor:
-        labels:
+        enabled: true
+        additionalLabels:
           prometheus: system-monitoring-prometheus
 
   # To create this secret:
