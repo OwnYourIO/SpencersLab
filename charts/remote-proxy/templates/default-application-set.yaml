@@ -1,3 +1,5 @@
+{{ if (index .Values "appsets.enabled") }}
+---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -56,3 +58,5 @@ spec:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
+...
+{{ end }}
