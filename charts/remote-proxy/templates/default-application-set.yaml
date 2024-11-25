@@ -1,4 +1,4 @@
-{{ if not .Values.appsets.disabled }}
+{{ if not .Values.appsetsDisabled }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
