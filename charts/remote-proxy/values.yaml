@@ -1,2 +1,15 @@
-
-
+argo-cd:
+  dex:
+    enabled: false
+  notifications:
+    enabled: false
+  applicationSet:
+    enabled: true
+  
+  server:
+    extraArgs:
+      - --insecure
+      - --application-namespaces="*"
+  controller:
+    extraArgs:
+      - --application-namespaces="*"

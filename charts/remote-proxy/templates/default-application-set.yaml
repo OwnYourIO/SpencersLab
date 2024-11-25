@@ -1,4 +1,4 @@
-{{ if (index .Values "appsets.enabled") }}
+{{ if not .Values.appsets.disabled }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
