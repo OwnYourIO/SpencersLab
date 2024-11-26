@@ -5,8 +5,11 @@ dependencies:
 - name: traefik-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.1
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.15.3
 - name: crowdsec
   repository: https://crowdsecurity.github.io/helm-charts
   version: 0.13.0
-digest: sha256:249c8db07e161c4bb0d80ec78d26e720d70361a323020350da4f5488cf63c9ed
-generated: "2024-11-13T20:09:33.444813249-07:00"
+digest: sha256:d442d1ec328cd14fb9de060ac7befcb6d0acd05ab8b2a8ce61a4b928d59442d6
+generated: "2024-11-25T20:11:00.611319954-07:00"
