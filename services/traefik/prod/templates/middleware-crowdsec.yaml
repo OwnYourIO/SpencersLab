@@ -1,3 +1,5 @@
+{{ if $.Values.middleware.crowdsec.enabled }} 
+---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -11,3 +13,5 @@ spec:
       crowdsecLapiHost: traefik-service:8080
       crowdsecLapiKeyFile: /run/secrets/lapi/api_key
       CrowdsecLapiTLSInsecureVerify: true
+...
+{{ end }}

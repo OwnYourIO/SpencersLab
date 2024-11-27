@@ -1,3 +1,16 @@
+keycloak:
+  realm: SpencersLab
+
+middleware:
+  crowdsec: 
+    enabled: false
+  oidc-keycloak:
+    enabled: false
+  geoblock:
+    enabled: false
+  
+domain: OVERRIDE_VIA_APPSET
+
 bitwardenIds:
   crowdsec-secret: 9e144cd6-5e85-4ded-b913-b228003c68a0
   traefik-sso-secret: fa9bb676-c5a9-431e-903f-b22b0038bf5c
@@ -69,15 +82,6 @@ traefik:
 
   # To create this secret:
   # kubectl create secret generic crowdsec-bouncer-key -n kube-system --from-literal="api_key=<THE_GENERATED_BOUNCER_API_KEY"
-  volumes:
-    - name: crowdsec-bouncer-key
-      type: secret
-      mountPath: /run/secrets/lapi
-      subpath: api_key
-      readOnly: true
-    - name: traefik-sso
-      type: secret
-      mountPath: "/run/secrets/oidc"
   
   logs:
     #general:
@@ -89,9 +93,6 @@ crowdsec:
   container_runtime: containerd
   tls:
     enabled: true
-    crowdsec-bouncer-traefik-plugin:
-      reflector:
-        namespaces: ["kube-system"]
   lapi:
     env:
       - name: TZ

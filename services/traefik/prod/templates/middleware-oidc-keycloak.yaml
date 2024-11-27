@@ -1,0 +1,41 @@
+{{ if $.Values.middleware.oidc-keycloak.enabled }} 
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: oidc-keycloak
+  namespace: kube-system
+spec:
+  plugin:
+    keycloakopenid:
+      ClientIDFile: "/run/secrets/oidc/client-id"
+      ClientSecretFile: "/run/secrets/oidc/client-secret"
+      KeycloakRealm: "{{ $.Values.keycloak.realm }}" 
+      KeycloakURL: https://login.{{ $.Values.domain }}
+      Scope: openid
+      TokenCookieName: AUTH_TOKEN
+      UseAuthHeader: "false"
+...
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: login-cors
+  namespace: kube-system
+spec:
+  headers:
+    accessControlAllowOriginList:
+      - "https://login.{{ $.Values.domain }}"
+    accessControlAllowMethods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    accessControlAllowHeaders:
+      - "Authorization"
+      - "Content-Type"
+      - "X-Requested-With"
+    accessControlAllowCredentials: true
+...
+{{ end }}
