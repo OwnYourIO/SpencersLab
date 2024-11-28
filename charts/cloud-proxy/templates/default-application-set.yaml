@@ -45,6 +45,10 @@ spec:
               value: "storage"
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
               value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
+            - name: middleware.oidc-keycloak.enabled
+              value: true
+            - name: middleware.whitelist.enabled
+              value: true
           valueFiles:
         #    #- ../common.values.yaml
             - values.yaml
