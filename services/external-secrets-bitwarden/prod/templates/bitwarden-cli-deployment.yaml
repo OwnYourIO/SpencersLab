@@ -109,6 +109,6 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app.kubernetes.io/instance: base
+            app.kubernetes.io/instance: "{{ .Release.Name }}"
             app.kubernetes.io/name: external-secrets
             
