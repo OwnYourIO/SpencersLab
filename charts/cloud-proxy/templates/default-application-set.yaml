@@ -45,7 +45,7 @@ spec:
               value: "{{ `{{ metadata.annotations.domain }}` }}"
             - name: base.clusterName
               value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            - name: base.argocd.configs.cm.url
+            - name: base.argo-cd.configs.cm.url
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
               value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
