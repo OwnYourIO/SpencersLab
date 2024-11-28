@@ -23,7 +23,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: base-argocd-server
+                name: local-proxy-argocd-server
                 port:
                   number: 80
 #---
