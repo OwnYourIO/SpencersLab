@@ -5,10 +5,16 @@ metadata:
   namespace: default
   labels:
     app: default
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    #traefik.ingress.kubernetes.io/router.middlewares: authentik-authentik-middleware@kubernetescrd
 spec:
   tls:
   - hosts:
       - "cluster.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+    secretName: cluster-wildcard-cert
   rules:
     - host: "cluster.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
       http:
@@ -17,6 +23,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: base-argocd-server
+                name: "{{.Release.Name }}-argocd-server"
                 port:
                   number: 80
