@@ -8,7 +8,7 @@ dependencies:
     version: 1.1.16
     repository: https://ownyourio.github.io/SpencersLab/
   - name: base
-    version: 1.0.37
+    version: 1.0.38
     repository: https://ownyourio.github.io/SpencersLab/
   - name: seaweedfs-csi-driver
     version: 0.2.2
