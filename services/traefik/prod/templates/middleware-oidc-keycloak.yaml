@@ -1,4 +1,4 @@
-{{ if $.Values.middleware.oidc-keycloak.enabled }} 
+{{ if $.Values.middleware.oidcKeycloak.enabled }} 
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

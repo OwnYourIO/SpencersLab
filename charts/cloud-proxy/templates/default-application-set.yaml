@@ -49,7 +49,7 @@ spec:
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
               value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
-            - name: middleware.oidc-keycloak.enabled
+            - name: middleware.oidcKeycloak.enabled
               value: "true"
             - name: middleware.whitelist.enabled
               value: "true"
