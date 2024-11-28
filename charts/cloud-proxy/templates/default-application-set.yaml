@@ -43,6 +43,12 @@ spec:
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
               value: "storage"
+            - name: base.domain
+              value: "{{ `{{ metadata.annotations.domain }}` }}"
+            - name: base.clusterName
+              value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+            - name: base.argocd.argo-cd.configs.cm.url
+              value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
               value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
             - name: middleware.oidc-keycloak.enabled
