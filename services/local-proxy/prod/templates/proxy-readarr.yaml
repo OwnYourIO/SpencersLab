@@ -17,7 +17,7 @@ metadata:
   namespace: default
   annotations:
     # Traefik annotations
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc@kubernetescrd,kube-system-login-cors@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd
     traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
