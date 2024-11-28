@@ -21,10 +21,10 @@ dependencies:
     version: 3.5.1
     repository: https://bjw-s.github.io/helm-charts/
     alias: autossh
-  - name: app-template
-    version: 3.5.1
-    repository: https://bjw-s.github.io/helm-charts/
-    alias: metube
+  #- name: app-template
+  #  version: 3.5.1
+  #  repository: https://bjw-s.github.io/helm-charts/
+  #  alias: metube
   #- name: app-template
   #  version: 3.5.1
   #  repository: https://bjw-s.github.io/helm-charts/
