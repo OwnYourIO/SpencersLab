@@ -1,3 +1,4 @@
+# Pretty sure this just gets ignored when a custom Traefik chart is used instead.
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
 metadata:

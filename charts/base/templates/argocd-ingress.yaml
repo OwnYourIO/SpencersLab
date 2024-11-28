@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd
+  namespace: default
+  labels:
+    app: default
+spec:
+  tls:
+  - hosts:
+      - "cluster.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+  rules:
+    - host: "cluster.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: base-argocd-server
+                port:
+                  number: 80

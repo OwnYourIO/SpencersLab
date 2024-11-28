@@ -1,0 +1,63 @@
+# It's expected that these will be overridden with values from the AppSet.
+# Similarly, where you see these in a values.yaml file, it's used as a reference.
+#   The actual value is coming from an override on the AppSet.
+domain: local
+clusterName: base
+letsEncryptEmail: ""
+#letsEncryptSolver: 
+
+# Additionally to disable sso, override this in the umbrella app.
+# argo-cd.server.authMode ... or maybe argo-cd.server.sso.enabled
+
+cert-manager:
+  installCRDs: true
+
+bitwardenIds:
+  # These are optional.
+  cert-manager-solver-token: OVERRIDE_IN_UMBRELLA_APP
+
+argo-cd:
+  server:
+    authMode: sso
+    sso:
+      # -- Create SSO configuration. If you set `true` , please also set `.Values.server.authMode` as `sso`.
+      enabled: true
+
+    extraArgs:
+      - --insecure
+      - --application-namespaces="*"
+
+  configs:
+  # General Argo CD configuration
+  ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
+    cm:
+      oidc.config: |
+        name: Keycloak
+        issuer: $argocd-sso:issuer
+        clientId: $argocd-sso:client-id
+        clientSecret: $argocd-sso:client-secret
+        requestedIDTokenClaims:
+          groups:
+            essential: true
+        requestedScopes:
+          - openid
+          - profile
+          - email
+          - groups
+    rbac: 
+      create: true
+      policy.default: ''
+      policy.csv: |
+        g, Admin, role:admin
+      scopes: "[groups]"
+
+  dex:
+    enabled: false
+  notifications:
+    enabled: false
+  applicationSet:
+    enabled: true
+
+  controller:
+    extraArgs:
+      - --application-namespaces="*"
