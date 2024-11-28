@@ -7,6 +7,9 @@ dependencies:
   - name: cloud-proxy-appset
     version: 1.1.9
     repository: https://ownyourio.github.io/SpencersLab/
+  - name: base
+    version: 1.0.37
+    repository: https://ownyourio.github.io/SpencersLab/
   - name: seaweedfs-csi-driver
     version: 0.2.2
     repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
