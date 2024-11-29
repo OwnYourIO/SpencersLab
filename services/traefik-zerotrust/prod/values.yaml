@@ -1,0 +1,47 @@
+# These may or may not be necessary in the zero trust version?
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+cert-manager:
+  installCRDs: true
+
+traefik:
+  additionalArguments:
+    - "--api"
+    #- "--api.dashboard=true"
+    - "--api.insecure=true"
+    - "--serversTransport.insecureSkipVerify=true"
+  dashboard: 
+    enabled: false
+  providers:
+    kubernetesCRD:
+      allowCrossNamespace: true
+      allowExternalNameServices: true
+    kubernetesIngress:
+      allowEmptyServices: true
+      allowExternalNameServices: true
+
+  experimental:
+    plugins:
+      geoblock:
+        moduleName: "github.com/PascalMinder/geoblock"
+        # renovate: depName=github.com/PascalMinder/geoblock
+        version: "v0.2.8"
+
+  service:
+    externalTrafficPolicy: Local
+
+  metrics:
+    prometheus:
+      serviceMonitor:
+        enabled: true
+        namespace: default
+        additionalLabels:
+          release: monitoring-agent
+          prometheus: system-monitoring-prometheus-prometheus
+
+  logs:
+    #general:
+    #  level: DEBUG
+    access:
+      enabled: true

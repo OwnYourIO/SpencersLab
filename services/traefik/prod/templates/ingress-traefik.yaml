@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik
+  namespace: kube-system
+  #annotations:
+    #traefik.ingress.kubernetes.io/router.middlewares: @kubernetescrd
+spec:
+  tls:
+  - hosts:
+      - "traefik.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+    secretName: cluster-wildcard-cert
+  rules:
+    - host: "traefik.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Release.Name }}-traefik-server"
+                port:
+                  number: 80
+
