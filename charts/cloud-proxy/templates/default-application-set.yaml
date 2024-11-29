@@ -51,6 +51,18 @@ spec:
               value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
             - name: middleware.oidcKeycloak.enabled
               value: "true"
+            - name: traefik.volumes[+]
+              value: 
+                name: crowdsec-bouncer-key
+                type: secret
+                mountPath: /run/secrets/lapi
+                subpath: api_key
+                readOnly: true
+            - name: traefik.volumes[+]
+              value: 
+                name: traefik-sso
+                type: secret
+                mountPath: "/run/secrets/oidc" 
             - name: middleware.whitelist.enabled
               value: "true"
           valueFiles:

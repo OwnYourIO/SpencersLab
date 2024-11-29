@@ -4,7 +4,7 @@ keycloak:
 middleware:
   crowdsec: 
     enabled: false
-  oidc-keycloak:
+  oidcKeycloak:
     enabled: false
   geoblock:
     enabled: false
