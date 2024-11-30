@@ -13,7 +13,7 @@ spec:
                 - appName: remote-proxy
                   namespace: default
                   ServerSideApply: "false"
-                - appName: traefik
+                - appName: traefik-zerotrust
                   namespace: kube-system
                   ServerSideApply: "false"
                 - appName: monitoring-agent
