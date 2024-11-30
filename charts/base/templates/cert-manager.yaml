@@ -1,7 +1,7 @@
 # Doing the if condition like this was the only way I could get validation to pass.
 # putting it closer to the selector failed validation (though I'll bet the generated code was fine)
 # So I went the verbose way. Update both if changes are needed.
-{{ if $.Values.bitwardenIds.cert-manager-solver-token }}
+{{ if (index $.Values "bitwardenIds" "cert-manager-solver-token") }}
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
