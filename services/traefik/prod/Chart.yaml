@@ -7,7 +7,7 @@ dependencies:
     version: 33.0.0
     repository: https://traefik.github.io/charts
   - name: traefik-appset
-    version: 1.1.1
+    version: 1.1.2
     repository: https://ownyourio.github.io/SpencersLab/
   - name: cert-manager
     version: v1.15.3
