@@ -1,3 +1,12 @@
+# This is used to prevent helm from creating objects that depend on CRDs that don't exist yet.
+# helm install --namespace default --set initialInstall=true base OwnYourIO/base
+# Then when the actual application is installed it can reset this as the CRDs should exist.
+initialInstall: false
+
+# These are optional and should be overridden with values from custom_values
+bitwardenIds:
+  cert-manager-solver-token: OVERRIDE_IN_CUSTOM_VALUES
+
 # It's expected that these will be overridden with values from the AppSet.
 # Similarly, where you see these in a values.yaml file, it's used as a reference.
 #   The actual value is coming from an override on the AppSet.
@@ -13,16 +22,13 @@ cert-manager:
   crds:
     enabled: true
 
-bitwardenIds:
-  # These are optional.
-  cert-manager-solver-token: OVERRIDE_IN_UMBRELLA_APP
-
 argo-cd:
   server:
     authMode: sso
     sso:
       # -- Create SSO configuration. If you set `true` , please also set `.Values.server.authMode` as `sso`.
       enabled: true
+      # The rest of the SSO config is done in the ConfigMap to support the use of secrets to replace vars.
 
     extraArgs:
       - --insecure
