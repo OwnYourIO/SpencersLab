@@ -41,6 +41,7 @@ traefik:
         version: "v0.2.8"
 
   service:
+    type: LoadBalancer
     externalTrafficPolicy: Local
 
   metrics:
