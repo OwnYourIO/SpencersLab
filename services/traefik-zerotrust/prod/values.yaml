@@ -11,6 +11,8 @@ traefik:
     #- "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
+    - "--entrypoints.web.middlewares=kube-system-geoblock@kubernetescrd"
+    - "--entrypoints.websecure.middlewares=kube-system-geoblock@kubernetescrd"
   dashboard: 
     enabled: false
   providers:
