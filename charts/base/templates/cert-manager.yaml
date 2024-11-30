@@ -1,3 +1,8 @@
+# Doing the if condition like this was the only way I could get validation to pass.
+# putting it closer to the selector failed validation (though I'll bet the generated code was fine)
+# So I went the verbose way. Update both if changes are needed.
+{{ if $.Values.bitwardenIds.cert-manager-solver-token }}
+---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -19,6 +24,28 @@ spec:
             apiTokenSecretRef:
               name: cert-manager-solver-token
               key: password
+...
+{{ else }}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: default
+spec:
+  acme:
+    email: {{ $.Values.letsEncryptEmail | quote }}
+    server: https://acme-v02.api.letsencrypt.org/directory
+    #server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    solvers:
+      # An empty 'selector' means that this solver matches all domains
+      - selector: {}
+        # This should be overridden by the umbrella chart when other solvers are needed.
+        http01:
+...
+{{ end }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
