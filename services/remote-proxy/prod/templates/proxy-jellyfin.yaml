@@ -4,7 +4,7 @@ metadata:
   name: jellyfin-ingress
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-admin-whitelist@file
+    traefik.ingress.kubernetes.io/router.middlewares: admin-whitelist@file
 spec:
   tls:
     - hosts:
