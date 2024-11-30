@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: traefik-zerotrust-appset
+  name: appset-traefik-zerotrust
 spec:
   generators:
     # Generator for apps that should deploy to all cluster.
