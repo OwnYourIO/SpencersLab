@@ -1,3 +1,5 @@
+{{ if (index .Values "cert-manager" "crds" "enabled") }}
+---
 # Doing the if condition like this was the only way I could get validation to pass.
 # putting it closer to the selector failed validation (though I'll bet the generated code was fine)
 # So I went the verbose way. Update both if changes are needed.
@@ -46,6 +48,7 @@ spec:
         http01:
 ...
 {{ end }}
+
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -59,6 +62,8 @@ spec:
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
+...
+
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -81,3 +86,5 @@ metadata:
 spec:
   defaultCertificate:
     secretName: cluster-wildcard-cert
+...
+{{ end }}

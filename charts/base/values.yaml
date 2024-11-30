@@ -10,7 +10,8 @@ letsEncryptEmail: ""
 # argo-cd.server.authMode ... or maybe argo-cd.server.sso.enabled
 
 cert-manager:
-  installCRDs: true
+  crds:
+    enabled: true
 
 bitwardenIds:
   # These are optional.
