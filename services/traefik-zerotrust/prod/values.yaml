@@ -15,6 +15,11 @@ traefik:
     - "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
   dashboard: 
     enabled: false
+
+  persistence:
+    enabled: true
+    size: 1Gi 
+
   providers:
     kubernetesCRD:
       allowCrossNamespace: true
@@ -22,6 +27,9 @@ traefik:
     kubernetesIngress:
       allowEmptyServices: true
       allowExternalNameServices: true
+    file:
+      filename: "/data/admin-whitelist.yaml"
+      watch: true
 
   experimental:
     plugins:
