@@ -65,7 +65,7 @@ traefik:
     - name: traefik-sso
       type: secret
       mountPath: "/run/secrets/oidc"
-  
+
   logs:
     #general:
     #  level: DEBUG

@@ -1,4 +1,4 @@
-{{ if (index .Values "initialInstall") }}
+{{ if .Values.initialInstall }}
 ---
 # Doing the if condition like this was the only way I could get validation to pass.
 # putting it closer to the selector failed validation (though I'll bet the generated code was fine)
