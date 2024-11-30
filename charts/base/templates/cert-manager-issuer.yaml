@@ -25,7 +25,7 @@ spec:
               name: cert-manager-solver-token
               key: password
 ...
-{{ else }}
+{{ else if (not .Values.InitialInstall) }}
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
