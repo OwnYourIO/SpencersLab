@@ -49,20 +49,6 @@ spec:
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
             - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
               value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
-            - name: middleware.oidcKeycloak.enabled
-              value: "true"
-            - name: traefik.volumes
-              value: |
-                - name: crowdsec-bouncer-key
-                  type: secret
-                  mountPath: /run/secrets/lapi
-                  subpath: api_key
-                  readOnly: true
-                - name: traefik-sso
-                  type: secret
-                  mountPath: "/run/secrets/oidc" 
-            - name: middleware.whitelist.enabled
-              value: "true"
           valueFiles:
         #    #- ../common.values.yaml
             - values.yaml
