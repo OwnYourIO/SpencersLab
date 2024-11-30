@@ -5,7 +5,7 @@ initialInstall: false
 
 # These are optional and should be overridden with values from custom_values
 bitwardenIds:
-  cert-manager-solver-token: OVERRIDE_IN_CUSTOM_VALUES
+  cert-manager-solver-token:
 
 # It's expected that these will be overridden with values from the AppSet.
 # Similarly, where you see these in a values.yaml file, it's used as a reference.
