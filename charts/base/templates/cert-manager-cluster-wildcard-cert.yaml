@@ -1,0 +1,26 @@
+{{ if not .Values.initialInstall }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: tls-certificate-cluster
+  namespace: default
+spec:
+  dnsNames:
+    - "*.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+  secretName: cluster-wildcard-cert
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+...
+---
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: default
+spec:
+  defaultCertificate:
+    secretName: cluster-wildcard-cert
+...
+{{ end }}
