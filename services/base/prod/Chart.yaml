@@ -7,7 +7,7 @@ dependencies:
   version: 1.0.30
   repository: https://ownyourio.github.io/SpencersLab/
 - name: cert-manager
-  version: v1.15.3
+  version: v1.16.2
   repository: https://charts.jetstack.io
 - name: external-secrets
   version: 0.10.7
