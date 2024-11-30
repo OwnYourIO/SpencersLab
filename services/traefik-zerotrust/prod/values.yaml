@@ -13,6 +13,8 @@ traefik:
     - "--serversTransport.insecureSkipVerify=true"
     - "--entrypoints.web.http.middlewares=kube-system-geoblock@kubernetescrd"
     - "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
+    - "--providers.file.filename=/data/admin-whitelist.yaml"
+    - "--providers.file.watch=true"
   dashboard: 
     enabled: false
 
