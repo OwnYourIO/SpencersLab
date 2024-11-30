@@ -13,3 +13,4 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
 ...
+{{ end }}
