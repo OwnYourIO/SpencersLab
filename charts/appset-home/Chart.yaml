@@ -1,4 +1,4 @@
 apiVersion: v2
 name: appset-home
-version: 1.1.10
+version: 1.1.11
 appVersion: 1.1.9
