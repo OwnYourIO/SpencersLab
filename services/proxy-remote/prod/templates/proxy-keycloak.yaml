@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: login-ingress
+  namespace: default
+spec:
+  tls:
+    - hosts:
+      - "login.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
+  rules:
+    - host: login.spencerslab.com
+      http:
+        paths:
+          - path: /realms/SpencersLab/
+            pathType: Prefix
+            backend: &defaultBackend
+              service:
+                name: proxy-service
+                port:
+                  number: 443
+          - path: /resources/
+            pathType: Prefix
+            backend: *defaultBackend

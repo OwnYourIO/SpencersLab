@@ -1,0 +1,13 @@
+apiVersion: v2
+name: proxy-remote
+version: 1.0.0
+appVersion: 1.0.0
+
+dependencies:
+  - name: appset-proxy-remote
+    version: 1.1.6
+    repository: https://ownyourio.github.io/SpencersLab/
+  - name: app-template
+    version: 3.5.1
+    repository: https://bjw-s.github.io/helm-charts/
+    alias: sshd
