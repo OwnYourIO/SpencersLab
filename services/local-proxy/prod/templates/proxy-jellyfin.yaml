@@ -39,7 +39,8 @@ kind: Ingress
 metadata:
   name: jellyfin-whitelist-ingress
   namespace: default
-  annotations:
+  #annotations:
+  #  traefik.ingress.kubernetes.io/router.middlewares: user-whitelist@file
 spec:
   tls:
     - hosts:
