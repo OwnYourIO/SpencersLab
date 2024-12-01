@@ -1,7 +1,7 @@
 dependencies:
 - name: cloud-proxy-appset
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.19
+  version: 1.1.20
 - name: base
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.38
@@ -14,5 +14,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-digest: sha256:774994163ffcfb309fb1c1af97b4e9e6deff40924411f7105fecec58d50ad220
-generated: "2024-11-29T18:19:46.855330756-07:00"
+digest: sha256:d5f930803f5cc64e148051070157cc952c9a113ec947f398029929e4ee39dea6
+generated: "2024-11-30T19:55:38.909285605-07:00"
