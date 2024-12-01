@@ -16,6 +16,9 @@ spec:
                 - appName: proxy-local
                   namespace: default
                   ServerSideApply: "false"
+                - appName: local-proxy
+                  namespace: default
+                  ServerSideApply: "false"
                 - appName: traefik
                   namespace: kube-system
                   ServerSideApply: "false"
