@@ -10,7 +10,7 @@ spec:
           - clusters: {}
           - list:
               elements:
-                - appName: remote-proxy
+                - appName: proxy-remote
                   namespace: default
                   ServerSideApply: "false"
                 - appName: traefik-zerotrust
