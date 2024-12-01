@@ -13,7 +13,7 @@ spec:
                 - appName: external-secrets-bitwarden
                   namespace: default
                   ServerSideApply: "false"
-                - appName: local-proxy
+                - appName: proxy-local
                   namespace: default
                   ServerSideApply: "false"
                 - appName: traefik
