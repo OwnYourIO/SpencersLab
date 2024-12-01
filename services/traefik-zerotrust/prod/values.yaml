@@ -42,7 +42,8 @@ traefik:
 
   service:
     type: LoadBalancer
-    externalTrafficPolicy: Local
+    spec:
+      externalTrafficPolicy: Local
 
   metrics:
     prometheus:
