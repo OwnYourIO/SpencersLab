@@ -1,0 +1,4 @@
+apiVersion: v2
+name: appset-grow
+version: 1.1.2
+appVersion: 1.1.1
