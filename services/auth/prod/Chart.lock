@@ -1,6 +1,0 @@
-dependencies:
-- name: auth-appset
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.8
-digest: sha256:990be0a702f06360a22594c808bdc21cf4cc0b7f7c961564c5dc5926cdc9097d
-generated: "2024-04-04T20:45:04.882240592-06:00"
