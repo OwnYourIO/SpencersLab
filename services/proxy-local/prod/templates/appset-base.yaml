@@ -32,6 +32,8 @@ spec:
               value: "{{ `{{ metadata.annotations.domain }}` }}"
             - name: clusterName
               value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+            - name: argo-cd.configs.cm.url
+              value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
           valueFiles:
             - values.yaml
       destination:
