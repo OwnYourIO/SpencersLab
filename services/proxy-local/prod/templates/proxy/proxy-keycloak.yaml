@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: login-service
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: login.spencerslab.com
+  ports:
+    - port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: login-ingress
+  namespace: default
+spec:
+  tls:
+    - hosts:
+      - "login.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
+  rules:
+    - host: login.spencerslab.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: login-service
+                port:
+                  number: 443

@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radarr-service
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: radarr.spencerslab.com
+  ports:
+    - port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: radarr-ingress
+  namespace: default
+  annotations:
+    # Traefik annotations
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  tls:
+    - hosts:
+      - "radarr.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
+  rules:
+    - host: radarr.spencerslab.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: radarr-service
+                port:
+                  number: 443

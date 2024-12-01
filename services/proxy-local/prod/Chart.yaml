@@ -1,0 +1,31 @@
+apiVersion: v2
+name: proxy-local
+version: 1.0.0
+appVersion: 1.0.0
+
+dependencies:
+  - name: cloud-proxy-appset
+    version: 1.1.19
+    repository: https://ownyourio.github.io/SpencersLab/
+  - name: base
+    version: 1.0.38
+    repository: https://ownyourio.github.io/SpencersLab/
+  - name: seaweedfs-csi-driver
+    version: 0.2.2
+    repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+  - name: app-template
+    version: 3.5.1
+    repository: https://bjw-s.github.io/helm-charts/
+    alias: qbittorrent
+  - name: app-template
+    version: 3.5.1
+    repository: https://bjw-s.github.io/helm-charts/
+    alias: autossh
+  #- name: app-template
+  #  version: 3.5.1
+  #  repository: https://bjw-s.github.io/helm-charts/
+  #  alias: metube
+  #- name: app-template
+  #  version: 3.5.1
+  #  repository: https://bjw-s.github.io/helm-charts/
+  #  alias: pinchflat
