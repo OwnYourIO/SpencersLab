@@ -1,0 +1,4 @@
+# Shared values.
+# Or do these go on the cluster secret?
+TZ: America/Denver
+#domain?
