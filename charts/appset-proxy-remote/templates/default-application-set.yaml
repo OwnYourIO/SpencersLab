@@ -46,6 +46,9 @@ spec:
           #    #- ../common.values.yaml
               #- "{{ `{{ metadata.annotations.valueRepo }}/{{ metadata.annotations.valuePath}}/{{ metadata.annotations.stage}}-values.yaml` }}"
               - values.yaml
+        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
+          targetRevision: main
+          ref: values
       destination:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
