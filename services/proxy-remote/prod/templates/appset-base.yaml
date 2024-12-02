@@ -33,7 +33,7 @@ spec:
             - name: clusterName
               value: "{{ `{{ metadata.annotations.clusterName }}` }}"
             - name: autoUpdateK3s
-              value: true
+              value: "true"
           valueFiles:
             - values.yaml
       destination:
