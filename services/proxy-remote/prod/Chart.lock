@@ -1,9 +1,9 @@
 dependencies:
 - name: appset-proxy-remote
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.11
+  version: 1.1.12
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-digest: sha256:4f08e285351dc45c5389c1b7a996657efb45776b0adead89acf33f95b2c3e1ac
-generated: "2024-12-02T15:35:18.005757697-07:00"
+digest: sha256:5854ab188b69d3c2d880c56a4bc9ee3d5ade5975450809ee1232d489b46a0763
+generated: "2024-12-02T15:42:48.58576439-07:00"
