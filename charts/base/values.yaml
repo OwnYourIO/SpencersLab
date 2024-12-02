@@ -15,6 +15,9 @@ clusterName: base
 letsEncryptEmail: ""
 #letsEncryptSolver: 
 
+# This will allow k3s to be updated. Disabled by default incase anyone uses something other than k3s
+autoUpdateK3s: false
+
 # Additionally to disable sso, override this in the umbrella app.
 # argo-cd.server.authMode ... or maybe argo-cd.server.sso.enabled
 

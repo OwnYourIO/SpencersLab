@@ -25,13 +25,15 @@ spec:
         chart: "{{ `{{appName}}` }}"
         repoURL: "{{ `{{ metadata.annotations.chart.repo }}` }}"
         # TODO: This might need to be generic in some way.
-        targetRevision: 1.0.56
+        targetRevision: 1.0.57
         helm:
           parameters:
             - name: domain
               value: "{{ `{{ metadata.annotations.domain }}` }}"
             - name: clusterName
               value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+            - name: autoUpdateK3s
+              value: true
           valueFiles:
             - values.yaml
       destination:

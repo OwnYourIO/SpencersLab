@@ -25,7 +25,7 @@ spec:
         chart: "{{ `{{appName}}` }}"
         repoURL: "{{ `{{ metadata.annotations.chart.repo }}` }}"
         # TODO: This might need to be generic in some way.
-        targetRevision: 1.0.56
+        targetRevision: 1.0.57
         helm:
           parameters:
             - name: domain
@@ -34,6 +34,8 @@ spec:
               value: "{{ `{{ metadata.annotations.clusterName }}` }}"
             - name: argo-cd.configs.cm.url
               value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
+            - name: autoUpdateK3s
+              value: true
           valueFiles:
             - values.yaml
       destination:
