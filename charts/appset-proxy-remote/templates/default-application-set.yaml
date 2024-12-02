@@ -43,7 +43,6 @@ spec:
               - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
                 value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
             valueFiles:
-              - $values/{{ `{{ metadata.annotations.values.path }}/{{ metadata.annotations.stage }}-values.yaml` }}
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
               - values.yaml
         - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
