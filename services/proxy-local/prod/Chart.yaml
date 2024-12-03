@@ -5,7 +5,7 @@ appVersion: 1.0.0
 
 dependencies:
   - name: appset-proxy-local
-    version: 1.1.24
+    version: 1.1.25
     repository: https://ownyourio.github.io/SpencersLab/
   - name: seaweedfs-csi-driver
     version: 0.2.2

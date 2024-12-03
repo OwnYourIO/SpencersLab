@@ -1,7 +1,7 @@
 dependencies:
 - name: appset-proxy-local
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.24
+  version: 1.1.25
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
@@ -11,5 +11,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-digest: sha256:26cbedcf0cd3c05bd721aff8b2e8059d805906c5ba835a3dded05ed179da56e4
-generated: "2024-11-30T21:18:03.559497099-07:00"
+digest: sha256:af926dbc52bfc84d5c3bfe0ff764e6cd3de03c5efacbef2a656a9950fe3bb976
+generated: "2024-12-02T19:13:30.293129765-07:00"
