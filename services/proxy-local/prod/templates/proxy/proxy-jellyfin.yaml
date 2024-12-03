@@ -21,7 +21,7 @@ spec:
   tls:
     - hosts:
       - "jellyfin.{{ $.Values.domain }}"
-      secretName: cluster-wildcard-cert
+      secretName: wildcard-cert
   rules:
     - host: jellyfin.spencerslab.com
       http:
@@ -45,7 +45,7 @@ spec:
   tls:
     - hosts:
       - "player.{{ $.Values.domain }}"
-      secretName: cluster-wildcard-cert
+      secretName: wildcard-cert
   rules:
     - host: player.spencerslab.com
       http:
