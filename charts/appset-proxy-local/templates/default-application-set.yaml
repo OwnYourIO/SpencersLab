@@ -29,29 +29,32 @@ spec:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
-      source:
-        repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
-        targetRevision: main
-        path: "{{ `{{ metadata.annotations.services.repo.path }}`}}/{{ `{{appName}}` }}/{{ `{{ metadata.annotations.stage }}` }}"
-        helm:
-          parameters:
-            - name: domain
-              value: "{{ `{{ metadata.annotations.domain }}` }}"
-            - name: clusterName
-              value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
-              value: "storage"
-            - name: base.domain
-              value: "{{ `{{ metadata.annotations.domain }}` }}"
-            - name: base.clusterName
-              value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            - name: base.argo-cd.configs.cm.url
-              value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
-            - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
-              value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
-          valueFiles:
-        #    #- ../common.values.yaml
-            - values.yaml
+      sources:
+        - repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
+          targetRevision: main
+          path: "{{ `{{ metadata.annotations.services.repo.path }}`}}/{{ `{{appName}}` }}/{{ `{{ metadata.annotations.stage }}` }}"
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
+                value: "storage"
+              - name: base.domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: base.clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+              - name: base.argo-cd.configs.cm.url
+                value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
+              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
+                value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
+            valueFiles:
+              - values.yaml
+              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
+        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
+          targetRevision: main
+          ref: values
       destination:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
