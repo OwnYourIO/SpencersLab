@@ -1,9 +1,9 @@
 keycloak:
-  realm: SpencersLab
+  realm: OVERRIDE_VIA_CUSTOM_VALUES
 
 bitwardenIds:
-  crowdsec-secret: 9e144cd6-5e85-4ded-b913-b228003c68a0
-  traefik-sso-secret: fa9bb676-c5a9-431e-903f-b22b0038bf5c
+  crowdsec-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  traefik-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
@@ -54,6 +54,7 @@ traefik:
           release: monitoring-agent
           prometheus: system-monitoring-prometheus-prometheus
 
+  # TODO: Use a reflector from the external-secrets namespace instead.
   # To create this secret:
   # kubectl create secret generic crowdsec-bouncer-key -n kube-system --from-literal="api_key=<THE_GENERATED_BOUNCER_API_KEY"
   volumes:
@@ -78,10 +79,11 @@ crowdsec:
     enabled: true
   lapi:
     env:
+      # TODO: Handle this better
       - name: TZ
         value: America/Denver
       - name: ENROLL_INSTANCE_NAME
-        value: remote-proxy
+        value: proxy-remote
       # Setting the enroll key after initial startup requires force enrollment which currently breaks the local API.
       - name: ENROLL_KEY
         valueFrom:
@@ -116,6 +118,7 @@ crowdsec:
         program: traefik
         poll_without_inotify: true
     env:
+      # TODO: Handle this better
       - name: TZ
         value: America/Denver
       - name: COLLECTIONS
