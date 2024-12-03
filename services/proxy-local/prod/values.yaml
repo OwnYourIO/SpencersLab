@@ -5,6 +5,9 @@ bitwardenIds:
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   autossh-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
 qbittorrent:
   global:
     nameOverride: "qbittorrent"

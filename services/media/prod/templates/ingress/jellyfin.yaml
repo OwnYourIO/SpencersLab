@@ -1,0 +1,54 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jellyfin
+  namespace: default
+  labels:
+    app: default
+  #annotations:
+    #traefik.ingress.kubernetes.io/router.middlewares: kube-system-ipwhitelist@kubernetescrd
+spec:
+  tls:
+  - hosts:
+      - "jellyfin.{{ $.Values.domain }}"
+    secretName: wildcard-cert
+  rules:
+    - host: "jellyfin.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{.Release.Name }}-jellyfin"
+                port:
+                  name: http
+...
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: player
+  namespace: default
+  labels:
+    app: default
+  #annotations:
+    #traefik.ingress.kubernetes.io/router.middlewares: kube-system-ipwhitelist@kubernetescrd
+spec:
+  tls:
+  - hosts:
+      - "player.{{ $.Values.domain }}"
+    secretName: wildcard-cert
+  rules:
+    - host: "player.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{.Release.Name }}-jellyfin"
+                port:
+                  number: 8096
+...

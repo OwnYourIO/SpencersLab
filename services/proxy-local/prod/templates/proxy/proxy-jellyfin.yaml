@@ -37,17 +37,17 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: jellyfin-whitelist-ingress
+  name: player-ingress
   namespace: default
   #annotations:
   #  traefik.ingress.kubernetes.io/router.middlewares: user-whitelist@file
 spec:
   tls:
     - hosts:
-      - "jellyfin-whitelist.{{ $.Values.domain }}"
+      - "player.{{ $.Values.domain }}"
       secretName: cluster-wildcard-cert
   rules:
-    - host: jellyfin-whitelist.spencerslab.com
+    - host: player.spencerslab.com
       http:
         paths:
           - path: /

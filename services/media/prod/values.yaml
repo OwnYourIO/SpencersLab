@@ -57,18 +57,6 @@ jellyfin:
     - name: TZ
       value: America/Denver
 
-  ingress:
-    enabled: true
-    hosts:
-      - host: "jellyfin.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "jellyfin.spencerslab.com"
-
   # Additional volumes on the output Deployment definition.
   volumes:
     - name: jellyfin-config
