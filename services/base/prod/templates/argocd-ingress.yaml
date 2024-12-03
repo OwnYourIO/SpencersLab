@@ -23,7 +23,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: local-proxy-argocd-server
+                name: "{{ .Release.Name }}-argocd-server"
                 port:
                   number: 80
 #---
