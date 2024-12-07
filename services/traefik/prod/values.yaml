@@ -17,6 +17,8 @@ traefik:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
+    - "--providers.file.filename=/data/user-allowlist.yaml"
+    - "--providers.file.watch=true"
   dashboard: 
     enabled: true
   providers:
