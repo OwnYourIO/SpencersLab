@@ -50,7 +50,9 @@ traefik:
         version: "v1.3.5"
 
   service:
-    externalTrafficPolicy: Local
+    type: LoadBalancer
+    spec:
+      externalTrafficPolicy: Local
 
   metrics:
     prometheus:
