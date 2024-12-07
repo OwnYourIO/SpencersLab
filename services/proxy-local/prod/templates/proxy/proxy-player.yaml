@@ -99,12 +99,7 @@ metadata:
   name: real-ip
 spec:
   plugin:
-    traefik-real-ip-plugin:
+    standardize-xff:
       headers:
-        - X-Forwarded-For
-        #- X-Real-IP
-      retrievers:
-        - header: X-Real-IP
-          excludedCIDRs:
-            - 10.42.0.0/16
-            - 10.42.0.72/32
+        customRequestHeaders:
+          X-Forwarded-For: "{{ .RequestHeader.Get \"X-Real-Ip\" }}"
