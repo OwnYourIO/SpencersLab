@@ -18,6 +18,8 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd,user-allowlist@file
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
+  labels:
+    external-dns: true
 spec:
   tls:
     - hosts:

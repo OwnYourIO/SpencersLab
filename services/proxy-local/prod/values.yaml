@@ -30,6 +30,8 @@ external-dns-external:
     - ingress
     - crd
   txtPrefix: "k8s.proxy-local"
+  labelFilters:
+    - external-dns: true
   serviceMonitor:
     enabled: true
   resources:
