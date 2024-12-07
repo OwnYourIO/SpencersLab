@@ -37,7 +37,7 @@ spec:
             - name: autoUpdateK3s
               value: "true"
             - name: bitwardenIds.cert-manager-solver-token
-              value: "{{ .Values.bitwardenIds.cert-manager-solver-token }}"
+              value: "{{ `{{ .Values.bitwardenIds.cert-manager-solver-token }}` }}"
           valueFiles:
             - values.yaml
       destination:
