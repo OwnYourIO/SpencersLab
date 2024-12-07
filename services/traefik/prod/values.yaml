@@ -60,7 +60,7 @@ traefik:
     spec:
       externalTrafficPolicy: Local
 
-  entryPoints:
+  ports:
     web:
       forwardedHeaders:
         trustedIPs:
