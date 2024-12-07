@@ -71,6 +71,6 @@ metadata:
   name: play-to-player-redirect
 spec:
   redirectRegex:
-    regex: "^https?://(.+)"
+    regex: "^https?://.*/(.+)"
     replacement: "https://player.{{ .Values.domain }}/${1}"
     permanent: false
