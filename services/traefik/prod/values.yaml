@@ -60,6 +60,17 @@ traefik:
     spec:
       externalTrafficPolicy: Local
 
+  entryPoints:
+    web:
+      forwardedHeaders:
+        trustedIPs:
+          - "10.0.0.0/8" # Replace with your internal network CIDR, if applicable
+    websecure:
+      address: ":443"
+      forwardedHeaders:
+        trustedIPs:
+          - "10.42.0.0/16"
+
   metrics:
     prometheus:
       serviceMonitor:
