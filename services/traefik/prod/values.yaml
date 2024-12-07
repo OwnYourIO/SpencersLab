@@ -75,6 +75,11 @@ traefik:
     - name: traefik-sso
       type: secret
       mountPath: "/run/secrets/oidc"
+    - name: redirect-html
+      type: configMap
+      mountPath: /etc/traefik/redirect.html
+      subpath: redirect.html
+      readOnly: true
 
   logs:
     #general:

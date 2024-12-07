@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redirect-html
+data:
+  redirect.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Redirecting...</title>
+        <script>
+            // Get the hash fragment (everything after #)
+            const subpath = window.location.hash.substring(1);
+            
+            // Construct the new URL
+            const currentHost = window.location.hostname;
+            const baseDomain = currentHost.replace(/^[^.]+\./, '');
+            const newUrl = `https://${subpath}.${baseDomain}/`;
+            
+            // Redirect
+            window.location.href = newUrl;
+        </script>
+    </head>
+    <body>
+        <p>If you are not redirected, <a id="redirectLink">click here</a>.</p>
+        <script>
+            // Update fallback link
+            const subpath = window.location.hash.substring(1);
+            const currentHost = window.location.hostname;
+            const baseDomain = currentHost.replace(/^[^.]+\./, '');
+            
+            const redirectLink = document.getElementById('redirectLink');
+            redirectLink.href = `https://${subpath}.${baseDomain}/`;
+            redirectLink.textContent = `Redirect to ${subpath}.${baseDomain}`;
+        </script>
+    </body>
+    </html>
