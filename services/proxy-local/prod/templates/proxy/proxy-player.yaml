@@ -43,7 +43,7 @@ metadata:
   name: play-ingress
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd,kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd,default-play-to-player-redirect@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd,default-play-to-player-redirect@kubernetescrd
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
   labels:
     external-dns: "enabled"
