@@ -25,13 +25,12 @@ external-dns-external:
   extraArgs:
     - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
     - --crd-source-kind=DNSEndpoint
+    - '--label-filter "external-dns: true"'
   policy: sync
   sources:
     - ingress
     - crd
   txtPrefix: "k8s.proxy-local"
-  labelFilters:
-    - external-dns: true
   serviceMonitor:
     enabled: true
   resources:
