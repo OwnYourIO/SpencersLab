@@ -98,7 +98,6 @@ kind: Middleware
 metadata:
   name: real-ip
 spec:
-  plugin:
-    headers:
-      customRequestHeaders:
-        X-Forwarded-For: '{headers.x-real-ip}'
+  headers:
+    customRequestHeaders:
+      X-Forwarded-For: '{headers.x-real-ip}'
