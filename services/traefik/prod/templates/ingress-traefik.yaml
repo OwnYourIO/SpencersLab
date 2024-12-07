@@ -9,7 +9,6 @@ spec:
   tls:
   - hosts:
       - "traefik.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
-    secretName: cluster-wildcard-cert
   rules:
     - host: "traefik.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
       http:
