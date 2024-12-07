@@ -15,12 +15,12 @@ external-dns-external:
     - name: CF_API_EMAIL
       valueFrom:
         secretKeyRef:
-          name: cloudflare-token
+          name: cert-manager-solver-token
           key: email
     - name: CF_API_TOKEN
       valueFrom:
         secretKeyRef:
-          name: cloudflare-token
+          name: cert-manager-solver-token
           key: password
   extraArgs:
     - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
