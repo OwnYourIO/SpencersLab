@@ -10,7 +10,7 @@ spec:
       method:
         - GET
       redirectCode: "307"
-      redirectUri: play.{{ .Values.domain }}
+      redirectUri: https://play.{{ .Values.domain }}/
       status:
         - "403"
 ...

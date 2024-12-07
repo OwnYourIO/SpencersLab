@@ -43,7 +43,7 @@ metadata:
   name: play-ingress
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd,default-play-to-player-redirect@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd,default-redirect-play-to-player@kubernetescrd
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
   labels:
     external-dns: "enabled"
@@ -68,7 +68,7 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: play-to-player-redirect
+  name: redirect-play-to-player
 spec:
   redirectRegex:
     regex: "^https?://.*/(.+)"
