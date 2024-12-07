@@ -51,6 +51,9 @@ traefik:
       traefik-plugin-redirect-on-status:
         moduleName: "github.com/m-riedel/traefik-plugin-redirect-on-status"
         version: "v1.0.1"
+      traefik-real-ip-plugin:
+        moduleName: "github.com/Desuuuu/traefik-real-ip-plugin"
+        version: "v1.1.0"
 
   service:
     type: LoadBalancer
