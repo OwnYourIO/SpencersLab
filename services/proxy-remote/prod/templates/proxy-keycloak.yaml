@@ -7,9 +7,8 @@ spec:
   tls:
     - hosts:
       - "login.{{ $.Values.domain }}"
-      secretName: cluster-wildcard-cert
   rules:
-    - host: login.spencerslab.com
+    - host: login.{{ .Values.domain }}
       http:
         paths:
           - path: /realms/SpencersLab/

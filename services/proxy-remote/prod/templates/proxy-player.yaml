@@ -21,3 +21,27 @@ spec:
                 name: proxy-service
                 port:
                   number: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: play-ingress
+  namespace: default
+  #annotations:
+  #  traefik.ingress.kubernetes.io/router.middlewares: kube-system-geoblock@file
+spec:
+  tls:
+    - hosts:
+      - "play.{{ .Values.domain }}"
+
+  rules:
+    - host: "play.{{ .Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 443
