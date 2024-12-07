@@ -19,8 +19,6 @@ traefik:
     - "--serversTransport.insecureSkipVerify=true"
     - "--providers.file.filename=/data/user-allowlist.yaml"
     - "--providers.file.watch=true"
-    - "--entryPoints.web.forwardedHeaders.insecure=true"
-    - "--entryPoints.websecure.forwardedHeaders.insecure=true"
   dashboard: 
     enabled: true
 
@@ -72,7 +70,6 @@ traefik:
           - "0.0.0.0/0"   # Trust all (for testing)
           - "::/0"        # Trust all (IPv6)
     websecure:
-      address: ":443"
       forwardedHeaders:
         trustedIPs:
           - "127.0.0.1/8"
