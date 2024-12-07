@@ -45,6 +45,14 @@ traefik:
     spec:
       externalTrafficPolicy: Local
 
+  ports:
+    web:
+      proxyProtocol:
+        enabled: true
+    websecure:
+      proxyProtocol:
+        enabled: true
+
   metrics:
     prometheus:
       serviceMonitor:

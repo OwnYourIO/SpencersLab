@@ -16,8 +16,34 @@ metadata:
   name: player-ingress
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: default-real-ip@kubernetescrd,default-redirect-player-403-to-play@kubernetescrd,user-allowlist@file
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-player-403-to-play@kubernetescrd,user-allowlist@file
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
+  labels:
+    external-dns: "enabled"
+spec:
+  tls:
+    - hosts:
+      - "player.{{ $.Values.domain }}"
+      secretName: wildcard-cert
+  rules:
+    - host: player.{{ .Values.domain}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: player-service
+                port:
+                  number: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: player-remote-ingress
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-player-403-to-play@kubernetescrd,user-allowlist-remote@file
   labels:
     external-dns: "enabled"
 spec:
