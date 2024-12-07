@@ -102,4 +102,5 @@ spec:
     standardize-xff:
       headers:
         customRequestHeaders:
-          X-Forwarded-For: "{{ .RequestHeader.Get \"X-Real-Ip\" }}"
+          X-Forwarded-For: '{{ .RequestHeader.Get "X-Real-Ip" }}'
+
