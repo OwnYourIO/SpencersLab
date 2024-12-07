@@ -99,7 +99,6 @@ metadata:
   name: real-ip
 spec:
   plugin:
-    standardize-xff:
-      headers:
-        customRequestHeaders:
-          X-Forwarded-For: '{headers.x-real-ip}'
+    headers:
+      customRequestHeaders:
+        X-Forwarded-For: '{headers.x-real-ip}'
