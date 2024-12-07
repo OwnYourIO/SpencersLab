@@ -70,7 +70,9 @@ kind: Middleware
 metadata:
   name: redirect-play-to-player
 spec:
-  redirectRegex:
-    regex: "^https?://.*/(.+)"
-    replacement: "https://player.{{ .Values.domain }}/${1}"
-    permanent: false
+  plugin:
+    traefik-plugin-redirect-on-status:
+      redirectCode: "307"
+      redirectUri: https://player.{{ .Values.domain }}/
+      status:
+        - "404"
