@@ -1,3 +1,4 @@
+domain: OVERRIDE_VIA_APPSET
 
 sshd:
   nameOverride: "sshd"

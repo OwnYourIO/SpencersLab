@@ -1,18 +1,17 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: jellyfin-ingress
+  name: player-ingress
   namespace: default
-  annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: admin-whitelist@file
+  #annotations:
+  #  traefik.ingress.kubernetes.io/router.middlewares: kube-system-geoblock@file
 spec:
   tls:
     - hosts:
-      - "jellyfin.spencerslab.com"
+      - "player.{{ .Values.domain }}"
 
-      secretName: cluster-wildcard-cert
   rules:
-    - host: jellyfin.spencerslab.com
+    - host: "player.{{ .Values.domain }}"
       http:
         paths:
           - path: /

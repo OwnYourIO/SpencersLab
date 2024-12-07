@@ -33,8 +33,6 @@ metadata:
   namespace: default
   labels:
     app: default
-  #annotations:
-    #traefik.ingress.kubernetes.io/router.middlewares: kube-system-ipwhitelist@kubernetescrd
 spec:
   tls:
   - hosts:
