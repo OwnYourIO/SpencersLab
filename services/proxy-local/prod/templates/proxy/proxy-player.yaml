@@ -17,6 +17,7 @@ metadata:
   namespace: default
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd,user-allowlist@file
+    external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
 spec:
   tls:
     - hosts:
@@ -41,6 +42,7 @@ metadata:
   namespace: default
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd,kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd,default-play-to-player-redirect@kubernetescrd
+    external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
 spec:
   tls:
     - hosts:

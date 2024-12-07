@@ -8,6 +8,37 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+external-dns-external:
+  interval: 2m
+  provider: cloudflare
+  env:
+    - name: CF_API_EMAIL
+      valueFrom:
+        secretKeyRef:
+          name: cloudflare-token
+          key: email
+    - name: CF_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: cloudflare-token
+          key: password
+  extraArgs:
+    - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
+    - --crd-source-kind=DNSEndpoint
+  policy: sync
+  sources:
+    - ingress
+    - crd
+  txtPrefix: "k8s.proxy-local"
+  serviceMonitor:
+    enabled: true
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 25m
+    limits:
+      memory: 250Mi
+
 qbittorrent:
   global:
     nameOverride: "qbittorrent"
