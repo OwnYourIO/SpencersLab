@@ -21,6 +21,11 @@ traefik:
     - "--providers.file.watch=true"
   dashboard: 
     enabled: true
+
+  persistence:
+    enabled: true
+    size: 1Gi 
+
   providers:
     kubernetesCRD:
       allowCrossNamespace: true
