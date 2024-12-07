@@ -48,6 +48,9 @@ traefik:
         moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
         # renovate: depName=github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
         version: "v1.3.5"
+      traefik-plugin-redirect-on-status:
+        moduleName: "github.com/m-riedel/traefik-plugin-redirect-on-status"
+        version: "v1.0.1"
 
   service:
     type: LoadBalancer
@@ -75,11 +78,6 @@ traefik:
     - name: traefik-sso
       type: secret
       mountPath: "/run/secrets/oidc"
-    - name: redirect-html
-      type: configMap
-      mountPath: /etc/traefik/redirect.html
-      subpath: redirect.html
-      readOnly: true
 
   logs:
     #general:
