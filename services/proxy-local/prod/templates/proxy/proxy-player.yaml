@@ -101,6 +101,9 @@ spec:
   plugin:
     traefik-real-ip-plugin:
       headers:
-        - X-Real-IP
+        - X-Forwarded-For
+        #- X-Real-IP
       retrievers:
         - header: X-Forwarded-For
+          excludedCIDRs:
+            - 10.42.0.0/16
