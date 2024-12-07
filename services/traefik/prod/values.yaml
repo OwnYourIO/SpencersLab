@@ -64,11 +64,15 @@ traefik:
     web:
       forwardedHeaders:
         trustedIPs:
+          - "127.0.0.1/8"
+          - "::1"
           - "10.0.0.0/8" # Replace with your internal network CIDR, if applicable
     websecure:
       address: ":443"
       forwardedHeaders:
         trustedIPs:
+          - "127.0.0.1/8"
+          - "::1"
           - "10.42.0.0/16"
 
   metrics:
