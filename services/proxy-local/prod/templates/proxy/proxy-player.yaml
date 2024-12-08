@@ -16,7 +16,7 @@ metadata:
   name: player-ingress
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-player-403-to-play@kubernetescrd,user-allowlist-remote@file
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd,default-redirect-player-403-to-play@kubernetescrd,user-allowlist-remote@file
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
   labels:
     external-dns: "enabled"
@@ -55,6 +55,7 @@ spec:
         - name: player-service
           port: 443
       middlewares:
+        - name: kube-system-crowdsec@kubernetescrd
         - name: redirect-player-403-to-play
         - name: user-allowlist@file
 ---
