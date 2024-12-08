@@ -29,7 +29,7 @@ spec:
           port: 443
       middlewares:
         - name: redirect-player-403-to-play
-        - name: user-allowlist
+        - name: user-allowlist@file
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
