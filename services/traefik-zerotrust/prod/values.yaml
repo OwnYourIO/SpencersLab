@@ -13,7 +13,7 @@ traefik:
     - "--serversTransport.insecureSkipVerify=true"
     - "--entrypoints.web.http.middlewares=kube-system-geoblock@kubernetescrd"
     - "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
-    - "--providers.file.filename=/data/admin-whitelist.yaml"
+    - "--providers.file.filename=/data/admin-allowlist.yaml"
     - "--providers.file.watch=true"
   dashboard: 
     enabled: false
@@ -30,7 +30,7 @@ traefik:
       allowEmptyServices: true
       allowExternalNameServices: true
     file:
-      filename: "/data/admin-whitelist.yaml"
+      filename: "/data/admin-allowlist.yaml"
       watch: true
 
   experimental:

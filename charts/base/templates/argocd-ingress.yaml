@@ -8,7 +8,7 @@ metadata:
   labels:
     app: default
   #annotations:
-    #traefik.ingress.kubernetes.io/router.middlewares: kube-system-ipwhitelist@kubernetescrd
+    #traefik.ingress.kubernetes.io/router.middlewares: admin-allowlist@file
 spec:
   tls:
   - hosts:
