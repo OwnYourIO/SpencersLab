@@ -22,7 +22,7 @@ spec:
   tls:
     secretName: wildcard-cert
   routes:
-    - match: Host(`player.{{ $.Values.domain }}`) && ClientIP(`10.0.0.0/16`)
+    - match: Host(`player.{{ $.Values.domain }}`) 
       kind: Rule
       services:
         - name: player-service
