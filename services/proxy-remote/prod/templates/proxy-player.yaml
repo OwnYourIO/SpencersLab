@@ -9,7 +9,7 @@ spec:
   tls:
     - hosts:
       - "player.{{ .Values.domain }}"
-      secretName: wildcard-cert
+      secretName: player-cert
   rules:
     - host: "player.{{ .Values.domain }}"
       http:
@@ -33,7 +33,7 @@ spec:
   tls:
     - hosts:
       - "play.{{ .Values.domain }}"
-      secretName: wildcard-cert
+      secretName: play-cert
   rules:
     - host: "play.{{ .Values.domain }}"
       http:
