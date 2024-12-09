@@ -90,7 +90,7 @@ traefik:
           prometheus: system-monitoring-prometheus-prometheus
 
   volumes:
-    - name: traefik-lapi-tls
+    - name: traefik-bouncer-tls
       mountPath: /etc/traefik/crowdsec-certs/
       type: secret
     - name: traefik-sso
