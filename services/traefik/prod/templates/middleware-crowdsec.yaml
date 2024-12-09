@@ -10,6 +10,7 @@ spec:
       enabled: true
       crowdsecLapiScheme: https
       crowdsecLapiHost: traefik-service:8080
-      crowdsecLapiKeyFile: /run/secrets/lapi/api_key
-      CrowdsecLapiTLSInsecureVerify: true
+      crowdsecLapiTLSCertificateAuthorityFile: /etc/traefik/crowdsec-certs/ca.crt
+      crowdsecLapiTLSCertificateBouncerFile: /etc/traefik/crowdsec-certs/tls.crt
+      crowdsecLapiTLSCertificateBouncerKeyFile: /etc/traefik/crowdsec-certs/tls.key
 ...

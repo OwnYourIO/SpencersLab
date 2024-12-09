@@ -59,6 +59,9 @@ traefik:
 
   ports:
     web:
+      redirectTo:
+        port: websecure
+        priority: 10
       proxyProtocol:
         trustedIPs: 
           - "10.42.0.0/16"
@@ -86,15 +89,10 @@ traefik:
           release: monitoring-agent
           prometheus: system-monitoring-prometheus-prometheus
 
-  # TODO: Use a reflector from the external-secrets namespace instead.
-  # To create this secret:
-  # kubectl create secret generic crowdsec-bouncer-key -n kube-system --from-literal="api_key=<THE_GENERATED_BOUNCER_API_KEY"
   volumes:
-    - name: crowdsec-bouncer-key
+    - name: traefik-bouncer-tls
+      mountPath: /etc/traefik/crowdsec-certs/
       type: secret
-      mountPath: /run/secrets/lapi
-      subpath: api_key
-      readOnly: true
     - name: traefik-sso
       type: secret
       mountPath: "/run/secrets/oidc"
