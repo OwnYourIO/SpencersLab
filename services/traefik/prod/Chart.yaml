@@ -9,6 +9,6 @@ dependencies:
   - name: appset-traefik
     version: 1.1.4
     repository: https://ownyourio.github.io/SpencersLab/
-  - name: crowdsec
-    version: 0.13.0
-    repository: https://crowdsecurity.github.io/helm-charts
+  #- name: crowdsec
+  #  version: 0.13.0
+  #  repository: https://crowdsecurity.github.io/helm-charts
