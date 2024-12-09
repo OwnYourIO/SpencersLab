@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: login-ingress
   namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
     - hosts:
