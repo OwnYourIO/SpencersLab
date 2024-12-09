@@ -7,6 +7,7 @@ spec:
   tls:
     - hosts:
       - "login.{{ $.Values.domain }}"
+      secretName: wildcard-cert
   rules:
     - host: login.{{ .Values.domain }}
       http:

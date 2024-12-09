@@ -11,6 +11,9 @@ traefik:
     #- "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
+    # Leave 80 un geoblocked. Otherwise it gets in the way of the cert generation. 
+    # It's automatically forwarded to 443 by the proxy-local anyway.
+    #- "--entrypoints.web.http.middlewares=kube-system-geoblock@kubernetescrd"
     - "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
     - "--providers.file.filename=/data/admin-allowlist.yaml"
     - "--providers.file.watch=true"
