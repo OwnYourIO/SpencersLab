@@ -5,5 +5,8 @@ dependencies:
 - name: appset-traefik
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.4
-digest: sha256:a6c016b1431c65a91a29e24a49e33753010abb1fc4b20ee74053527abe69438f
-generated: "2024-12-08T19:31:46.223149464-07:00"
+- name: crowdsec
+  repository: https://crowdsecurity.github.io/helm-charts
+  version: 0.13.0
+digest: sha256:f29068dad77d7e77b8cacdb2a6776014a600fa0d17723f78a9dd210b4441490b
+generated: "2024-12-08T19:32:21.441465914-07:00"
