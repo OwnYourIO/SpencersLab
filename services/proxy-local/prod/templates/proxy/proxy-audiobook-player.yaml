@@ -1,0 +1,35 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audiobook-player-service
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: "audiobook-player.{{ $.Values.domain }}"
+  ports:
+    - port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audiobook-player-ingress
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd
+spec:
+  tls:
+    - hosts:
+      - "audiobook-player.{{ $.Values.domain }}"
+      secretName: wildcard-cert
+  rules:
+    - host: "audiobook-player.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: audiobook-player-service
+                port:
+                  number: 443

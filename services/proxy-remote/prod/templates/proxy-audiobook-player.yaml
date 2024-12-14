@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audiobook-player-ingress
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+      - "audiobook-player.{{ $.Values.domain }}"
+      secretName: audiobook-player-cert
+  rules:
+    - host: audiobook-player.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: &defaultBackend
+              service:
+                name: proxy-service
+                port:
+                  number: 443

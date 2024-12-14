@@ -1,0 +1,52 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audiobookshelf
+  namespace: default
+  labels:
+    app: default
+  #annotations:
+    #traefik.ingress.kubernetes.io/router.middlewares: kube-system-ipwhitelist@kubernetescrd
+spec:
+  tls:
+  - hosts:
+      - "audiobookshelf.{{ $.Values.domain }}"
+    secretName: wildcard-cert
+  rules:
+    - host: "audiobookshelf.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{.Release.Name }}-audiobookshelf"
+                port:
+                  name: http
+...
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: player
+  namespace: default
+  labels:
+    app: default
+spec:
+  tls:
+  - hosts:
+      - "audiobook-player.{{ $.Values.domain }}"
+    secretName: wildcard-cert
+  rules:
+    - host: "audiobook-player.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{.Release.Name }}-audiobookshelf"
+                port:
+                  number: 8096
+...
