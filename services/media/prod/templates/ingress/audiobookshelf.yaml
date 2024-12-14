@@ -48,5 +48,5 @@ spec:
               service:
                 name: "{{.Release.Name }}-audiobookshelf"
                 port:
-                  number: 8096
+                  name: http
 ...
