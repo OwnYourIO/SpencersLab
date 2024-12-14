@@ -6,7 +6,7 @@ metadata:
   namespace: default
 spec:
   type: ExternalName
-  externalName: "audiobook-player.{{ $.Values.domain }}"
+  externalName: "audiobookshelf.{{ $.Values.domain }}"
   ports:
     - port: 443
 ---
