@@ -17,6 +17,9 @@ metadata:
   namespace: default
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,kube-system-login-cors@kubernetescrd
+    external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
+  labels:
+    external-dns: "enabled"
 spec:
   tls:
     - hosts:
