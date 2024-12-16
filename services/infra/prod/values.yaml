@@ -110,6 +110,8 @@ keycloakx:
         value: edge
       - name: KC_PROXY_HEADERS
         value: xforwarded
+      - name: KC_PROXY_ADDRESS_FORWARDING
+        value: "true"
       - name: KC_HTTP_PORT
         value: "8080"
       - name: KC_HOSTNAME
