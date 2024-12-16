@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proxy-allowlist
+spec:
+  storageClassName: ""
+  volumeName: proxy-allowlist
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 30Gi
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: proxy-allowlist
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 1Gi
+  csi:
+    driver: seaweedfs-csi-driver
+    # volumeHandle doesn't seem to have an impact, but is required. For now, just matching volume name.
+    volumeHandle: proxy-allowlist
+    volumeAttributes:
+      collection: proxy-allowlist
+      replication: "001"
+      path: /buckets/proxy-allowlist
+      diskType: "hdd"
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
