@@ -28,7 +28,9 @@ traefik:
 
   persistence:
     enabled: true
-    size: 1Gi 
+    existingClaim: "proxy-allowlist"
+    #existingClaim: ""
+    #size: 1Gi 
 
   providers:
     kubernetesCRD:
