@@ -107,7 +107,7 @@ keycloakx:
           -Djgroups.dns.query=keycloak-headless
           -XX:+UseContainerSupport
       - name: KC_PROXY
-        value: passthrough
+        value: edge
       - name: KC_HTTP_PORT
         value: "8080"
       - name: KC_HOSTNAME
