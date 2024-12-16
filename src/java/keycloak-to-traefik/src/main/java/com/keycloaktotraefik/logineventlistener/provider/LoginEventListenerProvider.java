@@ -21,6 +21,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -148,8 +149,8 @@ public class LoginEventListenerProvider implements EventListenerProvider {
             if (!line.startsWith("#")) {
                 Matcher matcher = IP_COMMENT_PATTERN.matcher(line);
                 if (matcher.find()) {
-                    LocalDateTime expiryDate = LocalDateTime.parse(matcher.group(4), DATE_FORMATTER);
-                    if (now.isAfter(expiryDate)) {
+                    LocalDate expiryDate = LocalDate.parse(matcher.group(4), DATE_FORMATTER);
+                    if (now.toLocalDate().isAfter(expiryDate)) {
                         allowlistLines.set(i, "# " + line);
                         modified = true;
                     }
