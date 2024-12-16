@@ -29,6 +29,7 @@ traefik:
   persistence:
     enabled: true
     existingClaim: "proxy-allowlist"
+    accessMode: ReadWriteMany
     #existingClaim: ""
     #size: 1Gi 
 
