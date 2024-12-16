@@ -71,20 +71,20 @@ traefik:
         priority: 10
       proxyProtocol:
         trustedIPs: 
-          - "10.42.0.0/16"
+          #- "10.42.0.0/16"
           - "10.0.22.0/24"
       forwardedHeaders:
         trustedIPs:
-          - "10.42.0.0/16"
+          #- "10.42.0.0/16"
           - "10.0.22.0/24"
     websecure:
       proxyProtocol:
         trustedIPs: 
-          - "10.42.0.0/16"
+          #- "10.42.0.0/16"
           - "10.0.22.0/24"
       forwardedHeaders:
         trustedIPs:
-          - "10.42.0.0/16"
+          #- "10.42.0.0/16"
           - "10.0.22.0/24"
 
   metrics:
