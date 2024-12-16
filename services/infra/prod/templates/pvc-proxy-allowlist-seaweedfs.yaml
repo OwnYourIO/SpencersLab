@@ -21,7 +21,7 @@ spec:
   accessModes:
   - ReadWriteMany
   capacity:
-    storage: 1Gi
+    storage: 30Gi
   csi:
     driver: seaweedfs-csi-driver
     # volumeHandle doesn't seem to have an impact, but is required. For now, just matching volume name.
