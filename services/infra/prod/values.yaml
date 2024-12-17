@@ -112,8 +112,6 @@ keycloakx:
         value: xforwarded
       - name: KC_PROXY_HEADERS
         value: xforwarded
-      - name: KC_HTTP_ENABLED
-        value: "true"
       - name: PROXY_ADDRESS_FORWARDING
         value: "true"
       - name: KC_HTTP_PORT
