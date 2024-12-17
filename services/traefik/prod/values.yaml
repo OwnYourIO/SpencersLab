@@ -41,6 +41,7 @@ traefik:
       allowEmptyServices: true
       allowExternalNameServices: true
     file:
+      enabled: true
       filename: "/data/user-allowlist.yaml"
       watch: true
       interval: 1s
