@@ -110,8 +110,8 @@ keycloakx:
           -Djava.awt.headless=true
           -Djgroups.dns.query=keycloak-headless
           -XX:+UseContainerSupport
-      - name: PROXY_ADDRESS_FORWARDING
-        value: "true"
+      #- name: PROXY_ADDRESS_FORWARDING
+      #  value: "true"
       - name: KC_HTTP_PORT
         value: "8080"
       - name: KC_HOSTNAME
