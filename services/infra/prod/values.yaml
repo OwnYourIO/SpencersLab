@@ -106,18 +106,12 @@ keycloakx:
           -Djava.awt.headless=true
           -Djgroups.dns.query=keycloak-headless
           -XX:+UseContainerSupport
-      #- name: KEYCLOAK_PROXY_HEADERS
-      #  value: xforwarded
       - name: KC_PROXY_HEADERS
         value: xforwarded
       - name: KC_HTTP_ENABLED
         value: "true"
-      #- name: KC_PROXY_ADDRESS_FORWARDING
-      #  value: "true"
       - name: PROXY_ADDRESS_FORWARDING
         value: "true"
-      #- name: KEYCLOAK_PROXY_ADDRESS_FORWARDING
-      #  value: "true"
       - name: KC_HTTP_PORT
         value: "8080"
       - name: KC_HOSTNAME
@@ -151,20 +145,6 @@ keycloakx:
       # - name: KC_DB_URL_DATABASE
       #   value: sso
       
-      # TODO: Have a feeling I'll want a custom redirect like this eventually.
-      # These were taken from the quarks secret, which had a note we could use env instead. 
-      # quarkus.http.non-application-root-path=/
-      # # custom redirects
-      # quarkus.kc-routing.path-redirect./=/realms/YOUR-REALM-NAME/account
-      # quarkus.kc-routing.path-redirect./auth=/realms/YOUR-REALM-NAME/account
-      # quarkus.kc-routing.path-redirect./register=/realms/YOUR-REALM-NAME/protocol/openid-connect/registrations?client_id=account&response_type=code
-      # quarkus.kc-routing.path-prefix./oauth/authorize=/realms/YOUR-REALM-NAME/protocol/openid-connect/auth
-      # quarkus.kc-routing.path-filter./api/v4/user=/realms/YOUR-REALM-NAME/protocol/openid-connect/userinfo
-      # quarkus.kc-routing.path-filter./oauth/token=/realms/YOUR-REALM-NAME/protocol/openid-connect/token
-      # # block metrics and health enpoints from being exposed through the istio ingress
-      # quarkus.kc-routing.path-recursive-block./metrics=8443
-      # quarkus.kc-routing.path-recursive-block./health=8443
-
     extraVolumes: |-
       - name: keycloak-data
         persistentVolumeClaim:
