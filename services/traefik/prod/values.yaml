@@ -17,6 +17,8 @@ traefik:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
+    - "--providers.file.filename=/data/user-allowlist.yaml"
+    - "--providers.file.watch=true"
     # Force all port 80 traffic to 443
     - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
     - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
@@ -27,7 +29,6 @@ traefik:
   persistence:
     enabled: true
     existingClaim: "proxy-allowlist"
-    path: /etc/traefik/dynamic
     accessMode: ReadWriteMany
     #existingClaim: ""
     #size: 1Gi 
@@ -39,11 +40,6 @@ traefik:
     kubernetesIngress:
       allowEmptyServices: true
       allowExternalNameServices: true
-    file:
-      enabled: true
-      filename: "/data/user-allowlist.yaml"
-      watch: true
-      interval: 1s
   deployment: 
     additionalContainers: 
     - name: user-allowlist-update
@@ -52,9 +48,12 @@ traefik:
       args:
         - |
           while true; do
-            touch /etc/traefik/dynamic/user-allowlist.yaml
+            touch /data/user-allowlist.yaml
             sleep 1
           done
+      volumeMounts:
+        - name: data 
+          mountPath: /data
 
   experimental:
     plugins:
