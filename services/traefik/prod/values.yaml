@@ -43,6 +43,7 @@ traefik:
     file:
       filename: "/data/user-allowlist.yaml"
       watch: true
+      interval: 1s
 
   experimental:
     plugins:
