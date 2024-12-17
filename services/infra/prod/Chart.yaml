@@ -10,7 +10,7 @@ dependencies:
   version: 0.2.2
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
 - name: appset-infra
-  version: 1.1.27
+  version: 1.1.28
   repository: https://ownyourio.github.io/SpencersLab/
 - name: keycloakx
   version: 2.6.0

@@ -7,7 +7,7 @@ dependencies:
   version: 0.2.2
 - name: appset-infra
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.27
+  version: 1.1.28
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 2.6.0
@@ -17,5 +17,5 @@ dependencies:
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.3
-digest: sha256:9e5229dbd5e504693a54a14c3f887ba1258ad97fc9bb98f60a2fe57f511f0751
-generated: "2024-12-16T17:22:46.231076319-07:00"
+digest: sha256:b74ae8a98323f27bf79b046cb00aeedf5c078c8f0a1a0f495788013a5d8e4198
+generated: "2024-12-16T18:08:40.790710095-07:00"
