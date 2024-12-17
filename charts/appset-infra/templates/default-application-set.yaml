@@ -13,6 +13,9 @@ spec:
                 - appName: infra
                   namespace: default
                   ServerSideApply: "false"
+                - appName: external-secrets-bitwarden
+                  namespace: default
+                  ServerSideApply: "false"
                 - appName: monitoring-agent
                   namespace: default
                   ServerSideApply: "true"
