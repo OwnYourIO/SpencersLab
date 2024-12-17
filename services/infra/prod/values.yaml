@@ -100,7 +100,7 @@ keycloakx:
 
     proxy:
       enabled: true
-      mode: xforwarded
+      mode: forwarded
 
     extraEnv: |-
       - name: TZ
