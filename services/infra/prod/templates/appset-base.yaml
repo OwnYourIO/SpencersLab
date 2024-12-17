@@ -35,7 +35,7 @@ spec:
               - name: argo-cd.configs.cm.url
                 value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
               - name: autoUpdateK3s
-                value: "true"
+                value: "false"
             valueFiles:
               - values.yaml
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
