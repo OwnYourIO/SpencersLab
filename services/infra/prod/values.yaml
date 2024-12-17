@@ -106,9 +106,15 @@ keycloakx:
           -Djava.awt.headless=true
           -Djgroups.dns.query=keycloak-headless
           -XX:+UseContainerSupport
+      - name: KEYCLOAK_PROXY_HEADERS
+        value: xforwarded
+      - name: KC_PROXY_HEADERS
+        value: xforwarded
       - name: KC_HTTP_ENABLED
         value: "true"
       - name: KC_PROXY_ADDRESS_FORWARDING
+        value: "true"
+      - name: PROXY_ADDRESS_FORWARDING
         value: "true"
       - name: KEYCLOAK_PROXY_ADDRESS_FORWARDING
         value: "true"
