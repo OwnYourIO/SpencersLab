@@ -40,6 +40,9 @@ traefik:
     kubernetesIngress:
       allowEmptyServices: true
       allowExternalNameServices: true
+    file:
+      filename: "/data/user-allowlist.yaml"
+      watch: true
 
   experimental:
     plugins:
