@@ -44,6 +44,17 @@ traefik:
       filename: "/data/user-allowlist.yaml"
       watch: true
       interval: 1s
+  deployment: 
+    additionalContainers: 
+    - name: user-allowlist-update
+      image: alpine:3.18
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          while true; do
+            touch /etc/traefik/dynamic/user-allowlist.yaml
+            sleep 1
+          done
 
   experimental:
     plugins:
