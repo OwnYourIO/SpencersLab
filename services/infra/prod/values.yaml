@@ -90,6 +90,11 @@ keycloakx:
       tag: 25.0.2
 
     command:
+      - "watch" 
+      - "-n" 
+      - "1" 
+      - '"touch /data/user-allowlist.yaml"' 
+      - "&;"
       - "/opt/keycloak/bin/kc.sh"
       - "--verbose"
       - "start-dev"
