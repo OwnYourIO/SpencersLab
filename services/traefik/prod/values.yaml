@@ -17,8 +17,6 @@ traefik:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
-    - "--providers.file.filename=/data/user-allowlist.yaml"
-    - "--providers.file.watch=true"
     # Force all port 80 traffic to 443
     - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
     - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
@@ -29,6 +27,7 @@ traefik:
   persistence:
     enabled: true
     existingClaim: "proxy-allowlist"
+    path: /etc/traefik/dynamic
     accessMode: ReadWriteMany
     #existingClaim: ""
     #size: 1Gi 
