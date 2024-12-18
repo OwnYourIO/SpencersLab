@@ -22,4 +22,35 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ...
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system-upgrade-controller-role
+rules:
+- apiGroups: ['']
+  resources: ['namespaces']
+  verbs: ['get', 'list']
+- apiGroups: ['']
+  resources: ['nodes']
+  verbs: ['get', 'list', 'patch', 'update']
+- apiGroups: ['batch']
+  resources: ['jobs']
+  verbs: ['create', 'delete', 'get', 'list', 'watch']
+- apiGroups: ['apps']
+  resources: ['daemonsets']
+  verbs: ['get', 'list']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system-upgrade-controller-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system-upgrade-controller-role
+subjects:
+- kind: ServiceAccount
+  name: system-upgrade
+  namespace: system-upgrade
+...
 {{ end }}
