@@ -30,6 +30,7 @@ rules:
 - apiGroups: ['']
   resources: ['namespaces']
   verbs: ['get', 'list']
+  resourceNames: ['kube-system']  # Explicitly allow access to kube-system
 - apiGroups: ['']
   resources: ['nodes']
   verbs: ['get', 'list', 'patch', 'update']
