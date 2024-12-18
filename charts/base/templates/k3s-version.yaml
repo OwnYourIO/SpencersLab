@@ -5,7 +5,7 @@ apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
   name: server-plan
-  namespace: system-upgrade
+  namespace: kube-system
   labels:
     argocd.argoproj.io/depends-on: "customresourcedefinition.apiextensions.k8s.io/plans.upgrade.cattle.io"
 spec:
@@ -28,7 +28,7 @@ apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
   name: agent-plan
-  namespace: system-upgrade
+  namespace: kube-system
   labels:
     argocd.argoproj.io/depends-on: "customresourcedefinition.apiextensions.k8s.io/plans.upgrade.cattle.io"
 spec:
