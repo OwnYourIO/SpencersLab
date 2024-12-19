@@ -242,6 +242,8 @@ pinchflat:
       existingClaim: pinchflat
     downloads:
       type: emptyDir
+      globalMounts:
+        - path: /downloads/videos
     tmp:
       type: emptyDir
     media:
