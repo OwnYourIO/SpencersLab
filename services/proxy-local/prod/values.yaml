@@ -135,6 +135,8 @@ qbittorrent:
 autossh:
   global:
     nameOverride: "autossh"
+  defaultPodOptions:
+    restartPolicy: Always
   controllers:
     main:
       containers:
