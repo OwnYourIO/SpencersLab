@@ -47,4 +47,4 @@ sshd:
     sshd:
       existingClaim: sshd
       globalMounts:
-        - path: /config
+        - path: /config/ssh_host_keys
