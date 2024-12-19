@@ -175,6 +175,8 @@ autossh:
           supplementalGroups: [1000]
 
 pinchflat:
+  global:
+    nameOverride: "pinchflat"
   controllers:
     pinchflat:
       containers:
@@ -251,6 +253,8 @@ pinchflat:
           subPath: Library/YouTube
 
 metube:
+  global:
+    nameOverride: "metube"
   controllers:
     metube:
       labels:
