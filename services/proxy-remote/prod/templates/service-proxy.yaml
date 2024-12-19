@@ -9,5 +9,6 @@ spec:
   ports:
     - port: 443
   selector:
-    app.kubernetes.io/name: "{{ .Release.Name}}-sshd"
+    app.kubernetes.io/name: "sshd"
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
     app.kubernetes.io/component: main
