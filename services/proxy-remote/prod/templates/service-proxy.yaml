@@ -9,5 +9,5 @@ spec:
   ports:
     - port: 443
   selector:
-    app.kubernetes.io/name: proxy-remote
+    app.kubernetes.io/name: "{{ .Release.Name}}-sshd"
     app.kubernetes.io/component: main
