@@ -220,8 +220,8 @@ pinchflat:
       fsGroupChangePolicy: OnRootMismatch
       supplementalGroups: [44, 10000]
       seccompProfile: { type: RuntimeDefault }
-    nodeSelector:
-      intel.feature.node.kubernetes.io/gpu: "true"
+    #nodeSelector:
+    #  intel.feature.node.kubernetes.io/gpu: "true"
   service:
     app:
       controller: pinchflat
@@ -240,17 +240,10 @@ pinchflat:
   persistence:
     config:
       existingClaim: pinchflat
-    downloads:
-      type: emptyDir
-    tmp:
-      type: emptyDir
     media:
-      type: nfs
-      server: expanse.internal
-      path: /eros/Media
+      existingClaim: media
       globalMounts:
-        - path: /media/Library/YouTube
-          subPath: Library/YouTube
+        - path: /media/
 
 metube:
   global:
@@ -296,10 +289,7 @@ metube:
                 identifier: app
                 port: http
   persistence:
-    downloads:
-      type: nfs
-      server: ${NAS_IP}
-      path: ${NAS_MEDIA_PATH}
+    media:
+      existingClaim: media
       globalMounts:
-        - path: /downloads/videos
-          subPath: videos
+        - path: /media/
