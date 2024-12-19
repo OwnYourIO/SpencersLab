@@ -1,7 +1,8 @@
 domain: OVERRIDE_VIA_APPSET
 
 sshd:
-  nameOverride: "sshd"
+  global:
+    nameOverride: "sshd"
   controllers:
     main:
       containers:
