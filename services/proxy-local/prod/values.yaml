@@ -208,9 +208,9 @@ pinchflat:
           resources:
             requests:
               cpu: 10m
-            limits:
-              gpu.intel.com/i915: 1
-              memory: 4Gi
+            #limits:
+              #gpu.intel.com/i915: 1
+              #memory: 4Gi
   defaultPodOptions:
     securityContext:
       runAsNonRoot: true
@@ -240,6 +240,10 @@ pinchflat:
   persistence:
     config:
       existingClaim: pinchflat
+    downloads:
+      type: emptyDir
+    tmp:
+      type: emptyDir
     media:
       existingClaim: media
       globalMounts:
