@@ -240,12 +240,6 @@ pinchflat:
   persistence:
     config:
       existingClaim: pinchflat
-    downloads:
-      type: emptyDir
-      globalMounts:
-        - path: /downloads/videos
-    tmp:
-      type: emptyDir
     media:
       existingClaim: media
       globalMounts:
@@ -299,3 +293,8 @@ metube:
       existingClaim: media
       globalMounts:
         - path: /media/
+
+    downloads:
+      type: emptyDir
+      globalMounts:
+        - path: /downloads/videos
