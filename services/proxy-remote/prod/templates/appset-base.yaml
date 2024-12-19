@@ -21,21 +21,27 @@ spec:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
-      source:
-        chart: "{{ `{{appName}}` }}"
-        repoURL: "{{ `{{ metadata.annotations.chart.repo }}` }}"
-        # TODO: This might need to be generic in some way.
-        targetRevision: 1.0.59
-        helm:
-          parameters:
-            - name: domain
-              value: "{{ `{{ metadata.annotations.domain }}` }}"
-            - name: clusterName
-              value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            - name: autoUpdateK3s
-              value: "true"
-          valueFiles:
-            - values.yaml
+      sources:
+        - repoURL: "{{ `{{ metadata.annotations.chart.repo }}` }}"
+          chart: "{{ `{{appName}}` }}"
+          # TODO: This might need to be generic in some way.
+          targetRevision: 1.0.70
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+              - name: argo-cd.configs.cm.url
+                value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
+              #- name: autoUpdateK3s
+              #  value: "true"
+            valueFiles:
+              - values.yaml
+              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
+        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
+          targetRevision: main
+          ref: values
       destination:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
