@@ -47,8 +47,17 @@ traefik:
       command: ["/bin/sh", "-c"]
       args:
         - |
+          #!/bin/sh
+          FILE=/data/user-allowlist.yaml
+          LAST_MODIFIED=0
           while true; do
-            touch /data/user-allowlist.yaml
+            if [ -f "$FILE" ]; then
+              MODIFIED=$(stat -c %Y "$FILE")
+              if [ "$MODIFIED" -ne "$LAST_MODIFIED" ]; then
+                touch "$FILE"
+                LAST_MODIFIED=$MODIFIED
+              fi
+            fi
             sleep 1
           done
       containerSecurityContext:
