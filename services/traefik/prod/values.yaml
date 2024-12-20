@@ -51,6 +51,11 @@ traefik:
             touch /data/user-allowlist.yaml
             sleep 1
           done
+      containerSecurityContext:
+        runAsUser: 1000
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
       volumeMounts:
         - name: data 
           mountPath: /data
