@@ -110,6 +110,6 @@ spec:
   plugin:
     traefik-plugin-redirect-on-status:
       redirectCode: "307"
-      redirectUri: https://play.{{ .Values.domain }}/
+      redirectUri: https://login.{{ .Values.domain }}/realms/SpencersLab/protocol/openid-connect/auth?response_type=code&state=3DN0z6k_7S8eqC5_Tj8Gag&code_challenge=hKOElEyI35bVaqJfMLuuU9iKzR8x7Vzj2R_Wylvat0U&code_challenge_method=S256&client_id=jellyfin&scope=openid%20profile&redirect_uri=https%3A%2F%2Fplayer.spencerslab.com%2Fsso%2FOID%2Fredirect%2Flogin.spencerslab.com
       status:
         - "403"
