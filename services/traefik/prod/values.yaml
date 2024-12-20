@@ -51,7 +51,7 @@ traefik:
           FILE=/data/user-allowlist.yaml
           LAST_MODIFIED=0
           while true; do
-            if [ -f "$FILE" ]; then
+            if [ -f "$FILE" ] && [ -s "$FILE" ]; then
               MODIFIED=$(stat -c %Y "$FILE")
               if [ "$MODIFIED" -ne "$LAST_MODIFIED" ]; then
                 touch "$FILE"
