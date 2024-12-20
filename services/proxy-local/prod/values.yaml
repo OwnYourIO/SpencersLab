@@ -245,6 +245,9 @@ pinchflat:
       existingClaim: pinchflat
     tmp:
       type: emptyDir
+    # This is needed because even though I'm mounting to /media, the image scans /downloads for privs.
+    downloads:
+      type: emptyDir
     media:
       existingClaim: media
       globalMounts:
