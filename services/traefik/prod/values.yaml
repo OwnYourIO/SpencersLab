@@ -65,7 +65,7 @@ traefik:
           while $RUNNING; do
             if [ -f "$FILE" ] && [ -s "$FILE" ]; then
               # Get file modification time and group ID in one stat call
-              STATS=$(stat -c "%Y %G" "$FILE")
+              STATS=$(stat -c "%Y %g" "$FILE")
               MODIFIED=$(echo "$STATS" | awk '{print $1}')
               CURRENT_GROUP=$(echo "$STATS" | awk '{print $2}')
               
