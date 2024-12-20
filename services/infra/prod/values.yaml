@@ -100,9 +100,10 @@ keycloakx:
       - "start-dev"
     
     podSecurityContext:
+      fsGroup: 65532
+    securityContext:
       runAsUser: 65532
       runAsGroup: 1000
-      fsGroup: 65532
 
     http:
       relativePath: /
