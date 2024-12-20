@@ -50,7 +50,18 @@ traefik:
           #!/bin/sh
           FILE=/data/user-allowlist.yaml
           LAST_MODIFIED=0
-          while true; do
+          RUNNING=true
+
+          # Function to handle termination signals
+          handle_exit() {
+            echo "Shutting down gracefully..."
+            RUNNING=false
+          }
+
+          # Trap termination signals
+          trap handle_exit SIGTERM SIGINT
+
+          while $RUNNING; do
             if [ -f "$FILE" ] && [ -s "$FILE" ]; then
               MODIFIED=$(stat -c %Y "$FILE")
               if [ "$MODIFIED" -ne "$LAST_MODIFIED" ]; then
