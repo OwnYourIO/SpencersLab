@@ -99,6 +99,11 @@ keycloakx:
       - "--verbose"
       - "start-dev"
     
+    podSecurityContext:
+      runAsUser: 65532
+      runAsGroup: 1000
+      fsGroup: 65532
+
     http:
       relativePath: /
       internalPort: metrics
