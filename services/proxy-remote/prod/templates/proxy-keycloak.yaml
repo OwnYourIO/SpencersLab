@@ -36,7 +36,7 @@ spec:
   tls:
     - hosts:
       - "registration.{{ $.Values.domain }}"
-      secretName: login-cert
+      secretName: registration-cert
   rules:
     - host: registration.{{ .Values.domain }}
       http:
