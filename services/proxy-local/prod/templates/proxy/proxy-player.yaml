@@ -16,7 +16,7 @@ metadata:
   name: player-ingress
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd,default-redirect-player-403-to-play@kubernetescrd,user-allowlist-remote@file
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd,default-redirect-player-403-to-sso@kubernetescrd,user-allowlist-remote@file
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
   labels:
     external-dns: "enabled"
@@ -56,56 +56,14 @@ spec:
           port: 443
       middlewares:
         - name: kube-system-crowdsec@kubernetescrd
-        - name: redirect-player-403-to-play
+        - name: redirect-player-403-to-sso
         - name: user-allowlist@file
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: play-ingress
-  namespace: default
-  annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-oidc-keycloak@kubernetescrd,default-redirect-play-to-player@kubernetescrd
-    external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ .Values.domain }}"
-  labels:
-    external-dns: "enabled"
-spec:
-  tls:
-    - hosts:
-      - "play.{{ $.Values.domain }}"
-      secretName: wildcard-cert
-  rules:
-    - host: "play.{{ $.Values.domain }}"
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: player-service
-                port:
-                  number: 443
 
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: redirect-play-to-player
-spec:
-  plugin:
-    traefik-plugin-redirect-on-status:
-      redirectCode: "307"
-      redirectUri: https://player.{{ .Values.domain }}/
-      status:
-        # This works mostly by assuming all the auth has been done to get this far.
-        # 404 is expected because Traefik can't serve files outa the box lol.
-        - "404"
-
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: redirect-player-403-to-play
+  name: redirect-player-403-to-sso
 spec:
   plugin:
     traefik-plugin-redirect-on-status:

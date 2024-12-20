@@ -24,3 +24,27 @@ spec:
           - path: /resources/
             pathType: Prefix
             backend: *defaultBackend
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registration-ingress
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+      - "registration.{{ $.Values.domain }}"
+      secretName: login-cert
+  rules:
+    - host: registration.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proxy-service
+                port:
+                  number: 443
