@@ -183,10 +183,13 @@ pinchflat:
         app:
           image:
             repository: ghcr.io/kieraneglin/pinchflat
-            tag: v2024.10.30@sha256:b7b407edef530ccd49d4b0a1503d964227c11f330e05dfcfc8c1456d77ffafd5
+            tag: v2024.12.10
           env:
             TZ: America/Denver
             TZ_DATA_DIR: /tmp/elixir_tz_data
+            MEDIA_PATH: /media
+            CONFIG_PATH: /config
+            TMPFILE_PATH: /tmp
             PORT: &port 80
           probes:
             liveness: &probes
@@ -240,8 +243,6 @@ pinchflat:
   persistence:
     config:
       existingClaim: pinchflat
-    downloads:
-      type: emptyDir
     tmp:
       type: emptyDir
     media:
@@ -265,8 +266,8 @@ metube:
             tag: 2024-05-28@sha256:412790e1c97455487e75cb77cfb8ce5801fbf0a2782ee43adcb78096f8fcc161
           env:
             TZ: "America/Denver"
-            DOWNLOAD_DIR: "/downloads/videos"
-            STATE_DIR: "/downloads/videos/.metube"
+            DOWNLOAD_DIR: "/media/Streams"
+            STATE_DIR: "/media/Streams/.metube"
             YTDL_OPTIONS: '{"http_headers":{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0"}}'
   defaultPodOptions:
     securityContext:
@@ -297,8 +298,3 @@ metube:
       existingClaim: media
       globalMounts:
         - path: /media/
-
-    downloads:
-      type: emptyDir
-      globalMounts:
-        - path: /downloads/videos
