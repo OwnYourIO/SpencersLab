@@ -63,10 +63,21 @@ traefik:
 
           while $RUNNING; do
             if [ -f "$FILE" ] && [ -s "$FILE" ]; then
-              MODIFIED=$(stat -c %Y "$FILE")
+              # Get file modification time and group ID in one stat call
+              STATS=$(stat -c "%Y %G" "$FILE")
+              MODIFIED=$(echo "$STATS" | awk '{print $1}')
+              CURRENT_GROUP=$(echo "$STATS" | awk '{print $2}')
+              
+              # Check and update modification time
               if [ "$MODIFIED" -ne "$LAST_MODIFIED" ]; then
                 touch "$FILE"
                 LAST_MODIFIED=$MODIFIED
+              fi
+
+              # Check and update group ownership
+              if [ "$CURRENT_GROUP" -ne "$EXPECTED_GROUP" ]; then
+                echo "Updating group ownership of $FILE to $EXPECTED_GROUP"
+                chgrp "$EXPECTED_GROUP" "$FILE"
               fi
             fi
             sleep 1
