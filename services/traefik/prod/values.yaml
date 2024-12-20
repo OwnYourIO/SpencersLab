@@ -50,6 +50,7 @@ traefik:
           #!/bin/sh
           FILE=/data/user-allowlist.yaml
           LAST_MODIFIED=0
+          EXPECTED_GROUP=65532
           RUNNING=true
 
           # Function to handle termination signals
@@ -82,12 +83,9 @@ traefik:
             fi
             sleep 1
           done
-      containerSecurityContext:
-        runAsUser: 1000
-        runAsGroup: 65532
       securityContext:
         runAsUser: 1000
-        runAsGroup: 1000
+        runAsGroup: 65532
       volumeMounts:
         - name: data 
           mountPath: /data
