@@ -187,7 +187,7 @@ pinchflat:
           env:
             TZ: America/Denver
             TZ_DATA_DIR: /tmp/elixir_tz_data
-            MEDIA_PATH: /media
+            #MEDIA_PATH: /media
             #CONFIG_PATH: /config
             #TMPFILE_PATH: /tmp
             PORT: &port 80
