@@ -183,13 +183,12 @@ pinchflat:
         app:
           image:
             repository: ghcr.io/kieraneglin/pinchflat
-            #tag: v2024.12.10
-            tag: dev
+            tag: v2024.12.10
           env:
             TZ: America/Denver
             TZ_DATA_DIR: /tmp/elixir_tz_data
-            #MEDIA_PATH: /media
-            #CONFIG_PATH: /config
+            MEDIA_PATH: /media
+            CONFIG_PATH: /config
             #TMPFILE_PATH: /tmp
             PORT: &port 80
           probes:
@@ -249,6 +248,10 @@ pinchflat:
     # This is needed because even though I'm mounting to /media, the image scans /downloads for privs.
     downloads:
       type: emptyDir
+    ytdlp:
+      type: emptyDir
+      globalMounts:
+        - path: /etc/yt-dlp/plugins
     media:
       existingClaim: media
       globalMounts:
