@@ -1,5 +1,37 @@
 domain: OVERRIDE_VIA_APPSET
 
+proxy:
+  middlewares: "kube-system-crowdsec@kubernetescrd,kube-system-geoblock@kubernetescrd"
+  domains:
+    login:
+    registration:
+
+    # These have apps
+    player:
+    audiobook-player:
+    pictures:
+    documents:
+    music-player:
+    torrent:
+    charts:
+    #home:
+    #esphome:
+
+    boards:
+    git:
+
+    # Services with no account support. (Auth should be added at proxy-local)
+    requests:
+    music:
+    shows:
+    shows-4k:
+    movies:
+    movies-4k:
+    ebooks:
+    audiobooks:
+    streams:
+    stream:
+
 sshd:
   global:
     nameOverride: "sshd"

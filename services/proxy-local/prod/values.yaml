@@ -8,6 +8,86 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+
+proxy:
+  middlewares: "kube-system-crowdsec@kubernetescrd,kube-system-oidc-keycloak@kubernetescrd"
+  subdomains:
+    login:
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+
+    registration:
+      target: login
+      middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-to-registration@kubernetescrd"
+      redirect:
+        code: "307"
+        uri: "https://login.$.Values.domain/realms/$.Values.realm/protocol/openid-connect/registrations?client_id=traefik&scope=openid%20profile&redirect_uri=https%3A%2F%2Fplayer.$.Values.domain&response_type=code"
+        status: 
+          - "404"
+
+    player:
+      target: jellyfin  # optional, defaults to key name if not specified
+      middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-player-403-to-sso@kubernetescrd,user-allowlist-remote@file"
+      ssoRedirect:
+        path: "/sso/OID/start/login.$.Values.domain"
+      ingressRoute:
+        clientIP: "10.0.0.0/16"
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+          - "redirect-player-403-to-sso"
+          - "user-allowlist@file"
+
+    audiobook-player:
+      target: audiobookshelf  # optional, defaults to key name if not specified
+      middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-audiobook-player-403-to-sso@kubernetescrd,user-allowlist-remote@file"
+      ssoRedirect:
+        path: "/sso/OID/start/login.$.Values.domain"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+          - "redirect-audiobook-player-403-to-sso"
+          - "user-allowlist@file"
+
+    pictures:
+      target: immich
+    documents:
+      target: paperless
+    music-player:
+      target: lms
+      #target: music-assistant
+
+    boards:
+      target: wekan
+    torrent:
+      target: qbittorrent
+    charts:
+      target: grafana
+    git:
+      target: gitea
+
+    #home:
+    #esphome:
+
+    requests:
+      target: requestarr
+    music:
+      target: lidarr
+    shows:
+      target: sonarr
+    shows-4k:
+      target: sonarr-4k
+    movies:
+      target: radarr
+    movies-4k:
+      target: radarr-4k
+    ebooks:
+      target: readarr
+    audiobooks:
+      target: readarr-audio
+    streams:
+      target: pinchflat
+    stream:
+      target: metube
+
 external-dns-external:
   interval: 2m
   provider: cloudflare
