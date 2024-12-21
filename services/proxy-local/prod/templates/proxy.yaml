@@ -82,8 +82,8 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectCode: {{ $config.redirect.code | default $config.ssoRedirect.code | default "307" | quote }}
-      redirectUri: {{ $config.redirect.uri | default $config.ssoRedirect }}
+      redirectCode: {{ coalesce $config.redirect.code $config.ssoRedirect.code "307" | quote }}
+      redirectUri: {{ coalesce $config.redirect.uri $config.ssoRedirect }}
       status:
         {{ range $config.redirect.status }}
         - {{ . | quote }}
