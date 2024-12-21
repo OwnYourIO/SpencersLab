@@ -43,7 +43,7 @@ spec:
 ...
 
 ---
-{{ if $config.sso }}
+{{ if $config.ssoRedirect }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -62,7 +62,7 @@ spec:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
-          - path: {{ $config.sso.path }}
+          - path: {{ $config.path }}
             pathType: Exact
             backend:
               service:
@@ -82,12 +82,10 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectCode: {{ coalesce (get $config.redirect "code") (get $config.ssoRedirect "code") "307" | quote }}
-      redirectUri: {{ coalesce $config.redirect.uri $config.ssoRedirect }}
+      redirectUri: https://{{ $name }}.{{ $.Values.domain }}.{{ regexReplaceAll "\\$\\.Values\\.domain" $config.path $.Values.domain }}
+      redirectCode: "307"
       status:
-        {{ range $config.redirect.status }}
-        - {{ . | quote }}
-        {{- end }}
+        - "403"
 ...
 {{ end }}
 
