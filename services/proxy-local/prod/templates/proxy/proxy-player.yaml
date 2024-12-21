@@ -55,7 +55,7 @@ spec:
       http:
         paths:
           - path: /sso/OID/start/login{{ .Values.domain }}
-            pathType: 
+            pathType: Exact
             backend:
               service:
                 name: player-service
