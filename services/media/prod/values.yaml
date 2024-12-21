@@ -357,6 +357,8 @@ unpackerr:
       # subPath: 
   
 audiobookshelf:
+  global:
+    nameOverride: "audiobookshelf"
   controllers:
     audiobookshelf:
       pod:

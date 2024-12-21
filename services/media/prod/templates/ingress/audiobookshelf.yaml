@@ -46,7 +46,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: "{{.Release.Name }}"
+                name: "{{.Release.Name }}-audiobookshelf"
                 port:
                   number: 8080
 ...
