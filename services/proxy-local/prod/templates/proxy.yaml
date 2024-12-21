@@ -82,7 +82,7 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectCode: {{ coalesce $config.redirect.code $config.ssoRedirect.code "307" | quote }}
+      redirectCode: {{ coalesce (get $config.redirect "code") (get $config.ssoRedirect "code") "307" | quote }}
       redirectUri: {{ coalesce $config.redirect.uri $config.ssoRedirect }}
       status:
         {{ range $config.redirect.status }}
