@@ -93,6 +93,6 @@ spec:
   plugin:
     traefik-plugin-redirect-on-status:
       redirectCode: "307"
-      redirectUri: https://player.{{ .Values.domain }}/sso/OID/start/login{{ .Values.domain }}
+      redirectUri: https://player.{{ .Values.domain }}/sso/OID/start/login.{{ .Values.domain }}
       status:
         - "403"
