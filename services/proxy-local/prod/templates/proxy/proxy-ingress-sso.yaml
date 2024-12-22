@@ -21,6 +21,7 @@ spec:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
+          # Be aware this only matches the path. It ignores everything ? and after.
           - path: {{ $finalPath }}
             pathType: Exact
             backend:
