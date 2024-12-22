@@ -1,5 +1,8 @@
 {{- range $name, $config := .Values.proxy.subdomains }}
 {{- if $config.ssoRedirectPath }}
+{{- $basePath := coalesce $config.path $config.ssoRedirectPath "/" }}
+{{- $pathWithDomain := regexReplaceAll "\\$\\.Values\\.domain" $basePath $.Values.domain }}
+{{- $finalPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.authRealm }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -18,7 +21,7 @@ spec:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
-          - path: {{ $config.ssoRedirectPath }}
+          - path: {{ $finalPath }}
             pathType: Exact
             backend:
               service:
