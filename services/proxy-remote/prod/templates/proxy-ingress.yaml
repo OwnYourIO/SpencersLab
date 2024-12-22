@@ -17,8 +17,8 @@ spec:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
-        {{- range $index, $path := default (list (dict "name" "/")) $config.paths }}
-          - path: {{ $path.name }}
+        {{- range $path := default (list "/") $config.paths }}
+          - path: {{ $path }}
             pathType: Prefix
             backend:
               service:
