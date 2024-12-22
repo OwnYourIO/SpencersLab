@@ -1,5 +1,4 @@
 {{ range $name, $config := .Values.proxy.subdomains }}
----
 {{ if index $config "ssoRedirectPath" }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -13,20 +12,18 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "{{ $name }}.{{ $.Values.domain }}"
+        - "{{ $name }}.{{ $.Values.domain }}"
       secretName: wildcard-cert
   rules:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
-          - path: {{ $config.ssoRedirectPath }}
+          - path: { { $config.ssoRedirectPath } }
             pathType: Exact
             backend:
               service:
                 name: "{{ $name }}-service"
                 port:
                   number: 443
-...
 {{ end }}
-...
 {{ end }}
