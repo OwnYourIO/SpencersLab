@@ -1,0 +1,27 @@
+{{- range $name, $config := .Values.proxy.subdomains }}
+# This is mostly used to detect local traffic and force it to use the local middleware rather than remote.
+{{- if $config.ingressRoute }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: "{{ $name }}-proxied-ingress"
+  namespace: default
+spec:
+  entryPoints:
+    - web
+    - websecure
+  tls:
+    secretName: wildcard-cert
+  routes:
+    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
+      kind: Rule
+      services:
+        - name: "{{ $name }}-service"
+          port: 443
+      middlewares:
+      {{ range $config.ingressRoute.middlewares }}
+        - name: {{ . }}
+      {{ end }}
+{{- end }}
+{{- end }}

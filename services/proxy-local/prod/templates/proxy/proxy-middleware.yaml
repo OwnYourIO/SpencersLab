@@ -1,6 +1,5 @@
-{{ range $name, $config := .Values.proxy.subdomains }}
----
-{{ if $config.redirect }}
+{{- range $name, $config := .Values.proxy.subdomains }}
+{{- if $config.redirect }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -13,7 +12,5 @@ spec:
       redirectCode: "307"
       status:
         - "403"
-...
-{{ end }}
-...
-{{ end }}
+{{- end }}
+{{- end }}
