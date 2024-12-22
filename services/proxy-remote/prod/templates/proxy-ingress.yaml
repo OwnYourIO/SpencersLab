@@ -1,0 +1,26 @@
+{{- range $name, $config := .Values.proxy.subdomains }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ $name }}-ingress"
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+      - "{{ $name }}.{{ $.Values.domain }}"
+      secretName: wildcard-cert
+  rules:
+    - host: "{{ $name }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ $name }}-service"
+                port:
+                  number: 443
+{{- end }}

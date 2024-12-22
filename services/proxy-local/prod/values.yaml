@@ -18,9 +18,9 @@ proxy:
     allowListRemote: "user-allowlist-remote@file"
 
   subdomains:
+    # Infrastructure
     login:
       middlewares: "kube-system-crowdsec@kubernetescrd"
-
     registration:
       target: login
       middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-to-registration@kubernetescrd"
@@ -30,14 +30,13 @@ proxy:
         status: 
           - "404"
 
+    # Has SSO & companion app (and thus needs a redirect)
     player:
       target: jellyfin
       ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
-
     audiobook-player:
       target: audiobookshelf
       ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
-
     pictures:
       target: immich
     documents:
@@ -48,15 +47,16 @@ proxy:
     #home:
     #esphome:
 
+    # Has just SSO
     boards:
       target: wekan
-    torrent:
-      target: qbittorrent
-    charts:
-      target: grafana
     git:
       target: gitea
+    charts:
+      target: grafana
 
+    torrents:
+      target: qbittorrent
     requests:
       target: requestarr
     music:
@@ -109,6 +109,48 @@ external-dns-external:
       cpu: 25m
     limits:
       memory: 250Mi
+
+autossh:
+  global:
+    nameOverride: "autossh"
+  defaultPodOptions:
+    restartPolicy: Always
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/camptocamp/autossh
+            tag: master
+
+          env:
+            TZ: America/Denver
+            SSH_REMOTE_USER: proxy
+            SSH_KEY: 
+              secretKeyRef:
+                name: autossh
+                key: private-key
+            # TODO: Make this generic.
+            SSH_REMOTE_HOST: proxy-remote.spencerslab.com
+            SSH_REMOTE_PORT: 2222
+            SSH_TUNNEL_PORT: 443
+            SSH_TARGET_HOST: traefik.kube-system
+            SSH_TARGET_PORT: 443
+            SSH_BIND_IP: 0.0.0.0
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 8Gi
+      pod:
+        securityContext:
+          # Pod required to be root, otherwise it's work on /etc/passwd can't happen.
+          #runAsUser: 1000
+          #runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: "OnRootMismatch"
+          supplementalGroups: [1000]
 
 qbittorrent:
   global:
@@ -202,47 +244,6 @@ qbittorrent:
           main:
           - path: /media
 
-autossh:
-  global:
-    nameOverride: "autossh"
-  defaultPodOptions:
-    restartPolicy: Always
-  controllers:
-    main:
-      containers:
-        main:
-          image:
-            repository: ghcr.io/camptocamp/autossh
-            tag: master
-
-          env:
-            TZ: America/Denver
-            SSH_REMOTE_USER: proxy
-            SSH_KEY: 
-              secretKeyRef:
-                name: autossh
-                key: private-key
-            # TODO: Make this generic.
-            SSH_REMOTE_HOST: proxy-remote.spencerslab.com
-            SSH_REMOTE_PORT: 2222
-            SSH_TUNNEL_PORT: 443
-            SSH_TARGET_HOST: traefik.kube-system
-            SSH_TARGET_PORT: 443
-            SSH_BIND_IP: 0.0.0.0
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              memory: 8Gi
-      pod:
-        securityContext:
-          # Pod required to be root, otherwise it's work on /etc/passwd can't happen.
-          #runAsUser: 1000
-          #runAsGroup: 1000
-          fsGroup: 1000
-          fsGroupChangePolicy: "OnRootMismatch"
-          supplementalGroups: [1000]
 
 pinchflat:
   global:

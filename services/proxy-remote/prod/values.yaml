@@ -1,26 +1,27 @@
 domain: OVERRIDE_VIA_APPSET
 
 proxy:
-  middlewares: "kube-system-crowdsec@kubernetescrd,kube-system-geoblock@kubernetescrd"
-  domains:
+  middlewares: "kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd"
+  subdomains:
     login:
     registration:
 
-    # These have apps
+    # These have apps & SSO
     player:
     audiobook-player:
     pictures:
     documents:
     music-player:
-    torrent:
-    charts:
     #home:
-    #esphome:
 
+    # Just SSO
     boards:
     git:
+    charts:
+    #esphome:
 
     # Services with no account support. (Auth should be added at proxy-local)
+    torrents:
     requests:
     music:
     shows:
