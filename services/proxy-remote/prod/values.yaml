@@ -4,7 +4,11 @@ proxy:
   middlewares: "kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd"
   # Additional values should be added via custom-values.
   subdomains:
-    #login:
+    login:
+      enabled: true
+      paths:
+        - /realms/SpencersLab/
+        - /resources/
     registration:
       enabled: true
 
