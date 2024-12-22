@@ -1,5 +1,5 @@
 {{- range $name, $config := .Values.proxy.subdomains }}
-{{- if $config.redirect }}
+{{- if or $config.redirect $config.ssoRedirectPath }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -8,9 +8,15 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectUri: 'https://login.spencerslab.com/'
-      redirectCode: "307"
+      redirectUri: https://{{ $name }}.{{ $.Values.domain }}{{ coalesce $config.path $config.ssoRedirectPath "/" }}
+      redirectCode: {{ coalesce $config.redirectCode "307" }}
       status:
+        {{ - if $config.redirect.status }}
+        {{- range $config.redirect.status }}
+        - {{ . | quote }}
+        {{- end }}
+        {{- else }}
         - "403"
+        {{- end }}
 {{- end }}
 {{- end }}

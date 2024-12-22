@@ -10,7 +10,13 @@ clusterName: OVERRIDE_VIA_APPSET
 
 
 proxy:
-  middlewares: "kube-system-crowdsec@kubernetescrd,kube-system-oidc-keycloak@kubernetescrd"
+  authRealm: SpencersLab
+  middlewares: 
+    entrypoint: "kube-system-crowdsec@kubernetescrd"
+    userAuth: "kube-system-oidc-keycloak@kubernetescrd"
+    allowList: "user-allowlist@file"
+    allowListRemote: "user-allowlist-remote@file"
+
   subdomains:
     login:
       middlewares: "kube-system-crowdsec@kubernetescrd"
@@ -25,7 +31,7 @@ proxy:
           - "404"
 
     player:
-      target: jellyfin  # optional, defaults to key name if not specified
+      target: jellyfin
       middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-player-403-to-sso@kubernetescrd,user-allowlist-remote@file"
       ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
       ingressRoute:
@@ -36,7 +42,7 @@ proxy:
           - "user-allowlist@file"
 
     audiobook-player:
-      target: audiobookshelf  # optional, defaults to key name if not specified
+      target: audiobookshelf
       middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-audiobook-player-403-to-sso@kubernetescrd,user-allowlist-remote@file"
       ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
       ingressRoute:
@@ -53,6 +59,8 @@ proxy:
     music-player:
       target: lms
       #target: music-assistant
+    #home:
+    #esphome:
 
     boards:
       target: wekan
@@ -62,9 +70,6 @@ proxy:
       target: grafana
     git:
       target: gitea
-
-    #home:
-    #esphome:
 
     requests:
       target: requestarr
