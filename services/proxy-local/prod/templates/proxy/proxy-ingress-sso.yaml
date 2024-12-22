@@ -1,5 +1,5 @@
-{{ range $name, $config := .Values.proxy.subdomains }}
-{{ if $config.ssoRedirectPath }}
+{{- range $name, $config := .Values.proxy.subdomains }}
+{{- if $config.ssoRedirectPath }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -18,12 +18,12 @@ spec:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
-          - path: /
+          - path: {{ $config.ssoRedirectPath }}
             pathType: Exact
             backend:
               service:
                 name: "{{ $name }}-service"
                 port:
                   number: 443
-{{ end }}
-{{ end }}
+{{- end }}
+{{- end }}
