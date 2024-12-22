@@ -11,7 +11,7 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectUri: https://{{ $name }}.{{ $.Values.domain }}{{ $finalPath )}}
+      redirectUri: https://{{ $name }}.{{ $.Values.domain }}{{ $finalPath }}
       redirectCode: {{ coalesce $config.redirectCode "307" }}
       status:
         {{- if dig "redirect" "status" false $config }}
