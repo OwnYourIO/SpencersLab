@@ -2,14 +2,17 @@ domain: OVERRIDE_VIA_APPSET
 
 proxy:
   middlewares: "kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd"
-  # TODO: Make an enable/disable override scheme for these. 
+  # Additional values should be added via custom-values.
   subdomains:
     #login:
     registration:
+      enabled: true
 
     # These have apps & SSO
     player:
+      enabled: true
     audiobook-player:
+      enabled: true
     pictures:
     documents:
     music-player:
@@ -17,22 +20,30 @@ proxy:
 
     # Just SSO
     boards:
+      enabled: true
     git:
     charts:
     #esphome:
 
     # Services with no account support. (Auth should be added at proxy-local)
     torrents:
+      enabled: true
     requests:
+      enabled: true
     music:
+      enabled: true
     shows:
-    shows-4k:
+      enabled: true
     movies:
-    movies-4k:
+      enabled: true
     ebooks:
+      enabled: true
     audiobooks:
+      enabled: true
     streams:
+      enabled: true
     stream:
+      enabled: true
 
 sshd:
   global:

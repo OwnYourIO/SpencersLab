@@ -9,7 +9,7 @@ sshd:
 
 proxy:
   subdomains:
-    player: 
-      enabled: true
-    audiobook-player:
-      enabled: "true"
+    shows-4k:
+      enabled: false
+    movies-4k:
+      enabled: false
