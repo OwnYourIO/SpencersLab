@@ -1,5 +1,8 @@
-{{- range $name, $config := .Values.proxy.subdomains }}
 # This is mostly used to detect local traffic and force it to use the local middleware rather than remote.
+{{- range $name, $config := .Values.proxy.subdomains }}
+{{- $basePath := coalesce $config.ssoRedirectPath  "/" }}
+{{- $pathWithDomain := regexReplaceAll "\\$\\.Values\\.domain" $basePath $.Values.domain }}
+{{- $finalSsoPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.authRealm }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -47,7 +50,7 @@ spec:
     secretName: wildcard-cert
   routes:
     # TODO: Turn the ClientIPCheck into a values list that generates ClientIP per 
-    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && Path(`{{ $config.ssoRedirectPath }}') && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
+    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && Path(`{{ $finalSsoPath }}') && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
       kind: Rule
       services:
         - name: "{{ $name }}-service"
