@@ -1,5 +1,5 @@
 {{ range $name, $config := .Values.proxy.subdomains }}
-{{ if index $config "ssoRedirectPath" }}
+{{ if $config.ssoRedirectPath }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -18,7 +18,7 @@ spec:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
-          - path: { { $config.ssoRedirectPath } }
+          - path: /
             pathType: Exact
             backend:
               service:
