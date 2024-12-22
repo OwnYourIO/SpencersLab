@@ -11,7 +11,8 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectUri: https://{{ $name }}.{{ $.Values.domain }}{{ $finalPath }}
+      {{-/* dig is defaulting to $name if the given nested key path doesn't exist on $config.*/-}}
+      redirectUri: https://{{ dig "redirect" "subdomain" $name $config }}.{{ $.Values.domain }}{{ $finalPath }}
       redirectCode: {{ coalesce $config.redirectCode "307" }}
       status:
         {{- if dig "redirect" "status" false $config }}
