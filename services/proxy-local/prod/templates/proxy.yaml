@@ -82,7 +82,7 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectUri: 'https://{{ $name }}.{{ $.Values.domain }}{{ regexReplaceAll "$.Values.domain" (coalesce $config.path "/") $.Values.domain }}'
+      redirectUri: 'https://{{ $name }}.{{ $.Values.domain }}{{$ config.path }}'
       redirectCode: "307"
       status:
         - "403"
