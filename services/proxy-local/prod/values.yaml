@@ -21,6 +21,10 @@ proxy:
     # Infrastructure
     login:
       middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+
     registration:
       target: login
       middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-registration@kubernetescrd"
