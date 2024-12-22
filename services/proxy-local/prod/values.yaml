@@ -42,7 +42,7 @@ proxy:
 
     audiobook-player:
       target: audiobookshelf
-      ssoRedirectPath: "/auth/openid?callback=/login"
+      ssoRedirectPath: "/auth/openid?callback=audiobook-player.$.Values.domain/login"
       ingressRoute:
         clientIP: "10.0.0.0/16"
         middlewares:
