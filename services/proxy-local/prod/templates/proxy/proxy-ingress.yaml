@@ -8,7 +8,7 @@ metadata:
   annotations:
     # If middlewares is set manually, use that.
     {{- if $config.middlewares }}
-    traefik.ingress.kubernetes.io/router.middlewares: $config.middlewares
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $config.middlewares }}
     # If ssoRedirect is utilized we need a middleware to redirect to sso. 
     {{- else if $config.ssoRedirectPath }}
     traefik.ingress.kubernetes.io/router.middlewares: {{ list 
