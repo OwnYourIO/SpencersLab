@@ -1,6 +1,7 @@
 {{- range $name, $config := .Values.proxy.subdomains }}
 {{- if or $config.redirect $config.ssoRedirectPath }}
-{{- $basePath := coalesce $config.path $config.ssoRedirectPath "/" }}
+{{/* dig is defaulting to "/" if redirect.path doesn't exist.*/}}
+{{- $basePath := coalesce $config.ssoRedirectPath dig "redirect" "path" "/" $config}}
 {{- $pathWithDomain := regexReplaceAll "\\$\\.Values\\.domain" $basePath $.Values.domain }}
 {{- $finalPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.authRealm }}
 ---

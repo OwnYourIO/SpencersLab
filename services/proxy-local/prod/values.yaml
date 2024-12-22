@@ -29,7 +29,7 @@ proxy:
         #   - using Keycloak 
         #   - client_id "traefik" configured
         #   - want to finish the process at player.$domain. 
-        redirectSubdomain: login
+        subdomain: login
         path: "/realms/$.Values.authRealm/protocol/openid-connect/registrations?client_id=traefik&scope=openid%20profile&redirect_uri=https%3A%2F%2Fplayer.$.Values.domain&response_type=code"
         status: 
           - "404"
