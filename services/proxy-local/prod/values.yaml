@@ -42,7 +42,8 @@ proxy:
 
     audiobook-player:
       target: audiobookshelf
-      ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
+      # This includes the domain. Could skip the domain but then the ingress path wouldn't be exact. Prefer exact because it's more secure.
+      ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
       ingressRoute:
         clientIP: "10.0.0.0/16"
         middlewares:
