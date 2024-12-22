@@ -2,8 +2,9 @@ domain: OVERRIDE_VIA_APPSET
 
 proxy:
   middlewares: "kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd"
+  # TODO: Make an enable/disable override scheme for these. 
   subdomains:
-    login:
+    #login:
     registration:
 
     # These have apps & SSO

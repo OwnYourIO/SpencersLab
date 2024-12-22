@@ -11,7 +11,7 @@ spec:
   tls:
     - hosts:
       - "{{ $name }}.{{ $.Values.domain }}"
-      secretName: wildcard-cert
+      secretName: {{ $name }}-cert
   rules:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
@@ -20,7 +20,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: "{{ $name }}-service"
+                name: proxy-service
                 port:
                   number: 443
 {{- end }}
