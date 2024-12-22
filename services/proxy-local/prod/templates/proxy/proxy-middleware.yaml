@@ -11,7 +11,7 @@ spec:
       redirectUri: https://{{ $name }}.{{ $.Values.domain }}{{ coalesce $config.path $config.ssoRedirectPath "/" }}
       redirectCode: {{ coalesce $config.redirectCode "307" }}
       status:
-        {{- if index $config.redirect "status" }}
+        {{- if dig "redirect" "status" false $config }}
         {{- range $config.redirect.status }}
         - {{ . | quote }}
         {{- end }}
