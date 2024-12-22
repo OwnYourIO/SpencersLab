@@ -1,0 +1,17 @@
+{{ range $name, $config := .Values.proxy.subdomains }}
+---
+{{ if $config.redirect }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-{{ $name }}
+spec:
+  plugin:
+    traefik-plugin-redirect-on-status:
+      redirectUri: 'https://login.spencerslab.com/'
+      redirectCode: "307"
+      status:
+        - "403"
+...
+{{ end }}

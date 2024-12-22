@@ -1,0 +1,30 @@
+{{ range $name, $config := .Values.proxy.subdomains }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ $name }}-ingress"
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Values.proxy.middlewares }}
+    external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
+  labels:
+    external-dns: "enabled"
+spec:
+  tls:
+    - hosts:
+      - "{{ $name }}.{{ $.Values.domain }}"
+      secretName: wildcard-cert
+  rules:
+    - host: "{{ $name }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ $name }}-service"
+                port:
+                  number: 443
+...
+{{ end }}

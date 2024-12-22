@@ -1,0 +1,32 @@
+{{ range $name, $config := .Values.proxy.subdomains }}
+---
+{{ if $config.ssoRedirect }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ $name }}-sso-ingress"
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-crowdsec@kubernetescrd
+spec:
+  tls:
+    - hosts:
+      - "{{ $name }}.{{ $.Values.domain }}"
+      secretName: wildcard-cert
+  rules:
+    - host: "{{ $name }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: {{ $config.path }}
+            pathType: Exact
+            backend:
+              service:
+                name: "{{ $name }}-service"
+                port:
+                  number: 443
+...
+{{ end }}
+...
+{{ end }}
