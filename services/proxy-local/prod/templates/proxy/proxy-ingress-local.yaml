@@ -3,6 +3,29 @@
 {{- $basePath := coalesce $config.ssoRedirectPath  "/" }}
 {{- $pathWithDomain := regexReplaceAll "\\$\\.Values\\.domain" $basePath $.Values.domain }}
 {{- $finalSsoPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.authRealm }}
+{{- if $config.ssoRedirectPath }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: "{{ $name }}-local-sso-ingress"
+  namespace: default
+spec:
+  entryPoints:
+    - web
+    - websecure
+  tls:
+    secretName: wildcard-cert
+  routes:
+    # TODO: Turn the ClientIPCheck into a values list that generates ClientIP per 
+    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && Path(`{{ $finalSsoPath }}') && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
+      kind: Rule
+      services:
+        - name: "{{ $name }}-service"
+          port: 443
+      middlewares:
+        - name: {{ $.Values.proxy.middlewares.entrypoint }}
+{{- end }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -35,27 +58,4 @@ spec:
         - name: {{ $.Values.proxy.middlewares.entrypoint }}
         - name: {{ $.Values.proxy.middlewares.userAuth }}
       {{- end }}
-{{- if $config.ssoRedirectPath }}
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: "{{ $name }}-local-sso-ingress"
-  namespace: default
-spec:
-  entryPoints:
-    - web
-    - websecure
-  tls:
-    secretName: wildcard-cert
-  routes:
-    # TODO: Turn the ClientIPCheck into a values list that generates ClientIP per 
-    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && Path(`{{ $finalSsoPath }}') && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
-      kind: Rule
-      services:
-        - name: "{{ $name }}-service"
-          port: 443
-      middlewares:
-        - name: {{ $.Values.proxy.middlewares.entrypoint }}
-{{- end }}
 {{- end }}
