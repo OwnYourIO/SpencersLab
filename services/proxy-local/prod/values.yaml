@@ -32,7 +32,6 @@ proxy:
 
     player:
       target: jellyfin
-      middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-player-403-to-sso@kubernetescrd,user-allowlist-remote@file"
       ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
       ingressRoute:
         clientIP: "10.0.0.0/16"
