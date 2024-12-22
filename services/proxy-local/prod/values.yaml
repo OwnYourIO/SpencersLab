@@ -5,12 +5,12 @@ bitwardenIds:
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   autossh-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
+authRealm: OVERRIDE_VIA_CUSTOM_VALUES
+
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
-
 proxy:
-  authRealm: SpencersLab
   middlewares: 
     entrypoint: "kube-system-crowdsec@kubernetescrd"
     userAuth: "kube-system-oidc-keycloak@kubernetescrd"
@@ -26,7 +26,7 @@ proxy:
       middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-to-registration@kubernetescrd"
       redirect:
         code: "307"
-        uri: "https://login.$.Values.domain/realms/$.Values.realm/protocol/openid-connect/registrations?client_id=traefik&scope=openid%20profile&redirect_uri=https%3A%2F%2Fplayer.$.Values.domain&response_type=code"
+        uri: "https://login.$.Values.domain/realms/$.Values.authRealm/protocol/openid-connect/registrations?client_id=traefik&scope=openid%20profile&redirect_uri=https%3A%2F%2Fplayer.$.Values.domain&response_type=code"
         status: 
           - "404"
 

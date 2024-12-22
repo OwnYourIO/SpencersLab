@@ -1,5 +1,8 @@
 {{- range $name, $config := .Values.proxy.subdomains }}
 {{- if or $config.redirect $config.ssoRedirectPath }}
+{{- $basePath := coalesce $config.path $config.ssoRedirectPath "/" }}
+{{- $pathWithDomain := regexReplaceAll "\\$\\.Values\\.domain" $basePath $.Values.domain }}
+{{- $finalPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.proxy.authRealm }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -8,7 +11,7 @@ metadata:
 spec:
   plugin:
     traefik-plugin-redirect-on-status:
-      redirectUri: https://{{ $name }}.{{ $.Values.domain }}{{ coalesce $config.path $config.ssoRedirectPath "/" }}
+      redirectUri: https://{{ $name }}.{{ $.Values.domain }}{{ $finalPath )}}
       redirectCode: {{ coalesce $config.redirectCode "307" }}
       status:
         {{- if dig "redirect" "status" false $config }}
