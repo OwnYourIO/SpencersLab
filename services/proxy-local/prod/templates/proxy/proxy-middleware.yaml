@@ -2,7 +2,7 @@
 {{- if or $config.redirect $config.ssoRedirectPath }}
 {{- $basePath := coalesce $config.path $config.ssoRedirectPath "/" }}
 {{- $pathWithDomain := regexReplaceAll "\\$\\.Values\\.domain" $basePath $.Values.domain }}
-{{- $finalPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.proxy.authRealm }}
+{{- $finalPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.authRealm }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
