@@ -19,7 +19,12 @@ spec:
         - name: "{{ $name }}-service"
           port: 443
       middlewares:
-      {{ range $config.ingressRoute.middlewares }}
+      {{- if dig "ingressRoute" "middlewares" false $config }}
+      {{- range $config.ingressRoute.middlewares }}
         - name: {{ . }}
-      {{ end }}
+      {{- end }}
+      {{- else }}
+        - name: {{ $.Values.proxy.middlewares.entrypoint }}
+        - name: {{ $.Values.proxy.middlewares.allowList }}
+      {{- end }}
 {{- end }}
