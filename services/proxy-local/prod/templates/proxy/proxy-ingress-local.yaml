@@ -33,3 +33,27 @@ spec:
         - name: {{ $.Values.proxy.middlewares.userAuth }}
       {{- end }}
 {{- end }}
+
+{{- if $config.ssoRedirectPath }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: "{{ $name }}-local-sso-ingress"
+  namespace: default
+spec:
+  entryPoints:
+    - web
+    - websecure
+  tls:
+    secretName: wildcard-cert
+  routes:
+    # TODO: Turn the ClientIPCheck into a values list that generates ClientIP per 
+    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && Path(`{{ $config.ssoRedirectPath }}') && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
+      kind: Rule
+      services:
+        - name: "{{ $name }}-service"
+          port: 443
+      middlewares:
+        - name: {{ $.Values.proxy.middlewares.entrypoint }}
+{{- end-}}
