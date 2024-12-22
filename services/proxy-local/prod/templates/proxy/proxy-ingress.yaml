@@ -6,7 +6,23 @@ metadata:
   name: "{{ $name }}-ingress"
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Values.proxy.middlewares }}
+    # If middlewares is set manually, use that.
+    {{- if $config.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: $config.middlewares
+    # If ssoRedirect is utilized we need a middleware to redirect to sso. 
+    {{- else if $config.ssoRedirectPath }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ list 
+      $.Values.Proxy.middlewares.entrypoint 
+      "default-redirect-{{ $name }}-to-sso@kubernetescrd" 
+      $.Values.Proxy.middlewares.allowListRemote 
+      | join "," }}
+    # Otherwise just use the userAuth middlewares.
+    {{- else }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ list 
+      $.Values.Proxy.middlewares.entrypoint 
+      $.Values.Proxy.middlewares.userAuth 
+      | join "," }}
+    {{- end }}
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
   labels:
     external-dns: "enabled"
