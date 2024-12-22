@@ -13,7 +13,7 @@ metadata:
     {{- else if $config.ssoRedirectPath }}
     traefik.ingress.kubernetes.io/router.middlewares: {{ list 
       $.Values.proxy.middlewares.entrypoint 
-      "default-redirect-{{ $name }}@kubernetescrd" 
+      (printf "default-redirect-%s@kubernetescrd" $name)
       $.Values.proxy.middlewares.allowListRemote 
       | join "," }}
     # Otherwise just use the userAuth middlewares.
