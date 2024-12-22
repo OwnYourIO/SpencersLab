@@ -13,6 +13,7 @@ spec:
   tls:
     secretName: wildcard-cert
   routes:
+    # TODO: Turn the ClientIPCheck into a values list that generates ClientIP per 
     - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
       kind: Rule
       services:
@@ -23,8 +24,12 @@ spec:
       {{- range $config.ingressRoute.middlewares }}
         - name: {{ . }}
       {{- end }}
+      {{- else if $config.ssoRedirectPath }}
+        - name: {{ $.Values.proxy.middlewares.entrypoint }}
+        - name: default-redirect-{{ $name }}@kubernetescrd
+        - name: {{ $.Values.proxy.middlewares.allowList }}
       {{- else }}
         - name: {{ $.Values.proxy.middlewares.entrypoint }}
-        - name: {{ $.Values.proxy.middlewares.allowList }}
+        - name: {{ $.Values.proxy.middlewares.userAuth }}
       {{- end }}
 {{- end }}

@@ -33,22 +33,10 @@ proxy:
     player:
       target: jellyfin
       ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
-      ingressRoute:
-        clientIP: "10.0.0.0/16"
-        middlewares:
-          - "kube-system-crowdsec@kubernetescrd"
-          - "redirect-player-403-to-sso"
-          - "user-allowlist@file"
 
     audiobook-player:
       target: audiobookshelf
       ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
-      ingressRoute:
-        clientIP: "10.0.0.0/16"
-        middlewares:
-          - "kube-system-crowdsec@kubernetescrd"
-          - "redirect-audiobook-player-403-to-sso"
-          - "user-allowlist@file"
 
     pictures:
       target: immich
