@@ -2,7 +2,9 @@
 {{- if $config.ssoRedirectPath }}
 {{- $basePath := coalesce $config.path $config.ssoRedirectPath "/" }}
 {{- $pathWithDomain := regexReplaceAll "\\$\\.Values\\.domain" $basePath $.Values.domain }}
-{{- $finalPath := regexReplaceAll "\\$\\.Values\\.authRealm" $pathWithDomain $.Values.authRealm }}
+# This is needed otherwise Traefik's ingress path matching doesn't work.
+{{- $strippedUrl := regexReplaceAll "\\?.*" $pathWithDomain "" }}
+{{- $finalPath := regexReplaceAll "\\$\\.Values\\.authRealm" $strippedUrl $.Values.authRealm }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
