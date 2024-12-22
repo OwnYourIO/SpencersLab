@@ -27,8 +27,7 @@ proxy:
     player:
       target: jellyfin  # optional, defaults to key name if not specified
       middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-player-403-to-sso@kubernetescrd,user-allowlist-remote@file"
-      path: "/sso/OID/start/login.$.Values.domain"
-      ssoRedirect: true
+      ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
       ingressRoute:
         clientIP: "10.0.0.0/16"
         middlewares:
@@ -39,8 +38,7 @@ proxy:
     audiobook-player:
       target: audiobookshelf  # optional, defaults to key name if not specified
       middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-audiobook-player-403-to-sso@kubernetescrd,user-allowlist-remote@file"
-      path: "/sso/OID/start/login.$.Values.domain"
-      ssoRedirect: "true"
+      ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
       ingressRoute:
         clientIP: "10.0.0.0/16"
         middlewares:
