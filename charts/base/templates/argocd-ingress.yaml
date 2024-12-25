@@ -1,4 +1,4 @@
-{ { if not .Values.initialInstall } }
+{{ if not .Values.initialInstall }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -9,8 +9,7 @@ metadata:
     app: default
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    traefik.ingress.kubernetes.io/router.middlewares:
-      { { $.Values.proxy.middlewares.entrypoint } }
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $.Values.proxy.middlewares.entrypoint }}
 
 spec:
   tls:
@@ -29,4 +28,4 @@ spec:
                 port:
                   number: 80
 ---
-{ { end } }
+{{ end }}
