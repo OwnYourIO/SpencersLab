@@ -2,7 +2,7 @@ domain: OVERRIDE_VIA_APPSET
 
 proxy:
   middlewares: 
-    entrypoint: "kube-system-geoblock@kubernetescrd,default-redirect-to-https@kubernetescrd"
+    entrypoint: "kube-system-geoblock@kubernetescrd"
   # Additional values should be added via custom-values.
   subdomains:
     login:
