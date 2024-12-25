@@ -1,4 +1,4 @@
-# This disabled prometheus for external services. 
+# This disables the ingress for the proxy-remote service. Don't want to leave the endpoint without auth on the open net.
 # TODO: have a dedicated flag for ingress enabled rather than reusing the existing value.
 {{- if index $.Values "bitwardenIds" "cert-manager-solver-token" }}
 apiVersion: networking.k8s.io/v1
@@ -10,7 +10,10 @@ metadata:
     app: default
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Values.proxy.middlewares.entrypoint }}"
+    # TODO: Still a bad check, but want to get prod working.
+    {{- if not (index $.Values "bitwardenIds" "cert-manager-solver-token") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    {{- end }}
 spec:
   tls:
     - hosts:
