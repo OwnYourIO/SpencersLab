@@ -1,5 +1,9 @@
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
 proxy:
   middlewares: 
+    # OVERRIDE entrypoint via appset.
     entrypoint: "" 
 
 kube-prometheus-stack: 
