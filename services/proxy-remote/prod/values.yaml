@@ -1,7 +1,8 @@
 domain: OVERRIDE_VIA_APPSET
 
 proxy:
-  middlewares: "kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd"
+  middlewares: 
+    entrypoint: "kube-system-geoblock@kubernetescrd,kube-system-crowdsec@kubernetescrd"
   # Additional values should be added via custom-values.
   subdomains:
     login:
