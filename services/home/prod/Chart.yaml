@@ -38,9 +38,9 @@ dependencies:
 - name: snapcast
   version: 1.0.4
   repository: https://ownyourio.github.io/SpencersLab/
-- name: paperless
-  version: 1.0.2
-  repository: https://ownyourio.github.io/SpencersLab/
+#- name: paperless
+#  version: 1.0.2
+#  repository: https://ownyourio.github.io/SpencersLab/
 - name: wekan
   version: 7.67.0
   repository: https://wekan.github.io/charts/
