@@ -49,6 +49,9 @@ traefik:
 
   ports:
     web:
+      redirectTo:
+        port: websecure
+        priority: 10
       proxyProtocol:
         enabled: true
     websecure:
