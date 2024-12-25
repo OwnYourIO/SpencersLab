@@ -12,9 +12,13 @@ spec:
           - list:
               elements:
                 - appName: base
-                  version: 1.0.78
+                  version: 1.0.77
                   namespace: default
                   ServerSideApply: "false"
+                - appName: external-secrets-bitwarden
+                  version: 1.0.1
+                  namespace: default
+                  ServerSideApply: "true"
                 - appName: monitoring-agent
                   version: 1.0.7
                   namespace: default

@@ -15,6 +15,10 @@ spec:
                   version: 1.0.77
                   namespace: default
                   ServerSideApply: "false"
+                - appName: external-secrets-bitwarden
+                  version: 1.0.1
+                  namespace: default
+                  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
@@ -34,7 +38,6 @@ spec:
                 value: "{{ `{{ metadata.annotations.clusterName }}` }}"
               - name: argo-cd.configs.cm.url
                 value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
-
               - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
                 value: "storage"
               - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
