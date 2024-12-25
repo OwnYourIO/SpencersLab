@@ -1,0 +1,55 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: appset-base
+spec:
+  generators:
+    # Generator for apps that should deploy to all cluster.
+    - matrix:
+        generators:
+          - clusters: {}
+          - list:
+              elements:
+                - appName: base
+                  namespace: default
+                  ServerSideApply: "false"
+  template:
+    metadata:
+      name: "{{ `{{appName}}` }}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: ".;.."
+    spec:
+      project: default
+      sources:
+        - repoURL: "{{ `{{ metadata.annotations.chart.repo }}` }}"
+          chart: "{{ `{{appName}}` }}"
+          # TODO: This might need to be generic in some way.
+          targetRevision: 1.0.77
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+              - name: argo-cd.configs.cm.url
+                value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
+              - name: autoUpdateK3s
+                value: "false"
+            valueFiles:
+              - values.yaml
+              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
+        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
+          targetRevision: main
+          ref: values
+      destination:
+        name: "{{ `{{name}}` }}"
+        namespace: "{{ `{{namespace}}` }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
+          - ServerSideApply={{ `{{ServerSideApply}}` }}
