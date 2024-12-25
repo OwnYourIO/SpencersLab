@@ -4,7 +4,7 @@ version: 1.0.0
 appVersion: 1.0.0
 dependencies:
 - name: appset-home
-  version: 1.1.12
+  version: 1.1.13
   repository: https://ownyourio.github.io/SpencersLab/
 - name: seaweedfs-csi-driver
   version: 0.2.2

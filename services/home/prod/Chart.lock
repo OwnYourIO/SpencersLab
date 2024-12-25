@@ -1,7 +1,7 @@
 dependencies:
 - name: appset-home
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.12
+  version: 1.1.13
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
@@ -29,5 +29,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.67.0
-digest: sha256:c869ebf72c35159d47a5e5ad6c52fe7125815d603039038808b4ab2e4dc3937e
-generated: "2024-12-25T15:00:35.780765215-07:00"
+digest: sha256:e1996304d2b76b4444625d3bc94323ca72eebc1bb8e9e010003cb8c50ef60610
+generated: "2024-12-25T15:09:05.611777347-07:00"
