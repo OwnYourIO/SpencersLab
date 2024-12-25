@@ -10,9 +10,6 @@ spec:
           - clusters: {}
           - list:
               elements:
-                - appName: external-secrets-bitwarden
-                  namespace: default
-                  ServerSideApply: "false"
                 - appName: home
                   namespace: default
                   ServerSideApply: "false"

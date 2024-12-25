@@ -13,9 +13,6 @@ spec:
                 - appName: infra
                   namespace: default
                   ServerSideApply: "false"
-                - appName: external-secrets-bitwarden
-                  namespace: default
-                  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
