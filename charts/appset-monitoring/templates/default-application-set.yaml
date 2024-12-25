@@ -13,9 +13,6 @@ spec:
                 - appName: monitoring
                   namespace: default
                   ServerSideApply: "true"
-                - appName: external-secrets-bitwarden
-                  namespace: default
-                  ServerSideApply: "false"
                 #- appName: proxy-remote
                 #  namespace: default
                 #  ServerSideApply: "false"
