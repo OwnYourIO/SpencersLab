@@ -6,11 +6,15 @@ import java.util.Map.Entry;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
-
+import org.keycloak.events.EventType;
+import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.email.EmailException;
+import org.keycloak.email.EmailSenderProvider;
+import org.keycloak.email.EmailSenderProviderFactory;
 import org.keycloak.email.EmailTemplateProvider;
 
 // File handling.
@@ -44,21 +48,21 @@ public class LoginEventListenerProvider implements EventListenerProvider {
 
     @Override
     public void onEvent(Event event) {
-        if (event.getType().toString().equals("LOGIN")) {
+        if (event.getType().equals(EventType.LOGIN)
+                || event.getType().equals(EventType.REGISTER)) {
             try {
                 // Ensure file exists before processing
                 ensureAllowlistFileExists();
 
-                // boolean isNewIp =
                 RealmModel realm = this.session.realms().getRealm(event.getRealmId());
                 UserModel user = this.session.users().getUserById(realm, event.getUserId());
 
-                updateUserAllowlist(user.getUsername(), event.getIpAddress());
+                boolean isNewIp = updateUserAllowlist(user.getUsername(), event.getIpAddress());
 
                 // Send email if it's a new IP
-                // if (isNewIp) {
-                // sendNewIpNotificationEmail(event.getUserId(), event.getIpAddress());
-                // }
+                if (isNewIp) {
+                    sendNewIpNotificationEmail(event);
+                }
             } catch (IOException e) {
                 // Log error or handle exception as appropriate for your system
                 e.printStackTrace();
@@ -77,18 +81,21 @@ public class LoginEventListenerProvider implements EventListenerProvider {
                 writer.write("    user-allowlist:\n");
                 writer.write("      ipAllowList:\n");
                 writer.write("        sourceRange: &allowlist\n");
+                writer.write("          # Initial value otherwise traefik doesn't block anything\n");
+                writer.write("          # when it should block everything.\n");
+                writer.write("          - 0.0.0.0/16\n");
                 writer.write("          # START ALLOWLIST AUTOMATION\n");
                 writer.write("          # END ALLOWLIST AUTOMATION\n");
-                writer.write("        ipStrategy:\n");
-                writer.write("          depth: 1\n");
                 writer.write("    user-allowlist-remote:\n");
                 writer.write("      ipAllowList:\n");
+                writer.write("        ipStrategy:\n");
+                writer.write("          depth: 1\n");
                 writer.write("        sourceRange: *allowlist\n");
             }
         }
     }
 
-    private void updateUserAllowlist(String userId, String ipAddress) throws IOException {
+    private boolean updateUserAllowlist(String userId, String ipAddress) throws IOException {
         List<String> fileLines = new ArrayList<>();
         int startIndex = -1;
         int endIndex = -1;
@@ -132,6 +139,7 @@ public class LoginEventListenerProvider implements EventListenerProvider {
                 }
             }
         }
+        return modified;
     }
 
     private boolean processAllowlist(List<String> allowlistLines, String userId, String ipAddress) {
@@ -203,6 +211,49 @@ public class LoginEventListenerProvider implements EventListenerProvider {
         }
 
         return modified;
+    }
+
+    private void sendNewIpNotificationEmail(Event event) {
+        try {
+            // Retrieve the realm and user
+            RealmModel realm = session.realms().getRealm(event.getRealmId());
+            UserModel user = session.users().getUserById(realm, event.getUserId());
+
+            // Get the "Admin" group
+            GroupModel adminGroup = realm.getGroupsStream()
+                    .filter(group -> "Admin".equalsIgnoreCase(group.getName()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (adminGroup == null) {
+                System.err.println("No admin group found to send IP notification");
+                return;
+            }
+
+            // Prepare email content
+            Map<String, Object> emailAttributes = new HashMap<>();
+            emailAttributes.put("username", user.getUsername());
+            emailAttributes.put("ip", event.getIpAddress());
+            emailAttributes.put("timestamp",
+                    LocalDateTime.now().format(TIMESTAMP_FORMATTER));
+
+            // Get the email template provider
+            EmailTemplateProvider emailProvider = session.getProvider(EmailTemplateProvider.class).setRealm(realm);
+
+            // Retrieve all users in the group
+            Stream<UserModel> adminUsers = session.users().getGroupMembersStream(realm, adminGroup);
+            adminUsers.forEach(adminUser -> {
+                // Send email to each user
+                emailProvider.setUser(adminUser);
+
+
+                } catch (EmailException e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
