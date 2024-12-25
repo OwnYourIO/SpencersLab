@@ -1,0 +1,12 @@
+# TODO: Should probably figure out a better way to make this optional in the Traefik service itself.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proxy-allowlist
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
