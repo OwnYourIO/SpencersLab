@@ -60,7 +60,6 @@ traefik:
     websecure:
       proxyProtocol:
         enabled: true
-      asDefault: true
 
   metrics:
     prometheus:
