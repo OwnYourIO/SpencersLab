@@ -13,8 +13,8 @@ dependencies:
   #  values: |
   #    pushgateway:
   #      enabled: false
-- name: monitoring-appset
-  version: 1.1.9
+- name: appset-monitoring
+  version: 1.1.12
   repository: https://ownyourio.github.io/SpencersLab/
 - name: exporter-mikrotik
   version: 1.0.12
