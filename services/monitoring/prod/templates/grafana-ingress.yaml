@@ -12,9 +12,9 @@ metadata:
     #traefik.ingress.kubernetes.io/router.middlewares: authentik-authentik-middleware@kubernetescrd
 spec:
   tls:
-  - hosts:
-      - "grafana.{{ $.Values.domain }}"
-    secretName: cluster-wildcard-cert
+    - hosts:
+        - "grafana.{{ $.Values.domain }}"
+      secretName: wildcard-cert
   rules:
     - host: "grafana.{{ $.Values.domain }}"
       http:
