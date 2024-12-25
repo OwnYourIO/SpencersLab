@@ -21,6 +21,10 @@ autoUpdateK3s: false
 # Additionally to disable sso, override this in the umbrella app.
 # argo-cd.server.authMode ... or maybe argo-cd.server.sso.enabled
 
+proxy:
+  middlewares:
+    entrypoint: ""
+
 cert-manager:
   crds:
     enabled: true

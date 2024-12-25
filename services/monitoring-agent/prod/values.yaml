@@ -1,3 +1,7 @@
+proxy:
+  middlewares: 
+    entrypoint: "" 
+
 prometheus:
   serviceMonitorSelectorNilUsesHelmValues: false
 kube-prometheus-stack: 

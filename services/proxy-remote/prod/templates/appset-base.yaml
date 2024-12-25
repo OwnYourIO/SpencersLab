@@ -25,7 +25,7 @@ spec:
         - repoURL: "{{ `{{ metadata.annotations.chart.repo }}` }}"
           chart: "{{ `{{appName}}` }}"
           # TODO: This might need to be generic in some way.
-          targetRevision: 1.0.70
+          targetRevision: 1.0.71
           helm:
             parameters:
               - name: domain
@@ -36,6 +36,8 @@ spec:
                 value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
               #- name: autoUpdateK3s
               #  value: "true"
+              - name: proxy.middlewares.entrypoint
+                value: "{{ $.Values.proxy.middlewares.entrypoint }}"
             valueFiles:
               - values.yaml
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}

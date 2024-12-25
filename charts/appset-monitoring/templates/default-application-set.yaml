@@ -16,7 +16,7 @@ spec:
                 - appName: monitoring
                   namespace: default
                   ServerSideApply: "true"
-                - appName: remote-proxy
+                - appName: proxy-remote
                   namespace: default
                   ServerSideApply: "false"
   template:

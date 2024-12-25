@@ -1,4 +1,4 @@
-{{ if not .Values.initialInstall }}
+{ { if not .Values.initialInstall } }
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -7,13 +7,16 @@ metadata:
   namespace: default
   labels:
     app: default
-  #annotations:
-    #traefik.ingress.kubernetes.io/router.middlewares: admin-allowlist@file
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares:
+      { { $.Values.proxy.middlewares.entrypoint } }
+
 spec:
   tls:
-  - hosts:
-      - "cluster.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
-    secretName: cluster-wildcard-cert
+    - hosts:
+        - "cluster.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
   rules:
     - host: "cluster.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
       http:
@@ -25,5 +28,5 @@ spec:
                 name: "{{.Release.Name }}-argocd-server"
                 port:
                   number: 80
-...
-{{ end }}
+---
+{ { end } }
