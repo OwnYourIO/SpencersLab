@@ -16,9 +16,6 @@ spec:
                 - appName: traefik-zerotrust
                   namespace: kube-system
                   ServerSideApply: "false"
-                - appName: monitoring-agent
-                  namespace: default
-                  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{ appName }}` }}"
@@ -36,12 +33,6 @@ spec:
                 value: "{{ `{{ metadata.annotations.domain }}` }}"
               - name: clusterName
                 value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-              - name: argocd.argo-cd.configs.cm.url
-                value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
-              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
-                value: "storage"
-              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
-                value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
             valueFiles:
               - values.yaml
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
@@ -59,4 +50,3 @@ spec:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
-...

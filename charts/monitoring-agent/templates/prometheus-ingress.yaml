@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus
+  namespace: default
+  labels:
+    app: default
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Values.proxy.middlewares.entrypoint }}"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - "prometheus.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      secretName: cluster-wildcard-cert
+  rules:
+    - host: "prometheus.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: monitoring-agent-kube-prom-prometheus
+                port:
+                  number: 9090

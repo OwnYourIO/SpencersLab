@@ -1,0 +1,21 @@
+proxy:
+  middlewares: 
+    entrypoint: "" 
+
+kube-prometheus-stack: 
+  crds:
+    enabled: true
+  grafana:
+    enabled: false
+  prometheusOperator: 
+    admissionWebhooks:
+      patch:
+        ttlSecondsAfterFinished: 600
+  prometheus:
+    agentMode: true
+    prometheusAgentSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector: {}
+      serviceMonitorNamespaceSelector: {} 
+      enableFeatures:
+        - agent
