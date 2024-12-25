@@ -12,7 +12,11 @@ spec:
   tls:
     - hosts:
         - "prometheus.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
-      #secretName: cluster-wildcard-cert
+      {{- if $.values.bitwardenIds.cert-manager-solver-token }}
+      secretName: cluster-wildcard-cert
+      {{- else }}
+      secretName: prometheus-cert
+      {{- end }}
   rules:
     - host: "prometheus.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
       http:

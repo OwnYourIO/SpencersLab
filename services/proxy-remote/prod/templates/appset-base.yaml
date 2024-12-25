@@ -16,7 +16,7 @@ spec:
                   namespace: default
                   ServerSideApply: "false"
                 - appName: monitoring-agent
-                  version: 1.0.3
+                  version: 1.0.4
                   namespace: default
                   ServerSideApply: "true"
   template:
