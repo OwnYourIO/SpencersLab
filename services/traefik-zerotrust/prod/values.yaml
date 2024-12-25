@@ -17,6 +17,9 @@ traefik:
     #- "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
     - "--providers.file.filename=/data/admin-allowlist.yaml"
     - "--providers.file.watch=true"
+    - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
+    - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+    - "--entryPoints.web.http.redirections.entryPoint.permanent=true"
   dashboard: 
     enabled: false
 
@@ -49,9 +52,10 @@ traefik:
 
   ports:
     web:
-      redirectTo:
-        port: websecure
-        permanent: true
+      # Have do to this in the args manually because port comes through as :443 when I thin it should be websecure.
+      #redirectTo:
+      #  port: websecure
+      #  permanent: true
       proxyProtocol:
         enabled: true
     websecure:
