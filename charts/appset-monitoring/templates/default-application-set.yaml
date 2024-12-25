@@ -16,9 +16,12 @@ spec:
                 - appName: monitoring
                   namespace: default
                   ServerSideApply: "true"
-                - appName: proxy-remote
+                - appName: external-secrets-bitwarden
                   namespace: default
                   ServerSideApply: "false"
+                #- appName: proxy-remote
+                #  namespace: default
+                #  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
@@ -26,21 +29,22 @@ spec:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
-      source:
-        repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
-        targetRevision: main
-        path: "{{ `{{ metadata.annotations.services.repo.path }}`}}/{{ `{{appName}}` }}/{{ `{{ metadata.annotations.stage }}` }}"
-        helm:
-          parameters:
-            - name: domain
-              value: "{{ `{{ metadata.annotations.domain }}` }}"
-            - name: clusterName
-              value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            - name: argocd.argo-cd.configs.cm.url
-              value: "{{ `https://cluster.{{ metadata.annotations.clusterName }}.{{ metadata.annotations.domain }}` }}"
-          valueFiles:
-        #    #- ../common.values.yaml
-            - values.yaml
+      sources:
+        - repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
+          targetRevision: main
+          path: "{{ `{{ metadata.annotations.services.repo.path }}`}}/{{ `{{appName}}` }}/{{ `{{ metadata.annotations.stage }}` }}"
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+            valueFiles:
+              - values.yaml
+              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
+        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
+          targetRevision: main
+          ref: values
       destination:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
@@ -49,7 +53,6 @@ spec:
           prune: true
           selfHeal: true
         syncOptions:
-          - ApplyOutOfSyncOnly=true
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
