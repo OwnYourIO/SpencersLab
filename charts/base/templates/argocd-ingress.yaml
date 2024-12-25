@@ -7,9 +7,12 @@ metadata:
   namespace: default
   labels:
     app: default
+  # TODO: Implement this as a flag rather than just looking for cert-manager-solver-token. Will break with other external secret providers.
+  {{- if not index .Values "bitwardenIds" "cert-manager-solver-token" }}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.middlewares: {{ $.Values.proxy.middlewares.entrypoint }}
+  {{- end }}
 
 spec:
   tls:
