@@ -15,10 +15,10 @@ spec:
                   version: 1.0.77
                   namespace: default
                   ServerSideApply: "false"
-                #- appName: monitoring-agent
-                #  version: 1.0.7
-                #  namespace: default
-                #  ServerSideApply: "true"
+                - appName: monitoring-agent
+                  version: 1.0.7
+                  namespace: default
+                  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
