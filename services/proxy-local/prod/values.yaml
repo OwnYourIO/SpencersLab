@@ -5,6 +5,8 @@ bitwardenIds:
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   autossh-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
+  # TODO: Or put in the cluster?
+  # It might be needed for argo? Maybe try and refactor that first.
 authRealm: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
@@ -16,6 +18,7 @@ proxy:
     userAuth: "kube-system-oidc-keycloak@kubernetescrd"
     allowList: "user-allowlist@file"
     allowListRemote: "user-allowlist-remote@file"
+    delay: kube-system-delay-500ms@kubernetescrd
 
   subdomains:
     # Infrastructure
