@@ -10,9 +10,6 @@ spec:
           - clusters: {}
           - list:
               elements:
-                - appName: base
-                  namespace: default
-                  ServerSideApply: "false"
                 - appName: monitoring
                   namespace: default
                   ServerSideApply: "true"
