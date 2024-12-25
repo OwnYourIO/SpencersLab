@@ -9,6 +9,8 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.middlewares: {{ $.Values.proxy.middlewares.entrypoint }}
+    traefik.ingress.kubernetes.io/frontend-entry-points: web, websecure
+    traefik.ingress.kubernetes.io/redirect-entry-point: websecure
 spec:
   tls:
     - hosts:
