@@ -107,6 +107,9 @@ traefik:
       traefik-plugin-redirect-on-status:
         moduleName: "github.com/m-riedel/traefik-plugin-redirect-on-status"
         version: "v1.0.1"
+      theme-park:
+        moduleName: "github.com/packruler/traefik-themepark"
+        version: "v1.4.2"
 
   service:
     type: LoadBalancer
