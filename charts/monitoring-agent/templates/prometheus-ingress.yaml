@@ -1,3 +1,6 @@
+# This disabled prometheus for external services. 
+# TODO: have a dedicated flag for ingress enabled rather than reusing the existing value.
+{{- if index $.Values "bitwardenIds" "cert-manager-solver-token" }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -28,3 +31,4 @@ spec:
                 name: monitoring-agent-kube-prom-prometheus
                 port:
                   number: 9090
+{{- end }}
