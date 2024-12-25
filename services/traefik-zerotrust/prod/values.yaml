@@ -17,6 +17,8 @@ traefik:
     #- "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
     - "--providers.file.filename=/data/admin-allowlist.yaml"
     - "--providers.file.watch=true"
+    - "--entryPoints.web.http.redirections.entryPoint.to=https"
+    - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
   dashboard: 
     enabled: false
 
