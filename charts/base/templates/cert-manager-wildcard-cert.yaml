@@ -1,4 +1,4 @@
-{{ if not .Values.initialInstall }}
+{{ if and (not .Values.initialInstall) (index .Values "bitwardenIds" "cert-manager-solver-token") }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

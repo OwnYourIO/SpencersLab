@@ -25,7 +25,7 @@ spec:
         - repoURL: "{{ `{{ metadata.annotations.chart.repo }}` }}"
           chart: "{{ `{{appName}}` }}"
           # TODO: This might need to be generic in some way.
-          targetRevision: 1.0.72
+          targetRevision: 1.0.73
           helm:
             parameters:
               - name: domain
