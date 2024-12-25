@@ -38,6 +38,9 @@ spec:
               #  value: "true"
               - name: proxy.middlewares.entrypoint
                 value: "{{ $.Values.proxy.middlewares.entrypoint }}"
+              # Unset cert-manager-solver-token as it's not desired on remote.
+              - name: bitwardenIds.cert-manager-solver-token
+                value: ""
             valueFiles:
               - values.yaml
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
