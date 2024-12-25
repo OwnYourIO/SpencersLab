@@ -7,7 +7,7 @@ dependencies:
   version: 0.2.2
 - name: jellyfin
   repository: https://bubylou.github.io/Arr-Stack
-  version: 0.2.3
+  version: 0.2.4
 - name: jellyseerr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.2.1
@@ -32,5 +32,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-digest: sha256:6a1429b6b8ecbf7ec7dbf6ef19ce994fcb2138cbe5a7fdfdc00451004b5b5eb3
-generated: "2024-12-25T10:01:34.21366241-07:00"
+digest: sha256:a948d42c5d50241c15fcb4e1b1ca9042eec54b43f359cac2da3e35e7096ed97c
+generated: "2024-12-25T13:08:02.425202283-07:00"
