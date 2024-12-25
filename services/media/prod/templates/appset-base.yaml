@@ -12,7 +12,7 @@ spec:
           - list:
               elements:
                 - appName: base
-                  version: 1.0.74
+                  version: 1.0.75
                   namespace: default
                   ServerSideApply: "false"
                 #- appName: monitoring-agent

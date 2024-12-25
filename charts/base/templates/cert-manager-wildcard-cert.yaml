@@ -22,7 +22,7 @@ metadata:
 spec:
   dnsNames:
     - "*.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
-  secretName: wildcard-cert
+  secretName: cluster-wildcard-cert
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
