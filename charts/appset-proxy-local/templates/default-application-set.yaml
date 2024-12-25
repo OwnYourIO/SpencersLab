@@ -19,9 +19,6 @@ spec:
                 - appName: traefik
                   namespace: kube-system
                   ServerSideApply: "false"
-                - appName: monitoring-agent
-                  namespace: default
-                  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
