@@ -7,16 +7,15 @@ clusterName: OVERRIDE_VIA_APPSET
 
 proxy:
   subdomains:
-    charts:
-      additionalNames: 
-        - grafana
+    charts: &charts
       service: monitoring-grafana
       port: 80
-    metrics:
-      additionalNames: 
-        - prometheus
+    grafana: *charts
+
+    metrics: &metrics
       service: monitoring-kube-prometheus-prometheus
       port: 9090
+    prometheus: *metrics
 
 #From https://gitlab.tikalk.dev/matan.amiel/kube-prometheus-stack/-/blob/main/values.yaml
 # https://medium.com/israeli-tech-radar/how-to-create-a-monitoring-stack-using-kube-prometheus-stack-part-1-eff8bf7ba9a9
