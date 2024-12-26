@@ -29,11 +29,13 @@ spec:
                 name: "{{ $config.service }}"
                 port:
                   number: {{ $config.port }}
+
+{{- if $config.serviceName }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: "{{ $serviceName }}-ingress"
+  name: "{{ $config.serviceName }}-ingress"
   namespace: default
   annotations:
     # If middlewares is set manually, use that.
@@ -46,10 +48,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "{{ $serviceName }}.{{ $.Values.domain }}"
+      - "{{ $config.serviceName }}.{{ $.Values.domain }}"
       secretName: wildcard-cert
   rules:
-    - host: "{{ $serviceName }}.{{ $.Values.domain }}"
+    - host: "{{ $config.serviceName }}.{{ $.Values.domain }}"
       http:
         paths:
           - path: /
@@ -59,4 +61,5 @@ spec:
                 name: "{{ $config.service }}"
                 port:
                   number: {{ $config.port }}
+{{- end }}
 {{- end }}
