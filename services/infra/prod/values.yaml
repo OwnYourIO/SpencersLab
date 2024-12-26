@@ -6,6 +6,39 @@ bitwardenIds:
   gitea: 2ca2457b-dc62-413a-af99-b1f8017ef7cd
   gitea-admin: f7b628ec-2544-4c28-a476-b1a501487d99
 
+
+ingress:
+  subdomains:
+    login:
+      #serviceName: keycloakx
+      service: infra-keycloakx
+      port: 80
+
+    seaweedfs-filer:
+      serviceName: seaweedfs-filer.infra
+      service: seadweedfs-filer
+      port: 8888
+
+    seaweedfs-volume:
+      serviceName: seaweedfs-volume.infra
+      service: seaweedfs-volume
+      port: 8080
+
+    seaweedfs-master:
+      serviceName: seaweedfs-master.infra
+      service: seaweedfs-master
+      port: 9333
+
+    s3:
+      serviceName: seaweedfs-s3.infra
+      service: seaweedfs-s3
+      port: 8333
+
+    #git:
+    #  serviceName: forgejo
+    #  service: infra-forgeo
+    #  port: ????
+
 prometheus:
   serviceMonitorSelectorNilUsesHelmValues: false
 
@@ -198,18 +231,6 @@ keycloakx:
         release: monitoring-agent
       port: http
       path: /realms/SpencersLab/metrics
-
-    ingress:
-      enabled: true
-      rules:
-        - host: "login.spencerslab.com"
-          paths:
-            - path: "/"
-              pathType: Prefix
-      tls:
-        - hosts:
-            - "login.spencerslab.com"
-          secretName: wildcard-cert
 
     # TODO: Add DB.
     #database:
@@ -918,18 +939,6 @@ forgejo:
         provider: 'openidConnect'
         existingSecret: gitea-secret
         autoDiscoverUrl: 'https://login.spencerslab.com/realms/SpencersLab/.well-known/openid-configuration'
-
-  ingress:
-    enabled: true
-    hosts:
-      - host: "git.spencerslab.com"
-        paths:
-          - path: "/"
-            pathType: Prefix
-    tls:
-      - hosts:
-          - "git.spencerslab.com"
-        secretName: wildcard-cert
 
   deployment:
     containers:
