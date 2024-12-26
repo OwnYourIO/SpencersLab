@@ -12,12 +12,12 @@ proxy:
     player:
       serviceName: jellyfin
       service: media-jellyfin
-      port: 80
+      port: 8096
 
     audiobook-player:
       serviceName: audiobookshelf
       service: media-audiobookshelf
-      port: 80
+      port: 8080
 
     requests:
       serviceName: jellyseerr
@@ -26,7 +26,7 @@ proxy:
 
     music:
       serviceName: lidarr
-      service: media-lidar
+      service: media-lidarr
       port: 8686
 
     trackers:
