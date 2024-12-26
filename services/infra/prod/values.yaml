@@ -11,7 +11,7 @@ ingress:
   subdomains:
     login:
       #serviceName: keycloakx
-      service: infra-keycloakx
+      service: infra-keycloakx-http
       port: 80
 
     seaweedfs-filer:
