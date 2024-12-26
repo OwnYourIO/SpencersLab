@@ -28,5 +28,5 @@ spec:
               service:
                 name: "{{ $config.serviceName }}"
                 port:
-                  number: "{{ $config.port }}"
+                  number: {{ $config.port }}
 {{- end }}
