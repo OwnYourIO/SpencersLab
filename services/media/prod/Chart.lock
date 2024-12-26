@@ -16,7 +16,7 @@ dependencies:
   version: 0.3.1
 - name: prowlarr
   repository: https://bubylou.github.io/Arr-Stack
-  version: 0.3.2
+  version: 0.3.3
 - name: navidrome
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.1.1
@@ -32,5 +32,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-digest: sha256:14fbe932e9274ada1b5b55a734aab0cef5f182d50b8666d4abeafbfa40b5d036
-generated: "2024-12-25T16:35:44.516948047-07:00"
+digest: sha256:4fb5f233ba307d7a5304384d3d481d09b46b13154968db2cbd84179c0129b13c
+generated: "2024-12-25T17:02:15.375362918-07:00"
