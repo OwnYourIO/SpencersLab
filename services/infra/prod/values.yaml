@@ -30,7 +30,7 @@ ingress:
       port: 9333
 
     s3:
-      serviceName: seaweedfs-s3.infra
+      #serviceName: seaweedfs-s3.infra
       service: seaweedfs-s3
       port: 8333
 
