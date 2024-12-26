@@ -40,7 +40,7 @@ loki-stack:
         enabled: true
         ingressClassName: traefik
         hosts:
-        - loki.spencerslab.com
+        - loki.$DOMAIN
         paths:
         - "/" 
         pathType: Prefix
@@ -50,7 +50,7 @@ loki-stack:
       enabled: true
       ingressClassName: traefik
       hosts:
-      - loki.spencerslab.com
+      - loki.$DOMAIN
       paths:
       - "/" 
       pathType: Prefix
@@ -67,18 +67,6 @@ kube-prometheus-stack:
       patch:
         ttlSecondsAfterFinished: 600
   prometheus:
-    ingress:
-      enabled: true
-      ingressClassName: traefik
-      hosts:
-      - prometheus.spencerslab.com
-      paths:
-      - "/"
-      pathType: Prefix
-      tls:
-        - hosts:
-          - prometheus.spencerslab.com
-          secretName: wildcard-cert
     prometheusSpec:
       enableRemoteWriteReceiver: true
       scrapeConfigSelector:
