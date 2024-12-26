@@ -125,8 +125,6 @@ keycloakx:
     command:
       - "/opt/keycloak/bin/kc.sh"
       - "--verbose"
-      - "--log-level=debug"
-      - "--log-categories=org.keycloak.theme"
       - "start-dev"
     
     http:
