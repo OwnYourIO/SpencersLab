@@ -7,6 +7,70 @@ seaweedfs-csi-driver:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+proxy:
+  subdomains:
+    player:
+      serviceName: jellyfin
+      service: media-jellyfin
+      port: 80
+
+    audiobook-player:
+      serviceName: audiobookshelf
+      service: media-audiobookshelf
+      port: 80
+
+    requests:
+      serviceName: jellyseerr
+      service: media-jellyseerr
+      port: 5055
+
+    music:
+      serviceName: lidarr
+      service: media-lidar
+      port: 8686
+
+    trackers:
+      serviceName: prowlarr
+      service: media-prowlarr
+      port: 9696
+
+    movies:
+      serviceName: radarr
+      service: media-radarr
+      port: 7878
+
+    movies-4k:
+      serviceName: radarr-4k
+      #service: media-radarr-4k
+      service: media-radarr
+      port: 7878
+
+    ebooks:
+      serviceName: readarr
+      service: media-readarr
+      port: 8787
+
+    audiobooks:
+      serviceName: readarr-audio
+      #service: readarr-audio
+      service: media-readarr
+      port: 8787
+
+    shows:
+      serviceName: sonarr
+      service: media-sonarr
+      port: 8989
+    shows-4k:
+      serviceName: sonarr-4k
+      #service: media-sonarr-4k
+      service: media-sonarr
+      port: 8989
+
+    #unpack:
+    #  serviceName: unpackerr
+    #  service: media-unpackerr
+    #  port: ????
+
 #jellyfin:
 #  app-template:
 #    controllers:
@@ -86,18 +150,6 @@ jellyseerr:
     - name: TZ
       value: America/Denver
 
-  ingress:
-    enabled: true
-    hosts:
-      - host: "jellyseerr.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "jellyseerr.spencerslab.com"
-
   # Additional volumes on the output Deployment definition.
   volumes:
     - name: jellyseerr-config
@@ -113,18 +165,6 @@ lidarr:
   env:
     - name: TZ
       value: America/Denver
-
-  ingress:
-    enabled: true
-    hosts:
-      - host: "lidarr.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "lidarr.spencerslab.com"
 
   # Additional volumes on the output Deployment definition.
   volumes:
@@ -148,18 +188,6 @@ prowlarr:
     - name: TZ
       value: America/Denver
 
-  ingress:
-    enabled: true
-    hosts:
-      - host: "prowlarr.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "prowlarr.spencerslab.com"
-
   # Additional volumes on the output Deployment definition.
   volumes:
     - name: prowlarr-config
@@ -177,56 +205,10 @@ prowlarr:
       mountPath: /media/
       # subPath: 
 
-navidrome:
-  env:
-    - name: TZ
-      value: America/Denver
-
-  ingress:
-    enabled: true
-    hosts:
-      - host: "navidrome.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "navidrome.spencerslab.com"
-
-  # Additional volumes on the output Deployment definition.
-  volumes:
-    - name: navidrome-config
-      persistentVolumeClaim:
-        claimName: navidrome
-    - name: media
-      persistentVolumeClaim:
-        claimName: media
-
-  # Additional volumeMounts on the output Deployment definition.
-  volumeMounts:
-    - name: navidrome-config
-      mountPath: "/config"
-    - name: media
-      mountPath: /music/
-      subPath: Music
-
 radarr:
   env:
     - name: TZ
       value: America/Denver
-
-  ingress:
-    enabled: true
-    hosts:
-      - host: "radarr.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "radarr.spencerslab.com"
 
   # Additional volumes on the output Deployment definition.
   volumes:
@@ -250,18 +232,6 @@ readarr:
     - name: TZ
       value: America/Denver
 
-  ingress:
-    enabled: true
-    hosts:
-      - host: "readarr.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "readarr.spencerslab.com"
-
   # Additional volumes on the output Deployment definition.
   volumes:
     - name: readarr-config
@@ -283,18 +253,6 @@ sonarr:
   env:
     - name: TZ
       value: America/Denver
-
-  ingress:
-    enabled: true
-    hosts:
-      - host: "sonarr.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "sonarr.spencerslab.com"
 
   # Additional volumes on the output Deployment definition.
   volumes:
@@ -326,18 +284,6 @@ unpackerr:
     enabled: true
   sonarr:
     enabled: true
-
-  ingress:
-    enabled: true
-    hosts:
-      - host: "unpackerr.spencerslab.com"
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: wildcard-cert
-        hosts:
-          - "unpackerr.spencerslab.com"
 
   # Additional volumes on the output Deployment definition.
   volumes:
@@ -403,19 +349,6 @@ audiobookshelf:
       ports:
         http:
           port: *port
-  ingress:
-    main:
-      hosts:
-        - host: &host audiobookshelf.spencerslab.com
-          paths:
-            - path: /
-              service:
-                identifier: app
-                port: http
-      tls: 
-        - secretName: wildcard-cert
-          hosts: 
-            - *host
   persistence:
     config:
       existingClaim: audiobookshelf

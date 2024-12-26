@@ -21,9 +21,6 @@ dependencies:
   - name: prowlarr
     version: 0.3.3
     repository: https://bubylou.github.io/Arr-Stack
-  - name: navidrome
-    version: 0.1.1
-    repository: https://bubylou.github.io/Arr-Stack
   - name: radarr
     version: 0.3.2
     repository: https://bubylou.github.io/Arr-Stack
