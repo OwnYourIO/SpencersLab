@@ -7,7 +7,7 @@ seaweedfs-csi-driver:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
-proxy:
+ingress:
   subdomains:
     player:
       serviceName: jellyfin

@@ -5,15 +5,52 @@ bitwardenIds:
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
 
-mosquitto: 
-  ingress:
-    main:
-      hosts:
-        # Specify external host name
-        - host: mqtt.spencerslab.com
-          paths:
-            - path: "/"
-              pathType: Prefix
+ingress:
+  subdomains:
+    boards:
+      serviceName: wekan
+      service: home-wekan
+      port: 8080
+
+    #documents:
+    #  serviceName: paperless
+    #  service: home-paperless
+    #  port: ????
+
+    zigbee:
+      serviceName: zigbee2mqtt
+      service: home-zigbee2mqtt
+      port: 8080
+    
+    #mqtt:
+    #  serviceName: mosquitto
+    #  service: home-mosquitto
+    #  port: 
+
+    audio-devices:
+      serviceName: snapserver
+      service: home-snapcast-snapcast-http
+      port: 1780
+
+    audio-lights:
+      serviceName: ledfx
+      service: home-ledfx
+      port: 8888
+
+    music-player:
+      serviceName: lms
+      service: home-logitech-media-server
+      port: 9000
+    
+    #music-assistant:
+    #  serviceName: lms
+    #  service: home-music-assistant
+    #  port: ????
+
+    hyperion:
+      #serviceName: hyperion
+      service: home-hyperion
+      port: 8090
 
 generic-device-plugin:
   app-template:
@@ -57,21 +94,6 @@ zigbee2mqtt:
               ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 57600
               ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyUSB1
               ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ezsp
-    ingress:
-      zigbee2mqtt:
-        annotations:
-          hajimari.io/url: https://zigbee2mqtt.spencerslab.com
-        hosts:
-          - host: &host "zigbee2mqtt.spencerslab.com"
-            paths: &paths
-              - path: /
-                service:
-                  identifier: zigbee2mqtt
-                  port: http
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
 
 snapcast:
   app-template:
@@ -83,20 +105,6 @@ snapcast:
               LOG_LEVEL: debug
               TZ: America/Denver
               HOME: /tmp/
-
-    ingress:
-      snapserver:
-        hosts:
-          - host: &host "snapserver.spencerslab.com"
-            paths: &paths
-              - path: /
-                service:
-                  identifier: snapcast-http
-                  port: websocket
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
 
     configMaps:
       snapserver-conf:
@@ -134,22 +142,6 @@ music-assistant:
               LOG_LEVEL: debug
               TZ: America/Denver
 
-    ingress:
-      music-assistant:
-        annotations:
-          hajimari.io/url: https://music-assistant.spencerslab.com
-        hosts:
-          - host: &host "music-assistant.spencerslab.com"
-            paths: &paths
-              - path: /
-                service:
-                  identifier: music-assistant
-                  port: http
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
-
 ledfx:
   app-template:
     defaultPodOptions:
@@ -165,21 +157,6 @@ ledfx:
           #  resources:
           #    limits:
           #      squat.ai/snd: 1
-    ingress:
-      ledfx:
-        annotations:
-          hajimari.io/url: https://ledfx.spencerslab.com
-        hosts:
-          - host: &host "ledfx.spencerslab.com"
-            paths: &paths
-              - path: /
-                service:
-                  identifier: ledfx
-                  port: http
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
     # TODO: Add this to the image.
     configMaps:
       entrypoint-override:
@@ -251,17 +228,6 @@ hyperion:
             fsGroup: 911
             fsGroupChangePolicy: OnRootMismatch
 
-    ingress:
-      hyperion:
-        annotations:
-          hajimari.io/url: https://hyperhdr.spencerslab.com
-        hosts:
-          - host: &host "hyperhdr.spencerslab.com"
-            paths:
-              - path: /
-                service:
-                  identifier: hyperion
-
 logitech-media-server:
   app-template:
     controllers:
@@ -271,22 +237,6 @@ logitech-media-server:
             env:
               TZ: America/Denver
               EXTRA_ARGS: "--advertiseaddr=lms.spencerslab.com"
-
-    ingress:
-      lms:
-        annotations:
-          hajimari.io/url: https://lms.spencerslab.com
-        hosts:
-          - host: &host "lms.spencerslab.com"
-            paths: &paths
-              - path: /
-                service:
-                  identifier: logitech-media-server
-                  port: http
-        tls:
-          - hosts:
-              - *host
-            secretName: wildcard-cert
 
     configMaps:
       init:
@@ -383,19 +333,6 @@ paperless:
         ports:
           http:
             port: 8000
-    ingress:
-      main:
-        hosts:
-          - host: paperless.spencerslab.com
-            paths:
-              - path: /
-                service:
-                  identifier: main
-                  port: http
-        tls:
-          - secretName: wildcard-cert
-            hosts:
-              - paperless.spencerslab.com
 
     persistence:
       data:
@@ -405,16 +342,6 @@ paperless:
 
 wekan:
   root_url: https://wekan.spencerslab.com
-  ingress:
-    enabled: true
-    path: /
-    pathtype: ImplementationSpecific
-    hosts: 
-      - wekan.spencerslab.com 
-    tls: 
-      - secretName: wildcard-cert
-        hosts:
-          - wekan.spencerslab.com
   env:
     - name: "MONGO_URL"
       value: "mongodb://home-mongodb:27017"
