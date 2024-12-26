@@ -2,6 +2,9 @@ bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
   grafana-sso-secret: 0ce9761f-6d83-4c6b-a778-b1db018ae192
 
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
 #From https://gitlab.tikalk.dev/matan.amiel/kube-prometheus-stack/-/blob/main/values.yaml
 # https://medium.com/israeli-tech-radar/how-to-create-a-monitoring-stack-using-kube-prometheus-stack-part-1-eff8bf7ba9a9
 prometheus:
