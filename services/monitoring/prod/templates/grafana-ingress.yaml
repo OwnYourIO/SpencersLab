@@ -1,28 +1,32 @@
+{{- range $name, $config := .Values.proxy.subdomains }}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: grafana
+  name: "{{ $name }}-ingress"
   namespace: default
-  labels:
-    app: default
   annotations:
-    kubernetes.io/ingress.class: "traefik"
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    #traefik.ingress.kubernetes.io/router.middlewares: authentik-authentik-middleware@kubernetescrd
+    # If middlewares is set manually, use that.
+    {{- if $config.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $config.middlewares }}
+    {{- end }}
+    #external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
+  labels:
+    external-dns: "enabled"
 spec:
   tls:
     - hosts:
-        - "grafana.{{ $.Values.domain }}"
+      - "{{ $name }}.{{ $.Values.domain }}"
       secretName: wildcard-cert
   rules:
-    - host: "grafana.{{ $.Values.domain }}"
+    - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: monitoring-grafana
+                name: "{{ $config.serviceName }}"
                 port:
-                  number: 80
+                  number: "{{ $config.port }}"
+{{- end }}
