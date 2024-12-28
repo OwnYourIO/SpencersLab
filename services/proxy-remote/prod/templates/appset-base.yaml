@@ -49,6 +49,8 @@ spec:
               # Unset cert-manager-solver-token as it's not desired on remote.
               - name: bitwardenIds.cert-manager-solver-token
                 value: ""
+              - name: bitwardenIds.argocd-sso-secret
+                value: ""
             valueFiles:
               - values.yaml
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
