@@ -45,7 +45,11 @@ spec:
             pathType: Prefix
             backend:
               service:
+                {{- if $name.service }}
+                name: "{{ $name.service }}"
+                {{- else }}
                 name: "{{ $name }}-service"
+                {{- end }}
                 port:
                   number: 443
 {{- end }}
