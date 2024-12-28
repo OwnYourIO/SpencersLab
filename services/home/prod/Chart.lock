@@ -13,24 +13,24 @@ dependencies:
   version: 1.0.13
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.39
+  version: 1.0.40
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.13
+  version: 1.0.14
 - name: ledfx
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.9
+  version: 1.0.10
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.14
+  version: 1.0.15
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.4
+  version: 1.0.5
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.67.0
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.67.0
-digest: sha256:9ba7bfdb11690414cc8afc5d22d90662d3cfeca20dbfd9192da83e7d122df26a
-generated: "2024-12-27T19:51:01.043023815-07:00"
+digest: sha256:957dfae075be8aff63adf1c0320b027f17b8aabbc67fce7c53aebeb9f1094c16
+generated: "2024-12-27T20:59:13.574941749-07:00"

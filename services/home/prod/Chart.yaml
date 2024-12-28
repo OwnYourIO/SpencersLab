@@ -16,7 +16,7 @@ dependencies:
   version: 1.0.13
   repository: https://ownyourio.github.io/SpencersLab/
 - name: zigbee2mqtt
-  version: 1.0.39
+  version: 1.0.40
   repository: https://ownyourio.github.io/SpencersLab/
 # TODO: MQTT chart
 # TODO: Use the better charts.
@@ -24,19 +24,19 @@ dependencies:
 #  version: 19.5.2
 #  repository: https://charts.truecharts.org
 - name: hyperion
-  version: 1.0.13
+  version: 1.0.14
   repository: https://ownyourio.github.io/SpencersLab/
 - name: ledfx
-  version: 1.0.9
+  version: 1.0.10
   repository: https://ownyourio.github.io/SpencersLab/
 - name: logitech-media-server
-  version: 1.0.14
+  version: 1.0.15
   repository: https://ownyourio.github.io/SpencersLab/
 #- name: music-assistant
 #  version: 1.0.14
 #  repository: https://ownyourio.github.io/SpencersLab/
 - name: snapcast
-  version: 1.0.4
+  version: 1.0.5
   repository: https://ownyourio.github.io/SpencersLab/
 #- name: paperless
 #  version: 1.0.2
