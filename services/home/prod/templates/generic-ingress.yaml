@@ -1,8 +1,9 @@
 {{- range $name, $config := .Values.ingress.subdomains }}
-{{- if $config.clusterBase }}
-{{- $subDomain := printf "%s.%s" $name $.Values.clusterName }}
+{{- $subDomain := "" }} {{/* Initialize the variable */}}
+{{- if $config.clusterBase | default false}}
+{{- $subDomain = printf "%s.%s" $name $.Values.clusterName }}
 {{- else }}
-{{- $subDomain := $name }}
+{{- $subDomain = $name }}
 {{- end}}
 ---
 apiVersion: networking.k8s.io/v1
