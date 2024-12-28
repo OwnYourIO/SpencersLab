@@ -1,20 +1,14 @@
 package com.keycloaktotraefik.logineventlistener.provider;
 
-import java.util.Map;
-import java.util.Map.Entry;
-// SPI
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.events.EventType;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.email.EmailException;
-import org.keycloak.email.EmailSenderProvider;
-import org.keycloak.email.EmailSenderProviderFactory;
 import org.keycloak.email.EmailTemplateProvider;
 
 // File handling.
@@ -24,14 +18,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class LoginEventListenerProvider implements EventListenerProvider {
     private final KeycloakSession session;
@@ -237,15 +234,18 @@ public class LoginEventListenerProvider implements EventListenerProvider {
             emailAttributes.put("timestamp",
                     LocalDateTime.now().format(TIMESTAMP_FORMATTER));
 
-            // Get the email template provider
-            EmailTemplateProvider emailProvider = session.getProvider(EmailTemplateProvider.class).setRealm(realm);
-
             // Retrieve all users in the group
             Stream<UserModel> adminUsers = session.users().getGroupMembersStream(realm, adminGroup);
-            adminUsers.forEach(adminUser -> {
-                // Send email to each user
-                emailProvider.setUser(adminUser);
+            adminUsers.forEach(adminUser -> { // Send email to each user
+                try {
+                    String subject = "New IP Login Notification";
+                    String templateName = "new-ip-login.ftl";
 
+                    EmailTemplateProvider emailTemplate = session.getProvider(EmailTemplateProvider.class,
+                            "keycloak-to-traefik");
+                    emailTemplate.setRealm(realm)
+                            .setUser(adminUser)
+                            .send(subject, templateName, emailAttributes);
 
                 } catch (EmailException e) {
                     e.printStackTrace();
