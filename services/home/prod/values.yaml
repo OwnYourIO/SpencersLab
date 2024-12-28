@@ -347,6 +347,8 @@ wekan:
       value: "mongodb://home-mongodb:27017"
     - name: "DEBUG"
       value: "true"
+    - name: "ROOT_URL"
+      value: "boards2.{{ $.Values.domain }}"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
