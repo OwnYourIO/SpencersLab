@@ -85,11 +85,12 @@ proxy:
       target: pinchflat
     stream:
       target: metube
+
     cluster:
       clusterBase: true
       service: base-argocd-server
       port: 80
-    traefik.home-lab:
+    traefik:
       clusterBase: true
       namespace: kube-system
       service: traefik
