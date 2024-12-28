@@ -82,20 +82,20 @@ traefik:
               fi
             else
               cat << 'EOF' > $FILE
-            http:
-              middlewares:
-                user-allowlist:
-                  ipAllowList:
-                    sourceRange: &allowlist
-                      - "10.0.0.0/16"
-                      # START ALLOWLIST AUTOMATION
-                      # END ALLOWLIST AUTOMATION
-                user-allowlist-remote:
-                  ipAllowList:
-                    ipStrategy:
-                      depth: 1
-                    sourceRange: *allowlist
-            EOF
+          http:
+            middlewares:
+              user-allowlist:
+                ipAllowList:
+                  sourceRange: &allowlist
+                    - "10.0.0.0/16"
+                    # START ALLOWLIST AUTOMATION
+                    # END ALLOWLIST AUTOMATION
+              user-allowlist-remote:
+                ipAllowList:
+                  ipStrategy:
+                    depth: 1
+                  sourceRange: *allowlist
+          EOF
             fi
             sleep 1
           done
