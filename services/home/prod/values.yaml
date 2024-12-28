@@ -1,5 +1,4 @@
 bitwardenIds:
-  argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   wekan-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
 seaweedfs-csi-driver:

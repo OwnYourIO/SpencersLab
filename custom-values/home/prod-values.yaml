@@ -1,5 +1,4 @@
 bitwardenIds:
-  argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
   wekan-sso-secret: 68ce2bae-c00f-4293-8325-b23000060637
 
 seaweedfs-csi-driver:
