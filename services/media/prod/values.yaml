@@ -71,79 +71,48 @@ ingress:
     #  service: media-unpackerr
     #  port: ????
 
-#jellyfin:
-#  app-template:
-#    controllers:
-#      jellyfin:
-#        pod:
-#          securityContext:
-#            runAsNonRoot: true
-#            runAsUser: 568
-#            # Using gid 2000 as "shared" group.
-#            runAsGroup: 568
-#            fsGroup: 568
-#            fsGroupChangePolicy: OnRootMismatch
-#            seccompProfile: { type: RuntimeDefault }
-#            supplementalGroups:
-#              - 44 # video
-#              - 109 # render
-#              - 105
-#              - 568
-#              - 1000
-#              - 2000
-#        containers:
-#          app:
-#            env:
-#              JELLYFIN_PublishedServerUrl: https://jellyfin.spencerslab.com
-#              DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
-#              JELLYFIN_FFmpeg__probesize: "50000000"
-#              JELLYFIN_FFmpeg__analyzeduration: "50000000"
-#    service:
-#      app:
-#        controller: jellyfin
-#        type: LoadBalancer
-#        ports:
-#          http:
-#            port: 8096
-#    ingress:
-#      app:
-#        hosts:
-#          - host: &host "jellyfin.spencerslab.com"
-#            paths:
-#              - path: /
-#                service:
-#                  identifier: app
-#                  port: http
-#        tls:
-#          - hosts:
-#              - *host
-#            secretName: wildcard-cert
-
 jellyfin:
-  env:
-    - name: TZ
-      value: America/Denver
-
-  # Additional volumes on the output Deployment definition.
-  volumes:
-    - name: jellyfin-config
-      persistentVolumeClaim:
-        claimName: jellyfin
-    - name: jellyfin-share
-      persistentVolumeClaim:
-        claimName: jellyfin-share
-    - name: media
-      persistentVolumeClaim:
-        claimName: media
-
-  # Additional volumeMounts on the output Deployment definition.
-  volumeMounts:
-    - name: jellyfin-config
-      mountPath: "/config"
-    - name: jellyfin-share
-      mountPath: "/share"
-    - name: media
-      mountPath: /media/
+  app-template:
+    controllers:
+      jellyfin:
+        pod:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 568
+            # Using gid 2000 as "shared" group.
+            runAsGroup: 2000
+            fsGroup: 568
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
+            supplementalGroups:
+              - 44 # video
+              - 109 # render
+              - 105
+              - 568
+              - 1000
+              - 2000
+        containers:
+          app:
+            env:
+              TZ: America/Denver
+              #JELLYFIN_PublishedServerUrl: https://jellyfin.$.Values.domain
+              #DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
+              #JELLYFIN_FFmpeg__probesize: "50000000"
+              #JELLYFIN_FFmpeg__analyzeduration: "50000000"
+    service:
+      app:
+        controller: jellyfin
+        type: ClusterIP
+        ports:
+          http:
+            port: 8096
+    persistence:
+      config:
+        existingClaim: jellyfin
+      share:
+        existingClaim: jellyfin-share
+      media:
+        existingClaim: media
 
 jellyseerr:
   env:
