@@ -1,9 +1,12 @@
 bitwardenIds:
-  argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
-  wekan-sso-secret: 68ce2bae-c00f-4293-8325-b23000060637
+  argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  wekan-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
 seaweedfs-csi-driver:
-  seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
+  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
 
 ingress:
   subdomains:
@@ -51,6 +54,24 @@ ingress:
       #serviceName: hyperion
       service: home-hyperion
       port: 8090
+
+# Have to split wekan into 2 pods to handle 2 urls. 
+wekan:
+  root_url: OVERRIDE_VIA_CUSTOM_VALUES
+  env:
+    - name: "MONGO_URL"
+      value: "mongodb://home-mongodb:27017"
+  extraEnvFrom: |
+    - secretRef:
+        name: "wekan-sso"
+boards:
+  root_url: OVERRIDE_VIA_CUSTOM_VALUES
+  env:
+    - name: "MONGO_URL"
+      value: "mongodb://home-mongodb:27017"
+  extraEnvFrom: |
+    - secretRef:
+        name: "wekan-sso"
 
 generic-device-plugin:
   app-template:
@@ -339,16 +360,3 @@ paperless:
         existingClaim: paperless
         globalMounts:
         - path: /paperless
-
-wekan:
-  root_url: https://wekan.spencerslab.com
-  env:
-    - name: "MONGO_URL"
-      value: "mongodb://home-mongodb:27017"
-    - name: "DEBUG"
-      value: "true"
-    - name: "ROOT_URL"
-      value: "boards2.{{ $.Values.domain }}"
-  extraEnvFrom: |
-    - secretRef:
-        name: "wekan-sso"
