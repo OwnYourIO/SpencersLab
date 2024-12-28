@@ -37,7 +37,6 @@ spec:
                   number: 443
         {{- end }}
 {{- end }}
-{{- end }}
 
 --- 
 apiVersion: traefik.io/v1alpha1
