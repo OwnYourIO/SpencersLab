@@ -82,3 +82,4 @@ app-template:
   persistence:
     config:
       existingClaim: zigbee2mqtt
+
