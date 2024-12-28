@@ -4,7 +4,7 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
-proxy:
+ingress:
   subdomains:
     charts: &charts
       service: monitoring-grafana

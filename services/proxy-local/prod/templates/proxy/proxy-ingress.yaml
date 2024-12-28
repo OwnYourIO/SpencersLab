@@ -1,5 +1,9 @@
 {{- range $name, $config := .Values.proxy.subdomains }}
+{{- if $config.clusterBase }}
 {{- $subDomain := printf "%s.%s" $name $.Values.clusterName }}
+{{- else }}
+{{- $subDomain := $name }}
+{{- end}}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
