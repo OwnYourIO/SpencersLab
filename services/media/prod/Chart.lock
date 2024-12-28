@@ -5,9 +5,9 @@ dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-- name: jellyfin
-  repository: https://bubylou.github.io/Arr-Stack
-  version: 0.2.4
+- name: app-template
+  repository: https://bjw-s.github.io/helm-charts/
+  version: 3.5.1
 - name: jellyseerr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.2.1
@@ -29,5 +29,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
-digest: sha256:7c06472d97539d9af01dee3923d049a4eac70b0b54ac9a92b472e4def3d95641
-generated: "2024-12-25T19:56:03.78096506-07:00"
+digest: sha256:0d4850b554a599eadfd0992d0da3817c38ce68b20fa05825eab6caac2e4b2877
+generated: "2024-12-27T17:15:39.799342483-07:00"
