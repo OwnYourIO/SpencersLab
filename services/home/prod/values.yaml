@@ -54,6 +54,16 @@ ingress:
       service: home-hyperion
       port: 8090
 
+    cluster:
+      clusterBase: true
+      service: base-argocd-server
+      port: 80
+    traefik:
+      clusterBase: true
+      namespace: kube-system
+      service: traefik
+      port: 80
+
 # Have to split wekan into 2 pods to handle 2 urls. 
 wekan:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES

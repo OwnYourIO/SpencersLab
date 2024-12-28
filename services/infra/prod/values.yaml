@@ -1,7 +1,6 @@
 
 bitwardenIds:
   keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
-  argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
   smtp: 876515bc-b0d6-43df-b9fa-b0dd000a601e
   gitea: 2ca2457b-dc62-413a-af99-b1f8017ef7cd
   gitea-admin: f7b628ec-2544-4c28-a476-b1a501487d99
@@ -38,6 +37,16 @@ ingress:
     #  serviceName: forgejo
     #  service: infra-forgeo
     #  port: ????
+
+    cluster:
+      clusterBase: true
+      service: base-argocd-server
+      port: 80
+    traefik:
+      clusterBase: true
+      namespace: kube-system
+      service: traefik
+      port: 80
 
 prometheus:
   serviceMonitorSelectorNilUsesHelmValues: false

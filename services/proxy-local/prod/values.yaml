@@ -85,6 +85,15 @@ proxy:
       target: pinchflat
     stream:
       target: metube
+    cluster:
+      clusterBase: true
+      service: base-argocd-server
+      port: 80
+    traefik.home-lab:
+      clusterBase: true
+      namespace: kube-system
+      service: traefik
+      port: 80
 
 external-dns-external:
   interval: 2m
