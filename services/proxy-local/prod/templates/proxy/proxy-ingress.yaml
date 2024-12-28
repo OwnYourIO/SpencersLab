@@ -53,5 +53,5 @@ spec:
                 name: "{{ $name }}-service"
                 {{- end }}
                 port:
-                  number: 443
+                  number: {{ $config.port | default 443 }}
 {{- end }}
