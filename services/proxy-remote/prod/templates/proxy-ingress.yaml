@@ -34,7 +34,7 @@ spec:
                 name: proxy-service
                 {{- end }}
                 port:
-                  number: 443
+                  number: {{ $config.port | default 443 }}
         {{- end }}
 {{- end }}
 
