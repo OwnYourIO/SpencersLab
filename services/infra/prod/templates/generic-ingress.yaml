@@ -1,4 +1,5 @@
 {{- range $name, $config := .Values.ingress.subdomains }}
+{{- $subDomain := "" }} {{/* Initialize the variable */}}
 {{- if $config.clusterBase }}
 {{- $subDomain := printf "%s.%s" $name $.Values.clusterName }}
 {{- else }}
