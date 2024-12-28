@@ -13,10 +13,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "{{ $name }}.{{ $.Values.domain }}"
+      - "{{ $subDomain }}.{{ $.Values.domain }}"
       secretName: {{ $name }}-cert
   rules:
-    - host: "{{ $name }}.{{ $.Values.domain }}"
+    - host: "{{ $subDomain }}.{{ $.Values.domain }}"
       http:
         paths:
         {{- range $path := default (list "/") $config.paths }}

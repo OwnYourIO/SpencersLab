@@ -17,10 +17,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "{{ $name }}.{{ $.Values.domain }}"
+      - "{{ $subDomain }}.{{ $.Values.domain }}"
       secretName: wildcard-cert
   rules:
-    - host: "{{ $name }}.{{ $.Values.domain }}"
+    - host: "{{ $subDomain }}.{{ $.Values.domain }}"
       http:
         paths:
           - path: /

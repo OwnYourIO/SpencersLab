@@ -1,10 +1,12 @@
 
 bitwardenIds:
-  keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
-  smtp: 876515bc-b0d6-43df-b9fa-b0dd000a601e
-  gitea: 2ca2457b-dc62-413a-af99-b1f8017ef7cd
-  gitea-admin: f7b628ec-2544-4c28-a476-b1a501487d99
+  keycloak: OVERRIDE_VIA_CUSTOM_VALUES
+  smtp: OVERRIDE_VIA_CUSTOM_VALUES
+  gitea: OVERRIDE_VIA_CUSTOM_VALUES
+  gitea-admin: OVERRIDE_VIA_CUSTOM_VALUES
 
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
 
 ingress:
   subdomains:
