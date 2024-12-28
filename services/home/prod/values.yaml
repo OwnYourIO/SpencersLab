@@ -24,7 +24,7 @@ ingress:
       serviceName: zigbee2mqtt
       service: home-zigbee2mqtt
       port: 8080
-    
+
     #mqtt:
     #  serviceName: mosquitto
     #  service: home-mosquitto
@@ -44,7 +44,7 @@ ingress:
       serviceName: lms
       service: home-logitech-media-server
       port: 9000
-    
+
     #music-assistant:
     #  serviceName: lms
     #  service: home-music-assistant
