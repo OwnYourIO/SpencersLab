@@ -63,20 +63,6 @@ app-template:
         roc-control:
           port: 10003
 
-  ingress:
-    snapserver:
-      hosts:
-        - host: &host "snapserver.local"
-          paths: &paths
-            - path: /
-              service:
-                identifier: snapcast-http
-                port: websocket
-      tls:
-        - hosts:
-            - *host
-          secretName: wildcard-cert
-
   configMaps:
     snapserver-conf:
       data:
