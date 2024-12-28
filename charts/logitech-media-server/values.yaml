@@ -69,22 +69,6 @@ app-template:
           port: 3483
           protocol: UDP
 
-  ingress:
-    logitech-media-server:
-      #annotations:
-      hosts:
-        - host: &host "logitech-media-server.local"
-          paths: &paths
-            - path: /
-              service:
-                identifier: logitech-media-server
-                port: http
-        - host: &customHost logitech-media-server.local
-          paths: *paths
-      tls:
-        - hosts:
-            - *host
-            - *customHost
   persistence:
     config:
       existingClaim: lms-config

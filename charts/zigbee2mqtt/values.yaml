@@ -79,24 +79,6 @@ app-template:
       ports:
         http:
           port: *port
-  ingress:
-    zigbee2mqtt:
-      annotations:
-        hajimari.io/icon: mdi:zigbee
-        hajimari.io/url: https://zigbee2mqtt.local
-      hosts:
-        - host: &host "zigbee2mqtt.local"
-          paths: &paths
-            - path: /
-              service:
-                identifier: zigbee2mqtt
-                port: http
-        - host: &customHost zigbee2mqtt.local
-          paths: *paths
-      tls:
-        - hosts:
-            - *host
-            - *customHost
   persistence:
     config:
       existingClaim: zigbee2mqtt

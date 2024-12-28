@@ -62,22 +62,6 @@ app-template:
       ports:
         http:
           port: *port 
-  ingress:
-    ledfx:
-      #annotations:
-      hosts:
-        - host: &host "ledfx.local"
-          paths: &paths
-            - path: /
-              service:
-                identifier: ledfx
-                port: http
-        - host: &customHost ledfx.local
-          paths: *paths
-      tls:
-        - hosts:
-            - *host
-            - *customHost
   persistence:
     config:
       existingClaim: ledfx

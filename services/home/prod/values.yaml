@@ -28,7 +28,7 @@ ingress:
     #mqtt:
     #  serviceName: mosquitto
     #  service: home-mosquitto
-    #  port: 
+    #  port:
 
     audio-devices:
       serviceName: snapserver
@@ -64,6 +64,8 @@ wekan:
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
+  ingress:
+    enabled: false
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
   env:
@@ -72,6 +74,8 @@ boards:
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
+  ingress:
+    enabled: false
 
 generic-device-plugin:
   app-template:

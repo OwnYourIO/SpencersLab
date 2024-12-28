@@ -53,22 +53,6 @@ app-template:
       ports:
         http:
           port: 8090
-  ingress:
-    hyperion:
-      #annotations:
-      hosts:
-        - host: &host "hyperion.local"
-          paths: &paths
-            - path: /
-              service:
-                identifier: hyperion
-                port: http
-        - host: &customHost hyperion.local
-          paths: *paths
-      tls:
-        - hosts:
-            - *host
-            - *customHost
   persistence:
     config:
       existingClaim: hyperion
