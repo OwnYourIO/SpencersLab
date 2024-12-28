@@ -78,13 +78,11 @@ jellyfin:
     jellyfin:
       pod:
         securityContext:
-          runAsNonRoot: true
           runAsUser: 1000
           # Using gid 2000 as "shared" group.
           runAsGroup: 2000
           fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
-          seccompProfile: { type: RuntimeDefault }
           supplementalGroups:
             - 44 # video
             - 109 # render
