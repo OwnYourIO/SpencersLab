@@ -45,8 +45,8 @@ spec:
             pathType: Prefix
             backend:
               service:
-                {{- if $name.service }}
-                name: "{{ $name.service }}"
+                {{- if $config.service }}
+                name: "{{ $config.service }}"
                 {{- else }}
                 name: "{{ $name }}-service"
                 {{- end }}
