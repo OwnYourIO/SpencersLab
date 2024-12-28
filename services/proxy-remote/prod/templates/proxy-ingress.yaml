@@ -32,7 +32,7 @@ spec:
                 name: "{{ $config.service }}"
                 {{- else }}
                 name: proxy-service
-                {{- else }}
+                {{- end }}
                 port:
                   number: 443
         {{- end }}
