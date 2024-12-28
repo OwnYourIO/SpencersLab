@@ -28,7 +28,11 @@ spec:
             pathType: Prefix
             backend:
               service:
+                {{- if $config.service }}
+                name: "{{ $config.service }}"
+                {{- else }}
                 name: proxy-service
+                {{- else }}
                 port:
                   number: 443
         {{- end }}

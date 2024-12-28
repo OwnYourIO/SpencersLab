@@ -29,7 +29,9 @@ metadata:
       $.Values.proxy.middlewares.userAuth 
       | join "," }}
     {{- end }}
+    {{- if not $config.clusterBase }}
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
+    {{- end }}
   labels:
     external-dns: "enabled"
 spec:
