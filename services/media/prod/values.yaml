@@ -79,7 +79,7 @@ jellyfin:
       pod:
         securityContext:
           runAsNonRoot: true
-          runAsUser: 568
+          runAsUser: 1000
           # Using gid 2000 as "shared" group.
           runAsGroup: 2000
           fsGroup: 568
