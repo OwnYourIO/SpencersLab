@@ -97,6 +97,8 @@ jellyfin:
             tag: 10.10.3@sha256:17c3a8d9dddb97789b5f37112840ebf96566442c14d4754193a6c2eb154bc221
           env:
             TZ: America/Denver
+            JELLYFIN_DATA_DIR: /config/data
+            JELLYFIN_CONFIG_DIR: /config
             #JELLYFIN_PublishedServerUrl: https://jellyfin.$.Values.domain
             #DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
             #JELLYFIN_FFmpeg__probesize: "50000000"
