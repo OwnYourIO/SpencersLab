@@ -180,7 +180,7 @@ qbittorrent:
         install-vuetorrent:
           image: 
             repository: busybox
-            tag: 1.36.1@sha256:c3839dd800b9eb7603340509769c43e146a74c63dca3045a8e7dc8ee07e53966
+            tag: 1.37.0@sha256:2919d0172f7524b2d8df9e50066a682669e6d170ac0f6a49676d54358fe970b5
           command:
             - "/bin/sh"
             - -c
