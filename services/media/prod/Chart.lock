@@ -19,13 +19,13 @@ dependencies:
   version: 0.3.3
 - name: radarr
   repository: https://bubylou.github.io/Arr-Stack
-  version: 0.3.2
+  version: 0.3.3
 - name: readarr
   repository: https://bubylou.github.io/Arr-Stack
-  version: 0.3.2
+  version: 0.3.3
 - name: sonarr
   repository: https://bubylou.github.io/Arr-Stack
-  version: 0.3.1
+  version: 0.3.2
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.5.1
