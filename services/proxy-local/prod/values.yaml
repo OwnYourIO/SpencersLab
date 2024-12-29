@@ -273,7 +273,7 @@ pinchflat:
         app:
           image:
             repository: ghcr.io/kieraneglin/pinchflat
-            tag: v2024.12.10
+            tag: v2024.12.29
           env:
             TZ: America/Denver
             TZ_DATA_DIR: /tmp/elixir_tz_data
