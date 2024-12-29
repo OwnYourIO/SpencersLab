@@ -134,8 +134,9 @@ keycloakx:
       tag: 25.0.2
 
     command:
-      - "/bin/sleep"
-      - "2000"
+      - "/opt/keycloak/bin/kc.sh"
+      - "--verbose"
+      - "start"
     
     http:
       relativePath: /
@@ -242,16 +243,15 @@ keycloakx:
       port: http
       path: /realms/SpencersLab/metrics
 
-    # TODO: Add DB.
-    #database:
-    #  vendor: "postgres"
-    #  hostname: "apps.postgresql.${INTERNAL_DOMAIN}"
-    #  port: "5432"
-    #  database: "keycloak"
-    #  user: "keycloak"
-    #  existingSecret: "keycloak-db"
-    #dbchecker:
-    #  enabled: true
+    database:
+      vendor: "postgres"
+      hostname: "infra-keycloakx-postgresql"
+      port: "5432"
+      database: "keycloak"
+      user: "keycloak"
+      existingSecret: "keycloak-db"
+    dbchecker:
+      enabled: true
 
 generic-device-plugin:
   app-template:
