@@ -136,7 +136,19 @@ keycloakx:
     command:
       - "/opt/keycloak/bin/kc.sh"
       - "--verbose"
-      - "start"
+      - "start-dev"
+      #- "start"
+
+    #database:
+    #  vendor: "postgres"
+    #  hostname: "infra-keycloakx-postgresql"
+    #  port: "5432"
+    #  database: "keycloak"
+    #  user: "keycloak"
+    #  existingSecret: "keycloak-db"
+    #dbchecker:
+    #  enabled: true
+
     
     http:
       relativePath: /
@@ -242,16 +254,6 @@ keycloakx:
         release: monitoring-agent
       port: http
       path: /realms/SpencersLab/metrics
-
-    database:
-      vendor: "postgres"
-      hostname: "infra-keycloakx-postgresql"
-      port: "5432"
-      database: "keycloak"
-      user: "keycloak"
-      existingSecret: "keycloak-db"
-    dbchecker:
-      enabled: true
 
 generic-device-plugin:
   app-template:
