@@ -4,9 +4,9 @@ dependencies:
   version: 4.0.0
 - name: gitea
   repository: https://dl.gitea.com/charts/
-  version: 10.4.1
+  version: 10.6.0
 - name: backups-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.1
-digest: sha256:a4d37976d98026602f255db82c653612dc16c40495b953868a976b3ab50d8c6a
-generated: "2024-09-29T16:31:07.082646569Z"
+digest: sha256:2246fe1a22d709735d1399aabcf3072c0b283867017c0121b4b4df1e5380a57f
+generated: "2024-12-29T20:48:08.72779689Z"
