@@ -20,11 +20,11 @@ proxy:
   subdomains:
     # Infrastructure
     login:
-      middlewares: "kube-system-crowdsec@kubernetescrd,default-rewrite-password-with-char-req@kubernetescrd"
+      middlewares: "kube-system-crowdsec@kubernetescrd,default-password-req-rewrite@kubernetescrd"
       ingressRoute:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"
-          - "default-rewrite-password-with-char-req@kubernetescrd"
+          - "default-password-req-rewrite@kubernetescrd"
 
     registration:
       target: login
