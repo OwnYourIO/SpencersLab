@@ -99,6 +99,7 @@ jobs:
     concurrency:
       # Only allow 1 to run at a time so that they get bumped correctly. 
       group: ${{ github.ref }}
+      # OMG there is no way to stop canceling jobs: https://github.com/orgs/community/discussions/12835
 
     steps:
       - name: Checkout
@@ -119,6 +120,8 @@ jobs:
           app_version: false
           level: patch
 
+      # TODO: Multi chart building breaks here because the commits step on each other.
+      # I think maybe the trick might be to not do it as a matrix but instead trim [] and loop?
       - name: Add & Commit
         uses: EndBug/add-and-commit@v9.1.4
 
