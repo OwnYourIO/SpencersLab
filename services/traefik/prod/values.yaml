@@ -124,7 +124,7 @@ traefik:
         moduleName: "github.com/m-riedel/traefik-plugin-redirect-on-status"
         version: "v1.0.1"
       rewrite-password-with-char-req:
-        modulename: "github.com/traefik/plugin-rewritebody"
+        moduleName: "github.com/traefik/plugin-rewritebody"
         version: "v0.3.1"
       theme-park:
         moduleName: "github.com/packruler/traefik-themepark"
