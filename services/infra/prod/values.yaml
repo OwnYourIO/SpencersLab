@@ -134,9 +134,8 @@ keycloakx:
       tag: 25.0.2
 
     command:
-      - "/opt/keycloak/bin/kc.sh"
-      - "--verbose"
-      - "start-dev"
+      - "/bin/sleep"
+      - "2000"
     
     http:
       relativePath: /
