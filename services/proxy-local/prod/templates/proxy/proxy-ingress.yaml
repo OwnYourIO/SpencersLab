@@ -10,7 +10,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: "{{ $subDomain | replace "." "-" }}-ingress"# 
-  namespace: default
+  namespace: '{{ $config.namespace | default "default" }}'
   annotations:
     # If middlewares is set manually, use that.
     {{- if $config.middlewares }}
