@@ -13,7 +13,7 @@ dependencies:
   version: 5.0.0
 - name: 389ds
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.3
+  version: 1.0.6
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.7

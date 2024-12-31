@@ -13,7 +13,7 @@ dependencies:
   version: 0.1.1
   repository: https://lmatfy.github.io/charts
 - name: generic-device-plugin
-  version: 1.0.13
+  version: 1.0.16
   repository: https://ownyourio.github.io/SpencersLab/
 - name: zigbee2mqtt
   version: 1.0.41
@@ -27,10 +27,10 @@ dependencies:
   version: 1.0.14
   repository: https://ownyourio.github.io/SpencersLab/
 - name: ledfx
-  version: 1.0.12
+  version: 1.0.13
   repository: https://ownyourio.github.io/SpencersLab/
 - name: logitech-media-server
-  version: 1.0.17
+  version: 1.0.18
   repository: https://ownyourio.github.io/SpencersLab/
 #- name: music-assistant
 #  version: 1.0.14
