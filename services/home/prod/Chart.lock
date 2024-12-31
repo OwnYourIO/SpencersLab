@@ -16,7 +16,7 @@ dependencies:
   version: 1.0.42
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.14
+  version: 1.0.15
 - name: ledfx
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.13
