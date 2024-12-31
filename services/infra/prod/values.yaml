@@ -56,11 +56,15 @@ prometheus:
 389ds:
   bitwardenIds:
     389ds: f7b628ec-2544-4c28-a476-b1a501487d99
+
   app-template:
     controllers:
       389ds:
         containers:
           main:
+            image:
+              repository: 389ds/dirsrv
+              tag: 3.1
             env:
               DS_SUFFIX_NAME: dc=spencerslab,dc=com
 
@@ -788,6 +792,9 @@ samba:
       samba:
         containers:
           main:
+            image:
+              repository: ghcr.io/crazy-max/samba
+              tag: 4.19.9@sha256:270a8dcaeb7be73c3a63e2d7cc966cfdc6ca70b418c59e4af406bee6ea41ded7
             env:
               TZ: America/Denver
               SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16"

@@ -12,8 +12,9 @@ app-template:
       containers:
         main:
           image:
-            repository: 389ds/dirsrv
-            tag: 3.1
+            # This is kept up to date in service/infra.
+            #repository: 389ds/dirsrv
+            #tag: 3.1
           env:
             DS_DM_PASSWORD: 
               secretKeyRef:

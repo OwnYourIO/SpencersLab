@@ -6,7 +6,27 @@
   "ignoreTests": true,
   "packageRules": [
     {
-      "matchPackageNames": ["traefik", "keycloakopenid", "keycloakx", "ghcr.io/linuxserver/openssh-server"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automergeSchedule": "[after 1:00am, before 6:00am]",
+      "matchPackageNames": ["traefik", "keycloakopenid", "keycloakx", "ghcr.io/linuxserver/openssh-server", "crowdsec"],
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "automergeSchedule": "[after 1:00am every tue, before 7:00am every tue]",
+      "matchPackageNames": [
+        "org.keycloak:keycloak-parent", 
+        "jellyseerr", 
+        "lidarr", 
+        "radarr", 
+        "readarr", 
+        "sonarr", 
+        "ghcr.io/advplyr/audiobookshelf", 
+        "ghcr.io/kieraneglin/pinchflat",
+        "ghcr.io/onedr0p/qbittorrent",
+        "ghcr.io/music-assistant/server",
+        "alpine"
+    ],
       "automerge": true
     }
   ]

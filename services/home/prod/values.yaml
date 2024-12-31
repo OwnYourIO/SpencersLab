@@ -90,6 +90,12 @@ boards:
 
 generic-device-plugin:
   app-template:
+    controllers:
+      containers:
+        main:
+          image:
+            repository:  ghcr.io/squat/generic-device-plugin
+            tag: 36bfc606bba2064de6ede0ff2764cbb52edff70d
     configMaps:
       config:
         enabled: true

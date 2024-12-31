@@ -13,9 +13,10 @@ app-template:
             - /config/devices.yaml
             - --log-level
             - debug
-          image:
-            repository:  ghcr.io/squat/generic-device-plugin
-            tag: 36bfc606bba2064de6ede0ff2764cbb52edff70d
+          # This is kept up to date in service/infra.
+          #image:
+          #  repository:  ghcr.io/squat/generic-device-plugin
+          #  tag: 36bfc606bba2064de6ede0ff2764cbb52edff70d
           env:
             DOMAIN: 'squat.ai'
           resources:

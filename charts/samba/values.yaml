@@ -10,8 +10,9 @@ app-template:
       containers:
         main:
           image:
-            repository: ghcr.io/crazy-max/samba
-            tag: 4.19.9@sha256:270a8dcaeb7be73c3a63e2d7cc966cfdc6ca70b418c59e4af406bee6ea41ded7
+            # This is kept up to date in service/infra.
+            #repository: ghcr.io/crazy-max/samba
+            #tag: 4.19.9@sha256:270a8dcaeb7be73c3a63e2d7cc966cfdc6ca70b418c59e4af406bee6ea41ded7
           env:
             TZ: Etc/Utc
             SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/8 192.168.0.0/16"
