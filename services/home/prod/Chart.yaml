@@ -16,7 +16,7 @@ dependencies:
   version: 1.0.16
   repository: https://ownyourio.github.io/SpencersLab/
 - name: zigbee2mqtt
-  version: 1.0.41
+  version: 1.0.42
   repository: https://ownyourio.github.io/SpencersLab/
 # TODO: MQTT chart
 # TODO: Use the better charts.
@@ -36,7 +36,7 @@ dependencies:
 #  version: 1.0.14
 #  repository: https://ownyourio.github.io/SpencersLab/
 - name: snapcast
-  version: 1.0.5
+  version: 1.0.6
   repository: https://ownyourio.github.io/SpencersLab/
 #- name: paperless
 #  version: 1.0.2
