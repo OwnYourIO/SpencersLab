@@ -19,6 +19,6 @@ dependencies:
   version: 1.0.3
   repository: https://ownyourio.github.io/SpencersLab/
 - name: samba
-  version: 1.0.3
+  version: 1.0.7
   repository: https://ownyourio.github.io/SpencersLab/
   
