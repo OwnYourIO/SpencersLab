@@ -3,15 +3,20 @@
   "extends": [
     "config:recommended"
   ],  
+  "timezone": "America/Denver",
   "ignoreTests": true,
   "packageRules": [
     {
+      "description": "Internet facing services.",
       "matchUpdateTypes": ["minor", "patch"],
       "automergeSchedule": "[after 1:00am, before 6:00am]",
       "matchPackageNames": ["traefik", "keycloakopenid", "keycloakx", "ghcr.io/linuxserver/openssh-server", "crowdsec"],
+      "lockFileMaintenance": { "enabled": true },
       "automerge": true
+
     },
     {
+      "description": "Non-critical services",
       "matchUpdateTypes": ["minor", "patch"],
       "automergeSchedule": "[after 1:00am every tue, before 7:00am every tue]",
       "matchPackageNames": [
@@ -26,7 +31,8 @@
         "ghcr.io/onedr0p/qbittorrent",
         "ghcr.io/music-assistant/server",
         "alpine"
-    ],
+      ],
+      "lockFileMaintenance": { "enabled": true },
       "automerge": true
     }
   ]
