@@ -8,6 +8,6 @@ dependencies:
     version: 1.1.18
     repository: https://ownyourio.github.io/SpencersLab/
   - name: app-template
-    version: 3.5.1
+    version: 3.6.0
     repository: https://bjw-s.github.io/helm-charts/
     alias: sshd
