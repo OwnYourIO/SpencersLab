@@ -19,13 +19,13 @@ dependencies:
   version: 1.0.14
 - name: ledfx
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.12
+  version: 1.0.13
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.17
+  version: 1.0.18
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.5
+  version: 1.0.6
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.75.0
