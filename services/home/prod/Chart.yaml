@@ -30,7 +30,7 @@ dependencies:
   version: 1.0.12
   repository: https://ownyourio.github.io/SpencersLab/
 - name: logitech-media-server
-  version: 1.0.17
+  version: 1.0.18
   repository: https://ownyourio.github.io/SpencersLab/
 #- name: music-assistant
 #  version: 1.0.14
