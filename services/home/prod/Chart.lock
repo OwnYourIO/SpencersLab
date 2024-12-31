@@ -28,9 +28,9 @@ dependencies:
   version: 1.0.6
 - name: wekan
   repository: https://wekan.github.io/charts/
-  version: 7.75.0
+  version: 7.77.0
 - name: wekan
   repository: https://wekan.github.io/charts/
-  version: 7.75.0
-digest: sha256:28ec1c8b07c25d2e9be2888c42ee1b7775c18021539def12adaca6042e022df2
-generated: "2024-12-31T15:01:33.03966579Z"
+  version: 7.77.0
+digest: sha256:bfffcedd3b5de05dc0c2b5a8dc1caabcf6932a2a6eaa99ea0192a69e225b84d0
+generated: "2024-12-31T15:03:30.282111718Z"
