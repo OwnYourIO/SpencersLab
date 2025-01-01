@@ -14,7 +14,7 @@ spec:
     path: manifests
   destination:
     server: https://kubernetes.default.svc
-    namespace: system-upgrade
+    namespace: default
   syncPolicy:
     automated:
       prune: true
@@ -52,6 +52,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: system-upgrade
-  namespace: system-upgrade
+  namespace: default
 ...
 {{ end }}
