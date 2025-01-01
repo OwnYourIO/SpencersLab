@@ -1,4 +1,3 @@
-{{ if .Values.autoUpdateK3s }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -54,4 +53,3 @@ subjects:
   name: system-upgrade
   namespace: system-upgrade
 ...
-{{ end }}
