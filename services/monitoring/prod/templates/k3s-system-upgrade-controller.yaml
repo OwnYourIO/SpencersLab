@@ -10,7 +10,7 @@ spec:
     repoURL: https://github.com/rancher/system-upgrade-controller
     # TODO: Make sure this is getting updated. Originally was v0.14.2
     targetRevision: v0.14.2
-    path: manifests
+    path: manifests/system-upgrade-controller.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: system-upgrade
