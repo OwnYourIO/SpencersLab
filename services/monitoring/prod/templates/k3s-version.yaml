@@ -5,8 +5,6 @@ kind: Plan
 metadata:
   name: server-plan
   namespace: system-upgrade
-  labels:
-    argocd.argoproj.io/depends-on: "customresourcedefinition.apiextensions.k8s.io/plans.upgrade.cattle.io"
 spec:
   concurrency: 1
   cordon: true
@@ -28,8 +26,6 @@ kind: Plan
 metadata:
   name: agent-plan
   namespace: system-upgrade
-  labels:
-    argocd.argoproj.io/depends-on: "customresourcedefinition.apiextensions.k8s.io/plans.upgrade.cattle.io"
 spec:
   concurrency: 1
   cordon: true
