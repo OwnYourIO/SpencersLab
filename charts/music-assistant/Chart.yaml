@@ -1,6 +1,6 @@
 apiVersion: v2
 name: music-assistant
-version: 1.0.21
+version: 1.0.22
 appVersion: 1.0.17
 dependencies:
 - name: app-template
