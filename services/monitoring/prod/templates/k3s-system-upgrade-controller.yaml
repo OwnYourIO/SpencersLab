@@ -11,24 +11,6 @@ spec:
     # TODO: Make sure this is getting updated. Originally was v0.14.2
     targetRevision: v0.14.2
     path: manifests
-    helm:
-      jsonPatches:
-      - target:
-          version: v1
-          kind: ClusterRoleBinding
-          name: system-upgrade
-        patch:
-          - op: add
-            path: /subjects/0/namespace
-            value: system-upgrade
-      - target:
-          version: v1
-          kind: ClusterRoleBinding
-          name: system-upgrade-drainer
-        patch:
-          - op: add
-            path: /subjects/0/namespace
-            value: system-upgrade
   destination:
     server: https://kubernetes.default.svc
     namespace: system-upgrade
