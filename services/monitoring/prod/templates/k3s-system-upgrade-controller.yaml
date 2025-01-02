@@ -30,7 +30,6 @@ spec:
   project: default
   source:
     repoURL: https://github.com/rancher/system-upgrade-controller/releases/
-...
     targetRevision: "v0.14.2"
     path: crd.yaml
   destination:
