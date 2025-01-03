@@ -36,6 +36,7 @@
       "automerge": true
     }
   ],
-  "fileMatch": ["appset-base.yaml"], 
-  "regexManagers": []
+  "helm": {
+    "fileMatch": ["appset-base.yaml"]
+  }
 }
