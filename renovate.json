@@ -10,16 +10,11 @@
       "customType": "regex",
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [
-        "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) regUrl=(?<registryUrl>.*?)\\s"
+        "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)\\s"
       ]
     }
   ],
   "packageRules": [
-    {
-      "description": "Custom Helm charts",
-      "matchDatasources": ["helm"],
-      "matchUpdateTypes": ["minor", "patch"]
-    },
     {
       "description": "Internet facing services.",
       "matchUpdateTypes": ["minor", "patch"],
