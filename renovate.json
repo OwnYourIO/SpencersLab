@@ -19,6 +19,11 @@
   ],
   "packageRules": [
     {
+      "argocd": {
+        "fileMatch": ["appset-base\\.yaml$"]
+      }
+    },
+    {
       "description": "Custom Helm charts",
       "matchDatasources": ["helm"],
       "matchUpdateTypes": ["minor", "patch"]
