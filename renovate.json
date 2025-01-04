@@ -16,6 +16,14 @@
   ],
   "packageRules": [
     {
+      "description": "Auto Update Proxies",
+      "matchPaths": ["service/proxy"],
+      "matchPackageNames": ["base", "monitoring-agent", "external-secrets-bitwarden"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeSchedule": "[after 1:00am, before 6:00am]"
+    },
+    {
       "description": "Internet facing services.",
       "matchUpdateTypes": ["minor", "patch"],
       "automergeSchedule": "[after 1:00am, before 6:00am]",
@@ -29,6 +37,7 @@
       "matchUpdateTypes": ["minor", "patch"],
       "automergeSchedule": "[after 1:00am every tue, before 7:00am every tue]",
       "matchPackageNames": [
+        "argo-cd", 
         "org.keycloak:keycloak-parent", 
         "jellyseerr", 
         "lidarr", 
