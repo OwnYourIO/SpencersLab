@@ -8,6 +8,17 @@
   "customManagers": [
     {
       "customType": "regex",
+      "fileMatch": ["k3s-version\\.yaml$"],
+      "matchStrings": [
+        "version:\\s*(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"
+      ],
+      "depNameTemplate": "rancher/k3s",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^(?<version>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)$",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
+    },
+    {
+      "customType": "regex",
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [
         "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)\\s"
@@ -15,6 +26,13 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "Update base Chart nightly",
+      "matchPaths": ["chart/base"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeSchedule": "[after 1:00am, before 6:00am]"
+    },
     {
       "description": "Auto Update Proxies",
       "matchPaths": ["service/proxy"],
@@ -39,6 +57,7 @@
       "matchPackageNames": [
         "argo-cd", 
         "org.keycloak:keycloak-parent", 
+        "wekan",
         "jellyseerr", 
         "lidarr", 
         "radarr", 
@@ -48,6 +67,7 @@
         "ghcr.io/kieraneglin/pinchflat",
         "ghcr.io/onedr0p/qbittorrent",
         "ghcr.io/music-assistant/server",
+        "toertel/logitech-media-server",
         "alpine"
       ],
       "lockFileMaintenance": { "enabled": true },
