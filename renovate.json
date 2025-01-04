@@ -23,6 +23,15 @@
       "matchStrings": [
         "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)\\s"
       ]
+    },
+    {
+      "description": "Update Traefik's plugins when found in values.yaml files",
+      "fileMatch": ["values\\.ya?ml$"],
+      "matchStrings": [
+        "moduleName:\\s*\"github\\.com/(?<packageName>[^\"]+)\"[^\"]*version:\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "{{packageName}}"
     }
   ],
   "packageRules": [
