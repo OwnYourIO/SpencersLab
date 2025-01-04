@@ -104,7 +104,7 @@ spec:
     targetRevision: v0.14.2
     path: manifests
     directory:
-      include: "*clusterrolebinding*"
+      exclude: "*clusterrolebinding*"
   destination:
     server: https://kubernetes.default.svc
     namespace: system-upgrade
