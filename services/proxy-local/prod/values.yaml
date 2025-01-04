@@ -396,3 +396,5 @@ metube:
       existingClaim: media
       globalMounts:
         - path: /media/
+    donwloads:
+      type: emptyDir
