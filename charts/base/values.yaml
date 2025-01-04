@@ -59,6 +59,11 @@ argo-cd:
           - profile
           - email
           - groups
+      # This is to address https://github.com/bjw-s/helm-charts/issues/366
+      resource.customizations.ignoreDifferences.apps_Deployment: |
+        jqPathExpressions:
+          - '.spec.template.spec.hostUsers'
+
     rbac: 
       create: true
       policy.default: ''
@@ -76,4 +81,3 @@ argo-cd:
   controller:
     extraArgs:
       - --application-namespaces="*"
-
