@@ -5,6 +5,18 @@
   ],  
   "timezone": "America/Denver",
   "ignoreTests": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["\\appset-base.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?), helmRegistryUrl=(?<registryUrl>.*?)\\s+version:\\s*(?<currentValue>.*)"
+      ],
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}helm{{/if}}",
+      "registryUrlTemplate": "{{#if registryUrl}}{{{registryUrl}}}{{/if}}",
+      "depNameTemplate": "{{depName}}"
+    }
+  ],
   "packageRules": [
     {
       "description": "Internet facing services.",
@@ -34,11 +46,6 @@
       ],
       "lockFileMaintenance": { "enabled": true },
       "automerge": true
-    },
-    {
-      "helm": {
-        "fileMatch": ["^appset-base\\.yaml$"]
-      }
     }
   ]
 }
