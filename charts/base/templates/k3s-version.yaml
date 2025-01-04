@@ -44,3 +44,4 @@ spec:
   version: v1.31.4+k3s1
 ...
 {{ end }}
+
