@@ -81,7 +81,9 @@ spec:
   source:
     repoURL: https://github.com/rancher/system-upgrade-controller.git
     targetRevision: v0.14.2
-    path: manifests/clusterrolebinding.yaml
+    path: manifests
+    directory:
+      include: "*clusterrolebinding*"
   destination:
     server: https://kubernetes.default.svc
     namespace: system-upgrade
