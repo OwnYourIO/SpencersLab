@@ -60,9 +60,7 @@ app-template:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
+
       pod:
         securityContext:
           runAsUser: 568
