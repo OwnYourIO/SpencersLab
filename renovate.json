@@ -12,7 +12,8 @@
       "matchStrings": [
         "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrls>.*?)"
       ],
-      "datasourceTemplate": "helm"
+      "datasourceTemplate": "helm",
+      "registryUrlTemplate": "https://ownyourio.github.io/SpencersLab/"
     }
   ],
   "packageRules": [
