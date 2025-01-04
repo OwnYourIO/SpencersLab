@@ -65,8 +65,6 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole                       
 metadata:        
-  labels:                                  
-    argocd.argoproj.io/instance: system-upgrade-controller
   name: system-upgrade-controller                         
 rules:
   - apiGroups:
