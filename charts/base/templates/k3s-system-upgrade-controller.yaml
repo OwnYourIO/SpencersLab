@@ -62,4 +62,59 @@ subjects:
   - kind: ServiceAccount
     name: system-upgrade
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole                       
+metadata:        
+  labels:                                  
+    argocd.argoproj.io/instance: system-upgrade-controller
+  name: system-upgrade-controller                         
+rules:
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+      - patch
+      - update
+  - apiGroups:
+      - ''
+    resources:
+      - namespaces
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ''
+    resources:
+      - nodes
+    verbs:
+      - update
+  - apiGroups:
+      - upgrade.cattle.io
+    resources:
+      - plans
+      - plans/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - list
+      - watch
+...
 {{ end }}
