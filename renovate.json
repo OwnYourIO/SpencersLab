@@ -5,18 +5,6 @@
   ],  
   "timezone": "America/Denver",
   "ignoreTests": true,
-  "customManagers": [
-    {
-      "customType": "regex",
-      "fileMatch": ["\\appset-base.yaml$"],
-      "matchStrings": [
-        "appName: (?<depName>.*?)\\n\\s+# renovate: datasource=(?<datasource>.*?), helmRegistryUrl=(?<registryUrl>.*?)\\n\\s+version:\\s*(?<currentValue>.*)"
-      ],
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}helm{{/if}}",
-      "registryUrlTemplate": "{{#if registryUrl}}{{{registryUrl}}}{{/if}}",
-      "depNameTemplate": "{{depName}}"
-    }
-  ],
   "regexManagers": [
     {
       "fileMatch": ["appset-base\\.yaml$"],
