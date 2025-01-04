@@ -10,10 +10,10 @@
       "customType": "regex",
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [
-        "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)"
+        "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<regUrl>.*?)"
       ],
       "datasourceTemplate": "helm",
-      "registryUrlTemplate": "{{registryUrl}}"
+      "registryUrlTemplate": "{{regUrl}}"
     }
   ],
   "packageRules": [
