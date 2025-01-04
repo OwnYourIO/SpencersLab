@@ -10,7 +10,7 @@
       "customType": "regex",
       "fileMatch": ["\\appset-base.yaml$"],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?), helmRegistryUrl=(?<registryUrl>.*?)\\s+version:\\s*(?<currentValue>.*)"
+        "appName: (?<depName>.*?)\\n\\s+# renovate: datasource=(?<datasource>.*?), helmRegistryUrl=(?<registryUrl>.*?)\\n\\s+version:\\s*(?<currentValue>.*)"
       ],
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}helm{{/if}}",
       "registryUrlTemplate": "{{#if registryUrl}}{{{registryUrl}}}{{/if}}",
@@ -18,6 +18,12 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "Custom Helm charts",
+      "matchDatasources": ["helm"],
+      "registryUrls": ["https://ownyourio.github.io/SpencersLab/"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
     {
       "description": "Internet facing services.",
       "matchUpdateTypes": ["minor", "patch"],
