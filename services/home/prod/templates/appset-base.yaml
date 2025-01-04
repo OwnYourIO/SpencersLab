@@ -82,26 +82,8 @@ spec:
     repoURL: https://github.com/rancher/system-upgrade-controller.git
     targetRevision: v0.14.2
     path: manifests
-    kustomize:
-      patchesJson6902:
-      - target:
-          group: rbac.authorization.k8s.io
-          version: v1
-          kind: ClusterRoleBinding
-          name: system-upgrade-drainer
-        patch: |
-          - op: add
-            path: /subjects/0/namespace
-            value: system-upgrade
-      - target:
-          group: rbac.authorization.k8s.io
-          version: v1
-          kind: ClusterRoleBinding
-          name: system-upgrade
-        patch: |
-          - op: add
-            path: /subjects/0/namespace
-            value: system-upgrade
+    directory:
+      exclude: "*clusterrolebinding*"
   destination:
     server: https://kubernetes.default.svc
     namespace: system-upgrade
@@ -111,3 +93,42 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+# Do the CRBs here because they're missing the namespace upstream.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system-upgrade-drainer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system-upgrade-controller-drainer
+subjects:
+- kind: ServiceAccount
+  name: system-upgrade
+  namespace: system-upgrade
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system-upgrade
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system-upgrade-controller
+subjects:
+- kind: ServiceAccount
+  name: system-upgrade
+  namespace: system-upgrade
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: system-upgrade
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: system-upgrade-controller
+subjects:
+- kind: ServiceAccount
+  name: system-upgrade
