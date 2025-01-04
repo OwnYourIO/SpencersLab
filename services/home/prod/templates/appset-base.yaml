@@ -17,7 +17,7 @@ spec:
                   namespace: default
                   ServerSideApply: "false"
                 - appName: external-secrets-bitwarden
-                  version: 1.0.1 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  version: 1.0.1 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab
                   namespace: default
                   ServerSideApply: "true"
                 - appName: monitoring-agent
