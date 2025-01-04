@@ -21,7 +21,6 @@
     {
       "description": "Custom Helm charts",
       "matchDatasources": ["helm"],
-      "registryUrls": ["https://ownyourio.github.io/SpencersLab/"],
       "matchUpdateTypes": ["minor", "patch"]
     },
     {
