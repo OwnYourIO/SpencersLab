@@ -367,6 +367,8 @@ metube:
             DOWNLOAD_DIR: "/media/Streams"
             STATE_DIR: "/media/Streams/.metube"
             YTDL_OPTIONS: '{"http_headers":{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0"}}'
+            TEMP_DIR: /media/Streams/downloads
+
   defaultPodOptions:
     securityContext:
       runAsNonRoot: true
