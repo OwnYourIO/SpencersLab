@@ -21,7 +21,7 @@
     {
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [
-        "appName: (?<depName>.*?)[^\\S\\r\\n]*?(?:\\r?\\n)\\s+# renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)[^\\S\\r\\n]*?(?:\\r?\\n)\\s+version: (?<currentValue>.*?)\\s"
+        "appName: (?<depName>.*?)\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)\\s"
       ]
     }
   ],
