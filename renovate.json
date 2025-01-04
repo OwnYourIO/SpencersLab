@@ -17,12 +17,10 @@
       "depNameTemplate": "{{depName}}"
     }
   ],
+  "argocd": {
+    "fileMatch": ["appset-base\\.yaml$"]
+  },
   "packageRules": [
-    {
-      "argocd": {
-        "fileMatch": ["appset-base\\.yaml$"]
-      }
-    },
     {
       "description": "Custom Helm charts",
       "matchDatasources": ["helm"],
