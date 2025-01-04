@@ -142,6 +142,7 @@ zigbee2mqtt:
         pod:
           securityContext:
             runAsNonRoot: false
+            readOnlyRootFilesystem: false
 
 snapcast:
   app-template:
