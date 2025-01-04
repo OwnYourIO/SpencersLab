@@ -5,8 +5,9 @@
   ],  
   "timezone": "America/Denver",
   "ignoreTests": true,
-  "regexManagers": [
+  "customManagers": [
     {
+      "type": "regex",
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [
         "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)"
