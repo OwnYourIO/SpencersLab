@@ -7,7 +7,7 @@
   "ignoreTests": true,
   "customManagers": [
     {
-      "type": "regex",
+      "customType": "regex",
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [
         "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrls>.*?)"
