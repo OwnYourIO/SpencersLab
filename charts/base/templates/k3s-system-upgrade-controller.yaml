@@ -12,7 +12,7 @@ spec:
     targetRevision: v0.14.2
     path: manifests
     directory:
-      exclude: "*clusterrolebinding*"
+      exclude: "*clusterrole*"
   destination:
     server: https://kubernetes.default.svc
     namespace: system-upgrade
@@ -63,9 +63,9 @@ subjects:
     name: system-upgrade
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole                       
-metadata:        
-  name: system-upgrade-controller                         
+kind: ClusterRole
+metadata:
+  name: system-upgrade-controller
 rules:
   - apiGroups:
       - batch
@@ -114,5 +114,73 @@ rules:
     verbs:
       - list
       - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: system-upgrade-controller
+rules:
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Borrowed from https://stackoverflow.com/a/63553032
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system-upgrade-controller-drainer
+rules:
+  # Needed to evict pods
+  - apiGroups:
+      - ""
+    resources:
+      - "pods/eviction"
+    verbs:
+      - "create"
+  # Needed to list/delete pods by Node
+  - apiGroups:
+      - ""
+    resources:
+      - "pods"
+    verbs:
+      - "get"
+      - "list"
+      - "delete"
+  # Needed to cordon Nodes
+  - apiGroups:
+      - ""
+    resources:
+      - "nodes"
+    verbs:
+      - "get"
+      - "patch"
+  # Needed to determine Pod owners
+  - apiGroups:
+      - "apps"
+    resources:
+      - "statefulsets"
+      - "daemonsets"
+      - "replicasets"
+    verbs:
+      - "get"
+      - "list"
 ...
 {{ end }}
