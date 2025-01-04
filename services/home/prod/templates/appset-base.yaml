@@ -84,6 +84,26 @@ spec:
     path: manifests
     directory:
       include: "*clusterrolebinding*"
+    kustomize:
+      patchesJson6902:
+      - target:
+          group: rbac.authorization.k8s.io
+          version: v1
+          kind: ClusterRoleBinding
+          name: system-upgrade-drainer
+        patch: |
+          - op: add
+            path: /subjects/0/namespace
+            value: system-upgrade
+      - target:
+          group: rbac.authorization.k8s.io
+          version: v1
+          kind: ClusterRoleBinding
+          name: system-upgrade
+        patch: |
+          - op: add
+            path: /subjects/0/namespace
+            value: system-upgrade
   destination:
     server: https://kubernetes.default.svc
     namespace: system-upgrade
