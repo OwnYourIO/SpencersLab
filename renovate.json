@@ -9,8 +9,7 @@
     {
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [
-        "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)",
-        "\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)"
+        "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)"
       ],
       "datasourceTemplate": "helm"
     }
