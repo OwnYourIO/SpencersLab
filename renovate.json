@@ -7,6 +7,7 @@
   "ignoreTests": true,
   "customManagers": [
     {
+      "description": "Updates for k3s.",
       "customType": "regex",
       "fileMatch": ["k3s-version\\.yaml$"],
       "matchStrings": [
@@ -18,6 +19,7 @@
       "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
     },
     {
+      "description": "Update Charts listed in appset-base.yaml files",
       "customType": "regex",
       "fileMatch": ["appset-base\\.yaml$"],
       "matchStrings": [

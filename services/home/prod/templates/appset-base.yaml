@@ -70,3 +70,24 @@ spec:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: system-upgrade-controller
+  namespace: default
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rancher/system-upgrade-controller.git
+    targetRevision: v0.14.2
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: system-upgrade
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
