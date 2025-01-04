@@ -139,6 +139,9 @@ zigbee2mqtt:
               ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ezsp
             securityContext:
               allowPrivilegeEscalation: true
+        pod:
+          securityContext:
+            runAsNonRoot: false
 
 snapcast:
   app-template:
