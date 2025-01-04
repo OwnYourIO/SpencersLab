@@ -62,4 +62,4 @@ subjects:
   - kind: ServiceAccount
     name: system-upgrade
 ---
-{ { end } }
+{{ end }}
