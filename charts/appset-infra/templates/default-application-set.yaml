@@ -12,7 +12,7 @@ spec:
               elements:
                 - appName: infra
                   namespace: default
-                  ServerSideApply: "false"
+                  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
