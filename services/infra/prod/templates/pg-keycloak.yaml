@@ -18,3 +18,9 @@ spec:
     parameters:
       max_connections: "600"
       shared_buffers: 512MB
+  bootstrap:
+    initdb:
+      database: keycloak
+      owner: keycloak
+      secret:
+        name: pg-keycloak-secret

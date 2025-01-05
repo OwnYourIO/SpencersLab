@@ -1,6 +1,7 @@
 
 bitwardenIds:
   keycloak: OVERRIDE_VIA_CUSTOM_VALUES
+  keycloak-pg: OVERRIDE_VIA_CUSTOM_VALUES
   smtp: OVERRIDE_VIA_CUSTOM_VALUES
   gitea: OVERRIDE_VIA_CUSTOM_VALUES
   gitea-admin: OVERRIDE_VIA_CUSTOM_VALUES
@@ -140,20 +141,19 @@ keycloakx:
     command:
       - "/opt/keycloak/bin/kc.sh"
       - "--verbose"
-      - "start-dev"
-      #- "start"
+      - "start"
 
-    #database:
-    #  vendor: "postgres"
-    #  hostname: "infra-keycloakx-postgresql"
-    #  port: "5432"
-    #  database: "keycloak"
-    #  user: "keycloak"
-    #  existingSecret: "keycloak-db"
-    #dbchecker:
-    #  enabled: true
+    database:
+      vendor: "postgres"
+      hostname: "pg-keycloak-rw"
+      port: "5432"
+      database: "keycloak"
+      user: "keycloak"
+      existingSecret: "pg-keycloak-secret"
+      existingSecretKey: "password"
+    dbchecker:
+      enabled: true
 
-    
     http:
       relativePath: /
       internalPort: metrics
