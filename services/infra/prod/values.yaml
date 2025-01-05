@@ -141,7 +141,8 @@ keycloakx:
     command:
       - "/opt/keycloak/bin/kc.sh"
       - "--verbose"
-      - "start"
+      - "start-dev"
+      #- "start"
 
     database:
       vendor: "postgres"
