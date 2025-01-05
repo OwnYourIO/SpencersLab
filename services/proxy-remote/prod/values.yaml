@@ -7,6 +7,7 @@ proxy:
   # Additional values should be added via custom-values.
   subdomains:
     login:
+      middlewares: "kube-system-geoblock@kubernetescrd,default-redirect-to-https@kubernetescrd,default-password-req-rewrite@kubernetescrd"
       enabled: true
       paths:
         - /realms/SpencersLab/
