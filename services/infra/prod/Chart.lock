@@ -7,7 +7,7 @@ dependencies:
   version: 0.2.2
 - name: appset-infra
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.31
+  version: 1.1.32
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
   version: 0.23.0
@@ -20,5 +20,5 @@ dependencies:
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.7
-digest: sha256:aeee80f4e62baf3745b7e39a844a0676f4fe23d9777e150f0c55c3fa58da9f71
-generated: "2025-01-04T18:41:56.694830997-07:00"
+digest: sha256:7fe5a4fe7ef9b7b0374885323330c8947150f4c0cd03e461ba0e2753a5e4f19a
+generated: "2025-01-04T18:55:49.788472566-07:00"
