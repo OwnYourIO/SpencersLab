@@ -180,7 +180,7 @@ keycloakx:
       - name: KC_HOSTNAME_STRICT
         value: "true"
       - name: KC_HOSTNAME_STRICT_HTTPS
-        value: "true"
+        value: "false"
       - name: KC_LOG_LEVEL
         value: "org.keycloak.events:DEBUG,org.infinispan:INFO,org.jgroups:INFO"
       - name: KEYCLOAK_ADMIN
