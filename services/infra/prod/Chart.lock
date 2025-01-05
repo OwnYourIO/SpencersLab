@@ -8,6 +8,9 @@ dependencies:
 - name: appset-infra
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.31
+- name: cloudnative-pg
+  repository: https://cloudnative-pg.github.io/charts
+  version: 0.23.0
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 5.0.0
@@ -17,5 +20,5 @@ dependencies:
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.7
-digest: sha256:e6cd8a8dd4e5a72bddacea9fcbc8a020adaad15decc025f7a9037551c7fa4300
-generated: "2025-01-04T17:35:18.501176072-07:00"
+digest: sha256:aeee80f4e62baf3745b7e39a844a0676f4fe23d9777e150f0c55c3fa58da9f71
+generated: "2025-01-04T18:41:56.694830997-07:00"
