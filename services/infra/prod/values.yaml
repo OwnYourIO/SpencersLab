@@ -247,7 +247,7 @@ keycloakx:
       labels:
         release: monitoring-agent
       port: http
-      path: /realms/SpencersLab/metrics
+      path: /realms/master/metrics
 
 generic-device-plugin:
   app-template:
