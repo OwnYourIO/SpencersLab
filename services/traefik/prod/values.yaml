@@ -161,7 +161,7 @@ traefik:
           prometheus: system-monitoring-prometheus-prometheus
 
   volumes:
-    - name: traefik-agent-tls
+    - name: traefik-lapi-tls
       mountPath: /etc/traefik/crowdsec-certs/
       type: secret
     - name: traefik-sso
