@@ -20,14 +20,14 @@ proxy:
   subdomains:
     # Infrastructure
     login:
-      middlewares: "kube-system-crowdsec@kubernetescrd,default-password-req-rewrite@kubernetescrd"
+      middlewares: "kube-system-crowdsec@kubernetescrd"
       ingressRoute:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"
 
     registration:
       target: login
-      middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-registration@kubernetescrd"
+      middlewares: "kube-system-crowdsec@kubernetescrd"
       redirect:
         # This assumes a fair amount and may need to be broken down.
         #   - using Keycloak 
