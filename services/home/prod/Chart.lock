@@ -13,7 +13,7 @@ dependencies:
   version: 1.0.16
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.45
+  version: 1.0.47
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.15
@@ -32,5 +32,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.79.0
-digest: sha256:79825fe77026642979983fad577a707b4568114780d1ba919c6673a4f743f413
-generated: "2025-01-05T00:12:32.653827323Z"
+digest: sha256:02ce88f7d0e3d963c5a2ae3df262d406c8352d391c6f6656e88b098641496ec1
+generated: "2025-01-08T06:58:11.645028723-07:00"
