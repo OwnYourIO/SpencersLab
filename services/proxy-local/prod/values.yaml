@@ -27,7 +27,7 @@ proxy:
 
     registration:
       target: login
-      middlewares: "kube-system-crowdsec@kubernetescrd"
+      middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-registration@kubernetescrd"
       redirect:
         # This assumes a fair amount and may need to be broken down.
         #   - using Keycloak 
