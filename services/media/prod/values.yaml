@@ -295,6 +295,8 @@ audiobookshelf:
           runAsGroup: &gid 2000
           fsGroup: 2000
           fsGroupChangePolicy: OnRootMismatch
+          supplementalGroups:
+            - 1000
       containers:
         app:
           image:
