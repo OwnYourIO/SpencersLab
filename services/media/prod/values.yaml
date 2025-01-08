@@ -291,9 +291,9 @@ audiobookshelf:
     audiobookshelf:
       pod:
         securityContext:
-          runAsUser: &uid 568
+          runAsUser: &uid 1000
           runAsGroup: &gid 2000
-          fsGroup: 2000
+          fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
           supplementalGroups:
             - 1000
