@@ -140,6 +140,11 @@ zigbee2mqtt:
             securityContext:
               allowPrivilegeEscalation: true
               readOnlyRootFilesystem: false
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
         pod:
           securityContext:
             runAsNonRoot: false
