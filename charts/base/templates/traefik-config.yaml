@@ -27,25 +27,25 @@ spec:
           priority: 10
         proxyProtocol:
           trustedIPs: 
-            - "10.42.0.0/16"
-            - "10.0.22.0/24"
-            - "10.0.77.0/24"
+            {{- range .Values.trustedIPs }}
+            - "{{ . }}"
+            {{- end }}
         forwardedHeaders:
           trustedIPs:
-            - "10.42.0.0/16"
-            - "10.0.22.0/24"
-            - "10.0.77.0/24"
+            {{- range .Values.trustedIPs }}
+            - "{{ . }}"
+            {{- end }}
       websecure:
         proxyProtocol:
           trustedIPs: 
-            - "10.42.0.0/16"
-            - "10.0.22.0/24"
-            - "10.0.77.0/24"
+            {{- range .Values.trustedIPs }}
+            - "{{ . }}"
+            {{- end }}
         forwardedHeaders:
           trustedIPs:
-            - "10.42.0.0/16"
-            - "10.0.22.0/24"
-            - "10.0.77.0/24"
+            {{- range .Values.trustedIPs }}
+            - "{{ . }}"
+            {{- end }}
     providers:
       kubernetesCRD:
         allowCrossNamespace: true

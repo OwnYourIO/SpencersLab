@@ -1,3 +1,8 @@
 bitwardenIds:
   cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+
+trustedIPs:
+  - "10.42.0.0/24"
+  - "10.0.22.0/24"
+  - "10.0.77.0/24"
