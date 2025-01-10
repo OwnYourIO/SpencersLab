@@ -20,7 +20,7 @@ spec:
                   namespace: default
                   ServerSideApply: "true"
                 - appName: monitoring-agent
-                  version: 1.0.9 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   namespace: default
                   ServerSideApply: "true"
   template:
