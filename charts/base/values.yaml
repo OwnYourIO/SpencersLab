@@ -66,6 +66,10 @@ argo-cd:
       resource.customizations.ignoreDifferences.apps_Deployment: |
         jqPathExpressions:
           - '.spec.template.spec.hostUsers'
+      resource.customizations.ignoreDifferences.apps_StatefulSet: |
+        jqPathExpressions:
+          - '.spec.volumeClaimTemplates[] | select(.metadata) | .apiVersion'
+          - '.spec.volumeClaimTemplates[] | select(.metadata) | .kind'
 
     rbac: 
       create: true
