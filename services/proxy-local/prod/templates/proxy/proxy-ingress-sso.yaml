@@ -18,7 +18,6 @@ spec:
   tls:
     - hosts:
         - "{{ $name }}.{{ $.Values.domain }}"
-      secretName: wildcard-cert
   rules:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:
