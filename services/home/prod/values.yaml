@@ -348,33 +348,71 @@ logitech-media-server:
             subPath: custom-entrypoint.sh
 
 paperless:
-  app-template:
-    controllers:
-      main:
-        containers:
-          main:
-            image:
-              repository: ghcr.io/paperless-ngx/paperless-ngx
-              tag: 2.13.5@sha256:199c67ed55bfb9d58bf90db2ee280880ae9ebc63413e54c73522f9c4ebdc7bad
-            env:
-              PAPERLESS_TIME_ZONE: America/Denver
-              PAPERLESS_URL: https://paperless.spencerslab.com
-              PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
-              PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
-          gotenburg:
-            env:
-              DISABLE_GOOGLE_CHROME: '1'
-            image:
-              repository: gotenberg/gotenberg
-              tag: 8.15.3@sha256:cec2b75259ea1828bc473521b83c1d4e4a6c45209c56bd6bb0f98f79c071e70d
-          redis:
-            image:
-              repository: redis
-              tag: 7.4.2@sha256:cd13b924409d740ea8abe6677a7d1accf696898408d330a3d7c8234fa7545775
-          tika:
-            image:
-              repository: ghcr.io/paperless-ngx/tika
-              tag: 2.9.1-minimal@sha256:20db3df89eaeb1b271dd840888fe909b88b12f4b86ef641ec07a1d45d4c5168f
+  global:
+    nameOverride: paperless
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/paperless-ngx/paperless-ngx
+            tag: 2.13.5@sha256:199c67ed55bfb9d58bf90db2ee280880ae9ebc63413e54c73522f9c4ebdc7bad
+          env:
+            PAPERLESS_TIME_ZONE: America/Denver
+            PAPERLESS_URL: https://paperless.spencerslab.com
+            PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
+            PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
+          probes:
+            liveness:
+              enabled: true
+              type: HTTP
+            readiness:
+              enabled: true
+              type: HTTP
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 30
+                periodSeconds: 5
+              type: HTTP
+          resources:
+            limits:
+              memory: 1.2Gi
+            requests:
+              cpu: 40m
+              memory: 1.2Gi
+        gotenburg:
+          image:
+            repository: gotenberg/gotenberg
+            tag: 8.15.3@sha256:cec2b75259ea1828bc473521b83c1d4e4a6c45209c56bd6bb0f98f79c071e70d
+          env:
+            DISABLE_GOOGLE_CHROME: '1'
+          resources:
+            limits:
+              memory: 30Mi
+            requests:
+              cpu: 10m
+              memory: 30Mi
+        redis:
+          image:
+            repository: redis
+            tag: 7.4.2@sha256:cd13b924409d740ea8abe6677a7d1accf696898408d330a3d7c8234fa7545775
+          resources:
+            limits:
+              memory: 50Mi
+            requests:
+              cpu: 10m
+              memory: 18Mi
+        tika:
+          image:
+            repository: ghcr.io/paperless-ngx/tika
+            tag: 2.9.1-minimal@sha256:20db3df89eaeb1b271dd840888fe909b88b12f4b86ef641ec07a1d45d4c5168f
+          resources:
+            limits:
+              memory: 220Mi
+            requests:
+              cpu: 10m
+              memory: 220Mi
 
     service:
       main:
