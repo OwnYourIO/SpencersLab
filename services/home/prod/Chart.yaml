@@ -42,10 +42,10 @@ dependencies:
 #  version: 1.0.2
 #  repository: https://ownyourio.github.io/SpencersLab/
 - name: wekan
-  version: 7.79.0
+  version: 7.80.0
   repository: https://wekan.github.io/charts/
 # Have to split wekan into 2 pods to handle 2 urls. 
 - name: wekan
-  version: 7.79.0
+  version: 7.80.0
   repository: https://wekan.github.io/charts/
   alias: boards
