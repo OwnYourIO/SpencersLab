@@ -1,5 +1,6 @@
 bitwardenIds:
   wekan-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  paperless-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
@@ -16,10 +17,10 @@ ingress:
       service: home-wekan
       port: 8080
 
-    #documents:
-    #  serviceName: paperless
-    #  service: home-paperless
-    #  port: ????
+    documents:
+      serviceName: paperless
+      service: home-paperless
+      port: 8000
 
     zigbee:
       serviceName: zigbee2mqtt
@@ -360,8 +361,37 @@ paperless:
           env:
             PAPERLESS_TIME_ZONE: America/Denver
             PAPERLESS_URL: https://paperless.spencerslab.com
+            PAPERLESS_TIKA_ENABLED: 1
             PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
             PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
+            COMPOSE_PROJECT_NAME: paperless-ngx
+            PAPERLESS_DBHOST: paperless-rw
+            PAPERLESS_DBNAME: paperless
+            PAPERLESS_REDIS: redis://paperless-ngx-redis-master:6379
+            USERMAP_UID: 33
+            USERMAP_GID: 33
+            PAPERLESS_CONSUMPTION_DIR: /paperless/consume
+            PAPERLESS_DATA_DIR: /paperless/data
+            PAPERLESS_MEDIA_ROOT: /paperless/media
+            PAPERLESS_FILENAME_FORMAT: "{created_year}/{correspondent}/{title}"
+            PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: true
+            PAPERLESS_CONSUMER_POLLING: 60
+            PAPERLESS_CONSUMER_DELETE_DUPLICATES: true
+            PAPERLESS_CONSUMER_RECURSIVE: true
+            PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: true
+            PAPERLESS_OCR_LANGUAGE: eng
+            PAPERLESS_DISABLE_REGULAR_LOGIN: true
+            PAPERLESS_REDIRECT_LOGIN_TO_SSO: true
+            PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+            PAPERLESS_SOCIALACCOUNT_PROVIDERS:
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-secret
+                  key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+            PAPERLESS_ENABLE_HTTP_REMOTE_USER: 'true'
+            PAPERLESS_OCR_PAGES: 2
+            PAPERLESS_THREADS_PER_WORKER: 1
+            PAPERLESS_WEBSERVER_WORKERS: 1
           probes:
             liveness:
               enabled: true

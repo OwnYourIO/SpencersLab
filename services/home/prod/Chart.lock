@@ -26,11 +26,14 @@ dependencies:
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.6
+- name: app-template
+  repository: https://bjw-s.github.io/helm-charts/
+  version: 3.6.0
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.80.0
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.80.0
-digest: sha256:c63dd132caf628ad19f2b1a2a8352dea85d1a2a92add3bfb1fa93b45cc0395c9
-generated: "2025-01-13T00:58:26.170416908Z"
+digest: sha256:f4b33d99ca42aa97baeec2fd8dbae41bfa2649cc0772f200bbcdea5aedb4ba8e
+generated: "2025-01-13T17:07:25.151839488-07:00"
