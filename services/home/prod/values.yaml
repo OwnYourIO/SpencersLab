@@ -454,15 +454,15 @@ paperless:
               cpu: 10m
               memory: 220Mi
 
-    service:
-      main:
-        controller: main
-        ports:
-          http:
-            port: 8000
+  service:
+    main:
+      controller: main
+      ports:
+        http:
+          port: 8000
 
-    persistence:
-      data:
-        existingClaim: paperless
-        globalMounts:
-        - path: /paperless
+  persistence:
+    data:
+      existingClaim: paperless
+      globalMounts:
+      - path: /paperless
