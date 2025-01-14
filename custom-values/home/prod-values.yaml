@@ -1,5 +1,6 @@
 bitwardenIds:
   wekan-sso-secret: 68ce2bae-c00f-4293-8325-b23000060637
+  paperless-pg: 9d812113-dd8b-4343-bef1-b265001073c2
 
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"

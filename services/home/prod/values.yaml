@@ -367,6 +367,16 @@ paperless:
             COMPOSE_PROJECT_NAME: paperless-ngx
             PAPERLESS_DBHOST: paperless-rw
             PAPERLESS_DBNAME: paperless
+            PAPERLESS_DBUSER:
+              valueFrom:
+                secretKeyRef:
+                  name: pg-paperless-secret
+                  key: username
+            PAPERLESS_DBPASS:
+              valueFrom:
+                secretKeyRef:
+                  name: pg-paperless-secret
+                  key: password
             PAPERLESS_REDIS: redis://paperless-ngx-redis-master:6379
             USERMAP_UID: 33
             USERMAP_GID: 33
