@@ -80,9 +80,9 @@ wekan:
     enabled: false
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
-  #env:
-  #  - name: "MONGO_URL"
-  #    value: "mongodb://home-mongodb:27017"
+  env:
+    - name: "MONGO_URL"
+      value: "mongodb://home-mongodb:27017"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
