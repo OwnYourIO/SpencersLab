@@ -396,7 +396,7 @@ paperless:
             PAPERLESS_SOCIALACCOUNT_PROVIDERS:
               valueFrom:
                 secretKeyRef:
-                  name: paperless-secret
+                  name: paperless-sso
                   key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
             PAPERLESS_ENABLE_HTTP_REMOTE_USER: 'true'
             PAPERLESS_OCR_PAGES: 2
