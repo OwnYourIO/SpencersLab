@@ -365,7 +365,7 @@ paperless:
             PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
             PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
             COMPOSE_PROJECT_NAME: paperless-ngx
-            PAPERLESS_DBHOST: paperless-rw
+            PAPERLESS_DBHOST: pg-paperless-rw
             PAPERLESS_DBNAME: paperless
             PAPERLESS_DBUSER:
               valueFrom:
