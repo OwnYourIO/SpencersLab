@@ -361,7 +361,7 @@ paperless:
           env:
             PAPERLESS_TIME_ZONE: America/Denver
             PAPERLESS_URL: https://documents.spencerslab.com
-            PAPERLESS_ALLOWED_HOSTS: documents.spencerslab.com,paperless.spencerslab.com
+            #PAPERLESS_ALLOWED_HOSTS: documents.spencerslab.com,paperless.spencerslab.com
             PAPERLESS_CSRF_TRUSTED_ORIGINS: https://documents.spencerslab.com,https://paperless.spencerslab.com
             PAPERLESS_TIKA_ENABLED: 1
             PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
