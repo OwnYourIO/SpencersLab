@@ -23,6 +23,11 @@ ingress:
       service: home-paperless
       port: 8000
 
+    pictures:
+      serviceName: immich
+      service: immich-immich
+      port: 8080
+
     zigbee:
       serviceName: zigbee2mqtt
       service: home-zigbee2mqtt
