@@ -484,3 +484,7 @@ paperless:
       existingClaim: paperless
       globalMounts:
       - path: /paperless
+    documents:
+      existingClaim: documents-shared
+      globalMounts:
+      - path: /share/paperless
