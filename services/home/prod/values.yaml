@@ -1,4 +1,5 @@
 bitwardenIds:
+  admin-account: OVERRIDE_VIA_CUSTOM_VALUES
   wekan-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   paperless-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
@@ -392,15 +393,29 @@ paperless:
             PAPERLESS_CONSUMER_RECURSIVE: true
             PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: true
             PAPERLESS_OCR_LANGUAGE: eng
-            PAPERLESS_SECRET_KEY: TESTING THIS FOR NOW
             PAPERLESS_DISABLE_REGULAR_LOGIN: true
             PAPERLESS_REDIRECT_LOGIN_TO_SSO: true
             PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+            PAPERLESS_SECRET_KEY:
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-secrets
+                  key: PAPERLESS_SECRET_KEY
             PAPERLESS_SOCIALACCOUNT_PROVIDERS:
               valueFrom:
                 secretKeyRef:
-                  name: paperless-sso
+                  name: paperless-secrets
                   key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+            PAPERLESS_ADMIN_USER:
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-secrets
+                  key: PAPERLESS_ADMIN_USER
+            PAPERLESS_ADMIN_PASSWORD:
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-secrets
+                  key: PAPERLESS_ADMIN_PASSWORD
             PAPERLESS_ENABLE_HTTP_REMOTE_USER: 'true'
             PAPERLESS_OCR_PAGES: 2
             PAPERLESS_THREADS_PER_WORKER: 1
