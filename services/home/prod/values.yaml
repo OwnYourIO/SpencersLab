@@ -377,7 +377,7 @@ paperless:
                 secretKeyRef:
                   name: pg-paperless-secret
                   key: password
-            PAPERLESS_REDIS: redis://paperless-ngx-redis-master:6379
+            PAPERLESS_REDIS: redis://localhost:6379
             USERMAP_UID: 33
             USERMAP_GID: 33
             PAPERLESS_CONSUMPTION_DIR: /paperless/consume
