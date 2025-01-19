@@ -98,6 +98,9 @@ boards:
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
+  mongodb:
+    architecture: standalone
+    useStatefulSet: false
   autoscaling:
     enabled: false
   ingress:
