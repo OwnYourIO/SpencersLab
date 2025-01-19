@@ -7,3 +7,5 @@ immich:
     persistence:
       library:
         existingClaim: pictures-shared
+  redis:
+    enabled: true
