@@ -4,8 +4,6 @@ bitwardenIds:
 immich:
   postgresql:
     enabled: true
-
   persistence:
     library:
-      existingClaim: 
-        name: pictures-shared
+      existingClaim: pictures-shared
