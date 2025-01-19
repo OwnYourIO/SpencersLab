@@ -1,9 +1,9 @@
 bitwardenIds:
   immich-sso-secret: # TODO:
-
 immich:
-  postgresql:
-    enabled: true
-  persistence:
-    library:
-      existingClaim: pictures-shared
+  immich:
+    postgresql:
+      enabled: true
+    persistence:
+      library:
+        existingClaim: pictures-shared
