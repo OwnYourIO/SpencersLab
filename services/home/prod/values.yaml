@@ -94,7 +94,8 @@ boards:
   #  - name: "MONGO_URL"
   #    value: "mongodb://home-mongodb:27017"
   envSecret:
-    MONGO_URL: "mongodb://home-mongodb:27017"
+    - name: MONGO_URL
+      value: "mongodb://home-mongodb:27017"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
