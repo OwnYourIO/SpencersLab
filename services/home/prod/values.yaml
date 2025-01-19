@@ -102,6 +102,7 @@ boards:
   mongodb:
     architecture: standalone
     useStatefulSet: false
+    replicaCount: 1
   autoscaling:
     enabled: false
   ingress:
