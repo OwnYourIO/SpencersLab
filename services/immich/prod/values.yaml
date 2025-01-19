@@ -15,6 +15,7 @@ immich:
       secretKeyRef:
         name: pg-immich-secret
         key: password
+    UPLOAD_LOCATION: /usr/src/app/upload
 
   immich:
     persistence:
