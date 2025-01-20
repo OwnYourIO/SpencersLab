@@ -24,6 +24,11 @@ immich:
     persistence:
       library:
         existingClaim: pictures-shared
+  command:
+    - "/bin/sh"
+  args:
+    - "-c"
+    - "sleep 200"
 
   redis:
     enabled: true
