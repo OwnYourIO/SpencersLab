@@ -32,11 +32,6 @@ immich:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
 
-  command:
-    - "/bin/sh"
-  args:
-    - "-c"
-    - "sleep 200"
 
   redis:
     enabled: true
