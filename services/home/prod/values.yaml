@@ -25,7 +25,7 @@ ingress:
 
     pictures:
       serviceName: immich
-      service: immich-immich
+      service: immich-server
       port: 8080
 
     zigbee:
