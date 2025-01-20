@@ -16,6 +16,7 @@ immich:
         name: pg-immich-secret
         key: password
     LOG_LEVEL: verbose
+    IMMICH_IGNORE_MOUNT_CHECK_ERRORS: true
 
   image:
     tag: "v1.124.2"
