@@ -15,7 +15,10 @@ immich:
       secretKeyRef:
         name: pg-immich-secret
         key: password
-    UPLOAD_LOCATION: /usr/src/app/upload
+    LOG_LEVEL: verbose
+
+  image:
+    tag: "v1.124.2"
 
   immich:
     persistence:
