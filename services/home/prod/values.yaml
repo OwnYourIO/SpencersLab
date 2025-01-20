@@ -26,7 +26,7 @@ ingress:
     pictures:
       serviceName: immich
       service: immich-server
-      port: 8080
+      port: 2283
 
     zigbee:
       serviceName: zigbee2mqtt
