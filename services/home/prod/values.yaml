@@ -437,13 +437,13 @@ paperless:
             PAPERLESS_WEBSERVER_WORKERS: 1
           probes:
             liveness:
-              enabled: true
+              enabled: false
               type: HTTP
             readiness:
-              enabled: true
+              enabled: false
               type: HTTP
             startup:
-              enabled: true
+              enabled: false
               spec:
                 failureThreshold: 30
                 periodSeconds: 5
