@@ -495,11 +495,7 @@ paperless:
           port: 8000
 
   persistence:
-    data:
-      existingClaim: paperless
-      globalMounts:
-      - path: /paperless
     documents:
       existingClaim: documents-shared
       globalMounts:
-      - path: /share/paperless
+      - path: /paperless
