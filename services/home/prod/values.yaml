@@ -408,8 +408,9 @@ paperless:
             PAPERLESS_CONSUMER_RECURSIVE: true
             PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: true
             PAPERLESS_OCR_LANGUAGE: eng
-            #PAPERLESS_DISABLE_REGULAR_LOGIN: true
-            #PAPERLESS_REDIRECT_LOGIN_TO_SSO: true
+            # TODO: Have to manually disable these to grant initial privs.
+            PAPERLESS_DISABLE_REGULAR_LOGIN: true
+            PAPERLESS_REDIRECT_LOGIN_TO_SSO: true
             PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
             PAPERLESS_SECRET_KEY:
               valueFrom:
@@ -437,13 +438,13 @@ paperless:
             PAPERLESS_WEBSERVER_WORKERS: 1
           probes:
             liveness:
-              enabled: false
+              enabled: true
               type: HTTP
             readiness:
-              enabled: false
+              enabled: true
               type: HTTP
             startup:
-              enabled: false
+              enabled: true
               spec:
                 failureThreshold: 30
                 periodSeconds: 5
