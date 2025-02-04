@@ -408,8 +408,8 @@ paperless:
             PAPERLESS_CONSUMER_RECURSIVE: true
             PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: true
             PAPERLESS_OCR_LANGUAGE: eng
-            PAPERLESS_DISABLE_REGULAR_LOGIN: true
-            PAPERLESS_REDIRECT_LOGIN_TO_SSO: true
+            #PAPERLESS_DISABLE_REGULAR_LOGIN: true
+            #PAPERLESS_REDIRECT_LOGIN_TO_SSO: true
             PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
             PAPERLESS_SECRET_KEY:
               valueFrom:
