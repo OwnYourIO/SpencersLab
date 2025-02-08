@@ -4,7 +4,7 @@ metadata:
   name: music-shared
 spec:
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   capacity:
     storage: 32Gi
   csi:
@@ -20,7 +20,6 @@ spec:
   volumeMode: Filesystem
 
 ---
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -29,12 +28,12 @@ spec:
   storageClassName: ""
   volumeName: music-shared
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   resources:
     requests:
       storage: 32Gi
 
---- 
+---
 # This is needed because the csi-driver can't currently set volumeServerAccess=publicURL
 # So this captures the internal DNS look up and directs it externally instead.
 apiVersion: v1
@@ -44,4 +43,8 @@ metadata:
   namespace: kube-system
 data:
   log.override: |
-    rewrite name seaweedfs-volume-0.seaweedfs-volume.default seaweedfs-volume.infra.spencerslab.com
+    rewrite name seaweedfs-volume-0.seaweedfs-volume.default seaweedfs-volume-0.infra.spencerslab.com
+    rewrite name seaweedfs-volume-1.seaweedfs-volume.default seaweedfs-volume-1.infra.spencerslab.com
+    rewrite name seaweedfs-volume-2.seaweedfs-volume.default seaweedfs-volume-2.infra.spencerslab.com
+    rewrite name seaweedfs-volume-3.seaweedfs-volume.default seaweedfs-volume-3.infra.spencerslab.com
+    rewrite name seaweedfs-volume-4.seaweedfs-volume.default seaweedfs-volume-4.infra.spencerslab.com
