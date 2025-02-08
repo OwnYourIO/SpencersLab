@@ -468,6 +468,13 @@ paperless:
             SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16 10.42.0.0/16"
             # TODO: Make the URL generic via a secret. 
             SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
+          probes:
+            liveness:
+              enabled: false
+            readiness:
+              enabled: false
+            startup:
+              enabled: false
         gotenburg:
           image:
             repository: gotenberg/gotenberg
