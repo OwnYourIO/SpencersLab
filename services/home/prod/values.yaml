@@ -504,6 +504,7 @@ paperless:
       ports:
         http:
           port: 8000
+          primary: true
 
     samba:
       controller: main
@@ -514,6 +515,7 @@ paperless:
           enabled: true
           port: 445
           targetPort: 445
+          primary: true
         samba-udp:
           enabled: true
           protocol: UDP
