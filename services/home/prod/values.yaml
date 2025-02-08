@@ -2,6 +2,7 @@ bitwardenIds:
   admin-account: OVERRIDE_VIA_CUSTOM_VALUES
   wekan-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   paperless-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  paperless-samba-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
@@ -455,6 +456,15 @@ paperless:
             requests:
               cpu: 40m
               memory: 1.2Gi
+        samba:
+          image:
+            repository: ghcr.io/crazy-max/samba
+            tag: 4.19.9@sha256:270a8dcaeb7be73c3a63e2d7cc966cfdc6ca70b418c59e4af406bee6ea41ded7
+          env:
+            TZ: America/Denver
+            SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16"
+            # TODO: Make the URL generic via a secret. 
+            SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
         gotenburg:
           image:
             repository: gotenberg/gotenberg
@@ -495,8 +505,53 @@ paperless:
         http:
           port: 8000
 
+  configMaps:
+    samba-config:
+      data: 
+        samba.yaml: |-
+          ---
+          auth:
+            - user: scanner
+              group: scanner
+              uid: 1000
+              gid: 1000
+              password_file: /run/secrets/samba_password
+          share:
+            - name: documents
+              security: user
+              path: /paperless
+              browsable: yes
+              readonly: no
+              guestok: no
+              validusers: scanner
+              writelist: scanner
+              veto: no
+              hidefiles: /_*/
+              recycle: yes
+              force user: scanner
+
   persistence:
     documents:
       existingClaim: documents-shared
       globalMounts:
       - path: /paperless
+
+    users:
+      type: secret
+      name: paperless-samba-secret
+      advancedMounts:
+        samba:
+          main:
+            - path: /run/secrets/samba_password
+              subPath: samba-password
+              readOnly: true
+
+    config:
+      name: "{{ .Release.Name }}-paperless-samba-config"
+      type: configMap
+      advancedMounts:
+        main:
+          samba:
+            - path: /data/config.yml
+              subPath: samba.yaml
+              readOnly: true
