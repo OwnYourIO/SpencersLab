@@ -34,8 +34,10 @@ immich:
   server:
     controllers:
       server:
-        env:
-          IMMICH_CONFIG_FILE: /config/immich-config.yaml
+        containers:
+          main:
+            env:
+              IMMICH_CONFIG_FILE: /config/immich-config.yaml
     defaultPodOptions:
       securityContext:
         runAsUser: 1000
