@@ -57,7 +57,7 @@ proxy:
 
     # Has just SSO
     boards:
-      target: wekan
+      target: boards
     git:
       target: gitea
     charts:
