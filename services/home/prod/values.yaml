@@ -505,6 +505,21 @@ paperless:
         http:
           port: 8000
 
+    samba:
+      controller: main
+      type: LoadBalancer
+      externalTrafficPolicy: Local
+      ports:
+        samba:
+          enabled: true
+          port: 445
+          targetPort: 445
+        samba-udp:
+          enabled: true
+          protocol: UDP
+          port: 445
+          targetPort: 445
+
   configMaps:
     samba-config:
       data: 
