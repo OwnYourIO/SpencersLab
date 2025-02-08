@@ -528,8 +528,8 @@ paperless:
           auth:
             - user: scanner
               group: scanner
-              uid: 1000
-              gid: 1000
+              uid: 33
+              gid: 33
               password_file: /run/secrets/samba_password
           share:
             - name: documents
