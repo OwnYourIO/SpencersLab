@@ -533,6 +533,9 @@ paperless:
               uid: 33
               gid: 33
               password_file: /run/secrets/samba_password
+          global:
+            - "client min protocol = CORE"
+            - "client max protocol = SMB3"
           share:
             - name: documents
               security: user
