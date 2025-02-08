@@ -553,7 +553,7 @@ paperless:
 
     users:
       type: secret
-      name: paperless-samba-secret
+      name: paperless-secrets
       advancedMounts:
         samba:
           main:
