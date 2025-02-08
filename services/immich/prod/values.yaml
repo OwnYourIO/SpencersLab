@@ -34,6 +34,8 @@ immich:
   server:
     controllers:
       server:
+        env:
+          IMMICH_CONFIG_FILE: /config/immich-config.yaml
     defaultPodOptions:
       securityContext:
         runAsUser: 1000
@@ -41,6 +43,13 @@ immich:
         runAsNonRoot: true
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+    persistence:
+      config:
+        enabled: true
+        type: secret
+        name: immich-sso
+        readOnly: true
+
   defaultPodOptions:
     securityContext:
       runAsUser: 1000
