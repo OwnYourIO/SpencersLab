@@ -75,21 +75,21 @@ ingress:
       port: 80
 
 # Have to split wekan into 2 pods to handle 2 urls. 
-wekan:
-  root_url: OVERRIDE_VIA_CUSTOM_VALUES
-  env:
-    - name: "MONGO_URL"
-      value: "mongodb://home-mongodb:27017"
-  envSecret:
-    - name: MONGO_URL
-      value: "mongodb://home-mongodb:27017"
-  extraEnvFrom: |
-    - secretRef:
-        name: "wekan-sso"
-  autoscaling:
-    enabled: false
-  ingress:
-    enabled: false
+#wekan:
+#  root_url: OVERRIDE_VIA_CUSTOM_VALUES
+#  env:
+#    - name: "MONGO_URL"
+#      value: "mongodb://home-mongodb:27017"
+#  envSecret:
+#    - name: MONGO_URL
+#      value: "mongodb://home-mongodb:27017"
+#  extraEnvFrom: |
+#    - secretRef:
+#        name: "wekan-sso"
+#  autoscaling:
+#    enabled: false
+#  ingress:
+#    enabled: false
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
   env:
