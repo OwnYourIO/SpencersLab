@@ -462,7 +462,7 @@ paperless:
             tag: 4.19.9@sha256:270a8dcaeb7be73c3a63e2d7cc966cfdc6ca70b418c59e4af406bee6ea41ded7
           env:
             TZ: America/Denver
-            SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16"
+            SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16 10.42.0.0/16"
             # TODO: Make the URL generic via a secret. 
             SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
         gotenburg:
