@@ -6,7 +6,7 @@ spec:
   accessModes:
     - ReadWriteMany
   capacity:
-    storage: 300Gi
+    storage: 3000Gi
   csi:
     driver: seaweedfs-csi-driver
     volumeHandle: documents-shared
@@ -31,4 +31,4 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 300Gi
+      storage: 3000Gi
