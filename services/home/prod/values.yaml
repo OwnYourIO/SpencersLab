@@ -96,6 +96,9 @@ boards:
     - secretRef:
         name: "wekan-sso"
   mongodb:
+    architecture: standalone
+    useStatefulSet: false
+    replicaCount: 1
     service:
       nameOverride: wekan-mongodb
 
