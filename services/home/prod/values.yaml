@@ -92,6 +92,8 @@ ingress:
 #    enabled: false
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
+  envSecret:
+    - name: MONGO_URL
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
