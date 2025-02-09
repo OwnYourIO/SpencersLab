@@ -93,6 +93,9 @@ ingress:
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
   env: {}
+  secretEnv:
+    - name: MONGO_URL
+      value: "mongodb://home-mongodb:27017"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
