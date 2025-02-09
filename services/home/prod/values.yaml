@@ -16,7 +16,7 @@ ingress:
       service: home-boards
       port: 8080
     wekan:
-      service: wekan-boards
+      service: home-wekan
       port: 8080
 
     documents:
