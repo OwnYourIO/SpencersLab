@@ -88,6 +88,9 @@ wekan:
     enabled: false
   ingress:
     enabled: false
+  mongodb:
+    service:
+      nameOverride: wekan-mongodb
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
   env: {}
@@ -98,9 +101,6 @@ boards:
     - secretRef:
         name: "wekan-sso"
   mongodb:
-    architecture: standalone
-    useStatefulSet: false
-    replicaCount: 1
     service:
       nameOverride: wekan-mongodb
 
