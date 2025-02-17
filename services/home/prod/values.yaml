@@ -21,7 +21,7 @@ ingress:
 
     documents:
       serviceName: paperless
-      service: home-paperless
+      service: home-paperless-main
       port: 8000
 
     pictures:
