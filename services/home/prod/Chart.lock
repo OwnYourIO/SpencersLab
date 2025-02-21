@@ -22,7 +22,7 @@ dependencies:
   version: 1.0.13
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.19
+  version: 1.0.20
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.6
@@ -38,5 +38,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.81.0
-digest: sha256:1bed9414b1ac3a761e68430022f9111c49c7d9d93388df408eddba2473a69d6c
-generated: "2025-02-21T22:16:05.228413465Z"
+digest: sha256:a9ce214e85452760d85b090fdd993db887014f08bcc93a82caa0078d2dbcadde
+generated: "2025-02-21T23:03:12.558099994Z"
