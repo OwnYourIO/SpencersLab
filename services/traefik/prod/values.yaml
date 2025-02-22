@@ -110,7 +110,7 @@ traefik:
     plugins:
       geoblock:
         moduleName: "github.com/PascalMinder/geoblock"
-        version: "v0.2.8"
+        version: "v0.3.2"
       keycloakopenid:
         moduleName: "github.com/jmcarbo/keycloakopenid"
         version: "v0.1.40"
