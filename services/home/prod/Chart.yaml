@@ -39,7 +39,7 @@ dependencies:
   version: 1.0.6
   repository: https://ownyourio.github.io/SpencersLab/
 - name: app-template
-  version: 3.6.0
+  version: 3.7.1
   repository: https://bjw-s.github.io/helm-charts/
   alias: paperless
 - name: cloudnative-pg

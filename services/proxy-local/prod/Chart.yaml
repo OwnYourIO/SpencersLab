@@ -15,18 +15,18 @@ dependencies:
     repository: https://kubernetes-sigs.github.io/external-dns/
     alias: external-dns-external
   - name: app-template
-    version: 3.6.0
+    version: 3.7.1
     repository: https://bjw-s.github.io/helm-charts/
     alias: qbittorrent
   - name: app-template
-    version: 3.6.0
+    version: 3.7.1
     repository: https://bjw-s.github.io/helm-charts/
     alias: autossh
   - name: app-template
-    version: 3.6.0
+    version: 3.7.1
     repository: https://bjw-s.github.io/helm-charts/
     alias: metube
   - name: app-template
-    version: 3.6.0
+    version: 3.7.1
     repository: https://bjw-s.github.io/helm-charts/
     alias: pinchflat
