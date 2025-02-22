@@ -13,7 +13,7 @@ dependencies:
   version: 1.0.17
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.49
+  version: 1.0.51
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.16
