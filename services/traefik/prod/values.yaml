@@ -134,9 +134,11 @@ traefik:
 
   ports:
     web:
-      redirectTo:
-        port: websecure
-        priority: 10
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
       proxyProtocol:
         trustedIPs: 
           - "10.42.0.0/16"

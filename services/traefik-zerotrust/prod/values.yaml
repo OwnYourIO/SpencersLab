@@ -55,9 +55,11 @@ traefik:
   ports:
     web:
       # Have do to this in the args manually because port comes through as :443 when I thin it should be websecure.
-      #redirectTo:
-      #  port: websecure
-      #  permanent: true
+      #redirections:
+      #  entryPoint:
+      #    to: websecure
+      #    scheme: https
+      #    permanent: true
       proxyProtocol:
         enabled: true
     websecure:
