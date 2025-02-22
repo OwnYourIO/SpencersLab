@@ -38,5 +38,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.81.0
-digest: sha256:3e8c3e84a0642b397d7686d7c7614c00e21942b9f617d373914a52e3543c8d0b
-generated: "2025-02-22T17:47:01.825989175Z"
+digest: sha256:e26caafa0a23526b6251812f36ce88a14981966abe4d61a34cbc71a7b8be713a
+generated: "2025-02-22T10:50:21.191197596-07:00"
