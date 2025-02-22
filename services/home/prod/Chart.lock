@@ -13,7 +13,7 @@ dependencies:
   version: 1.0.17
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.49
+  version: 1.0.51
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.16
@@ -22,10 +22,10 @@ dependencies:
   version: 1.0.14
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.20
+  version: 1.0.21
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.6
+  version: 1.0.7
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
   version: 3.7.1
@@ -38,5 +38,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.81.0
-digest: sha256:4920a321a372a42459a65d34f824ddf3e33af2fc8ac4b03ac507704635ae08e3
-generated: "2025-02-22T17:46:23.31281427Z"
+digest: sha256:3e8c3e84a0642b397d7686d7c7614c00e21942b9f617d373914a52e3543c8d0b
+generated: "2025-02-22T17:47:01.825989175Z"
