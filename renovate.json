@@ -2,14 +2,16 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
-  ],  
+  ],
   "timezone": "America/Denver",
   "ignoreTests": true,
   "customManagers": [
     {
       "description": "Updates for k3s.",
       "customType": "regex",
-      "fileMatch": ["k3s-version\\.yaml$"],
+      "fileMatch": [
+        "k3s-version\\.yaml$"
+      ],
       "matchStrings": [
         "version:\\s*(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"
       ],
@@ -21,14 +23,19 @@
     {
       "description": "Update Charts listed in appset-base.yaml files",
       "customType": "regex",
-      "fileMatch": ["appset-base\\.yaml$"],
+      "fileMatch": [
+        "appset-base\\.yaml$"
+      ],
       "matchStrings": [
         "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)\\s"
       ]
     },
     {
+      "customType": "regex",
       "description": "Update Traefik's plugins when found in values.yaml files",
-      "fileMatch": ["values\\.ya?ml$"],
+      "fileMatch": [
+        "values\\.ya?ml$"
+      ],
       "matchStrings": [
         "moduleName:\\s*\"github\\.com/(?<packageName>[^\"]+)\"[^\"]*version:\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""
       ],
@@ -39,49 +46,78 @@
   "packageRules": [
     {
       "description": "Update base Chart nightly",
-      "matchPaths": ["chart/base"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchFileNames": [
+        "chart/base"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true,
       "automergeSchedule": "[after 1:00am, before 6:00am]"
     },
     {
       "description": "Auto Update Proxies",
-      "matchPaths": ["service/proxy"],
-      "matchPackageNames": ["base", "monitoring-agent", "external-secrets-bitwarden"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchFileNames": [
+        "service/proxy"
+      ],
+      "matchPackageNames": [
+        "base",
+        "monitoring-agent",
+        "external-secrets-bitwarden"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true,
       "automergeSchedule": "[after 1:00am, before 6:00am]"
     },
     {
       "description": "Internet facing services.",
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automergeSchedule": "[after 1:00am, before 6:00am]",
-      "matchPackageNames": ["traefik", "keycloakopenid", "keycloakx", "ghcr.io/linuxserver/openssh-server", "crowdsec"],
-      "lockFileMaintenance": { "enabled": true },
+      "matchPackageNames": [
+        "traefik",
+        "keycloakopenid",
+        "keycloakx",
+        "ghcr.io/linuxserver/openssh-server",
+        "crowdsec"
+      ],
+      "lockFileMaintenance": {
+        "enabled": true
+      },
       "automerge": true
-
     },
     {
       "description": "Non-critical services",
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automergeSchedule": "[after 1:00am and before 7:00am every tuesday]",
       "matchPackageNames": [
-        "argo-cd", 
-        "org.keycloak:keycloak-parent", 
+        "argo-cd",
+        "org.keycloak:keycloak-parent",
         "wekan",
-        "jellyseerr", 
-        "lidarr", 
-        "radarr", 
-        "readarr", 
-        "sonarr", 
-        "ghcr.io/advplyr/audiobookshelf", 
+        "jellyseerr",
+        "lidarr",
+        "radarr",
+        "readarr",
+        "sonarr",
+        "ghcr.io/advplyr/audiobookshelf",
         "ghcr.io/kieraneglin/pinchflat",
         "ghcr.io/onedr0p/qbittorrent",
         "ghcr.io/music-assistant/server",
         "toertel/logitech-media-server",
         "alpine"
       ],
-      "lockFileMaintenance": { "enabled": true },
+      "lockFileMaintenance": {
+        "enabled": true
+      },
       "automerge": true
     }
   ]
