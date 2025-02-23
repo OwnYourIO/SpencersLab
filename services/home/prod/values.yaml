@@ -486,10 +486,10 @@ paperless:
             DISABLE_GOOGLE_CHROME: '1'
           resources:
             limits:
-              memory: 30Mi
+              memory: 500Mi
             requests:
               cpu: 10m
-              memory: 30Mi
+              memory: 60Mi
         redis:
           image:
             repository: redis
