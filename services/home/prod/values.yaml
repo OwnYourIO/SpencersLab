@@ -473,11 +473,18 @@ paperless:
             SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
           probes:
             liveness:
-              enabled: true
+              enabled: false
             readiness:
               enabled: true
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
             startup:
-              enabled: true
+              enabled: false
         gotenburg:
           image:
             repository: gotenberg/gotenberg
