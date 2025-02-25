@@ -471,6 +471,12 @@ paperless:
             SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16 10.42.0.0/16"
             # TODO: Make the URL generic via a secret. 
             SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
+          resources:
+            limits:
+              memory: 500Mi
+            requests:
+              cpu: 40m
+              memory: 100Mi
           probes:
             liveness:
               enabled: true
