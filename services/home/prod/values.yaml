@@ -473,11 +473,11 @@ paperless:
             SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
           probes:
             liveness:
-              enabled: false
+              enabled: true
             readiness:
-              enabled: false
+              enabled: true
             startup:
-              enabled: false
+              enabled: true
         gotenburg:
           image:
             repository: gotenberg/gotenberg
@@ -486,30 +486,30 @@ paperless:
             DISABLE_GOOGLE_CHROME: '1'
           resources:
             limits:
-              memory: 500Mi
+              memory: 700Mi
             requests:
               cpu: 10m
-              memory: 60Mi
+              memory: 200Mi
         redis:
           image:
             repository: redis
             tag: 7.4.2@sha256:93a8d83b707d0d6a1b9186edecca2e37f83722ae0e398aee4eea0ff17c2fad0e
           resources:
             limits:
-              memory: 50Mi
+              memory: 700Mi
             requests:
               cpu: 10m
-              memory: 18Mi
+              memory: 50Mi
         tika:
           image:
             repository: ghcr.io/paperless-ngx/tika
             tag: 2.9.1-minimal@sha256:20db3df89eaeb1b271dd840888fe909b88b12f4b86ef641ec07a1d45d4c5168f
           resources:
             limits:
-              memory: 220Mi
+              memory: 700Mi
             requests:
               cpu: 10m
-              memory: 220Mi
+              memory: 250Mi
 
   service:
     main:
