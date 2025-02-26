@@ -1,5 +1,5 @@
 ARG REPO=ghcr.io/music-assistant/server
-ARG TAG=2.3.6
+ARG TAG=2.4.0
 FROM ${REPO}:${TAG}
 RUN  apt-get update \
     # install roc-toolkit from 
