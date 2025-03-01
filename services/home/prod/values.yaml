@@ -542,6 +542,10 @@ paperless:
                     - /bin/sh
                     - -c
                     - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
+                initialDelaySeconds: 0
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 10
   service:
     main:
       controller: main
