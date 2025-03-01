@@ -534,18 +534,7 @@ paperless:
                 timeoutSeconds: 1
                 failureThreshold: 3
             startup:
-              enabled: true
-              custom: true
-              spec:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
-                initialDelaySeconds: 0
-                periodSeconds: 10
-                timeoutSeconds: 2
-                failureThreshold: 10
+              enabled: false
   service:
     main:
       controller: main
