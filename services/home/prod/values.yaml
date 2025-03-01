@@ -596,8 +596,8 @@ paperless:
       type: secret
       name: paperless-secrets
       advancedMounts:
-        main:
-          samba:
+        samba:
+          main:
             - path: /run/secrets/samba_password
               subPath: samba-password
               readOnly: true
