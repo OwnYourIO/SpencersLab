@@ -462,42 +462,6 @@ paperless:
             requests:
               cpu: 40m
               memory: 1.2Gi
-        samba:
-          image:
-            repository: ghcr.io/crazy-max/samba
-            tag: 4.19.9@sha256:270a8dcaeb7be73c3a63e2d7cc966cfdc6ca70b418c59e4af406bee6ea41ded7
-          env:
-            TZ: America/Denver
-            SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16 10.42.0.0/16"
-            # TODO: Make the URL generic via a secret. 
-            SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
-          resources:
-            limits:
-              memory: 500Mi
-            requests:
-              cpu: 40m
-              memory: 100Mi
-          probes:
-            liveness:
-              enabled: true
-              custom: true
-              spec:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
-            readiness:
-              enabled: true
-              custom: true
-              spec:
-                exec:
-                  command:
-                    - /bin/sh
-                    - -c
-                    - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
-            startup:
-              enabled: false
         gotenburg:
           image:
             repository: gotenberg/gotenberg
@@ -530,7 +494,47 @@ paperless:
             requests:
               cpu: 10m
               memory: 250Mi
-
+      samba:
+        main:
+          image:
+            repository: ghcr.io/crazy-max/samba
+            tag: 4.19.9@sha256:270a8dcaeb7be73c3a63e2d7cc966cfdc6ca70b418c59e4af406bee6ea41ded7
+          env:
+            TZ: America/Denver
+            SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16 10.42.0.0/16"
+            SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
+          resources:
+            limits:
+              memory: 500Mi
+            requests:
+              cpu: 40m
+              memory: 100Mi
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
+              type: HTTP
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
+                initialDelaySeconds: 0
+                periodSeconds: 10
+                timeoutSeconds: 1
+                failureThreshold: 3
+            startup:
+              enabled: false
   service:
     main:
       controller: main
