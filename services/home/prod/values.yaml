@@ -512,7 +512,7 @@ paperless:
               memory: 100Mi
           probes:
             liveness:
-              enabled: true
+              enabled: false
               custom: true
               spec:
                 exec:
