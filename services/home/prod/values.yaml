@@ -494,7 +494,8 @@ paperless:
             requests:
               cpu: 10m
               memory: 250Mi
-      samba:
+    samba:
+      containers:
         main:
           image:
             repository: ghcr.io/crazy-max/samba
