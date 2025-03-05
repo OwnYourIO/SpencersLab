@@ -13,7 +13,7 @@ dependencies:
   version: 1.1.32
   repository: https://ownyourio.github.io/SpencersLab/
 - name: cloudnative-pg
-  version: 0.23.0
+  version: 0.23.2
   repository: https://cloudnative-pg.github.io/charts
 - name: keycloakx
   version: 7.0.1
