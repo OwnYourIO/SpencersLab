@@ -12,7 +12,7 @@ spec:
           - list:
               elements:
                 - appName: base
-                  version: 1.0.107 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  version: 1.0.108 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   namespace: default
                   ServerSideApply: "false"
                 - appName: external-secrets-bitwarden
@@ -48,6 +48,8 @@ spec:
                 value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
               - name: autoUpdateK3s
                 value: "true"
+              - name: seaweedVolumePort
+                value: 8080
               #- name: proxy.middlewares.entrypoint
               #  value: "{ { $.Values.proxy.middlewares.entrypoint } }"
               ## Unset cert-manager-solver-token as it's not desired on remote.

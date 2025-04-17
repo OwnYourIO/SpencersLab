@@ -457,7 +457,9 @@ seaweedfs:
       size: "10Gi"
 
     ingress:
-      enabled: false
+      enabled: true
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: seaweedVolume
 
     # Volume server's rack name
     rack: infra.spencerslab.com
