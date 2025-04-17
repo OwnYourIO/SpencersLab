@@ -12,6 +12,7 @@ spec:
       - "--api.insecure=true"
       - "--log.level=DEBUG"
       - "--serversTransport.insecureSkipVerify=true"
+      - "--entrypoints.seaweedVolume.address=:8000/tcp"
     dashboard: 
       enabled: true
     service:
@@ -46,6 +47,13 @@ spec:
             {{- range .Values.trustedIPs }}
             - "{{ . }}"
             {{- end }}
+      {{- if index .Values "seaweedVolumePort" }}
+      seaweedVolume:
+        port: 8000
+        expose: true
+        exposedPort: 8080
+        protocol: TCP
+      {{- end }}
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
