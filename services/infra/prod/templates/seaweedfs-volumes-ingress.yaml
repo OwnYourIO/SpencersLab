@@ -1,0 +1,52 @@
+{{- $clusterName := .Values.clusterName -}}
+{{- $domain := .Values.domain -}}
+{{- $replicas := int .Values.seaweedfs.volume.replicas }}
+{{- range $replicaIndex := until $replicas }}
+
+# Service for each pod in the StatefulSet
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-volume-{{ $replicaIndex }}
+  namespace: default
+spec:
+  type: ClusterIP  # Changed from LoadBalancer as we'll use Ingress for external access
+  ports:
+    - name: swfs-volume
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/component: volume
+    app.kubernetes.io/name: seaweedfs
+    statefulset.kubernetes.io/pod-name: seaweedfs-volume-{{ $replicaIndex }}
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "seaweedfs-volume-{{ $replicaIndex }}-{{ $clusterName }}-ingress"
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: seaweedVolume
+  labels:
+    external-dns: "enabled"
+spec:
+  tls:
+    - hosts:
+      - "seaweedfs-volume-{{ $replicaIndex }}.{{ $clusterName }}.{{ $domain }}"
+      secretName: wildcard-cert
+  rules:
+    - host: "seaweedfs-volume-{{ $replicaIndex }}.{{ $clusterName }}.{{ $domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "seaweedfs-volume-{{ $replicaIndex }}"
+                port:
+                  number: 8080
+{{- end }}
