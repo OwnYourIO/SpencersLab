@@ -30,15 +30,21 @@ metadata:
   name: "seaweedfs-volume-{{ $replicaIndex }}-{{ $clusterName }}-ingress"
   namespace: default
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: seaweedvolume
+    traefik.ingress.kubernetes.io/router.entrypoints: "seaweedvolume"
   labels:
     external-dns: "enabled"
 spec:
-  tls:
-    - hosts:
-      - "seaweedfs-volume-{{ $replicaIndex }}.{{ $clusterName }}.{{ $domain }}"
-      secretName: wildcard-cert
   rules:
+    - host: "seaweedfs-volume-{{ $replicaIndex }}.seaweedfs-volume.default"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "seaweedfs-volume-{{ $replicaIndex }}"
+                port:
+                  number: 8080
     - host: "seaweedfs-volume-{{ $replicaIndex }}.{{ $clusterName }}.{{ $domain }}"
       http:
         paths:
