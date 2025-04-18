@@ -98,7 +98,7 @@
         "minor",
         "patch"
       ],
-      "automergeSchedule": "[after 1:00am and before 7:00am every tuesday]",
+      "automergeSchedule": ["* 1-6 * * 2"],
       "matchPackageNames": [
         "argo-cd",
         "org.keycloak:keycloak-parent",
