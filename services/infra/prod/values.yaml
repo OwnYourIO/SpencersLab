@@ -459,7 +459,7 @@ seaweedfs:
     ingress:
       enabled: true
       annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: seaweedVolume
+        traefik.ingress.kubernetes.io/router.entrypoints: seaweedvolume
 
     # Volume server's rack name
     rack: infra.spencerslab.com
