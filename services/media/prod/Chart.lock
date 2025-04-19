@@ -7,7 +7,7 @@ dependencies:
   version: 0.2.2
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
-  version: 3.7.1
+  version: 3.7.3
 - name: jellyseerr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.2.5
@@ -28,6 +28,6 @@ dependencies:
   version: 0.3.4
 - name: app-template
   repository: https://bjw-s.github.io/helm-charts/
-  version: 3.7.1
-digest: sha256:71bff9c596957e32d08f7f64f5431542ec80f8b56ec3db7192bad7df1149a86b
-generated: "2025-04-19T02:14:51.375532206Z"
+  version: 3.7.3
+digest: sha256:5426e34e2c4873645e6079e240572294a6d502c52560d5e26f397949deefb25c
+generated: "2025-04-19T02:34:35.017262225Z"
