@@ -1,12 +1,12 @@
 dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 4.0.385
+  version: 4.0.386
 - name: gitea
   repository: https://dl.gitea.com/charts/
   version: 11.0.1
 - name: backups-appset
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.1.1
-digest: sha256:291988d55c9e51f07145fc5bff307ebcbe1c7c6f47e0084105cd75ac57bfe0dd
-generated: "2025-03-26T18:58:34.12898542Z"
+digest: sha256:ff4034203f270ad835b6928c855300019c962803aa2b77d4d9b88c9a8c0d317b
+generated: "2025-04-19T02:05:31.744713033Z"
