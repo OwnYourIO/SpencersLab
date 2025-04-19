@@ -10,7 +10,7 @@ dependencies:
   version: 0.1.1
 - name: generic-device-plugin
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.17
+  version: 1.0.18
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.52
@@ -38,5 +38,5 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.84.0
-digest: sha256:bbec4fb7282013f8eed7038994bccb4aa2ab23a42d75cab146da0ad73a6d2a1d
-generated: "2025-04-19T04:05:21.382261341Z"
+digest: sha256:e557f8e7879d7c0b18d9fadbae244167a608ba9f2bd94aa54e3d77c51de54e90
+generated: "2025-04-19T04:52:04.785763239Z"
