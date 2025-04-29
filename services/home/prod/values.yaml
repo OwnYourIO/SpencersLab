@@ -65,6 +65,9 @@ ingress:
       service: home-hyperion
       port: 8090
     
+    budget:
+      service: home-firefly-iii
+      port: 8080
     firefly:
       service: home-firefly-iii
       port: 8080
