@@ -64,6 +64,13 @@ ingress:
       #serviceName: hyperion
       service: home-hyperion
       port: 8090
+    
+    firefly:
+      service: home-firefly-iii
+      port: 80
+    firefly-import:
+      service: home-firefly-import
+      port: 80
     firefly-pico:
       service: home-firefly-pico
       port: 80
