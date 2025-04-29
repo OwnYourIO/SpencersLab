@@ -53,3 +53,15 @@ dependencies:
   version: 7.85.0
   repository: https://wekan.github.io/charts/
   alias: boards
+
+- name:  firefly-iii
+  version: 1.9.3
+  repository:  https://firefly-iii.github.io/kubernetes
+- name: importer
+  version: 1.4.1
+  repository:  https://firefly-iii.github.io/kubernetes
+  alias: firefly-import
+- name: app-template
+  version: 3.7.1
+  repository: https://bjw-s.github.io/helm-charts/
+  alias: firefly-pico
