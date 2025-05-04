@@ -66,8 +66,12 @@ ingress:
       port: 8090
     
     budget:
-      service: home-firefly-iii
-      port: 8080
+      service: home-actualbudget
+      #service: home-firefly-iii
+      port: 5006
+    actualbudget:
+      service: home-actualbudget
+      port: 5006
     firefly:
       service: home-firefly-iii
       port: 8080
@@ -625,6 +629,70 @@ paperless:
             - path: /data/config.yml
               subPath: samba.yaml
               readOnly: true
+
+actualbudget:
+  controllers:
+    actual:
+      type: deployment
+      containers:
+        main:
+          image: &img
+            repository: ghcr.io/actualbudget/actual-server
+            tag: 25.4.0@sha256:c1c372993f9b90ec00a8bf3c135002bd47790e42cae5e76a01743b7fc1cf8f6e
+          env: &env
+            TZ: America/Denver
+            ACTUAL_PORT: &http 5006
+            ACTUAL_DATA_DIR: &pvc /data
+            ACTUAL_MULTIUSER: "true"
+          envFrom: &envFrom
+            - secretRef:
+                name: actualbudget-secrets
+          securityContext: &sc
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "10m"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+      initContainers:
+        01-enable-openid:
+          image: *img
+          env: *env
+          envFrom: *envFrom
+          securityContext: *sc
+          # command: ["npm", "run", "enable-openid", "--prefix", "/app"]
+          command: ["tini", "-g", "--", "/bin/sh", "-c"]
+          args: ["npm run enable-openid --prefix /app || true"]
+  service:
+    actual:
+      controller: actual
+      ports:
+        http:
+          port: *http
+          protocol: HTTP
+          appProtocol: http
+  persistence:
+    data:
+      existingClaim: actualbudget-data
+      globalMounts:
+        - subPath: data
+          path: *pvc
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: &uid 1000
+      runAsGroup: *uid
+      fsGroup: *uid
+      fsGroupChangePolicy: Always
+      seccompProfile: { type: "RuntimeDefault" }
 
 firefly-iii:
   image:
