@@ -38,6 +38,10 @@ dependencies:
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 7.85.0
+- name: app-template
+  repository: https://bjw-s.github.io/helm-charts/
+  version: 3.7.3
+  alias : actualbudget
 - name: firefly-iii
   repository: https://firefly-iii.github.io/kubernetes
   version: 1.9.3
