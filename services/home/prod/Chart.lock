@@ -27,7 +27,7 @@ dependencies:
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.7
 - name: app-template
-  repository: https://bjw-s.github.io/helm-charts/
+  repository: https://bjw-s-labs.github.io/helm-charts/
   version: 3.7.3
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
@@ -39,9 +39,8 @@ dependencies:
   repository: https://wekan.github.io/charts/
   version: 7.85.0
 - name: app-template
-  repository: https://bjw-s.github.io/helm-charts/
+  repository: https://bjw-s-labs.github.io/helm-charts/
   version: 3.7.3
-  alias : actualbudget
 - name: firefly-iii
   repository: https://firefly-iii.github.io/kubernetes
   version: 1.9.3
@@ -49,7 +48,7 @@ dependencies:
   repository: https://firefly-iii.github.io/kubernetes
   version: 1.4.1
 - name: app-template
-  repository: https://bjw-s.github.io/helm-charts/
+  repository: https://bjw-s-labs.github.io/helm-charts/
   version: 3.7.1
-digest: sha256:799adb3743bcdad80f353d81e15a046c55be86965cfc7ed5adf63b820d586aa1
-generated: "2025-04-28T22:09:37.023851287-06:00"
+digest: sha256:a165485b7a11e5f9f8e022297e090eecd084b1664a8efa4bb323c389723b765d
+generated: "2025-05-04T17:57:38.588533321-06:00"

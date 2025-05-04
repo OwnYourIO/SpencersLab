@@ -40,7 +40,7 @@ dependencies:
   repository: https://ownyourio.github.io/SpencersLab/
 - name: app-template
   version: 3.7.3
-  repository: https://bjw-s.github.io/helm-charts/
+  repository: https://bjw-s-labs.github.io/helm-charts/
   alias: paperless
 - name: cloudnative-pg
   version: 0.23.2
@@ -53,7 +53,10 @@ dependencies:
   version: 7.85.0
   repository: https://wekan.github.io/charts/
   alias: boards
-
+- name: app-template
+  version: 3.7.3
+  repository: https://bjw-s-labs.github.io/helm-charts/
+  alias: actualbudget
 - name:  firefly-iii
   version: 1.9.3
   repository:  https://firefly-iii.github.io/kubernetes
@@ -63,5 +66,5 @@ dependencies:
   alias: firefly-import
 - name: app-template
   version: 3.7.1
-  repository: https://bjw-s.github.io/helm-charts/
+  repository: https://bjw-s-labs.github.io/helm-charts/
   alias: firefly-pico
