@@ -693,57 +693,67 @@ actualbudget:
       fsGroupChangePolicy: Always
       seccompProfile: { type: "RuntimeDefault" }
 
-firefly-iii:
-  image:
-    repository: fireflyiii/core
-    tag: version-6.2.12@sha256:2fe8f53cb43532c03ed9f26cb98f5cc6a8c63f07e70c897d868f278f591c3ee3
-  persistence:
-    enabled: false
-  config:
-    existingSecret: firefly-config
-  cronjob:
-    enabled: true
-    annotations:
-      healthcheckSecret: firefly-cron
-    auth:
-      existingSecret: firefly-cron
-    image:
-      repository: curlimages/curl
-      tag: latest@sha256:d43bdb28bae0be0998f3be83199bfb2b81e0a30b034b6d7586ce7e05de34c3fd
-  resources:
-    requests:
-      cpu: 20m
-      memory: 200Mi
-
-firefly-import:
-  image:
-    repository: fireflyiii/data-importer
-    tag: version-1.6.2@sha256:753e5c51438da30843ff0f0eef486befca0a7c6f1bb94723cfdf1c80c421272b
-  fireflyiii:
-    url: http://home-firefly-iii
-    vanityUrl: OVERRIDE_VIA_CUSTOM_VALUE
-    auth:
-      existingSecret: firefly-importer
-  config:
-    existingSecret: firefly-importer
-    env:
-      IGNORE_DUPLICATE_ERRORS: "false"
-      TZ: America/Denver
-    files: []
-firefly-pico:
-  controllers:
-    main:
-      containers:
-        main:
-          image:
-            repository: cioraneanu/firefly-pico
-            tag: 1.7.0@sha256:d5206d22c39351c7f48e23843c2e7474519665d9daf2165a66cd6926a16647fa
-          env:
-            TZ: America/Denver
-            FIREFLY_URL: http://home-firefly-iii
-  service:
-    main:
-      controller: main
-      ports:
-        firefly-pico-http:
-          port: 80
+#firefly-iii:
+#  image:
+#    repository: fireflyiii/core
+#    tag: version-6.2.12@sha256:2fe8f53cb43532c03ed9f26cb98f5cc6a8c63f07e70c897d868f278f591c3ee3
+#  persistence:
+#    enabled: false
+#  config:
+#    existingSecret: firefly-config
+#  cronjob:
+#    enabled: true
+#    annotations:
+#      healthcheckSecret: firefly-cron
+#    auth:
+#      existingSecret: firefly-cron
+#    image:
+#      repository: curlimages/curl
+#      tag: latest@sha256:d43bdb28bae0be0998f3be83199bfb2b81e0a30b034b6d7586ce7e05de34c3fd
+#  resources:
+#    requests:
+#      cpu: 20m
+#      memory: 200Mi
+#
+#firefly-import:
+#  image:
+#    repository: fireflyiii/data-importer
+#    tag: version-1.6.2@sha256:753e5c51438da30843ff0f0eef486befca0a7c6f1bb94723cfdf1c80c421272b
+#  fireflyiii:
+#    url: http://home-firefly-iii
+#    vanityUrl: OVERRIDE_VIA_CUSTOM_VALUE
+#    auth:
+#      existingSecret: firefly-importer
+#  config:
+#    existingSecret: firefly-importer
+#    env:
+#      IGNORE_DUPLICATE_ERRORS: "false"
+#      TZ: America/Denver
+#    files: []
+#firefly-pico:
+#  controllers:
+#    main:
+#      containers:
+#        main:
+#          image:
+#            repository: cioraneanu/firefly-pico
+#            tag: 1.7.0@sha256:d5206d22c39351c7f48e23843c2e7474519665d9daf2165a66cd6926a16647fa
+#          env:
+#            TZ: America/Denver
+#            #APP_URL: firefly-pico.${SERVICE_DOMAIN}
+#            FIREFLY_URL: http://home-firefly-iii
+#            ## TODO: Fix this
+#            #DB_CONNECTION: posgresql
+#            #DB_DATABASE: /database/database.sqlite
+#  service:
+#    main:
+#      controller: main
+#      ports:
+#        firefly-pico-http:
+#          port: 80
+#  #persistence:
+#  #  database:
+#  #    type: persistentVolumeClaim
+#  #    storageClass: cluster-replicated
+#  #    accessMode: ReadWriteOnce
+#  #    size: 1Gi
