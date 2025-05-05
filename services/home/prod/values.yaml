@@ -631,6 +631,8 @@ paperless:
               readOnly: true
 
 actualbudget:
+  global:
+    nameOverride: actualbudget
   controllers:
     actual:
       type: deployment
