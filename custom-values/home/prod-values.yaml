@@ -17,3 +17,8 @@ boards:
 firefly-import:
   fireflyiii:
     vanityUrl: https://firefly.spencerslab.com
+
+# For actualbudget
+trustedIPs:
+  - "10.42.0.0/24"
+  - "10.0.77.0/24"
