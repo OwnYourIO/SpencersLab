@@ -57,14 +57,14 @@ dependencies:
   version: 3.7.3
   repository: https://bjw-s-labs.github.io/helm-charts/
   alias: actualbudget
-- name:  firefly-iii
-  version: 1.9.3
-  repository:  https://firefly-iii.github.io/kubernetes
-- name: importer
-  version: 1.4.1
-  repository:  https://firefly-iii.github.io/kubernetes
-  alias: firefly-import
-- name: app-template
-  version: 3.7.1
-  repository: https://bjw-s-labs.github.io/helm-charts/
-  alias: firefly-pico
+#- name:  firefly-iii
+#  version: 1.9.3
+#  repository:  https://firefly-iii.github.io/kubernetes
+#- name: importer
+#  version: 1.4.1
+#  repository:  https://firefly-iii.github.io/kubernetes
+#  alias: firefly-import
+#- name: app-template
+#  version: 3.7.1
+#  repository: https://bjw-s-labs.github.io/helm-charts/
+#  alias: firefly-pico
