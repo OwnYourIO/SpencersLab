@@ -745,5 +745,5 @@ firefly-pico:
     main:
       controller: main
       ports:
-        http:
+        firefly-pico-http:
           port: 80
