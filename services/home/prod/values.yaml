@@ -686,6 +686,7 @@ actualbudget:
       globalMounts:
         - subPath: data
           path: *pvc
+  defaultPodOptions:
     securityContext:
       runAsNonRoot: true
       runAsUser: &uid 1000
