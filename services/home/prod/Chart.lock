@@ -41,14 +41,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 3.7.3
-- name: firefly-iii
-  repository: https://firefly-iii.github.io/kubernetes
-  version: 1.9.3
-- name: importer
-  repository: https://firefly-iii.github.io/kubernetes
-  version: 1.4.1
-- name: app-template
-  repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 3.7.1
-digest: sha256:a165485b7a11e5f9f8e022297e090eecd084b1664a8efa4bb323c389723b765d
-generated: "2025-05-04T17:57:38.588533321-06:00"
+digest: sha256:ce9ad3aa842c7ef223db178fbbea18ba81a51ddcb65d6cb4debe2d7b31419c85
+generated: "2025-05-04T18:26:51.092405755-06:00"
