@@ -678,8 +678,6 @@ actualbudget:
       ports:
         http:
           port: *http
-          protocol: HTTP
-          appProtocol: http
   persistence:
     data:
       existingClaim: actualbudget-data
