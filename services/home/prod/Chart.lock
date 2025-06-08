@@ -16,7 +16,7 @@ dependencies:
   version: 1.0.53
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.17
+  version: 1.0.18
 - name: ledfx
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.15
@@ -41,5 +41,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.0.1
-digest: sha256:b6fbfc47731268218c88b394c8464c8a0a2a31ef4ffd135815e159787680da9f
-generated: "2025-06-08T01:23:22.62776765-06:00"
+digest: sha256:aa8d16f1e296cb961381a2227ce1a4a39efa6a3f298106dff23f941bae64be39
+generated: "2025-06-08T08:10:32.619932126Z"
