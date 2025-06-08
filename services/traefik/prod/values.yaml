@@ -43,7 +43,7 @@ traefik:
   deployment: 
     additionalContainers: 
     - name: user-allowlist-update
-      image: alpine:3.21
+      image: alpine:3.22
       command: ["/bin/sh", "-c"]
       args:
         - |
