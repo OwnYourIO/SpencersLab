@@ -495,7 +495,7 @@ paperless:
         redis:
           image:
             repository: redis
-            tag: 7.4.2@sha256:fbdbaea47b9ae4ecc2082ecdb4e1cea81e32176ffb1dcf643d422ad07427e5d9
+            tag: 8.0.2@sha256:dbf3e4b6ad3ece9c733282ff3f16942ed754fdc4ea12332154f30a9a9b88c3af
           resources:
             limits:
               memory: 700Mi
