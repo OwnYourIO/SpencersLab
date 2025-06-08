@@ -395,7 +395,7 @@ paperless:
         main:
           image:
             repository: ghcr.io/paperless-ngx/paperless-ngx
-            tag: 2.15.2@sha256:80d1a7fe4f638cb00c1dcf5ff4ce2c15d92f13a6287db1e1b94f58c35a689e47
+            tag: 2.16.3@sha256:5622c95b4e22c6b95d4791563d8ace03ae16e3147e2cdf2016b938dc9341d30a
           env:
             PAPERLESS_TIME_ZONE: America/Denver
             PAPERLESS_URL: https://documents.spencerslab.com
