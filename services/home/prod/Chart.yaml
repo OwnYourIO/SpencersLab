@@ -16,7 +16,7 @@ dependencies:
   version: 1.0.20
   repository: https://ownyourio.github.io/SpencersLab/
 - name: zigbee2mqtt
-  version: 1.0.54
+  version: 1.0.55
   repository: https://ownyourio.github.io/SpencersLab/
 # TODO: MQTT chart
 # TODO: Use the better charts.
