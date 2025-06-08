@@ -215,7 +215,7 @@ snapcast:
     persistence:
       snapserver:
         type: configMap
-        name: "{{ .Release.Name }}-snapcast-snapserver-conf"
+        name: "{{ .Release.Name }}-snapcast"
         globalMounts:
           - path: /etc/snapserver.conf
             subPath: snapserver.conf
@@ -287,7 +287,7 @@ ledfx:
               - path: /app/ledfx-config/
       entrypoint-override:
         type: configMap
-        name: '{{ .Release.Name }}-ledfx-entrypoint-override'
+        name: '{{ .Release.Name }}-ledfx'
         defaultMode: 0777
         globalMounts:
           - path: /app/entrypoint.sh
@@ -380,7 +380,7 @@ logitech-media-server:
           - path: /music
       init-config-map:
         type: configMap
-        name: '{{ .Release.Name }}-logitech-media-server-init'
+        name: '{{ .Release.Name }}-logitech-media-server'
         defaultMode: 0777
         globalMounts:
           - path: /entrypoint.sh
@@ -621,7 +621,7 @@ paperless:
               readOnly: true
 
     config:
-      name: "{{ .Release.Name }}-paperless-samba-config"
+      name: "{{ .Release.Name }}-paperless"
       type: configMap
       advancedMounts:
         samba:
