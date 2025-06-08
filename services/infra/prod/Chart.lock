@@ -16,9 +16,9 @@ dependencies:
   version: 7.0.1
 - name: 389ds
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.9
+  version: 1.0.10
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.10
-digest: sha256:fdb792694be4c051a9788baf53bdc4e41c346eade59d7c8949737326748fb0d8
-generated: "2025-06-08T08:15:15.699908389Z"
+  version: 1.0.11
+digest: sha256:051e5b658bd4a37c6d62ca933df2a2b5ec9973907996a471a96c1059405577b9
+generated: "2025-06-08T02:25:36.315031675-06:00"
