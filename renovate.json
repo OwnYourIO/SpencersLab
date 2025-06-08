@@ -9,8 +9,8 @@
     {
       "description": "Updates for k3s.",
       "customType": "regex",
-      "fileMatch": [
-        "k3s-version\\.yaml$"
+      "managerFilePatterns": [
+        "/k3s-version\\.yaml$/"
       ],
       "matchStrings": [
         "version:\\s*(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"
@@ -23,8 +23,8 @@
     {
       "description": "Update Charts listed in appset-base.yaml files",
       "customType": "regex",
-      "fileMatch": [
-        "appset-base\\.yaml$"
+      "managerFilePatterns": [
+        "/appset-base\\.yaml$/"
       ],
       "matchStrings": [
         "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)\\s"
@@ -33,8 +33,8 @@
     {
       "customType": "regex",
       "description": "Update Traefik's plugins when found in values.yaml files",
-      "fileMatch": [
-        "values\\.ya?ml$"
+      "managerFilePatterns": [
+        "/values\\.ya?ml$/"
       ],
       "matchStrings": [
         "moduleName:\\s*\"github\\.com/(?<packageName>[^\"]+)\"[^\"]*version:\\s*\"(?<currentValue>v\\d+\\.\\d+\\.\\d+)\""
@@ -54,7 +54,9 @@
         "patch"
       ],
       "automerge": true,
-      "automergeSchedule": ["* 1-6 * * *"]
+      "automergeSchedule": [
+        "* 1-6 * * *"
+      ]
     },
     {
       "description": "Auto Update Proxies",
@@ -71,7 +73,9 @@
         "patch"
       ],
       "automerge": true,
-      "automergeSchedule": ["* 1-6 * * *"]
+      "automergeSchedule": [
+        "* 1-6 * * *"
+      ]
     },
     {
       "description": "Internet facing services.",
@@ -79,7 +83,9 @@
         "minor",
         "patch"
       ],
-      "automergeSchedule": ["* 1-6 * * *"],
+      "automergeSchedule": [
+        "* 1-6 * * *"
+      ],
       "matchPackageNames": [
         "traefik",
         "keycloakopenid",
@@ -98,7 +104,9 @@
         "minor",
         "patch"
       ],
-      "automergeSchedule": ["* 1-6 * * 2"],
+      "automergeSchedule": [
+        "* 1-6 * * 2"
+      ],
       "matchPackageNames": [
         "argo-cd",
         "org.keycloak:keycloak-parent",
