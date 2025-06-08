@@ -10,7 +10,6 @@ spec:
     kind: Plan
     plural: plans
     singular: plan
-  preserveUnknownFields: false
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
