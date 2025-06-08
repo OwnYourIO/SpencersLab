@@ -19,6 +19,6 @@ dependencies:
   version: 1.0.8
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.8
-digest: sha256:f75f48481ff3cdc38ce5402e40f5e3dfa741f88b6080af4bfc96934b6e0ca346
-generated: "2025-04-19T04:20:32.289518667Z"
+  version: 1.0.9
+digest: sha256:1a43b7fa0e91aa55095a83ce71a2ad7111f7ac9d54a68cc9a9e196d71ea8b07f
+generated: "2025-06-08T04:19:48.21431902Z"
