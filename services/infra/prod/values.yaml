@@ -130,7 +130,7 @@ prometheus:
     persistence:
       ldifs:
         type: configMap
-        name: '{{ .Release.Name }}-389ds-ldifs'
+        name: '{{ .Release.Name }}-389ds'
         globalMounts:
           - path: /data/ldif/
 
@@ -871,7 +871,7 @@ samba:
                 readOnly: true
         
       config:
-        name: "{{ .Release.Name }}-samba-samba-config"
+        name: "{{ .Release.Name }}-samba"
         type: configMap
         advancedMounts:
           samba:
