@@ -24,9 +24,11 @@ spec:
         expose:
           default: true
       web:
-        redirectTo:
-          port: websecure
-          priority: 10
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https
+            permanent: true
         proxyProtocol:
           trustedIPs: 
             {{- range .Values.trustedIPs }}
