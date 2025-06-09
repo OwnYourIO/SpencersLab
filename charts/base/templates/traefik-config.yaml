@@ -12,7 +12,9 @@ spec:
       - "--api.insecure=true"
       - "--log.level=DEBUG"
       - "--serversTransport.insecureSkipVerify=true"
-      - "--entrypoints.seaweedvolume.address=:8080/tcp"
+      {{- if index .Values "seaweedVolumePort" }}
+      - "--entrypoints.seaweedvolume.address=:{{ index .Values "seaweedVolumePort" }}/tcp"
+      {{- end }}
     dashboard: 
       enabled: true
     service:
@@ -52,7 +54,7 @@ spec:
             {{- end }}
       {{- if index .Values "seaweedVolumePort" }}
       seaweedvolume:
-        port: 8080
+        port: {{ index .Values "seaweedVolumePort" }}
         expose:
           default: true
         exposedPort: 8080
