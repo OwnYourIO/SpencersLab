@@ -12,9 +12,6 @@ spec:
       - "--api.insecure=true"
       - "--log.level=DEBUG"
       - "--serversTransport.insecureSkipVerify=true"
-      {{- if index .Values "seaweedVolumePort" }}
-      - "--entrypoints.seaweedvolume.address=:{{ index .Values "seaweedVolumePort" }}/tcp"
-      {{- end }}
     dashboard: 
       enabled: true
     service:
