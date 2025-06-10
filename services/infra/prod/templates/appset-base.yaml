@@ -48,8 +48,8 @@ spec:
                 value: "{{ `https://prometheus.{{ metadata.annotations.domain }}/api/v1/write` }}"
               - name: autoUpdateK3s
                 value: "true"
-              - name: seaweedVolumePort
-                value: "8080"
+              #- name: seaweedVolumePort
+              #  value: "8080"
               #- name: proxy.middlewares.entrypoint
               #  value: "{ { $.Values.proxy.middlewares.entrypoint } }"
               ## Unset cert-manager-solver-token as it's not desired on remote.
