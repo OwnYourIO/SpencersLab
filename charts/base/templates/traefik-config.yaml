@@ -22,6 +22,8 @@ spec:
       traefik:
         expose:
           default: true
+        # Change from the default of 8080 to avoid conflict with SeaweedFS volumes.
+        port: 9000
       web:
         redirections:
           entryPoint:
