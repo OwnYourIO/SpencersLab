@@ -12,22 +12,22 @@ clusterName: OVERRIDE_VIA_APPSET
 
 proxy:
   middlewares: 
-    entrypoint: "kube-system/crowdsec@kubernetescrd"
-    userAuth: "kube-system/oidc-keycloak@kubernetescrd"
+    entrypoint: "crowdsec@kubernetescrd"
+    userAuth: "oidc-keycloak@kubernetescrd"
     allowList: "user-allowlist@file"
     allowListRemote: "user-allowlist-remote@file"
 
   subdomains:
     # Infrastructure
     login:
-      middlewares: "kube-system/crowdsec@kubernetescrd"
+      middlewares: "crowdsec@kubernetescrd"
       ingressRoute:
         middlewares:
-          - "kube-system/crowdsec@kubernetescrd"
+          - "crowdsec@kubernetescrd"
 
     registration:
       target: login
-      middlewares: "kube-system/crowdsec@kubernetescrd,default/redirect-registration@kubernetescrd"
+      middlewares: "crowdsec@kubernetescrd,default/redirect-registration@kubernetescrd"
       redirect:
         # This assumes a fair amount and may need to be broken down.
         #   - using Keycloak 
