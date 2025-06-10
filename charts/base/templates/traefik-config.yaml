@@ -59,6 +59,9 @@ spec:
         exposedPort: 8080
         protocol: TCP
       {{- end }}
+    entryPoints:
+      seaweedvolume:
+        address: ":8080"
     providers:
       kubernetesCRD:
         allowCrossNamespace: true
