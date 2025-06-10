@@ -11,4 +11,4 @@ spec:
   selector:
     app.kubernetes.io/name: "sshd"
     app.kubernetes.io/instance: "{{ .Release.Name }}"
-    app.kubernetes.io/component: main
+    app.kubernetes.io/controller: main
