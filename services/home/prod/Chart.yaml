@@ -39,7 +39,7 @@ dependencies:
   version: 1.0.10
   repository: https://ownyourio.github.io/SpencersLab/
 - name: app-template
-  version: 4.0.1
+  version: 4.1.0
   repository: https://bjw-s-labs.github.io/helm-charts/
   alias: paperless
 - name: cloudnative-pg
@@ -54,7 +54,7 @@ dependencies:
   repository: https://wekan.github.io/charts/
   alias: boards
 - name: app-template
-  version: 4.0.1
+  version: 4.1.0
   repository: https://bjw-s-labs.github.io/helm-charts/
   alias: actualbudget
 #- name:  firefly-iii
