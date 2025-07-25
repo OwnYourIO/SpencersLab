@@ -34,6 +34,10 @@ ingress:
       serviceName: zigbee2mqtt
       service: home-zigbee2mqtt
       port: 8080
+    zigbee-remote:
+      serviceName: zigbee2mqtt-remote
+      service: home-zigbee2mqtt-remote
+      port: 8080
 
     #mqtt:
     #  serviceName: mosquitto
@@ -61,26 +65,39 @@ ingress:
     #  port: ????
 
     hyperion:
-      #serviceName: hyperion
       service: home-hyperion
       port: 8090
     
     budget:
       service: home-actualbudget
-      #service: home-firefly-iii
       port: 5006
     actualbudget:
       service: home-actualbudget
       port: 5006
-    firefly:
-      service: home-firefly-iii
-      port: 8080
-    firefly-import:
-      service: home-firefly-import
-      port: 8080
-    firefly-pico:
-      service: home-firefly-pico
+
+    bookmarks:
+      service: home-karakeep
+      port: 3000
+    karakeep:
+      service: home-karakeep
+      port: 3000
+
+    plants:
+      service: home-hortusfox
       port: 80
+    hortusfox:
+      service: home-hortusfox
+      port: 80
+
+    help:
+      service: home-hugo-help
+      port: 1313
+    love:
+      service: home-hugo-love
+      port: 1313
+    grow:
+      service: home-hugo-grow
+      port: 1313
 
     cluster:
       clusterBase: true
@@ -176,6 +193,28 @@ zigbee2mqtt:
               ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 57600
               ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyUSB1
               ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ezsp
+            securityContext:
+              allowPrivilegeEscalation: true
+              readOnlyRootFilesystem: false
+        pod:
+          securityContext:
+            runAsNonRoot: false
+zigbee2mqtt-remote:
+  bitwardenIds:
+    zigbee2mqtt: 0164cfbc-dd85-43af-a4cc-b13f00108bde
+  app-template:
+    controllers:
+      zigbee2mqtt:
+        containers:
+          main:
+            image: 
+              repository: ghcr.io/koenkk/zigbee2mqtt
+              tag: 2.4.0
+            env:
+              TZ: America/Denver
+              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee2mqtt-remote.spencerslab.com
+              ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://home.spencerslab.com
+              ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 4
             securityContext:
               allowPrivilegeEscalation: true
               readOnlyRootFilesystem: false
@@ -695,67 +734,140 @@ actualbudget:
       fsGroupChangePolicy: Always
       seccompProfile: { type: "RuntimeDefault" }
 
-#firefly-iii:
-#  image:
-#    repository: fireflyiii/core
-#    tag: version-6.2.12@sha256:2fe8f53cb43532c03ed9f26cb98f5cc6a8c63f07e70c897d868f278f591c3ee3
-#  persistence:
-#    enabled: false
-#  config:
-#    existingSecret: firefly-config
-#  cronjob:
-#    enabled: true
-#    annotations:
-#      healthcheckSecret: firefly-cron
-#    auth:
-#      existingSecret: firefly-cron
-#    image:
-#      repository: curlimages/curl
-#      tag: latest@sha256:d43bdb28bae0be0998f3be83199bfb2b81e0a30b034b6d7586ce7e05de34c3fd
-#  resources:
-#    requests:
-#      cpu: 20m
-#      memory: 200Mi
-#
-#firefly-import:
-#  image:
-#    repository: fireflyiii/data-importer
-#    tag: version-1.6.2@sha256:753e5c51438da30843ff0f0eef486befca0a7c6f1bb94723cfdf1c80c421272b
-#  fireflyiii:
-#    url: http://home-firefly-iii
-#    vanityUrl: OVERRIDE_VIA_CUSTOM_VALUE
-#    auth:
-#      existingSecret: firefly-importer
-#  config:
-#    existingSecret: firefly-importer
-#    env:
-#      IGNORE_DUPLICATE_ERRORS: "false"
-#      TZ: America/Denver
-#    files: []
-#firefly-pico:
-#  controllers:
-#    main:
-#      containers:
-#        main:
-#          image:
-#            repository: cioraneanu/firefly-pico
-#            tag: 1.7.0@sha256:d5206d22c39351c7f48e23843c2e7474519665d9daf2165a66cd6926a16647fa
-#          env:
-#            TZ: America/Denver
-#            #APP_URL: firefly-pico.${SERVICE_DOMAIN}
-#            FIREFLY_URL: http://home-firefly-iii
-#            ## TODO: Fix this
-#            #DB_CONNECTION: posgresql
-#            #DB_DATABASE: /database/database.sqlite
-#  service:
-#    main:
-#      controller: main
-#      ports:
-#        firefly-pico-http:
-#          port: 80
-#  #persistence:
-#  #  database:
-#  #    type: persistentVolumeClaim
-#  #    storageClass: cluster-replicated
-#  #    accessMode: ReadWriteOnce
-#  #    size: 1Gi
+karakeep:
+  app-template:
+    controllers:
+      karakeep:
+        containers:
+          main:
+            image:
+              repository: ghcr.io/karakeep-app/karakeep
+              tag: 0.26.0
+            env:
+              BROWSER_WEB_URL: http://karakeep-chrome.selfhosted.svc.cluster.local:9222
+              CRAWLER_DOWNLOAD_BANNER_IMAGE: true
+              CRAWLER_ENABLE_ADBLOCKER: true
+              CRAWLER_STORE_SCREENSHOT: true
+              DATA_DIR: /data
+              MEILI_ADDR: http://karakeep-meilisearch.selfhosted.svc.cluster.local:7700
+              DISABLE_NEW_RELEASE_CHECK: true
+              COREPACK_INTEGRITY_KEYS: 0
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 1Gi
+
+      chrome:
+        annotations:
+        containers:
+          app:
+            image:
+              repository: gcr.io/zenika-hub/alpine-chrome
+              tag: 124
+            command:
+              - chromium-browser
+            args:
+              - --headless
+              - --no-sandbox
+              - --disable-gpu
+              - --disable-dev-shm-usage
+              - --remote-debugging-address=0.0.0.0
+              - --remote-debugging-port=9222
+              - --hide-scrollbars
+            securityContext:
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 1Gi
+
+      meilisearch:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app.kubernetes.io/name
+                        operator: In
+                        values:
+                          - karakeep
+                      - key: app.kubernetes.io/controller
+                        operator: In
+                        values:
+                          - karakeep
+                  topologyKey: kubernetes.io/hostname
+        containers:
+          app:
+            image:
+              repository: docker.io/getmeili/meilisearch
+              tag: v1.15.2
+            args:
+              - /bin/meilisearch
+              - --experimental-dumpless-upgrade
+            env:
+              MEILI_NO_ANALYTICS: true
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 4Gi
+    service:
+      app:
+        forceRename: karakeep
+        primary: true
+        controller: karakeep
+        ports:
+          http:
+            port: &httpPort 3000
+      chrome:
+        controller: chrome
+        ports:
+          http:
+            port: 9222
+      meilisearch:
+        controller: meilisearch
+        ports:
+          http:
+            port: 7700
+
+      data:
+        existingClaim: karakeep
+        advancedMounts:
+          karakeep:
+            app:
+              - path: /data
+                subPath: karakeep
+          meilisearch:
+            app:
+              - path: /meili_data
+                subPath: meilisearch
+
+hugo-help:
+  app-template:
+    controllers:
+      hugo-help:
+        containers:
+          main:
+            image:
+              repository:  ghcr.io/hugomods/hugo
+              tag: exts-non-root-0.148.1
+
+    service:
+      main:
+        controller: main
+        ports:
+          http:
+            port: 1313
+
