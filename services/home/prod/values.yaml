@@ -839,7 +839,7 @@ karakeep:
       ports:
         http:
           port: 7700
-
+  persistence:
     data:
       existingClaim: karakeep
       advancedMounts:
