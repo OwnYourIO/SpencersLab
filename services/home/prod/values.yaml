@@ -853,7 +853,6 @@ karakeep:
               subPath: meilisearch
 
 hugo-help:
-  app-template:
     controllers:
       hugo-help:
         containers:
