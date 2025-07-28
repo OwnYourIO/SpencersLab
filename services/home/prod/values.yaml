@@ -858,6 +858,8 @@ hugo-help:
         containers:
           main:
 hugo-help:
+    global:
+      nameOverride: hugo-help
     controllers:
       main:
         containers:
@@ -865,6 +867,8 @@ hugo-help:
             image:
               repository:  ghcr.io/hugomods/hugo
               tag: exts-non-root-0.148.1
+              TZ: America/Denver
+            command: server -D
 
     service:
       main:
