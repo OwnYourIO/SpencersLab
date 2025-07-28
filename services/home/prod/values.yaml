@@ -870,6 +870,7 @@ hugo-help:
             env:
               TZ: America/Denver
             command: 
+              - /usr/bin/hugo
               - server
               - "-D"
 
