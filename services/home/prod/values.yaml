@@ -867,6 +867,7 @@ hugo-help:
             image:
               repository:  ghcr.io/hugomods/hugo
               tag: exts-non-root-0.148.1
+            env:
               TZ: America/Denver
             command: server -D
 
