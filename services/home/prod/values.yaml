@@ -869,7 +869,9 @@ hugo-help:
               tag: exts-non-root-0.148.1
             env:
               TZ: America/Denver
-            command: server -D
+            command: 
+              - server
+              - "-D"
 
     service:
       main:
