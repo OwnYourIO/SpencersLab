@@ -864,13 +864,13 @@ hugo-help:
               tag: exts-non-root-0.148.1
             env:
               TZ: America/Denver
-            workingDir: /tmp/hugo
             command: 
                 - /bin/sh
                 - -c
                 - |
                   set -e
                   echo "Initializing Hugo modules..."
+                  mkdir themes;
                   hugo mod init help.sencerslab.com || echo "Module already initialized"
                   hugo mod get || { echo "Failed to get modules"; exit 1; }
                   hugo mod tidy &&
@@ -906,5 +906,5 @@ hugo-help:
         type: configMap
         name: "{{ .Release.Name }}-hugo-help"
         globalMounts:
-          - path: /tmp/hugo/hugo.yaml
+          - path: /src/hugo.yaml
             subPath: hugo.yaml
