@@ -876,7 +876,7 @@ hugo-help:
                   hugo mod get || { echo "Failed to get modules"; exit 1; }
                   hugo mod tidy &&
                   echo "Starting Hugo server..." &&
-                  hugo server -D -e production --logLevel debug -M
+                  hugo server -D -e production --bind 0.0.0.0 --baseURL https://help.spencerslab.com --logLevel debug -M
     configMaps:
       hugo-yaml:
         data:
