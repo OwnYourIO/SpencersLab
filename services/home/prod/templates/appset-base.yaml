@@ -63,7 +63,9 @@ spec:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
       syncPolicy:
-        automated: {}
+        automated:
+          prune: false
+          selfHeal: false
         syncOptions:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
