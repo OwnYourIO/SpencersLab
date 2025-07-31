@@ -864,6 +864,7 @@ hugo-help:
               tag: exts-non-root-0.148.1
             env:
               TZ: America/Denver
+              HUGO_BASEURL: "https://home.spencerslab.com"
             command: 
                 - /bin/sh
                 - -c
