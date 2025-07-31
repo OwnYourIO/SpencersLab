@@ -1,4 +1,4 @@
-module help.spencerslab.com
+module github.com/OwnYourIO/SpencersLab/sites/help
 
 go 1.24.5
 
