@@ -894,6 +894,7 @@ hugo-help:
               imports:
                 - path: github.com/lkhrs/hugo-dark-visitors
                 - path: github.com/adityatelange/hugo-PaperMod
+                - path: github.com/OwnYourIO/SpencersLab/sites/help
 
     service:
       main:
