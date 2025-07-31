@@ -2,3 +2,4 @@
 .cr-release-packages/*
 charts/**/charts
 services/**/charts
+**/sites/_vault/.obsidian

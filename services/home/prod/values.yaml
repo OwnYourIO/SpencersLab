@@ -853,11 +853,6 @@ karakeep:
               subPath: meilisearch
 
 hugo-help:
-    controllers:
-      hugo-help:
-        containers:
-          main:
-hugo-help:
     global:
       nameOverride: hugo-help
     controllers:
