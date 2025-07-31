@@ -873,7 +873,11 @@ hugo-help:
                   hugo mod init help.sencerslab.com &&
                   hugo mod get &&
                   hugo --environment production --baseURL "https://help.spencerslab.com" &&
-                  hugo server --bind 0.0.0.0 --port 1313 --disableLiveReload
+                  (while true; do
+                    hugo mod get -u  # Update to latest
+                    sleep 15        # Check every 3 minutes
+                  done) &
+                  hugo server --bind 0.0.0.0 --port 1313 --disableLiveReload --poll 1s --appendPort=false
     configMaps:
       hugo-yaml:
         data:
