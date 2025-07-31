@@ -870,13 +870,10 @@ hugo-help:
                 - -c
                 - |
                   set -e
-                  echo "Initializing Hugo modules..."
-                  mkdir themes;
-                  hugo mod init help.sencerslab.com || echo "Module already initialized"
-                  hugo mod get || { echo "Failed to get modules"; exit 1; }
-                  hugo mod tidy &&
-                  echo "Starting Hugo server..." &&
-                  hugo server -D -e production --bind 0.0.0.0 --baseURL https://help.spencerslab.com --logLevel debug -M
+                  hugo mod init help.sencerslab.com &&
+                  hugo mod get &&
+                  hugo --environment production --baseURL "https://help.spencerslab.com" &&
+                  hugo server --bind 0.0.0.0 --port 1313 --disableLiveReload
     configMaps:
       hugo-yaml:
         data:
