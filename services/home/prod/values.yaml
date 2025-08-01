@@ -1014,6 +1014,7 @@ hugo-help:
       hugo-yaml:
         type: configMap
         name: "{{ .Release.Name }}-hugo-help"
+        defaultMode: 0755 
         globalMounts:
           - path: /src/hugo.yaml
             subPath: hugo.yaml
