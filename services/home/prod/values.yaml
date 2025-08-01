@@ -869,7 +869,7 @@ hugo-help:
                 - /bin/sh
                 - -c
                 - |
-                  /hugo-server-startup.sh
+                  sh /hugo-server-startup.sh
     configMaps:
       hugo-yaml:
         data:
