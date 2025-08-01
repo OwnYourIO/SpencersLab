@@ -927,10 +927,12 @@ hugo-help:
             update_modules() {
                 while true; do
                     # Sleep with ability to be interrupted
-                    for ((i=0; i<UPDATE_INTERVAL; i++)); do
+                    i=0
+                    while [ $i -lt $UPDATE_INTERVAL ]; do
                         sleep 1
+                        i=$((i + 1))
                         # Check if we should exit (parent process killed)
-                        if ! kill -0 $$ 2>/dev/null; then
+                        if ! kill -0 $ 2>/dev/null; then
                             exit 0
                         fi
                     done
