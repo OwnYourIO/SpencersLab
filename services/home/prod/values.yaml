@@ -927,15 +927,7 @@ hugo-help:
             update_modules() {
                 while true; do
                     # Sleep with ability to be interrupted
-                    i=0
-                    while [ $i -lt $UPDATE_INTERVAL ]; do
-                        sleep 1
-                        i=$((i + 1))
-                        # Check if we should exit (parent process killed)
-                        if ! kill -0 $ 2>/dev/null; then
-                            exit 0
-                        fi
-                    done
+                    sleep $UPDATE_INTERVAL
 
                     echo "$(date): Checking for module updates..."
                     
