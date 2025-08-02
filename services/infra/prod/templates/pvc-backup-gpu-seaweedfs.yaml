@@ -1,27 +1,26 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: player
+  name: backup-gpu
 spec:
   storageClassName: ""
-  volumeName: player
+  volumeName: backup-gpu
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   resources:
     requests:
       storage: 30Gi
 
 ---
-
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: player
+  name: backup-gpu
 spec:
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   capacity:
-    storage: 10Ti
+    storage: 30Ti
   csi:
     driver: seaweedfs-csi-driver
     # volumeHandle doesn't seem to have an impact, but is required. For now, just matching volume name.
@@ -29,7 +28,7 @@ spec:
     volumeAttributes:
       collection: player
       replication: "001"
-      path: /buckets/player
+      path: /buckets/backup-gpu
       diskType: "hdd"
   persistentVolumeReclaimPolicy: Retain
   volumeMode: Filesystem
