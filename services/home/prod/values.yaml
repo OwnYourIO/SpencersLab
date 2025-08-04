@@ -878,15 +878,12 @@ hugo-help:
             baseURL: https://help.sencerslab.com/
             languageCode: en-us
             title: How to Use Spencer's Lab
-            #theme: hyde-1.4.0
             theme:
-              - github.com/adityatelange/hugo-PaperMod
-            #docsy-0.12.0
-            #hugo-theme-hello-friend-ng-1.0.9
+              - github.com/onweru/compose
             module:
               imports:
                 - path: github.com/lkhrs/hugo-dark-visitors
-                - path: github.com/adityatelange/hugo-PaperMod
+                - path: github.com/onweru/compose
                 - path: github.com/OwnYourIO/SpencersLab/sites/help
           hugo-server-startup.sh: |
             #!/bin/bash
