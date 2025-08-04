@@ -38,6 +38,12 @@ proxy:
         status: 
           - "404"
 
+    help:
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+
     # Has SSO & companion app (and thus needs a redirect)
     player:
       target: jellyfin

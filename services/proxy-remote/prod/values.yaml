@@ -15,6 +15,11 @@ proxy:
     registration:
       enabled: true
 
+    # No auth except geoblok. 
+    help:
+      middlewares: "kube-system-geoblock@kubernetescrd"
+      enabled: true
+
     # These have apps & SSO
     player:
       enabled: true
