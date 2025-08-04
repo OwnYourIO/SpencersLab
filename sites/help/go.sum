@@ -2,3 +2,5 @@ github.com/adityatelange/hugo-PaperMod v0.0.0-20250524045829-5a4651783fa9 h1:vSO
 github.com/adityatelange/hugo-PaperMod v0.0.0-20250524045829-5a4651783fa9/go.mod h1:HCHxNMKYdGafUYjVV3ICiAqznZK2yH0iI53jqcDFDdQ=
 github.com/lkhrs/hugo-dark-visitors v1.0.0 h1:jmHmrtCAGd7N1sXubiNRdIZn5EmAhpktQL80sgldobE=
 github.com/lkhrs/hugo-dark-visitors v1.0.0/go.mod h1:lA75qN4u1/RFiD0PykuHimRKWaCGY5k211Iin1RXd8M=
+github.com/onweru/compose v0.0.0-20250714145138-0419b4c89f33 h1:cNud57e+8EaTfERRZ0NwcLUFSHVxdXWDk8/JNK0bto0=
+github.com/onweru/compose v0.0.0-20250714145138-0419b4c89f33/go.mod h1:2eSBLsKzvKf3r4/vHiKdakIBqDtWACDAqAD7tRdt00o=
