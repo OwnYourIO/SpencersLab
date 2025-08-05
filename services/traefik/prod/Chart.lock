@@ -2,11 +2,8 @@ dependencies:
 - name: traefik
   repository: https://traefik.github.io/charts
   version: 36.1.0
-- name: appset-traefik
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.4
 - name: crowdsec
   repository: https://crowdsecurity.github.io/helm-charts
   version: 0.19.3
-digest: sha256:8d6021648f43dd3cedfb4b34d724801ec7654788f57b3bd32d3bc1b2b594ba15
-generated: "2025-06-11T08:09:40.135688773Z"
+digest: sha256:56ec54553dd0be3def2901b1f11e9323daaa4a283a63476e3431442590f1e28d
+generated: "2025-08-04T21:11:24.269173612-06:00"

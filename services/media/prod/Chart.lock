@@ -1,7 +1,4 @@
 dependencies:
-- name: appset-media
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.6
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
@@ -29,5 +26,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.1.0
-digest: sha256:ecf48a23cb7f0250df479b95c2276f55714a9087105bd674ed6e39e95acd073e
-generated: "2025-06-11T19:39:36.251561123Z"
+digest: sha256:3a29eede1d449b78fc63ddacc0ceb274ab4b2fb2e9ccae5e9839f2916edbfbb3
+generated: "2025-08-04T21:14:29.375314372-06:00"
