@@ -2,8 +2,5 @@ dependencies:
 - name: traefik
   repository: https://traefik.github.io/charts
   version: 36.1.0
-- name: appset-traefik-zerotrust
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.3
-digest: sha256:c18baedf95759df047db6b9993bb6d1e0e29c20d57eb0d1e16012db3c5cbd23c
-generated: "2025-06-11T08:09:27.900561046Z"
+digest: sha256:d4aa3d4520e9abe5618d71995ff952cacc84c7ad5ad60c6edc34b723f0220a64
+generated: "2025-08-04T21:10:44.809065025-06:00"

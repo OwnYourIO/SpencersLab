@@ -5,14 +5,11 @@ dependencies:
 - name: loki-stack
   repository: https://grafana.github.io/helm-charts
   version: 2.10.2
-- name: appset-monitoring
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.14
 - name: exporter-mikrotik
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.17
 - name: grafana
   repository: https://grafana.github.io/helm-charts/
   version: 9.2.2
-digest: sha256:d706e4afd0c091cfeac711f22c63e49da6c0d617f716c26bcfd8cdd97c9f5256
-generated: "2025-06-08T13:10:20.752960959Z"
+digest: sha256:2531dea07e7eb23e4056c7e030acdbec0cc6dc822f7da8c6bb81682acae03599
+generated: "2025-08-04T21:13:35.561113738-06:00"

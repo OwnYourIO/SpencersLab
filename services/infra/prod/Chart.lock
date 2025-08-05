@@ -5,9 +5,6 @@ dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.2
-- name: appset-infra
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.32
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
   version: 0.24.0
@@ -20,5 +17,5 @@ dependencies:
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.12
-digest: sha256:857e51d3316b8f101472e5b140ad370ff6cb96d13728a1d37a0792f22835bf6d
-generated: "2025-06-12T08:01:49.233796497-06:00"
+digest: sha256:b2715fb2dc7d078b9ae166da091ca237b0f7e8e06a2d748e6f4a330f33e6feb2
+generated: "2025-07-30T22:44:45.334407422-06:00"
