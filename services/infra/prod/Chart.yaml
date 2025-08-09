@@ -10,7 +10,7 @@ dependencies:
   version: 0.2.2
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
 - name: cloudnative-pg
-  version: 0.24.0
+  version: 0.25.0
   repository: https://cloudnative-pg.github.io/charts
 - name: keycloakx
   version: 7.0.1
