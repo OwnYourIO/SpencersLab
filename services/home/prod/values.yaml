@@ -679,7 +679,7 @@ actualbudget:
         main:
           image: &img
             repository: ghcr.io/actualbudget/actual-server
-            tag: 25.6.1@sha256:cb23c488bb517550dea10f42ae9a69c2e746fc2736b068e8c4cc2a224641222f
+            tag: 25.8.0@sha256:3d7fb08d3b405426e8625013a5ed95f5015e6c04d0f044e2e3fe7d7b7a41951b
           env: &env
             TZ: America/Denver
             ACTUAL_PORT: &http 5006
