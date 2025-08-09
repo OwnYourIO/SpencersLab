@@ -22,7 +22,7 @@ dependencies:
   version: 1.0.19
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.25
+  version: 1.0.27
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.10
@@ -56,5 +56,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.2.0
-digest: sha256:54bbe0268ea632a7332194b80e0e4d5894cdba2e588eaaf2b6887fb5690604f3
-generated: "2025-08-09T20:04:05.935395702Z"
+digest: sha256:cbd572bcaf5d888e4794d49d5dfe09e394eb3eb10139d9dd85c452d5378b3ca8
+generated: "2025-08-09T20:06:30.635083576Z"
