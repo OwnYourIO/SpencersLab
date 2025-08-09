@@ -4873,6 +4873,18 @@ entries:
   external-secrets-bitwarden:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-08-09T17:21:19.287450699Z"
+    dependencies:
+    - name: external-secrets
+      repository: https://charts.external-secrets.io
+      version: 0.19.1
+    digest: c6ff9595e7d9798122cf16b8a7d3fa948d5a5a1e403aab62dc413179b862f842
+    name: external-secrets-bitwarden
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/external-secrets-bitwarden-1.0.5/external-secrets-bitwarden-1.0.5.tgz
+    version: 1.0.5
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-08-09T15:28:36.259731606Z"
     dependencies:
     - name: external-secrets
@@ -8089,4 +8101,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-08-09T17:19:00.354012569Z"
+generated: "2025-08-09T17:21:19.288153958Z"
