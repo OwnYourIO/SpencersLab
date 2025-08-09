@@ -3,6 +3,18 @@ entries:
   389ds:
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2025-08-09T20:50:20.436640113Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 3f78db088b54ece676949bfd11f46b2147acde2097f5f0b6d66d73ffcf03e6eb
+    name: 389ds
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/389ds-1.0.13/389ds-1.0.13.tgz
+    version: 1.0.13
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2025-08-09T16:42:34.848550483Z"
     dependencies:
     - name: app-template
@@ -1821,6 +1833,21 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/backups-appset-1.1.1/backups-appset-1.1.1.tgz
     version: 1.1.1
   base:
+  - apiVersion: v2
+    appVersion: 1.0.31
+    created: "2025-08-09T20:50:20.601794535Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 8.2.7
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.18.2
+    digest: dd69c24b69a489a30c34ea020c9ed71791c360218c1fe10508a22c4f2021598d
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.130/base-1.0.130.tgz
+    version: 1.0.130
   - apiVersion: v2
     appVersion: 1.0.31
     created: "2025-08-09T20:06:26.146445444Z"
@@ -4674,6 +4701,18 @@ entries:
   exporter-mikrotik:
   - apiVersion: v2
     appVersion: 1.0.11
+    created: "2025-08-09T20:50:20.778212465Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 7b26325350c3984a5e7c449709854ee78b9d1e0c7bd7bfc32a6faac92e08f52a
+    name: exporter-mikrotik
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/exporter-mikrotik-1.0.20/exporter-mikrotik-1.0.20.tgz
+    version: 1.0.20
+  - apiVersion: v2
+    appVersion: 1.0.11
     created: "2025-08-09T16:42:35.056112973Z"
     dependencies:
     - name: app-template
@@ -4901,6 +4940,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/exporter-mikrotik-1.0.1/exporter-mikrotik-1.0.1.tgz
     version: 1.0.1
   external-secrets-bitwarden:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-08-09T20:50:20.926406015Z"
+    dependencies:
+    - name: external-secrets
+      repository: https://charts.external-secrets.io
+      version: 0.19.1
+    digest: f7e6d92d076a1ad167280f8c44188c66e6faf732c59a7f4e4f703a5ab3c93e77
+    name: external-secrets-bitwarden
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/external-secrets-bitwarden-1.0.6/external-secrets-bitwarden-1.0.6.tgz
+    version: 1.0.6
   - apiVersion: v2
     appVersion: 1.0.0
     created: "2025-08-09T17:21:19.287450699Z"
@@ -7530,6 +7581,18 @@ entries:
   zigbee2mqtt:
   - apiVersion: v2
     appVersion: 1.0.38
+    created: "2025-08-09T20:50:21.080531195Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 81c06976ba0d27d1d45c487582366a43b38c3f9ebb458d7d5180f47dd9759350
+    name: zigbee2mqtt
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.59/zigbee2mqtt-1.0.59.tgz
+    version: 1.0.59
+  - apiVersion: v2
+    appVersion: 1.0.38
     created: "2025-08-09T17:23:39.27714324Z"
     dependencies:
     - name: app-template
@@ -8164,4 +8227,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-08-09T20:13:31.671947038Z"
+generated: "2025-08-09T20:50:21.081403737Z"
