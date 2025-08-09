@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: bitwarden-cli
-          image: tangowithfoxtrot/bw-cli:2023.10.0
+          image: tangowithfoxtrot/bw-cli:2025.1.2
           imagePullPolicy: IfNotPresent
           env:
             #- name: BW_HOST
