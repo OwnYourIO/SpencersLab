@@ -40,7 +40,7 @@ dependencies:
   version: 1.0.10
   repository: https://ownyourio.github.io/SpencersLab/
 - name: app-template
-  version: 4.1.0
+  version: 4.2.0
   repository: https://bjw-s-labs.github.io/helm-charts/
   alias: paperless
 - name: cloudnative-pg
@@ -56,25 +56,25 @@ dependencies:
   alias: boards
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
   alias: hugo-grow
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
   alias: hugo-help
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
   alias: hugo-love
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
   alias: karakeep
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
   alias: hortusfox
 - name: app-template
-  version: 4.1.0
+  version: 4.2.0
   repository: https://bjw-s-labs.github.io/helm-charts/
   alias: actualbudget

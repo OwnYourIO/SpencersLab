@@ -28,7 +28,7 @@ dependencies:
   version: 1.0.10
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
   version: 0.24.0
@@ -40,21 +40,21 @@ dependencies:
   version: 7.91.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
-digest: sha256:c5e71e280d136fdafa5448d5ea0134b49741d0d9d470162966102d913d2400f8
-generated: "2025-07-30T22:42:37.163076238-06:00"
+  version: 4.2.0
+digest: sha256:5d40e49f488a9a6098ae8c1246a3406953cbd1d7b890f5c9119d6109a44c50f1
+generated: "2025-08-05T03:20:45.625720134Z"

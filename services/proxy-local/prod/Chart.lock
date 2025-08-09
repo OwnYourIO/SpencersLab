@@ -7,15 +7,15 @@ dependencies:
   version: 1.16.1
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
+  version: 4.2.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 4.1.0
-digest: sha256:e578c9d156622816daab2869d48a47a84dcc650a2be6e7c3db3db638913dad5d
-generated: "2025-08-04T21:12:42.709585519-06:00"
+  version: 4.2.0
+digest: sha256:84bdda05da7ef439d57e047a177ab64380438478aa4b94dac1ab0eede2a83fd0
+generated: "2025-08-05T03:22:15.782475158Z"
