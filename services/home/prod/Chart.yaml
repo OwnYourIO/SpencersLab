@@ -44,7 +44,7 @@ dependencies:
   repository: https://bjw-s-labs.github.io/helm-charts/
   alias: paperless
 - name: cloudnative-pg
-  version: 0.24.0
+  version: 0.25.0
   repository: https://cloudnative-pg.github.io/charts
 - name: wekan
   version: 7.91.0
