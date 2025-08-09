@@ -1,7 +1,7 @@
 dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
-  version: 0.2.2
+  version: 0.2.3
 - name: external-dns
   repository: https://kubernetes-sigs.github.io/external-dns/
   version: 1.18.0
@@ -17,5 +17,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.2.0
-digest: sha256:2f25ee78ee2e35f8279d0575653396c43c871a577168947b03766d115760fe6e
-generated: "2025-08-09T16:58:18.34794824Z"
+digest: sha256:9cbb3f08448ae69a0bd98b9d1498898776eea604722bb33afe2bed9aef504f27
+generated: "2025-08-09T20:13:04.258671736Z"
