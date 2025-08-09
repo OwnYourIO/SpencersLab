@@ -451,6 +451,9 @@ seaweedfs:
     idx:
       type: "persistentVolumeClaim"
       size: "10Gi"
+      mountOptions:
+        - direct
+        - dirsync
 
     logs: 
       type: "persistentVolumeClaim"
