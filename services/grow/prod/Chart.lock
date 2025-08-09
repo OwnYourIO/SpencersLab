@@ -1,9 +1,6 @@
 dependencies:
 - name: seaweedfs
   repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 4.0.390
-- name: grow-appset
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.1.2
-digest: sha256:a26f85bafabede656316f944a2bd5a80ea680a7475612df92ac17a88591ad939
-generated: "2025-06-09T04:53:28.656843512Z"
+  version: 4.0.393
+digest: sha256:99b227033cfe8cf126e16075da1a46aebf5dcdab8fbeec673d55c527869b1df6
+generated: "2025-08-09T20:15:04.023859938Z"
