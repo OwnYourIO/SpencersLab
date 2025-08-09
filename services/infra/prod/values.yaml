@@ -813,8 +813,8 @@ samba:
                 hidefiles: /_*/
                 recycle: yes
                 force user: 1000
-              - name: player
-                path: /mnt/player
+              - name: backup-gpu
+                path: /mnt/backup-gpu
                 browsable: yes
                 readonly: no
                 guestok: no
@@ -884,9 +884,9 @@ samba:
         globalMounts:
           - path: /mnt/media
       player:
-        existingClaim: player
+        existingClaim: backup-gpu
         globalMounts:
-          - path: /mnt/player
+          - path: /mnt/backup-gpu
       pictures:
         existingClaim: pictures
         globalMounts:
