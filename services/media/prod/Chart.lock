@@ -1,7 +1,7 @@
 dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
-  version: 0.2.2
+  version: 0.2.3
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.2.0
@@ -26,5 +26,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.2.0
-digest: sha256:57c0bd74a3f380b3995a681fc991ea40203864ccca21f1fd6da1c526dd6453f6
-generated: "2025-08-05T03:21:27.715974919Z"
+digest: sha256:eae34ce7b8cd412c781202be7e26075135f4a07ef585184ad381a23d91a59617
+generated: "2025-08-09T20:12:52.411325268Z"
