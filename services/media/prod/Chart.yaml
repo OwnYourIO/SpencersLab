@@ -7,7 +7,7 @@ dependencies:
     version: 0.2.2
     repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   - name: app-template
-    version: 4.1.0
+    version: 4.2.0
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: jellyfin
   - name: jellyseerr
@@ -32,6 +32,6 @@ dependencies:
   #  version: 0.4.2
   #  repository: https://bubylou.github.io/Arr-Stack
   - name: app-template
-    version: 4.1.0
+    version: 4.2.0
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: audiobookshelf
