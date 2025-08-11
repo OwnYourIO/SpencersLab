@@ -9,7 +9,7 @@ ingress:
     cluster:
       clusterBase: true
       service: base-argocd-server
-      port: 8080
+      port: 80
     traefik:
       clusterBase: true
       namespace: kube-system
