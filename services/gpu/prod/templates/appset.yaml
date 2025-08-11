@@ -18,7 +18,7 @@ spec:
                   ServerSideApply: "false"
   template:
     metadata:
-      name: "{{ .appName }}"
+      name: "{{appName}}"
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
