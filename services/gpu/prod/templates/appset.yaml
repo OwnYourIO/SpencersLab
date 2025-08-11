@@ -10,9 +10,9 @@ spec:
           - clusters: {}
           - list:
               elements:
-                - appName: base
-                  namespace: default
-                  ServerSideApply: "false"
+                #- appName: base
+                #  namespace: default
+                #  ServerSideApply: "false"
                 - appName: gpu
                   namespace: default
                   ServerSideApply: "false"
@@ -26,7 +26,7 @@ spec:
       sources:
         - repoURL: "{{ metadata.annotations.services.repo }}"
           targetRevision: main
-          path: "{{ metadata.annotations.services.repo.path }}`}}/{{ appName }}/{{ metadata.annotations.stage }}"
+          path: "{{ metadata.annotations.services.repo.path }}/{{ appName }}/{{ metadata.annotations.stage }}"
           helm:
             parameters:
               - name: domain
@@ -35,7 +35,7 @@ spec:
                 value: "{{ metadata.annotations.clusterName }}"
             valueFiles:
               - values.yaml
-              - $values/{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
+              - $values/{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml
         - repoURL: "{{ metadata.annotations.values.repo }}"
           targetRevision: main
           ref: values
