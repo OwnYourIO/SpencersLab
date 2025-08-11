@@ -1,0 +1,165 @@
+{
+    "child": {
+        "child1": {
+            "child1": {
+                "child1": {
+                    "directory": "\/home\/spencer",
+                    "height": 680,
+                    "overrideCommand": "ssh root@infra.spencerslab.com ",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": false,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "fa10ad0a-199c-485b-83f7-b975801f8125",
+                    "width": 860
+                },
+                "child2": {
+                    "directory": "\/home\/spencer",
+                    "height": 680,
+                    "overrideCommand": "ssh root@infra-2.spencerslab.com",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "0f080a39-7858-43fc-bb23-d4456c4d0858",
+                    "width": 860
+                },
+                "orientation": 1,
+                "position": 49,
+                "ratio": 0.499632623071271098,
+                "type": "Paned"
+            },
+            "child2": {
+                "child1": {
+                    "directory": "\/home\/spencer",
+                    "height": 680,
+                    "overrideCommand": "ssh root@home-lab.spencerslab.com",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": false,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "b0bbdb56-d59f-4413-a9df-54778e3a3dbe",
+                    "width": 859
+                },
+                "child2": {
+                    "directory": "\/home\/spencer",
+                    "height": 680,
+                    "overrideCommand": "ssh root@grow.spencerslab.com",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "47969f43-88a0-41c3-b7d0-a32a666459c0",
+                    "width": 859
+                },
+                "orientation": 1,
+                "position": 49,
+                "ratio": 0.499632623071271098,
+                "type": "Paned"
+            },
+            "orientation": 0,
+            "position": 25,
+            "ratio": 0.5,
+            "type": "Paned"
+        },
+        "child2": {
+            "child1": {
+                "child1": {
+                    "directory": "\/home\/spencer",
+                    "height": 680,
+                    "overrideCommand": "ssh root@media.spencerslab.com",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": false,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "1b242240-8d10-4236-a172-299a64ffb16f",
+                    "width": 859
+                },
+                "child2": {
+                    "directory": "\/home\/spencer",
+                    "height": 680,
+                    "overrideCommand": "ssh root@cherry.spencerslab.com",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "289933c6-e7a8-459b-b171-7c391fa94879",
+                    "width": 859
+                },
+                "orientation": 1,
+                "position": 49,
+                "ratio": 0.499632623071271098,
+                "type": "Paned"
+            },
+            "child2": {
+                "child1": {
+                    "child1": {
+                        "directory": "\/home\/spencer",
+                        "height": 340,
+                        "overrideCommand": "ssh root@proxy-local.spencerslab.com",
+                        "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                        "readOnly": false,
+                        "synchronizedInput": false,
+                        "title": "${id}: ${title}",
+                        "type": "Terminal",
+                        "uuid": "deed4355-c5a4-4a59-889e-8b20824c8b86",
+                        "width": 859
+                    },
+                    "child2": {
+                        "directory": "\/home\/spencer",
+                        "height": 339,
+                        "overrideCommand": "ssh root@proxy-remote.spencerslab.com",
+                        "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                        "readOnly": false,
+                        "synchronizedInput": false,
+                        "title": "${id}: ${title}",
+                        "type": "Terminal",
+                        "uuid": "289a8e89-2d3e-430d-937b-a092e360939e",
+                        "width": 859
+                    },
+                    "orientation": 1,
+                    "position": 24,
+                    "ratio": 0.5,
+                    "type": "Paned"
+                },
+                "child2": {
+                    "directory": "\/home\/spencer",
+                    "height": 680,
+                    "overrideCommand": "ssh root@monitoring.spencerslab.com",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": false,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "13f68c68-d321-4fb6-a792-81ae1473855a",
+                    "width": 859
+                },
+                "orientation": 1,
+                "position": 49,
+                "ratio": 0.499632623071271098,
+                "type": "Paned"
+            },
+            "orientation": 0,
+            "position": 24,
+            "ratio": 0.499709133216986623,
+            "type": "Paned"
+        },
+        "orientation": 0,
+        "position": 50,
+        "ratio": 0.5,
+        "type": "Paned"
+    },
+    "height": 1361,
+    "name": "${title}",
+    "synchronizedInput": true,
+    "type": "Session",
+    "uuid": "16d7f9f5-0bba-489a-b320-7bef17bcc239",
+    "version": "1.0",
+    "width": 3440
+}
