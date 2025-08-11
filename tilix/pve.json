@@ -1,0 +1,75 @@
+{
+    "child": {
+        "child1": {
+            "child1": {
+                "directory": "\/home\/spencer",
+                "height": 1361,
+                "overrideCommand": "ssh root@pve-main.spencerslab.com",
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "title": "${id}: ${title}",
+                "type": "Terminal",
+                "uuid": "8e210f30-bc38-4ae7-8c33-ec481290e9f7",
+                "width": 860
+            },
+            "child2": {
+                "directory": "\/home\/spencer",
+                "height": 1361,
+                "overrideCommand": "ssh root@pve-infra.spencerslab.com",
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "title": "${id}: ${title}",
+                "type": "Terminal",
+                "uuid": "ccfa4b69-bda8-4b0d-b056-375fef3916ee",
+                "width": 859
+            },
+            "orientation": 0,
+            "position": 25,
+            "ratio": 0.5,
+            "type": "Paned"
+        },
+        "child2": {
+            "child1": {
+                "directory": "\/home\/spencer",
+                "height": 1361,
+                "overrideCommand": "ssh root@pve-gpu.spencerslab.com",
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "title": "${id}: ${title}",
+                "type": "Terminal",
+                "uuid": "fe6fca09-9768-430e-b0fd-9bd28d726d0c",
+                "width": 859
+            },
+            "child2": {
+                "directory": "\/home\/spencer",
+                "height": 1361,
+                "overrideCommand": "ssh root@pve-monitor.spencerslab.com",
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "title": "${id}: ${title}",
+                "type": "Terminal",
+                "uuid": "ac876271-95d3-46c6-88bc-a5e66083e015",
+                "width": 859
+            },
+            "orientation": 0,
+            "position": 24,
+            "ratio": 0.499709133216986623,
+            "type": "Paned"
+        },
+        "orientation": 0,
+        "position": 50,
+        "ratio": 0.5,
+        "type": "Paned"
+    },
+    "height": 1361,
+    "name": "${title}",
+    "synchronizedInput": true,
+    "type": "Session",
+    "uuid": "c0c273a9-393c-497b-8704-ef8218ab1b06",
+    "version": "1.0",
+    "width": 3440
+}
