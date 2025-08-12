@@ -1,14 +1,11 @@
-apiVersion: v2
-name: gpu
-version: 1.0.0
-appVersion: 1.0.0
 dependencies:
 - name: seaweedfs-csi-driver
-  version: 0.2.3
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+  version: 0.2.3
 - name: ollama
+  repository: https://helm.otwld.com/
   version: 1.26.0
-  repository:  https://helm.otwld.com/
 - name: open-webui
-  version: 0.6.22
   repository: https://helm.openwebui.com/
+  version: 7.2.0
+digest: sha256:fde55d67923a98681750a332f971d0e99fb42a3e156ff638d39b347de1f856d6

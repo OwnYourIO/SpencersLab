@@ -1,10 +1,25 @@
+bitwardenIds:
+  open-webui-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  open-webui-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  open-webui-pg: OVERRIDE_VIA_CUSTOM_VALUES
+
+seaweedfs-csi-driver:
+  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
 
 ingress:
   subdomains:
-    #audio-lights:
-    #  serviceName: ledfx
-    #  service: home-ledfx
-    #  port: 8888
+    ollama:
+      serviceName: brains
+      service: gpu-ollama
+      port: 11434
+
+    open-webui:
+      serviceName: ai
+      service: gpu-open-webui
+      port: 80
 
     cluster:
       clusterBase: true
@@ -15,3 +30,81 @@ ingress:
       namespace: kube-system
       service: traefik
       port: 8080
+
+ollama:
+  gpu:
+    # -- Enable GPU integration
+    enabled: true
+    
+    # -- GPU type: 'nvidia' or 'amd'
+    type: 'amd'
+    
+    # -- Specify the number of GPU to 1
+    number: 1
+   
+  # -- List of models to pull at container startup
+  models:
+    pull:
+      - mistral
+      - llama2
+
+open-webui:
+  annotations:
+    reloader.stakater.com/auto: "true"
+  resources:
+    requests:
+      cpu: 15m
+      memory: 700Mi
+    limits:
+      cpu: 200m
+      memory: 1Gi
+  copyAppData:
+    resources: {}
+  ollama:
+    enabled: false
+  ollamaUrls: 
+    - "http://ollama.default.svc.cluster.local:11434"
+  pipelines:
+    enabled: true
+    persistence:
+      existingClaim: open-webui-pipelines
+  tika:
+    enabled: true
+    resources:
+      requests:
+        cpu: 15m
+        memory: 650Mi
+      limits:
+        cpu: 100m
+        memory: 800Mi
+  websocket:
+    enabled: true
+
+  extraEnvVars:
+    - name: ENABLE_LOGIN_FORM
+      value: "false"
+    - name: OAUTH_PROVIDER_NAME
+      value: login.spencerslab.com
+    - name: ENABLE_OAUTH_SIGNUP
+      value: "true"
+  extraEnvFrom: 
+    - secretRef:
+      name: open-webui-secrets
+  persistence:
+    enabled: true
+    existingClaim: open-webui
+  podSecurityContext:
+    supplementalGroups: 
+      - 140
+  containerSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 150
+    runAsNonRoot: true
+    privileged: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities: 
+      drop: 
+        - "ALL"
+    seccompProfile: 
+      type: RuntimeDefault
