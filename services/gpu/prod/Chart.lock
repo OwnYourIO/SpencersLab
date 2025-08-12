@@ -2,11 +2,14 @@ dependencies:
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.3
+- name: cloudnative-pg
+  repository: https://cloudnative-pg.github.io/charts
+  version: 0.25.0
 - name: ollama
   repository: https://helm.otwld.com/
   version: 1.26.0
 - name: open-webui
   repository: https://helm.openwebui.com/
   version: 7.2.0
-digest: sha256:fde55d67923a98681750a332f971d0e99fb42a3e156ff638d39b347de1f856d6
-generated: "2025-08-11T14:27:45.193724241-06:00"
+digest: sha256:31ce93ac75866373e989f5d2bf759e4f2c54b08544599f8ed03eb702bb1e9d48
+generated: "2025-08-12T06:36:38.850736824-06:00"
