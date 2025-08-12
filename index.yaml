@@ -6776,6 +6776,18 @@ entries:
   music-assistant:
   - apiVersion: v2
     appVersion: 1.0.17
+    created: "2025-08-12T09:41:07.642583696Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 18ca1376165d54caafd228c799abcc8a21374d6585bb207175ce77f8db8c3fa1
+    name: music-assistant
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/music-assistant-1.0.35/music-assistant-1.0.35.tgz
+    version: 1.0.35
+  - apiVersion: v2
+    appVersion: 1.0.17
     created: "2025-08-09T17:23:09.0443579Z"
     dependencies:
     - name: app-template
@@ -8251,4 +8263,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-08-11T01:47:48.716074842Z"
+generated: "2025-08-12T09:41:07.643425928Z"
