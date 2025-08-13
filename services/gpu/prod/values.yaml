@@ -50,6 +50,9 @@ ollama:
   resources:
     limits:
       amd.com/gpu: 1 # requesting a GPU
+  image:
+    repository: ollama/ollama
+    tag: 0.11.4-rocm
 
 open-webui:
   annotations:
