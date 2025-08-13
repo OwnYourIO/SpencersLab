@@ -47,6 +47,9 @@ ollama:
     pull:
       - mistral
       - llama2
+  resources:
+    limits:
+      amd.com/gpu: 1 # requesting a GPU
 
 open-webui:
   annotations:
