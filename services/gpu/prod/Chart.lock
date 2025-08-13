@@ -11,5 +11,8 @@ dependencies:
 - name: open-webui
   repository: https://helm.openwebui.com/
   version: 7.2.0
-digest: sha256:31ce93ac75866373e989f5d2bf759e4f2c54b08544599f8ed03eb702bb1e9d48
-generated: "2025-08-12T06:36:38.850736824-06:00"
+- name: amd-gpu
+  repository: https://rocm.github.io/k8s-device-plugin/
+  version: 0.20.0
+digest: sha256:b8e05f2760ab52552eccab1a28fabe23ccab9fb0656411e62bcd90945cca1c04
+generated: "2025-08-13T00:32:44.858009541-06:00"
