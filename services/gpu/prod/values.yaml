@@ -90,7 +90,7 @@ open-webui:
       value: "true"
   extraEnvFrom: 
     - secretRef:
-      name: open-webui-secrets
+        name: open-webui-secrets
   persistence:
     enabled: true
     existingClaim: open-webui
