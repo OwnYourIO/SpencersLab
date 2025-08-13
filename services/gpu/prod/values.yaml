@@ -41,7 +41,7 @@ ollama:
     
     # -- Specify the number of GPU to 1
     number: 1
-   
+
   # -- List of models to pull at container startup
   models:
     pull:
@@ -51,6 +51,7 @@ ollama:
 open-webui:
   annotations:
     reloader.stakater.com/auto: "true"
+  replicaCount: 1
   resources:
     requests:
       cpu: 15m
