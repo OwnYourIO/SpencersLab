@@ -64,7 +64,7 @@ open-webui:
   ollama:
     enabled: false
   ollamaUrls: 
-    - "http://ollama.default.svc.cluster.local:11434"
+    - "http://gpu-ollama.default.svc.cluster.local:11434"
   pipelines:
     enabled: true
     persistence:
