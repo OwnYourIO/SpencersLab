@@ -4,7 +4,7 @@ dependencies:
   version: 0.2.3
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
-  version: 0.25.0
+  version: 0.26.0
 - name: ollama
   repository: https://helm.otwld.com/
   version: 1.26.0
@@ -14,5 +14,5 @@ dependencies:
 - name: amd-gpu
   repository: https://rocm.github.io/k8s-device-plugin/
   version: 0.20.0
-digest: sha256:b8e05f2760ab52552eccab1a28fabe23ccab9fb0656411e62bcd90945cca1c04
-generated: "2025-08-13T00:32:44.858009541-06:00"
+digest: sha256:07889d75ea715644515b7cbd92808fa624df84ff5d4d64b5c4880e0379eb91d1
+generated: "2025-08-13T16:42:19.61462499Z"
