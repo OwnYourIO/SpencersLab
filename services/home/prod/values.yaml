@@ -842,15 +842,13 @@ karakeep:
   persistence:
     data:
       existingClaim: karakeep
-      advancedMounts:
-        karakeep:
-          app:
-            - path: /data
-              subPath: karakeep
+      globalMounts:
+        data:
+          - path: /data
+            subPath: karakeep
         meilisearch:
-          app:
-            - path: /meili_data
-              subPath: meilisearch
+          - path: /meili_data
+            subPath: meilisearch
 
 hugo-help:
     global:
