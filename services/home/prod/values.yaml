@@ -3,7 +3,7 @@ bitwardenIds:
   wekan-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   paperless-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   paperless-samba-secret: OVERRIDE_VIA_CUSTOM_VALUES
-  firefly-pg-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  karakeep-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
@@ -763,6 +763,7 @@ karakeep:
 
     chrome:
       annotations:
+        reloader.stakater.com/auto: "true"
       containers:
         app:
           image:
