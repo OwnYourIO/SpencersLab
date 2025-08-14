@@ -762,8 +762,7 @@ karakeep:
                 secretKeyRef:
                   name: karakeep-secret
                   key: encryption_key
-            NEXTAUTH_URL: https://karakeep.{{ domain }}
-            NEXTAUTH_URL2: https://karakeep.${domain}
+            NEXTAUTH_URL: https://karakeep.spencerslab.com
             DISABLE_NEW_RELEASE_CHECK: true
             COREPACK_INTEGRITY_KEYS: 0
           probes:
