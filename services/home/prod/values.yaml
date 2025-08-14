@@ -76,10 +76,10 @@ ingress:
       port: 5006
 
     bookmarks:
-      service: karakeep
+      service: home-karakeep-app
       port: 3000
     karakeep:
-      service: karakeep
+      service: home-karakeep-app
       port: 3000
 
     plants:
