@@ -42,17 +42,21 @@ ollama:
     # -- Specify the number of GPU to 1
     number: 1
 
-  # -- List of models to pull at container startup
-  models:
-    pull:
-      - mistral
-      - llama2
   resources:
     limits:
       amd.com/gpu: 1 # requesting a GPU
   image:
     repository: ollama/ollama
     tag: 0.11.4-rocm
+
+  extraEnv:
+    - name: OLLAMA_NUM_GPU
+      value: "10"
+    - name: OLLAMA_LOW_VRAM
+      value: "true"  
+
+  persistentVolume:
+    enabled: true
 
 open-webui:
   annotations:
