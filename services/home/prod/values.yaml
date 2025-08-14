@@ -845,10 +845,6 @@ karakeep:
       globalMounts:
         - subPath: karakeep
           path: /data
-
-    meilisearch:
-      existingClaim: karakeep
-      globalMounts:
         - path: /meili_data
           subPath: meilisearch
 
