@@ -843,12 +843,14 @@ karakeep:
     data:
       existingClaim: karakeep
       globalMounts:
-        data:
-          - path: /data
-            subPath: karakeep
-        meilisearch:
-          - path: /meili_data
-            subPath: meilisearch
+        - subPath: karakeep
+          path: /data
+
+    meilisearch:
+      existingClaim: karakeep
+      globalMounts:
+        - path: /meili_data
+          subPath: meilisearch
 
 hugo-help:
     global:
