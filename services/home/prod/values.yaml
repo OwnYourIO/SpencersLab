@@ -686,9 +686,6 @@ actualbudget:
             ACTUAL_PORT: &http 5006
             ACTUAL_DATA_DIR: &pvc /data
             ACTUAL_MULTIUSER: "true"
-          envFrom: &envFrom
-            - secretRef:
-                name: actualbudget-secrets
           securityContext: &sc
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
