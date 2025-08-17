@@ -840,7 +840,7 @@ karakeep:
                     - key: app.kubernetes.io/name
                       operator: In
                       values:
-                        - home
+                        - karakeep
                     - key: app.kubernetes.io/controller
                       operator: In
                       values:
