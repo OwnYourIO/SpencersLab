@@ -706,7 +706,6 @@ actualbudget:
         01-enable-openid:
           image: *img
           env: *env
-          envFrom: *envFrom
           securityContext: *sc
           # command: ["npm", "run", "enable-openid", "--prefix", "/app"]
           command: ["tini", "-g", "--", "/bin/sh", "-c"]
