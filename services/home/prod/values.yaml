@@ -4,6 +4,7 @@ bitwardenIds:
   paperless-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   paperless-samba-secret: OVERRIDE_VIA_CUSTOM_VALUES
   karakeep-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  karakeep-sso: OVERRIDE_VIA_CUSTOM_VALUES
 
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
@@ -763,6 +764,21 @@ karakeep:
                   name: karakeep-secret
                   key: encryption_key
             NEXTAUTH_URL: https://karakeep.spencerslab.com
+            OAUTH_WELLKNOWN_URL:
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-sso
+                  key: well_known_url
+            OAUTH_CLIENT_ID:
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-sso
+                  key: client_id
+            OAUTH_CLIENT_SECRET:
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-sso
+                  key: client_secret
             DISABLE_NEW_RELEASE_CHECK: true
             COREPACK_INTEGRITY_KEYS: 0
           probes:
@@ -886,6 +902,7 @@ hugo-help:
                 - -c
                 - |
                   sh /hugo-server-startup.sh
+
     configMaps:
       hugo-yaml:
         data:
