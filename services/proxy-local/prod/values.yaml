@@ -306,7 +306,7 @@ backup-gpu-qbittorrent:
       ports:
         http:
           port: *backup-gpu-port
-    bittorent:
+    backup-gpu-qbittorent:
       enabled: true
       controller: main
       type: LoadBalancer
