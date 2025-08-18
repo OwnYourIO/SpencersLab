@@ -71,8 +71,8 @@ proxy:
 
     torrents:
       target: qbittorrent
-    cherry-torrents:
-      target: cherry-qbittorrent
+    backup-gpu-torrents:
+      target: backup-gpu-qbittorrent
     requests:
       target: requestarr
     music:
