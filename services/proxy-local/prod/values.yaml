@@ -72,7 +72,7 @@ proxy:
     torrents:
       target: qbittorrent
     backup-gpu-torrents:
-      target: backup-gpu-torrents-service
+      target: proxy-local-backup-gpu-qbittorrent-main
     requests:
       target: requestarr
     music:
