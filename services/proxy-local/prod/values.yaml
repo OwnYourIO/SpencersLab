@@ -71,6 +71,8 @@ proxy:
 
     torrents:
       target: qbittorrent
+    cherry-torrents:
+      target: cherry-qbittorrent
     requests:
       target: requestarr
     music:
@@ -264,6 +266,69 @@ qbittorrent:
     media:
       enabled: true
       existingClaim: media
+      advancedMounts:
+        main:
+          main:
+          - path: /media
+
+cherry-qbittorrent:
+  global:
+    nameOverride: "cherry-qbittorrent"
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/onedr0p/qbittorrent
+            tag: 5.0.4
+
+          env:
+            TZ: America/Denver
+            QBITTORRENT__PORT: &port 8080
+            QBITTORRENT__BT_PORT: &port-bt 58462
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 8Gi
+      pod:
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: "OnRootMismatch"
+          supplementalGroups: [10000]
+
+  service:
+    main:
+      controller: main
+      ports:
+        http:
+          port: *port
+    bittorent:
+      enabled: true
+      controller: main
+      type: LoadBalancer
+      ports:
+        bittorrent:
+          enabled: true
+          port: *port-bt
+          protocol: TCP
+          targetPort: *port-bt
+      externalTrafficPolicy: Local
+
+
+  persistence:
+    config:
+      enabled: true
+      existingClaim: cherry-qbittorrent
+      globalMounts:
+        - path: /config
+
+    media:
+      enabled: true
+      existingClaim: backup-gpu
       advancedMounts:
         main:
           main:
