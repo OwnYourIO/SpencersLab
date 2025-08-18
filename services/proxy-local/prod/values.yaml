@@ -318,6 +318,21 @@ backup-gpu-qbittorrent:
           targetPort: *backup-gpu-port-bt
       externalTrafficPolicy: Local
 
+  ingress:
+    main:
+      enabled: true
+      hosts:
+        - host: "backup-gpu-qbittorrent.spencerslab.com"
+          paths:
+            - path: /
+              pathType: Prefix
+              service: 
+                identifier: main
+                port: http
+      tls:
+        - secretName: wildcard-cert
+          hosts:
+            - "backup-gpu-qbittorrent.spencerslab.com"
 
   persistence:
     config:
