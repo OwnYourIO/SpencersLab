@@ -284,8 +284,8 @@ backup-gpu-qbittorrent:
 
           env:
             TZ: America/Denver
-            QBITTORRENT__PORT: &port 8080
-            QBITTORRENT__BT_PORT: &port-bt 58462
+            QBITTORRENT__PORT: &backup-gpu-port 8080
+            QBITTORRENT__BT_PORT: &backup-gpu-port-bt 58463
           resources:
             requests:
               cpu: 500m
@@ -305,7 +305,7 @@ backup-gpu-qbittorrent:
       controller: main
       ports:
         http:
-          port: *port
+          port: *backup-gpu-port
     bittorent:
       enabled: true
       controller: main
@@ -313,9 +313,9 @@ backup-gpu-qbittorrent:
       ports:
         bittorrent:
           enabled: true
-          port: *port-bt
+          port: *backup-gpu-port-bt
           protocol: TCP
-          targetPort: *port-bt
+          targetPort: *backup-gpu-port-bt
       externalTrafficPolicy: Local
 
 
