@@ -18,6 +18,10 @@ dependencies:
   - name: app-template
     version: 4.2.0
     repository: https://bjw-s-labs.github.io/helm-charts/
+    alias: backup-gpu-qbittorrent
+  - name: app-template
+    version: 4.2.0
+    repository: https://bjw-s-labs.github.io/helm-charts/
     alias: autossh
   - name: app-template
     version: 4.2.0

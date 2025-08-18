@@ -271,9 +271,9 @@ qbittorrent:
           main:
           - path: /media
 
-cherry-qbittorrent:
+backup-gpu-qbittorrent:
   global:
-    nameOverride: "cherry-qbittorrent"
+    nameOverride: "backup-gpu-qbittorrent"
   controllers:
     main:
       containers:
@@ -322,7 +322,7 @@ cherry-qbittorrent:
   persistence:
     config:
       enabled: true
-      existingClaim: cherry-qbittorrent
+      existingClaim: backup-gpu-qbittorrent
       globalMounts:
         - path: /config
 
