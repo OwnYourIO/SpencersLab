@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: cherry-qbittorrent
+  name: backup-gpu-qbittorrent
   namespace: default
 spec:
   accessModes:
