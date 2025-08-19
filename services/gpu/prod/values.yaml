@@ -10,6 +10,8 @@ seaweedfs-csi-driver:
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
+ssoDomain: OVERRIDE_VIA_APPSET
+ssoPathPrefix: OVERRIDE_VIA_APPSET
 
 ingress:
   subdomains:
@@ -133,14 +135,8 @@ coder:
         value: "false"
       - name: CODER_OAUTH_GITHUB_ALLOW_SIGNUPS
         value: "false"
-      - name: CODER_OAUTH_GITHUB_CLIENT_ID
-        value: ""
-      - name: CODER_OAUTH_GITHUB_CLIENT_SECRET
-        value: ""
       - name: CODER_TELEMETRY
         value: "false"
-      - name: CODER_DISABLE_PASSWORD_AUTH
-        value: 'true'
       - name: CODER_PROMETHEUS_ENABLE
         value: 'true'
       - name: CODER_VERBOSE
