@@ -23,6 +23,11 @@ ingress:
       service: open-webui
       port: 80
 
+    coder:
+      serviceName: code
+      service: coder
+      port: 8080
+
     cluster:
       clusterBase: true
       service: base-argocd-server
