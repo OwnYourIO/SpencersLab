@@ -126,20 +126,20 @@ open-webui:
         - "ALL"
     seccompProfile: 
       type: RuntimeDefault
+coder: 
+  coder:
+    env:
+      - name: CODER_TELEMETRY
+        value: "false"
+      - name: CODER_DISABLE_PASSWORD_AUTH
+        value: 'true'
+      - name: CODER_PROMETHEUS_ENABLE
+        value: 'true'
+    envFrom:
+      - secretRef:
+          name: coder-secrets
+    # This is needed because the Access URL is coming from envFrom
+    envUseClusterAccessURL: false
 
-coder:
-  env:
-    - name: CODER_TELEMETRY
-      value: "false"
-    - name: CODER_DISABLE_PASSWORD_AUTH
-      value: 'true'
-    - name: CODER_PROMETHEUS_ENABLE
-      value: 'true'
-  envFrom:
-    - secretRef:
-        name: coder-secrets
-  # This is needed because the Access URL is coming from envFrom
-  envUseClusterAccessURL: false
-
-  service:
-            type: ClusterIP
+    service:
+      type: ClusterIP
