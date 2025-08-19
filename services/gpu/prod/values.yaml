@@ -127,6 +127,9 @@ open-webui:
     seccompProfile: 
       type: RuntimeDefault
 coder: 
+  envFrom:
+    - secretRef:
+        name: coder-secrets
   coder:
     env:
       - name: CODER_TELEMETRY
@@ -136,7 +139,7 @@ coder:
       - name: CODER_PROMETHEUS_ENABLE
         value: 'true'
       
-    envFrom: |
+    envFrom:
       - secretRef:
           name: coder-secrets
     # This is needed because the Access URL is coming from envFrom
