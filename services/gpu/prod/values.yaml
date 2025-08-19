@@ -129,6 +129,8 @@ open-webui:
 coder: 
   coder:
     env:
+      - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
+        value: "false"
       - name: CODER_OAUTH_GITHUB_ALLOW_SIGNUPS
         value: "false"
       - name: CODER_OAUTH_GITHUB_CLIENT_ID
