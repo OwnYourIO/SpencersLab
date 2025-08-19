@@ -2,6 +2,8 @@ bitwardenIds:
   open-webui-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   open-webui-secret: OVERRIDE_VIA_CUSTOM_VALUES
   open-webui-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  coder-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  coder-pg: OVERRIDE_VIA_CUSTOM_VALUES
 
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
@@ -119,3 +121,17 @@ open-webui:
         - "ALL"
     seccompProfile: 
       type: RuntimeDefault
+
+coder:
+  env:
+    - name: CODER_TELEMETRY
+      value: "false"
+    - name: CODER_DISABLE_PASSWORD_AUTH
+      value: 'true'
+    - name: CODER_PROMETHEUS_ENABLE
+      value: 'true'
+  envFrom:
+    - secretRef:
+        name: coder-secrets
+  # This is needed because the Access URL is coming from envFrom
+  envUseClusterAccessURL: false

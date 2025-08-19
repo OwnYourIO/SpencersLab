@@ -18,3 +18,7 @@ dependencies:
 - name: amd-gpu
   version: 0.20.0
   repository: https://rocm.github.io/k8s-device-plugin/
+- name: coder
+  version: 2.25.1
+  repository: https://helm.coder.com/v2
+
