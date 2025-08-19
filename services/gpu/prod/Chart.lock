@@ -4,7 +4,7 @@ dependencies:
   version: 0.2.3
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
-  version: 0.25.0
+  version: 0.26.0
 - name: ollama
   repository: https://helm.otwld.com/
   version: 1.26.0
@@ -17,5 +17,5 @@ dependencies:
 - name: coder
   repository: https://helm.coder.com/v2
   version: 2.25.1
-digest: sha256:916143d538923c86db75e8ca44a4cc2902b7e32349c9730f4f59b9750edfc71d
-generated: "2025-08-18T17:27:30.142102441-06:00"
+digest: sha256:23f1dd68c91d19df224027a93bebd198a7560ac0c34faef677af38c3610808b4
+generated: "2025-08-19T00:42:11.87722069Z"
