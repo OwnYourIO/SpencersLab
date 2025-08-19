@@ -26,7 +26,7 @@ ingress:
     coder:
       serviceName: code
       service: coder
-      port: 8080
+      port: 80
 
     cluster:
       clusterBase: true
