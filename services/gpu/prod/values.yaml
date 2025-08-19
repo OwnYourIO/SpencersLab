@@ -136,10 +136,9 @@ coder:
       - name: CODER_PROMETHEUS_ENABLE
         value: 'true'
       
-    envFrom:
-      valueFrom:
-        - secretRef:
-            name: coder-secrets
+    envFrom: |
+      - secretRef:
+          name: coder-secrets
     # This is needed because the Access URL is coming from envFrom
     envUseClusterAccessURL: false
 
