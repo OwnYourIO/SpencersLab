@@ -33,6 +33,10 @@ spec:
                 value: "{{ metadata.annotations.domain }}"
               - name: clusterName
                 value: "{{ metadata.annotations.clusterName }}"
+              - name: ssoDomain
+                value: "{{ metadata.annotations.sso.domain }}"
+              - name: ssoPathPrefix
+                value: "{{ metadata.annotations.sso.pathPrefix }}"
             valueFiles:
               - values.yaml
               - $values/{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml
