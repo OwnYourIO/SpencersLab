@@ -127,11 +127,14 @@ open-webui:
     seccompProfile: 
       type: RuntimeDefault
 coder: 
-  envFrom:
-    - secretRef:
-        name: coder-secrets
   coder:
     env:
+      - name: CODER_OAUTH_GITHUB_ALLOW_SIGNUPS
+        value: "false"
+      - name: CODER_OAUTH_GITHUB_CLIENT_ID
+        value: ""
+      - name: CODER_OAUTH_GITHUB_CLIENT_SECRET
+        value: ""
       - name: CODER_TELEMETRY
         value: "false"
       - name: CODER_DISABLE_PASSWORD_AUTH
