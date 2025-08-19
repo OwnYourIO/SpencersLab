@@ -138,6 +138,14 @@ coder:
         value: 'true'
       - name: CODER_PROMETHEUS_ENABLE
         value: 'true'
+      - name: CODER_VERBOSE
+        value: "true"
+      - name: CODER_OIDC_EMAIL_FIELD
+        value: "email"
+      - name: CODER_OIDC_USERNAME_FIELD
+        value: "preferred_username"
+      - name: CODER_OIDC_SCOPES
+        value: "openid,profile,email"
       
     envFrom:
       - secretRef:
