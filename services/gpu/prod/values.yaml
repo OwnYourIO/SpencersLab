@@ -140,3 +140,6 @@ coder:
         name: coder-secrets
   # This is needed because the Access URL is coming from envFrom
   envUseClusterAccessURL: false
+
+  service:
+            type: ClusterIP
