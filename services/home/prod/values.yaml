@@ -795,7 +795,7 @@ karakeep:
             requests:
               cpu: 10m
             limits:
-              memory: 1Gi
+              memory: 4Gi
 
     chrome:
       annotations:
