@@ -21,6 +21,7 @@ app-template:
           # TODO: From docker, translate these into k8 compatible ideas. 
           #--net=host \
           #--device=/PATH TO YOUR VIDEO DEVICE usually /dev/video0:/dev/video0 \
+          workingDir: /tmp/
           env:
             LOG_LEVE: "debug"
             DEBUG: "true"
