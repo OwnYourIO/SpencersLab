@@ -5036,6 +5036,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/external-secrets-bitwarden-1.0.1/external-secrets-bitwarden-1.0.1.tgz
     version: 1.0.1
+  flowise:
+  - apiVersion: v2
+    appVersion: 1.0.12
+    created: "2025-08-31T03:31:53.078553741Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: cc706e191500f3dfc2df941ea869670632a50f3e739404491f251a724570984f
+    name: flowise
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/flowise-1.0.22/flowise-1.0.22.tgz
+    version: 1.0.22
   freeipa:
   - apiVersion: v2
     appVersion: 1.0.9
@@ -8263,4 +8276,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-08-12T09:41:07.643425928Z"
+generated: "2025-08-31T03:31:53.080204092Z"
