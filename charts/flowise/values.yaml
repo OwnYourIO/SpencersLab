@@ -47,7 +47,7 @@ app-template:
             capabilities:
               drop:
                 - ALL
-      pod:
+      #pod:
         # TODO: Get this working.
         #securityContext:
         #  runAsUser: 1000
