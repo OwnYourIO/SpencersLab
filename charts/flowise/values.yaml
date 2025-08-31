@@ -27,7 +27,7 @@ app-template:
             TZ: Etc/UTC
           envFrom:
             - secretRef:
-                name: &chartName
+                name: *chartName
           probes:
             liveness:
               enabled: true
