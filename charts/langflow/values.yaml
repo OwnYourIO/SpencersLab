@@ -1,0 +1,64 @@
+bitwardenIds:
+  langflow: OVERRIDE_NEEDED
+  langflow-pg: OVERRIDE_NEEDED
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName langflow
+
+  controllers:
+    langflow:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: langflowai/langflow
+            tag: 1.5.1
+          workingDir: /tmp/
+          env:
+            LANGFLOW_HOST: "0.0.0.0"
+            LANGFLOW_PORT: "7860"
+            LANGFLOW_AUTO_LOGIN: "false"
+            LANGFLOW_NEW_USER_IS_ACTIVE: "false"
+            LANGFLOW_WEBHOOK_AUTH_ENABLE: "true"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 140Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            # TODO: Get this working.
+            #readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      #pod:
+        # TODO: Get this working.
+        #securityContext:
+        #  runAsUser: 1000
+        #  runAsNonRoot: true
+        #  fsGroup: 1000
+        #  fsGroupChangePolicy: OnRootMismatch
+  service:
+    langflow:
+      controller: *chartName
+      ports:
+        http:
+          port: 7860
+  persistence:
+    config:
+      existingClaim: *chartName
