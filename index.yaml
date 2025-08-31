@@ -5039,6 +5039,18 @@ entries:
   flowise:
   - apiVersion: v2
     appVersion: 1.0.12
+    created: "2025-08-31T04:08:11.388226505Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 5a18d83b8c870ee8615e4915d291bc667b0c30b0d4a718ddca6dbdc1874e20a2
+    name: flowise
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/flowise-1.0.28/flowise-1.0.28.tgz
+    version: 1.0.28
+  - apiVersion: v2
+    appVersion: 1.0.12
     created: "2025-08-31T04:05:48.950408171Z"
     dependencies:
     - name: app-template
@@ -8336,4 +8348,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-08-31T04:05:48.951296404Z"
+generated: "2025-08-31T04:08:11.388941086Z"
