@@ -6217,6 +6217,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/jellyfin-1.0.1/jellyfin-1.0.1.tgz
     version: 1.0.1
+  langflow:
+  - apiVersion: v2
+    appVersion: 1.5.1
+    created: "2025-08-31T20:47:07.214948067Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 68bcb88720f6dae6f55e1d2d6ee6bcbf00b47727065f03c2c09234b5658b1994
+    name: langflow
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/langflow-1.0.1/langflow-1.0.1.tgz
+    version: 1.0.1
   ledfx:
   - apiVersion: v2
     appVersion: 1.0.10
@@ -8396,4 +8409,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-08-31T04:15:05.293765753Z"
+generated: "2025-08-31T20:47:07.215677943Z"
