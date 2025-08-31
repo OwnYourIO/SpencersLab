@@ -48,11 +48,12 @@ app-template:
               drop:
                 - ALL
       pod:
-        securityContext:
-          runAsUser: 1000
-          runAsNonRoot: true
-          fsGroup: 1000
-          fsGroupChangePolicy: OnRootMismatch
+        # TODO: Get this working.
+        #securityContext:
+        #  runAsUser: 1000
+        #  runAsNonRoot: true
+        #  fsGroup: 1000
+        #  fsGroupChangePolicy: OnRootMismatch
       #    supplementalGroups:
       #      # Dialout on MicroOS
       #      - 492 
