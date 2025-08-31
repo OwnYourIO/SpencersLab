@@ -41,7 +41,8 @@ app-template:
               memory: 2Gi
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            # TODO: Get this working.
+            #readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
