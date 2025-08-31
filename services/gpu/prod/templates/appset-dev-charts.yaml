@@ -13,6 +13,9 @@ spec:
                 - appName: flowise
                   namespace: default
                   ServerSideApply: "false"
+                - appName: langflow
+                  namespace: default
+                  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"

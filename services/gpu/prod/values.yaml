@@ -35,6 +35,11 @@ ingress:
       service: flowise
       port: 3000
 
+    langflow:
+      serviceName: langflow
+      service: langflow
+      port: 7860
+
     cluster:
       clusterBase: true
       service: base-argocd-server
