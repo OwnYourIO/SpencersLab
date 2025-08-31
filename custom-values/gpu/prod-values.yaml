@@ -6,6 +6,7 @@ bitwardenIds:
   open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
   coder-sso-secret: 6052ca6f-bf5d-47bb-8194-b33e000a9455
   coder-pg: e197f717-0cd6-4634-8388-b33e000ae174
+  flowise-pg: 7533ab94-6308-4afa-a6fe-b34a00395edd
 
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
