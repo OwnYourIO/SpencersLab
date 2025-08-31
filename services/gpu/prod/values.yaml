@@ -29,6 +29,11 @@ ingress:
       serviceName: code
       service: coder
       port: 80
+      
+    flowise:
+      serviceName: flow
+      service: flowise
+      port: 3000
 
     cluster:
       clusterBase: true
