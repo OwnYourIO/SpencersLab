@@ -47,10 +47,8 @@ spec:
       owner: n8n
       secret:
         name: pg-n8n-secret
-
-  extensions:
-    - name: vector
-      ensure: present
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS vector;
 
     # Use for major upgrades or creating new cluster from existing
     #  import:
