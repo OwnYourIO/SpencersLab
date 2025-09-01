@@ -1,6 +1,6 @@
 apiVersion: v2
 name: n8n
-version: 1.0.3
+version: 1.0.4
 appVersion: 1.109.1
 dependencies:
 - name: app-template
