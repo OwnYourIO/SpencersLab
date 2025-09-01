@@ -1,0 +1,64 @@
+bitwardenIds:
+  n8n: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName n8n
+
+  controllers:
+    n8n:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: n8nio/n8n
+            tag: 1.109.1
+          env:
+            N8N_HOST: "0.0.0.0"
+            N8N_PORT: "5678"
+            N8N_PROTOCOL: "http"
+            N8N_LOG_LEVEL: "info"
+            N8N_METRICS: "true"
+            N8N_DISABLE_UI: "false"
+            WEBHOOK_URL: "https://{{ .Values.domain }}"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 140Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            # TODO: Get this working.
+            #readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      #pod:
+        # TODO: Get this working.
+        #securityContext:
+        #  runAsUser: 1000
+        #  runAsNonRoot: true
+        #  fsGroup: 1000
+        #  fsGroupChangePolicy: OnRootMismatch
+  service:
+    n8n:
+      controller: *chartName
+      ports:
+        http:
+          port: 5678
+  persistence:
+    config:
+      existingClaim: *chartName
