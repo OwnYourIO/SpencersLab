@@ -16,6 +16,9 @@ spec:
                 - appName: langflow
                   namespace: default
                   ServerSideApply: "false"
+                - appName: n8n
+                  namespace: default
+                  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"

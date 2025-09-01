@@ -40,6 +40,11 @@ ingress:
       service: langflow
       port: 7860
 
+    n8n:
+      serviceName: n8n
+      service: n8n
+      port: 5678
+
     cluster:
       clusterBase: true
       service: base-argocd-server
