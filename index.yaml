@@ -7304,6 +7304,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/music-assistant-1.0.6/music-assistant-1.0.6.tgz
     version: 1.0.6
+  n8n:
+  - apiVersion: v2
+    appVersion: 1.109.1
+    created: "2025-09-01T02:10:03.13622877Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 58507bdac209d348bd4d272b52702bc8ad054ddd3c18e096bd7b9f1ce008b0d9
+    name: n8n
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/n8n-1.0.1/n8n-1.0.1.tgz
+    version: 1.0.1
   paperless:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -8433,4 +8446,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-08-31T21:09:19.743161511Z"
+generated: "2025-09-01T02:10:03.136952157Z"
