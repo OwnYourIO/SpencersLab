@@ -17,6 +17,7 @@ app-template:
             repository: n8nio/n8n
             tag: 1.109.1
           env:
+            NODE_FUNCTION_ALLOW_EXTERNAL: "*"
             N8N_HOST: "0.0.0.0"
             N8N_PORT: "5678"
             N8N_PROTOCOL: "http"
@@ -49,7 +50,7 @@ app-template:
         scrape4ai:
           image:
             repository: unclecode/crawl4ai
-            tag: latest
+            tag: 0.7.4
           env:
             TZ: Etc/UTC
           resources:
