@@ -86,4 +86,4 @@ app-template:
     config:
       existingClaim: *chartName
       globalMounts:
-        - path: /home/node/.n8n
+        - path: /home/node
