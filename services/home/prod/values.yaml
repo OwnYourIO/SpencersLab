@@ -747,6 +747,7 @@ karakeep:
             CRAWLER_DOWNLOAD_BANNER_IMAGE: true
             CRAWLER_ENABLE_ADBLOCKER: true
             CRAWLER_STORE_SCREENSHOT: true
+            CRAWLER_FULL_PAGE_ARCHIVE: true
             DATA_DIR: /data
             # This impacts SSO signups as well.
             DISABLE_SIGNUPS: false
