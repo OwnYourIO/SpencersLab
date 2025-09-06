@@ -87,3 +87,7 @@ app-template:
       existingClaim: *chartName
       globalMounts:
         - path: /home/node
+    data:
+      existingClaim: markdown-shared
+      globalMounts:
+        - path: /data/markdown
