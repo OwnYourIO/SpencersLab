@@ -23,10 +23,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: documents-shared
+  name: markdown-shared
 spec:
   storageClassName: ""
-  volumeName: documents-shared
+  volumeName: markdowmarkdown-shared
   accessModes:
     - ReadWriteMany
   resources:
