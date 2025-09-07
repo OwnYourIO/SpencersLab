@@ -24,7 +24,6 @@ app-template:
             N8N_LOG_LEVEL: "info"
             N8N_METRICS: "true"
             N8N_DISABLE_UI: "false"
-            WEBHOOK_URL: "https://{{ .Values.domain }}"
             TZ: Etc/UTC
           envFrom:
             - secretRef:
