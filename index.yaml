@@ -7322,6 +7322,18 @@ entries:
   n8n:
   - apiVersion: v2
     appVersion: 1.109.1
+    created: "2025-09-07T04:49:19.273772581Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 45fafdab7b1fdd9fcfce2976cfdba94bb08d83df474dc874d10295c3aafd53f5
+    name: n8n
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/n8n-1.0.12/n8n-1.0.12.tgz
+    version: 1.0.12
+  - apiVersion: v2
+    appVersion: 1.109.1
     created: "2025-09-06T23:20:06.836891519Z"
     dependencies:
     - name: app-template
@@ -8581,4 +8593,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-09-06T23:20:06.838249272Z"
+generated: "2025-09-07T04:49:19.274549126Z"
