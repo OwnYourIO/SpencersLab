@@ -886,9 +886,15 @@ karakeep:
       existingClaim: karakeep
       globalMounts:
         - subPath: karakeep
-          path: /data
+          path: /data2
         - path: /meili_data
           subPath: meilisearch
+    documents:
+      existingClaim: documents-shared
+      globalMounts:
+        - subPath: karakeep
+          path: /data
+
 
 hugo-help:
     global:
