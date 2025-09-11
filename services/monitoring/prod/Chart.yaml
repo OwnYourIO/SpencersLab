@@ -17,5 +17,5 @@ dependencies:
   version: 1.0.20
   repository: https://ownyourio.github.io/SpencersLab/
 - name: grafana
-  version: 9.3.1
+  version: 9.4.5
   repository: https://grafana.github.io/helm-charts/
