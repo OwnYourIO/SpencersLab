@@ -566,6 +566,18 @@ entries:
   archon:
   - apiVersion: v2
     appVersion: main2
+    created: "2025-09-13T21:56:04.64336021Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 7ba2550556d8d5dfc70f24383ac2d6552c2b971afbabefb29a7fcdb632a94097
+    name: archon
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/archon-1.0.3/archon-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v2
+    appVersion: main2
     created: "2025-09-13T21:13:46.509815782Z"
     dependencies:
     - name: app-template
@@ -8895,4 +8907,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-09-13T21:37:36.156128014Z"
+generated: "2025-09-13T21:56:04.644105462Z"
