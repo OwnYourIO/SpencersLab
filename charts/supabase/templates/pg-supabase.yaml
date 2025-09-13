@@ -5,7 +5,7 @@ metadata:
   name: pg-supabase
 spec:
   instances: 1
-  imageName: supabase/postgres:17.6.1.004
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.6-26
   primaryUpdateStrategy: unsupervised
   storage:
     size: 10Gi
@@ -51,11 +51,6 @@ spec:
           GRANT ALL ON SCHEMA graphql TO supabase;
           GRANT USAGE ON SCHEMA vault TO supabase;
           GRANT ALL ON SCHEMA vault TO supabase;
-          
-          -- Install required extensions
-          CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
-          CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA extensions;
-          CREATE EXTENSION IF NOT EXISTS "pgjwt" WITH SCHEMA extensions;
           
           -- Set up search path for the supabase user
           ALTER ROLE supabase SET search_path TO public, auth, storage, realtime, supabase_functions, extensions, graphql, vault;
