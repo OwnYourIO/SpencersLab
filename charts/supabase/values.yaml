@@ -137,65 +137,6 @@ app-template:
             capabilities:
               drop:
                 - ALL
-        storage:
-          image:
-            repository: supabase/storage-api
-            tag: v1.11.9
-          env:
-            POSTGREST_URL: "http://localhost:3000"
-            FILE_SIZE_LIMIT: "52428800"
-            STORAGE_BACKEND: "file"
-            FILE_STORAGE_BACKEND_PATH: "/var/lib/storage"
-            TENANT_ID: "stub"
-            REGION: "stub"
-            GLOBAL_S3_BUCKET: "stub"
-            ENABLE_IMAGE_TRANSFORMATION: "true"
-            IMGPROXY_URL: "http://localhost:5001"
-            TZ: Etc/UTC
-          envFrom:
-            - secretRef:
-                name: *chartName
-          probes:
-            liveness:
-              enabled: true
-            readiness:
-              enabled: true
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              memory: 1Gi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-        imgproxy:
-          image:
-            repository: darthsim/imgproxy
-            tag: v3.8.0
-          env:
-            IMGPROXY_BIND: "0.0.0.0:5001"
-            IMGPROXY_LOCAL_FILESYSTEM_ROOT: "/var/lib/storage"
-            IMGPROXY_USE_ETAG: "true"
-            TZ: Etc/UTC
-          probes:
-            liveness:
-              enabled: true
-            readiness:
-              enabled: true
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              memory: 1Gi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
         redis:
           image:
             repository: redis
@@ -226,6 +167,7 @@ app-template:
       enabled: true
       type: configMap
       name: '{{ .Release.Name }}'
+      defaultMode: 0777
       globalMounts:
         - path: /var/lib/kong/kong.yml
           subPath: kong.conf
