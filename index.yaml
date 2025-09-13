@@ -563,6 +563,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/appset-traefik-zerotrust-1.1.2/appset-traefik-zerotrust-1.1.2.tgz
     version: 1.1.2
+  archon:
+  - apiVersion: v2
+    appVersion: main2
+    created: "2025-09-13T15:18:16.058964242Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: bcbb569a98a3a04e7dabb4a6e57908377d5087e249207fe6013cee2563e96bc7
+    name: archon
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/archon-1.0.1/archon-1.0.1.tgz
+    version: 1.0.1
   argo-cd:
   - apiVersion: v2
     appVersion: 1.0.8
@@ -7951,6 +7964,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/snapcast-1.0.1/snapcast-1.0.1.tgz
     version: 1.0.1
+  supabase:
+  - apiVersion: v2
+    appVersion: 2024.08.19
+    created: "2025-09-13T15:18:16.181570963Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: ccd817282a65c064c11ed77539a27bacb74562141c62b4823483b051bb153141
+    name: supabase
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/supabase-1.0.1/supabase-1.0.1.tgz
+    version: 1.0.1
   traefik-appset:
   - apiVersion: v2
     appVersion: 1.1.0
@@ -8617,4 +8643,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-09-07T04:57:37.318664975Z"
+generated: "2025-09-13T15:18:16.182919364Z"
