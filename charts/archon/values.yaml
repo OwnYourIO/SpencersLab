@@ -1,6 +1,8 @@
 bitwardenIds:
   archon: OVERRIDE_VIA_CUSTOM_VALUES
 
+emptySecrets: true
+
 domain: OVERRIDE_VIA_APPSET
 
 app-template:
@@ -66,6 +68,11 @@ app-template:
           envFrom:
             - secretRef:
                 name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
           resources:
             requests:
               cpu: 100m
@@ -85,6 +92,11 @@ app-template:
           envFrom:
             - secretRef:
                 name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
           resources:
             requests:
               cpu: 200m
@@ -101,6 +113,11 @@ app-template:
             PROD: "true"
             VITE_SHOW_DEVTOOLS: "false"
             TZ: Etc/UTC
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
           resources:
             requests:
               cpu: 100m
