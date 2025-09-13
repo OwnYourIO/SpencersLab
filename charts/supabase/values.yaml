@@ -140,7 +140,6 @@ app-template:
             limits:
               memory: 1Gi
           securityContext:
-            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
