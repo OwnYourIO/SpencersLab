@@ -63,8 +63,8 @@ spec:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
       syncPolicy:
-        automated:
-          prune: true
+        automated: {}
+          #prune: true
           #selfHeal: true
         syncOptions:
           - CreateNamespace=true
