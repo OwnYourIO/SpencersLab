@@ -45,6 +45,16 @@ ingress:
       service: n8n
       port: 5678
 
+    supabase:
+      serviceName: supabase
+      service: supabase
+      port: 3000
+
+    archon:
+      serviceName: archon
+      service: archon
+      port: 3737
+
     cluster:
       clusterBase: true
       service: base-argocd-server
