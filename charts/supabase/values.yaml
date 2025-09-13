@@ -1,0 +1,224 @@
+bitwardenIds:
+  supabase: OVERRIDE_VIA_CUSTOM_VALUES
+  supabase-pg: OVERRIDE_VIA_CUSTOM_VALUES
+
+emptySecrets: true
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName supabase
+
+  controllers:
+    supabase:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        kong:
+          image:
+            repository: kong
+            tag: 2.8.1
+          env:
+            KONG_DATABASE: "off"
+            KONG_DECLARATIVE_CONFIG: "/var/lib/kong/kong.yml"
+            KONG_DNS_ORDER: "LAST,A,CNAME"
+            KONG_PLUGINS: "request-transformer,cors,key-auth,acl,basic-auth"
+            KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: "160k"
+            KONG_NGINX_PROXY_PROXY_BUFFERS: "64 160k"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        auth:
+          image:
+            repository: supabase/gotrue
+            tag: v2.158.1
+          env:
+            GOTRUE_API_HOST: "0.0.0.0"
+            GOTRUE_API_PORT: "9999"
+            GOTRUE_DB_DRIVER: "postgres"
+            GOTRUE_JWT_ADMIN_ROLES: "service_role"
+            GOTRUE_JWT_AUD: "authenticated"
+            GOTRUE_JWT_DEFAULT_GROUP_NAME: "authenticated"
+            GOTRUE_JWT_EXP: "3600"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        rest:
+          image:
+            repository: postgrest/postgrest
+            tag: v12.2.0
+          env:
+            PGRST_DB_SCHEMAS: "public,storage,graphql_public"
+            PGRST_DB_ANON_ROLE: "anon"
+            PGRST_DB_USE_LEGACY_GUCS: "false"
+            PGRST_APP_SETTINGS_JWT_EXP: "3600"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        realtime:
+          image:
+            repository: supabase/realtime
+            tag: v2.30.23
+          env:
+            PORT: "4000"
+            DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
+            ERL_AFLAGS: "-proto_dist inet_tcp"
+            ENABLE_TAILSCALE: "false"
+            DNS_NODES: "''"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        storage:
+          image:
+            repository: supabase/storage-api
+            tag: v1.11.9
+          env:
+            POSTGREST_URL: "http://localhost:3000"
+            FILE_SIZE_LIMIT: "52428800"
+            STORAGE_BACKEND: "file"
+            FILE_STORAGE_BACKEND_PATH: "/var/lib/storage"
+            TENANT_ID: "stub"
+            REGION: "stub"
+            GLOBAL_S3_BUCKET: "stub"
+            ENABLE_IMAGE_TRANSFORMATION: "true"
+            IMGPROXY_URL: "http://localhost:5001"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        imgproxy:
+          image:
+            repository: darthsim/imgproxy
+            tag: v3.8.0
+          env:
+            IMGPROXY_BIND: "0.0.0.0:5001"
+            IMGPROXY_LOCAL_FILESYSTEM_ROOT: "/var/lib/storage"
+            IMGPROXY_USE_ETAG: "true"
+            TZ: Etc/UTC
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        redis:
+          image:
+            repository: redis
+            tag: 8.2.0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+  service:
+    supabase:
+      controller: *chartName
+      ports:
+        http:
+          port: 3000
+  persistence:
+    storage:
+      existingClaim: *chartName
+      globalMounts:
+        - path: /var/lib/storage
