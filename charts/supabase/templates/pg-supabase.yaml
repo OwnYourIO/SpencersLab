@@ -6,6 +6,8 @@ metadata:
 spec:
   instances: 1
   imageName: supabase/postgres:17.6.1.004
+  postgresUID: 105
+  postgresGID: 106
   primaryUpdateStrategy: unsupervised
   storage:
     size: 10Gi
