@@ -19,6 +19,12 @@ spec:
                 - appName: n8n
                   namespace: default
                   ServerSideApply: "false"
+                - appName: supabase
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: archon
+                  namespace: default
+                  ServerSideApply: "false"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
