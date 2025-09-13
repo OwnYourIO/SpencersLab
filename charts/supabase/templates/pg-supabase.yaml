@@ -55,4 +55,4 @@ spec:
           GRANT ALL ON SCHEMA vault TO supabase;
           
           -- Set up search path for the supabase user
-          ALTER ROLE supabase SET search_path TO public, auth, storage, realtime, supabase_functions, extensions, graphql, vault;
+          ALTER ROLE supabase SET search_path TO auth;
