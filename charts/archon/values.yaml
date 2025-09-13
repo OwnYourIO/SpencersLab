@@ -1,0 +1,124 @@
+bitwardenIds:
+  archon: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName archon
+
+  controllers:
+    archon:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        server:
+          image:
+            repository: ghcr.io/shivamkb17/archon-server
+            tag: main2
+          env:
+            ARCHON_SERVER_PORT: "8181"
+            ARCHON_MCP_PORT: "8051"
+            ARCHON_AGENTS_PORT: "8052"
+            SERVICE_DISCOVERY_MODE: "kubernetes"
+            LOG_LEVEL: "INFO"
+            AGENTS_ENABLED: "true"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8181
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8181
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+        mcp:
+          image:
+            repository: ghcr.io/shivamkb17/archon-mcp
+            tag: main2
+          env:
+            ARCHON_MCP_PORT: "8051"
+            ARCHON_SERVER_PORT: "8181"
+            ARCHON_AGENTS_PORT: "8052"
+            SERVICE_DISCOVERY_MODE: "kubernetes"
+            TRANSPORT: "sse"
+            LOG_LEVEL: "INFO"
+            API_SERVICE_URL: "http://archon:8181"
+            AGENTS_ENABLED: "true"
+            AGENTS_SERVICE_URL: "http://archon:8052"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+        agents:
+          image:
+            repository: ghcr.io/shivamkb17/archon-agents
+            tag: main2
+          env:
+            ARCHON_AGENTS_PORT: "8052"
+            ARCHON_SERVER_PORT: "8181"
+            SERVICE_DISCOVERY_MODE: "kubernetes"
+            LOG_LEVEL: "INFO"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+        frontend:
+          image:
+            repository: ghcr.io/shivamkb17/archon-frontend
+            tag: main2
+          env:
+            VITE_ARCHON_SERVER_PORT: "8181"
+            ARCHON_SERVER_PORT: "8181"
+            PROD: "true"
+            VITE_SHOW_DEVTOOLS: "false"
+            TZ: Etc/UTC
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+  service:
+    archon:
+      controller: *chartName
+      ports:
+        http:
+          port: 3737
+        server:
+          port: 8181
+        mcp:
+          port: 8051
+        agents:
+          port: 8052
+  persistence:
+    config:
+      existingClaim: *chartName
