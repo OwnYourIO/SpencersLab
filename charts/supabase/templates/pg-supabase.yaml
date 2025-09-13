@@ -30,13 +30,13 @@ spec:
       postInitApplicationSQL:
         - |
           -- Create all required Supabase schemas
-          CREATE SCHEMA IF NOT EXISTS auth;
-          CREATE SCHEMA IF NOT EXISTS storage;
-          CREATE SCHEMA IF NOT EXISTS realtime;
-          CREATE SCHEMA IF NOT EXISTS supabase_functions;
-          CREATE SCHEMA IF NOT EXISTS extensions;
-          CREATE SCHEMA IF NOT EXISTS graphql;
-          CREATE SCHEMA IF NOT EXISTS vault;
+          CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase;
+          CREATE SCHEMA IF NOT EXISTS storage AUTHORIZATION supabase;
+          CREATE SCHEMA IF NOT EXISTS realtime AUTHORIZATION supabase;
+          CREATE SCHEMA IF NOT EXISTS supabase_functions AUTHORIZATION supabase;
+          CREATE SCHEMA IF NOT EXISTS extensions AUTHORIZATION supabase;
+          CREATE SCHEMA IF NOT EXISTS graphql AUTHORIZATION supabase;
+          CREATE SCHEMA IF NOT EXISTS vault AUTHORIZATION supabase;
           
           -- Grant permissions to the supabase user
           GRANT USAGE ON SCHEMA auth TO supabase;
