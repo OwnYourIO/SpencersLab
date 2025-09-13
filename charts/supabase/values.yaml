@@ -119,7 +119,7 @@ app-template:
             DNS_NODES: "''"
             TZ: Etc/UTC
             DB_HOST: pg-supabase-rw
-            DB_PORT: 5423
+            DB_PORT: 5432
             DB_NAME: supabase
             RLIMIT_NOFILE: "10000"
             APP_NAME: realtime
