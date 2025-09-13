@@ -37,7 +37,9 @@ spec:
           CREATE SCHEMA IF NOT EXISTS extensions AUTHORIZATION supabase;
           CREATE SCHEMA IF NOT EXISTS graphql AUTHORIZATION supabase;
           CREATE SCHEMA IF NOT EXISTS vault AUTHORIZATION supabase;
-          
+
+          CREATE SCHEMA IF NOT EXISTS "_realtime" AUTHORIZATION supabase;
+
           -- Grant permissions to the supabase user
           GRANT USAGE ON SCHEMA auth TO supabase;
           GRANT ALL ON SCHEMA auth TO supabase;
