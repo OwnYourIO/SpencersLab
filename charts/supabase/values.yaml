@@ -228,7 +228,7 @@ app-template:
       name: '{{ .Release.Name }}-kong-conf'
       globalMounts:
         - path: /etc/kong.conf
-          subpath: kong-conf
+          subPath: kong-conf
 
   configMaps:
     kong-conf:
