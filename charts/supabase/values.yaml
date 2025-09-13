@@ -139,10 +139,6 @@ app-template:
               memory: 256Mi
             limits:
               memory: 1Gi
-          securityContext:
-            capabilities:
-              drop:
-                - ALL
         redis:
           image:
             repository: redis
