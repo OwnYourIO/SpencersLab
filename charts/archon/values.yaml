@@ -18,6 +18,16 @@ app-template:
           image:
             repository: ghcr.io/shivamkb17/archon-server
             tag: main2
+          command:
+            - "python"
+            - "-m"
+            - "uvicorn"
+            - "src.server.main:app"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8181"
+            - "--reload"
           env:
             ARCHON_SERVER_PORT: "8181"
             ARCHON_MCP_PORT: "8051"
