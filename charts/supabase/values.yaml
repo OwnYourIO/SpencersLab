@@ -222,3 +222,18 @@ app-template:
       existingClaim: *chartName
       globalMounts:
         - path: /var/lib/storage
+    kong-conf:
+      enabled: true
+      type: configMap
+      name: '{{ .Release.Name }}-kong-conf'
+      globalMounts:
+        - path: /etc/kong.conf
+          subpath: kong-conf
+
+  configMaps:
+    kong-conf:
+      #enabled: true
+      data:
+        kong.conf: |-
+            # Defaults can be found here: https://github.com/Kong/kong/blob/master/kong.conf.default
+            # This file has to exist otherwise the container won't start.
