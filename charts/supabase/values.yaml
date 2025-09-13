@@ -110,7 +110,7 @@ app-template:
         realtime:
           image:
             repository: supabase/realtime
-            tag: v2.30.23
+            tag: v2.47.4
           env:
             PORT: "4000"
             DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
@@ -118,6 +118,13 @@ app-template:
             ENABLE_TAILSCALE: "false"
             DNS_NODES: "''"
             TZ: Etc/UTC
+            DB_HOST: pg-supabase-rw
+            DB_PORT: 5423
+            DB_NAME: supabase
+            RLIMIT_NOFILE: "10000"
+            APP_NAME: realtime
+            SEED_SELF_HOST: true
+            RUN_JANITOR: true
           envFrom:
             - secretRef:
                 name: *chartName
