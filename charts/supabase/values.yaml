@@ -34,7 +34,7 @@ app-template:
           args:
             - |
               #!/bin/sh
-              eval "echo \"$(cat /home/kong/temp.yml)\"" > /home/kong/kong.yml
+              eval "echo \"$(cat /home/kong/tmp.yml)\"" > /home/kong/kong.yml
               && /docker-entrypoint.sh kong docker-start
           probes:
             liveness:
