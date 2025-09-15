@@ -172,7 +172,6 @@ app-template:
       type: emptyDir
       medium: "Memory"
       sizeLimit: 1Gi
-      defaultMode: 0777
       globalMounts:
         - path: /home/kong/
     storage:
