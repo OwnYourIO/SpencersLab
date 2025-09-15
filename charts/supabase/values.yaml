@@ -168,6 +168,13 @@ app-template:
           port: 3000
       
   persistence:
+    kong-home:
+      type: emptyDir
+      medium: "Memory"
+      sizeLimit: 1Gi
+      defaultMode: 0777
+      globalMounts:
+        - path: /home/kong/
     storage:
       existingClaim: *chartName
       globalMounts:
