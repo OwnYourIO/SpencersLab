@@ -35,7 +35,7 @@ app-template:
             - |
               #!/bin/sh
               eval "echo \"$(cat /home/kong/tmp.yml)\"" > /home/kong/kong.yml
-              && /docker-entrypoint.sh kong docker-start
+              /docker-entrypoint.sh kong docker-start
           probes:
             liveness:
               enabled: true
