@@ -262,7 +262,21 @@ app-template:
     supabase:
       controller: *chartName
       ports:
-        http:
+        kong:
+          port: 8000
+        auth:
+          port: 9999
+        storage:
+          port: 5000
+        functions:
+          port: 9000
+        rest:
+          port: 3001
+        realtime:
+          port: 4000
+        meta:
+          port: 8080
+        studio:
           port: 3000
       
   persistence:
@@ -328,7 +342,7 @@ app-template:
           services:
             ## Open Auth routes
             - name: auth-v1-open
-              url: http://auth:9999/verify
+              url: http://supabase:9999/verify
               routes:
                 - name: auth-v1-open
                   strip_path: true
@@ -337,7 +351,7 @@ app-template:
               plugins:
                 - name: cors
             - name: auth-v1-open-callback
-              url: http://auth:9999/callback
+              url: http://supabase:9999/callback
               routes:
                 - name: auth-v1-open-callback
                   strip_path: true
@@ -346,7 +360,7 @@ app-template:
               plugins:
                 - name: cors
             - name: auth-v1-open-authorize
-              url: http://auth:9999/authorize
+              url: http://supabase:9999/authorize
               routes:
                 - name: auth-v1-open-authorize
                   strip_path: true
@@ -358,7 +372,7 @@ app-template:
             ## Secure Auth routes
             - name: auth-v1
               _comment: 'GoTrue: /auth/v1/* -> http://auth:9999/*'
-              url: http://auth:9999/
+              url: http://supabase:9999/
               routes:
                 - name: auth-v1-all
                   strip_path: true
@@ -379,7 +393,7 @@ app-template:
             ## Secure REST routes
             - name: rest-v1
               _comment: 'PostgREST: /rest/v1/* -> http://rest:3001/*'
-              url: http://rest:3001/
+              url: http://supabase:3001/
               routes:
                 - name: rest-v1-all
                   strip_path: true
@@ -400,7 +414,7 @@ app-template:
             ## Secure GraphQL routes
             - name: graphql-v1
               _comment: 'PostgREST: /graphql/v1/* -> http://rest:3001/rpc/graphql'
-              url: http://rest:3001/rpc/graphql
+              url: http://supabase:3001/rpc/graphql
               routes:
                 - name: graphql-v1-all
                   strip_path: true
@@ -426,7 +440,7 @@ app-template:
             ## Secure Realtime routes
             - name: realtime-v1-ws
               _comment: 'Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*'
-              url: http://realtime:4000/socket
+              url: http://supabase:4000/socket
               protocol: ws
               routes:
                 - name: realtime-v1-ws
@@ -446,7 +460,7 @@ app-template:
                       - anon
             - name: realtime-v1-rest
               _comment: 'Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*'
-              url: http://realtime:4000/api
+              url: http://supabase:4000/api
               protocol: http
               routes:
                 - name: realtime-v1-rest
@@ -467,7 +481,7 @@ app-template:
             ## Storage routes: the storage server manages its own auth
             - name: storage-v1
               _comment: 'Storage: /storage/v1/* -> http://storage:5000/*'
-              url: http://storage:5000/
+              url: http://supabase:5000/
               routes:
                 - name: storage-v1-all
                   strip_path: true
@@ -479,7 +493,7 @@ app-template:
             ## Edge Functions routes
             - name: functions-v1
               _comment: 'Edge Functions: /functions/v1/* -> http://functions:9000/*'
-              url: http://functions:9000/
+              url: http://supabase:9000/
               routes:
                 - name: functions-v1-all
                   strip_path: true
@@ -491,7 +505,7 @@ app-template:
             ## Analytics routes
             - name: analytics-v1
               _comment: 'Analytics: /analytics/v1/* -> http://logflare:4000/*'
-              url: http://analytics:4000/
+              url: http://supabase:4000/
               routes:
                 - name: analytics-v1-all
                   strip_path: true
@@ -501,7 +515,7 @@ app-template:
             ## Secure Database routes
             - name: meta
               _comment: 'pg-meta: /pg/* -> http://pg-meta:8080/*'
-              url: http://meta:8080/
+              url: http://supabase:8080/
               routes:
                 - name: meta-all
                   strip_path: true
@@ -520,7 +534,7 @@ app-template:
             ## Protected Dashboard - catch all remaining routes
             - name: dashboard
               _comment: 'Studio: /* -> http://studio:3000/*'
-              url: http://studio:3000/
+              url: http://supabase:3000/
               routes:
                 - name: dashboard-all
                   strip_path: true
