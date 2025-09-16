@@ -48,7 +48,7 @@ ingress:
     supabase:
       serviceName: supabase
       service: supabase
-      port: 3000
+      port: 8000
 
     archon:
       serviceName: archon
