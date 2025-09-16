@@ -93,6 +93,10 @@ app-template:
             PGRST_DB_ANON_ROLE: "anon"
             PGRST_DB_USE_LEGACY_GUCS: "false"
             PGRST_APP_SETTINGS_JWT_EXP: "3600"
+            # This needs to be different than the studio port.
+            # By default they both run on 3000 and at the pod level conflict. 
+            # Much eaiser to change here.
+            PGRST_SERVER_PORT: "3001"
             TZ: Etc/UTC
           envFrom:
             - secretRef:
@@ -327,8 +331,8 @@ app-template:
 
             ## Secure REST routes
             - name: rest-v1
-              _comment: 'PostgREST: /rest/v1/* -> http://rest:3000/*'
-              url: http://rest:3000/
+              _comment: 'PostgREST: /rest/v1/* -> http://rest:3001/*'
+              url: http://rest:3001/
               routes:
                 - name: rest-v1-all
                   strip_path: true
@@ -348,8 +352,8 @@ app-template:
 
             ## Secure GraphQL routes
             - name: graphql-v1
-              _comment: 'PostgREST: /graphql/v1/* -> http://rest:3000/rpc/graphql'
-              url: http://rest:3000/rpc/graphql
+              _comment: 'PostgREST: /graphql/v1/* -> http://rest:3001/rpc/graphql'
+              url: http://rest:3001/rpc/graphql
               routes:
                 - name: graphql-v1-all
                   strip_path: true
