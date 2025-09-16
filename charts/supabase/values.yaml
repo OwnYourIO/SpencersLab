@@ -17,8 +17,8 @@ app-template:
       containers:
         kong:
           image:
-            repository: kong
-            tag: 2.8.1
+            repository: supabase/kong
+            tag:  2.8.5-alpine
           env:
             KONG_DATABASE: "off"
             KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
