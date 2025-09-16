@@ -211,6 +211,53 @@ app-template:
             capabilities:
               drop:
                 - ALL
+        meta:
+          image:
+            repository: supabase/postgres-meta
+            tag: v0.91.6
+          env:
+            PG_META_PORT: "8080"
+            PG_META_DB_HOST: "pg-supabase-rw"
+            PG_META_DB_PORT: "5432"
+            PG_META_DB_NAME: "supabase"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 30
+                periodSeconds: 30
+                timeoutSeconds: 10
+                failureThreshold: 3
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8080
+                initialDelaySeconds: 5
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
   service:
     supabase:
       controller: *chartName
