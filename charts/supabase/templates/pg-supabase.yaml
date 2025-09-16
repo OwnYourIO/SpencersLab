@@ -29,32 +29,12 @@ spec:
         name: pg-supabase-secret
       postInitApplicationSQL:
         - |
-          -- Create all required Supabase schemas
-          CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase;
-          CREATE SCHEMA IF NOT EXISTS storage AUTHORIZATION supabase;
-          CREATE SCHEMA IF NOT EXISTS realtime AUTHORIZATION supabase;
-          CREATE SCHEMA IF NOT EXISTS supabase_functions AUTHORIZATION supabase;
-          CREATE SCHEMA IF NOT EXISTS extensions AUTHORIZATION supabase;
-          CREATE SCHEMA IF NOT EXISTS graphql AUTHORIZATION supabase;
-          CREATE SCHEMA IF NOT EXISTS vault AUTHORIZATION supabase;
-
-          CREATE SCHEMA IF NOT EXISTS "_realtime" AUTHORIZATION supabase;
-
-          -- Grant permissions to the supabase user
-          GRANT USAGE ON SCHEMA auth TO supabase;
-          GRANT ALL ON SCHEMA auth TO supabase;
-          GRANT USAGE ON SCHEMA storage TO supabase;
-          GRANT ALL ON SCHEMA storage TO supabase;
-          GRANT USAGE ON SCHEMA realtime TO supabase;
-          GRANT ALL ON SCHEMA realtime TO supabase;
-          GRANT USAGE ON SCHEMA supabase_functions TO supabase;
-          GRANT ALL ON SCHEMA supabase_functions TO supabase;
-          GRANT USAGE ON SCHEMA extensions TO supabase;
-          GRANT ALL ON SCHEMA extensions TO supabase;
-          GRANT USAGE ON SCHEMA graphql TO supabase;
-          GRANT ALL ON SCHEMA graphql TO supabase;
-          GRANT USAGE ON SCHEMA vault TO supabase;
-          GRANT ALL ON SCHEMA vault TO supabase;
+          -- Include Supabase SQL initialization files from the Docker image
+          -- These files are executed in order based on their naming
+          \i /docker-entrypoint-initdb.d/init-scripts/00-schema.sql
+          \i /docker-entrypoint-initdb.d/init-scripts/00000000000000-initial-schema.sql
+          \i /docker-entrypoint-initdb.d/init-scripts/00000000000001-auth-schema.sql
+          \i /docker-entrypoint-initdb.d/init-scripts/00000000000002-storage-schema.sql
+          \i /docker-entrypoint-initdb.d/init-scripts/00000000000003-post-setup.sql
           
-          -- Set up search path for the supabase user
-          ALTER ROLE supabase SET search_path TO auth;
+          -- Additional custom SQL can be added here if needed:
