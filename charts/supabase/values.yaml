@@ -267,8 +267,6 @@ app-template:
       job:
         ttlSecondsAfterFinished: 300
         backoffLimit: 3
-      pod:
-        restartPolicy: OnFailure
       containers:
         migrate:
           image:
