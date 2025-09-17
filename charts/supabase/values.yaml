@@ -14,6 +14,31 @@ app-template:
     supabase:
       annotations:
         reloader.stakater.com/auto: "true"
+      initContainers:
+        migrate:
+          image:
+            repository: supabase/postgres
+            tag: 17.6.1.004
+          command: ["/docker-entrypoint-initdb.d/migrate.sh"]
+          env:
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
       containers:
         kong:
           image:
@@ -298,6 +323,12 @@ app-template:
       globalMounts:
         - path: /home/kong/tmp.yml
           subPath: kong.conf
+    migrate-init-scripts:
+      type: emptyDir
+      advancedMounts:
+        supabase:
+          migrate:
+            - path: /docker-entrypoint-initdb.d/init-scripts
 
   configMaps:
     kong-conf:
