@@ -592,6 +592,10 @@ app-template:
         migrate.sh: |-
           #!/bin/bash
           set -e
+
+          env | grep -i post
+          env | grep -i pg
+
           
           echo "Starting database migrations..."
           
