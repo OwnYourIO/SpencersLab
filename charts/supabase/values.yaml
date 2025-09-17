@@ -626,7 +626,7 @@ app-template:
               filename=$(basename "$sql")
               
               # Skip excluded files
-              if [ "$filename" = "00-extension.sql" ]; then
+              if [ "$filename" = "00-extension.sql" ] || [ "$filename" = "10000000000000_demote-postgres.sql" ]; then
                 echo "Skipping excluded file: $sql"
                 continue
               fi
