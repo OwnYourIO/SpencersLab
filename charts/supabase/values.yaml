@@ -272,7 +272,6 @@ app-template:
           image:
             repository: supabase/postgres
             tag: 17.6.1.004
-          command: ["/docker-entrypoint-initdb.d/migrate.sh"]
           env:
             TZ: Etc/UTC
           envFrom:
