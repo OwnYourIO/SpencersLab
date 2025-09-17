@@ -329,12 +329,6 @@ app-template:
       globalMounts:
         - path: /home/kong/tmp.yml
           subPath: kong.conf
-    migrate-init-scripts:
-      type: emptyDir
-      advancedMounts:
-        migrate:
-          migrate:
-            - path: /docker-entrypoint-initdb.d/init-scripts
 
   configMaps:
     kong-conf:
