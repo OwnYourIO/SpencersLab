@@ -332,7 +332,7 @@ app-template:
     migrate-script:
       enabled: true
       type: configMap
-      name: migrate-script
+      name: supabase-migrate-script
       defaultMode: 0755
       advancedMounts:
         supabase:
