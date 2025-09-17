@@ -586,3 +586,38 @@ app-template:
                 - name: basic-auth
                   config:
                     hide_credentials: true
+    migrate-script:
+      enabled: true
+      data:
+        migrate.sh: |-
+          #!/bin/bash
+          set -e
+          
+          echo "Starting database migrations..."
+          
+          # Migration directory
+          MIGRATION_DIR="/docker-entrypoint-initdb.d/migrations"
+          
+          # Check if migration directory exists
+          if [ ! -d "$MIGRATION_DIR" ]; then
+            echo "Migration directory $MIGRATION_DIR does not exist. Creating it..."
+            mkdir -p "$MIGRATION_DIR"
+          fi
+          
+          # Check if there are any SQL files to process
+          if ! ls "$MIGRATION_DIR"/*.sql >/dev/null 2>&1; then
+            echo "No SQL migration files found in $MIGRATION_DIR"
+            echo "Migration completed successfully (no files to process)"
+            exit 0
+          fi
+          
+          # Run each SQL file in the migrations directory
+          for sql in "$MIGRATION_DIR"/*.sql; do
+            if [ -f "$sql" ]; then
+              echo "Running migration: $sql"
+              psql -v ON_ERROR_STOP=1 -d "supabase" -f "$sql"
+              echo "Completed migration: $sql"
+            fi
+          done
+          
+          echo "All database migrations completed successfully!"
