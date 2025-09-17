@@ -7991,6 +7991,18 @@ entries:
   supabase:
   - apiVersion: v2
     appVersion: 2024.08.19
+    created: "2025-09-17T13:03:07.257415609Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: b936b40d38b9757139cbd909de42cc36b0073f95f7abe3f582d5c5eefca263ad
+    name: supabase
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/supabase-1.0.51/supabase-1.0.51.tgz
+    version: 1.0.51
+  - apiVersion: v2
+    appVersion: 2024.08.19
     created: "2025-09-17T12:55:06.891424324Z"
     dependencies:
     - name: app-template
@@ -9255,4 +9267,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-09-17T12:55:06.892271411Z"
+generated: "2025-09-17T13:03:07.258215011Z"
