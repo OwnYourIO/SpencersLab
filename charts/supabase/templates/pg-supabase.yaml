@@ -30,6 +30,8 @@ spec:
       postInitApplicationSQLRefs:
         configMapRefs:
         - name: pg-supabase-initdb
+          key: additional-migration-needs.sql
+        - name: pg-supabase-initdb
           key: 00000000000000-initial-schema.sql
         - name: pg-supabase-initdb
           key: 00000000000001-auth-schema.sql
