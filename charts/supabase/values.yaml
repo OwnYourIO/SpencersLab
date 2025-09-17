@@ -258,37 +258,6 @@ app-template:
             capabilities:
               drop:
                 - ALL
-    migrate:
-      type: job
-      annotations:
-        "helm.sh/hook": post-install,post-upgrade
-        "helm.sh/hook-weight": "1"
-        "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-      containers:
-        migrate:
-          image:
-            repository: supabase/postgres
-            tag: 17.6.1.004
-          env:
-            TZ: Etc/UTC
-          envFrom:
-            - secretRef:
-                name: *chartName
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              memory: 512Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-
   service:
     supabase:
       controller: *chartName
