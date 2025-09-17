@@ -593,6 +593,10 @@ app-template:
           #!/bin/bash
           set -e
 
+          export PGUSER=$POSTGRES_USER
+          export PGPASSWORD=$POSTGRES_PASSWORD
+          export PGDATABASE=$POSTGRES_USER
+          
           env | grep -i post
           env | grep -i pg
 
