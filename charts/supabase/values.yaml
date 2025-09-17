@@ -318,7 +318,7 @@ app-template:
     kong-conf:
       enabled: true
       type: configMap
-      name: '{{ .Release.Name }}'
+      name: '{{ .Release.Name }}-kong-conf'
       defaultMode: 0777
       globalMounts:
         - path: /home/kong/tmp.yml
@@ -332,7 +332,7 @@ app-template:
     migrate-script:
       enabled: true
       type: configMap
-      name: supabase-migrate-script
+      name: '{{ .Release.Name }}-migrate-script'
       defaultMode: 0755
       advancedMounts:
         supabase:
