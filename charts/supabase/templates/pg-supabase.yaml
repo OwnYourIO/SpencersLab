@@ -27,14 +27,13 @@ spec:
       owner: supabase
       secret:
         name: pg-supabase-secret
-      postInitApplicationSQL:
-        - |
-          -- Include Supabase SQL initialization files from the Docker image
-          -- These files are executed in order based on their naming
-          \i /docker-entrypoint-initdb.d/init-scripts/00-schema.sql
-          \i /docker-entrypoint-initdb.d/init-scripts/00000000000000-initial-schema.sql
-          \i /docker-entrypoint-initdb.d/init-scripts/00000000000001-auth-schema.sql
-          \i /docker-entrypoint-initdb.d/init-scripts/00000000000002-storage-schema.sql
-          \i /docker-entrypoint-initdb.d/init-scripts/00000000000003-post-setup.sql
-          
-          -- Additional custom SQL can be added here if needed:
+      postInitApplicationSQLRefs:
+        configMapRefs:
+        - name: pg-supabase-initdb
+          key: 00000000000000-initial-schema.sql
+        - name: pg-supabase-initdb
+          key: 00000000000001-auth-schema.sql
+        - name: pg-supabase-initdb
+          key: 00000000000002-storage-schema.sql
+        - name: pg-supabase-initdb
+          key: 00000000000003-post-setup.sql
