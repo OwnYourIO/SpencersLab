@@ -622,6 +622,15 @@ app-template:
           # Run each SQL file in the migrations directory
           for sql in "$MIGRATION_DIR"/*.sql; do
             if [ -f "$sql" ]; then
+              # Get the filename without path
+              filename=$(basename "$sql")
+              
+              # Skip excluded files
+              if [ "$filename" = "00-extension.sql" ]; then
+                echo "Skipping excluded file: $sql"
+                continue
+              fi
+              
               echo "Running migration: $sql"
               psql -v ON_ERROR_STOP=1 -h pg-supabase-rw -d "supabase" -f "$sql"
               echo "Completed migration: $sql"
