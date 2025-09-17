@@ -19,7 +19,7 @@ app-template:
           image:
             repository: supabase/postgres
             tag: 17.6.1.004
-          command: ["/docker-entrypoint-initdb.d/migrate.sh"]
+          command: ["/bin/bash", "/scripts/migrate.sh"]
           env:
             TZ: Etc/UTC
           envFrom:
@@ -329,6 +329,16 @@ app-template:
         supabase:
           migrate:
             - path: /docker-entrypoint-initdb.d/init-scripts
+    migrate-script:
+      enabled: true
+      type: configMap
+      name: migrate-script
+      defaultMode: 0755
+      advancedMounts:
+        supabase:
+          migrate:
+            - path: /scripts/migrate.sh
+              subPath: migrate.sh
 
   configMaps:
     kong-conf:
