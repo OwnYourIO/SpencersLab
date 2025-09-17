@@ -615,7 +615,7 @@ app-template:
           for sql in "$MIGRATION_DIR"/*.sql; do
             if [ -f "$sql" ]; then
               echo "Running migration: $sql"
-              psql -v ON_ERROR_STOP=1 -d "supabase" -f "$sql"
+              psql -v ON_ERROR_STOP=1 -h pg-supabase-rw -d "supabase" -f "$sql"
               echo "Completed migration: $sql"
             fi
           done
