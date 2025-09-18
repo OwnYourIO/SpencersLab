@@ -480,3 +480,26 @@ data:
     GRANT ALL ON ALL ROUTINES IN SCHEMA extensions TO dashboard_user;
 
     -- migrate:down
+
+  00000000000004-pgbouncer-schema.sql: |
+    -- Source: https://github.com/supabase/postgres/blob/493bd39a5e75228d34573ae3ecb010d2784e478a/ansible/files/pgbouncer_config/pgbouncer_auth_schema.sql
+    CREATE USER pgbouncer;
+
+    REVOKE ALL PRIVILEGES ON SCHEMA public FROM pgbouncer;
+
+    CREATE SCHEMA pgbouncer AUTHORIZATION pgbouncer;
+
+    CREATE OR REPLACE FUNCTION pgbouncer.get_auth(p_usename TEXT)
+    RETURNS TABLE(username TEXT, password TEXT) AS
+    $$
+    BEGIN
+        RAISE WARNING 'PgBouncer auth request: %', p_usename;
+
+        RETURN QUERY
+        SELECT usename::TEXT, passwd::TEXT FROM pg_catalog.pg_shadow
+        WHERE usename = p_usename;
+    END;
+    $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+    REVOKE ALL ON FUNCTION pgbouncer.get_auth(p_usename TEXT) FROM PUBLIC;
+    GRANT EXECUTE ON FUNCTION pgbouncer.get_auth(p_usename TEXT) TO pgbouncer;
