@@ -21,6 +21,8 @@ app-template:
             tag: 17.6.1.004
           command: ["/bin/bash", "/scripts/migrate.sh"]
           env:
+            PGDATABASE: supabase
+            PGHOST: pg-supabase-rw
             TZ: Etc/UTC
           envFrom:
             - secretRef:
@@ -593,10 +595,6 @@ app-template:
           #!/bin/bash
           set -e
 
-          export PGUSER=$POSTGRES_USER
-          export PGPASSWORD=$POSTGRES_PASSWORD
-          export PGDATABASE=$POSTGRES_USER
-          
           env | grep -i post
           env | grep -i pg
 
@@ -632,7 +630,7 @@ app-template:
               fi
               
               echo "Running migration: $sql"
-              psql -v ON_ERROR_STOP=1 -h pg-supabase-rw -d "supabase" -f "$sql"
+              psql -v ON_ERROR_STOP=1 -f "$sql"
               echo "Completed migration: $sql"
             fi
           done

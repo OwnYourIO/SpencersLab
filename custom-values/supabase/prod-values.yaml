@@ -1,3 +1,4 @@
 bitwardenIds:
   supabase: OVERRIDE_NEEDED
   supabase-pg: OVERRIDE_NEEDED
+  supabase-admin-pg: OVERRIDE_NEEDED
