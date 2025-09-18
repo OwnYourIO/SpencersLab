@@ -28,6 +28,9 @@ spec:
       secret:
         name: pg-supabase-secret
       postInitApplicationSQLRefs:
+        secretRefs:
+        - name: pg-supabase-secret
+          key: supabase_admin.sql
         configMapRefs:
         - name: pg-supabase-initdb
           key: additional-migration-needs.sql
