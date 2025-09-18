@@ -372,8 +372,8 @@ data:
     -- Source: https://github.com/supabase/postgres/blob/develop/migrations/db/init-scripts/00000000000003-post-setup.sql
     -- migrate:up
 
-    ALTER ROLE supabase_admin SET search_path TO "\$user",public,auth,extensions;
-    ALTER ROLE postgres SET search_path TO "\$user",public,extensions;
+    ALTER ROLE supabase_admin SET search_path TO auth,supabase,public,extensions;
+    ALTER ROLE postgres SET search_path TO supabase,public,extensions;
 
     -- Trigger for pg_cron
     CREATE OR REPLACE FUNCTION extensions.grant_pg_cron_access()
