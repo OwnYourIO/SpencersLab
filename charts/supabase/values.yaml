@@ -623,12 +623,6 @@ app-template:
               # Get the filename without path
               filename=$(basename "$sql")
               
-              # Skip excluded files
-              if [ "$filename" = "00-extension.sql" ] || [ "$filename" = "10000000000000_demote-postgres.sql" ]; then
-                echo "Skipping excluded file: $sql"
-                continue
-              fi
-              
               echo "Running migration: $sql"
               psql -v ON_ERROR_STOP=1 -f "$sql"
               echo "Completed migration: $sql"
