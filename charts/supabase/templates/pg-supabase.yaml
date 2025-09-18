@@ -16,10 +16,6 @@ spec:
   monitoring:
     enablePodMonitor: true
 
-  enableSuperuserAccess: true
-  superuserSecret:
-    name: pg-supabase-admin-secret
-
   postgresql:
     parameters:
       max_connections: "600"
