@@ -18,6 +18,11 @@ data:
       CREATE SCHEMA IF NOT EXISTS vault AUTHORIZATION supabase;
 
       CREATE SCHEMA IF NOT EXISTS "_realtime" AUTHORIZATION supabase;
+      
+      -- Needed so that the supabase user can run migrations on the auth table... Security risk?
+      GRANT ALL PRIVILEGES ON SCHEMA auth TO supabase;
+      GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA auth TO supabase;
+      GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA auth TO supabase;
 
       -- Grant permissions to the supabase user
       GRANT USAGE ON SCHEMA auth TO supabase;
