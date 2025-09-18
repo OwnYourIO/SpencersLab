@@ -15,7 +15,6 @@ data:
       CREATE SCHEMA IF NOT EXISTS extensions AUTHORIZATION supabase;
       CREATE SCHEMA IF NOT EXISTS graphql AUTHORIZATION supabase;
       CREATE SCHEMA IF NOT EXISTS vault AUTHORIZATION supabase;
-      CREATE SCHEMA IF NOT EXISTS pgbouncer AUTHORIZATION supabase;
 
       CREATE SCHEMA IF NOT EXISTS "_realtime" AUTHORIZATION supabase;
       
