@@ -39,6 +39,8 @@ spec:
         - name: pg-supabase-initdb
           key: 00000000000001-auth-schema.sql
         - name: pg-supabase-initdb
+          key: 00000000000001.1-auth-schema-fix.sql
+        - name: pg-supabase-initdb
           key: 00000000000002-storage-schema.sql
         - name: pg-supabase-initdb
           key: 00000000000003-post-setup.sql

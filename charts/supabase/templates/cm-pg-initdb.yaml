@@ -234,6 +234,16 @@ data:
     ALTER table "auth".schema_migrations OWNER TO supabase_auth_admin;
 
     -- migrate:down
+    
+  00000000000001.1-auth-schema-fix.sql: |
+    -- Actually using the supabase_admin, not supabase_auth_admin so need to own the tables for migrations to work.
+    ALTER USER supabase_admin SET search_path = "auth";
+    ALTER table "auth".users OWNER TO supabase_admin;
+    ALTER table "auth".refresh_tokens OWNER TO supabase_admin;
+    ALTER table "auth".audit_log_entries OWNER TO supabase_admin;
+    ALTER table "auth".instances OWNER TO supabase_admin;
+    ALTER table "auth".schema_migrations OWNER TO supabase_admin;
+
 
   00000000000002-storage-schema.sql: |
     -- Source: https://github.com/supabase/postgres/blob/develop/migrations/db/init-scripts/00000000000002-storage-schema.sql
