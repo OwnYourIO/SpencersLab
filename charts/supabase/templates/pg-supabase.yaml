@@ -27,7 +27,7 @@ spec:
       owner: supabase
       secret:
         name: pg-supabase-secret
-      postInitSQLRefs:
+      postInitApplicationSQLRefs:
         configMapRefs:
         - name: pg-supabase-initdb
           key: additional-migration-needs.sql
