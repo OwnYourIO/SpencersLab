@@ -1,6 +1,6 @@
 apiVersion: v2
 name: supabase
-version: 1.0.71
+version: 1.0.72
 appVersion: 2024.08.19
 dependencies:
 - name: app-template
