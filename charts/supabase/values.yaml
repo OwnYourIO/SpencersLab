@@ -26,7 +26,7 @@ app-template:
             TZ: Etc/UTC
           envFrom:
             - secretRef:
-                name: *chartName
+                name: pg-supabase-admin-secret
           resources:
             requests:
               cpu: 100m
