@@ -4,9 +4,8 @@ kind: ConfigMap
 metadata:
   name: pg-supabase-initdb
 data:
-  # Not sure why these weren't apart of the initial migrations. Definetly needed.
+  # Not sure why these weren't apart of the initial migrations. Definitely needed.
   additional-migration-needs.sql: |
-      create user supabase_admin with login;
 
       -- Create all required Supabase schemas
       CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase;
