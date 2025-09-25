@@ -10,7 +10,7 @@ dependencies:
   repository: https://cloudnative-pg.github.io/charts
   version: 0.25.0
 - name: ollama
-  version: 1.26.0
+  version: 1.30.0
   repository:  https://helm.otwld.com/
 - name: open-webui
   version: 7.2.0
