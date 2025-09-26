@@ -10,9 +10,6 @@ spec:
           - clusters: {}
           - list:
               elements:
-                #- appName: base
-                #  namespace: default
-                #  ServerSideApply: "false"
                 - appName: gpu
                   namespace: default
                   ServerSideApply: "true"
@@ -37,6 +34,10 @@ spec:
                 value: "{{ metadata.annotations.sso.domain }}"
               - name: ssoPathPrefix
                 value: "{{ metadata.annotations.sso.pathPrefix }}"
+              - name: appset.includeBase
+                value: "{{ metadata.annotations.services.gpu.includeBase | default \"false\" }}"
+              - name: syncPolicy.selfHeal
+                value: "{{ metadata.annotations.services.gpu.selfHeal | default \"false\" }}"
             valueFiles:
               - values.yaml
               - $values/{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml
@@ -49,7 +50,9 @@ spec:
       syncPolicy:
         automated:
           prune: true
-          #selfHeal: true
+          {{- if eq (metadata.annotations.services.gpu.selfHeal | default "false") "true" }}
+          selfHeal: true
+          {{- end }}
         syncOptions:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345

@@ -1,9 +1,19 @@
+# BitwardenIds moved to cluster secret annotation (metadata.annotations.services.gpu.bitwardenIds)
+# The YAML block is parsed and each key-value pair becomes individual Helm parameters
+# This allows charts to access values like: {{ index .Values "bitwardenIds" "coder-pg" }}
+# Example cluster annotation:
+# metadata.annotations.services.gpu.bitwardenIds: |
+#   open-webui-sso-secret: "12345678-1234-1234-1234-123456789abc"
+#   open-webui-secret: "87654321-4321-4321-4321-cba987654321"
+#   open-webui-pg: "11111111-2222-3333-4444-555555555555"
+#   coder-sso-secret: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+#   coder-pg: "ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"
 bitwardenIds:
-  open-webui-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
-  open-webui-secret: OVERRIDE_VIA_CUSTOM_VALUES
-  open-webui-pg: OVERRIDE_VIA_CUSTOM_VALUES
-  coder-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
-  coder-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  open-webui-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  open-webui-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  open-webui-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  coder-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  coder-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
@@ -13,7 +23,24 @@ clusterName: OVERRIDE_VIA_APPSET
 ssoDomain: OVERRIDE_VIA_APPSET
 ssoPathPrefix: OVERRIDE_VIA_APPSET
 
+# Configuration for optional components
+# Note: appset.includeBase is now controlled via cluster annotations (metadata.annotations.services.gpu.includeBase)
+# and will default to "false" if not specified in the cluster secret
+appset:
+  includeBase: false  # This value is overridden by cluster annotations
+
+# Sync policy configuration
+# Note: syncPolicy.selfHeal is now controlled via cluster annotations (metadata.annotations.services.gpu.selfHeal)
+# and will default to false if not specified in the cluster secret
+syncPolicy:
+  selfHeal: false  # This value is overridden by cluster annotations
+
+# SeaweedFS configuration
+seaweedfs:
+  volumeCount: 5  # Number of seaweedfs volume servers to configure DNS rewrites for
+
 ingress:
+  dashboardProvider: homepage  # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
     ollama:
       serviceName: brains
@@ -24,16 +51,37 @@ ingress:
       serviceName: ai
       service: open-webui
       port: 80
+      # Homepage integration example
+      homepageEnabled: "true"
+      homepageGroup: "AI Tools"
+      homepageName: "Open WebUI"
+      homepageDescription: "AI Chat Interface"
+      homepageIcon: "open-webui.png"
+      homepageWeight: "10"
 
     coder:
       serviceName: code
       service: coder
       port: 80
-      
+      # Homepage integration example
+      homepageEnabled: "true"
+      homepageGroup: "Development"
+      homepageName: "Coder"
+      homepageDescription: "Cloud Development Environment"
+      homepageIcon: "coder.png"
+      homepageWeight: "20"
+
     flowise:
       serviceName: flow
       service: flowise
       port: 3000
+      # Homepage integration example
+      homepageEnabled: "true"
+      homepageGroup: "AI Tools"
+      homepageName: "Flowise"
+      homepageDescription: "Visual AI Flow Builder"
+      homepageIcon: "flowise.png"
+      homepageWeight: "30"
 
     langflow:
       serviceName: langflow
@@ -45,10 +93,30 @@ ingress:
       service: n8n
       port: 5678
 
+    qdrant:
+      serviceName: qdrant
+      service: qdrant
+      port: 6333
+
+    neo4j:
+      serviceName: neo4j
+      service: neo4j
+      port: 7474
+
+    langfuse:
+      serviceName: langfuse
+      service: langfuse
+      port: 3000
+
+    searxng:
+      serviceName: searxng
+      service: searxng
+      port: 8080
+
     supabase:
       serviceName: supabase
       service: supabase
-      port: 8000
+      port: 3000
 
     archon:
       serviceName: archon
@@ -125,13 +193,6 @@ open-webui:
   websocket:
     enabled: true
 
-  extraEnvVars:
-    - name: ENABLE_LOGIN_FORM
-      value: "false"
-    - name: OAUTH_PROVIDER_NAME
-      value: login.spencerslab.com
-    - name: ENABLE_OAUTH_SIGNUP
-      value: "true"
   extraEnvFrom: 
     - secretRef:
         name: open-webui-secrets
@@ -166,12 +227,6 @@ coder:
         value: 'true'
       - name: CODER_VERBOSE
         value: "true"
-      - name: CODER_OIDC_EMAIL_FIELD
-        value: "email"
-      - name: CODER_OIDC_USERNAME_FIELD
-        value: "preferred_username"
-      - name: CODER_OIDC_SCOPES
-        value: "openid,profile,email"
       
     envFrom:
       - secretRef:

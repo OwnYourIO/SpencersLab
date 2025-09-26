@@ -19,6 +19,18 @@ spec:
                 - appName: n8n
                   namespace: default
                   ServerSideApply: "false"
+                - appName: qdrant
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: neo4j
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: langfuse
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: searxng
+                  namespace: default
+                  ServerSideApply: "false"
                 - appName: supabase
                   namespace: default
                   ServerSideApply: "false"

@@ -1,0 +1,71 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gpu-pinned-charts-appset
+spec:
+  generators:
+    # Generator for external charts that should deploy to all clusters.
+    - matrix:
+        generators:
+          - clusters: {}
+          - list:
+              elements:
+                - appName: seaweedfs-csi-driver
+                  version: 0.2.3
+                  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+                  namespace: default
+                  ServerSideApply: "true"
+                - appName: cloudnative-pg
+                  version: 0.25.0
+                  repository: https://cloudnative-pg.github.io/charts
+                  namespace: default
+                  ServerSideApply: "true"
+                - appName: ollama
+                  version: 1.26.0
+                  repository: https://helm.otwld.com/
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: open-webui
+                  version: 7.2.0
+                  repository: https://helm.openwebui.com/
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: amd-gpu
+                  version: 0.20.0
+                  repository: https://rocm.github.io/k8s-device-plugin/
+                  namespace: default
+                  ServerSideApply: "true"
+                - appName: coder
+                  version: 2.25.1
+                  repository: https://helm.coder.com/v2
+                  namespace: default
+                  ServerSideApply: "false"
+  template:
+    metadata:
+      name: "gpu-{{ `{{appName}}` }}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: ".;.."
+    spec:
+      project: default
+      sources:
+        - repoURL: "{{ `{{repository}}` }}"
+          chart: "{{ `{{appName}}` }}"
+          targetRevision: "{{ `{{version}}` }}"
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+            valueFiles:
+              - $values/{{ `{{ metadata.annotations.values.path }}/gpu/{{ metadata.annotations.stage }}-values.yaml` }}
+        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
+          targetRevision: main
+          ref: values
+      destination:
+        name: "{{ `{{name}}` }}"
+        namespace: "{{ `{{namespace}}` }}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply={{ `{{ServerSideApply}}` }}
