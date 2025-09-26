@@ -27,7 +27,7 @@ ssoPathPrefix: OVERRIDE_VIA_APPSET
 # Note: appset.includeBase is now controlled via cluster annotations (metadata.annotations.services.gpu.includeBase)
 # and will default to "false" if not specified in the cluster secret
 appset:
-  includeBase: false  # This value is overridden by cluster annotations
+  includeBase: true  # This value is overridden by cluster annotations
 
 # Sync policy configuration
 # Note: syncPolicy.selfHeal is now controlled via cluster annotations (metadata.annotations.services.gpu.selfHeal)
