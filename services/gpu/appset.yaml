@@ -38,6 +38,9 @@ spec:
                 value: "{{ metadata.annotations.services.gpu.includeBase | default \"true\" }}"
               - name: syncPolicy.selfHeal
                 value: "{{ metadata.annotations.services.gpu.selfHeal | default \"true\" | bool }}"
+              # BitwardenIds are dynamically added via templatePatch
+              - name: seaweedfs-csi-driver.seaweedfsFiler
+                value: "{{ metadata.annotations.services.gpu.seaweedfsFiler }}"
             valueFiles:
               - values.yaml
               - $values/{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml
@@ -59,3 +62,15 @@ spec:
         automated:
           prune: true
           selfHeal: {{ metadata.annotations.services.gpu.selfHeal | default true }}
+    {{- $bitwardenIds := (metadata.annotations.services.gpu.bitwardenIds | fromYaml) }}
+    {{- if $bitwardenIds }}
+    # Dynamic bitwardenIds parameters
+    {{- range $key, $value := $bitwardenIds }}
+    spec:
+      sources:
+        - helm:
+            parameters:
+              - name: bitwardenIds.{{ $key }}
+                value: "{{ $value }}"
+    {{- end }}
+    {{- end }}
