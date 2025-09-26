@@ -50,7 +50,7 @@ spec:
       syncPolicy:
         automated:
           prune: true
-          selfHeal: {{ metadata.annotations.services.gpu.selfHeal | default "true" }}
+          selfHeal: "{{ metadata.annotations.services.gpu.selfHeal | default \"true\" }}"
         syncOptions:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
