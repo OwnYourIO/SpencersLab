@@ -3,6 +3,7 @@ kind: ApplicationSet
 metadata:
   name: home-appset
 spec:
+  goTemplate: true
   generators:
     # Generator for apps that should deploy to all cluster.
     - matrix:
@@ -76,7 +77,7 @@ spec:
     spec:
       sources:
           # Helm repository chart fields
-        - repoURL: "{{ .repository | default 'https://github.com/OwnYourIO/SpencersLab.git' }}"
+        - repoURL: "{{ `{{ repository }}` }}"
           targetRevision: `{{ .version | default 'main' }}`
           chart: "{{ `{{appName}}` }}"
           path: "charts/{{ `{{appName}}` }}"
@@ -88,7 +89,11 @@ spec:
                 value: "{{ `{{ metadata.annotations.clusterName }}` }}"
             valueFiles:
               - values.yaml
+              - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
+        - repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
+          targetRevision: main
+          ref: services
         - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
           targetRevision: main
           ref: values
