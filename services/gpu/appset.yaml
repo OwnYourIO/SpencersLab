@@ -48,7 +48,7 @@ spec:
       syncPolicy:
         automated:
           prune: true
-          selfHeal: "{{ true | default \"true\" | bool }}"
+          selfHeal: "{{ true }}"
         syncOptions:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
