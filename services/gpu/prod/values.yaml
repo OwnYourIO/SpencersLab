@@ -31,9 +31,9 @@ appset:
 
 # Sync policy configuration
 # Note: syncPolicy.selfHeal is now controlled via cluster annotations (metadata.annotations.services.gpu.selfHeal)
-# and will default to false if not specified in the cluster secret
+# and will default to true if not specified in the cluster secret
 syncPolicy:
-  selfHeal: false  # This value is overridden by cluster annotations
+  selfHeal: false  # This value is overridden by cluster annotations (cluster annotation defaults to true)
 
 # SeaweedFS configuration
 seaweedfs:
