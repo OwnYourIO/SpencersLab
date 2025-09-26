@@ -3,7 +3,6 @@ kind: ApplicationSet
 metadata:
   name: home-appset
 spec:
-  goTemplate: true
   generators:
     # Generator for apps that should deploy to all cluster.
     - matrix:
