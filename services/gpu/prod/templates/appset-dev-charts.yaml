@@ -75,17 +75,11 @@ spec:
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
-        - {{- `{{- if .version }}` }}
           # Helm repository chart fields
-          repoURL: "{{ `{{repository}}` }}"
+        - repoURL: "{{ `{{ default metadata.annotations.services.repo repository }}` }}"
+          targetRevision: "{{ default 'main' `{{version}}` }}"
           chart: "{{ `{{appName}}` }}"
-          targetRevision: "{{ `{{version}}` }}"
-          {{- `{{- else }}` }}
-          # Git-based chart fields
-          repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
-          targetRevision: main
           path: "charts/{{ `{{appName}}` }}"
-          {{- `{{- end }}` }}
           helm:
             parameters:
               - name: domain
