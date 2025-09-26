@@ -77,7 +77,7 @@ spec:
       sources:
           # Helm repository chart fields
         - repoURL: "{{ `{{ default metadata.annotations.services.repo repository }}` }}"
-          targetRevision: "{{ default 'main' `{{version}}` }}"
+          targetRevision: "{{  `{{ default 'main' version}}` }}"
           chart: "{{ `{{appName}}` }}"
           path: "charts/{{ `{{appName}}` }}"
           helm:
