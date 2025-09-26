@@ -67,33 +67,15 @@ spec:
       destination:
         name: "{{ `{{name}}` }}"
         namespace: "{{ `{{namespace}}` }}"
-      syncPolicy:
-        syncOptions:
-          - CreateNamespace=true
-          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
-          - ServerSideApply={{ `{{ServerSideApply}}` }}
-  templatePatch: |
-    # Dynamic source configuration - toggle specific fields based on chart type
-    spec:
       sources:
-          # Helm repository chart fields
-        - repoURL: "{{ `{{ repository }}` }}"
-          targetRevision:"{{ `{{ version  }}` }}"
-          chart: "{{ `{{appName}}` }}"
-          path: "charts/{{ `{{appName}}` }}"
-          helm:
-            parameters:
-              - name: domain
-                value: "{{ `{{ metadata.annotations.domain }}` }}"
-              - name: clusterName
-                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            valueFiles:
-              - values.yaml
-              - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
-              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
         - repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
           targetRevision: main
           ref: services
         - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
           targetRevision: main
           ref: values
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
+          - ServerSideApply={{ `{{ServerSideApply}}` }}
