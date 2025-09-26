@@ -35,7 +35,7 @@ spec:
               - name: ssoPathPrefix
                 value: "{{ metadata.annotations.sso.pathPrefix }}"
               - name: appset.includeBase
-                value: "{{ metadata.annotations.services.gpu.includeBase | default \"false\" }}"
+                value: "{{ metadata.annotations.services.gpu.includeBase | default \"true\" }}"
               - name: syncPolicy.selfHeal
                 value: "{{ metadata.annotations.services.gpu.selfHeal | default \"true\" | bool }}"
             valueFiles:
@@ -53,7 +53,7 @@ spec:
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ ServerSideApply }}
   templatePatch: |
-    # Dynamic selfHeal based on cluster annotation
+    # Dynamic syncPolicy with automated settings
     spec:
       syncPolicy:
         automated:
