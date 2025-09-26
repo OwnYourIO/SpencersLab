@@ -76,8 +76,8 @@ spec:
     spec:
       sources:
           # Helm repository chart fields
-        - repoURL: "{{ repository | default 'https://github.com/OwnYourIO/SpencersLab.git' }}"
-          targetRevision: `{{ version | default 'main' }}`
+        - repoURL: "{{ .repository | default 'https://github.com/OwnYourIO/SpencersLab.git' }}"
+          targetRevision: `{{ .version | default 'main' }}`
           chart: "{{ `{{appName}}` }}"
           path: "charts/{{ `{{appName}}` }}"
           helm:
