@@ -12,9 +12,13 @@ spec:
           - list:
               elements:
                 - appName: flowise
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
                 - appName: langflow
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
                 - appName: n8n
@@ -22,10 +26,36 @@ spec:
                   # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
+                - appName: qdrant
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: neo4j
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: langfuse
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: searxng
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
+                  namespace: default
+                  ServerSideApply: "false"
                 - appName: supabase
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
                 - appName: archon
+                  # version: 1.0.0
+                  # repository: https://example.com/helm
+                  namespace: default
+                  ServerSideApply: "false"
                 # Helm repository charts (external charts)
                 - appName: seaweedfs-csi-driver
                   version: 0.2.3
@@ -74,6 +104,19 @@ spec:
         - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
           targetRevision: main
           ref: values
+        - repoURL: "{{ `{{ repository }}` }}"
+          targetRevision: "{{ `{{ version  }}` }}"
+          chart: "{{ `{{appName}}` }}"
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+            valueFiles:
+              - values.yaml
+              - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
+              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
