@@ -37,7 +37,7 @@ spec:
               - name: appset.includeBase
                 value: "{{ metadata.annotations.services.gpu.includeBase | default \"false\" }}"
               - name: syncPolicy.selfHeal
-                value: "{{ metadata.annotations.services.gpu.selfHeal | default true }}"
+                value: "{{ metadata.annotations.services.gpu.selfHeal | default true | bool }}"
             valueFiles:
               - values.yaml
               - $values/{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml
@@ -50,7 +50,7 @@ spec:
       syncPolicy:
         automated:
           prune: true
-          selfHeal: {{ metadata.annotations.services.gpu.selfHeal | default true }}
+          selfHeal: "{{ metadata.annotations.services.gpu.selfHeal | default true | bool }}"
         syncOptions:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
