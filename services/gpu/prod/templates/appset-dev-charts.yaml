@@ -35,6 +35,35 @@ spec:
                   namespace: default
                   ServerSideApply: "false"
                 - appName: archon
+                # Helm repository charts (external charts)
+                - appName: seaweedfs-csi-driver
+                  version: 0.2.3
+                  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+                  namespace: default
+                  ServerSideApply: "true"
+                - appName: cloudnative-pg
+                  version: 0.25.0
+                  repository: https://cloudnative-pg.github.io/charts
+                  namespace: default
+                  ServerSideApply: "true"
+                - appName: ollama
+                  version: 1.26.0
+                  repository: https://helm.otwld.com/
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: open-webui
+                  version: 7.2.0
+                  repository: https://helm.openwebui.com/
+                  namespace: default
+                  ServerSideApply: "false"
+                - appName: amd-gpu
+                  version: 0.20.0
+                  repository: https://rocm.github.io/k8s-device-plugin/
+                  namespace: default
+                  ServerSideApply: "true"
+                - appName: coder
+                  version: 2.25.1
+                  repository: https://helm.coder.com/v2
                   namespace: default
                   ServerSideApply: "false"
   template:
@@ -68,3 +97,13 @@ spec:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
+  templatePatch: |
+    # Dynamic source configuration based on chart type
+    {{- `{{- if .version }}` }}
+    # Helm repository chart - patch to use repository source
+    spec:
+      sources:
+        - repoURL: "{{ `{{repository}}` }}"
+          chart: "{{ `{{appName}}` }}"
+          targetRevision: "{{ `{{version}}` }}"
+    {{- `{{- end }}` }}
