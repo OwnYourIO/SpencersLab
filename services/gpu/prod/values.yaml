@@ -214,25 +214,24 @@ open-webui:
         - "ALL"
     seccompProfile: 
       type: RuntimeDefault
-coder: 
-  coder:
-    env:
-      - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
-        value: "false"
-      - name: CODER_OAUTH_GITHUB_ALLOW_SIGNUPS
-        value: "false"
-      - name: CODER_TELEMETRY
-        value: "false"
-      - name: CODER_PROMETHEUS_ENABLE
-        value: 'true'
-      - name: CODER_VERBOSE
-        value: "true"
-      
-    envFrom:
-      - secretRef:
-          name: coder-secrets
-    # This is needed because the Access URL is coming from envFrom
-    envUseClusterAccessURL: false
+coder:
+  env:
+    - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
+      value: "false"
+    - name: CODER_OAUTH_GITHUB_ALLOW_SIGNUPS
+      value: "false"
+    - name: CODER_TELEMETRY
+      value: "false"
+    - name: CODER_PROMETHEUS_ENABLE
+      value: 'true'
+    - name: CODER_VERBOSE
+      value: "true"
+    
+  envFrom:
+    - secretRef:
+        name: coder-secrets
+  # This is needed because the Access URL is coming from envFrom
+  envUseClusterAccessURL: false
 
-    service:
-      type: ClusterIP
+  service:
+    type: ClusterIP
