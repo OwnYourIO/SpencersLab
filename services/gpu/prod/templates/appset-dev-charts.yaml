@@ -25,26 +25,27 @@ spec:
                   # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
-                - appName: qdrant
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                - appName: neo4j
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                - appName: langfuse
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                - appName: searxng
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
+                # TODO: Enable these
+                #- appName: qdrant
+                #  # version: 1.0.0
+                #  # repository: https://example.com/helm
+                #  namespace: default
+                #  ServerSideApply: "false"
+                #- appName: neo4j
+                #  # version: 1.0.0
+                #  # repository: https://example.com/helm
+                #  namespace: default
+                #  ServerSideApply: "false"
+                #- appName: langfuse
+                #  # version: 1.0.0
+                #  # repository: https://example.com/helm
+                #  namespace: default
+                #  ServerSideApply: "false"
+                #- appName: searxng
+                #  # version: 1.0.0
+                #  # repository: https://example.com/helm
+                #  namespace: default
+                #  ServerSideApply: "false"
                 - appName: supabase
                   # version: 1.0.0
                   # repository: https://example.com/helm
@@ -93,34 +94,11 @@ spec:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
+      source:
+        repoURL: ""
       destination:
-        name: "{{ `{{name}}` }}"
-        namespace: "{{ `{{namespace}}` }}"
-      sources:
-        - repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
-          targetRevision: main
-          ref: services
-        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
-          targetRevision: main
-          ref: values
-        - repoURL: "{{ `{{ repository }}` }}"
-          targetRevision: "{{ `{{ version  }}` }}"
-          chart: "{{ `{{appName}}` }}"
-          helm:
-            parameters:
-              - name: domain
-                value: "{{ `{{ metadata.annotations.domain }}` }}"
-              - name: clusterName
-                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            valueFiles:
-              - values.yaml
-              - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
-              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
-      syncPolicy:
-        syncOptions:
-          - CreateNamespace=true
-          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
-          - ServerSideApply={{ `{{ServerSideApply}}` }}
+        server: ""
+
   templatePatch: |
     {{ `{{- $valuesKey := .appName }}` }}
     {{ `{{- if hasKey . "alias" }}` }}
