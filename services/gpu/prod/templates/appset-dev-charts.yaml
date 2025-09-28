@@ -97,7 +97,7 @@ spec:
     spec:
       project: default
       destination:
-        name: '{{ `{{.appName}}` }}'
+        name: "{{ `{{ .name }}` }}"
         namespace: "{{ `{{.namespace }}` }}"
       syncPolicy:
         syncOptions:
