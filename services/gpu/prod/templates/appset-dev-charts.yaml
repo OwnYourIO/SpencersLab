@@ -122,6 +122,6 @@ spec:
               - name: domain
                 value: '{{ `{{ index .metadata.annotations "domain" }}` }}'
               - name: clusterName
-                value: "{{ `{{ index .metadata.annotations 'clusterName' }}` }}"
+                value: '{ `{{ index .metadata.annotations "clusterName" }}` }}'
             valueFiles:
               - values.yaml
