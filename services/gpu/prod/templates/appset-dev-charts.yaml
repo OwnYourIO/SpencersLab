@@ -91,7 +91,7 @@ spec:
                   ServerSideApply: "false"
   template:
     metadata:
-      name: '{{ . | toJson }}'
+      name: '{{ .metadata | toJson }}'
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
