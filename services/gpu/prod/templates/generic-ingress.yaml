@@ -18,38 +18,6 @@ metadata:
     {{- end }}
     #external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
 
-    {{- if eq $.Values.ingress.dashboardProvider "homepage" }}
-    {{- if $config.homepageEnabled }}
-    gethomepage.dev/enabled: "{{ $config.homepageEnabled }}"
-    {{- end }}
-    {{- if $config.homepageGroup }}
-    gethomepage.dev/group: "{{ $config.homepageGroup }}"
-    {{- end }}
-    {{- if $config.homepageName }}
-    gethomepage.dev/name: "{{ $config.homepageName }}"
-    {{- end }}
-    {{- if $config.homepageDescription }}
-    gethomepage.dev/description: "{{ $config.homepageDescription }}"
-    {{- end }}
-    {{- if $config.homepageIcon }}
-    gethomepage.dev/icon: "{{ $config.homepageIcon }}"
-    {{- end }}
-    {{- if $config.homepageWeight }}
-    gethomepage.dev/weight: "{{ $config.homepageWeight }}"
-    {{- end }}
-    {{- if $config.homepageInstance }}
-    gethomepage.dev/instance: "{{ $config.homepageInstance }}"
-    {{- end }}
-    {{- if $config.homepageWidgetType }}
-    gethomepage.dev/widget.type: "{{ $config.homepageWidgetType }}"
-    {{- end }}
-    {{- if $config.homepageWidgetUrl }}
-    gethomepage.dev/widget.url: "{{ $config.homepageWidgetUrl }}"
-    {{- end }}
-    {{- if $config.homepagePodSelector }}
-    gethomepage.dev/pod-selector: "{{ $config.homepagePodSelector }}"
-    {{- end }}
-    {{- end }}
 spec:
   tls:
     - hosts:
