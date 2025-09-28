@@ -122,10 +122,10 @@ spec:
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
   templatePatch: |
-    {{- $valuesKey := .appName }}
-    {{- if hasKey . "alias" }}
-      {{- $valuesKey = .alias }}
-    {{- end }}
+    {{ `{{- $valuesKey := .appName }}` }}
+    {{ `{{- if hasKey . "alias" }}` }}
+      {{ `{{- $valuesKey = .alias }}` }}
+    {{ `{{- end }}` }}
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
@@ -149,8 +149,8 @@ spec:
               - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
             valuesObject:
-            {{- if hasKey $.Values $valuesKey }}
-            {{- range $key, $value := index $.Values $valuesKey }}
-              {{ $key }}: {{ $value | toJson }}
-            {{- end }}
-            {{- end }}
+            {{ `{{- if hasKey $.Values $valuesKey }}` }}
+            {{ `{{- range $key, $value := index $.Values $valuesKey }}` }}
+              {{ $key }}: {{ `{{ $value | toJson }}` }}
+            {{ `{{- end }}` }}
+            {{ `{{- end }}` }}
