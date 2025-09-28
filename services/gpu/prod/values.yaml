@@ -16,7 +16,7 @@ bitwardenIds:
   coder-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
 seaweedfs-csi-driver:
-  seaweedfsFiler: OVERRIDE_VIA_CLUSTER_ANNOTATIONS
+  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
@@ -30,9 +30,8 @@ appset:
   includeBase: true  # This value is overridden by cluster annotations
 
 # Sync policy configuration
-# Note: selfHeal is now dynamically controlled via cluster annotations (metadata.annotations.services.gpu.selfHeal)
+# Note: syncPolicy.selfHeal is now controlled via cluster annotations (metadata.annotations.services.gpu.selfHeal)
 # and will default to true if not specified in the cluster secret
-# The main ApplicationSet uses the cluster annotation directly for its selfHeal setting
 syncPolicy:
   selfHeal: false  # This value is overridden by cluster annotations (cluster annotation defaults to true)
 
