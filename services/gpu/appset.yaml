@@ -62,15 +62,3 @@ spec:
         automated:
           prune: true
           selfHeal: {{ metadata.annotations.services.gpu.selfHeal | default true }}
-    {{- $bitwardenIds := (metadata.annotations.services.gpu.bitwardenIds | fromYaml) }}
-    {{- if $bitwardenIds }}
-    # Dynamic bitwardenIds parameters
-    {{- range $key, $value := $bitwardenIds }}
-    spec:
-      sources:
-        - helm:
-            parameters:
-              - name: bitwardenIds.{{ $key }}
-                value: "{{ $value }}"
-    {{- end }}
-    {{- end }}
