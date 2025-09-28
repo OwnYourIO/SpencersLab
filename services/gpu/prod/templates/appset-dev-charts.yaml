@@ -108,28 +108,22 @@ spec:
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
-        - repoURL: "{{ `{{ metadata.annotations.services.repo }}` }}"
+        - repoURL: "{{ metadata.annotations.services.repo }}"
           targetRevision: main
           ref: services
-        - repoURL: "{{ `{{ metadata.annotations.values.repo }}` }}"
+        - repoURL: "{{ metadata.annotations.values.repo }}"
           targetRevision: main
           ref: values
-        - repoURL: "{{ `{{ repository }}` }}"
-          targetRevision: "{{ `{{ version  }}` }}"
-          chart: "{{ `{{appName}}` }}"
+        - repoURL: "{{ .repository }}"
+          targetRevision: "{{ .version }}"
+          chart: "{{ .appName }}"
           helm:
             parameters:
               - name: domain
-                value: "{{ `{{ metadata.annotations.domain }}` }}"
+                value: "{{ metadata.annotations.domain }}"
               - name: clusterName
-                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+                value: "{{ metadata.annotations.clusterName }}"
             valueFiles:
               - values.yaml
-              - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
-              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
-            {{ `{{- if hasKey $.Values .appName }}` }}
-            valuesObject:
-            {{ `{{- range $key, $value := index $.Values .appName }}` }}
-              {{ `{{ $key }}` }}: {{ `{{ $value | toJson }}` }}
-            {{ `{{- end }}` }}
-            {{ `{{- end }}` }}
+              - $services/{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml }}
+              - $values/{{ metadata.annotations.values.path }}/{{ .appName }}/{{ metadata.annotations.stage }}-values.yaml }}
