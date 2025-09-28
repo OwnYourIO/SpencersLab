@@ -3,6 +3,8 @@ kind: ApplicationSet
 metadata:
   name: home-appset
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
     # Generator for apps that should deploy to all cluster.
     - matrix:
