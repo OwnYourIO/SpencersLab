@@ -120,7 +120,7 @@ spec:
           helm:
             parameters:
               - name: domain
-                value: "{{ index .metadata.annotations 'domain' }}"
+                value: '{{ `{{ index .metadata.annotations "domain" }}` }}'
               - name: clusterName
                 value: "{{ `{{ index .metadata.annotations 'clusterName' }}` }}"
             valueFiles:
