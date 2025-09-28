@@ -149,8 +149,8 @@ spec:
               - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
             valuesObject:
-            {{- if $appConfig }}
+            {{- if hasKey .Values $valuesKey }}
             {{- range $key, $value := index .Values $valuesKey }}
-            {{ $key }}: {{ $value | toJson }}
+              {{ $key }}: {{ $value | toJson }}
             {{- end }}
             {{- end }}
