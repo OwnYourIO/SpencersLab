@@ -129,7 +129,7 @@ spec:
               - $values/{{ `{{ index .metadata.annotations "values.path" }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}-values.yaml 
             {{ `{{- if hasKey $.Values .appName }}` }}
             valuesObject:
-            {{ `{{- range $key, $value := index $.Values .appName }}` }}
+            {{ `{{- range $key, $value := index .Values .appName }}` }}
               {{ `{{ $key }}` }}: {{ `{{ $value | toJson }}` }}
             {{ `{{- end }}` }}
             {{ `{{- end }}` }}
