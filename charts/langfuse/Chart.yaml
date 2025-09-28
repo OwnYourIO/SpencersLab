@@ -1,8 +1,0 @@
-apiVersion: v2
-name: langfuse
-version: 1.0.0
-appVersion: 3.106.1
-dependencies:
-- name: app-template
-  version: 4.2.0
-  repository: https://bjw-s-labs.github.io/helm-charts/

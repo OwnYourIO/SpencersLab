@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: gpu-charts-appset
+  name: home-appset
 spec:
   generators:
     # Generator for apps that should deploy to all cluster.
@@ -88,7 +88,6 @@ spec:
                   ServerSideApply: "false"
   template:
     metadata:
-      name: "{{ `{{- if .version }}gpu-{{ end }}{{appName}}` }}"
       name: "{{ `{{ appName }}` }}"
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
@@ -122,22 +121,3 @@ spec:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ServerSideApply}}` }}
-  templatePatch: |
-    # Dynamic source configuration - toggle specific fields based on chart type
-    spec:
-      sources:
-          # Helm repository chart fields
-        - repoURL: "{{ `{{ repository }}` }}"
-          targetRevision: "{{ `{{ version  }}` }}"
-          chart: "{{ `{{appName}}` }}"
-          path: "charts/{{ `{{appName}}` }}"
-          helm:
-            parameters:
-              - name: domain
-                value: "{{ `{{ metadata.annotations.domain }}` }}"
-              - name: clusterName
-                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-            valueFiles:
-              - values.yaml
-              - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
-              - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
