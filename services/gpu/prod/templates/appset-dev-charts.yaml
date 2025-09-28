@@ -120,10 +120,10 @@ spec:
           helm:
             parameters:
               - name: domain
-                value: "{{ metadata.annotations.domain }}"
+                value: "{{ .metadata.annotations.domain }}"
               - name: clusterName
-                value: "{{ metadata.annotations.clusterName }}"
+                value: "{{ .metadata.annotations.clusterName }}"
             valueFiles:
               - values.yaml
-              - $services/{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml }}
-              - $values/{{ metadata.annotations.values.path }}/{{ .appName }}/{{ metadata.annotations.stage }}-values.yaml }}
+              - $services/{{ .metadata.annotations.services.repo.path }}/gpu/{{ .metadata.annotations.stage }}/values.yaml }}
+              - $values/{{ .metadata.annotations.values.path }}/{{ .appName }}/{{ .metadata.annotations.stage }}-values.yaml }}
