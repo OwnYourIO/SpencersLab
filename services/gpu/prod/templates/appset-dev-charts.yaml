@@ -108,10 +108,10 @@ spec:
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
-        - repoURL: "{{ .metadata.annotations.services.repo }}"
+        - repoURL: "{{ index .metadata.annotations "services.repo" }}"
           targetRevision: main
           ref: services
-        - repoURL: "{{ .metadata.annotations.values.repo }}"
+        - repoURL: "{{ index .metadata.annotations "values.repo" }}"
           targetRevision: main
           ref: values
         - repoURL: "{{ .repository }}"
