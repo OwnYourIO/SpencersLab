@@ -151,6 +151,6 @@ spec:
             valuesObject:
             {{ `{{- if hasKey $.Values $valuesKey }}` }}
             {{ `{{- range $key, $value := index $.Values $valuesKey }}` }}
-              {{ $key }}: {{ `{{ $value | toJson }}` }}
+              {{ `{{ $key }}` }}: {{ `{{ $value | toJson }}` }}
             {{ `{{- end }}` }}
             {{ `{{- end }}` }}
