@@ -55,10 +55,3 @@ spec:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ ServerSideApply }}
-  templatePatch: |
-    # Dynamic syncPolicy with automated settings
-    spec:
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: {{ metadata.annotations.services.gpu.selfHeal | default true }}
