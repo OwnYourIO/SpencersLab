@@ -21,10 +21,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "{{ $subDomain }}.{{ $.Values.domain }}"
+      - "{{ $subDomain }}.{{ .Values.domain }}"
       secretName: wildcard-cert
   rules:
-    - host: "{{ $subDomain }}.{{ $.Values.domain }}"
+    - host: "{{ $subDomain }}.{{ .Values.domain }}"
       http:
         paths:
           - path: /
@@ -86,10 +86,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "{{ $config.serviceName }}.{{ $.Values.domain }}"
+      - "{{ $config.serviceName }}.{{ .Values.domain }}"
       secretName: wildcard-cert
   rules:
-    - host: "{{ $config.serviceName }}.{{ $.Values.domain }}"
+    - host: "{{ $config.serviceName }}.{{ .Values.domain }}"
       http:
         paths:
           - path: /
