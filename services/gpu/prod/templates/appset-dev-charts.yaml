@@ -98,7 +98,7 @@ spec:
       project: default
       destination:
         name: "{{ `{{name}}` }}"
-        namespace: "{{ namespace }}"
+        namespace: "{{ .namespace }}"
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
