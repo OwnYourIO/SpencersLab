@@ -35,12 +35,10 @@ spec:
               - name: ssoPathPrefix
                 value: "{{ metadata.annotations.sso.pathPrefix }}"
               - name: appset.includeBase
-                value: "{{ metadata.annotations.services.gpu.includeBase | default \"true\" }}"
+                value: "{{ metadata.annotations.services.gpu.includeBase }}"
               - name: syncPolicy.selfHeal
-                value: "{{ metadata.annotations.services.gpu.selfHeal | default \"true\" | bool }}"
+                value: "{{ metadata.annotations.services.gpu.selfHeal }}"
               # BitwardenIds are dynamically added via templatePatch
-              - name: seaweedfs-csi-driver.seaweedfsFiler
-                value: "{{ metadata.annotations.services.gpu.seaweedfsFiler }}"
             valueFiles:
               - values.yaml
               - $values/{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml
