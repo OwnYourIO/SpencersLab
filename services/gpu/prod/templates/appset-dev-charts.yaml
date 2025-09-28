@@ -125,3 +125,9 @@ spec:
               - values.yaml
               - $services/{{ `{{ metadata.annotations.services.repo.path }}/gpu/{{ metadata.annotations.stage }}/values.yaml` }}
               - $values/{{ `{{ metadata.annotations.values.path }}/{{ appName }}/{{ metadata.annotations.stage }}-values.yaml` }}
+            {{ `{{- if hasKey $.Values $valuesKey }}` }}
+            valuesObject:
+            {{ `{{- range $key, $value := index $.Values 'appName' }}` }}
+              {{ `{{ $key }}` }}: {{ `{{ $value | toJson }}` }}
+            {{ `{{- end }}` }}
+            {{ `{{- end }}` }}
