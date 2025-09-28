@@ -125,3 +125,5 @@ spec:
                 value: '{{ `{{ index .metadata.annotations "clusterName" }}` }}'
             valueFiles:
               - values.yaml
+              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml 
+              - $values/{{ `{{ index .metadata.annotations "values.path" }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}-values.yaml 
