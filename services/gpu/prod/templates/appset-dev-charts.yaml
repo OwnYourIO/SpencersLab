@@ -94,11 +94,15 @@ spec:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
-      source:
-        repoURL: ""
       destination:
-        server: ""
+        name: "{{ `{{name}}` }}"
+        namespace: "{{ `{{namespace}}` }}"
 
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
+          - ServerSideApply={{ `{{ServerSideApply}}` }}
   templatePatch: |
     {{ `{{- $valuesKey := .appName }}` }}
     {{ `{{- if hasKey . "alias" }}` }}
