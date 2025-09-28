@@ -36,8 +36,6 @@ spec:
                 value: "{{ metadata.annotations.sso.pathPrefix }}"
               - name: appset.includeBase
                 value: "{{ metadata.annotations.services.gpu.includeBase }}"
-              - name: syncPolicy.selfHeal
-                value: "{{ metadata.annotations.services.gpu.selfHeal }}"
               # BitwardenIds are dynamically added via templatePatch
             valueFiles:
               - values.yaml
