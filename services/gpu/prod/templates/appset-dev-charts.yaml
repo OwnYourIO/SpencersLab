@@ -97,8 +97,8 @@ spec:
     spec:
       project: default
       destination:
-        name: "{{ `{{ .name }}` }}"
-        namespace: "{{ .namespace }}"
+        name: '{{ `{{.appName}}` }}'
+        namespace: "{{ `{{.namespace }}` }}"
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
@@ -116,4 +116,4 @@ spec:
           ref: values
         - repoURL: "{{ .repository }}"
           targetRevision: "{{ .version }}"
-          chart: "testchartname{{ .appName }}"
+          chart: "testchartname{{ `{{ .appName }}` }}"
