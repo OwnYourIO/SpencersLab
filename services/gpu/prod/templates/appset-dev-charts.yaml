@@ -114,6 +114,14 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
-        - repoURL: "{{ .repository }}"
-          targetRevision: "{{ .version }}"
+        - repoURL: "{{ `{{ .repository }}` }}"
+          targetRevision: "{{ `{{ .version }}` }}"
           chart: "{{ `{{ .appName }}` }}"
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ index .metadata.annotations 'domain' }}"
+              - name: clusterName
+                value: "{{ `{{ index .metadata.annotations 'clusterName' }}` }}"
+            valueFiles:
+              - values.yaml
