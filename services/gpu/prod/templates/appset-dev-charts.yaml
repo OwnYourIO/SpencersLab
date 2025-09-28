@@ -91,7 +91,7 @@ spec:
                   ServerSideApply: "false"
   template:
     metadata:
-      name: '{{ `{{ index .appName | toJson }}` }}'
+      name: '{{ `{{.appName}}` }}'
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
