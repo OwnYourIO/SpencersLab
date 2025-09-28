@@ -115,7 +115,7 @@ spec:
           targetRevision: main
           ref: values
         - repoURL: "{{ `{{ dig "repository" (index .metadata.annotations "charts.repo") . }}` }}"
-          targetRevision: "{{ `{{ .version }}` }}"
+          targetRevision: "{{ `{{ dig "version" 'main' . }}` }}"
           chart: "{{ `{{ .appName }}` }}"
           helm:
             parameters:
