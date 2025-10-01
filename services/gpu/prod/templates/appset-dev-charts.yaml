@@ -89,6 +89,10 @@ spec:
                   repository: https://helm.coder.com/v2
                   namespace: default
                   ServerSideApply: "false"
+                  alias: coder
+                  {{- if .Values.coder }}
+                  values: {{ .Values.coder | toJson }}
+                  {{- end }}
   template:
     metadata:
       name: '{{ `{{.appName}}` }}'
@@ -131,9 +135,12 @@ spec:
               - values.yaml
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml 
               - $values/{{ `{{ index .metadata.annotations "values.path" }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}-values.yaml 
-            {{ `{{- if hasKey .Values $valuesKey }}` }}
-            {{ `{{- $topLevelValues := index .Values $valuesKey }}` }}
-            {{ `{{- if $topLevelValues }}` }}
-            valuesObject: {{ `{{ $topLevelValues | toYaml | nindent 14 }}` }}
+            {{ `{{- if hasKey . "values" }}` }}
+            {{ `{{- $injectedValues := .values }}` }}
+            {{ `{{- if hasKey $injectedValues .appName }}` }}
+            {{ `{{- $appValues := index $injectedValues .appName }}` }}
+            {{ `{{- if $appValues }}` }}
+            valuesObject: {{ `{{ $appValues | toYaml | nindent 14 }}` }}
+            {{ `{{- end }}` }}
             {{ `{{- end }}` }}
             {{ `{{- end }}` }}
