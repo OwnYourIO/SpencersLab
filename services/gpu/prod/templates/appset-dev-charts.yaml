@@ -143,12 +143,17 @@ spec:
             valueFiles:
               - values.yaml
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
-              # Custom values URL can be set per-app via cluster annotation:
+              # Service-wide custom values URL (applies to ALL apps in this service):
+              # metadata.annotations.services.gpu.customValuesUrl
+              {{ `{{- $serviceCustomValuesUrl := index .metadata.annotations "services.gpu.customValuesUrl" }}` }}
+              {{ `{{- if $serviceCustomValuesUrl }}` }}
+              - {{ `{{ $serviceCustomValuesUrl }}` }}
+              {{ `{{- end }}` }}
+              # Per-app custom values URL (overrides service-wide for specific app):
               # metadata.annotations.services.gpu.<appName>.customValuesUrl
-              # If not set, no custom-values file is loaded (only chart + service values)
-              {{ `{{- $customValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}` }}
-              {{ `{{- if $customValuesUrl }}` }}
-              - {{ `{{ $customValuesUrl }}` }}
+              {{ `{{- $appCustomValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}` }}
+              {{ `{{- if $appCustomValuesUrl }}` }}
+              - {{ `{{ $appCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
             {{ `{{- if hasKey . "values" }}` }}
             valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
