@@ -183,7 +183,7 @@ zigbee2mqtt:
           main:
             image: 
               repository: ghcr.io/koenkk/zigbee2mqtt
-              tag: 2.6.0
+              tag: 2.6.2
             env:
               TZ: America/Denver
               #DEBUG: zigbee-herdsman*
@@ -210,7 +210,7 @@ zigbee2mqtt-remote:
           main:
             image: 
               repository: ghcr.io/koenkk/zigbee2mqtt
-              tag: 2.6.0
+              tag: 2.6.2
             env:
               TZ: America/Denver
               ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee2mqtt-remote.spencerslab.com
