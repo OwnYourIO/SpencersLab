@@ -126,6 +126,8 @@ custom-values/{service-name}/
 # CRITICAL: PostgreSQL connection uses pg-{service}-rw for read-write access
 # CRITICAL: Redis sidecars use standard redis:8.2.0 image
 # CRITICAL: All containers drop ALL capabilities for security
+# CRITICAL: ApplicationSet valueFiles must include service values.yaml for defaults
+# CRITICAL: Service values.yaml provides default configuration for all charts in that service
 ```
 
 ## Implementation Blueprint
@@ -269,7 +271,155 @@ SECRETS:
 DATABASE:
   - CloudNativePG: For PostgreSQL clusters
   - pattern: pg-{service}-rw for read-write access
+
+SERVICE_VALUES:
+  - file: services/{category}/prod/values.yaml
+  - purpose: Service-wide default configuration for all charts
+  - pattern: Must be included in ApplicationSet valueFiles
+  - hierarchy: Chart defaults < Service values < Custom values
 ```
+
+## Service Values Pattern (CRITICAL)
+
+### Three-Tier Value Loading System
+
+SpencersLab uses a three-tier value hierarchy to manage configuration:
+
+```yaml
+Priority (Low to High):
+1. Chart's built-in values.yaml        # Chart defaults
+2. Service's values.yaml                # Service-wide defaults ← CRITICAL
+3. custom-values/{chart}/prod-values.yaml  # Chart-specific overrides
+```
+
+### Service Values.yaml Structure
+
+Each service category has a values.yaml file that provides defaults for ALL charts in that service:
+
+```yaml
+Reference File: services/gpu/prod/values.yaml
+Purpose: 
+  - Provide service-wide defaults (domain, ingress, resources)
+  - Configure chart-specific settings (ollama GPU config, coder env vars)
+  - Define proxy/ingress routing for all services
+  - Set Bitwarden ID placeholders
+
+Structure:
+# Global service configuration
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+bitwardenIds:
+  {service-1}: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  {service-2}: OVERRIDE_VIA_CLUSTER_ANNOTATION
+
+# Service-wide ingress configuration
+ingress:
+  subdomains:
+    {service-1}:
+      serviceName: {name}
+      service: {service-name}
+      port: {port}
+
+# Chart-specific configuration (optional)
+{chart-name}:
+  # Chart-specific settings that apply to this chart
+  # Example: ollama GPU configuration, coder environment variables
+```
+
+### ApplicationSet ValueFiles Configuration
+
+**CRITICAL:** ApplicationSet templates MUST include the service values.yaml:
+
+```yaml
+# CORRECT - Three-tier hierarchy (default)
+valueFiles:
+  - values.yaml                    # Chart's default values
+  - $services/.../gpu/prod/values.yaml   # Service defaults ← REQUIRED
+  - $values/.../gpu/prod-values.yaml     # Custom overrides
+
+# INCORRECT - Missing service values
+valueFiles:
+  - values.yaml
+  - $values/.../gpu/prod-values.yaml  # ← Missing service tier!
+
+# OPTIONAL - Disable custom-values via annotation
+# Set cluster annotation: metadata.annotations.services.gpu.includeCustomValues: "false"
+# This will skip loading the custom-values file (useful for charts that don't need overrides)
+valueFiles:
+  - values.yaml
+  - $services/.../gpu/prod/values.yaml
+  # custom-values file skipped when includeCustomValues="false"
+```
+
+### Controlling Custom-Values Loading
+
+The custom-values file is OPTIONAL and only loaded when explicitly set via cluster annotation:
+
+```yaml
+# Cluster Secret Annotation Pattern
+metadata:
+  annotations:
+    # Set custom-values URL for specific app (OPTIONAL)
+    services.gpu.<appName>.customValuesUrl: "$values/custom-values/<appName>/prod-values.yaml"
+    
+# Default Behavior (no annotation):
+# NO custom-values file is loaded
+# Only loads: chart values → service values
+
+# Use Case Examples:
+
+# 1. No custom-values (default - most common)
+# No annotation needed
+# Loads: chart values → service values only
+# Use when: Service-wide defaults are sufficient
+
+# 2. Load custom-values for specific app
+metadata:
+  annotations:
+    services.gpu.ollama.customValuesUrl: "$values/custom-values/ollama/prod-values.yaml"
+# Loads: chart values → service values → custom-values/ollama/prod-values.yaml
+# Use when: App needs cluster-specific overrides
+
+# 3. Custom location
+metadata:
+  annotations:
+    services.gpu.ollama.customValuesUrl: "$values/overrides/ollama-prod.yaml"
+# Loads: chart values → service values → overrides/ollama-prod.yaml
+
+# 4. Shared custom-values for multiple apps
+metadata:
+  annotations:
+    services.gpu.ollama.customValuesUrl: "$values/shared/ai-tools.yaml"
+    services.gpu.coder.customValuesUrl: "$values/shared/ai-tools.yaml"
+# Both apps load: chart values → service values → shared/ai-tools.yaml
+
+# Implementation in ApplicationSet:
+# Custom values URL can be set per-app via cluster annotation:
+# metadata.annotations.services.gpu.<appName>.customValuesUrl
+# If not set, no custom-values file is loaded (only chart + service values)
+{{- $customValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}
+{{- if $customValuesUrl }}
+- {{ $customValuesUrl }}
+{{- end }}
+```
+
+### Required Files for Each Chart
+
+Every chart MUST have these files to prevent errors:
+
+```bash
+# Chart files (in charts/{chart}/)
+Chart.yaml
+Chart.lock
+values.yaml
+templates/
+
+# Custom values (REQUIRED even if empty)
+custom-values/{chart}/prod-values.yaml  # Must exist, can be empty
+
+# Service integration
+services/{category}/prod/values.yaml    # Service defaults
+services/{category}/prod/templates/appset-*.yaml  # ApplicationSet entry
 
 ## Validation Loop
 
@@ -494,14 +644,75 @@ Key Patterns:
 
 ### ApplicationSet Integration Examples
 
+#### Values Injection Pattern (Optional)
+```yaml
+Purpose: Inject Helm values into ApplicationSet generator elements for use in templatePatch
+Reference File: services/gpu/prod/templates/appset-dev-charts.yaml
+
+Pattern - Basic (appName as values key):
+- appName: ollama
+  version: 1.26.0
+  repository: https://helm.otwld.com/
+  namespace: default
+  ServerSideApply: "false"
+  {{- if index .Values "ollama" }}
+  values: {{ index .Values "ollama" | toJson }}
+  {{- end }}
+
+Pattern - With Optional Alias (custom values key):
+- appName: my-service
+  version: 1.0.0
+  repository: https://example.com/helm
+  namespace: default
+  ServerSideApply: "false"
+  {{- if index .Values "myCustomKey" }}
+  alias: myCustomKey  # Optional - only if values key differs from appName
+  values: {{ index .Values "myCustomKey" | toJson }}
+  {{- end }}
+
+TemplatePatch Logic (handles fallback):
+templatePatch: |
+  {{- $valuesKey := .appName }}
+  {{- if hasKey . "alias" }}
+    {{- $valuesKey = .alias }}
+  {{- end }}
+  ...
+  {{- if hasKey . "values" }}
+  valuesObject: {{ .values | toYaml | nindent 14 }}
+  {{- end }}
+
+Key Points:
+- Use index .Values "" for consistency (handles hyphens in names)
+- alias field is optional - defaults to appName if not specified
+- Values are injected as JSON at Helm template time
+- templatePatch accesses pre-injected values (not .Values directly)
+- Allows nested structures like coder: { coder: { env: ... } }
+
+Example values.yaml structure:
+coder:          # <- Top-level key (used as alias or appName)
+  coder:        # <- Nested structure
+    env:
+      - name: CODER_VERBOSE
+        value: "true"
+```
+
 #### GPU Service Integration
 ```yaml
 Reference File: services/gpu/prod/templates/appset-dev-charts.yaml
 Pattern: AI/ML services with development/experimental charts
-Example Addition:
+
+Example Addition - Simple:
 - appName: {new-ai-service}
   namespace: default
   ServerSideApply: "false"
+
+Example Addition - With Values Injection:
+- appName: {new-ai-service}
+  namespace: default
+  ServerSideApply: "false"
+  {{- if index .Values "{new-ai-service}" }}
+  values: {{ index .Values "{new-ai-service}" | toJson }}
+  {{- end }}
 ```
 
 #### Home Service Integration

@@ -138,9 +138,14 @@ spec:
                 value: '{{ `{{ index .metadata.annotations "clusterName" }}` }}'
             valueFiles:
               - values.yaml
-              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml 
-              # TODO: Better implement this. Should be settable from annotations.
-              #- $values/{{ `{{ index .metadata.annotations "values.path" }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}-values.yaml 
+              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
+              # Custom values URL can be set per-app via cluster annotation:
+              # metadata.annotations.services.gpu.<appName>.customValuesUrl
+              # If not set, no custom-values file is loaded (only chart + service values)
+              {{ `{{- $customValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}` }}
+              {{ `{{- if $customValuesUrl }}` }}
+              - {{ `{{ $customValuesUrl }}` }}
+              {{ `{{- end }}` }}
             {{ `{{- if hasKey . "values" }}` }}
             valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
