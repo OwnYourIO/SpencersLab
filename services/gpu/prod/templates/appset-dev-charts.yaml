@@ -136,11 +136,5 @@ spec:
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml 
               - $values/{{ `{{ index .metadata.annotations "values.path" }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}-values.yaml 
             {{ `{{- if hasKey . "values" }}` }}
-            {{ `{{- $injectedValues := .values }}` }}
-            {{ `{{- if hasKey $injectedValues .appName }}` }}
-            {{ `{{- $appValues := index $injectedValues .appName }}` }}
-            {{ `{{- if $appValues }}` }}
-            valuesObject: {{ `{{ $appValues | toYaml | nindent 14 }}` }}
-            {{ `{{- end }}` }}
-            {{ `{{- end }}` }}
+            valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
