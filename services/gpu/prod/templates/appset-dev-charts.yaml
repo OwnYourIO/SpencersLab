@@ -139,7 +139,8 @@ spec:
             valueFiles:
               - values.yaml
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml 
-              - $values/{{ `{{ index .metadata.annotations "values.path" }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}-values.yaml 
+              # TODO: Better implement this. Should be settable from annotations.
+              #- $values/{{ `{{ index .metadata.annotations "values.path" }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}-values.yaml 
             {{ `{{- if hasKey . "values" }}` }}
             valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
