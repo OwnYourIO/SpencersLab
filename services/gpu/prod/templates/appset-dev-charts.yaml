@@ -74,11 +74,17 @@ spec:
                   repository: https://helm.otwld.com/
                   namespace: default
                   ServerSideApply: "false"
+                  {{- if index .Values "ollama" }}
+                  values: {{ index .Values "ollama" | toJson }}
+                  {{- end }}
                 - appName: open-webui
                   version: 7.2.0
                   repository: https://helm.openwebui.com/
                   namespace: default
                   ServerSideApply: "false"
+                  {{- if index .Values "open-webui" }}
+                  values: {{ index .Values "open-webui" | toJson }}
+                  {{- end }}
                 - appName: amd-gpu
                   version: 0.20.0
                   repository: https://rocm.github.io/k8s-device-plugin/
@@ -89,9 +95,8 @@ spec:
                   repository: https://helm.coder.com/v2
                   namespace: default
                   ServerSideApply: "false"
-                  alias: coder
-                  {{- if .Values.coder }}
-                  values: {{ .Values.coder | toJson }}
+                  {{- if index .Values "coder" }}
+                  values: {{ index .Values "coder" | toJson }}
                   {{- end }}
   template:
     metadata:
