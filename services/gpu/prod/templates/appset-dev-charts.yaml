@@ -129,7 +129,7 @@ spec:
           ref: values
         - repoURL: '{{ `{{ dig "repository" (index .metadata.annotations "charts.repo") . }}` }}'
           targetRevision: "{{ `{{ dig "version" "main" . }}` }}"
-          {{ `{{- if .version }}` }}
+          {{ `{{- if hasKey . "version" }}` }}
           chart: "{{ `{{ .appName }}` }}"
           {{ `{{- else }}` }}
           path: "charts/{{ `{{ .appName }}` }}"
