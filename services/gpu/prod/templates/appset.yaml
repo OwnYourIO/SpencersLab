@@ -38,6 +38,14 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
+        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
+          targetRevision: main
+          path: services/gpu/prod/
           helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
             valueFiles:
               - values.yaml
