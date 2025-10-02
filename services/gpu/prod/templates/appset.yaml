@@ -47,5 +47,14 @@ spec:
                 value: "{{ `{{ metadata.annotations.domain }}` }}"
               - name: clusterName
                 value: "{{ `{{ metadata.annotations.clusterName }}` }}"
+              - name: ssoDomain
+                value: "{{ `{{ metadata.annotations.sso.domain }}` }}"
+              - name: ssoPathPrefix
+                value: "{{ `{{ metadata.annotations.sso.pathPrefix }}` }}"
+              - name: appset.includeBase
+                value: "{{ `{{ metadata.annotations.services.gpu.includeBase }}` }}"
+              - name: syncPolicy.selfHeal
+                value: "{{ `{{ metadata.annotations.services.gpu.selfHeal }}` }}"
             valueFiles:
               - values.yaml
+              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
