@@ -39,7 +39,7 @@ spec:
           targetRevision: main
           ref: values
         - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
-          targetRevision: "{{ `{{ if hasKey . "version" }}{{ .version }}{{ else }}main{{ end }}` }}"
+          targetRevision: "{{ `{{ index .metadata.annotations "stage" }}` }}"
           path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
             parameters:
