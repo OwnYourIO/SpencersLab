@@ -29,6 +29,10 @@ spec:
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ ServerSideApply }}` }}
   templatePatch: |
+    {{ `{{- $branch := metadata.annotations.stage }}` }}
+    {{ `{{- if eq $branch "prod" }}` }}
+      {{ `{{- $branch = "main" }}` }}
+    {{ `{{- end }}` }}
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
@@ -39,7 +43,7 @@ spec:
           targetRevision: main
           ref: values
         - repoURL: '{{ `{{ metadata.annotations.services.repo }}` }}'
-          targetRevision: '{{ `{{- if eq metadata.annotations.stage "prod" }}main{{ else }}{{ metadata.annotations.stage }}{{ end }}` }}'
+          targetRevision: '{{ `{{ $branch }}` }}'
           path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
             parameters:
