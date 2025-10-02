@@ -56,9 +56,3 @@ spec:
             valueFiles:
               - values.yaml
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
-              # Service-wide custom values URL (applies to ALL apps in this service):
-              # metadata.annotations.services.gpu.customValuesUrl
-              {{ `{{- $serviceCustomValuesUrl := index .metadata.annotations "services.gpu.customValuesUrl" }}` }}
-              {{ `{{- if $serviceCustomValuesUrl }}` }}
-              - {{ `{{ $serviceCustomValuesUrl }}` }}
-              {{ `{{- end }}` }}
