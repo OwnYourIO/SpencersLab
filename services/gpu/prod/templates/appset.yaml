@@ -53,7 +53,7 @@ spec:
               - name: ssoPathPrefix
                 value: "{{ `{{ metadata.annotations.sso.pathPrefix }}` }}"
               - name: appset.includeBase
-                value: "{{ `{{ metadata.annotations.services.gpu.includeBase }}` }}"
+                value: "true"
             valueFiles:
               - values.yaml
               - $services/{{ `{{ metadata.annotations.services.repo.path }}` }}/gpu/{{ `{{.metadata.annotations.stage }}` }}/values.yaml
