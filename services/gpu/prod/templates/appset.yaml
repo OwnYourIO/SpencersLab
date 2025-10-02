@@ -15,14 +15,14 @@ spec:
                   ServerSideApply: "true"
   template:
     metadata:
-      name: '{{ `{{.appName}}` }}'
+      name: '{{ `{{ appName}}` }}'
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
       destination:
-        name: "{{ `{{ .name }}` }}"
-        namespace: "{{ `{{.namespace }}` }}"
+        name: "{{ `{{ name }}` }}"
+        namespace: "{{ `{{ namespace }}` }}"
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
