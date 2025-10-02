@@ -20,10 +20,6 @@ spec:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
       project: default
-      sources:
-        - repoURL: "{{ metadata.annotations.services.repo }}"
-          targetRevision: main
-          path: "{{ metadata.annotations.services.repo.path }}/{{ appName }}/{{ metadata.annotations.stage }}"
       destination:
         name: "{{ `{{ .name }}` }}"
         namespace: "{{ `{{.namespace }}` }}"
