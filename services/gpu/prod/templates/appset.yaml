@@ -38,8 +38,6 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
-        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
-          targetRevision: "{{ `{{ index .metadata.annotations "stage" }}` }}"
           helm:
             valueFiles:
               - values.yaml
