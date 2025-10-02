@@ -27,7 +27,7 @@ spec:
         syncOptions:
           - CreateNamespace=true
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
-          - ServerSideApply={{ ServerSideApply }}
+          - ServerSideApply={{ `{{ServerSideApply}}` }}
   templatePatch: |
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
