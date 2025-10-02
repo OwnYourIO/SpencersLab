@@ -20,8 +20,6 @@ seaweedfs-csi-driver:
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
-ssoDomain: OVERRIDE_VIA_APPSET
-ssoPathPrefix: OVERRIDE_VIA_APPSET
 
 # Configuration for optional components
 # Note: appset.includeBase is now controlled via cluster annotations (metadata.annotations.services.gpu.includeBase)
