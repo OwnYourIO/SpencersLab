@@ -47,10 +47,8 @@ spec:
                 value: "{{ `{{ metadata.annotations.domain }}` }}"
               - name: clusterName
                 value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-              - name: ssoDomain
-                value: "{{ `{{ metadata.annotations.sso.domain }}` }}"
-              - name: ssoPathPrefix
-                value: "{{ `{{ metadata.annotations.sso.pathPrefix }}` }}"
+              - name: serviceName
+                value: '{{ `{{ appName}}` }}'
               - name: appset.includeBase
                 value: "true"
             valueFiles:
