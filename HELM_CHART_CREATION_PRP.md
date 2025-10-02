@@ -126,6 +126,7 @@ custom-values/{service-name}/
 # CRITICAL: PostgreSQL connection uses pg-{service}-rw for read-write access
 # CRITICAL: Redis sidecars use standard redis:8.2.0 image
 # CRITICAL: All containers drop ALL capabilities for security
+# CRITICAL: Each chart MUST have a custom-values/{chart}/prod-values.yaml file (even if empty)
 # CRITICAL: ApplicationSet valueFiles must include service values.yaml for defaults
 # CRITICAL: Service values.yaml provides default configuration for all charts in that service
 ```
@@ -353,53 +354,81 @@ valueFiles:
 
 ### Controlling Custom-Values Loading
 
-The custom-values file is OPTIONAL and only loaded when explicitly set via cluster annotation:
+The custom-values files are OPTIONAL and only loaded when explicitly set via cluster annotations. There are TWO levels of custom-values:
+
+1. **Service-Wide**: Applies to ALL apps in the service
+2. **Per-App**: Applies to specific app (can override service-wide)
 
 ```yaml
-# Cluster Secret Annotation Pattern
+# Cluster Secret Annotation Patterns
 metadata:
   annotations:
-    # Set custom-values URL for specific app (OPTIONAL)
+    # Service-wide custom-values URL (applies to ALL apps)
+    services.gpu.customValuesUrl: "$values/custom-values/gpu/prod-values.yaml"
+    
+    # Per-app custom-values URL (for specific apps)
     services.gpu.<appName>.customValuesUrl: "$values/custom-values/<appName>/prod-values.yaml"
     
-# Default Behavior (no annotation):
-# NO custom-values file is loaded
+# Default Behavior (no annotations):
+# NO custom-values files are loaded
 # Only loads: chart values → service values
+
+# Value Loading Order:
+# 1. Chart's values.yaml (lowest priority)
+# 2. Service's values.yaml (services/gpu/prod/values.yaml)
+# 3. Service-wide custom-values (if services.gpu.customValuesUrl is set)
+# 4. Per-app custom-values (if services.gpu.<appName>.customValuesUrl is set)
 
 # Use Case Examples:
 
 # 1. No custom-values (default - most common)
-# No annotation needed
+# No annotations needed
 # Loads: chart values → service values only
 # Use when: Service-wide defaults are sufficient
 
-# 2. Load custom-values for specific app
+# 2. Service-wide custom-values (for ALL apps)
+metadata:
+  annotations:
+    services.gpu.customValuesUrl: "$values/custom-values/gpu/prod-values.yaml"
+# All apps load: chart values → service values → gpu/prod-values.yaml
+# Use when: All apps in service need same cluster-specific overrides
+
+# 3. Per-app custom-values only
 metadata:
   annotations:
     services.gpu.ollama.customValuesUrl: "$values/custom-values/ollama/prod-values.yaml"
-# Loads: chart values → service values → custom-values/ollama/prod-values.yaml
-# Use when: App needs cluster-specific overrides
+# Ollama loads: chart values → service values → ollama/prod-values.yaml
+# Other apps load: chart values → service values only
+# Use when: Single app needs cluster-specific overrides
 
-# 3. Custom location
+# 4. Both service-wide AND per-app custom-values
 metadata:
   annotations:
+    services.gpu.customValuesUrl: "$values/custom-values/gpu/prod-values.yaml"
+    services.gpu.ollama.customValuesUrl: "$values/custom-values/ollama/prod-values.yaml"
+# Ollama loads: chart → service → gpu/prod-values.yaml → ollama/prod-values.yaml
+# Other apps load: chart → service → gpu/prod-values.yaml
+# Use when: Common overrides for all apps + specific overrides for some apps
+
+# 5. Custom locations
+metadata:
+  annotations:
+    services.gpu.customValuesUrl: "$values/shared/gpu-common.yaml"
     services.gpu.ollama.customValuesUrl: "$values/overrides/ollama-prod.yaml"
-# Loads: chart values → service values → overrides/ollama-prod.yaml
-
-# 4. Shared custom-values for multiple apps
-metadata:
-  annotations:
-    services.gpu.ollama.customValuesUrl: "$values/shared/ai-tools.yaml"
-    services.gpu.coder.customValuesUrl: "$values/shared/ai-tools.yaml"
-# Both apps load: chart values → service values → shared/ai-tools.yaml
 
 # Implementation in ApplicationSet:
-# Custom values URL can be set per-app via cluster annotation:
+# Service-wide custom values URL (applies to ALL apps in this service):
+# metadata.annotations.services.gpu.customValuesUrl
+{{- $serviceCustomValuesUrl := index .metadata.annotations "services.gpu.customValuesUrl" }}
+{{- if $serviceCustomValuesUrl }}
+- {{ $serviceCustomValuesUrl }}
+{{- end }}
+
+# Per-app custom values URL (overrides service-wide for specific app):
 # metadata.annotations.services.gpu.<appName>.customValuesUrl
-# If not set, no custom-values file is loaded (only chart + service values)
-{{- $customValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}
-{{- if $customValuesUrl }}
-- {{ $customValuesUrl }}
+{{- $appCustomValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}
+{{- if $appCustomValuesUrl }}
+- {{ $appCustomValuesUrl }}
 {{- end }}
 ```
 
@@ -514,6 +543,91 @@ ls -la custom-values/{service-name}/
 - ❌ Don't skip security contexts (always drop ALL capabilities)
 - ❌ Don't use sync database drivers (use async: postgresql+psycopg)
 - ❌ Don't forget to add proxy configuration for web-accessible services
+- ❌ Don't access optional fields directly in Go templates without checking existence first
+
+## Go Template Best Practices for ApplicationSets
+
+### Safe Field Access with hasKey
+
+When working with ApplicationSet Go templates, always use `hasKey` to check for optional fields before accessing them:
+
+```yaml
+# ❌ WRONG - Will error if field doesn't exist (with goTemplateOptions: ["missingkey=error"])
+{{- if .version }}
+chart: "{{ .appName }}"
+{{- else }}
+path: "charts/{{ .appName }}"
+{{- end }}
+
+# ✅ CORRECT - Safe check that won't error
+{{- if hasKey . "version" }}
+chart: "{{ .appName }}"
+{{- else }}
+path: "charts/{{ .appName }}"
+{{- end }}
+```
+
+### Common Patterns
+
+**Checking for Optional Generator Fields:**
+```yaml
+# Check if a field exists before using it
+{{- if hasKey . "repository" }}
+repoURL: "{{ .repository }}"
+{{- else }}
+repoURL: "{{ index .metadata.annotations \"charts.repo\" }}"
+{{- end }}
+
+# Check for optional values injection
+{{- if hasKey . "values" }}
+valuesObject: {{ .values | toYaml | nindent 14 }}
+{{- end }}
+
+# Check for optional alias field
+{{- $valuesKey := .appName }}
+{{- if hasKey . "alias" }}
+  {{- $valuesKey = .alias }}
+{{- end }}
+```
+
+**Checking for Annotation Keys:**
+```yaml
+# Check if annotation exists before accessing
+{{- $customValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}
+{{- if $customValuesUrl }}
+- {{ $customValuesUrl }}
+{{- end }}
+```
+
+### Why This Matters
+
+1. **Error Prevention**: With `goTemplateOptions: ["missingkey=error"]`, accessing non-existent fields causes ApplicationSet failures
+2. **Optional Features**: Allows charts to have optional fields without breaking deployments
+3. **Conditional Logic**: Enables different behavior based on field presence (e.g., git vs Helm chart repos)
+4. **Backward Compatibility**: New fields can be added without breaking existing configurations
+
+### Related Functions
+
+```yaml
+# hasKey - Check if key exists
+{{- if hasKey . "fieldName" }}...{{- end }}
+
+# dig - Access nested fields with default fallback
+{{ dig "key1" "key2" "default" . }}
+
+# index - Access map/annotation values
+{{ index .metadata.annotations "key.name" }}
+
+# default - Provide fallback value
+{{ .fieldName | default "fallback" }}
+```
+
+### Reference Implementation
+
+See `services/gpu/prod/templates/appset-dev-charts.yaml` for production examples of:
+- Using `hasKey` to distinguish git vs Helm chart sources
+- Safe access to optional `version`, `repository`, and `values` fields
+- Conditional custom-values loading with annotation checks
 
 ## Template Examples from SpencersLab
 
