@@ -64,6 +64,9 @@ spec:
                   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
                   namespace: default
                   ServerSideApply: "true"
+                  {{- if index .Values "seaweedfs-csi-driver" }}
+                  values: {{ index .Values "seaweedfs-csi-driver" | toJson }}
+                  {{- end }}
                 - appName: cloudnative-pg
                   version: 0.25.0
                   repository: https://cloudnative-pg.github.io/charts
