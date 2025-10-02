@@ -42,17 +42,6 @@ spec:
           targetRevision: "{{ `{{ index .metadata.annotations "stage" }}` }}"
           path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
-            parameters:
-              - name: domain
-                value: "{{ `{{ metadata.annotations.domain }}` }}"
-              - name: clusterName
-                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
-              - name: ssoDomain
-                value: "{{ `{{ metadata.annotations.sso.domain }}` }}"
-              - name: ssoPathPrefix
-                value: "{{ `{{ metadata.annotations.sso.pathPrefix }}` }}"
-              - name: appset.includeBase
-                value: "{{ `{{ metadata.annotations.services.gpu.includeBase }}` }}"
             valueFiles:
               - values.yaml
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
