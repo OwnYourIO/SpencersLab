@@ -40,7 +40,6 @@ spec:
           ref: values
         - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
           targetRevision: "{{ `{{ index .metadata.annotations "stage" }}` }}"
-          path: "{{ `{{ index .metadata.annotations 'services.repo.path' }}` }}/{{ `{{ .appName }}` }}/{{ `{{ index .metadata.annotations 'stage' }}` }}"
           helm:
             valueFiles:
               - values.yaml
