@@ -32,13 +32,13 @@ spec:
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
-        - repoURL: '{{ `{{ .metadata.annotations.services.repo }}` }}'
+        - repoURL: '{{ `{{ metadata.annotations.services.repo }}` }}'
           targetRevision: main
           ref: services
-        - repoURL: '{{ `{{ .metadata.annotations.values.repo }}` }}'
+        - repoURL: '{{ `{{ metadata.annotations.values.repo }}` }}'
           targetRevision: main
           ref: values
-        - repoURL: '{{ `{{ .metadata.annotations.services.repo }}` }}'
+        - repoURL: '{{ `{{ metadata.annotations.services.repo }}` }}'
           targetRevision: main
           path: services/gpu/prod/
           helm:
@@ -55,7 +55,7 @@ spec:
                 value: "true"
             valueFiles:
               - values.yaml
-              - $services/{{ `{{ metadata.annotations.services.repo.path }}` }}/gpu/{{ `{{.metadata.annotations.stage }}` }}/values.yaml
+              - $services/{{ `{{ metadata.annotations.services.repo.path }}` }}/gpu/{{ `{{ metadata.annotations.stage }}` }}/values.yaml
               - $services/custom-values/gpu/prod-values.yaml
               # Service-wide custom values URL (applies to ALL apps in this service):
               # metadata.annotations.services.gpu.customValuesUrl
