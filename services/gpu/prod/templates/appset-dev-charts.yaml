@@ -127,7 +127,7 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
-        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
+        - repoURL: '{{ `{{ hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
           targetRevision: "{{ `{{ dig "version" "main" . }}` }}"
           {{ `{{- if hasKey . "version" }}` }}
           chart: "{{ `{{ .appName }}` }}"
