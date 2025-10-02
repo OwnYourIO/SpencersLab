@@ -38,7 +38,7 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
-        - repoURL: '{{ `{{ if hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
+        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
           targetRevision: "{{ `{{ if hasKey . "version" }}{{ .version }}{{ else }}main{{ end }}` }}"
           path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
