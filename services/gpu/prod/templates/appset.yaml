@@ -39,11 +39,11 @@ spec:
           targetRevision: main
           ref: values
         - repoURL: '{{ `{{ metadata.annotations.services.repo }}` }}'
-            {{ `{{- if eq metadata.annotations.stage "prod" }}` }}
-            targetRevision: main
-            {{ `{{- else }}` }}
-            targetRevision: {{ `{{ metadata.annotations.stage }}` }}
-            {{ `{{- end }}` }}
+          {{ `{{- if true }}` }}
+          targetRevision: main
+          {{ `{{- else }}` }}
+          targetRevision: {{ `{{ metadata.annotations.stage }}` }}
+          {{ `{{- end }}` }}
           path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
             parameters:
