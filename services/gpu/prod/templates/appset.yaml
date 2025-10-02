@@ -43,4 +43,3 @@ spec:
           helm:
             valueFiles:
               - values.yaml
-              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
