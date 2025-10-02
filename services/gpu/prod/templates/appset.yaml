@@ -62,6 +62,3 @@ spec:
               {{ `{{- if $serviceCustomValuesUrl }}` }}
               - {{ `{{ $serviceCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
-            {{ `{{- if hasKey . "values" }}` }}
-            valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
-            {{ `{{- end }}` }}
