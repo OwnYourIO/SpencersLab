@@ -39,8 +39,8 @@ spec:
           targetRevision: main
           ref: values
         - repoURL: '{{ `{{ metadata.annotations.services.repo }}` }}'
-          targetRevision: "{{ `{{ if metadata.annotations.stage == 'prod' }}main{{ else }}metadata.annotations.stage{{ end }}` }}"
-          path: "{{ `{{ index metadata.annotations 'services.repo.path' }}` }}/{{ `{{ appName }}` }}/{{ `{{ index metadata.annotations 'stage' }}` }}"
+          targetRevision: "{{ `{{ if metadata.annotations.stage == 'prod' }}main{{ else }}{{ metadata.annotations.stage{{ end }}` }}"
+          path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
             parameters:
               - name: domain
