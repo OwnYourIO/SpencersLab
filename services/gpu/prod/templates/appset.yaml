@@ -40,20 +40,19 @@ spec:
           ref: values
         - repoURL: '{{ `{{ if hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
           targetRevision: "{{ `{{ if hasKey . "version" }}{{ .version }}{{ else }}main{{ end }}` }}"
-          path: "{{ metadata.annotations.services.repo.path }}/{{ appName }}/{{ metadata.annotations.stage }}"
+          path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
             parameters:
               - name: domain
-                value: "{{ metadata.annotations.domain }}"
+                value: "{{ `{{ metadata.annotations.domain }}` }}"
               - name: clusterName
-                value: "{{ metadata.annotations.clusterName }}"
+                value: "{{ `{{ metadata.annotations.clusterName }}` }}"
               - name: ssoDomain
-                value: "{{ metadata.annotations.sso.domain }}"
+                value: "{{ `{{ metadata.annotations.sso.domain }}` }}"
               - name: ssoPathPrefix
-                value: "{{ metadata.annotations.sso.pathPrefix }}"
+                value: "{{ `{{ metadata.annotations.sso.pathPrefix }}` }}"
               - name: appset.includeBase
-                value: "{{ metadata.annotations.services.gpu.includeBase }}"
-              # BitwardenIds are dynamically added via templatePatch
+                value: "{{ `{{ metadata.annotations.services.gpu.includeBase }}` }}"
             valueFiles:
               - values.yaml
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
