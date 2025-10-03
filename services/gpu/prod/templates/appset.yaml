@@ -40,6 +40,8 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
+        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
+          targetRevision: main
           path: '{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}'
           helm:
             parameters:
@@ -53,7 +55,7 @@ spec:
                 value: "true"
             valueFiles:
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
-              - $services/custom-values/gpu/prod-values.yaml
+              - https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml
               # Service-wide custom values URL (applies to ALL apps in this service):
               # metadata.annotations.services.gpu.customValuesUrl
 
