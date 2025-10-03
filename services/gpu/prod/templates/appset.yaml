@@ -10,12 +10,12 @@ spec:
           - clusters: {}
           - list:
               elements:
-                - appName: gpu
+                - serviceName: gpu
                   namespace: default
                   ServerSideApply: "true"
   template:
     metadata:
-      name: '{{ `{{ appName}}` }}'
+      name: '{{ `{{ serviceName }}` }}'
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
@@ -44,7 +44,7 @@ spec:
           ref: values
         - repoURL: '{{ `{{ metadata.annotations.services.repo }}` }}'
           targetRevision: '{{ `{{ $branch }}` }}'
-          path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ appName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
+          path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ serviceName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
             parameters:
               - name: domain
@@ -52,7 +52,7 @@ spec:
               - name: clusterName
                 value: "{{ `{{ metadata.annotations.clusterName }}` }}"
               - name: serviceName
-                value: '{{ `{{ appName}}` }}'
+                value: '{{ `{{ serviceName}}` }}'
               - name: appset.includeBase
                 value: "true"
             valueFiles:

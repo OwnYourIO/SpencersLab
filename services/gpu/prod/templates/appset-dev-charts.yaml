@@ -144,16 +144,8 @@ spec:
               - name: clusterName
                 value: '{{ `{{ index .metadata.annotations "clusterName" }}` }}'
             valueFiles:
-              - values.yaml
-              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/{{ `{{ serviceName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
-              # Service-wide custom values URL (applies to ALL apps in this service):
-              # Example: metadata.annotations.services.gpu.customValuesUrls
-              {{ `{{- $serviceCustomValuesUrl := index .metadata.annotations (printf "services.%s.customValuesUrls" serviceName) }}` }}
-              {{ `{{- if $serviceCustomValuesUrl }}` }}
-              - {{ `{{ $serviceCustomValuesUrl }}` }}
-              {{ `{{- end }}` }}
               # Per-app custom values URL (overrides service-wide for specific app):
-              # metadata.annotations.services.gpu.<appName>.customValuesUrl
+              # Example: metadata.annotations.services.gpu.zigbee2mqtt.customValuesUrl
               {{ `{{- $appCustomValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}` }}
               {{ `{{- if $appCustomValuesUrl }}` }}
               - {{ `{{ $appCustomValuesUrl }}` }}
