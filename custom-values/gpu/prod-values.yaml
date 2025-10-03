@@ -2,15 +2,16 @@ bitwardenIds:
   cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
-coder:
-  bitwardenIds:
-    coder-sso-secret: 6052ca6f-bf5d-47bb-8194-b33e000a9455
-    coder-pg: e197f717-0cd6-4634-8388-b33e000ae174
-open-webui:
-  bitwardenIds:
-    open-webui-sso-secret: 69e653a3-061c-4727-af4b-b336014cedbe
-    open-webui-secret: b56bd559-e590-42eb-a98a-b336014dc3e7
-    open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
+# Coder and open-webui secrets are currently in the gpu service, so keep at that level.
+#coder:
+#  bitwardenIds:
+  coder-sso-secret: 6052ca6f-bf5d-47bb-8194-b33e000a9455
+  coder-pg: e197f717-0cd6-4634-8388-b33e000ae174
+#open-webui:
+#  bitwardenIds:
+  open-webui-sso-secret: 69e653a3-061c-4727-af4b-b336014cedbe
+  open-webui-secret: b56bd559-e590-42eb-a98a-b336014dc3e7
+  open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
 n8n:
   bitwardenIds:
     n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
