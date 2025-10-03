@@ -17,16 +17,25 @@ spec:
                   # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
+                  {{- if index .Values "flowise" }}
+                  values: {{ index .Values "flowise" | toJson }}
+                  {{- end }}
                 - appName: langflow
                   # version: 1.0.0
                   # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
+                  {{- if index .Values "langflow" }}
+                  values: {{ index .Values "langflow" | toJson }}
+                  {{- end }}
                 - appName: n8n
                   # version: 1.0.0
                   # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
+                  {{- if index .Values "n8n" }}
+                  values: {{ index .Values "n8n" | toJson }}
+                  {{- end }}
                 # TODO: Enable these
                 #- appName: qdrant
                 #  # version: 1.0.0
@@ -53,11 +62,17 @@ spec:
                   # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
+                  {{- if index .Values "supabase" }}
+                  values: {{ index .Values "supabase" | toJson }}
+                  {{- end }}
                 - appName: archon
                   # version: 1.0.0
                   # repository: https://example.com/helm
                   namespace: default
                   ServerSideApply: "false"
+                  {{- if index .Values "archon" }}
+                  values: {{ index .Values "archon" | toJson }}
+                  {{- end }}
                 # Helm repository charts (external charts)
                 - appName: seaweedfs-csi-driver
                   version: 0.2.3
