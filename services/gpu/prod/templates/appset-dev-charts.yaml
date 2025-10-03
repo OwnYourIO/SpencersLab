@@ -164,7 +164,7 @@ spec:
             valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
       syncPolicy:
-        {{ `{{- if .Values.selfHeal }}` }}
+        {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
         automated:
           prune: true
           selfHeal: true
