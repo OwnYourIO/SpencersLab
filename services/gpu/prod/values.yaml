@@ -91,26 +91,6 @@ ingress:
       service: n8n
       port: 5678
 
-    qdrant:
-      serviceName: qdrant
-      service: qdrant
-      port: 6333
-
-    neo4j:
-      serviceName: neo4j
-      service: neo4j
-      port: 7474
-
-    langfuse:
-      serviceName: langfuse
-      service: langfuse
-      port: 3000
-
-    searxng:
-      serviceName: searxng
-      service: searxng
-      port: 8080
-
     supabase:
       serviceName: supabase
       service: supabase
