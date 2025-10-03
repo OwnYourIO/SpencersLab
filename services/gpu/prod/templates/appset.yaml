@@ -40,7 +40,7 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
-          path: "{{ `{{ index .metadata.annotations 'services.repo.path' }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations 'stage' }}` }}"
+          path: '{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}'
           helm:
             parameters:
               - name: domain
