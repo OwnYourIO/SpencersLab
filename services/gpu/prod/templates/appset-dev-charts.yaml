@@ -20,6 +20,7 @@ spec:
                   {{- if index .Values "flowise" }}
                   values: {{ index .Values "flowise" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: langflow
                   # version: 1.0.0
                   # repository: https://example.com/helm
@@ -28,6 +29,7 @@ spec:
                   {{- if index .Values "langflow" }}
                   values: {{ index .Values "langflow" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: n8n
                   # version: 1.0.0
                   # repository: https://example.com/helm
@@ -36,6 +38,7 @@ spec:
                   {{- if index .Values "n8n" }}
                   values: {{ index .Values "n8n" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 # TODO: Enable these
                 #- appName: qdrant
                 #  # version: 1.0.0
@@ -65,6 +68,7 @@ spec:
                   {{- if index .Values "supabase" }}
                   values: {{ index .Values "supabase" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: archon
                   # version: 1.0.0
                   # repository: https://example.com/helm
@@ -73,6 +77,7 @@ spec:
                   {{- if index .Values "archon" }}
                   values: {{ index .Values "archon" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 # Helm repository charts (external charts)
                 - appName: seaweedfs-csi-driver
                   version: 0.2.3
@@ -82,11 +87,13 @@ spec:
                   {{- if index .Values "seaweedfs-csi-driver" }}
                   values: {{ index .Values "seaweedfs-csi-driver" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: cloudnative-pg
                   version: 0.25.0
                   repository: https://cloudnative-pg.github.io/charts
                   namespace: default
                   ServerSideApply: "true"
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: ollama
                   version: 1.26.0
                   repository: https://helm.otwld.com/
@@ -95,6 +102,7 @@ spec:
                   {{- if index .Values "ollama" }}
                   values: {{ index .Values "ollama" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: open-webui
                   version: 7.2.0
                   repository: https://helm.openwebui.com/
@@ -103,11 +111,13 @@ spec:
                   {{- if index .Values "open-webui" }}
                   values: {{ index .Values "open-webui" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: amd-gpu
                   version: 0.20.0
                   repository: https://rocm.github.io/k8s-device-plugin/
                   namespace: default
                   ServerSideApply: "true"
+                  serviceName: {{ index .Values "serviceName" }}
                 - appName: coder
                   version: 2.25.1
                   repository: https://helm.coder.com/v2
@@ -116,6 +126,7 @@ spec:
                   {{- if index .Values "coder" }}
                   values: {{ index .Values "coder" | toJson }}
                   {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
   template:
     metadata:
       name: '{{ `{{.appName}}` }}'
