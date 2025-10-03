@@ -129,7 +129,7 @@ spec:
                   serviceName: {{ index .Values "serviceName" }}
   template:
     metadata:
-      name: "{{ `{{ .serviceName }}` }}-{{ `{{ .appName }}` }}'
+      name: "{{ `{{ .serviceName }}` }}-{{ `{{ .appName }}` }}"
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
