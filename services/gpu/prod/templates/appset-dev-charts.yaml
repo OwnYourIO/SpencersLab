@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: home-appset
+  name: '{{ index .Values "serviceName" }}-charts-appset'
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
