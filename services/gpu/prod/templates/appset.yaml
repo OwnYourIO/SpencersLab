@@ -62,7 +62,7 @@ spec:
               {{ `{{- end }}` }}
               {{ `{{- end }}` }}
       syncPolicy:
-        {{ `{{- if index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) }}` }}
+        {{ `{{- if true }}` }}
         automated:
           prune: true
           selfHeal: true
