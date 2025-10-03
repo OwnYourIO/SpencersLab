@@ -44,15 +44,15 @@ spec:
           helm:
             parameters:
               - name: domain
-                value: "{{ `{{ index .metadata 'annotations.domain' }}` }}"
+                value: '{{ `{{ index .metadata "annotations.domain" }}` }}'
               - name: clusterName
-                value: "{{ `{{ index .metadata 'annotations.clusterName' }}` }}"
+                value: '{{ `{{ index .metadata "annotations.clusterName' }}` }}'
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
               - name: appset.includeBase
                 value: "true"
             valueFiles:
-              - $services/{{ `{{ index .metadata.annotations 'services.repo.path' }}` }}/gpu/{{ `{{ index .metadata.annotations 'stage' }}` }}/values.yaml
+              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
               - https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml
               # Service-wide custom values URL (applies to ALL apps in this service):
               # metadata.annotations.services.gpu.customValuesUrl
