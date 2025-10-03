@@ -15,7 +15,7 @@ bitwardenIds:
 n8n:
   bitwardenIds:
     n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
-flowwise:
+flowise:
   bitwardenIds:
     flowise-pg: 7533ab94-6308-4afa-a6fe-b34a00395edd
 langflow:
