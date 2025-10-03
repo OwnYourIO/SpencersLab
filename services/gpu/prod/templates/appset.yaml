@@ -25,11 +25,6 @@ spec:
       destination:
         name: "{{ `{{ .name }}` }}"
         namespace: "{{ `{{ .namespace }}` }}"
-      syncPolicy:
-        syncOptions:
-          - CreateNamespace=true
-          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
-          - ServerSideApply={{ `{{ .ServerSideApply }}` }}
   templatePatch: |
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
@@ -51,6 +46,8 @@ spec:
                 value: '{{ `{{ .metadata.annotations.clusterName }}` }}'
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
+              - name: selfHeal
+                value: '{{ `{{ index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) }}` }}
               - name: appset.includeBase
                 value: "true"
             valueFiles:
@@ -64,3 +61,13 @@ spec:
               - {{ `{{ . }}` }}
               {{ `{{- end }}` }}
               {{ `{{- end }}` }}
+      syncPolicy:
+        {{ `{{- if index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) }}` }}
+        automated:
+          prune: true
+          selfHeal: true
+        {{ `{{- end }}` }}
+        syncOptions:
+          - CreateNamespace=true
+          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
+          - ServerSideApply={{ `{{ .ServerSideApply }}` }}
