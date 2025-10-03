@@ -11,12 +11,10 @@ spec:
           - clusters: {}
           - list:
               elements:
-              {{- if .Values.appset.includeBase }}
                 - appName: base
                   version: 1.0.130 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   namespace: default
                   ServerSideApply: "false"
-              {{- end }}
                 - appName: external-secrets-bitwarden
                   version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   namespace: default

@@ -46,8 +46,6 @@ spec:
                 value: '{{ `{{ .metadata.annotations.clusterName }}` }}'
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
-              - name: appset.includeBase
-                value: "true"
             valueFiles:
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
               # Service-wide custom values URL (applies to ALL apps in this service):
