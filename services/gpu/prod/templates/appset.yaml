@@ -56,7 +56,8 @@ spec:
             valueFiles:
               - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
               # Service-wide custom values URL (applies to ALL apps in this service):
-              # Example: metadata.annotations.services.gpu.customValuesUrls
+              # Example: 
+              # services.gpu.customValuesUrls: '["https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml"]'
               {{ `{{- $serviceCustomValuesUrls := index .metadata.annotations (printf "services.%s.customValuesUrls" .serviceName) }}` }}
               {{ `{{- if $serviceCustomValuesUrls }}` }}
               {{ `{{- range mustFromJson $serviceCustomValuesUrls }}` }}
