@@ -47,6 +47,7 @@ spec:
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
               - name: selfHeal
+                value: '{{ `{{ index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) }}` }}'
                 value: '{{ `{{ index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) }}` }}
               - name: appset.includeBase
                 value: "true"
