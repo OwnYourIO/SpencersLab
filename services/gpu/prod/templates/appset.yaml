@@ -30,9 +30,6 @@ spec:
           - ServerSideApply={{ `{{ ServerSideApply }}` }}
   templatePatch: |
     {{ `{{- $branch := metadata.annotations.stage }}` }}
-    {{ `{{- if eq $branch "prod" }}` }}
-      {{ `{{- $branch = "main" }}` }}
-    {{ `{{- end }}` }}
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
