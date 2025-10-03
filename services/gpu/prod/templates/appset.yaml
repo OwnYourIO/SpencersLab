@@ -29,7 +29,6 @@ spec:
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ ServerSideApply }}` }}
   templatePatch: |
-    {{ $branch := index .metadata.annotations "stage" }}
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
@@ -40,7 +39,7 @@ spec:
           targetRevision: main
           ref: values
         - repoURL: '{{ `{{ metadata.annotations.services.repo }}` }}'
-          targetRevision: main
+          targetRevision: '{{ index .metadata.annotations "stage" }}'
           path: "{{ `{{ metadata.annotations.services.repo.path }}` }}/{{ `{{ serviceName }}` }}/{{ `{{ metadata.annotations.stage }}` }}"
           helm:
             parameters:
