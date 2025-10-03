@@ -54,9 +54,10 @@ spec:
               - name: appset.includeBase
                 value: "true"
             valueFiles:
-              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/gpu/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
-              - https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml
+              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
               # Service-wide custom values URL (applies to ALL apps in this service):
-              # metadata.annotations.services.gpu.customValuesUrl
-
-
+              # Example: metadata.annotations.services.gpu.customValuesUrls
+              {{ `{{- $serviceCustomValuesUrls := index .metadata.annotations (printf "services.%s.customValuesUrls" .serviceName) }}` }}
+              {{ `{{- if $serviceCustomValuesUrls }}` }}
+              - {{ `{{ $serviceCustomValuesUrls }}` }}
+              {{ `{{- end }}` }}
