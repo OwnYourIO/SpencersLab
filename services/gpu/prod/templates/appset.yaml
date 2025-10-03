@@ -29,7 +29,7 @@ spec:
           # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
           - ServerSideApply={{ `{{ ServerSideApply }}` }}
   templatePatch: |
-    {{ $branch := .metadata.annotations.stage }}
+    {{ $branch := index .metadata.annotations "stage" }}
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
       sources:
