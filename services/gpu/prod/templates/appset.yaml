@@ -37,22 +37,22 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
           targetRevision: main
           ref: services
-        - repoURL: '{{ `{{ .metadata.annotations.values.repo }}` }}'
+        - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
-          path: "{{ `{{ .metadata.annotations.services.repo.path }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ .metadata.annotations.stage }}` }}"
+          path: "{{ `{{ index .metadata.annotations 'services.repo.path' }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations 'stage' }}` }}"
           helm:
             parameters:
               - name: domain
-                value: "{{ `{{ .metadata.annotations.domain }}` }}"
+                value: "{{ `{{ index .metadata 'annotations.domain' }}` }}"
               - name: clusterName
-                value: "{{ `{{ .metadata.annotations.clusterName }}` }}"
+                value: "{{ `{{ index .metadata 'annotations.clusterName' }}` }}"
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
               - name: appset.includeBase
                 value: "true"
             valueFiles:
-              - $services/{{ `{{ .metadata.annotations.services.repo.path }}` }}/gpu/{{ `{{ .metadata.annotations.stage }}` }}/values.yaml
+              - $services/{{ `{{ index .metadata.annotations 'services.repo.path' }}` }}/gpu/{{ `{{ index .metadata.annotations 'stage' }}` }}/values.yaml
               - https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml
               # Service-wide custom values URL (applies to ALL apps in this service):
               # metadata.annotations.services.gpu.customValuesUrl
