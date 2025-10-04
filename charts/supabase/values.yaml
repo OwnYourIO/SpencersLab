@@ -2,7 +2,7 @@ bitwardenIds:
   supabase: OVERRIDE_VIA_CUSTOM_VALUES
   supabase-pg: OVERRIDE_VIA_CUSTOM_VALUES
 
-emptySecrets: true
+emptySecrets: false
 
 domain: OVERRIDE_VIA_APPSET
 
