@@ -150,7 +150,6 @@ app-template:
             tag: v2.47.4
           env:
             PORT: "4000"
-            DB_ENC_KEY: Testing-athyinga-akey
             DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
             ERL_AFLAGS: "-proto_dist inet_tcp"
             ENABLE_TAILSCALE: "false"
