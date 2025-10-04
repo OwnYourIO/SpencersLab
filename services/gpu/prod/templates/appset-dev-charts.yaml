@@ -129,6 +129,7 @@ spec:
                   serviceName: {{ index .Values "serviceName" }}
 
                 - appName: external-secrets-bitwarden
+                  repository: https://ownyourio.github.io/SpencersLab/
                   version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   namespace: default
                   ServerSideApply: "true"
