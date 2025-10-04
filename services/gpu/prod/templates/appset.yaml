@@ -59,7 +59,6 @@ spec:
               {{ `{{- end }}` }}
         - repoURL: "{{ `{{ index .metadata.annotations "chart.repo" }}` }}"
           chart: "base"
-          #targetRevision: "{{ `{{ .version }}` }}"
           targetRevision: "1.0.130"
           helm:
             parameters:
