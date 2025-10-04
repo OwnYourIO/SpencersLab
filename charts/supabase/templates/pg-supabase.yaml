@@ -44,6 +44,8 @@ spec:
         secretRefs:
         - name: pg-supabase
           key: supabase_admin.sql
+        - name: pg-supabase
+          key: supabase_auth_admin.sql
         configMapRefs:
         - name: pg-supabase-initdb
           key: additional-migration-needs.sql
