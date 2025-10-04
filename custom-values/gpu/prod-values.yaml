@@ -22,6 +22,9 @@ langflow:
   bitwardenIds:
     langflow-pg: c2f26e5d-84fc-404d-93b7-b34a0157b6a0
     langflow: f7b628ec-2544-4c28-a476-b1a501487d99
+monitoring-agent:
+  bitwardenIds:
+    cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
 
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
