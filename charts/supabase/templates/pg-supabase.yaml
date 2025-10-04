@@ -28,7 +28,7 @@ spec:
       - pg_cron
       - pg_net
       #- pgsodium
-      - timescaledb
+      #- timescaledb
       - auto_explain
       - pg_tle
       - plan_filter
