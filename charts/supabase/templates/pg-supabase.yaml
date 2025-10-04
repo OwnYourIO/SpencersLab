@@ -39,10 +39,10 @@ spec:
       database: supabase
       owner: supabase
       secret:
-        name: pg-supabase-secret
+        name: pg-supabase
       postInitApplicationSQLRefs:
         secretRefs:
-        - name: pg-supabase-secret
+        - name: pg-supabase
           key: supabase_admin.sql
         configMapRefs:
         - name: pg-supabase-initdb
