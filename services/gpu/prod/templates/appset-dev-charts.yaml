@@ -167,7 +167,7 @@ spec:
             valueFiles:
               # Per-app custom values URL (overrides service-wide for specific app):
               # Example: metadata.annotations.services.gpu.zigbee2mqtt.customValuesUrl
-              {{ `{{- $appCustomValuesUrl := index .metadata.annotations (printf "services.gpu.%s.customValuesUrl" .appName) }}` }}
+              {{ `{{- $appCustomValuesUrl := index .metadata.annotations (printf "services.%s.%s.customValuesUrl" .serviceName .appName) }}` }}
               {{ `{{- if $appCustomValuesUrl }}` }}
               - {{ `{{ $appCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
@@ -175,7 +175,9 @@ spec:
             valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
       syncPolicy:
-        {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
+        {{ `{{- $serviceSelfHeal := index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) | default "true" }}` }}
+        {{ `{{- $appSelfHeal := index .metadata.annotations (printf "services.%s.%s.selfHeal" .serviceName .appName) | default $serviceSelfHeal }}` }}
+        {{ `{{- if eq $appSelfHeal "true" }}` }}
         automated:
           prune: true
           selfHeal: true
