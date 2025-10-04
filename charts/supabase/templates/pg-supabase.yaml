@@ -32,7 +32,7 @@ spec:
       - auto_explain
       - pg_tle
       - plan_filter
-      - supabase_vault
+      #- supabase_vault
 
   bootstrap:
     initdb:
