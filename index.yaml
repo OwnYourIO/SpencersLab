@@ -6296,6 +6296,18 @@ entries:
   langflow:
   - apiVersion: v2
     appVersion: 1.5.1
+    created: "2025-10-04T16:17:10.419951377Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: acab2452b13ebe3c3317eb953fb76a78efaeeda8f001b87b43d28002d523d9a6
+    name: langflow
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/langflow-1.0.4/langflow-1.0.4.tgz
+    version: 1.0.4
+  - apiVersion: v2
+    appVersion: 1.5.1
     created: "2025-08-31T21:09:19.741577368Z"
     dependencies:
     - name: app-template
@@ -9579,4 +9591,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-10-02T19:02:13.050822999Z"
+generated: "2025-10-04T16:17:10.420745174Z"
