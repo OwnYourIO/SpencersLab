@@ -158,6 +158,7 @@ app-template:
             DB_HOST: pg-supabase-rw
             DB_PORT: 5432
             DB_NAME: supabase
+            DB_USER: supabase_admin
             RLIMIT_NOFILE: "10000"
             APP_NAME: realtime
             SEED_SELF_HOST: true
