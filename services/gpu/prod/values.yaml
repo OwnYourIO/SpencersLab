@@ -72,7 +72,7 @@ ingress:
 
     flowise:
       serviceName: flow
-      service: flowise
+      service: gpu-flowise
       port: 3000
       # Homepage integration example
       homepageEnabled: "true"
@@ -84,43 +84,43 @@ ingress:
 
     langflow:
       serviceName: langflow
-      service: langflow
+      service: gpu-langflow
       port: 7860
 
     n8n:
       serviceName: n8n
-      service: n8n
+      service: gpu-n8n
       port: 5678
 
 # TODO: Implement these.
 #    qdrant:
 #      serviceName: qdrant
-#      service: qdrant
+#      service: gpu-qdrant
 #      port: 6333
 #
 #    neo4j:
 #      serviceName: neo4j
-#      service: neo4j
+#      service: gpu-neo4j
 #      port: 7474
 #
 #    langfuse:
 #      serviceName: langfuse
-#      service: langfuse
+#      service: gpu-langfuse
 #      port: 3000
 #
 #    searxng:
 #      serviceName: searxng
-#      service: searxng
+#      service: gpu-searxng
 #      port: 8080
 #
     supabase:
       serviceName: supabase
-      service: supabase
+      service: gpu-supabase
       port: 3000
 
     archon:
       serviceName: archon
-      service: archon
+      service: gpu-archon
       port: 3737
 
     cluster:
