@@ -41,11 +41,6 @@ spec:
       secret:
         name: pg-supabase
       postInitApplicationSQLRefs:
-        secretRefs:
-        - name: pg-supabase
-          key: supabase_admin.sql
-        - name: pg-supabase
-          key: supabase_auth_admin.sql
         configMapRefs:
         - name: pg-supabase-initdb
           key: additional-migration-needs.sql
@@ -61,5 +56,8 @@ spec:
           key: 00000000000003-post-setup.sql
         - name: pg-supabase-initdb
           key: 00000000000004-pgbouncer-schema.sql
+        secretRefs:
+        - name: pg-supabase
+          key: supabase_admin.sql
         - name: pg-supabase
           key: supabase_auth_admin.sql
