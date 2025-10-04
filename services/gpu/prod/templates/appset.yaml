@@ -57,6 +57,23 @@ spec:
               - {{ `{{ . }}` }}
               {{ `{{- end }}` }}
               {{ `{{- end }}` }}
+        - repoURL: "{{ `{{ index .metadata.annotations "chart.repo" }}` }}"
+          chart: "base"
+          #targetRevision: "{{ `{{ .version }}` }}"
+          targetRevision: "1.0.130"
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ .metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ .metadata.annotations.clusterName }}` }}"
+              - name: serviceName
+                value: '{{ `{{ .serviceName }}` }}'
+              - name: argo-cd.configs.cm.url
+                value: "{{ `https://cluster.{{ .metadata.annotations.clusterName }}.{{ .metadata.annotations.domain }}` }}"
+              # TODO: autoUpdateK3s should get the same treatment as selfHeal as seen in appset-dev-charts.yaml.
+              - name: autoUpdateK3s
+                value: "true"
       syncPolicy:
         {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
         automated:

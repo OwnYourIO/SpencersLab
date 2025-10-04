@@ -127,6 +127,23 @@ spec:
                   values: {{ index .Values "coder" | toJson }}
                   {{- end }}
                   serviceName: {{ index .Values "serviceName" }}
+
+                - appName: external-secrets-bitwarden
+                  version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  namespace: default
+                  ServerSideApply: "true"
+                  {{- if index .Values "external-secrets-bitwarden" }}
+                  values: {{ index .Values "external-secrets-bitwarden" | toJson }}
+                  {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
+                - appName: monitoring-agent
+                  version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  namespace: default
+                  ServerSideApply: "true"
+                  {{- if index .Values "monitoring-agent" }}
+                  values: {{ index .Values "monitoring-agent" | toJson }}
+                  {{- end }}
+                  serviceName: {{ index .Values "serviceName" }}
   template:
     metadata:
       name: "{{ `{{ .serviceName }}` }}-{{ `{{ .appName }}` }}"
@@ -164,6 +181,17 @@ spec:
                 value: '{{ `{{ index .metadata.annotations "domain" }}` }}'
               - name: clusterName
                 value: '{{ `{{ index .metadata.annotations "clusterName" }}` }}'
+
+              # I'd like to keep this file as generic as possible, so would rather move this into the app definitions,
+              # but those are coming from Values and the reading of the annotations HAS to happen in this file though. 
+              # This is the compromise. 
+              {{ `{{- if eq .appName "monitoring-agent" }}` }}
+              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
+                value: "storage"
+              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
+                value: "{{ `https://prometheus.{{ .metadata.annotations.domain }}/api/v1/write` }}"
+              {{ `{{- end }}` }}
+
             valueFiles:
               # Per-app custom values URL (overrides service-wide for specific app):
               # Example: metadata.annotations.services.gpu.zigbee2mqtt.customValuesUrl
