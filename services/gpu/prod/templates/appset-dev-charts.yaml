@@ -171,8 +171,12 @@ spec:
               {{ `{{- if $appCustomValuesUrl }}` }}
               - {{ `{{ $appCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
-            {{ `{{- if hasKey . "values" }}` }}
-            valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
+            {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "{}" | fromJson }}` }}
+            {{ `{{- $appCustomValues := index .metadata.annotations (printf "services.%s.%s.customValues" .serviceName .appName) | default "{}" | fromJson }}` }}
+            {{ `{{- $baseValues := .values | default dict }}` }}
+            {{ `{{- $mergedValues := merge (deepCopy $appCustomValues) (deepCopy $serviceCustomValues) (deepCopy $baseValues) }}` }}
+            {{ `{{- if or (hasKey . "values") (ne (len $serviceCustomValues) 0) (ne (len $appCustomValues) 0) }}` }}
+            valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
       syncPolicy:
         {{ `{{- $serviceSelfHeal := index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) | default "true" }}` }}
