@@ -126,7 +126,9 @@ app-template:
           probes:
             liveness:
               enabled: true
+              port: 3737
             readiness:
+              port: 3737
               enabled: true
           resources:
             requests:
@@ -138,14 +140,14 @@ app-template:
     archon:
       controller: *chartName
       ports:
-        http:
-          port: 3737
         server:
           port: 8181
         mcp:
           port: 8051
         agents:
           port: 8052
+        frontend:
+          port: 3737
   persistence:
     config:
       existingClaim: *chartName
