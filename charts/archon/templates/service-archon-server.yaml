@@ -8,4 +8,4 @@ metadata:
   namespace: default 
 spec:
   type: ExternalName
-  externalName: "{{ .Release-Name }}-archon"
+  externalName: "{{ .Release.Name }}-archon"
