@@ -1,0 +1,11 @@
+# This is needed because the host is hardcoded in the agent container.
+# https://github.com/coleam00/Archon/blob/a580fdfe661c5c51da8155db200510d7f43c419c/python/src/agents/server.py#L80C23-L80C85
+nameOverride: archon-server 
+apiVersion: v1
+kind: Service
+metadata:
+  name: archon-server
+  namespace: default 
+spec:
+  type: ExternalName
+  externalName: "{{ .Release-Name }}-archon"
