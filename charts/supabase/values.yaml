@@ -202,6 +202,10 @@ app-template:
             NEXT_PUBLIC_ENABLE_LOGS: "true"
             NEXT_ANALYTICS_BACKEND_PROVIDER: "postgres"
             TZ: Etc/UTC
+            PG_META_PORT: 8080
+            PG_META_DB_HOST: pg-supabase-rw
+            PG_META_DB_PORT: 5432
+            PG_META_DB_NAME: supabase
           envFrom:
             - secretRef:
                 name: *chartName
