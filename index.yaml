@@ -566,6 +566,18 @@ entries:
   archon:
   - apiVersion: v2
     appVersion: main2
+    created: "2025-10-05T22:23:18.385219211Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 7c18bfebdebb5dee88923336dc6bcafb3af7ea0e86549c745b5bc9bfec1e629b
+    name: archon
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/archon-1.0.6/archon-1.0.6.tgz
+    version: 1.0.6
+  - apiVersion: v2
+    appVersion: main2
     created: "2025-10-04T17:15:40.352946356Z"
     dependencies:
     - name: app-template
@@ -8051,6 +8063,18 @@ entries:
   supabase:
   - apiVersion: v2
     appVersion: 2024.08.19
+    created: "2025-10-05T22:23:18.542840997Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: add1761c66a26d4d19339c50d50ccf0ed4425a0d6ce859f3a3401b54b878041a
+    name: supabase
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/supabase-1.0.111/supabase-1.0.111.tgz
+    version: 1.0.111
+  - apiVersion: v2
+    appVersion: 2024.08.19
     created: "2025-10-05T21:44:48.396980678Z"
     dependencies:
     - name: app-template
@@ -10035,4 +10059,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-10-05T21:44:48.397874834Z"
+generated: "2025-10-05T22:23:18.543784991Z"
