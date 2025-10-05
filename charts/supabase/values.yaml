@@ -197,8 +197,8 @@ app-template:
             repository: supabase/studio
             tag: 2025.09.15-sha-6cff20b
           env:
-            STUDIO_PG_META_URL: "http://supabase:8080"
-            SUPABASE_URL: "http://supabase:8000"
+            STUDIO_PG_META_URL: "http://gpu-supabase:8080"
+            SUPABASE_URL: "http://gpu-supabase:8000"
             NEXT_PUBLIC_ENABLE_LOGS: "true"
             NEXT_ANALYTICS_BACKEND_PROVIDER: "postgres"
             TZ: Etc/UTC
