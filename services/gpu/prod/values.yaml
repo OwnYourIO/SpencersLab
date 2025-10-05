@@ -120,7 +120,7 @@ ingress:
 
     archon:
       serviceName: archon
-      service: gpu-archon
+      service: archon-server
       port: 3737
 
     cluster:
