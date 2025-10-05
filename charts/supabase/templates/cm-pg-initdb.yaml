@@ -78,7 +78,7 @@ data:
     create role authenticated       nologin noinherit; -- "logged in" user: web_user, app_user, etc
     create role service_role        nologin noinherit bypassrls; -- allow developers to create JWT's that bypass their policies
 
-    create user authenticator noinherit;
+    --create user authenticator noinherit;
     grant anon              to authenticator;
     grant authenticated     to authenticator;
     grant service_role      to authenticator;
