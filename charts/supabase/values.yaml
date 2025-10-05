@@ -384,6 +384,26 @@ app-template:
           ### API Routes
           ###
           services:
+            # Stubbed because these are built into studio but only provided in the cloud enviorment.
+            - name: platform-api-stub
+              url: http://studio:3000
+              routes:
+                - name: network-restrictions-stub
+                  strip_path: false
+                  paths:
+                    - /api/v1/projects/default/network-restrictions
+                - name: ssl-enforcement-stub
+                  strip_path: false
+                  paths:
+                    - /api/v1/projects/default/ssl-enforcement
+                - name: network-bans-stub
+                  strip_path: false
+                  paths:
+                    - /api/v1/projects/default/network-bans/retrieve
+                - name: customer-stub
+                  strip_path: false
+                  paths:
+                    - /api/platform/organizations/default-org-slug/customer
             ## Open Auth routes
             - name: auth-v1-open
               url: http://gpu-supabase:9999/verify
@@ -589,6 +609,11 @@ app-template:
                 - name: basic-auth
                   config:
                     hide_credentials: true
+                - name: request-termination
+                  config:
+                    status_code: 200
+                    message: '{"data": null}'
+                    content_type: application/json
     migrate-script:
       enabled: true
       data:
