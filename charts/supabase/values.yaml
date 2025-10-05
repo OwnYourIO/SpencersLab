@@ -202,10 +202,6 @@ app-template:
             NEXT_PUBLIC_ENABLE_LOGS: "true"
             NEXT_ANALYTICS_BACKEND_PROVIDER: "postgres"
             TZ: Etc/UTC
-            PG_META_PORT: 8080
-            PG_META_DB_HOST: pg-supabase-rw
-            PG_META_DB_PORT: 5432
-            PG_META_DB_NAME: supabase
           envFrom:
             - secretRef:
                 name: *chartName
@@ -390,7 +386,7 @@ app-template:
           services:
             ## Open Auth routes
             - name: auth-v1-open
-              url: http://supabase:9999/verify
+              url: http://gpu-supabase:9999/verify
               routes:
                 - name: auth-v1-open
                   strip_path: true
@@ -399,7 +395,7 @@ app-template:
               plugins:
                 - name: cors
             - name: auth-v1-open-callback
-              url: http://supabase:9999/callback
+              url: http://gpu-supabase:9999/callback
               routes:
                 - name: auth-v1-open-callback
                   strip_path: true
