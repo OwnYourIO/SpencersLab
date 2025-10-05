@@ -116,7 +116,7 @@ ingress:
     supabase:
       serviceName: supabase
       service: gpu-supabase
-      port: 3000
+      port: 8000
 
     archon:
       serviceName: archon
