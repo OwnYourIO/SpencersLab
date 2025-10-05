@@ -128,6 +128,9 @@ app-template:
             PROD: "true"
             VITE_SHOW_DEVTOOLS: "false"
             TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
           probes:
             liveness:
               enabled: true
