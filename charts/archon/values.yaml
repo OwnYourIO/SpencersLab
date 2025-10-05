@@ -109,7 +109,8 @@ app-template:
               enabled: true
               port: 8052
             readiness:
-              enabled: true
+              # By disabling this, we allow the pod to recieve traffic, which is needed for this container to talk to the server.
+              enabled: false
               port: 8052
           resources:
             requests:
