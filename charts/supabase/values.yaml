@@ -404,6 +404,13 @@ app-template:
                   strip_path: false
                   paths:
                     - /api/platform/organizations/default-org-slug/customer
+              plugins:
+                - name: request-termination
+                  config:
+                    status_code: 200
+                    body: '{"data": null}'
+                    content_type: application/json
+
             ## Open Auth routes
             - name: auth-v1-open
               url: http://gpu-supabase:9999/verify
@@ -609,11 +616,6 @@ app-template:
                 - name: basic-auth
                   config:
                     hide_credentials: true
-                - name: request-termination
-                  config:
-                    status_code: 200
-                    message: '{"data": null}'
-                    content_type: application/json
     migrate-script:
       enabled: true
       data:
