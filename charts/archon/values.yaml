@@ -128,6 +128,7 @@ app-template:
             PROD: "true"
             VITE_SHOW_DEVTOOLS: "false"
             TZ: Etc/UTC
+            HOST: archon-server
           envFrom:
             - secretRef:
                 name: *chartName
