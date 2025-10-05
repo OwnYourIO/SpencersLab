@@ -81,7 +81,9 @@ app-template:
           probes:
             liveness:
               enabled: true
+              port: 8051
             readiness:
+              port: 8051
               enabled: true
           resources:
             requests:
@@ -105,8 +107,10 @@ app-template:
           probes:
             liveness:
               enabled: true
+              port: 8052
             readiness:
               enabled: true
+              port: 8052
           resources:
             requests:
               cpu: 200m
