@@ -6,146 +6,28 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    # Generator for apps that should deploy to all cluster.
+    # Generator for apps that should deploy to all clusters.
+    # Chart definitions are now sourced from values.yaml under the 'charts' key
     - matrix:
         generators:
           - clusters: {}
           - list:
               elements:
-                - appName: flowise
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "flowise" }}
-                  values: {{ index .Values "flowise" | toJson }}
+                {{- range $appName, $chartConfig := .Values.base.charts }}
+                - appName: {{ $appName }}
+                  {{- if $chartConfig.version }}
+                  version: {{ $chartConfig.version }}
                   {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: langflow
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "langflow" }}
-                  values: {{ index .Values "langflow" | toJson }}
+                  {{- if $chartConfig.repository }}
+                  repository: {{ $chartConfig.repository }}
                   {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: n8n
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "n8n" }}
-                  values: {{ index .Values "n8n" | toJson }}
+                  namespace: {{ $chartConfig.namespace | default "default" }}
+                  ServerSideApply: {{ $chartConfig.ServerSideApply | default "false" | quote }}
+                  {{- if index $.Values $appName }}
+                  values: {{ index $.Values $appName | toJson }}
                   {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                # TODO: Enable these
-                #- appName: qdrant
-                #  # version: 1.0.0
-                #  # repository: https://example.com/helm
-                #  namespace: default
-                #  ServerSideApply: "false"
-                #- appName: neo4j
-                #  # version: 1.0.0
-                #  # repository: https://example.com/helm
-                #  namespace: default
-                #  ServerSideApply: "false"
-                #- appName: langfuse
-                #  # version: 1.0.0
-                #  # repository: https://example.com/helm
-                #  namespace: default
-                #  ServerSideApply: "false"
-                #- appName: searxng
-                #  # version: 1.0.0
-                #  # repository: https://example.com/helm
-                #  namespace: default
-                #  ServerSideApply: "false"
-                - appName: supabase
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "supabase" }}
-                  values: {{ index .Values "supabase" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: archon
-                  # version: 1.0.0
-                  # repository: https://example.com/helm
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "archon" }}
-                  values: {{ index .Values "archon" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                # Helm repository charts (external charts)
-                - appName: seaweedfs-csi-driver
-                  version: 0.2.3
-                  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
-                  namespace: default
-                  ServerSideApply: "true"
-                  {{- if index .Values "seaweedfs-csi-driver" }}
-                  values: {{ index .Values "seaweedfs-csi-driver" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: cloudnative-pg
-                  version: 0.25.0
-                  repository: https://cloudnative-pg.github.io/charts
-                  namespace: default
-                  ServerSideApply: "true"
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: ollama
-                  version: 1.26.0
-                  repository: https://helm.otwld.com/
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "ollama" }}
-                  values: {{ index .Values "ollama" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: open-webui
-                  version: 7.2.0
-                  repository: https://helm.openwebui.com/
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "open-webui" }}
-                  values: {{ index .Values "open-webui" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: amd-gpu
-                  version: 0.20.0
-                  repository: https://rocm.github.io/k8s-device-plugin/
-                  namespace: default
-                  ServerSideApply: "true"
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: coder
-                  version: 2.25.1
-                  repository: https://helm.coder.com/v2
-                  namespace: default
-                  ServerSideApply: "false"
-                  {{- if index .Values "coder" }}
-                  values: {{ index .Values "coder" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-
-                - appName: external-secrets-bitwarden
-                  repository: https://ownyourio.github.io/SpencersLab/
-                  version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  namespace: default
-                  ServerSideApply: "true"
-                  {{- if index .Values "external-secrets-bitwarden" }}
-                  values: {{ index .Values "external-secrets-bitwarden" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
-                - appName: monitoring-agent
-                  version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  repository: https://ownyourio.github.io/SpencersLab/
-                  namespace: default
-                  ServerSideApply: "true"
-                  {{- if index .Values "monitoring-agent" }}
-                  values: {{ index .Values "monitoring-agent" | toJson }}
-                  {{- end }}
-                  serviceName: {{ index .Values "serviceName" }}
+                  serviceName: {{ index $.Values "serviceName" }}
+                {{- end }}
   template:
     metadata:
       name: "{{ `{{ .serviceName }}` }}-{{ `{{ .appName }}` }}"
