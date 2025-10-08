@@ -78,30 +78,6 @@ spec:
               {{ `{{- $autoUpdateK3s := index .metadata.annotations (printf "services.%s.autoUpdateK3s" .serviceName) | default "true" }}` }}
               - name: autoUpdateK3s
                 value: "{{ `{{ $autoUpdateK3s }}` }}"
-            valueFiles:
-              - $services/{{ `{{ index .metadata.annotations "services.repo.path" }}` }}/{{ `{{ .serviceName }}` }}/{{ `{{ index .metadata.annotations "stage" }}` }}/values.yaml
-              # Service-wide custom values URL (applies to ALL apps in this service):
-              # Example: 
-              # services.gpu.customValuesUrls: '["https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml"]'
-              {{ `{{- $serviceCustomValuesUrls := index .metadata.annotations (printf "services.%s.customValuesUrls" .serviceName) }}` }}
-              {{ `{{- if $serviceCustomValuesUrls }}` }}
-              {{ `{{- range mustFromJson $serviceCustomValuesUrls }}` }}
-              - {{ `{{ . }}` }}
-              {{ `{{- end }}` }}
-              {{ `{{- end }}` }}
-            # Hierarchical values merging: Combines values from multiple sources with proper precedence.
-            # Merge order (highest to lowest precedence):
-            #   1. Base chart-specific custom values from cluster annotation: services.{serviceName}.base.customValues (YAML)
-            #   2. Service-wide custom values from cluster annotation: services.{serviceName}.customValues (YAML)
-            # Usage: Set cluster annotations in ArgoCD to provide service-wide or base chart-specific value overrides.
-            #   Example service-wide: services.gpu.customValues='replicas: 2'
-            #   Example base chart-specific: services.gpu.base.customValues='replicas: 3'
-            {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
-            {{ `{{- $baseCustomValues := index .metadata.annotations (printf "services.%s.base.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
-            {{ `{{- $mergedValues := merge (deepCopy $baseCustomValues) (deepCopy $serviceCustomValues) }}` }}
-            {{ `{{- if or (ne (len $serviceCustomValues) 0) (ne (len $baseCustomValues) 0) }}` }}
-            valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
-            {{ `{{- end }}` }}
       syncPolicy:
         {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
         automated:
