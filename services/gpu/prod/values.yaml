@@ -1,78 +1,77 @@
 # Chart definitions for appset-dev-charts.yaml
 # Each chart can have: namespace, ServerSideApply, version, repository
-base:
-  charts:
-    # Internal charts (no version/repository - uses charts/ directory)
-    flowise:
-      namespace: default
-      ServerSideApply: "false"
-    langflow:
-      namespace: default
-      ServerSideApply: "false"
-    n8n:
-      namespace: default
-      ServerSideApply: "false"
-    # TODO: Enable these
-    # qdrant:
-    #   namespace: default
-    #   ServerSideApply: "false"
-    # neo4j:
-    #   namespace: default
-    #   ServerSideApply: "false"
-    # langfuse:
-    #   namespace: default
-    #   ServerSideApply: "false"
-    # searxng:
-    #   namespace: default
-    #   ServerSideApply: "false"
-    supabase:
-      namespace: default
-      ServerSideApply: "false"
-    archon:
-      namespace: default
-      ServerSideApply: "false"
-    
-    # External charts (with version and repository)
-    seaweedfs-csi-driver:
-      version: 0.2.3
-      repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
-      namespace: default
-      ServerSideApply: "true"
-    cloudnative-pg:
-      version: 0.25.0
-      repository: https://cloudnative-pg.github.io/charts
-      namespace: default
-      ServerSideApply: "true"
-    ollama:
-      version: 1.26.0
-      repository: https://helm.otwld.com/
-      namespace: default
-      ServerSideApply: "false"
-    open-webui:
-      version: 7.2.0
-      repository: https://helm.openwebui.com/
-      namespace: default
-      ServerSideApply: "false"
-    amd-gpu:
-      version: 0.20.0
-      repository: https://rocm.github.io/k8s-device-plugin/
-      namespace: default
-      ServerSideApply: "true"
-    coder:
-      version: 2.25.1
-      repository: https://helm.coder.com/v2
-      namespace: default
-      ServerSideApply: "false"
-    external-secrets-bitwarden:
-      version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-      repository: https://ownyourio.github.io/SpencersLab/
-      namespace: default
-      ServerSideApply: "true"
-    monitoring-agent:
-      version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-      repository: https://ownyourio.github.io/SpencersLab/
-      namespace: default
-      ServerSideApply: "true"
+charts:
+  # Internal charts (no version/repository - uses charts/ directory)
+  flowise:
+    namespace: default
+    ServerSideApply: "false"
+  langflow:
+    namespace: default
+    ServerSideApply: "false"
+  n8n:
+    namespace: default
+    ServerSideApply: "false"
+  # TODO: Enable these
+  # qdrant:
+  #   namespace: default
+  #   ServerSideApply: "false"
+  # neo4j:
+  #   namespace: default
+  #   ServerSideApply: "false"
+  # langfuse:
+  #   namespace: default
+  #   ServerSideApply: "false"
+  # searxng:
+  #   namespace: default
+  #   ServerSideApply: "false"
+  supabase:
+    namespace: default
+    ServerSideApply: "false"
+  archon:
+    namespace: default
+    ServerSideApply: "false"
+  
+  # External charts (with version and repository)
+  seaweedfs-csi-driver:
+    version: 0.2.3
+    repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+    namespace: default
+    ServerSideApply: "true"
+  cloudnative-pg:
+    version: 0.25.0
+    repository: https://cloudnative-pg.github.io/charts
+    namespace: default
+    ServerSideApply: "true"
+  ollama:
+    version: 1.26.0
+    repository: https://helm.otwld.com/
+    namespace: default
+    ServerSideApply: "false"
+  open-webui:
+    version: 7.2.0
+    repository: https://helm.openwebui.com/
+    namespace: default
+    ServerSideApply: "false"
+  amd-gpu:
+    version: 0.20.0
+    repository: https://rocm.github.io/k8s-device-plugin/
+    namespace: default
+    ServerSideApply: "true"
+  coder:
+    version: 2.25.1
+    repository: https://helm.coder.com/v2
+    namespace: default
+    ServerSideApply: "false"
+  external-secrets-bitwarden:
+    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+  monitoring-agent:
+    version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 # BitwardenIds moved to cluster secret annotation (metadata.annotations.services.gpu.bitwardenIds)
 # The YAML block is parsed and each key-value pair becomes individual Helm parameters
