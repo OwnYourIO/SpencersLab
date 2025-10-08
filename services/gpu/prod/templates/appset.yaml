@@ -98,7 +98,7 @@ spec:
             #   Example service-wide: services.gpu.customValues='replicas: 2'
             #   Example base chart-specific: services.gpu.base.customValues='replicas: 3'
             {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
-            {{ `{{- $baseCustomValues := index .metadata.annotations (printf "services.%s.%s.customValues" .serviceName "base" | default "" | fromYaml | default dict }}` }}
+            {{ `{{- $baseCustomValues := index .metadata.annotations (printf "services.%s.%s.customValues" .serviceName "base") | default "" | fromYaml | default dict }}` }}
             {{ `{{- $baseValues := dict }}` }}
             {{ `{{- if hasKey . "values" }}` }}
               {{ `{{- $baseValues = .values }}` }}
