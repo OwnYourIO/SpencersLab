@@ -25,7 +25,6 @@ spec:
       project: default
       destination:
         name: "{{ `{{ .name }}` }}"
-        namespace: "{{ `{{ .namespace }}` }}"
   templatePatch: |
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
