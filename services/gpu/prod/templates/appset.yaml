@@ -101,7 +101,7 @@ spec:
               {{ `{{- end }}` }}
         - repoURL: "{{ `{{ index .metadata.annotations "chart.repo" }}` }}"
           chart: "base"
-          targetRevision: "{{ `{{ $baseChartVersion }}` }}"
+          targetRevision: "1.0.133"
           helm:
             parameters:
               - name: domain
