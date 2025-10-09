@@ -30,31 +30,31 @@ spec:
     # Dynamic source configuration - toggle specific fields based on chart type
     
     # Variable declarations for reusability and clarity
-    {{- $servicesRepoPath := index .metadata.annotations "services.repo.path" }}
-    {{- $stage := .metadata.annotations.stage }}
-    {{- $targetRevision := (eq $stage "prod") | ternary "main" $stage }}
-    {{- $servicePath := printf "%s/%s/%s" $servicesRepoPath .serviceName $stage }}
-    {{- $serviceValuesFile := printf "$services/%s/values.yaml" $servicePath }}
+    {{ `{{- $servicesRepoPath := index .metadata.annotations "services.repo.path" }}` }}
+    {{ `{{- $stage := .metadata.annotations.stage }}` }}
+    {{ `{{- $targetRevision := (eq $stage "prod") | ternary "main" $stage }}` }}
+    {{ `{{- $servicePath := printf "%s/%s/%s" $servicesRepoPath .serviceName $stage }}` }}
+    {{ `{{- $serviceValuesFile := printf "$services/%s/values.yaml" $servicePath }}` }}
     
     # Service-wide base chart version control: Allows per-cluster override of base chart version.
     # Configuration via cluster annotation (defaults to generator value):
     #   - services.{serviceName}.baseChartVersion
     # Usage: Set annotation to specific version to override default
     #   Example: services.gpu.baseChartVersion="1.0.134"
-    {{- $baseChartVersion := index .metadata.annotations (printf "services.%s.baseChartVersion" .serviceName) | default .baseChartVersion }}
+    {{ `{{- $baseChartVersion := index .metadata.annotations (printf "services.%s.baseChartVersion" .serviceName) | default .baseChartVersion }}` }}
     
     # Service-wide autoUpdateK3s control: Allows disabling K3s auto-updates.
     # Configuration via cluster annotation (defaults to "true"):
     #   - services.{serviceName}.autoUpdateK3s
     # Usage: Set annotation to "false" to disable auto-updates
     #   Example: services.gpu.autoUpdateK3s="false"
-    {{- $autoUpdateK3s := index .metadata.annotations (printf "services.%s.autoUpdateK3s" .serviceName) | default "true" }}
+    {{ `{{- $autoUpdateK3s := index .metadata.annotations (printf "services.%s.autoUpdateK3s" .serviceName) | default "true" }}` }}
     
     # Service-wide custom values URLs: Applies to ALL apps in this service.
     # Configuration via cluster annotation (JSON array of URLs):
     #   - services.{serviceName}.customValuesUrls
     # Example: services.gpu.customValuesUrls='["https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml"]'
-    {{- $serviceCustomValuesUrls := index .metadata.annotations (printf "services.%s.customValuesUrls" .serviceName) }}
+    {{ `{{- $serviceCustomValuesUrls := index .metadata.annotations (printf "services.%s.customValuesUrls" .serviceName) }}` }}
     
     # Hierarchical values merging: Combines values from multiple sources with proper precedence.
     # Merge order (highest to lowest precedence):
@@ -64,13 +64,13 @@ spec:
     # Usage: Set cluster annotations in ArgoCD to provide service-wide or base chart-specific value overrides.
     #   Example service-wide: services.gpu.customValues='replicas: 2'
     #   Example base chart-specific: services.gpu.base.customValues='replicas: 3'
-    {{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}
-    {{- $baseCustomValues := index .metadata.annotations (printf "services.%s.base.customValues" .serviceName) | default "" | fromYaml | default dict }}
-    {{- $baseValues := dict }}
-    {{- if hasKey . "values" }}
-      {{- $baseValues = .values }}
-    {{- end }}
-    {{- $mergedValues := merge (deepCopy $baseCustomValues) (deepCopy $serviceCustomValues) (deepCopy $baseValues) }}
+    {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
+    {{ `{{- $baseCustomValues := index .metadata.annotations (printf "services.%s.base.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
+    {{ `{{- $baseValues := dict }}` }}
+    {{ `{{- if hasKey . "values" }}` }}
+      {{ `{{- $baseValues = .values }}` }}
+    {{ `{{- end }}` }}
+    {{ `{{- $mergedValues := merge (deepCopy $baseCustomValues) (deepCopy $serviceCustomValues) (deepCopy $baseValues) }}` }}
     
     spec:
       sources:
