@@ -32,6 +32,9 @@ proxy:
 cert-manager:
   crds:
     enabled: true
+  # This is disabled because it's not necessary, causing problems jamming up ArgoCD, and is redundant.
+  startupapicheck:
+    enabled: false
 
 argo-cd:
   server:

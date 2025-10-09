@@ -1,0 +1,125 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: '{{ index .Values "serviceName" }}-charts-appset'
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    # Generator for apps that should deploy to all clusters.
+    # Chart definitions are now sourced from values.yaml under the 'charts' key
+    - matrix:
+        generators:
+          - clusters: {}
+          - list:
+              elements:
+                {{- range $appName, $chartConfig := .Values.charts }}
+                - appName: {{ $appName }}
+                  {{- if $chartConfig.version }}
+                  version: {{ $chartConfig.version }}
+                  {{- end }}
+                  {{- if $chartConfig.repository }}
+                  repository: {{ $chartConfig.repository }}
+                  {{- end }}
+                  namespace: {{ $chartConfig.namespace | default "default" }}
+                  ServerSideApply: {{ $chartConfig.ServerSideApply | default "false" | quote }}
+                  {{- if index $.Values $appName }}
+                  values: {{ index $.Values $appName | toJson }}
+                  {{- end }}
+                  serviceName: {{ index $.Values "serviceName" }}
+                {{- end }}
+  template:
+    metadata:
+      name: "{{ `{{ .serviceName }}` }}-{{ `{{ .appName }}` }}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: ".;.."
+    spec:
+      project: default
+      destination:
+        name: "{{ `{{ .name }}` }}"
+        namespace: "{{ `{{.namespace }}` }}"
+  templatePatch: |
+    {{ `{{- $valuesKey := .appName }}` }}
+    {{ `{{- if hasKey . "alias" }}` }}
+      {{ `{{- $valuesKey = .alias }}` }}
+    {{ `{{- end }}` }}
+    # Dynamic source configuration - toggle specific fields based on chart type
+    spec:
+      sources:
+        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
+          targetRevision: main
+          ref: services
+        - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
+          targetRevision: main
+          ref: values
+        - repoURL: '{{ `{{ if hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
+          targetRevision: "{{ `{{ dig "version" "main" . }}` }}"
+          {{ `{{- if hasKey . "version" }}` }}
+          chart: "{{ `{{ .appName }}` }}"
+          {{ `{{- else }}` }}
+          path: "charts/{{ `{{ .appName }}` }}"
+          {{ `{{- end }}` }}
+          helm:
+            parameters:
+              - name: domain
+                value: '{{ `{{ index .metadata.annotations "domain" }}` }}'
+              - name: clusterName
+                value: '{{ `{{ index .metadata.annotations "clusterName" }}` }}'
+
+              # I'd like to keep this file as generic as possible, so would rather move this into the app definitions,
+              # but those are coming from Values and the reading of the annotations HAS to happen in this file though. 
+              # This is the compromise. 
+              {{ `{{- if eq .appName "monitoring-agent" }}` }}
+              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
+                value: "storage"
+              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
+                value: "{{ `https://prometheus.{{ .metadata.annotations.domain }}/api/v1/write` }}"
+              {{ `{{- end }}` }}
+
+            valueFiles:
+              # Per-app custom values URL (overrides service-wide for specific app):
+              # Example: metadata.annotations.services.gpu.zigbee2mqtt.customValuesUrl
+              {{ `{{- $appCustomValuesUrl := index .metadata.annotations (printf "services.%s.%s.customValuesUrl" .serviceName .appName) }}` }}
+              {{ `{{- if $appCustomValuesUrl }}` }}
+              - {{ `{{ $appCustomValuesUrl }}` }}
+              {{ `{{- end }}` }}
+            # Hierarchical values merging: Combines values from multiple sources with proper precedence.
+            # Merge order (highest to lowest precedence):
+            #   1. Per-app custom values from cluster annotation: services.{serviceName}.{appName}.customValues (YAML)
+            #   2. Service-wide custom values from cluster annotation: services.{serviceName}.customValues (YAML)
+            #   3. Base values from the list element's .values field
+            # Usage: Set cluster annotations in ArgoCD to provide service-wide or app-specific value overrides.
+            #   Example service-wide: services.gpu.customValues='replicas: 2
+            #     resources:
+            #       limits:
+            #         memory: 1Gi'
+            #   Example app-specific: services.gpu.ollama.customValues='replicas: 3'
+            {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
+            {{ `{{- $appCustomValues := index .metadata.annotations (printf "services.%s.%s.customValues" .serviceName .appName) | default "" | fromYaml | default dict }}` }}
+            {{ `{{- $baseValues := dict }}` }}
+            {{ `{{- if hasKey . "values" }}` }}
+              {{ `{{- $baseValues = .values }}` }}
+            {{ `{{- end }}` }}
+            {{ `{{- $mergedValues := merge (deepCopy $appCustomValues) (deepCopy $serviceCustomValues) (deepCopy $baseValues) }}` }}
+            {{ `{{- if or (hasKey . "values") (ne (len $serviceCustomValues) 0) (ne (len $appCustomValues) 0) }}` }}
+            valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
+            {{ `{{- end }}` }}
+      syncPolicy:
+        # Per-app selfHeal override: Allows disabling automated sync for specific apps.
+        # Configuration via cluster annotations (both default to "true"):
+        #   - Service-wide: services.{serviceName}.selfHeal
+        #   - App-specific: services.{serviceName}.{appName}.selfHeal (overrides service-wide)
+        # Usage: Set app-specific annotation to "false" to disable auto-sync for a specific app
+        #   Example: services.gpu.selfHeal="false" (disables for all apps in gpu service)
+        #   Example: services.gpu.ollama.selfHeal="false" (disables only for ollama)
+        {{ `{{- $serviceSelfHeal := index .metadata.annotations (printf "services.%s.selfHeal" .serviceName) | default "true" }}` }}
+        {{ `{{- $appSelfHeal := index .metadata.annotations (printf "services.%s.%s.selfHeal" .serviceName .appName) | default $serviceSelfHeal }}` }}
+        {{ `{{- if eq $appSelfHeal "true" }}` }}
+        automated:
+          prune: true
+          selfHeal: true
+        {{ `{{- end }}` }}
+        syncOptions:
+          - CreateNamespace=true
+          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
+          - ServerSideApply={{ `{{ .ServerSideApply }}` }}
