@@ -13,8 +13,8 @@ spec:
           - list:
               elements:
                 - serviceName: gpu
+                  namespace: default
                   ServerSideApply: "true"
-                  baseChartVersion: 1.0.133 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   values: {{ index $ "Values" | toJson }}
   template:
     metadata:
