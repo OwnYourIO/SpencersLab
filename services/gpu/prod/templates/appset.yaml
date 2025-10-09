@@ -15,6 +15,7 @@ spec:
                 - serviceName: gpu
                   namespace: default
                   ServerSideApply: "true"
+                  baseChartVersion: 1.0.133 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   values: {{ index $ "Values" | toJson }}
   template:
     metadata:
@@ -22,10 +23,10 @@ spec:
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
-      project: '{{ `{{ index .metadata.annotations (printf "services.%s.project" .serviceName) | default "default" }}` }}'
+      project: default
       destination:
         name: "{{ `{{ .name }}` }}"
-        namespace: 'default'
+        namespace: "{{ `{{ .namespace }}` }}"
   templatePatch: |
     # Dynamic source configuration - toggle specific fields based on chart type
     
