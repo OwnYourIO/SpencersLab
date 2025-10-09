@@ -20,7 +20,7 @@ spec:
                   # appName: base
                   # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   baseChartVersion: 1.0.133
-                  values: '{{ index $ "Values" | default dict | toYaml }}'
+                  values: '{{ index $ "Values" | default dict }}'
   template:
     metadata:
       name: '{{ `{{ .serviceName }}` }}'
