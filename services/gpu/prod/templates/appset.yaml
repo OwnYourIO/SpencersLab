@@ -22,9 +22,10 @@ spec:
       annotations:
         argocd.argoproj.io/manifest-generate-paths: ".;.."
     spec:
-      project: default
+      project: '{{ `{{ index .metadata.annotations (printf "services.%s.project" .serviceName) | default "default" }}` }}'
       destination:
         name: "{{ `{{ .name }}` }}"
+        namespace: '{{ `{{ index .metadata.annotations (printf "services.%s.namespace" .serviceName) | default "default" }}` }}'
   templatePatch: |
     # Dynamic source configuration - toggle specific fields based on chart type
     spec:
