@@ -20,7 +20,7 @@ spec:
                   # appName: base
                   # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   baseChartVersion: 1.0.133
-                  values: '{{ index $ "Values" | default dict | toJson }}'
+                  values: '{{ index $ "Values" | default dict | toYaml }}'
   template:
     metadata:
       name: '{{ `{{ .serviceName }}` }}'
@@ -115,7 +115,7 @@ spec:
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
               - name: argo-cd.configs.cm.url
-                value: "{{ `https://cluster.{{ .metadata.annotations.clusterName }}.{{ .metadata.annotations.domain }}` }}"
+                value: "https://cluster.{{ `{{ .metadata.annotations.clusterName }}` }}.{{ `{{ .metadata.annotations.domain }}` }}"
               - name: autoUpdateK3s
                 value: "{{ `{{ $autoUpdateK3s }}` }}"
             valueFiles:
