@@ -15,7 +15,7 @@ spec:
                 - serviceName: gpu
                   namespace: default
                   ServerSideApply: "true"
-                  values: '{{ index $ "Values" | toJson }}'
+                  values: '{{ `{{ index $ "Values" | toJson }}` }}'
   template:
     metadata:
       name: '{{ `{{ .serviceName }}` }}'
