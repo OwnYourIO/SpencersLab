@@ -18,7 +18,8 @@ spec:
                   ServerSideApply: "true"
                   # This is needed so renovate pick's up the version
                   # appName: base
-                  baseChartVersion: 1.0.133 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  baseChartVersion: "1.0.133" 
                   values: '{{ index $ "Values" | toJson }}'
   template:
     metadata:
