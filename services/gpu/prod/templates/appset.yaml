@@ -25,7 +25,7 @@ spec:
       project: '{{ `{{ index .metadata.annotations (printf "services.%s.project" .serviceName) | default "default" }}` }}'
       destination:
         name: "{{ `{{ .name }}` }}"
-        namespace: '{{ `{{ index .metadata.annotations (printf "services.%s.namespace" .serviceName) | default "default" }}` }}'
+        namespace: 'default'
   templatePatch: |
     # Dynamic source configuration - toggle specific fields based on chart type
     
