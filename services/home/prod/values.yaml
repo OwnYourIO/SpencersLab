@@ -128,7 +128,7 @@ wekan:
   env: {}
   secretEnv:
     - name: MONGO_URL
-      value: "mongodb://home-wekan-mongodb:27017"
+      value: "mongodb://home-mongodb:27017"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
@@ -144,7 +144,7 @@ boards:
   env: {}
   secretEnv:
     - name: MONGO_URL
-      value: "mongodb://home-wekan-mongodb:27017"
+      value: "mongodb://home-mongodb:27017"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
