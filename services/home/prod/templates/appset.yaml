@@ -71,10 +71,6 @@ spec:
     {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
     {{ `{{- $baseCustomValues := index .metadata.annotations (printf "services.%s.base.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
     {{ `{{- $baseValues := dict }}` }}
-    {{ `{{- if hasKey . "values" }}` }}
-      {{ `{{- $baseValues = .values }}` }}
-    {{ `{{- end }}` }}
-    {{ `{{- $mergedValues := merge (deepCopy $baseCustomValues) (deepCopy $serviceCustomValues) (deepCopy $baseValues) }}` }}
     
     spec:
       sources:
@@ -124,9 +120,6 @@ spec:
               - {{ `{{ . }}` }}
               {{ `{{- end }}` }}
               {{ `{{- end }}` }}
-            {{ `{{- if or (hasKey . "values") (ne (len $serviceCustomValues) 0) (ne (len $baseCustomValues) 0) }}` }}
-            valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
-            {{ `{{- end }}` }}
             valuesObject: {{ `{{ .values | fromYaml | nindent 14 }}` }}
       syncPolicy:
         {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
