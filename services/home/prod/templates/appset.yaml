@@ -20,7 +20,7 @@ spec:
                   # appName: base
                   # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   baseChartVersion: 1.0.133
-                  values: "{{ . | default dict }}"
+                  values: "{{ . | default dict | toYaml }}"
   template:
     metadata:
       name: '{{ `{{ .serviceName }}` }}'
@@ -121,7 +121,7 @@ spec:
               - {{ `{{ . }}` }}
               {{ `{{- end }}` }}
               {{ `{{- end }}` }}
-            valuesObject: {{ `{{ .values | nindent 14 }}` }}
+            valuesObject: {{ `{{ .values | fromYaml | nindent 14 }}` }}
       syncPolicy:
         {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
         automated:
