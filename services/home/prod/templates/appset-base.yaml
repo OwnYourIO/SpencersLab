@@ -15,14 +15,14 @@ spec:
                 #  version: 1.0.130 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                 #  namespace: default
                 #  ServerSideApply: "false"
-                - appName: external-secrets-bitwarden
-                  version: 1.0.6 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  namespace: default
-                  ServerSideApply: "true"
-                - appName: monitoring-agent
-                  version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  namespace: default
-                  ServerSideApply: "true"
+                #- appName: external-secrets-bitwarden
+                #  version: 1.0.6 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                #  namespace: default
+                #  ServerSideApply: "true"
+                #- appName: monitoring-agent
+                #  version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                #  namespace: default
+                #  ServerSideApply: "true"
   template:
     metadata:
       name: "{{ `{{appName}}` }}"
