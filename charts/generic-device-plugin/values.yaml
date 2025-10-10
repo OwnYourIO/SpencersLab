@@ -61,4 +61,4 @@ app-template:
     config:
       enabled: true
       type: configMap
-      name: '{{ .Release.Name }}-generic-device-plugin'
+      name: 'home-generic-device-plugin'
