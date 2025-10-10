@@ -121,7 +121,7 @@ spec:
               - {{ `{{ . }}` }}
               {{ `{{- end }}` }}
               {{ `{{- end }}` }}
-            valuesObject: {{ `{{ .values | fromJson | nindent 14 }}` }}
+            valuesObject: {{ `{{ .values | toYaml | nindent 14 }}` }}
       syncPolicy:
         {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
         automated:
