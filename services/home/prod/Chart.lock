@@ -7,7 +7,7 @@ dependencies:
   version: 0.1.1
 - name: generic-device-plugin
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.22
+  version: 1.0.23
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.59
@@ -56,5 +56,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.2.0
-digest: sha256:9d9313345ed7162f3f359ea5c137689d7225904f07a22d553a940b082537cf4f
-generated: "2025-10-09T13:19:59.593871017-06:00"
+digest: sha256:1bc9c3de4dbe1d8098ddd0cd11611a2989a094b978d27af2dcd106ee8cdaa3c1
+generated: "2025-10-09T21:56:39.424144983-06:00"
