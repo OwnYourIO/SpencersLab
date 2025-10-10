@@ -127,6 +127,7 @@ spec:
             {{ `{{- if or (hasKey . "values") (ne (len $serviceCustomValues) 0) (ne (len $baseCustomValues) 0) }}` }}
             valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
+            valuesObject: {{ `{{ .values | fromYaml | nindent 14 }}` }}
       syncPolicy:
         {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
         automated:
