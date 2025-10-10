@@ -267,7 +267,7 @@ snapcast:
     persistence:
       snapserver:
         type: configMap
-        name: "{{ .Release.Name }}-snapcast"
+        name: "{{ .serviceName }}-snapcast"
         globalMounts:
           - path: /etc/snapserver.conf
             subPath: snapserver.conf
@@ -339,7 +339,7 @@ ledfx:
               - path: /app/ledfx-config/
       entrypoint-override:
         type: configMap
-        name: '{{ .Release.Name }}-ledfx'
+        name: '{{ .serviceName }}-ledfx'
         defaultMode: 0777
         globalMounts:
           - path: /app/entrypoint.sh
@@ -432,7 +432,7 @@ logitech-media-server:
           - path: /music
       init-config-map:
         type: configMap
-        name: '{{ .Release.Name }}-logitech-media-server'
+        name: '{{ .serviceName }}-logitech-media-server'
         defaultMode: 0777
         globalMounts:
           - path: /entrypoint.sh
@@ -673,7 +673,7 @@ paperless:
               readOnly: true
 
     config:
-      name: "{{ .Release.Name }}-paperless"
+      name: "{{ .serviceName }}-paperless"
       type: configMap
       advancedMounts:
         samba:
@@ -1061,7 +1061,7 @@ hugo-help:
     persistence:
       hugo-yaml:
         type: configMap
-        name: "{{ .Release.Name }}-hugo-help"
+        name: "{{ .serviceName }}-hugo-help"
         defaultMode: 0777
         globalMounts:
           - path: /src/hugo.yaml
