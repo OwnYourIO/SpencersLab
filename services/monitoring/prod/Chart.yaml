@@ -14,7 +14,7 @@ dependencies:
   #    pushgateway:
   #      enabled: false
 - name: exporter-mikrotik
-  version: 1.0.20
+  version: 1.0.21
   repository: https://ownyourio.github.io/SpencersLab/
 - name: grafana
   version: 10.1.0
