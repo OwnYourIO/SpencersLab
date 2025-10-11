@@ -10,12 +10,12 @@ dependencies:
   version: 0.26.0
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
-  version: 7.1.1
+  version: 7.1.4
 - name: 389ds
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.13
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.13
-digest: sha256:afe275dcd925a5920c90c14b54822891d4db93e21ee9826a4c6bbe2cf44efaed
-generated: "2025-10-11T01:14:21.713987364Z"
+digest: sha256:48236ae9dd057010964c797e68327711c81b932addd349fa2a4976e80c331f04
+generated: "2025-10-11T01:32:15.220167768Z"
