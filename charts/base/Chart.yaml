@@ -1,11 +1,11 @@
 apiVersion: v2
 name: base
-version: 1.0.133
+version: 1.0.134
 appVersion: 1.0.31
 dependencies:
 - name: argo-cd
   version: 8.3.3
   repository: https://argoproj.github.io/argo-helm
 - name: cert-manager
-  version: v1.18.2
+  version: v1.19.0
   repository: https://charts.jetstack.io
