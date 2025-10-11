@@ -447,7 +447,7 @@ paperless:
         main:
           image:
             repository: ghcr.io/paperless-ngx/paperless-ngx
-            tag: 2.17.1@sha256:ab72a0ab42a792228cdbe83342b99a48acd49f7890ae54b1ae8e04401fba24ee
+            tag: 2.18.4@sha256:3421ebe06ed27662d014046cf5089e612de853aae0c676a2bc72f73b38080e57
           env:
             PAPERLESS_TIME_ZONE: America/Denver
             PAPERLESS_URL: https://documents.spencerslab.com
@@ -535,7 +535,7 @@ paperless:
         gotenburg:
           image:
             repository: gotenberg/gotenberg
-            tag: 8.21.1@sha256:91486863744f7420ca985ee6cef7c216910e40faffd378f3da7c0fad724d01ba
+            tag: 8.24.0@sha256:b116a40a1c24917e2bf3e153692da5acd2e78e7cd67e1b2d243b47c178f31c90
           env:
             DISABLE_GOOGLE_CHROME: '1'
           resources:
@@ -547,7 +547,7 @@ paperless:
         redis:
           image:
             repository: redis
-            tag: 8.2.0@sha256:b0efb06f6b4d8c1e2fd1b7c1e89e178d787b432b7b09286b4e7ea3dcdbac777a
+            tag: 8.2.0@sha256:e7d6b261beaa22b1dc001f438b677f1c691ac7805607d8979bae65fe0615c2e6
           resources:
             limits:
               memory: 700Mi
@@ -752,7 +752,7 @@ karakeep:
         main:
           image:
             repository: ghcr.io/karakeep-app/karakeep
-            tag: 0.26.0
+            tag: 0.27.1
           env:
             TZ: America/Denver
             BROWSER_WEB_URL: http://home-karakeep-chrome.default.svc.cluster.local:9222
@@ -860,7 +860,7 @@ karakeep:
         app:
           image:
             repository: docker.io/getmeili/meilisearch
-            tag: v1.16.0
+            tag: v1.22.3
           args:
             - /bin/meilisearch
             - --experimental-dumpless-upgrade
