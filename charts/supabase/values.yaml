@@ -18,7 +18,7 @@ app-template:
         migrate:
           image:
             repository: supabase/postgres
-            tag: 17.6.1.004
+            tag: 17.6.1.021
           command: ["/bin/bash", "/scripts/migrate.sh"]
           env:
             PGDATABASE: supabase
@@ -45,7 +45,7 @@ app-template:
         kong:
           image:
             repository: kong
-            tag: 2.8.1
+            tag: 3.9.1
           env:
             KONG_DATABASE: "off"
             KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
@@ -82,7 +82,7 @@ app-template:
         auth:
           image:
             repository: supabase/gotrue
-            tag: v2.158.1
+            tag: v2.180.0
           env:
             GOTRUE_API_HOST: "0.0.0.0"
             GOTRUE_API_PORT: "9999"
@@ -114,7 +114,7 @@ app-template:
         rest:
           image:
             repository: postgrest/postgrest
-            tag: v12.2.0
+            tag: v13.0.7
           env:
             PGRST_DB_SCHEMAS: "public,storage,graphql_public"
             PGRST_DB_ANON_ROLE: "anon"
@@ -147,7 +147,7 @@ app-template:
         realtime:
           image:
             repository: supabase/realtime
-            tag: v2.47.4
+            tag: v2.53.4
           env:
             PORT: "4000"
             DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
@@ -242,7 +242,7 @@ app-template:
         meta:
           image:
             repository: supabase/postgres-meta
-            tag: v0.91.6
+            tag: v0.91.7
           env:
             PG_META_PORT: "8080"
             PG_META_DB_HOST: "pg-supabase-rw"
