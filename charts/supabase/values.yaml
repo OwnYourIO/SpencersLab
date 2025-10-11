@@ -45,7 +45,7 @@ app-template:
         kong:
           image:
             repository: kong
-            tag: 2.8.1
+            tag: 3.9.1
           env:
             KONG_DATABASE: "off"
             KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
