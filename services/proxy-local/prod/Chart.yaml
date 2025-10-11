@@ -8,7 +8,7 @@ dependencies:
     version: 0.2.3
     repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   - name: external-dns
-    version: 1.18.0
+    version: 1.19.0
     repository: https://kubernetes-sigs.github.io/external-dns/
     alias: external-dns-external
   - name: app-template
