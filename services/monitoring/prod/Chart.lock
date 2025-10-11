@@ -1,7 +1,7 @@
 dependencies:
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 76.5.1
+  version: 78.1.0
 - name: loki-stack
   repository: https://grafana.github.io/helm-charts
   version: 2.10.2
@@ -11,5 +11,5 @@ dependencies:
 - name: grafana
   repository: https://grafana.github.io/helm-charts/
   version: 10.1.0
-digest: sha256:f4c916081d7d0f87316c533d010d849093f68892368f921b42d914e5a2795046
-generated: "2025-10-11T00:49:37.489415504Z"
+digest: sha256:c6192040eb485d410fd5d92d681ebe7479677d6718d14636edd182444e6e8560
+generated: "2025-10-11T01:11:26.336155173Z"
