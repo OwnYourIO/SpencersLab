@@ -12,7 +12,7 @@ app-template:
         main:
           image:
             repository: toertel/logitech-media-server
-            tag: v9.0.2-1@sha256:ab5eb3c274a3b446751b80332f00b052746d34388b86b4e383f502028e3f8a3d
+            tag: v9.0.3-1@sha256:c4eb40e32801fba0a30bcb7ef79bff1b655d8211e93c5b8378a71ef0f6a96684
           env:
             HTTP_PORT: 9000
             TZ: Etc/UTC
