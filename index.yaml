@@ -7033,6 +7033,18 @@ entries:
   monitoring-agent:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-10-11T01:13:49.948887157Z"
+    dependencies:
+    - name: kube-prometheus-stack
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 78.1.0
+    digest: 38bacc6ea410bd3fe983850f9617bb8f55163da591f31df61e9b38f0d346c26a
+    name: monitoring-agent
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/monitoring-agent-1.0.15/monitoring-agent-1.0.15.tgz
+    version: 1.0.15
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-10-11T01:04:42.577238952Z"
     dependencies:
     - name: kube-prometheus-stack
@@ -10368,4 +10380,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-10-11T01:13:06.191956542Z"
+generated: "2025-10-11T01:13:50.066229009Z"
