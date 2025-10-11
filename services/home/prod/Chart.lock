@@ -10,10 +10,10 @@ dependencies:
   version: 1.0.24
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.59
+  version: 1.0.60
 - name: zigbee2mqtt
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.59
+  version: 1.0.60
 - name: hyperion
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.21
@@ -56,5 +56,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.3.0
-digest: sha256:5cae268c01fe1ec8322c64af929eef7a2c150e34735a669134ed291d4fbe6839
-generated: "2025-10-11T04:44:56.476387906Z"
+digest: sha256:2e560008961bb62b55a5a48051aa407b74d9b5b7567c7ca866daf37cabdbad70
+generated: "2025-10-11T14:11:21.572705246Z"
