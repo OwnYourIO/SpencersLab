@@ -3,6 +3,18 @@ entries:
   389ds:
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2025-10-11T02:17:14.057091999Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: d29562a9e77ac7a2f7a1102acecb77025f7af4a45fcf0ad425b9c6046acc3ad3
+    name: 389ds
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/389ds-1.0.14/389ds-1.0.14.tgz
+    version: 1.0.14
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2025-08-09T20:50:20.436640113Z"
     dependencies:
     - name: app-template
@@ -564,6 +576,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/appset-traefik-zerotrust-1.1.2/appset-traefik-zerotrust-1.1.2.tgz
     version: 1.1.2
   archon:
+  - apiVersion: v2
+    appVersion: main2
+    created: "2025-10-11T02:17:14.213524793Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 883a5292298566c0dd6036defe698b299f3ec7efa2b4f611585bc187c09ad83f
+    name: archon
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/archon-1.0.17/archon-1.0.17.tgz
+    version: 1.0.17
   - apiVersion: v2
     appVersion: main2
     created: "2025-10-05T23:42:03.940561219Z"
@@ -4969,6 +4993,18 @@ entries:
   exporter-mikrotik:
   - apiVersion: v2
     appVersion: 1.0.11
+    created: "2025-10-11T02:17:14.340019764Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: b72e8975ff34b9c83b71ae3a612c105956b7e70f13671be38d601b7fec13a312
+    name: exporter-mikrotik
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/exporter-mikrotik-1.0.21/exporter-mikrotik-1.0.21.tgz
+    version: 1.0.21
+  - apiVersion: v2
+    appVersion: 1.0.11
     created: "2025-08-09T20:50:20.778212465Z"
     dependencies:
     - name: app-template
@@ -5331,6 +5367,18 @@ entries:
   flowise:
   - apiVersion: v2
     appVersion: 1.0.12
+    created: "2025-10-11T02:17:14.467113738Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 36e0188f9ef1c6a7afeaec3e3b134ce9d6295ecc65f559a870fb178a52437e31
+    name: flowise
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/flowise-1.0.34/flowise-1.0.34.tgz
+    version: 1.0.34
+  - apiVersion: v2
+    appVersion: 1.0.12
     created: "2025-10-11T01:01:35.339608936Z"
     dependencies:
     - name: app-template
@@ -5595,6 +5643,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/freeipa-1.0.1/freeipa-1.0.1.tgz
     version: 1.0.1
   generic-device-plugin:
+  - apiVersion: v2
+    appVersion: 1.0.14
+    created: "2025-10-11T02:17:14.593443184Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 460b067f5dd57b45d919d562d3572c4a5695b1cb07e417afa1e9f50a372a66af
+    name: generic-device-plugin
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/generic-device-plugin-1.0.24/generic-device-plugin-1.0.24.tgz
+    version: 1.0.24
   - apiVersion: v2
     appVersion: 1.0.14
     created: "2025-10-10T03:55:58.470643339Z"
@@ -5898,6 +5958,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/home-appset-1.1.1/home-appset-1.1.1.tgz
     version: 1.1.1
   hyperion:
+  - apiVersion: v2
+    appVersion: 1.0.12
+    created: "2025-10-11T02:17:14.74295854Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 997d8bb12b077e08b7ae93e128290d1b8bc009eb5264753d4a9f4df57b23bea7
+    name: hyperion
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/hyperion-1.0.22/hyperion-1.0.22.tgz
+    version: 1.0.22
   - apiVersion: v2
     appVersion: 1.0.12
     created: "2025-08-09T16:42:35.604035822Z"
@@ -6319,6 +6391,18 @@ entries:
   jellyfin:
   - apiVersion: v2
     appVersion: 1.0.7
+    created: "2025-10-11T02:17:14.862564916Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 63dc70716b6a63140ba71defb4b334e31043a2fbb940cc580e39400ac70cc360
+    name: jellyfin
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/jellyfin-1.0.19/jellyfin-1.0.19.tgz
+    version: 1.0.19
+  - apiVersion: v2
+    appVersion: 1.0.7
     created: "2025-08-09T16:42:35.802128397Z"
     dependencies:
     - name: app-template
@@ -6536,6 +6620,18 @@ entries:
   langflow:
   - apiVersion: v2
     appVersion: 1.5.1
+    created: "2025-10-11T02:17:15.005885006Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 9e8c2ae253bf719e0a5fee4ab7ed0bc6b92e98b793bb2dbaf40bb82640166a93
+    name: langflow
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/langflow-1.0.5/langflow-1.0.5.tgz
+    version: 1.0.5
+  - apiVersion: v2
+    appVersion: 1.5.1
     created: "2025-10-04T16:17:10.419951377Z"
     dependencies:
     - name: app-template
@@ -6583,6 +6679,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/langflow-1.0.1/langflow-1.0.1.tgz
     version: 1.0.1
   ledfx:
+  - apiVersion: v2
+    appVersion: 1.0.10
+    created: "2025-10-11T02:17:15.134492132Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 92a4fce97b85f2930e4adc78d8a3c827c4218e3d217a295e04a331f083a4fdb8
+    name: ledfx
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/ledfx-1.0.20/ledfx-1.0.20.tgz
+    version: 1.0.20
   - apiVersion: v2
     appVersion: 1.0.10
     created: "2025-08-09T16:42:36.011582577Z"
@@ -6764,6 +6872,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/ledfx-1.0.5/ledfx-1.0.5.tgz
     version: 1.0.5
   logitech-media-server:
+  - apiVersion: v2
+    appVersion: 1.0.15
+    created: "2025-10-11T02:17:15.292139602Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 4aad4e1b06ae7223ed59967e1c780fa07c832ea8a82123919d33493b688e1bd9
+    name: logitech-media-server
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/logitech-media-server-1.0.29/logitech-media-server-1.0.29.tgz
+    version: 1.0.29
   - apiVersion: v2
     appVersion: 1.0.15
     created: "2025-10-11T00:58:59.08279929Z"
@@ -7310,6 +7430,18 @@ entries:
   music-assistant:
   - apiVersion: v2
     appVersion: 1.0.17
+    created: "2025-10-11T02:17:15.462348686Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 9708d77870d6ab8eedbee8412f736fb89a67dae0ea7cdcfd13d5a0bc0817f92d
+    name: music-assistant
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/music-assistant-1.0.36/music-assistant-1.0.36.tgz
+    version: 1.0.36
+  - apiVersion: v2
+    appVersion: 1.0.17
     created: "2025-08-12T09:41:07.642583696Z"
     dependencies:
     - name: app-template
@@ -7671,6 +7803,18 @@ entries:
   n8n:
   - apiVersion: v2
     appVersion: 1.109.1
+    created: "2025-10-11T02:17:15.60209029Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 8d2fc2eca26643104e185ae1c17a3b8667f4b7cdbbbdaf3ac08bc44566247882
+    name: n8n
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/n8n-1.0.15/n8n-1.0.15.tgz
+    version: 1.0.15
+  - apiVersion: v2
+    appVersion: 1.109.1
     created: "2025-09-07T04:57:37.317899149Z"
     dependencies:
     - name: app-template
@@ -7955,6 +8099,18 @@ entries:
   samba:
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2025-10-11T02:17:15.764952813Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: d0e634792fa019deaff8ee3e2495e5fffeb2e85fdb93c7d6fbe8cb3504cdb1ed
+    name: samba
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/samba-1.0.14/samba-1.0.14.tgz
+    version: 1.0.14
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2025-08-09T16:42:36.678937314Z"
     dependencies:
     - name: app-template
@@ -8158,6 +8314,18 @@ entries:
   snapcast:
   - apiVersion: v2
     appVersion: 1.0.3
+    created: "2025-10-11T02:17:15.911111787Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 428559ab5701cc190eb4d79cf90bcd332354da225372241118ab3d7bd7cc17d2
+    name: snapcast
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/snapcast-1.0.13/snapcast-1.0.13.tgz
+    version: 1.0.13
+  - apiVersion: v2
+    appVersion: 1.0.3
     created: "2025-08-09T16:42:36.94665741Z"
     dependencies:
     - name: app-template
@@ -8301,6 +8469,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/snapcast-1.0.1/snapcast-1.0.1.tgz
     version: 1.0.1
   supabase:
+  - apiVersion: v2
+    appVersion: 2024.08.19
+    created: "2025-10-11T02:17:16.057104886Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 5977095e572d8a0e571aaa699625e75481917ea3db24e48ef5498d29e31a1596
+    name: supabase
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/supabase-1.0.120/supabase-1.0.120.tgz
+    version: 1.0.120
   - apiVersion: v2
     appVersion: 2024.08.19
     created: "2025-10-11T01:13:06.191054898Z"
@@ -9749,6 +9929,18 @@ entries:
   zigbee2mqtt:
   - apiVersion: v2
     appVersion: 1.0.38
+    created: "2025-10-11T02:17:16.18560876Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 122f592f2ff009f5e019b26fca601ae45bf09c8c93fd96cd974c29918fe1440a
+    name: zigbee2mqtt
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.60/zigbee2mqtt-1.0.60.tgz
+    version: 1.0.60
+  - apiVersion: v2
+    appVersion: 1.0.38
     created: "2025-08-09T20:50:21.080531195Z"
     dependencies:
     - name: app-template
@@ -10395,4 +10587,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-10-11T01:14:51.049508924Z"
+generated: "2025-10-11T02:17:16.18837263Z"
