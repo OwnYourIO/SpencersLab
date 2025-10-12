@@ -23,6 +23,10 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  zigbee2mqtt-new:
+    namespace: default
+    ServerSideApply: "true"
+    chart: zigbee2mqtt
 
 ingress:
   subdomains:

@@ -21,6 +21,9 @@ spec:
                   {{- if $chartConfig.repository }}
                   repository: {{ $chartConfig.repository }}
                   {{- end }}
+                  {{- if $chartConfig.chart }}
+                  chart: {{ $chartConfig.chart }}
+                  {{- end }}
                   namespace: {{ $chartConfig.namespace | default "default" }}
                   ServerSideApply: {{ $chartConfig.ServerSideApply | default "false" | quote }}
                   {{- if index $.Values $appName }}
@@ -55,9 +58,9 @@ spec:
         - repoURL: '{{ `{{ if hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
           targetRevision: "{{ `{{ dig "version" "main" . }}` }}"
           {{ `{{- if hasKey . "version" }}` }}
-          chart: "{{ `{{ .appName }}` }}"
+          chart: "{{ `{{ if hasKey . "chart" }}{{ .chart }}{{ else }}{{ .appName }}{{ end }}` }}"
           {{ `{{- else }}` }}
-          path: "charts/{{ `{{ .appName }}` }}"
+          path: "charts/{{ `{{ if hasKey . "chart" }}{{ .chart }}{{ else }}{{ .appName }}{{ end }}` }}"
           {{ `{{- end }}` }}
           helm:
             parameters:
