@@ -16,7 +16,7 @@ seaweedfs-csi-driver:
 zigbee2mqtt:
   bitwardenIds:
     zigbee2mqtt: 0164cfbc-dd85-43af-a4cc-b13f00108bde
-zigbee2mqtt-new:
+home-zigbee2mqtt-new:
   bitwardenIds:
     zigbee2mqtt: 0164cfbc-dd85-43af-a4cc-b13f00108bde
 base:
