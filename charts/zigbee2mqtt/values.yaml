@@ -52,7 +52,6 @@ app-template:
             requests:
               cpu: 10m
             limits:
-              squat.ai/zigbee: 1
               memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
