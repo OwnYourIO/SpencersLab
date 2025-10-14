@@ -30,19 +30,14 @@ app-template:
             ZIGBEE2MQTT_CONFIG_DEVICE_OPTIONS_RETAIN: true
             ZIGBEE2MQTT_CONFIG_EXPERIMENTAL_NEW_API: true
             ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: &port 8080
-            ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee2mqtt.local
             ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION: true
             ZIGBEE2MQTT_CONFIG_MQTT_KEEPALIVE: 60
             ZIGBEE2MQTT_CONFIG_MQTT_REJECT_UNAUTHORIZED: true
-            ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto.home.svc.cluster.local
             ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 5
             ZIGBEE2MQTT_CONFIG_PERMIT_JOIN: false
-            ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 38400
-            ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyACM0
-            ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: deconz
           envFrom:
             - secretRef:
-                name: zigbee2mqtt-secret
+                name: "{{ .Release.Name }}-secret"
           probes:
             liveness:
               enabled: true
