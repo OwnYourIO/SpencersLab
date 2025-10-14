@@ -1,0 +1,75 @@
+bitwardenIds:
+  langgraph: OVERRIDE_VIA_CUSTOM_VALUES
+  langgraph-pg: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName langgraph
+
+  controllers:
+    langgraph:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: langchain/langgraph-api
+            tag: "0.2"
+          env:
+            # Redis for task queues
+            REDIS_URI: "redis://localhost:6379"
+            REDIS_CLUSTER: "False"
+            # Authentication (noop for self-hosted)
+            LANGGRAPH_AUTH_TYPE: "noop"
+            # Performance tuning
+            LANGGRAPH_POSTGRES_POOL_MAX_SIZE: "150"
+            N_JOBS_PER_WORKER: "10"
+            BG_JOB_ISOLATED_LOOPS: "True"
+            BG_JOB_TIMEOUT_SECS: "3600"
+            BG_JOB_SHUTDOWN_GRACE_PERIOD_SECS: "180"
+            # Observability
+            LOG_JSON: "true"
+            LOG_LEVEL: "INFO"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        redis:
+          image:
+            repository: redis
+            tag: "6"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+  service:
+    langgraph:
+      controller: *chartName
+      ports:
+        http:
+          port: 8000
