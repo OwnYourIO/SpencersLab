@@ -51,6 +51,10 @@ ingress:
       serviceName: zigbee2mqtt
       service: home-zigbee2mqtt
       port: 8080
+    zigbee-new:
+      serviceName: zigbee2mqtt
+      service: home-zigbee2mqtt-new
+      port: 8080
     zigbee-remote:
       serviceName: zigbee2mqtt-remote
       service: home-zigbee2mqtt-remote
