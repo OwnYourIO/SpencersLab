@@ -14,6 +14,8 @@ app-template:
             tag: 2.6.0
           env:
             TZ: Etc/UTC
+            # Use this by default. May want to override
+            ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER=zstack
             ZIGBEE2MQTT_DATA: /config
             ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_DISCOVERY_TOPIC: homeassistant
             ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_LEGACY_ENTITY_ATTRIBUTES: false
