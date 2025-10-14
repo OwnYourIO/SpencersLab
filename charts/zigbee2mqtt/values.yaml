@@ -1,5 +1,6 @@
 global:
   nameOverride: zigbee2mqtt
+domain: OVERRIDE_VIA_APPSET
 bitwardenIds:
   zigbee2mqtt: OVERRIDE_NEEDED
 app-template:
@@ -72,5 +73,4 @@ app-template:
           port: *port
   persistence:
     config:
-      existingClaim: zigbee2mqtt
-
+      existingClaim: "{{ .Release.Name }}"
