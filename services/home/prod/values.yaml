@@ -23,7 +23,7 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
-  zigbee2mqtt-new:
+  zigbee2mqtt-coord:
     namespace: default
     ServerSideApply: "true"
     chart: zigbee2mqtt
@@ -51,9 +51,9 @@ ingress:
       serviceName: zigbee2mqtt
       service: home-zigbee2mqtt
       port: 8080
-    zigbee-new:
-      serviceName: zigbee2mqtt-new
-      service: home-zigbee2mqtt-new
+    zigbee-coord:
+      serviceName: zigbee2mqtt-coord
+      service: home-zigbee2mqtt-coord
       port: 8080
     zigbee-remote:
       serviceName: zigbee2mqtt-remote
