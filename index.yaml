@@ -6693,6 +6693,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/langflow-1.0.1/langflow-1.0.1.tgz
     version: 1.0.1
+  langgraph:
+  - apiVersion: v2
+    appVersion: "0.2"
+    created: "2025-10-14T02:56:25.442038138Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 0e46490a6668aaa350cac6c6f9209d53924a17493cc28187036a99752acf54cd
+    name: langgraph
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/langgraph-1.0.1/langgraph-1.0.1.tgz
+    version: 1.0.1
   ledfx:
   - apiVersion: v2
     appVersion: 1.0.10
@@ -10734,4 +10747,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-10-14T01:57:29.650644875Z"
+generated: "2025-10-14T02:56:25.442919686Z"
