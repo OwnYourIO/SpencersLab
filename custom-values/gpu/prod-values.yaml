@@ -17,6 +17,11 @@ base:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
     cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
 
+langgraph:
+  bitwardenIds:
+    langgraph: 43901b8d-ba0f-4f56-89a3-b37700d75a70
+    langgraph-pg: ad6b3cdf-ef6f-4ff5-bbe3-b37700d86194
+
 n8n:
   bitwardenIds:
     n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
