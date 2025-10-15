@@ -6696,6 +6696,18 @@ entries:
   langgraph:
   - apiVersion: v2
     appVersion: "0.2"
+    created: "2025-10-15T13:30:17.55257988Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: ae503944b183dc2625623438596d7b78ac96f5009bd641f79096c2517ddc4e4a
+    name: langgraph
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/langgraph-1.0.2/langgraph-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: "0.2"
     created: "2025-10-14T02:56:25.442038138Z"
     dependencies:
     - name: app-template
@@ -10771,4 +10783,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-10-15T10:47:47.515792111Z"
+generated: "2025-10-15T13:30:17.553432966Z"
