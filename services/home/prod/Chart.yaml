@@ -15,10 +15,6 @@ dependencies:
 - name: zigbee2mqtt
   version: 1.0.59
   repository: https://ownyourio.github.io/SpencersLab/
-- name: zigbee2mqtt
-  version: 1.0.59
-  repository: https://ownyourio.github.io/SpencersLab/
-  alias: zigbee2mqtt-remote
 # TODO: MQTT chart
 # TODO: Use the better charts.
 #- name: zwavejs2mqtt
