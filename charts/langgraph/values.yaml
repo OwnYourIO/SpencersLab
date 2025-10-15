@@ -43,7 +43,7 @@ app-template:
               enabled: true
           resources:
             requests:
-              cpu: 500m
+              cpu: 10m
               memory: 1Gi
             limits:
               memory: 4Gi
