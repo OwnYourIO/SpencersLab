@@ -198,7 +198,7 @@ ingress:
 
     archon:
       serviceName: archon
-      service: archon-server
+      service: gpu-archon
       port: 3737
 
     langgraph:
