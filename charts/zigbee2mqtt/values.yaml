@@ -1,6 +1,7 @@
 global:
   nameOverride: zigbee2mqtt
 domain: OVERRIDE_VIA_APPSET
+appName: zigbee2mqtt
 bitwardenIds:
   zigbee2mqtt: OVERRIDE_NEEDED
 app-template:
