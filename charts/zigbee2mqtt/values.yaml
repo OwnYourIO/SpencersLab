@@ -40,6 +40,8 @@ app-template:
             ZIGBEE2MQTT_CONFIG_MQTT_REJECT_UNAUTHORIZED: true
             ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 4
             ZIGBEE2MQTT_CONFIG_PERMIT_JOIN: false
+            # This avoids being redirected to localhost:8080 after onboarding.
+            Z2M_ONBOARD_NO_REDIRECT: 1
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}-secret"
