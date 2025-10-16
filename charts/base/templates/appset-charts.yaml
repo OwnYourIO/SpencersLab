@@ -68,6 +68,10 @@ spec:
                 value: '{{ `{{ index .metadata.annotations "domain" }}` }}'
               - name: clusterName
                 value: '{{ `{{ index .metadata.annotations "clusterName" }}` }}'
+              - name: serviceName
+                value: '{{ `{{ .serviceName }}` }}'
+              - name: appName
+                value: '{{ `{{ .appName }}` }}'
 
               # I'd like to keep this file as generic as possible, so would rather move this into the app definitions,
               # but those are coming from Values and the reading of the annotations HAS to happen in this file though. 
