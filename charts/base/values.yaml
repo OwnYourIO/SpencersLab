@@ -29,6 +29,8 @@ proxy:
   middlewares:
     entrypoint: ""
 
+charts:
+
 cert-manager:
   crds:
     enabled: true

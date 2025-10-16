@@ -13,7 +13,7 @@ spec:
           - clusters: {}
           - list:
               elements:
-                {{- range $appName, $chartConfig := index .Values "charts" }}
+                {{- range $appName, $chartConfig := .Values.charts }}
                 - appName: {{ $appName }}
                   {{- if $chartConfig.version }}
                   version: {{ $chartConfig.version }}
