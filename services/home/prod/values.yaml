@@ -27,10 +27,10 @@ charts:
     namespace: default
     ServerSideApply: "true"
     chart: zigbee2mqtt
-  #zigbee2mqtt-remote:
-  #  namespace: default
-  #  ServerSideApply: "true"
-  #  chart: zigbee2mqtt
+  zigbee2mqtt-remote:
+    namespace: default
+    ServerSideApply: "true"
+    chart: zigbee2mqtt
 
 ingress:
   subdomains:
