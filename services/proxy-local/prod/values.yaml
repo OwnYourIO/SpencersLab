@@ -71,8 +71,10 @@ proxy:
 
     torrents:
       service: proxy-local-qbittorrent-main 
+      port: 8080
     backup-gpu-torrents:
       service: proxy-local-backup-gpu-qbittorrent-main
+      port: 8080
     requests:
       target: requestarr
     music:
