@@ -70,7 +70,7 @@ proxy:
       target: grafana
 
     torrents:
-      target: qbittorrent
+      target: proxy-local-qbittorrent-main 
     backup-gpu-torrents:
       target: proxy-local-backup-gpu-qbittorrent-main
     requests:
