@@ -3,7 +3,7 @@
 
 # Global namespace for ToolHive components
 # The operator will be deployed to this namespace
-namespace: toolhive-system
+namespace: default
 
 # Configuration for toolhive-operator-crds subchart
 # This subchart installs the Custom Resource Definitions
