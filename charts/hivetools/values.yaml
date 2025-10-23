@@ -1,0 +1,36 @@
+# Configuration for hivetools - Combined ToolHive CRDs and Operator
+# This chart deploys both the CRDs and the operator in a single installation
+
+# Global namespace for ToolHive components
+# The operator will be deployed to this namespace
+namespace: toolhive-system
+
+# Configuration for toolhive-operator-crds subchart
+# This subchart installs the Custom Resource Definitions
+toolhive-operator-crds:
+  enabled: true
+
+# Configuration for toolhive-operator subchart
+# This subchart installs the ToolHive operator
+toolhive-operator:
+  enabled: true
+  podAnnotations:
+    argocd.argoproj.io/sync-wave: "1"
+  
+  operator:
+    # Number of operator replicas
+    replicaCount: 1
+    
+    
+    # RBAC configuration
+    rbac:
+      # Deployment mode: 'cluster' or 'namespace'
+      # - cluster: Operator has cluster-wide access (default, simpler)
+      # - namespace: Operator restricted to specific namespaces (more secure)
+      scope: 'cluster'
+      
+      # Only used when scope is 'namespace'
+      # List of namespaces the operator can manage
+      # allowedNamespaces:
+      #   - 'default'
+      #   - 'gpu-workloads'

@@ -1,0 +1,9 @@
+dependencies:
+- name: toolhive-operator-crds
+  repository: oci://ghcr.io/stacklok/toolhive
+  version: 0.0.41
+- name: toolhive-operator
+  repository: oci://ghcr.io/stacklok/toolhive
+  version: 0.3.0
+digest: sha256:e49b3e883abdd1f764108e31e16fac31ae035307a971951f6994a7d8e2733e09
+generated: "2025-10-23T05:41:20.368204933Z"
