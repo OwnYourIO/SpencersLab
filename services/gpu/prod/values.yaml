@@ -34,7 +34,7 @@ charts:
     namespace: default
     ServerSideApply: "false"
   hivetools:
-    namespace: toolhive-system
+    namespace: default
     ServerSideApply: "true"
   
   # External charts (with version and repository)
