@@ -33,6 +33,9 @@ charts:
   langgraph:
     namespace: default
     ServerSideApply: "false"
+  hivetools:
+    namespace: toolhive-system
+    ServerSideApply: "true"
   
   # External charts (with version and repository)
   seaweedfs-csi-driver:
