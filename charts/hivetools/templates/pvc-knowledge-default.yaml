@@ -1,0 +1,13 @@
+{{- if not (index .Values "shared-storage" "knowledge") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: knowledge
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+{{- end }}
