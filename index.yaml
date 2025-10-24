@@ -5997,6 +5997,23 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/grow-appset-1.1.2/grow-appset-1.1.2.tgz
     version: 1.1.2
+  hivetools:
+  - apiVersion: v2
+    appVersion: 0.4.0
+    created: "2025-10-24T22:55:54.056739922Z"
+    dependencies:
+    - name: toolhive-operator-crds
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.0.41
+    - name: toolhive-operator
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.3.0
+    description: Combined Helm chart for ToolHive operator CRDs and operator
+    digest: 56108ee1d7647955d1406a15be331b0fbcfe15879766f150b2c7df4236b979da
+    name: hivetools
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/hivetools-1.0.1/hivetools-1.0.1.tgz
+    version: 1.0.1
   home-appset:
   - apiVersion: v2
     appVersion: 1.1.9
@@ -10921,4 +10938,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-10-24T22:37:28.809983212Z"
+generated: "2025-10-24T22:55:54.057869818Z"
