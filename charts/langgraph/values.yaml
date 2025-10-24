@@ -16,7 +16,7 @@ app-template:
         main:
           image:
             repository: langchain/langgraph-api
-            tag: "0.2"
+            tag: "3.13-wolfi-f82f6c9"
           env:
             # Redis for task queues
             REDIS_URI: "redis://localhost:6379"
