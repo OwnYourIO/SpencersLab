@@ -83,22 +83,22 @@ mcp:
               mountPath: /.cache
             - name: output
               mountPath: /output
-    volumes:
-      # Critical: /tmp for browser profiles and temporary data
-      - name: tmp
-        emptyDir:
-          medium: Memory
-          sizeLimit: 512Mi
-      
-      # Browser cache directory
-      - name: cache
-        emptyDir:
-          sizeLimit: 1Gi
-      
-      # Optional: Output directory for traces/videos
-      - name: output
-        emptyDir:
-          sizeLimit: 500Mi
+        volumes:
+          # Critical: /tmp for browser profiles and temporary data
+          - name: tmp
+            emptyDir:
+              medium: Memory
+              sizeLimit: 512Mi
+          
+          # Browser cache directory
+          - name: cache
+            emptyDir:
+              sizeLimit: 1Gi
+          
+          # Optional: Output directory for traces/videos
+          - name: output
+            emptyDir:
+              sizeLimit: 500Mi
 
   # Git MCP Server - Local git operations
   git:
