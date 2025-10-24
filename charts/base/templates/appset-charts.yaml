@@ -27,7 +27,7 @@ spec:
                   namespace: {{ $chartConfig.namespace | default "default" }}
                   ServerSideApply: {{ $chartConfig.ServerSideApply | default "false" | quote }}
                   {{- if index $.Values $appName }}
-                  values: {{ index $.Values $appName | toJson }}
+                  values: {{ merge (index $.Values "shared-storage") (index $.Values $appName)  | toJson }}
                   {{- end }}
                   serviceName: {{ index $.Values "serviceName" }}
                 {{- end }}
@@ -107,7 +107,7 @@ spec:
             {{ `{{- if hasKey . "values" }}` }}
               {{ `{{- $baseValues = .values }}` }}
             {{ `{{- end }}` }}
-            {{ `{{- $mergedValues := merge (deepCopy $appCustomValues) (deepCopy $serviceCustomValues) (deepCopy (index .values "shared-storage")) (deepCopy $baseValues) }}` }}
+            {{ `{{- $mergedValues := merge (deepCopy $appCustomValues) (deepCopy $serviceCustomValues) (deepCopy $baseValues) }}` }}
             {{ `{{- if or (hasKey . "values") (ne (len $serviceCustomValues) 0) (ne (len $appCustomValues) 0) }}` }}
             valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
