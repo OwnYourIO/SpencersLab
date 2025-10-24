@@ -40,7 +40,7 @@ toolhive-operator:
 mcp:
   # Playwright MCP Server - Browser automation
   playwright:
-    enabled: false
+    enabled: true
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/mcp-playwright:latest
     transport: streamable-http
@@ -56,7 +56,7 @@ mcp:
 
   # Git MCP Server - Local git operations
   git:
-    enabled: false
+    enabled: true
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/git:latest
     transport: stdio
@@ -71,7 +71,7 @@ mcp:
 
   # GitHub MCP Server - GitHub API operations
   github:
-    enabled: false
+    enabled: true
     image: ghcr.io/github/github-mcp-server:v0.19.1
     transport: stdio
     port: 8080
@@ -85,7 +85,7 @@ mcp:
 
   # Fetch MCP Server - HTTP fetching and web scraping
   fetch:
-    enabled: false
+    enabled: true
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/fetch
     transport: streamable-http
@@ -101,7 +101,7 @@ mcp:
 
   # Filesystem MCP Server - File system operations
   filesystem:
-    enabled: false
+    enabled: true
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/filesystem:latest
     transport: stdio
@@ -117,7 +117,7 @@ mcp:
   # This acts as a proxy/gateway that can manage multiple MCP servers as subprocesses
   # Perfect for running non-containerized MCP servers (like docling) in a unified way
   onemcp:
-    enabled: false
+    enabled: true
     image: ghcr.io/1mcp-app/agent:v0.25.5
     transport: streamable-http
     port: 3050
@@ -144,7 +144,7 @@ mcp:
 
   # Sequential Thinking MCP Server
   sequential-thinking:
-    enabled: false
+    enabled: true
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/sequentialthinking:latest
     transport: stdio
