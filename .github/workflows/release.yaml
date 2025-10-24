@@ -95,6 +95,7 @@ jobs:
 
   bump:
     needs: [test-build, changes]
+    if: ${{ needs.changes.outputs.charts != '[]' }}
     strategy:
       matrix:
         chart: ${{ fromJSON(needs.changes.outputs.charts) }}
@@ -133,6 +134,7 @@ jobs:
 
   release:
     needs: [bump, changes]
+    if: ${{ needs.changes.outputs.charts != '[]' }}
     # Needed because of this: https://github.com/helm/chart-releaser-action/issues/110
     permissions:
       contents: write
