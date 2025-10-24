@@ -1,4 +1,4 @@
-{{- if (index .Values "hivetools" "shared-storage" "knowledge") }}
+{{- if (index .Values "shared-storage" "knowledge") }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
