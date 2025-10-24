@@ -1,0 +1,39 @@
+{{- $hasEnabledServers := false }}
+{{- range $name, $config := .Values.mcp }}
+{{- if $config.enabled | default true }}
+{{- $hasEnabledServers = true }}
+{{- end }}
+{{- end }}
+{{- if $hasEnabledServers }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcp-multi-server-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: default-normalize-mcp-path@kubernetescrd
+spec:
+  tls:
+    - hosts:
+        - "mcp.{{ .Values.domain }}"
+      secretName: wildcard-cert
+  rules:
+    - host: "mcp.{{ .Values.domain }}"
+      http:
+        paths:
+{{- range $name, $config := .Values.mcp }}
+{{- if $config.enabled | default true }}
+          # Route /{{ $name }}/* to mcp-{{ $name }}-proxy
+          - path: /{{ $name }}
+            pathType: Prefix
+            backend:
+              service:
+                name: mcp-{{ $name }}-proxy
+                port:
+                  number: {{ $config.port | required (printf "mcp.%s.port is required" $name) }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,37 @@
+{{- range $name, $config := .Values.mcp }}
+{{- if $config.enabled | default true }}
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace | default "default" }}
+  {{- if $config.labels }}
+  labels:
+    {{- toYaml $config.labels | nindent 4 }}
+  {{- end }}
+spec:
+  image: {{ $config.image | required (printf "mcp.%s.image is required" $name) }}
+  transport: {{ $config.transport | required (printf "mcp.%s.transport is required" $name) }}
+  {{- if $config.targetPort }}
+  targetPort: {{ $config.targetPort }}
+  {{- end }}
+  port: {{ $config.port | required (printf "mcp.%s.port is required" $name) }}
+  {{- if $config.args }}
+  args:
+    {{- toYaml $config.args | nindent 4 }}
+  {{- end }}
+  {{- if $config.resources }}
+  resources:
+    {{- toYaml $config.resources | nindent 4 }}
+  {{- end }}
+  {{- if $config.secrets }}
+  secrets:
+    {{- toYaml $config.secrets | nindent 4 }}
+  {{- end }}
+  {{- if $config.podTemplateSpec }}
+  podTemplateSpec:
+    {{- toYaml $config.podTemplateSpec | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
