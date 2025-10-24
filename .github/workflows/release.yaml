@@ -13,6 +13,7 @@ jobs:
       pull-requests: read
     outputs:
       charts: ${{ steps.charts.outputs.CHARTS }}
+      has_changes: ${{ steps.check_changes.outputs.HAS_CHANGES }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -39,13 +40,20 @@ jobs:
       - id: test_output
         run: |
           echo "${{ steps.charts.outputs.CHARTS }}"
+      - id: check_changes
+        run: |
+          if [ "${{ steps.charts.outputs.CHARTS }}" = "[]" ] || [ -z "${{ steps.charts.outputs.CHARTS }}" ]; then
+            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
+          else
+            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
+          fi
 
   test-build:
     needs: changes
-    if: ${{ needs.changes.outputs.charts != '[]' && needs.changes.outputs.charts != '' }}
+    if: ${{ needs.changes.outputs.has_changes == 'true' }}
     strategy:
       matrix:
-        chart: ${{ fromJSON(needs.changes.outputs.charts || '[""]') }}
+        chart: ${{ fromJSON(needs.changes.outputs.charts) }}
     permissions:
       # Needed because of this: https://github.com/helm/chart-releaser-action/issues/110
       contents: write
@@ -95,10 +103,10 @@ jobs:
 
   bump:
     needs: [test-build, changes]
-    if: ${{ needs.changes.outputs.charts != '[]' && needs.changes.outputs.charts != '' }}
+    if: ${{ needs.changes.outputs.has_changes == 'true' }}
     strategy:
       matrix:
-        chart: ${{ fromJSON(needs.changes.outputs.charts || '[""]') }}
+        chart: ${{ fromJSON(needs.changes.outputs.charts) }}
     # Needed because of this: https://github.com/helm/chart-releaser-action/issues/110
     permissions:
       contents: write
@@ -134,7 +142,7 @@ jobs:
 
   release:
     needs: [bump, changes]
-    if: ${{ needs.changes.outputs.charts != '[]' }}
+    if: ${{ needs.changes.outputs.has_changes == 'true' }}
     # Needed because of this: https://github.com/helm/chart-releaser-action/issues/110
     permissions:
       contents: write
