@@ -133,9 +133,6 @@ mcp:
     image: mcp/filesystem:latest
     transport: stdio
     port: 8080
-    # Pass /knowledge directory as allowed directory for filesystem operations
-    args:
-      - /knowledge
     resources:
       limits:
         cpu: '100m'
@@ -151,6 +148,9 @@ mcp:
               claimName: knowledge-shared
         containers:
           - name: mcp
+            # Pass /knowledge directory as allowed directory for filesystem operations
+            args:
+              - "/knowledge"
             volumeMounts:
               - mountPath: /knowledge
                 name: knowledge
