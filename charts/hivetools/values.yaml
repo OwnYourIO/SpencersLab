@@ -68,6 +68,15 @@ mcp:
       requests:
         cpu: '50m'
         memory: '64Mi'
+    # TODO: It's also requiring the container run as root >_<.
+    podTemplateSpec:
+      spec:
+        containers:
+        - name: mcp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
 
   # GitHub MCP Server - GitHub API operations
   github:
@@ -98,6 +107,15 @@ mcp:
       requests:
         cpu: '50m'
         memory: '64Mi'
+    # TODO: It's also requiring the container run as root >_<.
+    podTemplateSpec:
+      spec:
+        containers:
+        - name: mcp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
 
   # Filesystem MCP Server - File system operations
   filesystem:
