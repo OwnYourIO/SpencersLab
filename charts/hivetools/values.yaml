@@ -34,3 +34,123 @@ toolhive-operator:
       # allowedNamespaces:
       #   - 'default'
       #   - 'gpu-workloads'
+
+# Default MCP Servers
+# Each server can be enabled/disabled independently
+mcp:
+  # Playwright MCP Server - Browser automation
+  playwright:
+    enabled: false
+    image: ghcr.io/executeautomation/mcp-playwright
+    transport: streamable-http
+    port: 8080
+    targetPort: 8080
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
+        cpu: '100m'
+        memory: '128Mi'
+
+  # Git MCP Server - Local git operations
+  git:
+    enabled: false
+    image: ghcr.io/modelcontextprotocol/servers/git:2025.9.25
+    transport: stdio
+    port: 8080
+    resources:
+      limits:
+        cpu: '100m'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+
+
+  # Docling MCP Server - Document processing
+  docling:
+    enabled: false
+    image: ghcr.io/docling-ai/mcp-server
+    transport: streamable-http
+    port: 8080
+    targetPort: 8080
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '512Mi'
+      requests:
+        cpu: '100m'
+        memory: '256Mi'
+
+  # Fetch MCP Server - HTTP fetching and web scraping
+  fetch:
+    enabled: false
+    image: ghcr.io/stackloklabs/gofetch/server:v1.0.1
+    transport: streamable-http
+    port: 8080
+    targetPort: 8080
+    resources:
+      limits:
+        cpu: '100m'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+
+  # Filesystem MCP Server - File system operations
+  filesystem:
+    enabled: false
+    image: docker.io/mcp/filesystem
+    transport: stdio
+    port: 8080
+    resources:
+      limits:
+        cpu: '100m'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+
+  # Spec Driven Development MCP Server
+  spec-driven-development:
+    enabled: false
+    image: ghcr.io/modelcontextprotocol/servers/spec-driven-development:2025.9.25
+    transport: streamable-http
+    port: 8080
+    targetPort: 8080
+    resources:
+      limits:
+        cpu: '100m'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+
+  # Sequential Thinking MCP Server
+  sequential-thinking:
+    enabled: false
+    image: ghcr.io/modelcontextprotocol/servers/sequential-thinking:2025.9.25
+    transport: stdio
+    port: 8080
+    resources:
+      limits:
+        cpu: '100m'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+  # Firecrawl MCP Server - Advanced web scraping
+  firecrawl:
+    enabled: false
+    image: ghcr.io/mendableai/firecrawl-mcp
+    transport: streamable-http
+    port: 8080
+    targetPort: 8080
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
+        cpu: '100m'
+        memory: '128Mi'
