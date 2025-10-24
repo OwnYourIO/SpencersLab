@@ -107,7 +107,7 @@ spec:
             {{ `{{- if hasKey . "values" }}` }}
               {{ `{{- $baseValues = .values }}` }}
             {{ `{{- end }}` }}
-            {{ `{{- $mergedValues := merge (deepCopy $appCustomValues) (deepCopy $serviceCustomValues) (deepCopy $baseValues) }}` }}
+            {{ `{{- $mergedValues := merge (deepCopy $appCustomValues) (deepCopy $serviceCustomValues) (deepCopy index .values "shared-storage") (deepCopy $baseValues) }}` }}
             {{ `{{- if or (hasKey . "values") (ne (len $serviceCustomValues) 0) (ne (len $appCustomValues) 0) }}` }}
             valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
             {{ `{{- end }}` }}
