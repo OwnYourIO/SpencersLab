@@ -66,16 +66,6 @@ mcp:
       spec:
         containers:
         - name: mcp
-          command: ["node"]
-          args:
-            - "cli.js"
-            - "--browser"
-            - "firefox"
-            - "--headless"
-            - "--port"
-            - "8931"
-        
-          
           volumeMounts:
             - name: tmp
               mountPath: /tmp
