@@ -5,6 +5,15 @@
 # The operator will be deployed to this namespace
 namespace: default
 
+# Shared storage configuration
+# When set, overrides the default PVC for knowledge storage
+# Example:
+# shared-storage:
+#   knowledge:
+#     pvc-name: knowledge-shared
+#     provider: seaweedfs
+shared-storage: {}
+
 # Configuration for toolhive-operator-crds subchart
 # This subchart installs the Custom Resource Definitions
 toolhive-operator-crds:
