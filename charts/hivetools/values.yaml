@@ -145,7 +145,8 @@ mcp:
   # Sequential Thinking MCP Server
   sequential-thinking:
     enabled: false
-    image: ghcr.io/modelcontextprotocol/servers/sequential-thinking:2025.9.25
+    # TODO: This should be versioned, but microsoft is only shipping latest >_<.
+    image: mcp/sequentialthinking:latest
     transport: stdio
     port: 8080
     resources:
@@ -155,6 +156,7 @@ mcp:
       requests:
         cpu: '50m'
         memory: '64Mi'
+
   # Firecrawl MCP Server - Advanced web scraping
   firecrawl:
     enabled: false
