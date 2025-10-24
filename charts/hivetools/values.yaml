@@ -62,6 +62,23 @@ mcp:
       requests:
         cpu: '100m'
         memory: '128Mi'
+    podTemplateSpec:
+      spec:
+        containers:
+        - name: mcp
+          command: ["node"]
+          args:
+            - "cli.js"
+            - "--browser"
+            - "firefox"
+            - "--headless"
+            - "--port"
+            - "8931"
+        
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
 
   # Git MCP Server - Local git operations
   git:
