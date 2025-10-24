@@ -140,6 +140,18 @@ mcp:
       requests:
         cpu: '50m'
         memory: '64Mi'
+    podTemplateSpec:
+      spec:
+        volumes:
+          - name: knowledge
+            persistentVolumeClaim:
+              claimName: knowledge-shared
+        containers:
+          - name: mcp
+            volumeMounts:
+              - mountPath: /knowledge
+                name: knowledge
+
   # 1MCP - One MCP Server for All
   # This acts as a proxy/gateway that can manage multiple MCP servers as subprocesses
   # Perfect for running non-containerized MCP servers (like docling) in a unified way
