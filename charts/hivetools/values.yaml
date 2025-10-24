@@ -56,7 +56,7 @@ mcp:
   # Git MCP Server - Local git operations
   git:
     enabled: false
-    image: ghcr.io/modelcontextprotocol/servers/git:2025.9.25
+    image: mcp/git:2025.7.1
     transport: stdio
     port: 8080
     resources:
@@ -67,21 +67,19 @@ mcp:
         cpu: '50m'
         memory: '64Mi'
 
-
-  # Docling MCP Server - Document processing
-  docling:
+  # GitHub MCP Server - GitHub API operations
+  github:
     enabled: false
-    image: ghcr.io/docling-ai/mcp-server
-    transport: streamable-http
+    image: ghcr.io/github/github-mcp-server:v0.19.1
+    transport: stdio
     port: 8080
-    targetPort: 8080
     resources:
       limits:
-        cpu: '200m'
-        memory: '512Mi'
-      requests:
         cpu: '100m'
-        memory: '256Mi'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
 
   # Fetch MCP Server - HTTP fetching and web scraping
   fetch:
@@ -111,16 +109,20 @@ mcp:
       requests:
         cpu: '50m'
         memory: '64Mi'
-
-  # Spec Driven Development MCP Server
-  spec-driven-development:
+  # 1MCP - One MCP Server for All
+  # This acts as a proxy/gateway that can manage multiple MCP servers as subprocesses
+  # Perfect for running non-containerized MCP servers (like docling) in a unified way
+  onemcp:
     enabled: false
-    image: ghcr.io/modelcontextprotocol/servers/spec-driven-development:2025.9.25
+    image: ghcr.io/1mcp-app/agent:v0.25.5
     transport: streamable-http
-    port: 8080
-    targetPort: 8080
+    port: 3050
+    targetPort: 3050
     resources:
       limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
         cpu: '100m'
         memory: '128Mi'
       requests:
