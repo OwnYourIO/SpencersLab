@@ -33,5 +33,9 @@ spec:
   podTemplateSpec:
     {{- toYaml $config.podTemplateSpec | nindent 4 }}
   {{- end }}
+  {{- if $config.volumes }}
+  volumes:
+    {{- toYaml $config.volumes | nindent 4 }}
+  {{- end }}
 {{- end }}
 {{- end }}
