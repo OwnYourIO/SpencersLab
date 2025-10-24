@@ -26,9 +26,7 @@ spec:
                   {{- end }}
                   namespace: {{ $chartConfig.namespace | default "default" }}
                   ServerSideApply: {{ $chartConfig.ServerSideApply | default "false" | quote }}
-                  {{- if index $.Values $appName }}
                   values: {{ merge (index $.Values "shared-storage") (index $.Values $appName)  | toJson }}
-                  {{- end }}
                   serviceName: {{ index $.Values "serviceName" }}
                 {{- end }}
   template:
