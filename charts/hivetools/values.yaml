@@ -125,9 +125,18 @@ mcp:
       requests:
         cpu: '100m'
         memory: '128Mi'
-      requests:
-        cpu: '50m'
-        memory: '64Mi'
+    # Volume mount for 1MCP configuration directory
+    # Required: 1MCP needs to write config to /home/node/.config/1mcp
+    podTemplateSpec:
+      spec:
+        volumes:
+          - name: onemcp-config
+            emptyDir: {}
+        containers:
+          - name: mcp
+            volumeMounts:
+              - mountPath: /home/node/.config/1mcp
+                name: onemcp-config
 
   # Sequential Thinking MCP Server
   sequential-thinking:
