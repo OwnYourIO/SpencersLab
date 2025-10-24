@@ -53,7 +53,7 @@ spec:
             {{- end }}
       {{- if index .Values "seaweedVolumePort" }}
       seaweedvolume:
-        port: 8080
+        port: {{ index .Values "seaweedVolumePort" }}
         expose:
           default: true
         exposedPort: 8080
