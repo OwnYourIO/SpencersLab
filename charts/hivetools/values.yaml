@@ -51,7 +51,7 @@ mcp:
   playwright:
     enabled: true
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
-    image: mcp/mcp-playwright:latest
+    image: mcr.microsoft.com/playwright/mcp:latest
     transport: streamable-http
     port: 8080
     targetPort: 8080
