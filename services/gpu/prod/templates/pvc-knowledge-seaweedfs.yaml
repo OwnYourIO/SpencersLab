@@ -1,0 +1,36 @@
+{{- if (index .Values "hivetools" "shared-storage" "knowledge") }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: knowledge-shared
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 3000Gi
+  csi:
+    driver: seaweedfs-csi-driver
+    volumeHandle: knowledge-shared
+    volumeAttributes:
+      collection: documents
+      replication: "003"
+      path: /buckets/documents/knowledge
+      #diskType: "ssd"
+    readOnly: false
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: knowledge-shared
+spec:
+  storageClassName: ""
+  volumeName: knowledge-shared
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 3000Gi
+{{- end }}

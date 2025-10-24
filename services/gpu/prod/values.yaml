@@ -321,3 +321,9 @@ coder:
 
     service:
       type: ClusterIP
+
+hivetools:
+  shared-storage:
+    knowledge:
+      pvc-name: knowledge-shared
+      provider: seaweedfs
