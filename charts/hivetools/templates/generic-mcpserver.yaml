@@ -1,5 +1,5 @@
 {{- range $name, $config := .Values.mcp }}
-{{- if $config.enabled | default true }}
+{{- if and $config (ne ($config.enabled | toString) "false") }}
 ---
 apiVersion: toolhive.stacklok.dev/v1alpha1
 kind: MCPServer
