@@ -78,6 +78,8 @@ jobs:
           for dir in $(ls -d charts/$CHART/); do
             helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ print "helm repo add " $1 " " $3 }' | while read cmd; do $cmd; done
           done
+        env:
+          CHART: "${{ matrix.chart }}"
       - name: Run chart-releaser
         # Check for newest version at: https://github.com/helm/chart-releaser-action/releases
         uses: helm/chart-releaser-action@3e001cb8c68933439c7e721650f20a07a1a5c61e
@@ -86,7 +88,6 @@ jobs:
           skip_upload: true
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          CHART: "${{ matrix.chart }}"
 
   bump:
     needs: [test-build, changes]
