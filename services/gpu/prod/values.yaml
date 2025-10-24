@@ -322,6 +322,12 @@ coder:
     service:
       type: ClusterIP
 
+langflow:
+  app-template:
+    persistence:
+      knowledge:
+        existingClaim: knowledge-shared
+
 shared-storage:
   knowledge:
     pvc-name: knowledge-shared
