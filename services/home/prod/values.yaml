@@ -114,6 +114,15 @@ ingress:
       service: home-hortusfox
       port: 80
 
+    drawio:
+      serviceName: drawio
+      service: home-drawio
+      port: 8080
+    diagrams:
+      serviceName: drawio
+      service: home-drawio
+      port: 8080
+
     help:
       service: home-hugo-help
       port: 1313
@@ -897,6 +906,55 @@ karakeep:
           path: /data
 
 
+drawio:
+  global:
+    nameOverride: drawio
+  controllers:
+    drawio:
+      containers:
+        main:
+          image:
+            repository: jgraph/drawio
+            tag: 25.0.6
+          env:
+            TZ: America/Denver
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 10m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          probes:
+            liveness:
+              enabled: true
+              type: HTTP
+              spec:
+                path: /
+                port: 8080
+            readiness:
+              enabled: true
+              type: HTTP
+              spec:
+                path: /
+                port: 8080
+  service:
+    drawio:
+      controller: drawio
+      ports:
+        http:
+          port: 8080
+  defaultPodOptions:
+    securityContext:
+      runAsNonRoot: false
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+
 hugo-help:
     global:
       nameOverride: hugo-help
@@ -910,7 +968,7 @@ hugo-help:
             env:
               TZ: America/Denver
               HUGO_BASEURL: "https://home.spencerslab.com"
-            command: 
+            command:
                 - /bin/sh
                 - -c
                 - |
