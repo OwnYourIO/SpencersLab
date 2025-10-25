@@ -5,6 +5,13 @@
 # The operator will be deployed to this namespace
 namespace: default
 
+# Domain for MCP ingress (override via custom-values)
+domain: OVERRIDE_VIA_CUSTOM_VALUES
+
+# Bitwarden secret IDs
+bitwardenIds:
+  github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+
 # Shared storage configuration
 # When set, overrides the default PVC for knowledge storage
 # Example:
@@ -135,6 +142,10 @@ mcp:
       requests:
         cpu: '50m'
         memory: '64Mi'
+    secrets:
+      - name: github-mcp
+        key: GITHUB_PERSONAL_ACCESS_TOKEN
+        targetEnvName: GITHUB_PERSONAL_ACCESS_TOKEN
 
   # Fetch MCP Server - HTTP fetching and web scraping
   fetch:
