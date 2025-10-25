@@ -1,0 +1,8 @@
+apiVersion: v2
+name: drawio
+version: 1.0.0
+appVersion: 25.0.6
+dependencies:
+- name: app-template
+  version: 4.3.0
+  repository: https://bjw-s-labs.github.io/helm-charts/

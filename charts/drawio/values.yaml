@@ -1,0 +1,51 @@
+global:
+  nameOverride: drawio
+domain: OVERRIDE_VIA_APPSET
+app-template:
+  controllers:
+    drawio:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: jgraph/drawio
+            tag: 25.0.6
+          env:
+            TZ: Etc/UTC
+          probes:
+            liveness:
+              enabled: true
+              type: HTTP
+              spec:
+                path: /
+                port: 8080
+            readiness:
+              enabled: true
+              type: HTTP
+              spec:
+                path: /
+                port: 8080
+          resources:
+            requests:
+              cpu: 10m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+      pod:
+        securityContext:
+          runAsNonRoot: false
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+  service:
+    drawio:
+      controller: drawio
+      ports:
+        http:
+          port: 8080
