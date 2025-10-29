@@ -1,0 +1,63 @@
+bitwardenIds:
+  docling: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName docling
+
+  controllers:
+    docling:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: quay.io/docling-project/docling-serve
+            tag: v1.7.0
+          env:
+            DOCLING_SERVE_HOST: "0.0.0.0"
+            DOCLING_SERVE_PORT: "5001"
+            DOCLING_SERVE_ENABLE_UI: "1"
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 5001
+                initialDelaySeconds: 30
+                periodSeconds: 10
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 5001
+                initialDelaySeconds: 20
+                periodSeconds: 5
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              memory: 8Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    docling:
+      controller: *chartName
+      ports:
+        http:
+          port: 5001
