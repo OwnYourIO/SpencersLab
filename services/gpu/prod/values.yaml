@@ -8,6 +8,21 @@ charts:
   langflow:
     namespace: default
     ServerSideApply: "false"
+  langfuse:
+    namespace: default
+    ServerSideApply: "false"
+  docling:
+    namespace: default
+    ServerSideApply: "false"
+  graphio:
+    namespace: default
+    ServerSideApply: "false"
+  searxng:
+    namespace: default
+    ServerSideApply: "false"
+  neo4j:
+    namespace: default
+    ServerSideApply: "false"
   n8n:
     namespace: default
     ServerSideApply: "false"
