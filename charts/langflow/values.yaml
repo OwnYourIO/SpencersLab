@@ -39,7 +39,8 @@ app-template:
               memory: 140Mi
             limits:
               # 22Gi was too little.
-              memory: 4Gi
+              # and so was 4Gi
+              memory: 8Gi
           securityContext:
             allowPrivilegeEscalation: false
             # TODO: Get this working.
