@@ -38,7 +38,8 @@ app-template:
               cpu: 10m
               memory: 140Mi
             limits:
-              memory: 2Gi
+              # 22Gi was too little.
+              memory: 4Gi
           securityContext:
             allowPrivilegeEscalation: false
             # TODO: Get this working.
