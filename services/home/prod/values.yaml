@@ -207,7 +207,7 @@ zigbee2mqtt:
           main:
             image: 
               repository: ghcr.io/koenkk/zigbee2mqtt
-              tag: 2.6.0
+              tag: 2.6.3
             env:
               TZ: America/Denver
               #DEBUG: zigbee-herdsman*
