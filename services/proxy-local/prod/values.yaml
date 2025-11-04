@@ -384,7 +384,8 @@ pinchflat:
             readiness: *probes
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            # Disable readonly so that yt-dlp can be updated.
+            #readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
           resources:
             requests:
