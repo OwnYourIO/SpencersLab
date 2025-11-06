@@ -897,7 +897,7 @@ karakeep:
           path: /data
     prompts-override:
       type: configMap
-      name: prompts-override
+      name: home-karakeep
       defaultMode: 0777
       globalMounts:
       - subPath: prompts.ts
