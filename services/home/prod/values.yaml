@@ -897,6 +897,8 @@ karakeep:
           path: /data
     prompts-override:
       type: configMap
+      name: prompts-override
+      defaultMode: 0777
       globalMounts:
       - subPath: prompts.ts
         path: /app/apps/workers/node_modules/.pnpm/@karakeep+shared@file+packages+shared_@opentelemetry+api@1.9.0_@types+better-sqlite3@7.6.13_@_gbff4xplyjwshe26gpf7ghfv7a/node_modules/@karakeep/shared/prompts.ts
