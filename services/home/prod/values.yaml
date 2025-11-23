@@ -758,6 +758,7 @@ karakeep:
                   name: karakeep-secret
                   key: ollama_base_url
             INFERENCE_TEXT_MODEL: 'hf.co/unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q4_K_M'
+            INFERENCE_CONTEXT_LENGTH: 128000
             INFERENCE_IMAGE_MODEL: 'llava:8b'
             MEILI_ADDR: http://home-karakeep-meilisearch.default.svc.cluster.local:7700
             MEILI_MASTER_KEY:
