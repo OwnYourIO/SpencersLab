@@ -749,6 +749,8 @@ karakeep:
             CRAWLER_ENABLE_ADBLOCKER: true
             CRAWLER_STORE_SCREENSHOT: true
             CRAWLER_FULL_PAGE_ARCHIVE: true
+            #Encounted DB locked errors. Trying WAL mode to address per https://github.com/karakeep-app/karakeep/issues/1802
+            DB_WAL_MODE: true
             DATA_DIR: /data
             # This impacts SSO signups as well.
             DISABLE_SIGNUPS: false
