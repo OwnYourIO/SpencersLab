@@ -51,10 +51,6 @@ ingress:
       service: immich-server
       port: 2283
 
-    zigbee:
-      serviceName: zigbee2mqtt
-      service: home-zigbee2mqtt
-      port: 8080
     zigbee-coord:
       serviceName: zigbee2mqtt-coord
       service: home-zigbee2mqtt-coord
@@ -196,34 +192,6 @@ generic-device-plugin:
                 groups:
                   - paths:
                       - path: /dev/snd
-
-zigbee2mqtt:
-  bitwardenIds:
-    zigbee2mqtt: 0164cfbc-dd85-43af-a4cc-b13f00108bde
-  app-template:
-    controllers:
-      zigbee2mqtt:
-        containers:
-          main:
-            image: 
-              repository: ghcr.io/koenkk/zigbee2mqtt
-              tag: 2.6.0
-            env:
-              TZ: America/Denver
-              #DEBUG: zigbee-herdsman*
-              #ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL: debug
-              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee2mqtt.spencerslab.com
-              ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://home.spencerslab.com
-              ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 4
-              ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 57600
-              ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyUSB1
-              ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ezsp
-            securityContext:
-              allowPrivilegeEscalation: true
-              readOnlyRootFilesystem: false
-        pod:
-          securityContext:
-            runAsNonRoot: false
 
 snapcast:
   app-template:

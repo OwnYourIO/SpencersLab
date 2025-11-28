@@ -12,9 +12,6 @@ dependencies:
 - name: generic-device-plugin
   version: 1.0.24
   repository: https://ownyourio.github.io/SpencersLab/
-- name: zigbee2mqtt
-  version: 1.0.59
-  repository: https://ownyourio.github.io/SpencersLab/
 # TODO: MQTT chart
 # TODO: Use the better charts.
 #- name: zwavejs2mqtt
