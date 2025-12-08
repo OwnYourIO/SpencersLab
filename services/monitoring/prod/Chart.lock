@@ -2,14 +2,5 @@ dependencies:
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 78.1.0
-- name: loki-stack
-  repository: https://grafana.github.io/helm-charts
-  version: 2.10.2
-- name: exporter-mikrotik
-  repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.21
-- name: grafana
-  repository: https://grafana.github.io/helm-charts/
-  version: 10.1.0
-digest: sha256:1d01df32e83fd1c2e1347893593e9388f65881172f465375d86922914d433a5d
-generated: "2025-10-11T13:56:45.115224551Z"
+digest: sha256:3c183c0dd06f999d38b240318dabb5434004671b51a8e92c2d39d55b4b5ac550
+generated: "2025-12-08T14:07:39.222395694-07:00"
