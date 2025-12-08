@@ -2,6 +2,8 @@ seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
   seaweedfsCsiPlugin:
     image: chrislusf/seaweedfs-csi-driver:v1.3.6
+  mountService:
+    enabled: false
 
 bitwardenIds:
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
