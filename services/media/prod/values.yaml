@@ -3,7 +3,7 @@ bitwardenIds:
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
   seaweedfsCsiPlugin:
-    image: chrislusf/seaweedfs-csi-driver:v1.3.3
+    image: chrislusf/seaweedfs-csi-driver:v1.3.6
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
