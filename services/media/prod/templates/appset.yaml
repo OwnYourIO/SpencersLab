@@ -1,0 +1,134 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  # AFTER COPY UPDATE HERE AND serviceName
+  name: media-appset
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    # Generator for apps that should deploy to all cluster.
+    - matrix:
+        generators:
+          - clusters: {}
+          - list:
+              elements:
+                # AFTER COPY UPDATE HERE
+                - serviceName: media
+                  ServerSideApply: "true"
+                  # This is needed so renovate pick's up the version
+                  # appName: base
+                  # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+                  baseChartVersion: 1.0.137
+                  values: { { index $ "Values" | default dict | toJson } }
+  template:
+    metadata:
+      name: "{{ `{{ .serviceName }}` }}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: ".;.."
+    spec:
+      project: '{{ `{{ index .metadata.annotations (printf "services.%s.project" .serviceName) | default "default" }}` }}'
+      destination:
+        name: "{{ `{{ .name }}` }}"
+        namespace: '{{ `{{ index .metadata.annotations (printf "services.%s.namespace" .serviceName) | default "default" }}` }}'
+  templatePatch: |
+    # Dynamic source configuration - toggle specific fields based on chart type
+
+    # Variable declarations for reusability and clarity
+    {{ `{{- $servicesRepoPath := index .metadata.annotations "services.repo.path" }}` }}
+    {{ `{{- $stage := .metadata.annotations.stage }}` }}
+    {{ `{{- $targetRevision := (eq $stage "prod") | ternary "main" $stage }}` }}
+    {{ `{{- $servicePath := printf "%s/%s/%s" $servicesRepoPath .serviceName $stage }}` }}
+    {{ `{{- $serviceValuesFile := printf "$services/%s/values.yaml" $servicePath }}` }}
+
+    # Service-wide base chart version control: Allows per-cluster override of base chart version.
+    # Configuration via cluster annotation (defaults to generator value):
+    #   - services.{serviceName}.baseChartVersion
+    # Usage: Set annotation to specific version to override default
+    #   Example: services.gpu.baseChartVersion="1.0.134"
+    {{ `{{- $baseChartVersion := index .metadata.annotations (printf "services.%s.baseChartVersion" .serviceName) | default .baseChartVersion }}` }}
+
+    # Service-wide autoUpdateK3s control: Allows disabling K3s auto-updates.
+    # Configuration via cluster annotation (defaults to "true"):
+    #   - services.{serviceName}.autoUpdateK3s
+    # Usage: Set annotation to "false" to disable auto-updates
+    #   Example: services.gpu.autoUpdateK3s="false"
+    {{ `{{- $autoUpdateK3s := index .metadata.annotations (printf "services.%s.autoUpdateK3s" .serviceName) | default "true" }}` }}
+
+    # Service-wide custom values URLs: Applies to ALL apps in this service.
+    # Configuration via cluster annotation (JSON array of URLs):
+    #   - services.{serviceName}.customValuesUrls
+    # Example: services.gpu.customValuesUrls='["https://raw.githubusercontent.com/OwnYourIO/SpencersLab/refs/heads/main/custom-values/gpu/prod-values.yaml"]'
+    {{ `{{- $serviceCustomValuesUrls := index .metadata.annotations (printf "services.%s.customValuesUrls" .serviceName) }}` }}
+
+    # Hierarchical values merging: Combines values from multiple sources with proper precedence.
+    # Merge order (highest to lowest precedence):
+    #   1. Base chart-specific custom values from cluster annotation: services.{serviceName}.base.customValues (YAML)
+    #   2. Service-wide custom values from cluster annotation: services.{serviceName}.customValues (YAML)
+    #   3. Values injected from generator (optional)
+    # Usage: Set cluster annotations in ArgoCD to provide service-wide or base chart-specific value overrides.
+    #   Example service-wide: services.gpu.customValues='replicas: 2'
+    #   Example base chart-specific: services.gpu.base.customValues='replicas: 3'
+    {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
+    {{ `{{- $baseCustomValues := index .metadata.annotations (printf "services.%s.base.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
+    {{ `{{- $mergedValues := merge (deepCopy $baseCustomValues) (deepCopy $serviceCustomValues) (deepCopy .values) }}` }}
+
+    spec:
+      sources:
+        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
+          targetRevision: main
+          ref: services
+        - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
+          targetRevision: main
+          ref: values
+        - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
+          targetRevision: '{{ `{{ $targetRevision }}` }}'
+          path: '{{ `{{ $servicePath }}` }}'
+          helm:
+            parameters:
+              - name: domain
+                value: '{{ `{{ .metadata.annotations.domain }}` }}'
+              - name: clusterName
+                value: '{{ `{{ .metadata.annotations.clusterName }}` }}'
+              - name: serviceName
+                value: '{{ `{{ .serviceName }}` }}'
+            valueFiles:
+              - '{{ `{{ $serviceValuesFile }}` }}'
+              {{ `{{- if $serviceCustomValuesUrls }}` }}
+              {{ `{{- range mustFromJson $serviceCustomValuesUrls }}` }}
+              - {{ `{{ . }}` }}
+              {{ `{{- end }}` }}
+              {{ `{{- end }}` }}
+        - repoURL: "{{ `{{ index .metadata.annotations "chart.repo" }}` }}"
+          chart: "base"
+          targetRevision: "{{ `{{ $baseChartVersion }}` }}"
+          helm:
+            parameters:
+              - name: domain
+                value: "{{ `{{ .metadata.annotations.domain }}` }}"
+              - name: clusterName
+                value: "{{ `{{ .metadata.annotations.clusterName }}` }}"
+              - name: serviceName
+                value: '{{ `{{ .serviceName }}` }}'
+              - name: argo-cd.configs.cm.url
+                value: "https://cluster.{{ `{{ .metadata.annotations.clusterName }}` }}.{{ `{{ .metadata.annotations.domain }}` }}"
+              - name: autoUpdateK3s
+                value: "{{ `{{ $autoUpdateK3s }}` }}"
+            valueFiles:
+              - '{{ `{{ $serviceValuesFile }}` }}'
+              {{ `{{- if $serviceCustomValuesUrls }}` }}
+              {{ `{{- range mustFromJson $serviceCustomValuesUrls }}` }}
+              - {{ `{{ . }}` }}
+              {{ `{{- end }}` }}
+              {{ `{{- end }}` }}
+            valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
+      syncPolicy:
+        {{ `{{- if eq (default "true" (index .metadata.annotations (printf "services.%s.selfHeal" .serviceName))) "true" }}` }}
+        automated:
+          prune: true
+          selfHeal: true
+        {{ `{{- end }}` }}
+        syncOptions:
+          - CreateNamespace=true
+          # Needed for: https://github.com/prometheus-community/helm-charts/issues/3345
+          - ServerSideApply={{ `{{ .ServerSideApply }}` }}
