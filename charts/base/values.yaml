@@ -51,9 +51,10 @@ argo-cd:
       - --insecure
       - --application-namespaces="*"
   repoServer:
-    service:
-      port: 8081
-      targetPort: 8081
+    containerPorts:
+      server:
+        name: repo-server
+        containerPort: 8081
 
   configs:
     # General Argo CD configuration
