@@ -39,6 +39,7 @@ cert-manager:
     enabled: false
 
 argo-cd:
+  fullnameOverride: "argocd"
   server:
     authMode: sso
     sso:
@@ -51,8 +52,8 @@ argo-cd:
       - --application-namespaces="*"
 
   configs:
-  # General Argo CD configuration
-  ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
+    # General Argo CD configuration
+    ## Ref: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml
     cm:
       oidc.config: |
         name: Keycloak
@@ -76,9 +77,9 @@ argo-cd:
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .apiVersion'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .kind'
 
-    rbac: 
+    rbac:
       create: true
-      policy.default: ''
+      policy.default: ""
       policy.csv: |
         g, Admin, role:admin
       scopes: "[groups]"
@@ -93,4 +94,3 @@ argo-cd:
   controller:
     extraArgs:
       - --application-namespaces="*"
-
