@@ -1,0 +1,33 @@
+bitwardenIds:
+  home-assistant-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+charts:
+  cloudnative-pg:
+    version: 0.25.0
+    repository: https://cloudnative-pg.github.io/charts
+    namespace: default
+    ServerSideApply: "true"
+  external-secrets-bitwarden:
+    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+  monitoring-agent:
+    version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+ingress:
+  subdomains:
+    cluster:
+      clusterBase: true
+      service: base-argocd-server
+      port: 80
+    traefik:
+      clusterBase: true
+      namespace: kube-system
+      service: traefik
+      port: 8080
