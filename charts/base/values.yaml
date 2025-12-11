@@ -72,6 +72,20 @@ argo-cd:
           - profile
           - email
           - groups
+
+      # This is needed because when argocd is installed initially with raw k8s 
+      # objects and then taken over with the appset, it's missing the appset selector. 
+      # Selectors are immutable and already can't run more than one argocd per 
+      # namespace so just ignoring that difference for now.
+      resource.customizations.ignoreDifferences.apps_Deployment: |
+        jqPathExpressions:
+          - '.spec.selector'
+          - '.metadata.labels'
+      resource.customizations.ignoreDifferences.apps_StatefulSet: |
+        jqPathExpressions:
+          - '.spec.selector'
+          - '.metadata.labels'
+
       # This is to address https://github.com/bjw-s/helm-charts/issues/366
       resource.customizations.ignoreDifferences.apps_Deployment: |
         jqPathExpressions:
