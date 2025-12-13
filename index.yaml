@@ -7514,6 +7514,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/logitech-media-server-1.0.6/logitech-media-server-1.0.6.tgz
     version: 1.0.6
+  loki:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-12-13T14:43:03.882967019Z"
+    dependencies:
+    - name: loki
+      repository: https://grafana.github.io/helm-charts
+      version: 6.46.0
+    digest: d03d8012b2a1f5fd2502257afdf4617b3566c0635e97cccd3e48d1b827e7c1d8
+    name: loki
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/loki-1.0.1/loki-1.0.1.tgz
+    version: 1.0.1
   media-appset:
   - apiVersion: v2
     appVersion: 1.1.2
@@ -11157,4 +11170,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-11T20:00:40.295168041Z"
+generated: "2025-12-13T14:43:03.883882538Z"
