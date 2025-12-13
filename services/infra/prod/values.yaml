@@ -15,6 +15,19 @@ seaweedfs-csi-driver:
     image: chrislusf/seaweedfs-csi-driver:v1.3.6
   mountService:
     enabled: true
+
+charts: 
+  external-secrets-bitwarden:
+    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+  monitoring-agent:
+    version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+
 ingress:
   subdomains:
     login:
@@ -274,6 +287,11 @@ generic-device-plugin:
 seaweedfs-csi-driver:
   #seaweedfsFiler: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
   seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default:8888"
+
+  seaweedfsCsiPlugin:
+    image: chrislusf/seaweedfs-csi-driver:v1.3.6
+  mountService:
+    enabled: true
 
 seaweedfs:
   global:
