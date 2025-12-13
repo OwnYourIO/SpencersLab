@@ -9,6 +9,12 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+
+seaweedfs-csi-driver:
+  seaweedfsCsiPlugin:
+    image: chrislusf/seaweedfs-csi-driver:v1.3.6
+  mountService:
+    enabled: true
 ingress:
   subdomains:
     login:
