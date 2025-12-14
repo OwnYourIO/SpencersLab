@@ -88,6 +88,9 @@ spec:
               {{ `{{- if $appCustomValuesUrl }}` }}
               - {{ `{{ $appCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
+              {{ `{{- if not hasKey . "version" }}` }}
+              - $values/charts/{{ `{{ .appName }}` }}/values.yaml
+              {{ `{{- else }}` }}
             # Hierarchical values merging: Combines values from multiple sources with proper precedence.
             # Merge order (highest to lowest precedence):
             #   1. Per-app custom values from cluster annotation: services.{serviceName}.{appName}.customValues (YAML)
