@@ -15,8 +15,10 @@ charts:
     namespace: default
     ServerSideApply: "true"
   loki:
-    version: 1.0.1 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    repository: https://ownyourio.github.io/SpencersLab/
+    #version: 1.0.1 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
     namespace: default
     ServerSideApply: "true"
 ingress:
