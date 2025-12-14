@@ -81,6 +81,7 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
+          path: .
         - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
           targetRevision: '{{ `{{ $targetRevision }}` }}'
           path: '{{ `{{ $servicePath }}` }}'
