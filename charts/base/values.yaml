@@ -88,10 +88,14 @@ argo-cd:
       resource.customizations.ignoreDifferences.apps_Deployment: |
         jqPathExpressions:
           - '.spec.template.spec.hostUsers'
+          - 'select(.metadata.name | test("argocd-(server|repo-server)")) | .spec.selector'
+          - 'select(.metadata.name | test("argocd-(server|repo-server)")) | .metadata.labels'
       resource.customizations.ignoreDifferences.apps_StatefulSet: |
         jqPathExpressions:
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .apiVersion'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .kind'
+          - 'select(.metadata.name | test("argocd-application-controller")) | .spec.selector'
+          - 'select(.metadata.name | test("argocd-application-controller")) | .metadata.labels'
 
     rbac:
       create: true
