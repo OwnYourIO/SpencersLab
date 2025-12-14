@@ -88,14 +88,14 @@ argo-cd:
       resource.customizations.ignoreDifferences.apps_Deployment: |
         jqPathExpressions:
           - '.spec.template.spec.hostUsers'
-          - 'select(.metadata.name | test("argocd-(server|repo-server)")) | .spec.selector'
-          - 'select(.metadata.name | test("argocd-(server|repo-server)")) | .metadata.labels'
+          - '.spec.selector | select(.matchLabels."app.kubernetes.io/name" | test("argocd-(server|repo-server|applicationset-controller)"))'
+          - '.metadata.labels | select(.metadata.name | test("argocd-(server|repo-server|applicationset-controller)"))'
       resource.customizations.ignoreDifferences.apps_StatefulSet: |
         jqPathExpressions:
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .apiVersion'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .kind'
-          - 'select(.metadata.name | test("argocd-application-controller")) | .spec.selector'
-          - 'select(.metadata.name | test("argocd-application-controller")) | .metadata.labels'
+          - '.spec.selector | select(.matchLabels."app.kubernetes.io/name" | test("argocd-(server|repo-server|applicationset-controller)"))'
+          - '.metadata.labels | select(.metadata.name | test("argocd-(server|repo-server|applicationset-controller)"))'
 
     rbac:
       create: true
