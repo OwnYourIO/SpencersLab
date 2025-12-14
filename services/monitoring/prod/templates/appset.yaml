@@ -19,7 +19,7 @@ spec:
                   # This is needed so renovate pick's up the version
                   # appName: base
                   # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  baseChartVersion: 1.0.153
+                  baseChartVersion: 1.0.154
                   values: {{ index $ "Values" | default dict | toJson }}
   template:
     metadata:
@@ -81,7 +81,6 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
-          path: .
         - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
           targetRevision: '{{ `{{ $targetRevision }}` }}'
           path: '{{ `{{ $servicePath }}` }}'

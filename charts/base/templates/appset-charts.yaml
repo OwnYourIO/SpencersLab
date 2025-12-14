@@ -89,7 +89,7 @@ spec:
               - {{ `{{ $appCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
               {{ `{{- if not (hasKey . "version") }}` }}
-              - $values/charts/{{ `{{ .appName }}` }}/values.yaml
+              - values.yaml
               {{ `{{- end }}` }}
             # Hierarchical values merging: Combines values from multiple sources with proper precedence.
             # Merge order (highest to lowest precedence):
