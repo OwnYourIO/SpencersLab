@@ -9,13 +9,9 @@ loki:
     storage:
       type: s3
       bucketNames:
-        chunks: "logs"
-        ruler: "spencerslab"
-      s3:
-        endpoint: s3.spencerslab.com
-        region: us-co-1
-        accessKeyId: ""                    # Empty string
-        secretAccessKey: ""                # Empty string
+        chunks: logs
+        ruler: logs
+        admin: logs
     schemaConfig:
       configs:
         - from: "2024-04-01"
@@ -32,6 +28,10 @@ loki:
         active_index_directory: /var/loki/index
         cache_location: /var/loki/index_cache
         cache_ttl: 168h                  # 7 days - keep week's indexes locally
+      aws:
+        endpoint: https://s3.spencerslab.com
+        region: us-co-1
+        s3forcepathstyle: true
 
     limits_config:
       retention_period: 2160h            # 90 days global retention
