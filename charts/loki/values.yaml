@@ -50,18 +50,15 @@ loki:
       retention_delete_worker_count: 150
       delete_request_store: s3
 
-    ingester:
-      chunk_encoding: snappy
+  ingester:
+    chunk_encoding: snappy
 
-    # IRSA for AWS - most secure credential method
-    serviceAccount:
-      create: true
 
-    # Component replicas
-    backend:
-      replicas: 1
-      persistence:
-        size: 20Gi
+  # Component replicas
+  backend:
+    replicas: 1
+    persistence:
+      size: 20Gi
 
   read:
     replicas: 1
