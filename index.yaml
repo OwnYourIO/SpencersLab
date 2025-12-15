@@ -7637,6 +7637,18 @@ entries:
   loki:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-12-15T02:24:49.550906621Z"
+    dependencies:
+    - name: loki
+      repository: https://grafana.github.io/helm-charts
+      version: 6.46.0
+    digest: 54ece67f7689d4b17872df77d827ea95b22c6364f531b4f15faaa183fb131886
+    name: loki
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/loki-1.0.9/loki-1.0.9.tgz
+    version: 1.0.9
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-12-15T02:11:36.652532097Z"
     dependencies:
     - name: loki
@@ -11374,4 +11386,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-15T02:11:36.653993239Z"
+generated: "2025-12-15T02:24:49.551924672Z"
