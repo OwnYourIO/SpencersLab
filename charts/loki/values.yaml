@@ -1,6 +1,24 @@
 deploymentMode: SimpleScalable
 
+
+storage:
+  type: s3
+  bucketNames:
+    chunks: "logs"
+    ruler: "spencerslab"
+  s3:
+    endpoint: s3.spencerslab.com
+    region: us-co-1
 loki:
+  loki:
+    storage:
+      type: s3
+      bucketNames:
+        chunks: "logs"
+        ruler: "spencerslab"
+      s3:
+        endpoint: s3.spencerslab.com
+        region: us-co-1
   auth_enabled: false
 
   schemaConfig:
