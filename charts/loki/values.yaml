@@ -1,25 +1,26 @@
 deploymentMode: SimpleScalable
 
 
-storage:
-  type: s3
-  bucketNames:
-    chunks: "logs"
-    ruler: "spencerslab"
-  s3:
-    endpoint: s3.spencerslab.com
-    region: us-co-1
-schemaConfig:
-  configs:
-    - from: "2024-04-01"
-      store: tsdb                    # TSDB required for Loki 2.8+
-      object_store: s3
-      schema: v13
-      index:
-        prefix: loki_index_
-        # I think 24 hours is required?
-        period: 24h                  # Required for retention to work
 loki:
+  loki:
+    storage:
+      type: s3
+      bucketNames:
+        chunks: "logs"
+        ruler: "spencerslab"
+      s3:
+        endpoint: s3.spencerslab.com
+        region: us-co-1
+    schemaConfig:
+      configs:
+        - from: "2024-04-01"
+          store: tsdb                    # TSDB required for Loki 2.8+
+          object_store: s3
+          schema: v13
+          index:
+            prefix: loki_index_
+            # I think 24 hours is required?
+            period: 24h                  # Required for retention to work
   auth_enabled: false
 
 
