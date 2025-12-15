@@ -25,8 +25,8 @@ loki:
 
     storage_config:
       tsdb_shipper:
-        active_index_directory: /loki/index
-        cache_location: /loki/index_cache
+        active_index_directory: /var/loki/index
+        cache_location: /var/loki/index_cache
         cache_ttl: 168h                  # 7 days - keep week's indexes locally
 
     limits_config:
@@ -43,7 +43,7 @@ loki:
           period: 4320h                  # 180 days for prod
 
     compactor:
-      working_directory: /data/retention
+      working_directory: /var/loki/retention
       compaction_interval: 10m
       retention_enabled: true
       retention_delete_delay: 2h
