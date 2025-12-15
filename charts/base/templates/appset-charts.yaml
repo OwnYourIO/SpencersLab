@@ -53,6 +53,7 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
+          path: '{{ `{{ index .metadata.annotations "chart.repo.path" }}` }}/{{ `{{ .appName }}` }}'
         - repoURL: '{{ `{{ if hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
           targetRevision: "{{ `{{ dig "version" "main" . }}` }}"
           {{ `{{- if hasKey . "version" }}` }}
@@ -89,7 +90,7 @@ spec:
               - {{ `{{ $appCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
               {{ `{{- if not (hasKey . "version") }}` }}
-              - values.yaml
+              - $values/values.yaml
               {{ `{{- end }}` }}
             # Hierarchical values merging: Combines values from multiple sources with proper precedence.
             # Merge order (highest to lowest precedence):
