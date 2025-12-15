@@ -4,6 +4,8 @@ deploymentMode: SimpleScalable
 loki:
   loki:
     auth_enabled: false
+    commonConfig:
+      replication_factor: 1
     storage:
       type: s3
       bucketNames:
