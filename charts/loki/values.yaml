@@ -63,25 +63,25 @@ loki:
       persistence:
         size: 20Gi
 
-    read:
-      replicas: 1
-    write:
-      replicas: 1
-      persistence:
-        size: 20Gi
+  read:
+    replicas: 1
+  write:
+    replicas: 1
+    persistence:
+      size: 20Gi
 
-    # Enable caching for fast recent queries
-    chunksCache:
-      enabled: true
-      allocatedMemory: 4096              # 4GB for chunk cache
-    resultsCache:
-      enabled: true
-      allocatedMemory: 1024
+  # Enable caching for fast recent queries
+  chunksCache:
+    enabled: true
+    allocatedMemory: 4096              # 4GB for chunk cache
+  resultsCache:
+    enabled: true
+    allocatedMemory: 1024
 
-    # Disable bundled MinIO
-    minio:
-      enabled: false
+  # Disable bundled MinIO
+  minio:
+    enabled: false
 
-    gateway:
-      service:
-        type: ClusterIP
+  gateway:
+    service:
+      type: ClusterIP
