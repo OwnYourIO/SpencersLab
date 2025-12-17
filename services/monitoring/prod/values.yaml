@@ -32,6 +32,10 @@ ingress:
       service: monitoring-kube-prometheus-prometheus
       port: 9090
     prometheus: *metrics
+    logs: &logs
+      service: monitoring-loki-gateway
+      port: 80
+    loki: &logs
     cluster:
       clusterBase: true
       service: argocd-server
