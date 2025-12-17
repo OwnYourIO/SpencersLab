@@ -19,6 +19,7 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+    serviceName: base
     namespace: default
     ServerSideApply: "true"
 ingress:
