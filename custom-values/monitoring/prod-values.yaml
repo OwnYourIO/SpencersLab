@@ -10,3 +10,7 @@ base:
 loki: 
   bitwardenIds:
     loki-s3: 06a65037-29d3-48de-978c-b3b6002d3978
+
+exporter-mikrotik:
+  bitwardenIds:
+    exporter-mikrotik: 87082494-47f1-4efc-926e-b1df016b9428
