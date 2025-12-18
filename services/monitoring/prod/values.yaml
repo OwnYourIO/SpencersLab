@@ -238,7 +238,7 @@ grafana:
             implementation: prometheus
         - name: Loki
           type: loki
-          url: http://monitoring-loki.default:3100
+          url: http://monitoring-loki-gateway.default:3100
           access: proxy 
         - name: Prometheus
           type: prometheus
