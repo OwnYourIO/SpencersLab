@@ -146,6 +146,19 @@ grafana:
     GF_SERVER_ROOT_URL: https://grafana.spencerslab.com
   envFromSecrets:
     - name: grafana-sso
+  
+  # Run init container as root
+  initChownData:
+    enabled: true
+    securityContext:
+      runAsUser: 0
+      runAsNonRoot: false
+
+  securityContext:
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
+
   ingress:
     enabled: false
   grafana.ini:
