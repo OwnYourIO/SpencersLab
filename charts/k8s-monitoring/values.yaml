@@ -3,156 +3,156 @@ bitwardenIds:
   k8s-monitoring: OVERRIDE_NEEDED
 
 
+k8s-monitoring:
+  # values.yaml for grafana/k8s-monitoring chart
+  cluster:
+    # TODO: Make this generic.
+    name: spencerslab
 
-# values.yaml for grafana/k8s-monitoring chart
-cluster:
-  # TODO: Make this generic.
-  name: spencerslab
+  # Define destinations - sending to your existing Prometheus
+  destinations:
+    # Your existing kube-prometheus-stack Prometheus
+    - name: prometheus
+      type: prometheus
+      # TODO
+      url: https://prometheus.spencerslab.com/api/v1/write
 
-# Define destinations - sending to your existing Prometheus
-destinations:
-  # Your existing kube-prometheus-stack Prometheus
-  - name: prometheus
-    type: prometheus
-    # TODO
-    url: https://prometheus.spencerslab.com/api/v1/write
+    # Loki for logs
+    - name: loki
+      type: loki
+      # TODO:
+      url: https://loki.spencerslab.com/loki/api/v1/push
+      # Add auth if needed
+      # auth:
+      #   type: basic
+      #   username: ${LOKI_USERNAME}
+      #   password: ${LOKI_PASSWORD}
 
-  # Loki for logs
-  - name: loki
-    type: loki
-    # TODO:
-    url: https://loki.spencerslab.com/loki/api/v1/push
-    # Add auth if needed
-    # auth:
-    #   type: basic
-    #   username: ${LOKI_USERNAME}
-    #   password: ${LOKI_PASSWORD}
-
-# Cluster metrics collection
-clusterMetrics:
-  enabled: true
-  destinations: ["prometheus"]
-  
-  node-exporter:
+  # Cluster metrics collection
+  clusterMetrics:
     enabled: true
-    deploy: true
-    metricsTuning:
-      useDefaultAllowList: true
-      
-  cadvisor:
-    enabled: true
-    metricsTuning:
-      useDefaultAllowList: true
-      dropEmptyContainerLabels: true
-      dropEmptyImageLabels: true
-      
-  kubelet:
-    enabled: true
-    metricsTuning:
-      useDefaultAllowList: true
-      
-  kube-state-metrics:
-    enabled: true
-    deploy: true
-    metricsTuning:
-      useDefaultAllowList: true
-      excludeMetrics:
-        - "kube_pod_labels"
-        - "kube_pod_annotations"
-  
-  apiserver:
-    enabled: true
-    metricsTuning:
-      useDefaultAllowList: true
-      
-  cost:
-    enabled: false
+    destinations: ["prometheus"]
     
-  kepler:
+    node-exporter:
+      enabled: true
+      deploy: true
+      metricsTuning:
+        useDefaultAllowList: true
+        
+    cadvisor:
+      enabled: true
+      metricsTuning:
+        useDefaultAllowList: true
+        dropEmptyContainerLabels: true
+        dropEmptyImageLabels: true
+        
+    kubelet:
+      enabled: true
+      metricsTuning:
+        useDefaultAllowList: true
+        
+    kube-state-metrics:
+      enabled: true
+      deploy: true
+      metricsTuning:
+        useDefaultAllowList: true
+        excludeMetrics:
+          - "kube_pod_labels"
+          - "kube_pod_annotations"
+    
+    apiserver:
+      enabled: true
+      metricsTuning:
+        useDefaultAllowList: true
+        
+    cost:
+      enabled: false
+      
+    kepler:
+      enabled: false
+
+  # Cluster events
+  clusterEvents:
+    enabled: true
+    destinations: ["prometheus"]
+
+  # ServiceMonitor/PodMonitor discovery
+  prometheusOperatorObjects:
+    enabled: true
+    destinations: ["prometheus"]
+
+  # Pod logs collection
+  podLogs:
+    enabled: true
+    destinations: ["loki"]
+    gatherMethod: volumes
+    
+    excludeNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+
+  # Node logs (journald)
+  nodeLogs:
+    enabled: true
+    destinations: ["loki"]
+
+  # Annotation-based service discovery
+  annotationAutodiscovery:
+    enabled: true
+    destinations: ["prometheus"]
+    metricsTuning:
+      excludeMetrics:
+        - "go_*"
+        - "process_*"
+
+  # Alloy metrics instance
+  alloy-metrics:
+    enabled: true
+    alloy:
+      clustering:
+        enabled: false
+      mounts:
+        dockercontainers: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+
+  # Alloy singleton
+  alloy-singleton:
+    enabled: true
+    alloy:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+
+  # Alloy logs instance
+  alloy-logs:
+    enabled: true
+    alloy:
+      clustering:
+        enabled: false
+      mounts:
+        varlog: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+
+  # Disable receivers
+  alloy-receiver:
     enabled: false
 
-# Cluster events
-clusterEvents:
-  enabled: true
-  destinations: ["prometheus"]
+  # Profiles collection
+  alloy-profiles:
+    enabled: false
 
-# ServiceMonitor/PodMonitor discovery
-prometheusOperatorObjects:
-  enabled: true
-  destinations: ["prometheus"]
-
-# Pod logs collection
-podLogs:
-  enabled: true
-  destinations: ["loki"]
-  gatherMethod: volumes
-  
-  excludeNamespaces:
-    - kube-system
-    - kube-public
-    - kube-node-lease
-
-# Node logs (journald)
-nodeLogs:
-  enabled: true
-  destinations: ["loki"]
-
-# Annotation-based service discovery
-annotationAutodiscovery:
-  enabled: true
-  destinations: ["prometheus"]
-  metricsTuning:
-    excludeMetrics:
-      - "go_*"
-      - "process_*"
-
-# Alloy metrics instance
-alloy-metrics:
-  enabled: true
-  alloy:
-    clustering:
-      enabled: false
-    mounts:
-      dockercontainers: true
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        memory: 512Mi
-
-# Alloy singleton
-alloy-singleton:
-  enabled: true
-  alloy:
-    resources:
-      requests:
-        cpu: 50m
-        memory: 64Mi
-
-# Alloy logs instance
-alloy-logs:
-  enabled: true
-  alloy:
-    clustering:
-      enabled: false
-    mounts:
-      varlog: true
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        memory: 1Gi
-
-# Disable receivers
-alloy-receiver:
-  enabled: false
-
-# Profiles collection
-alloy-profiles:
-  enabled: false
-
-# Configuration reloading
-configAnalysis:
-  enabled: true
+  # Configuration reloading
+  configAnalysis:
+    enabled: true
