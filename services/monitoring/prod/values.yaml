@@ -26,7 +26,7 @@ charts:
     namespace: default
     ServerSideApply: "true"
   exporter-mikrotik:
-    version: 1.0.23 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    version: 1.0.24 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     #ServerSideApply: "true"
@@ -102,51 +102,14 @@ mailcow_exporter:
 
 exporter-mikrotik:
   bitwardenIds: 
-    exporter-mikrotik: 87082494-47f1-4efc-926e-b1df016b9428
+    exporter-mikrotik: OVERRIDE_VIA_CUSTOM_VALUES
   app-template:
     controllers:
       exporter-mikrotik:
         containers:
           main:
-            image:
-              repository: ghcr.io/akpw/mktxp
-              tag: gha-10485178964@sha256:16f19707ed40c8373c525a06dbe31f4334fc3cb8317b3b5ffd890d60e39de9e8
-            command:
-              - "/bin/sh"
-            args:
-              - "-c"
-              - "/entrypoint.sh"
-            env:
-              TZ: America/Denver
-              MIKROTIK_ADDRESS: 10.0.99.253
-              MIKROTIK_USERNAME:
-                secretKeyRef:
-                  name: exporter-mikrotik-secret
-                  key: mikrotik-username
-              MIKROTIK_PASSWORD:
-                secretKeyRef:
-                  name: exporter-mikrotik-secret
-                  key: mikrotik-password
             securityContext:
               readOnlyRootFilesystem: false
-    persistence:
-      mktxp-config:
-        type: emptyDir
-        medium: Memory
-        globalMounts:
-          - path: /mktxp_config
-
-    serviceMonitor:
-      exporter-mikrotik:
-        labels:
-          prometheus: system-monitoring-prometheus
-        serviceName: monitoring-exporter-mikrotik
-        endpoints:
-          - port: "49090"
-            scheme: http
-            path: /metrics
-            interval: 1m
-            scrapeTimeout: 1m
 
 grafana:
   enabled: true
