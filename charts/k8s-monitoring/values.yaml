@@ -74,7 +74,7 @@ k8s-monitoring:
   # Cluster events
   clusterEvents:
     enabled: true
-    destinations: ["prometheus"]
+    destinations: ["loki"]
 
   # ServiceMonitor/PodMonitor discovery
   prometheusOperatorObjects:
