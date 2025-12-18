@@ -163,3 +163,21 @@ app-template:
       globalMounts:
         - path: /entrypoint.sh
           subPath: custom-entrypoint.sh
+
+    mktxp-config:
+      type: emptyDir
+      medium: Memory
+      globalMounts:
+        - path: /mktxp_config
+
+  serviceMonitor:
+    exporter-mikrotik:
+      labels:
+        prometheus: system-monitoring-prometheus
+      serviceName: monitoring-exporter-mikrotik
+      endpoints:
+        - port: "49090"
+          scheme: http
+          path: /metrics
+          interval: 1m
+          scrapeTimeout: 1m
