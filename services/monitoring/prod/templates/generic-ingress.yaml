@@ -23,7 +23,7 @@ spec:
   tls:
     - hosts:
       - "{{ $subDomain }}.{{ $.Values.domain }}"
-      secretName: wildcard-cert
+      secretName: {{ if $config.clusterBase | default false }}cluster-wildcard-cert{{ else }}wildcard-cert{{ end }}
   rules:
     - host: "{{ $subDomain }}.{{ $.Values.domain }}"
       http:
@@ -35,4 +35,37 @@ spec:
                 name: "{{ $config.service }}"
                 port:
                   number: {{ $config.port }}
+
+{{- if $config.serviceName }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ $config.serviceName }}-ingress"
+  namespace: default
+  annotations:
+    # If middlewares is set manually, use that.
+    {{- if $config.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $config.middlewares }}
+    {{- end }}
+    #external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
+  labels:
+    external-dns: "enabled"
+spec:
+  tls:
+    - hosts:
+      - "{{ $config.serviceName }}.{{ $.Values.domain }}"
+      secretName: {{ if $config.clusterBase | default false }}cluster-wildcard-cert{{ else }}wildcard-cert{{ end }}
+  rules:
+    - host: "{{ $config.serviceName }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ $config.service }}"
+                port:
+                  number: {{ $config.port }}
+{{- end }}
 {{- end }}
