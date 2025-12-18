@@ -149,7 +149,7 @@ app-template:
   persistence:
     config:
       type: configMap
-      name: '{{ .Release.Name }}-exporter-mikrotik-config'
+      name: '{{ .Release.Name }}'
       globalMounts:
         - path: /etc/mktxp.config
           subPath: mktxp.conf
@@ -158,7 +158,7 @@ app-template:
 
     entrypoint-override:
       type: configMap
-      name: '{{ .Release.Name }}-exporter-mikrotik-config'
+      name: '{{ .Release.Name }}'
       defaultMode: 0777
       globalMounts:
         - path: /entrypoint.sh
