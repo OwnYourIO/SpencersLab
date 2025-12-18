@@ -20,6 +20,19 @@ charts:
     namespace: default
     ServerSideApply: "true"
     serviceName: base
+  grafana:
+    version: 10.1.0 # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts/
+    repository: https://grafana.github.io/helm-charts/
+    namespace: default
+    ServerSideApply: "true"
+  exporter-mikrotik:
+    version: 1.0.21 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    #ServerSideApply: "true"
+  kube-prometheus-stack:
+    version: 78.1.0 # renovate: datasource=helm registryUrl=https://prometheus-community.github.io/helm-charts
+    repository: https://prometheus-community.github.io/helm-charts
     namespace: default
     ServerSideApply: "true"
 ingress:
