@@ -46,10 +46,12 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
           targetRevision: main
           ref: services
+        {{ `{{- if not (hasKey . "version") }}` }}
         - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
           targetRevision: main
           ref: values
           path: '{{ `{{ index .metadata.annotations "chart.repo.path" }}` }}/{{ `{{ .appName }}` }}'
+        {{ `{{- end }}` }}
         - repoURL: '{{ `{{ if hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
           targetRevision: "{{ `{{ dig "version" "main" . }}` }}"
           {{ `{{- if hasKey . "version" }}` }}
