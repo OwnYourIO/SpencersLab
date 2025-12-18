@@ -147,14 +147,13 @@ grafana:
   envFromSecrets:
     - name: grafana-sso
   
-  # Run init container as root
+  # Disable the init-chown-data container entirely
   initChownData:
-    enabled: true
-    securityContext:
-      runAsUser: 0
-      runAsNonRoot: false
+    enabled: false
 
+  # Pod-level security context - handles permissions via fsGroup
   securityContext:
+    runAsNonRoot: true
     runAsUser: 472
     runAsGroup: 472
     fsGroup: 472
