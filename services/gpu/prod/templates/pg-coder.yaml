@@ -9,6 +9,10 @@ spec:
     size: 5Gi
     storageClass: local-path
 
+  #enableSuperuserAccess: true
+  #superuserSecret:
+  #  name: &secretName cloudnative-pg-secret
+
   monitoring:
     enablePodMonitor: true
 

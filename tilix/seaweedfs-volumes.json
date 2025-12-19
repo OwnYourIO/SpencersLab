@@ -1,0 +1,93 @@
+{
+    "child": {
+        "child1": {
+            "directory": "",
+            "height": 1361,
+            "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-0 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-0ccb84d1-61cb-4d84-85aa-d9b5ed44d4d5_default_idx-seaweedfs-volume-0\/ && bash\"",
+            "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+            "readOnly": false,
+            "synchronizedInput": true,
+            "title": "${id}: ${title}",
+            "type": "Terminal",
+            "uuid": "80806a06-1b77-4221-8691-9b059235c6a8",
+            "width": 434
+        },
+        "child2": {
+            "child1": {
+                "directory": "",
+                "height": 1361,
+                "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-1 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-b6297b53-6c13-4f54-9786-4438f80d8f6f_default_idx-seaweedfs-volume-1 && bash\"",
+                "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                "readOnly": false,
+                "synchronizedInput": true,
+                "title": "${id}: ${title}",
+                "type": "Terminal",
+                "uuid": "9292217b-31bc-4540-a220-e72743a01690",
+                "width": 732
+            },
+            "child2": {
+                "child1": {
+                    "directory": "",
+                    "height": 1361,
+                    "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-2 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-83698893-00cc-46d5-bf93-be482b8a0728_default_idx-seaweedfs-volume-2 && bash\"",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "af398bd3-abdf-4670-aee2-767395878562",
+                    "width": 632
+                },
+                "child2": {
+                    "child1": {
+                        "directory": "",
+                        "height": 1361,
+                        "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-3 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-2000b368-eeb9-4d42-bfa9-cd03d1a52ed7_default_idx-seaweedfs-volume-3 && bash\"",
+                        "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                        "readOnly": false,
+                        "synchronizedInput": true,
+                        "title": "${id}: ${title}",
+                        "type": "Terminal",
+                        "uuid": "2b60eb29-a38b-4ceb-993c-f217dd294206",
+                        "width": 819
+                    },
+                    "child2": {
+                        "directory": "",
+                        "height": 1361,
+                        "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-4 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-a4463eb5-f3a6-4316-98dd-39d70cb27b61_default_idx-seaweedfs-volume-4 && bash\"",
+                        "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                        "readOnly": false,
+                        "synchronizedInput": true,
+                        "title": "${id}: ${title}",
+                        "type": "Terminal",
+                        "uuid": "8249351a-6972-41cc-bcea-bb84ded7f1e8",
+                        "width": 819
+                    },
+                    "orientation": 0,
+                    "position": 23,
+                    "ratio": 0.49969493593654668,
+                    "type": "Paned"
+                },
+                "orientation": 0,
+                "position": 18,
+                "ratio": 0.27816901408450706,
+                "type": "Paned"
+            },
+            "orientation": 0,
+            "position": 21,
+            "ratio": 0.243594009983361059,
+            "type": "Paned"
+        },
+        "orientation": 0,
+        "position": 12,
+        "ratio": 0.126162790697674415,
+        "type": "Paned"
+    },
+    "height": 1361,
+    "name": "${title}",
+    "synchronizedInput": true,
+    "type": "Session",
+    "uuid": "c4c40779-5ad2-4a9b-89be-8cb8b564048f",
+    "version": "1.0",
+    "width": 3440
+}
