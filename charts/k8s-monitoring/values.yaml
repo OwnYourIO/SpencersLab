@@ -60,16 +60,16 @@ k8s-monitoring:
           - "kube_pod_labels"
           - "kube_pod_annotations"
     
-    apiserver:
-      enabled: true
-      metricsTuning:
-        useDefaultAllowList: true
-        
-    cost:
-      enabled: false
+  apiserver:
+    enabled: true
+    metricsTuning:
+      useDefaultAllowList: true
       
-    kepler:
-      enabled: false
+  cost:
+    enabled: false
+    
+  kepler:
+    enabled: false
 
   # Cluster events
   clusterEvents:
