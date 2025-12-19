@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   # AFTER COPY UPDATE HERE AND serviceName
-  name: monitoring-appset
+  name: proxy-local-appset
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
@@ -14,7 +14,7 @@ spec:
           - list:
               elements:
                 # AFTER COPY UPDATE HERE
-                - serviceName: monitoring
+                - serviceName: proxy-local
                   ServerSideApply: "true"
                   # This is needed so renovate pick's up the version
                   # appName: base
