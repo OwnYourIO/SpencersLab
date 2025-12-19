@@ -14,6 +14,13 @@ authRealm: OVERRIDE_VIA_CUSTOM_VALUES
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+charts: 
+  external-secrets-bitwarden:
+    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+
 proxy:
   middlewares: 
     entrypoint: "kube-system-crowdsec@kubernetescrd"
