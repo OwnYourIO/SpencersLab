@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   # AFTER COPY UPDATE HERE AND serviceName
-  name: proxy-local-appset
+  name: cloud-proxy-appset
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
