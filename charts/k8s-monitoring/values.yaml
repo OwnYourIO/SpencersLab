@@ -65,9 +65,8 @@ k8s-monitoring:
         useDefaultAllowList: true
     kepler:
       enabled: false
-
-  cost:
-    enabled: false
+    opencost:
+      enabled: false
     
 
   # Cluster events
