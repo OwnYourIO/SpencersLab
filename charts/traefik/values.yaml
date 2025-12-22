@@ -189,10 +189,8 @@ crowdsec:
       certManager:
         enabled: false
       agent:
-        secretTemplate: {} 
         secretName: "traefik-agent-tls"
       bouncer:
-        secretTemplate: {}
         secretName: "traefik-bouncer-tls"
     env:
       # TODO: Handle this better
