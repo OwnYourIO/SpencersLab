@@ -23,7 +23,7 @@ charts:
   traefik:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
-    namespace: kube-system
+    namespace: default
     ServerSideApply: "true"
 
 proxy:
