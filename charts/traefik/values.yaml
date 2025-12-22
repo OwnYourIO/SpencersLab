@@ -180,21 +180,10 @@ crowdsec:
   container_runtime: containerd
   tls:
     enabled: true
-    certManager:
-      enabled: true
-      secretTemplate:
-        annotations: {}
-        labels: {}
+    agent:
+      tlsClientAuth: true
 
   lapi:
-    tls:
-      enabled: true
-      agent:
-        secretTemplate: {} 
-        secretName: "traefik-agent-tls"
-      bouncer:
-        secretTemplate: {}
-        secretName: "traefik-bouncer-tls"
     env:
       # TODO: Handle this better
       - name: TZ
