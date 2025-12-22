@@ -12,6 +12,8 @@ cert-manager:
   installCRDs: true
 
 traefik:
+  fullnameOverride: "traefik"
+
   additionalArguments:
     - "--api"
     - "--api.dashboard=true"
