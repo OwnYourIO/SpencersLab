@@ -26,6 +26,18 @@ charts:
     namespace: kube-system
     ServerSideApply: "true"
 
+crowdsec: 
+  lapi:
+    tls:
+      enabled: true
+      agent:
+        secretName: "traefik-agent-tls"
+
+  agent:
+    tls:
+      enabled: true
+      secretName: "traefik-agent-tls"
+
 proxy:
   middlewares: 
     entrypoint: "kube-system-crowdsec@kubernetescrd"
