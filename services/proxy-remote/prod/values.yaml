@@ -2,6 +2,11 @@ domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
 charts: 
+  traefik-zerotrust:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 proxy:
   middlewares: 
