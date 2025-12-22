@@ -25,6 +25,10 @@ traefik:
     - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
   dashboard: 
     enabled: true
+  
+  ingressClass:
+    enabled: true
+    name: "traefik"  # Change from "proxy-local-traefik"
 
   persistence:
     enabled: true
