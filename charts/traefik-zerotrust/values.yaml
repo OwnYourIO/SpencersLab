@@ -1,0 +1,82 @@
+# These may or may not be necessary in the zero trust version?
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+cert-manager:
+  installCRDs: true
+
+traefik:
+  additionalArguments:
+    - "--api"
+    #- "--api.dashboard=true"
+    - "--api.insecure=true"
+    - "--serversTransport.insecureSkipVerify=true"
+    # Leave 80 un geoblocked. Otherwise it gets in the way of the cert generation. 
+    # It's automatically forwarded to 443 by the proxy-local anyway.
+    #- "--entrypoints.web.http.middlewares=kube-system-geoblock@kubernetescrd"
+    #- "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
+    - "--providers.file.filename=/data/admin-allowlist.yaml"
+    - "--providers.file.watch=true"
+    - "--entryPoints.web.http.redirections.entryPoint.to=https"
+    - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+  dashboard: 
+    enabled: false
+
+  persistence:
+    enabled: true
+    size: 1Gi 
+
+  providers:
+    kubernetesCRD:
+      allowCrossNamespace: true
+      allowExternalNameServices: true
+    kubernetesIngress:
+      allowEmptyServices: true
+      allowExternalNameServices: true
+    file:
+      filename: "/data/admin-allowlist.yaml"
+      watch: true
+
+  experimental:
+    plugins:
+      geoblock:
+        moduleName: "github.com/PascalMinder/geoblock"
+        # renovate: depName=github.com/PascalMinder/geoblock
+        version: "v0.3.3"
+      rewrite-body:
+        moduleName: "github.com/traefik/plugin-rewritebody"
+        version: "v0.3.1"
+
+  service:
+    type: LoadBalancer
+    spec:
+      externalTrafficPolicy: Local
+
+  ports:
+    web:
+      # Have do to this in the args manually because port comes through as :443 when I thin it should be websecure.
+      #redirections:
+      #  entryPoint:
+      #    to: websecure
+      #    scheme: https
+      #    permanent: true
+      proxyProtocol:
+        enabled: true
+    websecure:
+      proxyProtocol:
+        enabled: true
+
+  metrics:
+    prometheus:
+      serviceMonitor:
+        enabled: true
+        namespace: default
+        additionalLabels:
+          release: monitoring-agent
+          prometheus: system-monitoring-prometheus-prometheus
+
+  logs:
+    #general:
+    #  level: DEBUG
+    access:
+      enabled: true
