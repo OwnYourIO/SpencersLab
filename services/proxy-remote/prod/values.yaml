@@ -2,11 +2,6 @@ domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
 charts: 
-  external-secrets-bitwarden:
-    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    repository: https://ownyourio.github.io/SpencersLab/
-    namespace: default
-    ServerSideApply: "true"
 
 proxy:
   middlewares: 
@@ -66,7 +61,7 @@ proxy:
 
     cluster:
       clusterBase: true
-      service: base-argocd-server
+      service: argocd-server
       port: 80
     #traefik:
     #  clusterBase: true
