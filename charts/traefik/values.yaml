@@ -180,17 +180,20 @@ crowdsec:
   container_runtime: containerd
   tls:
     enabled: true
-    agent:
-      secretName: "traefik-agent-tls"
+    certManager:
+      enabled: true
+      secretTemplate:
+        annotations: {}
+        labels: {}
 
   lapi:
     tls:
       enabled: true
-      certManager:
-        enabled: false
       agent:
+        secretTemplate: {} 
         secretName: "traefik-agent-tls"
       bouncer:
+        secretTemplate: {}
         secretName: "traefik-bouncer-tls"
     env:
       # TODO: Handle this better
@@ -226,11 +229,6 @@ crowdsec:
           - ReadWriteOnce
         size: 100Mi
   agent:
-    tls:
-      enabled: true
-      secretName: "traefik-agent-tls"
-      certManager:
-        enabled: false
     acquisition:
       - namespace: kube-system
         podName: traefik-[0-9]*
