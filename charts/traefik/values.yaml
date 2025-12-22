@@ -188,12 +188,10 @@ crowdsec:
       enabled: true
       agent:
         secretTemplate: {} 
+        secretName: "traefik-agent-tls"
       bouncer:
         secretTemplate: {}
-      ##agent:
-      ##  secretName: "traefik-agent-tls"
-      ##bouncer:
-      ##  secretName: "traefik-bouncer-tls"
+        secretName: "traefik-bouncer-tls"
     env:
       # TODO: Handle this better
       - name: TZ
