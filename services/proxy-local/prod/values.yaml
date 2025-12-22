@@ -20,6 +20,11 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  traefik:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 proxy:
   middlewares: 
