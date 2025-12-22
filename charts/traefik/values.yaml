@@ -187,7 +187,13 @@ crowdsec:
     tls:
       enabled: true
       agent:
-        secretName: "traefik-agent-tls"
+        secretTemplate: {} 
+      bouncer:
+        secretTemplate: {}
+      ##agent:
+      ##  secretName: "traefik-agent-tls"
+      ##bouncer:
+      ##  secretName: "traefik-bouncer-tls"
     env:
       # TODO: Handle this better
       - name: TZ
