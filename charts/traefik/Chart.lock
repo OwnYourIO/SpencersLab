@@ -1,0 +1,9 @@
+dependencies:
+- name: traefik
+  repository: https://traefik.github.io/charts
+  version: 37.1.2
+- name: crowdsec
+  repository: https://crowdsecurity.github.io/helm-charts
+  version: 0.20.1
+digest: sha256:e2c08e4efdd3dd9325d040e6eb95daf3aeb4c99b80a4460d3854a808a84efc82
+generated: "2025-10-11T01:16:59.944116198Z"

@@ -1,0 +1,246 @@
+keycloak:
+  realm: OVERRIDE_VIA_CUSTOM_VALUES
+
+bitwardenIds:
+  crowdsec-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  traefik-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+cert-manager:
+  installCRDs: true
+
+traefik:
+  additionalArguments:
+    - "--api"
+    - "--api.dashboard=true"
+    - "--api.insecure=true"
+    - "--serversTransport.insecureSkipVerify=true"
+    - "--providers.file.filename=/data/user-allowlist.yaml"
+    - "--providers.file.watch=true"
+    # Force all port 80 traffic to 443
+    - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+    - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+    - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+  dashboard: 
+    enabled: true
+
+  persistence:
+    enabled: true
+    existingClaim: "proxy-allowlist"
+    accessMode: ReadWriteMany
+    #existingClaim: ""
+    #size: 1Gi 
+
+  providers:
+    kubernetesCRD:
+      allowCrossNamespace: true
+      allowExternalNameServices: true
+    kubernetesIngress:
+      allowEmptyServices: true
+      allowExternalNameServices: true
+  deployment: 
+    additionalContainers: 
+    - name: user-allowlist-update
+      image: alpine:3.22
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          #!/bin/sh
+          FILE=/data/user-allowlist.yaml
+          LAST_MODIFIED=0
+          EXPECTED_GROUP=65532
+          RUNNING=true
+
+          # Function to handle termination signals
+          handle_exit() {
+            echo "Shutting down gracefully..."
+            RUNNING=false
+          }
+
+          # Trap termination signals
+          trap handle_exit SIGTERM SIGINT
+
+          while $RUNNING; do
+            if [ -f "$FILE" ] && [ -s "$FILE" ]; then
+              # Get file modification time and group ID in one stat call
+              STATS=$(stat -c "%Y %g" "$FILE")
+              MODIFIED=$(echo "$STATS" | awk '{print $1}')
+              CURRENT_GROUP=$(echo "$STATS" | awk '{print $2}')
+              
+              # Check and update modification time
+              if [ "$MODIFIED" -ne "$LAST_MODIFIED" ]; then
+                touch "$FILE"
+                LAST_MODIFIED=$MODIFIED
+              fi
+
+              # Check and update group ownership
+              if [ "$CURRENT_GROUP" -ne "$EXPECTED_GROUP" ]; then
+                echo "Updating group ownership of $FILE to $EXPECTED_GROUP"
+                chgrp "$EXPECTED_GROUP" "$FILE"
+              fi
+            else
+              cat << 'EOF' > $FILE
+          http:
+            middlewares:
+              user-allowlist:
+                ipAllowList:
+                  sourceRange: &allowlist
+                    - "10.0.0.0/16"
+                    # START ALLOWLIST AUTOMATION
+                    # END ALLOWLIST AUTOMATION
+              user-allowlist-remote:
+                ipAllowList:
+                  ipStrategy:
+                    depth: 1
+                  sourceRange: *allowlist
+          EOF
+            fi
+            sleep 1
+          done
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 65532
+      volumeMounts:
+        - name: data 
+          mountPath: /data
+
+  experimental:
+    plugins:
+      geoblock:
+        moduleName: "github.com/PascalMinder/geoblock"
+        version: "v0.3.3"
+      keycloakopenid:
+        moduleName: "github.com/jmcarbo/keycloakopenid"
+        version: "v0.1.40"
+      crowdsec:
+        moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+        version: "v1.3.5"
+      traefik-plugin-redirect-on-status:
+        moduleName: "github.com/m-riedel/traefik-plugin-redirect-on-status"
+        version: "v1.0.1"
+      rewrite-password-with-char-req:
+        moduleName: "github.com/traefik/plugin-rewritebody"
+        version: "v0.3.1"
+      theme-park:
+        moduleName: "github.com/packruler/traefik-themepark"
+        version: "v1.4.2"
+
+  service:
+    type: LoadBalancer
+    spec:
+      externalTrafficPolicy: Local
+
+  ports:
+    web:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+      proxyProtocol:
+        trustedIPs: 
+          - "10.42.0.0/16"
+      forwardedHeaders:
+        trustedIPs:
+          - "10.42.0.0/16"
+    websecure:
+      proxyProtocol:
+        trustedIPs: 
+          - "10.42.0.0/16"
+      forwardedHeaders:
+        trustedIPs:
+          - "10.42.0.0/16"
+
+  metrics:
+    prometheus:
+      serviceMonitor:
+        enabled: true
+        namespace: default
+        additionalLabels:
+          release: monitoring-agent
+          prometheus: system-monitoring-prometheus-prometheus
+
+  volumes:
+    - name: traefik-bouncer-tls
+      mountPath: /etc/traefik/crowdsec-certs/
+      type: secret
+    - name: traefik-sso
+      type: secret
+      mountPath: "/run/secrets/oidc"
+
+  logs:
+    #general:
+    #  level: DEBUG
+    access:
+      enabled: true
+
+crowdsec:
+  container_runtime: containerd
+  tls:
+    enabled: true
+  lapi:
+    env:
+      # TODO: Handle this better
+      - name: TZ
+        value: America/Denver
+      - name: ENROLL_INSTANCE_NAME
+        value: proxy-remote
+      # Setting the enroll key after initial startup requires force enrollment which currently breaks the local API.
+      - name: ENROLL_KEY
+        valueFrom:
+          secretKeyRef:
+            name: crowdsec-keys
+            key: ENROLL_KEY
+      - name: LEVEL_DEBUG
+        value: "true"
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: monitoring-agent
+    persistentVolume:
+      # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
+      data:
+        enabled: true
+        accessModes:
+          - ReadWriteOnce
+        size: 1Gi
+      # -- Persistent volume for config folder. Stores e.g. online api credentials
+      config:
+        enabled: true
+        accessModes:
+          - ReadWriteOnce
+        size: 100Mi
+  agent:
+    acquisition:
+      - namespace: kube-system
+        podName: traefik-[0-9]*
+        program: traefik
+        poll_without_inotify: true
+    env:
+      # TODO: Handle this better
+      - name: TZ
+        value: America/Denver
+      - name: COLLECTIONS
+        value: >-
+          crowdsecurity/linux
+          crowdsecurity/traefik
+          crowdsecurity/base-http-scenarios
+          crowdsecurity/http-cve
+
+    persistentVolume:
+      # -- Persistent volume for config folder. Stores local config (parsers, scenarios etc.)
+      config:
+        enabled: true
+        accessModes:
+          - ReadWriteOnce
+        size: 100Mi 
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: monitoring-agent
