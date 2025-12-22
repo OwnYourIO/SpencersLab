@@ -24,7 +24,8 @@ charts:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: kube-system
-    ServerSideApply: "true"
+    # Deployment issues if this is true.
+    ServerSideApply: "false"
 
 proxy:
   middlewares: 
