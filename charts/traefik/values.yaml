@@ -182,6 +182,13 @@ crowdsec:
     enabled: true
     agent:
       tlsClientAuth: true
+      secretTemplate:
+        annotations: {}
+        labels: {}
+    bouncer:
+      secretTemplate:
+        annotations: {}
+        labels: {}
 
   lapi:
     env:
