@@ -186,6 +186,8 @@ crowdsec:
   lapi:
     tls:
       enabled: true
+      certManager:
+        enabled: false
       agent:
         secretTemplate: {} 
         secretName: "traefik-agent-tls"
@@ -229,6 +231,8 @@ crowdsec:
     tls:
       enabled: true
       secretName: "traefik-agent-tls"
+      certManager:
+        enabled: false
     acquisition:
       - namespace: kube-system
         podName: traefik-[0-9]*
