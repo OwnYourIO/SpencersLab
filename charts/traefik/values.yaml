@@ -195,9 +195,6 @@ crowdsec:
       secretTemplate:
         annotations: {}
         labels: {}
-  secrets:
-    externalSecret:
-      name: crowdsec-keys
 
   lapi:
     storeCAPICredentialsInSecret: true
