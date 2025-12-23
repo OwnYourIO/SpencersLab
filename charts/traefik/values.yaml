@@ -183,6 +183,7 @@ traefik:
       enabled: true
 
 crowdsec:
+  fullnameOverride: "crowdsec"
   container_runtime: containerd
   tls:
     enabled: true
