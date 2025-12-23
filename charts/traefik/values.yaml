@@ -197,6 +197,7 @@ crowdsec:
         labels: {}
 
   lapi:
+    storeCAPICredentialsInSecret: true
     env:
       # TODO: Handle this better
       - name: TZ
@@ -226,10 +227,7 @@ crowdsec:
         size: 1Gi
       # -- Persistent volume for config folder. Stores e.g. online api credentials
       config:
-        enabled: true
-        accessModes:
-          - ReadWriteOnce
-        size: 100Mi
+        enabled: false
   agent:
     acquisition:
       - namespace: kube-system
