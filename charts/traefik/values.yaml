@@ -248,10 +248,7 @@ crowdsec:
     persistentVolume:
       # -- Persistent volume for config folder. Stores local config (parsers, scenarios etc.)
       config:
-        enabled: true
-        accessModes:
-          - ReadWriteOnce
-        size: 100Mi 
+        enabled: false
     metrics:
       enabled: true
       serviceMonitor:
