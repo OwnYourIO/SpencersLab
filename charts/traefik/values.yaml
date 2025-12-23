@@ -212,6 +212,12 @@ crowdsec:
             key: ENROLL_KEY
       - name: LEVEL_DEBUG
         value: "true"
+    config:
+      config.yaml.local: |
+        api:
+          server:
+            auto_registration:
+              enabled: false  # Disable password-based registration
     metrics:
       enabled: true
       serviceMonitor:
