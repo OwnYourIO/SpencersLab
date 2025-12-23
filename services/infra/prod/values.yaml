@@ -9,12 +9,6 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
-seaweedfs-csi-driver:
-  seaweedfsCsiPlugin:
-    image: chrislusf/seaweedfs-csi-driver:v1.3.6
-  mountService:
-    enabled: true
-
 charts: 
   external-secrets-bitwarden:
     version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
@@ -148,7 +142,7 @@ prometheus:
     persistence:
       ldifs:
         type: configMap
-        name: '{{ .Release.Name }}-389ds'
+        name: 'infra-389ds'
         globalMounts:
           - path: /data/ldif/
 
@@ -902,7 +896,7 @@ samba:
                 readOnly: true
         
       config:
-        name: "{{ .Release.Name }}-samba"
+        name: "infra-samba"
         type: configMap
         advancedMounts:
           samba:
