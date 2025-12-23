@@ -46,7 +46,6 @@ traefik:
     kubernetesIngress:
       allowEmptyServices: true
       allowExternalNameServices: true
-      namespaces: []
   deployment: 
     additionalContainers: 
     - name: user-allowlist-update
