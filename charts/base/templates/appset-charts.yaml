@@ -73,7 +73,7 @@ spec:
 
               {{ `{{- if eq .appName "k8s-monitoring" }}` }}
               - name: cluster.name
-                value: {{ `{{ .Release.Name }}` }}
+                value: {{ `{{ .serviceName }}` }}
               {{ `{{- end }}` }}
 
               # I'd like to keep this file as generic as possible, so would rather move this into the app definitions,
