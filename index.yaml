@@ -2076,6 +2076,21 @@ entries:
   base:
   - apiVersion: v2
     appVersion: 1.0.31
+    created: "2025-12-24T14:32:34.217274095Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 8.6.4
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.19.0
+    digest: 983163aeea1f056ff1046c8473dbe3d0f305bebea03fc7dd390fcfae062d0d3d
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.166/base-1.0.166.tgz
+    version: 1.0.166
+  - apiVersion: v2
+    appVersion: 1.0.31
     created: "2025-12-24T05:13:55.195601393Z"
     dependencies:
     - name: argo-cd
@@ -9287,6 +9302,18 @@ entries:
     version: 4.0.3751
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2025-12-24T14:32:34.366729865Z"
+    dependencies:
+    - name: seaweedfs
+      repository: https://seaweedfs.github.io/seaweedfs/helm
+      version: 4.0.393
+    digest: 5bc94887b8cbf3d2e6a4e301e3975a760086379233a4e868521abc851656bc23
+    name: seaweedfs
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-1.0.15/seaweedfs-1.0.15.tgz
+    version: 1.0.15
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2025-12-24T03:16:23.184772352Z"
     dependencies:
     - name: seaweedfs
@@ -12276,4 +12303,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-24T05:13:55.196778686Z"
+generated: "2025-12-24T14:32:34.368551892Z"
