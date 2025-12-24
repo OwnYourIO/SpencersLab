@@ -107,6 +107,6 @@ app-template:
     ldifs:
       type: configMap
       #name: 'infra-389ds'
-      name: {{ .Release.Name}}-389ds
+      name: '{{ .Release.Name}}-389ds'
       globalMounts:
         - path: /data/ldif/
