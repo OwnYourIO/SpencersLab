@@ -106,7 +106,6 @@ app-template:
       existingClaim: 389ds-data
     ldifs:
       type: configMap
-      #name: 'infra-389ds'
-      name: '{{ .Release.Name}}-389ds'
+      name: '{{ .Release.Name }}'
       globalMounts:
         - path: /data/ldif/
