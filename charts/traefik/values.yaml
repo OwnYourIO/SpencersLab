@@ -25,9 +25,9 @@ traefik:
     - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
     - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-  dashboard: 
+  dashboard:
     enabled: true
-  
+
   ingressClass:
     enabled: true
     name: "traefik"  # Change from "proxy-local-traefik"
@@ -36,8 +36,8 @@ traefik:
     enabled: true
     existingClaim: "proxy-allowlist"
     accessMode: ReadWriteMany
-    #existingClaim: ""
-    #size: 1Gi 
+    # existingClaim: ""
+    # size: 1Gi
 
   providers:
     kubernetesCRD:
@@ -46,8 +46,8 @@ traefik:
     kubernetesIngress:
       allowEmptyServices: true
       allowExternalNameServices: true
-  deployment: 
-    additionalContainers: 
+  deployment:
+    additionalContainers:
     - name: user-allowlist-update
       image: alpine:3.22
       command: ["/bin/sh", "-c"]
@@ -74,7 +74,7 @@ traefik:
               STATS=$(stat -c "%Y %g" "$FILE")
               MODIFIED=$(echo "$STATS" | awk '{print $1}')
               CURRENT_GROUP=$(echo "$STATS" | awk '{print $2}')
-              
+
               # Check and update modification time
               if [ "$MODIFIED" -ne "$LAST_MODIFIED" ]; then
                 touch "$FILE"
@@ -109,7 +109,7 @@ traefik:
         runAsUser: 1000
         runAsGroup: 65532
       volumeMounts:
-        - name: data 
+        - name: data
           mountPath: /data
 
   experimental:
@@ -146,14 +146,14 @@ traefik:
           scheme: https
           permanent: true
       proxyProtocol:
-        trustedIPs: 
+        trustedIPs:
           - "10.42.0.0/16"
       forwardedHeaders:
         trustedIPs:
           - "10.42.0.0/16"
     websecure:
       proxyProtocol:
-        trustedIPs: 
+        trustedIPs:
           - "10.42.0.0/16"
       forwardedHeaders:
         trustedIPs:
@@ -169,7 +169,7 @@ traefik:
           prometheus: system-monitoring-prometheus-prometheus
 
   volumes:
-    - name: {{ .Release.Name }}-traefik-bouncer-tls
+    - name: '{{ .Release.Name }}-traefik-bouncer-tls'
       mountPath: /etc/traefik/crowdsec-certs/
       type: secret
     - name: traefik-sso
@@ -177,7 +177,7 @@ traefik:
       mountPath: "/run/secrets/oidc"
 
   logs:
-    #general:
+    # general:
     #  level: DEBUG
     access:
       enabled: true
@@ -204,7 +204,8 @@ crowdsec:
         value: America/Denver
       - name: ENROLL_INSTANCE_NAME
         value: proxy-remote
-      # Setting the enroll key after initial startup requires force enrollment which currently breaks the local API.
+      # Setting the enroll key after initial startup requires force enrollment
+      # which currently breaks the local API.
       - name: ENROLL_KEY
         valueFrom:
           secretKeyRef:
@@ -225,13 +226,15 @@ crowdsec:
         additionalLabels:
           release: monitoring-agent
     persistentVolume:
-      # -- Persistent volume for data folder. Stores e.g. registered bouncer api keys
+      # Persistent volume for data folder.
+      # Stores e.g. registered bouncer api keys
       data:
         enabled: true
         accessModes:
           - ReadWriteOnce
         size: 1Gi
-      # -- Persistent volume for config folder. Stores e.g. online api credentials
+      # Persistent volume for config folder.
+      # Stores e.g. online api credentials
       config:
         enabled: false
   agent:
@@ -252,7 +255,8 @@ crowdsec:
           crowdsecurity/http-cve
 
     persistentVolume:
-      # -- Persistent volume for config folder. Stores local config (parsers, scenarios etc.)
+      # Persistent volume for config folder.
+      # Stores local config (parsers, scenarios etc.)
       config:
         enabled: false
     metrics:
