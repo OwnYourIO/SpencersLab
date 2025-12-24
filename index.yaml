@@ -3,6 +3,18 @@ entries:
   389ds:
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2025-12-24T01:09:37.64269033Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.3.0
+    digest: 3fc73f5bcc8715d1f872828f5d981e960cc6ae5cb964bd2de0aba9cdd1752e8f
+    name: 389ds
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/389ds-1.0.16/389ds-1.0.16.tgz
+    version: 1.0.16
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2025-12-24T01:06:10.418908053Z"
     dependencies:
     - name: app-template
@@ -12024,4 +12036,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-24T01:06:10.419925779Z"
+generated: "2025-12-24T01:09:37.643783687Z"
