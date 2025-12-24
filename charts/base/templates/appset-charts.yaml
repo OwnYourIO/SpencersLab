@@ -72,7 +72,7 @@ spec:
                 value: '{{ `{{ .appName }}` }}'
 
               {{ `{{- if eq .appName "k8s-monitoring" }}` }}
-              - name: cluster.name
+              - name: k8s-monitoring.cluster.name
                 value: {{ `{{ .serviceName }}` }}
               {{ `{{- end }}` }}
 

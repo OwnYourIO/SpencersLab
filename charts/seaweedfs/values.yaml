@@ -112,7 +112,7 @@ seaweedfs:
     metricsPort: 9328
     index: leveldb
     replicas: 5
-    #minFreeSpacePercent: 5
+    minFreeSpacePercent: 2
     #compactionMBps: "250"
 
     # In the 4.0.0 chart these seemed to change and are now failing... 
