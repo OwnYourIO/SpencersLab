@@ -71,6 +71,11 @@ spec:
               - name: appName
                 value: '{{ `{{ .appName }}` }}'
 
+              {{ `{{- if eq .appName "k8s-monitoring" }}` }}
+              - name: cluster.name
+                value: {{ `{{ .Release.Name }}` }}
+              {{ `{{- end }}` }}
+
               # I'd like to keep this file as generic as possible, so would rather move this into the app definitions,
               # but those are coming from Values and the reading of the annotations HAS to happen in this file though. 
               # This is the compromise. 
