@@ -46,12 +46,13 @@ spec:
         - repoURL: '{{ `{{ index .metadata.annotations "services.repo" }}` }}'
           targetRevision: main
           ref: services
-        {{ `{{- if not (hasKey . "version") }}` }}
-        - repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
-          targetRevision: main
-          ref: values
-          path: '{{ `{{ index .metadata.annotations "chart.repo.path" }}` }}/{{ `{{ .appName }}` }}'
-        {{ `{{- end }}` }}
+        # TODO: This should include logic for if the chart is external.
+        #{{ `{{- if not (hasKey . "version") }}` }}
+        #- repoURL: '{{ `{{ index .metadata.annotations "values.repo" }}` }}'
+        #  targetRevision: main
+        #  ref: values
+        #  path: '{{ `{{ index .metadata.annotations "chart.repo.path" }}` }}/{{ `{{ .appName }}` }}'
+        #{{ `{{- end }}` }}
         - repoURL: '{{ `{{ if hasKey . "repository" }}{{ .repository }}{{ else }}{{ index .metadata.annotations "services.repo" }}{{ end }}` }}'
           targetRevision: "{{ `{{ dig "version" "main" . }}` }}"
           {{ `{{- if hasKey . "version" }}` }}
@@ -87,8 +88,9 @@ spec:
               {{ `{{- if $appCustomValuesUrl }}` }}
               - {{ `{{ $appCustomValuesUrl }}` }}
               {{ `{{- end }}` }}
+              # TODO: This should include logic for if the chart is external.
               {{ `{{- if not (hasKey . "version") }}` }}
-              - $values/{{ `{{ index .metadata.annotations "chart.repo.path" }}` }}/{{ `{{ .appName }}` }}/values.yaml
+              - {{ `{{ index .metadata.annotations "chart.repo.path" }}` }}/{{ `{{ .appName }}` }}/values.yaml
               {{ `{{- end }}` }}
             # Hierarchical values merging: Combines values from multiple sources with proper precedence.
             # Merge order (highest to lowest precedence):
