@@ -26,7 +26,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: "seaweedfs-volume-{{ $replicaIndex }}-{{ .Values.clusterName }}-ingress"
+  name: "seaweedfs-volume-{{ $replicaIndex }}-{{ `{{ .Values.clusterName }}` }}-ingress"
   namespace: default
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: "seaweedvolume"
@@ -44,7 +44,7 @@ spec:
                 name: "seaweedfs-volume-{{ $replicaIndex }}"
                 port:
                   number: 8080
-    - host: "seaweedfs-volume-{{ $replicaIndex }}.{{ .Values.clusterName }}.{{ $domain }}"
+    - host: "seaweedfs-volume-{{ $replicaIndex }}.infra.{{ $domain }}"
       http:
         paths:
           - path: /
