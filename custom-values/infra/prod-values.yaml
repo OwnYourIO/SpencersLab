@@ -8,3 +8,8 @@ base:
   bitwardenIds:
     cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+
+389ds:
+  bitwardenIds:
+    389ds: f7b628ec-2544-4c28-a476-b1a501487d99
+
