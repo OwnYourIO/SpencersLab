@@ -9,9 +9,6 @@ dependencies:
 - name: cloudnative-pg
   version: 0.26.0
   repository: https://cloudnative-pg.github.io/charts
-- name: 389ds
-  version: 1.0.14
-  repository: https://ownyourio.github.io/SpencersLab/
 - name: samba
   version: 1.0.13
   repository: https://ownyourio.github.io/SpencersLab/
