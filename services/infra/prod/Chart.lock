@@ -1,7 +1,4 @@
 dependencies:
-- name: seaweedfs
-  repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 4.0.393
 - name: seaweedfs-csi-driver
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
   version: 0.2.3
@@ -17,5 +14,5 @@ dependencies:
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.13
-digest: sha256:93e98f0acd37c502917bb21ae189caac809a375052f1014b3cc2a60cde7ab7d8
-generated: "2025-10-11T13:56:00.913009341Z"
+digest: sha256:03b91f26ec4dda6da98d558e790ce4a0c85f913a9e84af4a5bfa87425c19d37a
+generated: "2025-12-23T16:57:10.102039823-07:00"
