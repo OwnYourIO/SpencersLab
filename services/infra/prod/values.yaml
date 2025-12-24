@@ -80,8 +80,7 @@ ingress:
       port: 80
 
 # This is needed to enable the seaweedfs port on 8080.
-base:
-  seaweedVolumePort: 8080
+seaweedVolumePort: 8080
 
 prometheus:
   serviceMonitorSelectorNilUsesHelmValues: false
