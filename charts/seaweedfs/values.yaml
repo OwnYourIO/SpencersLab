@@ -1,8 +1,5 @@
-global:
-  nameOverride: 389ds
-
-bitwardenIds:
-  389ds: OVERRIDE_NEEDED
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
 
 seaweedfs:
   global:
