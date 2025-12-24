@@ -79,6 +79,9 @@ ingress:
       service: traefik
       port: 80
 
+seaweedfs:
+  seaweedVolumePort: 8080
+
 prometheus:
   serviceMonitorSelectorNilUsesHelmValues: false
 
