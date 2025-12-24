@@ -9215,6 +9215,18 @@ entries:
     version: 4.0.3751
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2025-12-24T02:11:54.190830401Z"
+    dependencies:
+    - name: seaweedfs
+      repository: https://seaweedfs.github.io/seaweedfs/helm
+      version: 4.0.393
+    digest: 2e1e3c93e07c850a08530aaaf20a20e06c0eb829731ec1e8c7066845d066b3d3
+    name: seaweedfs
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-1.0.13/seaweedfs-1.0.13.tgz
+    version: 1.0.13
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2025-12-24T02:07:07.366256869Z"
     dependencies:
     - name: seaweedfs
@@ -12180,4 +12192,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-24T02:07:07.367270285Z"
+generated: "2025-12-24T02:11:54.191994719Z"
