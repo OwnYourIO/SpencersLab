@@ -26,7 +26,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: "seaweedfs-volume-{{ $replicaIndex }}-{{ .clusterName }}-ingress"
+  name: "seaweedfs-volume-{{ $replicaIndex }}-{{ .Values }}-ingress"
   namespace: default
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: "seaweedvolume"
