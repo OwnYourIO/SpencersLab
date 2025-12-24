@@ -79,7 +79,8 @@ ingress:
       service: traefik
       port: 80
 
-seaweedfs:
+# This is needed to enable the seaweedfs port on 8080.
+base:
   seaweedVolumePort: 8080
 
 prometheus:
