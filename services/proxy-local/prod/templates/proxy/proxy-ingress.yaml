@@ -38,7 +38,7 @@ spec:
   tls:
     - hosts:
       - "{{ $subDomain }}.{{ $.Values.domain }}"
-      secretName: wildcard-cert
+      secretName: {{ if $config.clusterBase | default false }}cluster-wildcard-cert{{ else }}wildcard-cert{{ end }}
   rules:
     - host: "{{ $subDomain }}.{{ $.Values.domain }}"
       http:
