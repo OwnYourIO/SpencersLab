@@ -6,8 +6,7 @@ bitwardenIds:
 k8s-monitoring:
   # values.yaml for grafana/k8s-monitoring chart
   cluster:
-    # TODO: Make this generic.
-    name: spencerslab
+    name: {{ .Release.Name }}
 
   # Define destinations - sending to your existing Prometheus
   destinations:
