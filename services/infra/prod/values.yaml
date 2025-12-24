@@ -24,7 +24,8 @@ charts:
     #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
-    ServerSideApply: "true"
+    # Needs to be false otherwise values aren't passed properly.
+    ServerSideApply: "false"
   389ds:
     #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
