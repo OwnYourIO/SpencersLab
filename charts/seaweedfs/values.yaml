@@ -65,7 +65,7 @@ seaweedfs:
         cpu: 200m
         memory: 2Gi
       limits:
-        memory: 4Gi
+        memory: 8Gi
 
     # Affinity Settings
     # Commenting out or setting as empty the affinity variable, will allow
