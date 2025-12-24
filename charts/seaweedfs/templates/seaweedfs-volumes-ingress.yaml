@@ -1,5 +1,4 @@
-{{- $clusterName := index .Values "clusterName" -}}
-{{- $domain := .Values.domain -}}
+{{- $domain := `{{ .Values.domain }}` -}}
 {{- $replicas := int .Values.seaweedfs.volume.replicas }}
 {{- range $replicaIndex := until $replicas }}
 
@@ -27,7 +26,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: "seaweedfs-volume-{{ $replicaIndex }}-{{ $clusterName }}-ingress"
+  name: "seaweedfs-volume-{{ $replicaIndex }}-{{ .Values.clusterName }}-ingress"
   namespace: default
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: "seaweedvolume"
@@ -45,7 +44,7 @@ spec:
                 name: "seaweedfs-volume-{{ $replicaIndex }}"
                 port:
                   number: 8080
-    - host: "seaweedfs-volume-{{ $replicaIndex }}.{{ $clusterName }}.{{ $domain }}"
+    - host: "seaweedfs-volume-{{ $replicaIndex }}.{{ .Values.clusterName }}.{{ $domain }}"
       http:
         paths:
           - path: /
