@@ -1,4 +1,4 @@
-{{- $clusterName := .Values -}}
+{{- $clusterName := .Values.clusterName -}}
 {{- $domain := .Values.domain -}}
 {{- $replicas := int .Values.seaweedfs.volume.replicas }}
 {{- range $replicaIndex := until $replicas }}
