@@ -106,7 +106,6 @@ app-template:
       existingClaim: 389ds-data
     ldifs:
       type: configMap
-      # Restore {{ .Release.Name }}
       #name: 'infra-389ds'
       name: {{ .Release.Name}}-389ds
       globalMounts:
