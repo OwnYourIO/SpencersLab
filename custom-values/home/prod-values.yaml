@@ -29,6 +29,8 @@ monitoring-agent:
   bitwardenIds:
     cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
 
+realm: SpencersLab
+
 wekan:
   root_url: https://wekan.spencerslab.com
 boards:
