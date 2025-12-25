@@ -95,6 +95,11 @@ crowdsec:
 
   lapi:
     storeCAPICredentialsInSecret: true
+    certManager:
+      enabled: true
+      secretTemplate:
+        annotations: {}
+        labels: {}
     env:
       # TODO: Handle this better
       - name: TZ
