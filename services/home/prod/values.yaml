@@ -124,7 +124,7 @@ ingress:
 
     cluster:
       clusterBase: true
-      service: home-argocd-server
+      service: argocd-server
       port: 80
     traefik:
       clusterBase: true
