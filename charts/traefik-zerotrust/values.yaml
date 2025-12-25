@@ -22,6 +22,10 @@ traefik:
   dashboard: 
     enabled: false
 
+  ingressClass:
+    enabled: true
+    name: "traefik"  # Change from "proxy-remote-traefik"
+
   persistence:
     enabled: true
     size: 1Gi 
