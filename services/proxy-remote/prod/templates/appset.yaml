@@ -19,7 +19,7 @@ spec:
                   # This is needed so renovate pick's up the version
                   # appName: base
                   # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  baseChartVersion: 1.0.161
+                  baseChartVersion: 1.0.166
                   values: {{ index $ "Values" | default dict | toJson }}
   template:
     metadata:
