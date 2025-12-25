@@ -84,3 +84,83 @@ traefik:
     #  level: DEBUG
     access:
       enabled: true
+
+
+crowdsec:
+  container_runtime: containerd
+  tls:
+    enabled: true
+    agent:
+      tlsClientAuth: true
+
+  lapi:
+    storeCAPICredentialsInSecret: true
+    env:
+      # TODO: Handle this better
+      - name: TZ
+        value: America/Denver
+      - name: DISABLE_ONLINE_API
+        value: "true"
+      #- name: ENROLL_INSTANCE_NAME
+      #  value: proxy-remote
+      # Setting the enroll key after initial startup requires force enrollment
+      # which currently breaks the local API.
+      #- name: ENROLL_KEY
+      #  valueFrom:
+      #    secretKeyRef:
+      #      name: crowdsec-keys
+      #      key: ENROLL_KEY
+      - name: LEVEL_DEBUG
+        value: "true"
+    config:
+      config.yaml.local: |
+        api:
+          server:
+            auto_registration:
+              enabled: false  # Disable password-based registration
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: monitoring-agent
+    persistentVolume:
+      # Persistent volume for data folder.
+      # Stores e.g. registered bouncer api keys
+      data:
+        enabled: true
+        accessModes:
+          - ReadWriteOnce
+        size: 1Gi
+      # Persistent volume for config folder.
+      # Stores e.g. online api credentials
+      config:
+        enabled: false
+  agent:
+    acquisition:
+      - namespace: kube-system
+        podName: traefik-[0-9]*
+        program: traefik
+        poll_without_inotify: true
+    env:
+      # TODO: Handle this better
+      - name: TZ
+        value: America/Denver
+      - name: COLLECTIONS
+        value: >-
+          crowdsecurity/linux
+          crowdsecurity/traefik
+          crowdsecurity/base-http-scenarios
+          crowdsecurity/http-cve
+
+    persistentVolume:
+      # Persistent volume for config folder.
+      # Stores local config (parsers, scenarios etc.)
+      config:
+        enabled: false
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: monitoring-agent
