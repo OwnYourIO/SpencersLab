@@ -12,6 +12,8 @@ base:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
 traefik: 
+  keycloak:
+    realm: SpencersLab
   bitwardenIds:
     crowdsec-secret: 9e144cd6-5e85-4ded-b913-b228003c68a0
     traefik-sso-secret: fa9bb676-c5a9-431e-903f-b22b0038bf5c
@@ -23,3 +25,4 @@ traefik:
   #        value: "true"
 
 authRealm: SpencersLab
+
