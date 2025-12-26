@@ -225,7 +225,7 @@ ingress:
       port: 8000
     cluster:
       clusterBase: true
-      service: base-argocd-server
+      service: argocd-server
       port: 80
     traefik:
       clusterBase: true
