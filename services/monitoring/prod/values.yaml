@@ -73,7 +73,7 @@ prometheus:
 
 kube-prometheus-stack: 
   # Disable this in favor of using k8s-monitoring.
-  prometheus-node-exporter:
+  nodeExporter:
     enabled: false
   crds:
     enabled: true
