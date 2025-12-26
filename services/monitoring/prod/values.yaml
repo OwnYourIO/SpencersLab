@@ -18,7 +18,8 @@ charts:
     #version: 1.0.1 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
-    ServerSideApply: "true"
+    # Loki needs false so that stateful set PVCs doesn't generate creationTimestamp: null
+    ServerSideApply: "false"
     serviceName: base
   grafana:
     version: 10.1.0 # renovate: datasource=helm registryUrl=https://grafana.github.io/helm-charts/
