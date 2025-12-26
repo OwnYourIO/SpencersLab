@@ -114,6 +114,9 @@ bitwardenIds:
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
 
+  mountService:
+    enabled: true
+
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
