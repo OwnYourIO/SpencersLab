@@ -14,7 +14,7 @@ bitwardenIds:
 domain: local
 clusterName: base
 letsEncryptEmail: ""
-#letsEncryptSolver: 
+#letsEncryptSolver:
 
 # This will allow k3s to be updated. Disabled by default incase anyone uses something other than k3s
 autoUpdateK3s: false

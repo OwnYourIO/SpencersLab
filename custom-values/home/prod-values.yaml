@@ -25,10 +25,6 @@ zigbee2mqtt-remote:
   bitwardenIds:
     zigbee2mqtt: 0164cfbc-dd85-43af-a4cc-b13f00108bde
 
-monitoring-agent:
-  bitwardenIds:
-    cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
-
 realm: SpencersLab
 
 wekan:
