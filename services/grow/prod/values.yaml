@@ -5,9 +5,10 @@ domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
 charts:
-  cloudnative-pg:
-    version: 0.25.0
-    repository: https://cloudnative-pg.github.io/charts
+  # Internal charts (no version/repository - uses charts/ directory)
+  k8s-monitoring:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
   external-secrets-bitwarden:
@@ -15,11 +16,14 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
-  monitoring-agent:
-    version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    repository: https://ownyourio.github.io/SpencersLab/
+
+  # External charts (with version and repository)
+  cloudnative-pg:
+    version: 0.25.0
+    repository: https://cloudnative-pg.github.io/charts
     namespace: default
     ServerSideApply: "true"
+
 ingress:
   subdomains:
     cluster:
