@@ -1,16 +1,16 @@
 {{- range $name, $config := .Values.ingress.subdomains }}
-{{- $subDomain := "" }} {{/* Initialize the variable */}}
-{{- if $config.clusterBase | default false}}
-{{- $subDomainName := $name }}
-{{- if hasKey $config "subDomain" }}
-  {{- $subDomainName = $config.subDomain }}
-{{- else if hasKey $.Values.charts "subDomain" }}
-  {{- $subDomainName = $.Values.charts.subDomain }}
-{{- end }}
-{{- $subDomain := printf "%s.%s" $subDomainName $.Values.clusterName }}
-{{- else }}
-{{- $subDomain = $name }}
-{{- end}}
+  {{- $subDomain := "" }} {{/* Initialize the variable */}}
+  {{- if $config.clusterBase | default false}}
+    {{- $subDomainName := $name }}
+    {{- if hasKey $config "subDomain" }}
+      {{- $subDomainName = $config.subDomain }}
+    {{- else if hasKey $.Values.charts "subDomain" }}
+      {{- $subDomainName = $.Values.charts.subDomain }}
+    {{- end }}
+    {{- $subDomain := printf "%s.%s" $subDomainName $.Values.clusterName }}
+  {{- else }}
+    {{- $subDomain = $name }}
+  {{- end}}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -42,7 +42,7 @@ spec:
                 port:
                   number: {{ $config.port }}
 
-{{- if $config.serviceName }}
+  {{- if $config.serviceName }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -73,5 +73,5 @@ spec:
                 name: "{{ $config.service }}"
                 port:
                   number: {{ $config.port }}
-{{- end }}
+  {{- end }}
 {{- end }}
