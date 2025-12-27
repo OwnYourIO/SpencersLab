@@ -11,29 +11,3 @@ spec:
       storage: 5Gi
 
 ---
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: lms-playlists
-  namespace: default
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: lms-music
-  namespace: default
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
