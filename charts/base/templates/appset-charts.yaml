@@ -15,13 +15,13 @@ spec:
               elements:
                 {{- range $appName, $chartConfig := .Values.charts }}
                 - appName: {{ $appName }}
-                  {{- if $chartConfig.version }}
+                  {{- if hasKey $chartConfig "version" }}
                   version: {{ $chartConfig.version }}
                   {{- end }}
-                  {{- if $chartConfig.repository }}
+                  {{- if hasKey $chartConfig "repository" }}
                   repository: {{ $chartConfig.repository }}
                   {{- end }}
-                  {{- if $chartConfig.chart }}
+                  {{- if hasKey $chartConfig "chart" }}
                   chart: {{ $chartConfig.chart }}
                   {{- end }}
                   namespace: {{ $chartConfig.namespace | default "default" }}
