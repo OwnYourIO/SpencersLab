@@ -75,9 +75,6 @@ traefik:
       serviceMonitor:
         enabled: true
         namespace: default
-        additionalLabels:
-          release: monitoring-agent
-          prometheus: system-monitoring-prometheus-prometheus
 
   logs:
     #general:
@@ -127,8 +124,6 @@ crowdsec:
       enabled: true
       serviceMonitor:
         enabled: true
-        additionalLabels:
-          release: monitoring-agent
     persistentVolume:
       # Persistent volume for data folder.
       # Stores e.g. registered bouncer api keys
@@ -167,5 +162,3 @@ crowdsec:
       enabled: true
       serviceMonitor:
         enabled: true
-        additionalLabels:
-          release: monitoring-agent

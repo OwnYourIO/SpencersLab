@@ -11,6 +11,7 @@ immich:
       secretKeyRef:
         name: pg-immich-secret
         key: username
+
     DB_PASSWORD:
       secretKeyRef:
         name: pg-immich-secret

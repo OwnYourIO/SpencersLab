@@ -100,13 +100,9 @@ keycloakx:
 
   serviceMonitor:
     enabled: true
-    labels:
-      release: monitoring-agent
     port: metrics
 
   extraServiceMonitor:
     enabled: true  
-    labels:
-      release: monitoring-agent
     port: http
     path: /realms/master/metrics
