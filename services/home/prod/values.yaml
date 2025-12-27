@@ -10,6 +10,8 @@ seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
   seaweedfsCsiPlugin:
     image: chrislusf/seaweedfs-csi-driver:v1.3.6
+  mountService:
+    enabled: true
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
