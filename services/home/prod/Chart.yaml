@@ -3,9 +3,6 @@ name: home
 version: 1.0.0
 appVersion: 1.0.0
 dependencies:
-- name: seaweedfs-csi-driver
-  version: 0.2.3
-  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
 - name: mosquitto
   version: 0.1.1
   repository: https://lmatfy.github.io/charts

@@ -1,7 +1,4 @@
 dependencies:
-- name: seaweedfs-csi-driver
-  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
-  version: 0.2.3
 - name: mosquitto
   repository: https://lmatfy.github.io/charts
   version: 0.1.1
@@ -50,5 +47,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.3.0
-digest: sha256:8067ffbac64b31c3175003872360559484fe14c3bf30d49ae794118b8634f921
-generated: "2025-11-27T19:28:17.77291271-07:00"
+digest: sha256:b9b7db5174a88b476297c3b16e9d4f868f654207e84e24d993dadae8b9207dd7
+generated: "2025-12-26T17:56:10.290728108-07:00"
