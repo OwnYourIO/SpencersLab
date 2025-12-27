@@ -58,7 +58,7 @@ spec:
           {{ `{{- if hasKey . "version" }}` }}
           chart: "{{ `{{ if hasKey . "chart" }}{{ .chart }}{{ else }}{{ .appName }}{{ end }}` }}"
           {{ `{{- else }}` }}
-          path: {{ `{{ if hasKey . "chart" }}{{ .chart }}{{ else }}{{ if hasKey . "version" }}{{ .appName }}{{ else }}{{ index .metadata.annotations "chart.repo.path" }}/{{ .appName }}{{ end }}{{ end }}` }}
+          path: {{ `{{ if and (hasKey . "chart") (hasKey . "version") }}{{ .chart }}{{ else }}{{ if hasKey . "version" }}{{ .appName }}{{ else }}{{ index .metadata.annotations "chart.repo.path" }}/{{ .appName }}{{ end }}{{ end }}` }}
           {{ `{{- end }}` }}
           helm:
             parameters:
