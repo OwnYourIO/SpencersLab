@@ -17,7 +17,7 @@ spec:
                   # TODO: Test/confirm this actually updates. Started on 1.0.133
                   # This is needed so renovate pick's up the version
                   # appName: base
-                  baseChartVersion: 1.0.168
+                  baseChartVersion: 1.0.169
                   values: {{ index $ "Values" | default dict | toJson }}
   template:
     metadata:
