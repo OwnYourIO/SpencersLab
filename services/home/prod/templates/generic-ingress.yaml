@@ -4,8 +4,8 @@
 {{- $subDomainName := $name }}
 {{- if hasKey $config "subDomain" }}
   {{- $subDomainName = $config.subDomain }}
-{{- else if hasKey $.charts "subDomain" }}
-  {{- $subDomainName = $.charts.subDomain }}
+{{- else if hasKey $.Values.charts "subDomain" }}
+  {{- $subDomainName = $.Values.charts.subDomain }}
 {{- end }}
 {{- $subDomain := printf "%s.%s" $subDomainName $.Values.clusterName }}
 {{- else }}
