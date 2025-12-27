@@ -77,7 +77,7 @@ kube-prometheus-stack:
   nodeExporter:
     enabled: false
   crds:
-    enabled: true
+    enabled: false
   grafana:
     enabled: false
   prometheusOperator: 
