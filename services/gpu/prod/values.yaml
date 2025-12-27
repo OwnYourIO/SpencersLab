@@ -88,9 +88,9 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
-  monitoring-agent:
-    version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    repository: https://ownyourio.github.io/SpencersLab/
+  k8s-monitoring:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
 
