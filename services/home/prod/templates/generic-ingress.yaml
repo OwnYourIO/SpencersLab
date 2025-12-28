@@ -7,7 +7,7 @@
     {{- else if hasKey $.Values "subDomain" }}
       {{- $subDomainName = $.Values.subDomain }}
     {{- end }}
-    {{- $subDomain = printf "%s.%s" $subDomainName $.Values.clusterName }}
+    {{- $subDomain = printf "%s.%s" $name $subDomainName }}
   {{- else }}
     {{- $subDomain = $name }}
   {{- end}}
