@@ -188,7 +188,7 @@ crowdsec:
   secrets:
     externalSecret:
       name: "crowdsec-keys"
-      csLapiSecretKey: "csLapiSecret"
+      csLapiSecretKey: "csLapiSecretKey"
       registrationTokenKey: "registrationToken"
 
   lapi:
