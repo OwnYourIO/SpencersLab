@@ -108,7 +108,7 @@ proxy:
     # Has just SSO
     boards:
       target: wekan
-      ssoRedirectPath: "/sign-in"
+      #ssoRedirectPath: "/sign-in"
     git:
       target: gitea
     charts:
