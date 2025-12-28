@@ -16,7 +16,10 @@ clusterName: OVERRIDE_VIA_APPSET
 
 external-secrets-bitwarden-kube-system:
   webhook:
-  create: false
+    create: false
+  crds:
+    conversion:
+      enabled: false
 charts: 
   external-secrets-bitwarden:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
