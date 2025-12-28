@@ -21,7 +21,7 @@ metadata:
   namespace: default
 spec:
   dnsNames:
-    - "*.{{ if hasKey $.Values.charts "subDomain" }}{{ $.Values.charts.subDomain }}{{ else }}{{ $.Values.clusterName }}{{ end }}.{{ $.Values.domain }}"
+    - "*.{{ if hasKey $.Values "subDomain" }}{{ $.Values.subDomain }}{{ else }}{{ $.Values.clusterName }}{{ end }}.{{ $.Values.domain }}"
   secretName: cluster-wildcard-cert
   issuerRef:
     name: letsencrypt-prod
