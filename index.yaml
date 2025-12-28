@@ -9435,6 +9435,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/samba-1.0.1/samba-1.0.1.tgz
     version: 1.0.1
+  searxng:
+  - apiVersion: v2
+    appVersion: 2024.8.31
+    created: "2025-12-28T22:06:07.678257823Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 0a32b038b52f42aa9c64ff75df20c0e1376789a7aa8d23c57d8ef90096cf26f4
+    name: searxng
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/searxng-1.0.1/searxng-1.0.1.tgz
+    version: 1.0.1
   seaweedfs:
   - apiVersion: v1
     appVersion: "3.75"
@@ -12676,4 +12689,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-28T21:51:35.77944627Z"
+generated: "2025-12-28T22:06:07.680564086Z"
