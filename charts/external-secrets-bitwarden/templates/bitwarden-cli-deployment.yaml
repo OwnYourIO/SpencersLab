@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bitwarden-cli
-  namespace: default
+  namespace: {{ $.Values.namespace }}
   labels:
     app.kubernetes.io/instance: bitwarden-cli
     app.kubernetes.io/name: bitwarden-cli
@@ -79,7 +79,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: bitwarden-cli
-  namespace: default
+  namespace: {{ $.Values.namespace }}
   labels:
     app.kubernetes.io/instance: bitwarden-cli
     app.kubernetes.io/name: bitwarden-cli
@@ -98,7 +98,7 @@ spec:
 kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
-  namespace: default
+  namespace: {{ $.Values.namespace }}
   name: external-secret-2-bw-cli
 spec:
   podSelector:
