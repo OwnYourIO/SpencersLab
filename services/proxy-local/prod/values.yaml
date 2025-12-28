@@ -17,7 +17,7 @@ clusterName: OVERRIDE_VIA_APPSET
 charts: 
   external-secrets-bitwarden:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    repository: https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
   k8s-monitoring:
@@ -27,7 +27,7 @@ charts:
     ServerSideApply: "true"
   external-secrets-bitwarden-kube-system:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    repository: https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
     namespace: kube-system
     ServerSideApply: "true"
     chart: external-secrets-bitwarden
