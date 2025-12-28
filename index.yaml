@@ -5469,6 +5469,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/deploy-1.0.10/deploy-1.0.10.tgz
     version: 1.0.10
+  docling:
+  - apiVersion: v2
+    appVersion: 1.7.0
+    created: "2025-12-28T21:51:35.622761109Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 4fcf367c425b6ccf173b492f9f1c34453d9554fef004058bcd0e63185d799725
+    name: docling
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/docling-1.0.1/docling-1.0.1.tgz
+    version: 1.0.1
   email-appset:
   - apiVersion: v2
     appVersion: 1.1.1
@@ -12663,4 +12676,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-28T21:25:24.992237928Z"
+generated: "2025-12-28T21:51:35.77944627Z"
