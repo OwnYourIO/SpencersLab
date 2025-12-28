@@ -12,6 +12,10 @@ bitwardenIds:
   open-webui-sso-secret: 69e653a3-061c-4727-af4b-b336014cedbe
   open-webui-secret: b56bd559-e590-42eb-a98a-b336014dc3e7
   open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
+
+  searxng: b68399c2-ab7c-41fd-9ab0-b3c101672961
+  neo4j: 232db903-844d-4e16-8cd7-b3c10166f527
+
 base:
   bitwardenIds:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625

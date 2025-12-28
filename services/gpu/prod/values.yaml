@@ -1,14 +1,40 @@
+# BitwardenIds moved to cluster secret annotation (metadata.annotations.services.gpu.bitwardenIds)
+# The YAML block is parsed and each key-value pair becomes individual Helm parameters
+# This allows charts to access values like: {{ index .Values "bitwardenIds" "coder-pg" }}
+# Example cluster annotation:
+# metadata.annotations.services.gpu.bitwardenIds: |
+#   open-webui-sso-secret: "12345678-1234-1234-1234-123456789abc"
+#   open-webui-secret: "87654321-4321-4321-4321-cba987654321"
+#   open-webui-pg: "11111111-2222-3333-4444-555555555555"
+#   coder-sso-secret: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+#   coder-pg: "ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"
+bitwardenIds:
+  open-webui-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  open-webui-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  open-webui-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  coder-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  coder-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  
+  docling: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
+
+seaweedfs-csi-driver:
+  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
+  mountService:
+    enabled: true
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+# SeaweedFS configuration
+seaweedfs:
+  volumeCount: 5  # Number of seaweedfs volume servers to configure DNS rewrites for
+
 # Chart definitions for appset-dev-charts.yaml
 # Each chart can have: namespace, ServerSideApply, version, repository
 charts:
   # Internal charts (no version/repository - uses charts/ directory)
-  flowise:
-    namespace: default
-    ServerSideApply: "false"
   langflow:
-    namespace: default
-    ServerSideApply: "false"
-  langfuse:
     namespace: default
     ServerSideApply: "false"
   docling:
@@ -20,37 +46,34 @@ charts:
   searxng:
     namespace: default
     ServerSideApply: "false"
-  neo4j:
+  archon:
+    namespace: default
+    ServerSideApply: "false"
+  flowise:
     namespace: default
     ServerSideApply: "false"
   n8n:
     namespace: default
     ServerSideApply: "false"
-  # TODO: Enable these
-  # qdrant:
-  #   namespace: default
-  #   ServerSideApply: "false"
-  # neo4j:
-  #   namespace: default
-  #   ServerSideApply: "false"
-  # langfuse:
-  #   namespace: default
-  #   ServerSideApply: "false"
-  # searxng:
-  #   namespace: default
-  #   ServerSideApply: "false"
+  neo4j:
+    namespace: default
+    ServerSideApply: "false"
+  qdrant:
+    namespace: default
+    ServerSideApply: "false"
   supabase:
-    namespace: default
-    ServerSideApply: "false"
-  archon:
-    namespace: default
-    ServerSideApply: "false"
-  langgraph:
     namespace: default
     ServerSideApply: "false"
   hivetools:
     namespace: default
     ServerSideApply: "true"
+  # Disabled because they don't currently work and I like langflow better.
+  #langfuse:
+  #  namespace: default
+  #  ServerSideApply: "false"
+  #langgraph:
+  #  namespace: default
+  #  ServerSideApply: "false"
   
   # External charts (with version and repository)
   seaweedfs-csi-driver:
@@ -93,48 +116,6 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
-
-# BitwardenIds moved to cluster secret annotation (metadata.annotations.services.gpu.bitwardenIds)
-# The YAML block is parsed and each key-value pair becomes individual Helm parameters
-# This allows charts to access values like: {{ index .Values "bitwardenIds" "coder-pg" }}
-# Example cluster annotation:
-# metadata.annotations.services.gpu.bitwardenIds: |
-#   open-webui-sso-secret: "12345678-1234-1234-1234-123456789abc"
-#   open-webui-secret: "87654321-4321-4321-4321-cba987654321"
-#   open-webui-pg: "11111111-2222-3333-4444-555555555555"
-#   coder-sso-secret: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-#   coder-pg: "ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"
-bitwardenIds:
-  open-webui-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  open-webui-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  open-webui-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  coder-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  coder-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
-
-seaweedfs-csi-driver:
-  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
-  mountService:
-    enabled: true
-
-domain: OVERRIDE_VIA_APPSET
-clusterName: OVERRIDE_VIA_APPSET
-
-# Configuration for optional components
-# Note: appset.includeBase is now controlled via cluster annotations (metadata.annotations.services.gpu.includeBase)
-# and will default to "false" if not specified in the cluster secret
-appset:
-  includeBase: true  # This value is overridden by cluster annotations
-
-# Sync policy configuration
-# Note: selfHeal is now dynamically controlled via cluster annotations (metadata.annotations.services.gpu.selfHeal)
-# and will default to true if not specified in the cluster secret
-# The main ApplicationSet uses the cluster annotation directly for its selfHeal setting
-syncPolicy:
-  selfHeal: false  # This value is overridden by cluster annotations (cluster annotation defaults to true)
-
-# SeaweedFS configuration
-seaweedfs:
-  volumeCount: 5  # Number of seaweedfs volume servers to configure DNS rewrites for
 
 ingress:
   dashboardProvider: homepage  # Set to "homepage" to enable Homepage annotations on ingress objects
@@ -190,27 +171,21 @@ ingress:
       service: gpu-n8n
       port: 5678
 
-# TODO: Implement these.
-#    qdrant:
-#      serviceName: qdrant
-#      service: gpu-qdrant
-#      port: 6333
-#
-#    neo4j:
-#      serviceName: neo4j
-#      service: gpu-neo4j
-#      port: 7474
-#
-#    langfuse:
-#      serviceName: langfuse
-#      service: gpu-langfuse
-#      port: 3000
-#
-#    searxng:
-#      serviceName: searxng
-#      service: gpu-searxng
-#      port: 8080
-#
+    qdrant:
+      serviceName: qdrant
+      service: gpu-qdrant
+      port: 6333
+
+    neo4j:
+      serviceName: neo4j
+      service: gpu-neo4j
+      port: 7474
+
+    searxng:
+      serviceName: searxng
+      service: gpu-searxng
+      port: 8080
+
     supabase:
       serviceName: supabase
       service: gpu-supabase
@@ -221,10 +196,6 @@ ingress:
       service: gpu-archon
       port: 3737
 
-    langgraph:
-      serviceName: langgraph
-      service: gpu-langgraph
-      port: 8000
     cluster:
       clusterBase: true
       service: argocd-server

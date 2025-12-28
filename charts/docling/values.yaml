@@ -21,9 +21,10 @@ app-template:
             DOCLING_SERVE_PORT: "5001"
             DOCLING_SERVE_ENABLE_UI: "1"
             TZ: Etc/UTC
-          envFrom:
-            - secretRef:
-                name: *chartName
+          # Doesn't seem like Docling has a secret.
+          #envFrom:
+          #  - secretRef:
+          #      name: *chartName
           probes:
             liveness:
               enabled: true
