@@ -15,12 +15,19 @@ domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
 external-secrets-bitwarden-kube-system:
-  fullnameOverride: "{{ .Release.Name }}"
-  webhook:
-    create: false
-  crds:
-    conversion:
-      enabled: false
+  external-secrets:
+    webhook:
+      create: false
+    certController:
+      create: false
+    crds:
+      conversion:
+        enabled: false
+    # Scope to specific namespace
+    scopedRBAC: true
+    scopedNamespace: kube-system
+    processClusterExternalSecret: false
+    processClusterStore: false
 charts: 
   external-secrets-bitwarden:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
