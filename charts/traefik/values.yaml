@@ -7,6 +7,7 @@ bitwardenIds:
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
+namespace: OVERRIDE_VIA_APPSET
 
 cert-manager:
   installCRDs: true
