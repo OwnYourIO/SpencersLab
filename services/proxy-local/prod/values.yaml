@@ -14,6 +14,9 @@ authRealm: OVERRIDE_VIA_CUSTOM_VALUES
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+external-secrets-bitwarden-kube-system:
+  webhook:
+  create: false
 charts: 
   external-secrets-bitwarden:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
