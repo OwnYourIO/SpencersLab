@@ -2076,6 +2076,21 @@ entries:
   base:
   - apiVersion: v2
     appVersion: 1.0.31
+    created: "2025-12-28T18:56:42.363418599Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 8.6.4
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.19.0
+    digest: f62026b5c100435508ae6b655b839d598c19c19a71319bfc1d00bd9533fda466
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.174/base-1.0.174.tgz
+    version: 1.0.174
+  - apiVersion: v2
+    appVersion: 1.0.31
     created: "2025-12-28T00:19:45.766682441Z"
     dependencies:
     - name: argo-cd
@@ -5874,6 +5889,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/exporter-mikrotik-1.0.1/exporter-mikrotik-1.0.1.tgz
     version: 1.0.1
   external-secrets-bitwarden:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-12-28T18:56:42.536533108Z"
+    dependencies:
+    - name: external-secrets
+      repository: https://charts.external-secrets.io
+      version: 0.20.2
+    digest: 4914c1b9a998702afc711724019e6116509a8b8f2c396deac3ef273b42ebdc3b
+    name: external-secrets-bitwarden
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/external-secrets-bitwarden-1.0.12/external-secrets-bitwarden-1.0.12.tgz
+    version: 1.0.12
   - apiVersion: v2
     appVersion: 1.0.0
     created: "2025-12-28T18:55:30.463347117Z"
@@ -12537,4 +12564,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-28T18:55:30.464518371Z"
+generated: "2025-12-28T18:56:42.537593802Z"
