@@ -15,6 +15,7 @@ domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
 external-secrets-bitwarden-kube-system:
+  fullnameOverride: "{{ .Release.Name }}"
   webhook:
     create: false
   crds:
