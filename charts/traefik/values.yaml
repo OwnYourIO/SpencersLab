@@ -185,6 +185,11 @@ crowdsec:
     enabled: true
     agent:
       tlsClientAuth: true
+  secrets:
+    externalSecret:
+      name: "crowdsec-keys"
+      csLapiSecretKey: "csLapiSecret"
+      registrationTokenKey: "registrationToken"
 
   lapi:
     storeCAPICredentialsInSecret: true
