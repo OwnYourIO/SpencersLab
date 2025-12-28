@@ -25,6 +25,12 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  external-secrets-bitwarden-kube-system:
+    version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: kube-system
+    ServerSideApply: "true"
+    chart: external-secrets-bitwarden
   traefik:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
