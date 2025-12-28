@@ -78,16 +78,6 @@ spec:
                 value: {{ `{{ .serviceName }}` }}
               {{ `{{- end }}` }}
 
-              # I'd like to keep this file as generic as possible, so would rather move this into the app definitions,
-              # but those are coming from Values and the reading of the annotations HAS to happen in this file though. 
-              # This is the compromise. 
-              {{ `{{- if eq .appName "monitoring-agent" }}` }}
-              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].name
-                value: "storage"
-              - name: kube-prometheus-stack.prometheus.prometheusSpec.remoteWrite[0].url
-                value: "{{ `https://prometheus.{{ .metadata.annotations.domain }}/api/v1/write` }}"
-              {{ `{{- end }}` }}
-
             valueFiles:
               # Per-app custom values URL (overrides service-wide for specific app):
               # Example: metadata.annotations.services.gpu.zigbee2mqtt.customValuesUrl
