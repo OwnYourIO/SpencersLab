@@ -13,9 +13,6 @@ bitwardenIds:
   open-webui-secret: b56bd559-e590-42eb-a98a-b336014dc3e7
   open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
 
-  searxng: b68399c2-ab7c-41fd-9ab0-b3c101672961
-  neo4j: 232db903-844d-4e16-8cd7-b3c10166f527
-
 base:
   bitwardenIds:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
@@ -28,7 +25,12 @@ langgraph:
   bitwardenIds:
     langgraph: 43901b8d-ba0f-4f56-89a3-b37700d75a70
     langgraph-pg: ad6b3cdf-ef6f-4ff5-bbe3-b37700d86194
-
+searxng:
+  bitwardenIds:
+    searxng: b68399c2-ab7c-41fd-9ab0-b3c101672961
+neo4j:
+  bitwardenIds:
+    neo4j: 232db903-844d-4e16-8cd7-b3c10166f527
 n8n:
   bitwardenIds:
     n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
