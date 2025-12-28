@@ -1,7 +1,3 @@
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 namespace: OVERRIDE_VIA_APPSET
-
-external-secrets:
-  # This is needed to allow for multiple instances on one cluster.
-  fullnameOverride: "{{ .Release.Name }}"
