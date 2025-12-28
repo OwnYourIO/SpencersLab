@@ -16,8 +16,8 @@ seaweedfs-csi-driver:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+subDomain: home-lab
 charts: 
-  subDomain: home-lab
   external-secrets-bitwarden:
     version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     repository: https://ownyourio.github.io/SpencersLab/
