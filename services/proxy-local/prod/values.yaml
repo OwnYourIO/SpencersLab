@@ -136,9 +136,11 @@ proxy:
     audiobooks:
       target: readarr-audio
     streams:
-      target: pinchflat
+      service: proxy-local-pinchflat 
+      port: 80
     stream:
-      target: metube
+      service: proxy-local-metube
+      port: 8081
 
     cluster:
       clusterBase: true
