@@ -15,7 +15,7 @@ app-template:
         main:
           image:
             repository: ghcr.io/gitroomhq/postiz-app
-            tag: latest
+            tag: v2.0.8
           env:
             TZ: Etc/UTC
             # Database configuration
