@@ -18,6 +18,11 @@ clusterName: OVERRIDE_VIA_APPSET
 
 subDomain: home-lab
 charts: 
+  postiz:
+    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
   external-secrets-bitwarden:
     version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     repository: https://ownyourio.github.io/SpencersLab/
@@ -129,6 +134,11 @@ ingress:
     grow:
       service: home-hugo-grow
       port: 1313
+
+    social-scheduler:
+      serviceName: postiz
+      service: home-postiz
+      port: 3000
 
     cluster:
       clusterBase: true

@@ -1,0 +1,19 @@
+bitwardenIds:
+  postiz-db: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+postiz:
+  images:
+    repository: ghcr.io/gitroomhq/postiz-app
+    tag: "v2.10.1"
+    pullPolicy: IfNotPresent
+
+
+  postgres:
+    enabled: false
+  redis:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1000Mi
