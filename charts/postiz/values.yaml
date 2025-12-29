@@ -68,7 +68,7 @@ app-template:
     config:
       existingClaim: *chartName
     uploads:
-      existingClam: "{{ .Release.Name }}"
+      existingClaim: "{{ .Release.Name }}"
       globalMounts:
         - path: /uploads
           subpath: uploads
