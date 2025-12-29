@@ -22,7 +22,7 @@ app-template:
             DATABASE_URL:
               valueFrom:
                 secretKeyRef:
-                  name: *chartName
+                  name: "{{ .Release.Name }}-secret"
                   key: DATABASE_URL
             # Redis configuration
             REDIS_URL: redis://localhost:6379
