@@ -41,7 +41,7 @@ charts:
   docling:
     namespace: default
     ServerSideApply: "false"
-  graphio:
+  drawio:
     namespace: default
     ServerSideApply: "false"
   searxng:
@@ -185,6 +185,11 @@ ingress:
     searxng:
       serviceName: searxng
       service: gpu-searxng
+      port: 8080
+
+    drawio:
+      serviceName: graph
+      service: gpu-drawio
       port: 8080
 
     supabase:
