@@ -9178,6 +9178,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/n8n-1.0.1/n8n-1.0.1.tgz
     version: 1.0.1
+  neo4j:
+  - apiVersion: v2
+    appVersion: 5.23.0
+    created: "2025-12-29T18:39:19.573645856Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 7bae4d15760e282582f047848fe93712b5ff0021f2eb576ebfee9f4b8420f5db
+    name: neo4j
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/neo4j-1.0.1/neo4j-1.0.1.tgz
+    version: 1.0.1
   paperless:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -12740,4 +12753,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-29T18:27:18.926333849Z"
+generated: "2025-12-29T18:39:19.574715387Z"
