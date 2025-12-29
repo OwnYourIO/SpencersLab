@@ -78,7 +78,11 @@ app-template:
   persistence:
     config:
       existingClaim: *chartName
-    nginx:
+    nginx-logs:
       type: emptyDir
       globalMounts:
-        - path: /var/lib/nginx/
+        - path: /var/lib/nginx/logs
+    nginx-tmp:
+      type: emptyDir
+      globalMounts:
+        - path: /var/lib/nginx/tmp
