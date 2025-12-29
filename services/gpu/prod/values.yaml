@@ -218,6 +218,11 @@ ollama:
     # -- Specify the number of GPU to 1
     number: 1
 
+  # -- List of models to pull at container startup
+  #models:
+  #  pull:
+  #    - mistral
+  #    - llama2
   resources:
     limits:
       amd.com/gpu: 1 # requesting a GPU

@@ -30,6 +30,11 @@ spec:
         name: "{{ `{{ .name }}` }}"
         namespace: '{{ `{{ index .metadata.annotations (printf "services.%s.namespace" .serviceName) | default "default" }}` }}'
   templatePatch: |
+    {{ `{{- $valuesKey := .appName }}` }}
+    {{ `{{- if hasKey . "alias" }}` }}
+      {{ `{{- $valuesKey = .alias }}` }}
+    {{ `{{- end }}` }}
+    # TODO: The above needs integrated into the values below probably?
     # Dynamic source configuration - toggle specific fields based on chart type
     
     # Variable declarations for reusability and clarity
