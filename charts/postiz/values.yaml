@@ -1,19 +1,74 @@
 bitwardenIds:
-  postiz-db: OVERRIDE_VIA_CUSTOM_VALUES
+  postiz-pg: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 
-postiz:
-  images:
-    repository: ghcr.io/gitroomhq/postiz-app
-    tag: "v2.10.1"
-    pullPolicy: IfNotPresent
+app-template:
+  global:
+    nameOverride: &chartName postiz
 
+  controllers:
+    postiz:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/gitroomhq/postiz-app
+            tag: latest
+          env:
+            TZ: Etc/UTC
+            # Database configuration
+            DATABASE_URL:
+              valueFrom:
+                secretKeyRef:
+                  name: *chartName
+                  key: DATABASE_URL
+            # Redis configuration
+            REDIS_URL: redis://localhost:6379
+            # App configuration
+            FRONTEND_URL: "https://{{ .Values.domain }}"
+            NEXT_PUBLIC_BACKEND_URL: "https://{{ .Values.domain }}"
+            #JWT_SECRET:
+            #  valueFrom:
+            #    secretKeyRef:
+            #      name: *chartName
+            #      key: JWT_SECRET
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        
+        redis:
+          image:
+            repository: redis
+            tag: 8.2.0
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+            limits:
+              memory: 256Mi
 
-  postgres:
-    enabled: false
-  redis:
-    resources:
-      limits:
-        cpu: 500m
-        memory: 1000Mi
+  service:
+    postiz:
+      controller: *chartName
+      ports:
+        http:
+          port: 3000
+
+  persistence:
+    config:
+      existingClaim: *chartName

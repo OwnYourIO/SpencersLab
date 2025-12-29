@@ -3,6 +3,6 @@ name: postiz
 version: 1.0.1
 appVersion: 1.0.0
 dependencies:
-- name: postiz
-  repository: https://charts.rock8s.com
-  version: 1.0.5
+- name: app-template
+  version: 4.2.0
+  repository: https://bjw-s-labs.github.io/helm-charts/
