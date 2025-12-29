@@ -18,22 +18,11 @@ app-template:
             tag: v2.11.3
           env:
             TZ: Etc/UTC
-            # Database configuration
-            DATABASE_URL:
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Release.Name }}-secret"
-                  key: DATABASE_URL
-            # Redis configuration
-            REDIS_URL: redis://localhost:6379
-            # App configuration
-            FRONTEND_URL: "https://{{ .Values.domain }}"
-            NEXT_PUBLIC_BACKEND_URL: "https://{{ .Values.domain }}"
-            #JWT_SECRET:
-            #  valueFrom:
-            #    secretKeyRef:
-            #      name: *chartName
-            #      key: JWT_SECRET
+
+          envFrom:
+            - secretRef:
+                name: "{{ .Release.Name }}-secret"
+            
           probes:
             liveness:
               enabled: true
