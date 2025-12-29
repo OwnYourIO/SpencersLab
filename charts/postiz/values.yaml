@@ -72,3 +72,7 @@ app-template:
   persistence:
     config:
       existingClaim: *chartName
+    nginx:
+      type: emptyDir
+      globalMounts:
+        - path: /var/lib/nginx/
