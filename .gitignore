@@ -2,4 +2,9 @@
 .cr-release-packages/*
 charts/**/charts
 services/**/charts
-**/sites/_vault/.obsidian
+**/sites/_vault/
+**/sites/
+**/infra-2/
+**/email/*
+.hugo_build.lock
+

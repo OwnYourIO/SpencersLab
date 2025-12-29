@@ -25,6 +25,7 @@ charts:
     ServerSideApply: "true"
 
 ingress:
+  dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
     cluster:
       clusterBase: true
