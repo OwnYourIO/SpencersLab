@@ -1,6 +1,6 @@
 apiVersion: v2
 name: postiz
-version: 1.0.16
+version: 1.0.17
 appVersion: 1.0.0
 dependencies:
 - name: app-template
