@@ -1,6 +1,6 @@
 apiVersion: v2
 name: neo4j
-version: 1.0.0
+version: 1.0.1
 appVersion: 5.23.0
 dependencies:
 - name: app-template
