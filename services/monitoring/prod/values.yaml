@@ -102,7 +102,7 @@ kube-prometheus-stack:
       serviceMonitorSelectorNilUsesHelmValues: false
 
     volumes:
-      - name: '{{ .Release.Name }}-prometheus'
+      - name: 'monitoring-prometheus'
         persistentVolumeClaim:
           claimName: prometheus-data
     volumeMounts:
