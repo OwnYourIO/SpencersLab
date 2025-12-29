@@ -26,6 +26,7 @@ seaweedfs-csi-driver:
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
+
 # SeaweedFS configuration
 seaweedfs:
   volumeCount: 5  # Number of seaweedfs volume servers to configure DNS rewrites for

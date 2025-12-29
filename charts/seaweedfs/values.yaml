@@ -232,6 +232,8 @@ seaweedfs:
     # formatted as a multi-line string. By default no direct resource request
     # is made.
     resources: {}
+      #limits:
+      #  squat.ai/hdd: 1
 
     # Configure security context for Pod
     # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
@@ -383,10 +385,16 @@ seaweedfs:
   s3:
     enabled: true
     allowEmptyFolder: true
+    # enable user & permission to s3 (need to inject to all services)
+    #enableAuth: true
     # Suffix of the host name, {bucket}.{domainName}
     domainName: "s3.spencerslab.com"
     ingress:
       enabled: false
+    #replicas: 1
+    #port: 8333
+    # add additional https port
+    #httpsPort: 0
     metricsPort: 9327
 
     # Resource requests, limits, etc. for the server cluster placement. This

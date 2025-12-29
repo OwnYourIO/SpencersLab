@@ -109,14 +109,6 @@ kube-prometheus-stack:
               requests:
                 storage: 50Gi
 
-    volumes:
-      - name: 'monitoring-prometheus'
-        persistentVolumeClaim:
-          claimName: prometheus-data
-    volumeMounts:
-      - name: prometheus-data
-        mountPath: /prometheus
-
 mailcow_exporter:
   host: mail.spencerslab.com
   bitwarden_id: 082a5ebe-78b1-4a1e-aefb-b101003c1765
