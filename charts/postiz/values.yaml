@@ -71,7 +71,7 @@ app-template:
       existingClaim: "{{ .Release.Name }}"
       globalMounts:
         - path: /uploads
-          subpath: uploads
+          subPath: uploads
 
     nginx-logs:
       type: emptyDir
