@@ -24,4 +24,4 @@ spec:
       database: postiz
       owner: postiz
       secret:
-        name: postiz-secret
+        name: "{{ .Release.Name }}-secret"
