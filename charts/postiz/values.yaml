@@ -67,6 +67,12 @@ app-template:
   persistence:
     config:
       existingClaim: *chartName
+    uploads:
+      existingClam: "{{ .Release.Name }}"
+      globalMounts:
+        - path: /uploads
+          subpath: uploads
+
     nginx-logs:
       type: emptyDir
       globalMounts:
