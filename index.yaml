@@ -9248,6 +9248,18 @@ entries:
   postiz:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-12-29T22:26:18.215166379Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 92fcbdebaf49a7c151fc352e8a65dd61fabf6c04cf81a62857e215778b6b3d69
+    name: postiz
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/postiz-1.0.2/postiz-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-12-29T22:10:31.372367854Z"
     dependencies:
     - name: postiz
@@ -12766,4 +12778,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-29T22:10:31.37347428Z"
+generated: "2025-12-29T22:26:18.216229914Z"
