@@ -54,6 +54,12 @@ app-template:
             capabilities:
               drop:
                 - ALL
+      pod:
+        securityContext:
+          runAsUser: 7474
+          fsGroup: 7474
+          fsGroupChangePolicy: OnRootMismatch
+          runAsNonRoot: true
   service:
     neo4j:
       controller: *chartName
