@@ -18,6 +18,12 @@ app-template:
             tag: v2.11.3
           env:
             TZ: Etc/UTC
+            IS_GENERAL: "true"
+            STORAGE_PROVIDER: local
+            BACKEND_INTERNAL_URL:  http://localhost:3000
+            UPLOAD_DIRECTORY: /uploads
+            NEXT_PUBLIC_POSTIZ_UPLOAD_DIRECTORY: /uploads
+            REDIS_URL: redis://localhost:6379
 
           envFrom:
             - secretRef:
