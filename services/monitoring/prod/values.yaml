@@ -105,9 +105,9 @@ kube-prometheus-stack:
         volumeClaimTemplate:
           spec:
             accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 50Gi
+            resources:
+              requests:
+                storage: 50Gi
 
     volumes:
       - name: 'monitoring-prometheus'
