@@ -9245,6 +9245,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/personal-appset-1.1.0/personal-appset-1.1.0.tgz
     version: 1.1.0
+  postiz:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-12-29T22:10:31.372367854Z"
+    dependencies:
+    - name: postiz
+      repository: https://charts.rock8s.com
+      version: 1.0.5
+    digest: a35b2d07cee5892ba2fe1256018c6ba5962e42c3a9f36dd8f6577c650aa2b4d4
+    name: postiz
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/postiz-1.0.1/postiz-1.0.1.tgz
+    version: 1.0.1
   remote-proxy-appset:
   - apiVersion: v2
     appVersion: 1.1.0
@@ -12753,4 +12766,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-29T18:39:19.574715387Z"
+generated: "2025-12-29T22:10:31.37347428Z"
