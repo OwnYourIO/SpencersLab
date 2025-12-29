@@ -2,5 +2,5 @@ dependencies:
 - name: postiz
   repository: https://charts.rock8s.com
   version: 1.0.5
-digest: sha256:951fb29739b425d834afdaff0327fc0ca307dae2f7a296cf832f749647446c35
-generated: "2024-12-29T20:27:00.000000000Z"
+digest: sha256:5f096d11e6179e52a2b348cc82184e7645b8e844b6cb56b3c5980c90252238df
+generated: "2025-12-29T15:07:01.794272732-07:00"
