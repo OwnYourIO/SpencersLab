@@ -61,6 +61,12 @@ app-template:
               memory: 50Mi
             limits:
               memory: 256Mi
+      pod:
+        securityContext:
+          runAsUser: 100
+          fsGroup: 100
+          fsGroupChangePolicy: OnRootMismatch
+          runAsNonRoot: true
 
   service:
     postiz:
