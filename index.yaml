@@ -8155,6 +8155,18 @@ entries:
   loki:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-12-29T04:10:41.573496176Z"
+    dependencies:
+    - name: loki
+      repository: https://grafana.github.io/helm-charts
+      version: 6.46.0
+    digest: 628422324c17e9f70f65ed5303436e6a63ff1c749560df047b6956bdc4d38b43
+    name: loki
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/loki-1.0.16/loki-1.0.16.tgz
+    version: 1.0.16
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-12-17T03:54:28.778541724Z"
     dependencies:
     - name: loki
@@ -9509,6 +9521,18 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-4.0.3751/seaweedfs-4.0.3751.tgz
     version: 4.0.3751
+  - apiVersion: v2
+    appVersion: 1.0.4
+    created: "2025-12-29T04:10:41.741398364Z"
+    dependencies:
+    - name: seaweedfs
+      repository: https://seaweedfs.github.io/seaweedfs/helm
+      version: 4.0.393
+    digest: 4bdf81aa8b78d4b96b79d7f7b61dbf05582f845abe4df9d2384ea2fdec6d3a95
+    name: seaweedfs
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-1.0.17/seaweedfs-1.0.17.tgz
+    version: 1.0.17
   - apiVersion: v2
     appVersion: 1.0.4
     created: "2025-12-24T19:18:11.117052261Z"
@@ -12704,4 +12728,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-28T23:01:13.923502209Z"
+generated: "2025-12-29T04:10:41.74336537Z"
