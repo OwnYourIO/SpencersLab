@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "{{ $.Release.Name }}-prometheus"
+  name: "prometheus-{{ .Release.Name }}-prometheus-db-prometheus-{{ .Release.Name }}-prometheus-0"
   namespace: default
 spec:
   accessModes:

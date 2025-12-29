@@ -86,6 +86,7 @@ kube-prometheus-stack:
         ttlSecondsAfterFinished: 600
   prometheus:
     prometheusSpec:
+      retention: 7d
       enableRemoteWriteReceiver: true
       scrapeConfigSelector:
         matchLabels:
@@ -100,6 +101,13 @@ kube-prometheus-stack:
       serviceMonitorNamespaceSelector: {}
       serviceMonitorSelector: {}
       serviceMonitorSelectorNilUsesHelmValues: false
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
 
     volumes:
       - name: 'monitoring-prometheus'
