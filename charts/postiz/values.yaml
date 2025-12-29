@@ -70,9 +70,6 @@ app-template:
       globalMounts:
         - path: /config
           subPath: config
-    uploads:
-      existingClaim: "{{ .Release.Name }}"
-      globalMounts:
         - path: /uploads
           subPath: uploads
 
