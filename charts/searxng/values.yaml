@@ -51,6 +51,12 @@ app-template:
               memory: 50Mi
             limits:
               memory: 256Mi
+      pod:
+        securityContext:
+          runAsUser: 977
+          fsGroup: 977
+          fsGroupChangePolicy: OnRootMismatch
+          runAsNonRoot: true
   service:
     searxng:
       controller: *chartName
@@ -60,3 +66,5 @@ app-template:
   persistence:
     config:
       existingClaim: *chartName
+      globalMounts:
+        - path: /etc/searxng
