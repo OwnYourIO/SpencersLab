@@ -27,9 +27,9 @@ app-template:
             UID: "1000"
           envFrom:
             - secretRef:
-                name: *chartName
+                name: "{{ .Release.Name }}"
             - secretRef:
-                name: playsms-db
+                name: "{{ .Release.Name }}-db"
           resources:
             requests:
               cpu: 100m
