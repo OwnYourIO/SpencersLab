@@ -1,0 +1,92 @@
+bitwardenIds:
+  playsms: OVERRIDE_VIA_CUSTOM_VALUES
+  playsms-db: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName playsms
+
+  controllers:
+    playsms:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        playsms:
+          image:
+            repository: playsms/playsms
+            tag: 1.4.x
+          env:
+            TZ: Etc/UTC
+            PLAYSMS_VERSION: "1.4.x"
+            PLAYSMS_DB_HOST: "localhost"
+            PLAYSMS_DB_PORT: "3306"
+            PLAYSMS_DB_NAME: "playsms"
+            GID: "1000"
+            UID: "1000"
+          envFrom:
+            - secretRef:
+                name: *chartName
+            - secretRef:
+                name: playsms-db
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        
+        mariadb:
+          image:
+            repository: mariadb
+            tag: lts
+          env:
+            TZ: Etc/UTC
+            MARIADB_RANDOM_ROOT_PASSWORD: "1"
+            MARIADB_DATABASE: "playsms"
+          envFrom:
+            - secretRef:
+                name: playsms-db
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        
+  service:
+    playsms:
+      controller: *chartName
+      ports:
+        http:
+          port: 80
+
+  persistence:
+    mysql-data:
+      existingClaim: playsms-mysql
+      globalMounts:
+        - path: /var/lib/mysql
+          subPath: mysql-data
+    playsms-log:
+      existingClaim: playsms-data
+      globalMounts:
+        - path: /home/playsms/log
+          subPath: log
+    playsms-web:
+      existingClaim: playsms-data
+      globalMounts:
+        - path: /home/playsms/web
+          subPath: web
+        - path: /var/www/html
+          subPath: web
