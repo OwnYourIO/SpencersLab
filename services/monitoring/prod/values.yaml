@@ -273,16 +273,19 @@ grafana:
   dashboards:
     its-alive:
       TraefikV3:
+        # renovate: depName="Traefik V3"
         gnetId: 21136
         revision: 1
         datasource: 
           - { name: DS_PROMETHEUS, value: Prometheus }
           - { name: DS_LOKI, value: Loki }
       Traefik:
+        # renovate: depName="Traefik"
         gnetId: 17347
         revision: 9
         datasource: Prometheus
       Keycloak:
+        # renovate: depName="Keycloak Metrics Dashboard"
         gnetId: 19659
         revision: 1
         datasource: Prometheus
@@ -310,6 +313,34 @@ grafana:
       external-secrets:
         url: https://raw.githubusercontent.com/external-secrets/external-secrets/main/docs/snippets/dashboard.json
         datasource: Prometheus
+    logs:
+      container-log-dashboard:
+        # renovate: depName="Container Log Dashboard"
+        gnetId: 16966
+        revision: 1
+        datasource: Loki
+      logging-via-loki-v2:
+        # renovate: depName="Logging Dashboard via Loki v2"
+        gnetId: 18042
+        revision: 5
+        datasource: Loki
+      app-logs-multi-cluster:
+        # renovate: depName="K8s App Logs / Multi Clusters)"
+        gnetId: 22874
+        revision: 3
+        datasource: Loki
+      troubleshooting-kubernetes:
+        # renovate: depName="Troubleshooting Kubernetes (simple and fast view)"
+        gnetId: 15196
+        revision: 3
+        datasource: 
+          - { name: datasource, value: Loki }
+          - { name: datasource, value: Prometheus }
+      kubernetes-event-exporter:
+        # renovate: depName="Kubernetes Event Exporter"
+        gnetId: 17882
+        revision: 2
+        datasource: Loki
     kubernetes:
       kubernetes-api-server:
         # renovate: depName="Kubernetes / System / API Server"
@@ -366,10 +397,29 @@ grafana:
         revision: 1
         datasource:
           - { name: datasource, value: Prometheus }
+      unbound:
+        # renovate: depName="Unbound"
+        gnetId: 18077
+        revision: 6
+        datasource: 
+          - { name: datasource, value: Loki }
+          - { name: datasource, value: Prometheus }
+      traefik-on-k8s-via-loki:
+        # renovate: depName="Traefik On K8s Via Loki"
+        gnetId: 17501
+        revision: 1
+        datasource: Loki
     storage:
       host-overview:
         url: https://raw.githubusercontent.com/ceph/ceph/main/monitoring/ceph-mixin/dashboards_out/hosts-overview.json
         datasource: Prometheus
+      volsync:
+        # renovate: depName="VolSync Dashboard"
+        gnetId: 21356
+        revision: 3
+        datasource:
+          - { name: DS_PROMETHEUS, value: Prometheus }
+          - { name: VAR_REPLICATIONDESTNAME, value: '.*-bootstrap'}
     system:
       keycloak:
         # renovate: depName="Keycloak Metrics Dashboard"
@@ -390,6 +440,12 @@ grafana:
       node-feature-discovery:
         url: https://raw.githubusercontent.com/kubernetes-sigs/node-feature-discovery/master/examples/grafana-dashboard.json
         datasource: Prometheus
+      #spegel:
+      #  # renovate: depName="Spegel"
+      #  gnetId: 18089
+      #  revision: 1
+      #  datasource:
+      #    - { name: DS_PROMETHEUS, value: Prometheus }
     default:
       apc-ups:
         # renovate: depName="APC UPS (SNMP)"
@@ -597,6 +653,10 @@ grafana:
     - vonage-status-panel
   serviceMonitor:
     enabled: true
+    # Might be wanted?
+    #metricRelabelings:
+    #  - action: labeldrop
+    #    regex: (pod)
   imageRenderer:
     enabled: true
     replicas: 3
