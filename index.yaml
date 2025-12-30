@@ -9245,6 +9245,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/personal-appset-1.1.0/personal-appset-1.1.0.tgz
     version: 1.1.0
+  playsms:
+  - apiVersion: v2
+    appVersion: 1.4.x
+    created: "2025-12-30T00:16:26.837272476Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 9f75759cc7c41d41beb46964c033ed5a13084605b1c88fb8d464c04a3079b4b7
+    name: playsms
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/playsms-1.0.1/playsms-1.0.1.tgz
+    version: 1.0.1
   postiz:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -12970,4 +12983,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-30T00:05:05.433481439Z"
+generated: "2025-12-30T00:16:26.838769825Z"
