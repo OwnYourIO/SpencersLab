@@ -36,11 +36,11 @@ app-template:
               memory: 256Mi
             limits:
               memory: 1Gi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
+          #securityContext:
+          #  allowPrivilegeEscalation: false
+          #  capabilities:
+          #    drop:
+          #      - ALL
         
         mariadb:
           image:
@@ -59,11 +59,11 @@ app-template:
               memory: 512Mi
             limits:
               memory: 2Gi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
+          #securityContext:
+          #  allowPrivilegeEscalation: false
+          #  capabilities:
+          #    drop:
+          #      - ALL
         
   service:
     playsms:
