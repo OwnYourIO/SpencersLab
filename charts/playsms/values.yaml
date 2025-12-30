@@ -22,23 +22,23 @@ app-template:
             - -c
           args:
             - |
-              # Download installer with dynamic signature verification
-              EXPECTED_SIG="$(curl -sS https://composer.github.io/installer.sig)"
-              php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-              ACTUAL_SIG="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+              # Install Composer to a location accessible without sudo
+              cd /tmp
+              curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o composer.phar
+              chmod +x composer.phar
 
-              if [ "$EXPECTED_SIG" != "$ACTUAL_SIG" ]; then
-                  echo 'Signature verification failed - using direct download'
-                  rm -f composer-setup.php
-                  curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o composer.phar
-              else
-                  php composer-setup.php --quiet
-                  rm composer-setup.php
-              fi
+              # Move to user's local bin (no sudo needed)
+              mkdir -p /home/playsms/bin
+              mv composer.phar /home/playsms/bin/composer
 
-              sudo mv composer.phar /usr/local/bin/composer
-              sudo chmod +x /usr/local/bin/composer
+              # Add to PATH for current session
+              export PATH="/home/playsms/bin:$PATH"
+
+              # Verify it works
               composer --version
+
+              # Make PATH permanent by adding to .bashrc or .profile
+              echo 'export PATH="/home/playsms/bin:$PATH"' >> /home/playsms/.bashrc
       containers:
         playsms:
           image:
