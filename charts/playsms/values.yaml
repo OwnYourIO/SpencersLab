@@ -78,14 +78,11 @@ app-template:
       globalMounts:
         - path: /var/lib/mysql
           subPath: mysql-data
-    playsms-log:
+    playsms:
       existingClaim: playsms-data
       globalMounts:
         - path: /home/playsms/log
           subPath: log
-    playsms-web:
-      existingClaim: playsms-data
-      globalMounts:
         - path: /home/playsms/web
           subPath: web
         - path: /var/www/html
