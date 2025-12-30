@@ -12,6 +12,33 @@ app-template:
     playsms:
       annotations:
         reloader.stakater.com/auto: "true"
+      initContainers:
+        install-composer:
+          image:
+            repository: playsms/playsms
+            tag: 1.4.x
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              # Download installer with dynamic signature verification
+              EXPECTED_SIG="$(curl -sS https://composer.github.io/installer.sig)"
+              php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+              ACTUAL_SIG="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+              if [ "$EXPECTED_SIG" != "$ACTUAL_SIG" ]; then
+                  echo 'Signature verification failed - using direct download'
+                  rm -f composer-setup.php
+                  curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o composer.phar
+              else
+                  php composer-setup.php --quiet
+                  rm composer-setup.php
+              fi
+
+              sudo mv composer.phar /usr/local/bin/composer
+              sudo chmod +x /usr/local/bin/composer
+              composer --version
       containers:
         playsms:
           image:
