@@ -52,7 +52,7 @@ app-template:
             MARIADB_DATABASE: "playsms"
           envFrom:
             - secretRef:
-                name: playsms-db
+                name: "{{ .Release.Name }}-db"
           resources:
             requests:
               cpu: 100m
