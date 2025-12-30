@@ -68,7 +68,7 @@ app-template:
       controller: *chartName
       ports:
         http:
-          port: 3000
+          port: 5000
 
   persistence:
     config:

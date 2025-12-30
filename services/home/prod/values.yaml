@@ -138,7 +138,7 @@ ingress:
     social-scheduler:
       serviceName: postiz
       service: home-postiz
-      port: 3000
+      port: 5000
 
     cluster:
       clusterBase: true
