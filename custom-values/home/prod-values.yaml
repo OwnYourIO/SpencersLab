@@ -18,6 +18,10 @@ seaweedfs-csi-driver:
 postiz:
   bitwardenIds:
     postiz-db: a3bf7d42-1ae7-4e8f-9d30-b3c20161ee38
+playsms:
+  bitwardenIds:
+    playsms: 5d18aef1-370c-400f-850f-b3c3000648e2
+    playsms-db: a99b5d7a-29cc-4216-b590-b3c300066716
 
 zigbee2mqtt:
   bitwardenIds:
