@@ -23,6 +23,11 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  playsms:
+    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
   external-secrets-bitwarden:
     version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     repository: https://ownyourio.github.io/SpencersLab/
@@ -134,6 +139,11 @@ ingress:
     grow:
       service: home-hugo-grow
       port: 1313
+
+    sms:
+      serviceName: playsms
+      service: home-playsms
+      port: 80
 
     social-scheduler:
       serviceName: postiz
