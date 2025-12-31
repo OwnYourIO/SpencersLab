@@ -1,5 +1,6 @@
 bitwardenIds:
-  postiz-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  postiz-db: OVERRIDE_VIA_CUSTOM_VALUES
+  postiz-sso: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 

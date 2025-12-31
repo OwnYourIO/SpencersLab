@@ -18,7 +18,7 @@ seaweedfs-csi-driver:
 postiz:
   bitwardenIds:
     postiz-db: a3bf7d42-1ae7-4e8f-9d30-b3c20161ee38
-    rallly-sso: 5162b942-9d85-4dcb-928b-b3c4010d3851
+    postiz-sso: 5162b942-9d85-4dcb-928b-b3c4010d3851
 rallly:
   bitwardenIds:
     rallly-db: 7eae5e8c-90f1-47b4-ae0f-b3c4010eec7e
