@@ -32,6 +32,10 @@ proxy:
       enabled: true
     audiobook-player:
       enabled: true
+    social-scheduler:
+      enabled: true
+    polls:
+      enabled: true
     pictures:
     documents:
     music-player:
