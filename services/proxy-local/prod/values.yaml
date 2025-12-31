@@ -95,6 +95,11 @@ proxy:
     audiobook-player:
       target: audiobookshelf
       ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
+    social-scheduler:
+      target: postiz
+      ssoRedirectPath: "/api/auth/oauth/GENERIC"
+    polls:
+      target: rallly
     pictures:
       target: immich
     documents:
