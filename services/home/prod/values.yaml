@@ -18,6 +18,11 @@ clusterName: OVERRIDE_VIA_APPSET
 
 subDomain: home-lab
 charts: 
+  rallly:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
   postiz:
     #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -149,6 +154,11 @@ ingress:
       serviceName: postiz
       service: home-postiz
       port: 5000
+
+    polls:
+      serviceName: rallly
+      service: home-rallly
+      port: 3000
 
     cluster:
       clusterBase: true

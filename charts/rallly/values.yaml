@@ -1,0 +1,51 @@
+bitwardenIds:
+  rallly: OVERRIDE_VIA_CUSTOM_VALUES
+  rallly-db: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName rallly
+
+  controllers:
+    rallly:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: lukevella/rallly
+            tag: v4.5.14
+          env:
+            TZ: Etc/UTC
+          envFrom:
+            - secretRef:
+                name: "{{ .Release.Name }}"
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    rallly:
+      controller: *chartName
+      ports:
+        http:
+          port: 3000
+
+  persistence:
+    config:
+      existingClaim: *chartName
