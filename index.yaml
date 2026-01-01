@@ -9631,6 +9631,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/postiz-1.0.1/postiz-1.0.1.tgz
     version: 1.0.1
+  rallly:
+  - apiVersion: v2
+    appVersion: v4.5.14
+    created: "2026-01-01T15:34:18.175318935Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: d64471506920386b8390713a5fbd5832e42188437ac92d3e6067f4d8e12b3d10
+    name: rallly
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/rallly-1.0.1/rallly-1.0.1.tgz
+    version: 1.0.1
   remote-proxy-appset:
   - apiVersion: v2
     appVersion: 1.1.0
@@ -13139,4 +13152,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2025-12-31T17:53:39.614768089Z"
+generated: "2026-01-01T15:34:18.176402333Z"
