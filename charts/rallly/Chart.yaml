@@ -1,0 +1,8 @@
+apiVersion: v2
+name: rallly
+version: 1.0.0
+appVersion: v4.5.14
+dependencies:
+- name: app-template
+  version: 4.2.0
+  repository: https://bjw-s-labs.github.io/helm-charts/
