@@ -9634,6 +9634,18 @@ entries:
   rallly:
   - apiVersion: v2
     appVersion: v4.5.14
+    created: "2026-01-01T16:08:51.142703123Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: e55ab5ee5293e95def5c9dd00d5da43f81fe99dc9608faa22cfdea3a5f4d2cca
+    name: rallly
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/rallly-1.0.13/rallly-1.0.13.tgz
+    version: 1.0.13
+  - apiVersion: v2
+    appVersion: v4.5.14
     created: "2026-01-01T15:58:51.101661599Z"
     dependencies:
     - name: app-template
@@ -13284,4 +13296,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-01T15:58:51.102773152Z"
+generated: "2026-01-01T16:08:51.144802513Z"
