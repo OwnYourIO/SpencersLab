@@ -41,7 +41,7 @@ app-template:
 
   service:
     rallly:
-      controller: "{{ .Release.Name }}"
+      controller: rallly
       ports:
         http:
           port: 3000
