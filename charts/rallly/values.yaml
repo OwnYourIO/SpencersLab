@@ -41,11 +41,11 @@ app-template:
 
   service:
     rallly:
-      controller: *chartName
+      controller: "{{ .Release.Name }}"
       ports:
         http:
           port: 3000
 
   persistence:
     config:
-      existingClaim: *chartName
+      existingClaim: "{{ .Release.Name }}"
