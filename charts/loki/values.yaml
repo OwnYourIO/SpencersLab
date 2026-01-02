@@ -14,7 +14,7 @@ loki:
         admin: logs
     schemaConfig:
       configs:
-        - from: "2024-04-01"
+        - from: "2026-01-01"
           store: tsdb                    # TSDB required for Loki 2.8+
           object_store: s3
           schema: v13
@@ -56,7 +56,15 @@ loki:
 
   ingester:
     chunk_encoding: snappy
+    wal:
+      enabled: true
+      dir: /var/loki/wal
+      flush_on_shutdown: true      # Ensures data is written before shutdown
+      replay_memory_ceiling: 4GB   # Optional: limits memory during WAL replay
 
+    chunk_idle_period: 2h          # How long before idle chunks are flushed
+    chunk_retain_period: 30s       # Keep chunks in memory for 30s after flushing
+    max_chunk_age: 2h              # Maximum age before forcing flush
 
   # Component replicas
   backend:
