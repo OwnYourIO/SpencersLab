@@ -20,10 +20,6 @@ postiz:
     postiz: 51ef165e-88ab-4271-9170-b3c4011c0a70
     postiz-db: a3bf7d42-1ae7-4e8f-9d30-b3c20161ee38
     postiz-sso: 5162b942-9d85-4dcb-928b-b3c4010d3851
-rallly:
-  bitwardenIds:
-    rallly-db: 7eae5e8c-90f1-47b4-ae0f-b3c4010eec7e
-    rallly-sso: a48b08fa-b8ff-4a24-91a1-b3c4010e760f
 
 playsms:
   bitwardenIds:
@@ -32,9 +28,9 @@ playsms:
 
 rallly:
   bitwardenIds:
-    rallly: f7b628ec-2544-4c28-a476-b1a501487d99
-    rallly-db: a99b5d7a-29cc-4216-b590-b3c300066716
-    rallly-sso: 5d18aef1-370c-400f-850f-b3c3000648e2
+    rallly: 74d9f8bc-d640-488c-be79-b3c5010a6e04
+    rallly-db: 7eae5e8c-90f1-47b4-ae0f-b3c4010eec7e
+    rallly-sso: a48b08fa-b8ff-4a24-91a1-b3c4010e760f
 
 zigbee2mqtt:
   bitwardenIds:
