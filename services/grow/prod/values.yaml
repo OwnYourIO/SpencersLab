@@ -6,7 +6,7 @@ clusterName: OVERRIDE_VIA_APPSET
 
 charts:
   # Internal charts (no version/repository - uses charts/ directory)
-  grow-assistant:
+  assistant:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
