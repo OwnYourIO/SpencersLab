@@ -1,0 +1,103 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: "pg-{{ .Release.Name }}"
+spec:
+  instances: 1
+  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:17-3.5
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 500Gi
+    storageClass: local-path
+
+  monitoring:
+    enablePodMonitor: true
+
+  postgresql:
+    parameters:
+      max_connections: "600"
+      shared_buffers: 512MB
+    shared_preload_libraries:
+      - pg_stat_statements
+      - pgaudit
+      - plpgsql
+      - plpgsql_check
+      - pg_cron
+      - pg_net
+      - timescaledb
+      - auto_explain
+      - pg_tle
+      - plan_filter
+
+  bootstrap:
+    initdb:
+      database: home-assistant
+      owner: home-assistant
+      secret:
+        name: "pg-{{ .Release.Name }}-secret"
+      postInitTemplateSQL:
+        - CREATE EXTENSION timescaledb;
+        - CREATE EXTENSION postgis;
+        - CREATE EXTENSION postgis_topology;
+        - CREATE EXTENSION fuzzystrmatch;
+        - CREATE EXTENSION postgis_tiger_geocoder;
+
+    # Use for major upgrades or creating new cluster from existing
+    #  import:
+    #    type: monolith
+    #    databases: ["*"]
+    #    roles: ["*"]
+    #    source:
+    #      externalCluster: old-cluster
+
+    #recovery:
+    #  # Should match name in externalClusters
+    #  source: &backup postgres16-v2
+
+  #externalClusters:
+  #  - name: *backup
+  #    barmanObjectStore:
+  #      wal:
+  #        compression: bzip2
+  #        maxParallel: 8
+  #      destinationPath: *dest
+  #      endpointURL: *s3
+  #      s3Credentials: *credentials
+    # - name: old-cluster
+    #   connectionParameters:
+    #     host: postgres16-rw.default.svc.cluster.local
+    #     user: postgres
+    #     dbname: postgres
+    #   password:
+    #     name: postgres-creds
+    #     key: password
+
+  # TODO: 
+  #backup:
+  #  retentionPolicy: 7d
+  #  barmanObjectStore:
+  #    wal:
+  #      compression: bzip2
+  #      maxParallel: 8
+  #    destinationPath: &dest s3://cloudnative-pg/
+  #    endpointURL: &s3 https://${SECRET_CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com
+  #    serverName: postgres16-v3
+  #    s3Credentials: &credentials
+  #      accessKeyId:
+  #        name: *secretName
+  #        key: s3-access-key-id
+  #      secretAccessKey:
+  #        name: *secretName
+  #        key: s3-secret-access-key
+#---
+#apiVersion: postgresql.cnpg.io/v1
+#kind: ScheduledBackup
+#metadata:
+#  name: postgres
+#spec:
+#  schedule: "@daily"
+#  immediate: true
+#  backupOwnerReference: self
+#  cluster:
+#    name: postgres16

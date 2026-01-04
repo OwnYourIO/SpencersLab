@@ -1,0 +1,10 @@
+bitwardenIds:
+  langflow: OVERRIDE_VIA_CUSTOM_VALUES
+  langflow-pg: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: "{{ .Release.Name }}"
+  # TODO: add home-assistant container.
