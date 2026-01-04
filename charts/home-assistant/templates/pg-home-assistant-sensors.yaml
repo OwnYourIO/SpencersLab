@@ -53,7 +53,8 @@ spec:
             spec:
               type: LoadBalancer
               ports:
-                - port: 5433
+                - name: postgres
+                  port: 5433
                   targetPort: 5432
                   protocol: TCP
               externalTrafficPolicy: Local
