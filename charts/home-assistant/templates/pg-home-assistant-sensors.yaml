@@ -2,13 +2,13 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: "pg-{{ .Release.Name }}"
+  name: "pg-{{ .Release.Name }}-sensors"
 spec:
   instances: 1
   imageName: ghcr.io/imusmanmalik/timescaledb-postgis:17-3.5
   primaryUpdateStrategy: unsupervised
   storage:
-    size: 20Gi
+    size: 500Gi
     storageClass: local-path
 
   monitoring:
@@ -25,19 +25,19 @@ spec:
       #- plpgsql_check
       #- pg_cron
       #- pg_net
-      #- timescaledb
+      - timescaledb
       #- auto_explain
       #- pg_tle
       #- plan_filter
 
   bootstrap:
     initdb:
-      database: home-assistant
+      database: sensors
       owner: home-assistant
       secret:
         name: "pg-{{ .Release.Name }}-secret"
-      #postInitTemplateSQL:
-        #- CREATE EXTENSION timescaledb;
+      postInitTemplateSQL:
+        - CREATE EXTENSION timescaledb;
         #- CREATE EXTENSION postgis;
         #- CREATE EXTENSION postgis_topology;
         #- CREATE EXTENSION fuzzystrmatch;
@@ -49,9 +49,13 @@ spec:
         - selectorType: rw
           serviceTemplate:
             metadata:
-              name: "pg-{{ .Release.Name }}-external"
+              name: "pg-{{ .Release.Name }}-tsdb-external"
             spec:
               type: LoadBalancer
+              ports:
+                - port: 5433
+                  targetPort: 5432
+                  protocol: TCP
               externalTrafficPolicy: Local
 
     # Use for major upgrades or creating new cluster from existing
