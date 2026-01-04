@@ -50,6 +50,7 @@ spec:
           serviceTemplate:
             metadata:
               name: "pg-{{ .Release.Name }}-tsdb-external"
+            updateStrategy: patch
             spec:
               type: LoadBalancer
               ports:
