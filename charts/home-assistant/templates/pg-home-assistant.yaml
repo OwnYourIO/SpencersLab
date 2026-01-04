@@ -43,6 +43,17 @@ spec:
         - CREATE EXTENSION fuzzystrmatch;
         - CREATE EXTENSION postgis_tiger_geocoder;
 
+  managed:
+    services:
+      additional:
+        - selectorType: rw
+          serviceTemplate:
+            metadata:
+              name: "<pg-{{ .Release.Name }}-external"
+            spec:
+              type: LoadBalancer
+              externalTrafficPolicy: Local
+
     # Use for major upgrades or creating new cluster from existing
     #  import:
     #    type: monolith
