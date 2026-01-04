@@ -6842,6 +6842,14 @@ entries:
   home-assistant:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-01-04T22:16:29.162202396Z"
+    digest: 8c2340e35ef10f8cdc364a01e2fb22125fdb06da04988ae3c26c0a7adb0f158a
+    name: home-assistant
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/home-assistant-1.0.9/home-assistant-1.0.9.tgz
+    version: 1.0.9
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-01-04T22:13:11.272937548Z"
     digest: 22a5af7a9b7bb84f397846c88a55cdb61938e57f359bca564b369189455beced
     name: home-assistant
@@ -13397,4 +13405,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-04T22:13:11.274234001Z"
+generated: "2026-01-04T22:16:29.163315138Z"
