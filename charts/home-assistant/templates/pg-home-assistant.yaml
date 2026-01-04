@@ -49,7 +49,7 @@ spec:
         - selectorType: rw
           serviceTemplate:
             metadata:
-              name: "<pg-{{ .Release.Name }}-external"
+              name: "pg-{{ .Release.Name }}-external"
             spec:
               type: LoadBalancer
               externalTrafficPolicy: Local
