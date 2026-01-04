@@ -3,7 +3,7 @@ bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
   home-assistant-pg: e197f717-0cd6-4634-8388-b33e000ae174
 
-grow-assistant:
+assistant:
   bitwardenIds:
     home-assistant-pg: e197f717-0cd6-4634-8388-b33e000ae174
 base:
