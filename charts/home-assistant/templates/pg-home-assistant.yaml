@@ -47,7 +47,6 @@ spec:
     services:
       additional:
         - selectorType: rw
-          updateStrategy: patch
           serviceTemplate:
             metadata:
               name: "pg-{{ .Release.Name }}-external"
