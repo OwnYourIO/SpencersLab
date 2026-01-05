@@ -16,6 +16,7 @@ spec:
 
   postgresql:
     parameters:
+      max_locks_per_transaction: "1024" 
       max_connections: "600"
       shared_buffers: 2048MB
     shared_preload_libraries:
