@@ -115,6 +115,12 @@ seaweedfs-csi-driver:
   mountService:
     enabled: true
 
+  controller:
+    timeout: 3600  # Increase timeout
+  node:
+    livenessProbe:
+      timeoutSeconds: 10      # Increase from default 3
+
 samba:
   app-template:
     controllers:
