@@ -1,6 +1,6 @@
 apiVersion: v2
 name: rallly
-version: 1.0.16
+version: 1.0.17
 appVersion: v4.5.14
 dependencies:
 - name: app-template
