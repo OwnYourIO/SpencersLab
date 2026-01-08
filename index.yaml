@@ -10470,6 +10470,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-1.0.1/seaweedfs-1.0.1.tgz
     version: 1.0.1
+  smtp-relay:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-01-08T21:59:04.189274357Z"
+    dependencies:
+    - name: mail
+      repository: https://bokysan.github.io/docker-postfix/
+      version: v5.1.0
+    digest: 1fcf88f6d8da64db241f1a52ef379ffe2730ef594ddd03eaf938c1e2cf714bc6
+    name: smtp-relay
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/smtp-relay-1.0.1/smtp-relay-1.0.1.tgz
+    version: 1.0.1
   snapcast:
   - apiVersion: v2
     appVersion: 1.0.3
@@ -13473,4 +13486,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-07T16:41:44.880739357Z"
+generated: "2026-01-08T21:59:04.190439103Z"
