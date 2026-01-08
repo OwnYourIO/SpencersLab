@@ -15,6 +15,9 @@ bitwardenIds:
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
 
+smtp-relay:
+  bitwardenIds:
+    smtp-secret: 876515bc-b0d6-43df-b9fa-b0dd000a601e
 postiz:
   bitwardenIds:
     postiz: 51ef165e-88ab-4271-9170-b3c4011c0a70

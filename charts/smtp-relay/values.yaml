@@ -1,0 +1,38 @@
+bitwardenIds:
+  smtp-secret: OVERRIDE_VIA_CUSTOM_VALUES
+
+#domain: OVERRIDE_VIA_APPSET
+
+mail: 
+  #replicaCount: 2
+  config:
+    general:
+      TZ: "UTC"
+    #  ALLOW_EMPTY_SENDER_DOMAINS: "true"
+    #  LOG_FORMAT: "json"
+    #postfix:
+    #  myhostname: "smtp-relay.internal"
+    #  mynetworks: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8"
+    #  smtp_tls_security_level: "encrypt"
+    #  smtp_sasl_auth_enable: "yes"
+    #  smtp_sasl_security_options: "noanonymous"
+    #  message_size_limit: "26214400"
+
+  # Reference existing secret for credentials
+  existingSecret: "smtp-secret"
+
+  persistence:
+    enabled: true
+    size: 2Gi
+
+  service:
+    type: ClusterIP
+    port: 587
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
