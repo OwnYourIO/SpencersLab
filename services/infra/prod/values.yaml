@@ -110,8 +110,6 @@ seaweedfs-csi-driver:
   #seaweedfsFiler: "seaweedfs-filer.{{ $.Values.clusterName }}.{{ $.Values.domain }}"
   seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default:8888"
 
-  seaweedfsCsiPlugin:
-    image: chrislusf/seaweedfs-csi-driver:v1.3.6
   mountService:
     enabled: true
 
