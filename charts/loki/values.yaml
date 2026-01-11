@@ -54,17 +54,17 @@ loki:
       retention_delete_worker_count: 150
       delete_request_store: s3
 
-  ingester:
-    chunk_encoding: snappy
-    wal:
-      enabled: true
-      dir: /var/loki/wal
-      flush_on_shutdown: true      # Ensures data is written before shutdown
-      replay_memory_ceiling: 4GB   # Optional: limits memory during WAL replay
+    ingester:
+      chunk_encoding: snappy
+      wal:
+        enabled: true
+        dir: /var/loki/wal
+        flush_on_shutdown: true      # Ensures data is written before shutdown
+        replay_memory_ceiling: 4GB   # Optional: limits memory during WAL replay
 
-    chunk_idle_period: 2h          # How long before idle chunks are flushed
-    chunk_retain_period: 30s       # Keep chunks in memory for 30s after flushing
-    max_chunk_age: 2h              # Maximum age before forcing flush
+      chunk_idle_period: 2h          # How long before idle chunks are flushed
+      chunk_retain_period: 30s       # Keep chunks in memory for 30s after flushing
+      max_chunk_age: 2h              # Maximum age before forcing flush
 
   # Component replicas
   backend:
