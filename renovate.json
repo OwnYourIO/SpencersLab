@@ -24,7 +24,7 @@
       "description": "Update Charts - explicit chart field",
       "customType": "regex",
       "managerFilePatterns": [
-        "/appset-base\\.yaml$/"
+        "/values\\.yaml$/"
       ],
       "matchStrings": [
         "chart:\\s*(?<depName>[a-zA-Z0-9_-]+)\\s*\\n\\s+#?version:\\s*(?<currentValue>[\\d.]+)\\s*\\n\\s+repository:\\s*(?<registryUrl>\\S+)"
@@ -35,7 +35,7 @@
       "description": "Update Charts - key as chart name",
       "customType": "regex",
       "managerFilePatterns": [
-        "/appset-base\\.yaml$/"
+        "/values\\.yaml$/"
       ],
       "matchStrings": [
         "(?<depName>[a-zA-Z0-9_-]+):\\s*\\n\\s+#?\\s?version:\\s*(?<currentValue>[\\d.]+)\\s*\\n\\s+repository:\\s*(?<registryUrl>\\S+)"
