@@ -1,6 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
+  # AFTER COPY UPDATE HERE AND serviceName
   name: gpu-appset
 spec:
   goTemplate: true
@@ -12,11 +13,13 @@ spec:
           - clusters: {}
           - list:
               elements:
+                # AFTER COPY UPDATE HERE
                 - serviceName: gpu
                   ServerSideApply: "true"
                   # TODO: Test/confirm this actually updates. Started on 1.0.133
                   # This is needed so renovate pick's up the version
                   # appName: base
+                  # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
                   baseChartVersion: 1.0.173
                   values: {{ index $ "Values" | default dict | toJson }}
   template:
@@ -90,7 +93,6 @@ spec:
                 value: '{{ `{{ .metadata.annotations.clusterName }}` }}'
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
-            valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
             valueFiles:
               - '{{ `{{ $serviceValuesFile }}` }}'
               {{ `{{- if $serviceCustomValuesUrls }}` }}
