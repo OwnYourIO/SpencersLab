@@ -1,7 +1,7 @@
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
   seaweedfsCsiPlugin:
-    image: chrislusf/seaweedfs-csi-driver:v1.3.6
+    image: chrislusf/seaweedfs-csi-driver:v1.4.1
   mountService:
     enabled: true
 
