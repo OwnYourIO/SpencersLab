@@ -83,11 +83,6 @@ k8s-monitoring:
     enabled: true
     destinations: ["loki"]
     gatherMethod: volumes
-    
-    excludeNamespaces:
-      - kube-system
-      - kube-public
-      - kube-node-lease
 
   # Node logs (journald)
   nodeLogs:
