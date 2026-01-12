@@ -49,7 +49,7 @@ app-template:
         scrape4ai:
           image:
             repository: unclecode/crawl4ai
-            tag: 0.7.6
+            tag: 0.7.8
           env:
             TZ: Etc/UTC
           resources:
