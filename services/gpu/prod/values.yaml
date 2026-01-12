@@ -230,6 +230,7 @@ ollama:
   #    - llama2
   resources:
     limits:
+      cpu: 10000m
       amd.com/gpu: 1 # requesting a GPU
   image:
     repository: ollama/ollama
