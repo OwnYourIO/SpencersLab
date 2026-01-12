@@ -233,7 +233,7 @@ ollama:
       cpu: 10000m
       amd.com/gpu: 1 # requesting a GPU
     requests:
-      cpu: 1
+      cpu: "1"
   image:
     repository: ollama/ollama
     tag: 0.13.5-rocm
