@@ -45,8 +45,8 @@
     {
       "customType": "regex",
       "description": "Update Grafana dashboards from grafana.com",
-      "fileMatch": [
-        "\\.ya?ml$"
+      "managerFilePatterns": [
+        "/\\.ya?ml$/"
       ],
       "matchStrings": [
         "# renovate: depName=\"(?<depName>.*?)\"\\s+gnetId:\\s+(?<packageName>\\d+)\\s+revision:\\s+(?<currentValue>\\d+)"
