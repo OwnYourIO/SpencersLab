@@ -5487,6 +5487,18 @@ entries:
   docling:
   - apiVersion: v2
     appVersion: 1.7.0
+    created: "2026-01-12T16:36:35.464089673Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: a3dd9261a5407e18eee47781790a1b197098af7e191d742028fb60ec68d56c05
+    name: docling
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/docling-1.0.2/docling-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 1.7.0
     created: "2025-12-28T21:51:35.622761109Z"
     dependencies:
     - name: app-template
@@ -13654,4 +13666,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-12T15:37:01.913244232Z"
+generated: "2026-01-12T16:36:35.612766019Z"
