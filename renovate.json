@@ -63,7 +63,7 @@
       "matchStrings": [
         "#\\s*renovate:\\s*depName=\"(?<depName>[^\"]+)\"\\s+gnetId:\\s*(?<packageName>\\d+)\\s+revision:\\s*(?<currentValue>\\d+)"
       ],
-      "datasourceTemplate": "grafana-dashboards",
+      "datasourceTemplate": "custom.grafana-dashboards",
       "versioningTemplate": "regex:^(?<major>\\d+)$"
     }
   ],
