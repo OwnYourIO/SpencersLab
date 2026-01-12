@@ -754,7 +754,7 @@ karakeep:
         main:
           image:
             repository: ghcr.io/karakeep-app/karakeep
-            tag: 0.28.0
+            tag: 0.30.0
           env:
             TZ: America/Denver
             BROWSER_WEB_URL: http://home-karakeep-chrome.default.svc.cluster.local:9222
