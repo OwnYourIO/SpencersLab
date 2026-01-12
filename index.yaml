@@ -7631,6 +7631,18 @@ entries:
   k8s-monitoring:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-01-12T15:26:59.654027526Z"
+    dependencies:
+    - name: k8s-monitoring
+      repository: https://grafana.github.io/helm-charts
+      version: 3.7.0
+    digest: bc6a9a42d4fc71252a1da517a7e975004727946e8f98802d2acdec8bcac024d5
+    name: k8s-monitoring
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/k8s-monitoring-1.0.9/k8s-monitoring-1.0.9.tgz
+    version: 1.0.9
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-12-24T03:59:40.034102647Z"
     dependencies:
     - name: k8s-monitoring
@@ -13618,4 +13630,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-11T19:30:11.859827447Z"
+generated: "2026-01-12T15:26:59.655289818Z"
