@@ -234,7 +234,7 @@ ollama:
       amd.com/gpu: 1 # requesting a GPU
   image:
     repository: ollama/ollama
-    tag: 0.12.6-rocm
+    tag: 0.13.5-rocm
 
   extraEnv:
     - name: OLLAMA_NUM_GPU
