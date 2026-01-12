@@ -21,14 +21,26 @@
       "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
     },
     {
-      "description": "Update Charts listed in appset-base.yaml files",
+      "description": "Update Charts - explicit chart field",
       "customType": "regex",
       "managerFilePatterns": [
         "/appset-base\\.yaml$/"
       ],
       "matchStrings": [
-        "appName: (?<depName>.*?)\\s*\\n\\s+version: (?<currentValue>.*?) # renovate: datasource=(?<datasource>.*?) registryUrl=(?<registryUrl>.*?)\\s"
-      ]
+        "chart:\\s*(?<depName>[a-zA-Z0-9_-]+)\\s*\\n\\s+#?version:\\s*(?<currentValue>[\\d.]+)\\s*\\n\\s+repository:\\s*(?<registryUrl>\\S+)"
+      ],
+      "datasourceTemplate": "helm"
+    },
+    {
+      "description": "Update Charts - key as chart name",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/appset-base\\.yaml$/"
+      ],
+      "matchStrings": [
+        "(?<depName>[a-zA-Z0-9_-]+):\\s*\\n\\s+#?\\s?version:\\s*(?<currentValue>[\\d.]+)\\s*\\n\\s+repository:\\s*(?<registryUrl>\\S+)"
+      ],
+      "datasourceTemplate": "helm"
     },
     {
       "customType": "regex",
@@ -49,7 +61,7 @@
         "/\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate: depName=\"(?<depName>.*?)\"\\s+gnetId:\\s+(?<packageName>\\d+)\\s+revision:\\s+(?<currentValue>\\d+)"
+        "#\\s*renovate:\\s*depName=\"(?<depName>[^\"]+)\"\\s+gnetId:\\s*(?<packageName>\\d+)\\s+revision:\\s*(?<currentValue>\\d+)"
       ],
       "datasourceTemplate": "grafana-dashboards",
       "versioningTemplate": "regex:^(?<major>\\d+)$"
