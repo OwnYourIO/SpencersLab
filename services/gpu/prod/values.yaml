@@ -98,7 +98,7 @@ charts:
     namespace: default
     ServerSideApply: "false"
   amd-gpu:
-    version: 0.20.0
+    version: 0.21.0
     repository: https://rocm.github.io/k8s-device-plugin/
     namespace: default
     ServerSideApply: "true"
