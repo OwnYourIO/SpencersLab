@@ -10617,6 +10617,18 @@ entries:
   smtp-relay:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-01-14T23:12:28.717399266Z"
+    dependencies:
+    - name: mail
+      repository: https://bokysan.github.io/docker-postfix/
+      version: v5.1.0
+    digest: 9123ba1d309ec10df69d6be50e09e765958bf9722a25d30f1112fdc3c1e77bb3
+    name: smtp-relay
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/smtp-relay-1.0.7/smtp-relay-1.0.7.tgz
+    version: 1.0.7
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-01-08T23:40:32.704573211Z"
     dependencies:
     - name: mail
@@ -13690,4 +13702,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-14T15:56:10.424516539Z"
+generated: "2026-01-14T23:12:28.718738166Z"
