@@ -4,6 +4,11 @@ seaweedfs-csi-driver:
     image: chrislusf/seaweedfs-csi-driver:v1.4.1
   mountService:
     enabled: true
+    resources:
+      requests:
+        memory: 2Gi
+      limits:
+        memory: 3Gi
 
 bitwardenIds:
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
@@ -264,10 +269,11 @@ qbittorrent:
             QBITTORRENT__BT_PORT: &port-bt 58462
           resources:
             requests:
-              cpu: 500m
+              cpu: 200m
               memory: 1Gi
             limits:
-              memory: 8Gi
+              cpu: 600m
+              memory: 3Gi
       pod:
         securityContext:
           runAsUser: 1000
