@@ -331,7 +331,11 @@ seaweedfs:
     # should map directly to the value of the resources field for a PodSpec,
     # formatted as a multi-line string. By default no direct resource request
     # is made.
-    resources: {}
+    resources: 
+      limits: 
+        cpu: 1.5
+      requests:
+        cpu: 50m
 
     # nodeSelector labels for server pod assignment, formatted as a muli-line string.
     # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector

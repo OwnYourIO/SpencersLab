@@ -664,6 +664,11 @@ paperless:
       globalMounts:
       - path: /paperless
 
+    data:
+      existingClaim: paperless
+      globalMounts:
+      - path: /paperless/data_2 
+
     users:
       type: secret
       name: paperless-secrets
