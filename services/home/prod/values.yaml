@@ -532,7 +532,7 @@ paperless:
             limits:
               memory: 1.2Gi
             requests:
-              cpu: 40m
+              cpu: 10m
               memory: 1.2Gi
         gotenburg:
           image:
