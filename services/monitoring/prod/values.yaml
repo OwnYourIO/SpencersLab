@@ -163,10 +163,6 @@ grafana:
     GF_SECURITY_COOKIE_SAMESITE: grafana
     GF_SERVER_ROOT_URL: https://grafana.spencerslab.com
     
-    GF_SMTP_ENABLED: "true"
-    GF_SMTP_HOST: "smtp-relay-mail"
-    GF_SMTP_FROM_ADDRESS: "alerts@{{ .Values.domain }}"
-    GF_SMTP_FROM_NAME: "Grafana"
   envFromSecrets:
     - name: grafana-sso
   
