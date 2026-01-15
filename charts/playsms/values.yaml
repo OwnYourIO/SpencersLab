@@ -20,16 +20,11 @@ app-template:
           env:
             TZ: Etc/UTC
             PLAYSMS_VERSION: "1.4.x"
-            PLAYSMS_DB_HOST: "localhost"
-            PLAYSMS_DB_PORT: "3306"
-            PLAYSMS_DB_NAME: "playsms"
             GID: "1000"
             UID: "1000"
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}"
-            - secretRef:
-                name: "{{ .Release.Name }}-db"
           resources:
             requests:
               cpu: 100m
