@@ -182,6 +182,10 @@ wekan:
   secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017"
+    - name: MAIL_URL
+      value: "smtp://lab@{{ .Values.domain }}/"
+    - name: MAIL_FROM
+      value: "Boards <boards@{{ .Values.domain }}>"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
@@ -198,6 +202,10 @@ boards:
   secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017"
+    - name: MAIL_URL
+      value: "smtp://lab@{{ .Values.domain }}/"
+    - name: MAIL_FROM
+      value: "Boards <boards@{{ .Values.domain }}>"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
