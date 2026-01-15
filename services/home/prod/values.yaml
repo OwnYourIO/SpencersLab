@@ -515,7 +515,7 @@ paperless:
             PAPERLESS_WEBSERVER_WORKERS: 1
           envFrom:
             - secretRef:
-                name: "paperless-secret"
+                name: "paperless-secrets"
             
           probes:
             liveness:
