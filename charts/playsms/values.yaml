@@ -89,7 +89,7 @@ app-template:
     docker-setup:
       type: configMap
       name: "{{ .Release.Name}}"
+      defaultMode: 0777
       globalMounts:
         - path: /_docker-setup.sh
           subPath: docker-setup.sh
-          defaultMode: 0777
