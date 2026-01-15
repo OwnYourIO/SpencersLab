@@ -32,7 +32,7 @@ proxy:
       enabled: true
     audiobook-player:
       enabled: true
-    social-scheduler:
+    posts:
       enabled: true
     polls:
       enabled: true
