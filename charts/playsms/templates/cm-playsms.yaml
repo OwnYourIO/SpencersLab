@@ -45,7 +45,16 @@ data:
       mkdir -p $PATHCONF $PATHBIN $PATHLIB $PATHLOG $PATHWEB &&
       git clone --branch $PLAYSMS_VERSION --depth=1 https://github.com/playsms/playsms.git $PATHSRC &&
       cd $PATHSRC &&
-      ./getcomposer.sh &&
+
+      # TODO: Find a better way?
+      # Probably should keep an eye on https://github.com/playsms/docker-playsms/blob/master/playsms/docker-setup.sh
+      # I rewrote this section!
+      curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o composer.phar
+      chmod +x composer.phar
+      ln -s ./composer.phar ./composer
+      chown -R 1000:1000 ./composer*
+      composer --version
+
       cp -rR -f web/* $PATHWEB/ &&
       cp -f web/config-dist.php $PATHWEB/config.php &&
       ln -s $PATHSRC/daemon/linux/bin/playsmsd.php $PATHBIN/playsmsd &&
