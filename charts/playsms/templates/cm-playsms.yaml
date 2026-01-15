@@ -97,10 +97,9 @@ data:
         echo "Database already exists."
         echo "Importing data skipped and installation process will continue."
       else
+        until mariadb-check --host ${MYSQL_HOST} -u ${MYSQL_USER} --password=${MYSQL_PWD} playsms ; do sleep 2; done
         echo "CREATE DATABASE ${MYSQL_DBNAME};" | mysql -u${MYSQL_USER} -p${MYSQL_PWD} -h${MYSQL_HOST} -P${MYSQL_TCP_PORT} &>/dev/null
         echo "Importing data to database..."
-        echo "mysql -uplaysms -p${PLAYSMS_DB_PASS} -h127.0.0.1 -P3306 playsms < src/db/playsms.sql"
-        echo "if mysql -u${MYSQL_USER} -p${MYSQL_PWD} -h${MYSQL_HOST} -P${MYSQL_TCP_PORT} ${MYSQL_DBNAME} < ${SQL_FILE}"
         if mysql -u${MYSQL_USER} -p${MYSQL_PWD} -h${MYSQL_HOST} -P${MYSQL_TCP_PORT} ${MYSQL_DBNAME} < ${SQL_FILE} &>/dev/null; then
           echo "Database has been installed successfully."
           FRESH_INSTALL=1
