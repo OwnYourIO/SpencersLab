@@ -81,11 +81,15 @@ app-template:
     playsms:
       existingClaim: playsms-data
       globalMounts:
-        - path: /home/playsms/log
-          subPath: log
-        - path: /home/playsms/web
-          subPath: web
+        - path: /home/playsms
+          subPath: home
         - path: /var/www/html
           subPath: web
-        - path: /usr/local/bin
-          subPath: bin
+
+    docker-setup:
+      type: configMap
+      name: "{{ .Release.Name}}"
+      globalMounts:
+        - path: /_docker-setup.sh
+          subPath: docker-setup.sh
+          defaultMode: 0777
