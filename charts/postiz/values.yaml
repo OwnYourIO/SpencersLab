@@ -27,10 +27,6 @@ app-template:
             NEXT_PUBLIC_POSTIZ_UPLOAD_DIRECTORY: /uploads
             REDIS_URL: redis://localhost:6379
 
-            EMAIL_PROVIDER: nodemailer
-            EMAIL_HOST: smtp-relay-mail
-            EMAIL_FROM_NAME: "Postiz"
-            EMAIL_FROM_ADDRESS: "postiz@{{ .Values.domain }}"
           envFrom:
             - secretRef:
                 name: "{{ .Release.Name }}-secret"
