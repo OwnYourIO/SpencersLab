@@ -134,7 +134,8 @@ jellyfin:
             JELLYFIN_DATA_DIR: /config/data
             JELLYFIN_CONFIG_DIR: /config
             JELLYFIN_SMTP_SERVER: "smtp-relay-mail"
-            JELLYFIN_SMTP_FROM_ADDRESS: "player@{{ .Values.domain }}"
+            # TODO: Extract this.
+            JELLYFIN_SMTP_FROM_ADDRESS: "player@spencerslab.com"
             #JELLYFIN_PublishedServerUrl: https://jellyfin.$.Values.domain
             #DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
             #JELLYFIN_FFmpeg__probesize: "50000000"
