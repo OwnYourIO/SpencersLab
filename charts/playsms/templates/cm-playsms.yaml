@@ -53,7 +53,8 @@ data:
       chmod +x composer.phar
       ln -s ./composer.phar ./composer
       chown -R 1000:1000 ./composer*
-      composer --version
+      ./composer --version
+      ./composer update
 
       cp -rR -f web/* $PATHWEB/ &&
       cp -f web/config-dist.php $PATHWEB/config.php &&
