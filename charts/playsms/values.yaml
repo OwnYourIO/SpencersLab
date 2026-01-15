@@ -59,6 +59,13 @@ app-template:
           #  capabilities:
           #    drop:
           #      - ALL
+        nginx:
+          image:
+            repository: nginx
+            tag: stable-alpine
+          env:
+            WEBSERVER_SERVER_NAME: playsms
+            WEBSERVER_HTTP_PORT: 80
         
   service:
     playsms:
@@ -88,3 +95,11 @@ app-template:
       globalMounts:
         - path: /_docker-setup.sh
           subPath: docker-setup.sh
+
+    ngnix-template:
+      type: configMap
+      name: "{{ .Release.Name}}"
+      defaultMode: 0777
+      globalMounts:
+        - path: /etc/nginx/templates/default.conf.template
+          subPath: default.conf.template
