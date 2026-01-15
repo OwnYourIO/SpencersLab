@@ -155,7 +155,7 @@ ingress:
       service: home-playsms
       port: 80
 
-    social-scheduler:
+    posts:
       serviceName: postiz
       service: home-postiz
       port: 5000
