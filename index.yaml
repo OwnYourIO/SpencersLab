@@ -9847,6 +9847,18 @@ entries:
   rallly:
   - apiVersion: v2
     appVersion: v4.5.14
+    created: "2026-01-15T08:04:32.440092951Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 615ffa338fffc3108a11c1545b6460c41e533700beb846bdeab6d72ab35276d3
+    name: rallly
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/rallly-1.0.20/rallly-1.0.20.tgz
+    version: 1.0.20
+  - apiVersion: v2
+    appVersion: v4.5.14
     created: "2026-01-08T23:50:31.773992908Z"
     dependencies:
     - name: app-template
@@ -10615,6 +10627,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-1.0.1/seaweedfs-1.0.1.tgz
     version: 1.0.1
   smtp-relay:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-01-15T08:04:32.602113143Z"
+    dependencies:
+    - name: mail
+      repository: https://bokysan.github.io/docker-postfix/
+      version: v5.1.0
+    digest: 4536abc20d0733dcf7e91929e8a2f95afc74eb077c52764dcce3c92c5d4aaf54
+    name: smtp-relay
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/smtp-relay-1.0.8/smtp-relay-1.0.8.tgz
+    version: 1.0.8
   - apiVersion: v2
     appVersion: 1.0.0
     created: "2026-01-14T23:12:28.717399266Z"
@@ -13702,4 +13726,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-14T23:12:28.718738166Z"
+generated: "2026-01-15T08:04:32.604466422Z"
