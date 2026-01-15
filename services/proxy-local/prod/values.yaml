@@ -58,6 +58,11 @@ charts:
     namespace: kube-system
     # Deployment issues if this is true.
     ServerSideApply: "false"
+  smtp-relay:
+    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 proxy:
   middlewares: 

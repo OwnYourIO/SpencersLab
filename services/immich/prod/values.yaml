@@ -20,6 +20,10 @@ immich:
     IMMICH_IGNORE_MOUNT_CHECK_ERRORS: true
     IMMICH_CONFIG_FILE: /config/immich-config.yaml
 
+    # TODO: Test this and probably move into a secret to handle the domain.
+    EMAIL_HOST: "smtp-relay-mail"
+    EMAIL_FROM: "pics@{{ .Values.domain }}"
+
   image:
     tag: "v1.124.2"
 
