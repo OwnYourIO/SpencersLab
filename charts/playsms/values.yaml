@@ -12,23 +12,6 @@ app-template:
     playsms:
       annotations:
         reloader.stakater.com/auto: "true"
-      initContainers:
-        install-composer:
-          image:
-            repository: playsms/playsms
-            tag: 1.4.x
-          command:
-            - /bin/sh
-            - -c
-          args:
-            - |
-              # Install Composer to a location accessible without sudo
-              cd /tmp
-              curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o /usr/local/bin/composer.phar
-              chmod +x /usr/local/bin/composer.phar
-
-              # Verify it works
-              composer --version
       containers:
         playsms:
           image:
