@@ -515,6 +515,11 @@ paperless:
             PAPERLESS_OCR_PAGES: 2
             PAPERLESS_THREADS_PER_WORKER: 1
             PAPERLESS_WEBSERVER_WORKERS: 1
+            
+            PAPERLESS_EMAIL_HOST: "smtp-relay-mail"
+            PAPERLESS_EMAIL_FROM: "documents@{{ .Values.domain }}"
+            PAPERLESS_EMAIL_SUBJECT_PREFIX: Documents
+
           probes:
             liveness:
               enabled: true
@@ -812,6 +817,10 @@ karakeep:
                   key: client_secret
             DISABLE_NEW_RELEASE_CHECK: true
             COREPACK_INTEGRITY_KEYS: 0
+
+            SMTP_HOST: smtp-relay-mail
+            SMTP_FROM: "bookmarks@{{ .Values.domain }}"
+
           probes:
             liveness:
               enabled: true

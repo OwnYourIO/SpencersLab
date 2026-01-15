@@ -21,6 +21,11 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  smtp-relay:
+    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
 ingress:
   subdomains:
@@ -128,6 +133,8 @@ jellyfin:
             TZ: America/Denver
             JELLYFIN_DATA_DIR: /config/data
             JELLYFIN_CONFIG_DIR: /config
+            JELLYFIN_SMTP_SERVER: "smtp-relay-mail"
+            JELLYFIN_SMTP_FROM_ADDRESS: "player@{{ .Values.domain }}"
             #JELLYFIN_PublishedServerUrl: https://jellyfin.$.Values.domain
             #DOTNET_SYSTEM_IO_DISABLEFILELOCKING: "true"
             #JELLYFIN_FFmpeg__probesize: "50000000"
