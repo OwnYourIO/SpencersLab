@@ -1,6 +1,6 @@
 apiVersion: v2
 name: playsms
-version: 1.0.15
+version: 1.0.16
 appVersion: 1.4.x
 dependencies:
 - name: app-template
