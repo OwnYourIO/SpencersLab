@@ -317,14 +317,6 @@ coder:
         value: "false"
       - name: CODER_PROMETHEUS_ENABLE
         value: 'true'
-      - name: CODER_EMAIL_SMARTHOST
-        value: "smtp-relay-mail"
-      - name: CODER_EMAIL_FROM
-        value: "coder@{{ .Values.domain }}"
-      - name: CODER_EMAIL_HELLO
-        value: "coder.{{ .Values.domain }}"
-      - name: CODER_EMAIL_TLS_SKIPVERIFY
-        value: "true"
 
     envFrom:
       - secretRef:
