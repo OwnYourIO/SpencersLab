@@ -4,6 +4,8 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 
 mail: 
+  # This removes the .Release.Name from the object names and allows us to reference smtp-relay-mail regardless.
+  fullnameOverride: smtp-relay-mail
   #replicaCount: 2
   config:
     general:
