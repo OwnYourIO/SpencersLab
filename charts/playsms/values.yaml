@@ -24,21 +24,11 @@ app-template:
             - |
               # Install Composer to a location accessible without sudo
               cd /tmp
-              curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o composer.phar
-              chmod +x composer.phar
-
-              # Move to user's local bin (no sudo needed)
-              mkdir -p /home/playsms/bin
-              mv composer.phar /home/playsms/bin/composer
-
-              # Add to PATH for current session
-              export PATH="/home/playsms/bin:$PATH"
+              curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o /usr/local/bin/composer.phar
+              chmod +x /usr/local/bin/composer.phar
 
               # Verify it works
               composer --version
-
-              # Make PATH permanent by adding to .bashrc or .profile
-              echo 'export PATH="/home/playsms/bin:$PATH"' >> /home/playsms/.bashrc
       containers:
         playsms:
           image:
@@ -114,3 +104,5 @@ app-template:
           subPath: web
         - path: /var/www/html
           subPath: web
+        - path: /usr/local/bin
+          subPath: bin
