@@ -453,9 +453,7 @@ paperless:
             tag: 2.18.4@sha256:3421ebe06ed27662d014046cf5089e612de853aae0c676a2bc72f73b38080e57
           env:
             PAPERLESS_TIME_ZONE: America/Denver
-            PAPERLESS_URL: https://documents.spencerslab.com
             PAPERLESS_ALLOWED_HOSTS: '*'
-            PAPERLESS_CSRF_TRUSTED_ORIGINS: https://documents.spencerslab.com,https://paperless.spencerslab.com
             PAPERLESS_TIKA_ENABLED: 1
             PAPERLESS_TIKA_ENDPOINT: http://localhost:9998
             PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://localhost:3000
@@ -515,6 +513,9 @@ paperless:
             PAPERLESS_OCR_PAGES: 2
             PAPERLESS_THREADS_PER_WORKER: 1
             PAPERLESS_WEBSERVER_WORKERS: 1
+          envFrom:
+            - secretRef:
+                name: "paperless-secret"
             
           probes:
             liveness:
@@ -773,11 +774,6 @@ karakeep:
             DATA_DIR: /data
             # This impacts SSO signups as well.
             DISABLE_SIGNUPS: false
-            OLLAMA_BASE_URL: 
-              valueFrom:
-                secretKeyRef:
-                  name: karakeep-secret
-                  key: ollama_base_url
             INFERENCE_TEXT_MODEL: 'hf.co/unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q4_K_M'
             INFERENCE_CONTEXT_LENGTH: 128000
             INFERENCE_IMAGE_MODEL: 'llava:8b'
@@ -785,17 +781,6 @@ karakeep:
             INFERENCE_JOB_TIMEOUT_SEC: 600
             INFERENCE_MAX_OUTPUT_TOKENS: 8000
             MEILI_ADDR: http://home-karakeep-meilisearch.default.svc.cluster.local:7700
-            MEILI_MASTER_KEY:
-              valueFrom:
-                secretKeyRef:
-                  name: karakeep-secret
-                  key: meilisearch_master_key
-            NEXTAUTH_SECRET:
-              valueFrom:
-                secretKeyRef:
-                  name: karakeep-secret
-                  key: encryption_key
-            NEXTAUTH_URL: https://karakeep.spencerslab.com
             OAUTH_WELLKNOWN_URL:
               valueFrom:
                 secretKeyRef:
@@ -813,7 +798,9 @@ karakeep:
                   key: client_secret
             DISABLE_NEW_RELEASE_CHECK: true
             COREPACK_INTEGRITY_KEYS: 0
-
+          envFrom:
+            - secretRef:
+                name: "karakeep-secret"
           probes:
             liveness:
               enabled: true
