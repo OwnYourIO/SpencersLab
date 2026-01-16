@@ -27,6 +27,11 @@ k8s-monitoring:
       #   username: ${LOKI_USERNAME}
       #   password: ${LOKI_PASSWORD}
 
+annotationAutodiscovery:
+  enabled: true
+  metricsTuning:
+    excludeMetrics: ["go_*"]  # Global exclusion of Go runtime metrics
+
   # Cluster metrics collection
   clusterMetrics:
     enabled: true
@@ -36,19 +41,53 @@ k8s-monitoring:
       enabled: true
       deploy: true
       metricsTuning:
-        useDefaultAllowList: true
-        
+        useIntegrationAllowList: true
+        includeMetrics:
+          - "node_cpu_seconds_total"
+          - "node_memory_.*"
+          - "node_filesystem_.*"
+          - "node_disk_.*"
+          - "node_network_.*"
+          - "node_load.*"
+
+        #includeMetrics:
+          - node_time_seconds
+          - node_boot_time_seconds
+          - node_uname_info
+          - node_disk_io_time_seconds_total
+          - node_disk_read_bytes_total
+          - node_disk_written_bytes_total
+          - node_context_switches_total
+        excludeMetrics:
+          - node_sockstat_.*      # High cardinality socket stats
+          - node_vmstat_.*        # Verbose VM stats
+          - node_netstat_.*       # Detailed network stats
+          - node_scrape_.*        # Scrape metadata
+          - node_cpu_guest_seconds_total  # Often unnecessary
+
     cadvisor:
       enabled: true
       metricsTuning:
         useDefaultAllowList: true
         dropEmptyContainerLabels: true
         dropEmptyImageLabels: true
+        keepPhysicalFilesystemDevices: ["mmcblk.p.+|nvme.+|rbd.+|sd.+|vd.+|xvd.+|dasd.+"]
+        keepPhysicalNetworkDevices: ["en[ospx][0-9].*|wlan[0-9].*|eth[0-9].*"]
+        includeMetrics:
+          - container_oom_events_total
+          - container_spec_cpu_quota
+          - container_spec_memory_limit_bytes
+          - machine_cpu_cores
         
     kubelet:
       enabled: true
       metricsTuning:
         useDefaultAllowList: true
+        excludeMetrics:
+          - kubelet_pod_worker_duration_seconds_bucket
+          - kubelet_cgroup_manager_duration_seconds_bucket
+          - kubelet_pleg_relist_duration_seconds_bucket
+          - storage_operation_duration_seconds_count
         
     kube-state-metrics:
       enabled: true
@@ -56,12 +95,22 @@ k8s-monitoring:
       metricsTuning:
         useDefaultAllowList: true
         excludeMetrics:
-          - "kube_pod_labels"
-          - "kube_pod_annotations"
+          - kube_pod_labels         # Creates series for every pod label
+          - kube_pod_annotations    # Creates series for every annotation
+          - kube_lease_*            # Lease objects churn frequently
+          - kube_replicaset_*       # ReplicaSets create many series
+          - kube_endpoint_*         # High churn in large clusters
     apiserver:
       enabled: true
       metricsTuning:
         useDefaultAllowList: true
+        includeMetrics:
+          - "apiserver_request_.*"
+          - "apiserver_current_.*"
+          - "apiserver_response_.*"
+          - "apiserver_storage_.*"
+          - "workqueue_.*"
+          - "rest_client_.*"
     kepler:
       enabled: false
     opencost:
@@ -72,6 +121,7 @@ k8s-monitoring:
   clusterEvents:
     enabled: true
     destinations: ["loki"]
+    namespaces: []
 
   # ServiceMonitor/PodMonitor discovery
   prometheusOperatorObjects:
