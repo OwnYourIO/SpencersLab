@@ -96,7 +96,6 @@ spec:
                 value: '{{ `{{ .metadata.annotations.clusterName }}` }}'
               - name: serviceName
                 value: '{{ `{{ .serviceName }}` }}'
-            valuesObject: {{ `{{ $mergedValues | toYaml | nindent 14 }}` }}
             valueFiles:
               - '{{ `{{ $serviceValuesFile }}` }}'
               {{ `{{- if $serviceCustomValuesUrls }}` }}
