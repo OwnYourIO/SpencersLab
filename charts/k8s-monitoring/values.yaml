@@ -60,10 +60,10 @@ k8s-monitoring:
           - node_context_switches_total
         excludeMetrics:
           - node_sockstat_.*      # High cardinality socket stats
-          - node_vmstat_.*        # Verbose VM stats
+          #- node_vmstat_.*        # Verbose VM stats
           - node_netstat_.*       # Detailed network stats
           - node_scrape_.*        # Scrape metadata
-          - node_cpu_guest_seconds_total  # Often unnecessary
+          #- node_cpu_guest_seconds_total  # Often unnecessary
 
     cadvisor:
       enabled: true
