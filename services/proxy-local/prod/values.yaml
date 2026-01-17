@@ -110,6 +110,8 @@ proxy:
       ssoRedirectPath: "/api/auth/oauth/GENERIC"
     polls:
       target: rallly
+    sms:
+      target: playsms
     pictures:
       target: immich
     documents:
