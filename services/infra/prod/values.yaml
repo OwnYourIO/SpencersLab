@@ -116,7 +116,7 @@ seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer-0.seaweedfs-filer.default:8888"
 
   seaweedfsCsiPlugin:
-    image: chrislusf/seaweedfs-csi-driver:v1.4.1
+    image: chrislusf/seaweedfs-csi-driver:v1.4.2
 
   mountService:
     enabled: true
