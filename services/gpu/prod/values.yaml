@@ -241,7 +241,7 @@ ollama:
       cpu: "1"
   image:
     repository: ollama/ollama
-    tag: 0.13.5-rocm
+    tag: 0.14.2-rocm
 
   extraEnv:
     - name: OLLAMA_NUM_GPU
