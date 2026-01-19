@@ -63,9 +63,9 @@ seaweedfs:
     resources:
       requests:
         cpu: 200m
-        memory: 2Gi
+        memory: 120Mi
       limits:
-        memory: 8Gi
+        memory: 1Gi
 
     # Affinity Settings
     # Commenting out or setting as empty the affinity variable, will allow
@@ -231,7 +231,11 @@ seaweedfs:
     # should map directly to the value of the resources field for a PodSpec,
     # formatted as a multi-line string. By default no direct resource request
     # is made.
-    resources: {}
+    resources: 
+      limits:
+        memory: 1Gi
+      requests: 
+        memory: 500Mi
       #limits:
       #  squat.ai/hdd: 1
 
@@ -334,7 +338,9 @@ seaweedfs:
     resources: 
       limits: 
         cpu: 1.5
+        memory: 1Gi
       requests:
+        memory: 200Mi
         cpu: 50m
 
     # nodeSelector labels for server pod assignment, formatted as a muli-line string.
