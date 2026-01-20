@@ -8,5 +8,5 @@ dependencies:
   repository: https://traefik.github.io/charts
 - name: crowdsec
   # Keep here until this has been addressed: https://github.com/crowdsecurity/helm-charts/issues/318
-  version: 0.20.1
+  version: 0.21.1
   repository: https://crowdsecurity.github.io/helm-charts
