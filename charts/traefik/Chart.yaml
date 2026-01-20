@@ -4,7 +4,7 @@ version: 1.0.35
 appVersion: 2.11.10
 dependencies:
 - name: traefik
-  version: 37.1.2
+  version: 37.4.0
   repository: https://traefik.github.io/charts
 - name: crowdsec
   # Keep here until this has been addressed: https://github.com/crowdsecurity/helm-charts/issues/318
