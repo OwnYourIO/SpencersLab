@@ -7785,6 +7785,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/k8s-monitoring-1.0.1/k8s-monitoring-1.0.1.tgz
     version: 1.0.1
+  keycloakx:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-01-20T08:58:46.245855994Z"
+    dependencies:
+    - name: keycloakx
+      repository: https://codecentric.github.io/helm-charts
+      version: 7.1.6
+    digest: 98f0e45944b123095380c9cddcf49e6d1a9af829ec283691606a023fd41ab36a
+    name: keycloakx
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/keycloakx-1.0.1/keycloakx-1.0.1.tgz
+    version: 1.0.1
   langflow:
   - apiVersion: v2
     appVersion: 1.5.1
@@ -13990,4 +14003,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-19T20:01:56.393325487Z"
+generated: "2026-01-20T08:58:46.421439342Z"
