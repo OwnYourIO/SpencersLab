@@ -235,9 +235,11 @@ ollama:
   #    - llama2
   resources:
     limits:
-      cpu: 10000m
+      cpu: 80000m
+      memory: 28Gi
       amd.com/gpu: 1 # requesting a GPU
     requests:
+      memory: 10Gi
       cpu: "1"
   image:
     repository: ollama/ollama
@@ -245,7 +247,7 @@ ollama:
 
   extraEnv:
     - name: OLLAMA_NUM_GPU
-      value: "10"
+      value: "8"
     - name: OLLAMA_LOW_VRAM
       value: "true"  
 
