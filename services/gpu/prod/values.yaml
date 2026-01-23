@@ -235,7 +235,7 @@ ollama:
   #    - llama2
   resources:
     limits:
-      cpu: 80000m
+      cpu: 8000m
       memory: 28Gi
       amd.com/gpu: 1 # requesting a GPU
     requests:
