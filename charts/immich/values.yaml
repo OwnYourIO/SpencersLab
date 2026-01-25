@@ -3,6 +3,14 @@ bitwardenIds:
   immich-pg: OVERRIDE_VIA_CUSTOM_VALUES
 
 immich:
+  controllers:
+    main:
+      containers:
+        main:
+          image:
+            repository: ghcr.io/immich-app/immich-server
+            tag: "v2.4.1"
+
 
   env:
     DB_HOSTNAME: pg-immich-rw
