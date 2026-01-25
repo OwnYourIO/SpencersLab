@@ -15,6 +15,11 @@ bitwardenIds:
 seaweedfs-csi-driver:
   seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
 
+immich:
+  bitwardenIds:
+    immich-sso-secret: f4dfae88-f77d-4c31-b58e-b26b0049b6f5
+    immich-pg: e908eec9-232c-4aef-8665-b26a000c7469
+
 smtp-relay:
   bitwardenIds:
     smtp-secret: 876515bc-b0d6-43df-b9fa-b0dd000a601e
