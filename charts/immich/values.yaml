@@ -20,8 +20,6 @@ immich:
     IMMICH_IGNORE_MOUNT_CHECK_ERRORS: true
     IMMICH_CONFIG_FILE: /config/immich-config.yaml
 
-  image:
-    tag: "v1.124.2"
 
   immich:
     persistence:
