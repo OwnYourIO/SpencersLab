@@ -27,9 +27,10 @@ immich:
       runAsNonRoot: true
       fsGroup: 1000
       fsGroupChangePolicy: OnRootMismatch
+
   server:
     controllers:
-      server:
+      main:
         containers:
           main:
             image:
