@@ -83,7 +83,7 @@ ingress:
 
     pictures:
       serviceName: immich
-      service: immich-server
+      service: home-immich-server
       port: 2283
 
     zigbee-coord:
