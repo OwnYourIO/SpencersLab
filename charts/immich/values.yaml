@@ -52,6 +52,8 @@ immich:
                   key: password
               LOG_LEVEL: verbose
               IMMICH_IGNORE_MOUNT_CHECK_ERRORS: true
+              REDIS_HOSTNAME: '{{ printf "%s-valkey" .Release.Name }}'
+
     defaultPodOptions:
       securityContext:
         runAsUser: 1000
