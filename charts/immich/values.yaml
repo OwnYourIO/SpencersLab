@@ -2,6 +2,19 @@ bitwardenIds:
   immich-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   immich-pg: OVERRIDE_VIA_CUSTOM_VALUES
 
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: ghcr.io/immich-app/immich-server
+          tag: "v2.4.1"
+
+image:
+  # renovate: datasource=github-releases depName=immich-app/immich
+  repository: ghcr.io/immich-app/immich-server
+  tag: "v2.4.1"
+
 immich:
   controllers:
     main:
