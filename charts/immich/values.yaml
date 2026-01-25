@@ -16,14 +16,8 @@ image:
   tag: "v2.4.1"
 
 immich:
-  controllers:
-    main:
-      containers:
-        main:
-          image:
-            repository: ghcr.io/immich-app/immich-server
-            tag: "v2.4.1"
-
+  valkey:
+    enabled: true
 
   env:
     DB_HOSTNAME: pg-immich-rw
