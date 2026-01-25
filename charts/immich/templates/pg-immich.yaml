@@ -23,6 +23,13 @@ spec:
     shared_preload_libraries:
       - "vectors.so"
 
+  managed:
+    roles:
+      - name: immich
+        superuser: true
+        login: true
+        passwordSecret:
+          name: pg-immich-secret
   bootstrap:
     initdb:
       database: immich
