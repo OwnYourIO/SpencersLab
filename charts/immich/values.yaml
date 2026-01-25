@@ -20,6 +20,10 @@ immich:
     IMMICH_IGNORE_MOUNT_CHECK_ERRORS: true
     IMMICH_CONFIG_FILE: /config/immich-config.yaml
 
+  image:
+    # renovate: datasource=github-releases depName=immich-app/immich
+    repository: ghcr.io/immich-app/immich-server
+    tag: "v2.4.1"
 
   immich:
     persistence:
