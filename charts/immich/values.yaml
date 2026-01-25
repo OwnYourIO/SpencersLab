@@ -79,5 +79,3 @@ immich:
 
   valkey:
     enabled: true
-  redis:
-    enabled: false
