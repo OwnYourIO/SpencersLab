@@ -1,0 +1,67 @@
+bitwardenIds:
+  immich-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  immich-pg: OVERRIDE_VIA_CUSTOM_VALUES
+
+immich:
+
+  env:
+    DB_HOSTNAME: pg-immich-rw
+    DB_DATABASE_NAME: immich
+    DB_USERNAME:
+      secretKeyRef:
+        name: pg-immich-secret
+        key: username
+
+    DB_PASSWORD:
+      secretKeyRef:
+        name: pg-immich-secret
+        key: password
+    LOG_LEVEL: verbose
+    IMMICH_IGNORE_MOUNT_CHECK_ERRORS: true
+    IMMICH_CONFIG_FILE: /config/immich-config.yaml
+
+  image:
+    tag: "v1.124.2"
+
+  immich:
+    persistence:
+      library:
+        existingClaim: pictures-shared
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+  server:
+    controllers:
+      server:
+        containers:
+          main:
+            env:
+              IMMICH_CONFIG_FILE: /config/immich-config.yaml
+    defaultPodOptions:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    persistence:
+      config:
+        enabled: true
+        type: secret
+        name: immich-sso
+        readOnly: true
+
+  defaultPodOptions:
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+
+
+  redis:
+    enabled: true
