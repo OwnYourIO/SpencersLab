@@ -206,7 +206,7 @@ mcp:
   # Perfect for running non-containerized MCP servers (like docling) in a unified way
   onemcp:
     enabled: true
-    image: ghcr.io/1mcp-app/agent:v0.26.1
+    image: ghcr.io/1mcp-app/agent:v0.29.0
     transport: streamable-http
     port: 3050
     targetPort: 3050
