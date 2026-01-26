@@ -81,6 +81,7 @@ argo-cd:
       resource.customizations.ignoreDifferences.apps_StatefulSet: |
         jqPathExpressions:
           - '.spec.template.metadata.annotations?["date/deploy-date"]'
+          - '.spec.volumeClaimTemplates[] | select(.metadata) | .creationTimestamp'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .apiVersion'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .kind'
           - '.spec.selector | select(.matchLabels."app.kubernetes.io/name" | test("argocd-(server|repo-server|applicationset-controller)"))'
