@@ -17,6 +17,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: {{ $config.middlewares }}
     # If ssoRedirect is utilized we need a middleware to redirect to sso. 
     {{- else if $config.ssoRedirectPath }}
+    traefik.ingress.kubernetes.io/router.priority: "10"  # Lower than IngressRoute so that if those match they take priority (cus they're local).
     traefik.ingress.kubernetes.io/router.middlewares: {{ list 
       $.Values.proxy.middlewares.entrypoint 
       (printf "default-redirect-%s@kubernetescrd" $name)
