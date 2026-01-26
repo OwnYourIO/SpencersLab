@@ -77,8 +77,10 @@ argo-cd:
           - '.spec.template.spec.hostUsers'
           - '.spec.selector | select(.matchLabels."app.kubernetes.io/name" | test("argocd-(server|repo-server|applicationset-controller)"))'
           - '.metadata.labels | select(.metadata.name | test("argocd-(server|repo-server|applicationset-controller)"))'
+      # ArgoCD has trouble handling PVCs and statefulsets. These ignore noise from that.
       resource.customizations.ignoreDifferences.apps_StatefulSet: |
         jqPathExpressions:
+          - '.metadata.annotations?["date/deploy-date"]'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .apiVersion'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .kind'
           - '.spec.selector | select(.matchLabels."app.kubernetes.io/name" | test("argocd-(server|repo-server|applicationset-controller)"))'
