@@ -107,7 +107,6 @@ proxy:
       ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
     posts:
       target: postiz
-      ssoRedirectPath: "/api/auth/oauth/GENERIC"
     polls:
       target: rallly
     sms:
