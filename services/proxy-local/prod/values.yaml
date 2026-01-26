@@ -104,13 +104,7 @@ proxy:
       ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
     audiobook-player:
       target: audiobookshelf
-      ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
-    posts:
-      target: postiz
-    polls:
-      target: rallly
-    sms:
-      target: playsms
+      #ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
     pictures:
       target: immich
     documents:
@@ -129,7 +123,14 @@ proxy:
       target: gitea
     charts:
       target: grafana
+    posts:
+      target: postiz
+    polls:
+      target: rallly
+    sms:
+      target: playsms
 
+    # Has no auth (Use Keycloak's middleware)
     torrents:
       service: proxy-local-qbittorrent-main 
       port: 8080
