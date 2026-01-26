@@ -30,5 +30,16 @@ spec:
                 name: "{{ $name }}-service"
                 port:
                   number: 443
+{{- if $config.ssoAllowedPaths }}
+{{- range $path := $config.ssoAllowedPaths }}
+          - path: {{ $path }}
+            pathType: Exact
+            backend:
+              service:
+                name: "{{ $name }}-service"
+                port:
+                  number: 443
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

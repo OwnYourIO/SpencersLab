@@ -105,7 +105,10 @@ proxy:
     audiobook-player:
       target: audiobookshelf
       #ssoRedirectPath: "/auth/openid?callback=https://audiobook-player.$.Values.domain/login"
-      ssoRedirectPath: "/status"
+      ssoRedirectPath: "/auth/openid"
+      ssoAllowedPaths:
+        - "/status"
+        - "/api/authorize"
     pictures:
       target: immich
     documents:
