@@ -32,7 +32,7 @@ mail:
     port: 587
   pod:
     annotations:
-      argocd.argoproj.io/sync-options: ServerSideApply=false
+      argocd.argoproj.io/compare-options: ServerSideDiff=true
 
   resources:
     requests:
