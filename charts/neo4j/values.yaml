@@ -15,7 +15,7 @@ app-template:
         main:
           image:
             repository: neo4j
-            tag: "5.23.0-community"
+            tag: "5.26.20-community"
           env:
             NEO4J_AUTH: "neo4j/$(NEO4J_PASSWORD)"
             NEO4J_PLUGINS: '["apoc"]'
