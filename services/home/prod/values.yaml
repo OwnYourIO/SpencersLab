@@ -190,6 +190,13 @@ wekan:
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 10m
+    requests:
+      memory: 200Mi
+      cpu: 10m
   autoscaling:
     enabled: false
   ingress:
