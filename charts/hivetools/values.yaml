@@ -132,7 +132,7 @@ mcp:
   # GitHub MCP Server - GitHub API operations
   github:
     enabled: true
-    image: ghcr.io/github/github-mcp-server:v0.20.0
+    image: ghcr.io/github/github-mcp-server:v0.30.1
     transport: stdio
     port: 8080
     resources:
