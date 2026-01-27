@@ -30,6 +30,10 @@ spec:
         login: true
         passwordSecret:
           name: pg-immich-secret
+        connectionLimit: -1
+        ensure: present
+        inherit: true
+
   bootstrap:
     initdb:
       database: immich
@@ -78,6 +82,9 @@ spec:
       - name: immich
         superuser: true
         login: true
+        connectionLimit: -1
+        ensure: present
+        inherit: true
 
   # TODO:
   #backup:
