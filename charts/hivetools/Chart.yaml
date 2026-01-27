@@ -1,6 +1,6 @@
 apiVersion: v2
 name: hivetools
-version: 1.0.10
+version: 1.0.11
 appVersion: 0.4.0
 description: Combined Helm chart for ToolHive operator CRDs and operator
 dependencies:
