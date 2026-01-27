@@ -5,7 +5,7 @@ appVersion: 0.4.0
 description: Combined Helm chart for ToolHive operator CRDs and operator
 dependencies:
 - name: toolhive-operator-crds
-  version: 0.0.46
+  version: 0.0.103
   repository: oci://ghcr.io/stacklok/toolhive
 - name: toolhive-operator
   version: 0.3.2
