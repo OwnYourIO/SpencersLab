@@ -193,7 +193,7 @@ wekan:
   resources:
     limits:
       memory: 1Gi
-      cpu: 10m
+      cpu: "1"
     requests:
       memory: 200Mi
       cpu: 10m
@@ -213,6 +213,13 @@ boards:
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: "1"
+    requests:
+      memory: 200Mi
+      cpu: 10m
   mongodb:
     service:
       nameOverride: wekan-mongodb
