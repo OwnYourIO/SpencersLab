@@ -242,7 +242,7 @@ app-template:
         meta:
           image:
             repository: supabase/postgres-meta
-            tag: v0.91.7
+            tag: v0.95.2
           env:
             PG_META_PORT: "8080"
             PG_META_DB_HOST: "pg-supabase-rw"
