@@ -2076,6 +2076,21 @@ entries:
   base:
   - apiVersion: v2
     appVersion: 1.0.31
+    created: "2026-01-28T16:10:28.869575872Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 9.3.6
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.19.0
+    digest: 34997901f742a3a3aa29ec0f2facd3a18ed906505e07be8e0e192d72f5bbd416
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.180/base-1.0.180.tgz
+    version: 1.0.180
+  - apiVersion: v2
+    appVersion: 1.0.31
     created: "2026-01-27T01:12:19.128890263Z"
     dependencies:
     - name: argo-cd
@@ -8154,6 +8169,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/k8s-monitoring-1.0.1/k8s-monitoring-1.0.1.tgz
     version: 1.0.1
   keycloakx:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-01-28T16:10:29.040701892Z"
+    dependencies:
+    - name: keycloakx
+      repository: https://codecentric.github.io/helm-charts
+      version: 7.1.7
+    digest: bf6dfc4d22c8f99be0f9b4673915c8dff4e410ff3623900f45d1ab7feb25165b
+    name: keycloakx
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/keycloakx-1.0.8/keycloakx-1.0.8.tgz
+    version: 1.0.8
   - apiVersion: v2
     appVersion: 1.0.0
     created: "2026-01-28T06:37:30.865329642Z"
@@ -14593,4 +14620,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-28T06:37:30.866635431Z"
+generated: "2026-01-28T16:10:29.042339048Z"
