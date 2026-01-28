@@ -15,7 +15,7 @@ dependencies:
 #  version: 19.5.2
 #  repository: https://charts.truecharts.org
 - name: hyperion
-  version: 1.0.21
+  version: 1.0.22
   repository: https://ownyourio.github.io/SpencersLab/
 - name: ledfx
   version: 1.0.19
