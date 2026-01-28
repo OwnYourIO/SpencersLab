@@ -23,6 +23,7 @@ keycloakx:
   bitwardenIds:
     keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
     keycloak-pg: 77443679-1d79-49a2-840f-b25c01334c21
+    keycloak-mqtt: c25dd5f0-60b4-42e3-8080-b3e00064e902
 
 trustedIPs:
   - "10.42.0.0/24"

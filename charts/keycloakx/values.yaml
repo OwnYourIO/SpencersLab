@@ -1,6 +1,9 @@
 bitwardenIds:
   keycloak: OVERRIDE_NEEDED
+  keycloak-mqtt: OVERRIDE_NEEDED
   keycloak-pg: OVERRIDE_NEEDED
+
+domain: OVERRIDE_VIA_APPSET
 
 keycloakx:
   image:  
