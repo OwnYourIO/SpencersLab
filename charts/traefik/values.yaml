@@ -194,6 +194,7 @@ crowdsec:
 
   lapi:
     storeCAPICredentialsInSecret: true
+    storeLAPICscliCredentialsInSecret: false
     env:
       # TODO: Handle this better
       - name: TZ
