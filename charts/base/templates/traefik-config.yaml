@@ -51,6 +51,11 @@ spec:
             {{- range .Values.trustedIPs }}
             - "{{ . }}"
             {{- end }}
+        transport:
+          respondingTimeouts:
+            readTimeout: 600s
+            writeTimeout: 600s
+            idleTimeout: 600s
       {{- if index .Values "seaweedVolumePort" }}
       seaweedvolume:
         port: {{ index .Values "seaweedVolumePort" }}

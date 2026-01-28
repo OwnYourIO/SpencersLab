@@ -46,24 +46,12 @@ keycloakx:
     #  value: "true"
     - name: KC_HTTP_PORT
       value: "8080"
-    - name: KC_HOSTNAME
-      value: https://login.spencerslab.com/
     - name: KC_HOSTNAME_STRICT
       value: "true"
     - name: KC_HOSTNAME_STRICT_HTTPS
       value: "true"
     - name: KC_LOG_LEVEL
       value: "org.keycloak.events:DEBUG,org.infinispan:INFO,org.jgroups:INFO"
-    - name: KEYCLOAK_ADMIN
-      valueFrom:
-        secretKeyRef:
-          name: keycloak-secret
-          key: KEYCLOAK_ADMIN
-    - name: KEYCLOAK_ADMIN_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: keycloak-secret
-          key: KEYCLOAK_ADMIN_PASSWORD
   extraEnvFrom: |-
     - secretRef:
         name: keycloak-secret
