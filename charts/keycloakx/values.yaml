@@ -64,6 +64,9 @@ keycloakx:
         secretKeyRef:
           name: keycloak-secret
           key: KEYCLOAK_ADMIN_PASSWORD
+  extraEnvFrom: |-
+    - secretRef:
+        name: keycloak-secret
     
   extraVolumes: |-
     - name: keycloak-data
