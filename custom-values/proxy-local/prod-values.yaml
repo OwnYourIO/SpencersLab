@@ -21,6 +21,7 @@ traefik:
   bitwardenIds:
     crowdsec-secret: 9e144cd6-5e85-4ded-b913-b228003c68a0
     traefik-sso-secret: fa9bb676-c5a9-431e-903f-b22b0038bf5c
+    traefik-mqtt: e45b84ab-c92d-4704-9fd4-b3e000651b45
   # Skip registering for now. Currently timedout.
   #crowdsec:
   #  lapi:

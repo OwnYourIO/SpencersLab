@@ -13,6 +13,7 @@ seaweedfs-csi-driver:
 bitwardenIds:
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   autossh-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  traefik-mqtt: OVERRIDE_VIA_CUSTOM_VALUES
 
 authRealm: OVERRIDE_VIA_CUSTOM_VALUES
 
