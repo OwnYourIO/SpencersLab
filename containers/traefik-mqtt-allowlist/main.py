@@ -160,9 +160,9 @@ class AllowlistManager:
                 # Find markers
                 try:
                     begin_idx = next(i for i, line in enumerate(lines) 
-                                    if 'BEGIN AUTOMATED ALLOWLIST' in line)
+                        if 'BEGIN ALLOWLIST AUTOMATION' in line)
                     end_idx = next(i for i, line in enumerate(lines) 
-                                  if 'END AUTOMATED ALLOWLIST' in line)
+                        if 'END ALLOWLIST AUTOMATION' in line)
                 except StopIteration:
                     self.logger.error("Markers not found in allowlist file")
                     return False
