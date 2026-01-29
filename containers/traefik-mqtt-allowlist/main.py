@@ -98,7 +98,7 @@ class AllowlistManager:
                 return
             
             # Extract required fields
-            username = event.get('username')
+            username = event.get('details', {}).get('username')
             ip_address = event.get('ipAddress')
             
             if not username or not ip_address:
