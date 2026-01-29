@@ -123,9 +123,9 @@ proxy:
     # Has just SSO
     boards:
       target: wekan
-      ssoRedirectPath: "/_oauth/oidc"
-      ssoAllowedPaths:
-        - "/packages/oauth/end_of_popup_response.js"
+      #ssoRedirectPath: "/_oauth/oidc"
+      #ssoAllowedPaths:
+      #  - "/packages/oauth/end_of_popup_response.js"
     git:
       target: gitea
     charts:
