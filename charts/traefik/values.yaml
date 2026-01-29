@@ -51,7 +51,7 @@ traefik:
   deployment:
     additionalContainers:
     - name: user-allowlist-mqtt
-      image: alpine:3.23
+      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.1
 
       envFrom:
         - secretRef:
