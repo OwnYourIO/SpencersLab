@@ -37,9 +37,7 @@ traefik:
   persistence:
     enabled: true
     existingClaim: "proxy-allowlist"
-    accessMode: ReadWriteMany
-    # existingClaim: ""
-    # size: 1Gi
+    accessMode: ReadWriteOnce
 
   providers:
     kubernetesCRD:
@@ -51,73 +49,16 @@ traefik:
   deployment:
     additionalContainers:
     - name: user-allowlist-mqtt
-      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.4
+      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.5
 
       envFrom:
         - secretRef:
             name: traefik-mqtt
-    - name: user-allowlist-update
-      image: alpine:3.23
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          #!/bin/sh
-          FILE=/data/user-allowlist.yaml
-          LAST_MODIFIED=0
-          EXPECTED_GROUP=65532
-          RUNNING=true
-
-          # Function to handle termination signals
-          handle_exit() {
-            echo "Shutting down gracefully..."
-            RUNNING=false
-          }
-
-          # Trap termination signals
-          trap handle_exit SIGTERM SIGINT
-
-          while $RUNNING; do
-            if [ -f "$FILE" ] && [ -s "$FILE" ]; then
-              # Get file modification time and group ID in one stat call
-              STATS=$(stat -c "%Y %g" "$FILE")
-              MODIFIED=$(echo "$STATS" | awk '{print $1}')
-              CURRENT_GROUP=$(echo "$STATS" | awk '{print $2}')
-
-              # Check and update modification time
-              if [ "$MODIFIED" -ne "$LAST_MODIFIED" ]; then
-                touch "$FILE"
-                LAST_MODIFIED=$MODIFIED
-              fi
-
-              # Check and update group ownership
-              if [ "$CURRENT_GROUP" -ne "$EXPECTED_GROUP" ]; then
-                echo "Updating group ownership of $FILE to $EXPECTED_GROUP"
-                chgrp "$EXPECTED_GROUP" "$FILE"
-              fi
-            else
-              cat << 'EOF' > $FILE
-          http:
-            middlewares:
-              user-allowlist:
-                ipAllowList:
-                  sourceRange: &allowlist
-                    - "10.0.0.0/16"
-                    # START ALLOWLIST AUTOMATION
-                    # END ALLOWLIST AUTOMATION
-              user-allowlist-remote:
-                ipAllowList:
-                  ipStrategy:
-                    depth: 1
-                  sourceRange: *allowlist
-          EOF
-            fi
-            sleep 1
-          done
       securityContext:
-        runAsUser: 1000
+        runAsUser: 10001
         runAsGroup: 65532
       volumeMounts:
-        - name: data
+        - name: proxy-allowlist
           mountPath: /data
 
   experimental:
