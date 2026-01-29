@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
 
 # Create non-root user
-RUN useradd -u 10001 -r -s /bin/false allowlist && \
+RUN useradd -u 65532 -r -s /bin/false allowlist && \
     mkdir -p /data && \
     chown -R allowlist:allowlist /app /data
 

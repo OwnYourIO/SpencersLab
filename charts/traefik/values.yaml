@@ -49,13 +49,13 @@ traefik:
   deployment:
     additionalContainers:
     - name: user-allowlist-mqtt
-      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.5
+      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.6
 
       envFrom:
         - secretRef:
             name: traefik-mqtt
       securityContext:
-        runAsUser: 10001
+        runAsUser: 65532
         runAsGroup: 65532
       volumeMounts:
         - name: proxy-allowlist
