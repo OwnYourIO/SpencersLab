@@ -158,19 +158,23 @@ class AllowlistManager:
                 lines = content.split('\n')
                 
                 # Find markers
-                try:
-                    begin_idx = next(i for i, line in enumerate(lines) 
-                                    if 'START ALLOWLIST AUTOMATION' in line)
-                    end_idx = next(i for i, line in enumerate(lines) 
-                                  if 'END ALLOWLIST AUTOMATION' in line)
-                except StopIteration:
+                begin_idx = None
+                end_idx = None
+                for i, line in enumerate(lines):
+                    if 'START ALLOWLIST AUTOMATION' in line:
+                        begin_idx = i
+                    if 'END ALLOWLIST AUTOMATION' in line:
+                        end_idx = i
+                        break
+                
+                if begin_idx is None or end_idx is None:
                     self.logger.error("Markers not found in allowlist file")
                     return False
                 
                 # Check if IP already exists
-                ip_entry = f'"{ip_address}/32"'
-                for i in range(begin_idx + 1, end_idx):
-                    if ip_entry in lines[i]:
+                ip_pattern = f'- "{ip_address}"'
+                for line in lines[begin_idx+1:end_idx]:
+                    if ip_pattern in line:
                         self.logger.info(f"IP {ip_address} already exists in allowlist")
                         return True
                 
@@ -179,27 +183,19 @@ class AllowlistManager:
                 expiry_date = now + timedelta(days=self.config['ip_expiry_days'])
                 new_section = []
                 
-                comment_pattern = re.compile(
-                    r'# Added: (\d{4}-\d{2}-\d{2}) User: (.+) Expires: (\d{4}-\d{2}-\d{2})'
+                entry_pattern = re.compile(
+                    r'- "([^"]+)" # user: ([^,]+), last-login: ([^,]+), expires: (\d{4}-\d{2}-\d{2})'
                 )
                 
-                i = begin_idx + 1
-                while i < end_idx:
-                    line = lines[i]
-                    
+                for line in lines[begin_idx+1:end_idx]:
                     if not line.strip():
-                        i += 1
                         continue
                     
-                    # Check if it's a comment with expiry date
-                    match = comment_pattern.search(line)
+                    match = entry_pattern.search(line)
                     if match:
-                        expires_str = match.group(3)
-                        expires = datetime.strptime(expires_str, '%Y-%m-%d')
-                        
+                        expires = datetime.strptime(match.group(4), '%Y-%m-%d')
                         if expires < now:
-                            self.logger.info(f"Removing expired entry: {match.group(2)}")
-                            i += 2  # Skip comment and IP line
+                            self.logger.info(f"Removing expired entry for user: {match.group(2)}")
                             continue
                     
                     new_section.append(line)
