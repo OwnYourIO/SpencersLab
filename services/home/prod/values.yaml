@@ -183,7 +183,9 @@ ingress:
 # Have to split wekan into 2 pods to handle 2 urls. 
 wekan:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
-  env: {}
+  env:
+    - name: OIDC_REDIRECTION_ENABLED
+      value: "true"
   secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017"
@@ -206,7 +208,9 @@ wekan:
       nameOverride: wekan-mongodb
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
-  env: {}
+  env:
+    - name: OIDC_REDIRECTION_ENABLED
+      value: "true"
   secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017"
