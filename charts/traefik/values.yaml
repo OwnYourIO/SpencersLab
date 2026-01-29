@@ -58,7 +58,7 @@ traefik:
         runAsUser: 65532
         runAsGroup: 65532
       volumeMounts:
-        - name: proxy-allowlist
+        - name: data
           mountPath: /data
 
   experimental:
