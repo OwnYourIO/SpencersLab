@@ -49,7 +49,7 @@ traefik:
   deployment:
     additionalContainers:
     - name: user-allowlist-mqtt
-      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.6
+      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.7
 
       envFrom:
         - secretRef:
