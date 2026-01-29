@@ -160,9 +160,9 @@ class AllowlistManager:
                 # Find markers
                 try:
                     begin_idx = next(i for i, line in enumerate(lines) 
-                        if 'BEGIN ALLOWLIST AUTOMATION' in line)
+                                    if 'START ALLOWLIST AUTOMATION' in line)
                     end_idx = next(i for i, line in enumerate(lines) 
-                        if 'END ALLOWLIST AUTOMATION' in line)
+                                  if 'END ALLOWLIST AUTOMATION' in line)
                 except StopIteration:
                     self.logger.error("Markers not found in allowlist file")
                     return False
@@ -203,13 +203,12 @@ class AllowlistManager:
                             continue
                     
                     new_section.append(line)
-                    i += 1
                 
-                # Add new entry
-                comment = (f'          # Added: {now.strftime("%Y-%m-%d")} '
-                          f'User: {username} Expires: {expiry_date.strftime("%Y-%m-%d")}')
-                ip_line = f'          - "{ip_address}/32"'
-                new_section.extend([comment, ip_line])
+                # Add new entry with inline comment
+                last_login = now.isoformat()
+                expires = expiry_date.strftime('%Y-%m-%d')
+                new_entry = f'          - "{ip_address}" # user: {username}, last-login: {last_login}, expires: {expires}'
+                new_section.append(new_entry)
                 
                 # Rebuild file
                 result = lines[:begin_idx+1] + new_section + lines[end_idx:]
