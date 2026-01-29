@@ -55,7 +55,7 @@ traefik:
       command: ["/bin/sh", "-c"]
       args:
         - |
-          #!/bin/sh
+          #!/bin/bash
           set -Euo pipefail
 
           apk add --no-cache \
