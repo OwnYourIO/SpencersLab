@@ -1,0 +1,129 @@
+name: Build and Push Docker Containers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'containers/**'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed-containers: ${{ steps.changed-files.outputs.all_changed_files }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed containers
+        id: changed-files
+        run: |
+          # Get all changed files in containers directory
+          if [ "${{ github.event_name }}" == "push" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep "^containers/" || true)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep "^containers/" || true)
+          fi
+          
+          # Extract unique container directories
+          CONTAINERS=$(echo "$CHANGED_FILES" | cut -d'/' -f1-2 | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "all_changed_files=$CONTAINERS" >> $GITHUB_OUTPUT
+          echo "Changed containers: $CONTAINERS"
+
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed-containers != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container: ${{ fromJson(needs.detect-changes.outputs.changed-containers) }}
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get container name
+        id: container-info
+        run: |
+          CONTAINER_NAME=$(basename ${{ matrix.container }})
+          echo "name=$CONTAINER_NAME" >> $GITHUB_OUTPUT
+
+      - name: Read and bump version
+        id: version
+        run: |
+          cd ${{ matrix.container }}
+          
+          # Create VERSION file if it doesn't exist
+          if [ ! -f VERSION ]; then
+            echo "0.0.0" > VERSION
+          fi
+          
+          CURRENT_VERSION=$(cat VERSION)
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Parse semantic version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+          
+          # Bump patch version
+          PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          
+          echo "New version: $NEW_VERSION"
+          echo "$NEW_VERSION" > VERSION
+          
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit version bump
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add ${{ matrix.container }}/VERSION
+          git commit -m "Bump ${{ steps.container-info.outputs.name }} version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git push
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ steps.container-info.outputs.name }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ steps.version.outputs.version }}
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.container }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create Git tag
+        run: |
+          git tag "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"
+          git push origin "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"
