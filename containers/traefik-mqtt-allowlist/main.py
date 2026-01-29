@@ -133,12 +133,17 @@ class AllowlistManager:
         # Create initial file
         initial_content = """http:
   middlewares:
-    user-ip-allowlist:
-      ipWhiteList:
-        sourceRange:
-          - "127.0.0.1/32"
-# BEGIN AUTOMATED ALLOWLIST - DO NOT EDIT BELOW THIS LINE
-# END AUTOMATED ALLOWLIST
+    user-allowlist:
+      ipAllowList:
+        sourceRange: &allowlist
+          - "10.0.0.0/16"
+          # START ALLOWLIST AUTOMATION
+          # END ALLOWLIST AUTOMATION
+    user-allowlist-remote:
+      ipAllowList:
+        ipStrategy:
+          depth: 1
+        sourceRange: *allowlist
 """
         allowlist_path.write_text(initial_content)
     
