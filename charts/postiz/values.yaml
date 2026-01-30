@@ -96,6 +96,7 @@ app-template:
 temporal:
   enabled: true
   web: 
+    enabled: true
     additionalEnv: 
       - name: TEMPORAL_UI_ENABLED
         value: "true"
