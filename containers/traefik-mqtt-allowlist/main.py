@@ -108,15 +108,21 @@ class AllowlistManager:
             
             self.logger.info(f"Processing LOGIN: user={username} ip={ip_address}")
             
-            # Update allowlist
-            if self._update_allowlist(username, ip_address):
-                self.logger.info(f"Successfully added {ip_address} for user {username}")
+            result = self._update_allowlist(username, ip_address)
+            
+            if result['changed']:
+                if result['added']:
+                    self.logger.info(f"Successfully added {ip_address} for user {username}")
+                    if self.config['smtp_server'] and self.config['admin_emails']:
+                        self._send_notification('added', username, ip_address)
                 
-                if self.config['smtp_server'] and self.config['admin_emails']:
-                    self.logger.info(f"Sending email notification to {len(self.config['admin_emails'])} recipient(s)")
-                    self._send_notification(username, ip_address)
-                else:
-                    self.logger.debug(f"Email notification skipped: SMTP_SERVER={bool(self.config['smtp_server'])}, ADMIN_EMAILS={bool(self.config['admin_emails'])}")
+                if result['removed_users']:
+                    for removed_user in result['removed_users']:
+                        self.logger.info(f"Removed expired entry: {removed_user['ip']} for user {removed_user['username']}")
+                        if self.config['smtp_server'] and self.config['admin_emails']:
+                            self._send_notification('removed', removed_user['username'], removed_user['ip'], removed_user['expires'])
+            else:
+                self.logger.info(f"IP {ip_address} already exists in allowlist for user {username}, no changes made")
             
         except Exception as e:
             self.logger.error(f"Error processing message: {e}", exc_info=True)
@@ -150,8 +156,7 @@ class AllowlistManager:
 """
         allowlist_path.write_text(initial_content)
     
-    def _update_allowlist(self, username: str, ip_address: str) -> bool:
-        """Update the allowlist file with a new IP address."""
+    def _update_allowlist(self, username: str, ip_address: str) -> dict:
         with self.file_lock:
             try:
                 allowlist_path = Path(self.config['allowlist_file'])
@@ -172,19 +177,19 @@ class AllowlistManager:
                 
                 if begin_idx is None or end_idx is None:
                     self.logger.error("Markers not found in allowlist file")
-                    return False
+                    return {'changed': False, 'added': False, 'removed_users': []}
                 
                 # Check if IP already exists
                 ip_pattern = f'- "{ip_address}"'
                 for line in lines[begin_idx+1:end_idx]:
                     if ip_pattern in line:
-                        self.logger.info(f"IP {ip_address} already exists in allowlist")
-                        return True
+                        return {'changed': False, 'added': False, 'removed_users': []}
                 
-                # Remove expired entries
+                # Keep non-expired entries and track removed ones
                 now = datetime.now()
                 expiry_date = now + timedelta(days=self.config['ip_expiry_days'])
                 new_section = []
+                removed_users = []
                 
                 entry_pattern = re.compile(
                     r'- "([^"]+)" # user: ([^,]+), last-login: ([^,]+), expires: (\d{4}-\d{2}-\d{2})'
@@ -198,7 +203,11 @@ class AllowlistManager:
                     if match:
                         expires = datetime.strptime(match.group(4), '%Y-%m-%d')
                         if expires < now:
-                            self.logger.info(f"Removing expired entry for user: {match.group(2)}")
+                            removed_users.append({
+                                'ip': match.group(1),
+                                'username': match.group(2),
+                                'expires': match.group(4)
+                            })
                             continue
                     
                     new_section.append(line)
@@ -215,18 +224,22 @@ class AllowlistManager:
                 # Write back
                 allowlist_path.write_text('\n'.join(result))
                 
-                return True
+                return {
+                    'changed': True,
+                    'added': True,
+                    'removed_users': removed_users
+                }
                 
             except Exception as e:
                 self.logger.error(f"Failed to update allowlist: {e}", exc_info=True)
-                return False
+                return {'changed': False, 'added': False, 'removed_users': []}
     
-    def _send_notification(self, username: str, ip_address: str):
-        """Send email notification about allowlist update."""
+    def _send_notification(self, action: str, username: str, ip_address: str, expires: str = None):
         try:
-            expiry = datetime.now() + timedelta(days=self.config['ip_expiry_days'])
-            
-            msg = MIMEText(f"""IP Allowlist Update
+            if action == 'added':
+                expiry = datetime.now() + timedelta(days=self.config['ip_expiry_days'])
+                subject = f"Traefik Allowlist: IP added for {username}"
+                body = f"""IP Allowlist Update
 
 Action: added
 User: {username}
@@ -235,9 +248,25 @@ Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Expires: {expiry.strftime('%Y-%m-%d')}
 
 This IP has been automatically added to the Traefik allowlist.
-""")
+"""
+            elif action == 'removed':
+                subject = f"Traefik Allowlist: IP removed for {username}"
+                body = f"""IP Allowlist Update
+
+Action: removed (expired)
+User: {username}
+IP Address: {ip_address}
+Expired: {expires}
+Removed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+This IP has been automatically removed from the Traefik allowlist due to expiration.
+"""
+            else:
+                self.logger.error(f"Unknown notification action: {action}")
+                return
             
-            msg['Subject'] = f"Traefik Allowlist: IP added for {username}"
+            msg = MIMEText(body)
+            msg['Subject'] = subject
             msg['From'] = self.config['from_email']
             
             with smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port']) as server:
@@ -248,7 +277,7 @@ This IP has been automatically added to the Traefik allowlist.
                 for admin_email in self.config['admin_emails']:
                     msg['To'] = admin_email
                     server.send_message(msg)
-                    self.logger.info(f"Email notification sent to {admin_email}")
+                    self.logger.info(f"Email notification ({action}) sent to {admin_email}")
                     del msg['To']  # Remove for next iteration
             
         except Exception as e:
