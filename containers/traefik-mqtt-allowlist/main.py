@@ -181,8 +181,11 @@ class AllowlistManager:
                 
                 # Check if IP already exists
                 ip_pattern = f'- "{ip_address}"'
+                self.logger.info(f"Checking for existing IP pattern: {ip_pattern}")
+                self.logger.info(f"Lines between markers (begin={begin_idx}, end={end_idx}): {lines[begin_idx+1:end_idx]}")
                 for line in lines[begin_idx+1:end_idx]:
                     if ip_pattern in line:
+                        self.logger.info(f"Found match in line: {line}")
                         return {'changed': False, 'added': False, 'removed_users': []}
                 
                 # Keep non-expired entries and track removed ones
