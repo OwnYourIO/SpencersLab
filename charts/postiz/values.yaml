@@ -112,6 +112,7 @@ temporal:
           default:
             sql:
               pluginName: postgres12
+              manageSchema: true
               connectAddr: "pg-temporal-rw:5432"
               connectProtocol: "tcp"
               databaseName: "temporal"
@@ -123,6 +124,7 @@ temporal:
           visibility:
             sql:
               pluginName: postgres12
+              manageSchema: true
               connectAddr: "pg-temporal-visibility-rw:5432"
               connectProtocol: "tcp"
               databaseName: "temporal-visibility"
