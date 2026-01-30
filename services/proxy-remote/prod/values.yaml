@@ -45,7 +45,8 @@ proxy:
     boards:
       enabled: true
     git:
-    charts:
+    graphs:
+      enabled: true
     #esphome:
 
     # Services with no account support. (Auth should be added at proxy-local)
