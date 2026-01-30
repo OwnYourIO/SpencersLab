@@ -53,6 +53,11 @@ charts:
     namespace: kube-system
     ServerSideApply: "true"
     chart: external-secrets-bitwarden
+  seaweedfs-csi-driver:
+    version: 0.2.8
+    repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+    namespace: default
+    ServerSideApply: "true"
   traefik:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
