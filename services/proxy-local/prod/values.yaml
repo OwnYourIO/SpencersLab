@@ -134,12 +134,18 @@ proxy:
       #  - "/packages/oauth/end_of_popup_response.js"
     git:
       target: gitea
-    charts:
+    graphs:
       target: grafana
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=grafana&response_type=code&redirect_uri=https://graphs.$.Values.domain/"
+      loginSubDomain: "login"
     posts:
       target: postiz
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=postiz&response_type=code&redirect_uri=https://posts.$.Values.domain/"
+      loginSubDomain: "login"
     polls:
       target: rallly
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=rallly&response_type=code&redirect_uri=https://polls.$.Values.domain/"
+      loginSubDomain: "login"
     sms:
       target: playsms
 
