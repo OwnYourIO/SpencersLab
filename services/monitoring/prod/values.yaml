@@ -161,7 +161,7 @@ grafana:
     GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: natel-discrete-panel,pr0ps-trackmap-panel,panodata-map-panel
     GF_SECURITY_ANGULAR_SUPPORT_ENABLED: true # Ref: https://grafana.com/docs/grafana/latest/developers/angular_deprecation
     GF_SECURITY_COOKIE_SAMESITE: grafana
-    GF_SERVER_ROOT_URL: https://grafana.spencerslab.com
+    GF_SERVER_ROOT_URL: https://graphs.spencerslab.com
     
   envFromSecrets:
     - name: grafana-sso
