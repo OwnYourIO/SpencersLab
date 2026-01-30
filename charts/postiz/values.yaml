@@ -104,6 +104,11 @@ temporal:
     additionalEnvConfigMapName: false
   server:
     config:
+      namespaces:
+        create: true
+        namespace:
+          - name: default
+            retention: 3d
       persistence:
         defaultStore: default
         visibilityStore: visibility
