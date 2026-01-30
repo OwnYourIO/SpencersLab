@@ -182,7 +182,6 @@ class AllowlistManager:
                 # Check if IP already exists
                 ip_pattern = f'- "{ip_address}"'
                 self.logger.info(f"Checking for existing IP pattern: {ip_pattern}")
-                self.logger.info(f"Lines between markers (begin={begin_idx}, end={end_idx}): {lines[begin_idx+1:end_idx]}")
                 for line in lines[begin_idx+1:end_idx]:
                     if ip_pattern in line:
                         self.logger.info(f"Found match in line: {line}")
@@ -225,13 +224,7 @@ class AllowlistManager:
                 result = lines[:begin_idx+1] + new_section + lines[end_idx:]
                 new_content = '\n'.join(result)
                 self.logger.info(f"About to write file with {len(new_section)} entries")
-                self.logger.info(f"File content to write:\n{new_content}")
                 allowlist_path.write_text(new_content)
-                
-                # Verify write
-                time.sleep(0.1)  # Small delay
-                verify_content = allowlist_path.read_text()
-                self.logger.info(f"Verified file content after write:\n{verify_content}")
                 
                 return {
                     'changed': True,
