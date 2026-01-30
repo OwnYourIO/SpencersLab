@@ -109,8 +109,7 @@ temporal:
           default:
             sql:
               pluginName: postgres12
-              host: "pg-temporal-rw"
-              port: 5432
+              connectAddr: "pg-temporal-rw:5432"
               databaseName: "temporal"
               user: "temporal"
               existingSecret: "{{ .Release.Name }}-temporal-secret"
@@ -120,8 +119,7 @@ temporal:
           visibility:
             sql:
               pluginName: postgres12
-              host: "pg-temporal-visibility-rw"
-              port: 5432
+              connectAddr: "pg-temporal-visibility-rw:5432"
               databaseName: "temporal-visibility"
               user: "temporal"
               existingSecret: "{{ .Release.Name }}-temporal-secret"
