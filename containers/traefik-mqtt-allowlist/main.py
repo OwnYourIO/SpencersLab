@@ -44,7 +44,7 @@ class AllowlistManager:
         return logging.getLogger('allowlist-manager')
     
     def _load_config(self) -> dict:
-        """Load configuration from environment variables."""
+        admin_emails = os.getenv('ADMIN_EMAILS', '')
         return {
             'mqtt_broker': os.getenv('MQTT_BROKER', 'localhost'),
             'mqtt_port': int(os.getenv('MQTT_PORT', '1883')),
@@ -57,7 +57,8 @@ class AllowlistManager:
             'smtp_port': int(os.getenv('SMTP_PORT', '587')),
             'smtp_username': os.getenv('SMTP_USERNAME', ''),
             'smtp_password': os.getenv('SMTP_PASSWORD', ''),
-            'admin_email': os.getenv('ADMIN_EMAIL', ''),
+            'from_email': os.getenv('FROM_EMAIL', 'allowlist@example.com'),
+            'admin_emails': [email.strip() for email in admin_emails.split(',') if email.strip()],
         }
     
     def _signal_handler(self, signum, frame):
@@ -111,9 +112,11 @@ class AllowlistManager:
             if self._update_allowlist(username, ip_address):
                 self.logger.info(f"Successfully added {ip_address} for user {username}")
                 
-                # Send notification if configured
-                if self.config['smtp_server'] and self.config['admin_email']:
+                if self.config['smtp_server'] and self.config['admin_emails']:
+                    self.logger.info(f"Sending email notification to {len(self.config['admin_emails'])} recipient(s)")
                     self._send_notification(username, ip_address)
+                else:
+                    self.logger.debug(f"Email notification skipped: SMTP_SERVER={bool(self.config['smtp_server'])}, ADMIN_EMAILS={bool(self.config['admin_emails'])}")
             
         except Exception as e:
             self.logger.error(f"Error processing message: {e}", exc_info=True)
@@ -235,15 +238,18 @@ This IP has been automatically added to the Traefik allowlist.
 """)
             
             msg['Subject'] = f"Traefik Allowlist: IP added for {username}"
-            msg['From'] = self.config['smtp_username']
-            msg['To'] = self.config['admin_email']
+            msg['From'] = self.config['from_email']
             
             with smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port']) as server:
-                server.starttls()
-                server.login(self.config['smtp_username'], self.config['smtp_password'])
-                server.send_message(msg)
-            
-            self.logger.info(f"Email notification sent to {self.config['admin_email']}")
+                if self.config['smtp_username'] and self.config['smtp_password']:
+                    server.starttls()
+                    server.login(self.config['smtp_username'], self.config['smtp_password'])
+                
+                for admin_email in self.config['admin_emails']:
+                    msg['To'] = admin_email
+                    server.send_message(msg)
+                    self.logger.info(f"Email notification sent to {admin_email}")
+                    del msg['To']  # Remove for next iteration
             
         except Exception as e:
             self.logger.warning(f"Failed to send email notification: {e}")
