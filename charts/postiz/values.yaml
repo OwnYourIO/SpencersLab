@@ -100,6 +100,7 @@ temporal:
       - name: TEMPORAL_UI_ENABLED
         value: "true"
     additionalEnvSecretName: "{{ .Release.Name }}-temporal-secret"
+    additionalEnvConfigMapName: false
   server:
     config:
       persistence:
