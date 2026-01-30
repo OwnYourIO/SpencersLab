@@ -100,7 +100,7 @@ temporal:
     additionalEnv: 
       - name: TEMPORAL_UI_ENABLED
         value: "true"
-    additionalEnvSecretName: "postiz-temporal-secret"
+    additionalEnvSecretName: "home-postiz-temporal-secret"
     additionalEnvConfigMapName: false
   server:
     config:
@@ -112,7 +112,7 @@ temporal:
               connectAddr: "pg-temporal-rw:5432"
               databaseName: "temporal"
               user: "temporal"
-              existingSecret: "postiz-temporal-secret"
+              existingSecret: "home-postiz-temporal-secret"
               secretKey: password
               maxConns: 20
               maxIdleConns: 5
@@ -122,5 +122,5 @@ temporal:
               connectAddr: "pg-temporal-visibility-rw:5432"
               databaseName: "temporal-visibility"
               user: "temporal"
-              existingSecret: "postiz-temporal-secret"
+              existingSecret: "home-postiz-temporal-secret"
               secretKey: password
