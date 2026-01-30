@@ -37,6 +37,7 @@ proxy:
     polls:
       enabled: true
     pictures:
+      enabled: true
     documents:
     music-player:
     #home:
