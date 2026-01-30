@@ -105,6 +105,9 @@ temporal:
   server:
     config:
       persistence:
+        defaultStore: default
+        visibilityStore: visibility
+        numHistoryShards: 512
         datastores:
           default:
             sql:
