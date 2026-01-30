@@ -63,9 +63,6 @@ keycloakx:
     - name: keycloak-providers
       persistentVolumeClaim:
         claimName: keycloak-providers
-    - name: proxy-allowlist
-      persistentVolumeClaim:
-        claimName: proxy-allowlist
   # - name: customreg
   #   secret:
   #     secretName: {{ include "keycloak.fullname" . }}-customreg
