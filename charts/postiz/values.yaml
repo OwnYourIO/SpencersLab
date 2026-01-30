@@ -2,6 +2,8 @@ bitwardenIds:
   postiz: OVERRIDE_VIA_CUSTOM_VALUES
   postiz-db: OVERRIDE_VIA_CUSTOM_VALUES
   postiz-sso: OVERRIDE_VIA_CUSTOM_VALUES
+  temporal-sso: OVERRIDE_VIA_CUSTOM_VALUES
+  temporal-db: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 
@@ -23,6 +25,7 @@ app-template:
             IS_GENERAL: "true"
             STORAGE_PROVIDER: local
             BACKEND_INTERNAL_URL:  http://localhost:3000
+            TEMPORAL_ADDRESS: "temporal-frontend:7233" 
             UPLOAD_DIRECTORY: /uploads
             NEXT_PUBLIC_POSTIZ_UPLOAD_DIRECTORY: /uploads
             REDIS_URL: redis://localhost:6379
@@ -89,3 +92,32 @@ app-template:
       type: emptyDir
       globalMounts:
         - path: /var/lib/nginx/tmp
+
+temporal:
+  enabled: true
+  web: 
+    additionalEnvSecretName: "{{ .Release.Name }}-temporal-secret"
+  server:
+    config:
+      persistence:
+        datastores:
+          default:
+            sql:
+              pluginName: postgres12
+              host: "pg-temporal-rw"
+              port: 5432
+              databaseName: "temporal"
+              user: "temporal"
+              existingSecret: "{{ .Release.Name }}-temporal-secret"
+              secretKey: password
+              maxConns: 20
+              maxIdleConns: 5
+          visibility:
+            sql:
+              pluginName: postgres12
+              host: "pg-temporal-visibility-rw"
+              port: 5432
+              databaseName: "temporal-visibility"
+              user: "temporal"
+              existingSecret: "{{ .Release.Name }}-temporal-secret"
+              secretKey: password
