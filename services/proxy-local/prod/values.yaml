@@ -117,6 +117,7 @@ proxy:
         - "/api/authorize"
     pictures:
       target: immich
+      ssoRedirectPath: "/auth/login"
     documents:
       target: paperless
     music-player:
