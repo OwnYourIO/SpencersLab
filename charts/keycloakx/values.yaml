@@ -83,8 +83,6 @@ keycloakx:
       mountPath: /opt/keycloak/providers/
     # Mounting at /data/ because that's where traefik reads it from. 
     # In this pod it might work elsewhere. Would have to update the SPI.
-    - name: proxy-allowlist
-      mountPath: /data/
 
   metrics:
     enabled: true
