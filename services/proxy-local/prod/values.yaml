@@ -118,6 +118,9 @@ proxy:
     pictures:
       target: immich
       ssoRedirectPath: "/auth/login"
+      ssoAllowedPaths:
+        - "/.well-known/immich"
+        - "/api/server/ping"
     documents:
       target: paperless
     music-player:
