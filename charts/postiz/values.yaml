@@ -25,7 +25,7 @@ app-template:
             IS_GENERAL: "true"
             STORAGE_PROVIDER: local
             BACKEND_INTERNAL_URL:  http://localhost:3000
-            TEMPORAL_ADDRESS: "temporal-frontend:7233" 
+            TEMPORAL_ADDRESS: "home-postiz-temporal-frontend.default:7233" 
             UPLOAD_DIRECTORY: /uploads
             NEXT_PUBLIC_POSTIZ_UPLOAD_DIRECTORY: /uploads
             REDIS_URL: redis://localhost:6379
