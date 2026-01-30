@@ -223,9 +223,15 @@ class AllowlistManager:
                 
                 # Rebuild file
                 result = lines[:begin_idx+1] + new_section + lines[end_idx:]
+                new_content = '\n'.join(result)
+                self.logger.info(f"About to write file with {len(new_section)} entries")
+                self.logger.info(f"File content to write:\n{new_content}")
+                allowlist_path.write_text(new_content)
                 
-                # Write back
-                allowlist_path.write_text('\n'.join(result))
+                # Verify write
+                time.sleep(0.1)  # Small delay
+                verify_content = allowlist_path.read_text()
+                self.logger.info(f"Verified file content after write:\n{verify_content}")
                 
                 return {
                     'changed': True,
