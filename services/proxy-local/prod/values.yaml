@@ -143,6 +143,8 @@ proxy:
       loginSubDomain: "login"
     posts:
       target: postiz
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=postiz&response_type=code&redirect_uri=https://posts.$.Values.domain/"
+      loginSubDomain: "login"
     polls:
       target: rallly
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=rallly&response_type=code&redirect_uri=https://polls.$.Values.domain/"
