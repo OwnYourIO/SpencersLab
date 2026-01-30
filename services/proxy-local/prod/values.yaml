@@ -2,6 +2,7 @@ seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
   mountService:
     enabled: true
+  seaweedfsCsiPlugin:
     resources:
       requests:
         memory: 2Gi
