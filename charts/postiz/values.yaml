@@ -96,6 +96,9 @@ app-template:
 temporal:
   enabled: true
   web: 
+    additionalEnv: 
+      - name: TEMPORAL_UI_ENABLED
+        value: "true"
     additionalEnvSecretName: "{{ .Release.Name }}-temporal-secret"
   server:
     config:
