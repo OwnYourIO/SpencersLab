@@ -113,6 +113,7 @@ temporal:
             sql:
               pluginName: postgres12
               connectAddr: "pg-temporal-rw:5432"
+              connectProtocol: "tcp"
               databaseName: "temporal"
               user: "temporal"
               existingSecret: "home-postiz-temporal-secret"
@@ -123,6 +124,7 @@ temporal:
             sql:
               pluginName: postgres12
               connectAddr: "pg-temporal-visibility-rw:5432"
+              connectProtocol: "tcp"
               databaseName: "temporal-visibility"
               user: "temporal"
               existingSecret: "home-postiz-temporal-secret"
