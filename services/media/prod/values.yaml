@@ -3,6 +3,16 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+seaweedfs-csi-driver:
+  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
+  mountService:
+    enabled: true
+    resources:
+      requests:
+        memory: 2Gi
+      limits:
+        memory: 2.5Gi
+
 charts: 
   external-secrets-bitwarden:
     version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
