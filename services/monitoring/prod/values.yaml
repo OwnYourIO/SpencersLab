@@ -44,7 +44,7 @@ charts:
     ServerSideApply: "true"
 ingress:
   subdomains:
-    charts: &charts
+    graphs: &charts
       service: monitoring-grafana
       port: 80
     grafana: *charts
