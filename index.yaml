@@ -8171,6 +8171,18 @@ entries:
   keycloakx:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-01-30T09:19:06.23193784Z"
+    dependencies:
+    - name: keycloakx
+      repository: https://codecentric.github.io/helm-charts
+      version: 7.1.7
+    digest: 1160707efecba94fa07912909136cb9c6da7f07c4b79c86ab9ae83c540eaa237
+    name: keycloakx
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/keycloakx-1.0.9/keycloakx-1.0.9.tgz
+    version: 1.0.9
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-01-28T16:10:29.040701892Z"
     dependencies:
     - name: keycloakx
@@ -14917,4 +14929,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-01-30T08:25:22.665774916Z"
+generated: "2026-01-30T09:19:06.233285731Z"
