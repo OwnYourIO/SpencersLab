@@ -128,7 +128,7 @@ proxy:
     # Has just SSO
     boards:
       target: wekan
-      #ssoRedirectPath: "/_oauth/oidc"
+      ssoRedirectPath: "/sign-in"
       #ssoAllowedPaths:
       #  - "/packages/oauth/end_of_popup_response.js"
     git:
