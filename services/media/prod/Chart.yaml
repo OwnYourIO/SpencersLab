@@ -4,7 +4,7 @@ version: 1.0.0
 appVersion: 1.0.0
 dependencies:
   - name: app-template
-    version: 4.3.0
+    version: 4.6.2
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: jellyfin
   - name: jellyseerr
@@ -29,6 +29,6 @@ dependencies:
   #  version: 0.4.2
   #  repository: https://bubylou.github.io/Arr-Stack
   - name: app-template
-    version: 4.3.0
+    version: 4.6.2
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: audiobookshelf
