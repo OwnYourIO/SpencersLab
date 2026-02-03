@@ -3,9 +3,10 @@ seaweedfs-csi-driver:
   mountService:
     enabled: true
   seaweedfsCsiPlugin:
+    image: chrislusf/seaweedfs-csi-driver:v1.4.3
     resources:
       requests:
-        memory: 2Gi
+        memory: 7Gi
       limits:
         memory: 2.5Gi
 
