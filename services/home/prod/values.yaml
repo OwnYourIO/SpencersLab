@@ -9,7 +9,7 @@ bitwardenIds:
 seaweedfs-csi-driver:
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
   seaweedfsCsiPlugin:
-    image: chrislusf/seaweedfs-csi-driver:v1.4.2
+    image: chrislusf/seaweedfs-csi-driver:v1.4.3
   mountService:
     enabled: true
 
