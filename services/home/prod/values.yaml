@@ -49,7 +49,7 @@ charts:
     namespace: default
     ServerSideApply: "true"
   seaweedfs-csi-driver:
-    version: 0.2.8
+    version: 0.2.9
     repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
     namespace: default
     ServerSideApply: "true"
