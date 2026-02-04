@@ -187,6 +187,9 @@ wekan:
   #env:
   #  - name: OIDC_REDIRECTION_ENABLED
   #    value: "true"
+  secretEnv:
+    - name: MONGO_URL
+      value: "mongodb://home-mongodb:27017"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
@@ -209,6 +212,9 @@ boards:
   env:
     - name: OIDC_REDIRECTION_ENABLED
       value: "true"
+  secretEnv:
+    - name: MONGO_URL
+      value: "mongodb://home-mongodb:27017"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
