@@ -22,14 +22,10 @@ spec:
       shared_buffers: 512MB
     extensions:
       - name: vector
-        ensure: present
       - name: vchord
-        ensure: present
         version: 0.3.0
       - name: earthdistance
-        ensure: present
       - name: vectors
-        ensure: absent
     shared_preload_libraries:
       - 'vchord.so'
 
