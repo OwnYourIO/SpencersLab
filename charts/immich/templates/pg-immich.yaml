@@ -16,21 +16,20 @@ spec:
 
   imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.5-0.3.0
 
-  extensions:
-    - name: vector
-      ensure: present
-    - name: vchord
-      ensure: present
-      version: 0.3.0
-    - name: earthdistance
-      ensure: present
-    - name: vectors
-      ensure: absent
-
   postgresql:
     parameters:
       max_connections: "600"
       shared_buffers: 512MB
+    extensions:
+      - name: vector
+        ensure: present
+      - name: vchord
+        ensure: present
+        version: 0.3.0
+      - name: earthdistance
+        ensure: present
+      - name: vectors
+        ensure: absent
     shared_preload_libraries:
       - 'vchord.so'
 
