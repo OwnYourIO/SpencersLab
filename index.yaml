@@ -7295,6 +7295,18 @@ entries:
   immich:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-02-04T21:32:03.238402424Z"
+    dependencies:
+    - name: immich
+      repository: https://immich-app.github.io/immich-charts
+      version: 0.10.3
+    digest: 790dc5cc1a99e63a9ba653aaaa2bba715e80b1b6500a7f89e1d3cd27aae77020
+    name: immich
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/immich-1.0.27/immich-1.0.27.tgz
+    version: 1.0.27
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-02-04T21:29:43.904180052Z"
     dependencies:
     - name: immich
@@ -15214,4 +15226,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-04T21:29:43.905442748Z"
+generated: "2026-02-04T21:32:03.239947462Z"
