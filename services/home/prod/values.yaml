@@ -183,9 +183,10 @@ ingress:
 # Have to split wekan into 2 pods to handle 2 urls. 
 wekan:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
-  env:
-    - name: OIDC_REDIRECTION_ENABLED
-      value: "true"
+  # This allows a local bot to login.
+  #env:
+  #  - name: OIDC_REDIRECTION_ENABLED
+  #    value: "true"
   secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017"
