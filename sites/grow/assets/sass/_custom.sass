@@ -21,18 +21,18 @@ html:not([data-mode="dark"])
   --code-bg: #1a1714
   --scroll-thumb: rgba(255, 107, 0, 0.15)
   --search-border-color: #3a2e1e
-  --inline-color: #FFA726
+  --inline-color: #E67300
 
 [data-mode="dark"]
   --bg: #080808
   --text: #e0d8cf
   --haze: #121008
   --accent: #121008
-  --theme: #FFA726
+  --theme: #FF7B1A
   --border-color: #1a1714
   --overlay: #121008
   --code-bg: #121008
-  --inline-color: #FFcc80
+  --inline-color: #E67300
 
 // Headings use Orbitron (matches Eurostile Extended / Microgramma from the card)
 h1, h2, h3, h4, h5, h6
@@ -52,12 +52,25 @@ h1, h2, h3, h4, h5, h6
   letter-spacing: 0.08em
   text-transform: uppercase
   text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
+  display: flex
+  align-items: center
+  gap: 0.6rem
+
+.brand_text
+  font-family: 'Orbitron', sans-serif
+  font-size: 1.1rem
+  font-weight: 700
+  color: #FF6B00
+  letter-spacing: 0.1em
+  text-transform: uppercase
+  white-space: nowrap
+  text-shadow: 0 0 12px rgba(255, 107, 0, 0.4)
 
 // Links
 a
   color: #FF6B00
   &:hover
-    color: #FFA726
+    color: #FF7B1A
     text-shadow: 0 0 8px rgba(255, 107, 0, 0.3)
 
 // Code
@@ -66,7 +79,7 @@ pre
   border: 1px solid #2a2218
 
 code
-  color: #FFA726
+  color: #E67300
 
 // Sidebar
 .sidebar
@@ -88,7 +101,7 @@ code
   font-weight: 600
   letter-spacing: 0.05em
   &:hover
-    background: #FFA726
+    background: #FF7B1A
 
 // Footer
 .footer
