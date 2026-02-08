@@ -1,0 +1,10 @@
+main:
+  - name: SFF
+    url: /
+    weight: 1
+  - name: Technologies
+    url: /technologies/
+    weight: 10
+  - name: Plants & Aeroponics
+    url: /plants-and-aeroponics/
+    weight: 20

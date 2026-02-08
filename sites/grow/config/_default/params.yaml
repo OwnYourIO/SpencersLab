@@ -3,3 +3,6 @@ logo:
   darkMode: images/logo-dark.svg
 enableDarkMode: true
 defaultLightingMode: dark
+docSections:
+  - technologies
+  - plants-and-aeroponics
