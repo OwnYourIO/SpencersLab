@@ -1,38 +1,38 @@
 // SciFi.Farm custom theme
-// Retro orange neon / black color scheme with sci-fi fonts
+// Green primary with orange active states, dark background, sci-fi fonts
 // Fonts: Orbitron (headings) ~ Eurostile Extended, Exo 2 (body) ~ clean sci-fi sans
 
 \:root
-  --theme: #FF6B00
+  --theme: #00C853
   --font: 'Exo 2', 'Metropolis', sans-serif
 
 // Dark-first: both modes get dark treatment
 html:not([data-mode="dark"])
   --bg: #0e0e0e
-  --text: #e0d8cf
+  --text: #d8e8d8
   --text-light: #fff
-  --haze: #1a1714
-  --accent: #1a1714
+  --haze: #0f1a0f
+  --accent: #0f1a0f
   --light: #0e0e0e
   --dark: #0e0e0e
-  --border-color: #2a2218
-  --theme: #FF6B00
-  --overlay: #1a1714
-  --code-bg: #1a1714
-  --scroll-thumb: rgba(255, 107, 0, 0.15)
-  --search-border-color: #3a2e1e
-  --inline-color: #E67300
+  --border-color: #1a2e1a
+  --theme: #00C853
+  --overlay: #0f1a0f
+  --code-bg: #0f1a0f
+  --scroll-thumb: rgba(0, 200, 83, 0.15)
+  --search-border-color: #1a3a1a
+  --inline-color: #2E7D32
 
 [data-mode="dark"]
   --bg: #080808
-  --text: #e0d8cf
-  --haze: #121008
-  --accent: #121008
-  --theme: #FF7B1A
-  --border-color: #1a1714
-  --overlay: #121008
-  --code-bg: #121008
-  --inline-color: #E67300
+  --text: #d8e8d8
+  --haze: #0a140a
+  --accent: #0a140a
+  --theme: #00E676
+  --border-color: #0f1a0f
+  --overlay: #0a140a
+  --code-bg: #0a140a
+  --inline-color: #2E7D32
 
 // Headings use Orbitron (matches Eurostile Extended / Microgramma from the card)
 h1, h2, h3, h4, h5, h6
@@ -40,18 +40,23 @@ h1, h2, h3, h4, h5, h6
   color: #fff
   letter-spacing: 0.03em
 
-// Navigation
+// Navigation - left-aligned menu
 .nav
-  background: #0a0806 !important
-  border-bottom: 1px solid #FF6B00
+  background: #060a06 !important
+  border-bottom: 1px solid #00C853
+  justify-content: flex-start
+
+.nav_body
+  margin-left: 0
+  margin-right: auto
 
 .nav_brand
   font-family: 'Orbitron', sans-serif
-  color: #FF6B00 !important
+  color: #00C853 !important
   font-weight: 700
   letter-spacing: 0.08em
   text-transform: uppercase
-  text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
+  text-shadow: 0 0 10px rgba(0, 200, 83, 0.4)
   display: flex
   align-items: center
   gap: 0.6rem
@@ -60,39 +65,60 @@ h1, h2, h3, h4, h5, h6
   font-family: 'Orbitron', sans-serif
   font-size: 1.1rem
   font-weight: 700
-  color: #FF6B00
+  color: #00C853
   letter-spacing: 0.1em
   text-transform: uppercase
   white-space: nowrap
-  text-shadow: 0 0 12px rgba(255, 107, 0, 0.4)
+  text-shadow: 0 0 12px rgba(0, 200, 83, 0.4)
 
-// Links
-a
-  color: #FF6B00
+// Menu links: green by default, orange when active/selected
+.nav-link
+  color: #00C853 !important
   &:hover
-    color: #FF7B1A
-    text-shadow: 0 0 8px rgba(255, 107, 0, 0.3)
+    color: #00E676 !important
+    text-shadow: 0 0 8px rgba(0, 200, 83, 0.3)
+
+.nav-link.active, .nav-link .active
+  color: #FF6B00 !important
+  text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
+
+// General links: green
+a
+  color: #00C853
+  &:hover
+    color: #00E676
+    text-shadow: 0 0 8px rgba(0, 200, 83, 0.3)
+
+// Sidebar links: green, orange when active
+.sidebar a
+  color: #00C853
+  &:hover
+    color: #00E676
+.sidebar a.active, .sidebar .active a
+  color: #FF6B00 !important
+  border-color: #FF6B00 !important
+  text-shadow: 0 0 8px rgba(255, 107, 0, 0.3)
 
 // Code
 pre
-  background: #0d0b08 !important
-  border: 1px solid #2a2218
+  background: #080e08 !important
+  border: 1px solid #1a2e1a
 
 code
-  color: #E67300
+  color: #2E7D32
 
 // Sidebar
 .sidebar
-  background: #0a0806
-  border-right: 1px solid #1a1714
+  background: #060a06
+  border-right: 1px solid #0f1a0f
 
 // Search
 .search_field
-  background: #1a1714 !important
-  border-color: #3a2e1e !important
-  color: #e0d8cf !important
+  background: #0f1a0f !important
+  border-color: #1a3a1a !important
+  color: #d8e8d8 !important
 
-// Buttons
+// Buttons: orange accent
 .button, button, [type="submit"]
   background: #FF6B00
   color: #000
@@ -105,11 +131,11 @@ code
 
 // Footer
 .footer
-  background: #0a0806
-  border-top: 1px solid #1a1714
-  color: #6b5d4d
+  background: #060a06
+  border-top: 1px solid #0f1a0f
+  color: #4d6b4d
 
-// Selection
+// Selection: orange highlight
 \:\:selection
   background: rgba(255, 107, 0, 0.3)
   color: #fff
@@ -117,4 +143,4 @@ code
 // Logo styling
 .nav_brand img
   height: 40px
-  filter: drop-shadow(0 0 6px rgba(255, 107, 0, 0.5))
+  filter: drop-shadow(0 0 6px rgba(0, 200, 83, 0.5))
