@@ -4,7 +4,7 @@ hugo:
   domain: local
   title: A Hugo Webpage
   theme: github.com/onweru/compose
-  imports: |
+  imports:
     - path: github.com/lkhrs/hugo-dark-visitors
     - path: github.com/onweru/compose
     - path: github.com/OwnYourIO/SpencersLab/sites/help

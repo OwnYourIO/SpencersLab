@@ -10,7 +10,7 @@ data:
     theme:
       - {{ .Values.hugo.theme }}
     module:
-      imports: {{ .Values.hugo.imports }}
+        {{- .Values.hugo.imports | nindent 8 }}
   hugo-server-startup.sh: |
     #!/bin/bash
     
