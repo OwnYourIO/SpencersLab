@@ -1,0 +1,44 @@
+#bitwardenIds:
+
+hugo:
+  domain: local
+  title: A Hugo Webpage
+  theme: github.com/onweru/compose
+  imports: |
+    - path: github.com/lkhrs/hugo-dark-visitors
+    - path: github.com/onweru/compose
+    - path: github.com/OwnYourIO/SpencersLab/sites/help
+
+app-template:
+  controllers:
+    main:
+      containers:
+        hugo-help:
+          image:
+            repository:  ghcr.io/hugomods/hugo
+            tag: exts-non-root-0.148.1
+          env:
+            TZ: America/Denver
+          command: 
+              - /bin/sh
+              - -c
+              - |
+                sh /hugo-server-startup.sh
+
+  service:
+    main:
+      controller: main
+      ports:
+        http:
+          port: 1313
+
+  persistence:
+    hugo-yaml:
+      type: configMap
+      name: "{{ .Release.Name }}"
+      defaultMode: 0777
+      globalMounts:
+        - path: /src/hugo.yaml
+          subPath: hugo.yaml
+        - path: /hugo-server-startup.sh
+          subPath: hugo-server-startup.sh

@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Release.Name }}"
+data:
+  hugo.yaml: |-
+    baseURL: https://{{ .Values.hugo.domain }}/
+    languageCode: en-us
+    title: {{ .Values.hugo.title }}
+    theme:
+      - {{ .Values.hugo.theme }}
+    module:
+      imports: {{ .Values.hugo.imports }}
+  hugo-server-startup.sh: |
+    #!/bin/bash
+    
+    set -e
+    
+    # Global variables
+    UPDATER_PID=""
+    HUGO_PID=""
+    UPDATE_INTERVAL=180
+    
+    # Cleanup function for graceful shutdown
+    cleanup() {
+        echo "Received termination signal, shutting down gracefully..."
+        
+        # Kill the updater loop if it's running
+        if [[ -n "$UPDATER_PID" && -d "/proc/$UPDATER_PID" ]]; then
+            echo "Stopping module updater (PID: $UPDATER_PID)..."
+            kill -TERM "$UPDATER_PID" 2>/dev/null || true
+            wait "$UPDATER_PID" 2>/dev/null || true
+        fi
+        
+        # Kill hugo server if it's running
+        if [[ -n "$HUGO_PID" && -d "/proc/$HUGO_PID" ]]; then
+            echo "Stopping Hugo server (PID: $HUGO_PID)..."
+            kill -TERM "$HUGO_PID" 2>/dev/null || true
+            wait "$HUGO_PID" 2>/dev/null || true
+        fi
+        
+        echo "Cleanup completed."
+        exit 0
+    }
+    
+    # Set up signal handlers
+    trap cleanup SIGTERM SIGINT SIGQUIT
+    
+    # Module updater function
+    update_modules() {
+        while true; do
+            # Sleep with ability to be interrupted
+            sleep $UPDATE_INTERVAL
+
+            echo "$(date): Checking for module updates..."
+            
+            if hugo mod get -u; then
+                echo "$(date): Modules updated successfully"
+                hugo mod tidy
+            else
+                echo "$(date): Failed to update modules, retrying in $UPDATE_INTERVAL seconds"
+            fi
+            
+        done
+    }
+    
+    echo "Starting Hugo server initialization..."
+    
+    # Create themes directory
+    echo "Creating themes directory..."
+    mkdir -p themes
+    
+    # Initialize Hugo module
+    echo "Initializing Hugo module..."
+    if ! hugo mod init {{ .Values.hugo.domain }}; then
+        echo "Failed to initialize Hugo module"
+        exit 1
+    fi
+    
+    # Get initial modules
+    echo "Getting initial modules..."
+    if ! hugo mod get; then
+        echo "Failed to get initial modules"
+        exit 1
+    fi
+    
+    # Tidy modules
+    echo "Tidying modules..."
+    if ! hugo mod tidy; then
+        echo "Failed to tidy modules"
+        exit 1
+    fi
+    
+    # Start the module updater in background
+    echo "Starting module updater..."
+    update_modules &
+    UPDATER_PID=$!
+    echo "Module updater started with PID: $UPDATER_PID"
+    
+    # Start Hugo server
+    echo "Starting Hugo server..."
+    hugo server \
+        --environment production \
+        --bind 0.0.0.0 \
+        --port 1313 \
+        --disableLiveReload \
+        --poll 1s \
+        --appendPort=false &
+    
+    HUGO_PID=$!
+    echo "Hugo server started with PID: $HUGO_PID"
+    
+    # Wait for Hugo server to finish or be terminated
+    wait "$HUGO_PID"
+    HUGO_EXIT_CODE=$?
+    
+    echo "Hugo server exited with code: $HUGO_EXIT_CODE"
+    
+    # Clean up the updater
+    cleanup

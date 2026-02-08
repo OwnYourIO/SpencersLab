@@ -5,6 +5,16 @@ bitwardenIds:
 assistant:
   bitwardenIds:
     home-assistant-pg: f59add53-a8fb-42cd-b784-b3c8011081df
+scifi-farm:
+  hugo:
+    domain: scifi.farm
+    title: SciFi.Farm Next Generation Collaborative Farming
+    theme: github.com/onweru/compose
+    imports: |
+      - path: github.com/lkhrs/hugo-dark-visitors
+      - path: github.com/onweru/compose
+      - path: github.com/OwnYourIO/SpencersLab/sites/help
+
 base:
   bitwardenIds:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
