@@ -10,7 +10,7 @@ scifi-farm:
     domain: scifi.farm
     title: SciFi.Farm - Aeroponic Farming & Automation
     theme: github.com/onweru/compose
-    imports: |
+    imports:
       - path: github.com/lkhrs/hugo-dark-visitors
       - path: github.com/OwnYourIO/SpencersLab/sites/grow
       - path: github.com/onweru/compose
