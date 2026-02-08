@@ -7087,6 +7087,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/home-assistant-1.0.1/home-assistant-1.0.1.tgz
     version: 1.0.1
+  hugo:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-02-08T19:58:28.866311216Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 9a94536c92f9dc6a902a600aeaa9ec8e71686e4c88b7d893e3f36eccf4c017ff
+    name: hugo
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/hugo-1.0.1/hugo-1.0.1.tgz
+    version: 1.0.1
   hyperion:
   - apiVersion: v2
     appVersion: 1.0.12
@@ -15238,4 +15251,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-04T21:35:40.076224385Z"
+generated: "2026-02-08T19:58:28.867563193Z"
