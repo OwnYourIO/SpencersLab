@@ -1,95 +1,107 @@
 // SciFi.Farm custom theme
-// Green / black / white color scheme matching the SFF business card
+// Retro orange neon / black color scheme with sci-fi fonts
+// Fonts: Orbitron (headings) ~ Eurostile Extended, Exo 2 (body) ~ clean sci-fi sans
 
 \:root
-  --theme: #00c853
-  --font: 'Metropolis', 'Segoe UI', sans-serif
+  --theme: #FF6B00
+  --font: 'Exo 2', 'Metropolis', sans-serif
 
-// Light mode overrides - make it dark-first to match the card aesthetic
+// Dark-first: both modes get dark treatment
 html:not([data-mode="dark"])
-  --bg: #111
-  --text: #eee
+  --bg: #0e0e0e
+  --text: #e0d8cf
   --text-light: #fff
-  --haze: #1a1a1a
-  --accent: #1a1a1a
-  --light: #111
-  --dark: #111
-  --border-color: #222
-  --theme: #00c853
-  --overlay: #1a1a1a
-  --code-bg: #1a1a1a
-  --scroll-thumb: rgba(255,255,255,.08)
-  --search-border-color: #333
-  --inline-color: #00e676
+  --haze: #1a1714
+  --accent: #1a1714
+  --light: #0e0e0e
+  --dark: #0e0e0e
+  --border-color: #2a2218
+  --theme: #FF6B00
+  --overlay: #1a1714
+  --code-bg: #1a1714
+  --scroll-thumb: rgba(255, 107, 0, 0.15)
+  --search-border-color: #3a2e1e
+  --inline-color: #FFA726
 
-// Dark mode
 [data-mode="dark"]
-  --bg: #0a0a0a
-  --text: #eee
-  --haze: #141414
-  --accent: #141414
-  --theme: #00e676
-  --border-color: #1a1a1a
-  --overlay: #141414
-  --code-bg: #141414
-  --inline-color: #69f0ae
+  --bg: #080808
+  --text: #e0d8cf
+  --haze: #121008
+  --accent: #121008
+  --theme: #FFA726
+  --border-color: #1a1714
+  --overlay: #121008
+  --code-bg: #121008
+  --inline-color: #FFcc80
 
-// Navigation and header branding
+// Headings use Orbitron (matches Eurostile Extended / Microgramma from the card)
+h1, h2, h3, h4, h5, h6
+  font-family: 'Orbitron', 'Metropolis', sans-serif
+  color: #fff
+  letter-spacing: 0.03em
+
+// Navigation
 .nav
-  background: #0a0a0a !important
-  border-bottom: 1px solid #00c853
+  background: #0a0806 !important
+  border-bottom: 1px solid #FF6B00
 
 .nav_brand
-  color: #00c853 !important
+  font-family: 'Orbitron', sans-serif
+  color: #FF6B00 !important
   font-weight: 700
-  letter-spacing: 0.05em
+  letter-spacing: 0.08em
   text-transform: uppercase
+  text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
 
 // Links
 a
-  color: #00c853
+  color: #FF6B00
   &:hover
-    color: #00e676
+    color: #FFA726
+    text-shadow: 0 0 8px rgba(255, 107, 0, 0.3)
 
-// Headings
-h1, h2, h3, h4, h5, h6
-  color: #fff
-
-// Code blocks
+// Code
 pre
-  background: #0d0d0d !important
-  border: 1px solid #1a1a1a
+  background: #0d0b08 !important
+  border: 1px solid #2a2218
 
 code
-  color: #69f0ae
+  color: #FFA726
 
-// Sidebar / aside
+// Sidebar
 .sidebar
-  background: #0a0a0a
-  border-right: 1px solid #1a1a1a
+  background: #0a0806
+  border-right: 1px solid #1a1714
 
 // Search
 .search_field
-  background: #1a1a1a !important
-  border-color: #333 !important
-  color: #eee !important
+  background: #1a1714 !important
+  border-color: #3a2e1e !important
+  color: #e0d8cf !important
 
-// Buttons and interactive elements
+// Buttons
 .button, button, [type="submit"]
-  background: #00c853
+  background: #FF6B00
   color: #000
   border: none
+  font-family: 'Orbitron', sans-serif
   font-weight: 600
+  letter-spacing: 0.05em
   &:hover
-    background: #00e676
+    background: #FFA726
 
 // Footer
 .footer
-  background: #0a0a0a
-  border-top: 1px solid #1a1a1a
-  color: #888
+  background: #0a0806
+  border-top: 1px solid #1a1714
+  color: #6b5d4d
 
-// Selection highlight
+// Selection
 \:\:selection
-  background: rgba(0, 200, 83, 0.3)
+  background: rgba(255, 107, 0, 0.3)
   color: #fff
+
+// Logo styling
+.nav_brand img
+  height: 40px
+  filter: drop-shadow(0 0 6px rgba(255, 107, 0, 0.5))
