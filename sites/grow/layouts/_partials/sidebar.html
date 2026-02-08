@@ -11,11 +11,12 @@
 
   {{/* Loop through all top-level sections */}}
   {{- range site.Sections }}
+  {{- $sectionTitle := .Title }}
   <section class="section aside_inner">
     <h2 class="section_title{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}" class="group">{{ .Title }}</a></h2>
     {{- $pages := .Pages }}
     {{- with $pages }}
-    <section id="docs-{{ anchorize .Title }}">
+    <section id="docs-{{ anchorize $sectionTitle }}">
       {{- range . }}
       {{- if .IsPage }}
       <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
