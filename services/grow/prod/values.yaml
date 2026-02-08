@@ -39,6 +39,10 @@ charts:
 ingress:
   dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
+    scifi-farm:
+      domain: scifi.farm
+      service: grow-scifi-farm
+      port: 1313
     cluster:
       clusterBase: true
       service: argocd-server
