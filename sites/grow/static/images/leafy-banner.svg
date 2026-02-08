@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="60" viewBox="0 0 1200 60">
+  <rect width="1200" height="60" fill="#060a06"/>
+
+  <!-- Leaves scattered across the banner -->
+  <g opacity="0.25">
+    <!-- Leaf cluster 1 -->
+    <ellipse cx="30" cy="30" rx="18" ry="8" fill="#1B5E20" transform="rotate(-30 30 30)"/>
+    <ellipse cx="45" cy="22" rx="15" ry="6" fill="#2E7D32" transform="rotate(15 45 22)"/>
+    <ellipse cx="20" cy="38" rx="14" ry="5" fill="#1B5E20" transform="rotate(-50 20 38)"/>
+
+    <!-- Strawberry 1 -->
+    <path d="M85,20 C85,14 90,10 95,10 C100,10 105,14 105,20 C105,32 95,40 95,40 C95,40 85,32 85,20 Z" fill="#8B1A1A" opacity="0.6"/>
+    <circle cx="90" cy="22" r="0.8" fill="#5D1010" opacity="0.5"/>
+    <circle cx="95" cy="26" r="0.8" fill="#5D1010" opacity="0.5"/>
+    <circle cx="100" cy="22" r="0.8" fill="#5D1010" opacity="0.5"/>
+    <ellipse cx="95" cy="11" rx="6" ry="3" fill="#2E7D32" opacity="0.7"/>
+
+    <!-- Leaf cluster 2 -->
+    <ellipse cx="155" cy="42" rx="20" ry="7" fill="#1B5E20" transform="rotate(20 155 42)"/>
+    <ellipse cx="170" cy="35" rx="16" ry="6" fill="#2E7D32" transform="rotate(-25 170 35)"/>
+    <ellipse cx="140" cy="48" rx="12" ry="5" fill="#1B5E20" transform="rotate(40 140 48)"/>
+
+    <!-- Leaf cluster 3 -->
+    <ellipse cx="250" cy="15" rx="17" ry="7" fill="#2E7D32" transform="rotate(-15 250 15)"/>
+    <ellipse cx="265" cy="25" rx="14" ry="5" fill="#1B5E20" transform="rotate(35 265 25)"/>
+
+    <!-- Strawberry 2 -->
+    <path d="M320,28 C320,22 325,18 330,18 C335,18 340,22 340,28 C340,40 330,48 330,48 C330,48 320,40 320,28 Z" fill="#8B1A1A" opacity="0.5"/>
+    <circle cx="326" cy="30" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="330" cy="34" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="334" cy="30" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <ellipse cx="330" cy="19" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
+
+    <!-- Leaf cluster 4 -->
+    <ellipse cx="400" cy="38" rx="19" ry="7" fill="#1B5E20" transform="rotate(-40 400 38)"/>
+    <ellipse cx="415" cy="30" rx="15" ry="6" fill="#2E7D32" transform="rotate(10 415 30)"/>
+
+    <!-- Leaf cluster 5 -->
+    <ellipse cx="490" cy="20" rx="16" ry="6" fill="#2E7D32" transform="rotate(25 490 20)"/>
+    <ellipse cx="475" cy="28" rx="18" ry="7" fill="#1B5E20" transform="rotate(-20 475 28)"/>
+    <ellipse cx="505" cy="15" rx="12" ry="5" fill="#1B5E20" transform="rotate(50 505 15)"/>
+
+    <!-- Strawberry 3 -->
+    <path d="M560,35 C560,29 565,25 570,25 C575,25 580,29 580,35 C580,47 570,55 570,55 C570,55 560,47 560,35 Z" fill="#8B1A1A" opacity="0.55"/>
+    <circle cx="566" cy="37" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="570" cy="41" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="574" cy="37" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <ellipse cx="570" cy="26" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
+
+    <!-- Leaf cluster 6 -->
+    <ellipse cx="640" cy="45" rx="17" ry="6" fill="#1B5E20" transform="rotate(-35 640 45)"/>
+    <ellipse cx="660" cy="38" rx="14" ry="5" fill="#2E7D32" transform="rotate(20 660 38)"/>
+
+    <!-- Leaf cluster 7 -->
+    <ellipse cx="720" cy="18" rx="20" ry="7" fill="#2E7D32" transform="rotate(10 720 18)"/>
+    <ellipse cx="735" cy="28" rx="15" ry="6" fill="#1B5E20" transform="rotate(-30 735 28)"/>
+    <ellipse cx="710" cy="12" rx="13" ry="5" fill="#1B5E20" transform="rotate(45 710 12)"/>
+
+    <!-- Strawberry 4 -->
+    <path d="M800,22 C800,16 805,12 810,12 C815,12 820,16 820,22 C820,34 810,42 810,42 C810,42 800,34 800,22 Z" fill="#8B1A1A" opacity="0.5"/>
+    <circle cx="806" cy="24" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="810" cy="28" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="814" cy="24" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <ellipse cx="810" cy="13" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
+
+    <!-- Leaf cluster 8 -->
+    <ellipse cx="880" cy="40" rx="18" ry="7" fill="#1B5E20" transform="rotate(15 880 40)"/>
+    <ellipse cx="895" cy="32" rx="14" ry="5" fill="#2E7D32" transform="rotate(-25 895 32)"/>
+
+    <!-- Leaf cluster 9 -->
+    <ellipse cx="960" cy="15" rx="16" ry="6" fill="#2E7D32" transform="rotate(-20 960 15)"/>
+    <ellipse cx="950" cy="25" rx="19" ry="7" fill="#1B5E20" transform="rotate(30 950 25)"/>
+
+    <!-- Strawberry 5 -->
+    <path d="M1030,30 C1030,24 1035,20 1040,20 C1045,20 1050,24 1050,30 C1050,42 1040,50 1040,50 C1040,50 1030,42 1030,30 Z" fill="#8B1A1A" opacity="0.55"/>
+    <circle cx="1036" cy="32" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="1040" cy="36" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <circle cx="1044" cy="32" r="0.7" fill="#5D1010" opacity="0.5"/>
+    <ellipse cx="1040" cy="21" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
+
+    <!-- Leaf cluster 10 -->
+    <ellipse cx="1110" cy="42" rx="17" ry="6" fill="#1B5E20" transform="rotate(-15 1110 42)"/>
+    <ellipse cx="1130" cy="35" rx="14" ry="5" fill="#2E7D32" transform="rotate(25 1130 35)"/>
+    <ellipse cx="1100" cy="48" rx="12" ry="5" fill="#1B5E20" transform="rotate(-45 1100 48)"/>
+
+    <!-- Leaf cluster 11 -->
+    <ellipse cx="1180" cy="20" rx="18" ry="7" fill="#2E7D32" transform="rotate(35 1180 20)"/>
+    <ellipse cx="1190" cy="30" rx="13" ry="5" fill="#1B5E20" transform="rotate(-10 1190 30)"/>
+  </g>
+</svg>
