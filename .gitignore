@@ -3,7 +3,7 @@
 charts/**/charts
 services/**/charts
 **/sites/_vault/
-**/sites/
+
 **/infra-2/
 **/email/*
 .hugo_build.lock

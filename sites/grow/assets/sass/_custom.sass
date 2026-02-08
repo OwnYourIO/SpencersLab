@@ -1,0 +1,95 @@
+// SciFi.Farm custom theme
+// Green / black / white color scheme matching the SFF business card
+
+:root
+  --theme: #00c853
+  --font: 'Metropolis', 'Segoe UI', sans-serif
+
+// Light mode overrides - make it dark-first to match the card aesthetic
+html:not([data-mode="dark"])
+  --bg: #111
+  --text: #eee
+  --text-light: #fff
+  --haze: #1a1a1a
+  --accent: #1a1a1a
+  --light: #111
+  --dark: #111
+  --border-color: #222
+  --theme: #00c853
+  --overlay: #1a1a1a
+  --code-bg: #1a1a1a
+  --scroll-thumb: rgba(255,255,255,.08)
+  --search-border-color: #333
+  --inline-color: #00e676
+
+// Dark mode
+[data-mode="dark"]
+  --bg: #0a0a0a
+  --text: #eee
+  --haze: #141414
+  --accent: #141414
+  --theme: #00e676
+  --border-color: #1a1a1a
+  --overlay: #141414
+  --code-bg: #141414
+  --inline-color: #69f0ae
+
+// Navigation and header branding
+.nav
+  background: #0a0a0a !important
+  border-bottom: 1px solid #00c853
+
+.nav_brand
+  color: #00c853 !important
+  font-weight: 700
+  letter-spacing: 0.05em
+  text-transform: uppercase
+
+// Links
+a
+  color: #00c853
+  &:hover
+    color: #00e676
+
+// Headings
+h1, h2, h3, h4, h5, h6
+  color: #fff
+
+// Code blocks
+pre
+  background: #0d0d0d !important
+  border: 1px solid #1a1a1a
+
+code
+  color: #69f0ae
+
+// Sidebar / aside
+.sidebar
+  background: #0a0a0a
+  border-right: 1px solid #1a1a1a
+
+// Search
+.search_field
+  background: #1a1a1a !important
+  border-color: #333 !important
+  color: #eee !important
+
+// Buttons and interactive elements
+.button, button, [type="submit"]
+  background: #00c853
+  color: #000
+  border: none
+  font-weight: 600
+  &:hover
+    background: #00e676
+
+// Footer
+.footer
+  background: #0a0a0a
+  border-top: 1px solid #1a1a1a
+  color: #888
+
+// Selection highlight
+::selection
+  background: rgba(0, 200, 83, 0.3)
+  color: #fff
