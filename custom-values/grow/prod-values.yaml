@@ -13,7 +13,7 @@ scifi-farm:
     imports: |
       - path: github.com/lkhrs/hugo-dark-visitors
       - path: github.com/onweru/compose
-      - path: github.com/OwnYourIO/SpencersLab/sites/help
+      - path: github.com/OwnYourIO/SpencersLab/sites/grow
 
 base:
   bitwardenIds:
