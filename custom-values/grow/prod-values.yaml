@@ -8,7 +8,7 @@ assistant:
 scifi-farm:
   hugo:
     domain: scifi.farm
-    title: SciFi.Farm Next Generation Collaborative Farming
+    title: SciFi.Farm - Aeroponic Farming & Automation
     theme: github.com/onweru/compose
     imports: |
       - path: github.com/lkhrs/hugo-dark-visitors
