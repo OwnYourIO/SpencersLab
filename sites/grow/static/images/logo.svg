@@ -10,7 +10,7 @@
       </feMerge>
     </filter>
   </defs>
-  <g filter="url(#neon)" fill="none" stroke="#00C853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+  <g filter="url(#neon)" fill="none" stroke="#FF6B00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <!-- Rocket body -->
     <path d="M100,20 C100,20 75,60 75,120 L75,160 L125,160 L125,120 C125,60 100,20 100,20 Z"/>
     <!-- Window -->
