@@ -1,0 +1,31 @@
+<aside class="aside menu">
+  <div>
+    <label class="aside_toggle toggle" title='{{ T "docs_menu" }}' role="button">{{ T "docs_menu" }} {{ partial "sprite" (dict "icon" "carly") }}</label>
+  </div>
+  {{- $permalink := .RelPermalink }}
+
+  {{/* Home link */}}
+  <section class="section aside_inner">
+    <h2 class="section_title{{ if .IsHome }} active{{ end }}"><a href='{{ absLangURL "" }}' class="group">SFF</a></h2>
+  </section>
+
+  {{/* Loop through all top-level sections */}}
+  {{- range site.Sections }}
+  <section class="section aside_inner">
+    <h2 class="section_title{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}" class="group">{{ .Title }}</a></h2>
+    {{- $pages := .Pages }}
+    {{- with $pages }}
+    <section id="docs-{{ anchorize .Title }}">
+      {{- range . }}
+      {{- if .IsPage }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- else }}
+      {{/* Nested section */}}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      {{- end }}
+    </section>
+    {{- end }}
+  </section>
+  {{- end }}
+</aside>

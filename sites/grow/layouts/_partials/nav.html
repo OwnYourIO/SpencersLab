@@ -16,33 +16,6 @@
 		<li class="nav-item">
 			{{- partial "search" . }}
 		</li>
-		{{- $p := . }}
-		{{- range site.Menus.main }}
-		<li class="nav-item">
-			{{- $active := or ($p.IsMenuCurrent "main" .) ($p.HasMenuCurrent "main" .) }}
-			{{- with .Page }}
-			{{- $active = or $active ( $.IsDescendant .)  }}
-			{{- end }}
-			{{- $url := absLangURL .URL }}
-			{{- if or (hasPrefix .URL "http") (hasPrefix .URL "www.") }}
-				{{- $url = .URL }}
-			{{- end }}
-			<a class="nav-link{{if $active }} active{{end}}" href="{{ $url }}"><span{{if $active }} class="active"{{end}}>{{ T .Identifier | default .Name }}</span></a>
-		</li>
-		{{- end }}
-		{{- with $config.source }}
-		<li class="nav-item nav_repo">
-			<a class="nav-link" href="{{ .url }}" target="_blank">
-				{{- if .iconLight }}
-					{{- $litPath := absURL .iconLight }}
-					{{- $darkPath := absURL .iconDark }}
-					<picture data-lit="{{ $litPath }}" data-dark="{{ $darkPath }}">
-						<img src="{{ $litPath }}" alt="{{ .name }} Repo">
-					</picture>
-				{{- else }}{{ .name }}{{ end }}
-			</a>
-		</li>
-		{{- end }}
 		<li class="nav-item">{{ partial "mode" . }}</li>
 	</ul>
 </nav>

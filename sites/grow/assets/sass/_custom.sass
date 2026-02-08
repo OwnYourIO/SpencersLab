@@ -1,5 +1,5 @@
 // SciFi.Farm custom theme
-// Green primary with orange active states, dark background, sci-fi fonts
+// Green sidebar menu with orange active states, dark background, sci-fi fonts
 // Fonts: Orbitron (headings) ~ Eurostile Extended, Exo 2 (body) ~ clean sci-fi sans
 
 \:root
@@ -40,23 +40,18 @@ h1, h2, h3, h4, h5, h6
   color: #fff
   letter-spacing: 0.03em
 
-// Navigation - left-aligned menu
+// Top nav bar - just brand + search/mode toggle
 .nav
   background: #060a06 !important
   border-bottom: 1px solid #00C853
-  justify-content: flex-start
-
-.nav_body
-  margin-left: 0
-  margin-right: auto
 
 .nav_brand
   font-family: 'Orbitron', sans-serif
-  color: #00C853 !important
+  color: #FF6B00 !important
   font-weight: 700
   letter-spacing: 0.08em
   text-transform: uppercase
-  text-shadow: 0 0 10px rgba(0, 200, 83, 0.4)
+  text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
   display: flex
   align-items: center
   gap: 0.6rem
@@ -65,38 +60,46 @@ h1, h2, h3, h4, h5, h6
   font-family: 'Orbitron', sans-serif
   font-size: 1.1rem
   font-weight: 700
-  color: #00C853
+  color: #FF6B00
   letter-spacing: 0.1em
   text-transform: uppercase
   white-space: nowrap
-  text-shadow: 0 0 12px rgba(0, 200, 83, 0.4)
-
-// Menu links: green by default, orange when active/selected
-.nav-link
-  color: #00C853 !important
-  &:hover
-    color: #00E676 !important
-    text-shadow: 0 0 8px rgba(0, 200, 83, 0.3)
-
-.nav-link.active, .nav-link .active
-  color: #FF6B00 !important
-  text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
+  text-shadow: 0 0 12px rgba(255, 107, 0, 0.4)
 
 // General links: green
 a
   color: #00C853
   &:hover
-    color: #00E676
+    color: #4CAF50
     text-shadow: 0 0 8px rgba(0, 200, 83, 0.3)
 
-// Sidebar links: green, orange when active
-.sidebar a
-  color: #00C853
+// Sidebar: the main navigation
+.aside
+  background: #060a06
+  border-right: 1px solid #0f1a0f
+
+// Sidebar section headings (Technologies, Plants & Aeroponics, SFF)
+.section_title a
+  color: #1B8A3A !important
+  font-family: 'Orbitron', sans-serif
+  letter-spacing: 0.04em
   &:hover
-    color: #00E676
-.sidebar a.active, .sidebar .active a
+    color: #4CAF50 !important
+    text-shadow: 0 0 8px rgba(0, 200, 83, 0.2)
+
+.section_title.active a
   color: #FF6B00 !important
-  border-color: #FF6B00 !important
+  text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
+
+// Sidebar page links
+.section_link a
+  color: #1B8A3A !important
+  &:hover
+    color: #4CAF50 !important
+    text-shadow: 0 0 6px rgba(0, 200, 83, 0.2)
+
+.section_link.active a
+  color: #FF6B00 !important
   text-shadow: 0 0 8px rgba(255, 107, 0, 0.3)
 
 // Code
@@ -106,11 +109,6 @@ pre
 
 code
   color: #2E7D32
-
-// Sidebar
-.sidebar
-  background: #060a06
-  border-right: 1px solid #0f1a0f
 
 // Search
 .search_field

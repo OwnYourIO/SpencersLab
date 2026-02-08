@@ -1,0 +1,30 @@
+{{- $config := site.Params }}
+{{- $context := . }}
+{{- $item_type := "http://schema.org/WebPage" }}
+{{- $lang := site.Language.Lang }}
+{{- $is_dark := $config.enableDarkMode }}
+{{- $default_mode := $config.defaultLightingMode -}}
+<!doctype html>
+<html lang={{ $lang }}{{ with $is_dark }} class=dark{{ end }}{{ with $default_mode }} data-mode={{ . }}{{ end }} itemscope itemtype={{ $item_type }}>
+<head>
+  {{- partial "head/index" . }}
+</head>
+<body class="page-{{ .Kind }}" id="pagetop">
+  <header class="nav_header">
+    {{- partial "nav" . }}
+  </header>
+  <div class="main wrap pt-4">
+    <div class="grid-auto">
+      {{- partial "sidebar" . }}
+      <main class="content">
+        {{- block "main" . }}{{ end }}
+      </main>
+    </div>
+  </div>
+  {{- partial "scripts/translations" . -}}
+  {{- partialCached "footer" . -}}
+  {{- partialCached "sprites" . -}}
+  {{- partial "scripts/bundle" . -}}
+  {{- partial "scripts/mermaid" . -}}
+</body>
+</html>
