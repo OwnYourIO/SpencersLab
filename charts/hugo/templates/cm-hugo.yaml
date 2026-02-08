@@ -101,6 +101,7 @@ data:
     echo "Starting Hugo server..."
     hugo server \
         --environment production \
+        --baseURL "https://{{ .Values.hugo.domain }}" \
         --bind 0.0.0.0 \
         --port 1313 \
         --disableLiveReload \
