@@ -73,27 +73,43 @@ a
     color: #4CAF50
     text-shadow: 0 0 8px rgba(0, 200, 83, 0.3)
 
-// Sidebar: the main navigation
+// Sidebar: space theme with rounded edges and star background
 .aside
-  background: #060a06
-  border-right: 1px solid #0f1a0f
+  background: #030508 url('/images/stars.svg') repeat
+  border-right: none
+  border-radius: 0 16px 16px 0
+  margin-top: 0.5rem
+  margin-bottom: 0.5rem
+  padding: 1rem 0.5rem
+  box-shadow: 0 0 20px rgba(0, 200, 83, 0.08), inset 0 0 40px rgba(0, 0, 0, 0.5)
+  border: 1px solid rgba(0, 200, 83, 0.15)
+  border-left: none
 
-// Sidebar section headings (Technologies, Plants & Aeroponics, SFF)
+// Sidebar section headings (SFF, Technologies, Plants & Aeroponics) - BRIGHT green
+.section_title
+  margin-top: 0.8rem
+
 .section_title a
-  color: #1B8A3A !important
+  color: #00E676 !important
   font-family: 'Orbitron', sans-serif
-  letter-spacing: 0.04em
+  font-size: 0.95rem
+  letter-spacing: 0.06em
+  font-weight: 700
   &:hover
-    color: #4CAF50 !important
-    text-shadow: 0 0 8px rgba(0, 200, 83, 0.2)
+    color: #69F0AE !important
+    text-shadow: 0 0 10px rgba(0, 230, 118, 0.4)
 
 .section_title.active a
   color: #FF6B00 !important
-  text-shadow: 0 0 10px rgba(255, 107, 0, 0.4)
+  text-shadow: 0 0 12px rgba(255, 107, 0, 0.5)
 
-// Sidebar page links
+// Sidebar page links - darker green, indented
+.section_link
+  padding-left: 1rem
+
 .section_link a
   color: #1B8A3A !important
+  font-size: 0.88rem
   &:hover
     color: #4CAF50 !important
     text-shadow: 0 0 6px rgba(0, 200, 83, 0.2)
