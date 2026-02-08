@@ -1,0 +1,5 @@
+logo:
+  lightMode: images/logo.svg
+  darkMode: images/logo-dark.svg
+enableDarkMode: true
+defaultLightingMode: dark

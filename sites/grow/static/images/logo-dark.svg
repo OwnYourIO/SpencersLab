@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="200" height="250">
+  <defs>
+    <filter id="neon" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#neon)" fill="none" stroke="#FFA726" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Rocket body -->
+    <path d="M100,20 C100,20 75,60 75,120 L75,160 L125,160 L125,120 C125,60 100,20 100,20 Z"/>
+    <!-- Window -->
+    <circle cx="100" cy="95" r="15"/>
+    <!-- Left fin -->
+    <path d="M75,135 C75,135 50,155 45,185 L75,165"/>
+    <!-- Right fin -->
+    <path d="M125,135 C125,135 150,155 155,185 L125,165"/>
+    <!-- Center fin / exhaust -->
+    <path d="M90,160 L87,190 L100,180 L113,190 L110,160"/>
+    <!-- Nose detail -->
+    <path d="M90,65 L110,65"/>
+  </g>
+</svg>
