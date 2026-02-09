@@ -1,90 +1,182 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="60" viewBox="0 0 1200 60">
-  <rect width="1200" height="60" fill="#060a06"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="70" viewBox="0 0 2400 70">
+  <rect width="2400" height="70" fill="#060a06"/>
+  <defs>
+    <!-- Strawberry leaf (3-lobed) -->
+    <g id="sleaf">
+      <ellipse cx="0" cy="-6" rx="5" ry="8" fill="#2E7D32"/>
+      <ellipse cx="-5" cy="0" rx="5" ry="7" fill="#1B5E20" transform="rotate(25)"/>
+      <ellipse cx="5" cy="0" rx="5" ry="7" fill="#256029" transform="rotate(-25)"/>
+    </g>
+    <!-- Small white flower -->
+    <g id="flower">
+      <ellipse cx="0" cy="-3" rx="1.8" ry="3" fill="#e8e8e0" opacity="0.8"/>
+      <ellipse cx="2.8" cy="-1" rx="1.8" ry="3" fill="#e8e8e0" opacity="0.8" transform="rotate(72)"/>
+      <ellipse cx="1.8" cy="2.4" rx="1.8" ry="3" fill="#e8e8e0" opacity="0.8" transform="rotate(144)"/>
+      <ellipse cx="-1.8" cy="2.4" rx="1.8" ry="3" fill="#e8e8e0" opacity="0.8" transform="rotate(216)"/>
+      <ellipse cx="-2.8" cy="-1" rx="1.8" ry="3" fill="#e8e8e0" opacity="0.8" transform="rotate(288)"/>
+      <circle cx="0" cy="0" r="1.5" fill="#FFD54F" opacity="0.9"/>
+    </g>
+    <!-- Purple tradescantia leaf -->
+    <g id="pleaf">
+      <ellipse cx="0" cy="0" rx="4" ry="10" fill="#4A148C" opacity="0.7"/>
+    </g>
+  </defs>
 
-  <!-- Leaves scattered across the banner -->
-  <g opacity="0.25">
-    <!-- Leaf cluster 1 -->
-    <ellipse cx="30" cy="30" rx="18" ry="8" fill="#1B5E20" transform="rotate(-30 30 30)"/>
-    <ellipse cx="45" cy="22" rx="15" ry="6" fill="#2E7D32" transform="rotate(15 45 22)"/>
-    <ellipse cx="20" cy="38" rx="14" ry="5" fill="#1B5E20" transform="rotate(-50 20 38)"/>
-
-    <!-- Strawberry 1 -->
-    <path d="M85,20 C85,14 90,10 95,10 C100,10 105,14 105,20 C105,32 95,40 95,40 C95,40 85,32 85,20 Z" fill="#8B1A1A" opacity="0.6"/>
-    <circle cx="90" cy="22" r="0.8" fill="#5D1010" opacity="0.5"/>
-    <circle cx="95" cy="26" r="0.8" fill="#5D1010" opacity="0.5"/>
-    <circle cx="100" cy="22" r="0.8" fill="#5D1010" opacity="0.5"/>
-    <ellipse cx="95" cy="11" rx="6" ry="3" fill="#2E7D32" opacity="0.7"/>
-
-    <!-- Leaf cluster 2 -->
-    <ellipse cx="155" cy="42" rx="20" ry="7" fill="#1B5E20" transform="rotate(20 155 42)"/>
-    <ellipse cx="170" cy="35" rx="16" ry="6" fill="#2E7D32" transform="rotate(-25 170 35)"/>
-    <ellipse cx="140" cy="48" rx="12" ry="5" fill="#1B5E20" transform="rotate(40 140 48)"/>
-
-    <!-- Leaf cluster 3 -->
-    <ellipse cx="250" cy="15" rx="17" ry="7" fill="#2E7D32" transform="rotate(-15 250 15)"/>
-    <ellipse cx="265" cy="25" rx="14" ry="5" fill="#1B5E20" transform="rotate(35 265 25)"/>
-
-    <!-- Strawberry 2 -->
-    <path d="M320,28 C320,22 325,18 330,18 C335,18 340,22 340,28 C340,40 330,48 330,48 C330,48 320,40 320,28 Z" fill="#8B1A1A" opacity="0.5"/>
-    <circle cx="326" cy="30" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="330" cy="34" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="334" cy="30" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <ellipse cx="330" cy="19" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
-
-    <!-- Leaf cluster 4 -->
-    <ellipse cx="400" cy="38" rx="19" ry="7" fill="#1B5E20" transform="rotate(-40 400 38)"/>
-    <ellipse cx="415" cy="30" rx="15" ry="6" fill="#2E7D32" transform="rotate(10 415 30)"/>
-
-    <!-- Leaf cluster 5 -->
-    <ellipse cx="490" cy="20" rx="16" ry="6" fill="#2E7D32" transform="rotate(25 490 20)"/>
-    <ellipse cx="475" cy="28" rx="18" ry="7" fill="#1B5E20" transform="rotate(-20 475 28)"/>
-    <ellipse cx="505" cy="15" rx="12" ry="5" fill="#1B5E20" transform="rotate(50 505 15)"/>
-
-    <!-- Strawberry 3 -->
-    <path d="M560,35 C560,29 565,25 570,25 C575,25 580,29 580,35 C580,47 570,55 570,55 C570,55 560,47 560,35 Z" fill="#8B1A1A" opacity="0.55"/>
-    <circle cx="566" cy="37" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="570" cy="41" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="574" cy="37" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <ellipse cx="570" cy="26" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
-
-    <!-- Leaf cluster 6 -->
-    <ellipse cx="640" cy="45" rx="17" ry="6" fill="#1B5E20" transform="rotate(-35 640 45)"/>
-    <ellipse cx="660" cy="38" rx="14" ry="5" fill="#2E7D32" transform="rotate(20 660 38)"/>
-
-    <!-- Leaf cluster 7 -->
-    <ellipse cx="720" cy="18" rx="20" ry="7" fill="#2E7D32" transform="rotate(10 720 18)"/>
-    <ellipse cx="735" cy="28" rx="15" ry="6" fill="#1B5E20" transform="rotate(-30 735 28)"/>
-    <ellipse cx="710" cy="12" rx="13" ry="5" fill="#1B5E20" transform="rotate(45 710 12)"/>
-
-    <!-- Strawberry 4 -->
-    <path d="M800,22 C800,16 805,12 810,12 C815,12 820,16 820,22 C820,34 810,42 810,42 C810,42 800,34 800,22 Z" fill="#8B1A1A" opacity="0.5"/>
-    <circle cx="806" cy="24" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="810" cy="28" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="814" cy="24" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <ellipse cx="810" cy="13" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
-
-    <!-- Leaf cluster 8 -->
-    <ellipse cx="880" cy="40" rx="18" ry="7" fill="#1B5E20" transform="rotate(15 880 40)"/>
-    <ellipse cx="895" cy="32" rx="14" ry="5" fill="#2E7D32" transform="rotate(-25 895 32)"/>
-
-    <!-- Leaf cluster 9 -->
-    <ellipse cx="960" cy="15" rx="16" ry="6" fill="#2E7D32" transform="rotate(-20 960 15)"/>
-    <ellipse cx="950" cy="25" rx="19" ry="7" fill="#1B5E20" transform="rotate(30 950 25)"/>
-
-    <!-- Strawberry 5 -->
-    <path d="M1030,30 C1030,24 1035,20 1040,20 C1045,20 1050,24 1050,30 C1050,42 1040,50 1040,50 C1040,50 1030,42 1030,30 Z" fill="#8B1A1A" opacity="0.55"/>
-    <circle cx="1036" cy="32" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="1040" cy="36" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <circle cx="1044" cy="32" r="0.7" fill="#5D1010" opacity="0.5"/>
-    <ellipse cx="1040" cy="21" rx="5" ry="3" fill="#2E7D32" opacity="0.7"/>
-
-    <!-- Leaf cluster 10 -->
-    <ellipse cx="1110" cy="42" rx="17" ry="6" fill="#1B5E20" transform="rotate(-15 1110 42)"/>
-    <ellipse cx="1130" cy="35" rx="14" ry="5" fill="#2E7D32" transform="rotate(25 1130 35)"/>
-    <ellipse cx="1100" cy="48" rx="12" ry="5" fill="#1B5E20" transform="rotate(-45 1100 48)"/>
-
-    <!-- Leaf cluster 11 -->
-    <ellipse cx="1180" cy="20" rx="18" ry="7" fill="#2E7D32" transform="rotate(35 1180 20)"/>
-    <ellipse cx="1190" cy="30" rx="13" ry="5" fill="#1B5E20" transform="rotate(-10 1190 30)"/>
+  <!-- Dense foliage layer - back -->
+  <g opacity="0.3">
+    <use href="#sleaf" x="15" y="35" transform="scale(1.2) rotate(-10 15 35)"/>
+    <use href="#sleaf" x="40" y="50" transform="scale(1.0) rotate(15 40 50)"/>
+    <use href="#sleaf" x="70" y="25" transform="scale(1.3) rotate(-5 70 25)"/>
+    <use href="#sleaf" x="95" y="45" transform="scale(0.9) rotate(20 95 45)"/>
+    <use href="#sleaf" x="125" y="30" transform="scale(1.1) rotate(-15 125 30)"/>
+    <use href="#sleaf" x="160" y="55" transform="scale(1.0) rotate(8 160 55)"/>
+    <use href="#sleaf" x="190" y="20" transform="scale(1.2) rotate(-20 190 20)"/>
+    <use href="#sleaf" x="220" y="42" transform="scale(1.0) rotate(12 220 42)"/>
+    <use href="#sleaf" x="255" y="35" transform="scale(1.3) rotate(-8 255 35)"/>
+    <use href="#sleaf" x="285" y="55" transform="scale(0.9) rotate(18 285 55)"/>
+    <use href="#sleaf" x="315" y="22" transform="scale(1.1) rotate(-12 315 22)"/>
+    <use href="#sleaf" x="350" y="48" transform="scale(1.0) rotate(5 350 48)"/>
+    <use href="#sleaf" x="380" y="30" transform="scale(1.2) rotate(-22 380 30)"/>
+    <use href="#sleaf" x="415" y="55" transform="scale(0.9) rotate(14 415 55)"/>
+    <use href="#sleaf" x="445" y="18" transform="scale(1.1) rotate(-6 445 18)"/>
+    <use href="#sleaf" x="480" y="42" transform="scale(1.3) rotate(10 480 42)"/>
+    <use href="#sleaf" x="510" y="60" transform="scale(1.0) rotate(-18 510 60)"/>
+    <use href="#sleaf" x="545" y="28" transform="scale(1.1) rotate(22 545 28)"/>
+    <use href="#sleaf" x="575" y="48" transform="scale(0.9) rotate(-10 575 48)"/>
+    <use href="#sleaf" x="610" y="35" transform="scale(1.2) rotate(7 610 35)"/>
+    <use href="#sleaf" x="640" y="55" transform="scale(1.0) rotate(-14 640 55)"/>
+    <use href="#sleaf" x="675" y="20" transform="scale(1.3) rotate(16 675 20)"/>
+    <use href="#sleaf" x="705" y="45" transform="scale(0.9) rotate(-8 705 45)"/>
+    <use href="#sleaf" x="740" y="32" transform="scale(1.1) rotate(12 740 32)"/>
+    <use href="#sleaf" x="770" y="58" transform="scale(1.0) rotate(-20 770 58)"/>
+    <use href="#sleaf" x="805" y="25" transform="scale(1.2) rotate(5 805 25)"/>
+    <use href="#sleaf" x="835" y="48" transform="scale(0.9) rotate(-16 835 48)"/>
+    <use href="#sleaf" x="870" y="35" transform="scale(1.3) rotate(10 870 35)"/>
+    <use href="#sleaf" x="900" y="55" transform="scale(1.0) rotate(-6 900 55)"/>
+    <use href="#sleaf" x="935" y="22" transform="scale(1.1) rotate(18 935 22)"/>
+    <use href="#sleaf" x="965" y="42" transform="scale(0.9) rotate(-12 965 42)"/>
+    <use href="#sleaf" x="1000" y="60" transform="scale(1.2) rotate(8 1000 60)"/>
+    <use href="#sleaf" x="1030" y="28" transform="scale(1.0) rotate(-22 1030 28)"/>
+    <use href="#sleaf" x="1065" y="50" transform="scale(1.3) rotate(14 1065 50)"/>
+    <use href="#sleaf" x="1095" y="18" transform="scale(0.9) rotate(-5 1095 18)"/>
+    <use href="#sleaf" x="1130" y="42" transform="scale(1.1) rotate(20 1130 42)"/>
+    <use href="#sleaf" x="1160" y="55" transform="scale(1.0) rotate(-15 1160 55)"/>
+    <use href="#sleaf" x="1195" y="30" transform="scale(1.2) rotate(7 1195 30)"/>
   </g>
+
+  <!-- Mid foliage layer -->
+  <g opacity="0.35">
+    <use href="#sleaf" x="30" y="40" transform="scale(1.1) rotate(8 30 40)"/>
+    <use href="#sleaf" x="65" y="55" transform="scale(1.0) rotate(-12 65 55)"/>
+    <use href="#sleaf" x="100" y="30" transform="scale(1.3) rotate(18 100 30)"/>
+    <use href="#sleaf" x="140" y="48" transform="scale(0.9) rotate(-5 140 48)"/>
+    <use href="#sleaf" x="175" y="22" transform="scale(1.2) rotate(15 175 22)"/>
+    <use href="#sleaf" x="210" y="55" transform="scale(1.0) rotate(-20 210 55)"/>
+    <use href="#sleaf" x="248" y="35" transform="scale(1.1) rotate(10 248 35)"/>
+    <use href="#sleaf" x="280" y="18" transform="scale(1.3) rotate(-8 280 18)"/>
+    <use href="#sleaf" x="318" y="50" transform="scale(0.9) rotate(22 318 50)"/>
+    <use href="#sleaf" x="355" y="28" transform="scale(1.2) rotate(-14 355 28)"/>
+    <use href="#sleaf" x="390" y="58" transform="scale(1.0) rotate(6 390 58)"/>
+    <use href="#sleaf" x="425" y="35" transform="scale(1.1) rotate(-18 425 35)"/>
+    <use href="#sleaf" x="460" y="52" transform="scale(1.3) rotate(12 460 52)"/>
+    <use href="#sleaf" x="498" y="20" transform="scale(0.9) rotate(-10 498 20)"/>
+    <use href="#sleaf" x="535" y="45" transform="scale(1.2) rotate(16 535 45)"/>
+    <use href="#sleaf" x="568" y="60" transform="scale(1.0) rotate(-7 568 60)"/>
+    <use href="#sleaf" x="605" y="25" transform="scale(1.1) rotate(20 605 25)"/>
+    <use href="#sleaf" x="640" y="42" transform="scale(1.3) rotate(-15 640 42)"/>
+    <use href="#sleaf" x="678" y="55" transform="scale(0.9) rotate(8 678 55)"/>
+    <use href="#sleaf" x="715" y="30" transform="scale(1.2) rotate(-22 715 30)"/>
+    <use href="#sleaf" x="748" y="48" transform="scale(1.0) rotate(14 748 48)"/>
+    <use href="#sleaf" x="785" y="18" transform="scale(1.1) rotate(-6 785 18)"/>
+    <use href="#sleaf" x="820" y="55" transform="scale(1.3) rotate(10 820 55)"/>
+    <use href="#sleaf" x="858" y="35" transform="scale(0.9) rotate(-18 858 35)"/>
+    <use href="#sleaf" x="895" y="48" transform="scale(1.2) rotate(5 895 48)"/>
+    <use href="#sleaf" x="928" y="22" transform="scale(1.0) rotate(-12 928 22)"/>
+    <use href="#sleaf" x="965" y="58" transform="scale(1.1) rotate(16 965 58)"/>
+    <use href="#sleaf" x="1000" y="30" transform="scale(1.3) rotate(-8 1000 30)"/>
+    <use href="#sleaf" x="1038" y="50" transform="scale(0.9) rotate(20 1038 50)"/>
+    <use href="#sleaf" x="1075" y="25" transform="scale(1.2) rotate(-14 1075 25)"/>
+    <use href="#sleaf" x="1108" y="42" transform="scale(1.0) rotate(7 1108 42)"/>
+    <use href="#sleaf" x="1145" y="58" transform="scale(1.1) rotate(-20 1145 58)"/>
+    <use href="#sleaf" x="1180" y="35" transform="scale(1.3) rotate(12 1180 35)"/>
+  </g>
+
+  <!-- Purple tradescantia accents -->
+  <g opacity="0.3">
+    <use href="#pleaf" x="85" y="30" transform="rotate(-30 85 30)"/>
+    <use href="#pleaf" x="92" y="42" transform="rotate(15 92 42) scale(0.8)"/>
+    <use href="#pleaf" x="340" y="25" transform="rotate(-20 340 25) scale(0.9)"/>
+    <use href="#pleaf" x="348" y="38" transform="rotate(25 348 38) scale(0.7)"/>
+    <use href="#pleaf" x="620" y="45" transform="rotate(-35 620 45)"/>
+    <use href="#pleaf" x="628" y="32" transform="rotate(10 628 32) scale(0.8)"/>
+    <use href="#pleaf" x="910" y="28" transform="rotate(-15 910 28) scale(0.9)"/>
+    <use href="#pleaf" x="918" y="40" transform="rotate(20 918 40) scale(0.7)"/>
+    <use href="#pleaf" x="1150" y="38" transform="rotate(-25 1150 38)"/>
+    <use href="#pleaf" x="1158" y="50" transform="rotate(12 1158 50) scale(0.8)"/>
+  </g>
+
+  <!-- White strawberry flowers -->
+  <g>
+    <use href="#flower" x="55" y="28" transform="scale(0.8)" opacity="0.3"/>
+    <use href="#flower" x="185" y="45" transform="scale(0.7)" opacity="0.25"/>
+    <use href="#flower" x="310" y="32" transform="scale(0.9)" opacity="0.3"/>
+    <use href="#flower" x="470" y="50" transform="scale(0.7)" opacity="0.25"/>
+    <use href="#flower" x="590" y="25" transform="scale(0.8)" opacity="0.3"/>
+    <use href="#flower" x="730" y="48" transform="scale(0.7)" opacity="0.25"/>
+    <use href="#flower" x="860" y="30" transform="scale(0.9)" opacity="0.3"/>
+    <use href="#flower" x="990" y="52" transform="scale(0.7)" opacity="0.25"/>
+    <use href="#flower" x="1120" y="28" transform="scale(0.8)" opacity="0.3"/>
+  </g>
+
+  <!-- Repeat right half for seamless wide screens -->
+  <use href="#sleaf" x="1225" y="35" transform="scale(1.2) rotate(-10 1225 35)" opacity="0.3"/>
+  <use href="#sleaf" x="1260" y="50" transform="scale(1.0) rotate(15 1260 50)" opacity="0.35"/>
+  <use href="#sleaf" x="1295" y="25" transform="scale(1.3) rotate(-5 1295 25)" opacity="0.3"/>
+  <use href="#sleaf" x="1330" y="42" transform="scale(1.1) rotate(12 1330 42)" opacity="0.35"/>
+  <use href="#sleaf" x="1365" y="55" transform="scale(0.9) rotate(-18 1365 55)" opacity="0.3"/>
+  <use href="#sleaf" x="1400" y="28" transform="scale(1.2) rotate(8 1400 28)" opacity="0.35"/>
+  <use href="#sleaf" x="1435" y="48" transform="scale(1.0) rotate(-12 1435 48)" opacity="0.3"/>
+  <use href="#sleaf" x="1470" y="30" transform="scale(1.3) rotate(16 1470 30)" opacity="0.35"/>
+  <use href="#sleaf" x="1505" y="55" transform="scale(0.9) rotate(-8 1505 55)" opacity="0.3"/>
+  <use href="#sleaf" x="1540" y="22" transform="scale(1.1) rotate(20 1540 22)" opacity="0.35"/>
+  <use href="#sleaf" x="1575" y="45" transform="scale(1.2) rotate(-14 1575 45)" opacity="0.3"/>
+  <use href="#sleaf" x="1610" y="35" transform="scale(1.0) rotate(10 1610 35)" opacity="0.35"/>
+  <use href="#sleaf" x="1645" y="58" transform="scale(1.3) rotate(-6 1645 58)" opacity="0.3"/>
+  <use href="#sleaf" x="1680" y="25" transform="scale(0.9) rotate(14 1680 25)" opacity="0.35"/>
+  <use href="#sleaf" x="1715" y="48" transform="scale(1.1) rotate(-20 1715 48)" opacity="0.3"/>
+  <use href="#sleaf" x="1750" y="35" transform="scale(1.2) rotate(7 1750 35)" opacity="0.35"/>
+  <use href="#sleaf" x="1785" y="55" transform="scale(1.0) rotate(-15 1785 55)" opacity="0.3"/>
+  <use href="#sleaf" x="1820" y="22" transform="scale(1.3) rotate(18 1820 22)" opacity="0.35"/>
+  <use href="#sleaf" x="1855" y="42" transform="scale(0.9) rotate(-10 1855 42)" opacity="0.3"/>
+  <use href="#sleaf" x="1890" y="58" transform="scale(1.1) rotate(12 1890 58)" opacity="0.35"/>
+  <use href="#sleaf" x="1925" y="30" transform="scale(1.2) rotate(-22 1925 30)" opacity="0.3"/>
+  <use href="#sleaf" x="1960" y="50" transform="scale(1.0) rotate(5 1960 50)" opacity="0.35"/>
+  <use href="#sleaf" x="1995" y="18" transform="scale(1.3) rotate(-8 1995 18)" opacity="0.3"/>
+  <use href="#sleaf" x="2030" y="42" transform="scale(0.9) rotate(16 2030 42)" opacity="0.35"/>
+  <use href="#sleaf" x="2065" y="55" transform="scale(1.1) rotate(-12 2065 55)" opacity="0.3"/>
+  <use href="#sleaf" x="2100" y="28" transform="scale(1.2) rotate(10 2100 28)" opacity="0.35"/>
+  <use href="#sleaf" x="2135" y="48" transform="scale(1.0) rotate(-18 2135 48)" opacity="0.3"/>
+  <use href="#sleaf" x="2170" y="35" transform="scale(1.3) rotate(22 2170 35)" opacity="0.35"/>
+  <use href="#sleaf" x="2205" y="55" transform="scale(0.9) rotate(-5 2205 55)" opacity="0.3"/>
+  <use href="#sleaf" x="2240" y="22" transform="scale(1.1) rotate(14 2240 22)" opacity="0.35"/>
+  <use href="#sleaf" x="2275" y="45" transform="scale(1.2) rotate(-10 2275 45)" opacity="0.3"/>
+  <use href="#sleaf" x="2310" y="60" transform="scale(1.0) rotate(8 2310 60)" opacity="0.35"/>
+  <use href="#sleaf" x="2345" y="30" transform="scale(1.3) rotate(-16 2345 30)" opacity="0.3"/>
+  <use href="#sleaf" x="2380" y="48" transform="scale(0.9) rotate(12 2380 48)" opacity="0.35"/>
+
+  <!-- More flowers for right half -->
+  <use href="#flower" x="1280" y="40" transform="scale(0.8)" opacity="0.28"/>
+  <use href="#flower" x="1450" y="30" transform="scale(0.7)" opacity="0.25"/>
+  <use href="#flower" x="1620" y="50" transform="scale(0.9)" opacity="0.28"/>
+  <use href="#flower" x="1800" y="25" transform="scale(0.7)" opacity="0.25"/>
+  <use href="#flower" x="1970" y="45" transform="scale(0.8)" opacity="0.28"/>
+  <use href="#flower" x="2150" y="32" transform="scale(0.7)" opacity="0.25"/>
+  <use href="#flower" x="2330" y="50" transform="scale(0.8)" opacity="0.28"/>
+
+  <!-- More purple accents for right half -->
+  <use href="#pleaf" x="1350" y="35" transform="rotate(-25 1350 35)" opacity="0.25"/>
+  <use href="#pleaf" x="1600" y="42" transform="rotate(15 1600 42) scale(0.8)" opacity="0.25"/>
+  <use href="#pleaf" x="1850" y="30" transform="rotate(-30 1850 30) scale(0.9)" opacity="0.25"/>
+  <use href="#pleaf" x="2100" y="45" transform="rotate(20 2100 45) scale(0.8)" opacity="0.25"/>
+  <use href="#pleaf" x="2350" y="35" transform="rotate(-15 2350 35)" opacity="0.25"/>
 </svg>
