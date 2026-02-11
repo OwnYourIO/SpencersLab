@@ -7090,6 +7090,18 @@ entries:
   hugo:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-02-11T02:01:28.477875479Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: 1f7f6d17cc9bbb13a8dab4110c30347803408efd91591d9a8fe213942581627f
+    name: hugo
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/hugo-1.0.5/hugo-1.0.5.tgz
+    version: 1.0.5
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-02-08T21:36:45.338525096Z"
     dependencies:
     - name: app-template
@@ -15287,4 +15299,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-08T21:36:45.339849052Z"
+generated: "2026-02-11T02:01:28.47910263Z"
