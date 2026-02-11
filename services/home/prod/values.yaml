@@ -78,7 +78,7 @@ ingress:
 
     scifi-farm:
       domain: scifi.farm
-      service: grow-scifi-farm
+      service: home-scifi-farm
       port: 1313
 
     boards:
