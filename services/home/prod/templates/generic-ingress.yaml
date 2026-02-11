@@ -11,6 +11,15 @@
   {{- else }}
     {{- $subDomain = $name }}
   {{- end}}
+{{- $hostname := $config.domain | default (printf "%s.%s" $subDomain $.Values.domain) }}
+{{- $secretName := "" }}
+{{- if $config.domain }}
+{{- $secretName = printf "%s-cert" $name }}
+{{- else if $config.clusterBase | default false }}
+{{- $secretName = "cluster-wildcard-cert" }}
+{{- else }}
+{{- $secretName = "wildcard-cert" }}
+{{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -28,10 +37,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "{{ $subDomain }}.{{ $.Values.domain }}"
-      secretName: {{ if $config.clusterBase | default false }}cluster-wildcard-cert{{ else }}wildcard-cert{{ end }}
+      - "{{ $hostname }}"
+      secretName: {{ $secretName }}
   rules:
-    - host: "{{ $subDomain }}.{{ $.Values.domain }}"
+    - host: "{{ $hostname }}"
       http:
         paths:
           - path: /
