@@ -2,5 +2,7 @@
 title: "Plants & Aeroponics"
 weight: 20
 ---
+# Aeroponics
+Aeroponics is a high risk high reward endeavor. It has a couple failure modes that can cause the plants to die rapidly (clogged nozzles or power loss). But when done successfully, can impact plants' growth by up to 20%. 
 
-Aeroponics grows plants with roots suspended in air, fed by a fine mist of nutrient solution rather than soil or standing water. This approach uses up to 95% less water than traditional farming and dramatically accelerates growth rates by delivering oxygen directly to the root zone. At SFF, we pair this growing method with a DevOps mindset -- treating every grow cycle as an experiment, every sensor reading as telemetry, and every harvest as a release.
+Currently this site is showing off my aeroponic build, but will soon have more information around designing and building your own aeroponic system, along with tips and tricks I've learned along the way.

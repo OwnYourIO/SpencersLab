@@ -1,7 +1,8 @@
 ---
 title: "Sci-Fi Farms"
 ---
+# SciFi Farm - Aeroponic Farming 
 
-## Aeroponic Farming -- IoT Powered by TechnoCore
+This site is dedicated to sharing what I've learned in the past decade playing with Aeroponics to grow plants. 
 
-Science Fiction Farms is building the future of agriculture by combining aeroponic growing systems with IoT sensor networks and open-source automation. We believe farming should be data-driven, collaborative, and accessible to anyone willing to grow.
+It's under construction right now, so do check back soon for more content!

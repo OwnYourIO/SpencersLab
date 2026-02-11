@@ -2,5 +2,7 @@
 title: "Technologies"
 weight: 10
 ---
+# Technologies
+Here at SciFi Farm there is a strong belief that open source software is the way of the future and that openness to collaboration is a differentiating factor. With that in mind, we've stuck to exclusively open source software and hardware. 
 
-The SFF technology stack is built entirely on open-source software. From the microcontrollers monitoring root zone humidity to the time-series databases storing years of growth data, every layer is designed to be transparent, forkable, and community-driven. We call this stack **TechnoCore** -- a curated set of tools that turn a pile of sensors and pumps into an intelligent growing system.
+The stack we use has been dubbed ["The Curated Forest"](technologies/curated-forest). Checkout that page for more info!
