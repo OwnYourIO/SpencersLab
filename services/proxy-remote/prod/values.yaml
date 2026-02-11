@@ -26,6 +26,10 @@ proxy:
     help:
       middlewares: "kube-system-geoblock@kubernetescrd"
       enabled: true
+    scifi-farm:
+      domain: scifi.farm
+      middlewares: "kube-system-geoblock@kubernetescrd"
+      enabled: true
 
     # These have apps & SSO
     player:

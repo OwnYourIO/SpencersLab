@@ -103,6 +103,13 @@ proxy:
       ingressRoute:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"
+    scifi-farm:
+      domain: scifi.farm
+      target: grow
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
 
     # Has SSO & companion app (and thus needs a redirect)
     player:
@@ -134,8 +141,6 @@ proxy:
       target: wekan
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=wekan&response_type=code&redirect_uri=https://boards.$.Values.domain/sign-in/"
       loginSubDomain: "login"
-      #ssoAllowedPaths:
-      #  - "/packages/oauth/end_of_popup_response.js"
     git:
       target: gitea
     graphs:
