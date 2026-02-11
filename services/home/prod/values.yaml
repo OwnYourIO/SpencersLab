@@ -18,6 +18,12 @@ clusterName: OVERRIDE_VIA_APPSET
 
 subDomain: home-lab
 charts: 
+  scifi-farm:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+    chart: hugo
   immich:
     #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -69,6 +75,12 @@ charts:
 
 ingress:
   subdomains:
+
+    scifi-farm:
+      domain: scifi.farm
+      service: grow-scifi-farm
+      port: 1313
+
     boards:
       service: home-boards
       port: 8080

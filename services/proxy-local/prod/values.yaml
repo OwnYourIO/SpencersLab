@@ -105,7 +105,7 @@ proxy:
           - "kube-system-crowdsec@kubernetescrd"
     scifi-farm:
       domain: scifi.farm
-      target: grow
+      target: home-lab
       middlewares: "kube-system-crowdsec@kubernetescrd"
       ingressRoute:
         middlewares:
