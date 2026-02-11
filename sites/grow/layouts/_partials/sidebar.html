@@ -4,29 +4,72 @@
   </div>
   {{- $permalink := .RelPermalink }}
 
-  {{/* Home link */}}
+  {{/* SciFi Farm (Home) */}}
   <section class="section aside_inner">
-    <h2 class="section_title{{ if .IsHome }} active{{ end }}"><a href='{{ absLangURL "" }}' class="group">Sci-Fi Farms</a></h2>
+    <h2 class="section_title{{ if .IsHome }} active{{ end }}"><a href='{{ absLangURL "" }}' class="group">SciFi Farm</a></h2>
   </section>
 
-  {{/* Loop through all top-level sections */}}
-  {{- range site.Sections }}
-  {{- $sectionTitle := .Title }}
+  {{/* About Me */}}
+  {{- with site.GetPage "/about" }}
   <section class="section aside_inner">
-    <h2 class="section_title{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}" class="group">{{ .Title }}</a></h2>
-    {{- $pages := .Pages }}
-    {{- with $pages }}
-    <section id="docs-{{ anchorize $sectionTitle }}">
-      {{- range . }}
-      {{- if .IsPage }}
-      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
-      {{- else }}
-      {{/* Nested section */}}
+    <h2 class="section_title{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}" class="group">About Me</a></h2>
+    <section>
+      <!-- {{- range .Pages }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }} -->
+    </section>
+  </section>
+  {{- end }}
+
+  {{/* Aeroponics & Plants */}}
+  {{- with site.GetPage "/plants-and-aeroponics" }}
+  <section class="section aside_inner">
+    <h2 class="section_title{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}" class="group">Aeroponics &amp; Plants</a></h2>
+    <section>
+      {{- with .GetPage "current-grows" }}
       <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
       {{- end }}
+      {{- with .GetPage "past-designs" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
       {{- end }}
+      <!-- Hidden pages (still accessible by URL):
+      {{- with .GetPage "devops-approach" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      {{- with .GetPage "data-collection" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      {{- with .GetPage "live-data" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      -->
     </section>
-    {{- end }}
+  </section>
+  {{- end }}
+
+  {{/* Technologies */}}
+  {{- with site.GetPage "/technologies" }}
+  <section class="section aside_inner">
+    <h2 class="section_title{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}" class="group">Technologies</a></h2>
+    <section>
+      {{- with .GetPage "curated-forest" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      <!-- Hidden pages (still accessible by URL):
+      {{- with .GetPage "home-assistant" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      {{- with .GetPage "esphome" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      {{- with .GetPage "timescaledb" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      {{- with .GetPage "grafana" }}
+      <h3 class="section_link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a href="{{ .Permalink }}">{{ .Title }}</a></h3>
+      {{- end }}
+      -->
+    </section>
   </section>
   {{- end }}
 </aside>
