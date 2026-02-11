@@ -52,6 +52,9 @@ argo-cd:
       - --application-namespaces="*"
   repoServer:
     containerPort: 8081
+    env:
+      - name: ARGOCD_EXEC_TIMEOUT
+        value: "5m"
 
   configs:
     # General Argo CD configuration
