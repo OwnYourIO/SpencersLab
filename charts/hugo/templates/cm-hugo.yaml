@@ -11,7 +11,7 @@ data:
       - {{ .Values.hugo.theme }}
     module:
       imports:
-        {{- .Values.hugo.imports | nindent 8 }}
+        {{- .Values.hugo.imports | toYaml | nindent 8 }}
   hugo-server-startup.sh: |
     #!/bin/bash
     
