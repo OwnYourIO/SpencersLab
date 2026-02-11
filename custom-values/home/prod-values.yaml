@@ -5,9 +5,9 @@ scifi-farm:
     theme: github.com/onweru/compose
     imports:
       - path: github.com/lkhrs/hugo-dark-visitors
+      - path: github.com/mfg92/hugo-shortcode-gallery
       - path: github.com/OwnYourIO/SpencersLab/sites/grow
       - path: github.com/onweru/compose
-      - path: github.com/mfg92/hugo-shortcode-gallery
 
 bitwardenIds:
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
