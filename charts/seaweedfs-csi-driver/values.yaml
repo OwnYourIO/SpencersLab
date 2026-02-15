@@ -1,0 +1,19 @@
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+seaweedfs-csi-driver:
+  volume-count: OVERRIDE_VIA_CUSTOM_VALUES
+  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
+  mountService:
+    enabled: true
+  seaweedfsCsiPlugin:
+    image: chrislusf/seaweedfs-csi-driver:v1.4.3
+    args: 
+      - --concurrentReaders=5
+      - --concurrentWriters=5
+      - --cacheCapacityMB=1024
+    resources:
+      requests:
+        memory: 2Gi
+      limits:
+        memory: 5Gi

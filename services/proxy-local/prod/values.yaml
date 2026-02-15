@@ -54,8 +54,8 @@ charts:
     ServerSideApply: "true"
     chart: external-secrets-bitwarden
   seaweedfs-csi-driver:
-    version: 0.2.9
-    repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+    #version: 1.0.1 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
   traefik:
