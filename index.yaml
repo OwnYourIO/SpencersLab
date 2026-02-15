@@ -7371,6 +7371,18 @@ entries:
   immich:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-02-15T18:42:06.536186776Z"
+    dependencies:
+    - name: immich
+      repository: https://immich-app.github.io/immich-charts
+      version: 0.10.3
+    digest: 85b8dbb49c3b357472a27c366bcae4c0f5bd0aa92cb2875a76c846ad48e2264e
+    name: immich
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/immich-1.0.29/immich-1.0.29.tgz
+    version: 1.0.29
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-02-04T21:35:40.074903016Z"
     dependencies:
     - name: immich
@@ -11529,6 +11541,18 @@ entries:
     version: 4.0.3751
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2026-02-15T18:42:06.720604487Z"
+    dependencies:
+    - name: seaweedfs
+      repository: https://seaweedfs.github.io/seaweedfs/helm
+      version: 4.0.408
+    digest: 7ddf4384aa8d744af84ee24b6c981ea1b6cc8bd91b23289268ad40f60bfad103
+    name: seaweedfs
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-1.0.25/seaweedfs-1.0.25.tgz
+    version: 1.0.25
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2026-02-03T20:37:36.031542951Z"
     dependencies:
     - name: seaweedfs
@@ -15351,4 +15375,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-15T18:07:27.885761388Z"
+generated: "2026-02-15T18:42:06.723843304Z"
