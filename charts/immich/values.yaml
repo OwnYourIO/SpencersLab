@@ -8,12 +8,12 @@ controllers:
       main:
         image:
           repository: ghcr.io/immich-app/immich-server
-          tag: "v2.4.1"
+          tag: "v2.5.6"
 
 image:
   # renovate: datasource=github-releases depName=immich-app/immich
   repository: ghcr.io/immich-app/immich-server
-  tag: "v2.4.1"
+  tag: "v2.5.6"
 
 immich:
 
@@ -36,7 +36,7 @@ immich:
             image:
               # renovate: datasource=github-releases depName=immich-app/immich
               repository: ghcr.io/immich-app/immich-server
-              tag: "v2.4.1"
+              tag: "v2.5.6"
             env:
               IMMICH_CONFIG_FILE: /config/immich-config.yaml
               DB_HOSTNAME: pg-immich-rw
