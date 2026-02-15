@@ -17,7 +17,7 @@ app-template:
         main:
           image:
             repository: flowiseai/flowise
-            tag: 3.0.12
+            tag: 3.0.13
           # TODO: From docker, translate these into k8 compatible ideas. 
           #--net=host \
           #--device=/PATH TO YOUR VIDEO DEVICE usually /dev/video0:/dev/video0 \
