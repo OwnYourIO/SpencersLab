@@ -18,7 +18,7 @@ dependencies:
   version: 1.0.21
   repository: https://ownyourio.github.io/SpencersLab/
 - name: ledfx
-  version: 1.0.19
+  version: 1.0.20
   repository: https://ownyourio.github.io/SpencersLab/
 - name: logitech-media-server
   version: 1.0.29
