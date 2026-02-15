@@ -1,9 +1,9 @@
 dependencies:
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
-  version: 0.26.0
+  version: 0.27.1
 - name: samba
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.14
-digest: sha256:a5a972af4f0fb54bdae969b1f42a6fffe7aee91747313a7cbc11756ca988209e
-generated: "2026-02-15T11:25:38.679452927-07:00"
+digest: sha256:7ef509098e5de122f1fd774b328970db9254ae0f3283ed6f6c381dfd92da5f84
+generated: "2026-02-15T18:40:45.22201116Z"
