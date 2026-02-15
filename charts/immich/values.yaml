@@ -76,6 +76,5 @@ immich:
       fsGroup: 1000
       fsGroupChangePolicy: OnRootMismatch
 
-
   valkey:
     enabled: true

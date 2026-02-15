@@ -6,13 +6,6 @@ bitwardenIds:
   karakeep-secret: OVERRIDE_VIA_CUSTOM_VALUES
   karakeep-sso: OVERRIDE_VIA_CUSTOM_VALUES
 
-seaweedfs-csi-driver:
-  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
-  seaweedfsCsiPlugin:
-    image: chrislusf/seaweedfs-csi-driver:v1.4.3
-  mountService:
-    enabled: true
-
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
@@ -964,7 +957,6 @@ hugo-help:
               tag: exts-non-root-0.148.1
             env:
               TZ: America/Denver
-              HUGO_BASEURL: "https://home.spencerslab.com"
             command: 
                 - /bin/sh
                 - -c

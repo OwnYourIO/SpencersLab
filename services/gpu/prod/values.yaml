@@ -19,11 +19,6 @@ bitwardenIds:
   neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
   searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
-seaweedfs-csi-driver:
-  seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
-  mountService:
-    enabled: true
-
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
