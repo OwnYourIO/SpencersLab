@@ -1,6 +1,6 @@
 dependencies:
-- name: seaweedfs
-  repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 4.0.408
-digest: sha256:18d6fe7c5530e2a916bba90ee51eb13dac17627c7bd6435c2d2a08432e20aa81
-generated: "2026-02-03T20:32:48.352061976Z"
+- name: seaweedfs-csi-driver
+  repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+  version: 0.2.9
+digest: sha256:f22e246e4fef4ef04117003d76b94dd4c26a9b09b21acbe7c198c6175106b600
+generated: "2026-02-15T10:45:29.794571608-07:00"

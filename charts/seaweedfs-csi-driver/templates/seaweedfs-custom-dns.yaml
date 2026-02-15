@@ -1,0 +1,13 @@
+# This is needed because the csi-driver can't currently set volumeServerAccess=publicURL
+# So this captures the internal DNS look up and directs it externally instead.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  log.override: |
+    {{- $volumeCount := .Values.seaweedfs-csi-driver.volume-count }}
+    {{- range $i := until ($volumeCount | int) }}
+    rewrite name seaweedfs-volume-{{ $i }}.seaweedfs-volume.default seaweedfs-volume-{{ $i }}.infra.{{ $.Values.domain }}
+    {{- end }}
