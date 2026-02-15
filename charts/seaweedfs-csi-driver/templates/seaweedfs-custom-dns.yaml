@@ -7,7 +7,7 @@ metadata:
   namespace: kube-system
 data:
   log.override: |
-    {{- $volumeCount := .Values.seaweedfs-csi-driver.volume-count }}
+    {{- $volumeCount := index .Values "seaweedfs-csi-driver" "volume-count" }}
     {{- range $i := until ($volumeCount | int) }}
     rewrite name seaweedfs-volume-{{ $i }}.seaweedfs-volume.default seaweedfs-volume-{{ $i }}.infra.{{ $.Values.domain }}
     {{- end }}
