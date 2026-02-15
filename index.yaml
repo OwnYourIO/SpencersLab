@@ -11815,6 +11815,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-1.0.1/seaweedfs-1.0.1.tgz
     version: 1.0.1
+  seaweedfs-csi-driver:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-02-15T17:55:45.043266556Z"
+    dependencies:
+    - name: seaweedfs-csi-driver
+      repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+      version: 0.2.9
+    digest: 730724d0038bb71ae9b9e7f90168b5886146f118ca66b8e44afc381a92bb1394
+    name: seaweedfs-csi-driver
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-csi-driver-1.0.1/seaweedfs-csi-driver-1.0.1.tgz
+    version: 1.0.1
   smtp-relay:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -15314,4 +15327,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-11T14:41:30.937060531Z"
+generated: "2026-02-15T17:55:45.044757223Z"
