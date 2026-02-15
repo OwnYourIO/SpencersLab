@@ -114,7 +114,7 @@ app-template:
         rest:
           image:
             repository: postgrest/postgrest
-            tag: v13.0.7
+            tag: v13.0.8
           env:
             PGRST_DB_SCHEMAS: "public,storage,graphql_public"
             PGRST_DB_ANON_ROLE: "anon"
