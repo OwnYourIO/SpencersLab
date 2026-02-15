@@ -9,22 +9,22 @@ dependencies:
     repository: https://kubernetes-sigs.github.io/external-dns/
     alias: external-dns-external
   - name: app-template
-    version: 4.3.0
+    version: 4.6.2
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: qbittorrent
   - name: app-template
-    version: 4.3.0
+    version: 4.6.2
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: backup-gpu-qbittorrent
   - name: app-template
-    version: 4.3.0
+    version: 4.6.2
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: autossh
   - name: app-template
-    version: 4.3.0
+    version: 4.6.2
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: metube
   - name: app-template
-    version: 4.3.0
+    version: 4.6.2
     repository: https://bjw-s-labs.github.io/helm-charts/
     alias: pinchflat
