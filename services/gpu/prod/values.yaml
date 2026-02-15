@@ -88,7 +88,7 @@ charts:
     namespace: default
     ServerSideApply: "true"
   ollama:
-    version: 1.39.0
+    version: 1.42.0
     repository: https://helm.otwld.com/
     namespace: default
     ServerSideApply: "false"
