@@ -10,7 +10,7 @@ dependencies:
   version: 1.0.21
 - name: ledfx
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.19
+  version: 1.0.20
 - name: logitech-media-server
   repository: https://ownyourio.github.io/SpencersLab/
   version: 1.0.29
@@ -47,5 +47,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.3.0
-digest: sha256:74a81295da1214403decbd002e57a8efcf817cf2fa017ebd9cd80ee9ee93a0f7
-generated: "2026-02-04T14:07:23.141054815-07:00"
+digest: sha256:85273ddc8f69b765e50f2f4da0790db3eba5e26c907462dee7304812c9ffa490
+generated: "2026-02-15T17:58:11.366642994Z"
