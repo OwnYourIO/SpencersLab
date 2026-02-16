@@ -1,7 +1,7 @@
 dependencies:
 - name: external-dns
   repository: https://kubernetes-sigs.github.io/external-dns/
-  version: 1.19.0
+  version: 1.20.0
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.6.2
@@ -17,5 +17,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.6.2
-digest: sha256:d7eb4733b189af3bf69534f1c72d6cd589a9ce1ec360050bd6296af9df9f3934
-generated: "2026-02-15T18:06:18.056836845Z"
+digest: sha256:14a36c60bc476aec36815178ccd1bd7b150b4e2c17b8568f54978875bcac5173
+generated: "2026-02-16T18:31:35.350116842Z"
