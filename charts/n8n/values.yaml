@@ -15,7 +15,7 @@ app-template:
         main:
           image:
             repository: n8nio/n8n
-            tag: 2.6.0
+            tag: 2.9.0
           env:
             NODE_FUNCTION_ALLOW_EXTERNAL: "*"
             N8N_HOST: "0.0.0.0"
