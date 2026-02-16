@@ -55,7 +55,7 @@ app-template:
         redis:
           image:
             repository: redis
-            tag: "6"
+            tag: "8"
           resources:
             requests:
               cpu: 10m

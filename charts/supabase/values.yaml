@@ -180,7 +180,7 @@ app-template:
         redis:
           image:
             repository: redis
-            tag: 8.2.2
+            tag: 8.6.0
           resources:
             requests:
               cpu: 10m
