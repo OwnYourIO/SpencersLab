@@ -16,7 +16,7 @@ dependencies:
   version: 1.0.29
 - name: snapcast
   repository: https://ownyourio.github.io/SpencersLab/
-  version: 1.0.13
+  version: 1.0.14
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.6.2
@@ -47,5 +47,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.6.2
-digest: sha256:6a419472527f34376c5b3e85899852fd7f9e57eb87d981de2de6a04011af824b
-generated: "2026-02-16T20:40:55.749600878Z"
+digest: sha256:9bc5b80d2c5e35d6eb080ebf844e4fd6224ceab986ff2604027e328d72f41d5d
+generated: "2026-02-16T20:47:03.28567457Z"
