@@ -3,6 +3,8 @@ clusterName: OVERRIDE_VIA_APPSET
 
 seaweedfs:
   fullnameOverride: "seaweedfs"
+  nameOverride: "seaweedfs"
+
   global:
     createClusterRole: true
     monitoring:
