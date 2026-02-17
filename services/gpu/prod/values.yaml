@@ -202,11 +202,11 @@ ingress:
       clusterBase: true
       service: argocd-server
       port: 80
-    traefik:
-      clusterBase: true
-      namespace: kube-system
-      service: traefik
-      port: 8080
+    #traefik:
+    #  clusterBase: true
+    #  namespace: kube-system
+    #  service: traefik
+    #  port: 8080
 
 ollama:
   gpu:
