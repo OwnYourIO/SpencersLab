@@ -124,7 +124,7 @@ ingress:
 
     open-webui:
       serviceName: ai
-      service: open-webui
+      service: gpu-open-webui
       port: 80
       # Homepage integration example
       homepageEnabled: "true"
