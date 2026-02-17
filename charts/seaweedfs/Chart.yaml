@@ -4,5 +4,5 @@ version: 1.0.25
 appVersion: 1.0.4
 dependencies:
 - name: seaweedfs
-  version: 4.0.408
+  version: 4.0.413
   repository: https://seaweedfs.github.io/seaweedfs/helm
