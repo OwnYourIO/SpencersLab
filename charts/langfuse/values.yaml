@@ -16,7 +16,7 @@ app-template:
         main:
           image:
             repository: langfuse/langfuse
-            tag: 3.148.0
+            tag: 3.153.0
           env:
             PORT: "3000"
             HOSTNAME: "0.0.0.0"
