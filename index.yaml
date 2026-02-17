@@ -8088,6 +8088,18 @@ entries:
   jellyfin:
   - apiVersion: v2
     appVersion: 1.0.7
+    created: "2026-02-17T22:34:59.467186108Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    digest: f2737e34ec12be6ae8a53af8488767cd0597646ef08b7366e7906f9d60470a4a
+    name: jellyfin
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/jellyfin-1.0.21/jellyfin-1.0.21.tgz
+    version: 1.0.21
+  - apiVersion: v2
+    appVersion: 1.0.7
     created: "2026-02-16T19:52:43.95742383Z"
     dependencies:
     - name: app-template
@@ -15936,4 +15948,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-17T22:03:52.387709479Z"
+generated: "2026-02-17T22:34:59.46956211Z"
