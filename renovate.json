@@ -65,6 +65,17 @@
       ],
       "datasourceTemplate": "custom.grafana-dashboards",
       "versioningTemplate": "regex:^(?<major>\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Update baseChartVersion with inline renovate comment",
+      "managerFilePatterns": [
+        "/appset\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\s*#*\\s*appName:\\s*(?<depName>[^\\s#]+)\\s*#\\s*renovate:\\s*datasource=helm\\s+registryUrl=(?<registryUrl>\\S+)\\s*\\n\\s*baseChartVersion:\\s*(?<currentValue>[\\d.]+)"
+      ],
+      "datasourceTemplate": "helm"
     }
   ],
   "customDatasources": {
