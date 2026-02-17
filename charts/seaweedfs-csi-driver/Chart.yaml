@@ -4,5 +4,5 @@ version: 1.0.3
 appVersion: 1.0.0
 dependencies:
 - name: seaweedfs-csi-driver
-  version: 0.2.9
+  version: 0.2.10
   repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
