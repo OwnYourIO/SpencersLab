@@ -15,6 +15,7 @@ traefik:
     # It's automatically forwarded to 443 by the proxy-local anyway.
     #- "--entrypoints.web.http.middlewares=kube-system-geoblock@kubernetescrd"
     #- "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
+    - "--providers.file.filename=/data/admin-allowlist.yaml"
     - "--entryPoints.web.http.redirections.entryPoint.to=https"
     - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
 
@@ -34,7 +35,7 @@ traefik:
       allowEmptyServices: true
       allowExternalNameServices: true
     file:
-      directory: /data/
+      enabled: true
       watch: true
 
   experimental:
