@@ -14144,6 +14144,21 @@ entries:
   traefik:
   - apiVersion: v2
     appVersion: 2.11.10
+    created: "2026-02-17T23:31:38.405331816Z"
+    dependencies:
+    - name: traefik
+      repository: https://traefik.github.io/charts
+      version: 39.0.1
+    - name: crowdsec
+      repository: https://crowdsecurity.github.io/helm-charts
+      version: 0.22.0
+    digest: 3cdf20a7f013f6421ee6d984802d87a87471da31bcd3c94c0e40a32681d4f844
+    name: traefik
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/traefik-1.0.63/traefik-1.0.63.tgz
+    version: 1.0.63
+  - apiVersion: v2
+    appVersion: 2.11.10
     created: "2026-02-17T23:22:56.662917883Z"
     dependencies:
     - name: traefik
@@ -15963,4 +15978,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-17T23:22:56.664555732Z"
+generated: "2026-02-17T23:31:38.406716458Z"
