@@ -8712,6 +8712,18 @@ entries:
   langfuse:
   - apiVersion: v2
     appVersion: 3.106.1
+    created: "2026-02-17T21:21:22.662062629Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    digest: 59fd2f45a123db615a6d0cd5cf4d1c20764180db39126ac71bc087a0456a8485
+    name: langfuse
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/langfuse-1.0.2/langfuse-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 3.106.1
     created: "2026-02-16T19:52:44.238272118Z"
     dependencies:
     - name: app-template
@@ -15848,4 +15860,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-17T08:29:58.554763682Z"
+generated: "2026-02-17T21:21:23.019861362Z"
