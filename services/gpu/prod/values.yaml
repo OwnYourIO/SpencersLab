@@ -14,17 +14,13 @@ bitwardenIds:
   open-webui-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
   coder-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
   coder-pg: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  
+
   docling: OVERRIDE_VIA_CLUSTER_ANNOTATION
   neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
   searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
-
-# SeaweedFS configuration
-seaweedfs:
-  volumeCount: 5  # Number of seaweedfs volume servers to configure DNS rewrites for
 
 # Chart definitions for appset-dev-charts.yaml
 # Each chart can have: namespace, ServerSideApply, version, repository
@@ -63,6 +59,11 @@ charts:
   hivetools:
     namespace: default
     ServerSideApply: "true"
+  seaweedfs-csi-driver:
+    #version: 0.2.9
+    #repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+    namespace: default
+    ServerSideApply: "true"
   # Disabled because they don't currently work and I like langflow better.
   #langfuse:
   #  namespace: default
@@ -70,13 +71,8 @@ charts:
   #langgraph:
   #  namespace: default
   #  ServerSideApply: "false"
-  
+
   # External charts (with version and repository)
-  seaweedfs-csi-driver:
-    version: 0.2.9
-    repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
-    namespace: default
-    ServerSideApply: "true"
   cloudnative-pg:
     version: 0.27.1
     repository: https://cloudnative-pg.github.io/charts
@@ -119,7 +115,7 @@ charts:
     ServerSideApply: "true"
 
 ingress:
-  dashboardProvider: homepage  # Set to "homepage" to enable Homepage annotations on ingress objects
+  dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
     ollama:
       serviceName: brains
@@ -216,10 +212,10 @@ ollama:
   gpu:
     # -- Enable GPU integration
     enabled: true
-    
+
     # -- GPU type: 'nvidia' or 'amd'
-    type: 'amd'
-    
+    type: "amd"
+
     # -- Specify the number of GPU to 1
     number: 1
 
@@ -244,7 +240,7 @@ ollama:
     - name: OLLAMA_NUM_GPU
       value: "8"
     - name: OLLAMA_LOW_VRAM
-      value: "true"  
+      value: "true"
 
   persistentVolume:
     enabled: true
@@ -264,7 +260,7 @@ open-webui:
     resources: {}
   ollama:
     enabled: false
-  ollamaUrls: 
+  ollamaUrls:
     - "http://gpu-ollama.default.svc.cluster.local:11434"
   pipelines:
     enabled: true
@@ -282,14 +278,14 @@ open-webui:
   websocket:
     enabled: true
 
-  extraEnvFrom: 
+  extraEnvFrom:
     - secretRef:
         name: open-webui-secrets
   persistence:
     enabled: true
     existingClaim: open-webui
   podSecurityContext:
-    supplementalGroups: 
+    supplementalGroups:
       - 140
   containerSecurityContext:
     runAsUser: 1000
@@ -298,12 +294,12 @@ open-webui:
     privileged: false
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: false
-    capabilities: 
-      drop: 
+    capabilities:
+      drop:
         - "ALL"
-    seccompProfile: 
+    seccompProfile:
       type: RuntimeDefault
-coder: 
+coder:
   coder:
     env:
       - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
@@ -313,7 +309,7 @@ coder:
       - name: CODER_TELEMETRY
         value: "false"
       - name: CODER_PROMETHEUS_ENABLE
-        value: 'true'
+        value: "true"
 
     envFrom:
       - secretRef:
