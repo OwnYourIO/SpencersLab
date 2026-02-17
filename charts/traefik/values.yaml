@@ -32,7 +32,7 @@ traefik:
 
   ingressClass:
     enabled: true
-    name: "traefik"  # Change from "proxy-local-traefik"
+    name: "traefik" # Change from "proxy-local-traefik"
 
   persistence:
     enabled: true
@@ -46,20 +46,23 @@ traefik:
     kubernetesIngress:
       allowEmptyServices: true
       allowExternalNameServices: true
+    file:
+      enabled: true
+      watch: true
   deployment:
     additionalContainers:
-    - name: user-allowlist-mqtt
-      image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.12
+      - name: user-allowlist-mqtt
+        image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.12
 
-      envFrom:
-        - secretRef:
-            name: traefik-mqtt
-      securityContext:
-        runAsUser: 65532
-        runAsGroup: 65532
-      volumeMounts:
-        - name: data
-          mountPath: /data
+        envFrom:
+          - secretRef:
+              name: traefik-mqtt
+        securityContext:
+          runAsUser: 65532
+          runAsGroup: 65532
+        volumeMounts:
+          - name: data
+            mountPath: /data
 
   experimental:
     plugins:
@@ -115,7 +118,7 @@ traefik:
         namespace: default
 
   volumes:
-    - name: '{{ .Release.Name }}-bouncer-tls'
+    - name: "{{ .Release.Name }}-bouncer-tls"
       mountPath: /etc/traefik/crowdsec-certs/
       type: secret
     - name: traefik-sso
