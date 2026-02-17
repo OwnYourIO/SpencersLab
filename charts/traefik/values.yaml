@@ -90,8 +90,12 @@ traefik:
 
   ports:
     web:
-      redirectTo:
-        port: websecure
+      http:
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https
+            permanent: true
       proxyProtocol:
         trustedIPs:
           - "10.42.0.0/16"
