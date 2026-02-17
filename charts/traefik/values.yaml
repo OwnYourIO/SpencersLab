@@ -27,8 +27,6 @@ traefik:
     - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
     - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-  dashboard:
-    enabled: true
 
   ingressClass:
     enabled: true
@@ -92,11 +90,8 @@ traefik:
 
   ports:
     web:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true
+      redirectTo:
+        port: websecure
       proxyProtocol:
         trustedIPs:
           - "10.42.0.0/16"
