@@ -11,24 +11,20 @@ traefik:
     #- "--api.dashboard=true"
     - "--api.insecure=true"
     - "--serversTransport.insecureSkipVerify=true"
-    # Leave 80 un geoblocked. Otherwise it gets in the way of the cert generation. 
+    # Leave 80 un geoblocked. Otherwise it gets in the way of the cert generation.
     # It's automatically forwarded to 443 by the proxy-local anyway.
     #- "--entrypoints.web.http.middlewares=kube-system-geoblock@kubernetescrd"
     #- "--entrypoints.websecure.http.middlewares=kube-system-geoblock@kubernetescrd"
-    - "--providers.file.filename=/data/admin-allowlist.yaml"
-    - "--providers.file.watch=true"
     - "--entryPoints.web.http.redirections.entryPoint.to=https"
     - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
-  dashboard: 
-    enabled: false
 
   ingressClass:
     enabled: true
-    name: "traefik"  # Change from "proxy-remote-traefik"
+    name: "traefik" # Change from "proxy-remote-traefik"
 
   persistence:
     enabled: true
-    size: 1Gi 
+    size: 1Gi
 
   providers:
     kubernetesCRD:
@@ -38,7 +34,7 @@ traefik:
       allowEmptyServices: true
       allowExternalNameServices: true
     file:
-      filename: "/data/admin-allowlist.yaml"
+      directory: /data/
       watch: true
 
   experimental:
@@ -81,7 +77,6 @@ traefik:
     #  level: DEBUG
     access:
       enabled: true
-
 
 crowdsec:
   container_runtime: containerd
