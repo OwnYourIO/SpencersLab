@@ -8088,6 +8088,18 @@ entries:
   jellyfin:
   - apiVersion: v2
     appVersion: 1.0.7
+    created: "2026-02-18T21:20:06.508842404Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    digest: 62c8ca50d4de13a092b4035c85d6d7128e70f6cd8ecd71d9add0851f2fd613c1
+    name: jellyfin
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/jellyfin-1.0.22/jellyfin-1.0.22.tgz
+    version: 1.0.22
+  - apiVersion: v2
+    appVersion: 1.0.7
     created: "2026-02-17T22:34:59.467186108Z"
     dependencies:
     - name: app-template
@@ -14144,6 +14156,21 @@ entries:
   traefik:
   - apiVersion: v2
     appVersion: 2.11.10
+    created: "2026-02-18T21:20:06.803626093Z"
+    dependencies:
+    - name: traefik
+      repository: https://traefik.github.io/charts
+      version: 39.0.1
+    - name: crowdsec
+      repository: https://crowdsecurity.github.io/helm-charts
+      version: 0.22.0
+    digest: 40abcb4bdcd346a2c0e6ba199f17984a6e0a2fc2f49749bc92844de046e80dd0
+    name: traefik
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/traefik-1.0.66/traefik-1.0.66.tgz
+    version: 1.0.66
+  - apiVersion: v2
+    appVersion: 2.11.10
     created: "2026-02-18T00:01:41.134840664Z"
     dependencies:
     - name: traefik
@@ -16008,4 +16035,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-18T00:01:41.136245465Z"
+generated: "2026-02-18T21:20:06.805077683Z"
