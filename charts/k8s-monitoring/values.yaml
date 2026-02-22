@@ -27,11 +27,6 @@ k8s-monitoring:
       #   username: ${LOKI_USERNAME}
       #   password: ${LOKI_PASSWORD}
 
-  annotationAutodiscovery:
-    enabled: true
-    metricsTuning:
-      excludeMetrics: ["go_*"]  # Global exclusion of Go runtime metrics
-
   # Cluster metrics collection
   clusterMetrics:
     enabled: true
