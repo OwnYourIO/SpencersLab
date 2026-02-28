@@ -15195,6 +15195,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/traefik-appset-1.1.1/traefik-appset-1.1.1.tgz
     version: 1.1.1
+  tvheadend:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-02-28T18:46:16.48868389Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: f8d7dd10b217e7b63fab54ef7b31d233e92458c6057bd511641ebc3bf88b06a2
+    name: tvheadend
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/tvheadend-1.0.1/tvheadend-1.0.1.tgz
+    version: 1.0.1
   zigbee2mqtt:
   - apiVersion: v2
     appVersion: 1.0.38
@@ -16072,4 +16085,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-28T17:18:22.473395919Z"
+generated: "2026-02-28T18:46:16.490017741Z"
