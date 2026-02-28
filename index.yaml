@@ -11447,6 +11447,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/postiz-1.0.1/postiz-1.0.1.tgz
     version: 1.0.1
+  privatebin:
+  - apiVersion: v2
+    appVersion: 1.7.4
+    created: "2026-02-28T16:58:13.909874055Z"
+    dependencies:
+    - name: privatebin
+      repository: https://privatebin.github.io/helm-chart/
+      version: 0.23.3
+    digest: dd196693335c1a76adcc0f059d400f20ee937e53fff2721962a3c0d0cad9b210
+    name: privatebin
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/privatebin-1.0.1/privatebin-1.0.1.tgz
+    version: 1.0.1
   rallly:
   - apiVersion: v2
     appVersion: v4.5.14
@@ -16047,4 +16060,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-22T23:45:04.72436271Z"
+generated: "2026-02-28T16:58:13.911522836Z"
