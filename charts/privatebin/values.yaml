@@ -35,7 +35,7 @@ privatebin:
       defaultformatter = "plaintext"
       syntaxhighlightingtheme = "sons-of-obsidian"
       sizelimit = 10485760
-      template = "bootstrap"
+      template = "bootstrap-dark"
       languageselection = false
       languagedefault = "en"
       
