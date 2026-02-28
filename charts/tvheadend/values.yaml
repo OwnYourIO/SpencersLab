@@ -28,8 +28,8 @@ app-template:
             tag: latest
           env:
             TZ: Etc/UTC
-            PUID: *uid
-            PGID: *gid
+            PUID: "1000"
+            PGID: "2000"
           # envFrom:
           #   - secretRef:
           #       name: *chartName
