@@ -15198,6 +15198,18 @@ entries:
   tvheadend:
   - apiVersion: v2
     appVersion: latest
+    created: "2026-02-28T19:49:49.953402654Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.2.0
+    digest: d2f89867b12c68c422418a28e186a1175a4a8d35746abddc9e4480281fa96fdb
+    name: tvheadend
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/tvheadend-1.0.3/tvheadend-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v2
+    appVersion: latest
     created: "2026-02-28T19:46:43.244155873Z"
     dependencies:
     - name: app-template
@@ -16097,4 +16109,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-02-28T19:46:43.2460414Z"
+generated: "2026-02-28T19:49:49.954664843Z"
