@@ -61,6 +61,7 @@ app-template:
           securityContext:
             privileged: true  # Required for TV tuner access
             allowPrivilegeEscalation: true
+            runAsNonRoot: false
             capabilities:
               add:
                 - SYS_ADMIN  # Required for device access
