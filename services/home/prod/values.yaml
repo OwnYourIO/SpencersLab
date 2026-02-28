@@ -11,6 +11,11 @@ clusterName: OVERRIDE_VIA_APPSET
 
 subDomain: home-lab
 charts: 
+  privatebin:
+    version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "false"
   scifi-farm:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -174,6 +179,16 @@ ingress:
       serviceName: rallly
       service: home-rallly
       port: 3000
+
+    paste:
+      serviceName: privatebin
+      service: home-privatebin
+      port: 8080
+    
+    privatebin:
+      serviceName: privatebin
+      service: home-privatebin
+      port: 8080
 
     cluster:
       clusterBase: true

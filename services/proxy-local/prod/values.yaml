@@ -146,6 +146,9 @@ proxy:
     sms:
       target: playsms
 
+    paste:
+      target: privatebin
+
     # Has no auth (Use Keycloak's middleware)
     torrents:
       service: proxy-local-qbittorrent-main 

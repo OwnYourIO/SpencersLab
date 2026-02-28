@@ -55,6 +55,8 @@ proxy:
     #esphome:
 
     # Services with no account support. (Auth should be added at proxy-local)
+    paste:
+      enabled: true
     sms:
       enabled: true
     torrents:
