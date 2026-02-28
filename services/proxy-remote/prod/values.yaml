@@ -67,6 +67,8 @@ proxy:
       enabled: true
     shows:
       enabled: true
+    tv:
+      enabled: true
     movies:
       enabled: true
     ebooks:

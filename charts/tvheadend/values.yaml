@@ -1,0 +1,94 @@
+# bitwardenIds:
+#   tvheadend: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName tvheadend
+
+  controllers:
+    tvheadend:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      pod:
+        securityContext:
+          runAsUser: &uid 1000
+          runAsGroup: &gid 2000
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+          supplementalGroups:
+            - 44    # video group
+            - 109   # render group
+            - 212   # Additional hardware group
+      containers:
+        main:
+          image:
+            repository: lscr.io/linuxserver/tvheadend
+            tag: latest
+          env:
+            TZ: Etc/UTC
+            PUID: *uid
+            PGID: *gid
+          # envFrom:
+          #   - secretRef:
+          #       name: *chartName
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 9981
+                initialDelaySeconds: 30
+                periodSeconds: 10
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 9981
+                initialDelaySeconds: 30
+                periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            privileged: true  # Required for TV tuner access
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - SYS_ADMIN  # Required for device access
+
+  service:
+    tvheadend:
+      controller: *chartName
+      type: ClusterIP
+      ports:
+        http:
+          port: 9981
+        htsp:
+          port: 9982
+
+  persistence:
+    config:
+      existingClaim: *chartName
+    recordings:
+      existingClaim: media
+      globalMounts:
+        - path: /recordings
+          subPath: Recordings
+    timeshift:
+      type: emptyDir
+      globalMounts:
+        - path: /timeshift
+    dev:
+      type: hostPath
+      hostPath: /dev
+      globalMounts:
+        - path: /dev

@@ -24,6 +24,11 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "false"
+  tvheadend:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "false"
 
 ingress:
   subdomains:
@@ -87,6 +92,11 @@ ingress:
       #service: media-sonarr-4k
       service: media-sonarr
       port: 8989
+
+    tv:
+      serviceName: tvheadend
+      service: media-tvheadend
+      port: 9981
 
     #unpack:
     #  serviceName: unpackerr

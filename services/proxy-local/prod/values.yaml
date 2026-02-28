@@ -164,6 +164,8 @@ proxy:
       target: sonarr
     shows-4k:
       target: sonarr-4k
+    tv:
+      target: tvheadend
     movies:
       target: radarr
     movies-4k:
