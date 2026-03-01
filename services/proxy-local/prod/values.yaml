@@ -142,12 +142,18 @@ proxy:
     polls:
       target: rallly
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=rallly&response_type=code&redirect_uri=https://polls.$.Values.domain/"
+      ssoAllowedPaths:
+        - 'invite/'
       loginSubDomain: "login"
     sms:
       target: playsms
 
     paste:
       target: privatebin
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
 
     # Has no auth (Use Keycloak's middleware)
     torrents:

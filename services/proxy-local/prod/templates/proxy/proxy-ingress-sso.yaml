@@ -34,7 +34,7 @@ spec:
 {{- if $config.ssoAllowedPaths }}
 {{- range $path := $config.ssoAllowedPaths }}
           - path: {{ $path }}
-            pathType: Exact
+            pathType: Prefix
             backend:
               service:
                 name: "{{ $name }}-service"

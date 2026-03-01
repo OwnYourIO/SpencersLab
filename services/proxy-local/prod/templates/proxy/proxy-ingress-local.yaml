@@ -61,7 +61,7 @@ spec:
         - name: {{ $.Values.proxy.middlewares.entrypoint }}
 {{- if $config.ssoAllowedPaths }}
 {{- range $path := $config.ssoAllowedPaths }}
-    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && Path(`{{ $path }}`) && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
+    - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && PathPrefix(`{{ $path }}`) && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
       kind: Rule
       priority: 100
       services:
