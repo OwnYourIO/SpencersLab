@@ -143,7 +143,7 @@ proxy:
       target: rallly
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=rallly&response_type=code&redirect_uri=https://polls.$.Values.domain/"
       ssoAllowedPaths:
-        - 'invite/'
+        - '/invite/'
       loginSubDomain: "login"
     sms:
       target: playsms
