@@ -15,7 +15,7 @@ app-template:
         main:
           image:
             repository: quay.io/docling-project/docling-serve
-            tag: v1.12.0
+            tag: v1.14.3
           env:
             DOCLING_SERVE_HOST: "0.0.0.0"
             DOCLING_SERVE_PORT: "5001"
