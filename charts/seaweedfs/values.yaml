@@ -103,7 +103,6 @@ seaweedfs:
     #   allowPrivilegeEscalation: false
     containerSecurityContext: {}
 
-
     ingress:
       # Disabled and done with template instead because this chart assumes nginx :/
       enabled: false
@@ -118,7 +117,7 @@ seaweedfs:
     minFreeSpacePercent: 2
     #compactionMBps: "250"
 
-    # In the 4.0.0 chart these seemed to change and are now failing... 
+    # In the 4.0.0 chart these seemed to change and are now failing...
     # Though could be that my volumes are actually broken (I know they sorta are) and I need a more permissive health check to fix.
     readinessProbe:
       httpGet:
@@ -195,7 +194,7 @@ seaweedfs:
         - direct
         - dirsync
 
-    logs: 
+    logs:
       type: "persistentVolumeClaim"
       size: "10Gi"
 
@@ -234,10 +233,10 @@ seaweedfs:
     # should map directly to the value of the resources field for a PodSpec,
     # formatted as a multi-line string. By default no direct resource request
     # is made.
-    resources: 
+    resources:
       limits:
-        memory: 2Gi
-      requests: 
+        memory: 4Gi
+      requests:
         memory: 500Mi
       #limits:
       #  squat.ai/hdd: 1
@@ -259,7 +258,7 @@ seaweedfs:
     #   runAsUser: 2000
     #   allowPrivilegeEscalation: false
     containerSecurityContext: {}
-    
+
   filer:
     enabled: true
     replicas: 5
@@ -338,8 +337,8 @@ seaweedfs:
     # should map directly to the value of the resources field for a PodSpec,
     # formatted as a multi-line string. By default no direct resource request
     # is made.
-    resources: 
-      limits: 
+    resources:
+      limits:
         cpu: 1.5
         memory: 1Gi
       requests:
@@ -468,9 +467,9 @@ seaweedfs:
 #      WEED_CLUSTER_SW_FILER: "seaweedfs-filer-client.default:8888"
 #  master:
 #    enabled: false
-#  filer:  
+#  filer:
 #    enabled: false
-#    s3: 
+#    s3:
 #      enabled: false
 #
 #  volume:
@@ -481,7 +480,7 @@ seaweedfs:
 #    index: leveldb
 #    replicas: 1
 #
-#    # In the 4.0.0 chart these seemed to change and are now failing... 
+#    # In the 4.0.0 chart these seemed to change and are now failing...
 #    # Though could be that my volumes are actually broken (I know they sorta are) and I need a more permissive health check to fix.
 #    readinessProbe:
 #      httpGet:
@@ -504,7 +503,7 @@ seaweedfs:
 #      type: "persistentVolumeClaim"
 #      size: "10Gi"
 #
-#    logs: 
+#    logs:
 #      type: "persistentVolumeClaim"
 #      size: "2Gi"
 #
