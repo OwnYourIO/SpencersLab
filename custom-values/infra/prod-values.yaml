@@ -13,9 +13,9 @@ base:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
 
 seaweedfs-csi-driver:
+  volume-count: 8
   seaweedfs-csi-driver:
     seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
-    volume-count: 8
 
 seaweedfs:
   seaweedfs:
