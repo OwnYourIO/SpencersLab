@@ -61,6 +61,11 @@ ingress:
       serviceName: seaweedfs-volume.infra
       service: seaweedfs-volume
       port: 8080
+    
+    seaweedfs-admin:
+      serviceName: seaweedfs-admin.infra
+      service: seaweedfs-admin
+      port: 23646
 
     seaweedfs-master:
       serviceName: seaweedfs-master.infra
