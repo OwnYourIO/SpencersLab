@@ -27,11 +27,11 @@ seaweedfs:
 
     data:
       type: "persistentVolumeClaim"
-      #claimName: "data-default-seaweedfs-admin-0"
+      claimName: "admin-data-seaweedfs-admin-0"
       size: 10Gi
     logs:
       type: "existingClaim"
-      claimName: "data-admin-seaweedfs-admin-0"
+      claimName: "admin-data-seaweedfs-admin-0"
 
   master:
     enabled: true
