@@ -31,7 +31,7 @@ seaweedfs:
       size: 10Gi
     logs:
       type: "existingClaim"
-      claimName: "data-default-seaweedfs-admin-0"
+      claimName: "data-admin-seaweedfs-admin-0"
 
   master:
     enabled: true
