@@ -156,6 +156,8 @@ proxy:
           - "kube-system-crowdsec@kubernetescrd"
 
     # Has no auth (Use Keycloak's middleware)
+    charts:
+      target: drawio
     torrents:
       service: proxy-local-qbittorrent-main 
       port: 8080
