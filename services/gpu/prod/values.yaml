@@ -184,7 +184,7 @@ ingress:
       port: 8080
 
     drawio:
-      serviceName: graph
+      serviceName: draw
       service: gpu-drawio
       port: 8080
 
