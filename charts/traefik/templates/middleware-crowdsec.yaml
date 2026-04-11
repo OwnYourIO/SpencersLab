@@ -13,3 +13,6 @@ spec:
       crowdsecLapiTLSCertificateAuthorityFile: /etc/traefik/crowdsec-certs/ca.crt
       crowdsecLapiTLSCertificateBouncerFile: /etc/traefik/crowdsec-certs/tls.crt
       crowdsecLapiTLSCertificateBouncerKeyFile: /etc/traefik/crowdsec-certs/tls.key
+      # These are needed because without them Traefik will start before crowdsec, try and contact crowdsec, fail and stop retrying.
+      updateMaxFailure: -1
+      crowdsecMode: stream
