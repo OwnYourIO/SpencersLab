@@ -1,19 +1,15 @@
 ---
-#apiVersion: traefik.io/v1alpha1
-#kind: Middleware
-#metadata:
-#  name: crowdsec
-#  namespace: kube-system
-#spec:
-#  plugin:
-#    crowdsec:
-#      enabled: true
-#      crowdsecLapiScheme: https
-#      crowdsecLapiHost: "{{ .Release.Name }}-service.kube-system:8080"
-#      crowdsecLapiTLSCertificateAuthorityFile: /etc/traefik/crowdsec-certs/ca.crt
-#      crowdsecLapiTLSCertificateBouncerFile: /etc/traefik/crowdsec-certs/tls.crt
-#      crowdsecLapiTLSCertificateBouncerKeyFile: /etc/traefik/crowdsec-certs/tls.key
-#      # These are needed because without them Traefik will start before crowdsec, try and contact crowdsec, fail and stop retrying.
-#      updatemaxfailure: -1
-#      updateIntervalSeconds: 10
-#      crowdsecMode: stream
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: crowdsec
+  namespace: kube-system
+spec:
+  plugin:
+    crowdsec:
+      enabled: true
+      crowdsecLapiScheme: https
+      crowdsecLapiHost: "{{ .Release.Name }}-service.kube-system:8080"
+      crowdsecLapiTLSCertificateAuthorityFile: /etc/traefik/crowdsec-certs/ca.crt
+      crowdsecLapiTLSCertificateBouncerFile: /etc/traefik/crowdsec-certs/tls.crt
+      crowdsecLapiTLSCertificateBouncerKeyFile: /etc/traefik/crowdsec-certs/tls.key
