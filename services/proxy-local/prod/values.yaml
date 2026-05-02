@@ -149,7 +149,8 @@ proxy:
       target: playsms
     budget:
       target: budget
-      ssoRedirectPath: "/account/login"
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=rallly&response_type=code&redirect_uri=https://budget.$.Values.domain/account/login"
+      loginSubDomain: "login"
 
     paste:
       target: privatebin
