@@ -148,7 +148,7 @@ proxy:
     sms:
       target: playsms
     budget:
-      #target: actualbudget
+      target: budget
       ssoRedirectPath: "/account/login"
       loginSubDomain: "login"
 
