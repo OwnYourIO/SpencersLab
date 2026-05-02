@@ -147,6 +147,10 @@ proxy:
       loginSubDomain: "login"
     sms:
       target: playsms
+    budget:
+      #target: actualbudget
+      ssoRedirectPath: "/account/login"
+      loginSubDomain: "login"
 
     paste:
       target: privatebin

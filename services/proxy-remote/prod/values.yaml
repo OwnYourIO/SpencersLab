@@ -79,6 +79,8 @@ proxy:
       enabled: true
     stream:
       enabled: true
+    budget:
+      enabled: true
 
     cluster:
       clusterBase: true
