@@ -150,7 +150,6 @@ proxy:
     budget:
       target: budget
       ssoRedirectPath: "/account/login"
-      loginSubDomain: "login"
 
     paste:
       target: privatebin
