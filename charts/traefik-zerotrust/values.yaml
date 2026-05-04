@@ -103,7 +103,7 @@ traefik:
 
   volumes:
     - name: traefik-plugin-ping
-      mountPath: /data/plugin-ping.yaml
+      mountPath: /data/
       subPath: plugin-ping.yaml
       type: configMap
 

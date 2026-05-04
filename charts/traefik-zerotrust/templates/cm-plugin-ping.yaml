@@ -27,4 +27,3 @@ data:
             {{- range .Values.pluginPingMiddlewares }}
             - {{ . }}
             {{- end }}
-      middlewares: {}
