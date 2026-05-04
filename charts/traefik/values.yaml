@@ -152,6 +152,22 @@ traefik:
     access:
       enabled: true
 
+  # Override probes to use the plugin-gated ping endpoint.
+  # If any plugin (geoblock, crowdsec) fails to load, this route breaks,
+  # the probe fails, and Kubernetes restarts the pod — giving
+  # AbortOnPluginFailure another attempt with a clean process.
+  readinessProbe:
+    httpGet:
+      path: /ping
+      port: 8082
+  livenessProbe:
+    httpGet:
+      path: /ping
+      port: 8082
+  startupProbe:
+    httpGet:
+      path: /ping
+      port: 8082
   # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
   # provider (--providers.file.directory=/data/) picks it up automatically.
   additionalVolumeMounts:
