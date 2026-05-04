@@ -79,10 +79,6 @@ traefik:
     access:
       enabled: true
 
-  env:
-    - name: TRAEFIK_EXPERIMENTAL_ABORTONPLUGINFAILURE
-      value: "true"
-
 crowdsec:
   container_runtime: containerd
   tls:
