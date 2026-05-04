@@ -99,10 +99,12 @@ traefik:
   # provider (--providers.file.directory=/data/) picks it up automatically.
   volumes:
     - name: plugin-ping-config
+
+  volumes:
+    - name: traefik-plugin-ping
       mountPath: /data/plugin-ping.yaml
       subPath: plugin-ping.yaml
-      configMap:
-        name: traefik-plugin-ping
+      type: configMap
 
 crowdsec:
   container_runtime: containerd
