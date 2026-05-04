@@ -10,6 +10,12 @@ domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 namespace: OVERRIDE_VIA_APPSET
 
+# Middlewares that the internal plugin-health ping route must pass through.
+# If any of these fail to load, the probe fails and Kubernetes restarts the pod.
+pluginPingMiddlewares:
+  - kube-system-geoblock@kubernetescrd
+  - kube-system-crowdsec@kubernetescrd
+
 cert-manager:
   installCRDs: true
 
@@ -26,6 +32,9 @@ traefik:
     - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
     - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+    # Ping entrypoint for plugin health checking
+    - "--ping=true"
+    - "--ping.entryPoint=plugincheck"
 
   ingressClass:
     enabled: true
@@ -112,6 +121,12 @@ traefik:
       forwardedHeaders:
         trustedIPs:
           - "10.42.0.0/16"
+    # Internal-only entrypoint for plugin health checking
+    plugincheck:
+      port: 8082
+      expose:
+        default: false
+      protocol: TCP
 
   metrics:
     prometheus:
@@ -132,6 +147,19 @@ traefik:
     #  level: DEBUG
     access:
       enabled: true
+
+
+  # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
+  # provider (--providers.file.directory=/data/) picks it up automatically.
+  additionalVolumeMounts:
+    - name: plugin-ping-config
+      mountPath: /data/plugin-ping.yaml
+      subPath: plugin-ping.yaml
+
+  additionalVolumes:
+    - name: plugin-ping-config
+      configMap:
+        name: traefik-plugin-ping
 
 crowdsec:
   container_runtime: containerd

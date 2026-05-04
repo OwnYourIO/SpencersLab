@@ -1,0 +1,30 @@
+---
+# Routes /ping through every middleware listed in .Values.pluginPingMiddlewares
+# on the internal plugincheck entrypoint (port 8082).
+#
+# The readiness, liveness, and startup probes all hit this endpoint.
+# If any middleware's plugin fails to load, its reference is "not found",
+# the route breaks, the probe fails, and Kubernetes restarts the pod —
+# giving AbortOnPluginFailure another attempt with a clean process.
+#
+# Note: geoblock has allowLocalRequests: true, so kubelet probe traffic
+# (coming from the node's private IP) is not blocked.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-plugin-ping
+  namespace: kube-system
+data:
+  plugin-ping.yaml: |
+    http:
+      routers:
+        plugin-ping:
+          rule: "PathPrefix(`/ping`)"
+          service: ping@internal
+          entryPoints:
+            - plugincheck
+          middlewares:
+            {{- range .Values.pluginPingMiddlewares }}
+            - {{ . }}
+            {{- end }}
+      middlewares: {}
