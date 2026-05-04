@@ -141,6 +141,10 @@ traefik:
     - name: traefik-sso
       type: secret
       mountPath: "/run/secrets/oidc"
+    - name: traefik-plugin-ping
+      mountPath: /data/plugin-ping.yaml
+      type: configMap
+      subPath: plugin-ping.yaml
 
   logs:
     # general:
@@ -148,15 +152,6 @@ traefik:
     access:
       enabled: true
 
-
-  # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
-  # provider (--providers.file.directory=/data/) picks it up automatically.
-
-  volumes:
-    - name: traefik-plugin-ping
-      mountPath: /data/plugin-ping.yaml
-      type: configMap
-      subPath: plugin-ping.yaml
 
 crowdsec:
   container_runtime: containerd
