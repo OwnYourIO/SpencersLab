@@ -97,7 +97,7 @@ traefik:
 
   # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
   # provider (--providers.file.directory=/data/) picks it up automatically.
-  volumeMounts:
+  additionalVolumeMounts:
     - name: plugin-ping-config
       mountPath: /data/plugin-ping.yaml
       subPath: plugin-ping.yaml
