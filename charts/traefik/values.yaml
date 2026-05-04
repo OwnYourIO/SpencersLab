@@ -156,7 +156,8 @@ traefik:
   # provider (--providers.file.directory=/data/) picks it up automatically.
   additionalVolumeMounts:
     - name: plugin-ping-config
-      mountPath: /data/plugin-ping.yaml
+      # This needs a symlink in /data/ to provide the plugin. 
+      mountPath: /etc/traefik/plugin-ping.yaml
       subPath: plugin-ping.yaml
 
 crowdsec:
