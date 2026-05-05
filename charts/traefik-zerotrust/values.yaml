@@ -56,6 +56,14 @@ traefik:
       middlewares:
         - name: geoblock
           namespace: kube-system
+  # Has to fail on the first occurrence, otherwise Traefik passes on the second but needs to restart to fix middleware after a host reboot.
+  livenessProbe: 
+    failureThreshold: 1
+  # Tried using the below, but it didn't catch enough. The healthcheck is better.
+  #env:
+  #  - name: TRAEFIK_EXPERIMENTAL_ABORTONPLUGINFAILURE
+  #    value: "true"
+
   service:
     type: LoadBalancer
     spec:
