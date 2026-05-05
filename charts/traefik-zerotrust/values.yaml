@@ -52,6 +52,7 @@ traefik:
   # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
   ingressRoute:
     healthcheck:
+      enabled: true
       middlewares:
         - name: geoblock
           namespace: kube-system
