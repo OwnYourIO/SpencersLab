@@ -13,4 +13,6 @@ smtp-relay:
 seaweedfs-csi-driver:
   volume-count: 8
   seaweedfs-csi-driver:
+    # For some reason this is needed here but higher in other services.
+    volume-count: 8
     seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
