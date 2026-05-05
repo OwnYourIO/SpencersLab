@@ -27,9 +27,6 @@ traefik:
     - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
     - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-    # Ping entrypoint for plugin health checking
-    - "--ping=true"
-    - "--ping.entryPoint=plugincheck"
 
   ingressClass:
     enabled: true
@@ -120,6 +117,7 @@ traefik:
   # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
   ingressRoute:
     healthcheck:
+      enabled: true
       middlewares:
         - name: crowdsec
           namespace: kube-system
