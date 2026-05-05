@@ -97,10 +97,12 @@ traefik:
     access:
       enabled: true
 
+  # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
   ingressRoute:
     healthcheck:
       middlewares:
-        - kube-system-geoblock@kubernetescrd
+        - name: geoblock
+          namespace: kube-system
 
   # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
   # provider (--providers.file.directory=/data/) picks it up automatically.
