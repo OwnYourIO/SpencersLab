@@ -120,7 +120,7 @@ traefik:
   ingressRoute:
     healthcheck:
       middlewares:
-        - name: geoblock
+        - name: crowdsec
           namespace: kube-system
   # Has to fail on the first occurrence, otherwise Traefik passes on the second but needs to restart to fix middleware after a host reboot.
   livenessProbe: 
