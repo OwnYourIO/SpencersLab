@@ -13,10 +13,6 @@ cert-manager:
 traefik:
   deployment: 
     healthchecksPort: 8082
-    additionalVolumes:
-      - name: plugin-ping-config
-        configMap:
-          name: traefik-plugin-ping
 
   additionalArguments:
     - "--api"
@@ -101,19 +97,12 @@ traefik:
     access:
       enabled: true
 
+  # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
+  # provider (--providers.file.directory=/data/) picks it up automatically.
   volumes:
     - name: traefik-plugin-ping
       mountPath: /data/
-      subPath: plugin-ping.yaml
       type: configMap
-
-  # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
-  # provider (--providers.file.directory=/data/) picks it up automatically.
-  additionalVolumeMounts:
-    - name: plugin-ping-config
-      # This needs a symlink in /data/ to provide the plugin. 
-      mountPath: /etc/traefik/plugin-ping.yaml
-      subPath: plugin-ping.yaml
 
 crowdsec:
   container_runtime: containerd
