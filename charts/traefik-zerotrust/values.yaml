@@ -2,18 +2,10 @@
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
-# Middlewares that the internal plugin-health ping route must pass through.
-# If any of these fail to load, the probe fails and Kubernetes restarts the pod.
-pluginPingMiddlewares:
-  - kube-system-geoblock@kubernetescrd
-
 cert-manager:
   installCRDs: true
 
 traefik:
-  deployment: 
-    healthchecksPort: 8082
-
   additionalArguments:
     - "--api"
     #- "--api.dashboard=true"
@@ -27,9 +19,6 @@ traefik:
     - "--providers.file.directory=/data/"
     - "--entryPoints.web.http.redirections.entryPoint.to=https"
     - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
-    # Ping entrypoint for plugin health checking
-    - "--ping=true"
-    - "--ping.entryPoint=plugincheck"
 
   ingressClass:
     enabled: true
@@ -60,6 +49,12 @@ traefik:
         moduleName: "github.com/traefik/plugin-rewritebody"
         version: "v0.3.1"
 
+  # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
+  ingressRoute:
+    healthcheck:
+      middlewares:
+        - name: geoblock
+          namespace: kube-system
   service:
     type: LoadBalancer
     spec:
@@ -78,12 +73,6 @@ traefik:
     websecure:
       proxyProtocol:
         enabled: true
-    # Internal-only entrypoint for plugin health checking
-    plugincheck:
-      port: 8082
-      expose:
-        default: false
-      protocol: TCP
 
   metrics:
     prometheus:
@@ -96,20 +85,6 @@ traefik:
     #  level: DEBUG
     access:
       enabled: true
-
-  # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
-  ingressRoute:
-    healthcheck:
-      middlewares:
-        - name: geoblock
-          namespace: kube-system
-
-  # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
-  # provider (--providers.file.directory=/data/) picks it up automatically.
-  volumes:
-    - name: traefik-plugin-ping
-      mountPath: /data/
-      type: configMap
 
 crowdsec:
   container_runtime: containerd

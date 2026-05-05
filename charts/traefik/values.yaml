@@ -10,12 +10,6 @@ domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 namespace: OVERRIDE_VIA_APPSET
 
-# Middlewares that the internal plugin-health ping route must pass through.
-# If any of these fail to load, the probe fails and Kubernetes restarts the pod.
-pluginPingMiddlewares:
-  - kube-system-geoblock@kubernetescrd
-  - kube-system-crowdsec@kubernetescrd
-
 cert-manager:
   installCRDs: true
 
@@ -55,12 +49,6 @@ traefik:
     file:
       enabled: true
       watch: true
-  deployment:
-    healthchecksPort: 8082
-    additionalVolumes:
-      - name: plugin-ping-config
-        configMap:
-          name: traefik-plugin-ping
     additionalContainers:
       - name: user-allowlist-mqtt
         image: ghcr.io/ownyourio/traefik-mqtt-allowlist:0.0.12
@@ -126,12 +114,16 @@ traefik:
       forwardedHeaders:
         trustedIPs:
           - "10.42.0.0/16"
-    # Internal-only entrypoint for plugin health checking
-    plugincheck:
-      port: 8082
-      expose:
-        default: false
-      protocol: TCP
+
+  # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
+  ingressRoute:
+    healthcheck:
+      middlewares:
+        - name: geoblock
+          namespace: kube-system
+  # Has to fail on the first occurrence, otherwise Traefik passes on the second but needs to restart to fix middleware after a host reboot.
+  livenessProbe: 
+    failureThreshold: 1
 
   metrics:
     prometheus:
@@ -152,14 +144,6 @@ traefik:
     #  level: DEBUG
     access:
       enabled: true
-
-  # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
-  # provider (--providers.file.directory=/data/) picks it up automatically.
-  additionalVolumeMounts:
-    - name: plugin-ping-config
-      # This needs a symlink in /data/ to provide the plugin. 
-      mountPath: /etc/traefik/plugin-ping.yaml
-      subPath: plugin-ping.yaml
 
 crowdsec:
   container_runtime: containerd
