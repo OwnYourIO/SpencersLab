@@ -97,6 +97,11 @@ traefik:
     access:
       enabled: true
 
+  ingressRoute:
+    healthcheck:
+      middlewares:
+        - kube-system-geoblock@kubernetescrd
+
   # Mount the plugin-ping ConfigMap as a file inside /data/ so the file
   # provider (--providers.file.directory=/data/) picks it up automatically.
   volumes:
