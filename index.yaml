@@ -11564,6 +11564,23 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/privatebin-1.0.1/privatebin-1.0.1.tgz
     version: 1.0.1
+  pt750:
+  - apiVersion: v2
+    appVersion: 0.2.1
+    created: "2026-05-10T20:11:46.218189773Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    description: 'Web UI + HTTP API for printing labels on a Brother PT-P750W over
+      TCP, built on https://github.com/rpedde/pt750 (uvicorn + FastAPI + Jinja2).
+      Unlike the brother-ptouch-automation chart (which is API-only and upstream-dry-run-locked),
+      pt750 actually drives the printer end-to-end over tcp://printer:9100. '
+    digest: d8df186bf547d47bcd93dca62e1e844272668a1495083ffacaff4f7c0690a94c
+    name: pt750
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/pt750-1.0.1/pt750-1.0.1.tgz
+    version: 1.0.1
   rallly:
   - apiVersion: v2
     appVersion: v4.5.14
@@ -16687,4 +16704,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-05-10T19:37:56.261397191Z"
+generated: "2026-05-10T20:11:46.219657467Z"
