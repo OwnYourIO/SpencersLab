@@ -25,7 +25,7 @@ app-template:
             LABEL_PRINTER_CONFIG_DIR: /config
           envFrom:
             - secretRef:
-                name: brother-ptouch-automation-secret
+                name: "{{ .Release.Name }}-secret"
           probes:
             liveness:
               enabled: true
