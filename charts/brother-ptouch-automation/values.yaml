@@ -1,7 +1,6 @@
-# Bitwarden item ID for the brother-ptouch-automation entry. The item is expected
-# to have two custom fields:
-#   host  → IP or hostname of the Brother PT-P750W on the LAN
-#   token → Optional bearer token. Leave the field blank to disable auth.
+# Bitwarden Login item ID for the brother-ptouch-automation entry:
+#   Username → IP or hostname of the Brother PT-P750W on the LAN
+#   Password → Optional bearer token. Leave the field blank to disable auth.
 bitwardenIds:
   brother-ptouch-automation: OVERRIDE_VIA_CUSTOM_VALUES
 
