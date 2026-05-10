@@ -4847,6 +4847,22 @@ entries:
   brother-ptouch-automation:
   - apiVersion: v2
     appVersion: 0.2.0
+    created: "2026-05-10T19:34:44.400894565Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    description: 'HTTP service wrapper around the brother-ptouch-automation (https://github.com/harteWired/brother-ptouch-automation)
+      label engine for Brother PT-P750W (also PT-P710BT, PT-E550W). Exposes /render
+      and /print over HTTP so labels can be sent from CLI tools, Home Assistant, scripts,
+      or Claude Code skills. Reaches the physical printer over TCP:9100 + UDP:161. '
+    digest: 64e255cd1e48abf044caf2e6efa798bfff0d7503f559da8f2b48980720f557b8
+    name: brother-ptouch-automation
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/brother-ptouch-automation-1.0.3/brother-ptouch-automation-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v2
+    appVersion: 0.2.0
     created: "2026-05-10T19:29:54.059815396Z"
     dependencies:
     - name: app-template
@@ -16655,4 +16671,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-05-10T19:29:54.061403948Z"
+generated: "2026-05-10T19:34:44.403186064Z"
