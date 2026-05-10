@@ -1,0 +1,14 @@
+apiVersion: v2
+name: pt750
+description: |
+  Web UI + HTTP API for printing labels on a Brother PT-P750W over TCP,
+  built on https://github.com/rpedde/pt750 (uvicorn + FastAPI + Jinja2).
+  Unlike the brother-ptouch-automation chart (which is API-only and
+  upstream-dry-run-locked), pt750 actually drives the printer end-to-end
+  over tcp://printer:9100.
+version: 1.0.0
+appVersion: 0.2.1
+dependencies:
+- name: app-template
+  version: 4.6.2
+  repository: https://bjw-s-labs.github.io/helm-charts/

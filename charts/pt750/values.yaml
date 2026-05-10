@@ -1,0 +1,86 @@
+# Re-uses the same Bitwarden Login item as the brother-ptouch-automation chart.
+# The item shape is:
+#   Username → printer host / IP (e.g. label-maker.spencerslab.com)
+#   Password → unused by pt750 (reserved)
+bitwardenIds:
+  brother-ptouch-automation: OVERRIDE_VIA_CUSTOM_VALUES
+
+# Friendly name pt750's UI shows in its printer dropdown.
+# Combined with the host from Bitwarden in templates/secret-pt750.yaml as:
+#   L_PRINTERS=<printerName>=tcp://<host>:9100
+printerName: ptouch
+
+app-template:
+  global:
+    nameOverride: &chartName pt750
+
+  controllers:
+    pt750:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            # Upstream only publishes a rolling `master` tag (no semver tag for
+            # v0.2.1 on GHCR), so we track master with Always pull. Pin to a
+            # digest later if that gets too noisy.
+            repository: ghcr.io/rpedde/pt750
+            tag: master
+            pullPolicy: Always
+          env:
+            TZ: America/Denver
+          envFrom:
+            - secretRef:
+                # Provides L_PRINTERS, assembled in templates/secret-pt750.yaml
+                # from the Bitwarden Login item's username field. Secret name
+                # is "<Release.Name>-secret" (e.g. home-pt750-secret).
+                name: "{{ .Release.Name }}-secret"
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 5000
+                initialDelaySeconds: 10
+                periodSeconds: 30
+                timeoutSeconds: 5
+                failureThreshold: 3
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 5000
+                initialDelaySeconds: 5
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+          resources:
+            requests:
+              cpu: 10m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            # Matches the `nonroot` user (UID/GID 999) created in the upstream
+            # Dockerfile. Running as a different UID will fail because the
+            # entrypoint script and venv live in dirs owned by 999.
+            runAsUser: 999
+            runAsGroup: 999
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    pt750:
+      controller: *chartName
+      ports:
+        http:
+          port: 5000
+
+  # pt750 is stateless — printers are declared via L_PRINTERS at startup and
+  # there's no DB. Skipping persistence entirely.
