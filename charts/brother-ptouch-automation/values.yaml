@@ -64,7 +64,7 @@ app-template:
 
   service:
     brother-ptouch-automation:
-      controller: "{{ .Release.Name }}-secret"
+      controller: *chartName
       ports:
         http:
           port: 8765
