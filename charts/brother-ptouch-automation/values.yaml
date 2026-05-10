@@ -1,0 +1,77 @@
+# Bitwarden item ID for the brother-ptouch-automation entry. The item is expected
+# to have two custom fields:
+#   host  → IP or hostname of the Brother PT-P750W on the LAN
+#   token → Optional bearer token. Leave the field blank to disable auth.
+bitwardenIds:
+  brother-ptouch-automation: OVERRIDE_VIA_CUSTOM_VALUES
+
+app-template:
+  global:
+    nameOverride: &chartName brother-ptouch-automation
+
+  controllers:
+    brother-ptouch-automation:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/ownyourio/brother-ptouch-automation
+            # The docker-build workflow auto-bumps this and tags `latest`.
+            # Switch to a specific version once the first build completes.
+            tag: latest
+            pullPolicy: Always
+          env:
+            TZ: America/Denver
+            LABEL_PRINTER_CONFIG_DIR: /config
+          envFrom:
+            - secretRef:
+                name: brother-ptouch-automation-secret
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8765
+                initialDelaySeconds: 5
+                periodSeconds: 30
+                timeoutSeconds: 5
+                failureThreshold: 3
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8765
+                initialDelaySeconds: 5
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    brother-ptouch-automation:
+      controller: *chartName
+      ports:
+        http:
+          port: 8765
+
+  persistence:
+    config:
+      existingClaim: *chartName
+      globalMounts:
+        - path: /config

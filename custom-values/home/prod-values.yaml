@@ -81,3 +81,7 @@ firefly-import:
 trustedIPs:
   - "10.42.0.0/24"
   - "10.0.77.0/24"
+
+brother-ptouch-automation:
+  bitwardenIds:
+    brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931

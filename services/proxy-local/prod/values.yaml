@@ -151,6 +151,8 @@ proxy:
       target: budget
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=actualbudget&response_type=code&redirect_uri=https://budget.$.Values.domain/account/login"
       loginSubDomain: "login"
+    labels:
+      target: brother-ptouch-automation 
 
     paste:
       target: privatebin
