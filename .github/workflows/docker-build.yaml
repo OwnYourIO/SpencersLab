@@ -101,6 +101,10 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add ${{ matrix.container }}/VERSION
           git commit -m "Bump ${{ steps.container-info.outputs.name }} version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          # Rebase onto any commits that landed on main between checkout and now
+          # (another container's parallel job, a chart-release commit, a human push, etc.)
+          # before pushing, otherwise the push gets rejected with `! [rejected] (fetch first)`.
+          git pull --rebase origin main
           git push
 
       - name: Extract metadata for Docker
@@ -126,4 +130,7 @@ jobs:
       - name: Create Git tag
         run: |
           git tag "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"
+          # Tag pushes are independent of main, but pull --rebase on main keeps
+          # the working ref current in case any follow-up step needs it.
+          git pull --rebase origin main
           git push origin "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"
