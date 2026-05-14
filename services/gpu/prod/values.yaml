@@ -84,7 +84,7 @@ charts:
     namespace: default
     ServerSideApply: "false"
   open-webui:
-    version: 12.3.0
+    version: 12.13.0
     repository: https://helm.openwebui.com/
     namespace: default
     ServerSideApply: "false"
