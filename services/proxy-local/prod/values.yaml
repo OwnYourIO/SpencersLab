@@ -146,9 +146,9 @@ proxy:
         - '/invite/'
         - '/_next/static/media/'
         - '/_next/static/chunks/'
-        - 'favicon.ico'
-        - 'apple-touch-icon.png'
-        - 'apple-touch-icon-precomposed.png'
+        - '/favicon.ico'
+        - '/apple-touch-icon.png'
+        - '/apple-touch-icon-precomposed.png'
       loginSubDomain: "login"
     sms:
       target: playsms
