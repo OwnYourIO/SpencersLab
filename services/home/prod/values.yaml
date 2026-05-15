@@ -221,10 +221,13 @@ wekan:
   env:
     - name: OIDC_REDIRECTION_ENABLED
       value: "false"
+    - name: METEOR_REACTIVITY_ORDER
+      value: "oplog,polling"
+      #value: "changeStreams,oplog,polling"
   # It needs to go here and not above to avoid a value conflict in the chart.
   secretEnv:
     - name: MONGO_URL
-      value: "mongodb://home-mongodb:27017/wekan?replicaSet=rs0"
+      value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
     - name: MONGO_OPLOG_URL
       value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
   extraEnvFrom: |
@@ -243,6 +246,7 @@ wekan:
     enabled: false
   mongodb:
     architecture: replicaset
+    replicaCount: 1
     replicaSet:
       name: rs0
     service:
@@ -252,10 +256,12 @@ boards:
   env:
     - name: OIDC_REDIRECTION_ENABLED
       value: "true"
+    - name: METEOR_REACTIVITY_ORDER
+      value: "oplog,polling"
   # It needs to go here and not above to avoid a value conflict in the chart.
   secretEnv:
     - name: MONGO_URL
-      value: "mongodb://home-mongodb:27017/wekan?replicaSet=rs0"
+      value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
     - name: MONGO_OPLOG_URL
       value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
   extraEnvFrom: |
