@@ -221,6 +221,8 @@ wekan:
   env:
     - name: OIDC_REDIRECTION_ENABLED
       value: "false"
+  # It needs to go here and not above to avoid a value conflict in the chart.
+  secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017/wekan?replicaSet=rs0"
     - name: MONGO_OPLOG_URL
@@ -250,6 +252,8 @@ boards:
   env:
     - name: OIDC_REDIRECTION_ENABLED
       value: "true"
+  # It needs to go here and not above to avoid a value conflict in the chart.
+  secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017/wekan?replicaSet=rs0"
     - name: MONGO_OPLOG_URL
