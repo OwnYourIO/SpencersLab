@@ -239,6 +239,8 @@ wekan:
   ingress:
     enabled: false
   mongodb:
+    replicaSet:
+      name: rs0
     service:
       nameOverride: wekan-mongodb
 boards:
@@ -260,6 +262,8 @@ boards:
       memory: 200Mi
       cpu: 10m
   mongodb:
+    replicaSet:
+      name: rs0
     service:
       nameOverride: wekan-mongodb
 
