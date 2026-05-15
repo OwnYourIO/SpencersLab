@@ -144,6 +144,11 @@ proxy:
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=rallly&response_type=code&redirect_uri=https://polls.$.Values.domain/"
       ssoAllowedPaths:
         - '/invite/'
+        - '/_next/static/media/'
+        - '/_next/static/chunks/'
+        - 'favicon.ico'
+        - 'apple-touch-icon.png'
+        - 'apple-touch-icon-precomposed.png'
       loginSubDomain: "login"
     sms:
       target: playsms
