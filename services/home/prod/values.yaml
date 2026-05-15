@@ -227,9 +227,11 @@ wekan:
   # It needs to go here and not above to avoid a value conflict in the chart.
   secretEnv:
     - name: MONGO_URL
-      value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
+      value: "mongodb://home-mongodb:27017"
+      #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
     - name: MONGO_OPLOG_URL
-      value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
+      value: "mongodb://home-mongodb:27017"
+      #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
@@ -245,10 +247,10 @@ wekan:
   ingress:
     enabled: false
   mongodb:
-    architecture: replicaset
-    replicaCount: 1
-    replicaSet:
-      name: rs0
+    #architecture: replicaset
+    #replicaCount: 1
+    #replicaSet:
+    #  name: rs0
     service:
       nameOverride: wekan-mongodb
 boards:
