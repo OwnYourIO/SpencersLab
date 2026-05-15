@@ -240,6 +240,7 @@ wekan:
   ingress:
     enabled: false
   mongodb:
+    architecture: replicaset
     replicaSet:
       name: rs0
     service:
@@ -264,6 +265,7 @@ boards:
       memory: 200Mi
       cpu: 10m
   mongodb:
+    architecture: replicaset
     replicaSet:
       name: rs0
     service:
