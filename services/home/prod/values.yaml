@@ -227,10 +227,10 @@ wekan:
   # It needs to go here and not above to avoid a value conflict in the chart.
   secretEnv:
     - name: MONGO_URL
-      value: "mongodb://home-mongodb:27017"
+      value: "mongodb://home-mongodb:27017/local"
       #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
     - name: MONGO_OPLOG_URL
-      value: "mongodb://home-mongodb:27017"
+      value: "mongodb://home-mongodb:27017/local"
       #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
   extraEnvFrom: |
     - secretRef:
