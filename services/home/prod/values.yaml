@@ -229,9 +229,9 @@ wekan:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017/local"
       #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
-    - name: MONGO_OPLOG_URL
-      value: "mongodb://home-mongodb:27017/local"
-      #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
+    #- name: MONGO_OPLOG_URL
+    #  value: "mongodb://home-mongodb:27017/local"
+    #  #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
@@ -264,8 +264,8 @@ boards:
   secretEnv:
     - name: MONGO_URL
       value: "mongodb://home-mongodb:27017/local"
-    - name: MONGO_OPLOG_URL
-      value: "mongodb://home-mongodb:27017/local"
+    #- name: MONGO_OPLOG_URL
+    #  value: "mongodb://home-mongodb:27017/local"
   extraEnvFrom: |
     - secretRef:
         name: "wekan-sso"
