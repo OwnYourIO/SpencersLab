@@ -1,6 +1,6 @@
 apiVersion: v2
 name: traefik
-version: 1.0.92
+version: 1.0.93
 appVersion: 2.11.10
 dependencies:
 - name: traefik
