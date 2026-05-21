@@ -136,7 +136,7 @@ jellyfin:
         app:
           image:
             repository: jellyfin/jellyfin
-            tag: 10.11.6@sha256:333b647716631443a43c7fabac4b0c46b4e2f036bad19547e00958f10f721b85
+            tag: 10.11.9@sha256:bc9fa8e1462fffe3d8d4255fc62af478602641f4c0e5f4875fea8563d1189837
           env:
             TZ: America/Denver
             JELLYFIN_DATA_DIR: /config/data
