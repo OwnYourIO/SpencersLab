@@ -70,6 +70,11 @@ charts:
     namespace: default
     ServerSideApply: "true"
     chart: zigbee2mqtt
+  brother-ptouch-automation:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "false"
   pt750:
     #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -199,6 +204,10 @@ ingress:
       serviceName: pt750
       service: home-pt750
       port: 5000
+    brother-ptouch-automation:
+      serviceName: brother-ptouch-automation
+      service: home-brother-ptouch-automation
+      port: 80
     pt750:
       serviceName: pt750
       service: home-pt750
