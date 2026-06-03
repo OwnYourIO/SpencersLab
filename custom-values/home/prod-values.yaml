@@ -84,8 +84,8 @@ trustedIPs:
 
 pt750:
   bitwardenIds:
-    # Bitwarden Login item (reused from the retired brother-ptouch-automation
-    # entry; pt750's secret-pt750.yaml expects this key name):
-    #   Username → label-maker.spencerslab.com (or printer IP)
-    #   Password → unused
+    brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931
+
+brother-ptouch-automation:
+  bitwardenIds:
     brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931
