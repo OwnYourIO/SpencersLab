@@ -11567,6 +11567,22 @@ entries:
   pt750:
   - apiVersion: v2
     appVersion: 0.2.1
+    created: "2026-06-04T00:07:09.736460061Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    description: 'Web UI + HTTP API for printing labels on a Brother PT-P750W over
+      TCP, built on https://github.com/rpedde/pt750 (uvicorn + FastAPI + Jinja2).
+      Unlike the brother-ptouch-automation chart (which is API-only and upstream-dry-run-locked),
+      pt750 actually drives the printer end-to-end over tcp://printer:9100. '
+    digest: 42af734d47fd408c40b87f84e6a6a0ff2823c5c7ff70eba6f14898fc48b51d8a
+    name: pt750
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/pt750-1.0.2/pt750-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 0.2.1
     created: "2026-05-10T20:11:46.218189773Z"
     dependencies:
     - name: app-template
@@ -16719,4 +16735,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-05-16T08:35:03.943309756Z"
+generated: "2026-06-04T00:07:09.740067761Z"
