@@ -6,7 +6,7 @@ description: |
   Unlike the brother-ptouch-automation chart (which is API-only and
   upstream-dry-run-locked), pt750 actually drives the printer end-to-end
   over tcp://printer:9100.
-version: 1.0.1
+version: 1.0.2
 appVersion: 0.2.1
 dependencies:
 - name: app-template
