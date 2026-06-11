@@ -67,6 +67,25 @@ app-template:
             WEBSERVER_SERVER_NAME: playsms
             WEBSERVER_HTTP_PORT: 80
 
+        gammu:
+          image:
+            repository: valterseu/gammu-sms
+            tag: latest
+          env:
+            TZ: Etc/UTC
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          # Opening /dev/ttyUSB2 requires access to the host serial device.
+          # privileged is the blunt-but-reliable option for passing a raw
+          # character device into a container; see notes below for the
+          # device-plugin alternative if privileged is disallowed.
+          securityContext:
+            privileged: true
+
   service:
     playsms:
       controller: *chartName
@@ -103,3 +122,28 @@ app-template:
       globalMounts:
         - path: /etc/nginx/templates/default.conf.template
           subPath: default.conf.template
+    gammu-spool:
+      type: emptyDir
+      advancedMounts:
+        playsms:
+          playsms:
+            - path: /var/spool/gammu
+          gammu:
+            - path: /var/spool/gammu
+    gammu-config:
+      type: configMap
+      name: "{{ .Release.Name }}-gammu"
+      defaultMode: 0644
+      advancedMounts:
+        playsms:
+          gammu:
+            - path: /etc/gammu-smsdrc
+              subPath: gammu-smsdrc
+    modem:
+      type: hostPath
+      hostPath: /dev/ttyUSB2
+      hostPathType: CharDevice
+      advancedMounts:
+        playsms:
+          gammu:
+            - path: /dev/ttyUSB2
