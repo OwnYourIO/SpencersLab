@@ -94,7 +94,7 @@ app-template:
             - /bin/sh
             - -c
             - |
-              exec gammu-smsd --config /etc/gammu-smsdrc --debug-level 1
+              exec gammu-smsd --config /etc/gammu-smsdrc
           resources:
             requests:
               cpu: 50m
