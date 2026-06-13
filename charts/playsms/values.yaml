@@ -123,7 +123,7 @@ app-template:
         - path: /var/www/html
           subPath: web
         - path: /var/spool/gammu
-          subpath: gammu
+          subPath: gammu
 
     docker-setup:
       type: configMap
