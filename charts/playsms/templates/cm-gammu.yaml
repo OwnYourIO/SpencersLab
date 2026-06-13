@@ -8,7 +8,7 @@ data:
     [gammu]
     port = /dev/ttyUSB2
     connection = at115200
-    logfile = /var/log/gammu/gammu.log
+    logfile = /dev/stdout
     logformat = textall
 
     [smsd]
@@ -21,7 +21,7 @@ data:
     OutboxFormat = unicode
     TransmitFormat = auto
     debugLevel = 1
-    LogFile = /var/log/gammu/smsd.log
+    LogFile = /dev/stdout
     DeliveryReport = sms
     DeliveryReportDelay = 7200
     CheckSecurity = 0
