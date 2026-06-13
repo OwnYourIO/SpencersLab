@@ -106,6 +106,8 @@ app-template:
           subPath: home
         - path: /var/www/html
           subPath: web
+        - path: /var/spool/gammu
+          subpath: gammu
 
     docker-setup:
       type: configMap
@@ -122,23 +124,14 @@ app-template:
       globalMounts:
         - path: /etc/nginx/templates/default.conf.template
           subPath: default.conf.template
-    gammu-spool:
-      type: emptyDir
-      advancedMounts:
-        playsms:
-          playsms:
-            - path: /var/spool/gammu
-          gammu:
-            - path: /var/spool/gammu
     gammu-config:
       type: configMap
       name: "{{ .Release.Name }}-gammu"
       defaultMode: 0644
-      advancedMounts:
-        playsms:
-          gammu:
-            - path: /etc/gammu-smsdrc
-              subPath: gammu-smsdrc
+      globalMounts:
+        - path: /etc/gammu-smsdrc
+          subPath: gammu-smsdrc
+
     modem:
       type: hostPath
       hostPath: /dev/ttyUSB2
