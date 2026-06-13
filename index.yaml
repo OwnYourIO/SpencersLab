@@ -10649,6 +10649,18 @@ entries:
   playsms:
   - apiVersion: v2
     appVersion: 1.4.x
+    created: "2026-06-13T03:29:12.529815596Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    digest: 2494e04908a7471861f8061b218525d345cf42636d9b8d217b8771156ffc6fe4
+    name: playsms
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/playsms-1.0.27/playsms-1.0.27.tgz
+    version: 1.0.27
+  - apiVersion: v2
+    appVersion: 1.4.x
     created: "2026-06-13T01:01:59.268591662Z"
     dependencies:
     - name: app-template
@@ -16771,4 +16783,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-06-13T01:01:59.270066444Z"
+generated: "2026-06-13T03:29:12.530733979Z"
