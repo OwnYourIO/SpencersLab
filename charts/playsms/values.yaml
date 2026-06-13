@@ -10,6 +10,22 @@ app-template:
 
   controllers:
     playsms:
+      initContainers:
+        init-gammu-spool:
+          image:
+            repository: busybox
+            tag: stable
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /var/spool/gammu/inbox \
+                       /var/spool/gammu/outbox \
+                       /var/spool/gammu/sent \
+                       /var/spool/gammu/error
+              # match the UID/GID playSMS + gammu run as
+              chown -R 1000:1000 /var/spool/gammu
+              chmod -R 0775 /var/spool/gammu
       annotations:
         reloader.stakater.com/auto: "true"
       containers:
