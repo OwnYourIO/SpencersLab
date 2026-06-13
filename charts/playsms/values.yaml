@@ -89,6 +89,12 @@ app-template:
             tag: latest
           env:
             TZ: Etc/UTC
+          # Go straight to gammu and skip the existing command as it tries to run apache - not needed.
+          command:
+            - /bin/sh
+            - -c
+            - |
+              exec gammu-smsd --config /etc/gammu-smsdrc --debug-level 1
           resources:
             requests:
               cpu: 50m
