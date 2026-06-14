@@ -155,12 +155,3 @@ app-template:
       globalMounts:
         - path: /etc/gammu-smsdrc
           subPath: gammu-smsdrc
-
-    modem:
-      type: hostPath
-      hostPath: /dev/ttyUSB2
-      hostPathType: CharDevice
-      advancedMounts:
-        playsms:
-          gammu:
-            - path: /dev/ttyUSB2

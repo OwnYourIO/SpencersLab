@@ -7,7 +7,7 @@ data:
   gammu-smsdrc: |
     [gammu]
     port = /dev/ttyUSB2
-    connection = at115200
+    connection = at
     logfile = /dev/stdout
     logformat = textall
 
