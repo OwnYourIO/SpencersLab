@@ -99,8 +99,10 @@ app-template:
             requests:
               cpu: 50m
               memory: 64Mi
+              squat.ai/ec25: 1
             limits:
               memory: 256Mi
+              squat.ai/ec25: 1
           # Opening /dev/ttyUSB2 requires access to the host serial device.
           # privileged is the blunt-but-reliable option for passing a raw
           # character device into a container; see notes below for the
