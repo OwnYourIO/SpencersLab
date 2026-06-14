@@ -287,6 +287,7 @@ boards:
       cpu: 10m
   mongodb:
     architecture: replicaset
+    replicaCount: 1
     replicaSet:
       name: rs0
     service:
@@ -324,6 +325,11 @@ generic-device-plugin:
                 groups:
                   - paths:
                       - path: /dev/snd
+              - name: ec25
+                groups:
+                  - usb:
+                    - vendor: "2c7c"
+                      product: "0125"
 
 snapcast:
   app-template:
@@ -664,6 +670,7 @@ paperless:
           env:
             TZ: America/Denver
             SAMBA_HOSTS_ALLOW: "127.0.0.0/8 10.0.0.0/16 10.42.0.0/16"
+            # TODO: Make the URL generic via a secret. 
             SAMBA_SERVER_STRING: "documents-samba.spencerslab.com"
           resources:
             limits:
@@ -696,6 +703,17 @@ paperless:
                 failureThreshold: 3
             startup:
               enabled: false
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - smbclient -L //localhost -U % -m SMB3 | grep "Disk"
+                initialDelaySeconds: 0
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 10
   service:
     main:
       controller: main
@@ -862,7 +880,7 @@ karakeep:
             # This impacts SSO signups as well.
             DISABLE_SIGNUPS: false
             INFERENCE_TEXT_MODEL: 'gemma3:27b-it-qat'
-            INFERENCE_CONTEXT_LENGTH: 128000
+            INFERENCE_CONTEXT_LENGTH: 158000
             # Can't use oss-20b because you can't turn off thinking >_<
             #INFERENCE_TEXT_MODEL: 'gemma3:4b'
             #INFERENCE_CONTEXT_LENGTH: 12800
