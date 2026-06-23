@@ -15,15 +15,15 @@ WORKDIR /app
 # git is required because we install directly from the GitHub repo (upstream
 # isn't published to PyPI yet).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git \
-        libcairo2 \
-        libpango-1.0-0 \
-        libpangocairo-1.0-0 \
-        libgdk-pixbuf-2.0-0 \
-        libffi8 \
+    git \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi8 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir \
+RUN pip install -e --no-cache-dir \
     "label-printer[service,barcode,icons] @ git+https://github.com/harteWired/brother-ptouch-automation.git@${LABEL_PRINTER_VERSION}"
 
 # Non-root user (uid 65532). Note that the python:3.11-slim-bookworm base
