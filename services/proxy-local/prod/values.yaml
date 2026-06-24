@@ -149,6 +149,7 @@ proxy:
         - '/favicon.ico'
         - '/apple-touch-icon.png'
         - '/apple-touch-icon-precomposed.png'
+        - '/api/trpc/polls.participants.add'
       loginSubDomain: "login"
     sms:
       target: playsms
