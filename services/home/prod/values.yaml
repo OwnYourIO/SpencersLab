@@ -207,7 +207,7 @@ ingress:
     brother-ptouch-automation:
       serviceName: brother-ptouch-automation
       service: home-brother-ptouch-automation
-      port: 80
+      port: 8765
     pt750:
       serviceName: pt750
       service: home-pt750
