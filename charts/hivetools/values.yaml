@@ -73,9 +73,7 @@ mcp:
       spec:
         containers:
         - name: mcp
-          command: ["node"]
           args:
-            - "cli.js"
             - "--browser"
             - "firefox"
             - "--headless"
