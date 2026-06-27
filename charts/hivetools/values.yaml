@@ -75,6 +75,11 @@ mcp:
           fsGroup: 1000 
         containers:
         - name: mcp
+          env:
+            - name: XDG_CONFIG_HOME
+              value: /home/node/.cache
+            - name: XDG_CACHE_HOME
+              value: /home/node/.cache
           args:
             - "--headless"
             - "--port"
@@ -83,7 +88,6 @@ mcp:
             - "0.0.0.0"
             - --allowed-hosts
             - "*"
-            - '--no-crashpad'
           volumeMounts:
             - name: tmp
               mountPath: /tmp
