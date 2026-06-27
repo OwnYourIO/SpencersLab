@@ -83,6 +83,7 @@ mcp:
             - "0.0.0.0"
             - --allowed-hosts
             - "*"
+            - '--no-crashpad'
           volumeMounts:
             - name: tmp
               mountPath: /tmp
