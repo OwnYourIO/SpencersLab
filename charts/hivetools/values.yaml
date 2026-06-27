@@ -74,11 +74,13 @@ mcp:
         containers:
         - name: mcp
           args:
-            - "--browser"
-            - "firefox"
             - "--headless"
             - "--port"
-            - "8080"
+            - "8931"
+            - "--host"
+            - "0.0.0.0"
+            - --allowed-hosts
+            - "*"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
@@ -86,6 +88,8 @@ mcp:
               mountPath: /.cache
             - name: output
               mountPath: /output
+        mcpPort: 8931
+        proxyPort: 8080
         volumes:
           # Critical: /tmp for browser profiles and temporary data
           - name: tmp
