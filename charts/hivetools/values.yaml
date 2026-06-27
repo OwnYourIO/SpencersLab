@@ -71,6 +71,8 @@ mcp:
         memory: '128Mi'
     podTemplateSpec:
       spec:
+        securityContext:
+          fsGroup: 1000 
         containers:
         - name: mcp
           args:
