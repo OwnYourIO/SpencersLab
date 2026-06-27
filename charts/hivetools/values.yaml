@@ -65,7 +65,7 @@ mcp:
     resources:
       limits:
         cpu: '200m'
-        memory: '256Mi'
+        memory: '2Gi'
       requests:
         cpu: '100m'
         memory: '128Mi'
