@@ -85,7 +85,7 @@ mcp:
             - name: tmp
               mountPath: /tmp
             - name: cache
-              mountPath: /.cache
+              mountPath: /home/node/.cache
             - name: output
               mountPath: /output
         mcpPort: 8931
