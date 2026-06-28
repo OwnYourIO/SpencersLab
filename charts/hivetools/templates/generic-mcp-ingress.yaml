@@ -33,7 +33,7 @@ spec:
               service:
                 name: mcp-{{ $name }}-proxy
                 port:
-                  number: {{ $config.port | required (printf "mcp.%s.port is required" $name) }}
+                  number: {{ $config.podTemplateSpec.spec.port | required (printf "mcp.%s.podTemplateSpec.spec.port is required" $name) }}
 {{- end }}
 {{- end }}
 {{- end }}
