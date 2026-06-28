@@ -121,7 +121,6 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/git:latest
     transport: stdio
-    port: 8080
     resources:
       limits:
         cpu: '100m'
@@ -132,6 +131,7 @@ mcp:
     # TODO: It's also requiring the container run as root >_<.
     podTemplateSpec:
       spec:
+        port: 8080
         containers:
         - name: mcp
           securityContext:
@@ -163,7 +163,6 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/fetch
     transport: stdio
-    port: 8080
     targetPort: 8080
     resources:
       limits:
@@ -175,6 +174,7 @@ mcp:
     # TODO: It's also requiring the container run as root >_<.
     podTemplateSpec:
       spec:
+        port: 8080
         containers:
         - name: mcp
           securityContext:
@@ -188,7 +188,6 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/filesystem:latest
     transport: stdio
-    port: 8080
     resources:
       limits:
         cpu: '100m'
@@ -198,6 +197,7 @@ mcp:
         memory: '64Mi'
     podTemplateSpec:
       spec:
+        port: 8080
         volumes:
           - name: knowledge
             persistentVolumeClaim:
@@ -218,7 +218,6 @@ mcp:
     enabled: true
     image: ghcr.io/1mcp-app/agent:v0.29.2
     transport: streamable-http
-    port: 3050
     targetPort: 3050
     resources:
       limits:
@@ -231,6 +230,7 @@ mcp:
     # Required: 1MCP needs to write config to /home/node/.config/1mcp
     podTemplateSpec:
       spec:
+        port: 3050
         volumes:
           - name: onemcp-config
             emptyDir: {}
