@@ -60,7 +60,6 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcr.microsoft.com/playwright/mcp:latest
     transport: streamable-http
-    port: 8080
     targetPort: 8080
     resources:
       limits:
