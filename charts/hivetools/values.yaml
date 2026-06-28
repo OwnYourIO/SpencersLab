@@ -88,7 +88,7 @@ mcp:
             - --allowed-hosts
             - "*"
             - "--output-dir"
-            - "/output"
+            - "/home/node/.cache/"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
