@@ -88,6 +88,8 @@ mcp:
             - "0.0.0.0"
             - --allowed-hosts
             - "*"
+            - "--output-dir"
+            - "/output"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
