@@ -72,6 +72,7 @@ mcp:
     podTemplateSpec:
       spec:
         port: 8080
+        targetPort: 8080
         securityContext:
           fsGroup: 1000 
         containers:
