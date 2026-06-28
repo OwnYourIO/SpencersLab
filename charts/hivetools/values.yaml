@@ -60,8 +60,8 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcr.microsoft.com/playwright/mcp:latest
     transport: streamable-http
-    port: 8080
-    targetPort: 8080
+    mcpPort: 8931
+    proxyPort: 8080
     resources:
       limits:
         cpu: '200m'
@@ -71,8 +71,6 @@ mcp:
         memory: '128Mi'
     podTemplateSpec:
       spec:
-        port: 8080
-        targetPort: 8080
         securityContext:
           fsGroup: 1000 
         containers:
@@ -99,7 +97,6 @@ mcp:
               mountPath: /home/node/.cache
             - name: output
               mountPath: /output
-        mcpPort: 8931
         volumes:
           # Critical: /tmp for browser profiles and temporary data
           - name: tmp
@@ -123,7 +120,7 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/git:latest
     transport: stdio
-    port: 8080
+    mcpPort: 8080
     resources:
       limits:
         cpu: '100m'
@@ -134,7 +131,6 @@ mcp:
     # TODO: It's also requiring the container run as root >_<.
     podTemplateSpec:
       spec:
-        targetPort: 8080
         containers:
         - name: mcp
           securityContext:
@@ -147,7 +143,7 @@ mcp:
     enabled: true
     image: ghcr.io/github/github-mcp-server:v0.30.3
     transport: stdio
-    port: 8080
+    mcpPort: 8080
     resources:
       limits:
         cpu: '100m'
@@ -166,8 +162,7 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/fetch
     transport: stdio
-    port: 8080
-    targetPort: 8080
+    mcpPort: 8080
     resources:
       limits:
         cpu: '100m'
@@ -178,7 +173,6 @@ mcp:
     # TODO: It's also requiring the container run as root >_<.
     podTemplateSpec:
       spec:
-        targetPort: 8080
         containers:
         - name: mcp
           securityContext:
@@ -192,7 +186,7 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/filesystem:latest
     transport: stdio
-    port: 8080
+    mcpPort: 8080
     resources:
       limits:
         cpu: '100m'
@@ -202,7 +196,6 @@ mcp:
         memory: '64Mi'
     podTemplateSpec:
       spec:
-        targetPort: 8080
         volumes:
           - name: knowledge
             persistentVolumeClaim:
@@ -223,8 +216,7 @@ mcp:
     enabled: true
     image: ghcr.io/1mcp-app/agent:v0.29.2
     transport: streamable-http
-    port: 3050
-    targetPort: 3050
+    mcpPort: 3050
     resources:
       limits:
         cpu: '200m'
@@ -236,7 +228,6 @@ mcp:
     # Required: 1MCP needs to write config to /home/node/.config/1mcp
     podTemplateSpec:
       spec:
-        targetPort: 8080
         volumes:
           - name: onemcp-config
             emptyDir: {}
@@ -252,7 +243,7 @@ mcp:
     # TODO: This should be versioned, but microsoft is only shipping latest >_<.
     image: mcp/sequentialthinking:latest
     transport: stdio
-    port: 8080
+    mcpPort: 8080
     resources:
       limits:
         cpu: '100m'
@@ -266,8 +257,7 @@ mcp:
     enabled: false
     image: ghcr.io/mendableai/firecrawl-mcp
     transport: streamable-http
-    port: 8080
-    targetPort: 8080
+    mcpPort: 8080
     resources:
       limits:
         cpu: '200m'
