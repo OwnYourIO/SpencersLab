@@ -134,6 +134,7 @@ mcp:
     # TODO: It's also requiring the container run as root >_<.
     podTemplateSpec:
       spec:
+        targetPort: 8080
         containers:
         - name: mcp
           securityContext:
@@ -177,6 +178,7 @@ mcp:
     # TODO: It's also requiring the container run as root >_<.
     podTemplateSpec:
       spec:
+        targetPort: 8080
         containers:
         - name: mcp
           securityContext:
@@ -200,6 +202,7 @@ mcp:
         memory: '64Mi'
     podTemplateSpec:
       spec:
+        targetPort: 8080
         volumes:
           - name: knowledge
             persistentVolumeClaim:
@@ -233,6 +236,7 @@ mcp:
     # Required: 1MCP needs to write config to /home/node/.config/1mcp
     podTemplateSpec:
       spec:
+        targetPort: 8080
         volumes:
           - name: onemcp-config
             emptyDir: {}
