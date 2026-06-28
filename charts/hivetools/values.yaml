@@ -89,6 +89,8 @@ mcp:
             - "*"
             - "--output-dir"
             - "/home/node/.cache/"
+            - "--user-data-dir"
+            - "/home/node/.cache/ms-playwright-mcp"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
