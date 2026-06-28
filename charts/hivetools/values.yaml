@@ -57,8 +57,7 @@ mcp:
   # Playwright MCP Server - Browser automation
   playwright:
     enabled: true
-    # TODO: This should be versioned, but microsoft is only shipping latest >_<.
-    image: mcr.microsoft.com/playwright/mcp:latest
+    image:  mcr.microsoft.com/playwright/mcp:v0.0.70
     transport: streamable-http
     mcpPort: 8931
     proxyPort: 8080
