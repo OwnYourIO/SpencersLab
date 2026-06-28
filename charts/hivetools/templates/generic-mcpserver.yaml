@@ -16,7 +16,6 @@ spec:
   {{- if $config.targetPort }}
   targetPort: {{ $config.targetPort }}
   {{- end }}
-  port: {{ $config.port | required (printf "mcp.%s.port is required" $name) }}
   {{- if $config.args }}
   args:
     {{- toYaml $config.args | nindent 4 }}
