@@ -13,9 +13,6 @@ metadata:
 spec:
   image: {{ $config.image | required (printf "mcp.%s.image is required" $name) }}
   transport: {{ $config.transport | required (printf "mcp.%s.transport is required" $name) }}
-  {{- if $config.targetPort }}
-  targetPort: {{ $config.targetPort }}
-  {{- end }}
   {{- if $config.args }}
   args:
     {{- toYaml $config.args | nindent 4 }}
