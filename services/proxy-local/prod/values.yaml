@@ -150,6 +150,7 @@ proxy:
         - '/apple-touch-icon.png'
         - '/apple-touch-icon-precomposed.png'
         - '/api/trpc/polls.participants.add'
+        - '/api/better-auth/sign-in/anonymous'
       loginSubDomain: "login"
     sms:
       target: playsms
