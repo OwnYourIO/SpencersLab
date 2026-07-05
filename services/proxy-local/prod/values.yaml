@@ -111,6 +111,7 @@ proxy:
         - "/status"
         - "/api/authorize"
         - "/auth/refresh"
+        - "/ping"
     pictures:
       target: immich
       ssoRedirectPath: "/auth/login"
