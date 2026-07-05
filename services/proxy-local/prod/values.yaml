@@ -105,7 +105,9 @@ proxy:
       ssoRedirectPath: "/sso/OID/start/login.$.Values.domain"
     audiobook-player:
       target: audiobookshelf
-      ssoRedirectPath: "/audiobookshelf/auth/openid?callback=https://audiobook-player.$.Values.domain/audiobookshelf/login/"
+      #ssoRedirectPath: "/audiobookshelf/auth/openid?callback=https://audiobook-player.$.Values.domain/audiobookshelf/login/"
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=audiobookshelf&response_type=code&redirect_uri=https://audiobook-player.$.Values.domain/audiobookshelf/login/"
+      loginSubDomain: "login"
       ssoAllowedPaths:
         - "/auth/openid"
         - "/status"
