@@ -110,6 +110,7 @@ proxy:
         - "/auth/openid"
         - "/status"
         - "/api/authorize"
+        - "/auth/refresh"
     pictures:
       target: immich
       ssoRedirectPath: "/auth/login"
