@@ -57,7 +57,7 @@ mcp:
   # Playwright MCP Server - Browser automation
   playwright:
     enabled: true
-    image:  mcr.microsoft.com/playwright/mcp:v0.0.70
+    image:  mcr.microsoft.com/playwright/mcp:v0.0.78
     transport: streamable-http
     mcpPort: 8931
     proxyPort: 8080
