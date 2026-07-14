@@ -7,4 +7,5 @@ services/**/charts
 **/infra-2/
 **/email/*
 .hugo_build.lock
-
+.agents/skills
+Home-Assistant-Label-based-Features

@@ -13,8 +13,8 @@ app-template:
         reloader.stakater.com/auto: "true"
       pod:
         securityContext:
-          runAsUser: &uid 1000
-          runAsGroup: &gid 2000
+          # LinuxServer.io images need to run as root initially for setup
+          # They handle user switching internally via PUID/PGID env vars
           fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
           supplementalGroups:

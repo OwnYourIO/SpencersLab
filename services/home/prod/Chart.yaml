@@ -39,11 +39,14 @@ dependencies:
 - name: wekan
   version: 9.18.0
   repository: https://wekan.github.io/charts/
+  # changelog: https://github.com/wekan/wekan
 # Have to split wekan into 2 pods to handle 2 urls. 
 - name: wekan
   version: 9.18.0
   repository: https://wekan.github.io/charts/
+  # changelog: https://github.com/wekan/wekan
   alias: boards
+
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 4.6.2

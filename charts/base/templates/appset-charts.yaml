@@ -94,13 +94,15 @@ spec:
             # Merge order (highest to lowest precedence):
             #   1. Per-app custom values from cluster annotation: services.{serviceName}.{appName}.customValues (YAML)
             #   2. Service-wide custom values from cluster annotation: services.{serviceName}.customValues (YAML)
-            #   3. Base values from the list element's .values field
+            #   3. Service-level global values (e.g., shared-storage from services/{category}/prod/values.yaml)
+            #   4. Base values from the list element's .values field (app-specific config from services/{category}/prod/values.yaml)
             # Usage: Set cluster annotations in ArgoCD to provide service-wide or app-specific value overrides.
             #   Example service-wide: services.gpu.customValues='replicas: 2
             #     resources:
             #       limits:
             #         memory: 1Gi'
             #   Example app-specific: services.gpu.ollama.customValues='replicas: 3'
+            # Note: Service-level global values like shared-storage are read from the service values and merged into all charts
             {{ `{{- $serviceCustomValues := index .metadata.annotations (printf "services.%s.customValues" .serviceName) | default "" | fromYaml | default dict }}` }}
             {{ `{{- $appCustomValues := index .metadata.annotations (printf "services.%s.%s.customValues" .serviceName .appName) | default "" | fromYaml | default dict }}` }}
             {{ `{{- $baseValues := dict }}` }}

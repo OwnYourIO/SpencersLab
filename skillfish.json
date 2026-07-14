@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "skills": [
+    "tonylofgren/aurora-smart-home/ha-integration-dev",
+    "homeassistant-ai/skills/skills/home-assistant-best-practices"
+  ]
+}

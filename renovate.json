@@ -76,6 +76,28 @@
         "\\s*#*\\s*appName:\\s*(?<depName>[^\\s#]+)\\s*#\\s*renovate:\\s*datasource=helm\\s+registryUrl=(?<registryUrl>\\S+)\\s*\\n\\s*baseChartVersion:\\s*(?<currentValue>[\\d.]+)"
       ],
       "datasourceTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Pin git-installed Python pkgs in Dockerfiles via renovate comment on the line above an ARG line. Tracks GitHub tags/commits/releases.",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>github-tags|github-releases|git-refs)\\s+depName=(?<depName>[^\\s]+)\\s*\\nARG\\s+\\w+=(?<currentValue>[a-f0-9]{7,40}|v?\\d[\\w.+-]*)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Override changelog/source URL for Helm chart deps via inline '# changelog:' or '# sourceUrl:' comment on the line after the repository line. Lets us point Renovate at upstream GitHub releases when the helm index.yaml lacks a sources field.",
+      "managerFilePatterns": [
+        "/Chart\\.ya?ml$/",
+        "/values\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "-\\s*name:\\s*(?<depName>[a-zA-Z0-9_-]+)\\s*\\n\\s*version:\\s*(?<currentValue>[\\d.]+)\\s*\\n\\s*repository:\\s*(?<registryUrl>\\S+)\\s*\\n\\s*#\\s*(changelog|sourceUrl):\\s*(?<sourceUrl>\\S+)"
+      ],
+      "datasourceTemplate": "helm"
     }
   ],
   "customDatasources": {

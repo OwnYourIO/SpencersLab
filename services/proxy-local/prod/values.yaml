@@ -472,7 +472,9 @@ pinchflat:
         app:
           image:
             repository: ghcr.io/kieraneglin/pinchflat
+            # TODO: It'd be nice to pin this and have it updated automatically.
             tag: latest
+            pullPolicy: Always
           env:
             TZ: America/Denver
             TZ_DATA_DIR: /tmp/elixir_tz_data

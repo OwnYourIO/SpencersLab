@@ -37,6 +37,8 @@ toolhive-operator:
     # Number of operator replicas
     replicaCount: 1
     
+    # ToolHive runner image version
+    #toolhiveRunnerImage: ghcr.io/stacklok/toolhive:v0.4.0
     
     # RBAC configuration
     rbac:
@@ -157,6 +159,19 @@ mcp:
         key: GITHUB_PERSONAL_ACCESS_TOKEN
         targetEnvName: GITHUB_PERSONAL_ACCESS_TOKEN
 
+  # Docling MCP Server - Document processing
+  # Latest version: v1.0.1 (PyPI)
+  # Example 1MCP config:
+  #   "docling": {
+  #     "command": "uvx",
+  #     "args": ["--from", "docling-mcp", "docling-mcp-server", "--transport", "stdio"]
+  #   }
+  # docling:
+  #   enabled: false
+  #   transport: streamable-http
+  #   port: 8080
+  #   targetPort: 8080
+
   # Fetch MCP Server - HTTP fetching and web scraping
   fetch:
     enabled: true
@@ -231,12 +246,45 @@ mcp:
       spec:
         volumes:
           - name: onemcp-config
+            # TODO: Make local?
             emptyDir: {}
         containers:
           - name: mcp
             volumeMounts:
               - mountPath: /home/node/.config/1mcp
                 name: onemcp-config
+    # Configuration for 1MCP to add MCP servers
+    # Example: Configure to add docling server
+    # podTemplateSpec:
+    #   spec:
+    #     containers:
+    #       - name: mcp
+    #         env:
+    #           - name: PYTHONIOENCODING
+    #             value: utf-8
+    #           - name: MCP_CONFIG
+    #             value: |
+    #               {
+    #                 "mcpServers": {
+    #                   "docling": {
+    #                     "command": "uvx",
+    #                     "args": ["--from", "docling-mcp", "docling-mcp-server", "--transport", "stdio"]
+    #                   }
+    #                 }
+    #               }
+
+  # Spec Driven Development MCP Server
+  # Repository: github.com/formulahendry/mcp-server-spec-driven-development
+  # Example 1MCP config:
+  #   "spec-driven-dev": {
+  #     "command": "npx",
+  #     "args": ["-y", "mcp-server-spec-driven-development@latest"]
+  #   }
+  # spec-driven-development:
+  #   enabled: false
+  #   transport: streamable-http
+  #   port: 8080
+  #   targetPort: 8080
 
   # Sequential Thinking MCP Server
   sequential-thinking:
@@ -255,7 +303,7 @@ mcp:
 
   # Firecrawl MCP Server - Advanced web scraping
   firecrawl:
-    enabled: false
+    enabled: true
     image: ghcr.io/mendableai/firecrawl-mcp
     transport: streamable-http
     mcpPort: 8080

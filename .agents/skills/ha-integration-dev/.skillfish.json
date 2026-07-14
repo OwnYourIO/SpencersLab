@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "ha-integration-dev",
+  "owner": "tonylofgren",
+  "repo": "aurora-smart-home",
+  "path": "ha-integration-dev",
+  "branch": "main",
+  "sha": "4ba8329dfac7b760feff59f191e439184a15a16a",
+  "source": "manifest"
+}
