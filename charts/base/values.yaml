@@ -29,6 +29,7 @@ proxy:
   middlewares:
     entrypoint: ""
 
+# TODO: add prometheus monitoring agent and the bitwarden ESO to this? See if it gets merged together or if incoming things override this.
 charts:
 
 cert-manager:

@@ -63,10 +63,14 @@ charts:
     namespace: default
     ServerSideApply: "true"
   zigbee2mqtt-coord:
+    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
     chart: zigbee2mqtt
   zigbee2mqtt-remote:
+    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
     chart: zigbee2mqtt
@@ -236,6 +240,7 @@ wekan:
   # It needs to go here and not above to avoid a value conflict in the chart.
   secretEnv:
     - name: MONGO_URL
+      # TODO: Fix this usage of home.
       value: "mongodb://home-mongodb:27017"
       #value: "mongodb://home-mongodb:27017/local?replicaSet=rs0"
     #- name: MONGO_OPLOG_URL
@@ -272,6 +277,7 @@ boards:
   # It needs to go here and not above to avoid a value conflict in the chart.
   secretEnv:
     - name: MONGO_URL
+      # TODO: Fix this usage of home.
       value: "mongodb://home-mongodb:27017"
     #- name: MONGO_OPLOG_URL
     #  value: "mongodb://home-mongodb:27017/local"
@@ -363,6 +369,7 @@ snapcast:
     persistence:
       snapserver:
         type: configMap
+        # TODO: when moving this to a chart, restore {{ .Release.Name }}
         name: "home-snapcast"
         globalMounts:
           - path: /etc/snapserver.conf
@@ -435,6 +442,7 @@ ledfx:
               - path: /app/ledfx-config/
       entrypoint-override:
         type: configMap
+        # TODO: when moving this to a chart, restore {{ .Release.Name }}
         name: 'home-ledfx'
         defaultMode: 0777
         globalMounts:
@@ -528,6 +536,7 @@ logitech-media-server:
           - path: /music
       init-config-map:
         type: configMap
+        # TODO: when moving this to a chart, restore {{ .Release.Name }}
         name: 'home-logitech-media-server'
         defaultMode: 0777
         globalMounts:
@@ -569,6 +578,7 @@ paperless:
             PAPERLESS_CONSUMPTION_DIR: /paperless/consume
             PAPERLESS_DATA_DIR: /paperless/data
             PAPERLESS_MEDIA_ROOT: /paperless/media
+            #PAPERLESS_FILENAME_FORMAT: '{{ `{{ created_year }}/{{ correspondent }}/{{ title }}` }}'
             PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: true
             PAPERLESS_CONSUMER_POLLING: 60
             # Aiming for 30 minute timeout.
@@ -787,6 +797,7 @@ paperless:
               readOnly: true
 
     config:
+        # TODO: when moving this to a chart, restore {{ .Release.Name }}
       name: "home-paperless"
       type: configMap
       advancedMounts:
@@ -1173,6 +1184,7 @@ hugo-help:
     persistence:
       hugo-yaml:
         type: configMap
+        # TODO: when moving this to a chart, restore {{ .Release.Name }}
         name: "home-hugo-help"
         defaultMode: 0777
         globalMounts:

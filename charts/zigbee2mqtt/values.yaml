@@ -55,6 +55,12 @@ app-template:
             requests:
               cpu: 10m
             limits:
+              # TODO: 
+              # This is causing problems because I want to disable it for new containers.
+              # Do I want it to be optional, or just force people to deeply nest the config if they want it.
+              # It may be easier to set it after the fact that before and try to override. Mostly because this is in the value.yaml file. So templates aren't usually helpful... Could try 0 or 1 though.
+              # I also have to decide what to do about the squat.ai cm side of this.
+              #squat.ai/zigbee: 1
               memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false

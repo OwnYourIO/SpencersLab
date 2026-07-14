@@ -131,6 +131,238 @@ custom-values/{service-name}/
 # CRITICAL: Service values.yaml provides default configuration for all charts in that service
 ```
 
+## Chart Field for Multiple Deployments (Advanced)
+
+### Overview
+
+The `chart` field in the ApplicationSet configuration allows you to deploy the same Helm chart multiple times with different release names and configurations. This is useful when you need to run multiple instances of the same service with different settings.
+
+### How It Works
+
+Without the `chart` field:
+- `appName` is used for both the release name AND the chart location
+- Example: `zigbee2mqtt` → Release: `home-zigbee2mqtt`, Chart: `charts/zigbee2mqtt`
+
+With the `chart` field:
+- `appName` is used for the release name
+- `chart` field specifies the actual chart location
+- Example: `zigbee2mqtt-new` with `chart: zigbee2mqtt` → Release: `home-zigbee2mqtt-new`, Chart: `charts/zigbee2mqtt`
+
+### Configuration Syntax
+
+```yaml
+# In services/{category}/prod/values.yaml
+charts:
+  # Standard deployment (no chart field)
+  zigbee2mqtt:
+    namespace: default
+    ServerSideApply: "true"
+    # Uses: Release=home-zigbee2mqtt, Chart=charts/zigbee2mqtt
+  
+  # Additional deployment with different name (using chart field)
+  zigbee2mqtt-remote:
+    namespace: default
+    ServerSideApply: "true"
+    chart: zigbee2mqtt
+    # Uses: Release=home-zigbee2mqtt-remote, Chart=charts/zigbee2mqtt
+  
+  # Works with Helm repositories too
+  my-custom-deployment:
+    version: 1.0.0
+    repository: https://charts.example.com/
+    namespace: default
+    ServerSideApply: "false"
+    chart: actual-chart-name
+    # Uses: Release=service-my-custom-deployment, Chart=actual-chart-name from repo
+```
+
+### Use Cases
+
+1. **Multiple Instances with Different Configs**
+   ```yaml
+   zigbee2mqtt:
+     # Primary instance for main Zigbee controller
+     namespace: default
+     ServerSideApply: "true"
+   
+   zigbee2mqtt-remote:
+     # Secondary instance for remote location
+     namespace: default
+     ServerSideApply: "true"
+     chart: zigbee2mqtt
+   ```
+
+2. **Testing Different Versions**
+   ```yaml
+   myapp-stable:
+     version: 2.0.0
+     repository: https://charts.example.com/
+     namespace: default
+     chart: myapp
+   
+   myapp-beta:
+     version: 3.0.0-beta
+     repository: https://charts.example.com/
+     namespace: default
+     chart: myapp
+   ```
+
+3. **Different Configurations from Same Chart**
+   ```yaml
+   database-primary:
+     namespace: default
+     chart: postgresql-ha
+   
+   database-replica:
+     namespace: default
+     chart: postgresql-ha
+   ```
+
+### Configuration via Service Values
+
+Each deployment can have its own configuration in the service values.yaml:
+
+```yaml
+# In services/home/prod/values.yaml
+charts:
+  zigbee2mqtt:
+    namespace: default
+    chart: zigbee2mqtt  # Optional if name matches
+  
+  zigbee2mqtt-remote:
+    namespace: default
+    chart: zigbee2mqtt  # Required - points to the actual chart
+
+# Chart-specific configurations
+zigbee2mqtt:
+  bitwardenIds:
+    zigbee2mqtt: uuid-for-primary
+  app-template:
+    controllers:
+      zigbee2mqtt:
+        containers:
+          main:
+            env:
+              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee.example.com
+              ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyUSB1
+
+zigbee2mqtt-remote:
+  bitwardenIds:
+    zigbee2mqtt: uuid-for-remote
+  app-template:
+    controllers:
+      zigbee2mqtt:
+        containers:
+          main:
+            env:
+              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: https://zigbee-remote.example.com
+              ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyUSB2
+```
+
+### Implementation Details
+
+The ApplicationSet template uses conditional logic to check for the `chart` field:
+
+```yaml
+# In charts/base/templates/appset-charts.yaml
+{{- if hasKey . "version" }}
+chart: "{{ if hasKey . "chart" }}{{ .chart }}{{ else }}{{ .appName }}{{ end }}"
+{{- else }}
+path: "charts/{{ if hasKey . "chart" }}{{ .chart }}{{ else }}{{ .appName }}{{ end }}"
+{{- end }}
+```
+
+This logic:
+1. Checks if the `chart` field exists using `hasKey`
+2. If present, uses `.chart` for the chart name/path
+3. If absent, falls back to `.appName` (backward compatible)
+4. Works for both Helm chart repositories and git-based charts
+
+### Best Practices
+
+1. **Use Descriptive Release Names**: Make it clear what each instance is for
+   - ✅ `zigbee2mqtt-remote`, `zigbee2mqtt-basement`
+   - ❌ `zigbee2mqtt-1`, `zigbee2mqtt-2`
+
+2. **Separate Configurations**: Use values injection to provide different configs
+   ```yaml
+   zigbee2mqtt-remote:
+     chart: zigbee2mqtt
+   # Configuration via values
+   {{- if index .Values "zigbee2mqtt-remote" }}
+   values: {{ index .Values "zigbee2mqtt-remote" | toJson }}
+   {{- end }}
+   ```
+
+3. **Proxy Configuration**: Update ingress subdomains for each instance
+   ```yaml
+   ingress:
+     subdomains:
+       zigbee:
+         service: home-zigbee2mqtt
+         port: 8080
+       zigbee-remote:
+         service: home-zigbee2mqtt-remote
+         port: 8080
+   ```
+
+4. **Custom Values**: Each instance can have its own custom-values file
+   ```bash
+   custom-values/zigbee2mqtt/prod-values.yaml
+   custom-values/zigbee2mqtt-remote/prod-values.yaml
+   ```
+
+### Common Patterns
+
+#### Pattern 1: Regional Deployments
+```yaml
+charts:
+  service-us-east:
+    chart: myservice
+    namespace: default
+  service-eu-west:
+    chart: myservice
+    namespace: default
+```
+
+#### Pattern 2: Environment Variants
+```yaml
+charts:
+  app-production:
+    version: 2.0.0
+    chart: myapp
+    namespace: prod
+  app-staging:
+    version: 2.1.0-rc
+    chart: myapp
+    namespace: staging
+```
+
+#### Pattern 3: Feature Branches
+```yaml
+charts:
+  service-main:
+    chart: myservice
+    namespace: default
+  service-feature-x:
+    chart: myservice
+    namespace: default
+```
+
+### Troubleshooting
+
+**Issue**: `charts/{appName}: app path does not exist`
+- **Cause**: ArgoCD is looking for a chart with the release name, not the chart name
+- **Solution**: Ensure the `chart` field is set in the values.yaml AND the changes have been committed/synced to ArgoCD
+
+**Issue**: Both instances have the same configuration
+- **Cause**: Not using values injection or separate configuration sections
+- **Solution**: Create separate configuration blocks in values.yaml with names matching your appNames
+
+**Issue**: Ingress conflicts between instances
+- **Cause**: Both instances trying to use the same ingress subdomain
+- **Solution**: Configure different subdomains for each instance in the ingress section
+
 ## Implementation Blueprint
 
 ### Pre-Creation Analysis (CRITICAL - DO THIS FIRST)
@@ -175,6 +407,7 @@ Architecture Analysis:
   - Single container: Simple app-template pattern
   - Multi-container: Complex app-template with multiple containers
   - Database requirement: PostgreSQL cluster needed?
+  - Vector database requirement: Does PostgreSQL need pgvector extension?
   - Storage requirement: PVC needed for persistent data?
   - Dependencies: Redis, other services needed?
 
@@ -234,8 +467,9 @@ CREATE charts/{service-name}/templates/
 Task 2 - Core Chart Files:
 CREATE charts/{service-name}/Chart.yaml:
   - PATTERN: Follow existing Chart.yaml structure
-  - MODIFY: name, version (1.0.0), appVersion (latest)
-  - PRESERVE: app-template dependency v4.2.0
+  - MODIFY: name, version (1.0.0), appVersion (latest from Docker Hub)
+  - IMPORTANT: Check bjw-s-labs.github.io/helm-charts for latest app-template version
+  - Use latest stable app-template version (e.g., 4.3.0, not the example 4.2.0 shown here)
 
 CREATE charts/{service-name}/Chart.lock:
   - MIRROR: Existing Chart.lock files
