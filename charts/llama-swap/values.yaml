@@ -30,40 +30,98 @@ config:
   # Macros for reusable configuration
   macros:
     "server-cmd": "/llama-server --port ${PORT} --host 0.0.0.0"
-    "models-dir": "/models"
 
   # Model definitions
+  # Models are downloaded automatically from HuggingFace via the -hf flag
+  # and cached on the models PVC (LLAMA_CACHE=/models).
   models:
-    # Qwen 3.6 27B
-    "qwen3.6-27b":
+    # Qwen 3.6 27B (Q6_K)
+    "qwen3.6-27b-q6":
       cmd: |
         ${server-cmd}
-        --model ${models-dir}/qwen3.6-27b/qwen3.6-27b.gguf
-        --ctx-size 8192
-      name: "Qwen 3.6 27B"
-      description: "Qwen 3.6 27B general purpose model"
+        -hf unsloth/Qwen3.6-27B-GGUF:Q6_K
+        --ctx-size 262144
+        # Uncomment to reduce KV-cache VRAM usage at long context:
+        # --flash-attn on
+        # --cache-type-k q8_0
+        # --cache-type-v q8_0
+      name: "Qwen 3.6 27B (Q6_K)"
+      description: "Qwen 3.6 27B general purpose model, Q6_K quant"
       proxy: http://localhost:${PORT}
       ttl: 0
 
-    # Qwen 3 Coder Next
-    "qwen3-coder-next":
+    # Qwen 3.6 27B (Q8_0)
+    "qwen3.6-27b-q8":
       cmd: |
         ${server-cmd}
-        --model ${models-dir}/qwen3-coder-next/qwen3-coder-next.gguf
-        --ctx-size 16384
-      name: "Qwen 3 Coder Next"
-      description: "Qwen 3 Coder Next coding model"
+        -hf unsloth/Qwen3.6-27B-GGUF:Q8_0
+        --ctx-size 262144
+        # Uncomment to reduce KV-cache VRAM usage at long context:
+        # --flash-attn on
+        # --cache-type-k q8_0
+        # --cache-type-v q8_0
+      name: "Qwen 3.6 27B (Q8_0)"
+      description: "Qwen 3.6 27B general purpose model, Q8_0 quant"
       proxy: http://localhost:${PORT}
       ttl: 0
 
-    # Qwen 3.6 35B A3B
-    "qwen3.6-35b-a3b":
+    # Qwen 3 Coder Next (Q6_K)
+    "qwen3-coder-next-q6":
       cmd: |
         ${server-cmd}
-        --model ${models-dir}/qwen3.6-35b-a3b/qwen3.6-35b-a3b.gguf
-        --ctx-size 8192
-      name: "Qwen 3.6 35B A3B"
-      description: "Qwen 3.6 35B with 3B active parameters (MoE)"
+        -hf unsloth/Qwen3-Coder-Next-GGUF:Q6_K
+        --ctx-size 262144
+        # Uncomment to reduce KV-cache VRAM usage at long context:
+        # --flash-attn on
+        # --cache-type-k q8_0
+        # --cache-type-v q8_0
+      name: "Qwen 3 Coder Next (Q6_K)"
+      description: "Qwen 3 Coder Next coding model, Q6_K quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    # Qwen 3 Coder Next (Q8_0)
+    "qwen3-coder-next-q8":
+      cmd: |
+        ${server-cmd}
+        -hf unsloth/Qwen3-Coder-Next-GGUF:Q8_0
+        --ctx-size 262144
+        # Uncomment to reduce KV-cache VRAM usage at long context:
+        # --flash-attn on
+        # --cache-type-k q8_0
+        # --cache-type-v q8_0
+      name: "Qwen 3 Coder Next (Q8_0)"
+      description: "Qwen 3 Coder Next coding model, Q8_0 quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    # Qwen 3.6 35B A3B (UD-Q6_K - no plain Q6_K published for this repo)
+    "qwen3.6-35b-a3b-q6":
+      cmd: |
+        ${server-cmd}
+        -hf unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K
+        --ctx-size 262144
+        # Uncomment to reduce KV-cache VRAM usage at long context:
+        # --flash-attn on
+        # --cache-type-k q8_0
+        # --cache-type-v q8_0
+      name: "Qwen 3.6 35B A3B (UD-Q6_K)"
+      description: "Qwen 3.6 35B with 3B active parameters (MoE), UD-Q6_K quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    # Qwen 3.6 35B A3B (Q8_0)
+    "qwen3.6-35b-a3b-q8":
+      cmd: |
+        ${server-cmd}
+        -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+        --ctx-size 262144
+        # Uncomment to reduce KV-cache VRAM usage at long context:
+        # --flash-attn on
+        # --cache-type-k q8_0
+        # --cache-type-v q8_0
+      name: "Qwen 3.6 35B A3B (Q8_0)"
+      description: "Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant"
       proxy: http://localhost:${PORT}
       ttl: 0
 
@@ -77,9 +135,12 @@ config:
             swap: true
             exclusive: true
             members:
-              - "qwen3.6-27b"
-              - "qwen3-coder-next"
-              - "qwen3.6-35b-a3b"
+              - "qwen3.6-27b-q6"
+              - "qwen3.6-27b-q8"
+              - "qwen3-coder-next-q6"
+              - "qwen3-coder-next-q8"
+              - "qwen3.6-35b-a3b-q6"
+              - "qwen3.6-35b-a3b-q8"
     scheduler:
       use: fifo
 
@@ -98,6 +159,8 @@ app-template:
             tag: v240-vulkan-b10015
           env:
             TZ: Etc/UTC
+            # Cache downloaded models (-hf flag) on the models PVC
+            LLAMA_CACHE: /models
           probes:
             liveness:
               enabled: true
