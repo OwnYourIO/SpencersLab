@@ -9628,6 +9628,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/ledfx-1.0.5/ledfx-1.0.5.tgz
     version: 1.0.5
+  llama-swap:
+  - apiVersion: v2
+    appVersion: v240-vulkan-b10015
+    created: "2026-07-15T15:39:21.867154558Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 93842c4fab9d118fb987e50b9cc3b94e1f32f7cd92c9d12a552b6b9b80f30994
+    name: llama-swap
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/llama-swap-1.0.1/llama-swap-1.0.1.tgz
+    version: 1.0.1
   logitech-media-server:
   - apiVersion: v2
     appVersion: 1.0.15
@@ -17399,4 +17412,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-07-15T13:54:51.276547103Z"
+generated: "2026-07-15T15:39:21.869718916Z"
