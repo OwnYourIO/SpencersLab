@@ -81,11 +81,6 @@ charts:
     repository: https://cloudnative-pg.github.io/charts
     namespace: default
     ServerSideApply: "true"
-  ollama:
-    version: 1.66.0
-    repository: https://helm.otwld.com/
-    namespace: default
-    ServerSideApply: "false"
   open-webui:
     version: 15.2.0
     repository: https://helm.openwebui.com/
@@ -120,11 +115,6 @@ charts:
 ingress:
   dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
-    ollama:
-      serviceName: brains
-      service: gpu-ollama
-      port: 11434
-
     llama-cpp:
       serviceName: llama-cpp
       service: gpu-llama-swap
@@ -217,43 +207,6 @@ ingress:
     #  port: 8080
 
 llama-swap:
-ollama:
-  gpu:
-    # -- Enable GPU integration
-    enabled: true
-
-    # -- GPU type: 'nvidia' or 'amd'
-    type: "amd"
-
-    # -- Specify the number of GPU to 1
-    number: 1
-
-  # -- List of models to pull at container startup
-  #models:
-  #  pull:
-  #    - mistral
-  #    - llama2
-  resources:
-    limits:
-      cpu: 8000m
-      memory: 28Gi
-      amd.com/gpu: 1 # requesting a GPU
-    requests:
-      memory: 10Gi
-      cpu: "1"
-  image:
-    repository: ollama/ollama
-    tag: 0.31.2-rocm
-
-  extraEnv:
-    - name: OLLAMA_NUM_GPU
-      value: "8"
-    - name: OLLAMA_LOW_VRAM
-      value: "true"
-
-  persistentVolume:
-    enabled: true
-
 open-webui:
   annotations:
     reloader.stakater.com/auto: "true"
@@ -269,8 +222,8 @@ open-webui:
     resources: {}
   ollama:
     enabled: false
-  ollamaUrls:
-    - "http://gpu-llama-swap.default.svc.cluster.local:8080"
+  enableOpenaiApi: true
+  openaiBaseApiUrl: "http://gpu-llama-swap.default.svc.cluster.local:8080/v1"
   pipelines:
     enabled: true
     persistence:
