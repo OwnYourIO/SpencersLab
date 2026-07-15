@@ -134,7 +134,8 @@ app-template:
       type: configMap
       name: llama-swap-config
       globalMounts:
-        - path: /etc/llama-swap/config
+        - path: /app/config.yaml
+          subPath: config.yaml
     models:
       existingClaim: *chartName
       globalMounts:
