@@ -29,7 +29,7 @@ config:
 
   # Macros for reusable configuration
   macros:
-    "server-cmd": "/llama-server --port ${PORT} --host 0.0.0.0"
+    "server-cmd": "/app/llama-server --port ${PORT} --host 0.0.0.0"
 
   # Model definitions
   # Models are downloaded automatically from HuggingFace via the -hf flag
