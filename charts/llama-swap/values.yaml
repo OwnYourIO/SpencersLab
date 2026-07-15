@@ -4,6 +4,9 @@ domain: OVERRIDE_VIA_APPSET
 config:
   # Health check timeout for model readiness
   healthCheckTimeout: 500
+  performance:
+    enable: true
+    every: 5s
 
   # Logging
   logLevel: info
