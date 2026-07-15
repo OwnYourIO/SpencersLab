@@ -76,6 +76,10 @@ mcp:
           fsGroup: 1000 
         containers:
         - name: mcp
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
           env:
             - name: XDG_CONFIG_HOME
               value: /home/node/.cache
@@ -93,6 +97,7 @@ mcp:
             - "/home/node/.cache/"
             - "--user-data-dir"
             - "/home/node/.cache/ms-playwright-mcp"
+            - "--isolated"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
