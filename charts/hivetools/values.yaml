@@ -319,3 +319,26 @@ mcp:
       requests:
         cpu: '100m'
         memory: '128Mi'
+
+  # SearXNG MCP Server - Private web search via self-hosted SearXNG
+  # Repo: github.com/ihor-sokoliuk/mcp-searxng
+  # Points at the in-cluster SearXNG service (see charts/searxng)
+  searxng:
+    enabled: true
+    image: ghcr.io/ihor-sokoliuk/mcp-searxng:v1.11.1
+    transport: stdio
+    mcpPort: 8080
+    resources:
+      limits:
+        cpu: '100m'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+    podTemplateSpec:
+      spec:
+        containers:
+          - name: mcp
+            env:
+              - name: SEARXNG_URL
+                value: "http://searxng.default.svc.cluster.local:8080"
