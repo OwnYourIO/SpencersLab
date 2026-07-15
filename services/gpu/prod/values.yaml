@@ -59,6 +59,9 @@ charts:
   hivetools:
     namespace: default
     ServerSideApply: "true"
+  llama-swap:
+    namespace: default
+    ServerSideApply: "false"
   seaweedfs-csi-driver:
     #version: 0.2.9
     #repository: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
@@ -121,6 +124,11 @@ ingress:
       serviceName: brains
       service: gpu-ollama
       port: 11434
+
+    llama-cpp:
+      serviceName: llama-cpp
+      service: gpu-llama-swap
+      port: 8080
 
     open-webui:
       serviceName: ai
@@ -208,6 +216,7 @@ ingress:
     #  service: traefik
     #  port: 8080
 
+llama-swap:
 ollama:
   gpu:
     # -- Enable GPU integration
@@ -261,7 +270,7 @@ open-webui:
   ollama:
     enabled: false
   ollamaUrls:
-    - "http://gpu-ollama.default.svc.cluster.local:11434"
+    - "http://gpu-llama-swap.default.svc.cluster.local:8080"
   pipelines:
     enabled: true
     persistence:

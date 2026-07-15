@@ -1,0 +1,8 @@
+apiVersion: v2
+name: llama-swap
+version: 1.0.0
+appVersion: v240-vulkan-b10015
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/

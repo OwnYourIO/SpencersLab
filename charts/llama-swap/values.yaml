@@ -1,0 +1,141 @@
+domain: OVERRIDE_VIA_APPSET
+
+# llama-swap application configuration
+config:
+  # Health check timeout for model readiness
+  healthCheckTimeout: 500
+
+  # Logging
+  logLevel: info
+  logToStdout: "proxy"
+
+  # Start port for automatic ${PORT} macro
+  startPort: 10001
+
+  # Send loading state to clients
+  sendLoadingState: true
+
+  # No API keys required (default allow)
+  apiKeys: []
+
+  # Global TTL (0 = never automatically unload)
+  globalTTL: 0
+
+  # Graceful timeout when unloading a model
+  unloadTimeout: 30
+
+  # Macros for reusable configuration
+  macros:
+    "server-cmd": "/llama-server --port ${PORT} --host 0.0.0.0"
+    "models-dir": "/models"
+
+  # Model definitions
+  models:
+    # Qwen 3.6 27B
+    "qwen3.6-27b":
+      cmd: |
+        ${server-cmd}
+        --model ${models-dir}/qwen3.6-27b/qwen3.6-27b.gguf
+        --ctx-size 8192
+      name: "Qwen 3.6 27B"
+      description: "Qwen 3.6 27B general purpose model"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    # Qwen 3 Coder Next
+    "qwen3-coder-next":
+      cmd: |
+        ${server-cmd}
+        --model ${models-dir}/qwen3-coder-next/qwen3-coder-next.gguf
+        --ctx-size 16384
+      name: "Qwen 3 Coder Next"
+      description: "Qwen 3 Coder Next coding model"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    # Qwen 3.6 35B A3B
+    "qwen3.6-35b-a3b":
+      cmd: |
+        ${server-cmd}
+        --model ${models-dir}/qwen3.6-35b-a3b/qwen3.6-35b-a3b.gguf
+        --ctx-size 8192
+      name: "Qwen 3.6 35B A3B"
+      description: "Qwen 3.6 35B with 3B active parameters (MoE)"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+  # Routing configuration
+  routing:
+    router:
+      use: group
+      settings:
+        groups:
+          "main":
+            swap: true
+            exclusive: true
+            members:
+              - "qwen3.6-27b"
+              - "qwen3-coder-next"
+              - "qwen3.6-35b-a3b"
+    scheduler:
+      use: fifo
+
+app-template:
+  global:
+    nameOverride: &chartName llama-swap
+
+  controllers:
+    llama-swap:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/mostlygeek/llama-swap
+            tag: v240-vulkan-b10015
+          env:
+            TZ: Etc/UTC
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8080
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8080
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 4Gi
+            limits:
+              amd.com/gpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    llama-swap:
+      controller: *chartName
+      ports:
+        http:
+          port: 8080
+
+  persistence:
+    config:
+      type: configMap
+      name: llama-swap-config
+      globalMounts:
+        - path: /etc/llama-swap/config
+    models:
+      existingClaim: *chartName
+      globalMounts:
+        - path: /models
