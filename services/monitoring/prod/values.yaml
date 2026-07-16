@@ -553,7 +553,7 @@ grafana:
       mikrotik:
         # renovate: depName="Mikrotik MKTXP Exporter"
         gnetId: 13679
-        revision: 23
+        revision: 28
         datasource:
           - name: DS_PROMETHEUS
             value: Prometheus
