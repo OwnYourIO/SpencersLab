@@ -1,0 +1,10 @@
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: llama-timeouts
+  namespace: default
+spec:
+  forwardingTimeouts:
+    # Do this because llama.cpp can take a while to respond.
+    responseHeaderTimeout: 0
+    idleConnTimeout: 3600s

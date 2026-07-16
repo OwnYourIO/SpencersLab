@@ -112,6 +112,11 @@ traefik:
       forwardedHeaders:
         trustedIPs:
           - "10.42.0.0/16"
+      transport:
+        respondingTimeouts:
+          readTimeout: 650s
+          writeTimeout: 1100s
+          idleTimeout: 650s
 
   # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
   ingressRoute:

@@ -82,6 +82,11 @@ traefik:
     websecure:
       proxyProtocol:
         enabled: true
+      transport:
+        respondingTimeouts:
+          readTimeout: 680s
+          writeTimeout: 1500s
+          idleTimeout: 680s
 
   metrics:
     prometheus:

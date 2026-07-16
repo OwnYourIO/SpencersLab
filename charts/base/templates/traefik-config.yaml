@@ -54,7 +54,7 @@ spec:
         transport:
           respondingTimeouts:
             readTimeout: 600s
-            writeTimeout: 600s
+            writeTimeout: 1200s
             idleTimeout: 600s
       {{- if index .Values "seaweedVolumePort" }}
       seaweedvolume:
