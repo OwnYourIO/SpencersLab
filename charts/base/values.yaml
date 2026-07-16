@@ -108,4 +108,3 @@ argo-cd:
   controller:
     extraArgs:
       - --application-namespaces="*"
-
