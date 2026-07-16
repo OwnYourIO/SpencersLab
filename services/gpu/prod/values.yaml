@@ -92,7 +92,7 @@ charts:
     namespace: default
     ServerSideApply: "true"
   coder:
-    version: 2.35.1
+    version: 2.35.2
     repository: https://helm.coder.com/v2
     namespace: default
     ServerSideApply: "false"
