@@ -11243,6 +11243,18 @@ entries:
   neo4j:
   - apiVersion: v2
     appVersion: 5.23.0
+    created: "2026-07-16T18:41:10.468262388Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 7103b4e2e821dafef30a713f3af55459631a029c8125122a66327679d391406d
+    name: neo4j
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/neo4j-1.0.4/neo4j-1.0.4.tgz
+    version: 1.0.4
+  - apiVersion: v2
+    appVersion: 5.23.0
     created: "2026-02-17T21:22:34.915973941Z"
     dependencies:
     - name: app-template
@@ -17576,4 +17588,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-07-16T18:39:45.379702419Z"
+generated: "2026-07-16T18:41:10.469648941Z"
