@@ -81,7 +81,7 @@ proxy:
       enabled: true
     budget:
       enabled: true
-    ai:
+    llama:
       enabled: true
 
     cluster:

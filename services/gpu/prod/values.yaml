@@ -116,7 +116,7 @@ ingress:
   dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
     llama-cpp:
-      serviceName: llama-cpp
+      serviceName: llama
       service: gpu-llama-swap
       port: 8080
 
