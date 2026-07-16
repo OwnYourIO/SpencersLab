@@ -5760,6 +5760,18 @@ entries:
   drawio:
   - apiVersion: v2
     appVersion: 26.0.4
+    created: "2026-07-16T18:28:20.456022502Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 4.6.2
+    digest: 4835b7367f0f245c2528f75dae82ca0ad609a40bf040b7ec13680c149f40dc82
+    name: drawio
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/drawio-1.0.2/drawio-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 26.0.4
     created: "2026-02-16T19:52:43.10339117Z"
     dependencies:
     - name: app-template
@@ -17488,4 +17500,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-07-16T14:28:58.527520783Z"
+generated: "2026-07-16T18:28:20.457457147Z"
