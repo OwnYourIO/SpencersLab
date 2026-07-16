@@ -30,6 +30,7 @@ config:
   # Macros for reusable configuration
   macros:
     "server-cmd": "/app/llama-server --port ${PORT} --host 0.0.0.0"
+    "moe": '-ngl 99 -ot "\.ffn_.*_exps\.=CPU" --no-nmap --jinja'
 
   # Model definitions
   # Models are downloaded automatically from HuggingFace via the -hf flag
@@ -115,6 +116,7 @@ config:
       cmd: |
         ${server-cmd}
         -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+        ${moe}
         --ctx-size 262144
         # Uncomment to reduce KV-cache VRAM usage at long context:
         # --flash-attn on
