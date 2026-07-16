@@ -4,7 +4,7 @@ version: 1.0.185
 appVersion: 1.0.31
 dependencies:
 - name: argo-cd
-  version: 9.4.6
+  version: 10.1.4
   repository: https://argoproj.github.io/argo-helm
 - name: cert-manager
   version: v1.19.3
