@@ -81,6 +81,8 @@ proxy:
       enabled: true
     budget:
       enabled: true
+    ai:
+      enabled: true
 
     cluster:
       clusterBase: true

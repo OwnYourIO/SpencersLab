@@ -205,6 +205,8 @@ proxy:
     stream:
       service: proxy-local-metube
       port: 8081
+    ai:
+      target: llama-cpp
 
     cluster:
       clusterBase: true
