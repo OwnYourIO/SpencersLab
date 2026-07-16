@@ -30,7 +30,7 @@ config:
   # Macros for reusable configuration
   macros:
     "server-cmd": "/app/llama-server --port ${PORT} --host 0.0.0.0"
-    "moe": '-ngl 99 -ot "\.ffn_.*_exps\.=CPU" --no-nmap --jinja'
+    "moe": '-ngl 99 -ot "\.ffn_.*_exps\.=CPU" --no-mmap --jinja'
 
   # Model definitions
   # Models are downloaded automatically from HuggingFace via the -hf flag
