@@ -210,7 +210,7 @@ proxy:
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=traefik&response_type=code&redirect_uri=https://llama.$.Values.domain/ui/"
       loginSubDomain: "login"
       #middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-llama@kubernetescrd,user-allowlist@file,default-sse-safe@kubernetescrd"
-      middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-llama@kubernetescrd,default-sse-safe@kubernetescrd"
+      middlewares: "kube-system-crowdsec@kubernetescrd,user-allowlist@file,default-sse-safe@kubernetescrd"
       ingressRoute:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"
