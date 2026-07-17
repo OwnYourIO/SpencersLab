@@ -2100,6 +2100,21 @@ entries:
   base:
   - apiVersion: v2
     appVersion: 1.0.31
+    created: "2026-07-17T21:11:01.108064926Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 10.1.4
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.19.3
+    digest: a51210c2c7ac17454fcf1ad6e8e4491786a78eeb8c23cf14cf675e010b19f7d9
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.191/base-1.0.191.tgz
+    version: 1.0.191
+  - apiVersion: v2
+    appVersion: 1.0.31
     created: "2026-07-16T18:44:42.03908977Z"
     dependencies:
     - name: argo-cd
@@ -15261,6 +15276,21 @@ entries:
   traefik:
   - apiVersion: v2
     appVersion: 2.11.10
+    created: "2026-07-17T21:11:01.677343515Z"
+    dependencies:
+    - name: traefik
+      repository: https://traefik.github.io/charts
+      version: 39.0.9
+    - name: crowdsec
+      repository: https://crowdsecurity.github.io/helm-charts
+      version: 0.24.0
+    digest: c4ed4f371b6ee67337c4a92edfe472e4835f5689101d4d11806790171b7ccd73
+    name: traefik
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/traefik-1.0.96/traefik-1.0.96.tgz
+    version: 1.0.96
+  - apiVersion: v2
+    appVersion: 2.11.10
     created: "2026-07-17T13:34:40.197765613Z"
     dependencies:
     - name: traefik
@@ -17648,4 +17678,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-07-17T13:34:40.199687651Z"
+generated: "2026-07-17T21:11:01.678984501Z"
