@@ -44,7 +44,7 @@ metadata:
     {{- end }}
     {{- if $config.sse }}
     traefik.ingress.kubernetes.io/router.middlewares: default-sse-safe@kubernetescrd
-    {{ - end }}
+    {{- end }}
   labels:
     external-dns: "enabled"
 spec:
