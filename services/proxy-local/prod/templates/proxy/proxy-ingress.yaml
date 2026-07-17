@@ -42,6 +42,9 @@ metadata:
     {{- if not $config.clusterBase }}
     external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
     {{- end }}
+    {{- if $config.sse }}
+    traefik.ingress.kubernetes.io/router.middlewares: default-sse-safe@kubernetescrd
+    {{ - end }}
   labels:
     external-dns: "enabled"
 spec:
