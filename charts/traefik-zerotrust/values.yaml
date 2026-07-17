@@ -85,7 +85,7 @@ traefik:
       transport:
         respondingTimeouts:
           readTimeout: 680s
-          writeTimeout: 1500s
+          writeTimeout: 0
           idleTimeout: 680s
 
   metrics:

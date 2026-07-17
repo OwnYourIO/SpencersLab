@@ -115,7 +115,7 @@ traefik:
       transport:
         respondingTimeouts:
           readTimeout: 650s
-          writeTimeout: 1100s
+          writeTimeout: 0
           idleTimeout: 650s
 
   # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
