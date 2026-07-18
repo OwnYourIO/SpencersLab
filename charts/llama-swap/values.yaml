@@ -144,7 +144,7 @@ config:
         ${ctx-1m}
         ${moe}
         ${flash-and-q8}
-      name: "Qwen 3.6 35B A3B (Q8_0)"
+      name: "Qwen 3.6 35B A3B (Q8_0) - 1M"
       description: "Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant"
       proxy: http://localhost:${PORT}
       ttl: 0
