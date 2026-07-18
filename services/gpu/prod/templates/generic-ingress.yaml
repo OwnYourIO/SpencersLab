@@ -12,6 +12,7 @@ metadata:
   name: "{{ $subDomain | replace "." "-" }}-ingress"
   namespace: default
   annotations:
+    # TODO: Make this only apply to llama-swap
     traefik.ingress.kubernetes.io/service.serverstransport: default-llama-timeouts@kubernetescrd
     # If middlewares is set manually, use that.
     {{- if $config.middlewares }}
