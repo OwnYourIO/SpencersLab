@@ -31,9 +31,9 @@ config:
   macros:
     server-cmd: |
       /app/llama-server
-      --port ${PORT} 
-      --host 0.0.0.0 
-      --jinja "
+      --port ${PORT}
+      --host 0.0.0.0
+      --jinja
     threads: |
       -t 10
     moe: |
