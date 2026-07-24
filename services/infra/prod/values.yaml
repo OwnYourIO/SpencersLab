@@ -258,6 +258,10 @@ samba:
         existingClaim: backups
         globalMounts:
           - path: /mnt/backups
+      dev:
+        existingClaim: dev
+        globalMounts:
+          - path: /mnt/dev
 
 forgejo:
   redis-cluster:
