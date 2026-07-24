@@ -173,6 +173,17 @@ samba:
                 hidefiles: /_*/
                 recycle: yes
                 force user: spencer
+              - name: dev
+                security: user
+                path: /mnt/dev
+                browsable: yes
+                readonly: no
+                guestok: no
+                validusers: spencer
+                writelist: spencer
+                veto: no
+                hidefiles: /_*/
+                recycle: yes
               - name: documents
                 security: user
                 path: /mnt/documents
