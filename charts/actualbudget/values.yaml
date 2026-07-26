@@ -1,0 +1,64 @@
+app-template:
+  global:
+    # nameOverride is intentionally defaulted to the chart name here. Each
+    # deployment instance SHOULD override app-template.global.nameOverride with
+    # a unique, static string (e.g. via the service values.yaml under the
+    # dependency's alias key). This value also names the PVC in
+    # templates/pvc-data-default.yaml.
+    nameOverride: actualbudget
+  controllers:
+    actual:
+      type: deployment
+      containers:
+        main:
+          image: &img
+            repository: ghcr.io/actualbudget/actual-server
+            tag: 26.7.0@sha256:e18b7fbfec6157a368fad4146563f397502e9da70a120aeaeac63b4977405d1c
+          env: &env
+            TZ: America/Denver
+            ACTUAL_PORT: &http 5006
+            ACTUAL_DATA_DIR: &pvc /data
+            ACTUAL_MULTIUSER: "true"
+          securityContext: &sc
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: "10m"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+      initContainers:
+        01-enable-openid:
+          image: *img
+          env: *env
+          securityContext: *sc
+          command: ["tini", "-g", "--", "/bin/sh", "-c"]
+          args: ["npm run enable-openid --prefix /app || true"]
+  service:
+    actual:
+      controller: actual
+      ports:
+        http:
+          port: *http
+  persistence:
+    data:
+      existingClaim: '{{ index .Values "global" "nameOverride" | default .Chart.Name }}-data'
+      globalMounts:
+        - subPath: data
+          path: *pvc
+  defaultPodOptions:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: &uid 1000
+      runAsGroup: *uid
+      fsGroup: *uid
+      fsGroupChangePolicy: Always
+      seccompProfile: { type: "RuntimeDefault" }
