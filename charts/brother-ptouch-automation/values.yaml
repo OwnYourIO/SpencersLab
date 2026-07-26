@@ -15,11 +15,10 @@ app-template:
       containers:
         main:
           image:
-            repository: ghcr.io/ownyourio/brother-ptouch-automation
-            # The docker-build workflow auto-bumps this and tags `latest`.
-            # Switch to a specific version once the first build completes.
+            repository: ghcr.io/curatedforest/brother-ptouch-automation
             tag: latest
-            pullPolicy: Always
+            #tag: 0.0.1
+            #pullPolicy: Always
           env:
             TZ: America/Denver
             LABEL_PRINTER_CONFIG_DIR: /config
