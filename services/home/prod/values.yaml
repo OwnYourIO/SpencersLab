@@ -74,6 +74,10 @@ charts:
     namespace: default
     ServerSideApply: "true"
     chart: zigbee2mqtt
+  bri-budget:
+    namespace: default
+    ServerSideApply: "true"
+    chart: actualbudget
   brother-ptouch-automation:
     #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -153,6 +157,9 @@ ingress:
       port: 5006
     actualbudget:
       service: home-actualbudget
+      port: 5006
+    bri-budget:
+      service: home-bri-budget
       port: 5006
 
     bookmarks:
@@ -867,6 +874,16 @@ actualbudget:
       fsGroup: *uid
       fsGroupChangePolicy: Always
       seccompProfile: { type: "RuntimeDefault" }
+
+# Second ActualBudget instance (Brianna's budget), deployed as its own ArgoCD
+# Application (home-bri-budget) from the standalone charts/actualbudget chart.
+# Declared via the 'bri-budget' entry under the top-level 'charts:' key above;
+# this block is injected into the chart as its values. All other configuration
+# comes from the chart's own values.yaml defaults.
+bri-budget:
+  app-template:
+    global:
+      nameOverride: bri-budget
 
 karakeep:
   global:
