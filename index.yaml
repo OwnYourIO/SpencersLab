@@ -205,6 +205,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/389ds-1.0.1/389ds-1.0.1.tgz
     version: 1.0.1
+  actualbudget:
+  - apiVersion: v2
+    appVersion: 26.7.0
+    created: "2026-07-26T16:34:49.32580181Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 96b8dac4f766a48481b045936a43c25dcf992237f14fb7ef4c6526d0f212cc38
+    name: actualbudget
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/actualbudget-1.0.1/actualbudget-1.0.1.tgz
+    version: 1.0.1
   appset-backups:
   - apiVersion: v2
     appVersion: 1.1.1
@@ -17730,4 +17743,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-07-26T13:20:20.034245621Z"
+generated: "2026-07-26T16:34:49.327192673Z"
