@@ -17,9 +17,28 @@ spec:
   proxyPort: {{ $config.proxyPort }}
   {{- end }}
   mcpPort: {{ $config.mcpPort | required (printf "mcp.%s.port is required" $name) }}
+  {{- if $config.serviceAccount }}
+  serviceAccount: {{ $config.serviceAccount }}
+  {{- end }}
+  {{- if $config.oidc }}
+  oidcConfigRef:
+    name: keycloak
+    audience: {{ $config.oidc.audience | default $name }}
+    {{- if $config.oidc.scopes }}
+    scopes:
+      {{- toYaml $config.oidc.scopes | nindent 6 }}
+    {{- end }}
+    {{- if $config.oidc.resourceUrl }}
+    resourceUrl: {{ $config.oidc.resourceUrl }}
+    {{- end }}
+  {{- end }}
   {{- if $config.args }}
   args:
     {{- toYaml $config.args | nindent 4 }}
+  {{- end }}
+  {{- if $config.env }}
+  env:
+    {{- toYaml $config.env | nindent 4 }}
   {{- end }}
   {{- if $config.resources }}
   resources:

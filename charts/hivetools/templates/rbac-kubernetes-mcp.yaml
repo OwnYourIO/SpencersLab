@@ -1,0 +1,20 @@
+{{- if ne (.Values.mcp.kubernetes.enabled | toString) "false" }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubernetes-mcp
+  namespace: {{ .Values.namespace | default "default" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-mcp-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes-mcp
+    namespace: {{ .Values.namespace | default "default" }}
+{{- end }}
