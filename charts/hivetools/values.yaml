@@ -11,6 +11,17 @@ domain: OVERRIDE_VIA_CUSTOM_VALUES
 # Bitwarden secret IDs
 bitwardenIds:
   github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  homeassistant-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  mcp-keycloak-oidc: OVERRIDE_VIA_CUSTOM_VALUES
+
+# Keycloak OIDC configuration for MCP endpoint authentication.
+# All MCP servers are exposed through the shared ingress and authenticate via
+# the shared MCPOIDCConfig (templates/mcpoidcconfig-keycloak.yaml) unless a
+# server sets oidc: null / oidcConfigRef: null to opt out.
+keycloak:
+  realm: OVERRIDE_VIA_CUSTOM_VALUES
+  # Public client id registered in Keycloak for MCP token flows.
+  clientId: mcp
 
 # Shared storage configuration
 # When set, overrides the default PVC for knowledge storage
@@ -63,6 +74,8 @@ mcp:
     transport: streamable-http
     mcpPort: 8931
     proxyPort: 8080
+    oidc:
+      audience: playwright
     resources:
       limits:
         cpu: '200m'
@@ -129,6 +142,8 @@ mcp:
     image: mcp/git:latest
     transport: stdio
     mcpPort: 8080
+    oidc:
+      audience: git
     resources:
       limits:
         cpu: '100m'
@@ -152,6 +167,8 @@ mcp:
     image: ghcr.io/github/github-mcp-server:v1.6.0
     transport: stdio
     mcpPort: 8080
+    oidc:
+      audience: github
     resources:
       limits:
         cpu: '100m'
@@ -163,6 +180,87 @@ mcp:
       - name: github-mcp
         key: GITHUB_PERSONAL_ACCESS_TOKEN
         targetEnvName: GITHUB_PERSONAL_ACCESS_TOKEN
+
+  # Home Assistant MCP Server - Smart home control and automation management
+  # Repo: github.com/zorak1103/ha-mcp (40 tools: entities, automations, scripts,
+  # scenes, helpers, registries, dashboards, HACS). Talks to external HA over
+  # WebSocket + REST. HA_URL overridden per-cluster via custom-values.
+  homeassistant:
+    enabled: true
+    image: zorak1103/ha-mcp:2026.7.3
+    transport: streamable-http
+    mcpPort: 8080
+    oidc:
+      audience: homeassistant
+    env:
+      - name: HA_URL
+        value: OVERRIDE_VIA_CUSTOM_VALUES
+    secrets:
+      - name: homeassistant-mcp
+        key: HA_TOKEN
+        targetEnvName: HA_TOKEN
+    resources:
+      limits:
+        cpu: '100m'
+        memory: '128Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+    podTemplateSpec:
+      spec:
+        containers:
+          - name: mcp
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+
+  # Kubernetes MCP Server - Kubernetes/OpenShift operations
+  # Repo: github.com/containers/kubernetes-mcp-server
+  # TODO: upstream only publishes the 'latest' tag on quay.io >_<.
+  # Runs read-only against the in-cluster API via the kubernetes-mcp ServiceAccount
+  # (bound to the built-in 'view' ClusterRole, see templates/rbac-kubernetes-mcp.yaml).
+  kubernetes:
+    enabled: true
+    image: quay.io/containers/kubernetes_mcp_server:latest
+    transport: streamable-http
+    mcpPort: 8080
+    serviceAccount: kubernetes-mcp
+    oidc:
+      audience: kubernetes
+    args:
+      - "--port"
+      - "8080"
+      - "--stateless"
+      - "--read-only"
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
+        cpu: '100m'
+        memory: '128Mi'
+    podTemplateSpec:
+      spec:
+        volumes:
+          - name: tmp
+            emptyDir: {}
+        containers:
+          - name: mcp
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
 
   # Docling MCP Server - Document processing
   # Latest version: v1.0.1 (PyPI)
@@ -184,6 +282,8 @@ mcp:
     image: mcp/fetch
     transport: stdio
     mcpPort: 8080
+    oidc:
+      audience: fetch
     resources:
       limits:
         cpu: '100m'
@@ -208,6 +308,8 @@ mcp:
     image: mcp/filesystem:latest
     transport: stdio
     mcpPort: 8080
+    oidc:
+      audience: filesystem
     resources:
       limits:
         cpu: '100m'
@@ -238,6 +340,8 @@ mcp:
     image: ghcr.io/1mcp-app/agent:v0.34.2
     transport: streamable-http
     mcpPort: 3050
+    oidc:
+      audience: onemcp
     resources:
       limits:
         cpu: '200m'
@@ -298,6 +402,8 @@ mcp:
     image: mcp/sequentialthinking:latest
     transport: stdio
     mcpPort: 8080
+    oidc:
+      audience: sequential-thinking
     resources:
       limits:
         cpu: '100m'
@@ -312,6 +418,8 @@ mcp:
     image: ghcr.io/mendableai/firecrawl-mcp
     transport: streamable-http
     mcpPort: 8080
+    oidc:
+      audience: firecrawl
     resources:
       limits:
         cpu: '200m'
@@ -328,6 +436,8 @@ mcp:
     image: ghcr.io/ihor-sokoliuk/mcp-searxng:v1.11.1
     transport: stdio
     mcpPort: 8080
+    oidc:
+      audience: searxng
     resources:
       limits:
         cpu: '100m'

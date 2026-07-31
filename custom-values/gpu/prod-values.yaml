@@ -24,6 +24,15 @@ smtp-relay:
 hivetools:
   bitwardenIds:
     github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
+    homeassistant-mcp: OVERRIDE_NEEDED # UUID of Bitwarden item holding HA token in custom field 'token'
+    mcp-keycloak-oidc: OVERRIDE_NEEDED # UUID of Bitwarden login item for the Keycloak 'mcp' client (username=client-id, password=client-secret)
+  keycloak:
+    realm: SpencersLab
+  mcp:
+    homeassistant:
+      env:
+        - name: HA_URL
+          value: OVERRIDE_NEEDED # e.g. http://homeassistant.local:8123
 
 langgraph:
   bitwardenIds:

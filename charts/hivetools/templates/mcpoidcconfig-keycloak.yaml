@@ -1,0 +1,17 @@
+# Shared OIDC configuration for all MCP servers, backed by the existing
+# Keycloak instance (login.{domain}). Referenced per-server via oidcConfigRef
+# (see generic-mcpserver.yaml). Namespace-scoped: must live in the same
+# namespace as the MCPServer resources that reference it.
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPOIDCConfig
+metadata:
+  name: keycloak
+  namespace: {{ .Values.namespace | default "default" }}
+spec:
+  type: inline
+  inline:
+    issuer: https://login.{{ .Values.domain }}/realms/{{ .Values.keycloak.realm }}
+    clientId: {{ .Values.keycloak.clientId }}
+    clientSecretRef:
+      name: mcp-keycloak-oidc
+      key: client-secret
