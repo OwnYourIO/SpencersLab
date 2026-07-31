@@ -1,0 +1,46 @@
+# RBAC for the kubernetes MCP server (mcp.kubernetes in values.yaml).
+#
+# The MCP server needs cluster-wide read access so its generic resources_* tools
+# work against arbitrary resources and CRDs (e.g. ArgoCD Applications), which the
+# built-in "view" ClusterRole does not cover (no nodes, PVs, CRDs, metrics).
+#
+# TRADE-OFF: Kubernetes RBAC cannot express "all resources EXCEPT Secrets" -
+# there is no deny rule. So this ClusterRole does grant read on Secrets at the
+# API level, and Secret access is blocked one layer up by denied_resources in
+# kubernetes-mcp-config (see configmap-kubernetes-mcp.yaml). A failure to mount
+# or parse that config.toml is therefore security-relevant, not cosmetic.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubernetes-mcp
+  namespace: {{ .Values.namespace | default "default" }}
+
+---
+# Cluster-scoped, so the name is prefixed to avoid collisions with other charts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hivetools-kubernetes-mcp-read
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - get
+      - list
+      - watch
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hivetools-kubernetes-mcp-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hivetools-kubernetes-mcp-read
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes-mcp
+    namespace: {{ .Values.namespace | default "default" }}

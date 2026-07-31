@@ -17,9 +17,39 @@ spec:
   proxyPort: {{ $config.proxyPort }}
   {{- end }}
   mcpPort: {{ $config.mcpPort | required (printf "mcp.%s.port is required" $name) }}
+  {{- if $config.serviceAccount }}
+  # Sets the ServiceAccount on the MCP server backend pod. The ToolHive proxy
+  # runner always uses its own ServiceAccount, and the operator overwrites any
+  # serviceAccountName set inside podTemplateSpec, so RBAC must go through here.
+  serviceAccount: {{ $config.serviceAccount }}
+  {{- end }}
+  {{- $auth := $.Values.mcpAuth | default dict }}
+  {{- if $auth.enabled }}
+  {{- $serverAuth := $auth.default | default false }}
+  {{- if hasKey $config "auth" }}
+  {{- $serverAuth = $config.auth }}
+  {{- end }}
+  {{- if $serverAuth }}
+  # Requires a Keycloak bearer token. Without this block the ToolHive proxy accepts
+  # every request that reaches its port. resourceUrl must be the external URL clients
+  # actually connect to so RFC 9728 protected-resource metadata advertises correctly.
+  oidcConfigRef:
+    name: {{ $auth.name | default "keycloak" }}
+    audience: {{ $config.oidcAudience | default $auth.audience | required (printf "mcpAuth.audience (or mcp.%s.oidcAudience) is required when auth is enabled for %s" $name $name) | quote }}
+    resourceUrl: "https://mcp.{{ $.Values.domain }}/{{ $name }}"
+    {{- if $auth.scopes }}
+    scopes:
+      {{- toYaml $auth.scopes | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   {{- if $config.args }}
   args:
     {{- toYaml $config.args | nindent 4 }}
+  {{- end }}
+  {{- if $config.env }}
+  env:
+    {{- toYaml $config.env | nindent 4 }}
   {{- end }}
   {{- if $config.resources }}
   resources:

@@ -1,0 +1,30 @@
+{{- if .Values.mcpAuth.enabled }}
+{{- $auth := .Values.mcpAuth }}
+{{- $issuer := $auth.issuer }}
+{{- if not $issuer }}
+{{- $realm := required "mcpAuth.realm is required when mcpAuth.enabled is true (or set mcpAuth.issuer explicitly)" $auth.realm }}
+{{- if eq $realm "OVERRIDE_VIA_CUSTOM_VALUES" }}
+{{- fail "mcpAuth.realm is still OVERRIDE_VIA_CUSTOM_VALUES; set the Keycloak realm in custom-values before enabling mcpAuth" }}
+{{- end }}
+{{- $issuer = printf "https://login.%s/realms/%s" (required "domain is required when mcpAuth.enabled is true" .Values.domain) $realm }}
+{{- end }}
+# Shared OIDC provider config for every MCP server that opts in via `auth: true`.
+# Per-server overrides (audience, resourceUrl, scopes) live on the MCPServer's
+# oidcConfigRef, which generic-mcpserver.yaml renders.
+#
+# No clientId/clientSecretRef is set: in this configuration ToolHive is an OAuth
+# resource server that only validates inbound bearer tokens against the issuer's
+# JWKS. MCP clients obtain tokens from Keycloak directly, so the proxy needs no
+# client credentials of its own.
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPOIDCConfig
+metadata:
+  name: {{ $auth.name | default "keycloak" }}
+  namespace: {{ .Values.namespace | default "default" }}
+spec:
+  type: inline
+  inline:
+    issuer: {{ $issuer | quote }}
+    jwksAllowPrivateIP: {{ $auth.jwksAllowPrivateIP | default false }}
+    protectedResourceAllowPrivateIP: {{ $auth.jwksAllowPrivateIP | default false }}
+{{- end }}

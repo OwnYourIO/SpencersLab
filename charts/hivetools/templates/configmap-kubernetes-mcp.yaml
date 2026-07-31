@@ -1,0 +1,31 @@
+# Configuration for the kubernetes MCP server (mcp.kubernetes in values.yaml).
+#
+# Everything is set here rather than split between CLI args and TOML so there is
+# a single source of truth; values.yaml only passes --config.
+#
+# NOTE: editing this ConfigMap does NOT restart the MCP server pod. The backend
+# workload is a StatefulSet created by the ToolHive proxy runner, not by Helm, so
+# Reloader annotations and checksum/config annotations do not reach it. Delete pod
+# `kubernetes-0` (StatefulSet `kubernetes`) manually after changing this file.
+#
+# denied_resources is the only thing preventing Secret reads - the ClusterRole in
+# rbac-kubernetes-mcp.yaml cannot exclude Secrets (see the comment there).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubernetes-mcp-config
+  namespace: {{ .Values.namespace | default "default" }}
+data:
+  config.toml: |
+    port = "8080"
+    bind_address = "0.0.0.0"
+    list_output = "yaml"
+    stateless = true
+    read_only = true
+    cluster_provider_strategy = "in-cluster"
+    toolsets = ["core", "helm"]
+
+    [[denied_resources]]
+    group = ""
+    version = "v1"
+    kind = "Secret"

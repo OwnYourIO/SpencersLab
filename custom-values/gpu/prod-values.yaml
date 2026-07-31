@@ -24,6 +24,21 @@ smtp-relay:
 hivetools:
   bitwardenIds:
     github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
+    # TODO: replace with the UUID of the Bitwarden item holding the Home Assistant
+    # custom fields `url` (external HA base URL) and `token` (long-lived access token).
+    home-assistant-mcp: OVERRIDE_NEEDED
+  mcpAuth:
+    # Realm is set now but inert: nothing renders until `enabled: true` below.
+    realm: SpencersLab
+    # To turn on MCP authentication:
+    #   1. Create a Keycloak client in the SpencersLab realm for the MCP endpoints.
+    #   2. Add an audience mapper on that client that puts "mcp" (mcpAuth.audience)
+    #      into the access token, otherwise ToolHive rejects every token.
+    #   3. Uncomment `enabled: true`.
+    #   4. Add `auth: true` to one hivetools mcp.<name> entry at a time, or set
+    #      `default: true` here to require auth on every MCP server at once.
+    #enabled: true
+    #default: true
 
 langgraph:
   bitwardenIds:

@@ -11,6 +11,62 @@ domain: OVERRIDE_VIA_CUSTOM_VALUES
 # Bitwarden secret IDs
 bitwardenIds:
   github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  # Bitwarden item must carry two custom fields:
+  #   url   - externally reachable Home Assistant base URL (https:// is converted to wss://)
+  #   token - Home Assistant long-lived access token
+  home-assistant-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+
+# Keycloak OIDC authentication for the MCP endpoints.
+#
+# The mcp.<domain> ingress has no authentication of its own, and a ToolHive proxy
+# without oidcConfigRef accepts every request that reaches it. This block turns on
+# ToolHive's native OIDC bearer-token validation, which is the right model for MCP
+# (machine clients presenting a token), unlike the browser-redirect
+# kube-system-oidc-keycloak middleware used for human-facing subdomains.
+#
+# Rollout is opt-in per server so existing clients do not break:
+#   1. Create a Keycloak client in the realm below and add an audience mapper that
+#      puts `audience` (default "mcp") into the access token.
+#   2. Set mcpAuth.enabled: true in custom-values.
+#   3. Add `auth: true` to one mcp.<name> entry at a time and verify, or flip
+#      mcpAuth.default: true to require auth on every server at once.
+mcpAuth:
+  # Master switch. While false nothing is rendered and every server stays
+  # unauthenticated, exactly as before this block existed.
+  enabled: false
+
+  # Fallback for servers that do not set `auth` explicitly, once enabled.
+  # Set to true to require auth everywhere.
+  default: false
+
+  # Name of the MCPOIDCConfig resource created by this chart.
+  name: keycloak
+
+  # Keycloak realm. Only used to build the default issuer below.
+  realm: OVERRIDE_VIA_CUSTOM_VALUES
+
+  # Leave empty to derive https://login.<domain>/realms/<realm>, matching the
+  # issuer every other service in this repo uses. Set explicitly to override.
+  issuer: ""
+
+  # Shared audience for all MCP servers. ToolHive documents that audience should be
+  # unique per server to prevent a token minted for one server being replayed
+  # against another; a single shared audience deliberately accepts that trade-off
+  # for a single Keycloak client. Override per server with `oidcAudience`.
+  audience: mcp
+
+  # Scopes advertised in the RFC 9728 protected-resource metadata document.
+  scopes:
+    - openid
+    - profile
+    - email
+
+  # Allow JWKS/discovery fetches to resolve to private IPs. Needed when
+  # login.<domain> resolves to a LAN address via split-horizon DNS, which is the
+  # common homelab case; a blocked JWKS fetch fails auth closed and is hard to
+  # diagnose. Safe here because the issuer is operator-controlled chart config,
+  # not attacker-supplied input, so this is not an SSRF vector.
+  jwksAllowPrivateIP: true
 
 # Shared storage configuration
 # When set, overrides the default PVC for knowledge storage
@@ -342,3 +398,92 @@ mcp:
             env:
               - name: SEARXNG_URL
                 value: "http://searxng.default.svc.cluster.local:8080"
+
+  # Home Assistant MCP Server - smart home queries and analysis
+  # Repo: github.com/zorak1103/ha-mcp
+  # Read-only: no service calls, no automation/script/scene/helper mutation.
+  # HA runs outside this cluster, so HA_URL comes from the secret, not values.yaml.
+  # mcpPort must be 8080: it is both the ha-mcp default listen port and the port
+  # the generic-mcp-ingress template uses as the mcp-<name>-proxy backend.
+  home-assistant:
+    enabled: true
+    image: zorak1103/ha-mcp:2026.7.3
+    transport: streamable-http
+    mcpPort: 8080
+    env:
+      - name: HA_MCP_READ_ONLY
+        value: "true"
+    # NOT spec.secrets: MCPServer.spec.secrets is x-kubernetes-list-type: map keyed
+    # on `name`, so two entries both named home-assistant-mcp are a duplicate map key
+    # and the apiserver rejects the whole object. Both values come from one Secret, so
+    # they are injected as standard secretKeyRef env vars on the `mcp` container
+    # instead, which keeps the HA URL out of Git with a single ExternalSecret.
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+    podTemplateSpec:
+      spec:
+        containers:
+          - name: mcp
+            env:
+              - name: HA_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: home-assistant-mcp
+                    key: HA_URL
+              - name: HA_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: home-assistant-mcp
+                    key: HA_TOKEN
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+
+  # Kubernetes MCP Server - in-cluster read-only cluster inspection
+  # Repo: github.com/containers/kubernetes-mcp-server
+  # All behaviour is driven by the kubernetes-mcp-config ConfigMap (config.toml):
+  # read_only, toolsets, and denied_resources for v1/Secret.
+  # RBAC comes from the kubernetes-mcp ServiceAccount (rbac-kubernetes-mcp.yaml).
+  kubernetes:
+    enabled: true
+    image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65
+    transport: streamable-http
+    mcpPort: 8080
+    serviceAccount: kubernetes-mcp
+    args:
+      - "--config"
+      - "/etc/kubernetes-mcp-server/config.toml"
+    resources:
+      limits:
+        # 512Mi because the server buffers up to 16Mi request bodies and caches
+        # the cluster's OpenAPI schemas.
+        cpu: '500m'
+        memory: '512Mi'
+      requests:
+        cpu: '50m'
+        memory: '128Mi'
+    podTemplateSpec:
+      spec:
+        volumes:
+          - name: config
+            configMap:
+              name: kubernetes-mcp-config
+        containers:
+          - name: mcp
+            volumeMounts:
+              - name: config
+                mountPath: /etc/kubernetes-mcp-server
+                readOnly: true
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+
