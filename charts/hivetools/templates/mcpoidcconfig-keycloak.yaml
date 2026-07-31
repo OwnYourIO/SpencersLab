@@ -13,5 +13,5 @@ spec:
     issuer: https://login.{{ .Values.domain }}/realms/{{ .Values.keycloak.realm }}
     clientId: {{ .Values.keycloak.clientId }}
     clientSecretRef:
-      name: mcp-keycloak-oidc
+      name: mcp-sso
       key: client-secret

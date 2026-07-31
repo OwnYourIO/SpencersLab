@@ -12,7 +12,7 @@ domain: OVERRIDE_VIA_CUSTOM_VALUES
 bitwardenIds:
   github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
   homeassistant-mcp: OVERRIDE_VIA_CUSTOM_VALUES
-  mcp-keycloak-oidc: OVERRIDE_VIA_CUSTOM_VALUES
+  mcp-sso: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Keycloak OIDC configuration for MCP endpoint authentication.
 # All MCP servers are exposed through the shared ingress and authenticate via
@@ -192,13 +192,17 @@ mcp:
     mcpPort: 8080
     oidc:
       audience: homeassistant
-    env:
-      - name: HA_URL
-        value: OVERRIDE_VIA_CUSTOM_VALUES
+    # Home Assistant connection URL (non-sensitive). Injected into the
+    # homeassistant-mcp secret alongside HA_TOKEN; override per-cluster via
+    # custom-values.
+    # haUrl: OVERRIDE_VIA_CUSTOM_VALUES
     secrets:
       - name: homeassistant-mcp
         key: HA_TOKEN
         targetEnvName: HA_TOKEN
+      - name: homeassistant-mcp
+        key: HA_URL
+        targetEnvName: HA_URL
     resources:
       limits:
         cpu: '100m'
@@ -221,12 +225,11 @@ mcp:
 
   # Kubernetes MCP Server - Kubernetes/OpenShift operations
   # Repo: github.com/containers/kubernetes-mcp-server
-  # TODO: upstream only publishes the 'latest' tag on quay.io >_<.
   # Runs read-only against the in-cluster API via the kubernetes-mcp ServiceAccount
   # (bound to the built-in 'view' ClusterRole, see templates/rbac-kubernetes-mcp.yaml).
   kubernetes:
     enabled: true
-    image: quay.io/containers/kubernetes_mcp_server:latest
+    image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65
     transport: streamable-http
     mcpPort: 8080
     serviceAccount: kubernetes-mcp
