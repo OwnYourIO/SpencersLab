@@ -22,6 +22,8 @@ smtp-relay:
     smtp-secret: 876515bc-b0d6-43df-b9fa-b0dd000a601e
 
 hivetools:
+  keycloak:
+    realm: SpencersLab
   bitwardenIds:
     github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
 

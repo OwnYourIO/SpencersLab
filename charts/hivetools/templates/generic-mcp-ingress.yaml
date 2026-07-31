@@ -14,7 +14,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "traefik"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: default-normalize-mcp-path@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: default-normalize-mcp-path@kubernetescrd,default-jwt-keycloak@kubernetescrd
 spec:
   tls:
     - hosts:

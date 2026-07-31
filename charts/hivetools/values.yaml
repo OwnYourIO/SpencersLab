@@ -8,9 +8,14 @@ namespace: default
 # Domain for MCP ingress (override via custom-values)
 domain: OVERRIDE_VIA_CUSTOM_VALUES
 
+# Keycloak configuration for JWT authentication
+keycloak:
+  realm: OVERRIDE_VIA_CUSTOM_VALUES
+
 # Bitwarden secret IDs
 bitwardenIds:
   github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  ha-mcp: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Shared storage configuration
 # When set, overrides the default PVC for knowledge storage
@@ -342,3 +347,66 @@ mcp:
             env:
               - name: SEARXNG_URL
                 value: "http://searxng.default.svc.cluster.local:8080"
+
+  # Home Assistant MCP Server - Smart home control and automation
+  # Repo: github.com/zorak1103/ha-mcp
+  homeassistant:
+    enabled: true
+    image: zorak1103/ha-mcp:2026.7.3
+    transport: streamable-http
+    mcpPort: 8080
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+    secrets:
+      - name: ha-mcp
+        key: HA_TOKEN
+        targetEnvName: HA_TOKEN
+    podTemplateSpec:
+      spec:
+        containers:
+          - name: mcp
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+            env:
+              - name: HA_URL
+                value: OVERRIDE_VIA_CUSTOM_VALUES
+
+  # Kubernetes MCP Server - Cluster management and observability
+  # Repo: github.com/containers/kubernetes-mcp-server
+  kubernetes:
+    enabled: true
+    # TODO: This should be versioned, but containers/kubernetes-mcp-server only ships latest on Quay.
+    image: quay.io/containers/kubernetes_mcp_server:latest
+    transport: streamable-http
+    mcpPort: 8080
+    args:
+      - "--port"
+      - "8080"
+      - "--stateless"
+      - "--read-only"
+      - "--cluster-provider"
+      - "in-cluster"
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+    podTemplateSpec:
+      spec:
+        containers:
+          - name: mcp
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL

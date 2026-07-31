@@ -85,6 +85,9 @@ traefik:
       theme-park:
         moduleName: "github.com/packruler/traefik-themepark"
         version: "v1.4.2"
+      traefik-jwt-plugin:
+        moduleName: "github.com/team-carepay/traefik-jwt-plugin"
+        version: "v0.2.1"
 
   service:
     type: LoadBalancer

@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: jwt-keycloak
+  namespace: {{ .Values.namespace | default "default" }}
+spec:
+  plugin:
+    traefik-jwt-plugin:
+      jwksUrl: "https://login.{{ .Values.domain }}/realms/{{ .Values.keycloak.realm }}/protocol/openid-connect/certs"
+      issuer: "https://login.{{ .Values.domain }}/realms/{{ .Values.keycloak.realm }}"
+      required: true
+      headerName: "Authorization"
+      tokenPrefix: "Bearer "
+      saveToken: false
+      allowedAlgorithms:
+        - "RS256"
