@@ -192,17 +192,6 @@ mcp:
     mcpPort: 8080
     oidc:
       audience: homeassistant
-    # Home Assistant connection URL (non-sensitive). Injected into the
-    # homeassistant-mcp secret alongside HA_TOKEN; override per-cluster via
-    # custom-values.
-    # haUrl: OVERRIDE_VIA_CUSTOM_VALUES
-    secrets:
-      - name: homeassistant-mcp
-        key: HA_TOKEN
-        targetEnvName: HA_TOKEN
-      - name: homeassistant-mcp
-        key: HA_URL
-        targetEnvName: HA_URL
     resources:
       limits:
         cpu: '100m'
@@ -214,6 +203,9 @@ mcp:
       spec:
         containers:
           - name: mcp
+            envFrom:
+              - secretRef:
+                  name: homeassistant-mcp
             securityContext:
               runAsUser: 1000
               runAsGroup: 1000
