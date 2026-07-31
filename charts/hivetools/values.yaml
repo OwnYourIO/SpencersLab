@@ -147,7 +147,7 @@ mcp:
     resources:
       limits:
         cpu: '100m'
-        memory: '128Mi'
+        memory: '1128Mi'
       requests:
         cpu: '50m'
         memory: '64Mi'
@@ -172,7 +172,7 @@ mcp:
     resources:
       limits:
         cpu: '100m'
-        memory: '128Mi'
+        memory: '1128Mi'
       requests:
         cpu: '50m'
         memory: '64Mi'
@@ -195,7 +195,7 @@ mcp:
     resources:
       limits:
         cpu: '100m'
-        memory: '128Mi'
+        memory: '1128Mi'
       requests:
         cpu: '50m'
         memory: '64Mi'
@@ -235,7 +235,7 @@ mcp:
     resources:
       limits:
         cpu: '200m'
-        memory: '256Mi'
+        memory: '1256Mi'
       requests:
         cpu: '100m'
         memory: '128Mi'
@@ -282,7 +282,7 @@ mcp:
     resources:
       limits:
         cpu: '100m'
-        memory: '128Mi'
+        memory: '1128Mi'
       requests:
         cpu: '50m'
         memory: '64Mi'
@@ -308,7 +308,7 @@ mcp:
     resources:
       limits:
         cpu: '100m'
-        memory: '128Mi'
+        memory: '1128Mi'
       requests:
         cpu: '50m'
         memory: '64Mi'
@@ -340,7 +340,7 @@ mcp:
     resources:
       limits:
         cpu: '200m'
-        memory: '256Mi'
+        memory: '1256Mi'
       requests:
         cpu: '100m'
         memory: '128Mi'
@@ -402,7 +402,7 @@ mcp:
     resources:
       limits:
         cpu: '100m'
-        memory: '128Mi'
+        memory: '1128Mi'
       requests:
         cpu: '50m'
         memory: '64Mi'
@@ -418,7 +418,7 @@ mcp:
     resources:
       limits:
         cpu: '200m'
-        memory: '256Mi'
+        memory: '1256Mi'
       requests:
         cpu: '100m'
         memory: '128Mi'
@@ -436,7 +436,7 @@ mcp:
     resources:
       limits:
         cpu: '100m'
-        memory: '128Mi'
+        memory: '1128Mi'
       requests:
         cpu: '50m'
         memory: '64Mi'
