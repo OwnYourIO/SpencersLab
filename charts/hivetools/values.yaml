@@ -187,7 +187,7 @@ mcp:
   # WebSocket + REST. HA_URL overridden per-cluster via custom-values.
   homeassistant:
     enabled: true
-    image: zorak1103/ha-mcp:2026.7.3
+    image: zorak1103/ha-mcp:2026.8.1
     transport: streamable-http
     mcpPort: 8080
     oidc:
