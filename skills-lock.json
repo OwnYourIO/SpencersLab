@@ -1,11 +1,47 @@
 {
   "version": 1,
   "skills": {
+    "aws-cost-optimization": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "aws-cost-optimization/skills/SKILL.md",
+      "computedHash": "a033370fe716ac4eeefa26d892f4d1cbf0c8e6b7617d38aae5dc0a513a636198"
+    },
+    "ci-cd": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "ci-cd/skills/SKILL.md",
+      "computedHash": "bec1f79d1209f2a6d256f0e1d5ee2a939d757ef4fdac65dbf1cd47560ea9ae7a"
+    },
+    "gitops-workflows": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "gitops-workflows/skills/SKILL.md",
+      "computedHash": "036221ae6a2cfd29e8ed40f85a16b043c09c196452ea4e48d2e698398238a59b"
+    },
     "home-assistant-best-practices": {
       "source": "homeassistant-ai/skills",
       "sourceType": "github",
       "skillPath": "skills/home-assistant-best-practices/SKILL.md",
       "computedHash": "9bcf8eb6e6e48accc9445b95a5a94730b144d152d77ced56ac9cf3343631814c"
+    },
+    "iac-terraform": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "iac-terraform/skills/SKILL.md",
+      "computedHash": "392bdaa01023a8098f665a6289f956712d12b074cba2cb258cdef5389c927ddd"
+    },
+    "k8s-troubleshooter": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "k8s-troubleshooter/skills/SKILL.md",
+      "computedHash": "5d694153729d2afaa337ef485db570d09ffdd285965295f4c094fc95c128eb7e"
+    },
+    "monitoring-observability": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "monitoring-observability/skills/SKILL.md",
+      "computedHash": "a074cfeaa390c9492b920971f12f9ab6b16c828ae9436b13d35e44cd6e54360b"
     }
   }
 }
