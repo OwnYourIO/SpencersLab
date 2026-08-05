@@ -5,6 +5,7 @@ bitwardenIds:
   paperless-samba-secret: OVERRIDE_VIA_CUSTOM_VALUES
   karakeep-secret: OVERRIDE_VIA_CUSTOM_VALUES
   karakeep-sso: OVERRIDE_VIA_CUSTOM_VALUES
+  actualbudget-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
@@ -830,6 +831,9 @@ actualbudget:
             ACTUAL_PORT: &http 5006
             ACTUAL_DATA_DIR: &pvc /data
             ACTUAL_MULTIUSER: "true"
+          envFrom:
+            - secretRef:
+                name: "{{ `{{ .Release.Name }}` }}-sso-secret
           securityContext: &sc
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false

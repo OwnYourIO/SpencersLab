@@ -89,3 +89,11 @@ pt750:
 brother-ptouch-automation:
   bitwardenIds:
     brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931
+
+bri-budget:
+  bitwardenIds:
+    actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
+
+actualbudget:
+  bitwardenIds:
+    actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182

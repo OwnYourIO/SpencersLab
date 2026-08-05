@@ -158,6 +158,10 @@ proxy:
       loginSubDomain: "login"
     sms:
       target: playsms
+    bri-budget:
+      target: bri-budget
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=actualbudget&response_type=code&redirect_uri=https://bri-budget.$.Values.domain/account/login"
+      loginSubDomain: "login"
     budget:
       target: budget
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=actualbudget&response_type=code&redirect_uri=https://budget.$.Values.domain/account/login"
