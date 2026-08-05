@@ -38,13 +38,6 @@ app-template:
               enabled: true
             readiness:
               enabled: true
-      initContainers:
-        01-enable-openid:
-          image: *img
-          env: *env
-          securityContext: *sc
-          command: ["tini", "-g", "--", "/bin/sh", "-c"]
-          args: ["npm run enable-openid --prefix /app || true"]
   service:
     actual:
       controller: actual
