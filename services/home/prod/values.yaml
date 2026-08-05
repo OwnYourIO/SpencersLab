@@ -833,7 +833,7 @@ actualbudget:
             ACTUAL_MULTIUSER: "true"
           envFrom:
             - secretRef:
-                name: "{{ `{{ .Release.Name }}` }}-sso-secret
+                name: "{{ `{{ .Release.Name }}` }}-sso-secret"
           securityContext: &sc
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
