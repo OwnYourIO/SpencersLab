@@ -327,36 +327,6 @@ mcp:
               - mountPath: /knowledge
                 name: knowledge
 
-  # 1MCP - One MCP Server for All
-  # This acts as a proxy/gateway that can manage multiple MCP servers as subprocesses
-  # Perfect for running non-containerized MCP servers (like docling) in a unified way
-  onemcp:
-    enabled: true
-    image: ghcr.io/1mcp-app/agent:v0.34.2
-    transport: streamable-http
-    mcpPort: 3050
-    oidc:
-      audience: onemcp
-    resources:
-      limits:
-        cpu: '200m'
-        memory: '1256Mi'
-      requests:
-        cpu: '100m'
-        memory: '128Mi'
-    # Volume mount for 1MCP configuration directory
-    # Required: 1MCP needs to write config to /home/node/.config/1mcp
-    podTemplateSpec:
-      spec:
-        volumes:
-          - name: onemcp-config
-            # TODO: Make local?
-            emptyDir: {}
-        containers:
-          - name: mcp
-            volumeMounts:
-              - mountPath: /home/node/.config/1mcp
-                name: onemcp-config
     # Configuration for 1MCP to add MCP servers
     # Example: Configure to add docling server
     # podTemplateSpec:
@@ -428,7 +398,7 @@ mcp:
   # Points at the in-cluster SearXNG service (see charts/searxng)
   searxng:
     enabled: true
-    image: ghcr.io/ihor-sokoliuk/mcp-searxng:v1.11.1
+    image: isokoliuk/mcp-searxng:1.13.0
     transport: stdio
     mcpPort: 8080
     oidc:
