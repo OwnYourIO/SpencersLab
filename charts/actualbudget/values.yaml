@@ -19,6 +19,9 @@ app-template:
             ACTUAL_PORT: &http 5006
             ACTUAL_DATA_DIR: &pvc /data
             ACTUAL_MULTIUSER: "true"
+          envFrom:
+            - secretRef:
+                name: "actualbudget-sso-secret"
           securityContext: &sc
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
