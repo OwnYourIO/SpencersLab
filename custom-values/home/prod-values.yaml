@@ -23,6 +23,15 @@ bitwardenIds:
   zigbee2mqtt: 0164cfbc-dd85-43af-a4cc-b13f00108bde
   immich-sso-secret: f4dfae88-f77d-4c31-b58e-b26b0049b6f5
   immich-pg: e908eec9-232c-4aef-8665-b26a000c7469
+  actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
+
+bri-budget:
+  bitwardenIds:
+    actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
+
+actualbudget:
+  bitwardenIds:
+    actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
 
 seaweedfs-csi-driver:
   volume-count: 8
@@ -89,11 +98,3 @@ pt750:
 brother-ptouch-automation:
   bitwardenIds:
     brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931
-
-bri-budget:
-  bitwardenIds:
-    actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
-
-actualbudget:
-  bitwardenIds:
-    actualbudget-sso-secret: 3f3ebb88-bded-44bf-afc9-b49d00225182
