@@ -81,6 +81,8 @@ proxy:
       enabled: true
     budget:
       enabled: true
+    bri-budget:
+      enabled: true
     llama:
       enabled: true
 
