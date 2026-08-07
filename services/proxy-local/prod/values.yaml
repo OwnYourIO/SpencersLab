@@ -215,7 +215,7 @@ proxy:
       loginSubDomain: "login"
       # TODO: It'd be nice to split this into 2 ingress kinda like we do for sso.
       # That'd enable us to allow login redirects on the /ui/ while skipping it for the /v1 + other endpoints.
-      middlewares: "kube-system-crowdsec@kubernetescrd,user-allowlist@file"
+      middlewares: "kube-system-crowdsec@kubernetescrd,user-allowlist-remote@file"
       #middlewares: "kube-system-crowdsec@kubernetescrd,default-redirect-llama@kubernetescrd,user-allowlist@file"
       ingressRoute:
         middlewares:
