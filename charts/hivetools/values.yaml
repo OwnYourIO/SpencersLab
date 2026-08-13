@@ -218,7 +218,8 @@ mcp:
   # Kubernetes MCP Server - Kubernetes/OpenShift operations
   # Repo: github.com/containers/kubernetes-mcp-server
   # Runs read-only against the in-cluster API via the kubernetes-mcp ServiceAccount
-  # (bound to the built-in 'view' ClusterRole, see templates/rbac-kubernetes-mcp.yaml).
+  # (bound to the custom 'kubernetes-mcp-view' ClusterRole, which mirrors the built-in
+  # 'view' role but without read access to Secrets — see templates/rbac-kubernetes-mcp.yaml).
   kubernetes:
     enabled: true
     image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65
