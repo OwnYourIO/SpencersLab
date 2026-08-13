@@ -188,7 +188,7 @@ mcp:
   homeassistant:
     enabled: true
     #image: zorak1103/ha-mcp:2026.8.2
-    image: ghcr.io/curatedforest/ha-mcp:fix-trace-item-id-latest
+    image: ghcr.io/curatedforest/ha-mcp:0.0.0-rc.3
     transport: streamable-http
     mcpPort: 8080
     oidc:
