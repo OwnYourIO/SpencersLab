@@ -1,11 +1,23 @@
 {
   "version": 1,
   "skills": {
+    "argocd-advanced": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/argocd-advanced/SKILL.md",
+      "computedHash": "accd1310dc5f0fbff4743f4c50c5191338d3c59839cbc61b208950067e1a65ac"
+    },
     "aws-cost-optimization": {
       "source": "ahmedasmar/devops-claude-skills",
       "sourceType": "github",
       "skillPath": "aws-cost-optimization/skills/SKILL.md",
       "computedHash": "a033370fe716ac4eeefa26d892f4d1cbf0c8e6b7617d38aae5dc0a513a636198"
+    },
+    "brainstorming": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/brainstorming/SKILL.md",
+      "computedHash": "b58d55b64742ecd37923985ec7bdfbe678ffbcb9895562abd28c0a32dcacd7fb"
     },
     "ci-cd": {
       "source": "ahmedasmar/devops-claude-skills",
@@ -13,11 +25,47 @@
       "skillPath": "ci-cd/skills/SKILL.md",
       "computedHash": "bec1f79d1209f2a6d256f0e1d5ee2a939d757ef4fdac65dbf1cd47560ea9ae7a"
     },
+    "container-security": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/container-security/SKILL.md",
+      "computedHash": "fdaeb392635fd87ff596aeb0a63027ed923fc75aef486c436cf28ecc7a895fec"
+    },
+    "dispatching-parallel-agents": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/dispatching-parallel-agents/SKILL.md",
+      "computedHash": "b011107f17188e0b2898bb1856b5bac8b49537cc86e737c82126558a235bd62a"
+    },
+    "executing-plans": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/executing-plans/SKILL.md",
+      "computedHash": "78a07800ee99a5861ae10be59d79fad085fdca10444e8aaeb2691597e357cff8"
+    },
+    "finishing-a-development-branch": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/finishing-a-development-branch/SKILL.md",
+      "computedHash": "4f571e7befb8b0946d9d7770232c818812412e9ab1dfb811f847edfba1fc6275"
+    },
+    "gitops-principles": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gitops-principles/SKILL.md",
+      "computedHash": "4b0e25b8ecca55768b84b7921fd6cb6a27ead95bf30eaaeb02f40c0f16d1d680"
+    },
     "gitops-workflows": {
       "source": "ahmedasmar/devops-claude-skills",
       "sourceType": "github",
       "skillPath": "gitops-workflows/skills/SKILL.md",
       "computedHash": "036221ae6a2cfd29e8ed40f85a16b043c09c196452ea4e48d2e698398238a59b"
+    },
+    "grafana": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/grafana/SKILL.md",
+      "computedHash": "0107f5fcc377f49751f734c68e6243c665473604f1838c4e89b05387c36cff93"
     },
     "ha-mcp-efficiency": {
       "source": "zorak1103/ha-mcp",
@@ -49,6 +97,12 @@
       "skillPath": ".claude/skills/ha-mcp/ha-mcp-tools/SKILL.md",
       "computedHash": "ce5b1c610f2be1088ee3ecb713a2968ed092efa09cee54bd2b1b86a4a82f608c"
     },
+    "helm-bjw-s-chart": {
+      "source": "obeone/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/helm-bjw-s-chart/SKILL.md",
+      "computedHash": "a642de03822c6a2a8387e94813747055b8dbc9db2a84b5741301276773a8e4d0"
+    },
     "home-assistant-best-practices": {
       "source": "homeassistant-ai/skills",
       "sourceType": "github",
@@ -67,11 +121,107 @@
       "skillPath": "k8s-troubleshooter/skills/SKILL.md",
       "computedHash": "5d694153729d2afaa337ef485db570d09ffdd285965295f4c094fc95c128eb7e"
     },
+    "kubernetes-skill": {
+      "source": "LukasNiessen/kubernetes-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "c87c8d52ad4d08d29d34b2788a2b64b0a367dd71a958e592dc57608934c217db"
+    },
+    "loki": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/loki/SKILL.md",
+      "computedHash": "96c9e19fac879ea28b6b35a397967707d5c50c4af8d3de930581158b74d810a8"
+    },
+    "managing-infra": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/managing-infra/SKILL.md",
+      "computedHash": "5babc0fcd19ac85f26f916ca11600df6fcb804f8dde68693bbfbd85814cc198e"
+    },
     "monitoring-observability": {
       "source": "ahmedasmar/devops-claude-skills",
       "sourceType": "github",
       "skillPath": "monitoring-observability/skills/SKILL.md",
       "computedHash": "a074cfeaa390c9492b920971f12f9ab6b16c828ae9436b13d35e44cd6e54360b"
+    },
+    "progressive-delivery": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/progressive-delivery/SKILL.md",
+      "computedHash": "bc70a9dd3e6082c8165ef77522f173fcb9768907c2aea8f0d87cc9629c4ee4fd"
+    },
+    "prometheus": {
+      "source": "julianobarbosa/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "skills/prometheus/SKILL.md",
+      "computedHash": "906e5850642347a6c7c45e16dd9a09374703ea314193b3a38708fc98c360b040"
+    },
+    "receiving-code-review": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/receiving-code-review/SKILL.md",
+      "computedHash": "59361179fc9225173e0c145ffd9bafbf9fdbf8b43ce3dc308497a0b4f83a6063"
+    },
+    "requesting-code-review": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/requesting-code-review/SKILL.md",
+      "computedHash": "004f340ae65811095d6a9bb0a759c87d0a8085c5e705dbb019b011626293d2e9"
+    },
+    "subagent-driven-development": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/subagent-driven-development/SKILL.md",
+      "computedHash": "367cc1d3216d6672b947c8c6583dbd6440ea407beb6da75a97d3a8ee1a23640a"
+    },
+    "systematic-debugging": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/systematic-debugging/SKILL.md",
+      "computedHash": "a2750dfbaed1690da73b120254892c4f926b4576cb82eb16fc877783941fe39b"
+    },
+    "test-driven-development": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/test-driven-development/SKILL.md",
+      "computedHash": "a4126a9c5f17be3c228aa9e5755898ade283448b86099f56f40852e8c14532be"
+    },
+    "traefik": {
+      "source": "kettleofketchup/kettleofskills",
+      "sourceType": "github",
+      "skillPath": "plugins/traefik/skills/traefik/SKILL.md",
+      "computedHash": "98f09884fb0b89a30bb712ad42375bec41469d8036ee9de81f5792eb103236b7"
+    },
+    "using-git-worktrees": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/using-git-worktrees/SKILL.md",
+      "computedHash": "48c8a1040e378e0cb7208107294e3afa9067b9370c3f33b49a443eb6b7528b0d"
+    },
+    "using-superpowers": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/using-superpowers/SKILL.md",
+      "computedHash": "c7abe8bdc2099bbe4f245454d32c7563ccd2bb41dcc218b02b461c2acc3c6ae6"
+    },
+    "verification-before-completion": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/verification-before-completion/SKILL.md",
+      "computedHash": "b529822bdac4b197b180fe12225cff86b930b65910435103c10622df7f041651"
+    },
+    "writing-plans": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/writing-plans/SKILL.md",
+      "computedHash": "27c75044e444a4fc68798c3f799dc23eaff3a6bfabff32e6ad75bb20f881c094"
+    },
+    "writing-skills": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/writing-skills/SKILL.md",
+      "computedHash": "e5dfc1a942f56dc757421b0d87ae1f38ab693ebc71138e65268fd408bb5c93d3"
     }
   }
 }
