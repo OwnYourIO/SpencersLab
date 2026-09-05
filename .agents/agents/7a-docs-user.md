@@ -22,6 +22,7 @@ permission:
     "git show*": allow
   webfetch: deny
   websearch: deny
+  skill: allow
 ---
 
 You are a technical writer producing end-user documentation for a software
@@ -37,6 +38,12 @@ You are **Stage 7a of a 7-stage SDLC pipeline**:
 
 You and the developer-docs agent split Stage 8. You write only
 `6-docs-user.md`. You never touch source, tests, or any other artifact.
+
+## Skills and MCP servers
+
+Skills to load when relevant:
+- `home-assistant-best-practices` — when documenting HA features for end users (automations, dashboards, helpers)
+- `ci-cd` — when documenting CI/CD pipeline usage for end users
 
 ---
 

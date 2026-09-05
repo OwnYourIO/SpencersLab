@@ -19,6 +19,36 @@
       "skillPath": "gitops-workflows/skills/SKILL.md",
       "computedHash": "036221ae6a2cfd29e8ed40f85a16b043c09c196452ea4e48d2e698398238a59b"
     },
+    "ha-mcp-efficiency": {
+      "source": "zorak1103/ha-mcp",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ha-mcp/ha-mcp-efficiency/SKILL.md",
+      "computedHash": "c670a3e83290fc1ec01508d2ee3fcefdd4297d5caadd715d3049b8dc89dbbdec"
+    },
+    "ha-mcp-gotchas": {
+      "source": "zorak1103/ha-mcp",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ha-mcp/ha-mcp-gotchas/SKILL.md",
+      "computedHash": "2cdf47e13270c94115f1f64c7fe15b000b29067919bb0e883bc3ad91c0cbd078"
+    },
+    "ha-mcp-guide": {
+      "source": "zorak1103/ha-mcp",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ha-mcp/ha-mcp-guide/SKILL.md",
+      "computedHash": "1604af3f44a44393cac1869934a514da3e4df39c02f863995e398191db7d7f00"
+    },
+    "ha-mcp-patching": {
+      "source": "zorak1103/ha-mcp",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ha-mcp/ha-mcp-patching/SKILL.md",
+      "computedHash": "4c68056be669c612d51a8ef59104e91d5e0ba272e23b5e2e6c99c1b443fd16a6"
+    },
+    "ha-mcp-tools": {
+      "source": "zorak1103/ha-mcp",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ha-mcp/ha-mcp-tools/SKILL.md",
+      "computedHash": "ce5b1c610f2be1088ee3ecb713a2968ed092efa09cee54bd2b1b86a4a82f608c"
+    },
     "home-assistant-best-practices": {
       "source": "homeassistant-ai/skills",
       "sourceType": "github",
