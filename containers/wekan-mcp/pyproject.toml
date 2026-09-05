@@ -1,0 +1,20 @@
+[project]
+name = "wekan-mcp"
+version = "0.1.0"
+description = "MCP server that wraps the WeKan REST API with credential isolation."
+requires-python = ">=3.10"
+dependencies = [
+    # Pin to compatible ranges. FastMCP moves fast; loosen only after testing.
+    "fastmcp>=3.4,<4",
+    "httpx>=0.27,<1",
+]
+
+[project.scripts]
+wekan-mcp = "wekan_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["wekan_mcp*"]

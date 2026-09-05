@@ -1,0 +1,117 @@
+# MCPServer resource for the WeKan MCP server.
+#
+# What this does:
+#   The ToolHive operator sees this resource and creates:
+#     - a Deployment running your image (the "MCP server pod")
+#     - a proxy Deployment + Service that exposes the streamable-http endpoint
+#       to clients (Claude Desktop, other MCP clients) at
+#       http://<proxy-service>.<namespace>.svc.cluster.local:<proxyPort>/mcp
+#
+# Prerequisites:
+#   1. ToolHive operator installed in `toolhive-system` (or your chosen ns):
+#        helm upgrade -i toolhive-operator \
+#          oci://ghcr.io/stacklok/toolhive/toolhive-operator \
+#          --version=<current> \
+#          -n toolhive-system --create-namespace
+#   2. The wekan-mcp image pushed to a registry the cluster can pull from.
+#   3. The `wekan-creds` Secret created (see secret.yaml.example).
+#
+# Apply:
+#   kubectl apply -f k8s/mcpserver.yaml
+#
+# Then follow k8s/client-setup.md to point Claude Desktop at the proxy Service.
+
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: wekan
+  namespace: toolhive-system
+spec:
+  # -----------------------------------------------------------------------
+  # Image
+  # -----------------------------------------------------------------------
+  # Replace with the registry path where you pushed the image built from
+  # this repo's Dockerfile. Pin the tag; never use `latest` in production.
+  image: registry.example.com/wekan-mcp:0.1.0
+
+  # -----------------------------------------------------------------------
+  # Transport & ports
+  # -----------------------------------------------------------------------
+  # streamable-http is the right choice for K8s: multi-client, no stdio
+  # attach limitation, works with the ToolHive proxy Service unmodified.
+  transport: streamable-http
+
+  # Port ToolHive's proxy Service exposes to clients.
+  proxyPort: 8080
+
+  # Port the container inside the pod listens on (matches Dockerfile EXPOSE
+  # and the WEKAN_MCP_PORT default in server.py).
+  # Older ToolHive versions called this `mcpPort`; newer ones use `targetPort`.
+  # If your operator rejects one, swap to the other.
+  targetPort: 8080
+
+  # -----------------------------------------------------------------------
+  # Non-secret env vars for the MCP server container
+  # -----------------------------------------------------------------------
+  env:
+    - name: WEKAN_BASE_URL
+      # Site root of your WeKan server. NO trailing /api.
+      # If WeKan runs in the same cluster, prefer its in-cluster Service DNS,
+      # e.g. http://wekan.wekan.svc.cluster.local:8080
+      value: "https://boards.example.com"
+
+    # Optional: turn up log verbosity for debugging.
+    # - name: WEKAN_MCP_LOG_LEVEL
+    #   value: "DEBUG"
+
+  # -----------------------------------------------------------------------
+  # Secrets — the key credential-isolation piece
+  # -----------------------------------------------------------------------
+  # ToolHive reads the value from a Kubernetes Secret and injects it into
+  # the MCP server container as WEKAN_TOKEN at runtime. The token never
+  # appears in this manifest or in any client config file.
+  secrets:
+    - name: wekan-creds        # Kubernetes Secret name
+      key: token               # key within the Secret
+      targetEnvName: WEKAN_TOKEN   # env var inside the container
+
+  # -----------------------------------------------------------------------
+  # Permission profile — restrict what the server can reach
+  # -----------------------------------------------------------------------
+  # `network` allows outbound network so the server can reach the WeKan API.
+  # For tighter control, define an MCPPermissionProfile CR that restricts
+  # egress to the WeKan host only.
+  permissionProfile:
+    type: builtin
+    name: network
+
+  # -----------------------------------------------------------------------
+  # Resource limits — modest; this server is I/O-bound
+  # -----------------------------------------------------------------------
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  # -----------------------------------------------------------------------
+  # Optional: pod-level customization
+  # -----------------------------------------------------------------------
+  # Uncomment to add security context, node selectors, tolerations, etc.
+  # The main container MUST be named `mcp` so ToolHive can manage it.
+  #
+  # podTemplateSpec:
+  #   spec:
+  #     securityContext:
+  #       runAsNonRoot: true
+  #       seccompProfile:
+  #         type: RuntimeDefault
+  #     containers:
+  #       - name: mcp
+  #         securityContext:
+  #           allowPrivilegeEscalation: false
+  #           readOnlyRootFilesystem: true
+  #           capabilities:
+  #             drop: ["ALL"]
