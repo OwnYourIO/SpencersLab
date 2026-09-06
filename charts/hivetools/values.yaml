@@ -13,11 +13,7 @@ bitwardenIds:
   github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
   homeassistant-mcp: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-sso: OVERRIDE_VIA_CUSTOM_VALUES
-  # Grafana service-account token (Viewer) for the grafana MCP server.
   grafana-mcp-token: OVERRIDE_VIA_CUSTOM_VALUES
-  # Read-only Postgres MCP role credentials (one Bitwarden LOGIN item per
-  # CNPG cluster; username=readonly). Also back the composed DATABASE_URI secrets
-  # rendered by templates/secret-postgres-mcp.yaml.
   mcp-pg-coder: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-flowise: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-langflow: OVERRIDE_VIA_CUSTOM_VALUES

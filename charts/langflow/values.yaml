@@ -1,7 +1,6 @@
 bitwardenIds:
   langflow: OVERRIDE_VIA_CUSTOM_VALUES
   langflow-pg: OVERRIDE_VIA_CUSTOM_VALUES
-  # Read-only CNPG role credential for the postgres-langflow ToolHive MCP server.
   mcp-pg-langflow: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET

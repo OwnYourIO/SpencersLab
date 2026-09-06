@@ -2,7 +2,6 @@
 bitwardenIds:
   flowise: OVERRIDE_NEEDED
   flowise-pg: OVERRIDE_NEEDED
-  # Read-only CNPG role credential for the postgres-flowise ToolHive MCP server.
   mcp-pg-flowise: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET

@@ -1,8 +1,7 @@
 name: Build and Push Docker Containers
 
-# Images are identified by TAGS ONLY — no VERSION files, no version-bump
-# commits. Mirrors the ADO containers.yml semantics:
-#   CI on main/dev → push v<run_number> (monotonic, ADO Build.BuildId analog)
+# Images are identified by tags:
+#   CI on main/dev → push v<run_number> (monotonic immutable tag)
 #                    + <branch> (mutable rolling tag the cluster pulls)
 #   PR builds      → build only, never push (a PR branch must not be able to
 #                    overwrite the ':main' tag)

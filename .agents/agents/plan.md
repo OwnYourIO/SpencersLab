@@ -67,9 +67,9 @@ Do not generate multiple alternative plans — ask instead.
    registries in `AGENTS.md` — it runs in a fresh session and loads only what
    your plan names.
 6. Never plan version bumps — CI bumps `Chart.yaml` `version` automatically on
-   merge to main, and containers are tag-based with no VERSION files
-   (`docker-build.yaml` pushes `:v<run_number>` + `:<branch>`). Only brand-new
-   charts get an initial version (`1.0.0`).
+   merge to main, and containers are tag-based (`docker-build.yaml` pushes
+   `:v<run_number>` + `:<branch>`). Only brand-new charts get an initial
+   version (`1.0.0`).
 7. Write the plan to `.agents/plans/`.
 
 ## Plan file naming

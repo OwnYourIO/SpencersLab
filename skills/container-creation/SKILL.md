@@ -1,6 +1,6 @@
 ---
 name: container-creation
-description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the tag-based docker-build GitHub workflow (no VERSION files), or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
+description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the tag-based docker-build GitHub workflow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
 ---
 
 # Container Creation (SpencersLab)
@@ -34,15 +34,13 @@ containers/
     └── ...                 # any other build-context files
 ```
 
-**No `VERSION` file.** Images are identified by tags only.
-
 The directory name is significant: it becomes the image name. The container
 above publishes as `ghcr.io/ownyourio/<container-name>`.
 
 ## Build pipeline
 
 `.github/workflows/docker-build.yaml` builds and pushes containers
-automatically — tag-based, no VERSION files, no version-bump commits.
+automatically; images are identified by tags.
 
 **Triggers:** pushes to `main`/`dev` that touch `containers/**`, and PRs
 targeting `main`/`dev` that touch `containers/**`.

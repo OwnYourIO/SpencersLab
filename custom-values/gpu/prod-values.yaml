@@ -12,9 +12,6 @@ bitwardenIds:
   open-webui-sso-secret: 69e653a3-061c-4727-af4b-b336014cedbe
   open-webui-secret: b56bd559-e590-42eb-a98a-b336014dc3e7
   open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
-  # Read-only CNPG role credentials for the pg-coder and pg-open-webui clusters
-  # defined by the gpu service chart. TEMP: reuse each app's DB LOGIN item (same
-  # password for now); swap to dedicated readonly items + UUIDs when available.
   mcp-pg-coder: e197f717-0cd6-4634-8388-b33e000ae174
   mcp-pg-open-webui: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
 
@@ -31,11 +28,7 @@ hivetools:
     github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
     homeassistant-mcp: 84d06d73-da27-4066-9da1-b498002d69b5
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
-    # Grafana service-account token (Viewer) for the grafana MCP server.
     grafana-mcp-token: 7e393c36-5b11-4806-a05f-b4bd00e613f5
-    # Read-only CNPG role credentials backing the composed DATABASE_URI secrets
-    # for the postgres MCP servers. TEMP: reuse each app's DB LOGIN item (same
-    # password for now); swap to dedicated readonly items + UUIDs when available.
     mcp-pg-coder: e197f717-0cd6-4634-8388-b33e000ae174
     mcp-pg-flowise: 7533ab94-6308-4afa-a6fe-b34a00395edd
     mcp-pg-langflow: c2f26e5d-84fc-404d-93b7-b34a0157b6a0
@@ -58,21 +51,15 @@ neo4j:
 n8n:
   bitwardenIds:
     n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
-    # Read-only CNPG role credential for postgres-n8n MCP. TEMP: reuse the n8n
-    # DB LOGIN item (same password for now); swap to a dedicated item later.
     mcp-pg-n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
 flowise:
   bitwardenIds:
     flowise-pg: 7533ab94-6308-4afa-a6fe-b34a00395edd
-    # Read-only CNPG role credential for postgres-flowise MCP. TEMP: reuse the
-    # flowise DB LOGIN item (same password for now); swap to a dedicated item later.
     mcp-pg-flowise: 7533ab94-6308-4afa-a6fe-b34a00395edd
 langflow:
   bitwardenIds:
     langflow-pg: c2f26e5d-84fc-404d-93b7-b34a0157b6a0
     langflow: f7b628ec-2544-4c28-a476-b1a501487d99
-    # Read-only CNPG role credential for postgres-langflow MCP. TEMP: reuse the
-    # langflow DB LOGIN item (same password for now); swap to a dedicated item later.
     mcp-pg-langflow: c2f26e5d-84fc-404d-93b7-b34a0157b6a0
 supabase:
   bitwardenIds:

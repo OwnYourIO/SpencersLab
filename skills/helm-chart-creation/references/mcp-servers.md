@@ -176,8 +176,8 @@ wired into `services/gpu/prod/values.yaml`:
 ## In-repo images (`containers/<name>`)
 
 If the MCP server is built in this repo (see the `container-creation` skill),
-the docker-build workflow is tag-based (no VERSION files): each build on
-`main` pushes an immutable `:v<run_number>` tag plus the rolling `:main` tag.
+the docker-build workflow is tag-based: each build on `main` pushes an
+immutable `:v<run_number>` tag plus the rolling `:main` tag.
 
 - **Pin `mcp.<name>.image` to the newest published `:v<run_number>` tag** —
   the repo standard (see "Image tag pinning" in the helm-chart-creation
