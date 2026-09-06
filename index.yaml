@@ -2137,6 +2137,21 @@ entries:
   base:
   - apiVersion: v2
     appVersion: 1.0.31
+    created: "2026-09-06T19:56:46.378822643Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 10.1.4
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.19.3
+    digest: 41cc62cf4d476e98062d1e5ced1fe9ae3305830a62e6844f72260fab8a805e9d
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.192/base-1.0.192.tgz
+    version: 1.0.192
+  - apiVersion: v2
+    appVersion: 1.0.31
     created: "2026-07-17T21:11:01.108064926Z"
     dependencies:
     - name: argo-cd
@@ -7045,6 +7060,22 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/grow-appset-1.1.2/grow-appset-1.1.2.tgz
     version: 1.1.2
   hivetools:
+  - apiVersion: v2
+    appVersion: 0.4.0
+    created: "2026-09-06T19:56:46.607430225Z"
+    dependencies:
+    - name: toolhive-operator-crds
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.34.0
+    - name: toolhive-operator
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.34.0
+    description: Combined Helm chart for ToolHive operator CRDs and operator
+    digest: bc16dd58576635ee77128d96193c7c216c2cfb5a2b60d271ec3e69815bdf395c
+    name: hivetools
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/hivetools-1.0.59/hivetools-1.0.59.tgz
+    version: 1.0.59
   - apiVersion: v2
     appVersion: 0.4.0
     created: "2026-09-06T02:34:04.716044757Z"
@@ -18007,4 +18038,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-06T02:34:04.717001393Z"
+generated: "2026-09-06T19:56:46.609013102Z"
