@@ -45,6 +45,21 @@ spec:
         #- CREATE EXTENSION postgis_tiger_geocoder;
 
   managed:
+    roles:
+      # Read-only role for the postgres-<release>-sensors ToolHive MCP server.
+      # pg_read_all_data = read everything, write nothing (PG14+ predefined role).
+      # Password lives in Bitwarden (pg-<release>-sensors-mcp-secret ExternalSecret);
+      # the LOGIN item's username must match this role name (readonly).
+      - name: readonly
+        ensure: present
+        login: true
+        inherit: true
+        inRoles:
+          - pg_read_all_data
+        connectionLimit: 5
+        passwordSecret:
+          name: "pg-{{ .Release.Name }}-sensors-mcp-secret"
+
     services:
       additional:
         - selectorType: rw

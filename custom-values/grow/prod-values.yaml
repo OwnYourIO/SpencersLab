@@ -5,6 +5,11 @@ bitwardenIds:
 assistant:
   bitwardenIds:
     home-assistant-pg: f59add53-a8fb-42cd-b784-b3c8011081df
+    # Read-only MCP roles reuse the app DB item (same password for now;
+    # both CNPG clusters share this one item); swap to dedicated
+    # username=readonly items when available.
+    mcp-pg-grow-assistant: f59add53-a8fb-42cd-b784-b3c8011081df
+    mcp-pg-grow-assistant-sensors: f59add53-a8fb-42cd-b784-b3c8011081df
 scifi-farm:
   hugo:
     domain: scifi.farm
@@ -27,5 +32,7 @@ seaweedfs-csi-driver:
 hivetools:
   bitwardenIds:
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+    mcp-pg-grow-assistant: f59add53-a8fb-42cd-b784-b3c8011081df
+    mcp-pg-grow-assistant-sensors: f59add53-a8fb-42cd-b784-b3c8011081df
   keycloak:
     realm: SpencersLab

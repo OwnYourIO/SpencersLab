@@ -1,6 +1,8 @@
 bitwardenIds:
   immich-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   immich-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  # Read-only CNPG role credential for the postgres-immich ToolHive MCP server.
+  mcp-pg-immich: OVERRIDE_VIA_CUSTOM_VALUES
 
 controllers:
   main:

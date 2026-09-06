@@ -20,8 +20,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Install package sources first (leverage layer cache).
-# VERSION is required by setuptools' dynamic version in pyproject.toml.
-COPY pyproject.toml README.md VERSION ./
+COPY pyproject.toml README.md ./
 COPY wekan_mcp ./wekan_mcp
 
 RUN pip install . && \

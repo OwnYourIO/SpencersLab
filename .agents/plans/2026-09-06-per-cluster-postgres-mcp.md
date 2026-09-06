@@ -1,0 +1,111 @@
+# Per-cluster Postgres MCP servers + cross-cluster access
+
+Date: 2026-09-06
+Status: PLANNED (implementation pending user go-ahead on the per-cluster hivetools approach)
+
+## Background
+
+Read-only Postgres MCP servers (crystaldba/postgres-mcp) were added for the 6 GPU-cluster
+databases (coder, flowise, langflow, n8n, open-webui, supabase). They run via the hivetools
+chart, which is deployed ONLY in the GPU cluster, and reach their databases over cluster-local
+DNS (`pg-<name>-rw.<ns>.svc.cluster.local`).
+
+The remaining Postgres databases live in OTHER clusters (grow, home, infra) and are unreachable
+from the GPU cluster. The user chose the **per-cluster hivetools** approach: deploy hivetools in
+each cluster so the MCP servers run next to their databases (no cross-cluster DB exposure).
+
+## Complete PG cluster inventory (verified)
+
+| Cluster   | PG cluster                    | Database             | Deployed by            | MCP? |
+|-----------|-------------------------------|----------------------|------------------------|------|
+| gpu       | pg-coder                      | coder                | gpu service (svc-level)| done |
+| gpu       | pg-open-webui                 | open-webui           | gpu service (svc-level)| done |
+| gpu       | pg-flowise                    | flowise              | flowise chart          | done |
+| gpu       | pg-langflow                   | langflow             | langflow chart         | done |
+| gpu       | pg-n8n                        | n8n                  | n8n chart              | done |
+| gpu       | pg-supabase                   | supabase             | supabase chart         | done |
+| grow      | pg-grow-assistant             | home-assistant       | assistant chart        | done |
+| grow      | pg-grow-assistant-sensors     | sensors              | assistant chart        | done |
+| home      | pg-immich                     | immich               | immich chart           | done |
+| home      | pg-postiz                     | postiz               | postiz chart           | done |
+| home      | pg-temporal                   | temporal             | postiz chart           | skip (user) |
+| home      | pg-temporal-visibility        | temporal-visibility  | postiz chart           | skip (user) |
+| home      | pg-home-rallly                | rallly               | rallly chart           | done |
+| home      | pg-paperless                  | paperless            | home service (svc-level)| done |
+| infra     | pg-keycloak                   | keycloak             | keycloakx chart        | done |
+| (n/a)     | pg-langfuse / pg-langgraph    | langflow/langgraph   | NOT deployed           | skip |
+
+Note: home-assistant's two clusters share one Bitwarden item (`home-assistant-pg`); the sensors
+cluster bootstraps from the same `pg-<release>-secret`.
+
+## Approach: per-cluster hivetools
+
+Deploy the hivetools chart in the grow, home, and infra services, but enable ONLY the postgres
+MCP servers for that cluster's databases (disable the other MCP servers: playwright, git, github,
+homeassistant, kubernetes, fetch, filesystem, sequential-thinking, firecrawl, searxng, wekan,
+grafana, renovate).
+
+### Per-cluster requirements
+- hivetools subcharts bring the toolhive-operator + CRDs automatically.
+- external-secrets-bitwarden is already deployed in grow/home/infra (bitwarden-login SecretStore).
+- cloudnative-pg is already a chart dependency in home/infra; grow deploys it too.
+- Keycloak OIDC: MCPOIDCConfig points at Keycloak (infra cluster). Remote clusters need the
+  Keycloak issuer reachable. NOTE: Keycloak runs in infra; grow/home MCP servers authenticate
+  against it over the network. Confirm the issuer URL is reachable cross-cluster.
+
+### Per-database wiring (same pattern as the 6 GPU ones)
+For each database:
+1. CNPG `managed.roles` readonly entry (pg_read_all_data, connectionLimit 5,
+   passwordSecret `pg-<cluster>-mcp-secret`) in the cluster's pg-*.yaml.
+2. `pg-<cluster>-mcp-secret.yaml` ExternalSecret (bitwarden-login, username hardcoded `readonly`,
+   password from the Bitwarden item) in the owning chart's templates/.
+3. hivetools values: `postgresMcp.databases[]` entry + `bitwardenIds.mcp-pg-<name>`.
+4. custom-values/<cluster>/prod-values.yaml: `mcp-pg-<name>` UUID (reuse the app-DB item UUID,
+   matching the GPU approach) under the hivetools block.
+5. Bitwarden LOGIN item `mcp-pg-<name>` (username=readonly) — user creates these.
+
+## Open questions / risks — RESOLVED (2026-09-06)
+- Keycloak issuer reachability from grow/home clusters: verified login.spencerslab.com
+  returns 200 cross-cluster; moot while OIDC is disabled.
+- Ingress exposure: YES — resolved by the mcp-platform-to-base refactor (merged to
+  main): hivetools deploys on every cluster via base's charts: list, ingress at
+  mcp.<subDomain|clusterName>.<domain> + cluster-wildcard-cert.
+- home-assistant's shared Bitwarden item: REUSE it for both readonly roles
+  (user decision); swap to dedicated username=readonly items later.
+- temporal/temporal-visibility: NO MCP servers (user decision).
+- OIDC: NOT implemented yet — oidcConfigRef commented out chart-wide on main
+  ("Disable oidc for now"); per-cluster servers ship without OIDC.
+
+## Architecture note (supersedes "Per-cluster requirements" above)
+Main's `.agents/plans/2026-09-06-mcp-platform-to-base.md` refactor landed: base
+deploys hivetools everywhere (default server: kubernetes). Per-cluster postgres
+servers are added purely via values — service `hivetools:` block
+(`postgresMcp.databases` + `bitwardenIds` sentinels) + custom-values UUIDs. No
+charts: entry needed. gpu's transitional charts:hivetools entry removed (Phase 2).
+
+## Status
+- GPU-cluster MCP servers: DONE (committed; supabase included).
+- Per-cluster postgres MCP: IMPLEMENTED on update-mcp-servers-v2, pending merge to main.
+  - grow: grow-assistant (db home-assistant), grow-assistant-sensors (db sensors)
+  - home: immich, postiz, home-rallly (db rallly), paperless
+  - infra: keycloak
+  - All reuse the app-DB Bitwarden items (temporary, documented per entry).
+  - baseChartVersion bumped 1.0.183 -> 1.0.192 in all 7 non-gpu appsets
+    (delivers the platform + these servers once merged).
+- Validated: helm lint + helm template on all touched charts/umbrellas;
+  per-cluster hivetools renders MCServers + ExternalSecrets + ingress routes
+  (home host: mcp.home-lab.spencerslab.com).
+
+## Rollout (after merge to main)
+1. ArgoCD syncs: <svc>-hivetools Applications appear on grow/home/infra;
+   CNPG reconciles the readonly roles; ExternalSecrets ready once Bitwarden
+   items/passwords match (reused items already exist).
+2. Out-of-repo: verify *.grow. / *.home-lab. / *.infra. wildcard DNS resolves
+   to each cluster's traefik.
+3. Client config: point MCP clients at
+   https://mcp.<cluster>.<domain>/postgres-<name>/mcp
+   (grow: mcp.grow., home: mcp.home-lab., infra: mcp.infra.).
+4. Later: dedicated username=readonly Bitwarden items per DB; OIDC re-enable
+   (uncomment oidcConfigRef in generic-postgres-mcpserver.yaml + per-server
+   oidc blocks).
+

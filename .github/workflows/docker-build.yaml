@@ -18,6 +18,16 @@ on:
       - dev
     paths:
       - 'containers/**'
+  # Manual rebuild: name the containers to build (comma/space separated). Use
+  # this to (re)build a container whose sources did not change in a push, e.g.
+  # one whose earlier build was cancelled. Leave empty to auto-detect.
+  workflow_dispatch:
+    inputs:
+      containers:
+        description: 'Container names to build (comma/space separated; empty = auto-detect changed)'
+        required: false
+        default: ''
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -41,23 +51,30 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_SHA: ${{ github.sha }}
           EVENT_NAME: ${{ github.event_name }}
+          MANUAL_CONTAINERS: ${{ github.event.inputs.containers }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- containers/ || true)
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$MANUAL_CONTAINERS" ]; then
+            # Manual trigger: build the explicitly listed containers regardless
+            # of what changed in git (one per line after normalizing separators).
+            CONTAINERS=$(echo "$MANUAL_CONTAINERS" | tr ',' '\n' | tr -s ' \n' '\n' | sort -u)
           else
-            # Push: diff the pushed range. On the very first push to a branch
-            # 'before' is all-zero; fall back to HEAD^.
-            if [ "$EVENT_BEFORE" = "0000000000000000000000000000000000000000" ]; then
-              CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- containers/ || true)
+            if [ "$EVENT_NAME" = "pull_request" ]; then
+              CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- containers/ || true)
             else
-              CHANGED_FILES=$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- containers/ || true)
+              # Push: diff the pushed range. On the very first push to a branch
+              # 'before' is all-zero; fall back to HEAD^.
+              if [ "$EVENT_BEFORE" = "0000000000000000000000000000000000000000" ]; then
+                CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- containers/ || true)
+              else
+                CHANGED_FILES=$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- containers/ || true)
+              fi
             fi
-          fi
 
-          # Only strict DNS-safe names (matches ADO validation) with a Dockerfile.
-          CONTAINERS=$(echo "$CHANGED_FILES" | cut -d'/' -f2 | sort -u | \
-            grep -E '^[a-z0-9]+(-[a-z0-9]+)*$' || true)
+            # Only strict DNS-safe names (matches ADO validation) with a Dockerfile.
+            CONTAINERS=$(echo "$CHANGED_FILES" | cut -d'/' -f2 | sort -u | \
+              grep -E '^[a-z0-9]+(-[a-z0-9]+)*$' || true)
+          fi
           RESULT="[]"
           for c in $CONTAINERS; do
             if [ -f "containers/$c/Dockerfile" ]; then
@@ -72,6 +89,8 @@ jobs:
     if: needs.detect-changes.outputs.changed-containers != '[]'
     runs-on: ubuntu-latest
     strategy:
+      # One container failing to build must not cancel its siblings' builds.
+      fail-fast: false
       matrix:
         container: ${{ fromJson(needs.detect-changes.outputs.changed-containers) }}
     permissions:

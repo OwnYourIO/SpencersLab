@@ -34,6 +34,24 @@ spec:
       - plan_filter
       #- supabase_vault
 
+  managed:
+    roles:
+      # Read-only role for the postgres-supabase ToolHive MCP server.
+      # pg_read_all_data = read everything, write nothing (PG14+ predefined role).
+      # NOTE: Supabase tables protected by Row Level Security (RLS) are NOT visible
+      # to this role (it lacks BYPASSRLS) — only non-RLS tables are readable.
+      # Password lives in Bitwarden (pg-supabase-mcp-secret ExternalSecret); the
+      # LOGIN item's username must match this role name (readonly).
+      - name: readonly
+        ensure: present
+        login: true
+        inherit: true
+        inRoles:
+          - pg_read_all_data
+        connectionLimit: 5
+        passwordSecret:
+          name: pg-supabase-mcp-secret
+
   bootstrap:
     initdb:
       database: supabase
