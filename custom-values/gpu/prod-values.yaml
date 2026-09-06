@@ -34,6 +34,7 @@ hivetools:
     mcp-pg-langflow: c2f26e5d-84fc-404d-93b7-b34a0157b6a0
     mcp-pg-n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
     mcp-pg-open-webui: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
+    mcp-pg-supabase: 41d3450d-b750-4ae4-9cb0-b35700ff079b
     wekan-mcp: e6761f4a-9813-4073-b539-b4bd002bc4b1
   keycloak:
     realm: SpencersLab
@@ -65,6 +66,9 @@ supabase:
   bitwardenIds:
     supabase: ce98dd73-28ff-48e3-849d-b36c00fd09ac
     supabase-pg: 41d3450d-b750-4ae4-9cb0-b35700ff079b
+    # Read-only MCP role reuses the app DB item (same password for now);
+    # swap to a dedicated username=readonly item when available.
+    mcp-pg-supabase: 41d3450d-b750-4ae4-9cb0-b35700ff079b
     # Not needed as sso seem to be configured via UI.
     #supabase-sso: OVERRIDE_NEEDED
 archon:

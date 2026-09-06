@@ -19,6 +19,7 @@ bitwardenIds:
   mcp-pg-langflow: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-n8n: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-open-webui: OVERRIDE_VIA_CUSTOM_VALUES
+  mcp-pg-supabase: OVERRIDE_VIA_CUSTOM_VALUES
   wekan-mcp: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Keycloak OIDC configuration for MCP endpoint authentication.
@@ -88,6 +89,9 @@ postgresMcp:
     - name: open-webui
       bitwardenIdKey: mcp-pg-open-webui
       database: open-webui
+    - name: supabase
+      bitwardenIdKey: mcp-pg-supabase
+      database: supabase
 
 # Shared storage configuration
 # When set, overrides the default PVC for knowledge storage
