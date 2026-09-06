@@ -18,9 +18,10 @@ spec:
   image: {{ $pg.image | required "postgresMcp.image is required" }}
   transport: {{ $pg.transport | required "postgresMcp.transport is required" }}
   mcpPort: {{ $pg.mcpPort | required "postgresMcp.mcpPort is required" }}
-  oidcConfigRef:
-    name: keycloak
-    audience: postgres-{{ .name }}
+  # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+  # oidcConfigRef:
+  #   name: keycloak
+  #   audience: postgres-{{ .name }}
   {{- if $pg.args }}
   args:
     {{- toYaml $pg.args | nindent 4 }}

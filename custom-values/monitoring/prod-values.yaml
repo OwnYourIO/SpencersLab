@@ -17,3 +17,10 @@ loki:
 exporter-mikrotik:
   bitwardenIds:
     exporter-mikrotik: 87082494-47f1-4efc-926e-b1df016b9428
+
+# MCP platform (hivetools via base): shared Keycloak client `mcp`, one realm.
+hivetools:
+  bitwardenIds:
+    mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+  keycloak:
+    realm: SpencersLab

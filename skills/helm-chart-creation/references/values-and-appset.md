@@ -93,6 +93,100 @@ Two layers:
    Release names are `<serviceName>-<appName>` (e.g. `home-karakeep-app`,
    `gpu-n8n`). Proxy `service:` entries must match that name.
 
+## Cluster-wide charts (base's `charts:` list)
+
+A chart that must run on **every cluster** is added to the `charts:` map in
+`charts/base/values.yaml` instead of (or in addition to) a service values.yaml.
+The service's `charts:` map and base's `charts:` map coalesce per key during
+the Helm valueFiles merge, so a key present in both still yields ONE
+ApplicationSet element and ONE Application. Live example: `hivetools`
+(ToolHive MCP platform, cluster-wide since 2026-09).
+
+Rules for cluster-wide charts:
+
+- **Chart defaults must be generic** — they render on every cluster, including
+  small ones. Keep the default server/workload set minimal; per-cluster or
+  per-service extras layer on top (below).
+- **Per-cluster values/secrets** go in EVERY cluster's
+  `custom-values/<category>/prod-values.yaml` under the app's top-level key
+  (e.g. `hivetools: bitwardenIds: ...`). They merge into base's `.Values` and
+  ride the charts-appset values slice into the Application. Chart-level
+  sentinel keys (`OVERRIDE_VIA_CUSTOM_VALUES`) stay in the chart values.yaml —
+  e.g. `keycloak.realm` in hivetools remains a sentinel and is set only via
+  custom-values, never hardcoded in the chart or a service values.yaml.
+- **Single-service extensions**: one service can extend the cluster-wide
+  chart via a top-level `<appName>:` block in its
+  `services/<category>/prod/values.yaml` (same mechanism as any app config —
+  it joins the values slice). Helm deep-merge semantics apply: **maps merge,
+  lists replace**. Example: gpu adds 12 MCP servers + 5 Postgres DBs to
+  hivetools this way; its `postgresMcp.databases` list fully replaces the
+  chart's empty default. Service-specific secret templates belong in
+  `services/<category>/prod/templates/` (umbrella level) and read the
+  umbrella's TOP-LEVEL `.Values.bitwardenIds` — sentinels in the service
+  values.yaml, UUIDs at the top level of the category's custom-values. This
+  differs from chart-level templates, which read the chart's own
+  `bitwardenIds` map (fed via the app's values slice).
+- **Rollout / transitional duplicates**: clusters pin `baseChartVersion` and
+  renovate bumps the pin after each base release, so there is a window where
+  some clusters run an old base WITHOUT the new `charts:` entry. If the chart
+  was previously deployed on a cluster through its service `charts:` entry,
+  KEEP that service entry (marked with a "Transitional duplicate of base's
+  charts.<name>; remove once every cluster's baseChartVersion includes it"
+  comment) until all pins are bumped — otherwise the Application would be
+  pruned mid-window. The duplicate key merges to one element, so there is no
+  collision. Remove the service entry in a follow-up once all clusters are
+  bumped.
+- **Prerequisite check for every cluster**: a cluster-wide rollout inherits
+  whatever the chart needs (certs, DNS, tokens) on ALL clusters. Verify each
+  cluster's custom-values satisfies the gates before the base bump lands —
+  e.g. hivetools' ingress needs `cluster-wildcard-cert`, which base only
+  issues when `bitwardenIds.cert-manager-solver-token` is present;
+  proxy-remote lacked it and needed the token added before rollout.
+
+## subDomain propagation and cluster-scoped hostnames
+
+`appset-charts.yaml` injects `subDomain` into every app's values slice when
+the service values.yaml sets it (`subDomain: <category>-lab` is the usual
+convention). Apps that need a cluster-scoped hostname — as opposed to the
+global `*.<domain>` wildcard — use:
+
+```
+<name>.{{ if hasKey .Values "subDomain" }}{{ .Values.subDomain }}{{ else }}{{ .Values.clusterName }}{{ end }}.{{ .Values.domain }}
+```
+
+i.e. `mcp.gpu.spencerslab.com` on gpu, `mcp.home-lab.spencerslab.com` on
+home. The base chart issues the matching wildcard as `cluster-wildcard-cert`
+(`charts/base/templates/cert-manager-wildcard-cert.yaml`); ingresses using
+cluster-scoped hosts must reference that secret, not `wildcard-cert`.
+`clusterName`/`domain`/`serviceName` reach app charts as helm parameters in
+the appset templatePatch; `subDomain` rides the values slice.
+
+## Moving templates between a chart and a service umbrella
+
+Templates that only matter to one service can move from `charts/<name>/templates/`
+to `services/<category>/prod/templates/` (and vice versa). The mechanics:
+
+- **`git mv`, no content change** — the template's `.Values` context changes,
+  so first confirm every `.Values` reference resolves in the new home. The
+  common shift: chart templates read the chart's `bitwardenIds` map (fed via
+  the app's values slice); umbrella templates read the umbrella's TOP-LEVEL
+  `bitwardenIds` (sentinels in the service values.yaml, UUIDs at the top
+  level of the category's custom-values). Add the sentinels/UUIDs at the new
+  level as part of the same change.
+- **Ownership flips between ArgoCD Applications.** The old Application
+  (path source tracking `main`, automated prune) prunes the resource at the
+  merge that removes it; the new Application creates it. Cross-Application
+  ordering is nondeterministic. For ExternalSecrets, check `deletionPolicy`:
+  `Delete` means the target Secret is deleted if the prune lands before the
+  adopt (real credential gap); the default `Retain` orphans the target Secret
+  harmlessly until re-adoption. Mitigate by force-syncing the adopting app
+  first (or disabling selfHeal on the pruning app around the merge).
+- **Gated templates**: a template gated on a value the new home always sets
+  (e.g. `pvc-knowledge-default.yaml` gated off by gpu's
+  `shared-storage.knowledge`) renders nothing after the move — verify both
+  gate states render as expected (`--show-only` errors on an empty render,
+  which confirms the gate is closed).
+
 ## Controlling custom-values loading (cluster secret annotations)
 
 Custom-values files are OPTIONAL and load only when the ArgoCD cluster secret

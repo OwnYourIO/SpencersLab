@@ -29,8 +29,13 @@ proxy:
   middlewares:
     entrypoint: ""
 
-# TODO: add prometheus monitoring agent and the bitwarden ESO to this? See if it gets merged together or if incoming things override this.
 charts:
+  # MCP platform for every cluster (ToolHive operator + MCP servers).
+  # Default server: kubernetes (see charts/hivetools). Services extend via
+  # their own values under `hivetools:` and can add `charts:` entries.
+  hivetools:
+    namespace: default
+    ServerSideApply: "true"
 
 cert-manager:
   crds:

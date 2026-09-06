@@ -98,3 +98,10 @@ pt750:
 brother-ptouch-automation:
   bitwardenIds:
     brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931
+
+# MCP platform (hivetools via base): shared Keycloak client `mcp`, one realm.
+hivetools:
+  bitwardenIds:
+    mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+  keycloak:
+    realm: SpencersLab

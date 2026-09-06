@@ -23,7 +23,8 @@ If the user is just looking for UI help, general kanban advice, or non-WeKan too
 
 In SpencersLab, prefer the **`wekan` MCP server** over raw REST calls. It is an
 in-repo server (`containers/wekan-mcp`) deployed on the lab's ToolHive platform
-(`charts/hivetools`), reachable at `https://mcp.spencerslab.com/wekan/mcp`
+(`charts/hivetools`) on the gpu cluster, reachable at
+`https://mcp.gpu.spencerslab.com/wekan/mcp`
 (streamable-http, Keycloak OIDC audience `wekan`). It exposes 15 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,

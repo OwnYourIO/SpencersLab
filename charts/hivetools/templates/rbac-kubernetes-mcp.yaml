@@ -5,12 +5,19 @@ metadata:
   name: kubernetes-mcp
   namespace: {{ .Values.namespace | default "default" }}
 ---
-# Mirrors the built-in 'view' ClusterRole but WITHOUT read access to Secrets.
-# (RBAC is additive-only, so we cannot subtract the secrets rule from 'view'.)
+# Access model for the kubernetes MCP server (ServiceAccount kubernetes-mcp):
+# read + restart/rollout. View-equivalent read access across the cluster,
+# plus node observability, PVs and storageclasses. Restart tier: pod delete
+# (+ PDB-safe eviction), patch/update on workloads for rollout restart, and
+# scale subresources. Secrets get NO access at all: Kubernetes list/watch
+# returns full Secret objects (contents included) — there is no names-only
+# RBAC verb. Explicitly NOT granted: secrets (any verb), pods/exec, pods
+# create, workload create/delete, argoproj.io writes. Documented fully in
+# skills/helm-chart-creation/references/mcp-servers.md.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kubernetes-mcp-view
+  name: kubernetes-mcp
 rules:
   - apiGroups: [""]
     resources:
@@ -181,15 +188,52 @@ rules:
       - helmcharts
       - helmchartconfigs
     verbs: ["get", "list", "watch"]
+  # --- Secrets: NO access. list/watch/get all return full Secret objects ---
+  # --- (contents included); there is no names-only RBAC verb. ---
+  # --- Node observability (nodes_top/nodes_log/nodes_stats_summary) ---
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: [nodes/proxy]
+    verbs: ["get"]
+  # --- Storage read (PVC debugging: local-path, seaweedfs) ---
+  - apiGroups: [""]
+    resources: [persistentvolumes]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: [storageclasses]
+    verbs: ["get", "list", "watch"]
+  # --- Restart by pod delete (+ PDB-safe eviction) ---
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: ["delete"]            # get/list/watch already granted above
+  - apiGroups: [""]
+    resources: [pods/eviction]
+    verbs: ["create"]
+  # --- Rollout restart/undo: patch pod template (incl. SSA) ---
+  - apiGroups: ["apps"]
+    resources: [deployments, statefulsets, daemonsets, replicasets]
+    verbs: ["patch", "update"]   # get/list/watch already granted
+  - apiGroups: [""]
+    resources: [replicationcontrollers]
+    verbs: ["patch", "update"]
+  # --- resources_scale tool ---
+  - apiGroups: ["apps"]
+    resources: [deployments/scale, statefulsets/scale, replicasets/scale]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: [""]
+    resources: [replicationcontrollers/scale]
+    verbs: ["get", "patch", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kubernetes-mcp-view
+  name: kubernetes-mcp
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: kubernetes-mcp-view
+  name: kubernetes-mcp
 subjects:
   - kind: ServiceAccount
     name: kubernetes-mcp
