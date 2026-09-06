@@ -73,6 +73,10 @@ change.
 
 ## Hard rules
 
+- **Never bump versions by hand.** `release.yaml` bumps `Chart.yaml` `version`
+  (patch) on every merge to main and chart-releaser tags `<chart>-<version>`;
+  `docker-build.yaml` bumps `containers/<name>/VERSION` on merge and tags
+  `<name>-v<version>`. Agents set an initial version on new artifacts only.
 - Validate chart changes: `helm lint charts/<name>` and
   `helm template charts/<name>` must pass before finishing.
 - Secrets: ExternalSecret + Bitwarden only. Placeholder

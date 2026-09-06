@@ -19,7 +19,9 @@ Is there an official Helm chart?
 When no official chart exists:
 
 1. `mkdir -p charts/<service>/templates`
-2. Create `Chart.yaml` (pattern below) — name, `version: 1.0.0`, `appVersion`
+2. Create `Chart.yaml` (pattern below) — name, `version: 1.0.0` (initial only;
+   `release.yaml` auto-bumps patch on every merge to main and chart-releaser
+   tags `<chart>-<version>` — never bump it by hand), `appVersion`
    (latest from Docker Hub), app-template dependency at the repo-standard
    version (check an existing chart; currently `5.0.1`).
 3. Create `values.yaml` from the template below — inject service-specific env
@@ -91,7 +93,7 @@ Notes:
 ```yaml
 apiVersion: v2
 name: <service-name>
-version: 1.0.0
+version: 1.0.0  # initial only — release.yaml bumps patch on every merge to main
 appVersion: <latest-version>  # research from Docker Hub
 dependencies:
 - name: app-template

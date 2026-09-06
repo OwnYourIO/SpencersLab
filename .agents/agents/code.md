@@ -60,13 +60,17 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
 2. Make the edits, one plan step at a time. New charts: the
    `helm-chart-creation` skill governs (plus `helm-bjw-s-chart` for the
    app-template API). New containers: the `container-creation` skill governs.
-3. After chart changes, run `helm lint charts/<name>` and
+3. Never bump versions — CI does it on merge to main (Chart.yaml `version` via
+   `release.yaml`, `containers/<name>/VERSION` via `docker-build.yaml`). Set an
+   initial version only when creating a brand-new chart (`version: 1.0.0`) or
+   container (`VERSION` = `0.0.0`).
+4. After chart changes, run `helm lint charts/<name>` and
    `helm template charts/<name>`. If they fail, fix and re-validate before
    finishing.
-4. For new services, confirm the trio: chart entry, ApplicationSet values
+5. For new services, confirm the trio: chart entry, ApplicationSet values
    entry (`charts:` key or umbrella dependency), proxy values entry — plus the
    custom-values entry for every `OVERRIDE_VIA_CUSTOM_VALUES` placeholder.
-5. Report what changed and the validation output. Never `kubectl apply` —
+6. Report what changed and the validation output. Never `kubectl apply` —
    ArgoCD syncs.
 
 ## Pre-completion checklist

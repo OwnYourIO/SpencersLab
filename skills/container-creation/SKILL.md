@@ -61,6 +61,8 @@ The version bump happens **even on the first build** (initial `VERSION=0.0.0`
 becomes `0.0.1` after the first successful build).
 
 **There is no manual release process** — merging to main is the entire flow.
+You create `VERSION` once at `0.0.0` for a new container and **never bump it by
+hand**; the workflow does it on every merge.
 
 ## Dockerfile conventions
 
@@ -199,7 +201,7 @@ app-template:
           image:
             repository: ghcr.io/ownyourio/<container-name>
             # Pin to the version the docker-build workflow has bumped to.
-            # Update this when you bump the container's VERSION file (or use
+            # Update this after the workflow bumps VERSION (or use
             # `:latest` + `pullPolicy: Always` during initial development).
             tag: 1.2.4
           securityContext:
