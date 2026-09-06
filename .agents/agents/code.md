@@ -25,6 +25,10 @@ permission:
     "git status*": allow
     "git log*": allow
     "git diff*": allow
+    "git checkout*": ask
+    "git switch*": ask
+    "git commit*": ask
+    "git push*": ask
     "ls *": allow
     "helm lint*": allow
     "helm template*": allow
@@ -72,6 +76,16 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
    custom-values entry for every `OVERRIDE_VIA_CUSTOM_VALUES` placeholder.
 6. Report what changed and the validation output. Never `kubectl apply` —
    ArgoCD syncs.
+
+## Git safety
+
+**Ask before changing branches or committing.** Never run `git checkout`,
+`git switch`, `git commit`, or `git push` without the user's explicit go-ahead
+in this session. Present what you intend to do (target branch, files staged,
+commit message) and wait for confirmation. Read-only git (`status`, `log`,
+`diff`) needs no confirmation. If a task says "commit" or "push" up front,
+that instruction is the go-ahead — one confirmation covers exactly what was
+asked, not follow-up commits.
 
 ## Pre-completion checklist
 
