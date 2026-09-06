@@ -50,6 +50,7 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 | `traefik` | Traefik ingress/middleware/TLS (`charts/traefik*`, proxy services) | |
 | `container-security` | Image scanning (Trivy), Dockerfile hardening (`containers/`) | some ACR-specific content |
 | `llama-swap` | llama-swap / llama.cpp work only (`charts/llama-swap`) | self-managed in `./skills/` |
+| `wekan-api` | WeKan REST API or `wekan-mcp` server work (`containers/wekan-mcp`, `mcp.wekan` in hivetools, WeKan instances in `services/home/prod`) | self-managed in `./skills/` |
 
 ## MCP servers
 

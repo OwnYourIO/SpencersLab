@@ -39,6 +39,7 @@ hivetools:
     mcp-pg-langflow: OVERRIDE_NEEDED
     mcp-pg-n8n: OVERRIDE_NEEDED
     mcp-pg-open-webui: OVERRIDE_NEEDED
+    wekan-mcp: e6761f4a-9813-4073-b539-b4bd002bc4b1
   keycloak:
     realm: SpencersLab
 

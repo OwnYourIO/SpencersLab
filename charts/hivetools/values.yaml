@@ -23,6 +23,7 @@ bitwardenIds:
   mcp-pg-langflow: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-n8n: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-open-webui: OVERRIDE_VIA_CUSTOM_VALUES
+  wekan-mcp: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Keycloak OIDC configuration for MCP endpoint authentication.
 # All MCP servers are exposed through the shared ingress and authenticate via
@@ -491,6 +492,45 @@ mcp:
             env:
               - name: SEARXNG_URL
                 value: "http://gpu-searxng.default.svc.cluster.local:8080"
+
+  # WeKan MCP Server - kanban boards/lists/cards via the WeKan REST API.
+  # In-repo image: containers/wekan-mcp (15 typed tools, no destructive ops).
+  # Talks to the home cluster's bot-enabled WeKan instance through its public
+  # ingress (WeKan is not in this cluster, so no in-cluster DNS). The token
+  # belongs to a dedicated password-based service user — see skills/wekan-api.
+  wekan:
+    enabled: true
+    image: ghcr.io/ownyourio/wekan-mcp:0.0.2
+    transport: streamable-http
+    mcpPort: 8080
+    oidc:
+      audience: wekan
+    env:
+      - name: WEKAN_BASE_URL
+        value: "https://wekan.spencerslab.com"
+    secrets:
+      - name: wekan-mcp
+        key: WEKAN_TOKEN
+        targetEnvName: WEKAN_TOKEN
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '256Mi'
+      requests:
+        cpu: '50m'
+        memory: '64Mi'
+    podTemplateSpec:
+      spec:
+        containers:
+          - name: mcp
+            securityContext:
+              runAsUser: 65532
+              runAsGroup: 65532
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
 
   # Grafana MCP Server - read-only dashboards/Prometheus/Loki/alerting access.
   # Read-only enforced twice: --disable-write (server side) + Viewer-only SA token.

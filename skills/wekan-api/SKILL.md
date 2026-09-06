@@ -1,6 +1,6 @@
 ---
 name: wekan-api
-description: Interact with a WeKan open-source kanban server via its REST API — authenticate, manage boards/lists/swimlanes/cards/checklists/comments/custom-fields/attachments, and handle outgoing webhooks. Use this skill whenever the user mentions WeKan, Wekan, a self-hosted kanban board, an "open-source Trello alternative," or asks to script/automate kanban actions against a WeKan instance (creating cards from tickets, syncing boards, receiving board events, migrating from Trello/Jira into WeKan, etc.), even if they don't explicitly say "REST API." Also use when the user references endpoints like `/users/login`, `/api/boards`, or files like `api.py` from the wekan/wekan repo.
+description: Interact with a WeKan open-source kanban server via its REST API — authenticate, manage boards/lists/swimlanes/cards/checklists/comments/custom-fields/attachments, and handle outgoing webhooks. Use this skill whenever the user mentions WeKan, Wekan, a self-hosted kanban board, an "open-source Trello alternative," or asks to script/automate kanban actions against a WeKan instance (creating cards from tickets, syncing boards, receiving board events, migrating from Trello/Jira into WeKan, etc.), even if they don't explicitly say "REST API." Also use when the user references endpoints like `/users/login`, `/api/boards`, or files like `api.py` from the wekan/wekan repo. This skill also covers the lab's `wekan-mcp` server (`containers/wekan-mcp`), which exposes the high-frequency subset of these operations as MCP tools.
 ---
 
 # WeKan REST API Skill
@@ -18,6 +18,36 @@ Use it when the user wants to:
 - Stand up a local WeKan instance for API testing.
 
 If the user is just looking for UI help, general kanban advice, or non-WeKan tools (Trello, Jira, Planka, Kanboard), this skill is not the right fit — say so and redirect.
+
+## Prefer the wekan MCP server when it is available
+
+In SpencersLab, prefer the **`wekan` MCP server** over raw REST calls. It is an
+in-repo server (`containers/wekan-mcp`) deployed on the lab's ToolHive platform
+(`charts/hivetools`), reachable at `https://mcp.spencerslab.com/wekan/mcp`
+(streamable-http, Keycloak OIDC audience `wekan`). It exposes 15 typed tools:
+
+- **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
+  `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
+  `get_checklist`
+- **Write:** `create_card`, `update_card`, `move_card`, `add_comment`,
+  `add_checklist`, `toggle_checklist_item`
+
+Using it keeps the long-lived WeKan bearer token entirely out of model context
+(the token lives only in the server pod, injected via ExternalSecret +
+Bitwarden), and its errors are sanitized. It targets the bot-enabled instance
+`https://wekan.spencerslab.com` (`WITH_API=true`, password-based service user).
+
+Fall back to this skill's raw REST workflow only when:
+
+- the operation is intentionally omitted from the MCP surface — destructive
+  ops (`delete_*`, `remove_member`), attachments, webhooks, custom fields,
+  admin/user management, imports/exports; or
+- the MCP server is unavailable, or the task targets a different WeKan
+  instance than the lab's.
+
+For deploying or modifying the MCP server itself, see
+`skills/helm-chart-creation/references/mcp-servers.md` (platform wiring) and
+`containers/wekan-mcp/README.md` (server internals).
 
 ## Ground truth and version pinning
 
