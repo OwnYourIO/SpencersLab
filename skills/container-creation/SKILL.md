@@ -199,29 +199,36 @@ app-template:
         main:
           image:
             repository: ghcr.io/ownyourio/<container-name>
-            # The rolling branch tag tracks every merge to main.
-            tag: main
-            pullPolicy: Always
+            # Pinned to the newest immutable :v<run> tag — the repo standard
+            # (see "Image tag pinning" in helm-chart-creation). Renovate
+            # proposes bumps when a newer :v<run> tag is published.
+            tag: v123
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
 ```
 
-Two ways to reference the image:
+Two ways to reference the image — **pin by default**:
 
-- **`:main` + `pullPolicy: Always`** (default) — the deployment always pulls the
-  freshest build. Simplest; use it unless you have a reason to pin.
-- **`:v<run_number>`** — an immutable point-in-time tag. Pin to this only if you
-  need a reproducible, non-moving image (grab the run number from the
-  workflow run or `docker buildx imagetools inspect
-  ghcr.io/ownyourio/<name>:main`).
+- **`:v<run_number>`** (default) — an immutable point-in-time tag; pin to the
+  newest published one. This is the repo standard: reproducible deploys and
+  Renovate-managed upgrades (see the pinned-image rule in the
+  `helm-chart-creation` skill). Grab the run number from the workflow run or
+  `docker buildx imagetools inspect ghcr.io/ownyourio/<name>`.
+- **`:main` + `pullPolicy: Always`** — the mutable rolling tag. Use it only for
+  a brand-new container that has no pinned tag yet (or when explicitly asked),
+  and leave a note to pin it once a versioned build exists.
+  `brother-ptouch-automation` is the standing exception (active development —
+  it tracks `latest` + `pullPolicy: Always` on purpose).
 
-The change loop is now trivial — no chart edit needed when using `:main`:
+The change loop when pinned:
 
 1. Edit `containers/<name>/Dockerfile` (or source).
-2. Merge to `main` → the workflow rebuilds and repushes
-   `ghcr.io/ownyourio/<name>:main`; the next pod restart pulls it.
+2. Merge to `main` → the workflow rebuilds and repushes the rolling
+   `ghcr.io/ownyourio/<name>:main` plus a fresh immutable `:v<run_number>`.
+3. Bump `image.tag` in `charts/<name>/values.yaml` to the new `:v<run_number>`
+   (Renovate opens this PR for you once the tag is published).
 
 ## Worked example: brother-ptouch-automation
 

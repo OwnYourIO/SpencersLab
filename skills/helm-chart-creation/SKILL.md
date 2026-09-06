@@ -104,6 +104,8 @@ Non-negotiables (full template in `references/chart-templates.md`):
 - `reloader.stakater.com/auto: "true"` controller annotation so pods restart
   when secrets change.
 - Resource requests/limits per the tiers below.
+- **Pinned image tags** — never a default `latest`/`main` (see **Image tag
+  pinning** below).
 
 ### 5. Secrets
 
@@ -179,6 +181,32 @@ Never leave these strings in a rendered manifest:
 
 If any sentinel appears in `helm template` output, the chart is not ready.
 
+## Image tag pinning
+
+**Pin container images to a concrete version tag.** Do not default to
+`latest` or a rolling branch tag (`main`). Pinned tags are what let Renovate
+manage the image (its docker datasource needs a concrete current version to
+compare against) and they keep deployments reproducible.
+
+Rules, in order:
+
+1. **Default — pin to the newest published version tag** (e.g. `tag: 0.0.12`
+   or `:v<run_number>`). Look the actual tag up in the registry (ghcr.io
+   `v2/<owner>/<image>/tags/list` API, or the Docker Hub tags API) — do not
+   guess or reuse a stale tag from memory.
+2. **Use `latest`/a rolling tag only when** the user explicitly asks for it,
+   **or** no pinned version exists yet (e.g. a brand-new in-repo container
+   that has not had a versioned build). In that case set
+   `pullPolicy: Always` and leave a comment noting that a pinned tag should
+   replace it as soon as one is published.
+3. **Documented exception — `brother-ptouch-automation`**: under active
+   development, so it deliberately tracks `latest` with `pullPolicy: Always`
+   (see `charts/brother-ptouch-automation/values.yaml`). Do not "fix" this
+   one when sweeping for unpinned images.
+
+When you encounter an unpinned image while editing a chart, pin it as part of
+the change rather than leaving it for later.
+
 ## Standard security context
 
 Every container MUST include:
@@ -232,6 +260,9 @@ Each category dir holds `templates/appset.yaml` (per-service appset) and
 - ❌ Forgetting the proxy entry for web-accessible services.
 - ❌ Accessing optional fields in Go templates without `hasKey`/`index` guards.
 - ❌ Leaving `OVERRIDE_*` sentinels in rendered output.
+- ❌ Unpinned `latest`/`main` image tags when a pinned version exists (see
+  **Image tag pinning**; `brother-ptouch-automation` is the documented
+  exception).
 
 ## Reference charts (read these files, not stale docs)
 

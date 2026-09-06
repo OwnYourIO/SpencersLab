@@ -14,6 +14,10 @@ app-template:
               memory: 1024Mi
           image:
               repository: ghcr.io/ownyourio/snapcast
+              # No pinned :v<run> tag exists yet, so track the rolling :main tag
+              # the docker-build workflow publishes (pinned-image rule's "no pinned
+              # version" exception). Pin to a :v<run> tag once a versioned build
+              # lands. pullPolicy Always because :main is mutable.
               tag: main
               pullPolicy: Always
           env:

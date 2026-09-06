@@ -596,7 +596,10 @@ mcp:
   # single-connection by design (one session at a time).
   renovate:
     enabled: true
-    image: ghcr.io/ownyourio/renovate-mcp:0.0.1
+    # New container: no pinned :v<run> tag exists yet, so it tracks the rolling
+    # :main tag (pinned-image rule's "no pinned version" exception). Pin to a
+    # specific :v<run> tag once the first successful build publishes one.
+    image: ghcr.io/ownyourio/renovate-mcp:main
     transport: stdio
     mcpPort: 8080
     oidc:
@@ -624,7 +627,8 @@ mcp:
           fsGroup: 1000
         initContainers:
           - name: clone
-            image: ghcr.io/ownyourio/renovate-mcp:0.0.1  # same image ships git
+            image: ghcr.io/ownyourio/renovate-mcp:main  # same image ships git
+            imagePullPolicy: Always
             env:
               - name: HOME
                 value: /tmp
@@ -654,6 +658,7 @@ mcp:
                 name: tmp
         containers:
           - name: mcp
+            imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
             resources:   # Renovate dry-runs are CPU/memory heavy
               requests:
                 cpu: '500m'

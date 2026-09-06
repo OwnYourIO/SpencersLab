@@ -16,8 +16,11 @@ app-template:
         main:
           image:
             repository: ghcr.io/curatedforest/brother-ptouch-automation
+            # EXCEPTION to the pinned-image rule (see skills/helm-chart-creation):
+            # this app is under active development, so it tracks :latest and always
+            # pulls. Switch to a pinned tag once it stabilizes.
             tag: latest
-            # pullPolicy: Always
+            pullPolicy: Always
           env:
             TZ: America/Denver
             LABEL_PRINTER_CONFIG_DIR: /config

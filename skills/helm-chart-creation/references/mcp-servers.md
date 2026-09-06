@@ -83,8 +83,8 @@ Field notes:
   (set `mcpPort` to the server's listen port). `stdio` servers get ToolHive's
   proxy wrapper (the common `mcp/*` images use this).
 - **`mcpPort`** is both the container port and the port of the generated
-  `mcp-<name>-proxy` Service that the ingress targets. `proxyPort` is only
-  rendered by `generic-mcpserver.yaml` when `targetPort` is set — normally you
+  `mcp-<name>-proxy` Service that the ingress targets. `proxyPort` is rendered
+  by `generic-mcpserver.yaml` only when it is set explicitly — normally you
   only need `mcpPort`.
 - **`oidc`**: presence of the block opts the server into the shared Keycloak
   `MCPOIDCConfig` (`oidcConfigRef.name: keycloak`) with the given `audience`.
@@ -92,10 +92,10 @@ Field notes:
   deliberately public servers.
 - **`secrets[].key`** refers to a key in the ExternalSecret's *target* Secret
   data (e.g. `WEKAN_TOKEN` after templating), not the Bitwarden field name.
-- **`enabled` gotcha**: `generic-mcpserver.yaml` checks
-  `ne ($config.enabled | toString) "false"` while `generic-mcp-ingress.yaml`
-  checks `$config.enabled | default true`. Explicit `enabled: true` satisfies
-  both; an absent key also renders the MCPServer but is worth being explicit.
+- **`enabled`**: both `generic-mcpserver.yaml` and `generic-mcp-ingress.yaml`
+  check `ne ($config.enabled | toString) "false"`, so a server is rendered
+  unless it is explicitly `enabled: false` (which removes both its MCPServer
+  and its ingress route). Keep `enabled: true` explicit for clarity.
 
 ## Secrets recipe (ExternalSecret + Bitwarden)
 
@@ -175,17 +175,23 @@ wired into `services/gpu/prod/values.yaml`:
 
 ## In-repo images (`containers/<name>`)
 
-If the MCP server is built in this repo (see the `container-creation` skill):
+If the MCP server is built in this repo (see the `container-creation` skill),
+the docker-build workflow is tag-based (no VERSION files): each build on
+`main` pushes an immutable `:v<run_number>` tag plus the rolling `:main` tag.
 
-- The image tag equals `containers/<name>/VERSION` after the docker-build
-  workflow's auto-bump on merge to `main`
-  (`ghcr.io/ownyourio/<name>:<version>`).
+- **Pin `mcp.<name>.image` to the newest published `:v<run_number>` tag** —
+  the repo standard (see "Image tag pinning" in the helm-chart-creation
+  skill). Renovate proposes the bump when a newer tag is published.
+- **Brand-new container with no build yet**: reference the rolling `:main`
+  tag and add `imagePullPolicy: Always` to the `podTemplateSpec` `mcp`
+  container (the MCPServer top level does not render a pull policy), with a
+  note to pin to a `:v<run_number>` once the first build lands. Expect a
+  transient ImagePullBackOff until the workflow publishes the image — see
+  `mcp.renovate` in `charts/hivetools/values.yaml` for this pattern.
 - **Ordering dependency**: the container change must merge and the workflow
-  must complete before the `mcp.<name>.image` pin resolves. Verify the actual
-  tag via GHCR (`https://ghcr.io/v2/ownyourio/<name>/tags/list` with an
-  anonymous pull token) rather than assuming the bump number.
-- Bump `mcp.<name>.image` on every subsequent container change; never pin
-  `:latest`.
+  must complete before the pin resolves. Verify the actual tag via GHCR
+  (`https://ghcr.io/v2/ownyourio/<name>/tags/list` with an anonymous pull
+  token) rather than assuming the run number.
 
 ## Validation
 
