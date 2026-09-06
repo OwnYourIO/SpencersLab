@@ -40,13 +40,11 @@ tests, and no files outside `features/`.
 
 ## Skills and MCP servers
 
-Skills to load when relevant:
-- `ci-cd` — when the plan involves CI/CD pipeline changes, build workflows, or deployment automation
-- `gitops-workflows` — when the plan involves ArgoCD/Flux applications, ApplicationSets, or GitOps deployment patterns
-- `iac-terraform` — when the plan involves Terraform resource changes, modules, or state
-- `k8s-troubleshooter` — when the plan involves Kubernetes resource design or cluster changes
-- `monitoring-observability` — when the plan involves adding metrics, logging, or tracing infrastructure
-- `home-assistant-best-practices` — when the plan involves HA automations, helpers, scripts, or dashboards
+Skills and MCP servers are registered in the root `AGENTS.md` — load skills
+from that registry as the feature requires. Stage-specific: for chart/service
+work load `helm-chart-creation` + `helm-bjw-s-chart`; for
+ArgoCD/ApplicationSet design load `gitops-workflows` (+ `argocd-advanced` for
+generators/Image Updater).
 
 ---
 

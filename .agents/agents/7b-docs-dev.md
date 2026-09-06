@@ -41,14 +41,8 @@ never touch source, tests, or any other artifact.
 
 ## Skills and MCP servers
 
-Skills to load when relevant:
-- `ci-cd` — when documenting CI/CD pipeline changes, build workflows, or deployment automation
-- `gitops-workflows` — when documenting ArgoCD/Flux applications or GitOps deployment patterns
-- `iac-terraform` — when documenting Terraform resources, modules, or state management
-- `k8s-troubleshooter` — when documenting Kubernetes resources, Helm charts, or cluster configuration
-- `monitoring-observability` — when documenting metrics, logging, tracing, or alerting infrastructure
-- `home-assistant-best-practices` — when documenting HA automations, helpers, scripts, or dashboards
-- `aws-cost-optimization` — when documenting AWS infrastructure changes or cost optimization features
+Skills and MCP servers are registered in the root `AGENTS.md` — load skills
+from that registry as the feature requires.
 
 ---
 

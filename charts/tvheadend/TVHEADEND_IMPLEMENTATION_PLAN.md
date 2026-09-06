@@ -726,8 +726,8 @@ tvheadend:
 - **Official Chart**: https://github.com/geek-cookbook/charts/tree/main/charts/tvheadend
 - **Docker Image**: https://docs.linuxserver.io/images/docker-tvheadend
 - **TVHeadend Docs**: https://tvheadend.org/projects/tvheadend/wiki
-- **SpencersLab PRP**: HELM_CHART_CREATION_PRP.md
-- **SpencersLab Guide**: HELM_CHART_CREATION_GUIDE.md
+- **SpencersLab chart workflow**: `skills/helm-chart-creation/` (SKILL.md + references/)
+- **SpencersLab container workflow**: `skills/container-creation/SKILL.md`
 
 ---
 

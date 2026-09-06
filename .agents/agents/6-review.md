@@ -55,13 +55,10 @@ Recommend the change, show it as an example, and let Stage 5 apply it.
 
 ## Skills and MCP servers
 
-Skills to load when relevant:
-- `ci-cd` — when reviewing CI/CD pipeline changes, build scripts, or deployment automation
-- `monitoring-observability` — when reviewing metrics, logging, or alerting infrastructure changes
-- `k8s-troubleshooter` — when reviewing Kubernetes manifests, Helm charts, or cluster configuration
-- `iac-terraform` — when reviewing Terraform resource changes or state management
-- `home-assistant-best-practices` — when reviewing HA automations, helpers, scripts, or dashboards
-- `aws-cost-optimization` — when reviewing AWS infrastructure changes for cost implications
+Skills and MCP servers are registered in the root `AGENTS.md` — load skills
+from that registry as the feature requires. Stage-specific:
+`kubernetes-skill` when reviewing manifests/charts; run `helm lint` /
+`helm template` yourself when reviewing chart changes.
 
 ---
 

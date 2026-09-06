@@ -82,13 +82,10 @@ never modify a manifest or lockfile.
 
 ## Skills and MCP servers
 
-Skills to load when relevant:
-- `iac-terraform` — when the feature involves Terraform infrastructure, IaC modules, or state management
-- `k8s-troubleshooter` — when the feature involves Kubernetes resources, pods, or cluster configuration
-- `monitoring-observability` — when the feature involves metrics, logging, tracing, or alerting infrastructure
-- `ci-cd` — when the feature involves CI/CD pipeline configuration or deployment infrastructure
-
-MCP servers: `git` (ls-files, grep, log, diff), `github` (search repos, fetch PRs/issues), `kubernetes` (inspect cluster resources), `k8s-troubleshooter` (K8s diagnostics), `searxng` (search for package info), `fetch` (fetch registry pages).
+Skills and MCP servers are registered in the root `AGENTS.md` — load skills
+from that registry as the feature requires. Stage-specific: `searxng` for
+package/image/chart research; `kubernetes` MCP to inspect live cluster
+resources the feature depends on.
 
 ---
 

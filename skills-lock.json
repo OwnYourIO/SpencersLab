@@ -49,12 +49,6 @@
       "skillPath": "skills/finishing-a-development-branch/SKILL.md",
       "computedHash": "4f571e7befb8b0946d9d7770232c818812412e9ab1dfb811f847edfba1fc6275"
     },
-    "gitops-principles": {
-      "source": "julianobarbosa/claude-code-skills",
-      "sourceType": "github",
-      "skillPath": "skills/gitops-principles/SKILL.md",
-      "computedHash": "4b0e25b8ecca55768b84b7921fd6cb6a27ead95bf30eaaeb02f40c0f16d1d680"
-    },
     "gitops-workflows": {
       "source": "ahmedasmar/devops-claude-skills",
       "sourceType": "github",
@@ -138,12 +132,6 @@
       "sourceType": "github",
       "skillPath": "skills/managing-infra/SKILL.md",
       "computedHash": "5babc0fcd19ac85f26f916ca11600df6fcb804f8dde68693bbfbd85814cc198e"
-    },
-    "monitoring-observability": {
-      "source": "ahmedasmar/devops-claude-skills",
-      "sourceType": "github",
-      "skillPath": "monitoring-observability/skills/SKILL.md",
-      "computedHash": "a074cfeaa390c9492b920971f12f9ab6b16c828ae9436b13d35e44cd6e54360b"
     },
     "progressive-delivery": {
       "source": "julianobarbosa/claude-code-skills",
