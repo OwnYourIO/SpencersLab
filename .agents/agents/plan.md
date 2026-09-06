@@ -66,9 +66,10 @@ Do not generate multiple alternative plans — ask instead.
 5. Decide which skills and MCP servers the Code agent will need, using the
    registries in `AGENTS.md` — it runs in a fresh session and loads only what
    your plan names.
-6. Never plan version bumps — CI bumps `Chart.yaml` `version` and
-   `containers/<name>/VERSION` automatically on merge to main. Only new
-   artifacts get an initial version (`1.0.0` / `0.0.0`).
+6. Never plan version bumps — CI bumps `Chart.yaml` `version` automatically on
+   merge to main, and containers are tag-based with no VERSION files
+   (`docker-build.yaml` pushes `:v<run_number>` + `:<branch>`). Only brand-new
+   charts get an initial version (`1.0.0`).
 7. Write the plan to `.agents/plans/`.
 
 ## Plan file naming

@@ -60,10 +60,10 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
 2. Make the edits, one plan step at a time. New charts: the
    `helm-chart-creation` skill governs (plus `helm-bjw-s-chart` for the
    app-template API). New containers: the `container-creation` skill governs.
-3. Never bump versions — CI does it on merge to main (Chart.yaml `version` via
-   `release.yaml`, `containers/<name>/VERSION` via `docker-build.yaml`). Set an
-   initial version only when creating a brand-new chart (`version: 1.0.0`) or
-   container (`VERSION` = `0.0.0`).
+3. Never bump versions or image tags — CI does it on merge to main (Chart.yaml
+   `version` via `release.yaml`; containers are tag-based with no VERSION
+   files, `docker-build.yaml` pushes `:v<run_number>` + `:<branch>`). Set an
+   initial version only when creating a brand-new chart (`version: 1.0.0`).
 4. After chart changes, run `helm lint charts/<name>` and
    `helm template charts/<name>`. If they fail, fix and re-validate before
    finishing.
