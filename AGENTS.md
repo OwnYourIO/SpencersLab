@@ -74,6 +74,11 @@ change.
 
 ## Hard rules
 
+- **Never push to `main` — only the user does that.** Agents work on their own
+  branch/worktree and commit there. To pick up changes, merge `main` *into*
+  your worktree (`git merge main`); never merge your branch into `main` and
+  never run `git push origin main`. Landing work on `main` is the user's
+  decision alone.
 - **Never bump versions or image tags by hand.** `release.yaml` bumps
   `Chart.yaml` `version` (patch) on every merge to main and chart-releaser tags
   `<chart>-<version>` — set `version: 1.0.0` only on a brand-new chart.

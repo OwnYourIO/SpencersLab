@@ -79,6 +79,10 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
 
 ## Git safety
 
+**Never push to `main`.** Only the user lands work on `main`. Commit to your
+own branch/worktree, and pick up updates by merging `main` *into* it — never
+merge your branch into `main` and never run `git push origin main`.
+
 **Ask before changing branches or committing.** Never run `git checkout`,
 `git switch`, `git commit`, or `git push` without the user's explicit go-ahead
 in this session. Present what you intend to do (target branch, files staged,
