@@ -1,6 +1,6 @@
 ---
 name: container-creation
-description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the docker-build GitHub workflow, the git-tag version auto-bump flow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
+description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the tag-based docker-build GitHub workflow (no VERSION files), or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
 ---
 
 # Container Creation (SpencersLab)
@@ -34,33 +34,34 @@ containers/
     └── ...                 # any other build-context files
 ```
 
+**No `VERSION` file.** Images are identified by tags only.
+
 The directory name is significant: it becomes the image name. The container
 above publishes as `ghcr.io/ownyourio/<container-name>`.
 
 ## Build pipeline
 
-`.github/workflows/docker-build.yaml` builds and pushes containers automatically.
+`.github/workflows/docker-build.yaml` builds and pushes containers
+automatically — tag-based, no VERSION files, no version-bump commits.
 
-**Trigger:** any push to `main` that touches `containers/**`.
+**Triggers:** pushes to `main`/`dev` that touch `containers/**`, and PRs
+targeting `main`/`dev` that touch `containers/**`.
 
-**Per changed container directory, it:**
+**Per changed container directory:**
 
-1. Derives the current version from the latest git tag `<name>-v<semver>`
-   (no tag yet = `0.0.0`). There is **no VERSION file** — git tags are the
-   source of truth.
-2. **Bumps the patch version** (`1.2.3` → `1.2.4`).
-3. Builds `containers/<name>/Dockerfile` with Buildx + GHA cache.
-4. Pushes to `ghcr.io/ownyourio/<name>` with three tags:
-   - `:latest`
-   - `:<version>` (e.g. `:1.2.4`)
-   - `:v<version>` (semver-prefix variant)
-5. Creates and pushes the git tag `<name>-v<version>` — this tag is what the
-   next build bumps from.
+1. Detects changed container dirs (only strict DNS-safe names with a
+   `Dockerfile` are accepted).
+2. Builds `containers/<name>/Dockerfile` with Buildx + GHA cache.
+3. **On CI (push to `main`/`dev`)** pushes two tags:
+   - `:v<run_number>` — monotonic, immutable (the GitHub `run_number`; this is
+     the GitHub Actions analog of ADO's `v$(Build.BuildId)`).
+   - `:<branch>` — the mutable rolling tag (`:main` / `:dev`) that the cluster
+     pulls.
+4. **On PRs** it builds only — it never pushes, so a PR branch named e.g.
+   `dev` cannot overwrite the mutable `:dev` tag the cluster pulls.
 
-The version bump happens **even on the first build** (no tags → `0.0.0` →
-`0.0.1`, tagged `<name>-v0.0.1`).
-
-**There is no manual release process** — merging to main is the entire flow.
+**There is no manual release process** — merging to `main` is the entire flow.
+There is nothing to bump and nothing to tag by hand.
 
 ## Dockerfile conventions
 
@@ -198,25 +199,29 @@ app-template:
         main:
           image:
             repository: ghcr.io/ownyourio/<container-name>
-            # Pin to the version the docker-build workflow published (git tag
-            # <name>-v<version>). Update this after a build publishes the new
-            # tag (or use `:latest` + `pullPolicy: Always` during development).
-            tag: 1.2.4
+            # The rolling branch tag tracks every merge to main.
+            tag: main
+            pullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
 ```
 
-After the first successful build (no tags → publishes `0.0.1` and tag
-`<name>-v0.0.1`), update your chart's `image.tag` to that version. From then
-on, every container change becomes:
+Two ways to reference the image:
+
+- **`:main` + `pullPolicy: Always`** (default) — the deployment always pulls the
+  freshest build. Simplest; use it unless you have a reason to pin.
+- **`:v<run_number>`** — an immutable point-in-time tag. Pin to this only if you
+  need a reproducible, non-moving image (grab the run number from the
+  workflow run or `docker buildx imagetools inspect
+  ghcr.io/ownyourio/<name>:main`).
+
+The change loop is now trivial — no chart edit needed when using `:main`:
 
 1. Edit `containers/<name>/Dockerfile` (or source).
-2. Merge to `main` → workflow bumps from the latest `<name>-v*` tag and pushes
-   `ghcr.io/ownyourio/<name>:<new-version>`.
-3. Bump `image.tag` in `charts/<name>/values.yaml` to the new version.
-4. Merge to `main` → `release.yaml` cuts a new chart release; ArgoCD picks it up.
+2. Merge to `main` → the workflow rebuilds and repushes
+   `ghcr.io/ownyourio/<name>:main`; the next pod restart pulls it.
 
 ## Worked example: brother-ptouch-automation
 

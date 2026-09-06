@@ -17,8 +17,7 @@ app-template:
           image:
             repository: ghcr.io/curatedforest/brother-ptouch-automation
             tag: latest
-            #tag: 0.0.1
-            #pullPolicy: Always
+            # pullPolicy: Always
           env:
             TZ: America/Denver
             LABEL_PRINTER_CONFIG_DIR: /config

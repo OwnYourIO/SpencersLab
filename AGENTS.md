@@ -74,6 +74,13 @@ change.
 
 ## Hard rules
 
+- **Never bump versions or image tags by hand.** `release.yaml` bumps
+  `Chart.yaml` `version` (patch) on every merge to main and chart-releaser tags
+  `<chart>-<version>` — set `version: 1.0.0` only on a brand-new chart.
+  Containers are tag-based with **no VERSION files**: `docker-build.yaml`
+  pushes `:v<run_number>` (immutable) + `:<branch>` (`:main`/`:dev`, rolling)
+  on every merge; reference `:main` (+ `pullPolicy: Always`) or a `:v<run>`
+  pin.
 - Validate chart changes: `helm lint charts/<name>` and
   `helm template charts/<name>` must pass before finishing.
 - Secrets: ExternalSecret + Bitwarden only. Placeholder

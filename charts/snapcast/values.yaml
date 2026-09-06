@@ -14,7 +14,8 @@ app-template:
               memory: 1024Mi
           image:
               repository: ghcr.io/ownyourio/snapcast
-              tag: latest
+              tag: main
+              pullPolicy: Always
           env:
             #LOG_LEVEL: debug
             TZ: Etc/UTC

@@ -25,6 +25,10 @@ permission:
     "git status*": allow
     "git log*": allow
     "git diff*": allow
+    "git checkout*": ask
+    "git switch*": ask
+    "git commit*": ask
+    "git push*": ask
     "ls *": allow
     "helm lint*": allow
     "helm template*": allow
@@ -60,14 +64,28 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
 2. Make the edits, one plan step at a time. New charts: the
    `helm-chart-creation` skill governs (plus `helm-bjw-s-chart` for the
    app-template API). New containers: the `container-creation` skill governs.
-3. After chart changes, run `helm lint charts/<name>` and
+3. Never bump versions or image tags — CI does it on merge to main (Chart.yaml
+   `version` via `release.yaml`; containers are tag-based with no VERSION
+   files, `docker-build.yaml` pushes `:v<run_number>` + `:<branch>`). Set an
+   initial version only when creating a brand-new chart (`version: 1.0.0`).
+4. After chart changes, run `helm lint charts/<name>` and
    `helm template charts/<name>`. If they fail, fix and re-validate before
    finishing.
-4. For new services, confirm the trio: chart entry, ApplicationSet values
+5. For new services, confirm the trio: chart entry, ApplicationSet values
    entry (`charts:` key or umbrella dependency), proxy values entry — plus the
    custom-values entry for every `OVERRIDE_VIA_CUSTOM_VALUES` placeholder.
-5. Report what changed and the validation output. Never `kubectl apply` —
+6. Report what changed and the validation output. Never `kubectl apply` —
    ArgoCD syncs.
+
+## Git safety
+
+**Ask before changing branches or committing.** Never run `git checkout`,
+`git switch`, `git commit`, or `git push` without the user's explicit go-ahead
+in this session. Present what you intend to do (target branch, files staged,
+commit message) and wait for confirmation. Read-only git (`status`, `log`,
+`diff`) needs no confirmation. If a task says "commit" or "push" up front,
+that instruction is the go-ahead — one confirmation covers exactly what was
+asked, not follow-up commits.
 
 ## Pre-completion checklist
 

@@ -1,9 +1,22 @@
 name: Build and Push Docker Containers
 
+# Images are identified by TAGS ONLY — no VERSION files, no version-bump
+# commits. Mirrors the ADO containers.yml semantics:
+#   CI on main/dev → push v<run_number> (monotonic, ADO Build.BuildId analog)
+#                    + <branch> (mutable rolling tag the cluster pulls)
+#   PR builds      → build only, never push (a PR branch must not be able to
+#                    overwrite the ':main' tag)
 on:
   push:
     branches:
       - main
+      - dev
+    paths:
+      - 'containers/**'
+  pull_request:
+    branches:
+      - main
+      - dev
     paths:
       - 'containers/**'
 
@@ -23,18 +36,37 @@ jobs:
 
       - name: Get changed containers
         id: changed-files
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          # Get all changed files in containers directory
-          if [ "${{ github.event_name }}" == "push" ]; then
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep "^containers/" || true)
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- containers/ || true)
           else
-            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep "^containers/" || true)
+            # Push: diff the pushed range. On the very first push to a branch
+            # 'before' is all-zero; fall back to HEAD^.
+            if [ "$EVENT_BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- containers/ || true)
+            else
+              CHANGED_FILES=$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- containers/ || true)
+            fi
           fi
-          
-          # Extract unique container directories
-          CONTAINERS=$(echo "$CHANGED_FILES" | cut -d'/' -f1-2 | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "all_changed_files=$CONTAINERS" >> $GITHUB_OUTPUT
-          echo "Changed containers: $CONTAINERS"
+
+          # Only strict DNS-safe names (matches ADO validation) with a Dockerfile.
+          CONTAINERS=$(echo "$CHANGED_FILES" | cut -d'/' -f2 | sort -u | \
+            grep -E '^[a-z0-9]+(-[a-z0-9]+)*$' || true)
+          RESULT="[]"
+          for c in $CONTAINERS; do
+            if [ -f "containers/$c/Dockerfile" ]; then
+              RESULT=$(echo "$RESULT" | jq -c --arg c "$c" '. + [$c]')
+            fi
+          done
+          echo "all_changed_files=$RESULT" >> "$GITHUB_OUTPUT"
+          echo "Changed containers: $RESULT"
 
   build-and-push:
     needs: detect-changes
@@ -44,79 +76,61 @@ jobs:
       matrix:
         container: ${{ fromJson(needs.detect-changes.outputs.changed-containers) }}
     permissions:
-      contents: write
+      contents: read
       packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
+        # PR builds validate the Dockerfile only — never push (a PR branch
+        # named e.g. 'dev' would otherwise overwrite the mutable ':dev' tag).
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get container name
-        id: container-info
+      - name: Compute tags
+        id: tags
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+          HEAD_REF: ${{ github.head_ref }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          CONTAINER_NAME=$(basename ${{ matrix.container }})
-          echo "name=$CONTAINER_NAME" >> $GITHUB_OUTPUT
-
-      - name: Derive version from git tags
-        id: version
-        run: |
-          CONTAINER_NAME="${{ steps.container-info.outputs.name }}"
-
-          # Version is derived from the latest git tag "<name>-v<semver>".
-          # There is no VERSION file — git tags are the source of truth.
-          LATEST_TAG=$(git tag -l "${CONTAINER_NAME}-v*" | sort -V | tail -n 1)
-          if [ -z "$LATEST_TAG" ]; then
-            CURRENT_VERSION="0.0.0"
-            echo "No existing tags for ${CONTAINER_NAME}; starting from 0.0.0"
+          # v<run_number> is the monotonic immutable tag (ADO v$(Build.BuildId)).
+          echo "run_tag=v${RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          # Branch name sanitized for Docker tags ('/' is not allowed).
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            RAW_BRANCH="$HEAD_REF"
           else
-            CURRENT_VERSION="${LATEST_TAG#${CONTAINER_NAME}-v}"
-            echo "Current version (from tag ${LATEST_TAG}): ${CURRENT_VERSION}"
+            RAW_BRANCH="$REF_NAME"
           fi
-
-          # Parse semantic version and bump the patch number
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-          PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-
-          echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "branch_tag=${RAW_BRANCH//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ steps.container-info.outputs.name }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.container }}
           tags: |
-            type=semver,pattern={{version}},value=v${{ steps.version.outputs.version }}
-            type=raw,value=${{ steps.version.outputs.version }}
-            type=raw,value=latest
+            type=raw,value=${{ steps.tags.outputs.run_tag }}
+            type=raw,value=${{ steps.tags.outputs.branch_tag }}
 
-      - name: Build and push Docker image
+      - name: Build and push ${{ matrix.container }}
         uses: docker/build-push-action@v7
         with:
-          context: ${{ matrix.container }}
-          push: true
+          context: containers/${{ matrix.container }}
+          file: containers/${{ matrix.container }}/Dockerfile
+          # CI pushes both tags; PR builds run with push disabled so the
+          # Dockerfile is still validated end-to-end.
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Create Git tag
-        run: |
-          # This tag is the version source for the next build; push it so
-          # subsequent runs bump from it.
-          git tag "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"
-          git push origin "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"
