@@ -28,7 +28,8 @@ Deep-dives in `references/` (read on demand, not upfront):
   shared SeaweedFS storage pattern.
 - `references/mcp-servers.md` — adding MCP servers as `mcp.<name>` entries in
   `charts/hivetools` (ToolHive MCPServer CRDs, shared ingress/OIDC, secrets
-  recipe, in-repo image pinning).
+  recipe, in-repo image pinning) plus pattern recipes: read-only Postgres/CNPG,
+  Grafana service-account token, and initContainer repo-clone.
 
 ## When to use / when not
 
