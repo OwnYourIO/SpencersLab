@@ -21,7 +21,7 @@ RUN apt-get update \
 # back to native RegExp (warning only). Acceptable for design-time use; if
 # re2 ever becomes required, rebuild with --allow-scripts plus build tooling.
 # renovate: datasource=npm depName=renovate-mcp
-RUN npm install -g renovate-mcp@1.4.9
+RUN npm install -g renovate-mcp@1.4.11
 
 # The official node image already ships a "node" user at uid/gid 1000 —
 # exactly the runAsUser the MCPServer podTemplateSpec securityContext sets.
