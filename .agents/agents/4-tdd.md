@@ -80,11 +80,10 @@ You write test files and `3-test-spec.md`. You do not write source.
 
 ## Skills and MCP servers
 
-Skills to load when relevant:
-- `ci-cd` — when writing tests for CI/CD pipeline configurations or build workflows
-- `monitoring-observability` — when testing metrics collection, alerting rules, or dashboard configurations
-- `k8s-troubleshooter` — when testing Kubernetes manifests, Helm charts, or cluster resource behavior
-- `home-assistant-best-practices` — when writing tests for HA automations, scripts, or helpers
+Skills and MCP servers are registered in the root `AGENTS.md` — load skills
+from that registry as the feature requires. Stage-specific:
+`test-driven-development` when testing real code (`containers/`, `src/`) — not
+for YAML-only changes.
 
 ---
 

@@ -41,9 +41,8 @@ You and the developer-docs agent split Stage 8. You write only
 
 ## Skills and MCP servers
 
-Skills to load when relevant:
-- `home-assistant-best-practices` — when documenting HA features for end users (automations, dashboards, helpers)
-- `ci-cd` — when documenting CI/CD pipeline usage for end users
+Skills and MCP servers are registered in the root `AGENTS.md` — load skills
+from that registry as the feature requires.
 
 ---
 

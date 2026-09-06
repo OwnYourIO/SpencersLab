@@ -1,8 +1,13 @@
-# Container Creation Guide for SpencersLab
+---
+name: container-creation
+description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the docker-build GitHub workflow, the VERSION auto-bump flow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
+---
 
-This document covers the conventions for adding custom-built container images to
-SpencersLab. Pair it with `HELM_CHART_CREATION_GUIDE.md` — the chart consumes
-the image this guide produces.
+# Container Creation (SpencersLab)
+
+Conventions for adding custom-built container images to SpencersLab. Pair it
+with the `helm-chart-creation` skill — the chart consumes the image this
+skill produces.
 
 ## When to create a container
 
@@ -215,8 +220,8 @@ container change becomes:
 
 ## Worked example: brother-ptouch-automation
 
-- **Container**: [`containers/brother-ptouch-automation/`](containers/brother-ptouch-automation/)
-- **Chart**: [`charts/brother-ptouch-automation/`](charts/brother-ptouch-automation/)
+- **Container**: `containers/brother-ptouch-automation/`
+- **Chart**: `charts/brother-ptouch-automation/`
 - **Pattern**: Python project installed from a git pin, FastAPI service entrypoint,
   non-root uid 65532, single PVC for state, reaches a physical Brother label
   printer on the LAN over TCP:9100 + UDP:161.

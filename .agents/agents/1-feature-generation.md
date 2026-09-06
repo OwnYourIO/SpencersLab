@@ -39,11 +39,10 @@ code, never create files outside `features/`, and never invoke other agents.
 
 ## Skills and MCP servers
 
-Skills to load when relevant:
-- `ci-cd` — when the feature involves CI/CD pipelines, build workflows, or DevSecOps scanning
-- `home-assistant-best-practices` — when the feature involves Home Assistant automations, scripts, scenes, or dashboards
-
-MCP servers: `github` (search repos, create issues/PRs), `searxng` (web search for requirements), `filesystem` (browse project structure), `fetch` (fetch external docs).
+Skills and MCP servers are registered in the root `AGENTS.md` — load skills
+from that registry as the feature requires. Stage-specific: `searxng` for
+requirements research; `homeassistant` MCP only when the feature touches Home
+Assistant.
 
 ---
 
