@@ -1,6 +1,6 @@
 ---
 name: container-creation
-description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the docker-build GitHub workflow, the VERSION auto-bump flow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
+description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the docker-build GitHub workflow, the git-tag version auto-bump flow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
 ---
 
 # Container Creation (SpencersLab)
@@ -29,7 +29,6 @@ chart at it.
 containers/
 └── <container-name>/
     ├── Dockerfile          # REQUIRED
-    ├── VERSION             # REQUIRED — semver string, e.g. "0.0.0"
     ├── requirements.txt    # OPTIONAL — pip deps if you're shipping Python
     ├── main.py             # OPTIONAL — source files if you ship code in-repo
     └── ...                 # any other build-context files
@@ -46,19 +45,20 @@ above publishes as `ghcr.io/ownyourio/<container-name>`.
 
 **Per changed container directory, it:**
 
-1. Reads `containers/<name>/VERSION` (creates `0.0.0` if missing).
-2. **Bumps the patch version** (`1.2.3` → `1.2.4`) and commits the new
-   `VERSION` back to `main` with the message
-   `Bump <name> version to <version>`.
+1. Derives the current version from the latest git tag `<name>-v<semver>`
+   (no tag yet = `0.0.0`). There is **no VERSION file** — git tags are the
+   source of truth.
+2. **Bumps the patch version** (`1.2.3` → `1.2.4`).
 3. Builds `containers/<name>/Dockerfile` with Buildx + GHA cache.
 4. Pushes to `ghcr.io/ownyourio/<name>` with three tags:
    - `:latest`
    - `:<version>` (e.g. `:1.2.4`)
    - `:v<version>` (semver-prefix variant)
-5. Creates a git tag `<name>-v<version>` and pushes it.
+5. Creates and pushes the git tag `<name>-v<version>` — this tag is what the
+   next build bumps from.
 
-The version bump happens **even on the first build** (initial `VERSION=0.0.0`
-becomes `0.0.1` after the first successful build).
+The version bump happens **even on the first build** (no tags → `0.0.0` →
+`0.0.1`, tagged `<name>-v0.0.1`).
 
 **There is no manual release process** — merging to main is the entire flow.
 
@@ -198,9 +198,9 @@ app-template:
         main:
           image:
             repository: ghcr.io/ownyourio/<container-name>
-            # Pin to the version the docker-build workflow has bumped to.
-            # Update this when you bump the container's VERSION file (or use
-            # `:latest` + `pullPolicy: Always` during initial development).
+            # Pin to the version the docker-build workflow published (git tag
+            # <name>-v<version>). Update this after a build publishes the new
+            # tag (or use `:latest` + `pullPolicy: Always` during development).
             tag: 1.2.4
           securityContext:
             allowPrivilegeEscalation: false
@@ -208,12 +208,12 @@ app-template:
               drop: ["ALL"]
 ```
 
-After the first successful build (which bumps `VERSION` 0.0.0 → 0.0.1),
-update your chart's `image.tag` to that version. From then on, every
-container change becomes:
+After the first successful build (no tags → publishes `0.0.1` and tag
+`<name>-v0.0.1`), update your chart's `image.tag` to that version. From then
+on, every container change becomes:
 
 1. Edit `containers/<name>/Dockerfile` (or source).
-2. Merge to `main` → workflow auto-bumps `VERSION` and pushes
+2. Merge to `main` → workflow bumps from the latest `<name>-v*` tag and pushes
    `ghcr.io/ownyourio/<name>:<new-version>`.
 3. Bump `image.tag` in `charts/<name>/values.yaml` to the new version.
 4. Merge to `main` → `release.yaml` cuts a new chart release; ArgoCD picks it up.
@@ -234,7 +234,6 @@ Before merging a new container to `main`:
 
 - [ ] `containers/<name>/Dockerfile` exists and builds locally
       (`docker build containers/<name>/`)
-- [ ] `containers/<name>/VERSION` exists (`0.0.0` is fine for first build)
 - [ ] Runs as non-root user (UID 65532 or other non-zero uid)
 - [ ] Has a clear `ENTRYPOINT`
 - [ ] Exposes a `/health` (or equivalent) endpoint for chart probes if it's a service

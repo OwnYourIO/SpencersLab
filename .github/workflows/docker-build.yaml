@@ -69,43 +69,30 @@ jobs:
           CONTAINER_NAME=$(basename ${{ matrix.container }})
           echo "name=$CONTAINER_NAME" >> $GITHUB_OUTPUT
 
-      - name: Read and bump version
+      - name: Derive version from git tags
         id: version
         run: |
-          cd ${{ matrix.container }}
-          
-          # Create VERSION file if it doesn't exist
-          if [ ! -f VERSION ]; then
-            echo "0.0.0" > VERSION
+          CONTAINER_NAME="${{ steps.container-info.outputs.name }}"
+
+          # Version is derived from the latest git tag "<name>-v<semver>".
+          # There is no VERSION file — git tags are the source of truth.
+          LATEST_TAG=$(git tag -l "${CONTAINER_NAME}-v*" | sort -V | tail -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            CURRENT_VERSION="0.0.0"
+            echo "No existing tags for ${CONTAINER_NAME}; starting from 0.0.0"
+          else
+            CURRENT_VERSION="${LATEST_TAG#${CONTAINER_NAME}-v}"
+            echo "Current version (from tag ${LATEST_TAG}): ${CURRENT_VERSION}"
           fi
-          
-          CURRENT_VERSION=$(cat VERSION)
-          echo "Current version: $CURRENT_VERSION"
-          
-          # Parse semantic version
+
+          # Parse semantic version and bump the patch number
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-          
-          # Bump patch version
           PATCH=$((PATCH + 1))
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          
+
           echo "New version: $NEW_VERSION"
-          echo "$NEW_VERSION" > VERSION
-          
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Commit version bump
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add ${{ matrix.container }}/VERSION
-          git commit -m "Bump ${{ steps.container-info.outputs.name }} version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
-          # Rebase onto any commits that landed on main between checkout and now
-          # (another container's parallel job, a chart-release commit, a human push, etc.)
-          # before pushing, otherwise the push gets rejected with `! [rejected] (fetch first)`.
-          git pull --rebase origin main
-          git push
 
       - name: Extract metadata for Docker
         id: meta
@@ -129,8 +116,7 @@ jobs:
 
       - name: Create Git tag
         run: |
+          # This tag is the version source for the next build; push it so
+          # subsequent runs bump from it.
           git tag "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"
-          # Tag pushes are independent of main, but pull --rebase on main keeps
-          # the working ref current in case any follow-up step needs it.
-          git pull --rebase origin main
           git push origin "${{ steps.container-info.outputs.name }}-v${{ steps.version.outputs.version }}"

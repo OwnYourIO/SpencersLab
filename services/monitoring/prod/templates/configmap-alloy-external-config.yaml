@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-external-config
+data:
+  config.alloy: |
+    // Reference config for external (non-cluster) Alloy hosts shipping into
+    // the SpencersLab monitoring stack. Remote-write is unauthenticated today
+    // (same posture as charts/k8s-monitoring); add Keycloak client-credentials
+    // later if/when the ingress enforces oidc-m2m.
+    //
+    // Per-host values live in /etc/alloy/alloy.env (created by the
+    // alloy-external-setup flow, edited by hand):
+    //   CLUSTER - cluster label for dashboards (default: external)
+
+    // ── Identity ─────────────────────────────────────────────
+    // Used on every metric and log line so dashboards can filter.
+    local.file "hostname" {
+      filename = "/etc/hostname"
+    }
+
+    // ── Node metrics ─────────────────────────────────────────
+    prometheus.exporter.unix "node" {
+      // rootfs/sysfs paths are handled automatically when running
+      // as a systemd service; set procfs_path etc. if containerized.
+      enable_collectors = ["systemd"]
+    }
+
+    prometheus.scrape "node" {
+      targets         = prometheus.exporter.unix.node.targets
+      forward_to      = [prometheus.relabel.node_filter.receiver]
+      scrape_interval = "60s"
+    }
+
+    // Match the allowlist used in-cluster (charts/k8s-monitoring
+    // node-exporter includeMetrics) so external hosts show up
+    // consistently in the same dashboards.
+    prometheus.relabel "node_filter" {
+      forward_to = [prometheus.remote_write.default.receiver]
+
+      rule {
+        source_labels = ["__name__"]
+        regex         = "node_cpu_seconds_total|node_memory_.*|node_filesystem_.*|node_disk_.*|node_network_.*|node_load.*|node_time_seconds|node_boot_time_seconds|node_uname_info|node_context_switches_total|up"
+        action        = "keep"
+      }
+    }
+
+    prometheus.remote_write "default" {
+      endpoint {
+        url = "https://prometheus.{{ .Values.domain }}/api/v1/write"
+      }
+
+      external_labels = {
+        instance = string.trim_space(local.file.hostname.content),
+        cluster  = sys.env("CLUSTER"),    // default external, via env file
+        job      = "integrations/unix",
+      }
+    }
+
+    // ── Journald logs ────────────────────────────────────────
+    loki.source.journal "journal" {
+      max_age = "12h"
+      labels  = {
+        job      = "systemd-journal",
+        instance = string.trim_space(local.file.hostname.content),
+        cluster  = sys.env("CLUSTER"),
+      }
+      relabel_rules = loki.relabel.journal.rules
+      forward_to    = [loki.write.default.receiver]
+    }
+
+    loki.relabel "journal" {
+      forward_to = []
+      rule {
+        source_labels = ["__journal__systemd_unit"]
+        target_label  = "unit"
+      }
+      rule {
+        source_labels = ["__journal_priority_keyword"]
+        target_label  = "level"
+      }
+    }
+
+    // ── Flat-file logs (optional) ────────────────────────────
+    local.file_match "varlog" {
+      path_targets = [
+        { __path__ = "/var/log/*.log" },
+        { __path__ = "/var/log/syslog" },
+      ]
+    }
+
+    loki.source.file "varlog" {
+      targets    = local.file_match.varlog.targets
+      forward_to = [loki.process.varlog.receiver]
+    }
+
+    loki.process "varlog" {
+      forward_to = [loki.write.default.receiver]
+      stage.static_labels {
+        values = {
+          job      = "varlogs",
+          instance = string.trim_space(local.file.hostname.content),
+          cluster  = sys.env("CLUSTER"),
+        }
+      }
+    }
+
+    // ── Loki destination ─────────────────────────────────────
+    loki.write "default" {
+      endpoint {
+        url = "https://loki.{{ .Values.domain }}/loki/api/v1/push"
+      }
+    }

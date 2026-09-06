@@ -1,0 +1,40 @@
+{{- /*
+Postgres MCP servers: one MCPServer per entry in .Values.postgresMcp.databases.
+All servers share the single definition in .Values.postgresMcp (image / transport /
+mcpPort / args / resources / podTemplateSpec); only the per-database name varies.
+This is the MCPServer counterpart of secret-postgres-mcp.yaml (ExternalSecrets) and
+is routed by generic-mcp-ingress.yaml. Adding a database = one entry in
+postgresMcp.databases + the bitwardenIds key + the CNPG managed role.
+*/}}
+{{- $pg := .Values.postgresMcp }}
+{{- range $pg.databases }}
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: postgres-{{ .name }}
+  namespace: {{ $.Values.namespace | default "default" }}
+spec:
+  image: {{ $pg.image | required "postgresMcp.image is required" }}
+  transport: {{ $pg.transport | required "postgresMcp.transport is required" }}
+  mcpPort: {{ $pg.mcpPort | required "postgresMcp.mcpPort is required" }}
+  oidcConfigRef:
+    name: keycloak
+    audience: postgres-{{ .name }}
+  {{- if $pg.args }}
+  args:
+    {{- toYaml $pg.args | nindent 4 }}
+  {{- end }}
+  {{- if $pg.resources }}
+  resources:
+    {{- toYaml $pg.resources | nindent 4 }}
+  {{- end }}
+  secrets:
+    - name: postgres-mcp-{{ .name }}
+      key: DATABASE_URI
+      targetEnvName: DATABASE_URI
+  {{- if $pg.podTemplateSpec }}
+  podTemplateSpec:
+    {{- toYaml $pg.podTemplateSpec | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -12,6 +12,10 @@ bitwardenIds:
   open-webui-sso-secret: 69e653a3-061c-4727-af4b-b336014cedbe
   open-webui-secret: b56bd559-e590-42eb-a98a-b336014dc3e7
   open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
+  # Read-only CNPG role credentials (LOGIN items, username=readonly) for the
+  # pg-coder and pg-open-webui clusters defined by the gpu service chart.
+  mcp-pg-coder: OVERRIDE_NEEDED
+  mcp-pg-open-webui: OVERRIDE_NEEDED
 
 base:
   bitwardenIds:
@@ -26,6 +30,15 @@ hivetools:
     github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
     homeassistant-mcp: 84d06d73-da27-4066-9da1-b498002d69b5
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+    # Grafana service-account token (Viewer) for the grafana MCP server.
+    grafana-mcp-token: 7e393c36-5b11-4806-a05f-b4bd00e613f5
+    # Read-only CNPG role credentials (LOGIN items, username=readonly) backing
+    # the composed DATABASE_URI secrets for the postgres MCP servers.
+    mcp-pg-coder: OVERRIDE_NEEDED
+    mcp-pg-flowise: OVERRIDE_NEEDED
+    mcp-pg-langflow: OVERRIDE_NEEDED
+    mcp-pg-n8n: OVERRIDE_NEEDED
+    mcp-pg-open-webui: OVERRIDE_NEEDED
   keycloak:
     realm: SpencersLab
 
@@ -42,13 +55,19 @@ neo4j:
 n8n:
   bitwardenIds:
     n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
+    # Read-only CNPG role credential (username=readonly) for postgres-n8n MCP.
+    mcp-pg-n8n: OVERRIDE_NEEDED
 flowise:
   bitwardenIds:
     flowise-pg: 7533ab94-6308-4afa-a6fe-b34a00395edd
+    # Read-only CNPG role credential (username=readonly) for postgres-flowise MCP.
+    mcp-pg-flowise: OVERRIDE_NEEDED
 langflow:
   bitwardenIds:
     langflow-pg: c2f26e5d-84fc-404d-93b7-b34a0157b6a0
     langflow: f7b628ec-2544-4c28-a476-b1a501487d99
+    # Read-only CNPG role credential (username=readonly) for postgres-langflow MCP.
+    mcp-pg-langflow: OVERRIDE_NEEDED
 supabase:
   bitwardenIds:
     supabase: ce98dd73-28ff-48e3-849d-b36c00fd09ac

@@ -1,8 +1,11 @@
 {{- $hasEnabledServers := false }}
 {{- range $name, $config := .Values.mcp }}
-{{- if $config.enabled | default true }}
+{{- if and $config (ne ($config.enabled | toString) "false") }}
 {{- $hasEnabledServers = true }}
 {{- end }}
+{{- end }}
+{{- if .Values.postgresMcp.databases }}
+{{- $hasEnabledServers = true }}
 {{- end }}
 {{- if $hasEnabledServers }}
 ---
@@ -25,7 +28,7 @@ spec:
       http:
         paths:
 {{- range $name, $config := .Values.mcp }}
-{{- if $config.enabled | default true }}
+{{- if and $config (ne ($config.enabled | toString) "false") }}
           # Route /{{ $name }}/* to mcp-{{ $name }}-proxy
           - path: /{{ $name }}
             pathType: Prefix
@@ -35,5 +38,15 @@ spec:
                 port:
                   number: {{ $config.mcpPort | required (printf "mcp.%s.mcpPort is required" $name) }}
 {{- end }}
+{{- end }}
+{{- range $pgdb := .Values.postgresMcp.databases }}
+          # Route /postgres-{{ $pgdb.name }}/* to mcp-postgres-{{ $pgdb.name }}-proxy
+          - path: /postgres-{{ $pgdb.name }}
+            pathType: Prefix
+            backend:
+              service:
+                name: mcp-postgres-{{ $pgdb.name }}-proxy
+                port:
+                  number: {{ $.Values.postgresMcp.mcpPort | required "postgresMcp.mcpPort is required" }}
 {{- end }}
 {{- end }}

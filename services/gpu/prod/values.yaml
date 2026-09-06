@@ -19,6 +19,14 @@ bitwardenIds:
   neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
   searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
+  # Read-only CNPG role credentials (LOGIN items, username=readonly) for the two
+  # CNPG clusters defined by THIS service chart (pg-coder, pg-open-webui); they
+  # back the pg-*-mcp-secret role passwords rendered here. The flowise/langflow/n8n
+  # role credentials live in their own charts' values. (grafana-mcp-token and the
+  # composed DATABASE_URI secrets are hivetools-only, via custom-values/gpu.)
+  mcp-pg-coder: OVERRIDE_VIA_CUSTOM_VALUES
+  mcp-pg-open-webui: OVERRIDE_VIA_CUSTOM_VALUES
+
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 

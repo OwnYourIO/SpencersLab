@@ -13,7 +13,7 @@ metadata:
 spec:
   image: {{ $config.image | required (printf "mcp.%s.image is required" $name) }}
   transport: {{ $config.transport | required (printf "mcp.%s.transport is required" $name) }}
-  {{- if $config.targetPort }}
+  {{- if $config.proxyPort }}
   proxyPort: {{ $config.proxyPort }}
   {{- end }}
   mcpPort: {{ $config.mcpPort | required (printf "mcp.%s.port is required" $name) }}
