@@ -2,14 +2,14 @@
 
 A Model Context Protocol (MCP) server that wraps the WeKan REST API,
 designed to run under **ToolHive on Kubernetes** so the WeKan bearer
-token stays out of Claude's context.
+token stays out of the model's context.
 
 ## What this gives you
 
-- **13 typed tools** covering the high-frequency WeKan operations:
-  read (boards, lists, swimlanes, cards, comments) and write (create/update/
-  move cards, add comments, add checklists, toggle items). Destructive
-  operations (`delete_*`) are intentionally omitted.
+- **15 typed tools** covering the high-frequency WeKan operations:
+  read (boards, lists, swimlanes, cards, comments, checklists) and write
+  (create/update/move cards, add comments, add checklists, toggle items).
+  Destructive operations (`delete_*`) are intentionally omitted.
 - **Credential isolation from the model**: `WEKAN_TOKEN` lives in a
   Kubernetes Secret, is injected into the pod as an env var by the
   ToolHive operator, and is never a tool parameter, never in a schema,
@@ -24,80 +24,49 @@ token stays out of Claude's context.
 
 ```
 wekan-mcp/
-├── pyproject.toml          # package + `wekan-mcp` console script
+├── pyproject.toml          # package + `wekan-mcp` console script;
+│                           # version is read dynamically from VERSION
+├── VERSION                 # semver source of truth (bumped by CI)
 ├── Dockerfile              # builds the image ToolHive will run
 ├── .dockerignore
 ├── README.md               # this file
-├── wekan_mcp/
-│   ├── __init__.py
-│   ├── wekan.py            # internal WeKan client (WekanClient)
-│   └── server.py           # FastMCP server + tool definitions
-└── k8s/
-    ├── secret.yaml.example # WEKAN_TOKEN as a Kubernetes Secret
-    ├── mcpserver.yaml      # ToolHive MCPServer resource
-    └── client-setup.md     # connecting Claude Desktop to the proxy
+└── wekan_mcp/
+    ├── __init__.py
+    ├── wekan.py            # internal WeKan client (WekanClient)
+    └── server.py           # FastMCP server + tool definitions
 ```
 
-## Prerequisites
+## Deployment in SpencersLab
 
-- A Kubernetes cluster (you already have one).
-- The **ToolHive operator** installed:
-  ```
-  helm upgrade -i toolhive-operator \
-    oci://ghcr.io/stacklok/toolhive/toolhive-operator \
-    -n toolhive-system --create-namespace
-  ```
-- A container **registry** the cluster can pull from.
-- A **WeKan server** with `WITH_API=true` and a bearer token for a
-  password-based account (not LDAP/OIDC-only). See the wekan-api skill's
-  `references/rest-api-overview.md` for how to obtain the token by
-  POSTing JSON to `/users/login`.
+This server is deployed through the lab's GitOps repo — **never
+`kubectl apply`**; ArgoCD syncs everything.
 
-## End-to-end setup
+- **Image**: built and pushed automatically by
+  `.github/workflows/docker-build.yaml` on any merge to `main` that
+  touches `containers/wekan-mcp/`. The workflow bumps the `VERSION`
+  file and publishes `ghcr.io/ownyourio/wekan-mcp:<version>` (plus
+  `:latest` and `:v<version>`). The image tag is pinned in the chart
+  values; bump it there after each container change.
+- **Platform wiring**: declared as the `mcp.wekan` entry in
+  `charts/hivetools/values.yaml` (ToolHive `MCPServer` CRD,
+  streamable-http, port 8080). The shared hivetools ingress routes
+  `https://mcp.spencerslab.com/wekan` to the ToolHive proxy
+  automatically.
+- **Authentication**: the endpoint is gated by the shared Keycloak
+  `MCPOIDCConfig` with audience `wekan`.
+- **Credential**: the WeKan bearer token belongs to a dedicated
+  password-based service user on the bot-enabled WeKan instance
+  (`https://wekan.spencerslab.com`, which must run with `WITH_API=true`).
+  The token is stored as the password of a Bitwarden login item and
+  injected as `WEKAN_TOKEN` via the `wekan-mcp` ExternalSecret
+  (`charts/hivetools/templates/secret-wekan-mcp.yaml`) +
+  `bitwardenIds.wekan-mcp` (real UUID in
+  `custom-values/gpu/prod-values.yaml`). `WEKAN_BASE_URL` is a plain
+  env value.
 
-### 1. Build and push the image
-
-```
-docker build -t registry.example.com/wekan-mcp:0.1.0 .
-docker push       registry.example.com/wekan-mcp:0.1.0
-```
-
-Update `k8s/mcpserver.yaml` `spec.image` to match this path.
-
-### 2. Create the Secret with your WeKan token
-
-Do NOT commit the real secret. Apply it directly:
-
-```
-kubectl create secret generic wekan-creds \
-  -n toolhive-system \
-  --from-literal=token='<YOUR_WEKAN_BEARER_TOKEN>'
-```
-
-(Or use sealed-secrets / external-secrets-operator / Vault CSI if that's
-your usual pattern — see `k8s/secret.yaml.example` for the shape.)
-
-### 3. Set the WeKan base URL
-
-Edit `k8s/mcpserver.yaml` `spec.env[0].value` (`WEKAN_BASE_URL`) to your
-WeKan site root. **No trailing `/api`**. If WeKan runs in the same cluster,
-prefer its in-cluster Service DNS.
-
-### 4. Apply the MCPServer
-
-```
-kubectl apply -f k8s/mcpserver.yaml
-kubectl get mcpserver -n toolhive-system wekan
-kubectl logs -n toolhive-system deploy/wekan
-```
-
-Look for `connected to WeKan as user_id=...` in the logs. If you see
-`WEKAN_BASE_URL not set` or `WeKan 401`, fix the env/secret and reapply.
-
-### 5. Connect Claude Desktop
-
-See `k8s/client-setup.md`. For solo use: `kubectl port-forward` the proxy
-Service and register `http://localhost:8080/mcp` as a custom connector.
+See `skills/helm-chart-creation/references/mcp-servers.md` for the
+full "add an MCP server" recipe and `skills/wekan-api` for WeKan REST
+API facts (token semantics, `WITH_API`, endpoint reference).
 
 ## What the model sees vs. what it doesn't
 
@@ -109,8 +78,8 @@ Service and register `http://localhost:8080/mcp` as a custom connector.
 **Does not see**:
 - `WEKAN_TOKEN` or the `Authorization` header. These live in the server
   process only.
-- The `claude_desktop_config.json` env block (there's nothing sensitive in it —
-  just the connector URL).
+- The client connector config (there's nothing sensitive in it —
+  just the endpoint URL).
 - Request URLs, request headers, or WeKan traceback details. Errors are
   sanitized to `WeKan <status> on <path>: <reason>`.
 
@@ -125,6 +94,8 @@ Service and register `http://localhost:8080/mcp` as a custom connector.
 | `list_cards_in_list` | read | Cards in a list |
 | `get_card` | read | Full card details |
 | `list_comments` | read | Comments on a card |
+| `list_checklists` | read | Checklists on a card |
+| `get_checklist` | read | Checklist with item ids (needed to toggle items) |
 | `create_card` | write | New card in a list+swimlane |
 | `update_card` | write | Edit title/description/dates |
 | `move_card` | write | Move between lists/swimlanes |
@@ -141,6 +112,8 @@ destructive hint so clients can gate them.
 
 - **Provision a dedicated, least-privilege WeKan user** for the token
   rather than reusing your admin account. Rotate the token periodically.
+  Note that WeKan keeps old tokens valid after re-login (issue #1437);
+  invalidating a leaked token requires disabling the service user.
 - **Every WeKan action will attribute to that service user** in WeKan's
   audit log. That's a known limitation of the shared-service-account
   pattern. Mitigation: prefix comments/descriptions with `[via AI]` if
@@ -172,11 +145,13 @@ curl -sS -X POST http://localhost:8080/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
 
+The target WeKan server must run with `WITH_API=true`, and the token
+must come from a password-based account (OIDC-only users cannot use
+`/users/login`). See `skills/wekan-api` for details.
+
 ## Upgrading
 
 - WeKan itself releases near-daily. On upgrade, re-verify endpoints
   against `api.py` and `models/*.js` on the pinned version tag.
-- FastMCP moves fast. Pin `fastmcp` to a tested minor and bump deliberately.
-- ToolHive's `MCPServer` CRD field names have shifted (`mcpPort` →
-  `targetPort` at one point). If `kubectl apply` complains about an
-  unknown field, check the CRD reference for your operator version.
+- FastMCP moves fast. Pin `fastmcp` to a tested minor and bump
+  deliberately (currently `>=3.4,<4`).

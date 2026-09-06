@@ -19,18 +19,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install package sources first (leverage layer cache)
-COPY pyproject.toml README.md ./
+# Install package sources first (leverage layer cache).
+# VERSION is required by setuptools' dynamic version in pyproject.toml.
+COPY pyproject.toml README.md VERSION ./
 COPY wekan_mcp ./wekan_mcp
 
 RUN pip install . && \
-    # non-root user for the server process
-    useradd --create-home --uid 10001 mcp && \
+    # non-root user for the server process (uid 65532 per repo convention)
+    groupadd --system --gid 65532 mcp && \
+    useradd --system --uid 65532 --gid 65532 --shell /bin/false \
+        --home /home/mcp --create-home mcp && \
     chown -R mcp:mcp /app
 
-USER 10001
+USER 65532
 
 EXPOSE 8080
 
 # The console entry point registered by pyproject.toml.
-CMD ["wekan-mcp"]
+ENTRYPOINT ["wekan-mcp"]

@@ -158,6 +158,30 @@ def list_comments(board_id: str, card_id: str) -> list[dict]:
     return [_slim_comment(c) for c in raw]
 
 
+@mcp.tool
+def list_checklists(board_id: str, card_id: str) -> list[dict]:
+    """List the checklists on a card."""
+    raw = _wekan.get(f"/api/boards/{board_id}/cards/{card_id}/checklists") or []
+    return [{"id": c.get("_id"), "title": c.get("title")} for c in raw]
+
+
+@mcp.tool
+def get_checklist(board_id: str, card_id: str, checklist_id: str) -> dict:
+    """Get a checklist with its items. Item ids are required by toggle_checklist_item."""
+    raw = _wekan.get(
+        f"/api/boards/{board_id}/cards/{card_id}/checklists/{checklist_id}"
+    ) or {}
+    return {
+        "id": raw.get("_id"),
+        "title": raw.get("title"),
+        "items": [
+            {"id": i.get("_id"), "title": i.get("title"),
+             "finished": i.get("isFinished", False)}
+            for i in raw.get("items", []) if i
+        ],
+    }
+
+
 # ==============================================================================
 # WRITE TOOLS
 # ==============================================================================
