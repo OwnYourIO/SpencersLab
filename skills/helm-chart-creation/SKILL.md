@@ -26,6 +26,9 @@ Deep-dives in `references/` (read on demand, not upfront):
   wiring, the multi-deploy `chart:` field, Go template safety.
 - `references/storage-and-secrets.md` — Bitwarden stores, env vars by app type,
   shared SeaweedFS storage pattern.
+- `references/mcp-servers.md` — adding MCP servers as `mcp.<name>` entries in
+  `charts/hivetools` (ToolHive MCPServer CRDs, shared ingress/OIDC, secrets
+  recipe, in-repo image pinning).
 
 ## When to use / when not
 
@@ -66,6 +69,10 @@ Check, in order: artifacthub.io, kubesearch.dev, the app's official docs.
 Custom chart in `charts/<name>/` vs external chart referenced from the service
 values.yaml `charts:` key. The two never mix. Decision tree, task lists, and
 comparison table: `references/chart-templates.md`.
+
+**MCP servers are neither**: they are entries in the `mcp:` map of
+`charts/hivetools` (ToolHive platform), not standalone charts. See
+`references/mcp-servers.md`.
 
 ### 3. Scaffold
 

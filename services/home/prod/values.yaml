@@ -240,6 +240,10 @@ wekan:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
   # This allows a local bot to login.
   env:
+    # Required for the REST API used by the wekan-mcp server (charts/hivetools).
+    # Only enabled on this bot-facing instance, not on `boards`.
+    - name: WITH_API
+      value: "true"
     - name: OIDC_REDIRECTION_ENABLED
       value: "false"
     - name: METEOR_REACTIVITY_ORDER
