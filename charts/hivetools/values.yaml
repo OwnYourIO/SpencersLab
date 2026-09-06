@@ -79,8 +79,10 @@ mcp:
     transport: streamable-http
     mcpPort: 8080
     serviceAccount: kubernetes-mcp
-    oidc:
-      audience: kubernetes
+    # OIDC temporarily disabled (2026-09) — uncomment to re-enable. The shared
+    # MCPOIDCConfig + mcp-sso secret stay in place for that.
+    # oidc:
+    #   audience: kubernetes
     args:
       - "--port"
       - "8080"

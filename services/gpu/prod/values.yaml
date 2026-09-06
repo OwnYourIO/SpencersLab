@@ -315,8 +315,9 @@ hivetools:
       transport: streamable-http
       mcpPort: 8931
       proxyPort: 8080
-      oidc:
-        audience: playwright
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: playwright
       resources:
         limits:
           cpu: '200m'
@@ -373,8 +374,9 @@ hivetools:
       image: zorak1103/ha-mcp:2026.9.2
       transport: streamable-http
       mcpPort: 8080
-      oidc:
-        audience: homeassistant
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: homeassistant
       resources:
         limits:
           cpu: '100m'
@@ -402,8 +404,9 @@ hivetools:
       image: isokoliuk/mcp-searxng:1.13.0
       transport: stdio
       mcpPort: 8080
-      oidc:
-        audience: searxng
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: searxng
       resources:
         limits:
           cpu: '100m'
@@ -423,8 +426,9 @@ hivetools:
       image: ghcr.io/ownyourio/wekan-mcp:0.0.2
       transport: streamable-http
       mcpPort: 8080
-      oidc:
-        audience: wekan
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: wekan
       env:
         - name: WEKAN_BASE_URL
           value: "https://wekan.spencerslab.com"
@@ -456,8 +460,9 @@ hivetools:
       image: grafana/mcp-grafana:1.3.0
       transport: streamable-http
       mcpPort: 8000
-      oidc:
-        audience: grafana
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: grafana
       # --allowed-hosts '*' is REQUIRED: mcp-grafana validates Host/Origin and
       # the ToolHive proxy rewrites Host to the backend ClusterIP (else 403).
       args:
@@ -509,8 +514,9 @@ hivetools:
       image: ghcr.io/ownyourio/renovate-mcp:main
       transport: stdio
       mcpPort: 8080
-      oidc:
-        audience: renovate
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: renovate
       env:
         - name: RENOVATE_MCP_REQUIRE_CLI
           value: "true"

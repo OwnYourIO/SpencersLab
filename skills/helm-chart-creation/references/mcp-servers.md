@@ -23,6 +23,11 @@ Base renders `<serviceName>-charts-appset`, which creates one
   client. Every cluster reuses the same Bitwarden `mcp-sso` item — the UUID +
   `keycloak.realm` live under `hivetools:` in each
   `custom-values/<svc>/prod-values.yaml`.
+  **Status (2026-09): temporarily DISABLED** — every per-server `oidc:` block
+  (and the postgres template's `oidcConfigRef`) is commented out so the
+  servers are usable without Keycloak sign-in while the OIDC rollout is
+  pending. The MCPOIDCConfig + mcp-sso secret stay deployed; re-enabling is
+  just uncommenting the `oidc:` blocks (grep for "OIDC temporarily disabled").
 - **Service-specific servers** (in-cluster URLs, external-service tokens,
   knowledge PVCs) live under the `hivetools:` key in
   `services/<svc>/prod/values.yaml` — Helm deep-merges chart values < service
