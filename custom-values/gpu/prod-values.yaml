@@ -26,6 +26,7 @@ hivetools:
     github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
     homeassistant-mcp: 84d06d73-da27-4066-9da1-b498002d69b5
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+    wekan-mcp: e6761f4a-9813-4073-b539-b4bd002bc4b1
   keycloak:
     realm: SpencersLab
 
