@@ -193,6 +193,155 @@ immutable `:v<run_number>` tag plus the rolling `:main` tag.
   (`https://ghcr.io/v2/ownyourio/<name>/tags/list` with an anonymous pull
   token) rather than assuming the run number.
 
+## Pattern recipes
+
+Concrete, reusable patterns built on this platform. Each has a live example in
+`charts/hivetools/` you can copy.
+
+### Read-only Postgres MCP (CNPG)
+
+Expose read-only SQL access to a CloudNativePG database as an MCP server,
+without handing the MCP pod the app's write-capable credentials. It is a
+list-driven pattern: one `postgresMcp` block renders N servers + N secrets.
+Live examples: `postgres-coder`, `postgres-flowise`, `postgres-langflow`,
+`postgres-n8n`, `postgres-open-webui`.
+
+**Security model (defense in depth):**
+
+- *DB layer — the real boundary:* a dedicated `readonly` role granted only the
+  PG14+ predefined `pg_read_all_data` role (read everything, write nothing).
+  The app's write credentials never reach the MCP pod.
+- *App layer:* `crystaldba/postgres-mcp` runs with `--access-mode=restricted`.
+  **`0.3.0` is the final upstream release — pin it, don't float it.**
+
+**Three cooperating pieces, all driven by one list:**
+
+| Piece | Where | What |
+|---|---|---|
+| `postgresMcp.databases` | `values.yaml` | One entry per DB (`name`, `bitwardenIdKey`, `database`); the shared server settings live once in the `postgresMcp` block. |
+| `generic-postgres-mcpserver.yaml` | `templates/` | Ranges the list → one `MCPServer postgres-<name>` per entry (audience `postgres-<name>`, secret `postgres-mcp-<name>`). |
+| `secret-postgres-mcp.yaml` | `templates/` | Ranges the same list → one ExternalSecret per entry composing `DATABASE_URI`. |
+
+**Add a database in 3 steps:**
+
+1. **CNPG managed role** in the cluster manifest
+   (`charts/<app>/templates/pg-<app>.yaml` or
+   `services/gpu/prod/templates/pg-<name>.yaml`):
+
+   ```yaml
+   managed:
+     roles:
+       - name: readonly
+         ensure: present
+         login: true
+         inherit: true
+         inRoles:
+           - pg_read_all_data
+         connectionLimit: 5
+         passwordSecret:
+           name: pg-<name>-mcp-secret
+   ```
+
+2. **Role-password ExternalSecret** next to the cluster. The username is
+   hardcoded to the role name; only the password comes from Bitwarden (see the
+   "hardcode + fetch" technique below). The LOGIN item's username must equal
+   the role name (`readonly`):
+
+   ```yaml
+   apiVersion: external-secrets.io/v1
+   kind: ExternalSecret
+   metadata:
+     name: pg-<name>-mcp-secret
+   spec:
+     refreshInterval: 1h
+     secretStoreRef: { name: bitwarden-login, kind: SecretStore }
+     target:
+       name: pg-<name>-mcp-secret
+       creationPolicy: Owner
+       template:
+         engineVersion: v2
+         data:
+           username: readonly
+           password: '{{ `{{ .password }}` }}'
+     data:
+       - secretKey: password
+         remoteRef:
+           key: {{ index .Values "bitwardenIds" "mcp-pg-<name>" }}
+           property: password
+           conversionStrategy: Default
+           decodingStrategy: None
+           metadataPolicy: None
+   ```
+
+3. **Wire it up:** add the entry to `postgresMcp.databases`, the sentinel
+   `mcp-pg-<name>: OVERRIDE_VIA_CUSTOM_VALUES` under `bitwardenIds`, and the
+   real UUID in `custom-values/gpu/prod-values.yaml`.
+
+`DATABASE_URI` is composed in `secret-postgres-mcp.yaml`; the host is
+deterministic: `pg-<name>-rw.<ns>.svc.cluster.local:5432`. Password escaping
+is covered in Techniques below.
+
+**Credential reuse (temporary):** until a dedicated readonly item exists, the
+role's `bitwardenIdKey` may point at the app's own DB LOGIN item (same
+password). Swap in a dedicated item/UUID when it's created.
+
+### Grafana MCP (service-account token)
+
+`grafana/mcp-grafana` authenticates to Grafana with a **Viewer**
+service-account bearer token (read-only), not the Keycloak OAuth. Two gotchas:
+
+- **`--allowed-hosts '*'` is required.** mcp-grafana validates Host/Origin
+  (DNS-rebinding protection); the ToolHive proxy rewrites Host to the backend
+  ClusterIP, which is otherwise rejected with **403**.
+- **`--disable-write`** enforces read-only server-side, belt-and-braces with
+  the Viewer-only token.
+
+The token is the `password` field of a Bitwarden LOGIN item
+(`bitwarden-login` store), wired via `secrets[]` →
+`GRAFANA_SERVICE_ACCOUNT_TOKEN`. `GRAFANA_URL` is the public Grafana ingress
+(the monitoring stack may live on another cluster). See `mcp.grafana` +
+`templates/secret-grafana-mcp-token.yaml`.
+
+### Private-repo access via initContainer clone
+
+For an MCP server that needs the repo's contents but no runtime GitHub auth
+(e.g. `renovate`, which validates/dry-runs `renovate.json`): an initContainer
+git-clones the private repo into a shared emptyDir using an existing PAT; the
+`mcp` container reads the clone and needs no GitHub credentials itself.
+
+- Reuse an existing PAT secret (e.g. `github-mcp`'s
+  `GITHUB_PERSONAL_ACCESS_TOKEN`) via `secretKeyRef` in the initContainer.
+- Clone `--depth 1 --branch main` into `/workspace` (an emptyDir shared with
+  the `mcp` container).
+- stdio transport is single-connection by design (one session at a time).
+- Heavy tools (Renovate dry-runs) need real resources (~2 CPU / 4Gi limit) and
+  writable scratch dirs (`HOME=/tmp`, `RENOVATE_BASE_DIR=/cache` emptyDirs)
+  under `readOnlyRootFilesystem: true`.
+
+See `mcp.renovate` in `charts/hivetools/values.yaml`.
+
+## Techniques & gotchas
+
+- **ESO template inside Helm → backtick-escape it.** ExternalSecret
+  `target.template.data` values are Go templates evaluated by ESO at sync time,
+  *not* by Helm. Pass them through literally by wrapping in a Helm raw string:
+  `password: '{{ `{{ .password }}` }}'`. Without the backticks, Helm evaluates
+  `{{ .password }}` itself and renders it empty.
+- **Hardcode a value next to a fetched one.** Put the literal in
+  `target.template.data` (`username: readonly`) and reference fetched keys with
+  the backtick technique; only fetched fields need a `data[].remoteRef`.
+- **Percent-encode passwords for URIs.** In an ESO template,
+  `{{ .password | urlquery | replace "+" "%20" }}` percent-encodes every
+  non-unreserved character — the full charset, unlike a hand-rolled `replace`
+  chain. `urlquery` renders spaces as `+` (query-string style), so normalize
+  them back to `%20` for the URI userinfo component.
+- **`imagePullPolicy` belongs on the pod container, not the MCPServer.** The
+  MCPServer top level doesn't render a pull policy; set `imagePullPolicy: Always`
+  on the `mcp` container (and any initContainer) in `podTemplateSpec` when the
+  tag is mutable (e.g. `:main`).
+- **`deletionPolicy: Delete`** on credential/token ExternalSecrets so the target
+  Secret is removed when the ExternalSecret is pruned — no orphaned credential.
+
 ## Validation
 
 1. `helm lint charts/hivetools`
