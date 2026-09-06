@@ -39,3 +39,10 @@ keycloakx:
 trustedIPs:
   - "10.42.0.0/24"
   - "10.0.77.0/24"
+
+# MCP platform (hivetools via base): shared Keycloak client `mcp`, one realm.
+hivetools:
+  bitwardenIds:
+    mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+  keycloak:
+    realm: SpencersLab

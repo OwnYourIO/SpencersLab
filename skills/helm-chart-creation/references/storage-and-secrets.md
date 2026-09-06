@@ -174,11 +174,15 @@ spec:
 Read these files:
 
 - `charts/hivetools/values.yaml` — `shared-storage: {}` default
-- `charts/hivetools/templates/pvc-knowledge-default.yaml` — conditional 10Gi PVC
-- `services/gpu/prod/values.yaml` — `hivetools.shared-storage.knowledge` override
+- `services/gpu/prod/templates/pvc-knowledge-default.yaml` — conditional 10Gi
+  PVC fallback (gpu-only since the platform went cluster-wide; moved here from
+  `charts/hivetools/templates/` so other clusters don't render it)
+- `services/gpu/prod/values.yaml` — top-level `shared-storage.knowledge`
+  override (flows to hivetools via the charts-appset values slice)
 - `services/gpu/prod/templates/pvc-knowledge-seaweedfs.yaml` — 3000Gi SeaweedFS
   PV/PVC (`collection: documents`, `path: /buckets/documents/knowledge`)
 
-Usage flow: default → chart creates local 10Gi PVC; production → service sets
-`shared-storage.knowledge`, chart PVC is skipped, workloads mount the shared
-3000Gi SeaweedFS PVC — always by the name `knowledge-shared`.
+Usage flow: default → the gpu umbrella renders the local 10Gi PVC when
+`shared-storage.knowledge` is unset; production → the service sets
+`shared-storage.knowledge`, the fallback PVC is skipped, and workloads mount
+the shared 3000Gi SeaweedFS PVC — always by the name `knowledge-shared`.

@@ -1,3 +1,7 @@
+{{- $hostBase := .Values.clusterName }}
+{{- if hasKey .Values "subDomain" }}
+{{- $hostBase = .Values.subDomain }}
+{{- end }}
 {{- $hasEnabledServers := false }}
 {{- range $name, $config := .Values.mcp }}
 {{- if and $config (ne ($config.enabled | toString) "false") }}
@@ -21,10 +25,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - "mcp.{{ .Values.domain }}"
-      secretName: wildcard-cert
+        - "mcp.{{ $hostBase }}.{{ .Values.domain }}"
+      secretName: cluster-wildcard-cert
   rules:
-    - host: "mcp.{{ .Values.domain }}"
+    - host: "mcp.{{ $hostBase }}.{{ .Values.domain }}"
       http:
         paths:
 {{- range $name, $config := .Values.mcp }}

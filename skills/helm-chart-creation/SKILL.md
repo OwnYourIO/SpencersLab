@@ -23,13 +23,19 @@ Deep-dives in `references/` (read on demand, not upfront):
 - `references/chart-templates.md` — Chart.yaml / values.yaml / template bodies,
   custom-vs-external decision, worked examples.
 - `references/values-and-appset.md` — three-tier value loading, ApplicationSet
-  wiring, the multi-deploy `chart:` field, Go template safety.
+  wiring, the multi-deploy `chart:` field, Go template safety, cluster-wide
+  charts via base's `charts:` list (rollout duplicates, per-service
+  extensions), subDomain/cluster-scoped hostnames, and moving templates
+  between a chart and a service umbrella (ownership-flip races).
 - `references/storage-and-secrets.md` — Bitwarden stores, env vars by app type,
   shared SeaweedFS storage pattern.
-- `references/mcp-servers.md` — adding MCP servers as `mcp.<name>` entries in
-  `charts/hivetools` (ToolHive MCPServer CRDs, shared ingress/OIDC, secrets
-  recipe, in-repo image pinning) plus pattern recipes: read-only Postgres/CNPG,
-  Grafana service-account token, and initContainer repo-clone.
+- `references/mcp-servers.md` — adding MCP servers as `mcp.<name>` entries on
+  the ToolHive platform (`charts/hivetools`, deployed cluster-wide via base's
+  `charts:` list; service-specific servers under the service's `hivetools:`
+  values key). Covers MCPServer CRDs, shared ingress/OIDC, secrets recipe,
+  in-repo image pinning, the kubernetes server's RBAC access model, plus
+  pattern recipes: read-only Postgres/CNPG, Grafana service-account token,
+  and initContainer repo-clone.
 
 ## When to use / when not
 
@@ -71,9 +77,11 @@ Custom chart in `charts/<name>/` vs external chart referenced from the service
 values.yaml `charts:` key. The two never mix. Decision tree, task lists, and
 comparison table: `references/chart-templates.md`.
 
-**MCP servers are neither**: they are entries in the `mcp:` map of
-`charts/hivetools` (ToolHive platform), not standalone charts. See
-`references/mcp-servers.md`.
+**MCP servers are neither**: they are entries in an `mcp:` map on the
+ToolHive platform — `charts/hivetools` (deployed on every cluster via base's
+`charts:` list, default server `kubernetes`), extended per-service under the
+`hivetools:` values key in `services/<category>/prod/values.yaml`. Not
+standalone charts. See `references/mcp-servers.md`.
 
 ### 3. Scaffold
 
@@ -118,7 +126,11 @@ ExternalSecrets + Bitwarden only. Two stores: `bitwarden-login`
 ### 6. Integrate — the trio
 
 Adding a service requires the first two ALWAYS, the third only when the
-service has secrets:
+service has secrets. (Exception: a **cluster-wide chart** — one listed in
+`charts/base/values.yaml`'s `charts:` map, e.g. hivetools — needs no
+per-service ApplicationSet entry; see "Cluster-wide charts" in
+`references/values-and-appset.md` for that workflow, including transitional
+duplicates during the baseChartVersion rollout window.):
 
 1. **ApplicationSet entry** — add an entry under the `charts:` key in
    `services/<category>/prod/values.yaml` (appName is the key; optional
@@ -146,6 +158,19 @@ Four levels, in order — fix errors before moving on:
    `charts:` entry and the proxy entry both exist.
 4. **File presence**: Chart.yaml, Chart.lock, values.yaml, templates/ — plus
    the custom-values entry, when the service has secrets.
+
+Helm override gotchas hit while testing renders:
+
+- `--set-json 'someKey={}'` does NOT override an existing map in values.yaml
+  on helm v3.16 (empty-object no-op; non-empty JSON values do override). To
+  empty/null a nested key use `--set 'someKey.subkey=null'` instead.
+- `helm template --show-only templates/<file>.yaml` errors with "could not
+  find template" when the template renders NOTHING (e.g. gated off) — that
+  error is itself a valid way to confirm a gate is closed.
+- To test a service-level `<appName>:` block against a chart, extract it to a
+  temp file (`python3 -c "import yaml; ..."`) and render with
+  `helm template <chart> -f <temp>` — see `references/mcp-servers.md`
+  Validation for a worked example.
 
 ## Known gotchas (CRITICAL)
 

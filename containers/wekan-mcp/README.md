@@ -47,10 +47,11 @@ This server is deployed through the lab's GitOps repo — **never
   file and publishes `ghcr.io/ownyourio/wekan-mcp:<version>` (plus
   `:latest` and `:v<version>`). The image tag is pinned in the chart
   values; bump it there after each container change.
-- **Platform wiring**: declared as the `mcp.wekan` entry in
-  `charts/hivetools/values.yaml` (ToolHive `MCPServer` CRD,
+- **Platform wiring**: declared as the `hivetools.mcp.wekan` entry in
+  `services/gpu/prod/values.yaml` (ToolHive `MCPServer` CRD,
   streamable-http, port 8080). The shared hivetools ingress routes
-  `https://mcp.spencerslab.com/wekan` to the ToolHive proxy
+  `https://mcp.gpu.spencerslab.com/wekan` (generally
+  `mcp.<subDomain|clusterName>.<domain>`) to the ToolHive proxy
   automatically.
 - **Authentication**: the endpoint is gated by the shared Keycloak
   `MCPOIDCConfig` with audience `wekan`.
@@ -59,7 +60,7 @@ This server is deployed through the lab's GitOps repo — **never
   (`https://wekan.spencerslab.com`, which must run with `WITH_API=true`).
   The token is stored as the password of a Bitwarden login item and
   injected as `WEKAN_TOKEN` via the `wekan-mcp` ExternalSecret
-  (`charts/hivetools/templates/secret-wekan-mcp.yaml`) +
+  (`services/gpu/prod/templates/secret-wekan-mcp.yaml`) +
   `bitwardenIds.wekan-mcp` (real UUID in
   `custom-values/gpu/prod-values.yaml`). `WEKAN_BASE_URL` is a plain
   env value.

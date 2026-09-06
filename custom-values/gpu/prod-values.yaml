@@ -14,6 +14,12 @@ bitwardenIds:
   open-webui-pg: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
   mcp-pg-coder: e197f717-0cd6-4634-8388-b33e000ae174
   mcp-pg-open-webui: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
+  # Consumed by the gpu-specific MCP ExternalSecret templates in
+  # services/gpu/prod/templates/ (umbrella chart level).
+  github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
+  homeassistant-mcp: 84d06d73-da27-4066-9da1-b498002d69b5
+  grafana-mcp-token: 7e393c36-5b11-4806-a05f-b4bd00e613f5
+  wekan-mcp: e6761f4a-9813-4073-b539-b4bd002bc4b1
 
 base:
   bitwardenIds:
@@ -25,16 +31,12 @@ smtp-relay:
 
 hivetools:
   bitwardenIds:
-    github-mcp: f4938da9-3260-42c7-9787-b38100023fc3
-    homeassistant-mcp: 84d06d73-da27-4066-9da1-b498002d69b5
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
-    grafana-mcp-token: 7e393c36-5b11-4806-a05f-b4bd00e613f5
     mcp-pg-coder: e197f717-0cd6-4634-8388-b33e000ae174
     mcp-pg-flowise: 7533ab94-6308-4afa-a6fe-b34a00395edd
     mcp-pg-langflow: c2f26e5d-84fc-404d-93b7-b34a0157b6a0
     mcp-pg-n8n: 94cc6ec2-5c62-407b-a04a-b34a0166d615
     mcp-pg-open-webui: 3d3e5fa0-d0f0-4a95-a9e1-b336014f13f8
-    wekan-mcp: e6761f4a-9813-4073-b539-b4bd002bc4b1
   keycloak:
     realm: SpencersLab
 
