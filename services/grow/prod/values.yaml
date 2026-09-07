@@ -6,12 +6,17 @@ clusterName: OVERRIDE_VIA_APPSET
 
 charts:
   # Internal charts (no version/repository - uses charts/ directory)
-  scifi-farm:
-    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    #repository: https://ownyourio.github.io/SpencersLab/
-    namespace: default
-    ServerSideApply: "true"
-    chart: hugo
+  # Disabled 2026-09-07: Hugo crash-loop — content module sites/grow does not
+  # exist in this repo and never has (see plan
+  # .agents/plans/2026-09-07-disable-crashing-neo4j-qdrant.md). Duplicate of the
+  # home-lab scifi-farm disabled the same way. Re-enable by uncommenting; the
+  # custom-values scifi-farm block was left in place.
+  #scifi-farm:
+  #  #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+  #  #repository: https://ownyourio.github.io/SpencersLab/
+  #  namespace: default
+  #  ServerSideApply: "true"
+  #  chart: hugo
   assistant:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -39,10 +44,11 @@ charts:
 ingress:
   dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
-    scifi-farm:
-      domain: scifi.farm
-      service: grow-scifi-farm
-      port: 1313
+    # Disabled 2026-09-07 with the scifi-farm chart (backend Service removed).
+    #scifi-farm:
+    #  domain: scifi.farm
+    #  service: grow-scifi-farm
+    #  port: 1313
     cluster:
       clusterBase: true
       service: argocd-server

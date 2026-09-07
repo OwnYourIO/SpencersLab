@@ -222,3 +222,23 @@ main; ArgoCD syncs from main after the user merges):
     or confirm it is decommissioned.
 - **mongodb drift (home)** is a separate OutOfSync issue on wekan's DB; investigate
   separately — do not disable.
+
+## Addendum 2026-09-07 (post-merge): grow cluster scifi-farm
+
+After the gpu/home disables were merged to main (`5d2e0a77 Remove failing
+services.`), the **grow cluster** surfaced the same failure: `grow-scifi-farm`
+CrashLoopBackOff — Hugo can't load `github.com/OwnYourIO/SpencersLab/sites/grow`
+(never existed in the repo). It was a duplicate deployment of the home-lab
+scifi-farm (both claimed the `scifi.farm` domain). Pre-existing, unrelated to the
+merge. User approved disabling it the same reversible way:
+
+11. [DONE] `services/grow/prod/values.yaml` — commented out `charts.scifi-farm`
+    and `ingress.subdomains.scifi-farm`, with why/re-enable notes.
+    `custom-values/grow/prod-values.yaml` (scifi-farm Hugo block) left in place.
+    No PVC involved (hugo chart uses a configMap only).
+
+Verified: `helm lint services/grow/prod` 0 failures; `helm template
+services/grow/prod` exit 0 with zero scifi-farm remnants; YAML parse confirms
+`charts:` = assistant, cloudnative-pg, external-secrets-bitwarden,
+k8s-monitoring. Post-sync expectation: `grow-charts-appset` drops
+`grow-scifi-farm`; grow cluster becomes fully Healthy.
