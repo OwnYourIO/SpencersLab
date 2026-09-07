@@ -459,6 +459,11 @@ git-clones the private repo into a shared emptyDir using an existing PAT; the
   `GITHUB_PERSONAL_ACCESS_TOKEN`) via `secretKeyRef` in the initContainer.
 - Clone `--depth 1 --branch main` into `/workspace` (an emptyDir shared with
   the `mcp` container).
+- **Make the clone idempotent: `rm -rf <dest>` before `git clone`.** The
+  emptyDir survives container restarts within the same pod; on any in-place
+  restart (node blip, OOM) the init container re-runs against the previous
+  clone and `git clone` exits 128 ("destination path already exists") →
+  permanent CrashLoopBackOff (seen live with renovate, 2026-09-07).
 - stdio transport is single-connection by design (one session at a time).
 - Heavy tools (Renovate dry-runs) need real resources (~2 CPU / 4Gi limit) and
   writable scratch dirs (`HOME=/tmp`, `RENOVATE_BASE_DIR=/cache` emptyDirs)

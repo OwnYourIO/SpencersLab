@@ -550,6 +550,10 @@ hivetools:
               command: ["/bin/sh", "-c"]
               args:
                 - |
+                  # rm -rf first: the /workspace emptyDir survives container
+                  # restarts within the same pod, and git clone refuses a
+                  # non-empty destination (exit 128 -> CrashLoopBackOff).
+                  rm -rf /workspace/SpencersLab
                   git clone --depth 1 --branch main \
                     "https://x-access-token:${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/OwnYourIO/SpencersLab.git" \
                     /workspace/SpencersLab
