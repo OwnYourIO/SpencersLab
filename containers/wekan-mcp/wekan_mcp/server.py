@@ -148,7 +148,11 @@ def list_cards_in_list(board_id: str, list_id: str) -> list[dict]:
 @mcp.tool
 def get_card(board_id: str, card_id: str) -> dict:
     """Get a single card with its main fields (title, description, dates, members)."""
-    return _slim_card(_wekan.get(f"/api/boards/{board_id}/cards/{card_id}") or {})
+    # WeKan has no /api/boards/:boardId/cards/:cardId route — the single-card
+    # lookup is /api/cards/:cardId (it enforces board access server-side via
+    # the card's own boardId; board_id is kept for interface consistency).
+    # Note: this route also returns archived cards; check the "archived" field.
+    return _slim_card(_wekan.get(f"/api/cards/{card_id}") or {})
 
 
 @mcp.tool
