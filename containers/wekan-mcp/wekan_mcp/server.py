@@ -14,6 +14,8 @@ Design principles:
     - Errors are sanitized. No Authorization header, no raw request, no traceback.
     - Destructive tools (delete_board, delete_card) are intentionally OMITTED.
       Add them back only if you want them, and mark with destructive hints.
+    - WEKAN_MCP_READ_ONLY=true hides every write tool from the catalog
+      (they are never registered), for the readonly server tier.
 
 Transport: streamable-http on 0.0.0.0:8080 (chosen for Kubernetes;
     ToolHive proxies this to Claude Desktop / other clients).
@@ -41,6 +43,16 @@ logging.basicConfig(
 log = logging.getLogger("wekan-mcp")
 
 
+# ---------- Read-only mode ----------
+
+# Set WEKAN_MCP_READ_ONLY=true on the readonly server tier: write tools are
+# then never registered (hidden from tools/list, impossible to call). The
+# admin tier leaves it unset and gets the full read+write surface.
+READ_ONLY = os.environ.get("WEKAN_MCP_READ_ONLY", "").strip().lower() in (
+    "1", "true", "yes", "on",
+)
+
+
 # ---------- Startup: validate credential ONCE ----------
 
 try:
@@ -52,8 +64,15 @@ except WekanError as e:
     log.error("startup failed: %s", e)
     raise SystemExit(1)
 
+if READ_ONLY:
+    log.info("READ-ONLY mode: write tools will NOT be registered")
+
 
 mcp = FastMCP("wekan")
+
+# In READ_ONLY mode write tools are defined but never registered: they vanish
+# from the tool catalog and cannot be invoked at all.
+_write_tool = (lambda fn: fn) if READ_ONLY else mcp.tool
 
 
 # ---------- Response shaping helpers ----------
@@ -187,10 +206,10 @@ def get_checklist(board_id: str, card_id: str, checklist_id: str) -> dict:
 
 
 # ==============================================================================
-# WRITE TOOLS
+# WRITE TOOLS (skipped entirely when WEKAN_MCP_READ_ONLY is set)
 # ==============================================================================
 
-@mcp.tool
+@_write_tool
 def create_card(
     board_id: str,
     list_id: str,
@@ -212,7 +231,7 @@ def create_card(
     return {"id": resp.get("_id"), "title": title}
 
 
-@mcp.tool
+@_write_tool
 def update_card(
     board_id: str,
     list_id: str,
@@ -239,7 +258,7 @@ def update_card(
     return {"updated": True, "card_id": card_id, "fields": list(body.keys())}
 
 
-@mcp.tool
+@_write_tool
 def move_card(
     board_id: str,
     from_list_id: str,
@@ -258,7 +277,7 @@ def move_card(
     return {"moved": True, "card_id": card_id, "to_list_id": to_list_id}
 
 
-@mcp.tool
+@_write_tool
 def add_comment(board_id: str, card_id: str, comment: str) -> dict:
     """Add a comment on a card, authored by the service user."""
     body = {"authorId": _wekan.user_id, "comment": comment}
@@ -266,7 +285,7 @@ def add_comment(board_id: str, card_id: str, comment: str) -> dict:
     return {"id": resp.get("_id"), "comment": comment}
 
 
-@mcp.tool
+@_write_tool
 def add_checklist(
     board_id: str,
     card_id: str,
@@ -281,7 +300,7 @@ def add_checklist(
     return {"id": resp.get("_id"), "title": title, "items_added": len(items or [])}
 
 
-@mcp.tool
+@_write_tool
 def toggle_checklist_item(
     board_id: str,
     card_id: str,
