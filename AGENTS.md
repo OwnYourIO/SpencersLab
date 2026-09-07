@@ -74,6 +74,8 @@ change.
 
 ## Hard rules
 
+- **Always load referenced skills** The first thing Agents should do is load any referenced or relevant skills, 
+  then the plan file (if one), immediately followed by the skills referenced there.
 - **Never push to `main` — only the user does that.** Agents work on their own
   branch/worktree and commit there. To pick up changes, merge `main` *into*
   your worktree (`git merge main`); never merge your branch into `main` and
