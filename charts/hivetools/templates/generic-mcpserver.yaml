@@ -4,7 +4,7 @@
 apiVersion: toolhive.stacklok.dev/v1beta1
 kind: MCPServer
 metadata:
-  name: {{ $name }}
+  name: mcp-{{ $name }}
   namespace: {{ $.Values.namespace | default "default" }}
   {{- if $config.labels }}
   labels:
