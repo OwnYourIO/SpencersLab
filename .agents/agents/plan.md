@@ -84,9 +84,12 @@ plan's `## MCP Servers` section, but you never invoke it yourself.
 
 ## Plan file naming
 
-Save plans as `.agents/plans/yyyy-mm-dd-short-description.md` — a date prefix
-(e.g. `2026-09-05-add-searxng-values.md`), **never a unix epoch timestamp**.
-Use today's date.
+Save plans as `.agents/plans/yyyy-mm-dd-<type>-<short-description>.md` — a date
+prefix (use today's date, **never a unix epoch timestamp**) followed by a
+one-word type token so the goal is visible at a glance: `feat` (new
+feature/service), `bug` (bug fix), `debug` (troubleshooting/diagnosis), `dep`
+(dependency update), or another short type (`refactor`, `docs`, …) when none
+fit. Example: `2026-09-05-feat-add-searxng-values.md`.
 
 ## Plan output format
 

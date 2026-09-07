@@ -13,7 +13,8 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `custom-values/<category>/` — private overrides (Bitwarden UUIDs) via `bitwardenIds`.
 - `containers/<name>/` — custom images (Dockerfile + CI in `.github/workflows/`).
 - `.agents/agents/` — agent definitions. `.agents/plans/` — plan documents named
-  `yyyy-mm-dd-short-description.md` (date prefix, **never** a unix epoch).
+  `yyyy-mm-dd-<type>-<short-desc>.md` (date prefix, **never** a unix epoch;
+  `<type>` = `feat`|`bug`|`debug`|`dep`|… so the goal is visible at a glance).
 - `skills/` — self-written skills (`helm-chart-creation`, `container-creation`,
   `llama-swap`). `.agents/skills/` — third-party skills managed by skillfish
   (`skillfish.json`, `skills-lock.json`); don't hand-edit those.
@@ -118,4 +119,5 @@ change.
 - Adding a service = chart entry + ApplicationSet values entry + proxy values
   entry. All three — plus a `custom-values/` entry only when the service has
   secrets needing per-cluster overrides.
-- Plans are `yyyy-mm-dd-short-description.md` in `.agents/plans/`.
+- Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/`
+  (`<type>` = `feat`|`bug`|`debug`|`dep`|…).

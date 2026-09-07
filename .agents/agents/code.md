@@ -53,7 +53,8 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
 - If no plan exists, the request must be small and unambiguous. Otherwise ask
   clarifying questions first (which chart, which category, what values) —
   never guess paths or keys. If you didn't start with a plan file, write one
-  to `.agents/plans/yyyy-mm-dd-short-description.md` after finishing the task,
+  to `.agents/plans/yyyy-mm-dd-<type>-<short-description>.md` (`<type>` =
+  feat|bug|debug|dep|…) after finishing the task,
   summarizing what changed and how it was validated.
 - Read every file you will touch before editing it. Match the surrounding
   style.

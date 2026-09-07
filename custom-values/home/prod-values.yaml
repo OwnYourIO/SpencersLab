@@ -39,6 +39,11 @@ actualbudget:
 seaweedfs-csi-driver:
   volume-count: 8
   seaweedfs-csi-driver:
+    # Must stay nested here: the chart template reads
+    # .Values.seaweedfs-csi-driver.volume-count to render the CoreDNS
+    # rewrite rules (charts/seaweedfs-csi-driver/templates/seaweedfs-custom-dns.yaml).
+    # At the outer level it is ignored and the rewrite block renders empty,
+    # breaking all SeaweedFS volume reads (see commit 19ab00d5 regression).
     volume-count: 8
     seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
 
