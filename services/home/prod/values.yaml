@@ -247,6 +247,9 @@ wekan:
     # Only enabled on this bot-facing instance, not on `boards`.
     - name: WITH_API
       value: "true"
+    # Needed for long lived token generation. Disable after token(s) created.
+    - name: ACCOUNTS_COMMON_LOGIN_EXPIRATION_IN_DAYS
+      value: "10950"
     - name: OIDC_REDIRECTION_ENABLED
       value: "false"
     - name: METEOR_REACTIVITY_ORDER
