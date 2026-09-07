@@ -1,5 +1,6 @@
 [project]
 name = "wekan-mcp"
+# Cosmetic only: image tags are managed by CI (tag-based docker-build scheme).
 version = "0.0.2"
 description = "MCP server that wraps the WeKan REST API with credential isolation."
 requires-python = ">=3.10"

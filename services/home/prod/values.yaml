@@ -20,12 +20,16 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "false"
-  scifi-farm:
-    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    #repository: https://ownyourio.github.io/SpencersLab/
-    namespace: default
-    ServerSideApply: "true"
-    chart: hugo
+  # Disabled 2026-09-07: Hugo crash-loop — content module sites/grow does not
+  # exist in this repo (see plan
+  # .agents/plans/2026-09-07-disable-crashing-neo4j-qdrant.md). Re-enable by
+  # uncommenting; the custom-values scifi-farm block was left in place.
+  #scifi-farm:
+  #  #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+  #  #repository: https://ownyourio.github.io/SpencersLab/
+  #  namespace: default
+  #  ServerSideApply: "true"
+  #  chart: hugo
   immich:
     #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -72,12 +76,16 @@ charts:
     namespace: default
     ServerSideApply: "true"
     chart: zigbee2mqtt
-  zigbee2mqtt-remote:
-    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    #repository: https://ownyourio.github.io/SpencersLab/
-    namespace: default
-    ServerSideApply: "true"
-    chart: zigbee2mqtt
+  # Disabled 2026-09-07: CrashLoopBackOff — remote Zigbee adapter
+  # (10.0.3.195:6638) unreachable. Re-enable by uncommenting; PVC
+  # home-zigbee2mqtt-remote and the shared zigbee2mqtt bitwardenId were left in
+  # place. zigbee2mqtt-coord stays enabled.
+  #zigbee2mqtt-remote:
+  #  #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+  #  #repository: https://ownyourio.github.io/SpencersLab/
+  #  namespace: default
+  #  ServerSideApply: "true"
+  #  chart: zigbee2mqtt
   bri-budget:
     namespace: default
     ServerSideApply: "true"
@@ -96,10 +104,11 @@ charts:
 ingress:
   subdomains:
 
-    scifi-farm:
-      domain: scifi.farm
-      service: home-scifi-farm
-      port: 1313
+    # Disabled 2026-09-07 with the scifi-farm chart (backend Service removed).
+    #scifi-farm:
+    #  domain: scifi.farm
+    #  service: home-scifi-farm
+    #  port: 1313
 
     boards:
       service: home-boards
@@ -122,10 +131,12 @@ ingress:
       serviceName: zigbee2mqtt-coord
       service: home-zigbee2mqtt-coord
       port: 8080
-    zigbee-remote:
-      serviceName: zigbee2mqtt-remote
-      service: home-zigbee2mqtt-remote
-      port: 8080
+    # Disabled 2026-09-07 with the zigbee2mqtt-remote chart (backend Service
+    # removed).
+    #zigbee-remote:
+    #  serviceName: zigbee2mqtt-remote
+    #  service: home-zigbee2mqtt-remote
+    #  port: 8080
 
     #mqtt:
     #  serviceName: mosquitto
@@ -180,15 +191,18 @@ ingress:
       service: home-hortusfox
       port: 80
 
-    help:
-      service: home-hugo-help
-      port: 1313
-    love:
-      service: home-hugo-love
-      port: 1313
-    grow:
-      service: home-hugo-grow
-      port: 1313
+    # Hugo site ingress routes disabled 2026-09-07. `help:` backed home-hugo-help
+    # (disabled below); `love:`/`grow:` were dangling — home-hugo-love /
+    # home-hugo-grow Services never existed (no-op Chart.yaml deps).
+    #help:
+    #  service: home-hugo-help
+    #  port: 1313
+    #love:
+    #  service: home-hugo-love
+    #  port: 1313
+    #grow:
+    #  service: home-hugo-grow
+    #  port: 1313
 
     sms:
       serviceName: playsms
@@ -247,6 +261,9 @@ wekan:
     # Only enabled on this bot-facing instance, not on `boards`.
     - name: WITH_API
       value: "true"
+    # Needed for long lived token generation. Disable after token(s) created.
+    - name: ACCOUNTS_COMMON_LOGIN_EXPIRATION_IN_DAYS
+      value: "10950"
     - name: OIDC_REDIRECTION_ENABLED
       value: "false"
     - name: METEOR_REACTIVITY_ORDER
@@ -1060,166 +1077,11 @@ karakeep:
         - subPath: karakeep/assets
           path: /data/assets
 
-hugo-help:
-    global:
-      nameOverride: hugo-help
-    controllers:
-      main:
-        containers:
-          hugo-help:
-            image:
-              repository:  ghcr.io/hugomods/hugo
-              tag: exts-non-root-0.148.1
-            env:
-              TZ: America/Denver
-            command: 
-                - /bin/sh
-                - -c
-                - |
-                  sh /hugo-server-startup.sh
-
-    configMaps:
-      hugo-yaml:
-        data:
-          hugo.yaml: |-
-            # TODO: Move this into a k8s file.
-            baseURL: https://help.sencerslab.com/
-            languageCode: en-us
-            title: How to Use Spencer's Lab
-            theme:
-              - github.com/onweru/compose
-            module:
-              imports:
-                - path: github.com/lkhrs/hugo-dark-visitors
-                - path: github.com/onweru/compose
-                - path: github.com/OwnYourIO/SpencersLab/sites/help
-          hugo-server-startup.sh: |
-            #!/bin/bash
-            
-            set -e
-            
-            # Global variables
-            UPDATER_PID=""
-            HUGO_PID=""
-            UPDATE_INTERVAL=180
-            
-            # Cleanup function for graceful shutdown
-            cleanup() {
-                echo "Received termination signal, shutting down gracefully..."
-                
-                # Kill the updater loop if it's running
-                if [[ -n "$UPDATER_PID" && -d "/proc/$UPDATER_PID" ]]; then
-                    echo "Stopping module updater (PID: $UPDATER_PID)..."
-                    kill -TERM "$UPDATER_PID" 2>/dev/null || true
-                    wait "$UPDATER_PID" 2>/dev/null || true
-                fi
-                
-                # Kill hugo server if it's running
-                if [[ -n "$HUGO_PID" && -d "/proc/$HUGO_PID" ]]; then
-                    echo "Stopping Hugo server (PID: $HUGO_PID)..."
-                    kill -TERM "$HUGO_PID" 2>/dev/null || true
-                    wait "$HUGO_PID" 2>/dev/null || true
-                fi
-                
-                echo "Cleanup completed."
-                exit 0
-            }
-            
-            # Set up signal handlers
-            trap cleanup SIGTERM SIGINT SIGQUIT
-            
-            # Module updater function
-            update_modules() {
-                while true; do
-                    # Sleep with ability to be interrupted
-                    sleep $UPDATE_INTERVAL
-
-                    echo "$(date): Checking for module updates..."
-                    
-                    if hugo mod get -u; then
-                        echo "$(date): Modules updated successfully"
-                        hugo mod tidy
-                    else
-                        echo "$(date): Failed to update modules, retrying in $UPDATE_INTERVAL seconds"
-                    fi
-                    
-                done
-            }
-            
-            echo "Starting Hugo server initialization..."
-            
-            # Create themes directory
-            echo "Creating themes directory..."
-            mkdir -p themes
-            
-            # Initialize Hugo module
-            echo "Initializing Hugo module..."
-            if ! hugo mod init help.sencerslab.com; then
-                echo "Failed to initialize Hugo module"
-                exit 1
-            fi
-            
-            # Get initial modules
-            echo "Getting initial modules..."
-            if ! hugo mod get; then
-                echo "Failed to get initial modules"
-                exit 1
-            fi
-            
-            # Tidy modules
-            echo "Tidying modules..."
-            if ! hugo mod tidy; then
-                echo "Failed to tidy modules"
-                exit 1
-            fi
-            
-            # Start the module updater in background
-            echo "Starting module updater..."
-            update_modules &
-            UPDATER_PID=$!
-            echo "Module updater started with PID: $UPDATER_PID"
-            
-            # Start Hugo server
-            echo "Starting Hugo server..."
-            hugo server \
-                --environment production \
-                --baseURL "https://help.spencerslab.com" \
-                --bind 0.0.0.0 \
-                --port 1313 \
-                --disableLiveReload \
-                --poll 1s \
-                --appendPort=false &
-            
-            HUGO_PID=$!
-            echo "Hugo server started with PID: $HUGO_PID"
-            
-            # Wait for Hugo server to finish or be terminated
-            wait "$HUGO_PID"
-            HUGO_EXIT_CODE=$?
-            
-            echo "Hugo server exited with code: $HUGO_EXIT_CODE"
-            
-            # Clean up the updater
-            cleanup
-
-    service:
-      main:
-        controller: main
-        ports:
-          http:
-            port: 1313
-
-    persistence:
-      hugo-yaml:
-        type: configMap
-        # TODO: when moving this to a chart, restore {{ .Release.Name }}
-        name: "home-hugo-help"
-        defaultMode: 0777
-        globalMounts:
-          - path: /src/hugo.yaml
-            subPath: hugo.yaml
-          - path: /hugo-server-startup.sh
-            subPath: hugo-server-startup.sh
+# hugo-help disabled 2026-09-07: CrashLoopBackOff — Hugo module
+# github.com/OwnYourIO/SpencersLab/sites/help does not exist in this repo, so the
+# site can never build. The `alias: hugo-help` app-template dependency stays in
+# Chart.yaml and renders nothing (like hugo-grow/hugo-love). Re-enable by restoring
+# the previous `hugo-help:` values block (see git history) and the `help:` ingress.
 
 # ToolHive MCP platform extension (base deploys hivetools on every cluster):
 # read-only Postgres MCP servers for this cluster's CNPG databases, exposed at

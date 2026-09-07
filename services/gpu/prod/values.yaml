@@ -57,12 +57,18 @@ charts:
   n8n:
     namespace: default
     ServerSideApply: "false"
-  neo4j:
-    namespace: default
-    ServerSideApply: "false"
-  qdrant:
-    namespace: default
-    ServerSideApply: "false"
+  # Disabled 2026-09-07: CrashLoopBackOff (neo4j env/config bug — see plan
+  # .agents/plans/2026-09-07-disable-crashing-neo4j-qdrant.md). Re-enable by
+  # uncommenting; PVC `neo4j` and bitwardenIds.neo4j were left in place.
+  #neo4j:
+  #  namespace: default
+  #  ServerSideApply: "false"
+  # Disabled 2026-09-07: CreateContainerConfigError (no bitwardenIds.qdrant,
+  # so its secret never renders). Re-enable by uncommenting; PVC `qdrant`
+  # retained.
+  #qdrant:
+  #  namespace: default
+  #  ServerSideApply: "false"
   supabase:
     namespace: default
     ServerSideApply: "false"
@@ -175,15 +181,17 @@ ingress:
       service: gpu-n8n
       port: 5678
 
-    qdrant:
-      serviceName: qdrant
-      service: gpu-qdrant
-      port: 6333
+    # Disabled 2026-09-07 with the qdrant chart (backend Service removed).
+    #qdrant:
+    #  serviceName: qdrant
+    #  service: gpu-qdrant
+    #  port: 6333
 
-    neo4j:
-      serviceName: neo4j
-      service: gpu-neo4j
-      port: 7474
+    # Disabled 2026-09-07 with the neo4j chart (backend Service removed).
+    #neo4j:
+    #  serviceName: neo4j
+    #  service: gpu-neo4j
+    #  port: 7474
 
     searxng:
       serviceName: searxng
@@ -420,7 +428,7 @@ hivetools:
                   value: "http://gpu-searxng.default.svc.cluster.local:8080"
     wekan:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:0.0.2
+      image: ghcr.io/ownyourio/wekan-mcp:v25
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
