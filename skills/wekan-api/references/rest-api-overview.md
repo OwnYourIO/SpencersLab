@@ -338,6 +338,7 @@ Notes:
 - Trigger `activityType` values include `createCard`, `moveCard`, `editCard`, plus `scheduledTrigger` (with `scheduleKind`, e.g. `aging` + `days` + `atTime`) and `button` (with `buttonType`/`buttonLabel`). Scheduled and button triggers are NOT wildcard-normalized.
 - Action `actionType` values include `addMember`, `removeMember`, `moveCardToTop`, `moveCardToBottom`, `archive`, and more.
 - The trigger vocabulary and matching fields are enumerated in `server/triggersDef.js`; action types are dispatched in `server/rulesHelper.js` (both version-specific — re-verify on upgrade).
+- **REST move gotcha (verified on v9.99)**: a REST card move that changes ONLY the swimlane (same list) creates **no `moveCard` activity** — the PUT route writes the swimlane via `Cards.direct` (skipping collection hooks) and only calls `cardMove()` with `['listId']` in the list-change branch. `moveCard`-triggered rules therefore fire only on REST moves that change the **list** (a swimlane change rides along in that activity). UI drag-and-drop is unaffected (it goes through the collection hooks and fires for swimlane-only moves too).
 
 ### Template variables in action text fields (`{name}` tokens, issue #2475)
 
