@@ -420,7 +420,7 @@ hivetools:
                   value: "http://gpu-searxng.default.svc.cluster.local:8080"
     wekan:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:0.0.2
+      image: ghcr.io/ownyourio/wekan-mcp:v25
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
