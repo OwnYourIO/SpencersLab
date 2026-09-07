@@ -24,15 +24,15 @@ each cluster so the MCP servers run next to their databases (no cross-cluster DB
 | gpu       | pg-langflow                   | langflow             | langflow chart         | done |
 | gpu       | pg-n8n                        | n8n                  | n8n chart              | done |
 | gpu       | pg-supabase                   | supabase             | supabase chart         | done |
-| grow      | pg-grow-assistant             | home-assistant       | assistant chart        | TODO |
-| grow      | pg-grow-assistant-sensors     | sensors              | assistant chart        | TODO |
-| home      | pg-immich                     | immich               | immich chart           | TODO |
-| home      | pg-postiz                     | postiz               | postiz chart           | TODO |
-| home      | pg-temporal                   | temporal             | postiz chart           | TODO |
-| home      | pg-temporal-visibility        | temporal-visibility  | postiz chart           | TODO |
-| home      | pg-home-rallly                | rallly               | rallly chart           | TODO |
-| home      | pg-paperless                  | paperless            | home service (svc-level)| TODO |
-| infra     | pg-keycloak                   | keycloak             | keycloakx chart        | TODO |
+| grow      | pg-grow-assistant             | home-assistant       | assistant chart        | done |
+| grow      | pg-grow-assistant-sensors     | sensors              | assistant chart        | done |
+| home      | pg-immich                     | immich               | immich chart           | done |
+| home      | pg-postiz                     | postiz               | postiz chart           | done |
+| home      | pg-temporal                   | temporal             | postiz chart           | skip (user) |
+| home      | pg-temporal-visibility        | temporal-visibility  | postiz chart           | skip (user) |
+| home      | pg-home-rallly                | rallly               | rallly chart           | done |
+| home      | pg-paperless                  | paperless            | home service (svc-level)| done |
+| infra     | pg-keycloak                   | keycloak             | keycloakx chart        | done |
 | (n/a)     | pg-langfuse / pg-langgraph    | langflow/langgraph   | NOT deployed           | skip |
 
 Note: home-assistant's two clusters share one Bitwarden item (`home-assistant-pg`); the sensors
@@ -64,14 +64,86 @@ For each database:
    matching the GPU approach) under the hivetools block.
 5. Bitwarden LOGIN item `mcp-pg-<name>` (username=readonly) — user creates these.
 
-## Open questions / risks
-- Keycloak issuer reachability from grow/home clusters (Keycloak is in infra).
-- Whether to expose the remote MCP servers via ingress (they'd be reachable at
-  mcp.<domain> per cluster) or keep them cluster-local.
-- home-assistant's two clusters share one Bitwarden item; the readonly role needs its own item.
-- postiz has 3 clusters (postiz, temporal, temporal-visibility) — temporal/temporal-visibility
-  are infrastructure DBs; confirm they should get MCP servers.
+## Open questions / risks — RESOLVED (2026-09-06)
+- Keycloak issuer reachability from grow/home clusters: verified login.spencerslab.com
+  returns 200 cross-cluster; moot while OIDC is disabled.
+- Ingress exposure: YES — resolved by the mcp-platform-to-base refactor (merged to
+  main): hivetools deploys on every cluster via base's charts: list, ingress at
+  mcp.<subDomain|clusterName>.<domain> + cluster-wildcard-cert.
+- home-assistant's shared Bitwarden item: REUSE it for both readonly roles
+  (user decision); swap to dedicated username=readonly items later.
+- temporal/temporal-visibility: NO MCP servers (user decision).
+- OIDC: NOT implemented yet — oidcConfigRef commented out chart-wide on main
+  ("Disable oidc for now"); per-cluster servers ship without OIDC.
+
+## Architecture note (supersedes "Per-cluster requirements" above)
+Main's `.agents/plans/2026-09-06-mcp-platform-to-base.md` refactor landed: base
+deploys hivetools everywhere (default server: kubernetes). Per-cluster postgres
+servers are added purely via values — service `hivetools:` block
+(`postgresMcp.databases` + `bitwardenIds` sentinels) + custom-values UUIDs. No
+charts: entry needed. gpu's transitional charts:hivetools entry removed (Phase 2).
 
 ## Status
-- GPU-cluster MCP servers: DONE (committed).
-- Per-cluster hivetools: PLANNED, pending user go-ahead.
+- GPU-cluster MCP servers: DONE (committed; supabase included).
+- Per-cluster postgres MCP: IMPLEMENTED on update-mcp-servers-v2, pending merge to main.
+  - grow: grow-assistant (db home-assistant), grow-assistant-sensors (db sensors)
+  - home: immich, postiz, home-rallly (db rallly), paperless
+  - infra: keycloak
+  - All reuse the app-DB Bitwarden items (temporary, documented per entry).
+  - baseChartVersion bumped 1.0.183 -> 1.0.192 in all 7 non-gpu appsets
+    (delivers the platform + these servers once merged).
+- Validated: helm lint + helm template on all touched charts/umbrellas;
+  per-cluster hivetools renders MCServers + ExternalSecrets + ingress routes
+  (home host: mcp.home-lab.spencerslab.com).
+
+## Rollout (after merge to main)
+1. ArgoCD syncs: <svc>-hivetools Applications appear on grow/home/infra;
+   CNPG reconciles the readonly roles; ExternalSecrets ready once Bitwarden
+   items/passwords match (reused items already exist).
+2. Out-of-repo: verify *.grow. / *.home-lab. / *.infra. wildcard DNS resolves
+   to each cluster's traefik.
+3. Client config: point MCP clients at
+   https://mcp.<cluster>.<domain>/postgres-<name>/mcp
+   (grow: mcp.grow., home: mcp.home-lab., infra: mcp.infra.).
+4. Later: dedicated username=readonly Bitwarden items per DB; OIDC re-enable
+   (uncomment oidcConfigRef in generic-postgres-mcpserver.yaml + per-server
+   oidc blocks).
+
+## MCPServer rename (2026-09-06, user decision)
+All ToolHive MCPServers get the `mcp-` prefix: `kubernetes` → `mcp-kubernetes`,
+`postgres-<db>` → `mcp-postgres-<db>`, gpu extras (playwright, homeassistant,
+searxng, wekan, grafana, renovate) → `mcp-<name>`. Scope: ALL servers
+(generic-mcpserver.yaml + generic-postgres-mcpserver.yaml).
+- Ingress PATHS are unchanged (`/<name>`, `/postgres-<name>`) — external URLs
+  stay stable; only resource names change.
+- ToolHive derives Service names as `mcp-<serverName>-{proxy,headless}`
+  (verified upstream: controllerutil.CreateProxyServiceName), so services
+  become `mcp-mcp-*`; ingress backends updated accordingly.
+- ExternalSecret/secret names (`postgres-mcp-<name>`) and RBAC names
+  (`kubernetes-mcp`) unchanged.
+- baseChartVersion bumped 1.0.192 → 1.0.193 in all 8 appsets; charts/base
+  comment updated in the same merge so the release pipeline publishes
+  base 1.0.193 (brief chart-not-found window between merge and release is
+  accepted).
+- kilo.jsonc: gpu cluster-local URLs updated to mcp-mcp-* service names;
+  they resolve only after merge + ToolHive rollout (expect gpu MCP blip).
+
+## Kubernetes tier split + external naming (2026-09-07, user decisions)
+1. The single kubernetes server is replaced by TWO servers on every cluster:
+   - `mcp-kubernetes-readonly` — SA/ClusterRole `kubernetes-mcp-readonly`,
+     read tier only, `--read-only` flag (write tools hidden).
+   - `mcp-kubernetes-admin` — SA/ClusterRole `kubernetes-mcp-admin`, the
+     SAME role contents as the old single server (read + restart tier);
+     user may extend it later. NOT cluster-admin.
+   RBAC template split with a shared read-rules define; both tiers keep
+   no-secrets/no-exec boundaries.
+2. MCP ingress host follows the repo cluster-scoped convention
+   `mcp.<subDomain|clusterName>.<domain>`. Initially switched home to
+   `mcp.home.<domain>` (external clusterName), but DNS landed for the
+   subDomain instead → REVERTED to `mcp.home-lab.<domain>` (2026-09-07).
+   No base cert change needed (cluster-wildcard-cert already covers
+   `*.<subDomain>`).
+3. kilo.jsonc: kubernetes entries split into readonly/admin pairs (gpu
+   cluster-local + per-cluster external); home entries on
+   `mcp.home-lab.spencerslab.com`.
+

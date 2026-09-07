@@ -70,19 +70,63 @@ toolhive-operator:
       scope: 'cluster'
 
 mcp:
-  # Cluster access: read + restart/rollout, no secrets access, no exec —
-  # enforced by ClusterRole kubernetes-mcp (templates/rbac-kubernetes-mcp.yaml),
-  # documented in skills/helm-chart-creation/references/mcp-servers.md.
-  kubernetes:
+  # Cluster access comes in two tiers, each its own MCPServer + ServiceAccount
+  # + ClusterRole (templates/rbac-kubernetes-mcp.yaml), documented in
+  # skills/helm-chart-creation/references/mcp-servers.md:
+  #   kubernetes-readonly — strict read tier (+ --read-only hides write tools)
+  #   kubernetes-admin    — read + restart/rollout tier (may grow later)
+  # Both: no secrets access, no exec.
+  kubernetes-readonly:
     enabled: true
     image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65
     transport: streamable-http
     mcpPort: 8080
-    serviceAccount: kubernetes-mcp
+    serviceAccount: kubernetes-mcp-readonly
     # OIDC temporarily disabled (2026-09) — uncomment to re-enable. The shared
     # MCPOIDCConfig + mcp-sso secret stay in place for that.
     # oidc:
-    #   audience: kubernetes
+    #   audience: kubernetes-readonly
+    args:
+      - "--port"
+      - "8080"
+      - "--stateless"
+      # Read tier only; --read-only also hides the write tools from the
+      # server's tool list (RBAC denies them anyway).
+      - "--read-only"
+    resources:
+      limits:
+        cpu: '200m'
+        memory: '1256Mi'
+      requests:
+        cpu: '100m'
+        memory: '128Mi'
+    podTemplateSpec:
+      spec:
+        volumes:
+          - name: tmp
+            emptyDir: {}
+        containers:
+          - name: mcp
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+  kubernetes-admin:
+    enabled: true
+    image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65
+    transport: streamable-http
+    mcpPort: 8080
+    serviceAccount: kubernetes-mcp-admin
+    # OIDC temporarily disabled (2026-09) — uncomment to re-enable. The shared
+    # MCPOIDCConfig + mcp-sso secret stay in place for that.
+    # oidc:
+    #   audience: kubernetes-admin
     args:
       - "--port"
       - "8080"
