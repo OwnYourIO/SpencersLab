@@ -52,3 +52,22 @@ ingress:
       namespace: kube-system
       service: traefik
       port: 8080
+
+# ToolHive MCP platform extension (base deploys hivetools on every cluster):
+# read-only Postgres MCP servers for this cluster's CNPG databases, exposed at
+# mcp.grow.<domain> (charts/hivetools generic-mcp-ingress). OIDC stays
+# disabled until the rollout is re-enabled chart-wide.
+hivetools:
+  bitwardenIds:
+    mcp-pg-grow-assistant: OVERRIDE_VIA_CUSTOM_VALUES
+    mcp-pg-grow-assistant-sensors: OVERRIDE_VIA_CUSTOM_VALUES
+  postgresMcp:
+    databases:
+      # name must match the CNPG cluster name (pg-<name>) so the composed
+      # DATABASE_URI host pg-<name>-rw resolves.
+      - name: grow-assistant
+        bitwardenIdKey: mcp-pg-grow-assistant
+        database: home-assistant
+      - name: grow-assistant-sensors
+        bitwardenIdKey: mcp-pg-grow-assistant-sensors
+        database: sensors

@@ -33,6 +33,19 @@ spec:
         connectionLimit: -1
         ensure: present
         inherit: true
+      # Read-only role for the postgres-immich ToolHive MCP server.
+      # pg_read_all_data = read everything, write nothing (PG14+ predefined role).
+      # Password lives in Bitwarden (pg-immich-mcp-secret ExternalSecret); the
+      # LOGIN item's username must match this role name (readonly).
+      - name: readonly
+        ensure: present
+        login: true
+        inherit: true
+        inRoles:
+          - pg_read_all_data
+        connectionLimit: 5
+        passwordSecret:
+          name: pg-immich-mcp-secret
 
   bootstrap:
     initdb:

@@ -35,6 +35,9 @@ keycloakx:
     keycloak: f7b628ec-2544-4c28-a476-b1a501487d99
     keycloak-pg: 77443679-1d79-49a2-840f-b25c01334c21
     keycloak-mqtt: c25dd5f0-60b4-42e3-8080-b3e00064e902
+    # Read-only MCP role reuses the app DB item (same password for now);
+    # swap to a dedicated username=readonly item when available.
+    mcp-pg-keycloak: 77443679-1d79-49a2-840f-b25c01334c21
 
 trustedIPs:
   - "10.42.0.0/24"
@@ -44,5 +47,6 @@ trustedIPs:
 hivetools:
   bitwardenIds:
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+    mcp-pg-keycloak: 77443679-1d79-49a2-840f-b25c01334c21
   keycloak:
     realm: SpencersLab

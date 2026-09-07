@@ -66,11 +66,8 @@ charts:
   supabase:
     namespace: default
     ServerSideApply: "false"
-  # Transitional duplicate of base's charts.hivetools; remove once every
-  # cluster's baseChartVersion includes it (Phase 2).
-  hivetools:
-    namespace: default
-    ServerSideApply: "true"
+  # hivetools ships from base's charts: list (base >= 1.0.192 on every
+  # cluster); gpu-specific servers/DBs live in the hivetools: block below.
   llama-swap:
     namespace: default
     ServerSideApply: "false"
@@ -618,3 +615,6 @@ hivetools:
       - name: open-webui
         bitwardenIdKey: mcp-pg-open-webui
         database: open-webui
+      - name: supabase
+        bitwardenIdKey: mcp-pg-supabase
+        database: supabase

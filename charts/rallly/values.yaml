@@ -1,6 +1,8 @@
 bitwardenIds:
   rallly: OVERRIDE_VIA_CUSTOM_VALUES
   rallly-db: OVERRIDE_VIA_CUSTOM_VALUES
+  # Read-only CNPG role credential for the postgres-home-rallly ToolHive MCP server.
+  mcp-pg-home-rallly: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 
