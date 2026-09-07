@@ -150,7 +150,22 @@ def list_lists(board_id: str) -> list[dict]:
     """List the lists (columns) on a board. Each entry carries its swimlane_id,
     so you can group lists by swimlane (list titles repeat across swimlanes)."""
     raw = _wekan.get(f"/api/boards/{board_id}/lists") or []
-    return [_slim_list(l) for l in raw]
+    out = []
+    for l in raw:
+        slim = _slim_list(l)
+        # WeKan's collection endpoint hard-projects each list to {_id, title}
+        # (verified in server/models/lists.js), so swimlaneId is absent there.
+        # The single-list endpoint returns the full document — hydrate from it.
+        if slim["id"] and slim["swimlane_id"] is None:
+            try:
+                full = _wekan.get(f"/api/boards/{board_id}/lists/{slim['id']}") or {}
+                if isinstance(full, dict):
+                    slim["swimlane_id"] = full.get("swimlaneId")
+            except WekanError as e:
+                # Degrade to null rather than failing the whole listing.
+                log.warning("list_lists: could not hydrate list %s: %s", slim["id"], e)
+        out.append(slim)
+    return out
 
 
 @mcp.tool
