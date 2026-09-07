@@ -90,7 +90,7 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 |---|---|---|
 | `list_boards` | read | Boards the service user belongs to |
 | `get_board` | read | Board metadata + labels |
-| `list_lists` | read | Columns on a board |
+| `list_lists` | read | Columns on a board (each with its `swimlane_id`) |
 | `list_swimlanes` | read | Rows on a board |
 | `list_cards_in_list` | read | Cards in a list |
 | `get_card` | read | Full card details |

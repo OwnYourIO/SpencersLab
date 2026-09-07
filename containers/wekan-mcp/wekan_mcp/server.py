@@ -109,7 +109,9 @@ def _slim_card(c: dict) -> dict:
 
 
 def _slim_list(l: dict) -> dict:
-    return {"id": l.get("_id"), "title": l.get("title")}
+    # swimlane_id is load-bearing: WeKan rules and card creation both need the
+    # (list, swimlane) pair, and list titles repeat across swimlanes.
+    return {"id": l.get("_id"), "title": l.get("title"), "swimlane_id": l.get("swimlaneId")}
 
 
 def _slim_swimlane(s: dict) -> dict:
@@ -145,7 +147,8 @@ def get_board(board_id: str) -> dict:
 
 @mcp.tool
 def list_lists(board_id: str) -> list[dict]:
-    """List the lists (columns) on a board."""
+    """List the lists (columns) on a board. Each entry carries its swimlane_id,
+    so you can group lists by swimlane (list titles repeat across swimlanes)."""
     raw = _wekan.get(f"/api/boards/{board_id}/lists") or []
     return [_slim_list(l) for l in raw]
 
