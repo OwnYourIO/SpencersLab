@@ -214,6 +214,10 @@ Array of `{ _id, title }`.
 
 Full list document.
 
+### `GET /api/boards/:boardId/lists/:listId/cards`
+
+Array of full card documents in the list (same shape as `GET .../swimlanes/:swimlaneId/cards`). Used by the wekan-mcp `list_cards_in_list` tool and `scripts/lists_swimlanes_cards_crud.py`.
+
 ### `POST /api/boards/:boardId/lists`
 
 Body: `{ "title": "In progress" }`. Response: `{ "_id": "<newListId>" }`.

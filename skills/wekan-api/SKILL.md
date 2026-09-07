@@ -140,3 +140,11 @@ Every script in `scripts/` uses this convention. `auth.py` validates the token b
 ## Local test instance
 
 If the user wants to test without touching production, spin up a local instance with Docker. See `references/config-reference.md` for a minimal `docker-compose.yml` and the required env vars. The first registered user becomes the global admin.
+
+## SpencersLab instances
+
+- `wekan.spencerslab.com` — the **bot instance** (`OIDC_REDIRECTION_ENABLED=false`, so password login via `/users/login` works). Target for API scripts and MCP clients; use a dedicated password-based bot account.
+- `boards.spencerslab.com` — the **human instance** (Keycloak SSO via proxy-local).
+- Both releases share one MongoDB, so the data behind them is the same.
+- In-lab MCP access: the `wekan` server on `mcp.<domain>` (deployed via `charts/hivetools`, image `ghcr.io/ownyourio/wekan-mcp` from `containers/wekan-mcp`).
+- **Observed quirk**: unauthenticated `GET /api/user` returns **502** (not 401) on these instances — treat a 502-on-`/api/user` as an auth failure (missing/invalid/expired token).
