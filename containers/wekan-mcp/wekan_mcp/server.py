@@ -13,7 +13,10 @@ Design principles:
       unless a tool's purpose is to return them.
     - Errors are sanitized. No Authorization header, no raw request, no traceback.
     - Destructive tools (delete_board, delete_card) are intentionally OMITTED.
-      Add them back only if you want them, and mark with destructive hints.
+      remove_rule is the one destructive tool that IS exposed (rules are
+      cheap to recreate and needed for automation hygiene); its docstring
+      marks it as destructive. Add the others back only if you want them,
+      and mark with destructive hints.
     - WEKAN_MCP_READ_ONLY=true hides every write tool from the catalog
       (they are never registered), for the readonly server tier.
 
@@ -127,6 +130,18 @@ def _slim_comment(c: dict) -> dict:
     }
 
 
+def _slim_rule(r: dict) -> dict:
+    # WeKan's rules API already embeds the trigger and action inline with
+    # internal fields (_id, boardId, timestamps) stripped server-side, so the
+    # documents pass through as-is — they ARE the rule the model reasons about.
+    return {
+        "id": r.get("_id"),
+        "title": r.get("title"),
+        "trigger": r.get("trigger"),
+        "action": r.get("action"),
+    }
+
+
 # ==============================================================================
 # READ TOOLS
 # ==============================================================================
@@ -221,6 +236,22 @@ def get_checklist(board_id: str, card_id: str, checklist_id: str) -> dict:
             for i in raw.get("items", []) if i
         ],
     }
+
+
+@mcp.tool
+def list_rules(board_id: str) -> list[dict]:
+    """List the automation rules of a board. Each rule embeds its trigger and
+    action inline (e.g. trigger {activityType: moveCard, listName: Doing} +
+    action {actionType: addMember, username: ...}). Rule ids are required by
+    get_rule, update_rule and remove_rule."""
+    raw = _wekan.get(f"/api/boards/{board_id}/rules") or []
+    return [_slim_rule(r) for r in raw]
+
+
+@mcp.tool
+def get_rule(board_id: str, rule_id: str) -> dict:
+    """Get one automation rule with its full embedded trigger and action."""
+    return _slim_rule(_wekan.get(f"/api/boards/{board_id}/rules/{rule_id}") or {})
 
 
 # ==============================================================================
@@ -332,6 +363,65 @@ def toggle_checklist_item(
         json_body={"isFinished": done},
     )
     return {"item_id": item_id, "done": done}
+
+
+@_write_tool
+def create_rule(board_id: str, title: str, trigger: dict, action: dict) -> dict:
+    """
+    Create an automation rule on a board: when TRIGGER fires, perform ACTION.
+
+    trigger must include "activityType" (e.g. "createCard", "moveCard",
+    "editCard"; also "scheduledTrigger" with scheduleKind/days/atTime, or
+    "button"). Matching fields you omit (listName, oldListName, swimlaneName,
+    cardTitle, userId) default to the '*' wildcard, so the rule fires for any
+    value. action must include "actionType" (e.g. "addMember", "removeMember",
+    "moveCardToTop", "archive").
+    Example: trigger {"activityType": "moveCard", "listName": "Doing"} +
+    action {"actionType": "addMember", "username": "someuser"}.
+    Text fields of some actions support {variable} substitution, expanded at
+    rule time — sendEmail's emailTo/emailSubject/emailMsg, and created
+    card/checklist/swimlane names. Variables: {cardname}/{cardtitle},
+    {cardnumber}, {description}, {duedate}, {listname}, {swimlanename},
+    {boardname}, {username}, {date}, {time}, {datetime}.
+    Returns the new rule's id and title.
+    """
+    body = {"title": title, "trigger": trigger, "action": action}
+    resp = _wekan.post(f"/api/boards/{board_id}/rules", json_body=body) or {}
+    return {"id": resp.get("_id"), "title": title}
+
+
+@_write_tool
+def update_rule(
+    board_id: str,
+    rule_id: str,
+    title: Optional[str] = None,
+    trigger: Optional[dict] = None,
+    action: Optional[dict] = None,
+) -> dict:
+    """
+    Edit an automation rule. Any argument left as None is not changed. A
+    supplied trigger or action REPLACES the stored one wholesale, so include
+    every field the rule should keep matching on.
+    """
+    body: dict = {}
+    if title is not None: body["title"] = title
+    if trigger is not None: body["trigger"] = trigger
+    if action is not None: body["action"] = action
+    if not body:
+        return {"updated": False, "reason": "no fields provided"}
+    _wekan.put(f"/api/boards/{board_id}/rules/{rule_id}", json_body=body)
+    return {"updated": True, "rule_id": rule_id, "fields": list(body.keys())}
+
+
+@_write_tool
+def remove_rule(board_id: str, rule_id: str) -> dict:
+    """
+    DESTRUCTIVE: remove an automation rule, including its trigger and action.
+    There is no undo — a removed rule must be recreated via create_rule. Only
+    use for rules the user explicitly asked to delete.
+    """
+    _wekan.delete(f"/api/boards/{board_id}/rules/{rule_id}")
+    return {"removed": True, "rule_id": rule_id}
 
 
 # ==============================================================================

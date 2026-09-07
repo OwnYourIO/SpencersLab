@@ -6,10 +6,12 @@ token stays out of the model's context.
 
 ## What this gives you
 
-- **15 typed tools** covering the high-frequency WeKan operations:
-  read (boards, lists, swimlanes, cards, comments, checklists) and write
-  (create/update/move cards, add comments, add checklists, toggle items).
-  Destructive operations (`delete_*`) are intentionally omitted.
+- **20 typed tools** covering the high-frequency WeKan operations:
+  read (boards, lists, swimlanes, cards, comments, checklists, automation
+  rules) and write (create/update/move cards, add comments, add checklists,
+  toggle items, create/update/remove automation rules). Destructive
+  operations (`delete_*`) are intentionally omitted — `remove_rule` is the
+  one marked-destructive exception, needed for automation hygiene.
 - **Credential isolation from the model**: `WEKAN_TOKEN` lives in a
   Kubernetes Secret, is injected into the pod as an env var by the
   ToolHive operator, and is never a tool parameter, never in a schema,
@@ -97,17 +99,24 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `list_comments` | read | Comments on a card |
 | `list_checklists` | read | Checklists on a card |
 | `get_checklist` | read | Checklist with item ids (needed to toggle items) |
+| `list_rules` | read | Automation rules of a board (trigger+action embedded) |
+| `get_rule` | read | One automation rule with full trigger and action |
 | `create_card` | write | New card in a list+swimlane |
 | `update_card` | write | Edit title/description/dates |
 | `move_card` | write | Move between lists/swimlanes |
 | `add_comment` | write | Post a comment on a card |
 | `add_checklist` | write | New checklist (with optional items) |
 | `toggle_checklist_item` | write | Mark an item done/undone |
+| `create_rule` | write | New automation rule (inline trigger + action) |
+| `update_rule` | write | Edit a rule's title/trigger/action |
+| `remove_rule` | write | **Destructive** — delete a rule + its trigger/action |
 
 Destructive tools (`delete_board`, `delete_card`, `delete_list`,
-`remove_member`) are **intentionally omitted**. Add them back in
-`wekan_mcp/server.py` if you want them, and consider marking with a
-destructive hint so clients can gate them.
+`remove_member`) are **intentionally omitted**. `remove_rule` is the one
+destructive tool that is exposed (rules are cheap to recreate and needed
+for automation hygiene); its docstring marks it destructive. Add the
+others back in `wekan_mcp/server.py` if you want them, and consider
+marking with a destructive hint so clients can gate them.
 
 ## Security notes worth encoding into ops
 

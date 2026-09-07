@@ -98,6 +98,15 @@ Commands are grouped below by topic. Argument names are the CLI positional argum
 - `createcomment BOARDID CARDID AUTHORID COMMENT`
 - `deletecomment BOARDID CARDID COMMENTID`
 
+### Automation rules (IFTTT, #2674)
+
+- `listrules BOARDID`
+- `getrule BOARDID RULEID`
+- `addrule BOARDID TITLE TRIGGER_JSON ACTION_JSON` — omitted trigger matching fields default to the `'*'` wildcard
+- `editrule BOARDID RULEID PATCH_JSON` — `{"title":..,"trigger":{..},"action":{..}}`
+- `removerule BOARDID RULEID` — removes the rule and its trigger + action
+- Action text fields (`sendEmail`'s `emailTo`/`emailSubject`/`emailMsg`, created card/checklist/swimlane names) support `{cardname}`-style variables — see the [template variables table](rest-api-overview.md#automation-rules).
+
 ### Custom fields
 
 - `getcustomfields BOARDID`
