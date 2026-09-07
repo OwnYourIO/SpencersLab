@@ -83,9 +83,11 @@ never modify a manifest or lockfile.
 ## Skills and MCP servers
 
 Skills and MCP servers are registered in the root `AGENTS.md` — load skills
-from that registry as the feature requires. Stage-specific: `searxng` for
-package/image/chart research; `kubernetes` MCP to inspect live cluster
-resources the feature depends on.
+from that registry as the feature requires. Stage-specific: `global-searxng`
+for package/image/chart research; the `<cluster>-readonly-kubernetes` MCP
+servers to inspect live cluster resources the feature depends on (pick the
+cluster the feature targets; this stage only inspects, so use the `readonly`
+tier).
 
 ---
 

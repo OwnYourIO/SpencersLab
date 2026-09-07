@@ -430,23 +430,40 @@ is covered in Techniques below.
 role's `bitwardenIdKey` may point at the app's own DB LOGIN item (same
 password). Swap in a dedicated item/UUID when it's created.
 
-### Grafana MCP (service-account token)
+### Grafana MCP (service-account token, two tiers)
 
-`grafana/mcp-grafana` authenticates to Grafana with a **Viewer**
-service-account bearer token (read-only), not the Keycloak OAuth. Two gotchas:
+`grafana/mcp-grafana` authenticates to Grafana with a service-account bearer
+token, not the Keycloak OAuth. The server is split into two privilege tiers
+(same pattern as the kubernetes/HA servers):
 
-- **`--allowed-hosts '*'` is required.** mcp-grafana validates Host/Origin
-  (DNS-rebinding protection); the ToolHive proxy rewrites Host to the backend
-  ClusterIP, which is otherwise rejected with **403**.
-- **`--disable-write`** enforces read-only server-side, belt-and-braces with
-  the Viewer-only token.
+- **`grafana-readonly`** — `--disable-write` flag + a **Viewer** SA token
+  (`grafana-mcp-token` secret). Read-only enforced twice: server-side flag and
+  token role.
+- **`grafana-admin`** — no `--disable-write`, uses a separate **Admin** SA
+  token (`grafana-mcp-admin-token` secret). The admin token's Bitwarden item
+  must exist before the server can start (ExternalSecret stays unready
+  otherwise — a visible failure).
 
-The token is the `password` field of a Bitwarden LOGIN item
+Gotcha (both tiers): **`--allowed-hosts '*'` is required.** mcp-grafana
+validates Host/Origin (DNS-rebinding protection); the ToolHive proxy rewrites
+Host to the backend ClusterIP, which is otherwise rejected with **403**.
+
+Each token is the `password` field of a Bitwarden LOGIN item
 (`bitwarden-login` store), wired via `secrets[]` →
 `GRAFANA_SERVICE_ACCOUNT_TOKEN`. `GRAFANA_URL` is the public Grafana ingress
-(the monitoring stack may live on another cluster). See `hivetools.mcp.grafana`
-in `services/gpu/prod/values.yaml` +
-`services/gpu/prod/templates/secret-grafana-mcp-token.yaml`.
+(the monitoring stack may live on another cluster). See
+`hivetools.mcp.grafana-readonly` / `grafana-admin` in
+`services/gpu/prod/values.yaml` +
+`services/gpu/prod/templates/secret-grafana-mcp-token.yaml` and
+`secret-grafana-mcp-admin-token.yaml`.
+
+### Home Assistant MCP (two tiers, same token)
+
+`zorak1103/ha-mcp` is split into `homeassistant-readonly` /
+`homeassistant-admin`. HA tokens have no roles, so both tiers use the SAME
+`homeassistant-mcp` secret (token + URL); the tier is enforced server-side by
+ha-mcp's native `READ_ONLY_MODE=true` env on the readonly server (hides write
+tools from the catalog and blocks write calls at runtime).
 
 ### Private-repo access via initContainer clone
 

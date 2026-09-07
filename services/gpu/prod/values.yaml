@@ -27,6 +27,8 @@ bitwardenIds:
   github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
   homeassistant-mcp: OVERRIDE_VIA_CUSTOM_VALUES
   grafana-mcp-token: OVERRIDE_VIA_CUSTOM_VALUES
+  # Grafana ADMIN service-account token for the grafana-admin MCP tier.
+  grafana-mcp-admin-token: OVERRIDE_VIA_CUSTOM_VALUES
   wekan-mcp: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
@@ -374,14 +376,50 @@ hivetools:
             - name: output
               emptyDir:
                 sizeLimit: 500Mi
-    homeassistant:
+    # Home Assistant, split into privilege tiers. Both use the SAME HA token
+    # (homeassistant-mcp secret); the tier is enforced server-side by ha-mcp's
+    # READ_ONLY_MODE (hides write tools + blocks write calls at runtime).
+    homeassistant-readonly:
       enabled: true
       image: zorak1103/ha-mcp:2026.9.2
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
       # oidc:
-      #   audience: homeassistant
+      #   audience: homeassistant-readonly
+      env:
+        - name: READ_ONLY_MODE
+          value: "true"
+      resources:
+        limits:
+          cpu: '100m'
+          memory: '1128Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              envFrom:
+                - secretRef:
+                    name: homeassistant-mcp
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+    homeassistant-admin:
+      enabled: true
+      image: zorak1103/ha-mcp:2026.9.2
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: homeassistant-admin
       resources:
         limits:
           cpu: '100m'
@@ -460,14 +498,18 @@ hivetools:
                 capabilities:
                   drop:
                     - ALL
-    grafana:
+    # Grafana, split into privilege tiers. Readonly keeps --disable-write and
+    # the existing viewer token; admin drops --disable-write and uses a
+    # separate admin service-account token (grafana-mcp-admin-token secret —
+    # Bitwarden item must exist before the admin server can start).
+    grafana-readonly:
       enabled: true
       image: grafana/mcp-grafana:1.3.0
       transport: streamable-http
       mcpPort: 8000
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
       # oidc:
-      #   audience: grafana
+      #   audience: grafana-readonly
       # --allowed-hosts '*' is REQUIRED: mcp-grafana validates Host/Origin and
       # the ToolHive proxy rewrites Host to the backend ClusterIP (else 403).
       args:
@@ -483,6 +525,56 @@ hivetools:
           value: https://graphs.spencerslab.com
       secrets:
         - name: grafana-mcp-token
+          key: token
+          targetEnvName: GRAFANA_SERVICE_ACCOUNT_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+            - name: mcp
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+    grafana-admin:
+      enabled: true
+      image: grafana/mcp-grafana:1.3.0
+      transport: streamable-http
+      mcpPort: 8000
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: grafana-admin
+      # Same as readonly but WITHOUT --disable-write and with the admin token.
+      args:
+        - "--transport"
+        - "streamable-http"
+        - "--address"
+        - "0.0.0.0:8000"
+        - "--allowed-hosts"
+        - "*"
+      env:
+        - name: GRAFANA_URL
+          value: https://graphs.spencerslab.com
+      secrets:
+        - name: grafana-mcp-admin-token
           key: token
           targetEnvName: GRAFANA_SERVICE_ACCOUNT_TOKEN
       resources:
