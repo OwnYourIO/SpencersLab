@@ -147,3 +147,35 @@ searxng, wekan, grafana, renovate) → `mcp-<name>`. Scope: ALL servers
    cluster-local + per-cluster external); home entries on
    `mcp.home-lab.spencerslab.com`.
 
+## Global utility servers + HA/Grafana tier split (2026-09-07, user decisions)
+1. Client-config naming: shared utility servers use the `global-` prefix
+   instead of `gpu-`: wekan, grafana, searxng, playwright, renovate,
+   homeassistant. Cluster-scoped servers (kubernetes, postgres) keep their
+   cluster prefix.
+2. Home Assistant split into `homeassistant-readonly` / `homeassistant-admin`
+   (MCPServers mcp-homeassistant-*). Both use the SAME homeassistant-mcp
+   secret (HA tokens have no roles); the readonly tier sets ha-mcp's native
+   `READ_ONLY_MODE=true` (hides write tools + blocks writes at call time).
+3. Grafana split into `grafana-readonly` / `grafana-admin` (MCPServers
+   mcp-grafana-*). Readonly keeps `--disable-write` + the existing Viewer
+   token (grafana-mcp-token). Admin drops `--disable-write` and uses a NEW
+   `grafana-mcp-admin-token` secret (ExternalSecret template added to
+   services/gpu/prod/templates/; sentinel in gpu bitwardenIds). The admin
+   server cannot start until the user creates the Grafana Admin SA token +
+   Bitwarden item and adds its UUID to custom-values/gpu.
+4. AGENTS.md registry + agent files updated to the new names/tiers.
+5. Grafana admin token landed: Bitwarden item UUID
+   d37bc58e-ab95-4935-83bc-b4be01021699 wired in custom-values/gpu
+   (top-level bitwardenIds.grafana-mcp-admin-token).
+
+## Final client-config naming convention (2026-09-07)
+Kilo config entry names settled on `<cluster>-<priv>-<service>` (priv first):
+`gpu-readonly-kubernetes`, `home-readonly-postgres-immich`,
+`global-readonly-homeassistant`. Untiered servers stay `<cluster>-<service>`
+(`global-searxng`). Server-side names are unaffected — MCPServer resources
+stay `mcp-<name>`, ingress paths `/<name>`, hivetools values keys
+`<name>`/`<name>-readonly`/`<name>-admin`.
+Agent privilege rules recorded in AGENTS.md + agent definitions: planning
+agents (plan, dependency-map, read-only stages) use `*-readonly-*` only;
+code agent uses `*-readonly-*` freely and asks the user before any
+`*-admin-*` server.

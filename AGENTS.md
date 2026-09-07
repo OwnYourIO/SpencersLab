@@ -54,12 +54,32 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 
 ## MCP servers
 
+Servers are named `<cluster>-<priv>-<service>` in the client config
+(e.g. `gpu-readonly-kubernetes`, `home-readonly-postgres-immich`); servers
+without a privilege tier are just `<cluster>-<service>` (e.g.
+`global-searxng`). `<cluster>` is one of gpu, grow, home, infra, media,
+monitoring, proxy-local — or `global` for shared utility servers (wekan,
+grafana, searxng, playwright, renovate, homeassistant). `<priv>` is
+`readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete).
+Kubernetes, Home Assistant, and Grafana come in both tiers (HA/Grafana
+enforced server-side: ha-mcp `READ_ONLY_MODE`, mcp-grafana `--disable-write`
++ token roles). Postgres servers are read-only by design.
+
+**Agent privilege rules:** planning agents (plan, dependency-map, and the
+read-only pipeline stages) may use `*-readonly-*` servers only — never
+`*-admin-*`. The code agent may use `*-readonly-*` freely but must ask the
+user for explicit confirmation before using any `*-admin-*` server.
+
 | Server | Use when |
 |---|---|
-| `kubernetes` | Nearly always — inspect cluster state, ApplicationSets, pod logs, events |
-| `searxng` | Web search: docs, chart research, image versions |
-| `playwright` | JS-heavy doc sites, UI verification |
-| `homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) |
+| `<cluster>-readonly-kubernetes` | Nearly always — inspect cluster state, ApplicationSets, pod logs, events |
+| `<cluster>-admin-kubernetes` | Only when cluster mutations are required |
+| `<cluster>-readonly-postgres-<db>` | Querying a cluster's Postgres DB |
+| `global-searxng` | Web search: docs, chart research, image versions |
+| `global-playwright` | JS-heavy doc sites, UI verification |
+| `global-readonly-grafana` / `global-admin-grafana` | Grafana dashboards/datasources/alerting (admin needs the admin SA token) |
+| `global-readonly-homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) — inspection |
+| `global-admin-homeassistant` | Home Assistant changes (automations, entities, service calls) |
 
 **Keep these lists current:** when a task uses a skill or MCP server not listed
 above, add a line to this file (or the relevant agent file) as part of your
