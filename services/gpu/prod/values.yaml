@@ -464,14 +464,56 @@ hivetools:
               env:
                 - name: SEARXNG_URL
                   value: "http://gpu-searxng.default.svc.cluster.local:8080"
-    wekan:
+    # WeKan, split into privilege tiers. Both share the same WEKAN_TOKEN
+    # (wekan-mcp secret); the readonly tier hides/blocks write tools via the
+    # WEKAN_MCP_READ_ONLY flag handled by the wekan-mcp image.
+    # Image tracks :main until the build with WEKAN_MCP_READ_ONLY support is
+    # published, then pin to the :v<run> tag.
+    wekan-readonly:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:v25
+      image: ghcr.io/ownyourio/wekan-mcp:main
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
       # oidc:
-      #   audience: wekan
+      #   audience: wekan-readonly
+      env:
+        - name: WEKAN_BASE_URL
+          value: "https://wekan.spencerslab.com"
+        - name: WEKAN_MCP_READ_ONLY
+          value: "true"
+      secrets:
+        - name: wekan-mcp
+          key: WEKAN_TOKEN
+          targetEnvName: WEKAN_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
+              securityContext:
+                runAsUser: 65532
+                runAsGroup: 65532
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+    wekan-admin:
+      enabled: true
+      image: ghcr.io/ownyourio/wekan-mcp:main
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: wekan-admin
       env:
         - name: WEKAN_BASE_URL
           value: "https://wekan.spencerslab.com"
@@ -490,6 +532,7 @@ hivetools:
         spec:
           containers:
             - name: mcp
+              imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
               securityContext:
                 runAsUser: 65532
                 runAsGroup: 65532
