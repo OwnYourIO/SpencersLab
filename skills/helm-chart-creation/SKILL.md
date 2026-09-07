@@ -36,6 +36,12 @@ Deep-dives in `references/` (read on demand, not upfront):
   in-repo image pinning, the kubernetes server's RBAC access model, plus
   pattern recipes: read-only Postgres/CNPG, Grafana service-account token,
   and initContainer repo-clone.
+- `references/proxying.md` — how traffic reaches services: proxy-remote
+  (zerotrust edge, SSH :2222) → autossh tunnel (remote-forward :443) →
+  proxy-local hub traefik (crowdsec/geoblock/SSO routing, ExternalName
+  fan-out) → owning cluster's traefik. Cluster-scoped host conventions
+  (`clusterBase`, subDomain naming), external-dns targets, TLS wildcards.
+  Read before adding ingress/proxy entries or exposing anything externally.
 
 ## When to use / when not
 

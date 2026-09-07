@@ -12,7 +12,7 @@ postgresMcp.databases + the bitwardenIds key + the CNPG managed role.
 apiVersion: toolhive.stacklok.dev/v1beta1
 kind: MCPServer
 metadata:
-  name: postgres-{{ .name }}
+  name: mcp-postgres-{{ .name }}
   namespace: {{ $.Values.namespace | default "default" }}
 spec:
   image: {{ $pg.image | required "postgresMcp.image is required" }}
@@ -21,7 +21,7 @@ spec:
   # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
   # oidcConfigRef:
   #   name: keycloak
-  #   audience: postgres-{{ .name }}
+  #   audience: mcp-postgres-{{ .name }}
   {{- if $pg.args }}
   args:
     {{- toYaml $pg.args | nindent 4 }}

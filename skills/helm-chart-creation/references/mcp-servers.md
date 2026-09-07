@@ -12,12 +12,19 @@ generic `charts:` list (`charts/base/values.yaml` → `charts: hivetools:`).
 Base renders `<serviceName>-charts-appset`, which creates one
 `<svc>-hivetools` Application per cluster (`ServerSideApply: "true"`).
 
-- **Default server:** `kubernetes` only — defined in
-  `charts/hivetools/values.yaml` (see the RBAC access model section below).
+- **Default servers:** `mcp-kubernetes-readonly` + `mcp-kubernetes-admin` —
+  defined in `charts/hivetools/values.yaml` (see the RBAC access model section
+  below).
+  All MCPServers are named `mcp-*` (the `mcp-` prefix is part of the server
+  name); ToolHive derives Service names as `mcp-<serverName>-{proxy,headless}`,
+  so services render as `mcp-mcp-*`. Ingress paths stay `/<name>` /
+  `/postgres-<name>` (paths are the external contract and do NOT carry
+  the prefix).
 - **Ingress host:** `mcp.<subDomain|clusterName>.<domain>` — the repo
-  convention for cluster-scoped hostnames (subDomain-if-set-else-clusterName),
-  matching the `cluster-wildcard-cert` issued by
-  `charts/base/templates/cert-manager-wildcard-cert.yaml`. Examples:
+  convention for cluster-scoped hostnames (subDomain-if-set-else-clusterName).
+  home renders `mcp.home-lab.<domain>` (its subDomain; DNS and the wildcard
+  cert both follow the subDomain). TLS from `cluster-wildcard-cert`
+  (`charts/base/templates/cert-manager-wildcard-cert.yaml`). Examples:
   `mcp.gpu.spencerslab.com`, `mcp.home-lab.spencerslab.com`.
 - **OIDC:** shared Keycloak `MCPOIDCConfig` (`keycloak`), one shared `mcp`
   client. Every cluster reuses the same Bitwarden `mcp-sso` item — the UUID +
@@ -46,7 +53,7 @@ First decide the scope:
 
 - **Every cluster** → add the entry under `mcp:` in
   `charts/hivetools/values.yaml`. Only do this for servers with no
-  cluster-specific URLs/credentials (the `kubernetes` server is the model).
+  cluster-specific URLs/credentials (the `mcp-kubernetes` server is the model).
 - **One service/cluster** (the common case) → add the entry under
   `hivetools.mcp` in `services/<svc>/prod/values.yaml`, with any secret
   templates in `services/<svc>/prod/templates/` and real UUIDs in
@@ -69,7 +76,7 @@ Platform pieces in `charts/hivetools/`:
 | File | Role |
 |---|---|
 | `templates/generic-mcpserver.yaml` | Renders one `toolhive.stacklok.dev/v1beta1 MCPServer` per enabled `mcp.<name>` entry. |
-| `templates/generic-mcp-ingress.yaml` | Single shared Traefik `Ingress` on host `mcp.<subDomain\|clusterName>.<domain>` (TLS from `cluster-wildcard-cert`); adds one `path: /<name>` route per enabled server to `mcp-<name>-proxy:<mcpPort>`. |
+| `templates/generic-mcp-ingress.yaml` | Single shared Traefik `Ingress` on host `mcp.<subDomain\|clusterName>.<domain>` (TLS from `cluster-wildcard-cert`); adds one `path: /<name>` route per enabled server to the operator-derived Service `mcp-mcp-<name>-proxy:<mcpPort>` (paths do not carry the `mcp-` prefix). |
 | `templates/mcp-middleware.yaml` | Traefik middleware `normalize-mcp-path` — strips the `/<name>` prefix (`^/[^/]+(/.*)$` → `$1`) before the request reaches the server. |
 | `templates/mcpoidcconfig-keycloak.yaml` | Shared `MCPOIDCConfig` named `keycloak` (issuer `https://login.<domain>/realms/<realm>`, client `{{ .Values.keycloak.clientId }}`, client secret from ExternalSecret `mcp-sso`). Referenced per server via `oidcConfigRef`. |
 | `templates/rbac-kubernetes-mcp.yaml` | ServiceAccount + ClusterRole/Binding `kubernetes-mcp` for the kubernetes server (see RBAC section). |
@@ -86,10 +93,10 @@ the top level of `custom-values/gpu/prod-values.yaml`.
 
 At runtime the ToolHive operator creates, per server:
 
-- a StatefulSet pod `<name>-0` (the MCP server itself; labels
-  `toolhive-name=<name>`, `toolhive-transport=<transport>`), and
-- a proxy Deployment `<name>-<hash>` plus Service `mcp-<name>-proxy` that
-  the ingress routes to.
+- a StatefulSet pod `mcp-<name>-0` (the MCP server itself; labels
+  `toolhive-name=mcp-<name>`, `toolhive-transport=<transport>`), and
+- a proxy Deployment `mcp-<name>-<hash>` plus Service `mcp-mcp-<name>-proxy`
+  that the ingress routes to (the operator prefixes service names with `mcp-`).
 
 The server container runs inside the pod alongside ToolHive's proxy; the
 container in any `podTemplateSpec` you supply **must be named `mcp`**.
@@ -139,7 +146,7 @@ Field notes:
   (set `mcpPort` to the server's listen port). `stdio` servers get ToolHive's
   proxy wrapper (the common `mcp/*` images use this).
 - **`mcpPort`** is both the container port and the port of the generated
-  `mcp-<name>-proxy` Service that the ingress targets. `proxyPort` is rendered
+  `mcp-mcp-<name>-proxy` Service that the ingress targets. `proxyPort` is rendered
   by `generic-mcpserver.yaml` only when it is set explicitly — normally you
   only need `mcpPort`.
 - **`oidc`**: presence of the block opts the server into the shared Keycloak
@@ -240,13 +247,19 @@ ApplicationSet entry needed for the platform itself):
 - No `custom-values/` entry unless the server has secrets (then only the
   UUID for its ExternalSecret, placed per the Secrets recipe).
 
-## Kubernetes MCP server: access model (RBAC)
+## Kubernetes MCP servers: access model (RBAC)
 
-The `kubernetes` server talks to the in-cluster API as ServiceAccount
-`kubernetes-mcp`, bound to the ClusterRole `kubernetes-mcp`
-(`charts/hivetools/templates/rbac-kubernetes-mcp.yaml`). The model is
-**read + restart/rollout** — not read-only, not admin. RBAC is the
-enforcement boundary.
+Every cluster gets TWO kubernetes MCP servers (chart defaults in
+`charts/hivetools/values.yaml`, RBAC in
+`charts/hivetools/templates/rbac-kubernetes-mcp.yaml`):
+
+| Server | ServiceAccount / ClusterRole | Tier |
+|---|---|---|
+| `mcp-kubernetes-readonly` | `kubernetes-mcp-readonly` | Read tier only; also runs `--read-only` (write tools hidden from `tools/list`) |
+| `mcp-kubernetes-admin` | `kubernetes-mcp-admin` | Read tier + restart/rollout tier (may be extended later — user decision 2026-09) |
+
+RBAC is the enforcement boundary for both. The read tier is shared (one
+`define` in the template); the admin role adds the restart tier on top.
 
 **Read tier** (view-equivalent get/list/watch across the cluster):
 
@@ -284,9 +297,11 @@ enforcement boundary.
 - `pods/exec`, `pods/portforward`, pods `create`
   (`pods_run`), workload create/delete, argoproj.io writes, the helm
   toolset (server runs default toolsets only).
-- Note: `pods_exec`, `pods_run`, `resources_delete`, etc. still APPEAR in the
-  MCP `tools/list` output — kubernetes-mcp-server has no per-verb tool
-  gating. Calling them 403s. RBAC is the boundary, not tool visibility.
+- Note: on the **admin** server, `pods_exec`, `pods_run`, `resources_delete`,
+  etc. still APPEAR in the MCP `tools/list` output — kubernetes-mcp-server has
+  no per-verb tool gating. Calling them 403s. RBAC is the boundary, not tool
+  visibility. The **readonly** server runs `--read-only`, which hides the
+  write tools entirely.
 
 **GitOps mechanics for restarts:**
 
@@ -348,7 +363,7 @@ Live examples (gpu): `postgres-coder`, `postgres-flowise`,
 | Piece | Where | What |
 |---|---|---|
 | `postgresMcp.databases` | chart `values.yaml` (empty by default) or a service's `hivetools.postgresMcp.databases` | One entry per DB (`name`, `bitwardenIdKey`, `database`); the shared server settings live once in the `postgresMcp` block. |
-| `generic-postgres-mcpserver.yaml` | `templates/` | Ranges the list → one `MCPServer postgres-<name>` per entry (audience `postgres-<name>`, secret `postgres-mcp-<name>`). |
+| `generic-postgres-mcpserver.yaml` | `templates/` | Ranges the list → one `MCPServer mcp-postgres-<name>` per entry (audience `mcp-postgres-<name>` when OIDC is re-enabled, secret `postgres-mcp-<name>`). |
 | `secret-postgres-mcp.yaml` | `templates/` | Ranges the same list → one ExternalSecret per entry composing `DATABASE_URI`. |
 
 **Add a database in 3 steps:**
@@ -490,11 +505,11 @@ See `hivetools.mcp.renovate` in `services/gpu/prod/values.yaml`.
      --set keycloak.realm=test
    ```
 
-   Confirm: the `MCPServer <name>` renders (image, transport, mcpPort,
+   Confirm: the `MCPServer mcp-<name>` renders (image, transport, mcpPort,
    `oidcConfigRef` with audience, env/secrets), the `ExternalSecret <name>`
    renders with your test UUID, and the ingress contains
    `host: mcp.testcluster.test.example.com` with `path: /<name>` →
-   `mcp-<name>-proxy` (add `--set subDomain=test-lab` to check the
+   `mcp-mcp-<name>-proxy` (add `--set subDomain=test-lab` to check the
    subDomain host form). Grep the output for `OVERRIDE_`: no sentinel may
    appear in the new server's rendered resources (hits from other servers'
    sentinels are expected in an isolated render and are resolved by

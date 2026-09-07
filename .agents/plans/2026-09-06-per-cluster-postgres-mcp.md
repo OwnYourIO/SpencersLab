@@ -109,3 +109,41 @@ charts: entry needed. gpu's transitional charts:hivetools entry removed (Phase 2
    (uncomment oidcConfigRef in generic-postgres-mcpserver.yaml + per-server
    oidc blocks).
 
+## MCPServer rename (2026-09-06, user decision)
+All ToolHive MCPServers get the `mcp-` prefix: `kubernetes` → `mcp-kubernetes`,
+`postgres-<db>` → `mcp-postgres-<db>`, gpu extras (playwright, homeassistant,
+searxng, wekan, grafana, renovate) → `mcp-<name>`. Scope: ALL servers
+(generic-mcpserver.yaml + generic-postgres-mcpserver.yaml).
+- Ingress PATHS are unchanged (`/<name>`, `/postgres-<name>`) — external URLs
+  stay stable; only resource names change.
+- ToolHive derives Service names as `mcp-<serverName>-{proxy,headless}`
+  (verified upstream: controllerutil.CreateProxyServiceName), so services
+  become `mcp-mcp-*`; ingress backends updated accordingly.
+- ExternalSecret/secret names (`postgres-mcp-<name>`) and RBAC names
+  (`kubernetes-mcp`) unchanged.
+- baseChartVersion bumped 1.0.192 → 1.0.193 in all 8 appsets; charts/base
+  comment updated in the same merge so the release pipeline publishes
+  base 1.0.193 (brief chart-not-found window between merge and release is
+  accepted).
+- kilo.jsonc: gpu cluster-local URLs updated to mcp-mcp-* service names;
+  they resolve only after merge + ToolHive rollout (expect gpu MCP blip).
+
+## Kubernetes tier split + external naming (2026-09-07, user decisions)
+1. The single kubernetes server is replaced by TWO servers on every cluster:
+   - `mcp-kubernetes-readonly` — SA/ClusterRole `kubernetes-mcp-readonly`,
+     read tier only, `--read-only` flag (write tools hidden).
+   - `mcp-kubernetes-admin` — SA/ClusterRole `kubernetes-mcp-admin`, the
+     SAME role contents as the old single server (read + restart tier);
+     user may extend it later. NOT cluster-admin.
+   RBAC template split with a shared read-rules define; both tiers keep
+   no-secrets/no-exec boundaries.
+2. MCP ingress host follows the repo cluster-scoped convention
+   `mcp.<subDomain|clusterName>.<domain>`. Initially switched home to
+   `mcp.home.<domain>` (external clusterName), but DNS landed for the
+   subDomain instead → REVERTED to `mcp.home-lab.<domain>` (2026-09-07).
+   No base cert change needed (cluster-wildcard-cert already covers
+   `*.<subDomain>`).
+3. kilo.jsonc: kubernetes entries split into readonly/admin pairs (gpu
+   cluster-local + per-cluster external); home entries on
+   `mcp.home-lab.spencerslab.com`.
+

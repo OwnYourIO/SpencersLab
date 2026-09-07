@@ -31,7 +31,8 @@ proxy:
 
 charts:
   # MCP platform for every cluster (ToolHive operator + MCP servers).
-  # Default server: kubernetes (see charts/hivetools). Services extend via
+  # Default servers: mcp-kubernetes-readonly + mcp-kubernetes-admin (see
+  # charts/hivetools; all MCPServers are named mcp-*). Services extend via
   # their own values under `hivetools:` and can add `charts:` entries.
   hivetools:
     namespace: default
