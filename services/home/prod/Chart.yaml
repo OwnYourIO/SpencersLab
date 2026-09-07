@@ -37,12 +37,12 @@ dependencies:
   version: 0.27.1
   repository: https://cloudnative-pg.github.io/charts
 - name: wekan
-  version: 11.53.0
+  version: 9.99.0
   repository: https://wekan.github.io/charts/
   # changelog: https://github.com/wekan/wekan
 # Have to split wekan into 2 pods to handle 2 urls. 
 - name: wekan
-  version: 11.53.0
+  version: 9.99.0
   repository: https://wekan.github.io/charts/
   # changelog: https://github.com/wekan/wekan
   alias: boards
