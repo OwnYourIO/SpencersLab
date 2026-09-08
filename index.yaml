@@ -8932,6 +8932,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/immich-1.0.1/immich-1.0.1.tgz
     version: 1.0.1
+  immich-analyze:
+  - apiVersion: v2
+    appVersion: 0.4.3
+    created: "2026-09-08T03:09:34.615065361Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: AI-powered image description generator for Immich
+    digest: 8debc22c87d11b6cc98ed0cb643ccbab61aa22237f3761b5898c63ad926abef7
+    name: immich-analyze
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/immich-analyze-1.0.1/immich-analyze-1.0.1.tgz
+    version: 1.0.1
   infra-appset:
   - apiVersion: v2
     appVersion: 1.1.25
@@ -10125,6 +10140,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/ledfx-1.0.5/ledfx-1.0.5.tgz
     version: 1.0.5
   llama-swap:
+  - apiVersion: v2
+    appVersion: v240-vulkan-b10015
+    created: "2026-09-08T03:09:34.829146816Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: d929fa9f73c87ee3f0d401afb092a2b7280c64beef4578ec5a269e4ec3d54bda
+    name: llama-swap
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/llama-swap-1.0.12/llama-swap-1.0.12.tgz
+    version: 1.0.12
   - apiVersion: v2
     appVersion: v240-vulkan-b10015
     created: "2026-08-07T18:43:36.360105739Z"
@@ -18170,4 +18197,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-08T03:06:14.613197337Z"
+generated: "2026-09-08T03:09:34.8301958Z"
