@@ -11831,6 +11831,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/personal-appset-1.1.0/personal-appset-1.1.0.tgz
     version: 1.1.0
+  pictaria:
+  - apiVersion: v2
+    appVersion: 1.1.0
+    created: "2026-09-08T03:06:14.612004472Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: fa07d74cfa297a7ab5398da248ff0d0ed700512929913ddeda817cd3d5a44a38
+    name: pictaria
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/pictaria-1.0.1/pictaria-1.0.1.tgz
+    version: 1.0.1
   playsms:
   - apiVersion: v2
     appVersion: 1.4.x
@@ -18157,4 +18170,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-07T21:05:05.117583756Z"
+generated: "2026-09-08T03:06:14.613197337Z"
