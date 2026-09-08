@@ -274,6 +274,61 @@ config:
       proxy: http://localhost:${PORT}
       ttl: 0
 
+    qwen3-vl-4b:
+      cmd: |
+        ${server-cmd}
+        ${threads}
+        -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M
+        --mmproj hf://unsloth/Qwen3-VL-4B-Instruct-GGUF/mmproj-F16.gguf
+        -c 16384
+      name: "Qwen3 VL 4B Instruct"
+      description: "Vision-language model for Immich image analysis, Q4_K_M quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    qwen3-vl-8b:
+      cmd: |
+        ${server-cmd}
+        ${threads}
+        -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M
+        --mmproj hf://unsloth/Qwen3-VL-8B-Instruct-GGUF/mmproj-F16.gguf
+        -c 16384
+      name: "Qwen3 VL 8B Instruct"
+      description: "Vision-language model for Immich image analysis, Q4_K_M quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    qwen3-vl-30b-a3b:
+      cmd: |
+        ${server-cmd}
+        ${threads}
+        -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M
+        --mmproj hf://unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF/mmproj-F16.gguf
+        ${moe}
+        -c 16384
+      name: "Qwen3 VL 30B A3B Instruct"
+      description: "Vision-language MoE model for Immich image analysis, Q4_K_M quant, CPU-offloaded experts"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
   # Concurrency matrix (replaces legacy groups routing).
   # One GPU model at a time; homecpu (CPU) may run alongside any GPU model.
   matrix:
@@ -295,8 +350,11 @@ config:
       katq8: kat-coder-q8
       homegpu: home-3b-v3-gpu
       homecpu: home-3b-v3
+      vl4b: qwen3-vl-4b
+      vl8b: qwen3-vl-8b
+      vl30b: qwen3-vl-30b-a3b
     sets:
-      main: "(q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu) & homecpu"
+      main: "(q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl4b | vl8b | vl30b) & homecpu"
 
 app-template:
   global:

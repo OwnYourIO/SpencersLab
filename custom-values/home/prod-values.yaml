@@ -55,6 +55,10 @@ immich:
     # swap to a dedicated username=readonly item when available.
     mcp-pg-immich: e908eec9-232c-4aef-8665-b26a000c7469
 
+immich-analyze:
+  bitwardenIds:
+    immich-analyze: 8ef66a15-3efb-4854-85b1-b4bf0030a214
+
 smtp-relay:
   bitwardenIds:
     smtp-secret: 876515bc-b0d6-43df-b9fa-b0dd000a601e

@@ -1,0 +1,104 @@
+bitwardenIds:
+  immich-analyze: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  # App-level tunables. They live under app-template: (not top level) because the
+  # bjw-s subchart renders env values in its own .Values scope — a top-level
+  # `config:` block is invisible to `{{ .Values.config.* }}` in env templates.
+  # Override any of these from service values or custom-values via
+  # `immich-analyze.app-template.config.<key>`.
+  config:
+    # llama-swap model ID to use for image analysis.
+    modelName: qwen3-vl-4b
+    # llama-swap base URL. Domain is hardcoded (not templated) because the
+    # appset only sets top-level `domain`, which the app-template subchart
+    # cannot see — `{{ .Values.domain }}` renders empty in production
+    # (same latent bug as searxng's SEARXNG_BASE_URL). Override here if the
+    # llama-swap ingress host changes.
+    aiHosts: "https://llama-cpp.spencerslab.com"
+    # Number of concurrent AI requests.
+    maxConcurrent: "2"
+    # combined = process existing library then keep monitoring for new assets.
+    mode: combined
+    # missing-ai = process assets that do not already have an [AI]...[/AI] block.
+    overwritePolicy: missing-ai
+    # Preserve human-written text outside [AI]...[/AI] blocks.
+    preserveHuman: "true"
+    # Poll interval for Immich API mode, seconds.
+    apiPollInterval: "10"
+    # Request timeout for AI calls, seconds.
+    timeout: "300"
+    # Health endpoint port inside the container.
+    healthPort: "3000"
+
+  global:
+    nameOverride: &chartName immich-analyze
+
+  controllers:
+    immich-analyze:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            # Upstream currently publishes only rolling :main / :nightly tags.
+            # Pin to a version tag if upstream starts publishing one.
+            repository: ghcr.io/timasoft/immich-analyze
+            tag: main
+            pullPolicy: Always
+          env:
+            TZ: Etc/UTC
+            IMMICH_ANALYZE_DATA_ACCESS_MODE: immich-api
+            IMMICH_API_URL: http://home-immich-server:2283
+            IMMICH_API_KEY:
+              secretKeyRef:
+                name: *chartName
+                key: api_key
+            IMMICH_ANALYZE_INTERFACE: llamacpp
+            IMMICH_ANALYZE_HOSTS: "{{ .Values.config.aiHosts }}"
+            IMMICH_ANALYZE_MODEL_NAME: "{{ .Values.config.modelName }}"
+            IMMICH_ANALYZE_MODE: "{{ .Values.config.mode }}"
+            IMMICH_ANALYZE_OVERWRITE_POLICY: "{{ .Values.config.overwritePolicy }}"
+            IMMICH_ANALYZE_PRESERVE_HUMAN: "{{ .Values.config.preserveHuman }}"
+            IMMICH_ANALYZE_MAX_CONCURRENT: "{{ .Values.config.maxConcurrent }}"
+            IMMICH_ANALYZE_API_POLL_INTERVAL: "{{ .Values.config.apiPollInterval }}"
+            IMMICH_ANALYZE_TIMEOUT: "{{ .Values.config.timeout }}"
+            IMMICH_ANALYZE_HEALTH_PORT: "{{ .Values.config.healthPort }}"
+            RUST_LOG: info
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 3000
+                initialDelaySeconds: 30
+                periodSeconds: 30
+                timeoutSeconds: 10
+                failureThreshold: 3
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 3000
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
