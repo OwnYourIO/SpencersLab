@@ -7077,6 +7077,22 @@ entries:
   hivetools:
   - apiVersion: v2
     appVersion: 0.4.0
+    created: "2026-09-08T13:11:36.364970411Z"
+    dependencies:
+    - name: toolhive-operator-crds
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.34.0
+    - name: toolhive-operator
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.34.0
+    description: Combined Helm chart for ToolHive operator CRDs and operator
+    digest: ada626f11962fc6e80e87c0d16a2c72d086106dba689cfc0380a15a0771972ae
+    name: hivetools
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/hivetools-1.0.62/hivetools-1.0.62.tgz
+    version: 1.0.62
+  - apiVersion: v2
+    appVersion: 0.4.0
     created: "2026-09-07T00:43:59.119930102Z"
     dependencies:
     - name: toolhive-operator-crds
@@ -8933,6 +8949,20 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/immich-1.0.1/immich-1.0.1.tgz
     version: 1.0.1
   immich-analyze:
+  - apiVersion: v2
+    appVersion: 0.4.3
+    created: "2026-09-08T13:11:36.731256859Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: AI-powered image description generator for Immich
+    digest: b7f21b4d6d6d14d5f06b4762489bd72d61b7bd61eda016d588f48f15d7ca6dea
+    name: immich-analyze
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/immich-analyze-1.0.2/immich-analyze-1.0.2.tgz
+    version: 1.0.2
   - apiVersion: v2
     appVersion: 0.4.3
     created: "2026-09-08T03:09:34.615065361Z"
@@ -18197,4 +18227,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-08T03:09:34.8301958Z"
+generated: "2026-09-08T13:11:36.732464715Z"
