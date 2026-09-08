@@ -117,6 +117,11 @@ brother-ptouch-automation:
   bitwardenIds:
     brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931
 
+pictaria:
+  bitwardenIds:
+    pictaria: a2dae3be-43c3-4881-8172-b4bf0031366d
+    pictaria-immich: 8ef66a15-3efb-4854-85b1-b4bf0030a214
+
 # MCP platform (hivetools via base): shared Keycloak client `mcp`, one realm.
 hivetools:
   bitwardenIds:

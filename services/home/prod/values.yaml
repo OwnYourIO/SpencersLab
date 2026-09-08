@@ -35,6 +35,11 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  pictaria:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
   rallly:
     #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -126,6 +131,10 @@ ingress:
       serviceName: immich
       service: home-immich-server
       port: 2283
+
+    pictaria:
+      service: home-pictaria
+      port: 4080
 
     zigbee-coord:
       serviceName: zigbee2mqtt-coord

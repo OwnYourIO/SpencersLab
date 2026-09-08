@@ -1,0 +1,104 @@
+bitwardenIds:
+  # Login item whose password field is the APP_PASSWORD for Pictaria's login screen.
+  pictaria: OVERRIDE_VIA_CUSTOM_VALUES
+  # Separate Login item whose password field is the Immich API key.
+  pictaria-immich: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+# Pictaria Server — photo insights/enrichment/curation companion for Immich
+# (pictaria-ai/pictaria-server). Single Node container; ALL state lives in
+# /data (SQLite DBs, settings, frame DB, wake-word models, backup snapshots).
+app-template:
+  global:
+    nameOverride: &chartName pictaria
+
+  controllers:
+    pictaria:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      pod:
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          runAsNonRoot: true
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+      containers:
+        main:
+          image:
+            # renovate: datasource=docker depName=ghcr.io/pictaria-ai/pictaria-server
+            repository: ghcr.io/pictaria-ai/pictaria-server
+            tag: 1.1.0
+          env:
+            TZ: America/Denver
+            HOST: 0.0.0.0
+            PORT: "4080"
+            # Cluster-local Immich server endpoint (same namespace, verified
+            # Service home-immich-server:2283). Browser-facing deep links use
+            # IMMICH_PUBLIC_URL from the ExternalSecret instead.
+            IMMICH_BASE_URL: http://home-immich-server:2283
+            # Pictaria is only ever reached through HTTPS reverse proxies
+            # (hub traefik + home traefik), so mark the session cookie Secure.
+            SESSION_COOKIE_SECURE: "true"
+            # Home cluster pod subnet (single-node K3s) — the direct peer is
+            # the home traefik pod. Same convention as custom-values
+            # trustedIPs. Enables per-client login lockout behind the proxy.
+            TRUSTED_PROXY_IPS: 10.42.0.0/24
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /api/health
+                  port: 4080
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /api/health
+                  port: 4080
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /api/health
+                  port: 4080
+                failureThreshold: 30
+                periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    main:
+      controller: *chartName
+      ports:
+        http:
+          port: 4080
+
+  persistence:
+    data:
+      existingClaim: *chartName
+      globalMounts:
+        - path: /data
+    tmp:
+      type: emptyDir
+      globalMounts:
+        - path: /tmp
