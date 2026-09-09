@@ -11941,6 +11941,18 @@ entries:
   pictaria:
   - apiVersion: v2
     appVersion: 1.1.0
+    created: "2026-09-09T18:24:45.772182843Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 488f55cce95d0ea2d143a477427d6e23cf1b3a96cbb38ca1531593eb178cb590
+    name: pictaria
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/pictaria-1.0.2/pictaria-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 1.1.0
     created: "2026-09-08T03:06:14.612004472Z"
     dependencies:
     - name: app-template
@@ -18277,4 +18289,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-09T17:04:31.801178463Z"
+generated: "2026-09-09T18:24:45.773540479Z"
