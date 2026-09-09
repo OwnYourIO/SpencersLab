@@ -2,8 +2,13 @@ domain: OVERRIDE_VIA_APPSET
 
 # llama-swap application configuration
 config:
-  # Health check timeout for model readiness
-  healthCheckTimeout: 500
+  # Health check timeout for model readiness.
+  # Generous (1h) on purpose: the first load of a large model includes the
+  # -hf download (30B Q8 ~32 GB, 30B BF16 ~61 GB) and llama-server only opens
+  # its port once download+load finish. At 500s llama-swap killed the process
+  # mid-download ("health check timed out after 8m20s"). Cached loads are fast;
+  # this only widens the window for cold downloads.
+  healthCheckTimeout: 3600
   performance:
     enable: true
     every: 5s
