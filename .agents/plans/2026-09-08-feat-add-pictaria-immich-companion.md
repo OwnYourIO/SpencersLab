@@ -434,3 +434,26 @@ Bitwarden Login item, the user provided TWO separate Login items:
 The ExternalSecret template was updated accordingly: both `data` entries use
 `bitwarden-login` store with `property: password`, each referencing its own
 `bitwardenIds` key. The `bitwardenIds` map in values.yaml now has two entries.
+
+## Post-deploy fix: job runs cancelled by probe kills (2026-09-09)
+
+Symptom: kicking off a Pictaria enrichment job showed no activity and the run
+was cancelled; pod had 3 restarts. Events proved the cause:
+`Liveness probe failed: ... context deadline exceeded` →
+`Container main failed liveness probe, will be restarted` — each container
+lived ~3 min (job duration) and exited 0 on SIGTERM.
+
+Root cause: during a job the Node process stalls (Immich asset download +
+image processing), so `/api/health` could not answer within the default probe
+`timeoutSeconds: 1`; three failures in 30s → kubelet kills the container
+mid-job → run cancelled. The 1-CPU limit amplified the stalls.
+
+Fix in `charts/pictaria/values.yaml`:
+- liveness + readiness: `timeoutSeconds: 10`, `periodSeconds: 15`,
+  `failureThreshold: 8` (tolerates ~2 min of event-loop stall)
+- CPU limit `1` → `2` (requests unchanged)
+
+This change alters the pod template, so ArgoCD rolls the Deployment
+automatically — no manual restart needed. llama-swap side verified healthy at
+the time: `qwen3-vl-30b-a3b-q8` running/ready, `/v1/models` reachable
+unauthenticated from outside the cluster.

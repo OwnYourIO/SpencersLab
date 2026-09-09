@@ -49,6 +49,10 @@ app-template:
             - secretRef:
                 name: *chartName
           probes:
+            # Job runs (Immich asset download + image processing) can stall
+            # the Node event loop for minutes; keep probes generous so the
+            # kubelet doesn't kill the container mid-job (observed: liveness
+            # timeout 1s x3 killed every job run, cancelling the run).
             liveness:
               enabled: true
               custom: true
@@ -56,6 +60,9 @@ app-template:
                 httpGet:
                   path: /api/health
                   port: 4080
+                timeoutSeconds: 10
+                periodSeconds: 15
+                failureThreshold: 8
             readiness:
               enabled: true
               custom: true
@@ -63,6 +70,9 @@ app-template:
                 httpGet:
                   path: /api/health
                   port: 4080
+                timeoutSeconds: 10
+                periodSeconds: 15
+                failureThreshold: 8
             startup:
               enabled: true
               custom: true
@@ -77,7 +87,9 @@ app-template:
               cpu: 100m
               memory: 256Mi
             limits:
-              cpu: "1"
+              # Headroom for image processing during enrichment jobs
+              # (1 CPU throttled the workload and worsened the probe stalls).
+              cpu: "2"
               memory: 1Gi
           securityContext:
             allowPrivilegeEscalation: false
