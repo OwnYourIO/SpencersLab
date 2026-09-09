@@ -81,6 +81,25 @@ quant in every model ID.
 - Live-cluster shape check confirms the deployed llama-swap version accepts
   `capabilities`/`matrix`/`aliases`.
 
+## Post-deploy fixes (same day)
+
+1. **healthCheckTimeout 500 → 3600** — first loads died with "health check
+   timed out after 8m20s" mid-download of the 32 GB Q8 file. Landed on main
+   as `480bb21d`.
+2. **Pod restart required to pick up ConfigMap changes** — the gpu cluster has
+   **no reloader deployment**, so `reloader.stakater.com/auto` does nothing
+   there; the llama-swap pod had to be deleted manually after the timeout fix
+   synced. (Follow-up: deploy reloader on gpu.)
+3. **Removed `--mmproj hf://...` from all 18 VL model cmds** — the deployed
+   llama.cpp (b10015) treats the `--mmproj` value as a literal path
+   (`params.mmproj.path = value` in common/arg.cpp), so it died with
+   `failed to open GGUF file 'hf://...' (No such file or directory)` right
+   after the model download finished. b10015's `-hf` download planner
+   auto-picks the mmproj sibling from the same repo
+   (`find_best_mmproj` in common/download.cpp; arg help: "if -hf is used,
+   this argument can be omitted"), so dropping the flag is the fix. Each cmd
+   carries a comment noting this.
+
 ## Notes / risks
 
 - **30B BF16 variants (instruct + thinking) are ~61 GB, split across 2

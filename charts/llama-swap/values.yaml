@@ -284,7 +284,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M
-        --mmproj hf://unsloth/Qwen3-VL-4B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 4B Instruct (Q4_K_M)"
       description: "Vision-language model for Immich image analysis, Q4_K_M quant"
@@ -305,7 +305,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M
-        --mmproj hf://unsloth/Qwen3-VL-8B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 8B Instruct (Q4_K_M)"
       description: "Vision-language model for Immich image analysis, Q4_K_M quant"
@@ -326,7 +326,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q8_0
-        --mmproj hf://unsloth/Qwen3-VL-8B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 8B Instruct (Q8_0)"
       description: "Vision-language model for Immich image analysis, Q8_0 quant"
@@ -344,7 +344,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:BF16
-        --mmproj hf://unsloth/Qwen3-VL-8B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 8B Instruct (BF16)"
       description: "Vision-language model for Immich image analysis, BF16 (no quant)"
@@ -362,7 +362,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M
-        --mmproj hf://unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
         -c 16384
       name: "Qwen3 VL 30B A3B Instruct (Q4_K_M)"
@@ -384,7 +384,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q8_0
-        --mmproj hf://unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
         -c 16384
       name: "Qwen3 VL 30B A3B Instruct (Q8_0)"
@@ -403,7 +403,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:BF16
-        --mmproj hf://unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
         -c 16384
       name: "Qwen3 VL 30B A3B Instruct (BF16)"
@@ -422,7 +422,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q8_0
-        --mmproj hf://unsloth/Qwen3-VL-2B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 2B Instruct (Q8_0)"
       description: "Vision-language model for Immich image analysis, Q8_0 quant; faster processing for simpler descriptions"
@@ -440,7 +440,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q4_K_M
-        --mmproj hf://unsloth/Qwen3-VL-2B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 2B Instruct (Q4_K_M)"
       description: "Vision-language model for Immich image analysis, Q4_K_M quant; faster processing for simpler descriptions"
@@ -458,7 +458,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:BF16
-        --mmproj hf://unsloth/Qwen3-VL-2B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 2B Instruct (BF16)"
       description: "Vision-language model for Immich image analysis, BF16 (no quant); faster processing for simpler descriptions"
@@ -476,7 +476,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q8_0
-        --mmproj hf://unsloth/Qwen3-VL-4B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 4B Instruct (Q8_0)"
       description: "Vision-language model for Immich image analysis, Q8_0 quant"
@@ -494,7 +494,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:BF16
-        --mmproj hf://unsloth/Qwen3-VL-4B-Instruct-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 4B Instruct (BF16)"
       description: "Vision-language model for Immich image analysis, BF16 (no quant)"
@@ -512,7 +512,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q8_0
-        --mmproj hf://unsloth/Qwen3-VL-4B-Thinking-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 4B Thinking (Q8_0)"
       description: "Reasoning vision-language model for Immich image analysis, Q8_0 quant; good balance of speed and accuracy"
@@ -530,7 +530,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q4_K_M
-        --mmproj hf://unsloth/Qwen3-VL-4B-Thinking-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 4B Thinking (Q4_K_M)"
       description: "Reasoning vision-language model for Immich image analysis, Q4_K_M quant; good balance of speed and accuracy"
@@ -548,7 +548,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:BF16
-        --mmproj hf://unsloth/Qwen3-VL-4B-Thinking-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         -c 16384
       name: "Qwen3 VL 4B Thinking (BF16)"
       description: "Reasoning vision-language model for Immich image analysis, BF16 (no quant); good balance of speed and accuracy"
@@ -566,7 +566,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q8_0
-        --mmproj hf://unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
         -c 16384
       name: "Qwen3 VL 30B A3B Thinking (Q8_0)"
@@ -585,7 +585,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q4_K_M
-        --mmproj hf://unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
         -c 16384
       name: "Qwen3 VL 30B A3B Thinking (Q4_K_M)"
@@ -604,7 +604,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:BF16
-        --mmproj hf://unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF/mmproj-F16.gguf
+        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
         -c 16384
       name: "Qwen3 VL 30B A3B Thinking (BF16)"
