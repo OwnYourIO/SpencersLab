@@ -11,7 +11,7 @@ app-template:
   # `immich-analyze.app-template.config.<key>`.
   config:
     # llama-swap model ID to use for image analysis.
-    modelName: qwen3-vl-4b
+    modelName: qwen3-vl-4b-q4
     # llama-swap base URL. Domain is hardcoded (not templated) because the
     # appset only sets top-level `domain`, which the app-template subchart
     # cannot see — `{{ .Values.domain }}` renders empty in production

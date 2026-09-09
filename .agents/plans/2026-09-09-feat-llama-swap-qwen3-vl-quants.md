@@ -1,13 +1,14 @@
 # Plan: Add Qwen3-VL quant variants to llama-swap
 
-Type: feat | Date: 2026-09-09 | Status: implemented (pending merge)
+Type: feat | Date: 2026-09-09 | Status: implemented (pending merge to main)
 
 ## Goal
 
 Expand the llama-swap vision-model menu on the gpu cluster per user request
-(sourced from Pictaria's vision-provider docs): add Qwen3-VL 2B Instruct,
-4B Thinking, 30B-A3B Thinking, and Q8/BF16 variants of the existing 4B
-Instruct — preferring Q8 quants, also including Q4_K_M and BF16.
+(sourced from Pictaria's vision-provider docs): complete Qwen3-VL coverage —
+every family (2B Instruct, 4B Instruct, 4B Thinking, 8B Instruct, 30B-A3B
+Instruct, 30B-A3B Thinking) in Q8 (preferred), Q4_K_M, and BF16 — with the
+quant in every model ID.
 
 ## Skills
 
@@ -22,54 +23,71 @@ Instruct — preferring Q8 quants, also including Q4_K_M and BF16.
 
 - HuggingFace repos confirmed via HF API (all files exist):
   - `unsloth/Qwen3-VL-2B-Instruct-GGUF` — Q8_0, Q4_K_M, BF16, mmproj-F16.gguf
+  - `unsloth/Qwen3-VL-4B-Instruct-GGUF` — Q8_0, Q4_K_M, BF16, mmproj-F16.gguf
   - `unsloth/Qwen3-VL-4B-Thinking-GGUF` — Q8_0, Q4_K_M, BF16, mmproj-F16.gguf
-  - `unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF` — Q8_0, Q4_K_M, BF16 (split into
-    2 shards under `BF16/` subdir), mmproj-F16.gguf
-  - `unsloth/Qwen3-VL-4B-Instruct-GGUF` — Q8_0, BF16 (Q4_K_M already wired as
-    the existing `qwen3-vl-4b` model)
+  - `unsloth/Qwen3-VL-8B-Instruct-GGUF` — Q8_0, Q4_K_M, BF16, mmproj-F16.gguf
+  - `unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF` — Q8_0, Q4_K_M, BF16 (split
+    shards under `BF16/` subdir), mmproj-F16.gguf
+  - `unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF` — Q8_0, Q4_K_M, BF16 (split
+    shards under `BF16/` subdir), mmproj-F16.gguf
 - BF16-in-subfolder pattern already proven in this config:
   `qwen3.6-35b-a3b-bf16` uses `-hf unsloth/Qwen3.6-35B-A3B-GGUF:BF16` and that
   repo also keeps BF16 in a `BF16/` subfolder.
 - Live gpu cluster: ConfigMap `llama-swap-config` already carries the
-  `capabilities` + `matrix` config shape with the three existing VL models;
-  pod `gpu-llama-swap` Running 1/1 → llama-swap v240 accepts this shape.
+  `capabilities` + `matrix` config shape; pod `gpu-llama-swap` Running 1/1 →
+  llama-swap v240 accepts this shape.
 
 ## Changes (implemented)
 
-Single file: `charts/llama-swap/values.yaml`
+### `charts/llama-swap/values.yaml`
 
-1. **11 new model entries** under `config.models`, following the existing VL
-   pattern (`${server-cmd}` + `${threads}` + `-hf <repo>:<quant>` +
+1. **Renamed the 3 pre-existing VL models so every ID carries its quant**,
+   each with a back-compat `aliases:` entry for the old ID (protects
+   runtime-configured consumers such as Pictaria's AI-provider settings):
+   - `qwen3-vl-4b` → `qwen3-vl-4b-q4` (alias `qwen3-vl-4b`)
+   - `qwen3-vl-8b` → `qwen3-vl-8b-q4` (alias `qwen3-vl-8b`)
+   - `qwen3-vl-30b-a3b` → `qwen3-vl-30b-a3b-q4` (alias `qwen3-vl-30b-a3b`)
+2. **15 new model entries**, following the existing VL pattern
+   (`${server-cmd}` + `${threads}` + `-hf <repo>:<quant>` +
    `--mmproj hf://<repo>/mmproj-F16.gguf` + `-c 16384`, `ttl: 0`,
-   `capabilities: in [text, image] / out [text]`):
+   `capabilities: in [text, image] / out [text]`); the 30B entries also use
+   the `${moe}` macro (CPU-offloaded experts):
    - `qwen3-vl-2b-q8` / `qwen3-vl-2b-q4` / `qwen3-vl-2b-bf16`
-   - `qwen3-vl-4b-instruct-q8` / `qwen3-vl-4b-instruct-bf16`
-     (existing `qwen3-vl-4b` stays as the 4B Instruct Q4_K_M)
+   - `qwen3-vl-4b-q8` / `qwen3-vl-4b-bf16`
    - `qwen3-vl-4b-thinking-q8` / `qwen3-vl-4b-thinking-q4` / `qwen3-vl-4b-thinking-bf16`
+   - `qwen3-vl-8b-q8` / `qwen3-vl-8b-bf16`
+   - `qwen3-vl-30b-a3b-q8` / `qwen3-vl-30b-a3b-bf16`
    - `qwen3-vl-30b-a3b-thinking-q8` / `qwen3-vl-30b-a3b-thinking-q4` /
-     `qwen3-vl-30b-a3b-thinking-bf16` — these three also use the `${moe}`
-     macro (CPU-offloaded experts), matching the existing `qwen3-vl-30b-a3b`
-2. **Matrix**: 11 new vars (`vl2bq8 vl2bq4 vl2bbf vl4bq8 vl4bbf v4tq8 v4tq4
-   v4tbf v30tq8 v30tq4 v30tbf`, all ≤8 alphanumeric chars) added to the
-   `main` set alternatives (`... | <new>) & homecpu`).
+     `qwen3-vl-30b-a3b-thinking-bf16`
+3. **Matrix**: vars renamed to match (`vl4b→vl4bq4`, `vl8b→vl8bq4`,
+   `vl30b→vl30bq4`) plus 15 new vars; all 35 vars resolve and appear in the
+   `main` set alternatives (`... & homecpu`).
+
+### `charts/immich-analyze/values.yaml`
+
+- `config.modelName`: `qwen3-vl-4b` → `qwen3-vl-4b-q4` (only in-repo
+  consumer of the old ID; the alias also keeps the old ID working).
 
 ## Validation performed
 
-- `helm dependency build` + `helm lint charts/llama-swap` — pass
-- `helm template` renders; ConfigMap config.yaml parsed and cross-checked:
-  31 models, all 31 matrix vars resolve to real model IDs, all vars present
-  in the `main` set, every new model has `--mmproj`, `-hf`, and image
-  capabilities; no duplicate `-hf` targets.
-- Live-cluster shape check (above) confirms the deployed llama-swap version
-  accepts `capabilities`/`matrix`.
+- `helm lint` + `helm template` pass for both charts.
+- Rendered llama-swap config cross-checked: 35 models; all 6 VL families
+  complete across {q8, q4, bf16}; no VL ID without a quant suffix; all 35
+  matrix vars resolve to real IDs, valid names, present in the `main` set;
+  aliases unique and non-colliding; every VL model has `--mmproj` + image
+  capabilities.
+- immich-analyze renders `IMMICH_ANALYZE_MODEL_NAME=qwen3-vl-4b-q4`, zero
+  sentinels with test values.
+- Live-cluster shape check confirms the deployed llama-swap version accepts
+  `capabilities`/`matrix`/`aliases`.
 
 ## Notes / risks
 
-- **30B Thinking BF16 is ~61 GB split across 2 shards** in a `BF16/`
-  subfolder; relies on the same `-hf repo:BF16` resolution as the existing
-  `qwen3.6-35b-a3b-bf16`. If llama.cpp's HF resolver fails on it at runtime,
-  drop that one entry (Q8/Q4 remain).
-- All new models are in the single GPU alternation group — loading one evicts
+- **30B BF16 variants (instruct + thinking) are ~61 GB, split across 2
+  shards** in a `BF16/` subfolder; relies on the same `-hf repo:BF16`
+  resolution as the existing `qwen3.6-35b-a3b-bf16`. If llama.cpp's HF
+  resolver fails on them at runtime, drop those two entries (Q8/Q4 remain).
+- All VL models are in the single GPU alternation group — loading one evicts
   the others (expected llama-swap behavior; `globalTTL: 0` keeps them resident
   until swapped).
 - Models download on first use (`-hf`) and cache on the models PVC
