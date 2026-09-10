@@ -97,7 +97,7 @@ asked, not follow-up commits.
 MCP servers follow the `<cluster>-<priv>-<service>` naming, where `<priv>` is
 `readonly` or `admin`. You may use `*-readonly-*` servers freely (inspection:
 pods, logs, events, queries). For any `*-admin-*` server (cluster mutations:
-restart/scale/patch/delete), **ask the user for explicit confirmation first** —
+restart/scale/patch/delete/exec), **ask the user for explicit confirmation first** —
 name the server, the exact action, and the target resource, and wait for the
 go-ahead. One confirmation covers exactly the action asked for, not follow-ups.
 

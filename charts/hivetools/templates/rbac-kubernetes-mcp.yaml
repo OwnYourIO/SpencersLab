@@ -6,14 +6,15 @@ and mcp-kubernetes-admin, defined in values.yaml):
     across the cluster plus node observability, PVs and storageclasses. No
     mutating verbs. The server also runs with --read-only (hides write tools).
 
-  kubernetes-mcp-admin — read tier PLUS restart/rollout: pod delete (+ PDB-safe
-    eviction), patch/update on workloads for rollout restart, and scale
-    subresources. May be extended later (user decision 2026-09).
+  kubernetes-mcp-admin — read tier PLUS restart/rollout and exec: pod delete
+    (+ PDB-safe eviction), patch/update on workloads for rollout restart, scale
+    subresources, and pods/exec. May be extended later (user decision 2026-09).
 
 Both tiers: Secrets get NO access at all — Kubernetes list/watch returns full
 Secret objects (contents included); there is no names-only RBAC verb.
-Explicitly NOT granted: secrets (any verb), pods/exec, pods create, workload
-create/delete, argoproj.io writes. Documented fully in
+Explicitly NOT granted: secrets (any verb), pods create, workload
+create/delete, argoproj.io writes; pods/exec stays denied on the readonly
+tier. Documented fully in
 skills/helm-chart-creation/references/mcp-servers.md.
 */}}
 {{- define "hivetools.kubernetesMcpReadRules" }}
@@ -267,6 +268,10 @@ rules:
   - apiGroups: [""]
     resources: [replicationcontrollers/scale]
     verbs: ["get", "patch", "update"]
+  # --- Pod exec (pods_exec tool) ---
+  - apiGroups: [""]
+    resources: [pods/exec]
+    verbs: ["create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

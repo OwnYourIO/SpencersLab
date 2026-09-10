@@ -74,8 +74,8 @@ mcp:
   # + ClusterRole (templates/rbac-kubernetes-mcp.yaml), documented in
   # skills/helm-chart-creation/references/mcp-servers.md:
   #   kubernetes-readonly — strict read tier (+ --read-only hides write tools)
-  #   kubernetes-admin    — read + restart/rollout tier (may grow later)
-  # Both: no secrets access, no exec.
+  #   kubernetes-admin    — read + restart/rollout + pod exec tier (may grow later)
+  # Both: no secrets access. Exec: admin tier only.
   kubernetes-readonly:
     enabled: true
     image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65

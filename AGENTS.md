@@ -61,7 +61,7 @@ without a privilege tier are just `<cluster>-<service>` (e.g.
 `global-searxng`). `<cluster>` is one of gpu, grow, home, infra, media,
 monitoring, proxy-local — or `global` for shared utility servers (wekan,
 grafana, searxng, playwright, renovate, homeassistant). `<priv>` is
-`readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete).
+`readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete/exec).
 Kubernetes, Home Assistant, Grafana, and WeKan come in both tiers
 (HA/Grafana/WeKan enforced server-side: ha-mcp `READ_ONLY_MODE`,
 mcp-grafana `--disable-write` + token roles, wekan-mcp

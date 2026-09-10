@@ -256,7 +256,7 @@ Every cluster gets TWO kubernetes MCP servers (chart defaults in
 | Server | ServiceAccount / ClusterRole | Tier |
 |---|---|---|
 | `mcp-kubernetes-readonly` | `kubernetes-mcp-readonly` | Read tier only; also runs `--read-only` (write tools hidden from `tools/list`) |
-| `mcp-kubernetes-admin` | `kubernetes-mcp-admin` | Read tier + restart/rollout tier (may be extended later — user decision 2026-09) |
+| `mcp-kubernetes-admin` | `kubernetes-mcp-admin` | Read tier + restart/rollout + pod exec tier (may be extended later — user decision 2026-09) |
 
 RBAC is the enforcement boundary for both. The read tier is shared (one
 `define` in the template); the admin role adds the restart tier on top.
@@ -286,6 +286,8 @@ RBAC is the enforcement boundary for both. The read tier is shared (one
   pod-template patches, including Server-Side Apply.
 - `get`/`patch`/`update` on deployments/scale, statefulsets/scale,
   replicasets/scale, replicationcontrollers/scale (`resources_scale` tool).
+- `pods/exec` **create** — run commands in a running container (`pods_exec`
+  tool). Admin tier only (added 2026-09-10).
 
 **Denied tier (explicit):**
 
@@ -294,10 +296,11 @@ RBAC is the enforcement boundary for both. The read tier is shared (one
   "names only" is impossible via RBAC. Not granting any verb is the only way
   to keep contents private. (This partially reverses the 2026-09 plan, which
   assumed list/watch exposed only names.)
-- `pods/exec`, `pods/portforward`, pods `create`
+- `pods/portforward`, pods `create`
   (`pods_run`), workload create/delete, argoproj.io writes, the helm
-  toolset (server runs default toolsets only).
-- Note: on the **admin** server, `pods_exec`, `pods_run`, `resources_delete`,
+  toolset (server runs default toolsets only). `pods/exec` is denied on the
+  readonly tier (granted on admin only).
+- Note: on the **admin** server, `pods_run`, `resources_delete`,
   etc. still APPEAR in the MCP `tools/list` output — kubernetes-mcp-server has
   no per-verb tool gating. Calling them 403s. RBAC is the boundary, not tool
   visibility. The **readonly** server runs `--read-only`, which hides the
