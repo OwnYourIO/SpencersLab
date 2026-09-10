@@ -2,7 +2,7 @@
 description: Planning agent for this GitOps/Helm repo. Turns infrastructure requests (new chart, service change, ApplicationSet, secrets, monitoring, debugging) into verified, implementation-ready plans grounded in this repo and the cluster. Use before any non-trivial change.
 mode: all
 color: "#8b5cf6"
-steps: 30
+steps: 150
 permission:
   read: allow
   glob: allow

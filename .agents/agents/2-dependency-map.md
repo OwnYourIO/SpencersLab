@@ -8,7 +8,7 @@ description: >
 mode: all
 model: anthropic/claude-sonnet-4-6
 temperature: 0.0
-steps: 100
+steps: 300
 permission:
   read: allow
   glob: allow

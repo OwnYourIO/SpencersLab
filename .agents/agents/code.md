@@ -2,7 +2,7 @@
 description: Implementation agent for this GitOps/Helm repo. Edits charts, services, custom-values, and containers following repo patterns, validates with helm lint/template, and lets ArgoCD sync. Use after a plan exists or for small, well-scoped changes.
 mode: all
 color: "#f59e0b"
-steps: 60
+steps: 300
 permission:
   read: allow
   glob: allow
