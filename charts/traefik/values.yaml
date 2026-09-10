@@ -26,6 +26,15 @@ traefik:
     - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
     - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+    # Plugins are re-downloaded from plugins.traefik.io on EVERY startup
+    # (the local archive cache is wiped first), so right after a node reboot —
+    # before egress is up — the download times out and Traefik would start with
+    # ALL plugin middlewares dead (every router using them is dropped → 404s).
+    # Abort instead: the pod crashloops and retries until the download succeeds.
+    # NOTE: this must be a CLI flag. TRAEFIK_* env vars are silently ignored
+    # whenever traefik runs with CLI args (paerser stops at the first loader
+    # that succeeds — FlagLoader — and never runs EnvLoader).
+    - "--experimental.abortonpluginfailure=true"
 
   ingressClass:
     enabled: true
@@ -47,6 +56,11 @@ traefik:
       enabled: true
       watch: true
   deployment:
+    # Route the kubelet probes through the middleware-gated healthcheck
+    # IngressRoute below (see the note there — /ping is shadowed by Traefik's
+    # internal MaxInt-priority ping router and can never fail).
+    livenessPath: /healthcheck
+    readinessPath: /healthcheck
     additionalContainers:
       - name: user-allowlist-mqtt
         # Pinned to the latest published release tag (was :main). Renovate keeps
@@ -63,9 +77,10 @@ traefik:
           - name: data
             mountPath: /data
 
-  env:
-    - name: TRAEFIK_EXPERIMENTAL_ABORTONPLUGINFAILURE
-      value: "true"
+  # NOTE: TRAEFIK_EXPERIMENTAL_ABORTONPLUGINFAILURE used to be set here as an
+  # env var, but env vars are never decoded when traefik runs with CLI args
+  # (paerser's loader loop stops at FlagLoader). The setting now lives in
+  # additionalArguments as --experimental.abortonpluginfailure=true.
 
   experimental:
     plugins:
@@ -121,9 +136,19 @@ traefik:
           idleTimeout: 650s
 
   # Without this, Traefik's ping returns ok when the middleware is infact down and Traefik needs to restart.
+  #
+  # IMPORTANT: the probes must NOT use /ping. Traefik auto-creates an internal
+  # "ping" router on the traefik entrypoint with rule PathPrefix(`/ping`) and
+  # priority MaxInt and NO middlewares, which shadows any /ping IngressRoute and
+  # answers kubelet probes with 200 no matter how broken the middlewares are
+  # (verified live: ping@internal priorityStr=9223372036854775807 vs
+  # healthcheck router priorityStr=19). Probing /healthcheck instead forces the
+  # request through this IngressRoute and its crowdsec middleware: if the
+  # plugin middleware is invalid the router doesn't load → probe gets 404.
   ingressRoute:
     healthcheck:
       enabled: true
+      matchRule: PathPrefix(`/healthcheck`)
       middlewares:
         - name: crowdsec
           namespace: kube-system
