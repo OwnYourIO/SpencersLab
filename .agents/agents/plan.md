@@ -69,7 +69,7 @@ plan's `## MCP Servers` section, but you never invoke it yourself.
    an existing service. For new charts, load the `helm-chart-creation` skill
    (and `helm-bjw-s-chart` for the app-template API); for new containers, load
    `container-creation`.
-3. Optionally inspect live cluster state via the `<cluster>-readonly-kubernetes`
+3. Optionally inspect live cluster state via the `readonly-<cluster>-kubernetes`
    MCP servers (ApplicationSets, pods, existing secrets) when the plan depends
    on reality — pick the cluster the plan targets.
 4. Render-check with `helm template` where useful to validate assumptions.
@@ -108,7 +108,7 @@ Skills the Code agent must load for the work (fresh session — nothing carries
 over). Example: helm-chart-creation, helm-bjw-s-chart, kubernetes-skill.
 
 ## MCP Servers
-MCP servers the Code agent needs. Example: gpu-readonly-kubernetes,
+MCP servers the Code agent needs. Example: readonly-gpu-kubernetes,
 global-searxng.
 
 ## Verified context

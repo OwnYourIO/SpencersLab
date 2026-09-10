@@ -55,8 +55,8 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 
 ## MCP servers
 
-Servers are named `<cluster>-<priv>-<service>` in the client config
-(e.g. `gpu-readonly-kubernetes`, `home-readonly-postgres-immich`); servers
+Servers are named `<priv>-<cluster>-<service>` in the client config
+(e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers
 without a privilege tier are just `<cluster>-<service>` (e.g.
 `global-searxng`). `<cluster>` is one of gpu, grow, home, infra, media,
 monitoring, proxy-local — or `global` for shared utility servers (wekan,
@@ -68,22 +68,22 @@ mcp-grafana `--disable-write` + token roles, wekan-mcp
 `WEKAN_MCP_READ_ONLY`). Postgres servers are read-only by design.
 
 **Agent privilege rules:** planning agents (plan, dependency-map, and the
-read-only pipeline stages) may use `*-readonly-*` servers only — never
-`*-admin-*`. The code agent may use `*-readonly-*` freely but must ask the
-user for explicit confirmation before using any `*-admin-*` server.
+read-only pipeline stages) may use `readonly-*` servers only — never
+`admin-*`. The code agent may use `readonly-*` freely but must ask the
+user for explicit confirmation before using any `admin-*` server.
 
 | Server | Use when |
 |---|---|
-| `<cluster>-readonly-kubernetes` | Nearly always — inspect cluster state, ApplicationSets, pod logs, events |
-| `<cluster>-admin-kubernetes` | Only when cluster mutations are required |
-| `<cluster>-readonly-postgres-<db>` | Querying a cluster's Postgres DB |
+| `readonly-<cluster>-kubernetes` | Nearly always — inspect cluster state, ApplicationSets, pod logs, events |
+| `admin-<cluster>-kubernetes` | Only when cluster mutations are required |
+| `readonly-<cluster>-postgres-<db>` | Querying a cluster's Postgres DB |
 | `global-searxng` | Web search: docs, chart research, image versions |
 | `global-playwright` | JS-heavy doc sites, UI verification |
 | `global-renovate` | Renovate dry-runs and config validation against this repo |
-| `global-readonly-grafana` / `global-admin-grafana` | Grafana dashboards/datasources/alerting (admin needs the admin SA token) |
-| `global-readonly-homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) — inspection |
-| `global-admin-homeassistant` | Home Assistant changes (automations, entities, service calls) |
-| `global-readonly-wekan` / `global-admin-wekan` | WeKan boards/cards — readonly for inspection, admin for card mutations |
+| `readonly-global-grafana` / `admin-global-grafana` | Grafana dashboards/datasources/alerting (admin needs the admin SA token) |
+| `readonly-global-homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) — inspection |
+| `admin-global-homeassistant` | Home Assistant changes (automations, entities, service calls) |
+| `readonly-global-wekan` / `admin-global-wekan` | WeKan boards/cards — readonly for inspection, admin for card mutations |
 
 **Keep these lists current:** when a task uses a skill or MCP server not listed
 above, add a line to this file (or the relevant agent file) as part of your
