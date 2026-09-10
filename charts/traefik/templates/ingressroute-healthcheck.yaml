@@ -1,19 +1,25 @@
-# Healthcheck route for the kubelet probes (deployment.livenessPath/readinessPath=/healthcheck).
+# Healthcheck route for the kubelet probes (deployment.livenessPath/
+# readinessPath=/healthcheck, deployment.healthchecksPort=8082).
 #
-# This is rendered here (instead of the upstream chart's ingressRoute.healthcheck)
-# because it MUST carry an explicit route priority: with --api.insecure and
-# --api.dashboard enabled, Traefik's internal provider auto-creates a dashboard
-# catch-all router on the same "traefik" entrypoint — rule PathPrefix(`/`),
-# priority MaxInt-2 (9223372036854775805) — which outranks any default-priority
-# router and answers /healthcheck with 404. The upstream template cannot set a
-# priority, so its healthcheck IngressRoute can never work (verified live
-# 2026-09-10: router "enabled" in the API yet /healthcheck -> 404 on every
-# instance; only /ping survived because its internal router has priority MaxInt).
+# It lives on its OWN entrypoint ("healthcheck", :8082) because on the traefik
+# entrypoint (:8080) it could never win:
 #
-# MaxInt-1 beats the dashboard router; the internal ping router (MaxInt, rule
-# /ping) does not overlap this rule. If the crowdsec plugin middleware is
-# invalid this router doesn't load -> probes get 404 -> kubelet restarts the
-# pod, which is the intended self-heal.
+#  1. With --api.insecure + --api.dashboard, Traefik's internal provider
+#     auto-creates a dashboard catch-all router — rule PathPrefix(`/`),
+#     priority MaxInt-2 — on the traefik entrypoint, which answers
+#     /healthcheck with 404 ahead of any normal router (verified live
+#     2026-09-10: route "enabled" in the API yet /healthcheck -> 404).
+#  2. Beating it needs a priority of MaxInt-1 or MaxInt, but values that
+#     large do not survive the Helm/ArgoCD/kubectl pipeline: manifests are
+#     parsed through float64, and near 2^63 float64 spacing is 2048, so
+#     9223372036854775806 arrives at the API server as 9.223372036854776e+18
+#     (> MaxInt) and is rejected by the CRD schema (observed live).
+#
+# The dedicated entrypoint has NO internal routers (ping/api/dashboard all
+# bind only to the traefik entrypoint), so this route serves unopposed with a
+# default priority. If the crowdsec plugin middleware is invalid the router
+# doesn't load -> probes get 404 -> kubelet restarts the pod (the intended
+# self-heal). The port is pod-local (no Service exposes it).
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -21,11 +27,10 @@ metadata:
   namespace: kube-system
 spec:
   entryPoints:
-    - traefik
+    - healthcheck
   routes:
     - match: PathPrefix(`/healthcheck`)
       kind: Rule
-      priority: 9223372036854775806
       middlewares:
         - name: crowdsec
           namespace: kube-system

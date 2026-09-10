@@ -204,3 +204,35 @@ with the priority, probes intact.
   and circular help ExternalName.
 - Missing TLS secrets `kube-system/cluster-wildcard-cert`,
   `default/scifi-farm-cert` error on every config build.
+
+## v4 correction: priorities near MaxInt don't survive the manifest pipeline
+
+The v3 fix (priority MaxInt-1) was rejected by the API server:
+
+    spec.routes[0].priority ... must be of type integer: "number"
+    ... value: 9.223372036854776e+18 ... should be <= 9.223372036854775e+18
+
+Helm/ArgoCD/kubectl parse manifests through float64; near 2^63 float64
+spacing is 2048, so 9223372036854775806 rounds UP past MaxInt. And because
+the dashboard catch-all sits at MaxInt-2, there is NO float64-safe integer
+that outranks it. Route priorities on the traefik entrypoint are a dead end.
+
+### Fix (v4): dedicated probe entrypoint
+
+- `--entryPoints.healthcheck.address=:8082/tcp` (additionalArguments).
+- Wrapper IngressRoute now binds to entrypoint `healthcheck` (no priority
+  needed: no internal routers bind to that entrypoint — ping/api/dashboard
+  all bind only `traefik`).
+- `deployment.healthchecksPort: 8082` moves liveness/readiness to :8082
+  (chart-native mechanism, same as the May 83daf0a0 attempt — whose entrypoint
+  idea was sound all along).
+- startupProbe stays on /ping :8080 (process-alive gate only).
+
+Validated: helm lint OK; template renders probes on :8082 and the
+entrypoint-[healthcheck] IngressRoute with no priority field.
+
+Post-merge expectation: ArgoCD patches the IngressRoute (now a small,
+float-safe change), rolls the Deployment (new entrypoint arg + probe port),
+pods boot, probe passes once the CRD provider delivers the route (~5s),
+rollout completes. The previously failed sync (invalid priority) heals on
+this sync.

@@ -35,6 +35,15 @@ traefik:
     # whenever traefik runs with CLI args (paerser stops at the first loader
     # that succeeds — FlagLoader — and never runs EnvLoader).
     - "--experimental.abortonpluginfailure=true"
+    # Dedicated entrypoint for the kubelet probes' healthcheck route (see
+    # templates/ingressroute-healthcheck.yaml). It must NOT be the traefik
+    # entrypoint (:8080): --api.insecure + --api.dashboard make Traefik
+    # auto-create a dashboard catch-all router there (PathPrefix(`/`),
+    # priority MaxInt-2) that 404s /healthcheck ahead of any route we can
+    # configure (priorities high enough to beat it don't survive the
+    # float64-based Helm/ArgoCD/kubectl manifest pipeline). This entrypoint
+    # has no internal routers, so the healthcheck route serves unopposed.
+    - "--entryPoints.healthcheck.address=:8082/tcp"
 
   ingressClass:
     enabled: true
@@ -57,10 +66,13 @@ traefik:
       watch: true
   deployment:
     # Route the kubelet probes through the middleware-gated healthcheck
-    # IngressRoute below (see the note there — /ping is shadowed by Traefik's
-    # internal MaxInt-priority ping router and can never fail).
+    # IngressRoute (templates/ingressroute-healthcheck.yaml) on the dedicated
+    # "healthcheck" entrypoint. /ping must not be used: Traefik's internal
+    # MaxInt-priority ping router answers it 200 no matter how broken the
+    # middlewares are.
     livenessPath: /healthcheck
     readinessPath: /healthcheck
+    healthchecksPort: 8082
     additionalContainers:
       - name: user-allowlist-mqtt
         # Pinned to the latest published release tag (was :main). Renovate keeps
@@ -147,14 +159,14 @@ traefik:
   # middleware means the route doesn't load → probe gets 404 → kubelet
   # restarts the pod.
   #
-  # That route is rendered by THIS chart (templates/ingressroute-healthcheck.yaml),
-  # not by the upstream healthcheck IngressRoute, because the upstream template
-  # cannot set a route priority: with --api.insecure + --api.dashboard Traefik
-  # auto-creates a dashboard catch-all router (PathPrefix(`/`), priority
-  # MaxInt-2 = 9223372036854775805) on the same entrypoint, which outranks any
-  # default-priority router and answers /healthcheck with 404. Verified live
-  # 2026-09-10: upstream route "enabled" in the API yet /healthcheck 404 on
-  # every instance → v2 probes crashlooped. Our route sets priority MaxInt-1.
+  # That route is rendered by THIS chart (templates/ingressroute-healthcheck.yaml)
+  # on a dedicated "healthcheck" entrypoint (:8082, deployment.healthchecksPort),
+  # because on the traefik entrypoint it could never serve: --api.insecure +
+  # --api.dashboard make Traefik auto-create a dashboard catch-all router
+  # (PathPrefix(`/`), priority MaxInt-2) there, which answers /healthcheck with
+  # 404 ahead of any route we can configure — priorities high enough to beat it
+  # (MaxInt-1/MaxInt) do not survive the float64-based Helm/ArgoCD/kubectl
+  # manifest pipeline (rejected by the CRD schema, observed live 2026-09-10).
   ingressRoute:
     healthcheck:
       enabled: false
