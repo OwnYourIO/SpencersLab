@@ -140,18 +140,24 @@ traefik:
   # IMPORTANT: the probes must NOT use /ping. Traefik auto-creates an internal
   # "ping" router on the traefik entrypoint with rule PathPrefix(`/ping`) and
   # priority MaxInt and NO middlewares, which shadows any /ping IngressRoute and
-  # answers kubelet probes with 200 no matter how broken the middlewares are
-  # (verified live: ping@internal priorityStr=9223372036854775807 vs
-  # healthcheck router priorityStr=19). Probing /healthcheck instead forces the
-  # request through this IngressRoute and its crowdsec middleware: if the
-  # plugin middleware is invalid the router doesn't load → probe gets 404.
+  # answers kubelet probes with 200 no matter how broken the middlewares are.
+  #
+  # The probes therefore hit /healthcheck (deployment.livenessPath/
+  # readinessPath), served through the crowdsec middleware so a broken plugin
+  # middleware means the route doesn't load → probe gets 404 → kubelet
+  # restarts the pod.
+  #
+  # That route is rendered by THIS chart (templates/ingressroute-healthcheck.yaml),
+  # not by the upstream healthcheck IngressRoute, because the upstream template
+  # cannot set a route priority: with --api.insecure + --api.dashboard Traefik
+  # auto-creates a dashboard catch-all router (PathPrefix(`/`), priority
+  # MaxInt-2 = 9223372036854775805) on the same entrypoint, which outranks any
+  # default-priority router and answers /healthcheck with 404. Verified live
+  # 2026-09-10: upstream route "enabled" in the API yet /healthcheck 404 on
+  # every instance → v2 probes crashlooped. Our route sets priority MaxInt-1.
   ingressRoute:
     healthcheck:
-      enabled: true
-      matchRule: PathPrefix(`/healthcheck`)
-      middlewares:
-        - name: crowdsec
-          namespace: kube-system
+      enabled: false
   # The startupProbe covers the slow part of boot on the INTERNAL ping router
   # (always 200 once the process listens): plugin re-download from
   # plugins.traefik.io + provider sync can take well over 10s after a node

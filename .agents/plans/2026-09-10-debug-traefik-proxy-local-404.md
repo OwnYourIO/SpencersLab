@@ -148,3 +148,59 @@ stuck; MCP ingress down; boards 404).
 Validated again with helm lint/template. Recovery path: merge → ArgoCD sync
 creates a new ReplicaSet with the v2 probes; pods boot through the
 startupProbe and roll out cleanly.
+
+## Final root cause (v3): the dashboard catch-all router shadows the healthcheck route
+
+The v2 crashloop was NOT a provider/informer problem (that trail was a
+capture-timing red herring — informers sync in <5s and the router table is
+complete). Exec-based testing showed the healthcheck router present and
+`status: enabled` on EVERY instance, yet `/healthcheck` → 404 everywhere,
+while `/ping` → 200.
+
+Traefik v3.6.15 `pkg/provider/traefik/internal.go:286-305`: with
+`--api.insecure` + `--api.dashboard` (both in additionalArguments), the
+internal provider creates on the `traefik` entrypoint:
+
+- router `api`: rule `PathPrefix('/api')`, priority MaxInt-1
+- router `dashboard`: rule `PathPrefix('/')` (catch-all), priority MaxInt-2
+
+The upstream healthcheck IngressRoute gets default priority = rule length
+(26) and cannot set one (its template has no priority support), so every
+`/healthcheck` request was captured by the dashboard catch-all
+(MaxInt-2 >> 26) and answered with its 404. Only `/ping` survived because
+its internal router has priority MaxInt. This also retroactively explains
+why the May-era /ping-based healthcheck never worked (ping router MaxInt).
+
+### Fix (v3)
+
+- New wrapper template `charts/traefik/templates/ingressroute-healthcheck.yaml`
+  renders the healthcheck IngressRoute with explicit
+  `priority: 9223372036854775806` (MaxInt-1: beats the dashboard catch-all;
+  doesn't collide with the ping MaxInt `/ping` or api MaxInt-1 `/api` rules).
+- `ingressRoute.healthcheck.enabled: false` (upstream variant is unusable).
+- Probes unchanged from v2 (startupProbe /ping; liveness+readiness
+  /healthcheck threshold 2). Deployment template unchanged → no new
+  ReplicaSet; the existing crashlooping pod recovers as soon as ArgoCD
+  patches the IngressRoute.
+
+Validated: helm lint OK, helm template renders one healthcheck IngressRoute
+with the priority, probes intact.
+
+### Expected post-merge behavior
+
+1. ArgoCD syncs: IngressRoute `proxy-local-traefik-healthcheck` gains
+   priority (same object name, in-place update).
+2. Crashlooping pod's next liveness passes → Ready → rollout completes,
+   old-template pod terminated.
+3. Future reboot-with-egress-down: abort flag crashloops until plugin
+   download succeeds; runtime middleware death detected via /healthcheck
+   within ~20s.
+
+### Still open (separate from this fix)
+
+- `proxy-local-hivetools` app OutOfSync → `normalize-mcp-path` middleware
+  missing → MCP ingress router dropped (why agent cluster access was down).
+- Orphaned git.spencerslab.com DNS (points at infra; gitea deployed nowhere)
+  and circular help ExternalName.
+- Missing TLS secrets `kube-system/cluster-wildcard-cert`,
+  `default/scifi-farm-cert` error on every config build.
