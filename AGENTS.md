@@ -54,12 +54,17 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 
 ## MCP servers
 
+Named `readonly|admin-<cluster>-<service>` (defined in `~/.config/kilo/kilo.jsonc`).
+
 | Server | Use when |
 |---|---|
-| `kubernetes` | Nearly always — inspect cluster state, ApplicationSets, pod logs, events |
-| `searxng` | Web search: docs, chart research, image versions |
-| `playwright` | JS-heavy doc sites, UI verification |
-| `homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) |
+| `readonly\|admin-<cluster>-kubernetes` | Nearly always — cluster state, ApplicationSets, pod logs, events. One pair per cluster: `gpu`, `grow`, `home`, `infra`, `media`, `monitoring`, `proxy-local` |
+| `global-searxng` | Web search: docs, chart research, image versions |
+| `global-playwright` | JS-heavy doc sites, UI verification |
+| `readonly-global-homeassistant` / `admin-global-homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) |
+| `readonly-global-grafana` / `admin-global-grafana` | Grafana dashboards, datasources, alerting (monitoring category) |
+| `readonly-global-wekan` / `admin-global-wekan` | WeKan boards/cards (wekan chart, wekan-mcp container) |
+| `readonly-<cluster>-postgres-<db>` | Read-only SQL against an app's Postgres (e.g. `readonly-home-postgres-paperless`) |
 
 **Keep these lists current:** when a task uses a skill or MCP server not listed
 above, add a line to this file (or the relevant agent file) as part of your
