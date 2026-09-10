@@ -351,7 +351,9 @@ seaweedfs:
     resources:
       limits:
         cpu: 1.5
-        memory: 1Gi
+        # 2026-09-07: 1Gi caused recurring OOMKills during media scan bursts
+        # (filer-2 x11, filer-3 x8, filer-4 x6 restarts). Node had ~19Gi free.
+        memory: 2Gi
       requests:
         memory: 200Mi
         cpu: 50m

@@ -1,6 +1,7 @@
 [project]
 name = "wekan-mcp"
-dynamic = ["version"]
+# Cosmetic only: image tags are managed by CI (tag-based docker-build scheme).
+version = "0.0.2"
 description = "MCP server that wraps the WeKan REST API with credential isolation."
 requires-python = ">=3.10"
 dependencies = [
@@ -15,9 +16,6 @@ wekan-mcp = "wekan_mcp.server:main"
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.dynamic]
-version = {file = "VERSION"}
 
 [tool.setuptools.packages.find]
 include = ["wekan_mcp*"]

@@ -15,7 +15,9 @@ app-template:
         main:
           image:
             repository: searxng/searxng
-            tag: latest
+            # Immutable date-commit tag verified 2026-09-06 against Docker Hub
+            # (digest matches searxng/searxng:latest at that time).
+            tag: 2026.9.5-c7f3080aa
           env:
             SEARXNG_BASE_URL: "https://{{ .Values.domain }}"
             SEARXNG_PORT: "8080"

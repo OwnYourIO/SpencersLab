@@ -23,14 +23,23 @@ If the user is just looking for UI help, general kanban advice, or non-WeKan too
 
 In SpencersLab, prefer the **`wekan` MCP server** over raw REST calls. It is an
 in-repo server (`containers/wekan-mcp`) deployed on the lab's ToolHive platform
-(`charts/hivetools`), reachable at `https://mcp.spencerslab.com/wekan/mcp`
-(streamable-http, Keycloak OIDC audience `wekan`). It exposes 15 typed tools:
+(`charts/hivetools`) on the gpu cluster as two privilege tiers sharing one image
+and one `WEKAN_TOKEN`:
+
+- **`wekan-readonly`** — `https://mcp.gpu.spencerslab.com/wekan-readonly/mcp`
+  (Keycloak OIDC audience `wekan-readonly`): read tools only; write tools are
+  never registered (`WEKAN_MCP_READ_ONLY=true`).
+- **`wekan-admin`** — `https://mcp.gpu.spencerslab.com/wekan-admin/mcp`
+  (audience `wekan-admin`): the full 20-tool surface.
+
+The server exposes 20 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
-  `get_checklist`
-- **Write:** `create_card`, `update_card`, `move_card`, `add_comment`,
-  `add_checklist`, `toggle_checklist_item`
+  `get_checklist`, `list_rules`, `get_rule`
+- **Write (admin tier only):** `create_card`, `update_card`, `move_card`,
+  `add_comment`, `add_checklist`, `toggle_checklist_item`, `create_rule`,
+  `update_rule`, `remove_rule` (marked destructive)
 
 Using it keeps the long-lived WeKan bearer token entirely out of model context
 (the token lives only in the server pod, injected via ExternalSecret +
@@ -39,9 +48,9 @@ Bitwarden), and its errors are sanitized. It targets the bot-enabled instance
 
 Fall back to this skill's raw REST workflow only when:
 
-- the operation is intentionally omitted from the MCP surface — destructive
-  ops (`delete_*`, `remove_member`), attachments, webhooks, custom fields,
-  admin/user management, imports/exports; or
+- the operation is intentionally omitted from the MCP surface — attachments,
+  webhooks, custom fields, admin/user management, imports/exports, and
+  destructive ops other than `remove_rule` (`delete_*`, `remove_member`); or
 - the MCP server is unavailable, or the task targets a different WeKan
   instance than the lab's.
 
@@ -139,3 +148,11 @@ Every script in `scripts/` uses this convention. `auth.py` validates the token b
 ## Local test instance
 
 If the user wants to test without touching production, spin up a local instance with Docker. See `references/config-reference.md` for a minimal `docker-compose.yml` and the required env vars. The first registered user becomes the global admin.
+
+## SpencersLab instances
+
+- `wekan.spencerslab.com` — the **bot instance** (`OIDC_REDIRECTION_ENABLED=false`, so password login via `/users/login` works). Target for API scripts and MCP clients; use a dedicated password-based bot account.
+- `boards.spencerslab.com` — the **human instance** (Keycloak SSO via proxy-local).
+- Both releases share one MongoDB, so the data behind them is the same.
+- In-lab MCP access: the `wekan-readonly` / `wekan-admin` tier servers on `mcp.<domain>` (deployed via `charts/hivetools`, image `ghcr.io/ownyourio/wekan-mcp` from `containers/wekan-mcp`) — see "Prefer the wekan MCP server when it is available" above.
+- **Observed quirk**: unauthenticated `GET /api/user` returns **502** (not 401) on these instances — treat a 502-on-`/api/user` as an auth failure (missing/invalid/expired token).

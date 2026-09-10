@@ -6,7 +6,7 @@ description: >
 mode: all
 model: anthropic/claude-sonnet-4-6
 temperature: 0.2
-steps: 40
+steps: 200
 permission:
   read: allow
   glob: allow
@@ -40,9 +40,10 @@ code, never create files outside `features/`, and never invoke other agents.
 ## Skills and MCP servers
 
 Skills and MCP servers are registered in the root `AGENTS.md` — load skills
-from that registry as the feature requires. Stage-specific: `searxng` for
-requirements research; `homeassistant` MCP only when the feature touches Home
-Assistant.
+from that registry as the feature requires. Stage-specific: `global-searxng`
+for requirements research; `global-readonly-homeassistant` (or
+`global-admin-homeassistant` when changes are needed) only when the feature
+touches Home Assistant.
 
 ---
 

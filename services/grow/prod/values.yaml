@@ -6,12 +6,17 @@ clusterName: OVERRIDE_VIA_APPSET
 
 charts:
   # Internal charts (no version/repository - uses charts/ directory)
-  scifi-farm:
-    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-    #repository: https://ownyourio.github.io/SpencersLab/
-    namespace: default
-    ServerSideApply: "true"
-    chart: hugo
+  # Disabled 2026-09-07: Hugo crash-loop — content module sites/grow does not
+  # exist in this repo and never has (see plan
+  # .agents/plans/2026-09-07-disable-crashing-neo4j-qdrant.md). Duplicate of the
+  # home-lab scifi-farm disabled the same way. Re-enable by uncommenting; the
+  # custom-values scifi-farm block was left in place.
+  #scifi-farm:
+  #  #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+  #  #repository: https://ownyourio.github.io/SpencersLab/
+  #  namespace: default
+  #  ServerSideApply: "true"
+  #  chart: hugo
   assistant:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -39,10 +44,11 @@ charts:
 ingress:
   dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
-    scifi-farm:
-      domain: scifi.farm
-      service: grow-scifi-farm
-      port: 1313
+    # Disabled 2026-09-07 with the scifi-farm chart (backend Service removed).
+    #scifi-farm:
+    #  domain: scifi.farm
+    #  service: grow-scifi-farm
+    #  port: 1313
     cluster:
       clusterBase: true
       service: argocd-server
@@ -52,3 +58,22 @@ ingress:
       namespace: kube-system
       service: traefik
       port: 8080
+
+# ToolHive MCP platform extension (base deploys hivetools on every cluster):
+# read-only Postgres MCP servers for this cluster's CNPG databases, exposed at
+# mcp.grow.<domain> (charts/hivetools generic-mcp-ingress). OIDC stays
+# disabled until the rollout is re-enabled chart-wide.
+hivetools:
+  bitwardenIds:
+    mcp-pg-grow-assistant: OVERRIDE_VIA_CUSTOM_VALUES
+    mcp-pg-grow-assistant-sensors: OVERRIDE_VIA_CUSTOM_VALUES
+  postgresMcp:
+    databases:
+      # name must match the CNPG cluster name (pg-<name>) so the composed
+      # DATABASE_URI host pg-<name>-rw resolves.
+      - name: grow-assistant
+        bitwardenIdKey: mcp-pg-grow-assistant
+        database: home-assistant
+      - name: grow-assistant-sensors
+        bitwardenIdKey: mcp-pg-grow-assistant-sensors
+        database: sensors

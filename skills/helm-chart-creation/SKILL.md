@@ -23,12 +23,25 @@ Deep-dives in `references/` (read on demand, not upfront):
 - `references/chart-templates.md` — Chart.yaml / values.yaml / template bodies,
   custom-vs-external decision, worked examples.
 - `references/values-and-appset.md` — three-tier value loading, ApplicationSet
-  wiring, the multi-deploy `chart:` field, Go template safety.
+  wiring, the multi-deploy `chart:` field, Go template safety, cluster-wide
+  charts via base's `charts:` list (rollout duplicates, per-service
+  extensions), subDomain/cluster-scoped hostnames, and moving templates
+  between a chart and a service umbrella (ownership-flip races).
 - `references/storage-and-secrets.md` — Bitwarden stores, env vars by app type,
   shared SeaweedFS storage pattern.
-- `references/mcp-servers.md` — adding MCP servers as `mcp.<name>` entries in
-  `charts/hivetools` (ToolHive MCPServer CRDs, shared ingress/OIDC, secrets
-  recipe, in-repo image pinning).
+- `references/mcp-servers.md` — adding MCP servers as `mcp.<name>` entries on
+  the ToolHive platform (`charts/hivetools`, deployed cluster-wide via base's
+  `charts:` list; service-specific servers under the service's `hivetools:`
+  values key). Covers MCPServer CRDs, shared ingress/OIDC, secrets recipe,
+  in-repo image pinning, the kubernetes server's RBAC access model, plus
+  pattern recipes: read-only Postgres/CNPG, Grafana service-account token,
+  and initContainer repo-clone.
+- `references/proxying.md` — how traffic reaches services: proxy-remote
+  (zerotrust edge, SSH :2222) → autossh tunnel (remote-forward :443) →
+  proxy-local hub traefik (crowdsec/geoblock/SSO routing, ExternalName
+  fan-out) → owning cluster's traefik. Cluster-scoped host conventions
+  (`clusterBase`, subDomain naming), external-dns targets, TLS wildcards.
+  Read before adding ingress/proxy entries or exposing anything externally.
 
 ## When to use / when not
 
@@ -70,9 +83,11 @@ Custom chart in `charts/<name>/` vs external chart referenced from the service
 values.yaml `charts:` key. The two never mix. Decision tree, task lists, and
 comparison table: `references/chart-templates.md`.
 
-**MCP servers are neither**: they are entries in the `mcp:` map of
-`charts/hivetools` (ToolHive platform), not standalone charts. See
-`references/mcp-servers.md`.
+**MCP servers are neither**: they are entries in an `mcp:` map on the
+ToolHive platform — `charts/hivetools` (deployed on every cluster via base's
+`charts:` list, default server `kubernetes`), extended per-service under the
+`hivetools:` values key in `services/<category>/prod/values.yaml`. Not
+standalone charts. See `references/mcp-servers.md`.
 
 ### 3. Scaffold
 
@@ -104,6 +119,8 @@ Non-negotiables (full template in `references/chart-templates.md`):
 - `reloader.stakater.com/auto: "true"` controller annotation so pods restart
   when secrets change.
 - Resource requests/limits per the tiers below.
+- **Pinned image tags** — never a default `latest`/`main` (see **Image tag
+  pinning** below).
 
 ### 5. Secrets
 
@@ -115,7 +132,11 @@ ExternalSecrets + Bitwarden only. Two stores: `bitwarden-login`
 ### 6. Integrate — the trio
 
 Adding a service requires the first two ALWAYS, the third only when the
-service has secrets:
+service has secrets. (Exception: a **cluster-wide chart** — one listed in
+`charts/base/values.yaml`'s `charts:` map, e.g. hivetools — needs no
+per-service ApplicationSet entry; see "Cluster-wide charts" in
+`references/values-and-appset.md` for that workflow, including transitional
+duplicates during the baseChartVersion rollout window.):
 
 1. **ApplicationSet entry** — add an entry under the `charts:` key in
    `services/<category>/prod/values.yaml` (appName is the key; optional
@@ -143,6 +164,19 @@ Four levels, in order — fix errors before moving on:
    `charts:` entry and the proxy entry both exist.
 4. **File presence**: Chart.yaml, Chart.lock, values.yaml, templates/ — plus
    the custom-values entry, when the service has secrets.
+
+Helm override gotchas hit while testing renders:
+
+- `--set-json 'someKey={}'` does NOT override an existing map in values.yaml
+  on helm v3.16 (empty-object no-op; non-empty JSON values do override). To
+  empty/null a nested key use `--set 'someKey.subkey=null'` instead.
+- `helm template --show-only templates/<file>.yaml` errors with "could not
+  find template" when the template renders NOTHING (e.g. gated off) — that
+  error is itself a valid way to confirm a gate is closed.
+- To test a service-level `<appName>:` block against a chart, extract it to a
+  temp file (`python3 -c "import yaml; ..."`) and render with
+  `helm template <chart> -f <temp>` — see `references/mcp-servers.md`
+  Validation for a worked example.
 
 ## Known gotchas (CRITICAL)
 
@@ -178,6 +212,32 @@ Never leave these strings in a rendered manifest:
 | `OVERRIDE_NEEDED` | You, before merging | must-fill placeholder during chart creation |
 
 If any sentinel appears in `helm template` output, the chart is not ready.
+
+## Image tag pinning
+
+**Pin container images to a concrete version tag.** Do not default to
+`latest` or a rolling branch tag (`main`). Pinned tags are what let Renovate
+manage the image (its docker datasource needs a concrete current version to
+compare against) and they keep deployments reproducible.
+
+Rules, in order:
+
+1. **Default — pin to the newest published version tag** (e.g. `tag: 0.0.12`
+   or `:v<run_number>`). Look the actual tag up in the registry (ghcr.io
+   `v2/<owner>/<image>/tags/list` API, or the Docker Hub tags API) — do not
+   guess or reuse a stale tag from memory.
+2. **Use `latest`/a rolling tag only when** the user explicitly asks for it,
+   **or** no pinned version exists yet (e.g. a brand-new in-repo container
+   that has not had a versioned build). In that case set
+   `pullPolicy: Always` and leave a comment noting that a pinned tag should
+   replace it as soon as one is published.
+3. **Documented exception — `brother-ptouch-automation`**: under active
+   development, so it deliberately tracks `latest` with `pullPolicy: Always`
+   (see `charts/brother-ptouch-automation/values.yaml`). Do not "fix" this
+   one when sweeping for unpinned images.
+
+When you encounter an unpinned image while editing a chart, pin it as part of
+the change rather than leaving it for later.
 
 ## Standard security context
 
@@ -232,6 +292,9 @@ Each category dir holds `templates/appset.yaml` (per-service appset) and
 - ❌ Forgetting the proxy entry for web-accessible services.
 - ❌ Accessing optional fields in Go templates without `hasKey`/`index` guards.
 - ❌ Leaving `OVERRIDE_*` sentinels in rendered output.
+- ❌ Unpinned `latest`/`main` image tags when a pinned version exists (see
+  **Image tag pinning**; `brother-ptouch-automation` is the documented
+  exception).
 
 ## Reference charts (read these files, not stale docs)
 

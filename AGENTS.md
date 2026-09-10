@@ -13,7 +13,8 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `custom-values/<category>/` — private overrides (Bitwarden UUIDs) via `bitwardenIds`.
 - `containers/<name>/` — custom images (Dockerfile + CI in `.github/workflows/`).
 - `.agents/agents/` — agent definitions. `.agents/plans/` — plan documents named
-  `yyyy-mm-dd-short-description.md` (date prefix, **never** a unix epoch).
+  `yyyy-mm-dd-<type>-<short-desc>.md` (date prefix, **never** a unix epoch;
+  `<type>` = `feat`|`bug`|`debug`|`dep`|… so the goal is visible at a glance).
 - `skills/` — self-written skills (`helm-chart-creation`, `container-creation`,
   `llama-swap`). `.agents/skills/` — third-party skills managed by skillfish
   (`skillfish.json`, `skills-lock.json`); don't hand-edit those.
@@ -50,21 +51,39 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 | `traefik` | Traefik ingress/middleware/TLS (`charts/traefik*`, proxy services) | |
 | `container-security` | Image scanning (Trivy), Dockerfile hardening (`containers/`) | some ACR-specific content |
 | `llama-swap` | llama-swap / llama.cpp work only (`charts/llama-swap`) | self-managed in `./skills/` |
-| `wekan-api` | WeKan REST API or `wekan-mcp` server work (`containers/wekan-mcp`, `mcp.wekan` in hivetools, WeKan instances in `services/home/prod`) | self-managed in `./skills/` |
+| `wekan-api` | WeKan REST API or `wekan-mcp` server work (`containers/wekan-mcp`, `mcp.wekan-readonly`/`mcp.wekan-admin` in the gpu service values, WeKan instances in `services/home/prod`) | self-managed in `./skills/` |
 
 ## MCP servers
 
-Named `readonly|admin-<cluster>-<service>` (defined in `~/.config/kilo/kilo.jsonc`).
+Servers are named `<priv>-<cluster>-<service>` in the client config
+(e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers
+without a privilege tier are just `<cluster>-<service>` (e.g.
+`global-searxng`). `<cluster>` is one of gpu, grow, home, infra, media,
+monitoring, proxy-local — or `global` for shared utility servers (wekan,
+grafana, searxng, playwright, renovate, homeassistant). `<priv>` is
+`readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete/exec).
+Kubernetes, Home Assistant, Grafana, and WeKan come in both tiers
+(HA/Grafana/WeKan enforced server-side: ha-mcp `READ_ONLY_MODE`,
+mcp-grafana `--disable-write` + token roles, wekan-mcp
+`WEKAN_MCP_READ_ONLY`). Postgres servers are read-only by design.
+
+**Agent privilege rules:** planning agents (plan, dependency-map, and the
+read-only pipeline stages) may use `readonly-*` servers only — never
+`admin-*`. The code agent may use `readonly-*` freely but must ask the
+user for explicit confirmation before using any `admin-*` server.
 
 | Server | Use when |
 |---|---|
-| `readonly\|admin-<cluster>-kubernetes` | Nearly always — cluster state, ApplicationSets, pod logs, events. One pair per cluster: `gpu`, `grow`, `home`, `infra`, `media`, `monitoring`, `proxy-local` |
+| `readonly-<cluster>-kubernetes` | Nearly always — inspect cluster state, ApplicationSets, pod logs, events |
+| `admin-<cluster>-kubernetes` | Only when cluster mutations are required |
+| `readonly-<cluster>-postgres-<db>` | Querying a cluster's Postgres DB |
 | `global-searxng` | Web search: docs, chart research, image versions |
 | `global-playwright` | JS-heavy doc sites, UI verification |
-| `readonly-global-homeassistant` / `admin-global-homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) |
-| `readonly-global-grafana` / `admin-global-grafana` | Grafana dashboards, datasources, alerting (monitoring category) |
-| `readonly-global-wekan` / `admin-global-wekan` | WeKan boards/cards (wekan chart, wekan-mcp container) |
-| `readonly-<cluster>-postgres-<db>` | Read-only SQL against an app's Postgres (e.g. `readonly-home-postgres-paperless`) |
+| `global-renovate` | Renovate dry-runs and config validation against this repo |
+| `readonly-global-grafana` / `admin-global-grafana` | Grafana dashboards/datasources/alerting (admin needs the admin SA token) |
+| `readonly-global-homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) — inspection |
+| `admin-global-homeassistant` | Home Assistant changes (automations, entities, service calls) |
+| `readonly-global-wekan` / `admin-global-wekan` | WeKan boards/cards — readonly for inspection, admin for card mutations |
 
 **Keep these lists current:** when a task uses a skill or MCP server not listed
 above, add a line to this file (or the relevant agent file) as part of your
@@ -79,13 +98,19 @@ change.
 
 ## Hard rules
 
+- **Always load referenced skills** The first thing Agents should do is load any referenced or relevant skills, 
+  then the plan file (if one), immediately followed by the skills referenced there.
+- **Never push to `main` — only the user does that.** Agents work on their own
+  branch/worktree and commit there. To pick up changes, merge `main` *into*
+  your worktree (`git merge main`); never merge your branch into `main` and
+  never run `git push origin main`. Landing work on `main` is the user's
+  decision alone.
 - **Never bump versions or image tags by hand.** `release.yaml` bumps
   `Chart.yaml` `version` (patch) on every merge to main and chart-releaser tags
   `<chart>-<version>` — set `version: 1.0.0` only on a brand-new chart.
-  Containers are tag-based with **no VERSION files**: `docker-build.yaml`
-  pushes `:v<run_number>` (immutable) + `:<branch>` (`:main`/`:dev`, rolling)
-  on every merge; reference `:main` (+ `pullPolicy: Always`) or a `:v<run>`
-  pin.
+  Containers are tag-based: `docker-build.yaml` pushes `:v<run_number>`
+  (immutable) + `:<branch>` (`:main`/`:dev`, rolling) on every merge; reference
+  `:main` (+ `pullPolicy: Always`) or a `:v<run>` pin.
 - Validate chart changes: `helm lint charts/<name>` and
   `helm template charts/<name>` must pass before finishing.
 - Secrets: ExternalSecret + Bitwarden only. Placeholder
@@ -94,4 +119,5 @@ change.
 - Adding a service = chart entry + ApplicationSet values entry + proxy values
   entry. All three — plus a `custom-values/` entry only when the service has
   secrets needing per-cluster overrides.
-- Plans are `yyyy-mm-dd-short-description.md` in `.agents/plans/`.
+- Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/`
+  (`<type>` = `feat`|`bug`|`debug`|`dep`|…).

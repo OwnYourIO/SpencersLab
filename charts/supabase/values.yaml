@@ -1,6 +1,8 @@
 bitwardenIds:
   supabase: OVERRIDE_VIA_CUSTOM_VALUES
   supabase-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  # Read-only CNPG role credential for the postgres-supabase ToolHive MCP server.
+  mcp-pg-supabase: OVERRIDE_VIA_CUSTOM_VALUES
 
 emptySecrets: false
 

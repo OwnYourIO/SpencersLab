@@ -2,6 +2,9 @@
 # Keycloak instance (login.{domain}). Referenced per-server via oidcConfigRef
 # (see generic-mcpserver.yaml). Namespace-scoped: must live in the same
 # namespace as the MCPServer resources that reference it.
+# NOTE (2026-09): currently UNREFERENCED — per-server oidc blocks are
+# commented out while OIDC rollout is pending. Keep this (and the mcp-sso
+# ExternalSecret) so re-enabling is just uncommenting the oidc blocks.
 apiVersion: toolhive.stacklok.dev/v1beta1
 kind: MCPOIDCConfig
 metadata:

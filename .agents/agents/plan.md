@@ -2,7 +2,7 @@
 description: Planning agent for this GitOps/Helm repo. Turns infrastructure requests (new chart, service change, ApplicationSet, secrets, monitoring, debugging) into verified, implementation-ready plans grounded in this repo and the cluster. Use before any non-trivial change.
 mode: all
 color: "#8b5cf6"
-steps: 30
+steps: 150
 permission:
   read: allow
   glob: allow
@@ -52,6 +52,15 @@ Before planning, resolve:
 If the request is ambiguous, ask focused questions with the `question` tool.
 Do not generate multiple alternative plans — ask instead.
 
+## MCP server privilege rule (hard)
+
+MCP servers follow the `<cluster>-<priv>-<service>` naming, where `<priv>` is
+`readonly` or `admin`. **You may ONLY use `*-readonly-*` servers** (e.g.
+`gpu-readonly-kubernetes`, `home-readonly-postgres-immich`). Never call an
+`*-admin-*` server — planning is inspection only. If a plan will require the
+Code agent to mutate cluster state, list the needed `*-admin-*` server in the
+plan's `## MCP Servers` section, but you never invoke it yourself.
+
 ## Workflow
 
 1. Clarify intent (Iron Law). Ask if anything is ambiguous.
@@ -61,23 +70,26 @@ Do not generate multiple alternative plans — ask instead.
    (and `helm-bjw-s-chart` for the app-template API); for new containers, load
    `container-creation`.
 3. Optionally inspect live cluster state via the `readonly-<cluster>-kubernetes`
-   MCP server (ApplicationSets, pods, existing secrets) when the plan depends
-   on reality.
+   MCP servers (ApplicationSets, pods, existing secrets) when the plan depends
+   on reality — pick the cluster the plan targets.
 4. Render-check with `helm template` where useful to validate assumptions.
 5. Decide which skills and MCP servers the Code agent will need, using the
    registries in `AGENTS.md` — it runs in a fresh session and loads only what
    your plan names.
 6. Never plan version bumps — CI bumps `Chart.yaml` `version` automatically on
-   merge to main, and containers are tag-based with no VERSION files
-   (`docker-build.yaml` pushes `:v<run_number>` + `:<branch>`). Only brand-new
-   charts get an initial version (`1.0.0`).
+   merge to main, and containers are tag-based (`docker-build.yaml` pushes
+   `:v<run_number>` + `:<branch>`). Only brand-new charts get an initial
+   version (`1.0.0`).
 7. Write the plan to `.agents/plans/`.
 
 ## Plan file naming
 
-Save plans as `.agents/plans/yyyy-mm-dd-short-description.md` — a date prefix
-(e.g. `2026-09-05-add-searxng-values.md`), **never a unix epoch timestamp**.
-Use today's date.
+Save plans as `.agents/plans/yyyy-mm-dd-<type>-<short-description>.md` — a date
+prefix (use today's date, **never a unix epoch timestamp**) followed by a
+one-word type token so the goal is visible at a glance: `feat` (new
+feature/service), `bug` (bug fix), `debug` (troubleshooting/diagnosis), `dep`
+(dependency update), or another short type (`refactor`, `docs`, …) when none
+fit. Example: `2026-09-05-feat-add-searxng-values.md`.
 
 ## Plan output format
 
@@ -96,7 +108,8 @@ Skills the Code agent must load for the work (fresh session — nothing carries
 over). Example: helm-chart-creation, helm-bjw-s-chart, kubernetes-skill.
 
 ## MCP Servers
-MCP servers the Code agent needs. Example: readonly-gpu-kubernetes, global-searxng.
+MCP servers the Code agent needs. Example: readonly-gpu-kubernetes,
+global-searxng.
 
 ## Verified context
 - Files/charts found in recon: <paths, with what they confirmed>

@@ -14,3 +14,19 @@ proxy:
       enabled: false
     movies-4k:
       enabled: false
+
+# Needed by the base chart's cert-manager wildcard certificates
+# (wildcard-cert + cluster-wildcard-cert). Without it, the hivetools MCP
+# ingress (mcp.proxy-remote.<domain>) has no TLS once base's charts.hivetools
+# rolls out here via the baseChartVersion bump. Same shared Bitwarden item as
+# every other cluster. Prerequisite: *.proxy-remote.<domain> DNS must resolve
+# to this cluster's proxy for the ACME DNS-01 challenge to succeed.
+bitwardenIds:
+  cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
+
+# MCP platform (hivetools via base): shared Keycloak client `mcp`, one realm.
+hivetools:
+  bitwardenIds:
+    mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+  keycloak:
+    realm: SpencersLab

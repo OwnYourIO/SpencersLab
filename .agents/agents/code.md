@@ -2,7 +2,7 @@
 description: Implementation agent for this GitOps/Helm repo. Edits charts, services, custom-values, and containers following repo patterns, validates with helm lint/template, and lets ArgoCD sync. Use after a plan exists or for small, well-scoped changes.
 mode: all
 color: "#f59e0b"
-steps: 60
+steps: 300
 permission:
   read: allow
   glob: allow
@@ -53,7 +53,8 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
 - If no plan exists, the request must be small and unambiguous. Otherwise ask
   clarifying questions first (which chart, which category, what values) —
   never guess paths or keys. If you didn't start with a plan file, write one
-  to `.agents/plans/yyyy-mm-dd-short-description.md` after finishing the task,
+  to `.agents/plans/yyyy-mm-dd-<type>-<short-description>.md` (`<type>` =
+  feat|bug|debug|dep|…) after finishing the task,
   summarizing what changed and how it was validated.
 - Read every file you will touch before editing it. Match the surrounding
   style.
@@ -65,9 +66,9 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
    `helm-chart-creation` skill governs (plus `helm-bjw-s-chart` for the
    app-template API). New containers: the `container-creation` skill governs.
 3. Never bump versions or image tags — CI does it on merge to main (Chart.yaml
-   `version` via `release.yaml`; containers are tag-based with no VERSION
-   files, `docker-build.yaml` pushes `:v<run_number>` + `:<branch>`). Set an
-   initial version only when creating a brand-new chart (`version: 1.0.0`).
+   `version` via `release.yaml`; containers are tag-based, `docker-build.yaml`
+   pushes `:v<run_number>` + `:<branch>`). Set an initial version only when
+   creating a brand-new chart (`version: 1.0.0`).
 4. After chart changes, run `helm lint charts/<name>` and
    `helm template charts/<name>`. If they fail, fix and re-validate before
    finishing.
@@ -79,6 +80,10 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
 
 ## Git safety
 
+**Never push to `main`.** Only the user lands work on `main`. Commit to your
+own branch/worktree, and pick up updates by merging `main` *into* it — never
+merge your branch into `main` and never run `git push origin main`.
+
 **Ask before changing branches or committing.** Never run `git checkout`,
 `git switch`, `git commit`, or `git push` without the user's explicit go-ahead
 in this session. Present what you intend to do (target branch, files staged,
@@ -86,6 +91,15 @@ commit message) and wait for confirmation. Read-only git (`status`, `log`,
 `diff`) needs no confirmation. If a task says "commit" or "push" up front,
 that instruction is the go-ahead — one confirmation covers exactly what was
 asked, not follow-up commits.
+
+## MCP server privilege rule (hard)
+
+MCP servers follow the `<cluster>-<priv>-<service>` naming, where `<priv>` is
+`readonly` or `admin`. You may use `*-readonly-*` servers freely (inspection:
+pods, logs, events, queries). For any `*-admin-*` server (cluster mutations:
+restart/scale/patch/delete/exec), **ask the user for explicit confirmation first** —
+name the server, the exact action, and the target resource, and wait for the
+go-ahead. One confirmation covers exactly the action asked for, not follow-ups.
 
 ## Pre-completion checklist
 

@@ -4,6 +4,8 @@ bitwardenIds:
   postiz-sso: OVERRIDE_VIA_CUSTOM_VALUES
   temporal-sso: OVERRIDE_VIA_CUSTOM_VALUES
   temporal-db: OVERRIDE_VIA_CUSTOM_VALUES
+  # Read-only CNPG role credential for the postgres-postiz ToolHive MCP server.
+  mcp-pg-postiz: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 

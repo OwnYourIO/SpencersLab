@@ -21,6 +21,22 @@ spec:
       max_connections: "600"
       shared_buffers: 512MB
 
+  managed:
+    roles:
+      # Read-only role for the postgres-open-webui ToolHive MCP server.
+      # pg_read_all_data = read everything, write nothing (PG14+ predefined role).
+      # Password lives in Bitwarden (pg-open-webui-mcp-secret ExternalSecret); the LOGIN
+      # item's username must match this role name (readonly).
+      - name: readonly
+        ensure: present
+        login: true
+        inherit: true
+        inRoles:
+          - pg_read_all_data
+        connectionLimit: 5
+        passwordSecret:
+          name: pg-open-webui-mcp-secret
+
   #backup:
   #  retentionPolicy: 7d
   #  barmanObjectStore:

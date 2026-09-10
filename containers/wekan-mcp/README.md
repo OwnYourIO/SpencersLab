@@ -6,10 +6,12 @@ token stays out of the model's context.
 
 ## What this gives you
 
-- **15 typed tools** covering the high-frequency WeKan operations:
-  read (boards, lists, swimlanes, cards, comments, checklists) and write
-  (create/update/move cards, add comments, add checklists, toggle items).
-  Destructive operations (`delete_*`) are intentionally omitted.
+- **20 typed tools** covering the high-frequency WeKan operations:
+  read (boards, lists, swimlanes, cards, comments, checklists, automation
+  rules) and write (create/update/move cards, add comments, add checklists,
+  toggle items, create/update/remove automation rules). Destructive
+  operations (`delete_*`) are intentionally omitted — `remove_rule` is the
+  one marked-destructive exception, needed for automation hygiene.
 - **Credential isolation from the model**: `WEKAN_TOKEN` lives in a
   Kubernetes Secret, is injected into the pod as an env var by the
   ToolHive operator, and is never a tool parameter, never in a schema,
@@ -47,10 +49,11 @@ This server is deployed through the lab's GitOps repo — **never
   file and publishes `ghcr.io/ownyourio/wekan-mcp:<version>` (plus
   `:latest` and `:v<version>`). The image tag is pinned in the chart
   values; bump it there after each container change.
-- **Platform wiring**: declared as the `mcp.wekan` entry in
-  `charts/hivetools/values.yaml` (ToolHive `MCPServer` CRD,
+- **Platform wiring**: declared as the `hivetools.mcp.wekan` entry in
+  `services/gpu/prod/values.yaml` (ToolHive `MCPServer` CRD,
   streamable-http, port 8080). The shared hivetools ingress routes
-  `https://mcp.spencerslab.com/wekan` to the ToolHive proxy
+  `https://mcp.gpu.spencerslab.com/wekan` (generally
+  `mcp.<subDomain|clusterName>.<domain>`) to the ToolHive proxy
   automatically.
 - **Authentication**: the endpoint is gated by the shared Keycloak
   `MCPOIDCConfig` with audience `wekan`.
@@ -59,7 +62,7 @@ This server is deployed through the lab's GitOps repo — **never
   (`https://wekan.spencerslab.com`, which must run with `WITH_API=true`).
   The token is stored as the password of a Bitwarden login item and
   injected as `WEKAN_TOKEN` via the `wekan-mcp` ExternalSecret
-  (`charts/hivetools/templates/secret-wekan-mcp.yaml`) +
+  (`services/gpu/prod/templates/secret-wekan-mcp.yaml`) +
   `bitwardenIds.wekan-mcp` (real UUID in
   `custom-values/gpu/prod-values.yaml`). `WEKAN_BASE_URL` is a plain
   env value.
@@ -89,24 +92,31 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 |---|---|---|
 | `list_boards` | read | Boards the service user belongs to |
 | `get_board` | read | Board metadata + labels |
-| `list_lists` | read | Columns on a board |
+| `list_lists` | read | Columns on a board (each with its `swimlane_id`) |
 | `list_swimlanes` | read | Rows on a board |
 | `list_cards_in_list` | read | Cards in a list |
 | `get_card` | read | Full card details |
 | `list_comments` | read | Comments on a card |
 | `list_checklists` | read | Checklists on a card |
 | `get_checklist` | read | Checklist with item ids (needed to toggle items) |
+| `list_rules` | read | Automation rules of a board (trigger+action embedded) |
+| `get_rule` | read | One automation rule with full trigger and action |
 | `create_card` | write | New card in a list+swimlane |
 | `update_card` | write | Edit title/description/dates |
 | `move_card` | write | Move between lists/swimlanes |
 | `add_comment` | write | Post a comment on a card |
 | `add_checklist` | write | New checklist (with optional items) |
 | `toggle_checklist_item` | write | Mark an item done/undone |
+| `create_rule` | write | New automation rule (inline trigger + action) |
+| `update_rule` | write | Edit a rule's title/trigger/action |
+| `remove_rule` | write | **Destructive** — delete a rule + its trigger/action |
 
 Destructive tools (`delete_board`, `delete_card`, `delete_list`,
-`remove_member`) are **intentionally omitted**. Add them back in
-`wekan_mcp/server.py` if you want them, and consider marking with a
-destructive hint so clients can gate them.
+`remove_member`) are **intentionally omitted**. `remove_rule` is the one
+destructive tool that is exposed (rules are cheap to recreate and needed
+for automation hygiene); its docstring marks it destructive. Add the
+others back in `wekan_mcp/server.py` if you want them, and consider
+marking with a destructive hint so clients can gate them.
 
 ## Security notes worth encoding into ops
 

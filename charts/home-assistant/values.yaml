@@ -1,5 +1,9 @@
 bitwardenIds:
   home-assistant-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  # Read-only CNPG role credentials for the ToolHive MCP servers
+  # (postgres-grow-assistant / postgres-grow-assistant-sensors).
+  mcp-pg-grow-assistant: OVERRIDE_VIA_CUSTOM_VALUES
+  mcp-pg-grow-assistant-sensors: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 

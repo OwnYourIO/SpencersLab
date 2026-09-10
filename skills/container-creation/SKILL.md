@@ -1,6 +1,6 @@
 ---
 name: container-creation
-description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the tag-based docker-build GitHub workflow (no VERSION files), or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
+description: Add custom-built container images to the SpencersLab repo. Use this skill whenever adding or editing an image under containers/, writing or reviewing a Dockerfile for this repo, publishing to ghcr.io/ownyourio, working with the tag-based docker-build GitHub workflow, or renovate ARG pins for git-pinned build sources — even if the user doesn't name this skill directly.
 ---
 
 # Container Creation (SpencersLab)
@@ -34,15 +34,13 @@ containers/
     └── ...                 # any other build-context files
 ```
 
-**No `VERSION` file.** Images are identified by tags only.
-
 The directory name is significant: it becomes the image name. The container
 above publishes as `ghcr.io/ownyourio/<container-name>`.
 
 ## Build pipeline
 
 `.github/workflows/docker-build.yaml` builds and pushes containers
-automatically — tag-based, no VERSION files, no version-bump commits.
+automatically; images are identified by tags.
 
 **Triggers:** pushes to `main`/`dev` that touch `containers/**`, and PRs
 targeting `main`/`dev` that touch `containers/**`.
@@ -199,29 +197,36 @@ app-template:
         main:
           image:
             repository: ghcr.io/ownyourio/<container-name>
-            # The rolling branch tag tracks every merge to main.
-            tag: main
-            pullPolicy: Always
+            # Pinned to the newest immutable :v<run> tag — the repo standard
+            # (see "Image tag pinning" in helm-chart-creation). Renovate
+            # proposes bumps when a newer :v<run> tag is published.
+            tag: v123
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
 ```
 
-Two ways to reference the image:
+Two ways to reference the image — **pin by default**:
 
-- **`:main` + `pullPolicy: Always`** (default) — the deployment always pulls the
-  freshest build. Simplest; use it unless you have a reason to pin.
-- **`:v<run_number>`** — an immutable point-in-time tag. Pin to this only if you
-  need a reproducible, non-moving image (grab the run number from the
-  workflow run or `docker buildx imagetools inspect
-  ghcr.io/ownyourio/<name>:main`).
+- **`:v<run_number>`** (default) — an immutable point-in-time tag; pin to the
+  newest published one. This is the repo standard: reproducible deploys and
+  Renovate-managed upgrades (see the pinned-image rule in the
+  `helm-chart-creation` skill). Grab the run number from the workflow run or
+  `docker buildx imagetools inspect ghcr.io/ownyourio/<name>`.
+- **`:main` + `pullPolicy: Always`** — the mutable rolling tag. Use it only for
+  a brand-new container that has no pinned tag yet (or when explicitly asked),
+  and leave a note to pin it once a versioned build exists.
+  `brother-ptouch-automation` is the standing exception (active development —
+  it tracks `latest` + `pullPolicy: Always` on purpose).
 
-The change loop is now trivial — no chart edit needed when using `:main`:
+The change loop when pinned:
 
 1. Edit `containers/<name>/Dockerfile` (or source).
-2. Merge to `main` → the workflow rebuilds and repushes
-   `ghcr.io/ownyourio/<name>:main`; the next pod restart pulls it.
+2. Merge to `main` → the workflow rebuilds and repushes the rolling
+   `ghcr.io/ownyourio/<name>:main` plus a fresh immutable `:v<run_number>`.
+3. Bump `image.tag` in `charts/<name>/values.yaml` to the new `:v<run_number>`
+   (Renovate opens this PR for you once the tag is published).
 
 ## Worked example: brother-ptouch-automation
 

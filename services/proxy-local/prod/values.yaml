@@ -158,6 +158,9 @@ proxy:
       loginSubDomain: "login"
     sms:
       target: playsms
+    # Own auth (APP_PASSWORD) + hub Keycloak forward-auth (default userAuth).
+    pictaria:
+      target: pictaria
     bri-budget:
       target: bri-budget
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=actualbudget&response_type=code&redirect_uri=https://bri-budget.$.Values.domain/account/login"

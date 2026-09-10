@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-external-setup
+data:
+  setup.md: |
+    External Alloy host setup (unauthenticated remote-write)
+    ========================================================
+
+    Per-host values live in /etc/alloy/alloy.env on the target. Remote-write
+    is unauthenticated today (same posture as the in-cluster k8s-monitoring
+    stack); nothing sensitive appears on a command line, and the env file is
+    created with commented placeholders and edited by hand so nothing lands
+    in shell history.
+
+    Target host needs: Alloy >= 1.12, and DNS + network reach to
+    prometheus.{{ .Values.domain }} and loki.{{ .Values.domain }}. No kubectl on the
+    target.
+
+    ── STEP 1: install the config ─────────────────────────────
+    Standard hosts — on the kubectl machine run this and paste the printed
+    one-liner on the target (an existing config.alloy is backed up with a
+    timestamp suffix first):
+
+      printf 'sudo mkdir -p /etc/alloy && { [ ! -f /etc/alloy/config.alloy ] || sudo cp -a /etc/alloy/config.alloy /etc/alloy/config.alloy.bak-$(date +%%Y%%m%%d-%%H%%M%%S); } && echo '\''%s'\'' | base64 -d | sudo tee /etc/alloy/config.alloy >/dev/null\n' "$(kubectl -n default get cm alloy-external-config -o jsonpath='{.data.config\.alloy}' | base64 -w0)"
+
+    ── STEP 2: create the env file + systemd wiring ───────────
+    Paste these one-liners on the target (contain no secrets). An existing
+    alloy.env is backed up with a timestamp suffix first. Each is a single
+    complete command, so it pastes cleanly regardless of indentation:
+
+    sudo mkdir -p /etc/alloy /etc/systemd/system/alloy.service.d
+
+    { [ ! -f /etc/alloy/alloy.env ] || sudo cp -a /etc/alloy/alloy.env "/etc/alloy/alloy.env.bak-$(date +%Y%m%d-%H%M%S)"; } && printf '%s\n' '# Cluster label applied to all metrics/logs (dashboard grouping).' '# Change only if this host belongs to a different logical group.' 'CLUSTER=external' | sudo tee /etc/alloy/alloy.env >/dev/null && sudo chmod 600 /etc/alloy/alloy.env
+
+    printf '%s\n' '[Service]' 'EnvironmentFile=/etc/alloy/alloy.env' | sudo tee /etc/systemd/system/alloy.service.d/10-external.conf >/dev/null && sudo systemctl daemon-reload
+
+    ── STEP 3: fill in per-host values ────────────────────────
+    Edit the env file on the target (sudoedit uses your $EDITOR, edits a
+    temp copy, preserves the 600 perms):
+
+      sudoedit /etc/alloy/alloy.env
+
+      - CLUSTER=  change only if this host belongs to a different
+                  logical group
+
+    ── STEP 4: restart alloy ──────────────────────────────────
+      sudo systemctl restart alloy
+
+    ── Verify ─────────────────────────────────────────────────
+    journalctl -u alloy -f   (no write errors; remote-write succeeds)
+    Grafana: series with cluster=<CLUSTER> and instance=<hostname>
+
+    Rotate/change later: edit /etc/alloy/alloy.env, then
+    sudo systemctl restart alloy.

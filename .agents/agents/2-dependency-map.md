@@ -8,7 +8,7 @@ description: >
 mode: all
 model: anthropic/claude-sonnet-4-6
 temperature: 0.0
-steps: 100
+steps: 300
 permission:
   read: allow
   glob: allow
@@ -84,8 +84,10 @@ never modify a manifest or lockfile.
 
 Skills and MCP servers are registered in the root `AGENTS.md` — load skills
 from that registry as the feature requires. Stage-specific: `global-searxng`
-for package/image/chart research; `readonly-<cluster>-kubernetes` MCP to
-inspect live cluster resources the feature depends on.
+for package/image/chart research; the `readonly-<cluster>-kubernetes` MCP
+servers to inspect live cluster resources the feature depends on (pick the
+cluster the feature targets; this stage only inspects, so use the `readonly`
+tier).
 
 ---
 

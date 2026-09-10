@@ -5,7 +5,23 @@
   ],
   "timezone": "America/Denver",
   "ignoreTests": true,
+  "labels": ["dependencies"],
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 5,
+  "semanticCommits": "disabled",
   "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Plain image: lines in chart/service templates (ToolHive MCPServer specs, raw Deployments). Helm-templated and commented lines don't match; untagged/latest images yield no updates.",
+      "managerFilePatterns": [
+        "/(^|/)charts/[^/]+/templates/[^/]+\\.ya?ml$/",
+        "/(^|/)services/[^/]+/[^/]+/templates/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(^|\\n)[ \\t]*image:[ \\t]+(?<depName>[A-Za-z0-9._/-]+):(?<currentValue>[A-Za-z0-9._-]+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
     {
       "description": "Updates for k3s.",
       "customType": "regex",

@@ -488,3 +488,45 @@ then bumps `VERSION` to `0.0.2` and pushes the image — step 9 pins that tag.
 - If the image tag in step 8 doesn't match the auto-bumped VERSION (e.g. two
   container merges land first), use the actual tag — verify via the GHCR
   tags list, never guess.
+
+## Runtime diagnosis (2026-09-06 ~19:30 UTC, via Grafana/Loki/Prometheus + HA)
+
+Post-deploy, `wekan-0` crash-looped on startup validation:
+`GET /api/user → HTTP 200 + embedded "Unauthorized"`, repeated across every
+retry from 03:01 onward, including long stable-WeKan windows.
+
+Investigation findings:
+
+1. **The HA token is valid.** `rest_command.get_board` /
+   `rest_command.get_board_lists` in Home Assistant (which send
+   `Authorization: !secret wekan_api_token`, i.e. `Bearer <TOKEN>`) both
+   succeeded against `https://wekan.spencerslab.com` with no logged errors.
+2. **The MCP pod's token is rejected.** Same WeKan instance, minutes apart,
+   ExternalSecret freshly refreshed (`refreshInterval: 1h`, last sync
+   18:51:42Z from Bitwarden item `e6761f4a-…` `property: password`). Same
+   server, different outcomes ⇒ **the Bitwarden password field is not
+   byte-identical to the token in HA's `wekan_api_token` secret** (likely a
+   doubled/stripped `Bearer ` prefix, stray whitespace, or copy typo).
+   Fix: re-copy the exact value after `Bearer ` from HA's secret into the
+   Bitwarden item's password field, then wait ≤1h for the ExternalSecret
+   refresh (or force it) and let `wekan-0` retry.
+3. **WeKan v9.18 crash bug (home cluster):** unauthenticated requests to
+   board/list API endpoints throw an *unhandled* `Unauthorized` rejection
+   (`authentication.js checkUserId/checkBoardAccess` → `models/boards.js`,
+   `models/lists.js`), which `SyncedCron` treats as fatal
+   (`UNHANDLED_REJECTION → cleaning up running jobs`) — the process exits and
+   the container restarts. Observed restarts 8→11 between 18:50–19:25, each
+   traceable to a no-token probe. **Do not probe wekan.spencerslab.com API
+   endpoints without a valid token** until upstream fixes this; authenticated
+   requests (incl. the MCP server's) return proper errors and do not crash it.
+4. **MongoDB blip (resolved):** `home-mongodb-0` liveness probe
+   (`mongosh db.adminCommand('ping')`) timed out → kubelet restart at
+   17:23:43Z; mongod recovered (listening 17:23:52Z), stable since
+   (restarts_total flat at 55). WeKan reconnected silently. Not the blocker.
+5. Node home-lab: 17.1 GiB RAM, ~2.4–3.5 GiB available, root fs 83% — tight
+   but not the cause; worth watching given the liveness timeout.
+
+Status: all GitOps wiring verified working end-to-end (ExternalSecret →
+Secret → MCPServer → pod → public ingress). Only remaining action is the
+Bitwarden value correction above (user-side), then `wekan-0` self-heals on
+its next backoff retry.

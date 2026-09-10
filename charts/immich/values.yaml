@@ -1,6 +1,8 @@
 bitwardenIds:
   immich-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   immich-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  # Read-only CNPG role credential for the postgres-immich ToolHive MCP server.
+  mcp-pg-immich: OVERRIDE_VIA_CUSTOM_VALUES
 
 controllers:
   main:
@@ -8,12 +10,12 @@ controllers:
       main:
         image:
           repository: ghcr.io/immich-app/immich-server
-          tag: "v2.5.6"
+          tag: "v3.1.0"
 
 image:
   # renovate: datasource=github-releases depName=immich-app/immich
   repository: ghcr.io/immich-app/immich-server
-  tag: "v2.5.6"
+  tag: "v3.1.0"
 
 immich:
 
@@ -36,7 +38,7 @@ immich:
             image:
               # renovate: datasource=github-releases depName=immich-app/immich
               repository: ghcr.io/immich-app/immich-server
-              tag: "v2.5.6"
+              tag: "v3.1.0"
             env:
               IMMICH_CONFIG_FILE: /config/immich-config.yaml
               DB_HOSTNAME: pg-immich-rw

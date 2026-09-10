@@ -18,6 +18,9 @@ bitwardenIds:
   karakeep-secret: bc65b74a-1eaf-4e57-97d0-b2ce00407cf9
   karakeep-sso: 814bba20-e097-46a9-bf6b-b33c001f5d40
   paperless-pg: 9d812113-dd8b-4343-bef1-b265001073c2
+  # Read-only MCP role reuses the app DB item (same password for now);
+  # swap to a dedicated username=readonly item when available.
+  mcp-pg-paperless: 9d812113-dd8b-4343-bef1-b265001073c2
   paperless-sso-secret: 3f65d829-5e7e-44b8-b60f-b26901348eb4
   paperless-samba-secret: 6a63c15e-c02b-424d-bae0-b27e00049e09
   zigbee2mqtt: 0164cfbc-dd85-43af-a4cc-b13f00108bde
@@ -36,12 +39,25 @@ actualbudget:
 seaweedfs-csi-driver:
   volume-count: 8
   seaweedfs-csi-driver:
+    # Must stay nested here: the chart template reads
+    # .Values.seaweedfs-csi-driver.volume-count to render the CoreDNS
+    # rewrite rules (charts/seaweedfs-csi-driver/templates/seaweedfs-custom-dns.yaml).
+    # At the outer level it is ignored and the rewrite block renders empty,
+    # breaking all SeaweedFS volume reads (see commit 19ab00d5 regression).
+    volume-count: 8
     seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
 
 immich:
   bitwardenIds:
     immich-sso-secret: f4dfae88-f77d-4c31-b58e-b26b0049b6f5
     immich-pg: e908eec9-232c-4aef-8665-b26a000c7469
+    # Read-only MCP role reuses the app DB item (same password for now);
+    # swap to a dedicated username=readonly item when available.
+    mcp-pg-immich: e908eec9-232c-4aef-8665-b26a000c7469
+
+immich-analyze:
+  bitwardenIds:
+    immich-analyze: 8ef66a15-3efb-4854-85b1-b4bf0030a214
 
 smtp-relay:
   bitwardenIds:
@@ -53,6 +69,9 @@ postiz:
     postiz-sso: 5162b942-9d85-4dcb-928b-b3c4010d3851
     temporal-db: 8c1f6224-5157-45f2-b918-b3e20133690d
     temporal-sso: 102b8418-3ddf-4564-85cf-b3e201316a60
+    # Read-only MCP role reuses the app DB item (same password for now);
+    # swap to a dedicated username=readonly item when available.
+    mcp-pg-postiz: a3bf7d42-1ae7-4e8f-9d30-b3c20161ee38
 
 playsms:
   bitwardenIds:
@@ -64,6 +83,9 @@ rallly:
     rallly: 74d9f8bc-d640-488c-be79-b3c5010a6e04
     rallly-db: 7eae5e8c-90f1-47b4-ae0f-b3c4010eec7e
     rallly-sso: a48b08fa-b8ff-4a24-91a1-b3c4010e760f
+    # Read-only MCP role reuses the app DB item (same password for now);
+    # swap to a dedicated username=readonly item when available.
+    mcp-pg-home-rallly: 7eae5e8c-90f1-47b4-ae0f-b3c4010eec7e
 
 zigbee2mqtt:
   bitwardenIds:
@@ -98,3 +120,19 @@ pt750:
 brother-ptouch-automation:
   bitwardenIds:
     brother-ptouch-automation: 7ef542f8-7e2e-4ed9-96ae-b446013b5931
+
+pictaria:
+  bitwardenIds:
+    pictaria: a2dae3be-43c3-4881-8172-b4bf0031366d
+    pictaria-immich: 8ef66a15-3efb-4854-85b1-b4bf0030a214
+
+# MCP platform (hivetools via base): shared Keycloak client `mcp`, one realm.
+hivetools:
+  bitwardenIds:
+    mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+    mcp-pg-immich: e908eec9-232c-4aef-8665-b26a000c7469
+    mcp-pg-postiz: a3bf7d42-1ae7-4e8f-9d30-b3c20161ee38
+    mcp-pg-home-rallly: 7eae5e8c-90f1-47b4-ae0f-b3c4010eec7e
+    mcp-pg-paperless: 9d812113-dd8b-4343-bef1-b265001073c2
+  keycloak:
+    realm: SpencersLab

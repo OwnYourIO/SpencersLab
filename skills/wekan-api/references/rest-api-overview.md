@@ -13,12 +13,13 @@ Endpoint reference for the current WeKan REST API, distilled from the wiki (`RES
 7. [Cards](#cards)
 8. [Checklists and checklist items](#checklists-and-checklist-items)
 9. [Card comments](#card-comments)
-10. [Custom fields](#custom-fields)
-11. [Labels](#labels)
-12. [Integrations (webhooks)](#integrations-webhooks)
-13. [Attachments](#attachments)
-14. [Admin and global settings](#admin-and-global-settings)
-15. [Error handling patterns](#error-handling-patterns)
+10. [Automation rules](#automation-rules)
+11. [Custom fields](#custom-fields)
+12. [Labels](#labels)
+13. [Integrations (webhooks)](#integrations-webhooks)
+14. [Attachments](#attachments)
+15. [Admin and global settings](#admin-and-global-settings)
+16. [Error handling patterns](#error-handling-patterns)
 
 ## Base conventions
 
@@ -214,6 +215,10 @@ Array of `{ _id, title }`.
 
 Full list document.
 
+### `GET /api/boards/:boardId/lists/:listId/cards`
+
+Array of full card documents in the list (same shape as `GET .../swimlanes/:swimlaneId/cards`). Used by the wekan-mcp `list_cards_in_list` tool and `scripts/lists_swimlanes_cards_crud.py`.
+
 ### `POST /api/boards/:boardId/lists`
 
 Body: `{ "title": "In progress" }`. Response: `{ "_id": "<newListId>" }`.
@@ -295,6 +300,83 @@ Body depends on field type: `{ "value": "..." }` for text/number; item id for dr
 ### `POST /api/boards/:boardId/cards/:cardId/comments` — body `{ "authorId": "<userId>", "comment": "..." }`
 ### `GET /api/boards/:boardId/cards/:cardId/comments/:commentId`
 ### `DELETE /api/boards/:boardId/cards/:cardId/comments/:commentId`
+
+## Automation rules
+
+Board automation rules (IFTTT-style, issue #2674). A rule links a **trigger** (an activity event, a schedule, or a manual button) to an **action**. The REST API embeds the full trigger and action inline, so a rule is self-contained. Verified against `server/models/rules.js` on WeKan v9.99 (the lab's deployed version). Writes require board **write** access; reads require board membership.
+
+### `GET /api/boards/:boardId/rules`
+
+Returns an array of `{_id, title, trigger, action}`. Trigger/action documents come back with internal fields (`_id`, `boardId`, timestamps) already stripped.
+
+### `GET /api/boards/:boardId/rules/:ruleId`
+
+One rule as `{_id, title, trigger, action}`. Errors if the rule does not belong to the board.
+
+### `POST /api/boards/:boardId/rules` — create a rule
+
+Body: `{ "title": "...", "trigger": {...}, "action": {...} }`. `trigger.activityType` and `action.actionType` are required. Omitted trigger matching fields (`listName`, `oldListName`, `swimlaneName`, `cardTitle`, `userId`) default to the `'*'` wildcard server-side — this is what makes "add member on move TO list" / "remove member on move AWAY FROM list" pairs work (#2674). Response: `{_id, triggerId, actionId}`.
+
+```bash
+curl -X POST https://boards.example.com/api/boards/<boardId>/rules \
+  -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
+  -d '{"title":"Add member on move to Doing",
+       "trigger":{"activityType":"moveCard","listName":"Doing"},
+       "action":{"actionType":"addMember","username":"someuser"}}'
+```
+
+### `PUT /api/boards/:boardId/rules/:ruleId` — edit a rule
+
+Body: any of `{ "title"?, "trigger"?, "action"? }`. A supplied trigger/action **replaces** the stored document wholesale — include every field the rule should keep matching on. Response: `{_id}`.
+
+### `DELETE /api/boards/:boardId/rules/:ruleId`
+
+Removes the rule **and its trigger and action**. Response: `{_id}`.
+
+Notes:
+
+- Trigger `activityType` values include `createCard`, `moveCard`, `editCard`, plus `scheduledTrigger` (with `scheduleKind`, e.g. `aging` + `days` + `atTime`) and `button` (with `buttonType`/`buttonLabel`). Scheduled and button triggers are NOT wildcard-normalized.
+- Action `actionType` values include `addMember`, `removeMember`, `moveCardToTop`, `moveCardToBottom`, `archive`, and more.
+- The trigger vocabulary and matching fields are enumerated in `server/triggersDef.js`; action types are dispatched in `server/rulesHelper.js` (both version-specific — re-verify on upgrade).
+- **REST move gotcha (verified on v9.99)**: a REST card move that changes ONLY the swimlane (same list) creates **no `moveCard` activity** — the PUT route writes the swimlane via `Cards.direct` (skipping collection hooks) and only calls `cardMove()` with `['listId']` in the list-change branch. `moveCard`-triggered rules therefore fire only on REST moves that change the **list** (a swimlane change rides along in that activity). UI drag-and-drop is unaffected (it goes through the collection hooks and fires for swimlane-only moves too).
+
+### Template variables in action text fields (`{name}` tokens, issue #2475)
+
+Rules support Trello-Butler-style `{variable}` substitution, expanded when the rule fires (verified in `server/rulesHelper.js` on v9.99). It applies to **all three `sendEmail` action fields** (`emailTo`, `emailSubject`, `emailMsg`) and to `addChecklist`/`addChecklistWithItems` `checklistName` (+ items), `addSwimlane` `swimlaneName`, and `createCard` `cardName`.
+
+Available variables (lookup is case-insensitive: `{CardName}` == `{cardname}`):
+
+| Variable | Value |
+|---|---|
+| `{cardname}` / `{cardtitle}` | title of the card that triggered the rule |
+| `{cardnumber}` | the card's number |
+| `{description}` | card description |
+| `{duedate}` | card due date, locale string (only when the card has one) |
+| `{listname}` | list containing the card |
+| `{swimlanename}` | swimlane containing the card |
+| `{boardname}` | board title |
+| `{username}` | user who performed the triggering activity |
+| `{date}` / `{time}` / `{datetime}` | current date / time / both at rule execution |
+
+Semantics:
+
+- Tokens match `\{(\w+)\}`; **unknown tokens are left untouched** (no error).
+- Card-scoped variables need a card context: board-level rules (scheduled/button triggers running without a card) leave `{cardname}` etc. unexpanded.
+- `{username}` is the activity's actor, not the email recipient.
+- `sendEmail` also detects the recipient's WeKan language preference (lookup by email address) for localized mail templates; the From address is the server's mail-template From. The WeKan server must have mail delivery configured (e.g. `MAIL_URL`) or no mail goes out — send failures are logged server-side and swallowed by the rule engine.
+
+Example — email the team when a card is moved to "Done":
+
+```bash
+curl -X POST https://boards.example.com/api/boards/<boardId>/rules \
+  -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
+  -d '{"title":"Email on done",
+       "trigger":{"activityType":"moveCard","listName":"Done"},
+       "action":{"actionType":"sendEmail",
+                 "emailTo":"team@example.com",
+                 "emailSubject":"[{boardname}] {cardname} is done",
+                 "emailMsg":"{username} moved \"{cardname}\" to Done on {datetime}.\n\n{description}"}}'
+```
 
 ## Custom fields
 

@@ -1,7 +1,7 @@
 apiVersion: v2
 name: searxng
 version: 1.0.3
-appVersion: 2024.8.31
+appVersion: 2026.9.5
 dependencies:
 - name: app-template
   version: 5.0.1

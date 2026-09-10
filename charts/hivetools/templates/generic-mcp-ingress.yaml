@@ -1,8 +1,19 @@
+{{- /* MCP is exposed at mcp.<subDomain|clusterName>.<domain> — the repo
+     convention for cluster-scoped hostnames (subDomain-if-set-else-clusterName).
+     home renders mcp.home-lab.<domain>: DNS + cluster-wildcard-cert follow the
+     subDomain. */}}
+{{- $hostBase := .Values.clusterName }}
+{{- if hasKey .Values "subDomain" }}
+{{- $hostBase = .Values.subDomain }}
+{{- end }}
 {{- $hasEnabledServers := false }}
 {{- range $name, $config := .Values.mcp }}
-{{- if $config.enabled | default true }}
+{{- if and $config (ne ($config.enabled | toString) "false") }}
 {{- $hasEnabledServers = true }}
 {{- end }}
+{{- end }}
+{{- if .Values.postgresMcp.databases }}
+{{- $hasEnabledServers = true }}
 {{- end }}
 {{- if $hasEnabledServers }}
 ---
@@ -18,22 +29,34 @@ metadata:
 spec:
   tls:
     - hosts:
-        - "mcp.{{ .Values.domain }}"
-      secretName: wildcard-cert
+        - "mcp.{{ $hostBase }}.{{ .Values.domain }}"
+      secretName: cluster-wildcard-cert
   rules:
-    - host: "mcp.{{ .Values.domain }}"
+    - host: "mcp.{{ $hostBase }}.{{ .Values.domain }}"
       http:
         paths:
 {{- range $name, $config := .Values.mcp }}
-{{- if $config.enabled | default true }}
-          # Route /{{ $name }}/* to mcp-{{ $name }}-proxy
+{{- if and $config (ne ($config.enabled | toString) "false") }}
+          # Route /{{ $name }}/* to the ToolHive proxy of MCPServer mcp-{{ $name }}
+          # (service names are operator-derived: mcp-<serverName>-proxy).
           - path: /{{ $name }}
             pathType: Prefix
             backend:
               service:
-                name: mcp-{{ $name }}-proxy
+                name: mcp-mcp-{{ $name }}-proxy
                 port:
                   number: {{ $config.mcpPort | required (printf "mcp.%s.mcpPort is required" $name) }}
 {{- end }}
+{{- end }}
+{{- range $pgdb := .Values.postgresMcp.databases }}
+          # Route /postgres-{{ $pgdb.name }}/* to the ToolHive proxy of
+          # MCPServer mcp-postgres-{{ $pgdb.name }} (mcp-<serverName>-proxy).
+          - path: /postgres-{{ $pgdb.name }}
+            pathType: Prefix
+            backend:
+              service:
+                name: mcp-mcp-postgres-{{ $pgdb.name }}-proxy
+                port:
+                  number: {{ $.Values.postgresMcp.mcpPort | required "postgresMcp.mcpPort is required" }}
 {{- end }}
 {{- end }}

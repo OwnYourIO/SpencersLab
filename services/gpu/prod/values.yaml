@@ -19,6 +19,18 @@ bitwardenIds:
   neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
   searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
+  mcp-pg-coder: OVERRIDE_VIA_CUSTOM_VALUES
+  mcp-pg-open-webui: OVERRIDE_VIA_CUSTOM_VALUES
+
+  # Consumed by the gpu MCP ExternalSecret templates in templates/.
+  # github-mcp backs the renovate server's repo-clone initContainer.
+  github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  homeassistant-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  grafana-mcp-token: OVERRIDE_VIA_CUSTOM_VALUES
+  # Grafana ADMIN service-account token for the grafana-admin MCP tier.
+  grafana-mcp-admin-token: OVERRIDE_VIA_CUSTOM_VALUES
+  wekan-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
@@ -47,18 +59,23 @@ charts:
   n8n:
     namespace: default
     ServerSideApply: "false"
-  neo4j:
-    namespace: default
-    ServerSideApply: "false"
-  qdrant:
-    namespace: default
-    ServerSideApply: "false"
+  # Disabled 2026-09-07: CrashLoopBackOff (neo4j env/config bug — see plan
+  # .agents/plans/2026-09-07-disable-crashing-neo4j-qdrant.md). Re-enable by
+  # uncommenting; PVC `neo4j` and bitwardenIds.neo4j were left in place.
+  #neo4j:
+  #  namespace: default
+  #  ServerSideApply: "false"
+  # Disabled 2026-09-07: CreateContainerConfigError (no bitwardenIds.qdrant,
+  # so its secret never renders). Re-enable by uncommenting; PVC `qdrant`
+  # retained.
+  #qdrant:
+  #  namespace: default
+  #  ServerSideApply: "false"
   supabase:
     namespace: default
     ServerSideApply: "false"
-  hivetools:
-    namespace: default
-    ServerSideApply: "true"
+  # hivetools ships from base's charts: list (base >= 1.0.192 on every
+  # cluster); gpu-specific servers/DBs live in the hivetools: block below.
   llama-swap:
     namespace: default
     ServerSideApply: "false"
@@ -166,15 +183,17 @@ ingress:
       service: gpu-n8n
       port: 5678
 
-    qdrant:
-      serviceName: qdrant
-      service: gpu-qdrant
-      port: 6333
+    # Disabled 2026-09-07 with the qdrant chart (backend Service removed).
+    #qdrant:
+    #  serviceName: qdrant
+    #  service: gpu-qdrant
+    #  port: 6333
 
-    neo4j:
-      serviceName: neo4j
-      service: gpu-neo4j
-      port: 7474
+    # Disabled 2026-09-07 with the neo4j chart (backend Service removed).
+    #neo4j:
+    #  serviceName: neo4j
+    #  service: gpu-neo4j
+    #  port: 7474
 
     searxng:
       serviceName: searxng
@@ -292,3 +311,457 @@ shared-storage:
   knowledge:
     pvc-name: knowledge-shared
     provider: seaweedfs
+
+hivetools:
+  # gpu-specific MCP servers + Postgres DBs on top of base's defaults
+  # (the kubernetes server ships from charts/hivetools/values.yaml).
+  mcp:
+    playwright:
+      enabled: true
+      image:  mcr.microsoft.com/playwright/mcp:v0.0.78
+      transport: streamable-http
+      mcpPort: 8931
+      proxyPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: playwright
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '4Gi'
+        requests:
+          cpu: '100m'
+          memory: '128Mi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            fsGroup: 1000
+          containers:
+          - name: mcp
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
+            env:
+              - name: XDG_CONFIG_HOME
+                value: /home/node/.cache
+              - name: XDG_CACHE_HOME
+                value: /home/node/.cache
+            args:
+              - "--headless"
+              - "--port"
+              - "8931"
+              - "--host"
+              - "0.0.0.0"
+              - --allowed-hosts
+              - "*"
+              - "--output-dir"
+              - "/home/node/.cache/"
+              - "--isolated"
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: cache
+                mountPath: /home/node/.cache
+              - name: output
+                mountPath: /output
+          volumes:
+            - name: tmp
+              emptyDir:
+                medium: Memory
+                sizeLimit: 512Mi
+            - name: cache
+              emptyDir:
+                sizeLimit: 1Gi
+            - name: output
+              emptyDir:
+                sizeLimit: 500Mi
+    # Home Assistant, split into privilege tiers. Both use the SAME HA token
+    # (homeassistant-mcp secret); the tier is enforced server-side by ha-mcp's
+    # READ_ONLY_MODE (hides write tools + blocks write calls at runtime).
+    homeassistant-readonly:
+      enabled: true
+      image: zorak1103/ha-mcp:2026.9.2
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: homeassistant-readonly
+      env:
+        - name: READ_ONLY_MODE
+          value: "true"
+      resources:
+        limits:
+          cpu: '100m'
+          memory: '1128Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              envFrom:
+                - secretRef:
+                    name: homeassistant-mcp
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+    homeassistant-admin:
+      enabled: true
+      image: zorak1103/ha-mcp:2026.9.2
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: homeassistant-admin
+      resources:
+        limits:
+          cpu: '100m'
+          memory: '1128Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              envFrom:
+                - secretRef:
+                    name: homeassistant-mcp
+              securityContext:
+                runAsUser: 1000
+                runAsGroup: 1000
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+    searxng:
+      enabled: true
+      image: isokoliuk/mcp-searxng:1.13.0
+      transport: stdio
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: searxng
+      resources:
+        limits:
+          cpu: '100m'
+          memory: '1128Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              env:
+                - name: SEARXNG_URL
+                  value: "http://gpu-searxng.default.svc.cluster.local:8080"
+    # WeKan, split into privilege tiers. Both share the same WEKAN_TOKEN
+    # (wekan-mcp secret); the readonly tier hides/blocks write tools via the
+    # WEKAN_MCP_READ_ONLY flag handled by the wekan-mcp image.
+    # Image tracks :main until the build with WEKAN_MCP_READ_ONLY support is
+    # published, then pin to the :v<run> tag.
+    wekan-readonly:
+      enabled: true
+      image: ghcr.io/ownyourio/wekan-mcp:main
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: wekan-readonly
+      env:
+        - name: WEKAN_BASE_URL
+          value: "https://wekan.spencerslab.com"
+        - name: WEKAN_MCP_READ_ONLY
+          value: "true"
+      secrets:
+        - name: wekan-mcp
+          key: WEKAN_TOKEN
+          targetEnvName: WEKAN_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
+              securityContext:
+                runAsUser: 65532
+                runAsGroup: 65532
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+    wekan-admin:
+      enabled: true
+      image: ghcr.io/ownyourio/wekan-mcp:main
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: wekan-admin
+      env:
+        - name: WEKAN_BASE_URL
+          value: "https://wekan.spencerslab.com"
+      secrets:
+        - name: wekan-mcp
+          key: WEKAN_TOKEN
+          targetEnvName: WEKAN_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
+              securityContext:
+                runAsUser: 65532
+                runAsGroup: 65532
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+    # Grafana, split into privilege tiers. Readonly keeps --disable-write and
+    # the existing viewer token; admin drops --disable-write and uses a
+    # separate admin service-account token (grafana-mcp-admin-token secret —
+    # Bitwarden item must exist before the admin server can start).
+    grafana-readonly:
+      enabled: true
+      image: grafana/mcp-grafana:1.3.0
+      transport: streamable-http
+      mcpPort: 8000
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: grafana-readonly
+      # --allowed-hosts '*' is REQUIRED: mcp-grafana validates Host/Origin and
+      # the ToolHive proxy rewrites Host to the backend ClusterIP (else 403).
+      args:
+        - "--transport"
+        - "streamable-http"
+        - "--address"
+        - "0.0.0.0:8000"
+        - "--allowed-hosts"
+        - "*"
+        - "--disable-write"
+      env:
+        - name: GRAFANA_URL
+          value: https://graphs.spencerslab.com
+      secrets:
+        - name: grafana-mcp-token
+          key: token
+          targetEnvName: GRAFANA_SERVICE_ACCOUNT_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+            - name: mcp
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+    grafana-admin:
+      enabled: true
+      image: grafana/mcp-grafana:1.3.0
+      transport: streamable-http
+      mcpPort: 8000
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: grafana-admin
+      # Same as readonly but WITHOUT --disable-write and with the admin token.
+      args:
+        - "--transport"
+        - "streamable-http"
+        - "--address"
+        - "0.0.0.0:8000"
+        - "--allowed-hosts"
+        - "*"
+      env:
+        - name: GRAFANA_URL
+          value: https://graphs.spencerslab.com
+      secrets:
+        - name: grafana-mcp-admin-token
+          key: token
+          targetEnvName: GRAFANA_SERVICE_ACCOUNT_TOKEN
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+            - name: mcp
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+    # No pinned :v<run> tag exists yet, so this tracks the rolling :main tag —
+    # pin to a :v<run> tag once the first successful build publishes one.
+    renovate:
+      enabled: true
+      image: ghcr.io/ownyourio/renovate-mcp:main
+      transport: stdio
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: renovate
+      env:
+        - name: RENOVATE_MCP_REQUIRE_CLI
+          value: "true"
+        - name: RENOVATE_BASE_DIR
+          value: /cache
+        - name: HOME
+          value: /tmp
+      resources:
+        limits:
+          cpu: '2'
+          memory: '4Gi'
+        requests:
+          cpu: '500m'
+          memory: '1Gi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          initContainers:
+            - name: clone
+              image: ghcr.io/ownyourio/renovate-mcp:main  # same image ships git
+              imagePullPolicy: Always
+              env:
+                - name: HOME
+                  value: /tmp
+                - name: GITHUB_PERSONAL_ACCESS_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-mcp
+                      key: GITHUB_PERSONAL_ACCESS_TOKEN
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  # rm -rf first: the /workspace emptyDir survives container
+                  # restarts within the same pod, and git clone refuses a
+                  # non-empty destination (exit 128 -> CrashLoopBackOff).
+                  rm -rf /workspace/SpencersLab
+                  git clone --depth 1 --branch main \
+                    "https://x-access-token:${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/OwnYourIO/SpencersLab.git" \
+                    /workspace/SpencersLab
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+              volumeMounts:
+                - mountPath: /workspace
+                  name: workspace
+                - mountPath: /tmp
+                  name: tmp
+          containers:
+            - name: mcp
+              imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
+              resources:
+                requests:
+                  cpu: '500m'
+                  memory: '1Gi'
+                limits:
+                  cpu: '2'
+                  memory: '4Gi'
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+              volumeMounts:
+                - mountPath: /workspace
+                  name: workspace
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /cache
+                  name: cache
+          volumes:
+            - name: workspace
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+            - name: cache
+              emptyDir: {}
+  postgresMcp:
+    databases:
+      - name: coder
+        bitwardenIdKey: mcp-pg-coder
+        database: coder
+      - name: flowise
+        bitwardenIdKey: mcp-pg-flowise
+        database: flowise
+      - name: langflow
+        bitwardenIdKey: mcp-pg-langflow
+        database: langflow
+      - name: n8n
+        bitwardenIdKey: mcp-pg-n8n
+        database: n8n
+      - name: open-webui
+        bitwardenIdKey: mcp-pg-open-webui
+        database: open-webui
+      - name: supabase
+        bitwardenIdKey: mcp-pg-supabase
+        database: supabase

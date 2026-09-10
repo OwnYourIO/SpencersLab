@@ -1,0 +1,75 @@
+{{- /*
+Postgres MCP servers: one MCPServer per entry in .Values.postgresMcp.databases.
+All servers share the single definition in .Values.postgresMcp (image / transport /
+mcpPort / args / resources / podTemplateSpec); only the per-database name varies.
+This is the MCPServer counterpart of secret-postgres-mcp.yaml (ExternalSecrets) and
+is routed by generic-mcp-ingress.yaml. Adding a database = one entry in
+postgresMcp.databases + the bitwardenIds key + the CNPG managed role.
+*/}}
+{{- $pg := .Values.postgresMcp }}
+{{- range $pg.databases }}
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: mcp-postgres-{{ .name }}
+  namespace: {{ $.Values.namespace | default "default" }}
+spec:
+  image: {{ $pg.image | required "postgresMcp.image is required" }}
+  transport: {{ $pg.transport | required "postgresMcp.transport is required" }}
+  mcpPort: {{ $pg.mcpPort | required "postgresMcp.mcpPort is required" }}
+  # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+  # oidcConfigRef:
+  #   name: keycloak
+  #   audience: mcp-postgres-{{ .name }}
+  {{- if $pg.args }}
+  args:
+    {{- toYaml $pg.args | nindent 4 }}
+  {{- end }}
+  {{- if $pg.resources }}
+  resources:
+    {{- toYaml $pg.resources | nindent 4 }}
+  {{- end }}
+  secrets:
+    - name: postgres-mcp-{{ .name }}
+      key: DATABASE_URI
+      targetEnvName: DATABASE_URI
+  {{- /*
+  Liveness probe: self-heal a hung postgres-mcp process. The ToolHive proxy's
+  /health endpoint pings the backend and reports mcp.available. The probe
+  fetches it with python3 (present in the postgres-mcp image) and exits 1 when
+  the backend is degraded/hung, so kubelet restarts the container. A
+  connection-refused (proxy itself down) is treated as healthy — restarting the
+  backend would not help the proxy. See the plan for the failure analysis.
+  */}}
+  {{- $probeURL := printf "http://mcp-mcp-postgres-%s-proxy:%d/health" .name (int $pg.mcpPort) }}
+  {{- $probeScript := `import json, socket, sys, urllib.request
+url = sys.argv[1]
+try:
+    with urllib.request.urlopen(url, timeout=8) as r:
+        body = json.load(r)
+except Exception as e:
+    reason = getattr(e, "reason", e)
+    if isinstance(e, (socket.timeout, TimeoutError)) or isinstance(reason, (socket.timeout, TimeoutError, ConnectionResetError)):
+        sys.exit(1)
+    sys.exit(0)
+sys.exit(0 if body.get("mcp", {}).get("available") else 1)` }}
+  {{- $probe := dict "exec" (dict "command" (list "python3" "-c" $probeScript $probeURL)) "initialDelaySeconds" 30 "periodSeconds" 15 "timeoutSeconds" 12 "failureThreshold" 3 }}
+  {{- if $pg.podTemplateSpec }}
+  {{- $pts := deepCopy $pg.podTemplateSpec }}
+  {{- range $c := $pts.spec.containers }}
+  {{- if eq ($c.name | default "") "mcp" }}
+  {{- $_ := set $c "livenessProbe" $probe }}
+  {{- end }}
+  {{- end }}
+  podTemplateSpec:
+    {{- toYaml $pts | nindent 4 }}
+  {{- else }}
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          livenessProbe:
+            {{- toYaml $probe | nindent 12 }}
+  {{- end }}
+{{- end }}

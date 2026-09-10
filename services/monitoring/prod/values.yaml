@@ -331,6 +331,21 @@ grafana:
       external-secrets:
         url: https://raw.githubusercontent.com/external-secrets/external-secrets/main/docs/snippets/dashboard.json
         datasource: Prometheus
+      pg-overview:
+        # renovate: depName="PG Overview"
+        gnetId: 18316
+        revision: 1
+        datasource: Prometheus
+      postgresql-database:
+        # renovate: depName="PostgreSQL Database"
+        gnetId: 9628
+        revision: 8
+        datasource: Prometheus
+      postgresql-monitoring-dashboard:
+        # renovate: depName="PostgreSQL Monitoring Dashboard"
+        gnetId: 24298
+        revision: 11
+        datasource: Prometheus
     logs:
       container-log-dashboard:
         # renovate: depName="Container Log Dashboard"
