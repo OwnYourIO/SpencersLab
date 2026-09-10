@@ -22,7 +22,7 @@ dependencies:
   version: 5.0.1
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
-  version: 0.27.1
+  version: 0.29.0
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 9.99.0
@@ -47,5 +47,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 5.0.1
-digest: sha256:3f3832f7a4a6dae89dba025074d0ea64b51f6e9fc731e0667d44b94a12f2576a
-generated: "2026-09-07T02:27:19.903071552Z"
+digest: sha256:e674284db17d5415adbbc2b28ae1aa82653031f27019152b79cc5df7245366e3
+generated: "2026-09-10T17:29:53.207699511Z"
