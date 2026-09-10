@@ -124,3 +124,27 @@ practice, raise `livenessProbe.failureThreshold` to 2–3 or add a startupProbe.
 ## Not committed
 
 Changes are in the `troubleshoot-traefik` worktree only; commit/merge is the user's call.
+
+## Follow-up incident (same day, ~14:31): the v1 probe config crashlooped
+
+After the v1 fix merged (efa67306) and synced, the new ReplicaSet
+crashlooped: liveness `/healthcheck` with `failureThreshold: 1` and
+`initialDelaySeconds: 2` is an unwinnable race — entrypoints open only after
+plugins load (>2s) and the healthcheck route answers only after the first
+provider config build (another 1-3s), so the first probe always failed and
+kubelet killed every start (9 restarts in 15 min, runs of 2-8s; rollout
+stuck; MCP ingress down; boards 404).
+
+### Correction (v2)
+
+- Added a `startupProbe` on the internal `/ping` (port 8080, period 2s,
+  failureThreshold 30 ≈ 60s) to cover plugin download + provider sync;
+  liveness/readiness are suspended while it runs.
+- Raised liveness/readiness `failureThreshold` to 2 (detects a broken
+  middleware within ~20s; threshold 1 cannot survive a healthy startup).
+- Kept: `/healthcheck` probe path through the crowdsec-gated IngressRoute and
+  `--experimental.abortonpluginfailure=true`.
+
+Validated again with helm lint/template. Recovery path: merge → ArgoCD sync
+creates a new ReplicaSet with the v2 probes; pods boot through the
+startupProbe and roll out cleanly.

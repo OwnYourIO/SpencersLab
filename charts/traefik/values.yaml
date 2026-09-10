@@ -152,9 +152,29 @@ traefik:
       middlewares:
         - name: crowdsec
           namespace: kube-system
-  # Has to fail on the first occurrence, otherwise Traefik passes on the second but needs to restart to fix middleware after a host reboot.
+  # The startupProbe covers the slow part of boot on the INTERNAL ping router
+  # (always 200 once the process listens): plugin re-download from
+  # plugins.traefik.io + provider sync can take well over 10s after a node
+  # reboot, and entrypoints only open after plugins load. Liveness/readiness
+  # are suspended while it runs.
+  startupProbe:
+    httpGet:
+      path: /ping
+      port: 8080
+      scheme: HTTP
+    initialDelaySeconds: 2
+    periodSeconds: 2
+    failureThreshold: 30
+    timeoutSeconds: 2
+  # failureThreshold 1 is NOT survivable: after startup the /healthcheck route
+  # needs another 1-3s (first provider config build) before it can answer, so a
+  # threshold-1 liveness kills every healthy start and crashloops forever
+  # (observed live 2026-09-10: 9 restarts in 15 min, every run 2-8s).
+  # Threshold 2 still detects a genuinely broken middleware within ~20s.
   livenessProbe: 
-    failureThreshold: 1
+    failureThreshold: 2
+  readinessProbe:
+    failureThreshold: 2
 
   metrics:
     prometheus:
