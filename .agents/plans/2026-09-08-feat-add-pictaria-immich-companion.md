@@ -457,3 +457,32 @@ This change alters the pod template, so ArgoCD rolls the Deployment
 automatically — no manual restart needed. llama-swap side verified healthy at
 the time: `qwen3-vl-30b-a3b-q8` running/ready, `/v1/models` reachable
 unauthenticated from outside the cluster.
+
+## Post-deploy fix 2: v1.1.0 blocks the event loop at job start (2026-09-11)
+
+Symptom persisted after the probe fix: enhance job kicked off → no activity →
+run cancelled. The pod (new ReplicaSet with the lenient probes + 2 CPUs)
+still restarted: previous container ran 4h idle, then was killed ~2-3 min
+after the job started (liveness failures at 04:47:30, exit 137). The previous
+container's log contained ONLY the startup line — v1.1.0 logs nothing about
+jobs, and /api/health stayed unresponsive for the entire >2 min probe window,
+i.e. the Node event loop is hard-blocked from job start.
+
+Root cause: v1.1.0 walks the whole Immich library synchronously at the start
+of every sweep; on a large library that blocks the event loop for minutes,
+which no realistic liveness config can survive.
+
+Fix: **upgrade to pictaria-server 1.2.0** (released 2026-09-11):
+- "Faster library sweeps: a resumable local inventory avoids repeatedly
+  walking already-enriched photos" — directly targets this stall.
+- Adds a performance inspection page (run/photo timings, timeouts, retries) —
+  replaces the total log silence for future debugging.
+- Chart changes: `tag: 1.1.0 → 1.2.0`, `appVersion: 1.2.0` (chart `version`
+  untouched — CI bumps it). Lenient probes kept: the first inventory build
+  may still take a while.
+
+**Upgrade caveat (from release notes):** v1.2.0 migrates stored data
+(schema 7→12, settings 6→7, contract 8→15). Startup creates a complete
+pre-migration recovery snapshot automatically; rollback requires restoring
+that snapshot with the older build. A verified Pictaria backup before the
+rollout is recommended.
