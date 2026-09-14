@@ -1,0 +1,230 @@
+bitwardenIds:
+  erp-next: OVERRIDE_VIA_CUSTOM_VALUES
+  erp-next-db: OVERRIDE_VIA_CUSTOM_VALUES
+
+# Wrapper around the official frappe/erpnext chart (dependency `erpnext`).
+# Object names are service-agnostic (no cluster/release prefix): the chart
+# can be included by any service. The ArgoCD release name is
+# <serviceName>-<appName> — only release-derived names (the sites PVC)
+# carry it.
+erpnext:
+  fullnameOverride: erp-next
+  # DB root user for any chart-rendered job that reads it as a plain value
+  # (none enabled today — create-site runs via jobs.custom and reads the
+  # username from Secret erp-next-db). Must match the username of the
+  # Bitwarden `erp-next-db` item; the operator-managed MariaDB root user is
+  # always `root`.
+  dbRootUser: root
+  image:
+    repository: frappe/erpnext
+    tag: v16.34.2
+    pullPolicy: IfNotPresent
+  persistence:
+    worker:
+      enabled: true
+      # Sites volume owned by THIS chart (templates/pvc-erp-next.yaml,
+      # annotated resource-policy keep). MUST match the name in that
+      # template.
+      existingClaim: erp-next
+    logs:
+      # emptyDir logs — avoids a second PVC.
+      enabled: false
+  # Database runs on mariadb-operator (templates/mariadb-erp-next.yaml),
+  # NOT the chart's built-in mariadb-sts. The chart consumes external DB
+  # coordinates via dbHost/dbPort; the operator's Service is named after
+  # the MariaDB CR.
+  dbHost: mariadb-erp-next
+  dbPort: 3306
+  mariadb-sts:
+    enabled: false
+  valkey-cache:
+    enabled: true
+    # Subchart names default to <release>-<alias> — pin bare names.
+    fullnameOverride: erp-next-valkey-cache
+    resources:
+      requests:
+        cpu: 10m
+        memory: 50Mi
+      limits:
+        memory: 256Mi
+  valkey-queue:
+    enabled: true
+    fullnameOverride: erp-next-valkey-queue
+    resources:
+      requests:
+        cpu: 10m
+        memory: 50Mi
+      limits:
+        memory: 256Mi
+  nginx:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 256Mi
+  socketio:
+    resources:
+      requests:
+        cpu: 20m
+        memory: 100Mi
+      limits:
+        memory: 512Mi
+  worker:
+    gunicorn:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 400Mi
+        limits:
+          memory: 1Gi
+    default:
+      resources:
+        requests:
+          cpu: 40m
+          memory: 200Mi
+        limits:
+          memory: 1Gi
+    short:
+      resources:
+        requests:
+          cpu: 40m
+          memory: 200Mi
+        limits:
+          memory: 1Gi
+    long:
+      resources:
+        requests:
+          cpu: 40m
+          memory: 200Mi
+        limits:
+          memory: 1Gi
+    scheduler:
+      resources:
+        requests:
+          cpu: 20m
+          memory: 100Mi
+        limits:
+          memory: 512Mi
+  jobs:
+    configure:
+      enabled: true
+      # Static name — chart default uses {{ now }} (ArgoCD drift).
+      jobName: erp-next-conf-bench
+      # Retry first-boot transient failures (chart default 0 = one-shot, and
+      # ArgoCD never re-runs a Failed Job whose manifest matches).
+      backoffLimit: 5
+    # Site creation runs via jobs.custom below instead of jobs.createSite:
+    # the chart's create-site script runs `set -x` before `bench new-site`,
+    # which would write the admin + MariaDB root passwords into the pod
+    # logs. jobs.custom is the same Job without the xtrace.
+    createSite:
+      enabled: false
+    custom:
+      enabled: true
+      # Static name (same reason as configure). NOTE: Job spec.template is
+      # immutable — after an image tag or chart bump, delete this Job and
+      # erp-next-conf-bench so ArgoCD can re-apply them.
+      jobName: erp-next-create-site
+      backoffLimit: 5
+      initContainers:
+        - name: validate-config
+          # keep in sync with erpnext.image.tag
+          image: frappe/erpnext:v16.34.2
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "-c"]
+          args:
+            - >
+              export start=`date +%s`;
+              until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] && [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] && [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]]; do
+              echo "Waiting for sites/common_site_config.json to be created";
+              sleep 5;
+              if (( `date +%s`-start > 600 )); then
+              echo "could not find sites/common_site_config.json with required keys";
+              exit 1;
+              fi;
+              done;
+              echo "sites/common_site_config.json found";
+              echo "Waiting for database to be reachable...";
+              wait-for-it -t 180 $(DB_HOST):$(DB_PORT);
+              echo "Database is reachable.";
+          env:
+            - name: DB_HOST
+              value: mariadb-erp-next
+            - name: DB_PORT
+              value: "3306"
+          securityContext:
+            capabilities:
+              add:
+                - CAP_CHOWN
+          volumeMounts:
+            - name: sites-dir
+              mountPath: /home/frappe/frappe-bench/sites
+      containers:
+        - name: create-site
+          # keep in sync with erpnext.image.tag
+          image: frappe/erpnext:v16.34.2
+          imagePullPolicy: IfNotPresent
+          command: ["bash", "-c"]
+          args:
+            # No `set -x` here on purpose: xtrace would print the expanded
+            # bench command line (admin + DB root passwords) into the logs.
+            - >
+              bench_output=$(bench new-site ${SITE_NAME} --no-mariadb-socket --db-type=${DB_TYPE} --db-host=${DB_HOST} --db-port=${DB_PORT} --admin-password=${ADMIN_PASSWORD} --mariadb-root-username=${DB_ROOT_USER} --mariadb-root-password=${DB_ROOT_PASSWORD} --install-app=erpnext | tee /dev/stderr);
+              bench_exit_status=$?;
+              if [ $bench_exit_status -ne 0 ]; then
+              if [[ $bench_output == *"already exists"* ]]; then
+              echo "Site already exists, continuing...";
+              else
+              echo "An error occurred in bench new-site";
+              exit $bench_exit_status;
+              fi;
+              fi;
+              rm -f currentsite.txt
+          env:
+            # Site name MUST equal the public host (Frappe routes by Host
+            # header; the hub preserves erp.spencerslab.com end to end).
+            - name: SITE_NAME
+              value: erp.spencerslab.com
+            - name: DB_TYPE
+              value: mariadb
+            - name: DB_HOST
+              value: mariadb-erp-next
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: erp-next-db
+                  key: mariadb-root-username
+            - name: DB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-next-db
+                  key: mariadb-root-password
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: erp-next-admin
+                  key: password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            capabilities:
+              add:
+                - CAP_CHOWN
+          volumeMounts:
+            - name: sites-dir
+              mountPath: /home/frappe/frappe-bench/sites
+            - name: logs
+              mountPath: /home/frappe/frappe-bench/logs
+      volumes:
+        - name: sites-dir
+          persistentVolumeClaim:
+            claimName: erp-next
+        - name: logs
+          emptyDir: {}

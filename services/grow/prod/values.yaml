@@ -28,6 +28,14 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  # ERPNext v16 — wrapper chart charts/erp-next around the official
+  # frappe/erpnext chart (secrets, sites PVC and create-site job live in
+  # the chart, not here).
+  erp-next:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
   external-secrets-bitwarden:
     version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     repository: https://ownyourio.github.io/SpencersLab/
@@ -89,6 +97,14 @@ ingress:
       serviceName: ilias
       service: grow-ilias
       port: 80
+    erp-next:
+      # serviceName renders a second ingress for the public host
+      # erp.<domain> (documents/paperless pattern): the hub preserves the
+      # Host header when forwarding erp -> target erp-next, so grow must
+      # serve both erp.spencerslab.com and erp-next.spencerslab.com.
+      serviceName: erp
+      service: erp-next
+      port: 8080
 
 # ToolHive MCP platform extension (base deploys hivetools on every cluster):
 # read-only Postgres MCP servers for this cluster's CNPG databases, exposed at

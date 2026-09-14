@@ -1,0 +1,21 @@
+# Sites volume, owned by THIS chart (not the frappe subchart) so it can
+# carry ArgoCD deletion protection. The subchart consumes it via
+# erpnext.persistence.worker.existingClaim in values.yaml — that value must
+# stay in sync with this name.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: erp-next
+  namespace: default
+  annotations:
+    # Data volume: never prune it together with the Application —
+    # local-path's reclaimPolicy Delete would destroy the ERPNext site
+    # (common_site_config, uploaded files) beyond recovery.
+    argocd.argoproj.io/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 8Gi

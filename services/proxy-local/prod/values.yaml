@@ -167,6 +167,13 @@ proxy:
     # Own auth (ILIAS login) + hub Keycloak forward-auth (default userAuth).
     training:
       target: ilias
+    # ERPNext own auth (Frappe Administrator/users) + hub Keycloak
+    # forward-auth (default userAuth). Accepts erp.<domain>, forwards to
+    # erp-next.<domain> (grow serves both hosts). Note: forward-auth
+    # blocks Frappe API token clients — switch to the crowdsec-only
+    # `paste` pattern if API/mobile access is needed.
+    erp:
+      target: erp-next
     bri-budget:
       target: bri-budget
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=actualbudget&response_type=code&redirect_uri=https://bri-budget.$.Values.domain/account/login"

@@ -1,17 +1,24 @@
-# Chart Templates — Custom vs External, Chart.yaml, values.yaml, Template Bodies
+# Chart Templates — Custom vs Wrapper vs External, Chart.yaml, values.yaml, Template Bodies
 
 Reference material for the `helm-chart-creation` skill. Read the sections you
 need; don't load this whole file upfront.
 
-## Custom vs external chart (critical decision)
+## Custom vs wrapper vs external chart (critical decision)
 
-**Before implementing anything, decide:** is this a custom chart or an external
-chart?
+**Before implementing anything, decide:** custom chart, wrapper chart, or
+external chart? Best practice: **prefer including a chart in the service over
+direct implementation** — as soon as a service needs secrets, PVCs, or extra
+resources for an app, that app belongs in `charts/`, not inline in the
+service.
 
 ```
 Is there an official Helm chart?
 ├─ NO  → Create custom chart (charts/<name>/)
-└─ YES → Use external chart (entry under charts: in the service values.yaml)
+└─ YES → Does the service need secrets, PVCs, extra resources, or heavy config?
+         ├─ YES → Wrapper chart (charts/<name>/ with the official chart as a
+         │        dependency; Path 3)
+         └─ NO  → External chart (values-only entry under charts: in the
+                  service values.yaml; Path 2)
 ```
 
 ### Path 1: Custom chart (`charts/` folder)
@@ -65,6 +72,56 @@ Either way:
   in `services/<category>/prod/templates/` if needed (example:
   `services/home/prod/templates/pg-paperless.yaml`).
 - Add the proxy entry (`ingress.subdomains`) in the same values.yaml.
+
+### Path 3: Wrapper chart around an official chart (`charts/` folder)
+
+Preferred over Path 2 whenever the service needs repo-side resources —
+ExternalSecrets, PVCs, extra jobs — or substantial config. The wrapper keeps
+everything versioned, lintable and reusable; the service only carries a
+minimal internal `charts:` entry. Reference implementation: `charts/erp-next`
+(wraps frappe/erpnext).
+
+1. `mkdir -p charts/<service>/templates`
+2. `Chart.yaml` — name `<service>`, `version: 1.0.0`, `appVersion` of the
+   wrapped app, and the official chart as a dependency:
+
+   ```yaml
+   apiVersion: v2
+   name: <service>
+   version: 1.0.0
+   appVersion: <app-version>
+   dependencies:
+   - name: <official-chart-name>
+     version: <pinned-version>
+     repository: <official-repo-url>
+   ```
+
+   Renovate tracks the dependency via the built-in helm manager (Chart.yaml),
+   no inline comment needed. `helm dependency update charts/<service>`
+   generates `Chart.lock` (commit it; the vendored `charts/*.tgz` is
+   gitignored — ArgoCD resolves the dependency at sync time).
+3. `values.yaml` — `bitwardenIds:` sentinels as in any chart, then the
+   subchart config under the dependency-name key (e.g. `erpnext:`).
+   Subchart values are static YAML — names derived from the release
+   (fullnameOverride etc.) must be kept in sync manually with comments.
+4. `templates/` — one file per ExternalSecret
+   (`secret-<service>.yaml`, `secret-<service>-db.yaml`), wrapper-owned PVCs
+   (annotate `argocd.argoproj.io/resource-policy: keep` for data volumes;
+   point the subchart at them via its `existingClaim` value if supported),
+   and any extra resources.
+5. Watch for leaky upstream jobs: render the subchart's job scripts before
+   enabling them — e.g. frappe/erpnext's create-site runs `set -x` before
+   `bench new-site`, xtracing passwords into pod logs; `charts/erp-next`
+   replaces it with the chart's generic `jobs.custom`. Set `backoffLimit`
+   > 0 on one-shot Jobs (chart defaults are often 0 = no retry, and ArgoCD
+   never re-runs a Failed Job whose manifest matches). Static `jobName`s
+   avoid `{{ now }}` drift but make Job specs immutable across upgrades —
+   document the delete-before-bump procedure.
+6. Wire the service: internal `charts:` entry (commented
+   `#version:`/`#repository:` lines like other internal entries), proxy
+   entry, and the app-scoped block in
+   `custom-values/<category>/prod-values.yaml` with the real UUIDs
+   (merged into the app values slice, overriding the chart sentinels).
 
 ### How the two deployment mechanisms compare
 
@@ -258,6 +315,11 @@ Use for ANY new MariaDB/MySQL database. Requires the mariadb-operator chart
 (`charts/mariadb-operator`, currently deployed on grow — add the same `charts:`
 entry to another category's values.yaml to deploy it elsewhere). Never run
 MariaDB as a sidecar container in new charts (legacy example: playsms).
+
+Live example: `charts/erp-next/templates/mariadb-erp-next.yaml` — a
+root-only variant (no Database/User/Grant/Connection CRs) because `bench
+new-site` bootstraps the site database and user itself via root; the root
+password comes from the app's existing DB ExternalSecret.
 
 Credentials come from Bitwarden via two `bitwarden-login` items:
 `<service>-mariadb-root` (root password) and `<service>-mariadb` (app user
@@ -550,6 +612,10 @@ SERVICE_VALUES:
   `services/home/prod/Chart.yaml`.
 - External chart via `charts:` key: `external-secrets-bitwarden` in
   `services/home/prod/values.yaml` (live `version:` + `repository:`).
+- Wrapper chart around an official chart: `charts/erp-next` (frappe/erpnext
+  dependency) wired as an internal `charts:` entry in
+  `services/grow/prod/values.yaml`; secrets/PVC/create-site job live in the
+  wrapper.
 - Multi-deploy via `chart:` field: `scifi-farm` in
   `services/home/prod/values.yaml` uses `chart: hugo` (release `home-scifi-farm`
   from `charts/hugo`).

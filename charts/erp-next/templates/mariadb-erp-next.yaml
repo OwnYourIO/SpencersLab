@@ -1,0 +1,43 @@
+# ERPNext database via mariadb-operator (charts/mariadb-operator on grow).
+# Pattern: skills/helm-chart-creation/references/chart-templates.md
+# "MariaDB instance (mariadb-operator)".
+#
+# Deviation from the full pattern: NO Database/User/Grant/Connection CRs —
+# `bench new-site` bootstraps the site database + user itself using the DB
+# root credentials (jobs.custom create-site container), exactly like the
+# frappe chart's built-in mariadb-sts flow did. The root password comes from
+# Secret erp-next-db (ExternalSecret erp-next-db-secret, Bitwarden item
+# `erp-next-db`).
+#
+# Image: MariaDB 10.6 LTS — the series the frappe chart's own mariadb-sts
+# ships for ERPNext v16; newer series are not what upstream validates
+# against. Pinned patch tag per operator best practice.
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: mariadb-erp-next
+spec:
+  rootPasswordSecretKeyRef:
+    name: erp-next-db
+    key: mariadb-root-password
+  # renovate: datasource=docker depName=mariadb
+  image: mariadb:10.6.28
+  replicas: 1
+  port: 3306
+  storage:
+    # local-path cannot expand — size adequately up front.
+    size: 8Gi
+    storageClassName: local-path
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  metrics:
+    enabled: true

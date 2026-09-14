@@ -1,0 +1,8 @@
+apiVersion: v2
+name: erp-next
+version: 1.0.0
+appVersion: v16.34.2
+dependencies:
+- name: erpnext
+  version: 8.0.79
+  repository: https://helm.erpnext.com

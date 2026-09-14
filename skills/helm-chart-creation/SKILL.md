@@ -49,14 +49,25 @@ Use for: onboarding a new service, restructuring an existing chart
 (controllers, persistence, secrets), ApplicationSet/proxy wiring, custom-values
 plumbing.
 
-**Do NOT create a custom chart when a maintained official chart exists.**
-Check, in order: artifacthub.io, kubesearch.dev, the app's official docs.
+**Prefer including a chart in the service over direct implementation.**
+Services consume charts through `charts:` entries; application config belongs
+in a chart under `charts/`, not inline in service values/templates. Check for
+an official chart first, in order: artifacthub.io, kubesearch.dev, the app's
+official docs.
 
-- Official chart exists and is maintained → wire it as an **external chart**
-  (values-only entry under `charts:` in the service values.yaml — no `charts/`
-  directory). See `references/values-and-appset.md`.
+- No official chart → custom app-template chart in `charts/<name>/`.
+- Official chart exists and is maintained:
+  - The service needs repo-side templates (ExternalSecrets, PVCs, extra
+    jobs/resources) or substantial config → **wrapper chart** in
+    `charts/<name>/` that declares the official chart as a dependency
+    (example: `charts/erp-next` wraps frappe/erpnext). Secrets, PVCs and
+    jobs live in the wrapper; the service gets a minimal internal `charts:`
+    entry.
+  - Truly values-only, no secrets and no extra resources → direct
+    **external chart** entry under `charts:` in the service values.yaml
+    (example: `cloudnative-pg` in grow). See
+    `references/values-and-appset.md`.
 - Official chart outdated/unmaintained → evaluate fix-upstream vs custom.
-- No official chart → proceed with a custom app-template chart.
 
 ## Workflow
 
@@ -76,11 +87,15 @@ Check, in order: artifacthub.io, kubesearch.dev, the app's official docs.
   | Medium | `charts/n8n` | single container + CloudNativePG PostgreSQL |
   | Complex | `charts/langfuse` | app + Redis sidecar + PostgreSQL |
   | Very complex | `charts/archon`, `charts/supabase` | 4+ containers, many ports/secrets |
+  | Wrapper | `charts/erp-next` | wraps an official external chart (frappe/erpnext dependency); secrets/PVC/jobs in the wrapper |
 
-### 2. Decide custom vs external chart
+### 2. Decide custom vs wrapper vs external chart
 
-Custom chart in `charts/<name>/` vs external chart referenced from the service
-values.yaml `charts:` key. The two never mix. Decision tree, task lists, and
+Custom chart in `charts/<name>/`, wrapper chart in `charts/<name>/` around an
+official dependency, or external chart referenced straight from the service
+values.yaml `charts:` key. Rule of thumb: as soon as a service needs secrets,
+PVCs, or extra resources for an external chart, wrap it in a chart instead of
+configuring it directly in the service. Decision tree, task lists, and
 comparison table: `references/chart-templates.md`.
 
 **MCP servers are neither**: they are entries in an `mcp:` map on the
@@ -293,7 +308,11 @@ Each category dir holds `templates/appset.yaml` (per-service appset) and
 
 ## Anti-patterns
 
-- ❌ Creating a chart when an official one exists.
+- ❌ Configuring an external chart directly in the service once it needs
+  secrets, PVCs, or extra resources (wrap it in a `charts/` chart instead;
+  direct external entries are for values-only cases).
+- ❌ Reimplementing in a custom chart what a maintained official chart
+  already provides (wrap the official chart as a dependency instead).
 - ❌ Domain references directly in values.yaml (use secret templates).
 - ❌ `localhost` for cross-pod communication (use service names).
 - ❌ Skipping the PVC evaluation (not every service needs persistent storage).
@@ -319,6 +338,10 @@ Each category dir holds `templates/appset.yaml` (per-service appset) and
   domain construction, separate DB credentials.
 - Very complex: `charts/archon/` (4 containers, domain refs in secrets),
   `charts/supabase/` (6+ containers, multiple JWT secrets).
+- Wrapper around an official chart: `charts/erp-next/` — Chart.yaml
+  dependency on frappe/erpnext, subchart config under the `erpnext:` values
+  key, one-file-per-secret ExternalSecrets, wrapper-owned PVC
+  (`resource-policy: keep`), `jobs.custom` replacing a leaky upstream job.
 - PG cluster key elements: CloudNativePG, `local-path` storage class,
   `enablePodMonitor: true`, `max_connections`/`shared_buffers`, initdb
   bootstrap.
