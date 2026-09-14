@@ -1,0 +1,66 @@
+# Wrapper values for the upstream mariadb-operator chart (community).
+# All config is nested under the `mariadb-operator:` subchart key.
+mariadb-operator:
+  # CRDs are managed by THIS release (initial-deployment mode).
+  # WARNING: uninstalling/pruning this release deletes the 12
+  # k8s.mariadb.com CRDs, which cascade-deletes EVERY MariaDB instance in the
+  # cluster (no preserveOnDelete). Never remove the mariadb-operator
+  # Application while MariaDB instances exist.
+  crds:
+    enabled: true
+
+  image:
+    repository: ghcr.io/mariadb-operator/mariadb-operator
+    pullPolicy: IfNotPresent
+    # tag defaults to Chart appVersion (26.6.0)
+
+  # Operator controller metrics + ServiceMonitors (grow scrapes
+  # prometheus-operator objects via the k8s-monitoring stack).
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  webhook:
+    # Built-in cert-controller issues/rotates the webhook serving cert.
+    # cert-manager integration stays off even though cert-manager exists.
+    cert:
+      certManager:
+        enabled: false
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
+  certController:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL

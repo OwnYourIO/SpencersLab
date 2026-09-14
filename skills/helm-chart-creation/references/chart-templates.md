@@ -252,6 +252,169 @@ spec:
         name: db-<service-name>-secret
 ```
 
+### MariaDB instance — `templates/mariadb-<service>.yaml` (mariadb-operator)
+
+Use for ANY new MariaDB/MySQL database. Requires the mariadb-operator chart
+(`charts/mariadb-operator`, currently deployed on grow — add the same `charts:`
+entry to another category's values.yaml to deploy it elsewhere). Never run
+MariaDB as a sidecar container in new charts (legacy example: playsms).
+
+Credentials come from Bitwarden via two `bitwarden-login` items:
+`<service>-mariadb-root` (root password) and `<service>-mariadb` (app user
+username/password). Add `OVERRIDE_VIA_CUSTOM_VALUES` sentinels for both in the
+service values.yaml and real UUIDs in `custom-values/<category>/prod-values.yaml`.
+
+```yaml
+# templates/secret-mariadb-<service>.yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mariadb-<service>-root
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: bitwarden-login
+    kind: SecretStore
+  target:
+    name: mariadb-<service>-root
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: {{ index .Values "bitwardenIds" "<service>-mariadb-root" }}
+        property: password
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mariadb-<service>-app
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: bitwarden-login
+    kind: SecretStore
+  target:
+    name: mariadb-<service>-app
+    creationPolicy: Owner
+  data:
+    - secretKey: password
+      remoteRef:
+        key: {{ index .Values "bitwardenIds" "<service>-mariadb" }}
+        property: password
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
+```
+
+```yaml
+# templates/mariadb-<service>.yaml
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: mariadb-<service>
+spec:
+  rootPasswordSecretKeyRef:
+    name: mariadb-<service>-root
+    key: password
+  image: mariadb:11.8.8        # pin an LTS patch tag (11.8 line); don't rely on operator defaults
+  replicas: 1                  # standalone — single-node clusters can't run Galera/replication
+  port: 3306
+  storage:
+    size: 10Gi                 # local-path CANNOT expand — size adequately up front
+    storageClassName: local-path
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  metrics:
+    enabled: true              # mysqld-exporter sidecar + ServiceMonitor
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Database
+metadata:
+  name: <service>
+spec:
+  mariaDbRef:
+    name: mariadb-<service>
+  name: <service>
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: User
+metadata:
+  name: <service>
+spec:
+  mariaDbRef:
+    name: mariadb-<service>
+  name: <service>
+  passwordSecretKeyRef:
+    name: mariadb-<service>-app
+    key: password
+  maxUserConnections: 20
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Grant
+metadata:
+  name: <service>
+spec:
+  mariaDbRef:
+    name: mariadb-<service>
+  privileges:
+    - ALL PRIVILEGES
+  database: <service>
+  table: "*"
+  username: <service>
+---
+# Connection secret the app mounts/reads (analogous to CNPG's connection handling)
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Connection
+metadata:
+  name: <service>
+spec:
+  mariaDbRef:
+    name: mariadb-<service>
+  username: <service>
+  passwordSecretKeyRef:
+    name: mariadb-<service>-app
+    key: password
+  database: <service>
+  secretName: mariadb-<service>-conn
+  healthCheck:
+    interval: 30s
+```
+
+The app chart then consumes `mariadb-<service>-conn` (keys: `host`, `port`,
+`username`, `password`, `database`, plus `url`-style keys via
+`spec.secretTemplate` if the app wants a DSN) — construct `DATABASE_*` env
+vars from it in the app's secret template, e.g.
+`DATABASE_HOST: "{{ "{{ .host }}" }}"`.
+
+Operational constraints (single-node k3s + local-path):
+
+- Standalone only: Galera needs >= 3 nodes, async replication >= 2 pods;
+  PITR needs the replication topology + MariaDB >= 10.8 — none apply.
+- `local-path` has `allowVolumeExpansion: false` — grow the DB by restoring
+  into a larger fresh instance, not by resizing the PVC.
+- Backups: scheduled `PhysicalBackup` (mariadb-backup, preferred) or logical
+  `Backup` to S3/MinIO with `compression` + `maxRetention`; restore via a
+  `Restore` CR or `spec.bootstrapFrom`. No MinIO endpoint is wired on grow
+  yet — add credentials/CA secrets first when backups are implemented.
+- Operator lifecycle: the operator release owns the CRDs; deleting it
+  cascade-deletes all instances. Upgrades: never skip intermediate operator
+  versions (renovate bumps one version per PR — merge in order).
+- Field reference: `apiVersion` for all CRDs is `k8s.mariadb.com/v1alpha1`;
+  validate exact fields against the operator's API reference when
+  implementing (docs linked in `.agents/plans/2026-09-14-feat-add-mariadb-operator-grow.md`).
+
 ### Application ExternalSecret — `templates/secret-<service>.yaml`
 
 ```yaml
@@ -364,7 +527,10 @@ SECRETS:
   - bitwarden-fields: custom fields (API keys, tokens)
 
 DATABASE:
-  - CloudNativePG: pg-<service>-rw for read-write access
+  - PostgreSQL: CloudNativePG operator — pg-<service>-rw for read-write access
+  - MariaDB/MySQL: mariadb-operator (charts/mariadb-operator, grow) —
+    MariaDB/Database/User/Grant/Connection CRDs (k8s.mariadb.com/v1alpha1),
+    app reads the Connection secret mariadb-<service>-conn
 
 SERVICE_VALUES:
   - file: services/<category>/prod/values.yaml
@@ -389,3 +555,7 @@ SERVICE_VALUES:
   from `charts/hugo`).
 - Service-level PG cluster: `services/home/prod/templates/pg-paperless.yaml` +
   `pg-paperless-secret.yaml`.
+- External-chart wrapper (operator): `charts/mariadb-operator/` — Chart.yaml
+  with one OCI dependency (upstream chart, CRDs via `crds.enabled: true`),
+  config nested under the subchart key; wired via the `charts:` key in
+  `services/grow/prod/values.yaml` (git-path source).

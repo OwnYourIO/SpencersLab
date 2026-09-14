@@ -193,6 +193,11 @@ Helm override gotchas hit while testing renders:
   latest; do not copy stale versions from old docs).
 - PostgreSQL clusters use the **CloudNativePG** operator
   (`postgresql.cnpg.io/v1 Cluster`).
+- MariaDB/MySQL instances use the **mariadb-operator**
+  (`k8s.mariadb.com/v1alpha1 MariaDB`) — operator wrapper chart
+  `charts/mariadb-operator` (deployed on grow). Standalone single-instance
+  only on single-node clusters; never sidecar a MariaDB container for new
+  services. Templates in `references/chart-templates.md`.
 - All secrets use **external-secrets + Bitwarden** — no other secret mechanism.
 - **Domain references live in secret templates**, not values.yaml.
 - Use the `OVERRIDE_VIA_CUSTOM_VALUES` sentinel for Bitwarden IDs in

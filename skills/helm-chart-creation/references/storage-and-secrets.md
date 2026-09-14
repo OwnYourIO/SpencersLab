@@ -59,6 +59,9 @@ expect. Actual names vary — consult the app's Docker image docs.
 
 **Database-backed applications:**
 
+- Postgres comes from CloudNativePG; MariaDB/MySQL comes from the
+  mariadb-operator (`MariaDB` + `Database`/`User`/`Grant` + `Connection` CRs —
+  see `chart-templates.md`). Never sidecar a database container in new charts.
 - `DATABASE_URL` (single connection string) or discrete
   `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USER`/`DB_PASSWORD`
 - Connection pooling settings (pool size, timeouts)

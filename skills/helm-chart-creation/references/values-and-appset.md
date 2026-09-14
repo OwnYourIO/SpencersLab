@@ -344,7 +344,9 @@ SECRETS:
   - bitwarden-fields: custom fields (API keys, tokens)
 
 DATABASE:
-  - CloudNativePG; read-write endpoint pg-<service>-rw
+  - PostgreSQL: CloudNativePG operator; read-write endpoint pg-<service>-rw
+  - MariaDB/MySQL: mariadb-operator (charts/mariadb-operator, grow);
+    Connection secret mariadb-<service>-conn
 
 VALUE HIERARCHY:
   - chart defaults < service values < custom-values (annotation-gated)

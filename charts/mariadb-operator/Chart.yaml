@@ -1,0 +1,11 @@
+apiVersion: v2
+name: mariadb-operator
+description: MariaDB operator (community) - run and operate MariaDB in a cloud native way
+type: application
+version: 1.0.0
+appVersion: "26.6.0"
+dependencies:
+  - name: mariadb-operator
+    version: 26.6.0
+    repository: oci://ghcr.io/mariadb-operator/charts
+    # sourceUrl: https://github.com/mariadb-operator/mariadb-operator
