@@ -56,10 +56,6 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
-    # Consumed by charts/ilias to build ILIAS_HTTP_PATH; co-located with the
-    # training ingress entry below so a subdomain rename touches one file.
-    values:
-      publicSubdomain: training
   okd:
     #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/

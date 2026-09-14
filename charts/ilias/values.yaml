@@ -39,7 +39,7 @@ app-template:
             # ILIAS_DB_HOST/PORT/USER/PASSWORD/NAME, rendered by the
             # mariadb-operator Connection CR (templates/mariadb-ilias.yaml).
             - secretRef:
-                name: mariadb-ilias-conn
+                name: ilias-db
           probes:
             liveness: &iliasProbes
               enabled: true
@@ -120,7 +120,7 @@ app-template:
             - secretRef:
                 name: "{{ .Release.Name }}"
             - secretRef:
-                name: mariadb-ilias-conn
+                name: ilias-db
           resources:
             requests:
               cpu: 10m

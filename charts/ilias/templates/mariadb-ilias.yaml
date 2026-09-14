@@ -107,7 +107,9 @@ spec:
     name: mariadb-ilias-app
     key: password
   database: ilias
-  secretName: mariadb-ilias-conn
+  # Named ilias-db per lab convention (playsms-style <service>-db), not the
+  # skill-doc default mariadb-<service>-conn.
+  secretName: ilias-db
   secretTemplate:
     hostKey: ILIAS_DB_HOST
     portKey: ILIAS_DB_PORT
