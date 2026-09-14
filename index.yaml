@@ -8599,6 +8599,18 @@ entries:
   ilias:
   - apiVersion: v2
     appVersion: "11.3"
+    created: "2026-09-14T16:46:48.596828473Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 85af6bb95ea5457eb6ffd3e9ca2afe053b4c24f1e6cc4505523494a6864be733
+    name: ilias
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/ilias-1.0.2/ilias-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: "11.3"
     created: "2026-09-14T01:11:07.990554902Z"
     dependencies:
     - name: app-template
@@ -18487,4 +18499,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-14T15:01:25.930414689Z"
+generated: "2026-09-14T16:46:48.598293608Z"
