@@ -8567,6 +8567,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/hyperion-1.0.5/hyperion-1.0.5.tgz
     version: 1.0.5
+  ilias:
+  - apiVersion: v2
+    appVersion: "11.3"
+    created: "2026-09-14T01:11:07.990554902Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: d43b0cf740bea71b00d42ef7f60daf2d5a7b46e4f92d99234b9c6c27afecd6ce
+    name: ilias
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/ilias-1.0.1/ilias-1.0.1.tgz
+    version: 1.0.1
   immich:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -18420,4 +18433,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-14T00:34:37.240271355Z"
+generated: "2026-09-14T01:11:07.992044071Z"
