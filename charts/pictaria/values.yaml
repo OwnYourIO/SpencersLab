@@ -50,6 +50,15 @@ app-template:
             TRUSTED_PROXY_IPS: 10.42.0.0/24
             # 2h request budget for slow local vision models (provider default is 300s).
             OPENAI_COMPATIBLE_TIMEOUT_MS: "7200000"
+            # Verbose Qwen3-VL tag output exhausted the adapter's old fixed
+            # 2400-token cap mid-JSON (finish_reason=length -> "bad JSON"
+            # failures). 8192 matches the cloud-OpenAI budget (v1.4.0+).
+            OPENAI_COMPATIBLE_MAX_TOKENS: "8192"
+            # Send response_format json_schema (not just json_object) so
+            # llama.cpp enforces Pictaria's schema while decoding — bounds the
+            # output (maxItems) and guarantees schema-valid JSON. Requires
+            # v1.4.0+; older images ignore the variable.
+            OPENAI_COMPATIBLE_JSON_SCHEMA: "true"
             # Frozen v1.2-spencer taxonomy, mounted from the pictaria-tags ConfigMap.
             TAXONOMY_PATH: /tags/tags.json
           envFrom:
