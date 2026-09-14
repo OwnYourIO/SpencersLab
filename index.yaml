@@ -5919,6 +5919,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/email-appset-1.1.1/email-appset-1.1.1.tgz
     version: 1.1.1
+  erp-next:
+  - apiVersion: v2
+    appVersion: v16.34.2
+    created: "2026-09-14T01:17:25.200276765Z"
+    dependencies:
+    - name: erpnext
+      repository: https://helm.erpnext.com
+      version: 8.0.79
+    digest: a373ab590a7d579b0ebcd521b6fcf73db0517345c3859a15e7b3ac158557e58f
+    name: erp-next
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/erp-next-1.0.1/erp-next-1.0.1.tgz
+    version: 1.0.1
   espresense:
   - apiVersion: v2
     appVersion: 1.0.12
@@ -18433,4 +18446,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-14T01:11:07.992044071Z"
+generated: "2026-09-14T01:17:25.201401353Z"
