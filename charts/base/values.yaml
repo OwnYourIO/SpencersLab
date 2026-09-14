@@ -37,6 +37,37 @@ charts:
   hivetools:
     namespace: default
     ServerSideApply: "true"
+  # Stakater Reloader on every cluster: rolling-restarts Deployments/
+  # StatefulSets/DaemonSets when a referenced ConfigMap/Secret changes.
+  # Charts already carry reloader.stakater.com/auto: "true". Renovate
+  # manages the version via the "key as chart name" regex manager: keep
+  # version: directly under the key and repository: on the next line.
+  reloader:
+    version: 2.2.17
+    repository: https://stakater.github.io/stakater-charts
+    namespace: default
+    ServerSideApply: "true"
+
+# Values for the cluster-wide stakater/reloader chart (charts entry above) —
+# rides the charts-appset values slice into every <serviceName>-reloader
+# Application. annotations reload strategy restarts via a pod-template
+# annotation excluded from ArgoCD diffs below, so selfHeal never fights it.
+reloader:
+  reloader:
+    reloadStrategy: annotations
+    readOnlyRootFileSystem: true
+    deployment:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
 
 cert-manager:
   crds:
@@ -85,17 +116,22 @@ argo-cd:
       resource.customizations.ignoreDifferences.apps_Deployment: |
         jqPathExpressions:
           - '.spec.template.spec.hostUsers'
+          - '.spec.template.metadata.annotations?["reloader.stakater.com/last-reloaded-from"]'
           - '.spec.selector | select(.matchLabels."app.kubernetes.io/name" | test("argocd-(server|repo-server|applicationset-controller)"))'
           - '.metadata.labels | select(.metadata.name | test("argocd-(server|repo-server|applicationset-controller)"))'
       # ArgoCD has trouble handling PVCs and statefulsets. These ignore noise from that.
       resource.customizations.ignoreDifferences.apps_StatefulSet: |
         jqPathExpressions:
           - '.spec.template.metadata.annotations?["date/deploy-date"]'
+          - '.spec.template.metadata.annotations?["reloader.stakater.com/last-reloaded-from"]'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .creationTimestamp'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .apiVersion'
           - '.spec.volumeClaimTemplates[] | select(.metadata) | .kind'
           - '.spec.selector | select(.matchLabels."app.kubernetes.io/name" | test("argocd-(server|repo-server|applicationset-controller)"))'
           - '.metadata.labels | select(.metadata.name | test("argocd-(server|repo-server|applicationset-controller)"))'
+      resource.customizations.ignoreDifferences.apps_DaemonSet: |
+        jqPathExpressions:
+          - '.spec.template.metadata.annotations?["reloader.stakater.com/last-reloaded-from"]'
 
     rbac:
       create: true
