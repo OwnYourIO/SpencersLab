@@ -326,6 +326,20 @@ Credentials come from Bitwarden via two `bitwarden-login` items:
 username/password). Add `OVERRIDE_VIA_CUSTOM_VALUES` sentinels for both in the
 service values.yaml and real UUIDs in `custom-values/<category>/prod-values.yaml`.
 
+**`generate: false` on `rootPasswordSecretKeyRef` (required for ArgoCD
+convergence).** The operator's defaulting webhook injects `generate: false`
+on every apply; with ServerSideApply it is the one defaulted field that shows
+up as a live-vs-desired diff, leaving the Application permanently OutOfSync.
+Declare it in the chart (verified on grow, operator 26.6.0, 2026-09-14 — the
+other webhook defaults do NOT need to be echoed).
+
+**Startup probe override (required on slow nodes).** The operator's default
+startup probe budget is ~50s, but first-boot init (`mariadb-install-db` +
+temporary server for the root-password SQL) takes longer under load/disk
+pressure. If the probe kills the container mid-init, the next start sees an
+initialized datadir and skips the init SQL forever — root password never set,
+permanent CrashLoopBackOff. Override with the ~10-minute budget below.
+
 ```yaml
 # templates/secret-mariadb-<service>.yaml
 apiVersion: external-secrets.io/v1
@@ -381,6 +395,7 @@ spec:
   rootPasswordSecretKeyRef:
     name: mariadb-<service>-root
     key: password
+    generate: false            # required — see note above (SSA convergence)
   image: mariadb:11.8.8        # pin an LTS patch tag (11.8 line); don't rely on operator defaults
   replicas: 1                  # standalone — single-node clusters can't run Galera/replication
   port: 3306
@@ -398,6 +413,17 @@ spec:
     capabilities:
       drop:
         - ALL
+  # Startup probe override — see note above (~10 min init budget).
+  startupProbe:
+    exec:
+      command:
+        - bash
+        - -c
+        - mariadb -u root -p"${MARIADB_ROOT_PASSWORD}" -e "SELECT 1;"
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 60
   metrics:
     enabled: true              # mysqld-exporter sidecar + ServiceMonitor
 ---

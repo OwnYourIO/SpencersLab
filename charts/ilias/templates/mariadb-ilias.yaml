@@ -9,6 +9,10 @@ spec:
   rootPasswordSecretKeyRef:
     name: mariadb-ilias-root
     key: password
+    # Required for ArgoCD SSA convergence: the operator's defaulting webhook
+    # injects generate: false on apply; without declaring it the app stays
+    # OutOfSync forever (the only defaulted field that shows in the diff).
+    generate: false
   # renovate: datasource=docker depName=mariadb
   image: mariadb:11.8.8
   replicas: 1 # standalone — grow is single-node (no Galera/replication)

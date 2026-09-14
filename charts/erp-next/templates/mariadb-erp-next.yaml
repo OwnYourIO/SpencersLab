@@ -20,6 +20,10 @@ spec:
   rootPasswordSecretKeyRef:
     name: erp-next-db
     key: mariadb-root-password
+    # Required for ArgoCD SSA convergence: the operator's defaulting webhook
+    # injects generate: false on apply; without declaring it the app stays
+    # OutOfSync forever (the only defaulted field that shows in the diff).
+    generate: false
   # renovate: datasource=docker depName=mariadb
   image: mariadb:10.6.28
   replicas: 1
@@ -39,5 +43,21 @@ spec:
     capabilities:
       drop:
         - ALL
+  # Override the operator's default startup probe (~50s budget). First-boot
+  # init = mariadb-install-db + a temporary server that applies the
+  # root-password SQL; if the probe kills the container mid-init, the next
+  # start sees an initialized datadir and SKIPS the init SQL forever
+  # (permanent CrashLoopBackOff — observed on grow 2026-09-14, ilias +
+  # erp-next). Budget: 20s delay + 60 x 10s = ~10 minutes.
+  startupProbe:
+    exec:
+      command:
+        - bash
+        - -c
+        - mariadb -u root -p"${MARIADB_ROOT_PASSWORD}" -e "SELECT 1;"
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 60
   metrics:
     enabled: true
