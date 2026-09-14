@@ -1,6 +1,6 @@
 apiVersion: v2
 name: ilias
-version: 1.0.1
+version: 1.0.2
 appVersion: '11.3'
 dependencies:
 - name: app-template
