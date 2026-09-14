@@ -60,6 +60,16 @@ charts:
     # training ingress entry below so a subdomain rename touches one file.
     values:
       publicSubdomain: training
+  okd:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+  smtp-relay:
+    #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
   # External charts (with version and repository)
   cloudnative-pg:
@@ -105,6 +115,9 @@ ingress:
       serviceName: erp
       service: erp-next
       port: 8080
+    okd:
+      service: grow-okd
+      port: 80
 
 # ToolHive MCP platform extension (base deploys hivetools on every cluster):
 # read-only Postgres MCP servers for this cluster's CNPG databases, exposed at

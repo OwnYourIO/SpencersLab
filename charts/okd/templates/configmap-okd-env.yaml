@@ -1,0 +1,20 @@
+# Domain-dependent env for the frontend (nginx) and enketo containers.
+# Rendered here (parent chart context) because the appset injects `domain` as
+# a TOP-LEVEL value, which the app-template subchart cannot see — templated
+# env strings inside values.yaml would render empty (same latent bug as
+# searxng's SEARXNG_BASE_URL). Consumed via envFrom configMapRef.
+#
+# No email vars: CERTBOT_EMAIL is only used by the certbot path (never with
+# SSL_TYPE=upstream) and v2026.3.0 enketo hardcodes its support address —
+# neither is consumed at this pinned version.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: okd-env
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+data:
+  DOMAIN: "{{ .Values.subdomain }}.{{ .Values.domain }}"
+  SENTRY_ORG_SUBDOMAIN: "{{ .Values.sentry.orgSubdomain }}"
+  SENTRY_KEY: "{{ .Values.sentry.key }}"
+  SENTRY_PROJECT: "{{ .Values.sentry.project }}"

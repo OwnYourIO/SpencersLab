@@ -219,6 +219,17 @@ Helm override gotchas hit while testing renders:
   `services/**/values.yaml`; real UUIDs only in `custom-values/`.
 - **Service name == chart name** for proper routing; releases are named
   `<serviceName>-<appName>`.
+- **Reserved bare Service names in `default`**: `service`, `enketo`, `pyxform`
+  are claimed by `charts/okd` via `forceRename` (upstream ODK configs hardcode
+  those hostnames). No other chart may render Services with these names —
+  two ServerSideApply Applications owning the same object sync-fight.
+- **app-template subcharts cannot see top-level values**: the appset injects
+  `domain`/`clusterName` as TOP-LEVEL values, so `{{ .Values.domain }}` inside
+  the `app-template:` subtree (e.g. templated container env in values.yaml)
+  renders EMPTY (live example: searxng's `SEARXNG_BASE_URL: https://`).
+  Domain-dependent env belongs in parent-context templates — an ExternalSecret
+  or a small ConfigMap consumed via `envFrom` (see `charts/okd`
+  `templates/configmap-okd-env.yaml`).
 - Multi-container pods use **localhost** for intra-pod communication — but
   never for cross-pod/service communication (use service names).
 - PostgreSQL read-write endpoint is `pg-<service>-rw`.

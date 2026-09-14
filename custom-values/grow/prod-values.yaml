@@ -60,3 +60,18 @@ hivetools:
     mcp-pg-grow-assistant-sensors: f59add53-a8fb-42cd-b784-b3c8011081df
   keycloak:
     realm: SpencersLab
+
+okd:
+  bitwardenIds:
+    # Three Bitwarden Login items (see charts/okd + plan prerequisites):
+    #   enketo         — username odk, password = DB password,
+    #                    custom field enketo-secret (64 hex chars)
+    #   enketo-less    — password = less-secure key (32 hex chars)
+    #   enketo-api-key — password = API key (128 hex chars)
+    enketo: 1aa10dd1-0747-4486-8a36-b4c5001609a5
+    enketo-less: 86239b0f-3651-4114-8989-b4c50016da04
+    enketo-api-key: 4c8ef2ef-8dbf-4caf-91a8-b4c500166878
+
+smtp-relay:
+  bitwardenIds:
+    smtp-secret: 876515bc-b0d6-43df-b9fa-b0dd000a601e

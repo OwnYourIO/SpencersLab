@@ -1,0 +1,391 @@
+bitwardenIds:
+  # Three Bitwarden Login items (see plan prerequisites):
+  #   enketo        — username/password = DB creds + custom field enketo-secret
+  #   enketo-less   — password = less-secure enketo key
+  #   enketo-api-key — password = enketo API key
+  enketo: OVERRIDE_VIA_CUSTOM_VALUES
+  enketo-less: OVERRIDE_VIA_CUSTOM_VALUES
+  enketo-api-key: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+# Subdomain for all ODK endpoints; DOMAIN/EMAIL_FROM are composed from it in
+# the parent-context templates (configmap-okd-env, secret-okd-backend) so the
+# prefix lives in exactly one place.
+subdomain: okd
+
+# ODK system administrator contact (backend sysadminAccount).
+sysadminEmail: lab@spencerslab.com
+
+# Upstream compose defaults (ODK's own Sentry project). Single source for
+# both the frontend okd-env ConfigMap and the backend ExternalSecret.
+sentry:
+  orgSubdomain: o130137
+  key: 3cf75f54983e473da6bd07daddf0d2ee
+  project: "1298632"
+
+app-template:
+  global:
+    nameOverride: okd
+
+  controllers:
+    # Frontend: central-nginx (frontend baked in). SSL_TYPE=upstream → plain
+    # HTTP :80; TLS terminates at grow's traefik (wildcard-cert).
+    frontend:
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/getodk/central-nginx
+            tag: v2026.3.0
+          # DOMAIN + Sentry constants come from the okd-env ConfigMap (parent
+          # chart context — top-level chart values are invisible to the
+          # app-template subchart; templated env here would render empty).
+          envFrom:
+            - configMapRef:
+                name: okd-env
+          env:
+            SSL_TYPE: upstream
+            OIDC_ENABLED: "false"
+            # Consumed by nginx setup-odk.sh (client-config.json); empty = off.
+            SENTRY_DSN_FRONTEND: ""
+          probes:
+            liveness: &frontendProbe
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: 80
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 3
+            readiness: *frontendProbe
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            # NOTE: nginx master runs as root and needs CAP_SETUID/SETGID/CHOWN
+            # to spawn workers — do NOT drop ALL here.
+
+    # Backend: runs migrations at startup (start-odk.sh) → Recreate so two
+    # pods never migrate concurrently.
+    backend:
+      strategy: Recreate
+      annotations:
+        reloader.stakater.com/auto: "true"
+        argocd.argoproj.io/sync-wave: "0"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/getodk/central-service
+            tag: v2026.3.0
+          # Image ships no entrypoint; compose runs start-odk.sh (waits for
+          # PG, generates local.json, runs migrations, starts cron + pm2).
+          command: ["./start-odk.sh"]
+          envFrom:
+            - secretRef:
+                name: okd-backend
+          probes:
+            # First boot waits for PG then runs the FULL ODK migration suite
+            # before port 8383 opens — give startup 5 min; liveness/readiness
+            # only arm once startup succeeds.
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: 8383
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 30
+            liveness: &backendProbe
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: 8383
+                initialDelaySeconds: 30
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 5
+            readiness: *backendProbe
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1536Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+    # Enketo + its two Redis instances (sidecars, localhost — upstream
+    # config.json.template redis hosts are overridden via the enketo-config
+    # ConfigMap mount; compose names contain underscores, invalid in K8s).
+    enketo:
+      strategy: Recreate
+      annotations:
+        reloader.stakater.com/auto: "true"
+        argocd.argoproj.io/sync-wave: "0"
+      containers:
+        enketo:
+          image:
+            repository: ghcr.io/ownyourio/okd-enketo
+            # New in-repo container: no pinned build exists yet — track the
+            # rolling :main tag until docker-build publishes the first
+            # :v<run>, then pin it (renovate maintains the pin afterwards).
+            tag: main
+            pullPolicy: Always
+          # DOMAIN + Sentry constants come from the okd-env ConfigMap (parent
+          # chart context — top-level chart values are invisible to the
+          # app-template subchart; templated env here would render empty).
+          envFrom:
+            - configMapRef:
+                name: okd-env
+          env:
+            HTTPS_PORT: "443"
+          probes:
+            liveness: &enketoProbe
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: 8005
+                initialDelaySeconds: 30
+                periodSeconds: 10
+                timeoutSeconds: 2
+                failureThreshold: 5
+            readiness: *enketoProbe
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        redis-main:
+          image:
+            repository: redis
+            tag: 8.10.1
+          probes:
+            liveness: &redisMainProbe
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: 6379
+                initialDelaySeconds: 5
+                periodSeconds: 10
+                failureThreshold: 3
+            readiness: *redisMainProbe
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        redis-cache:
+          image:
+            repository: redis
+            tag: 8.10.1
+          # Enketo expects the cache redis on 6380 (upstream conf).
+          args: ["--port", "6380"]
+          probes:
+            liveness: &redisCacheProbe
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: 6380
+                initialDelaySeconds: 5
+                periodSeconds: 10
+                failureThreshold: 3
+            readiness: *redisCacheProbe
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+    # XLSForm conversion service.
+    pyxform:
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/getodk/pyxform-http
+            tag: v4.5.0
+          probes:
+            liveness: &pyxformProbe
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: 80
+                initialDelaySeconds: 5
+                periodSeconds: 10
+                failureThreshold: 3
+            readiness: *pyxformProbe
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    # Ingress target: with nameOverride okd + release grow-okd this renders
+    # as `grow-okd` (referenced by services/grow ingress.subdomains.okd).
+    okd:
+      controller: frontend
+      ports:
+        http:
+          port: 80
+    # Upstream ODK configs hardcode these hostnames (nginx odk.conf.template:
+    # proxy_pass http://service:8383 / http://enketo:8005; backend
+    # config.json.template: xlsform host `pyxform`, enketo url
+    # http://enketo:8005/-). forceRename keeps upstream templates untouched.
+    backend:
+      forceRename: service
+      controller: backend
+      ports:
+        http:
+          port: 8383
+    enketo:
+      forceRename: enketo
+      controller: enketo
+      ports:
+        http:
+          port: 8005
+    pyxform:
+      forceRename: pyxform
+      controller: pyxform
+      ports:
+        http:
+          port: 80
+
+  configMaps:
+    # Verbatim copy of getodk/central files/enketo/config.json.template at
+    # v2026.3.0, with ONLY the redis hosts changed to the localhost sidecars.
+    # Re-sync from upstream whenever the Central version is bumped.
+    enketo-config:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-3"
+      data:
+        config.json.template: |
+          {
+              "app name": "Enketo",
+              "base path": "-",
+              "encryption key": "${SECRET}",
+              "id length": 31,
+              "less secure encryption key": "${LESS_SECRET}",
+              "linked form and data server": {
+                  "api key": "${API_KEY}",
+                  "authentication": {
+                      "type": "cookie",
+                      "url": "${BASE_URL}/login?next={RETURNURL}"
+                  },
+                  "name": "ODK Central",
+                  "server url": "${DOMAIN}"
+              },
+              "logo": {
+                  "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+                  "href": ""
+              },
+              "offline enabled": true,
+              "payload limit": "1mb",
+              "port": "8005",
+              "query parameter to pass to submission": "st",
+              "redis": {
+                  "main": {
+                      "host": "127.0.0.1",
+                      "port": "6379"
+                  },
+                  "cache": {
+                      "host": "127.0.0.1",
+                      "port": "6380"
+                  }
+              },
+              "support": {
+                  "email": "support@getodk.org"
+              },
+              "maps": [ {
+                  "name": "street",
+                  "tiles": [ "https://tile.openstreetmap.org/{z}/{x}/{y}.png" ],
+                  "attribution": "Map data © <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors",
+                  "referrerPolicy": "origin"
+              } ],
+              "text field character limit": 1000000,
+              "exclude non-relevant": true,
+              "hide powered by": true
+          }
+
+  persistence:
+    # Enketo secrets (ExternalSecret `okd`) mounted as files —
+    # start-enketo.sh asserts sizes 64/32/128; start-odk.sh reads
+    # enketo-api-key.
+    secrets:
+      type: secret
+      name: okd
+      advancedMounts:
+        backend:
+          main:
+            - path: /etc/secrets
+              readOnly: true
+        enketo:
+          enketo:
+            - path: /etc/secrets
+              readOnly: true
+    enketo-config:
+      type: configMap
+      identifier: enketo-config
+      advancedMounts:
+        enketo:
+          enketo:
+            - path: /srv/src/enketo/packages/enketo-express/config/config.json.template
+              subPath: config.json.template
+    enketo-redis-main-data:
+      existingClaim: okd-enketo-redis
+      advancedMounts:
+        enketo:
+          redis-main:
+            - path: /data
+    enketo-redis-cache-data:
+      type: emptyDir
+      advancedMounts:
+        enketo:
+          redis-cache:
+            - path: /data

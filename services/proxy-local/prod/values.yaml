@@ -99,6 +99,16 @@ proxy:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"
 
+    # ODK Central (grow cluster). ODK has its own auth; public survey links
+    # and ODK Collect mobile clients must not hit hub Keycloak → crowdsec only.
+    # target `grow` = grow cluster traefik (grow.<domain> resolves to it).
+    okd:
+      target: grow
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+
     # Has SSO & companion app (and thus needs a redirect)
     player:
       target: jellyfin

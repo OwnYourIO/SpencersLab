@@ -1,0 +1,33 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-okd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.5-19-bookworm
+  primaryUpdateStrategy: unsupervised
+  # Without this the pod is BestEffort — first eviction under MemoryPressure
+  # on the single grow node. No CPU limit: throttling hurts DB latency.
+  resources:
+    requests:
+      cpu: 128m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  storage:
+    size: 10Gi
+    storageClass: local-path
+  monitoring:
+    enablePodMonitor: true
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: 256MB
+  bootstrap:
+    initdb:
+      database: odk
+      owner: odk
+      secret:
+        name: pg-okd-secret
