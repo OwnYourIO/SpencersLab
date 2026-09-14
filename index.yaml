@@ -10910,6 +10910,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/loki-1.0.1/loki-1.0.1.tgz
     version: 1.0.1
+  mayan-edms:
+  - apiVersion: v2
+    appVersion: 4.12.1
+    created: "2026-09-14T00:30:44.146974283Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Mayan EDMS - free open source electronic document management system
+    digest: 151a3460cf333adae26bedbd9d9ed8f9f0a7f299bc47838cc1832db46f962f9e
+    name: mayan-edms
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/mayan-edms-1.0.1/mayan-edms-1.0.1.tgz
+    version: 1.0.1
   media-appset:
   - apiVersion: v2
     appVersion: 1.1.2
@@ -18389,4 +18404,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-11T21:24:02.161417156Z"
+generated: "2026-09-14T00:30:44.149501523Z"
