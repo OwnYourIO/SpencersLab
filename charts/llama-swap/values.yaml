@@ -23,6 +23,10 @@ config:
   # Send loading state to clients
   sendLoadingState: true
 
+  # Expose aliases in /v1/models (incl. the :tags/:caption workload aliases
+  # below) so clients that enumerate models (Pictaria, OpenWebUI) can see them.
+  includeAliasesInList: true
+
   # No API keys required (default allow)
   apiKeys: []
 
@@ -313,6 +317,30 @@ config:
           - image
         out:
           - text
+      # Per-workload aliases for this loaded model (no reload between workloads).
+      # llama-swap v240 substitutes ${MODEL_ID} in setParamsByID keys and
+      # auto-registers each key as an alias (verified in upstream load.go), so
+      # this single block is reused verbatim on every Qwen3-VL Instruct model:
+      #   <model>:tags    -> Pictaria tag extraction. Forces thinking OFF
+      #                      (llama.cpp #20345: with enable_thinking=true the
+      #                      json_schema grammar is silently bypassed -> broken
+      #                      JSON) + low temp for classification. Pictaria sends
+      #                      response_format json_schema itself; llama-swap
+      #                      passes it through untouched.
+      #   <model>:caption -> Immich captioning. Free-text (no schema: constraints
+      #                      hurt description quality), thinking off, low temp +
+      #                      fixed seed for reproducible captions.
+      filters: &vlWorkloadFilters
+        setParamsByID:
+          "${MODEL_ID}:tags":
+            chat_template_kwargs:
+              enable_thinking: false
+            temperature: 0.2
+          "${MODEL_ID}:caption":
+            chat_template_kwargs:
+              enable_thinking: false
+            temperature: 0.1
+            seed: 42
 
     qwen3-vl-8b-q4:
       cmd: |
@@ -334,6 +362,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-8b-q8:
       cmd: |
@@ -352,6 +381,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-8b-bf16:
       cmd: |
@@ -370,6 +400,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-30b-a3b-q4:
       cmd: |
@@ -394,6 +425,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-30b-a3b-q8:
       cmd: |
@@ -415,6 +447,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-30b-a3b-bf16:
       cmd: |
@@ -435,6 +468,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-2b-q8:
       cmd: |
@@ -453,6 +487,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-2b-q4:
       cmd: |
@@ -471,6 +506,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-2b-bf16:
       cmd: |
@@ -489,6 +525,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-4b-q8:
       cmd: |
@@ -507,6 +544,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-4b-bf16:
       cmd: |
@@ -525,6 +563,7 @@ config:
           - image
         out:
           - text
+      filters: *vlWorkloadFilters
 
     qwen3-vl-4b-thinking-q8:
       cmd: |
