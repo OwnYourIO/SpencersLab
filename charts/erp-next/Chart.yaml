@@ -1,6 +1,6 @@
 apiVersion: v2
 name: erp-next
-version: 1.0.0
+version: 1.0.1
 appVersion: v16.34.2
 dependencies:
 - name: erpnext
