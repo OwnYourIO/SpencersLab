@@ -996,3 +996,14 @@ CNPG stays.
     1aa10dd1-…, enketo-less 86239b0f-…, enketo-api-key 4c8ef2ef-…).
     End-to-end render with the custom-values slice verified: 0 sentinels,
     all five remoteRefs resolve to the right item/property.
+13. **Public name renamed okd → forms** (2026-09-14, post-merge, user
+    request): proxy-local entry key renamed `okd:` → `forms:` (hub serves
+    forms.spencerslab.com, crowdsec-only, target grow; old okd-* hub objects
+    prune on sync). Grow keeps the internal name: `ingress.subdomains.okd`
+    gains `serviceName: forms` (erp-next/erp dual-host pattern) → renders
+    `okd-ingress` (okd.<domain>, no DNS record) AND `forms-ingress`
+    (forms.<domain>, external-dns enabled), both → grow-okd:80, because the
+    hub preserves the Host header when forwarding. Chart unchanged: release,
+    Services, and DOMAIN stay okd.spencerslab.com — if user-facing links
+    should say forms.spencerslab.com instead, set `subdomain: forms` in
+    charts/okd/values.yaml (one line; affects DOMAIN + EMAIL_FROM).

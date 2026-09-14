@@ -116,6 +116,12 @@ ingress:
       service: erp-next
       port: 8080
     okd:
+      # serviceName renders a second ingress for the public host
+      # forms.<domain> (erp-next/erp pattern): the proxy-local hub preserves
+      # the Host header when forwarding forms -> target grow, so grow must
+      # serve forms.spencerslab.com too. The key keeps the cluster-side name
+      # okd; both hosts route to the same grow-okd service.
+      serviceName: forms
       service: grow-okd
       port: 80
 
