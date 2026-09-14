@@ -33,6 +33,11 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  mayan-edms:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
 
   # External charts (with version and repository)
   cloudnative-pg:
@@ -58,6 +63,14 @@ ingress:
       namespace: kube-system
       service: traefik
       port: 8080
+    # Key != serviceName (paperless pattern): renders edms.<domain> mesh
+    # ingress plus external-dns-labelled mayan-edms.<domain> ingress that the
+    # proxy-local hub ExternalName targets. Equal values would collide on
+    # the rendered <name>-ingress object names.
+    edms:
+      serviceName: mayan-edms
+      service: grow-mayan-edms
+      port: 8000
 
 # ToolHive MCP platform extension (base deploys hivetools on every cluster):
 # read-only Postgres MCP servers for this cluster's CNPG databases, exposed at

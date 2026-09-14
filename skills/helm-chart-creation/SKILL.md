@@ -129,6 +129,14 @@ ExternalSecrets + Bitwarden only. Two stores: `bitwarden-login`
 `jwt_secret`, …). Template bodies and `bitwardenIds` map semantics:
 `references/storage-and-secrets.md`.
 
+Bitwarden item naming pattern — one dedicated item per concern, named after
+the service: `<service>` (the app's own credential, e.g. its admin password —
+queried as a regular LOGIN password, not a custom field), `<service>-db`
+(database credentials; username must equal the chart's CNPG initdb `owner`),
+and `<service>-sso` (SSO/OIDC client credentials) when the service gets SSO.
+Never point a chart at a shared multi-consumer item. Details and rationale:
+`references/storage-and-secrets.md`.
+
 ### 6. Integrate — the trio
 
 Adding a service requires the first two ALWAYS, the third only when the

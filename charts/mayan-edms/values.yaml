@@ -1,0 +1,179 @@
+bitwardenIds:
+  # App item `mayan-edms`: its LOGIN password is the initial Mayan admin
+  # (autoadmin) password — queried as a regular password, no custom field.
+  mayan-edms: OVERRIDE_VIA_CUSTOM_VALUES
+  # DB item `mayan-edms-db`: username/password for the pg-mayan-edms CNPG
+  # cluster. The item's username MUST be `mayan-edms` (must match the CNPG
+  # initdb owner).
+  mayan-edms-db: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName mayan-edms
+
+  defaultPodOptions:
+    # The Mayan entrypoint starts as root, chowns /var/lib/mayan, then drops
+    # to uid/gid 1000 ("mayan") via runuser/supervisord. fsGroup makes the
+    # PVC group-writable for the mayan user. Do NOT add runAsNonRoot/runAsUser.
+    securityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+
+  controllers:
+    mayan-edms:
+      # RWO PVC on a single node: never run two pods at once.
+      strategy: Recreate
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: mayanedms/mayanedms
+            tag: v4.12.1
+          # No command/args: image default CMD `run_all` = setup-or-upgrade +
+          # gunicorn + celery workers A-F + beat under supervisord.
+          env:
+            TZ: Etc/UTC
+            # Wait for Postgres and the pod-local redis sidecar before setup.
+            MAYAN_DOCKER_WAIT: "pg-mayan-edms-rw:5432 localhost:6379"
+            # Celery broker / results / locks / server-side-events on the
+            # pod-local redis, dbs 0/1/2/3 — upstream 4.12 compose layout.
+            MAYAN_CELERY_BROKER_URL: "redis://localhost:6379/0"
+            MAYAN_CELERY_RESULT_BACKEND: "redis://localhost:6379/1"
+            MAYAN_LOCK_MANAGER_BACKEND: mayan.apps.lock_manager.backends.redis_lock.RedisLock
+            MAYAN_LOCK_MANAGER_BACKEND_ARGUMENTS: "{'redis_url':'redis://localhost:6379/2'}"
+            MAYAN_SERVER_SIDE_EVENTS_BACKEND: mayan.apps.server_side_events.sse_backends.redis.RedisServerEventStreamBackend
+            MAYAN_SERVER_SIDE_EVENTS_BACKEND_ARGUMENTS: "{'url':'redis://localhost:6379/3'}"
+            # --- single-node tuning (upstream defaults in parentheses) ---
+            MAYAN_GUNICORN_WORKERS: "2"        # (3) async gevent workers
+            MAYAN_GUNICORN_TIMEOUT: "300"      # (120) large uploads on slow disk
+            MAYAN_WORKER_A_CONCURRENCY: "2"    # (4) interactive/fast tasks
+            MAYAN_WORKER_B_CONCURRENCY: "2"    # (8) documents/OCR dispatch
+            MAYAN_WORKER_C_CONCURRENCY: "2"    # (4) periodic/downloads
+            MAYAN_WORKER_D_CONCURRENCY: "1"    # (2) long-running OCR
+            MAYAN_WORKER_E_CONCURRENCY: "1"    # (4) search index/housekeeping
+            MAYAN_WORKER_F_CONCURRENCY: "1"    # (1) per-file analysis
+            # Optional extras (uncomment as needed):
+            # MAYAN_APT_INSTALLS: "tesseract-ocr-deu"  # extra OCR languages
+          envFrom:
+            - secretRef:
+                name: *chartName
+          probes:
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 8000
+                periodSeconds: 10
+                failureThreshold: 90   # first boot runs migrations/fixtures (~15 min)
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 8000
+                periodSeconds: 30
+                timeoutSeconds: 10
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 8000
+                periodSeconds: 15
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 3Gi   # OCR spikes; node is memory-tight — see plan risks
+          securityContext:
+            allowPrivilegeEscalation: false
+            # DEVIATION from the repo "drop ALL" standard, verified against
+            # the v4.12.1 entrypoint.sh: it runs as root and needs to chown
+            # the media dir (CHOWN) and drop to the mayan user via
+            # runuser/supervisord (SETUID/SETGID). Dropping ALL breaks boot.
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - SETUID
+                - SETGID
+                - DAC_OVERRIDE
+        redis:
+          # Pod-local broker/results/lock/SSE store (repo sidecar standard,
+          # see charts/langfuse). Flags mirror the upstream 4.12 compose
+          # redis service: noeviction because locks/results/chord counters
+          # are NOT cache; no persistence (queued tasks are expendable).
+          # No password: only reachable inside this pod.
+          image:
+            repository: redis
+            tag: 8.6.0
+          args:
+            - redis-server
+            - --appendonly
+            - "no"
+            - --databases
+            - "4"
+            - --maxmemory
+            - "100mb"
+            - --maxclients
+            - "500"
+            - --maxmemory-policy
+            - "noeviction"
+            - --save
+            - ""
+            - --tcp-backlog
+            - "256"
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command: ["redis-cli", "ping"]
+                periodSeconds: 10
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command: ["redis-cli", "ping"]
+                periodSeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            # Run as the image's redis user (uid 999) so ALL capabilities can
+            # be dropped: as root the image entrypoint would gosu-down, which
+            # needs CAP_SETUID that drop-ALL removes. Nothing is persisted,
+            # so the redis user needs no volume ownership.
+            runAsUser: 999
+            runAsGroup: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    mayan-edms:
+      controller: *chartName
+      ports:
+        http:
+          port: 8000
+
+  persistence:
+    data:
+      existingClaim: *chartName
+      globalMounts:
+        - path: /var/lib/mayan

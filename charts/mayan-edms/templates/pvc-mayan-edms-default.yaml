@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mayan-edms
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Nominal size per user decision: local-path does not enforce quotas.
+      # The grow node disk is small (~5.3Gi free) — real usage is bounded by
+      # actual free space, not this number. See plan risks.
+      storage: 20Gi

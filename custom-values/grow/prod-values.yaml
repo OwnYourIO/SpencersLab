@@ -10,6 +10,12 @@ assistant:
     # username=readonly items when available.
     mcp-pg-grow-assistant: f59add53-a8fb-42cd-b784-b3c8011081df
     mcp-pg-grow-assistant-sensors: f59add53-a8fb-42cd-b784-b3c8011081df
+mayan-edms:
+  bitwardenIds:
+    # App item: its LOGIN password is the initial Mayan admin password.
+    mayan-edms: f7b628ec-2544-4c28-a476-b1a501487d99
+    # DB item (username must be `mayan-edms` = CNPG initdb owner):
+    mayan-edms-db: 6257199f-e9fe-458e-b247-b4c50004a3b0
 scifi-farm:
   hugo:
     domain: scifi.farm

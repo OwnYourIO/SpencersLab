@@ -1,0 +1,39 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-mayan-edms
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.5-19-bookworm
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 5Gi
+    storageClass: local-path
+
+  monitoring:
+    enablePodMonitor: true
+
+  postgresql:
+    parameters:
+      # Adapted from the upstream Mayan compose postgres flags
+      # (max_connections 150, statistics 200, maintenance_work_mem 128MB),
+      # shared_buffers/work_mem scaled down for the memory-tight grow node.
+      max_connections: "150"
+      shared_buffers: 256MB
+      work_mem: 16MB
+      maintenance_work_mem: 128MB
+      default_statistics_target: "200"
+      checkpoint_completion_target: "0.6"
+
+  bootstrap:
+    initdb:
+      # Standard repo pattern (n8n/langfuse/home-assistant): database and
+      # owner named after the chart; credentials come from the dedicated
+      # `mayan-edms-db` Bitwarden item via pg-mayan-edms-secret. CNPG
+      # requires the secret's username to equal `owner` — the Bitwarden
+      # item's username must be `mayan-edms`.
+      database: mayan-edms
+      owner: mayan-edms
+      secret:
+        name: pg-mayan-edms-secret

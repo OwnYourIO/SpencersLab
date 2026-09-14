@@ -1,0 +1,10 @@
+apiVersion: v2
+name: mayan-edms
+description: Mayan EDMS - free open source electronic document management system
+type: application
+version: 1.0.0
+appVersion: "4.12.1"
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/

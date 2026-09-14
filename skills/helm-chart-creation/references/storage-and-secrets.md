@@ -23,17 +23,32 @@ the store:
 - `salt` — password hashing salt
 - (any other custom field name your app needs)
 
-The `bitwardenIds` map in values.yaml maps a logical name (e.g.
-`<service-name>`, `<service-name>-db`) to the UUID of the Bitwarden item. Both
-stores can read from the SAME item — the store type just changes *which* part
-of the item is accessed (login credentials vs custom fields).
+The `bitwardenIds` map in values.yaml maps a logical name to the UUID of the
+Bitwarden item. Both stores can read from the SAME item — the store type just
+changes *which* part of the item is accessed (login credentials vs custom
+fields).
+
+### Bitwarden item naming pattern
+
+One item per concern, named after the service:
+
+| Item name | Holds | Read via |
+|---|---|---|
+| `<service>` | The app's own credential — e.g. its admin/web password. Query it as a **regular LOGIN password** (`bitwarden-login`, property `password`), not a custom field. | `bitwarden-login` |
+| `<service>-db` | Database credentials (`username` + `password`) for the service's CNPG cluster. The username MUST equal the chart's CNPG initdb `owner` (convention: the chart name) — CNPG rejects a mismatch. | `bitwarden-login` |
+| `<service>-sso` | SSO/OIDC client credentials, when the service gets Keycloak SSO. | `bitwarden-login` / `bitwarden-fields` |
+
+Keep items dedicated to one service. Do not point a chart at a shared
+multi-consumer item: rotating the shared item re-renders every consumer's
+secrets, and DB passwords applied only at bootstrap silently drift from the
+re-rendered app config (breaking auth at the next pod restart).
 
 Placeholder `OVERRIDE_VIA_CUSTOM_VALUES` in `services/<category>/prod/values.yaml`;
 real UUIDs in `custom-values/<category>/prod-values.yaml`. Common patterns:
 
 - **Single item** (e.g. n8n): one UUID holds app + db credentials.
-- **Separate DB item** (e.g. langflow): `<svc>-db` UUID for the database login,
-  `<svc>` UUID for app fields.
+- **Separate DB item** (e.g. langflow, mayan-edms): `<svc>-db` UUID for the
+  database login, `<svc>` UUID for the app credential/fields.
 - **Shared infra secret**: one UUID (e.g. the cert-manager solver token)
   referenced by several categories' custom-values files.
 
