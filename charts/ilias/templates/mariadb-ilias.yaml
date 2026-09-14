@@ -29,9 +29,27 @@ spec:
       memory: 512Mi
     limits:
       memory: 2Gi
-  # No restrictive securityContext: the official mariadb image entrypoint
-  # starts as root (datadir init/chown) and drops privileges itself via gosu.
-  # Precedent: charts/playsms sidecar.
+  # The operator runs the instance pod non-root (UID 999); the official image
+  # entrypoint initializes the datadir as the mysql user without issue.
+  #
+  # Override the operator's default startup probe (~50s budget). First-boot
+  # init = mariadb-install-db (75s+ on a slow node) + a temporary server that
+  # applies the root-password/user SQL. If the probe kills the container
+  # mid-init, the next start sees an initialized datadir and SKIPS the init
+  # SQL forever — root password never set, permanent CrashLoopBackOff with
+  # "Access denied for user 'root'@'localhost'" (observed 2026-09-14).
+  # Budget: 20s delay + 60 x 10s = ~10 minutes. Same exec as the operator
+  # default; liveness/readiness stay operator defaults.
+  startupProbe:
+    exec:
+      command:
+        - bash
+        - -c
+        - mariadb -u root -p"${MARIADB_ROOT_PASSWORD}" -e "SELECT 1;"
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 60
   metrics:
     enabled: true
 ---

@@ -6,9 +6,9 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 
 # Public subdomain under which ILIAS is reachable via the proxy-local hub
-# (proxy.subdomains.training -> target: ilias). Injected by the grow appset
-# entry (charts.ilias.values.publicSubdomain) so it stays co-located with the
-# ingress wiring; used to build ILIAS_HTTP_PATH in templates/secret-ilias.yaml.
+# (proxy.subdomains.training -> target: ilias). Injected via the ilias block
+# of custom-values/grow/prod-values.yaml; used to build ILIAS_HTTP_PATH in
+# templates/secret-ilias.yaml.
 publicSubdomain: OVERRIDE_VIA_APPSET
 
 app-template:

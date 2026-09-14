@@ -36,6 +36,10 @@ scifi-farm:
       - path: github.com/onweru/compose
 
 ilias:
+  # Consumed by charts/ilias to build ILIAS_HTTP_PATH. Routed through
+  # custom-values because the published base chart (1.0.193) does not
+  # propagate charts.<app>.values: into per-app valuesObject.
+  publicSubdomain: training
   bitwardenIds:
     # login item "ilias": username root, password = ILIAS root password
     ilias: f7b628ec-2544-4c28-a476-b1a501487d99
