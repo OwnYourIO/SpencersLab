@@ -1,6 +1,11 @@
 # 2026-09-10 feat — Grant pods/exec to the kubernetes-mcp-admin tier
 
-Status: implemented (retrospective plan — no plan file preceded this change).
+> **SUPERSEDED (2026-09-14):** the exec grant was removed again at the user's
+> request — see `2026-09-14-feat-k8s-mcp-exec-revert-mariadb-read.md`. The
+> admin tier is back to restart/rollout/scale only; agents present exec
+> commands to the user instead.
+
+Status: implemented then reverted.
 
 ## Goal
 

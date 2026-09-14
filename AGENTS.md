@@ -61,11 +61,14 @@ without a privilege tier are just `<cluster>-<service>` (e.g.
 `global-searxng`). `<cluster>` is one of gpu, grow, home, infra, media,
 monitoring, proxy-local — or `global` for shared utility servers (wekan,
 grafana, searxng, playwright, renovate, homeassistant). `<priv>` is
-`readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete/exec).
+`readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete).
 Kubernetes, Home Assistant, Grafana, and WeKan come in both tiers
 (HA/Grafana/WeKan enforced server-side: ha-mcp `READ_ONLY_MODE`,
 mcp-grafana `--disable-write` + token roles, wekan-mcp
 `WEKAN_MCP_READ_ONLY`). Postgres servers are read-only by design.
+**No tier grants pod exec** — if a task needs commands run inside a pod,
+present the exact command (e.g. `kubectl exec -n <ns> <pod> -- <cmd>`) to the
+user and let them run it.
 
 **Agent privilege rules:** planning agents (plan, dependency-map, and the
 read-only pipeline stages) may use `readonly-*` servers only — never
