@@ -10910,6 +10910,22 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/loki-1.0.1/loki-1.0.1.tgz
     version: 1.0.1
+  mariadb-operator:
+  - apiVersion: v2
+    appVersion: 26.6.0
+    created: "2026-09-14T00:34:37.239162763Z"
+    dependencies:
+    - name: mariadb-operator
+      repository: oci://ghcr.io/mariadb-operator/charts
+      version: 26.6.0
+    description: MariaDB operator (community) - run and operate MariaDB in a cloud
+      native way
+    digest: 193d96fe211fb39e8514fe4d851ff85143de20c1b3eb2927b9cc8145223a74a6
+    name: mariadb-operator
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/mariadb-operator-1.0.1/mariadb-operator-1.0.1.tgz
+    version: 1.0.1
   mayan-edms:
   - apiVersion: v2
     appVersion: 4.12.1
@@ -18404,4 +18420,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-14T00:30:44.149501523Z"
+generated: "2026-09-14T00:34:37.240271355Z"
