@@ -364,6 +364,10 @@
             {
                 "tag": "ai/composition/selfie",
                 "description": "Selfie or selfie-like framing."
+            },
+            {
+                "tag": "ai/composition/group",
+                "description": "Group or specific set of people at the center of attention."
             }
         ]
     },
