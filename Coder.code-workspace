@@ -14,6 +14,9 @@
 		},
 		{
 			"path": "../Home-Assistant-Label-based-Features"
+		},
+		{
+			"path": "../pictaria-server"
 		}
 	],
 	"settings": {
