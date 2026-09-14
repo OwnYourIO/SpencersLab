@@ -35,6 +35,11 @@ erpnext:
   # the MariaDB CR.
   dbHost: mariadb-erp-next
   dbPort: 3306
+  # The configure job hardcodes redis URLs as {{ .Release.Name }}-valkey-*,
+  # which would bypass the bare subchart names below — override explicitly.
+  externalRedis:
+    cache: redis://erp-next-valkey-cache:6379
+    queue: redis://erp-next-valkey-queue:6379
   mariadb-sts:
     enabled: false
   valkey-cache:
@@ -169,7 +174,10 @@ erpnext:
           args:
             # No `set -x` here on purpose: xtrace would print the expanded
             # bench command line (admin + DB root passwords) into the logs.
+            # pipefail IS required: without it $? reflects `tee`, not bench,
+            # and a failed `bench new-site` would exit 0 (silent success).
             - >
+              set -o pipefail;
               bench_output=$(bench new-site ${SITE_NAME} --no-mariadb-socket --db-type=${DB_TYPE} --db-host=${DB_HOST} --db-port=${DB_PORT} --admin-password=${ADMIN_PASSWORD} --mariadb-root-username=${DB_ROOT_USER} --mariadb-root-password=${DB_ROOT_PASSWORD} --install-app=erpnext | tee /dev/stderr);
               bench_exit_status=$?;
               if [ $bench_exit_status -ne 0 ]; then

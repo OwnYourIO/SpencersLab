@@ -638,3 +638,56 @@ are now bare/generic:
 Validation: render shows 26 resources, zero `grow-` names, zero `grow-`
 strings in chart sources, no sentinels; both grow ingresses backend
 `erp-next:8080`; lint clean.
+
+### Round 6 — first-deploy incident (2026-09-14) and fixes
+
+First deploy failed with three independent root causes (diagnosed via grow
+cluster state + Loki):
+
+1. **Corrupted MariaDB init (node disk pressure).** During the deploy window
+   the node was under disk pressure ("no space left on device" image-pull
+   failure ~13:30, DiskPressure taint 13:41–46, node rebooted ~13:17). The
+   first `mariadb-erp-next-0` init was killed ~11s into "Initializing
+   database files" — BEFORE the entrypoint's temp-server phase that applies
+   `MARIADB_ROOT_PASSWORD`. On restart the entrypoint sees a non-empty
+   datadir and never re-initializes, so root never got the Secret password:
+   every startup probe (`mariadb -u root -p$MARIADB_ROOT_PASSWORD`) fails
+   with `ERROR 1045 Access denied` → crashloop forever. Same failure hit
+   `mariadb-ilias-0`. Disk is healthy again now (77GB free); the datadir is
+   not recoverable in place — it must be wiped.
+2. **Redis hostname mismatch (round-5 rename bug).** The frappe chart's
+   configure job hardcodes redis URLs as
+   `redis://{{ .Release.Name }}-valkey-{cache,queue}:6379`
+   (job-configure-bench.yaml:96/109) — it does NOT use the subchart
+   fullname. After the valkey rename it wrote
+   `grow-erp-next-valkey-*` into `common_site_config.json` while the actual
+   Services are `erp-next-valkey-*`; every redis-dependent component
+   (workers, scheduler, socketio) crashloops with "Name or service not
+   known". FIXED in values: `erpnext.externalRedis.cache/queue` override the
+   hardcoded URLs (they take precedence in the configure template) —
+   rendered env verified.
+3. **Silent create-site failure (jobs.custom script bug, inherited from
+   upstream).** `bench_output=$(bench … | tee /dev/stderr); status=$?`
+   captures `tee`'s exit code (always 0) — without `pipefail` a failed
+   `bench new-site` still exits 0. The Job showed Complete but NO site was
+   ever created (MariaDB txn id 14 = empty datadir confirms it). FIXED:
+   `set -o pipefail;` prepended to the script (bash -n verified).
+
+Recovery procedure (admin actions, run AFTER these chart fixes are merged
+and synced):
+
+1. Delete Jobs `erp-next-conf-bench` and `erp-next-create-site` (Job
+   spec.template is immutable — the fixed env/script cannot apply over the
+   existing Jobs; ArgoCD recreates them).
+2. Wipe the corrupted datadir: delete PVC `storage-mariadb-erp-next-0` and
+   Pod `mariadb-erp-next-0` (StatefulSet recreates both; fresh init applies
+   the current Secret password). No data loss — the DB is empty.
+3. Wait for `mariadb-erp-next-0` Ready, then for the recreated
+   `erp-next-conf-bench` (rewrites common_site_config.json with the correct
+   redis URLs) and `erp-next-create-site` (creates the site for real this
+   time; with pipefail it will now fail loudly if it fails).
+4. Delete the crashlooping frappe pods (workers/scheduler/socketio) to pick
+   up the corrected config immediately instead of waiting out backoff.
+5. `mariadb-ilias-0` needs the same datadir wipe (separate service, same
+   interrupted-init failure); the ilias app pod's CreateContainerConfigError
+   is a separate secret issue.
