@@ -1,0 +1,100 @@
+# MariaDB for ILIAS via mariadb-operator (charts/mariadb-operator on grow).
+# Repo pattern: skills/helm-chart-creation/references/chart-templates.md
+# "MariaDB instance" — never sidecar a MariaDB container in new charts.
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
+metadata:
+  name: mariadb-ilias
+spec:
+  rootPasswordSecretKeyRef:
+    name: mariadb-ilias-root
+    key: password
+  # renovate: datasource=docker depName=mariadb
+  image: mariadb:11.8.8
+  replicas: 1 # standalone — grow is single-node (no Galera/replication)
+  port: 3306
+  # ILIAS requires a 3-byte utf8 (utf8mb3) server collation.
+  myCnf: |
+    [mysqld]
+    character-set-server = utf8
+    collation-server = utf8_general_ci
+  storage:
+    # local-path CANNOT expand — sized up front (was the 10Gi ilias-mysql PVC
+    # in the original sidecar design).
+    size: 10Gi
+    storageClassName: local-path
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+  # No restrictive securityContext: the official mariadb image entrypoint
+  # starts as root (datadir init/chown) and drops privileges itself via gosu.
+  # Precedent: charts/playsms sidecar.
+  metrics:
+    enabled: true
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Database
+metadata:
+  name: ilias
+spec:
+  mariaDbRef:
+    name: mariadb-ilias
+  name: ilias
+  # ILIAS requires 3-byte utf8; tables ILIAS creates inherit the DB default.
+  characterSet: utf8
+  collate: utf8_general_ci
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: User
+metadata:
+  name: ilias
+spec:
+  mariaDbRef:
+    name: mariadb-ilias
+  # Must match the username of the Bitwarden item behind bitwardenIds.ilias-mariadb.
+  name: ilias
+  passwordSecretKeyRef:
+    name: mariadb-ilias-app
+    key: password
+  maxUserConnections: 20
+---
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Grant
+metadata:
+  name: ilias
+spec:
+  mariaDbRef:
+    name: mariadb-ilias
+  privileges:
+    - ALL PRIVILEGES
+  database: ilias
+  table: "*"
+  username: ilias
+---
+# Connection secret consumed by the ilias + cron containers via envFrom.
+# secretTemplate renames the keys straight to ILIAS env vars, so no
+# per-container DB host overrides are needed anywhere.
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Connection
+metadata:
+  name: ilias
+spec:
+  mariaDbRef:
+    name: mariadb-ilias
+  username: ilias
+  passwordSecretKeyRef:
+    name: mariadb-ilias-app
+    key: password
+  database: ilias
+  secretName: mariadb-ilias-conn
+  secretTemplate:
+    hostKey: ILIAS_DB_HOST
+    portKey: ILIAS_DB_PORT
+    usernameKey: ILIAS_DB_USER
+    passwordKey: ILIAS_DB_PASSWORD
+    databaseKey: ILIAS_DB_NAME
+  healthCheck:
+    interval: 30s

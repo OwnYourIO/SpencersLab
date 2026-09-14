@@ -27,6 +27,16 @@ scifi-farm:
       - path: github.com/OwnYourIO/SpencersLab/sites/grow
       - path: github.com/onweru/compose
 
+ilias:
+  bitwardenIds:
+    # login item "ilias": username root, password = ILIAS root password
+    ilias: f7b628ec-2544-4c28-a476-b1a501487d99
+    # login item "ilias-db": username ilias + app-user password. The same
+    # item's password is reused for the MariaDB root password (user decision;
+    # swap ilias-mariadb-root to a dedicated item to split them).
+    ilias-mariadb: 14a6639d-eb30-48db-8554-b4c3002ef0d9
+    ilias-mariadb-root: 14a6639d-eb30-48db-8554-b4c3002ef0d9
+
 base:
   bitwardenIds:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625

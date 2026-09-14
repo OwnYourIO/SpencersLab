@@ -1,0 +1,161 @@
+bitwardenIds:
+  ilias: OVERRIDE_VIA_CUSTOM_VALUES
+  ilias-mariadb-root: OVERRIDE_VIA_CUSTOM_VALUES
+  ilias-mariadb: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+# Public subdomain under which ILIAS is reachable via the proxy-local hub
+# (proxy.subdomains.training -> target: ilias). Injected by the grow appset
+# entry (charts.ilias.values.publicSubdomain) so it stays co-located with the
+# ingress wiring; used to build ILIAS_HTTP_PATH in templates/secret-ilias.yaml.
+publicSubdomain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName ilias
+
+  controllers:
+    ilias:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        ilias:
+          image:
+            repository: srsolutions/ilias
+            # renovate: datasource=docker depName=srsolutions/ilias
+            tag: 11.3-php8.4-apache
+          env:
+            TZ: America/Denver
+            ILIAS_AUTO_SETUP: "1"
+            ILIAS_AUTO_UPDATE: "1"
+            ILIAS_CLIENT_NAME: default
+            ILIAS_TIMEZONE: America/Denver
+            ILIAS_MAX_UPLOAD_SIZE: 256M
+            ILIAS_MEMORY_LIMIT: 512M
+          envFrom:
+            - secretRef:
+                name: "{{ .Release.Name }}"
+            # ILIAS_DB_HOST/PORT/USER/PASSWORD/NAME, rendered by the
+            # mariadb-operator Connection CR (templates/mariadb-ilias.yaml).
+            - secretRef:
+                name: mariadb-ilias-conn
+          probes:
+            liveness: &iliasProbes
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 80
+                initialDelaySeconds: 30
+                periodSeconds: 30
+                timeoutSeconds: 5
+                failureThreshold: 5
+            readiness: *iliasProbes
+            # First boot runs setup.php install (and every later start may run
+            # setup.php update via ILIAS_AUTO_UPDATE) before apache listens.
+            # Suppress liveness for up to ~10 min so the install isn't killed
+            # mid-flight (which would wedge a half-installed DB).
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 80
+                periodSeconds: 10
+                failureThreshold: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          # No restrictive securityContext: the image runs apache as root
+          # (binds port 80, chowns files during setup). Precedent: charts/playsms.
+
+    ilias-cron:
+      type: cronjob
+      cronjob:
+        # Matches the image's own /etc/cron.d/ilias schedule.
+        schedule: "*/10 * * * *"
+        concurrencyPolicy: Forbid
+        successfulJobsHistory: 3
+        failedJobsHistory: 3
+      pod:
+        # ilias-data is RWO and shared with the ilias Deployment pod. RWO is
+        # per-node, so co-schedule cron pods with the ilias pod; otherwise a
+        # second cluster node would Multi-Attach-fail and (Forbid) wedge all
+        # later runs.
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: *chartName
+                    app.kubernetes.io/controller: ilias
+                topologyKey: kubernetes.io/hostname
+      containers:
+        cron:
+          image:
+            repository: srsolutions/ilias
+            # renovate: datasource=docker depName=srsolutions/ilias
+            tag: 11.3-php8.4-apache
+          # args (NOT command): the image entrypoint must run first to
+          # regenerate ilias.ini.php/client.ini.php from env; it execs this
+          # afterwards. Run as the webserver user, exactly like the image's
+          # own cron.d entry.
+          args:
+            - su
+            - www-data
+            - -s
+            - /bin/sh
+            - -c
+            - exec php /var/www/html/cli/cron.php run-jobs root default
+          env:
+            TZ: America/Denver
+            ILIAS_CLIENT_NAME: default
+          envFrom:
+            - secretRef:
+                name: "{{ .Release.Name }}"
+            - secretRef:
+                name: mariadb-ilias-conn
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+
+  service:
+    # id must equal the nameOverride so the Service renders as <release-name>
+    ilias:
+      controller: ilias
+      ports:
+        http:
+          port: 80
+
+  persistence:
+    ilias-webdata:
+      existingClaim: ilias-data
+      advancedMounts:
+        ilias:
+          ilias:
+            - path: /var/www/html/public/data
+              subPath: webdata
+        ilias-cron:
+          cron:
+            - path: /var/www/html/public/data
+              subPath: webdata
+    ilias-iliasdata:
+      existingClaim: ilias-data
+      advancedMounts:
+        ilias:
+          ilias:
+            - path: /var/iliasdata/ilias
+              subPath: iliasdata
+        ilias-cron:
+          cron:
+            - path: /var/iliasdata/ilias
+              subPath: iliasdata

@@ -164,6 +164,9 @@ proxy:
     # Own auth (Mayan admin login) + hub Keycloak forward-auth (default userAuth).
     edms:
       target: mayan-edms
+    # Own auth (ILIAS login) + hub Keycloak forward-auth (default userAuth).
+    training:
+      target: ilias
     bri-budget:
       target: bri-budget
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=actualbudget&response_type=code&redirect_uri=https://bri-budget.$.Values.domain/account/login"

@@ -43,6 +43,15 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  ilias:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+    # Consumed by charts/ilias to build ILIAS_HTTP_PATH; co-located with the
+    # training ingress entry below so a subdomain rename touches one file.
+    values:
+      publicSubdomain: training
 
   # External charts (with version and repository)
   cloudnative-pg:
@@ -76,6 +85,10 @@ ingress:
       serviceName: mayan-edms
       service: grow-mayan-edms
       port: 8000
+    training:
+      serviceName: ilias
+      service: grow-ilias
+      port: 80
 
 # ToolHive MCP platform extension (base deploys hivetools on every cluster):
 # read-only Postgres MCP servers for this cluster's CNPG databases, exposed at
