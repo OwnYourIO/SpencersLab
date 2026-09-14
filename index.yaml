@@ -11957,6 +11957,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/neo4j-1.0.1/neo4j-1.0.1.tgz
     version: 1.0.1
+  okd:
+  - apiVersion: v2
+    appVersion: 2026.3.0
+    created: "2026-09-14T13:37:48.719154507Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: bd7e20ab39b427866521d1a7340200fcd7b75283c8659bd6fa2dda7a6ae2a519
+    name: okd
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/okd-1.0.1/okd-1.0.1.tgz
+    version: 1.0.1
   paperless:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -18446,4 +18459,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-14T01:17:25.201401353Z"
+generated: "2026-09-14T13:37:48.720277909Z"
