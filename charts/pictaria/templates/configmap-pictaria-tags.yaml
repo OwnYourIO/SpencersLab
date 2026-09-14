@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pictaria-tags
+data:
+  tags.json: |
+{{ .Files.Get "files/tags.json" | indent 4 }}

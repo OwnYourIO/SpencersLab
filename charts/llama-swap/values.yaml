@@ -45,6 +45,20 @@ config:
       -ngl 99 
       -ot "\.ffn_.*_exps\.=CPU" 
       --no-mmap
+    # Expert placement for the 30B vision-MoE quants on the 8GB gpu card
+    # (measured regime: Poor GPU Club runs Qwen3-30B-A3B Q4 on 8GB with
+    # n-cpu-moe ~28-34 at 20-34 t/s; all-experts-on-CPU is the slow floor).
+    # --n-cpu-moe N keeps experts of N layers on CPU, rest on GPU. These are
+    # conservative starting points — sweep N down (more experts on GPU) while
+    # load-time VRAM allows. BF16 has no expert headroom on 8GB, it keeps ${moe}.
+    moe-vl-q4: |
+      -ngl 99
+      --n-cpu-moe 38
+      --no-mmap
+    moe-vl-q8: |
+      -ngl 99
+      --n-cpu-moe 44
+      --no-mmap
     flash-and-q8: |
       --flash-attn on
       --cache-type-k q8_0
@@ -363,7 +377,9 @@ config:
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M
         # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
-        ${moe}
+        ${moe-vl-q4}
+        ${flash-and-q8}
+        ${big-ub}
         -c 16384
       name: "Qwen3 VL 30B A3B Instruct (Q4_K_M)"
       description: "Vision-language MoE model for Immich image analysis, Q4_K_M quant, CPU-offloaded experts"
@@ -385,7 +401,9 @@ config:
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q8_0
         # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
-        ${moe}
+        ${moe-vl-q8}
+        ${flash-and-q8}
+        ${big-ub}
         -c 16384
       name: "Qwen3 VL 30B A3B Instruct (Q8_0)"
       description: "Vision-language MoE model for Immich image analysis, Q8_0 quant, CPU-offloaded experts"
@@ -405,6 +423,7 @@ config:
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:BF16
         # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
+        ${flash-and-q8}
         -c 16384
       name: "Qwen3 VL 30B A3B Instruct (BF16)"
       description: "Vision-language MoE model for Immich image analysis, BF16 (no quant), CPU-offloaded experts"
@@ -567,7 +586,9 @@ config:
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q8_0
         # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
-        ${moe}
+        ${moe-vl-q8}
+        ${flash-and-q8}
+        ${big-ub}
         -c 16384
       name: "Qwen3 VL 30B A3B Thinking (Q8_0)"
       description: "Reasoning vision-language MoE model for Immich image analysis, Q8_0 quant, CPU-offloaded experts; higher accuracy for complex images"
@@ -586,7 +607,9 @@ config:
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q4_K_M
         # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
-        ${moe}
+        ${moe-vl-q4}
+        ${flash-and-q8}
+        ${big-ub}
         -c 16384
       name: "Qwen3 VL 30B A3B Thinking (Q4_K_M)"
       description: "Reasoning vision-language MoE model for Immich image analysis, Q4_K_M quant, CPU-offloaded experts; higher accuracy for complex images"
@@ -606,6 +629,7 @@ config:
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:BF16
         # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
         ${moe}
+        ${flash-and-q8}
         -c 16384
       name: "Qwen3 VL 30B A3B Thinking (BF16)"
       description: "Reasoning vision-language MoE model for Immich image analysis, BF16 (no quant), CPU-offloaded experts; higher accuracy for complex images"

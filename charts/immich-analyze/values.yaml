@@ -101,4 +101,9 @@ app-template:
             capabilities:
               drop:
                 - ALL
+            # The image declares USER appuser (non-numeric), which kubelet
+            # cannot verify against runAsNonRoot — pin the numeric IDs from
+            # the image's /etc/passwd (appuser=100, group appuser=101).
+            runAsUser: 100
+            runAsGroup: 101
             runAsNonRoot: true

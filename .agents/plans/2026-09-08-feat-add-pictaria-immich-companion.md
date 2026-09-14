@@ -486,3 +486,24 @@ Fix: **upgrade to pictaria-server 1.2.0** (released 2026-09-11):
 pre-migration recovery snapshot automatically; rollback requires restoring
 that snapshot with the older build. A verified Pictaria backup before the
 rollout is recommended.
+
+## Follow-up changes (2026-09-14)
+
+- **Image source**: switched to `ghcr.io/curatedforest/pictaria-server`
+  (`:latest` + `pullPolicy: Always`, documented EXCEPTION to the pinned-tag
+  rule — custom patched build under active management; renovate annotation
+  removed since there is no pinned tag to track).
+- **`OPENAI_COMPATIBLE_TIMEOUT_MS: "7200000"`** — 2h per-request budget for
+  slow local vision models. Requires the curatedforest build: upstream
+  v1.2.1 hardcodes the openai_compatible provider timeout at 300000ms
+  (`src/enrich/providers.mjs` constructor default; config.mjs wires no
+  timeout env). Patch adding the env lives in ~/pictaria-server branch
+  `openai-compatible-timeout-ms` (config + compose + .env.example + tests +
+  docs + changelog; 119 affected tests pass).
+- **tags.json fixed and wired**: the `templates/tags.json` added 2026-09-11
+  broke the chart (helm lint error; ArgoCD home-pictaria sync failing since
+  then with "Object 'Kind' is missing"). Moved to `files/tags.json`, exposed
+  as ConfigMap `pictaria-tags`, mounted at `/tags`, selected via
+  `TAXONOMY_PATH=/tags/tags.json`. The frozen v1.2-spencer taxonomy was
+  validated through Pictaria's own `loadTaxonomy()` both from the file and
+  from the rendered ConfigMap content.

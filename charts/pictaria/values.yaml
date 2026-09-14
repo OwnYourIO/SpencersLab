@@ -27,9 +27,12 @@ app-template:
       containers:
         main:
           image:
-            # renovate: datasource=docker depName=ghcr.io/pictaria-ai/pictaria-server
-            repository: ghcr.io/pictaria-ai/pictaria-server
-            tag: 1.2.0
+            repository: ghcr.io/curatedforest/pictaria-server
+            # EXCEPTION to the pinned-image rule (see skills/helm-chart-creation):
+            # custom patched build under active management, so it tracks :latest
+            # and always pulls. Switch to a pinned tag once it stabilizes.
+            tag: latest
+            pullPolicy: Always
           env:
             TZ: America/Denver
             HOST: 0.0.0.0
@@ -45,6 +48,10 @@ app-template:
             # the home traefik pod. Same convention as custom-values
             # trustedIPs. Enables per-client login lockout behind the proxy.
             TRUSTED_PROXY_IPS: 10.42.0.0/24
+            # 2h request budget for slow local vision models (provider default is 300s).
+            OPENAI_COMPATIBLE_TIMEOUT_MS: "7200000"
+            # Frozen v1.2-spencer taxonomy, mounted from the pictaria-tags ConfigMap.
+            TAXONOMY_PATH: /tags/tags.json
           envFrom:
             - secretRef:
                 name: *chartName
@@ -114,3 +121,9 @@ app-template:
       type: emptyDir
       globalMounts:
         - path: /tmp
+    # Frozen v1.2-spencer tag taxonomy (files/tags.json -> ConfigMap).
+    tags:
+      type: configMap
+      name: pictaria-tags
+      globalMounts:
+        - path: /tags

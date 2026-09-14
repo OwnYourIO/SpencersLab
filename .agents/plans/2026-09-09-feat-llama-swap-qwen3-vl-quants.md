@@ -99,6 +99,53 @@ quant in every model ID.
    (`find_best_mmproj` in common/download.cpp; arg help: "if -hf is used,
    this argument can be omitted"), so dropping the flag is the fix. Each cmd
    carries a comment noting this.
+4. **Added `${flash-and-q8}` to the 6 vision MoE models** (30B-A3B instruct
+   q4/q8/bf16 + thinking q4/q8/bf16), matching the text-MoE pattern
+   (`${moe}` + `${flash-and-q8}`). Kept `-c 16384` (not `${ctx-256k}`) —
+   vision requests are small and a 256k KV allocation would waste VRAM.
+
+   Safety evidence for FA on multimodal in the deployed build (b10015):
+   - `tools/mtmd/mtmd.cpp` explicitly maps the server's `flash_attn_type`
+     into the clip/vision context (`mtmd_get_clip_flash_attn_type`) — FA is
+     wired through to the vision tower by design.
+   - `tools/mtmd/clip.cpp` implements it via `ggml_flash_attn_ext` and
+     degrades gracefully when unsupported: AUTO falls back to disabled with a
+     warning; forced-ON logs "falling back to CPU". Either way it loads, and
+     warmup logs "flash attention is enabled/disabled" for verification.
+   - Vulkan FA + q8_0 KV is already proven in this deployment by the text MoE
+     models running with the same macro on the same build.
+
+   Expected effect: faster vision-tower + prompt prefill, KV cache halved
+   (q8_0 vs f16 at 16k ctx for 30B-A3B: ~1.6 GB → ~0.8 GB). Does NOT change
+   the dominant cost — CPU-expert decode speed — so 30B still won't fit
+   Pictaria's hardcoded 300 s client timeout on this hardware.
+5. **Tuned MoE expert placement for the 8GB gpu card** (user confirmed VRAM):
+   replaced the blanket all-experts-on-CPU `${moe}` with per-quant
+   `--n-cpu-moe N` macros on the Q4/Q8 vision MoE models, plus `${big-ub}`
+   (-b 2048 -ub 2048; b10015's default ubatch is only 512).
+
+   Research basis:
+   - b10015 ships `--n-cpu-moe N` (keeps experts of N layers on CPU) and
+     `-fit` auto-fit (default on); the canonical `--cpu-moe` equals our old
+     `-ot "\.ffn_.*_exps\.=CPU"` (common/common.h `llm_ffn_exps_cpu_override`).
+   - Doctor-Shotgun's MoE-offload guide (HF, 2026-01) ranks the levers:
+     FA (done) > bigger ubatch (done) > KV q8 (done) > expert placement.
+   - "The 8 GB Vanguard" archive + Poor GPU Club measurements:
+     Qwen3-30B-A3B Q4 on 8GB cards runs at 20–34 t/s with ncmoe ~28–34
+     (most experts ON GPU); all-experts-on-CPU is the slow floor of the
+     curve. The archive's model-fit ladder names Qwen3-VL-30B-A3B
+     explicitly at "ncmoe ~28–34" for 8GB.
+
+   Applied values (conservative starts, NOT yet swept on hardware):
+   - `moe-vl-q4`: `-ngl 99 --n-cpu-moe 38 --no-mmap` (10 expert layers on GPU)
+   - `moe-vl-q8`: `-ngl 99 --n-cpu-moe 44 --no-mmap` (4 expert layers on GPU)
+   - BF16 variants keep `${moe}` — no expert headroom on 8GB.
+   - Text MoE models untouched (scope: vision MoE per user request).
+
+   Follow-up: sweep N downward per quant (more experts on GPU) while
+   load-time VRAM allows — the archive calls this "the single highest-value
+   hour in the playbook"; each step needs a model load to verify (evicts the
+   running model). Too-low N fails loudly at load (Vulkan OOM), not silently.
 
 ## Notes / risks
 
