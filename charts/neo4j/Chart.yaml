@@ -4,5 +4,5 @@ version: 1.0.4
 appVersion: 5.23.0
 dependencies:
 - name: app-template
-  version: 5.0.1
+  version: 5.1.0
   repository: https://bjw-s-labs.github.io/helm-charts/
