@@ -436,24 +436,27 @@ hivetools:
       audit:
         enabled: true
       # Layer 2 — Cedar default-deny allowlist (enforced on every tools/call).
-      # KEEP IN SYNC with toolsFilter below.
+      # KEEP IN SYNC with toolsFilter below. Shape per the ToolHive CRD:
+      # type inline requires the nested inline: block
+      # (authzConfig.inline.policies — policies is NOT a direct child).
       authz:
         type: inline
-        policies:
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_get");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_list");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_resource_tree");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_managed_resources");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_list_resource_events");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_pod_logs");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_get_manifests");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_revision_metadata");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_project_get");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_list");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_get");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_version");'
-          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_sync");'
-          - 'permit(principal, action == Action::"get_prompt", resource);'
+        inline:
+          policies:
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_get");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_list");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_resource_tree");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_managed_resources");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_list_resource_events");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_pod_logs");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_get_manifests");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_revision_metadata");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_project_get");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_list");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_get");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_version");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_sync");'
+            - 'permit(principal, action == Action::"get_prompt", resource);'
       # Layer 3 — discovery allowlist (renders MCPToolConfig mcp-argocd-tools).
       toolsFilter:
         - argocd_application_get

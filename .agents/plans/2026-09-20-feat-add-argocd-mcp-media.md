@@ -604,3 +604,24 @@ Post-merge (ArgoCD applies; verify with `readonly-media-kubernetes`):
 - **mcp-bot lands in every cluster's ArgoCD** (base chart is global) — intended
   and harmless; no token is minted anywhere but media. Repeating this setup for
   another cluster later = steps 6-11 for that category only.
+
+## Post-merge correction (2026-09-20)
+
+First deploy attempt (media-hivetools sync at revision af5e6753) failed with:
+`failed to create typed patch object (default/mcp-argocd; ...): .spec.authzConfig.policies: field not declared in schema`.
+
+The ToolHive 0.34.0 MCPServer CRD nests inline policies one level deeper than
+step 6b assumed — `authzConfig` requires (CEL-enforced):
+
+```yaml
+authzConfig:
+  type: inline
+  inline:
+    policies: [...]   # NOT authzConfig.policies
+```
+
+Fixed in `services/media/prod/values.yaml` (`hivetools.mcp.argocd.authz` now
+carries the nested `inline:` block). The "Verified context" recon line
+"authzConfig (type inline with policies[]/entitiesJson …)" was right about the
+fields but elided the nesting. Future Cedar work on this platform: always
+check the live CRD's `x-kubernetes-validations` before authoring inline authz.
