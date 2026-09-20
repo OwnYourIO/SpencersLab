@@ -659,3 +659,23 @@ Chart changes this forced in `charts/hivetools/templates/`:
   routes pointed at ports their proxy Services don't expose — live probes
   returned 404 vs 406 for healthy routes. They re-point to 8080 on the next
   gpu hivetools sync. All other fleet routes render unchanged (8080).
+
+## Post-merge correction #3 (2026-09-20, client auth dropped)
+
+The SA-token client auth (kubernetesServiceAccount OIDC) was dropped to match
+the fleet-wide posture: every other server's `oidc:` block is commented out
+("OIDC temporarily disabled (2026-09)") and the proxies run unauthenticated —
+verified live: an auth-less POST initialize to gpu's kubernetes-readonly
+returns HTTP 200. Enforcing a 24h-expiring projected SA token on argocd-mcp
+alone made it the only server needing per-client credentials, with no
+longer-lived compatible option (kubectl create token is capped by
+--service-account-max-token-expiration, default 24h; legacy SA secret tokens
+carry no `aud` claim and the kubernetesServiceAccount validator requires the
+audience).
+
+Change: `oidc:` commented out in the media argocd entry (same fleet
+convention). MCPOIDCConfig `argocd-k8s-sa` and ServiceAccount
+`argocd-mcp-client` stay in place for a future fleet-wide OIDC re-enable.
+Enforcement layers unchanged: Cedar allowlist + toolsFilter + ArgoCD RBAC on
+the mcp-bot token; the network perimeter (zerotrust edge) is the client
+boundary, as for all other servers.
