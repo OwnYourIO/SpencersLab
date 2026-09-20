@@ -11,6 +11,30 @@ app-template:
     slskd:
       annotations:
         reloader.stakater.com/auto: "true"
+      initContainers:
+        # slskd validates directories.downloads / directories.incomplete at
+        # startup and refuses to boot if they are missing. Downloads land in the
+        # music library root (/media/Music/automation, which already exists);
+        # just ensure the incomplete subdir is present. No recursive chown/chmod
+        # here on purpose — this is the live library, don't touch existing files.
+        create-dirs:
+          image:
+            repository: docker.io/slskd/slskd
+            tag: "0.26.0"
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              mkdir -p /media/Music/automation/incomplete
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
+                - FOWNER
       pod:
         securityContext:
           fsGroup: 1000
