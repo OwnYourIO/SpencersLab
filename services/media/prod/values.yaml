@@ -380,18 +380,20 @@ hivetools:
     argocd:
       enabled: true
       image: ghcr.io/matthisholleville/argocd-mcp:1.8.0
-      transport: streamable-http
-      mcpPort: 8080
+      # stdio transport: the ToolHive proxyrunner drives the server over stdio
+      # and serves streamable-http externally. Direct transports are NOT usable
+      # here — the operator force-injects MCP_TRANSPORT=<spec.transport> into
+      # the backend container (overriding spec.env), and argocd-mcp only
+      # accepts 'stdio' or 'http'. No mcpPort in stdio mode.
+      transport: stdio
       # SA-token auth (MCPOIDCConfig above): clients send a projected token for
       # SA argocd-mcp-client with audience "argocd" as Authorization: Bearer.
       oidc:
         configRef: argocd-k8s-sa
         audience: argocd
       env:
-        - name: MCP_TRANSPORT
-          value: "http"
-        - name: MCP_ADDR
-          value: ":8080"
+        # NOTE: no MCP_TRANSPORT/MCP_ADDR here — in stdio mode the proxyrunner
+        # owns the transport; the app's MCP_TRANSPORT validation accepts stdio.
         # media's ArgoCD runs insecure (server --insecure): plain HTTP on :80.
         - name: ARGOCD_BASE_URL
           value: "http://argocd-server.default.svc.cluster.local"

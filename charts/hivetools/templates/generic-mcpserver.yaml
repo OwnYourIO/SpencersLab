@@ -16,7 +16,9 @@ spec:
   {{- if $config.proxyPort }}
   proxyPort: {{ $config.proxyPort }}
   {{- end }}
-  mcpPort: {{ $config.mcpPort | required (printf "mcp.%s.port is required" $name) }}
+  {{- if $config.mcpPort }}
+  mcpPort: {{ $config.mcpPort }}
+  {{- end }}
   {{- if $config.serviceAccount }}
   serviceAccount: {{ $config.serviceAccount }}
   {{- end }}
