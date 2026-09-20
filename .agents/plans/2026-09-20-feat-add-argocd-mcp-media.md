@@ -679,3 +679,16 @@ convention). MCPOIDCConfig `argocd-k8s-sa` and ServiceAccount
 Enforcement layers unchanged: Cedar allowlist + toolsFilter + ArgoCD RBAC on
 the mcp-bot token; the network perimeter (zerotrust edge) is the client
 boundary, as for all other servers.
+
+## Post-merge correction #4 (2026-09-20, ToolHive stdio bug → operator upgrade)
+
+With OIDC off, functional testing showed the server answering small requests
+but returning an **empty body for tools/list** (and any large response). The
+backend is healthy (52 generated tools; single valid 31 KB JSON-RPC line on
+its stdio wire) — ToolHive 0.34.0's k8s attach/parse path drops large
+messages (proxy logs `error parsing JSON-RPC message` around each failure).
+
+Resolution chosen: upgrade ToolHive 0.34.0 → 0.50.0 — tracked in
+`.agents/plans/2026-09-20-dep-upgrade-tohive-0.50.md`. After that rollout,
+re-run the functional suite here (tools/list = 13 allowlisted tools, real
+reads, Cedar deny, dry-run sync).
