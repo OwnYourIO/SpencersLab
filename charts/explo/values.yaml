@@ -1,5 +1,11 @@
 bitwardenIds:
+  # One Bitwarden LOGIN item per key (custom-values/media supplies the UUIDs):
+  #   explo        = Explo web-UI login (username/password).
+  #   listenbrainz = ListenBrainz username (user field) + token (password).
+  #   lidarr       = Lidarr API key in the item's password field.
   explo: OVERRIDE_VIA_CUSTOM_VALUES
+  listenbrainz: OVERRIDE_VIA_CUSTOM_VALUES
+  lidarr: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 

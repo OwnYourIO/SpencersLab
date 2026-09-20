@@ -50,26 +50,32 @@ minuspod:
   bitwardenIds:
     minuspod: ""
 # Music stack (plan 2026-09-20-feat-add-music-stack-to-media.md, phase 7a).
-# TODO(user): create the Bitwarden items below and fill each UUID. Until then
-# the corresponding ExternalSecrets stay unready and pods stay Pending
-# (visible, accepted failure mode).
-#   betanin (Login): username/password = betanin web login; custom fields
-#     api_key, acoustid_key, lastfm_key.
-#   slskd (Login): username/password = Soulseek creds; custom field api_key.
-#   explo (Login): username/password = Explo web-UI login; custom fields
-#     listenbrainz_user, listenbrainz_token, lidarr_api_key.
-#   audiomuse-ai (Login): password = bundled-Postgres password (username/db are
-#     static in the chart); also store jellyfin_user_id + jellyfin_token here
-#     for manual entry in the AudioMuse Setup Wizard.
+# One Bitwarden LOGIN item per secret (no custom fields): the item's password
+# field holds the secret; items that also carry a username use that field.
+#   betanin        = betanin web login; its password doubles as betanin api_key.
+#   acoustid_key   = AcoustID API key (password field).
+#   slskd          = Soulseek creds; its password doubles as slskd api_key.
+#   explo          = Explo web-UI login.
+#   listenbrainz   = ListenBrainz username (user field) + token (password).
+#   lidarr         = Lidarr API key (password field).
+#   audiomuse-ai   = bundled-Postgres password (username/db are static in the
+#                    chart); optionally store jellyfin_user_id/jellyfin_token on
+#                    the item for manual entry in the AudioMuse Setup Wizard.
+# NOTE(user): acoustid_key and listenbrainz currently share ONE item UUID
+# (abdfbf3d…); they are wired as separate keys below, so once you identify the
+# correct item just fix the one UUID line that is wrong — no chart changes.
 betanin:
   bitwardenIds:
-    betanin: ""
+    betanin: 5b6a9f94-62cb-4455-881c-b4cb017540da
+    acoustid_key: abdfbf3d-06c3-4a82-b809-b4cb017d2a48
 slskd:
   bitwardenIds:
-    slskd: ""
+    slskd: f59b9a35-ffb0-4efc-a8be-b4cb0175d619
 explo:
   bitwardenIds:
-    explo: ""
+    explo: f270af8b-8d3f-4e1a-88d3-b4cb01760a2a
+    listenbrainz: abdfbf3d-06c3-4a82-b809-b4cb017d2a48
+    lidarr: a72c6761-d069-4374-bb6f-b4cb01769a89
 audiomuse-ai:
   bitwardenIds:
-    audiomuse-ai: ""
+    audiomuse-ai: 07f2f69a-1aac-46b9-a0d3-b4cb0176c171

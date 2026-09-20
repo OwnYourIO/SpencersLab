@@ -1,5 +1,9 @@
 bitwardenIds:
+  # One Bitwarden LOGIN item per key (custom-values/media supplies the UUIDs):
+  #   betanin      = web login; password doubles as the betanin api_key.
+  #   acoustid_key = AcoustID API key in the item's password field.
   betanin: OVERRIDE_VIA_CUSTOM_VALUES
+  acoustid_key: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 
