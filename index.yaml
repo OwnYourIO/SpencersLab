@@ -13182,6 +13182,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/privatebin-1.0.1/privatebin-1.0.1.tgz
     version: 1.0.1
+  prowlarr:
+  - apiVersion: v2
+    appVersion: 2.1.5.5216
+    created: "2026-09-20T18:41:11.123022381Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: bcf9286c16fdcfee7a40fa47db76872f882f77a393d5612b4f64cbe8a948cf47
+    name: prowlarr
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/prowlarr-1.0.1/prowlarr-1.0.1.tgz
+    version: 1.0.1
   pt750:
   - apiVersion: v2
     appVersion: 0.2.1
@@ -18542,4 +18555,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-20T16:20:48.68052861Z"
+generated: "2026-09-20T18:41:11.124220079Z"
