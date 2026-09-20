@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: slskd
+  namespace: default
+  annotations:
+    # slskd state (SQLite DB, logs) — keep the data even if the ArgoCD
+    # Application is pruned.
+    argocd.argoproj.io/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

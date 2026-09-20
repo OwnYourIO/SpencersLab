@@ -1,0 +1,10 @@
+apiVersion: v2
+name: betanin
+description: betanin + beets write-only music tagging pipeline
+type: application
+version: 1.0.0
+appVersion: "0.6.3"
+dependencies:
+  - name: app-template
+    version: 5.0.1
+    repository: https://bjw-s-labs.github.io/helm-charts/

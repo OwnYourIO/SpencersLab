@@ -1,0 +1,72 @@
+bitwardenIds:
+  explo: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+# Wrapper around the upstream `explo` chart (dependency `explo`). The upstream
+# chart only injects plain env values (`.Values.env`) and UI creds via
+# `auth.existingSecret`; it has NO envFrom / secret-env mechanism. Secrets are
+# therefore rendered into a `.env` file by templates/secret-explo.yaml and
+# mounted read-only at /explo-secrets/.env, with WEB_ENV_PATH pointed there
+# (cleanenv merges env vars over the file). Non-secret runtime config stays in
+# the plain `env:` map below.
+#
+# NOTE: the upstream chart exposes no pod/container securityContext values, so
+# the container starts as root (its start.sh then drops to PUID/PGID via
+# su-exec). The repo's drop-ALL hardening cannot be applied here — documented
+# exception for this third-party chart.
+explo:
+  image:
+    repository: ghcr.io/lumepart/explo
+    # Pinned (repo rule); matches upstream chart appVersion v1.2.0.
+    tag: v1.2.0
+    pullPolicy: IfNotPresent
+
+  env:
+    TZ: America/Denver
+    # start.sh drops from root to this uid/gid (shared-media group 2000).
+    PUID: "1000"
+    PGID: "2000"
+    WEB_UI: "true"
+    WEB_ADDR: ":7288"
+    WEB_DATA_PATH: /opt/explo/config/
+    # Secrets live in the ESO-rendered .env mounted below.
+    WEB_ENV_PATH: /explo-secrets/.env
+    # ListenBrainz discovery -> album requests downloaded via Lidarr
+    # (Tubifarry provides the actual download clients inside Lidarr).
+    DISCOVERY_SERVICE: listenbrainz
+    LISTENBRAINZ_DISCOVERY: playlist
+    DOWNLOAD_SERVICES: lidarr
+    LIDARR_URL: http://media-lidarr:8686
+    # Must match the NAME of the Lidarr root folder (Settings -> Media
+    # Management); falls back to the first root folder if not matched.
+    LIDARR_ROOT_FOLDER: automation
+    # Config is pre-seeded via the .env secret; skip the first-run wizard.
+    WIZARD_COMPLETE: "true"
+
+  extraVolumes:
+    - name: explo-env
+      secret:
+        secretName: explo
+  extraVolumeMounts:
+    - name: explo-env
+      mountPath: /explo-secrets
+      readOnly: true
+
+  persistence:
+    config:
+      # Web cache / data — chart-created PVC (<release>-config).
+      enabled: true
+      size: 2Gi
+    media:
+      # Shared SeaweedFS media share at the chart's expected download path.
+      enabled: true
+      existingClaim: media
+      mountPath: /data
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi

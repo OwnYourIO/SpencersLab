@@ -1,0 +1,6 @@
+dependencies:
+- name: audiomuse-ai
+  repository: https://NeptuneHub.github.io/AudioMuse-AI-helm
+  version: 1.1.6
+digest: sha256:8cf842a5a1333e3e837aac72217ab10336fda703c9c849e224c24f4beb083107
+generated: "2026-09-20T20:03:32.855975534Z"

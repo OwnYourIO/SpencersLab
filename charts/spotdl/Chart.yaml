@@ -1,0 +1,10 @@
+apiVersion: v2
+name: spotdl
+description: spotDL nightly sync CronJob (keyless mode)
+type: application
+version: 1.0.0
+appVersion: "4.5.2"
+dependencies:
+  - name: app-template
+    version: 5.0.1
+    repository: https://bjw-s-labs.github.io/helm-charts/

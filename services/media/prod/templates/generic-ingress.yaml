@@ -5,6 +5,10 @@
 {{- else }}
 {{- $subDomain = $name }}
 {{- end}}
+{{- /* When serviceName equals the subdomain the two Ingresses below would
+       collide on the same name/host; collapse them into one (with the
+       external-dns label) instead of rendering a duplicate. */}}
+{{- $sameAsService := and $config.serviceName (eq $config.serviceName $subDomain) }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -19,6 +23,10 @@ metadata:
     #external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
   #labels:
   #  external-dns: "enabled"
+  {{- if $sameAsService }}
+  labels:
+    external-dns: "enabled"
+  {{- end }}
 spec:
   tls:
     - hosts:
@@ -36,7 +44,7 @@ spec:
                 port:
                   number: {{ $config.port }}
 
-{{- if $config.serviceName }}
+{{- if and $config.serviceName (not $sameAsService) }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

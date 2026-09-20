@@ -56,6 +56,21 @@ charts:
   minuspod:
     namespace: default
     ServerSideApply: "false"
+  betanin:
+    namespace: default
+    ServerSideApply: "false"
+  slskd:
+    namespace: default
+    ServerSideApply: "false"
+  spotdl:
+    namespace: default
+    ServerSideApply: "false"
+  explo:
+    namespace: default
+    ServerSideApply: "true"
+  audiomuse-ai:
+    namespace: default
+    ServerSideApply: "true"
 
 ingress:
   subdomains:
@@ -143,6 +158,22 @@ ingress:
     minuspod:
       service: media-minuspod
       port: 8000
+    betanin:
+      serviceName: betanin
+      service: media-betanin
+      port: 9393
+
+    slskd:
+      serviceName: slskd
+      service: media-slskd
+      port: 5030
+
+    audiomuse:
+      serviceName: audiomuse
+      # Rendered Service name of the AudioMuse-AI flask web UI (verified via
+      # helm template charts/audiomuse-ai).
+      service: media-audiomuse-ai-flask-service
+      port: 8000
 
     #unpack:
     #  serviceName: unpackerr
@@ -226,11 +257,26 @@ jellyseerr:
       mountPath: "/config"
 
 lidarr:
+  # Nightly branch REQUIRED for the plugin system (Tubifarry, Brainarr).
+  # ONE-WAY DB migration — /config PVC backed up first (plan phase 1a).
+  # LSIO publishes pinnable nightly-version-* tags (repo pinning rule);
+  # bump tag + plugins together (plugins declare Minimum Lidarr Version).
+  image:
+    repository: lscr.io/linuxserver/lidarr
+    tag: nightly-version-3.1.6.5078
   env:
     - name: TZ
       value: America/Denver
-
-  # Additional volumes on the output Deployment definition.
+    - name: PUID
+      value: "1000"
+    - name: PGID
+      value: "1000"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
   volumes:
     - name: lidarr-config
       persistentVolumeClaim:
@@ -238,14 +284,29 @@ lidarr:
     - name: media
       persistentVolumeClaim:
         claimName: media
-
-  # Additional volumeMounts on the output Deployment definition.
+    # betanin custom script + its API key (phases 2a/2c). optional: true keeps
+    # this existing service running even before the betanin ExternalSecret is
+    # ready (Bitwarden UUID not yet filled) — the script just won't find its
+    # key file until then.
+    - name: betanin-script
+      configMap:
+        name: lidarr-betanin-script
+        defaultMode: 0755
+    - name: betanin-secret
+      secret:
+        secretName: betanin
+        optional: true
   volumeMounts:
     - name: lidarr-config
       mountPath: "/config"
     - name: media
       mountPath: /media/
-      # subPath: 
+    - name: betanin-script
+      mountPath: /config/scripts/betanin.sh
+      subPath: betanin.sh
+    - name: betanin-secret
+      mountPath: /config/secrets/betanin/api_key
+      subPath: BETANIN_API_KEY
 
 radarr:
   env:

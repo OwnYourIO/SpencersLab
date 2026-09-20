@@ -217,6 +217,12 @@ proxy:
       target: requestarr
     music:
       target: lidarr
+    betanin:
+      target: betanin
+    slskd:
+      target: slskd
+    audiomuse:
+      target: audiomuse
     shows:
       target: sonarr
     shows-4k:

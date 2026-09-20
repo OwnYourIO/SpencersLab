@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: betanin-config
+  namespace: default
+  annotations:
+    # Tagging config (config.toml lives here after first-boot seeding) — keep
+    # the data even if the ArgoCD Application is pruned.
+    argocd.argoproj.io/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

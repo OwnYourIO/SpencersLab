@@ -49,3 +49,27 @@ mediamanager:
 minuspod:
   bitwardenIds:
     minuspod: ""
+# Music stack (plan 2026-09-20-feat-add-music-stack-to-media.md, phase 7a).
+# TODO(user): create the Bitwarden items below and fill each UUID. Until then
+# the corresponding ExternalSecrets stay unready and pods stay Pending
+# (visible, accepted failure mode).
+#   betanin (Login): username/password = betanin web login; custom fields
+#     api_key, acoustid_key, lastfm_key.
+#   slskd (Login): username/password = Soulseek creds; custom field api_key.
+#   explo (Login): username/password = Explo web-UI login; custom fields
+#     listenbrainz_user, listenbrainz_token, lidarr_api_key.
+#   audiomuse-ai (Login): password = bundled-Postgres password (username/db are
+#     static in the chart); also store jellyfin_user_id + jellyfin_token here
+#     for manual entry in the AudioMuse Setup Wizard.
+betanin:
+  bitwardenIds:
+    betanin: ""
+slskd:
+  bitwardenIds:
+    slskd: ""
+explo:
+  bitwardenIds:
+    explo: ""
+audiomuse-ai:
+  bitwardenIds:
+    audiomuse-ai: ""

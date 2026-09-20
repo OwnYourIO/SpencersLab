@@ -1,0 +1,86 @@
+bitwardenIds:
+  slskd: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName slskd
+
+  controllers:
+    slskd:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      pod:
+        securityContext:
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+          supplementalGroups:
+            - 2000
+      containers:
+        main:
+          image:
+            repository: docker.io/slskd/slskd
+            # Plain 0.26.0 tag verified present on Docker Hub at impl time.
+            tag: "0.26.0"
+          env:
+            TZ: America/Denver
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 5030
+                initialDelaySeconds: 30
+                periodSeconds: 10
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 5030
+                initialDelaySeconds: 30
+                periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            # slskd image runs as root by default; no setuid needed, so the
+            # standard hardening holds. TODO: verify a non-root story later.
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    slskd:
+      controller: *chartName
+      type: ClusterIP
+      ports:
+        http:
+          port: 5030
+        soulseek:
+          port: 50300
+
+  persistence:
+    data:
+      existingClaim: slskd
+      globalMounts:
+        - path: /app
+    config:
+      type: secret
+      name: slskd
+      globalMounts:
+        - path: /app/slskd.yml
+          subPath: slskd.yml
+          readOnly: true
+    media:
+      existingClaim: media
+      globalMounts:
+        - path: /media

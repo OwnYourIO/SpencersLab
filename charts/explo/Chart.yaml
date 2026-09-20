@@ -1,0 +1,10 @@
+apiVersion: v2
+name: explo
+description: Explo - ListenBrainz discovery for self-hosted music stacks (wrapper)
+type: application
+version: 1.0.0
+appVersion: "1.2.0"
+dependencies:
+  - name: explo
+    version: 1.2.0 # verified via `helm search repo explo --versions` 2026-09-20
+    repository: https://lumepart.github.io/Explo

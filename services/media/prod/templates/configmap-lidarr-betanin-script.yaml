@@ -1,0 +1,28 @@
+# Lidarr custom script (Settings -> Connect -> Custom Script, On Import /
+# On Upgrade): /config/scripts/betanin.sh. Pushes completed album paths to
+# betanin's API for beets tagging. API key comes from the betanin
+# ExternalSecret mounted into the lidarr pod (see lidarr: volumes in
+# services/media/prod/values.yaml).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lidarr-betanin-script
+  namespace: default
+data:
+  betanin.sh: |
+    #!/usr/bin/env bash
+    # Lidarr -> betanin custom script. Env vars per Servarr wiki:
+    # https://wiki.servarr.com/lidarr/custom-scripts
+    set -euo pipefail
+
+    [ "${lidarr_eventtype:-}" = "Download" ] || [ "${lidarr_eventtype:-}" = "AlbumDownload" ] || exit 0
+
+    BETANIN_URL="http://media-betanin:9393/api/torrents"
+    API_KEY="$(cat /config/secrets/betanin/api_key)"
+
+    TARGET="${lidarr_artist_path:-}"
+    [ -n "${lidarr_addedtrackpaths:-}" ] && TARGET="$(dirname "${lidarr_addedtrackpaths%%|*}")"
+
+    curl -fsS --data-urlencode "both=${TARGET}" \
+      --header "X-API-Key: ${API_KEY}" \
+      "${BETANIN_URL}"

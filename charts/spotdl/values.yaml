@@ -1,0 +1,75 @@
+# No secrets: keyless spotDL mode (Spotify's 2026-03 policy makes dev-app
+# credentials Premium-gated; revisit if the user gets a client id/secret).
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName spotdl
+
+  controllers:
+    spotdl:
+      type: cronjob
+      cronjob:
+        schedule: "0 4 * * *"
+        concurrencyPolicy: Forbid
+        ttlSecondsAfterFinished: 3600
+        backoffLimit: 1
+      pod:
+        restartPolicy: OnFailure
+        securityContext:
+          # v4.5.x images run non-root; gid 2000 = shared-media group so
+          # Jellyfin can read what spotDL writes on the SeaweedFS share.
+          runAsUser: 1000
+          runAsGroup: 2000
+          fsGroup: 2000
+          fsGroupChangePolicy: OnRootMismatch
+          supplementalGroups:
+            - 2000
+      containers:
+        main:
+          image:
+            repository: docker.io/spotdl/spotify-downloader
+            tag: v4.5.2
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              cd /config
+              OUT='/media/Music/automation/{artist}/{album}/{title}.{output-ext}'
+              COMMON="--output $OUT --format flac --sync-without-deleting --threads 4 --cache-dir /config"
+              if [ -f playlists.spotdl ]; then
+                spotdl sync playlists.spotdl $COMMON
+              else
+                # First run: bootstrap the sync file from the URL list.
+                spotdl sync $(tr '\n' ' ' < /playlists/playlists.txt) --save-file playlists.spotdl $COMMON
+              fi
+          env:
+            TZ: America/Denver
+            HOME: /config
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  persistence:
+    config:
+      # .spotdl sync file + cache — block storage.
+      existingClaim: spotdl
+      globalMounts:
+        - path: /config
+    playlists:
+      type: configMap
+      name: spotdl-playlists
+      globalMounts:
+        - path: /playlists
+    media:
+      existingClaim: media
+      globalMounts:
+        - path: /media

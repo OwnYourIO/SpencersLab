@@ -1,0 +1,133 @@
+bitwardenIds:
+  betanin: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName betanin
+
+  controllers:
+    betanin:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      initContainers:
+        # Seed config.toml from the ESO-rendered secret on FIRST boot only;
+        # afterwards betanin owns the file on its PVC (UI edits persist).
+        config-init:
+          image:
+            repository: docker.io/sentriz/betanin
+            tag: v0.6.3
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              if [ ! -f /b/.config/betanin/config.toml ]; then
+                cp /tpl/config.toml /b/.config/betanin/config.toml
+              fi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      pod:
+        securityContext:
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+          # Shared-media group (jellyfin/tvheadend convention) so tagged
+          # files on the SeaweedFS share stay group-readable.
+          supplementalGroups:
+            - 2000
+      containers:
+        main:
+          image:
+            repository: docker.io/sentriz/betanin
+            tag: v0.6.3
+          env:
+            TZ: America/Denver
+            BETANIN_HOST: 0.0.0.0
+            BETANIN_PORT: "9393"
+            # Image entrypoint adduser's to UID/GID then drops via sudo.
+            UID: "1000"
+            GID: "1000"
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 9393
+                initialDelaySeconds: 30
+                periodSeconds: 10
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 9393
+                initialDelaySeconds: 30
+                periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            # Image entrypoint runs as root, adduser's, chown's $HOME and drops
+            # to UID/GID via sudo (setuid). Dropping ALL without re-adding
+            # CHOWN/SETUID/SETGID empties the bounding set, so sudo could not
+            # change user and chown would fail. Documented exception to the
+            # allowPrivilegeEscalation:false + drop-ALL default.
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - SETUID
+                - SETGID
+
+  service:
+    betanin:
+      controller: *chartName
+      type: ClusterIP
+      ports:
+        http:
+          port: 9393
+
+  persistence:
+    config:
+      existingClaim: betanin-config
+      globalMounts:
+        - path: /b/.config/betanin
+    data:
+      # betanin SQLite DB — block storage, never the SeaweedFS share.
+      existingClaim: betanin-data
+      globalMounts:
+        - path: /b/.local/share/betanin
+    beetsdb:
+      # beets library.db — block storage, never the SeaweedFS share.
+      existingClaim: betanin-beets
+      globalMounts:
+        - path: /b/.config/beets-db
+    beetsconfig:
+      type: secret
+      name: betanin
+      globalMounts:
+        - path: /b/.config/beets/config.yaml
+          subPath: beets-config.yaml
+          readOnly: true
+    config-tpl:
+      type: secret
+      name: betanin
+      globalMounts:
+        - path: /tpl/config.toml
+          subPath: config.toml
+          readOnly: true
+    media:
+      existingClaim: media
+      globalMounts:
+        - path: /media

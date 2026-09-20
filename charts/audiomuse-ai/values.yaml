@@ -1,0 +1,66 @@
+bitwardenIds:
+  audiomuse-ai: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+# Wrapper around the upstream `audiomuse-ai` chart (dependency `audiomuse-ai`).
+# Media-server type (Jellyfin), its URL/credentials, and the AI provider are
+# NOT chart values in this upstream chart — they are completed in the app's
+# Setup Wizard after first boot (plan phase 8i). AI provider stays NONE for
+# now (llama-swap is OpenAI/Anthropic-API, not Ollama-native).
+audiomuse-ai:
+  image:
+    # Upstream default is `latest` — repo rule forbids it. Pinned 1.1.6 tag
+    # verified present at ghcr.io/neptunehub/audiomuse-ai (2026-09-20).
+    tag: "1.1.6"
+    pullPolicy: IfNotPresent
+
+  timezone: America/Denver
+
+  flask:
+    service:
+      # Reached through the media generic-ingress + proxy-local hub, not a
+      # cloud LB on the single-node k3s cluster.
+      type: ClusterIP
+      port: 8000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+
+  worker:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+
+  redis:
+    # Bundled Redis is deployed by the chart (optional but harmless).
+    enabled: true
+    resources:
+      requests:
+        cpu: 20m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+
+  postgres:
+    # Chart-bundled Postgres on local-path (no CNPG on the media cluster).
+    enabled: true
+    # Credentials come from templates/secret-audiomuse-ai.yaml (ExternalSecret
+    # target `audiomuse-ai`), keys POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB
+    # which match the chart's existingSecretKeys defaults.
+    existingSecret: audiomuse-ai
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi

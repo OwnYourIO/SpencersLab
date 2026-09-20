@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spotdl-playlists
+  namespace: default
+data:
+  # One Spotify URL per line (playlist / album / artist). Consumed by the
+  # spotdl cronjob on FIRST run only to bootstrap /config/playlists.spotdl;
+  # afterwards edit via the .spotdl file semantics or delete the PVC file to
+  # re-bootstrap. OVERRIDE_NEEDED: replace the example before enabling.
+  playlists.txt: |
+    # https://open.spotify.com/playlist/<id>
