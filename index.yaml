@@ -11091,6 +11091,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/media-appset-1.1.1/media-appset-1.1.1.tgz
     version: 1.1.1
+  minuspod:
+  - apiVersion: v2
+    appVersion: 2.95.3
+    created: "2026-09-20T23:50:38.637152094Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 27338c69e8e402d009ddbce93ca1d9fdcb400c18c59c40bb600b928533210c1f
+    name: minuspod
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/minuspod-1.0.1/minuspod-1.0.1.tgz
+    version: 1.0.1
   monitoring-agent:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -18603,4 +18616,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-20T21:09:07.2341545Z"
+generated: "2026-09-20T23:50:38.638641113Z"
