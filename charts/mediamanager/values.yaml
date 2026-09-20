@@ -11,7 +11,8 @@ bitwardenIds:
 domain: OVERRIDE_VIA_APPSET
 
 # MediaManager admin accounts: emails matched against the OIDC email claim.
-# Override via the service values slice once the admin email is known:
+# Defaults (rendered in the ConfigMap template) to ["media@<domain>"].
+# Override via the service values slice once a different admin email is wanted:
 #   mediamanager:
 #     adminEmails: ["you@example.com"]
 adminEmails: []

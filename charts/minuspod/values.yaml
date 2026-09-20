@@ -1,8 +1,8 @@
 bitwardenIds:
-  # Item `minuspod`: custom fields master_passphrase, anthropic_api_key,
-  # whisper_api_key (Groq). The passphrase MUST exist before first boot
-  # (otherwise provider keys are stored plaintext) and must be backed up
-  # offline — losing it makes stored keys/backups unrecoverable.
+  # LOGIN item `minuspod`: password = master passphrase (MUST exist before
+  # first boot or provider keys are stored plaintext; back it up offline —
+  # losing it makes stored keys/backups unrecoverable). LLM + Whisper both
+  # run on llama-swap (gpu cluster), which needs no API keys.
   minuspod: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
@@ -29,13 +29,20 @@ app-template:
             tag: 2.95.3-cpu
           env:
             TZ: America/Denver
-            # LLM (key arrives via the minuspod ExternalSecret)
-            LLM_PROVIDER: anthropic
-            OPENAI_MODEL: claude-haiku-4-5
-            # Whisper via remote API (Groq) — no GPU on this cluster
+            # LLM via llama-swap on the gpu cluster (OpenAI-compatible, no
+            # auth — llama-swap apiKeys is empty). OPENAI_BASE_URL is
+            # domain-dependent → rendered in secret-minuspod.yaml. Model is a
+            # seed: OPENAI_MODEL only applies while the stored setting is
+            # unset; afterwards change it in Settings > AI models.
+            LLM_PROVIDER: openai-compatible
+            OPENAI_API_KEY: not-needed
+            OPENAI_MODEL: qwen3.6-27b-q6
+            # Whisper via llama-swap's whisper.cpp (ggml-large-v3) on the gpu
+            # cluster — same endpoint as the LLM, no auth. WHISPER_API_BASE_URL
+            # is domain-dependent → rendered in secret-minuspod.yaml.
             WHISPER_BACKEND: openai-api
-            WHISPER_API_BASE_URL: https://api.groq.com/openai/v1
-            WHISPER_API_MODEL: whisper-large-v3-turbo
+            WHISPER_API_KEY: not-needed
+            WHISPER_API_MODEL: whisper-large-v3
             WHISPER_DEVICE: cpu
             # Behind the traefik ingress — real client IPs for rate limits/audit
             MINUSPOD_TRUSTED_PROXY_COUNT: "1"
@@ -47,7 +54,7 @@ app-template:
             # mounts at the default /app/data (2.95.3 path-precedence gotcha).
           envFrom:
             - secretRef:
-                name: *chartName   # MINUSPOD_MASTER_PASSPHRASE, API keys, BASE_URL
+                name: *chartName   # MINUSPOD_MASTER_PASSPHRASE, WHISPER_API_KEY, OPENAI_BASE_URL, BASE_URL
           probes:
             liveness: &probes
               enabled: true

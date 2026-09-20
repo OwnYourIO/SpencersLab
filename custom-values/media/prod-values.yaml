@@ -39,16 +39,12 @@ mediamanager:
     mediamanager-db: a93623ff-5dc2-485c-988e-b4cb01578cac
     mediamanager-sso: 6a012240-6eac-422b-b900-b4cb01582f9c
 
-# MinusPod (charts/minuspod). TODO(user): create Bitwarden item `minuspod`
-# with custom fields:
-#   master_passphrase = openssl rand -base64 48   (ALSO back this up offline!)
-#   anthropic_api_key = sk-ant-...
-#   whisper_api_key   = gsk_...                   (Groq)
-# Paste its UUID here. Until then the ExternalSecret stays unready and the
-# pod stays Pending — visible, accepted failure mode.
+# MinusPod (charts/minuspod). Bitwarden LOGIN item `minuspod`:
+#   password = master passphrase (ALSO back this up offline!)
+# LLM + Whisper both run on llama-swap (gpu cluster) — no API keys needed.
 minuspod:
   bitwardenIds:
-    minuspod: ""
+    minuspod: 3b6d1b78-8551-4846-847e-b4cb016c32d1
 # Music stack (plan 2026-09-20-feat-add-music-stack-to-media.md, phase 7a).
 # One Bitwarden LOGIN item per secret (no custom fields): the item's password
 # field holds the secret; items that also carry a username use that field.

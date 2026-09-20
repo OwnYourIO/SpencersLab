@@ -681,6 +681,33 @@ config:
         out:
           - text
 
+    # Audio transcription for MinusPod (media cluster) via whisper.cpp,
+    # bundled in the unified image. Weights (~3.1GB) are fetched once from
+    # HuggingFace into the models PVC on first load. Swaps 1:1 with the GPU
+    # chat/VL models per the matrix below (one GPU model at a time on 8GB).
+    whisper-large-v3:
+      cmd: |
+        /bin/sh -c "
+          mkdir -p /models/whisper &&
+          test -f /models/whisper/ggml-large-v3.bin ||
+          curl -fL --retry 3 -o /models/whisper/ggml-large-v3.bin
+            https://huggingface.co/ggml-org/whisper.cpp/resolve/main/ggml-large-v3.bin &&
+          exec /app/whisper-server
+            --host 0.0.0.0
+            --port ${PORT}
+            -m /models/whisper/ggml-large-v3.bin
+        "
+      name: "Whisper Large v3"
+      description: "Audio transcription (whisper.cpp ggml-large-v3) for podcast processing"
+      proxy: http://localhost:${PORT}
+      checkEndpoint: /health
+      ttl: 0
+      capabilities:
+        in:
+          - audio
+        out:
+          - text
+
   # Concurrency matrix (replaces legacy groups routing).
   # One GPU model at a time; homecpu (CPU) may run alongside any GPU model.
   matrix:
@@ -720,8 +747,9 @@ config:
       v30tq8: qwen3-vl-30b-a3b-thinking-q8
       v30tq4: qwen3-vl-30b-a3b-thinking-q4
       v30tbf: qwen3-vl-30b-a3b-thinking-bf16
+      wsp: whisper-large-v3
     sets:
-      main: "(q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf) & homecpu"
+      main: "(q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
 
 app-template:
   global:

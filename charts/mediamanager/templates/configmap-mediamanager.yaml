@@ -26,7 +26,7 @@ data:
     [auth]
     email_password_resets = false
     session_lifetime = 86400
-    admin_emails = {{ .Values.adminEmails | toJson }}
+    admin_emails = {{ .Values.adminEmails | default (list (printf "media@%s" .Values.domain)) | toJson }}
 
     [indexers.prowlarr]
     enabled = true
