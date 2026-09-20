@@ -8,9 +8,6 @@ dependencies:
 - name: lidarr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.3.5
-- name: prowlarr
-  repository: https://bubylou.github.io/Arr-Stack
-  version: 0.3.5
 - name: radarr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.3.6
@@ -23,5 +20,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 5.0.1
-digest: sha256:00eae8e19d0b82358e4bc0c702004a0f41e6797f335a0fc79a417c85b19b3471
-generated: "2026-07-16T18:21:43.829198412Z"
+digest: sha256:6c24062a78a9bc6e95ebfa5bea7b3852d4d58894514313f36a51939bbb3d83f6
+generated: "2026-09-20T17:35:59.218489623Z"

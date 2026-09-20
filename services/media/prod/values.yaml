@@ -32,6 +32,11 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "false"
+  prowlarr:
+    #version: 1.0.0 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "false"
 
 ingress:
   subdomains:
@@ -199,28 +204,6 @@ lidarr:
   # Additional volumeMounts on the output Deployment definition.
   volumeMounts:
     - name: lidarr-config
-      mountPath: "/config"
-    - name: media
-      mountPath: /media/
-      # subPath: 
-
-prowlarr:
-  env:
-    - name: TZ
-      value: America/Denver
-
-  # Additional volumes on the output Deployment definition.
-  volumes:
-    - name: prowlarr-config
-      persistentVolumeClaim:
-        claimName: prowlarr
-    - name: media
-      persistentVolumeClaim:
-        claimName: media
-
-  # Additional volumeMounts on the output Deployment definition.
-  volumeMounts:
-    - name: prowlarr-config
       mountPath: "/config"
     - name: media
       mountPath: /media/

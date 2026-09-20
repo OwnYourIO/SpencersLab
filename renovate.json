@@ -198,6 +198,7 @@
         "radarr",
         "readarr",
         "sonarr",
+        "ghcr.io/home-operations/prowlarr",
         "ghcr.io/advplyr/audiobookshelf",
         "ghcr.io/kieraneglin/pinchflat",
         "ghcr.io/onedr0p/qbittorrent",
