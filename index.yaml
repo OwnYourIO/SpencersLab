@@ -7105,6 +7105,22 @@ entries:
   hivetools:
   - apiVersion: v2
     appVersion: 0.4.0
+    created: "2026-09-20T18:57:16.658897976Z"
+    dependencies:
+    - name: toolhive-operator-crds
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.34.0
+    - name: toolhive-operator
+      repository: oci://ghcr.io/stacklok/toolhive
+      version: 0.34.0
+    description: Combined Helm chart for ToolHive operator CRDs and operator
+    digest: 07e45956ddcc240ccd002746aaf992cfc9bb45dd9ed55f3a697d8f0c3e1f3fef
+    name: hivetools
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/hivetools-1.0.66/hivetools-1.0.66.tgz
+    version: 1.0.66
+  - apiVersion: v2
+    appVersion: 0.4.0
     created: "2026-09-20T16:20:48.67901561Z"
     dependencies:
     - name: toolhive-operator-crds
@@ -18555,4 +18571,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-20T18:41:11.124220079Z"
+generated: "2026-09-20T18:57:16.659836089Z"
