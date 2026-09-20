@@ -79,12 +79,21 @@ app-template:
             limits:
               memory: 12Gi
           # Upstream: deploy permissive, tighten deliberately. Keep root +
-          # writable rootfs; repo standard still drops capabilities.
+          # writable rootfs. The entrypoint chowns /app/data and then drops
+          # to the app user via setpriv, which needs these capabilities back
+          # (drop-ALL alone crash-loops: "setpriv: setresuid failed") —
+          # documented exception, plan design decision 14.
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+              add:
+                - CHOWN
+                - FOWNER
+                - DAC_OVERRIDE
+                - SETUID
+                - SETGID
 
   service:
     app:
