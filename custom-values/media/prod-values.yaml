@@ -26,3 +26,26 @@ hivetools:
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
   keycloak:
     realm: SpencersLab
+
+# MediaManager (charts/mediamanager). Three Bitwarden LOGIN items:
+#   - `mediamanager-db`: username=mediamanager (MUST equal the CNPG initdb
+#     owner), password=<DB password>. Feeds CNPG bootstrap + app DB env.
+#   - `mediamanager`: password = `openssl rand -hex 32` ([auth] token_secret).
+#   - `mediamanager-sso`: username = client_id, password = client_secret of
+#     the Keycloak `mediamanager` client (plan Verification step 4).
+mediamanager:
+  bitwardenIds:
+    mediamanager: f7b628ec-2544-4c28-a476-b1a501487d99
+    mediamanager-db: a93623ff-5dc2-485c-988e-b4cb01578cac
+    mediamanager-sso: 6a012240-6eac-422b-b900-b4cb01582f9c
+
+# MinusPod (charts/minuspod). TODO(user): create Bitwarden item `minuspod`
+# with custom fields:
+#   master_passphrase = openssl rand -base64 48   (ALSO back this up offline!)
+#   anthropic_api_key = sk-ant-...
+#   whisper_api_key   = gsk_...                   (Groq)
+# Paste its UUID here. Until then the ExternalSecret stays unready and the
+# pod stays Pending — visible, accepted failure mode.
+minuspod:
+  bitwardenIds:
+    minuspod: ""

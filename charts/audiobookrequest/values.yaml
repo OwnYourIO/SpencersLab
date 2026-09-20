@@ -1,0 +1,54 @@
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName audiobookrequest
+
+  controllers:
+    audiobookrequest:
+      pod:
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+      containers:
+        app:
+          image:
+            repository: markbeep/audiobookrequest
+            tag: 1.10.7
+          env:
+            TZ: America/Denver
+            ABR_APP__PORT: "8000"
+            ABR_APP__CONFIG_DIR: /config
+            ABR_APP__LOG_LEVEL: INFO
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    app:
+      controller: *chartName
+      type: ClusterIP
+      ports:
+        http:
+          port: 8000
+
+  persistence:
+    config:
+      existingClaim: *chartName   # SQLite inside → RWO local-path, never SeaweedFS/NFS
+      globalMounts:
+        - path: /config

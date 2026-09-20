@@ -1,0 +1,94 @@
+bitwardenIds:
+  # Item `minuspod`: custom fields master_passphrase, anthropic_api_key,
+  # whisper_api_key (Groq). The passphrase MUST exist before first boot
+  # (otherwise provider keys are stored plaintext) and must be backed up
+  # offline — losing it makes stored keys/backups unrecoverable.
+  minuspod: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName minuspod
+
+  controllers:
+    minuspod:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      # SQLite on RWO + single background worker: never scale above 1.
+      # Recreate is app-template's deployment default; explicit for intent.
+      strategy: Recreate
+      containers:
+        app:
+          image:
+            repository: ttlequals0/minuspod
+            # Concrete version tag (repo pinning rule) == current stable
+            # channel. CAUTION: MinusPod publishes edge releases as
+            # <ver>-cpu tags several times a day — only merge Renovate bumps
+            # that match upstream STABLE release notes.
+            tag: 2.95.3-cpu
+          env:
+            TZ: America/Denver
+            # LLM (key arrives via the minuspod ExternalSecret)
+            LLM_PROVIDER: anthropic
+            OPENAI_MODEL: claude-haiku-4-5
+            # Whisper via remote API (Groq) — no GPU on this cluster
+            WHISPER_BACKEND: openai-api
+            WHISPER_API_BASE_URL: https://api.groq.com/openai/v1
+            WHISPER_API_MODEL: whisper-large-v3-turbo
+            WHISPER_DEVICE: cpu
+            # Behind the traefik ingress — real client IPs for rate limits/audit
+            MINUSPOD_TRUSTED_PROXY_COUNT: "1"
+            # First-boot posture seeds only; stored settings win afterwards —
+            # tune later in the Settings UI, not here.
+            AUTO_PROCESS_ENABLED: "true"
+            FEED_AUTH_ENABLED: "true"
+            # NOTE: set no DATA_DIR/DATA_PATH/MINUSPOD_DATA_DIR — the PVC
+            # mounts at the default /app/data (2.95.3 path-precedence gotcha).
+          envFrom:
+            - secretRef:
+                name: *chartName   # MINUSPOD_MASTER_PASSPHRASE, API keys, BASE_URL
+          probes:
+            liveness: &probes
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /api/v1/health
+                  port: 8000
+                periodSeconds: 30
+                timeoutSeconds: 10
+                failureThreshold: 5
+            readiness: *probes
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 60   # migrations run on boot; be generous
+                periodSeconds: 5
+          resources:
+            requests:
+              cpu: 500m
+              memory: 4Gi
+            limits:
+              memory: 12Gi
+          # Upstream: deploy permissive, tighten deliberately. Keep root +
+          # writable rootfs; repo standard still drops capabilities.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    app:
+      controller: *chartName
+      type: ClusterIP
+      ports:
+        http:
+          port: 8000
+
+  persistence:
+    data:
+      existingClaim: *chartName   # PVC from pvc-minuspod-default.yaml; SQLite → RWO local-path, never SeaweedFS/NFS
+      globalMounts:
+        - path: /app/data

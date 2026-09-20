@@ -37,6 +37,25 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "false"
+  # CloudNativePG operator (external chart, values-only — same entry as grow).
+  # Needed by charts/mediamanager's pg-mediamanager Cluster.
+  cloudnative-pg:
+    version: 0.27.1
+    repository: https://cloudnative-pg.github.io/charts
+    namespace: default
+    ServerSideApply: "true"
+  mediamanager:
+    namespace: default
+    ServerSideApply: "true"
+  lazylibrarian:
+    namespace: default
+    ServerSideApply: "false"
+  audiobookrequest:
+    namespace: default
+    ServerSideApply: "false"
+  minuspod:
+    namespace: default
+    ServerSideApply: "false"
 
 ingress:
   subdomains:
@@ -105,6 +124,25 @@ ingress:
       serviceName: tvheadend
       service: media-tvheadend
       port: 9981
+
+    # Mesh-only hosts (no serviceName → no external-dns-published duplicate
+    # Ingress; see generic-ingress.yaml). Public exposure later = add a
+    # distinct key with serviceName.
+    mediamanager:
+      service: media-mediamanager
+      port: 8000
+
+    lazylibrarian:
+      service: media-lazylibrarian
+      port: 5299
+
+    audiobookrequest:
+      service: media-audiobookrequest
+      port: 8000
+
+    minuspod:
+      service: media-minuspod
+      port: 8000
 
     #unpack:
     #  serviceName: unpackerr

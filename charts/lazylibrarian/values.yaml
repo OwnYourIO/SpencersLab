@@ -1,0 +1,69 @@
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName lazylibrarian
+
+  controllers:
+    lazylibrarian:
+      # No reloader annotation: config lives in a PVC, not ConfigMap/Secret.
+      pod:
+        securityContext:
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+      containers:
+        app:
+          image:
+            repository: lscr.io/linuxserver/lazylibrarian
+            # LinuxServer version-<sha> tags: Renovate cannot order these —
+            # bump manually when updating.
+            tag: version-58c3b076
+          env:
+            TZ: America/Denver
+            PUID: "1000"
+            PGID: "2000"   # shared media group (jellyfin/tvheadend convention)
+          # NOTE: LinuxServer s6-overlay images start as root and drop to
+          # PUID/PGID internally. runAsNonRoot / drop-ALL would break init —
+          # deliberate deviation from the standard security context, same as
+          # charts/tvheadend.
+          probes:
+            liveness: &probes
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /home   # webui lives at /home
+                  port: 5299
+                initialDelaySeconds: 30
+                periodSeconds: 10
+            readiness: *probes
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+
+  service:
+    app:
+      controller: *chartName
+      type: ClusterIP
+      ports:
+        http:
+          port: 5299
+
+  persistence:
+    config:
+      existingClaim: *chartName   # PVC from pvc-lazylibrarian-default.yaml; SQLite → RWO local-path, never SeaweedFS/NFS
+      globalMounts:
+        - path: /config
+    books:
+      existingClaim: media        # shared RWX media PVC
+      globalMounts:
+        - path: /books
+          subPath: books
+    downloads:
+      existingClaim: media        # same volume as books → hardlinks possible
+      globalMounts:
+        - path: /downloads
+          subPath: downloads

@@ -1,0 +1,94 @@
+bitwardenIds:
+  # LOGIN item `mediamanager`: password = [auth] token_secret.
+  mediamanager: OVERRIDE_VIA_CUSTOM_VALUES
+  # LOGIN item `mediamanager-db`: username MUST equal the CNPG initdb owner
+  # (mediamanager); password = DB password.
+  mediamanager-db: OVERRIDE_VIA_CUSTOM_VALUES
+  # LOGIN item `mediamanager-sso`: Keycloak OIDC client — username = client_id,
+  # password = client_secret (see the Keycloak client steps under Verification).
+  mediamanager-sso: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+# MediaManager admin accounts: emails matched against the OIDC email claim.
+# Override via the service values slice once the admin email is known:
+#   mediamanager:
+#     adminEmails: ["you@example.com"]
+adminEmails: []
+
+app-template:
+  global:
+    nameOverride: &chartName mediamanager
+
+  controllers:
+    mediamanager:
+      annotations:
+        # config.toml ConfigMap + ExternalSecret changes restart the pod.
+        reloader.stakater.com/auto: "true"
+      pod:
+        securityContext:
+          runAsUser: 1000   # rootless since v1.12.0
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+      containers:
+        app:
+          image:
+            repository: quay.io/maxdorninger/mediamanager
+            tag: 1.12.3
+          env:
+            TZ: America/Denver
+            CONFIG_DIR: /app/config
+          envFrom:
+            - secretRef:
+                name: *chartName   # MEDIAMANAGER_* overrides (see secret-mediamanager.yaml)
+          probes:
+            liveness:
+              enabled: true
+            readiness:
+              enabled: true
+            startup:
+              enabled: true
+              spec:
+                failureThreshold: 30
+                periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    app:
+      controller: *chartName
+      type: ClusterIP
+      ports:
+        http:
+          port: 8000
+
+  persistence:
+    config:
+      existingClaim: *chartName        # PVC from pvc-mediamanager-default.yaml
+      globalMounts:
+        - path: /app/config
+    config-toml:
+      type: configMap
+      name: mediamanager-config        # rendered by templates/configmap-mediamanager.yaml
+      globalMounts:
+        - path: /app/config/config.toml
+          subPath: config.toml
+          readOnly: true
+    images:
+      existingClaim: mediamanager-images  # PVC from pvc-mediamanager-images-default.yaml
+      globalMounts:
+        - path: /data/images
+    media:
+      existingClaim: media             # shared SeaweedFS RWX media PVC (pre-existing)
+      globalMounts:
+        - path: /data

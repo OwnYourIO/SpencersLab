@@ -1,0 +1,14 @@
+# Sized for this cluster's node disk (~16.5GB free of 75GB, shared with
+# images and all local-path PVCs) — NOT the upstream 50Gi suggestion.
+# local-path does not enforce capacity; manage retention in the Settings UI.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minuspod
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

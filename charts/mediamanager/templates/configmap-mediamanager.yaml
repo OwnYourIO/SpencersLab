@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediamanager-config
+data:
+  config.toml: |
+    # MediaManager config. Secrets ([database] password, [auth] token_secret)
+    # arrive as MEDIAMANAGER_* env overrides from the mediamanager
+    # ExternalSecret and are intentionally absent here.
+    [misc]
+    # Must exactly match the ingress URL (no trailing slash) or auth breaks.
+    frontend_url = "https://mediamanager.{{ .Values.domain }}"
+    cors_urls = ["https://mediamanager.{{ .Values.domain }}"]
+    image_directory = "/data/images"
+    tv_directory = "/data/tv"
+    movie_directory = "/data/movies"
+    torrent_directory = "/data/torrents"
+    development = false
+
+    [database]
+    host = "pg-mediamanager-rw"
+    port = 5432
+    user = "mediamanager"
+    dbname = "mediamanager"
+
+    [auth]
+    email_password_resets = false
+    session_lifetime = 86400
+    admin_emails = {{ .Values.adminEmails | toJson }}
+
+    [indexers.prowlarr]
+    enabled = true
+    url = "http://media-prowlarr:9696"
+    # Set the Prowlarr API key in the MediaManager UI after first boot.
+
+    # Download clients are out of scope for now (no qBittorrent/SABnzbd in
+    # the cluster yet); enable here when one lands.
+    [torrents.qbittorrent]
+    enabled = false
+
+    [torrents.sabnzbd]
+    enabled = false
