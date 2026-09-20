@@ -541,7 +541,7 @@ hivetools:
             - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_project_get");'
             - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_list");'
             - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_get");'
-            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_version");'
+            - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_version_version");'
             - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_sync");'
             - 'permit(principal, action == Action::"get_prompt", resource);'
       # Layer 3 — discovery allowlist (renders MCPToolConfig mcp-argocd-tools).
@@ -557,7 +557,7 @@ hivetools:
         - argocd_project_get
         - argocd_cluster_list
         - argocd_cluster_get
-        - argocd_version
+        - argocd_version_version
         - argocd_application_sync
       resources:
         limits:

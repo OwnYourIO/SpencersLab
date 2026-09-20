@@ -692,3 +692,13 @@ Resolution chosen: upgrade ToolHive 0.34.0 → 0.50.0 — tracked in
 `.agents/plans/2026-09-20-dep-upgrade-tohive-0.50.md`. After that rollout,
 re-run the functional suite here (tools/list = 13 allowlisted tools, real
 reads, Cedar deny, dry-run sync).
+
+## Post-merge correction #5 (2026-09-20, version tool name)
+
+After the ToolHive upgrade, tools/list returned 12 of 13 tools: generated-mode
+tool names derive from OpenAPI operationIds (`VersionService_Version` →
+`argocd_version_version`, not `argocd_version`). Cedar policy + toolsFilter
+updated to the real name. Functional suite on 0.50.0 (2026-09-20 ~21:15 UTC):
+initialize ✓, tools/list 12 tools ✓ (8.5 KB response passes), app list ✓
+(537 KB content), Cedar deny on argocd_application_delete ✓ ("tool not
+found"), dry-run sync of media-smtp-relay ✓ (200 + full Application object).
