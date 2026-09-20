@@ -15,6 +15,12 @@ keycloak:
   realm: OVERRIDE_VIA_CUSTOM_VALUES
   clientId: mcp
 
+# Additional MCPOIDCConfig resources (rendered by generic-mcpoidcconfig.yaml),
+# keyed by MCPOIDCConfig name. The shared Keycloak config lives in
+# mcpoidcconfig-keycloak.yaml; use this map for other OIDC source types (e.g.
+# kubernetesServiceAccount). An mcp entry references one via oidc.configRef.
+mcpOidcConfigs: {}
+
 # Read-only Postgres MCP servers (crystaldba/postgres-mcp): one MCPServer +
 # ExternalSecret per entry in .databases. Recipe: references/mcp-servers.md.
 postgresMcp:

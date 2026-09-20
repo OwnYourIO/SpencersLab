@@ -1,0 +1,9 @@
+# Client identity for the argocd-mcp ToolHive proxy: MCPOIDCConfig
+# argocd-k8s-sa (services/media/prod/values.yaml hivetools.mcpOidcConfigs)
+# validates projected tokens for this SA. Mint client tokens with:
+#   kubectl -n default create token argocd-mcp-client --audience argocd --duration 24h
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-mcp-client
+  namespace: default

@@ -1,6 +1,13 @@
 bitwardenIds:
   cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
   argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+  # TODO(user): UUID of the Bitwarden LOGIN item `argocd-mcp-media` (media
+  # ArgoCD mcp-bot API token). One-time user steps 10a-10c of
+  # .agents/plans/2026-09-20-feat-add-argocd-mcp-media.md — mint the token
+  # after the mcp-bot account lands in media's ArgoCD, create the Bitwarden
+  # item, then put its UUID here. Until then ExternalSecret argocd-mcp stays
+  # unready and the server pod stays Pending (visible, accepted failure mode).
+  argocd-mcp: ""
 
 base:
   bitwardenIds:

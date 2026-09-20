@@ -1,0 +1,16 @@
+{{- /* Extra MCPOIDCConfig resources beyond the shared Keycloak one
+     (mcpoidcconfig-keycloak.yaml). Keyed by MCPOIDCConfig name; the value is
+     the full spec (type + matching block). Reference from an mcp entry via
+     oidc.configRef. */}}
+{{- range $name, $config := .Values.mcpOidcConfigs }}
+{{- if $config }}
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPOIDCConfig
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace | default "default" }}
+spec:
+  {{- toYaml $config | nindent 2 }}
+{{- end }}
+{{- end }}

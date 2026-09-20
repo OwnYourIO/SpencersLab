@@ -133,11 +133,24 @@ argo-cd:
         jqPathExpressions:
           - '.spec.template.metadata.annotations?["reloader.stakater.com/last-reloaded-from"]'
 
+      # Local account for argocd-mcp (token auth only: apiKey = can mint API
+      # tokens, cannot log in interactively). RBAC below; tokens minted
+      # per-cluster out-of-band and stored in Bitwarden.
+      accounts.mcp-bot: apiKey
+
     rbac:
       create: true
       policy.default: ""
       policy.csv: |
         g, Admin, role:admin
+        # mcp-bot (argocd-mcp server): read + refresh + sync ONLY. Deliberately
+        # no create/update/delete/override/action permissions — ArgoCD RBAC is
+        # the backstop layer if the ToolHive Cedar/tool-filter layers ever fail.
+        p, mcp-bot, applications, get, */*, allow
+        p, mcp-bot, applications, sync, */*, allow
+        p, mcp-bot, logs, get, */*, allow
+        p, mcp-bot, projects, get, */*, allow
+        p, mcp-bot, clusters, get, */*, allow
       scopes: "[groups]"
 
   dex:

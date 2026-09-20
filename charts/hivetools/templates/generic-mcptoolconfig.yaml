@@ -1,0 +1,15 @@
+{{- /* One MCPToolConfig per mcp entry that defines toolsFilter (discovery
+     allowlist). Referenced via toolConfigRef rendered by generic-mcpserver.yaml. */}}
+{{- range $name, $config := .Values.mcp }}
+{{- if and $config (ne ($config.enabled | toString) "false") $config.toolsFilter }}
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPToolConfig
+metadata:
+  name: mcp-{{ $name }}-tools
+  namespace: {{ $.Values.namespace | default "default" }}
+spec:
+  toolsFilter:
+    {{- toYaml $config.toolsFilter | nindent 4 }}
+{{- end }}
+{{- end }}

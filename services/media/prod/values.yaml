@@ -1,4 +1,7 @@
 bitwardenIds:
+  # Consumed by templates/secret-argocd-mcp.yaml (media ArgoCD API token for
+  # the argocd-mcp server). Real UUID lives in custom-values/media.
+  argocd-mcp: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
@@ -375,3 +378,119 @@ audiobookshelf:
       existingClaim: audiobookshelf
     media:
       existingClaim: media
+
+# ToolHive MCP platform extension (base deploys hivetools on every cluster):
+# argocd-mcp gives read + refresh + sync access to THIS cluster's ArgoCD,
+# exposed at mcp.media.<domain>/argocd. Four enforcement layers:
+#   1. argocd-mcp ALLOWED_RESOURCES (only these services become tools)
+#   2. ToolHive Cedar authzConfig below (default-deny allowlist, enforced)
+#   3. MCPToolConfig toolsFilter below (discovery allowlist / hygiene)
+#   4. ArgoCD RBAC on the mcp-bot account token (backstop, see charts/base)
+hivetools:
+  mcpOidcConfigs:
+    argocd-k8s-sa:
+      type: kubernetesServiceAccount
+      kubernetesServiceAccount:
+        serviceAccount: argocd-mcp-client
+        namespace: default
+  mcp:
+    argocd:
+      enabled: true
+      image: ghcr.io/matthisholleville/argocd-mcp:1.8.0
+      transport: streamable-http
+      mcpPort: 8080
+      # SA-token auth (MCPOIDCConfig above): clients send a projected token for
+      # SA argocd-mcp-client with audience "argocd" as Authorization: Bearer.
+      oidc:
+        configRef: argocd-k8s-sa
+        audience: argocd
+      env:
+        - name: MCP_TRANSPORT
+          value: "http"
+        - name: MCP_ADDR
+          value: ":8080"
+        # media's ArgoCD runs insecure (server --insecure): plain HTTP on :80.
+        - name: ARGOCD_BASE_URL
+          value: "http://argocd-server.default.svc.cluster.local"
+        - name: AUTH_MODE
+          value: "token"
+        - name: TOOL_MODE
+          value: "generated"
+        # MUST stay false — sync is an HTTP POST; write scope is controlled by
+        # the Cedar allowlist + toolsFilter + ArgoCD RBAC instead.
+        - name: DISABLE_WRITE
+          value: "false"
+        - name: ALLOWED_RESOURCES
+          value: "ApplicationService,ProjectService,ClusterService,VersionService"
+        - name: RATE_LIMIT
+          value: "10"
+        - name: RATE_LIMIT_BURST
+          value: "20"
+        - name: AUDIT_LOG
+          value: "true"
+      secrets:
+        - name: argocd-mcp
+          key: token
+          targetEnvName: ARGOCD_TOKEN
+      # ToolHive proxy audit logging (denied tool calls show up here).
+      audit:
+        enabled: true
+      # Layer 2 — Cedar default-deny allowlist (enforced on every tools/call).
+      # KEEP IN SYNC with toolsFilter below.
+      authz:
+        type: inline
+        policies:
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_get");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_list");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_resource_tree");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_managed_resources");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_list_resource_events");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_pod_logs");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_get_manifests");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_revision_metadata");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_project_get");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_list");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_cluster_get");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_version");'
+          - 'permit(principal, action == Action::"call_tool", resource == Tool::"argocd_application_sync");'
+          - 'permit(principal, action == Action::"get_prompt", resource);'
+      # Layer 3 — discovery allowlist (renders MCPToolConfig mcp-argocd-tools).
+      toolsFilter:
+        - argocd_application_get
+        - argocd_application_list
+        - argocd_application_resource_tree
+        - argocd_application_managed_resources
+        - argocd_application_list_resource_events
+        - argocd_application_pod_logs
+        - argocd_application_get_manifests
+        - argocd_application_revision_metadata
+        - argocd_project_get
+        - argocd_cluster_list
+        - argocd_cluster_get
+        - argocd_version
+        - argocd_application_sync
+      resources:
+        limits:
+          cpu: '500m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          volumes:
+            - name: tmp
+              emptyDir: {}
+          containers:
+            # Container name MUST be "mcp" (ToolHive requirement).
+            - name: mcp
+              securityContext:
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp

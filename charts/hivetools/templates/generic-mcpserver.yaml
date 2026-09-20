@@ -22,7 +22,7 @@ spec:
   {{- end }}
   {{- if $config.oidc }}
   oidcConfigRef:
-    name: keycloak
+    name: {{ $config.oidc.configRef | default "keycloak" }}
     audience: {{ $config.oidc.audience | default $name }}
     {{- if $config.oidc.scopes }}
     scopes:
@@ -55,6 +55,18 @@ spec:
   {{- if $config.volumes }}
   volumes:
     {{- toYaml $config.volumes | nindent 4 }}
+  {{- end }}
+  {{- if $config.audit }}
+  audit:
+    {{- toYaml $config.audit | nindent 4 }}
+  {{- end }}
+  {{- if $config.authz }}
+  authzConfig:
+    {{- toYaml $config.authz | nindent 4 }}
+  {{- end }}
+  {{- if $config.toolsFilter }}
+  toolConfigRef:
+    name: mcp-{{ $name }}-tools
   {{- end }}
 {{- end }}
 {{- end }}
