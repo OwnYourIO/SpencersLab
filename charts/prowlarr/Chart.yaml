@@ -1,6 +1,6 @@
 apiVersion: v2
 name: prowlarr
-version: 1.0.0  # initial only — release.yaml auto-bumps patch on merge to main
+version: 1.0.1  # initial only — release.yaml auto-bumps patch on merge to main
 appVersion: 2.1.5.5216
 dependencies:
 - name: app-template
