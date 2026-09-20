@@ -39,13 +39,16 @@ spec:
 {{- if and $config (ne ($config.enabled | toString) "false") }}
           # Route /{{ $name }}/* to the ToolHive proxy of MCPServer mcp-{{ $name }}
           # (service names are operator-derived: mcp-<serverName>-proxy).
+          # The proxy Service always exposes proxyPort (CRD default 8080) —
+          # NOT mcpPort (that is the backend server's own port, which differs
+          # for e.g. playwright/grafana and does not exist for stdio servers).
           - path: /{{ $name }}
             pathType: Prefix
             backend:
               service:
                 name: mcp-mcp-{{ $name }}-proxy
                 port:
-                  number: {{ $config.mcpPort | required (printf "mcp.%s.mcpPort is required" $name) }}
+                  number: {{ $config.proxyPort | default 8080 }}
 {{- end }}
 {{- end }}
 {{- range $pgdb := .Values.postgresMcp.databases }}

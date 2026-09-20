@@ -625,3 +625,37 @@ carries the nested `inline:` block). The "Verified context" recon line
 "authzConfig (type inline with policies[]/entitiesJson …)" was right about the
 fields but elided the nesting. Future Cedar work on this platform: always
 check the live CRD's `x-kubernetes-validations` before authoring inline authz.
+
+## Post-merge correction #2 (2026-09-20, transport)
+
+With secrets wired, the backend pod crash-looped:
+
+```
+fatal: configuration errors:
+  - MCP_TRANSPORT must be 'stdio' or 'http', got "streamable-http"
+```
+
+The ToolHive 0.34 operator force-injects its own env into direct-transport
+backend containers — `MCP_TRANSPORT=<spec.transport>`, plus `MCP_PORT`,
+`MCP_HOST`, `FASTMCP_PORT` — and the injected `MCP_TRANSPORT` REPLACES the
+`spec.env` value. argocd-mcp validates MCP_TRANSPORT against `stdio|http`, so
+`transport: streamable-http` is unusable for it (v1.8.0 is latest; no
+streamable-http acceptance upstream). The existing kubernetes/grafana servers
+survive the injection only because they ignore that env var.
+
+Fix (media values): `transport: stdio` — the proxyrunner drives the server
+over stdio and still serves streamable-http externally. Dropped `mcpPort`
+(stdio servers have no HTTP port) and the `MCP_TRANSPORT`/`MCP_ADDR` env.
+
+Chart changes this forced in `charts/hivetools/templates/`:
+
+- `generic-mcpserver.yaml`: `mcpPort` no longer `required` — gated behind
+  `if` (the CRD treats it as optional; stdio servers omit it).
+- `generic-mcp-ingress.yaml`: ingress backend port is now
+  `proxyPort | default 8080` instead of `mcpPort`. The ingress routes to the
+  operator's proxy Service, which always exposes proxyPort — using mcpPort
+  was wrong whenever the two differ, and impossible for stdio servers.
+  Side effect (fix): gpu's `/playwright` (8931) and `/grafana-*` (8000)
+  routes pointed at ports their proxy Services don't expose — live probes
+  returned 404 vs 406 for healthy routes. They re-point to 8080 on the next
+  gpu hivetools sync. All other fleet routes render unchanged (8080).
