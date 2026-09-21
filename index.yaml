@@ -14336,6 +14336,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/seaweedfs-csi-driver-1.0.1/seaweedfs-csi-driver-1.0.1.tgz
     version: 1.0.1
+  slskd:
+  - apiVersion: v2
+    appVersion: 0.26.0
+    created: "2026-09-21T00:00:41.134147295Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: slskd Soulseek daemon (no VPN for now)
+    digest: cfe84b7ed665dc0619494d25f72036f004302b0e73de1af058a6dc0a2381d009
+    name: slskd
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/slskd-1.0.1/slskd-1.0.1.tgz
+    version: 1.0.1
   smtp-relay:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -18616,4 +18631,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-09-20T23:50:38.638641113Z"
+generated: "2026-09-21T00:00:41.13564876Z"
