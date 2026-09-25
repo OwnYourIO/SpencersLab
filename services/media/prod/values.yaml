@@ -40,7 +40,7 @@ charts:
   # CloudNativePG operator (external chart, values-only — same entry as grow).
   # Needed by charts/mediamanager's pg-mediamanager Cluster.
   cloudnative-pg:
-    version: 0.27.1
+    version: 0.29.1
     repository: https://cloudnative-pg.github.io/charts
     namespace: default
     ServerSideApply: "true"
