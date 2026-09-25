@@ -4,5 +4,5 @@ version: 1.0.1  # initial only — release.yaml auto-bumps patch on merge to mai
 appVersion: 2.1.5.5216
 dependencies:
 - name: app-template
-  version: 5.0.1
+  version: 5.2.1
   repository: https://bjw-s-labs.github.io/helm-charts/
