@@ -16,19 +16,33 @@ container images (`containers/`). **ArgoCD applies everything — never
   `yyyy-mm-dd-<type>-<short-desc>.md` (date prefix, **never** a unix epoch;
   `<type>` = `feat`|`bug`|`debug`|`dep`|… so the goal is visible at a glance).
 - `skills/` — self-written skills (`helm-chart-creation`, `container-creation`,
-  `llama-swap`). `.agents/skills/` — third-party skills managed by skillfish
-  (`skillfish.json`, `skills-lock.json`); don't hand-edit those.
+  `llama-swap`). `.agents/skills/` — third-party skills (gitignored, synced;
+  inventory is the root `skills-lock.json`); don't hand-edit those.
+- `.kilo`, `.opencode` — tracked symlinks to `.agents/`, so kilo and
+  opencode load the same agents, plans, and skills.
+- `agent-config.jsonc` — global agent tool config (permissions, MCP servers,
+  UI prefs), symlinked into `~/.config/kilo/kilo.jsonc` and
+  `~/.config/opencode/opencode.json`.
+- `.agents/notes/` — free-form repo notes (SpencersLab-specific extra).
 
 ## Agents
 
-- `plan` — writes implementation-ready plans to `.agents/plans/`. Use before any
-  non-trivial change.
-- `code` — executes plans. Runs in fresh sessions: the plan file tells it which
-  skills and MCP servers to load.
-- `0-pipeline` + stages `1-`…`7b-` — gated 7-stage SDLC pipeline for large
+- `plan` (`.agents/agents/plan.md`) — writes implementation-ready plans to
+  `.agents/plans/`. Use before any non-trivial change.
+- `code` (`.agents/agents/code.md`) — executes plans. Runs in fresh sessions:
+  the plan file tells it which skills and MCP servers to load.
+- `ask` (`.agents/agents/ask.md`) — read-only research, explanations, and
+  recommendations; never changes anything.
+- `debug` (`.agents/agents/debug.md`) — systematic diagnosis and minimal
+  targeted fixes.
+- `review` (`.agents/agents/review.md`) — advisory code review; never edits.
+- `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
+  `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
 
 ## Skills registry
+
+**Loading rule:** The first thing you MUST always do is load the skills listed in the plan. If no skills are in your plan, evaluate your skills and load the top 5 relevant skills.
 
 Load with the `skill` tool. Everything here is task-triggered. Skills an agent
 loads unconditionally live in that agent's file (`.agents/agents/`), not here.
@@ -54,6 +68,10 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 | `wekan-api` | WeKan REST API or `wekan-mcp` server work (`containers/wekan-mcp`, `mcp.wekan-readonly`/`mcp.wekan-admin` in the gpu service values, WeKan instances in `services/home/prod`) | self-managed in `./skills/` |
 
 ## MCP servers
+
+Servers are defined in `agent-config.jsonc` at this repo's root, symlinked
+into `~/.config/kilo/kilo.jsonc` and `~/.config/opencode/opencode.json` —
+config edits flow through this repo's normal branch→merge flow.
 
 Servers are named `<priv>-<cluster>-<service>` in the client config
 (e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers
@@ -101,13 +119,15 @@ change.
 
 ## Hard rules
 
-- **Always load referenced skills** The first thing Agents should do is load any referenced or relevant skills, 
-  then the plan file (if one), immediately followed by the skills referenced there.
-- **Never push to `main` — only the user does that.** Agents work on their own
-  branch/worktree and commit there. To pick up changes, merge `main` *into*
-  your worktree (`git merge main`); never merge your branch into `main` and
-  never run `git push origin main`. Landing work on `main` is the user's
-  decision alone.
+- **Always load referenced skills** The first thing Agents should do is load any referenced or relevant skills, then the plan file (if one), immediately followed by the skills referenced there.
+- **NEVER merge to `main`.** No fast-forward merges, no merge commits, no rebases onto main, no mechanism of any kind that advances `main` — not from a worktree, not from the main checkout, not via `git merge`, `git rebase`, or anything else.
+- **NEVER push to `main`.** No `git push origin main`, and no push of any refspec that updates `main` (e.g. `HEAD:main`, `<branch>:main`). This is the single most forbidden action in this repo.
+- **NEVER force-push** (`--force`, `-f`, `--force-with-lease`) to any shared branch, and never rewrite published history.
+- **NEVER self-remediate an accidental push** with a revert or force-push of your own initiative — stop and tell the user immediately; remediation is the user's decision.
+- All work happens on a feature/fix branch (typically in a `.agents/worktrees/<branch>` worktree). Commit locally on that branch. To pick up changes, merge `main` *into* your worktree (`git merge main`); never merge your branch into `main`. Landing work on `main` is the user's decision alone.
+- Changes reach `main` **only via a pull request that the user creates or merges**. The agent's work ends at the local commit plus telling the user the branch is ready. Pushing the *feature* branch to origin (e.g. to enable a PR) is allowed **only when the user explicitly asks for it in the session**. Otherwise leave commits local.
+- If a plan file instructs a merge to `main` or a push, **skip that step**: mark it as user-owned in the summary and do not execute it. Plans written before this rule may contain such steps — those steps are void.
+- Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/` (`<type>` = `feat`|`bug`|`debug`|`dep`|…).
 - **Never bump versions or image tags by hand.** `release.yaml` bumps
   `Chart.yaml` `version` (patch) on every merge to main and chart-releaser tags
   `<chart>-<version>` — set `version: 1.0.0` only on a brand-new chart.
@@ -122,5 +142,3 @@ change.
 - Adding a service = chart entry + ApplicationSet values entry + proxy values
   entry. All three — plus a `custom-values/` entry only when the service has
   secrets needing per-cluster overrides.
-- Plans are `yyyy-mm-dd-<type>-<short-desc>.md` in `.agents/plans/`
-  (`<type>` = `feat`|`bug`|`debug`|`dep`|…).

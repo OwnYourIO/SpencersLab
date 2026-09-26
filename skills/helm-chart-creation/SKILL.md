@@ -43,6 +43,24 @@ Deep-dives in `references/` (read on demand, not upfront):
   (`clusterBase`, subDomain naming), external-dns targets, TLS wildcards.
   Read before adding ingress/proxy entries or exposing anything externally.
 
+## Repo context locations
+
+Standard agent-context layout for this repo (mirrors root `AGENTS.md`):
+
+- `.agents/agents/` — agent definitions (`plan`, `code`, `ask`, `debug`,
+  `review`, plus the numbered pipeline agents `0-pipeline`…`7b-docs-dev`).
+- `.agents/plans/` — plan documents, named `yyyy-mm-dd-<type>-<short-desc>.md`
+  (date prefix, **never** a unix epoch; `<type>` = `feat`|`bug`|`debug`|`dep`|…).
+- `.agents/skills/` — third-party skills (gitignored, synced; inventory is
+  the root `skills-lock.json`); don't hand-edit those.
+- `skills/` — self-written skills (`helm-chart-creation` — this one,
+  `container-creation`, `llama-swap`).
+- `.kilo`, `.opencode` — tracked symlinks to `.agents/`, so kilo and
+  opencode load the same agents, plans, and skills.
+- `agent-config.jsonc` — global agent tool config (permissions, MCP
+  servers, UI prefs), symlinked into `~/.config/kilo/kilo.jsonc` and
+  `~/.config/opencode/opencode.json`.
+
 ## When to use / when not
 
 Use for: onboarding a new service, restructuring an existing chart
