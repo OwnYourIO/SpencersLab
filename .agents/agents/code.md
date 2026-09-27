@@ -122,9 +122,10 @@ Before declaring work done, verify:
 
 ## Skills
 
+The first thing you MUST always do is load the skills listed in the plan. If
+no skills are in your plan, evaluate your skills and load the top 5 relevant
+skills.
+
 Always load: `executing-plans`. For chart work also load `helm-bjw-s-chart`
 and `kubernetes-skill`.
 
-For anything else, consult the skills registry in `AGENTS.md` — it is the
-single source of truth for task-triggered skills and MCP servers — and load
-whatever the plan file's `## Skills` / `## MCP Servers` sections list.

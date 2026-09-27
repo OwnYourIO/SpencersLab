@@ -142,9 +142,9 @@ Each plan you
 write names the skills and MCP servers the Code agent must load (its `##
 Skills` / `## MCP Servers` sections), chosen from that registry.
 
-The first thing you MUST first do is load 3 skills for small tasks, 5 for medium, and 8 for a large task. Otherwise you'll miss important context.
+The first thing you MUST always do is load the skills listed in the plan. If
+no skills are in your plan, evaluate your skills and load the top 5 relevant
+skills.
 
 Always load: `writing-plans`.
 
-For anything else, consult the skills registry in `AGENTS.md` — it is the
-single source of truth for task-triggered skills and MCP servers. 

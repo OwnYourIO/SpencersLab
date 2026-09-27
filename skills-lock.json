@@ -61,6 +61,14 @@
       "skillPath": "skills/grafana/SKILL.md",
       "computedHash": "0107f5fcc377f49751f734c68e6243c665473604f1838c4e89b05387c36cff93"
     },
+    "ha-integration-dev": {
+      "source": "tonylofgren/aurora-smart-home",
+      "sourceType": "github",
+      "skillPath": "ha-integration-dev/SKILL.md",
+      "computedHash": "",
+      "branch": "main",
+      "sha": "4ba8329dfac7b760feff59f191e439184a15a16a"
+    },
     "ha-mcp-efficiency": {
       "source": "zorak1103/ha-mcp",
       "sourceType": "github",
