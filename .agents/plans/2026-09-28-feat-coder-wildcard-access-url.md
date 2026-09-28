@@ -121,3 +121,56 @@ The secret-based `CODER_WILDCARD_ACCESS_URL` (above) landed in `main` via
 - **Wildcard DNS**: `*.spencerslab.com` must resolve at the edge
   (proxy-remote) for app subdomains to arrive — check the DNS provider.
 - Verify TLS/proxy chain accepts the app subdomains end-to-end once synced.
+
+---
+
+# Debug 2026-09-28 — "doesn't work right" after rollout
+
+User report: loaded the app, "connected to the coder container, not the
+workspace I'm working out of". Investigation (readonly MCP, no mutations):
+
+| Check | Result |
+|---|---|
+| Secret synced | ✅ ExternalSecret refresh 02:17:52Z |
+| Pod env | ✅ pod started 02:18:26Z (after sync) → has `*-coder.spencerslab.com` |
+| Ingress | ✅ `coder` Ingress: rule `*.spencerslab.com` + TLS `wildcard-cert` |
+| App config (coder DB) | ✅ `openchamber`: subdomain=true, url http://127.0.0.1:3000, health=healthy, workspace SpencersLab-Claud (code-server is path-based, subdomain=false) |
+| coderd request logs | ❌ zero inbound app requests in the 15 min after rollout |
+| DNS | ❌ **`*.spencerslab.com` does not resolve** (NXDOMAIN from lab network). `coder.spencerslab.com` → 10.0.22.205 (split-horizon/internal target), `proxy-remote.spencerslab.com` → 5.78.101.168 |
+
+**Root cause (confirmed blocker):** no wildcard DNS record for
+`*.spencerslab.com`. The generated app URL
+(`openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com`)
+goes NXDOMAIN, so nothing reaches coderd. Fix = add `*.spencerslab.com` to
+the same split-horizon DNS that serves `coder.spencerslab.com` (→ same
+target, 10.0.22.205), then re-test. Explicit records always take precedence
+over a wildcard, so existing subdomains are unaffected.
+
+Also noted: the workspace restarted at 02:19 (stop→start) with transient
+agent reconnect errors (yamux EOF, 500 on /containers) — anything loaded in
+that window would have misbehaved regardless.
+
+## Resolution — OpenChamber "Could not initialize workspace" 500s
+
+After the wildcard DNS landed, the UI loaded but all `/api/*` calls returned
+500. Traced via coderd request logs → opencode server log
+(`~/.local/share/opencode/log/opencode.log` inside the workspace):
+
+```
+PlatformError: NotFound: FileSystem.realPath (/home/coder/.config/openchamber/chats)
+cause: ENOENT ... lstat '/home/coder/.config/openchamber/chats'
+```
+
+OpenChamber's web UI treats `/home/coder/.config/openchamber/chats` as its
+workspace directory and sends it as `X-OpenCode-Directory` on every API call;
+the opencode server 500s when that directory doesn't exist. It didn't exist
+because 02:45Z was the FIRST web-UI use (previously used via VS Code only —
+`install-id-web` was created at that moment). Reproduced (500 with the
+header) and fixed by `mkdir -p ~/.config/openchamber/chats` — on the
+persistent home PVC, so it survives restarts. Post-fix: `/api/config` and
+`/api/model` with the header → 200.
+
+Side note: agent `lifecycle_state=start_error` comes from the startup script
+"output pipes not closed after 10s" warning (the `| sed`-piped app commands
+hold stdout). Cosmetic (dashboard banner); apps work. Fix would be
+redirecting those commands' output to log files in the template.
