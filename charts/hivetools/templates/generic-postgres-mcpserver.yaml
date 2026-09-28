@@ -35,12 +35,13 @@ spec:
       key: DATABASE_URI
       targetEnvName: DATABASE_URI
   {{- /*
-  Liveness probe: self-heal a hung postgres-mcp process. The ToolHive proxy's
-  /health endpoint pings the backend and reports mcp.available. The probe
-  fetches it with python3 (present in the postgres-mcp image) and exits 1 when
-  the backend is degraded/hung, so kubelet restarts the container. A
-  connection-refused (proxy itself down) is treated as healthy — restarting the
-  backend would not help the proxy. See the plan for the failure analysis.
+  Liveness probe: self-heal a hung postgres-mcp process when the ToolHive
+  proxy can report backend availability. Newer proxyrunner /health responses
+  include `mcp.available`; older versions (e.g. v0.34.0) do not. To avoid a
+  version-skew crashloop, treat a missing/unknown `mcp` object as healthy and
+  fail only when the proxy explicitly reports the backend unavailable. A
+  connection-refused (proxy itself down) is treated as healthy — restarting
+  the backend would not help the proxy. See the plan for the failure analysis.
   */}}
   {{- $probeURL := printf "http://mcp-mcp-postgres-%s-proxy:%d/health" .name (int $pg.mcpPort) }}
   {{- $probeScript := `import json, socket, sys, urllib.request
@@ -53,7 +54,12 @@ except Exception as e:
     if isinstance(e, (socket.timeout, TimeoutError)) or isinstance(reason, (socket.timeout, TimeoutError, ConnectionResetError)):
         sys.exit(1)
     sys.exit(0)
-sys.exit(0 if body.get("mcp", {}).get("available") else 1)` }}
+if not isinstance(body, dict):
+    sys.exit(0)
+mcp = body.get("mcp")
+if not isinstance(mcp, dict):
+    sys.exit(0)
+sys.exit(1 if mcp.get("available") is False else 0)` }}
   {{- $probe := dict "exec" (dict "command" (list "python3" "-c" $probeScript $probeURL)) "initialDelaySeconds" 30 "periodSeconds" 15 "timeoutSeconds" 12 "failureThreshold" 3 }}
   {{- if $pg.podTemplateSpec }}
   {{- $pts := deepCopy $pg.podTemplateSpec }}

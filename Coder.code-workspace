@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "../pictaria-server"
+		},
+		{
+			"path": "../ha-mcp"
 		}
 	],
 	"settings": {

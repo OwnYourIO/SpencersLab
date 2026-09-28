@@ -445,7 +445,14 @@ hivetools:
     searxng:
       enabled: true
       image: isokoliuk/mcp-searxng:1.13.0
-      transport: stdio
+      # streamable-http (2026-09-27): the stdio attach bridge dies permanently
+      # after any transient apiserver outage (ToolHive re-attach gives up after
+      # 10 retries and reports healthy anyway — see
+      # .agents/plans/2026-09-27-debug-mcp-servers-longterm-fix.md). mcp-searxng
+      # serves native Streamable HTTP when MCP_HTTP_PORT is set, so the
+      # proxyrunner attach hop goes away entirely (same pattern as wekan/HA).
+      # Client URL moves to the -headless service: see agent-config.jsonc.
+      transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
       # oidc:
@@ -464,6 +471,11 @@ hivetools:
               env:
                 - name: SEARXNG_URL
                   value: "http://gpu-searxng.default.svc.cluster.local:8080"
+                # Switches mcp-searxng from stdio to native HTTP mode.
+                - name: MCP_HTTP_PORT
+                  value: "8080"
+                - name: MCP_HTTP_HOST
+                  value: "0.0.0.0"
     # WeKan, split into privilege tiers. Both share the same WEKAN_TOKEN
     # (wekan-mcp secret); the readonly tier hides/blocks write tools via the
     # WEKAN_MCP_READ_ONLY flag handled by the wekan-mcp image.
@@ -652,7 +664,12 @@ hivetools:
     renovate:
       enabled: true
       image: ghcr.io/ownyourio/renovate-mcp:main
-      transport: stdio
+      # streamable-http (2026-09-27): renovate-mcp is stdio-only upstream, so
+      # the image bridges it with supergateway (stdio → Streamable HTTP).
+      # Same reason as searxng: the stdio proxy attach dies permanently after
+      # an apiserver blip. Revert = transport: stdio (image ENTRYPOINT still
+      # runs renovate-mcp directly; supergateway is additive).
+      transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
       # oidc:
@@ -716,6 +733,19 @@ hivetools:
           containers:
             - name: mcp
               imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
+              # Bridge: supergateway exposes the stdio renovate-mcp child as
+              # Streamable HTTP on mcpPort. Stateless by default (no
+              # --stateful): cross-request session state would only wedge the
+              # bridge after a restart; renovate's real state lives in
+              # /workspace, not in MCP sessions.
+              command: ["supergateway"]
+              args:
+                - --stdio
+                - renovate-mcp
+                - --outputTransport
+                - streamableHttp
+                - --port
+                - "8080"
               resources:
                 requests:
                   cpu: '500m'

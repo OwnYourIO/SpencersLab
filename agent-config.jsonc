@@ -123,7 +123,9 @@
     },
     "global-searxng": {
       "type": "remote",
-      "url": "http://mcp-mcp-searxng-proxy.default:8080/mcp",
+      // streamable-http (2026-09-27): -headless service hits the mcp pod
+      // directly; the old -proxy URL was the stdio proxyrunner bridge.
+      "url": "http://mcp-mcp-searxng-headless.default:8080/mcp",
       "enabled": true,
       "timeout": 60000
     },
@@ -153,7 +155,10 @@
     },
     "global-renovate": {
       "type": "remote",
-      "url": "http://mcp-mcp-renovate-proxy.default:8080/mcp",
+      // streamable-http (2026-09-27): supergateway bridge in the renovate-mcp
+      // image serves /mcp directly; the old -proxy URL was the stdio
+      // proxyrunner bridge.
+      "url": "http://mcp-mcp-renovate-headless.default:8080/mcp",
       "enabled": true,
       "timeout": 60000
     },
