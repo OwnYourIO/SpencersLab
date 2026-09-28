@@ -23,6 +23,16 @@ bitwardenIds:
   grafana-mcp-admin-token: d37bc58e-ab95-4935-83bc-b4be01021699
   wekan-mcp: e6761f4a-9813-4073-b539-b4bd002bc4b1
 
+# Coder wildcard ingress host (external coder chart, wired via services/gpu
+# charts.coder + the coder: values block). The chart renders ingress.host
+# unconditionally (always paired with a tls entry), so the wildcard is carried
+# in `host` and wildcardHost stays empty. The plain coder.<domain> host is
+# covered by the gpu generic-ingress, so it does not appear here.
+coder:
+  coder:
+    ingress:
+      host: "*.spencerslab.com"
+
 base:
   bitwardenIds:
     argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625

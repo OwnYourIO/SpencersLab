@@ -298,6 +298,18 @@ coder:
     # This is needed because the Access URL is coming from envFrom
     envUseClusterAccessURL: false
 
+    ingress:
+      # Wildcard ingress so workspace app subdomains reach coderd. The
+      # wildcard host lives in custom-values/gpu/prod-values.yaml — this
+      # external chart's values slice is not templated, so .Values.domain is
+      # unavailable here. The chart renders ingress.host unconditionally, so
+      # the wildcard is carried there; the plain coder.<domain> host stays
+      # with the gpu generic-ingress.
+      enable: true
+      tls:
+        enable: true
+        secretName: wildcard-cert
+
     service:
       type: ClusterIP
 
