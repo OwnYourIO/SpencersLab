@@ -1,5 +1,5 @@
 {
-    "version": "v1.2-spencer",
+    "version": "v1.3-spencer",
     "status": "frozen-for-initial-evaluation",
     "notes": [
         "JSON-compatible YAML keeps bootstrap validation runnable before PyYAML is installed.",
@@ -48,6 +48,10 @@
             {
                 "tag": "ai/quality/blurry",
                 "description": "The subject is ruined by motion blur or missed focus. Not artistic depth-of-field or background blur."
+            },
+            {
+                "tag": "ai/quality/minor-blur",
+                "description": "The subject or picture is slightly blurry or out of focus. Not artistic depth-of-field or background blur."
             },
             {
                 "tag": "ai/quality/dark",
@@ -367,7 +371,7 @@
             },
             {
                 "tag": "ai/composition/group",
-                "description": "Group or specific set of people at the center of attention."
+                "description": "Group or group-like framing."
             }
         ]
     },

@@ -50,7 +50,8 @@
 			"statusBar.debuggingBackground": "#330e25",
 			"statusBar.debuggingForeground": "#e7e7e7",
 			"activityBar.activeBorder": "#e7e7e7",
-			"activityBarTop.activeBorder": "#e7e7e7"
+			"activityBarTop.activeBorder": "#e7e7e7",
+			"statusBar.inactiveBackground": "#330e25"
 		},
 		"peacock.remoteColor": "#330e25"
 	}
