@@ -17,6 +17,37 @@ keycloakx:
     - "--verbose"
     - "start"
 
+  # MQTT watchdog: the Keycloak MQTT event-listener client (paho) dies whenever the
+  # Home Assistant MQTT broker restarts and never recovers (verified 2026-09-27:
+  # 8 disconnects, 0 auto-recoveries, 1801 failed publishes, 3 weeks of silent
+  # external-SSO lockout). A healthy client holds an ESTABLISHED TCP connection to
+  # the broker; a wedged one holds none. This probe makes the kubelet restart the
+  # container in that state — boot always reconnects cleanly (0 boot failures in
+  # 30d of logs). Broker-unreachable passes, so HA outages don't crashloop us.
+  # Broker: mqtt.spencerslab.com:1883 (matches KC_SPI_EVENTS_LISTENER_MQTT_SERVER_URI
+  # in templates/secret-keycloak-admin.yaml) — if the broker host/port ever moves,
+  # update the hex port (1883 = 0x075B) and hostname below.
+  livenessProbe: |
+    exec:
+      command:
+      - /bin/bash
+      - -c
+      - |
+        # 1) Healthy = ESTABLISHED connection to the MQTT broker exists.
+        #    1883 = 0x075B; st 01 = ESTABLISHED. Checked FIRST so the probe's own
+        #    reachability test below can never self-match.
+        if awk '$4=="01" && $3 ~ /:075B$/' /proc/net/tcp /proc/net/tcp6 2>/dev/null | grep -q .; then
+          exit 0
+        fi
+        # 2) No socket. If the broker itself is unreachable, a restart can't help
+        #    (and would crashloop during HA outages) — pass.
+        timeout 3 bash -c 'exec 3<>/dev/tcp/mqtt.spencerslab.com/1883' 2>/dev/null || exit 0
+        # 3) Broker reachable but keycloak holds no connection — client is wedged.
+        exit 1
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 2
+
   database:
     vendor: "postgres"
     hostname: "pg-keycloak-rw"
