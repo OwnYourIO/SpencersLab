@@ -50,9 +50,12 @@ charts:
   searxng:
     namespace: default
     ServerSideApply: "false"
-  archon:
-    namespace: default
-    ServerSideApply: "false"
+  # Disabled 2026-10-06 at the operator's request (frees GPU node memory; no
+  # crash involved). Re-enable by uncommenting; PVCs and bitwardenIds.archon
+  # were left in place.
+  #archon:
+  #  namespace: default
+  #  ServerSideApply: "false"
   flowise:
     namespace: default
     ServerSideApply: "false"
@@ -210,10 +213,11 @@ ingress:
       service: gpu-supabase
       port: 8000
 
-    archon:
-      serviceName: archon
-      service: gpu-archon
-      port: 3737
+    # Disabled 2026-10-06 with the archon chart (backend Service removed).
+    #archon:
+    #  serviceName: archon
+    #  service: gpu-archon
+    #  port: 3737
 
     cluster:
       clusterBase: true

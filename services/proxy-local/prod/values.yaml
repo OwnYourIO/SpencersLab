@@ -251,10 +251,12 @@ proxy:
       target: radarr
     movies-4k:
       target: radarr-4k
-    ebooks:
-      target: readarr
-    audiobooks:
-      target: readarr-audio
+    # Disabled 2026-10-06 with the readarr chart (media no longer serves
+    # readarr.spencerslab.com / readarr-audio.spencerslab.com).
+    #ebooks:
+    #  target: readarr
+    #audiobooks:
+    #  target: readarr-audio
     streams:
       service: proxy-local-pinchflat 
       port: 80
@@ -395,7 +397,11 @@ qbittorrent:
               memory: 1Gi
             limits:
               cpu: 600m
-              memory: 3Gi
+              # 3Gi was cgroup-OOM-killing qbittorrent-nox under active
+              # downloads (~179 kills/wk in the week before 2026-10-06; peak
+              # WSS 3.2Gi) — 4Gi covers that peak, but headroom above it is
+              # thin; if OOMs return under heavier load, raise further.
+              memory: 4Gi
       pod:
         securityContext:
           runAsUser: 1000

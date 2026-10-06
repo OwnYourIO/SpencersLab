@@ -84,11 +84,12 @@ ingress:
       service: media-audiobookshelf
       port: 8080
 
+    # Disabled 2026-10-06 with the jellyseerr chart (backend Service removed).
     # TODO: Jellyseerr works, but not requests?
-    requests:
-      serviceName: jellyseerr
-      service: media-jellyseerr
-      port: 5055
+    #requests:
+    #  serviceName: jellyseerr
+    #  service: media-jellyseerr
+    #  port: 5055
 
     music:
       serviceName: lidarr
@@ -113,17 +114,19 @@ ingress:
       service: media-radarr
       port: 7878
 
-    ebooks:
-      serviceName: readarr
-      service: media-readarr
-      port: 8787
+    # Disabled 2026-10-06 with the readarr chart (backend Service removed).
+    #ebooks:
+    #  serviceName: readarr
+    #  service: media-readarr
+    #  port: 8787
 
+    # Disabled 2026-10-06 with the readarr chart (backend Service removed).
     # No go here
-    audiobooks:
-      serviceName: readarr-audio
-      #service: readarr-audio
-      service: media-readarr
-      port: 8787
+    #audiobooks:
+    #  serviceName: readarr-audio
+    #  #service: readarr-audio
+    #  service: media-readarr
+    #  port: 8787
 
     shows:
       serviceName: sonarr
@@ -240,6 +243,8 @@ jellyfin:
     media:
       existingClaim: media
 
+# Dormant since 2026-10-06 (jellyseerr dependency commented out in
+# Chart.yaml) — kept in place for re-enable.
 jellyseerr:
   env:
     - name: TZ
@@ -330,6 +335,8 @@ radarr:
       mountPath: /media/
       # subPath: 
 
+# Dormant since 2026-10-06 (readarr dependency commented out in Chart.yaml)
+# — kept in place for re-enable.
 readarr:
   env:
     - name: TZ

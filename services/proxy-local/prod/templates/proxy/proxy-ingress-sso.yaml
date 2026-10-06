@@ -17,8 +17,13 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "15"  # Lower than IngressRoute so that if those match they take priority (cus they're local).
 spec:
   tls:
+    # Missing secretName made every -sso-ingress invalid (spec.tls[0].secretName:
+    # Required value) — Traefik skipped the whole TLS block, leaving the SSO
+    # redirect routes unencrypted and logging BadConfig. Same wildcard-cert the
+    # main proxy-ingress uses for subdomains.
     - hosts:
         - "{{ $name }}.{{ $.Values.domain }}"
+      secretName: wildcard-cert
   rules:
     - host: "{{ $name }}.{{ $.Values.domain }}"
       http:

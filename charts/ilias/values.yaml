@@ -48,6 +48,18 @@ app-template:
                 httpGet:
                   path: /
                   port: 80
+                  # ILIAS rejects requests whose Host header isn't in
+                  # allowed_hosts (components/ILIAS/Init/.../HttpPathBuilder.php)
+                  # and returns HTTP 500. Kubelet probes dial the pod IP and by
+                  # default send Host: <podIP>, which ILIAS rejects — that 500
+                  # was crash-looping the pod (~1,000 restarts/wk). An
+                  # httpHeaders Host override changes only the Host header the
+                  # app sees (kubelet still dials the pod IP), and
+                  # "localhost" is in ILIAS's default allowed_hosts list, so
+                  # the probe passes.
+                  httpHeaders:
+                    - name: Host
+                      value: localhost
                 initialDelaySeconds: 30
                 periodSeconds: 30
                 timeoutSeconds: 5
@@ -64,6 +76,11 @@ app-template:
                 httpGet:
                   path: /
                   port: 80
+                  # See liveness comment: Host: localhost so ILIAS's
+                  # allowed_hosts check passes.
+                  httpHeaders:
+                    - name: Host
+                      value: localhost
                 periodSeconds: 10
                 failureThreshold: 60
           resources:
