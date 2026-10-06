@@ -1,0 +1,38 @@
+# Shared media volume backed by the SeaweedFS `backup-gpu` collection on the
+# infra cluster (same collection proxy-local's backup-gpu-qbittorrent writes
+# to). The PV/PVC keep the conventional name `media` so every chart's
+# default `existingClaim: media` works unchanged.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 50Ti
+  csi:
+    driver: seaweedfs-csi-driver
+    volumeHandle: media
+    volumeAttributes:
+      collection: backup-gpu
+      replication: "001"
+      path: /buckets/backup-gpu
+      diskType: "hdd"
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media
+spec:
+  storageClassName: ""
+  volumeName: media
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 30Gi

@@ -1,0 +1,70 @@
+# No bitwardenIds: MeTube has no auth or secret configuration at the
+# Kubernetes level.
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName metube
+
+  controllers:
+    metube:
+      pod:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+          # 10000 = shared media group (same convention as the other
+          # media-consuming services).
+          supplementalGroups: [10000]
+          seccompProfile: { type: RuntimeDefault }
+      containers:
+        main:
+          image:
+            repository: ghcr.io/alexta69/metube
+            tag: 2025-05-01
+          env:
+            TZ: "America/Denver"
+            PORT: &port 8081
+            DOWNLOAD_DIR: "/media/Streams"
+            STATE_DIR: "/media/Streams/.metube"
+            TEMP_DIR: "/media/Streams/downloads"
+            YTDL_OPTIONS: '{"http_headers":{"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0"}}'
+          probes:
+            liveness: &probes
+              enabled: true
+              custom: true
+              spec:
+                tcpSocket:
+                  port: *port
+                initialDelaySeconds: 0
+                periodSeconds: 10
+                timeoutSeconds: 1
+                failureThreshold: 3
+            readiness: *probes
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    main:
+      controller: *chartName
+      ports:
+        http:
+          port: *port
+
+  persistence:
+    media:
+      existingClaim: media
+      globalMounts:
+        - path: /media

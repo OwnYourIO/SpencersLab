@@ -1,0 +1,74 @@
+# No bitwardenIds: qBittorrent keeps its Web UI credentials in its own config
+# on the config PVC — nothing lives in a Kubernetes secret.
+
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName qbittorrent
+
+  controllers:
+    qbittorrent:
+      pod:
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: "OnRootMismatch"
+          # 10000 = shared media group (same convention as the other
+          # media-consuming services).
+          supplementalGroups: [10000]
+      containers:
+        main:
+          image:
+            repository: ghcr.io/onedr0p/qbittorrent
+            tag: 5.0.4
+          env:
+            TZ: America/Denver
+            QBITTORRENT__PORT: &port 8080
+            QBITTORRENT__BT_PORT: &port-bt 58462
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              cpu: 600m
+              memory: 3Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    main:
+      controller: *chartName
+      ports:
+        http:
+          port: *port
+    # Reachable BitTorrent port for seeding (LoadBalancer on the LAN, same as
+    # the former inline config in services/proxy-local).
+    bittorrent:
+      enabled: true
+      controller: *chartName
+      type: LoadBalancer
+      externalTrafficPolicy: Local
+      ports:
+        bittorrent:
+          enabled: true
+          port: *port-bt
+          protocol: TCP
+          targetPort: *port-bt
+
+  persistence:
+    config:
+      # PVC is created by the consuming service's umbrella templates
+      # (e.g. services/proxy-backup/prod/templates/pvc-qbittorrent-default.yaml)
+      # — kept there on purpose so the data volume outlives this Application.
+      existingClaim: *chartName
+      globalMounts:
+        - path: /config
+    media:
+      existingClaim: media
+      globalMounts:
+        - path: /media

@@ -1,0 +1,56 @@
+# gpu-ai — dedicated AI inference cluster (carved out of gpu).
+# Bitwarden IDs for this service come from the cluster annotation
+# (metadata.annotations.services.gpu-ai.bitwardenIds) and from
+# custom-values/gpu-ai/prod-values.yaml (loaded via the
+# services.gpu-ai.customValuesUrls cluster annotation). gpu-ai itself has no
+# app-level secrets today — base's IDs (cert-manager solver token, ArgoCD
+# SSO) and hivetools' mcp-sso live in custom-values.
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+# Chart definitions for appset-charts.yaml (rendered by the base chart).
+# Each chart can have: namespace, ServerSideApply, version, repository
+charts:
+  # Internal charts (no version/repository - uses charts/ directory)
+  llama-swap:
+    namespace: default
+    ServerSideApply: "false"
+  external-secrets-bitwarden:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+  k8s-monitoring:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+
+  # External charts (with version and repository)
+  amd-gpu:
+    version: 0.21.0
+    repository: https://rocm.github.io/k8s-device-plugin/
+    namespace: default
+    ServerSideApply: "true"
+
+ingress:
+  subdomains:
+    ai-llama-swap:
+      service: gpu-ai-llama-swap
+      port: 8080
+
+    cluster:
+      clusterBase: true
+      service: argocd-server
+      port: 80
+    #traefik:
+    #  clusterBase: true
+    #  namespace: kube-system
+    #  service: traefik
+    #  port: 80
+
+# No service-level overrides for llama-swap — the chart's defaults (model
+# roster, concurrency matrix) ride as-is. Tune per-hardware here later via
+# the usual `<appName>:` values block.
+llama-swap:

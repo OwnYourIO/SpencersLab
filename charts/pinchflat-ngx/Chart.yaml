@@ -1,0 +1,9 @@
+apiVersion: v2
+name: pinchflat-ngx
+description: Pinchflat-NGX - enhanced Pinchflat fork (Material 3 UI, disk staging) for YouTube archiving
+version: 1.0.0
+appVersion: "2026.9.28"
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/

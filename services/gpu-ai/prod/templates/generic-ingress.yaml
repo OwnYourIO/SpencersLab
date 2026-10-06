@@ -1,0 +1,73 @@
+{{- range $name, $config := .Values.ingress.subdomains }}
+{{- $subDomain := "" }} {{/* Initialize the variable */}}
+{{- if $config.clusterBase | default false}}
+{{- $subDomain = printf "%s.%s" $name $.Values.clusterName }}
+{{- else }}
+{{- $subDomain = $name }}
+{{- end}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ $subDomain | replace "." "-" }}-ingress"
+  namespace: default
+  annotations:
+    # llama.cpp/llama-swap can take a long time to respond (model loads);
+    # the ServersTransport comes from servicestransport-llama.yaml.
+    traefik.ingress.kubernetes.io/service.serverstransport: default-llama-timeouts@kubernetescrd
+    # If middlewares is set manually, use that.
+    {{- if $config.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $config.middlewares }}
+    {{- end }}
+    #external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
+
+spec:
+  tls:
+    - hosts:
+      - "{{ $subDomain }}.{{ $.Values.domain }}"
+      secretName: {{ if $config.clusterBase | default false }}cluster-wildcard-cert{{ else }}wildcard-cert{{ end }}
+  rules:
+    - host: "{{ $subDomain }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ $config.service }}"
+                port:
+                  number: {{ $config.port }}
+
+{{- if $config.serviceName }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ $config.serviceName }}-ingress"
+  namespace: default
+  annotations:
+    # If middlewares is set manually, use that.
+    {{- if $config.middlewares }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $config.middlewares }}
+    {{- end }}
+    #external-dns.alpha.kubernetes.io/target: "proxy-remote.{{ $.Values.domain }}"
+  labels:
+    external-dns: "enabled"
+spec:
+  tls:
+    - hosts:
+      - "{{ $config.serviceName }}.{{ $.Values.domain }}"
+      secretName: {{ if $config.clusterBase | default false }}cluster-wildcard-cert{{ else }}wildcard-cert{{ end }}
+  rules:
+    - host: "{{ $config.serviceName }}.{{ $.Values.domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ $config.service }}"
+                port:
+                  number: {{ $config.port }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: qbittorrent
+description: qBittorrent torrent client (onedr0p image) for downloading/seedbox duty
+version: 1.0.0
+appVersion: "5.0.4"
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/

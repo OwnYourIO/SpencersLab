@@ -1,0 +1,35 @@
+bitwardenIds:
+  cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
+  argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+
+base:
+  bitwardenIds:
+    argocd-sso-secret: 6bc8ead2-faf6-4548-9831-b1a501646625
+    cert-manager-solver-token: 0f8504eb-1339-4a32-861b-af440002801e
+
+seaweedfs-csi-driver:
+  volume-count: 8
+  seaweedfs-csi-driver:
+    # Must stay nested here: the chart template reads
+    # .Values.seaweedfs-csi-driver.volume-count to render the CoreDNS
+    # rewrite rules (charts/seaweedfs-csi-driver/templates/seaweedfs-custom-dns.yaml).
+    # At the outer level it is ignored and the rewrite block renders empty,
+    # breaking all SeaweedFS volume reads (see commit 19ab00d5 regression).
+    volume-count: 8
+    seaweedfsFiler: "seaweedfs-filer.infra.spencerslab.com:8880,seaweedfs-filer.infra.spencerslab.com:8881,seaweedfs-filer.infra.spencerslab.com:8882,seaweedfs-filer.infra.spencerslab.com:8883,seaweedfs-filer.infra.spencerslab.com:8884"
+
+# MCP platform (hivetools via base): shared Keycloak client `mcp`, one realm.
+hivetools:
+  bitwardenIds:
+    mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
+  keycloak:
+    realm: SpencersLab
+
+# Pinchflat-NGX (charts/pinchflat-ngx). Bitwarden LOGIN item `pinchflat-ngx`:
+#   password = SECRET_KEY_BASE — a long random string, e.g. `openssl rand -hex 64`.
+#   Phoenix signs session/CSRF tokens with it; keep it stable.
+# USER ACTION: create the item in Bitwarden, then replace OVERRIDE_NEEDED
+# with its UUID before the proxy-backup cluster syncs.
+pinchflat-ngx:
+  bitwardenIds:
+    pinchflat-ngx: OVERRIDE_NEEDED

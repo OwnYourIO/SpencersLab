@@ -1,0 +1,107 @@
+# Bitwarden item `pinchflat-ngx` (LOGIN type): its password field holds
+# SECRET_KEY_BASE — a long random string (e.g. `openssl rand -hex 64`).
+# Phoenix signs session/CSRF tokens with it; it must stay stable across
+# restarts and must NOT remain the image's built-in default on an
+# internet-facing deployment.
+
+domain: OVERRIDE_VIA_APPSET
+
+bitwardenIds:
+  pinchflat-ngx: OVERRIDE_VIA_CUSTOM_VALUES
+
+app-template:
+  global:
+    nameOverride: &chartName pinchflat-ngx
+
+  controllers:
+    pinchflat-ngx:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      pod:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+          # 10000 = shared media group (same convention as the other
+          # media-consuming services).
+          supplementalGroups: [10000]
+          seccompProfile: { type: RuntimeDefault }
+      containers:
+        main:
+          image:
+            repository: ghcr.io/thebadfella/pinchflat-ngx
+            tag: 2026.9.28
+          env:
+            TZ: America/Denver
+            PORT: &port 8945
+            # Media library lives on shared (SeaweedFS-backed) storage; the
+            # SQLite config stays on a local PVC (SQLite WAL mode is
+            # unreliable on network filesystems).
+            MEDIA_PATH: /media
+            # Disk staging: finish downloads on local disk, then transfer to
+            # the network-backed media library (NGX's purpose-built feature).
+            DOWNLOAD_STAGING_PATH: /staging
+          envFrom:
+            - secretRef:
+                name: pinchflat-ngx
+          probes:
+            liveness: &probes
+              enabled: true
+              custom: true
+              spec:
+                # /healthcheck stays unauthenticated by design (NGX docs).
+                httpGet:
+                  path: /healthcheck
+                  port: *port
+                initialDelaySeconds: 0
+                periodSeconds: 10
+                timeoutSeconds: 1
+                failureThreshold: 3
+            readiness: *probes
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /healthcheck
+                  port: *port
+                initialDelaySeconds: 0
+                periodSeconds: 5
+                failureThreshold: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    main:
+      controller: *chartName
+      ports:
+        http:
+          port: *port
+
+  persistence:
+    config:
+      # PVC is created by the consuming service's umbrella templates
+      # (e.g. services/proxy-backup/prod/templates/pvc-pinchflat-ngx-default.yaml)
+      # — kept there on purpose so the data volume outlives this Application.
+      existingClaim: *chartName
+      globalMounts:
+        - path: /config
+    media:
+      existingClaim: media
+      globalMounts:
+        - path: /media
+    staging:
+      type: emptyDir
+      globalMounts:
+        - path: /staging
