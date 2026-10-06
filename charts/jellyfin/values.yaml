@@ -1,8 +1,10 @@
+# No bitwardenIds: Jellyfin keeps its own user database on the config PVC —
+# nothing lives in a Kubernetes secret.
+
+domain: OVERRIDE_VIA_APPSET
+
 global:
   nameOverride: jellyfin
-
-bitwardenIds:
-  samba-users: OVERRIDE_NEEDED
 
 app-template:
   controllers:
@@ -28,7 +30,9 @@ app-template:
             repository: jellyfin/jellyfin
             tag: 10.11.6@sha256:333b647716631443a43c7fabac4b0c46b4e2f036bad19547e00958f10f721b85
           env:
-            JELLYFIN_PublishedServerUrl: https://jellyfin.local
+            # JELLYFIN_PublishedServerUrl is set per-service (it's the public
+            # URL of this deployment, e.g. via the consuming service's
+            # `jellyfin:` values block).
             # This is needed otherwise Jellyfin flags plugins with old versions as needed a reboot and disables them.
             JELLYFIN_RemoveOldPlugins: "true"
           #securityContext:
@@ -66,22 +70,15 @@ app-template:
             limits:
               memory: 8Gi
               #gpu.intel.com/i915: 1
+  # External exposure is handled by the consuming service's generic-ingress
+  # (ingress.subdomains entry), same as every other service in this repo.
   service:
     app:
       controller: jellyfin
-      type: LoadBalancer
+      type: ClusterIP
       ports:
         http:
           port: *port
-  ingress:
-    app:
-      hosts:
-        - host: jellyfin.local
-          paths:
-            - path: /
-              service:
-                identifier: app
-                port: http
   persistence:
     config:
       existingClaim: jellyfin
@@ -90,6 +87,8 @@ app-template:
     transcode:
       type: emptyDir
     media:
-      existingClaim: media-shared
+      # Repo convention: the shared media PVC is named `media` on every cluster
+      # that has one (see services/*/prod/templates/pvc-media-seaweedfs.yaml).
+      existingClaim: media
       globalMounts:
         - path: /media

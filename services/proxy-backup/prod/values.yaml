@@ -1,0 +1,98 @@
+# proxy-backup — dedicated cluster consolidating the download/archive/media
+# workloads (torrents, YouTube archiving, Jellyfin playback, indexer). Name is
+# a historical misnomer; it serves the backup-side media pipeline.
+# Bitwarden IDs come from the cluster annotation
+# (metadata.annotations.services.proxy-backup.bitwardenIds) and from
+# custom-values/proxy-backup/prod-values.yaml (loaded via the
+# services.proxy-backup.customValuesUrls cluster annotation).
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+# Chart definitions for appset-charts.yaml (rendered by the base chart).
+# Each chart can have: namespace, ServerSideApply, version, repository
+charts:
+  # Internal charts (no version/repository - uses charts/ directory)
+  qbittorrent:
+    namespace: default
+    ServerSideApply: "false"
+  metube:
+    namespace: default
+    ServerSideApply: "false"
+  pinchflat-ngx:
+    namespace: default
+    ServerSideApply: "false"
+  jellyfin:
+    namespace: default
+    ServerSideApply: "false"
+  prowlarr:
+    namespace: default
+    ServerSideApply: "false"
+  seaweedfs-csi-driver:
+    #version: 1.0.1 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+  external-secrets-bitwarden:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+  k8s-monitoring:
+    #version: 1.0.10 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
+    #repository: https://ownyourio.github.io/SpencersLab/
+    namespace: default
+    ServerSideApply: "true"
+
+ingress:
+  subdomains:
+    backup-torrents:
+      # app-template renders a per-id Service name when a chart has more than
+      # one service (main + bittorrent), same as proxy-local-qbittorrent-main.
+      service: proxy-backup-qbittorrent-main
+      port: 8080
+
+    backup-player:
+      service: proxy-backup-jellyfin
+      port: 8096
+
+    backup-stream:
+      service: proxy-backup-metube
+      port: 8081
+
+    backup-streams:
+      service: proxy-backup-pinchflat-ngx
+      port: 8945
+
+    backup-prowlarr:
+      service: proxy-backup-prowlarr
+      port: 9696
+
+    cluster:
+      clusterBase: true
+      service: argocd-server
+      port: 80
+    traefik:
+      clusterBase: true
+      namespace: kube-system
+      service: traefik
+      port: 80
+
+# Per-app configuration (joins each chart's Application values slice via
+# appset-charts.yaml's `values:` element).
+
+jellyfin:
+  app-template:
+    controllers:
+      jellyfin:
+        containers:
+          app:
+            env:
+              TZ: America/Denver
+              # Public URL of this deployment (hub-routed, see proxy-local's
+              # proxy.subdomains.backup-player).
+              JELLYFIN_PublishedServerUrl: https://backup-player.spencerslab.com
+
+pinchflat-ngx:
+  bitwardenIds:
+    pinchflat-ngx: OVERRIDE_VIA_CUSTOM_VALUES

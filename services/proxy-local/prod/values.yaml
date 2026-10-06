@@ -213,6 +213,24 @@ proxy:
     backup-gpu-torrents:
       service: proxy-local-backup-gpu-qbittorrent-main
       port: 8080
+
+    # gpu-ai cluster: llama-swap on the dedicated AI GPU box
+    # (hub → ai-gpu.<domain> → ai-gpu cluster traefik).
+    ai-llama-swap:
+      target: ai-gpu
+
+    # proxy-backup cluster (hub → proxy-backup.<domain> → proxy-backup
+    # cluster traefik). Auth: default crowdsec + Keycloak forward-auth.
+    backup-torrents:
+      target: proxy-backup
+    backup-player:
+      target: proxy-backup
+    backup-stream:
+      target: proxy-backup
+    backup-streams:
+      target: proxy-backup
+    backup-prowlarr:
+      target: proxy-backup
     requests:
       target: requestarr
     music:
