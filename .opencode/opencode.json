@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Project-level MCP servers for the SpencersLab repo. Merged over the
+  // global config (~/.config/opencode/opencode.json). Fleet-wide servers
+  // live in agent-config.jsonc; entries here are ones this project needs
+  // regardless of where the global symlink points.
+  "mcp": {
+    // gpu-ai: new AI-inference cluster (service gpu-ai). Host follows the
+    // the clusterName annotation. It is gpu-ai for now; renaming to ai-gpu
+    // happens after bootstrap is sorted: kubectl annotate secret -n default
+    // <argocd-cluster-secret> clusterName=ai-gpu --overwrite
+    "readonly-ai-gpu-kubernetes": {
+      "type": "remote",
+      "url": "https://mcp.gpu-ai.spencerslab.com/kubernetes-readonly/mcp",
+      "enabled": true,
+      "timeout": 60000
+    },
+    "admin-ai-gpu-kubernetes": {
+      "type": "remote",
+      "url": "https://mcp.gpu-ai.spencerslab.com/kubernetes-admin/mcp",
+      "enabled": false,
+      "timeout": 60000
+    }
+  }
+}
