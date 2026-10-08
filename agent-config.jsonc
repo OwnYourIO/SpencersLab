@@ -285,6 +285,20 @@
       "enabled": false,
       "timeout": 60000
     },
+    // gpu-ai: new AI-inference cluster (service gpu-ai). Host follows the
+    // clusterName annotation (ai-gpu), not the service name.
+    "readonly-ai-gpu-kubernetes": {
+      "type": "remote",
+      "url": "https://mcp.gpu-ai.spencerslab.com/kubernetes-readonly/mcp",
+      "enabled": true,
+      "timeout": 60000
+    },
+    "admin-ai-gpu-kubernetes": {
+      "type": "remote",
+      "url": "https://mcp.gpu-ai.spencerslab.com/kubernetes-admin/mcp",
+      "enabled": false,
+      "timeout": 60000
+    },
     "readonly-grow-postgres-assistant": {
       "type": "remote",
       "url": "https://mcp.grow.spencerslab.com/postgres-grow-assistant/mcp",

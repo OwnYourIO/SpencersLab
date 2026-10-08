@@ -78,9 +78,9 @@ config edits flow through this repo's normal branch→merge flow.
 Servers are named `<priv>-<cluster>-<service>` in the client config
 (e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers
 without a privilege tier are just `<cluster>-<service>` (e.g.
-`global-searxng`). `<cluster>` is one of gpu, grow, home, infra, media,
-monitoring, proxy-local — or `global` for shared utility servers (wekan,
-grafana, searxng, playwright, renovate, homeassistant). `<priv>` is
+`global-searxng`). `<cluster>` is one of gpu, ai-gpu, grow, home, infra, media,
+monitoring, proxy-local, proxy-backup — or `global` for shared utility servers
+(wekan, grafana, searxng, playwright, renovate, homeassistant). `<priv>` is
 `readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete).
 Kubernetes, Home Assistant, Grafana, and WeKan come in both tiers
 (HA/Grafana/WeKan enforced server-side: ha-mcp `READ_ONLY_MODE`,
