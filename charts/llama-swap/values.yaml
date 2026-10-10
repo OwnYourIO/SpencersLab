@@ -1,5 +1,14 @@
 domain: OVERRIDE_VIA_APPSET
 
+# Bitwarden item IDs (uuids), injected per-cluster via custom-values or the
+# cluster annotation. Empty by default: charts that render secrets guard on
+# these keys so clusters without them render clean.
+bitwardenIds: {}
+
+# Models PVC size. gpu rides the 300Gi default; gpu-ai overrides to 500Gi
+# (Qwen3.8-27B roster + MTP/mmproj auxiliaries + a converted cyber LoRA).
+modelsPvcSize: 300Gi
+
 # llama-swap application configuration
 config:
   # Health check timeout for model readiness.
@@ -768,6 +777,11 @@ app-template:
             TZ: Etc/UTC
             # Cache downloaded models (-hf flag) on the models PVC
             LLAMA_CACHE: /models
+            # NOTE: HF_TOKEN is intentionally NOT set here. Gated -hf repos
+            # need a token, but app-template's schema forbids optional
+            # secretKeyRefs and clusters without bitwardenIds.hf-token (gpu)
+            # have no hf-token secret. gpu-ai injects HF_TOKEN into this
+            # container via its service values (secret is guaranteed there).
           probes:
             liveness:
               enabled: true
@@ -795,6 +809,30 @@ app-template:
               drop:
                 - ALL
 
+        # Operator provisioning sidecar (LoRA conversion, artifact staging).
+        # Disabled by default; gpu-ai enables it. No GPU, no port. Scripts are
+        # mounted read-only from the llama-swap-tools ConfigMap at /app/tools;
+        # /models arrives via the models persistence globalMounts.
+        tools:
+          enabled: false
+          image:
+            repository: python
+            tag: 3.12.15-slim-bookworm
+          command: ["sleep", "infinity"]
+          env:
+            TZ: Etc/UTC
+          probes:
+            liveness: {enabled: false}
+            readiness: {enabled: false}
+            startup: {enabled: false}
+          resources:
+            requests: {cpu: 10m, memory: 128Mi}
+            limits: {memory: 1Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+
   service:
     llama-swap:
       controller: *chartName
@@ -809,6 +847,12 @@ app-template:
       globalMounts:
         - path: /app/config.yaml
           subPath: config.yaml
+    tools:
+      type: configMap
+      name: llama-swap-tools
+      globalMounts:
+        - path: /app/tools
+          readOnly: true
     models:
       existingClaim: *chartName
       globalMounts:

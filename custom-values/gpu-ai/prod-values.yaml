@@ -13,3 +13,10 @@ hivetools:
     mcp-sso: 2c3ac9dd-636a-4c3e-ba1e-b498002ed133
   keycloak:
     realm: SpencersLab
+
+# HuggingFace token for gated model repos (orcarouter et al.) — consumed by
+# the llama-swap hf-token ExternalSecret (main container -hf downloads +
+# tools sidecar LoRA provisioning).
+llama-swap:
+  bitwardenIds:
+    hf-token: 2ebdd082-4996-440b-a8c1-b4de01130738

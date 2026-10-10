@@ -8,4 +8,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 300Gi
+      # Parameterized so clusters can size independently (gpu rides the 300Gi
+      # default; gpu-ai overrides to 500Gi). Chart default unchanged.
+      storage: {{ .Values.modelsPvcSize | default "300Gi" }}

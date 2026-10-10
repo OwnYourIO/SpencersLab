@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "description": "Provenance of the vendored llama.cpp b10015 LoRA-converter subset. The converter shipped with the llama-swap image (ghcr.io/mostlygeek/llama-swap:v240-vulkan-b10015) is not standalone: it imports the repo-local conversion/ package and the repo-local gguf-py package (PyPI gguf stopped at 0.9.1; b10015 ships 0.19.0). A minimal lazy-import subset for the Qwen3 architecture is vendored here. Every file below was re-fetched from raw.githubusercontent.com at tag b10015 on 2026-10-10 and is byte-for-byte identical (sha256 verified).",
+  "repository": "https://github.com/ggml-org/llama.cpp",
+  "tag": "b10015",
+  "commit": "12127defda4f41b7679cb2477a4b0d65ee6a0c8f",
+  "license": "MIT (see LLAMA_CPP_LICENSE in this directory)",
+  "raw_url_pattern": "https://raw.githubusercontent.com/ggml-org/llama.cpp/b10015/{path}",
+  "runtime_venv": ["torch (CPU wheel)", "transformers", "safetensors", "huggingface_hub", "numpy", "pyyaml", "tqdm"],
+  "files": {
+    "convert_lora_to_gguf.py": {
+      "upstream_path": "convert_lora_to_gguf.py",
+      "sha256": "3c5f109f3d7a5ef530ea388d8e994512df6f544ce1aa8b2e39be446223637b93"
+    },
+    "LLAMA_CPP_LICENSE": {
+      "upstream_path": "LICENSE",
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d"
+    },
+    "conversion/__init__.py": {
+      "upstream_path": "conversion/__init__.py",
+      "sha256": "b62877cfa64ba9800f1edce1bd8d796cf6d226d8f63f9e27e659c480dd02a39e"
+    },
+    "conversion/base.py": {
+      "upstream_path": "conversion/base.py",
+      "sha256": "d4c8de9cd5bd6499c2a7ee9b41bc315e8b04a0cba9f19cd0f26140ecdf380484"
+    },
+    "conversion/qwen.py": {
+      "upstream_path": "conversion/qwen.py",
+      "sha256": "07447bde7fcb7989d659a1d0c7ee6428a04493e4d6c67cd6b2bfd8759d30d8de"
+    },
+    "gguf-py/gguf/__init__.py": {
+      "upstream_path": "gguf-py/gguf/__init__.py",
+      "sha256": "3ccfc0104cd7ea88c6028743b7bf3f2c89b5f474425de03a217a6072320d7c2f"
+    },
+    "gguf-py/gguf/constants.py": {
+      "upstream_path": "gguf-py/gguf/constants.py",
+      "sha256": "cf5e80f5d01422a0650adfa45879593a2fbc73d1a9e3ce78391e8d4d02e8fe97"
+    },
+    "gguf-py/gguf/gguf.py": {
+      "upstream_path": "gguf-py/gguf/gguf.py",
+      "sha256": "f0c0eeedad0911784b52ffed8e162a0eb5ae6d535ce35705bc16196e46597a72"
+    },
+    "gguf-py/gguf/gguf_reader.py": {
+      "upstream_path": "gguf-py/gguf/gguf_reader.py",
+      "sha256": "91cb9e81f1a67f5856f012cf3f526ad9ffdb6b887d2aa66e2593ee6f63764aad"
+    },
+    "gguf-py/gguf/gguf_writer.py": {
+      "upstream_path": "gguf-py/gguf/gguf_writer.py",
+      "sha256": "165bf749a0292743475635670ae2a7499304f22ff52ef1791303455a424fc9e4"
+    },
+    "gguf-py/gguf/lazy.py": {
+      "upstream_path": "gguf-py/gguf/lazy.py",
+      "sha256": "ec35541320443e1bdc293e39c699fa5d1adb7fb594f3f87af093b4c756a4ebe2"
+    },
+    "gguf-py/gguf/metadata.py": {
+      "upstream_path": "gguf-py/gguf/metadata.py",
+      "sha256": "c871748f49f7fb8e67aa9a18867adf8a8ba862f0f1f4a89a0a0e285daa52a312"
+    },
+    "gguf-py/gguf/quants.py": {
+      "upstream_path": "gguf-py/gguf/quants.py",
+      "sha256": "2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b"
+    },
+    "gguf-py/gguf/tensor_mapping.py": {
+      "upstream_path": "gguf-py/gguf/tensor_mapping.py",
+      "sha256": "5a6ea9e2c68541bd283f3bbef019f61e89a48e89c06443bc8b36614508bdd796"
+    },
+    "gguf-py/gguf/utility.py": {
+      "upstream_path": "gguf-py/gguf/utility.py",
+      "sha256": "da920e2c62166ec9f30e407e9fb35ec29fda671310ffbf0f8ce856b62f1c70d7"
+    },
+    "gguf-py/gguf/vocab.py": {
+      "upstream_path": "gguf-py/gguf/vocab.py",
+      "sha256": "16cddd93700f86c8b72e6f9e741e2362189155b9f96aa9e3bbb0995060095f1a"
+    }
+  }
+}

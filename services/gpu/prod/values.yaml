@@ -136,7 +136,10 @@ ingress:
   dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
     llama-cpp:
-      serviceName: llama
+      # 2026-10-09: llama.<domain> moved to the gpu-ai cluster. gpu now serves
+      # the existing roster as llama-small.<domain> (hub entry in proxy-local;
+      # LAN clients resolve it to proxy-local via internal DNS).
+      serviceName: llama-small
       service: gpu-llama-swap
       port: 8080
 
@@ -230,6 +233,7 @@ ingress:
     #  port: 8080
 
 llama-swap:
+
 open-webui:
   annotations:
     reloader.stakater.com/auto: "true"
