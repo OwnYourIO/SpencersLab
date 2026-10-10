@@ -1,4 +1,4 @@
-# Contract test for the vendored b10015 convert_lora_to_gguf.py subset.
+# Contract test for the vendored b11515 convert_lora_to_gguf.py subset.
 #
 # Builds a synthetic PEFT LoRA adapter (tiny Qwen3-shaped safetensors) plus a
 # minimal base config.json, runs the vendored script end-to-end, and asserts a
@@ -25,7 +25,7 @@ CONVERTER = SCRIPTS_DIR / "convert_lora_to_gguf.py"
 
 # Read outputs with the SAME gguf package the converter writes with: the
 # repo-local gguf-py 0.19.0 vendored under scripts/ (PyPI gguf is older and
-# lacks the arch constants b10015 uses).
+# lacks the arch constants b11515 uses).
 sys.path.insert(0, str(SCRIPTS_DIR / "gguf-py"))
 sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -115,7 +115,7 @@ def run_converter(base_dir: Path, adapter_dir: Path, outfile: Path) -> subproces
 
 def test_vendored_subset_is_complete():
     """The lazy-import subset must cover the Qwen3 architecture end to end,
-    including the repo-local gguf-py package the b10015 converter requires."""
+    including the repo-local gguf-py package the b11515 converter requires."""
     for rel in ("convert_lora_to_gguf.py", "conversion/__init__.py",
                 "conversion/base.py", "conversion/qwen.py",
                 "gguf-py/gguf/__init__.py", "gguf-py/gguf/constants.py",
@@ -123,7 +123,7 @@ def test_vendored_subset_is_complete():
         assert (SCRIPTS_DIR / rel).exists(), f"vendored file missing: {rel}"
     import gguf
     assert hasattr(gguf.MODEL_ARCH, "DFLASH"), \
-        "imported gguf is not the vendored b10015 gguf-py (0.19.0)"
+        "imported gguf is not the vendored b11515 gguf-py (0.19.0)"
 
 
 def test_converts_synthetic_adapter(adapter_env, tmp_path):
@@ -149,7 +149,7 @@ def test_converts_synthetic_adapter(adapter_env, tmp_path):
     assert float(fields["adapter.lora.alpha"].parts[-1][0]) == pytest.approx(2 * R)
 
     names = {t.name for t in reader.tensors}
-    # b10015 tensor naming includes the .weight segment: blk.N.attn_q.weight.lora_a
+    # b11515 tensor naming includes the .weight segment: blk.N.attn_q.weight.lora_a
     for i in range(LAYERS):
         for proj in ("attn_q", "attn_k", "attn_v", "attn_output"):
             assert f"blk.{i}.{proj}.weight.lora_a" in names, \

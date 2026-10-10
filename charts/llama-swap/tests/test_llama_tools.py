@@ -317,7 +317,7 @@ def _write_provenance(files: dict[str, bytes], base_url: str, pins: dict[str, st
         entries[rel] = {"upstream_path": upstream, "sha256": (pins or {}).get(rel, default)}
     prov = {
         "repository": "https://github.com/ggml-org/llama.cpp",
-        "tag": "b10015",
+        "tag": "b11515",
         "commit": "12127defda4f41b7679cb2477a4b0d65ee6a0c8f",
         "raw_url_pattern": base_url.rstrip("/") + "/{path}",
         "files": entries,

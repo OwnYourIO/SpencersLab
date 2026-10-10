@@ -66,7 +66,7 @@ ingress:
 #
 # HF_TOKEN note: several of these repos are gated (orcarouter) or require
 # login (aboliterant), so the main container gets HF_TOKEN from the hf-token
-# ExternalSecret below — llama.cpp b10015 picks the token up from the env
+# ExternalSecret below — llama.cpp picks the token up from the env
 # (common/arg.cpp --hf-token defaults to $HF_TOKEN). The app-template schema
 # forbids optional secretKeyRefs, but on gpu-ai the secret is guaranteed
 # (bitwardenIds.hf-token + custom-values/gpu-ai/prod-values.yaml).
@@ -101,7 +101,7 @@ llama-swap:
       q38-common: |
         -ngl 999
         --flash-attn on
-        --no-mmap
+        --load-mode none
         -np 1
         -b 2048
         -ub 2048
@@ -111,10 +111,16 @@ llama-swap:
         --no-context-shift
       q38-sampling: |
         --temp 0.7 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
+      # NOTE: --reasoning-effort is native since llama.cpp b11xxx (the image
+      # rides v262-vulkan-b11515). It was NOT available on the previous
+      # b10015 build — if the image is ever rolled back to <= b10015, replace
+      # it with --chat-template-kwargs '{"reasoning_effort":"..."}' (the
+      # kwarg path works on every build; only 'enable_thinking' was the
+      # deprecated kwarg that --reasoning on replaces).
       q38-think: |
         --reasoning on
-        --reasoning-effort medium
         --reasoning-preserve
+        --reasoning-effort medium
     models:
       qwen38-orca:                  # daily driver, MTP + embedded vision
         cmd: |
@@ -152,9 +158,9 @@ llama-swap:
           /bin/sh -c "
             dl() {
               if [ -n \"$HF_TOKEN\" ]; then
-                curl -fL --retry 3 -H \"Authorization: Bearer $HF_TOKEN\" -o \"$2.part\" \"$1\"
+                curl -fL --retry 3 --retry-all-errors -H \"Authorization: Bearer $HF_TOKEN\" -o \"$2.part\" \"$1\"
               else
-                curl -fL --retry 3 -o \"$2.part\" \"$1\"
+                curl -fL --retry 3 --retry-all-errors -o \"$2.part\" \"$1\"
               fi && mv \"$2.part\" \"$2\"
             } &&
             mkdir -p /models/rana &&
@@ -162,17 +168,17 @@ llama-swap:
             dl https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF/resolve/main/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf &&
             test -f /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf ||
             dl https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF/resolve/main/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf &&
-            exec /app/llama-server \
+            exec llama-server \
               --port ${PORT} --host 0.0.0.0 --jinja \
               -hf abliterant/Qwen3.8-27B-RANA-abliterated-GGUF:Q6_K \
               --model-draft /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf \
               --mmproj /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf \
               -c 262144 \
               --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0.75 \
-              -ngl 999 --flash-attn on --no-mmap -np 1 -b 2048 -ub 2048 \
+              -ngl 999 --flash-attn on --load-mode none -np 1 -b 2048 -ub 2048 \
               --cache-type-k q8_0 --cache-type-v q8_0 --cache-reuse 1 --no-context-shift \
               --temp 0.7 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0 \
-              --reasoning on --reasoning-effort medium --reasoning-preserve
+              --reasoning on --reasoning-preserve --reasoning-effort medium
           "
         # NOTE: the q38-* macros are deliberately INLINED above: they expand to
         # multiple lines without backslash continuations, which /bin/sh -c would
@@ -191,7 +197,8 @@ llama-swap:
           -c 131072
           ${q38-common}
           ${q38-sampling}
-          --reasoning on --reasoning-effort low
+          --reasoning on
+          --reasoning-effort low
         name: "Qwen3.8 27B Humanlike-Chat 2.0 (Q6_K)"
         description: "Text-only humanlike chat; low reasoning effort, 128k ctx"
         proxy: http://localhost:${PORT}

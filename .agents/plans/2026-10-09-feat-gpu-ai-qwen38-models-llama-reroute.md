@@ -286,3 +286,74 @@ resource in the app on two live clusters — unnecessary once the ConfigMap is
 - Merge to main / push — agent work stops at local files.
 - Post-merge steps 6–11 of the original plan (sync checks, smoke loads,
   cyber phase-2 walkthrough commands, Grafana watch).
+
+## Image bump to v262-vulkan-b11515 (2026-10-10, user-requested)
+
+"Does it make sense to bump the cpp version? Might as well get up to date."
+Bumped the chart's llama-swap image from `v240-vulkan-b10015` to
+**`v262-vulkan-b11515`** (newest llama-swap release + newest cpp build in the
+`*-vulkan-*` family on GHCR — surveyed all 5,647 published tags). Applies to
+BOTH clusters (chart default tag; gpu and gpu-ai both ride it).
+
+### Compatibility verification performed before adoption
+
+- llama-swap v241→v262 release notes reviewed: additive only (profiles,
+  selectors, tailcat, UI, /v1/systemone); every config key this chart uses is
+  still present in v262's `docs/config.example.yaml`.
+- v262 unified image layout checked from source: `llama-server` and
+  `whisper-server` moved from `/app/` to `/usr/local/bin/` (entrypoint is now
+  `run.sh`; WORKDIR stays `/app`, so the ConfigMap-mounted `/app/config.yaml`
+  is still found by default).
+- Every flag used by any roster cmd audited against b11515's `common/arg.cpp`
+  (all present; `-ub` short form kept, long form renamed `--ubatch-size`).
+- Converter re-vendored at b11515 (commit `3d65c90d`): same 15-file subset,
+  re-proven by an offline synthetic PEFT→GGUF conversion BEFORE swapping it
+  into the chart; `converter-source.json` pins updated (gguf-py is still
+  0.19.0; DFLASH present).
+
+### Config changes forced by the bump
+
+- `${server-cmd}` macro + rana bootstrap: `/app/llama-server` → bare
+  `llama-server` (on PATH); whisper: `/app/whisper-server` → `whisper-server`.
+- `--no-mmap` → `--load-mode none` (flag removed upstream; verified
+  equivalent via b11515 `src/llama-model.cpp` — LOAD_MODE_NONE = no mmap).
+  Sites: chart `moe`/`moe-vl-q4`/`moe-vl-q8` macros, gpu-ai `q38-common`
+  macro, rana inline.
+- `logToStdout: "proxy"` → `"proxy,http"`: v259 split HTTP access lines into
+  their own stream; this keeps the pre-v259 stdout makeup (request lines in
+  Loki).
+- `--reasoning-effort` is NATIVE on b11515 (added shortly after b10015) —
+  the template-kwarg workaround from the previous section reverted to the
+  native flag in q38-think, humanlike, and rana. Guard comment now documents
+  the kwarg fallback in case of an image rollback.
+- `Chart.yaml` appVersion bumped with the tag (version left to CI).
+
+### Real rana fix found along the way: llama-swap SanitizeCommand
+
+Reading llama-swap's `internal/config/commands.go` (byte-identical in v240
+and v262) revealed that the previous session's rana backslash-continuation
+fix **could never work**: `SanitizeCommand` strips trailing `\` (keeping the
+newline) before POSIX-shlex splitting. Inside the quoted `/bin/sh -c "..."`
+script, the newlines survive into the inner shell as command separators, so
+`exec llama-server` ran with ZERO args (this, not the reasoning flag, is why
+rana "couldn't pull" — the same latent bug has silently broken the whisper
+bootstrap since it was written: `sh -n` on the raw script can't catch it
+because the sanitizer runs first).
+
+Restructured both bootstrap scripts to the sanitizer-safe pattern: every
+inner command is complete on one line; continuation only via trailing
+`&&`/`||` (a newline after an operator is legal POSIX); no `#` lines inside
+the quotes (the sanitizer strips those too). Validated with a faithful
+Python replica of SanitizeCommand + shlex: all plain-model cmds tokenize to
+clean argv (45 models), and both inner scripts pass `sh -n` with every flag
+present after sanitization.
+
+### Validation
+
+- 33/33 pytest (incl. conversion through the NEW b11515 vendored closure),
+  helm lint chart + gpu-ai/gpu/proxy-local umbrellas, gpu-ai render with
+  custom-values overlay (0 sentinels), sanitizer-replica argv checks.
+- Post-merge expectations: image pull (~GB) on both clusters; pods recreate;
+  models re-download is NOT needed (PVC cache survives), but every model
+  reloads on demand under the new binary. rana/humanlike/ara should now load;
+  orca/orca-f16 still need the orcarouter gate (user action, unchanged).

@@ -81,7 +81,7 @@ def test_default_tools_configmap_mounted_readonly():
     assert len(cm) == 1
     keys = set(cm[0]["data"])
     # ONLY the operator CLI + the provenance pin are embedded. The vendored
-    # b10015 converter closure (~750 KiB) must stay out of the ConfigMap:
+    # b11515 converter closure (~870 KiB) must stay out of the ConfigMap:
     # the chart is applied client-side, so kubectl mirrors the whole object
     # into the last-applied-configuration annotation, which the API server
     # caps at 256 KiB ("metadata.annotations: Too long" — the exact failure
@@ -92,7 +92,7 @@ def test_default_tools_configmap_mounted_readonly():
         "the flat-key embedding map must not come back"
 
     prov = json.loads(cm[0]["data"]["converter-source.json"])
-    assert prov["tag"] == "b10015"
+    assert prov["tag"] == "b11515"
     assert "convert_lora_to_gguf.py" in prov["files"]
     assert prov["raw_url_pattern"].startswith("https://raw.githubusercontent.com/")
 

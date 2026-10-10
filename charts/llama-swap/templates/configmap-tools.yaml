@@ -5,7 +5,7 @@
 # SIZE LIMIT: this ConfigMap is applied client-side (ServerSideApply: "false"
 # on both gpu and gpu-ai), so kubectl stores the whole object in the
 # last-applied-configuration annotation, which the API server caps at 256 KiB.
-# Embedding the vendored b10015 converter here (~750 KiB) broke syncs with
+# Embedding the vendored b11515 converter here (~870 KiB) broke syncs with
 # "metadata.annotations: Too long". Therefore ONLY the operator CLI and its
 # provenance pin are embedded; `llama_tools.py prepare` fetches the converter
 # files from the pinned raw.githubusercontent.com URLs in

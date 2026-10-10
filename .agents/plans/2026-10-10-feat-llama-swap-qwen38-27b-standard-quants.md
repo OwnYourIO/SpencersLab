@@ -134,3 +134,63 @@ rana, zero sentinels.
   (observed failing in ai-gpu events today) — flagged to user separately.
 - ai-gpu cluster's `hf-token` ExternalSecret still failing: Bitwarden item
   `2ebdd082-4996-440b-a8c1-b4de01130738` doesn't resolve — user action.
+
+## Correction (2026-10-10, later session): --reasoning-effort does not exist on b10015
+
+The reasoning cleanup above was validated against llama.cpp **master**, but the
+image's llama-server is **b10015**. Master has `--reasoning-effort LEVEL`
+(arg.cpp:3728); b10015 does not (its reasoning flags stop at `--reasoning`,
+`--reasoning-format`, `--reasoning-budget`, `--reasoning-budget-message`,
+`--reasoning-preserve`). Live evidence: after the cleanup rolled out, every
+model carrying `--reasoning-effort` (qwen38-orca, -ara, -rana, -humanlike,
+-orca-f16 via the q38-think macro) exited prematurely at arg-parse — before
+any download — while the flagless `qwen3.8-27b-*` quants loaded fine. This
+masqueraded as "can't pull the abliterated model" for rana (a public,
+ungated repo — verified: metadata 200, files resolve anonymously).
+
+Fix applied in `services/gpu-ai/prod/values.yaml`:
+- `--reasoning-effort <level>` replaced by a template-kwarg passthrough
+  `--chat-template-kwargs '{"reasoning_effort":"<level>"}'` — exactly the
+  pre-cleanup behavior for effort (only `enable_thinking` was the deprecated
+  kwarg; b10015 warns on that key alone). `--reasoning on` and
+  `--reasoning-preserve` are valid on b10015 and stay. Three sites: q38-think
+  macro (medium), humanlike inline (low), rana inline (medium, escaped quotes
+  inside the sh -c string; extracted script re-passes `sh -n`).
+- Guard comment added above q38-think so the flag is not re-introduced until
+  the image's llama.cpp gains it.
+- rana's bootstrap `curl` gained `--retry-all-errors` (HF's resolver was
+  observed returning transient 401s on this public repo; plain `--retry`
+  does not retry 4xx).
+
+Status of the two "Not in this change" items above, as of this correction:
+- tools ConfigMap >256KB annotation risk: FIXED in 232d6aec2 (ConfigMap now
+  embeds only llama_tools.py + converter-source.json, 26 KiB; prepare fetches
+  the pinned converter files).
+- hf-token ExternalSecret: now `Ready: True` / "secret synced" (checked live);
+  the earlier Bitwarden resolution failure cleared.
+
+Still user-owned: orcarouter/Qwen3.8-27B-Uncensored-GGUF is gated — orca and
+orca-f16 will 403 until access is requested with the hf-token account, even
+with the flag fix in place.
+
+Validated: helm lint (chart + gpu-ai + gpu umbrellas), gpu-ai chart render
+(no `--reasoning-effort` anywhere rendered, kwargs + preserve present, 0
+sentinels), `sh -n` on the extracted rana script, pytest 33 passed.
+
+## Correction #2 (2026-10-10, later session): rana backslash fix vs. llama-swap SanitizeCommand
+
+The rana fix in the correction above (backslash continuations inside the
+quoted `/bin/sh -c "..."` script) was validated with `sh -n` on the raw
+script — but llama-swap never passes the raw script to the shell. Its
+`SanitizeCommand` (internal/config/commands.go, byte-identical v240/v262)
+strips trailing `\` (keeping the newline) before POSIX-shlex splitting, so
+inside the quotes the newlines reached the inner sh as command separators:
+`exec llama-server` ran with zero args and the flag lines died as "not
+found" commands. Live evidence persisted after rollout (rana still exited
+prematurely). The same latent bug has broken the whisper bootstrap since it
+was written. Fixed properly during the v262-vulkan-b11515 image bump: both
+bootstrap scripts restructured so every inner command is complete on one
+line with continuation only via trailing `&&`/`||` (legal POSIX newline
+after an operator), validated through a replica of SanitizeCommand + shlex +
+`sh -n`. See the 2026-10-09 reroute plan record, section "Real rana fix
+found along the way".

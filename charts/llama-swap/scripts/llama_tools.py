@@ -8,7 +8,7 @@ conversion, no smoke tests on startup.
 Commands:
   status                 Report provisioning state of the known artifacts.
   prepare                Create/reuse the venv, fetch + hash-verify the
-                         pinned b10015 converter files, fetch the cyber LoRA
+                         pinned b11515 converter files, fetch the cyber LoRA
                          adapter + its base model config.
   convert-cyber          Convert the staged PEFT adapter to GGUF (f16),
                          atomic publish + SHA-256 record.
@@ -56,10 +56,10 @@ BASE_CONFIG_DIR = CYBER_DIR / "base-config"
 # Where the chart mounts the read-only tool scripts (ConfigMap llama-swap-tools).
 TOOLS_SRC = Path(os.environ.get("TOOLS_SRC", "/app/tools"))
 
-# Converter provenance. The b10015 converter needs the repo-local `conversion`
+# Converter provenance. The b11515 converter needs the repo-local `conversion`
 # package AND the repo-local `gguf-py` package (PyPI's gguf stopped at 0.9.1;
-# b10015 ships 0.19.0). Those files are too large to embed in the
-# llama-swap-tools ConfigMap (~750 KiB breaks the 256 KiB
+# b11515 ships 0.19.0). Those files are too large to embed in the
+# llama-swap-tools ConfigMap (~870 KiB breaks the 256 KiB
 # last-applied-configuration annotation the API server allows on client-side
 # apply — ArgoCD syncs failed with "metadata.annotations: Too long"), so the
 # ConfigMap ships only this script + the provenance pin
@@ -103,7 +103,7 @@ ARTIFACTS = {
 
 # torch must come from the CPU wheel index; the sidecar has no GPU and the
 # default PyPI torch wheel would drag in CUDA libraries. The gguf package is
-# NOT pip-installed: b10015's converter needs the repo-local gguf-py 0.19.0,
+# NOT pip-installed: b11515's converter needs the repo-local gguf-py 0.19.0,
 # which is vendored in the chart and staged next to the converter.
 TORCH_INDEX_URL = "https://download.pytorch.org/whl/cpu"
 VENV_PACKAGES = ["transformers", "safetensors", "huggingface_hub", "numpy", "pyyaml", "tqdm"]
@@ -326,7 +326,7 @@ def converter_pins(meta: dict) -> dict[str, tuple[str, str]]:
 
 
 def stage_converter() -> None:
-    """Fetch the pinned b10015 converter files into CONVERTER_DIR.
+    """Fetch the pinned b11515 converter files into CONVERTER_DIR.
 
     Every file is sha256-verified against converter-source.json BEFORE it is
     published; already-staged files with a matching hash are skipped, so the
@@ -416,7 +416,7 @@ def cmd_convert_cyber(_: argparse.Namespace) -> int:
     env["PYTHONPATH"] = str(CONVERTER_DIR) + os.pathsep + env.get("PYTHONPATH", "")
     # gguf resolves via the vendored gguf-py staged under CONVERTER_DIR (the
     # converter script probes for it next to itself); no NO_LOCAL_GGUF here.
-    log("running vendored convert_lora_to_gguf.py (b10015)")
+    log("running vendored convert_lora_to_gguf.py (b11515)")
     proc = subprocess.run(cmd, env=env)
     if proc.returncode != 0:
         if outfile.exists():

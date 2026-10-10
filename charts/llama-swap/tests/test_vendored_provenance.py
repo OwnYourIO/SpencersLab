@@ -1,4 +1,4 @@
-# Integrity test for the vendored llama.cpp b10015 converter subset.
+# Integrity test for the vendored llama.cpp b11515 converter subset.
 #
 # scripts/converter-source.json pins the upstream tag/commit and the sha256 of
 # every vendored file. This test re-hashes the files that actually ship in the
@@ -17,7 +17,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
 def test_provenance_file_exists_and_parses():
     meta = json.loads((SCRIPTS_DIR / "converter-source.json").read_text())
     assert meta["repository"] == "https://github.com/ggml-org/llama.cpp"
-    assert meta["tag"] == "b10015"
+    assert meta["tag"] == "b11515"
     assert meta["files"], "provenance must list the vendored files"
 
 
@@ -32,12 +32,12 @@ def test_every_vendored_file_matches_recorded_sha256():
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         if digest != info["sha256"]:
             mismatches.append(f"{rel}: {digest} != {info['sha256']}")
-    assert not mismatches, "vendored files drifted from b10015 provenance:\n" + "\n".join(mismatches)
+    assert not mismatches, "vendored files drifted from b11515 provenance:\n" + "\n".join(mismatches)
 
 
 def test_configmap_embeds_only_cli_and_provenance_pin():
     """The tools ConfigMap must embed ONLY llama_tools.py and
-    converter-source.json. The vendored converter closure is ~750 KiB;
+    converter-source.json. The vendored converter closure is ~870 KiB;
     embedding it breaks the 256 KiB last-applied-configuration annotation
     that client-side apply writes (ArgoCD sync failed with
     "metadata.annotations: Too long"). `prepare` fetches the pinned files

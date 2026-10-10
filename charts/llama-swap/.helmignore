@@ -3,7 +3,7 @@ tests/
 scripts/__pycache__/
 .pytest_cache/
 *.pyc
-# The vendored b10015 converter closure (~750 KiB) stays in git as the source
+# The vendored b11515 converter closure (~870 KiB) stays in git as the source
 # of truth for the converter-source.json pins and the CI contract tests, but
 # is NOT part of the packaged chart: configmap-tools.yaml embeds only
 # llama_tools.py + converter-source.json (embedding the closure broke ArgoCD

@@ -24,7 +24,10 @@ config:
 
   # Logging
   logLevel: info
-  logToStdout: "proxy"
+  # llama-swap v259 split stdout into streams: HTTP access lines moved out of
+  # "proxy" into "http". "proxy,http" keeps the pre-v259 stdout makeup so
+  # request lines still reach Loki via pod logs.
+  logToStdout: "proxy,http"
 
   # Start port for automatic ${PORT} macro
   startPort: 10001
@@ -47,17 +50,21 @@ config:
 
   # Macros for reusable configuration
   macros:
+    # Bare binary name: the unified image (v262+) ships llama-server in
+    # /usr/local/bin — the old /app/llama-server path is gone.
     server-cmd: |
-      /app/llama-server
+      llama-server
       --port ${PORT}
       --host 0.0.0.0
       --jinja
     threads: |
       -t 10
+    # --no-mmap was removed upstream; --load-mode none is the equivalent
+    # (read weights into RAM without mmap).
     moe: |
       -ngl 99 
       -ot "\.ffn_.*_exps\.=CPU" 
-      --no-mmap
+      --load-mode none
     # Expert placement for the 30B vision-MoE quants on the 8GB gpu card
     # (measured regime: Poor GPU Club runs Qwen3-30B-A3B Q4 on 8GB with
     # n-cpu-moe ~28-34 at 20-34 t/s; all-experts-on-CPU is the slow floor).
@@ -67,11 +74,11 @@ config:
     moe-vl-q4: |
       -ngl 99
       --n-cpu-moe 38
-      --no-mmap
+      --load-mode none
     moe-vl-q8: |
       -ngl 99
       --n-cpu-moe 44
-      --no-mmap
+      --load-mode none
     flash-and-q8: |
       --flash-attn on
       --cache-type-k q8_0
@@ -362,7 +369,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 4B Instruct (Q4_K_M)"
       description: "Vision-language model for Immich image analysis, Q4_K_M quant"
@@ -378,7 +385,7 @@ config:
         out:
           - text
       # Per-workload aliases for this loaded model (no reload between workloads).
-      # llama-swap v240 substitutes ${MODEL_ID} in setParamsByID keys and
+      # llama-swap substitutes ${MODEL_ID} in setParamsByID keys and
       # auto-registers each key as an alias (verified in upstream load.go), so
       # this single block is reused verbatim on every Qwen3-VL Instruct model:
       #   <model>:tags    -> Pictaria tag extraction. Forces thinking OFF
@@ -407,7 +414,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 8B Instruct (Q4_K_M)"
       description: "Vision-language model for Immich image analysis, Q4_K_M quant"
@@ -429,7 +436,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q8_0
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 8B Instruct (Q8_0)"
       description: "Vision-language model for Immich image analysis, Q8_0 quant"
@@ -448,7 +455,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:BF16
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 8B Instruct (BF16)"
       description: "Vision-language model for Immich image analysis, BF16 (no quant)"
@@ -467,7 +474,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         ${moe-vl-q4}
         ${flash-and-q8}
         ${big-ub}
@@ -492,7 +499,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q8_0
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         ${moe-vl-q8}
         ${flash-and-q8}
         ${big-ub}
@@ -514,7 +521,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:BF16
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         ${moe}
         ${flash-and-q8}
         -c 16384
@@ -535,7 +542,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q8_0
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 2B Instruct (Q8_0)"
       description: "Vision-language model for Immich image analysis, Q8_0 quant; faster processing for simpler descriptions"
@@ -554,7 +561,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q4_K_M
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 2B Instruct (Q4_K_M)"
       description: "Vision-language model for Immich image analysis, Q4_K_M quant; faster processing for simpler descriptions"
@@ -573,7 +580,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:BF16
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 2B Instruct (BF16)"
       description: "Vision-language model for Immich image analysis, BF16 (no quant); faster processing for simpler descriptions"
@@ -592,7 +599,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q8_0
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 4B Instruct (Q8_0)"
       description: "Vision-language model for Immich image analysis, Q8_0 quant"
@@ -611,7 +618,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:BF16
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 4B Instruct (BF16)"
       description: "Vision-language model for Immich image analysis, BF16 (no quant)"
@@ -630,7 +637,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q8_0
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 4B Thinking (Q8_0)"
       description: "Reasoning vision-language model for Immich image analysis, Q8_0 quant; good balance of speed and accuracy"
@@ -648,7 +655,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q4_K_M
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 4B Thinking (Q4_K_M)"
       description: "Reasoning vision-language model for Immich image analysis, Q4_K_M quant; good balance of speed and accuracy"
@@ -666,7 +673,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:BF16
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         -c 16384
       name: "Qwen3 VL 4B Thinking (BF16)"
       description: "Reasoning vision-language model for Immich image analysis, BF16 (no quant); good balance of speed and accuracy"
@@ -684,7 +691,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q8_0
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         ${moe-vl-q8}
         ${flash-and-q8}
         ${big-ub}
@@ -705,7 +712,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q4_K_M
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         ${moe-vl-q4}
         ${flash-and-q8}
         ${big-ub}
@@ -726,7 +733,7 @@ config:
         ${server-cmd}
         ${threads}
         -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:BF16
-        # mmproj auto-downloads from the -hf repo (b10015 treats hf:// in --mmproj as a literal path)
+        # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
         ${moe}
         ${flash-and-q8}
         -c 16384
@@ -745,17 +752,19 @@ config:
     # bundled in the unified image. Weights (~3.1GB) are fetched once from
     # HuggingFace into the models PVC on first load. Swaps 1:1 with the GPU
     # chat/VL models per the matrix below (one GPU model at a time on 8GB).
+    # NOTE on the /bin/sh -c bootstrap below: llama-swap's SanitizeCommand
+    # strips trailing backslashes (keeping the newline) before shlex-splitting,
+    # so inside the quoted script a command must be COMPLETE on one line —
+    # continuation is only safe via a trailing &&/|| (a newline after an
+    # operator is legal POSIX). Lines starting with # are also stripped.
     whisper-large-v3:
       cmd: |
         /bin/sh -c "
           mkdir -p /models/whisper &&
-          test -f /models/whisper/ggml-large-v3.bin ||
-          curl -fL --retry 3 -o /models/whisper/ggml-large-v3.bin
-            https://huggingface.co/ggml-org/whisper.cpp/resolve/main/ggml-large-v3.bin &&
-          exec /app/whisper-server
-            --host 0.0.0.0
-            --port ${PORT}
-            -m /models/whisper/ggml-large-v3.bin
+          { test -f /models/whisper/ggml-large-v3.bin ||
+            { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggml-org/whisper.cpp/resolve/main/ggml-large-v3.bin &&
+              mv /models/whisper/ggml-large-v3.bin.part /models/whisper/ggml-large-v3.bin; }; } &&
+          exec whisper-server --host 0.0.0.0 --port ${PORT} -m /models/whisper/ggml-large-v3.bin
         "
       name: "Whisper Large v3"
       description: "Audio transcription (whisper.cpp ggml-large-v3) for podcast processing"
@@ -827,7 +836,7 @@ app-template:
         main:
           image:
             repository: ghcr.io/mostlygeek/llama-swap
-            tag: v240-vulkan-b10015
+            tag: v262-vulkan-b11515
           env:
             TZ: Etc/UTC
             # Cache downloaded models (-hf flag) on the models PVC

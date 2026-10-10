@@ -1,13 +1,13 @@
 # Tests for the llama-swap chart's operator tools sidecar and the gpu/gpu-ai
 # service wiring around it:
 #   - pytest suite in charts/llama-swap/tests (llama_tools.py contract,
-#     vendored b10015 LoRA converter end-to-end on a synthetic adapter,
+#     vendored b11515 LoRA converter end-to-end on a synthetic adapter,
 #     vendored-file provenance hashes, helm template assertions)
 #   - helm lint + helm template for the chart and both service umbrellas
 #
-# The converter at llama.cpp b10015 needs torch + transformers plus the
+# The converter at llama.cpp b11515 needs torch + transformers plus the
 # repo-local conversion/ and gguf-py packages (the latter two are vendored in
-# the chart, NOT pip-installed — PyPI gguf is far older than b10015's).
+# the chart, NOT pip-installed — PyPI gguf is far older than b11515's).
 name: llama-swap tools tests
 
 on:
