@@ -1,0 +1,963 @@
+# Common Deployment Patterns
+
+Proven patterns for common Kubernetes deployment scenarios using bjw-s common library.
+
+> Default target is **common 5.x**. Patterns marked **`(5.x only)`**
+> are unavailable on the legacy 4.x track. Everything else works on
+> both. See `SKILL.md` for the version matrix and
+> `migration-4-to-5.md` for the upgrade procedure.
+
+## Single Container App
+
+Basic web application with persistence:
+
+```yaml
+controllers:
+  app:
+    containers:
+      app:
+        image:
+          repository: nginx
+          tag: "1.25-alpine"
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+
+service:
+  app:
+    controller: app
+    ports:
+      http:
+        port: 80
+
+ingress:
+  app:
+    className: nginx
+    hosts:
+      - host: myapp.example.com
+        paths:
+          - path: /
+            service:
+              identifier: app
+              port: http
+
+persistence:
+  data:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    globalMounts:
+      - path: /data
+```
+
+## Gateway API HTTPRoute **(5.x only)**
+
+The modern alternative to Ingress. Instead of an `Ingress`, attach an
+`HTTPRoute` to an existing `Gateway` via `parentRefs`, then send matched
+requests to a declared service identifier. Same app as the Single
+Container example above:
+
+```yaml
+service:
+  app:
+    controller: app
+    ports:
+      http:
+        port: 80
+
+route:
+  app:
+    enabled: true
+    kind: HTTPRoute
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: external
+        namespace: gateway-system
+        sectionName: https
+    hostnames:
+      - myapp.example.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - identifier: app      # References service.app (use `name:` for external services)
+            port: http
+```
+
+## App with Sidecar (Code-Server)
+
+Application with development sidecar for editing configs:
+
+```yaml
+defaultPodOptions:
+  securityContext:
+    runAsUser: 568
+    runAsGroup: 568
+    fsGroup: 568
+
+controllers:
+  main:
+    containers:
+      app:
+        image:
+          repository: homeassistant/home-assistant
+          tag: "2024.1"
+
+      code:
+        dependsOn: app
+        image:
+          repository: ghcr.io/coder/code-server
+          tag: "4.19.0"
+        args:
+          - --auth=none
+          - --user-data-dir=/config/.vscode
+          - --port=8081
+          - /config
+
+service:
+  app:
+    controller: main
+    ports:
+      http:
+        port: 8123
+
+  code:
+    controller: main
+    ports:
+      http:
+        port: 8081
+
+persistence:
+  config:
+    existingClaim: app-config
+    globalMounts:
+      - path: /config
+```
+
+## App with VPN Sidecar (Gluetun)
+
+Route traffic through VPN (qBittorrent + Gluetun):
+
+```yaml
+defaultPodOptions:
+  automountServiceAccountToken: false
+
+controllers:
+  main:
+    pod:
+      securityContext:
+        fsGroup: 568
+
+    containers:
+      app:
+        image:
+          repository: ghcr.io/onedr0p/qbittorrent
+          tag: "4.6.0"
+        securityContext:
+          runAsUser: 568
+          runAsGroup: 568
+
+      gluetun:
+        dependsOn: app
+        image:
+          repository: ghcr.io/qdm12/gluetun
+          tag: "v3.41.1"
+        env:
+          VPN_TYPE: wireguard
+          VPN_INTERFACE: wg0
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+
+      port-forward:
+        dependsOn: gluetun
+        image:
+          repository: snoringdragon/gluetun-qbittorrent-port-manager
+          tag: "1.0"
+        env:
+          QBITTORRENT_SERVER: localhost
+          QBITTORRENT_PORT: "8080"
+          PORT_FORWARDED: /tmp/gluetun/forwarded_port
+
+service:
+  app:
+    controller: main
+    ports:
+      http:
+        port: 8080
+
+persistence:
+  config:
+    existingClaim: qbittorrent-config
+    advancedMounts:
+      main:
+        app:
+          - path: /config
+
+  gluetun-data:
+    type: emptyDir
+    advancedMounts:
+      main:
+        gluetun:
+          - path: /tmp/gluetun
+        port-forward:
+          - path: /tmp/gluetun
+            readOnly: true
+```
+
+## Multi-Controller Setup
+
+Separate frontend and backend controllers:
+
+```yaml
+controllers:
+  frontend:
+    containers:
+      app:
+        image:
+          repository: myapp/frontend
+          tag: "1.0.0"
+
+  backend:
+    containers:
+      app:
+        image:
+          repository: myapp/backend
+          tag: "1.0.0"
+
+service:
+  frontend:
+    controller: frontend
+    ports:
+      http:
+        port: 3000
+
+  backend:
+    controller: backend
+    ports:
+      http:
+        port: 8000
+
+ingress:
+  main:
+    className: nginx
+    hosts:
+      - host: myapp.example.com
+        paths:
+          - path: /
+            service:
+              identifier: frontend
+              port: http
+          - path: /api
+            service:
+              identifier: backend
+              port: http
+```
+
+## StatefulSet with Init Container and Headless Service
+
+Database with initialization and stable network identity (required for clustering):
+
+```yaml
+controllers:
+  db:
+    type: statefulset
+
+    statefulset:
+      podManagementPolicy: OrderedReady  # Ordered startup for clustered DBs
+      volumeClaimTemplates:
+        - name: data
+          accessMode: ReadWriteOnce
+          size: 20Gi
+          globalMounts:
+            - path: /var/lib/postgresql/data
+
+    initContainers:
+      init-permissions:
+        image:
+          repository: busybox
+          tag: "1.36"
+        command:
+          - sh
+          - -c
+          - chown -R 999:999 /data
+
+    containers:
+      postgres:
+        image:
+          repository: postgres
+          tag: "16-alpine"
+        env:
+          POSTGRES_DB: mydb
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: password
+
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command:
+                  - pg_isready
+                  - -U
+                  - myuser
+              initialDelaySeconds: 30
+              periodSeconds: 10
+
+# Regular service for client connections
+service:
+  db:
+    controller: db
+    ports:
+      postgres:
+        port: 5432
+
+  # Headless service for stable DNS per pod (pod-0.db-headless, pod-1.db-headless, ...)
+  # Required for clustered databases and peer discovery
+  db-headless:
+    controller: db
+    type: ClusterIP
+    clusterIP: None  # Makes it headless
+    ports:
+      postgres:
+        port: 5432
+```
+
+## CronJob Pattern
+
+Periodic backup job:
+
+```yaml
+controllers:
+  backup:
+    type: cronjob
+
+    cronjob:
+      schedule: "0 2 * * *"  # 2 AM daily
+      successfulJobsHistory: 3
+      failedJobsHistory: 1
+      concurrencyPolicy: Forbid
+
+    containers:
+      backup:
+        image:
+          repository: backup-tool
+          tag: "1.2.0"
+        command:
+          - /bin/backup.sh
+        env:
+          BACKUP_TARGET: /backups
+          RETENTION_DAYS: "7"
+
+persistence:
+  backups:
+    type: nfs
+    server: nas.example.lan
+    path: /volume/backups
+    globalMounts:
+      - path: /backups
+```
+
+## ConfigMap and Secrets Pattern
+
+App with external configuration:
+
+```yaml
+configMaps:
+  app-config:
+    data:
+      APP_MODE: production
+      LOG_LEVEL: info
+      API_URL: https://api.example.com
+
+secrets:
+  app-secrets:
+    stringData:
+      API_KEY: "your-api-key-here"
+      DB_PASSWORD: "your-db-password"
+
+controllers:
+  app:
+    containers:
+      app:
+        image:
+          repository: myapp
+          tag: "1.0.0"
+        env:
+          # Direct env vars
+          APP_NAME: MyApp
+
+          # From ConfigMap (individual)
+          APP_MODE:
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: APP_MODE
+
+          # From Secret (individual)
+          API_KEY:
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: API_KEY
+
+        envFrom:
+          # Load all ConfigMap keys
+          - configMapRef:
+              identifier: app-config
+          # Load all Secret keys
+          - secretRef:
+              identifier: app-secrets
+```
+
+## Multiple Volumes Pattern
+
+App with different storage types:
+
+```yaml
+persistence:
+  # Config on PVC
+  config:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    globalMounts:
+      - path: /config
+
+  # Shared data on NFS
+  media:
+    type: nfs
+    server: nas.example.lan
+    path: /volume/media
+    globalMounts:
+      - path: /media
+        readOnly: true
+
+  # Temp storage
+  cache:
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 1Gi
+    globalMounts:
+      - path: /cache
+
+  # Config file from ConfigMap
+  app-config:
+    type: configMap
+    identifier: app-config
+    advancedMounts:
+      main:
+        app:
+          - path: /app/config.yaml
+            subPath: config.yaml
+            readOnly: true
+```
+
+## WebSocket + HTTP Ingress
+
+Application with both HTTP and WebSocket endpoints:
+
+```yaml
+service:
+  app:
+    controller: main
+    ports:
+      http:
+        port: 80
+      websocket:
+        port: 3012
+
+ingress:
+  main:
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    hosts:
+      - host: app.example.com
+        paths:
+          # Regular HTTP
+          - path: /
+            service:
+              identifier: app
+              port: http
+
+          # WebSocket negotiate (still HTTP)
+          - path: /ws/negotiate
+            service:
+              identifier: app
+              port: http
+
+          # WebSocket connection
+          - path: /ws
+            service:
+              identifier: app
+              port: websocket
+```
+
+## Resource Limits Pattern
+
+Production-ready resource configuration:
+
+```yaml
+defaultPodOptions:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10000
+    fsGroup: 10000
+    seccompProfile:
+      type: RuntimeDefault
+
+controllers:
+  app:
+    replicas: 2
+    
+    strategy: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+    containers:
+      app:
+        image:
+          repository: myapp
+          tag: "1.0.0"
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+
+          readiness:
+            enabled: true
+            type: HTTP
+            spec:
+              initialDelaySeconds: 5
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 3
+
+          startup:
+            enabled: true
+            type: HTTP
+            spec:
+              initialDelaySeconds: 0
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 30
+```
+
+## Private Registry with imagePullSecrets
+
+Pull images from a private container registry:
+
+```yaml
+# Step 1: Create the pull secret (outside the chart, or via secrets: below)
+# kubectl create secret docker-registry registry-credentials \
+#   --docker-server=registry.example.com \
+#   --docker-username=myuser \
+#   --docker-password=mytoken
+
+# Step 2: Reference in defaultPodOptions (applies to all pods)
+defaultPodOptions:
+  imagePullSecrets:
+    - name: registry-credentials
+
+controllers:
+  app:
+    containers:
+      app:
+        image:
+          repository: registry.example.com/myapp
+          tag: "1.0.0"
+          pullPolicy: IfNotPresent
+
+# Alternative: Create the secret inline (stored in values.yaml — avoid for sensitive data)
+secrets:
+  registry-credentials:
+    type: kubernetes.io/dockerconfigjson
+    stringData:
+      .dockerconfigjson: |
+        {
+          "auths": {
+            "registry.example.com": {
+              "auth": "<base64-encoded user:token>"
+            }
+          }
+        }
+```
+
+> Use an external secret operator (e.g., External Secrets Operator, Sealed Secrets) to
+> avoid committing credentials to version control.
+
+## Advanced Mounts Pattern
+
+Different mount points for different containers:
+
+```yaml
+persistence:
+  shared-data:
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    advancedMounts:
+      main:
+        app:
+          - path: /app/data
+            subPath: app-data
+
+        sidecar:
+          - path: /sidecar/data
+            subPath: sidecar-data
+
+        backup:
+          - path: /backup/source
+            readOnly: true
+
+  config:
+    type: configMap
+    identifier: app-config
+    advancedMounts:
+      main:
+        app:
+          - path: /app/config/main.yaml
+            subPath: main.yaml
+          - path: /app/config/feature.yaml
+            subPath: feature.yaml
+```
+
+## HorizontalPodAutoscaler **(5.x only)**
+
+Autoscale a stateless workload on CPU + memory pressure. HPA config nests
+under the target controller — there is no top-level
+`horizontalPodAutoscaler:` key, and no `controller:` field inside it (the
+parent controller is implicitly the target). Leave `replicas: null` on
+the controller so the HPA owns the replica count.
+
+```yaml
+controllers:
+  web:
+    replicas: null                   # Let the HPA own the replica count
+    horizontalPodAutoscaler:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 20
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 70
+        - type: Resource
+          resource:
+            name: memory
+            target:
+              type: Utilization
+              averageUtilization: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+    containers:
+      app:
+        image:
+          repository: myapp/web
+          tag: "2.1.0"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 512Mi
+```
+
+## PodMonitor (Prometheus, no Service required) **(5.x only)**
+
+When the workload exposes metrics but has no `Service` (e.g. CronJobs,
+exporters that should be scraped per-pod):
+
+```yaml
+controllers:
+  worker:
+    containers:
+      app:
+        image:
+          repository: myapp/worker
+          tag: "1.4.0"
+        # Container port name picked up by the PodMonitor
+        # (declared inside the container spec, not the service)
+        ports:
+          - name: metrics
+            containerPort: 9090
+
+podMonitor:
+  worker:
+    enabled: true
+    controller:
+      identifier: worker   # object form; a bare string fails schema validation
+    podMetricsEndpoints:    # not `endpoints:` — that key is rejected by the schema
+      - port: metrics
+        path: /metrics
+        interval: 30s
+```
+
+## Generic Ephemeral Volume **(5.x only)**
+
+A throwaway PVC scoped to the pod lifecycle — useful for scratch space
+on dynamic provisioners without committing to a long-lived PVC:
+
+```yaml
+persistence:
+  scratch:
+    type: ephemeral
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    storageClass: fast-ssd
+    globalMounts:
+      - path: /scratch
+```
+
+## Container and Pod resizePolicy **(5.x only)**
+
+In-place vertical scaling: change CPU or memory on a running pod without
+recreating it. Container-level `resizePolicy` needs Kubernetes >= 1.35,
+pod-level needs >= 1.36. On older clusters the keys are ignored, so the
+resize falls back to a restart.
+
+```yaml
+controllers:
+  main:
+    pod:
+      resizePolicy: PreferNoRestart   # k8s >= 1.36
+    containers:
+      main:
+        resizePolicy:                 # k8s >= 1.35
+          - resourceName: cpu
+            restartPolicy: NotRequired
+          - resourceName: memory
+            restartPolicy: RestartContainer
+```
+
+`NotRequired` applies the new value live; `RestartContainer` restarts the
+container to apply it. Memory usually needs the restart, CPU rarely does.
+
+## rawResources with the 5.x manifest wrapper **(5.x only)**
+
+Use `rawResources` to ship an arbitrary Kubernetes manifest alongside
+the chart-managed resources. 5.x requires the `manifest:` wrapper and
+moves labels/annotations under `metadata:`:
+
+```yaml
+rawResources:
+  webhook:
+    enabled: true
+    manifest:
+      apiVersion: admissionregistration.k8s.io/v1
+      kind: ValidatingWebhookConfiguration
+      metadata:
+        labels:
+          app: my-app
+        annotations:
+          description: "My webhook"
+      rules:
+        - apiGroups: [""]
+          apiVersions: ["v1"]
+          operations: ["CREATE"]
+          resources: ["pods"]
+          scope: "Namespaced"
+```
+
+Notes:
+
+- `metadata.labels` / `metadata.annotations` are merged with the
+  chart-managed labels/annotations.
+- `metadata.name` is ignored — the library derives the name from its
+  naming scheme.
+- For resources with a `spec` field (Deployment, Service, …) keep
+  `spec:` underneath `manifest:`.
+
+The 4.x shape (manifest fields at top level, optional `spec:`
+indirection) is **not accepted** in 5.x. See
+[`migration-4-to-5.md`](migration-4-to-5.md) for the conversion.
+
+## NetworkPolicy with single-controller auto-detection **(5.x only)**
+
+When the chart only defines one controller, the policy is auto-targeted —
+no need to repeat `controller:` or `podSelector:`. Those two keys are
+mutually exclusive in 5.x: set one or neither, never both.
+
+```yaml
+controllers:
+  main:
+    containers:
+      app:
+        image:
+          repository: myapp
+          tag: "1.0.0"
+
+networkpolicies:
+  default-deny-egress:
+    enabled: true
+    # No controller / podSelector — auto-binds to `main`
+    policyTypes:
+      - Egress
+    rules:
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+          ports:
+            - protocol: UDP
+              port: 53
+```
+
+## DaemonSet updateStrategy **(5.1+)**
+
+`strategy` and `rollingUpdate` were accepted but dropped on DaemonSets
+before 5.1.0 — the rendered manifest carried no `updateStrategy` at all.
+Valid values here are `RollingUpdate` and `OnDelete`; leave `strategy`
+unset to inherit the Kubernetes default.
+
+```yaml
+controllers:
+  node-agent:
+    type: daemonset
+    strategy: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+    containers:
+      agent:
+        image:
+          repository: myagent
+          tag: "1.4.0"
+```
+
+`maxSurge` needs a spare slot per node during the roll, so it only helps
+when the workload tolerates two copies briefly. `maxUnavailable: 1` with
+`maxSurge: 0` is the conservative pairing for a node agent that owns a
+host resource.
+
+## ServiceAccount-level automountServiceAccountToken **(5.1+)**
+
+Before 5.1.0 the field could only be set on the pod. 5.1.0 adds it on the
+ServiceAccount object — which is **not** a shortcut for the pod-level key.
+Kubernetes lets the pod spec override the ServiceAccount, and this library
+always writes `automountServiceAccountToken` into the pod spec, defaulting
+to `false`. Leave the pod side alone and the token stays unmounted no
+matter what the ServiceAccount says. Set both:
+
+```yaml
+serviceAccount:
+  api-reader:
+    enabled: true
+    # Declares the policy on the SA, for anything binding to it outside
+    # this chart. Does not reach this chart's own pods.
+    automountServiceAccountToken: true
+
+controllers:
+  main:
+    pod:
+      # This is the one that decides for the pods rendered here.
+      automountServiceAccountToken: true
+    serviceAccount:
+      identifier: api-reader
+    containers:
+      app:
+        image:
+          repository: myapp
+          tag: "1.0.0"
+
+global:
+  # The workload brings its own SA, so skip the auto-created default.
+  createDefaultServiceAccount: false
+```
+
+Grant the RBAC the workload actually needs; mounting the token is only
+half of it.
+
+## Cross-namespace Route with an auto-generated ReferenceGrant **(5.1+)**
+
+`namespaceOverride` puts the Route in another namespace, and the library
+emits the `ReferenceGrant` that authorizes it to reach back to the
+Services in the release namespace. Only `backendRefs` resolving to a
+Service in the release namespace are covered — a `backendRefs` entry with
+its own explicit `namespace:` is left to you.
+
+```yaml
+service:
+  main:
+    controller: main
+    ports:
+      http:
+        port: 80
+
+route:
+  main:
+    enabled: true
+    kind: HTTPRoute
+    # Route lives here; the Service stays in the release namespace.
+    namespaceOverride: gateway-system
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: external
+        namespace: gateway-system
+    hostnames:
+      - app.example.com
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          # Resolve by identifier so the grant picks the Service up.
+          - identifier: main
+            port: 80
+```
+
+The generated grant is named after the Route and lives in the release
+namespace. Suppress it when a cluster-wide grant is already managed
+elsewhere:
+
+```yaml
+route:
+  main:
+    namespaceOverride: gateway-system
+    referenceGrant:
+      enabled: false
+```

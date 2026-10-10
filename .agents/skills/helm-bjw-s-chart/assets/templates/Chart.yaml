@@ -1,0 +1,13 @@
+apiVersion: v2
+name: CHANGEME
+description: A Helm chart for CHANGEME
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+  - name: common
+    repository: https://bjw-s-labs.github.io/helm-charts
+    # Default 5.x track (requires K8s >= 1.31 / Helm >= 3.18).
+    # Legacy: pin to 4.6.2 for clusters that can't meet the 5.x prereqs.
+    # See references/migration-4-to-5.md before bumping an existing chart.
+    version: 5.1.0
