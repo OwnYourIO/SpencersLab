@@ -1,0 +1,91 @@
+# Tests for the llama-swap chart's operator tools sidecar and the gpu/gpu-ai
+# service wiring around it:
+#   - pytest suite in charts/llama-swap/tests (llama_tools.py contract,
+#     vendored b10015 LoRA converter end-to-end on a synthetic adapter,
+#     vendored-file provenance hashes, helm template assertions)
+#   - helm lint + helm template for the chart and both service umbrellas
+#
+# The converter at llama.cpp b10015 needs torch + transformers plus the
+# repo-local conversion/ and gguf-py packages (the latter two are vendored in
+# the chart, NOT pip-installed — PyPI gguf is far older than b10015's).
+name: llama-swap tools tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/llama-swap/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - 'services/gpu/prod/values.yaml'
+      - 'services/proxy-local/prod/**'
+      - 'custom-values/gpu-ai/prod-values.yaml'
+      - '.github/workflows/llama-swap-tools-tests.yaml'
+  pull_request:
+    paths:
+      - 'charts/llama-swap/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - 'services/gpu/prod/values.yaml'
+      - 'services/proxy-local/prod/**'
+      - 'custom-values/gpu-ai/prod-values.yaml'
+      - '.github/workflows/llama-swap-tools-tests.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies (converter + tests)
+        run: |
+          pip install pytest numpy safetensors transformers huggingface_hub pyyaml tqdm
+          # CPU-only torch wheel — the tests never touch a GPU.
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Fetch chart dependencies
+        run: helm dependency update charts/llama-swap
+
+      - name: Run test suite
+        run: pytest charts/llama-swap/tests -v
+
+      - name: helm lint (chart)
+        run: helm lint charts/llama-swap
+
+      - name: helm template (chart defaults)
+        run: helm template llama-swap charts/llama-swap --set domain=spencerslab.com --set clusterName=gpu-ai
+
+      - name: helm lint + template (gpu-ai umbrella)
+        run: |
+          helm lint services/gpu-ai/prod
+          helm template gpu-ai services/gpu-ai/prod --set domain=spencerslab.com --set clusterName=gpu-ai > /dev/null
+
+      - name: helm lint + template (gpu umbrella)
+        run: |
+          helm lint services/gpu/prod
+          helm template gpu services/gpu/prod --set domain=spencerslab.com --set clusterName=gpu > /dev/null
+
+      - name: helm lint + template (proxy-local umbrella, localOnly gates)
+        run: |
+          helm dependency build services/proxy-local/prod
+          helm lint services/proxy-local/prod \
+            --set domain=spencerslab.com --set clusterName=proxy-local \
+            --set authRealm=SpencersLab \
+            --set bitwardenIds.argocd-sso-secret=x \
+            --set bitwardenIds.autossh-secret=x \
+            --set bitwardenIds.traefik-mqtt=x
+          helm template proxy-local services/proxy-local/prod \
+            --set domain=spencerslab.com --set clusterName=proxy-local \
+            --set authRealm=SpencersLab \
+            --set bitwardenIds.argocd-sso-secret=x \
+            --set bitwardenIds.autossh-secret=x \
+            --set bitwardenIds.traefik-mqtt=x > /dev/null

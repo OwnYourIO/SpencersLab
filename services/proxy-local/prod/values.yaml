@@ -214,10 +214,13 @@ proxy:
       service: proxy-local-backup-gpu-qbittorrent-main
       port: 8080
 
-    # gpu-ai cluster: llama-swap on the dedicated AI GPU box
-    # (hub → ai-gpu.<domain> → ai-gpu cluster traefik).
-    ai-llama-swap:
-      target: ai-gpu
+    # gpu-ai cluster hub route.
+    # Disabled 2026-10-09: hub route superseded by llama.<domain> → gpu-ai.
+    # ai-llama-swap.<domain> is still served directly by gpu-ai's traefik.
+    # Re-enabling through the hub is a one-entry uncomment once gpu-ai.<domain>
+    # DNS exists.
+    #ai-llama-swap:
+    #  target: gpu-ai
 
     # proxy-backup cluster (hub → proxy-backup.<domain> → proxy-backup
     # cluster traefik). Auth: default crowdsec + Keycloak forward-auth.
@@ -264,7 +267,10 @@ proxy:
       service: proxy-local-metube
       port: 8081
     llama:
-      target: llama-cpp
+      # 2026-10-09: rerouted from the gpu cluster (llama-cpp) to gpu-ai —
+      # llama.<domain> now lands on the gpu-ai cluster's traefik, which
+      # serves the Qwen3.8 roster (+ chart defaults) via its llama ingress.
+      target: gpu-ai
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=traefik&response_type=code&redirect_uri=https://llama.$.Values.domain/ui/"
       loginSubDomain: "login"
       # TODO: It'd be nice to split this into 2 ingress kinda like we do for sso.
@@ -275,6 +281,23 @@ proxy:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"
           #- "default-redirect-llama@kubernetescrd"
+          - "user-allowlist@file"
+
+    # gpu cluster roster under its old name (2026-10-09). Shaped like llama
+    # (SSO + crowdsec + user-allowlist); the hub ExternalName points at
+    # llama-cpp.<domain> on the gpu cluster. Per operator decision
+    # (2026-10-10) this is a plain entry with no localOnly template gating:
+    # the public Ingress, the external-dns record and the SSO-path ingress
+    # all render and are accepted as dangling/unused — LAN clients resolve
+    # llama-small.<domain> → proxy-local (10.0.77.54) via internal DNS, and
+    # no proxy-remote entry is added.
+    llama-small:
+      target: llama-cpp
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=traefik&response_type=code&redirect_uri=https://llama-small.$.Values.domain/ui/"
+      loginSubDomain: "login"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
           - "user-allowlist@file"
 
     cluster:

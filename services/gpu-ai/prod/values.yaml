@@ -40,6 +40,16 @@ ingress:
       service: gpu-ai-llama-swap
       port: 8080
 
+    # Serves llama.<domain> from gpu-ai (rerouted from the gpu cluster
+    # 2026-10-09). Mirrors gpu's serviceName convention: entry key renders
+    # llama-cpp.<domain> internally, serviceName renders the public-facing
+    # llama.<domain> host. (Keying this entry "llama" with serviceName
+    # "llama" would render two Ingresses both named llama-ingress.)
+    llama-cpp:
+      serviceName: llama
+      service: gpu-ai-llama-swap
+      port: 8080
+
     cluster:
       clusterBase: true
       service: argocd-server
@@ -50,7 +60,181 @@ ingress:
     #  service: traefik
     #  port: 80
 
-# No service-level overrides for llama-swap — the chart's defaults (model
-# roster, concurrency matrix) ride as-is. Tune per-hardware here later via
-# the usual `<appName>:` values block.
+# gpu-ai model roster: the Qwen3.8-27B family. These values MERGE with the
+# chart defaults (chart roster + matrix stay intact), so /v1/models here is
+# the union of old + new by design (clean split = chart-fork follow-up).
+#
+# HF_TOKEN note: several of these repos are gated (orcarouter) or require
+# login (aboliterant), so the main container gets HF_TOKEN from the hf-token
+# ExternalSecret below — llama.cpp b10015 picks the token up from the env
+# (common/arg.cpp --hf-token defaults to $HF_TOKEN). The app-template schema
+# forbids optional secretKeyRefs, but on gpu-ai the secret is guaranteed
+# (bitwardenIds.hf-token + custom-values/gpu-ai/prod-values.yaml).
 llama-swap:
+  modelsPvcSize: 500Gi
+  bitwardenIds:
+    hf-token: OVERRIDE_VIA_CUSTOM_VALUES
+  app-template:
+    controllers:
+      llama-swap:
+        containers:
+          main:
+            env:
+              HF_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: hf-token
+                    key: token
+          # Operator provisioning sidecar (LoRA conversion, artifact staging).
+          # Scripts at /app/tools (llama-swap-tools ConfigMap); work happens
+          # under /models/.tools; see charts/llama-swap/scripts/llama_tools.py.
+          tools:
+            enabled: true
+            env:
+              HF_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: hf-token
+                    key: token
+  config:
+    macros:
+      q38-common: |
+        -ngl 999
+        --flash-attn on
+        --no-mmap
+        -np 1
+        -b 2048
+        -ub 2048
+        --cache-type-k q8_0
+        --cache-type-v q8_0
+        --cache-reuse 1
+        --no-context-shift
+      q38-sampling: |
+        --temp 0.7 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
+      q38-think: |
+        --chat-template-kwargs '{"enable_thinking":true,"reasoning_effort":"medium","preserve_thinking":true}'
+    models:
+      qwen38-orca:                  # daily driver, MTP + embedded vision
+        cmd: |
+          ${server-cmd}
+          -hf orcarouter/Qwen3.8-27B-Uncensored-GGUF:Q6_K
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q38-common}
+          ${q38-sampling}
+          ${q38-think}
+        name: "Qwen3.8 27B Uncensored (Orca Q6_K, MTP)"
+        description: "Qwen3.8 27B daily driver; draft-MTP speculative decoding, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+        aliases: [qwen3.8, local/qwen3.8-27b]
+        capabilities: { in: [text, image], out: [text] }
+
+      qwen38-ara:                   # max quality / coding (embedded MTP)
+        cmd: |
+          ${server-cmd}
+          -hf cygnal/Qwen3.8-27B-heretic-ara-Q4_K_M-MTP-GGUF:Q6_K-MTP
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 3
+          ${q38-common}
+          ${q38-sampling}
+          ${q38-think}
+        name: "Qwen3.8 27B heretic-ara (Q6_K-MTP)"
+        description: "Max-quality/coding build; draft-MTP n-max 3, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+        capabilities: { in: [text, image], out: [text] }
+
+      qwen38-rana:                  # separate MTP draft + mmproj, whisper-style bootstrap
+        cmd: |
+          /bin/sh -c "
+            dl() {
+              if [ -n \"$HF_TOKEN\" ]; then
+                curl -fL --retry 3 -H \"Authorization: Bearer $HF_TOKEN\" -o \"$2.part\" \"$1\"
+              else
+                curl -fL --retry 3 -o \"$2.part\" \"$1\"
+              fi && mv \"$2.part\" \"$2\"
+            } &&
+            mkdir -p /models/rana &&
+            test -f /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf ||
+            dl https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF/resolve/main/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf &&
+            test -f /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf ||
+            dl https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF/resolve/main/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf &&
+            exec /app/llama-server
+              --port ${PORT} --host 0.0.0.0 --jinja
+              -hf abliterant/Qwen3.8-27B-RANA-abliterated-GGUF:Q6_K
+              --model-draft /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf
+              --mmproj /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf
+              -c 262144
+              --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0.75
+              ${q38-common}
+              ${q38-sampling}
+              ${q38-think}
+          "
+        name: "Qwen3.8 27B RANA abliterated (Q6_K, MTP)"
+        description: "Separate MTP draft file; p-min 0.75, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+        capabilities: { in: [text, image], out: [text] }
+
+      qwen38-humanlike:             # text-only; official GGUF has no MTP → no --spec-type
+        cmd: |
+          ${server-cmd}
+          -hf LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-GGUF:Q6_K
+          -c 131072
+          ${q38-common}
+          ${q38-sampling}
+          --chat-template-kwargs '{"enable_thinking":true,"reasoning_effort":"low"}'
+        name: "Qwen3.8 27B Humanlike-Chat 2.0 (Q6_K)"
+        description: "Text-only humanlike chat; low reasoning effort, 128k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+
+      qwen38-orca-f16:              # reference quality (~20.8Gi, ~4-6 tok/s)
+        # F16 ships as two shards (-00001-of-00002 / -00002-of-00002); the
+        # :F16 suffix matches both and llama.cpp downloads them together
+        # (same mechanism the chart's :BF16 models already use).
+        cmd: |
+          ${server-cmd}
+          -hf orcarouter/Qwen3.8-27B-Uncensored-GGUF:F16
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q38-common}
+          ${q38-sampling}
+          ${q38-think}
+        name: "Qwen3.8 27B Uncensored (Orca F16 reference, MTP)"
+        description: "Reference F16 build; ttl 180 so it evicts fast"
+        proxy: http://localhost:${PORT}
+        ttl: 180
+        capabilities: { in: [text, image], out: [text] }
+
+      # PHASE 2 — enable after sidecar provisioning (prepare → convert-cyber
+      # → verify). Deliberately NO bootstrap here: a missing LoRA must fail
+      # loudly, provisioning is operator-run via the tools container.
+      # qwen38-cyber:
+      #   cmd: |
+      #     ${server-cmd}
+      #     -hf orcarouter/Qwen3.8-27B-Uncensored-GGUF:Q6_K
+      #     --lora /models/qwen38-cyber-lora-f16.gguf
+      #     -c 131072
+      #     --spec-type draft-mtp --spec-draft-n-max 2
+      #     ${q38-common}
+      #     ${q38-sampling}
+      #     ${q38-think}
+      #   name: "Qwen3.8 27B Uncensored + cyber LoRA (Q6_K, MTP)"
+      #   description: "Orca Q6_K base + cyber PEFT LoRA (converted via tools sidecar)"
+      #   proxy: http://localhost:${PORT}
+      #   ttl: 300
+      #   capabilities: { in: [text, image], out: [text] }
+
+    matrix:
+      vars:
+        q38orca: qwen38-orca
+        q38ara: qwen38-ara
+        q38rana: qwen38-rana
+        q38hum: qwen38-humanlike
+        q38f16: qwen38-orca-f16
+        # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
+      sets:
+        # Scalar: must restate the chart's full alternation + the new models.
+        main: "(q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16) & homecpu"
