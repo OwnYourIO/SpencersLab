@@ -7,8 +7,9 @@ conversion, no smoke tests on startup.
 
 Commands:
   status                 Report provisioning state of the known artifacts.
-  prepare                Create/reuse the venv, stage the vendored converter,
-                         fetch the cyber LoRA adapter + its base model config.
+  prepare                Create/reuse the venv, fetch + hash-verify the
+                         pinned b10015 converter files, fetch the cyber LoRA
+                         adapter + its base model config.
   convert-cyber          Convert the staged PEFT adapter to GGUF (f16),
                          atomic publish + SHA-256 record.
   download <artifact>    Fetch one explicitly named artifact (consent gate:
@@ -34,10 +35,8 @@ import argparse
 import hashlib
 import json
 import os
-import shutil
 import subprocess
 import sys
-import tempfile
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -57,29 +56,22 @@ BASE_CONFIG_DIR = CYBER_DIR / "base-config"
 # Where the chart mounts the read-only tool scripts (ConfigMap llama-swap-tools).
 TOOLS_SRC = Path(os.environ.get("TOOLS_SRC", "/app/tools"))
 
-# Vendored converter files as they appear in the ConfigMap (flat keys) mapped to
-# their package layout under CONVERTER_DIR. The converter at llama.cpp b10015
-# needs the repo-local `conversion` package AND the repo-local `gguf-py`
-# package (PyPI's gguf stopped at 0.9.1; b10015 ships 0.19.0). The staged
-# layout mirrors the llama.cpp tree so convert_lora_to_gguf.py's own
-# `Path(__file__).parent / 'gguf-py'` probe finds it.
-CONVERTER_FILES = {
-    "convert_lora_to_gguf.py": Path("convert_lora_to_gguf.py"),
-    "conversion__init__.py": Path("conversion/__init__.py"),
-    "conversion__base.py": Path("conversion/base.py"),
-    "conversion__qwen.py": Path("conversion/qwen.py"),
-    "gguf_py__init__.py": Path("gguf-py/gguf/__init__.py"),
-    "gguf_py__constants.py": Path("gguf-py/gguf/constants.py"),
-    "gguf_py__gguf.py": Path("gguf-py/gguf/gguf.py"),
-    "gguf_py__gguf_reader.py": Path("gguf-py/gguf/gguf_reader.py"),
-    "gguf_py__gguf_writer.py": Path("gguf-py/gguf/gguf_writer.py"),
-    "gguf_py__lazy.py": Path("gguf-py/gguf/lazy.py"),
-    "gguf_py__metadata.py": Path("gguf-py/gguf/metadata.py"),
-    "gguf_py__quants.py": Path("gguf-py/gguf/quants.py"),
-    "gguf_py__tensor_mapping.py": Path("gguf-py/gguf/tensor_mapping.py"),
-    "gguf_py__utility.py": Path("gguf-py/gguf/utility.py"),
-    "gguf_py__vocab.py": Path("gguf-py/gguf/vocab.py"),
-}
+# Converter provenance. The b10015 converter needs the repo-local `conversion`
+# package AND the repo-local `gguf-py` package (PyPI's gguf stopped at 0.9.1;
+# b10015 ships 0.19.0). Those files are too large to embed in the
+# llama-swap-tools ConfigMap (~750 KiB breaks the 256 KiB
+# last-applied-configuration annotation the API server allows on client-side
+# apply — ArgoCD syncs failed with "metadata.annotations: Too long"), so the
+# ConfigMap ships only this script + the provenance pin
+# (converter-source.json: repo, tag, commit, per-file sha256). `prepare`
+# fetches each file from the pinned raw.githubusercontent.com URL and
+# verifies its sha256 BEFORE publishing it under CONVERTER_DIR, which mirrors
+# the llama.cpp tree so convert_lora_to_gguf.py's own
+# `Path(__file__).parent / 'gguf-py'` probe finds it. The chart's git source
+# keeps matching vendored copies (scripts/conversion, scripts/gguf-py) for
+# offline CI contract tests; provenance hashes guard both.
+PROVENANCE_FILE = "converter-source.json"
+PROVENANCE_LICENSE_KEY = "LLAMA_CPP_LICENSE"  # attribution only, never staged
 
 CYBER_ADAPTER_REPO = "nico248000000000/Qwen3.8-27B-Uncensored-cyber-LoRA"
 CYBER_ADAPTER_FILES = ("adapter_config.json", "adapter_model.safetensors")
@@ -163,16 +155,30 @@ def redact(text: str) -> str:
     return text
 
 
-def http_get(url: str, dest: Path, *, desc: str = "", auth: bool = True) -> None:
+def http_get(url: str, dest: Path, *, desc: str = "", auth: bool = True,
+             expected_sha256: str | None = None) -> None:
     """Download url to dest with temp-file + resume + atomic rename.
 
     The partial file lives at <dest>.part so an interrupted run can resume.
     The token is attached only for huggingface.co URLs and never logged.
+
+    With expected_sha256 set (pinned converter files): an existing dest is
+    re-checked against the pin (mismatch → re-download), and the temp file is
+    hash-verified BEFORE the atomic publish — a mismatch aborts loudly and
+    publishes nothing.
     """
+    label = desc or dest.name
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists():
-        log(f"{desc or dest.name}: already present ({dest.stat().st_size} bytes), skipping")
-        return
+        if expected_sha256 is None:
+            log(f"{label}: already present ({dest.stat().st_size} bytes), skipping")
+            return
+        actual = sha256_file(dest)
+        if actual == expected_sha256:
+            log(f"{label}: already present ({dest.stat().st_size} bytes), sha256 matches pin — skipping")
+            return
+        log(f"{label}: present but sha256 {actual[:16]}... != pin {expected_sha256[:16]}... — re-downloading")
+        dest.unlink()
 
     tmp = dest.parent / (dest.name + ".part")
     resume_from = tmp.stat().st_size if tmp.exists() else 0
@@ -183,7 +189,7 @@ def http_get(url: str, dest: Path, *, desc: str = "", auth: bool = True) -> None
         headers["Authorization"] = f"Bearer {token}"
     if resume_from > 0:
         headers["Range"] = f"bytes={resume_from}-"
-        log(f"{desc or dest.name}: resuming at byte {resume_from}")
+        log(f"{label}: resuming at byte {resume_from}")
 
     req = urllib.request.Request(url, headers=headers)
     try:
@@ -191,8 +197,8 @@ def http_get(url: str, dest: Path, *, desc: str = "", auth: bool = True) -> None
     except urllib.error.HTTPError as e:
         if e.code == 416 and resume_from > 0:
             # Range not satisfiable: the partial file is already complete.
-            log(f"{desc or dest.name}: partial file already complete, finalizing")
-            os.replace(tmp, dest)
+            log(f"{label}: partial file already complete, finalizing")
+            _publish_verified(tmp, dest, expected_sha256, label)
             return
         if e.code == 401:
             raise SystemExit(
@@ -203,7 +209,7 @@ def http_get(url: str, dest: Path, *, desc: str = "", auth: bool = True) -> None
 
     mode = "ab" if (resume_from > 0 and resp.status == 206) else "wb"
     if mode == "wb" and resume_from > 0:
-        log(f"{desc or dest.name}: server ignored Range, restarting download")
+        log(f"{label}: server ignored Range, restarting download")
 
     total = 0
     with open(tmp, mode) as f:
@@ -213,11 +219,26 @@ def http_get(url: str, dest: Path, *, desc: str = "", auth: bool = True) -> None
                 break
             f.write(chunk)
             total += len(chunk)
-    log(f"{desc or dest.name}: downloaded {total} bytes (now {tmp.stat().st_size})")
+    log(f"{label}: downloaded {total} bytes (now {tmp.stat().st_size})")
 
+    _publish_verified(tmp, dest, expected_sha256, label)
+
+
+def _publish_verified(tmp: Path, dest: Path, expected_sha256: str | None, label: str) -> None:
+    """Hash-check the temp file (when pinned), then atomically publish it."""
+    if expected_sha256 is not None:
+        actual = sha256_file(tmp)
+        if actual != expected_sha256:
+            tmp.unlink(missing_ok=True)
+            raise SystemExit(
+                f"[llama-tools] ERROR: sha256 mismatch for {label}: "
+                f"expected {expected_sha256[:16]}..., got {actual[:16]}... — "
+                "nothing published (upstream file changed or download corrupt; "
+                "re-run to retry, or check scripts/converter-source.json pins)"
+            )
     os.replace(tmp, dest)  # atomic publish
     digest = write_sha256(dest)
-    log(f"{desc or dest.name}: published sha256={digest[:16]}...")
+    log(f"{label}: published sha256={digest[:16]}...")
 
 
 # ---------------------------------------------------------------------------
@@ -244,8 +265,7 @@ def cmd_status(_: argparse.Namespace) -> int:
 
     log("  Tooling:")
     log(f"    venv:      {'ready' if (VENV_DIR / 'bin/python').exists() else 'not prepared (run: prepare)'}")
-    staged = all((CONVERTER_DIR / dst).exists() for dst in CONVERTER_FILES.values())
-    log(f"    converter: {'staged' if staged else 'not staged (run: prepare)'}")
+    log(f"    converter: {'staged + hash-verified' if converter_staged() else 'not staged (run: prepare)'}")
     adapter = all((ADAPTER_DIR / f).exists() for f in CYBER_ADAPTER_FILES)
     log(f"    adapter:   {'fetched' if adapter else 'not fetched (run: prepare)'}")
     base = all((BASE_CONFIG_DIR / f).exists() for f in CYBER_BASE_FILES)
@@ -281,23 +301,64 @@ def ensure_venv() -> Path:
     return VENV_DIR
 
 
+def load_provenance() -> dict:
+    """Parse converter-source.json from the ConfigMap mount."""
+    src = TOOLS_SRC / PROVENANCE_FILE
+    if not src.exists():
+        raise SystemExit(
+            f"[llama-tools] ERROR: {src} missing — is the llama-swap-tools "
+            "ConfigMap mounted at /app/tools?"
+        )
+    try:
+        return json.loads(src.read_text())
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"[llama-tools] ERROR: {src} does not parse: {e}") from e
+
+
+def converter_pins(meta: dict) -> dict[str, tuple[str, str]]:
+    """upstream_path -> (raw url, expected sha256) for every runtime file."""
+    url_pattern = meta["raw_url_pattern"]
+    return {
+        info["upstream_path"]: (url_pattern.format(path=info["upstream_path"]), info["sha256"])
+        for rel, info in meta["files"].items()
+        if rel != PROVENANCE_LICENSE_KEY
+    }
+
+
 def stage_converter() -> None:
-    log(f"staging converter from {TOOLS_SRC} -> {CONVERTER_DIR}")
-    for src_name, dst in CONVERTER_FILES.items():
-        src = TOOLS_SRC / src_name
-        if not src.exists():
-            raise SystemExit(
-                f"[llama-tools] ERROR: {src} missing — is the llama-swap-tools "
-                "ConfigMap mounted at /app/tools?"
-            )
-        target = CONVERTER_DIR / dst
-        target.parent.mkdir(parents=True, exist_ok=True)
-        # Stage via temp + rename so a half-copied file never survives.
-        fd, tmp_name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.")
-        os.close(fd)
-        shutil.copyfile(src, tmp_name)
-        os.replace(tmp_name, target)
-    log("converter staged")
+    """Fetch the pinned b10015 converter files into CONVERTER_DIR.
+
+    Every file is sha256-verified against converter-source.json BEFORE it is
+    published; already-staged files with a matching hash are skipped, so the
+    step is restart-safe and idempotent. The staged layout mirrors the
+    llama.cpp tree (convert_lora_to_gguf.py at the root, conversion/ and
+    gguf-py/ packages beside it).
+    """
+    meta = load_provenance()
+    pins = converter_pins(meta)
+    log(f"staging converter from {meta['repository']} @ {meta['tag']} -> {CONVERTER_DIR}")
+    for upstream_path, (url, expected) in sorted(pins.items()):
+        http_get(
+            url,
+            CONVERTER_DIR / upstream_path,
+            desc=f"converter {upstream_path}",
+            auth=False,  # raw.githubusercontent.com needs no token
+            expected_sha256=expected,
+        )
+    log(f"converter staged ({len(pins)} files, all sha256-verified)")
+
+
+def converter_staged() -> bool:
+    """True when every pinned converter file is staged with the right hash."""
+    try:
+        pins = converter_pins(load_provenance())
+    except SystemExit:
+        return False
+    for upstream_path, (_, expected) in pins.items():
+        path = CONVERTER_DIR / upstream_path
+        if not path.exists() or sha256_file(path) != expected:
+            return False
+    return True
 
 
 def cmd_prepare(_: argparse.Namespace) -> int:
@@ -316,7 +377,8 @@ def cmd_prepare(_: argparse.Namespace) -> int:
             BASE_CONFIG_DIR / name,
             desc=f"base model {name}",
         )
-    log("prepare complete: venv ready, converter staged, adapter + base config fetched")
+    log("prepare complete: venv ready, converter staged + hash-verified, "
+        "adapter + base config fetched")
     log("next: llama_tools.py convert-cyber")
     return 0
 

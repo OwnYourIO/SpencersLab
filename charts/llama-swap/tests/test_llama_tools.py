@@ -10,6 +10,7 @@ import hashlib
 import http.server
 import importlib
 import io
+import json
 import os
 import sys
 import threading
@@ -299,24 +300,82 @@ def test_verify_skips_missing(workspace):
 
 
 # ---------------------------------------------------------------------------
-# prepare / stage
+# prepare / stage (converter fetched from pinned URLs, sha256-verified)
 # ---------------------------------------------------------------------------
 
-def test_stage_converter_maps_flat_keys_to_package_layout(workspace):
-    src = llama_tools.TOOLS_SRC
-    for name in llama_tools.CONVERTER_FILES:
-        (src / name).write_text(f"content of {name}")
+def _write_provenance(files: dict[str, bytes], base_url: str, pins: dict[str, str] | None = None):
+    """Write a converter-source.json pointing raw_url_pattern at base_url.
+
+    files maps rel-path -> bytes the fake server will return (all served as
+    PAYLOAD by RangeHandler, so content pins default to sha256(PAYLOAD)).
+    pins optionally overrides the sha256 for a rel-path (to force a mismatch).
+    """
+    entries = {}
+    for rel in files:
+        upstream = "LICENSE" if rel == "LLAMA_CPP_LICENSE" else rel
+        default = hashlib.sha256(PAYLOAD).hexdigest()
+        entries[rel] = {"upstream_path": upstream, "sha256": (pins or {}).get(rel, default)}
+    prov = {
+        "repository": "https://github.com/ggml-org/llama.cpp",
+        "tag": "b10015",
+        "commit": "12127defda4f41b7679cb2477a4b0d65ee6a0c8f",
+        "raw_url_pattern": base_url.rstrip("/") + "/{path}",
+        "files": entries,
+    }
+    (llama_tools.TOOLS_SRC / llama_tools.PROVENANCE_FILE).write_text(json.dumps(prov))
+    return prov
+
+
+def test_stage_converter_fetches_verifies_and_lays_out(workspace, http_server):
+    rels = ["convert_lora_to_gguf.py", "conversion/base.py", "gguf-py/gguf/__init__.py",
+            "LLAMA_CPP_LICENSE"]
+    _write_provenance({r: PAYLOAD for r in rels}, http_server)
 
     llama_tools.stage_converter()
 
     conv = llama_tools.CONVERTER_DIR
-    for name, rel in llama_tools.CONVERTER_FILES.items():
-        assert (conv / rel).read_text() == f"content of {name}", f"bad staging for {name}"
-    # spot-check the two package layouts the converter probes at runtime
-    assert (conv / "conversion/__init__.py").exists()
-    assert (conv / "gguf-py/gguf/__init__.py").exists()
-    assert not any(p.name.startswith(".") for p in conv.rglob("*") if p.is_file()), \
-        "no staging temp files left"
+    # runtime files staged at their llama.cpp-tree layout, byte-exact
+    assert (conv / "convert_lora_to_gguf.py").read_bytes() == PAYLOAD
+    assert (conv / "conversion/base.py").read_bytes() == PAYLOAD
+    assert (conv / "gguf-py/gguf/__init__.py").read_bytes() == PAYLOAD
+    # the license is attribution-only and must NOT be staged
+    assert not (conv / "LICENSE").exists()
+    assert not (conv / "LLAMA_CPP_LICENSE").exists()
+    # every staged file got a sha256 sidecar
+    assert (conv / "convert_lora_to_gguf.py.sha256").exists()
+    assert not any(p.name.endswith(".part") for p in conv.rglob("*")), "no temp files left"
+
+
+def test_stage_converter_is_idempotent(workspace, http_server):
+    _write_provenance({"convert_lora_to_gguf.py": PAYLOAD}, http_server)
+    llama_tools.stage_converter()
+    requests_first = len(RangeHandler.seen_headers)
+
+    # second run: file present + hash matches pin -> no network hit
+    llama_tools.stage_converter()
+    assert len(RangeHandler.seen_headers) == requests_first, \
+        "a hash-matching staged file must be reused, not re-downloaded"
+
+
+def test_stage_converter_rejects_sha256_mismatch(workspace, http_server):
+    # pin a hash the served PAYLOAD will not match
+    _write_provenance({"convert_lora_to_gguf.py": PAYLOAD}, http_server,
+                      pins={"convert_lora_to_gguf.py": "0" * 64})
+    with pytest.raises(SystemExit, match="sha256 mismatch"):
+        llama_tools.stage_converter()
+    assert not (llama_tools.CONVERTER_DIR / "convert_lora_to_gguf.py").exists(), \
+        "a mismatched file must not be published"
+    assert not (llama_tools.CONVERTER_DIR / "convert_lora_to_gguf.py.part").exists()
+
+
+def test_stage_converter_redownloads_tampered_file(workspace, http_server):
+    _write_provenance({"convert_lora_to_gguf.py": PAYLOAD}, http_server)
+    dest = llama_tools.CONVERTER_DIR / "convert_lora_to_gguf.py"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(b"tampered on disk")
+
+    llama_tools.stage_converter()  # detects hash mismatch, re-fetches
+    assert dest.read_bytes() == PAYLOAD
 
 
 def test_stage_converter_fails_loudly_without_configmap(workspace, capsys):

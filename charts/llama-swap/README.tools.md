@@ -27,7 +27,7 @@ kubectl -n default exec deploy/gpu-ai-llama-swap -c tools -- python /app/tools/l
 | Command | Behavior |
 |---|---|
 | `status` | No downloads, no model loads. Reports which runtime artifacts (cyber LoRA GGUF, rana MTP draft/mmproj) are present or missing, plus venv/converter/adapter staging state and whether `HF_TOKEN` is set. |
-| `prepare` | Creates/reuses the PEP668-safe venv at `/models/.tools/venv` (CPU-only torch + transformers, the large download), stages the vendored b10015 converter from `/app/tools` into `/models/.tools/converter/`, and fetches the cyber PEFT adapter + its base-model config. **No GGUF downloads.** |
+| `prepare` | Creates/reuses the PEP668-safe venv at `/models/.tools/venv` (CPU-only torch + transformers, the large download), fetches the pinned b10015 converter files from the URLs in `converter-source.json` (each sha256-verified **before** publish, staged into `/models/.tools/converter/`), and fetches the cyber PEFT adapter + its base-model config. **No GGUF downloads.** |
 | `convert-cyber` | Runs the vendored `convert_lora_to_gguf.py --outtype f16 --base <base config>` against the staged adapter. Publishes `/models/qwen38-cyber-lora-f16.gguf` via temp-file + atomic rename only on success and records its SHA-256. Fails loudly on unsupported tensors; nothing is published on failure. |
 | `download <artifact>` | Consent gate: refuses to run without an explicitly named artifact (`rana-mtp`, `rana-mmproj`). Range-resumable `.part` download + atomic rename; `--force` to re-download. |
 | `verify` | Size + SHA-256 checks of provisioned artifacts against their recorded `.sha256` sidecars. Missing (not yet provisioned) artifacts are skips, not failures. Does **not** prove inference compatibility. |
@@ -48,13 +48,22 @@ kubectl -n default exec deploy/gpu-ai-llama-swap -c tools -- python /app/tools/l
 
 ## Converter provenance
 
-The vendored converter is the exact script from llama.cpp tag `b10015` (the
-image's build) plus the minimal lazy-import subset of the repo-local
-`conversion/` and `gguf-py/` packages it needs (PyPI `gguf` is stuck at 0.9.1;
-b10015 ships 0.19.0). See `scripts/converter-source.json` for the pinned
-commit and per-file sha256s, and `scripts/LLAMA_CPP_LICENSE` for the MIT
-license. The ConfigMap embedding ships ~750 KiB of script data — keep the
-1 MiB ConfigMap etcd limit in mind when adding files.
+The converter is the exact script from llama.cpp tag `b10015` (the image's
+build) plus the minimal lazy-import subset of the repo-local `conversion/`
+and `gguf-py/` packages it needs (PyPI `gguf` is stuck at 0.9.1; b10015
+ships 0.19.0). See `scripts/converter-source.json` for the pinned commit and
+per-file sha256s, and `scripts/LLAMA_CPP_LICENSE` for the MIT license.
+
+The files are **not** embedded in the `llama-swap-tools` ConfigMap — the
+~750 KiB closure exceeds the 256 KiB `last-applied-configuration` annotation
+the API server allows on client-side apply, and embedding it broke ArgoCD
+syncs (`metadata.annotations: Too long`). The ConfigMap ships only
+`llama_tools.py` + `converter-source.json`; `prepare` downloads each pinned
+file from raw.githubusercontent.com and verifies its sha256 before staging it
+on the PVC (re-runs skip files whose hash already matches). The chart's git
+source keeps matching vendored copies under `scripts/conversion/` and
+`scripts/gguf-py/` — they are the source of truth for the pins and power the
+offline CI contract tests, but are excluded from the packaged chart.
 
 ## Cyber Phase 2 activation
 

@@ -1,15 +1,18 @@
 # Operator provisioning tools for the llama-swap `tools` sidecar (disabled by
-# default; gpu-ai enables it). All scripts ship read-only via this ConfigMap,
+# default; gpu-ai enables it). Scripts ship read-only via this ConfigMap,
 # mounted at /app/tools.
 #
-# The LoRA converter at llama.cpp b10015 (the image's exact build) is not
-# standalone: it needs the repo's `conversion` package and the repo-local
-# `gguf-py` package (PyPI gguf is stuck at 0.9.1; b10015 ships 0.19.0). The
-# minimal lazy-import subset for the Qwen3.8 architecture is vendored here
-# under flat keys (conversion__*.py, gguf_py__*.py); `llama_tools.py prepare`
-# stages them into their real package layout under /models/.tools/converter/.
-# Total data size ~750KiB — keep an eye on the 1MiB ConfigMap limit when
-# adding files.
+# SIZE LIMIT: this ConfigMap is applied client-side (ServerSideApply: "false"
+# on both gpu and gpu-ai), so kubectl stores the whole object in the
+# last-applied-configuration annotation, which the API server caps at 256 KiB.
+# Embedding the vendored b10015 converter here (~750 KiB) broke syncs with
+# "metadata.annotations: Too long". Therefore ONLY the operator CLI and its
+# provenance pin are embedded; `llama_tools.py prepare` fetches the converter
+# files from the pinned raw.githubusercontent.com URLs in
+# converter-source.json (sha256-verified before publish, staged to
+# /models/.tools/converter/). The vendored copies under scripts/conversion/
+# and scripts/gguf-py/ stay in git for CI contract tests — they are the
+# source of truth the pins were taken from.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -18,33 +21,5 @@ metadata:
 data:
   llama_tools.py: |
 {{ .Files.Get "scripts/llama_tools.py" | indent 4 }}
-  convert_lora_to_gguf.py: |
-{{ .Files.Get "scripts/convert_lora_to_gguf.py" | indent 4 }}
-  conversion__init__.py: |
-{{ .Files.Get "scripts/conversion/__init__.py" | indent 4 }}
-  conversion__base.py: |
-{{ .Files.Get "scripts/conversion/base.py" | indent 4 }}
-  conversion__qwen.py: |
-{{ .Files.Get "scripts/conversion/qwen.py" | indent 4 }}
-  gguf_py__init__.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/__init__.py" | indent 4 }}
-  gguf_py__constants.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/constants.py" | indent 4 }}
-  gguf_py__gguf.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/gguf.py" | indent 4 }}
-  gguf_py__gguf_reader.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/gguf_reader.py" | indent 4 }}
-  gguf_py__gguf_writer.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/gguf_writer.py" | indent 4 }}
-  gguf_py__lazy.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/lazy.py" | indent 4 }}
-  gguf_py__metadata.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/metadata.py" | indent 4 }}
-  gguf_py__quants.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/quants.py" | indent 4 }}
-  gguf_py__tensor_mapping.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/tensor_mapping.py" | indent 4 }}
-  gguf_py__utility.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/utility.py" | indent 4 }}
-  gguf_py__vocab.py: |
-{{ .Files.Get "scripts/gguf-py/gguf/vocab.py" | indent 4 }}
+  converter-source.json: |
+{{ .Files.Get "scripts/converter-source.json" | indent 4 }}

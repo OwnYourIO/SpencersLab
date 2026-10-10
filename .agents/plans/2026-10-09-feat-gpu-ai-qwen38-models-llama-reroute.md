@@ -34,6 +34,21 @@ app-template 5.0.1 schema and existing charts instead).
 > plain hub entry — its public Ingress, external-dns record and SSO-path
 > ingress all render and are accepted as dangling/unused per user).
 
+> Post-merge fix (2026-10-10, this branch): the merged 750 KiB tools
+> ConfigMap **failed ArgoCD sync** on llama-swap —
+> `metadata.annotations: Too long: may not be more than 262144 bytes`.
+> Both clusters apply llama-swap client-side (`ServerSideApply: "false"`),
+> so kubectl mirrors the whole object into the `last-applied-configuration`
+> annotation, which the API server caps at 256 KiB — the 1 MiB etcd limit
+> the size was checked against never applies on this path. Fix: the
+> ConfigMap now embeds ONLY `llama_tools.py` + `converter-source.json`
+> (26 KiB), and `prepare` fetches the 15 pinned b10015 converter files from
+> raw.githubusercontent.com with sha256 verification before publish
+> (idempotent; tampered/corrupt staged files are re-fetched). The vendored
+> closure stays in git (CI contract tests + source of truth for the pins)
+> but is now excluded from the packaged chart via `.helmignore`. Tests:
+> 33 passed. See "Post-merge fix" section below for details.
+
 ## What changed
 
 ### charts/llama-swap
@@ -80,8 +95,10 @@ app-template 5.0.1 schema and existing charts instead).
 - `scripts/LLAMA_CPP_LICENSE` — NEW: llama.cpp MIT license for the vendored
   subset (attribution; not mounted at runtime).
 - `.helmignore` — NEW: keeps `tests/` and Python caches out of the packaged
-  chart (does NOT touch `scripts/`, which `configmap-tools.yaml` embeds via
-  `.Files.Get`).
+  chart, and (since the post-merge ConfigMap fix) also the vendored
+  converter closure (`scripts/conversion/`, `scripts/gguf-py/`,
+  `scripts/convert_lora_to_gguf.py`) — those stay in git for CI but are no
+  longer embedded or packaged.
 - `.github/workflows/llama-swap-tools-tests.yaml` — NEW: pytest + helm
   lint + helm template on push/PR touching `charts/llama-swap/**`, the
   gpu/gpu-ai service values, proxy-local, or the custom-values entry
@@ -205,6 +222,55 @@ torch 2.14.1+cpu, transformers 5.19.0):
   `test_vendored_provenance.py`.
 - `pytest charts/llama-swap/tests` — **30 passed** (incl. the real
   synthetic-adapter → GGUF conversion through the vendored b10015 converter).
+
+## Post-merge fix (2026-10-10): tools ConfigMap too long for client-side apply
+
+**Failure:** ArgoCD llama-swap sync task —
+`ConfigMap "llama-swap-tools" is invalid: metadata.annotations: Too long:
+may not be more than 262144 bytes`.
+
+**Root cause:** the fused implementation embedded the full vendored b10015
+converter closure in the ConfigMap (~750 KiB, validated only against the
+1 MiB etcd object limit). But gpu-ai and gpu both deploy llama-swap with
+`ServerSideApply: "false"`, i.e. client-side apply: kubectl serializes the
+entire object into the `kubectl.kubernetes.io/last-applied-configuration`
+annotation, and the API server caps any single annotation at 256 KiB. Every
+apply of that ConfigMap was rejected — on both clusters.
+
+**Fix (this branch):**
+- `templates/configmap-tools.yaml` — embeds only `llama_tools.py` +
+  `converter-source.json` (26 KiB total, 1/10 of the annotation cap). Header
+  comment documents the limit so nobody re-embeds the closure.
+- `scripts/llama_tools.py` — `stage_converter()` rewritten: loads the pin
+  file from the ConfigMap mount, fetches each of the 15 runtime files from
+  `raw.githubusercontent.com/ggml-org/llama.cpp/b10015/<path>` (no auth,
+  `prepare` is already the networked step) and sha256-verifies the temp file
+  BEFORE the atomic publish. Already-staged files with a matching hash are
+  skipped (idempotent); a tampered/corrupt staged file is re-downloaded; a
+  pin mismatch aborts loudly and publishes nothing. `status` now reports the
+  converter as "staged + hash-verified" only when every pin matches.
+- `.helmignore` — also excludes the vendored closure from the packaged chart
+  (git keeps it: CI contract tests + source of truth for the pins; package
+  drops from ~1 MB to 206 KB).
+- Tests updated/new: staging fetch+layout, idempotent skip (zero repeat
+  requests), sha256-mismatch rejection, tampered-file re-download, render
+  contract `keys == {llama_tools.py, converter-source.json}` + a hard
+  < 200 KB ConfigMap size guard, and the provenance test flipped to fail if
+  the closure is ever re-embedded. **33 passed.**
+- `README.tools.md` — provenance section rewritten accordingly.
+
+**Re-validated:** helm lint + template (default/gpu-ai+custom-values/gpu):
+ConfigMap 26 KiB in all three modes, zero sentinels; gpu-ai umbrella, gpu
+umbrella, proxy-local umbrella all unchanged and rendering as before.
+
+**Operator note:** `prepare` now needs egress to `raw.githubusercontent.com`
+in addition to `huggingface.co`. Everything stays restart-safe: re-running
+`prepare` after an interruption resumes/skips per file by hash.
+
+**Not done (deliberately):** flipping llama-swap to `ServerSideApply: "true"`
+would also dodge the annotation cap, but changes apply semantics for every
+resource in the app on two live clusters — unnecessary once the ConfigMap is
+26 KiB.
 
 ## Still user-owned (per plan)
 
