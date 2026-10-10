@@ -15,9 +15,9 @@ app-template:
         main:
           image:
             repository: searxng/searxng
-            # Immutable date-commit tag verified 2026-09-06 against Docker Hub
+            # Immutable date-commit tag verified 2026-10-10 against Docker Hub
             # (digest matches searxng/searxng:latest at that time).
-            tag: 2026.9.5-c7f3080aa
+            tag: 2026.10.9-f4822b3fc
           env:
             SEARXNG_BASE_URL: "https://{{ .Values.domain }}"
             SEARXNG_PORT: "8080"
@@ -70,3 +70,15 @@ app-template:
       existingClaim: *chartName
       globalMounts:
         - path: /etc/searxng
+    settings:
+      # GitOps-managed settings.yml rendered by the ExternalSecret
+      # (secret-searxng.yaml): Bitwarden secret_key + engine policy.
+      # The image entrypoint never writes to an existing settings.yml
+      # (verified at image commit f4822b3fc), so shadowing the PVC copy
+      # is safe. subPath mounts refresh only on pod restart — the
+      # reloader annotation covers that.
+      type: secret
+      name: *chartName
+      globalMounts:
+        - path: /etc/searxng/settings.yml
+          subPath: settings.yml
