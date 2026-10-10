@@ -1,7 +1,7 @@
 dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 5.0.1
+  version: 5.3.0
 - name: lidarr
   repository: https://bubylou.github.io/Arr-Stack
   version: 0.3.5
@@ -13,6 +13,6 @@ dependencies:
   version: 0.3.4
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
-  version: 5.0.1
-digest: sha256:7a57b82c41cbe6cb1700e54e50aa0f2a40b4ec1efea23133f7548e3e6ee9175d
-generated: "2026-10-06T01:40:11.420360849Z"
+  version: 5.3.0
+digest: sha256:8fa04d3b4b2c2b5f46e04e542f5ffec779fdc5234e56ed203fdc5d4549870b50
+generated: "2026-10-10T23:40:46.303870592Z"
