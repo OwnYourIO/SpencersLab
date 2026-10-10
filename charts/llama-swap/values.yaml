@@ -96,6 +96,57 @@ config:
   # Models are downloaded automatically from HuggingFace via the -hf flag
   # and cached on the models PVC (LLAMA_CACHE=/models).
   models:
+    # Qwen 3.8 27B (plain/official). Q4/Q6/Q8 from unsloth's dynamic
+    # imatrix builds (no plain K-quants published); the 16-bit entry comes
+    # from ggml-org since unsloth ships no F16/BF16 for this model.
+    qwen3.8-27b-q4:
+      cmd: |
+        ${server-cmd}
+        ${threads}
+        -hf unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL
+        ${ctx-256k}
+        ${flash-and-q8}
+      name: "Qwen 3.8 27B (UD-Q4_K_XL)"
+      description: "Qwen 3.8 27B dense model, UD-Q4_K_XL quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    qwen3.8-27b-q6:
+      cmd: |
+        ${server-cmd}
+        ${threads}
+        -hf unsloth/Qwen3.8-27B-GGUF:UD-Q6_K_XL
+        ${ctx-256k}
+        ${flash-and-q8}
+      name: "Qwen 3.8 27B (UD-Q6_K_XL)"
+      description: "Qwen 3.8 27B dense model, UD-Q6_K_XL quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    qwen3.8-27b-q8:
+      cmd: |
+        ${server-cmd}
+        ${threads}
+        -hf unsloth/Qwen3.8-27B-GGUF:Q8_0
+        ${ctx-256k}
+        ${flash-and-q8}
+      name: "Qwen 3.8 27B (Q8_0)"
+      description: "Qwen 3.8 27B dense model, Q8_0 quant"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
+    qwen3.8-27b-bf16:
+      cmd: |
+        ${server-cmd}
+        ${threads}
+        -hf ggml-org/Qwen3.8-27B-GGUF:BF16
+        ${ctx-256k}
+        ${flash-and-q8}
+      name: "Qwen 3.8 27B (BF16)"
+      description: "Qwen 3.8 27B dense model, BF16 (no quant)"
+      proxy: http://localhost:${PORT}
+      ttl: 0
+
     qwen3.6-27b-q6:
       cmd: |
         ${server-cmd}
@@ -721,6 +772,10 @@ config:
   # One GPU model at a time; homecpu (CPU) may run alongside any GPU model.
   matrix:
     vars:
+      q38q4: qwen3.8-27b-q4
+      q38q6: qwen3.8-27b-q6
+      q38q8: qwen3.8-27b-q8
+      q38bf16: qwen3.8-27b-bf16
       q27bq6: qwen3.6-27b-q6
       q27bq8: qwen3.6-27b-q8
       coderq6: qwen3-coder-next-q6
@@ -758,7 +813,7 @@ config:
       v30tbf: qwen3-vl-30b-a3b-thinking-bf16
       wsp: whisper-large-v3
     sets:
-      main: "(q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+      main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
 
 app-template:
   global:

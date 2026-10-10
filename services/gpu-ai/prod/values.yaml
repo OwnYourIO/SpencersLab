@@ -112,7 +112,9 @@ llama-swap:
       q38-sampling: |
         --temp 0.7 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
       q38-think: |
-        --chat-template-kwargs '{"enable_thinking":true,"reasoning_effort":"medium","preserve_thinking":true}'
+        --reasoning on
+        --reasoning-effort medium
+        --reasoning-preserve
     models:
       qwen38-orca:                  # daily driver, MTP + embedded vision
         cmd: |
@@ -160,17 +162,22 @@ llama-swap:
             dl https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF/resolve/main/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf &&
             test -f /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf ||
             dl https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF/resolve/main/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf &&
-            exec /app/llama-server
-              --port ${PORT} --host 0.0.0.0 --jinja
-              -hf abliterant/Qwen3.8-27B-RANA-abliterated-GGUF:Q6_K
-              --model-draft /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf
-              --mmproj /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf
-              -c 262144
-              --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0.75
-              ${q38-common}
-              ${q38-sampling}
-              ${q38-think}
+            exec /app/llama-server \
+              --port ${PORT} --host 0.0.0.0 --jinja \
+              -hf abliterant/Qwen3.8-27B-RANA-abliterated-GGUF:Q6_K \
+              --model-draft /models/rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf \
+              --mmproj /models/rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf \
+              -c 262144 \
+              --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-p-min 0.75 \
+              -ngl 999 --flash-attn on --no-mmap -np 1 -b 2048 -ub 2048 \
+              --cache-type-k q8_0 --cache-type-v q8_0 --cache-reuse 1 --no-context-shift \
+              --temp 0.7 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0 \
+              --reasoning on --reasoning-effort medium --reasoning-preserve
           "
+        # NOTE: the q38-* macros are deliberately INLINED above: they expand to
+        # multiple lines without backslash continuations, which /bin/sh -c would
+        # execute as separate commands (the original failure mode:
+        # "/bin/sh: 15: --port: not found"). Keep them inlined if editing.
         name: "Qwen3.8 27B RANA abliterated (Q6_K, MTP)"
         description: "Separate MTP draft file; p-min 0.75, 256k ctx"
         proxy: http://localhost:${PORT}
@@ -184,7 +191,7 @@ llama-swap:
           -c 131072
           ${q38-common}
           ${q38-sampling}
-          --chat-template-kwargs '{"enable_thinking":true,"reasoning_effort":"low"}'
+          --reasoning on --reasoning-effort low
         name: "Qwen3.8 27B Humanlike-Chat 2.0 (Q6_K)"
         description: "Text-only humanlike chat; low reasoning effort, 128k ctx"
         proxy: http://localhost:${PORT}
@@ -207,6 +214,65 @@ llama-swap:
         proxy: http://localhost:${PORT}
         ttl: 180
         capabilities: { in: [text, image], out: [text] }
+
+      # Chart-standard plain Qwen3.8-27B (unsloth), gpu-ai override with MTP.
+      # The unsloth GGUFs carry no embedded MTP layers (verified: tensor scan
+      # of the header), so the draft comes as a separate ggml-org MTP file via
+      # -hfd; cached on the models PVC like the main weights.
+      qwen3.8-27b-q4:
+        cmd: |
+          ${server-cmd}
+          -hf unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL
+          -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q38-common}
+        name: "Qwen 3.8 27B (UD-Q4_K_XL, MTP)"
+        description: "Plain Qwen 3.8 27B, UD-Q4_K_XL; ggml-org Q8_0 MTP draft, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+
+      qwen3.8-27b-q6:
+        cmd: |
+          ${server-cmd}
+          -hf unsloth/Qwen3.8-27B-GGUF:UD-Q6_K_XL
+          -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q38-common}
+        name: "Qwen 3.8 27B (UD-Q6_K_XL, MTP)"
+        description: "Plain Qwen 3.8 27B, UD-Q6_K_XL; ggml-org Q8_0 MTP draft, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+
+      qwen3.8-27b-q8:
+        cmd: |
+          ${server-cmd}
+          -hf unsloth/Qwen3.8-27B-GGUF:Q8_0
+          -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q38-common}
+        name: "Qwen 3.8 27B (Q8_0, MTP)"
+        description: "Plain Qwen 3.8 27B, Q8_0; ggml-org Q8_0 MTP draft, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+
+      # Same story for the ggml-org BF16 reference build: no embedded MTP
+      # tensors (verified in the header), so it takes the Q8_0 draft too.
+      # ttl 180 like qwen38-orca-f16 — reference quality, evicts fast.
+      qwen3.8-27b-bf16:
+        cmd: |
+          ${server-cmd}
+          -hf ggml-org/Qwen3.8-27B-GGUF:BF16
+          -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q38-common}
+        name: "Qwen 3.8 27B (BF16, MTP)"
+        description: "Reference BF16 build; ggml-org Q8_0 MTP draft, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 180
 
       # PHASE 2 — enable after sidecar provisioning (prepare → convert-cyber
       # → verify). Deliberately NO bootstrap here: a missing LoRA must fail
@@ -237,4 +303,4 @@ llama-swap:
         # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
       sets:
         # Scalar: must restate the chart's full alternation + the new models.
-        main: "(q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16) & homecpu"
+        main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16) & homecpu"
