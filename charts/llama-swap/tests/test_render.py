@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -79,15 +80,26 @@ def test_default_tools_configmap_mounted_readonly():
     cm = by_kind_name(docs, "ConfigMap", "llama-swap-tools")
     assert len(cm) == 1
     keys = set(cm[0]["data"])
-    assert "llama_tools.py" in keys and "convert_lora_to_gguf.py" in keys
-    assert {"conversion__init__.py", "conversion__base.py", "conversion__qwen.py"} <= keys
-    assert {"gguf_py__init__.py", "gguf_py__constants.py",
-            "gguf_py__gguf_writer.py", "gguf_py__tensor_mapping.py"} <= keys, \
-        "b10015 converter needs the repo-local gguf-py (PyPI gguf is too old)"
-    # the vendored converter must actually be embedded, not empty
-    assert "def parse_args" in cm[0]["data"]["convert_lora_to_gguf.py"]
-    assert "ModelBase" in cm[0]["data"]["conversion__base.py"]
-    assert "MODEL_ARCH" in cm[0]["data"]["gguf_py__constants.py"]
+    # ONLY the operator CLI + the provenance pin are embedded. The vendored
+    # b10015 converter closure (~750 KiB) must stay out of the ConfigMap:
+    # the chart is applied client-side, so kubectl mirrors the whole object
+    # into the last-applied-configuration annotation, which the API server
+    # caps at 256 KiB ("metadata.annotations: Too long" — the exact failure
+    # this guard exists for). `prepare` fetches the pinned files instead.
+    assert keys == {"llama_tools.py", "converter-source.json"}, keys
+    assert "def main" in cm[0]["data"]["llama_tools.py"]
+    assert "CONVERTER_FILES" not in cm[0]["data"]["llama_tools.py"], \
+        "the flat-key embedding map must not come back"
+
+    prov = json.loads(cm[0]["data"]["converter-source.json"])
+    assert prov["tag"] == "b10015"
+    assert "convert_lora_to_gguf.py" in prov["files"]
+    assert prov["raw_url_pattern"].startswith("https://raw.githubusercontent.com/")
+
+    # Hard regression guard: keep the ConfigMap far below the 256 KiB
+    # annotation ceiling (and the 1 MiB etcd object limit).
+    total = sum(len(k.encode()) + len(v.encode()) for k, v in cm[0]["data"].items())
+    assert total < 200_000, f"tools ConfigMap grew to {total} bytes — syncs will break"
 
 
 # ---------------------------------------------------------------------------

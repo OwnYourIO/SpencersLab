@@ -35,16 +35,20 @@ def test_every_vendored_file_matches_recorded_sha256():
     assert not mismatches, "vendored files drifted from b10015 provenance:\n" + "\n".join(mismatches)
 
 
-def test_every_recorded_file_is_embedded_in_the_configmap_manifest():
-    """The ConfigMap must ship every vendored converter file (llama_tools.py
-    and convert_lora_to_gguf.py are embedded by name; the conversion/ and
-    gguf-py packages via the flat conversion__* / gguf_py__* keys)."""
+def test_configmap_embeds_only_cli_and_provenance_pin():
+    """The tools ConfigMap must embed ONLY llama_tools.py and
+    converter-source.json. The vendored converter closure is ~750 KiB;
+    embedding it breaks the 256 KiB last-applied-configuration annotation
+    that client-side apply writes (ArgoCD sync failed with
+    "metadata.annotations: Too long"). `prepare` fetches the pinned files
+    at runtime instead, so re-embedding them is a regression."""
     meta = json.loads((SCRIPTS_DIR / "converter-source.json").read_text())
     cm = (SCRIPTS_DIR.parent / "templates" / "configmap-tools.yaml").read_text()
+    assert 'scripts/llama_tools.py' in cm
+    assert 'scripts/converter-source.json' in cm
     for rel in meta["files"]:
-        if rel == "LLAMA_CPP_LICENSE":
-            continue  # attribution file, not needed at runtime
-        flat = rel.replace("/", "__").replace("-", "_").replace(".py", "")
-        key = flat + ".py" if not flat.endswith(".py") else flat
-        # Either the real filename or the flattened key must appear.
-        assert rel.split("/")[-1] in cm or key in cm, f"{rel} not embedded in configmap-tools.yaml"
+        # neither the chart-relative path nor any flattened form may be embedded
+        assert f'"{rel}"' not in cm, f"{rel} must not be embedded in the ConfigMap"
+        assert f"scripts/{rel}" not in cm, f"{rel} must not be embedded in the ConfigMap"
+    for marker in ("conversion__", "gguf_py__"):
+        assert marker not in cm, f"flattened vendored key ({marker}*) re-appeared in the ConfigMap"
