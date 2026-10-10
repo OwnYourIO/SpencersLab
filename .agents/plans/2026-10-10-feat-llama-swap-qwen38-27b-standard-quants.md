@@ -126,6 +126,30 @@ rana, zero sentinels.
   `llama-swap-config` ConfigMap with correct `-hf` refs and macros intact;
   `grep -c OVERRIDE_` on the render = 0.
 
+## Follow-up change: rana repo went private → mirror rewrite (option B)
+
+Live check after the user agreed to the orcarouter gate: orca loaded, rana
+still failed. `aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF` now returns
+HTTP 401 on the metadata API (private — no request-access flow exists for
+private repos; HF search still indexes it stale). Rewrote `qwen38-rana`:
+
+- Main weights: `-hf mradermacher/Qwen3.8-27B-RANA-abliterated-GGUF:Q6_K`
+  (public mirror, `gated=false`; note its dot-separated file naming).
+- mmproj: bootstrap curl kept (explicit `--mmproj` is version-proof vs -hf
+  sidecar auto-fetch), re-pointed at the mirror's
+  `Qwen3.8-27B-RANA-abliterated.mmproj-f16.gguf` — URL verified 200→CDN.
+  HF_TOKEN branch dropped from `dl()` (public files, no auth needed).
+- MTP draft (user chose option B, experimental):
+  `-hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf` — the official
+  base-model MTP module; trained on stock Qwen3.8-27B, not the abliteration,
+  so acceptance may be poor. Comment in values says to drop the spec flags if
+  it hurts more than it helps.
+- exec remains one physical line (SanitizeCommand constraint, above).
+
+Validation: SanitizeCommand-replica argv check (`sh -c` + single 998-char
+script), `sh -n` OK, mmproj URL 200, zero `aboliterant` refs remain, helm
+lint clean, gpu-ai render OK, 0 sentinels, 0 trailing backslashes.
+
 ## Not in this change
 
 - No version bump (CI does it on merge).
