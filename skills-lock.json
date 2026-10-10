@@ -165,6 +165,12 @@
       "skillPath": "skills/requesting-code-review/SKILL.md",
       "computedHash": "004f340ae65811095d6a9bb0a759c87d0a8085c5e705dbb019b011626293d2e9"
     },
+    "storm": {
+      "source": "kunjan-p/storm-skill",
+      "sourceType": "github",
+      "skillPath": "storm/SKILL.md",
+      "computedHash": "d6b4709e53bd3757f4d4c0fa7d318e96167156701a03087cc3f5b8d377372d00"
+    },
     "subagent-driven-development": {
       "source": "obra/superpowers",
       "sourceType": "github",

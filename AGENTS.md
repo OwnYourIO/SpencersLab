@@ -68,6 +68,7 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 | `container-security` | Image scanning (Trivy), Dockerfile hardening (`containers/`) | some ACR-specific content |
 | `llama-swap` | llama-swap / llama.cpp work only (`charts/llama-swap`) | self-managed in `./skills/` |
 | `wekan-api` | WeKan REST API or `wekan-mcp` server work (`containers/wekan-mcp`, `mcp.wekan-readonly`/`mcp.wekan-admin` in the gpu service values, WeKan instances in `services/home/prod`) | self-managed in `./skills/` |
+| `storm` | Deep research: "research X", "deep dive", briefings, backgrounder reports, "understand all sides of" a topic — sourced multi-perspective output | third-party (`kunjan-p/storm-skill`); citation-grounded STORM pipeline; pairs with `global-searxng` for the web searches |
 
 ## MCP servers
 
