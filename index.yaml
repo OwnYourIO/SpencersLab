@@ -13904,6 +13904,18 @@ entries:
     version: 1.0.1
   searxng:
   - apiVersion: v2
+    appVersion: 2026.10.9
+    created: "2026-10-10T23:35:05.73345731Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 0b7b4fc7ec6f1b50d2e534dff6a69603ff31b8a7ae99a4bab28328f510ad2258
+    name: searxng
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/searxng-1.0.4/searxng-1.0.4.tgz
+    version: 1.0.4
+  - apiVersion: v2
     appVersion: 2024.8.31
     created: "2026-02-16T19:52:45.921943738Z"
     dependencies:
@@ -18749,4 +18761,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-10T05:08:31.954785472Z"
+generated: "2026-10-10T23:35:05.734946524Z"
