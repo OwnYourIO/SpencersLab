@@ -236,6 +236,39 @@ ingress:
     #  port: 8080
 
 llama-swap:
+  # gpu-only override for the 8 GiB Radeon 780M. The chart-default cmd OOMs
+  # here: llama.cpp's fit-params probe ("failed to fit params to free device
+  # memory", fires before every load attempt) and then radv dies with
+  # "Not enough memory for command submission" -> VK_ERROR_DEVICE_LOST ->
+  # llama-swap "upstream command exited prematurely". Exact accounting from
+  # the GGUF header (arch qwen35moe, 40 layers = 10x [3x Gated DeltaNet +
+  # 1x Gated Attention], 256 experts): expert tensors matched by ${moe}'s
+  # -ot regex = 31.88 GiB -> CPU; GPU-resident weights only 2.48 GiB; q8_0
+  # KV for 262144 tokens across the 10 attention layers (2 kv heads x 256
+  # dim) = 2.66 GiB; compute buffer ~0.75 GiB at ub 2048; and the HF repo
+  # ships mmproj-BF16 (vision projector, auto-loaded, ~0.7-1 GiB on GPU).
+  # Total ~7.5 GiB > ~7.4 GiB usable. Fix keeps 256k ctx + q8_0 KV +
+  # expert-only offload (operator decision 2026-10-11; FA + cache types stay
+  # in ${flash-and-q8}, chart untouched) and reclaims VRAM via
+  # --no-mmproj (text-only on this box; gpu-ai keeps vision) and ub 1024
+  # (smaller compute buffer; slower prompt processing — accepted, expect
+  # slow generation overall). Full debug trail:
+  # .agents/plans/2026-10-11-debug-gpu-moe-qwen36-35b-q8-vram-oom.md
+  # Only cmd + description are overridden; name/proxy/ttl merge from chart.
+  config:
+    models:
+      qwen3.6-35b-a3b-q8:
+        cmd: |
+          ${server-cmd}
+          ${threads}
+          -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+          --no-mmproj
+          --ctx-size 262144
+          -b 2048
+          -ub 1024
+          ${moe}
+          ${flash-and-q8}
+        description: "Qwen 3.6 35B A3B (MoE), Q8_0; 8GiB-gpu fit: experts on CPU, q8_0 KV, no vision, 256k ctx (slow)"
 
 open-webui:
   annotations:
