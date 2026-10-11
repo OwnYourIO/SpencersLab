@@ -85,6 +85,11 @@ proxy:
       enabled: true
     llama:
       enabled: true
+    # gpu cluster's public llama endpoint (2026-10-10 endpoint reorg).
+    # Same shape as llama (gpu-ai): geoblock at the edge, SSO + ipAllowList
+    # on the proxy-local hop.
+    llama-moe:
+      enabled: true
 
     cluster:
       clusterBase: true

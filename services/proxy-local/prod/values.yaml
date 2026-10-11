@@ -270,6 +270,8 @@ proxy:
       # 2026-10-09: rerouted from the gpu cluster (llama-cpp) to gpu-ai —
       # llama.<domain> now lands on the gpu-ai cluster's traefik, which
       # serves the Qwen3.8 roster (+ chart defaults) via its llama ingress.
+      # 2026-10-10: gpu-ai's internal hop name is now llama.gpu-ai.<domain>;
+      # this chain is unchanged (target stays the cluster apex host).
       target: gpu-ai
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=traefik&response_type=code&redirect_uri=https://llama.$.Values.domain/ui/"
       loginSubDomain: "login"
@@ -283,18 +285,17 @@ proxy:
           #- "default-redirect-llama@kubernetescrd"
           - "user-allowlist@file"
 
-    # gpu cluster roster under its old name (2026-10-09). Shaped like llama
-    # (SSO + crowdsec + user-allowlist); the hub ExternalName points at
-    # llama-cpp.<domain> on the gpu cluster. Per operator decision
-    # (2026-10-10) this is a plain entry with no localOnly template gating:
-    # the public Ingress, the external-dns record and the SSO-path ingress
-    # all render and are accepted as dangling/unused — LAN clients resolve
-    # llama-small.<domain> → proxy-local (10.0.77.54) via internal DNS, and
-    # no proxy-remote entry is added.
-    llama-small:
-      target: llama-cpp
-      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=traefik&response_type=code&redirect_uri=https://llama-small.$.Values.domain/ui/"
+    # gpu cluster roster (chart defaults incl. the MoE models), public name
+    # llama-moe.<domain> (2026-10-10 endpoint reorg; supersedes llama-small).
+    # Mirrors llama's shape (SSO + crowdsec + user-allowlist); the hub
+    # ExternalName points at gpu.<domain> (gpu cluster traefik), which serves
+    # llama-moe.<domain> via its generic-ingress serviceName entry. LAN
+    # clients pass the ipAllowlist (10.0.0.0/16) without SSO.
+    llama-moe:
+      target: gpu
+      ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=traefik&response_type=code&redirect_uri=https://llama-moe.$.Values.domain/ui/"
       loginSubDomain: "login"
+      middlewares: "kube-system-crowdsec@kubernetescrd,user-allowlist-remote@file"
       ingressRoute:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"

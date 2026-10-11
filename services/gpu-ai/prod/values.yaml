@@ -40,12 +40,14 @@ ingress:
       service: gpu-ai-llama-swap
       port: 8080
 
-    # Serves llama.<domain> from gpu-ai (rerouted from the gpu cluster
-    # 2026-10-09). Mirrors gpu's serviceName convention: entry key renders
-    # llama-cpp.<domain> internally, serviceName renders the public-facing
-    # llama.<domain> host. (Keying this entry "llama" with serviceName
-    # "llama" would render two Ingresses both named llama-ingress.)
-    llama-cpp:
+    # 2026-10-10: endpoint reorg. clusterBase renders the cluster/local name
+    # llama.gpu-ai.<domain> (replaces the old llama-cpp.<domain> internal hop
+    # that gpu AND gpu-ai both claimed — DNS could only reach one).
+    # serviceName llama renders the public llama.<domain> host — the same
+    # Ingress name/host/cert as before, so the
+    # proxy-remote → proxy-local (target: gpu-ai) chain is undisturbed.
+    llama:
+      clusterBase: true
       serviceName: llama
       service: gpu-ai-llama-swap
       port: 8080
