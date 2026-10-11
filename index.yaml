@@ -9146,6 +9146,20 @@ entries:
   immich-analyze:
   - apiVersion: v2
     appVersion: 0.4.3
+    created: "2026-10-11T00:34:15.053035792Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: AI-powered image description generator for Immich
+    digest: 3d3bc2f779e98caf8b7e573646d3ddde126477d0274fadeb6f102ded7e815ae6
+    name: immich-analyze
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/immich-analyze-1.0.4/immich-analyze-1.0.4.tgz
+    version: 1.0.4
+  - apiVersion: v2
+    appVersion: 0.4.3
     created: "2026-09-09T14:16:52.020350736Z"
     dependencies:
     - name: app-template
@@ -11210,6 +11224,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/media-appset-1.1.1/media-appset-1.1.1.tgz
     version: 1.1.1
   minuspod:
+  - apiVersion: v2
+    appVersion: 2.95.3
+    created: "2026-10-11T00:34:15.287312994Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 92fbdcdce93c71594492cdd34a979653b9129d474f7f1744f63135fc319df7c2
+    name: minuspod
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/minuspod-1.0.2/minuspod-1.0.2.tgz
+    version: 1.0.2
   - apiVersion: v2
     appVersion: 2.95.3
     created: "2026-09-20T23:50:38.637152094Z"
@@ -18773,4 +18799,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-11T00:29:16.277770041Z"
+generated: "2026-10-11T00:34:15.28880608Z"
