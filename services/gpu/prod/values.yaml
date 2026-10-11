@@ -135,11 +135,14 @@ charts:
 ingress:
   dashboardProvider: homepage # Set to "homepage" to enable Homepage annotations on ingress objects
   subdomains:
-    llama-cpp:
-      # 2026-10-09: llama.<domain> moved to the gpu-ai cluster. gpu now serves
-      # the existing roster as llama-small.<domain> (hub entry in proxy-local;
-      # LAN clients resolve it to proxy-local via internal DNS).
-      serviceName: llama-small
+    # 2026-10-10: endpoint reorg. clusterBase renders the cluster/local name
+    # llama.gpu.<domain> (replaces llama-cpp.<domain>, which gpu AND gpu-ai
+    # both claimed — DNS could only reach one). serviceName renders the
+    # public llama-moe.<domain> host used by the
+    # proxy-remote → proxy-local (target: gpu) chain.
+    llama:
+      clusterBase: true
+      serviceName: llama-moe
       service: gpu-llama-swap
       port: 8080
 
