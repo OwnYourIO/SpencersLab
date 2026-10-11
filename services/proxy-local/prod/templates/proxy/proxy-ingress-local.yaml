@@ -19,7 +19,12 @@ spec:
     # TODO: Turn the ClientIPCheck into a values list that generates ClientIP per 
     - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
       kind: Rule
-      priority: 50
+      # Must beat the kubernetes-Ingress routers, whose DEFAULT priority is the
+      # rule length (Host+PathPrefix grows with the subdomain name). 50 only
+      # worked for names shorter than ~7 chars — llama-moe reached 52 and its
+      # public router won, 403ing direct LAN clients (2026-10-11). Keep this
+      # above any realistic rule length; local-sso below stays above it.
+      priority: 100
       services:
         - name: "{{ $name }}-service"
           port: 443
@@ -53,7 +58,8 @@ spec:
     # TODO: Turn the ClientIPCheck into a values list that generates ClientIP per 
     - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && Path(`{{ $finalSsoPath }}`) && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
       kind: Rule
-      priority: 100
+      # Above the local route (100): the SSO path must win for LAN clients.
+      priority: 150
       services:
         - name: "{{ $name }}-service"
           port: 443
@@ -63,7 +69,8 @@ spec:
 {{- range $path := $config.ssoAllowedPaths }}
     - match: Host(`{{ $name }}.{{ $.Values.domain }}`) && PathPrefix(`{{ $path }}`) && (ClientIP(`10.0.0.0/16`) || ClientIP(`192.168.0.0/16`))
       kind: Rule
-      priority: 100
+      # Above the local route (100): the SSO path must win for LAN clients.
+      priority: 150
       services:
         - name: "{{ $name }}-service"
           port: 443

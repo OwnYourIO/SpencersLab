@@ -179,3 +179,41 @@ Post-merge (user-driven):
   TODO remains.
 - gpu + proxy-local umbrellas were OutOfSync before this change (orphan
   resources live there). Pre-existing; monitor during rollout.
+
+## Correction #1 (2026-10-11): llama-moe 403 from LAN — router priority bug
+
+**Symptom:** after the reorg deployed, `llama-moe.<domain>` returned 403
+from proxy-local for LAN clients, while `llama.<domain>` worked.
+
+**Root cause:** `services/proxy-local/prod/templates/proxy/proxy-ingress.yaml`
+set an explicit `router.priority: "10"` only in the ssoRedirectPath branch.
+The manual-middlewares branch (used by llama/llama-moe) and the default
+branch left priority at traefik's default = **rule length**. The LAN
+IngressRoutes (`proxy-ingress-local.yaml`) are pinned at priority 50. So:
+- `llama` rule length 48 < 50 → LAN CRD route won (worked by luck).
+- `llama-moe` rule length 52 > 50 → the public Ingress router won; its
+  `user-allowlist-remote` middleware (ipStrategy depth 1) found no
+  X-Forwarded-For on a direct LAN request → ipAllowList 403.
+
+Verified live: proxy-local access logs show the same LAN client hitting
+`llama-local-ingress@kubernetescrd` (200) vs
+`llama-moe-ingress@kubernetes` (403); gpu's traefik API confirms rule-length
+priorities (52 for the llama-moe rule).
+
+**Fix (per operator decision: adjust priorities, don't flatten them):**
+raised the LAN IngressRoute priorities in `proxy-ingress-local.yaml` —
+local route 50 → **100**, local-sso routes 100 → **150**. `proxy-ingress.yaml`
+is untouched (sso branch keeps its explicit 10; others keep their natural
+rule-length priority). Final hierarchy: LAN local-sso (150) > LAN local
+(100) > public sso-ingress (15) > public ingress (10 for sso-branch entries,
+rule-length ≤ ~75 otherwise) — the LAN routes now beat any rule-length
+ingress for any subdomain name, present or future. Render-verified: all
+`*-local-ingress` routes at 100, `*-local-sso-ingress` at 150; public
+ingress priorities unchanged from before the incident. (First attempt —
+flat `priority: 10` on all public ingresses — was reverted.)
+
+**Deployed:** 2026-10-10 reorg commit `8b41b724b` on main; ArgoCD applied
+gpu + gpu-ai + proxy-local + proxy-remote. Post-deploy orphans on gpu
+(llama-cpp-ingress, llama-small-ingress) — gpu app flipped back to
+OutOfSync without completing prune; monitor. Keycloak redirect URI +
+DNS records were handled by the operator before/at deploy.
