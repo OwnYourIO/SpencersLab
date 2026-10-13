@@ -1,0 +1,57 @@
+# Bitwarden UUID map for the dev cluster — loaded via the cluster annotation
+# services.dev.customValuesUrls.
+#
+# All items are NEW dev items (user decision 2026-10-13). OIDC: dev has NO
+# Keycloak of its own — SSO goes through the LAB Keycloak
+# (login.spencerslab.com, realm SpencersLab) via ONE shared dev SSO client
+# item (d07b1bec…) consumed by ArgoCD, Coder, Forgejo and hivetools MCP —
+# everything using SSO uses the same secret. Its URI carries the issuer;
+# base's argocd-sso ExternalSecret reads it via the bitwarden-uri store.
+#
+# The dev DB items are shared too (47d1d689…): the ExternalSecrets hardcode
+# the username to the CNPG initdb owner and read only the password.
+
+bitwardenIds:
+  # dev-cloudflare — Cloudflare API token (Zone:DNS:Edit for scifi.farm).
+  cert-manager-solver-token: 918d3521-f584-45f9-8113-b4e2000d1d64
+  # dev-argocd-sso — the shared dev SSO client item.
+  argocd-sso-secret: d07b1bec-d02c-4580-8544-b4e2000e1783
+  # dev-github (password = PAT).
+  github-pat: 522b1cc4-2c74-4399-887d-b4e20014b2d2
+
+base:
+  bitwardenIds:
+    argocd-sso-secret: d07b1bec-d02c-4580-8544-b4e2000e1783
+    cert-manager-solver-token: 918d3521-f584-45f9-8113-b4e2000d1d64
+
+coder:
+  # Consumed by the charts/coder wrapper (OIDC + CNPG ExternalSecrets). The
+  # wildcard ingress is driven by the dev service values (coder chart's own
+  # ingress template), not the chart itself.
+  bitwardenIds:
+    coder-sso-secret: d07b1bec-d02c-4580-8544-b4e2000e1783   # shared dev SSO
+    coder-pg: 47d1d689-b615-4461-8b57-b4e20015ae75           # shared dev DB item
+
+forgejo:
+  bitwardenIds:
+    forgejo: 47d1d689-b615-4461-8b57-b4e20015ae75            # password = SECRET_KEY
+    forgejo-admin: 47d1d689-b615-4461-8b57-b4e20015ae75      # shared dev DB item
+    forgejo-pg: 47d1d689-b615-4461-8b57-b4e20015ae75         # shared dev DB item
+    forgejo-sso: d07b1bec-d02c-4580-8544-b4e2000e1783        # shared dev SSO
+  # Forgejo's public identity — dev-specific, kept out of the chart.
+  forgejo:
+    gitea:
+      config:
+        server:
+          DOMAIN: git.dev.scifi.farm
+          ROOT_URL: "https://git.dev.scifi.farm/"
+
+hivetools:
+  bitwardenIds:
+    mcp-sso: d07b1bec-d02c-4580-8544-b4e2000e1783            # shared dev SSO
+  keycloak:
+    realm: SpencersLab
+    # MCPOIDCConfig clientId must equal the shared dev SSO client's id (the
+    # item's username). MCP OIDC is dormant repo-wide (per-server oidc blocks
+    # commented out) — set/verify this when the rollout reaches dev.
+    # clientId: <shared-dev-client-id>

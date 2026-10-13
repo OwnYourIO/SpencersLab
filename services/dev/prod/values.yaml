@@ -1,0 +1,102 @@
+# dev — new dev cluster (public identity dev.scifi.farm).
+# Deploys Coder, Forgejo, GPT Researcher, and the parity extras
+# (cloudnative-pg, external-secrets-bitwarden, k8s-monitoring).
+# No Keycloak on dev (user decision 2026-10-12): SSO follows the lab pattern
+# — ArgoCD SSO + hivetools MCP reuse the lab-wide shared client items on the
+# lab Keycloak (login.spencerslab.com, realm SpencersLab); Coder + Forgejo
+# get dev-specific clients in that realm (custom-values/dev/).
+# No smtp-relay on dev either (user decision 2026-10-12), hence no
+# CODER_EMAIL_* in charts/coder/templates/secret-coder.yaml and no Forgejo
+# mailer config.
+#
+# Bitwarden UUIDs come from custom-values/dev/prod-values.yaml (loaded via
+# the services.dev.customValuesUrls cluster annotation); the sentinels below
+# are replaced at deploy time.
+
+subDomain: dev
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+bitwardenIds:
+  cert-manager-solver-token: OVERRIDE_VIA_CUSTOM_VALUES
+  argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  github-pat: OVERRIDE_VIA_CUSTOM_VALUES
+
+# Chart definitions for appset-charts.yaml (rendered by the base chart).
+# Each chart can have: namespace, ServerSideApply, version, repository
+charts:
+  # Internal charts (no version/repository - uses charts/ directory)
+  forgejo:
+    namespace: default
+    ServerSideApply: "false"
+  gpt-researcher:
+    namespace: default
+    ServerSideApply: "false"
+  external-secrets-bitwarden:
+    namespace: default
+    ServerSideApply: "true"
+  k8s-monitoring:
+    namespace: default
+    ServerSideApply: "true"
+  coder:
+    namespace: default
+    ServerSideApply: "false"
+
+  # External charts (with version and repository)
+  cloudnative-pg:
+    version: 0.27.1
+    repository: https://cloudnative-pg.github.io/charts
+    namespace: default
+    ServerSideApply: "true"
+
+ingress:
+  subdomains:
+    coder:
+      clusterBase: true
+      service: coder
+      port: 80
+    git:
+      clusterBase: true
+      service: dev-forgejo-http
+      port: 3000
+    research:
+      clusterBase: true
+      service: dev-gpt-researcher
+      port: 3000
+    cluster:
+      clusterBase: true
+      service: argocd-server
+      port: 80
+
+# Coder is a wrapper chart (charts/coder): its subchart config, OIDC/PG
+# ExternalSecrets and the pg-coder CNPG cluster live in the chart itself.
+# Dev-specific values ride custom-values/dev/prod-values.yaml under `coder:`
+# (bitwardenIds), matching the gpu pattern.
+coder:
+  # Three `coder` levels by necessity: this slice → wrapper chart's
+  # subchart key → the official coder chart's own `coder.` values key.
+  coder:
+    coder:
+      # Wildcard ingress so workspace app subdomains reach coderd — driven
+      # here by the dev service (generic, same mechanism gpu uses from
+      # custom-values) instead of being hardcoded in the chart. On dev the
+      # wildcard *.dev.scifi.farm is cluster-scoped → cluster-wildcard-cert.
+      # The plain coder.dev.scifi.farm host stays with the generic-ingress.
+      ingress:
+        enable: true
+        host: "*.dev.scifi.farm"
+        tls:
+          enable: true
+          secretName: cluster-wildcard-cert
+
+# Forgejo and Coder are wrapper charts (charts/forgejo, charts/coder): their
+# subchart config, ExternalSecrets and CNPG clusters live in the charts
+# themselves. Dev-specific Bitwarden UUIDs ride custom-values/dev/
+# prod-values.yaml under the `forgejo:` / `coder:` keys.
+
+# ToolHive MCP platform (cluster-wide via base): the kubernetes
+# readonly+admin servers ship from base's defaults — "MCP by default", no
+# extra servers in this change. postgres-MCP for the dev DBs is a follow-up.
+hivetools:
+  bitwardenIds:
+    mcp-sso: OVERRIDE_VIA_CUSTOM_VALUES

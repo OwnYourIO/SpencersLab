@@ -1,0 +1,32 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-forgejo
+  annotations:
+    # The dev-forgejo Application applies with client-side apply (the
+    # forgejo subchart keeps ServerSideApply=false), but CNPG's mutating
+    # webhook defaults drift against the last-applied annotation under CSA —
+    # every other CNPG cluster in the repo is server-side applied for this
+    # reason. Per-resource override keeps only the Cluster on SSA.
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+spec:
+  instances: 1
+  storage:
+    size: 5Gi
+    storageClass: local-path
+
+  monitoring:
+    enablePodMonitor: true
+
+  postgresql:
+    parameters:
+      max_connections: "600"
+      shared_buffers: 512MB
+
+  bootstrap:
+    initdb:
+      database: forgejo
+      owner: forgejo
+      secret:
+        name: pg-forgejo-secret

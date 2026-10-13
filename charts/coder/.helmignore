@@ -1,0 +1,6 @@
+# Coder workspace Terraform templates (charts/coder/coder-templates/) are
+# pushed to Coder via `coder templates push` from a source checkout — they
+# are NOT part of the packaged Helm chart. Keep them out of the published
+# chart artifact (chart-releaser would otherwise bundle them into the
+# gh-pages coder-*.tgz).
+coder-templates/

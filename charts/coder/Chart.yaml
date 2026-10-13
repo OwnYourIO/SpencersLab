@@ -1,0 +1,9 @@
+apiVersion: v2
+name: coder
+description: Wrapper around the official Coder chart — CNPG database + Bitwarden ExternalSecrets for OIDC/PG
+version: 1.0.0
+appVersion: 2.35.2
+dependencies:
+- name: coder
+  version: 2.35.2
+  repository: https://helm.coder.com/v2

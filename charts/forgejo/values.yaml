@@ -1,0 +1,107 @@
+# Wrapper around the official Forgejo chart (oci://code.forgejo.org/forgejo-helm).
+# Secrets live here (Bitwarden ExternalSecrets in templates/), the database is
+# CNPG (templates/pg-forgejo.yaml). Chart 17.x bundles no Redis/PostgreSQL
+# subcharts anymore — built-in memory cache is fine at dev scale.
+# OIDC goes to the LAB Keycloak (login.spencerslab.com, realm SpencersLab) —
+# dev has no Keycloak of its own (user decision 2026-10-12).
+#
+# Ingress stays disabled in the subchart; the dev service's generic-ingress
+# routes git.<subDomain>.<domain> at the <fullname>-http service (port 3000).
+# Server DOMAIN/ROOT_URL are set in services/dev/prod/values.yaml (literal
+# hosts are acceptable there — this service only ever deploys to the dev
+# cluster).
+
+bitwardenIds:
+  # SECRET_KEY for Forgejo (item's login password).
+  forgejo: OVERRIDE_VIA_CUSTOM_VALUES
+  # Initial admin user (username/password).
+  forgejo-admin: OVERRIDE_VIA_CUSTOM_VALUES
+  # CNPG database credentials — only the password is read; the username is
+  # hardcoded to the initdb owner `forgejo` in the ExternalSecret (the
+  # dev item is shared across DBs and can't carry per-DB usernames).
+  forgejo-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  # OIDC client key/secret — the shared dev SSO item on the LAB Keycloak
+  # (read as username/password).
+  forgejo-sso: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+
+forgejo:
+  # Rootless image (chart default) — runs as uid 1000.
+  image:
+    rootless: true
+
+  # Wrapper-named data PVC; the chart creates it (persistence.create) with
+  # helm.sh/resource-policy: keep so data survives a release deletion.
+  persistence:
+    enabled: true
+    create: true
+    claimName: forgejo
+    size: 10Gi
+    accessModes:
+      - ReadWriteOnce
+    storageClass: local-path
+
+  service:
+    http:
+      type: ClusterIP
+      port: 3000
+
+  # Routed via the service umbrella's generic-ingress.
+  ingress:
+    enabled: false
+
+  gitea:
+    config:
+      APP_NAME: "SpencersLab Dev"
+      # Public identity (server.DOMAIN / ROOT_URL) is dev-specific, so it
+      # rides custom-values/dev/prod-values.yaml under
+      # forgejo.forgejo.gitea.config.server — not hardcoded in the chart.
+      # (The chart renders gitea.config into a Secret — <fullname>-inline-
+      # config — and additionalConfigFromEnvs supports secretKeyRef sources,
+      # but the values themselves must live in a values file either way.)
+      # External CNPG database (templates/pg-forgejo.yaml). The password is
+      # NOT inline here — it arrives via additionalConfigFromEnvs below so it
+      # never sits in the chart-rendered inline-config values.
+      database:
+        DB_TYPE: postgres
+        HOST: pg-forgejo-rw:5432
+        NAME: forgejo
+        USER: forgejo
+      # No public signups on dev — access via Keycloak OIDC / admin invite.
+      service:
+        DISABLE_REGISTRATION: true
+
+    # Preset envs override the inline config during env2ini. This is how the
+    # ExternalSecret-backed values reach app.ini.
+    additionalConfigFromEnvs:
+      - name: FORGEJO__DATABASE__PASSWD
+        valueFrom:
+          secretKeyRef:
+            name: pg-forgejo-secret
+            key: password
+      # Bitwarden-managed SECRET_KEY (forgejo item). The chart would
+      # auto-generate one, but keeping it in the vault matches the lab's
+      # secrets-in-Bitwarden convention.
+      - name: FORGEJO__SECURITY__SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-secret
+            key: SECRET_KEY
+
+    # Initial admin user from ExternalSecret forgejo-admin-secret
+    # (keys: username/password). passwordMode keepUpdated (chart default)
+    # re-applies the vault password on every pod start.
+    admin:
+      existingSecret: forgejo-admin-secret
+      email: forgejo@scifi.farm
+
+    # One OIDC source: the LAB Keycloak realm (dev has no Keycloak of its
+    # own — user decision 2026-10-12). The key/secret keys of forgejo-secret
+    # carry the dev-forgejo-sso (shared dev SSO client)'s credentials, created in the
+    # SpencersLab realm post-bootstrap.
+    oauth:
+      - name: "SpencersLab"
+        provider: openidConnect
+        existingSecret: forgejo-secret
+        autoDiscoverUrl: "https://login.spencerslab.com/realms/SpencersLab/.well-known/openid-configuration"

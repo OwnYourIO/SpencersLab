@@ -1,0 +1,57 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-coder
+  annotations:
+    # The dev-coder Application applies with client-side apply (the coder
+    # subchart keeps gpu's ServerSideApply=false), but CNPG's mutating
+    # webhook defaults drift against the last-applied annotation under CSA —
+    # every other CNPG cluster in the repo is server-side applied for this
+    # reason. Per-resource override keeps only the Cluster on SSA.
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+spec:
+  instances: 1
+  storage:
+    size: 5Gi
+    storageClass: local-path
+
+  #enableSuperuserAccess: true
+  #superuserSecret:
+  #  name: &secretName cloudnative-pg-secret
+
+  monitoring:
+    enablePodMonitor: true
+
+  postgresql:
+    parameters:
+      max_connections: "600"
+      shared_buffers: 512MB
+
+  # NOTE: gpu's pg-coder carries a managed `readonly` role for the
+  # postgres-coder ToolHive MCP server. Dev gets that role + its secret in a
+  # follow-up together with the postgres-MCP servers for the dev DBs.
+
+  #backup:
+  #  retentionPolicy: 7d
+  #  barmanObjectStore:
+  #    wal:
+  #      compression: bzip2
+  #      maxParallel: 8
+  #    destinationPath: &dest s3://cloudnative-pg/
+  #    endpointURL: &s3 https://${SECRET_CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com
+  #    serverName: postgres16-v3
+  #    s3Credentials: &credentials
+  #      accessKeyId:
+  #        name: *secretName
+  #        key: s3-access-key-id
+  #      secretAccessKey:
+  #        name: *secretName
+  #        key: s3-secret-access-key
+
+  bootstrap:
+    initdb:
+      database: coder
+      owner: coder
+      secret:
+        name: pg-coder-secret

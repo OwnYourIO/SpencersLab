@@ -1,0 +1,178 @@
+# gpt-researcher — "ResearchGPT": autonomous research agent.
+# Two containers in one pod: the FastAPI backend (port 8000) does the
+# research; the Next.js frontend (port 3000) serves the UI. The frontend
+# reaches the backend pod-locally:
+#   - its app/api/* route handlers (chat, reports) proxy via
+#     NEXT_PUBLIC_GPTR_API_URL (runtime env, server-side code)
+#   - next.config.mjs rewrites /outputs/* via NEXT_PUBLIC_BACKEND_URL
+# Direct browser paths (/ws WebSocket, /upload, /files) hit the SAME origin
+# and are routed to the backend service by templates/ingress-backend.yaml.
+#
+# Images are built in-repo from pinned upstream master
+# (containers/gpt-researcher, containers/gpt-researcher-frontend) because
+# upstream publishes Docker Hub images only rarely (latest there is 2025-03)
+# and the lab build adds local embeddings + a non-root user.
+#
+# Secret-free of CREDENTIALS by design: LLM calls go to the lab llama-swap
+# endpoint, web search to the lab SearXNG instance, embeddings run locally in
+# the backend (sentence-transformers, baked into the image — llama-swap serves
+# no embedding model today). The endpoint URLs ride a chart-rendered Secret
+# (templates/secret-endpoints.yaml) and reach the container via secretKeyRef.
+# Hence no bitwardenIds in this chart.
+
+domain: OVERRIDE_VIA_APPSET
+clusterName: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: &chartName gpt-researcher
+
+  controllers:
+    gpt-researcher:
+      containers:
+        backend:
+          image:
+            repository: ghcr.io/ownyourio/gpt-researcher
+            # Brand-new in-repo container: no immutable :v<run> tag exists
+            # yet — track the rolling :main tag (docker-build.yaml pushes it
+            # on every merge) and pin a :v<run> once one is published.
+            tag: main
+            pullPolicy: Always
+          env:
+            TZ: Etc/UTC
+            LOGGING_LEVEL: INFO
+            # LLM backend = the lab llama-swap endpoint (OpenAI-compatible),
+            # from the endpoints Secret (templates/secret-endpoints.yaml).
+            # Mesh/LAN clients pass the hub ipAllowlist without SSO, same
+            # mechanism minuspod/immich-analyze use. llama-swap ignores the
+            # key, but the client demands a non-empty value.
+            OPENAI_BASE_URL:
+              valueFrom:
+                secretKeyRef:
+                  name: gpt-researcher-endpoints
+                  key: OPENAI_BASE_URL
+            OPENAI_API_KEY: dummy
+            # Model roster from the gpu-ai cluster (llama-swap /v1/models).
+            # provider:model format — provider `openai` = the endpoint above.
+            FAST_LLM: "openai:qwen3-8b-q8"
+            SMART_LLM: "openai:qwen38-orca"
+            STRATEGIC_LLM: "openai:qwen38-ara"
+            # Web search via the lab SearXNG (JSON format already enabled
+            # there since mcp-searxng consumes it) — endpoints Secret.
+            RETRIEVER: searx
+            SEARX_URL:
+              valueFrom:
+                secretKeyRef:
+                  name: gpt-researcher-endpoints
+                  key: SEARX_URL
+            # The context pipeline calls embeddings unconditionally
+            # (ContextCompressor → EmbeddingsFilter). llama-swap serves no
+            # embedding model, so use the local sentence-transformers model
+            # baked into the image (HF_HOME cache, no egress). Follow-up if
+            # llama-swap gains an embedding model: switch to
+            # openai:<model> against the same OPENAI_BASE_URL.
+            EMBEDDING: "huggingface:sentence-transformers/all-MiniLM-L6-v2"
+            HF_HOME: /app/.hf-cache
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  # GET / 404s unless a built frontend is mounted; /files/
+                  # always answers 200 with the report-file listing.
+                  path: /files/
+                  port: 8000
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /files/
+                  port: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 500Mi
+            limits:
+              memory: 3Gi
+          # In-repo image runs as uid 65532 (non-root); drop all caps.
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop:
+                - ALL
+
+        frontend:
+          dependsOn: backend
+          image:
+            repository: ghcr.io/ownyourio/gpt-researcher-frontend
+            # Same story as the backend: rolling :main until a :v<run> pin.
+            tag: main
+            pullPolicy: Always
+          env:
+            TZ: Etc/UTC
+            NEXT_TELEMETRY_DISABLED: "1"
+            # Server-side only (route handlers + next.config rewrites read
+            # these at RUNTIME): localhost works because both containers
+            # share a pod. Deliberately NOT baked at image build time, so the
+            # browser bundle keeps its same-origin default (getHost()).
+            NEXT_PUBLIC_GPTR_API_URL: http://localhost:8000
+            NEXT_PUBLIC_BACKEND_URL: http://localhost:8000
+          probes:
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 3000
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /
+                  port: 3000
+          resources:
+            requests:
+              cpu: 10m
+              memory: 100Mi
+            limits:
+              memory: 512Mi
+          # In-repo image runs as uid 65532 (non-root); drop all caps.
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    # Frontend is the primary service (generic-ingress `research` entry).
+    gpt-researcher:
+      controller: *chartName
+      ports:
+        http:
+          port: 3000
+    # Backend service for the direct browser paths (/ws WebSocket, ...) —
+    # routed by templates/ingress-backend.yaml on the same public host.
+    backend:
+      controller: *chartName
+      ports:
+        http:
+          port: 8000
+
+  persistence:
+    # Ephemeral scratch space for generated reports (dev workload; a PVC is
+    # an optional follow-up if reports should survive restarts). The backend
+    # resolves outputs/ against its CWD (/app/backend).
+    outputs:
+      type: emptyDir
+      advancedMounts:
+        gpt-researcher:
+          backend:
+            - path: /app/backend/outputs
