@@ -6,7 +6,6 @@ description: >
 mode: primary
 model: anthropic/claude-sonnet-4-6
 temperature: 0.0
-steps: 300
 permission:
   read: allow
   glob: allow
@@ -31,6 +30,7 @@ permission:
   webfetch: deny
   websearch: deny
   skill: allow
+  question: allow
 ---
 
 You route work through a 7-stage SDLC pipeline. You are a dispatcher and a

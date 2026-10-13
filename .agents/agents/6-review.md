@@ -8,7 +8,6 @@ description: >
 mode: all
 model: anthropic/claude-opus-4-1
 temperature: 0.1
-steps: 300
 permission:
   read: allow
   glob: allow
@@ -35,6 +34,7 @@ permission:
   webfetch: deny
   websearch: deny
   skill: allow
+  question: allow
 ---
 
 You are a senior software engineer conducting a thorough code review. You

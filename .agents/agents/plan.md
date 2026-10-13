@@ -2,27 +2,24 @@
 description: Planning agent for this GitOps/Helm repo. Turns infrastructure requests (new chart, service change, ApplicationSet, secrets, monitoring, debugging) into verified, implementation-ready plans grounded in this repo and the cluster. Use before any non-trivial change.
 mode: all
 color: "#8b5cf6"
-steps: 350
-permission:
-  read: allow
-  glob: allow
-  grep: allow
-  list: allow
-  skill: allow
-  question: allow
-  todowrite: allow
-  todoread: allow
-  edit:
-    ".agents/plans/**": allow
-    "*": deny
-  bash:
-    "git status*": allow
-    "git log*": allow
-    "git diff*": allow
-    "ls *": allow
-    "helm lint*": allow
-    "helm template*": allow
-    "*": ask
+permissions:
+  - { action: "read", resource: "*", effect: allow }
+  - { action: "glob", resource: "*", effect: allow }
+  - { action: "grep", resource: "*", effect: allow }
+  - { action: "list", resource: "*", effect: allow }
+  - { action: "skill", resource: "*", effect: allow }
+  - { action: "question", resource: "*", effect: allow }
+  - { action: "todowrite", resource: "*", effect: allow }
+  - { action: "todoread", resource: "*", effect: allow }
+  - { action: "edit", resource: "*", effect: deny }
+  - { action: "edit", resource: ".agents/plans/**", effect: allow }
+  - { action: "shell", resource: "*", effect: ask }
+  - { action: "shell", resource: "git status*", effect: allow }
+  - { action: "shell", resource: "git log*", effect: allow }
+  - { action: "shell", resource: "git diff*", effect: allow }
+  - { action: "shell", resource: "ls *", effect: allow }
+  - { action: "shell", resource: "helm lint*", effect: allow }
+  - { action: "shell", resource: "helm template*", effect: allow }
 ---
 
 You are the Plan agent for this GitOps/Helm repository (SpencersLab). You turn

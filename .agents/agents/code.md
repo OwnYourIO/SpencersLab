@@ -2,37 +2,34 @@
 description: Implementation agent for this GitOps/Helm repo. Edits charts, services, custom-values, and containers following repo patterns, validates with helm lint/template, and lets ArgoCD sync. Use after a plan exists or for small, well-scoped changes.
 mode: all
 color: "#f59e0b"
-steps: 300
-permission:
-  read: allow
-  glob: allow
-  grep: allow
-  list: allow
-  skill: allow
-  question: allow
-  todowrite: allow
-  todoread: allow
-  edit:
-    "charts/**": allow
-    "services/**": allow
-    "custom-values/**": allow
-    "containers/**": allow
-    "skills/**": allow
-    ".agents/plans/**": allow
-    ".github/**": ask
-    "*": ask
-  bash:
-    "git status*": allow
-    "git log*": allow
-    "git diff*": allow
-    "git checkout*": ask
-    "git switch*": ask
-    "git commit*": ask
-    "git push*": ask
-    "ls *": allow
-    "helm lint*": allow
-    "helm template*": allow
-    "*": ask
+permissions:
+  - { action: "read", resource: "*", effect: allow }
+  - { action: "glob", resource: "*", effect: allow }
+  - { action: "grep", resource: "*", effect: allow }
+  - { action: "list", resource: "*", effect: allow }
+  - { action: "skill", resource: "*", effect: allow }
+  - { action: "question", resource: "*", effect: allow }
+  - { action: "todowrite", resource: "*", effect: allow }
+  - { action: "todoread", resource: "*", effect: allow }
+  - { action: "edit", resource: "*", effect: ask }
+  - { action: "edit", resource: ".github/**", effect: ask }
+  - { action: "edit", resource: "charts/**", effect: allow }
+  - { action: "edit", resource: "services/**", effect: allow }
+  - { action: "edit", resource: "custom-values/**", effect: allow }
+  - { action: "edit", resource: "containers/**", effect: allow }
+  - { action: "edit", resource: "skills/**", effect: allow }
+  - { action: "edit", resource: ".agents/plans/**", effect: allow }
+  - { action: "shell", resource: "*", effect: ask }
+  - { action: "shell", resource: "git status*", effect: allow }
+  - { action: "shell", resource: "git log*", effect: allow }
+  - { action: "shell", resource: "git diff*", effect: allow }
+  - { action: "shell", resource: "git checkout*", effect: ask }
+  - { action: "shell", resource: "git switch*", effect: ask }
+  - { action: "shell", resource: "git commit*", effect: ask }
+  - { action: "shell", resource: "git push*", effect: ask }
+  - { action: "shell", resource: "ls *", effect: allow }
+  - { action: "shell", resource: "helm lint*", effect: allow }
+  - { action: "shell", resource: "helm template*", effect: allow }
 ---
 
 You are the Code agent for this GitOps/Helm repository (SpencersLab). You

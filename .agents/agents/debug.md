@@ -2,24 +2,21 @@
 description: Diagnoses and fixes issues in this repo with systematic debugging — hypothesize, validate with evidence, then apply minimal targeted fixes.
 mode: all
 color: "#ef4444"
-steps: 150
-permission:
-  read: allow
-  glob: allow
-  grep: allow
-  list: allow
-  skill: allow
-  question: allow
-  todowrite: allow
-  todoread: allow
-  edit:
-    "*": allow
-  bash:
-    "git status*": allow
-    "git log*": allow
-    "git diff*": allow
-    "ls *": allow
-    "*": ask
+permissions:
+  - { action: "read", resource: "*", effect: allow }
+  - { action: "glob", resource: "*", effect: allow }
+  - { action: "grep", resource: "*", effect: allow }
+  - { action: "list", resource: "*", effect: allow }
+  - { action: "skill", resource: "*", effect: allow }
+  - { action: "question", resource: "*", effect: allow }
+  - { action: "todowrite", resource: "*", effect: allow }
+  - { action: "todoread", resource: "*", effect: allow }
+  - { action: "edit", resource: "*", effect: allow }
+  - { action: "shell", resource: "*", effect: ask }
+  - { action: "shell", resource: "git status*", effect: allow }
+  - { action: "shell", resource: "git log*", effect: allow }
+  - { action: "shell", resource: "git diff*", effect: allow }
+  - { action: "shell", resource: "ls *", effect: allow }
 ---
 
 You are an expert software debugger specializing in systematic problem

@@ -1426,7 +1426,6 @@
           "temperature": 0.2
         }
       },
-      "steps": 200,
       "permissions": [
         {
           "action": "read",
@@ -1515,7 +1514,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 300,
       "color": "#f59e0b",
       "permissions": [
         {
@@ -1645,7 +1643,6 @@
           "temperature": 0.2
         }
       },
-      "steps": 200,
       "color": "#a855f7",
       "permissions": [
         {
@@ -1805,7 +1802,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 150,
       "color": "#ef4444",
       "permissions": [
         {
@@ -1865,7 +1861,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 150,
       "color": "#8b5cf6",
       "permissions": [
         {
@@ -1905,7 +1900,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 200,
       "color": "#6366f1",
       "permissions": [
         {
@@ -1995,7 +1989,6 @@
           "temperature": 0.2
         }
       },
-      "steps": 200,
       "permissions": [
         {
           "action": "read",
@@ -2059,7 +2052,6 @@
           "temperature": 0.3
         }
       },
-      "steps": 100,
       "color": "#22c55e",
       "permissions": [
         {
@@ -2114,7 +2106,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 150,
       "color": "#0ea5e9",
       "permissions": [
         {
@@ -2169,7 +2160,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 200,
       "color": "#14b8a6",
       "permissions": [
         {
@@ -2334,7 +2324,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 300,
       "permissions": [
         {
           "action": "read",
@@ -2408,7 +2397,6 @@
           "temperature": 0.3
         }
       },
-      "steps": 200,
       "permissions": [
         {
           "action": "read",
@@ -2477,7 +2465,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 300,
       "permissions": [
         {
           "action": "read",
@@ -2601,7 +2588,6 @@
           "temperature": 0
         }
       },
-      "steps": 400,
       "permissions": [
         {
           "action": "read",
@@ -2805,7 +2791,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 300,
       "permissions": [
         {
           "action": "read",
@@ -2999,7 +2984,6 @@
           "temperature": 0.1
         }
       },
-      "steps": 300,
       "permissions": [
         {
           "action": "read",
@@ -3063,7 +3047,6 @@
           "temperature": 0
         }
       },
-      "steps": 300,
       "permissions": [
         {
           "action": "read",
@@ -3282,7 +3265,6 @@
           "temperature": 0
         }
       },
-      "steps": 300,
       "permissions": [
         {
           "action": "read",

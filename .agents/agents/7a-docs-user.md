@@ -7,7 +7,6 @@ description: >
 mode: all
 model: anthropic/claude-sonnet-4-6
 temperature: 0.3
-steps: 200
 permission:
   read: allow
   glob: allow
@@ -23,6 +22,7 @@ permission:
   webfetch: deny
   websearch: deny
   skill: allow
+  question: allow
 ---
 
 You are a technical writer producing end-user documentation for a software

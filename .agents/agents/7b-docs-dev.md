@@ -7,7 +7,6 @@ description: >
 mode: all
 model: anthropic/claude-sonnet-4-6
 temperature: 0.1
-steps: 300
 permission:
   read: allow
   glob: allow
@@ -24,6 +23,7 @@ permission:
   webfetch: deny
   websearch: deny
   skill: allow
+  question: allow
 ---
 
 You are a senior software engineer writing internal developer documentation
