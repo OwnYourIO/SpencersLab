@@ -1,0 +1,47 @@
+# Wrapper around the official Coder chart (https://helm.coder.com/v2).
+# Secrets live here (Bitwarden ExternalSecrets in templates/), the database is
+# CNPG (templates/pg-coder.yaml). The wildcard ingress HOST is set in
+# custom-values/dev/prod-values.yaml — the coder subchart's values slice is
+# static YAML, so .Values.domain is unavailable to template it here (same
+# pattern as gpu).
+
+bitwardenIds:
+  # OIDC client (client-id/secret/issuer) for Coder SSO — a dev-specific
+  # client in the LAB SpencersLab realm (dev has no Keycloak of its own);
+  # the item's URI carries the issuer (bitwarden-uri store).
+  coder-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
+  # CNPG database credentials (username must equal initdb owner `coder`).
+  coder-pg: OVERRIDE_VIA_CUSTOM_VALUES
+
+domain: OVERRIDE_VIA_APPSET
+# Injected by the charts-appset values slice (services/dev sets subDomain: dev);
+# defaulted here so the access-URL template renders standalone too.
+subDomain: dev
+
+coder:
+  coder:
+    env:
+      - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
+        value: "false"
+      - name: CODER_OAUTH_GITHUB_ALLOW_SIGNUPS
+        value: "false"
+      - name: CODER_TELEMETRY
+        value: "false"
+      - name: CODER_PROMETHEUS_ENABLE
+        value: "true"
+
+    envFrom:
+      - secretRef:
+          name: coder-secrets
+    # This is needed because the Access URL is coming from envFrom
+    envUseClusterAccessURL: false
+
+    # Ingress stays DISABLED at the chart level — the wildcard host for
+    # workspace app subdomains is driven generically by the consuming
+    # service's values (services/dev sets coder.coder.ingress.* the same
+    # way gpu drives it from custom-values), not hardcoded in the chart.
+    ingress:
+      enable: false
+
+    service:
+      type: ClusterIP

@@ -1,0 +1,42 @@
+{{- /* Direct-to-backend paths on the research host.
+     The generic-ingress `research` entry (services/dev/prod) routes `/` to
+     the frontend service; a few browser paths must reach the FastAPI backend
+     on the SAME origin — the client uses same-origin getHost() for them:
+       /ws      research WebSocket
+       /upload  file uploads (POST /upload/)
+       /files   uploaded-file listing/deletion (/files/)
+       /outputs generated reports (also reachable via the frontend's
+                next.config.mjs rewrite; routed here directly for good measure)
+       /report  direct report access
+     The frontend's own app/api/* handlers (chat, reports) stay on the
+     frontend service. Traefik picks the longer rule first, so these Prefix
+     paths win over the generic `/` route. Host is built from clusterName,
+     exactly like the generic-ingress clusterBase entries. */}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gpt-researcher-backend-ingress
+  namespace: default
+spec:
+  tls:
+    - hosts:
+        - "research.{{ .Values.clusterName }}.{{ .Values.domain }}"
+      secretName: cluster-wildcard-cert
+  rules:
+    - host: "research.{{ .Values.clusterName }}.{{ .Values.domain }}"
+      http:
+        paths:
+          {{- range $path := list "/ws" "/upload" "/files" "/outputs" "/report" }}
+          - path: {{ $path }}
+            pathType: Prefix
+            backend:
+              service:
+                # Release names are always <serviceName>-gpt-researcher in
+                # this repo, so Release.Name equals the app-template fullname
+                # and the backend service is <Release.Name>-backend
+                # (tests/test_render.py pins this contract).
+                name: "{{ $.Release.Name }}-backend"
+                port:
+                  number: 8000
+          {{- end }}

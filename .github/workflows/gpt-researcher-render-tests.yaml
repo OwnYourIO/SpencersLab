@@ -1,0 +1,63 @@
+# Render-contract tests for the gpt-researcher chart plus lint/template for
+# the chart and the dev service umbrella:
+#   - pytest suite in charts/gpt-researcher/tests (Ingress↔Service naming,
+#     backend host convention, lab env wiring)
+#   - helm lint + helm template for charts/gpt-researcher and
+#     services/dev/prod
+name: gpt-researcher render tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/gpt-researcher/**'
+      - 'containers/gpt-researcher/**'
+      - 'containers/gpt-researcher-frontend/**'
+      - 'services/dev/prod/**'
+      - 'custom-values/dev/**'
+      - '.github/workflows/gpt-researcher-render-tests.yaml'
+  pull_request:
+    paths:
+      - 'charts/gpt-researcher/**'
+      - 'containers/gpt-researcher/**'
+      - 'containers/gpt-researcher-frontend/**'
+      - 'services/dev/prod/**'
+      - 'custom-values/dev/**'
+      - '.github/workflows/gpt-researcher-render-tests.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install pytest pyyaml
+
+      - name: Fetch chart dependencies
+        run: helm dependency update charts/gpt-researcher
+
+      - name: Run test suite
+        run: pytest charts/gpt-researcher/tests -v
+
+      - name: helm lint (chart)
+        run: helm lint charts/gpt-researcher
+
+      - name: helm template (chart defaults)
+        run: helm template dev-gpt-researcher charts/gpt-researcher --set domain=scifi.farm --set clusterName=dev
+
+      - name: helm lint + template (dev umbrella)
+        run: |
+          helm lint services/dev/prod
+          helm template dev services/dev/prod --set domain=scifi.farm --set clusterName=dev > /dev/null

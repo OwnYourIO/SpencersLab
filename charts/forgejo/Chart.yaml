@@ -1,0 +1,13 @@
+apiVersion: v2
+name: forgejo
+description: Wrapper around the official Forgejo OCI chart — CNPG database, Bitwarden ExternalSecrets, Keycloak OIDC source
+version: 1.0.0
+appVersion: 15.0.9
+dependencies:
+# NOTE: oci:// dependency — renovate's helm managers cannot track OCI
+# registries, so version bumps are MANUAL (watch code.forgejo.org/forgejo-helm
+# releases). ArgoCD 3.1 (base chart) resolves OCI deps natively; the registry
+# is public/anonymous. Tracked as a renovate follow-up in the dev plan.
+- name: forgejo
+  version: 17.2.0
+  repository: oci://code.forgejo.org/forgejo-helm

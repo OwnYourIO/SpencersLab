@@ -17,3 +17,7 @@ __pycache__/
 .venv/
 venv/
 .agents/worktrees/
+
+# BMad ephemeral artifacts (the _bmad/ install itself — scripts, config — is tracked)
+_bmad/render/
+_bmad-output/
