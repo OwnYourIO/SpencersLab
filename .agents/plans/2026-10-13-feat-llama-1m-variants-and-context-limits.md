@@ -145,18 +145,19 @@ projects and Kilo still consume them; drift is now manual (documented in
 AGENTS.md).
 ## Addendum 2 (2026-10-15): Q8 cache/no-cache split + post-lockup crash check
 
-**Model split (operator request):** llama.cpp hard-disables `cache_reuse` when
-a multimodal projector is loaded, so each Q8 daily driver now comes in two
-variants — "- No Cache" (vision on, mmproj auto-loaded) and "- Caching"
-(`--no-mmproj` + `--cache-reuse 256`; 256 tokens of drift tolerance for
-mutating agentic prompts — system reminders, tool schemas):
-- gpu-ai: `qwen3.8-27b-q8-cache` (MTP kept), `qwen3.6-35b-a3b-q8-cache`
-  (chart cmd + the two flags), both added to the matrix (q38q8c / q35q8c).
-  Base entries renamed "- No Cache" (q35 base = rename-only override, cmd
-  merges from chart).
+**Model split (operator request; naming swapped 2026-10-15):** llama.cpp
+hard-disables `cache_reuse` when a multimodal projector is loaded, so each Q8
+daily driver comes in two variants — the **base ID is the text-only CACHING
+version** (`--no-mmproj` + `--cache-reuse 256`; 256 tokens of drift tolerance
+for mutating agentic prompts), and the **`-visual` sibling** keeps the mmproj
+(cache_reuse disabled there):
+- gpu-ai: `qwen3.8-27b-q8` (caching, MTP kept) / `qwen3.8-27b-q8-visual`;
+  `qwen3.6-35b-a3b-q8` (caching) / `qwen3.6-35b-a3b-q8-visual` (chart cmd).
+  Matrix: base IDs reuse the chart vars; new `q38q8v` / `q35q8v`.
 - gpu box: its single `qwen3.6-35b-a3b-q8` (already `--no-mmproj` from the
-  8GiB fit) gains `--cache-reuse 256`.
-- Global OpenCode config: new caching entries + renames (machine-local file).
+  8GiB fit) gains `--cache-reuse 256` — base-ID-is-caching holds there too.
+- Global OpenCode config: IDs/names swapped, text-only capabilities on the
+  caching variants, image input on the `-visual` ones (machine-local file).
 Render-verified both umbrellas; helm lint clean.
 
 **Crash check (same night):** device-lost crashes CONTINUE on
