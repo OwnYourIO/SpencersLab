@@ -143,3 +143,31 @@ Deliberately NOT changed: the materialized globals keep their full legacy
 content (inline agents block, UI prefs, providers without limits) — other
 projects and Kilo still consume them; drift is now manual (documented in
 AGENTS.md).
+## Addendum 2 (2026-10-15): Q8 cache/no-cache split + post-lockup crash check
+
+**Model split (operator request):** llama.cpp hard-disables `cache_reuse` when
+a multimodal projector is loaded, so each Q8 daily driver now comes in two
+variants — "- No Cache" (vision on, mmproj auto-loaded) and "- Caching"
+(`--no-mmproj` + `--cache-reuse 256`; 256 tokens of drift tolerance for
+mutating agentic prompts — system reminders, tool schemas):
+- gpu-ai: `qwen3.8-27b-q8-cache` (MTP kept), `qwen3.6-35b-a3b-q8-cache`
+  (chart cmd + the two flags), both added to the matrix (q38q8c / q35q8c).
+  Base entries renamed "- No Cache" (q35 base = rename-only override, cmd
+  merges from chart).
+- gpu box: its single `qwen3.6-35b-a3b-q8` (already `--no-mmproj` from the
+  8GiB fit) gains `--cache-reuse 256`.
+- Global OpenCode config: new caching entries + renames (machine-local file).
+Render-verified both umbrellas; helm lint clean.
+
+**Crash check (same night):** device-lost crashes CONTINUE on
+gpu-ai qwen3.8-27b-q8 — 11 reload cycles in the log window, every crash at
+n_tokens 59–64k (progress 0.93–1.00, t≈275–319s): the SAME band as before
+the `amdgpu.lockup_timeout=30000` cmdline change. With a 30s ring budget the
+~2–3s deep-KV FA dispatches could not trip the watchdog at this depth, so the
+parameter almost certainly is NOT active on the booted kernel (likely the
+edited systemd-boot entry isn't the one being booted — 12 entries present).
+Verify on ai-gpu: `cat /proc/cmdline | grep amdgpu` and
+`cat /sys/module/amdgpu/parameters/lockup_timeout`; match the booted entry by
+its initrd hash in /proc/cmdline against /boot/efi/loader/entries/*.conf.
+If crashes persist WITH the param active, next lever = drop MTP from the
+caching variants (upstream A/B: MTP-off survives 125k+).

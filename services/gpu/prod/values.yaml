@@ -268,7 +268,11 @@ llama-swap:
           -ub 1024
           ${moe}
           ${flash-and-q8}
-        description: "Qwen 3.6 35B A3B (MoE), Q8_0; 8GiB-gpu fit: experts on CPU, q8_0 KV, no vision, 256k ctx (slow)"
+          # 2026-10-15: text-only (--no-mmproj) so cache_reuse works; 256 =
+          # tolerate that many tokens of prompt drift when reusing cached KV
+          # (agentic conversations mutate: system reminders, tool schemas).
+          --cache-reuse 256
+        description: "Qwen 3.6 35B A3B (MoE), Q8_0; 8GiB-gpu fit: experts on CPU, q8_0 KV, no vision, cache_reuse 256, 256k ctx (slow)"
 
 open-webui:
   annotations:

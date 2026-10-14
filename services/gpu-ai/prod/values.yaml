@@ -257,10 +257,53 @@ llama-swap:
           -c 262144
           --spec-type draft-mtp --spec-draft-n-max 2
           ${q38-common}
-        name: "Qwen 3.8 27B (Q8_0, MTP)"
-        description: "Plain Qwen 3.8 27B, Q8_0; ggml-org Q8_0 MTP draft, 256k ctx"
+        name: "Qwen 3.8 27B (Q8_0, MTP) - No Cache"
+        description: "Plain Qwen 3.8 27B, Q8_0; MTP draft, vision on, 256k ctx; cache_reuse disabled by llama.cpp in multimodal mode"
         proxy: http://localhost:${PORT}
         ttl: 300
+
+      # Cache variant (2026-10-15): --no-mmproj drops the vision projector so
+      # llama.cpp's cache_reuse stays enabled (multimodal hard-disables it).
+      # --cache-reuse 256 = tolerate up to 256 tokens of prompt drift when
+      # reusing the cached KV (K-shift), covering opencode's mutating
+      # conversations (system reminders, tool schemas). The q38-common macro
+      # carries --cache-reuse 1; the later flag wins. Use this for long
+      # agentic sessions; keep the vision entry for image inputs.
+      qwen3.8-27b-q8-cache:
+        cmd: |
+          ${server-cmd}
+          -hf unsloth/Qwen3.8-27B-GGUF:Q8_0
+          -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q38-common}
+          --no-mmproj
+          --cache-reuse 256
+        name: "Qwen 3.8 27B (Q8_0, MTP) - Caching"
+        description: "Plain Qwen 3.8 27B, Q8_0; MTP draft, text-only (--no-mmproj), cache_reuse 256, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+
+      # Qwen 3.6 35B A3B Q8 split (2026-10-15): the chart-default entry keeps
+      # vision (auto-loaded mmproj → cache_reuse disabled there); this pair
+      # mirrors the q38 split. No-cache = rename only (cmd merges from chart).
+      qwen3.6-35b-a3b-q8:
+        name: "Qwen 3.6 35B A3B (Q8_0) - No Cache"
+        description: "Qwen 3.6 35B A3B (MoE), Q8_0; vision on, experts on CPU, 256k ctx; cache_reuse disabled by llama.cpp in multimodal mode"
+      qwen3.6-35b-a3b-q8-cache:
+        cmd: |
+          ${server-cmd}
+          ${threads}
+          -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+          ${ctx-256k}
+          ${moe}
+          ${flash-and-q8}
+          --no-mmproj
+          --cache-reuse 256
+        name: "Qwen 3.6 35B A3B (Q8_0) - Caching"
+        description: "Qwen 3.6 35B A3B (MoE), Q8_0; text-only (--no-mmproj), cache_reuse 256, experts on CPU, 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 0
 
       # 1M context variants (2026-10-13) — one 1m sibling per requested
       # model, alongside the existing 256k versions. Same weights; ${ctx-1m}
@@ -380,7 +423,10 @@ llama-swap:
         katq41m: kat-coder-q4-1m
         katq61m: kat-coder-q6-1m
         katq81m: kat-coder-q8-1m
+        # Text-only caching variants (2026-10-15)
+        q38q8c: qwen3.8-27b-q8-cache
+        q35q8c: qwen3.6-35b-a3b-q8-cache
         # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
       sets:
         # Scalar: must restate the chart's full alternation + the new models.
-        main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16 | q38q81m | katq41m | katq61m | katq81m) & homecpu"
+        main: "(q38q4 | q38q6 | q38q8 | q38q8c | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35q8c | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16 | q38q81m | katq41m | katq61m | katq81m) & homecpu"
