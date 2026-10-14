@@ -1,14 +1,353 @@
 {
+  // Project-level OpenCode config for the SpencersLab repo.
+  // 2026-10-13: agent-config.jsonc was removed from the repo; the
+  // global configs (~/.config/opencode/opencode.json and
+  // ~/.config/kilo/kilo.jsonc) are now real machine-local files.
+  // This file is the version-controlled source for what this project
+  // needs beyond the globals: lab MCP servers, permissions, skills
+  // and the default agent. It merges over the global config
+  // (project entries win).
+  //
+  // LLM providers (gpu-ai / gpu-moe, with per-model limit.context
+  // fixing OpenCode's 200k fallback for uncataloged models) live in
+  // the GLOBAL config, not here — they're machine-wide endpoints,
+  // used from other projects too.
   "$schema": "https://opencode.ai/config.json",
-  // Project-level MCP servers for the SpencersLab repo. Merged over the
-  // global config (~/.config/opencode/opencode.json). Fleet-wide servers
-  // live in agent-config.jsonc; entries here are ones this project needs
-  // regardless of where the global symlink points.
-  // Native V2 shape since 2026-10-12 (mcp.servers, disabled, split timeout).
   "mcp": {
     "servers": {
-      // gpu-ai: new AI-inference cluster (service gpu-ai). Host follows the
-      // clusterName annotation (ai-gpu), not the service name.
+      "global-playwright": {
+        "type": "remote",
+        "url": "http://mcp-mcp-playwright-headless.default:8931/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-global-homeassistant": {
+        "type": "remote",
+        "url": "http://mcp-mcp-homeassistant-readonly-headless.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-global-homeassistant": {
+        "type": "remote",
+        "url": "http://mcp-mcp-homeassistant-admin-headless.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-gpu-kubernetes": {
+        "type": "remote",
+        "url": "http://mcp-mcp-kubernetes-readonly-headless.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-gpu-kubernetes": {
+        "type": "remote",
+        "url": "http://mcp-mcp-kubernetes-admin-headless.default:8080/mcp",
+        "disabled": true,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "global-searxng": {
+        "type": "remote",
+        "url": "http://mcp-mcp-searxng-headless.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-global-wekan": {
+        "type": "remote",
+        "url": "http://mcp-mcp-wekan-readonly-headless.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-global-wekan": {
+        "type": "remote",
+        "url": "http://mcp-mcp-wekan-admin-headless.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-global-grafana": {
+        "type": "remote",
+        "url": "http://mcp-mcp-grafana-readonly-headless.default:8000/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-global-grafana": {
+        "type": "remote",
+        "url": "http://mcp-mcp-grafana-admin-headless.default:8000/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "global-renovate": {
+        "type": "remote",
+        "url": "http://mcp-mcp-renovate-headless.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-gpu-postgres-coder": {
+        "type": "remote",
+        "url": "http://mcp-mcp-postgres-coder-proxy.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-gpu-postgres-flowise": {
+        "type": "remote",
+        "url": "http://mcp-mcp-postgres-flowise-proxy.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-gpu-postgres-langflow": {
+        "type": "remote",
+        "url": "http://mcp-mcp-postgres-langflow-proxy.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-gpu-postgres-n8n": {
+        "type": "remote",
+        "url": "http://mcp-mcp-postgres-n8n-proxy.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-gpu-postgres-open-webui": {
+        "type": "remote",
+        "url": "http://mcp-mcp-postgres-open-webui-proxy.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-gpu-postgres-supabase": {
+        "type": "remote",
+        "url": "http://mcp-mcp-postgres-supabase-proxy.default:8080/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-grow-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.grow.spencerslab.com/kubernetes-readonly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-grow-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.grow.spencerslab.com/kubernetes-admin/mcp",
+        "disabled": true,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-home-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.home-lab.spencerslab.com/kubernetes-readonly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-home-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.home-lab.spencerslab.com/kubernetes-admin/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-infra-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.infra.spencerslab.com/kubernetes-readonly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-infra-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.infra.spencerslab.com/kubernetes-admin/mcp",
+        "disabled": true,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-monitoring-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.monitoring.spencerslab.com/kubernetes-readonly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-monitoring-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.monitoring.spencerslab.com/kubernetes-admin/mcp",
+        "disabled": true,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-media-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.media.spencerslab.com/kubernetes-readonly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-media-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.media.spencerslab.com/kubernetes-admin/mcp",
+        "disabled": true,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-media-argocd": {
+        "type": "remote",
+        "url": "https://mcp.media.spencerslab.com/argocd/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-proxy-local-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.proxy-local.spencerslab.com/kubernetes-readonly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-proxy-local-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.proxy-local.spencerslab.com/kubernetes-admin/mcp",
+        "disabled": true,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-grow-postgres-assistant": {
+        "type": "remote",
+        "url": "https://mcp.grow.spencerslab.com/postgres-grow-assistant/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-grow-postgres-assistant-sensors": {
+        "type": "remote",
+        "url": "https://mcp.grow.spencerslab.com/postgres-grow-assistant-sensors/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-home-postgres-immich": {
+        "type": "remote",
+        "url": "https://mcp.home-lab.spencerslab.com/postgres-immich/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-home-postgres-postiz": {
+        "type": "remote",
+        "url": "https://mcp.home-lab.spencerslab.com/postgres-postiz/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-home-postgres-rallly": {
+        "type": "remote",
+        "url": "https://mcp.home-lab.spencerslab.com/postgres-home-rallly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-home-postgres-paperless": {
+        "type": "remote",
+        "url": "https://mcp.home-lab.spencerslab.com/postgres-paperless/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "readonly-infra-postgres-keycloak": {
+        "type": "remote",
+        "url": "https://mcp.infra.spencerslab.com/postgres-keycloak/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
       "readonly-ai-gpu-kubernetes": {
         "type": "remote",
         "url": "https://mcp.gpu-ai.spencerslab.com/kubernetes-readonly/mcp",
@@ -28,5 +367,375 @@
         }
       }
     }
-  }
+  },
+  "permissions": [
+    {
+      "action": "read",
+      "resource": "*.env.example",
+      "effect": "allow"
+    },
+    {
+      "action": "read",
+      "resource": "*.env.*",
+      "effect": "ask"
+    },
+    {
+      "action": "read",
+      "resource": "*.env",
+      "effect": "ask"
+    },
+    {
+      "action": "read",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "edit",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "glob",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "grep",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "list",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "*>*",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "printenv *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "whoami *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "uname *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "which *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "date *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "diff *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "echo *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "file *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "find *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "grep *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "head *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "less *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "sort *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "tail *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "tree *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "type *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "uniq *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "cat *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "cut *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "man *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "pwd *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "ag *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "df *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "du *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "jq *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "ls *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "rg *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "tr *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "wc *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/home/coder/CuratedForest.com/assets/sass/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "question",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "webfetch",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "websearch",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "doom_loop",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "playwright_browser_navigate",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_close",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_resize",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_console_messages",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_handle_dialog",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_evaluate",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_file_upload",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_drop",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_fill_form",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_press_key",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_type",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_navigate_back",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_network_requests",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_network_request",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_run_code_unsafe",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_take_screenshot",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_snapshot",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_click",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_drag",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_hover",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_select_option",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_tabs",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "playwright_browser_wait_for",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "codesearch",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "skill",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "*",
+      "resource": "*",
+      "effect": "ask"
+    }
+  ],
+  "disabled_providers": [
+    "kilo",
+    "llama",
+    "opencode",
+    "spencerslab"
+  ],
+  "default_agent": "plan",
+  "skills": [
+    "/home/coder/CuratedForest.com/content/tech/home-assistant",
+    "./.agents/skills",
+    "./skill/",
+    "skills/"
+  ]
 }

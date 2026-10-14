@@ -507,7 +507,8 @@ hivetools:
       # .agents/plans/2026-09-27-debug-mcp-servers-longterm-fix.md). mcp-searxng
       # serves native Streamable HTTP when MCP_HTTP_PORT is set, so the
       # proxyrunner attach hop goes away entirely (same pattern as wekan/HA).
-      # Client URL moves to the -headless service: see agent-config.jsonc.
+      # Client URL moves to the -headless service: see .opencode/opencode.json
+      # (MCP server definitions).
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.

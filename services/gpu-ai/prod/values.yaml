@@ -262,6 +262,77 @@ llama-swap:
         proxy: http://localhost:${PORT}
         ttl: 300
 
+      # 1M context variants (2026-10-13) — one 1m sibling per requested
+      # model, alongside the existing 256k versions. Same weights; ${ctx-1m}
+      # = YaRN x4 over the native 262144 ctx (all three are qwen3_5 hybrids:
+      # q38 16/64 full-attn layers → 1M q8 KV ≈ 34GB; kat-coder + q35
+      # 10/40 → ≈ 11GB). --no-kv-offload parks that KV in the node's 125GB
+      # RAM, leaving the VRAM budget unchanged from the 256k versions —
+      # slow attention, no OOM risk. No MTP on the 1m variants: they trade
+      # speed for context, and draft-mtp over CPU-resident KV is untested.
+      # (q38-common isn't reused below because its -b/-ub would clobber
+      # ${ctx-1m}'s 512 batches.)
+      qwen3.8-27b-q8-1m:
+        cmd: |
+          ${server-cmd}
+          -hf unsloth/Qwen3.8-27B-GGUF:Q8_0
+          ${ctx-1m}
+          --no-kv-offload
+          -ngl 999
+          --flash-attn on
+          --load-mode none
+          -np 1
+          --cache-type-k q8_0
+          --cache-type-v q8_0
+          --cache-reuse 1
+          --no-context-shift
+        name: "Qwen 3.8 27B (Q8_0) - 1M"
+        description: "Plain Qwen 3.8 27B, Q8_0; 1M ctx (YaRN x4), KV in system RAM"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+
+      kat-coder-q4-1m:
+        cmd: |
+          ${server-cmd}
+          ${threads}
+          -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q4_K_M
+          ${ctx-1m}
+          ${moe}
+          ${flash-and-q8}
+          --no-kv-offload
+        name: "KAT Coder V2.5 Dev (Q4_K_M) - 1M"
+        description: "Kwaipilot KAT-Coder V2.5 Dev (MoE), Q4_K_M; 1M ctx (YaRN x4), experts + KV in system RAM"
+        proxy: http://localhost:${PORT}
+        ttl: 0
+
+      kat-coder-q6-1m:
+        cmd: |
+          ${server-cmd}
+          ${threads}
+          -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q6_K
+          ${ctx-1m}
+          ${moe}
+          ${flash-and-q8}
+          --no-kv-offload
+        name: "KAT Coder V2.5 Dev (Q6_K) - 1M"
+        description: "Kwaipilot KAT-Coder V2.5 Dev (MoE), Q6_K; 1M ctx (YaRN x4), experts + KV in system RAM"
+        proxy: http://localhost:${PORT}
+        ttl: 0
+
+      kat-coder-q8-1m:
+        cmd: |
+          ${server-cmd}
+          ${threads}
+          -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q8_0
+          ${ctx-1m}
+          ${moe}
+          ${flash-and-q8}
+          --no-kv-offload
+        name: "KAT Coder V2.5 Dev (Q8_0) - 1M"
+        description: "Kwaipilot KAT-Coder V2.5 Dev (MoE), Q8_0; 1M ctx (YaRN x4), experts + KV in system RAM"
+        proxy: http://localhost:${PORT}
+        ttl: 0
+
       # Same story for the ggml-org BF16 reference build: no embedded MTP
       # tensors (verified in the header), so it takes the Q8_0 draft too.
       # ttl 180 like qwen38-orca-f16 — reference quality, evicts fast.
@@ -304,7 +375,12 @@ llama-swap:
         q38rana: qwen38-rana
         q38hum: qwen38-humanlike
         q38f16: qwen38-orca-f16
+        # 1M context variants (2026-10-13)
+        q38q81m: qwen3.8-27b-q8-1m
+        katq41m: kat-coder-q4-1m
+        katq61m: kat-coder-q6-1m
+        katq81m: kat-coder-q8-1m
         # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
       sets:
         # Scalar: must restate the chart's full alternation + the new models.
-        main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16) & homecpu"
+        main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16 | q38q81m | katq41m | katq61m | katq81m) & homecpu"

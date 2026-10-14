@@ -59,9 +59,12 @@ Standard agent-context layout for this repo (mirrors root `AGENTS.md`):
   plans, and skills.
 - `.opencode/` — real tracked dir: `agents` and `skills` symlink back into
   `.agents/`; opencode-only content lives here (`plugin/`, `opencode.json`).
-- `agent-config.jsonc` — global agent tool config (permissions, MCP
-  servers, UI prefs), symlinked into `~/.config/kilo/kilo.jsonc` and
-  `~/.config/opencode/opencode.json`.
+- `.opencode/opencode.json` — version-controlled OpenCode project config:
+  the lab MCP servers, permissions, skills paths and the default agent;
+  merged over the machine-global config. LLM providers (`gpu-ai`/`gpu-moe`)
+  live in the machine-local globals (`~/.config/opencode/opencode.json`,
+  `~/.config/kilo/kilo.jsonc` — real files since 2026-10-13, formerly
+  symlinks to a repo-root `agent-config.jsonc`).
 
 ## When to use / when not
 

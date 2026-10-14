@@ -30,9 +30,13 @@ container images (`containers/`). **ArgoCD applies everything — never
   plans, and skills.
 - `.opencode/` — real tracked dir: `agents` and `skills` symlink back into
   `.agents/`; opencode-only content lives here (`plugin/`, `opencode.json`).
-- `agent-config.jsonc` — global agent tool config (permissions, MCP servers,
-  UI prefs), symlinked into `~/.config/kilo/kilo.jsonc` and
-  `~/.config/opencode/opencode.json`.
+- `.opencode/opencode.json` — version-controlled OpenCode project config:
+  the lab MCP servers, permissions, skills paths and the default agent.
+  Merged over the machine-global config. LLM providers (`gpu-ai`/`gpu-moe`
+  with per-model `limit.context`) live in the machine-local globals —
+  `~/.config/opencode/opencode.json` and `~/.config/kilo/kilo.jsonc` are
+  real files since 2026-10-13 (`agent-config.jsonc` and its symlinks were
+  removed), so global-config edits are no longer version-controlled here.
 - `.agents/notes/` — free-form repo notes (SpencersLab-specific extra).
 
 ## Agents
@@ -141,9 +145,12 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 
 ## MCP servers
 
-Servers are defined in `agent-config.jsonc` at this repo's root, symlinked
-into `~/.config/kilo/kilo.jsonc` and `~/.config/opencode/opencode.json` —
-config edits flow through this repo's normal branch→merge flow.
+Servers are defined in `.opencode/opencode.json` (project-level, merged over
+the machine-global config) — edits flow through this repo's normal
+branch→merge flow. The machine globals
+(`~/.config/opencode/opencode.json`, `~/.config/kilo/kilo.jsonc`) carry the
+same fleet list for other projects; since 2026-10-13 they are real files, not
+symlinks, so keep them in sync by hand when a server is added or changed.
 
 Servers are named `<priv>-<cluster>-<service>` in the client config
 (e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers
