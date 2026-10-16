@@ -6782,6 +6782,20 @@ entries:
   forgejo:
   - apiVersion: v2
     appVersion: 15.0.9
+    created: "2026-10-16T02:47:02.587846046Z"
+    dependencies:
+    - name: forgejo
+      repository: oci://code.forgejo.org/forgejo-helm
+      version: 17.2.0
+    description: Wrapper around the official Forgejo OCI chart — CNPG database, Bitwarden
+      ExternalSecrets, Keycloak OIDC source
+    digest: 1e72ccea3cdb1705cc6b3107c8058099ff742b18134a454fd125ee5996681bfc
+    name: forgejo
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-1.0.2/forgejo-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 15.0.9
     created: "2026-10-16T02:20:44.350103776Z"
     dependencies:
     - name: forgejo
@@ -7169,6 +7183,20 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/generic-device-plugin-1.0.1/generic-device-plugin-1.0.1.tgz
     version: 1.0.1
   gpt-researcher:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-10-16T02:47:02.826867305Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: GPT Researcher (ResearchGPT) — autonomous research agent backend
+      + Next.js frontend
+    digest: 6ed1875ffdc576ae88e96737976b5eb267626855cde607429c31248da9a9a2a5
+    name: gpt-researcher
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/gpt-researcher-1.0.2/gpt-researcher-1.0.2.tgz
+    version: 1.0.2
   - apiVersion: v2
     appVersion: latest
     created: "2026-10-16T02:20:44.585761029Z"
@@ -18883,4 +18911,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-16T02:20:44.587357897Z"
+generated: "2026-10-16T02:47:02.828531231Z"
