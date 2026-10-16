@@ -155,10 +155,10 @@ symlinks, so keep them in sync by hand when a server is added or changed.
 Servers are named `<priv>-<cluster>-<service>` in the client config
 (e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers
 without a privilege tier are just `<cluster>-<service>` (e.g.
-`global-searxng`). `<cluster>` is one of gpu, ai-gpu, grow, home, infra, media,
-monitoring, proxy-local, proxy-backup — or `global` for shared utility servers
-(wekan, grafana, searxng, playwright, renovate, homeassistant). `<priv>` is
-`readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete).
+`global-searxng`). `<cluster>` is one of gpu, ai-gpu, dev, grow, home, infra,
+media, monitoring, proxy-local, proxy-backup — or `global` for shared utility
+servers (wekan, grafana, searxng, playwright, renovate, homeassistant). `<priv>`
+is `readonly` (inspection) or `admin` (mutations: restart/scale/patch/delete).
 Kubernetes, Home Assistant, Grafana, and WeKan come in both tiers
 (HA/Grafana/WeKan enforced server-side: ha-mcp `READ_ONLY_MODE`,
 mcp-grafana `--disable-write` + token roles, wekan-mcp

@@ -3,8 +3,8 @@
 #     name+port the chart actually renders (Kubernetes does not validate
 #     Ingress backends, so a values.yaml rename would otherwise 502 at
 #     runtime with every layer of CI green)
-#   - the backend ingress host follows the generic-ingress clusterBase
-#     convention (<name>.<clusterName>.<domain>)
+#   - the backend ingress host is the top-level research.<domain> (matches
+#     the umbrella generic-ingress `research` entry, user decision 2026-10-13)
 #   - the frontend service exposes the port the umbrella generic-ingress
 #     `research` entry expects
 #   - the backend container carries the lab wiring (llama-swap LLMs,
@@ -78,12 +78,16 @@ def test_ingress_backend_targets_rendered_service():
             f"Service exposes {sorted(service_ports(svcs[name]))}")
 
 
-def test_backend_ingress_host_follows_clusterbase_convention():
+def test_backend_ingress_host_is_top_level():
     docs = helm_template()
-    host = backend_ingress(docs)["spec"]["rules"][0]["host"]
-    # Same shape as the umbrella generic-ingress clusterBase entries:
-    # <name>.<clusterName>.<domain>.
-    assert host == "research.dev.scifi.farm"
+    ingress = backend_ingress(docs)
+    host = ingress["spec"]["rules"][0]["host"]
+    # Same host as the umbrella generic-ingress `research` entry:
+    # top-level <name>.<domain> (NOT cluster-scoped since 2026-10-13).
+    assert host == "research.scifi.farm"
+    # Top-level hosts are covered by wildcard-cert (*.scifi.farm).
+    assert ingress["spec"]["tls"][0]["secretName"] == "wildcard-cert"
+    assert ingress["spec"]["tls"][0]["hosts"] == ["research.scifi.farm"]
 
 
 def test_frontend_service_matches_umbrella_ingress_entry():

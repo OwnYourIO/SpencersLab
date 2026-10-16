@@ -365,6 +365,24 @@
           "catalog": 60000,
           "execution": 60000
         }
+      },
+      "readonly-dev-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.dev.scifi.farm/kubernetes-readonly/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "admin-dev-kubernetes": {
+        "type": "remote",
+        "url": "https://mcp.dev.scifi.farm/kubernetes-admin/mcp",
+        "disabled": true,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
       }
     }
   },

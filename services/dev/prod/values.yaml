@@ -55,12 +55,12 @@ ingress:
       clusterBase: true
       service: coder
       port: 80
+    # Public-facing hosts: top-level *.scifi.farm (wildcard-cert), NOT
+    # cluster-scoped (user decision 2026-10-13).
     git:
-      clusterBase: true
       service: dev-forgejo-http
       port: 3000
     research:
-      clusterBase: true
       service: dev-gpt-researcher
       port: 3000
     cluster:

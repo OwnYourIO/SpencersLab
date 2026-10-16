@@ -39,12 +39,13 @@ forgejo:
     forgejo-pg: 47d1d689-b615-4461-8b57-b4e20015ae75         # shared dev DB item
     forgejo-sso: d07b1bec-d02c-4580-8544-b4e2000e1783        # shared dev SSO
   # Forgejo's public identity — dev-specific, kept out of the chart.
+  # Top-level host (user decision 2026-10-13), NOT cluster-scoped.
   forgejo:
     gitea:
       config:
         server:
-          DOMAIN: git.dev.scifi.farm
-          ROOT_URL: "https://git.dev.scifi.farm/"
+          DOMAIN: git.scifi.farm
+          ROOT_URL: "https://git.scifi.farm/"
 
 hivetools:
   bitwardenIds:

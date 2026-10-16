@@ -10,8 +10,9 @@
        /report  direct report access
      The frontend's own app/api/* handlers (chat, reports) stay on the
      frontend service. Traefik picks the longer rule first, so these Prefix
-     paths win over the generic `/` route. Host is built from clusterName,
-     exactly like the generic-ingress clusterBase entries. */}}
+     paths win over the generic `/` route. Host matches the generic-ingress
+     `research` entry: top-level research.<domain> (user decision
+     2026-10-13), covered by wildcard-cert. */}}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -21,10 +22,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - "research.{{ .Values.clusterName }}.{{ .Values.domain }}"
-      secretName: cluster-wildcard-cert
+        - "research.{{ .Values.domain }}"
+      secretName: wildcard-cert
   rules:
-    - host: "research.{{ .Values.clusterName }}.{{ .Values.domain }}"
+    - host: "research.{{ .Values.domain }}"
       http:
         paths:
           {{- range $path := list "/ws" "/upload" "/files" "/outputs" "/report" }}

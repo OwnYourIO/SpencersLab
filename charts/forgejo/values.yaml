@@ -6,10 +6,11 @@
 # dev has no Keycloak of its own (user decision 2026-10-12).
 #
 # Ingress stays disabled in the subchart; the dev service's generic-ingress
-# routes git.<subDomain>.<domain> at the <fullname>-http service (port 3000).
-# Server DOMAIN/ROOT_URL are set in services/dev/prod/values.yaml (literal
-# hosts are acceptable there — this service only ever deploys to the dev
-# cluster).
+# routes git.<domain> (top-level host since 2026-10-13) at the
+# <fullname>-http service (port 3000).
+# Server DOMAIN/ROOT_URL are set in custom-values/dev/prod-values.yaml under
+# forgejo.forgejo.gitea.config.server (dev-specific literals, kept out of the
+# chart).
 
 bitwardenIds:
   # SECRET_KEY for Forgejo (item's login password).
