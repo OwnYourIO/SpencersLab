@@ -2,8 +2,8 @@
 # Secrets live here (Bitwarden ExternalSecrets in templates/), the database is
 # CNPG (templates/pg-forgejo.yaml). Chart 17.x bundles no Redis/PostgreSQL
 # subcharts anymore — built-in memory cache is fine at dev scale.
-# OIDC goes to the LAB Keycloak (login.spencerslab.com, realm SpencersLab) —
-# dev has no Keycloak of its own (user decision 2026-10-12).
+# OIDC goes to the LAB Keycloak (realm SpencersLab) — dev has no Keycloak of
+# its own (user decision 2026-10-12).
 #
 # Ingress stays disabled in the subchart; the dev service's generic-ingress
 # routes git.<domain> (top-level host since 2026-10-13) at the

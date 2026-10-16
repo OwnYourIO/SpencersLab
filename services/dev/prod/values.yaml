@@ -3,8 +3,8 @@
 # (cloudnative-pg, external-secrets-bitwarden, k8s-monitoring).
 # No Keycloak on dev (user decision 2026-10-12): SSO follows the lab pattern
 # — ArgoCD SSO + hivetools MCP reuse the lab-wide shared client items on the
-# lab Keycloak (login.spencerslab.com, realm SpencersLab); Coder + Forgejo
-# get dev-specific clients in that realm (custom-values/dev/).
+# lab Keycloak (realm SpencersLab); Coder + Forgejo get dev-specific clients
+# in that realm (custom-values/dev/).
 # No smtp-relay on dev either (user decision 2026-10-12), hence no
 # CODER_EMAIL_* in charts/coder/templates/secret-coder.yaml and no Forgejo
 # mailer config.

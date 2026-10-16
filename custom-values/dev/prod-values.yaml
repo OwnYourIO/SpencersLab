@@ -2,11 +2,14 @@
 # services.dev.customValuesUrls.
 #
 # All items are NEW dev items (user decision 2026-10-13). OIDC: dev has NO
-# Keycloak of its own — SSO goes through the LAB Keycloak
-# (login.spencerslab.com, realm SpencersLab) via ONE shared dev SSO client
-# item (d07b1bec…) consumed by ArgoCD, Coder, Forgejo and hivetools MCP —
-# everything using SSO uses the same secret. Its URI carries the issuer;
-# base's argocd-sso ExternalSecret reads it via the bitwarden-uri store.
+# Keycloak of its own — SSO goes through the LAB Keycloak (realm SpencersLab)
+# via ONE shared dev SSO client item (d07b1bec…) consumed by ArgoCD, Coder,
+# Forgejo and hivetools MCP — everything using SSO uses the same secret. Its
+# URI carries the issuer; base's argocd-sso ExternalSecret reads it via the
+# bitwarden-uri store. Its OPTIONAL custom field `oidcEmailDomain` carries
+# Coder's OIDC email allow-list — charts/coder fetches the whole item
+# (bitwarden-item store) and tolerates the field being absent (empty value =
+# Coder accepts any email the IdP vouches for).
 #
 # The dev DB items are shared too (47d1d689…): the ExternalSecrets hardcode
 # the username to the CNPG initdb owner and read only the password.
