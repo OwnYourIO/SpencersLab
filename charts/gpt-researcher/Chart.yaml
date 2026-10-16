@@ -2,7 +2,7 @@ apiVersion: v2
 name: gpt-researcher
 description: GPT Researcher (ResearchGPT) — autonomous research agent backend + Next.js
   frontend
-version: 1.0.1
+version: 1.0.2
 # Images are built in-repo from pinned upstream master
 # (containers/gpt-researcher + containers/gpt-researcher-frontend); upstream
 # publishes Docker Hub images only rarely. appVersion tracks the rolling
