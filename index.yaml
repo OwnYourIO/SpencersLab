@@ -2137,6 +2137,21 @@ entries:
   base:
   - apiVersion: v2
     appVersion: 1.0.31
+    created: "2026-10-16T02:20:43.967746251Z"
+    dependencies:
+    - name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 10.10.0
+    - name: cert-manager
+      repository: https://charts.jetstack.io
+      version: v1.19.3
+    digest: 8bcc0c72bcb21f7a2ce97f4c47492d24dccad0cb95ccf3b51014f9650f8cdc06
+    name: base
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/base-1.0.197/base-1.0.197.tgz
+    version: 1.0.197
+  - apiVersion: v2
+    appVersion: 1.0.31
     created: "2026-10-08T03:23:42.538830286Z"
     dependencies:
     - name: argo-cd
@@ -5251,6 +5266,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/cloud-proxy-appset-1.1.2/cloud-proxy-appset-1.1.2.tgz
     version: 1.1.2
+  coder:
+  - apiVersion: v2
+    appVersion: 2.35.2
+    created: "2026-10-16T02:20:44.159105035Z"
+    dependencies:
+    - name: coder
+      repository: https://helm.coder.com/v2
+      version: 2.35.2
+    description: Wrapper around the official Coder chart — CNPG database + Bitwarden
+      ExternalSecrets for OIDC/PG
+    digest: 606839bb61c76bfface13a1dcda5643bcf171b37525dbd2fb88a8ea17463d3f9
+    name: coder
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/coder-1.0.1/coder-1.0.1.tgz
+    version: 1.0.1
   core:
   - apiVersion: v2
     appVersion: 1.0.40
@@ -6749,6 +6779,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/flowise-1.0.22/flowise-1.0.22.tgz
     version: 1.0.22
+  forgejo:
+  - apiVersion: v2
+    appVersion: 15.0.9
+    created: "2026-10-16T02:20:44.350103776Z"
+    dependencies:
+    - name: forgejo
+      repository: oci://code.forgejo.org/forgejo-helm
+      version: 17.2.0
+    description: Wrapper around the official Forgejo OCI chart — CNPG database, Bitwarden
+      ExternalSecrets, Keycloak OIDC source
+    digest: ac4c4cbed63b1665760f4d11108b78c81d4c3aeb4e63669f1299044526f783df
+    name: forgejo
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-1.0.1/forgejo-1.0.1.tgz
+    version: 1.0.1
   freeipa:
   - apiVersion: v2
     appVersion: 1.0.9
@@ -7122,6 +7167,21 @@ entries:
     name: generic-device-plugin
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/generic-device-plugin-1.0.1/generic-device-plugin-1.0.1.tgz
+    version: 1.0.1
+  gpt-researcher:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-10-16T02:20:44.585761029Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: GPT Researcher (ResearchGPT) — autonomous research agent backend
+      + Next.js frontend
+    digest: ad34e4a620f31dc722c4e750f645210ceab696528ba9792b3b31c2d351f50cc6
+    name: gpt-researcher
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/gpt-researcher-1.0.1/gpt-researcher-1.0.1.tgz
     version: 1.0.1
   grow-appset:
   - apiVersion: v2
@@ -18823,4 +18883,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-11T16:18:50.312961158Z"
+generated: "2026-10-16T02:20:44.587357897Z"
