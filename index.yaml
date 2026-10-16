@@ -5269,6 +5269,20 @@ entries:
   coder:
   - apiVersion: v2
     appVersion: 2.35.2
+    created: "2026-10-16T16:08:05.969467477Z"
+    dependencies:
+    - name: coder
+      repository: https://helm.coder.com/v2
+      version: 2.35.2
+    description: Wrapper around the official Coder chart — CNPG database + Bitwarden
+      ExternalSecrets for OIDC/PG
+    digest: 6ad1e0abb9c1f784222ce360d495015bc7cc4db8cd7b01c219919790dc5cd4fc
+    name: coder
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/coder-1.0.2/coder-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 2.35.2
     created: "2026-10-16T02:20:44.159105035Z"
     dependencies:
     - name: coder
@@ -18911,4 +18925,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-16T02:47:02.828531231Z"
+generated: "2026-10-16T16:08:05.972360139Z"
