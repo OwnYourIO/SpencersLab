@@ -23,9 +23,14 @@ RUN git clone https://github.com/assafelovic/gpt-researcher.git . \
     && git checkout "$GPTR_VERSION"
 
 # CPU-only torch wheel first (the PyPI default ships CUDA libs), then the app
-# requirements plus the local embedding stack.
+# requirements plus the local embedding stack, then the gpt_researcher package
+# itself. Upstream runs uvicorn from the repo root so the package resolves via
+# CWD; this image runs from backend/ (see ENTRYPOINT below), so the package
+# must be installed explicitly. --no-deps: dependencies are already pinned by
+# requirements.txt above — don't let the resolver touch them.
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements.txt sentence-transformers
+    && pip install --no-cache-dir -r requirements.txt sentence-transformers \
+    && pip install --no-cache-dir --no-deps .
 
 # Bake the embedding model into the image so research runs need no egress.
 ENV HF_HOME=/app/.hf-cache
