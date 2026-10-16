@@ -256,6 +256,31 @@ llama-swap:
       # reusing the cached KV (K-shift), covering opencode's mutating
       # conversations (system reminders, tool schemas). The q38-common macro
       # carries --cache-reuse 1; the later flag wins.
+      #
+      # 2026-10-16 cache persistence + trio coexistence (operator request:
+      # hour-long idle gaps between turns, concurrent subagents, and an
+      # always-ready MoE + embedding sidecar):
+      # - ttl key removed entirely: inherits globalTTL 0 = never auto-unload
+      #   (was 300s — the cache-buster that killed all KV during idle gaps).
+      #   The model stays resident until a matrix swap evicts it.
+      # - Slots (-np) = the "live" cache tier: each concurrent session gets
+      #   its own slot so sessions never evict each other (-np 1 shared one
+      #   slot: the 0.34–0.52 LCP churn from the 2026-10-15 debug). Under
+      #   kv_unified the pool = np × ctx. np is sized against the measured
+      #   125 GiB node budget with the full trio resident (dense + MoE +
+      #   embedding; matrix "main" set below): q38 np=2 → 512k pool ≈ 17.8
+      #   GiB KV; q35 np=2 → 512k pool ≈ 5.9 GiB KV (10.9 KB/token — its
+      #   32 GiB of experts live in RAM, not KV).
+      # - --cache-ram (MiB) = the "warm" tier (llama.cpp PR #16391): idle
+      #   sessions beyond -np are saved to host RAM on slot reassignment
+      #   (cache_idle_slots, default on) and restored on prefix match instead
+      #   of re-prefill. PER-PROCESS budget — NOT shared between models;
+      #   within a process it LRU-evicts the oldest entry when full. Default
+      #   is 8192 MiB — the cap where the observed 1.6–7 GiB entries evicted
+      #   each other. Final split keeps ~3 GiB node headroom at full trio
+      #   (weights+KV ≈ 90 GiB + 16+10 GiB cache + ~6 GiB system of 125):
+      #   q38 16 GiB + q35 10 GiB (operator decision 2026-10-16). Soft caps:
+      #   raise later if monitoring shows headroom.
       qwen3.8-27b-q8:
         cmd: |
           ${server-cmd}
@@ -266,10 +291,11 @@ llama-swap:
           ${q38-common}
           --no-mmproj
           --cache-reuse 256
+          -np 2
+          --cache-ram 16384
         name: "Qwen 3.8 27B (Q8_0, MTP)"
-        description: "Plain Qwen 3.8 27B, Q8_0; MTP draft, text-only (--no-mmproj), cache_reuse 256, 256k ctx"
+        description: "Plain Qwen 3.8 27B, Q8_0; MTP draft, text-only (--no-mmproj), cache_reuse 256, 2 slots (512k pool), 16GiB RAM prompt cache, no idle unload, 256k ctx"
         proxy: http://localhost:${PORT}
-        ttl: 300
 
       qwen3.8-27b-q8-visual:
         cmd: |
@@ -286,6 +312,10 @@ llama-swap:
 
       # Same split for the MoE Q8: base = text-only + cache_reuse (full cmd
       # override), -visual = chart-default cmd (vision auto-loads).
+      # 2026-10-16: same cache-persistence treatment as q38q8 above (ttl key
+      # removed — inherits globalTTL 0 = no idle unload). np=2, --cache-ram
+      # 10240 — budget derivation in the q38q8 comment; full trio (dense +
+      # this MoE + embedding) preallocates ~90 GiB of the 125 GiB node.
       qwen3.6-35b-a3b-q8:
         cmd: |
           ${server-cmd}
@@ -296,10 +326,11 @@ llama-swap:
           ${flash-and-q8}
           --no-mmproj
           --cache-reuse 256
+          -np 2
+          --cache-ram 10240
         name: "Qwen 3.6 35B A3B (Q8_0)"
-        description: "Qwen 3.6 35B A3B (MoE), Q8_0; text-only (--no-mmproj), cache_reuse 256, experts on CPU, 256k ctx"
+        description: "Qwen 3.6 35B A3B (MoE), Q8_0; text-only (--no-mmproj), cache_reuse 256, experts on CPU, 2 slots (512k pool), 10GiB RAM prompt cache, no idle unload, 256k ctx"
         proxy: http://localhost:${PORT}
-        ttl: 0
 
       qwen3.6-35b-a3b-q8-visual:
         cmd: |
@@ -311,6 +342,29 @@ llama-swap:
           ${flash-and-q8}
         name: "Qwen 3.6 35B A3B (Q8_0) - Visual"
         description: "Qwen 3.6 35B A3B (MoE), Q8_0; vision on (auto mmproj), experts on CPU, 256k ctx; cache_reuse disabled by llama.cpp in multimodal mode"
+        proxy: http://localhost:${PORT}
+        ttl: 0
+
+      # Always-ready embedding sidecar (2026-10-16): coexists with the
+      # dense + MoE trio via the matrix "main" set below, so RAG /
+      # similarity workloads never evict the chat models (and vice versa).
+      # Own llama-server in --embeddings mode — serves /v1/embeddings; chat
+      # endpoints are disabled on this process. Single-pass embeddings have
+      # no prefix reuse → --cache-ram 0. Trivial footprint (~0.7 GiB weights
+      # + ~0.1 GiB KV at 8k ctx). gpu-ai only (the 8GiB gpu box keeps its
+      # tight single-model budget).
+      qwen3-embedding-0.6b:
+        cmd: |
+          ${server-cmd}
+          ${threads}
+          -hf Qwen/Qwen3-Embedding-0.6B-GGUF:Q8_0
+          --embeddings
+          -c 8192
+          -np 2
+          --cache-ram 0
+          -ngl 99
+        name: "Qwen3 Embedding 0.6B (Q8_0)"
+        description: "Text embeddings via /v1/embeddings; Qwen3-Embedding 0.6B Q8_0, always-ready sidecar"
         proxy: http://localhost:${PORT}
         ttl: 0
 
@@ -420,8 +474,20 @@ llama-swap:
       #   ttl: 300
       #   capabilities: { in: [text, image], out: [text] }
 
+    # Startup preload (2026-10-16): have the trio ready after (re)starts
+    # instead of paying 1–3 min of load on first request. The "main" matrix
+    # set permits all three concurrently, so they load without swapping each
+    # other out. Weights are PVC-cached; loads overlap.
+    hooks:
+      on_startup:
+        preload:
+          - qwen3.8-27b-q8
+          - qwen3.6-35b-a3b-q8
+          - qwen3-embedding-0.6b
+
     matrix:
       vars:
+        emb06: qwen3-embedding-0.6b
         q38orca: qwen38-orca
         q38ara: qwen38-ara
         q38rana: qwen38-rana
@@ -438,5 +504,15 @@ llama-swap:
         q35q8v: qwen3.6-35b-a3b-q8-visual
         # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
       sets:
-        # Scalar: must restate the chart's full alternation + the new models.
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35q8v | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp | q38orca | q38ara | q38rana | q38hum | q38f16 | q38q81m | katq41m | katq61m | katq81m) & homecpu"
+        # Trio coexistence (2026-10-16): ONE dense + ONE MoE + embedding +
+        # homecpu may all be resident at once; within the dense / MoE groups
+        # models remain alternatives (switching dense evicts only the old
+        # dense — the MoE, embedding, and their caches stay). Memory-sized on
+        # the 125 GiB node: dense ~47 + MoE ~41 + embed ~1 GiB preallocated
+        # + 26 GiB warm-cache caps + ~6 GiB system ≈ 121 GiB (≈3 GiB buffer).
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
+        # Heavy / special models run alone (+ homecpu): requesting one evicts
+        # the trio; requesting a trio member afterwards reloads it (weights
+        # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;
+        # VL/whisper serve batch jobs.
+        solo: "(q35bf16 | q35b1m | q38f16 | q38q81m | katq41m | katq61m | katq81m | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"

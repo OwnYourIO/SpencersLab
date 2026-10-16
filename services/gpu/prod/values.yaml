@@ -272,7 +272,17 @@ llama-swap:
           # tolerate that many tokens of prompt drift when reusing cached KV
           # (agentic conversations mutate: system reminders, tool schemas).
           --cache-reuse 256
-        description: "Qwen 3.6 35B A3B (MoE), Q8_0; 8GiB-gpu fit: experts on CPU, q8_0 KV, no vision, cache_reuse 256, 256k ctx (slow)"
+          # 2026-10-16: -np MUST be pinned to 1 on this box — the unified KV
+          # pool is np x ctx, so the llama-server default (4 slots) would
+          # preallocate 4 x 262144 x ~10.9KB/token = ~10.6 GiB of KV, and
+          # even np 2 (~5.7 GiB) plus the 2.48 GiB weights busts the 8 GiB
+          # card. np 1 keeps the pool at ~2.66 GiB (the 2026-10-11 VRAM
+          # budget). Concurrent agents here queue on the one slot instead.
+          # --cache-ram deliberately left at the 8 GiB default: ~32 GiB
+          # experts already resident in this box's 64 GiB RAM. ttl stays
+          # chart-default 0 (never auto-unload).
+          -np 1
+        description: "Qwen 3.6 35B A3B (MoE), Q8_0; 8GiB-gpu fit: experts on CPU, q8_0 KV, no vision, cache_reuse 256, 1 slot (np pinned: pool = np x ctx), 256k ctx (slow)"
 
 open-webui:
   annotations:
