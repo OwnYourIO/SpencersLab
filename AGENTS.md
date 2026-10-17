@@ -12,7 +12,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   (gpu, home, infra, media, monitoring, proxy-local, proxy-remote, …).
 - `custom-values/<category>/` — private overrides (Bitwarden UUIDs) via `bitwardenIds`.
 - `containers/<name>/` — custom images (Dockerfile + CI in `.github/workflows/`).
-- `.agents/agents/` — agent definitions. `.agents/plans/` — plan documents named
+- `.agents/agents/` — agent definitions; a symlink to `.opencode/agents/`,
+  the real tracked dir. `.agents/plans/` — plan documents named
   `yyyy-mm-dd-<type>-<short-desc>.md` (date prefix, **never** a unix epoch;
   `<type>` = `feat`|`bug`|`debug`|`dep`|… so the goal is visible at a glance),
   plus per-feature pipeline folders `yyyy-mm/<feature-slug>/` used by the
@@ -28,8 +29,10 @@ container images (`containers/`). **ArgoCD applies everything — never
   inventory is the root `skills-lock.json`); don't hand-edit those.
 - `.kilo` — tracked symlink to `.agents/`, so kilo loads the same agents,
   plans, and skills.
-- `.opencode/` — real tracked dir: `agents` and `skills` symlink back into
-  `.agents/`; opencode-only content lives here (`plugin/`, `opencode.json`).
+- `.opencode/` — real tracked dir: `agents/` is the canonical home of the
+  agent definitions (`.agents/agents` symlinks into it), while `skills`
+  symlinks back into `.agents/`; opencode-only content lives here
+  (`plugin/`, `opencode.json`).
 - `.opencode/opencode.json` — version-controlled OpenCode project config:
   the lab MCP servers, permissions, skills paths and the default agent.
   Merged over the machine-global config. LLM providers (`gpu-ai`/`gpu-moe`
