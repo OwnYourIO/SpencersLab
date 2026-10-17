@@ -752,6 +752,11 @@ config:
     # bundled in the unified image. Weights (~3.1GB) are fetched once from
     # HuggingFace into the models PVC on first load. Swaps 1:1 with the GPU
     # chat/VL models per the matrix below (one GPU model at a time on 8GB).
+    # 2026-10-17: weights URL is ggerganov/whisper.cpp — the former home
+    # ggml-org/whisper.cpp was removed from HuggingFace (401), which made
+    # every load die in the curl bootstrap ("upstream command exited
+    # prematurely"); ggerganov/whisper.cpp is where upstream's own
+    # download-ggml-model.sh points.
     # NOTE on the /bin/sh -c bootstrap below: llama-swap's SanitizeCommand
     # strips trailing backslashes (keeping the newline) before shlex-splitting,
     # so inside the quoted script a command must be COMPLETE on one line —
@@ -762,7 +767,7 @@ config:
         /bin/sh -c "
           mkdir -p /models/whisper &&
           { test -f /models/whisper/ggml-large-v3.bin ||
-            { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggml-org/whisper.cpp/resolve/main/ggml-large-v3.bin &&
+            { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin &&
               mv /models/whisper/ggml-large-v3.bin.part /models/whisper/ggml-large-v3.bin; }; } &&
           exec whisper-server --host 0.0.0.0 --port ${PORT} -m /models/whisper/ggml-large-v3.bin
         "

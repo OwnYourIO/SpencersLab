@@ -52,7 +52,7 @@
 | Knob | Before | After |
 |---|---|---|
 | `ttl` | 300 (q38) / 0 (q35) | key removed → chart default `ttl: 0` = never auto-unload; eviction only via matrix swap |
-| `-np` | 1 (q38) / implicit 4 (q35) | **2** each (512k pool each: ~17.8 GiB KV dense, ~5.9 GiB KV MoE) |
+| `-np` | 1 (q38) / implicit 4 (q35) | **1** (q38) / **2** (q35) — q38 back to a single live slot per operator (2026-10-17): full decode speed for the active session; a concurrent dense session rides the warm tier. Pools: q38 256k ≈ 8.7 GiB KV, q35 512k ≈ 5.9 GiB KV |
 | `--cache-ram` | default 8192 | **16384** (q38) / **10240** (q35) |
 | `--cache-reuse` | 256 | 256 (unchanged) |
 
@@ -85,15 +85,16 @@ qwen3.6-35b-a3b-q8, qwen3-embedding-0.6b]` — the trio is ready after pod
 | Item | GiB |
 |---|---|
 | q38q8 weights + MTP | ~29 |
-| q38 KV pool (np=2, 512k) | ~17.8 |
+| q38 KV pool (np=1, 256k) | ~8.7 |
 | q35q8 experts (RAM) + non-expert + KV pool (np=2) | ~31.9 + 2.5 + 5.9 |
 | embedding | ~1 |
 | cache-ram caps (16 + 10 + 0) | 26 |
 | system + other pods | ~6 |
-| **Total vs 125 GiB** | **≈ 121 → ~3 GiB buffer** (operator-specified target) |
+| **Total vs 125 GiB** | **≈ 112 → ~14 GiB buffer** |
 
 Options weighed with operator (np=3-MoE or 32 GiB cache variants overflowed
-the box); chosen: **np=2/np=2, cache 16+10 GiB**.
+the box); chosen: **np=1/np=2, cache 16+10 GiB** (dense np dropped 2→1 on
+2026-10-17 — frees ~9 GiB, keeps full decode speed for the active session).
 
 ### `services/gpu/prod/values.yaml`
 
@@ -111,7 +112,7 @@ queue on the single slot by design.
   (`git diff charts/` empty); chart pytest 33/33.
 - gpu-ai merged ConfigMap: hooks.preload trio; `main`/`solo` sets parsed;
   every matrix var used, every model has a var, no dangling targets;
-  q38q8 `-np 2 --cache-ram 16384`, q35q8 `-np 2 --cache-ram 10240`,
+  q38q8 `-np 1 --cache-ram 16384`, q35q8 `-np 2 --cache-ram 10240`,
   embedding `--embeddings -np 2 --cache-ram 0`, both ttls absent at service
   level (chart `ttl: 0` merges).
 - gpu merged ConfigMap: embedding absent, no hooks, q35 `-np 1`, sets
@@ -125,7 +126,7 @@ queue on the single slot by design.
    agent sessions → `/api/metrics/activity` shows `cache_tokens` ≈ full
    prompt per stream; walk away and return → fast restore, no cold prefill;
    request a VL model → trio evicts, then reloads on the next chat request.
-3. Watch node RAM the first day (target ≈121 GiB peak, ~3 GiB buffer);
+3. Watch node RAM the first day (worst case ≈112 GiB peak, ~14 GiB buffer);
    cache-ram caps are soft — raise with a one-line values change if
    monitoring shows headroom.
 

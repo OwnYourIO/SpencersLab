@@ -266,21 +266,24 @@ llama-swap:
       # - Slots (-np) = the "live" cache tier: each concurrent session gets
       #   its own slot so sessions never evict each other (-np 1 shared one
       #   slot: the 0.34–0.52 LCP churn from the 2026-10-15 debug). Under
-      #   kv_unified the pool = np × ctx. np is sized against the measured
-      #   125 GiB node budget with the full trio resident (dense + MoE +
-      #   embedding; matrix "main" set below): q38 np=2 → 512k pool ≈ 17.8
-      #   GiB KV; q35 np=2 → 512k pool ≈ 5.9 GiB KV (10.9 KB/token — its
-      #   32 GiB of experts live in RAM, not KV).
+      #   kv_unified the pool = np × ctx. Sized against the measured 125 GiB
+      #   node budget with the full trio resident (dense + MoE + embedding;
+      #   matrix "main" set below): q38 np=1 → 256k pool ≈ 8.7 GiB KV
+      #   (operator decision 2026-10-17: keep full decode speed for the
+      #   active session; a second concurrent dense session rides the warm
+      #   tier below instead of halving throughput); q35 np=2 → 512k pool
+      #   ≈ 5.9 GiB KV (10.9 KB/token — its 32 GiB of experts live in RAM,
+      #   not KV).
       # - --cache-ram (MiB) = the "warm" tier (llama.cpp PR #16391): idle
       #   sessions beyond -np are saved to host RAM on slot reassignment
       #   (cache_idle_slots, default on) and restored on prefix match instead
       #   of re-prefill. PER-PROCESS budget — NOT shared between models;
       #   within a process it LRU-evicts the oldest entry when full. Default
       #   is 8192 MiB — the cap where the observed 1.6–7 GiB entries evicted
-      #   each other. Final split keeps ~3 GiB node headroom at full trio
-      #   (weights+KV ≈ 90 GiB + 16+10 GiB cache + ~6 GiB system of 125):
-      #   q38 16 GiB + q35 10 GiB (operator decision 2026-10-16). Soft caps:
-      #   raise later if monitoring shows headroom.
+      #   each other. Final split at full trio (weights+KV ≈ 81 GiB + 24+10 GiB
+      #   cache + ~6 GiB system of 125 → ~6 GiB headroom with q38 np=1):
+      #   q38 24 GiB + q35 10 GiB (operator decisions 2026-10-16/17). Soft
+      #   caps: raise later if monitoring shows headroom.
       qwen3.8-27b-q8:
         cmd: |
           ${server-cmd}
@@ -291,10 +294,10 @@ llama-swap:
           ${q38-common}
           --no-mmproj
           --cache-reuse 256
-          -np 2
-          --cache-ram 16384
+          -np 1
+          --cache-ram 24576
         name: "Qwen 3.8 27B (Q8_0, MTP)"
-        description: "Plain Qwen 3.8 27B, Q8_0; MTP draft, text-only (--no-mmproj), cache_reuse 256, 2 slots (512k pool), 16GiB RAM prompt cache, no idle unload, 256k ctx"
+        description: "Plain Qwen 3.8 27B, Q8_0; MTP draft, text-only (--no-mmproj), cache_reuse 256, 1 slot (256k pool), 24GiB RAM prompt cache, no idle unload, 256k ctx"
         proxy: http://localhost:${PORT}
 
       qwen3.8-27b-q8-visual:
@@ -508,8 +511,8 @@ llama-swap:
         # homecpu may all be resident at once; within the dense / MoE groups
         # models remain alternatives (switching dense evicts only the old
         # dense — the MoE, embedding, and their caches stay). Memory-sized on
-        # the 125 GiB node: dense ~47 + MoE ~41 + embed ~1 GiB preallocated
-        # + 26 GiB warm-cache caps + ~6 GiB system ≈ 121 GiB (≈3 GiB buffer).
+        # the 125 GiB node: dense ~38 + MoE ~41 + embed ~1 GiB preallocated
+        # + 34 GiB warm-cache caps + ~6 GiB system ≈ 119 GiB (~6 GiB buffer).
         main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
