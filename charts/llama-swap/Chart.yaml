@@ -1,7 +1,7 @@
 apiVersion: v2
 name: llama-swap
-version: 1.0.20
-appVersion: v262-vulkan-b11515
+version: 1.0.19
+appVersion: unified-vulkan-262
 dependencies:
 - name: app-template
   version: 5.0.1

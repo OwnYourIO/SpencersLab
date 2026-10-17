@@ -841,11 +841,33 @@ app-template:
         main:
           image:
             repository: ghcr.io/mostlygeek/llama-swap
-            tag: v262-vulkan-b11515
+            # 2026-10-17: switched from the vNNN-vulkan-bNNNN lineage to the
+            # unified pipeline. The old lineage's vulkan tags were built by
+            # the pre-#1071 Dockerfile (llama-server in /app, NO whisper.cpp,
+            # entrypoint /app/llama-swap -config /app/config.yaml) — verified
+            # from the v262-vulkan-b11515 image history — so whisper-large-v3
+            # died with "exec: whisper-server: not found" after the 2026-10-17
+            # download-URL fix. unified-vulkan-262 is the v262-release image
+            # of the per-project pipeline: whisper-server/sd-server/llama-
+            # server in /usr/local/bin, entrypoint run.sh. Pinned to the
+            # release-versioned tag (not the floating unified-vulkan) so the
+            # digest is stable; same llama-swap v262 config schema. Its
+            # llama.cpp (889edf43, 2026-10-03) was audited for every flag
+            # used below (-ot, --load-mode, --cache-reuse, --cache-ram,
+            # --n-cpu-moe, --no-mmproj, --flash-attn, --jinja, ...).
+            tag: unified-vulkan-262
           env:
             TZ: Etc/UTC
             # Cache downloaded models (-hf flag) on the models PVC
             LLAMA_CACHE: /models
+            # run.sh (unified entrypoint) maps LLAMA_SWAP_* env to llama-swap
+            # flags. Default config path is the image's bundled example at
+            # /etc/llama-swap/config/config.yaml — point it at OUR rendered
+            # config. WATCH_CONFIG defaults to true in run.sh; spelled out
+            # here because it only pays off with the directory mount below
+            # (subPath mounts never receive ConfigMap updates).
+            LLAMA_SWAP_CONFIG: /app/config/config.yaml
+            LLAMA_SWAP_WATCH_CONFIG: "true"
             # NOTE: HF_TOKEN is intentionally NOT set here. Gated -hf repos
             # need a token, but app-template's schema forbids optional
             # secretKeyRefs and clusters without bitwardenIds.hf-token (gpu)
@@ -911,11 +933,17 @@ app-template:
 
   persistence:
     config:
+      # Mount the ConfigMap as a DIRECTORY (no subPath): subPath mounts never
+      # receive ConfigMap updates, which silently disabled llama-swap's
+      # -watch-config hot reload (the 2026-10-17 whisper incident needed a
+      # manual pod restart for exactly this reason). With the directory mount
+      # kubelet syncs ConfigMap changes (~1 min) and run.sh's default
+      # -watch-config reloads llama-swap in place; the LLAMA_SWAP_CONFIG env
+      # above points at the file inside the directory.
       type: configMap
       name: llama-swap-config
       globalMounts:
-        - path: /app/config.yaml
-          subPath: config.yaml
+        - path: /app/config
     tools:
       type: configMap
       name: llama-swap-tools
