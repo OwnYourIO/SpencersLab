@@ -363,6 +363,12 @@
       "skillPath": "skills/requesting-code-review/SKILL.md",
       "computedHash": "004f340ae65811095d6a9bb0a759c87d0a8085c5e705dbb019b011626293d2e9"
     },
+    "rulesync": {
+      "source": "dyoshikawa/rulesync",
+      "sourceType": "github",
+      "skillPath": "skills/rulesync/SKILL.md",
+      "computedHash": "f4fd7d9fe959ce69d15e6c2bd7c73a226daff4fb30d263c74ee2b8e15d7274fa"
+    },
     "storm": {
       "source": "kunjan-p/storm-skill",
       "sourceType": "github",
