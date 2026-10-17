@@ -757,6 +757,13 @@ config:
     # every load die in the curl bootstrap ("upstream command exited
     # prematurely"); ggerganov/whisper.cpp is where upstream's own
     # download-ggml-model.sh points.
+    # 2026-10-17 (2nd): --inference-path below is REQUIRED. whisper.cpp's
+    # server only ever registers request_path + inference_path (default
+    # /inference) — it has NO /v1/audio/transcriptions route (verified in
+    # the image's whisper.cpp 60c0be6a), while llama-swap forwards the
+    # OpenAI path to upstreams unrewritten, so without the flag every
+    # transcription 404'd with Server: whisper.cpp. /health stays put
+    # (registered off request_path), so checkEndpoint keeps working.
     # NOTE on the /bin/sh -c bootstrap below: llama-swap's SanitizeCommand
     # strips trailing backslashes (keeping the newline) before shlex-splitting,
     # so inside the quoted script a command must be COMPLETE on one line —
@@ -769,7 +776,7 @@ config:
           { test -f /models/whisper/ggml-large-v3.bin ||
             { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin &&
               mv /models/whisper/ggml-large-v3.bin.part /models/whisper/ggml-large-v3.bin; }; } &&
-          exec whisper-server --host 0.0.0.0 --port ${PORT} -m /models/whisper/ggml-large-v3.bin
+          exec whisper-server --host 0.0.0.0 --port ${PORT} --inference-path /v1/audio/transcriptions -m /models/whisper/ggml-large-v3.bin
         "
       name: "Whisper Large v3"
       description: "Audio transcription (whisper.cpp ggml-large-v3) for podcast processing"
