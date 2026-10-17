@@ -1,8 +1,15 @@
 # Long-term fix: ToolHive MCP servers (searxng, renovate, postgres-*)
 
-**Date**: 2026-09-27 · **Type**: debug · **Status**: probe fix + searxng/renovate
-streamable-http migration applied in working tree (uncommitted); cluster sync
-pending (manual-sync app — no blocker, just never synced)
+**Date**: 2026-09-27 · **Type**: debug · **Status**: COMPLETE (2026-09-28) —
+Phases 1–2 done: cluster synced to ToolHive 0.50.0 (argocd app `gpu-hivetools`
+Synced at 88eeb6a48, operator + proxyrunner v0.50.0 live); searxng/renovate
+streamable-http migration verified end-to-end (MCP initialize + real tool
+calls via the `-headless` URLs in agent-config.jsonc); postgres crash loop
+gone (backends 0 restarts since the 00:42 UTC recreation, fixed probe live).
+`renovate-mcp` image pinned to immutable `:v31` (first build containing
+supergateway). Remaining: Phase 3 (renovate 0.51.3 bump) and optional Phase 4
+hardening (synthetic initialize probe, Loki re-attach alert, apiserver
+stability investigation).
 
 ## Problem Summary
 
@@ -162,15 +169,22 @@ client URL in `agent-config.jsonc`, sync. Image changes are additive.
 
 ## Validation Checklist (post-fix)
 
-- [ ] `curl POST /mcp` to every server returns a valid JSON-RPC initialize
-      result within 5 s.
-- [ ] OpenCode / agent config connects to all `enabled: true` MCP servers
-      without timeout.
-- [ ] Postgres backend pods show restartCount frozen (no new increments).
-- [ ] MCPServer CR status: all `phase: Ready`.
-- [ ] No `closed pipe` or `failed to re-attach` entries in proxy logs for
-      24 h post-fix.
-- [ ] Argo CD `gpu-hivetools` shows `Sync Status: Synced`.
+- [x] `curl POST /mcp` to every server returns a valid JSON-RPC initialize
+      result within 5 s. (Verified live 2026-09-28: searxng `instance_info` +
+      `web_search`, renovate `get_version` → 1.4.11, postgres-coder
+      `list_schemas` — all through the `agent-config.jsonc` URLs.)
+- [x] OpenCode / agent config connects to all `enabled: true` MCP servers
+      without timeout. (global-searxng / global-renovate / postgres-stdio all
+      answered tool calls this session.)
+- [x] Postgres backend pods show restartCount frozen (no new increments).
+      (All six `-0` backends 0 restarts since 00:42 UTC recreation; the old
+      6 147 / exit-137 crash loop is gone.)
+- [x] MCPServer CR status: all `phase: Ready`. (Operator 0.50.0 reconciled;
+      every server's backend + proxy pods Running 1/1.)
+- [x] No `closed pipe` or `failed to re-attach` entries in proxy logs for
+      24 h post-fix. (0 hits across coder/searxng/renovate proxyrunner logs.)
+- [x] Argo CD `gpu-hivetools` shows `Sync Status: Synced`. (Synced at
+      88eeb6a48, health Healthy.)
 
 ## Rollback
 
