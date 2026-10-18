@@ -617,9 +617,6 @@ llama-swap:
         # the 125 GiB node: dense ~38 + MoE ~41 + embed ~1 GiB preallocated
         # + 34 GiB warm-cache caps + ~6 GiB system ≈ 119 GiB (~6 GiB buffer).
         main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
-        # the 125 GiB node: dense ~47 + MoE ~41 + embed ~1 GiB preallocated
-        # + 26 GiB warm-cache caps + ~6 GiB system ≈ 121 GiB (≈3 GiB buffer).
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
         # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;
