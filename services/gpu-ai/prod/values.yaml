@@ -123,6 +123,30 @@ llama-swap:
         --reasoning on
         --reasoning-preserve
         --reasoning-effort medium
+      # Qwen3.6-35B-A3B uncensored entries (2026-10-18, plan 2026-10-11
+      # gpu-ai-uncensored-qwen36-coder-next). VRAM unpinned → Variant B:
+      # experts-on-CPU, a literal copy of the chart's ${moe} + ${threads}
+      # flags plus the q38 perf flags. Literal because macro→macro reference
+      # order across the chart merge isn't guaranteed, and attention must
+      # never go all-CPU. Switching to full-GPU (-ngl 999) after a VRAM pin
+      # ≥ 32 GB is a one-macro edit.
+      q36-common: |
+        -ngl 99
+        -ot "\.ffn_.*_exps\.=CPU"
+        --load-mode none
+        -t 10
+        -np 1
+        -b 2048
+        -ub 2048
+        --flash-attn on
+        --cache-type-k q8_0
+        --cache-type-v q8_0
+        --cache-reuse 1
+        --no-context-shift
+      # Qwen thinking-coding params (temp 0.6 — deliberately NOT
+      # q38-sampling's 0.7): per Qwen3.6 card guidance from the STORM run.
+      q36-sampling: |
+        --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
     models:
       qwen38-orca:                  # daily driver, MTP + embedded vision
         cmd: |
@@ -458,6 +482,80 @@ llama-swap:
         proxy: http://localhost:${PORT}
         ttl: 180
 
+      # --- Qwen3.6-35B-A3B uncensored (2026-10-18, STORM run c93fd3a) ---
+      # Abliterated variants ALONGSIDE the chart's base qwen3.6-35b-a3b-*
+      # entries — they replace nothing. Both keep native MTP heads →
+      # draft-mtp speculative decoding (n-max 2 per the RDNA4 measurement;
+      # expect only ~1.15-1.25× on fine-grained MoE — measure on first
+      # load). Placement: experts-on-CPU (Variant B, VRAM unpinned) via
+      # ${q36-common}. mmproj confirmed in both repos → vision declared.
+      qwen36-heretic:               # evidence pick: KL 0.0015, MMLU 83.71→83.39,
+                                    # 19 MTP tensors proven intact
+        cmd: |
+          ${server-cmd}
+          -hf mradermacher/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-GGUF:Q4_K_M
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q36-common}
+          ${q36-sampling}
+          ${q38-think}
+        # q38-think reuse is intentional: the reasoning flags are generic
+        # (--reasoning on/--reasoning-preserve/--reasoning-effort medium).
+        name: "Qwen3.6 35B A3B heretic (Q4_K_M, MTP)"
+        description: "llmfan46 heretic abliteration, native MTP preserved; mradermacher mirror; experts-on-CPU; 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+        capabilities: { in: [text, image], out: [text] }
+
+      qwen36-huihui:                # stable-org fallback: HF PRO, 155 models,
+                                    # dedicated MTP-preserving GGUF build. Repo
+                                    # ships Q4_K, not Q4_K_M — quant suffix
+                                    # adjusted per plan Task 1 (user-approved).
+        cmd: |
+          ${server-cmd}
+          -hf huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF:Q4_K
+          -c 262144
+          --spec-type draft-mtp --spec-draft-n-max 2
+          ${q36-common}
+          ${q36-sampling}
+          ${q38-think}
+        name: "Qwen3.6 35B A3B huihui abliterated (Q4_K, MTP)"
+        description: "huihui-ai classic abliteration, dedicated MTP GGUF; experts-on-CPU; 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+        capabilities: { in: [text, image], out: [text] }
+
+      coder-next-ablit:             # 80B-A3B abliterated (huihui) via bartowski
+                                    # GGUF. Experts-on-CPU unconditionally
+                                    # (48.6 GB weights; attention+KV stay on GPU —
+                                    # never all-CPU attention). NON-THINKING model:
+                                    # no --reasoning flags. Tight sampling for
+                                    # agent loops: start at temp 0.2; drop to 0.1
+                                    # only if Cyrillic-homoglyph drift or
+                                    # numeric-spam appears (rafw007 needed 0.1).
+                                    # Lives in the solo set: 48.6 GB experts-on-CPU
+                                    # co-resident with the dense trio would exceed
+                                    # the 125 GiB node budget.
+        cmd: |
+          ${server-cmd}
+          ${threads}
+          -hf bartowski/huihui-ai_Qwen3-Coder-Next-abliterated-GGUF:Q4_K_M
+          -c 262144
+          ${moe}
+          --flash-attn on
+          --cache-type-k q8_0
+          --cache-type-v q8_0
+          --cache-reuse 1
+          --no-context-shift
+          -np 1
+          -b 2048
+          -ub 2048
+          --temp 0.2 --top-p 0.95 --top-k 20
+        name: "Qwen3-Coder-Next 80B A3B abliterated (Q4_K_M)"
+        description: "huihui abliteration, bartowski GGUF; experts-on-CPU; non-thinking, tight sampling; 256k ctx"
+        proxy: http://localhost:${PORT}
+        ttl: 300
+
       # PHASE 2 — enable after sidecar provisioning (prepare → convert-cyber
       # → verify). Deliberately NO bootstrap here: a missing LoRA must fail
       # loudly, provisioning is operator-run via the tools container.
@@ -505,6 +603,11 @@ llama-swap:
         # are the text-only caching versions (--no-mmproj + cache_reuse).
         q38q8v: qwen3.8-27b-q8-visual
         q35q8v: qwen3.6-35b-a3b-q8-visual
+        # Uncensored MoE additions (2026-10-18): the two 35B entries join the
+        # main MoE alternation; coder-next-ablit is solo-set (see below).
+        q36her: qwen36-heretic
+        q36hui: qwen36-huihui
+        cnxabl: coder-next-ablit
         # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
       sets:
         # Trio coexistence (2026-10-16): ONE dense + ONE MoE + embedding +
@@ -513,9 +616,13 @@ llama-swap:
         # dense — the MoE, embedding, and their caches stay). Memory-sized on
         # the 125 GiB node: dense ~38 + MoE ~41 + embed ~1 GiB preallocated
         # + 34 GiB warm-cache caps + ~6 GiB system ≈ 119 GiB (~6 GiB buffer).
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
+        # the 125 GiB node: dense ~47 + MoE ~41 + embed ~1 GiB preallocated
+        # + 26 GiB warm-cache caps + ~6 GiB system ≈ 121 GiB (≈3 GiB buffer).
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
         # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;
-        # VL/whisper serve batch jobs.
-        solo: "(q35bf16 | q35b1m | q38f16 | q38q81m | katq41m | katq61m | katq81m | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+        # VL/whisper serve batch jobs; cnxabl's 48.6 GB experts-on-CPU would
+        # overflow the node RAM budget if co-resident with the dense trio.
+        solo: "(q35bf16 | q35b1m | q38f16 | q38q81m | katq41m | katq61m | katq81m | cnxabl | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
