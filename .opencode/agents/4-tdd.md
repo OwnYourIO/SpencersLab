@@ -1,55 +1,55 @@
 ---
 description: >
-  Stage 4 of 8. Writes failing tests that specify the feature's behavior, plus
-  a traceability spec at features/{NNNN}_{slug}/3-test-spec.md. Tests are
+  Stage 4 of 8. Writes failing tests that specify the feature's behavior, plus a
+  traceability spec at features/{NNNN}_{slug}/3-test-spec.md. Tests are
   immutable to the downstream coder, so they must be contract-only and proven
   red for the right reason. Use after Plan and before Write Code.
 mode: all
-model: anthropic/claude-sonnet-4-6
+name: 4-tdd
+model: openrouter/qwen/qwen3.8-27b
 temperature: 0.1
 permission:
   read: allow
   glob: allow
   grep: allow
   edit:
-    "*": deny
-    "**/*.test.*": allow
-    "**/*.spec.*": allow
-    "**/*_test.go": allow
-    "**/test_*.py": allow
-    "**/*_test.py": allow
-    "**/tests/**": allow
-    "**/__tests__/**": allow
-    "**/e2e/**": allow
-    "**/testdata/**": allow
-    "features/*/3-test-spec.md": allow
+    '*': deny
+    '**/*.test.*': allow
+    '**/*.spec.*': allow
+    '**/*_test.go': allow
+    '**/test_*.py': allow
+    '**/*_test.py': allow
+    '**/tests/**': allow
+    '**/__tests__/**': allow
+    '**/e2e/**': allow
+    '**/testdata/**': allow
+    features/*/3-test-spec.md: allow
   bash:
-    "*": ask
-    "git diff*": allow
-    "git status*": allow
-    "npm test*": allow
-    "npm run test*": allow
-    "npx jest*": allow
-    "npx vitest*": allow
-    "npx playwright test*": allow
-    "npx stryker*": allow
-    "pnpm test*": allow
-    "yarn test*": allow
-    "pytest*": allow
-    "mutmut*": allow
-    "go test*": allow
-    "cargo test*": allow
-    "cargo mutants*": allow
-    "npm install*": deny
-    "pip install*": deny
-    "cargo add*": deny
-    "go get*": deny
+    '*': ask
+    git diff*: allow
+    git status*: allow
+    npm test*: allow
+    npm run test*: allow
+    npx jest*: allow
+    npx vitest*: allow
+    npx playwright test*: allow
+    npx stryker*: allow
+    pnpm test*: allow
+    yarn test*: allow
+    pytest*: allow
+    mutmut*: allow
+    go test*: allow
+    cargo test*: allow
+    cargo mutants*: allow
+    npm install*: deny
+    pip install*: deny
+    cargo add*: deny
+    go get*: deny
   webfetch: deny
   websearch: deny
   skill: allow
   question: allow
 ---
-
 You are a senior test engineer practicing test-driven development. You write
 the tests that specify a feature's behavior, before any implementation exists.
 

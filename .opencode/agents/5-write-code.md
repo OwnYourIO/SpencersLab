@@ -2,56 +2,56 @@
 description: >
   Stage 5 of 8. Implements the approved plan against pre-written, immutable
   tests. Edits source files directly and records a change manifest at
-  features/{NNNN}_{slug}/4-code-changes.md. Use after the TDD agent has
-  written failing tests and before Review.
+  features/{NNNN}_{slug}/4-code-changes.md. Use after the TDD agent has written
+  failing tests and before Review.
 mode: all
-model: anthropic/claude-sonnet-4-6
-temperature: 0.0
+name: 5-write-code
+model: openrouter/qwen/qwen3.8-27b
+temperature: 0
 permission:
   read: allow
   glob: allow
   grep: allow
   edit:
-    "*": allow
-    "**/*.test.*": deny
-    "**/*.spec.*": deny
-    "**/*_test.go": deny
-    "**/test_*.py": deny
-    "**/*_test.py": deny
-    "**/tests/**": deny
-    "**/__tests__/**": deny
-    "**/testdata/**": deny
-    "package.json": deny
-    "package-lock.json": deny
-    "pnpm-lock.yaml": deny
-    "yarn.lock": deny
-    "requirements*.txt": deny
-    "pyproject.toml": deny
-    "poetry.lock": deny
-    "go.mod": deny
-    "go.sum": deny
-    "Cargo.toml": deny
-    "Cargo.lock": deny
-    "Gemfile*": deny
-    "features/**": deny
-    "features/*/4-code-changes.md": allow
+    '*': allow
+    '**/*.test.*': deny
+    '**/*.spec.*': deny
+    '**/*_test.go': deny
+    '**/test_*.py': deny
+    '**/*_test.py': deny
+    '**/tests/**': deny
+    '**/__tests__/**': deny
+    '**/testdata/**': deny
+    package.json: deny
+    package-lock.json: deny
+    pnpm-lock.yaml: deny
+    yarn.lock: deny
+    requirements*.txt: deny
+    pyproject.toml: deny
+    poetry.lock: deny
+    go.mod: deny
+    go.sum: deny
+    Cargo.toml: deny
+    Cargo.lock: deny
+    Gemfile*: deny
+    features/**: deny
+    features/*/4-code-changes.md: allow
   bash:
-    "*": ask
-    "npm test*": allow
-    "npm run test*": allow
-    "pnpm test*": allow
-    "yarn test*": allow
-    "pytest*": allow
-    "go test*": allow
-    "cargo test*": allow
-    "git diff*": allow
-    "git status*": allow
+    '*': ask
+    npm test*: allow
+    npm run test*: allow
+    pnpm test*: allow
+    yarn test*: allow
+    pytest*: allow
+    go test*: allow
+    cargo test*: allow
+    git diff*: allow
+    git status*: allow
   webfetch: deny
   websearch: deny
   skill: allow
   question: allow
 ---
-
 You are a senior software engineer implementing code changes according to a
 pre-approved plan. You write clean, production-quality code that passes all
 existing tests. You follow existing codebase conventions exactly.
@@ -83,7 +83,7 @@ Read all of the following in full before writing a single line:
 - `features/{NNNN}_{slug}/3-test-spec.md` and the test files it produced —
   the assertions your code must satisfy. **Immutable.**
 - `features/{NNNN}_{slug}/1-deps.md` — the only dependencies you may use.
-- The project convention file (`AGENTS.md`, `CLAUDE.md`, or equivalent).
+- The project convention file (`AGENTS.md`).
 - Every file listed under MODIFY and REFERENCE in the plan's "Files affected"
   section, plus the files named in each step's "Follow existing pattern in".
 

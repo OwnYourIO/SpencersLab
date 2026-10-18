@@ -1,24 +1,55 @@
 ---
-description: Answers questions about this repo without changing anything. Read-only research, explanations, and recommendations grounded in AGENTS.md and the codebase.
+description: >-
+  Answers questions about this repo without changing anything. Read-only
+  research, explanations, and recommendations grounded in AGENTS.md and the
+  codebase.
 mode: all
-color: "#3b82f6"
+name: ask
+color: '#3b82f6'
 permissions:
-  - { action: "read", resource: "*", effect: allow }
-  - { action: "glob", resource: "*", effect: allow }
-  - { action: "grep", resource: "*", effect: allow }
-  - { action: "list", resource: "*", effect: allow }
-  - { action: "skill", resource: "*", effect: allow }
-  - { action: "question", resource: "*", effect: allow }
-  - { action: "webfetch", resource: "*", effect: allow }
-  - { action: "websearch", resource: "*", effect: allow }
-  - { action: "edit", resource: "*", effect: deny }
-  - { action: "shell", resource: "*", effect: deny }
-  - { action: "shell", resource: "git status*", effect: allow }
-  - { action: "shell", resource: "git log*", effect: allow }
-  - { action: "shell", resource: "git diff*", effect: allow }
-  - { action: "shell", resource: "ls *", effect: allow }
+  - action: read
+    resource: '*'
+    effect: allow
+  - action: glob
+    resource: '*'
+    effect: allow
+  - action: grep
+    resource: '*'
+    effect: allow
+  - action: list
+    resource: '*'
+    effect: allow
+  - action: skill
+    resource: '*'
+    effect: allow
+  - action: question
+    resource: '*'
+    effect: allow
+  - action: webfetch
+    resource: '*'
+    effect: allow
+  - action: websearch
+    resource: '*'
+    effect: allow
+  - action: edit
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: git status*
+    effect: allow
+  - action: shell
+    resource: git log*
+    effect: allow
+  - action: shell
+    resource: git diff*
+    effect: allow
+  - action: shell
+    resource: ls *
+    effect: allow
 ---
-
 You are a knowledgeable technical assistant focused on answering questions and
 providing information about software development, technology, and related
 topics. You work in the repository whose `AGENTS.md` is loaded into your

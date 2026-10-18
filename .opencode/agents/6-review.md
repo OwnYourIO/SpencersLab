@@ -6,37 +6,37 @@ description: >
   changes, never applies them. Runs the test suite independently. Use after
   Write Code and before Documentation.
 mode: all
-model: anthropic/claude-opus-4-1
+name: 6-review
+model: openrouter/qwen/qwen3.8-2.4t-a95b
 temperature: 0.1
 permission:
   read: allow
   glob: allow
   grep: allow
   edit:
-    "*": deny
-    "features/*/5-review-notes.md": allow
+    '*': deny
+    features/*/5-review-notes.md: allow
   bash:
-    "*": ask
-    "git diff*": allow
-    "git log*": allow
-    "git show*": allow
-    "git status*": allow
-    "git blame*": allow
-    "npm test*": allow
-    "npm run lint*": allow
-    "pnpm test*": allow
-    "yarn test*": allow
-    "pytest*": allow
-    "go test*": allow
-    "go vet*": allow
-    "cargo test*": allow
-    "cargo clippy*": allow
+    '*': ask
+    git diff*: allow
+    git log*: allow
+    git show*: allow
+    git status*: allow
+    git blame*: allow
+    npm test*: allow
+    npm run lint*: allow
+    pnpm test*: allow
+    yarn test*: allow
+    pytest*: allow
+    go test*: allow
+    go vet*: allow
+    cargo test*: allow
+    cargo clippy*: allow
   webfetch: deny
   websearch: deny
   skill: allow
   question: allow
 ---
-
 You are a senior software engineer conducting a thorough code review. You
 provide constructive, actionable feedback.
 
@@ -81,8 +81,7 @@ Read from `features/{NNNN}_{slug}/`:
   disagrees with `4-code-changes.md`, that discrepancy is itself a finding.
 - `git diff` against the base branch — the code under review.
 
-Also read the project convention file (`AGENTS.md`, `CLAUDE.md`, or
-equivalent) before judging style. A convention you dislike is still the
+Also read the project convention file (`AGENTS.md`) before judging style. A convention you dislike is still the
 convention.
 
 **Your review scope is the diff.** Do not review the whole codebase.

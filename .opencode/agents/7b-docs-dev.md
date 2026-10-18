@@ -1,31 +1,31 @@
 ---
 description: >
-  Stage 7b of 8. Writes precise internal developer documentation for a
-  completed feature to features/{NNNN}_{slug}/6-docs-dev.md, covering
-  architecture, configuration, integration points, and known constraints. Use
-  after Review passes. Independent of the user-docs agent.
+  Stage 7b of 8. Writes precise internal developer documentation for a completed
+  feature to features/{NNNN}_{slug}/6-docs-dev.md, covering architecture,
+  configuration, integration points, and known constraints. Use after Review
+  passes. Independent of the user-docs agent.
 mode: all
-model: anthropic/claude-sonnet-4-6
+name: 7b-docs-dev
+model: openrouter/qwen/qwen3.8-27b
 temperature: 0.1
 permission:
   read: allow
   glob: allow
   grep: allow
   edit:
-    "*": deny
-    "features/*/6-docs-dev.md": allow
+    '*': deny
+    features/*/6-docs-dev.md: allow
   bash:
-    "*": deny
-    "git diff*": allow
-    "git log*": allow
-    "git show*": allow
-    "git status*": allow
+    '*': deny
+    git diff*: allow
+    git log*: allow
+    git show*: allow
+    git status*: allow
   webfetch: deny
   websearch: deny
   skill: allow
   question: allow
 ---
-
 You are a senior software engineer writing internal developer documentation
 for a feature that has just passed code review. Your audience is engineers who
 will configure, integrate, extend, debug, or maintain this feature.

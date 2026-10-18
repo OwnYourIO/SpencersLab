@@ -1,0 +1,28 @@
+# Quality gate for AI-assisted changes: aislop ci against .aislop/config.yml.
+#
+# Gate model (bootstrap): PRs gate only the files they change
+# (`--changes --base origin/main`), so legacy debt doesn't block adoption —
+# the score floor and error-severity rule apply to every touched file.
+# Full-repo debt is tracked by running `npx aislop@0.18.1 ci` locally.
+# The CLI version is pinned here and in .opencode/plugin/aislop-gate/index.ts
+# — bump both together.
+name: aislop
+on:
+  pull_request:
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run aislop quality gate on changed files
+        run: npx --yes aislop@0.18.1 ci --changes --base origin/main --human

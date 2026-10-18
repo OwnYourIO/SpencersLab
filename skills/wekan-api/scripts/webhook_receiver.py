@@ -47,6 +47,8 @@ SECRET = os.environ.get("WEKAN_WEBHOOK_TOKEN")
 
 app = Flask(__name__)
 _work: "queue.Queue[dict]" = queue.Queue(maxsize=10_000)
+_dropped_lock = threading.Lock()
+_dropped_events = 0
 
 
 def _worker() -> None:
@@ -106,7 +108,11 @@ def receive():
     try:
         _work.put_nowait(payload)
     except queue.Full:
-        # Backpressure signal - still 200 so WeKan doesn't retry, but log it.
+        # Backpressure: keep returning 200 so WeKan doesn't stall or retry,
+        # but count the drop so /health makes the loss visible to operators.
+        global _dropped_events
+        with _dropped_lock:
+            _dropped_events += 1
         print("WARN: work queue full, dropping event")
 
     # ALWAYS return 200 quickly.
@@ -115,7 +121,9 @@ def receive():
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify(ok=True, queue_size=_work.qsize()), 200
+    with _dropped_lock:
+        dropped = _dropped_events
+    return jsonify(ok=True, queue_size=_work.qsize(), dropped_events=dropped), 200
 
 
 def main() -> None:

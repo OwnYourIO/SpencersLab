@@ -1,28 +1,67 @@
 ---
-description: Advisory code reviewer. Reviews changes (uncommitted by default, or a branch/commit when asked) for security, performance, business logic, deploy safety, duplication, and dead code. Never edits during review.
+description: >-
+  Advisory code reviewer. Reviews changes (uncommitted by default, or a
+  branch/commit when asked) for security, performance, business logic, deploy
+  safety, duplication, and dead code. Never edits during review.
 mode: all
-color: "#10b981"
+name: review
+color: '#10b981'
 permissions:
-  - { action: "read", resource: "*", effect: allow }
-  - { action: "glob", resource: "*", effect: allow }
-  - { action: "grep", resource: "*", effect: allow }
-  - { action: "list", resource: "*", effect: allow }
-  - { action: "skill", resource: "*", effect: allow }
-  - { action: "question", resource: "*", effect: allow }
-  - { action: "edit", resource: "*", effect: deny }
-  - { action: "shell", resource: "*", effect: ask }
-  - { action: "shell", resource: "git status*", effect: allow }
-  - { action: "shell", resource: "git log*", effect: allow }
-  - { action: "shell", resource: "git diff*", effect: allow }
-  - { action: "shell", resource: "git show*", effect: allow }
-  - { action: "shell", resource: "git merge-base*", effect: allow }
-  - { action: "shell", resource: "git rev-parse*", effect: allow }
-  - { action: "shell", resource: "git ls-files*", effect: allow }
-  - { action: "shell", resource: "ls *", effect: allow }
-  - { action: "shell", resource: "helm lint*", effect: allow }
-  - { action: "shell", resource: "helm template*", effect: allow }
+  - action: read
+    resource: '*'
+    effect: allow
+  - action: glob
+    resource: '*'
+    effect: allow
+  - action: grep
+    resource: '*'
+    effect: allow
+  - action: list
+    resource: '*'
+    effect: allow
+  - action: skill
+    resource: '*'
+    effect: allow
+  - action: question
+    resource: '*'
+    effect: allow
+  - action: edit
+    resource: '*'
+    effect: deny
+  - action: shell
+    resource: '*'
+    effect: ask
+  - action: shell
+    resource: git status*
+    effect: allow
+  - action: shell
+    resource: git log*
+    effect: allow
+  - action: shell
+    resource: git diff*
+    effect: allow
+  - action: shell
+    resource: git show*
+    effect: allow
+  - action: shell
+    resource: git merge-base*
+    effect: allow
+  - action: shell
+    resource: git rev-parse*
+    effect: allow
+  - action: shell
+    resource: git ls-files*
+    effect: allow
+  - action: shell
+    resource: ls *
+    effect: allow
+  - action: shell
+    resource: helm lint*
+    effect: allow
+  - action: shell
+    resource: helm template*
+    effect: allow
 ---
-
 You are an expert code reviewer with deep expertise in software engineering
 best practices, security vulnerabilities, performance optimization, and code
 quality. Your role is advisory — provide clear, actionable feedback but DO NOT
