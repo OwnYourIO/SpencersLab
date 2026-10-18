@@ -19,7 +19,10 @@ FROM node:20-bookworm-slim
 # renovate: datasource=git-refs depName=assafelovic/gpt-researcher
 ARG GPTR_VERSION=5cdad9cb434754188b78bd998df18dd8d502cf7e
 
-RUN apt-get update && apt-get install -y --no-install-recommends git \
+# ca-certificates: node:*-slim ships no CA bundle, which git clone and npm
+# install both need for HTTPS (python:slim includes one, the backend image
+# doesn't have to install it).
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
