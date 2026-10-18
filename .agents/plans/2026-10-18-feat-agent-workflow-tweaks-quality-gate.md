@@ -104,6 +104,21 @@ stay opencode-only — no claudecode target).
 - Dropped the dead `./skill/` entry from the `skills` paths in
   `.opencode/opencode.jsonc` (parses clean after).
 
+## AGENTS.md overlap slimming (user-approved)
+
+- Removed the last bmad mention: the `bmad-*` skills-registry row (BMAD
+  skills remain installed third-party; just no longer documented as
+  pipeline-wired).
+- `## Feature pipeline` section deduplicated against the agents' own
+  self-contained shared block: the file-semantics paragraph (STATE/
+  DECISIONS/friction writers + lifecycle) and the skills meta-paragraph are
+  gone; replaced by a pointer to `.rulesync/subagents/agent-*.md` (the
+  operational contract) and the `agents-sync` references. 382 → 250 words;
+  AGENTS.md total 2,499 → 2,367 words. Canonical homes for pipeline
+  mechanics: agent prompts (runtime contract) + agents-sync references
+  (methodology). Verified nothing lost: dev/test tests-only rules live in
+  both prompts; file semantics in `plan-and-result.md`.
+
 ## `-bmad` variants removed (user: "just remove the bmad variants")
 
 - Deleted sources: 5 agents (`agent-{cord,plan,dev,test,review}-bmad.md`) +

@@ -93,34 +93,20 @@ container images (`containers/`). **ArgoCD applies everything — never
 
 A chunk-based pipeline for multi-step work, complementary to the standalone
 `plan`/`code` agents (single-shot planning/implementation) and the
-`0-pipeline` SDLC stages (large features with docs):
+`0-pipeline` SDLC stages (large features with docs). `agent-cord` runs an
+approved plan chunk by chunk through fresh `agent-plan`/`agent-dev`/
+`agent-test`/`agent-review` subagents; files are the only shared memory.
+Launch with `/pipeline` (plan if needed, then run) or `/pipeline-resume`
+(feature folder as argument).
 
-- `agent-cord` — coordinator; writes only `STATE.json`/`DECISIONS.md`/
-  `friction.md`; runs Phase 1 (launches `agent-plan`) when no approved plan
-  exists yet.
-- `agent-plan`, `agent-dev`, `agent-test`, `agent-review` — subagents, fresh
-  context per launch. Files are the bus; every hand-back ends in a RESULT
-  block that cord parses. `agent-test` is the mirror of `agent-dev`: it may
-  edit only `tests/` (dev may edit everything *except* `tests/`).
-
-Commands (`.agents/commands/`): `/pipeline` (plan if needed, then run) and
-`/pipeline-resume` (resume an approved plan; feature folder as argument).
-
-Each feature gets `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/` containing
-`PLAN.md`, `STATE.json`, `DECISIONS.md`, `friction.md` and `chunks/`, copied
-from `.agents/plans/templates/`. `STATE.json` carries the machine state
-(only cord writes it); `DECISIONS.md` is the append-only decision log (only
-plan/cord write it); `friction.md` is the append-only friction log — agents
-report what blocked/slowed them via RESULT `friction:`, cord appends, and
-every agent reads it at run start so known workarounds are not rediscovered
-(entries are never deleted, only re-statused `open` → `fixed`/`ignored`).
-
-Every agent in the set carries a `## Skills` section at the top of its file:
-the standard loading rule, its role's MUST-load `/skill-name` calls, and an
-instruction to evaluate the task and load 3 more relevant skills dynamically
-at runtime. Skill loading is mandatory, not optional. When dispatching a
-subagent, reference the skills it needs with `/skill-name` in the launch
-message so they load in that fresh session.
+Each feature lives in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`
+(`PLAN.md`, `STATE.json`, `DECISIONS.md`, `friction.md`, `chunks/` — copied
+from `.agents/plans/templates/`). The operational contract — file semantics,
+read order, the RESULT handoff schema, role permissions — lives in the agent
+prompts themselves (`.rulesync/subagents/agent-*.md`, which are
+self-contained for fresh sessions) and in the `agents-sync` skill references
+(`plan-and-result.md`, `permissions.md`, `pipeline-overview.md`). Edit
+those, not this summary.
 
 ### Pipeline specifics in this repo
 
