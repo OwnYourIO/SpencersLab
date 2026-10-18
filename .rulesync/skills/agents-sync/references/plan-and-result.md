@@ -28,6 +28,8 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
 ```json
 {
   "feature": "<yyyy>/<yyyy-mm>-<type>-<slug>",
+  "kickoff": { "slug": "<slug>", "run_tag": "<tag>", "worktree": "<slug>-<tag>",
+               "plan_model": "<provider/model>", "code_model": "<provider/model>" },
   "plan_status": "draft | approved | needs-replan | complete",
   "current_wave": 1,
   "updated_at": "YYYY-MM-DDTHH:MM:SSZ",

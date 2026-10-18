@@ -104,6 +104,52 @@ stay opencode-only — no claudecode target).
 - Dropped the dead `./skill/` entry from the `skills` paths in
   `.opencode/opencode.jsonc` (parses clean after).
 
+## Coordinator kickoff flow (new-ticket naming)
+
+- New `## Kickoff (new ticket)` section in agent-cord: for a NEW ticket, ask
+  (question tool) — project slug (2-3 suggested, type-prefixed), planning
+  model (default openrouter/qwen/qwen3.8-2.4t-a95b), model for the rest
+  (default openrouter/qwen/qwen3.8-27b), run tag (bare model tag / +run
+  number / +variant / user-provided). Kickoff model choices override the
+  defaults table for the run.
+- Cord then names the run surfaces via the `opencode` tool: `worktree_create`
+  `<slug>-<run tag>`, `session_rename` to the slug, `session_move` into the
+  worktree (so all subagents of the run work there); answers recorded in
+  STATE.json under `kickoff` (schema documented in agents-sync
+  plan-and-result.md).
+- Permission grant: `action: opencode, resource: '*', effect: allow` —
+  constrained by a hard rule to worktree_create/worktree_list/session_rename/
+  session_move only; worktree_remove explicitly forbidden.
+- `/pipeline` command and agents-sync pipeline-overview updated to lead with
+  the kickoff (resume skips it).
+- Branch maintenance: merged main into this branch; resolved one conflict in
+  services/gpu-ai/prod/values.yaml (kept main's f4c888f67 cache-slot rebalance
+  comment + our expanded MoE/solo sets); re-validated merged file (helm render
+  clean, 0 OVERRIDE, config assertions pass, merge committed d2f364e9c).
+
+## Coord favorites: kat-coder + global config sync (2026-10-18, follow-up)
+
+- kat-coder tool use CONFIRMED from the Kwaipilot model card: `agent`/
+  `agentic-coding` tags, Qwen3.6-35B-A3B base, RL-trained tool labels
+  (9.34% → 0.28% anomalies), SWE-bench Verified 69.40 via claude_code
+  harness. The global OpenCode config was just missing the
+  `capabilities.tools` flags.
+- Coord map: added `gpu-ai/kat-coder-q8` + `gpu-moe/kat-coder-q6`; intro
+  line now reads "tool-capable local fallbacks" (the earlier caveat about
+  kat-coder being non-tool models was wrong and is removed).
+- Global configs (machine-local, hand-managed, both backed up as
+  `*.bak-20261018`): `~/.config/opencode/opencode.json` and
+  `~/.config/kilo/kilo.jsonc` — all 9 kat-coder entries per file gained
+  `capabilities: {tools: true, input: [text], output: [text]}`; gpu-ai
+  provider gained `qwen36-heretic`, `qwen36-huihui` (tools + vision, 262k)
+  and `coder-next-ablit` (tools, text-only, 262k) matching the llama-swap
+  roster entries committed in d070a3371.
+- Verified live after the config-triggered server restart: `opencode debug
+  config` shows all 3 new gpu-ai models and kat tools:true.
+- Note: coder-next-ablit tool-calling is upstream-validated (rafw007
+  agent-loop deployment) but the plan's Task 5 tool-call smoke test is still
+  pending first load post-merge.
+
 ## AGENTS.md overlap slimming (user-approved)
 
 - Removed the last bmad mention: the `bmad-*` skills-registry row (BMAD

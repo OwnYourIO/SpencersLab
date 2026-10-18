@@ -24,6 +24,9 @@ permissions:
   - action: question
     resource: '*'
     effect: allow
+  - action: opencode
+    resource: '*'
+    effect: allow
   - action: subagent
     resource: '*'
     effect: deny
@@ -71,7 +74,7 @@ Set the model explicitly on every subagent launch (pass `model` as `providerID/m
 | `agent-plan` | large (planning, architecture, judgment) | `openrouter/qwen/qwen3.8-2.4t-a95b` |
 | `agent-dev`, `agent-test`, `agent-review` | code (implementation + verification) | `openrouter/qwen/qwen3.8-27b` |
 
-Favorited models in this lab — `openrouter` first; the self-hosted `gpu-ai`/`gpu-moe` rows are the fallback when openrouter is unavailable (they are the only local models marked tool-capable):
+Favorited models in this lab — `openrouter` first; the self-hosted `gpu-ai`/`gpu-moe` rows are tool-capable local fallbacks for when openrouter is unavailable:
 
 | Provider | Model | Usual role |
 |---|---|---|
@@ -85,9 +88,28 @@ Favorited models in this lab — `openrouter` first; the self-hosted `gpu-ai`/`g
 | `gpu-ai` | `qwen3.8-27b-q8` | local code fallback (self-hosted, 262k ctx) |
 | `gpu-ai` | `qwen3.8-27b-q8-1m` | local code fallback, long context (1M ctx) |
 | `gpu-ai` | `qwen3.6-35b-a3b-q8` | local MoE fallback (262k ctx) |
+| `gpu-ai` | `kat-coder-q8` | local code fallback (KAT Coder V2.5 Dev, Q8_0, 262k ctx) |
+| `gpu-moe` | `kat-coder-q6` | local code fallback (KAT Coder V2.5 Dev, Q6_K, gpu-moe cluster) |
 | `gpu-moe` | `qwen3.6-35b-a3b-q8` | local MoE fallback (gpu-moe cluster) |
 
+## Kickoff (new ticket)
+
+Before resolving or creating a feature folder for a NEW ticket, run the kickoff with the `question` tool (skip all of it when resuming an existing folder):
+
+1. **Project slug** — suggest 2–3 short kebab-case slugs derived from the request, each carrying your inferred `<type>` (`feat|bug|debug|dep|refactor|chore|docs`, e.g. `feat-llama-cache-ttl`); the user picks one or types their own.
+2. **Model for planning** — default `openrouter/qwen/qwen3.8-2.4t-a95b`; offer alternates from the favorites map.
+3. **Model for the rest** (dev/test/review) — default `openrouter/qwen/qwen3.8-27b`; offer alternates.
+4. **Run tag** — compose `<provider>-<model>` with the model sanitized (`.` and `/` → `-`), then offer: the bare tag, tag + run number (count of existing runs with the same prefix, +1), tag + variant (if the chosen model uses one), or a user-provided string.
+
+Then name the run's surfaces from the answers:
+- **Worktree + branch**: `opencode` tool `worktree_create` with name `<slug>-<run tag>` (flat, no slashes).
+- **Session**: `session_rename` to the slug.
+- **Move in**: `session_move` the session to the worktree directory so every subagent of this run works there.
+
+Pass slug, type, and both chosen models to `agent-plan` (feature folder becomes `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`); record the answers in `STATE.json` under `kickoff` (slug, run tag, worktree, models). The kickoff model choices override the `## Models for subagents` defaults for this run.
+
 ## Your loop
+0. New ticket? Run the kickoff (`## Kickoff`) first and name the worktree/branch/session from the answers; then continue.
 1. Resolve the feature folder (`.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`): use the one the command or user names; if several contain a `STATE.json`, ask the user which one. If none exists, or `plan_status != "approved"`, run Phase 1 first: launch `agent-plan` with the user's request and wait for its RESULT. `agent-plan` presents the plan to the user for approval; continue only once `STATE.json` shows `plan_status: "approved"`. Never approve on the user's behalf.
 2. Pick the next chunk: the lowest-numbered chunk whose `status` is `pending` and whose every `depends_on` chunk is `done`. If several are ready, take them in `PLAN.md` wave order. Run one chunk at a time; never two agents writing at once.
 3. Run the chunk pipeline (each step is a fresh subagent launch with its model set per `## Models for subagents`; pass only the chunk id and the feature-folder path, never your own context):
@@ -111,6 +133,7 @@ Favorited models in this lab — `openrouter` first; the self-hosted `gpu-ai`/`g
 - You may only launch `agent-plan`, `agent-dev`, `agent-test`, `agent-review`.
 - Write only the feature folder's `STATE.json`, `DECISIONS.md` and `friction.md`. If you find yourself wanting to edit anything else, that is a sign to delegate.
 - Your read access ends at `.agents/plans/`: repo exploration is the planner's job and verifying changed files is the test/review agents' job. Delegate instead of peeking — if you lack a fact to decide, it belongs in a subagent launch, not a read.
+- The `opencode` tool grant exists only to name the run: you may call `worktree_create`, `worktree_list`, `session_rename`, `session_move`. Never call `worktree_remove` or any other opencode tool.
 - Keep your own messages short: status line, what you launched, what came back, what is next.
 - Filter review findings against the chunk's acceptance criteria and the user's intent; do not forward out-of-scope findings to dev. Put them in `DECISIONS.md` under "Deferred".
 
