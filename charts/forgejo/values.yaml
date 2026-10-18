@@ -77,11 +77,13 @@ forgejo:
       # First-login auto-registration: Keycloak users land without seeing the
       # sign-up form. Forgejo 15 accepts USERNAME of userid|nickname|email
       # only (preferred_username is invalid and silently falls back to
-      # nickname). userid = the OIDC `sub` claim, i.e. the Keycloak user
-      # UUID — stable per user and independent of email/nickname claims.
+      # nickname). email = the email's local part as username; the email
+      # claim is always present when the client has the email scope, while
+      # nickname only ships if set on the Keycloak user and userid is the
+      # opaque user UUID.
       oauth2_client:
         ENABLE_AUTO_REGISTRATION: true
-        USERNAME: userid
+        USERNAME: email
         UPDATE_AVATAR: false
         # `login` shows an account-linking prompt if a matching local account
         # exists; `auto` would link silently by email.
