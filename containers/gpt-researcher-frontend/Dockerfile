@@ -32,6 +32,11 @@ RUN git clone https://github.com/assafelovic/gpt-researcher.git /src \
     && rm -rf /src
 
 RUN npm install --legacy-peer-deps
+# next.config.mjs imports @ducanh2912/next-pwa, and `next start` re-evaluates
+# the config at runtime — but upstream lists it under devDependencies, so the
+# prune below would strip it and crash the container. Promote it to a
+# production dependency first (npm moves the existing dev entry over).
+RUN npm install --legacy-peer-deps --save-prod @ducanh2912/next-pwa@^10.0.1
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build && npm prune --production
 
