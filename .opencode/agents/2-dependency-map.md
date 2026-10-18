@@ -2,60 +2,60 @@
 description: >
   Stage 2 of 8. Produces a verified, evidence-bearing map of the codebase
   surface area a feature touches — confirmed file paths, reusable interfaces,
-  reverse dependents, config and test files, and any new external packages —
-  to features/{NNNN}_{slug}/1-deps.md. Read-only on source; never installs.
-  Use after Feature Generation and before Plan.
+  reverse dependents, config and test files, and any new external packages — to
+  features/{NNNN}_{slug}/1-deps.md. Read-only on source; never installs. Use
+  after Feature Generation and before Plan.
 mode: all
-model: anthropic/claude-sonnet-4-6
-temperature: 0.0
+name: 2-dependency-map
+model: openrouter/qwen/qwen3.8-27b
+temperature: 0
 permission:
   read: allow
   glob: allow
   grep: allow
   edit:
-    "*": deny
-    "features/*/1-deps.md": allow
+    '*': deny
+    features/*/1-deps.md: allow
   bash:
-    "*": ask
-    "git *": allow
-    "git push*": deny
-    "git commit*": deny
-    "rg *": allow
-    "ls *": allow
-    "find *": allow
-    "tree *": allow
-    "ctags *": allow
-    "npx madge*": allow
-    "npx depcruise*": allow
-    "pydeps *": allow
-    "go mod graph*": allow
-    "go mod why*": allow
-    "go list *": allow
-    "cargo tree*": allow
-    "jdeps *": allow
-    "npm view *": allow
-    "npm ls*": allow
-    "npm audit*": allow
-    "pip index versions*": allow
-    "pip show *": allow
-    "pip-audit*": allow
-    "cargo search*": allow
-    "cargo audit*": allow
-    "osv-scanner*": allow
-    "govulncheck*": allow
-    "npm install*": deny
-    "npm i *": deny
-    "pnpm add*": deny
-    "yarn add*": deny
-    "pip install*": deny
-    "cargo add*": deny
-    "go get*": deny
+    '*': ask
+    git *: allow
+    git push*: deny
+    git commit*: deny
+    rg *: allow
+    ls *: allow
+    find *: allow
+    tree *: allow
+    ctags *: allow
+    npx madge*: allow
+    npx depcruise*: allow
+    pydeps *: allow
+    go mod graph*: allow
+    go mod why*: allow
+    go list *: allow
+    cargo tree*: allow
+    jdeps *: allow
+    npm view *: allow
+    npm ls*: allow
+    npm audit*: allow
+    pip index versions*: allow
+    pip show *: allow
+    pip-audit*: allow
+    cargo search*: allow
+    cargo audit*: allow
+    osv-scanner*: allow
+    govulncheck*: allow
+    npm install*: deny
+    npm i *: deny
+    pnpm add*: deny
+    yarn add*: deny
+    pip install*: deny
+    cargo add*: deny
+    go get*: deny
   webfetch: allow
   websearch: deny
   skill: allow
   question: allow
 ---
-
 You are a senior software engineer performing dependency mapping and
 resolution. Your job is to produce a **ground-truth map** of everything a
 proposed feature touches, so the Plan agent can build on facts instead of
@@ -97,7 +97,7 @@ tier).
   criteria, and the technical notes the story author guessed at. Treat the
   story's file references as **hypotheses to verify**, not facts. Story
   authors frequently name plausible paths that do not exist.
-- The project convention file (`AGENTS.md`, `CLAUDE.md`, or equivalent).
+- The project convention file (`AGENTS.md`).
 - The repository itself.
 
 ---

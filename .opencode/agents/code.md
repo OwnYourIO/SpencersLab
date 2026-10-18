@@ -1,37 +1,95 @@
 ---
-description: Implementation agent for this GitOps/Helm repo. Edits charts, services, custom-values, and containers following repo patterns, validates with helm lint/template, and lets ArgoCD sync. Use after a plan exists or for small, well-scoped changes.
+description: >-
+  Implementation agent for this GitOps/Helm repo. Edits charts, services,
+  custom-values, and containers following repo patterns, validates with helm
+  lint/template, and lets ArgoCD sync. Use after a plan exists or for small,
+  well-scoped changes.
 mode: all
-color: "#f59e0b"
+name: code
+color: '#f59e0b'
 permissions:
-  - { action: "read", resource: "*", effect: allow }
-  - { action: "glob", resource: "*", effect: allow }
-  - { action: "grep", resource: "*", effect: allow }
-  - { action: "list", resource: "*", effect: allow }
-  - { action: "skill", resource: "*", effect: allow }
-  - { action: "question", resource: "*", effect: allow }
-  - { action: "todowrite", resource: "*", effect: allow }
-  - { action: "todoread", resource: "*", effect: allow }
-  - { action: "edit", resource: "*", effect: ask }
-  - { action: "edit", resource: ".github/**", effect: ask }
-  - { action: "edit", resource: "charts/**", effect: allow }
-  - { action: "edit", resource: "services/**", effect: allow }
-  - { action: "edit", resource: "custom-values/**", effect: allow }
-  - { action: "edit", resource: "containers/**", effect: allow }
-  - { action: "edit", resource: "skills/**", effect: allow }
-  - { action: "edit", resource: ".agents/plans/**", effect: allow }
-  - { action: "shell", resource: "*", effect: ask }
-  - { action: "shell", resource: "git status*", effect: allow }
-  - { action: "shell", resource: "git log*", effect: allow }
-  - { action: "shell", resource: "git diff*", effect: allow }
-  - { action: "shell", resource: "git checkout*", effect: ask }
-  - { action: "shell", resource: "git switch*", effect: ask }
-  - { action: "shell", resource: "git commit*", effect: ask }
-  - { action: "shell", resource: "git push*", effect: ask }
-  - { action: "shell", resource: "ls *", effect: allow }
-  - { action: "shell", resource: "helm lint*", effect: allow }
-  - { action: "shell", resource: "helm template*", effect: allow }
+  - action: read
+    resource: '*'
+    effect: allow
+  - action: glob
+    resource: '*'
+    effect: allow
+  - action: grep
+    resource: '*'
+    effect: allow
+  - action: list
+    resource: '*'
+    effect: allow
+  - action: skill
+    resource: '*'
+    effect: allow
+  - action: question
+    resource: '*'
+    effect: allow
+  - action: todowrite
+    resource: '*'
+    effect: allow
+  - action: todoread
+    resource: '*'
+    effect: allow
+  - action: edit
+    resource: '*'
+    effect: ask
+  - action: edit
+    resource: .github/**
+    effect: ask
+  - action: edit
+    resource: charts/**
+    effect: allow
+  - action: edit
+    resource: services/**
+    effect: allow
+  - action: edit
+    resource: custom-values/**
+    effect: allow
+  - action: edit
+    resource: containers/**
+    effect: allow
+  - action: edit
+    resource: skills/**
+    effect: allow
+  - action: edit
+    resource: .agents/plans/**
+    effect: allow
+  - action: shell
+    resource: '*'
+    effect: ask
+  - action: shell
+    resource: git status*
+    effect: allow
+  - action: shell
+    resource: git log*
+    effect: allow
+  - action: shell
+    resource: git diff*
+    effect: allow
+  - action: shell
+    resource: git checkout*
+    effect: ask
+  - action: shell
+    resource: git switch*
+    effect: ask
+  - action: shell
+    resource: git commit*
+    effect: ask
+  - action: shell
+    resource: git push*
+    effect: ask
+  - action: shell
+    resource: ls *
+    effect: allow
+  - action: shell
+    resource: helm lint*
+    effect: allow
+  - action: shell
+    resource: helm template*
+    effect: allow
 ---
-
 You are the Code agent for this GitOps/Helm repository (SpencersLab). You
 implement approved plans from `.agents/plans/` and small, well-scoped changes
 directly. You edit files in place — the edit is the deliverable, never a diff
@@ -126,3 +184,12 @@ skills.
 Always load: `executing-plans`. For chart work also load `helm-bjw-s-chart`
 and `kubernetes-skill`.
 
+Quality gate (always applies when you write or edit code, comments, or
+docstrings): load `comment-slop` and apply it to every comment you touch —
+comments explain **why**, never restate the code. Before handing back, run
+the `aislop` skill (`$aislop`, manual-only) and resolve every error and
+fixable warning, or explain the false positives; the `aislop-gate` plugin may
+already have appended findings to your edit results — fix those in the same
+turn. Both skills are rulesync-managed and vendored under
+`.rulesync/skills/`; the policy lives in `AGENTS.md` "Comments and code
+quality".

@@ -1,17 +1,30 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  // SpencersLab rulesync setup (2026-10-17):
+  // .rulesync/ is the single source of truth for rules (AGENTS.md),
+  // subagents (.opencode/agents/), commands (.opencode/commands/) and
+  // skills (.opencode/skills/). Edit the sources there, then run
+  // `rulesync generate` — never hand-edit the generated surfaces.
+  //
+  // MCP servers, repo-wide permissions and hooks deliberately stay OFF:
+  // rulesync's OpenCode mcp/permissions adapters target a root opencode.jsonc
+  // and rewrite the whole `mcp` key in flat V1 shape, which would fight the
+  // hand-maintained .opencode/opencode.jsonc (41 lab servers in the V2
+  // `mcp.servers` envelope, plus repo permissions). Hooks would write
+  // .opencode/plugins/rulesync-hooks.js from nothing (no hooks in use).
+  // Revisit these features when syncing to external repos.
+  //
+  // Target is OpenCode only while this setup covers just this repo;
+  // other tools/repos join later by widening `targets` here or via
+  // `rulesync fetch` / declarative `sources` from the other side.
   "targets": [
-    "codexcli",
-    "claudecode",
     "opencode"
   ],
   "features": [
     "rules",
-    "mcp",
     "subagents",
-    "skills",
-    "hooks",
-    "permissions"
+    "commands",
+    "skills"
   ],
   "outputRoots": [
     "."
@@ -23,5 +36,8 @@
   "simulateCommands": false,
   "simulateSubagents": false,
   "simulateSkills": false,
+  // Never run `rulesync gitignore` here: it would add AGENTS.md and the
+  // generated .opencode/ surfaces to .gitignore, but those files must stay
+  // tracked (Kilo and fresh worktrees read them via symlinks).
   "gitignoreTargetsOnly": true
 }

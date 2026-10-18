@@ -1,0 +1,24 @@
+# aislop gate config — consumed by `aislop ci` (GitHub workflow aislop.yaml)
+# and by `aislop scan` when run inside the repo. Generate defaults with
+# `npx aislop init`; bump engines deliberately.
+# Vendored upstream code we do not maintain: third-party BMAD method scripts
+# and the upstream gguf-py library. Kept out of the gate so the score reflects
+# code we actually own. (Re-list the defaults — an explicit `exclude:`
+# replaces them wholesale.)
+exclude:
+  - node_modules
+  - .git
+  - dist
+  - build
+  - coverage
+  - _bmad/**
+  - charts/llama-swap/scripts/gguf-py/**
+engines:
+  format: true
+  lint: true
+  code-quality: true
+  ai-slop: true          # includes narrative/trivial-comment rules
+  architecture: false    # opt-in; needs .aislop/rules.yml
+  security: true
+ci:
+  failBelow: 80          # aislop ci exits 1 below this score or on any error-severity diagnostic

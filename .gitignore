@@ -21,3 +21,6 @@ venv/
 # BMad ephemeral artifacts (the _bmad/ install itself — scripts, config — is tracked)
 _bmad/render/
 _bmad-output/
+
+# rulesync fetch cache — re-fetched on demand, never committed
+.rulesync/skills/.curated/

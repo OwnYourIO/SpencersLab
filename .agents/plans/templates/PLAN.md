@@ -1,5 +1,5 @@
 # PLAN: <title>
-feature: <yyyy-mm>/<feature-slug>
+feature: <yyyy>/<yyyy-mm>-<type>-<slug>
 
 ## Goal
 <two sentences>

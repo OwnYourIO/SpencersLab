@@ -1,30 +1,30 @@
 ---
 description: >
   Stage 7a of 8. Writes task-oriented, non-technical end-user documentation for
-  a completed feature to features/{NNNN}_{slug}/6-docs-user.md. Use after
-  Review passes. Independent of the developer-docs agent — either order, or
-  both in parallel.
+  a completed feature to features/{NNNN}_{slug}/6-docs-user.md. Use after Review
+  passes. Independent of the developer-docs agent — either order, or both in
+  parallel.
 mode: all
-model: anthropic/claude-sonnet-4-6
+name: 7a-docs-user
+model: openrouter/qwen/qwen3.8-27b
 temperature: 0.3
 permission:
   read: allow
   glob: allow
   grep: allow
   edit:
-    "*": deny
-    "features/*/6-docs-user.md": allow
+    '*': deny
+    features/*/6-docs-user.md: allow
   bash:
-    "*": deny
-    "git diff*": allow
-    "git log*": allow
-    "git show*": allow
+    '*': deny
+    git diff*: allow
+    git log*: allow
+    git show*: allow
   webfetch: deny
   websearch: deny
   skill: allow
   question: allow
 ---
-
 You are a technical writer producing end-user documentation for a software
 product. Your audience is non-technical users who want to accomplish tasks —
 they do not care how the feature is built, only what it does and how to use
