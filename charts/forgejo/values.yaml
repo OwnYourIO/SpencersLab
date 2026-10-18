@@ -69,9 +69,23 @@ forgejo:
         HOST: pg-forgejo-rw:5432
         NAME: forgejo
         USER: forgejo
-      # No public signups on dev — access via Keycloak OIDC / admin invite.
+      # Local sign-up stays closed; ALLOW_ONLY_EXTERNAL_REGISTRATION lets
+      # Keycloak OIDC users get accounts (created on first SSO login).
       service:
-        DISABLE_REGISTRATION: true
+        DISABLE_REGISTRATION: false
+        ALLOW_ONLY_EXTERNAL_REGISTRATION: true
+      # First-login auto-registration: Keycloak users land without seeing the
+      # sign-up form. Forgejo 15 accepts USERNAME of userid|nickname|email
+      # only (preferred_username is invalid and silently falls back to
+      # nickname). userid = the OIDC `sub` claim, i.e. the Keycloak user
+      # UUID — stable per user and independent of email/nickname claims.
+      oauth2_client:
+        ENABLE_AUTO_REGISTRATION: true
+        USERNAME: userid
+        UPDATE_AVATAR: false
+        # `login` shows an account-linking prompt if a matching local account
+        # exists; `auto` would link silently by email.
+        ACCOUNT_LINKING: login
 
     # Preset envs override the inline config during env2ini. This is how the
     # ExternalSecret-backed values reach app.ini.
