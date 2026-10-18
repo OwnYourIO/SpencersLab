@@ -2,7 +2,7 @@ apiVersion: v2
 name: forgejo
 description: Wrapper around the official Forgejo OCI chart — CNPG database, Bitwarden
   ExternalSecrets, Keycloak OIDC source
-version: 1.0.2
+version: 1.0.3
 appVersion: 15.0.9
 dependencies:
 # NOTE: oci:// dependency — renovate's helm managers cannot track OCI
