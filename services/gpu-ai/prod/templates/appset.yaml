@@ -18,8 +18,13 @@ spec:
                   ServerSideApply: "true"
                   # This is needed so renovate pick's up the version
                   # appName: base
+                  # bumped 2026-10-17 1.0.196 → 1.0.197 (parity with gpu):
+                  # values identical; the only behavioral change is the
+                  # ArgoCD SSO issuer ExternalSecret moving to the
+                  # bitwarden-uri store — verify ArgoCD login after sync.
+                  # (gpu-ai already had the reloader wiring from 1.0.196.)
                   # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  baseChartVersion: 1.0.196
+                  baseChartVersion: 1.0.197
                   values: {{ index $ "Values" | default dict | toJson }}
   template:
     metadata:

@@ -19,7 +19,10 @@ FROM node:20-bookworm-slim
 # renovate: datasource=git-refs depName=assafelovic/gpt-researcher
 ARG GPTR_VERSION=5cdad9cb434754188b78bd998df18dd8d502cf7e
 
-RUN apt-get update && apt-get install -y --no-install-recommends git \
+# ca-certificates: node:*-slim ships no CA bundle, which git clone and npm
+# install both need for HTTPS (python:slim includes one, the backend image
+# doesn't have to install it).
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -29,6 +32,11 @@ RUN git clone https://github.com/assafelovic/gpt-researcher.git /src \
     && rm -rf /src
 
 RUN npm install --legacy-peer-deps
+# next.config.mjs imports @ducanh2912/next-pwa, and `next start` re-evaluates
+# the config at runtime — but upstream lists it under devDependencies, so the
+# prune below would strip it and crash the container. Promote it to a
+# production dependency first (npm moves the existing dev entry over).
+RUN npm install --legacy-peer-deps --save-prod @ducanh2912/next-pwa@^10.0.1
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build && npm prune --production
 

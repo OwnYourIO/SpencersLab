@@ -752,6 +752,18 @@ config:
     # bundled in the unified image. Weights (~3.1GB) are fetched once from
     # HuggingFace into the models PVC on first load. Swaps 1:1 with the GPU
     # chat/VL models per the matrix below (one GPU model at a time on 8GB).
+    # 2026-10-17: weights URL is ggerganov/whisper.cpp — the former home
+    # ggml-org/whisper.cpp was removed from HuggingFace (401), which made
+    # every load die in the curl bootstrap ("upstream command exited
+    # prematurely"); ggerganov/whisper.cpp is where upstream's own
+    # download-ggml-model.sh points.
+    # 2026-10-17 (2nd): --inference-path below is REQUIRED. whisper.cpp's
+    # server only ever registers request_path + inference_path (default
+    # /inference) — it has NO /v1/audio/transcriptions route (verified in
+    # the image's whisper.cpp 60c0be6a), while llama-swap forwards the
+    # OpenAI path to upstreams unrewritten, so without the flag every
+    # transcription 404'd with Server: whisper.cpp. /health stays put
+    # (registered off request_path), so checkEndpoint keeps working.
     # NOTE on the /bin/sh -c bootstrap below: llama-swap's SanitizeCommand
     # strips trailing backslashes (keeping the newline) before shlex-splitting,
     # so inside the quoted script a command must be COMPLETE on one line —
@@ -762,9 +774,9 @@ config:
         /bin/sh -c "
           mkdir -p /models/whisper &&
           { test -f /models/whisper/ggml-large-v3.bin ||
-            { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggml-org/whisper.cpp/resolve/main/ggml-large-v3.bin &&
+            { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin &&
               mv /models/whisper/ggml-large-v3.bin.part /models/whisper/ggml-large-v3.bin; }; } &&
-          exec whisper-server --host 0.0.0.0 --port ${PORT} -m /models/whisper/ggml-large-v3.bin
+          exec whisper-server --host 0.0.0.0 --port ${PORT} --inference-path /v1/audio/transcriptions -m /models/whisper/ggml-large-v3.bin
         "
       name: "Whisper Large v3"
       description: "Audio transcription (whisper.cpp ggml-large-v3) for podcast processing"
@@ -836,11 +848,33 @@ app-template:
         main:
           image:
             repository: ghcr.io/mostlygeek/llama-swap
-            tag: v262-vulkan-b11515
+            # 2026-10-17: switched from the vNNN-vulkan-bNNNN lineage to the
+            # unified pipeline. The old lineage's vulkan tags were built by
+            # the pre-#1071 Dockerfile (llama-server in /app, NO whisper.cpp,
+            # entrypoint /app/llama-swap -config /app/config.yaml) — verified
+            # from the v262-vulkan-b11515 image history — so whisper-large-v3
+            # died with "exec: whisper-server: not found" after the 2026-10-17
+            # download-URL fix. unified-vulkan-262 is the v262-release image
+            # of the per-project pipeline: whisper-server/sd-server/llama-
+            # server in /usr/local/bin, entrypoint run.sh. Pinned to the
+            # release-versioned tag (not the floating unified-vulkan) so the
+            # digest is stable; same llama-swap v262 config schema. Its
+            # llama.cpp (889edf43, 2026-10-03) was audited for every flag
+            # used below (-ot, --load-mode, --cache-reuse, --cache-ram,
+            # --n-cpu-moe, --no-mmproj, --flash-attn, --jinja, ...).
+            tag: unified-vulkan-262
           env:
             TZ: Etc/UTC
             # Cache downloaded models (-hf flag) on the models PVC
             LLAMA_CACHE: /models
+            # run.sh (unified entrypoint) maps LLAMA_SWAP_* env to llama-swap
+            # flags. Default config path is the image's bundled example at
+            # /etc/llama-swap/config/config.yaml — point it at OUR rendered
+            # config. WATCH_CONFIG defaults to true in run.sh; spelled out
+            # here because it only pays off with the directory mount below
+            # (subPath mounts never receive ConfigMap updates).
+            LLAMA_SWAP_CONFIG: /app/config/config.yaml
+            LLAMA_SWAP_WATCH_CONFIG: "true"
             # NOTE: HF_TOKEN is intentionally NOT set here. Gated -hf repos
             # need a token, but app-template's schema forbids optional
             # secretKeyRefs and clusters without bitwardenIds.hf-token (gpu)
@@ -906,11 +940,17 @@ app-template:
 
   persistence:
     config:
+      # Mount the ConfigMap as a DIRECTORY (no subPath): subPath mounts never
+      # receive ConfigMap updates, which silently disabled llama-swap's
+      # -watch-config hot reload (the 2026-10-17 whisper incident needed a
+      # manual pod restart for exactly this reason). With the directory mount
+      # kubelet syncs ConfigMap changes (~1 min) and run.sh's default
+      # -watch-config reloads llama-swap in place; the LLAMA_SWAP_CONFIG env
+      # above points at the file inside the directory.
       type: configMap
       name: llama-swap-config
       globalMounts:
-        - path: /app/config.yaml
-          subPath: config.yaml
+        - path: /app/config
     tools:
       type: configMap
       name: llama-swap-tools
