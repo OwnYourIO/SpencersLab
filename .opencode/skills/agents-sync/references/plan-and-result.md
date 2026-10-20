@@ -10,9 +10,10 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
   <yyyy>/
     <yyyy-mm>-<type>-<slug>/         ONE folder per ticket, everything together;
                                      <type> = feat|bug|debug|dep|refactor|chore|docs
-      yyyy-mm-dd-<slug>.md           the plan file(s); slug led by type
-      <companions>                   runbooks/scripts share their plan file's prefix
-      PLAN.md                        plan of record: goal, scope, chunk table, waves. Only plan/coord write it.
+      <yyyy-mm-dd>-<type>-<slug>.md  plan of record: goal, scope, chunk table, waves.
+                                     Only plan/coord write it. Renamed from
+                                     templates/PLAN.md when the ticket is created.
+      <companions>                   runbooks/scripts share the plan file's prefix
       STATE.json                     machine state: status, waves, per-chunk handoffs. Only cord writes it.
       DECISIONS.md                   append-only decision log. Read before acting; only plan/coord add to it.
       friction.md                    append-only friction log. Agents report via RESULT; cord appends; everyone reads at run start.
@@ -21,7 +22,7 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
 
 - Keep a ticket in its **earliest** folder — the one created in the year/month the ticket started; follow-up plans join the existing folder even in later months or years.
 - Folders created before 2026-10-17 use the legacy `yyyy-mm/<feature-slug>/` layout and are migrated per-ticket; plans created before the per-ticket convention live flat at the `.agents/plans/` root — historical and immutable.
-- New ticket: copy the blanks from `templates/` into `<ticket>/` (`agent-plan` does this).
+- New ticket: copy the blanks from `templates/` into `<ticket>/`, renaming `PLAN.md` to the dated plan file `<yyyy-mm-dd>-<type>-<slug>.md` (`agent-plan` does this). One plan file per ticket — never a second one.
 
 ## STATE.json schema
 
@@ -61,7 +62,7 @@ Cord copies it verbatim into `STATE.json` under `chunks.<id>.handoffs[]` **befor
 
 ## Chunk lifecycle (per wave, one chunk at a time)
 
-`agent-test` writes failing tests → `agent-dev` implements → `agent-test` runs the verification commands/full suite → `agent-review` reviews. On `CHANGES_REQUESTED`, dev fixes and test→review repeat (max 3 rounds each; then chunk `blocked`, ask the user: more rounds / accept / re-plan / drop). A chunk is `done` only with dev DONE + verification shown passing in `commands_run` + review APPROVED. Two consecutive dev rounds failing the same verification on the same files → stop and escalate.
+`agent-dev` implements → `agent-validate` runs the validation commands/full suite → `agent-review` reviews. On `CHANGES_REQUESTED`, dev fixes and validate→review repeat (max 3 rounds each; then chunk `blocked`, ask the user: more rounds / accept / re-plan / drop). A chunk is `done` only with dev DONE + verification shown passing in `commands_run` + review APPROVED. Two consecutive dev rounds failing the same verification on the same files → stop and escalate. When all chunks are `done`, cord launches a final `agent-review` over the whole plan (full diff against every acceptance criterion, plus DECISIONS.md and friction.md); only its APPROVED marks `plan_status: "complete"`.
 
 ## Friction lifecycle
 

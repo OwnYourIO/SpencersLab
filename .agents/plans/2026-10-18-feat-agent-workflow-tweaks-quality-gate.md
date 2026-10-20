@@ -104,6 +104,61 @@ stay opencode-only — no claudecode target).
 - Dropped the dead `./skill/` entry from the `skills` paths in
   `.opencode/opencode.jsonc` (parses clean after).
 
+## Tests placement + plan-file naming (2026-10-20, follow-up)
+
+- **No global `tests/`**: tests/validation live in the chart's or
+  container's own `tests/` folder. Permission globs changed accordingly —
+  agent-validate may edit only `charts/**/tests/**` +
+  `containers/**/tests/**`; agent-dev is denied exactly those (was
+  root `tests/**` + one-level `*/tests/**`, which wouldn't even have
+  matched `charts/<name>/tests/`). Matrices in agents-sync
+  permissions.md/pipeline-overview.md updated; validate/dev prompts and
+  AGENTS.md mirror wording now say chart/container tests folders.
+- **Plans moved off `PLAN.md` onto the dated convention**: the ticket's
+  plan of record is now `<yyyy-mm-dd>-<type>-<slug>.md` (same naming as
+  standalone plans — one convention everywhere). `templates/PLAN.md` stays
+  as boilerplate; agent-plan renames it to the dated name when creating the
+  ticket (and still adopts a pre-existing root-level dated plan via git mv).
+  All PLAN.md references updated across cord/plan/dev/validate/review,
+  overview.md, code.md, plan.md, and the agents-sync skill (SKILL.md diagram,
+  plan-and-result layout + new-ticket bullet). The old docs listed BOTH a
+  dated file and PLAN.md inside tickets — that contradiction was the
+  two-plan-files bug; resolved in favor of the dated file (user decision).
+- Validated: frontmatter YAML parses (dev 32 perms, validate 19), new globs
+  asserted, regenerate idempotent, --check ✓, no stray PLAN.md references.
+
+## Pipeline phase consolidation + one-plan rule (2026-10-20)
+
+- Duplicate test/validate/review phases collapsed: the chunk loop is now
+  `agent-dev` (implement) → `agent-validate` (run validation + full suite) →
+  `agent-review` (chunk review), max 3 fix rounds — the separate
+  "write failing tests first" phase is gone (this repo's validations are
+  helm lint/template + grep checks, not unit tests).
+- `agent-test` renamed to `agent-validate` (source rename; `delete: true`
+  swept the orphan, generated surface verified at 19 agents; cord's
+  subagent permission roster now exactly plan/dev/validate/review).
+- New **final review**: after all chunks are done cord launches
+  `agent-review` over the whole plan (full diff vs every acceptance
+  criterion + DECISIONS.md + friction.md); only its APPROVED sets
+  `plan_status: complete`. agent-review's prompt now covers both scopes.
+- aislop is enforced via the `.opencode/plugin/aislop-gate/` OpenCode
+  plugin (auto-scan on edit/write); the dev/code agent quality gates no
+  longer instruct a manual `$aislop` run — the plugin findings are the
+  in-loop mechanism, the root AGENTS.md rule stays as the hand-back policy.
+- **One plan per piece of work**: dated `yyyy-mm-dd-*` plan files are
+  standalone-work only; pipeline tickets keep their single plan of record
+  as the ticket's `PLAN.md` (not renamed — the duplicate came from two
+  conventions, so `agent-plan` now `git mv`s a pre-existing dated plan
+  into the ticket as PLAN.md, and `code`/`plan` agents never write a
+  dated plan when a ticket exists). Rule documented in AGENTS.md plans
+  bullet, agent-plan step 2, plan.md naming section, code.md fallback.
+- Coord favorites map: confirmed `openrouter/qwen/qwen3.8-flash` already
+  present (added with the original map).
+- Updated: agents-sync SKILL.md + all 4 references (roles, flow, chunk
+  lifecycle incl. final review, permission matrix), chunk template
+  ("Validation to add"), overview.md (agents bullet, pipeline paragraph,
+  specifics bullet reworded off the TDD-era phrasing).
+
 ## Coordinator kickoff flow (new-ticket naming)
 
 - New `## Kickoff (new ticket)` section in agent-cord: for a NEW ticket, ask

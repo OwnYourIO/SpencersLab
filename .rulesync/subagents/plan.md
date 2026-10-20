@@ -129,6 +129,12 @@ feature/service), `bug` (bug fix), `debug` (troubleshooting/diagnosis), `dep`
 (dependency update), or another short type (`refactor`, `docs`, …) when none
 fit. Example: `2026-09-05-feat-add-searxng-values.md`.
 
+Dated plan files are for **standalone (non-pipeline) work only**. If the work
+runs through the `agent-*` pipeline, the ticket folder's dated plan file
+(`<yyyy-mm-dd>-<type>-<slug>.md`) is the single plan of record — same naming
+as standalone plans, just living in the ticket folder. Never write two plan
+files for the same work.
+
 ## Plan output format
 
 **Every plan MUST include `## Skills` and `## MCP Servers` sections** naming

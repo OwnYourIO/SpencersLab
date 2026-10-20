@@ -11,13 +11,13 @@ Generated agents carry `permissions:` blocks in their frontmatter (authored in `
 
 | role | edit | subagent | shell | MCP |
 |---|---|---|---|---|
-| coord | ONLY `.agents/plans/**/STATE.json`, `…/DECISIONS.md`, `…/friction.md` (starts from `* * deny`) | plan/dev/test/review of same variant | none | none |
+| coord | ONLY `.agents/plans/**/STATE.json`, `…/DECISIONS.md`, `…/friction.md` (starts from `* * deny`) | plan/dev/validate/review of same variant | none | none |
 | plan | ONLY `.agents/plans/**` | none | read-only git | `admin*` deny; `readonly*`/`global*` allow |
-| dev | everything EXCEPT `tests/**`, `*/tests/**`, `.agents/plans/**`, and the context-file rules below | none | git reads + `helm lint/template` | as plan |
-| test | ONLY `tests/**`, `*/tests/**` | none | git reads + `helm lint/template` | as plan |
+| dev | everything EXCEPT chart/container `tests/` folders (`charts/**/tests/**`, `containers/**/tests/**`) and `.agents/plans/**`, plus the context-file rules below | none | git reads + `helm lint/template` | as plan |
+| validate | ONLY chart/container `tests/` folders | none | git reads + `helm lint/template` | as plan |
 | review | ONLY `.agents/plans/**` | none | read-only git | as plan |
 
-All roles allow `question` and `skill` everywhere; MCP servers named `readonly*`/`global*` are allowed and `admin*` denied for plan/dev/test/review (mutations need a user step), while cord denies everything (it orchestrates, never touches the cluster).
+All roles allow `question` and `skill` everywhere; MCP servers named `readonly*`/`global*` are allowed and `admin*` denied for plan/dev/validate/review (mutations need a user step), while cord denies everything (it orchestrates, never touches the cluster).
 
 ### Context-file rules (dev)
 

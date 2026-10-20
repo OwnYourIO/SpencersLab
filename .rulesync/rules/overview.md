@@ -26,7 +26,13 @@ container images (`containers/`). **ArgoCD applies everything — never
   plus per-feature pipeline folders `<yyyy>/<yyyy-mm>-<type>-<slug>/` used by
   the `agent-*` pipeline (see below). Folders created before 2026-10-17 keep
   the legacy `yyyy-mm/<feature-slug>/` layout until migrated per-ticket.
-- `.agents/plans/templates/` — blank boilerplate (`PLAN.md`, `STATE.json`,
+  **One plan per piece of work**: plans are always dated files
+  (`yyyy-mm-dd-<type>-<slug>.md`) — at the plans root for standalone work,
+  inside the ticket folder (as its plan of record) for pipeline work. Never
+  two plan files for the same work, and no other plan-file names.
+- `.agents/plans/templates/` — blank boilerplate (the plan boilerplate
+  `PLAN.md`, copied into tickets renamed as the dated plan file;
+  `STATE.json`,
   `DECISIONS.md`, `friction.md`, `chunks/`) that `agent-plan` copies into
   each new feature folder.
 - `.agents/commands/` — slash commands for the pipeline (`/pipeline`,
@@ -80,10 +86,12 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{cord,plan,dev,test,review}.md`) —
+- `agent-*` (`.agents/agents/agent-{cord,plan,dev,validate,review}.md`) —
   chunk-based pipeline: `agent-cord` (primary) runs an approved plan through
-  fresh `agent-plan`/`agent-dev`/`agent-test`/`agent-review` subagents, one
-  chunk at a time, with files as the only shared memory. Artifacts live in
+  fresh `agent-plan`/`agent-dev`/`agent-validate`/`agent-review` subagents, one
+  chunk at a time, with files as the only shared memory; when all chunks are
+  done it runs a final whole-plan review before marking the plan complete.
+  Artifacts live in
   `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the `/pipeline`
   commands.
 
@@ -93,13 +101,13 @@ A chunk-based pipeline for multi-step work, complementary to the standalone
 `plan`/`code` agents (single-shot planning/implementation) and the
 `0-pipeline` SDLC stages (large features with docs). `agent-cord` runs an
 approved plan chunk by chunk through fresh `agent-plan`/`agent-dev`/
-`agent-test`/`agent-review` subagents; files are the only shared memory.
+`agent-validate`/`agent-review` subagents; files are the only shared memory.
 Launch with `/pipeline` (plan if needed, then run) or `/pipeline-resume`
 (feature folder as argument).
 
 Each feature lives in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`
-(`PLAN.md`, `STATE.json`, `DECISIONS.md`, `friction.md`, `chunks/` — copied
-from `.agents/plans/templates/`). The operational contract — file semantics,
+(the dated plan file, `STATE.json`, `DECISIONS.md`, `friction.md`, `chunks/`
+— boilerplate copied from `.agents/plans/templates/`). The operational contract — file semantics,
 read order, the RESULT handoff schema, role permissions — lives in the agent
 prompts themselves (`.rulesync/subagents/agent-*.md`, which are
 self-contained for fresh sessions) and in the `agents-sync` skill references
@@ -113,8 +121,9 @@ those, not this summary.
   grep checks for the service trio (chart entry + ApplicationSet values entry
   + proxy values entry), and every `OVERRIDE_VIA_CUSTOM_VALUES` placeholder
   matched 1:1 by a `custom-values/` entry. `agent-plan` records these in
-  `PLAN.md` "Commands"; `agent-test` writes them as failing checks under
-  `tests/` before implementation; `agent-cord` gates a chunk done only when
+  the plan file's "Commands"; `agent-dev` runs them while implementing and
+  `agent-validate` verifies them independently after each chunk; `agent-cord`
+  gates a chunk done only when
   they pass.
 - All Hard rules below (no hand-bumped versions, ExternalSecret+Bitwarden
   secrets, ArgoCD — never kubectl apply, git safety, MCP privilege tiers)

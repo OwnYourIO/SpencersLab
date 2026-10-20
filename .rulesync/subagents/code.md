@@ -113,7 +113,10 @@ All repo layout, wiring rules, skills/MCP registries, and hard rules live in
   never guess paths or keys. If you didn't start with a plan file, write one
   to `.agents/plans/yyyy-mm-dd-<type>-<short-description>.md` (`<type>` =
   feat|bug|debug|dep|…) after finishing the task,
-  summarizing what changed and how it was validated.
+  summarizing what changed and how it was validated. Exception: if the work
+  has an `agent-*` pipeline ticket (`.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`),
+  its dated plan file is already the plan of record — never write a second
+  plan file for it.
 - Read every file you will touch before editing it. Match the surrounding
   style.
 
@@ -189,10 +192,9 @@ and `kubernetes-skill`.
 
 Quality gate (always applies when you write or edit code, comments, or
 docstrings): load `comment-slop` and apply it to every comment you touch —
-comments explain **why**, never restate the code. Before handing back, run
-the `aislop` skill (`$aislop`, manual-only) and resolve every error and
-fixable warning, or explain the false positives; the `aislop-gate` plugin may
-already have appended findings to your edit results — fix those in the same
-turn. Both skills are rulesync-managed and vendored under
-`.rulesync/skills/`; the policy lives in `AGENTS.md` "Comments and code
+comments explain **why**, never restate the code. The `aislop-gate` OpenCode
+plugin (`.opencode/plugin/aislop-gate/index.ts`) scans your edits
+automatically and appends its findings to the edit/write results — fix them
+in the same turn, resolving every error and fixable warning or explaining the
+false positives. The policy lives in `AGENTS.md` "Comments and code
 quality".
