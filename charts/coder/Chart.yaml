@@ -2,7 +2,7 @@ apiVersion: v2
 name: coder
 description: Wrapper around the official Coder chart — CNPG database + Bitwarden ExternalSecrets
   for OIDC/PG
-version: 1.0.5
+version: 1.0.6
 appVersion: 2.35.2
 dependencies:
 - name: coder
