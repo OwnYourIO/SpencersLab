@@ -29,10 +29,13 @@ log_fd=/proc/1/fd/1
 
 # Each server is detached into its own session and tagged, so a crash of one
 # leaves the other running and its output stays attributable in one stream.
+# The outer sh's stdin/stdout/stderr must NOT stay attached to this script's
+# own pipes: the coder agent marks the startup script failed ("output pipes
+# were not closed") when a surviving child inherits them.
 start_server() {
   label=$1
   shift
-  nohup setsid sh -c "$* 2>&1 | sed -u \"s/^/[${label}] /\" >> \"$log_fd\"" &
+  nohup setsid sh -c "$* 2>&1 | sed -u \"s/^/[${label}] /\" >> \"$log_fd\"" </dev/null >>"$log_fd" 2>&1 &
 }
 
 # Polls until the URL answers or 60s pass. The caller decides what a timeout
@@ -132,12 +135,20 @@ else
     # --foreground so OpenChamber does not daemonize away from the log pipe;
     # OPENCODE_SKIP_START keeps it off its own managed OpenCode instance,
     # which would compete with the one above for the workspace.
-    # --host 0.0.0.0: devices reach OpenChamber via the pod IP (a loopback
-    # bind leaves them staring at its "server only listens on this computer"
-    # refusal). Accepted exposure: anything on the cluster network can hit
-    # the UI on :3000; the OpenCode agent API behind it stays loopback-only.
-    start_server openchamber env OPENCODE_HOST=http://127.0.0.1:4096 OPENCODE_SKIP_START=true \
-      openchamber serve --foreground --host 0.0.0.0 --port 3000
+    #
+    # OpenChamber refuses a non-loopback bind without UI authentication (it
+    # exits with an error), and devices reach it via the pod IP. With the UI
+    # password the template supplies it binds 0.0.0.0; without one it falls
+    # back to loopback so the server still comes up.
+    if [ -n "${OPENCHAMBER_UI_PASSWORD:-}" ]; then
+      start_server openchamber env OPENCODE_HOST=http://127.0.0.1:4096 OPENCODE_SKIP_START=true \
+        OPENCHAMBER_UI_PASSWORD="$OPENCHAMBER_UI_PASSWORD" \
+        openchamber serve --foreground --host 0.0.0.0 --port 3000
+    else
+      log 'OPENCHAMBER_UI_PASSWORD is not set; binding OpenChamber to loopback only'
+      start_server openchamber env OPENCODE_HOST=http://127.0.0.1:4096 OPENCODE_SKIP_START=true \
+        openchamber serve --foreground --host 127.0.0.1 --port 3000
+    fi
   else
     log 'OpenCode server did not answer within 60s; not starting OpenChamber (it proxies to that server)'
   fi

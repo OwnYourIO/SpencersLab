@@ -56,7 +56,7 @@ fi
 # --- env contract -----------------------------------------------------------
 # These are the exact env names the hardened template will export; a rename on
 # either side would silently break workspace startup.
-for var in OPENCODE_SERVER_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
+for var in OPENCODE_SERVER_PASSWORD OPENCHAMBER_UI_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
   if grep -Eq "(^|[^A-Za-z0-9_])\\\$\\{?${var}" "$STARTUP"; then
     pass "env: \${${var}} is read by the startup script"
   else
