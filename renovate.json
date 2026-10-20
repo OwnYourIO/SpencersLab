@@ -114,6 +114,16 @@
         "-\\s*name:\\s*(?<depName>[a-zA-Z0-9_-]+)\\s*\\n\\s*version:\\s*(?<currentValue>[\\d.]+)\\s*\\n\\s*repository:\\s*(?<registryUrl>\\S+)\\s*\\n\\s*#\\s*(changelog|sourceUrl):\\s*(?<sourceUrl>\\S+)"
       ],
       "datasourceTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Pinned tools in containers/*/Dockerfile: the \"# renovate:\" comment line directly above an ARG line. The datasource capture is narrowed to node-version|golang-version|forgejo-releases|npm so the github-tags/github-releases/git-refs ARG lines stay with the existing git-pin manager instead of double-matching it (duplicate-dependency warnings).",
+      "managerFilePatterns": [
+        "/(^|/)containers/[^/]+/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>node-version|golang-version|forgejo-releases|npm)\\s+(?:registryUrl=(?<registryUrl>\\S+)\\s+)?depName=(?<depName>\\S+)\\s*\\nARG\\s+\\w+=(?<currentValue>\\S+)"
+      ]
     }
   ],
   "customDatasources": {
@@ -210,6 +220,20 @@
         "enabled": true
       },
       "automerge": true
+    },
+    {
+      "description": "Hold the helm v3 line: ArgoCD renders this repo's charts with helm v3, so v4 updates are held back until that changes. The pattern is slash-wrapped: a bare ^v3. is not a valid semver range, so renovate would error this dep at lookup with no updates.",
+      "matchPackageNames": [
+        "helm/helm"
+      ],
+      "allowedVersions": "/^v3\\./"
+    },
+    {
+      "description": "Hold kubectl to the lab cluster minor (k3s v1.36.x per charts/base/templates/k3s-version.yaml); a cluster minor upgrade must bump this pattern together with the Dockerfile pin. The pattern is slash-wrapped: a bare ^v1.36. is not a valid semver range, so renovate would error this dep at lookup with no updates.",
+      "matchPackageNames": [
+        "kubernetes/kubernetes"
+      ],
+      "allowedVersions": "/^v1\\.36\\./"
     }
   ]
 }
