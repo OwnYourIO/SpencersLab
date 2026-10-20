@@ -271,15 +271,22 @@ if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'mount_path[[:sp
 else
   fail "c2: no /home/coder volume mount$NOTE"
 fi
-if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'mount_path[[:space:]]*=[[:space:]]*"/shared"'; then
-  pass "c2: shared PVC is mounted at /shared"
+# The shared mount is opt-in: dev has no shared RWX PVC (the dev-shared
+# SeaweedFS claim lives on the gpu cluster), and a volume referencing a
+# missing claim leaves every workspace Pending. So shared_pvc_name defaults
+# to "" and the volume + mount render only when it is set at push time.
+sh_block=$(var_block shared_pvc_name)
+if [ -z "$sh_block" ]; then
+  fail "c2: variable shared_pvc_name is not declared$NOTE"
+elif printf '%s\n' "$sh_block" | grep -qE 'default[[:space:]]*=[[:space:]]*""'; then
+  pass "c2: shared_pvc_name defaults to \"\" (no shared mount where no RWX PVC exists)"
 else
-  fail "c2: no /shared volume mount$NOTE"
+  fail "c2: shared_pvc_name default is not \"\" — workspaces on clusters without the PVC would stay Pending"
 fi
-if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'claim_name[[:space:]]*=[[:space:]]*var\.shared_pvc_name'; then
-  pass "c2: shared volume uses claim_name = var.shared_pvc_name"
+if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'dynamic[[:space:]]+"volume_mount"[[:space:]]*\{' && printf '%s\n' "$CODE_VIEW" | grep -qE 'dynamic[[:space:]]+"volume"[[:space:]]*\{' && printf '%s\n' "$CODE_VIEW" | grep -qE 'mount_path[[:space:]]*=[[:space:]]*"/shared"'; then
+  pass "c2: the /shared volume + mount render conditionally (dynamic blocks)"
 else
-  fail "c2: no volume claims var.shared_pvc_name$NOTE"
+  fail "c2: the /shared volume/mount are not dynamic on shared_pvc_name$NOTE"
 fi
 
 # The fused contract follows the reference artifact: prevent_destroy is
