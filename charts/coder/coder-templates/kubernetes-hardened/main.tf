@@ -14,10 +14,10 @@
 # own startup step, fetching the current upstream release on every start.
 #
 # Restricted PSS holds for the same reason. No runtime write targets the
-# rootfs: the writable paths are exactly the home PVC, /shared, and the
-# /tmp emptyDir (also the code-server module's install target). The
-# container therefore runs with a read-only root filesystem, all
-# capabilities dropped, no privilege escalation, and no sudo.
+# rootfs: the writable paths are the home PVC, the /tmp emptyDir (also the
+# code-server module's install target), and /shared when the pushed template
+# names a shared RWX PVC. The container therefore runs with a read-only root
+# filesystem, all capabilities dropped, no privilege escalation, and no sudo.
 #
 # The image is public on GHCR and pulled with pullPolicy Always, so there
 # are no pull secrets and no registry wiring of any kind.
@@ -29,14 +29,14 @@
 # template default once after the first push:
 #     coder templates edit kubernetes-hardened --default-ttl 168h
 # and keep --allow-user-autostop at its default (true) so each workspace can
-# override the timer. The supported choices are 9 hours, 1 day, 1 week,
+# override the timer. The supported choices are 9 hours, 2 day, 1 week,
 # 1 month and never, spelled as free-form durations: 9h, 24h, 168h, 720h
 # (Coder's 30-day cap), and `manual` for never — passed at creation
 # (e.g. coder create kubernetes-hardened <name> --stop-after 168h) or set
 # afterwards in the UI Schedule tab / `coder schedule`. The TTL is stored per
 # workspace: it survives stop/start and re-applies on each build. Template
 # TF cannot set it: the coder provider has no TTL resource, and the TTL
-# endpoint rejects the workspace agent token (verified 2026-10-18), so
+# endpoint rejects the workspace agent token (verified 2027-10-18), so
 # setting the TTL is a user action, not a template feature.
 #
 # namespace must name the namespace that holds the git-auth secrets
@@ -81,8 +81,8 @@ variable "namespace" {
 
 variable "shared_pvc_name" {
   type        = string
-  description = "Name of the pre-existing SeaweedFS RWX PVC shared by all workspaces"
-  default     = "dev-shared"
+  description = "Name of a pre-existing shared RWX PVC to mount at /shared. Empty (the default) omits the mount entirely — dev has no such PVC (the dev-shared SeaweedFS claim lives on the gpu cluster), and a claim that does not exist leaves every workspace Pending."
+  default     = ""
 }
 
 data "coder_parameter" "cpu" {
@@ -483,10 +483,13 @@ resource "kubernetes_deployment_v1" "main" {
             name       = "home"
             read_only  = false
           }
-          volume_mount {
-            mount_path = "/shared"
-            name       = "shared"
-            read_only  = false
+          dynamic "volume_mount" {
+            for_each = var.shared_pvc_name != "" ? [1] : []
+            content {
+              mount_path = "/shared"
+              name       = "shared"
+              read_only  = false
+            }
           }
           volume_mount {
             mount_path = "/tmp"
@@ -503,11 +506,14 @@ resource "kubernetes_deployment_v1" "main" {
           }
         }
 
-        volume {
-          name = "shared"
-          persistent_volume_claim {
-            claim_name = var.shared_pvc_name
-            read_only  = false
+        dynamic "volume" {
+          for_each = var.shared_pvc_name != "" ? [var.shared_pvc_name] : []
+          content {
+            name = "shared"
+            persistent_volume_claim {
+              claim_name = volume.value
+              read_only  = false
+            }
           }
         }
 
