@@ -179,6 +179,21 @@ Changes:
 Follow-ups if crashes continue: trim warm-cache caps (q38 24 GiB / q35
 10 GiB --cache-ram are the biggest reclaimable headroom), and watch whether
 lazy q35q8 loads beside an active q38q8 still hit the transient peak.
+Pending operator call: q35q8 `-np 2` → `-np 1` would reclaim ~3 GiB more
+(512k→256k preallocated KV pool) at the cost of serializing concurrent MoE
+sessions.
+
+## Base chart pin bump (2026-10-20)
+
+Bumped `baseChartVersion` 1.0.197 → 1.0.198 in the gpu, gpu-ai, and dev
+appsets so the argocd-cm Plan /status ignoreDifferences lands on those
+clusters. 1.0.198 does not exist in the chart repo yet: the Release Charts
+CI creates it when the charts/base change merges (release.yaml patch-bumps
+changed charts). Between merge and publish the three apps show source errors
+and self-heal on retry; running workloads are unaffected. Only the base
+change needs the pin bump — the supabase annotations and llama-swap values
+flow from main at merge time (internal charts/service values are unpinned).
+Renovate owns the pin for all other clusters (annotation intact).
 
 ## Validation
 

@@ -18,8 +18,12 @@ spec:
                   ServerSideApply: "true"
                   # This is needed so renovate pick's up the version
                   # appName: base
+                  # bumped 2026-10-20 1.0.197 → 1.0.198 (parity with gpu):
+                  # argocd-cm Plan /status ignoreDifferences — stops selfHeal
+                  # re-apply churn on the system-upgrade Plans re-firing
+                  # k3s-killing upgrade jobs (gpu incident 2026-10-20 01:40).
                   # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
-                  baseChartVersion: 1.0.197
+                  baseChartVersion: 1.0.198
                   values: {{ index $ "Values" | default dict | toJson }}
   template:
     metadata:
