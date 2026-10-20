@@ -193,6 +193,17 @@ resource "random_password" "opencode_server" {
   }
 }
 
+# UI password for OpenChamber: it refuses to bind outside loopback without
+# one (exits with an error), and the pod-IP exposure below needs the wider
+# bind. Same state/keeper story as the OpenCode password.
+resource "random_password" "openchamber_ui" {
+  length  = 32
+  special = false
+  keepers = {
+    workspace_id = data.coder_workspace.me.id
+  }
+}
+
 resource "coder_agent" "main" {
   os   = "linux"
   arch = "amd64"
@@ -207,6 +218,8 @@ resource "coder_agent" "main" {
     OPENCODE_BINARY          = "/usr/local/bin/opencode"
     OPENCODE_SERVER_USERNAME = "opencode"
     OPENCODE_SERVER_PASSWORD = random_password.opencode_server.result
+    # OpenChamber needs this to bind outside loopback (see the startup script).
+    OPENCHAMBER_UI_PASSWORD = random_password.openchamber_ui.result
     # Git identity for the baked startup script (git config --global),
     # sourced explicitly from the workspace owner.
     CODER_USER       = data.coder_workspace_owner.me.name
@@ -274,6 +287,18 @@ resource "coder_agent" "main" {
     EOT
     interval = 60
     timeout  = 1
+  }
+
+  # OpenChamber prompts for its UI password when opened; the tile below makes
+  # it discoverable without a state dive (`coder ssh <ws> 'echo
+  # $OPENCHAMBER_UI_PASSWORD'` also works). Visible to the workspace owner
+  # only.
+  metadata {
+    display_name = "OpenChamber UI password"
+    key          = "7_openchamber_ui_password"
+    script       = "echo $OPENCHAMBER_UI_PASSWORD"
+    interval     = 60
+    timeout      = 1
   }
 }
 
