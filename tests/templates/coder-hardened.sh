@@ -271,22 +271,15 @@ if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'mount_path[[:sp
 else
   fail "c2: no /home/coder volume mount$NOTE"
 fi
-# The shared mount is opt-in: dev has no shared RWX PVC (the dev-shared
-# SeaweedFS claim lives on the gpu cluster), and a volume referencing a
-# missing claim leaves every workspace Pending. So shared_pvc_name defaults
-# to "" and the volume + mount render only when it is set at push time.
-sh_block=$(var_block shared_pvc_name)
-if [ -z "$sh_block" ]; then
-  fail "c2: variable shared_pvc_name is not declared$NOTE"
-elif printf '%s\n' "$sh_block" | grep -qE 'default[[:space:]]*=[[:space:]]*""'; then
-  pass "c2: shared_pvc_name defaults to \"\" (no shared mount where no RWX PVC exists)"
+# No shared-volume mount: the legacy template's /shared referenced
+# dev-shared, a SeaweedFS claim that exists only on the gpu cluster. No
+# cluster this template deploys to has it, a missing claim leaves every
+# workspace Pending (dev, 2026-10-20), and Coder carries stored variable
+# values across template versions — so the variable must not exist either.
+if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'shared_pvc_name|mount_path[[:space:]]*=[[:space:]]*"/shared"'; then
+  fail "c2: shared-volume wiring survived (shared_pvc_name or a /shared mount) — it must be absent"
 else
-  fail "c2: shared_pvc_name default is not \"\" — workspaces on clusters without the PVC would stay Pending"
-fi
-if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'dynamic[[:space:]]+"volume_mount"[[:space:]]*\{' && printf '%s\n' "$CODE_VIEW" | grep -qE 'dynamic[[:space:]]+"volume"[[:space:]]*\{' && printf '%s\n' "$CODE_VIEW" | grep -qE 'mount_path[[:space:]]*=[[:space:]]*"/shared"'; then
-  pass "c2: the /shared volume + mount render conditionally (dynamic blocks)"
-else
-  fail "c2: the /shared volume/mount are not dynamic on shared_pvc_name$NOTE"
+  pass "c2: no shared-volume wiring (no shared_pvc_name variable, no /shared mount)"
 fi
 
 # The fused contract follows the reference artifact: prevent_destroy is

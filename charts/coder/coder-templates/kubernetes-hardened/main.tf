@@ -14,10 +14,15 @@
 # own startup step, fetching the current upstream release on every start.
 #
 # Restricted PSS holds for the same reason. No runtime write targets the
-# rootfs: the writable paths are the home PVC, the /tmp emptyDir (also the
-# code-server module's install target), and /shared when the pushed template
-# names a shared RWX PVC. The container therefore runs with a read-only root
-# filesystem, all capabilities dropped, no privilege escalation, and no sudo.
+# rootfs: the writable paths are the home PVC and the /tmp emptyDir (also
+# the code-server module's install target). The container therefore runs
+# with a read-only root filesystem, all capabilities dropped, no privilege
+# escalation, and no sudo.
+#
+# No shared-volume mount: the legacy template's /shared mount referenced
+# dev-shared, a SeaweedFS claim that exists only on the gpu cluster — no
+# cluster this template deploys to has it, and a missing claim leaves every
+# workspace Pending (verified on dev 2026-10-20).
 #
 # The image is public on GHCR and pulled with pullPolicy Always, so there
 # are no pull secrets and no registry wiring of any kind.
@@ -77,12 +82,6 @@ variable "use_kubeconfig" {
 variable "namespace" {
   type        = string
   description = "The Kubernetes namespace to create workspaces in (must exist prior to creating workspaces). If the Coder host is itself running as a Pod on the same Kubernetes cluster as you are deploying workspaces to, set this to the same namespace."
-}
-
-variable "shared_pvc_name" {
-  type        = string
-  description = "Name of a pre-existing shared RWX PVC to mount at /shared. Empty (the default) omits the mount entirely — dev has no such PVC (the dev-shared SeaweedFS claim lives on the gpu cluster), and a claim that does not exist leaves every workspace Pending."
-  default     = ""
 }
 
 data "coder_parameter" "cpu" {
@@ -483,14 +482,6 @@ resource "kubernetes_deployment_v1" "main" {
             name       = "home"
             read_only  = false
           }
-          dynamic "volume_mount" {
-            for_each = var.shared_pvc_name != "" ? [1] : []
-            content {
-              mount_path = "/shared"
-              name       = "shared"
-              read_only  = false
-            }
-          }
           volume_mount {
             mount_path = "/tmp"
             name       = "tmp"
@@ -503,17 +494,6 @@ resource "kubernetes_deployment_v1" "main" {
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim_v1.home.metadata.0.name
             read_only  = false
-          }
-        }
-
-        dynamic "volume" {
-          for_each = var.shared_pvc_name != "" ? [var.shared_pvc_name] : []
-          content {
-            name = "shared"
-            persistent_volume_claim {
-              claim_name = volume.value
-              read_only  = false
-            }
           }
         }
 
