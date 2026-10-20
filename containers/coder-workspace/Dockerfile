@@ -98,13 +98,21 @@ ENV LANG=en_US.UTF-8 \
 # The removal has no -f: trixie's python3.13 always ships the marker, so a
 # missing path means the base moved to a new python minor. Failing here is the
 # signal; a skipped removal would resurface as a pip error inside a workspace.
+#
+# localedef writes the locale archive directly. Debian's locale-gen ignores
+# its argument form unless the locale is also uncommented in /etc/locale.gen:
+# it exits 0 having generated nothing (proven against the published image
+# layer — /etc/locale.gen present, no /usr/lib/locale archive), so every
+# shell logged "setlocale: LC_ALL: cannot change locale". The locale -a
+# assertion makes that silent no-op impossible.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
          ca-certificates curl wget locales openssh-client \
          jq unzip zip xz-utils rsync vim htop less man-db iproute2 procps \
          build-essential tzdata iputils-ping netcat-openbsd \
          git git-lfs python3 python3-pip python3-venv python3-dev pipx \
- && locale-gen en_US.UTF-8 \
+ && localedef -i en_US -f UTF-8 en_US.UTF-8 \
+ && locale -a | grep -qx 'en_US.utf8' \
  && git lfs install --system \
  && rm /usr/lib/python3.13/EXTERNALLY-MANAGED \
  && rm -rf /var/lib/apt/lists/*

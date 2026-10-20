@@ -53,7 +53,12 @@ wait_for_http() {
 # keeps later boots from overwriting a user's own edits.
 if [ ! -e "${HOME}/.init_done" ]; then
   if [ -d /etc/skel ]; then
-    cp -a /etc/skel/. "${HOME}/"
+    # --no-preserve=ownership,timestamps: plain cp -a also applies
+    # /etc/skel's root-owned attributes to the $HOME mount point itself,
+    # which uid 1000 cannot do (EPERM) — and set -eu would abort the whole
+    # boot over a dotfile copy. The seed is best-effort: warn, keep booting.
+    cp -a --no-preserve=ownership,timestamps /etc/skel/. "${HOME}/" \
+      || log "WARN: /etc/skel seed hit errors; continuing"
   fi
   : > "${HOME}/.init_done"
   log "seeded ${HOME} from /etc/skel"
