@@ -329,18 +329,28 @@ else
   fail "c2: agent env does not set CODER_USER$NOTE"
 fi
 
-csev_block=$(var_block code_server_version)
-if [ -z "$csev_block" ]; then
-  fail "c2: variable code_server_version is not declared$NOTE"
-elif printf '%s\n' "$csev_block" | grep -qE 'default[[:space:]]*=[[:space:]]*"v4\.141\.0"'; then
-  pass "c2: variable code_server_version defaults to v4.141.0"
+# code-server comes from the official Coder module — no repo-side pin to
+# maintain; every workspace start fetches the current upstream release. The
+# module also creates its own coder_app, so the template must declare none.
+if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'module[[:space:]]+"code-server"[[:space:]]*\{'; then
+  pass "c2: code-server is provided by a module \"code-server\" block"
 else
-  fail "c2: variable code_server_version default is not v4.141.0 (got: $(printf '%s\n' "$csev_block" | grep -E 'default[[:space:]]*=' | head -n 1 | tr '\n' ' '))"
+  fail "c2: no module \"code-server\" block$NOTE"
 fi
-if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'CODE_SERVER_VERSION[[:space:]]*=[[:space:]]*var\.code_server_version'; then
-  pass "c2: coder_agent env sets CODE_SERVER_VERSION from var.code_server_version"
+if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qF 'registry.coder.com/coder/code-server/coder'; then
+  pass "c2: the code-server module is the official registry.coder.com one"
 else
-  fail "c2: coder_agent env does not set CODE_SERVER_VERSION = var.code_server_version$NOTE"
+  fail "c2: the code-server module source is not registry.coder.com/coder/code-server/coder$NOTE"
+fi
+if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -q 'CODE_SERVER_VERSION'; then
+  fail "c2: CODE_SERVER_VERSION is back — code-server must stay unpinned (the module owns it)"
+else
+  pass "c2: no CODE_SERVER_VERSION pin survives in the template"
+fi
+if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'resource[[:space:]]+"coder_app"[[:space:]]+"code-server"'; then
+  fail "c2: a hand-rolled coder_app \"code-server\" would collide with the module's own app"
+else
+  pass "c2: no hand-rolled code-server coder_app (the module creates it)"
 fi
 
 if [ "$EXISTS" -eq 1 ] && [ -z "$HDR" ]; then

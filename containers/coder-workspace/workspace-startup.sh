@@ -2,12 +2,15 @@
 # Workspace bootstrap called by the Coder templates' startup_script: seed $HOME
 # on first boot, provision the SSH key + known_hosts the git hosts need, bring
 # up the OpenCode/OpenChamber pair the IDE talks to, wire optional git auth,
-# clone the repos selected via the template's "repos" parameter, and install +
-# start code-server on 127.0.0.1:13337.
+# and clone the repos selected via the template's "repos" parameter.
 #
 # It must return, because the Coder agent starts after this script exits. The
 # servers therefore detach, and their output is funnelled into the container's
 # stdout so `coder ssh` and pod logs keep showing it.
+#
+# code-server is deliberately NOT here: the Coder template's official
+# code-server module installs and starts it as a separate startup step, so it
+# tracks upstream without a pin in this image.
 #
 # Token git auth is optional and driven by env the template supplies. No env,
 # no action: GITHUB_TOKEN, FORGEJO_TOKEN + FORGEJO_HOST. Git identity comes
@@ -202,50 +205,3 @@ if [ -n "${WORKSPACE_GIT_REPOS:-}" ]; then
   set +f
   IFS=$SAVED_IFS
 fi
-
-# code-server lives on the home PVC ($HOME/.local/share), not in the image: a
-# 240 MB download kept on the PVC beats adding it to every image rebuild, and
-# it survives restarts. The marker records the installed version, so a
-# CODE_SERVER_VERSION bump re-installs instead of silently keeping the old
-# binary.
-cs_version=${CODE_SERVER_VERSION:-v4.141.0}
-# The release tag is v-prefixed; the asset name and the archive top dir drop it.
-cs_release=${cs_version#v}
-cs_dir=${HOME}/.local/share/code-server
-cs_marker=${cs_dir}/.installed_version
-
-# The release publishes no checksum file, so the sha256 is hardcoded here —
-# the same deliberate pattern as FJ_SHA256 in the Dockerfile: a version bump
-# fails startup until the hash is recomputed, which surfaces faster than a
-# silently wrong binary would.
-cs_sha256=65bcd20b524d03eb1b5adb7f360244599ef0e5b74089a46a982d32c074b97a29
-
-if [ -f "$cs_marker" ] && [ "$(cat "$cs_marker")" = "${cs_version}" ]; then
-  log "code-server ${cs_version} already installed"
-else
-  log "installing code-server ${cs_version} into ${cs_dir}"
-  cs_tmp=$(mktemp -d "${TMPDIR:-/tmp}/code-server.XXXXXX")
-  # curl -f and the checksum gate are hard assertions: a partial or wrong
-  # tarball must abort startup, not be installed. A failed run leaves no
-  # marker, so the next boot retries from a clean state.
-  curl -fsSL -o "${cs_tmp}/code-server-${cs_release}-linux-amd64.tar.gz" \
-    "https://github.com/coder/code-server/releases/download/${cs_version}/code-server-${cs_release}-linux-amd64.tar.gz"
-  if ! printf '%s  %s\n' "$cs_sha256" "${cs_tmp}/code-server-${cs_release}-linux-amd64.tar.gz" | sha256sum -c -; then
-    log "code-server ${cs_version} checksum mismatch; aborting (recompute cs_sha256 for the new version)"
-    rm -rf "$cs_tmp"
-    exit 1
-  fi
-  tar -xzf "${cs_tmp}/code-server-${cs_release}-linux-amd64.tar.gz" -C "$cs_tmp"
-  # The archive top dir is named after the version; adopt it as the install
-  # dir so a re-install replaces the old one wholesale.
-  rm -rf "$cs_dir"
-  mv "${cs_tmp}/code-server-${cs_release}-linux-amd64" "$cs_dir"
-  echo "${cs_version}" > "$cs_marker"
-  rm -rf "$cs_tmp"
-  log "code-server ${cs_version} installed"
-fi
-
-# --auth none is safe only because the bind address is loopback: nothing outside
-# the pod can reach it. XDG_CONFIG_HOME (image env) keeps its config on the PVC.
-start_server codeserver "${cs_dir}/bin/code-server" --auth none \
-  --bind-addr 127.0.0.1:13337 --folder /home/coder

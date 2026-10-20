@@ -346,7 +346,7 @@ resource "coder_app" "code-server" {
 
 # OpenChamber
 # Must be a subdomain app: OpenChamber can't be served under a path prefix.
-# Requires CODER_WILDCARD_ACCESS_URL on the Coder server (e.g. *-coder.spencerslab.com).
+# Requires CODER_WILDCARD_ACCESS_URL on the Coder server (e.g. *-coder.example.com).
 resource "coder_app" "openchamber" {
   agent_id     = coder_agent.main.id
   slug         = "openchamber"
