@@ -21,6 +21,8 @@ bitwardenIds:
   cert-manager-solver-token: OVERRIDE_VIA_CUSTOM_VALUES
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   github-pat: OVERRIDE_VIA_CUSTOM_VALUES
+  # Bitwarden item `forgejo-token` — Forgejo access token (PASSWORD field).
+  forgejo-token: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Chart definitions for appset-charts.yaml (rendered by the base chart).
 # Each chart can have: namespace, ServerSideApply, version, repository

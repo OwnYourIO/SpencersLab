@@ -21,6 +21,8 @@ bitwardenIds:
   argocd-sso-secret: d07b1bec-d02c-4580-8544-b4e2000e1783
   # dev-github (password = PAT).
   github-pat: 522b1cc4-2c74-4399-887d-b4e20014b2d2
+  # forgejo-token (password = Forgejo access token for git.scifi.farm).
+  forgejo-token: 5488c4ba-b108-4430-b5bf-b4e7015c6c98
 
 base:
   bitwardenIds:
