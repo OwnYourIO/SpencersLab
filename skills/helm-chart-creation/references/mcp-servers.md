@@ -355,8 +355,16 @@ Live examples (gpu): `postgres-coder`, `postgres-flowise`,
 - *DB layer — the real boundary:* a dedicated `readonly` role granted only the
   PG14+ predefined `pg_read_all_data` role (read everything, write nothing).
   The app's write credentials never reach the MCP pod.
-- *App layer:* `crystaldba/postgres-mcp` runs with `--access-mode=restricted`.
-  **`0.3.0` is the final upstream release — pin it, don't float it.**
+- *App layer:* `enterprisedb/pg-airman-mcp` (maintained successor of the
+  unmaintained `crystaldba/postgres-mcp`, final release `0.3.0`) runs with
+  `--access-mode=restricted` and `ALLOW_COMMENT_IN_RESTRICTED=false` —
+  airman's restricted mode defaults to allowing `COMMENT ON` writes, the one
+  place it is looser than crystaldba 0.3.0. One process serves every session
+  through a single shared pool (min 1 / max 5, airman's built-in default) on
+  the native `streamable-http` transport; the stdio/supergateway
+  process-per-session wrapper is gone, and with it the cold-start race that
+  failed the first `tools/call` of every new session
+  (crystaldba/postgres-mcp#223).
 
 **Three cooperating pieces, all driven by one list:**
 
@@ -364,7 +372,7 @@ Live examples (gpu): `postgres-coder`, `postgres-flowise`,
 |---|---|---|
 | `postgresMcp.databases` | chart `values.yaml` (empty by default) or a service's `hivetools.postgresMcp.databases` | One entry per DB (`name`, `bitwardenIdKey`, `database`); the shared server settings live once in the `postgresMcp` block. |
 | `generic-postgres-mcpserver.yaml` | `templates/` | Ranges the list → one `MCPServer mcp-postgres-<name>` per entry (audience `mcp-postgres-<name>` when OIDC is re-enabled, secret `postgres-mcp-<name>`). |
-| `secret-postgres-mcp.yaml` | `templates/` | Ranges the same list → one ExternalSecret per entry composing `DATABASE_URI`. |
+| `secret-postgres-mcp.yaml` | `templates/` | Ranges the same list → one ExternalSecret per entry composing `AIRMAN_MCP_DATABASE_URL`. |
 
 **Add a database in 3 steps:**
 
@@ -422,7 +430,7 @@ Live examples (gpu): `postgres-coder`, `postgres-flowise`,
    under the chart's `bitwardenIds`, and the real UUID under `hivetools:` in
    `custom-values/<svc>/prod-values.yaml`.
 
-`DATABASE_URI` is composed in `secret-postgres-mcp.yaml`; the host is
+`AIRMAN_MCP_DATABASE_URL` is composed in `secret-postgres-mcp.yaml`; the host is
 deterministic: `pg-<name>-rw.<ns>.svc.cluster.local:5432`. Password escaping
 is covered in Techniques below.
 

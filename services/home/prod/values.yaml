@@ -1108,7 +1108,7 @@ hivetools:
   postgresMcp:
     databases:
       # name must match the CNPG cluster name (pg-<name>) so the composed
-      # DATABASE_URI host pg-<name>-rw resolves.
+      # AIRMAN_MCP_DATABASE_URL host pg-<name>-rw resolves.
       - name: immich
         bitwardenIdKey: mcp-pg-immich
         database: immich

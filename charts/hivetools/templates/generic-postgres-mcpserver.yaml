@@ -1,7 +1,7 @@
 {{- /*
 Postgres MCP servers: one MCPServer per entry in .Values.postgresMcp.databases.
 All servers share the single definition in .Values.postgresMcp (image / transport /
-mcpPort / args / resources / podTemplateSpec); only the per-database name varies.
+mcpPort / args / env / resources / podTemplateSpec); only the per-database name varies.
 This is the MCPServer counterpart of secret-postgres-mcp.yaml (ExternalSecrets) and
 is routed by generic-mcp-ingress.yaml. Adding a database = one entry in
 postgresMcp.databases + the bitwardenIds key + the CNPG managed role.
@@ -26,14 +26,18 @@ spec:
   args:
     {{- toYaml $pg.args | nindent 4 }}
   {{- end }}
+  {{- if $pg.env }}
+  env:
+    {{- toYaml $pg.env | nindent 4 }}
+  {{- end }}
   {{- if $pg.resources }}
   resources:
     {{- toYaml $pg.resources | nindent 4 }}
   {{- end }}
   secrets:
     - name: postgres-mcp-{{ .name }}
-      key: DATABASE_URI
-      targetEnvName: DATABASE_URI
+      key: AIRMAN_MCP_DATABASE_URL
+      targetEnvName: AIRMAN_MCP_DATABASE_URL
   {{- /*
   Liveness probe: self-heal a hung postgres-mcp process when the ToolHive
   proxy can report backend availability. Newer proxyrunner /health responses

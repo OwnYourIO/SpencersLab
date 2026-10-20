@@ -21,16 +21,29 @@ keycloak:
 # kubernetesServiceAccount). An mcp entry references one via oidc.configRef.
 mcpOidcConfigs: {}
 
-# Read-only Postgres MCP servers (crystaldba/postgres-mcp): one MCPServer +
+# Read-only Postgres MCP servers (enterprisedb/pg-airman-mcp): one MCPServer +
 # ExternalSecret per entry in .databases. Recipe: references/mcp-servers.md.
 postgresMcp:
-  # 0.3.0 is the FINAL upstream release — pin, don't float.
-  # Security: --access-mode=restricted (app layer) + pg_read_all_data role (real boundary).
-  image: crystaldba/postgres-mcp:0.3.0
-  transport: stdio
+  # airman succeeds the unmaintained crystaldba/postgres-mcp (final release
+  # 0.3.0). One process serves every session through a single shared pool
+  # (min 1 / max 5, airman's built-in default). The stdio/supergateway
+  # process-per-session wrapper is gone — its cold-start race fails the first
+  # tools/call of every new session (crystaldba/postgres-mcp#223).
+  image: enterprisedb/pg-airman-mcp:1.1.1
+  transport: streamable-http
   mcpPort: 8080
   args:
+    - "--transport=streamable-http"
+    - "--streamable-http-host=0.0.0.0"
+    - "--streamable-http-port=8080"
+    # Security: restricted mode (app layer) + pg_read_all_data role (real boundary).
     - "--access-mode=restricted"
+  # airman's restricted mode allows COMMENT ON writes by default
+  # (ALLOW_COMMENT_IN_RESTRICTED=true) — the one place it is looser than
+  # crystaldba 0.3.0. Close it so restricted means read-only.
+  env:
+    - name: ALLOW_COMMENT_IN_RESTRICTED
+      value: "false"
   resources:
     limits:
       cpu: '200m'
