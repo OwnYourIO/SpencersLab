@@ -132,8 +132,12 @@ else
     # --foreground so OpenChamber does not daemonize away from the log pipe;
     # OPENCODE_SKIP_START keeps it off its own managed OpenCode instance,
     # which would compete with the one above for the workspace.
+    # --host 0.0.0.0: devices reach OpenChamber via the pod IP (a loopback
+    # bind leaves them staring at its "server only listens on this computer"
+    # refusal). Accepted exposure: anything on the cluster network can hit
+    # the UI on :3000; the OpenCode agent API behind it stays loopback-only.
     start_server openchamber env OPENCODE_HOST=http://127.0.0.1:4096 OPENCODE_SKIP_START=true \
-      openchamber serve --foreground --host 127.0.0.1 --port 3000
+      openchamber serve --foreground --host 0.0.0.0 --port 3000
   else
     log 'OpenCode server did not answer within 60s; not starting OpenChamber (it proxies to that server)'
   fi
