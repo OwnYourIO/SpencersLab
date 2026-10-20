@@ -575,15 +575,19 @@ llama-swap:
       #   ttl: 300
       #   capabilities: { in: [text, image], out: [text] }
 
-    # Startup preload (2026-10-16): have the trio ready after (re)starts
-    # instead of paying 1–3 min of load on first request. The "main" matrix
-    # set permits all three concurrently, so they load without swapping each
-    # other out. Weights are PVC-cached; loads overlap.
+    # Startup preload (2026-10-16): have the daily driver ready after
+    # (re)starts instead of paying 1–3 min of load on first request.
+    # Weights are PVC-cached; loads overlap.
+    # 2026-10-20: qwen3.6-35b-a3b-q8 DROPPED from preload — loading it while
+    # q38q8 was resident with an active KV pool exhausted VRAM and killed the
+    # running q38q8 (amdgpu "Not enough memory for command submission" ->
+    # Vulkan device-lost/coredump) on 2026-10-18 04:29 and 2026-10-19 07:07,
+    # both right after restart preloads. It lazy-loads on first MoE request
+    # instead (matrix still permits trio coexistence at steady state).
     hooks:
       on_startup:
         preload:
           - qwen3.8-27b-q8
-          - qwen3.6-35b-a3b-q8
           - qwen3-embedding-0.6b
 
     matrix:
@@ -616,10 +620,16 @@ llama-swap:
         # dense — the MoE, embedding, and their caches stay). Memory-sized on
         # the 125 GiB node: dense ~38 + MoE ~41 + embed ~1 GiB preallocated
         # + 34 GiB warm-cache caps + ~6 GiB system ≈ 119 GiB (~6 GiB buffer).
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8 | katq4 | katq6 | katq8) & emb06 & homecpu"
+        # 2026-10-20: q38bf16 moved to solo — BF16 dense (~57 GiB incl. MTP
+        # draft + 8.7 GiB KV pool) blows the ~38 GiB dense assumption and
+        # overflows the node alongside any MoE. katq4/q6/q8 moved to solo:
+        # ~80B-A3B experts-on-CPU co-resident with the dense trio exceeds the
+        # 125 GiB budget (same reason cnxabl is solo).
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
         # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;
         # VL/whisper serve batch jobs; cnxabl's 48.6 GB experts-on-CPU would
-        # overflow the node RAM budget if co-resident with the dense trio.
-        solo: "(q35bf16 | q35b1m | q38f16 | q38q81m | katq41m | katq61m | katq81m | cnxabl | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+        # overflow the node RAM budget if co-resident with the dense trio;
+        # q38bf16 + kat trio overflow it too (see main-set note 2026-10-20).
+        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | katq4 | katq6 | katq8 | q38q81m | katq41m | katq61m | katq81m | cnxabl | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"

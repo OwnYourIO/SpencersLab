@@ -132,6 +132,14 @@ argo-cd:
       resource.customizations.ignoreDifferences.apps_DaemonSet: |
         jqPathExpressions:
           - '.spec.template.metadata.annotations?["reloader.stakater.com/last-reloaded-from"]'
+      # system-upgrade-controller rewrites Plan /status on every reconcile;
+      # without this, automated selfHeal re-applies the Plans on status
+      # drift. A spurious upgrade job fired right after such a re-sync on
+      # gpu (2026-10-20 01:39 UTC) and SIGTERM'd k3s even though the pinned
+      # version was unchanged (~1 min API outage on single-node clusters).
+      resource.customizations.ignoreDifferences.upgrade.cattle.io_Plan: |
+        jsonPointers:
+          - /status
 
       # Local account for argocd-mcp (token auth only: apiKey = can mint API
       # tokens, cannot log in interactively). RBAC below; tokens minted

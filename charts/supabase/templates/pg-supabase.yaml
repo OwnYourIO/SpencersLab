@@ -3,6 +3,10 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: pg-supabase
+  annotations:
+    # Deleting the CNPG Cluster CR makes the operator delete its PVCs
+    # (pg-supabase-1) — the database would not survive a service disable.
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   instances: 1
   imageName: supabase/postgres:17.6.1.004

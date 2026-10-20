@@ -3,6 +3,10 @@ kind: PersistentVolumeClaim
 metadata:
   name: supabase
   namespace: default
+  annotations:
+    # ArgoCD pruned the PVCs of previously disabled charts (neo4j, archon,
+    # qdrant); keep supabase app storage around for a later re-enable.
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   accessModes:
     - ReadWriteOnce
