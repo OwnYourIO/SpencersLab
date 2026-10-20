@@ -47,6 +47,16 @@ are recorded in `.agents/plans/2026/2026-10-feat-coder-workspace-rebuild/DECISIO
   banner into the boot log, and clones the template's `repos` selection
   (WORKSPACE_GIT_REPOS agent env, CODER_USER/CODER_USER_EMAIL git identity).
   Token auth stays alongside: SSH serves git@ URLs, tokens serve HTTPS.
+- code-server UNPINNED via the official Coder module
+  (registry.coder.com/coder/code-server/coder v1.6.0): its run_on_start script
+  re-runs code-server.dev/install.sh on every workspace start, so every start
+  picks up the current upstream release. The startup-script install section,
+  the code_server_version variable + CODE_SERVER_VERSION env, and the
+  hand-rolled coder_app are gone (the module creates its own app, same port
+  13337 / ?folder=/home/coder). Accepted costs: ~240 MB download per start
+  into the /tmp emptyDir; the scoped 6 GB NODE_OPTIONS heap is gone.
+- Wildcard examples in the OpenChamber comments use *-coder.example.com, not
+  the lab's real domain (both templates).
 
 ## Changes (worktree, uncommitted)
 - `containers/coder-workspace/Dockerfile` — debian:13-slim digest pin, ARG-pinned
@@ -56,9 +66,9 @@ are recorded in `.agents/plans/2026/2026-10-feat-coder-workspace-rebuild/DECISIO
 - `containers/coder-workspace/workspace-startup.sh` (new, 755) — skel seed,
   SSH key + known_hosts provisioning with pubkey banner, OpenCode :4096 +
   OpenChamber :3000, env-driven GitHub/Forgejo token auth (+ `fj auth
-  add-token`), git identity + clone loop for the `repos` parameter, pinned
-  code-server v4.141.0 install into the PVC (sha256-verified), all writes to
-  PVC//tmp.
+  add-token`), git identity + clone loop for the `repos` parameter; all
+  writes to PVC//tmp. code-server is the template's Coder module's job, not
+  this script's.
 - `renovate.json` — new custom manager for `containers/*/Dockerfile`
   (node-version|golang-version|forgejo-releases|npm, disjoint from the existing
   git-pin manager) + packageRules holding helm to v3 and kubectl to v1.36 via
@@ -68,8 +78,9 @@ are recorded in `.agents/plans/2026/2026-10-feat-coder-workspace-rebuild/DECISIO
 - `charts/coder/coder-templates/kubernetes-hardened/main.tf` (new) — merged
   template: restricted PSS, baked-image startup contract, shared PVC, git-auth
   env, `repos` multi-select + WORKSPACE_GIT_REPOS/CODER_USER agent env,
-  explicit `prevent_destroy = false`, SHUTDOWN header (template
-  `--default-ttl 168h` + per-workspace 9h/24h/168h/720h/manual).
+  explicit `prevent_destroy = false`, official code-server module (unpinned),
+  SHUTDOWN header (template `--default-ttl 168h` + per-workspace
+  9h/24h/168h/720h/manual).
 - `services/dev/prod/templates/secret-forgejo-token.yaml` (new),
   `services/dev/prod/values.yaml`, `custom-values/dev/prod-values.yaml`,
   `services/dev/prod/templates/secret-github.yaml` — ExternalSecret + Bitwarden
@@ -78,11 +89,13 @@ are recorded in `.agents/plans/2026/2026-10-feat-coder-workspace-rebuild/DECISIO
 
 ## Validation (all run in this worktree)
 - `bash tests/coder-workspace/image-structure.sh` → 46/46
-- `bash tests/coder-workspace/startup-script.sh` → 20/20
+- `bash tests/coder-workspace/startup-script.sh` → 17/17
 - `bash tests/renovate/dockerfile-pins.sh` → 8/8
-- `bash tests/templates/coder-move.sh` → 10/10 (incl. scratch terraform validate)
-- `bash tests/templates/coder-hardened.sh` → 40/40 (incl. terraform init+validate
-  of the fused template, helm package guard: 0 coder-templates/ entries, lint, template)
+- `bash tests/templates/coder-move.sh` → 9/9 (committed-move history branch,
+  incl. R100 + byte-identity at the move commit)
+- `bash tests/templates/coder-hardened.sh` → 42/42 (incl. terraform init —
+  which downloads the code-server module from registry.coder.com — +
+  validate of the fused template, helm package guard, lint, template)
 - `bash tests/services/dev-git-auth.sh` → 20 ok (incl. both helm renders of the
   dev umbrella: sentinel replaced by --set UUID and by the custom-values UUID)
 - `terraform fmt -check` on the fused template → clean

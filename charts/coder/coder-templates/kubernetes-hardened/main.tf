@@ -8,15 +8,16 @@
 # /usr/local/bin/workspace-startup.sh is the entire bootstrap: it seeds
 # $HOME on first boot, provisions the workspace SSH key + known_hosts,
 # starts OpenCode and OpenChamber, applies optional env-driven git auth
-# (tokens over HTTPS, the key over SSH), clones the repos selected via the
-# "repos" parameter, and installs + starts code-server into the home PVC
-# (the only runtime download; it never touches the rootfs).
+# (tokens over HTTPS, the key over SSH), and clones the repos selected via
+# the "repos" parameter. code-server is deliberately NOT the script's job:
+# the official Coder code-server module below installs and starts it as its
+# own startup step, fetching the current upstream release on every start.
 #
 # Restricted PSS holds for the same reason. No runtime write targets the
 # rootfs: the writable paths are exactly the home PVC, /shared, and the
-# /tmp emptyDir that stages code-server's first-boot download. The container
-# therefore runs with a read-only root filesystem, all capabilities
-# dropped, no privilege escalation, and no sudo.
+# /tmp emptyDir (also the code-server module's install target). The
+# container therefore runs with a read-only root filesystem, all
+# capabilities dropped, no privilege escalation, and no sudo.
 #
 # The image is public on GHCR and pulled with pullPolicy Always, so there
 # are no pull secrets and no registry wiring of any kind.
@@ -82,12 +83,6 @@ variable "shared_pvc_name" {
   type        = string
   description = "Name of the pre-existing SeaweedFS RWX PVC shared by all workspaces"
   default     = "dev-shared"
-}
-
-variable "code_server_version" {
-  type        = string
-  description = "Pinned code-server version; the startup script installs it into the home PVC at first boot and re-installs when the version on the PVC differs."
-  default     = "v4.141.0"
 }
 
 data "coder_parameter" "cpu" {
@@ -209,14 +204,10 @@ resource "coder_agent" "main" {
   # OPENCODE_SERVER_PASSWORD is set by the agent on every process it launches
   # (startup script, code-server + its extension host, terminals, `coder ssh`), so the
   # OpenChamber extension and OpenChamber server can both authenticate to OpenCode.
-  # CODE_SERVER_VERSION pins the code-server the startup script installs into
-  # the home PVC when the version on the PVC differs; unset falls back to the
-  # script's own default.
   env = {
     OPENCODE_BINARY          = "/usr/local/bin/opencode"
     OPENCODE_SERVER_USERNAME = "opencode"
     OPENCODE_SERVER_PASSWORD = random_password.opencode_server.result
-    CODE_SERVER_VERSION      = var.code_server_version
     # Git identity for the baked startup script (git config --global),
     # sourced explicitly from the workspace owner.
     CODER_USER       = data.coder_workspace_owner.me.name
@@ -287,26 +278,26 @@ resource "coder_agent" "main" {
   }
 }
 
-# code-server
-resource "coder_app" "code-server" {
-  agent_id     = coder_agent.main.id
-  slug         = "code-server"
-  display_name = "code-server"
-  icon         = "/icon/code.svg"
-  url          = "http://127.0.0.1:13337?folder=/home/coder"
-  subdomain    = false
-  share        = "owner"
-
-  healthcheck {
-    url       = "http://127.0.0.1:13337/healthz"
-    interval  = 3
-    threshold = 10
-  }
+# code-server via the official Coder module instead of a repo pin: its
+# run_on_start script runs code-server.dev/install.sh on EVERY workspace
+# start (no install_version set), so every start picks up the current
+# upstream release — freshness over the pinned-tarball approach this
+# replaced. Accepted costs: a ~240 MB download per start into the /tmp
+# emptyDir, and no scoped NODE_OPTIONS (the module's launcher takes none),
+# so the old 6 GB Cline heap is gone. The module also creates the
+# coder_app (path-based, port 13337, ?folder=/home/coder), which is why
+# this template declares none.
+module "code-server" {
+  count    = data.coder_workspace.me.start_count
+  source   = "registry.coder.com/coder/code-server/coder"
+  version  = "1.6.0"
+  agent_id = coder_agent.main.id
+  folder   = "/home/coder"
 }
 
 # OpenChamber
 # Must be a subdomain app: OpenChamber can't be served under a path prefix.
-# Requires CODER_WILDCARD_ACCESS_URL on the Coder server (e.g. *-coder.spencerslab.com).
+# Requires CODER_WILDCARD_ACCESS_URL on the Coder server (e.g. *-coder.example.com).
 resource "coder_app" "openchamber" {
   agent_id     = coder_agent.main.id
   slug         = "openchamber"

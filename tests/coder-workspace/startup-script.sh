@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# C01 acceptance checks for containers/coder-workspace/workspace-startup.sh —
+# Acceptance checks for containers/coder-workspace/workspace-startup.sh —
 # the baked startup contract the Coder templates call. Covers criterion 1
-# (POSIX sh, set -eu), the env contract, the pinned code-server install, and
-# the forbidden strings. Each check prints one pass/fail line; any fail makes
+# (POSIX sh, set -eu), the env contract, the SSH + clone jobs, and the
+# forbidden strings. Each check prints one pass/fail line; any fail makes
 # the script exit non-zero.
 #
 # This script is the single baked startup contract for the hardened template,
 # so the checks assert exactly what the template and the image depend on: the
-# env names the template will export, the verified code-server artifact, and
-# the absence of machinery the rebuild deliberately drops.
+# env names the template will export, the jobs the script owns, and the
+# absence of machinery the rebuild deliberately drops. code-server is NOT
+# this script's job (the template's official Coder module owns it), and the
+# checks pin that boundary too.
 #
 # Usage: bash tests/coder-workspace/startup-script.sh
 
@@ -17,13 +19,6 @@ set -u
 cd "$(git rev-parse --show-toplevel)" || { echo "fail: cannot resolve repo root via git"; exit 2; }
 
 STARTUP="containers/coder-workspace/workspace-startup.sh"
-
-# The code-server release publishes no checksum file, so the startup script
-# must hardcode the sha256 (verified 2026-10-18, DECISIONS #22) — the same
-# deliberate pattern as FJ_SHA256: a version bump fails startup until the
-# hash is recomputed.
-CODE_SERVER_SHA256='65bcd20b524d03eb1b5adb7f360244599ef0e5b74089a46a982d32c074b97a29'
-CODE_SERVER_DEFAULT_VERSION='v4.141.0'
 
 PASS=0
 FAIL=0
@@ -61,7 +56,7 @@ fi
 # --- env contract -----------------------------------------------------------
 # These are the exact env names the hardened template will export; a rename on
 # either side would silently break workspace startup.
-for var in OPENCODE_SERVER_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST CODE_SERVER_VERSION CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
+for var in OPENCODE_SERVER_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
   if grep -Eq "(^|[^A-Za-z0-9_])\\\$\\{?${var}" "$STARTUP"; then
     pass "env: \${${var}} is read by the startup script"
   else
@@ -80,27 +75,14 @@ for needle in ssh-keygen known_hosts 'git clone'; do
   fi
 done
 
-if grep -Fq "$CODE_SERVER_DEFAULT_VERSION" "$STARTUP"; then
-  pass "env: code-server falls back to ${CODE_SERVER_DEFAULT_VERSION} when CODE_SERVER_VERSION is unset"
+# code-server is the template's official Coder module's job; a reinstall of
+# it in the baked script would race the module and silently pin whatever the
+# script fetched. Comments may name it; code must not.
+cs_hit=$(code_lines "$STARTUP" | grep -in 'code-server' | head -n 1 || true)
+if [ -z "$cs_hit" ]; then
+  pass "job: no code-server install/start survives in the script (the module owns it)"
 else
-  fail "env: no ${CODE_SERVER_DEFAULT_VERSION} default for CODE_SERVER_VERSION"
-fi
-
-# --- pinned code-server install ---------------------------------------------
-if grep -Fq "$CODE_SERVER_SHA256" "$STARTUP"; then
-  pass "code-server: the verified sha256 ${CODE_SERVER_SHA256:0:16}… is hardcoded in the script"
-else
-  fail "code-server: the verified sha256 ${CODE_SERVER_SHA256} is not in the script"
-fi
-
-# The asset name is built from the (possibly env-supplied) version, e.g.
-# code-server-${version#v}-linux-amd64.tar.gz; match the shape, not the
-# variable name, so either a direct ${CODE_SERVER_VERSION...} expansion or a
-# local alias satisfies the contract.
-if grep -Eq "code-server-[A-Za-z0-9_\$.{}#\"'-]*-linux-amd64\.tar\.gz" "$STARTUP"; then
-  pass "code-server: the official 'code-server-<version>-linux-amd64.tar.gz' asset pattern is used"
-else
-  fail "code-server: no 'code-server-<version>-linux-amd64.tar.gz' asset pattern found"
+  fail "job: code-server machinery present in $STARTUP code ($cs_hit)"
 fi
 
 # --- forbidden strings --------------------------------------------------------

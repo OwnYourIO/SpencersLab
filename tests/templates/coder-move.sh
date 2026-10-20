@@ -8,11 +8,13 @@
 # checks are the local gate for C03. Each check prints one pass/fail line;
 # any fail makes the script exit non-zero.
 #
-# Criterion 1 uses `git status --porcelain=v2` (not v1): only v2 reports the
-# R100 similarity score and BOTH rename paths on one line, which is what
-# proves "100% similarity, no content edit". Status is scoped to the
-# coder-templates pathspec because the worktree legitimately carries other
-# uncommitted C01/C02 changes (renovate.json, the Dockerfile, tests/).
+# Criterion 1 has two acceptance shapes for the same contract (exactly two
+# exact R100 renames, zero content change): while the move is staged,
+# `git status --porcelain=v2` proves it (only v2 reports the R100 similarity
+# score and BOTH rename paths on one line; scoped to the coder-templates
+# pathspec because the worktree legitimately carries other changes); once
+# the move is committed, the proof moves to history (the R100 diff-tree
+# entry in the new path's --follow history).
 #
 # Criterion 2 runs PLAN.md's scratch-copy terraform recipe verbatim: init in
 # a copy under /tmp/opencode, never inside the repo (.terraform/ must not be
@@ -49,15 +51,23 @@ fail() { FAIL=$((FAIL + 1)); printf 'fail: %s\n' "$1"; }
 
 status_dump=$(git -C "$REPO_ROOT" status --porcelain=v2 -- "$TPL/" 2>&1)
 
-# --- criterion 1: exactly two 100%-similarity renames, old paths gone ------
-# A rename is one v2 line: "2 <XY> <sub> <m1> <m2> <mH> <X> <Y> <score> <path>\t<origPath>"
-# — ten space-separated fields (the score is where R100 similarity is reported,
-# the NEW path is last of them), then ONE tab, then the orig path.
+# --- criterion 1: exactly two exact (R100) renames, old paths gone ---------
+# The move shows up in exactly one of two places, and the gate accepts both:
 #
-# XY must be exactly "R." (staged rename, worktree clean against the index).
-# The score compares INDEX vs HEAD, so an unstaged edit after `git mv` shows
-# "RM ... R100" — index-still-identical, worktree-drifted — and must fail the
-# zero-content-change contract.
+# a) In-flight: `git status --porcelain=v2` carries the staged renames. A
+#    rename is one v2 line: "2 <XY> <sub> <m1> <m2> <mH> <X> <Y> <score>
+#    <path>\t<origPath>" — ten space-separated fields (the score is where
+#    R100 similarity is reported, the NEW path is last of them), then ONE
+#    tab, then the orig path. XY must be exactly "R." (staged rename,
+#    worktree clean against the index): the score compares INDEX vs HEAD, so
+#    an unstaged edit after `git mv` shows "RM ... R100" — index still
+#    identical, worktree drifted — and must fail the zero-content-change
+#    contract.
+#
+# b) Committed: status under the pathspec is clean, so the proof moves to
+#    history — a commit whose R100 diff-tree entry records old -> new with
+#    byte-identical content, found by walking the new path's --follow
+#    history (so later edits to the moved file do not hide the move).
 rename_entry() { # $1 = expected new path, $2 = expected orig path
   printf '%s\n' "$status_dump" | awk -F'\t' -v want_new="$1" -v want_orig="$2" '
     NF == 2 {
@@ -69,28 +79,68 @@ rename_entry() { # $1 = expected new path, $2 = expected orig path
   '
 }
 status_tail=$(printf '%s' "$status_dump" | head -n 5 | tr '\n' '|')
+rename_entries=$(printf '%s\n' "$status_dump" | awk '$1 == "2"' || true)
 
-if rename_entry "$TPL/kubernetes/main.tf" "$TPL/main.tf"; then
-  pass "c1: main.tf is staged as an R100 rename to kubernetes/main.tf"
+# Prints the commit that records the exact rename of $2 to $1, walking the
+# new path's --follow history; empty + non-zero when no commit does.
+move_commit_for() { # $1 = new path, $2 = orig path
+  local c
+  while IFS= read -r c; do
+    [ -n "$c" ] || continue
+    if git -C "$REPO_ROOT" diff-tree -r -M --no-commit-id --name-status "$c" |
+        awk -F'\t' -v old="$2" -v new="$1" '$1 == "R100" && $2 == old && $3 == new { found = 1 } END { exit !found }'; then
+      printf '%s' "$c"
+      return 0
+    fi
+  done < <(git -C "$REPO_ROOT" log --follow --format=%H -- "$1")
+  return 1
+}
+
+if [ -n "$rename_entries" ]; then
+  if rename_entry "$TPL/kubernetes/main.tf" "$TPL/main.tf"; then
+    pass "c1: main.tf is staged as an R100 rename to kubernetes/main.tf"
+  else
+    fail "c1: no R100 rename entry $TPL/main.tf -> $TPL/kubernetes/main.tf (status under $TPL/ is: ${status_tail})"
+  fi
+  if rename_entry "$TPL/kubernetes/terraform.tfvars" "$TPL/terraform.tfvars"; then
+    pass "c1: terraform.tfvars is staged as an R100 rename to kubernetes/terraform.tfvars"
+  else
+    fail "c1: no R100 rename entry $TPL/terraform.tfvars -> $TPL/kubernetes/terraform.tfvars (status under $TPL/ is: ${status_tail})"
+  fi
+  # Count only type-2 (rename) lines, not all entries: the untracked
+  # kubernetes-hardened/ folder is a legitimate third entry under this
+  # pathspec (its file contract lives in tests/templates/coder-hardened.sh).
+  # A third rename still fails (count 3); a modification of either moved file
+  # still fails the per-file checks above, where worktree drift flips XY from
+  # "R." to "RM".
+  rename_count=$(printf '%s\n' "$status_dump" | awk '$1 == "2" { n++ } END { print n + 0 }')
+  if [ "$rename_count" -eq 2 ]; then
+    pass "c1: exactly 2 rename entries under coder-templates/ (the two R100 renames only)"
+  else
+    fail "c1: expected exactly 2 rename entries under coder-templates/, got $rename_count: $(printf '%s' "$status_dump" | tr '\n' '|')"
+  fi
 else
-  fail "c1: no R100 rename entry $TPL/main.tf -> $TPL/kubernetes/main.tf (status under $TPL/ is: ${status_tail})"
-fi
-if rename_entry "$TPL/kubernetes/terraform.tfvars" "$TPL/terraform.tfvars"; then
-  pass "c1: terraform.tfvars is staged as an R100 rename to kubernetes/terraform.tfvars"
-else
-  fail "c1: no R100 rename entry $TPL/terraform.tfvars -> $TPL/kubernetes/terraform.tfvars (status under $TPL/ is: ${status_tail})"
-fi
-# Count only type-2 (rename) lines, not all entries: C04's untracked
-# kubernetes-hardened/ folder is a legitimate third entry under this
-# pathspec (its file contract lives in tests/templates/coder-hardened.sh).
-# A third rename still fails (count 3); a modification of either moved file
-# still fails the per-file checks above, where worktree drift flips XY from
-# "R." to "RM".
-rename_count=$(printf '%s\n' "$status_dump" | awk '$1 == "2" { n++ } END { print n + 0 }')
-if [ "$rename_count" -eq 2 ]; then
-  pass "c1: exactly 2 rename entries under coder-templates/ (the two R100 renames only)"
-else
-  fail "c1: expected exactly 2 rename entries under coder-templates/, got $rename_count: $(printf '%s' "$status_dump" | tr '\n' '|')"
+  for pair in main.tf terraform.tfvars; do
+    old="$TPL/$pair"
+    new="$TPL/kubernetes/$pair"
+    if [ ! -f "$REPO_ROOT/$new" ]; then
+      fail "c1: $new is missing — the move has not landed (staged or committed)"
+      continue
+    fi
+    if git -C "$REPO_ROOT" cat-file -e "HEAD:$old" 2>/dev/null; then
+      fail "c1: $old is still tracked at HEAD — the move has not been committed"
+      continue
+    fi
+    if move_commit=$(move_commit_for "$new" "$old"); then
+      if git -C "$REPO_ROOT" show "${move_commit}^:$old" | cmp -s - <(git -C "$REPO_ROOT" show "$move_commit:$new"); then
+        pass "c1: $pair moved to kubernetes/ as an exact rename in ${move_commit:0:9} (content byte-identical at the move)"
+      else
+        fail "c1: $pair rename recorded in ${move_commit:0:9} but the content changed in the move"
+      fi
+    else
+      fail "c1: no commit in $new's history records $old -> $new as an exact rename (R100)"
+    fi
+  done
 fi
 if [ ! -e "$REPO_ROOT/$TPL/main.tf" ] && [ ! -e "$REPO_ROOT/$TPL/terraform.tfvars" ]; then
   pass "c1: old paths no longer exist on disk"
