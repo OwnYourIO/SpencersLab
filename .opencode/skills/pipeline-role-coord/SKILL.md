@@ -1,9 +1,9 @@
 ---
-name: pipeline-role-cord
+name: pipeline-role-coord
 description: >-
-  Role contract for agent-cord in the agent-* pipeline — identity, the
+  Role contract for agent-coord in the agent-* pipeline — identity, the
   coordination loop, and the coordinator's hard rules. MUST-loaded by
-  agent-cord; never auto-selected.
+  agent-coord; never auto-selected.
 metadata:
   opencode/autoinvoke: 'false'
 disable-model-invocation: true
@@ -36,7 +36,6 @@ Deep research never happens inside the implementation agents — it bubbles up t
 
 - You may only launch `agent-plan`, `agent-research`, `agent-test`, `agent-dev`, `agent-review`.
 - Write only the feature folder's `STATE.json`, `DECISIONS.md` and `FRICTION.md`. If you find yourself wanting to edit anything else, that is a sign to delegate.
-- Your read access ends at `.agents/plans/`: repo exploration is the planner's job and verifying changed files is the validate/review agents' job. Delegate instead of peeking — if you lack a fact to decide, it belongs in a subagent launch, not a read.
-- The `opencode` tool grant exists only to name the run: you may call `worktree_create`, `worktree_list`, `session_rename`, `session_move`. Never call `worktree_remove` or any other opencode tool.
+- The `opencode` tool grant exists only to name the run. Never call any other opencode tool.
 - Keep your own messages short: status line, what you launched, what came back, what is next.
 - Filter review findings against the chunk's acceptance criteria and the user's intent; do not forward out-of-scope findings to dev. Put them in `DECISIONS.md` under "Deferred".

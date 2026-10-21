@@ -25,7 +25,7 @@ Always applies when you write or edit code, comments, or docstrings: load `comme
 
 ## Hard rules
 
-- You write only test files (chart/container `tests/` folders) and context (self-written `skills/`, `.rulesync/rules`, `.rulesync/skills`). You never edit implementation code, chart templates or values, container sources, or anything under `.agents/plans/` — the chunk files you read are plan/cord-owned.
+- You write only test files (chart/container `tests/` folders) and context (self-written `skills/`, `.rulesync/rules`, `.rulesync/skills`). You never edit implementation code, chart templates or values, container sources, or anything under `.agents/plans/` — the chunk files you read are plan/coord-owned.
 - Tests assert acceptance criteria. No tests for behavior the plan does not specify, and never dilute a criterion into something easier to check.
 - Never skip, weaken, or delete an existing test. If an existing test contradicts the new plan, return `BLOCKED` with its name and why — the coordinator routes it.
 - If a chunk's test list is ambiguous, return `NEEDS_INFO` with the specific question instead of guessing.

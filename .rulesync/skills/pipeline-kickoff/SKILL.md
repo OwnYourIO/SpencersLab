@@ -1,6 +1,6 @@
 ---
 name: pipeline-kickoff
-description: New-ticket kickoff for the agent-* coordinator — the questions to ask the user (slug, models, run tag) and how to name the worktree/branch/session from the answers. MUST-loaded by agent-cord; never auto-selected.
+description: New-ticket kickoff for the agent-* coordinator — the questions to ask the user (slug, models, run tag) and how to name the worktree/branch/session from the answers. MUST-loaded by agent-coord; never auto-selected.
 targets: ["*"]
 disable-model-invocation: true
 metadata:

@@ -89,8 +89,8 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{cord,plan,research,test,dev,review}.md`) —
-  chunk-based pipeline: `agent-cord` (primary) runs an approved plan through
+- `agent-*` (`.agents/agents/agent-{coord,plan,research,test,dev,review}.md`) —
+  chunk-based pipeline: `agent-coord` (primary) runs an approved plan through
   fresh `agent-plan`/`agent-test`/`agent-dev`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only
   shared memory; when all chunks are done it runs a final whole-plan review
@@ -102,7 +102,7 @@ container images (`containers/`). **ArgoCD applies everything — never
 
 A chunk-based pipeline for multi-step work, complementary to the standalone
 `planner`/`code` agents (single-shot planning/implementation) and the
-`0-pipeline` SDLC stages (large features with docs). `agent-cord` runs an
+`0-pipeline` SDLC stages (large features with docs). `agent-coord` runs an
 approved plan chunk by chunk through fresh `agent-plan`/`agent-test`/
 `agent-dev`/`agent-review` subagents; files are the only shared memory.
 Launch with `/pipeline` (plan if needed, then run) or `/pipeline-resume`
@@ -131,11 +131,11 @@ role × permission matrix is in the `agents-sync` skill references
   the plan file's "Commands"; `agent-test` writes every chunk's test files
   in one session after planning (before any dev), `agent-dev` runs them
   while implementing and `agent-review` re-runs them as the first step of
-  every review; `agent-cord` gates a chunk done only when they pass. A test
-  judged faulty is never fixed by the reviewer — cord asks the user and
+  every review; `agent-coord` gates a chunk done only when they pass. A test
+  judged faulty is never fixed by the reviewer — coord asks the user and
   routes the fix back to the test session.
 - Deep research is commissioned, never ad hoc: any agent that needs it
-  reports the need via RESULT, `agent-cord` launches `agent-research`
+  reports the need via RESULT, `agent-coord` launches `agent-research`
   (storm skill + `global-searxng`), and the summary lands in the feature
   folder as `RESEARCH.md` for every later agent to read.
 - All Hard rules below (no hand-bumped versions, ExternalSecret+Bitwarden
@@ -145,38 +145,6 @@ role × permission matrix is in the `agents-sync` skill references
 The agent files themselves are repo-agnostic on purpose (they work the same
 in HomeAssistant/CuratedForest); repo grounding lives in this file, which is
 loaded into every session automatically.
-
-## Skills registry
-
-**Loading rule:** The first thing you MUST always do is load the skills listed in the plan. If no skills are in your plan, evaluate your skills and load the top 5 relevant skills.
-
-Load with the `skill` tool. Everything here is task-triggered. Skills an agent
-loads unconditionally live in that agent's file (`.agents/agents/`), not here.
-
-| Skill | Load when | Notes |
-|---|---|---|
-| `helm-chart-creation` | Creating/modifying charts or service wiring | self-managed (`skills/`); pairs with `helm-bjw-s-chart` |
-| `helm-bjw-s-chart` | Chart work — the bjw-s app-template values/schema API | upstream reference |
-| `container-creation` | Adding/editing images in `containers/` | self-managed (`skills/`) |
-| `kubernetes-skill` | Authoring/reviewing manifests or charts | complements k8s-troubleshooter |
-| `gitops-workflows` | ArgoCD/ApplicationSet/sync/secrets-in-git work | **primary GitOps skill** |
-| `argocd-advanced` | ApplicationSet generators, Image Updater, cluster onboarding/bootstrapping | |
-| `k8s-troubleshooter` | Live cluster incidents (CrashLoopBackOff, Pending, OOM, PVC, networking) | live debugging; distinct from kubernetes-skill |
-| `systematic-debugging` | Any non-obvious bug, before proposing fixes | generic discipline |
-| `test-driven-development` | Writing/changing real code (`containers/`, `src/`) | not for YAML-only changes |
-| `using-git-worktrees` | Starting isolated feature work | |
-| `prometheus` | PromQL, Prometheus HTTP API | API reference |
-| `grafana` | Grafana HTTP API (dashboards, datasources, alerting) | API reference |
-| `loki` | Loki deployment, LogQL, retention | |
-| `traefik` | Traefik ingress/middleware/TLS (`charts/traefik*`, proxy services) | |
-| `container-security` | Image scanning (Trivy), Dockerfile hardening (`containers/`) | some ACR-specific content |
-| `llama-swap` | llama-swap / llama.cpp work only (`charts/llama-swap`) | self-managed in `./skills/` |
-| `wekan-api` | WeKan REST API or `wekan-mcp` server work (`containers/wekan-mcp`, `mcp.wekan-readonly`/`mcp.wekan-admin` in the gpu service values, WeKan instances in `services/home/prod`) | self-managed in `./skills/` |
-| `agents-sync` | Build, extend, and repair the agent-* pipeline and sync it between repos — roles/variants/permissions, plan folders, friction log, RESULT handoffs | rulesync-managed (`.rulesync/skills/` → `.opencode/skills/`) |
-| `pipeline-*` | Internal agent-* contract skills — `pipeline-conventions` + `pipeline-role-{cord,plan,dev,validate,review}` (+ `pipeline-kickoff`/`pipeline-models`/`pipeline-gates` for cord); MUST-loaded by the pipeline agents, hidden from auto-selection | rulesync-managed (`.rulesync/skills/` → `.opencode/skills/`) |
-| `comment-slop` | Comment quality: find/remove AI-slop comments while keeping the reasoning that earns its place; applies whenever comments/docstrings are written or cleaned up | rulesync-managed, vendored + SHA-pinned from `dashed/claude-marketplace` |
-| `aislop` | Deterministic code-quality gate (6 engines, 0–100 score): run via `$aislop` before handing back code; manual-only (hidden from auto-selection) | rulesync-managed, vendored + SHA-pinned from `scanaislop/skills` |
-| `storm` | Deep research: "research X", "deep dive", briefings, backgrounder reports, "understand all sides of" a topic — sourced multi-perspective output | third-party (`kunjan-p/storm-skill`); citation-grounded STORM pipeline; pairs with `global-searxng` for the web searches |
 
 ## MCP servers
 

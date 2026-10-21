@@ -56,15 +56,16 @@ pasted into chat.
 
 **Never push to `main`.** Only the user lands work on `main`. Commit to your
 own branch/worktree, and pick up updates by merging `main` *into* it — never
-merge your branch into `main` and never run `git push origin main`.
+merge your branch into `main` and never run `git push origin main`. You may
+leave changes uncommitted for review on the main branch if asked.
 
-**Ask before changing branches or committing.** Never run `git checkout`,
-`git switch`, `git commit`, or `git push` without the user's explicit go-ahead
-in this session. Present what you intend to do (target branch, files staged,
-commit message) and wait for confirmation. Read-only git (`status`, `log`,
-`diff`) needs no confirmation. If a task says "commit" or "push" up front,
-that instruction is the go-ahead — one confirmation covers exactly what was
-asked, not follow-up commits.
+**Ask before changing branches or committing.** `git checkout`, `git switch`,
+`git commit`, and `git push` are permissioned as `ask` in your permission
+rules — each pauses for the user's explicit go-ahead. When one fires, present
+what you intend to do (target branch, files staged, commit message). Read-only
+git (`status`, `log`, `diff`) needs no confirmation. If a task says "commit"
+or "push" up front, that instruction is the go-ahead — one confirmation covers
+exactly what was asked, not follow-up commits.
 
 ## MCP server privilege rule (hard)
 

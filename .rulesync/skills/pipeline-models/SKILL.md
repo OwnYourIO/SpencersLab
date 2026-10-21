@@ -1,6 +1,6 @@
 ---
 name: pipeline-models
-description: Model routing for the agent-* coordinator — which model each subagent role runs on, and this lab's favorited models map. MUST-loaded by agent-cord; never auto-selected.
+description: Model routing for the agent-* coordinator — which model each subagent role runs on, and this lab's favorited models map. MUST-loaded by agent-coord; never auto-selected.
 targets: ["*"]
 disable-model-invocation: true
 metadata:

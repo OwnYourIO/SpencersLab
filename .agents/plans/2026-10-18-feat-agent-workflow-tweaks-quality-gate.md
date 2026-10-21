@@ -18,20 +18,20 @@ stay opencode-only — no claudecode target).
   month forever; legacy `yyyy-mm/<feature-slug>/` folders stay until migrated
   per-ticket (documented in AGENTS.md + building-agents references).
 - Updated: templates/PLAN.md (`feature:` field), all 10 `agent-*` sources
-  (shared conventions + cord resolve step + plan create step), rules source,
+  (shared conventions + coord resolve step + plan create step), rules source,
   building-agents SKILL.md + plan-and-result.md + pipeline-overview.md,
   STATE.json `feature` schema.
 - `/pipeline*` commands unchanged: their `find -mindepth 2 -maxdepth 3`
   already matches the new depth.
 
-### 2. Coordinator read lockdown (`agent-cord{,-bmad}`)
+### 2. Coordinator read lockdown (`agent-coord{,-bmad}`)
 - Permissions: removed `read * allow` / `glob *` / `grep *`; added
   `read .agents/plans/** allow` (last-match-wins: default-deny at top).
 - Prompts: intro now says exploration/verification belong to subagents;
   new hard rule "your read access ends at `.agents/plans/`".
 
 ### 3. Coordinator skills = workflow-only
-- cord MUST-loads `/building-agents` + `/executing-plans`; cord-bmad
+- coord MUST-loads `/building-agents` + `/executing-plans`; coord-bmad
   `/bmad` + `/building-agents`. Dropped "load top 5 relevant skills"
   dynamic task-skill loading; subagents carry task skills.
 
@@ -95,7 +95,7 @@ stay opencode-only — no claudecode target).
 ## Skill rename + skills-management doc fixes
 
 - Renamed the pipeline skill `building-agents` → `agents-sync` (sources
-  dir, SKILL.md name/title, sync-reference examples, cord MUST-load lines,
+  dir, SKILL.md name/title, sync-reference examples, coord MUST-load lines,
   registry row). `delete: true` swept the orphaned generated dir; the new
   skill registered live and the old id was retired.
 - `.agents/skills/` bullet corrected to reality: third-party skills are
@@ -107,7 +107,7 @@ stay opencode-only — no claudecode target).
 ## Agents → rule/call skeletons (2026-10-20, round 2)
 
 - Remaining agent body text moved into five role skills (hidden, same
-  pattern): `pipeline-role-cord` (identity + loop + hard rules),
+  pattern): `pipeline-role-coord` (identity + loop + hard rules),
   `pipeline-role-plan` (process + chunk template + planning rules),
   `pipeline-role-dev` (quality gate + process + hard rules),
   `pipeline-role-validate` (validate procedure + hard rules),
@@ -133,11 +133,11 @@ stay opencode-only — no claudecode target).
     files-are-the-bus read order, RESULT block (loaded by all 5 pipeline
     agents).
   - `pipeline-kickoff` — new-ticket questions + worktree/branch/session
-    naming (cord).
-  - `pipeline-models` — role→model routing table + lab favorites map (cord).
+    naming (coord).
+  - `pipeline-models` — role→model routing table + lab favorites map (coord).
   - `pipeline-gates` — deterministic-first, stuck detection, retry caps,
-    BLOCKED/NEEDS_INFO handling, deviation logging (cord).
-- Agent files slimmed accordingly (cord 1,391→887 words; the four
+    BLOCKED/NEEDS_INFO handling, deviation logging (coord).
+- Agent files slimmed accordingly (coord 1,391→887 words; the four
   subagents lost the ~280-word shared-conventions+RESULT block each,
   replaced by a one-line hand-off pointer). Total pipeline-agent text
   ~3,800 words, contract now single-sourced.
@@ -160,7 +160,7 @@ stay opencode-only — no claudecode target).
   standalone plans — one convention everywhere). `templates/PLAN.md` stays
   as boilerplate; agent-plan renames it to the dated name when creating the
   ticket (and still adopts a pre-existing root-level dated plan via git mv).
-  All PLAN.md references updated across cord/plan/dev/validate/review,
+  All PLAN.md references updated across coord/plan/dev/validate/review,
   overview.md, code.md, plan.md, and the agents-sync skill (SKILL.md diagram,
   plan-and-result layout + new-ticket bullet). The old docs listed BOTH a
   dated file and PLAN.md inside tickets — that contradiction was the
@@ -176,9 +176,9 @@ stay opencode-only — no claudecode target).
   "write failing tests first" phase is gone (this repo's validations are
   helm lint/template + grep checks, not unit tests).
 - `agent-test` renamed to `agent-validate` (source rename; `delete: true`
-  swept the orphan, generated surface verified at 19 agents; cord's
+  swept the orphan, generated surface verified at 19 agents; coord's
   subagent permission roster now exactly plan/dev/validate/review).
-- New **final review**: after all chunks are done cord launches
+- New **final review**: after all chunks are done coord launches
   `agent-review` over the whole plan (full diff vs every acceptance
   criterion + DECISIONS.md + friction.md); only its APPROVED sets
   `plan_status: complete`. agent-review's prompt now covers both scopes.
@@ -202,13 +202,13 @@ stay opencode-only — no claudecode target).
 
 ## Coordinator kickoff flow (new-ticket naming)
 
-- New `## Kickoff (new ticket)` section in agent-cord: for a NEW ticket, ask
+- New `## Kickoff (new ticket)` section in agent-coord: for a NEW ticket, ask
   (question tool) — project slug (2-3 suggested, type-prefixed), planning
   model (default openrouter/qwen/qwen3.8-2.4t-a95b), model for the rest
   (default openrouter/qwen/qwen3.8-27b), run tag (bare model tag / +run
   number / +variant / user-provided). Kickoff model choices override the
   defaults table for the run.
-- Cord then names the run surfaces via the `opencode` tool: `worktree_create`
+- Coord then names the run surfaces via the `opencode` tool: `worktree_create`
   `<slug>-<run tag>`, `session_rename` to the slug, `session_move` into the
   worktree (so all subagents of the run work there); answers recorded in
   STATE.json under `kickoff` (schema documented in agents-sync
@@ -263,7 +263,7 @@ stay opencode-only — no claudecode target).
 
 ## `-bmad` variants removed (user: "just remove the bmad variants")
 
-- Deleted sources: 5 agents (`agent-{cord,plan,dev,test,review}-bmad.md`) +
+- Deleted sources: 5 agents (`agent-{coord,plan,dev,test,review}-bmad.md`) +
   2 commands (`pipeline-bmad.md`, `pipeline-resume-bmad.md`); `delete: true`
   swept the 5 generated agents, and the 2 generated commands went with their
   sources. Generated surfaces: 19 agents, 2 commands.
@@ -307,30 +307,30 @@ stay opencode-only — no claudecode target).
   mode). `agent-plan` keeps its name. Source renamed via `git mv`; generated
   `plan.md` swept.
 - **`agent-*` user-selectable**: agent-plan/dev/review/research are
-  `mode: all` (cord stays `primary`) — every pipeline agent is drivable from
-  the agent picker, not just via cord.
+  `mode: all` (coord stays `primary`) — every pipeline agent is drivable from
+  the agent picker, not just via coord.
 - **Chunk grouping**: S tasks up to 5 per chunk (was 3), M tasks up to 2
   related per chunk (was 1), L always alone (`pipeline-role-plan` +
   pipeline-overview doc).
 - **Validate stage removed** (user: "validation isn't catching much, so is a
   waste"): `agent-validate` + `pipeline-role-validate` deleted; its verbiage
   merged into `pipeline-role-review` — review now runs the validation
-  commands + full suite as step 1, then reviews; cord's loop is dev → review
+  commands + full suite as step 1, then reviews; coord's loop is dev → review
   (fix rounds: dev → review). ~~Review inherits validate's edit grants so it
   can fix a broken validation~~ — superseded by the correction section below:
-  review edits nothing, the fix routes to the authoring session via cord +
-  user confirmation. Cord's chunk-done gate now reads
+  review edits nothing, the fix routes to the authoring session via coord +
+  user confirmation. Coord's chunk-done gate now reads
   the validation proof from review's RESULT `commands_run`.
 - **`friction.md` → `FRICTION.md`** everywhere (conventions layout + read
-  order, cord loop/permissions — globs are case-sensitive, cord permission
+  order, coord loop/permissions — globs are case-sensitive, coord permission
   resource updated, templates renamed via `git mv`, docs).
 - **`agent-research`** added: deep, citation-grounded research via the `storm`
   skill + `global-searxng` MCP; summary lands in the ticket folder as
   `RESEARCH.md` next to the plan file. `mode: all`; webfetch/websearch
   allowed; write access only `.agents/plans/**`. Research is commissioned,
   never ad hoc: any agent reports a need via RESULT/open_questions, it
-  bubbles up through cord (new "Research" section in `pipeline-role-cord`,
-  cord's launch roster now plan/research/dev/review), cord launches research;
+  bubbles up through coord (new "Research" section in `pipeline-role-coord`,
+  coord's launch roster now plan/research/dev/review), coord launches research;
   `pipeline-role-plan` reads `RESEARCH.md` first and returns `NEEDS_INFO` +
   `Needs research: yes` instead of planning on guesses; conventions read
   order includes `RESEARCH.md`; `pipeline-models` routes research on the
@@ -366,7 +366,7 @@ stay opencode-only — no claudecode target).
   `.rulesync/rules/**`, `.rulesync/skills/**` allowed; other `.rulesync/**` +
   generator configs ask; starts from `edit * deny`) — never implementation
   code, never plans. Role skill: `pipeline-role-test`.
-- Cord: new loop step 2 "Tests" (one launch for the whole plan); the session
+- Coord: new loop step 2 "Tests" (one launch for the whole plan); the session
   ID is recorded as top-level `test_session` in STATE.json (the
   per-chunk `dev_session` field is dropped — the test session is the single
   author); the `validation_at_fault` branch routes to `test_session`. Roster:
@@ -385,6 +385,29 @@ stay opencode-only — no claudecode target).
   consolidation) in a different shape — one session for the whole plan,
   positioned after planning rather than per-chunk.
 
+## Post-generation review tweaks (2026-10-21)
+
+- **`agent-cord` → `agent-coord`** everywhere: source + role skill renamed
+  (`pipeline-role-cord` → `pipeline-role-coord`), prose "cord" → "coord"
+  across skills/docs/changelog, both `/pipeline*` commands route to
+  `agent-coord`, generated `agent-cord.md`/`pipeline-role-cord/` swept.
+- **Skills registry removed from AGENTS.md** — agents already see the skill
+  list in-session. All 10 skeleton agents' dynamic-pick line now reads
+  "evaluate the task against the skills available to you"; the `0-pipeline`
+  dispatcher and agents-sync loading guidance reworded to match.
+- **agent-plan loads 5** dynamic skills (was 3).
+- **S-chunk grouping**: mixing unrelated S tasks is now explicitly fine
+  ("they're small"); M stays "up to 2 related".
+- **coord hard rules**: dropped the redundant read-access rule (already in
+  the role intro and enforced by permissions); the opencode-tool rule is now
+  just "exists only to name the run. Never call any other opencode tool."
+- **pipeline-conventions**: removed the "You were told to load this skill in
+  your prompt" line.
+- **role-code Git safety**: added "You may leave changes uncommitted for
+  review on the main branch if asked."; the `git checkout/switch/commit/push`
+  prose enumeration replaced with a pointer to the permission rules — the
+  `ask` rules for those four commands already exist in `code.md`.
+
 ## Validation
 
 - `rulesync generate` idempotent; `rulesync generate --check` ✓.
@@ -392,7 +415,7 @@ stay opencode-only — no claudecode target).
   gone; `planner.md` + `agent-research.md` present; `.opencode/skills/`
   gains `role-*` ×5 + `pipeline-role-research`, loses `pipeline-role-validate`;
   all six new skills keep the hidden flags after generation; agent-plan/dev/
-  review/research generate `mode: all`, cord `mode: primary`; cord permission
+  review/research generate `mode: all`, coord `mode: primary`; coord permission
   resources show `FRICTION.md` and the research/test subagent grants;
   agent-test has tests+context allows only; dev and review have zero
   `tests/**` allows.

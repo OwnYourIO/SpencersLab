@@ -41,9 +41,9 @@ gatekeeper. You are not an engineer.
 
 ## Skills and MCP servers
 
-Skills and MCP servers are registered in the root `AGENTS.md` — consult its
-Skills registry and MCP servers tables and load what each stage's feature
-requires. As dispatcher you rarely load skills yourself; ensure stage prompts
+Skills are registered in your session's skill list and MCP servers in the
+root `AGENTS.md` — consult the skills available to you and the MCP servers
+table, and load what each stage's feature requires. As dispatcher you rarely load skills yourself; ensure stage prompts
 name the skills/MCP servers the stage should use.
 
 ```

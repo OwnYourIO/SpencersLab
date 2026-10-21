@@ -15,9 +15,9 @@ Agent files do **not** duplicate repo context — MCP servers, layout, git rules
 
 ## How the pipeline runs
 
-1. `/pipeline <request>` → `agent-cord` runs the kickoff (ask slug, planning model, code model, run tag; then name worktree/branch/session via the `opencode` tool) and resolves (or creates via `agent-plan`) the feature folder `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/` (blanks from `.agents/plans/templates/`). If `plan_status != "approved"`, Phase 1: `agent-plan` plans into the folder and presents the plan to the user; cord continues only once `STATE.json` shows `approved` — never approves on the user's behalf. `/pipeline-resume` picks up the active ticket (skips the kickoff).
-2. **Tests phase**: cord launches `agent-test` ONCE for the whole plan — it writes the tests for every chunk (each chunk file lists them under "## Tests") in a single session, before any implementation; its sessionID is recorded as `test_session` in `STATE.json`.
-3. Per chunk, in wave order, one at a time: dev (implement; tests are read-only to it) → review (runs the validation commands/full suite first, then reviews) → (dev fix → review, max 3 rounds). If review judges a test itself at fault it returns BLOCKED with `validation_at_fault` — the reviewer edits nothing; cord asks the user (always) and routes the fix to the test session (`test_session`; fresh `agent-test` session if gone). When all chunks are done, cord runs a final review of the whole plan (full diff against every acceptance criterion, plus the full suite) before marking it complete. Research needs bubble up to cord at any point (RESULT `open_questions`, planner flag); cord launches `research`, which writes `RESEARCH.md` into the feature folder for every later agent.
+1. `/pipeline <request>` → `agent-coord` runs the kickoff (ask slug, planning model, code model, run tag; then name worktree/branch/session via the `opencode` tool) and resolves (or creates via `agent-plan`) the feature folder `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/` (blanks from `.agents/plans/templates/`). If `plan_status != "approved"`, Phase 1: `agent-plan` plans into the folder and presents the plan to the user; coord continues only once `STATE.json` shows `approved` — never approves on the user's behalf. `/pipeline-resume` picks up the active ticket (skips the kickoff).
+2. **Tests phase**: coord launches `agent-test` ONCE for the whole plan — it writes the tests for every chunk (each chunk file lists them under "## Tests") in a single session, before any implementation; its sessionID is recorded as `test_session` in `STATE.json`.
+3. Per chunk, in wave order, one at a time: dev (implement; tests are read-only to it) → review (runs the validation commands/full suite first, then reviews) → (dev fix → review, max 3 rounds). If review judges a test itself at fault it returns BLOCKED with `validation_at_fault` — the reviewer edits nothing; coord asks the user (always) and routes the fix to the test session (`test_session`; fresh `agent-test` session if gone). When all chunks are done, coord runs a final review of the whole plan (full diff against every acceptance criterion, plus the full suite) before marking it complete. Research needs bubble up to coord at any point (RESULT `open_questions`, planner flag); coord launches `research`, which writes `RESEARCH.md` into the feature folder for every later agent.
 4. Every subagent returns a `RESULT` block; the coordinator copies it into the ticket's `STATE.json` before doing anything else, and appends reported `friction:` items (plus its own) to the ticket's `FRICTION.md` with the resolutions used — every agent reads that file at run start, so known workarounds are not rediscovered. The user triages entries later (`open` → `fixed`/`ignored`); entries are never deleted.
 5. A chunk is `done` only with dev DONE + review APPROVED, with the validation commands shown passing in review's `commands_run`.
 
@@ -27,12 +27,12 @@ Chunking rules live in the plan prompts: S tasks grouped up to 5, M tasks up to 
 
 | agent | edit | subagent | shell | MCP |
 |---|---|---|---|---|
-| cord | `.agents/plans/**/{STATE.json,DECISIONS.md,FRICTION.md}` only (starts from deny-all) | plan/research/test/dev/review of same variant | none (deny `*`) | none (deny `*`) |
+| coord | `.agents/plans/**/{STATE.json,DECISIONS.md,FRICTION.md}` only (starts from deny-all) | plan/research/test/dev/review of same variant | none (deny `*`) | none (deny `*`) |
 | plan | `.agents/plans/**` only | none | git reads allowed, else ask | `admin*` deny; `readonly*`/`global*` allow |
 | research | `.agents/plans/**` only (writes `RESEARCH.md`) | none | git reads allowed, else ask | as plan; plus `webfetch`/`websearch` |
 | test | chart/container `tests/` folders + context allows only (starts from `edit * deny`) | none | git reads + `helm lint/template/unittest` allowed, else ask | as plan |
 | dev | everything except `tests/`, plans; context files per-table (see `references/permissions.md`) | none | git reads + `helm lint/template` allowed, else ask | as plan |
-| review | `.agents/plans/**` only (never edits code or tests; a faulty test escalates via cord to the test session, user-confirmed) | none | git reads + `helm lint/template` allowed, else ask | as plan |
+| review | `.agents/plans/**` only (never edits code or tests; a faulty test escalates via coord to the test session, user-confirmed) | none | git reads + `helm lint/template` allowed, else ask | as plan |
 
 Every role can ask the user questions with the `question` tool — questions only reach the user when explicitly asked, so all prompts say to use the tool when blocked on a decision only the user can make (pipeline subagents prefer `open_questions` in the RESULT block first). Skills are unrestricted everywhere.
 
@@ -45,6 +45,6 @@ MCP tools are permissioned as action `<server>_<tool>`; unsupported characters b
    If not applied, move each block to `agents.<id>.permissions` in the OpenCode config.
 2. Do a live test: `opencode run --agent agent-review "write hello.txt"` must be denied.
 3. Shell is `ask` for dev/review outside the allowlist (git read commands and `helm lint/template`). For unattended runs, add your exact commands as `allow` rules in the agent sources; keep the allowlist narrow.
-4. Commands live in `.opencode/commands/` (generated): `/pipeline`, `/pipeline-resume`. They route to `agent-cord`, and the `!`…`` line discovers the tickets' STATE.json files and injects them at kickoff.
+4. Commands live in `.opencode/commands/` (generated): `/pipeline`, `/pipeline-resume`. They route to `agent-coord`, and the `!`…`` line discovers the tickets' STATE.json files and injects them at kickoff.
 5. In OpenChamber, never start a message with `/skillname` (404 bug); mention skills mid-message or let the agent call the `skill` tool. (This is why the agent prompts say never to START a message with `/skill-name` even though skills are force-loaded via `/` in their lists.)
-6. All `agent-*` agents are user-selectable: `mode: all` (cord is `mode: primary`), so any of them can be driven directly from the agent picker, not just launched by cord.
+6. All `agent-*` agents are user-selectable: `mode: all` (coord is `mode: primary`), so any of them can be driven directly from the agent picker, not just launched by coord.

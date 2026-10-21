@@ -14,10 +14,10 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
                                      Only plan/coord write it. Renamed from
                                      templates/PLAN.md when the ticket is created.
       <companions>                   runbooks/scripts share the plan file's prefix
-      STATE.json                     machine state: status, waves, per-chunk handoffs. Only cord writes it.
+      STATE.json                     machine state: status, waves, per-chunk handoffs. Only coord writes it.
       DECISIONS.md                   append-only decision log. Read before acting; only plan/coord add to it.
       RESEARCH.md                    optional: deep-research summary by agent-research (findings with sources, implications). Everyone reads at run start if present.
-      FRICTION.md                    append-only friction log. Agents report via RESULT; cord appends; everyone reads at run start.
+      FRICTION.md                    append-only friction log. Agents report via RESULT; coord appends; everyone reads at run start.
       chunks/C01.md ...              one per chunk: goal, tasks, files in scope, acceptance criteria, verification, review notes.
 ```
 
@@ -56,24 +56,24 @@ files_changed: [<paths>]
 commands_run: [<cmd> => pass|fail]
 deviations: <anything done differently from the chunk/plan, or "none">
 friction: <one line per item: what blocked/slowed the run + resolution used, or "none">
-open_questions: <questions for cord/human, or "none">
+open_questions: <questions for coord/human, or "none">
 next_suggested: <one line>
 ```
 
-Cord copies it verbatim into `STATE.json` under `chunks.<id>.handoffs[]` **before anything else** — context may be compacted at any moment; the file is the only memory.
+Coord copies it verbatim into `STATE.json` under `chunks.<id>.handoffs[]` **before anything else** — context may be compacted at any moment; the file is the only memory.
 
 ## Chunk lifecycle (per wave, one chunk at a time)
 
-Plan approved → `agent-test` writes the tests for **every** chunk in ONE session, before any dev starts (its sessionID recorded as `test_session` in `STATE.json`). Then per chunk: `agent-dev` implements (tests are read-only to it) → `agent-review` runs the validation commands/full suite, then reviews. On `CHANGES_REQUESTED`, dev fixes and review repeats (max 3 rounds; then chunk `blocked`, ask the user: more rounds / accept / re-plan / drop). If review judges a test itself at fault it returns `BLOCKED` with `validation_at_fault` — the reviewer never edits tests; cord asks the user (always) and routes the fix to the test session (`test_session`; a fresh `agent-test` session if that one is gone), then re-reviews. A chunk is `done` only with dev DONE + review APPROVED, the validation commands shown passing in review's `commands_run`. Two consecutive dev rounds failing the same verification on the same files → stop and escalate. When all chunks are `done`, cord launches a final `agent-review` over the whole plan (full suite + full diff against every acceptance criterion, plus DECISIONS.md and FRICTION.md); only its APPROVED marks `plan_status: "complete"`.
+Plan approved → `agent-test` writes the tests for **every** chunk in ONE session, before any dev starts (its sessionID recorded as `test_session` in `STATE.json`). Then per chunk: `agent-dev` implements (tests are read-only to it) → `agent-review` runs the validation commands/full suite, then reviews. On `CHANGES_REQUESTED`, dev fixes and review repeats (max 3 rounds; then chunk `blocked`, ask the user: more rounds / accept / re-plan / drop). If review judges a test itself at fault it returns `BLOCKED` with `validation_at_fault` — the reviewer never edits tests; coord asks the user (always) and routes the fix to the test session (`test_session`; a fresh `agent-test` session if that one is gone), then re-reviews. A chunk is `done` only with dev DONE + review APPROVED, the validation commands shown passing in review's `commands_run`. Two consecutive dev rounds failing the same verification on the same files → stop and escalate. When all chunks are `done`, coord launches a final `agent-review` over the whole plan (full suite + full diff against every acceptance criterion, plus DECISIONS.md and FRICTION.md); only its APPROVED marks `plan_status: "complete"`.
 
-Deep research sits outside the chunk loop: any agent reports a research need via RESULT, cord launches `agent-research` (storm + `global-searxng`), and the summary lands in the ticket folder as `RESEARCH.md` for every later agent to read.
+Deep research sits outside the chunk loop: any agent reports a research need via RESULT, coord launches `agent-research` (storm + `global-searxng`), and the summary lands in the ticket folder as `RESEARCH.md` for every later agent to read.
 
 ## Friction lifecycle
 
 Friction = anything an agent could not find or had no access to, crashes/tool-MCP failures, stale docs/plans, forced repeats or workarounds — **each with the resolution actually used**.
 
 1. Every agent reads `FRICTION.md` at run start (known workarounds are not rediscovered) and reports new items in RESULT `friction:`.
-2. Cord appends reported + own items after every hand-back. Primary agents without a coord append their own.
+2. Coord appends reported + own items after every hand-back. Primary agents without a coord append their own.
 3. User triages: entries are never deleted, only re-statused `open` → `fixed` (cause repaired) or `ignored` (accepted). Agents treat `fixed` as history and `ignored` as known-OK.
 
 Entry format:

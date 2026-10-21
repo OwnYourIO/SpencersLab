@@ -75,4 +75,4 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 
 /role-review
 
-Then evaluate the task against the `AGENTS.md` skills registry and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
+Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).

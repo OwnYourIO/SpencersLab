@@ -3,7 +3,7 @@ targets:
   - '*'
 description: Plan and run a change through the agent-* pipeline
 opencode:
-  agent: agent-cord
+  agent: agent-coord
 ---
 Request: $ARGUMENTS
 

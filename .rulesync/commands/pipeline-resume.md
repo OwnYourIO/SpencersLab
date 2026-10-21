@@ -3,7 +3,7 @@ targets:
   - '*'
 description: Resume an approved plan with the coordinator only
 opencode:
-  agent: agent-cord
+  agent: agent-coord
 ---
 Resume the approved plan in feature folder: $ARGUMENTS
 If no folder is given, list the feature folders that contain a STATE.json and ask the user which one to resume.

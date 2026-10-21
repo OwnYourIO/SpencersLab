@@ -1,6 +1,6 @@
 ---
 description: Plan and run a change through the agent-* pipeline
-agent: agent-cord
+agent: agent-coord
 ---
 Request: $ARGUMENTS
 

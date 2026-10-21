@@ -3,7 +3,7 @@ name: pipeline-gates
 description: >-
   Gates and escalation rules for the agent-* coordinator — deterministic-first
   advancement, stuck detection, retry caps, BLOCKED/NEEDS_INFO handling,
-  deviation logging. MUST-loaded by agent-cord; never auto-selected.
+  deviation logging. MUST-loaded by agent-coord; never auto-selected.
 metadata:
   opencode/autoinvoke: 'false'
 disable-model-invocation: true

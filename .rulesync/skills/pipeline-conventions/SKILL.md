@@ -9,16 +9,16 @@ metadata:
 
 # Pipeline shared conventions
 
-The operational contract for every `agent-*` pipeline session. You were told to load this skill in your prompt — read it once, then work from it.
+The operational contract for every `agent-*` pipeline session.
 
 ## Plan folders
 
 Every feature gets its own folder under the plan root `.agents/plans/`, named `<yyyy>/<yyyy-mm>-<type>-<slug>/` (e.g. `.agents/plans/2026/2026-10-feat-searxng-rate-limits/`), where `<type>` is one of feat|bug|debug|dep|refactor|chore|docs:
-- The plan file (`<yyyy-mm-dd>-<type>-<slug>.md` — the `templates/PLAN.md` boilerplate, renamed on copy) is the plan of record: goal, scope, chunk table, order/waves. Everyone reads it; only plan/cord write it.
-- `STATE.json` — machine state: feature folder, current wave, per-chunk status, retries, verdicts, last handoff. Only cord writes it.
-- `DECISIONS.md` — append-only log of decisions, rejected alternatives, conventions. Read it before acting; add to it only if you are plan or cord.
+- The plan file (`<yyyy-mm-dd>-<type>-<slug>.md` — the `templates/PLAN.md` boilerplate, renamed on copy) is the plan of record: goal, scope, chunk table, order/waves. Everyone reads it; only plan/coord write it.
+- `STATE.json` — machine state: feature folder, current wave, per-chunk status, retries, verdicts, last handoff. Only coord writes it.
+- `DECISIONS.md` — append-only log of decisions, rejected alternatives, conventions. Read it before acting; add to it only if you are plan or coord.
 - `RESEARCH.md` — optional: the deep-research summary `agent-research` writes on demand, next to the plan file (findings with sources, contradictions, implications for the plan). Everyone reads it at run start if it exists.
-- `FRICTION.md` — append-only friction log: what blocked or slowed agents down, each with the resolution used. Everyone reads it at run start so known workarounds are not rediscovered; agents report new items via RESULT `friction:`; only cord appends.
+- `FRICTION.md` — append-only friction log: what blocked or slowed agents down, each with the resolution used. Everyone reads it at run start so known workarounds are not rediscovered; agents report new items via RESULT `friction:`; only coord appends.
 - `chunks/<chunk-id>.md` — one file per chunk: tasks, files in scope, acceptance criteria, test list, review notes.
 
 Blank templates live in `.agents/plans/templates/`; `agent-plan` copies them into the new feature folder.
@@ -45,6 +45,6 @@ files_changed: [<paths>]
 commands_run: [<cmd> => pass|fail]
 deviations: <anything you did differently from the chunk/plan, or "none">
 friction: <one line per item: what blocked/slowed the run + resolution used, or "none">
-open_questions: <questions for cord/human, or "none">
+open_questions: <questions for coord/human, or "none">
 next_suggested: <what you think should happen next, one line>
 ```

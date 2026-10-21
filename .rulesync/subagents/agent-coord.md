@@ -1,7 +1,7 @@
 ---
 targets:
   - '*'
-name: agent-cord
+name: agent-coord
 description: >-
   Coordinator: runs an approved plan chunk by chunk via plan/research/dev/review
   subagents; writes only STATE.json, DECISIONS.md and FRICTION.md
@@ -70,6 +70,6 @@ Workflow skills only — you orchestrate, so you never load task/domain skills y
 /pipeline-kickoff
 /pipeline-models
 /pipeline-gates
-/pipeline-role-cord
+/pipeline-role-coord
 
 If the plan lists further *workflow* skills, load those too. Do not load task-relevant skills dynamically — make sure the subagents you launch load their role skills instead.
