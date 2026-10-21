@@ -16,6 +16,15 @@ opencode:
       resource: .agents/plans/**
       effect: allow
     - action: read
+      resource: .opencode/skills/**
+      effect: allow
+    - action: read
+      resource: .agents/skills/**
+      effect: allow
+    - action: read
+      resource: skills/**
+      effect: allow
+    - action: read
       resource: '*.env'
       effect: deny
     - action: read

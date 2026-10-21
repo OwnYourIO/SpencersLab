@@ -408,6 +408,44 @@ stay opencode-only — no claudecode target).
   prose enumeration replaced with a pointer to the permission rules — the
   `ask` rules for those four commands already exist in `code.md`.
 
+## Skill-read grants, friction follow-ups, question-notify plugin (2026-10-21)
+
+- **Skill reads pre-granted for all agent-\***: every agent-\* source now
+  carries explicit `read` allows for `.opencode/skills/**`, `.agents/skills/**`
+  and `skills/**` — for coord (deny-all baseline) this is the actual grant;
+  for the others it makes the implicit `read *` explicit so skill loading
+  never prompts regardless of how the glob matcher treats dot-directories.
+- **Friction follow-up at plan completion**: coord step 9 — after the final
+  report, coord asks the user (question tool) whether to spin up a new
+  `agent-plan` session per open `FRICTION.md` item; each confirmed item gets
+  its own planning session (friction line + ticket/chunk context as the
+  request) and becomes a new ticket. Mirrored in plan-and-result lifecycle +
+  AGENTS.md pipeline bullet.
+- **`question-notify` plugin** (`.opencode/plugin/question-notify/index.ts`,
+  hand-written like aislop-gate): when any `agent-*` session invokes the
+  `question` tool, pushes a Home Assistant notification to the user's phone
+  (`notify/mobile_app_pixel_6`). Determinism: plugins run in the server
+  process where MCP tools don't exist for models — so it speaks MCP JSON-RPC
+  (streamable HTTP: initialize → initialized → `tools/call call_service`)
+  directly to the `admin-global-homeassistant` endpoint (readonly ha-mcp
+  rejects service calls), URL discovered at runtime from `ctx.mcp.list()`
+  with a `.opencode/opencode.jsonc` parse fallback. Agent filter via
+  `event.sessionID`/`event.agent` → `ctx.session.get` (prefix `agent-`),
+  15s per-session cooldown, fire-and-forget — a notification can never block
+  a question. Unverified paths (event field names, handshake tolerance) log
+  one-time debug keys to opencode.log. AGENTS.md `.opencode/` bullet now
+  lists both plugins.
+- aislop-gate live-check while writing the plugin: fired on the write,
+  100/100 clean run.
+- Event shape verified afterwards against `@opencode/plugin@2.1.2` types
+  (`dist/promise/tool.d.ts` via unpkg): `execute.before` carries
+  `{ tool, sessionID, agent, messageID, id, input }` — `event.agent` is read
+  directly, with a `ctx.session.get` fallback kept only because the installed
+  CLI (v2.0.32) predates the checked types. (Lesson logged: the plugins guide
+  names the hook event types without defining them; the definitions live in
+  the npm package's .d.ts, pullable from the CDN even when the package isn't
+  installed.)
+
 ## Validation
 
 - `rulesync generate` idempotent; `rulesync generate --check` ✓.

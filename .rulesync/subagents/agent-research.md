@@ -13,6 +13,15 @@ opencode:
     - action: read
       resource: '*'
       effect: allow
+    - action: read
+      resource: .opencode/skills/**
+      effect: allow
+    - action: read
+      resource: .agents/skills/**
+      effect: allow
+    - action: read
+      resource: skills/**
+      effect: allow
     - action: glob
       resource: '*'
       effect: allow

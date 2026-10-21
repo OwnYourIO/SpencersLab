@@ -48,7 +48,9 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `.opencode/` — tracked dir holding the **generated** surfaces: `agents/`,
   `commands/`, `skills/` (rulesync output — never hand-edit; `.agents/agents`
   and `.agents/commands` symlink into the first two) plus hand-managed
-  `plugin/` and `opencode.jsonc`.
+  `plugin/` (`aislop-gate` quality gate on edits; `question-notify` pushes a
+  Home Assistant notification to the user's phone whenever an `agent-*`
+  session asks a question) and `opencode.jsonc`.
 - `.rulesync/` — the single source of truth for AI-tool config: `rules/`
   (→ this `AGENTS.md`), `subagents/` (→ `.opencode/agents/`), `commands/`
   (→ `.opencode/commands/`), `skills/` (→ `.opencode/skills/`: the
@@ -94,7 +96,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   fresh `agent-plan`/`agent-test`/`agent-dev`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only
   shared memory; when all chunks are done it runs a final whole-plan review
-  before marking the plan complete. Artifacts live in
+  before marking the plan complete, then offers to plan fixes for the open
+  friction items. Artifacts live in
   `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the `/pipeline`
   commands.
 
