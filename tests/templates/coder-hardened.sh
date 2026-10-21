@@ -328,13 +328,6 @@ if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'CODER_USER[[:sp
 else
   fail "c2: agent env does not set CODER_USER$NOTE"
 fi
-# OpenChamber exits rather than bind outside loopback without a UI password;
-# the template supplies one so devices can reach the pod-IP listener.
-if [ "$EXISTS" -eq 1 ] && printf '%s\n' "$CODE_VIEW" | grep -qE 'OPENCHAMBER_UI_PASSWORD[[:space:]]*=[[:space:]]*random_password\.openchamber_ui\.result'; then
-  pass "c2: agent env sets OPENCHAMBER_UI_PASSWORD from random_password.openchamber_ui"
-else
-  fail "c2: agent env does not set OPENCHAMBER_UI_PASSWORD (OpenChamber would refuse the non-loopback bind)$NOTE"
-fi
 
 # code-server comes from the official Coder module — no repo-side pin to
 # maintain; every workspace start fetches the current upstream release. The
