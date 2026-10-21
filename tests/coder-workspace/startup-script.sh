@@ -56,7 +56,7 @@ fi
 # --- env contract -----------------------------------------------------------
 # These are the exact env names the hardened template will export; a rename on
 # either side would silently break workspace startup.
-for var in OPENCODE_SERVER_PASSWORD OPENCHAMBER_UI_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
+for var in OPENCODE_SERVER_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
   if grep -Eq "(^|[^A-Za-z0-9_])\\\$\\{?${var}" "$STARTUP"; then
     pass "env: \${${var}} is read by the startup script"
   else
@@ -74,6 +74,14 @@ for needle in ssh-keygen known_hosts 'git clone'; do
     fail "job: '$needle' is missing from the startup script"
   fi
 done
+
+# OpenChamber binds 0.0.0.0 only with an explicit unauthenticated-LAN waiver
+# (user decision 2026-10-21); without it OpenChamber exits rather than serve.
+if grep -qF 'OPENCHAMBER_ALLOW_UNAUTHENTICATED_LAN=true' "$STARTUP"; then
+  pass "job: OpenChamber's non-loopback bind carries the ALLOW_UNAUTHENTICATED_LAN waiver"
+else
+  fail "job: OpenChamber would refuse its non-loopback bind (no ALLOW_UNAUTHENTICATED_LAN waiver)"
+fi
 
 # code-server is the template's official Coder module's job; a reinstall of
 # it in the baked script would race the module and silently pin whatever the
