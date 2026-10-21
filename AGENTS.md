@@ -35,8 +35,9 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `.agents/plans/templates/` — blank boilerplate (the plan boilerplate
   `PLAN.md`, copied into tickets renamed as the dated plan file;
   `STATE.json`,
-  `DECISIONS.md`, `friction.md`, `chunks/`) that `agent-plan` copies into
-  each new feature folder.
+  `DECISIONS.md`, `FRICTION.md`, `chunks/`) that `agent-plan` copies into
+  each new feature folder. `RESEARCH.md` has no template — `agent-research`
+  writes it on demand, next to the plan file.
 - `.agents/commands/` — slash commands for the pipeline (`/pipeline`,
   `/pipeline-resume`); a symlink to `.opencode/commands/`, which rulesync
   generates from `.rulesync/commands/`.
@@ -53,7 +54,8 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `.rulesync/` — the single source of truth for AI-tool config: `rules/`
   (→ this `AGENTS.md`), `subagents/` (→ `.opencode/agents/`), `commands/`
   (→ `.opencode/commands/`), `skills/` (→ `.opencode/skills/`: the
-  `agents-sync` pipeline skill plus the vendored, SHA-pinned
+  `agents-sync` pipeline skill, the hidden `pipeline-*` contract skills the
+  agents compose via `/skill` loads, plus the vendored, SHA-pinned
   `comment-slop` and `aislop` quality-gate skills). Edit here, then `rulesync generate`
   (targets/features per `rulesync.jsonc`); `rulesync generate --check`
   verifies the committed output is current. Commit sources and generated
@@ -76,8 +78,9 @@ container images (`containers/`). **ArgoCD applies everything — never
 
 ## Agents
 
-- `plan` (`.agents/agents/plan.md`) — writes implementation-ready plans to
-  `.agents/plans/`. Use before any non-trivial change.
+- `planner` (`.agents/agents/planner.md`) — writes implementation-ready
+  plans to `.agents/plans/`. Use before any non-trivial change. (Named
+  `planner`, not `plan`, to stay clear of the built-in plan mode.)
 - `code` (`.agents/agents/code.md`) — executes plans. Runs in fresh sessions:
   the plan file tells it which skills and MCP servers to load.
 - `ask` (`.agents/agents/ask.md`) — read-only research, explanations, and
@@ -88,33 +91,37 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{cord,plan,dev,validate,review}.md`) —
+- `agent-*` (`.agents/agents/agent-{cord,plan,research,test,dev,review}.md`) —
   chunk-based pipeline: `agent-cord` (primary) runs an approved plan through
-  fresh `agent-plan`/`agent-dev`/`agent-validate`/`agent-review` subagents, one
-  chunk at a time, with files as the only shared memory; when all chunks are
-  done it runs a final whole-plan review before marking the plan complete.
-  Artifacts live in
+  fresh `agent-plan`/`agent-test`/`agent-dev`/`agent-review` subagents (plus
+  `agent-research` on demand), one chunk at a time, with files as the only
+  shared memory; when all chunks are done it runs a final whole-plan review
+  before marking the plan complete. Artifacts live in
   `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the `/pipeline`
   commands.
 
 ## Feature pipeline (agent-*)
 
 A chunk-based pipeline for multi-step work, complementary to the standalone
-`plan`/`code` agents (single-shot planning/implementation) and the
+`planner`/`code` agents (single-shot planning/implementation) and the
 `0-pipeline` SDLC stages (large features with docs). `agent-cord` runs an
-approved plan chunk by chunk through fresh `agent-plan`/`agent-dev`/
-`agent-validate`/`agent-review` subagents; files are the only shared memory.
+approved plan chunk by chunk through fresh `agent-plan`/`agent-test`/
+`agent-dev`/`agent-review` subagents; files are the only shared memory.
 Launch with `/pipeline` (plan if needed, then run) or `/pipeline-resume`
 (feature folder as argument).
 
 Each feature lives in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`
-(the dated plan file, `STATE.json`, `DECISIONS.md`, `friction.md`, `chunks/`
-— boilerplate copied from `.agents/plans/templates/`). The operational contract — file semantics,
-read order, the RESULT handoff schema, role permissions — lives in the agent
-prompts themselves (`.rulesync/subagents/agent-*.md`, which are
-self-contained for fresh sessions) and in the `agents-sync` skill references
-(`plan-and-result.md`, `permissions.md`, `pipeline-overview.md`). Edit
-those, not this summary.
+(the dated plan file, `STATE.json`, `DECISIONS.md`, `FRICTION.md`, `chunks/`
+— boilerplate copied from `.agents/plans/templates/` — plus `RESEARCH.md`
+when the coordinator commissioned deep research). The operational
+contract — plan-folder layout, read order, the RESULT handoff schema, the
+role processes, kickoff, model routing, gates — lives in the hidden
+`pipeline-*` skills (`pipeline-conventions` + one `pipeline-role-<role>`
+per agent, plus `pipeline-kickoff`/`pipeline-models`/`pipeline-gates` for
+the coordinator) that every pipeline agent MUST-loads at run start; the
+agent files themselves are thin frontmatter + skill-call skeletons. The
+role × permission matrix is in the `agents-sync` skill references
+(`permissions.md`). Edit those, not this summary.
 
 ### Pipeline specifics in this repo
 
@@ -123,10 +130,16 @@ those, not this summary.
   grep checks for the service trio (chart entry + ApplicationSet values entry
   + proxy values entry), and every `OVERRIDE_VIA_CUSTOM_VALUES` placeholder
   matched 1:1 by a `custom-values/` entry. `agent-plan` records these in
-  the plan file's "Commands"; `agent-dev` runs them while implementing and
-  `agent-validate` verifies them independently after each chunk; `agent-cord`
-  gates a chunk done only when
-  they pass.
+  the plan file's "Commands"; `agent-test` writes every chunk's test files
+  in one session after planning (before any dev), `agent-dev` runs them
+  while implementing and `agent-review` re-runs them as the first step of
+  every review; `agent-cord` gates a chunk done only when they pass. A test
+  judged faulty is never fixed by the reviewer — cord asks the user and
+  routes the fix back to the test session.
+- Deep research is commissioned, never ad hoc: any agent that needs it
+  reports the need via RESULT, `agent-cord` launches `agent-research`
+  (storm skill + `global-searxng`), and the summary lands in the feature
+  folder as `RESEARCH.md` for every later agent to read.
 - All Hard rules below (no hand-bumped versions, ExternalSecret+Bitwarden
   secrets, ArgoCD — never kubectl apply, git safety, MCP privilege tiers)
   apply to every pipeline agent unchanged.
@@ -162,6 +175,7 @@ loads unconditionally live in that agent's file (`.agents/agents/`), not here.
 | `llama-swap` | llama-swap / llama.cpp work only (`charts/llama-swap`) | self-managed in `./skills/` |
 | `wekan-api` | WeKan REST API or `wekan-mcp` server work (`containers/wekan-mcp`, `mcp.wekan-readonly`/`mcp.wekan-admin` in the gpu service values, WeKan instances in `services/home/prod`) | self-managed in `./skills/` |
 | `agents-sync` | Build, extend, and repair the agent-* pipeline and sync it between repos — roles/variants/permissions, plan folders, friction log, RESULT handoffs | rulesync-managed (`.rulesync/skills/` → `.opencode/skills/`) |
+| `pipeline-*` | Internal agent-* contract skills — `pipeline-conventions` + `pipeline-role-{cord,plan,dev,validate,review}` (+ `pipeline-kickoff`/`pipeline-models`/`pipeline-gates` for cord); MUST-loaded by the pipeline agents, hidden from auto-selection | rulesync-managed (`.rulesync/skills/` → `.opencode/skills/`) |
 | `comment-slop` | Comment quality: find/remove AI-slop comments while keeping the reasoning that earns its place; applies whenever comments/docstrings are written or cleaned up | rulesync-managed, vendored + SHA-pinned from `dashed/claude-marketplace` |
 | `aislop` | Deterministic code-quality gate (6 engines, 0–100 score): run via `$aislop` before handing back code; manual-only (hidden from auto-selection) | rulesync-managed, vendored + SHA-pinned from `scanaislop/skills` |
 | `storm` | Deep research: "research X", "deep dive", briefings, backgrounder reports, "understand all sides of" a topic — sourced multi-perspective output | third-party (`kunjan-p/storm-skill`); citation-grounded STORM pipeline; pairs with `global-searxng` for the web searches |

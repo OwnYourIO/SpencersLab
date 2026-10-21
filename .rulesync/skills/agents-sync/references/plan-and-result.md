@@ -16,7 +16,8 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
       <companions>                   runbooks/scripts share the plan file's prefix
       STATE.json                     machine state: status, waves, per-chunk handoffs. Only cord writes it.
       DECISIONS.md                   append-only decision log. Read before acting; only plan/coord add to it.
-      friction.md                    append-only friction log. Agents report via RESULT; cord appends; everyone reads at run start.
+      RESEARCH.md                    optional: deep-research summary by agent-research (findings with sources, implications). Everyone reads at run start if present.
+      FRICTION.md                    append-only friction log. Agents report via RESULT; cord appends; everyone reads at run start.
       chunks/C01.md ...              one per chunk: goal, tasks, files in scope, acceptance criteria, verification, review notes.
 ```
 
@@ -32,6 +33,7 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
   "kickoff": { "slug": "<slug>", "run_tag": "<tag>", "worktree": "<slug>-<tag>",
                "plan_model": "<provider/model>", "code_model": "<provider/model>" },
   "plan_status": "draft | approved | needs-replan | complete",
+  "test_session": null,
   "current_wave": 1,
   "updated_at": "YYYY-MM-DDTHH:MM:SSZ",
   "chunks": {
@@ -62,13 +64,15 @@ Cord copies it verbatim into `STATE.json` under `chunks.<id>.handoffs[]` **befor
 
 ## Chunk lifecycle (per wave, one chunk at a time)
 
-`agent-dev` implements → `agent-validate` runs the validation commands/full suite → `agent-review` reviews. On `CHANGES_REQUESTED`, dev fixes and validate→review repeat (max 3 rounds each; then chunk `blocked`, ask the user: more rounds / accept / re-plan / drop). A chunk is `done` only with dev DONE + verification shown passing in `commands_run` + review APPROVED. Two consecutive dev rounds failing the same verification on the same files → stop and escalate. When all chunks are `done`, cord launches a final `agent-review` over the whole plan (full diff against every acceptance criterion, plus DECISIONS.md and friction.md); only its APPROVED marks `plan_status: "complete"`.
+Plan approved → `agent-test` writes the tests for **every** chunk in ONE session, before any dev starts (its sessionID recorded as `test_session` in `STATE.json`). Then per chunk: `agent-dev` implements (tests are read-only to it) → `agent-review` runs the validation commands/full suite, then reviews. On `CHANGES_REQUESTED`, dev fixes and review repeats (max 3 rounds; then chunk `blocked`, ask the user: more rounds / accept / re-plan / drop). If review judges a test itself at fault it returns `BLOCKED` with `validation_at_fault` — the reviewer never edits tests; cord asks the user (always) and routes the fix to the test session (`test_session`; a fresh `agent-test` session if that one is gone), then re-reviews. A chunk is `done` only with dev DONE + review APPROVED, the validation commands shown passing in review's `commands_run`. Two consecutive dev rounds failing the same verification on the same files → stop and escalate. When all chunks are `done`, cord launches a final `agent-review` over the whole plan (full suite + full diff against every acceptance criterion, plus DECISIONS.md and FRICTION.md); only its APPROVED marks `plan_status: "complete"`.
+
+Deep research sits outside the chunk loop: any agent reports a research need via RESULT, cord launches `agent-research` (storm + `global-searxng`), and the summary lands in the ticket folder as `RESEARCH.md` for every later agent to read.
 
 ## Friction lifecycle
 
 Friction = anything an agent could not find or had no access to, crashes/tool-MCP failures, stale docs/plans, forced repeats or workarounds — **each with the resolution actually used**.
 
-1. Every agent reads `friction.md` at run start (known workarounds are not rediscovered) and reports new items in RESULT `friction:`.
+1. Every agent reads `FRICTION.md` at run start (known workarounds are not rediscovered) and reports new items in RESULT `friction:`.
 2. Cord appends reported + own items after every hand-back. Primary agents without a coord append their own.
 3. User triages: entries are never deleted, only re-statused `open` → `fixed` (cause repaired) or `ignored` (accepted). Agents treat `fixed` as history and `ignored` as known-OK.
 

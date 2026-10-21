@@ -2,26 +2,30 @@
 name: agents-sync
 description: >-
   Build, extend, install, and repair the plan-first agent pipeline
-  (coord/plan/dev/validate/review roles x variants, per-ticket plan folders,
-  friction log, RESULT handoffs) and sync it between repos with rulesync. Use
-  whenever setting up the /pipeline agent workflow in a new repo, adding or
-  changing agent roles/variants/permissions/skills, editing .rulesync/subagents
-  sources or regenerating agent files, auditing permission drift, or debugging
-  why a pipeline subagent could or could not write a file. Also covers the
-  hard-won operational lessons (permission drift is silent, verify syncs/deploys
-  landed, one branch one concern).
+  (coord/plan/research/test/dev/review roles x variants, per-ticket plan
+  folders, friction log, RESULT handoffs) and sync it between repos with
+  rulesync. Use whenever setting up the /pipeline agent workflow in a new repo,
+  adding or changing agent roles/variants/permissions/skills, editing
+  .rulesync/subagents sources or regenerating agent files, auditing permission
+  drift, or debugging why a pipeline subagent could or could not write a file.
+  Also covers the hard-won operational lessons (permission drift is silent,
+  verify syncs/deploys landed, one branch one concern).
 ---
 # Agents sync
 
-The plan-first chunk pipeline: a coordinator runs an approved plan chunk by chunk through fresh dev → validate → review subagents (plus a final whole-plan review before handoff), with all living state in per-ticket plan folders and a friction log that stops every run from rediscovering known problems.
+The plan-first chunk pipeline: a coordinator runs an approved plan through a one-shot test writer (agent-test drafts every chunk's tests in one session, before implementation), then chunk by chunk through fresh dev → review subagents (review runs the validations first, then reviews; plus a final whole-plan review before handoff), and commissions deep research on demand via agent-research — with all living state in per-ticket plan folders and a friction log that stops every run from rediscovering known problems.
 
 ## Architecture in one picture
 
 ```
 .rulesync/                                  canonical sources (single source of truth)
   rules/*.md                                repo rules -> generated AGENTS.md
-  subagents/agent-<role><suffix>.md         5 roles x N variants
+  subagents/agent-<role><suffix>.md         5 roles x N variants (thin
+                                            frontmatter + /skill call skeletons)
   commands/pipeline*.md                     /pipeline + /pipeline-resume per variant
+  skills/pipeline-*/                        hidden contract skills the agents
+                                            MUST-load (conventions, role
+                                            processes, kickoff, models, gates)
   skills/agents-sync/                   this skill (the methodology)
         |  rulesync generate                (targets/features per rulesync.jsonc)
         v
@@ -30,7 +34,7 @@ AGENTS.md, .opencode/skills/                edit the sources above and regenerat
 .agents/plans/templates/                    blank PLAN/STATE/DECISIONS/friction/chunks
 ```
 
-Roles: `coord` (primary, orchestrates), `plan` (planner), `dev` (implementer), `validate` (runs the chunk's validation commands and full suite), `review` (fresh-eyes reviewer). Every domain or workflow overlay is an explicit variant suffix so domains match agent names — this repo ships only the plain set (its `-bmad` overlay was removed 2026-10-18); other repos may add overlays. When they exist, overlay names lead with the overlay marker (`-bmad`, not `-<domain>-bmad`) so a plain name is never a prefix of its overlay's agent names (`agent-dev` does not prefix-match `agent-dev-bmad`) — subagent permission matching is whole-value/exact on OpenCode v2 (verified 2026-10-14 on v2.0.24: cross-variant launches denied, coords see only their own four subagents), and the prefix-free scheme stays correct under any prefix-like behavior. An overlay coordinator launches only its overlay's subagents. The bare `/pipeline` + `/pipeline-resume` commands target the repo's base variant. Never hand-edit generated files — edit the `.rulesync/` sources and regenerate; verify with `git diff` that only the intended files changed.
+Roles: `coord` (primary, orchestrates), `plan` (planner), `research` (deep research via storm + searxng, commissioned by cord on demand, writes `RESEARCH.md`), `test` (writes every chunk's tests in one session, after planning and before dev), `dev` (implementer; tests are read-only to it), `review` (runs the chunk's validation commands and full suite, then fresh-eyes reviewer; never edits tests). Every domain or workflow overlay is an explicit variant suffix so domains match agent names — this repo ships only the plain set (its `-bmad` overlay was removed 2026-10-18); other repos may add overlays. When they exist, overlay names lead with the overlay marker (`-bmad`, not `-<domain>-bmad`) so a plain name is never a prefix of its overlay's agent names (`agent-dev` does not prefix-match `agent-dev-bmad`) — subagent permission matching is whole-value/exact on OpenCode v2 (verified 2026-10-14 on v2.0.24: cross-variant launches denied, coords see only their own four subagents), and the prefix-free scheme stays correct under any prefix-like behavior. An overlay coordinator launches only its overlay's subagents. The bare `/pipeline` + `/pipeline-resume` commands target the repo's base variant. Never hand-edit generated files — edit the `.rulesync/` sources and regenerate; verify with `git diff` that only the intended files changed.
 
 **Skill assignment is per agent, in its `## Skills` section** (every agent is also told to load extra task-relevant skills as it goes):
 1. **Plan-driven first** — load the skills the plan lists; if the plan lists none, evaluate the task against the repo's skills registry and load the most relevant set.
@@ -47,10 +51,10 @@ Roles: `coord` (primary, orchestrates), `plan` (planner), `dev` (implementer), `
                                     feat|bug|debug|dep|refactor|chore|docs)
     <yyyy-mm-dd>-<type>-<slug>.md   plan of record (renamed templates/PLAN.md);
                                     runbooks/scripts share its prefix
-    STATE.json  DECISIONS.md  friction.md  chunks/C01.md...
+    STATE.json  DECISIONS.md  FRICTION.md  [RESEARCH.md on demand]  chunks/C01.md...
 ```
 
-**Files are the bus.** Subagents share nothing but files: every hand-back ends in a RESULT block (schema in `references/plan-and-result.md`), coord writes it verbatim into `STATE.json` before anything else, and appends reported friction to `friction.md`. Read that reference when touching handoff parsing, chunk lifecycle (gates, retry caps, escalation), or the friction lifecycle (`open` → `fixed`/`ignored`, never deleted).
+**Files are the bus.** Subagents share nothing but files: every hand-back ends in a RESULT block (schema in `references/plan-and-result.md`), coord writes it verbatim into `STATE.json` before anything else, and appends reported friction to `FRICTION.md`. Read that reference when touching handoff parsing, chunk lifecycle (gates, retry caps, escalation), or the friction lifecycle (`open` → `fixed`/`ignored`, never deleted).
 
 ## Editing the pipeline
 

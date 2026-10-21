@@ -55,6 +55,6 @@ If the target's tool skills dir is a symlink into a directory holding OTHER tool
 
 1. `git status` in the target — only the expected new files; review and commit (user step).
 2. Overlay variants (if you copy a repo that ships them, e.g. `-bmad`) only work if the target has the matching skills installed; otherwise drop the overlay sources or install the overlay's skills first.
-3. Target's AGENTS.md must describe the per-ticket plan layout (`.agents/plans/yyyy-mm/<ticket>/` with `friction.md`) — if it still says flat `yyyy-mm-dd-*` plans, update its Plans section (the root rule source, then regenerate).
+3. Target's AGENTS.md must describe the per-ticket plan layout (`.agents/plans/yyyy-mm/<ticket>/` with `FRICTION.md`) — if it still says flat `yyyy-mm-dd-*` plans, update its Plans section (the root rule source, then regenerate).
 4. Spot-check one generated agent (`agent-dev` permissions + skill list, `agent-cord` locked-down block) and the `/pipeline` command's STATE lookup against the target's plans layout.
-5. Smoke-test: run `/pipeline <tiny request>` and confirm cord reads `templates/`, creates the ticket folder, and the dev/test/review handoffs land in `STATE.json` (with friction appending to `friction.md`).
+5. Smoke-test: run `/pipeline <tiny request>` and confirm cord reads `templates/`, creates the ticket folder, and the dev/review handoffs land in `STATE.json` (with friction appending to `FRICTION.md`).

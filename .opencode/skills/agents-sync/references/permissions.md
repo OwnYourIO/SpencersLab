@@ -11,17 +11,18 @@ Generated agents carry `permissions:` blocks in their frontmatter (authored in `
 
 | role | edit | subagent | shell | MCP |
 |---|---|---|---|---|
-| coord | ONLY `.agents/plans/**/STATE.json`, `…/DECISIONS.md`, `…/friction.md` (starts from `* * deny`) | plan/dev/validate/review of same variant | none | none |
+| coord | ONLY `.agents/plans/**/STATE.json`, `…/DECISIONS.md`, `…/FRICTION.md` (starts from `* * deny`) | plan/research/test/dev/review of same variant | none | none |
 | plan | ONLY `.agents/plans/**` | none | read-only git | `admin*` deny; `readonly*`/`global*` allow |
+| research | ONLY `.agents/plans/**` (its `RESEARCH.md`) | none | read-only git | as plan; plus `webfetch`/`websearch` allowed |
+| test | ONLY chart/container `tests/` folders + the context allows below (starts from `edit * deny`) | none | git reads + `helm lint/template/unittest` | as plan |
 | dev | everything EXCEPT chart/container `tests/` folders (`charts/**/tests/**`, `containers/**/tests/**`) and `.agents/plans/**`, plus the context-file rules below | none | git reads + `helm lint/template` | as plan |
-| validate | ONLY chart/container `tests/` folders | none | git reads + `helm lint/template` | as plan |
-| review | ONLY `.agents/plans/**` | none | read-only git | as plan |
+| review | ONLY `.agents/plans/**` (never edits code or tests — a faulty test escalates to cord, who asks the user and routes the fix to the test session) | none | git reads + `helm lint/template` | as plan |
 
-All roles allow `question` and `skill` everywhere; MCP servers named `readonly*`/`global*` are allowed and `admin*` denied for plan/dev/validate/review (mutations need a user step), while cord denies everything (it orchestrates, never touches the cluster).
+All roles allow `question` and `skill` everywhere; MCP servers named `readonly*`/`global*` are allowed and `admin*` denied for plan/research/test/dev/review (mutations need a user step), while cord denies everything (it orchestrates, never touches the cluster).
 
 ### Context-file rules (dev)
 
-Repo/agent context files get a per-file policy for the dev role — the other roles start from `edit * deny`, so this concerns dev only (its single `edit * allow` makes the trailing overrides matter):
+Repo/agent context files get a per-file policy for the roles that edit the repo — dev (broad `edit * allow` with the trailing overrides below) and test (starts from `edit * deny`, so it gets only the two context **allow** rows plus the machinery asks):
 
 | effect | resources | why |
 |---|---|---|
@@ -46,5 +47,7 @@ This repo's servers follow the `<priv>-<cluster>-<service>` naming (`readonly-*`
 
 ## Drift incidents (history — keep as regression tests for audits)
 
-- **2026-10-13 — coord root-pinned paths.** After plans moved to per-ticket folders, coord still had `edit .agents/plans/STATE.json` / `DECISIONS.md` (root). Under its leading deny-all, coord would have been unable to write any tracking file. Fixed with `.agents/plans/**/<file>` (+ `friction.md`).
+- **2026-10-13 — coord root-pinned paths.** After plans moved to per-ticket folders, coord still had `edit .agents/plans/STATE.json` / `DECISIONS.md` (root). Under its leading deny-all, coord would have been unable to write any tracking file. Fixed with `.agents/plans/**/<file>` (+ the friction file).
+- **2026-10-21 — validate merged into review; friction file uppercased.** The standalone validate stage was removed (it rarely caught anything dev's own run hadn't); review now runs the validations first, then reviews. Same day `friction.md` became `FRICTION.md` and `agent-research` joined cord's launch roster — audit any saved permission snippet against the matrix above, and remember path globs are case-sensitive.
+- **2026-10-21 (same day, user corrections) — review never edits tests; dedicated test writer.** Two brief states lived only in staging and are reverted here: review holding validate's `tests/` grants (vetoed — a faulty test escalates, cord asks the user, the fix routes to the authoring session), and dev authoring validations (replaced by a dedicated writer). Final state: `agent-test` writes every chunk's tests in ONE session after planning and before dev (its sessionID is `STATE.json` `test_session`); dev is tests-denied again; review is plans-only. If you find review or dev with `tests/` grants anywhere, that is a reverted state — remove them.
 - **2026-10-14 — dev over-broad edit.** dev was `edit * allow` with only `tests/` + plans denied, so dev subagents could edit `AGENTS.md`, agent definitions, skills, and the generator — observed as subagents updating context files. Fixed with the per-file allow/ask/deny table above (dev may update repo-context sources when a chunk needs it; agent machinery needs explicit approval; plans, generated surfaces, and registry-managed skills stay closed). The same incident family applies whenever a surface BECOMES generated (as `AGENTS.md`/agents did under rulesync): move it from allow to deny and point editors at the source.

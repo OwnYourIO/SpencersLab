@@ -104,6 +104,47 @@ stay opencode-only — no claudecode target).
 - Dropped the dead `./skill/` entry from the `skills` paths in
   `.opencode/opencode.jsonc` (parses clean after).
 
+## Agents → rule/call skeletons (2026-10-20, round 2)
+
+- Remaining agent body text moved into five role skills (hidden, same
+  pattern): `pipeline-role-cord` (identity + loop + hard rules),
+  `pipeline-role-plan` (process + chunk template + planning rules),
+  `pipeline-role-dev` (quality gate + process + hard rules),
+  `pipeline-role-validate` (validate procedure + hard rules),
+  `pipeline-role-review` (chunk + final review process + hard rules).
+- The `## Hand-off contract` pointer paragraphs dropped — the agents see
+  their loaded skills; no restatement needed.
+- Agent files are now frontmatter (rules) + one paragraph + the MUST-load
+  `/skill` calls: 244–382 words each (was ~550–1,400); all five
+  permission blocks verified byte-identical to the pre-split commit.
+- Skill count in `.opencode/skills/`: 12 (agents-sync, aislop,
+  comment-slop, 4 pipeline contract skills, 5 pipeline role skills).
+- Docs: overview.md contract pointer + registry row and the agents-sync
+  diagram/domain-context paragraph updated for the role skills.
+
+## Agent text blocks → hidden `pipeline-*` contract skills (2026-10-20)
+
+- The blocks duplicated/inline across the pipeline agents are now four
+  rulesync-managed skills, all hidden from auto-selection
+  (`disable-model-invocation` + `metadata.opencode/autoinvoke: "false"`,
+  same pattern as `aislop`), composed into the agents via MUST-load
+  `/skill` calls:
+  - `pipeline-conventions` — plan-folder layout, file semantics,
+    files-are-the-bus read order, RESULT block (loaded by all 5 pipeline
+    agents).
+  - `pipeline-kickoff` — new-ticket questions + worktree/branch/session
+    naming (cord).
+  - `pipeline-models` — role→model routing table + lab favorites map (cord).
+  - `pipeline-gates` — deterministic-first, stuck detection, retry caps,
+    BLOCKED/NEEDS_INFO handling, deviation logging (cord).
+- Agent files slimmed accordingly (cord 1,391→887 words; the four
+  subagents lost the ~280-word shared-conventions+RESULT block each,
+  replaced by a one-line hand-off pointer). Total pipeline-agent text
+  ~3,800 words, contract now single-sourced.
+- Docs updated: AGENTS.md `.rulesync/` bullet + contract pointer +
+  `pipeline-*` registry row; agents-sync pipeline-overview "Domain
+  context" paragraph.
+
 ## Tests placement + plan-file naming (2026-10-20, follow-up)
 
 - **No global `tests/`**: tests/validation live in the chart's or
@@ -255,9 +296,106 @@ stay opencode-only — no claudecode target).
 - Nothing else referenced claudecode targets/hooks — those were never
   implemented (opencode-only decision held).
 
+## Standalone skeletonizing, planner rename, validate→review merge, research agent (2026-10-21)
+
+- **Standalone agents → rule/call skeletons** (same treatment as the pipeline
+  agents): `planner`/`code`/`ask`/`debug`/`review` bodies moved into five new
+  hidden skills `role-{planner,code,ask,debug,review}` (all
+  `disable-model-invocation: true` + `metadata.opencode/autoinvoke: "false"`);
+  agent files are now frontmatter + `/skill` MUST-load calls.
+- **`plan` → `planner`** (standalone agent only; avoids the built-in plan
+  mode). `agent-plan` keeps its name. Source renamed via `git mv`; generated
+  `plan.md` swept.
+- **`agent-*` user-selectable**: agent-plan/dev/review/research are
+  `mode: all` (cord stays `primary`) — every pipeline agent is drivable from
+  the agent picker, not just via cord.
+- **Chunk grouping**: S tasks up to 5 per chunk (was 3), M tasks up to 2
+  related per chunk (was 1), L always alone (`pipeline-role-plan` +
+  pipeline-overview doc).
+- **Validate stage removed** (user: "validation isn't catching much, so is a
+  waste"): `agent-validate` + `pipeline-role-validate` deleted; its verbiage
+  merged into `pipeline-role-review` — review now runs the validation
+  commands + full suite as step 1, then reviews; cord's loop is dev → review
+  (fix rounds: dev → review). ~~Review inherits validate's edit grants so it
+  can fix a broken validation~~ — superseded by the correction section below:
+  review edits nothing, the fix routes to the authoring session via cord +
+  user confirmation. Cord's chunk-done gate now reads
+  the validation proof from review's RESULT `commands_run`.
+- **`friction.md` → `FRICTION.md`** everywhere (conventions layout + read
+  order, cord loop/permissions — globs are case-sensitive, cord permission
+  resource updated, templates renamed via `git mv`, docs).
+- **`agent-research`** added: deep, citation-grounded research via the `storm`
+  skill + `global-searxng` MCP; summary lands in the ticket folder as
+  `RESEARCH.md` next to the plan file. `mode: all`; webfetch/websearch
+  allowed; write access only `.agents/plans/**`. Research is commissioned,
+  never ad hoc: any agent reports a need via RESULT/open_questions, it
+  bubbles up through cord (new "Research" section in `pipeline-role-cord`,
+  cord's launch roster now plan/research/dev/review), cord launches research;
+  `pipeline-role-plan` reads `RESEARCH.md` first and returns `NEEDS_INFO` +
+  `Needs research: yes` instead of planning on guesses; conventions read
+  order includes `RESEARCH.md`; `pipeline-models` routes research on the
+  large tier.
+- **aislop plugin audit** (user request, checked against the live session
+  store): the aislop-gate plugin fired in **51 sessions / 331 edit/write
+  results**, including this fusion session (19 hits) and the pipeline
+  dev/test/plan/review subagent sessions from the coder-workspace run —
+  confirming it runs automatically after the dev/code agents edit.
+- Docs kept current: AGENTS.md/overview (Agents bullets, pipeline specifics,
+  research bullet), agents-sync SKILL + references (roles, flow, permission
+  matrix incl. research row, chunk lifecycle, drift-incident entry for the
+  validate merge + FRICTION rename), plan-and-result layout/lifecycle,
+  syncing-to-other-repos smoke test, kickoff Q3 (dev/review), chunk template
+  section ("Validation (review agent runs)").
+
+## Correction: reviewer never edits tests + dedicated test writer (2026-10-21, user fixes)
+
+- The previous section gave review validate's `tests/` edit grants so it could
+  fix a broken validation itself — **vetoed by the user**. Correct flow: if a
+  validation/test fails and review judges the test (not the code) at fault,
+  review returns `BLOCKED` with `validation_at_fault:` details and touches
+  nothing; the coordinator **always asks the user** to confirm sending the fix
+  back to the session that wrote the test, or a fresh session if the original
+  is gone.
+- A brief intermediate state (dev as validation author, its `tests/` denies
+  flipped to allows) was also staged-only and is **reverted**: the user wants
+  dev to never write tests.
+- **New agent `agent-test`** (test writer): writes the tests for **every chunk
+  of the plan in one session**, after the plan is approved and before any dev
+  starts. `mode: all` (user-selectable), code-tier model. Writes ONLY test
+  files (chart/container `tests/` folders) + context (self-written `skills/`,
+  `.rulesync/rules/**`, `.rulesync/skills/**` allowed; other `.rulesync/**` +
+  generator configs ask; starts from `edit * deny`) — never implementation
+  code, never plans. Role skill: `pipeline-role-test`.
+- Cord: new loop step 2 "Tests" (one launch for the whole plan); the session
+  ID is recorded as top-level `test_session` in STATE.json (the
+  per-chunk `dev_session` field is dropped — the test session is the single
+  author); the `validation_at_fault` branch routes to `test_session`. Roster:
+  plan/research/test/dev/review.
+- Dev: `tests/` denies restored; hard rule back to "tests are read-only
+  (agent-test wrote them); escalate a wrong test via BLOCKED".
+- Planner: each chunk file's "## Tests" list must be concrete enough to write
+  tests from before implementation exists (chunk template section renamed
+  "## Tests (agent-test writes, review runs)").
+- Docs synced: pipeline-models (test on the code tier), kickoff Q3
+  (test/dev/review), gates (test-session routing), plan-and-result (lifecycle
+  + `test_session` schema), permissions.md (+test row, drift entry rewritten
+  to the final state), pipeline-overview (roles, tests phase, matrix),
+  agents-sync SKILL, AGENTS.md overview.
+- Note: this revives a test-writing phase (dropped in the 2026-10-20 phase
+  consolidation) in a different shape — one session for the whole plan,
+  positioned after planning rather than per-chunk.
+
 ## Validation
 
 - `rulesync generate` idempotent; `rulesync generate --check` ✓.
+- Generated surfaces swept + created: `.opencode/agents/{plan,agent-validate}.md`
+  gone; `planner.md` + `agent-research.md` present; `.opencode/skills/`
+  gains `role-*` ×5 + `pipeline-role-research`, loses `pipeline-role-validate`;
+  all six new skills keep the hidden flags after generation; agent-plan/dev/
+  review/research generate `mode: all`, cord `mode: primary`; cord permission
+  resources show `FRICTION.md` and the research/test subagent grants;
+  agent-test has tests+context allows only; dev and review have zero
+  `tests/**` allows.
 - Semantic permission diff vs main: cords +read plans/−glob/grep/broad-read;
   nothing else changed unexpectedly (python tuple-compare of all 24 agents).
 - `opencode debug config`: renamed jsonc loaded, 41-server fleet parsed.
