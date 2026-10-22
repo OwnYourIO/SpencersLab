@@ -2,8 +2,6 @@ bitwardenIds:
   keycloak: OVERRIDE_VIA_CUSTOM_VALUES
   keycloak-pg: OVERRIDE_VIA_CUSTOM_VALUES
   smtp: OVERRIDE_VIA_CUSTOM_VALUES
-  gitea: OVERRIDE_VIA_CUSTOM_VALUES
-  gitea-admin: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
@@ -14,6 +12,12 @@ charts:
     repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  # Internal chart (charts/forgejo) — versioned by CI, not renovate. The
+  # chart's CNPG Cluster carries its own ServerSideApply=true sync-option
+  # annotation; the app itself must not SSA (same as dev).
+  forgejo:
+    namespace: default
+    ServerSideApply: "false"
   k8s-monitoring:
     #version: 1.0.13 # renovate: datasource=helm registryUrl=https://ownyourio.github.io/SpencersLab/
     #repository: https://ownyourio.github.io/SpencersLab/
@@ -77,10 +81,14 @@ ingress:
       service: seaweedfs-s3
       port: 8333
 
-    #git:
-    #  serviceName: forgejo
-    #  service: infra-forgeo
-    #  port: ????
+    # Forgejo (infra cluster): git is the canonical host (DOMAIN/ROOT_URL),
+    # forgejo is an alias for the same instance.
+    git:
+      service: infra-forgejo-http
+      port: 3000
+    forgejo:
+      service: infra-forgejo-http
+      port: 3000
 
     cluster:
       clusterBase: true
@@ -262,57 +270,6 @@ samba:
         existingClaim: dev
         globalMounts:
           - path: /mnt/dev
-
-forgejo:
-  redis-cluster:
-    enabled: false
-  redis:
-    enabled: true
-  postgresql:
-    enabled: true
-  postgresql-ha:
-    enabled: false
-
-  persistence:
-    enabled: true
-
-  gitea:
-    config:
-      APP_NAME: "Gitea!!!"
-      database:
-        DB_TYPE: postgres
-      indexer:
-        ISSUE_INDEXER_TYPE: bleve
-        REPO_INDEXER_ENABLED: true
-
-    admin:
-      existingSecret: gitea-admin-secret
-      email: gitea@spencerslab.com
-
-    ldap:
-      - name: LDAP
-        securityProtocol: unencrypted
-        host: "infra-389ds.default"
-        port: "389"
-        userSearchBase: dc=spencerslab,dc=com
-        userFilter: (objectClass=person)
-        adminFilter: (CN=brenda)
-        emailAttribute: mail
-        existingSecret: gitea-secret
-        usernameAttribute: CN
-        publicSSHKeyAttribute: publicSSHKey
-
-    oauth:
-      - name: "OAuth"
-        provider: "openidConnect"
-        existingSecret: gitea-secret
-        autoDiscoverUrl: "https://login.spencerslab.com/realms/SpencersLab/.well-known/openid-configuration"
-
-  deployment:
-    containers:
-      "0":
-        env:
-          DISABLE_REGISTRATION: true
 
 # ToolHive MCP platform extension (base deploys hivetools on every cluster):
 # read-only Postgres MCP servers for this cluster's CNPG databases, exposed at

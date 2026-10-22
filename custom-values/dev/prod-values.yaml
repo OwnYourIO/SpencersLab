@@ -43,14 +43,19 @@ forgejo:
     forgejo-admin: 47d1d689-b615-4461-8b57-b4e20015ae75      # shared dev DB item
     forgejo-pg: 47d1d689-b615-4461-8b57-b4e20015ae75         # shared dev DB item
     forgejo-sso: d07b1bec-d02c-4580-8544-b4e2000e1783        # shared dev SSO
-  # Forgejo's public identity — dev-specific, kept out of the chart.
-  # Top-level host (user decision 2026-10-13), NOT cluster-scoped.
+  # Forgejo's per-instance identity — dev-specific, kept out of the chart
+  # (the chart ships neutral defaults shared with infra; these reproduce
+  # dev's render). Top-level host (user decision 2026-10-13), NOT
+  # cluster-scoped.
   forgejo:
     gitea:
       config:
+        APP_NAME: "SpencersLab Dev"
         server:
           DOMAIN: git.scifi.farm
           ROOT_URL: "https://git.scifi.farm/"
+      admin:
+        email: forgejo@scifi.farm
 
 hivetools:
   bitwardenIds:

@@ -1,16 +1,17 @@
 # Wrapper around the official Forgejo chart (oci://code.forgejo.org/forgejo-helm).
 # Secrets live here (Bitwarden ExternalSecrets in templates/), the database is
 # CNPG (templates/pg-forgejo.yaml). Chart 17.x bundles no Redis/PostgreSQL
-# subcharts anymore — built-in memory cache is fine at dev scale.
-# OIDC goes to the LAB Keycloak (realm SpencersLab) — dev has no Keycloak of
-# its own (user decision 2026-10-12).
+# subcharts anymore — built-in memory cache is fine at lab scale.
+# Serves BOTH the dev and infra instances: per-instance identity (APP_NAME,
+# admin email, server DOMAIN/ROOT_URL, mailer) lives in each cluster's
+# custom-values/<cluster>/prod-values.yaml under the `forgejo:` app key and
+# deep-merges over the neutral defaults below.
+# OIDC goes to the LAB Keycloak (realm SpencersLab) — neither dev nor infra
+# has a Keycloak of its own.
 #
-# Ingress stays disabled in the subchart; the dev service's generic-ingress
-# routes git.<domain> (top-level host since 2026-10-13) at the
-# <fullname>-http service (port 3000).
-# Server DOMAIN/ROOT_URL are set in custom-values/dev/prod-values.yaml under
-# forgejo.forgejo.gitea.config.server (dev-specific literals, kept out of the
-# chart).
+# Ingress stays disabled in the subchart; each service umbrella's
+# generic-ingress routes its top-level git host at the <fullname>-http
+# service (port 3000).
 
 bitwardenIds:
   # SECRET_KEY for Forgejo (item's login password).
@@ -18,11 +19,13 @@ bitwardenIds:
   # Initial admin user (username/password).
   forgejo-admin: OVERRIDE_VIA_CUSTOM_VALUES
   # CNPG database credentials — only the password is read; the username is
-  # hardcoded to the initdb owner `forgejo` in the ExternalSecret (the
-  # dev item is shared across DBs and can't carry per-DB usernames).
+  # hardcoded to the initdb owner `forgejo` in the ExternalSecret (dev reuses
+  # the shared dev DB item, which can't carry per-DB usernames; infra uses a
+  # dedicated item).
   forgejo-pg: OVERRIDE_VIA_CUSTOM_VALUES
-  # OIDC client key/secret — the shared dev SSO item on the LAB Keycloak
-  # (read as username/password).
+  # OIDC client key/secret — the instance's SSO item on the LAB Keycloak
+  # (dev: shared dev SSO client, infra: client infra-forgejo; read as
+  # username/password).
   forgejo-sso: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
@@ -54,9 +57,11 @@ forgejo:
 
   gitea:
     config:
-      APP_NAME: "SpencersLab Dev"
-      # Public identity (server.DOMAIN / ROOT_URL) is dev-specific, so it
-      # rides custom-values/dev/prod-values.yaml under
+      # Per-instance display name — dev and infra set their own in their
+      # custom-values (forgejo.forgejo.gitea.config.APP_NAME).
+      APP_NAME: "Forgejo"
+      # Public identity (server.DOMAIN / ROOT_URL) is per-instance, so it
+      # rides each cluster's custom-values under
       # forgejo.forgejo.gitea.config.server — not hardcoded in the chart.
       # (The chart renders gitea.config into a Secret — <fullname>-inline-
       # config — and additionalConfigFromEnvs supports secretKeyRef sources,
@@ -111,12 +116,14 @@ forgejo:
     # re-applies the vault password on every pod start.
     admin:
       existingSecret: forgejo-admin-secret
-      email: forgejo@scifi.farm
+      # Initial admin's contact email — per-instance; dev and infra set
+      # their own in their custom-values (forgejo.forgejo.gitea.admin.email).
+      email: forgejo@example.com
 
-    # One OIDC source: the LAB Keycloak realm (dev has no Keycloak of its
-    # own — user decision 2026-10-12). The key/secret keys of forgejo-secret
-    # carry the dev-forgejo-sso (shared dev SSO client)'s credentials, created in the
-    # SpencersLab realm post-bootstrap.
+    # One OIDC source: the LAB Keycloak realm (neither dev nor infra has a
+    # Keycloak of its own). The key/secret keys of forgejo-secret carry the
+    # instance's SSO client credentials (dev: shared dev SSO client, infra:
+    # client infra-forgejo), created in the SpencersLab realm.
     oauth:
       - name: "SpencersLab"
         provider: openidConnect

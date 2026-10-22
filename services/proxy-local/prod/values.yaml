@@ -111,6 +111,25 @@ proxy:
         middlewares:
           - "kube-system-crowdsec@kubernetescrd"
 
+    # Forgejo on the infra cluster — git.spencerslab.com (canonical) and
+    # forgejo.spencerslab.com (alias). Forgejo authenticates git clients
+    # itself (token + OIDC login); hub Keycloak forward-auth breaks
+    # git-over-HTTPS, so crowdsec-only (paste/forms pattern). The hub
+    # ExternalName targets the infra cluster apex (mesh DNS, user-owned);
+    # the public records are published by external-dns from these entries.
+    git:
+      target: infra
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+    forgejo:
+      target: infra
+      middlewares: "kube-system-crowdsec@kubernetescrd"
+      ingressRoute:
+        middlewares:
+          - "kube-system-crowdsec@kubernetescrd"
+
     # Has SSO & companion app (and thus needs a redirect)
     player:
       target: jellyfin
@@ -145,8 +164,6 @@ proxy:
       target: wekan
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=wekan&response_type=code&redirect_uri=https://boards.$.Values.domain/sign-in/"
       loginSubDomain: "login"
-    git:
-      target: gitea
     graphs:
       target: grafana
       ssoRedirectPath: "/realms/$.Values.authRealm/protocol/openid-connect/auth?loginStyle=redirect&client_id=grafana&response_type=code&redirect_uri=https://graphs.$.Values.domain/"
