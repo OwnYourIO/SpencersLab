@@ -1,0 +1,807 @@
+apiKeys: []
+globalTTL: 0
+healthCheckTimeout: 3600
+includeAliasesInList: true
+logLevel: info
+logToStdout: proxy,http
+macros:
+  big-ub: "-b 2048 \n-ub 2048\n"
+  ctx-1m: "-c 1010000 \n--rope-scaling yarn --rope-scale 4 --yarn-orig-ctx 262144\n-b
+    512 -ub 512\n"
+  ctx-256k: "--ctx-size 262144\n-b 2048 \n-ub 2048\n"
+  flash-and-q8: |
+    --flash-attn on
+    --cache-type-k q8_0
+    --cache-type-v q8_0
+  moe: "-ngl 99 \n-ot \"\\.ffn_.*_exps\\.=CPU\" \n--load-mode none\n"
+  moe-vl-q4: |
+    -ngl 99
+    --n-cpu-moe 38
+    --load-mode none
+  moe-vl-q8: |
+    -ngl 99
+    --n-cpu-moe 44
+    --load-mode none
+  server-cmd: |
+    llama-server
+    --port ${PORT}
+    --host 0.0.0.0
+    --jinja
+  threads: |
+    -t 10
+matrix:
+  sets:
+    main: (q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 |
+      q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6
+      | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4
+      | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8
+      | v30tq4 | v30tbf | wsp) & homecpu
+  vars:
+    coderq6: qwen3-coder-next-q6
+    coderq8: qwen3-coder-next-q8
+    homecpu: home-3b-v3
+    homegpu: home-3b-v3-gpu
+    katq4: kat-coder-q4
+    katq6: kat-coder-q6
+    katq8: kat-coder-q8
+    q8bq4: qwen3-8b-q4
+    q8bq8: qwen3-8b-q8
+    q27bq6: qwen3.6-27b-q6
+    q27bq8: qwen3.6-27b-q8
+    q30q4: qwen3-30b-a3b-q4
+    q30q8: qwen3-30b-a3b-q8
+    q35b1m: qwen3.6-35b-a3b-1m
+    q35bf16: qwen3.6-35b-a3b-bf16
+    q35q6: qwen3.6-35b-a3b-q6
+    q35q8: qwen3.6-35b-a3b-q8
+    q38bf16: qwen3.8-27b-bf16
+    q38q4: qwen3.8-27b-q4
+    q38q6: qwen3.8-27b-q6
+    q38q8: qwen3.8-27b-q8
+    v4tbf: qwen3-vl-4b-thinking-bf16
+    v4tq4: qwen3-vl-4b-thinking-q4
+    v4tq8: qwen3-vl-4b-thinking-q8
+    v30tbf: qwen3-vl-30b-a3b-thinking-bf16
+    v30tq4: qwen3-vl-30b-a3b-thinking-q4
+    v30tq8: qwen3-vl-30b-a3b-thinking-q8
+    vl2bbf: qwen3-vl-2b-bf16
+    vl2bq4: qwen3-vl-2b-q4
+    vl2bq8: qwen3-vl-2b-q8
+    vl4bbf: qwen3-vl-4b-bf16
+    vl4bq4: qwen3-vl-4b-q4
+    vl4bq8: qwen3-vl-4b-q8
+    vl8bbf: qwen3-vl-8b-bf16
+    vl8bq4: qwen3-vl-8b-q4
+    vl8bq8: qwen3-vl-8b-q8
+    vl30bbf: qwen3-vl-30b-a3b-bf16
+    vl30bq4: qwen3-vl-30b-a3b-q4
+    vl30bq8: qwen3-vl-30b-a3b-q8
+    wsp: whisper-large-v3
+models:
+  home-3b-v3:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf acon96/Home-3B-v3-GGUF:Q4_K_M
+      -ngl 0
+      -c 8192
+    description: Home Assistant 3B v3 model on CPU, Q4_K_M quant; runs in parallel
+      with GPU models
+    name: Home 3B v3 (Q4_K_M) - CPU
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  home-3b-v3-gpu:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf acon96/Home-3B-v3-GGUF:Q8_0
+      -ngl 99
+      -c 8192
+    description: Home Assistant 3B v3 model on GPU, Q8_0 quant
+    name: Home 3B v3 (Q8_0) - GPU
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  kat-coder-q4:
+    cmd: |
+      /bin/sh -c "echo 'kat-coder-q4 disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai.' >&2; exit 1"
+    description: DISABLED on 8GiB gpu (VRAM-exhaustion node freeze) — available on
+      gpu-ai
+    name: KAT Coder V2.5 Dev (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  kat-coder-q6:
+    cmd: |
+      /bin/sh -c "echo 'kat-coder-q6 disabled on the 8GiB gpu box: loading it exhausted VRAM, lost the Vulkan device and froze the node 2026-10-18. Use gpu-ai.' >&2; exit 1"
+    description: DISABLED on 8GiB gpu (caused 2026-10-18 node freeze) — available
+      on gpu-ai
+    name: KAT Coder V2.5 Dev (Q6_K)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  kat-coder-q8:
+    cmd: |
+      /bin/sh -c "echo 'kat-coder-q8 disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai.' >&2; exit 1"
+    description: DISABLED on 8GiB gpu (VRAM-exhaustion node freeze) — available on
+      gpu-ai
+    name: KAT Coder V2.5 Dev (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-8b-q4:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-8B-GGUF:Q4_K_M
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3 8B dense model, Q4_K_M quant
+    name: Qwen 3 8B (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-8b-q8:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-8B-GGUF:Q8_0
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3 8B dense model, Q8_0 quant
+    name: Qwen 3 8B (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-30b-a3b-q4:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q4_K_M
+      ${ctx-256k}
+      ${moe}
+      ${flash-and-q8}
+    description: Qwen 3 30B with 3B active parameters (MoE), Q4_K_M quant
+    name: Qwen 3 30B A3B Instruct (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-30b-a3b-q8:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q8_0
+      ${ctx-256k}
+      ${moe}
+      ${flash-and-q8}
+    description: Qwen 3 30B with 3B active parameters (MoE), Q8_0 quant
+    name: Qwen 3 30B A3B Instruct (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-coder-next-q6:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-Coder-Next-GGUF:Q6_K
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3 Coder Next coding model, Q6_K quant
+    name: Qwen 3 Coder Next (Q6_K)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-coder-next-q8:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-Coder-Next-GGUF:Q8_0
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3 Coder Next coding model, Q8_0 quant
+    name: Qwen 3 Coder Next (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-2b-bf16:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:BF16
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, BF16 (no quant);
+      faster processing for simpler descriptions
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 2B Instruct (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-2b-q4:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q4_K_M
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, Q4_K_M quant; faster
+      processing for simpler descriptions
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 2B Instruct (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-2b-q8:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q8_0
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, Q8_0 quant; faster
+      processing for simpler descriptions
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 2B Instruct (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-4b-bf16:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:BF16
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, BF16 (no quant)
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 4B Instruct (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-4b-q4:
+    aliases:
+    - qwen3-vl-4b
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, Q4_K_M quant
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 4B Instruct (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-4b-q8:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q8_0
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, Q8_0 quant
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 4B Instruct (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-4b-thinking-bf16:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:BF16
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Reasoning vision-language model for Immich image analysis, BF16 (no
+      quant); good balance of speed and accuracy
+    name: Qwen3 VL 4B Thinking (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-4b-thinking-q4:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q4_K_M
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Reasoning vision-language model for Immich image analysis, Q4_K_M
+      quant; good balance of speed and accuracy
+    name: Qwen3 VL 4B Thinking (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-4b-thinking-q8:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q8_0
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Reasoning vision-language model for Immich image analysis, Q8_0 quant;
+      good balance of speed and accuracy
+    name: Qwen3 VL 4B Thinking (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-8b-bf16:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:BF16
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, BF16 (no quant)
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 8B Instruct (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-8b-q4:
+    aliases:
+    - qwen3-vl-8b
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, Q4_K_M quant
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 8B Instruct (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-8b-q8:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q8_0
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      -c 16384
+    description: Vision-language model for Immich image analysis, Q8_0 quant
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 8B Instruct (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-30b-a3b-bf16:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      /bin/sh -c "echo 'qwen3-vl-30b-a3b-bf16 disabled on the 8GiB gpu box: it uses the untuned expert-offload macro (the q4/q8 entries use the 8GB-measured moe-vl placement); BF16 non-experts + mmproj exceed the card. Use the q4/q8 variants.' >&2; exit 1"
+    description: DISABLED on 8GiB gpu (cannot fit) — use the q4/q8 variants
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 30B A3B Instruct (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-30b-a3b-q4:
+    aliases:
+    - qwen3-vl-30b-a3b
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${moe-vl-q4}
+      ${flash-and-q8}
+      ${big-ub}
+      -c 16384
+    description: Vision-language MoE model for Immich image analysis, Q4_K_M quant,
+      CPU-offloaded experts
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 30B A3B Instruct (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-30b-a3b-q8:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q8_0
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${moe-vl-q8}
+      ${flash-and-q8}
+      ${big-ub}
+      -c 16384
+    description: Vision-language MoE model for Immich image analysis, Q8_0 quant,
+      CPU-offloaded experts
+    filters:
+      setParamsByID:
+        ${MODEL_ID}:caption:
+          chat_template_kwargs:
+            enable_thinking: false
+          seed: 42
+          temperature: 0.1
+        ${MODEL_ID}:tags:
+          chat_template_kwargs:
+            enable_thinking: false
+          temperature: 0.2
+    name: Qwen3 VL 30B A3B Instruct (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-30b-a3b-thinking-bf16:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:BF16
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${moe}
+      ${flash-and-q8}
+      -c 16384
+    description: Reasoning vision-language MoE model for Immich image analysis, BF16
+      (no quant), CPU-offloaded experts; higher accuracy for complex images
+    name: Qwen3 VL 30B A3B Thinking (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-30b-a3b-thinking-q4:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q4_K_M
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${moe-vl-q4}
+      ${flash-and-q8}
+      ${big-ub}
+      -c 16384
+    description: Reasoning vision-language MoE model for Immich image analysis, Q4_K_M
+      quant, CPU-offloaded experts; higher accuracy for complex images
+    name: Qwen3 VL 30B A3B Thinking (Q4_K_M)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3-vl-30b-a3b-thinking-q8:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q8_0
+      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${moe-vl-q8}
+      ${flash-and-q8}
+      ${big-ub}
+      -c 16384
+    description: Reasoning vision-language MoE model for Immich image analysis, Q8_0
+      quant, CPU-offloaded experts; higher accuracy for complex images
+    name: Qwen3 VL 30B A3B Thinking (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.6-27b-q6:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3.6-27B-GGUF:Q6_K
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3.6 27B general purpose model, Q6_K quant
+    name: Qwen 3.6 27B (Q6_K)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.6-27b-q8:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3.6-27B-GGUF:Q8_0
+      ${flash-and-q8}
+      ${ctx-256k}
+    description: Qwen 3.6 27B general purpose model, Q8_0 quant
+    name: Qwen 3.6 27B (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.6-35b-a3b-1m:
+    cmd: |
+      /bin/sh -c "echo 'qwen3.6-35b-a3b-1m disabled on the 8GiB gpu box: 1M-token KV stays GPU-resident here (no --no-kv-offload), ~11 GiB alone. Use gpu-ai.' >&2; exit 1"
+    description: DISABLED on 8GiB gpu (1M KV off-card) — available on gpu-ai
+    name: Qwen 3.6 35B A3B (Q8_0) - 1M
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.6-35b-a3b-bf16:
+    cmd: |
+      /bin/sh -c "echo 'qwen3.6-35b-a3b-bf16 disabled on the 8GiB gpu box: BF16 non-expert weights (~5 GiB) + 256k KV + mmproj exceed the card. Use qwen3.6-35b-a3b-q8 (tuned) or gpu-ai.' >&2; exit 1"
+    description: DISABLED on 8GiB gpu (cannot fit) — use the tuned q8 entry or gpu-ai
+    name: Qwen 3.6 35B A3B (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.6-35b-a3b-q6:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3.6 35B with 3B active parameters (MoE), UD-Q6_K quant
+    name: Qwen 3.6 35B A3B (UD-Q6_K)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.6-35b-a3b-q8:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+      --no-mmproj
+      --ctx-size 262144
+      -b 2048
+      -ub 1024
+      ${moe}
+      ${flash-and-q8}
+      # 2026-10-15: text-only (--no-mmproj) so cache_reuse works; 256 =
+      # tolerate that many tokens of prompt drift when reusing cached KV
+      # (agentic conversations mutate: system reminders, tool schemas).
+      --cache-reuse 256
+      # 2026-10-16: -np MUST be pinned to 1 on this box — the unified KV
+      # pool is np x ctx, so the llama-server default (4 slots) would
+      # preallocate 4 x 262144 x ~10.9KB/token = ~10.6 GiB of KV, and
+      # even np 2 (~5.7 GiB) plus the 2.48 GiB weights busts the 8 GiB
+      # card. np 1 keeps the pool at ~2.66 GiB (the 2026-10-11 VRAM
+      # budget). Concurrent agents here queue on the one slot instead.
+      # --cache-ram deliberately left at the 8 GiB default: ~32 GiB
+      # experts already resident in this box's 64 GiB RAM. ttl stays
+      # chart-default 0 (never auto-unload).
+      -np 1
+    description: 'Qwen 3.6 35B A3B (MoE), Q8_0; 8GiB-gpu fit: experts on CPU, q8_0
+      KV, no vision, cache_reuse 256, 1 slot (np pinned: pool = np x ctx), 256k ctx
+      (slow)'
+    name: Qwen 3.6 35B A3B (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.8-27b-bf16:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf ggml-org/Qwen3.8-27B-GGUF:BF16
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3.8 27B dense model, BF16 (no quant)
+    name: Qwen 3.8 27B (BF16)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.8-27b-q4:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3.8 27B dense model, UD-Q4_K_XL quant
+    name: Qwen 3.8 27B (UD-Q4_K_XL)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.8-27b-q6:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3.8-27B-GGUF:UD-Q6_K_XL
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3.8 27B dense model, UD-Q6_K_XL quant
+    name: Qwen 3.8 27B (UD-Q6_K_XL)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  qwen3.8-27b-q8:
+    cmd: |
+      ${server-cmd}
+      ${threads}
+      -hf unsloth/Qwen3.8-27B-GGUF:Q8_0
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Qwen 3.8 27B dense model, Q8_0 quant
+    name: Qwen 3.8 27B (Q8_0)
+    proxy: http://localhost:${PORT}
+    ttl: 0
+  whisper-large-v3:
+    capabilities:
+      in:
+      - audio
+      out:
+      - text
+    checkEndpoint: /health
+    cmd: |
+      /bin/sh -c "
+        mkdir -p /models/whisper &&
+        { test -f /models/whisper/ggml-large-v3.bin ||
+          { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin &&
+            mv /models/whisper/ggml-large-v3.bin.part /models/whisper/ggml-large-v3.bin; }; } &&
+        exec whisper-server --host 0.0.0.0 --port ${PORT} --inference-path /v1/audio/transcriptions -m /models/whisper/ggml-large-v3.bin
+      "
+    description: Audio transcription (whisper.cpp ggml-large-v3) for podcast processing
+    name: Whisper Large v3
+    proxy: http://localhost:${PORT}
+    ttl: 0
+performance:
+  enable: true
+  every: 5s
+sendLoadingState: true
+startPort: 10001
+unloadTimeout: 30

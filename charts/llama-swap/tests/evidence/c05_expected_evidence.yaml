@@ -1,0 +1,58 @@
+# C05 expected-evidence grep list — pre-written (per chunks/C05.md "Tests")
+# so review/coord can mechanically diff OBSERVED vs EXPECTED after the user
+# lands the PR and ArgoCD syncs `main`. No pytest automates this pre-merge;
+# observation channels are the readonly-gpu-kubernetes MCP + pod logs only
+# (NEVER kubectl apply; NO admin-* without explicit user approval; gpu-ai is
+# log-level confirmation only — DECISIONS).
+#
+# The runbook (verification-runbook.md, a C05 artifact) references this file
+# step by step. "source" names the read-only channel; "expect" is the match
+# rule applied to that channel's output.
+
+prerequisites:
+  - check: PR landed on main and release.yaml bumped charts/llama-swap version
+    source: git log origin/main + charts/llama-swap/Chart.yaml
+    expect: version > 1.0.21 after merge; image tags unmodified by hand
+  - check: containers/llama-swap-autogen got a :v<run> build on the merge
+    source: GitHub Actions docker-build.yaml run for the merge commit
+    expect: push job succeeded, ghcr.io/ownyourio/llama-swap-autogen:v<N> and :main exist
+    note: not a blocker; chart references :main + Always per DECISIONS until re-pinned
+
+gpu_box:
+  - check: ArgoCD Application gpu
+    source: readonly-gpu-kubernetes (argocd app status via CR inspection)
+    expect: Sync=Synced Health=Healthy, no OutOfSync on llama-swap Application
+  - check: pod llama-swap initContainer state
+    source: pod status initContainerStatuses[name=autogen]
+    expect: terminated exitCode 0, reason Completed
+  - check: 'initContainer degrade log (steady state: /models/scanned absent)'
+    source: initContainer logs
+    expect: one of "no GGUF"/"skipping generation"/"No models found" style line; absence of the line means the scan dir is NOT empty — verify intentionally before accepting
+  - check: scanned half content
+    source: pod /app/gen/10-scanned.yaml (read via container fs through MCP describe/logs only if exec is unavailable — exec command goes to the USER per AGENTS.md)
+    expect: comment-only file (every nonblank line starts '#'), parses to empty YAML
+  - check: merged config load + model count
+    source: llama-swap main container startup logs
+    expect: config load without merge errors (no "conflict"/"duplicate"/"identity" errors); 47 model registrations after C04 lands (40 chart + 7 ladder)
+  - check: /v1/models completeness
+    source: cluster-internal service read (gpu-llama-swap.default.svc) via MCP service proxy
+    expect: all 47 gpu IDs listed (disabled ones stay routable); aliases qwen3-vl-4b/-8b/-30b-a3b present
+  - check: reloader coverage of the new ConfigMap
+    source: pod annotations + rollout history on a llama-swap-config data change (or observed renovate change)
+    expect: pod restart OR llama-swap 'config reloaded' log within ~2 min; generated half changes only on restart
+  - check: serve smoke (ONLY with explicit user approval at run time, before any download)
+    source: ingress llama.gpu.<domain> /v1/chat/completions
+    expect: qwen3-vl-2b-q4 regression OK; ornith-1.5-35b-a3b-iq2xxs end-to-end with unload between; any fit-params probe failure => declare disabled on gpu + follow-up (abort criteria, chunk C05)
+
+gpu_ai_box:
+  - check: post-its-own-sync config-level confirmation only
+    source: readonly-ai-gpu-kubernetes pod logs
+    expect: startup shows merged load with 71 models (55 + 16 C04 additions); NO requests, NO restart nudging, NO serve tests
+  - check: flash-next q5/q6 routable but unpreloaded
+    source: rendered config + logs
+    expect: ids registered (enabled per DECISIONS) yet never loaded at startup; absent from every matrix set
+
+rollback:
+  - check: revert PR commit through normal branch->PR flow (user lands it)
+    source: GitOps only
+    expect: ArgoCD re-syncs old ConfigMaps; reloader rolls pods; no manual kubectl anywhere (AGENTS.md hard rule)
