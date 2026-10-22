@@ -6,8 +6,9 @@
 # admin email, server DOMAIN/ROOT_URL, mailer) lives in each cluster's
 # custom-values/<cluster>/prod-values.yaml under the `forgejo:` app key and
 # deep-merges over the neutral defaults below.
-# OIDC goes to the LAB Keycloak (realm SpencersLab) — neither dev nor infra
-# has a Keycloak of its own.
+# OIDC goes to the shared LAB Keycloak at login.spencerslab.com (realm
+# SpencersLab) — hosted on the infra cluster; both instances join it with
+# per-instance clients.
 #
 # Ingress stays disabled in the subchart; each service umbrella's
 # generic-ingress routes its top-level git host at the <fullname>-http
@@ -120,10 +121,11 @@ forgejo:
       # their own in their custom-values (forgejo.forgejo.gitea.admin.email).
       email: forgejo@example.com
 
-    # One OIDC source: the LAB Keycloak realm (neither dev nor infra has a
-    # Keycloak of its own). The key/secret keys of forgejo-secret carry the
-    # instance's SSO client credentials (dev: shared dev SSO client, infra:
-    # client infra-forgejo), created in the SpencersLab realm.
+    # One OIDC source: the LAB Keycloak realm (login.spencerslab.com) — the
+    # shared instance is hosted on the infra cluster. The key/secret keys of
+    # forgejo-secret carry the instance's SSO client credentials (dev:
+    # shared dev SSO client, infra: client infra-forgejo), created in the
+    # SpencersLab realm.
     oauth:
       - name: "SpencersLab"
         provider: openidConnect
