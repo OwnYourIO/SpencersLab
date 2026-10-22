@@ -435,6 +435,15 @@ stay opencode-only — no claudecode target).
   a question. Unverified paths (event field names, handshake tolerance) log
   one-time debug keys to opencode.log. AGENTS.md `.opencode/` bullet now
   lists both plugins.
+- **Dev fixes return to the implementing session** (user directive): on
+  `CHANGES_REQUESTED`, coord directs the fix to the session that originally
+  implemented the chunk — continuing that dev session via its sessionID
+  (`chunks.<id>.dev_session` is back in the STATE.json schema, recorded on
+  every dev hand-back); a fresh session is acceptable only when the
+  continuation fails/is gone. Reviews are ALWAYS fresh sessions, never
+  continued. Mirrored in plan-and-result (schema + lifecycle) and
+  pipeline-overview flow. Contrast with test fixes: those require explicit
+  user confirmation; dev fix rounds are the normal loop and don't.
 - aislop-gate live-check while writing the plugin: fired on the write,
   100/100 clean run.
 - Event shape verified afterwards against `@opencode/plugin@2.1.2` types
