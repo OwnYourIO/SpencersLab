@@ -5,4 +5,4 @@ metadata:
   namespace: default
 data:
   config.yaml: |
-{{- toYaml .Values.config | nindent 4 }}
+{{- include "llama-swap.declaredConfig" . | nindent 4 }}

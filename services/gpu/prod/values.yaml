@@ -260,20 +260,20 @@ llama-swap:
   # (smaller compute buffer; slower prompt processing — accepted, expect
   # slow generation overall). Full debug trail:
   # .agents/plans/2026-10-11-debug-gpu-moe-qwen36-35b-q8-vram-oom.md
-  # Only cmd + description are overridden; name/proxy/ttl merge from chart.
+  # Only the cmd composition (use/flags) and description are overridden;
+  # name/proxy/ttl merge from chart defaults.
   config:
     models:
       qwen3.6-35b-a3b-q8:
-        cmd: |
-          ${server-cmd}
-          ${threads}
-          -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+        hf: unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+        # ${ctx-256k} is NOT reused here: it carries -ub 2048, this box
+        # needs -ub 1024; the context flags below replace the macro.
+        use: [threads, moe, flash-and-q8]
+        flags: |
           --no-mmproj
           --ctx-size 262144
           -b 2048
           -ub 1024
-          ${moe}
-          ${flash-and-q8}
           # 2026-10-15: text-only (--no-mmproj) so cache_reuse works; 256 =
           # tolerate that many tokens of prompt drift when reusing cached KV
           # (agentic conversations mutate: system reminders, tool schemas).
@@ -298,29 +298,26 @@ llama-swap:
       # is the same class. Exiting instantly keeps the ID routable with a
       # logged reason instead of taking the cluster offline. They serve fine
       # on gpu-ai.
+      # `disabled:` renders the fail-fast cmd the renderer composes as
+      #   /bin/sh -c "echo '<id> <disabled>' >&2; exit 1"
+      # (echo body byte-pinned by tests/golden/gpu.config.yaml).
       kat-coder-q4:
-        cmd: |
-          /bin/sh -c "echo 'kat-coder-q4 disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai.' >&2; exit 1"
+        disabled: "disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai."
         description: "DISABLED on 8GiB gpu (VRAM-exhaustion node freeze) — available on gpu-ai"
       kat-coder-q6:
-        cmd: |
-          /bin/sh -c "echo 'kat-coder-q6 disabled on the 8GiB gpu box: loading it exhausted VRAM, lost the Vulkan device and froze the node 2026-10-18. Use gpu-ai.' >&2; exit 1"
+        disabled: "disabled on the 8GiB gpu box: loading it exhausted VRAM, lost the Vulkan device and froze the node 2026-10-18. Use gpu-ai."
         description: "DISABLED on 8GiB gpu (caused 2026-10-18 node freeze) — available on gpu-ai"
       kat-coder-q8:
-        cmd: |
-          /bin/sh -c "echo 'kat-coder-q8 disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai.' >&2; exit 1"
+        disabled: "disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai."
         description: "DISABLED on 8GiB gpu (VRAM-exhaustion node freeze) — available on gpu-ai"
       qwen3.6-35b-a3b-bf16:
-        cmd: |
-          /bin/sh -c "echo 'qwen3.6-35b-a3b-bf16 disabled on the 8GiB gpu box: BF16 non-expert weights (~5 GiB) + 256k KV + mmproj exceed the card. Use qwen3.6-35b-a3b-q8 (tuned) or gpu-ai.' >&2; exit 1"
+        disabled: "disabled on the 8GiB gpu box: BF16 non-expert weights (~5 GiB) + 256k KV + mmproj exceed the card. Use qwen3.6-35b-a3b-q8 (tuned) or gpu-ai."
         description: "DISABLED on 8GiB gpu (cannot fit) — use the tuned q8 entry or gpu-ai"
       qwen3.6-35b-a3b-1m:
-        cmd: |
-          /bin/sh -c "echo 'qwen3.6-35b-a3b-1m disabled on the 8GiB gpu box: 1M-token KV stays GPU-resident here (no --no-kv-offload), ~11 GiB alone. Use gpu-ai.' >&2; exit 1"
+        disabled: "disabled on the 8GiB gpu box: 1M-token KV stays GPU-resident here (no --no-kv-offload), ~11 GiB alone. Use gpu-ai."
         description: "DISABLED on 8GiB gpu (1M KV off-card) — available on gpu-ai"
       qwen3-vl-30b-a3b-bf16:
-        cmd: |
-          /bin/sh -c "echo 'qwen3-vl-30b-a3b-bf16 disabled on the 8GiB gpu box: it uses the untuned expert-offload macro (the q4/q8 entries use the 8GB-measured moe-vl placement); BF16 non-experts + mmproj exceed the card. Use the q4/q8 variants.' >&2; exit 1"
+        disabled: "disabled on the 8GiB gpu box: it uses the untuned expert-offload macro (the q4/q8 entries use the 8GB-measured moe-vl placement); BF16 non-experts + mmproj exceed the card. Use the q4/q8 variants."
         description: "DISABLED on 8GiB gpu (cannot fit) — use the q4/q8 variants"
 
 open-webui:
