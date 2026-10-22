@@ -1,0 +1,6 @@
+https://artifacthub.io/packages/helm/wrenix/forgejo-runner	wrenix/forgejo-runner listing (v0.7.6; dir absent from repo main)
+https://github.com/dtechvision/forgejo-runner-helm-chart	dtechvision chart README + templates (v0.0.1)
+https://gitea.com/gitea/helm-actions	Gitea fork runner chart (not Forgejo-compatible)
+https://github.com/mother-of-all-self-hosting/ansible-role-forgejo-runner	ansible role: config.yaml.j2 shape
+https://gist.github.com/net-pilgrim/5e10f4e54e7a996d7ca54f9aac2a8724	k3s gist (stale prior art)
+Local: AGENTS.md, skills/helm-chart-creation/, charts/forgejo/, services/dev/prod/	repo conventions

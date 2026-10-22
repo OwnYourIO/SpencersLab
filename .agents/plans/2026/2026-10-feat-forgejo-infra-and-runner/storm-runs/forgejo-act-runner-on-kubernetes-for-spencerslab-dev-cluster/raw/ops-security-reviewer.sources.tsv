@@ -1,0 +1,7 @@
+https://code.forgejo.org/forgejo/runner (v13.2.0 source)	.runner semantics, daemon.go:84 (ephemeral refused in daemon mode), config defaults
+https://forgejo.org/docs/latest/admin/config-cheat-sheet/	ZOMBIE_TASK_TIMEOUT / ENDLESS_TASK_TIMEOUT defaults
+https://codeberg.org/forgejo/forgejo (branch v15.0/forgejo)	runner_list.tmpl (reset_registration_token), DELETE API
+https://forgejo.org/docs/latest/admin/actions/	admin UI runner list
+https://gitea.com/gitea/runner (examples/kubernetes)	StatefulSet per-ordinal PVC variant
+https://forgejo.org/2026-08-runner-release-v13/	Docker minimum 25.0
+https://local repo services/dev/prod/templates/secret-forgejo-token.yaml	existing forgejo-token ExternalSecret (different concern)

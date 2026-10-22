@@ -1,0 +1,5 @@
+https://data.forgejo.org/v2/forgejo/runner/tags/list	Registry tag list — latest 13.2.0 + aliases
+https://data.forgejo.org/api/v1/repos/forgejo/runner/releases?limit=3	Releases v13.0.0/v13.1.0/v13.2.0 with dates
+https://forgejo.org/2026-08-runner-release-v13/	Runner v13.0.0 breaking-changes blog post (2026-08-03)
+https://code.forgejo.org/forgejo/runner (v13.2.0 source via Go module proxy zip)	Dockerfile, config.example.yaml, register.go, daemon.go, args.go, examples/kubernetes/dind-docker.yaml
+https://forgejo.org/docs/latest/admin/actions/	Official runner docs: default label, registration

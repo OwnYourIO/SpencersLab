@@ -1,0 +1,9 @@
+https://live-dev-cluster (MCP readonly-dev-kubernetes)	k3s v1.36.5+k3s1, node dev, 8 CPU/~13.3GiB, local-path
+https://gitea.com/gitea/runner/raw/branch/main/examples/kubernetes/dind-docker.yaml	gitea/runner K8s DinD example (re-fetched 2026-10-21)
+https://gitea.com/gitea/runner	gitea/runner examples/kubernetes/ (StatefulSet variant, kubernetes-pods.yaml)
+https://code.forgejo.org/forgejo/runner (v13.2.0 source)	examples/kubernetes/dind-docker.yaml
+https://stackoverflow.com/questions/70631927	overlay-on-overlay unsupported
+https://code.forgejo.org/forgejo/runner (pull #1472, issue #1773)	K8s backend upstream state
+https://codeberg.org/forgejo/discussions/issues/66	Native K8s runners discussion
+https://github.com/eleboucher/runner-k8s-plugin;github.com/sjones512/forgejo-runner-kubernetes;blurrycat.dev/kuranto;github.com/marinatedconcrete/forgejo-runner-operator	Third-party k8s backends (not prod-ready)
+https://gist.github.com/net-pilgrim/5e10f4e54e7a996d7ca54f9aac2a8724	k3s runner gist (stale)

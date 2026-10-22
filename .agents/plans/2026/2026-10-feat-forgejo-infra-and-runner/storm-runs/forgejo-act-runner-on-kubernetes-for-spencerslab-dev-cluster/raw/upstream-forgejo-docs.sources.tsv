@@ -1,0 +1,8 @@
+https://codeberg.org/forgejo/forgejo	Forgejo server source (branch v15.0/forgejo): routers/api/v1/api.go, templates/shared/actions/runner_{create,setup,list}.tmpl
+https://forgejo.org/docs/latest/admin/config-cheat-sheet/	Server [actions] defaults
+https://charts/forgejo/Chart.yaml;charts/forgejo/values.yaml (local repo)	Wrapper chart: forgejo-helm 17.2.0, appVersion 15.0.9
+https://live-dev-cluster (MCP readonly-dev-kubernetes)	k3s v1.36.5+k3s1, dev-forgejo pod Running 15.0.9
+https://data.forgejo.org/api/v1/repos/forgejo/forgejo/releases?limit=8	Forgejo server releases v15.0.9/v15.0.10/v17.0.0
+https://code.forgejo.org/forgejo/runner (v13.2.0 source)	Dockerfile (no auto-registration entrypoint), ephemeral error strings
+https://wiki.serversatho.me/forgejo	Warning: FORGEJO_* registration env vars are Gitea's
+https://forgejo.org/2026-08-runner-release-v13/	Runner v13 breaking changes (GITEA_* env vars ignored)
