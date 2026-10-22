@@ -57,6 +57,12 @@ forgejo:
       admin:
         email: forgejo@scifi.farm
 
+forgejo-runner:
+  bitwardenIds:
+    # Item `forgejo-runner` (username = runner uuid, password = registration
+    # token). NOT `forgejo-token` — that is the Coder workspace access token.
+    forgejo-runner-token: OVERRIDE_NEEDED
+
 hivetools:
   bitwardenIds:
     mcp-sso: d07b1bec-d02c-4580-8544-b4e2000e1783            # shared dev SSO

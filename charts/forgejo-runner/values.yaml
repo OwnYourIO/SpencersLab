@@ -1,0 +1,178 @@
+# Forgejo Actions runner for the dev cluster.
+#
+# Client-only: the runner dials the dev Forgejo instance in-cluster
+# (dev-forgejo-http:3000), so this chart is host-free — no ingress, no
+# proxy entry, no domain references. The in-cluster URL is a dev literal
+# on purpose: the user decided the runner never moves (2026-10-21 question
+# round), so there is no abstraction to parameterize.
+#
+# Registration is declarative (runner v13 — the register CLI and env-var
+# registration do not work): the daemon connects with
+# server.connections.dev from the ExternalSecret-generated config.yaml and
+# reads the token from file:$CREDENTIALS_DIRECTORY/token. The .runner
+# identity file on the `data` PVC makes a restart a re-attach, not a
+# re-registration.
+
+bitwardenIds:
+  # Item `forgejo-runner` (username = runner uuid, password = registration
+  # token). NEVER the `forgejo-token` item — that one is the Coder
+  # workspace access token.
+  forgejo-runner-token: OVERRIDE_VIA_CUSTOM_VALUES
+
+app-template:
+  global:
+    nameOverride: forgejo-runner
+
+  controllers:
+    runner:
+      # Single replica on purpose: one (uuid, token) pair must map to
+      # exactly one pod. Scaling means more runner records, never more
+      # replicas of one identity (decision B1).
+      type: statefulset
+      replicas: 1
+      annotations:
+        reloader.stakater.com/auto: "true"
+      statefulset:
+        # app-template 5.x VCTs are a LIST with singular accessMode/size.
+        volumeClaimTemplates:
+          # Runner identity (.runner), config and the act cache — the image
+          # sets HOME=/data, so all of it lands here. globalMounts: both
+          # containers see it.
+          - name: data
+            accessMode: ReadWriteOnce
+            size: 2Gi
+            storageClass: local-path
+            globalMounts:
+              - path: /data
+          # Docker image cache — without it every job re-pulls its images.
+          # dind-only via advancedMounts (VCT advancedMounts are
+          # {container: [mounts]}; the controller level is added by the
+          # library): the runner talks to dockerd over the socket and never
+          # needs the data root.
+          - name: docker-data
+            accessMode: ReadWriteOnce
+            size: 10Gi
+            storageClass: local-path
+            advancedMounts:
+              dind:
+                - path: /var/lib/docker
+      initContainers:
+        # DinD as a sidecar (K8s 1.29+ restartPolicy semantics; dev is
+        # k3s 1.36.5). Without `restartPolicy: Always` the pod dies when
+        # dockerd exits. Privileged on purpose — the only deliberately
+        # privileged container in the pod; jobs stay sandboxed
+        # (container.privileged: false in the runner config).
+        #
+        # No storage-driver env: the node root-fs type is unverified —
+        # dockerd ships overlay2 and degrades on its own; forcing vfs is a
+        # replan, not a default.
+        dind:
+          image:
+            repository: docker
+            # renovate: datasource=docker depName=docker
+            tag: 29.9.1-dind
+          restartPolicy: Always
+          securityContext:
+            privileged: true
+          probes:
+            # The socket probe is what keeps the pod observable — dind
+            # carries the liveness of the whole pod (see runner probes note).
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - test
+                    - -S
+                    - /var/run/docker.sock
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - test
+                    - -S
+                    - /var/run/docker.sock
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 2
+              memory: 4Gi
+      containers:
+        runner:
+          image:
+            repository: data.forgejo.org/forgejo/runner
+            # renovate: datasource=docker depName=data.forgejo.org/forgejo/runner versioning=semver
+            tag: 13.2.0
+          # The image's ENTRYPOINT is dumb-init (zombie reaping) and K8s
+          # `command` replaces the entrypoint — so it goes back in
+          # explicitly.
+          #
+          # Deliberately no probes on this container: verified against the
+          # v13.2.0 source (no --listen flag, no HTTP server anywhere in
+          # the daemon), so there is no stable health endpoint to probe.
+          # The dind sidecar's socket probes carry the pod's observable
+          # liveness.
+          command:
+            - /usr/bin/dumb-init
+            - /bin/forgejo-runner
+            - daemon
+            - -c
+            - /data/config/config.yaml
+          env:
+            # Resolved by the runner for token_url: file:$CREDENTIALS_DIRECTORY/token
+            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner
+            # In-pod socket (the `socket` emptyDir), not a node socket.
+            DOCKER_HOST: unix:///var/run/docker.sock
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 2
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      pod:
+        # >= the runner's shutdown_timeout (3h) so in-flight jobs get the
+        # chance to finish during termination.
+        terminationGracePeriodSeconds: 10800
+
+  service:
+    # Headless — a StatefulSet requires one for its per-ordinal DNS names.
+    # The port is nominal: the daemon listens on nothing, the entry exists
+    # only so the headless service has a record to serve.
+    runner-headless:
+      controller: runner
+      clusterIP: None
+      ports:
+        api:
+          port: 3000
+
+  persistence:
+    # In-pod docker socket: dind creates it, the runner dials it.
+    socket:
+      type: emptyDir
+      globalMounts:
+        - path: /var/run
+    # The ExternalSecret-generated identity, mounted twice on the runner
+    # only: whole secret at CREDENTIALS_DIRECTORY (so `token` lands where
+    # token_url says) and config.yaml subPath-mounted where the daemon's
+    # -c flag points. subPath means the file does not hot-update — the
+    # reloader annotation restarts the pod on secret changes.
+    runner-creds:
+      type: secret
+      name: forgejo-runner
+      advancedMounts:
+        runner:
+          runner:
+            - path: /run/secrets/forgejo-runner
+            - path: /data/config/config.yaml
+              subPath: config.yaml

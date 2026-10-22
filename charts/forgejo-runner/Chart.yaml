@@ -1,0 +1,10 @@
+apiVersion: v2
+name: forgejo-runner
+description: Forgejo Actions runner — 1-replica StatefulSet with a privileged DinD sidecar, declarative registration against the dev Forgejo instance
+type: application
+version: 1.0.0
+appVersion: "13.2.0"
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/

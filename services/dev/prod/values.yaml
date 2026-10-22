@@ -1,6 +1,6 @@
 # dev — new dev cluster (public identity dev.scifi.farm).
-# Deploys Coder, Forgejo, GPT Researcher, and the parity extras
-# (cloudnative-pg, external-secrets-bitwarden, k8s-monitoring).
+# Deploys Coder, Forgejo (+ its Actions runner), GPT Researcher, and the
+# parity extras (cloudnative-pg, external-secrets-bitwarden, k8s-monitoring).
 # No Keycloak on dev (user decision 2026-10-12): SSO follows the lab pattern
 # — ArgoCD SSO + hivetools MCP reuse the lab-wide shared client items on the
 # lab Keycloak (realm SpencersLab); Coder + Forgejo get dev-specific clients
@@ -41,6 +41,13 @@ charts:
     namespace: default
     ServerSideApply: "true"
   coder:
+    namespace: default
+    ServerSideApply: "false"
+  # Client-only service: the runner talks to the dev Forgejo instance
+  # in-cluster (dev-forgejo-http:3000), so it deliberately gets NO
+  # ingress.subdomains entry — the service trio's proxy leg is N/A by
+  # design, not an oversight.
+  forgejo-runner:
     namespace: default
     ServerSideApply: "false"
 
