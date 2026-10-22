@@ -1,0 +1,141 @@
+{
+  "feature": "2026/2026-10-feat-forgejo-infra-and-runner",
+  "plan_status": "complete",
+  "current_wave": 1,
+  "updated_at": "2026-10-22",
+  "kickoff": {
+    "slug": "feat-forgejo-infra-and-runner",
+    "type": "feat",
+    "run_tag": "gpu-ai-qwen3-8-27b-q6-2",
+    "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/feat-forgejo-infra-and-runner-gpu-ai-qwen3-8-27b-q6-2",
+    "branch": "feat-forgejo-infra-and-runner-gpu-ai-qwen3-8-27b-q6-2",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-27b-q6",
+      "research": "gpu-ai/qwen3.8-27b-q6",
+      "test": "gpu-ai/qwen3.8-27b-q4",
+      "dev": "gpu-ai/qwen3.8-27b-q4",
+      "review": "gpu-ai/qwen3.8-27b-q4"
+    },
+    "research_session": "ses_e9fed8ebeffeBBnU1Y97kyRZ7R"
+  },
+  "test_session": "ses_e9e701a02ffeIx9JnvwH6lmNsk",
+  "test_handoff": {
+    "status": "DONE",
+    "files": [
+      "tests/services/audit-trail.sh",
+      "tests/services/infra-forgejo.sh",
+      "tests/services/dev-forgejo-runner.sh"
+    ],
+    "red_verified": "each script run once pre-implementation; missing-artifact reds (test session RESULT 2026-10-22: t1 storm-runs still at root; t3 no charts.forgejo in infra blob; t1 no charts/forgejo-runner)",
+    "green_sim": "/tmp/opencode/sim-fj faithful implementations: audit-trail 4 ok, infra-forgejo 33 ok, dev-forgejo-runner 21 ok",
+    "rulings": "DECISIONS.md 'Test round' section: C01 audit trail is 13 files (chunk said 11); C03 templates/common.yaml task dropped (app-template v5 render break; no repo chart ships one); 3 accepted test-contract deviations"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-22",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [\".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/storm-runs/forgejo-act-runner-on-kubernetes-for-spencerslab-dev-cluster/** (13 files, moved from repo root)\", \".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/RESEARCH.md (pointer line only)\"]\ncommands_run: [\"bash tests/services/audit-trail.sh => pass (4 ok)\", \"diff -r pre-move snapshot vs destination => pass (13/13 byte-identical)\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100, no issues)\", \"bash tests/services/infra-forgejo.sh => fail (red by design: C02 artifacts absent; unchanged by this work)\", \"bash tests/services/dev-forgejo-runner.sh => fail (red by design: C03 chart absent; unchanged by this work)\"]\ndeviations: [\"Chunk text says 11 files; moved the whole directory per the coordinator ruling (13 files) \u2014 test list + exact-count check is the contract\", \"Worktree HEAD was detached at main tip; created and attached branch feat-forgejo-infra-and-runner-gpu-ai-qwen3-8-27b-q6-2 (per STATE.json kickoff; repo hard rule requires a feature branch) \u2014 local only, nothing pushed\", \"RESEARCH.md path string is identical old vs new (feature-folder-relative = same string), so the one-line edit disambiguates the pointer as local: appended ' (this folder)' \u2014 t3 is a resolution check and passes on the new text\"]\nfriction: [\"aislop CLI not preinstalled in this session \u2014 ran the CI-pinned version npx aislop@0.18.1 per the aislop skill's decision order; clean 100/100\"]\nopen_questions: none\nnext_suggested: coord marks C01 done and dispatches agent-review against commit 326e81e85; C02/C03 can proceed (both wave 1, independent)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-22",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C01\nfiles_changed: [\".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/chunks/C01.md\"]\ncommands_run: [\"bash tests/services/audit-trail.sh => pass (4 ok)\", \"bash tests/services/infra-forgejo.sh => fail (red by design, C02: t3 no charts.forgejo in infra blob \u2014 correct reason, unmodified)\", \"bash tests/services/dev-forgejo-runner.sh => fail (red by design, C03: t1 no charts/forgejo-runner \u2014 correct reason, unmodified)\", \"diff -r /tmp/opencode/pre-move-storm-runs/... vs feature-folder dest => pass (13/13 byte-identical)\", \"git show --name-status 326e81e85 => pass (commit carries only the 13 moved files + RESEARCH.md)\", \"git status --porcelain => pass (no untracked storm-runs at root; no tracked-file modifications)\", \"plan Commands slice: OVERRIDE_VIA_CUSTOM_VALUES + OVERRIDE_NEEDED sentinel sweep + service-trio greps => pass (baseline unchanged; helm slice N/A \u2014 commit touches no chart/service files)\"]\ndeviations: none (reviewer wrote only the chunk's Review notes section; all findings recorded there)\nfriction: none\nopen_questions: none (deferred items in chunk review notes: merge main into worktree before C02/C03 \u2014 branch 1 commit behind on a rulesync-only commit; plan's sentinel-sweep lists a non-existent root values.yaml)\nnext_suggested: coord marks C01 done and dispatches C02 and C03 (wave 1, independent); run `git merge main` in the worktree first"
+        }
+      ],
+      "dev_session": "ses_e9d57f442ffe2Ip5fxcEPbgJCm",
+      "commit": "326e81e85",
+      "review_session": "ses_e9d420f8dffeOssjcENJuOg7lF"
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-22",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [\"charts/forgejo/values.yaml\", \"custom-values/dev/prod-values.yaml\", \"custom-values/infra/prod-values.yaml\", \"services/infra/prod/values.yaml\", \"services/infra/prod/templates/secret-gitea.yaml (deleted)\", \"services/infra/prod/templates/secret-gitea-admin.yaml (deleted)\", \"services/proxy-local/prod/values.yaml\"]\ncommands_run: [\"bash tests/services/infra-forgejo.sh => pass (33 ok, was red at t3 pre-change)\", \"bash tests/services/audit-trail.sh => pass (4 ok)\", \"bash tests/services/dev-forgejo-runner.sh => fail (red by design: C03 chart absent; unmodified)\", \"helm lint charts/forgejo / services/infra/prod / services/proxy-local/prod / services/dev/prod => pass\", \"helm template charts/forgejo (neutral + dev-block + resolved-sentinel renders) => pass, 0 sentinels\", \"helm template services/dev/prod (plan --set list) => pass, 0 sentinels\", \"plan Commands sentinel sweep + service-trio greps => pass\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100; gate scope is 0 files for this repo's YAML/MD file types \u2014 same no-op behavior as C01's run)\"]\ndeviations: [\"Added a 2-line why-comment on the infra charts.forgejo entry (CI-versioned not renovate; SSA=false because the chart's CNPG Cluster carries its own SSA=true annotation, dev plan review P5) \u2014 dev's entry is comment-less, but the chunk cites the P5 rationale and comment-slop requires why-comments for non-obvious choices\", \"Added a 4-line header comment to the custom-values/infra forgejo: block naming the 4 Bitwarden items to create (plan User actions) beyond the chunk's inline item comments \u2014 all other block content matches the chunk spec verbatim\"]\nfriction: [\"aislop ci --changes reports scope 0 changed files for YAML/MD-only diffs (not in its gateable language set) \u2014 gate passes but effectively no-ops in this repo; C01 had identical behavior, so no action needed beyond awareness\"]\nopen_questions: none\nnext_suggested: coord marks C02 dev round complete and dispatches agent-review against commit 2c507ce90; C03 is wave-1 independent and can proceed in parallel"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-22",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C02\nfiles_changed: [\".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/chunks/C02.md (Review notes section only)\"]\ncommands_run: [\"bash tests/services/infra-forgejo.sh => pass (33 ok, t1-t6 all executed)\", \"bash tests/services/audit-trail.sh => pass (4 ok)\", \"bash tests/services/dev-forgejo-runner.sh => fail (red by design: C03 chart absent; unmodified, correct reason)\", \"helm dependency build charts/forgejo + services/infra/prod + services/proxy-local/prod (via t1, copies) => pass\", \"helm lint charts/forgejo / services/infra/prod / services/proxy-local/prod / services/dev/prod (via t2) => pass\", \"helm template charts/forgejo --debug => pass (6 chart-level sentinels, expected)\", \"helm template services/dev/prod (plan --set list) => pass (0 sentinels)\", \"helm template services/infra/prod (plan --set list) => pass (0 sentinels; re-run independently)\", \"helm template services/proxy-local/prod (plan --set list) => pass (0 sentinels; re-run independently)\", \"plan Commands sentinel sweep (corrected file list per FRICTION) => pass\", \"service-trio greps (infra + proxy-local) => pass\", \"pre/post dev-parity render diff (chart + dev custom-values block) => pass (byte-identical, 878 lines)\", \"repo-wide gitea grep + pg-forgejo.yaml SSA-annotation claim check => pass\"]\ndeviations: none (reviewer wrote only the chunk's Review notes section; the plan's sentinel-sweep line was run with the FRICTION-noted corrected file list, not verbatim)\nfriction: none\nopen_questions: none (deferred items in chunk review notes: samba-users OVERRIDE_NEEDED blob artifact pre-existing; plan sweep-line typo already in FRICTION; A2 10Gi-vs-5Gi DB clarification for post-sync verification)\nnext_suggested: coord marks C02 done; C03 (forgejo-runner) can proceed \u2014 its test script is already red-for-the-right-reason and waiting on the chart"
+        }
+      ],
+      "dev_session": "ses_e9d2a1afcffeTXyxmdO27cdj24",
+      "commit": "2c507ce90",
+      "review_session": "ses_e9cf8f2dfffeROtx1IvuOjaMvs"
+    },
+    "C03": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-22",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [\"charts/forgejo-runner/Chart.yaml\", \"charts/forgejo-runner/Chart.lock\", \"charts/forgejo-runner/values.yaml\", \"charts/forgejo-runner/templates/secret-forgejo-runner.yaml\", \"charts/forgejo-runner/templates/NOTES.txt\", \"services/dev/prod/values.yaml\", \"custom-values/dev/prod-values.yaml\"]\ncommands_run: [\"bash tests/services/dev-forgejo-runner.sh => pass (21 ok; red at t1 pre-change)\", \"bash tests/services/audit-trail.sh => pass (4 ok)\", \"bash tests/services/infra-forgejo.sh => pass (33 ok)\", \"helm dependency update charts/forgejo-runner => pass (app-template 5.0.1; Chart.lock digest matches repo standard)\", \"helm lint charts/forgejo-runner => pass (0 failures)\", \"helm template charts/forgejo-runner --set bitwardenIds.forgejo-runner-token=<test-uuid> => pass, 0 sentinels, structure matches criterion 2\", \"helm template services/dev/prod (plan --set list) => pass, 0 sentinels\", \"plan sentinel sweep + trio greps => pass (chart sentinel <-> custom-values/dev OVERRIDE_NEEDED 1:1; charts.forgejo-runner present with client-only comment)\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100; scope 0 files \u2014 YAML/TXT outside gateable set, same no-op as C01/C02)\", \"comment-slop pass over the diff => 3 redundant comments trimmed\"]\ndeviations: [\"templates/common.yaml DROPPED per the Test-round ruling (not created)\", \"Headless service port: verified against v13.2.0 source \u2014 the daemon exposes no API port at all (no --listen, no HTTP server), so the port is nominal; kept the chunk's 3000 and recorded that in a comment (chunk asked to verify at implementation; no stable endpoint exists)\", \"config.yaml template entry quotes the uuid ('{{ .uuid }}') \u2014 the t2 contract parses it before ESO substitution, where an unquoted {{ }} is a flow mapping; post-substitution value is unchanged\", \"Runner command includes /usr/bin/dumb-init explicitly (K8s command replaces the image ENTRYPOINT; the image ships dumb-init for zombie reaping)\", \"Added a renovate comment on the dind image (depName=docker) per decision B2 'pinned, renovate-tracked' \u2014 the chunk only mandated the runner's comment\", \"Refreshed the one-line header comment in services/dev/prod/values.yaml (deployed-apps list went stale with the runner added)\"]\nfriction: [\"code.forgejo.org is Anubis bot-gated for direct fetches \u2014 used the Go module proxy (proxy.golang.org code.forgejo.org/forgejo/runner/v13 v13.2.0 zip), the same provenance the research session used\", \"t2 contract detail: the ESO config.yaml template entry must be parseable YAML before uuid substitution (unquoted {{ .uuid }} fails with 'found unhashable key') \u2014 resolved by quoting; worth knowing for future template-driven secrets\"]\nopen_questions: none (dev-node root-fs check remains a user action; the chart ships dockerd's overlay2 default with no storage-driver env per the chunk \u2014 nothing forced NEEDS_INFO)\nnext_suggested: coord marks C03 dev-done and dispatches agent-review against commit 9457af5db (all wave-1 chunks then complete)"
+        },
+        {
+          "role": "dev",
+          "round": 2,
+          "at": "2026-10-22",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [\"charts/forgejo-runner/values.yaml\", \"charts/forgejo-runner/templates/NOTES.txt\"]\ncommands_run: [\"bash tests/services/dev-forgejo-runner.sh => pass (21 ok)\", \"bash tests/services/audit-trail.sh => pass (4 ok)\", \"bash tests/services/infra-forgejo.sh => pass (33 ok)\", \"helm lint charts/forgejo-runner => pass (0 failures)\", \"helm template charts/forgejo-runner --set bitwardenIds.forgejo-runner-token=<test-uuid> => pass (239 lines, 0 sentinels)\", \"comment-slop pass over the 3 rewritten sites => pass (three-clause test; no history narration)\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100, 0 issues; scope 0 files \u2014 YAML/TXT outside gateable set, same as C01/C02)\"]\ndeviations: [\"Committed only the 2 chart files (9c90f0c89); the untracked pipeline artifacts (plan folder, test scripts) were left untouched \u2014 consistent with prior rounds\", \"Per scope guard, RESEARCH.md and chunks/C03.md still carry the stale .runner framing (the review itself located the inaccuracy's origin there) \u2014 left for coord to disposition\", \"helm not on this session's PATH; used /home/coder/.local/bin/helm for the manual lint/template (the test's own discovery found it too)\"]\nfriction: none\nopen_questions: \"RESEARCH.md (lines ~80, 178, 195) and chunks/C03.md 'Notes for dev' still state the .runner-based re-attach \u2014 the review flagged this as originating in the plan/RESEARCH layer; recommend coord decide whether a follow-up docs-fix (or a FRICTION entry) is wanted\"\nnext_suggested: \"coord re-dispatches agent-review for C03 round 2 against commit 9c90f0c89 (finding resolved: three sites reworded, all suites green)"
+        },
+        {
+          "role": "review",
+          "round": 2,
+          "at": "2026-10-22",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C03\nfiles_changed: [\".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/chunks/C03.md (Review notes section only)\"]\ncommands_run: [\"bash tests/services/dev-forgejo-runner.sh => pass (21 ok, exit 0)\", \"bash tests/services/audit-trail.sh => pass (4 ok, exit 0)\", \"bash tests/services/infra-forgejo.sh => pass (33 ok, exit 0)\", \"helm lint charts/forgejo-runner => pass (0 failures)\", \"helm template charts/forgejo-runner --set bitwardenIds.forgejo-runner-token=00000000-0000-0000-0000-000000000000 => pass (239 lines, 0 sentinels)\", \"git diff --name-only 9457af5db..9c90f0c89 + stripped non-comment diff of values.yaml => pass (2 files only; no functional lines changed)\", \"NOTES.txt template-surface check (grep for actions) => pass (exactly one action, {{ .Release.Name }})\"]\ndeviations: \"none (helm install --dry-run not usable in this session due to session kubeconfig RBAC \u2014 cluster-permission limit, not a chart issue; NOTES.txt render surface verified by action-count inspection instead; recorded in chunk notes)\"\nfriction: none\nopen_questions: none (stale .runner framing in RESEARCH.md / C03 Notes-for-dev is already dispositioned in DECISIONS.md as historical artifacts \u2014 the DECISIONS entry is the correction)\nnext_suggested: \"coord marks C03 done (round 2 APPROVED); all wave-1 chunks are now complete \u2014 dispatch the final whole-plan review"
+        }
+      ],
+      "dev_session": "ses_e9cbbbec8ffeI5forsOEnpBdLR",
+      "commit": "9c90f0c89",
+      "review_session": "ses_e9c098761ffe6QyssDPWMBy5Va",
+      "commits": [
+        "9457af5db",
+        "9c90f0c89"
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "review(C02): pre-existing samba chart default bitwardenIds.samba-users OVERRIDE_NEEDED in infra values blob with no custom-values/infra key \u2014 byte-identical pre/post this ticket; candidate follow-up",
+    "review(C02): A2 clarification for post-sync verification \u2014 10Gi is the app data PVC; the CNPG pg-forgejo DB storage is the chart pre-existing 5Gi"
+  ],
+  "final_review": {
+    "session": "ses_e9bde902efferCmIQ9Kz0JadLY",
+    "at": "2026-10-22",
+    "verdict": "APPROVED",
+    "fix_commit": "5c0d75b9a",
+    "result": "RESULT\nstatus: DONE\nchunk: plan (final whole-plan review of feat-forgejo-infra-and-runner)\nverdict: APPROVED (one minor non-blocking comment-accuracy finding, fixed in 5c0d75b9a, re-verified APPROVED by the same reviewer)\ncommands_run: [all three tests/services scripts => pass (4/33/21 ok), plan Commands (dep builds, lints, chart+umbrella renders with plan --set lists, sentinel sweep w/ FRICTION-corrected file list, trio greps) => pass, aislop ci --changes => pass (100/100; known YAML/MD scope no-op), between-chunks hunt (sentinel<->custom-values 1:1 across dev/infra/proxy-local, gitea sweep, runner proxy-leg documentation, commit attribution, user-actions alignment 5x OVERRIDE_NEEDED 1:1) => pass]\nopen_questions: none \u2014 minor finding recorded in chunks/C02.md, routed to dev and closed"
+  },
+  "completed_at": "2026-10-22",
+  "branch": "feat-forgejo-infra-and-runner-gpu-ai-qwen3-8-27b-q6-2",
+  "commits": [
+    "326e81e85",
+    "2c507ce90",
+    "9457af5db",
+    "9c90f0c89",
+    "5c0d75b9a"
+  ]
+}
