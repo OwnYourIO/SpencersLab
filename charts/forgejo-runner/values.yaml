@@ -9,9 +9,11 @@
 # Registration is declarative (runner v13 — the register CLI and env-var
 # registration do not work): the daemon connects with
 # server.connections.dev from the ExternalSecret-generated config.yaml and
-# reads the token from file:$CREDENTIALS_DIRECTORY/token. The .runner
-# identity file on the `data` PVC makes a restart a re-attach, not a
-# re-registration.
+# reads the token from file:$CREDENTIALS_DIRECTORY/token. The identity is
+# the (uuid, token) pair in the Bitwarden item — the ExternalSecret
+# re-renders it on every pod start, and the server matches the runner
+# record by uuid, so a restart is a re-attach, not a re-registration (the
+# daemon never writes a .runner file).
 
 bitwardenIds:
   # Item `forgejo-runner` (username = runner uuid, password = registration
@@ -35,9 +37,9 @@ app-template:
       statefulset:
         # app-template 5.x VCTs are a LIST with singular accessMode/size.
         volumeClaimTemplates:
-          # Runner identity (.runner), config and the act cache — the image
-          # sets HOME=/data, so all of it lands here. globalMounts: both
-          # containers see it.
+          # Config workdir and the act cache — the image sets HOME=/data,
+          # so ~/.cache/actcache lands here. globalMounts: both containers
+          # see it.
           - name: data
             accessMode: ReadWriteOnce
             size: 2Gi

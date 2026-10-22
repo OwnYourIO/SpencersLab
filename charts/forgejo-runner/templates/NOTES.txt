@@ -10,10 +10,11 @@ don't re-pull.
 Identity: the runner registers declaratively (server.connections.dev in the
 ExternalSecret-generated config.yaml, token read from
 file:$CREDENTIALS_DIRECTORY/token — no register CLI, no env vars). The
-.runner identity file lives on the `data` PVC, so a restart is a
-re-attach, NOT a re-registration. Never scale the StatefulSet: one
-uuid+token pair must map to exactly one pod (more runners = more runner
-records, each with its own pod).
+uuid+token pair lives in the Bitwarden item `forgejo-runner`; the
+ExternalSecret re-renders it on every pod start and the server matches the
+runner record by uuid, so a restart is a re-attach, NOT a re-registration.
+Never scale the StatefulSet: one uuid+token pair must map to exactly one
+pod (more runners = more runner records, each with its own pod).
 
 One-time user actions (before the runner can go online):
   1. Create the runner record on the dev instance (Admin -> Actions ->
