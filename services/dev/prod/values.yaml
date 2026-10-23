@@ -43,13 +43,21 @@ charts:
   coder:
     namespace: default
     ServerSideApply: "false"
-  # Client-only service: the runner talks to the dev Forgejo instance
-  # in-cluster (dev-forgejo-http:3000), so it deliberately gets NO
-  # ingress.subdomains entry — the service trio's proxy leg is N/A by
-  # design, not an oversight.
+  # Client-only service: both runners dial out (runner-dev in-cluster to
+  # dev-forgejo-http:3000, runner-infra to the infra instance), so they
+  # deliberately get NO ingress.subdomains entries — the service trio's
+  # proxy leg is N/A by design, not an oversight.
   forgejo-runner:
     namespace: default
     ServerSideApply: "false"
+    # Deployed-target decisions: the chart defaults are render-time
+    # stand-ins (standalone chart render); this slice records the
+    # live-verified targets for both connections.
+    runners:
+      dev:
+        url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
+      infra:
+        url: https://git.spencerslab.com   # mesh/LAN host of the infra instance
 
   # External charts (with version and repository)
   cloudnative-pg:

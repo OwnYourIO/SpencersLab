@@ -62,6 +62,10 @@ forgejo-runner:
     # Item `forgejo-runner` (username = runner uuid, password = registration
     # token). NOT `forgejo-token` — that is the Coder workspace access token.
     forgejo-runner-token: OVERRIDE_NEEDED
+    # Item `dev-forgejo-runner-infra` (username = runner uuid, password =
+    # registration token). Created AFTER the infra instance boots
+    # (plan User action 7); never the `forgejo-token` item.
+    forgejo-runner-infra-token: OVERRIDE_NEEDED
 
 hivetools:
   bitwardenIds:
