@@ -13,6 +13,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 import llama_swap_testlib as L
@@ -61,22 +63,31 @@ def test_c02_chart_composition_hf_refs_match_golden():
     """Conversion fidelity is a SOURCE check: each composition model's `hf`
     value must equal the `-hf` token pair in that model's golden cmd, and
     `draft` (where present) the `-hfd` pair — C02 converts 1:1 in golden
-    order, so a wrong ref cannot hide behind the cmd renderer."""
+    order, so a wrong ref cannot hide behind the cmd renderer.
+
+    The golden source is per-cluster by design: for the six gpu fail-fast IDs
+    the golden GPU cmd is the disable echo (no -hf token at all, by contract —
+    parity test_c02_4 pins it byte-exact), while their composition refs are
+    golden-pinned on gpu-ai where the chart default survives untouched.
+    (Amended 2026-10-23 per coord-routed defect B: the original single-gpu-golden
+    reading was unsatisfiable alongside the parity contract.)"""
     models = L.chart_values()["config"]["models"]
-    golden_models = L.all_models_of(L.golden_config("gpu"))
+    goldens = {"gpu": L.all_models_of(L.golden_config("gpu")),
+               "gpu-ai": L.all_models_of(L.golden_config("gpu-ai"))}
     problems = []
     for mid in L.CHART_MODEL_IDS:
         if mid in L.CHART_RAW_CMD_IDS:
             continue
         m = models[mid]
-        gcmd = golden_models[mid]["cmd"]
+        src = "gpu-ai" if mid in L.GPU_DISABLED_IDS else "gpu"
+        gcmd = goldens[src][mid]["cmd"]
         want_hf = L.cmd_flag_value(gcmd, "-hf")
-        assert want_hf, f"golden {mid} has no -hf token — spec premise broken"
+        assert want_hf, f"golden {src} {mid} has no -hf token — spec premise broken"
         if m.get("hf") != want_hf:
-            problems.append(f"{mid}: hf={m.get('hf')!r} but golden -hf={want_hf!r}")
+            problems.append(f"{mid}: hf={m.get('hf')!r} but golden({src}) -hf={want_hf!r}")
         want_hfd = L.cmd_flag_value(gcmd, "-hfd")
         if want_hfd and m.get("draft") != want_hfd:
-            problems.append(f"{mid}: draft={m.get('draft')!r} but golden -hfd={want_hfd!r}")
+            problems.append(f"{mid}: draft={m.get('draft')!r} but golden({src}) -hfd={want_hfd!r}")
     assert not problems, "schema refs diverge from golden cmd tokens:\n" + "\n".join(problems)
 
 
@@ -126,7 +137,14 @@ def test_c02_gpuai_block_escape_hatch_is_exactly_rana():
     rana = models["qwen38-rana"]["cmd"]
     exec_lines = [ln for ln in rana.splitlines() if "exec llama-server" in ln]
     assert len(exec_lines) == 1, "rana exec line split across lines — breaks SanitizeCommand"
-    assert exec_lines[0].count("-hf") == 1 and "-hfd" in exec_lines[0]
+    # Count WHITESPACE-DELIMITED tokens, not "-hf" substrings: the golden
+    # (byte-pinned by the parity contract) legitimately carries "-hf" inside
+    # the "-hfd" draft flag as well — substring counting made this assertion
+    # unsatisfiable by any golden-preserving implementation (coord-routed
+    # defect A amendment, 2026-10-23). Intent: one PRIMARY download (-hf)
+    # plus one draft (-hfd).
+    assert len(re.findall(r"(?:^|\s)-hf(?=\s)", exec_lines[0])) == 1, "rana: expected exactly one -hf primary"
+    assert len(re.findall(r"(?:^|\s)-hfd(?=\s)", exec_lines[0])) == 1, "rana: expected exactly one -hfd draft"
     for mid in models:
         if mid in L.GPUAI_RAW_CMD_IDS:
             continue

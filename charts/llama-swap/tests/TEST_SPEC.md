@@ -204,3 +204,41 @@ these tests are immutable downstream)
   `runs_as_uid_65532` (gated; PR docker-build job = CI build proof)
 * C05 -> `tests/evidence/c05_expected_evidence.yaml` (manual, post-merge;
   no automatable pre-merge test per its chunk text)
+
+## 7. Amendments (test-writer session, user-ratified, 2026-10-23)
+
+Coord routed C02 dev's two `validation_at_fault` claims back to the sole test
+author. Both verified against the goldens + the landed implementation
+(commit `1bc243e53`) before amending: each was unsatisfiable by any
+golden-preserving implementation, i.e. test-faulty, not dev-error.
+
+* **(A) `test_c02_gpuai_block_escape_hatch_is_exactly_rana`** — old
+  `count("-hf") == 1` counted the substring, and the golden rana exec line
+  (byte-pinned by the green parity multiset test) legitimately contains
+  `-hf` twice: standalone plus inside `-hfd`. Amended to whitespace-delimited
+  token counting: exactly one `-hf` primary AND exactly one `-hfd` draft —
+  the original intent (one primary download + one borrowed-MTP draft, one-physical-line
+  exec invariant) is unchanged and now actually expressed.
+* **(B) `test_c02_chart_composition_hf_refs_match_golden`** — old loop read
+  every chart model's `-hf` from the golden **GPU** render, but the six
+  `GPU_DISABLED_IDS` entries' golden GPU cmd is the fail-fast echo (no `-hf`
+  token by design). Amended to source those six from the golden **GPU-AI**
+  render (where the chart default survives untouched) — full conversion-fidelity
+  coverage preserved, no exclusions.
+* **Ratified as C02 contract resolution (dev deviation 1):** the `disabled:`
+  schema value carries the FULL message that follows the model id, and the
+  template composes `/bin/sh -c "echo '<id> <message>' >&2; exit 1"` —
+  golden-BYTE-exact beats the chunk sketch (`<id> disabled on this box:
+  <reason>.`), which conflicted with acceptance 4's byte-identical echo
+  requirement. Verified wording-compatible with C04's
+  `test_c04_1_35b_bf16_gpu_disabled_failfast` (asserts fail-fast SHAPE + id +
+  "disabled" + "8GiB"/"8 GiB" in the echo body — never the sketch template)
+  and with `test_c02_synthetic_precedence_disabled_wins` (both now green).
+  Coord/plan: mirror this into DECISIONS.md (test role writes no plan-folder
+  files).
+
+Re-run after amending: `test_config_schema.py` 12/12, `test_config_parity.py`
+23/23, full suite **47 failed / 82 passed / 12 skipped** — the 47 reds are
+exactly 21 C03-wiring + 26 C04-roster (implementation-missing), the 12 skips
+are the evidence gates of §4, and all C01 hard parses + the untouched existing
+suite are green.
