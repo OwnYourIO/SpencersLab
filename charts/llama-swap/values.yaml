@@ -820,9 +820,13 @@ app-template:
             capabilities:
               drop:
                 - ALL
-            # uid 65532 = the C01 image contract (Dockerfile USER); the
-            # read-only root is proven, not guessed: the pinned tool writes
-            # nothing but its -o output (tmp-write audit at c7357e68).
+            # uid 65532 = the C01 image contract (Dockerfile USER). The
+            # read-only root survives the generator's ~/.cache GGUF-metadata
+            # write (unguarded mkdir + write_text at c7357e68, which cli.py's
+            # FileNotFoundError/ValueError-only handler lets escape as a
+            # traceback) only because it lands on the init-only `autogen-home`
+            # emptyDir; without that mount generate exits 1 the first time any
+            # GGUF is on disk and the fail-open hides a dead scanned half.
             runAsNonRoot: true
             runAsUser: 65532
             readOnlyRootFilesystem: true
@@ -959,6 +963,19 @@ app-template:
           autogen:
             - path: /app/autogen
               readOnly: true
+    autogen-home:
+      # /home/autogen is where the generator's ~/.cache write goes: the C01
+      # image sets no HOME env, so Path.home() falls back to the useradd
+      # --home passwd entry. Writable scratch is a proven pattern for this
+      # container at uid 65532 - the degrade path already writes
+      # 10-scanned.yaml into the `gen` emptyDir. advancedMounts keep it
+      # init-only: main must not gain a writable dir (chunk acceptance 1).
+      type: emptyDir
+      sizeLimit: 10Mi
+      advancedMounts:
+        llama-swap:
+          autogen:
+            - path: /home/autogen
     tools:
       type: configMap
       name: llama-swap-tools
