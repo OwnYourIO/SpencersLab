@@ -66,10 +66,20 @@ def test_c04_1_roster_is_exactly_golden_plus_approved_table(cluster):
 def test_c04_1_exact_hf_ref_per_approved_id(mid, ref):
     """Each approved ID's cmd carries the exact `-hf repo:TAG` pair re-verified
     against the HF API (C04 task 1 attaches the script output to the chunk;
-    hf_check.py / the gated HF test re-runs it)."""
+    hf_check.py / the gated HF test re-runs it).
+
+    An entry rendered fail-fast (`-bf16 -> disabled:` on gpu, per the plan) has
+    no -hf token in that cluster by design — the ratified disabled-shape
+    contract and this ref contract would otherwise be mutually unsatisfiable
+    (coord-routed defect D amendment, 2026-10-23; same class as ratified B).
+    Its ref is cross-read from the live cluster; presence + echo shape stay
+    pinned by test_c04_1_35b_bf16_gpu_disabled_failfast."""
     cluster = "gpu-ai" if mid in GPU_AI_ONLY else "gpu"
     m = models(cluster).get(mid) or models("gpu-ai").get(mid)
     assert m is not None, f"{mid}: not rendered in any cluster"
+    if _DISABLED_SHAPE.match(m["cmd"].strip()):
+        assert mid in models("gpu-ai"), f"{mid}: fail-fast render but no live cluster to cross-read the ref"
+        m = models("gpu-ai")[mid]
     assert L.cmd_flag_value(m["cmd"], "-hf") == ref, (
         f"{mid}: -hf is {L.cmd_flag_value(m['cmd'], '-hf')!r}, approved ref is {ref!r}"
     )

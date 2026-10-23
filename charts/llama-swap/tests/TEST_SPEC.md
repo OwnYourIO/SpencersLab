@@ -260,3 +260,52 @@ suite are green.
   12 skipped** (reds = C04 roster only), `LLAMA_SWAP_EVIDENCE=1` integration
   subset **3 passed / 5 skipped** (docker/HF gates deferred per user waiver —
   merged `-validate` evidence is C05-cluster-side, DECISIONS to mirror).
+
+* **(D) `test_c04_1_exact_hf_ref_per_approved_id[ornith-1.5-35b-a3b-bf16]`
+  (amended 2026-10-23, coord-routed with E/F after C04 dev).** The loop read
+  the `-hf` ref from the entry's primary cluster render, but the plan itself
+  makes that gpu entry a `disabled:` fail-fast echo — mutually unsatisfiable
+  with `test_c04_1_35b_bf16_gpu_disabled_failfast` (green), same class as
+  ratified B. Fixed by cross-reading the ref from the live cluster when the
+  primary render is fail-fast shaped; presence/shape stay pinned by the
+  dedicated test. A probe over all 17 approved IDs confirmed exactly one
+  fail-fast-shaped primary render (gpu/bf16) — no other ID's routing changed.
+* **(E) `test_c02_2_config_layer_macros_matrix_hooks_scalars`** — whole-
+  matrix equality vs golden contradicted C04 by design (its tasks add vars and
+  main/solo alternation; the three roster placement tests that are GREEN
+  require exactly those additions). Re-expressed as additive preservation:
+  every golden var maps unchanged, no golden set vanishes or renames, no
+  golden membership is dropped. Verified lossless against the C04 render
+  first: the delta is pure additions (7 new gpu vars / +7 main members; 14 new
+  gpu-ai vars / +6 main +8 solo, zero removals). New-membership exactness
+  remains with the roster tests — the originally designed division of labor.
+  macros/hooks/scalars assertions untouched.
+* **(F) `hf_check.py::_tag_resolves`** — the frozen resolver implemented
+  stem-startswith/dir-equal while its docstring promised llama.cpp's loose
+  match; the live run reproduced dev's claim exactly: **97/117 false-MISSING**,
+  including 12 pre-C04 production refs (`qwen38-orca`, kat trio, VLs) — the
+  defect predates C04 (the tool was never exercised against a full render
+  before). TEST-FAULTY. Fixed by mirroring the loader from raw source
+  (common/download.cpp at 889edf43): `-hf` = `find_best_model` —
+  case-insensitive regex `TAG[.-]` over the full path, candidates = `.gguf`
+  whose basename lacks the CASE-SENSITIVE sidecar tokens
+  (mmproj/imatrix/mtp-/eagle3-/dflash-/dspark-), sharded models via the
+  -00001-of-NNNNN primary only, empty tag falls back Q4_K_M->Q8_0->first;
+  `-hfd` = the DRAFT path (arg.cpp:411 sets download_mtp;
+  `find_best_sibling(primary="", "mtp-", tag)`) — root-level `.gguf`
+  containing case-sensitive `mtp-`, with the named sidecar required for churn
+  sensitivity (the loader would silently pick a different draft otherwise).
+  Live re-run: **117/117 refs resolve, zero problems** — which also
+  re-confirms zero true negatives (no repo lookup errors, every wired
+  repo:TAG still exists). Adversarial probes confirm no over-resolving:
+  absent tags MISS, the `Q2_K`-vs-`Q2_K_XL` boundary is honored, sidecar-named
+  files are not selectable as models, uppercase `MTP-…` is NOT a valid `-hfd`
+  target (loader keyword is case-sensitive — C05 runbook note if the orca
+  `-hfd MTP-draft.gguf` fallback is ever wired), nested mtp files MISS.
+
+Post-D/E/F bar: full suite **0 failed / 129 passed / 12 skipped** (parity 23,
+schema 12, wiring 26, roster 30, image 5P/4S, existing CI 33);
+`RUN_HF_CHECK=1 LLAMA_SWAP_EVIDENCE=1 -k hf_repo_tags_resolve` **1 passed**;
+`LLAMA_SWAP_EVIDENCE=1 -k autogen_integration` **3 passed / 5 skipped**
+(docker/HF gates per waiver). No values/source change was demanded or made —
+the C04 implementation satisfies the contract after D/E/F.

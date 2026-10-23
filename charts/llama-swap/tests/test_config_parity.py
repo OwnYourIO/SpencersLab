@@ -134,6 +134,28 @@ def _ws_norm(macros: dict) -> dict:
     return {k: re.sub(r"[ \t]+", " ", (v or "").strip()) for k, v in (macros or {}).items()}
 
 
+def _assert_matrix_preserved(cluster: str, g: dict, f: dict) -> None:
+    """Golden-matrix SURVIVAL expressed as additive preservation
+    (coord-routed defect E amendment, 2026-10-23): every golden var must map
+    to the same model ID and every golden set must keep its full membership.
+    Whole-matrix equality was unsatisfiable from C04 onward BY DESIGN —
+    chunks/C04.md tasks require new vars and main/solo alternation additions;
+    exactness of the NEW memberships is pinned by test_new_roster's placement
+    tests (division of labor preserved)."""
+    gvars = (g.get("matrix") or {}).get("vars") or {}
+    fvars = (f.get("matrix") or {}).get("vars") or {}
+    changed = {k: (v, fvars.get(k)) for k, v in gvars.items() if fvars.get(k) != v}
+    assert not changed, f"{cluster}: golden matrix vars changed/removed: {changed}"
+    gsets = (g.get("matrix") or {}).get("sets") or {}
+    fsets = (f.get("matrix") or {}).get("sets") or {}
+    assert set(gsets) <= set(fsets), (
+        f"{cluster}: golden matrix sets vanished: {sorted(set(gsets) - set(fsets))}"
+    )
+    for name in gsets:
+        lost = L.matrix_member_ids(g, name) - L.matrix_member_ids(f, name)
+        assert not lost, f"{cluster}: matrix set {name} dropped golden members: {sorted(lost)}"
+
+
 @pytest.mark.parametrize("cluster", CLUSTERS)
 def test_c02_2_config_layer_macros_matrix_hooks_scalars(cluster):
     g = L.golden_config(cluster)
@@ -141,7 +163,7 @@ def test_c02_2_config_layer_macros_matrix_hooks_scalars(cluster):
     assert _ws_norm(g.get("macros")) == _ws_norm(f.get("macros")), (
         f"{cluster}: macros diverge (whitespace-normalized)"
     )
-    assert g.get("matrix") == f.get("matrix"), f"{cluster}: matrix diverged"
+    _assert_matrix_preserved(cluster, g, f)
     assert g.get("hooks") == f.get("hooks"), f"{cluster}: hooks diverged"
     skip = {"models", "macros", "matrix", "hooks"}
     g_scalars = {k: v for k, v in g.items() if k not in skip}
