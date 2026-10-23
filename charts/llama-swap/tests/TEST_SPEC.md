@@ -242,3 +242,21 @@ Re-run after amending: `test_config_schema.py` 12/12, `test_config_parity.py`
 exactly 21 C03-wiring + 26 C04-roster (implementation-missing), the 12 skips
 are the evidence gates of §4, and all C01 hard parses + the untouched existing
 suite are green.
+
+* **(C) `_init_script` off-by-one (amended 2026-10-23, coord-routed after C03
+  dev).** The `-c` extraction `argv[len(argv) - 1 - argv[::-1].index("-c")]`
+  evaluated to the `"-c"` token itself, so all three degrade-script contracts
+  compared `"-c"` against sandbox content (`assert '<tmp>/sb' in '-c'`) and
+  were unsatisfiable by any implementation. Fixed to the one-token index
+  `argv[len(argv) - argv[::-1].index("-c")]`; assertions and sandbox mechanics
+  are untouched, and both extractor branches (argv with `-c`, argv without →
+  newline-join) still keep the §7.7 "either implementation passes" promise.
+  Verified dev-is-innocent before amending: the rendered initContainer argv is
+  `["/bin/sh", "-c", "<script>"]`, the corrected extraction yields the real
+  fail-open script, and the contracts now PASS against it — degrade behavior
+  (exit 0 + comment-only file on empty scan / on generate failure; generated
+  content preserved on success) is genuinely implemented, not papered over.
+  Post-fix bars: wiring **26/26**, full suite **26 failed / 103 passed /
+  12 skipped** (reds = C04 roster only), `LLAMA_SWAP_EVIDENCE=1` integration
+  subset **3 passed / 5 skipped** (docker/HF gates deferred per user waiver —
+  merged `-validate` evidence is C05-cluster-side, DECISIONS to mirror).

@@ -194,7 +194,10 @@ def _init_script(cluster: str) -> str:
     argv = list(c.get("command") or []) + list(c.get("args") or [])
     assert argv, f"{cluster}: initContainer autogen has no command — degrade logic missing"
     if "-c" in argv:
-        return argv[len(argv) - 1 - argv[::-1].index("-c")]
+        # The script is the element AFTER the last "-c"; the previous
+        # `len(argv) - 1 - ...` form returned the "-c" token itself (coord-
+        # routed defect C amendment, 2026-10-23).
+        return argv[len(argv) - argv[::-1].index("-c")]
     return "\n".join(argv)
 
 
