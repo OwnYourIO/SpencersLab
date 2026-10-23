@@ -31,7 +31,10 @@ container images (`containers/`). **ArgoCD applies everything — never
   **One plan per piece of work**: plans are always dated files
   (`yyyy-mm-dd-<type>-<slug>.md`) — at the plans root for standalone work,
   inside the ticket folder (as its plan of record) for pipeline work. Never
-  two plan files for the same work, and no other plan-file names.
+  two plan files for the same work, and no other plan-file names. The single
+  sanctioned exception is a fusion plan `<plan-file>-fusion.md`, which
+  `agent-fuser` writes into a ticket folder when parallel runs of the same
+  ticket get fused.
 - `.agents/plans/templates/` — blank boilerplate (the plan boilerplate
   `PLAN.md`, copied into tickets renamed as the dated plan file;
   `STATE.json`,
@@ -93,15 +96,17 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{coord,plan,research,test,dev,review}.md`) —
+- `agent-*` (`.agents/agents/agent-{coord,plan,research,test,dev,review,fuser}.md`) —
   chunk-based pipeline: `agent-coord` (primary) runs an approved plan through
   fresh `agent-plan`/`agent-test`/`agent-dev`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only
   shared memory; when all chunks are done it runs a final whole-plan review
   before marking the plan complete, then offers to plan fixes for the open
-  friction items. Artifacts live in
-  `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the `/pipeline`
-  commands.
+  friction items. `agent-fuser` (user-launched, on demand) compares parallel
+  runs of the same ticket across branches and writes a user-confirmed fusion
+  plan back into the chosen base branch for that session to execute. Artifacts
+  live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
+  `/pipeline` commands.
 
 ## Feature pipeline (agent-*)
 
@@ -142,7 +147,15 @@ role × permission matrix is in the `agents-sync` skill references
 - Deep research is commissioned, never ad hoc: any agent that needs it
   reports the need via RESULT, `agent-coord` launches `agent-research`
   (storm skill + `global-searxng`), and the summary lands in the feature
-  folder as `RESEARCH.md` for every later agent to read.
+  folder as `RESEARCH.md` (next to the plan file — the coordinator passes
+  the folder's absolute path in the launch) for every later agent to read.
+- Parallel runs of one ticket can be fused: `agent-fuser` compares the runs
+  (planning quality, branch code diffs, research findings, friction), the
+  user confirms the base branch and every conflicted sourcing choice (always
+  with a follow-up confirmation — a single answer is never trusted), and the
+  fuser writes `FUSION-REPORT.md` plus `<plan-file>-fusion.md` into the base
+  branch's ticket folder and hands the confirmed plan back to that branch's
+  pipeline session (its `coord_session` in `STATE.json`) for execution.
 - All Hard rules below (no hand-bumped versions, ExternalSecret+Bitwarden
   secrets, ArgoCD — never kubectl apply, git safety, MCP privilege tiers)
   apply to every pipeline agent unchanged.

@@ -33,6 +33,21 @@ opencode:
     - action: skill
       resource: '*'
       effect: allow
+    - action: skill
+      resource: pipeline-role-plan
+      effect: deny
+    - action: skill
+      resource: pipeline-role-research
+      effect: deny
+    - action: skill
+      resource: pipeline-role-test
+      effect: deny
+    - action: skill
+      resource: pipeline-role-dev
+      effect: deny
+    - action: skill
+      resource: pipeline-role-review
+      effect: deny
     - action: question
       resource: '*'
       effect: allow
@@ -71,14 +86,15 @@ All repo layout, conventions, and hard rules live in `AGENTS.md` — it is loade
 
 ## Skills
 
-Workflow skills only — you orchestrate, so you never load task/domain skills yourself; those belong to the subagents you launch. At run start you MUST load (via the `/skill-name` slash command or the `skill` tool):
+Workflow skills only — you orchestrate, so you never load task/domain skills to do work yourself; those belong to the subagents you launch. At run start you MUST load (via the `/skill-name` slash command or the `skill` tool):
 
 /agents-sync
 /executing-plans
+/opencode
 /pipeline-conventions
 /pipeline-kickoff
 /pipeline-models
 /pipeline-gates
 /pipeline-role-coord
 
-If the plan lists further *workflow* skills, load those too. Do not load task-relevant skills dynamically — make sure the subagents you launch load their role skills instead.
+The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the user's request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.

@@ -14,7 +14,7 @@ The operational contract for every `agent-*` pipeline session.
 ## Plan folders
 
 Every feature gets its own folder under the plan root `.agents/plans/`, named `<yyyy>/<yyyy-mm>-<type>-<slug>/` (e.g. `.agents/plans/2026/2026-10-feat-searxng-rate-limits/`), where `<type>` is one of feat|bug|debug|dep|refactor|chore|docs:
-- The plan file (`<yyyy-mm-dd>-<type>-<slug>.md` — the `templates/PLAN.md` boilerplate, renamed on copy) is the plan of record: goal, scope, chunk table, order/waves. Everyone reads it; only plan/coord write it.
+- The plan file (`<yyyy-mm-dd>-<type>-<slug>.md` — the `templates/PLAN.md` boilerplate, renamed on copy) is the plan of record: goal, scope, chunk table, order/waves. Everyone reads it; only plan/coord write it. The one sanctioned second plan file is `<plan-file>-fusion.md`, written by `agent-fuser` when parallel runs of the ticket are fused; the base session executes it as a replan.
 - `STATE.json` — machine state: feature folder, current wave, per-chunk status, retries, verdicts, last handoff. Only coord writes it.
 - `DECISIONS.md` — append-only log of decisions, rejected alternatives, conventions. Read it before acting; add to it only if you are plan or coord.
 - `RESEARCH.md` — optional: the deep-research summary `agent-research` writes on demand, next to the plan file (findings with sources, contradictions, implications for the plan). Everyone reads it at run start if it exists.
@@ -40,7 +40,7 @@ End every hand-back with exactly this block (the coordinator parses it):
 ```
 RESULT
 status: DONE | BLOCKED | NEEDS_INFO | CHANGES_REQUESTED
-chunk: <chunk-id or "plan">
+chunk: <chunk-id, "plan", or "fusion">
 files_changed: [<paths>]
 commands_run: [<cmd> => pass|fail]
 deviations: <anything you did differently from the chunk/plan, or "none">

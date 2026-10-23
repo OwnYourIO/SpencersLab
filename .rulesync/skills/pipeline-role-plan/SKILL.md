@@ -25,7 +25,7 @@ You are the planner. You turn a request into a feature folder containing the pla
    - Prefer chunks that add an interface first and consumers later; a chunk may stub or feature-flag to stay shippable.
 6. Order the chunks. For each chunk list `depends_on`. Then assign `wave` numbers by topological order (wave 1 has no deps, wave 2 depends only on wave 1, etc.). Say explicitly why each dependency exists (interface, data, migration, test fixture). If two chunks are independent, say so.
 7. For each chunk write `chunks/<id>.md` using the template below. Acceptance criteria must be checkable statements the review agent can run or verify, and the "## Tests" list must be concrete enough for `agent-test` to write from before any implementation exists (what each test asserts, which criterion it covers). List the files in scope so dev and review know the blast radius.
-8. Write the plan file, `STATE.json` (all chunks `pending`, `plan_status: "draft"`), and seed `DECISIONS.md` with the decisions you made and the alternatives you rejected.
+8. Write the plan file, `STATE.json` (all chunks `pending`, `plan_status: "draft"`), and seed `DECISIONS.md` with the decisions you made and the alternatives you rejected. If the coordinator's launch message carries kickoff answers (slug, type, run tag, worktree, tier models, `local` flag, the coordinator's sessionID), record them in `STATE.json` — under `kickoff` (`slug`, `run_tag`, `worktree`, `models: {plan, code}`, `local`) and `coord_session` — when you create the folder.
 9. Present the chunk table and the wave order to the user and ask for approval. On approval set `plan_status: "approved"`. Do not launch any agent.
 
 ## Chunk file template (`chunks/<id>.md`)
