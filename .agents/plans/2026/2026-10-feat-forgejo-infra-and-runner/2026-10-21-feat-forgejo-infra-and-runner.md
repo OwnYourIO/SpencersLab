@@ -166,7 +166,150 @@ grep -n 'forgejo-runner' services/dev/prod/values.yaml       # charts.forgejo-ru
    its commit is the feature's first dev commit (coordinator instruction).
    C02 ∥ C03 would be safe in parallel; the pipeline runs them sequentially.
 
+## Fusion (2026-10-23)
+
+Three parallel runs of this ticket were fused by `agent-fuser` (2026-10-23)
+onto this branch — **base: run 2
+(`feat-forgejo-infra-and-runner-gpu-ai-qwen3-8-27b-q6-2`), user-confirmed
+2026-10-23 over the fuser's run-1 suggestion**. All 5 conflict rulings were
+confirmed by the user with follow-up confirmation and are recorded verbatim
+in the fusion plan under "Base and ports" (and in DECISIONS.md). This section
+is the plan of record for the fusion deltas: **C01–C03 stay done and are not
+re-executed**; F01/F02 carry ONLY the deltas from the other branches plus the
+deltas the rulings require.
+
+- Fusion plan (the single sanctioned second plan file):
+  `2026-10-21-feat-forgejo-infra-and-runner-fusion.md` — ports 1–10,
+  rejections with rulings, F01/F02 specs.
+- Full comparison: `FUSION-REPORT.md` (planning quality, code/research/
+  friction diffs, independent re-verification on 2026-10-23).
+- Source branches (local worktrees — READ ONLY, never merge, never write):
+  - run 1 `feat-forgejo-infra-and-dev-runner-3` —
+    `/home/coder/.local/share/opencode/worktree/5e680f/feat-forgejo-infra-and-dev-runner-3`
+  - run 3 `feat-forgejo-infra-and-runner-openrouter-qwen-qwen3-8-27b-1` —
+    `/home/coder/.local/share/opencode/worktree/5e680f/feat-forgejo-infra-and-runner-openrouter-qwen-qwen3-8-27b-1`
+
+### Chunks (fusion state)
+
+| id  | title | size | wave | depends_on | status | why the dependency |
+|-----|-------|------|------|------------|--------|--------------------|
+| C01 | Relocate research audit trail into the feature folder | S | 1 | [] | **done** | — |
+| C02 | Item A: infra Forgejo instance + proxy-local routing + leftovers cleanup | L | 1 | [] | **done** | independent subsystem (infra/proxy-local/custom-values/infra); shares no files with C03 |
+| C03 | Item B: `charts/forgejo-runner` + dev service wiring | L | 1 | [] | **done** | independent subsystem (new chart + services/dev + custom-values/dev); registers against the existing dev forgejo, which C02 does not touch |
+| F01 | forgejo-runner chart → two controllers (dev + infra), act labels, short timeouts, fsGroup, research-supplement docs | L | 1 | [] | pending | chart-owned surface; consumes no other fusion chunk |
+| F02 | dev service wiring delta — infra-runner sentinel + URL pins | S | 2 | [F01] | pending | consumes F01's chart interface (sentinel key names, values keys) |
+
+Wave order: C01–C03 done (wave 1, historical). **F01** runs alone in wave 1;
+**F02** runs in wave 2 after F01 — F02's service slice sets
+`runners.dev.url`/`runners.infra.url` and the second sentinel slot, both of
+which are F01 chart surface (values keys +
+`bitwardenIds.forgejo-runner-infra-token`), so F02 cannot render or validate
+before F01 lands.
+
+Test contract for the fusion: `tests/services/dev-forgejo-runner.sh` is
+REWRITTEN red-first to the fused two-controller contract before F01 dev
+(agent-test); F02 EXTENDS the same script — one script stays the runner
+contract. `tests/services/infra-forgejo.sh`, `tests/services/audit-trail.sh`
+and the pre-existing `tests/services/dev-git-auth.sh` stay untouched and
+green as regression.
+
+### User actions (consolidated: base plan + ruling 2 — complete list; supersedes the base "User actions" section below)
+
+**Before sync (blocking):**
+
+1. **Bitwarden items (org vault):** `infra-forgejo` (password =
+   `openssl rand -hex 32` SECRET_KEY), `infra-forgejo-admin`,
+   `infra-forgejo-pg` (password = DB password; username irrelevant — the
+   ExternalSecret hardcodes `forgejo`), `infra-forgejo-sso` (username =
+   client-id, password = client-secret). Paste UUIDs into
+   `custom-values/infra/prod-values.yaml` (4× `OVERRIDE_NEEDED`).
+2. **Lab Keycloak** (login.spencerslab.com, realm `SpencersLab`): new client
+   `infra-forgejo`, redirects `https://git.spencerslab.com/*` +
+   `https://forgejo.spencerslab.com/*`; creds → `infra-forgejo-sso`.
+3. **DNS (mesh/split-horizon):** confirm `infra.spencerslab.com` → infra
+   traefik LB (hub ExternalName depends on it). Public records for
+   git/forgejo are auto-published by proxy-local's external-dns (point at
+   proxy-remote; external access stays dead until future proxy-remote work —
+   out of scope).
+4. **Dev node filesystem:** `df -T /` on the dev node — root fs must NOT be
+   overlay for DinD overlay2 over local-path PVs (btrfs/xfs/ext4 fine); if
+   overlay, the dind containers need `storage-driver: vfs` (surface before
+   sync).
+5. **Runner registration — DEV instance:** git.scifi.farm → Admin → Actions
+   → Runners → create instance-admin runner; uuid+token → Bitwarden item
+   `forgejo-runner` (LOGIN: username=uuid, password=token; NEVER the
+   `forgejo-token` item); UUID → `custom-values/dev/prod-values.yaml`
+   (`forgejo-runner.bitwardenIds.forgejo-runner-token`).
+6. **Confirm** the infra ArgoCD cluster secret carries
+   `services.infra.customValuesUrls` (verified by inference only).
+
+**After infra boots (ruling 2 adds this):**
+
+7. **Runner registration — INFRA instance (NEW):** git.spencerslab.com →
+   Admin → Actions → Runners → create instance-admin runner; uuid+token →
+   Bitwarden item `dev-forgejo-runner-infra` (LOGIN: username=uuid,
+   password=token); UUID → `custom-values/dev/prod-values.yaml`
+   (`forgejo-runner.bitwardenIds.forgejo-runner-infra-token`).
+
+**Post-sync verification:**
+
+8. infra: `infra-forgejo-*` + `pg-forgejo-1` Running; ExternalSecrets
+   SecretSynced; both hosts serve over LAN; OIDC login works; mailer event
+   flows through smtp-relay.
+9. dev: BOTH runner pods Running; runner-dev **online** in git.scifi.farm's
+   admin UI and runner-infra **online** in git.spencerslab.com's admin UI; a
+   trivial workflow (`runs-on: ubuntu-latest`, e.g. echo step) completes on
+   each instance. First-run pulls are ~2 GB per act image — expect a slow
+   first job. If a job dies during "checking out actions", suspect
+   forgejo/runner#1779 (k3s MTU) first — mitigations: dind `--mtu 1450`
+   dockerd flag or per-job `network: host` (see RESEARCH-dind-supplement.md).
+
+### Validation (fusion-level, on top of the chunks')
+
+```
+export PATH="$HOME/.local/bin:$PATH"
+helm dependency update charts/forgejo-runner && helm lint charts/forgejo-runner
+helm template charts/forgejo-runner --set bitwardenIds.forgejo-runner-token=00000000-0000-0000-0000-000000000000 --set bitwardenIds.forgejo-runner-infra-token=00000000-0000-0000-0000-000000000001
+helm dependency update services/dev/prod && helm lint services/dev/prod
+helm template dev services/dev/prod -f custom-values/dev/prod-values.yaml --set domain=scifi.farm --set clusterName=dev --set forgejo-runner.bitwardenIds.forgejo-runner-token=00000000-0000-0000-0000-000000000000 --set forgejo-runner.bitwardenIds.forgejo-runner-infra-token=00000000-0000-0000-0000-000000000001
+bash tests/services/dev-forgejo-runner.sh   # rewritten contract
+bash tests/services/infra-forgejo.sh        # regression, unchanged
+bash tests/services/audit-trail.sh          # regression, unchanged
+bash tests/services/dev-git-auth.sh         # regression, unchanged
+grep -rn OVERRIDE_ charts/forgejo-runner services/dev/prod custom-values/dev/   # sentinels only in values files
+npx --yes aislop@0.18.1 ci --changes --base main   # plus manual comment-slop pass (YAML is outside aislop's gateable set)
+```
+
+### Follow-ups (carried from all three runs; NOT this ticket; supersedes the base "Follow-ups" section)
+
+- SeaweedFS `git` PV/PVC on infra stays idle (user chose local-path; A2).
+- Forgejo 15.0.9 → 15.0.10 patch on dev (OCI dep, manual bump; `dep` ticket).
+- Renovate coverage for the OCI forgejo chart dependency.
+- `services/backups/prod/Chart.yaml` gitea chart dependency ("TODO: Replace
+  gitea with forgejo").
+- samba `samba-users: OVERRIDE_NEEDED` wart in the infra render
+  (pre-existing; user deferred to a separate ticket).
+- Watch the runner k8s-native backend (gRPC plugin; run 3's RESEARCH.md F4
+  documents the bjw-s precedent) as the long-term DinD replacement — do not
+  depend on it (alpha).
+- Optional: postgres-MCP entry for the new infra `pg-forgejo` DB.
+- Open friction items from the base FRICTION.md (aislop YAML/MD scope,
+  plan-file sentinel-sweep typo) — coord offers follow-up planning per
+  AGENTS.md convention after this fusion lands.
+
+### User-owned next steps (outside the pipeline)
+
+- Review the PR for this branch (branch stays local until the user
+  pushes/PRs — the pipeline never pushes).
+- Items 1–9 above (Bitwarden, Keycloak, DNS, registrations, verification).
+- Merging to main is the user's decision alone.
+
 ## User actions
+
+> **Superseded by "Fusion (2026-10-23)"** — the consolidated list 1–9 there is
+> the canonical one (item 7, infra-instance runner registration, is new via
+> conflict ruling 2; items 8–9 are the consolidated post-sync verifications).
+> Kept as the historical record of the pre-fusion plan.
 
 **Before the infra/dev apps sync (blocking):**
 
@@ -214,6 +357,10 @@ grep -n 'forgejo-runner' services/dev/prod/values.yaml       # charts.forgejo-ru
    workflow job completes.
 
 ## Follow-ups (not in this ticket)
+
+> **Superseded by "Fusion (2026-10-23)"** — the consolidated follow-ups there
+> (carried from all three runs) are canonical. Kept as the historical record
+> of the pre-fusion plan.
 
 - The seaweedfs `git` PV/PVC remains idle after this ticket (user chose
   local-path) — candidate for a future LFS/attachment store or other RWX need.

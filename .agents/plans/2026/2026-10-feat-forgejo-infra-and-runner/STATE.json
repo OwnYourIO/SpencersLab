@@ -1,8 +1,8 @@
 {
   "feature": "2026/2026-10-feat-forgejo-infra-and-runner",
-  "plan_status": "complete",
+  "plan_status": "approved",
   "current_wave": 1,
-  "updated_at": "2026-10-22",
+  "updated_at": "2026-10-23",
   "kickoff": {
     "slug": "feat-forgejo-infra-and-runner",
     "type": "feat",
@@ -115,6 +115,58 @@
         "9457af5db",
         "9c90f0c89"
       ]
+    },
+    "F01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nchunk: F01\nfiles_changed: [\"charts/forgejo-runner/values.yaml\", \"charts/forgejo-runner/templates/NOTES.txt\", \"charts/forgejo-runner/templates/secret-forgejo-runner.yaml (deleted)\", \"charts/forgejo-runner/templates/secret-runner-dev.yaml\", \"charts/forgejo-runner/templates/secret-runner-infra.yaml\", \".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/RESEARCH-dind-supplement.md\", \".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/RESEARCH.md (one-line pointer only)\"]\ncommands_run: [\"bash tests/services/dev-forgejo-runner.sh => t1-t6 pass (24 ok), t7 fail-for-the-right-reason (F02 slot absent \u2014 correct F01-done state per test_handoff_fusion)\", \"bash tests/services/audit-trail.sh => pass (4 ok, unmodified)\", \"bash tests/services/infra-forgejo.sh => pass (33 ok, unmodified)\", \"bash tests/services/dev-git-auth.sh => pass (20 ok, unmodified)\", \"helm dependency update charts/forgejo-runner (on /tmp copy) => pass (Chart.lock digest match)\", \"helm lint charts/forgejo-runner => pass (0 failures)\", \"helm template charts/forgejo-runner --set both bitwardenIds tokens => pass (490 lines, 0 sentinels; 2 STS, per-pod creds mount -> own target Secret, dind-only docker-data, headless svcs, 2 privileged)\", \"helm template ... --set runners.infra.url=https://example.test => pass (infra url moved, dev unchanged)\", \"renovate 44.115.13 dry-run (FRICTION recipe) => pass (built-in helm-values manager extracted runner 13.2.0 + docker 29.9.1-dind; log /tmp/opencode/f01-renovate-dry-run.log)\", \"supplement byte-identity cmp+sha256 917de3c1... => pass; RESEARCH.md pointer line 2 exact + tail -n +3 sha256 7d6b5d04... => pass\", \"plan Commands sentinel sweep + dev trio grep => pass\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100; known YAML/MD scope no-op)\"]\ndeviations: [\"Kept run-2's shipped config keys runner.capacity: 1, cache.enabled: true, container.privileged: false in both ESO config templates (sim reference omitted them; fused contract asserts neither way \u2014 minimal diff from the C03-approved config)\", \"Renovate annotations rewritten to truthful why-comments preemptively per the chunk's option-a; t4 dry-run then verified extraction still works with the annotations gone\", \"Committed only the 7 F01-scope paths; coord/test artifacts left unstaged\"]\nfriction: none new (aislop YAML/MD no-op recurred as recorded)\nopen_questions: none\nnext_suggested: coord marks F01 dev round complete and dispatches agent-review against fee4fd83a (review should attach/verify /tmp/opencode/f01-renovate-dry-run.log in the chunk Review notes); F02 unblocks after review passes"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: F01\nfiles_changed: [\".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/chunks/F01.md (Review notes section only)\"]\ncommands_run: [\"bash tests/services/dev-forgejo-runner.sh (canonical, helm off PATH) => pass t1-t6 (24 ok), FAIL t7 right-reason (F02 slot absent) \u2014 expected F01-done state\", \"bash tests/services/dev-forgejo-runner.sh (first run, PATH with ~/.local/bin) => fail at t1 \u2014 latent find_helm bug (missing return 0), diagnosed, recorded as finding 1\", \"bash tests/services/audit-trail.sh => pass (4 ok, unmodified)\", \"bash tests/services/infra-forgejo.sh => pass (33 ok, unmodified)\", \"bash tests/services/dev-git-auth.sh => pass (20 ok, unmodified)\", \"helm dependency update charts/forgejo-runner && helm lint charts/forgejo-runner => pass (0 failures)\", \"helm template charts/forgejo-runner --set both bitwardenIds tokens => pass (490 lines, 0 sentinels, 2 STS + 2 headless SVC + 1 SA + 2 ESO, no Ingress/Deployment/cluster RBAC)\", \"helm template ... --set runners.infra.url=https://example.test => pass (infra moved, dev unchanged)\", \"grep -rn OVERRIDE_ charts/forgejo-runner services/dev/prod custom-values/dev/ => pass (sentinels only in values files + NOTES prose)\", \"renovate 44.115.13 dry-run (FRICTION recipe, reviewer's own minimal repo) => pass (exit 1 expected on node 26; helm-values manager extracted docker 29.9.1-dind x2 + runner 13.2.0 x2; dev log matches)\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100; known YAML/MD scope no-op)\", \"dev umbrella render spot check => pass (0 sentinels, F02 preconditions intact)\", \"supplement byte-identity (sha256 + cmp vs run-1 worktree) + RESEARCH.md pointer/tail sha256 => pass\", \"git show fee4fd83a --name-only / git status / merge-base main HEAD => pass (scope clean, nothing on main)\"]\ndeviations: \"First test run exported PATH per the fusion Validation block and hit the latent find_helm bug; re-ran with the canonical no-helm-on-PATH invocation as the validation of record \u2014 bug recorded as finding 1, not worked around silently\"\nfriction: \"find_helm() in tests/services/dev-forgejo-runner.sh lacks return 0 after the command -v helm branch \u2014 false t1 red when helm is on PATH; the plan's Validation block exports PATH right before the script, so F02's gate hits it; one-line fix, test-session-owned\"\nopen_questions: \"1) Route the one-line find_helm fix to the test session BEFORE F02 dev. 2) Chart.yaml description still dev-only framed \u2014 out of F01/F02 file scope; disposition: tiny follow-up or F02 scope extension\"\nnext_suggested: \"coord marks F01 done (APPROVED, review round 1) and dispatches F02 (wave 2) after the test-session find_helm fix; Chart.yaml description update alongside or as follow-up"
+        }
+      ],
+      "dev_session": "ses_e98909bebffe0WmwytvzwNP8W2",
+      "commit": "fee4fd83a",
+      "review_session": "ses_e984c5533ffeRPOM3wnDF2Qg3z"
+    },
+    "F02": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [
+        "F01"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nchunk: F02\nfiles_changed: [\"services/dev/prod/values.yaml\", \"custom-values/dev/prod-values.yaml\", \"charts/forgejo-runner/Chart.yaml\"]\ncommands_run: [\"bash tests/services/dev-forgejo-runner.sh => pass (31 ok, exit 0; was t1-t6 green / t7 red pre-change)\", \"bash tests/services/audit-trail.sh => pass (4 ok, unmodified)\", \"bash tests/services/infra-forgejo.sh => pass (33 ok, unmodified)\", \"bash tests/services/dev-git-auth.sh => pass (20 ok, unmodified)\", \"helm dependency update charts/forgejo-runner && helm lint charts/forgejo-runner => pass (0 failures)\", \"helm lint services/dev/prod => pass (0 failures; pre-existing OVERRIDE_VIA_APPSET name warnings only)\", \"helm template dev services/dev/prod -f custom-values/dev/prod-values.yaml --set domain=scifi.farm --set clusterName=dev --set both runner-token UUIDs (fusion Validation block verbatim) => pass (0 OVERRIDE_VIA_CUSTOM_VALUES; no OVERRIDE_* outside appset-generator resources; blob carries both URL pins + both resolved UUIDs; ingress.subdomains = coder/git/research/cluster)\", \"helm template charts/forgejo-runner --set both bitwardenIds UUIDs => pass (0 sentinels)\", \"grep -rn OVERRIDE_ charts/forgejo-runner services/dev/prod custom-values/dev/ => pass (2 chart sentinels <-> 2 custom-values slots)\", \"base-chart ground-truth render (--show-only templates/appset-charts.yaml) => pass (per-app valuesObject = top-level app key only \u2014 comment-accuracy evidence)\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100; known YAML-scope no-op)\", \"comment-slop pass over the diff => pass\"]\ndeviations: [\"Chart.yaml description change included per the coord-approved F02 scope extension (DECISIONS.md 2026-10-23) \u2014 metadata only, no version bump\", \"The runners: block comment deliberately deviates from the sim reference's wording: the sim's 'so a default change can never silently re-point a runner' is untruthful (base-chart render proves the charts.<app> entry never rides the per-app valuesObject) \u2014 mine states the slice 'records the live-verified targets'\", \"Committed only the 3 surface files (commit 64a7f27cb); pipeline artifacts left for coord\"]\nfriction: none\nopen_questions: \"Informational wiring finding for coord: base chart per-app merge pulls only the top-level <appName>: key, so charts.forgejo-runner.runners.* URL pins document the deployed targets in the dev-appset blob while chart defaults apply at deploy time \u2014 functionally identical today; future chart-default change WOULD silently re-point a runner. Suggest one-line DECISIONS entry\"\nnext_suggested: coord marks F02 dev round 1 done and dispatches agent-review against commit 64a7f27cb"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: F02\nfiles_changed: [\".agents/plans/2026/2026-10-feat-forgejo-infra-and-runner/chunks/F02.md (Review notes only)\"]\ncommands_run: [\"bash tests/services/dev-forgejo-runner.sh => pass (31 ok, exit 0; t7-t10 were the last red surface)\", \"bash tests/services/audit-trail.sh => pass (4 ok, unmodified)\", \"bash tests/services/infra-forgejo.sh => pass (33 ok, unmodified)\", \"bash tests/services/dev-git-auth.sh => pass (20 ok, unmodified)\", \"helm dependency update charts/forgejo-runner && helm lint charts/forgejo-runner => pass\", \"helm lint services/dev/prod => pass (pre-existing OVERRIDE_VIA_APPSET name warnings only)\", \"helm template dev services/dev/prod -f custom-values/dev/prod-values.yaml + both sentinel --sets (fusion Validation verbatim) => pass (both URL pins + resolved UUIDs in dev-appset blob; zero OVERRIDE_ in the entire render)\", \"helm template charts/forgejo-runner --set both bitwardenIds UUIDs => pass (0 sentinels)\", \"grep -rn OVERRIDE_ charts/forgejo-runner services/dev/prod custom-values/dev/ => pass (2<->2 parity)\", \"npx --yes aislop@0.18.1 ci --changes --base main --human => pass (100/100; known YAML-scope no-op)\", \"ground-truth base-chart appset-charts render => pass (per-app valuesObject carries no runners key \u2014 disposition mechanism confirmed)\", \"git show 64a7f27cb --stat / git status --porcelain => pass (exactly 3 in-scope files; regressions unmodified; nothing on main)\"]\ndeviations: none\nfriction: none\nopen_questions: none (deferred: fused 31-check test contract + fusion artifacts uncommitted \u2014 coord artifacts commit pending)\nnext_suggested: coord marks F02 done, lands the artifacts commit, then dispatches the final whole-plan review of the fused ticket"
+        }
+      ],
+      "dev_session": "ses_e97e79dc1ffeciAhhA7pN6o9NV",
+      "commit": "64a7f27cb",
+      "review_session": "ses_e97adf72cffeB3U7QZ1HOGJ735"
     }
   },
   "blocked": [],
@@ -137,5 +189,33 @@
     "9457af5db",
     "9c90f0c89",
     "5c0d75b9a"
-  ]
+  ],
+  "coord_session": "ses_e9ff3d069ffeS32wt0UrTscxPs",
+  "fusion": {
+    "at": "2026-10-23",
+    "fuser_session": "user-launched agent-fuser",
+    "report": "FUSION-REPORT.md",
+    "fusion_plan": "2026-10-21-feat-forgejo-infra-and-runner-fusion.md",
+    "base": "run 2 (this branch) \u2014 user-confirmed 2026-10-23 over the fuser run-1 suggestion",
+    "source_worktrees": {
+      "run1": "/home/coder/.local/share/opencode/worktree/5e680f/feat-forgejo-infra-and-dev-runner-3",
+      "run3": "/home/coder/.local/share/opencode/worktree/5e680f/feat-forgejo-infra-and-runner-openrouter-qwen-qwen3-8-27b-1"
+    },
+    "user_rulings": "5 conflict rulings confirmed + follow-up, verbatim in the fusion plan under Base and ports",
+    "added_chunks": [
+      "F01",
+      "F02"
+    ],
+    "test_rewrite": "tests/services/dev-forgejo-runner.sh rewritten red-first to the fused contract before F01 dev; audit-trail.sh/infra-forgejo.sh/dev-git-auth.sh untouched"
+  },
+  "test_handoff_fusion": {
+    "at": "2026-10-23",
+    "status": "DONE",
+    "rewrite": "tests/services/dev-forgejo-runner.sh: 21-check C03 contract -> 31-check fused two-controller contract (F01 t1-t6 + F02 t7-t10, one script per planner ruling)",
+    "red_verified": "worktree pre-F01: t1 ok, FAIL t2 (expected exactly two StatefulSets, found 1) \u2014 right reason",
+    "green_sim": "/tmp/opencode/sim-fj2: F01-only 22 ok red at t7 (right reason); F01+F02 31 ok exit 0 incl. live renovate 44.115.13 dry-run; sim F01 commit 67452b1 is a working reference for the two-controller app-template v5 shape",
+    "regression": "audit-trail.sh 4 ok, dev-git-auth.sh 20 ok, infra-forgejo.sh 33 ok \u2014 all UNTOUCHED and green",
+    "f01_completion_state": "after F01 the script is still red at t7 (F02 assertions, wave 2) \u2014 t1-t6 green + t7 red IS the correct F01-done state",
+    "rulings_carried": "C03 config keys (capacity/cache/container.privileged) not asserted by the fused contract; no-RBAC check includes ClusterRoleBinding; t10 comment check is wording-agnostic (names both controllers or contains \"both\")"
+  }
 }
