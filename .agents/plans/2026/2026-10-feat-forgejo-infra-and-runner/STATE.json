@@ -1,7 +1,7 @@
 {
   "feature": "2026/2026-10-feat-forgejo-infra-and-runner",
-  "plan_status": "approved",
-  "current_wave": 1,
+  "plan_status": "complete",
+  "current_wave": 2,
   "updated_at": "2026-10-23",
   "kickoff": {
     "slug": "feat-forgejo-infra-and-runner",
@@ -181,7 +181,7 @@
     "fix_commit": "5c0d75b9a",
     "result": "RESULT\nstatus: DONE\nchunk: plan (final whole-plan review of feat-forgejo-infra-and-runner)\nverdict: APPROVED (one minor non-blocking comment-accuracy finding, fixed in 5c0d75b9a, re-verified APPROVED by the same reviewer)\ncommands_run: [all three tests/services scripts => pass (4/33/21 ok), plan Commands (dep builds, lints, chart+umbrella renders with plan --set lists, sentinel sweep w/ FRICTION-corrected file list, trio greps) => pass, aislop ci --changes => pass (100/100; known YAML/MD scope no-op), between-chunks hunt (sentinel<->custom-values 1:1 across dev/infra/proxy-local, gitea sweep, runner proxy-leg documentation, commit attribution, user-actions alignment 5x OVERRIDE_NEEDED 1:1) => pass]\nopen_questions: none \u2014 minor finding recorded in chunks/C02.md, routed to dev and closed"
   },
-  "completed_at": "2026-10-22",
+  "completed_at": "2026-10-23",
   "branch": "feat-forgejo-infra-and-runner-gpu-ai-qwen3-8-27b-q6-2",
   "commits": [
     "326e81e85",
@@ -217,5 +217,21 @@
     "regression": "audit-trail.sh 4 ok, dev-git-auth.sh 20 ok, infra-forgejo.sh 33 ok \u2014 all UNTOUCHED and green",
     "f01_completion_state": "after F01 the script is still red at t7 (F02 assertions, wave 2) \u2014 t1-t6 green + t7 red IS the correct F01-done state",
     "rulings_carried": "C03 config keys (capacity/cache/container.privileged) not asserted by the fused contract; no-RBAC check includes ClusterRoleBinding; t10 comment check is wording-agnostic (names both controllers or contains \"both\")"
-  }
+  },
+  "final_review_fused": {
+    "session": "ses_e9765b27dffeOQ1D9yLm23ZxTC",
+    "at": "2026-10-23",
+    "verdict": "APPROVED",
+    "suite": "audit-trail 4 ok, infra-forgejo 33 ok, dev-forgejo-runner 31 ok (fused contract, live renovate dry-run), dev-git-auth 20 ok; fusion Validation block + base Commands slice all pass; aislop 100/100",
+    "non_blocking": [
+      "provenance tags in shipped comments (ruling 2/3/4, B1) \u2014 load-bearing why stated at every site; future cleanup may drop the tags",
+      "runners: block comment restates the header (comment-slop clause 3 nit, carried from F01 r1)"
+    ],
+    "deferred_note": "both non-blockers are stylistic, not factual \u2014 dispositioned as deferred cleanup rather than a post-approval dev round"
+  },
+  "commits_fusion": [
+    "fee4fd83a",
+    "64a7f27cb",
+    "283956241"
+  ]
 }
