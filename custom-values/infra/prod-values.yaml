@@ -43,10 +43,10 @@ keycloakx:
 # default (local-path 10Gi).
 forgejo:
   bitwardenIds:
-    forgejo: OVERRIDE_NEEDED        # item infra-forgejo (password = SECRET_KEY)
-    forgejo-admin: OVERRIDE_NEEDED  # item infra-forgejo-admin (initial admin)
-    forgejo-pg: OVERRIDE_NEEDED     # item infra-forgejo-pg (password = DB password)
-    forgejo-sso: OVERRIDE_NEEDED    # item infra-forgejo-sso (lab Keycloak client infra-forgejo)
+    forgejo: ed858a27-1882-42ce-bcbd-b4ec010ab7bc        # item infra-forgejo (password = SECRET_KEY)
+    forgejo-admin: f7b628ec-2544-4c28-a476-b1a501487d99  # item infra-forgejo-admin (initial admin)
+    forgejo-pg: 96fb70d4-d0ec-4167-964a-b4ec010b404f     # item infra-forgejo-pg (password = DB password)
+    forgejo-sso: aaa94e81-aa39-4962-961f-b4ec010ba0c9    # item infra-forgejo-sso (lab Keycloak client infra-forgejo)
   forgejo:
     gitea:
       config:
