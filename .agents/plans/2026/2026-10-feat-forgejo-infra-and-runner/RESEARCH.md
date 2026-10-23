@@ -1,4 +1,5 @@
 # RESEARCH — Forgejo Actions runner on the dev k3s cluster
+> DinD supplement (run 1, ported 2026-10-23): RESEARCH-dind-supplement.md — k3s MTU clone-failure warning (forgejo/runner#1779), ArgoCD-timeout rationale, reliability self-rating.
 
 Deep research for ticket `feat-forgejo-infra-and-runner`, commissioned by the
 coordinator on 2026-10-21. All web sources fetched 2026-10-21 unless noted;

@@ -1,32 +1,56 @@
-# Forgejo Actions runner for the dev cluster.
+# Forgejo Actions runners for the dev cluster — two registrations.
 #
-# Client-only: the runner dials the dev Forgejo instance in-cluster
-# (dev-forgejo-http:3000), so this chart is host-free — no ingress, no
-# proxy entry, no domain references. The in-cluster URL is a dev literal
-# on purpose: the user decided the runner never moves (2026-10-21 question
-# round), so there is no abstraction to parameterize.
+# Two controllers, one (uuid, token) identity each: runner-dev talks to the
+# dev Forgejo instance in-cluster, runner-infra to the new infra instance
+# (git.spencerslab.com — conflict ruling 2; its Bitwarden item is created
+# only after that instance boots).
+#
+# Client-only: both runners dial out, so the chart is host-free — no
+# ingress, no proxy entry, no domain references. The runners.<ctl>.url
+# chart defaults keep the chart renderable standalone; the dev service
+# slice (services/dev/prod/values.yaml) pins both explicitly.
 #
 # Registration is declarative (runner v13 — the register CLI and env-var
-# registration do not work): the daemon connects with
-# server.connections.dev from the ExternalSecret-generated config.yaml and
-# reads the token from file:$CREDENTIALS_DIRECTORY/token. The identity is
-# the (uuid, token) pair in the Bitwarden item — the ExternalSecret
-# re-renders it on every pod start, and the server matches the runner
-# record by uuid, so a restart is a re-attach, not a re-registration (the
-# daemon never writes a .runner file).
+# registration do not work): each daemon connects with its
+# server.connections.<dev|infra> entry from the ExternalSecret-generated
+# config.yaml and reads the token from file:$CREDENTIALS_DIRECTORY/token.
+# The identity is the (uuid, token) pair in the Bitwarden item — the
+# ExternalSecret re-renders it on every pod start, and the server matches
+# the runner record by uuid, so a restart is a re-attach, not a
+# re-registration (the daemon never writes a .runner file).
+#
+# k3s MTU warning: if a workflow dies during "checking out actions", first
+# suspect forgejo/runner#1779 (runner >= 12.5 intermittently fails action
+# clones on k3s — git-binary cloning, suspected overlay/MTU interaction).
+# Mitigations: dind `--mtu 1450` dockerd flag or per-job `network: host`;
+# full research in RESEARCH-dind-supplement.md.
 
 bitwardenIds:
   # Item `forgejo-runner` (username = runner uuid, password = registration
-  # token). NEVER the `forgejo-token` item — that one is the Coder
-  # workspace access token.
+  # token) for the dev registration. NEVER the `forgejo-token` item — that
+  # one is the Coder workspace access token.
   forgejo-runner-token: OVERRIDE_VIA_CUSTOM_VALUES
+  # Item `dev-forgejo-runner-infra` (same shape) for the infra
+  # registration — created AFTER the infra instance boots (plan User
+  # action 7); never the `forgejo-token` item either.
+  forgejo-runner-infra-token: OVERRIDE_VIA_CUSTOM_VALUES
+
+# Connection URLs: chart defaults so the chart renders standalone; the dev
+# service slice (services/dev/prod/values.yaml) pins both explicitly.
+runners:
+  dev:
+    # In-cluster: the runner is a client of the dev instance, no public
+    # ingress is involved.
+    url: http://dev-forgejo-http.default.svc:3000
+  infra:
+    url: https://git.spencerslab.com
 
 app-template:
   global:
     nameOverride: forgejo-runner
 
   controllers:
-    runner:
+    runner-dev:
       # Single replica on purpose: one (uuid, token) pair must map to
       # exactly one pod. Scaling means more runner records, never more
       # replicas of one identity (decision B1).
@@ -71,7 +95,9 @@ app-template:
         dind:
           image:
             repository: docker
-            # renovate: datasource=docker depName=docker
+            # Renovate's built-in helm-values manager tracks this pin
+            # (dry-run verified 2026-10-23) — the extraction comes from
+            # the manager, not from any per-line annotation.
             tag: 29.9.1-dind
           restartPolicy: Always
           securityContext:
@@ -108,7 +134,9 @@ app-template:
         runner:
           image:
             repository: data.forgejo.org/forgejo/runner
-            # renovate: datasource=docker depName=data.forgejo.org/forgejo/runner versioning=semver
+            # Renovate's built-in helm-values manager tracks this pin
+            # (dry-run verified 2026-10-23) — the extraction comes from
+            # the manager, not from any per-line annotation.
             tag: 13.2.0
           # The image's ENTRYPOINT is dumb-init (zombie reaping) and K8s
           # `command` replaces the entrypoint — so it goes back in
@@ -127,7 +155,7 @@ app-template:
             - /data/config/config.yaml
           env:
             # Resolved by the runner for token_url: file:$CREDENTIALS_DIRECTORY/token
-            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner
+            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner-dev
             # In-pod socket (the `socket` emptyDir), not a node socket.
             DOCKER_HOST: unix:///var/run/docker.sock
           resources:
@@ -143,16 +171,119 @@ app-template:
               drop:
                 - ALL
       pod:
-        # >= the runner's shutdown_timeout (3h) so in-flight jobs get the
-        # chance to finish during termination.
-        terminationGracePeriodSeconds: 10800
+        # Short and explicit on purpose (ruling 4): an ArgoCD sync must
+        # never hang on a terminating pod — the 30m/5m runner timeouts in
+        # the config bound the work, and in-flight jobs get the 5m
+        # shutdown window.
+        terminationGracePeriodSeconds: 300
+        securityContext:
+          # uid-1000 runner image vs node-owned fresh local-path VCT
+          # volumes: without this the first-boot volume ownership can
+          # mismatch and the runner fails on writes.
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+    runner-infra:
+      # Same pod shape as runner-dev (dind sidecar + hardened runner, same
+      # VCTs and sizing); only the identity differs — Bitwarden item
+      # `dev-forgejo-runner-infra`, target Secret forgejo-runner-infra,
+      # connection `infra` against the infra instance URL.
+      type: statefulset
+      replicas: 1
+      annotations:
+        reloader.stakater.com/auto: "true"
+      statefulset:
+        volumeClaimTemplates:
+          - name: data
+            accessMode: ReadWriteOnce
+            size: 2Gi
+            storageClass: local-path
+            globalMounts:
+              - path: /data
+          - name: docker-data
+            accessMode: ReadWriteOnce
+            size: 10Gi
+            storageClass: local-path
+            advancedMounts:
+              dind:
+                - path: /var/lib/docker
+      initContainers:
+        dind:
+          image:
+            repository: docker
+            tag: 29.9.1-dind
+          restartPolicy: Always
+          securityContext:
+            privileged: true
+          probes:
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - test
+                    - -S
+                    - /var/run/docker.sock
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                exec:
+                  command:
+                    - test
+                    - -S
+                    - /var/run/docker.sock
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 2
+              memory: 4Gi
+      containers:
+        runner:
+          image:
+            repository: data.forgejo.org/forgejo/runner
+            tag: 13.2.0
+          command:
+            - /usr/bin/dumb-init
+            - /bin/forgejo-runner
+            - daemon
+            - -c
+            - /data/config/config.yaml
+          env:
+            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner-infra
+            DOCKER_HOST: unix:///var/run/docker.sock
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 2
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      pod:
+        terminationGracePeriodSeconds: 300
+        securityContext:
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
 
   service:
     # Headless — a StatefulSet requires one for its per-ordinal DNS names.
     # The port is nominal: the daemon listens on nothing, the entry exists
     # only so the headless service has a record to serve.
-    runner-headless:
-      controller: runner
+    runner-dev-headless:
+      controller: runner-dev
+      clusterIP: None
+      ports:
+        api:
+          port: 3000
+    runner-infra-headless:
+      controller: runner-infra
       clusterIP: None
       ports:
         api:
@@ -169,12 +300,25 @@ app-template:
     # token_url says) and config.yaml subPath-mounted where the daemon's
     # -c flag points. subPath means the file does not hot-update — the
     # reloader annotation restarts the pod on secret changes.
-    runner-creds:
+    #
+    # app-template persistence is global, so one entry per controller:
+    # advancedMounts scope each entry's mounts to that controller's pod —
+    # a single shared entry would make both pods mount one Secret.
+    runner-creds-dev:
       type: secret
-      name: forgejo-runner
+      name: forgejo-runner-dev
       advancedMounts:
-        runner:
+        runner-dev:
           runner:
-            - path: /run/secrets/forgejo-runner
+            - path: /run/secrets/forgejo-runner-dev
+            - path: /data/config/config.yaml
+              subPath: config.yaml
+    runner-creds-infra:
+      type: secret
+      name: forgejo-runner-infra
+      advancedMounts:
+        runner-infra:
+          runner:
+            - path: /run/secrets/forgejo-runner-infra
             - path: /data/config/config.yaml
               subPath: config.yaml

@@ -1,25 +1,34 @@
-Forgejo Actions runner ({{ .Release.Name }})
-===========================================
+Forgejo Actions runners ({{ .Release.Name }})
+=============================================
 
-Nothing to browse or port-forward — this is a client-only service. The
-runner dials the dev Forgejo instance in-cluster at
-http://dev-forgejo-http.default.svc:3000 and runs jobs in its privileged
-DinD sidecar; docker images are cached on the docker-data PVC so re-runs
-don't re-pull.
+Nothing to browse or port-forward — this is a client-only service. Two
+runners run here, one per registration: runner-dev dials the dev Forgejo
+instance in-cluster at http://dev-forgejo-http.default.svc:3000, and
+runner-infra the infra instance at https://git.spencerslab.com. Jobs run
+in each pod's privileged DinD sidecar; docker images are cached on the
+docker-data PVC so re-runs don't re-pull.
 
-Identity: the runner registers declaratively (server.connections.dev in the
-ExternalSecret-generated config.yaml, token read from
+Identity: each runner registers declaratively (its server.connections entry
+in the ExternalSecret-generated config.yaml, token read from
 file:$CREDENTIALS_DIRECTORY/token — no register CLI, no env vars). The
-uuid+token pair lives in the Bitwarden item `forgejo-runner`; the
-ExternalSecret re-renders it on every pod start and the server matches the
-runner record by uuid, so a restart is a re-attach, NOT a re-registration.
-Never scale the StatefulSet: one uuid+token pair must map to exactly one
-pod (more runners = more runner records, each with its own pod).
+uuid+token pairs live in the Bitwarden items `forgejo-runner` (dev) and
+`dev-forgejo-runner-infra` (infra); each ExternalSecret re-renders its pair
+on every pod start and the server matches the runner record by uuid, so a
+restart is a re-attach, NOT a re-registration. Never scale either
+StatefulSet: one uuid+token pair must map to exactly one pod (more runners
+= more runner records, each with its own pod).
 
-One-time user actions (before the runner can go online):
-  1. Create the runner record on the dev instance (Admin -> Actions ->
-     Runners) and copy the UUID and the registration token.
-  2. Store them in the Bitwarden item `forgejo-runner` (username = uuid,
+One-time user actions (before each runner can go online):
+  1. DEV: create the runner record on git.scifi.farm (Admin -> Actions ->
+     Runners, instance scope) and copy the UUID and the registration token.
+     Store them in the Bitwarden item `forgejo-runner` (username = uuid,
      password = token) and replace OVERRIDE_NEEDED with the item's UUID in
      custom-values/dev/prod-values.yaml under
      forgejo-runner.bitwardenIds.forgejo-runner-token.
+  2. INFRA (after the infra instance boots): create the runner record on
+     git.spencerslab.com (Admin -> Actions -> Runners, instance scope) and
+     copy the UUID and the registration token. Store them in the Bitwarden
+     item `dev-forgejo-runner-infra` (username = uuid, password = token)
+     and replace OVERRIDE_NEEDED with the item's UUID in
+     custom-values/dev/prod-values.yaml under
+     forgejo-runner.bitwardenIds.forgejo-runner-infra-token.
