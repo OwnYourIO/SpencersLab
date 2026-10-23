@@ -90,3 +90,74 @@ captures — the disabled echo strings are compared byte-exact.
 {{- printf "%s\n" ($lines | join "\n") -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+llama-swap.autogenBase renders base.yaml, the input contract for the pinned
+llama-swap-config-autogen generator (containers/llama-swap-autogen; key
+spellings verified against archive commit c7357e68, not guessed).
+
+Scanned-half ONLY, by construction. Two merge-safety rules drive this
+(v262 internal/config/merge.go + generator.py generate_full_config):
+ - the generator re-emits every *unknown* top-level base.yaml key verbatim
+   into 10-scanned.yaml, so matrix/hooks/groups (identity-map children -
+   duplicate child keys across config files are a hard load error) and any
+   top-level scalar that could differ from the declared half must never
+   appear here. The four generator-owned keys (vram_estimation,
+   read_gguf_metadata, model_labels, path_prefix_map) are stripped by the
+   tool itself, so they are safe to declare.
+ - generated model IDs are `<dir>:<QUANT>` (lowercased scan-relative dir +
+   filename quant token), so declared model IDs stay colon-free: the two
+   halves' `models` identity maps can never collide across -config/
+   -config-dir. This invariant is pinned by test_autogen_wiring.
+
+`macros:` carries the declared-half macros by reference (deep-copy of the
+same values source - the superset-slice test requires byte-equality under
+shared names) plus the two generator contract macros: `binary` (the cmd
+template hardwires ${binary}) and `default-params` - the tool falls back to
+a synthetic model_pattern macro of exactly that name for any scanned model
+matching no model_patterns entry (generator.py
+get_model_pattern_config), and an undefined macro reference fails the
+llama-swap config load, so it MUST be defined here.
+*/}}
+{{- define "llama-swap.autogenBase" -}}
+{{- $a := .Values.autogen -}}
+{{- $paths := $a.scanPaths | default list -}}
+{{- if not $a.binary -}}
+  {{- fail "autogen.binary missing - the generator's fixed cmd template needs ${binary}" -}}
+{{- end -}}
+{{- if not $a.defaultParams -}}
+  {{- fail "autogen.defaultParams missing - scanned models fall back to ${default-params} and llama-swap fails to load undefined macros" -}}
+{{- end -}}
+{{/* dig rejects chartutil.Values at the root - drop to the plain sub-map. */}}
+{{- $at := index .Values "app-template" | default dict -}}
+{{- $cmd := dig "controllers" "llama-swap" "initContainers" "autogen" "command" nil $at -}}
+{{- if not (kindIs "slice" $cmd) -}}
+  {{- fail "autogen: no app-template initContainers.autogen command to render - the degrade quick-find would not exist to keep in sync with autogen.scanPaths" -}}
+{{- end -}}
+{{- $joined := join " " $cmd -}}
+{{- if not (contains `SCAN_DIRS="` $joined) -}}
+  {{- fail "autogen: the init script defines no SCAN_DIRS=\"...\" assignment - templates/configmap-autogen-base.yaml cannot verify it against autogen.scanPaths" -}}
+{{- end -}}
+{{- $dirsRaw := index (splitList "\"" (index (splitList `SCAN_DIRS="` $joined) 1)) 0 -}}
+{{/*
+  Drift guard, both directions: the quick-find (decides whether the generator
+  runs at all) and the base.yaml scan roots MUST be the same set. Script-only
+  paths would find GGUFs the generator does not scan ("No models found" ->
+  silent degrade over live models); values-only paths would skip generation
+  before the tool ever runs.
+*/}}
+{{- $want := join " " (sortAlpha $paths) -}}
+{{- $got := join " " (sortAlpha (splitList " " (trim $dirsRaw))) -}}
+{{- if ne $want $got -}}
+  {{- fail (printf "autogen.scanPaths (%s) and the initContainer SCAN_DIRS (%s) disagree - edit both or neither" $want $got) -}}
+{{- end -}}
+{{- $macros := deepCopy (.Values.config.macros | default dict) -}}
+{{- $_ := set $macros "binary" $a.binary -}}
+{{- $_ := set $macros "default-params" $a.defaultParams -}}
+{{- $base := dict -}}
+{{- $_ := set $base "models" $paths -}}
+{{- $_ := set $base "macros" $macros -}}
+{{- $_ := set $base "read_gguf_metadata" true -}}
+{{- $_ := set $base "vram_estimation" false -}}
+{{- toYaml $base -}}
+{{- end -}}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-swap-autogen-base
+  namespace: default
+data:
+  base.yaml: |
+    # Rendered by Helm from charts/llama-swap values (autogen.scanPaths +
+    # config.macros) - do not hand-edit. Consumed ONLY by the `autogen`
+    # initContainer; llama-swap itself never reads this file.
+    # Generated model IDs are `<dir>:<QUANT>`; declared IDs stay colon-free,
+    # so the scanned and declared halves cannot collide their `models`
+    # identity maps under the v262 -config/-config-dir merge.
+{{- include "llama-swap.autogenBase" . | nindent 4 }}
