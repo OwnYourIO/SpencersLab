@@ -6881,6 +6881,20 @@ entries:
   forgejo:
   - apiVersion: v2
     appVersion: 15.0.9
+    created: "2026-10-23T16:03:51.755170222Z"
+    dependencies:
+    - name: forgejo
+      repository: oci://code.forgejo.org/forgejo-helm
+      version: 17.2.0
+    description: Wrapper around the official Forgejo OCI chart — CNPG database, Bitwarden
+      ExternalSecrets, Keycloak OIDC source
+    digest: e96ada49a188387d9385148cf514cb0526392fea2d4288feb1289b1ae453da0f
+    name: forgejo
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-1.0.5/forgejo-1.0.5.tgz
+    version: 1.0.5
+  - apiVersion: v2
+    appVersion: 15.0.9
     created: "2026-10-18T14:47:31.17318816Z"
     dependencies:
     - name: forgejo
@@ -6934,6 +6948,23 @@ entries:
     name: forgejo
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-1.0.1/forgejo-1.0.1.tgz
+    version: 1.0.1
+  forgejo-runner:
+  - apiVersion: v2
+    appVersion: 13.2.0
+    created: "2026-10-23T16:03:52.032804066Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Forgejo Actions runners — two 1-replica StatefulSets (runner-dev,
+      runner-infra) with privileged DinD sidecars, declarative registration against
+      the dev and infra Forgejo instances
+    digest: be1af9fd5fb85e9e0f72f2be4f2993af50c10d16b6f6b153d66218d40977c0a0
+    name: forgejo-runner
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-runner-1.0.1/forgejo-runner-1.0.1.tgz
     version: 1.0.1
   freeipa:
   - apiVersion: v2
@@ -19114,4 +19145,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-21T02:11:55.750404717Z"
+generated: "2026-10-23T16:03:52.033982397Z"
