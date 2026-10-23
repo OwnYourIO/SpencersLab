@@ -1,9 +1,11 @@
 apiVersion: v2
 name: forgejo-runner
-description: Forgejo Actions runners — two 1-replica StatefulSets (runner-dev, runner-infra) with privileged DinD sidecars, declarative registration against the dev and infra Forgejo instances
+description: Forgejo Actions runners — two 1-replica StatefulSets (runner-dev, runner-infra)
+  with privileged DinD sidecars, declarative registration against the dev and infra
+  Forgejo instances
 type: application
-version: 1.0.0
-appVersion: "13.2.0"
+version: 1.0.1
+appVersion: 13.2.0
 dependencies:
 - name: app-template
   version: 5.0.1
