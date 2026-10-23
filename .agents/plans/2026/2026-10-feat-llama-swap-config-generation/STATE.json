@@ -1,0 +1,617 @@
+{
+  "feature": ".agents/plans/2026/2026-10-feat-llama-swap-config-generation",
+  "plan_status": "approved-pre-merge-complete",
+  "current_wave": 3,
+  "updated_at": "2026-10-23",
+  "kickoff": {
+    "slug": "feat-llama-swap-config-generation",
+    "type": "feat",
+    "run_tag": "openrouter-qwen-qwen3-8-flash",
+    "worktree": "llama-swap-config-generation (reused existing session worktree)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "research": "openrouter/qwen/qwen3.8-flash",
+      "test": "openrouter/qwen/qwen3.8-flash",
+      "dev": "openrouter/qwen/qwen3.8-flash",
+      "review": "openrouter/qwen/qwen3.8-flash"
+    },
+    "overrides_pipeline_models_defaults": true
+  },
+  "research": {
+    "session": "ses_e9c2426c0ffeYDc4QKYWinOW0S",
+    "artifacts": [
+      "RESEARCH.md",
+      "storm-runs/"
+    ],
+    "handoffs": [
+      {
+        "status": "DONE",
+        "chunk": "plan-input",
+        "files_changed": [
+          ".agents/plans/2026/2026-10-feat-llama-swap-config-generation/RESEARCH.md",
+          "storm-runs/adopt-shirayullama-swap-config-autogen-to-generate-llama/** (moved under ticket folder by coord)"
+        ],
+        "commands_run": [
+          "source-tarball-read => pass",
+          "GitHub-API checks (releases/tags/issues/commits/user) => pass",
+          "PyPI 404 check => pass",
+          "llama-swap v262 + llama.cpp 889edf43 fetch/grep => pass",
+          "HF API model/tree searches => pass",
+          "kubelet stats snapshot (readonly-ai-gpu) => pass",
+          "citation-integrity check (no invented [n]) => pass"
+        ],
+        "deviations": "STORM fan-out impossible (subagent depth limit) => sequential in-session fallback; webfetch routed via expiring file-proxy => direct curl; 'gpu-moe' matches no services/ folder => surfaced as open question 1; nothing committed (landing coord/user-owned)",
+        "friction": "nested subagents blocked => sequential fallback; webfetch file-proxy 404s => direct curl; gpu-moe naming ambiguity => open question; llama.cpp moved hf.cpp => located via tree API",
+        "open_questions": "1) gpu-moe target box? 2) Path A vs B vs A-then-B (user decision gates plan) 3) keep existing model IDs as declared aliases 4) drop infeasible flash-next q5/q6? 5) fork delivery: containers/ image vs vendored ConfigMap vs runtime tarball 6) orcarouter gated flash-next w/o HF_TOKEN on gpu? 7) verify matrix.vars/config-dir reload on cluster",
+        "next_suggested": "user answers Q2/Q4/Q6 => agent-plan with RESEARCH.md + quant short-lists"
+      }
+    ],
+    "key_findings": [
+      "Stock tool = disk-scan-only, fixed '-m <path>' cmd template, can NEVER emit -hf; declaring not-on-disk models impossible in its input format",
+      "Lab roster is 100% -hf-based => stock tool fits ~0 of it",
+      "Path A: v262 -config-dir two-file merge (autogen scanned half + hand-written declared -hf half), zero tool changes; declared half stays hand-edited",
+      "Path B: small Apache-2.0 fork adding hf_models: section => true single-DSL desired-state generation (only path meeting 'no hand-editing' goal fully)",
+      "Download-on-demand = llama.cpp -hf repo:tag + LLAMA_CACHE hub layout + HF_TOKEN; LLAMA_CACHE unscannable by tool (depth-4 snapshot dirs break strict layout)",
+      "flash-next = Qwen/Qwen3.8-Flash-Next 180B-class MoE: q3 83.8 GiB / q4 104-111 / q5 125-147 / q6 156-158 \u2014 q5/q6 exceed gpu-ai ~125 GiB budget outright; infeasible on gpu box",
+      "Ornith-1.5-122B: official has no Q3 (unsloth UD-Q3_K_XL 55.7 / bartowski cover); q4 70.6-74.2 / q5 82.6-88.4 / q6 95.4-106.4",
+      "Ornith-1.5-35B-A3B: official Q4_K_M/Q5_K_M/Q6_K/Q8_0/BF16 + bartowski full ladder IQ2_XXS..Q8_0 (9.55-35.2 GiB)",
+      "Integration: no PyPI/OCI/releases => pin SHA; initContainer generation into emptyDir + -config-dir matches tool design; containers/llama-swap-autogen image fits repo convention",
+      "No 'snippets' concept in tool or llama-swap v262 \u2014 lab snippets ARE macros/YAML anchors => map to base.yaml macros"
+    ]
+  },
+  "test_session": "ses_e9bdebccbffe7bYG46Fm9LO8FG",
+  "plan": {
+    "session": "ses_e9bf36a5fffeGnZqdsF1oS6bG4",
+    "handoffs": [
+      {
+        "status": "DONE",
+        "chunk": "plan",
+        "files_changed": [
+          ".agents/plans/2026/2026-10-feat-llama-swap-config-generation/2026-10-22-feat-llama-swap-config-generation.md",
+          "chunks/C01.md",
+          "chunks/C02.md",
+          "chunks/C03.md",
+          "chunks/C04.md",
+          "chunks/C05.md",
+          "STATE.json (chunks table, plan_status->approved, deferred entry)",
+          "DECISIONS.md (appended planning-decisions + user-approval sections)"
+        ],
+        "commands_run": [
+          "repo-survey of charts/llama-swap + services/gpu + services/gpu-ai (40+6+20 inventory verified vs RESEARCH 5) => pass",
+          "v262 source verification (merge.go identity-map/scalar/sequence rules, matrix.go:71 unknown-var load error, llama-swap.go -validate flag, run.sh LLAMA_CONFIG_DIR mapping) => pass",
+          "autogen pinned SHA c7357e68c755b54557f5b0f88b0507bf1c981500 re-check (still main HEAD) => pass",
+          "HF API repo/quant verification for all new families => pass",
+          "CI trigger coverage check (llama-swap-tools-tests.yaml covers all touched paths) => pass",
+          "STATE.json parse check => pass"
+        ],
+        "deviations": "matrix/hooks/macros must NOT be passed through base.yaml in the two-file world - v262 merge.go treats matrix children as identity keys, cross-file matrix hard-errors; all such keys stay declared-half-only (logged in plan+DECISIONS). RESEARCH unverified edges now source-proven. No research gaps.",
+        "friction": "none",
+        "open_questions": "none (user approved 35B 7-entry ladder, long-form IDs, full plan incl. delivery + fail-open degrade + fit gates)",
+        "next_suggested": "agent-test once for all chunks BEFORE dev touches templates (C02 golden capture must pin CURRENT chart output); then wave 1 (C01, C02), wave 2 (C03, C04), wave 3 (C05 gated on user landing PR)"
+      }
+    ]
+  },
+  "test": {
+    "session": "ses_e9bdebccbffe7bYG46Fm9LO8FG",
+    "handoffs": [
+      {
+        "status": "DONE",
+        "chunk": "test-all",
+        "files_changed": [
+          "charts/llama-swap/tests/TEST_SPEC.md",
+          "charts/llama-swap/tests/llama_swap_testlib.py",
+          "charts/llama-swap/tests/golden/gpu.config.yaml",
+          "charts/llama-swap/tests/golden/gpu-ai.config.yaml",
+          "charts/llama-swap/tests/test_config_parity.py",
+          "charts/llama-swap/tests/test_config_schema.py",
+          "charts/llama-swap/tests/test_autogen_wiring.py",
+          "charts/llama-swap/tests/test_autogen_integration.py",
+          "charts/llama-swap/tests/test_new_roster.py",
+          "charts/llama-swap/tests/test_autogen_image.py",
+          "charts/llama-swap/tests/fixtures/scanned_synthetic.yaml",
+          "charts/llama-swap/tests/hf_check.py",
+          "charts/llama-swap/tests/evidence/c05_expected_evidence.yaml"
+        ],
+        "commands_run": [
+          "helm v3.16.4 install => pass",
+          "helm dependency update charts/llama-swap => pass",
+          "golden capture via plan Commands (extract-and-render, gpu + gpu-ai) => pass (gpu 40 / gpu-ai 55 models, pre-change chart b2aa2e4b2)",
+          "golden re-verification byte-equal vs fresh render => pass",
+          "pip venv install pinned autogen tarball c7357e68 => pass",
+          "probe: autogen validate rejects base.yaml form AND declared config => pass-as-evidence (drove deviation 1)",
+          "probe: autogen generate empty-scan rc=1 No models found => pass-as-evidence",
+          "probe: gguf-py fixture tree -> generate rc=0 -> validate rc=0 => pass-as-evidence",
+          "pytest charts/llama-swap/tests -v => 61 failed red-on-missing-impl / 68 passed / 12 skipped, zero harness errors",
+          "pytest test_autogen_integration LLAMA_SWAP_EVIDENCE=1 => 3 failed (base CM missing) / 5 skipped (no docker daemon)",
+          "reloader-focused re-run after annotation fix => 2 passed",
+          "hf_check.py offline resolver probe => pass",
+          "git surface check: no tracked files modified; untracked only under tests/** => pass"
+        ],
+        "deviations": "(1) C03-acceptance-2 'base.yaml passes autogen validate' re-expressed per pinned-tool evidence (validate rejects list-shaped models AND today's declared config) - see TEST_SPEC 5.1. (2) Parity IDs-exact implemented as golden-subset + additions subset-of-approved-C04-table; exact-set asserted in C04 tests. (3) C02-criterion-3 '16 gpu-ai-local IDs' is 15 in merged golden; golden is ground truth. (4) C05 evidence grep list landed at charts/llama-swap/tests/evidence/c05_expected_evidence.yaml (role hard rule forbids chunk edits); coord to link it from the chunk. (5) C04 HF conditionals (orca/122B MTP, -ot fn-moe) deliberately unasserted - either outcome compliant. (6) helm+venv installed to /tmp/opencode; local capture python3.14 vs CI 3.12 (interpreter-independent renders). (7) No commit - landing coord/user-owned.",
+        "friction": "provider crash mid-session recovered by re-validating on-disk artifacts before continuing; docker daemon absent locally => image/merged -validate evidence is an opt-in gated run (acceptance requirement, not CI gate); edit tool em-dash match flakes => patched via shell python",
+        "open_questions": "(1) ratify C03-2 re-expression into DECISIONS.md (tests immutable downstream). (2) confirm 15-not-16 local-ID count accepted. (3) HF tag churn found during C04 => C04_HF_REFS frozen tables update via test-writer route, never dev.",
+        "next_suggested": "wave 1 dev (C01, C02); review first step = re-run pytest suite (expect parity+schema+image-parse green at chunk completion); gated evidence runs (LLAMA_SWAP_EVIDENCE=1, LLAMA_SWAP_IMAGE_EVIDENCE=1 w/ docker) before accepting C03/C04 criteria 2-5"
+      }
+    ]
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "title": "containers/llama-swap-autogen image (pinned SHA)",
+      "size": "S",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C01",
+          "files_changed": [
+            "containers/llama-swap-autogen/Dockerfile (new)",
+            "charts/llama-swap/tests/** (baseline commit 49e977faf, test contents untouched)"
+          ],
+          "commands_run": [
+            "git baseline commit 49e977faf => pass",
+            "git feat commit 5b3dbb58d => pass",
+            "helm dependency update charts/llama-swap => pass",
+            "pytest test_autogen_image.py -v => pass (5 hard green, 4 docker-gated skips by design)",
+            "pip install pinned tarball into /tmp/opencode/ag-venv => pass",
+            "init|generate|validate --help => 3x pass",
+            "deps import => pass",
+            "curl PyPI 404 check => pass",
+            "pytest full suite -q => 56f/73p/12s = baseline with 5 C01 reds flipped, zero failures referencing containers/ => pass",
+            "existing CI suite => 33/33 pass",
+            "helm lint => pass",
+            "aislop scan --changes => 0 errors / 0 warnings => pass"
+          ],
+          "deviations": "(1) docker build/run/inspect evidence not executed (no daemon; FRICTION re-verified CLI present/socket absent) - substituted pip-install + console-script proof per TEST_SPEC 4 gating; PR CI build = CI proof. (2) numeric USER 65532:65532 (wekan-mcp precedent) instead of USER autogen; named user still created. (3) no out-of-scope files; plan folder left untracked (coord-owned).",
+          "friction": "/tmp/opencode was empty (test session venv cleaned despite reuse note) - rebuilt helm v3.16.4 + venv; docker CLI-without-daemon can look like availability - probe docker info first.",
+          "open_questions": "none",
+          "next_suggested": "review re-runs suite; wave-1 C02 dev; C03 relies on locked image contract (llama-swap-config-autogen on PATH as uid 65532, ghcr.io/ownyourio/llama-swap-autogen, :main + pullPolicy Always)"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C01",
+          "verdict": "APPROVED",
+          "files_changed": [
+            ".agents/plans/2026/2026-10-feat-llama-swap-config-generation/chunks/C01.md (Review notes appended)"
+          ],
+          "commands_run": [
+            "helm dependency update / lint / template default+gpu+gpu-ai => pass",
+            "OVERRIDE_VIA + trio/sentinel greps + git-diff scope checks => pass (templates/services untouched)",
+            "pytest charts/llama-swap/tests -q => 56f/73p/12s exactly expected",
+            "existing suite 33/33 => pass",
+            "test_autogen_image.py => 5 pass + 4 honest gated skips",
+            "GitHub API HEAD check => pass (pin == main HEAD)",
+            "fresh-venv pip install pinned tarball => pass",
+            "init|generate|validate --help => 3x pass",
+            "deps import => pass"
+          ],
+          "findings": [
+            "minor: in-image evidence (entrypoint run, inspect uid) currently covered only by venv substitution + static parses; PR CI builds but never RUNS the image - coord must ensure an LLAMA_SWAP_IMAGE_EVIDENCE=1 run with a daemon before C03 accepts the image contract",
+            "nit: patch-locked base pin python:3.12.15-slim-bookworm deliberate (mirrors tools sidecar values.yaml:918; renovate docker manager active) - recorded, no action"
+          ],
+          "deviations": "none by reviewer; dev's 2 declared deviations reviewed + accepted",
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "proceed to C02; schedule docker-gated evidence run before C03 acceptance"
+        }
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "title": "declared-half render: roster schema + Helm templates + value conversion (golden parity)",
+      "size": "L",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "BLOCKED",
+          "chunk": "C02",
+          "files_changed": [
+            "charts/llama-swap/templates/_helpers-llama-swap.tpl (new)",
+            "charts/llama-swap/templates/configmap-llama-swap.yaml",
+            "charts/llama-swap/values.yaml",
+            "services/gpu/prod/values.yaml (llama-swap block)",
+            "services/gpu-ai/prod/values.yaml (llama-swap block)"
+          ],
+          "commit": "1bc243e53 (local)",
+          "commands_run": [
+            "helm dependency update => pass",
+            "helm lint => pass",
+            "helm template default+gpu+gpu-ai => 3x pass",
+            "golden byte-identical re-verification at run start => 2x pass",
+            "pytest tests -q => 49f/80p/12s (7 of 9 C02 reds flipped; remaining = 21 C03 + 26 C04 + 2 defects below)",
+            "test_config_parity.py => 23/23 green",
+            "test_config_schema.py => 10/12",
+            "trio/sentinel greps => pass",
+            "normalized golden-vs-fresh deep diff (ids/tokens/macros/matrix/hooks/disabled-bytes) => pass",
+            "aislop => 0 findings in changed files (2 pre-existing in vendored scripts/gguf-py)"
+          ],
+          "validation_at_fault": "(A) test_config_schema.py::test_c02_gpuai_block_escape_hatch_is_exactly_rana:129 - substring count '-hf'==1 vs byte-pinned golden rana line containing '-hf' twice (standalone + inside -hfd); unsatisfiable by any compliant impl. Suggested: match '-hf ' or regex \\s-hf\\s. (B) ::test_c02_chart_composition_hf_refs_match_golden - asserts every non-whisper chart model golden cmd carries -hf, but 6 GPU_DISABLED_IDS golden cmd is the fail-fast echo; suggested: skip GPU_DISABLED_IDS or source from golden gpu-ai. Route to test session ses_e9bdebccbffe7bYG46Fm9LO8FG.",
+          "deviations": "(1) disabled: = full message after id; template composes byte-exact golden echo (chunk sketch wording conflicts with byte-parity requirement). (2) proxy: omitted from values, template injects http://localhost:${PORT} (golden uniform). (3) gpu/gpu-ai re-declare hf: for explicitness (merge-neutral). (4) VL in-cmd '# mmproj' comments relocated to YAML comments (SanitizeCommand stripped; normalized-token equality). (5) goldens re-verified not re-captured (test session owns them). (6) app-template tgz stays gitignored. (7) rana verbatim except proxy omission.",
+          "friction": "aislop scan --changes scopes 0 files on unpushed branch (no base ref) => substituted dir scans + grep evidence; em-dash YAML spliced via shell python (known workaround)",
+          "open_questions": "ratify deviation-1 disabled-wording ownership with test writer during A/B fix (C04 bf16-failfast depends on it)",
+          "next_suggested": "route A+B to test session (or user waiver), C02 review re-runs suite; then C03/C04"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C02-contract-fix",
+          "files_changed": [
+            "charts/llama-swap/tests/test_config_schema.py",
+            "charts/llama-swap/tests/TEST_SPEC.md"
+          ],
+          "commands_run": [
+            "defect-A verification: rana exec-line substring -hf count=2 vs token-boundary -hf=1/-hfd=1; fresh render token-equal golden => TEST-FAULTY confirmed",
+            "defect-B verification: 6 GPU_DISABLED_IDS golden-gpu cmd lacks -hf; chart.hf == golden-gpu-ai -hf for all 6 => TEST-FAULTY confirmed",
+            "pytest schema+parity => 35 passed (schema 12/12)",
+            "pytest full suite => 47f/82p/12s, reds decompose exactly 21 C03 + 26 C04, all implementation-missing",
+            "C04 wording-compat probe (bf16 fail-fast vs composition) => compatible",
+            "git commit b6fe26e0c local (tests-only) => pass"
+          ],
+          "deviations": "minimal re-expressions: (A) substring count -> whitespace-token count (one -hf primary AND one -hfd draft); (B) hf refs routed per-ID against golden gpu-ai for fail-fast ids (coverage preserved, not excluded). TEST_SPEC 7 records amendments + ratifies dev C02 deviation 1 (disabled: full post-id message; template composes byte-exact golden echo; chunk-sketch wording void). DECISIONS mirror left to coord (role cannot write .agents/plans/).",
+          "friction": "/tmp/opencode bin+venv aged out again (helm reinstall) - ephemeral env, known",
+          "open_questions": "none",
+          "next_suggested": "C02 review re-runs suite expecting 47f/82p/12s; then wave 2"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C02",
+          "verdict": "APPROVED",
+          "files_changed": [
+            ".agents/plans/2026/2026-10-feat-llama-swap-config-generation/chunks/C02.md (Round-2 Review notes appended; Round-1 notes from crashed attempt independently re-derived and corroborated)"
+          ],
+          "commands_run": [
+            "helm dependency update => pass",
+            "helm lint + --strict => pass",
+            "helm template default/gpu/gpu-ai extract-and-render => 3x pass",
+            "pytest full suite => 47f/82p/12s = expected bar, reds 21 C03 + 26 C04 all implementation-missing",
+            "parity => 23/23",
+            "schema => 12/12",
+            "existing CI suite => 33/33",
+            "trio/sentinel/custom-values greps => pass",
+            "independent golden parity script (IDs 40/55 exact; cmd token multisets; non-cmd/macros/matrix/hooks deep-equal; 6 disabled echoes byte-identical; rana+whisper byte-identical; proxy-uniform audit) => PASS",
+            "rightmost-wins effective-args simulation (39+53 models) => 0 differing",
+            "template fail-guard probes => as documented",
+            "git scope verification => pass",
+            "aislop dir scans => 0 findings changed files"
+          ],
+          "findings": [
+            "minor-1: EOF newlines (fold into C04 work)",
+            "minor-2: TEST_SPEC fail-guard wording (fold into C04 work)"
+          ],
+          "deviations": "none by reviewer",
+          "friction": "aislop --json findings live under .diagnostics not .findings",
+          "open_questions": "none",
+          "next_suggested": "wave 2: C03 dev (schedule LLAMA_SWAP_IMAGE_EVIDENCE=1 docker-gated run before C03 acceptance); C04 dev; fold minors into C04"
+        }
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "title": "autogen wiring: base.yaml ConfigMap, initContainer, /app/gen, degrade path, reload semantics",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C01",
+        "C02"
+      ],
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "BLOCKED",
+          "chunk": "C03",
+          "commit": "fc7c53c43 (local)",
+          "files_changed": [
+            "charts/llama-swap/values.yaml",
+            "charts/llama-swap/templates/_helpers-llama-swap.tpl",
+            "charts/llama-swap/templates/configmap-autogen-base.yaml (new)"
+          ],
+          "commands_run": [
+            "helm dependency update => pass",
+            "helm lint + --strict => pass",
+            "helm template default/gpu/gpu-ai => 3x pass",
+            "pytest -q => 29f/100p/12s (reds = 26 C04 + 3 contract-fault; all other 21 C03 green)",
+            "test_autogen_wiring => 23/26",
+            "parity+schema+CI+image subset => 73p/4s (parity 23/23, schema 12/12, CI 33/33, C02 golden parity NOT regressed)",
+            "LLAMA_SWAP_EVIDENCE=1 autogen_integration => 3p/5s (base_yaml parses + empty-scan stock failure both clusters; fixture generate+validate disjoint+scalar-safe; docker/HF skipped per waiver)",
+            "degraded-script replay under corrected extraction => 3/3 pass",
+            "declared-CM bytes vs HEAD => 22547/31334 B identical",
+            "sentinel/trio greps => pass",
+            "drift-guard probes => 2x fail-render-as-designed",
+            "aislop scan => 0 findings changed files",
+            "git scope => pass"
+          ],
+          "validation_at_fault": "test_autogen_wiring.py::_init_script:197 argv[len(argv)-1-argv[::-1].index('-c')] resolves to the '-c' element itself -> always returns '-c' (evidence: assert '.../sb' in '-c'). 3 degrade-path tests unsatisfiable by any compliant rendering. Suggested fix: argv[len(argv)-argv[::-1].index('-c')]. Implementation proven against corrected extraction: all 3 contracts pass. Route to test session ses_e9bdebccbffe7bYG46Fm9LO8FG.",
+          "deviations": "(1) 3 reds are contract-fault not gaps. (2) Added autogen.binary + autogen.defaultParams values keys (tool cmd template hardwires ${binary}; default-params must be defined or llama-swap rejects generated half - generator.py:160 at pinned SHA). (3) base.yaml carries NO top-level scalars (generate re-emits verbatim; omission removes scalar-conflict class). (4) base.yaml macros = config.macros + 2 contract macros. (5) SCAN_DIRS guard uses contains/splitList (helm 3.16 lacks regexFindString variants). (6) EOF newline added to chart values.yaml (in-scope pre-existing); services/* EOF items stay C04. (7) no services/** change needed - chart-level wiring, both cluster renders verified. (8) gen emptyDir globalMounts also reach tools container (inert).",
+          "friction": "helm 3.16 template func gaps (regexFindString*) caught at lint; git-archive compare needed helm dep update in extracted copy (app-template tgz gitignored); aislop local-absent -> npx 0.18.1 dir-scope",
+          "open_questions": "route _init_script fix; waiver covers docker-gated merged -validate (c03_4-merge/c03_5) -> CONFIRMED by user 2026-10-23; nit-3/minor-2 fold into C04",
+          "next_suggested": "test-session fix => C03 review expects 26 wiring green; C04 dev"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C03-contract-fix",
+          "commit": "f2dcdc176 (tests-only, local)",
+          "files_changed": [
+            "charts/llama-swap/tests/test_autogen_wiring.py",
+            "charts/llama-swap/tests/TEST_SPEC.md"
+          ],
+          "commands_run": [
+            "pre-fix repro => 3 FAILED exactly assert '<tmp>/sb' in '-c' (dev evidence reproduced)",
+            "one-token index correction => pass",
+            "pytest test_autogen_wiring.py -v => 26 passed (dev's fail-open script PROVEN by execution in all 3 sandbox modes)",
+            "pytest full suite -v => 26f/103p/12s, reds 100% test_new_roster (C04)",
+            "LLAMA_SWAP_EVIDENCE=1 -k autogen_integration => 3p/5s unchanged",
+            "git commit tests-only, tree clean => pass"
+          ],
+          "defect_C_verdict": "TEST-FAULTY confirmed; dev not at fault; TEST_SPEC 7.7 promise preserved, amendment logged 7(C)",
+          "deviations": "none beyond routed fix",
+          "friction": "none (env survived; em-dash edit clean this time)",
+          "open_questions": "none",
+          "next_suggested": "C03 review bars: wiring 26/26, suite 26f/103p/12s, evidence 3p/5s; then C04 dev + HF re-verification (RUN_HF_CHECK=1)"
+        },
+        {
+          "status": "CHANGES_REQUESTED",
+          "chunk": "C03",
+          "verdict": "CHANGES_REQUESTED",
+          "files_changed": [
+            ".agents/plans/2026/2026-10-feat-llama-swap-config-generation/chunks/C03.md (Round-1 Review notes appended)"
+          ],
+          "commands_run": [
+            "helm dep update / lint / --strict / template default+gpu+gpu-ai => pass",
+            "pytest -v => 26f/103p/12s expected bar; wiring 26/26; parity 23/23; schema 12/12; CI 33/33 => pass",
+            "LLAMA_SWAP_EVIDENCE=1 autogen_integration => 3p/5s honest skips",
+            "pinned-venv generate vs rendered base absent-scan => stock No-models-found rc1 both clusters => pass",
+            "pinned-venv generate on gguf fixture => rc0 models+macros only => pass",
+            "HOME non-writable fixture generate => PermissionError rc1 (finding #1 repro) => FAIL",
+            "declared CM byte-compare vs C02 tip => 22547/31334 IDENTICAL",
+            "main-container pod-delta => exactly feature surface",
+            "drift-guard probes x2 => fail-render as designed",
+            "git show f2dcdc176 => tests-only verified",
+            "aislop => 0 on changed files",
+            "generator.py/cli.py source checks => confirmed"
+          ],
+          "findings": [
+            "#1 MAJOR: read_gguf_metadata:true cache path ~/.cache/llama_swap_config_autogen (gguf_metadata.py:77 unguarded mkdir/write, generator.py:1071) under readOnlyRootFilesystem:true + HOME=/home/autogen => EROFS rc1 => fail-open silently disables scanned half whenever disk GGUFs exist; empirically proven (non-writable HOME repro vs writable HOME rc0); values.yaml:824-825 comment claim falsified. Fix: init-only emptyDir at /home/autogen mirroring autogen-base advancedMounts pattern (values.yaml:951-960) + corrected comment. No test edits needed.",
+            "nits 2-3 + Deferred list in chunks/C03.md"
+          ],
+          "deviations": "none by reviewer; dev deviations 1-8 adjudicated, 7 accepted, 1 (secCtx claim) falsified by finding #1",
+          "friction": "aislop --json diagnostic key is filePath",
+          "open_questions": "none",
+          "next_suggested": "C03 dev round 2 (writable-HOME emptyDir + comment fix), re-review same bars + HOME mount render check"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C03 (round 2)",
+          "commit": "ebe26cc43 (local, 1 file +20/-3)",
+          "files_changed": [
+            "charts/llama-swap/values.yaml"
+          ],
+          "commands_run": [
+            "helm dep update + lint + --strict => pass",
+            "template default/gpu/gpu-ai => 3x pass",
+            "pytest -v => 26f/103p/12s bar met, reds 100% C04",
+            "wiring 26/26, parity 23/23, schema 12/12, CI 33/33, image 5p/4 skips => pass",
+            "LLAMA_SWAP_EVIDENCE=1 => 3p/5s",
+            "render: init-only /home/autogen emptyDir present, main+sidecars do NOT gain it, gen/autogen-home distinct, declared CM sha-equal (222f89da) => pass",
+            "empirical: non-writable HOME => PermissionError rc1; read-only bind => OSError Errno 30 rc1; writable => rc0 cache absorbed => pass",
+            "drift-guard x2 => fail-render as designed",
+            "aislop => 0 on values.yaml (2 pre-existing vendored errors)",
+            "git commit, tree clean => pass"
+          ],
+          "deviations": "(1) HOME env pin TRIALED then removed (no HOME in base image config; Path.home falls back to passwd entry = mount target) - flag for re-review if reviewer prefers explicit pin. (2) nit-2 not applied: dropping 2>/dev/null reintroduces SIGPIPE noise; correct fix is a behavior change. (3) nit-3 not applied per reviewer's own conservative/acceptable judgment. (4) rationale at :823 site + mount-site comment cross-referenced. (5) no tests/services touched.",
+          "friction": "22547/31334 are python len(str) CHARS not UTF-8 bytes (gpu=22561 bytes, 7 em-dashes) - reconcile before flagging false parity regression",
+          "open_questions": "none",
+          "next_suggested": "C03 review round 2: same bars + HOME-mount render + EROFS repro; then C04 dev"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C03",
+          "verdict": "APPROVED",
+          "files_changed": [
+            ".agents/plans/2026/2026-10-feat-llama-swap-config-generation/chunks/C03.md (Round-2 Review notes appended)"
+          ],
+          "commands_run": [
+            "helm dep/lint/--strict => pass",
+            "template x3 => pass",
+            "pytest => 26f/103p/12s reds 100% C04",
+            "wiring 26/26, parity 23/23, schema 12/12, CI 33/33, image 5p/4s => pass",
+            "LLAMA_SWAP_EVIDENCE=1 => 3p/5s",
+            "render: autogen-home init-only, 6 unique vols, main/tools byte-identical vs fc7c53c43 => pass",
+            "declared-CM + base-CM sha-equal (archive re-renders) => pass",
+            "drift-guard x2 => fail-render as designed",
+            "empirical: HOME 555 => PermissionError rc1; RO-bind unshare => OSError 30 rc1; writable => rc0+cache; HOME-unset => passwd fallback rc0 => finding #1 CLOSED",
+            "aislop values.yaml => 0/0",
+            "cluster readonly MCP: k3s v1.36.5/containerd 2.3.4, SCC absent; CRI/runc/kubelet HOME greps => deviation-1 ACCEPT"
+          ],
+          "findings": [
+            "deviation-1 (no explicit HOME pin) ACCEPTED with source+cluster proof: image has no HOME, passwd entry baked by useradd --create-home, env=image+spec on this fleet, emptyDirs 0777",
+            "nits 2-3 non-application accepted",
+            "deferred (e): findutils -print -quit restructure; deferred (f): C05 first-real-scan observation line - fold into C04/C05 tasking"
+          ],
+          "deviations": "none by reviewer",
+          "friction": "ag-venv/bin/python3 shadows pytest when PATH-prepended - use /usr/bin/python3 for gated runs; raw.githubusercontent path guesses 404 - tree API first",
+          "open_questions": "none",
+          "next_suggested": "C04 dev (fold minors: services EOF newlines, nit-3, deferred (e); C05 gets deferred (f))"
+        }
+      ]
+    },
+    "C04": {
+      "status": "done",
+      "title": "new model roster: flash-next, Ornith 122B/35B, orcarouter uncensored",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "BLOCKED",
+          "chunk": "C04",
+          "commit": "4b19a9b6b (local)",
+          "files_changed": [
+            "charts/llama-swap/values.yaml (+112: 35B ladder 7 entries + chart matrix vars/main)",
+            "services/gpu/prod/values.yaml (+41: tuned q6/q8, bf16 fail-fast echo, EOF)",
+            "services/gpu-ai/prod/values.yaml (+182: flash-next q3-q6, orca-q6, 122B q3-q6, matrix vars/main/solo, EOF)",
+            "chunks/C04.md (Dev findings - acceptance-5 record location, permitted w/ reason)"
+          ],
+          "commands_run": [
+            "helm dep update/lint/--strict => pass",
+            "template default+gpu+gpu-ai => 3x pass (67832/69632/88739 B)",
+            "pytest -v => 3f/126p/12s: 25 of 26 roster reds green; 3 survivors = D/E contract conflicts; schema 12/12, wiring 26/26, CI 33/33, image 5p/4s",
+            "byte-stability vs ebe26cc43 git-archive render: pre-existing entries JSON-byte-equal both clusters, macros/hooks/scalars equal, base CM sha-equal, additions = approved 7/16 => pass",
+            "gpu isolation greps (0 flash-next/122b/orca ids+refs; orcarouter count 0) => pass",
+            "preload==pinned; q5/q6 in NO set, NO var => pass",
+            "dev-side llama.cpp@889edf43 find_best_model checker over both renders => 117/117 refs resolve live, exit 0",
+            "HF API listings + size sums all 6 repos => present, match RESEARCH 4, NO churn",
+            "fit gate range-fetches: -ot regex matches qwen4exp 144 tensors / qwen35moe 122B 147 / 35B 123-of-753 => ${moe} wired everywhere, fn-moe NOT needed",
+            "orca header probe => 401 GatedRepo anon (evidence); siblings listable Q6_K + MTP-draft present",
+            "LLAMA_SWAP_EVIDENCE=1 autogen_integration => 3p/5s",
+            "RUN_HF_CHECK=1 pytest -k hf_repo_tags_resolve => FAILED 97/117 false-MISSING incl. 12 pre-existing prod refs = defect F (frozen resolver)",
+            "trio/sentinel greps => pass",
+            "aislop dir-scans => 0 new findings",
+            "EOF newlines restored; scratch .-*-config.yaml deleted => pass"
+          ],
+          "validation_at_fault": "(D) test_c04_1_exact_hf_ref_per_approved_id[ornith-1.5-35b-a3b-bf16] demands -hf in GPU render cmd while sibling test_c04_1_35b_bf16_gpu_disabled_failfast (green) + chunk mandate the fail-fast echo - unsatisfiable, same class as ratified B; suggested per-ID golden routing for fail-fast-shaped cmds. (E) test_config_parity test_c02_2 matrix assertion (line 144) demands whole matrix == pre-C04 golden while roster tests flashnext_matrix_placement/orca_and_122b_solo/35b_ladder_matrix_membership (green) require additions - mutually unsatisfiable; suggested golden-vars-subset + golden-set-tokens-preserved. (F) hf_check.py::_tag_resolves misses flat <Model>-<TAG>.gguf layout - false-MISSING 97/117 incl. prod refs, pre-dates C04; llama.cpp@889edf43 find_best_model rule proves 117/117 resolve; suggested resolver reuse. Route all to ses_e9bdebccbffe7bYG46Fm9LO8FG (user-approved 2026-10-23).",
+          "deviations": "(1) chunks/C04.md dev-findings append permitted (record location named by acceptance-5). (2) orca-q6 use list = flash-next MoE regime (156 GiB MoE cannot take 27B dense -ngl 999); {draft-mtp,2}, no -hfd (embedded-MTP expectation; 401-blocked header check; fallback line in entry comment). (3) q5/q6 carry draft+spec superset. (4) 122B capabilities declared (mmproj in listings). (5) 122B MTP shipped WITHOUT (prithivMLmods holds full builds, no standalone draft; contract asserts none). (6) deferred (e) + minor-2/nit-3 NOT applied (out of this round's folded scope).",
+          "friction": "gated repos: anon list ok, /resolve 401 (HF_TOKEN needed for header checks); unsloth shard1 metadata-only (n_tensors=0) - probe shard 2+; GGUF tensor-info field order name->ndims->dims->dtype->offset (misread = silent empty tables); RUN_HF_CHECK sits behind LLAMA_SWAP_EVIDENCE module gate (set both)",
+          "open_questions": "D/E/F amendments (post-expect 0f/129p/12s); minor-2+nit-3+deferred(e) unowned - propose post-wave hardening chore; C05 runbook: orca -hfd fallback note + first-load measure-on-cluster caveats (q5/q6/orca/122B-q6)",
+          "next_suggested": "test-session D/E/F fixes, then C04 review (expect 0f/129p/12s); wave 3 C05 gated on user PR"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C04-contract-fix",
+          "commit": "e9a2d1d1e (tests-only, local)",
+          "files_changed": [
+            "charts/llama-swap/tests/test_new_roster.py",
+            "charts/llama-swap/tests/test_config_parity.py",
+            "charts/llama-swap/tests/hf_check.py",
+            "charts/llama-swap/tests/TEST_SPEC.md"
+          ],
+          "commands_run": [
+            "D/E reds reproduced verbatim => pass",
+            "D scope probe: 1 of 17 approved IDs renders fail-fast in primary cluster (gpu/bf16) => pass",
+            "E losslessness probe: matrix delta pure additions, zero changed/removed vars, no dropped memberships => pass",
+            "F source verification at 889edf43: find_best_model regex + case-sensitive sidecar exclusions + shard-primary; -hfd routes find_best_sibling => pass",
+            "F reproduce: frozen resolver 97/117 false-MISSING incl prod refs = exact dev claim => pass",
+            "amend D fail-fast->live-cluster cross-read, E additive-preservation, F loader-mirroring _tag_resolves + _sidecar_resolves => pass",
+            "pytest FULL -v => 0 failed / 129 passed / 12 skipped (parity 23, schema 12, wiring 26, roster 30, image 5p/4s, CI 33)",
+            "hf_check live => 117 refs OK exit 0, zero false-MISSING, zero true negatives",
+            "adversarial probes x13 (boundaries, sidecars, MTP-uppercase rejected, shard-1) => all pass",
+            "RUN_HF_CHECK=1+LLAMA_SWAP_EVIDENCE=1 => 1 passed",
+            "autogen_integration => 3p/5s unchanged",
+            "commit tests-only, tree clean => pass"
+          ],
+          "verdict_D_E_F": "ALL TEST-FAULTY; C04 dev not at fault on any; proof-by-execution against dev's renders",
+          "deviations": "(1) F fix slightly broader than routed: loader has TWO rules (-hf find_best_model + -hfd find_best_sibling) - model-rule-only would leave 9 false-MISSING; _sidecar_resolves added, both source-cited; sidecar check intentionally stricter than loader (named sidecar required = churn signal). (2) hf_check.py is a manual tool, not the pytest contract. (3) E's macros/hooks/scalars assertions untouched. (5) LATENT C05 FINDING: orca MTP-draft.gguf is UPPERCASE - llama.cpp's case-sensitive mtp- keyword would NOT resolve it if the recorded -hfd fallback ever gets wired; logged in TEST_SPEC 7(F), no such ref wired today.",
+          "friction": "em-dash edit flakes recurred (TEST_SPEC tail + hf_check headers) - shell-python with end-anchored asserts used; same known class",
+          "open_questions": "none",
+          "next_suggested": "C04 review bars: 0f/129p/12s + live 117/117; mirror dev findings (fit gate pass, orca no-hfd) + C05 runbook addendum (uppercase MTP-) into DECISIONS"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C04",
+          "verdict": "APPROVED",
+          "files_changed": [
+            ".agents/plans/2026/2026-10-feat-llama-swap-config-generation/chunks/C04.md (Round-1 Review notes appended)"
+          ],
+          "commands_run": [
+            "helm dep update + lint + --strict => pass",
+            "template x3 => pass (67832/69632/88739 B)",
+            "pytest -v => 0f/129p/12s exactly + per-module recount",
+            "LLAMA_SWAP_EVIDENCE=1 autogen_integration => 3p/5s",
+            "RUN_HF_CHECK=1 LLAMA_SWAP_EVIDENCE=1 => 1p",
+            "hf_check.py direct => 117/117 OK exit 0",
+            "fit-gate independent re-derivation (range-fetch UD-Q4_K_XL shards, GGUF parse) => 144 matches qwen4exp, 0 false-matches",
+            "download.cpp@889edf43 source check => pass",
+            "HF API size re-sums + 4 repo SHAs => zero churn",
+            "git-archive ebe26cc43 byte-compare gpu-ai pre-existing surface => 55/55 identical, base CM sha-equal",
+            "sentinel/trio/leakage/macro-resolution/preload/EOF/mojibake greps => pass",
+            "aislop x3 => 0 touched files",
+            "git diff scope => pass"
+          ],
+          "findings": [
+            "minor-1: gpu q6/q8 inherit image capabilities while pinning --no-mmproj (UI-informational; per-cluster caps override -> post-wave hardening chore)",
+            "nit: TEST_SPEC 7(D) says 17 IDs, is 16",
+            "nit-2: orca fallback comment lacks uppercase-MTP caveat -> fold into C05 runbook"
+          ],
+          "deviations": "none by reviewer; dev 1-6 ACCEPTED (#2 orca regime correct call: -ngl 999 physically impossible for 156 GiB MoE; #5 verified prithivMLmods full-builds-only)",
+          "friction": "none new (FRICTION workarounds held; xxd absent -> od)",
+          "open_questions": "none",
+          "next_suggested": "C04 done; final whole-plan review; C05 gated on user PR w/ runbook addenda (uppercase MTP-draft, measure-on-cluster first loads, nit-2)"
+        }
+      ]
+    },
+    "C05": {
+      "status": "pending",
+      "title": "post-merge gpu-box verification + reload/rollback runbook (user-gated)",
+      "size": "S",
+      "wave": 3,
+      "depends_on": [
+        "C01",
+        "C02",
+        "C03",
+        "C04"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "C05 cannot execute until the user lands the PR (ArgoCD syncs main only)",
+    "FOLLOWUP (C01 review, minor): run LLAMA_SWAP_IMAGE_EVIDENCE=1 suite + docker build/run/inspect of containers/llama-swap-autogen with a real daemon BEFORE accepting C03 (C03 depends on the image contract; no daemon in this worktree - ask user to run locally or approve on-cluster substitute)",
+    "nit (no action): patch-locked base pin python:3.12.15-slim-bookworm mirrors tools sidecar; renovate docker manager covers it",
+    "C02 review minors: minor-1 EOF newlines, minor-2 spec fail-guard wording - fold into C04 dev tasking",
+    "deferred (e): init degrade find|head SIGPIPE restructure to find -print -quit (C03 review R2, non-blocking)",
+    "deferred (f): C05 first-real-scan observation of /home/autogen cache behavior on-cluster (fold into C05 tasking)",
+    "post-wave hardening chore candidate: C02 minor-2 (spec fail-guard) + nit-3 (use-macro render validation) + deferred(e) (-print -quit) - unowned by design, propose to user after final review",
+    "post-wave candidates (C04 review): gpu q6/q8 per-cluster capabilities override (minor-1); orca fallback-comment uppercase-MTP caveat (fold into C05 runbook tasking)"
+  ],
+  "final_review": {
+    "session": "ses_e98e8415fffewg5QkHPMOGkz2Z",
+    "verdict": "APPROVED (ready-to-PR)",
+    "handoff": {
+      "status": "DONE",
+      "chunk": "final",
+      "commands_run": [
+        "helm dep update + lint --strict => pass",
+        "renders x3 => 67832/69632/88739 B byte-exact",
+        "pytest -v => 0f/129p/12s",
+        "LLAMA_SWAP_EVIDENCE=1 => 3p/5s honest gates",
+        "RUN_HF_CHECK=1 => 1p; hf_check direct => 117/117 exit 0",
+        "sentinel/trio/custom-values 1:1 + merged-render probes => pass",
+        "v262 merge.go/run.sh source re-read => macros NOT identity-keyed (scalar-safe), CONFIG_DIR mapping confirmed",
+        "pinned generator source sample => cmd template/colon-ID/macro-reemit contract confirmed",
+        "per-commit scope audit x9 => pass; goldens diff empty; amendment diffs zero deletions",
+        "sh -n + executed probes of 10 disabled echoes => fail-fast shape works",
+        "aislop x4 dirs => 0 findings on branch-changed files (2 errors/135 warnings = pre-existing vendored scripts/**)",
+        "git status => clean (except plan folder)"
+      ],
+      "findings": [
+        "nit-1 (harden): _helpers-llama-swap.tpl:61 disabled: value interpolated into single-quoted shell without quote guard - data currently apostrophe-free (probed), offending value still fails fast; join hardening chore",
+        "nit-2 (C05 runbook): hf_check.py standalone needs helm on PATH (PATH=/tmp/opencode/bin:$PATH)"
+      ],
+      "post_merge_obligations": [
+        "pin ghcr.io/ownyourio/llama-swap-autogen :main -> first :v<run> (renovate-managed)",
+        "C05 with runbook addenda: uppercase MTP-draft caveat, measure-on-cluster first loads (>125 GiB + q3 regime), deferred-(f) cache observation, docker-waived merged -validate lands here",
+        "post-wave hardening chore bundle: minor-2 spec fail-guard + nit-3 use-macro validation + deferred-(e) -print -quit + C04 minor-1 gpu caps + final nit-1 quote guard"
+      ],
+      "deviations": "none - read-only throughout",
+      "friction": "first echo probe used naive quote-stripping => false sh failures; lesson: parse rendered shell via shlex, never strip",
+      "open_questions": "none"
+    }
+  }
+}

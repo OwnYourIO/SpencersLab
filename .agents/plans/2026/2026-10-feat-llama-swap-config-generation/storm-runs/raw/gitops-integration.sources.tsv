@@ -1,0 +1,11 @@
+https://api.github.com/repos/shirayu/llama_swap_config_autogen	Repo metadata: created 2025-09-15, pushed 2026-10-22, 1 star, 0 forks, Apache-2.0, Python
+https://api.github.com/repos/shirayu/llama_swap_config_autogen/releases	GitHub releases: empty
+https://api.github.com/repos/shirayu/llama_swap_config_autogen/tags	GitHub tags: empty
+https://api.github.com/repos/shirayu/llama_swap_config_autogen/commits?per_page=15	Commit cadence: 2026-10-22 active, single author
+https://api.github.com/users/shirayu	Maintainer identity: Yuta Hayashibe, 143 public repos since 2011
+https://pypi.org/pypi/llama-swap-config-autogen/json	PyPI 404: not published
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/.github/workflows/ci.yml	CI: uv+task lint/test only, no publish job (via tarball)
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/pyproject.toml	pyproject: deps PyYAML/gguf/pydantic/jsonschema, requires-python >=3.10 (via tarball)
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docker/unified/run.sh	run.sh: LLAMA_SWAP_CONFIG/CONFIG_DIR/WATCH_CONFIG mapping
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docker/unified/runtime.Dockerfile	unified runtime: python3+pip+numpy+sentencepiece installed, no git
+https://github.com/SpencersLab/SpencersLab/blob/main/charts/llama-swap/values.yaml	Repo chart: unified-vulkan-262 pin, run.sh env usage, persistence layout (local worktree)

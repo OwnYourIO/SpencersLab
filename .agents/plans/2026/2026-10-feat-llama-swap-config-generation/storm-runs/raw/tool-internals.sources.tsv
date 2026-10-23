@@ -1,0 +1,8 @@
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/README.md	Llama-Swap Config Autogen README
+https://api.github.com/repos/shirayu/llama_swap_config_autogen/git/trees/HEAD?recursive=1	Full file tree at main (commit c7357e68)
+https://github.com/shirayu/llama_swap_config_autogen/archive/c7357e68c755b54557f5b0f88b0507bf1c981500.tar.gz	Source tarball pinned to c7357e68 (read locally: pyproject.toml, cli.py, models.py, config.py, generator.py, validation_models.py, template.yaml, base.example.yaml, docs/*)
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/docs/spec.md	spec.md: base.yaml field reference and generation rules (fetched via tarball)
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/docs/tutorial.md	tutorial.md: parameterized macros, variant presets, mmproj/draft binding (via tarball)
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/docs/capabilities.md	capabilities.md: auto-derived capabilities (via tarball)
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/docs/containerized-setup.md	containerized-setup.md (via tarball)
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/docs/vram-estimation.md	vram-estimation.md: fit-params, caching, sidecar JSON (via tarball)

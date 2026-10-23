@@ -1,0 +1,6 @@
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/README.md	README (scan-disk workflow; re-run on gguf add/remove)
+https://api.github.com/repos/shirayu/llama_swap_config_autogen/issues?state=all&per_page=100	Issue tracker: 11 items, all dependabot PRs, zero human issues
+https://github.com/shirayu/llama_swap_config_autogen/blob/main/docs/spec.md	spec.md §3.1/§9: models: = dirs to scan; generation fails with no GGUFs
+https://api.github.com/repos/mostlygeek/llama-swap/git/trees/v262?recursive=1	llama-swap v262 file tree (merge.go location)
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/internal/config/merge.go	multi-file merge: -config + -config-dir, identity maps, conflict rules
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docs/kb/guides/model-runtime/writing-cmd.md	"llama-swap has no setting that downloads a missing GGUF"

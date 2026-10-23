@@ -1,0 +1,16 @@
+https://api.github.com/repos/mostlygeek/llama-swap/git/trees/v262?recursive=1	mostlygeek/llama-swap tree at tag v262 (file listing)
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/config-schema.json	llama-swap v262 config-schema.json
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docs/kb/guides/model-runtime/writing-cmd.md	llama-swap v262 KB: Writing the cmd for a model
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docs/kb/guides/configuration/configuration-overview.md	llama-swap v262 KB: Configuration overview
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docs/config.example.yaml	llama-swap v262 docs/config.example.yaml
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docker/unified/run.sh	llama-swap v262 unified image entrypoint run.sh
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docker/unified/base-vulkan.Dockerfile	llama-swap v262 unified Vulkan builder base
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/docker/unified/runtime.Dockerfile	llama-swap v262 unified runtime image Dockerfile
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/llama-swap.go	llama-swap v262 main flags (-config-dir additive)
+https://raw.githubusercontent.com/mostlygeek/llama-swap/v262/internal/config/merge.go	llama-swap v262 config multi-file merge engine
+https://api.github.com/repos/mostlygeek/llama-swap/releases	mostlygeek/llama-swap releases (v262 published 2026-10-03)
+https://github.com/mostlygeek/llama-swap/blob/v262/config.example.yaml	config.example.yaml moved to docs/ (root file = pointer)
+https://raw.githubusercontent.com/ggml-org/llama.cpp/889edf43/common/hf-cache.cpp	llama.cpp 889edf43 HF cache (LLAMA_CACHE, hub layout)
+https://raw.githubusercontent.com/ggml-org/llama.cpp/889edf43/common/download.cpp	llama.cpp 889edf43 download plan (repo:tag resolution, shards, mmproj/MTP siblings)
+https://raw.githubusercontent.com/ggml-org/llama.cpp/889edf43/common/arg.cpp	llama.cpp 889edf43 args (--hf-token default $HF_TOKEN, --no-mmproj)
+https://github.com/mostlygeek/llama-swap/tree/v262/docker/unified	unified image build directory at v262
