@@ -237,6 +237,107 @@ config:
       description: "Qwen 3.6 35B with 3B active parameters (MoE), BF16 (no quant)"
       ttl: 0
 
+    # Ornith 1.5 35B A3B (qwen35moe arch, 256 experts/top-8 - verified in the
+    # official GGUF header 2026-10-23; same family as the qwen3.6-35b-a3b
+    # entries above, so ${moe}'s expert-on-CPU regime carries over). Ladder =
+    # the operator-approved 7 rungs (DECISIONS 2026-10-22 "Plan approval"):
+    # official Q4_K_M/Q5_K_M/Q6_K/Q8_0/BF16 + bartowski Q3_K_XL/IQ2_XXS, one
+    # repo per rung so llama.cpp's hub-cache shares downloads. Sizes are total
+    # GGUF bytes re-summed from the live HF API at implementation.
+    # BF16 rides the chart so gpu can keep the ID routable via its `disabled`
+    # fail-fast override (same pattern as the qwen3.6 BF16/1M and kat-coder
+    # disables there).
+    ornith-1.5-35b-a3b-iq2xxs:
+      hf: bartowski/Ornith-1.5-35B-A3B-GGUF:IQ2_XXS
+      use: [threads, moe, ctx-256k, flash-and-q8]
+      name: "Ornith 1.5 35B A3B (IQ2_XXS)"
+      description: "Ornith 1.5 35B with 3B active parameters (MoE), IQ2_XXS quant; 9.6 GiB weights, experts on CPU, 256k ctx"
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    ornith-1.5-35b-a3b-q3:
+      hf: bartowski/Ornith-1.5-35B-A3B-GGUF:Q3_K_XL
+      use: [threads, moe, ctx-256k, flash-and-q8]
+      name: "Ornith 1.5 35B A3B (Q3_K_XL)"
+      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q3_K_XL quant; 16.6 GiB weights, experts on CPU, 256k ctx"
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    ornith-1.5-35b-a3b-q4:
+      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q4_K_M
+      use: [threads, moe, ctx-256k, flash-and-q8]
+      name: "Ornith 1.5 35B A3B (Q4_K_M)"
+      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q4_K_M quant; 20.2 GiB weights, experts on CPU, 256k ctx"
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    ornith-1.5-35b-a3b-q5:
+      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q5_K_M
+      use: [threads, moe, ctx-256k, flash-and-q8]
+      name: "Ornith 1.5 35B A3B (Q5_K_M)"
+      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q5_K_M quant; 23.6 GiB weights, experts on CPU, 256k ctx"
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    ornith-1.5-35b-a3b-q6:
+      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q6_K
+      use: [threads, moe, ctx-256k, flash-and-q8]
+      name: "Ornith 1.5 35B A3B (Q6_K)"
+      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q6_K quant; 27.2 GiB weights, experts on CPU, 256k ctx"
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    ornith-1.5-35b-a3b-q8:
+      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q8_0
+      use: [threads, moe, ctx-256k, flash-and-q8]
+      name: "Ornith 1.5 35B A3B (Q8_0)"
+      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q8_0 quant; 35.2 GiB weights, experts on CPU, 256k ctx"
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
+    ornith-1.5-35b-a3b-bf16:
+      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:BF16
+      use: [threads, moe, ctx-256k, flash-and-q8]
+      name: "Ornith 1.5 35B A3B (BF16)"
+      description: "Ornith 1.5 35B with 3B active parameters (MoE), BF16 (no quant); 66.2 GiB weights, experts on CPU, 256k ctx"
+      ttl: 0
+      capabilities:
+        in:
+          - text
+          - image
+        out:
+          - text
+
     qwen3-30b-a3b-q4:
       hf: unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q4_K_M
       use: [threads, ctx-256k, moe, flash-and-q8]
@@ -698,9 +799,22 @@ config:
       v30tq8: qwen3-vl-30b-a3b-thinking-q8
       v30tq4: qwen3-vl-30b-a3b-thinking-q4
       v30tbf: qwen3-vl-30b-a3b-thinking-bf16
+      ornqbf: ornith-1.5-35b-a3b-bf16
+      ornq8: ornith-1.5-35b-a3b-q8
+      ornq6: ornith-1.5-35b-a3b-q6
+      ornq5: ornith-1.5-35b-a3b-q5
+      ornq4: ornith-1.5-35b-a3b-q4
+      ornq3: ornith-1.5-35b-a3b-q3
+      orniq2: ornith-1.5-35b-a3b-iq2xxs
       wsp: whisper-large-v3
     sets:
-      main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+      # C04 (2026-10-23): the Ornith 35B ladder joins the MoE alternation on
+      # both clusters - one GPU model at a time still holds (gpu-ai narrows
+      # this set with its own main/solo definitions; here it is the chart
+      # default the gpu box rides). ornqbf is routable but fail-fast on gpu
+      # (services/gpu disabled override) - matrix membership of a disabled
+      # echo is the established kat-coder pattern on that box.
+      main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | coderq6 | coderq8 | q35q6 | q35q8 | q35bf16 | q35b1m | q30q4 | q30q8 | q8bq4 | q8bq8 | katq4 | katq6 | katq8 | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf | wsp) & homecpu"
 
 # Scanned-half generation (Path A two-source merge, plan 2026-10-22). The
 # `autogen` initContainer below runs the pinned llama-swap-config-autogen

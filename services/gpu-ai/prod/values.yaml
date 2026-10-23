@@ -501,6 +501,168 @@ llama-swap:
         description: "huihui abliteration, bartowski GGUF; experts-on-CPU; non-thinking, tight sampling; 256k ctx"
         ttl: 300
 
+      # --- C04 big families (2026-10-23): Qwen 3.8 Flash Next + Ornith 1.5
+      # 122B + Orca uncensored Flash Next. gpu-ai-only BY PLACEMENT
+      # (DECISIONS 2026-10-22: absence on gpu, not fail-fast - no consumers
+      # on that box and orcarouter is gated:auto with HF_TOKEN gpu-ai-side
+      # only). Fit evidence re-verified live at implementation (GGUF headers
+      # range-fetched; sizes re-summed from the HF API - no tag churn vs
+      # RESEARCH §4):
+      #   flash-next  = arch qwen4exp, 512 experts/top-10, 180B-class.
+      #   ornith-122b = arch qwen35moe, 256 experts/top-8 (~92% routed).
+      #   ${moe}'s -ot "\.ffn_.*_exps\.=CPU" matched the fused routed-expert
+      #   tensors of BOTH arches (blk.N.ffn_{gate,up,down}_exps.weight;
+      #   144/147 tensors) - no fn-moe substitute macro needed; shared
+      #   experts (_shexp) stay GPU-resident as intended.
+      #   Sizes above the node's ~125 GiB RAM budget (q5/q6/orca) are
+      #   declared ENABLED anyway per the operator's accepted OOM-churn risk:
+      #   they carry NO matrix var (a model in no set can only run alone),
+      #   are never preloaded, and ttl 300 evicts them fast on swap.
+      # MTP: flash-next takes the in-repo draft via -hfd
+      # (mtp-Qwen3.8-Flash-Next-Q8_0.gguf, 3.9 GiB, flat root file verified
+      # present live). 122B ships WITHOUT MTP: the unsloth repo has no mtp-*
+      # files and prithivMLmods/Ornith-1.5-122B-MTP-GGUF holds full-model
+      # builds (Ornith-1.5-122B.Q4_K_M.gguf etc.), not a standalone draft to
+      # point -hfd at - recorded per the C04.md conditional.
+      qwen3.8-flash-next-q3:
+        hf: unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q3_K_XL
+        draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+        spec: {type: draft-mtp, draft_n_max: 2}
+        use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+        name: "Qwen 3.8 Flash Next (UD-Q3_K_XL, MTP)"
+        description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q3_K_XL, 83.8 GiB weights; experts on CPU; MTP draft, 256k ctx; SOLO - largest resident this node has attempted (RESEARCH §4A regime test)"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      qwen3.8-flash-next-q4:
+        hf: unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q4_K_XL
+        draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+        spec: {type: draft-mtp, draft_n_max: 2}
+        use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+        name: "Qwen 3.8 Flash Next (UD-Q4_K_XL, MTP)"
+        description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q4_K_XL, 103.7 GiB weights; experts on CPU; MTP draft, 256k ctx; tight against the ~125 GiB node budget - SOLO only"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      # q5/q6: over the node RAM budget outright (147.4/157.5 GiB). Declared
+      # enabled per operator decision 2026-10-22; intentionally NO matrix var
+      # (run-alone semantics) and never preloaded - a request for them evicts
+      # everything, and a failed load surfaces as an upstream error, not a
+      # co-residency surprise.
+      qwen3.8-flash-next-q5:
+        hf: unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q5_K_XL
+        draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+        spec: {type: draft-mtp, draft_n_max: 2}
+        use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+        name: "Qwen 3.8 Flash Next (UD-Q5_K_XL, MTP)"
+        description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q5_K_XL, 147.4 GiB weights; OVER the ~125 GiB node budget - enabled by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix), never preloaded"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      qwen3.8-flash-next-q6:
+        hf: unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q6_K_XL
+        draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+        spec: {type: draft-mtp, draft_n_max: 2}
+        use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+        name: "Qwen 3.8 Flash Next (UD-Q6_K_XL, MTP)"
+        description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q6_K_XL, 157.5 GiB weights; OVER the ~125 GiB node budget - enabled by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix), never preloaded"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      qwen3.8-flash-next-orca-q6:
+        # gated:auto repo - downloads need HF_TOKEN (gpu-ai main container
+        # injects it; the gpu box has none, which is part of why this ID does
+        # not exist there). MTP pattern mirrors the proven qwen38-orca daily
+        # driver (same publisher/build convention, embedded-MTP expectation);
+        # the header itself is not anonymously inspectable (401 GatedRepo,
+        # evidence in the C04 record). If a first load reports no MTP
+        # tensors: add draft: orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:MTP-draft.gguf
+        # (file verified present live) or drop the spec block.
+        hf: orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:Q6_K
+        spec: {type: draft-mtp, draft_n_max: 2}
+        use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+        name: "Qwen 3.8 Flash Next Uncensored (Orca Q6_K, MTP)"
+        description: "orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights; experts on CPU; over the ~125 GiB node budget like flash-next q6 - SOLO, never preloaded, may OOM; embedded-MTP per the qwen38-orca pattern"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      ornith-1.5-122b-q3:
+        hf: unsloth/Ornith-1.5-122B-GGUF:UD-Q3_K_XL
+        use: [threads, moe, ctx-256k, flash-and-q8]
+        name: "Ornith 1.5 122B (UD-Q3_K_XL)"
+        description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q3_K_XL, 55.7 GiB weights; experts on CPU, 256k ctx; SOLO; no MTP draft published (see the C04 family note)"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      ornith-1.5-122b-q4:
+        hf: unsloth/Ornith-1.5-122B-GGUF:UD-Q4_K_XL
+        use: [threads, moe, ctx-256k, flash-and-q8]
+        name: "Ornith 1.5 122B (UD-Q4_K_XL)"
+        description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q4_K_XL, 74.2 GiB weights; experts on CPU, 256k ctx; SOLO; no MTP draft published (see the C04 family note)"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      ornith-1.5-122b-q5:
+        hf: unsloth/Ornith-1.5-122B-GGUF:UD-Q5_K_XL
+        use: [threads, moe, ctx-256k, flash-and-q8]
+        name: "Ornith 1.5 122B (UD-Q5_K_XL)"
+        description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q5_K_XL, 88.1 GiB weights; experts on CPU, 256k ctx; SOLO; no MTP draft published (see the C04 family note)"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
+      ornith-1.5-122b-q6:
+        hf: unsloth/Ornith-1.5-122B-GGUF:UD-Q6_K_XL
+        use: [threads, moe, ctx-256k, flash-and-q8]
+        name: "Ornith 1.5 122B (UD-Q6_K_XL)"
+        description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q6_K_XL, 106.4 GiB weights; marginal against the ~125 GiB budget - SOLO only; no MTP draft published (see the C04 family note)"
+        capabilities:
+          in:
+            - text
+            - image
+          out:
+            - text
+        ttl: 300
+
       # PHASE 2 — enable after sidecar provisioning (prepare → convert-cyber
       # → verify). Deliberately NO bootstrap here: a missing LoRA must fail
       # loudly, provisioning is operator-run via the tools container.
@@ -557,6 +719,19 @@ llama-swap:
         q36her: qwen36-heretic
         q36hui: qwen36-huihui
         cnxabl: coder-next-ablit
+        # C04 big families (2026-10-23) - all solo-set. flash-next q5/q6 get
+        # NO var at all on purpose: a model in no matrix set can only run
+        # alone and is never admitted under a co-residency promise (declared
+        # ENABLED per the operator's accepted OOM risk, DECISIONS 2026-10-22).
+        # The Ornith 35B ladder vars (orn*) come from the chart matrix and
+        # merge in.
+        fnq3: qwen3.8-flash-next-q3
+        fnq4: qwen3.8-flash-next-q4
+        fnorca: qwen3.8-flash-next-orca-q6
+        o122q3: ornith-1.5-122b-q3
+        o122q4: ornith-1.5-122b-q4
+        o122q5: ornith-1.5-122b-q5
+        o122q6: ornith-1.5-122b-q6
         # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
       sets:
         # Trio coexistence (2026-10-16): ONE dense + ONE MoE + embedding +
@@ -570,11 +745,18 @@ llama-swap:
         # overflows the node alongside any MoE. katq4/q6/q8 moved to solo:
         # ~80B-A3B experts-on-CPU co-resident with the dense trio exceeds the
         # 125 GiB budget (same reason cnxabl is solo).
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8) & emb06 & homecpu"
+        # 2026-10-23 (C04): the Ornith 1.5 35B A3B ladder (qwen35moe, same
+        # expert-offload class as the q35* entries - header-verified) joins
+        # the MoE alternation; it stays ONE MoE resident, IQ2..Q8 rungs.
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8 | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
         # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;
         # VL/whisper serve batch jobs; cnxabl's 48.6 GB experts-on-CPU would
         # overflow the node RAM budget if co-resident with the dense trio;
         # q38bf16 + kat trio overflow it too (see main-set note 2026-10-20).
-        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | katq4 | katq6 | katq8 | q38q81m | katq41m | katq61m | katq81m | cnxabl | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+        # 2026-10-23 (C04): flash-next q3/q4 + orca-q6 + the 122B UD ladder
+        # join here (55.7-156.1 GiB weight classes); ornqbf (Ornith 35B BF16,
+        # 66.2 GiB) is solo - dense-weight resident too big for the trio.
+        # flash-next q5/q6 are deliberately in NO set at all (see vars note).
+        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | katq4 | katq6 | katq8 | q38q81m | katq41m | katq61m | katq81m | cnxabl | fnq3 | fnq4 | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
