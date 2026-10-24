@@ -133,18 +133,25 @@
       "dev_session": "ses_e8fd8ad07ffeCBdbTtxjaEfpUJ"
     },
     "C05": {
-      "status": "in-review",
+      "status": "done",
       "wave": 3,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "role": "dev",
           "round": 1,
           "at": "2026-10-24",
           "result": "RESULT\nstatus: DONE\nchunk: C05\nfiles_changed: [services/gpu/prod/templates/secrets-coder.yaml (7 target.template.data keys: ID=forgejo/TYPE=gitea/DISPLAY_NAME=Forgejo/canonical AUTH_URL https://git.spencerslab.com/login/oauth/authorize + 3 v2-escaped fetch keys, escape shape from the file's own OIDC line; ea_client_id/ea_secret/token_encryption_keys entries, bitwarden-login + Default/None/None trio; why-comments), services/gpu/prod/values.yaml (bitwardenIds coder-external-auth + coder-token-encryption sentinels + current-standard vs legacy coder-sso-secret/coder-pg note; coder.coder.podAnnotations reloader=true + rationale), custom-values/gpu/prod-values.yaml (both keys OVERRIDE_NEEDED slots in the flat top-level bitwardenIds block, C04 treatment mirrored: register redirect URI, dd|base64 gen form, crash-loop warning, gpu-distinct-item note)] (commit 9276382a8, local, 3 files +96/\u22120)\ncommands_run: [gpu-coder-sso.sh => pre-edit EXIT 1 first FAIL g-sso-1, post-edit EXIT 0 15/15 ok zero skips incl. real coder-chart@2.35.2 pull+render leg-3 pod-annotation proof; dev-git-auth.sh => EXIT 1 44 ok sole FAIL c-sso-5 (unchanged C04-state); startup-script 36/7 (C06 statics only); startup-sso-behavior red only b-1; image 46/0; pins 8/0; helm lint services/gpu/prod => 0; plan-verbatim render (domain + 4 coder bitwardenIds) => 0: 7 keys, canonical AUTH_URL, 8 test-uuid hits, grep OVERRIDE 0 in doc; sh -n/dash -n => 0/0; AC5 version: 2.35.2 pin present outside hunks; AC6 diffs charts/coder+custom-values/dev+services/dev+tests+containers => EMPTY; git diff 9c5bbd5e0..HEAD -- tests/ EMPTY; forward-ref grep zero; aislop 100/100 (non-informative yaml); comment-slop applied, keep-all]\ndeviations: none \u2014 verbatim per chunks/C05.md; deferred C04 NIT deliberately NOT touched (AC6 scope); C04's NIT wording not replicated\nfriction: none new\nopen_questions: none\nnext_suggested: agent-review round 1 on C05; C06 unblocked (depends_on C04 approved)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C05\nverdict: APPROVED (round 1)\nfiles_changed: [chunks/C05.md] (Review notes appended; no source/test edits)\ncommands_run: [gpu-coder-sso.sh => EXIT 0 (15/15, zero skips, leg-3 real coder@2.35.2 pull+render re-verified live); dev-git-auth.sh => EXIT 1 44 ok sole FAIL c-sso-5; startup-script => EXIT 1 36/7 (C06 statics only); startup-sso-behavior => EXIT 1 b-1; image 46/0; pins 8/0; helm lint services/gpu/prod => 0; plan render 4-set => 0 (7 keys, canonical AUTH_URL, v2 escapes literal, UUIDs resolved, zero OVERRIDE); 2-set => 0 (5 pre-existing cluster-annotation sentinels only, TEST-SPEC-anticipated); -f custom-values/gpu => 0 (OVERRIDE_NEEDED x3 only); g-sso-4 pairing spot-check => pass; AC6 negatives empty; tests//containers/ diffs empty; forward-ref grep zero; aislop 100/100 (non-informative yaml); terraform skipped (no HCL)]\nmechanism: charts/base/templates/appset-charts.yaml:33 injects (index $.Values $appName) into the coder Application valuesObject -> gpu coder: block feeds official chart directly; coder.podAnnotations is the official chart's own value path (dev reaches same key via wrapper subchart hop one level deeper); env delivery rides pre-existing envFrom: coder-secrets; renders prove both sides.\ndeviations: none \u2014 runbook steps 1-7; exit codes sans pipes; leg-3 re-verified live\nfriction: (1) startup-script uses lowercase 'fail:' not 'FAILED' \u2014 case-insensitive grep needed \u00b7 trivial; (2) known workarounds held\nopen_questions: none \u2014 APPROVED; NIT: TEST-SPEC g-sso-4 row says (3 ok) but 3 assertions emit 2 ok lines (per-row sums 16 vs observed 15) \u2014 same evidence-count class as earlier nits, coord may fix the line\nnext_suggested: mark C05 done (wave 3 complete); C06 dev (deps satisfied)"
         }
       ],
       "dev_session": "ses_e8fc2e7feffeUxjkW2qDe0jdiB"

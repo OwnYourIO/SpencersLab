@@ -159,7 +159,7 @@ ok/fail + helm-skip discipline; coder chart pin is read from
 | `g-sso-1` (5 ok) | mirror of c-sso-1 on `services/gpu/prod/templates/secrets-coder.yaml` with the **canonical** AUTH_URL literal | AC2, Tasks bullet 1 |
 | `g-sso-2` (4 ok) | gpu service values: both new sentinels + `coder.coder.podAnnotations` reloader key; custom-values/gpu: both keys UUID-or-`OVERRIDE_NEEDED`, never sentinel | Tasks bullets 2–3, AC4 |
 | `g-sso-3` (4 ok, render ladder) | leg 1 umbrella render: coder-secrets doc seven keys + UUIDs + canonical URL, no OVERRIDE; leg 2: the ApplicationSet values blob (what ArgoCD feeds the external chart) carries the reloader annotation; leg 3: `helm pull coder <pin>` + render with the extracted `coder:` slice → **real Deployment pod template** carries it (registry-unreachable ⇒ skip, not fail); leg 4: `-f custom-values/gpu` render shows OVERRIDE_NEEDED, neither service nor legacy cluster-annotation sentinel | AC2, AC3 |
-| `g-sso-4` (3 ok) | pairing guard: AUTH_URL host is `git.spencerslab.com` exactly; dev-forge host absent from it; the value differs from the dev twin's when defined — a copy-paste between the two server files fails HERE even when each file's own suite would pass | AC2 |
+| `g-sso-4` (3 assertions, 2 ok lines emitted — per-row sum corrected 2026-10-24 per C05 review nit) | pairing guard: AUTH_URL host is `git.spencerslab.com` exactly; dev-forge host absent from it; the value differs from the dev twin's when defined — a copy-paste between the two server files fails HERE even when each file's own suite would pass | AC2 |
 
 ### C06 — workspace polite gate (startup-script.sh extended + NEW startup-sso-behavior.sh + c-sso-5..7)
 

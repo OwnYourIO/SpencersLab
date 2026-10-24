@@ -15,3 +15,4 @@ Friction = anything an agent could not find or had no access to, crashes/tool/MC
 - 2026-10-24 · review(C03) · `terraform` not on PATH in agent sessions · resolution: call `/home/coder/.local/bin/terraform` directly (same off-PATH class as helm) · fixed
 - 2026-10-24 · plan(replan) · Forgejo live swagger 404s on both instances · resolution: verify API routes from v15.0.9 source via Codeberg contents/trees API (stronger evidence) · fixed
 - 2026-10-24 · test(C04-C06) · cap_vars ERE dropped the `\$` before a `\( ` capture group → silent empty extraction (false green risk) · resolution: caught by forward-sim variant probe; later suites must escape `$` in ERE alternations and prove non-vacuity via drift probes · fixed
+- 2026-10-24 · review(C05) · startup-script.sh emits lowercase `fail:` lines (not `FAILED`) — case-sensitive greps miss them · resolution: case-insensitive grep in review probes · open
