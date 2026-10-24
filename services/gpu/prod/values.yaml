@@ -242,28 +242,77 @@ ingress:
     #  port: 8080
 
 llama-swap:
-  # gpu-only override for the 8 GiB Radeon 780M. The chart-default cmd OOMs
-  # here: llama.cpp's fit-params probe ("failed to fit params to free device
-  # memory", fires before every load attempt) and then radv dies with
-  # "Not enough memory for command submission" -> VK_ERROR_DEVICE_LOST ->
-  # llama-swap "upstream command exited prematurely". Exact accounting from
-  # the GGUF header (arch qwen35moe, 40 layers = 10x [3x Gated DeltaNet +
-  # 1x Gated Attention], 256 experts): expert tensors matched by ${moe}'s
-  # -ot regex = 31.88 GiB -> CPU; GPU-resident weights only 2.48 GiB; q8_0
-  # KV for 262144 tokens across the 10 attention layers (2 kv heads x 256
-  # dim) = 2.66 GiB; compute buffer ~0.75 GiB at ub 2048; and the HF repo
-  # ships mmproj-BF16 (vision projector, auto-loaded, ~0.7-1 GiB on GPU).
-  # Total ~7.5 GiB > ~7.4 GiB usable. Fix keeps 256k ctx + q8_0 KV +
-  # expert-only offload (operator decision 2026-10-11; FA + cache types stay
-  # in ${flash-and-q8}, chart untouched) and reclaims VRAM via
-  # --no-mmproj (text-only on this box; gpu-ai keeps vision) and ub 1024
-  # (smaller compute buffer; slower prompt processing — accepted, expect
-  # slow generation overall). Full debug trail:
-  # .agents/plans/2026-10-11-debug-gpu-moe-qwen36-35b-q8-vram-oom.md
-  # Only the cmd composition (use/flags) and description are overridden;
-  # name/proxy/ttl merge from chart defaults.
+  # gpu working set (CA2 catalog enablement; frozen ENABLEMENT table
+  # charts/llama-swap/tests/llama_swap_testlib.py): 34 of the 58-ID catalog
+  # render live here, the rest stay the chart's default-disabled catalog
+  # echoes (fail-fast "<id> is not enabled on this cluster"). Whole families
+  # flip at family level; families with over-budget or gpu-ai-only rungs flip
+  # per-rung. The 8GiB Radeon 780M budget is the filter (VRAM node-freeze
+  # incidents 2026-10-11/18): flash-next/122B/qwen38/qwen36/embedding/
+  # visual/1m/BF16 rungs never load on this box.
   config:
+    families:
+      qwen3.8-27b:
+        quants:
+          q4: {enabled: true}
+          q6: {enabled: true}
+          q8: {enabled: true}
+          bf16: {enabled: true}
+          # q8-visual / q8-1m: gpu-ai-only (q38 macro + RAM-class sizes).
+      qwen3.6-27b: {enabled: true}
+      qwen3.6-35b-a3b:
+        quants:
+          q6: {enabled: true}
+          q8: {enabled: true}
+          # 1m / bf16 / q8-visual: echo on this box - 1m/bf16 carry the
+          # legacy byte-pinned disabled messages below, q8-visual the
+          # gpu-ai-only default message.
+      ornith-1.5-35b-a3b:
+        quants:
+          iq2xxs: {enabled: true}
+          q3: {enabled: true}
+          q4: {enabled: true}
+          q5: {enabled: true}
+          q6: {enabled: true}
+          q8: {enabled: true}
+          # bf16: echo (measured 66.2 GiB; see the disabled override below)
+      home-3b-v3: {enabled: true}
+      qwen3-vl-2b: {enabled: true}
+      qwen3-vl-4b: {enabled: true}
+      qwen3-vl-8b: {enabled: true}
+      qwen3-vl-30b-a3b:
+        quants:
+          q4: {enabled: true}
+          q8: {enabled: true}
+          # bf16: echo with its legacy disabled message below.
+      qwen3-vl-4b-thinking: {enabled: true}
+      qwen3-vl-30b-a3b-thinking: {enabled: true}
+      whisper: {enabled: true}
+      # Default-disabled here: ornith-1.5-122b, qwen3-embedding, qwen36,
+      # qwen38, qwen3.8-flash-next(-orca) - gpu-ai's set, echoed on this box.
     models:
+      # ---- per-ID override layer (merged OVER the family expansion;
+      # precedence disabled > cmd > composition unchanged from C02) ----
+      # gpu-only override for the 8 GiB Radeon 780M. The chart-default cmd
+      # OOMs here: llama.cpp's fit-params probe ("failed to fit params to free device
+      # memory", fires before every load attempt) and then radv dies with
+      # "Not enough memory for command submission" -> VK_ERROR_DEVICE_LOST ->
+      # llama-swap "upstream command exited prematurely". Exact accounting from
+      # the GGUF header (arch qwen35moe, 40 layers = 10x [3x Gated DeltaNet +
+      # 1x Gated Attention], 256 experts): expert tensors matched by ${moe}'s
+      # -ot regex = 31.88 GiB -> CPU; GPU-resident weights only 2.48 GiB; q8_0
+      # KV for 262144 tokens across the 10 attention layers (2 kv heads x 256
+      # dim) = 2.66 GiB; compute buffer ~0.75 GiB at ub 2048; and the HF repo
+      # ships mmproj-BF16 (vision projector, auto-loaded, ~0.7-1 GiB on GPU).
+      # Total ~7.5 GiB > ~7.4 GiB usable. Fix keeps 256k ctx + q8_0 KV +
+      # expert-only offload (operator decision 2026-10-11; FA + cache types stay
+      # in ${flash-and-q8}, chart untouched) and reclaims VRAM via
+      # --no-mmproj (text-only on this box; gpu-ai keeps vision) and ub 1024
+      # (smaller compute buffer; slower prompt processing — accepted, expect
+      # slow generation overall). Full debug trail:
+      # .agents/plans/2026-10-11-debug-gpu-moe-qwen36-35b-q8-vram-oom.md
+      # Only the cmd composition (use/flags) and description are overridden;
+      # name/proxy/ttl merge from chart defaults.
       qwen3.6-35b-a3b-q8:
         hf: unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
         # ${ctx-256k} is NOT reused here: it carries -ub 2048, this box
