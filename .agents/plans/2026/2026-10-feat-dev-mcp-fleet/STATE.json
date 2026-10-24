@@ -17,14 +17,15 @@
   },
   "chunks": {
     "C01": {
-      "status": "dev_done",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
-        "RESULT status: DONE chunk: C01 files_changed: [services/dev/prod/values.yaml, custom-values/dev/prod-values.yaml] commands_run: [baseline t1|t4|t5 => fail(red-expected); t2 t3 => pass; t1..t5 => pass(11 ok); t10 => pass; helm lint services/dev/prod => pass; dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop scan --changes => pass(100, 0 findings); git commit be59d29cd => pass] deviations: none material (comments tightened per comment-slop) friction: none open_questions: none (pod NotReady until user creates dev-searxng LOGIN item = documented interim OQ2) next_suggested: review C01"
+        "RESULT status: DONE chunk: C01 files_changed: [services/dev/prod/values.yaml, custom-values/dev/prod-values.yaml] commands_run: [baseline t1|t4|t5 => fail(red-expected); t2 t3 => pass; t1..t5 => pass(11 ok); t10 => pass; helm lint services/dev/prod => pass; dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop scan --changes => pass(100, 0 findings); git commit be59d29cd => pass] deviations: none material (comments tightened per comment-slop) friction: none open_questions: none (pod NotReady until user creates dev-searxng LOGIN item = documented interim OQ2) next_suggested: review C01",
+        "RESULT status: DONE(chunk C01 review) verdict: APPROVED chunk: C01 commands_run: [t1..t5 => pass(11 ok); t10 t6 => pass; chart lints+searxng render => pass; hivetools dev-slice render => pass (mcp-* C03 red-expected); dev umbrella render => pass (searxng-ingress asserted); sentinel parity 1:1 => pass; rulesync generate --check => pass; JSONC parse => pass; wekan-mcp-login.sh => fail(C02 red-expected); docker build => skip(no daemon); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); tree clean after every run] deviations: reviewer ran --check only (read-only); C03-scoped plan-Commands entries noted red-expected; review notes appended+committed ecfd04b3d friction: none new open_questions: none (pod NotReady until user creates dev-searxng LOGIN item = OQ2 interim) next_suggested: C02"
       ],
       "dev_session": "ses_e90350bf8ffem1psFBe7SazPn3"
     },
