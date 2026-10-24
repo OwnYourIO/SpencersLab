@@ -1,48 +1,81 @@
 #!/usr/bin/env bash
-# Gateway API surface for git-SSH: ONE runner contract for chunks C02 + C03
-# of 2026-10-feat-forgejo-ssh.
+# Gateway API surface for git-SSH: ONE runner contract for chunks C02, C03
+# and C04 of 2026-10-feat-forgejo-ssh.
 #
-# C02 slice (t1-t4): the base chart gains the dormant Gateway API surface —
-# a gitSshPort-gated gitssh block in the k3s traefik HelmChartConfig
-# (kubernetesGateway provider + experimentalChannel, ports.gitssh, and a
-# gateway: key whose listeners null the chart-default web listener and add
-# the gitssh TCP listener) plus a new template vending the EXPERIMENTAL-
-# channel tcproutes CRD (v1.6.3, serves v1 AND v1alpha2 — traefik 3.7's
-# TCPRoute client is pinned to v1alpha2, and k3s's standard-channel bundle
-# does not serve it; the RESEARCH correction in the plan). Gate closed by
-# default: the base chart is cluster-wide, so NOTHING gateway-related may
-# render on any cluster until gitSshPort is set.
+# C02 slice (t1, t3a): the base chart's dormant gitSshPort-gated gitssh
+# blocks in the k3s traefik HelmChartConfig (kubernetesGateway provider +
+# experimentalChannel, ports.gitssh, gateway: listeners with the chart-
+# default web listener nulled). Gate closed by default: the base chart is
+# cluster-wide, so nothing gateway-related may render on any cluster until
+# gitSshPort is set.
 #
-# C03 slice (t5-t10): the activation — gitSshPort: 22222 in exactly the dev
-# + infra umbrella values, charts/forgejo advertising SSH_PORT 22222 in the
-# inline-config Secret (subchart hardcodes 22; its auto-follow is dead code)
-# while the ssh Service stays ClusterIP :22 and the subchart's shipped
-# tcpRoute block attaches <fullname>-ssh to the traefik-gateway (kube-system,
+# C03 slice (t5, t6, t7, t8): the activation — gitSshPort: 22222 in exactly
+# the dev + infra umbrella values, charts/forgejo advertising SSH_PORT
+# 22222 in the inline-config Secret (subchart hardcodes 22; its auto-follow
+# is dead code) while the ssh Service stays ClusterIP :22 and the subchart's
+# tcpRoute attaches <fullname>-ssh to the traefik-gateway (kube-system,
 # sectionName gitssh), the open-gate base renders with the REAL service
-# values files (C02 t5 flips from closed to open), the umbrella appset
-# values blobs carry the gate, and the operator/client-migration notes land
-# in .agents/notes/.
+# values files, the umbrella appset values blobs carry the wiring, and the
+# operator/client-migration notes land in .agents/notes/.
 #
-# Contract sources: chunks/C02.md acceptance criteria 1-6 + its Tests list
-# (t1-t5, t5 inverted in C03) and chunks/C03.md acceptance criteria 1-7 +
-# its Tests list. DECISIONS.md conventions: the port literal 22222 appears
-# in exactly two places and must stay equal.
+# C04 slice (t2, t3b, t4, t5b, the check_crd half of t7): the CRD carrier
+# swap (user-directed follow-up, 2026-10-24) — the C02-era vendored
+# tcproutes CRD template (history: charts/base/templates/gateway-tcproute-
+# crd.yaml) is deleted and replaced by a PINNED chart dependency:
+# gateway-api-crds 1.2.5 from https://charts.christianhuth.de (Chart.yaml +
+# committed Chart.lock), base default-OFF via the condition key (GOTCHA:
+# helm loads a conditioned subchart when the condition path is ABSENT — the
+# default-OFF keys must exist in base values), dev/infra re-enable exactly
+# the experimental tcproutes CRD (+ resource-policy keep) as static
+# companion wiring next to gitSshPort. A chart dependency renders from
+# STATIC values, so the gitSshPort template gate stays the single SEMANTIC
+# gate for the HelmChartConfig surface only; t4 pins the separation
+# (--set gitSshPort alone renders the surface but NO CRD). The rendered CRD
+# must be the v1.6.3 experimental spec — pinned by sha256 (SPEC_PIN), proven
+# equal from both the dependency render and the former vendored template
+# render during C04 planning (2026-10-24); a renovate bump that changes the
+# spec must fail t7.
+#
+# Contract sources: chunks/C02.md criteria 1-6 + Tests, chunks/C03.md
+# criteria 1-7 + Tests, chunks/C04.md criteria 1-12 + its Tests rewrite spec
+# (t2, t3b, t4, t5, t7, t8 rewritten/extended; t1, t3a, the t5 gitSshPort
+# assertions, t6, t9, t10, t11 unchanged). DECISIONS.md: the port literal
+# 22222 appears in value-land in exactly the two sanctioned places.
 #
 # LIFECYCLE (fused single-script pattern, cf. dev-forgejo-runner.sh): the
-# C02 slice is green from C02 dev onward; the C03 slice stays red (for the
-# right reason: the gitSshPort values, the forgejo chart config, and the
-# notes do not exist yet) until C03 lands. t11 (predecessor regressions)
-# must be green whenever this script runs — C01's trail move is what
-# keeps audit-trail.sh green while the root storm-runs/ of THIS ticket
-# still exists.
+# C02/C03-era assertions are green from C02/C03 onward; the C04-era
+# assertions (t2, t3b, t4, t5b, and check_crd inside t7) stay red (for the
+# right reason: the vendored template still exists and the dependency is
+# not pinned) until C04 lands. t11 (predecessor regressions) must be green
+# whenever this script runs — C01's trail move is what keeps
+# tests/services/audit-trail.sh green while the root storm-runs/ of THIS
+# ticket still exists.
+#
+# Sentinel scoping note: the t7 dev open render passes no sentinel --sets
+# (the plan's exact command), so base's ExternalSecret documents and the
+# appset values blob legitimately carry OVERRIDE_VIA_CUSTOM_VALUES there
+# (they resolve at deploy via customValuesUrls; t8's --set renders sweep
+# them). The "no OVERRIDE_VIA_*" assertions are therefore scoped to the
+# HelmChartConfig document (check_hcc) and the CRD document (check_crd) —
+# the union of which is exactly what the C02/C03-era --show-only renders
+# contained.
+#
+# The t2b renovate-annotation guard matches the repo's override-regex form
+# (renovate.json): a comment line whose FIRST token is `changelog:` or
+# `sourceUrl:`. An explanatory comment mentioning those words mid-sentence
+# (the interface WHY-comment says "no # sourceUrl: annotation") does not
+# match and is allowed.
 #
 # Helm discovery follows the dev-git-auth.sh convention: HELM_BIN, the
 # PATH, /home/coder/.local/bin, /tmp/opencode; failing that, helm v3.21.4 is
 # downloaded there. Vendored chart tarballs are not committed, so
 # `helm dependency build` runs on COPIES under /tmp/opencode — the
-# worktree is never written. If a registry is unreachable, that chart's
-# renders are skipped (not failed); the static checks (t1, t2, t5, t9,
-# t10, t11) and the dev-umbrella render (no vendored deps) still run.
+# worktree is never written. Post-C04 the base copy's build also pulls
+# gateway-api-crds per the committed Chart.lock (charts.christianhuth.de) —
+# the registry-unreachable skip handling covers it. If a registry is
+# unreachable, that chart's renders are skipped (not failed); the static
+# checks (t1, t2, t5, t5b, t9, t10, t11) and the dev-umbrella render (no
+# vendored deps) still run.
 #
 # The plan's umbrella Commands use --debug (manifests to stderr); this
 # script captures stdout — the rendered manifests are identical.
@@ -69,6 +102,14 @@ INFRA_CV="custom-values/infra/prod-values.yaml"
 TCFG="$BASE/templates/traefik-config.yaml"
 CRD_TPL="$BASE/templates/gateway-tcproute-crd.yaml"
 NOTES=".agents/notes/2026-10-23-forgejo-git-ssh.md"
+# The C04 CRD identity pin: sha256 of the canonicalized (json.dumps
+# sort_keys) spec of the rendered tcproutes CRD. Proven equal during C04
+# planning (2026-10-24) from BOTH the gateway-api-crds dependency render
+# and the former vendored template render — i.e. the v1.6.3 experimental
+# spec. A renovate bump of the dependency that changes the CRD spec must
+# fail check_crd.
+CRD_NAME="tcproutes.gateway.networking.k8s.io"
+SPEC_PIN="c29ee86ea554c32b83ca8ab6b07651a99e8d72345088f6b4f829b44ad700947e"
 
 checks=0
 
@@ -310,16 +351,19 @@ else
   exit 1
 fi
 
-# --- t2: the vendored experimental-channel tcproutes CRD template ---------
-# (C02 t2 — static structure; t4 re-proves it on the rendered document.)
-if [ ! -f "$CRD_TPL" ]; then
-  fail "t2: $CRD_TPL is missing (C02 has not added the vendored tcproutes CRD template)"
+# --- t2: the pinned gateway-api-crds dependency (C04 criteria 1-4) ---------
+# (supersedes the C02 vendored-template structure check; t7/check_crd
+# re-proves the CRD on the rendered document.)
+# t2a: the vendored template is deleted, and the filename is referenced
+# nowhere outside this ticket's plan artifacts + this script's history.
+if [ -e "$CRD_TPL" ]; then
+  fail "t2: $CRD_TPL still exists (C04 deletes the vendored CRD template — the CRD is now a pinned chart dependency)"
 fi
-if python3 - "$CRD_TPL" "$WORK/t2-count" <<'PY'
-import re, sys
+ok "t2: the vendored CRD template is deleted"
+if python3 - "$WORK/t2-count" <<'PY'
+import subprocess, sys
 
-path, count_file = sys.argv[1], sys.argv[2]
-lines = open(path).read().splitlines()
+count_file = sys.argv[1]
 ok_n = 0
 
 def ok(msg):
@@ -331,56 +375,18 @@ def bad(msg):
     print(f'FAIL: {msg}', file=sys.stderr)
     sys.exit(1)
 
-IF_RE = re.compile(r'\{\{-?\s*if\s+(.+?)\s*-?\}\}')
-GATE_RE = re.compile(r'(?:index\s+\.Values\s+"gitSshPort"|\.Values\.gitSshPort)')
-if not any(IF_RE.search(l) and GATE_RE.search(IF_RE.search(l).group(1)) for l in lines):
-    bad(f't2: {path} is not gated on gitSshPort (the CRD must render only on the clusters that set the gate)')
-ok(f't2: {path} is gated on gitSshPort')
-
-for needle, label in (
-    (re.compile(r'^\s*name:\s*tcproutes\.gateway\.networking\.k8s\.io\s*$'), 'metadata.name tcproutes.gateway.networking.k8s.io'),
-    (re.compile(r'gateway\.networking\.k8s\.io/channel:\s*experimental\s*$'), 'the gateway.networking.k8s.io/channel: experimental annotation'),
-    (re.compile(r'gateway\.networking\.k8s\.io/bundle-version:\s*v1\.6\.3\s*$'), 'the gateway.networking.k8s.io/bundle-version: v1.6.3 annotation'),
-    (re.compile(r'^\s*name:\s*v1\s*$'), 'a version named v1'),
-    (re.compile(r'^\s*name:\s*v1alpha2\s*$'), 'a version named v1alpha2'),
-):
-    if not any(needle.search(l) for l in lines):
-        bad(f't2: {path} lacks {label} (the vendored CRD must be the experimental-channel v1.6.3 tcproutes file, verbatim)')
-ok('t2: the vendored CRD carries name tcproutes.gateway.networking.k8s.io, channel experimental, bundle-version v1.6.3, and both v1 + v1alpha2 versions')
-
-# The upstream file lists each version entry as a 2-space `- ` item whose
-# keys are alphabetical — `name:` sits mid-entry (after
-# additionalPrinterColumns) and `deprecated:` precedes it, so the block
-# extends from the entry's `- ` start line to the next one.
-def version_block(name):
-    idx = None
-    for i, l in enumerate(lines):
-        if re.match(r'^\s*name:\s*' + name + r'\s*$', l):
-            idx = i
-            break
-    if idx is None:
-        return []
-    start = idx
-    while start > 0 and not re.match(r'^  - ', lines[start - 1]):
-        start -= 1
-    block = []
-    for j in range(start, len(lines)):
-        if j > start and re.match(r'^  - ', lines[j]):
-            break
-        block.append(lines[j])
-    return block
-
-v1 = version_block('v1')
-if not any(re.match(r'^\s*served:\s*true\s*$', l) for l in v1):
-    bad('t2: the v1 version block lacks served: true')
-if not any(re.match(r'^\s*storage:\s*true\s*$', l) for l in v1):
-    bad('t2: the v1 version block lacks storage: true (v1 must be the storage version)')
-v2 = version_block('v1alpha2')
-if not any(re.match(r'^\s*served:\s*true\s*$', l) for l in v2):
-    bad('t2: the v1alpha2 version block lacks served: true (traefik 3.7 lists TCPRoute at v1alpha2 — the standard-channel CRD does not serve it, which is why the lab vendors the experimental one)')
-if not any(re.match(r'^\s*deprecated:\s*true\s*$', l) for l in v2):
-    bad('t2: the v1alpha2 version block lacks deprecated: true (the experimental bundle marks it deprecated)')
-ok('t2: v1 is served+storage and v1alpha2 is served (deprecated)')
+r = subprocess.run(['git', 'grep', '-n', 'gateway-tcproute-crd'], capture_output=True, text=True)
+stray = []
+for line in r.stdout.splitlines():
+    p = line.split(':', 1)[0]
+    # this ticket's plan artifacts + this script's history comment are the
+    # sanctioned remaining references (C04 criterion 2)
+    if p.startswith('.agents/plans/2026/2026-10-feat-forgejo-ssh/') or p == 'tests/services/forgejo-ssh-gateway.sh':
+        continue
+    stray.append(line)
+if stray:
+    bad('t2: the deleted template name is still referenced outside the plan artifacts + this test\'s history (C04 criterion 2):\n' + '\n'.join(stray))
+ok('t2: no remaining reference to the vendored template filename (except plan artifacts + this script\'s history)')
 
 with open(count_file, 'w') as f:
     f.write(str(ok_n))
@@ -390,13 +396,190 @@ then
 else
   exit 1
 fi
+# t2b: the Chart.yaml dependency is exactly the interface triple + condition,
+# https repo (renovate-trackable, not oci://), no renovate override annotation.
+if python3 - "$BASE/Chart.yaml" "$WORK/t2b-count" <<'PY'
+import re, sys, yaml
 
-# --- t3: gate CLOSED — the dormant default (C02 criteria 2, 3) ------------
-# (a) the closed-gate valuesContent carries none of the gitssh surface;
-# (b) it is BYTE-IDENTICAL to the pre-change render, anchored to main's
+path, count_file = sys.argv[1], sys.argv[2]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def _uncaught(exc_type, exc_value, exc_tb):
+    print(f'FAIL: t2: {path} could not be evaluated ({exc_type.__name__}: {exc_value})', file=sys.stderr)
+    sys.exit(1)
+sys.excepthook = _uncaught
+
+raw = open(path).read()
+chart = yaml.safe_load(raw)
+deps = [d for d in (chart.get('dependencies') or []) if isinstance(d, dict)]
+by_name = {d.get('name'): d for d in deps}
+for keep in ('argo-cd', 'cert-manager'):
+    if keep not in by_name:
+        bad(f't2: Chart.yaml no longer lists the {keep!r} dependency (C04 adds gateway-api-crds alongside the existing dependencies)')
+entry = by_name.get('gateway-api-crds')
+if entry is None:
+    bad('t2: Chart.yaml has no gateway-api-crds dependency (C04 must pin the experimental-channel tcproutes CRD as a chart dependency)')
+expected = {'name': 'gateway-api-crds', 'version': '1.2.5', 'repository': 'https://charts.christianhuth.de', 'condition': 'gateway-api-crds.enabled'}
+if entry != expected:
+    bad(f't2: the gateway-api-crds dependency entry is {entry!r}, expected exactly {expected!r} (the pinned triple + the condition key that keeps the subchart off by default)')
+ok('t2: Chart.yaml pins gateway-api-crds 1.2.5 from https://charts.christianhuth.de with condition gateway-api-crds.enabled (exactly the interface entry)')
+
+# renovate.json's override regex extracts an annotation only when a comment
+# line's FIRST token is `changelog:` or `sourceUrl:` (the built-in helmv3
+# manager already tracks HTTP-repo Chart.yaml deps — an annotation would
+# double-extract the dependency). An explanatory comment mentioning those
+# words mid-sentence does not match.
+lines = raw.splitlines()
+idx = None
+for i, l in enumerate(lines):
+    if re.match(r'^- name: gateway-api-crds\s*$', l):
+        idx = i
+        break
+if idx is None:
+    bad('t2: the - name: gateway-api-crds line was not found in the raw Chart.yaml (the entry layout differs from the interface block)')
+start = idx
+while start > 0 and lines[start - 1].lstrip().startswith('#'):
+    start -= 1
+end = start
+while end + 1 < len(lines) and lines[end + 1][:1] in (' ', '\t', '#'):
+    end += 1
+ann = [l.strip() for l in lines[start:end + 1] if re.match(r'^\s*#\s*(?:changelog|sourceUrl):', l)]
+if ann:
+    bad(f't2: the gateway-api-crds entry carries a renovate annotation-form comment {ann!r} (renovate.json\'s override regex would double-extract the dependency)')
+ok('t2: no # sourceUrl: / # changelog: annotation attached to the gateway-api-crds entry')
+
+with open(count_file, 'w') as f:
+    f.write(str(ok_n))
+PY
+then
+  checks=$((checks + $(cat "$WORK/t2b-count")))
+else
+  exit 1
+fi
+# t2c: the lock is committed, carries the entry, and a sha256 digest.
+# (Lock/Chart.yaml sync itself is proven by the setup dependency build — a
+# stale lock fails it.)
+if python3 - "$BASE/Chart.lock" "$WORK/t2c-count" <<'PY'
+import re, subprocess, sys, yaml
+
+path, count_file = sys.argv[1], sys.argv[2]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def _uncaught(exc_type, exc_value, exc_tb):
+    print(f'FAIL: t2: {path} could not be evaluated ({exc_type.__name__}: {exc_value})', file=sys.stderr)
+    sys.exit(1)
+sys.excepthook = _uncaught
+
+r = subprocess.run(['git', 'ls-files', '--error-unmatch', path], capture_output=True, text=True)
+if r.returncode != 0:
+    bad(f't2: {path} is not tracked in git (the regenerated Chart.lock must be committed together with Chart.yaml)')
+ok('t2: Chart.lock is committed')
+
+lock = yaml.safe_load(open(path).read())
+deps = {d.get('name'): d for d in (lock.get('dependencies') or []) if isinstance(d, dict)}
+e = deps.get('gateway-api-crds')
+if e is None:
+    bad('t2: Chart.lock has no gateway-api-crds entry (the lock was not regenerated after the Chart.yaml change)')
+if e.get('version') != '1.2.5' or e.get('repository') != 'https://charts.christianhuth.de':
+    bad(f't2: the Chart.lock gateway-api-crds entry is {e!r}, expected version 1.2.5 + repository https://charts.christianhuth.de')
+ok('t2: Chart.lock carries the gateway-api-crds entry (1.2.5, https://charts.christianhuth.de)')
+
+# This repo's lock format pins the dependency set with a top-level
+# `digest: sha256:...` (see the pre-change argo-cd/cert-manager entries);
+# accept a per-entry sha256 too in case a helm version writes one.
+sha = e.get('sha256') or lock.get('digest')
+if not (isinstance(sha, str) and re.fullmatch(r'sha256:[0-9a-f]{64}', sha)):
+    bad(f't2: Chart.lock carries no sha256 digest (entry sha256={e.get("sha256")!r}, lock digest={lock.get("digest")!r})')
+ok('t2: Chart.lock carries a sha256 digest pinning the dependency set')
+
+with open(count_file, 'w') as f:
+    f.write(str(ok_n))
+PY
+then
+  checks=$((checks + $(cat "$WORK/t2c-count")))
+else
+  exit 1
+fi
+# t2d: base default values carry the default-OFF condition keys (the
+# condition-key gotcha — an ABSENT path makes helm load the subchart).
+if python3 - "$BASE/values.yaml" "$WORK/t2d-count" <<'PY'
+import re, sys, yaml
+
+path, count_file = sys.argv[1], sys.argv[2]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def _uncaught(exc_type, exc_value, exc_tb):
+    print(f'FAIL: t2: {path} could not be evaluated ({exc_type.__name__}: {exc_value})', file=sys.stderr)
+    sys.exit(1)
+sys.excepthook = _uncaught
+
+def load(p):
+    # REDEFINED anchors are legal YAML (helm/Go accept them; PyYAML raises
+    # ComposerError) — only markers in value position are rewritten.
+    lines = []
+    with open(p) as f:
+        for line in f:
+            line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+            line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+            lines.append(line)
+    return yaml.safe_load(''.join(lines)) or {}
+
+g = load(path).get('gateway-api-crds')
+if not isinstance(g, dict):
+    bad('t2: base values have no gateway-api-crds: block — the condition-key gotcha: helm loads a conditioned subchart when the condition path is ABSENT, so the default-OFF keys must exist here or every base-managed cluster gets the chart\'s default CRD bundle')
+if g.get('enabled') is not False:
+    bad(f't2: base values gateway-api-crds.enabled is {g.get("enabled")!r}, expected false (default OFF on every cluster)')
+if (g.get('standard') or {}).get('enabled') is not False:
+    bad(f't2: base values gateway-api-crds.standard.enabled is {(g.get("standard") or {}).get("enabled")!r}, expected false')
+if (g.get('experimental') or {}).get('enabled') is not False:
+    bad(f't2: base values gateway-api-crds.experimental.enabled is {(g.get("experimental") or {}).get("enabled")!r}, expected false (the dev/infra service values re-enable exactly the tcproutes CRD)')
+ok('t2: base default values carry the default-OFF gateway-api-crds block (enabled / standard.enabled / experimental.enabled all false)')
+
+with open(count_file, 'w') as f:
+    f.write(str(ok_n))
+PY
+then
+  checks=$((checks + $(cat "$WORK/t2d-count")))
+else
+  exit 1
+fi
+
+# --- t3: gate CLOSED — the dormant default (C02 c2, C04 c5) ---------------
+# (a) the closed-gate valuesContent carries none of the gitssh surface AND
+#     is BYTE-IDENTICAL to the pre-change render, anchored to main's
 #     template (the pre-change tree at this ticket's start; after merge the
-#     anchor equals the new template and the diff is trivially empty);
-# (c) the CRD template renders nothing.
+#     anchor equals the new template and the diff is trivially empty). The
+#     C04 comment fix inside the gate cannot change the closed render.
+# (b) the FULL closed-gate render carries zero gateway.networking.k8s.io
+#     CRDs (replaces the C02 --show-only check — the vendored template is
+#     deleted in C04; the default-OFF condition keys are load-bearing).
 if [ -z "$helm_bin" ] || [ -z "$base_copy" ]; then
   skip "t3: closed-gate render not run (no helm or base dependency build)"
 else
@@ -464,25 +647,38 @@ PY
   fi
   ok "t3: closed-gate HelmChartConfig render is byte-identical to the pre-change (main) render"
 
-  crd_out="$WORK/closed-crd.yaml"
-  crd_err="$WORK/closed-crd.err"
-  if "$helm_bin" template base "$base_copy" --set serviceName=dev \
-      --show-only templates/gateway-tcproute-crd.yaml >"$crd_out" 2>"$crd_err"; then
-    if grep -q 'kind: CustomResourceDefinition' "$crd_out"; then
-      fail "t3: the gate-closed render produced a tcproutes CRD (the CRD template must render nothing without gitSshPort — C02 criterion 3)"
-    fi
-  else
-    grep -q 'could not find template' "$crd_err" ||
-      fail "t3: unexpected helm error on the gated-off CRD render: $(tail -n 5 "$crd_err")"
+  full_out="$WORK/closed-full-render.yaml"
+  if ! "$helm_bin" template base "$base_copy" --set serviceName=dev \
+      >"$full_out" 2>"$WORK/closed-full.err"; then
+    tail -n 30 "$WORK/closed-full.err" >&2
+    fail "t3: full closed-gate render of $BASE failed (log kept at $WORK/closed-full.err)"
   fi
-  ok "t3: the CRD template renders nothing with the gate closed"
+  if python3 - "$full_out" <<'PY'
+import sys, yaml
+
+render = sys.argv[1]
+docs = [d for d in yaml.safe_load_all(open(render)) if d]
+gw = [d for d in docs if d.get('kind') == 'CustomResourceDefinition'
+      and str((d.get('metadata') or {}).get('name', '')).endswith('.gateway.networking.k8s.io')]
+if gw:
+    print(f"FAIL: t3: the closed-gate render carries {len(gw)} gateway.networking.k8s.io CRD(s) {[ (d.get('metadata') or {}).get('name') for d in gw ]} — the default-OFF condition keys are load-bearing: without them helm installs the chart's default CRD bundle on every base-managed cluster", file=sys.stderr)
+    sys.exit(1)
+print('ok: t3: the closed-gate full render carries zero gateway.networking.k8s.io CRDs (the condition default-off skips the dependency everywhere)')
+PY
+  then
+    checks=$((checks + 1))
+  else
+    exit 1
+  fi
 fi
 
-# Shared assertion for an OPEN-gate base render (t4 via --set gitSshPort,
-# t7 via the real service values files). $1 = render file, $2 = tag.
-check_open_render() {
+# check_hcc — the gitssh HelmChartConfig surface of an open-gate base
+# render. $1 = render file, $2 = tag. (All valuesContent assertions are
+# unchanged from the C02/C03 era; the OVERRIDE_VIA_* scan is scoped to the
+# HelmChartConfig document — see the header's sentinel-scoping note.)
+check_hcc() {
   local out="$1" tag="$2"
-  python3 - "$out" "$tag" "$WORK/$tag-count" <<'PY'
+  python3 - "$out" "$tag" "$WORK/$tag-hcc-count" <<'PY'
 import sys, yaml
 
 render, tag, count_file = sys.argv[1:4]
@@ -506,10 +702,7 @@ sys.excepthook = _uncaught
 docs = [d for d in yaml.safe_load_all(text) if d]
 hcc = [d for d in docs if d.get('kind') == 'HelmChartConfig' and (d.get('metadata') or {}).get('name') == 'traefik']
 if not hcc:
-    bad(f'{tag}: no HelmChartConfig named traefik in the open-gate render')
-crd = [d for d in docs if d.get('kind') == 'CustomResourceDefinition']
-if not crd:
-    bad(f'{tag}: no CustomResourceDefinition in the open-gate render (the vendored tcproutes CRD template is missing or its gate is broken)')
+    bad(f'{tag}: no HelmChartConfig named traefik in the render')
 
 try:
     vc = yaml.safe_load((hcc[0].get('spec') or {}).get('valuesContent') or '')
@@ -549,45 +742,128 @@ if ((lg.get('namespacePolicy') or {}).get('from')) != 'All':
     bad(f"{tag}: gateway.listeners.gitssh.namespacePolicy.from is {((lg.get('namespacePolicy') or {}).get('from'))!r}, expected All (the TCPRoutes live in default next to the forgejo Services while the Gateway lands in kube-system)")
 ok(f'{tag}: gateway.listeners — web nulled, gitssh 22222/TCP with namespacePolicy.from All')
 
-md = crd[0].get('metadata') or {}
-if md.get('name') != 'tcproutes.gateway.networking.k8s.io':
-    bad(f"{tag}: CRD metadata.name is {md.get('name')!r}, expected tcproutes.gateway.networking.k8s.io")
-ann = md.get('annotations') or {}
-if ann.get('gateway.networking.k8s.io/bundle-version') != 'v1.6.3':
-    bad(f"{tag}: CRD bundle-version annotation is {ann.get('gateway.networking.k8s.io/bundle-version')!r}, expected v1.6.3")
-if ann.get('gateway.networking.k8s.io/channel') != 'experimental':
-    bad(f"{tag}: CRD channel annotation is {ann.get('gateway.networking.k8s.io/channel')!r}, expected experimental (the standard channel does not serve v1alpha2 — the plan's RESEARCH correction)")
-vers = {v.get('name'): v for v in (crd[0].get('spec') or {}).get('versions', [])}
-if not (vers.get('v1', {}).get('served') is True and vers.get('v1', {}).get('storage') is True):
-    bad(f"{tag}: CRD v1 version must be served+storage, got {vers.get('v1')!r}")
-if vers.get('v1alpha2', {}).get('served') is not True:
-    bad(f"{tag}: CRD v1alpha2 version must be served (traefik 3.7's TCPRoute client is pinned to v1alpha2), got {vers.get('v1alpha2')!r}")
-ok(f'{tag}: CRD renders as experimental-channel v1.6.3 with v1 (storage) + v1alpha2 (served)')
-
-if 'OVERRIDE_VIA_' in text:
-    bad(f'{tag}: the open-gate render still carries an OVERRIDE_VIA_* sentinel')
-ok(f'{tag}: no OVERRIDE_VIA_* sentinel in the open-gate render')
+hcc_text = yaml.safe_dump(hcc[0])
+if 'OVERRIDE_VIA_' in hcc_text:
+    bad(f'{tag}: the HelmChartConfig document still carries an OVERRIDE_VIA_* sentinel')
+ok(f'{tag}: no OVERRIDE_VIA_* sentinel in the HelmChartConfig document')
 
 with open(count_file, 'w') as f:
     f.write(str(ok_n))
 PY
 }
 
-# --- t4: gate OPEN via --set gitSshPort=22222 (C02 criterion 4, 5) --------
+# check_crd — the rendered CRD of an open-gate base render (C04): exactly
+# ONE tcproutes CRD from the gateway-api-crds dependency (and no other
+# gateway.networking.k8s.io CRDs — the tcproutes-only scoping), channel
+# experimental, bundle v1.6.3, v1 (served+storage) + v1alpha2 (served,
+# deprecated), the resource-policy keep annotation, and the spec identity
+# pin (SPEC_PIN). $1 = render file, $2 = tag.
+check_crd() {
+  local out="$1" tag="$2"
+  python3 - "$out" "$tag" "$SPEC_PIN" "$WORK/$tag-crd-count" <<'PY'
+import hashlib, json, sys, yaml
+
+render, tag, spec_pin, count_file = sys.argv[1:5]
+crd_name = 'tcproutes.gateway.networking.k8s.io'
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def _uncaught(exc_type, exc_value, exc_tb):
+    print(f'FAIL: {tag}: the open-gate render could not be evaluated ({exc_type.__name__}: {exc_value})', file=sys.stderr)
+    sys.exit(1)
+sys.excepthook = _uncaught
+
+docs = [d for d in yaml.safe_load_all(open(render)) if d]
+crds = [d for d in docs if d.get('kind') == 'CustomResourceDefinition']
+tc = [d for d in crds if (d.get('metadata') or {}).get('name') == crd_name]
+other_gw = [d for d in crds if (d.get('metadata') or {}).get('name') != crd_name
+            and str((d.get('metadata') or {}).get('name', '')).endswith('.gateway.networking.k8s.io')]
+if other_gw:
+    bad(f'{tag}: the render carries extra gateway.networking.k8s.io CRDs {[ (d.get("metadata") or {}).get("name") for d in other_gw ]} — the dependency must stay scoped to tcproutes only (the ownership overlap with k3s traefik-crd stays at exactly 1 CRD)')
+if len(tc) != 1:
+    bad(f'{tag}: expected exactly one {crd_name} CRD, found {len(tc)} (the static enable values must render it via the gateway-api-crds dependency)')
+crd = tc[0]
+md = crd.get('metadata') or {}
+ann = md.get('annotations') or {}
+if ann.get('gateway.networking.k8s.io/channel') != 'experimental':
+    bad(f"{tag}: CRD channel annotation is {ann.get('gateway.networking.k8s.io/channel')!r}, expected experimental (the standard channel does not serve v1alpha2 — the plan's RESEARCH correction)")
+if ann.get('gateway.networking.k8s.io/bundle-version') != 'v1.6.3':
+    bad(f"{tag}: CRD bundle-version annotation is {ann.get('gateway.networking.k8s.io/bundle-version')!r}, expected v1.6.3")
+ok(f'{tag}: CRD channel experimental + bundle-version v1.6.3')
+
+vers = {v.get('name'): v for v in (crd.get('spec') or {}).get('versions', [])}
+if not (vers.get('v1', {}).get('served') is True and vers.get('v1', {}).get('storage') is True):
+    bad(f"{tag}: CRD v1 version must be served+storage, got {vers.get('v1')!r}")
+v2 = vers.get('v1alpha2', {})
+if v2.get('served') is not True:
+    bad(f"{tag}: CRD v1alpha2 version must be served (traefik 3.7's TCPRoute client is pinned to v1alpha2), got {v2!r}")
+if v2.get('deprecated') is not True:
+    bad(f"{tag}: CRD v1alpha2 version must be deprecated (C04 criterion 7), got {v2!r}")
+ok(f'{tag}: CRD v1 (served+storage) + v1alpha2 (served, deprecated)')
+
+if ann.get('helm.sh/resource-policy') != 'keep':
+    bad(f'{tag}: the CRD lacks helm.sh/resource-policy: keep (a base-release uninstall must not cascade-delete a CRD k3s also owns — C04 criterion 7)')
+ok(f'{tag}: CRD carries helm.sh/resource-policy: keep')
+
+doc_text = yaml.safe_dump(crd)
+if 'OVERRIDE_VIA_' in doc_text:
+    bad(f'{tag}: the CRD document carries an OVERRIDE_VIA_* sentinel')
+ok(f'{tag}: no OVERRIDE_VIA_* sentinel in the CRD document')
+
+# SPEC_PIN provenance: the v1.6.3 experimental spec, verified during C04
+# planning (2026-10-24) to hash equally from BOTH the dependency render and
+# the former vendored template render.
+pin = hashlib.sha256(json.dumps(crd.get('spec') or {}, sort_keys=True).encode()).hexdigest()
+if pin != spec_pin:
+    bad(f'{tag}: the rendered CRD spec sha256 is {pin}, expected the v1.6.3 experimental pin {spec_pin} (the CRD spec changed — a dependency bump must not silently change what the lab applies)')
+ok(f'{tag}: the rendered CRD spec matches the v1.6.3 experimental identity pin')
+
+with open(count_file, 'w') as f:
+    f.write(str(ok_n))
+PY
+}
+
+# --- t4: gate separation — gitSshPort opens the surface, never the CRD ---
+# (C04 c6: the CRD is driven by the STATIC gateway-api-crds enable values,
+# never by the template gate. This render — gate via --set only, default
+# values, no service values file — pins the separation against re-coupling:
+# check_hcc must pass AND zero gateway.networking.k8s.io CRDs.)
 if [ -z "$helm_bin" ] || [ -z "$base_copy" ]; then
-  skip "t4: open-gate render not run (no helm or base dependency build)"
+  skip "t4: gate-separation render not run (no helm or base dependency build)"
 else
-  open_out="$WORK/open-render.yaml"
-  if ! "$helm_bin" template base "$base_copy" -f "$DEV_VALUES" \
-      --set domain=scifi.farm --set clusterName=dev --set serviceName=dev \
-      --set gitSshPort=22222 \
-      --show-only templates/traefik-config.yaml --show-only templates/gateway-tcproute-crd.yaml \
-      >"$open_out" 2>"$WORK/open-render.err"; then
-    tail -n 30 "$WORK/open-render.err" >&2
-    fail "t4: open-gate helm template of $BASE failed (log kept at $WORK/open-render.err) — expected both the HelmChartConfig and the CRD once gitSshPort is set"
+  t4_out="$WORK/gate-only-render.yaml"
+  if ! "$helm_bin" template base "$base_copy" --set serviceName=dev --set gitSshPort=22222 \
+      >"$t4_out" 2>"$WORK/gate-only.err"; then
+    tail -n 30 "$WORK/gate-only.err" >&2
+    fail "t4: gate-only render of $BASE failed (log kept at $WORK/gate-only.err)"
   fi
-  if check_open_render "$open_out" t4; then
-    checks=$((checks + $(cat "$WORK/t4-count")))
+  if check_hcc "$t4_out" t4; then
+    checks=$((checks + $(cat "$WORK/t4-hcc-count")))
+  else
+    exit 1
+  fi
+  if python3 - "$t4_out" t4 <<'PY'
+import sys, yaml
+
+render, tag = sys.argv[1], sys.argv[2]
+docs = [d for d in yaml.safe_load_all(open(render)) if d]
+gw = [d for d in docs if d.get('kind') == 'CustomResourceDefinition'
+      and str((d.get('metadata') or {}).get('name', '')).endswith('.gateway.networking.k8s.io')]
+if gw:
+    print(f"FAIL: {tag}: --set gitSshPort alone rendered {len(gw)} gateway CRD(s) {[ (d.get('metadata') or {}).get('name') for d in gw ]} — the CRD must be driven by the static gateway-api-crds enable values, never by the template gate (the design got re-coupled)", file=sys.stderr)
+    sys.exit(1)
+print(f'ok: {tag}: gate separation — gitSshPort opens the HelmChartConfig surface but renders zero gateway CRDs')
+PY
+  then
+    checks=$((checks + 1))
   else
     exit 1
   fi
@@ -632,6 +908,125 @@ with open(count_file, 'w') as f:
 PY
 then
   checks=$((checks + $(cat "$WORK/t5-count")))
+else
+  exit 1
+fi
+
+# --- t5b: the static gateway-api-crds companion wiring (C04 criterion 7, 9)
+# (a) the enable blocks parse to the interface shape, (b) no other
+# service/custom-values file mentions gateway-api-crds, (c) the block sits
+# directly after gitSshPort with a comment naming it (the pair moves together).
+if python3 - "$DEV_VALUES" "$INFRA_VALUES" "$WORK/t5b-count" <<'PY'
+import re, subprocess, sys, yaml
+
+dev_vals, infra_vals, count_file = sys.argv[1:4]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def _uncaught(exc_type, exc_value, exc_tb):
+    print(f'FAIL: t5: the companion-wiring checks could not be evaluated ({exc_type.__name__}: {exc_value})', file=sys.stderr)
+    sys.exit(1)
+sys.excepthook = _uncaught
+
+def load(p):
+    # REDEFINED anchors are legal YAML (helm/Go accept them; PyYAML raises
+    # ComposerError) — only markers in value position are rewritten.
+    lines = []
+    with open(p) as f:
+        for line in f:
+            line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
+            line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
+            lines.append(line)
+    return yaml.safe_load(''.join(lines)) or {}
+
+# The 13 experimental.crds.* toggles the Interface lists off (tcproutes is
+# the 14th — it stays at the chart default true).
+CRD_TOGGLES = ('backendtlspolicies', 'gatewayclasses', 'gateways', 'grpcroutes',
+               'httproutes', 'listenersets', 'referencegrants', 'tlsroutes',
+               'udproutes', 'xbackends', 'xbackendtrafficpolicies',
+               'xlistenersets', 'xmeshes')
+
+def check_enable(label, values):
+    g = values.get('gateway-api-crds')
+    if not isinstance(g, dict):
+        bad(f't5: {label} has no gateway-api-crds: block (the C04 companion wiring for gitSshPort is missing)')
+    if g.get('enabled') is not True:
+        bad(f"t5: {label} gateway-api-crds.enabled is {g.get('enabled')!r}, expected true")
+    if (g.get('standard') or {}).get('enabled') is not False:
+        bad(f"t5: {label} gateway-api-crds.standard.enabled is {(g.get('standard') or {}).get('enabled')!r}, expected false (only the experimental channel serves v1alpha2)")
+    exp = g.get('experimental') or {}
+    if exp.get('enabled') is not True:
+        bad(f"t5: {label} gateway-api-crds.experimental.enabled is {exp.get('enabled')!r}, expected true")
+    crds = exp.get('crds') or {}
+    for name in CRD_TOGGLES:
+        if crds.get(name) is not False:
+            bad(f"t5: {label} gateway-api-crds.experimental.crds.{name} is {crds.get(name)!r}, expected false (tcproutes-only scoping keeps the k3s ownership overlap at exactly 1 CRD)")
+    if 'tcproutes' in crds and crds['tcproutes'] is not True:
+        bad(f"t5: {label} gateway-api-crds.experimental.crds.tcproutes is {crds['tcproutes']!r}, expected true (or absent — the chart default)")
+    if (((g.get('global') or {}).get('resourcePolicy') or {}).get('keep')) is not True:
+        bad(f"t5: {label} gateway-api-crds.global.resourcePolicy.keep is not true (a base-release uninstall must not cascade-delete a CRD k3s also owns)")
+    ok(f't5: {label} enable block — experimental tcproutes only (13 other toggles off), standard off, resource-policy keep')
+
+def check_adjacency(label, text):
+    lines = text.splitlines()
+    gi = None
+    for i, l in enumerate(lines):
+        if re.match(r'^gitSshPort:', l):
+            gi = i
+            break
+    if gi is None:
+        bad(f't5: {label} has no top-level gitSshPort: line (the t5 gitSshPort assertions above cover this — reaching here means a layout the walker cannot see)')
+        return
+    # next top-level key after gitSshPort (skipping blanks + comments)
+    ai = None
+    for j in range(gi + 1, len(lines)):
+        l = lines[j]
+        if not l.strip() or l.lstrip().startswith('#'):
+            continue
+        ai = j
+        break
+    if ai is None or not re.match(r'^gateway-api-crds:', lines[ai]):
+        next_key = repr(lines[ai]) if ai is not None else 'EOF'
+        bad(f't5: {label}: the next top-level key after gitSshPort: is {next_key}, expected gateway-api-crds: directly after (no other top-level key may sit between the pair)')
+    # the comment block directly above gateway-api-crds: must name gitSshPort
+    block = []
+    k = ai - 1
+    while k >= 0 and (not lines[k].strip() or lines[k].lstrip().startswith('#')):
+        block.append(lines[k])
+        k -= 1
+    if 'gitSshPort' not in '\n'.join(block):
+        bad(f't5: {label}: the comment above gateway-api-crds: does not name gitSshPort (the pair must be documented as moving together)')
+    ok(f't5: {label} gateway-api-crds: sits directly after gitSshPort with a comment naming it')
+
+for path, label in ((dev_vals, 'services/dev/prod/values.yaml'),
+                    (infra_vals, 'services/infra/prod/values.yaml')):
+    check_enable(label, load(path))
+    check_adjacency(label, open(path).read())
+
+r = subprocess.run(['git', 'grep', '-n', 'gateway-api-crds', '--', 'services', 'custom-values'],
+                   capture_output=True, text=True)
+allowed = {dev_vals, infra_vals}
+if not r.stdout.strip():
+    bad('t5: git grep found no gateway-api-crds in services/ or custom-values/ (the enable blocks are missing)')
+for line in r.stdout.splitlines():
+    p = line.split(':', 1)[0]
+    if p not in allowed:
+        bad(f't5: gateway-api-crds appears outside the dev/infra umbrella values: {line} (the CRD enable wiring is scoped to exactly the two git-SSH clusters)')
+ok('t5: no other service values or custom-values file carries gateway-api-crds (repo-wide)')
+
+with open(count_file, 'w') as f:
+    f.write(str(ok_n))
+PY
+then
+  checks=$((checks + $(cat "$WORK/t5b-count")))
 else
   exit 1
 fi
@@ -803,22 +1198,30 @@ PY
   fi
 fi
 
-# --- t7: open-gate base render with the REAL service values files ---------
-# (C03 c5 — C02 t5 flips: with gitSshPort now in the umbrella values, the
-# gate is open WITHOUT any --set gitSshPort.)
+# --- t7: gate OPEN via the REAL service values — full renders (C04 c7) ----
+# (C03 c5 intent, C04 carrier: drop both --show-only flags — the CRD now
+# comes from the gateway-api-crds dependency, so the assertions parse the
+# FULL render: the HCC surface (check_hcc) plus exactly one scoped CRD
+# with the spec identity pin (check_crd). The dev render passes no
+# sentinel --sets (the plan's exact command) — see the header's sentinel-
+# scoping note.)
 if [ -z "$helm_bin" ] || [ -z "$base_copy" ]; then
   skip "t7: open-gate renders with the real service values not run (no helm or base dependency build)"
 else
   t7a="$WORK/base-dev-open.yaml"
   if ! "$helm_bin" template base "$base_copy" -f "$DEV_VALUES" \
       --set domain=scifi.farm --set clusterName=dev --set serviceName=dev \
-      --show-only templates/traefik-config.yaml --show-only templates/gateway-tcproute-crd.yaml \
       >"$t7a" 2>"$WORK/base-dev-open.err"; then
     tail -n 30 "$WORK/base-dev-open.err" >&2
-    fail "t7: open-gate base render with -f $DEV_VALUES failed (log kept at $WORK/base-dev-open.err) — the dev values must carry gitSshPort (no --set)"
+    fail "t7: full open-gate base render with -f $DEV_VALUES failed (log kept at $WORK/base-dev-open.err) — the dev values must carry gitSshPort (no --set)"
   fi
-  if check_open_render "$t7a" t7a; then
-    checks=$((checks + $(cat "$WORK/t7a-count")))
+  if check_hcc "$t7a" t7a; then
+    checks=$((checks + $(cat "$WORK/t7a-hcc-count")))
+  else
+    exit 1
+  fi
+  if check_crd "$t7a" t7a; then
+    checks=$((checks + $(cat "$WORK/t7a-crd-count")))
   else
     exit 1
   fi
@@ -830,13 +1233,17 @@ else
       --set bitwardenIds.smtp=u --set hivetools.bitwardenIds.mcp-pg-keycloak=u \
       --set forgejo.bitwardenIds.forgejo=u --set forgejo.bitwardenIds.forgejo-admin=u \
       --set forgejo.bitwardenIds.forgejo-pg=u --set forgejo.bitwardenIds.forgejo-sso=u \
-      --show-only templates/traefik-config.yaml --show-only templates/gateway-tcproute-crd.yaml \
       >"$t7b" 2>"$WORK/base-infra-open.err"; then
     tail -n 30 "$WORK/base-infra-open.err" >&2
-    fail "t7: open-gate base render with -f $INFRA_VALUES failed (log kept at $WORK/base-infra-open.err) — the infra values must carry gitSshPort (no --set)"
+    fail "t7: full open-gate base render with -f $INFRA_VALUES failed (log kept at $WORK/base-infra-open.err) — the infra values must carry gitSshPort (no --set)"
   fi
-  if check_open_render "$t7b" t7b; then
-    checks=$((checks + $(cat "$WORK/t7b-count")))
+  if check_hcc "$t7b" t7b; then
+    checks=$((checks + $(cat "$WORK/t7b-hcc-count")))
+  else
+    exit 1
+  fi
+  if check_crd "$t7b" t7b; then
+    checks=$((checks + $(cat "$WORK/t7b-crd-count")))
   else
     exit 1
   fi
@@ -915,7 +1322,9 @@ if not isinstance(vals, dict):
     bad(f't8: the {appset} generator element has no values blob')
 if vals.get('gitSshPort') != 22222:
     bad(f"t8: the {appset} values blob has gitSshPort {vals.get('gitSshPort')!r}, expected 22222 (the base Application for this cluster must carry the gate — C03 criterion 4)")
-ok(f't8: {appset} values blob carries gitSshPort: 22222')
+if ((vals.get('gateway-api-crds') or {}).get('enabled')) is not True:
+    bad(f"t8: the {appset} values blob has gateway-api-crds.enabled {((vals.get('gateway-api-crds') or {}).get('enabled'))!r}, expected true (the CRD enable wiring must ride to base with the umbrella values — C04 criterion 9)")
+ok(f't8: {appset} values blob carries gitSshPort: 22222 + gateway-api-crds.enabled: true')
 
 raw = open(render).read()
 for s in ('OVERRIDE_VIA_CUSTOM_VALUES', 'OVERRIDE_VIA_APPSET'):
@@ -966,7 +1375,9 @@ if not isinstance(vals, dict):
     bad(f't8: the {appset} generator element has no values blob')
 if vals.get('gitSshPort') != 22222:
     bad(f"t8: the {appset} values blob has gitSshPort {vals.get('gitSshPort')!r}, expected 22222 (the base Application for this cluster must carry the gate — C03 criterion 4)")
-ok(f't8: {appset} values blob carries gitSshPort: 22222')
+if ((vals.get('gateway-api-crds') or {}).get('enabled')) is not True:
+    bad(f"t8: the {appset} values blob has gateway-api-crds.enabled {((vals.get('gateway-api-crds') or {}).get('enabled'))!r}, expected true (the CRD enable wiring must ride to base with the umbrella values — C04 criterion 9)")
+ok(f't8: {appset} values blob carries gitSshPort: 22222 + gateway-api-crds.enabled: true')
 
 raw = open(render).read()
 for s in ('OVERRIDE_VIA_CUSTOM_VALUES', 'OVERRIDE_VIA_APPSET'):

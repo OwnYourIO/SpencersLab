@@ -70,6 +70,35 @@ standard CRDs on dev (v1.6.1) are INSUFFICIENT for traefik TCPRoute; both
 clusters need the experimental-channel tcproutes CRD, and the forgejo
 subchart's v1alpha2 TCPRoute template is exactly what traefik expects.
 
+## Follow-up C04 (2026-10-24, user-directed)
+
+After final review (C01–C03 APPROVED, PR open, unmerged) the user directed a
+design change: the vendored raw CRD template is not the desired tracking
+form — CRDs must be pinned like chart dependencies ("utilize it as a
+chart"). The commissioned follow-up research
+(`RESEARCH-gateway-crd-chart.md`, this folder — ground truth for C04) found
+the carrier: `gateway-api-crds` **v1.2.5** from
+`https://charts.christianhuth.de` — experimental channel, per-CRD scoping
+(tcproutes only), rendered CRD spec-IDENTICAL to the vendored v1.6.3
+experimental CRD (parsed-spec diff; re-proven in C04 planning: canonical
+spec sha256 `c29ee86e…00947e` from both render sources), renovate-trackable
+as a standard Chart.yaml dep + Chart.lock (repo precedent: cert-manager in
+charts/base ships CRDs via its chart dependency).
+
+C04 therefore swaps `charts/base/templates/gateway-tcproute-crd.yaml` for
+that pinned dependency. The design crux it resolves: chart-dependency
+rendering is driven by STATIC values, not template gates — the `gitSshPort`
+`{{- if }}` cannot wrap a subchart. Replacement gating: base default values
+disable the dependency entirely (`condition:` key present and false —
+research gotcha, probe-proven: an absent key gives every cluster the chart's
+default CRD bundle), dev+infra service values re-enable exactly the
+experimental tcproutes CRD (+ resourcePolicy keep) as the companion wiring
+next to `gitSshPort: 22222`, and the gitSshPort template gate on the
+traefik HelmChartConfig block stays untouched. This section SUPERSEDES the
+"Vendored CRD" decision bullet above and the C02 t2/t3 test contract (the
+test rewrite spec is in chunks/C04.md). CRD ownership overlap with k3s's
+traefik-crd is semantically unchanged — see Risks §1.
+
 ## Verified repo/cluster context (2026-10-23, this session)
 
 - `charts/forgejo` — wrapper v1.0.5, subchart forgejo 17.2.0 (OCI,
@@ -124,19 +153,28 @@ Dependency builds first (vendored charts are gitignored for these paths):
 ```
 export PATH="$HOME/.local/bin:$PATH"
 helm dependency build charts/forgejo        # OCI pull (anonymous, public)
-helm dependency build charts/base           # argo-cd + cert-manager
+helm dependency build charts/base           # argo-cd + cert-manager + gateway-api-crds (C04)
 helm dependency build services/infra/prod   # cloudnative-pg + samba
 ```
 
-Chart-level (C02/C03 surfaces):
+Chart-level (C02/C03/C04 surfaces; C04 replaced the gated CRD template with
+the condition-gated gateway-api-crds dependency, so the CRD now renders from
+the subchart — no `--show-only` for it, full-render parse asserts instead):
 
 ```
 helm lint charts/base
 helm lint charts/forgejo
-# gate CLOSED (default): no kubernetesGateway / gitssh / Gateway anywhere
-helm template base charts/base --set serviceName=dev --show-only templates/traefik-config.yaml --show-only templates/gateway-tcproute-crd.yaml
-# gate OPEN: full gitssh block + experimental tcproutes CRD render
-helm template base charts/base -f services/dev/prod/values.yaml --set domain=scifi.farm --set clusterName=dev --set serviceName=dev --show-only templates/traefik-config.yaml --show-only templates/gateway-tcproute-crd.yaml
+# gate CLOSED (default values): no kubernetesGateway / gitssh / Gateway in
+# the HelmChartConfig, and NO gateway.networking.k8s.io CRD anywhere
+# (condition key default-off skips the gateway-api-crds subchart entirely)
+helm template base charts/base --set serviceName=dev --show-only templates/traefik-config.yaml
+helm template base charts/base --set serviceName=dev   # parse: 0 CRDs named *.gateway.networking.k8s.io
+# gate SEPARATION (C04): gitSshPort alone opens the HelmChartConfig surface
+# but renders NO gateway CRD — the CRD needs the static enable values
+helm template base charts/base --set serviceName=dev --set gitSshPort=22222
+# gate OPEN (real values): full gitssh block + the dependency-rendered
+# experimental tcproutes CRD (v1.6.3, v1+v1alpha2, resource-policy keep)
+helm template base charts/base -f services/dev/prod/values.yaml --set domain=scifi.farm --set clusterName=dev --set serviceName=dev
 helm template charts/forgejo --set domain=test.example.com \
   --set bitwardenIds.forgejo=u --set bitwardenIds.forgejo-admin=u \
   --set bitwardenIds.forgejo-pg=u --set bitwardenIds.forgejo-sso=u
@@ -178,6 +216,7 @@ grep -n 'SSH_PORT\|tcpRoute' charts/forgejo/values.yaml
 | C01 | Relocate research audit trail + bootstrap branch | S | 1 | [] | — (first dev commit; creates/attaches `feat-forgejo-ssh-ssh`) |
 | C02 | Gateway API surface in the base chart (dormant) | L | 1 | [] | adds the interface: HelmChartConfig gitssh block + experimental tcproutes CRD, gated on `gitSshPort`; renders nothing until C03 sets the value |
 | C03 | Activate git-SSH on dev+infra (values + forgejo chart) + operator notes | M | 2 | [C02] | consumes C02's surface: `gitSshPort: 22222` in both service umbrellas, `SSH_PORT`+`tcpRoute` in charts/forgejo; parentRefs target C02's Gateway |
+| C04 | Swap the vendored tcproutes CRD template for a pinned gateway-api-crds chart dependency (user-directed follow-up) | M | 3 | [C02, C03] | removes C02's CRD template and re-gates CRD rendering through static enable values in C03's two umbrella files; both must be landed so the swap is one atomic commit with no moment dev/infra lack the CRD |
 
 ## Wave order
 
@@ -186,6 +225,12 @@ grep -n 'SSH_PORT\|tcpRoute' charts/forgejo/values.yaml
 2. C03 — wave 2 after C02: its TCPRoute parentRefs and the gate value only
    make sense against C02's rendered surface, and its render assertions
    validate C02+C03 together.
+3. C04 — wave 3 after C02+C03 (added 2026-10-24, user-directed): it deletes
+   the CRD template C02 added (flipping C02's t2/t3 test slices) and moves
+   CRD enablement into the same umbrella values files C03 created, next to
+   `gitSshPort`. Running it after both means the open-gate render for
+   dev/infra never loses the CRD mid-branch and the test rewrite has a
+   settled surface to assert against.
 
 ## User actions
 
@@ -230,9 +275,16 @@ has no Gateway API RBAC):**
   on dev immediately (k3s ships the standard variant), on infra after its
   next k3s upgrade. k3s re-applies only at boot/chart-change; ArgoCD
   selfHeal restores the experimental variant within one refresh (~3 min).
-  Transient TCPRoute breakage only in that window. If ArgoCD SSA hits a
-  field-manager conflict instead, dev adds `argocd.argoproj.io/sync-options:
-  Replace=true` to the CRD template (documented in C02 notes).
+  Transient TCPRoute breakage only in that window. C04 changes the carrier
+  (pinned `gateway-api-crds` chart dependency instead of a vendored
+  template), NOT the overlap semantics: still exactly 1 CRD, same selfHeal
+  window, and the dependency's `helm.sh/resource-policy: keep` additionally
+  keeps a base-release uninstall from cascade-deleting a CRD k3s also owns.
+  If ArgoCD SSA hits a field-manager conflict instead, remediate at the
+  ArgoCD Application layer — since C04 the CRD renders from the dependency
+  chart, so there is no repo template left to annotate with
+  `argocd.argoproj.io/sync-options: Replace=true` (the C02-era escape
+  hatch; it was never needed).
 - **Port 22222 assumed free** on both nodes (nothing known binds it; not
   verifiable via MCP) — verified at rollout by svclb readiness.
 - **traefik TCPRoute client is pinned to v1alpha2** in 3.7.x — a future

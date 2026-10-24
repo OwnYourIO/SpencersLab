@@ -97,6 +97,44 @@
       "dev_session": "ses_e9508ae1fffeYmVJOVK67U93qY",
       "commit": "db08d4d17",
       "review_session": "ses_e94c26809ffeqOdNGox92Xe3Dw"
+    },
+    "C04": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": [
+        "C02",
+        "C03"
+      ],
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [charts/base/templates/gateway-tcproute-crd.yaml (deleted), charts/base/Chart.yaml, charts/base/Chart.lock, charts/base/values.yaml, services/dev/prod/values.yaml, services/infra/prod/values.yaml, charts/base/templates/traefik-config.yaml]\ncommands_run: [helm dependency update charts/base => pass (digest sha256:2a9d5324..., tgz gitignored), helm lint charts/base => pass, closed-gate render vs main: => pass (byte-identical), closed-full 0 gateway CRDs => pass, gate-only render (HCC + 0 CRDs) => pass, dev/infra full opens (1 CRD, SPEC_PIN c29ee86e...00947e, keep) => pass, umbrella renders (0 sentinels, blobs carry gitSshPort + gateway-api-crds.enabled) => pass, full suite: gateway 67/audit-trail 6/predecessor 4/infra-forgejo 33/dev-forgejo-runner 31/dev-git-auth 20 => all pass, aislop ci => pass (100/100), commit e3ca402ca (atomic, 7 files) => pass]\ndeviations: none (pipeline artifacts left uncommitted, coord-owned)\nfriction: none\nopen_questions: [pre-existing gitSshPort WHY-comments in both service values still read 'vendored tcproutes CRD gate' \u2014 stale post-C04; contract scoped comment fixes to traefik-config only; flagged for review disposition]"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C04\nfiles_changed: [chunks/C04.md (Review notes only)]\ncommands_run: [full suite fresh: gateway 67/audit-trail 6/predecessor 4/infra-forgejo 33/dev-forgejo-runner 31/dev-git-auth 20 => all pass, plan Commands slice (dep builds, lints, closed-gate byte-identity vs main incl. FULL render, gate-separation, open renders with SPEC_PIN independently recomputed, umbrella renders, sentinel sweep) => pass, upstream chart tgz fetched: default-OFF key paths match actual condition semantics (standard.enabled defaults TRUE upstream \u2014 gotcha confirmed real), renovate.json override-regex cross-check (no sourceUrl/changelog annotation), repo-wide vendored-template sweep => gone, aislop => pass (100/100)]\ndeviations: none\nfriction: none\nopen_questions: [M1 minor: stale 'and its vendored tcproutes CRD gate' clause in gitSshPort comments at services/dev/prod/values.yaml:22 + services/infra/prod/values.yaml:108 \u2014 suggested wording in chunks/C04.md review notes]\nextra: 12/12 acceptance criteria verified; keep-annotation does not leak to argo-cd/cert-manager (chart-native on main); commit atomic (7 files)"
+        },
+        {
+          "role": "dev",
+          "round": 2,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C04 (round 2 \u2014 M1 comment fix)\nfiles_changed: [services/dev/prod/values.yaml, services/infra/prod/values.yaml]\ncommands_run: [git diff scope check => pass (comment-only, 2 hunks), forgejo-ssh-gateway.sh => pass (67 ok), forgejo-ssh-audit-trail.sh => pass (6 ok), aislop ci --changes => pass (100/100), git commit 2a5922e95 => pass]\ndeviations: [reviewer's suggested wording applied verbatim (dev as given; infra same shape)]\nfriction: none\nopen_questions: none"
+        }
+      ],
+      "dev_session": "ses_e9169949effeEurh5AHlotTtg2",
+      "review_session": "ses_e914c95a6ffeAJjj9n5K2vnbdx",
+      "commit": "e3ca402ca",
+      "commits": [
+        "e3ca402ca",
+        "2a5922e95"
+      ]
     }
   },
   "blocked": [],
@@ -127,5 +165,10 @@
       "a8d3116ff"
     ]
   },
-  "completed_at": "2026-10-24"
+  "completed_at": "2026-10-24",
+  "reopened_at": "2026-10-24",
+  "final_review_c04": {
+    "note": "C04 reviewed at e3ca402ca (APPROVED, 12/12 criteria); M1 comment fix 2a5922e95 verified by full suite re-run (comment-only, no separate review round \u2014 same disposition as the C02-era M1)",
+    "at": "2026-10-24"
+  }
 }
