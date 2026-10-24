@@ -2,7 +2,7 @@
   "feature": "2026/2026-10-feat-dev-mcp-fleet",
   "plan_status": "approved",
   "coord_session": "ses_e908dc2aeffenDK8IoJwj5SZQQ",
-  "test_session": null,
+  "test_session": "ses_e9064b1cfffe3gaBNEz6s2AI0E",
   "current_wave": 1,
   "updated_at": "2026-10-24",
   "kickoff": {
@@ -37,7 +37,10 @@
     "C03": {
       "status": "pending",
       "wave": 2,
-      "depends_on": ["C01", "C02"],
+      "depends_on": [
+        "C01",
+        "C02"
+      ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
@@ -46,7 +49,9 @@
     "C04": {
       "status": "pending",
       "wave": 3,
-      "depends_on": ["C03"],
+      "depends_on": [
+        "C03"
+      ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
@@ -55,24 +60,27 @@
   },
   "blocked": [],
   "deferred": [
-    "Ticket 2 (out of scope here): agent pipeline machinery changes — coord webfetch removal, comment policy, kickoff research-timing question, permission audit",
-    "Machine-global client config sync (~/.config/opencode/opencode.jsonc, ~/.config/kilo/kilo.jsonc) — user-owned per intake decision",
+    "Ticket 2 (out of scope here): agent pipeline machinery changes \u2014 coord webfetch removal, comment policy, kickoff research-timing question, permission audit",
+    "Machine-global client config sync (~/.config/opencode/opencode.jsonc, ~/.config/kilo/kilo.jsonc) \u2014 user-owned per intake decision",
     "Pin dev-boards image from :main to a :v<run> tag once the login-capable build lands (renovate-managed)"
   ],
   "open_items": [
     {
       "id": "OQ1",
       "chunk": "C03",
-      "question": "dev-boards WEKAN_BASE_URL — the dev cluster has NO wekan instance (live-verified 2026-10-24 via readonly-dev-kubernetes: no wekan/boards Service, Ingress or MCPServer; and the repo ships no wekan chart). Options: (a) point dev-boards at the existing lab bot instance https://wekan.spencerslab.com (same target gpu's wekan tiers use; requires the dev service account d8e2b2ca… to exist on that instance), (b) deploy a new wekan on dev (new chart work — separate ticket), (c) defer dev-boards. Default if no answer before C03: boards entry ships enabled: false.",
+      "question": "dev-boards WEKAN_BASE_URL \u2014 the dev cluster has NO wekan instance (live-verified 2026-10-24 via readonly-dev-kubernetes: no wekan/boards Service, Ingress or MCPServer; and the repo ships no wekan chart). Options: (a) point dev-boards at the existing lab bot instance https://wekan.spencerslab.com (same target gpu's wekan tiers use; requires the dev service account d8e2b2ca\u2026 to exist on that instance), (b) deploy a new wekan on dev (new chart work \u2014 separate ticket), (c) defer dev-boards. Default if no answer before C03: boards entry ships enabled: false.",
       "status": "resolved",
-      "resolution": "2026-10-24 user: WEKAN_BASE_URL is NOT hardcoded — dev's secret-wekan-mcp.yaml reads the URI field of Bitwarden LOGIN item d8e2b2ca-792d-4e0a-86ae-b4ed0122c21a via the bitwarden-uri store (secret-homeassistant-mcp.yaml pattern); boards ships enabled:true targeting whatever instance the user records in that URI. User-action precondition: the item must carry a reachable wekan base URL (WITH_API=true, password-login service account)."
+      "resolution": "2026-10-24 user: WEKAN_BASE_URL is NOT hardcoded \u2014 dev's secret-wekan-mcp.yaml reads the URI field of Bitwarden LOGIN item d8e2b2ca-792d-4e0a-86ae-b4ed0122c21a via the bitwarden-uri store (secret-homeassistant-mcp.yaml pattern); boards ships enabled:true targeting whatever instance the user records in that URI. User-action precondition: the item must carry a reachable wekan base URL (WITH_API=true, password-login service account)."
     },
     {
       "id": "OQ2",
       "chunk": "C03",
-      "question": "User action (not blocking merge): create the two new dev Bitwarden items — (1) dev github token as a FIELDS item with custom field `token` (referenced by bitwardenIds.github-mcp), (2) dev searxng secret key as a LOGIN item (referenced by searxng.bitwardenIds.searxng). custom-values/dev carries documented placeholder values until pasted; pods for renovate/searxng/boards stay unready until the items exist (visible failure, not silent).",
+      "question": "User action (not blocking merge): create the two new dev Bitwarden items \u2014 (1) dev github token as a FIELDS item with custom field `token` (referenced by bitwardenIds.github-mcp), (2) dev searxng secret key as a LOGIN item (referenced by searxng.bitwardenIds.searxng). custom-values/dev carries documented placeholder values until pasted; pods for renovate/searxng/boards stay unready until the items exist (visible failure, not silent).",
       "status": "awaiting-user",
-      "resolution": "Also per OQ1: populate/verify the d8e2b2ca item's URI field + password-based service account on the target instance. Per 2026-10-24 approval round: dev searxng gets LAN host searxng.scifi.farm (direct dev traefik ingress, no proxy-remote — plan C01), DNS/wildcard-cert assumed handled by the existing dev base stack (git/research precedent)."
+      "resolution": "Also per OQ1: populate/verify the d8e2b2ca item's URI field + password-based service account on the target instance. Per 2026-10-24 approval round: dev searxng gets LAN host searxng.scifi.farm (direct dev traefik ingress, no proxy-remote \u2014 plan C01), DNS/wildcard-cert assumed handled by the existing dev base stack (git/research precedent)."
     }
-  ]
+  ],
+  "last_handoff": {
+    "agent_test": "RESULT\nstatus: BLOCKED\nchunk: plan (all chunks \u2014 agent-test session)\nfiles_changed: [tests/services/dev-mcp-fleet.sh, tests/containers/wekan-mcp-login.sh]\ncommands_run: [bash -n both scripts => pass; python-block compile sweep => pass; dev-mcp-fleet t2 t3 => pass; t6 => pass (both lints); t8 => pass; t10 => pass; t1 => fail(red-expected: charts.searxng missing); t4 => fail(red-expected); t5 => fail(red-expected: searxng-ingress absent, render OK); t7 => fail(red-expected: mcp-playwright absent); t9 => fail(red-expected: github-mcp ES absent); t11 => fail(red-expected: 2-server set); t12 => fail(red-expected: dev-* entries absent, JSONC parses); t13 => fail(red-expected: no dev* rule); t14 => fail(red-expected: AGENTS.md row absent, generate+check clean, tree untouched); wekan-mcp-login t1 => pass; t3 => pass; t2/t4/t5 => fail(red-expected); t6 => skip(no daemon); aislop scan --changes => 100, 0 findings; npx rulesync generate + --check => pass, no tree drift; git commit 7ef80d65f => pass]\ndeviations: (1) opt-in t<id> selection args; (2) shared renders t5+t9, t7+t8+t11; (3) t9/t5 OVERRIDE_ sweep scoped to appset blob per dev-forgejo convention; (4) t14 asserts generate left tree git-clean; (5) t13 asserts dev* triplet shape + exactly-once + admin*-deny-first; (6) test_session stamp left to coord (now done); (7) expected-reds by design, none weakened.\nopen_questions: CONFLICT A \u2014 tests/services/dev-forgejo-runner.sh t9 (line ~957 asserts dev ingress.subdomains exact set without searxng; line ~968-973 fails non-appset docs carrying OVERRIDE_, which C03's secret-github-mcp.yaml interim OVERRIDE_NEEDED triggers). CONFLICT B \u2014 tests/services/forgejo-ssh-gateway.sh t8 (raw-greps OVERRIDE_VIA_CUSTOM_VALUES across a dev umbrella render with a fixed --set list predating the new bitwardenIds sentinels). Both are other tickets' contracts; mutually unsatisfiable with C01\u2013C03 tests as written. Routing per pipeline-gates: user decision, then fix via test-session follow-up.\nnext_suggested: coord routes conflicts to user; updates legacy contracts; launches agent-dev wave 1."
+  }
 }
