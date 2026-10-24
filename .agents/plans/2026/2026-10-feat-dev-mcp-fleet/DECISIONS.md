@@ -90,9 +90,19 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   traefik with `wildcard-cert`, external-dns proxy-remote target commented out
   — same form as the live `git`/`research` entries.
 
+- 2026-10-24, **user ruling (post-approval, OQ2 resolved)**: the dev GitHub token is
+  NOT a new FIELDS item — it reuses the existing dev LOGIN item `github-pat`
+  (`522b1cc4-2c74-4399-887d-b4e20014b2d2`, password = the PAT), so
+  `secret-github-mcp.yaml` reads `bitwarden-login` / `property: password`.
+  Re-rules C03's intake assumption ("new Bitwarden item… `token` field") and the
+  immutable contract t9's store/property assertions, which encoded that
+  assumption — routed to the `agent-test` session, then to dev for the template.
+  Dev searxng secret_key LOGIN item: `f90806ff-8ee5-435d-b2e2-b4ed0176d701`
+  (replaces the `OVERRIDE_NEEDED` placeholder; no contract change — t4/t10
+  already accept a real UUID).
+
 ## Deferred
-- OQ2: create dev Bitwarden items (github token FIELDS item w/ `token` field;
-  searxng secret_key LOGIN item) + paste UUIDs; populate/verify the `d8e2b2ca`
+- OQ2 (partly resolved by the ruling above): populate/verify the `d8e2b2ca`
   item's URI field and that its username+password is a valid password-based
   service account on that URI's instance (`WITH_API=true`).
 - Machine-global client config sync (`~/.config/opencode/`, `~/.config/kilo/`)

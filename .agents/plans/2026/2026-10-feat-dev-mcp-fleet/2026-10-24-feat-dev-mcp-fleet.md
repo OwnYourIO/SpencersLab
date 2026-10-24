@@ -53,10 +53,13 @@ worktree never written; helm resolved from PATH → `~/.local/bin/helm` → down
   shifts to the item content: user must record a reachable wekan base URL +
   valid password service account there (OQ2), else the boards pod fails fast
   (visible, not silent).
-- Bitwarden items for `github-mcp` and dev searxng don't exist yet (OQ2): until
-  the user creates them and pastes the UUIDs, those ExternalSecrets stay
-  unready and renovate/searxng MCP pods cannot start — visible failure, the
-  placeholders are the documented interim state (forgejo-runner precedent).
+- Bitwarden items for `github-mcp` and dev searxng (OQ2): resolved
+  2026-10-24 — both exist and the UUIDs are pasted in
+  `custom-values/dev/prod-values.yaml`; `github-mcp` reads the existing dev
+  `github-pat` LOGIN item's password (DECISIONS.md), so those ExternalSecrets
+  go ready on sync and the renovate/searxng pods start. The boards
+  precondition (item `d8e2b2ca` URI + valid password service account,
+  `WITH_API=true`) remains user-owned.
 - dev searxng LAN host: `searxng.scifi.farm` ingress renders like the live
   `git`/`research` entries (direct dev traefik, `wildcard-cert`, no
   proxy-remote target — user decision 2026-10-24); DNS/wildcard assumed
@@ -78,9 +81,12 @@ worktree never written; helm resolved from PATH → `~/.local/bin/helm` → down
    URI field = the wekan instance base URL dev-boards should target
    (`WITH_API=true`, password login), and its username+password are a valid
    service account there (OQ1 resolved: base URL is data-driven).
-2. Create the remaining dev Bitwarden items + paste UUIDs (OQ2): fields item
-   for the dev github token (`token` field), LOGIN item for the dev searxng
-   secret key.
+2. Paste the two UUIDs into `custom-values/dev/prod-values.yaml` (OQ2, resolved
+   by the 2026-10-24 user ruling in DECISIONS.md): `github-mcp` = the existing
+   dev `github-pat` LOGIN item `522b1cc4…` (password = PAT, so
+   `secret-github-mcp.yaml` reads `bitwarden-login`/`property: password`), and
+   `searxng.bitwardenIds.searxng` = the dev searxng secret_key LOGIN item
+   `f90806ff…`.
 3. After merge+sync: run the post-sync verification (or let the agent run the
    readonly-dev-kubernetes checks).
 4. Mirror the four `dev-*` server entries into the machine-global configs
