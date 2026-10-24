@@ -1258,11 +1258,18 @@ if [ -z "$helm_bin" ]; then
   skip "t8: umbrella renders not run (no helm binary)"
 else
   dev_out="$WORK/dev-umbrella-render.yaml"
+  # The --set list must resolve EVERY top-level bitwardenIds sentinel in
+  # services/dev/prod/values.yaml or the OVERRIDE_VIA_* sweep below flags
+  # legitimate renders instead of defects. github-mcp/wekan-mcp were added to
+  # that block by 2026/2026-10-feat-dev-mcp-fleet C03 (user ruling
+  # 2026-10-24); --set-ingesting keys the chart does not have yet is inert,
+  # so the list stays correct before and after C03 lands.
   if ! "$helm_bin" template "$DEVUMB" \
       --set domain=scifi.farm --set subDomain=dev --set clusterName=dev \
       --set bitwardenIds.cert-manager-solver-token=u \
       --set bitwardenIds.argocd-sso-secret=u \
       --set bitwardenIds.github-pat=u --set bitwardenIds.forgejo-token=u \
+      --set bitwardenIds.github-mcp=u --set bitwardenIds.wekan-mcp=u \
       --set hivetools.bitwardenIds.mcp-sso=u \
       >"$dev_out" 2>"$WORK/dev-umb.err"; then
     tail -n 30 "$WORK/dev-umb.err" >&2

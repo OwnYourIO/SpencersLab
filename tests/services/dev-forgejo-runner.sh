@@ -954,24 +954,48 @@ try:
     ok('t9: dev-appset values blob carries both resolved runner-token UUIDs under their app keys')
 
     subs = (vals.get('ingress') or {}).get('subdomains') or {}
-    if set(subs) != {'coder', 'git', 'research', 'cluster'}:
-        bad(f't9: dev ingress.subdomains are {sorted(subs)}, expected exactly [coder, git, research, cluster] — the runners are client-only, so they get NO ingress entry')
-    ok('t9: dev ingress.subdomains is unchanged (coder/git/research/cluster — no runner entry)')
+    # Re-ruled by 2026/2026-10-feat-dev-mcp-fleet C01 AC5 (user ruling
+    # 2026-10-24): the exact set froze the forgejo-runner-era dev surface; the
+    # approved plan adds the searxng LAN host. The load-bearing claims remain:
+    # the original four hosts stay, the runners stay client-only (NO ingress
+    # entry), and nothing beyond the approved additions appears.
+    base4 = {'coder', 'git', 'research', 'cluster'}
+    if not base4 <= set(subs):
+        bad(f't9: dev ingress.subdomains lost {sorted(base4 - set(subs))} — expected at least coder/git/research/cluster')
+    runners = sorted(set(subs) & {'forgejo-runner-dev', 'forgejo-runner-infra'})
+    if runners:
+        bad(f't9: dev ingress.subdomains carries runner entries {runners} — the runners are client-only, so they get NO ingress entry')
+    unapproved = sorted(set(subs) - (base4 | {'searxng'}))
+    if unapproved:
+        bad(f't9: dev ingress.subdomains carries unapproved entries {unapproved} — only coder/git/research/cluster plus the dev-mcp-fleet C01 searxng host are sanctioned')
+    ok('t9: dev ingress.subdomains within the approved set (original four + searxng; no runner entry, no unapproved addition)')
 
     # Sentinels may remain only inside the appset-generator resource (the
     # values blob, where per-app placeholders ride to the base chart); the
     # service sentinel must not survive anywhere, and no other rendered
-    # resource may carry any OVERRIDE_ string.
+    # resource may carry any OVERRIDE_ string — with one sanctioned exception
+    # (2026/2026-10-feat-dev-mcp-fleet C03 OQ2, user ruling 2026-10-24): the
+    # documented OVERRIDE_NEEDED interim placeholder for not-yet-created dev
+    # Bitwarden items rides custom-values into its ExternalSecret, a visible
+    # failure the plan calls acceptable until the user pastes the UUID. The
+    # placeholder is tolerated ONLY on the listed target documents.
     raw = open(render).read()
     if 'OVERRIDE_VIA_CUSTOM_VALUES' in raw:
         bad('t9: the rendered dev umbrella still carries the OVERRIDE_VIA_CUSTOM_VALUES service sentinel (the -f file did not resolve it)')
+    PLACEHOLDER_ES = {'github-mcp'}
     for d in docs:
         if d.get('kind') == 'ApplicationSet':
             continue
         t = yaml.safe_dump(d)
-        if 'OVERRIDE_' in t:
-            bad(f"t9: non-appset document {((d.get('metadata') or {}).get('name'))!r} carries an OVERRIDE_* string — only the appset-generator resource may hold per-app placeholders")
-    ok('t9: no OVERRIDE_ outside appset-generator resources; the service sentinel does not survive the render')
+        if 'OVERRIDE_' not in t:
+            continue
+        name = ((d.get('metadata') or {}).get('name'))
+        # \b keeps a longer token (OVERRIDE_NEEDED_2) unrecognized -> fail.
+        interim_only = (d.get('kind') == 'ExternalSecret' and name in PLACEHOLDER_ES
+                        and 'OVERRIDE_' not in re.sub(r'OVERRIDE_NEEDED\b', '', t))
+        if not interim_only:
+            bad(f"t9: non-appset document {name!r} carries an OVERRIDE_* string — only the appset-generator resource and the {sorted(PLACEHOLDER_ES)} placeholder slot may hold unresolved placeholders")
+    ok('t9: no OVERRIDE_* outside appset-generator resources and the allowlisted placeholder ExternalSecrets; the service sentinel does not survive the render')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
