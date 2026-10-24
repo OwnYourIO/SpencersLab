@@ -376,8 +376,8 @@ llama-swap:
 
       # 1M context variants (2026-10-13) — one 1m sibling per requested
       # model, alongside the existing 256k versions. Same weights; ${ctx-1m}
-      # = YaRN x4 over the native 262144 ctx (all three are qwen3_5 hybrids:
-      # q38 16/64 full-attn layers → 1M q8 KV ≈ 34GB; kat-coder + q35
+      # = YaRN x4 over the native 262144 ctx (both surviving 1m rungs are
+      # qwen3_5 hybrids: q38 16/64 full-attn layers → 1M q8 KV ≈ 34GB; q35
       # 10/40 → ≈ 11GB). --no-kv-offload parks that KV in the node's 125GB
       # RAM, leaving the VRAM budget unchanged from the 256k versions —
       # slow attention, no OOM risk. No MTP on the 1m variants: they trade
@@ -400,33 +400,6 @@ llama-swap:
         name: "Qwen 3.8 27B (Q8_0) - 1M"
         description: "Plain Qwen 3.8 27B, Q8_0; 1M ctx (YaRN x4), KV in system RAM"
         ttl: 300
-
-      kat-coder-q4-1m:
-        hf: bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q4_K_M
-        use: [threads, ctx-1m, moe, flash-and-q8]
-        flags: |
-          --no-kv-offload
-        name: "KAT Coder V2.5 Dev (Q4_K_M) - 1M"
-        description: "Kwaipilot KAT-Coder V2.5 Dev (MoE), Q4_K_M; 1M ctx (YaRN x4), experts + KV in system RAM"
-        ttl: 0
-
-      kat-coder-q6-1m:
-        hf: bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q6_K
-        use: [threads, ctx-1m, moe, flash-and-q8]
-        flags: |
-          --no-kv-offload
-        name: "KAT Coder V2.5 Dev (Q6_K) - 1M"
-        description: "Kwaipilot KAT-Coder V2.5 Dev (MoE), Q6_K; 1M ctx (YaRN x4), experts + KV in system RAM"
-        ttl: 0
-
-      kat-coder-q8-1m:
-        hf: bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q8_0
-        use: [threads, ctx-1m, moe, flash-and-q8]
-        flags: |
-          --no-kv-offload
-        name: "KAT Coder V2.5 Dev (Q8_0) - 1M"
-        description: "Kwaipilot KAT-Coder V2.5 Dev (MoE), Q8_0; 1M ctx (YaRN x4), experts + KV in system RAM"
-        ttl: 0
 
       # Same story for the ggml-org BF16 reference build: no embedded MTP
       # tensors (verified in the header), so it takes the Q8_0 draft too.
@@ -481,24 +454,6 @@ llama-swap:
             - image
           out:
             - text
-        ttl: 300
-
-      coder-next-ablit:             # 80B-A3B abliterated (huihui) via bartowski
-        hf: bartowski/huihui-ai_Qwen3-Coder-Next-abliterated-GGUF:Q4_K_M
-        use: [threads, moe]
-        flags: |
-          -c 262144
-          --flash-attn on
-          --cache-type-k q8_0
-          --cache-type-v q8_0
-          --cache-reuse 1
-          --no-context-shift
-          -np 1
-          -b 2048
-          -ub 2048
-          --temp 0.2 --top-p 0.95 --top-k 20
-        name: "Qwen3-Coder-Next 80B A3B abliterated (Q4_K_M)"
-        description: "huihui abliteration, bartowski GGUF; experts-on-CPU; non-thinking, tight sampling; 256k ctx"
         ttl: 300
 
       # --- C04 big families (2026-10-23): Qwen 3.8 Flash Next + Ornith 1.5
@@ -707,18 +662,14 @@ llama-swap:
         q38f16: qwen38-orca-f16
         # 1M context variants (2026-10-13)
         q38q81m: qwen3.8-27b-q8-1m
-        katq41m: kat-coder-q4-1m
-        katq61m: kat-coder-q6-1m
-        katq81m: kat-coder-q8-1m
         # Visual (mmproj) variants (2026-10-15); the base q38q8/q35q8 IDs
         # are the text-only caching versions (--no-mmproj + cache_reuse).
         q38q8v: qwen3.8-27b-q8-visual
         q35q8v: qwen3.6-35b-a3b-q8-visual
         # Uncensored MoE additions (2026-10-18): the two 35B entries join the
-        # main MoE alternation; coder-next-ablit is solo-set (see below).
+        # main MoE alternation.
         q36her: qwen36-heretic
         q36hui: qwen36-huihui
-        cnxabl: coder-next-ablit
         # C04 big families (2026-10-23) - all solo-set. flash-next q5/q6 get
         # NO var at all on purpose: a model in no matrix set can only run
         # alone and is never admitted under a co-residency promise (declared
@@ -742,21 +693,20 @@ llama-swap:
         # + 34 GiB warm-cache caps + ~6 GiB system ≈ 119 GiB (~6 GiB buffer).
         # 2026-10-20: q38bf16 moved to solo — BF16 dense (~57 GiB incl. MTP
         # draft + 8.7 GiB KV pool) blows the ~38 GiB dense assumption and
-        # overflows the node alongside any MoE. katq4/q6/q8 moved to solo:
-        # ~80B-A3B experts-on-CPU co-resident with the dense trio exceeds the
-        # 125 GiB budget (same reason cnxabl is solo).
+        # overflows the node alongside any MoE (the ~80B-A3B coder-family
+        # entries, ruled out of the roster 2026-10-24, overflowed it the same
+        # way and were the reason the trio assumption got pinned).
         # 2026-10-23 (C04): the Ornith 1.5 35B A3B ladder (qwen35moe, same
         # expert-offload class as the q35* entries - header-verified) joins
         # the MoE alternation; it stays ONE MoE resident, IQ2..Q8 rungs.
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | coderq6 | coderq8 | q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | q30q4 | q30q8 | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu"
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | q38orca | q38ara | q38rana | q38hum | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
         # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;
-        # VL/whisper serve batch jobs; cnxabl's 48.6 GB experts-on-CPU would
-        # overflow the node RAM budget if co-resident with the dense trio;
-        # q38bf16 + kat trio overflow it too (see main-set note 2026-10-20).
+        # VL/whisper serve batch jobs; q38bf16 overflows the RAM budget if
+        # co-resident with the dense trio (see main-set note 2026-10-20).
         # 2026-10-23 (C04): flash-next q3/q4 + orca-q6 + the 122B UD ladder
         # join here (55.7-156.1 GiB weight classes); ornqbf (Ornith 35B BF16,
         # 66.2 GiB) is solo - dense-weight resident too big for the trio.
         # flash-next q5/q6 are deliberately in NO set at all (see vars note).
-        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | katq4 | katq6 | katq8 | q38q81m | katq41m | katq61m | katq81m | cnxabl | fnq3 | fnq4 | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"

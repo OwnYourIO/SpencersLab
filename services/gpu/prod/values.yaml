@@ -293,23 +293,15 @@ llama-swap:
       # Fail-fast disables (2026-10-20): these ${moe}-macro entries set -ngl
       # by hand, so llama.cpp's fit-params probe aborts and the load exhausts
       # the 8 GiB card -> radv "Not enough memory for command submission" ->
-      # VK_ERROR_DEVICE_LOST. kat-coder-q6 doing exactly this froze the whole
-      # node 2026-10-18 (k3s + VM down ~27 min); the 2026-10-11 q35q8 incident
-      # is the same class. Exiting instantly keeps the ID routable with a
+      # VK_ERROR_DEVICE_LOST. An ~80B-A3B coder-family q6 entry (since removed
+      # from the roster) doing exactly this froze the whole node 2026-10-18
+      # (k3s + VM down ~27 min); the 2026-10-11 q35q8 incident is the same
+      # class. Exiting instantly keeps the ID routable with a
       # logged reason instead of taking the cluster offline. They serve fine
       # on gpu-ai.
       # `disabled:` renders the fail-fast cmd the renderer composes as
       #   /bin/sh -c "echo '<id> <disabled>' >&2; exit 1"
       # (echo body byte-pinned by tests/golden/gpu.config.yaml).
-      kat-coder-q4:
-        disabled: "disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai."
-        description: "DISABLED on 8GiB gpu (VRAM-exhaustion node freeze) — available on gpu-ai"
-      kat-coder-q6:
-        disabled: "disabled on the 8GiB gpu box: loading it exhausted VRAM, lost the Vulkan device and froze the node 2026-10-18. Use gpu-ai."
-        description: "DISABLED on 8GiB gpu (caused 2026-10-18 node freeze) — available on gpu-ai"
-      kat-coder-q8:
-        disabled: "disabled on the 8GiB gpu box: ~80B-A3B MoE cannot fit; load attempts exhaust VRAM and freeze the node (2026-10-18 kat-coder-q6 incident). Use gpu-ai."
-        description: "DISABLED on 8GiB gpu (VRAM-exhaustion node freeze) — available on gpu-ai"
       qwen3.6-35b-a3b-bf16:
         disabled: "disabled on the 8GiB gpu box: BF16 non-expert weights (~5 GiB) + 256k KV + mmproj exceed the card. Use qwen3.6-35b-a3b-q8 (tuned) or gpu-ai."
         description: "DISABLED on 8GiB gpu (cannot fit) — use the tuned q8 entry or gpu-ai"
