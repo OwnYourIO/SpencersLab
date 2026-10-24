@@ -56,3 +56,7 @@ Append-only. Known workarounds — do not rediscover them. Status: open | fixed 
 - [open] Append-splices via `cat >>` without a post-assert can silently write
   junk on heredoc-terminator slips (hit once by the CR5 planner; caught by the
   tail assert). Always follow a `>>` splice with an anchored assertion.
+- [open] `npx rulesync@latest` false-reports drift vs the repo's pinned v37.0.0
+  generated output — verify with the INSTALLED rulesync binary, not npx latest.
+- [open] `~/.config/opencode/opencode.json` is JSONC (comments) — `json.load`
+  fails; use text-grep for dangling-model-ID sweeps.
