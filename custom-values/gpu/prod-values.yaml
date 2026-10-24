@@ -7,6 +7,20 @@ bitwardenIds:
 #  bitwardenIds:
   coder-sso-secret: 6052ca6f-bf5d-47bb-8194-b33e000a9455
   coder-pg: e197f717-0cd6-4634-8388-b33e000ae174
+  # coder-external-auth — the Forgejo OAuth app for coder.spencerslab.com
+  # (register on git.spencerslab.com with redirect
+  # https://coder.spencerslab.com/external-auth/forgejo/callback; username =
+  # client id, password = client secret). The item does not exist yet, so
+  # this is a must-fill placeholder (OVERRIDE_NEEDED), not the deploy-time
+  # service sentinel. Replace it with the item UUID once created. This slot
+  # is gpu-distinct: the dev cluster carries its own item under the same key.
+  coder-external-auth: OVERRIDE_NEEDED
+  # coder-token-encryption — password = base64 of 32 random bytes, exactly
+  # `dd if=/dev/urandom bs=32 count=1 | base64` output. A malformed or
+  # wrong-length key crashloops coderd on the restart that follows the first
+  # sync — generate it fresh, never hand-typed. Per-cluster like the item
+  # above.
+  coder-token-encryption: OVERRIDE_NEEDED
 #open-webui:
 #  bitwardenIds:
   open-webui-sso-secret: 69e653a3-061c-4727-af4b-b336014cedbe
