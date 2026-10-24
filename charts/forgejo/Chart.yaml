@@ -10,5 +10,5 @@ dependencies:
 # releases). ArgoCD 3.1 (base chart) resolves OCI deps natively; the registry
 # is public/anonymous. Tracked as a renovate follow-up in the dev plan.
 - name: forgejo
-  version: 17.2.0
+  version: 17.3.1
   repository: oci://code.forgejo.org/forgejo-helm
