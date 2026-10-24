@@ -855,47 +855,6 @@ config:
       # echo is the established pattern on that box.
       main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q35q6 | q35q8 | q35bf16 | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf | wsp) & homecpu"
 
-# Scanned-half generation (Path A two-source merge, plan 2026-10-22). The
-# `autogen` initContainer below runs the pinned llama-swap-config-autogen
-# generator against the rendered base.yaml ConfigMap into the `gen` emptyDir;
-# llama-swap then merges `-config /app/config/config.yaml` (declared half,
-# this chart's `config:`) with `-config-dir /app/gen` (scanned half). run.sh
-# maps both env vars (verified at v262 docker/unified/run.sh).
-#
-# Scan layout enforced by the pinned generator - anything deeper or mixed is
-# a hard generate error, and a *.gguf whose filename carries no quant token
-# (-Qn_Qn / -BF16 / -F16) crashes it, so disk models must land as:
-#   /models/scanned/<model>/*.gguf
-#   /models/scanned/<model>/<variant>/*.gguf
-# Their IDs come out as `<dir>:<QUANT>` - a namespace the declared roster
-# never uses, which is what keeps the two halves merge-safe.
-#
-# Reload semantics (DECISIONS "Reload semantics statement"):
-#   - declared half: hot-reloads via kubelet ConfigMap sync (~1 min) +
-#     -watch-config; a bad reload keeps the old config running (v262).
-#   - scanned half: restart-to-reload only - the initContainer regenerates
-#     the emptyDir at pod start, nothing rewrites it afterwards.
-#   - pod rolls: reloader.stakater.com/auto on the controller watches every
-#     mounted ConfigMap, incl. llama-swap-autogen-base; if auto mode is ever
-#     observed to miss it, add reloader.stakater.com/match naming both CMs.
-#     C05 records the observed behaviour on the gpu box.
-autogen:
-  # Directories `generate` scans. The initContainer args repeat each as a
-  # --scan-dir flag (entrypoint quick-find mirror) -- the base.yaml helper
-  # fails the render if the two drift apart. Today's steady state: the dir
-  # is absent -> degrade path (comment-only file).
-  scanPaths:
-    - /models/scanned
-  # llama-server inside the unified-vulkan fleet image (RESEARCH [16]);
-  # the generator's cmd template hardwires ${binary}.
-  binary: /usr/local/bin/llama-server
-  # Fallback macro for any scanned model matching no model_patterns entry -
-  # must exist in base.yaml macros or llama-swap rejects the generated half.
-  # Floor value only: --jinja, what every declared model already passes via
-  # server-cmd. Tune per family with model_patterns before putting big or
-  # exotic GGUFs on disk.
-  defaultParams: "--jinja"
-
 app-template:
   global:
     nameOverride: &chartName llama-swap
@@ -904,63 +863,6 @@ app-template:
     llama-swap:
       annotations:
         reloader.stakater.com/auto: "true"
-      initContainers:
-        # Stock generator run right before llama-swap starts (plan Path A),
-        # as the image entrypoint of containers/llama-swap-autogen: the
-        # degrade/fail-open logic lives in the image, the chart wires only
-        # image + args + mounts (CR4; the autogenBase helper fails the render
-        # on any command: here). Fail-open by design (DECISIONS 2026-10-22
-        # "Degrade path"): an empty scan set or a crashed `generate` leaves a
-        # comment-only 10-scanned.yaml -- v262 merge.go parseSource skips
-        # files without YAML content, so the declared half loads untouched.
-        # Crashlooping would cost live consumers (Immich/HA/OpenWebUI)
-        # against a half that only ever ADDS models; the initContainer log
-        # carries the failure evidence.
-        autogen:
-          image:
-            repository: ghcr.io/ownyourio/llama-swap-autogen
-            # Brand-new containers/ image: docker-build.yaml only publishes
-            # the immutable :v<run_number> on merge to main, so none exists
-            # yet. :main + Always is the documented new-container exception
-            # (DECISIONS "Planning decisions") - pin the first :v<run> tag
-            # post-merge; renovate's docker manager covers this reference.
-            tag: main
-            pullPolicy: Always
-          # Flags for the image entrypoint (containers/llama-swap-autogen/
-          # entrypoint.sh). The --scan-dir set MUST equal autogen.scanPaths:
-          # the base.yaml helper parses these args and fails the render on
-          # drift ("edit both or neither") - the entrypoint quick-find
-          # decides whether the generator runs at all. Usage errors (missing/
-          # duplicate flags) exit nonzero on purpose: degrade rc0 is reserved
-          # for scan-empty / generate-fail, a wiring bug stays loud.
-          args:
-            - --scan-dir
-            - /models/scanned
-            - --base
-            - /app/autogen/base.yaml
-            - --out
-            - /app/gen/10-scanned.yaml
-            - --home
-            - /home/autogen
-          resources:
-            requests: {cpu: 100m, memory: 128Mi}
-            limits: {memory: 512Mi}
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            # uid 65532 = the C01 image contract (Dockerfile USER). The
-            # read-only root survives the generator's ~/.cache GGUF-metadata
-            # write (unguarded mkdir + write_text at c7357e68, which cli.py's
-            # FileNotFoundError/ValueError-only handler lets escape as a
-            # traceback) only because --home points the entrypoint's HOME at
-            # the init-only `autogen-home` emptyDir; without that mount
-            # generate exits 1 the first time any GGUF is on disk and the
-            # fail-open hides a dead scanned half.
-            runAsNonRoot: true
-            runAsUser: 65532
-            readOnlyRootFilesystem: true
       containers:
         main:
           image:
@@ -992,12 +894,6 @@ app-template:
             # (subPath mounts never receive ConfigMap updates).
             LLAMA_SWAP_CONFIG: /app/config/config.yaml
             LLAMA_SWAP_WATCH_CONFIG: "true"
-            # Second config source (Path A): run.sh maps this to -config-dir
-            # (verified at v262 docker/unified/run.sh); llama-swap merges the
-            # scanned half the autogen initContainer writes to the /app/gen
-            # emptyDir. Restart-to-reload only - kubelet never syncs an
-            # emptyDir, the init re-run regenerates it at every pod start.
-            LLAMA_SWAP_CONFIG_DIR: /app/gen
             # NOTE: HF_TOKEN is intentionally NOT set here. Gated -hf repos
             # need a token, but app-template's schema forbids optional
             # secretKeyRefs and clusters without bitwardenIds.hf-token (gpu)
@@ -1074,41 +970,6 @@ app-template:
       name: llama-swap-config
       globalMounts:
         - path: /app/config
-    gen:
-      # Scanned half: written by the autogen initContainer, read by llama-swap
-      # via LLAMA_SWAP_CONFIG_DIR - one globalMount serves writer and reader
-      # (the tools sidecar seeing an empty dir is inert). ~KB configs; the cap
-      # is headroom, not expected use.
-      type: emptyDir
-      sizeLimit: 10Mi
-      globalMounts:
-        - path: /app/gen
-    autogen-base:
-      # Generator contract for the initContainer ONLY - common 5.0.1
-      # advancedMounts are per-container, keeping the main container's mount
-      # surface byte-identical to the pre-C03 pod (chunk acceptance 1).
-      type: configMap
-      name: llama-swap-autogen-base
-      advancedMounts:
-        llama-swap:
-          autogen:
-            - path: /app/autogen
-              readOnly: true
-    autogen-home:
-      # /home/autogen is where the generator's ~/.cache write lands: the
-      # initContainer passes --home /home/autogen and entrypoint.sh exports
-      # it as HOME before invoking generate (CR4 makes the C03 finding-#1
-      # writable-cache contract explicit on the CLI, replacing the passwd-
-      # fallback reasoning). Writable scratch is a proven pattern for this
-      # container at uid 65532 - the degrade path already writes
-      # 10-scanned.yaml into the `gen` emptyDir. advancedMounts keep it
-      # init-only: main must not gain a writable dir (chunk acceptance 1).
-      type: emptyDir
-      sizeLimit: 10Mi
-      advancedMounts:
-        llama-swap:
-          autogen:
-            - path: /home/autogen
     tools:
       type: configMap
       name: llama-swap-tools
