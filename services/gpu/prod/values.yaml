@@ -669,7 +669,7 @@ hivetools:
     # Bitwarden item must exist before the admin server can start).
     grafana-readonly:
       enabled: true
-      image: grafana/mcp-grafana:1.3.0
+      image: grafana/mcp-grafana:1.6.3
       transport: streamable-http
       mcpPort: 8000
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
@@ -721,7 +721,7 @@ hivetools:
               emptyDir: {}
     grafana-admin:
       enabled: true
-      image: grafana/mcp-grafana:1.3.0
+      image: grafana/mcp-grafana:1.6.3
       transport: streamable-http
       mcpPort: 8000
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
