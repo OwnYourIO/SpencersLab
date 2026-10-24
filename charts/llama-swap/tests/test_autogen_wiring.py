@@ -193,6 +193,16 @@ def test_c03_2_base_yaml_macros_are_a_superset_slice(cluster):
 # ---------------------------------------------------------------------------
 
 
+def _comment_only(path: Path) -> bool:
+    if not path.exists():
+        return False
+    body = path.read_text()
+    if not body.strip():
+        return True
+    lines = [ln for ln in body.splitlines() if ln.strip()]
+    return all(ln.lstrip().startswith("#") for ln in lines) and bool(lines)
+
+
 ENTRYPOINT = L.ENTRYPOINT_FILE
 
 # Stubbed autogen CLI (on PATH for the sandboxed entrypoint runs). FAIL_STUB
@@ -245,7 +255,6 @@ def _ep_sandbox(tmp_path, stub: str | None, ggufs: bool, home: str | None = None
     if stub is not None:
         sp = bin_dir / "llama-swap-config-autogen"
         sp.write_text(stub)
-        import os
         os.chmod(sp, 0o755)
     home_dir = sb / ("home" if home is None else home)
     argv = ["sh", _require_entrypoint(),
@@ -255,9 +264,6 @@ def _ep_sandbox(tmp_path, stub: str | None, ggufs: bool, home: str | None = None
             "--home", str(home_dir)]
     env = dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}", HOME=str(tmp_path / "unset-home"))
     return argv, env, (sb / "app/gen/10-scanned.yaml"), home_dir
-
-
-import os  # noqa: E402  (used by _ep_sandbox env PATH building; kept explicit for stub chmod)
 
 
 def test_c03_3_degrade_empty_scan_is_comment_only_and_exit0(tmp_path):
@@ -390,7 +396,6 @@ def test_c04_entrypoint_missing_required_flag_is_usage_error(tmp_path):
     never for arg errors."""
     ep = _require_entrypoint()
     sb = tmp_path / "sb"
-    (sb / "scanned").mkdir(parents=True)
     scanned_dir = tmp_path / "scan"
     scanned_dir.mkdir()
     r = subprocess.run(["sh", ep,
@@ -439,27 +444,11 @@ def test_c04_initcontainer_args_not_command(cluster):
     assert "--home" in args
 
 
-def _render_rc(cluster: str, overlay: dict) -> tuple[int, str]:
-    """helm template rc for an overlay render WITHOUT raising (drift probes
-    assert failure, which render_docs' raising helper cannot express)."""
-    import json
-    import tempfile
-    with tempfile.TemporaryDirectory(prefix="llamaswap-probe-") as tmp:
-        vals = L.extract_service_values(cluster, Path(tmp) / "vals.yaml")
-        ov = Path(tmp) / "ov.yaml"
-        ov.write_text(yaml.safe_dump(overlay))
-        cmd = ["helm", "template", "llama-swap", str(L.CHART_DIR), "-f", str(vals),
-               "-f", str(ov), "--set", "domain=spencerslab.com", "--set", f"clusterName={cluster}"]
-        out = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        del json
-        return out.returncode, out.stdout + out.stderr
-
-
 def test_c04_drift_probe_scanpaths_disagreement_fails_render():
     """CR4 drift guard (args-driven re-arm): autogen.scanPaths gaining a path
     the args don't carry must fail the render — 'disagree - edit both or
     neither'. Red at handoff if HEAD's (script-based) guard lets it through."""
-    rc, _ = _render_rc("gpu", {"autogen": {"scanPaths": ["/models/scanned", "/models/extra"]}})
+    rc, _ = L.render_rc("gpu", {"autogen": {"scanPaths": ["/models/scanned", "/models/extra"]}})
     assert rc != 0, (
         "scanPaths/args disagreement did not fail the render — CA4 args guard missing"
     )
@@ -468,10 +457,11 @@ def test_c04_drift_probe_scanpaths_disagreement_fails_render():
 def test_c04_drift_probe_command_reintroduction_fails_render():
     """CR4 shell-reintroduction tripwire: ANY initContainer command on the
     autogen container fails the render (the k8s yaml must stay shell-free).
-    At CA1 handoff the CURRENT chart legitimately HAS a command, so this is
-    expected-red until CA4 lands; the overlay proves the guard must reject
-    regardless of source."""
-    rc, out = _render_rc("gpu", {
+    GREEN AT CA1 HANDOFF via the C03-era script-based guard (which rejects
+    this overlay because its scan-dirs check then fails) — it is a behavioral
+    bar, not a new-behavior red: CA4 must keep it green with the ARGS-based
+    guard (round-2 review fix 6; re-check in CA4 review, §7bis-K)."""
+    rc, out = L.render_rc("gpu", {
         "app-template": {"controllers": {"llama-swap": {"initContainers": {
             "autogen": {"command": ["/bin/sh"]}}}}}})
     assert rc != 0, "a command:/bin/sh passed the render — tripwire not armed (CA4)"

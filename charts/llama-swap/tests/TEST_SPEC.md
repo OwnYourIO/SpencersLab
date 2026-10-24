@@ -363,11 +363,25 @@ retained VERBATIM — the loop keys change, the comparison does not.
     `config.models.<id>` merge-OVER-expansion; duplicate derived ID FAILS the
     render (`pytest.raises`); `families` key stripped from rendered output
     [all red: CA2 — HEAD leaks the key and ignores families].
-  - gpu-ai block test: dropped the per-entry `assert "hf" in m` loop — NOT a
-    weakening: service-layer re-declaration (dev deviation-3) is superseded
-    by chart-side families coverage (above) + render-side P2; a post-CA2
-    partial override may legitimately omit hf (CR1.5). Raw set == {rana} and
-    the one-line-exec + -hf/-hfd token bars retained verbatim.
+  - gpu-ai block test: the per-entry `assert "hf" in m` loop IS removed
+    (round-1's patch silently no-oped here — caught by the review audit as
+    Major-3; round 2 executed the ruled intent). NOT a weakening:
+    service-layer re-declaration (dev deviation-3) is superseded by
+    chart-side families coverage (above) + render-side P2; a post-CA2 partial
+    override may legitimately omit hf (CR1.5). Raw set == {rana} and the
+    one-line-exec + -hf/-hfd token bars retained verbatim.
+  - Round-2 (review majors 1/4 + minors 5): the golden-cross-check skips the
+    16 catalog IDs absent from BOTH pre-C04 goldens (their ref coverage stays
+    pinned by test_new_roster.test_c04_1_exact_hf_ref_per_approved_id — a
+    guaranteed post-CA2 KeyError removed, zero assertions lost);
+    `test_fam_derivation_and_id_override` now asserts `id:` REPLACES the
+    derived name (`f"{FAM}-q8" not in models`) instead of the old
+    `f"{FAM}-off" not in models` clause, which was mutually unsatisfiable
+    with the enablement test's CR1.4 echo requirement (Major 4 — the
+    enablement test owns `off`); duplicate-ID check uses the shared
+    `L.render_rc` (explicit rc + CA2-named message) instead of pytest.raises;
+    all four previously message-thin fam tests now name CA2 literally
+    (acceptance-1 wording made true, not just sampled-per-file).
   - placement test: models loop made tolerant of CA2 (`config.models` may
     vanish) + extended to families entries [green-at-handoff].
   - UNTOUCHED: per-ID composition/precedence/ttl-proxy/raw passthrough render
@@ -388,7 +402,17 @@ retained VERBATIM — the loop keys change, the comparison does not.
 * **(K) `test_autogen_wiring.py` — entrypoint rebase (CR4).**
   - removed: `_init_script`/`_sandbox` render-extraction machinery (the
     script leaves the yaml under CA4; the C-render-execution promise of §7.7
-    transfers to executing the REPO file directly).
+    transfers to executing the REPO file directly). RETAINED: the
+    `_comment_only` predicate (a contract checker the NEW degrade tests use —
+    round 1's span-edit dropped it, review Major-2 caught it, round 2
+    restored it verbatim from d3e39b237; without it the two degrade contracts
+    would NameError post-CA4 regardless of entrypoint.sh).
+  - Round-2: the local `_render_rc` moved to testlib as shared
+    `render_rc(cluster, overlay)` (schema's duplicate-ID test reuses it);
+    duplicate `import os` lines, the no-op `import json`/`del json`, and an
+    unused mkdir swept; the command-tripwire probe docstring now matches the
+    recorded observation (green at handoff via the C03 script guard — a
+    behavioral bar CA4 must keep green under the args guard).
   - degrade trio re-expressed against `containers/llama-swap-autogen/
     entrypoint.sh` invoked with the CR4 flags + stub CLI on PATH; SAME three
     contracts (empty-scan → comment-only + rc0; generate rc≠0 → degrade file
@@ -433,3 +457,21 @@ guard and must stay green post-CA4 under the args guard (review re-checks).
 12 skips = unchanged evidence gates; existing CI files 33 green — zero
 collateral. Every red message names its owning chunk (CA2/CA3/CA4), sampled
 per file.
+
+
+**Round-2 addendum (review r1, 2026-10-24, CHANGES_REQUESTED -> fixed same
+session):** majors 1-4 + minors 5-6 + nit 7 all applied tests-only: (1)
+golden-absent skip in the hf-cross-check (16 ids; roster keeps coverage); (2)
+`_comment_only` restored verbatim; (3) the `assert "hf" in m` service-layer
+loop actually removed (choice: execute the ruled intent, as §7bis-I and
+CR1.5 already recorded — chart-side + P2 coverage strictly supersedes); (4)
+derivation-test `off` clause replaced by the `id:`-replaces assertion (the
+enablement test owns the echo, resolving the mutually-unsatisfiable pair);
+(5) four schema reds gained literal CA2-named assertion messages; (6)
+tripwire-probe docstring reconciled with §7bis-K's recorded observation; (7)
+nits swept (`fam and ''` f-string -> plain derivation, shared render_rc into
+testlib, duplicate imports/no-op json/unused mkdir removed; testlib soft
+line-count ceiling acknowledged, no action). Post-fix bars: full suite
+**25 failed / 122 passed / 12 skipped — red set NAME-IDENTICAL to the round-1
+handoff**, zero NameErrors, goldens diff empty, integration gates 3p/5s
+unchanged.

@@ -77,7 +77,7 @@ def test_c02_chart_models_are_composition_or_documented_escape_hatch():
     for fam, spec in cfg["families"].items():
         fam = fam or {}
         for quant, rung in (fam.get("quants") or {}).items():
-            mid = (rung or {}).get("id") or f"{fam and ''}{fam}-{quant}"
+            mid = (rung or {}).get("id") or f"{fam}-{quant}"
             merged = {**(fam or {}), **(rung or {})}
             merged.pop("quants", None)
             if mid in L.CHART_RAW_CMD_IDS:
@@ -117,6 +117,14 @@ def test_c02_chart_composition_hf_refs_match_golden():
                 continue
             eff = {**(spec or {}), **(rung or {})}
             eff.pop("quants", None)
+            if mid not in goldens["gpu"] and mid not in goldens["gpu-ai"]:
+                # Round-2 review fix 1: the 16 C04-approved-new ids postdate the
+                # pre-C04 goldens — no golden cmd carries their refs. Their -hf
+                # coverage stays pinned by test_new_roster.
+                # test_c04_1_exact_hf_ref_per_approved_id (C04_HF_REFS
+                # parametrization); skipping here removes a guaranteed
+                # post-CA2 KeyError without removing any assertion.
+                continue
             src = "gpu" if mid in goldens["gpu"] else "gpu-ai"
             gcmd = goldens[src][mid]["cmd"]
             if L.is_echo_cmd(gcmd):  # golden echo (surviving disables): ref lives in the other golden
@@ -195,11 +203,14 @@ def test_c02_gpuai_block_escape_hatch_is_exactly_rana():
     # plus one draft (-hfd).
     assert len(re.findall(r"(?:^|\s)-hf(?=\s)", exec_lines[0])) == 1, "rana: expected exactly one -hf primary"
     assert len(re.findall(r"(?:^|\s)-hfd(?=\s)", exec_lines[0])) == 1, "rana: expected exactly one -hfd draft"
-    for mid in models:
-        if mid in L.GPUAI_RAW_CMD_IDS:
-            continue
-        m = models[mid]
-        assert "hf" in m, f"gpu-ai/{mid}: neither hf ref nor escape hatch"
+    # Amendment I (round-2: loop ACTUALLY removed — the round-1 patch silently
+    # no-oped here, the drift review caught): the per-entry `assert "hf" in m`
+    # loop is SUPERSEDED, coverage moved chart-side
+    # (test_c02_chart_composition_hf_refs_match_golden over config.families)
+    # plus render-side (parity P2). Post-CA2 a service-block entry may be a
+    # partial override without `hf` (CR1.5 merge-over-expansion) — requiring
+    # it here false-reds a compliant CA2 while pinning nothing extra.
+    pass
 
 
 def test_c02_macros_matrix_hooks_stay_top_level_single_source():
@@ -364,7 +375,11 @@ def test_fam_derivation_and_id_override():
     """CR1.1: rendered ID = rung.id | <family>-<quant>."""
     models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", SMOKE_OVERLAY))
     assert SMOKE_RUNG_ID in models, f"derived id {SMOKE_RUNG_ID!r} not rendered — CA2 expansion missing"
-    assert "custom-smoke-id" in models and f"{FAM}-off" not in models
+    # Round-2 review fix 4: `id:` REPLACES the derived name (it does not add a
+    # second entry), and the not-enabled rung renders as an echo per CR1.4 —
+    # its shape is owned by test_fam_enablement... (old clause
+    # `f"{FAM}-off" not in models` was mutually unsatisfiable with it).
+    assert "custom-smoke-id" in models and f"{FAM}-q8" not in models
     assert L.cmd_flag_value(models[SMOKE_RUNG_ID]["cmd"], "-hf") == "smolorg/Smoke-GGUF:Q4_K_M"
 
 
@@ -373,6 +388,7 @@ def test_fam_fields_merge_family_below_rung():
     """CR1.2: family fields merge down; rung fields win (ttl: family 0 -> rung
     300 for the custom-id rung; use/threads still inherited)."""
     models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", SMOKE_OVERLAY))
+    assert "custom-smoke-id" in models, "CA2 family expansion missing (id: override rung not rendered)"
     rung = models["custom-smoke-id"]
     assert rung.get("ttl") == 300, f"rung ttl override lost to family merge: {rung.get('ttl')!r}"
     assert models[SMOKE_RUNG_ID].get("ttl") == 0, "family ttl did not merge down"
@@ -392,7 +408,7 @@ def test_fam_enablement_and_disabled_beats_enabled():
     merged["config"] = {**SMOKE_OVERLAY["config"], **overlay["config"]}
     models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", merged))
     off = models.get(f"{FAM}-off")
-    assert off is not None, "not-enabled rung vanished instead of echoing (P5 contract)"
+    assert off is not None, "CA2 missing: not-enabled rung vanished instead of echoing (CR1.4 / P5)"
     assert L.is_echo_cmd(off["cmd"]) and f"{FAM}-off" in off["cmd"] and "not enabled" in off["cmd"], off["cmd"]
     dis = models[SMOKE_RUNG_ID]
     assert L.is_echo_cmd(dis["cmd"]) and "smoke ruled out" in dis["cmd"], (
@@ -411,8 +427,11 @@ def test_fam_models_merge_over_expansion():
         "models": {SMOKE_RUNG_ID: {"ttl": 77, "flags": "--tuned-override 1"}},
     }}
     models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", overlay))
+    assert SMOKE_RUNG_ID in models, "CA2 expansion missing (smoke rung not rendered)"
     m = models[SMOKE_RUNG_ID]
-    assert m.get("ttl") == 77 and m.get("name") == "Smoke Q4"
+    assert m.get("ttl") == 77 and m.get("name") == "Smoke Q4", (
+        f"CA2 CR1.5 merge-over-expansion wrong: ttl={m.get('ttl')!r} name={m.get('name')!r}"
+    )
     toks = set(L.cmd_tokens(m["cmd"]))
     assert {"--tuned-override", "1"} <= toks and "smolorg/Smoke-GGUF:Q4_K_M" in toks
 
@@ -423,10 +442,13 @@ def test_fam_duplicate_derived_id_fails_render():
     silent overwrite — two smoke families deriving the same id."""
     dup = {"config": {"families": {
         "dupfam": {"enabled": True, "quants": {"x": {"hf": "a/b:Q4_K_M"}}},
-        "dupfam-x": {"enabled": True, "quants": {"": {"id": "dupfam-x", "hf": "a/b:Q4_K_M"}}},
+        "dupfam-x": {"enabled": True, "quants": {"y": {"id": "dupfam-x", "hf": "a/b:Q4_K_M"}}},
     }}}
-    with pytest.raises(AssertionError, match="helm template failed|duplicate"):
-        L.configmap_data("gpu", "llama-swap-config", "config.yaml", dup)
+    rc, out = L.render_rc("gpu", dup)
+    assert rc != 0, (
+        "CA2 duplicate-ID guard missing: two rungs deriving 'dupfam-x' rendered fine "
+        "(DECISIONS: duplicate rendered ID fails the render)\n" + out[-400:]
+    )
 
 
 @helm

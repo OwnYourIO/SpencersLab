@@ -140,6 +140,24 @@ def render_docs(cluster: str, extra_overlay: dict | None = None):
     return _thaw(_render_tuple(cluster, ""))
 
 
+def render_rc(cluster: str, overlay: dict | None = None) -> tuple[int, str]:
+    """helm template rc + combined output for a render that is EXPECTED TO
+    FAIL (drift guards: CA2 duplicate IDs, CA4 args/scanPaths disagreement or
+    reintroduced command:). render_docs raises on rc!=0, so guard-probe tests
+    need the non-raising form."""
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="llamaswap-rc-") as tmp:
+        vals = extract_service_values(cluster, Path(tmp) / "vals.yaml")
+        cmd = ["helm", "template", "llama-swap", str(CHART_DIR), "-f", str(vals),
+               "--set", "domain=spencerslab.com", "--set", f"clusterName={cluster}"]
+        if overlay is not None:
+            ov = Path(tmp) / "ov.yaml"
+            ov.write_text(yaml.safe_dump(overlay))
+            cmd += ["-f", str(ov)]
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        return out.returncode, out.stdout + out.stderr
+
+
 def configmap_data(cluster: str, name: str, key: str, extra_overlay: dict | None = None) -> dict:
     """Parsed YAML body of one ConfigMap data key (llama-swap configs)."""
     for doc in render_docs(cluster, extra_overlay):
