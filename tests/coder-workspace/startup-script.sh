@@ -2,8 +2,10 @@
 # Acceptance checks for containers/coder-workspace/workspace-startup.sh —
 # the baked startup contract the Coder templates call. Covers criterion 1
 # (POSIX sh, set -eu), the env contract, the SSH + clone jobs, the dual-host
-# Forgejo wiring (2026-10-feat-forgejo-auth-support C02), and the forbidden
-# strings. Each check prints one pass/fail line; any fail makes the script
+# Forgejo wiring (2026-10-feat-forgejo-auth-support C02), the SSO polite-gate
+# statics (same ticket C06 — the behavioral proof is
+# tests/coder-workspace/startup-sso-behavior.sh), and the forbidden strings.
+# Each check prints one pass/fail line; any fail makes the script
 # exit non-zero.
 #
 # This script is the single baked startup contract for the hardened template,
@@ -58,7 +60,7 @@ fi
 # These are the exact env names the hardened template will export; a rename on
 # either side would silently break workspace startup.
 for var in OPENCODE_SERVER_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST \
-  FORGEJO_TOKEN_CANONICAL FORGEJO_HOST_CANONICAL CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
+  FORGEJO_TOKEN_CANONICAL FORGEJO_HOST_CANONICAL FORGEJO_OAUTH_ID CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
   if grep -Eq "(^|[^A-Za-z0-9_])\\\$\\{?${var}" "$STARTUP"; then
     pass "env: \${${var}} is read by the startup script"
   else
@@ -133,6 +135,114 @@ if [ -z "$tok_write" ]; then
   pass "no-disk: no token env var is redirected to a file"
 else
   fail "no-disk: token redirected to disk ($tok_write)"
+fi
+
+# --- SSO polite gate (2026-10-feat-forgejo-auth-support C06) -----------------
+# When the user has approved the coder external-auth provider, git must reach
+# the per-user token through the agent's GIT_ASKPASS — and git consults
+# credential helpers BEFORE askpass (research §E), so the approved path has to
+# stop the PAT helper from answering. These statics pin the mechanism
+# lexically; startup-sso-behavior.sh pins the semantics (helper NOT wired when
+# approved, fallback otherwise), which no grep can prove.
+if code_lines "$STARTUP" | grep -qE 'coder[[:space:]]+external-auth[[:space:]]+access-token[[:space:]]+"?\$\{?FORGEJO_OAUTH_ID'; then
+  pass "sso: the probe invokes 'coder external-auth access-token' with the provider id"
+else
+  fail "sso: no probe of \"coder external-auth access-token \$FORGEJO_OAUTH_ID\" — the gate has no input (exit-0 token / exit-1 URL is the v2.35.2 contract)"
+fi
+
+if code_lines "$STARTUP" | grep -qE -- '--unset(-all)?[[:space:]]+"?credential\.https://'; then
+  pass "sso: the approved path unsets the host's credential.helper (a PVC-persisted helper would shadow askpass forever)"
+else
+  fail "sso: no '--unset ... credential.https://' code line — stale PAT helpers would outlive approval on the home PVC"
+fi
+
+# The banner prints the approval URL the CLI emits on exit 1. Variable names
+# are dev's; the capture (X=$(coder external-auth ...)) and the echo/log of
+# that same X referencing approval wording are what bind the contract.
+cap_vars=$(code_lines "$STARTUP" |
+  grep -oE '[A-Za-z_][A-Za-z0-9_]*=\$[[:space:]]*\(coder external-auth' |
+  sed -E 's/=.*//' | sort -u || true)
+banner_print=""
+for v in $cap_vars; do
+  hit=$(code_lines "$STARTUP" | grep -E '(^|[[:space:]])(echo|log)' | grep -iE 'approv|url' |
+    grep -E "\\$\\{?${v}([^A-Za-z0-9_]|\$)" | head -n 1 || true)
+  [ -n "$hit" ] && banner_print=$hit && break
+done
+if [ -n "$banner_print" ]; then
+  pass "sso: the unapproved path echoes/logs the variable captured from the coder CLI (the approval URL)"
+else
+  fail "sso: nothing prints the captured coder external-auth output — the exit-1 approval URL would never reach the boot log"
+fi
+
+if code_lines "$STARTUP" | grep -E '(^|[[:space:]])(echo|log)' | grep -iE 'approv' |
+  grep -qE 'git\.scifi\.farm|git\.spencerslab\.com|FORGEJO_HOST|sso[a-z_]*host'; then
+  pass "sso: the approval banner names the forge host it waits on"
+else
+  fail "sso: no host-naming approval prompt — 'approve here' must identify which instance"
+fi
+
+# The dev-pair wiring must become conditional on SSO state. Accepted layouts
+# (DECISIONS 2026-10-24 replan): a no-helper marker at the call site, or a
+# guard conditional naming the SSO state variable in the call's immediate
+# window. Canonical's call must stay free of SSO influence (pairing ruling:
+# the dev coder's one slot serves the dev forge only).
+dev_wire=$(grep -nE 'wire_forgejo[[:space:]]+"?\$\{?FORGEJO_TOKEN([^_A-Za-z0-9]|$)' "$STARTUP" || true)
+gate_hit=""
+while IFS=: read -r lineno _; do
+  [ -n "$lineno" ] || continue
+  lo=$((lineno > 5 ? lineno - 5 : 1))
+  if sed -n "${lo},${lineno}p" "$STARTUP" | grep -vE '^[[:space:]]*#' |
+    grep -qiE 'no[-_]?helper|sso'; then
+    gate_hit=$lineno
+    break
+  fi
+done <<< "$dev_wire"
+if [ -n "$gate_hit" ]; then
+  pass "sso: the dev-pair wire_forgejo call is gated on SSO state (marker or guard at line $gate_hit)"
+else
+  fail "sso: the dev-pair wire_forgejo call is unconditional — with approved SSO the PAT helper would still shadow askpass"
+fi
+
+can_wire=$(grep -nE 'wire_forgejo.*FORGEJO_TOKEN_CANONICAL' "$STARTUP" || true)
+can_hit=""
+while IFS=: read -r lineno _; do
+  [ -n "$lineno" ] || continue
+  lo=$((lineno > 1 ? lineno - 1 : 1))
+  # Window is deliberately ONE line above the call here (vs 5 for the dev
+  # gate): a guard at the canonical call site sits directly above it, while a
+  # wider window would false-positive on the dev pair's own SSO lines that
+  # usually precede the canonical block.
+  if sed -n "${lo},${lineno}p" "$STARTUP" | grep -vE '^[[:space:]]*#' |
+    grep -qiE 'no[-_]?helper|sso'; then
+    can_hit=$lineno
+    break
+  fi
+done <<< "$can_wire"
+if [ -z "$can_hit" ]; then
+  pass "sso: the canonical call site carries no SSO reference (per-user layering is dev-pair-only)"
+else
+  fail "sso: SSO logic leaked to the canonical wire_forgejo call (line $can_hit) — canonical must keep the shipped PAT behavior"
+fi
+
+# No-disk, extended to the OAuth token: whatever the CLI captured must never
+# be redirected to a file or handed to git config (the transient clone
+# credential below is the only legal carrier).
+sso_disk=""
+for v in $cap_vars; do
+  hit=$(code_lines "$STARTUP" | grep -E '>>|[[:space:]]config[[:space:]]' |
+    grep -E "\\$\\{?${v}([^A-Za-z0-9_]|\$)" | head -n 1 || true)
+  [ -n "$hit" ] && sso_disk=$hit && break
+done
+if [ -z "$sso_disk" ]; then
+  pass "no-disk: no coder-captured SSO variable is written to a file or git config"
+else
+  fail "no-disk: SSO token/url persisted ($sso_disk) — the home PVC would outlive the 1h token"
+fi
+
+if code_lines "$STARTUP" | grep -qE 'GIT_CONFIG_COUNT|git[[:space:]].*-c[[:space:]]+credential\.helper'; then
+  pass "clone: the per-user boot credential rides only on the git process (GIT_CONFIG_COUNT env or -c flag)"
+else
+  fail "clone: no transient (env/-c) credential mechanism — approved-host clones cannot get the per-user token without touching global config"
 fi
 
 # --- SSH + clone jobs -------------------------------------------------------

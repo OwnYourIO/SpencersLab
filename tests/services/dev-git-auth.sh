@@ -7,6 +7,12 @@
 # instance: `forgejo-token` (git.scifi.farm) and `forgejo-token-canonical`
 # (git.spencerslab.com) -> FORGEJO_TOKEN_CANONICAL / FORGEJO_HOST_CANONICAL.
 # No image change is needed: the baked startup script consumes those names.
+# From replan v2 this suite also covers the DEV coder server itself: the
+# coder-secrets ExternalSecret's gitea-type external-auth provider +
+# CODER_EXTERNAL_TOKEN_ENCRYPTION_KEYS (c-sso-1..4), and — once C06 lands —
+# the provider-id literal shared between that template, the kubernetes-hardened
+# env and the workspace probe (c-sso-5..7). The gpu twin lives in
+# tests/services/gpu-coder-sso.sh so this suite stays single-cluster-scoped.
 #
 # GREP CONVENTION: the secret-github.yaml check is deliberately
 # COMMENT-INCLUSIVE. The claim this script forbids ("no in-repo consumer") lives
@@ -31,6 +37,8 @@ VALUES="services/dev/prod/values.yaml"
 CUSTOM_VALUES="custom-values/dev/prod-values.yaml"
 MAIN="charts/coder/coder-templates/kubernetes-hardened/main.tf"
 CHART="charts/coder"
+CHART_VALUES="$CHART/values.yaml"
+SECRET_CODER="$CHART/templates/secret-coder.yaml"
 SERVICE="services/dev/prod"
 STARTUP="containers/coder-workspace/workspace-startup.sh"
 
@@ -105,6 +113,32 @@ blocks() {
         }
       }
     }
+  ' "$file"
+}
+
+# Prints every `- secretKey:` item of an ExternalSecret's spec.data as one
+# flattened line (comments and blank lines dropped). Binding per-entry keeps
+# "the ea_secret entry reads coder-external-auth's password" from passing on
+# file-wide mentions: store, remoteRef key and property must sit inside the
+# same entry (C04's secret-coder.yaml carries five sibling entries already).
+data_entries() {
+  local file="$1"
+  awk '
+    /^[[:space:]]*(#|$)/ { next }
+    /^[[:space:]]*-[[:space:]]*secretKey:/ {
+      if (buf != "") print buf
+      match($0, /^[[:space:]]*/)
+      base = RLENGTH
+      buf = $0
+      next
+    }
+    buf != "" {
+      match($0, /^[[:space:]]*/)
+      if (RLENGTH > base) { buf = buf " " $0; next }
+      print buf
+      buf = ""
+    }
+    END { if (buf != "") print buf }
   ' "$file"
 }
 
@@ -349,6 +383,108 @@ else
   skip "c-canonical-4: $STARTUP is absent, so the canonical env-name contract could not be cross-checked"
 fi
 
+# --- c-sso-1: the dev coder server carries the provider + encryption keys ---
+# Comment-inclusive per the chunk: the header rationale (per-user SSO
+# approval; coderd stores external tokens plaintext unless
+# CODER_EXTERNAL_TOKEN_ENCRYPTION_KEYS is set) is part of the C04 contract,
+# and the provider id is contractual, not cosmetic — the forge-side OAuth app
+# whitelists /external-auth/<ID>/callback (v2.35.2 docs).
+[ -f "$SECRET_CODER" ] || fail "c-sso-1: $SECRET_CODER is missing"
+
+grep -qE '^[[:space:]]*CODER_EXTERNAL_AUTH_0_ID:[[:space:]]*"forgejo"[[:space:]]*(#.*)?$' "$SECRET_CODER" ||
+  fail "c-sso-1: CODER_EXTERNAL_AUTH_0_ID is not the literal \"forgejo\" — the provider id embeds the callback path the dev forge's OAuth app must whitelist"
+ok "c-sso-1: provider id literal is \"forgejo\""
+
+grep -qE '^[[:space:]]*CODER_EXTERNAL_AUTH_0_TYPE:[[:space:]]*"gitea"[[:space:]]*(#.*)?$' "$SECRET_CODER" ||
+  fail "c-sso-1: CODER_EXTERNAL_AUTH_0_TYPE is not \"gitea\" (giteaDefaults() derives TOKEN_URL/VALIDATE_URL/REGEX against Forgejo 15 from the AUTH_URL host)"
+grep -qE '^[[:space:]]*CODER_EXTERNAL_AUTH_0_DISPLAY_NAME:[[:space:]]*"Forgejo"[[:space:]]*(#.*)?$' "$SECRET_CODER" ||
+  fail "c-sso-1: CODER_EXTERNAL_AUTH_0_DISPLAY_NAME is not \"Forgejo\""
+grep -qE '^[[:space:]]*CODER_EXTERNAL_AUTH_0_AUTH_URL:[[:space:]]*"https://git\.scifi\.farm/login/oauth/authorize"[[:space:]]*(#.*)?$' "$SECRET_CODER" ||
+  fail "c-sso-1: CODER_EXTERNAL_AUTH_0_AUTH_URL is not the dev-forge authorize path (pairing ruling: the dev coder's one slot spends itself on git.scifi.farm)"
+ok "c-sso-1: TYPE/DISPLAY_NAME/AUTH_URL literals match the dev pairing"
+
+# v2-template indirection: the fetched values enter target.template.data
+# through the {{ \`{{ .x }}\` }} escape like the existing CODER_OIDC_* lines —
+# binding template key → secretKey, not just key presence.
+grep -qE '^[[:space:]]*CODER_EXTERNAL_AUTH_0_CLIENT_ID:.*ea_client_id' "$SECRET_CODER" ||
+  fail "c-sso-1: CODER_EXTERNAL_AUTH_0_CLIENT_ID does not indirect through secretKey ea_client_id"
+grep -qE '^[[:space:]]*CODER_EXTERNAL_AUTH_0_CLIENT_SECRET:.*ea_secret' "$SECRET_CODER" ||
+  fail "c-sso-1: CODER_EXTERNAL_AUTH_0_CLIENT_SECRET does not indirect through secretKey ea_secret"
+grep -qE '^[[:space:]]*CODER_EXTERNAL_TOKEN_ENCRYPTION_KEYS:.*token_encryption_keys' "$SECRET_CODER" ||
+  fail "c-sso-1: CODER_EXTERNAL_TOKEN_ENCRYPTION_KEYS does not indirect through secretKey token_encryption_keys"
+ok "c-sso-1: all seven target.template.data keys present with their secretKey wirings"
+
+entries=$(data_entries "$SECRET_CODER")
+ea_client=$(printf '%s\n' "$entries" | grep -E 'secretKey:[[:space:]]*ea_client_id([^A-Za-z0-9_]|$)' | head -n 1 || true)
+ea_secret=$(printf '%s\n' "$entries" | grep -E 'secretKey:[[:space:]]*ea_secret([^A-Za-z0-9_]|$)' | head -n 1 || true)
+token_keys=$(printf '%s\n' "$entries" | grep -E 'secretKey:[[:space:]]*token_encryption_keys([^A-Za-z0-9_]|$)' | head -n 1 || true)
+[ -n "$ea_client" ] || fail "c-sso-1: no '- secretKey: ea_client_id' data entry"
+[ -n "$ea_secret" ] || fail "c-sso-1: no '- secretKey: ea_secret' data entry"
+[ -n "$token_keys" ] || fail "c-sso-1: no '- secretKey: token_encryption_keys' data entry"
+printf '%s' "$ea_client" | grep -q 'bitwarden-login' ||
+  fail "c-sso-1: the ea_client_id entry does not read through the bitwarden-login store"
+printf '%s' "$ea_client" | grep -q '"coder-external-auth"' ||
+  fail "c-sso-1: the ea_client_id entry does not reference bitwardenIds.coder-external-auth"
+printf '%s' "$ea_client" | grep -qE 'property:[[:space:]]*username' ||
+  fail "c-sso-1: ea_client_id does not read the OAuth client id from the item's username field"
+printf '%s' "$ea_secret" | grep -q 'bitwarden-login' ||
+  fail "c-sso-1: the ea_secret entry does not read through the bitwarden-login store"
+printf '%s' "$ea_secret" | grep -q '"coder-external-auth"' ||
+  fail "c-sso-1: the ea_secret entry does not reference bitwardenIds.coder-external-auth"
+printf '%s' "$ea_secret" | grep -qE 'property:[[:space:]]*password' ||
+  fail "c-sso-1: ea_secret does not read the client secret from the item's password field"
+printf '%s' "$token_keys" | grep -q 'bitwarden-login' ||
+  fail "c-sso-1: the token_encryption_keys entry does not read through the bitwarden-login store"
+printf '%s' "$token_keys" | grep -q '"coder-token-encryption"' ||
+  fail "c-sso-1: the token_encryption_keys entry does not reference bitwardenIds.coder-token-encryption"
+printf '%s' "$token_keys" | grep -qE 'property:[[:space:]]*password' ||
+  fail "c-sso-1: token_encryption_keys does not read the base64 key from the item's password field"
+for trio in conversionStrategy decodingStrategy metadataPolicy; do
+  for e in "$ea_client" "$ea_secret" "$token_keys"; do
+    printf '%s' "$e" | grep -q "$trio" ||
+      fail "c-sso-1: an external-auth/encryption data entry is missing the ArgoCD $trio boilerplate (the file's existing entry shape)"
+  done
+done
+ok "c-sso-1: three data entries carry store, bitwardenIds reference, property and the Default/None/None trio"
+
+# giteaDefaults() owns the derivation (source-verified at the deployed tag);
+# explicit copies would drift from it. Code-line scan — a comment explaining
+# why they are ABSENT legitimately names them.
+bad_derived=$(grep -vE '^[[:space:]]*#' "$SECRET_CODER" |
+  grep -E '^[[:space:]]*CODER_EXTERNAL_AUTH_0_(REGEX|TOKEN_URL|VALIDATE_URL):' | head -n 1 || true)
+[ -z "$bad_derived" ] ||
+  fail "c-sso-1: explicit derived provider key re-added ($bad_derived) — giteaDefaults() must own it"
+ok "c-sso-1: no explicit _REGEX/_TOKEN_URL/_VALIDATE_URL keys (giteaDefaults derivation trusted)"
+
+# --- c-sso-2: chart sentinels + custom-values slots -------------------------
+# The coder-external-auth/coder-token-encryption items are per-cluster (same
+# bitwardenIds key, different item — the coder-pg precedent), so dev's UUIDs
+# land under the coder: block's bitwardenIds here, not at the top level.
+chart_ids=$(yaml_block "$CHART_VALUES" '^bitwardenIds:')
+printf '%s\n' "$chart_ids" |
+  grep -qE '^[[:space:]]*coder-external-auth:[[:space:]]*OVERRIDE_VIA_CUSTOM_VALUES[[:space:]]*(#.*)?$' ||
+  fail "c-sso-2: $CHART_VALUES has no 'coder-external-auth: OVERRIDE_VIA_CUSTOM_VALUES' entry under bitwardenIds"
+printf '%s\n' "$chart_ids" |
+  grep -qE '^[[:space:]]*coder-token-encryption:[[:space:]]*OVERRIDE_VIA_CUSTOM_VALUES[[:space:]]*(#.*)?$' ||
+  fail "c-sso-2: $CHART_VALUES has no 'coder-token-encryption: OVERRIDE_VIA_CUSTOM_VALUES' entry under bitwardenIds"
+ok "c-sso-2: $CHART_VALUES carries both new sentinels"
+
+coder_cv=$(yaml_block "$CUSTOM_VALUES" '^coder:')
+coder_cv_ids=$(yaml_block <(printf '%s\n' "$coder_cv") '^[[:space:]]*bitwardenIds:')
+for key in coder-external-auth coder-token-encryption; do
+  custom_entry=$(printf '%s\n' "$coder_cv_ids" | grep -E "^[[:space:]]*${key}:" | head -n 1 || true)
+  [ -n "$custom_entry" ] || fail "c-sso-2: $CUSTOM_VALUES coder.bitwardenIds has no ${key} entry (the sentinel would survive to the cluster)"
+  if printf '%s' "$custom_entry" | grep -q 'OVERRIDE_VIA_CUSTOM_VALUES'; then
+    fail "c-sso-2: the custom-values ${key} entry is still the service sentinel: $custom_entry"
+  fi
+  # OVERRIDE_NEEDED is the documented must-fill slot until the user creates
+  # the Bitwarden item (the forgejo-token-canonical precedent above).
+  printf '%s' "$custom_entry" |
+    grep -qE "^[[:space:]]*${key}:[[:space:]]*(OVERRIDE_NEEDED|${UUID_RE})[[:space:]]*(#.*)?$" ||
+    fail "c-sso-2: the custom-values ${key} value is neither a real UUID nor the documented OVERRIDE_NEEDED placeholder: $custom_entry"
+  ok "c-sso-2: custom-values/dev ${key} slot is a real UUID or the documented placeholder"
+done
+
 # --- c4: helm lint/template and the rendered ExternalSecret ----------------
 find_helm() {
   local cand
@@ -412,6 +548,8 @@ fi
 
 if [ -z "$helm_bin" ]; then
   skip "c4: no helm binary on PATH or in /tmp/opencode, and none could be downloaded there; gate $CHART separately with helm dependency build + lint + template"
+  skip "c-sso-3: coder-secrets render ladder not run (no helm binary)"
+  skip "c-sso-4: pod-annotation render check not run (no helm binary)"
 else
   helm_version=$("$helm_bin" version --short 2>/dev/null || true)
   chart_copy=$(mktemp -d /tmp/opencode/c05-helm-XXXXXX)
@@ -421,6 +559,8 @@ else
   if ! (cd "$chart_copy" && "$helm_bin" dependency build .) >"$dep_log" 2>&1; then
     if grep -qiE 'dial tcp|no such host|connection refused|TLS handshake|network is unreachable|Failed to download|failed to fetch|could not download' "$dep_log"; then
       skip "c4: helm dependency build could not reach helm.coder.com here, so lint/template were not run (log kept at $dep_log)"
+      skip "c-sso-3: coder-secrets render ladder not run (dependency build unreachable)"
+      skip "c-sso-4: pod-annotation render check not run (dependency build unreachable)"
     else
       tail -n 30 "$dep_log" >&2
       fail "c4: helm dependency build failed on a copy of $CHART (log kept at $dep_log)"
@@ -548,14 +688,153 @@ else
       tail -n 30 "$dev_err" >&2
       fail "c4: helm template dev $SERVICE --set bitwardenIds.forgejo-token=test-uuid failed"
     fi
+
+    # --- c-sso-3: the coder-secrets render ladder (charts/coder) -----------
+    # Every bitwardenIds key the coder-secrets document consumes is resolved
+    # --set-style, including the pre-existing coder-sso-secret/coder-pg legs:
+    # their sentinels render INTO THE SAME DOCUMENT the no-OVERRIDE contract
+    # reads, and at deploy time the custom-values layer resolves them (the
+    # plan's --set list abbreviated that).
+    sso3_out=$(mktemp /tmp/opencode/c05-sso3-XXXXXX.yaml)
+    sso3_err=$(mktemp /tmp/opencode/c05-sso3-XXXXXX.err)
+    if "$helm_bin" template coder "$chart_copy" \
+      --set domain=test.example.com \
+      --set bitwardenIds.coder-external-auth=test-uuid-ea \
+      --set bitwardenIds.coder-token-encryption=test-uuid-key \
+      --set bitwardenIds.coder-sso-secret=test-uuid-sso \
+      --set bitwardenIds.coder-pg=test-uuid-pg \
+      >"$sso3_out" 2>"$sso3_err"; then
+      coder_doc=$(awk '
+        function flush() {
+          if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*coder-secrets([[:space:]]|$)/) print buf
+        }
+        /^---[[:space:]]*$/ { flush(); buf = ""; next }
+        { buf = buf $0 "\n" }
+        END { flush() }
+      ' "$sso3_out")
+      [ -n "$coder_doc" ] ||
+        fail "c-sso-3: the charts/coder render carries no coder-secrets ExternalSecret"
+      for key in CODER_EXTERNAL_AUTH_0_ID CODER_EXTERNAL_AUTH_0_TYPE CODER_EXTERNAL_AUTH_0_DISPLAY_NAME \
+        CODER_EXTERNAL_AUTH_0_AUTH_URL CODER_EXTERNAL_AUTH_0_CLIENT_ID CODER_EXTERNAL_AUTH_0_CLIENT_SECRET \
+        CODER_EXTERNAL_TOKEN_ENCRYPTION_KEYS; do
+        printf '%s' "$coder_doc" | grep -q "$key" ||
+          fail "c-sso-3: the rendered coder-secrets document lost the $key template key"
+      done
+      printf '%s' "$coder_doc" | grep -q 'forgejo' ||
+        fail "c-sso-3: the rendered coder-secrets document has no forgejo provider id"
+      printf '%s' "$coder_doc" | grep -q 'https://git.scifi.farm/login/oauth/authorize' ||
+        fail "c-sso-3: the rendered coder-secrets document lost the dev-forge AUTH_URL"
+      printf '%s' "$coder_doc" | grep -q 'test-uuid-ea' ||
+        fail "c-sso-3: the rendered coder-secrets document ignores --set bitwardenIds.coder-external-auth"
+      printf '%s' "$coder_doc" | grep -q 'test-uuid-key' ||
+        fail "c-sso-3: the rendered coder-secrets document ignores --set bitwardenIds.coder-token-encryption"
+      if printf '%s' "$coder_doc" | grep -q 'OVERRIDE'; then
+        fail "c-sso-3: the rendered coder-secrets document still carries an OVERRIDE_* sentinel"
+      fi
+      ok "c-sso-3: the coder-secrets render carries all seven keys, forgejo + dev AUTH_URL, both test UUIDs, no sentinel"
+
+      # c-sso-4: coderd reads provider/encryption env at process start only —
+      # without a secret-change restart the first sync would sit inert, so the
+      # pod template must carry the reloader annotation (Reloader runs
+      # cluster-wide on dev: dev-reloader-reloader 1/1, live-verified).
+      if python3 - "$sso3_out" <<'PY'
+import sys, yaml
+
+docs = [d for d in yaml.safe_load_all(open(sys.argv[1])) if d]
+dep = [d for d in docs if d.get('kind') == 'Deployment' and d['metadata']['name'] == 'coder']
+if not dep:
+    print('FAIL: c-sso-4: the charts/coder render has no Deployment named coder', file=sys.stderr)
+    sys.exit(1)
+ann = ((dep[0]['spec']['template'].get('metadata') or {}).get('annotations') or {})
+if ann.get('reloader.stakater.com/auto') != 'true':
+    print(f'FAIL: c-sso-4: the coderd pod template annotations are {ann!r} — coder.coder.podAnnotations did not reach the pod', file=sys.stderr)
+    sys.exit(1)
+PY
+      then
+        ok "c-sso-4: the coder Deployment pod template carries reloader.stakater.com/auto=\"true\""
+      else
+        exit 1
+      fi
+
+      # Second leg: the real deploy path — the coder: slice of
+      # custom-values/dev (what the ApplicationSet feeds the chart) must show
+      # the documented OVERRIDE_NEEDED slots, never the service sentinel.
+      coder_slice="$sso3_out.coder-block.yaml"
+      if ! printf '%s\n' "$coder_cv" | python3 -c 'import sys, yaml; yaml.safe_dump(yaml.safe_load(sys.stdin.read()), sys.stdout)' >"$coder_slice" 2>"$sso3_err"; then
+        tail -n 5 "$sso3_err" >&2
+        fail "c-sso-3: the coder: block of $CUSTOM_VALUES is not parseable YAML (the ApplicationSet embeds it as JSON already)"
+      fi
+      sso3f_out=$(mktemp /tmp/opencode/c05-sso3f-XXXXXX.yaml)
+      if ! "$helm_bin" template coder "$chart_copy" -f "$coder_slice" --set domain=test.example.com >"$sso3f_out" 2>/dev/null; then
+        fail "c-sso-3: helm template coder with the custom-values coder: slice failed"
+      fi
+      coder_f_doc=$(awk '
+        function flush() {
+          if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*coder-secrets([[:space:]]|$)/) print buf
+        }
+        /^---[[:space:]]*$/ { flush(); buf = ""; next }
+        { buf = buf $0 "\n" }
+        END { flush() }
+      ' "$sso3f_out")
+      [ -n "$coder_f_doc" ] ||
+        fail "c-sso-3: the custom-values-slice render lost the coder-secrets ExternalSecret"
+      printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE_NEEDED' ||
+        fail "c-sso-3: the deploy-path render shows no OVERRIDE_NEEDED documented slot for the new items (the slots must be visible until the user fills them)"
+      if printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE_VIA_CUSTOM_VALUES'; then
+        fail "c-sso-3: the custom-values coder: slice did not resolve the service sentinel in the coder-secrets document"
+      fi
+      ok "c-sso-3: the custom-values coder-slice render shows OVERRIDE_NEEDED slots and no service sentinel"
+    else
+      tail -n 30 "$sso3_err" >&2
+      fail "c-sso-3: helm template coder $chart_copy with the provider --set list failed"
+    fi
   fi
 fi
+
+# --- c-sso-5: the provider id must not drift between chart and template -----
+# `forgejo` is written twice on purpose — the coderd env (C04) and the
+# workspace's probe argument (C06) — and the forge-side callback path embeds
+# it (/external-auth/<ID>/callback), so a divergence silently breaks approval
+# flows that otherwise render and lint clean. Exact-string comparison of the
+# two extracted literals.
+chart_ea_id=$(sed -nE 's/^[[:space:]]*CODER_EXTERNAL_AUTH_0_ID:[[:space:]]*"([^"]+)".*/\1/p' "$SECRET_CODER" | head -n 1)
+[ -n "$chart_ea_id" ] || fail "c-sso-5: could not extract the CODER_EXTERNAL_AUTH_0_ID literal from $SECRET_CODER"
+oauth_block=$(env_block FORGEJO_OAUTH_ID)
+[ -n "$oauth_block" ] ||
+  fail "c-sso-5: $MAIN has no container env block setting FORGEJO_OAUTH_ID — the workspace probe would have no provider id to pass"
+tf_ea_id=$(printf '%s' "$oauth_block" | sed -nE 's/.*value[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' | head -n 1)
+[ -n "$tf_ea_id" ] || fail "c-sso-5: no quoted value literal in the FORGEJO_OAUTH_ID env block"
+[ "$chart_ea_id" = "$tf_ea_id" ] ||
+  fail "c-sso-5: provider-id drift: $SECRET_CODER says \"$chart_ea_id\", $MAIN says \"$tf_ea_id\" — coderd registers one callback path while the workspaces probe the other"
+ok "c-sso-5: provider id \"$chart_ea_id\" is identical in the coder-secrets template and kubernetes-hardened"
+
+# --- c-sso-6: c6 extension — the SSO env name crosses the script boundary ---
+if [ -f "$STARTUP" ]; then
+  grep -qE '\$\{?FORGEJO_OAUTH_ID' "$STARTUP" ||
+    fail "c-sso-6: $STARTUP never reads \$FORGEJO_OAUTH_ID, so the template's provider-id env has no consumer"
+  ok "c-sso-6: the baked startup script consumes FORGEJO_OAUTH_ID"
+else
+  skip "c-sso-6: $STARTUP is absent, so the provider-id env-name contract could not be cross-checked"
+fi
+
+# --- c-sso-7: FORGEJO_OAUTH_ID is a bare literal in the FORGEJO_HOST family --
+# Same no-server-stored-values posture as the host literals (DECISIONS
+# 2026-10-24): a coder_parameter or variable here would make the probe id
+# user-editable per workspace and break the c-sso-5 drift pairing.
+printf '%s' "$oauth_block" | grep -qE 'value[[:space:]]*=[[:space:]]*"forgejo"([[:space:]}]|$)' ||
+  fail "c-sso-7: FORGEJO_OAUTH_ID is not the bare literal \"forgejo\": $oauth_block"
+if printf '%s' "$oauth_block" | grep -qE 'var\.|\$\{|https?://'; then
+  fail "c-sso-7: FORGEJO_OAUTH_ID env block references a variable or a URL — the provider id must be the bare literal (no scheme, no coder_parameter): $oauth_block"
+fi
+[ -n "$host_block" ] || fail "c-sso-7: the FORGEJO_HOST env block vanished — FORGEJO_OAUTH_ID must sit in the same container env family (the probe covers FORGEJO_HOST's instance)"
+ok "c-sso-7: FORGEJO_OAUTH_ID = \"forgejo\" bare literal, same container env block family as FORGEJO_HOST"
 
 # Everything above passed; the /tmp copies and render dumps are done with. A
 # failed run keeps them so its "log kept at" pointer still resolves.
 if [ -n "${chart_copy:-}" ]; then
   rm -rf "$chart_copy"
-  for f in "${dev_out:-}" "${dev_err:-}" "${devf_out:-}" "${dev_can_out:-}"; do
+  for f in "${dev_out:-}" "${dev_err:-}" "${devf_out:-}" "${dev_can_out:-}" \
+    "${sso3_out:-}" "${sso3_err:-}" "${coder_slice:-}" "${sso3f_out:-}"; do
     if [ -n "$f" ]; then
       rm -f "$f"
     fi
