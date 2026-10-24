@@ -100,3 +100,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - Per-user git auth (Coder external git auth) if workspaces ever stop sharing
   one lab token.
 - Re-checking for a headless OpenChamber integration seed at each major bump.
+
+## Test round (2026-10-24, coord from agent-test RESULT, commit e520df0b2)
+- Ruled (deviations accepted, contract preserved): (1) two pre-existing c4 document selectors in tests/services/dev-git-auth.sh tightened prefix→boundary-terminated so C03's `forgejo-token-canonical` doc can't collide with the original `forgejo-token` checks (c1..c6 stay green; strengthens isolation, nothing weakened); (2) the C02 helper-pattern check accepts EITHER legal layout (3-arg `wire_forgejo` called with the env-var name, or literal helper body) — binds the contract, not dev's style; (3) traceability spec lives at TEST-SPEC.md (ticket root).
+- Test suite is now the immutable contract for C01–C03; fixes route back to test_session ses_e908a206dffeJJZ7J97KEzUmVP.
