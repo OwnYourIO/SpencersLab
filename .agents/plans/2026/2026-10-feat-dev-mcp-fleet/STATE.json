@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-feat-dev-mcp-fleet",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e908dc2aeffenDK8IoJwj5SZQQ",
   "test_session": "ses_e9064b1cfffe3gaBNEz6s2AI0E",
   "current_wave": 1,
@@ -21,8 +21,8 @@
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         "RESULT status: DONE chunk: C01 files_changed: [services/dev/prod/values.yaml, custom-values/dev/prod-values.yaml] commands_run: [baseline t1|t4|t5 => fail(red-expected); t2 t3 => pass; t1..t5 => pass(11 ok); t10 => pass; helm lint services/dev/prod => pass; dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop scan --changes => pass(100, 0 findings); git commit be59d29cd => pass] deviations: none material (comments tightened per comment-slop) friction: none open_questions: none (pod NotReady until user creates dev-searxng LOGIN item = documented interim OQ2) next_suggested: review C01",
         "RESULT status: DONE(chunk C01 review) verdict: APPROVED chunk: C01 commands_run: [t1..t5 => pass(11 ok); t10 t6 => pass; chart lints+searxng render => pass; hivetools dev-slice render => pass (mcp-* C03 red-expected); dev umbrella render => pass (searxng-ingress asserted); sentinel parity 1:1 => pass; rulesync generate --check => pass; JSONC parse => pass; wekan-mcp-login.sh => fail(C02 red-expected); docker build => skip(no daemon); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); tree clean after every run] deviations: reviewer ran --check only (read-only); C03-scoped plan-Commands entries noted red-expected; review notes appended+committed ecfd04b3d friction: none new open_questions: none (pod NotReady until user creates dev-searxng LOGIN item = OQ2 interim) next_suggested: C02"
@@ -34,8 +34,8 @@
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         "RESULT status: DONE chunk: C02 files_changed: [containers/wekan-mcp/wekan_mcp/wekan.py, containers/wekan-mcp/README.md, containers/wekan-mcp/Dockerfile] commands_run: [baseline wekan-mcp-login.sh => fail(red t2 old code); py_compile => pass; t1..t5 => pass(6 ok); full t1..t6 => pass(6 ok, t6 SKIP no daemon \u2014 CI docker-build.yaml is real gate); AC5 credential-leak diff audit => pass; aislop scan --changes => pass(100/0); git commit a03debfc1 => pass; tree clean => pass] deviations: (1) removed 2 pre-existing decorative separator comments in wekan.py (aislop-gate fixable warnings); (2) Dockerfile header-comment-only (named by chunk Tasks env lists, outside Files-in-scope list); (3) t6 skip per env limit. open_questions: none next_suggested: review C02",
         "RESULT status: DONE(chunk C02 review) verdict: APPROVED chunk: C02 files_changed: [.agents/plans/.../chunks/C02.md] commands_run: [py_compile => pass; wekan-mcp-login.sh full => pass(6 ok, t6 SKIP recorded, CI gate); dev-mcp-fleet.sh t1..t5 => pass(11 ok); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); tree clean after every run => pass; test immutability => pass; AC5 grep audit => pass; version/tag touch => NONE; notes committed 0dae099e5] deviations: none friction: none open_questions: none next_suggested: C03 unblocked"
@@ -50,8 +50,8 @@
         "C02"
       ],
       "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         "RESULT status: DONE chunk: C03 files_changed: [services/dev/prod/values.yaml, services/dev/prod/templates/secret-github-mcp.yaml, services/dev/prod/templates/secret-wekan-mcp.yaml, custom-values/dev/prod-values.yaml] commands_run: [dev-mcp-fleet.sh t6..t11 => pass(13 ok); t1..t11 => pass(24 ok); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); slice render => pass(6 MCPServers, 4 ingress paths, OVERRIDE_ clean); umbrella render => pass(ES stores/properties exact); helm lint dev umbrella => pass; aislop => pass(100/0, 26 files); comment-slop audit + 2 planning-token fixes applied; git commit 2bfd78e05 => pass; tree clean => pass] deviations: (1) searxng SEARXNG_URL/MCP_HTTP_* moved gpu-podTemplateSpec-env -> canonical spec.env (t7 contract asserts spec.env; gpu boards/HA precedents use spec.env; runtime identical; in-file comment). (2) playwright image double-space normalized. (3) stale hivetools header comment rewritten. friction: chunk 'gpu verbatim' vs immutable t7 spec.env assertion in tension; resolved test-as-contract; reviewer to confirm ruling. open_questions: none blocking (renovate/boards/searxng pods unready until user actions 1-2 \u2014 visible by design, OQ2) next_suggested: review C03",
         "RESULT status: DONE(chunk C03 review) verdict: APPROVED chunk: C03 files_changed: [chunks/C03.md notes commit c25b294de] commands_run: [t6-t11 => pass(13 ok); t1..t11 => pass(24 ok); slice render => pass(6 MCPServers/4 paths/0 OVERRIDE_); umbrella render => pass(exact ES stores/properties); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); secret-github byte-identical => pass; boards/searxng sanctioned deltas only => pass; live gpu MCPServer+pod env equivalence => pass(spec.env AND podTemplateSpec both land on mcp container; dev ruling CONFIRMED); property:username precedent => pass; tests untouched since 94e193af6 => pass; tag/version scan => none; aislop => pass(100/0)] deviations: none friction: none open_questions: none; C04 client URL = public ingress form per t12 next_suggested: C04"
@@ -65,8 +65,8 @@
         "C03"
       ],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         "RESULT status: DONE chunk: C04 files_changed: [.opencode/opencode.jsonc, .rulesync/subagents/agent-{plan,research,test,dev,review,fuser}.md, .rulesync/rules/overview.md, .rulesync/skills/agents-sync/references/permissions.md, AGENTS.md, .opencode/agents/agent-*.md (6), .opencode/skills/agents-sync/references/permissions.md] commands_run: [t12 => pass(2 ok); t13 => pass(6 ok); t14 pre-commit => FAIL as designed(dirty generated); rulesync generate => pass(v37); generate --check => pass; git commit f81d9c179 sources+generated together => pass; t14 post-commit => pass(4 ok incl git-clean); full t1..t14 => pass(36 ok); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop => pass(100/0); tree clean after every run => pass] deviations: (1) agents-sync references/permissions.md edited (source+regen copy) \u2014 outside Files-in-scope, ordered by launch scope; (2) 3-line why-comment above dev-* JSONC group; (3) role-matrix plan row + all-roles paragraph name dev* for consistency. friction: none new. open_questions: USER-OWNED \u2014 machine-global config sync (~/.config/opencode + ~/.config/kilo) needs the four dev-* entries mirrored (user-action 4); cluster-side endpoint verification after ArgoCD applies. next_suggested: review C04",
         "RESULT status: DONE(chunk C04 review) verdict: APPROVED chunk: C04 files_changed: [chunks/C04.md notes b73ee2f82] commands_run: [t12-t14 => pass(12 ok); full t1..t14 => pass(36 ok); own rulesync generate --check => pass; dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop => pass(100/0); triplet-order grep 12 surfaces => pass(admin* deny first in 6 sources + 6 generated; dev*/admin* disjoint); AGENTS.md row byte-identical => pass; permissions.md source==generated => pass; tests immutability => pass; secrets/version scan => none; tree clean every run => pass] deviations: none (notes-only commit, role-sanctioned) friction: none open_questions: none; 2 nits (t13 fail-message wording; underscore vs hyphen in permissions.md prose) folded to ticket-2 deferred permission audit next_suggested: final whole-plan review"
@@ -100,5 +100,9 @@
   "last_handoff": {
     "agent_test": "RESULT\nstatus: BLOCKED\nchunk: plan (all chunks \u2014 agent-test session)\nfiles_changed: [tests/services/dev-mcp-fleet.sh, tests/containers/wekan-mcp-login.sh]\ncommands_run: [bash -n both scripts => pass; python-block compile sweep => pass; dev-mcp-fleet t2 t3 => pass; t6 => pass (both lints); t8 => pass; t10 => pass; t1 => fail(red-expected: charts.searxng missing); t4 => fail(red-expected); t5 => fail(red-expected: searxng-ingress absent, render OK); t7 => fail(red-expected: mcp-playwright absent); t9 => fail(red-expected: github-mcp ES absent); t11 => fail(red-expected: 2-server set); t12 => fail(red-expected: dev-* entries absent, JSONC parses); t13 => fail(red-expected: no dev* rule); t14 => fail(red-expected: AGENTS.md row absent, generate+check clean, tree untouched); wekan-mcp-login t1 => pass; t3 => pass; t2/t4/t5 => fail(red-expected); t6 => skip(no daemon); aislop scan --changes => 100, 0 findings; npx rulesync generate + --check => pass, no tree drift; git commit 7ef80d65f => pass]\ndeviations: (1) opt-in t<id> selection args; (2) shared renders t5+t9, t7+t8+t11; (3) t9/t5 OVERRIDE_ sweep scoped to appset blob per dev-forgejo convention; (4) t14 asserts generate left tree git-clean; (5) t13 asserts dev* triplet shape + exactly-once + admin*-deny-first; (6) test_session stamp left to coord (now done); (7) expected-reds by design, none weakened.\nopen_questions: CONFLICT A \u2014 tests/services/dev-forgejo-runner.sh t9 (line ~957 asserts dev ingress.subdomains exact set without searxng; line ~968-973 fails non-appset docs carrying OVERRIDE_, which C03's secret-github-mcp.yaml interim OVERRIDE_NEEDED triggers). CONFLICT B \u2014 tests/services/forgejo-ssh-gateway.sh t8 (raw-greps OVERRIDE_VIA_CUSTOM_VALUES across a dev umbrella render with a fixed --set list predating the new bitwardenIds sentinels). Both are other tickets' contracts; mutually unsatisfiable with C01\u2013C03 tests as written. Routing per pipeline-gates: user decision, then fix via test-session follow-up.\nnext_suggested: coord routes conflicts to user; updates legacy contracts; launches agent-dev wave 1.",
     "agent_test_conflict_fix": "RESULT status: DONE chunk: plan (legacy contract re-ruling) files_changed: [tests/services/dev-forgejo-runner.sh, tests/services/forgejo-ssh-gateway.sh] commands_run: [bash -n both => pass; python-block compile sweep => pass; simulated C03 sweep unit-test fail-closed => pass; dev-forgejo-runner full suite => pass (41 ok); forgejo-ssh-gateway full suite => pass (67 ok, t11 chain green); aislop scan --changes => pass (100, 0 findings); git commit 94e193af6 => pass; tree clean => pass] deviations: (1) ingress re-check as three positive assertions (equivalent); (2) PLACEHOLDER_ES={github-mcp} fail-closed residue detection; (3) --set form as ruled, inert pre-C03; (4) no id-filter added; (5) test_session stamp resolved by coord. open_questions: none next_suggested: agent-dev wave 1"
-  }
+  },
+  "handoffs": [
+    "RESULT status: DONE chunk: final (whole-plan review) verdict: APPROVED \u2014 no blocker/major/minor commands_run: [dev-mcp-fleet.sh => pass(36 ok); wekan-mcp-login.sh => pass(6 ok, t6 SKIP); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop scan --changes => pass(100/0 x2); rulesync generate --check => pass; JSONC independent parse => pass; dev* triplet order 12/12 => pass; bitwarden-uri wiring => pass; duplicate/TODO/tag-bump scans => clean; tests immutability => pass; tree clean every run] deviations: none (notes-only commit 3be6b42d9) friction: aislop not on PATH (npx pinned form); docker daemon absent (t6 skip) open_questions: none \u2014 landing user-owned next_suggested: mark complete + offer ticket-2"
+  ],
+  "final_review": "APPROVED (ses_e8ff698b0ffetRdnY0GwAI4v13, commit 3be6b42d9)"
 }
