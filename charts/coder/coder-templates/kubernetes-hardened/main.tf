@@ -468,6 +468,19 @@ resource "kubernetes_deployment_v1" "main" {
             name  = "FORGEJO_HOST"
             value = "git.scifi.farm"
           }
+          # Per-user SSO probe id: the baked startup script runs
+          # `coder external-auth access-token forgejo` at boot and layers the
+          # per-user token over the PAT helper for FORGEJO_HOST once the user
+          # has approved. Must equal the coderd-side CODER_EXTERNAL_AUTH_0_ID
+          # from charts/coder (the dev-git-auth suite drift-checks the pair;
+          # the external-auth callback path embeds the id, so divergence
+          # breaks approval silently). Bare literal like FORGEJO_HOST — a
+          # coder_parameter here would make the probe id user-editable per
+          # workspace and break that pairing.
+          env {
+            name  = "FORGEJO_OAUTH_ID"
+            value = "forgejo"
+          }
           # The canonical instance (git.spencerslab.com) is a separate
           # Secret so one PAT never points at two concerns; it stays
           # optional until custom-values carries the new item's real UUID.

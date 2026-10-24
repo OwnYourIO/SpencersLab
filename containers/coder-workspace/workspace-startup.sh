@@ -13,10 +13,16 @@
 # tracks upstream without a pin in this image.
 #
 # Token git auth is optional and driven by env the template supplies. No env,
-# no action: GITHUB_TOKEN, FORGEJO_TOKEN + FORGEJO_HOST (dev instance), and
-# FORGEJO_TOKEN_CANONICAL + FORGEJO_HOST_CANONICAL (canonical instance) —
-# each Forgejo pair is guarded independently. Git identity comes
-# from CODER_USER / CODER_USER_EMAIL; the clone list from WORKSPACE_GIT_REPOS.
+# no action: GITHUB_TOKEN, FORGEJO_TOKEN + FORGEJO_HOST (dev instance),
+# FORGEJO_TOKEN_CANONICAL + FORGEJO_HOST_CANONICAL (canonical instance), and
+# FORGEJO_OAUTH_ID (the coder external-auth provider id covering
+# FORGEJO_HOST's instance) — each Forgejo pair is guarded independently.
+# When FORGEJO_OAUTH_ID is set and its provider is approved, the per-user
+# SSO token replaces the dev host's PAT helper for git-over-https: git
+# consults credential helpers BEFORE the agent's GIT_ASKPASS, so the helper
+# has to be absent for the per-user token to answer. Unset (or unapproved)
+# keeps the pure PAT behavior. Git identity comes from CODER_USER /
+# CODER_USER_EMAIL; the clone list from WORKSPACE_GIT_REPOS.
 set -eu
 
 log() {
@@ -179,17 +185,25 @@ configure_git_token() {
 # One host of the dual-forge wiring, called once per Forgejo env pair.
 # Arguments: the token value, the NAME of the env var holding it (the helper
 # above must keep echoing $<NAME> so git expands it at use time — nothing
-# secret is ever persisted to the home PVC), and the host-or-URL.
+# secret is ever persisted to the home PVC), the host-or-URL, and an optional
+# fourth "no-helper" mode for hosts whose per-user SSO token should answer
+# through the agent's GIT_ASKPASS instead (a wired helper is consulted first
+# and would shadow it forever on the PVC). fj keeps the bot PAT in every
+# mode: its token store does not refresh, so a ~1h OAuth token seeded there
+# would rot mid-session.
 wire_forgejo() {
   token_value=$1
   token_var=$2
   forgejo_ref=$3
+  wire_mode=${4:-helper}
   # Accept a bare host or a full URL: git needs the host, fj accepts either.
   forgejo_host=${forgejo_ref#https://}
   forgejo_host=${forgejo_host%%/*}
   # Git config runs first: a Forgejo API outage below must not cost the user
   # their working https push path.
-  configure_git_token "${forgejo_host}" "${token_var}"
+  if [ "$wire_mode" != no-helper ]; then
+    configure_git_token "${forgejo_host}" "${token_var}"
+  fi
   # fj keeps its own token store and ignores git credentials, so the same token
   # is seeded there for `fj` subcommands. A failure is logged, not fatal: a
   # Forgejo outage at boot must not stop the workspace from starting.
@@ -205,10 +219,49 @@ if [ -n "${GITHUB_TOKEN:-}" ]; then
   log 'git credential helper configured for github.com'
 fi
 
+# Optional per-user SSO for the dev instance (FORGEJO_OAUTH_ID is the coder
+# external-auth provider id for FORGEJO_HOST's coder server; absent => today's
+# PAT-only behavior unchanged). v2.35.2 CLI contract: `coder external-auth
+# access-token <id>` prints a validated token on stdout with exit 0, else the
+# authentication URL on stdout with exit 1. The `if VAR=$(...)` form absorbs
+# the exit 1 — a bare assignment under set -eu would abort the boot exactly
+# when the approval URL is produced. Probe failure of ANY kind (unapproved,
+# CLI missing, coderd unreachable) is the unapproved path: the boot must
+# never die because of SSO. On approval the PAT helper must not answer for
+# this host: git consults credential helpers before GIT_ASKPASS, and the
+# home PVC persists ~/.gitconfig across boots, so a helper wired before the
+# user approved would shadow the per-user token forever — the unset below is
+# load-bearing, not cosmetic.
+sso_approved=0
+sso_host=""
+if [ -n "${FORGEJO_OAUTH_ID:-}" ] && [ -n "${FORGEJO_HOST:-}" ]; then
+  sso_host=${FORGEJO_HOST#https://}
+  sso_host=${sso_host%%/*}
+  if sso_probe=$(coder external-auth access-token "$FORGEJO_OAUTH_ID" 2>/dev/null); then
+    sso_approved=1
+    # git exits 5 when the key is already absent; a missing entry is the
+    # common case (first approval), not an error.
+    git config --global --unset-all "credential.https://${sso_host}.helper" 2>/dev/null || true
+    log "SSO approved: git over https to ${sso_host} runs as your own account via the agent's askpass"
+  elif [ -n "$sso_probe" ]; then
+    log "SSO not approved for ${sso_host} yet — approve here to get per-user git identity, the shared PAT is used until then: $sso_probe"
+  else
+    log "WARN: no approval URL from 'coder external-auth access-token' (CLI missing or coderd unreachable); shared PAT stays active for ${sso_host} until SSO approval works"
+  fi
+fi
+
 # The lab runs two Forgejo instances; each pair is optional on its own —
-# no env for a pair, no action for that host.
+# no env for a pair, no action for that host. An approved dev host keeps the
+# call (fj still needs the bot PAT) but in no-helper mode, so only the SSO
+# token answers git. The canonical pair is never SSO-gated: this coder
+# server has one provider slot and it serves the dev instance (pairing
+# ruling 2026-10-24).
+sso_wire_mode=
+if [ "$sso_approved" = 1 ]; then
+  sso_wire_mode=no-helper
+fi
 if [ -n "${FORGEJO_TOKEN:-}" ] && [ -n "${FORGEJO_HOST:-}" ]; then
-  wire_forgejo "${FORGEJO_TOKEN}" FORGEJO_TOKEN "${FORGEJO_HOST}"
+  wire_forgejo "${FORGEJO_TOKEN}" FORGEJO_TOKEN "${FORGEJO_HOST}" "$sso_wire_mode"
 fi
 
 if [ -n "${FORGEJO_TOKEN_CANONICAL:-}" ] && [ -n "${FORGEJO_HOST_CANONICAL:-}" ]; then
@@ -245,6 +298,38 @@ if [ -n "${WORKSPACE_GIT_REPOS:-}" ]; then
     dest=$HOME/$(basename "$repo_url" .git)
     if [ -d "$dest/.git" ]; then
       log "SKIP: $dest already holds a checkout"
+      continue
+    fi
+    # Per-host SSO layering on the clone path. Only https URLs consult
+    # credentials, so the host comparison is limited to them (ssh:// and
+    # scp-style URLs keep the key-based path untouched).
+    clone_host=
+    case $repo_url in
+      https://*)
+        clone_host=${repo_url#https://}
+        clone_host=${clone_host%%/*}
+        ;;
+    esac
+    if [ "$sso_approved" = 1 ] && [ "$clone_host" = "$sso_host" ]; then
+      # The per-user token rides on this git PROCESS only — the value is
+      # expanded into the environment here, so nothing lands in
+      # ~/.gitconfig or any file (the no-disk invariant extended to the
+      # OAuth token, and a helper naming a boot-only var would answer an
+      # empty password from later terminals).
+      if GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper \
+        GIT_CONFIG_VALUE_0="!f() { echo username=token; echo \"password=$sso_probe\"; }; f" \
+        GIT_TERMINAL_PROMPT=0 git clone "$repo_url" "$dest"; then
+        log "Cloned $repo_url into $dest"
+      else
+        log "WARN: cloning $repo_url failed; check the SSH key registration above and repo access"
+      fi
+      continue
+    fi
+    # Polite gate: without approval AND without the shared PAT there is no
+    # credential left for this host — skip with a visible reason instead of
+    # a raw auth failure (the fallback PAT, when present, clones normally).
+    if [ -n "$sso_host" ] && [ "$clone_host" = "$sso_host" ] && [ -z "${FORGEJO_TOKEN:-}" ]; then
+      log "SKIP: $repo_url is pending SSO approval for ${sso_host} and no shared PAT is set — see the approval banner above"
       continue
     fi
     if GIT_TERMINAL_PROMPT=0 git clone "$repo_url" "$dest"; then
