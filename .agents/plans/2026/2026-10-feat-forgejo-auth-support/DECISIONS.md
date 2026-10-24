@@ -104,3 +104,6 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 ## Test round (2026-10-24, coord from agent-test RESULT, commit e520df0b2)
 - Ruled (deviations accepted, contract preserved): (1) two pre-existing c4 document selectors in tests/services/dev-git-auth.sh tightened prefix→boundary-terminated so C03's `forgejo-token-canonical` doc can't collide with the original `forgejo-token` checks (c1..c6 stay green; strengthens isolation, nothing weakened); (2) the C02 helper-pattern check accepts EITHER legal layout (3-arg `wire_forgejo` called with the env-var name, or literal helper body) — binds the contract, not dev's style; (3) traceability spec lives at TEST-SPEC.md (ticket root).
 - Test suite is now the immutable contract for C01–C03; fixes route back to test_session ses_e908a206dffeJJZ7J97KEzUmVP.
+
+## C02 ownership reconciliation (2026-10-24, coord)
+- The coord launch summary for C02 wrongly included the kubernetes-hardened/main.tf env pass-through; chunks/C03.md mandates both canonical env blocks (c-canonical-3). Dev correctly followed the chunk files. Ruling: chunk files are the ownership ground truth; no plan change; C03 lands the template env blocks.

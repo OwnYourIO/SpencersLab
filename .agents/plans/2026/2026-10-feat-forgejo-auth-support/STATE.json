@@ -35,22 +35,45 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e9073f24dffe3qRd9j6p8QLGVw",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [containers/coder-workspace/Dockerfile] (commit b285cce45, local, branch forgejo-auth-support — 1 file, +2/−2: ARG OPENCODE_VERSION=2.0.32→2.1.4, ARG OPENCHAMBER_VERSION=2.4.0→2.5.1; renovate comment lines byte-identical, no other line changed)\ncommands_run: [\n  bash tests/coder-workspace/image-structure.sh => pre-edit red for right reason (44/2, only the two pin mismatches), post-edit PASS 46/0 exit 0 — C01 gate (AC2/AC3)\n  bash tests/renovate/dockerfile-pins.sh => pre-edit red (7/1, EXPECTED_NEW tuple diff only), post-edit PASS 8/0 exit 0 — C01 gate (AC4)\n  grep -E '^ARG (OPENCODE|OPENCHAMBER)_VERSION=' Dockerfile => exactly 2.1.4/2.5.1 (AC1); git diff => exactly two version-value edits, nothing else (AC5)\n  curl -fsS registry.npmjs.org/@openchamber/web/latest + /@opencode/cli/latest => 2.5.1 / 2.1.4 (newest == plan pins) — so NO mirror into the test files was needed (test expectations already landed by agent-test in e520df0b2)\n  bash tests/coder-workspace/startup-script.sh => fail as expected (C02 not implemented): 24/10, all 10 fails target the new C02 contract only\n  bash tests/services/dev-git-auth.sh => fail as expected (C03 not implemented): c1..c6 green, first FAIL c-canonical-1\n  npx aislop scan --changes --json => 0 errors / 0 warnings\n]\ndeviations: none — implementation is exactly the two ARG bumps; both C01 gates match TEST-SPEC's forward-simulation expectations (46/0, 8/0)\nfriction: (1) FRICTION fixed-curl workaround applied again successfully — kept. (2) `$?` after `cmd | tail` reports tail's status, masking the script's exit code — resolution: re-ran redirecting to a file; suggest all later agents avoid `$?` through pipes · new\nnext_suggested: agent-review round 1 on C01 (gates green); then C02 dev"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.agents/plans/2026/2026-10-feat-forgejo-auth-support/chunks/C01.md] (Review notes appended; no source/test edits)\ncommands_run: [image-structure.sh => PASS exit 0 (46/0); dockerfile-pins.sh => PASS exit 0 (8/0); startup-script.sh => fail-as-expected (24/10, all fails C02 contract only); dev-git-auth.sh => fail-as-expected (first FAIL c-canonical-1 = C03); sh -n + dash -n workspace-startup.sh => PASS; helm dependency build/lint/template charts/coder (/home/coder/.local/bin/helm) => PASS all three; npx aislop scan --changes --base origin/main => PASS 100/100; curl registry => @openchamber/web 2.5.1 / @opencode/cli 2.1.4 (newest == pins, >= floors; AC4 currency); grep AC1 + git show b285cce45 --stat + cat -A + ARG consumers => all confirmed]\ndeviations: none — per plan Commands/TEST-SPEC runbook; exit codes captured without pipes per FRICTION\nfriction: (1) `helm` not on PATH this session — resolution: absolute /home/coder/.local/bin/helm from plan text · new; (2) aislop scan --changes --base prints '0 changed' on a 4-commit-ahead branch and cannot gate this diff (Dockerfile/sh not in its scored languages) — treat aislop PASS as non-informative for container diffs · new\nopen_questions: none — APPROVED; minor TEST-SPEC evidence-count nit recorded for coord (non-blocking)\nnext_suggested: mark C01 done; C02 dev may start (wave 1, independent of C01)"
+        }
+      ]
     },
     "C02": {
-      "status": "pending",
+      "status": "in-review",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e906b4b35ffeYjT6z0rMPkVUUZ",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\ncommit: 2273c9c98 (local, branch forgejo-auth-support, 1 file +56/−21)\nfiles_changed: [containers/coder-workspace/workspace-startup.sh — dual-host Forgejo auth: wire_forgejo (3-arg: token value, env-var NAME, host-or-URL) called per pair behind independent [ -n ] guards (FORGEJO_TOKEN/FORGEJO_HOST + new FORGEJO_TOKEN_CANONICAL/FORGEJO_HOST_CANONICAL); git config before fj, password=$<NAME> use-time indirection unchanged; known_hosts loop scans git.scifi.farm:22222, git.spencerslab.com:22222, github.com:22 via ssh-keyscan -p ([host]:22222 entries; skip/empty/unreachable-warn preserved); banner canonical→dev→GitHub]\ncommands_run: [sh -n/dash -n/bash -n workspace-startup.sh => EXIT 0/0/0 (AC1); bash tests/coder-workspace/startup-script.sh => EXIT 0, 34/0 (C02 gate, exactly TEST-SPEC forward-sim target); image-structure.sh => EXIT 0 (46/0); dockerfile-pins.sh => EXIT 0 (8/0) (C01 still green); bash tests/services/dev-git-auth.sh => EXIT 1 c-canonical-1 = fail-as-expected C03; /home/coder/.local/bin/helm dependency build/lint/template charts/coder => EXIT 0/0/0 (408 lines); timeout 20 ssh-keyscan -p 22 github.com => EXIT 0 (bare-host entries, github behavior byte-identical); dash end-to-end sim /tmp/opencode/fjsim2 — 4 probes EXIT 0: no-env zero-wire; both-pairs wired (literal password=$FORGEJO_TOKEN / $FORGEJO_TOKEN_CANONICAL, [host]:22222 entries, canonical-first banner); canonical-only (dev untouched); FAIL_FJ (exit 0, git-first ordering intact); npx aislop scan --changes => EXIT 0 (non-informative for sh per FRICTION)]\ndeviations: (1) No main.tf edit — coord launch wording assigned canonical env pass-through to C02, but chunks/C02.md scope lists script only and chunks/C03.md Tasks bullet 4 mandates both template env blocks (c-canonical-3); dev followed the chunk files; C03 remains sole owner of template env blocks. RESOLVED by coord: chunk files are ground truth, launch summary was the error, no plan change. (2) github.com scanned in the uniform loop with explicit -p 22, output proven byte-identical. (3) 3-arg wire_forgejo per DECISIONS ruling (2).\nfriction: none new — applied known workarounds successfully\nopen_questions: none after coord reconciliation of deviation 1\nnext_suggested: agent-review round 1 on C02 (startup-script.sh → 34/0, then plan Commands); C03 after approval"
+        }
+      ]
     },
     "C03": {
       "status": "pending",
