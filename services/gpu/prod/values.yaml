@@ -585,7 +585,7 @@ hivetools:
                     - ALL
     searxng:
       enabled: true
-      image: isokoliuk/mcp-searxng:1.13.0
+      image: isokoliuk/mcp-searxng:2.7.0
       # streamable-http (2026-09-27): the stdio attach bridge dies permanently
       # after any transient apiserver outage (ToolHive re-attach gives up after
       # 10 retries and reports healthy anyway — see
