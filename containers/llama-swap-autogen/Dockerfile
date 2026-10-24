@@ -4,7 +4,7 @@
 # pin is the commit SHA below; the CI-pushed :v<run> tag anchors the build
 # afterwards.
 
-FROM python:3.12.15-slim-bookworm
+FROM python:3.15.1-slim-bookworm
 
 # renovate: datasource=git-refs depName=shirayu/llama_swap_config_autogen
 ARG AUTOGEN_COMMIT=c7357e68c755b54557f5b0f88b0507bf1c981500

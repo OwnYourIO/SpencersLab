@@ -9,7 +9,7 @@
 # streamable-http server. WEKAN_BASE_URL and WEKAN_TOKEN come from
 # the environment at runtime (injected by ToolHive's MCPServer resource).
 
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 # Don't buffer logs; write .pyc off; keep the image small
 ENV PYTHONDONTWRITEBYTECODE=1 \
