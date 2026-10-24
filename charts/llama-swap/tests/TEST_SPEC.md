@@ -89,6 +89,10 @@ image would be a flaky-by-construction validation). Therefore:
   composition, wiring incl. degrade-script execution, roster), the C01
   Dockerfile/renovate parses, and the existing suite. Same gate as
   `test_render.py` (helm binary + app-template tgz, else skip).
+* **[CR6 RE-BASELINE, CC1 2026-10-24]** evidence-gate inventory 12 -> 1: the
+  sole surviving gate is `RUN_HF_CHECK` (see §7quinquies). `LLAMA_SWAP_EVIDENCE`
+  and `LLAMA_SWAP_IMAGE_EVIDENCE` retire entirely with the autogen test scope;
+  the bullets below are kept as the historical record.
 * **Evidence-gated** (skip with printed reason so review knows RAN vs
   DEFERRED, per chunks/C03.md "Tests"):
   * `LLAMA_SWAP_EVIDENCE=1` — builds the pinned-autogen venv (plan Commands
@@ -173,31 +177,31 @@ these tests are immutable downstream)
   new one)
 * C02-5 -> parity `no_override_sentinel_in_rendered_config`
 * C02 schema tasks -> all of test_config_schema.py
-* C03-1 -> wiring `initcontainer_autogen_pinned_image/security/mounts`,
+* C03-1 -> [CR6 RETIRED — autogen machinery removed by user ruling, §7quinquies] wiring `initcontainer_autogen_pinned_image/security/mounts`,
   `volumes_gen_emptydir_base_configmap`, `main_env_gains_only_config_dir`
-* C03-2 -> wiring base.yaml 4 tests (render half) + integration
+* C03-2 -> [CR6 RETIRED — base.yaml ConfigMap gone] wiring base.yaml 4 tests (render half) + integration
   `base_yaml_parses` (tool half; deviation §5.1)
-* C03-3 -> integration `base_yaml_parses_and_empty_scan_fails_stock` (stock
+* C03-3 -> [CR6 RETIRED — no scanned half to generate] integration `base_yaml_parses_and_empty_scan_fails_stock` (stock
   behavior, gated) + wiring `degrade_*` ×3 (script contract, hard)
-* C03-4 -> wiring `declared_model_ids_are_colon_free`,
+* C03-4 -> [CR6 RETIRED — two-file merge invariant inert; P1's exact colon-free CATALOG subsumes] wiring `declared_model_ids_are_colon_free`,
   `synthetic_scanned_half_disjoint_from_declared` (pure) + integration
   `scanned_half_generates_validates_and_is_disjoint`,
   `merged_declared_plus_scanned_validates` (gated)
-* C03-5 -> wiring base.yaml forbidden/scalar keys + integration
+* C03-5 -> [CR6 RETIRED — single-file config, no merge surface] wiring base.yaml forbidden/scalar keys + integration
   `declared_only_with_empty_config_dir_validates` (gated)
-* C03 reload task -> wiring `reloader_annotation_covers_both_configmaps`
+* C03 reload task -> RE-HOMED (CC1): schema `test_cr6_reloader_guard_declared_scope` ×2 — the reload mechanism is what CR6 KEEPS (single-CM scope; BASE_CM leg deleted) — was wiring `reloader_annotation_covers_both_configmaps`
 * C04-1 -> roster `roster_is_exactly_golden_plus_approved_table`,
   `exact_hf_ref_per_approved_id` ×16, `flashnext_mtp_draft_wired`,
   `gpu_ai_only_families_absent_from_gpu`, `flashnext_matrix_placement`,
   `orca_and_122b_solo`, `35b_ladder_matrix_membership`,
   `no_new_model_preloaded`, `big_family_ttl_300_and_ladder_ttl_0`,
   `vision_capabilities_declared`, `35b_q6_q8_gpu_tuned_regime`,
-  `35b_bf16_gpu_disabled_failfast` (+ gated `hf_repo_tags_resolve`)
+  `35b_bf16_gpu_disabled_failfast` (+ `hf_repo_tags_resolve` — CR6-RETAINED, re-homed to `test_hf_liveness.py`, RUN_HF_CHECK-only gate)
 * C04-2 -> parity tests (old IDs unchanged) + roster exact-set test
 * C04-3 -> roster `matrix_closure_after_additions` ×2 (+ parity same-named)
-* C04-4 -> integration `full_roster_declared_validates` ×2 (gated)
+* C04-4 -> [CR6 RETIRED BY USER RULING 2026-10-24 — pod boot on-cluster IS the fleet -validate proof; operator-side -validate demoted to a C05 runbook step] integration `full_roster_declared_validates` ×2 (gated)
 * C04-6 -> parity + `helm_lint` (existing green suite is the CI gate)
-* C01-1..4 -> image `dockerfile_exists`, `fleet_consistent_base_pin`,
+* C01-1..4 -> [CR6 RETIRED — containers/llama-swap-autogen deleted with the machinery; C01 history stands as the landed record] image `dockerfile_exists`, `fleet_consistent_base_pin`,
   `renovate_gitrefs_pin_matches_repo_custom_manager` (runs the repo's own
   renovate.json regex against the Dockerfile), `immutable_install_from_pinned_commit`,
   `nonroot_uid_and_entrypoint` (hard) + `console_script_on_path*`,
@@ -268,7 +272,7 @@ suite are green.
   with `test_c04_1_35b_bf16_gpu_disabled_failfast` (green), same class as
   ratified B. Fixed by cross-reading the ref from the live cluster when the
   primary render is fail-fast shaped; presence/shape stay pinned by the
-  dedicated test. A probe over all 17 approved IDs confirmed exactly one
+  dedicated test. A probe over all 16 approved IDs (§7quinquies carry-fix: '17' was a miscount — C04_HF_REFS holds 16) confirmed exactly one
   fail-fast-shaped primary render (gpu/bf16) — no other ID's routing changed.
 * **(E) `test_c02_2_config_layer_macros_matrix_hooks_scalars`** — whole-
   matrix equality vs golden contradicted C04 by design (its tasks add vars and
@@ -611,5 +615,81 @@ Handoff bars (2026-10-24, helm v3.16.4): full suite **2 failed / 153 passed /
 image 6P/4S, existing CI 33P; gates `LLAMA_SWAP_EVIDENCE=1` 3P/5S; goldens
 diff empty; no assertion outside P's two display keys was removed — review
 audits this entry assertion-for-assertion (A–O precedent). CB2 completion bar:
-0 failed / 159 passed / 12 skipped with the CR5 render-invariance + display
+0 failed / 155 passed / 12 skipped (§7quinquies carry-fix: '159' was a miscount) with the CR5 render-invariance + display
 table bars (plan "CR5 controlling bars").
+
+
+## 7quinquies. CC1 retirement ledger — CR6 autogen scope deleted (test session, 2026-10-24)
+
+Ruling of record: DECISIONS 2026-10-24 "CR6" + plan "CR6 user rulings" — the user
+removed the autogen machinery entirely and ADDITIONALLY ruled
+`test_c04_4_full_roster_declared_validates` retired (superseding the planner's
+keep-c04_4 posture: pod boot on-cluster is the only fleet -validate proof; C05
+keeps the config-load observation). Every retirement below maps old -> WHY;
+nothing kept was weakened (audit note at the end).
+
+Retired files (chunk-origin; why = CR6 declared-only ruling):
+* `test_autogen_wiring.py` — 32 cases retired (C03/CA4 wiring): init image /
+  securityContext / mounts / volumes, CONFIG_DIR env, base.yaml ×4, degrade trio,
+  usage-error, --home, args-not-command, drift probes ×2, synthetic-scanned
+  disjoint, colon-free-ID ×2 (invariant exists only under the two-file merge; P1's
+  exact colon-free CATALOG subsumes it). RE-HOMED ×2: reloader guard -> schema
+  `test_cr6_reloader_guard_declared_scope[gpu|gpu-ai]` (auto-annotation OR explicit
+  match naming `llama-swap-config` ONLY — BASE_CM leg deleted with the second CM).
+* `test_autogen_image.py` — 10 cases (6P/4S): parses the Dockerfile CC2 deletes;
+  `LLAMA_SWAP_IMAGE_EVIDENCE` retires with the file.
+* `test_autogen_integration.py` — retired: `c03_2_3_base_yaml_*` ×2,
+  `c03_4_scanned_half_*`, `c03_5_declared_only_empty_config_dir`,
+  `c04_4_full_roster_declared_validates` ×2 (USER-RULED), `autogen_cli` venv +
+  `fleet_image` fixtures. RE-HOMED: `test_c04_1_hf_repo_tags_resolve` ->
+  `test_hf_liveness.py`, gated RUN_HF_CHECK ALONE (needs only helm + network;
+  decouples the C04-friction accidental LLAMA_SWAP_EVIDENCE coupling).
+  `hf_check.py` KEPT verbatim (roster-liveness machinery, CR6 brief).
+* `fixtures/scanned_synthetic.yaml` — sole consumer was the disjoint test
+  (grep-proven: only reference in the retired file) before deletion.
+* Env-gate inventory: 12 evidence skips -> 1 (RUN_HF_CHECK).
+
+testlib prune — every symbol zero-consumer-grepped AFTER the file retirements
+(keeper set = parity/schema/roster/hf_liveness/hf_check + lib): removed
+`AUTOGEN_REPO/COMMIT/TARBALL_URL/AUTOGEN_IMAGE`, `FLEET_IMAGE`, `docker_ready`,
+`ENTRYPOINT_FILE`, `pod_spec`, `container`, `init_container`, `env_map`,
+`mount_paths`, `FIXTURES_DIR` (−70 lines). Kept (consumers re-grepped):
+`is_echo_cmd`, `render_rc`, render/golden machinery, `cmd_tokens`/`model_tokens`
+(byte-verified unchanged — the un-bent P2-cmd bar), matrix helpers, ALL frozen
+tables, CR5 resolution machinery, `TESTS_DIR` (consumed by test_hf_liveness.py).
+
+Evidence yaml re-balance (dropped-vs-kept, item-by-item):
+DROPPED: prereq "containers/llama-swap-autogen rebuilt WITH entrypoint.sh (CA4)";
+gpu_box "pod initContainer state (CA4 shape)", "entrypoint degrade log",
+"scanned half content", "reloader coverage of the new ConfigMap".
+REPLACED BY: one gpu_box line "declared-CM watch-config hot-reload observation"
+(single-CM scope: kubelet sync ~1min -> -watch-config in-place reload, or reloader
+auto-roll as coarse backstop; bad reload keeps old config — v262).
+REWORDED: "merged config load" -> "config load + model count (single declared
+file, CR6)" with POD-BOOT-IS-THE-FLEET-PROOF wording + operator `-validate`
+demoted to a runbook step; "/v1/models completeness" expect gains the CR5
+picker-vs-display-table check. ADDED: runbook line retiring the autogen
+:main->:v<run> pinning obligation (registry garbage = user-side cosmetic only).
+KEPT VERBATIM: PR/version prereq, CA3 sweep prereq, ArgoCD health, echo
+spot-proof, serve-smoke approval gate, gpu-ai config-level confirmation, q5/q6
+routable-unpreloaded-set-less, REMOVED(13) + matrix-closure sweeps, machine-global
+13+9, first-load measures, uppercase-MTP caveat, enlarged-picker note, rollback.
+
+Carry digit-fixes applied this touch (next-test-touch convention): §7quater 159 ->
+155; §7bis-D "17 approved IDs" -> 16.
+
+FROZEN BARS (CR6 user-ruling restated): CC1 completion == CC2 completion ==
+**0 failed / 119 passed / 1 skipped**. Arithmetic: passed 155 − wiring 32 +
+reloader re-home 2 − image 6 = 119; skips 12 − image 4 − integration 8 + re-homed
+HF keeper 1 = 1. Per-file recount: parity 34, schema 22 (20+2), roster 30,
+CI-existing 33, hf_liveness 1S (120 collected). THE CC1 INVARIANT: the bar passes
+against the UNMODIFIED source (autogen still wired at HEAD) — no surviving test
+references it; CC2 then removes source against an already-green shrunk suite.
+Gate bars: `RUN_HF_CHECK=1` alone => 1p WITHOUT docker/venv/LLAMA_SWAP_EVIDENCE;
+direct `hf_check.py` => all refs OK exit 0. CC2 adds: declared-CM byte-equal ×3
+renders, pod-delta removals-only, residual sweep clean.
+
+Audit note (acceptance 5): zero assertion-scope change to KEPT surface —
+test_config_parity.py and test_new_roster.py untouched by this session's round
+(diff-verified); schema additions are the two re-homed guards only; every other
+ledger line is a retirement or re-home.

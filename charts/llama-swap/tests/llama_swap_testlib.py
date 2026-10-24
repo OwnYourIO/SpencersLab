@@ -29,25 +29,12 @@ import yaml
 CHART_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = CHART_DIR.parent.parent
 GOLDEN_DIR = CHART_DIR / "tests" / "golden"
-FIXTURES_DIR = CHART_DIR / "tests" / "fixtures"
 TESTS_DIR = CHART_DIR / "tests"
 SERVICE_VALUES = {
     "gpu": REPO_ROOT / "services/gpu/prod/values.yaml",
     "gpu-ai": REPO_ROOT / "services/gpu-ai/prod/values.yaml",
 }
 
-# Pinned autogen tool: supply-chain anchor of containers/llama-swap-autogen
-# (DECISIONS 2026-10-22 "Planning decisions"). If dev moves the pin, these
-# tests move only when the decision record moves with it.
-AUTOGEN_REPO = "shirayu/llama_swap_config_autogen"
-AUTOGEN_COMMIT = "c7357e68c755b54557f5b0f88b0507bf1c981500"
-AUTOGEN_TARBALL_URL = (
-    "https://github.com/shirayu/llama_swap_config_autogen/archive/"
-    f"{AUTOGEN_COMMIT}.tar.gz"
-)
-
-AUTOGEN_IMAGE = "ghcr.io/ownyourio/llama-swap-autogen"
-FLEET_IMAGE = "ghcr.io/mostlygeek/llama-swap:unified-vulkan-262"
 
 # ---------------------------------------------------------------------------
 # Environment gating
@@ -60,20 +47,6 @@ def helm_ready() -> tuple[bool, str]:
     if not list(CHART_DIR.glob("charts/app-template-*.tgz")):
         return False, "app-template dependency missing (run: helm dependency update charts/llama-swap)"
     return True, ""
-
-
-def docker_ready() -> tuple[bool, str]:
-    if shutil.which("docker") is None:
-        return False, "docker CLI not on PATH"
-    probe = subprocess.run(["docker", "info"], capture_output=True, text=True, timeout=30)
-    if probe.returncode != 0:
-        return False, "docker daemon not reachable"
-    return True, ""
-
-
-# ---------------------------------------------------------------------------
-# Rendering
-# ---------------------------------------------------------------------------
 
 
 def extract_service_values(cluster: str, dest: Path) -> Path:
@@ -175,38 +148,6 @@ def golden_config(cluster: str) -> dict:
     path = GOLDEN_DIR / f"{cluster}.config.yaml"
     assert path.exists(), f"golden fixture {path} missing — fixture breakage, not a code red"
     return yaml.safe_load(path.read_text())
-
-
-def pod_spec(cluster: str) -> dict:
-    deps = [d for d in render_docs(cluster) if d.get("kind") == "Deployment"]
-    assert len(deps) == 1, f"expected exactly one Deployment, got {len(deps)}"
-    return deps[0]["spec"]["template"]["spec"]
-
-
-def container(cluster: str, name: str) -> dict:
-    spec = pod_spec(cluster)
-    for c in spec.get("containers", []):
-        if c["name"] == name:
-            return c
-    raise AssertionError(f"container {name} not found in pod spec")
-
-
-def init_container(cluster: str, name: str) -> dict:
-    spec = pod_spec(cluster)
-    for c in spec.get("initContainers", []):
-        if c["name"] == name:
-            return c
-    raise AssertionError(
-        f"initContainer {name} not found — C03 wiring (autogen initContainer) not implemented"
-    )
-
-
-def env_map(c: dict) -> dict:
-    return {e["name"]: e.get("value") for e in c.get("env", []) if "value" in e}
-
-
-def mount_paths(c: dict) -> dict:
-    return {m["mountPath"]: m for m in c.get("volumeMounts", [])}
 
 
 # ---------------------------------------------------------------------------
@@ -591,9 +532,6 @@ ENABLEMENT = {
     "gpu-ai": {"enabled": CATALOG_IDS, "echo": []},
 }
 
-# Repo-side entrypoint (CR4): the degrade/generate contract moves out of the
-# chart into the image; CA1's wiring tests execute THIS file directly.
-ENTRYPOINT_FILE = REPO_ROOT / "containers" / "llama-swap-autogen" / "entrypoint.sh"
 
 _ECHO_CMD = re.compile("^/bin/sh -c \"echo '.*' >&2; exit 1\"\\n?$")
 

@@ -1,22 +1,16 @@
-# C05 expected-evidence grep list - REBASED 2026-10-24 (CA1 amendment M) onto the approved
-# REPLAN surface (CR1-CR4): family catalog with default-disabled echoes, 13 removals
-# (ruling B), image-entrypoint relocation. Pre-written so review/coord can mechanically
-# diff OBSERVED vs EXPECTED after the user lands the PR and ArgoCD syncs main. No pytest
-# automates this pre-merge; observation channels are readonly-gpu-kubernetes MCP + pod
-# logs only (NEVER kubectl apply; NO admin-* without explicit user approval; gpu-ai is
-# log-level confirmation only - DECISIONS).
-#
-# Replaces (old -> new): counts 47/71 -> 58 both clusters (gpu 34 live + 24 echoes,
-# gpu-ai 58 live); /v1/models = full catalog superset (echoes routable, accepted CR2
-# consequence); initContainer evidence = args-driven entrypoint.sh (no shell in yaml);
-# isolation expectation absent -> present-as-echo.
+# C05 expected-evidence checklist - RE-BALANCED 2026-10-24 (CC1, CR6): autogen machinery
+# retired by user ruling, so the initContainer/entrypoint/scanned-half/reloader-new-CM items and
+# the autogen-rebuild prerequisite are DROPPED (item-by-item diff in TEST_SPEC 7quinquies); the
+# merged-validate wording became POD-BOOT-IS-THE-FLEET-PROOF (user ruling); a single declared-CM
+# hot-reload observation replaces the two-CM reloader coverage. Everything else KEPT verbatim,
+# plus the CR5 picker-vs-display-table line. Observation channels: readonly-gpu-kubernetes MCP +
+# pod logs only (NEVER kubectl apply; NO admin-* without explicit user approval; gpu-ai is
+# log-level confirmation only - DECISIONS). Pre-written for mechanical OBSERVED-vs-EXPECTED diff
+# after the user lands the PR; no pytest automates this pre-merge.
 prerequisites:
 - check: PR landed on main and release.yaml bumped charts/llama-swap version
   source: git log origin/main + charts/llama-swap/Chart.yaml
   expect: version > 1.0.21 after merge; image tags unmodified by hand
-- check: containers/llama-swap-autogen rebuilt WITH entrypoint.sh (CA4)
-  source: GitHub Actions docker-build.yaml run for the merge commit
-  expect: build succeeded after the CA4 commit (ENTRYPOINT ["/entrypoint.sh"]); :main rolling tag updated
 - check: CA3 consumer sweep landed as ruled (in-PR, delete-only)
   source: git diff main -- .rulesync/skills/pipeline-models/SKILL.md .opencode/skills/pipeline-models/SKILL.md
     charts/minuspod/values.yaml
@@ -26,33 +20,27 @@ gpu_box:
 - check: ArgoCD Application gpu
   source: readonly-gpu-kubernetes
   expect: Sync=Synced Health=Healthy, no OutOfSync on the llama-swap Application
-- check: pod initContainer state (CA4 shape)
-  source: pod spec + initContainerStatuses[name=autogen]
-  expect: spec shows image + args (--scan-dir/--base/--out/--home), NO command field; terminated exitCode
-    0, reason Completed
-- check: 'entrypoint degrade log (steady state: scan set empty)'
-  source: initContainer logs
-  expect: entrypoint.sh skip/degrade line (no-GGUF quick-find path); comment-only 10-scanned.yaml; rc
-    0. A USAGE error (rc not 0) here means an args wiring bug, not degrade
-- check: scanned half content
-  source: /app/gen/10-scanned.yaml via logs/describe (exec goes to the USER per AGENTS.md)
-  expect: comment-only file (every nonblank line starts with '#')
-- check: merged config load + model count
+- check: config load + model count (single declared file, CR6)
   source: llama-swap main container startup logs
-  expect: clean load (no conflict/duplicate/identity merge errors); registration count 58 (34 live cmds
-    + 24 echoes)
+  expect: 'clean load of /app/config/config.yaml (no merge surface anymore); registration count 58 (34
+    live cmds + 24 echoes on gpu). POD BOOT IS THE FLEET -VALIDATE PROOF (CR6 user ruling 2026-10-24:
+    a bad rendered config shows up as crashloop evidence here, not as a docker -validate gate); an operator-side
+    `llama-swap -validate` of the mounted file remains a runbook step, never a test'
 - check: /v1/models completeness (superset - rebased)
   source: cluster-internal service read gpu-llama-swap.default.svc via MCP service proxy
   expect: ALL 58 catalog IDs listed - echo IDs present and routable (ruling-B survivors + gpu-ai-local
     rungs echo on gpu); removed 13 IDs absent under any name; consumer aliases qwen3-vl-4b/-8b/-30b-a3b
-    resolve as before
+    resolve as before; picker list matches the user-approved CR5 before/after display table
 - check: echo behavior spot-proof (no download, instant fail)
   source: one request against an off-cluster echo ID (e.g. qwen38-rana) via the ingress
   expect: fast failure (~seconds), upstream log shows the disabled/not-enabled echo message, NO llama-server
     process, NO HF download traffic
-- check: reloader coverage of the new ConfigMap
-  source: pod annotations + rollout history on a llama-swap-config data change
-  expect: pod restart OR 'config reloaded' log within ~2 min; generated half changes only on restart
+- check: declared-CM watch-config hot-reload observation (single ConfigMap post-CR6)
+  source: llama-swap container logs + pod rollouts on an observed llama-swap-config data change
+  expect: kubelet syncs the mounted dir (~1 min) then -watch-config hot-reloads the declared file IN PLACE,
+    or the stakater auto-reloader rolls the pod as coarse backstop; a bad reload keeps the old config
+    running (v262). No second ConfigMap, no restart-to-reload generated half - reload semantics are the
+    pre-ticket single mechanism
 - check: serve smoke (ONLY with explicit user approval at run time, before any download)
   source: ingress llama.gpu.<domain> /v1/chat/completions
   expect: qwen3-vl-2b-q4 regression OK; ornith-1.5-35b-a3b-iq2xxs end-to-end with unload between; any
@@ -89,3 +77,6 @@ runbook_addenda:
   widened to the catalog superset'
 - 'rollback: revert PR via normal branch->PR flow (user lands it); ArgoCD re-syncs old ConfigMaps; reloader
   rolls pods; no manual kubectl anywhere (AGENTS.md hard rule)'
+- 'CR6: the post-merge pinning obligation for ghcr.io/ownyourio/llama-swap-autogen (:main -> :v<run>)
+  is RETIRED with the container; any registry-side image garbage is user-side cosmetic cleanup only (repo-side
+  removal is complete at CC2)'

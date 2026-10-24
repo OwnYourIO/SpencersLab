@@ -557,3 +557,34 @@ def test_cr5_unresolvable_rung_fails_render():
         "CB2 fail-guard missing: unresolvable rung cr5-ghost-nope rendered with rc=0 "
         "instead of failing the render\n" + out[-300:]
     )
+
+
+# ---------------------------------------------------------------------------
+# CR6 re-home (CC1): the reloader guard survived the autogen retirement because
+# the RELOAD mechanism is what CR6 keeps; the two-ConfigMap `match` leg is
+# deleted with the second CM. Declared-scope restatement of C03-5.
+# ---------------------------------------------------------------------------
+
+
+@helm
+@pytest.mark.parametrize("cluster", ["gpu", "gpu-ai"])
+def test_cr6_reloader_guard_declared_scope(cluster):
+    """The pod must roll on data change of the declared ConfigMap: either the
+    stakater auto annotation (watches mounted CMs) or an explicit
+    reloader.stakater.com/match naming `llama-swap-config`. Reads RENDERED
+    annotations only — the CA4 lesson: values-level overlays the templates never
+    see are not evidence."""
+    for doc in L.render_docs(cluster):
+        if doc.get("kind") == "Deployment":
+            dep_ann = (doc.get("metadata") or {}).get("annotations") or {}
+            pod_ann = (doc["spec"]["template"].get("metadata") or {}).get("annotations") or {}
+            break
+    else:
+        raise AssertionError("no Deployment rendered")
+    ann = {**dep_ann, **pod_ann}
+    if ann.get("reloader.stakater.com/auto") == "true":
+        return  # auto mode covers the mounted declared CM
+    match = ann.get("reloader.stakater.com/match", "")
+    assert "llama-swap-config" in match, (
+        f"{cluster}: neither auto-reload nor explicit match for llama-swap-config: {ann}"
+    )
