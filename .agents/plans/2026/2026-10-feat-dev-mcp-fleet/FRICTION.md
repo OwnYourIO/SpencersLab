@@ -22,5 +22,8 @@ Friction = anything an agent could not find or had no access to, crashes/tool/MC
 - fixed: legacy contract conflicts A/B — re-ruled by user at 94e193af6, fail-closed, regression green.
 - ignored(superseded): skills-permission-block drop on v2.0.32 — fixed by OpenCode v2.1.4 runtime upgrade at ticket start; saved skill/subagent rules purged; verified end-to-end this run (zero approval prompts across plan/test/dev/review sessions).
 - open: machine-global client configs (~/.config/opencode, ~/.config/kilo) still lack the four dev-* mirrors — user action.
-- open: OQ2 — dev github-token FIELDS item UUID pasted over OVERRIDE_NEEDED; d8e2b2ca URI field populated (+ WITH_API=true account).
+- fixed: OQ2 — 2026-10-24 user ruling + pastes: github-mcp reuses the dev `github-pat` LOGIN item (522b1cc4…, bitwarden-login/password), searxng LOGIN item f90806ff…; contract t9 re-ruled through the test session (6f40db347), template + UUIDs in ddf0167cb; dev-forgejo PLACEHOLDER_ES allowance retired (fail-closed again).
+- open: boards precondition remains user-owned — d8e2b2ca item URI field + valid password service account (WITH_API=true) on that instance.
 - open: post-sync endpoint verification tools/list mcp.dev.scifi.farm/{playwright,renovate,searxng,boards}/mcp; boards :v<run> pin after first CI build replaces :main if operator prefers pinning.
+- open: aislop `scan` is directory-only and its language set excludes YAML/bash, so file-level evidence for values/templates isn't obtainable — workaround: `scan --changes` (repo-wide) + manual comment-slop audit of added lines.
+- open: this branch's SHAs diverge from main's cherry-picked copies (branch rebased mid-run); treat `main..HEAD` as provenance only, never merge it into main.

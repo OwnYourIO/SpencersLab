@@ -112,3 +112,20 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   user-owned or readonly-MCP checks after ArgoCD syncs.
 - searxng `SEARXNG_BASE_URL` renders empty (app-template gotcha, chart-owned) —
   cosmetic, untouched.
+
+## Landing provenance (recorded by coord, 2026-10-24)
+- The ticket reached `main` by **cherry-pick of every branch commit + push to
+  origin/main** — an action taken outside this session (coord/dev/review agents
+  committed only to the feature branch; landing is user-owned per repo hard
+  rules). Consequences, verified from live git state:
+  - `main` = base `ae9ecb053` + cherry-picked copies, INCLUDING the C03
+    fix-round (`bitwarden-login`/`password`, both UUIDs pasted).
+  - `main..HEAD` on this branch = 30 original-SHA commits (the branch was also
+    rebased onto `ae9ec053`-era base, so SHAs differ from main's copies by
+    design, not by content).
+  - Content difference between `main` and the branch tip: exactly one file,
+    `chunks/C03.md` (+103 lines of re-review notes, the two post-push doc
+    commits). No source, test, values, or custom-values delta — `git diff
+    --name-only main HEAD` lists that single doc file.
+  - Therefore: do NOT merge this branch into main (duplicate-history merge);
+    any remaining delta is doc-only and lands by cherry-pick at the user's call.
