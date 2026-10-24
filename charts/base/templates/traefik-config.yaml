@@ -98,10 +98,9 @@ spec:
     {{- if index .Values "gitSshPort" }}
     gateway:
       listeners:
-        # The k3s chart ships a default web listener (port 8000) that no
-        # entrypoint in this config matches, and that would put a second
-        # listener on the lab Gateway; the Gateway must carry only gitssh,
-        # so the default is explicitly removed.
+        # The k3s chart ships a default web listener (port 8000) that would
+        # put a second listener on the lab Gateway; the Gateway must carry
+        # only gitssh, so the default is explicitly removed.
         web: null
         gitssh:
           port: {{ index .Values "gitSshPort" }}
