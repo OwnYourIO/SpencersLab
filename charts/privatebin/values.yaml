@@ -3,7 +3,7 @@ privatebin:
   # Chart-specific configuration
   image:
     repository: privatebin/nginx-fpm-alpine
-    tag: 1.7.4  # Latest stable version
+    tag: 2.1.0  # Latest stable version
   
   # Disable built-in ingress (use SpencersLab's generic-ingress)
   ingress:
