@@ -13,7 +13,9 @@
 # tracks upstream without a pin in this image.
 #
 # Token git auth is optional and driven by env the template supplies. No env,
-# no action: GITHUB_TOKEN, FORGEJO_TOKEN + FORGEJO_HOST. Git identity comes
+# no action: GITHUB_TOKEN, FORGEJO_TOKEN + FORGEJO_HOST (dev instance), and
+# FORGEJO_TOKEN_CANONICAL + FORGEJO_HOST_CANONICAL (canonical instance) —
+# each Forgejo pair is guarded independently. Git identity comes
 # from CODER_USER / CODER_USER_EMAIL; the clone list from WORKSPACE_GIT_REPOS.
 set -eu
 
@@ -93,34 +95,48 @@ touch "$SSH_DIR/known_hosts"
 chmod 600 "$SSH_DIR/known_hosts"
 
 # Pre-trusting the hosts keeps the clone job non-interactive: an unknown host
-# key stops git with a prompt nobody can answer during a boot. Hosts already
-# listed are skipped so a key rotation stays visible instead of being silently
+# key stops git with a prompt nobody can answer during a boot. The lab forges
+# serve ssh:// at the node's forgejo port 22222 (sibling forgejo-ssh ruling:
+# node sshd keeps :22), so they are scanned there — a port-22 scan of a forge
+# host would pin the node's sshd key under the wrong name, useless for those
+# URLs. ssh-keyscan emits non-default-port entries as [host]:port, exactly the
+# name ssh looks up for ssh://git@<host>:22222/... URLs. Hosts already listed
+# are skipped so a key rotation stays visible instead of being silently
 # re-pinned. A failed scan is a warning only — one unreachable host must not
 # stop the boot.
-for ssh_host in git.scifi.farm github.com; do
-  if ssh-keygen -F "$ssh_host" -f "$SSH_DIR/known_hosts" >/dev/null 2>&1; then
+for ssh_spec in git.scifi.farm:22222 git.spencerslab.com:22222 github.com:22; do
+  ssh_host=${ssh_spec%:*}
+  ssh_port=${ssh_spec##*:}
+  if [ "$ssh_port" = 22 ]; then
+    ssh_entry=$ssh_host
+  else
+    ssh_entry="[$ssh_host]:$ssh_port"
+  fi
+  if ssh-keygen -F "$ssh_entry" -f "$SSH_DIR/known_hosts" >/dev/null 2>&1; then
     continue
   fi
   # ssh-keyscan can time out or find no key and still exit 0, so the captured
   # output decides whether the host was added, not the exit status.
-  scanned=$(ssh-keyscan -t rsa,ecdsa,ed25519 "$ssh_host" 2>/dev/null || true)
+  scanned=$(ssh-keyscan -t rsa,ecdsa,ed25519 -p "$ssh_port" "$ssh_host" 2>/dev/null || true)
   if [ -n "$scanned" ]; then
     printf '%s\n' "$scanned" >>"$SSH_DIR/known_hosts"
-    log "known_hosts: added $ssh_host"
+    log "known_hosts: added $ssh_entry"
   else
-    log "WARN: ssh-keyscan $ssh_host failed; git over SSH to it may need a manual host-key acceptance"
+    log "WARN: ssh-keyscan $ssh_entry failed; git over SSH to it may need a manual host-key acceptance"
   fi
 done
 
 # The private key never leaves the workspace, so the startup log is the only
-# place a user can read the public half to register it. Forgejo leads the list
-# because the lab's own repos live there; GitHub carries the external ones.
+# place a user can read the public half to register it. The lab Forgejos lead
+# the list — canonical first, then dev — because the lab's own repos live
+# there; GitHub carries the external ones.
 echo "=============================================================="
 echo "Workspace SSH public key:"
 cat "$SSH_DIR/id_rsa.pub"
 echo "Add it to your git hosts before the clone job can succeed:"
-echo "  1. Forgejo  (git.scifi.farm)  -> Settings -> SSH/GPG Keys"
-echo "  2. GitHub   (github.com)      -> Settings -> SSH and GPG Keys"
+echo "  1. Forgejo  (git.spencerslab.com)  -> Settings -> SSH/GPG Keys"
+echo "  2. Forgejo  (git.scifi.farm)       -> Settings -> SSH/GPG Keys"
+echo "  3. GitHub   (github.com)           -> Settings -> SSH and GPG Keys"
 echo "=============================================================="
 
 # The password is mandatory here rather than defaulted: the server binds
@@ -160,24 +176,43 @@ configure_git_token() {
     "!f() { echo username=token; echo \"password=\$${env_var}\"; }; f"
 }
 
+# One host of the dual-forge wiring, called once per Forgejo env pair.
+# Arguments: the token value, the NAME of the env var holding it (the helper
+# above must keep echoing $<NAME> so git expands it at use time — nothing
+# secret is ever persisted to the home PVC), and the host-or-URL.
+wire_forgejo() {
+  token_value=$1
+  token_var=$2
+  forgejo_ref=$3
+  # Accept a bare host or a full URL: git needs the host, fj accepts either.
+  forgejo_host=${forgejo_ref#https://}
+  forgejo_host=${forgejo_host%%/*}
+  # Git config runs first: a Forgejo API outage below must not cost the user
+  # their working https push path.
+  configure_git_token "${forgejo_host}" "${token_var}"
+  # fj keeps its own token store and ignores git credentials, so the same token
+  # is seeded there for `fj` subcommands. A failure is logged, not fatal: a
+  # Forgejo outage at boot must not stop the workspace from starting.
+  if fj auth add-token --host "https://${forgejo_host}" "${token_value}" >/dev/null 2>&1; then
+    log "fj token seeded for ${forgejo_host}"
+  else
+    log "fj auth add-token failed for ${forgejo_host}; git over https still works"
+  fi
+}
+
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   configure_git_token github.com GITHUB_TOKEN
   log 'git credential helper configured for github.com'
 fi
 
+# The lab runs two Forgejo instances; each pair is optional on its own —
+# no env for a pair, no action for that host.
 if [ -n "${FORGEJO_TOKEN:-}" ] && [ -n "${FORGEJO_HOST:-}" ]; then
-  # Accept a bare host or a full URL: git needs the host, fj accepts either.
-  forgejo_host=${FORGEJO_HOST#https://}
-  forgejo_host=${forgejo_host%%/*}
-  configure_git_token "${forgejo_host}" FORGEJO_TOKEN
-  # fj keeps its own token store and ignores git credentials, so the same token
-  # is seeded there for `fj` subcommands. A failure is logged, not fatal: a
-  # Forgejo outage at boot must not stop the workspace from starting.
-  if fj auth add-token --host "https://${forgejo_host}" "${FORGEJO_TOKEN}" >/dev/null 2>&1; then
-    log "fj token seeded for ${forgejo_host}"
-  else
-    log "fj auth add-token failed for ${forgejo_host}; git over https still works"
-  fi
+  wire_forgejo "${FORGEJO_TOKEN}" FORGEJO_TOKEN "${FORGEJO_HOST}"
+fi
+
+if [ -n "${FORGEJO_TOKEN_CANONICAL:-}" ] && [ -n "${FORGEJO_HOST_CANONICAL:-}" ]; then
+  wire_forgejo "${FORGEJO_TOKEN_CANONICAL}" FORGEJO_TOKEN_CANONICAL "${FORGEJO_HOST_CANONICAL}"
 fi
 
 # Git rejects commits from a process with no identity; the template passes the
