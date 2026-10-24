@@ -23,11 +23,11 @@ bitwardenIds:
   github-pat: 522b1cc4-2c74-4399-887d-b4e20014b2d2
   # forgejo-token (password = Forgejo access token for git.scifi.farm).
   forgejo-token: 5488c4ba-b108-4430-b5bf-b4e7015c6c98
-  # dev github token as a FIELDS item (custom field `token`) — backs the
-  # renovate MCP server's repo-clone initContainer. NEW ITEM, user action
-  # (plan User action 2). Placeholder until pasted: the ExternalSecret stays
-  # unready, so the renovate pod fails visibly rather than silently.
-  github-mcp: OVERRIDE_NEEDED
+  # dev-github LOGIN item — deliberately the SAME item as github-pat above
+  # (user ruling 2026-10-24: renovate's clone initContainer reuses the dev
+  # PAT, password field; no separate FIELDS item). The duplicated UUID is the
+  # reuse, not an oversight.
+  github-mcp: 522b1cc4-2c74-4399-887d-b4e20014b2d2
   # dev-wekan-mcp — boards service-account LOGIN item (username+password).
   # Its URI field names the wekan instance dev-boards targets (password
   # login, WITH_API=true); the user must populate/verify the item — the
@@ -95,6 +95,5 @@ searxng:
   # sentinel (charts/searxng/values.yaml) — UUIDs for chart-level items live
   # here, never in the service values.yaml.
   bitwardenIds:
-    # dev-searxng LOGIN item (password = secret_key) — NEW ITEM, user
-    # action (plan User action 2). Placeholder until pasted.
-    searxng: OVERRIDE_NEEDED
+    # dev-searxng LOGIN item (password = the server secret_key).
+    searxng: f90806ff-8ee5-435d-b2e2-b4ed0176d701
