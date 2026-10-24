@@ -7,6 +7,6 @@ version: 1.0.1
 appVersion: 26.6.0
 dependencies:
 - name: mariadb-operator
-  version: 26.6.0
+  version: 26.10.2
   repository: oci://ghcr.io/mariadb-operator/charts
     # sourceUrl: https://github.com/mariadb-operator/mariadb-operator
