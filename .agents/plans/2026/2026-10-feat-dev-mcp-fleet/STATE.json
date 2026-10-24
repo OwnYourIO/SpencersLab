@@ -59,7 +59,7 @@
       "dev_session": "ses_e9019c254ffec3K8IaTleytjpA"
     },
     "C04": {
-      "status": "pending",
+      "status": "dev_done",
       "wave": 3,
       "depends_on": [
         "C03"
@@ -67,14 +67,18 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        "RESULT status: DONE chunk: C04 files_changed: [.opencode/opencode.jsonc, .rulesync/subagents/agent-{plan,research,test,dev,review,fuser}.md, .rulesync/rules/overview.md, .rulesync/skills/agents-sync/references/permissions.md, AGENTS.md, .opencode/agents/agent-*.md (6), .opencode/skills/agents-sync/references/permissions.md] commands_run: [t12 => pass(2 ok); t13 => pass(6 ok); t14 pre-commit => FAIL as designed(dirty generated); rulesync generate => pass(v37); generate --check => pass; git commit f81d9c179 sources+generated together => pass; t14 post-commit => pass(4 ok incl git-clean); full t1..t14 => pass(36 ok); dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop => pass(100/0); tree clean after every run => pass] deviations: (1) agents-sync references/permissions.md edited (source+regen copy) \u2014 outside Files-in-scope, ordered by launch scope; (2) 3-line why-comment above dev-* JSONC group; (3) role-matrix plan row + all-roles paragraph name dev* for consistency. friction: none new. open_questions: USER-OWNED \u2014 machine-global config sync (~/.config/opencode + ~/.config/kilo) needs the four dev-* entries mirrored (user-action 4); cluster-side endpoint verification after ArgoCD applies. next_suggested: review C04"
+      ],
+      "dev_session": "ses_e90045dfeffeWWQ1HtXP47DEwR"
     }
   },
   "blocked": [],
   "deferred": [
     "Ticket 2 (out of scope here): agent pipeline machinery changes \u2014 coord webfetch removal, comment policy, kickoff research-timing question, permission audit",
     "Machine-global client config sync (~/.config/opencode/opencode.jsonc, ~/.config/kilo/kilo.jsonc) \u2014 user-owned per intake decision",
-    "Pin dev-boards image from :main to a :v<run> tag once the login-capable build lands (renovate-managed)"
+    "Pin dev-boards image from :main to a :v<run> tag once the login-capable build lands (renovate-managed)",
+    "USER-ACTIONS (C04 handoff): mirror four dev-* servers into machine-global client configs (~/.config/opencode/opencode.json, ~/.config/kilo/kilo.jsonc); create dev github-token FIELDS item + paste UUID over OVERRIDE_NEEDED in custom-values/dev (OQ2); populate/verify d8e2b2ca item URI field + WITH_API=true wekan account; post-sync tools/list against https://mcp.dev.scifi.farm/{playwright,renovate,searxng,boards}/mcp"
   ],
   "open_items": [
     {
