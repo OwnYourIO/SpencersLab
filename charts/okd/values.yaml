@@ -181,7 +181,7 @@ app-template:
         redis-main:
           image:
             repository: redis
-            tag: 8.10.1
+            tag: 8.10.2
           probes:
             liveness: &redisMainProbe
               enabled: true
@@ -207,7 +207,7 @@ app-template:
         redis-cache:
           image:
             repository: redis
-            tag: 8.10.1
+            tag: 8.10.2
           # Enketo expects the cache redis on 6380 (upstream conf).
           args: ["--port", "6380"]
           probes:
