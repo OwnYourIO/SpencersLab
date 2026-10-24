@@ -119,6 +119,15 @@ matching no model_patterns entry (generator.py
 get_model_pattern_config), and an undefined macro reference fails the
 llama-swap config load, so it MUST be defined here.
 */}}
+{{/* llama-swap.firstMountPath returns the `path` of the first entry of an
+advancedMounts per-container list, empty when absent - helm 3.16's dig cannot
+descend through a slice, so list legs need this hop. */}}
+{{- define "llama-swap.firstMountPath" -}}
+{{- if and (kindIs "slice" .) (gt (len .) 0) (kindIs "map" (index . 0)) -}}
+{{- dig "path" "" (index . 0) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "llama-swap.autogenBase" -}}
 {{- $a := .Values.autogen -}}
 {{- $paths := $a.scanPaths | default list -}}
@@ -130,26 +139,59 @@ llama-swap config load, so it MUST be defined here.
 {{- end -}}
 {{/* dig rejects chartutil.Values at the root - drop to the plain sub-map. */}}
 {{- $at := index .Values "app-template" | default dict -}}
-{{- $cmd := dig "controllers" "llama-swap" "initContainers" "autogen" "command" nil $at -}}
-{{- if not (kindIs "slice" $cmd) -}}
-  {{- fail "autogen: no app-template initContainers.autogen command to render - the degrade quick-find would not exist to keep in sync with autogen.scanPaths" -}}
+{{- $init := dig "controllers" "llama-swap" "initContainers" "autogen" dict $at -}}
+{{- if not (kindIs "map" $init) -}}
+  {{- fail "autogen: app-template initContainers.autogen is not a mapping - there is no args wiring this base.yaml guard can verify" -}}
 {{- end -}}
-{{- $joined := join " " $cmd -}}
-{{- if not (contains `SCAN_DIRS="` $joined) -}}
-  {{- fail "autogen: the init script defines no SCAN_DIRS=\"...\" assignment - templates/configmap-autogen-base.yaml cannot verify it against autogen.scanPaths" -}}
+{{- if hasKey $init "command" -}}
+  {{- fail "autogen: the initContainer declares a command: - the degrade/generate logic lives in the image entrypoint (containers/llama-swap-autogen/entrypoint.sh), never in k8s yaml (shell-reintroduction tripwire)" -}}
 {{- end -}}
-{{- $dirsRaw := index (splitList "\"" (index (splitList `SCAN_DIRS="` $joined) 1)) 0 -}}
+{{- $args := $init.args -}}
+{{- if not (kindIs "slice" $args) -}}
+  {{- fail "autogen: no app-template initContainers.autogen args to render - the entrypoint flags would not exist to keep autogen.scanPaths and the base.yaml mount in sync" -}}
+{{- end -}}
 {{/*
-  Drift guard, both directions: the quick-find (decides whether the generator
-  runs at all) and the base.yaml scan roots MUST be the same set. Script-only
-  paths would find GGUFs the generator does not scan ("No models found" ->
-  silent degrade over live models); values-only paths would skip generation
-  before the tool ever runs.
+  set on a shared dict is what persists the loop's findings: template
+  variable assignments inside range die with the range scope.
+*/}}
+{{- $acc := dict "dirs" (list) "base" "" -}}
+{{- range $i, $a := $args -}}
+  {{- if eq (toString $a) "--scan-dir" -}}
+    {{- if lt (add $i 1) (len $args) -}}
+      {{- $_ := set $acc "dirs" (append $acc.dirs (toString (index $args (add $i 1)))) -}}
+    {{- end -}}
+  {{- else if eq (toString $a) "--base" -}}
+    {{- if lt (add $i 1) (len $args) -}}
+      {{- $_ := set $acc "base" (toString (index $args (add $i 1))) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $acc.dirs -}}
+  {{- fail "autogen: the initContainer args carry no --scan-dir flag - autogen.scanPaths cannot be cross-checked" -}}
+{{- end -}}
+{{- if not $acc.base -}}
+  {{- fail "autogen: the initContainer args carry no --base flag - the base.yaml ConfigMap mount cannot be cross-checked" -}}
+{{- end -}}
+{{/*
+  Drift guard, both directions: the entrypoint quick-find (the --scan-dir
+  set decides whether the generator runs at all) and the base.yaml scan
+  roots MUST be the same set. Args-only dirs would find GGUFs the generator
+  does not scan ("No models found" -> silent degrade over live models);
+  scanPaths-only dirs would skip generation before the tool ever runs.
 */}}
 {{- $want := join " " (sortAlpha $paths) -}}
-{{- $got := join " " (sortAlpha (splitList " " (trim $dirsRaw))) -}}
+{{- $got := join " " (sortAlpha $acc.dirs) -}}
 {{- if ne $want $got -}}
-  {{- fail (printf "autogen.scanPaths (%s) and the initContainer SCAN_DIRS (%s) disagree - edit both or neither" $want $got) -}}
+  {{- fail (printf "autogen.scanPaths (%s) and the initContainer --scan-dir args (%s) disagree - edit both or neither" $want $got) -}}
+{{- end -}}
+{{- $mounts := dig "persistence" "autogen-base" "advancedMounts" "llama-swap" "autogen" list $at -}}
+{{- $mountPath := trim (include "llama-swap.firstMountPath" $mounts) -}}
+{{- if eq (toString $mountPath) "" -}}
+  {{- fail "autogen: persistence.autogen-base carries no advancedMounts path for the autogen container - the --base arg cannot be verified against the ConfigMap mount" -}}
+{{- end -}}
+{{- $wantBase := printf "%s/base.yaml" (trimSuffix "/" (toString $mountPath)) -}}
+{{- if ne $acc.base $wantBase -}}
+  {{- fail (printf "autogen: the initContainer --base arg (%s) is not the base.yaml ConfigMap mount file (%s) - edit both or neither" $acc.base $wantBase) -}}
 {{- end -}}
 {{- $macros := deepCopy (.Values.config.macros | default dict) -}}
 {{- $_ := set $macros "binary" $a.binary -}}

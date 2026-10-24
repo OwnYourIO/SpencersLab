@@ -769,9 +769,10 @@ config:
 #     observed to miss it, add reloader.stakater.com/match naming both CMs.
 #     C05 records the observed behaviour on the gpu box.
 autogen:
-  # Directories `generate` scans, and the initContainer quick-find mirrors.
-  # The base.yaml helper fails the render if the two drift apart. Today's
-  # steady state: the dir is absent -> degrade path (comment-only file).
+  # Directories `generate` scans. The initContainer args repeat each as a
+  # --scan-dir flag (entrypoint quick-find mirror) -- the base.yaml helper
+  # fails the render if the two drift apart. Today's steady state: the dir
+  # is absent -> degrade path (comment-only file).
   scanPaths:
     - /models/scanned
   # llama-server inside the unified-vulkan fleet image (RESEARCH [16]);
@@ -793,14 +794,17 @@ app-template:
       annotations:
         reloader.stakater.com/auto: "true"
       initContainers:
-        # Stock generator run right before llama-swap starts (plan Path A).
-        # Fail-open by design (DECISIONS 2026-10-22 "Degrade path"): an empty
-        # scan set or a crashed `generate` leaves a comment-only
-        # 10-scanned.yaml -- v262 merge.go parseSource skips files without
-        # YAML content, so the declared half loads untouched. Crashlooping
-        # would cost live consumers (Immich/HA/OpenWebUI) against a half
-        # that only ever ADDS models; the initContainer log carries the
-        # failure evidence.
+        # Stock generator run right before llama-swap starts (plan Path A),
+        # as the image entrypoint of containers/llama-swap-autogen: the
+        # degrade/fail-open logic lives in the image, the chart wires only
+        # image + args + mounts (CR4; the autogenBase helper fails the render
+        # on any command: here). Fail-open by design (DECISIONS 2026-10-22
+        # "Degrade path"): an empty scan set or a crashed `generate` leaves a
+        # comment-only 10-scanned.yaml -- v262 merge.go parseSource skips
+        # files without YAML content, so the declared half loads untouched.
+        # Crashlooping would cost live consumers (Immich/HA/OpenWebUI)
+        # against a half that only ever ADDS models; the initContainer log
+        # carries the failure evidence.
         autogen:
           image:
             repository: ghcr.io/ownyourio/llama-swap-autogen
@@ -811,49 +815,22 @@ app-template:
             # post-merge; renovate's docker manager covers this reference.
             tag: main
             pullPolicy: Always
-          command:
-            - /bin/sh
-            - -c
-            - |
-              set -u
-              BASE=/app/autogen/base.yaml
-              OUT=/app/gen/10-scanned.yaml
-              # MUST equal autogen.scanPaths (chart values) -- the base.yaml
-              # helper diffs them and fails the render on drift: this
-              # quick-find decides whether the generator runs at all.
-              SCAN_DIRS="/models/scanned"
-
-              degrade() {
-                printf '# llama-swap-config-autogen produced no scanned half (%s).\n' "$1"
-                printf '# Written by the autogen initContainer degrade path; the\n'
-                printf '# declared -config half loads untouched (fail-open, see the\n'
-                printf '# charts/llama-swap/values.yaml autogen: block).\n'
-              }
-
-              # Stock `generate` on an empty scan set exits nonzero ("No
-              # models found"), so short-circuit before invoking it. -iname:
-              # the tool discovers *.gguf AND *.GGUF.
-              found=""
-              for d in $SCAN_DIRS; do
-                if [ -d "$d" ]; then
-                  found=$(find "$d" -iname '*.gguf' -print 2>/dev/null | head -n 1)
-                  if [ -n "$found" ]; then break; fi
-                  found=""
-                fi
-              done
-
-              if [ -z "$found" ]; then
-                echo "autogen: no GGUF files under $SCAN_DIRS - writing comment-only scanned half (fail-open)" >&2
-                degrade "no GGUF files under scan roots: $SCAN_DIRS" > "$OUT"
-                exit 0
-              fi
-
-              # generate's own stderr stays on the container log for triage.
-              if ! llama-swap-config-autogen generate --config "$BASE" -o "$OUT"; then
-                echo "autogen: generate failed - degrading to comment-only scanned half (fail-open; tool output above)" >&2
-                degrade "generate exited nonzero; see the initContainer log above" > "$OUT"
-              fi
-              exit 0
+          # Flags for the image entrypoint (containers/llama-swap-autogen/
+          # entrypoint.sh). The --scan-dir set MUST equal autogen.scanPaths:
+          # the base.yaml helper parses these args and fails the render on
+          # drift ("edit both or neither") - the entrypoint quick-find
+          # decides whether the generator runs at all. Usage errors (missing/
+          # duplicate flags) exit nonzero on purpose: degrade rc0 is reserved
+          # for scan-empty / generate-fail, a wiring bug stays loud.
+          args:
+            - --scan-dir
+            - /models/scanned
+            - --base
+            - /app/autogen/base.yaml
+            - --out
+            - /app/gen/10-scanned.yaml
+            - --home
+            - /home/autogen
           resources:
             requests: {cpu: 100m, memory: 128Mi}
             limits: {memory: 512Mi}
@@ -866,9 +843,10 @@ app-template:
             # read-only root survives the generator's ~/.cache GGUF-metadata
             # write (unguarded mkdir + write_text at c7357e68, which cli.py's
             # FileNotFoundError/ValueError-only handler lets escape as a
-            # traceback) only because it lands on the init-only `autogen-home`
-            # emptyDir; without that mount generate exits 1 the first time any
-            # GGUF is on disk and the fail-open hides a dead scanned half.
+            # traceback) only because --home points the entrypoint's HOME at
+            # the init-only `autogen-home` emptyDir; without that mount
+            # generate exits 1 the first time any GGUF is on disk and the
+            # fail-open hides a dead scanned half.
             runAsNonRoot: true
             runAsUser: 65532
             readOnlyRootFilesystem: true
@@ -1006,9 +984,11 @@ app-template:
             - path: /app/autogen
               readOnly: true
     autogen-home:
-      # /home/autogen is where the generator's ~/.cache write goes: the C01
-      # image sets no HOME env, so Path.home() falls back to the useradd
-      # --home passwd entry. Writable scratch is a proven pattern for this
+      # /home/autogen is where the generator's ~/.cache write lands: the
+      # initContainer passes --home /home/autogen and entrypoint.sh exports
+      # it as HOME before invoking generate (CR4 makes the C03 finding-#1
+      # writable-cache contract explicit on the CLI, replacing the passwd-
+      # fallback reasoning). Writable scratch is a proven pattern for this
       # container at uid 65532 - the degrade path already writes
       # 10-scanned.yaml into the `gen` emptyDir. advancedMounts keep it
       # init-only: main must not gain a writable dir (chunk acceptance 1).
