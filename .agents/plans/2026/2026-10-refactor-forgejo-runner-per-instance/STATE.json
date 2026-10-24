@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-refactor-forgejo-runner-per-instance",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": null,
   "test_session": "ses_e90e055e2ffeFRidpIOe9xQjrM",
   "current_wave": 1,
@@ -21,13 +21,29 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [charts/forgejo-runner/{Chart.yaml,values.yaml,templates/secret-runner.yaml,templates/NOTES.txt}, secret-runner-dev.yaml+secret-runner-infra.yaml deleted, services/dev/prod/values.yaml, custom-values/dev/prod-values.yaml, tests/services/dev-forgejo-runner.sh, ticket artifacts]\ncommands_run: [dev-forgejo-runner.sh => pass (41 ok), audit-trail 4/infra-forgejo 33/dev-git-auth 20/forgejo-ssh-audit-trail 6 => pass, forgejo-ssh-gateway => pass (67 ok, t11 flipped green per lifecycle), helm lint chart+umbrella => pass, both-release renders (release-named SA/STS/Service/ESO, (kind,name) disjoint, 0 OVERRIDE_) => pass, umbrella render -f custom-values => pass (exit 0, 0 OVERRIDE_), Chart.lock byte-identical vs fresh dep update => pass, sentinel sweep 1<->2 + trio greps => pass, aislop ci => pass (100/100)]\ndeviations: [atomic commit includes test rewrite + ticket artifacts (test in C01 Files-in-scope; t11 lifecycle needs test+chart to land together), dropped global.nameOverride (render already ignored it; tests assert release-exact names), persistence.runner-creds globalMounts means dind also mounts creds volume (contract-mandated; t2 asserts runner mounts hold)]\nfriction: [self-inflicted validation re-run (cd into /tmp copy broke relative paths; re-ran from repo root)]\nopen_questions: none\ncommit: 47b7f9f1d on refactor-forgejo-runner-per-instance-apps"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED (C01 AND final whole-plan review \u2014 single-chunk ticket)\nchunk: C01\nfiles_changed: [chunks/C01.md (Review notes only)]\ncommands_run: [full suite fresh: dev-forgejo-runner 41/audit-trail 4/infra-forgejo 33/dev-git-auth 20/forgejo-ssh-gateway 67 (t11 green)/forgejo-ssh-audit-trail 6 => all pass, lints => pass, both-release renders (release-exact, (kind,name) disjoint, 0 OVERRIDE_) => pass, umbrella render -f custom-values => pass (0 OVERRIDE_), independent base-chart ground-truth render => pass (2 elements, per-element values blob carries ITS url + ITS resolved UUID, no runners: block), sentinel sweep 1<->2 + trio greps => pass, Chart.lock unchanged vs main => pass, git hygiene (single atomic commit, main == origin/main, nothing pushed) => pass, aislop => pass (100/100)]\ndeviations: none\nfriction: none\nfindings: [minor-1: dind mounts runner-creds via plan-specified globalMounts \u2014 assessed NOT a real exposure (dind privileged/node-root, pinned official image, pod-scoped identity); minor-2 (deferred): t2 does not assert docker-data dind-only / shared /data+/var/run mount placement \u2014 manually verified true in renders; test-session contract gap, optional amendment later; nit: provenance-tag comments pre-existing deferred]\nopen_questions: none"
+        }
+      ],
+      "dev_session": "ses_e90abeea0ffe3thxZFWEnzZOnA",
+      "commit": "47b7f9f1d",
+      "review_session": "ses_e90903164ffeEThX5ggdfxCBWB"
     }
   },
   "blocked": [],
@@ -42,5 +58,12 @@
     "red_verified": "worktree: t1 ok, first trip t2 (two-controller shape renders 2 STS under dev release name) \u2014 right reason; per-section red evidence recorded",
     "green_sim": "/tmp/opencode real-git-worktree sim of C01: 41 ok exit 0 incl. t10 base-chart ground-truth values-flow proof",
     "lifecycle": "forgejo-ssh-gateway.sh red ONLY at t11 (predecessor guard re-runs the runner script) during the red-first window \u2014 self-resolves when the atomic C01 commit lands; regressions audit-trail 4 / infra-forgejo 33 / dev-git-auth 20 / forgejo-ssh-audit-trail 6 all green + unmodified"
-  }
+  },
+  "final_review": {
+    "session": "ses_e90903164ffeEThX5ggdfxCBWB",
+    "at": "2026-10-24",
+    "verdict": "APPROVED",
+    "note": "single-chunk ticket \u2014 C01 review doubled as final whole-plan review; suite 41/4/33/20/67/6 green; both-release renders disjoint; base-chart ground-truth values-flow proven; UUIDs verbatim; atomic unpushed commit"
+  },
+  "completed_at": "2026-10-24"
 }
