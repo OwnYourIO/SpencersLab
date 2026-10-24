@@ -109,18 +109,25 @@
       "dev_session": "ses_e905b590effebwayS8Lul5W3DT"
     },
     "C04": {
-      "status": "in-review",
+      "status": "done",
       "wave": 3,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "role": "dev",
           "round": 1,
           "at": "2026-10-24",
           "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [charts/coder/templates/secret-coder.yaml (7 target.template.data keys: CODER_EXTERNAL_AUTH_0_ID=forgejo/TYPE=gitea/DISPLAY_NAME=Forgejo/dev AUTH_URL literals + v2 escapes; ea_client_id/ea_secret/token_encryption_keys entries mirroring existing bitwarden-login + Default/None/None shape), charts/coder/values.yaml (bitwardenIds coder-external-auth + coder-token-encryption sentinels + item comments; coder.coder.podAnnotations reloader.stakater.com/auto true), custom-values/dev/prod-values.yaml (both keys as OVERRIDE_NEEDED must-fill slots, why-comments incl. dd|base64 generation form + crashloop warning)] (commit b50383b0f, local, 3 files +84/\u22120)\ncommands_run: [helm dependency build/lint/template charts/coder => 0/0/0 (AC2); helm template --set legs => 0, coder-secrets doc carries all seven keys + forgejo + https://git.scifi.farm/login/oauth/authorize + test uuids; grep OVERRIDE => EXIT 1 sentinel-free (AC3); python yaml walk: Deployment pod annotations contain reloader.stakater.com/auto => 0 (AC4); bash tests/services/dev-git-auth.sh => EXIT 1, 44 ok \u2014 c-sso-1..4 + legacy + c-canonical green, sole FAIL c-sso-5 (C06's, fail-as-expected per runbook step 7); startup-script.sh => 36/7 identical to pre-impl evidence (7 C06 statics only); image-structure 46/0; dockerfile-pins 8/0; gpu-coder-sso first FAIL g-sso-1 (C05); startup-sso-behavior first FAIL b-1 (C06); sh -n + dash -n => 0/0; git status porcelain tests/ containers/ services/ coder-templates/ => empty (in-scope only); aislop => 0 (non-informative yaml)]\ndeviations: (1) 'expect 47 ok' from launch wording vs authoritative TEST-SPEC C04-state = 44 ok + fail-fast c-sso-5 \u2014 followed the frozen contract; matches test-session forward sim exactly. (2) C04.md task 5 (extend dev-git-auth.sh) pre-executed by agent-test at 9c5bbd5e0; tests read-only \u2014 untouched. (3) no TF touched \u2192 terraform gate skipped per condition. (4) chart-default render now 11 sentinel occurrences vs 8 at C03: the 3 new are intended deploy-time slots (c-sso-3 leg proves resolution path).\nfriction: none new \u2014 all known workarounds held\nopen_questions: none \u2014 reminder for sequencing: dev Bitwarden items + OAuth app on git.scifi.farm (User actions 1\u20132 dev leg) pending user; ES inert by design until filled\nnext_suggested: agent-review round 1 on C04; then C05 dev (wave 3); C06 after C04 approved"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nverdict: APPROVED (round 1)\nfiles_changed: [chunks/C04.md] (Review notes appended; no source/test edits)\ncommands_run: [dev-git-auth.sh => EXIT 1, 44 ok, sole FAIL c-sso-5 (correct C04-only state, runbook step 7); gpu-coder-sso.sh => red only g-sso-1; startup-script.sh => 36/7 (C06 statics only, byte-matches pre-impl fail-set); startup-sso-behavior.sh => red only b-1; image 46/0; pins 8/0; helm dep-build/lint/template => 0/0/0; --set render: 7 keys ID=forgejo/TYPE=gitea/dev AUTH_URL, v2 escapes literal, test UUIDs in 3 entries, zero OVERRIDE in doc; -f custom-values => OVERRIDE_NEEDED slots only; c-sso-4 python walk: pod annotations reloader.stakater.com/auto=true from chart defaults; giteaDefaults negative: no _REGEX/_TOKEN_URL/_VALIDATE_URL; git diff 9c5bbd5e0..HEAD -- tests/ => empty; Chart.yaml/lock untouched => AC6 holds; forward-ref grep zero; aislop 0 (non-informative yaml)]\ndeviations: none \u2014 per plan Commands + runbook steps 1-4+7; exit codes without pipes\nfriction: none new\nopen_questions: none \u2014 APPROVED; NIT: secret-coder.yaml:124 'do not repoint it at a login item' self-contradictory wording \u2014 suggest reword at next touch (recorded, non-blocking)\nnext_suggested: mark C04 done; C05 dev; C06 gate now satisfied"
         }
       ],
       "dev_session": "ses_e8fd8ad07ffeCBdbTtxjaEfpUJ"
@@ -147,7 +154,9 @@
     }
   },
   "blocked": [],
-  "deferred": [],
+  "deferred": [
+    "C04 NIT (2026-10-24 review r1): reword secret-coder.yaml:124 \"do not repoint it at a login item\" \u2014 self-contradictory (the item IS a login item); fix opportunistically at next touch of the file"
+  ],
   "final_review": {
     "role": "review",
     "at": "2026-10-24",
