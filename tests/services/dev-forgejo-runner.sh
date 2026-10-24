@@ -973,29 +973,22 @@ try:
     # Sentinels may remain only inside the appset-generator resource (the
     # values blob, where per-app placeholders ride to the base chart); the
     # service sentinel must not survive anywhere, and no other rendered
-    # resource may carry any OVERRIDE_ string — with one sanctioned exception
-    # (2026/2026-10-feat-dev-mcp-fleet C03 OQ2, user ruling 2026-10-24): the
-    # documented OVERRIDE_NEEDED interim placeholder for not-yet-created dev
-    # Bitwarden items rides custom-values into its ExternalSecret, a visible
-    # failure the plan calls acceptable until the user pastes the UUID. The
-    # placeholder is tolerated ONLY on the listed target documents.
+    # resource may carry any OVERRIDE_ string. The github-mcp OVERRIDE_NEEDED
+    # allowance added for the dev-mcp-fleet interim was RETIRED by the
+    # DECISIONS 2026-10-24 post-approval ruling (the real items exist — dev-
+    # github LOGIN 522b1cc4 reused for github-mcp, searxng LOGIN f90806ff —
+    # and custom-values must carry the UUIDs), restoring this sweep to fully
+    # fail-closed; do not re-add the allow.
     raw = open(render).read()
     if 'OVERRIDE_VIA_CUSTOM_VALUES' in raw:
         bad('t9: the rendered dev umbrella still carries the OVERRIDE_VIA_CUSTOM_VALUES service sentinel (the -f file did not resolve it)')
-    PLACEHOLDER_ES = {'github-mcp'}
     for d in docs:
         if d.get('kind') == 'ApplicationSet':
             continue
         t = yaml.safe_dump(d)
-        if 'OVERRIDE_' not in t:
-            continue
-        name = ((d.get('metadata') or {}).get('name'))
-        # \b keeps a longer token (OVERRIDE_NEEDED_2) unrecognized -> fail.
-        interim_only = (d.get('kind') == 'ExternalSecret' and name in PLACEHOLDER_ES
-                        and 'OVERRIDE_' not in re.sub(r'OVERRIDE_NEEDED\b', '', t))
-        if not interim_only:
-            bad(f"t9: non-appset document {name!r} carries an OVERRIDE_* string — only the appset-generator resource and the {sorted(PLACEHOLDER_ES)} placeholder slot may hold unresolved placeholders")
-    ok('t9: no OVERRIDE_* outside appset-generator resources and the allowlisted placeholder ExternalSecrets; the service sentinel does not survive the render')
+        if 'OVERRIDE_' in t:
+            bad(f"t9: non-appset document {((d.get('metadata') or {}).get('name'))!r} carries an OVERRIDE_* string — only the appset-generator resource may hold per-app placeholders")
+    ok('t9: no OVERRIDE_ outside appset-generator resources; the service sentinel does not survive the render')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))

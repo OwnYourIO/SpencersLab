@@ -383,7 +383,7 @@ try:
     if not (isinstance(slot, str) and slot.strip()):
         bad(f't4: searxng.bitwardenIds.searxng is {slot!r}, expected a non-empty string')
     if slot != 'OVERRIDE_NEEDED' and not UUID_RE.match(slot):
-        bad(f't4: searxng.bitwardenIds.searxng is {slot!r}; expected the documented OVERRIDE_NEEDED placeholder (dev LOGIN item is a user action, OQ2) or a real UUID')
+        bad(f't4: searxng.bitwardenIds.searxng is {slot!r}; expected a real UUID (the dev-searxng LOGIN item exists: f90806ff-8ee5-435d-b2e2-b4ed0176d701 per DECISIONS 2026-10-24 ruling) or the OVERRIDE_NEEDED interim until that paste lands')
     ok(f't4: custom-values searxng.bitwardenIds.searxng slot present ({slot}) (C01 AC4)')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -505,8 +505,10 @@ PY
 fi
 
 # --- t9: umbrella ExternalSecret templates (C03 AC3) --------------------------
-# github-mcp: bitwarden-fields/token <- --set UUID, GITHUB_PERSONAL_ACCESS_TOKEN
-# target. wekan-mcp: THREE entries from the same LOGIN item — username+password
+# github-mcp: bitwarden-login/password <- --set UUID (DECISIONS 2026-10-24 user
+# ruling: reuses the existing dev-github LOGIN item, password = PAT; the
+# internal secretKey name stays 'token'), GITHUB_PERSONAL_ACCESS_TOKEN target.
+# wekan-mcp: THREE entries from the same LOGIN item — username+password
 # via bitwarden-login, base URL via bitwarden-uri (the OQ1 resolution: no
 # hardcoded host). Sentinel sweep follows the dev-forgejo-runner convention:
 # OVERRIDE_* may ride ONLY inside the appset-generator values blob (a real
@@ -546,11 +548,11 @@ try:
     d0 = data[0]
     rr = d0.get('remoteRef') or {}
     if d0.get('secretKey') != 'token':
-        bad(f't9: github-mcp secretKey is {d0.get("secretKey")!r}, expected token')
-    if ((d0.get('sourceRef') or {}).get('storeRef') or {}).get('name') != 'bitwarden-fields':
-        bad(f't9: github-mcp store is {((d0.get("sourceRef") or {}).get("storeRef") or {}).get("name")!r}, expected bitwarden-fields (the dev github token is a FIELDS item with custom field token, OQ2)')
-    if rr.get('property') != 'token':
-        bad(f't9: github-mcp remoteRef.property is {rr.get("property")!r}, expected token')
+        bad(f't9: github-mcp secretKey is {d0.get("secretKey")!r}, expected token (the internal name — the ruling changed the source field, not this key)')
+    if ((d0.get('sourceRef') or {}).get('storeRef') or {}).get('name') != 'bitwarden-login':
+        bad(f't9: github-mcp store is {((d0.get("sourceRef") or {}).get("storeRef") or {}).get("name")!r}, expected bitwarden-login — DECISIONS 2026-10-24 user ruling: the dev GitHub token reuses the EXISTING dev-github LOGIN item (522b1cc4-…, password = the PAT), not a new FIELDS item')
+    if rr.get('property') != 'password':
+        bad(f't9: github-mcp remoteRef.property is {rr.get("property")!r}, expected password (the LOGIN item\'s password field carries the PAT per the 2026-10-24 ruling)')
     if rr.get('key') != uuid_github:
         bad(f't9: github-mcp remoteRef.key is {rr.get("key")!r}, expected the --set test-uuid {uuid_github!r} (read from top-level .Values.bitwardenIds)')
     for k in ('conversionStrategy', 'decodingStrategy', 'metadataPolicy'):
@@ -559,7 +561,7 @@ try:
     tmpl = ((spec.get('target') or {}).get('template') or {}).get('data') or {}
     if tmpl.get('GITHUB_PERSONAL_ACCESS_TOKEN') != '{{ .token }}':
         bad(f't9: github-mcp template GITHUB_PERSONAL_ACCESS_TOKEN is {tmpl.get("GITHUB_PERSONAL_ACCESS_TOKEN")!r}, expected {{{{ .token }}}}')
-    ok('t9: ExternalSecret github-mcp — bitwarden-fields/token from the --set UUID, GITHUB_PERSONAL_ACCESS_TOKEN <- {{ .token }} (C03 AC3)')
+    ok('t9: ExternalSecret github-mcp — bitwarden-login/password from the --set UUID, GITHUB_PERSONAL_ACCESS_TOKEN <- {{ .token }} (C03 AC3 as re-ruled 2026-10-24)')
 
     es = by_name.get('wekan-mcp')
     if es is None:
