@@ -31,8 +31,8 @@ declare -A PIN=(
   [KUBECTL_VERSION]='v1.36.5'
   [UV_VERSION]='0.13.1'
   [FJ_VERSION]='v0.7.0'
-  [OPENCODE_VERSION]='2.0.32'
-  [OPENCHAMBER_VERSION]='2.4.0'
+  [OPENCODE_VERSION]='2.1.4'
+  [OPENCHAMBER_VERSION]='2.5.1'
 )
 
 # The exact renovate comment each tool ARG must carry on the line immediately

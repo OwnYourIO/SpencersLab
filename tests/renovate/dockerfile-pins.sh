@@ -61,8 +61,8 @@ const EXPECTED_NEW = [
   { datasource: 'node-version', depName: 'node', registryUrl: '', currentValue: 'v26.12.0' },
   { datasource: 'golang-version', depName: 'golang', registryUrl: '', currentValue: '1.27.2' },
   { datasource: 'forgejo-releases', depName: 'forgejo-contrib/forgejo-cli', registryUrl: 'https://codeberg.org', currentValue: 'v0.7.0' },
-  { datasource: 'npm', depName: '@opencode/cli', registryUrl: '', currentValue: '2.0.32' },
-  { datasource: 'npm', depName: '@openchamber/web', registryUrl: '', currentValue: '2.4.0' },
+  { datasource: 'npm', depName: '@opencode/cli', registryUrl: '', currentValue: '2.1.4' },
+  { datasource: 'npm', depName: '@openchamber/web', registryUrl: '', currentValue: '2.5.1' },
 ];
 const EXPECTED_GITPIN = [
   { datasource: 'github-releases', depName: 'helm/helm', registryUrl: '', currentValue: 'v3.22.1' },

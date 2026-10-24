@@ -3,8 +3,10 @@
 # (mirroring secret-github.yaml) plus the existing `github-pat` one feed
 # GITHUB_TOKEN / FORGEJO_TOKEN / FORGEJO_HOST into the kubernetes-hardened
 # workspace pods, and secret-github.yaml names the template as its in-repo
-# consumer. No image change is needed: the baked startup script already
-# consumes those three names.
+# consumer. The lab runs two Forgejo instances, so each pair exists per
+# instance: `forgejo-token` (git.scifi.farm) and `forgejo-token-canonical`
+# (git.spencerslab.com) -> FORGEJO_TOKEN_CANONICAL / FORGEJO_HOST_CANONICAL.
+# No image change is needed: the baked startup script consumes those names.
 #
 # GREP CONVENTION: the secret-github.yaml check is deliberately
 # COMMENT-INCLUSIVE. The claim this script forbids ("no in-repo consumer") lives
@@ -23,6 +25,7 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 SECRET_FORGEJO="services/dev/prod/templates/secret-forgejo-token.yaml"
+SECRET_FORGEJO_CANONICAL="services/dev/prod/templates/secret-forgejo-token-canonical.yaml"
 SECRET_GITHUB="services/dev/prod/templates/secret-github.yaml"
 VALUES="services/dev/prod/values.yaml"
 CUSTOM_VALUES="custom-values/dev/prod-values.yaml"
@@ -241,6 +244,111 @@ else
   skip "c6: $STARTUP is absent, so the env-name contract could not be cross-checked"
 fi
 
+# --- c-canonical-1: the canonical ExternalSecret mirrors c1's checks --------
+[ -f "$SECRET_FORGEJO_CANONICAL" ] ||
+  fail "c-canonical-1: $SECRET_FORGEJO_CANONICAL is missing (the forgejo-token-canonical ExternalSecret has not been added)"
+ok "c-canonical-1: $SECRET_FORGEJO_CANONICAL exists"
+
+grep -qE '^apiVersion:[[:space:]]*external-secrets\.io/v1[[:space:]]*(#.*)?$' "$SECRET_FORGEJO_CANONICAL" ||
+  fail "c-canonical-1: $SECRET_FORGEJO_CANONICAL is not external-secrets.io/v1"
+grep -qE '^kind:[[:space:]]*ExternalSecret[[:space:]]*(#.*)?$' "$SECRET_FORGEJO_CANONICAL" ||
+  fail "c-canonical-1: $SECRET_FORGEJO_CANONICAL is not an ExternalSecret"
+grep -qE '^[[:space:]]*name:[[:space:]]*forgejo-token-canonical[[:space:]]*(#.*)?$' "$SECRET_FORGEJO_CANONICAL" ||
+  fail "c-canonical-1: no 'name: forgejo-token-canonical' in $SECRET_FORGEJO_CANONICAL"
+grep -qE '^[[:space:]]*namespace:[[:space:]]*default[[:space:]]*(#.*)?$' "$SECRET_FORGEJO_CANONICAL" ||
+  fail "c-canonical-1: $SECRET_FORGEJO_CANONICAL does not pin namespace: default (the workspace namespace)"
+ok "c-canonical-1: ExternalSecret v1 names forgejo-token-canonical in namespace default"
+
+store=$(yaml_block "$SECRET_FORGEJO_CANONICAL" '^[[:space:]]*secretStoreRef:')
+printf '%s\n' "$store" | grep -qE '^[[:space:]]*name:[[:space:]]*bitwarden-login[[:space:]]*(#.*)?$' ||
+  fail "c-canonical-1: secretStoreRef does not use the bitwarden-login store"
+printf '%s\n' "$store" | grep -qE '^[[:space:]]*kind:[[:space:]]*SecretStore[[:space:]]*(#.*)?$' ||
+  fail "c-canonical-1: secretStoreRef.kind is not SecretStore"
+ok "c-canonical-1: secretStoreRef is the bitwarden-login SecretStore"
+
+grep -qE '^[[:space:]]*refreshInterval:[[:space:]]*[^[:space:]#]+' "$SECRET_FORGEJO_CANONICAL" ||
+  fail "c-canonical-1: $SECRET_FORGEJO_CANONICAL has no refreshInterval"
+ok "c-canonical-1: refreshInterval is set"
+
+for key in conversionStrategy decodingStrategy metadataPolicy; do
+  grep -qE "^[[:space:]]*${key}:[[:space:]]*[^[:space:]#]+" "$SECRET_FORGEJO_CANONICAL" ||
+    fail "c-canonical-1: the remoteRef boilerplate field '$key' is missing (the ArgoCD Default/None/None trio)"
+done
+ok "c-canonical-1: conversionStrategy/decodingStrategy/metadataPolicy boilerplate is present"
+
+template_block=$(yaml_block "$SECRET_FORGEJO_CANONICAL" '^[[:space:]]*template:')
+printf '%s\n' "$template_block" | grep -qE '^[[:space:]]*FORGEJO_TOKEN_CANONICAL:[[:space:]]*' ||
+  fail "c-canonical-1: target.template.data does not render a FORGEJO_TOKEN_CANONICAL key"
+ok "c-canonical-1: the rendered Secret carries the FORGEJO_TOKEN_CANONICAL key"
+
+remote_ref=$(yaml_block "$SECRET_FORGEJO_CANONICAL" '^[[:space:]]*remoteRef:')
+printf '%s\n' "$remote_ref" | grep -qE '^[[:space:]]*property:[[:space:]]*password[[:space:]]*(#.*)?$' ||
+  fail "c-canonical-1: remoteRef does not read the item's password field (the PASSWORD-field convention)"
+key_line=$(printf '%s\n' "$remote_ref" | grep -E '^[[:space:]]*key:' | head -n 1 || true)
+[ -n "$key_line" ] || fail "c-canonical-1: remoteRef has no key"
+if ! printf '%s' "$key_line" | grep -q 'bitwardenIds' ||
+  ! printf '%s' "$key_line" | grep -q 'forgejo-token-canonical'; then
+  fail "c-canonical-1: remoteRef.key does not read bitwardenIds.forgejo-token-canonical from the service values: $key_line"
+fi
+ok "c-canonical-1: the token is the bitwardenIds.forgejo-token-canonical item's password"
+
+# Comment-inclusive like the c5 github check: the consumers live only in the
+# header, and with two near-identical forgejo-token secrets in one folder the
+# header is what tells a reader which instance this one serves.
+grep -q 'git\.spencerslab\.com' "$SECRET_FORGEJO_CANONICAL" ||
+  fail "c-canonical-1: $SECRET_FORGEJO_CANONICAL never names git.spencerslab.com (the instance it serves)"
+grep -q 'kubernetes-hardened' "$SECRET_FORGEJO_CANONICAL" ||
+  fail "c-canonical-1: $SECRET_FORGEJO_CANONICAL does not name the kubernetes-hardened template as its consumer"
+ok "c-canonical-1: the header comment names the canonical instance and the kubernetes-hardened consumer"
+
+# --- c-canonical-2: sentinel in the service values, UUID slot in custom ------
+printf '%s\n' "$ids" |
+  grep -qE '^[[:space:]]*forgejo-token-canonical:[[:space:]]*OVERRIDE_VIA_CUSTOM_VALUES[[:space:]]*(#.*)?$' ||
+  fail "c-canonical-2: $VALUES has no 'forgejo-token-canonical: OVERRIDE_VIA_CUSTOM_VALUES' entry under bitwardenIds"
+
+custom_entry=$(printf '%s\n' "$custom_ids" | grep -E '^[[:space:]]*forgejo-token-canonical:' | head -n 1 || true)
+[ -n "$custom_entry" ] || fail "c-canonical-2: $CUSTOM_VALUES has no forgejo-token-canonical entry (the sentinel would survive to the cluster)"
+if printf '%s' "$custom_entry" | grep -q 'OVERRIDE_VIA_CUSTOM_VALUES'; then
+  fail "c-canonical-2: the custom-values forgejo-token-canonical entry is still the service sentinel: $custom_entry"
+fi
+# OVERRIDE_NEEDED is tolerated until User action 1 creates the Bitwarden item
+# (the infra-forgejo t6 precedent); unlike the service sentinel it is a
+# documented slot, not a value that would render as an item name forever.
+printf '%s' "$custom_entry" |
+  grep -qE "^[[:space:]]*forgejo-token-canonical:[[:space:]]*(OVERRIDE_NEEDED|${UUID_RE})[[:space:]]*(#.*)?$" ||
+  fail "c-canonical-2: the custom-values forgejo-token-canonical value is neither a real UUID nor the documented OVERRIDE_NEEDED placeholder: $custom_entry"
+custom_slot=$(printf '%s' "$custom_entry" | sed -E 's/.*forgejo-token-canonical:[[:space:]]*([^[:space:]#]+).*/\1/')
+ok "c-canonical-2: the canonical sentinel is paired with a custom-values slot ($custom_slot)"
+
+# --- c-canonical-3: the hardened template feeds the canonical pair to pods ----
+token_can_block=$(env_block FORGEJO_TOKEN_CANONICAL)
+[ -n "$token_can_block" ] || fail "c-canonical-3: no container env block sets FORGEJO_TOKEN_CANONICAL"
+printf '%s' "$token_can_block" | grep -qE 'secret_key_ref' ||
+  fail "c-canonical-3: FORGEJO_TOKEN_CANONICAL is not read from a secret_key_ref"
+printf '%s' "$token_can_block" | grep -qE '"forgejo-token-canonical"' ||
+  fail "c-canonical-3: FORGEJO_TOKEN_CANONICAL does not reference the forgejo-token-canonical Secret"
+printf '%s' "$token_can_block" | grep -qE 'key[[:space:]]*=[[:space:]]*"FORGEJO_TOKEN_CANONICAL"' ||
+  fail "c-canonical-3: FORGEJO_TOKEN_CANONICAL does not use the FORGEJO_TOKEN_CANONICAL Secret key"
+printf '%s' "$token_can_block" | grep -qE 'optional[[:space:]]*=[[:space:]]*true' ||
+  fail "c-canonical-3: FORGEJO_TOKEN_CANONICAL's secret key ref is not optional = true (the Secret only exists on-cluster after User action 1)"
+
+host_can_block=$(env_block FORGEJO_HOST_CANONICAL)
+[ -n "$host_can_block" ] || fail "c-canonical-3: no container env block sets FORGEJO_HOST_CANONICAL"
+printf '%s' "$host_can_block" | grep -qE 'value[[:space:]]*=[[:space:]]*"git\.spencerslab\.com"' ||
+  fail "c-canonical-3: FORGEJO_HOST_CANONICAL is not the literal \"git.spencerslab.com\" (no scheme, no trailing path — the startup script builds https://\$FORGEJO_HOST_CANONICAL/)"
+ok "c-canonical-3: FORGEJO_TOKEN_CANONICAL (forgejo-token-canonical Secret, optional) + FORGEJO_HOST_CANONICAL bare host"
+
+# --- c-canonical-4: c6 extension — the canonical names cross the script boundary
+if [ -f "$STARTUP" ]; then
+  for var in FORGEJO_TOKEN_CANONICAL FORGEJO_HOST_CANONICAL; do
+    grep -q "$var" "$STARTUP" ||
+      fail "c-canonical-4: $STARTUP never reads $var, so the template's canonical env name has no consumer"
+  done
+  ok "c-canonical-4: the baked startup script consumes the canonical pair too"
+else
+  skip "c-canonical-4: $STARTUP is absent, so the canonical env-name contract could not be cross-checked"
+fi
+
 # --- c4: helm lint/template and the rendered ExternalSecret ----------------
 find_helm() {
   local cand
@@ -343,10 +451,12 @@ else
     if "$helm_bin" template dev "$SERVICE" --set bitwardenIds.forgejo-token=test-uuid \
       >"$dev_out" 2>"$dev_err"; then
       # Split the multi-document stream; the target doc is the ExternalSecret
-      # named forgejo-token (the github-pat one is a sibling, not a substitute).
+      # named forgejo-token (the github-pat one is a sibling, not a
+      # substitute). The trailing [^A-Za-z0-9_-] keeps the sibling
+      # forgejo-token-canonical doc out of a prefix-only match.
       forgejo_doc=$(awk '
         function flush() {
-          if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*forgejo-token/) print buf
+          if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*forgejo-token[^A-Za-z0-9_-]/) print buf
         }
         /^---[[:space:]]*$/ { flush(); buf = ""; next }
         { buf = buf $0 "\n" }
@@ -363,6 +473,34 @@ else
       fi
       ok "c4: the dev umbrella renders forgejo-token with the --set UUID and no unresolved sentinel"
 
+      # c-canonical-5: the same ladder for the canonical ExternalSecret — the
+      # template's secret_key_ref and the script's env names both key off this
+      # document, so its name and template key are asserted at render time.
+      dev_can_out=$(mktemp /tmp/opencode/c05-dev-XXXXXX.yaml)
+      if "$helm_bin" template dev "$SERVICE" --set bitwardenIds.forgejo-token-canonical=test-uuid \
+        >"$dev_can_out" 2>/dev/null; then
+        canonical_doc=$(awk '
+          function flush() {
+            if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*forgejo-token-canonical/) print buf
+          }
+          /^---[[:space:]]*$/ { flush(); buf = ""; next }
+          { buf = buf $0 "\n" }
+          END { flush() }
+        ' "$dev_can_out")
+        [ -n "$canonical_doc" ] ||
+          fail "c-canonical-5: helm template dev $SERVICE --set bitwardenIds.forgejo-token-canonical=test-uuid renders no forgejo-token-canonical ExternalSecret"
+        printf '%s' "$canonical_doc" | grep -q 'FORGEJO_TOKEN_CANONICAL' ||
+          fail "c-canonical-5: the rendered forgejo-token-canonical ExternalSecret has no FORGEJO_TOKEN_CANONICAL key"
+        printf '%s' "$canonical_doc" | grep -q 'test-uuid' ||
+          fail "c-canonical-5: the rendered ExternalSecret ignores --set bitwardenIds.forgejo-token-canonical (the key is not taken from the values map)"
+        if printf '%s' "$canonical_doc" | grep -q 'OVERRIDE_VIA_CUSTOM_VALUES'; then
+          fail "c-canonical-5: the rendered forgejo-token-canonical ExternalSecret still carries OVERRIDE_VIA_CUSTOM_VALUES"
+        fi
+        ok "c-canonical-5: the dev umbrella renders forgejo-token-canonical with the --set UUID and no unresolved sentinel"
+      else
+        fail "c-canonical-5: helm template dev $SERVICE --set bitwardenIds.forgejo-token-canonical=test-uuid failed"
+      fi
+
       # Second render on the real deploy path: the custom-values file the
       # cluster annotation loads must resolve the sentinel to the real item.
       if [ -n "$real_uuid" ]; then
@@ -370,7 +508,7 @@ else
         if "$helm_bin" template dev "$SERVICE" -f "$CUSTOM_VALUES" >"$devf_out" 2>/dev/null; then
           real_doc=$(awk '
             function flush() {
-              if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*forgejo-token/) print buf
+              if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*forgejo-token[^A-Za-z0-9_-]/) print buf
             }
             /^---[[:space:]]*$/ { flush(); buf = ""; next }
             { buf = buf $0 "\n" }
@@ -384,6 +522,24 @@ else
           printf '%s' "$real_doc" | grep -q "$real_uuid" ||
             fail "c4: the rendered ExternalSecret does not carry the custom-values UUID $real_uuid"
           ok "c4: $CUSTOM_VALUES resolves the sentinel to the real UUID at render time"
+
+          # The canonical doc on the same real-deploy path: its custom-values
+          # slot may legitimately hold OVERRIDE_NEEDED until User action 1,
+          # but the service sentinel must never survive the layering.
+          canonical_f_doc=$(awk '
+            function flush() {
+              if (buf ~ /kind:[[:space:]]*ExternalSecret/ && buf ~ /name:[[:space:]]*forgejo-token-canonical/) print buf
+            }
+            /^---[[:space:]]*$/ { flush(); buf = ""; next }
+            { buf = buf $0 "\n" }
+            END { flush() }
+          ' "$devf_out")
+          [ -n "$canonical_f_doc" ] ||
+            fail "c-canonical-5: helm template dev $SERVICE -f $CUSTOM_VALUES renders no forgejo-token-canonical ExternalSecret"
+          if printf '%s' "$canonical_f_doc" | grep -q 'OVERRIDE_VIA_CUSTOM_VALUES'; then
+            fail "c-canonical-5: $CUSTOM_VALUES does not resolve the forgejo-token-canonical sentinel in the rendered ExternalSecret"
+          fi
+          ok "c-canonical-5: the custom-values render leaves the canonical document free of the service sentinel"
         else
           fail "c4: helm template dev $SERVICE -f $CUSTOM_VALUES failed (see the message above)"
         fi
@@ -399,7 +555,7 @@ fi
 # failed run keeps them so its "log kept at" pointer still resolves.
 if [ -n "${chart_copy:-}" ]; then
   rm -rf "$chart_copy"
-  for f in "${dev_out:-}" "${dev_err:-}" "${devf_out:-}"; do
+  for f in "${dev_out:-}" "${dev_err:-}" "${devf_out:-}" "${dev_can_out:-}"; do
     if [ -n "$f" ]; then
       rm -f "$f"
     fi
