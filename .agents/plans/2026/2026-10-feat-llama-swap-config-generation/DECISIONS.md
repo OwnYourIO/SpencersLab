@@ -320,3 +320,19 @@ After reviewing the landed C01–C04 surface, the user requested changes
 - CR1.3 merge semantics PINNED as implemented+tested (per CA2 review observation):
   family<rung<models precedence; rung `enabled: false` beats family `enabled: true`;
   `disabled:` beats `enabled:`. The plan's "OR" wording is superseded by this entry.
+
+## 2026-10-24 — Pivot request: push generation INTO the generator (coord)
+
+- User review of the CA2 end-state: hand-writing quant labels/descriptions in
+  values is still more authoring than desired. Wants the autogen tool to derive
+  them. Stock tool provably cannot (scan-only, fixed `-m` template, hub-cache
+  unscannable — RESEARCH.md TL;DR 1/2, §1/§3) ⇒ generator-extension path
+  (formerly Path B) reopens; this does NOT undo the landed Path A machinery —
+  it moves authoring from Helm values into (possibly forked) tool input.
+- Coord commissioned agent-research scope: minimal fork/patch design for an
+  `hf_models:` section deriving ID/name/description from repo:tag + filename
+  regex; which of aliases/filters/checkEndpoint/disabled/matrix-passthrough
+  can move into the generated half; HF-API metadata at generate time w/ offline
+  degrade; fork-in-image-build vs vendored fork vs upstream-PR posture
+  (single active author, no CONTRIBUTING, Apache-2.0). Plan status →
+  needs-replan-2 pending findings.
