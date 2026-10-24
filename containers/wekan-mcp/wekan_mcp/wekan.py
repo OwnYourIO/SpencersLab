@@ -1,13 +1,17 @@
 """
 Internal WeKan client used by the MCP server.
 
-Reads WEKAN_BASE_URL and WEKAN_TOKEN from environment ONCE at process start.
-These values live in the server process — NOT in tool schemas, NOT in tool
-arguments, NOT in tool responses (unless a tool explicitly returns them).
+Reads WEKAN_BASE_URL plus one credential form from the environment ONCE at
+process start: WEKAN_TOKEN (a pre-obtained bearer), or WEKAN_USERNAME +
+WEKAN_PASSWORD, which the client exchanges for a bearer via POST /users/login
+at startup and re-mints once on a 401. These values live in the server process
+— NOT in tool schemas, NOT in tool arguments, NOT in tool responses (unless a
+tool explicitly returns them).
 
 Design constraints imposed by WeKan:
     - Login body is JSON, not form data (form data is documented as broken).
-      We skip login entirely and reuse a pre-obtained bearer token.
+    - Old tokens stay valid after re-login (issue #1437), so the 401 re-mint
+      is resilience against a bad/expired token, not rotation.
     - Base URL must be the site root, not ending in /api.
     - Server must be started with WITH_API=true or every call returns 401.
     - Several endpoints return HTTP 200 with an embedded error body -
@@ -57,6 +61,8 @@ class WekanClient:
         self,
         base_url: Optional[str] = None,
         token: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
         timeout: float = 30.0,
     ):
         base_url = (base_url or os.environ.get("WEKAN_BASE_URL") or "").rstrip("/")
@@ -68,22 +74,74 @@ class WekanClient:
                 "not ending in /api"
             )
         token = token or os.environ.get("WEKAN_TOKEN")
-        if not token:
+        username = username or os.environ.get("WEKAN_USERNAME")
+        password = password or os.environ.get("WEKAN_PASSWORD")
+        # Stored even when a token wins: request() re-mints on a 401 only if
+        # the pair is available.
+        self._creds: Optional[tuple[str, str]] = (
+            (username, password) if username and password else None
+        )
+        if not token and not self._creds:
             raise WekanError(
-                "WEKAN_TOKEN not set. Obtain one by POSTing JSON to /users/login "
-                "on the WeKan server, then inject it via the ToolHive secret."
+                "WEKAN_TOKEN not set, and no WEKAN_USERNAME/WEKAN_PASSWORD pair "
+                "to mint one with. Inject a pre-obtained bearer as WEKAN_TOKEN, "
+                "or a password-based service account as the pair."
             )
 
         self._base_url = base_url
+        headers = {"Accept": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
         self._client = httpx.Client(
             base_url=base_url,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/json",
-            },
+            headers=headers,
             timeout=timeout,
         )
         self.user_id: Optional[str] = None
+        if not token:
+            self.login()
+
+    def login(self) -> None:
+        """
+        Mint a bearer token from the stored username/password pair via
+        POST /users/login and install it on the shared client's headers.
+
+        Calls httpx directly rather than request() so that request()'s
+        refresh-on-401 cannot recurse into login on a rejecting server; a
+        failed login surfaces as an error, never as another login attempt.
+        Neither the password nor a minted token may reach a message or log —
+        only WeKan's own reason field is surfaced, via _sanitize_error.
+        """
+        if self._creds is None:
+            raise WekanError("No WEKAN_USERNAME/WEKAN_PASSWORD pair to mint a token with")
+        username, password = self._creds
+        try:
+            resp = self._client.post(
+                "/users/login", json={"username": username, "password": password}
+            )
+        except httpx.HTTPError as e:
+            raise WekanError(f"WeKan login network error: {type(e).__name__}") from None
+
+        try:
+            parsed = resp.json() if resp.content else None
+        except ValueError:
+            parsed = None
+
+        if resp.status_code >= 400:
+            raise WekanError(
+                _sanitize_error(resp.status_code, "/users/login", parsed),
+                status=resp.status_code,
+                body=None,  # never retain the login body; it can reflect account data
+            )
+        minted = parsed.get("token") if isinstance(parsed, dict) else None
+        if not minted:
+            raise WekanError(
+                "WeKan /users/login returned no token (embedded error or "
+                "unexpected response shape)",
+                status=resp.status_code,
+                body=None,
+            )
+        self._client.headers["Authorization"] = f"Bearer {minted}"
 
     def validate(self) -> dict:
         """
@@ -98,7 +156,21 @@ class WekanClient:
     def close(self) -> None:
         self._client.close()
 
-    # ---- HTTP core ----
+    def _send(
+        self,
+        method: str,
+        path: str,
+        json_body: Any,
+        params: Optional[dict],
+        headers: Optional[dict],
+    ) -> httpx.Response:
+        try:
+            return self._client.request(
+                method, path, json=json_body, params=params, headers=headers
+            )
+        except httpx.HTTPError as e:
+            # Don't leak the URL structure or headers.
+            raise WekanError(f"WeKan network error on {method} {path}: {type(e).__name__}") from None
 
     def request(
         self,
@@ -112,13 +184,14 @@ class WekanClient:
         headers = {}
         if json_body is not None:
             headers["Content-Type"] = "application/json"
-        try:
-            resp = self._client.request(
-                method, path, json=json_body, params=params, headers=headers or None
-            )
-        except httpx.HTTPError as e:
-            # Don't leak the URL structure or headers.
-            raise WekanError(f"WeKan network error on {method} {path}: {type(e).__name__}") from None
+        headers = headers or None
+        resp = self._send(method, path, json_body, params, headers)
+        # Refresh-on-401: exactly one re-mint and retry, and only when a
+        # credential pair exists to re-mint from. The retry is not re-guarded,
+        # so a second 401 falls through to the raise below.
+        if resp.status_code == 401 and self._creds is not None:
+            self.login()
+            resp = self._send(method, path, json_body, params, headers)
 
         # Parse body first so error paths can include a sanitized snippet.
         try:
@@ -148,8 +221,6 @@ class WekanClient:
             )
 
         return parsed
-
-    # ---- convenience verbs ----
 
     def get(self, path: str, **kw): return self.request("GET", path, **kw)
     def post(self, path: str, json_body: Any = None, **kw): return self.request("POST", path, json_body=json_body, **kw)

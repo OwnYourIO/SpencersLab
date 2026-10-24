@@ -6,8 +6,10 @@
 #   docker push registry.example.com/wekan-mcp:0.1.0
 #
 # The image runs as a non-root user, exposes 8080, and starts the
-# streamable-http server. WEKAN_BASE_URL and WEKAN_TOKEN come from
-# the environment at runtime (injected by ToolHive's MCPServer resource).
+# streamable-http server. WEKAN_BASE_URL plus either WEKAN_TOKEN or
+# WEKAN_USERNAME+WEKAN_PASSWORD come from the environment at runtime
+# (injected by ToolHive's MCPServer resource); with the pair the server
+# mints its bearer via POST /users/login at startup.
 
 FROM python:3.12-slim
 

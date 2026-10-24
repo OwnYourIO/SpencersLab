@@ -12,10 +12,12 @@ token stays out of the model's context.
   toggle items, create/update/remove automation rules). Destructive
   operations (`delete_*`) are intentionally omitted — `remove_rule` is the
   one marked-destructive exception, needed for automation hygiene.
-- **Credential isolation from the model**: `WEKAN_TOKEN` lives in a
-  Kubernetes Secret, is injected into the pod as an env var by the
-  ToolHive operator, and is never a tool parameter, never in a schema,
-  never echoed in error messages.
+- **Credential isolation from the model**: WeKan auth arrives as env vars
+  injected into the pod by the ToolHive operator — either `WEKAN_TOKEN`
+  (a pre-obtained bearer) or `WEKAN_USERNAME` + `WEKAN_PASSWORD`, which
+  the server exchanges for a bearer via `POST /users/login` at startup
+  and re-mints once on a 401. Credentials are never a tool parameter,
+  never in a schema, never echoed in error messages.
 - **Container isolation**: runs as a non-root user in a slim image,
   behind ToolHive's permission profile (network egress only).
 - **Ready to promote**: uses streamable-http transport, so a small team
@@ -65,7 +67,10 @@ This server is deployed through the lab's GitOps repo — **never
   (`services/gpu/prod/templates/secret-wekan-mcp.yaml`) +
   `bitwardenIds.wekan-mcp` (real UUID in
   `custom-values/gpu/prod-values.yaml`). `WEKAN_BASE_URL` is a plain
-  env value.
+  env value. A deployment may instead inject `WEKAN_USERNAME` +
+  `WEKAN_PASSWORD` from a Bitwarden LOGIN item and the server mints its
+  own bearer at startup; `WEKAN_TOKEN` always wins when both forms are
+  present.
 
 See `skills/helm-chart-creation/references/mcp-servers.md` for the
 full "add an MCP server" recipe and `skills/wekan-api` for WeKan REST
@@ -79,8 +84,8 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 - Tool responses (slimmed dicts — id, title, dates, etc.).
 
 **Does not see**:
-- `WEKAN_TOKEN` or the `Authorization` header. These live in the server
-  process only.
+- `WEKAN_TOKEN`/`WEKAN_USERNAME`/`WEKAN_PASSWORD`, the minted bearer, or the
+  `Authorization` header. These live in the server process only.
 - The client connector config (there's nothing sensitive in it —
   just the endpoint URL).
 - Request URLs, request headers, or WeKan traceback details. Errors are
@@ -143,7 +148,11 @@ Without Kubernetes, you can run the server directly for development:
 ```
 pip install -e .
 export WEKAN_BASE_URL=https://boards.example.com
+# Either a pre-obtained bearer ...
 export WEKAN_TOKEN=your-bearer-token
+# ... or a password-based account's credentials, exchanged at startup:
+export WEKAN_USERNAME=service-user
+export WEKAN_PASSWORD=service-password
 wekan-mcp
 ```
 
