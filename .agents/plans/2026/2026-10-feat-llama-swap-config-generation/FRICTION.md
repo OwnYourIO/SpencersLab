@@ -53,3 +53,6 @@ Append-only. Known workarounds — do not rediscover them. Status: open | fixed 
 - [open] helm 3.16's sprig `dig` cannot descend through slices — use a small
   define helper (see `llama-swap.firstMountPath` in _helpers-llama-swap.tpl)
   instead of dig for paths crossing list structures.
+- [open] Append-splices via `cat >>` without a post-assert can silently write
+  junk on heredoc-terminator slips (hit once by the CR5 planner; caught by the
+  tail assert). Always follow a `>>` splice with an anchored assertion.

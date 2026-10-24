@@ -1,7 +1,7 @@
 {
   "feature": ".agents/plans/2026/2026-10-feat-llama-swap-config-generation",
-  "plan_status": "needs-replan-2",
-  "current_wave": 5,
+  "plan_status": "approved",
+  "current_wave": 7,
   "updated_at": "2026-10-24",
   "kickoff": {
     "slug": "feat-llama-swap-config-generation",
@@ -141,6 +141,54 @@
         "friction": "em-dash edit flakes again (known) - shell-python index-anchored splice",
         "open_questions": "none",
         "next_suggested": "CA1 via test session FIRST (nothing proceeds before rebased contract); then CA3, CA4 sequential (coord one-writer rule); then CA2; C05 gated. Standing docker-image-evidence run now belongs to C05 on-cluster."
+      },
+      {
+        "status": "DONE",
+        "chunk": "replan-2",
+        "verdict": "CR5 PLAN APPROVED (user, 2026-10-24 question tool: Option 2 + relax-P2-display + A/full-normalization)",
+        "files_changed": [
+          "2026-10-22-feat-llama-swap-config-generation.md (REPLAN ROUND 2 (CR5) section + user-rulings subsection appended)",
+          "chunks/CB1.md (new - test-session amendment)",
+          "chunks/CB2.md (new - machinery + catalog conversion)",
+          "chunks/C05.md (CR5 addendum appended)",
+          "STATE.json (plan_status approved; CB1/CB2 pending waves 6/7; C05 -> wave 8 + CB deps)",
+          "DECISIONS.md (CR5 round-2 decisions + user rulings appended)"
+        ],
+        "commands_run": [
+          "HEAD inventory: 58 rungs / 57 hf literals / 58 name / 58 desc; 23 repos; culture-map fit standard=26 rungs, unsloth-ud=10, 21 honest exceptions => pass",
+          "golden survivor pinning derivation: 42 survivors = (gpu40-union-gpu-ai55) - REMOVED; P2-rest loop enablement-INDEPENDENT (echo survivors pin display too); per-cluster override map measured => pass",
+          "roster/schema grep: no test pins survivor/new display TEXT (only synthetic smoke fixtures carry explicit names) => relax-P2 blast radius confined to test_c02_2_per_model_fields_deep_equal => pass",
+          "services blocks read-through: gpu tuned/echo overrides + gpu-ai re-compositions carry explicit hf/name/description (models layer) - CR5 leaves services untouched by construction => pass",
+          "RESEARCH 1/2 re-cite (stock tool disk-scan-only, fixed -m template, -m-path IDs rename consumers) => autogen cannot generate the -hf ladder; no re-research => pass",
+          "STATE.json parse check => pass"
+        ],
+        "deviations": "(1) Heredoc-terminator slip during the plan append (CR5RULINGEOF vs RULINGEOF) wrote two junk lines; caught by the tail assert and trimmed - no content loss, lesson: assert-anchored splice (FRICTION-known class). (2) Pre-ruling option text kept verbatim in the plan (never rewrite history); the ruling subsection explicitly supersedes the byte-empty render-invariance bar with the rest-invariance + display-table split. (3) No CB3+ chunked: user declined Option 3. (4) Nothing committed (landing coord/user-owned); plan-folder artifacts only.",
+        "friction": "none new (em-dash edit class avoided via shell-python splices)",
+        "open_questions": "none",
+        "next_suggested": "launch CB1 in the test session (ses_e9bdebccbffe7bYG46Fm9LO8FG) - CB2 dev starts only after it lands; user display-table review gates the PR; C05 stays final wave"
+      },
+      {
+        "status": "DONE",
+        "chunk": "replan-2",
+        "files_changed": [
+          "plan file (REPLAN ROUND 2 (CR5) + rulings)",
+          "chunks/CB1.md",
+          "chunks/CB2.md",
+          "chunks/C05.md (CR5 addendum)",
+          "STATE.json",
+          "DECISIONS.md"
+        ],
+        "commands_run": [
+          "HEAD surface inventory (58 rungs / 57 repo:TAG literals / 58 names / 58 descs / 23 repos; culture fit std 26 / ud 10 / 21 exceptions) => pass",
+          "golden survivor pinning derivation: 42 survivors, P2-rest enablement-independent => pass",
+          "display-text pin grep: blast radius = 1 parity test => pass",
+          "services read-through: zero CR5 service edits needed => pass",
+          "RESEARCH 1/2 re-cite (autogen cannot emit -hf) => pass"
+        ],
+        "deviations": "(1) heredoc slip wrote 2 junk lines at plan tail - caught+trimmed by assert. (2) pre-ruling option text kept verbatim (history); ruling subsection supersedes byte-empty bar with rest-invariance + user-reviewed display table. (3) no CB3 (Option 3 declined).",
+        "friction": "recommend: cat>> splices need post-asserts (logged)",
+        "open_questions": "none",
+        "next_suggested": "CB1 (test session only) -> CB2 dev -> reviews -> C05. CB2's before/after display table MUST reach user before PR."
       }
     ]
   },
@@ -607,9 +655,9 @@
     },
     "C05": {
       "status": "pending",
-      "title": "post-merge gpu-box verification + reload/rollback runbook (user-gated; REBASED 2026-10-24)",
+      "title": "post-merge gpu-box verification + reload/rollback runbook (user-gated; REBASED 2026-10-24; CR5 addendum: display-table live verification)",
       "size": "S",
-      "wave": 6,
+      "wave": 8,
       "depends_on": [
         "C01",
         "C02",
@@ -618,7 +666,9 @@
         "CA1",
         "CA2",
         "CA3",
-        "CA4"
+        "CA4",
+        "CB1",
+        "CB2"
       ],
       "dev_rounds": 0,
       "review_rounds": 0,
@@ -909,6 +959,123 @@
           "friction": "none new",
           "open_questions": "coord: optional DECISIONS one-liner pinning CR1.3 merge precedence",
           "next_suggested": "final whole-plan review round 2; then C05 awaits user PR"
+        }
+      ]
+    },
+    "CB1": {
+      "status": "done",
+      "title": "contract amendment (CR5 Option 2, user-ratified relax-P2-display): shorthand-aware value-shape tests, display presence+grammar-shape replacement contract, extended strip list \u2014 TEST SESSION ses_e9bdebccbffe7bYG46Fm9LO8FG only",
+      "size": "M",
+      "wave": 6,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "CB1",
+          "commit": "724d27e3b (tests-only)",
+          "files_changed": [
+            "charts/llama-swap/tests/llama_swap_testlib.py",
+            "test_config_parity.py",
+            "test_config_schema.py",
+            "TEST_SPEC.md"
+          ],
+          "commands_run": [
+            "final-shape synthetic render => rc0 w/ leaks+no-compose => U-2/U-3 redness is implementation-missing (verified messages)",
+            "probes: HEAD presence 58x2x2 0 gaps; name-grammar 0 violations; desc-TAG 4 raw violations all exempted (qwen36/qwen38 by non-ladder keys, fn-orca documented exemption)",
+            "pytest FULL => 2f/153p/12s; reds = shorthand-composition + unresolvable-fail-render, both naming CB2; parity 34P/0F, schema 18P/2F, wiring 32, roster 30, image 6p/4s, CI 33",
+            "gates 3p/5s; goldens 0-diff; cmd-token machinery byte-identical",
+            "TEST_SPEC 7quater (P/S/T/U + deletion audit + CB2 completion bar 0f/159p/12s)",
+            "commit tests-only scope => pass"
+          ],
+          "deviations": "(1) desc-TAG obligation data-driven (ladder keys + cultures; prose-family exemptions) not universal - universal false-reds HEAD-green prose; human-side equivalent = CR5 before/after table. (2) models-layer display-override exemptions computed from service values per cluster. (3) 7quater records CB2 completion bar.",
+          "friction": "none new; decorator-misplacement SyntaxError self-caught via py_compile",
+          "open_questions": "for CB2 dev: grammar spellings free (outcome bars asserted); every keep-explicit row must appear in display table; P3 echoes untouched",
+          "next_suggested": "CB1 review; then CB2 dev (wave 7)"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CB1",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CB1.md Round-1 notes"
+          ],
+          "commands_run": [
+            "bars exact: 2f/153p/12s, reds name-identical CB2-named; gates 3p/5s; goldens 0; cmd fns byte-identical",
+            "amendment-honesty: _strip_display surgically exact (nested-key + alias-tamper probed); exemptions re-derived honestly (fn-orca + 6 non-ladder); no test-side culture copy; per-cluster override exemptions verified (55/58 name-union)",
+            "forward-satisfiability SIM: 0 ref-fidelity mismatches, S1-S3 0 violations, U-2 grammar-mirror 7/7, U-3 mechanism exists - no CA1 defect classes",
+            "commit scope 4 test files; 12 deletions 1:1 to 7quater"
+          ],
+          "findings": [
+            "minor-1: 7quater CB2 bar is 159, correct = 0f/155p/12s (147+8) - CB2 tasking carries corrected number; TEST_SPEC digit fixed at next test-session touch",
+            "nit-2/3 logged for next test touch"
+          ],
+          "deviations": "none",
+          "friction": "cmd-fn diff needs whole-function spans (sed range class); sim reconciliation artifacts documented",
+          "open_questions": "none",
+          "next_suggested": "CB2 dev, bars: 0f/155p/12s + rest-invariance + empty services diff + display table 58 rows to user pre-PR + 3-render new-key grep + precedence probe; S1-S3 must never be CB2-red"
+        }
+      ]
+    },
+    "CB2": {
+      "status": "done",
+      "title": "template-side derivation machinery (display grammar + repo/tag shorthand) + chart catalog conversion; services untouched; before/after display table gates the PR",
+      "size": "M",
+      "wave": 7,
+      "depends_on": [
+        "CB1"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "CB2",
+          "commit": "5299f82b1 (2 files)",
+          "files_changed": [
+            "charts/llama-swap/templates/_helpers-llama-swap.tpl (deriveHf + deriveDisplay, pinned order)",
+            "charts/llama-swap/values.yaml (46 rungs composed, 12 keep-literal flagged, tagCultures data, 147 literal lines collapsed)",
+            "chunks/CB2.md (Dev findings + 58-row display table - uncommitted, coord lands)"
+          ],
+          "commands_run": [
+            "pytest -v => 0f/155p/12s EXACT (34+20+32+30+6+33=155; 4+8 gates=12)",
+            "helm dep/lint --strict + 3 renders => pass",
+            "LLAMA_SWAP_EVIDENCE=1 => 3p/5s; RUN_HF_CHECK=1 => 1p; hf_check direct => 98/98 OK exit 0 zero refs changed",
+            "U-2/U-3 flipped green; S1-S3 stayed green",
+            "REST-INVARIANCE script => byte-equal all 3 clusters outside name/desc VALUES",
+            "schema-key leak greps 3 renders => 0; precedence probes x7 pass; dup-key YAML load clean; values diff removals ONLY name/desc/hf lines",
+            "services/custom-values/containers/base/gpt-researcher diff => EMPTY; tests diff 0; goldens 0; trio/sentinel intact; aislop 0 attributable"
+          ],
+          "deviations": "(1) descTail verbatim (punctuation is data) - bought 46/58 byte-identical. (2) fn-orca keeps literal hf (gated). (3) flash-next q3/q4 MTP-fold + 122b-q6 tail normalized - in table. (4) embedding descBase rebuilt. (5) stray no-op tool call logged.",
+          "friction": "read-tool display vs actual bytes divergence (humanlike name vs file) - anchor edits to parsed-json dumps; known classes all held",
+          "open_questions": "none",
+          "next_suggested": "CB2 review (independent rest-invariance + table audit vs renders); then USER display-table review gates PR; final review; C05 wave 8"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CB2",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CB2.md Round-1 review notes"
+          ],
+          "commands_run": [
+            "0f/155p/12s reconciled digit-for-digit; gates 3p/5s; RUN_HF_CHECK 1p; own hf_check 98/98",
+            "own rest-invariance 724d27e3b-vs-HEAD x3: 0 rest-diffs; changed ids == table's 12",
+            "full automated 58-row table-vs-renders audit - every cell byte-exact, keep-explicit truthful, cluster coverage honest",
+            "machinery probes: precedence, loud-offender names rung, models-layer no-rederive, MTP-leg, strip 0x3, dup-key clean, tpl-free",
+            "honesty: services empty, 147 removals class-exact (55 name/46 desc/46 hf), aislop 0 attributable"
+          ],
+          "findings": [
+            "2 non-blocking nits for hardening bundle: {size}-without-size and null draft/spec misrender (unreachable today); .id-fallback spelling observation",
+            "shlex-opaque apostrophe echo = lens artifact noted"
+          ],
+          "deviations": "none; 2 audit-script false-positive classes self-caught pre-recording",
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "USER display-table gate -> final review round 3 -> C05 wave 8"
         }
       ]
     }

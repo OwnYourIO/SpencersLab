@@ -316,3 +316,246 @@ later chunk's rebased tests (documented per-chunk bars below).
 - CA1 must not weaken the live-model cmd bar while expressing superset semantics (P2/P3/P4
   above are the exact bars the test writer encodes; review re-runs and audits the amendment
   diff for assertion deletions, as done for A–F).
+
+---
+
+# REPLAN ROUND 2 (CR5) — display/tag derivation (agent-plan, 2026-10-24)
+
+All C01–C04 + CA1–CA4 stay done/APPROVED untouched; C05 stays the final user-gated wave.
+This section extends the plan with the CR5 request (DECISIONS 2026-10-24 "CR5 replan
+round"). Goldens stay byte-untouched.
+
+## CR5 goal (two sentences)
+Maximize Helm-template-side derivation of the per-rung display strings (`name:`/
+`description:`) and image refs (`hf:` repo prefix + quant TAG) so the chart catalog's
+rung bodies shrink to what is genuinely per-rung DATA (tag exceptions, tuned regimes,
+sizes, prose), with the composition GRAMMAR living once in `_helpers-llama-swap.tpl`.
+Out of scope: changing rendered bytes for golden-pinned survivors, renaming any model
+ID, touching the scanned-half machinery (autogen image/entrypoint), and any
+Path-B-fork revival (RESEARCH §1/§2 + DECISIONS 2026-10-22 stand: the stock tool is
+disk-scan-only with a fixed `-m` cmd template and can never emit `-hf` or
+name/description for the declared half — cited, not re-researched).
+
+## Measured starting surface (HEAD 5faada77b, this replan)
+- 58 rungs: 57 `hf:` full `repo:TAG` literals (57 distinct strings across 23 repos),
+  58 `name:` + 58 `description:` lines; 43 rung bodies contain only display/ref lines
+  + enablement. Family data (`enabled`, `use`, `ttl`, `flags`, `spec`, `draft`,
+  `capabilities`, `aliases`) is real per-cluster/per-rung content and is NOT touched
+  by any option.
+- Golden-pinned display strings = the **42 survivors** = (gpu golden ∪ gpu-ai golden)
+  − REMOVED (P2 `test_c02_2_per_model_fields_deep_equal` loops `golden ∩ fresh −
+  REMOVED` and deep-equals EVERY non-cmd field INCLUDING on echo-shaped renders —
+  enablement does not exempt). The **16 C04-new IDs** (ornith 35B×7 + 122B×4 +
+  flash-next×4 + fn-orca×1) have NO golden anywhere → derivation there is free
+  (roster tests pin their `-hf` REFS + ttl + matrix, never name/description text).
+- Per-cluster pinning nuance (measured): gpu-ai's `models.` re-composition of
+  qwen3.8-27b q4/q6/q8/bf16 + qwen3.6-35b-a3b-q8 + rana means the CHART RUNG text for
+  those ids is pinned only by the GPU golden (the service-layer explicit strings keep
+  riding the models layer untouched). qwen38/qwen36/embedding/q36-35b-q8-visual/
+  q38-27b-q8-1m/-q8-visual are gpu-ai-local → pinned by the GPU-AI golden.
+- Grammar fit vs the golden strings (byte-exact composition verified against the
+  captured goldens this round):
+  - NAME pattern `{dispName} ({TAG})`: fits 26/42 survivors + 11/16 new (ornith duo)
+    = qwen3.8-27b {q4,q6,q8,bf16}, qwen3.6-27b×2, qwen3.6-35b-a3b {q6,q8,bf16},
+    all 18 VL rungs (with family `descTail`), embedding name only.
+  - DESC pattern `{descBase}, {TAG} quant` / `{descBase}, BF16 (no quant)` +
+    optional family `descTail`: fits the same families' descriptions (qwen3.8-27b
+    "…dense model", qwen3.6-27b "…general purpose model", qwen3.6-35b-a3b
+    "Qwen 3.6 35B with 3B active parameters (MoE)", 6× VL families with their tails;
+    the 1m rung's desc derives from its Q8_0 TAG — the golden 1m desc does NOT
+    mention 1M, mechanically confirmed this round).
+  - PROSE (no honest grammar): 14 survivor rungs — home×2, q8-visual×2, q8-1m name,
+    qwen38×5, qwen36×2, whisper×1 — plus all 16 new ids' descriptions (they carry
+    per-rung DATA: GiB sizes, over-budget warnings, MTP markers, SOLO notes) and
+    flash-next×4 + fn-orca×1 names (embedded ", MTP"/"Orca" prose).
+- Repo/tag culture fit (Option 2): one-repo-per-family = 12/18 (all 6 VL, qwen3.6×2,
+  home, embedding, 122b, flash-next, fn-orca… 13 counting q36-35b); mixed repos:
+  qwen3.8-27b (+ggml-org bf16), ornith-1.5-35b-a3b (+bartowski iq2xxs/q3),
+  qwen38 (4 repos), qwen36 (2). Quant-key→TAG cultures that are REGULAR:
+  `standard` {q4:Q4_K_M,q5:Q5_K_M,q6:Q6_K,q8:Q8_0,bf16:BF16} covers 6 VL families×3 +
+  qwen3.6-27b×2 + qwen3.6-35b-a3b {q8,bf16} + ornith-1.5-35b-a3b official×5 = 26
+  rungs; `unsloth-ud` {q3..q6:UD-Q{q}_K_XL} covers flash-next×4 + 122b×4 + qwen3.8-27b
+  {q4,q6} = 10 rungs. 21 rungs stay honest exceptions (variant keys 1m/visual/
+  embedding-0.6b/home-cpu→Q4_K_M, qwen38/qwen36 per-repo tags, UD-Q6_K one-off) —
+  NO universal regex is invented; per-repo culture is modeled as a data map.
+
+## Options (user ruling at this gate)
+### Option 1 — derive name+description only (template-composed)
+Family vocab fields `dispName:`/`descBase:`/`descTail:`; rungs keep explicit
+`name:`/`description:` wherever prose (derive-if-absent). Byte-exact vs goldens by
+construction → P2 needs NO amendment; suite bar unchanged 0f/147p/12s. ~50 display
+lines drop, ~20 vocab lines return; net ~−30. Recommended posture per family:
+byte-exact derivation (zero contract churn) > values override > display-field
+relaxation amendment — the LAST is not recommended (relaxing P2's non-cmd compare for
+name/description would weaken the consumer-visible picker contract for 42 ids and
+still could not honestly derive the 14 prose rungs: the vocabulary would just move
+into new values fields).
+### Option 2 — Option 1 + repo/tag shorthand (RECOMMENDED)
+Adds family `hfRepo:` (+ optional `tagCulture:` preset name from a chart-level
+`config.tagCultures:` map, filterPresets-style) with rung `tag:`/`repo:` exceptions and
+the full literal `hf:` retained as the rung-level escape (qwen38/qwen36 keep today's
+shape — honest: shorthand buys them nothing). Composition resolves BEFORE the
+models-layer merge, so services' `models.<id>.hf:` full-ref overrides (gpu tuned
+ornith/q36 rungs) keep today's exact precedence (family < rung < models, DECISIONS
+2026-10-24 CA3 ruling). Rendered `-hf` tokens are byte-identical → cmd bars UNBENTED;
+the two VALUE-SHAPE schema tests that read rung `hf` (offenders rule +
+hf-refs-match-golden eff-compare) must be re-expressed to compute effective refs
+through the same culture map — routed amendment = chunk CB1 (test session
+ses_e9bdebccbffe7bYG46Fm9LO8FG, CA1-style). Best case the ladder collapses to
+one-liners: `q4: { aliases: [qwen3-vl-4b] }` or bare `q6:`.
+Representative DIFFs (measured, before → after):
+1. golden-pinned unsloth-style `qwen3.8-27b` — before: 6 rungs × hf+name+desc (+
+   tuned extras); after: +3 vocab lines (dispName/descBase/hfRepo),
+   `q4:{tag:UD-Q4_K_XL} q6:{tag:UD-Q6_K_XL} q8:{tag:Q8_0}
+   bf16:{repo:ggml-org/Qwen3.8-27B-GGUF,tag:BF16}`, q8-visual/q8-1m bodies keep
+   explicit hf+name+description (prose). 12 display/ref lines → 0; 4 tag lines.
+2. official/standard-culture `qwen3-vl-4b` — before: 3 rungs × hf+name+desc,
+   q4 also aliases; after: +4 vocab lines (dispName/descBase/descTail… descTail
+   empty→omitted), ladder = `q4: { aliases: [qwen3-vl-4b] }` `q8:` `bf16:` —
+   quant tags ALL derive from `tagCulture: standard`. 9 display/ref lines → 0.
+3. bartowski/mixed `ornith-1.5-35b-a3b` (no golden) — before: 7 rungs ×
+   hf+name+desc; after: +3 vocab (hfRepo: ornith-ai/…), `iq2xxs:
+   {repo: bartowski/…, tag: IQ2_XXS}` `q3: {repo: bartowski/…, tag: Q3_K_XL}`
+   `q4: {tag: Q4_K_M}`…(or bare under standard culture); names derive (11 free
+   ids), descriptions stay prose (sizes are data) unless the user rules the
+   `size:`-parameterized grammar (Q3 below).
+### Option 3 — Option 2 + generated quant roster (probe → checked-in YAML) — NOT recommended
+A probe enumerating each family repo's published quant tags live (reusing hf_check.py's
+loader-mirror machinery, TEST_SPEC §7(F)) emitting a checked-in roster consumed via
+values merge, with refresh ownership + churn policy. Honest strikes, all evidenced in
+this ticket: (a) it does NOT remove authoring — the operator CHOSE 7/14 ornith rungs
+for quality/regime reasons (DECISIONS 2026-10-22 35B-ladder ruling); enumeration
+proposes, humans still select, and the generated artifact still lands in git;
+(b) frozen-tag safety was an explicit contract: repos churned 2026-10-21, refs were
+frozen precisely so auto-expansion cannot silently add routable models or break
+`-config-dir` stability, and the C04 contract requires LIVE RE-VERIFICATION
+(standing rule: frozen tables update ONLY via the test session); (c) gated repos
+(orcarouter duo, 401 anonymously — C04 friction record) cannot be enumerated without
+an HF_TOKEN in the probe runner; (d) GitOps self-commit loops (CI job writing to the
+ArgoCD-synced repo) are a distinct architectural pattern with real sharp edges.
+THIN VARIANT worth having regardless: keep hf_check.py as the live-verification gate
++ optionally a human-invoked `--suggest` mode listing available tags per family repo
+(dev aid, NOT consumed by the chart; zero contract surface).
+If the user picks Option 3 proper: this is a GENUINE RESEARCH GAP (probe design under
+gating/rate limits; generated-artifact refresh patterns in ArgoCD GitOps — churn
+policy, write-back loops, who owns the commit) → coord must commission agent-research
+(STORM) BEFORE CB3+ chunking; this replan does not ad-hoc-solve it.
+
+## CR5 in-scope answers (all options)
+- Enablement lists: gpu's `enabled: true` flips stay exactly as landed (family-level
+  3 + per-rung 31 = 34 enabled/24 echoes); per-rung overrides/tuned regimes MUST and
+  DO stay representable — the models layer is untouched by derivation (precedence
+  family < rung < models pinned by DECISIONS 2026-10-24 CA3 execution ruling;
+  derivation is a family+rung-internal step). Services files get ZERO edits under
+  Options 1/2 (CB2 acceptance proves it with an empty `git diff services/`).
+- `home-3b-v3` `id:` override: unchanged (ID derivation is not display derivation).
+- whisper/rana raw-cmd escape hatches: unchanged. whisper has no `hf` at all (grammar
+  requires it — undecorated automatically); rana's inert documented hf/draft fields
+  may shorten to the shorthand only cosmetically — its gpu-ai models-layer raw cmd +
+  explicit name/description stay byte-pinned.
+- Echo-shape default message (deviation 1): stays the static string "is not enabled
+  on this cluster - see the chart catalog" — catalog growth does NOT change echo text
+  (no interpolation today, none added); deviation-1 wording rule (values carry the
+  full post-id message; template composes the byte-exact golden echo) is preserved
+  verbatim. Derived name/description render on echo entries exactly as today.
+
+## CR5 chunks
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| CB1 | contract amendment (OPTION ≥2 ONLY): shorthand-aware effective-ref computation in the two value-shape schema tests + strip-list extension to the new schema keys — TEST SESSION ses_e9bdebccbffe7bYG46Fm9LO8FG ONLY | S | 6 | [user CR5 ruling] | tests immutable downstream; CB2 changes rung value-shape (`hf` literals → culture+tag) that CB1's tests read; CA1-first pattern (red set = CB2 names at handoff) |
+| CB2 | template-side derivation machinery (`llama-swap.deriveDisplay`/`deriveHf` in _helpers) + chart values catalog conversion (vocab fields + shorthand); services untouched | M | 7 | [CB1 if Option≥2; none for Option 1] | amended contract must exist before the values-shape changes; under Option 1 CB2 is contract-neutral (amendment-less) and alone |
+| C05 | (existing, unchanged tasking + runbook) — post-merge gpu verification, user-gated on PR landing | S | 8 | [C01–C04, CA1–CA4, CB1*, CB2] | ArgoCD syncs main only; final wave stays final |
+
+Wave order after approval: 6 → CB1 (skipped under Option 1); 7 → CB2; 8 → C05 (user-gated).
+
+## CR5 commands (plan Commands PLUS)
+- RENDER-INVARIANCE SNAPSHOT (the controlling bar): before ANY CB2 edit, capture all
+  three plan renders (default / gpu / gpu-ai extract-and-render) to /tmp/opencode/cr5-before;
+  after the edit, re-render to /tmp/opencode/cr5-after; `diff -r` MUST be empty.
+  (CA2-friction promotion: whole-section YAML surgery is proven safe only by
+  before/after render diff, not by reading.)
+- `pytest charts/llama-swap/tests -v` => Option 1: 0f/147p/12s UNCHANGED (zero
+  amendments); Option 2: CB1 lands 2 amended value-shape tests + strip-list extension
+  (name-identical red set naming CB2 at CB1 handoff), CB2 => full suite green again
+  (gates 3p/5s unchanged; live `RUN_HF_CHECK=1` + direct `hf_check.py` still all-OK —
+  render-invariance makes this a formality but run it).
+- New-schema-key strip grep over all three rendered ConfigMaps:
+  `grep -E '^\s*(dispName|descBase|descTail|hfRepo|tagCulture|tagCultures|tags|tag|repo|size):'`
+  => zero hits (values-file-only keys; `tags` is also a matrix key — the grep scopes
+  the ConfigMap data body only, where matrix lives at top level; reviewer scopes by
+  section, the pytest strip-list assertion is the mechanical bar).
+- Services-untouched proof: `git diff --name-only HEAD -- services/` empty in the CB2
+  worktree after conversion (services files had no CR5 edit — Option 1/2 are
+  chart+template only).
+- Standing bars unchanged: helm dep/lint --strict, trio/sentinel greps, aislop on
+  touched files, goldens `git diff` empty.
+
+## CR5 risks / notes
+- Derivation grammar duplicated template-side (helm) and — under Option 2 — one
+  effective-ref computation in the CB1 test amendment. Mitigation: the render-invariance
+  snapshot + P1–P6 prove equivalence of OUTPUT; the test-side mirror reads the SAME
+  `config.tagCultures:` map from chart values (validates composition, not map content).
+- Free-16 display text: default posture KEEPS every current string byte-identical
+  (derivation reproduces them; prose stays prose). Any NORMALIZATION of new-id text
+  (dropping ", MTP" from flash-next names, parameterizing ornith sizes) is a separate
+  user ruling (Q3 below) — none is contract-required.
+- Option 3 is not chunked past CB1/CB2 here BY DESIGN: picking it triggers a research
+  commission first (plan rule: research via coord, never ad hoc).
+- A–F/G1/G2 amendment precedent holds: any CB2-discovered validation_at_fault routes
+  back to ses_e9bdebccbffe7bYG46Fm9LO8FG; dev never edits tests.
+
+## CR5 user rulings (2026-10-24 question tool — THIS section supersedes the pre-ruling
+## posture above where they differ; the option text stands as the presented record)
+
+- **Depth: Option 2** — display grammar + repo/tag shorthand (chunks CB1→CB2, waves 6→7;
+  C05 stays the final wave 8, user-gated).
+- **Display regime: RELAX P2 for display fields.** Routed CB1 amendment removes
+  `name`/`description` from the golden deep-compare in
+  `test_c02_2_per_model_fields_deep_equal`; cmd-token multiset equality and every OTHER
+  non-cmd field (ttl/proxy/aliases/capabilities/filters/checkEndpoint/env) stay
+  golden-pinned UNBENTED. The relaxation REPLACES the golden pin with a compensating
+  contract (CB1): display presence on all 58 rungs both clusters + the per-id
+  before/after display-text table the user reviews pre-PR. NOT a bare deletion — review
+  audits the amendment diff assertion-for-assertion (§A–O precedent). Consequence the
+  user accepted: picker text for golden-pinned survivors CAN change (IDs/aliases — the
+  programmatic contract — cannot).
+- **Free-16: A + full normalization.** flash-next/122B/fn-orca names+descriptions adopt
+  the uniform grammar; rung `size:` (GiB) + rung `descTail` overrides carry the real
+  data; the ", MTP" marker DERIVES from draft/spec presence (auto), variant/word
+  prefixes inside parentheses normalize away.
+- **Option 3 declined** (no research commission, no CB3+). The thin
+  `hf_check.py --suggest` dev-aid mode: post-wave hardening-chore candidate only.
+
+### CR5 grammar (outcome-level interface; dev owns spelling)
+- NAME: `{disp | fam.dispName} ({TAG}{, MTP if draft or spec}){ - {suffix}}` —
+  `disp`/`suffix`/`variant` are optional rung/family DATA fields; explicit rung
+  `name:` always beats derived (derive-if-absent); raw-cmd rungs without `hf` are never
+  decorated (whisper keeps explicit text by construction).
+- DESCRIPTION: `{descBase}, {TAG} quant` / `{descBase}, {TAG} (no quant)` for BF16/F16
+  + optional family `descTail` / rung `descTail` override (+ `{size}` interpolation for
+  the normalized new families); explicit `description:` beats derived.
+- HF: rung `hf:` literal > compose `{repo | fam.hfRepo}` + `:` +
+  (`tag` | `config.tagCultures[fam.tagCulture][quant-key]`). The two culture maps are
+  VALUES DATA (standard: Q4_K_M/Q5_K_M/Q6_K/Q8_0/BF16; unsloth-ud: UD-Q{n}_K_XL), not a
+  regex — the 21 irregular rungs keep per-rung `tag:`/full `hf:` honestly (qwen38/qwen36
+  stay full-literal families: 4- and 2-repo fan-out, shorthand buys them nothing).
+  `draft:` refs stay full literals. Resolution order: compose hf → derive display from
+  that rung-level hf → THEN merge raw `config.models` over the top (precedence
+  family < rung < models stays pinned by DECISIONS 2026-10-24 CA3 ruling; models-layer
+  `hf`/`name`/`description` overrides beat derivation exactly as today).
+- All new keys (dispName/descBase/descTail/size/disp/suffix/hfRepo/tagCulture/
+  tagCultures/tag/repo) are chart-values concepts — stripped from every render.
+
+### CR5 controlling bars — ADJUSTED (supersedes the byte-empty render-invariance bar)
+1. Rendered output diff vs HEAD touches ONLY model `name`/`description` VALUES:
+   mechanically, both-cluster + default renders compared with those keys excised MUST
+   be byte-equal (the CB2 snapshot check, rest-class invariance).
+2. A per-id display-text before/after table (all 58, both clusters) recorded in
+   chunks/CB2.md dev-findings + RESULT — USER-APPROVED before the PR (C05 prerequisite;
+   the table is the human review that replaced the golden display pin).
+3. P1 exact-ID, P2-cmd multiset, P3 byte-echo strings, P4, P5, P6, alias/VL/matrix/
+   closure/preload tests, trio/sentinel greps, gates 3p/5s, live hf_check: ALL run with
+   today's semantics, unbent.
+4. Suite: CB1 handoff = red set exactly the CB2-owned names (shorthand-aware +
+   compensating presence tests) per CA1 pattern; CB2 completion = full green
+   (147 + CB1's new tests, 12 evidence skips) with `helm lint --strict` + 3 renders.

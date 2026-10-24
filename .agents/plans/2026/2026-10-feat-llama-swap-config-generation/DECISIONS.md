@@ -321,18 +321,89 @@ After reviewing the landed C01–C04 surface, the user requested changes
   family<rung<models precedence; rung `enabled: false` beats family `enabled: true`;
   `disabled:` beats `enabled:`. The plan's "OR" wording is superseded by this entry.
 
-## 2026-10-24 — Pivot request: push generation INTO the generator (coord)
+## 2026-10-24 — CR5 replan round requested by user (coord)
 
-- User review of the CA2 end-state: hand-writing quant labels/descriptions in
-  values is still more authoring than desired. Wants the autogen tool to derive
-  them. Stock tool provably cannot (scan-only, fixed `-m` template, hub-cache
-  unscannable — RESEARCH.md TL;DR 1/2, §1/§3) ⇒ generator-extension path
-  (formerly Path B) reopens; this does NOT undo the landed Path A machinery —
-  it moves authoring from Helm values into (possibly forked) tool input.
-- Coord commissioned agent-research scope: minimal fork/patch design for an
-  `hf_models:` section deriving ID/name/description from repo:tag + filename
-  regex; which of aliases/filters/checkEndpoint/disabled/matrix-passthrough
-  can move into the generated half; HF-API metadata at generate time w/ offline
-  degrade; fork-in-image-build vs vendored fork vs upstream-PR posture
-  (single active author, no CONTRIBUTING, Apache-2.0). Plan status →
-  needs-replan-2 pending findings.
+- User reviewing the CA2 surface: expected autogen to GENERATE the quant
+  ladder/name/description instead of values enumerating it. Coord answer:
+  stock tool cannot (RESEARCH §1/§2: disk-scan-only discovery, fixed `-m`
+  template cannot emit `-hf`, filename-derived `<dir>:<QUANT>` IDs would
+  rename every consumer ID). Path A + declared catalog stands; Path B fork
+  remains the only full "tool generates" shape, declined at kickoff (owning
+  a fork) — revisit only if the user changes that ruling.
+- NEW REQUEST: maximize template-side derivation ("push the name and
+  description better into the helm template") so per-rung values bodies shrink.
+  Derivation depth options for the user gate: (1) name/description auto-text;
+  (2) + repo/tag shorthand composed from family-level hf repo + quant key;
+  (3) + a generated roster file (HF-API probe enumerating available tags,
+  checked in, CI/gated-refreshed) feeding the render.
+  HARD CONSTRAINT to weigh: P2 parity deep-compares NON-CMD fields vs goldens
+  — derived strings must reproduce golden values byte-exactly for survivors or
+  a routed contract amendment (pattern A-O) is required. New (C04) families
+  have no golden constraint.
+- plan_status: needs-replan (round 2 reopen); C05 stays behind it.
+
+## 2026-10-24 — CR5 replan round 2: decisions + user rulings (agent-plan)
+
+**User rulings (question tool, 2026-10-24 round-2 gate — ground truth):**
+- Derivation depth: **Option 2** — template-side name/description grammar + family
+  repo/tag shorthand (chunking CB1->CB2, waves 6->7; C05 stays final wave 8).
+  Rejected: Option 1 (amendment-less conservative, prose rungs stay explicit);
+  Option 3 (generated quant roster) — enumeration does not CHOOSE rungs (the 7-of-14
+  ornith ladder was an operator decision, DECISIONS 2026-10-22), the frozen-refs
+  churn contract (2026-10-21 repo churn + standing test-session-only rule), gated
+  repos 401 anonymously (orcarouter), and the artifact still lands in git; no
+  research commissioned. `hf_check.py --suggest` thin dev-aid = post-wave hardening
+  chore candidate only.
+- Display regime: **RELAX P2 for display fields** — name/description leave the golden
+  deep-compare (user-ratified); the relaxation is COMPENSATED (presence +
+  grammar-shape tests + a user-reviewed before/after display table gating the PR),
+  not a bare deletion. Picker text for golden-pinned survivors MAY change; IDs,
+  aliases, cmd, ttl/proxy/capabilities/filters/checkEndpoint/env, echo byte-strings
+  MAY NOT. Rejected: byte-exact-with-explicit-prose conservative.
+- C04-new 16 ids: **A + full normalization** — uniform grammar for names AND
+  descriptions; `, MTP` derives from draft/spec presence; over-budget warnings and
+  GiB sizes ride rung data (`size:`/`descTail:`); paren-prefix prose ("Orca",
+  "reference") normalizes away.
+
+**Planner measurements this round (ground for the plan's fit tables):**
+- 58 rungs carry 57 full `repo:TAG` literals + 58 name + 58 description lines;
+  golden-pinned survivors = 42 (55-union minus REMOVED 16-new); the P2-rest loop is
+  enablement-INDEPENDENT (echo survivors pin name/description too).
+- Grammar fit vs goldens: 26 survivor rungs derive byte-exactly today; 14 prose
+  rungs (qwen38 x5, qwen36 x2, home x2, q8-visual x2, q8-1m, whisper, embedding) had
+  no honest grammar — moot under the relaxation ruling (they normalize).
+- Culture maps: `standard` {Q4_K_M,Q5_K_M,Q6_K,Q8_0,BF16} covers 26 rungs,
+  `unsloth-ud` {UD-Q{n}_K_XL} 10; 21 honest exceptions (variant keys, UD-Q6_K
+  one-off, multi-repo families qwen38/qwen36 keep full literals). No universal
+  regex - cultures are chart VALUES data (`config.tagCultures:`).
+
+**Planner decisions (rejected alternatives in parentheses):**
+- Resolution order PINNED: compose effective hf (rung hf > repo+tag/culture) ->
+  derive display from that rung-level hf (derive-if-absent) -> merge raw
+  `config.models` OVER the top. Models-layer overrides (gpu tuned hf/description,
+  gpu-ai qwen3.8 re-compositions incl. rana raw-cmd + name/description) therefore
+  keep today's exact precedence (family < rung < models, DECISIONS 2026-10-24 CA3
+  execution ruling) and services files receive ZERO CR5 edits.
+- Display grammar is uniform (name = disp (TAG[, MTP])[- suffix]); per-rung
+  name/description remain as escape fields where prose carries ungrammatical data
+  (dev records each keep-explicit in the before/after table).
+- CR5 controlling bar split (supersedes byte-empty render-invariance): renders must
+  be byte-equal OUTSIDE name/description values; the display diff itself becomes a
+  user-review artifact gating the PR (the human contract that replaced the golden
+  display pin). Deviation-1 echo wording + the static catalog-default message are
+  untouched; catalog growth does not change echo text.
+- Contract amendments routed to the test session as chunk CB1 (CA1-style,
+  ses_e9bdebccbffe7bYG46Fm9LO8FG): P2-rest display excision + compensating
+  presence/grammar-shape tests + shorthand-aware effective-ref computation +
+  extended strip list. CB2 dev starts only after CB1 lands; any CB2-discovered
+  validation_at_fault routes back to the same session (A-O precedent).
+- `plan_status: approved` (round 2); waves: 6 CB1 -> 7 CB2 -> 8 C05 (unchanged
+  user gate). C05 runbook gains the display-table-vs-live-picker verification.
+
+## 2026-10-24 — CR5 display table APPROVED by user (coord)
+
+- User reviewed the 12 changed display rows (grouped summary of
+  chunks/CB2.md's full 58-row table) and ruled "Approve as-is". The CR5
+  human gate (plan bar 2) is DISCHARGED; no keep-explicit pins requested.
+- Reverted obligation: none. Proceed to final whole-plan review round 3
+  (CB1+CB2 increment) -> then PR is user-owned -> C05 wave 8.
