@@ -44,7 +44,7 @@ ARG NODE_VERSION=v26.12.0
 # Go from go.dev: the Debian-packaged Go lags what the repo's own tooling is
 # built against.
 # renovate: datasource=golang-version depName=golang
-ARG GO_VERSION=1.27.2
+ARG GO_VERSION=1.27.3
 
 # Helm stays on the v3 line: ArgoCD renders this repo's charts with v3, so a v4
 # client would validate against a different engine than the one that deploys.
