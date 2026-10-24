@@ -13,3 +13,5 @@ Friction = anything an agent could not find or had no access to, crashes/tool/MC
 - helm absent from PATH (only ~/.local/bin) — test scripts use the dev-forgejo-runner.sh discovery recipe.
 - services.dev.customValuesUrls unverifiable via readonly MCP — inference-verified, recorded in plan Risks.
 - Legacy cross-ticket contract conflicts A (dev-forgejo-runner.sh t9) and B (forgejo-ssh-gateway.sh t8) vs approved plan — escalated to user (pipeline-gates validation_at_fault-equivalent); resolution pending user ruling.
+## 2026-10-24 agent-test conflict-fix follow-up (commit 94e193af6)
+- Concurrent-edit hazard: a suite that execs another script from disk picks up mid-edit bytes (phantom syntax error). Never edit a test script while an in-flight suite chains it; run sequentially.
