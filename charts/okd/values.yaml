@@ -37,7 +37,7 @@ app-template:
         main:
           image:
             repository: ghcr.io/getodk/central-nginx
-            tag: v2026.3.0
+            tag: v2026.3.1
           # DOMAIN + Sentry constants come from the okd-env ConfigMap (parent
           # chart context — top-level chart values are invisible to the
           # app-template subchart; templated env here would render empty).
