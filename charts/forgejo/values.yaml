@@ -75,6 +75,12 @@ forgejo:
         HOST: pg-forgejo-rw:5432
         NAME: forgejo
         USER: forgejo
+      # SSH port advertised in clone URLs. Must stay equal to gitSshPort in
+      # the dev/infra umbrella values (the Gateway listener port it fronts);
+      # the subchart falls back to its own service.ssh port (22) when unset,
+      # so the external port has to be pinned here.
+      server:
+        SSH_PORT: 22222
       # Local sign-up stays closed; ALLOW_ONLY_EXTERNAL_REGISTRATION lets
       # Keycloak OIDC users get accounts (created on first SSO login).
       service:
@@ -131,3 +137,14 @@ forgejo:
         provider: openidConnect
         existingSecret: forgejo-secret
         autoDiscoverUrl: "https://login.spencerslab.com/realms/SpencersLab/.well-known/openid-configuration"
+
+  # Attach the <fullname>-ssh Service to the cluster's traefik Gateway
+  # gitssh listener (rendered by charts/base on dev/infra, where the
+  # umbrella sets gitSshPort). Port omitted → the subchart's service.ssh
+  # port (22), the ClusterIP backend the route forwards raw TCP to.
+  tcpRoute:
+    enabled: true
+    parentRefs:
+      - name: traefik-gateway
+        namespace: kube-system
+        sectionName: gitssh

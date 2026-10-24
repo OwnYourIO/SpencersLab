@@ -17,6 +17,12 @@ subDomain: dev
 domain: OVERRIDE_VIA_APPSET
 clusterName: OVERRIDE_VIA_APPSET
 
+# Git-over-SSH exposure for the dev forgejo instance: opens the Gateway API
+# gitssh listener + ServiceLB port on this node, consumed by charts/base's
+# traefik HelmChartConfig and its vendored tcproutes CRD gate. Must equal
+# the SSH port the forgejo chart advertises in clone URLs.
+gitSshPort: 22222
+
 bitwardenIds:
   cert-manager-solver-token: OVERRIDE_VIA_CUSTOM_VALUES
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
