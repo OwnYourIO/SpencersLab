@@ -4,9 +4,9 @@ dependencies:
   version: 10.10.0
 - name: cert-manager
   repository: https://charts.jetstack.io
-  version: v1.19.3
+  version: v1.21.3
 - name: gateway-api-crds
   repository: https://charts.christianhuth.de
   version: 1.2.5
-digest: sha256:2a9d5324d1d0589df568e07b34eeec9301b4407eb182cd09638c836b528f51dd
-generated: "2026-10-24T16:02:19.451369675Z"
+digest: sha256:af831ee23565532cf9f65cff6b6724b8385d2be35754f4d91fe2bedcabf97821
+generated: "2026-10-24T21:04:43.424173263Z"
