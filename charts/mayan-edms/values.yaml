@@ -115,7 +115,7 @@ app-template:
           # No password: only reachable inside this pod.
           image:
             repository: redis
-            tag: 8.6.0
+            tag: 8.10.2
           args:
             - redis-server
             - --appendonly
