@@ -48,7 +48,8 @@ gpu_box:
 gpu_ai_box:
 - check: post-its-own-sync config-level confirmation only
   source: readonly-ai-gpu-kubernetes pod logs
-  expect: startup merged load with 58 models, ALL live (zero echoes on gpu-ai per ENABLEMENT); NO requests,
+  expect: clean single-file config load with 58 models, ALL live (zero echoes on gpu-ai per ENABLEMENT;
+    single -config file post-CR6 - no merge surface, so expect NO merge/second-file log lines); NO requests,
     NO restart nudging, NO serve tests
 - check: flash-next q5/q6 routable but unpreloaded and set-less
   source: rendered config + logs
@@ -78,5 +79,6 @@ runbook_addenda:
 - 'rollback: revert PR via normal branch->PR flow (user lands it); ArgoCD re-syncs old ConfigMaps; reloader
   rolls pods; no manual kubectl anywhere (AGENTS.md hard rule)'
 - 'CR6: the post-merge pinning obligation for ghcr.io/ownyourio/llama-swap-autogen (:main -> :v<run>)
-  is RETIRED with the container; any registry-side image garbage is user-side cosmetic cleanup only (repo-side
-  removal is complete at CC2)'
+  is RETIRED with the container. Registry cleanup: N/A, not optional-pending - CC2 measured the image
+  was NEVER PUSHED (the containers path never triggered a push build on main/dev; PR builds are
+  build-only), so there is nothing to delete anywhere'

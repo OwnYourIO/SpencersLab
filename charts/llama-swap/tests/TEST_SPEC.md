@@ -639,7 +639,10 @@ Retired files (chunk-origin; why = CR6 declared-only ruling):
 * `test_autogen_image.py` — 10 cases (6P/4S): parses the Dockerfile CC2 deletes;
   `LLAMA_SWAP_IMAGE_EVIDENCE` retires with the file.
 * `test_autogen_integration.py` — retired: `c03_2_3_base_yaml_*` ×2,
-  `c03_4_scanned_half_*`, `c03_5_declared_only_empty_config_dir`,
+  `c03_4_scanned_half_*`, `c03_4_merged_declared_plus_scanned_validates`
+  (final-4 nit-3 ledger-completion: was covered by file-level retirement + §6
+  C03-4 trace; named explicitly so the item-by-item enumeration is complete),
+  `c03_5_declared_only_empty_config_dir`,
   `c04_4_full_roster_declared_validates` ×2 (USER-RULED), `autogen_cli` venv +
   `fleet_image` fixtures. RE-HOMED: `test_c04_1_hf_repo_tags_resolve` ->
   `test_hf_liveness.py`, gated RUN_HF_CHECK ALONE (needs only helm + network;
@@ -669,7 +672,10 @@ REWORDED: "merged config load" -> "config load + model count (single declared
 file, CR6)" with POD-BOOT-IS-THE-FLEET-PROOF wording + operator `-validate`
 demoted to a runbook step; "/v1/models completeness" expect gains the CR5
 picker-vs-display-table check. ADDED: runbook line retiring the autogen
-:main->:v<run> pinning obligation (registry garbage = user-side cosmetic only).
+:main->:v<run> pinning obligation; registry cleanup is N/A, not cosmetic-pending
+(CC2 measurement: the image was NEVER PUSHED — the containers path never
+triggered a push build on main/dev, PR builds are build-only; the stale
+"optional cleanup" line in the plan-folder C05.md is coord's to annotate).
 KEPT VERBATIM: PR/version prereq, CA3 sweep prereq, ArgoCD health, echo
 spot-proof, serve-smoke approval gate, gpu-ai config-level confirmation, q5/q6
 routable-unpreloaded-set-less, REMOVED(13) + matrix-closure sweeps, machine-global

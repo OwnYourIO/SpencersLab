@@ -585,6 +585,8 @@ def test_cr6_reloader_guard_declared_scope(cluster):
     if ann.get("reloader.stakater.com/auto") == "true":
         return  # auto mode covers the mounted declared CM
     match = ann.get("reloader.stakater.com/match", "")
-    assert "llama-swap-config" in match, (
-        f"{cluster}: neither auto-reload nor explicit match for llama-swap-config: {ann}"
+    # Comma-token membership, not substring (final-4 nit-2): a match naming
+    # e.g. llama-swap-config-backup must NOT satisfy the guard.
+    assert "llama-swap-config" in {m.strip() for m in match.split(",")}, (
+        f"{cluster}: neither auto-reload nor explicit llama-swap-config match-token: {ann}"
     )
