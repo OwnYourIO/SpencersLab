@@ -63,6 +63,11 @@ bitwardenIds:
   github-pat: OVERRIDE_VIA_CUSTOM_VALUES
   # Bitwarden item `forgejo-token` — Forgejo access token (PASSWORD field).
   forgejo-token: OVERRIDE_VIA_CUSTOM_VALUES
+  # Consumed by the dev MCP ExternalSecret templates in templates/: github-mcp
+  # backs the renovate server's repo-clone initContainer, wekan-mcp carries the
+  # boards service account (template headers document each item's shape).
+  github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  wekan-mcp: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Chart definitions for appset-charts.yaml (rendered by the base chart).
 # Each chart can have: namespace, ServerSideApply, version, repository
@@ -170,9 +175,272 @@ coder:
 # themselves. Dev-specific Bitwarden UUIDs ride custom-values/dev/
 # prod-values.yaml under the `forgejo:` / `coder:` keys.
 
-# ToolHive MCP platform (cluster-wide via base): the kubernetes
-# readonly+admin servers ship from base's defaults — "MCP by default", no
-# extra servers in this change. postgres-MCP for the dev DBs is a follow-up.
+# ToolHive MCP platform (cluster-wide via base): the kubernetes readonly+admin
+# servers ship from base's chart defaults; the four utility servers below are
+# dev-specific `mcp` entries Helm deep-merges on top, so the defaults stay.
+# Routing to https://mcp.dev.<domain>/<name> is chart-owned
+# (generic-mcp-ingress.yaml) — no ApplicationSet or ingress.subdomains entry
+# per server. Recipe: skills/helm-chart-creation/references/mcp-servers.md.
+# postgres-MCP for the dev DBs is a follow-up.
 hivetools:
   bitwardenIds:
     mcp-sso: OVERRIDE_VIA_CUSTOM_VALUES
+  mcp:
+    # Copied from the gpu sources in services/gpu/prod/values.yaml; dev-local
+    # differences are commented per entry.
+    playwright:
+      enabled: true
+      image: mcr.microsoft.com/playwright/mcp:v0.0.78
+      transport: streamable-http
+      mcpPort: 8931
+      proxyPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: playwright
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '4Gi'
+        requests:
+          cpu: '100m'
+          memory: '128Mi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            fsGroup: 1000
+          containers:
+          - name: mcp
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              runAsNonRoot: true
+            env:
+              - name: XDG_CONFIG_HOME
+                value: /home/node/.cache
+              - name: XDG_CACHE_HOME
+                value: /home/node/.cache
+            args:
+              - "--headless"
+              - "--port"
+              - "8931"
+              - "--host"
+              - "0.0.0.0"
+              - --allowed-hosts
+              - "*"
+              - "--output-dir"
+              - "/home/node/.cache/"
+              - "--isolated"
+            volumeMounts:
+              - name: tmp
+                mountPath: /tmp
+              - name: cache
+                mountPath: /home/node/.cache
+              - name: output
+                mountPath: /output
+          volumes:
+            - name: tmp
+              emptyDir:
+                medium: Memory
+                sizeLimit: 512Mi
+            - name: cache
+              emptyDir:
+                sizeLimit: 1Gi
+            - name: output
+              emptyDir:
+                sizeLimit: 500Mi
+    renovate:
+      enabled: true
+      # Pinned to the first immutable build that includes supergateway (v31 ==
+      # :main digest at 2026-09-28). Renovate bumps the :v<run> pin.
+      image: ghcr.io/ownyourio/renovate-mcp:v31
+      # streamable-http (2026-09-27): renovate-mcp is stdio-only upstream, so
+      # the image bridges it with supergateway (stdio → Streamable HTTP).
+      # Same reason as searxng: the stdio proxy attach dies permanently after
+      # an apiserver blip. Revert = transport: stdio (image ENTRYPOINT still
+      # runs renovate-mcp directly; supergateway is additive).
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: renovate
+      env:
+        - name: RENOVATE_MCP_REQUIRE_CLI
+          value: "true"
+        - name: RENOVATE_BASE_DIR
+          value: /cache
+        - name: HOME
+          value: /tmp
+      resources:
+        limits:
+          cpu: '2'
+          memory: '4Gi'
+        requests:
+          cpu: '500m'
+          memory: '1Gi'
+      podTemplateSpec:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          initContainers:
+            - name: clone
+              image: ghcr.io/ownyourio/renovate-mcp:v31  # same image ships git
+              env:
+                - name: HOME
+                  value: /tmp
+                - name: GITHUB_PERSONAL_ACCESS_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-mcp
+                      key: GITHUB_PERSONAL_ACCESS_TOKEN
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  # rm -rf first: the /workspace emptyDir survives container
+                  # restarts within the same pod, and git clone refuses a
+                  # non-empty destination (exit 128 -> CrashLoopBackOff).
+                  rm -rf /workspace/SpencersLab
+                  git clone --depth 1 --branch main \
+                    "https://x-access-token:${GITHUB_PERSONAL_ACCESS_TOKEN}@github.com/OwnYourIO/SpencersLab.git" \
+                    /workspace/SpencersLab
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+              volumeMounts:
+                - mountPath: /workspace
+                  name: workspace
+                - mountPath: /tmp
+                  name: tmp
+          containers:
+            - name: mcp
+              # Bridge: supergateway exposes the stdio renovate-mcp child as
+              # Streamable HTTP on mcpPort. Stateless by default (no
+              # --stateful): cross-request session state would only wedge the
+              # bridge after a restart; renovate's real state lives in
+              # /workspace, not in MCP sessions.
+              command: ["supergateway"]
+              args:
+                - --stdio
+                - renovate-mcp
+                - --outputTransport
+                - streamableHttp
+                - --port
+                - "8080"
+              resources:
+                requests:
+                  cpu: '500m'
+                  memory: '1Gi'
+                limits:
+                  cpu: '2'
+                  memory: '4Gi'
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+              volumeMounts:
+                - mountPath: /workspace
+                  name: workspace
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /cache
+                  name: cache
+          volumes:
+            - name: workspace
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+            - name: cache
+              emptyDir: {}
+    searxng:
+      enabled: true
+      image: isokoliuk/mcp-searxng:1.13.0
+      # streamable-http (2026-09-27): the stdio attach bridge dies permanently
+      # after any transient apiserver outage (ToolHive re-attach gives up after
+      # 10 retries and reports healthy anyway — see
+      # .agents/plans/2026-09-27-debug-mcp-servers-longterm-fix.md). mcp-searxng
+      # serves native Streamable HTTP when MCP_HTTP_PORT is set, so the
+      # proxyrunner attach hop goes away entirely (same pattern as wekan/HA).
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: searxng
+      resources:
+        limits:
+          cpu: '100m'
+          memory: '1128Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      # gpu carries these in podTemplateSpec's container env; dev pins them on
+      # the canonical top-level entry field instead (the operator injects
+      # spec.env into the mcp container — same mechanism as boards/HA here and
+      # on gpu; runtime is identical).
+      env:
+        - name: SEARXNG_URL
+          # Dev-local searxng — the dev-searxng release of charts/searxng on
+          # this cluster; gpu's entry points at gpu-searxng instead.
+          value: "http://dev-searxng.default.svc.cluster.local:8080"
+        # Switches mcp-searxng from stdio to native HTTP mode.
+        - name: MCP_HTTP_PORT
+          value: "8080"
+        - name: MCP_HTTP_HOST
+          value: "0.0.0.0"
+    # WeKan board management. The target instance comes from the URI field of
+    # the wekan-mcp Bitwarden LOGIN item — dev has no local wekan, so the base
+    # URL stays data, never a values-pinned host (user decision 2026-10-24).
+    # Admin tier: WEKAN_MCP_READ_ONLY is deliberately NOT set — server-side
+    # read-only is not enforced on dev (user decision 2026-10-24). All three
+    # runtime values arrive via the wekan-mcp Secret and the image mints the
+    # bearer in-pod from the credentials (containers/wekan-mcp).
+    # Image tracks :main until the login-capable build publishes, then pin to
+    # the :v<run> tag (renovate-managed).
+    boards:
+      enabled: true
+      image: ghcr.io/ownyourio/wekan-mcp:main
+      transport: streamable-http
+      mcpPort: 8080
+      # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
+      # oidc:
+      #   audience: boards
+      secrets:
+        - name: wekan-mcp
+          key: WEKAN_BASE_URL
+          targetEnvName: WEKAN_BASE_URL
+        - name: wekan-mcp
+          key: WEKAN_USERNAME
+          targetEnvName: WEKAN_USERNAME
+        - name: wekan-mcp
+          key: WEKAN_PASSWORD
+          targetEnvName: WEKAN_PASSWORD
+      resources:
+        limits:
+          cpu: '200m'
+          memory: '256Mi'
+        requests:
+          cpu: '50m'
+          memory: '64Mi'
+      podTemplateSpec:
+        spec:
+          containers:
+            - name: mcp
+              imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
+              securityContext:
+                runAsUser: 65532
+                runAsGroup: 65532
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
