@@ -107,3 +107,6 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 
 ## C02 ownership reconciliation (2026-10-24, coord)
 - The coord launch summary for C02 wrongly included the kubernetes-hardened/main.tf env pass-through; chunks/C03.md mandates both canonical env blocks (c-canonical-3). Dev correctly followed the chunk files. Ruling: chunk files are the ownership ground truth; no plan change; C03 lands the template env blocks.
+
+## Deferred hygiene note (C03 review round 1, 2026-10-24)
+- One non-blocking hygiene note recorded by the C03 reviewer in chunks/C03.md ("Deferred" section) — does not gate the ticket.
