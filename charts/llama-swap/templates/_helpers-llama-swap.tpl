@@ -1,9 +1,26 @@
 {{/*
 llama-swap.declaredConfig renders the llama-swap config.yaml from the compact
-roster schema in .Values.config: config.models entries are composed into the
-llama-swap surface (see llama-swap.modelCmd); every other config key passes
-through untouched. filterPresets is a chart-values concept only — it must not
-appear in the rendered config (llama-swap has no such key).
+roster schema in .Values.config (CA2, plan REPLAN CR1):
+
+- config.families is the FULL catalog: every family x rung pair expands into
+  one model entry. Field merge layering is family < rung < raw config.models
+  (deep merge; lists replace wholesale, same semantics as Helm's own value
+  layering - CA2 note "per-rung use/flags overrides are full replacements").
+  The rendered ID is rung.id | "<family>-<quant>"; a derived ID seen twice
+  fails the render (catalog identity must be machine-unique or -config-dir
+  merges silently lose entries).
+- enablement: a rung renders live only when family- or rung-level `enabled`
+  wins the merge as true (an explicit rung enabled:false beats an enabled
+  family); a not-enabled rung takes the deviation-1 fail-fast echo path with
+  the catalog-default "not enabled on this cluster" message unless a
+  `disabled:` message (chart, family, rung or models layer) supplies one -
+  that is how per-cluster legacy echo strings stay byte-exact.
+- config.models keeps its C02 role as the per-ID override + raw-cmd escape
+  hatch layer, merged OVER the expansion; models-only IDs render as before
+  (CR1.5). Precedence disabled > cmd > hf-composition stays in
+  llama-swap.modelCmd, untouched.
+- families/filterPresets are chart-values concepts: stripped, never rendered
+  (llama-swap has no such key).
 
 macros/matrix/hooks staying top-level here is load-bearing, not style: the
 v262 -config-dir merge treats matrix (and its vars/sets children) as identity
@@ -14,27 +31,59 @@ config-load error (DECISIONS 2026-10-22 "two-file layout").
 {{- $cfg := deepCopy .Values.config -}}
 {{- $presets := $cfg.filterPresets | default dict -}}
 {{- $_ := unset $cfg "filterPresets" -}}
+{{- $families := $cfg.families | default dict -}}
+{{- $_ := unset $cfg "families" -}}
+{{- $raw := $cfg.models | default dict -}}
+{{- $_ := unset $cfg "models" -}}
 {{- $models := dict -}}
-{{- range $id, $m := $cfg.models -}}
-  {{- $cmd := include "llama-swap.modelCmd" (dict "id" $id "model" $m) -}}
-  {{- $out := deepCopy $m -}}
-  {{- range (list "hf" "draft" "spec" "use" "flags" "disabled") -}}
-    {{- $_ := unset $out . -}}
-  {{- end -}}
-  {{- $_ := set $out "cmd" $cmd -}}
-  {{- if kindIs "string" $out.filters -}}
-    {{- if not (hasKey $presets $out.filters) -}}
-      {{- fail (printf "model %s: filters references unknown filterPresets entry %s" $id $out.filters) -}}
+{{- $derived := dict -}}
+{{- range $fam, $spec := $families -}}
+  {{- $familyFields := omit (deepCopy ($spec | default dict)) "quants" -}}
+  {{- range $quant, $rung := (get ($spec | default dict) "quants") | default dict -}}
+    {{- $m := mergeOverwrite (deepCopy $familyFields) (deepCopy ($rung | default dict)) -}}
+    {{- $id := default (printf "%s-%s" $fam $quant) (get $m "id") -}}
+    {{- if hasKey $derived $id -}}
+      {{- fail (printf "CA2 family expansion: duplicate model id %s - derived from both %s and %s-%s; every family/rung pair must yield a unique rendered id (id: overrides included)" $id (get $derived $id) $fam $quant) -}}
     {{- end -}}
-    {{- $_ := set $out "filters" (deepCopy (get $presets $out.filters)) -}}
+    {{- $_ := set $derived $id (printf "%s-%s" $fam $quant) -}}
+    {{- if hasKey $raw $id -}}
+      {{- $m = mergeOverwrite $m (deepCopy (get $raw $id)) -}}
+    {{- end -}}
+    {{- $enabled := get $m "enabled" -}}
+    {{- $_ := unset $m "enabled" -}}
+    {{- $_ := unset $m "id" -}}
+    {{- if and (not $enabled) (not (hasKey $m "disabled")) -}}
+      {{- $_ := set $m "disabled" "is not enabled on this cluster - see the chart catalog" -}}
+    {{- end -}}
+    {{- $_ := set $models $id $m -}}
   {{- end -}}
-  {{- if not (hasKey $out "proxy") -}}
-    {{- /* ${PORT} cmds always proxy to the pod-local port llama-swap assigned */ -}}
-    {{- $_ := set $out "proxy" "http://localhost:${PORT}" -}}
-  {{- end -}}
-  {{- $_ := set $models $id $out -}}
 {{- end -}}
-{{- $_ := set $cfg "models" $models -}}
+{{- range $id, $m := $raw -}}
+  {{- if not (hasKey $models $id) -}}
+    {{- $_ := set $models $id $m -}}
+  {{- end -}}
+{{- end -}}
+{{- $out := dict -}}
+{{- range $id, $m := $models -}}
+  {{- $cmd := include "llama-swap.modelCmd" (dict "id" $id "model" $m) -}}
+  {{- $e := deepCopy $m -}}
+  {{- range (list "hf" "draft" "spec" "use" "flags" "disabled" "enabled" "id") -}}
+    {{- $_ := unset $e . -}}
+  {{- end -}}
+  {{- $_ := set $e "cmd" $cmd -}}
+  {{- if kindIs "string" $e.filters -}}
+    {{- if not (hasKey $presets $e.filters) -}}
+      {{- fail (printf "model %s: filters references unknown filterPresets entry %s" $id $e.filters) -}}
+    {{- end -}}
+    {{- $_ := set $e "filters" (deepCopy (get $presets $e.filters)) -}}
+  {{- end -}}
+  {{- if not (hasKey $e "proxy") -}}
+    {{- /* ${PORT} cmds always proxy to the pod-local port llama-swap assigned */ -}}
+    {{- $_ := set $e "proxy" "http://localhost:${PORT}" -}}
+  {{- end -}}
+  {{- $_ := set $out $id $e -}}
+{{- end -}}
+{{- $_ := set $cfg "models" $out -}}
 {{- toYaml $cfg -}}
 {{- end -}}
 

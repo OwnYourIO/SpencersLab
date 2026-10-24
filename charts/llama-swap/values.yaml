@@ -131,567 +131,647 @@ config:
           temperature: 0.1
           seed: 42
 
-  # Model definitions. Models are downloaded automatically from HuggingFace
-  # via the -hf flag and cached on the models PVC (LLAMA_CACHE=/models).
+  # Model catalog (CA2, plan REPLAN CR1/CR2). Models are authored by FAMILY
+  # with their quant ladder under `quants:`; the rendered llama-swap ID is
+  # derived as `<family>-<quant>` (a rung-level `id:` replaces the derived
+  # name - only home-3b-v3's base rung needs one, consumers pinned that ID
+  # before family authoring existed). Field merge layering is family < rung
+  # < raw config.models (deep merge; use/flags lists replace wholesale).
   #
-  # Roster schema (templates/_helpers-llama-swap.tpl composes each entry into
-  # llama-swap's config surface; tests/golden pin the rendered result):
+  # CATALOG PATTERN: every family ships `enabled: false` and services/gpu +
+  # services/gpu-ai flip enablement for their subset (family-level or
+  # per-rung). A not-enabled rung still renders - as the deviation-1 fail-fast
+  # echo ("<id> is not enabled on this cluster - see the chart catalog";
+  # routable, exits 1 with the reason instead of loading). That is deliberate:
+  # un-enabled big rungs must never load by accident (the 2026-10-11/18 VRAM
+  # node-freeze incidents), and /v1/models consumers see the full catalog.
+  # A rung's `disabled:` message beats enablement, so the legacy byte-pinned
+  # gpu echo strings live on in services/gpu `config.models.<id>.disabled`.
+  #
+  # Roster schema per entry (llama-swap.modelCmd composes each cmd; precedence
+  # disabled > cmd > hf-composition, unchanged from C02):
   #   hf / draft   -hf / -hfd refs
   #   spec         --spec-type / --spec-draft-* speculative-decoding flags
   #   use          ordered ${macro} references (rendered as the reference;
   #                llama-swap expands macros at load)
-  #   flags        verbatim lines, composed after use — llama.cpp is
+  #   flags        verbatim lines, composed after use - llama.cpp is
   #                rightmost-wins, so a flag here can override a macro value
   #   cmd          raw escape hatch, passed through untouched
-  #   disabled     fail-fast message; the cmd echoes "<id> <disabled>" to
-  #                stderr and exits 1 (precedence disabled > cmd > composition)
+  #   disabled     fail-fast message (rendered as "<id> <message>" echo)
+  #   enabled      catalog gate, family- or rung-level
   #   filters      a filterPresets name, expanded into the model map
   # name/description/ttl/aliases/capabilities/checkEndpoint/proxy/env pass
   # through as-is; omitted proxy defaults to http://localhost:${PORT},
   # omitted ttl inherits globalTTL.
-  models:
+  #
+  # config.models remains in this map's meaning as the per-ID override +
+  # escape-hatch layer, merged OVER the expansion (gpu's tuned regimes and
+  # disabled messages, gpu-ai's MTP variants + rana raw cmd live there).
+  # A duplicate derived ID fails the render (templates/_helpers-llama-swap.tpl).
+  families:
     # Qwen 3.8 27B (plain/official). Q4/Q6/Q8 from unsloth's dynamic
     # imatrix builds (no plain K-quants published); the 16-bit entry comes
     # from ggml-org since unsloth ships no F16/BF16 for this model.
-    qwen3.8-27b-q4:
-      hf: unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL
+    # gpu-ai re-composes q4/q6/q8/bf16 with the ggml-org MTP draft via its
+    # config.models override layer; the -visual/-1m siblings ride the
+    # gpu-ai-only ${q38-common} macro (a service value), so they render
+    # live only where gpu-ai enables them and as echoes everywhere else.
+    qwen3.8-27b:
+      enabled: false
       use: [threads, ctx-256k, flash-and-q8]
-      name: "Qwen 3.8 27B (UD-Q4_K_XL)"
-      description: "Qwen 3.8 27B dense model, UD-Q4_K_XL quant"
       ttl: 0
+      quants:
+        q4:
+          hf: "unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL"
+          name: Qwen 3.8 27B (UD-Q4_K_XL)
+          description: "Qwen 3.8 27B dense model, UD-Q4_K_XL quant"
+        q6:
+          hf: "unsloth/Qwen3.8-27B-GGUF:UD-Q6_K_XL"
+          name: Qwen 3.8 27B (UD-Q6_K_XL)
+          description: "Qwen 3.8 27B dense model, UD-Q6_K_XL quant"
+        q8:
+          hf: "unsloth/Qwen3.8-27B-GGUF:Q8_0"
+          name: Qwen 3.8 27B (Q8_0)
+          description: "Qwen 3.8 27B dense model, Q8_0 quant"
+        bf16:
+          hf: "ggml-org/Qwen3.8-27B-GGUF:BF16"
+          name: Qwen 3.8 27B (BF16)
+          description: "Qwen 3.8 27B dense model, BF16 (no quant)"
+        # Vision sibling of gpu-ai's text-only caching q8 (Q8 split 2026-10-15:
+        # llama.cpp hard-disables cache_reuse in multimodal mode, so the two
+        # cannot be combined - full rationale in services/gpu-ai values).
+        q8-visual:
+          hf: "unsloth/Qwen3.8-27B-GGUF:Q8_0"
+          draft: "ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [q38-common]
+          flags: |
+            -c 262144
+          name: "Qwen 3.8 27B (Q8_0, MTP) - Visual"
+          description: "Plain Qwen 3.8 27B, Q8_0; MTP draft, vision on (auto mmproj), 256k ctx; cache_reuse disabled by llama.cpp in multimodal mode"
+          ttl: 300
+        # 1M context variant (2026-10-13): ${ctx-1m} = YaRN x4 over the native
+        # 262144 ctx; --no-kv-offload parks the ~34GB 1M q8_0 KV in gpu-ai's
+        # 125GB RAM (the 8GiB gpu box could never run this). No MTP on the 1m
+        # variants: they trade speed for context, draft-mtp over CPU-resident
+        # KV is untested. (${ctx-1m}'s 512 batches would be clobbered by
+        # ${q38-common}'s -b/-ub, so q38-common is deliberately not reused.)
+        q8-1m:
+          hf: "unsloth/Qwen3.8-27B-GGUF:Q8_0"
+          use: [ctx-1m]
+          flags: |
+            --no-kv-offload
+            -ngl 999
+            --flash-attn on
+            --load-mode none
+            -np 1
+            --cache-type-k q8_0
+            --cache-type-v q8_0
+            --cache-reuse 1
+            --no-context-shift
+          name: Qwen 3.8 27B (Q8_0) - 1M
+          description: "Plain Qwen 3.8 27B, Q8_0; 1M ctx (YaRN x4), KV in system RAM"
+          ttl: 300
 
-    qwen3.8-27b-q6:
-      hf: unsloth/Qwen3.8-27B-GGUF:UD-Q6_K_XL
+    qwen3.6-27b:
+      enabled: false
+      ttl: 0
+      quants:
+        q6:
+          hf: "unsloth/Qwen3.6-27B-GGUF:Q6_K"
+          use: [threads, ctx-256k, flash-and-q8]
+          name: Qwen 3.6 27B (Q6_K)
+          description: "Qwen 3.6 27B general purpose model, Q6_K quant"
+        q8:
+          hf: "unsloth/Qwen3.6-27B-GGUF:Q8_0"
+          use: [threads, flash-and-q8, ctx-256k]
+          name: Qwen 3.6 27B (Q8_0)
+          description: "Qwen 3.6 27B general purpose model, Q8_0 quant"
+
+    qwen3.6-35b-a3b:
+      enabled: false
       use: [threads, ctx-256k, flash-and-q8]
-      name: "Qwen 3.8 27B (UD-Q6_K_XL)"
-      description: "Qwen 3.8 27B dense model, UD-Q6_K_XL quant"
       ttl: 0
+      quants:
+        q6:
+          hf: "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K"
+          name: Qwen 3.6 35B A3B (UD-Q6_K)
+          description: "Qwen 3.6 35B with 3B active parameters (MoE), UD-Q6_K quant"
+        q8:
+          hf: "unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0"
+          use: [threads, ctx-256k, moe, flash-and-q8]
+          name: Qwen 3.6 35B A3B (Q8_0)
+          description: "Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant"
+        1m:
+          hf: "unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0"
+          use: [threads, ctx-1m, moe, flash-and-q8]
+          name: Qwen 3.6 35B A3B (Q8_0) - 1M
+          description: "Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant"
+        bf16:
+          hf: "unsloth/Qwen3.6-35B-A3B-GGUF:BF16"
+          use: [threads, ctx-256k, moe, flash-and-q8]
+          name: Qwen 3.6 35B A3B (BF16)
+          description: "Qwen 3.6 35B with 3B active parameters (MoE), BF16 (no quant)"
+        # Vision-on sibling of gpu-ai's text-only caching q8 (chart cmd, no
+        # cache flags); gpu-ai enables it, gpu keeps the caching q8 only.
+        q8-visual:
+          hf: "unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0"
+          use: [threads, ctx-256k, moe, flash-and-q8]
+          name: Qwen 3.6 35B A3B (Q8_0) - Visual
+          description: "Qwen 3.6 35B A3B (MoE), Q8_0; vision on (auto mmproj), experts on CPU, 256k ctx; cache_reuse disabled by llama.cpp in multimodal mode"
 
-    qwen3.8-27b-q8:
-      hf: unsloth/Qwen3.8-27B-GGUF:Q8_0
-      use: [threads, ctx-256k, flash-and-q8]
-      name: "Qwen 3.8 27B (Q8_0)"
-      description: "Qwen 3.8 27B dense model, Q8_0 quant"
-      ttl: 0
-
-    qwen3.8-27b-bf16:
-      hf: ggml-org/Qwen3.8-27B-GGUF:BF16
-      use: [threads, ctx-256k, flash-and-q8]
-      name: "Qwen 3.8 27B (BF16)"
-      description: "Qwen 3.8 27B dense model, BF16 (no quant)"
-      ttl: 0
-
-    qwen3.6-27b-q6:
-      hf: unsloth/Qwen3.6-27B-GGUF:Q6_K
-      use: [threads, ctx-256k, flash-and-q8]
-      name: "Qwen 3.6 27B (Q6_K)"
-      description: "Qwen 3.6 27B general purpose model, Q6_K quant"
-      ttl: 0
-
-    qwen3.6-27b-q8:
-      hf: unsloth/Qwen3.6-27B-GGUF:Q8_0
-      use: [threads, flash-and-q8, ctx-256k]
-      name: "Qwen 3.6 27B (Q8_0)"
-      description: "Qwen 3.6 27B general purpose model, Q8_0 quant"
-      ttl: 0
-
-    qwen3.6-35b-a3b-q6:
-      hf: unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K
-      use: [threads, ctx-256k, flash-and-q8]
-      name: "Qwen 3.6 35B A3B (UD-Q6_K)"
-      description: "Qwen 3.6 35B with 3B active parameters (MoE), UD-Q6_K quant"
-      ttl: 0
-
-    qwen3.6-35b-a3b-q8:
-      hf: unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
-      use: [threads, ctx-256k, moe, flash-and-q8]
-      name: "Qwen 3.6 35B A3B (Q8_0)"
-      description: "Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant"
-      ttl: 0
-
-    qwen3.6-35b-a3b-1m:
-      hf: unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
-      use: [threads, ctx-1m, moe, flash-and-q8]
-      name: "Qwen 3.6 35B A3B (Q8_0) - 1M"
-      description: "Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant"
-      ttl: 0
-
-    qwen3.6-35b-a3b-bf16:
-      hf: unsloth/Qwen3.6-35B-A3B-GGUF:BF16
-      use: [threads, ctx-256k, moe, flash-and-q8]
-      name: "Qwen 3.6 35B A3B (BF16)"
-      description: "Qwen 3.6 35B with 3B active parameters (MoE), BF16 (no quant)"
-      ttl: 0
-
-    # Ornith 1.5 35B A3B (qwen35moe arch, 256 experts/top-8 - verified in the
-    # official GGUF header 2026-10-23; same family as the qwen3.6-35b-a3b
-    # entries above, so ${moe}'s expert-on-CPU regime carries over). Ladder =
-    # the operator-approved 7 rungs (DECISIONS 2026-10-22 "Plan approval"):
-    # official Q4_K_M/Q5_K_M/Q6_K/Q8_0/BF16 + bartowski Q3_K_XL/IQ2_XXS, one
-    # repo per rung so llama.cpp's hub-cache shares downloads. Sizes are total
-    # GGUF bytes re-summed from the live HF API at implementation.
-    # BF16 rides the chart so gpu can keep the ID routable via its `disabled`
-    # fail-fast override (same pattern as the qwen3.6 BF16/1M
+    # Ornith 1.5 35B A3B (qwen35moe arch, 256 experts/top-8 - verified in
+    # the official GGUF header 2026-10-23; same family as the qwen3.6-35b-
+    # a3b entries above, so ${moe}'s expert-on-CPU regime carries over).
+    # Ladder = the operator-approved 7 rungs (DECISIONS 2026-10-22 "Plan
+    # approval"): official Q4_K_M/Q5_K_M/Q6_K/Q8_0/BF16 + bartowski
+    # Q3_K_XL/IQ2_XXS, one repo per rung so llama.cpp's hub-cache shares
+    # downloads. Sizes are total GGUF bytes re-summed from the live HF API
+    # at implementation.
+    # BF16 rides the chart so gpu can keep the ID routable via its
+    # `disabled` fail-fast override (same pattern as the qwen3.6 BF16/1M
     # disables there).
-    ornith-1.5-35b-a3b-iq2xxs:
-      hf: bartowski/Ornith-1.5-35B-A3B-GGUF:IQ2_XXS
+    ornith-1.5-35b-a3b:
+      enabled: false
       use: [threads, moe, ctx-256k, flash-and-q8]
-      name: "Ornith 1.5 35B A3B (IQ2_XXS)"
-      description: "Ornith 1.5 35B with 3B active parameters (MoE), IQ2_XXS quant; 9.6 GiB weights, experts on CPU, 256k ctx"
       ttl: 0
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
+      capabilities: {in: [text, image], out: [text]}
+      quants:
+        iq2xxs:
+          hf: "bartowski/Ornith-1.5-35B-A3B-GGUF:IQ2_XXS"
+          name: Ornith 1.5 35B A3B (IQ2_XXS)
+          description: "Ornith 1.5 35B with 3B active parameters (MoE), IQ2_XXS quant; 9.6 GiB weights, experts on CPU, 256k ctx"
+        q3:
+          hf: "bartowski/Ornith-1.5-35B-A3B-GGUF:Q3_K_XL"
+          name: Ornith 1.5 35B A3B (Q3_K_XL)
+          description: "Ornith 1.5 35B with 3B active parameters (MoE), Q3_K_XL quant; 16.6 GiB weights, experts on CPU, 256k ctx"
+        q4:
+          hf: "ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q4_K_M"
+          name: Ornith 1.5 35B A3B (Q4_K_M)
+          description: "Ornith 1.5 35B with 3B active parameters (MoE), Q4_K_M quant; 20.2 GiB weights, experts on CPU, 256k ctx"
+        q5:
+          hf: "ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q5_K_M"
+          name: Ornith 1.5 35B A3B (Q5_K_M)
+          description: "Ornith 1.5 35B with 3B active parameters (MoE), Q5_K_M quant; 23.6 GiB weights, experts on CPU, 256k ctx"
+        q6:
+          hf: "ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q6_K"
+          name: Ornith 1.5 35B A3B (Q6_K)
+          description: "Ornith 1.5 35B with 3B active parameters (MoE), Q6_K quant; 27.2 GiB weights, experts on CPU, 256k ctx"
+        q8:
+          hf: "ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q8_0"
+          name: Ornith 1.5 35B A3B (Q8_0)
+          description: "Ornith 1.5 35B with 3B active parameters (MoE), Q8_0 quant; 35.2 GiB weights, experts on CPU, 256k ctx"
+        bf16:
+          hf: "ornith-ai/Ornith-1.5-35B-A3B-GGUF:BF16"
+          name: Ornith 1.5 35B A3B (BF16)
+          description: "Ornith 1.5 35B with 3B active parameters (MoE), BF16 (no quant); 66.2 GiB weights, experts on CPU, 256k ctx"
 
-    ornith-1.5-35b-a3b-q3:
-      hf: bartowski/Ornith-1.5-35B-A3B-GGUF:Q3_K_XL
+    # Ornith 1.5 122B (arch qwen35moe, 256 experts/top-8, ~92% of weights
+    # routed - expert-on-CPU offload is the serving regime). gpu-ai-only
+    # BY ENABLEMENT (catalog echo on gpu). 122B ships WITHOUT MTP: the
+    # unsloth repo has no mtp-* files and
+    # prithivMLmods/Ornith-1.5-122B-MTP-GGUF holds full-model builds,
+    # not a standalone draft to point -hfd at - recorded per the C04.md
+    # conditional.
+    ornith-1.5-122b:
+      enabled: false
       use: [threads, moe, ctx-256k, flash-and-q8]
-      name: "Ornith 1.5 35B A3B (Q3_K_XL)"
-      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q3_K_XL quant; 16.6 GiB weights, experts on CPU, 256k ctx"
-      ttl: 0
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
+      ttl: 300
+      capabilities: {in: [text, image], out: [text]}
+      quants:
+        q3:
+          hf: "unsloth/Ornith-1.5-122B-GGUF:UD-Q3_K_XL"
+          name: Ornith 1.5 122B (UD-Q3_K_XL)
+          description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q3_K_XL, 55.7 GiB weights; experts on CPU, 256k ctx; SOLO; no MTP draft published (see the C04 family note)"
+        q4:
+          hf: "unsloth/Ornith-1.5-122B-GGUF:UD-Q4_K_XL"
+          name: Ornith 1.5 122B (UD-Q4_K_XL)
+          description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q4_K_XL, 74.2 GiB weights; experts on CPU, 256k ctx; SOLO; no MTP draft published (see the C04 family note)"
+        q5:
+          hf: "unsloth/Ornith-1.5-122B-GGUF:UD-Q5_K_XL"
+          name: Ornith 1.5 122B (UD-Q5_K_XL)
+          description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q5_K_XL, 88.1 GiB weights; experts on CPU, 256k ctx; SOLO; no MTP draft published (see the C04 family note)"
+        q6:
+          hf: "unsloth/Ornith-1.5-122B-GGUF:UD-Q6_K_XL"
+          name: Ornith 1.5 122B (UD-Q6_K_XL)
+          description: "Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed), UD-Q6_K_XL, 106.4 GiB weights; marginal against the ~125 GiB budget - SOLO only; no MTP draft published (see the C04 family note)"
 
-    ornith-1.5-35b-a3b-q4:
-      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q4_K_M
-      use: [threads, moe, ctx-256k, flash-and-q8]
-      name: "Ornith 1.5 35B A3B (Q4_K_M)"
-      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q4_K_M quant; 20.2 GiB weights, experts on CPU, 256k ctx"
-      ttl: 0
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-
-    ornith-1.5-35b-a3b-q5:
-      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q5_K_M
-      use: [threads, moe, ctx-256k, flash-and-q8]
-      name: "Ornith 1.5 35B A3B (Q5_K_M)"
-      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q5_K_M quant; 23.6 GiB weights, experts on CPU, 256k ctx"
-      ttl: 0
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-
-    ornith-1.5-35b-a3b-q6:
-      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q6_K
-      use: [threads, moe, ctx-256k, flash-and-q8]
-      name: "Ornith 1.5 35B A3B (Q6_K)"
-      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q6_K quant; 27.2 GiB weights, experts on CPU, 256k ctx"
-      ttl: 0
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-
-    ornith-1.5-35b-a3b-q8:
-      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q8_0
-      use: [threads, moe, ctx-256k, flash-and-q8]
-      name: "Ornith 1.5 35B A3B (Q8_0)"
-      description: "Ornith 1.5 35B with 3B active parameters (MoE), Q8_0 quant; 35.2 GiB weights, experts on CPU, 256k ctx"
-      ttl: 0
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-
-    ornith-1.5-35b-a3b-bf16:
-      hf: ornith-ai/Ornith-1.5-35B-A3B-GGUF:BF16
-      use: [threads, moe, ctx-256k, flash-and-q8]
-      name: "Ornith 1.5 35B A3B (BF16)"
-      description: "Ornith 1.5 35B with 3B active parameters (MoE), BF16 (no quant); 66.2 GiB weights, experts on CPU, 256k ctx"
-      ttl: 0
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-
-    home-3b-v3-gpu:
-      hf: acon96/Home-3B-v3-GGUF:Q8_0
-      use: [threads]
-      flags: |
-        -ngl 99
-        -c 8192
-      name: "Home 3B v3 (Q8_0) - GPU"
-      description: "Home Assistant 3B v3 model on GPU, Q8_0 quant"
-      ttl: 0
-
+    # Home Assistant 3B v3 (HA intent pipeline). Family name is the
+    # historical ID; the CPU rung therefore needs the catalog's ONLY
+    # `id:` override (consumers - HA, MinusPod routing - pinned
+    # home-3b-v3 before family authoring existed).
     home-3b-v3:
-      hf: acon96/Home-3B-v3-GGUF:Q4_K_M
+      enabled: false
       use: [threads]
-      flags: |
-        -ngl 0
-        -c 8192
-      name: "Home 3B v3 (Q4_K_M) - CPU"
-      description: "Home Assistant 3B v3 model on CPU, Q4_K_M quant; runs in parallel with GPU models"
       ttl: 0
+      quants:
+        gpu:
+          hf: "acon96/Home-3B-v3-GGUF:Q8_0"
+          flags: |
+            -ngl 99
+            -c 8192
+          name: Home 3B v3 (Q8_0) - GPU
+          description: "Home Assistant 3B v3 model on GPU, Q8_0 quant"
+        cpu:
+          id: home-3b-v3
+          hf: "acon96/Home-3B-v3-GGUF:Q4_K_M"
+          flags: |
+            -ngl 0
+            -c 8192
+          name: Home 3B v3 (Q4_K_M) - CPU
+          description: "Home Assistant 3B v3 model on CPU, Q4_K_M quant; runs in parallel with GPU models"
 
-    qwen3-vl-4b-q4:
-      hf: unsloth/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M
+    # Qwen3-VL Instruct/Thinking families for Immich/Pictaria. mmproj
+    # auto-downloads from the -hf repo (hf:// in --mmproj is a literal
+    # path, not a hub ref). filters: vl-workload = the named filterPresets
+    # entry replacing the old &vlWorkloadFilters anchor (:tags/:caption
+    # per-workload aliases, auto-registered by llama-swap).
+    qwen3-vl-2b:
+      enabled: false
       use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
       flags: |
         -c 16384
-      name: "Qwen3 VL 4B Instruct (Q4_K_M)"
-      description: "Vision-language model for Immich image analysis, Q4_K_M quant"
-      # Back-compat for consumers configured before quant suffixes were added.
-      aliases:
-        - qwen3-vl-4b
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
+      ttl: 0
+      capabilities: {in: [text, image], out: [text]}
       filters: vl-workload
-      ttl: 0
+      quants:
+        q8:
+          hf: "unsloth/Qwen3-VL-2B-Instruct-GGUF:Q8_0"
+          name: Qwen3 VL 2B Instruct (Q8_0)
+          description: "Vision-language model for Immich image analysis, Q8_0 quant; faster processing for simpler descriptions"
+        q4:
+          hf: "unsloth/Qwen3-VL-2B-Instruct-GGUF:Q4_K_M"
+          name: Qwen3 VL 2B Instruct (Q4_K_M)
+          description: "Vision-language model for Immich image analysis, Q4_K_M quant; faster processing for simpler descriptions"
+        bf16:
+          hf: "unsloth/Qwen3-VL-2B-Instruct-GGUF:BF16"
+          name: Qwen3 VL 2B Instruct (BF16)
+          description: "Vision-language model for Immich image analysis, BF16 (no quant); faster processing for simpler descriptions"
 
-    qwen3-vl-8b-q4:
-      hf: unsloth/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M
+    # See qwen3-vl-2b family note (mmproj autoload + vl-workload filters).
+    qwen3-vl-4b:
+      enabled: false
       use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
       flags: |
         -c 16384
-      name: "Qwen3 VL 8B Instruct (Q4_K_M)"
-      description: "Vision-language model for Immich image analysis, Q4_K_M quant"
-      # Back-compat for consumers configured before quant suffixes were added.
-      aliases:
-        - qwen3-vl-8b
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
       ttl: 0
+      capabilities: {in: [text, image], out: [text]}
+      filters: vl-workload
+      quants:
+        # Back-compat alias for consumers configured before quant suffixes
+        # were added.
+        q4:
+          hf: "unsloth/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M"
+          name: Qwen3 VL 4B Instruct (Q4_K_M)
+          description: "Vision-language model for Immich image analysis, Q4_K_M quant"
+          aliases: [qwen3-vl-4b]
+        q8:
+          hf: "unsloth/Qwen3-VL-4B-Instruct-GGUF:Q8_0"
+          name: Qwen3 VL 4B Instruct (Q8_0)
+          description: "Vision-language model for Immich image analysis, Q8_0 quant"
+        bf16:
+          hf: "unsloth/Qwen3-VL-4B-Instruct-GGUF:BF16"
+          name: Qwen3 VL 4B Instruct (BF16)
+          description: "Vision-language model for Immich image analysis, BF16 (no quant)"
 
-    qwen3-vl-8b-q8:
-      hf: unsloth/Qwen3-VL-8B-Instruct-GGUF:Q8_0
+    # See qwen3-vl-2b family note (mmproj autoload + vl-workload filters).
+    qwen3-vl-8b:
+      enabled: false
       use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
       flags: |
         -c 16384
-      name: "Qwen3 VL 8B Instruct (Q8_0)"
-      description: "Vision-language model for Immich image analysis, Q8_0 quant"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
       ttl: 0
+      capabilities: {in: [text, image], out: [text]}
+      filters: vl-workload
+      quants:
+        q4:
+          hf: "unsloth/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M"
+          name: Qwen3 VL 8B Instruct (Q4_K_M)
+          description: "Vision-language model for Immich image analysis, Q4_K_M quant"
+          aliases: [qwen3-vl-8b]
+        q8:
+          hf: "unsloth/Qwen3-VL-8B-Instruct-GGUF:Q8_0"
+          name: Qwen3 VL 8B Instruct (Q8_0)
+          description: "Vision-language model for Immich image analysis, Q8_0 quant"
+        bf16:
+          hf: "unsloth/Qwen3-VL-8B-Instruct-GGUF:BF16"
+          name: Qwen3 VL 8B Instruct (BF16)
+          description: "Vision-language model for Immich image analysis, BF16 (no quant)"
 
-    qwen3-vl-8b-bf16:
-      hf: unsloth/Qwen3-VL-8B-Instruct-GGUF:BF16
+    # See qwen3-vl-2b family note (mmproj autoload + vl-workload filters).
+    # Per-quant expert placement: q4/q8 ride the 8GB-measured moe-vl
+    # macros, bf16 keeps ${moe} (gpu disables it via its override).
+    qwen3-vl-30b-a3b:
+      enabled: false
+      flags: |
+        -c 16384
+      ttl: 0
+      capabilities: {in: [text, image], out: [text]}
+      filters: vl-workload
+      quants:
+        # Back-compat alias for consumers configured before quant suffixes
+        # were added.
+        q4:
+          hf: "unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M"
+          use: [threads, moe-vl-q4, flash-and-q8, big-ub]
+          name: Qwen3 VL 30B A3B Instruct (Q4_K_M)
+          description: "Vision-language MoE model for Immich image analysis, Q4_K_M quant, CPU-offloaded experts"
+          aliases: [qwen3-vl-30b-a3b]
+        q8:
+          hf: "unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q8_0"
+          use: [threads, moe-vl-q8, flash-and-q8, big-ub]
+          name: Qwen3 VL 30B A3B Instruct (Q8_0)
+          description: "Vision-language MoE model for Immich image analysis, Q8_0 quant, CPU-offloaded experts"
+        bf16:
+          hf: "unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:BF16"
+          use: [threads, moe, flash-and-q8]
+          name: Qwen3 VL 30B A3B Instruct (BF16)
+          description: "Vision-language MoE model for Immich image analysis, BF16 (no quant), CPU-offloaded experts"
+
+    # Qwen3-VL Thinking line: reasoning variants have NO vl-workload
+    # filters (Pictaria/Immich drive them via chat params, not the
+    # thinking-off setParamsByID aliases). mmproj auto-downloads.
+    qwen3-vl-4b-thinking:
+      enabled: false
       use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
       flags: |
         -c 16384
-      name: "Qwen3 VL 8B Instruct (BF16)"
-      description: "Vision-language model for Immich image analysis, BF16 (no quant)"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
       ttl: 0
+      capabilities: {in: [text, image], out: [text]}
+      quants:
+        q8:
+          hf: "unsloth/Qwen3-VL-4B-Thinking-GGUF:Q8_0"
+          name: Qwen3 VL 4B Thinking (Q8_0)
+          description: "Reasoning vision-language model for Immich image analysis, Q8_0 quant; good balance of speed and accuracy"
+        q4:
+          hf: "unsloth/Qwen3-VL-4B-Thinking-GGUF:Q4_K_M"
+          name: Qwen3 VL 4B Thinking (Q4_K_M)
+          description: "Reasoning vision-language model for Immich image analysis, Q4_K_M quant; good balance of speed and accuracy"
+        bf16:
+          hf: "unsloth/Qwen3-VL-4B-Thinking-GGUF:BF16"
+          name: Qwen3 VL 4B Thinking (BF16)
+          description: "Reasoning vision-language model for Immich image analysis, BF16 (no quant); good balance of speed and accuracy"
 
-    qwen3-vl-30b-a3b-q4:
-      hf: unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M
-      use: [threads, moe-vl-q4, flash-and-q8, big-ub]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+    # See qwen3-vl-4b-thinking family note. q4/q8 on the moe-vl placement
+    # macros, bf16 on ${moe}; mmproj auto-downloads.
+    qwen3-vl-30b-a3b-thinking:
+      enabled: false
       flags: |
         -c 16384
-      name: "Qwen3 VL 30B A3B Instruct (Q4_K_M)"
-      description: "Vision-language MoE model for Immich image analysis, Q4_K_M quant, CPU-offloaded experts"
-      # Back-compat for consumers configured before quant suffixes were added.
-      aliases:
-        - qwen3-vl-30b-a3b
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
       ttl: 0
-
-    qwen3-vl-30b-a3b-q8:
-      hf: unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q8_0
-      use: [threads, moe-vl-q8, flash-and-q8, big-ub]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 30B A3B Instruct (Q8_0)"
-      description: "Vision-language MoE model for Immich image analysis, Q8_0 quant, CPU-offloaded experts"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
-      ttl: 0
-
-    qwen3-vl-30b-a3b-bf16:
-      hf: unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:BF16
-      use: [threads, moe, flash-and-q8]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 30B A3B Instruct (BF16)"
-      description: "Vision-language MoE model for Immich image analysis, BF16 (no quant), CPU-offloaded experts"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
-      ttl: 0
-
-    qwen3-vl-2b-q8:
-      hf: unsloth/Qwen3-VL-2B-Instruct-GGUF:Q8_0
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 2B Instruct (Q8_0)"
-      description: "Vision-language model for Immich image analysis, Q8_0 quant; faster processing for simpler descriptions"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
-      ttl: 0
-
-    qwen3-vl-2b-q4:
-      hf: unsloth/Qwen3-VL-2B-Instruct-GGUF:Q4_K_M
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 2B Instruct (Q4_K_M)"
-      description: "Vision-language model for Immich image analysis, Q4_K_M quant; faster processing for simpler descriptions"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
-      ttl: 0
-
-    qwen3-vl-2b-bf16:
-      hf: unsloth/Qwen3-VL-2B-Instruct-GGUF:BF16
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 2B Instruct (BF16)"
-      description: "Vision-language model for Immich image analysis, BF16 (no quant); faster processing for simpler descriptions"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
-      ttl: 0
-
-    qwen3-vl-4b-q8:
-      hf: unsloth/Qwen3-VL-4B-Instruct-GGUF:Q8_0
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 4B Instruct (Q8_0)"
-      description: "Vision-language model for Immich image analysis, Q8_0 quant"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
-      ttl: 0
-
-    qwen3-vl-4b-bf16:
-      hf: unsloth/Qwen3-VL-4B-Instruct-GGUF:BF16
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 4B Instruct (BF16)"
-      description: "Vision-language model for Immich image analysis, BF16 (no quant)"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      filters: vl-workload
-      ttl: 0
-
-    qwen3-vl-4b-thinking-q8:
-      hf: unsloth/Qwen3-VL-4B-Thinking-GGUF:Q8_0
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 4B Thinking (Q8_0)"
-      description: "Reasoning vision-language model for Immich image analysis, Q8_0 quant; good balance of speed and accuracy"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      ttl: 0
-
-    qwen3-vl-4b-thinking-q4:
-      hf: unsloth/Qwen3-VL-4B-Thinking-GGUF:Q4_K_M
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 4B Thinking (Q4_K_M)"
-      description: "Reasoning vision-language model for Immich image analysis, Q4_K_M quant; good balance of speed and accuracy"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      ttl: 0
-
-    qwen3-vl-4b-thinking-bf16:
-      hf: unsloth/Qwen3-VL-4B-Thinking-GGUF:BF16
-      use: [threads]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 4B Thinking (BF16)"
-      description: "Reasoning vision-language model for Immich image analysis, BF16 (no quant); good balance of speed and accuracy"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      ttl: 0
-
-    qwen3-vl-30b-a3b-thinking-q8:
-      hf: unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q8_0
-      use: [threads, moe-vl-q8, flash-and-q8, big-ub]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 30B A3B Thinking (Q8_0)"
-      description: "Reasoning vision-language MoE model for Immich image analysis, Q8_0 quant, CPU-offloaded experts; higher accuracy for complex images"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      ttl: 0
-
-    qwen3-vl-30b-a3b-thinking-q4:
-      hf: unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q4_K_M
-      use: [threads, moe-vl-q4, flash-and-q8, big-ub]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 30B A3B Thinking (Q4_K_M)"
-      description: "Reasoning vision-language MoE model for Immich image analysis, Q4_K_M quant, CPU-offloaded experts; higher accuracy for complex images"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      ttl: 0
-
-    qwen3-vl-30b-a3b-thinking-bf16:
-      hf: unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:BF16
-      use: [threads, moe, flash-and-q8]
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
-      flags: |
-        -c 16384
-      name: "Qwen3 VL 30B A3B Thinking (BF16)"
-      description: "Reasoning vision-language MoE model for Immich image analysis, BF16 (no quant), CPU-offloaded experts; higher accuracy for complex images"
-      capabilities:
-        in:
-          - text
-          - image
-        out:
-          - text
-      ttl: 0
+      capabilities: {in: [text, image], out: [text]}
+      quants:
+        q8:
+          hf: "unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q8_0"
+          use: [threads, moe-vl-q8, flash-and-q8, big-ub]
+          name: Qwen3 VL 30B A3B Thinking (Q8_0)
+          description: "Reasoning vision-language MoE model for Immich image analysis, Q8_0 quant, CPU-offloaded experts; higher accuracy for complex images"
+        q4:
+          hf: "unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q4_K_M"
+          use: [threads, moe-vl-q4, flash-and-q8, big-ub]
+          name: Qwen3 VL 30B A3B Thinking (Q4_K_M)
+          description: "Reasoning vision-language MoE model for Immich image analysis, Q4_K_M quant, CPU-offloaded experts; higher accuracy for complex images"
+        bf16:
+          hf: "unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:BF16"
+          use: [threads, moe, flash-and-q8]
+          name: Qwen3 VL 30B A3B Thinking (BF16)
+          description: "Reasoning vision-language MoE model for Immich image analysis, BF16 (no quant), CPU-offloaded experts; higher accuracy for complex images"
 
     # Audio transcription for MinusPod (media cluster) via whisper.cpp,
     # bundled in the unified image. Weights (~3.1GB) are fetched once from
     # HuggingFace into the models PVC on first load. Swaps 1:1 with the GPU
     # chat/VL models per the matrix below (one GPU model at a time on 8GB).
-    # 2026-10-17: weights URL is ggerganov/whisper.cpp — the former home
+    # 2026-10-17: weights URL is ggerganov/whisper.cpp - the former home
     # ggml-org/whisper.cpp was removed from HuggingFace (401), which made
     # every load die in the curl bootstrap ("upstream command exited
     # prematurely"); ggerganov/whisper.cpp is where upstream's own
     # download-ggml-model.sh points.
     # 2026-10-17 (2nd): --inference-path below is REQUIRED. whisper.cpp's
     # server only ever registers request_path + inference_path (default
-    # /inference) — it has NO /v1/audio/transcriptions route (verified in
+    # /inference) - it has NO /v1/audio/transcriptions route (verified in
     # the image's whisper.cpp 60c0be6a), while llama-swap forwards the
     # OpenAI path to upstreams unrewritten, so without the flag every
     # transcription 404'd with Server: whisper.cpp. /health stays put
     # (registered off request_path), so checkEndpoint keeps working.
     # NOTE on the /bin/sh -c bootstrap below: llama-swap's SanitizeCommand
     # strips trailing backslashes (keeping the newline) before shlex-splitting,
-    # so inside the quoted script a command must be COMPLETE on one line —
+    # so inside the quoted script a command must be COMPLETE on one line -
     # continuation is only safe via a trailing &&/|| (a newline after an
     # operator is legal POSIX). Lines starting with # are also stripped.
-    whisper-large-v3:
-      cmd: |
-        /bin/sh -c "
-          mkdir -p /models/whisper &&
-          { test -f /models/whisper/ggml-large-v3.bin ||
-            { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin &&
-              mv /models/whisper/ggml-large-v3.bin.part /models/whisper/ggml-large-v3.bin; }; } &&
-          exec whisper-server --host 0.0.0.0 --port ${PORT} --inference-path /v1/audio/transcriptions -m /models/whisper/ggml-large-v3.bin
-        "
-      name: "Whisper Large v3"
-      description: "Audio transcription (whisper.cpp ggml-large-v3) for podcast processing"
-      checkEndpoint: /health
-      ttl: 0
-      capabilities:
-        in:
-          - audio
-        out:
-          - text
+    # The catalog converts this raw cmd to an ordinary disabled rung on
+    # clusters that do not enable it (echo wins over cmd).
+    whisper:
+      enabled: false
+      quants:
+        large-v3:
+          cmd: |
+            /bin/sh -c "
+              mkdir -p /models/whisper &&
+              { test -f /models/whisper/ggml-large-v3.bin ||
+                { curl -fL --retry 3 --retry-all-errors -o /models/whisper/ggml-large-v3.bin.part https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin &&
+                  mv /models/whisper/ggml-large-v3.bin.part /models/whisper/ggml-large-v3.bin; }; } &&
+              exec whisper-server --host 0.0.0.0 --port ${PORT} --inference-path /v1/audio/transcriptions -m /models/whisper/ggml-large-v3.bin
+            "
+          name: Whisper Large v3
+          description: Audio transcription (whisper.cpp ggml-large-v3) for podcast processing
+          checkEndpoint: /health
+          ttl: 0
+          capabilities: {in: [audio], out: [text]}
+
+    # Qwen3.8-27B derivative line (gpu-ai daily drivers, 2026-10-18 plan
+    # gpu-ai-uncensored-qwen36-coder-next era): uncensored/abliterated
+    # builds around the same base model. They compose ${q38-*} macros that
+    # only exist in services/gpu-ai values, so gpu keeps these rungs
+    # default-disabled (catalog echoes - the echo path never resolves a
+    # macro, so an undefined-macro load error cannot leak to that box).
+    qwen38:
+      enabled: false
+      quants:
+        # Daily driver, MTP + embedded vision. aliases qwen3.8 /
+        # local/qwen3.8-27b are consumer-pinned (OpenWebUI/HA routing).
+        orca:
+          hf: "orcarouter/Qwen3.8-27B-Uncensored-GGUF:Q6_K"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [q38-common, q38-sampling, q38-think]
+          flags: |
+            -c 262144
+          name: "Qwen3.8 27B Uncensored (Orca Q6_K, MTP)"
+          description: "Qwen3.8 27B daily driver; draft-MTP speculative decoding, 256k ctx"
+          aliases: [qwen3.8, local/qwen3.8-27b]
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 300
+        # Max quality / coding (embedded MTP).
+        ara:
+          hf: "cygnal/Qwen3.8-27B-heretic-ara-Q4_K_M-MTP-GGUF:Q6_K-MTP"
+          spec: {type: draft-mtp, draft_n_max: 3}
+          use: [q38-common, q38-sampling, q38-think]
+          flags: |
+            -c 262144
+          name: Qwen3.8 27B heretic-ara (Q6_K-MTP)
+          description: "Max-quality/coding build; draft-MTP n-max 3, 256k ctx"
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 300
+        # Public mirror + borrowed official MTP draft. The RENDERED cmd is
+        # gpu-ai's raw-cmd escape hatch (multi-curl mmproj bootstrap must stay
+        # one physical line - SanitizeCommand rule, see the whisper family
+        # note); the fields below document the refs (precedence cmd >
+        # composition keeps them inert where the override renders).
+        rana:
+          hf: "mradermacher/Qwen3.8-27B-RANA-abliterated-GGUF:Q6_K"
+          draft: "ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf"
+          spec: {type: draft-mtp, draft_n_max: 2, draft_p_min: 0.75}
+          use: [q38-common, q38-sampling, q38-think]
+          flags: |
+            -c 262144
+          name: "Qwen3.8 27B RANA abliterated (Q6_K, MTP)"
+          description: "mradermacher mirror; borrowed ggml-org official MTP draft (experimental), 256k ctx"
+          ttl: 300
+          capabilities: {in: [text, image], out: [text]}
+        # Text-only; official GGUF has no MTP -> no --spec-type.
+        humanlike:
+          hf: "LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-GGUF:Q6_K"
+          use: [q38-common, q38-sampling]
+          flags: |
+            -c 131072
+            --reasoning on
+            --reasoning-effort low
+          name: Qwen3.8 27B Humanlike-Chat 2.0 (Q6_K)
+          description: "Text-only humanlike chat; low reasoning effort, 128k ctx"
+          ttl: 300
+        # Reference quality (~20.8Gi, ~4-6 tok/s). F16 ships as two shards
+        # (-00001-of-00002 / -00002-of-00002); the :F16 suffix matches both
+        # and llama.cpp downloads them together (same mechanism the chart's
+        # :BF16 models already use). ttl 180 - evicts fast.
+        orca-f16:
+          hf: "orcarouter/Qwen3.8-27B-Uncensored-GGUF:F16"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [q38-common, q38-sampling, q38-think]
+          flags: |
+            -c 262144
+          name: "Qwen3.8 27B Uncensored (Orca F16 reference, MTP)"
+          description: Reference F16 build; ttl 180 so it evicts fast
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 180
+
+    # Always-ready embedding sidecar (2026-10-16, gpu-ai): coexists with
+    # the dense + MoE trio via the matrix main set there, so RAG
+    # workloads never evict the chat models. Own llama-server in
+    # --embeddings mode; trivial footprint (~0.7 GiB weights + ~0.1 GiB
+    # KV at 8k ctx). The 8GiB gpu box keeps its tight single-model budget
+    # - this rung stays default-disabled there.
+    qwen3-embedding:
+      enabled: false
+      quants:
+        0.6b:
+          hf: "Qwen/Qwen3-Embedding-0.6B-GGUF:Q8_0"
+          use: [threads]
+          flags: |
+            --embeddings
+            -c 8192
+            -np 2
+            --cache-ram 0
+            -ngl 99
+          name: Qwen3 Embedding 0.6B (Q8_0)
+          description: "Text embeddings via /v1/embeddings; Qwen3-Embedding 0.6B Q8_0, always-ready sidecar"
+          ttl: 0
+
+    # Qwen3.6-35B-A3B uncensored variants (2026-10-18, STORM run c93fd3a):
+    # abliterations ALONGSIDE the chart's base qwen3.6-35b-a3b entries -
+    # they replace nothing. Both keep native MTP heads -> draft-mtp
+    # speculative decoding (n-max 2 per the RDNA4 measurement; expect only
+    # ~1.15-1.25x on fine-grained MoE - measure on first load). Placement:
+    # experts-on-CPU (Variant B, VRAM unpinned) via ${q36-common}. mmproj
+    # confirmed in both repos -> vision declared.
+    qwen36:
+      enabled: false
+      use: [q36-common, q36-sampling, q38-think]
+      spec: {'type': 'draft-mtp', 'draft_n_max': 2}
+      flags: |
+        -c 262144
+      ttl: 300
+      capabilities: {in: [text, image], out: [text]}
+      quants:
+        # Evidence pick: KL 0.0015, MMLU 83.71->83.39. q38-think reuse is
+        # intentional: the reasoning flags are generic (--reasoning
+        # on/--reasoning-preserve/--reasoning-effort medium).
+        heretic:
+          hf: "mradermacher/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-GGUF:Q4_K_M"
+          name: "Qwen3.6 35B A3B heretic (Q4_K_M, MTP)"
+          description: "llmfan46 heretic abliteration, native MTP preserved; mradermacher mirror; experts-on-CPU; 256k ctx"
+        # Stable-org fallback: HF PRO, 155 models.
+        huihui:
+          hf: "huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF:Q4_K"
+          name: "Qwen3.6 35B A3B huihui abliterated (Q4_K, MTP)"
+          description: "huihui-ai classic abliteration, dedicated MTP GGUF; experts-on-CPU; 256k ctx"
+
+    # C04 big families (2026-10-23): Qwen 3.8 Flash Next - 180B-class MoE
+    # (arch qwen4exp, 512 experts/top-10). gpu-ai-only BY ENABLEMENT
+    # (DECISIONS 2026-10-22 + REPLAN CR2: everywhere else it is a catalog
+    # echo - no consumers on the gpu box and orcarouter is gated:auto with
+    # HF_TOKEN gpu-ai-side only). Fit evidence re-verified live at
+    # implementation (GGUF headers range-fetched; sizes re-summed from
+    # the HF API - no tag churn vs RESEARCH 4): ${moe}'s -ot
+    # \.ffn_.*_exps\.=CPU matched the fused routed-expert tensors
+    # (144/147 tensors) - no fn-moe substitute macro needed; shared
+    # experts (_shexp) stay GPU-resident as intended.
+    # MTP: flash-next takes the in-repo draft via -hfd
+    # (mtp-Qwen3.8-Flash-Next-Q8_0.gguf, 3.9 GiB, flat root file verified
+    # present live).
+    qwen3.8-flash-next:
+      enabled: false
+      use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+      draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+      spec: {'type': 'draft-mtp', 'draft_n_max': 2}
+      capabilities: {in: [text, image], out: [text]}
+      ttl: 300
+      quants:
+        q3:
+          hf: "unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q3_K_XL"
+          name: "Qwen 3.8 Flash Next (UD-Q3_K_XL, MTP)"
+          description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q3_K_XL, 83.8 GiB weights; experts on CPU; MTP draft, 256k ctx; SOLO - largest resident this node has attempted (RESEARCH §4A regime test)"
+        q4:
+          hf: "unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q4_K_XL"
+          name: "Qwen 3.8 Flash Next (UD-Q4_K_XL, MTP)"
+          description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q4_K_XL, 103.7 GiB weights; experts on CPU; MTP draft, 256k ctx; tight against the ~125 GiB node budget - SOLO only"
+        # Over the ~125 GiB gpu-ai node RAM budget outright (147.4 GiB).
+        # Declared ENABLED anyway per the operator's accepted OOM-churn
+        # decision 2026-10-22; intentionally NO matrix var (run-alone
+        # semantics) and never preloaded - a request for it evicts everything,
+        # and a failed load surfaces as an upstream error, not a co-residency
+        # surprise.
+        q5:
+          hf: "unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q5_K_XL"
+          name: "Qwen 3.8 Flash Next (UD-Q5_K_XL, MTP)"
+          description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q5_K_XL, 147.4 GiB weights; OVER the ~125 GiB node budget - enabled by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix), never preloaded"
+        # Same over-budget treatment as q5 (157.5 GiB): enabled by accepted
+        # operator decision, NO matrix var, never preloaded.
+        q6:
+          hf: "unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q6_K_XL"
+          name: "Qwen 3.8 Flash Next (UD-Q6_K_XL, MTP)"
+          description: "Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q6_K_XL, 157.5 GiB weights; OVER the ~125 GiB node budget - enabled by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix), never preloaded"
+
+    # orcarouter Uncensored Flash Next (gated:auto repo - downloads need
+    # HF_TOKEN, which only gpu-ai injects). MTP pattern mirrors the proven
+    # qwen38-orca daily driver (same publisher/build convention,
+    # embedded-MTP expectation); the header itself is not anonymously
+    # inspectable (401 GatedRepo, evidence in the C04 record). If a first
+    # load reports no MTP tensors: add
+    # draft: orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:MTP-draft.gguf
+    # (file verified present live - NOTE the UPPERCASE name: llama.cpp's
+    # mtp- sidecar match is case-sensitive, TEST_SPEC 7(F)) or drop the
+    # spec block.
+    qwen3.8-flash-next-orca:
+      enabled: false
+      quants:
+        q6:
+          hf: "orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:Q6_K"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+          name: "Qwen 3.8 Flash Next Uncensored (Orca Q6_K, MTP)"
+          description: "orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights; experts on CPU; over the ~125 GiB node budget like flash-next q6 - SOLO, never preloaded, may OOM; embedded-MTP per the qwen38-orca pattern"
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 300
+
 
   # Concurrency matrix (replaces legacy groups routing).
   # One GPU model at a time; homecpu (CPU) may run alongside any GPU model.
@@ -735,6 +815,40 @@ config:
       ornq3: ornith-1.5-35b-a3b-q3
       orniq2: ornith-1.5-35b-a3b-iq2xxs
       wsp: whisper-large-v3
+      # Catalog rungs (CA2): one var per gpu-ai-local catalog rung so the
+      # chart set stays closed on EVERY render (echo IDs exist in all
+      # clusters - closure holds trivially). Names are the ones
+      # services/gpu-ai set expressions reference; on the gpu box these
+      # vars are unreferenced (the rungs echo), which v262 tolerates.
+      # flash-next q5/q6 get NO var at all on purpose, on any cluster:
+      # a model in no matrix set can only run alone and is never admitted
+      # under a co-residency promise (declared ENABLED per the operator's
+      # accepted OOM risk, DECISIONS 2026-10-22).
+      emb06: qwen3-embedding-0.6b
+      q38orca: qwen38-orca
+      q38ara: qwen38-ara
+      q38rana: qwen38-rana
+      q38hum: qwen38-humanlike
+      q38f16: qwen38-orca-f16
+      # 1M context + visual variants (2026-10-13/15): the base q38q8/q35q8
+      # IDs are the text-only caching versions on gpu-ai (--no-mmproj +
+      # cache_reuse), these siblings keep the mmproj / 1M ctx.
+      q38q81m: qwen3.8-27b-q8-1m
+      q38q8v: qwen3.8-27b-q8-visual
+      q35q8v: qwen3.6-35b-a3b-q8-visual
+      # Uncensored MoE additions (2026-10-18): join gpu-ai's main MoE
+      # alternation.
+      q36her: qwen36-heretic
+      q36hui: qwen36-huihui
+      # C04 big families (2026-10-23) - all solo-set on gpu-ai.
+      fnq3: qwen3.8-flash-next-q3
+      fnq4: qwen3.8-flash-next-q4
+      fnorca: qwen3.8-flash-next-orca-q6
+      o122q3: ornith-1.5-122b-q3
+      o122q4: ornith-1.5-122b-q4
+      o122q5: ornith-1.5-122b-q5
+      o122q6: ornith-1.5-122b-q6
+      # q38cyber: qwen38-cyber      # PHASE 2 (vars must not reference undefined models)
     sets:
       # C04 (2026-10-23): the Ornith 35B ladder joins the MoE alternation on
       # both clusters - one GPU model at a time still holds (gpu-ai narrows
