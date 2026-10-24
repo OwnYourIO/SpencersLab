@@ -407,3 +407,84 @@ After reviewing the landed C01–C04 surface, the user requested changes
   human gate (plan bar 2) is DISCHARGED; no keep-explicit pins requested.
 - Reverted obligation: none. Proceed to final whole-plan review round 3
   (CB1+CB2 increment) -> then PR is user-owned -> C05 wave 8.
+
+## 2026-10-24 — CR6: autogen REMOVED by user ruling (coord)
+
+- Post-CR5 review question from user: "Is autogen being used at all?" Honest
+  answer: it emits a comment-only scanned half every boot (zero models); all
+  real generation is the Helm catalog. User ruled: **remove the autogen
+  machinery entirely** (container, initContainer, base.yaml CM, mounts,
+  degrade logic, -config-dir wiring, related tests). Path A is superseded by
+  a DECLARED-ONLY architecture; the `-config` single-file shape returns
+  (hot-reload of the declared file via the original chart mechanism).
+- Rationale preserved in RESEARCH.md/CA records for future revival (on-disk
+  scanning hedge); everything recoverable from this ticket's git history.
+- plan_status: needs-replan (round 3 = CR6 deletion). Pre-merge still — PR not
+  created; branch synced with origin/main at f4bdcab6e (pipeline-models
+  conflict resolved: main's structure kept, CA3 kat deletions re-applied).
+
+## 2026-10-24 — CR6 replan round 3: removal plan decisions (agent-plan)
+
+**Ruling of record:** DECISIONS 2026-10-24 "CR6" (coord) — user removed autogen
+entirely; DECLARED-ONLY. This entry adds only the PLANNING decisions.
+
+**Planner decisions (rejected alternatives in parentheses):**
+- End state VERIFIED, not reconstructed: the pre-ticket chart (b2aa2e4b2) env pair
+  `LLAMA_SWAP_CONFIG` + `LLAMA_SWAP_WATCH_CONFIG: "true"` + directory mount +
+  reloader annotation is STILL PRESENT verbatim at HEAD; CR6 removes only the
+  added `LLAMA_SWAP_CONFIG_DIR` line (Rejected: any rebuild of the original
+  command/args — run.sh maps envs; nothing was ever changed there).
+- Ordering CC1 (test retirement) BEFORE CC2 (source removal): deleting tests first
+  keeps every intermediate commit suite-green (no surviving test asserts autogen
+  existence); (Rejected: source-first — the wiring/image tests would red the
+  removal commit, breaking the green-at-every-commit discipline).
+- Retention carve-outs (user brief "KEEP hf_check + catalog tests"):
+  `test_c04_1_hf_repo_tags_resolve` retained + DECOUPLED to gate on RUN_HF_CHECK
+  alone; `test_c04_4_full_roster_declared_validates` retained, re-expressed
+  single-file (it is the only fleet-schema check); reloader-annotation guard
+  re-expressed declared-scope (the hot-reload contract is what CR6 KEEPS);
+  colon-free-ID test retired (two-file-merge invariant; P1 exact-set subsumes).
+  (Rejected: retiring whole files — would silently drop live contracts.)
+- Frozen completion bars: 0f/119p/3s at CC1 AND CC2 (arithmetic 155-32+2-6=119;
+  12-4-8+3=3 in the plan + 7quinquies); CC2 controlling bars = declared-CM byte-
+  EQUAL all renders + pod-delta removals-only (volumes 6->3). (Rejected:
+  recompute-at-review — counts must be frozen before dev starts, CA2 lesson.)
+- CI/renovate/docker-build VERIFIED edit-free by measurement (autodetect + guards
+  + generic git-refs manager); repo-wide sweep proves the removal surface is the
+  ONLY non-history autogen reference set. The :main->:v<run> pin obligation is
+  retired with the container; unified-vulkan-262 untouched; optional user-side
+  ghcr cleanup noted in C05.
+- TEST_SPEC carries the CB1-found stale digits fix (7quater 159->155, 7-D 17->16)
+  on CC1's touch (next-test-touch convention from final-3).
+- STATE.deferred items owned by the retired feature (image-evidence followup,
+  deferred-(e) -print-quit, deferred-(f) cache observation, :v-pin) are retired by
+  CR6 — coord may prune; recorded here rather than silently deleted.
+- `plan_status` -> approved pending this round's gate; waves 8 CC1 -> 9 CC2 ->
+  10 C05 (user-gated). C05 tasking rebased IN PLACE again (planner artifact;
+  no separate rechunk, round-1 precedent).
+
+- CR6 GATE OUTCOME (2026-10-24, question tool): removal plan + waves + reloader/
+  colon-free judgment calls APPROVED AS PLANNED; `test_c04_4_full_roster_declared_
+  validates` RULED RETIRED TOO (plan supersession subsection is the controlling
+  text) -> frozen bars CC1=CC2= **0f/119p/1s**, sole evidence gate = re-homed
+  `test_c04_1_hf_repo_tags_resolve` on RUN_HF_CHECK alone; LLAMA_SWAP_EVIDENCE +
+  LLAMA_SWAP_IMAGE_EVIDENCE gates retire entirely; FLEET_IMAGE/docker_ready join
+  the testlib prune list; pod boot on-cluster is the fleet -validate proof (C05
+  observation, not a test). `plan_status: approved`; waves 8 CC1 -> 9 CC2 ->
+  10 C05.
+
+## 2026-10-24 — CR6 close-out (coord; final-4 APPROVED ready-to-PR)
+
+- CR6 fully landed: replan-3 + CC1 0e7eafd36 + CC2 123f1cb55 + plan-file STATUS
+  pointer (+10 lines) + final-4 4-item ledger bundle 3804f70fc.
+  Branch tip = 3804f70fc; bar 0f/119p/1s; final-4 proved pod shape
+  byte-identical to the pre-ticket chart (restored, not reconstructed) and
+  the declared ConfigMap shas identical to final-3's certified values.
+- Supersession record: Path A (C01-C04, CR6-removed) -> DECLARED-ONLY Helm
+  catalog (CA2/CR5 grammar). autogen revival recipe lives in RESEARCH/CA4/CC
+  records if on-disk scanning is ever wanted.
+- Post-merge obligations FINAL (see STATE.deferred surviving inventory):
+  PR (user) -> release.yaml chart bump -> ArgoCD sync -> C05 (wave 10) ->
+  machine-global 13+9 dangling modelIDs cleanup (user) -> optional hardening
+  chore ticket. ghcr cleanup + :v-pin are N/A (image never existed outside
+  PR CI builds).

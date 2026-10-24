@@ -1,7 +1,7 @@
 {
   "feature": ".agents/plans/2026/2026-10-feat-llama-swap-config-generation",
-  "plan_status": "ready-for-PR-awaiting-C05",
-  "current_wave": 7,
+  "plan_status": "ready-for-pr",
+  "current_wave": 10,
   "updated_at": "2026-10-24",
   "kickoff": {
     "slug": "feat-llama-swap-config-generation",
@@ -189,6 +189,57 @@
         "friction": "recommend: cat>> splices need post-asserts (logged)",
         "open_questions": "none",
         "next_suggested": "CB1 (test session only) -> CB2 dev -> reviews -> C05. CB2's before/after display table MUST reach user before PR."
+      },
+      {
+        "status": "DONE",
+        "chunk": "replan-3",
+        "verdict": "CR6 PLAN APPROVED (user, 2026-10-24 question tool: removal as planned + c04_4 RETIRED TOO; bars re-frozen 0f/119p/1s)",
+        "files_changed": [
+          "2026-10-22-feat-llama-swap-config-generation.md (REPLAN ROUND 3 (CR6) + user-rulings supersession appended)",
+          "chunks/CC1.md (new - test-session retirement)",
+          "chunks/CC2.md (new - source removal)",
+          "chunks/C05.md (CR6 rebase addendum; c04_4 line corrected per gate ruling)",
+          "STATE.json (plan_status approved; CC1/CC2 pending waves 8/9; C05 -> wave 10 + CC deps; deferred CR6 note)",
+          "DECISIONS.md (CR6 planner decisions + gate outcome appended)"
+        ],
+        "commands_run": [
+          "pre-ticket shape verified: b2aa2e4b2 env pair LLAMA_SWAP_CONFIG + WATCH_CONFIG + dir-mount + reloader annotation STILL PRESENT byte-equal at HEAD - end state is pure subtraction, no reconstruction => pass",
+          "removal-surface measured: values autogen: ~882-897 + comment 859-880, initContainers.autogen ~907-966, CONFIG_DIR env 997-1000, persistence gen/autogen-base/autogen-home ~1078-1112, configmap-autogen-base.yaml, autogenBase+firstMountPath defines (sole consumers grep-verified) => pass",
+          "suite arithmetic frozen: 155P = 34+20+32+30+6+33; 12S = 8+4 => CC1=CC2 bar 0f/119p/1s (155-32+2-6; 12-4-8+1) + per-file recount recorded => pass",
+          "keeper classification: wiring 32p all-autogen except reloader-x2 (re-express) + colon-free (retire, P1-subsumed); integration: c04_1 KEEP decoupled, c04_4 RETIRED per ruling, rest retire; testlib prune list grep-verified consumers (FLEET_IMAGE/docker_ready/ENTRYPOINT_FILE/_comment_only/FAIL_STUB/OK_STUB/BASE_CM; keep is_echo_cmd/render_rc/tables) => pass",
+          "repo-wide dependency sweep: llama-swap-autogen/LLAMA_SWAP_CONFIG_DIR/autogen hits ONLY removal surface + tests + plan history; skills/AGENTS.md/services/custom-values/charts/base/workflows zero => pass",
+          "docker-build.yaml autodetect + Dockerfile-existence guard => edit-free; llama-swap-tools-tests.yaml no autogen/venv/env steps => edit-free; renovate.json generic git-refs manager => edit-free => pass",
+          "evidence-yaml item-by-item drop/keep classification recorded (autogen 5 items; keepers incl CR5 picker-table) => pass",
+          "STATE.json parse + plan-section integrity checks => pass"
+        ],
+        "deviations": "(1) CR6 addendum line in chunks/C05.md written pre-gate said c04_4 retained; corrected in-round per the user's retire-it-too ruling (supersession subsection + DECISIONS gate outcome carry the record). (2) python heredoc syntax slip (escaped apostrophe in a no-op assert) aborted the first plan-append attempt before any write - retried clean; no junk lines this time. (3) STATE.deferred entries retired by CR6 ANNOTATED not deleted (history rule). (4) Nothing committed (landing coord/user-owned); plan-folder artifacts only.",
+        "friction": "none new (shell-python splices per FRICTION held; /tmp/opencode helm availability still session-ephemeral - CC1/CC2 will need the reinstall dance, known)",
+        "open_questions": "none",
+        "next_suggested": "launch CC1 in the test session (ses_e9bdebccbffe7bYG46Fm9LO8FG); CC1 must land green against UNMODIFIED source before CC2 dev starts; then PR is user-owned (CB2 display table already approved) and C05 executes at wave 10 vs the re-balanced evidence yaml"
+      },
+      {
+        "status": "DONE",
+        "chunk": "replan-3",
+        "files_changed": [
+          "plan file (REPLAN ROUND 3 (CR6) + rulings supersession)",
+          "chunks/CC1.md",
+          "chunks/CC2.md",
+          "chunks/C05.md (CR6 rebase)",
+          "STATE.json",
+          "DECISIONS.md"
+        ],
+        "commands_run": [
+          "end-state verification b2aa2e4b2-vs-HEAD: single-file mechanism byte-equal at HEAD => pure subtraction",
+          "suite arithmetic frozen: bars CC1=CC2=0f/119p/1s",
+          "keeper classification + testlib prune greps => pass",
+          "repo-wide autogen dependency sweep: CI/renovate/skills/AGENTS.md edit-free => pass",
+          "STATE parse + plan integrity asserts => pass"
+        ],
+        "user_rulings": "CR6 removal approved as planned; c04_4 fleet -validate RETIRED TOO (skip 3->1; LLAMA_SWAP_EVIDENCE/IMAGE_EVIDENCE gates retire; pod boot on-cluster = the fleet validation proof, C05 observation)",
+        "deviations": "(1) C05 c04_4 line corrected in-round per gate. (2) heredoc slip pre-write no-op, retried. (3) deferred items annotated-retired, not deleted.",
+        "friction": "none new",
+        "open_questions": "coord: STATE.deferred pruning annotated; do at closeout",
+        "next_suggested": "CC1 test session (green against UNMODIFIED source at 0f/119p/1s) -> CC2 dev -> reviews -> final -> user PR"
       }
     ]
   },
@@ -655,9 +706,9 @@
     },
     "C05": {
       "status": "pending",
-      "title": "post-merge gpu-box verification + reload/rollback runbook (user-gated; REBASED 2026-10-24; CR5 addendum: display-table live verification)",
+      "title": "post-merge gpu-box verification + reload/rollback runbook (user-gated; REBASED 2026-10-24 x2 - CR5 display check + CR6 autogen-retirement shrink: no initContainer/entrypoint/scanned items, pod boot = fleet -validate proof)",
       "size": "S",
-      "wave": 8,
+      "wave": 10,
       "depends_on": [
         "C01",
         "C02",
@@ -668,12 +719,31 @@
         "CA3",
         "CA4",
         "CB1",
-        "CB2"
+        "CB2",
+        "CC1",
+        "CC2"
       ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "cr6-ledger-bundle",
+          "commit": "3804f70fc (tests-only, 3 files)",
+          "commands_run": [
+            "minor-1 evidence reword to single-file load incl NO-merge-lines negative check",
+            "nit-2 reloader comma-token exactness (both clusters still green)",
+            "nit-3 7quinquies merged-case bullet",
+            "item-4 registry-cleanup N/A stated in OUR files; C05.md stale line flagged for coord (annotated now)",
+            "pytest => 0f/119p/1s bar held exactly; RUN_HF_CHECK 1p; hf_check 98/98; goldens 0"
+          ],
+          "deviations": "none",
+          "friction": "two anchor asserts caught pre-write",
+          "open_questions": "none",
+          "next_suggested": "C05 execution wave 10 post-merge"
+        }
+      ]
     },
     "CA1": {
       "status": "done",
@@ -1078,18 +1148,129 @@
           "next_suggested": "USER display-table gate -> final review round 3 -> C05 wave 8"
         }
       ]
+    },
+    "CC1": {
+      "status": "done",
+      "title": "contract retirement (CR6): wiring+image+integration files retired (reloader guard re-expressed x2, HF liveness re-homed RUN_HF_CHECK-only, c04_4 user-ruled RETIRED), testlib prune incl FLEET_IMAGE/docker_ready, evidence-yaml re-balance, TEST_SPEC 4/6 + 7quinquies ledger + stale-digit fixes - TEST SESSION ses_e9bdebccbffe7bYG46Fm9LO8FG only. Frozen bar 0f/119p/1s; invariant: green against UNMODIFIED source",
+      "size": "M",
+      "wave": 8,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "CC1",
+          "commit": "0e7eafd36 (tests-only, 9 files)",
+          "files_changed": [
+            "-test_autogen_wiring.py, -test_autogen_image.py, -test_autogen_integration.py, -fixtures/scanned_synthetic.yaml",
+            "+test_hf_liveness.py (RUN_HF_CHECK-only gate)",
+            "llama_swap_testlib.py (-62 net prune)",
+            "test_config_schema.py (+2 reloader guards re-homed)",
+            "evidence/c05_expected_evidence.yaml (rebalanced)",
+            "TEST_SPEC.md (7quinquies ledger + 159->155/17->16 carry-fixes)"
+          ],
+          "commands_run": [
+            "zero-consumer greps x15 before prune; keeper re-greps after => safe",
+            "pytest -v vs UNMODIFIED source => 0f/119p/1s frozen bar exact (parity 34 + schema 22 + roster 30 + CI 33; 155-32+2-6=119; 12-4-8+1=1)",
+            "RUN_HF_CHECK=1 ALONE => 1p decoupling proven; hf_check direct 98/98 exit 0",
+            "renders x3 => pass; goldens 0-diff; commit scope tests-only",
+            "self-caught: range-cut prune ate _COMMENT_LINE constant -> first run 38f -> git-stash A/B diagnosed -> restored pre-commit"
+          ],
+          "deviations": "c04_4 x2 retired per USER ruling superseding planner keep-posture - ledgered; parity/roster files byte-absent from diff",
+          "friction": "range-function-prune class: deletes by [start->next-def] silently eat interleaved module constants - mitigation (post-prune import probe + full run pre-commit) proven",
+          "open_questions": "none",
+          "next_suggested": "CC1 review (re-run bar + arithmetic re-derivation + ledger audit), then CC2 source removal"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CC1",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CC1.md Round-1 notes"
+          ],
+          "commands_run": [
+            "0f/119p/1s vs unmodified source, invariant holds; frozen arithmetic re-derived via detached-worktree collect (167 items parent)",
+            "ledger: 50 deleted cases enumerated, mapped; reloader re-home semantics preserved; colon-free subsumption probe holds; testlib AST diff 13 symbols zero-consumer",
+            "RUN_HF_CHECK-alone 1p; hf_check 98/98; goldens 0; renders x3; evidence yaml ties to CR6 checklist; banned-token scan clean (4 ledger-mention files listed for CC2 sweep)"
+          ],
+          "findings": [
+            "minor-1: gpu-ai evidence line 'startup merged load' stale post-CR6 - reword before C05 mechanical diff (test touch)",
+            "nit-2 reloader token exactness, nit-3 merged-case missing from 7quinquies bullet - same next test touch"
+          ],
+          "deviations": "none",
+          "friction": "aislop single-file scan silently zero-diags on 'Not a directory' - dir-scope only",
+          "open_questions": "none",
+          "next_suggested": "CC2 dev now: same bars post-removal + declared-CM byte-equal x3 + pod-delta removals-only (volumes 6->3) + residual sweep w/ 4-file ledger exclusion"
+        }
+      ]
+    },
+    "CC2": {
+      "status": "done",
+      "title": "source removal (CR6): containers/llama-swap-autogen dir, configmap-autogen-base.yaml, autogenBase+firstMountPath defines + header-comment reword, values autogen:/initContainers/env/mounts. Bars: 0f/119p/1s + declared-CM byte-equal x3 + pod-delta removals-only (volumes 6->3) + residual sweep zero",
+      "size": "M",
+      "wave": 9,
+      "depends_on": [
+        "CC1"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "CC2",
+          "commit": "123f1cb55 (5 files, +6/-414 - additions are 2 reworded comment blocks)",
+          "files_changed": [
+            "charts/llama-swap/templates/_helpers-llama-swap.tpl (-119/+6)",
+            "charts/llama-swap/templates/configmap-autogen-base.yaml (DELETED)",
+            "charts/llama-swap/values.yaml (-139)",
+            "containers/llama-swap-autogen/Dockerfile + entrypoint.sh (DELETED)"
+          ],
+          "commands_run": [
+            "pytest => 0f/119p/1s EXACT (pre+post commit)",
+            "BYTE-EQUALITY: declared-CM data sha-equal x3 vs 0e7eafd36 archive renders; pod delta REMOVED-only 43/43/45 leaves, 0 added/changed; volumes 6->3; env single removal; base-CM doc vanished",
+            "helm dep/lint/--strict + renders x3 (68859/72002/77297 B)",
+            "residual sweep: functional trees 0 hits; tests = exactly 4 ledger files (+pycache cleared); AGENTS/renovate/.rulesync 0",
+            "RUN_HF_CHECK 1p; hf_check 98/98; goldens 0; tests diff 0; docker-build guard read-verified edit-free; ghcr probe => DENIED, never pushed, cleanup n/a",
+            "aislop 0 attributable"
+          ],
+          "deviations": "(1) stale gitignored __pycache__ of deleted modules cleared (untracked). (2) EOF blank self-caught+trimmed. (3) pre-existing trailing spaces left. (4) helpers header reworded to current invariants, no retired-merge history.",
+          "friction": "$( ) mangling in harness payloads -> registry check via execute runtime; git add -A no-op behind suppressed stderr -> explicit re-stage + rule: never suppress staging stderr",
+          "open_questions": "none",
+          "next_suggested": "CC2 review; final-4; C05 wave 10; PR user-owned; ghcr cleanup marked n/a in runbook"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CC2",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CC2.md Round-1 notes"
+          ],
+          "commands_run": [
+            "all bars reproduced incl dev shas byte-exact x3; pod deep-diff 0 added/0 changed; env/mount/annotation COMMENT-byte-equal to b2aa2e4b2 pre-ticket",
+            "numstat: 6 insertions = 2 header rewords only; both rewords code-true + slop-clean",
+            "sweep: 0 outside 4 ledger files; pycache provenance verified; docker-build inert; ghcr never-pushed VERIFIED via path-absence + 403",
+            "reload story hot-reload-only E2E"
+          ],
+          "findings": [
+            "new nit: runbook 'image stays published' wording = no-op (cleanup n/a) - fold at next test touch"
+          ],
+          "deviations": "none; dev 1-4 accepted",
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "final-4 CR6 increment; then user PR; C05 wave 10"
+        }
+      ]
     }
   },
   "blocked": [],
   "deferred": [
     "C05 cannot execute until the user lands the PR (ArgoCD syncs main only)",
-    "FOLLOWUP (C01 review, minor): run LLAMA_SWAP_IMAGE_EVIDENCE=1 suite + docker build/run/inspect of containers/llama-swap-autogen with a real daemon BEFORE accepting C03 (C03 depends on the image contract; no daemon in this worktree - ask user to run locally or approve on-cluster substitute)",
-    "nit (no action): patch-locked base pin python:3.12.15-slim-bookworm mirrors tools sidecar; renovate docker manager covers it",
-    "C02 review minors: minor-1 EOF newlines, minor-2 spec fail-guard wording - fold into C04 dev tasking",
-    "deferred (e): init degrade find|head SIGPIPE restructure to find -print -quit (C03 review R2, non-blocking)",
-    "deferred (f): C05 first-real-scan observation of /home/autogen cache behavior on-cluster (fold into C05 tasking)",
-    "post-wave hardening chore candidate: C02 minor-2 (spec fail-guard) + nit-3 (use-macro render validation) + deferred(e) (-print -quit) - unowned by design, propose to user after final review",
-    "post-wave candidates (C04 review): gpu q6/q8 per-cluster capabilities override (minor-1); orca fallback-comment uppercase-MTP caveat (fold into C05 runbook tasking)"
+    "HARDENING CHORE SURVIVORS (final-4 inventory, CR6-retired ones removed): C04 minor-1 gpu q6/q8 per-cluster capabilities override; final-1 nit-1 quote-guard on disabled: echo interpolation (helpers ~:205, incl CA2 catalog/cluster strings entry-point); CB2 nits {size}-without-size / null draft-spec MTP leg / .id-fallback spelling; final-1 nit-2 hf_check helm-on-PATH note; hf_check.py --suggest dev-aid; TEST_SPEC minor-2 fail-guard wording + 5.1/5.7 CR6-era markers",
+    "RETIRED by CR6 (do not carry): CA4 nits 2-5, deferred-(e) -print-quit, deferred-(f) first-real-scan, image-evidence FOLLOWUP, :v-pin, ghcr cleanup (N/A - never pushed)",
+    "USER-OWNED post-merge: PR; machine-global cleanup 13 gpu-ai + 9 gpu-moe dangling modelIDs (opencode.json + kilo twin) + coder-workspace flows; C05 run"
   ],
   "final_review": {
     "session": "ses_e98e8415fffewg5QkHPMOGkz2Z",
@@ -1177,6 +1358,31 @@
         "friction": "npx rulesync@latest false-reports drift vs pinned v37 - use installed binary; ~/.config/opencode JSONC needs text-grep",
         "open_questions": "none",
         "next_suggested": "user PR; C05 wave 8 vs evidence yaml incl picker-vs-table check; hardening chore on offer"
+      }
+    },
+    "round4": {
+      "session": "ses_e8ffe819effeRRX31UUF8Jj2Uj",
+      "verdict": "APPROVED (final, ready-to-PR)",
+      "handoff": {
+        "status": "DONE",
+        "chunk": "final-4",
+        "commands_run": [
+          "0f/119p/1s + gates + hf 98/98 + goldens 0 + rulesync clean + trio/sentinel + gpt-researcher + aislop 0-of-13",
+          "declared-CM shas x3 == final-3-certified (catalog unchanged through CR6)",
+          "pod leaf-diff vs b2aa2e4b2 = ZERO added/changed/removed both clusters (shape restored exactly)",
+          "all user rulings re-verified at HEAD incl display==approved-12, waiver MOOT+recorded, CR6 removal complete",
+          "ledger closure verified; pending-bundle = exactly 4 items, all ledgered",
+          "scope roster maps 1:1; containers/ == pre-ticket set; zero machine-global writes"
+        ],
+        "findings": [
+          "recommendation: plan-file STATUS pointer (landed by planner at +10 lines)",
+          "pending 4-item test touch (landed 3804f70fc)",
+          "coord closeout tasks (this record)"
+        ],
+        "deviations": "none",
+        "friction": "none new",
+        "open_questions": "none",
+        "next_suggested": "user PR; post-merge obligations list in DECISIONS"
       }
     }
   }

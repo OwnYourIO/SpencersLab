@@ -1,6 +1,14 @@
 # PLAN: llama-swap config autogen adoption + desired-state roster (Path A)
 feature: 2026/2026-10-feat-llama-swap-config-generation
 
+> **STATUS (2026-10-24, final-4 approval at 123f1cb55):** the FINAL ARCHITECTURE is
+> **DECLARED-ONLY — one Helm-rendered single-file config** (CR6 user ruling; autogen
+> removed by CC1/CC2). Everything below this banner — the title's "Path A", and the
+> Goal / Architecture (locked) / Commands sections — is **SUPERSEDED HISTORY,
+> preserved for the record**. Supersession chain: Path A (C01-C04) -> CA1/CA2 family
+> catalog (CR1-CR4 replan) -> CC1/CC2 autogen removal (CR6). See DECISIONS.md
+> "2026-10-24 — CR6" and this plan's REPLAN ROUND 3 (CR6) section for the end state.
+
 ## Goal
 Stop hand-editing the llama-swap `config.yaml`: render the whole declared `-hf`
 roster from compact per-model entries in Helm values (the desired-state half),
@@ -18,6 +26,8 @@ snippet-macros with zero model-ID changes, and add the flash-next / Ornith
 - profiles/peers/apiKeys changes; tools sidecar; proxy wiring (already exists, unchanged).
 
 ## Architecture (locked, from DECISIONS.md + verified against v262 source)
+> **SUPERSEDED by CR6** — DECLARED-ONLY single-file config; see REPLAN ROUND 3 (CR6) below.
+
 Two config sources merged natively:
 1. **Declared half** — ConfigMap `llama-swap-config`, key `config.yaml`, directory-
    mounted at `/app/config` (unchanged paths). Helm renders it from a compact
@@ -559,3 +569,179 @@ Wave order after approval: 6 → CB1 (skipped under Option 1); 7 → CB2; 8 → 
 4. Suite: CB1 handoff = red set exactly the CB2-owned names (shorthand-aware +
    compensating presence tests) per CA1 pattern; CB2 completion = full green
    (147 + CB1's new tests, 12 evidence skips) with `helm lint --strict` + 3 renders.
+
+---
+
+# REPLAN ROUND 3 (CR6) - autogen REMOVAL, DECLARED-ONLY architecture (agent-plan, 2026-10-24)
+
+All C01-C04, CA1-CA4, CB1-CB2 stay done/APPROVED untouched (history; Path A was
+built, reviewed, and is now retired by ruling). C05 stays the FINAL user-gated wave.
+Goldens stay byte-untouched. DECISIONS 2026-10-24 "CR6" is the ruling of record.
+
+## CR6 goal (two sentences)
+Delete the entire autogen machinery (containers/llama-swap-autogen, initContainer,
+base.yaml ConfigMap, gen/autogen-home/autogen-base mounts, the LLAMA_SWAP_CONFIG_DIR
+line, the autogenBase/drift-guard/tripwire helpers, the scanned-synthetic contract)
+and its test scope, returning the chart to the pre-C03 DECLARED-ONLY single-`-config`
+shape that was measured to already be the only half producing real models. Out of
+scope: the declared roster (the whole CA2/CB2 surface stays byte-identical), the
+unified-vulkan-262 fleet image (untouched, pre-existing pin), secrets/tools/proxy
+wiring, and the goldens; revival rationale stays preserved in RESEARCH/DECISIONS as
+the user directed.
+
+## DECLARED-ONLY end state (verified against b2aa2e4b2 pre-ticket + HEAD)
+- Single rendered ConfigMap `llama-swap-config` -> directory-mounted at
+  `/app/config` -> `-config /app/config/config.yaml` via the env pair
+  `LLAMA_SWAP_CONFIG` + `LLAMA_SWAP_WATCH_CONFIG: "true"` - BOTH ALREADY PRESENT at
+  HEAD and byte-equal to the pre-ticket chart; CR6 removes ONLY the added
+  `LLAMA_SWAP_CONFIG_DIR: /app/gen` line + comment. No command/args change was ever
+  needed (run.sh maps the envs; the image default config path is overridden by the
+  env - original mechanism, restored, NOT reconstructed).
+- Reload story carried by values comments after CR6 (single mechanism): kubelet
+  syncs the mounted ConfigMap (~1 min) -> llama-swap -watch-config hot-reloads the
+  declared file in place (v262 keeps the old config on a bad reload);
+  `reloader.stakater.com/auto: "true"` rolls the pod on data change as the coarse
+  backstop. The pre-existing `persistence.config` directory-mount rationale comment
+  (subPath-never-updates lesson) survives verbatim as the authoritative text; the
+  Path-A two-file comment block (values ~859-880) and the "scanned half
+  restart-to-reload" lines go away with it. Net: reload semantics SIMPLIFY to the
+  documented win the original chart had - recorded in DECISIONS + C05 runbook.
+- What llama-swap sees: one file, no merge -> the identity-map/duplicate-child
+  constraints that shaped the two-file design (DECISIONS 2026-10-22) become inert
+  history; macros/matrix/hooks stay top-level as a CONFIG-shape fact, not a merge
+  constraint - the `_helpers` header comment gets reworded accordingly (comment
+  carries the current invariant only).
+
+## Retirement ledger (measured at HEAD - what disappears and why)
+- Chart source (CC2): values `autogen:` section + Path-A comment; `initContainers.
+  autogen`; CONFIG_DIR env line; persistence `gen`/`autogen-base`/`autogen-home`;
+  `templates/configmap-autogen-base.yaml` (file); `_helpers-llama-swap.tpl`
+  `llama-swap.autogenBase` + `llama-swap.firstMountPath` defines (sole consumers:
+  that CM template + the retired wiring tests) + comment reword. `containers/
+  llama-swap-autogen/` deleted whole.
+- Tests (CC1, test session only): `test_autogen_wiring.py` retired (32p) EXCEPT
+  `test_c03_5_reloader_annotation_covers_both_configmaps` RE-EXPRESSED as the
+  declared-scope guard (auto-annotation OR explicit match naming
+  `llama-swap-config`; x2 clusters) - the reload mechanism is what CR6 KEEPS, so
+  its guard stays. `test_c03_4_declared_model_ids_are_colon_free` retired: the
+  no-collision invariant it protected exists only under the two-file merge, and
+  P1's exact CATALOG (colon-free by construction) subsumes it.
+  `test_autogen_image.py` retired whole (6p/4s - parses the deleted Dockerfile).
+  `test_autogen_integration.py` split: KEEP `test_c04_4_full_roster_declared_
+  validates` (x2, docker-gated; RE-EXPRESSED single-file - its empty-gen-dir
+  scaffolding disappears) + KEEP `test_c04_1_hf_repo_tags_resolve` (roster liveness,
+  hf_check machinery - explicitly retained per the CR6 brief) DECOUPLED to gate on
+  RUN_HF_CHECK ALONE (today it accidentally requires LLAMA_SWAP_EVIDENCE via the
+  module skipif; it needs only network). RETIRE `c03_2_3_base_yaml_*` (x2),
+  `c03_4_scanned_half_*`, `c03_5_declared_only_with_empty_config_dir_*` (subsumed by
+  c04_4 once there is no config-dir), the `autogen_cli` venv fixture, and
+  `fixtures/scanned_synthetic.yaml` (sole consumer: the disjoint test).
+- testlib prune (consumers-all-gone verified by grep, ledger in 7quinquies):
+  ENTRYPOINT_FILE, _comment_only, FAIL_STUB/OK_STUB, BASE_CM/scanPaths constants,
+  venv-install helpers. KEEP: FLEET_IMAGE, docker_ready, is_echo_cmd, render_rc,
+  chart_values/service_overlay, ALL frozen tables (CATALOG/REMOVED/ENABLEMENT/
+  C04_HF_REFS...), golden + render + model_tokens machinery.
+- `evidence/c05_expected_evidence.yaml` re-balanced (CC1): drop the CA4-rebuild
+  prerequisite, initContainer-state, entrypoint-degrade-log, scanned-half-content,
+  and "reloader coverage of the NEW CM" items; KEEP counts/echo/picker-vs-table
+  (CR5 addendum), serve-smoke gate, gpu-ai config-level confirmation, q5/q6
+  routability, removals/matrix-closure sweeps, machine-global 13+9, runbook addenda
+  (first-load measures, uppercase-MTP, rollback). Diff of dropped-vs-kept recorded
+  item-by-item (same ledger discipline as amendments; the yaml is test-owned).
+- CI/registry/configs VERIFIED EDIT-FREE: `docker-build.yaml` autodetects
+  containers/** and guards on Dockerfile existence (deletion inert; a no-image push
+  run may fire on the removing PR's main merge - harmless); `llama-swap-tools-tests.
+  yaml` has no autogen/venv/env-gate steps and its paths filter stays valid;
+  `renovate.json` covers container ARG pins via the GENERIC git-refs manager (the
+  pinned SHA lives only in the deleted Dockerfile). Repo-wide sweep (this replan):
+  `llama-swap-autogen`/`LLAMA_SWAP_CONFIG_DIR`/`autogen` references exist ONLY in
+  the removal surface + tests + plan-folder history; skills/, AGENTS.md, services/,
+  custom-values/, charts/base, workflows: zero hits.
+- Post-merge pinning obligations after CR6: the "pin ghcr.io/ownyourio/
+  llama-swap-autogen :main -> :v<run>" obligation DISAPPEARS WITH THE CONTAINER
+  (it was the autogen image's documented new-container exception). Remaining
+  pinned images in the chart: llama-swap `unified-vulkan-262` (pre-existing,
+  untouched) and the python base pins of OTHER containers - none managed by this
+  ticket. Optional USER-side cleanup of the already-published ghcr
+  llama-swap-autogen image goes in the C05 runbook note (repo-side deletion is
+  complete; registry garbage is cosmetic).
+
+## CR6 chunks
+| id  | title | size | wave | depends_on | why the dependency |
+|-----|-------|------|------|------------|--------------------|
+| CC1 | contract retirement: wiring/image files retired (reloader guard re-expressed), integration split to fleet-validate + hf-liveness, testlib prune, evidence-yaml re-balance, TEST_SPEC 4/6 + 7quinquies ledger - TEST SESSION ses_e9bdebccbffe7bYG46Fm9LO8FG ONLY | M | 8 | [user approval of this replan] | tests immutable downstream; retired tests must not red-light the source removal (deletion-first keeps EVERY intermediate commit suite-green: after CC1 the shrunk suite still passes against the still-present autogen source - no surviving test asserts its existence) |
+| CC2 | source removal: containers/ dir, base-CM template, helpers defines + comment reword, values sections (autogen/init/env/mounts) | M | 9 | [CC1] | completion bar is the CC1-shrunken suite; file-disjoint from CC1 (charts/llama-swap/tests/** vs everything else) |
+| C05 | (existing, REBASED again in place - CR6 addendum) post-merge gpu verification + runbook, user-gated | S | 10 | [C01-C04, CA1-CA4, CB1, CB2, CC1, CC2] | ArgoCD syncs main only |
+
+Wave order: 8 CC1 -> 9 CC2 -> 10 C05 (user-gated). CB1's TEST_SPEC digit-fix
+(7quater 159->155) rides CC1's TEST_SPEC touch (next-test-touch convention from
+final-3 findings).
+
+## CR6 commands (plan Commands PLUS)
+- FROZEN SUITE BAR (both chunks): `pytest charts/llama-swap/tests -v` =>
+  **0 failed / 119 passed / 3 skipped** at CC1 completion AND at CC2 completion.
+  Arithmetic (record in 7quinquies): 155 - wiring 32 + re-expressed reloader 2
+  - image 6 = 119; skips 12 - image 4 - integration 8 + retained evidence 3 = 3
+  (c04_4 x2 docker-gated, c04_1 RUN_HF_CHECK-gated). Per-file recount: parity 34,
+  schema 22 (20+2 reloader), roster 30, fleet/hf evidence 3S, CI-existing 33.
+- Gate re-baseline: `RUN_HF_CHECK=1` alone => 1p (decoupled); `LLAMA_SWAP_EVIDENCE=1`
+  + docker daemon => 2p c04_4 (single-file `-validate`, no `-config-dir` arg);
+  direct `hf_check.py` => 98 refs OK exit 0 (unchanged - refs untouched).
+- DECLARED-CM INVARIANCE (CC2 controlling bar): `llama-swap-config` ConfigMap data
+  byte-EQUAL between CC1 tip and CC2 completion, all three renders (the removal
+  must not touch a byte of the rendered config - the CM template is untouched and
+  `declaredConfig` does not reference autogen).
+- POD-SPEC DELTA (CC2): the Deployment diff vs CC2-parent is EXACTLY removals -
+  initContainers.autogen whole, volumes gen/autogen-base/autogen-home + their
+  mounts, the LLAMA_SWAP_CONFIG_DIR env line, and the `llama-swap-autogen-base`
+  ConfigMap document disappearing from the render. Main/tools containers otherwise
+  byte-identical; no additions anywhere.
+- Residual-sweep: `grep -rn "autogen|LLAMA_SWAP_CONFIG_DIR|/app/gen|10-scanned"
+  charts/ containers/ services/ custom-values/ .github/ skills/` (excluding
+  plan-folder + TEST_SPEC/ledger history mentions) => zero after CC2.
+- Standing bars: helm dep update/lint --strict/renders x3, trio/sentinel greps,
+  goldens 0-diff, aislop on touched trees, rulesync N/A (no AI-config edits).
+
+## CR6 risks / notes
+- Suite-count drift is the CC1 failure mode: the bar is frozen at 0f/119p/3s;
+  review re-derives it from the arithmetic above, not from eyeballing.
+- Shared-helper pruning could break KEEPERS: every testlib symbol deletion requires
+  a zero-consumer grep AFTER the file retires (is_echo_cmd/render_rc/FLEET_IMAGE
+  stay - they have keeper consumers).
+- c04_4's single-file re-expression changes a gated command shape (no -config-dir);
+  it is the ONLY fleet-schema check that survives - do not retire it with the file.
+- Evidence-yaml re-balance could silently drop a non-autogen C05 duty: the dropped-
+  vs-kept item table in 7quinquies is the audit artifact; chunks/C05.md CR6 addendum
+  mirrors the surviving checklist.
+- The re-expressed reloader guard keeps its CA4 lesson alive: `command:null`
+  overlays never reach templates (app-template schema) - the guard reads rendered
+  annotations only.
+- Rollback story: every retired line is recoverable from this branch's history
+  (user-directed rationale preservation); nothing else.
+
+## CR6 user rulings (2026-10-24 question tool — this subsection SUPERSEDES the
+## frozen-bar numbers and the c04_4 retention in the section above; both stay as the
+## presented record)
+- Removal plan, DECLARED-ONLY end state, waves CC1(8)->CC2(9)->C05(10), reloader-
+  guard re-expression and colon-free retirement: APPROVED AS PLANNED.
+- `test_c04_4_full_roster_declared_validates`: RETIRED TOO (user ruling - pod boot
+  on-cluster is the only -validate proof; C05 keeps the config-load observation).
+  Consequences, frozen:
+  * CC1 bar becomes **0f/119p/1s** (passed math unchanged: 155-32+2-6=119; skips
+    12-4-8+1=1 - sole surviving gate = re-homed `test_c04_1_hf_repo_tags_resolve`,
+    RUN_HF_CHECK-only gating, no docker, no venv).
+  * The `LLAMA_SWAP_EVIDENCE` gate retires ENTIRELY (its remaining consumers were
+    the venv + fleet tests); `LLAMA_SWAP_IMAGE_EVIDENCE` retired with the image
+    file. Evidence-gate inventory: 12 -> 1.
+  * testlib prune GROWS: FLEET_IMAGE + docker_ready + fleet_image fixture join
+    ENTRYPOINT_FILE/_comment_only/FAIL_STUB/OK_STUB/BASE_CM (zero consumers once
+    both files retire - re-grep before deletion).
+  * CC2 criterion "docker-evidence replay" drops; the pod-delta + declared-CM-
+    invariance bars stand as planned.
+  * C05 runbook line "docker-waived merged -validate lands here" becomes: pod
+    startup is the fleet validation (a bad rendered config = crashloop evidence);
+    optional operator-side `llama-swap -validate` of the mounted file remains a
+    runbook STEP, not a test.
+- Post-ruling bars restated: CC1 completion = CC2 completion = 0f/119p/1s +
+  goldens 0-diff + (CC2) declared-CM byte-equal x3 renders + pod-delta removals-
+  only + residual sweep clean.
