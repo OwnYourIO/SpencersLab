@@ -1,0 +1,174 @@
+{
+  "feature": "2026/2026-10-feat-forgejo-ssh",
+  "plan_status": "complete",
+  "coord_session": null,
+  "test_session": "ses_e95b1dd82ffeNT5ZwvfZAs8pX5",
+  "current_wave": 2,
+  "updated_at": "2026-10-24",
+  "kickoff": {
+    "slug": "feat-forgejo-ssh",
+    "type": "feat",
+    "run_tag": "ssh",
+    "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/feat-forgejo-ssh-ssh",
+    "branch": "feat-forgejo-ssh-ssh",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "research": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "test": "openrouter/qwen/qwen3.8-27b",
+      "dev": "openrouter/qwen/qwen3.8-27b",
+      "review": "openrouter/qwen/qwen3.8-27b"
+    },
+    "research_session": "ses_e95cfd054ffe342U9IpDyGGmpo"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.agents/plans/2026/2026-10-feat-forgejo-ssh/storm-runs/forgejo-ssh-exposure-k3s-traefik/perspectives.md]\ncommands_run: [git checkout -b feat-forgejo-ssh-ssh => pass, mv + rmdir storm-runs (sha256 identical) => pass, git commit c3f64b25a => pass, bash tests/services/forgejo-ssh-audit-trail.sh => pass (6 ok), bash tests/services/audit-trail.sh => pass (4 ok), bash tests/services/forgejo-ssh-gateway.sh => fail as expected (t1 only), npx aislop@0.18.1 ci --changes --base origin/main --human => pass (100/100)]\ndeviations: [rmdir of empty root storm-runs/ after mv (required by AC1/t1); no RESEARCH.md pointer line added (none exists \u2014 chunk Notes default)]\nfriction: none\nopen_questions: none"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C01\nfiles_changed: [chunks/C01.md (Review notes only)]\ncommands_run: [forgejo-ssh-audit-trail.sh => pass (6 ok), predecessor audit-trail.sh => pass (4 ok), forgejo-ssh-gateway.sh => fail red at t1 only (right reason), git show c3f64b25a => pass (single destination file, pure addition), sha256 worktree vs blob => identical, git symbolic-ref => feat-forgejo-ssh-ssh attached]\ndeviations: none\nfriction: none\nopen_questions: none"
+        }
+      ],
+      "dev_session": "ses_e95760988ffeRQK1QptP70TVWI",
+      "review_session": "ses_e954e3bfaffeZ3qBROSIVD4oMm",
+      "commit": "c3f64b25a"
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [charts/base/templates/traefik-config.yaml, charts/base/templates/gateway-tcproute-crd.yaml]\ncommands_run: [helm dependency build charts/base => pass, helm lint charts/base => pass, closed-gate render + diff vs git show main: => pass (byte-identical), closed-gate CRD --show-only => pass (renders nothing), open-gate --set gitSshPort=22222 render semantics => pass, helm template services/dev/prod + services/infra/prod (plan --set) => pass (0 sentinels), forgejo-ssh-gateway.sh => t1-t4 pass (14 ok), t5 red right reason, forgejo-ssh-audit-trail.sh => pass (6 ok), predecessor audit-trail.sh => pass (4 ok), aislop ci --changes => pass (100/100), commit e8eaedcc2 => pass]\ndeviations: [CRD WHY-comment sits INSIDE the gate (first body line), not above it: a comment outside the gate leaks into the closed-gate render (helm 3.16 comment-only manifest \u2014 verified empirically) and would break AC3 'renders nothing'; inside the gate the closed render stays empty and the comment travels as vendoring provenance]\nfriction: [aislop ci --changes reports 'Scope 0 changed vs origin/main' despite 2 local commits (whole-repo fallback, 26 files clean); YAML/MD outside aislop 0.18.1 scoring languages \u2014 comment quality rides comment-slop]\nopen_questions: none"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-23",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C02\nfiles_changed: [chunks/C02.md (Review notes only)]\ncommands_run: [forgejo-ssh-gateway.sh => t1-t4 pass (14 ok), t5 red right reason, forgejo-ssh-audit-trail.sh => pass (6 ok), predecessor audit-trail.sh => pass (4 ok), helm lint charts/base => pass, closed-gate render vs git show main: => pass (byte-identical), closed-gate CRD => pass (0 bytes), open-gate render semantics => pass (3 blocks exact, CRD v1.6.3 experimental v1+v1alpha2), both umbrella renders => pass (0 sentinels), upstream CRD fetch + sha256 (experimental==vendored; standard v1alpha2 served:false) => pass, k3s 40.1.5 gateway.yaml/_podtemplate empirical sim => pass (web:null removes default listener; provider flags exact), aislop => pass (100/100)]\ndeviations: none\nfriction: none\nopen_questions: none\nextra: reviewer empirically rendered the verbatim k3s traefik 40.1.5 gateway.yaml after merging open-gate values \u2014 web:null provably removes the default listener; Gateway ends with exactly the gitssh listener (22222/TCP, from: All); provider flags exact. CRD byte-verbatim upstream experimental v1.6.3 (sha256-verified)."
+        }
+      ],
+      "dev_session": "ses_e954b98a1ffehs0lsoI3WuVW7i",
+      "commit": "e8eaedcc2",
+      "review_session": "ses_e9512debeffezPLTfMAR8r1Aju"
+    },
+    "C03": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [charts/forgejo/values.yaml, services/dev/prod/values.yaml, services/infra/prod/values.yaml, .agents/notes/2026-10-23-forgejo-git-ssh.md]\ncommands_run: [helm dependency builds => pass, helm lint charts/base + charts/forgejo => pass, closed-gate base render => pass (no gateway strings, CRD nothing), open-gate base render with real dev/infra values => pass, charts/forgejo render: SSH_PORT=22222/SSH_LISTEN_PORT=2222/START_SSH_SERVER=true/Service ClusterIP :22->ssh/TCPRoute v1alpha2 parentRef traefik-gateway.kube-system.gitssh backendRef forgejo-ssh:22 => pass, dev custom-values deep-merge render (DOMAIN/ROOT_URL/SSH_DOMAIN intact) => pass, forgejo-ssh-gateway.sh => pass (49 ok), forgejo-ssh-audit-trail.sh => pass (6 ok), predecessor audit-trail.sh => pass (4 ok), infra-forgejo.sh => pass (33 ok), dev-forgejo-runner.sh => pass (31 ok), dev-git-auth.sh => pass (20 ok), aislop ci --changes => pass (100/100), commit db08d4d17 => pass]\ndeviations: [gitSshPort WHY-comments paraphrase the port invariant (no literal SSH_PORT/tcpRoute outside charts/forgejo \u2014 FRICTION t9 trap); pipeline artifacts left untracked (coord owns)]\nfriction: none\nopen_questions: none"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C03\nfiles_changed: [chunks/C03.md (Review notes only)]\ncommands_run: [full suite fresh: gateway 49/audit-trail 6/predecessor 4/infra-forgejo 33/dev-forgejo-runner 31/dev-git-auth 20 => all pass, plan Commands slice (dep builds incl. OCI digest match, lints, closed-gate byte-identity, open-gate renders with REAL values files no --set, forgejo render semantics, deep-merge identity intact, both umbrella renders 0 sentinels, greps) => pass, subchart source cross-check => pass, aislop => pass (100/100)]\ndeviations: none\nfriction: [reviewer's own ad-hoc first-pass verification script had two filter bugs (release name omitted; admin ExternalSecret treated as Secret) \u2014 re-ran correctly, no verdict effect]\nopen_questions: none\nextra: gitSshPort comments accurate (subchart _helpers.tpl + tcpRoute template cross-checked verbatim); SSH_LISTEN_PORT unchanged (subchart default 2222); notes file consistent with plan User actions 7-9; no drift (4 in-scope files exactly)"
+        }
+      ],
+      "dev_session": "ses_e9508ae1fffeYmVJOVK67U93qY",
+      "commit": "db08d4d17",
+      "review_session": "ses_e94c26809ffeqOdNGox92Xe3Dw"
+    },
+    "C04": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": [
+        "C02",
+        "C03"
+      ],
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [charts/base/templates/gateway-tcproute-crd.yaml (deleted), charts/base/Chart.yaml, charts/base/Chart.lock, charts/base/values.yaml, services/dev/prod/values.yaml, services/infra/prod/values.yaml, charts/base/templates/traefik-config.yaml]\ncommands_run: [helm dependency update charts/base => pass (digest sha256:2a9d5324..., tgz gitignored), helm lint charts/base => pass, closed-gate render vs main: => pass (byte-identical), closed-full 0 gateway CRDs => pass, gate-only render (HCC + 0 CRDs) => pass, dev/infra full opens (1 CRD, SPEC_PIN c29ee86e...00947e, keep) => pass, umbrella renders (0 sentinels, blobs carry gitSshPort + gateway-api-crds.enabled) => pass, full suite: gateway 67/audit-trail 6/predecessor 4/infra-forgejo 33/dev-forgejo-runner 31/dev-git-auth 20 => all pass, aislop ci => pass (100/100), commit e3ca402ca (atomic, 7 files) => pass]\ndeviations: none (pipeline artifacts left uncommitted, coord-owned)\nfriction: none\nopen_questions: [pre-existing gitSshPort WHY-comments in both service values still read 'vendored tcproutes CRD gate' \u2014 stale post-C04; contract scoped comment fixes to traefik-config only; flagged for review disposition]"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nverdict: APPROVED\nchunk: C04\nfiles_changed: [chunks/C04.md (Review notes only)]\ncommands_run: [full suite fresh: gateway 67/audit-trail 6/predecessor 4/infra-forgejo 33/dev-forgejo-runner 31/dev-git-auth 20 => all pass, plan Commands slice (dep builds, lints, closed-gate byte-identity vs main incl. FULL render, gate-separation, open renders with SPEC_PIN independently recomputed, umbrella renders, sentinel sweep) => pass, upstream chart tgz fetched: default-OFF key paths match actual condition semantics (standard.enabled defaults TRUE upstream \u2014 gotcha confirmed real), renovate.json override-regex cross-check (no sourceUrl/changelog annotation), repo-wide vendored-template sweep => gone, aislop => pass (100/100)]\ndeviations: none\nfriction: none\nopen_questions: [M1 minor: stale 'and its vendored tcproutes CRD gate' clause in gitSshPort comments at services/dev/prod/values.yaml:22 + services/infra/prod/values.yaml:108 \u2014 suggested wording in chunks/C04.md review notes]\nextra: 12/12 acceptance criteria verified; keep-annotation does not leak to argo-cd/cert-manager (chart-native on main); commit atomic (7 files)"
+        },
+        {
+          "role": "dev",
+          "round": 2,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C04 (round 2 \u2014 M1 comment fix)\nfiles_changed: [services/dev/prod/values.yaml, services/infra/prod/values.yaml]\ncommands_run: [git diff scope check => pass (comment-only, 2 hunks), forgejo-ssh-gateway.sh => pass (67 ok), forgejo-ssh-audit-trail.sh => pass (6 ok), aislop ci --changes => pass (100/100), git commit 2a5922e95 => pass]\ndeviations: [reviewer's suggested wording applied verbatim (dev as given; infra same shape)]\nfriction: none\nopen_questions: none"
+        }
+      ],
+      "dev_session": "ses_e9169949effeEurh5AHlotTtg2",
+      "review_session": "ses_e914c95a6ffeAJjj9n5K2vnbdx",
+      "commit": "e3ca402ca",
+      "commits": [
+        "e3ca402ca",
+        "2a5922e95"
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "test_handoff": {
+    "at": "2026-10-23",
+    "status": "DONE",
+    "files": [
+      "tests/services/forgejo-ssh-audit-trail.sh",
+      "tests/services/forgejo-ssh-gateway.sh"
+    ],
+    "contract": "audit-trail 6 checks (C01); gateway 49 assertions in 11 sections (C02 t1-t4, C03 extends t5-t10, t11 predecessor regressions) \u2014 one runner script for C02+C03",
+    "red_verified": "audit-trail: t1 storm-runs still at root; gateway: t1 no gitSshPort gate in traefik-config.yaml \u2014 both right reasons",
+    "green_sim": "/tmp/opencode/forgejo-ssh-sim faithful C01+C02+C03: audit-trail 6 ok, gateway 49 ok; C02-only state: t1-t4 green, t5 red right reason",
+    "lifecycle": "at C02 review: gateway t1-t4 green + t5-t10 red-for-right-reason; all green at C03. Predecessor audit-trail.sh is red until C01 moves this ticket root storm-runs/ \u2014 expected, C01 runs first"
+  },
+  "final_review": {
+    "session": "ses_e94ba1cf8ffeMM28AGFZTTCAol",
+    "at": "2026-10-24",
+    "verdict": "APPROVED",
+    "suite": "gateway 49, forgejo-ssh-audit-trail 6, predecessor audit-trail 4, infra-forgejo 33, dev-forgejo-runner 31, dev-git-auth 20 \u2014 all green fresh",
+    "extras": "full k3s traefik 40.1.5 chart sim with shipped valuesContent (Gateway gitssh-only listener, GatewayClass, Service/containerPort/entrypoint 22222, provider flags, RBAC); CRD sha256 == upstream experimental v1.6.3; web:null null-key coalescing proven at helm layer",
+    "findings": "M1 comment inaccuracy fixed in a8d3116ff (dev round, suite re-greened); M2 plan wording fixed inline by coord; both non-blocking",
+    "commits": [
+      "c3f64b25a",
+      "e8eaedcc2",
+      "db08d4d17",
+      "a8d3116ff"
+    ]
+  },
+  "completed_at": "2026-10-24",
+  "reopened_at": "2026-10-24",
+  "final_review_c04": {
+    "note": "C04 reviewed at e3ca402ca (APPROVED, 12/12 criteria); M1 comment fix 2a5922e95 verified by full suite re-run (comment-only, no separate review round \u2014 same disposition as the C02-era M1)",
+    "at": "2026-10-24"
+  }
+}

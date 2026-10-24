@@ -64,6 +64,19 @@ spec:
         exposedPort: 8080
         protocol: TCP
       {{- end }}
+      {{- if index .Values "gitSshPort" }}
+      # The base chart is cluster-wide: the gitssh ServiceLB port, the
+      # kubernetesGateway provider and the gateway: listeners must not
+      # come up on a cluster without a forgejo git-SSH backend. No
+      # entryPoints.gitssh: the chart derives entrypoints from ports.*;
+      # the entryPoints: block in this file is chart-ignored.
+      gitssh:
+        port: {{ index .Values "gitSshPort" }}
+        expose:
+          default: true
+        exposedPort: {{ index .Values "gitSshPort" }}
+        protocol: TCP
+      {{- end }}
     entryPoints:
       seaweedvolume:
         address: ":8080"
@@ -74,3 +87,28 @@ spec:
       kubernetesIngress:
         allowEmptyServices: true
         allowExternalNameServices: true
+      {{- if index .Values "gitSshPort" }}
+      kubernetesGateway:
+        enabled: true
+        # traefik 3.7 only watches TCPRoute with the experimental channel on
+        # (its client lists TCPRoute at v1alpha2); the matching tcproutes CRD
+        # comes from the gateway-api-crds chart dependency (Chart.yaml),
+        # which serves that version.
+        experimentalChannel: true
+      {{- end }}
+    {{- if index .Values "gitSshPort" }}
+    gateway:
+      listeners:
+        # The k3s chart ships a default web listener (port 8000) that would
+        # put a second listener on the lab Gateway; the Gateway must carry
+        # only gitssh, so the default is explicitly removed.
+        web: null
+        gitssh:
+          port: {{ index .Values "gitSshPort" }}
+          protocol: TCP
+          # The TCPRoutes live in default (next to the forgejo Services)
+          # while the Gateway lands in kube-system (with traefik), so the
+          # listener must accept allowedRoutes from any namespace.
+          namespacePolicy:
+            from: All
+    {{- end }}
