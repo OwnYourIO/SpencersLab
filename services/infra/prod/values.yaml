@@ -105,8 +105,9 @@ seaweedVolumePort: 8080
 
 # Git-over-SSH exposure for the infra forgejo instance: opens the Gateway
 # API gitssh listener + ServiceLB port on this node, consumed by
-# charts/base's traefik HelmChartConfig and its vendored tcproutes CRD gate.
-# Must equal the SSH port the forgejo chart advertises in clone URLs.
+# charts/base's traefik HelmChartConfig; the matching tcproutes CRD is the
+# adjacent gateway-api-crds block. Must equal the SSH port the forgejo chart
+# advertises in clone URLs.
 gitSshPort: 22222
 
 # Companion wiring for gitSshPort (keep adjacent — the two move together):
