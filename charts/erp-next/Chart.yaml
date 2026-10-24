@@ -4,5 +4,5 @@ version: 1.0.1
 appVersion: v16.34.2
 dependencies:
 - name: erpnext
-  version: 8.0.79
+  version: 8.0.89
   repository: https://helm.erpnext.com
