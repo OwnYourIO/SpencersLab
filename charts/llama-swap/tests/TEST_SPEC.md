@@ -475,3 +475,64 @@ line-count ceiling acknowledged, no action). Post-fix bars: full suite
 **25 failed / 122 passed / 12 skipped — red set NAME-IDENTICAL to the round-1
 handoff**, zero NameErrors, goldens diff empty, integration gates 3p/5s
 unchanged.
+
+
+## 7ter. CA2 contract fixes — amendments N/G1 + O/G2 (test-writer session, 2026-10-24, user-routed)
+
+CA2 dev (bda8c992a + 0602a2f49) landed the family catalog at 2f/145p/12s and
+raised the two survivors as validation_at_fault. Both independently verified
+BEFORE amending — both TEST-FAULTY, no dev error (dev's values satisfy every
+bar once the test-side defects are corrected; dev is credited with a
+compliant implementation, incl. the inert-but-documented rana chart rung
+carrying the real hf/draft, deviation 1).
+
+* **N (=G1) `test_c02_chart_models_are_composition_or_documented_escape_hatch`
+  offender loop** — OLD: `for fam, spec in cfg["families"].items(): fam = fam
+  or {}; for quant, rung in (fam.get("quants")...) ; merged = {**(fam or {}),
+  **(rung or {})}` — read `.get`/`**` off the family KEY string: guaranteed
+  `AttributeError: 'str' object has no attribute 'get'` for ANY families
+  implementation (masked at handoff because the `assert cfg.get("families")`
+  line above short-circuited first, and my round-1/-2 satisfiability sims
+  never executed the loop against a real families dict). NEW: loop reads the
+  SPEC dict (`spec.get("quants")`, `{**(spec or {}), **(rung or {})}`); the
+  key stays only for the CR1.1 `f"{fam}-{quant}"` derivation. Intent and
+  assertions unchanged — same rule, now actually executable; verified 0
+  offenders against dev's chart values before applying.
+* **O (=G2) `test_c02_chart_composition_hf_refs_match_golden` golden-`-hf`
+  assert vs opaque bootstraps** — OLD: `assert cmd_flag_value(golden, "-hf")`
+  for every rung. qwen38-rana's golden cmd is the raw `/bin/sh -c`
+  multi-curl bootstrap: shlex keeps the quoted script ONE opaque token
+  (correctly — that is llama-swap's SanitizeCommand shape), so no standalone
+  `-hf` token can exist, while P1 + CR1 make rana a chart-side family rung
+  with a real `hf` field. No compliant implementation could pass — structural
+  contradiction, same class as ratified defect A (and it was MY round-1
+  re-expression that moved rana into this loop without generalizing the
+  extraction). NEW: when the token search finds no `-hf`, route through the
+  token-boundary regexes `(?:^|\s)-hf\s+(\S+)` / `(?:^|\s)-hfd\s+(\S+)`
+  over the raw text, rightmost match (llama.cpp effective-flag semantics,
+  consistent with `cmd_flag_value`); the loud assert stays if NEITHER
+  mechanism finds a ref. Verified: golden rana exec-line refs
+  (`mradermacher/Qwen3.8-27B-RANA-abliterated-GGUF:Q6_K` +
+  `ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf`) == dev's chart rung
+  hf/draft exactly; 41 routed ids green. Coverage strictly grows (ana's rung
+  refs are now checked where previously the loop would have crashed or
+  skipped).
+* **Method correction (adopting CA2 dev's friction finding):** satisfiability
+  simulation for amendments that rewrite value-shape loops must EXECUTE
+  against a live implementation fixture (or a synthetic fixture of the final
+  shape), not just mental/py-mini sims over goldens — the G1 str-attribute and
+  G2 shlex-opacity classes both hid behind "the loop would run after CA2".
+  Recorded for all future amendments; review audits amended loops against
+  executed fixtures.
+* **Carry-forward closed (§7bis-K):** both drift probes re-verified green at
+  0602a2f49 UNDER CA4's new args-based guard (chart autogen container is
+  command-free; the line-1045 `command:` belongs to the tools sidecar, outside
+  the tripwire's scope), and `RUN_HF_CHECK=1` live verification passes against
+  the post-CA2 renders.
+
+Bars after N/O: full suite **0 failed / 147 passed / 12 skipped — the first
+fully-green suite of the ticket** (parity 28/28, schema 18/18, wiring 32/32,
+roster 30/30, image 6P+4S, existing CI 33, gates 8S; LLAMA_SWAP_EVIDENCE=1
+autogen_integration 3P/5S; goldens diff empty). No assertion was weakened in
+either amendment; G1 restored an intended-execution crash, G2 added a routing
+branch with the loud assert retained.

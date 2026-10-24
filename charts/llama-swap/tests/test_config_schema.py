@@ -74,11 +74,14 @@ def test_c02_chart_models_are_composition_or_documented_escape_hatch():
         f"-{sorted(set(L.CATALOG_IDS) - derived_family_ids(cfg))}"
     )
     offenders = []
+    # (coord-routed defect G1 amendment, 2026-10-24): the loop iterates
+    # (family KEY, spec DICT); reading `.get("quants")`/merging off the key
+    # string AttributeError-crashed ANY families implementation. `spec` is
+    # the values dict; `fam` stays the key for the ID derivation.
     for fam, spec in cfg["families"].items():
-        fam = fam or {}
-        for quant, rung in (fam.get("quants") or {}).items():
+        for quant, rung in (spec.get("quants") or {}).items():
             mid = (rung or {}).get("id") or f"{fam}-{quant}"
-            merged = {**(fam or {}), **(rung or {})}
+            merged = {**(spec or {}), **(rung or {})}
             merged.pop("quants", None)
             if mid in L.CHART_RAW_CMD_IDS:
                 if "cmd" not in merged:
@@ -131,10 +134,24 @@ def test_c02_chart_composition_hf_refs_match_golden():
                 other = "gpu-ai" if src == "gpu" else "gpu"
                 gcmd, src = goldens[other][mid]["cmd"], other
             want_hf = L.cmd_flag_value(gcmd, "-hf")
+            want_hfd = L.cmd_flag_value(gcmd, "-hfd")
+            if want_hf is None:
+                # (coord-routed defect G2 amendment, 2026-10-24): rana's
+                # golden cmd is the raw /bin/sh -c bootstrap — shlex keeps the
+                # quoted script ONE opaque token, so no standalone -hf/-hfd
+                # token can exist, while P1 + CR1 make the rung chart-side
+                # with real hf/draft fields. Route to the token-boundary
+                # regex over the raw text (ratified defect-A machinery;
+                # rightmost match = llama.cpp's effective flag, consistent
+                # with cmd_flag_value). If NEITHER mechanism finds -hf, the
+                # original loud assert stays.
+                hfs = re.findall(r"(?:^|\s)-hf\s+(\S+)", gcmd)
+                hfds = re.findall(r"(?:^|\s)-hfd\s+(\S+)", gcmd)
+                want_hf = hfs[-1] if hfs else None
+                want_hfd = hfds[-1] if hfds else want_hfd
             assert want_hf, f"golden {src} {mid} has no -hf token — spec premise broken"
             if eff.get("hf") != want_hf:
                 problems.append(f"{mid}: hf={eff.get('hf')!r} but golden({src}) -hf={want_hf!r}")
-            want_hfd = L.cmd_flag_value(gcmd, "-hfd")
             if want_hfd and eff.get("draft") != want_hfd:
                 problems.append(f"{mid}: draft={eff.get('draft')!r} but golden({src}) -hfd={want_hfd!r}")
     assert not problems, "family refs diverge from golden cmd tokens:\n" + "\n".join(problems)
