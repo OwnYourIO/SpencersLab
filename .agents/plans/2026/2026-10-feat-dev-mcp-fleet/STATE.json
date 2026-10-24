@@ -17,13 +17,16 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "dev_done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        "RESULT status: DONE chunk: C01 files_changed: [services/dev/prod/values.yaml, custom-values/dev/prod-values.yaml] commands_run: [baseline t1|t4|t5 => fail(red-expected); t2 t3 => pass; t1..t5 => pass(11 ok); t10 => pass; helm lint services/dev/prod => pass; dev-forgejo-runner => pass(41 ok); forgejo-ssh-gateway => pass(67 ok); aislop scan --changes => pass(100, 0 findings); git commit be59d29cd => pass] deviations: none material (comments tightened per comment-slop) friction: none open_questions: none (pod NotReady until user creates dev-searxng LOGIN item = documented interim OQ2) next_suggested: review C01"
+      ],
+      "dev_session": "ses_e90350bf8ffem1psFBe7SazPn3"
     },
     "C02": {
       "status": "pending",
