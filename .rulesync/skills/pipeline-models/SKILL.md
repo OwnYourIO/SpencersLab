@@ -50,6 +50,4 @@ The kickoff's model question is one multi-select over `Qwen Large` / `Qwen 27b` 
 | `gpu-ai` | `qwen3.8-27b-q8` | local code fallback (self-hosted, 262k ctx) |
 | `gpu-ai` | `qwen3.8-27b-q8-1m` | local code fallback, long context (1M ctx) |
 | `gpu-ai` | `qwen3.6-35b-a3b-q8` | local MoE fallback (262k ctx) |
-| `gpu-ai` | `kat-coder-q8` | local code fallback (KAT Coder V2.5 Dev, Q8_0, 262k ctx) |
-| `gpu-moe` | `kat-coder-q6` | local code fallback (KAT Coder V2.5 Dev, Q6_K, gpu-moe cluster) |
 | `gpu-moe` | `qwen3.6-35b-a3b-q8` | local MoE fallback (gpu-moe cluster) |
