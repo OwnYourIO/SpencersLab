@@ -83,6 +83,11 @@ charts:
   coder:
     namespace: default
     ServerSideApply: "false"
+  # Dev-local instance rather than reusing gpu's searxng (user decision
+  # 2026-10-24: self-contained dev cluster).
+  searxng:
+    namespace: default
+    ServerSideApply: "false"
   # Client-only service: both runners dial out (forgejo-runner-dev
   # in-cluster to dev-forgejo-http:3000, forgejo-runner-infra to the infra
   # instance), so both deliberately get NO ingress.subdomains entries — the
@@ -117,6 +122,12 @@ ingress:
     research:
       service: dev-gpt-researcher
       port: 3000
+    # LAN-only host: deliberately NOT routed via proxy-remote (user decision
+    # 2026-10-24). gpu's entry adds serviceName: searxng; dev omits it because
+    # the key-derived host here already equals searxng.<domain>.
+    searxng:
+      service: dev-searxng
+      port: 8080
     cluster:
       clusterBase: true
       service: argocd-server

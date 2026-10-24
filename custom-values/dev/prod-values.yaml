@@ -78,3 +78,13 @@ hivetools:
     # item's username). MCP OIDC is dormant repo-wide (per-server oidc blocks
     # commented out) — set/verify this when the rollout reaches dev.
     # clientId: <shared-dev-client-id>
+
+searxng:
+  # Chart-level slice: appset-charts.yaml extracts only this top-level key
+  # into the dev-searxng Application, resolving the chart's own bitwardenIds
+  # sentinel (charts/searxng/values.yaml) — UUIDs for chart-level items live
+  # here, never in the service values.yaml.
+  bitwardenIds:
+    # dev-searxng LOGIN item (password = secret_key) — NEW ITEM, user
+    # action (plan User action 2). Placeholder until pasted.
+    searxng: OVERRIDE_NEEDED
