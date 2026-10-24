@@ -110,3 +110,12 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 
 ## Deferred hygiene note (C03 review round 1, 2026-10-24)
 - One non-blocking hygiene note recorded by the C03 reviewer in chunks/C03.md ("Deferred" section) — does not gate the ticket.
+
+## Replan: SSO (Coder external-auth via Forgejo/Keycloak) — user rulings 2026-10-24
+- User confirmed TWO Coder deployments intended to each carry one external-auth provider: coder.spencerslab.com ↔ git.spencerslab.com, coder.dev.scifi.farm ↔ git.scifi.farm. The community one-provider cap binds per instance. PLANNER MUST verify the two-Coder topology against repo/cluster before chunking (research assumed one Coder).
+- Existing dev forgejo-token = bot account (bootstrap/fallback retained).
+- Forgejo full-account (scopeless) OAuth grants: accepted.
+- Coder external-token DB encryption: enable (--external-token-encryption-keys, key via Bitwarden ExternalSecret).
+- Non-OAuth forge fallback (if any): Coder user-secrets (Beta) per-user PATs.
+- First-boot UX: polite gate + banner around `coder external-auth access-token` (no raw clone failure until consent).
+- OpenChamber path unchanged (per-user PAT card; C03 canonical plumbing stays as its token source).

@@ -121,7 +121,15 @@
   "replan": {
     "requested_at": "2026-10-24",
     "by": "user",
-    "scope": "Coder-side git auth: replace/augment the shipped PAT model with an SSO approval flow \u2014 user framing: \"going with a token through OpenChamber makes sense... for the coder component I was hoping we could set up SSO approval of sorts. I think it would go against forgejo, but that is backed by keycloak.\" Research first (agent-research), then replan."
+    "scope": "Coder-side git auth: replace/augment the shipped PAT model with an SSO approval flow \u2014 user framing: \"going with a token through OpenChamber makes sense... for the coder component I was hoping we could set up SSO approval of sorts. I think it would go against forgejo, but that is backed by keycloak.\" Research first (agent-research), then replan.",
+    "user_answers": {
+      "provider_slot": "TWO Coder deployments: coder.spencerslab.com -> git.spencerslab.com (canonical), coder.dev.scifi.farm -> git.scifi.farm (dev). One external-auth provider EACH \u2014 free-tier cap binds per Coder instance, so OAuth on both forges is possible IF the two-Coder topology verifies (planner MUST verify against repo/cluster).",
+      "dev_pat_identity": "forgejo-token (dev) is a dedicated BOT account \u2014 fine as bootstrap/fallback.",
+      "full_account_grants": "ACCEPTED \u2014 Forgejo scopeless OAuth grants are the price of per-user identity.",
+      "token_encryption": "ENABLE --external-token-encryption-keys as part of this feature; key sourced via new Bitwarden ExternalSecret (repo standard).",
+      "second_host_model": "Coder user-secrets (Beta) per-user PATs for any forge WITHOUT an OAuth provider slot \u2014 moot if the two-Coder topology lands (both forges get OAuth); planner to reconcile against provider_slot answer.",
+      "first_boot_ux": "Polite gate + banner: workspace gates clone steps on approval and prints a clear \"approve here\" banner instead of failing raw."
+    }
   },
   "research_handoff": {
     "role": "research",
