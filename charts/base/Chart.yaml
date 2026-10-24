@@ -7,7 +7,7 @@ dependencies:
   version: 10.10.0
   repository: https://argoproj.github.io/argo-helm
 - name: cert-manager
-  version: v1.19.3
+  version: v1.21.3
   repository: https://charts.jetstack.io
 
 # Pinned source of the experimental-channel tcproutes CRD (traefik 3.7's
