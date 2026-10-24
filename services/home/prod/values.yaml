@@ -596,7 +596,7 @@ paperless:
         main:
           image:
             repository: ghcr.io/paperless-ngx/paperless-ngx
-            tag: 2.20.7@sha256:7b937cb2fa2885ab0ecfceb8c7e8827e2312472d9d897a270097ba7f5522dcdc
+            tag: 3.3.4@sha256:9bc6e8248891bcfa6f52fffe8b81e4ea8cae75790c3ec1b9906961a7ba55c969
           env:
             PAPERLESS_TIME_ZONE: America/Denver
             PAPERLESS_ALLOWED_HOSTS: '*'
