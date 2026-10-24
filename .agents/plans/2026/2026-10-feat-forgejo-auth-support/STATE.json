@@ -157,15 +157,23 @@
       "dev_session": "ses_e8fc2e7feffeUxjkW2qDe0jdiB"
     },
     "C06": {
-      "status": "pending",
+      "status": "in-review",
       "wave": 4,
       "depends_on": [
         "C04"
       ],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "at": "2026-10-24",
+          "result": "RESULT\nstatus: DONE\nchunk: C06\nfiles_changed: [containers/coder-workspace/workspace-startup.sh (FORGEJO_OAUTH_ID env-contract header; probe block: sso_probe=$(coder external-auth access-token \"$FORGEJO_OAUTH_ID\" 2>/dev/null) absorbing exit 1 under set -eu; approved => credential helper unset --global --unset-all ... || true + sso_approved=1 + per-user-askpass log; unapproved-with-URL => host-naming approve-here banner; CLI-missing/unreachable => WARN banner-without-URL, boot survives; wire_forgejo 4th arg wire_mode=${4:-helper}, no-helper skips configure_git_token, keeps fj bot-PAT seeding, add-token sole call-site + git-before-fj intact; dev-pair call gated via sso_wire_mode; canonical + GitHub blocks untouched; clone loop: approved+host-match => transient GIT_CONFIG_COUNT/KEY_0/VALUE_0 credential on the git process only (never on disk), unapproved+host-match+no-PAT => explicit pending-approval SKIP, else byte-identical C02), charts/coder/coder-templates/kubernetes-hardened/main.tf (env FORGEJO_OAUTH_ID=\"forgejo\" bare literal + drift-pairing why-comment)] (commit 26730105e, local, 2 files +106/-8)\ncommands_run: [pre-edit: dev-git-auth EXIT 1 44 ok sole FAIL c-sso-5; startup-script EXIT 1 36/7; behavior EXIT 1 b-1; gpu 15 ok; image; pins; tests/ diff EMPTY | post-edit: sh -n + dash -n + bash -n => 0/0/0 (AC1); startup-script => EXIT 0 43/0 (AC2); startup-sso-behavior => EXIT 0 22 ok b-1..b-7 on REAL committed script under stub-PATH+isolated HOME (AC3); dev-git-auth => EXIT 0 47 ok incl c-sso-5/6/7 (AC4); image 46/0 + pins 8/0 (AC5); gpu-coder-sso 15/15 (C05 regression); helm dependency build/lint/template charts/coder => 0/0/0 (468 lines, sentinel 11 = C04 evidence, zero new) (AC6); terraform init -backend=false + validate scratch kubernetes-hardened => 0/0 valid (AC7); full matrix re-run at committed HEAD => all 0; aislop 0 (non-informative sh/hcl); git status clean, local only]\ndeviations: (1) sso_host set whenever probe guard active (not only approved branch) so banner + gated-skip paths know the candidate host; sso_approved explicit bit; semantics identical, matches TEST-SPEC's pinned second legal layout. (2) gated-skip binds [ -z FORGEJO_TOKEN ] (pair-presence reduces to token-presence). (3) main.tf Secrets-header not extended \u2014 FORGEJO_OAUTH_ID is a literal, env enumeration is Secret-backed only. (4) aislop non-informative; comment-slop keep-all, every added comment anchors a why.\nfriction: none new \u2014 known workarounds held\nopen_questions: none for code; landing needs plan User actions 1-4 (OAuth apps both forges, 4 Bitwarden items + UUID fills, ArgoCD sync + reloader restart, coder templates push) \u2014 user-owned\nnext_suggested: agent-review round 1 on C06 (all green in final state); then final whole-plan review closing replan v2"
+        }
+      ],
+      "dev_session": "ses_e8fb61952ffeL30fJ1hAhHNfli"
     }
   },
   "blocked": [],
