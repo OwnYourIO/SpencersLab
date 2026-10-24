@@ -20,7 +20,7 @@ app-template:
         create-dirs:
           image:
             repository: docker.io/slskd/slskd
-            tag: "0.26.0"
+            tag: "0.26.2"
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -46,7 +46,7 @@ app-template:
           image:
             repository: docker.io/slskd/slskd
             # Plain 0.26.0 tag verified present on Docker Hub at impl time.
-            tag: "0.26.0"
+            tag: "0.26.2"
           env:
             TZ: America/Denver
           probes:
