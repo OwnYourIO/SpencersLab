@@ -71,7 +71,7 @@ ARG FJ_SHA256=6803c12eed17bfadb40ba95da2a6ab58f9b4a7dc10eabfe3512fce7e2fe6216f
 # OpenCode (the agent) and OpenChamber (its web UI) are the workspace's IDE
 # pair, which the baked startup contract runs.
 # renovate: datasource=npm depName=@opencode/cli
-ARG OPENCODE_VERSION=2.0.32
+ARG OPENCODE_VERSION=2.1.4
 # renovate: datasource=npm depName=@openchamber/web
 ARG OPENCHAMBER_VERSION=2.4.0
 
