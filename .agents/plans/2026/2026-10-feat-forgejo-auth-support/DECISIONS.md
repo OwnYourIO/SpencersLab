@@ -1,0 +1,102 @@
+# Decisions
+
+Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decision, alternatives rejected, why.
+
+## Conventions
+
+- Forgejo instance env naming in this ticket: the dev instance keeps the
+  existing generic pair (`FORGEJO_TOKEN` / `FORGEJO_HOST`, host
+  `git.scifi.farm`); the infra canonical instance gets the `_CANONICAL`
+  suffix on every surface — Bitwarden item / Secret / ExternalSecret /
+  `bitwardenIds` key `forgejo-token-canonical`, env
+  `FORGEJO_TOKEN_CANONICAL` / `FORGEJO_HOST_CANONICAL` (host
+  `git.spencerslab.com`).
+- One Bitwarden item per concern (helm-chart-creation skill): a per-instance
+  PAT is a separate item from the instance's own `forgejo*` admin items and
+  from the runner-token items.
+- Git-over-SSH URLs for lab forges stay `ssh://git@<host>:22222/...` (sibling
+  decision from 2026-10-feat-forgejo-ssh, Q2: node sshd keeps :22). known_hosts
+  entries therefore key on `[host]:22222`, the form ssh-keyscan emits for
+  non-default ports.
+- Validation = the four `tests/` suites + helm lint/template + sh/dash -n in
+  the plan file's Commands; no unit-test framework exists.
+
+## Decisions
+
+- 2026-10-24 plan: Scope taken from the intake answers — git auth (tokens,
+  credential helpers, repo URLs, fj wiring) for BOTH instances + OpenChamber's
+  Forgejo feature. Explicitly OUT (user declined): OAuth/SSO wiring, Forgejo as
+  ArgoCD repo source.
+- 2026-10-24 plan: Research is resolved by quick lookups, agent-research NOT
+  needed. Findings (sources in the plan file's Research basis): OpenChamber
+  v2.5.1 (2026-10-23) adds the Forgejo/Gitea/Gerrit host cards; the Forgejo
+  card takes instance URL + PAT with `write:repository`, `write:issue`,
+  `read:user`, requires Forgejo ≥7.0 served at the address root; sign-ins are
+  stored server-side (→ home PVC `~/.config/openchamber`), shared across
+  devices; OpenChamber ≥2.5.1 requires OpenCode ≥2.1.0 (it bundles 2.1.3);
+  npm latests 2026-10-24: @openchamber/web 2.5.1, @opencode/cli 2.1.4. The
+  lab's charts/forgejo appVersion 15.0.9 clears the ≥7.0 floor.
+- 2026-10-24 plan: Manual pin bump to 2.5.1/2.1.4 in
+  `containers/coder-workspace/Dockerfile` (C01), NOT "wait for renovate".
+  The feature itself demands a version floor (2.4.0 has no Forgejo host;
+  OpenCode 2.0.32 is below OpenChamber 2.5.1's 2.1.0 minimum) — a floor is a
+  requirement, not a routine bump; renovate keeps the pins current afterwards.
+  Precedent: 2026-10-04-dep-update-opencode-openchamber.md, and the rebuild
+  ticket pinning exact versions. Renovate annotations stay untouched.
+- 2026-10-24 plan: Dual-instance auth via a second explicit env pair
+  (`FORGEJO_TOKEN_CANONICAL`/`FORGEJO_HOST_CANONICAL`) consumed by a looped
+  `wire_forgejo` function in workspace-startup.sh. Rejected: comma-separated
+  `FORGEJO_HOSTS`/`FORGEJO_TOKENS` positional pairing (fragile, and breaks the
+  established single-name contract dev-git-auth.sh c6 checks); a full git
+  credential-store file (the current design's stated invariant is "nothing
+  written to disk" — the home PVC outlives the Secret); Coder
+  `coder_git_auth`/external git auth (per-user redesign, out of scope).
+- 2026-10-24 plan: `FORGEJO_HOST_CANONICAL` is a literal container env in the
+  template (mirroring the existing `FORGEJO_HOST = "git.scifi.farm"`), NOT a
+  new coder_parameter — avoids the server-stored-template-variable trap
+  documented in 2026-10-04-dep-update-opencode-openchamber.md (DECISIONS of
+  coder-workspace-rebuild too).
+- 2026-10-24 plan: New custom-values entry ships as the documented
+  `OVERRIDE_NEEDED` placeholder until the user creates the Bitwarden item
+  (infra-forgejo t6 precedent), with a real UUID following in a user-action
+  commit. Rejected: fabricating a UUID (renders an ExternalSecret pointing at
+  nothing) and blocking the whole ticket on the manual step.
+- 2026-10-24 plan: known_hosts pre-trust for the lab forges moves to port
+  22222 (`ssh-keyscan -p 22222`, `[host]:22222` entries) for BOTH hosts and
+  github.com stays scanned at 22. The current port-22 `git.scifi.farm` scan
+  captures the NODE's sshd key (sshd kept on :22 by sibling decision), which
+  is the wrong key for forgejo ssh:// URLs anyway.
+- 2026-10-24 plan: OpenChamber's per-instance connection stays a UI paste
+  (User action 4) — the docs describe no env/file/policy bootstrap for
+  integration tokens. The repo-side enabler is only the version bump; the
+  token's persistence is the home PVC. Rejected: scripting the UI or
+  inventing a config drop-path against undocumented internals.
+- 2026-10-24 plan: The legacy `charts/coder/coder-templates/kubernetes/`
+  template and `terraform.tfvars` (openchamber 2.1.0 / opencode 2.0.22
+  runtime-install lineage) stay untouched. `kubernetes-hardened` is the
+  git-auth-consumed template (dev-git-auth.sh names it); giving the legacy
+  template Forgejo support would mean runtime-install changes the rebuild
+  deliberately deleted. Retiring the legacy template is a separate cleanup.
+- 2026-10-24 plan: chunking = C01 pins (S) / C02 script (M) wave 1; C03 secret
+  plumbing + template env (M) wave 2. Interface-first: C02 defines the env
+  contract, C03 produces matching env. C01 merges alone (consumers of the
+  image are env-name-stable). Rejected: one mega-chunk (mixes an image-pin
+  revert concern with plumbing); splitting C03's service-side and chart-side
+  legs (a half-landed pair renders a Secret no template consumes — breaks
+  "chunk merges without breaking the software").
+- 2026-10-24 plan: Baseline validation recorded — on this branch
+  image-structure.sh, startup-script.sh, dockerfile-pins.sh, dev-git-auth.sh
+  (20 ok) and sh/dash -n all PASS before any change. Red-for-the-right-reason
+  targets for agent-test: image-structure + dockerfile-pins go red the moment
+  they expect the NEW pins while the Dockerfile still has the old ones;
+  dev-git-auth goes red on the missing `forgejo-token-canonical`
+  ExternalSecret/env; startup-script on the missing `_CANONICAL` names.
+
+## Deferred
+
+- Adding lab Forgejo repos as `repos` coder_parameter options once repos exist
+  on the forges (template comment anticipates it).
+- Retiring the legacy `kubernetes/` workspace template + tfvars.
+- Per-user git auth (Coder external git auth) if workspaces ever stop sharing
+  one lab token.
+- Re-checking for a headless OpenChamber integration seed at each major bump.

@@ -1,0 +1,60 @@
+{
+  "feature": "2026/2026-10-feat-forgejo-auth-support",
+  "plan_status": "approved",
+  "coord_session": "ses_e90a11f85ffenPs2OAuuqUBY0Q",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-24",
+  "kickoff": {
+    "slug": "feat-forgejo-auth-support",
+    "type": "feat",
+    "run_tag": "openrouter-qwen3-8-flash",
+    "worktree": "/home/coder/.local/share/opencode/worktree/ae3f6ce4d3246ef2ebecdc169ac2dad65a93b685/forgejo-auth-support",
+    "branch": "forgejo-auth-support",
+    "worktree_new": false,
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "research": "openrouter/qwen/qwen3.8-flash",
+      "test": "openrouter/qwen/qwen3.8-flash",
+      "dev": "openrouter/qwen/qwen3.8-flash",
+      "review": "openrouter/qwen/qwen3.8-flash"
+    }
+  },
+  "plan_handoff": {
+    "role": "plan",
+    "at": "2026-10-24",
+    "session": "ses_e90995404ffeCnne623kH1vhn6",
+    "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-feat-forgejo-auth-support/2026-10-24-feat-forgejo-auth-support.md, .agents/plans/2026/2026-10-feat-forgejo-auth-support/STATE.json, .agents/plans/2026/2026-10-feat-forgejo-auth-support/DECISIONS.md, .agents/plans/2026/2026-10-feat-forgejo-auth-support/FRICTION.md, .agents/plans/2026/2026-10-feat-forgejo-auth-support/chunks/C01.md, .agents/plans/2026/2026-10-feat-forgejo-auth-support/chunks/C02.md, .agents/plans/2026/2026-10-feat-forgejo-auth-support/chunks/C03.md]\ncommands_run: [git branch => forgejo-auth-support checked out, ls .agents/plans/2026/ + sibling tickets + templates => read, survey of charts/coder/coder-templates/{kubernetes,kubernetes-hardened}, containers/coder-workspace/{Dockerfile,workspace-startup.sh}, services/{dev,infra}/prod, custom-values/dev, tests/* => ground truth verified, curl registry.npmjs.org/@openchamber/web => latest 2.5.1, curl registry.npmjs.org/@opencode/cli/latest => 2.1.4, github releases API + docs.openchamber.dev/integrations (via release JSON body) => Forgejo card: URL+PAT write:repository/write:issue/read:user, Forgejo>=7.0 at root, OpenChamber 2.5.1 needs OpenCode>=2.1.0, bash tests/coder-workspace/image-structure.sh => pass, bash tests/coder-workspace/startup-script.sh => pass, bash tests/renovate/dockerfile-pins.sh => pass, bash tests/services/dev-git-auth.sh => pass (20 ok), python3 STATE.json validate => pass]\ndeviations: none — folder + artifacts follow templates/PLAN.md + pipeline-role-plan exactly; kickoff metadata recorded in STATE.json as instructed (reused worktree/branch, models override, coord_session); webfetch tool proxied some URLs oddly, resolved by direct curl (equivalent data, same sources)\nfriction: webfetch rewrote api.github.com/registry.npmjs.org URLs through an OSS file-proxy; first two responses arrived as saved files (content correct), later ones 404ed — resolution: shell curl for registry/docs; no later agent needs webfetch for this; agents-sync reference notes OpenChamber /skillname 404 quirk — not hit here\nopen_questions: (1) does the EXISTING git.scifi.farm forgejo-token PAT already carry write:issue+read:user (OpenChamber card needs all three) — plan makes it User action 2, no repo test can see it; (2) no documented headless/env bootstrap for OpenChamber integration sign-ins — connection stays UI-paste per docs; re-check at a later major bump if desired. Needs research: no — the three kickoff research questions are fully grounded by the quick lookups cited in the plan.\nnext_suggested: present the chunk table + waves above to the user for approval; on approval set STATE.json plan_status to \"approved\", commit the ticket folder, then dispatch agent-test for C01+C02+C03 tests (red-for-right-reason targets are spelled out in each chunk's Tests section) before wave 1 dev"
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
