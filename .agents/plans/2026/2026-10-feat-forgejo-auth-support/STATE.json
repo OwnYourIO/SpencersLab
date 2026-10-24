@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-feat-forgejo-auth-support",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e90a11f85ffenPs2OAuuqUBY0Q",
   "test_session": "ses_e908a206dffeJJZ7J97KEzUmVP",
   "current_wave": 2,
@@ -110,5 +110,12 @@
     }
   },
   "blocked": [],
-  "deferred": []
+  "deferred": [],
+  "final_review": {
+    "role": "review",
+    "at": "2026-10-24",
+    "session": "ses_e904eaaabffeAiwtvx5CTP66YE",
+    "verdict": "APPROVED",
+    "result": "RESULT\nstatus: DONE\nchunk: final-review (feat-forgejo-auth-support, C01+C02+C03 cumulative)\nverdict: APPROVED \u2014 no blockers, no majors\nfiles_changed: [] (read-only review; scratch confined to /tmp/opencode/finalrev)\ncommands_run: [image-structure.sh => PASS exit 0 (46/0); startup-script.sh => PASS exit 0 (34/0); dockerfile-pins.sh => PASS exit 0 (8/0); dev-git-auth.sh => PASS exit 0 (33 ok, no skips); sh -n + dash -n => exit 0/0; helm dependency build/lint/template charts/coder => exit 0/0/0 (408 lines, sentinel count 8 pre-existing, zero new leakage); helm template dev services/dev/prod --set bitwardenIds.forgejo-token-canonical=test-uuid => exit 0 (canonical doc exact, store/property/keys verified, dev doc isolated); -f custom-values leg => exit 0 (OVERRIDE_NEEDED documented slot, dev real UUID); terraform init -backend=false + validate scratch kubernetes-hardened => exit 0 valid; curl npm registry => 2.5.1/2.1.4 == pins >= floors; aislop scan --changes => exit 0 (non-informative per FRICTION); diff secret pair => exactly 5 intended substitutions; git diff origin/main..HEAD name-only => plan-scope files only (out-of-scope all zero); secret-pattern grep over diff => no real values; git branch -r + status => no upstream, local commits only, no push/merge; env-name grep across 5 surfaces => aligned; bind/waiver +- lines => empty (2026-10-21 ruling byte-intact)]\ndeviations: none \u2014 plan Commands verbatim + C03 terraform pattern; exit codes without pipes; FRICTION git-probe rule honored\nfriction: (1) python probe POSIX [[:space:]] in regex \u2192 0 docs (probe bug, resolved \\s) \u00b7 new; (2) known workarounds all held \u00b7 fixed\nfindings: MINOR (pre-existing): TEST-SPEC.md 'Red-for-the-right-reason' line says dev-git-auth '20 lines' before first FAIL; observable is 15 ok + FAIL (fail-fast ordering). Contract untouched; coord may fix the evidence line. NIT: no-default-port-scan check binds inline forms; loop-form regressions caught by independent checks \u2014 wording already accurate, no action.\nopen_questions: none\nnext_suggested: mark plan complete; hand user the post-merge actions; landing on main remains user-owned (PR)"
+  }
 }
