@@ -11,7 +11,7 @@
 # (injected by ToolHive's MCPServer resource); with the pair the server
 # mints its bearer via POST /users/login at startup.
 
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 # Don't buffer logs; write .pyc off; keep the image small
 ENV PYTHONDONTWRITEBYTECODE=1 \

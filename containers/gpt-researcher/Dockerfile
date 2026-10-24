@@ -10,7 +10,7 @@
 #   - a non-root runtime user.
 #
 # Consumed by charts/gpt-researcher as ghcr.io/ownyourio/gpt-researcher.
-FROM python:3.11-slim-bookworm
+FROM python:3.15-slim-bookworm
 
 # renovate: datasource=git-refs depName=assafelovic/gpt-researcher
 ARG GPTR_VERSION=5cdad9cb434754188b78bd998df18dd8d502cf7e
