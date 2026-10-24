@@ -153,30 +153,51 @@ llama-swap:
     # here per the operator's accepted OOM-churn decision 2026-10-22 (never
     # preloaded, no matrix var - run-alone).
     families:
-      home-3b-v3: {enabled: true}
-      ornith-1.5-122b: {enabled: true}
-      ornith-1.5-35b-a3b: {enabled: true}
-      qwen3-embedding: {enabled: true}
-      qwen3-vl-2b: {enabled: true}
-      qwen3-vl-30b-a3b: {enabled: true}
-      qwen3-vl-30b-a3b-thinking: {enabled: true}
-      qwen3-vl-4b: {enabled: true}
-      qwen3-vl-4b-thinking: {enabled: true}
-      qwen3-vl-8b: {enabled: true}
-      qwen3.6-27b: {enabled: true}
-      qwen3.6-35b-a3b: {enabled: true}
-      qwen3.8-27b: {enabled: true}
-      qwen3.8-flash-next: {enabled: true}
-      qwen3.8-flash-next-orca: {enabled: true}
-      qwen36: {enabled: true}
-      qwen38: {enabled: true}
-      whisper: {enabled: true}
+      home-3b-v3:
+        enabled: true
+      ornith-1.5-122b:
+        enabled: true
+      ornith-1.5-35b-a3b:
+        enabled: true
+      qwen3-embedding:
+        enabled: true
+      qwen3-vl-2b:
+        enabled: true
+      qwen3-vl-30b-a3b:
+        enabled: true
+      qwen3-vl-30b-a3b-thinking:
+        enabled: true
+      qwen3-vl-4b:
+        enabled: true
+      qwen3-vl-4b-thinking:
+        enabled: true
+      qwen3-vl-8b:
+        enabled: true
+      qwen3.6-27b:
+        enabled: true
+      qwen3.6-35b-a3b:
+        enabled: true
+      qwen3.8-27b:
+        enabled: true
+      qwen3.8-flash-next:
+        enabled: true
+      qwen3.8-flash-next-orca:
+        enabled: true
+      qwen36:
+        enabled: true
+      qwen38:
+        enabled: true
+      whisper:
+        enabled: true
 
     # The full ladder data now lives in the chart catalog
     # (charts/llama-swap values config.families, CA2); this models map is
     # only the per-ID override/escape-hatch layer merged OVER the expansion
     # (CR1.5). qwen38-rana stays the sole raw-cmd entry (schema test
     # test_c02_gpuai_block_escape_hatch_is_exactly_rana).
+    # None of these entries are catalog duplicates: deleting any one changes
+    # the rendered config (sha-verified per entry, 2026-10-24) - they carry
+    # the gpu-ai-only MTP drafts, cache-persistence tuning, and ttls.
     models:
       # Chart-standard plain Qwen3.8-27B (unsloth), gpu-ai override with MTP.
       # The unsloth GGUFs carry no embedded MTP layers (verified: tensor scan
