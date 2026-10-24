@@ -68,6 +68,9 @@ bitwardenIds:
   # boards service account (template headers document each item's shape).
   github-mcp: OVERRIDE_VIA_CUSTOM_VALUES
   wekan-mcp: OVERRIDE_VIA_CUSTOM_VALUES
+  # Bitwarden item `forgejo-token-canonical` — access token for
+  # git.spencerslab.com (PASSWORD field).
+  forgejo-token-canonical: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Chart definitions for appset-charts.yaml (rendered by the base chart).
 # Each chart can have: namespace, ServerSideApply, version, repository

@@ -45,8 +45,9 @@
 # setting the TTL is a user action, not a template feature.
 #
 # namespace must name the namespace that holds the git-auth secrets
-# (github-pat, forgejo-token — rendered by services/dev/prod): a workspace
-# elsewhere starts with no git credentials, and its home PVC lands there too.
+# (github-pat, forgejo-token, forgejo-token-canonical — rendered by
+# services/dev/prod): a workspace elsewhere starts with no git credentials,
+# and its home PVC lands there too.
 
 terraform {
   required_providers {
@@ -438,11 +439,11 @@ resource "kubernetes_deployment_v1" "main" {
             name  = "CODER_AGENT_TOKEN"
             value = coder_agent.main.token
           }
-          # Both Secrets are read from var.namespace (a secretKeyRef cannot
-          # cross namespaces); optional keeps a missing one from blocking the
-          # workspace start — the startup script then leaves that host
-          # unauthenticated. FORGEJO_HOST accepts a bare host or a URL; the
-          # script strips the scheme itself.
+          # All three Secret-backed envs read from var.namespace (a
+          # secretKeyRef cannot cross namespaces); optional keeps a missing
+          # one from blocking the workspace start — the startup script then
+          # leaves that host unauthenticated. The FORGEJO_HOST pair accepts a
+          # bare host or a URL; the script strips the scheme itself.
           env {
             name = "GITHUB_TOKEN"
             value_from {
@@ -466,6 +467,23 @@ resource "kubernetes_deployment_v1" "main" {
           env {
             name  = "FORGEJO_HOST"
             value = "git.scifi.farm"
+          }
+          # The canonical instance (git.spencerslab.com) is a separate
+          # Secret so one PAT never points at two concerns; it stays
+          # optional until custom-values carries the new item's real UUID.
+          env {
+            name = "FORGEJO_TOKEN_CANONICAL"
+            value_from {
+              secret_key_ref {
+                name     = "forgejo-token-canonical"
+                key      = "FORGEJO_TOKEN_CANONICAL"
+                optional = true
+              }
+            }
+          }
+          env {
+            name  = "FORGEJO_HOST_CANONICAL"
+            value = "git.spencerslab.com"
           }
           resources {
             requests = {
