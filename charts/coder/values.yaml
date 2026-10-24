@@ -12,6 +12,13 @@ bitwardenIds:
   coder-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES
   # CNPG database credentials (username must equal initdb owner `coder`).
   coder-pg: OVERRIDE_VIA_CUSTOM_VALUES
+  # Forgejo OAuth app registered for coderd on the dev forge (username =
+  # client id, password = client secret). Per-cluster item under a shared
+  # key — the gpu twin is a different vault item (the coder-pg precedent).
+  coder-external-auth: OVERRIDE_VIA_CUSTOM_VALUES
+  # password = base64 of 32 random bytes, coderd's at-rest key for stored
+  # external tokens; a wrong-length key crashloops coderd on restart.
+  coder-token-encryption: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 # Injected by the charts-appset values slice (services/dev sets subDomain: dev);
@@ -20,6 +27,11 @@ subDomain: dev
 
 coder:
   coder:
+    # coderd reads the external-auth/encryption env from coder-secrets at
+    # process start only; Reloader (cluster-wide on dev) restarts it when
+    # the Secret changes, so the first provider sync does not sit inert.
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
     env:
       - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
         value: "false"
