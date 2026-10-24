@@ -12,14 +12,14 @@ Generated agents carry `permissions:` blocks in their frontmatter (authored in `
 | role | edit | subagent | shell | MCP |
 |---|---|---|---|---|
 | coord | ONLY `.agents/plans/**/STATE.json`, `…/DECISIONS.md`, `…/FRICTION.md` (starts from `* * deny`) | plan/research/test/dev/review of same variant | none | none |
-| plan | ONLY `.agents/plans/**` | none | read-only git | `admin*` deny; `readonly*`/`global*` allow |
+| plan | ONLY `.agents/plans/**` | none | read-only git | `admin*` deny; `readonly*`/`global*`/`dev*` allow |
 | research | ONLY `.agents/plans/**` (its `RESEARCH.md`, at the exact feature-folder path from its launch message) | none | read-only git | as plan; plus `webfetch`/`websearch` allowed |
 | test | ONLY chart/container `tests/` folders + the context allows below (starts from `edit * deny`) | none | git reads + `helm lint/template/unittest` | as plan |
 | dev | everything EXCEPT chart/container `tests/` folders (`charts/**/tests/**`, `containers/**/tests/**`) and `.agents/plans/**`, plus the context-file rules below | none | git reads + `helm lint/template` | as plan |
 | review | ONLY `.agents/plans/**` (never edits code or tests — a faulty test escalates to coord, who asks the user and routes the fix to the test session) | none | git reads + `helm lint/template` | as plan |
 | fuser | ONLY `.agents/plans/**` — the ticket folder of the CONFIRMED base worktree, which it enters via `session_move` before writing (`FUSION-REPORT.md` + `<plan-file>-fusion.md`) | none | read-only git (`status/log/diff/show/branch/merge-base/worktree list`) + `helm lint/template` + `opencode api get /api/session*` and `opencode api post /api/session/*` (session lookup + the one hand-back prompt); else ask | as plan |
 
-All roles allow `question` everywhere. `skill` is allowed everywhere EXCEPT for coord, which denies the other roles' contract skills (`pipeline-role-{plan,research,test,dev,review}`, after its broad `skill * allow` — it coordinates and must not absorb their contracts); coord still loads its own workflow skills and the intake's 3 request-relevant task skills. MCP servers named `readonly*`/`global*` are allowed and `admin*` denied for plan/research/test/dev/review/fuser (mutations need a user step), while coord denies everything (it orchestrates, never touches the cluster).
+All roles allow `question` everywhere. `skill` is allowed everywhere EXCEPT for coord, which denies the other roles' contract skills (`pipeline-role-{plan,research,test,dev,review}`, after its broad `skill * allow` — it coordinates and must not absorb their contracts); coord still loads its own workflow skills and the intake's 3 request-relevant task skills. MCP servers named `readonly*`/`global*`/`dev*` are allowed and `admin*` denied for plan/research/test/dev/review/fuser (mutations need a user step), while coord denies everything (it orchestrates, never touches the cluster).
 
 ### Context-file rules (dev)
 
@@ -36,7 +36,7 @@ Repo/agent context files get a per-file policy for the roles that edit the repo 
 
 ### MCP allow-lists
 
-This repo's servers follow the `<priv>-<cluster>-<service>` naming (`readonly-*` / `admin-*` / `global-*`), so the agents use the prefix rules `admin* deny, readonly* allow, global* allow` — subagents never mutate cluster state; mutations are a user step. A repo whose servers lack that naming needs explicit per-server allow-lists instead, with anything that can mutate systems the repo shouldn't touch denied, and unlisted servers falling through to `ask` (conservative for unattended runs).
+This repo's servers follow the `<priv>-<cluster>-<service>` naming (`readonly-*` / `admin-*` / `global-*`), so the agents use the prefix rules `admin* deny, readonly* allow, global* allow` — subagents never mutate cluster state; mutations are a user step. Tier-less servers match none of those prefixes, and unlisted servers fall through to `ask` (= blocked in unattended runs), so the dev-cluster utility fleet (`dev-playwright`, `dev-renovate`, `dev-searxng`, `dev-boards`) is granted by a `dev*` allow added AFTER the `admin*` deny (2026-10-24, ticket 2026-10-feat-dev-mcp-fleet): under last-match-wins the deny stays the effective last match for `admin_*` tool names — `dev*` matches only `dev_*` names — and no tier-less `dev-*` name may shadow an `admin`-capable server; if the fleet ever gains one, put a specific deny after the `dev*` allow. A repo whose servers lack that naming needs explicit per-server allow-lists instead, with anything that can mutate systems the repo shouldn't touch denied.
 
 ## Audit checklist (run after files move or servers are renamed)
 

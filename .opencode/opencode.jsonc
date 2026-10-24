@@ -383,6 +383,45 @@
           "catalog": 60000,
           "execution": 60000
         }
+      },
+      // Dev-cluster utility fleet (ticket 2026-10-feat-dev-mcp-fleet): tier-less
+      // by user choice, so pipeline agents need the `dev*` allow rule in
+      // .rulesync/subagents/ — unlisted tier-less names fall through to ask.
+      "dev-playwright": {
+        "type": "remote",
+        "url": "https://mcp.dev.scifi.farm/playwright/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "dev-renovate": {
+        "type": "remote",
+        "url": "https://mcp.dev.scifi.farm/renovate/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "dev-searxng": {
+        "type": "remote",
+        "url": "https://mcp.dev.scifi.farm/searxng/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
+      },
+      "dev-boards": {
+        "type": "remote",
+        "url": "https://mcp.dev.scifi.farm/boards/mcp",
+        "disabled": false,
+        "timeout": {
+          "catalog": 60000,
+          "execution": 60000
+        }
       }
     }
   },

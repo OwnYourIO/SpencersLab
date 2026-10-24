@@ -203,6 +203,7 @@ user for explicit confirmation before using any `admin-*` server.
 | `readonly-global-homeassistant` | Only for Home Assistant work (`charts/home-assistant`, zigbee2mqtt, music-assistant, or the live HA instance) — inspection |
 | `admin-global-homeassistant` | Home Assistant changes (automations, entities, service calls) |
 | `readonly-global-wekan` / `admin-global-wekan` | WeKan boards/cards — readonly for inspection, admin for card mutations |
+| `dev-<service>` (playwright, renovate, searxng, boards) | Dev-cluster utility MCPs over the public ingress `mcp.dev.scifi.farm/<name>/mcp`; tier-less, allowed to pipeline agents via a `dev*` allow rule |
 
 **Keep these lists current:** when a task uses a skill or MCP server not listed
 above, add a line to this file (or the relevant agent file) as part of your
