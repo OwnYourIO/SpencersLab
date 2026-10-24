@@ -6,7 +6,7 @@ description = "MCP server that wraps the WeKan REST API with credential isolatio
 requires-python = ">=3.10"
 dependencies = [
     # Pin to compatible ranges. FastMCP moves fast; loosen only after testing.
-    "fastmcp>=3.4,<4",
+    "fastmcp>=4.1,<5",
     "httpx>=0.27,<1",
 ]
 
