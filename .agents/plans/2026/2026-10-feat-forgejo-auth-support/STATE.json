@@ -2,7 +2,7 @@
   "feature": "2026/2026-10-feat-forgejo-auth-support",
   "plan_status": "approved",
   "coord_session": "ses_e90a11f85ffenPs2OAuuqUBY0Q",
-  "test_session": "ses_e908a206dffeJJZ7J97KEzUmVP",
+  "test_session": "ses_e8ffbbd12ffeLQswF41nd4J4iq",
   "current_wave": 2,
   "updated_at": "2026-10-24",
   "kickoff": {
@@ -172,12 +172,21 @@
       "C06"
     ],
     "approved_at": "2026-10-24",
-    "approved_by": "user"
+    "approved_by": "user",
+    "test_session": "ses_e8ffbbd12ffeLQswF41nd4J4iq",
+    "test_handoff": {
+      "role": "test",
+      "at": "2026-10-24",
+      "session": "ses_e8ffbbd12ffeLQswF41nd4J4iq",
+      "commit": "9c5bbd5e0",
+      "result": "RESULT\nstatus: DONE\nchunk: test (C04, C05, C06)\nfiles_changed: [tests/services/gpu-coder-sso.sh (new), tests/coder-workspace/startup-sso-behavior.sh (new), tests/services/dev-git-auth.sh (c-sso-1..7), tests/coder-workspace/startup-script.sh (+9 SSO statics), TEST-SPEC.md (C04-C06 traceability + runbook steps 6-10)] (commit 9c5bbd5e0, local)\nsummary: gpu-coder-sso g-sso-1..4 (static contract + 4-leg render ladder + pairing guard); startup-sso-behavior b-1..b-7 dash harness on the real committed script under stub-PATH+isolated-HOME (approved => no SET/UNSET, fj keeps PAT, token never on disk; unapproved => URL banner + fallback + clone works; no-PAT => gated skip; opt-out => byte-identical C02; CLI-missing => boot survives; canonical invariant); dev-git-auth c-sso-1..7 (33->47 when implemented, legacy ladder untouched); startup-script +9 statics (34->43, layout-agnostic). Red-for-right-reason pre-impl (dev first FAIL c-sso-1 after 26 ok; gpu g-sso-1; startup 36/7; behavior b-1). Forward sim C04+C05+C06: dev 47 ok, gpu 15 ok, startup 43/0, behavior 22 ok, image+pins green, sh/dash/bash -n 0/0/0, terraform 0/0; 5 drift probes red-on-target; second legal layout green.\ndeviations: (1) render ladders --set pre-existing coder-sso-secret/coder-pg sentinel keys (deploy-time mirroring); (2) C05 AC3 split ApplicationSet-blob leg + real coder-chart render leg (umbrella alone can't render external Deployment); (3) behavioral harness runs whole committed script under stubs (superset), clone intercepted (network auth = User action 5); (4) c-sso-6 binds $FORGEJO_OAUTH_ID read-form (bare grep vacuous); (5) canonical-untouched negative window narrowed after variant false-positive; (6) gpu suite pins charts.coder.version==2.35.2 literally per AC5 (renovate must mirror; in-suite note). No existing check skipped/weakened/deleted.\nfriction: cap_vars ERE dropped $ before \\( capture -> silent empty extraction; caught by variant probe, fixed, re-proven \u00b7 new | aislop 0-changed for .sh \u00b7 known | helm/terraform off-PATH + stub-PATH/isolated-HOME held \u00b7 fixed\nopen_questions: none\nnext_suggested: dispatch C04+C05 dev (wave 3) against frozen contract at 9c5bbd5e0; C06 wave 4; review per TEST-SPEC runbook steps 6-10"
+    }
   },
   "research_handoff": {
     "role": "research",
     "at": "2026-10-24",
     "session": "ses_e9039ea52ffehYwhiWeYFfvhOK",
     "result": "RESULT\nstatus: DONE\nchunk: research (replan of feat-forgejo-auth-support)\nfiles_changed: [.agents/plans/2026/2026-10-feat-forgejo-auth-support/RESEARCH.md]\ncommands_run: [live probes api/v1/version + openid-configuration + authorize/token/device/revoke on both forges + Keycloak => pass; readonly-dev/infra-kubernetes reads => coder v2.35.2 / forgejo 15.0.9-rootless x2 / keycloak 26.7.2; source fetches at exact tags (coder v2.35.2 x9 incl. giteaDefaults+license.go+gitaskpass.go; forgejo v15.0.9 x3 + docs; fj v0.7.0 src) => pass; storm_run.py init+merge => 41 sources; token-lifetime unit check => 1h/30.4d; git status => RESEARCH.md only]\nkey_findings: (1) Coder v2.35.2 native External Auth Provider TYPE=gitea: browser consent against Forgejo (Keycloak-backed), callback lands on coderd (only approval route viable in this proxied-workspace topology; loopback helpers structurally can't complete), per-user token stored+auto-refreshed, auto-injected over HTTPS via GIT_ASKPASS; coder external-auth access-token => token on exit 0 / approval URL on exit 1. (2) Community Coder capped at ONE external-auth provider (license.go) => both-forges OAuth = paid tier. Forgejo 15.0.9: auth-code+PKCE+refresh only, NO device flow (open #4830), NO OAuth scopes (grant = full account), 1h access / 30d rotating refresh; tokens plaintext-in-DB unless --external-token-encryption-keys. (3) fj 0.7.0 has OAuth 'fj auth login' self-refreshing keys.json on PVC. (4) Recommended: OAuth-ify ONE forge (canonical), keep PAT plumbing as bootstrap/fallback/OpenChamber/second host; layering per host is deterministic (git helpers shadow askpass); costs one conditional in wire_forgejo.\ndeviations: STORM fan-out blocked (subagent depth limit) \u2014 inline interviews per skill fallback, trail kept /tmp/opencode/storm-forgejo-sso-run/\nfriction: subagent depth limit \u00b7 inline fallback; searxng timeouts \u00b7 retry/curl (known workaround held); coder/forgejo source paths moved between versions \u00b7 list via contents/trees API before raw fetch\nopen_questions: (1) which forge gets the single free provider slot (or Premium for both); (2) is the dev forgejo-token a bot or personal PAT; (3) accept full-account grants?; (4) enable --external-token-encryption-keys + where the key lives; (5) second-host model: Coder user-secrets (Beta) vs Bitwarden shared PAT; (6) accept 'unapproved first boot prints approval URL, clone fails until clicked' UX?\nnext_suggested: user answers 1-2 (hard gates) + 3-6, then replan with agent-plan grounded on RESEARCH.md"
-  }
+  },
+  "test_session_v1_C01_C03": "ses_e908a206dffeJJZ7J97KEzUmVP"
 }
