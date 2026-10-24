@@ -1,0 +1,65 @@
+{
+  "feature": "2026/2026-10-feat-ha-lifecycle-notify",
+  "plan_status": "complete",
+  "coord_session": "ses_e9096a43fffeMRYwOW41pTTvoI",
+  "test_session": "ses_e9083047affe1sz4knDeYJKAcn",
+  "current_wave": 1,
+  "updated_at": "2026-10-24",
+  "kickoff": {
+    "slug": "ha-lifecycle-notify",
+    "type": "feat",
+    "run_tag": "openrouter-qwen-qwen3-8-flash",
+    "worktree": "feat-ha-lifecycle-notify-openrouter-qwen3-8-flash",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false
+  },
+  "ticket": {
+    "wekan": null,
+    "note": "local-only ticket (no WeKan card)"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "last_verdict": "APPROVED",
+      "review_rounds": 1,
+      "dev_session": "ses_e90786f86ffe3wchtASsKiycZg",
+      "handoffs": [
+        {
+          "at": "2026-10-24",
+          "role": "test",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [tests/opencode/question-notify.test.ts, .agents/plans/2026/2026-10-feat-ha-lifecycle-notify/chunks/C01.md]\ncommands_run: [node --test tests/opencode/question-notify.test.ts => fail (expected-red: 35 tests, 33 fail / 2 pass, 1.2s, no hang), load+shape node --input-type=module check => fail (expected-red: handleLifecycle not a named export), grep wiring (succeeded|failed|event.subscribe) => fail (expected-red: none present), grep 'event.tool !== \"question\"' => pass (must stay), '! grep session.retry.scheduled' => pass (must stay), git status --porcelain .opencode/plugin/question-notify/index.ts => pass (plugin source untouched), opencode api get /api/session/<id>/context => pass (fixture shapes grounded live)]\ndeviations: (1) Appended to chunks/C01.md a \"Written by agent-test\" addendum + Validation-commands table with pre-dev statuses, authorized by the launch instruction; T1-T7 entries left verbatim. (2) Added S1 scaffold/regression guard and T8 subscribe-loop wiring beyond the listed T1-T7. (3) Seam resolved through namespace import + seam() helper so a missing export is an assertion failure, not an ESM link error. (4) Deliberate non-assertions: 240 cap asserted only at the notify boundary; no assertion that non-lifecycle events skip a session lookup; no live-socket/HA test. (5) STATE.json untouched, test_session coord-owned. (6) Nothing committed — tests untracked so dev lands them with the plugin edit under AC 10.\nfriction: aislop CLI not installed in this worktree, so 'aislop ci --changes' could not run; resolution: aislop-gate plugin scanned every write (100/100, 0 findings), installing a package out of remit given the offline/no-deps contract. Also: node --test's spec reporter prints no '# tests' summary here — used '--test-reporter=tap' for counts.\nopen_questions: Non-blocking: should handleLifecycle swallow a notify rejection (loop's void….catch(log) covers it) — dev may choose, tests do not pin it. Confirm the live event envelope during the user-owned smoke (plan Risks #1); T7 tolerates both shapes.\nnext_suggested: launch agent-dev for C01 against these immutable tests (red now, must all go green without editing this file), then agent-review re-runs the C01 Validation-commands table."
+        },
+        {
+          "at": "2026-10-24",
+          "role": "dev",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.opencode/plugin/question-notify/index.ts]\ncommands_run: [node --test tests/opencode/question-notify.test.ts --test-reporter=tap => pass (35 tests, 35 pass, 0 fail, exit 0), node --test (default reporter) => pass, load+shape ESM check => pass (AC2), grep succeeded|failed|event.subscribe => pass (AC3), grep 'event.tool !== \"question\"' => pass (AC4, question path intact), '! grep session.retry.scheduled' => pass (AC5), git status/diff --name-only => pass (AC10: only the plugin modified), node /tmp/opencode/qn-resilience-probe.mjs => pass (5/5: no-event ctx, throwing subscribe, non-iterable stream, garbage events, deps missing keys), aislop-gate on every write => pass (100/100, 0 findings)]\ndeviations: (1) Chunk task \"Create tests/opencode/question-notify.test.ts\" already satisfied upstream by agent-test; zero edits to it (md5 8b5d8382… unchanged). (2) Two defensive additions in scope: subscribe call wrapped in try/catch so an absent/throwing ctx.event API cannot take down the question path; handleLifecycle also swallows a notify rejection (test handoff's open question was dev's choice) — seam never rejects; loop keeps void….catch(log) as outer guard. (3) Chunk checkboxes left unticked and STATE/plan untouched — coord-owned. (4) No new manifest file; this RESULT is the change manifest. (5) Nothing committed, as instructed.\nfriction: aislop CLI not installed in this worktree (open FRICTION item) · resolution: aislop-gate scanned every write, 100/100. node --test spec reporter prints no count summary (open item) · resolution: --test-reporter=tap. One transient aislop-gate 'agent is not defined' error mid-edit (signature change landed a beat before its call site) · resolution: fixed in the immediately following edit, same turn.\nopen_questions: User-owned live verification NOT run (no service restart): after restart check opencode.log for one '[question-notify] first lifecycle event keys: … data keys: …' line to confirm the nested envelope; then finish a top-level turn (one '… finished' push), force a terminal provider failure (one '… stopped' push), run a subagent (no lifecycle push). Needs research: no. Tempting-but-out-of-scope: question path getting its own debug-log key; configurable notify target (deferred per plan).\nnext_suggested: launch agent-review for C01 to re-run the Validation-commands table and the AC10 diff scope, then hand the user-owned live smoke to the user."
+        },
+        {
+          "at": "2026-10-24",
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.agents/plans/2026/2026-10-feat-ha-lifecycle-notify/chunks/C01.md]\ncommands_run: [node --test tests/opencode/question-notify.test.ts => pass (35/35, exit 0), node --test --test-reporter=tap => pass (tests 35 / pass 35 / fail 0), load+shape node --input-type=module check => pass (AC2), grep succeeded|failed|event.subscribe => pass (AC3), grep 'event.tool !== \"question\"' => pass (AC4), '! grep session.retry.scheduled' => pass (AC5), git diff --name-only => pass (AC10: plugin file only), git status --porcelain + ls tests/opencode => pass (one in-scope test file, untracked as prescribed), md5sum test file => pass (8b5d838221f79ad7ced875760752febb, unchanged), od tail-byte check => pass (missing EOF newline pre-existing, not introduced)]\ndeviations: none (review role process followed; tap reporter used per FRICTION; live smoke deliberately not run — user-owned)\nfriction: open FRICTION item 'node --test default reporter prints no # tests summary' did NOT reproduce in this worktree — counts printed fine; suggested status re-check at closure · aislop CLI still unavailable (open item) · resolution: reviewed comments/structure manually against AGENTS.md rules, found clean\nopen_questions: none — minor finding (silent skip when ctx.event?.subscribe is absent) is non-blocking; coord may fold it into a later touch or close as accepted\nnext_suggested: mark C01 done in STATE.json, then hand the user the live-smoke checklist (restart → watch '[question-notify] first lifecycle event keys' → finished/stopped/subagent silence), and consider re-status of the stale reporter friction item at ticket close\nVERDICT: APPROVED (round 1; both dev deviations judged meritorious and endorsed; one non-blocking minor + one nit recorded in chunk Review notes)"
+        }
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "plan_handoffs": [
+    {
+      "at": "2026-10-24",
+      "role": "plan",
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-feat-ha-lifecycle-notify/2026-10-24-feat-ha-lifecycle-notify.md, .agents/plans/2026/2026-10-feat-ha-lifecycle-notify/STATE.json, .agents/plans/2026/2026-10-feat-ha-lifecycle-notify/DECISIONS.md, .agents/plans/2026/2026-10-feat-ha-lifecycle-notify/FRICTION.md, .agents/plans/2026/2026-10-feat-ha-lifecycle-notify/chunks/C01.md]\ncommands_run: [opencode api get /openapi.json => pass (grounded Session.Info parentID/outcome/event endpoint), node --input-type=module plugin import probe => pass, node --test ts probe => pass, strings event-schema extraction from opencode.exe v2.0.32 => pass (session.execution.*/retry.scheduled/StructuredError/isTopLevel-via-live-session-list => pass)]\ndeviations: none (one-chunk plan per sizing guidance; used live-server OpenAPI + binary grounding in addition to the docs pages, since docs describe @opencode/plugin 2.1.2 while the installed CLI is 2.0.32)\nfriction: docs' /v2/docs/build/plugins page truncates mid-stream for fetch; V2 event payload schemas are not documented on any docs page — resolution: extracted the authoritative event definitions from the installed binary's embedded JS and verified topology live via `opencode api get /api/session` and `/context`\nopen_questions: none — Needs research: no (V2 event semantics fully grounded)\nnext_suggested: present the plan to the user for approval (set plan_status approved), then commit the ticket folder and launch agent-test for C01, followed by agent-dev"
+    },
+    {
+      "at": "2026-10-24",
+      "role": "review-final",
+      "result": "RESULT\nstatus: DONE\nchunk: final (whole plan; C01 re-confirmed)\nfiles_changed: [.agents/plans/2026/2026-10-feat-ha-lifecycle-notify/chunks/C01.md]\ndeviations: none — final-review process followed; live smoke skipped as user-owned per launch instruction\nfriction: aislop CLI still not installed in this worktree (open FRICTION item) · resolution: manual comment-quality review against AGENTS.md, consistent with prior rounds; FRICTION reporter item again did not reproduce (tap used as prescribed regardless)\nopen_questions: none\nnext_suggested: coord marks the plan complete in STATE.json, hands the user the live-smoke checklist (restart → watch '[question-notify] first lifecycle event keys' → finished/stopped pushes → subagent silence; a possible 'event stream ended' line on shutdown is the noted nit, not a fault), re-statuses the two open FRICTION items, and the user opens the PR when satisfied\nVERDICT: APPROVED (final whole-plan review; ACs 1-10 all met; nit: abort-on-unload may log an 'event stream ended' stderr line during normal shutdown — flagged for smoke interpretation)"
+    }
+  ]
+}
