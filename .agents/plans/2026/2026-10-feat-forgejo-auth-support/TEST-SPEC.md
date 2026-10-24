@@ -95,7 +95,7 @@ image-structure 46/0 · startup-script 18/0 · dockerfile-pins 8/0 · dev-git-au
   every pre-existing check + the 4 green new invariant-regressions
   (`password=\$`, no config-time expansion, no disk store, no default-port scan)
   pass.
-- `dev-git-auth.sh` EXIT=1 — c1..c6 all still `ok` (20 lines), then
+- `dev-git-auth.sh` EXIT=1 — c1..c6 all still `ok` (observable 15 ok lines + first FAIL under fail-fast ordering; "20" counted c4's helm-ladder ok lines, which move behind the c-canonical block — corrected per final review 2026-10-24), then
   `FAIL: c-canonical-1: services/dev/prod/templates/secret-forgejo-token-canonical.yaml is missing`
   — exactly the DECISIONS-predicted first red.
 
