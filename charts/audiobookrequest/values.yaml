@@ -16,7 +16,7 @@ app-template:
         app:
           image:
             repository: markbeep/audiobookrequest
-            tag: 1.10.7
+            tag: 1.10.8
           env:
             TZ: America/Denver
             ABR_APP__PORT: "8000"
