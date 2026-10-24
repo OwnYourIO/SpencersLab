@@ -107,6 +107,35 @@
         }
       ],
       "dev_session": "ses_e905b590effebwayS8Lul5W3DT"
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": [
+        "C04"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
     }
   },
   "blocked": [],
@@ -129,7 +158,19 @@
       "token_encryption": "ENABLE --external-token-encryption-keys as part of this feature; key sourced via new Bitwarden ExternalSecret (repo standard).",
       "second_host_model": "Coder user-secrets (Beta) per-user PATs for any forge WITHOUT an OAuth provider slot \u2014 moot if the two-Coder topology lands (both forges get OAuth); planner to reconcile against provider_slot answer.",
       "first_boot_ux": "Polite gate + banner: workspace gates clone steps on approval and prints a clear \"approve here\" banner instead of failing raw."
-    }
+    },
+    "plan_handoff": {
+      "role": "plan",
+      "at": "2026-10-24",
+      "session": "ses_e900c791cffeaTYgc0vw0oNIOT",
+      "commit": "423c66367",
+      "result": "RESULT\nstatus: DONE\nchunk: plan (replan v2)\nfiles_changed: [2026-10-24-feat-forgejo-auth-support.md (replan-v2 section), DECISIONS.md (+17 replan decisions), chunks/C04.md, chunks/C05.md, chunks/C06.md] (commit 423c66367, local)\nsummary: TWO-CODER TOPOLOGY VERIFIED \u2014 dev cluster default/coder v2.35.2 host coder.dev.scifi.farm; gpu cluster default/coder v2.35.2 host coder.spencerslab.com/code.spencerslab.com; infra runs no coder. One TYPE=gitea provider slot each, paired canonical->canonical, dev->dev. C04 (M, wave 3): dev coder server gitea provider env + CODER_EXTERNAL_TOKEN_ENCRYPTION_KEYS + reloader via existing coder-secrets ExternalSecret + 2 Bitwarden slots (charts/coder). C05 (M, wave 3): identical for gpu coder vs git.spencerslab.com (services/gpu + custom-values/gpu, zero shared files with C04). C06 (M, wave 4, deps C04): workspace polite gate+banner \u2014 probe 'coder external-auth access-token forgejo'; approved => unset stale PAT helper + per-user askpass + transient-env boot clones; unapproved => banner URL + bot-PAT fallback; FORGEJO_OAUTH_ID literal in kubernetes-hardened main.tf; 4-arg wire_forgejo chosen to keep frozen C02 checks green. All v2.35.2-source verified (giteaDefaults derivation, callback /external-auth/forgejo/callback, CLI exit-0-token/exit-1-URL, encryption env). Forgejo OAuth app registration = USER ACTION (v15.0.9 has no admin OAuth API; source-checked). Tests: new gpu-coder-sso.sh + behavioral startup-sso-behavior.sh (stub-PATH/isolated-HOME per FRICTION) + extensions of existing two; C02/C03 hold as regressions.\ndeviations: none\nfriction: forgejo live swagger 404s both instances \u2014 verified API routes from v15.0.9 source instead \u00b7 new; known workarounds held; readonly-* only, no admin used\nopen_questions: (1) confirm consequence: dev-cluster workspaces stay bot-PAT for CANONICAL (dev coder slot -> git.scifi.farm); flip dev slot to canonical if disagreed. (2) Naming ack: provider id 'forgejo' both; Bitwarden items coder-external-auth + coder-token-encryption (distinct per cluster, coder-sso-secret precedent); reloader podAnnotations both coder deployments. Needs research: no\nnext_suggested: user approves C04-C06 -> plan_status approved -> TEST-SPEC extension for C04-C06 via test session -> wave 3 dev (C04 then C05)"
+    },
+    "chunks": [
+      "C04",
+      "C05",
+      "C06"
+    ]
   },
   "research_handoff": {
     "role": "research",
