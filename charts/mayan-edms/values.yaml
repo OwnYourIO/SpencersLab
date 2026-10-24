@@ -31,7 +31,7 @@ app-template:
         main:
           image:
             repository: mayanedms/mayanedms
-            tag: v4.12.1
+            tag: v4.12.2
           # No command/args: image default CMD `run_all` = setup-or-upgrade +
           # gunicorn + celery workers A-F + beat under supervisord.
           env:
