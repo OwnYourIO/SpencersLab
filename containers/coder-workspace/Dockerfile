@@ -73,7 +73,7 @@ ARG FJ_SHA256=6803c12eed17bfadb40ba95da2a6ab58f9b4a7dc10eabfe3512fce7e2fe6216f
 # renovate: datasource=npm depName=@opencode/cli
 ARG OPENCODE_VERSION=2.0.32
 # renovate: datasource=npm depName=@openchamber/web
-ARG OPENCHAMBER_VERSION=2.4.0
+ARG OPENCHAMBER_VERSION=2.5.1
 
 # Without a locale the agent and terminal sessions mangle non-ASCII output from
 # git, jq and the Coder CLI.
