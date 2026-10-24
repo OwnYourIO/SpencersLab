@@ -46,3 +46,10 @@ Append-only. Known workarounds — do not rediscover them. Status: open | fixed 
   tables.
 - [open] `RUN_HF_CHECK=1` cases sit behind the module-level
   `LLAMA_SWAP_EVIDENCE` gate — set BOTH env vars for the HF-live run.
+- [open] `/tmp/opencode/ag-venv` has the autogen console script but NO pytest;
+  gated runs use system `python3 -m pytest` (9.1.1 user-site) with
+  `PATH=/tmp/opencode/bin:$PATH` for helm. `aislop scan` takes exactly ONE
+  directory arg per invocation — dir-scan + per-file attribution.
+- [open] helm 3.16's sprig `dig` cannot descend through slices — use a small
+  define helper (see `llama-swap.firstMountPath` in _helpers-llama-swap.tpl)
+  instead of dig for paths crossing list structures.

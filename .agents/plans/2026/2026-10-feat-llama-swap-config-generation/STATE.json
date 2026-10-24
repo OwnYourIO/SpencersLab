@@ -1,8 +1,8 @@
 {
   "feature": ".agents/plans/2026/2026-10-feat-llama-swap-config-generation",
-  "plan_status": "approved-pre-merge-complete",
-  "current_wave": 3,
-  "updated_at": "2026-10-23",
+  "plan_status": "pre-merge-complete-awaiting-C05",
+  "current_wave": 5,
+  "updated_at": "2026-10-24",
   "kickoff": {
     "slug": "feat-llama-swap-config-generation",
     "type": "feat",
@@ -88,6 +88,59 @@
         "friction": "none",
         "open_questions": "none (user approved 35B 7-entry ladder, long-form IDs, full plan incl. delivery + fail-open degrade + fit gates)",
         "next_suggested": "agent-test once for all chunks BEFORE dev touches templates (C02 golden capture must pin CURRENT chart output); then wave 1 (C01, C02), wave 2 (C03, C04), wave 3 (C05 gated on user landing PR)"
+      },
+      {
+        "status": "DONE",
+        "chunk": "replan",
+        "verdict": "PLAN APPROVED (user, 2026-10-24 question tool)",
+        "files_changed": [
+          "2026-10-22-feat-llama-swap-config-generation.md (REPLAN 2026-10-24 section appended)",
+          "chunks/CA1.md (new)",
+          "chunks/CA2.md (new)",
+          "chunks/CA3.md (new)",
+          "chunks/CA4.md (new)",
+          "chunks/C05.md (rebased in place \u2014 absorbs the expected CA5 tasking update)",
+          "STATE.json (plan_status approved; CA1-CA4 pending added; C05 wave 6 + deps)",
+          "DECISIONS.md (2026-10-24 replan decisions + user rulings appended)"
+        ],
+        "commands_run": [
+          "repo-survey HEAD (git log, chart/gpu/gpu-ai values inventory 47+10+29 keys) => pass",
+          "qwen3.5 literal grep repo-wide => 0 roster hits (vendored scripts only) => drove ruling B",
+          "removal-candidate consumer sweep (services/custom-values/charts/skills/.rulesync/.opencode) => minuspod survivor + 2 pipeline-models rows => pass",
+          "machine-global opencode.json parse => gpu-ai 13 / gpu-moe 9 dangling modelIDs enumerated => pass",
+          "v262 feasibility recheck for all 5 CRs (identity-map, matrix.go:71, echo-listing, config-dir) => no STOP needed => pass",
+          "STATE.json parse check => pass"
+        ],
+        "deviations": "(1) No separate CA5 chunk: the C05-tasking rebase is a planner-owned artifact, executed in-place at replan (launch expected \"roughly CA5\" - folded). (2) CA2 carries a file-conflict dependency on CA4 (shared _helpers/values sections) besides the semantic CA1/CA3 ones. (3) Removal ruling B (user) differs from the plan's recommended A: qwen3.6 line survives; matrix/var cuts and P3 survivors recomputed (golden echoes 6->3). (4) Nothing committed (landing coord/user-owned); plan-folder artifacts only.",
+        "friction": "none new (em-dash edit flakes avoided via shell-python for the CR3 rewrite - known workaround)",
+        "open_questions": "none (rulings received: B + ablit removed + consumers in-PR + architecture approved)",
+        "next_suggested": "launch CA1 in the test session (ses_e9bdebccbffe7bYG46Fm9LO8FG) - it must land before any CA2/CA3/CA4 dev; coord may then run CA3 || CA4 (serialize at will: shared values.yaml, disjoint sections)"
+      },
+      {
+        "status": "DONE",
+        "chunk": "replan",
+        "files_changed": [
+          "plan file (REPLAN 2026-10-24 section)",
+          "chunks/CA1.md",
+          "chunks/CA2.md",
+          "chunks/CA3.md",
+          "chunks/CA4.md",
+          "chunks/C05.md (rebased in place)",
+          "STATE.json (approved; CA* added)",
+          "DECISIONS.md (replan rulings)"
+        ],
+        "commands_run": [
+          "HEAD inventory (47/10/29 model keys, matrix, hooks) => pass",
+          "literal qwen3.5 grep => 0 hits => ruling B",
+          "consumer sweep repo-wide => 2 findings",
+          "machine-global opencode.json parse => gpu-ai 13 / gpu-moe 9 dangling enumerated => pass",
+          "relocation surface read-through => pass",
+          "STATE + chunk consistency re-parse => pass"
+        ],
+        "deviations": "(1) no CA5 chunk - C05 rebase folded as planner artifact. (2) user ruled Option B (older text-only Qwen3 line removed; ENTIRE qwen3.6 line survives incl golden-pinned gpu tuned regime); catalog arithmetic 58 ids / gpu 34 enabled+24 echoes / gpu-ai 58+0. (3) CA2 has file-conflict dependency on CA4 (shared helpers/values). (4) no commits.",
+        "friction": "em-dash edit flakes again (known) - shell-python index-anchored splice",
+        "open_questions": "none",
+        "next_suggested": "CA1 via test session FIRST (nothing proceeds before rebased contract); then CA3, CA4 sequential (coord one-writer rule); then CA2; C05 gated. Standing docker-image-evidence run now belongs to C05 on-cluster."
       }
     ]
   },
@@ -554,19 +607,310 @@
     },
     "C05": {
       "status": "pending",
-      "title": "post-merge gpu-box verification + reload/rollback runbook (user-gated)",
+      "title": "post-merge gpu-box verification + reload/rollback runbook (user-gated; REBASED 2026-10-24)",
       "size": "S",
-      "wave": 3,
+      "wave": 6,
       "depends_on": [
         "C01",
         "C02",
         "C03",
-        "C04"
+        "C04",
+        "CA1",
+        "CA2",
+        "CA3",
+        "CA4"
       ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": []
+    },
+    "CA1": {
+      "status": "done",
+      "title": "contract rebase: superset parity P1-P6, family-schema tests, isolation flip, entrypoint/wiring/image re-expression, frozen tables (REMOVED 13 / CATALOG 58 / ENABLEMENT) \u2014 TEST SESSION ses_e9bdebccbffe7bYG46Fm9LO8FG only",
+      "size": "M",
+      "wave": 3,
+      "depends_on": [],
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "CA1",
+          "commit": "066322e70 (tests-only, 8 files, local)",
+          "files_changed": [
+            "charts/llama-swap/tests/**: llama_swap_testlib.py, test_config_parity.py, test_config_schema.py, test_new_roster.py, test_autogen_wiring.py, test_autogen_image.py, evidence/c05_expected_evidence.yaml, TEST_SPEC.md"
+          ],
+          "commands_run": [
+            "frozen-table arithmetic probe vs goldens (58=38+20; gpu 34+24; gpu-ai 58+0; REMOVED 13 subset golden-union) => matches rulings verbatim",
+            "HEAD baseline => 129p/12s reproduced",
+            "FULL pytest -v => 25f/122p/12s; reds: parity 5, schema 9, roster 3, wiring 7, image 1 - every message names CA2/CA3/CA4 with offending ID lists",
+            "LLAMA_SWAP_EVIDENCE=1 autogen_integration => 3p/5s gates unchanged",
+            "git diff golden => 0 lines byte-untouched",
+            "commit scope audit => tests only",
+            "aislop => 0 errors"
+          ],
+          "deviations": "(1) preservation-scope re-expressions (P2 verbatim code, P3 survivors, P6 modulo-REMOVED, ref-routing ENABLEMENT, table audit, gpu-ai P5 leg, mounts/env) green-at-handoff BY DESIGN = the unchanged-proof; TEST_SPEC 7bis G-M. (2) 2 CR4 drift probes green via OLD script guard - must re-verify green under NEW args guard in CA4 review (7bis-K). (3) self-caught stub-swallow accident restored pre-commit. (4) usage-error test hardened vs rc127-for-wrong-reason. (5) evidence yaml regenerated programmatically.",
+          "friction": "em-dash flakes (known workaround); one silent no-op replace -> all later patches carry asserts",
+          "open_questions": "none; coord: CA4 review must confirm drift probes under new guard; uncommitted .agents/plans edits are coord's",
+          "next_suggested": "CA3 or CA4 next (sequential per coord one-writer rule), then CA2"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CA1 round 2",
+          "verdict": "n/a-fix-round",
+          "files_changed": [
+            "charts/llama-swap/tests/test_config_schema.py, test_autogen_wiring.py, llama_swap_testlib.py, TEST_SPEC.md"
+          ],
+          "commit": "ebceb56c7",
+          "commands_run": [
+            "all 7 findings resolved; suite 25f/122p/12s name-identical red set",
+            "hf-loop grep-dead; _comment_only byte-identical vs d3e39b237",
+            "major-4 pair satisfiable (off-absent nowhere)",
+            "gates 3p/5s; goldens 0; aislop 0"
+          ],
+          "deviations": "self-reported: round-1 patch had silently no-op'd majors 2/3 (unasserted str.replace) - round-2 patches all carry asserts; added grep-for-symbols to author's post-patch checklist",
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "CA1 r2 review"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CA1 r2",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CA1.md (Round-2 notes)"
+          ],
+          "commands_run": [
+            "pytest 25f/122p/12s FAILED set diff-empty vs r1; baseline provenance re-established via archived 066322e70 re-run",
+            "tests-only scope, goldens empty diff, _comment_only byte-identical, hf-loop dead, post-CA2 KeyError simulation 0 residual, fam pair satisfiable",
+            "gates 3p/5s, CI 33, aislop 0/11 same classes"
+          ],
+          "findings": [],
+          "deviations": "none",
+          "friction": "/tmp/opencode/bin/helm not on PATH; npx aislop rc=1 on warnings-only",
+          "open_questions": "none",
+          "next_suggested": "CA1 done; wave 4 CA3 then CA4 sequential; CA4 review re-verifies drift probes under args guard"
+        }
+      ]
+    },
+    "CA3": {
+      "status": "done",
+      "title": "removals: frozen 13-ID strip (coder trio+ablit, kat trio+1m, qwen3-30b-a3b/-8b; qwen3.6 line SURVIVES per ruling B) + matrix closure + consumer sweep (pipeline-models kat rows in-PR; machine-global list to user)",
+      "size": "M",
+      "wave": 4,
+      "depends_on": [
+        "CA1"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "CA3",
+          "commits": [
+            "6b76b7c2d",
+            "111fe0e1c",
+            "e671e1c26 (local)"
+          ],
+          "files_changed": [
+            "charts/llama-swap/values.yaml (47->38)",
+            "services/gpu/prod/values.yaml",
+            "services/gpu-ai/prod/values.yaml (71->58 = frozen CATALOG)",
+            "charts/gpt-researcher/values.yaml (user-ruled FAST_LLM repoint)",
+            ".rulesync/skills/pipeline-models/SKILL.md (2 kat rows deleted)",
+            ".opencode/skills/pipeline-models/SKILL.md (regenerated mirror)"
+          ],
+          "commands_run": [
+            "baseline 25f/122p/12s name-identical => pass",
+            "helm dep/lint/--strict => pass",
+            "template x3 => 64228/65886/82914 B",
+            "pytest -v => 21f/126p/12s: flipped P4x2+P1[gpu-ai]+roster[gpu-ai]; remaining reds EXACTLY CA2 13 + CA4 8, zero new",
+            "matrix closure tests 2 green + independent probe => 0 dangling both clusters",
+            "survivor git-archive render diff => 0 field diffs, drops==REMOVED-only",
+            "13-id sweep => 0 hits renders + outside tests only family-generic comments",
+            "minuspod => survivor no-edit verified",
+            "rulesync generate + --check => pass",
+            "gpt-researcher lint+template => pass",
+            "aislop => 0/0 touched",
+            "tests tree diff ebceb56c7..HEAD => empty",
+            "commit scope x3 via git show => pass"
+          ],
+          "deviations": "(1) gpt-researcher added by USER RULING in-session (dangling FAST_LLM consumer missed by replan sweep). (2) comment blocks reworded family-generic per same ruling. (3) zero macro removals (none unreferenced). (4) plan folder left uncommitted (coord). (5) aislop dir-scope substitution.",
+          "friction": "replan sweep missed an in-repo consumer - CA3 per-id sweep caught it; review/C05 should re-run exact-id sweeps",
+          "open_questions": "coord: CA4 dev or CA3 review next (file-disjoint); CA1 flag carried: CA4 review re-verifies drift probes under args guard",
+          "next_suggested": "CA3 review then CA4 dev"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CA3",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CA3.md review notes"
+          ],
+          "commands_run": [
+            "all bars re-run; baseline re-reproduced from archive; flips exactly 4, remaining = CA2-13 + CA4-8",
+            "exact-13-ID sweep 0 residual; matrix closure 0 dangling; survivor render-diff byte-equal",
+            "gpt-researcher repoint verified live-target; rulesync --check up-to-date; macro graph 0 CA3-orphans",
+            "aislop 0 attributable"
+          ],
+          "findings": [
+            "2 pre-existing EOF nits deferred (not CA3)"
+          ],
+          "deviations": "none",
+          "friction": "ag-venv lacks pytest (system pytest fine); aislop single-dir-arg pattern confirmed",
+          "open_questions": "none",
+          "next_suggested": "CA4 dev; CA4 review must re-verify drift probes under NEW args guard (7bis-K) + exact-id sweep post-CA4"
+        }
+      ]
+    },
+    "CA4": {
+      "status": "done",
+      "title": "entrypoint relocation: containers/llama-swap-autogen/entrypoint.sh as image ENTRYPOINT (--scan-dir/--base/--out/--home), chart args-only wiring, args-driven drift guard + command tripwire",
+      "size": "M",
+      "wave": 4,
+      "depends_on": [
+        "CA1"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "CA4",
+          "commit": "601073581 (local, 4 files, 218+/75-)",
+          "files_changed": [
+            "containers/llama-swap-autogen/entrypoint.sh (new, 100755)",
+            "containers/llama-swap-autogen/Dockerfile (COPY --chmod=755 + exec ENTRYPOINT; pin untouched)",
+            "charts/llama-swap/values.yaml (init command->args)",
+            "charts/llama-swap/templates/_helpers-llama-swap.tpl (args drift guard + command tripwire + firstMountPath define)"
+          ],
+          "commands_run": [
+            "baseline 21f/126p/12s recorded => pass",
+            "sh -n entrypoint => pass (shellcheck absent)",
+            "helm dep/lint/--strict + template x3 => pass",
+            "pytest FULL -v => 13f/134p/12s; comm-diff vs baseline = exactly 8 CA4 flips, zero new, remaining 13 = CA2-only => pass",
+            "CI 33/33, gates 3p/5s => pass",
+            "DRIFT PROBES under NEW args guard => both PASS with new fail-reasons (7bis-K duty discharged)",
+            "degrade replay vs pinned venv CLI: empty-scan rc0 comment-only + tool-never-ran proof; real ValueError crash rc0 degrade + stderr kept; valid fixture rc0 content preserved + HOME cache under --home; missing --out rc2 usage => 4/4",
+            "pod/CM delta vs CA3 tip: init command->args swap ONLY, main/tools byte-identical, declared+base CMs JSON-sha identical => pass",
+            "tests tree diff vs ebceb56c7 => 0 lines",
+            "aislop charts => 0 attributable; containers dir outside aislop language set (documented substitution)"
+          ],
+          "deviations": "(1) deferred-(e) folded: find -print -quit (sanctioned). (2) guard also pins --base path (firstMountPath define for helm 3.16 dig-slice gap). (3) tripwire fires on ANY command: key incl null/empty. (4) sh -n + executed replay in lieu of shellcheck.",
+          "friction": "helm 3.16 sprig dig cannot descend slices - use define helper (new FRICTION item)",
+          "open_questions": "none",
+          "next_suggested": "CA4 review: 13f/134p/12s, probes green under args guard, rendered-pod diff; then CA2"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CA4",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CA4.md Round-1 review notes"
+          ],
+          "commands_run": [
+            "bars re-run: 13f/134p/12s FAILED name-identical CA2-13; CI 33; gates 3p/5s",
+            "drift probes x7 direct-helm under NEW args guard all fail-render as designed (7bis-K discharged both directions; null-command nuance = wording only)",
+            "degrade replays vs real pinned CLI under dash: tool-never-ran / stderr-kept / content-preserved / HOME-cache-under---home / usage rc2 x5 / dash -n clean",
+            "Dockerfile diff = COPY+ENTRYPOINT only, pin/uid/console-script intact",
+            "pod delta = command->args swap only, CMs sha-equal, volumes 6-equal",
+            "exact-13-ID sweep 0 residual"
+          ],
+          "findings": [
+            "5 nits -> post-wave hardening chore bundle",
+            "C05 keeps docker-daemon entrypoint/find/--entrypoint evidence item"
+          ],
+          "deviations": "none; dev 1-4 adjudicated accepted (deferred-(e) CLOSED via -print -quit fold)",
+          "friction": "command:null rejected at app-template schema before guards - null overlays never reach tripwire (probe-design lesson)",
+          "open_questions": "none",
+          "next_suggested": "CA2 dev (wave 5); target 0f/147p/12s"
+        }
+      ]
+    },
+    "CA2": {
+      "status": "done",
+      "title": "family schema + quant-ladder expansion + full-catalog default-disabled conversion + per-cluster enables (gpu 34/24, gpu-ai 58/0); deviation-1 wording + tuned overrides survive",
+      "size": "L",
+      "wave": 5,
+      "depends_on": [
+        "CA1",
+        "CA3",
+        "CA4"
+      ],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "BLOCKED",
+          "chunk": "CA2",
+          "commits": [
+            "bda8c992a + 0602a2f49 (local)"
+          ],
+          "files_changed": [
+            "charts/llama-swap/templates/_helpers-llama-swap.tpl",
+            "charts/llama-swap/values.yaml",
+            "services/gpu/prod/values.yaml",
+            "services/gpu-ai/prod/values.yaml"
+          ],
+          "commands_run": [
+            "helm dep/lint/--strict + template x3 => pass",
+            "pytest FULL -v => 2f/145p/12s (11/13 CA2 reds green; parity 28/28, schema 16/18, roster 30/30, wiring 32/32, image 6p/4s, CI 33, gates 3p/5s)",
+            "frozen-table diff ENABLEMENT/CATALOG/GPU_ECHO => table-for-table match",
+            "gpu-ai render structurally IDENTICAL to pre-conversion; gpu 38 entries identical + exactly 20 shaped echoes; default render 58 echoes",
+            "P3 echoes byte-exact; whisper/rana raw-cmd byte-identical; 15 golden multiset spot-checks; dup-ID fail-render CA2-named; schema-key strip clean; sentinels/trio pass; tests diff empty; aislop 0 attributable"
+          ],
+          "validation_at_fault": "G1 test_config_schema.py:77-81 offender loop reads fam.get('quants') where fam is the STRING key (spec unused) => AttributeError for ANY config.families impl (executed: 'str object has no attribute get'); corrected loop green over dev values (0 offenders). G2 :134 'golden gpu-ai qwen38-rana has no -hf token' - rana golden is raw /bin/sh bootstrap (opaque shlex token, -hf inside); CA2 MUST carry rana as chart rung (P1 exact-ID + CA2.md) and CHART_RAW_CMD_IDS={whisper} forbids chart cmd => unsatisfiable; fix = ratified defect-A token-boundary routing, verified green 41/41 routed ids.",
+          "deviations": "(1) rana chart rung carries inert documented hf/draft/spec/use/flags (required by post-G1 offender rule; preserves -hf coverage). (2) home layout = home-3b-v3 base + cpu rung id: override (ratified exception). (3) 18 gpu-ai-local matrix var names moved chart-side; q5/q6 stay var-less per ruling; gpu-ai keeps sets replacements only. (4) 2-commit split. (5) gpu-ai EOF restored. (6) no version/tag edits.",
+          "friction": "whole-section YAML surgery created duplicate config:/sets: keys caught ONLY by mechanical before/after render diff - promote that snapshot to CA2-style tasking; CA1 satisfiability sims missed str-attribute + shlex-opacity classes",
+          "open_questions": "none",
+          "next_suggested": "G1+G2 test-session fix round -> CA2 review expecting 0f/147p/12s"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CA2-contract-fix",
+          "commit": "117848712 (tests-only, 2 files)",
+          "commands_run": [
+            "G1/G2 reproduced verbatim (AttributeError 'str has no get'; rana -hf premise broken) => TEST-FAULTY both",
+            "G2 independent proof: token-boundary regex finds rana exec-line -hf/-hfd == dev rung refs exactly; G1 corrected loop 0 offenders",
+            "amend G1 key/spec reads; amend G2 fallback routing (loud assert retained, coverage grows)",
+            "FULL pytest => 0f/147p/12s HISTORIC FIRST-FULL-GREEN (parity 28, schema 18, wiring 32, roster 30, image 6p/4s, CI 33)",
+            "gates 3p/5s; HF live post-CA2 => 1p; drift x2 => 7bis-K CLOSED (args guard only; remaining command: = tools sleep, out of scope)",
+            "goldens 0; aislop 0; commit tests-only"
+          ],
+          "deviations": "root causes self-reported: CA1-r1 key/spec swap + moving rana into loop without generalizing -hf extraction. TEST_SPEC 7ter N/O logged; new standing method: value-shape loop amendments must execute against live/final-shape fixture (adopted from dev friction finding)",
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "CA2 review: 0f/147p/12s + 7ter audit + before/after render snapshot re-run (duplicate-key class)"
+        },
+        {
+          "status": "DONE",
+          "chunk": "CA2",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/CA2.md Round-1 notes"
+          ],
+          "commands_run": [
+            "bars fresh: 0f/147p/12s first-green reproduced; CI 33; gates 3p/5s; HF live 1p + 98 refs OK; goldens 0; drift probes fail-render under args guard (7bis-K closure verified)",
+            "own archive renders: gpu-ai BYTE-IDENTICAL vs parent; gpu +20 echoes +18 vars, 38 entries dict-identical; default 58/58 echoes",
+            "machinery: precedence probe family<rung<models, dup-ID CA2-named, disabled-beats-enabled, id: x1 only, zero schema-key leakage, tpl-free, modelCmd byte-identical C02->HEAD",
+            "dev deviations 1-6 ACCEPTED (18-var move = only contract-consistent reading; observation recorded)",
+            "G1/G2 fix audit: coverage grows, no weakening; exact-13-ID sweep 0 residual; aislop 0 attributable"
+          ],
+          "findings": [
+            "observation: plan CR1.3 'OR' wording vs pinned merge semantics (tests+impl agree; plan is the outlier) - coord optional DECISIONS line",
+            "hardening bundle gains: final-nit-1 new entry-point (catalog/cluster disabled: strings)"
+          ],
+          "deviations": "none by reviewer",
+          "friction": "none new",
+          "open_questions": "coord: optional DECISIONS one-liner pinning CR1.3 merge precedence",
+          "next_suggested": "final whole-plan review round 2; then C05 awaits user PR"
+        }
+      ]
     }
   },
   "blocked": [],
@@ -612,6 +956,35 @@
       "deviations": "none - read-only throughout",
       "friction": "first echo probe used naive quote-stripping => false sh failures; lesson: parse rendered shell via shlex, never strip",
       "open_questions": "none"
+    },
+    "round2": {
+      "session": "ses_e90ce60a6ffeooQpswYOChCnPW",
+      "verdict": "APPROVED (ready-to-PR, replan round)",
+      "handoff": {
+        "status": "DONE",
+        "chunk": "final-2",
+        "commands_run": [
+          "full replan bar: helm x3 => pass; renders 71796/74939/81162 B = CA2 record",
+          "pytest => 0f/147p/12s; skip inventory = established 12 gates only",
+          "gates 3p/5s; HF live 1p; goldens 0-diff; rulesync --check clean",
+          "drift probes x4 under NEW args guard fail-render (7bis-K re-confirmed)",
+          "entrypoint replays: empty-scan tool-never-ran + degrade stderr-kept rc0",
+          "CR1.3 live probe: pinned merge semantics hold",
+          "colon-free 58 ids x3; macros shared-differing 0",
+          "exact-13-ID sweep 0 residual; matrix closure 0 dangling; preload == frozen; q5/q6 orphaned-live confirmed",
+          "deleted-assertion sweep mapped; cmd/model token fns byte-identical vs baseline",
+          "per-commit scope x19; aislop 0 attributable; waiver honesty (docker absent); machine-global untouched by branch",
+          "gpt-researcher target live-verified"
+        ],
+        "findings": [
+          "NONE blocker/major/minor-new; carried items all in hardening bundle / C05 tasking",
+          "observation: kilo.jsonc mtime today - user's domain; C05 runbook re-greps 13+9 at run time"
+        ],
+        "deviations": "none; 14-vs-19 commit count reconciled (informational)",
+        "friction": "none new",
+        "open_questions": "none",
+        "next_suggested": "user lands PR; C05 executes against c05_expected_evidence.yaml + runbook addenda; hardening chore on offer"
+      }
     }
   }
 }

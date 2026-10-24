@@ -224,3 +224,99 @@ Append-only log of decisions, rejected alternatives, conventions.
   (TEST_SPEC §7(F)). First gpu-ai load of the >125 GiB-class entries
   (flash-next q5/q6, orca-q6, 122B-q6) and the q3 regime is
   measure-on-cluster; C05 must observe, not assume.
+
+## 2026-10-24 — User review round: replan requests (coord)
+
+After reviewing the landed C01–C04 surface, the user requested changes
+(pre-C05; plan reopened):
+
+1. **Family-based definitions**: model entries keyed by FAMILY (e.g.
+   `qwen3.8-27b`) with the quant ladder built in (like `use:` composition);
+   llama-swap IDs (`qwen3.8-27b-q4`) are GENERATED from family+quant. Rendered
+   cmd parity per quant must hold vs today.
+2. **Catalog pattern**: chart values.yaml defines ALL model families, default
+   DISABLED (ratified deviation-1 fail-fast wording); `services/gpu` and
+   `services/gpu-ai` enable their subset. Consequence for the contract:
+   per-cluster isolation assertions change from "ID absent" to "ID present +
+   fail-fast disabled" — test writer must rebase parity/isolation bars
+   (superset semantics), coord-routed.
+3. **Removals**: qwen3-coder* + all kat-coder* + "all non-vision-handling
+   qwen3.5" (exact inventory list to be presented for approval; matrix
+   var/set referential closure must be kept — v262 load-errors on dangling
+   vars). User WILL handle downstream consumer configs (agent-model fallbacks
+   gpu-ai/kat-coder-q8|q8-1m, gpu-moe/kat-coder-q6, coder-workspace flows)
+   themselves; runbook must flag them.
+4. **No inline script in k8s yaml**: the autogen degrade/generate shell moves
+   INTO `containers/llama-swap-autogen` (entrypoint); manifests invoke with
+   args only. Degrade-path test sandboxing must re-express against the
+   repo-side entrypoint file (daemon-free, still sandbox-executable).
+5. flash-next/orca: no additions — user's "research and add" was a visibility
+   miss during review; entries exist and stay (folded into the catalog).
+
+## 2026-10-24 — Replan decisions + user rulings (agent-plan; replan of C01–C04 surface)
+
+**User rulings (question tool, 2026-10-24 — ground truth):**
+- Removals: certain set (qwen3-coder-next×2 + kat-coder×6) APPROVED; `coder-next-ablit`
+  RULED IN with the coder family; "non-vision qwen3.5" RULED as **Option B** — the older
+  text-only Qwen3 line `qwen3-30b-a3b-q4/-q8` + `qwen3-8b-q4/-q8` (no literal qwen3.5* IDs
+  ever existed; grep-proven). **The entire qwen3.6 line SURVIVES** (incl. gpu's golden-pinned
+  tuned 35B-q8 regime, the -1m/-bf16 golden echoes, -q8-visual, qwen36-heretic/huihui).
+  Frozen REMOVED_IDS = **13**.
+- In-repo consumers: **fix both in this PR** — minuspod's `OPENAI_MODEL: qwen3.6-27b-q6`
+  turns out to be a SURVIVOR under ruling B (CA3 verifies, no edit); the two
+  `pipeline-models` kat-coder rows (gpu-ai/q8, gpu-moe/q6) are DELETED in-PR from the
+  `.rulesync` source + `rulesync generate` mirror (delete-only, no invented replacements).
+- Machine-global provider configs stay USER-OWNED: enumerated 13 dangling modelIDs under
+  provider `gpu-ai` + 9 under `gpu-moe` (+ kilo twin, coder-workspace flows) → C05 runbook.
+- Architecture (family schema, catalog default-disabled, superset parity P1–P6, entrypoint
+  relocation, waves CA1→CA3∥CA4→CA2→C05): **APPROVED as planned.**
+
+**Planner decisions (rejected alternatives in parentheses):**
+- Family schema = `config.families.<family>.quants.<rung>` with ID derivation
+  `<family>-<quant>`, per-rung `id:` override (only `home-3b-v3` needs it), merge layering
+  family < rung < raw `config.models.<id>` (Helm deep-merge stays the per-cluster override
+  channel — per-quant overrides survive with today's exact mechanism: gpu tuned regimes,
+  `disabled:` messages, capabilities). (Rejected: replacing `models:` entirely — would break
+  the schema escape-hatch tests and rana/whisper raw-cmd passthrough.)
+- Precedence unchanged `disabled > cmd > hf-composition`; expansion converts `not-enabled`
+  to the deviation-1 echo path (ratified wording preserved per-quant); NEW catalog-default
+  message ("is not enabled on this cluster …") is NOT golden-pinned — legacy golden messages
+  stay byte-exact via the clusters' `models.<id>.disabled:` overrides. (Rejected: per-rung
+  `cmd:` duplication for every rung — defeats the compact-catalog goal.)
+- Duplicate rendered ID fails the render; `families` key stripped from rendered output
+  (chart-values concept, like filterPresets).
+- Ordering CA3 (removals) BEFORE CA2 (catalog conversion): strip dead weight first so the
+  conversion moves less data and the catalog diff stays reviewable; CA2 additionally carries a
+  file-conflict dep on CA4 (shared `_helpers` + values sections), no semantic coupling.
+- Parity rebase P1–P6 (plan REPLAN/CR2): rendered-ID set == frozen CATALOG (58 IDs); live
+  golden cmds keep token-multiset equality UNBENTED; 3 surviving golden echoes byte-exact;
+  removed IDs absent; new off-cluster IDs fail-fast shaped; matrix assertion amendment E
+  re-expressed "additive preservation modulo REMOVED" (CA3 legitimately removes vars).
+  Goldens byte-untouched (user). Isolation flips absent→echo (user-requested consequence).
+- Entrypoint contract: flags `--scan-dir/--base/--out/--home`; fail-open rc0 semantics ported
+  verbatim; usage errors exit ≠0 (wiring bugs loud — degrade rc0 reserved for scan-empty /
+  generate-fail only); `--home` makes the C03 writable-cache fix EXPLICIT (supersedes the
+  accepted passwd-fallback deviation-1 reasoning with a pinned arg); drift guard re-armed
+  args-driven (scan-dir set == scanPaths, both directions) + any initContainer `command:`
+  fails the render (shell-reintroduction tripwire). Degrade tests re-expressed against the
+  repo-side entrypoint.sh (daemon-free), routed through CA1/test session.
+- No separate CA5 chunk: the C05-tasking rebase (enabled sets, removals, runbook addenda,
+  dangling list) was executed IN-PLACE in chunks/C05.md as a planner artifact of this replan.
+- v262 feasibility: all five CRs verified compliant (echo models in matrix = established
+  pattern; colon-namespaced scanned half unaffected; preload ids survive; matrix closure is
+  the standing rule CA3 re-proves). No STOP condition hit.
+- `plan_status: approved`; next wave = CA1 (test session only); C05 remains pending,
+  user-gated on PR landing (wave 6).
+
+## 2026-10-24 — CA3 execution rulings (coord)
+
+- In-session user ruling (during CA3 dev): `charts/gpt-researcher/values.yaml`
+  FAST_LLM pinned a removed ID (`qwen3-8b-q8`) — missed by the replan sweep.
+  **Repointed in-PR to `qwen3.6-27b-q8`** (survivor); own commit; helm-validated.
+  Lesson recorded: sweeps must grep EXACT IDs, not family patterns only.
+- Incident-history comment blocks mentioning removed IDs reworded
+  family-generic (reasoning preserved); rendered bytes untouched (proven).
+- No macro deletions (all still referenced across the two renders).
+- CR1.3 merge semantics PINNED as implemented+tested (per CA2 review observation):
+  family<rung<models precedence; rung `enabled: false` beats family `enabled: true`;
+  `disabled:` beats `enabled:`. The plan's "OR" wording is superseded by this entry.
