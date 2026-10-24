@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-feat-forgejo-auth-support",
-  "plan_status": "needs-replan",
+  "plan_status": "approved",
   "coord_session": "ses_e90a11f85ffenPs2OAuuqUBY0Q",
   "test_session": "ses_e908a206dffeJJZ7J97KEzUmVP",
   "current_wave": 2,
@@ -170,7 +170,9 @@
       "C04",
       "C05",
       "C06"
-    ]
+    ],
+    "approved_at": "2026-10-24",
+    "approved_by": "user"
   },
   "research_handoff": {
     "role": "research",
