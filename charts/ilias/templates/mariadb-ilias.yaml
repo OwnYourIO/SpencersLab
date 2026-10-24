@@ -14,7 +14,7 @@ spec:
     # OutOfSync forever (the only defaulted field that shows in the diff).
     generate: false
   # renovate: datasource=docker depName=mariadb
-  image: mariadb:11.8.8
+  image: mariadb:11.8.9
   replicas: 1 # standalone — grow is single-node (no Galera/replication)
   port: 3306
   # ILIAS requires a 3-byte utf8 (utf8mb3) server collation.
