@@ -89,8 +89,12 @@ def test_c02_chart_models_are_composition_or_documented_escape_hatch():
                 continue
             if "cmd" in merged:
                 offenders.append(f"{mid}: raw cmd outside the escape hatch")
-            if "hf" not in merged and "disabled" not in merged:
-                offenders.append(f"{mid}: no hf ref and no disabled reason")
+            # CR5 (amendment S, shape-tolerant): a rung resolves via literal
+            # hf OR shorthand composition (repo|hfRepo + tag|culture[quant]);
+            # culture maps are read ONLY from chart values config.tagCultures
+            # (single source; HEAD has none, so resolution = literals).
+            if L.rung_effective_ref(cfg, fam, spec, quant) is None and "disabled" not in merged:
+                offenders.append(f"{mid}: no resolvable hf ref and no disabled reason")
     # the per-ID override layer may add schema records (gpu disabled: overrides
     # etc.) but must never re-introduce the ladder (ids are family-owned now)
     for mid, m in (cfg.get("models") or {}).items():
@@ -133,6 +137,7 @@ def test_c02_chart_composition_hf_refs_match_golden():
             if L.is_echo_cmd(gcmd):  # golden echo (surviving disables): ref lives in the other golden
                 other = "gpu-ai" if src == "gpu" else "gpu"
                 gcmd, src = goldens[other][mid]["cmd"], other
+            eff_hf = L.rung_effective_ref(cfg, fam, spec, quant)
             want_hf = L.cmd_flag_value(gcmd, "-hf")
             want_hfd = L.cmd_flag_value(gcmd, "-hfd")
             if want_hf is None:
@@ -150,10 +155,11 @@ def test_c02_chart_composition_hf_refs_match_golden():
                 want_hf = hfs[-1] if hfs else None
                 want_hfd = hfds[-1] if hfds else want_hfd
             assert want_hf, f"golden {src} {mid} has no -hf token — spec premise broken"
-            if eff.get("hf") != want_hf:
-                problems.append(f"{mid}: hf={eff.get('hf')!r} but golden({src}) -hf={want_hf!r}")
+            if eff_hf != want_hf:
+                problems.append(f"{mid}: effective hf={eff_hf!r} but golden({src}) -hf={want_hf!r}")
             if want_hfd and eff.get("draft") != want_hfd:
-                problems.append(f"{mid}: draft={eff.get('draft')!r} but golden({src}) -hfd={want_hfd!r}")
+                problems.append(f"{mid}: draft={eff.get('draft')!r} but golden({src}) -hfd={want_hfd!r}"  # draft stays full-literal (CR5)
+)
     assert not problems, "family refs diverge from golden cmd tokens:\n" + "\n".join(problems)
 
 
@@ -470,7 +476,84 @@ def test_fam_duplicate_derived_id_fails_render():
 
 @helm
 def test_fam_key_stripped_from_rendered_output():
-    """DECISIONS: `families` is a chart-values concept (like filterPresets) —
-    it must not leak into the rendered llama-swap config."""
+    """DECISIONS + CR5: values-only concepts must never reach the rendered
+    llama-swap config. Extended (amendment U-1) to the CR5 schema keys on
+    every model entry and the new top-level keys."""
     cfg = L.configmap_data("gpu", "llama-swap-config", "config.yaml", SMOKE_OVERLAY)
-    assert "families" not in cfg, "families key leaked into rendered config (CA2)"
+    banned_top = {"families", "filterPresets", "tagCultures"}
+    assert not banned_top & set(cfg), f"values-only top-level keys leaked: {sorted(banned_top & set(cfg))}"
+    leaks = [f"{mid}.{k}" for mid, m in L.all_models_of(cfg).items()
+             for k in L.NEW_SCHEMA_KEYS if k in m]
+    assert not leaks, f"CR5 schema keys leaked into rendered entries: {leaks[:12]}"
+
+
+# ---------------------------------------------------------------------------
+# CR5 synthetic final-shape tests (amendment U; §7ter method: executed against
+# a fixture of CB2's prescribed schema, not just HEAD). RED at CB1 handoff for
+# the right reason — HEAD's templates ignore the shorthand/vocab fields (probed
+# 2026-10-24: no -hf composed, hfRepo/dispName/descBase LEAKED into entries,
+# unresolvable rungs rendered silently) — and GREEN at CB2 completion.
+# ---------------------------------------------------------------------------
+
+SH_SHORTHAND = {"config": {
+    "tagCultures": {"cr5-smoke": {"q4": "Q4_K_M", "q8": "Q8_0"}},
+    "families": {"cr5-smoke": {
+        "enabled": True,
+        "hfRepo": "smolorg/Cr5-Smoke-GGUF",
+        "tagCulture": "cr5-smoke",
+        "dispName": "CR5 Smoke",
+        "descBase": "Smoke catalog family",
+        "quants": {
+            "q4": {"size": "9.9 GiB", "suffix": "probe"},
+            "q8": {"repo": "otherorg/Cr5-Smoke-GGUF", "tag": "Q8_0",
+                   "draft": "ggml-org/Dummy-GGUF:mtp-draft-Q8_0",
+                   "spec": {"type": "draft-mtp", "draft_n_max": 2}},
+        },
+    }},
+}}
+
+
+@helm
+def test_cr5_shorthand_composition_render():
+    """CR5 grammar outcome bars on the synthetic shorthand family: effective
+    -hf composes from hfRepo+culture (and repo+tag exceptions); NAME carries
+    (TAG), the ", MTP" marker derives from draft/spec presence, suffix rides
+    as data; DESCRIPTION composes from descBase+TAG and interpolates the size
+    datum; no schema key leaks. Awaits CB2."""
+    cfg = L.configmap_data("gpu", "llama-swap-config", "config.yaml", SH_SHORTHAND)
+    models = L.all_models_of(cfg)
+    q4, q8 = models.get("cr5-smoke-q4"), models.get("cr5-smoke-q8")
+    assert q4 and q8, "CB2 shorthand family not expanded (cr5-smoke-q4/q8 missing)"
+    assert L.cmd_flag_value(q4["cmd"], "-hf") == "smolorg/Cr5-Smoke-GGUF:Q4_K_M", \
+        f"culture-composed ref wrong: {L.cmd_flag_value(q4['cmd'], '-hf')!r} (CB2)"
+    assert L.cmd_flag_value(q8["cmd"], "-hf") == "otherorg/Cr5-Smoke-GGUF:Q8_0", \
+        f"repo/tag-exception ref wrong: {L.cmd_flag_value(q8['cmd'], '-hf')!r} (CB2)"
+    assert "Q4_K_M" in (q4.get("name") or "") and "MTP" not in q4.get("name", ""), \
+        f"name grammar not composed / MTP wrongly present: {q4.get('name')!r} (CB2)"
+    assert "Q8_0" in (q8.get("name") or "") and "MTP" in q8.get("name", ""), \
+        f"MTP auto-marker missing from draft/spec rung name: {q8.get('name')!r} (CB2)"
+    assert " - probe" in (q4.get("name") or ""), f"suffix data not carried: {q4.get('name')!r} (CB2)"
+    assert "Q4_K_M" in (q4.get("description") or "") and "9.9 GiB" in q4.get("description", ""), \
+        f"desc grammar/size interpolation missing: {q4.get('description')!r} (CB2)"
+    leaks = [f"{m}.{k}" for mid, m in models.items()
+             if mid.startswith("cr5-smoke") for k in L.NEW_SCHEMA_KEYS if k in m]
+    assert not leaks and "tagCultures" not in cfg, f"schema keys leaked: {leaks[:8]} (CB2 strip)"
+
+
+SH_UNRESOLVABLE = {"config": {"families": {"cr5-ghost": {
+    "enabled": True,
+    "hfRepo": "smolorg/Ghost-GGUF",
+    "quants": {"nope": {}},  # no hf, no tag, no culture, no cmd, no disabled
+}}}}
+
+
+@helm
+def test_cr5_unresolvable_rung_fails_render():
+    """CR5 loud-offender rule (G1 precedent): a rung with no resolvable ref,
+    no cmd, no disabled must FAIL THE RENDER, not emit a cmd-less model.
+    HEAD renders it silently (probed rc=0) -> red naming CB2."""
+    rc, out = L.render_rc("gpu", SH_UNRESOLVABLE)
+    assert rc != 0, (
+        "CB2 fail-guard missing: unresolvable rung cr5-ghost-nope rendered with rc=0 "
+        "instead of failing the render\n" + out[-300:]
+    )

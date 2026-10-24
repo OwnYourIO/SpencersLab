@@ -602,3 +602,61 @@ def is_echo_cmd(cmd: str) -> bool:
     """Fail-fast echo shape (ratified deviation-1 wording) — the loader-safe
     predicate behind P3/P5 and the generalized B/D ref routing."""
     return bool(_ECHO_CMD.match((cmd or "").strip()))
+
+# ---------------------------------------------------------------------------
+# CR5 (REPLAN round 2) machinery: shorthand-aware effective refs + display
+# scoping. Grammar is outcome-level per plan "CR5 grammar"; the TEST-side
+# mirror reads the SAME config.tagCultures map from chart values (validates
+# composition, never map content - plan risk note). No test-side culture copy:
+# HEAD's values have no shorthand, so resolution falls through to literals and
+# the bar behaves exactly as pre-CB1 in both states.
+# ---------------------------------------------------------------------------
+
+NEW_SCHEMA_KEYS = [
+    "dispName", "descBase", "descTail", "size", "disp", "suffix",
+    "hfRepo", "tagCulture", "tag", "repo",
+]
+NEW_TOP_KEYS = ["tagCultures"]
+LADDER_QUANT_KEYS = {"q3", "q4", "q5", "q6", "q8", "bf16"}
+
+# Desc-TAG obligation (CB1 grammar-consistency): prose rungs the user ruling
+# leaves explicit - gated-repo caveats/HF_TOKEN provenance that the uniform
+# grammar cannot carry. Their NAME still faces the parenthesized-TAG rule;
+# the before/after display table (CR5 bar 2) is the human review of their text.
+DESC_PROSE_EXEMPT_FAMILIES = {"qwen3.8-flash-next-orca"}
+
+
+def rung_effective_ref(chart_cfg: dict, fam: str, spec: dict, quant: str) -> str | None:
+    """CR5 HF resolution order: rung hf literal > {repo | fam.hfRepo} :
+    {tag | tagCultures[fam.tagCulture][quant]}."""
+    rung = (spec.get("quants") or {}).get(quant) or {}
+    if rung.get("hf"):
+        return rung["hf"]
+    repo = rung.get("repo") or spec.get("hfRepo")
+    culture = (chart_cfg.get("tagCultures") or {}).get(spec.get("tagCulture") or "") or {}
+    tag = rung.get("tag") or culture.get(quant)
+    if repo and tag:
+        return f"{repo}:{tag}"
+    return None
+
+
+def id_family_index(chart_cfg: dict) -> dict[str, tuple[str, str]]:
+    """rendered ID -> (family, quant-key) via the CR1.1 derivation."""
+    out = {}
+    for fam, spec in (chart_cfg.get("families") or {}).items():
+        for quant, rung in (spec.get("quants") or {}).items():
+            mid = (rung or {}).get("id") or f"{fam}-{quant}"
+            out[mid] = (fam, quant)
+    return out
+
+
+def cmd_effective_tag(cmd: str) -> str | None:
+    """TAG of the effective -hf ref of a rendered cmd (rightmost; opaque
+    raw-script fallback per ratified G2 machinery)."""
+    ref = cmd_flag_value(cmd, "-hf")
+    if ref is None:
+        hfs = re.findall(r"(?:^|\s)-hf\s+(\S+)", cmd)
+        ref = hfs[-1] if hfs else None
+    if ref and ":" in ref:
+        return ref.split(":", 1)[1]
+    return None

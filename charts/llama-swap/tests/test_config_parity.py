@@ -177,16 +177,34 @@ def test_c02_2_cmd_flag_multisets_parity(cluster):
     assert not diffs, f"{cluster}: cmd token multisets diverge:\n" + "\n".join(diffs)
 
 
+DISPLAY_FIELDS = ("name", "description")
+
+
+def _strip_display(rest: dict) -> dict:
+    return {k: v for k, v in rest.items() if k not in DISPLAY_FIELDS}
+
+
 @pytest.mark.parametrize("cluster", CLUSTERS)
 def test_c02_2_per_model_fields_deep_equal(cluster):
-    """name/description/ttl/proxy/aliases/capabilities/checkEndpoint/filters/env
-    — every non-cmd model key — deep-equal vs golden."""
+    """ttl/proxy/aliases/capabilities/checkEndpoint/filters/env — every non-cmd
+    model key EXCEPT display text — deep-equal vs golden.
+
+    CR5 display excision (amendment P, user-ratified 2026-10-24: "RELAX P2 for
+    display fields"): name/description leave this comparison so the template
+    grammar may recompose picker text. This is the amendment's ONLY assertion-
+    scope removal and it is COMPENSATED, not bare: presence on all 58 rungs
+    (test_cr5_display_presence), grammar shape (test_cr5_display_name_grammar /
+    test_cr5_ladder_descriptions_mention_tag), and a user-reviewed per-id
+    before/after display table gating the PR (plan CR5 bar 2). IDs, aliases,
+    cmd tokens (P2 above — untouched), echo byte-strings (P3), P4/P5/P6 stay
+    UNBENTED golden pins."""
     golden = L.model_tokens(L.all_models_of(L.golden_config(cluster)))
     fresh = L.model_tokens(L.all_models_of(L.rendered_config(cluster)))
     problems = []
     for mid in sorted(set(golden) & set(fresh) - set(L.REMOVED_IDS)):  # P2 fields half
-        if golden[mid]["rest"] != fresh[mid]["rest"]:
-            problems.append(f"{mid}: {_first_diff_key(golden[mid]['rest'], fresh[mid]['rest'])}")
+        g_rest, f_rest = _strip_display(golden[mid]["rest"]), _strip_display(fresh[mid]["rest"])
+        if g_rest != f_rest:
+            problems.append(f"{mid}: {_first_diff_key(g_rest, f_rest)}")
     assert not problems, f"{cluster}: per-model field divergence:\n" + "\n".join(problems)
 
 
@@ -332,3 +350,80 @@ def test_c02_5_no_override_sentinel_in_rendered_config(cluster):
     cfg = L.configmap_data(cluster, "llama-swap-config", "config.yaml")
     import json
     assert "OVERRIDE_VIA" not in json.dumps(cfg), f"{cluster}: sentinel leaked into llama-swap-config"
+
+
+# ---------------------------------------------------------------------------
+# CR5 compensating display contract (CB1; replaces the golden display pin —
+# see test_c02_2_per_model_fields_deep_equal provenance). GREEN at CB1 handoff
+# against HEAD's explicit text AND required green post-CB2 under derivation:
+# they are the replacement bars, never CB2-named reds.
+# ---------------------------------------------------------------------------
+
+
+def _models_layer_display_overrides(cluster: str) -> set[str]:
+    om = L.service_overlay(cluster).get("config", {}).get("models", {}) or {}
+    return {mid for mid, m in om.items() if isinstance(m, dict)
+            and ("name" in m or "description" in m)}
+
+
+@pytest.mark.parametrize("cluster", CLUSTERS)
+def test_cr5_display_presence(cluster):
+    """Every catalog id on every cluster render carries a NON-EMPTY name AND
+    description — red if CB2 deletes display text without composing it."""
+    fresh = L.all_models_of(L.rendered_config(cluster))
+    gaps = [f"{mid} ({k})" for mid in L.CATALOG_IDS for k in DISPLAY_FIELDS
+            if not str(fresh[mid].get(k) or "").strip()]
+    assert not gaps, f"{cluster}: display text missing on {gaps}"
+
+
+@pytest.mark.parametrize("cluster", CLUSTERS)
+def test_cr5_display_name_grammar(cluster):
+    """NAME shape bar (outcome-level grammar; exact text is the user's table):
+    every non-exempt id with an effective -hf ref carries "(...TAG...)" in its
+    name. Exempt: raw-cmd escape ids and models-layer display overrides (their
+    explicit text is data, never grammar). Echo renders with no -hf ref are
+    skipped here (P5 owns their shape; presence above covers their text)."""
+    fresh = L.all_models_of(L.rendered_config(cluster))
+    exempt = L.CHART_RAW_CMD_IDS | L.GPUAI_RAW_CMD_IDS | _models_layer_display_overrides(cluster)
+    problems = []
+    for mid in L.CATALOG_IDS:
+        if mid in exempt:
+            continue
+        tag = L.cmd_effective_tag(fresh[mid]["cmd"])
+        if not tag:
+            continue
+        name = fresh[mid].get("name") or ""
+        parens = re.findall(r"\(([^)]*)\)", name)
+        if not any(tag in p for p in parens):
+            problems.append(f"{mid}: name {name!r} lacks ({tag}...) in parens")
+    assert not problems, f"{cluster}: name grammar violations:\n" + "\n".join(problems)
+
+
+@pytest.mark.parametrize("cluster", CLUSTERS)
+def test_cr5_ladder_descriptions_mention_tag(cluster):
+    """DESC obligation limited to LADDER rungs (quant key in LADDER_QUANT_KEYS,
+    effective TAG in the culture-tag space) on families whose description the
+    grammar honestly carries; prose-exempt families (DESC_PROSE_EXEMPT_FAMILIES
+    — gated-repo caveats etc.) and models-layer display overrides skip the
+    TAG-mention check (their desc is data reviewed via the display table).
+    Both-states green: HEAD's C04-era ladders already mention their TAG; the
+    CB2 grammar `{descBase}, {TAG} quant` guarantees it by construction."""
+    fresh = L.all_models_of(L.rendered_config(cluster))
+    fam_idx = L.id_family_index(L.chart_values()["config"])
+    exempt_ids = _models_layer_display_overrides(cluster)
+    problems = []
+    for mid, (fam, quant) in sorted(fam_idx.items()):
+        if mid not in set(L.CATALOG_IDS) or mid not in fresh:
+            continue
+        if (quant not in L.LADDER_QUANT_KEYS or fam in L.DESC_PROSE_EXEMPT_FAMILIES
+                or mid in exempt_ids or mid in L.CHART_RAW_CMD_IDS | L.GPUAI_RAW_CMD_IDS):
+            continue
+        tag = L.cmd_effective_tag(fresh[mid]["cmd"])
+        if not tag:
+            continue
+        if L.is_echo_cmd(fresh[mid]["cmd"]):
+            continue
+        if tag not in (fresh[mid].get("description") or ""):
+            problems.append(f"{mid} ({fam}/{quant}): desc lacks TAG {tag!r}: "
+                            f"{(fresh[mid].get('description') or '')[:80]!r}")
+    assert not problems, f"{cluster}: ladder desc-TAG violations:\n" + "\n".join(problems)

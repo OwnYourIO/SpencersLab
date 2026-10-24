@@ -536,3 +536,80 @@ roster 30/30, image 6P+4S, existing CI 33, gates 8S; LLAMA_SWAP_EVIDENCE=1
 autogen_integration 3P/5S; goldens diff empty). No assertion was weakened in
 either amendment; G1 restored an intended-execution crash, G2 added a routing
 branch with the loud assert retained.
+
+
+## 7quater. CR5 contract amendment — CB1 (test-writer session, 2026-10-24)
+
+Ground truth: plan "REPLAN ROUND 2 (CR5)" + user rulings (Option 2; RELAX P2
+for display fields; free-16 full normalization) in DECISIONS 2026-10-24.
+Goldens byte-untouched (diff empty, re-verified). cmd-token machinery
+(`cmd_tokens`/`model_tokens`) untouched by this amendment — mechanically
+diffed clean, the un-bent bar.
+
+Assertions old-vs-new (deletion audit — exactly ONE scope removal, compensated):
+
+* **P (user-ratified relaxation, the only one):**
+  `test_c02_2_per_model_fields_deep_equal` — OLD: every non-cmd key incl.
+  `name`/`description` deep-equal vs golden. NEW: those two keys excised from
+  both sides before the compare (`_strip_display`). REPLACED BY (not bare):
+  S1/S2/S3 below + the CR5 per-id before/after display table the user reviews
+  pre-PR (plan bar 2). All other non-cmd fields (ttl/proxy/aliases/
+  capabilities/filters/checkEndpoint/env) keep the golden deep-equal UNBENTED;
+  P1/P2-cmd/P3/P4/P5/P6 untouched.
+* **S1 `test_cr5_display_presence[2]`** — every catalog id on both cluster
+  renders carries non-empty name AND description (58×2 ids × 2 fields).
+  GREEN at CB1 handoff (probed: zero gaps), must stay green post-CB2 — the
+  anti-vanishing bar for CB2 deleting display lines.
+* **S2 `test_cr5_display_name_grammar[2]`** — non-exempt ids with an effective
+  `-hf` ref (opaque-script fallback per ratified G2 machinery) must carry
+  "(...TAG...)" in the name. Exemptions: raw-cmd escape ids {whisper, rana}
+  and the cluster's models-layer name/description overrides (computed from
+  service values, not hardcoded). Echo ids without a ref: name rule skipped
+  (P5 owns echo shape; S1 covers their text). GREEN at handoff against HEAD's
+  explicit text (probed: zero violations) AND guaranteed by the CB2 grammar.
+* **S3 `test_cr5_ladder_descriptions_mention_tag[2]`** — desc-TAG obligation
+  scoped to LADDER rungs: quant key ∈ {q3,q4,q5,q6,q8,bf16} via
+  `id_family_index(chart values)`; live cmd; not models-overridden/escape;
+  family not in `DESC_PROSE_EXEMPT_FAMILIES` =
+  {qwen3.8-flash-next-orca} (gated-repo/HF_TOKEN caveat is prose data the
+  grammar cannot carry — ruling 3 normalizes its NAME, the before/after table
+  is the human review of its desc). GREEN at handoff (probed: HEAD clean once
+  fn-orca exempted); CB2 grammar `{descBase}, {TAG} quant` satisfies by
+  construction. Scope is family/key-DRIVEN data, no per-string exemptions.
+* **T1 offenders rule (`test_c02_chart_models_are_...escape_hatch`)** — OLD:
+  `hf` literal required. NEW: resolves via `L.rung_effective_ref` (literal OR
+  repo|hfRepo + tag|tagCultures[tagCulture][quant]; maps read ONLY from chart
+  values `config.tagCultures` — single source, no test-side copy; absent at
+  HEAD ⇒ resolves to literals ⇒ shape-tolerant, GREEN both states).
+* **T2 `test_c02_chart_composition_hf_refs_match_golden`** — eff comparison now
+  uses the same `rung_effective_ref` vs golden `-hf` (B/D/G2 routing
+  unchanged; refs are cmd-side contract — NOT relaxed). `draft` stays
+  full-literal per CR5. GREEN both states (HEAD literals; CB2 shorthand must
+  resolve to the same strings — that IS the fidelity bar).
+* **U-1 `test_fam_key_stripped_from_rendered_output` extended** — banned
+  top-level now {families, filterPresets, tagCultures}; banned per-entry keys =
+  `NEW_SCHEMA_KEYS` (dispName/descBase/descTail/size/disp/suffix/hfRepo/
+  tagCulture/tag/repo). GREEN at handoff on the real+SMoke render (keys
+  absent today); CB2 must keep it green while introducing them values-side.
+* **U-2 `test_cr5_shorthand_composition_render`** — synthetic FINAL-SHAPE
+  family (§7ter method executed: fixture mirrors CB2's prescribed schema —
+  hfRepo + tagCulture + culture map + repo/tag exceptions + size/suffix/draft/
+  spec slots): asserts composed `-hf` refs, `(TAG)` name, MTP marker derives
+  from draft/spec ONLY, suffix + size carried as data, no schema-key leak.
+  RED at CB1 handoff naming CB2 (probed HEAD behavior: no composition, vocab
+  keys leaked, rc=0 — the red is implementation-missing, verified message
+  `culture-composed ref wrong: None (CB2)`).
+* **U-3 `test_cr5_unresolvable_rung_fails_render`** — loud-offender rule (G1
+  precedent): unresolvable rung (no ref/cmd/disabled) must fail the render.
+  RED at handoff naming CB2 (probed: HEAD renders rc=0).
+
+Classification per CB1 acceptance 2: red set == {U-2, U-3} (CB2-owned,
+shorthand/stripping machinery); {P-modified, S1-S3, T1-T2, U-1} GREEN at
+handoff by design (relaxation-restatement + replacement + shape tolerance).
+Handoff bars (2026-10-24, helm v3.16.4): full suite **2 failed / 153 passed /
+12 skipped**; per file: parity 34P, schema 18P/2F, wiring 32P, roster 30P,
+image 6P/4S, existing CI 33P; gates `LLAMA_SWAP_EVIDENCE=1` 3P/5S; goldens
+diff empty; no assertion outside P's two display keys was removed — review
+audits this entry assertion-for-assertion (A–O precedent). CB2 completion bar:
+0 failed / 159 passed / 12 skipped with the CR5 render-invariance + display
+table bars (plan "CR5 controlling bars").
