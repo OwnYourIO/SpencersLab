@@ -1,0 +1,46 @@
+{
+  "feature": "2026/2026-10-refactor-forgejo-runner-per-instance",
+  "plan_status": "approved",
+  "coord_session": null,
+  "test_session": "ses_e90e055e2ffeFRidpIOe9xQjrM",
+  "current_wave": 1,
+  "updated_at": "2026-10-24",
+  "kickoff": {
+    "slug": "refactor-forgejo-runner-per-instance",
+    "type": "refactor",
+    "run_tag": "apps",
+    "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/refactor-forgejo-runner-per-instance-apps",
+    "branch": "refactor-forgejo-runner-per-instance-apps",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "research": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "test": "openrouter/qwen/qwen3.8-27b",
+      "dev": "openrouter/qwen/qwen3.8-27b",
+      "review": "openrouter/qwen/qwen3.8-27b"
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "debug follow-up: root-cause the 2026-10-24 ~16:46 UTC whole-app recreation of dev-forgejo-runner + the SecretSyncedError on both runner ExternalSecrets (user ruled the item failure transient; items exist)",
+    "predecessor deferred: provenance-tag cleanup in shipped runner-chart comments (keep the why, drop the tags)"
+  ],
+  "test_handoff": {
+    "at": "2026-10-24",
+    "status": "DONE",
+    "rewrite": "tests/services/dev-forgejo-runner.sh: 31-check two-controller contract -> 41-check per-instance two-Applications contract (t1-t10 per C01.md ## Tests)",
+    "red_verified": "worktree: t1 ok, first trip t2 (two-controller shape renders 2 STS under dev release name) \u2014 right reason; per-section red evidence recorded",
+    "green_sim": "/tmp/opencode real-git-worktree sim of C01: 41 ok exit 0 incl. t10 base-chart ground-truth values-flow proof",
+    "lifecycle": "forgejo-ssh-gateway.sh red ONLY at t11 (predecessor guard re-runs the runner script) during the red-first window \u2014 self-resolves when the atomic C01 commit lands; regressions audit-trail 4 / infra-forgejo 33 / dev-git-auth 20 / forgejo-ssh-audit-trail 6 all green + unmodified"
+  }
+}

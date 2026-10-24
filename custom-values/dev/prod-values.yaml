@@ -57,15 +57,17 @@ forgejo:
       admin:
         email: forgejo@scifi.farm
 
-forgejo-runner:
+forgejo-runner-dev:
   bitwardenIds:
     # Item `dev-forgejo-dev-runner` (username = runner uuid, password = registration
     # token). NOT `forgejo-token` — that is the Coder workspace access token.
-    forgejo-runner-token: d3dafd1a-3d88-454e-88d4-b4ec010ae2c2
+    runner-token: d3dafd1a-3d88-454e-88d4-b4ec010ae2c2
+forgejo-runner-infra:
+  bitwardenIds:
     # Item `dev-forgejo-prod-runner` (username = runner uuid, password =
     # registration token). Created AFTER the infra instance boots
     # (plan User action 7); never the `forgejo-token` item.
-    forgejo-runner-infra-token: b1add65b-44fb-4c8b-b7ad-b4ec010afc71
+    runner-token: b1add65b-44fb-4c8b-b7ad-b4ec010afc71
 
 hivetools:
   bitwardenIds:

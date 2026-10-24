@@ -1,22 +1,27 @@
-# Forgejo Actions runners for the dev cluster — two registrations.
+# Forgejo Actions runner — one registration per release.
 #
-# Two controllers, one (uuid, token) identity each: runner-dev talks to the
-# dev Forgejo instance in-cluster, runner-infra to the new infra instance
-# (git.spencerslab.com — conflict ruling 2; its Bitwarden item is created
-# only after that instance boots).
+# The dev ApplicationSet deploys this chart TWICE (one ArgoCD Application
+# per target Forgejo instance): charts.forgejo-runner-dev and
+# charts.forgejo-runner-infra, both aliased `chart: forgejo-runner`. Each
+# release runs exactly one pod (privileged DinD sidecar + runner container),
+# one headless Service and one ExternalSecret — every resource is named
+# after the release, so the two releases coexist in namespace `default`
+# without colliding.
 #
-# Client-only: both runners dial out, so the chart is host-free — no
-# ingress, no proxy entry, no domain references. The runners.<ctl>.url
-# chart defaults keep the chart renderable standalone; the dev service
-# slice (services/dev/prod/values.yaml) pins both explicitly.
+# Client-only: the runner dials out, so the chart is host-free — no
+# ingress, no proxy entry, no domain references. The runner.url chart
+# default keeps the chart renderable standalone; the per-app TOP-LEVEL
+# slices in services/dev/prod/values.yaml pin the real targets (top-level
+# placement is load-bearing — the appset merge only flows those to the
+# release).
 #
 # Registration is declarative (runner v13 — the register CLI and env-var
-# registration do not work): each daemon connects with its
-# server.connections.<dev|infra> entry from the ExternalSecret-generated
+# registration do not work): the daemon connects with its
+# server.connections.default entry from the ExternalSecret-generated
 # config.yaml and reads the token from file:$CREDENTIALS_DIRECTORY/token.
-# The identity is the (uuid, token) pair in the Bitwarden item — the
-# ExternalSecret re-renders it on every pod start, and the server matches
-# the runner record by uuid, so a restart is a re-attach, not a
+# The identity is the (uuid, token) pair in the release's Bitwarden item —
+# the ExternalSecret re-renders it on every pod start, and the server
+# matches the runner record by uuid, so a restart is a re-attach, not a
 # re-registration (the daemon never writes a .runner file).
 #
 # k3s MTU warning: if a workflow dies during "checking out actions", first
@@ -26,31 +31,20 @@
 # full research in RESEARCH-dind-supplement.md.
 
 bitwardenIds:
-  # Item `forgejo-runner` (username = runner uuid, password = registration
-  # token) for the dev registration. NEVER the `forgejo-token` item — that
-  # one is the Coder workspace access token.
-  forgejo-runner-token: OVERRIDE_VIA_CUSTOM_VALUES
-  # Item `dev-forgejo-runner-infra` (same shape) for the infra
-  # registration — created AFTER the infra instance boots (plan User
-  # action 7); never the `forgejo-token` item either.
-  forgejo-runner-infra-token: OVERRIDE_VIA_CUSTOM_VALUES
+  # The Bitwarden item holding this release's (uuid, token) identity
+  # (username = runner uuid, password = registration token); the real UUID
+  # rides custom-values/dev/prod-values.yaml under the app key. NEVER the
+  # `forgejo-token` item — that one is the Coder workspace access token.
+  runner-token: OVERRIDE_VIA_CUSTOM_VALUES
 
-# Connection URLs: chart defaults so the chart renders standalone; the dev
-# service slice (services/dev/prod/values.yaml) pins both explicitly.
-runners:
-  dev:
-    # In-cluster: the runner is a client of the dev instance, no public
-    # ingress is involved.
-    url: http://dev-forgejo-http.default.svc:3000
-  infra:
-    url: https://git.spencerslab.com
+# Connection URL: chart default so the chart renders standalone — it is a
+# render-time stand-in, the per-app top-level slice pins the live target.
+runner:
+  url: http://dev-forgejo-http.default.svc:3000
 
 app-template:
-  global:
-    nameOverride: forgejo-runner
-
   controllers:
-    runner-dev:
+    runner:
       # Single replica on purpose: one (uuid, token) pair must map to
       # exactly one pod. Scaling means more runner records, never more
       # replicas of one identity (decision B1).
@@ -155,7 +149,7 @@ app-template:
             - /data/config/config.yaml
           env:
             # Resolved by the runner for token_url: file:$CREDENTIALS_DIRECTORY/token
-            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner-dev
+            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner
             # In-pod socket (the `socket` emptyDir), not a node socket.
             DOCKER_HOST: unix:///var/run/docker.sock
           resources:
@@ -182,108 +176,13 @@ app-template:
           # mismatch and the runner fails on writes.
           fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
-    runner-infra:
-      # Same pod shape as runner-dev (dind sidecar + hardened runner, same
-      # VCTs and sizing); only the identity differs — Bitwarden item
-      # `dev-forgejo-runner-infra`, target Secret forgejo-runner-infra,
-      # connection `infra` against the infra instance URL.
-      type: statefulset
-      replicas: 1
-      annotations:
-        reloader.stakater.com/auto: "true"
-      statefulset:
-        volumeClaimTemplates:
-          - name: data
-            accessMode: ReadWriteOnce
-            size: 2Gi
-            storageClass: local-path
-            globalMounts:
-              - path: /data
-          - name: docker-data
-            accessMode: ReadWriteOnce
-            size: 10Gi
-            storageClass: local-path
-            advancedMounts:
-              dind:
-                - path: /var/lib/docker
-      initContainers:
-        dind:
-          image:
-            repository: docker
-            tag: 29.9.1-dind
-          restartPolicy: Always
-          securityContext:
-            privileged: true
-          probes:
-            startup:
-              enabled: true
-              custom: true
-              spec:
-                exec:
-                  command:
-                    - test
-                    - -S
-                    - /var/run/docker.sock
-            liveness:
-              enabled: true
-              custom: true
-              spec:
-                exec:
-                  command:
-                    - test
-                    - -S
-                    - /var/run/docker.sock
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 2
-              memory: 4Gi
-      containers:
-        runner:
-          image:
-            repository: data.forgejo.org/forgejo/runner
-            tag: 13.2.0
-          command:
-            - /usr/bin/dumb-init
-            - /bin/forgejo-runner
-            - daemon
-            - -c
-            - /data/config/config.yaml
-          env:
-            CREDENTIALS_DIRECTORY: /run/secrets/forgejo-runner-infra
-            DOCKER_HOST: unix:///var/run/docker.sock
-          resources:
-            requests:
-              cpu: 250m
-              memory: 512Mi
-            limits:
-              cpu: 2
-              memory: 4Gi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-      pod:
-        terminationGracePeriodSeconds: 300
-        securityContext:
-          fsGroup: 1000
-          fsGroupChangePolicy: OnRootMismatch
 
   service:
     # Headless — a StatefulSet requires one for its per-ordinal DNS names.
     # The port is nominal: the daemon listens on nothing, the entry exists
     # only so the headless service has a record to serve.
-    runner-dev-headless:
-      controller: runner-dev
-      clusterIP: None
-      ports:
-        api:
-          port: 3000
-    runner-infra-headless:
-      controller: runner-infra
+    runner-headless:
+      controller: runner
       clusterIP: None
       ports:
         api:
@@ -295,30 +194,19 @@ app-template:
       type: emptyDir
       globalMounts:
         - path: /var/run
-    # The ExternalSecret-generated identity, mounted twice on the runner
-    # only: whole secret at CREDENTIALS_DIRECTORY (so `token` lands where
-    # token_url says) and config.yaml subPath-mounted where the daemon's
-    # -c flag points. subPath means the file does not hot-update — the
-    # reloader annotation restarts the pod on secret changes.
+    # The ExternalSecret-generated identity: whole secret at
+    # CREDENTIALS_DIRECTORY (so `token` lands where token_url says) and
+    # config.yaml subPath-mounted where the daemon's -c flag points.
+    # subPath means the file does not hot-update — the reloader annotation
+    # restarts the pod on secret changes.
     #
-    # app-template persistence is global, so one entry per controller:
-    # advancedMounts scope each entry's mounts to that controller's pod —
-    # a single shared entry would make both pods mount one Secret.
-    runner-creds-dev:
+    # The library tpl's name for type: secret, so a static values entry
+    # can still derive it from the release — each release's ExternalSecret
+    # targets a Secret of exactly its release name.
+    runner-creds:
       type: secret
-      name: forgejo-runner-dev
-      advancedMounts:
-        runner-dev:
-          runner:
-            - path: /run/secrets/forgejo-runner-dev
-            - path: /data/config/config.yaml
-              subPath: config.yaml
-    runner-creds-infra:
-      type: secret
-      name: forgejo-runner-infra
-      advancedMounts:
-        runner-infra:
-          runner:
-            - path: /run/secrets/forgejo-runner-infra
-            - path: /data/config/config.yaml
-              subPath: config.yaml
+      name: "{{ .Release.Name }}"
+      globalMounts:
+        - path: /run/secrets/forgejo-runner
+        - path: /data/config/config.yaml
+          subPath: config.yaml

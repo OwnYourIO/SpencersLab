@@ -83,21 +83,18 @@ charts:
   coder:
     namespace: default
     ServerSideApply: "false"
-  # Client-only service: both runners dial out (runner-dev in-cluster to
-  # dev-forgejo-http:3000, runner-infra to the infra instance), so they
-  # deliberately get NO ingress.subdomains entries — the service trio's
-  # proxy leg is N/A by design, not an oversight.
-  forgejo-runner:
+  # Client-only service: both runners dial out (forgejo-runner-dev
+  # in-cluster to dev-forgejo-http:3000, forgejo-runner-infra to the infra
+  # instance), so both deliberately get NO ingress.subdomains entries — the
+  # service trio's proxy leg is N/A by design, not an oversight.
+  forgejo-runner-dev:
     namespace: default
     ServerSideApply: "false"
-    # Deployed-target decisions: the chart defaults are render-time
-    # stand-ins (standalone chart render); this slice records the
-    # live-verified targets for both connections.
-    runners:
-      dev:
-        url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
-      infra:
-        url: https://git.spencerslab.com   # mesh/LAN host of the infra instance
+    chart: forgejo-runner
+  forgejo-runner-infra:
+    namespace: default
+    ServerSideApply: "false"
+    chart: forgejo-runner
 
   # External charts (with version and repository)
   cloudnative-pg:
@@ -124,6 +121,17 @@ ingress:
       clusterBase: true
       service: argocd-server
       port: 80
+
+# Per-app runner slices: appset-charts.yaml merges ONLY the top-level
+# <appName>: key into each release (nothing under charts.<appName> ever
+# reaches it), so the per-instance URL must ride here — the chart's
+# runner.url default is a render-time stand-in.
+forgejo-runner-dev:
+  runner:
+    url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
+forgejo-runner-infra:
+  runner:
+    url: https://git.spencerslab.com   # mesh/LAN host of the infra instance
 
 # Coder is a wrapper chart (charts/coder): its subchart config, OIDC/PG
 # ExternalSecrets and the pg-coder CNPG cluster live in the chart itself.
