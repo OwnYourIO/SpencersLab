@@ -1,0 +1,11 @@
+# Friction
+
+Append-only. Never delete entries — re-status them: open → fixed (cause repaired) or ignored (accepted). Agents read this at run start so known workarounds are not rediscovered.
+
+Friction = anything an agent could not find or had no access to, crashes/tool/MCP failures, stale docs/plans, forced repeats or workarounds — each with the resolution actually used. Agents report via RESULT `friction:`; coord appends (its own items included).
+
+- 2026-10-23 · plan · helm is NOT on the default PATH in this worktree session — it lives at ~/.local/bin/helm (v3.16.4) · resolution: export PATH="$HOME/.local/bin:$PATH" before helm commands (carried into the plan's Commands) · fixed
+- 2026-10-23 · plan · readonly MCP serviceaccount cannot list Gateway API resources (live 403, from RESEARCH.md F1) — planner could not verify live Gateway/GatewayClass/TCPRoute objects or node-level port listeners (port 22222 free-check) · resolution: post-sync verification written as user-run kubectl steps in the plan's User actions; CRD/version facts grounded from public chart/CRD sources instead · open- 2026-10-23 · test(all) · C03's task text suggests a gitSshPort why-comment containing the literal "SSH_PORT", but C03 criterion 6 (gateway t9) forbids tcpRoute|SSH_PORT anywhere outside charts/forgejo — dev(C03) must paraphrase the comment (e.g. "the SSH port the forgejo chart advertises"); test enforces the criterion strictly as written · open
+- 2026-10-23 · test(all) · predecessor tests/services/audit-trail.sh is red in the worktree until C01 lands (THIS ticket's untracked root storm-runs/ blocks its t1) — expected by wave design (C01 first); C01's t5 and gateway's t11 depend on that ordering · open
+- 2026-10-23 · dev(C02) · a helm template comment sitting OUTSIDE a `{{- if }}` gate leaks into the closed-gate render as a comment-only manifest (helm 3.16 behavior, verified) — gated templates that must "render nothing" when closed need their why-comments INSIDE the gate · open
+- 2026-10-23 · dev(C02) · `aislop ci --changes --base origin/main` reported "Scope 0 changed" despite local commits ahead (falls back to whole-repo analyzable set); YAML/MD are not scoring languages in aislop 0.18.1 regardless — comment quality for chart YAML rides the comment-slop pass + review · open
