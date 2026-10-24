@@ -84,7 +84,7 @@ app-template:
         main:
           image:
             repository: ghcr.io/getodk/central-service
-            tag: v2026.3.0
+            tag: v2026.3.1
           # Image ships no entrypoint; compose runs start-odk.sh (waits for
           # PG, generates local.json, runs migrations, starts cron + pm2).
           command: ["./start-odk.sh"]
