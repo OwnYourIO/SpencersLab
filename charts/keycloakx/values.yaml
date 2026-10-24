@@ -10,7 +10,7 @@ domain: OVERRIDE_VIA_APPSET
 keycloakx:
   image:  
     repository: quay.io/keycloak/keycloak
-    tag: 26.7.2
+    tag: 26.8.1
 
   command:
     - "/opt/keycloak/bin/kc.sh"
