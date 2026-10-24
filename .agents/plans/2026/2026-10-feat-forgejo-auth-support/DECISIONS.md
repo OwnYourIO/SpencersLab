@@ -119,3 +119,115 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - Non-OAuth forge fallback (if any): Coder user-secrets (Beta) per-user PATs.
 - First-boot UX: polite gate + banner around `coder external-auth access-token` (no raw clone failure until consent).
 - OpenChamber path unchanged (per-user PAT card; C03 canonical plumbing stays as its token source).
+
+## Replan v2 planning decisions (2026-10-24, plan agent)
+- **GATE PASSED — two-Coder topology verified with evidence.** Live: gpu
+  `default/coder` v2.35.2 (386d, ingress hosts `coder.spencerslab.com` /
+  `code.spencerslab.com` / wildcard `*.spencerslab.com`, active
+  enterprise-base workspace) + dev `default/coder` v2.35.2 (11d, hosts
+  `coder.dev.scifi.farm` + wildcard, active `coder-workspace:main`
+  workspace); infra runs no coder. Repo: `services/gpu/prod/values.yaml`
+  (external chart pin 2.35.2) + `services/gpu/prod/templates/secrets-coder.yaml`
+  (`CODER_ACCESS_URL=https://coder.{{ .Values.domain }}`) and
+  `services/dev` + `charts/coder` (wrapper, `https://coder.dev.scifi.farm`).
+  The user's premise holds → no blocking question; the single-Coder
+  fallback (user-secrets Beta) ruling is MOOT.
+- Pairing follows the user ruling exactly: dev coder slot → git.scifi.farm
+  (kubernetes-hardened workspaces gain per-user dev-forge identity), gpu
+  coder slot → git.spencerslab.com. Recorded CONSEQUENCE (flagged to the
+  user, not a blocker): dev-cluster workspaces keep the shared bot PAT for
+  canonical — per-user canonical identity exists only from gpu-coder
+  workspaces. Reversible by flipping the dev coder's AUTH_URL if the user
+  objects before approval.
+- Provider config lands fully GitOps via **env provisioning**
+  (`CODER_EXTERNAL_AUTH_0_*` on coderd — no TF resource exists for
+  providers; the coder TF provider only has a data source). Mechanism per
+  cluster: dev → `charts/coder/templates/secret-coder.yaml` coder-secrets
+  ES (the existing OIDC env pattern); gpu → the twin
+  `services/gpu/prod/templates/secrets-coder.yaml`. Provider id `forgejo`
+  on both; the callback path `/external-auth/forgejo/callback` embeds it
+  (v2.35.2 docs: mismatch ⇒ "redirect URI is not valid"). No explicit
+  REGEX/TOKEN_URL/VALIDATE_URL — `giteaDefaults()` derives all three from
+  the AUTH_URL host (source-verified at the deployed tag, v2.35.2,
+  coderd/externalauth/externalauth.go:1210+).
+- Rejected build-time `data.coder_external_auth` token injection (docs:
+  does not auto-refresh; conflicts with the no-server-stored-values rule)
+  and Coder device-flow (Forgejo 404s it — issue #4830 open).
+- Encryption env form `CODER_EXTERNAL_TOKEN_ENCRYPTION_KEYS` (docs-verified
+  at v2.35.2; comma-separated base64 32-byte, first key encrypts). Key
+  items: `coder-token-encryption` per cluster (password field = the key).
+  Wrong-length key ⇒ coderd crashloop on restart — generation command is
+  documented in the custom-values comment; tests only assert presence.
+- New Bitwarden items named `coder-external-auth` (login item: username =
+  OAuth client id, password = secret) and `coder-token-encryption`, one
+  per cluster. **Same bitwardenIds key, different item per cluster** —
+  the existing `coder-sso-secret`/`coder-pg` precedent (per-cluster
+  custom-values files carry different UUIDs under identical keys) beats
+  `_CANONICAL` suffixes here, because the `_CANONICAL` convention names
+  FORGE-side concerns, and this item pairs coder↔forge on that coder's
+  cluster. Slots ship `OVERRIDE_NEEDED` until the user creates the items
+  (forgejo-token-canonical precedent). Gpu's new sentinels use the current
+  `OVERRIDE_VIA_CUSTOM_VALUES` standard, NOT the legacy cluster-annotation
+  mechanism of gpu's older coder keys — no migration of those in scope.
+- Reloader pod annotations (`reloader.stakater.com/auto: "true"`) added on
+  both coder deployments (charts/coder/values.yaml `coder.coder`;
+  services/gpu `coder.coder` — the external chart is one level shallower)
+  because coderd reads provider/encryption env only at process start.
+  Reloader controllers live-verified on both clusters (base chart-wide
+  deploy; dev `dev-reloader-reloader` 1/1). Rejected: manual restart ritual
+  as the documented path (secret updates would silently not apply).
+- Forge-side OAuth app registration is a **user action, honestly labeled**:
+  no admin-scope OAuth API in v15.0.9 (no routers/api/v1/admin/oauth.go —
+  source-checked), user-scope `/api/v1/user/oauth2` exists (route table
+  verified) but its output (client secret) must reach Bitwarden by hand —
+  no repo mechanism writes TO the vault. UI or curl both fine; redirect
+  URIs are deterministic and listed in the plan's User actions.
+- Workspace layering (C06) resolves the PAT-shadow race deterministically
+  per research §E (helpers answer before askpass): probe at boot —
+  approved ⇒ unset any stale dev-host PAT helper (PVC persists it across
+  boots — load-bearing) and DON'T re-wire (askpass answers per-user);
+  unapproved ⇒ banner prints the CLI's approval URL (exit-1 contract,
+  docs-verified) and the bot PAT fallback wires exactly as C02 shipped.
+  `wire_forgejo` grows a 4th helper-mode arg rather than relocating the
+  `fj` call, keeping C02's frozen "add-token only inside wire_forgejo"
+  contract green; the 4th-arg layout is pinned in the tests as an allowed
+  pattern, not mandated.
+- `fj` keeps the bot PAT even when git is approved: Forgejo access tokens
+  live ~1h and fj's `add-token` store is static (no self-refresh like its
+  OAuth `keys.json` chain) — seeding an hour-lived token would rot
+  mid-session. Per-user identity is the GIT story; the fj/OpenChamber
+  floors stay bot/user-PAT per the user's "bootstrap/fallback stays"
+  ruling. Alternative rejected: fj `auth login` laptop bootstrap
+  (laptop-only loopback + refresh-rotation races the PVC copy).
+- Boot-time clones under approved SSO get the token via transient process
+  env only (`GIT_CONFIG_COUNT`-injected helper or `git -c`, in-memory,
+  per-URL host-matched so it can't leak the credential to other hosts) —
+  the no-disk invariant extends to the OAuth token. Rejected: wiring the
+  global helper with the literal token (persists to the PVC + expires in
+  1h); rejected: helper echoing a boot-only var name (git helpers expand
+  at use time — an empty password would shadow askpass in terminals with
+  a broken credential).
+- Gated-clone reading of the "polite gate" ruling: gate = never a raw
+  credential failure — with the bot PAT present the clone proceeds
+  (fallback per ruling); with neither approval nor PAT present the
+  matching-host clone is SKIPPED with an explicit pending-approval log
+  next to the banner. Recorded because the two user rulings (gate vs
+  fallback) intersect here.
+- Chunking: C04 dev-server + C05 gpu-server wave 3 (independent — zero
+  shared files), C06 workspace gate wave 4 depends [C04] (provider-id
+  literal drift trap + live-probe semantics). Rejected: one server chunk
+  for both clusters (two subsystems, ~8 files, and the gpu leg is
+  independently revertable); rejected: merging C06 into C04 (script +
+  HCL consumers must land behind the interface, and each diff stays
+  under one review). Rejected: a separate chunk for the reloader
+  annotation (same file, same commit, meaningless alone).
+- Tests: two new suites (`tests/services/gpu-coder-sso.sh`,
+  `tests/coder-workspace/startup-sso-behavior.sh` — the latter a
+  dash/stub-PATH/isolated-HOME behavioral matrix per the FRICTION
+  git-probe rule) plus extensions of the two established suites.
+  Behavioral (not grep-only) coverage is mandated for the gate logic —
+  grep cannot prove "helper NOT wired when approved".
+- Replan numbering continues C01–C03 without renumbering them; done-chunk
+  contracts (startup-script, dev-git-auth c1..c-canonical) stay green as
+  regressions in every new chunk.
+
