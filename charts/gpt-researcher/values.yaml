@@ -54,7 +54,10 @@ app-template:
             OPENAI_API_KEY: dummy
             # Model roster from the gpu-ai cluster (llama-swap /v1/models).
             # provider:model format — provider `openai` = the endpoint above.
-            FAST_LLM: "openai:qwen3-8b-q8"
+            # Was the retired 8B coder-line entry (removed 2026-10-24 along
+            # with the qwen3 coder/30b-a3b/8b line); 27B dense is the cheapest
+            # surviving chat lane on the gpu-ai roster.
+            FAST_LLM: "openai:qwen3.6-27b-q8"
             SMART_LLM: "openai:qwen38-orca"
             STRATEGIC_LLM: "openai:qwen38-ara"
             # Web search via the lab SearXNG (JSON format already enabled
