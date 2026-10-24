@@ -171,3 +171,26 @@ argo-cd:
   controller:
     extraArgs:
       - --application-namespaces="*"
+
+# Experimental-channel Gateway API CRDs as a pinned chart dependency
+# (Chart.yaml). Default OFF on every cluster: the Chart.yaml condition on
+# this key gates the dependency, and helm loads a conditioned subchart when
+# the condition path is ABSENT — so these keys must stay present and false
+# here, or every base-managed cluster gets the chart's default CRD bundle.
+# dev + infra re-enable exactly the experimental tcproutes CRD in their
+# service values (companion wiring to gitSshPort — keep them in lockstep).
+#
+# Ownership overlap (accepted, unchanged from the vendored design): k3s's
+# traefik-crd helm release owns the same CRD object (the standard variant).
+# k3s re-applies it only at boot/chart-change; ArgoCD selfHeal restores this
+# experimental variant within one refresh (~3 min), and a transient TCPRoute
+# watch gap in that window is accepted. tcproutes-only scoping keeps the
+# overlap at exactly this 1 CRD. If ArgoCD ServerSideApply ever hits a
+# field-manager conflict, remediate at the ArgoCD Application layer (the CRD
+# is dependency-rendered now — there is no repo template to annotate).
+gateway-api-crds:
+  enabled: false
+  standard:
+    enabled: false
+  experimental:
+    enabled: false

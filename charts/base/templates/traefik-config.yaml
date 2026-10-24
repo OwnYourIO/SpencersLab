@@ -92,7 +92,8 @@ spec:
         enabled: true
         # traefik 3.7 only watches TCPRoute with the experimental channel on
         # (its client lists TCPRoute at v1alpha2); the matching tcproutes CRD
-        # is vendored in gateway-tcproute-crd.yaml, which serves that version.
+        # comes from the gateway-api-crds chart dependency (Chart.yaml),
+        # which serves that version.
         experimentalChannel: true
       {{- end }}
     {{- if index .Values "gitSshPort" }}

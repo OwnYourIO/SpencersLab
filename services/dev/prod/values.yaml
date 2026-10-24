@@ -23,6 +23,39 @@ clusterName: OVERRIDE_VIA_APPSET
 # the SSH port the forgejo chart advertises in clone URLs.
 gitSshPort: 22222
 
+# Companion wiring for gitSshPort (keep adjacent — the two move together):
+# the gitssh gateway needs the experimental-channel tcproutes CRD (traefik
+# 3.7 watches TCPRoute at v1alpha2), served by the base chart's
+# gateway-api-crds dependency. Scoped to tcproutes only, so the ownership
+# overlap with k3s's traefik-crd release stays at exactly 1 CRD (full
+# overlap note: charts/base/values.yaml).
+gateway-api-crds:
+  enabled: true
+  standard:
+    enabled: false
+  experimental:
+    enabled: true
+    crds:
+      # experimental tcproutes ONLY (tcproutes stays at its chart default
+      # true; every other toggle off) — all other gateway CRDs stay owned
+      # by k3s's traefik-crd release.
+      backendtlspolicies: false
+      gatewayclasses: false
+      gateways: false
+      grpcroutes: false
+      httproutes: false
+      listenersets: false
+      referencegrants: false
+      tlsroutes: false
+      udproutes: false
+      xbackends: false
+      xbackendtrafficpolicies: false
+      xlistenersets: false   # no template in the chart today; explicit for forward-compat
+      xmeshes: false
+  global:
+    resourcePolicy:
+      keep: true   # uninstalling the base release must not cascade-delete a CRD that k3s also owns
+
 bitwardenIds:
   cert-manager-solver-token: OVERRIDE_VIA_CUSTOM_VALUES
   argocd-sso-secret: OVERRIDE_VIA_CUSTOM_VALUES

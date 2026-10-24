@@ -9,3 +9,15 @@ dependencies:
 - name: cert-manager
   version: v1.19.3
   repository: https://charts.jetstack.io
+
+# Pinned source of the experimental-channel tcproutes CRD (traefik 3.7's
+# gateway provider watches TCPRoute at v1alpha2, which only the experimental
+# channel serves). The condition key is default-off in values.yaml; helm
+# loads a conditioned subchart when the condition path is ABSENT, so the key
+# must stay present there. Renovate's built-in helm manager tracks this dep
+# (HTTP repo, like argo-cd/cert-manager above) — no # sourceUrl: annotation,
+# the repo's override manager would double-extract it.
+- name: gateway-api-crds
+  version: 1.2.5
+  repository: https://charts.christianhuth.de
+  condition: gateway-api-crds.enabled
