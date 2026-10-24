@@ -6,5 +6,5 @@ version: 1.0.7
 appVersion: 2.35.2
 dependencies:
 - name: coder
-  version: 2.35.2
+  version: 2.38.2
   repository: https://helm.coder.com/v2
