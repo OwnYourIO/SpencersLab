@@ -10,6 +10,12 @@
 # test_config_parity). The matrix-closure test is green today and must stay
 # green (standing invariant, C04 acceptance 3).
 #
+# REPLAN rebase (amendment J, 2026-10-24): the gpu isolation bar FLIPS from
+# "gpu-ai-only IDs absent" to "present as catalog echoes" (CR2/CA1); exact-set
+# now equals the frozen 58-ID CATALOG (P1-consistent); -hf ref routing is the
+# generalized B/D shape-pattern (echo on the primary cluster -> cross-read a
+# live one), which the enablement matrix makes deterministic.
+#
 # Deliberately NOT asserted (C04 makes implementation-time header checks with
 # two outcomes, so any hard assert here would be wrong for one branch):
 # orca-q6 MTP pattern (embedded vs -hfd MTP-draft vs no spec), 122B MTP via
@@ -51,14 +57,14 @@ def models(cluster: str) -> dict:
 
 @pytest.mark.parametrize("cluster", ["gpu", "gpu-ai"])
 def test_c04_1_roster_is_exactly_golden_plus_approved_table(cluster):
-    """Roster completeness both ways: every approved ID present, and nothing
-    beyond golden+approved (an unapproved ID in a render is scope creep)."""
-    golden = set(L.all_models_of(L.golden_config(cluster)))
+    """P1-consistent roster completeness (amendment J: expected set re-based
+    from golden+approved-C04 to the frozen REPLAN CATALOG — CA2/CA3 own the
+    conversion and removals)."""
     fresh = set(models(cluster))
-    expected = golden | set(L.C04_NEW_IDS[cluster])
-    assert fresh == expected, (
-        f"{cluster}: roster diverges — missing {sorted(expected - fresh)}, "
-        f"unexpected {sorted(fresh - expected)}"
+    assert fresh == set(L.CATALOG_IDS), (
+        f"{cluster}: roster diverges from the frozen CATALOG — "
+        f"missing {sorted(set(L.CATALOG_IDS) - fresh)}, "
+        f"unexpected {sorted(fresh - set(L.CATALOG_IDS))} (awaiting CA2/CA3)"
     )
 
 
@@ -71,15 +77,21 @@ def test_c04_1_exact_hf_ref_per_approved_id(mid, ref):
     An entry rendered fail-fast (`-bf16 -> disabled:` on gpu, per the plan) has
     no -hf token in that cluster by design — the ratified disabled-shape
     contract and this ref contract would otherwise be mutually unsatisfiable
-    (coord-routed defect D amendment, 2026-10-23; same class as ratified B).
-    Its ref is cross-read from the live cluster; presence + echo shape stay
-    pinned by test_c04_1_35b_bf16_gpu_disabled_failfast."""
-    cluster = "gpu-ai" if mid in GPU_AI_ONLY else "gpu"
-    m = models(cluster).get(mid) or models("gpu-ai").get(mid)
-    assert m is not None, f"{mid}: not rendered in any cluster"
-    if _DISABLED_SHAPE.match(m["cmd"].strip()):
-        assert mid in models("gpu-ai"), f"{mid}: fail-fast render but no live cluster to cross-read the ref"
-        m = models("gpu-ai")[mid]
+    (coord-routed defect D amendment, 2026-10-23; same class as ratified B;
+    generalized to the ENABLEMENT table by amendment J). Its ref is cross-read
+    from the live cluster; presence + echo shape stay pinned by
+    test_c04_1_35b_bf16_gpu_disabled_failfast and P5."""
+    # Amendment J: routing generalized from D (fixed gpu-ai fallback) to the
+    # enablement table — read from the cluster where the rung is ENABLED
+    # (exactly one exists for every approved ID per ENABLEMENT), so the
+    # CA2 echo-flip can never make this assertion ambiguous.
+    live = [c for c in ("gpu", "gpu-ai") if mid in set(L.ENABLEMENT[c]["enabled"])]
+    assert live, f"{mid}: approved id enabled on no cluster — ENABLEMENT table drift"
+    m = models(live[0]).get(mid)
+    assert m is not None, (
+        f"{mid}: not rendered on its enabled cluster {live[0]} — awaiting CA2/CA3"
+    )
+    assert not L.is_echo_cmd(m["cmd"]), f"{live[0]}/{mid}: enabled rung rendered as echo"
     assert L.cmd_flag_value(m["cmd"], "-hf") == ref, (
         f"{mid}: -hf is {L.cmd_flag_value(m['cmd'], '-hf')!r}, approved ref is {ref!r}"
     )
@@ -102,12 +114,21 @@ def test_c04_1_flashnext_mtp_draft_wired():
         assert {"--spec-type", "draft-mtp", "--spec-draft-n-max", "2"} <= set(L.cmd_tokens(m[mid]["cmd"]))
 
 
-def test_c04_1_gpu_ai_only_families_absent_from_gpu():
-    """Absence, not fail-fast: these IDs have no consumers on the gpu box and
-    orcarouter is HF_TOKEN-gated (DECISIONS placement)."""
+def test_c04_1_gpu_ai_only_families_present_as_echo_on_gpu():
+    """CA1 ISOLATION FLIP (user-requested CR2 consequence): gpu-ai-only
+    catalog rungs are now PRESENT on gpu as fail-fast echoes (routable,
+    instant-exit), not absent. orcarouter HF_TOKEN-gating stays a runtime
+    concern — the echo never downloads. Red at CA1 handoff: gpu still lacks
+    these IDs entirely (awaiting CA2 catalog)."""
     gpu = models("gpu")
-    stolen = [mid for mid in GPU_AI_ONLY if mid in gpu]
-    assert not stolen, f"gpu render carries gpu-ai-only families: {stolen}"
+    missing = [mid for mid in GPU_AI_ONLY if mid not in gpu]
+    assert not missing, (
+        f"gpu render lacks the catalog echo entries {missing} — CA2 not landed"
+    )
+    for mid in GPU_AI_ONLY:
+        assert L.is_echo_cmd(gpu[mid]["cmd"]) and mid in gpu[mid]["cmd"], (
+            f"gpu/{mid}: expected fail-fast echo shaped for the off-cluster rung, got {gpu[mid]['cmd']!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -174,8 +195,12 @@ def test_c04_1_big_family_ttl_300_and_ladder_ttl_0():
         assert m[mid].get("ttl") == 300, f"{mid}: plan pins ttl 300 (evict-friendly), got {m[mid].get('ttl')!r}"
     for cluster in ("gpu", "gpu-ai"):
         for mid in LADDER:
-            assert models(cluster)[mid].get("ttl") == 0, (
-                f"{cluster}/{mid}: chart-pattern ttl 0 (never idle-unload), got {models(cluster)[mid].get('ttl')!r}"
+            # amendment J note: ttl survives the echo flip as a passthrough
+            # field — the gpu bf16 echo keeps its ttl: 0 from C04 behavior.
+            m = models(cluster).get(mid)
+            assert m is not None, f"{cluster}/{mid}: not rendered (awaiting CA2)"
+            assert m.get("ttl") == 0, (
+                f"{cluster}/{mid}: chart-pattern ttl 0 (never idle-unload), got {m.get('ttl')!r}"
             )
 
 

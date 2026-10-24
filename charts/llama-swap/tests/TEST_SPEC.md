@@ -309,3 +309,127 @@ schema 12, wiring 26, roster 30, image 5P/4S, existing CI 33);
 `LLAMA_SWAP_EVIDENCE=1 -k autogen_integration` **3 passed / 5 skipped**
 (docker/HF gates per waiver). No values/source change was demanded or made —
 the C04 implementation satisfies the contract after D/E/F.
+
+
+## 7bis. REPLAN 2026-10-24 rebase — amendments G..M (CA1, test-writer session; user-routed)
+
+Chunk: `chunks/CA1.md`. Ground truth: plan REPLAN sections CR1-CR4 + DECISIONS
+2026-10-24 rulings. Goldens: byte-untouched (`git diff -- .../golden` EMPTY,
+re-verified). P2 cmd-parity bar: normalization + token-multiset equality code
+retained VERBATIM — the loop keys change, the comparison does not.
+
+* **(G) `llama_swap_testlib.py` — frozen replan tables.** NEW: `REMOVED_IDS`
+  (13, verbatim CR3/DECISIONS set: coder duo + coder-next-ablit + kat trio +
+  kat-1m trio + ruling-B qwen3-30b-a3b duo + qwen3-8b duo), `CATALOG_IDS`
+  (58 = golden-union ∪ C04-approved − REMOVED = 38 chart-side + 20 gpu-ai-local),
+  `GPUAI_LOCAL_CATALOG_IDS` (20), `GPU_ECHO_IDS` (24), `GPU_ENABLED_IDS` derived
+  (34), `ENABLEMENT` {"gpu": 34/24, "gpu-ai": 58/0}, `ENTRYPOINT_FILE`,
+  `is_echo_cmd()`. CHANGED: `GPU_DISABLED_IDS` 6 → the 3 ruling-B survivors
+  (byte-pinned P3 list; old six preserved as `GPU_DISABLED_IDS_PRE_REPLAN`).
+  Arithmetic vs goldens pinned by new table-audit test (green by design —
+  acceptance 5 support).
+* **(H) `test_config_parity.py` — P1-P6.**
+  - old `model_id_sets_equal` (golden-subset + bounded C04 additions) → **P1**:
+    rendered set == CATALOG exactly, both clusters [red: CA2/CA3].
+  - old per-ID `ids_survive_in_fresh_render` (golden ⊆ fresh) → survivors-only
+    (golden − REMOVED ⊆ fresh); strictness preserved by P1.
+  - cmd + fields tests: comparison code UNCHANGED verbatim; loop now skips
+    REMOVED (they leave the render under P1/P4 — skipping cannot mask a live
+    divergence since presence is exact-set-pinned) [P2, green-at-handoff by
+    design: preservation bar].
+  - old byte-echo test (6 DISABLED) → P3 over the 3 survivors [green-at-handoff].
+  - old `_assert_matrix_preserved` (amendment E) → **P6**: additive
+    preservation MODULO REMOVED (vars/sets/membership checks now skip ruled
+    ids; every SURVIVING mapping must still hold). macros/hooks/top-level
+    scalars assertions untouched [green-at-handoff].
+  - NEW **P4**: REMOVED ∩ (models ∪ matrix.vars-values ∪ preload) == ∅ per
+    cluster [red: CA3].
+  - NEW **P5**: catalog ids outside a cluster's golden are echoes (shape +
+    id-prefixed, message NOT pinned) where the cluster disables them and live
+    cmds where enabled — the isolation-flip expression [red gpu: CA2; gpu-ai
+    green-at-handoff (ladder ids live, ENABLEMENT-consistent)].
+  - NEW table-audit test (G arithmetic + survivors cross-check) [green].
+  - UNTOUCHED: criterion-1 lint/renders, golden-inventory historical audit,
+    aliases, VL setParamsByID render-side, closure, sentinel.
+* **(I) `test_config_schema.py` — families.**
+  - value-shape reads re-pointed `config.models` → `config.families`
+    (derivation coverage == CATALOG; per-rung effective `hf`/`draft` vs golden
+    with B/D-style live-golden routing; 12 VL rungs reference
+    `filters: vl-workload` at family-or-rung level) [red: CA2].
+  - NEW family-contract render tests (overlay-injected `smokefam`): ID
+    derivation + `id:` override; family<rung field merge (ttl/use);
+    enablement flip at either level + `disabled` beats `enabled` + default
+    "not enabled" echo (substring only — message not pinned); raw
+    `config.models.<id>` merge-OVER-expansion; duplicate derived ID FAILS the
+    render (`pytest.raises`); `families` key stripped from rendered output
+    [all red: CA2 — HEAD leaks the key and ignores families].
+  - gpu-ai block test: dropped the per-entry `assert "hf" in m` loop — NOT a
+    weakening: service-layer re-declaration (dev deviation-3) is superseded
+    by chart-side families coverage (above) + render-side P2; a post-CA2
+    partial override may legitimately omit hf (CR1.5). Raw set == {rana} and
+    the one-line-exec + -hf/-hfd token bars retained verbatim.
+  - placement test: models loop made tolerant of CA2 (`config.models` may
+    vanish) + extended to families entries [green-at-handoff].
+  - UNTOUCHED: per-ID composition/precedence/ttl-proxy/raw passthrough render
+    bars (escape-hatch + override layer semantics survive the rebase),
+    filterPresets value test, smoke-absent guard.
+* **(J) `test_new_roster.py`.**
+  - isolation flip: `gpu_ai_only_families_absent_from_gpu` →
+    `..._present_as_echo_on_gpu` (present + fail-fast shape + id-prefixed)
+    [red: CA2].
+  - exact-set test expected → frozen CATALOG (58) both clusters [red: CA2/CA3].
+  - per-ID -hf refs: routing generalized from fixed-D fallback to ENABLEMENT
+    lookup (read the cluster where the rung is enabled; assert non-echo there)
+    [green-at-handoff; CA2-safe by construction].
+  - ttl test: presence-assert via ENABLEMENT-consistent `.get` (red would
+    name CA2 if a ladder id vanished) [green-at-handoff].
+  - UNTOUCHED: matrix placement (flashnext solo/absent, ladder membership),
+    preload table, tuned regime, bf16 fail-fast, closure, capabilities.
+* **(K) `test_autogen_wiring.py` — entrypoint rebase (CR4).**
+  - removed: `_init_script`/`_sandbox` render-extraction machinery (the
+    script leaves the yaml under CA4; the C-render-execution promise of §7.7
+    transfers to executing the REPO file directly).
+  - degrade trio re-expressed against `containers/llama-swap-autogen/
+    entrypoint.sh` invoked with the CR4 flags + stub CLI on PATH; SAME three
+    contracts (empty-scan → comment-only + rc0; generate rc≠0 → degrade file
+    + rc0; generate rc0 → content preserved) [red: CA4 — file absent; note
+    stub constants FAIL_STUB/OK_STUB restored with the original shapes].
+  - NEW: usage-error contract (missing --out → rc≠0 + message; degrade-rc0
+    reserved for scan-empty/generate-fail ONLY) [red: CA4];
+    `--home` drives generator HOME (C03 finding #1 made CLI-explicit)
+    [red: CA4]; args-not-command pod shape (no command; --scan-dir set ==
+    base.yaml models == scanPaths; --base/--out/--home pinned) [red ×2: CA4].
+  - NEW drift probes (render-must-fail): scanPaths-vs-args disagreement; any
+    initContainer `command:` (tripwire). OBSERVED STATE AT HANDOFF: both
+    GREEN — HEAD's C03-era script-based guard fails these renders for the old
+    mechanism reason; they are behavioral bars CA4 must keep green with the
+    args-based guard (review re-checks post-CA4; a post-CA4 RED here means
+    the guard lost coverage).
+  - UNTOUCHED: image/security/mounts/volumes/env/base.yaml/colon-free/
+    disjoint/reloader (C03 landed surface — all 25 greens stay).
+* **(L) `test_autogen_image.py`.** ENTRYPOINT contract flipped: old
+  `ENTRYPOINT .*llama-swap-config-autogen` → exec-form `ENTRYPOINT
+  ["/entrypoint.sh"]` + `COPY entrypoint.sh` + repo file exists with `#!/bin/sh`
+  shebang + exec bit (in-tree chmod or Dockerfile chmod/--chmod) [red: CA4];
+  console-script-on-PATH retained as pip-install-line assertion + gated
+  `--entrypoint llama-swap-config-autogen` docker checks stay (unchanged).
+* **(M) `tests/evidence/c05_expected_evidence.yaml`** rebased wholesale onto
+  CR2/CR3/CR4 expectations: counts 47/71 → 58 both (34 live + 24 echoes gpu;
+  58 live gpu-ai); /v1/models superset + echo spot-proof step; args-driven
+  initContainer + usage-vs-degrade distinction; removal grep list (13);
+  CA3 consumer-sweep diff check (minuspod survivor verified-not-edited,
+  pipeline-models rows delete-only + regenerated mirror); machine-global
+  13+9 dangling enumeration (user-owned); runbook addenda (measure-on-cluster,
+  uppercase-MTP caveat, picker widenings, rollback).
+
+Handoff bars (CA1, 2026-10-24, helm v3.16.4 + app-template 5.0.1 from
+/tmp/opencode): full suite **25 failed / 122 passed / 12 skipped**. Red set:
+parity 5 (P1×2 → CA2/CA3, P4×2 → CA3, P5×1 gpu → CA2); schema 9 (value-shape
+families 3 + family-contract renders 6 → CA2); roster 3 (exact-set ×2 →
+CA2/CA3, isolation flip ×1 → CA2); wiring 7 (degrade trio 3 + usage 1 +
+--home 1 + args-not-command 2 → CA4); image 1 (entrypoint relocation → CA4).
+The two drift-behavior probes are GREEN at handoff via the C03 script-based
+guard and must stay green post-CA4 under the args guard (review re-checks).
+12 skips = unchanged evidence gates; existing CI files 33 green — zero
+collateral. Every red message names its owning chunk (CA2/CA3/CA4), sampled
+per file.

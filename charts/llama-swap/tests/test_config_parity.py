@@ -80,19 +80,78 @@ def test_c02_1_cluster_render_produces_configmap(cluster):
 
 @pytest.mark.parametrize("cluster", CLUSTERS)
 def test_c02_2_model_id_sets_equal(cluster):
-    """Golden IDs must all survive; additions only from the C04 approved table
-    (the plan's 'equal EXACTLY' holds at C02 time because no addition exists
-    yet; the bounded superset keeps this same immutable test valid through
-    C03/C04, which add models on purpose — tests are immutable downstream)."""
-    golden = L.all_models_of(L.golden_config(cluster))
-    fresh = L.all_models_of(L.rendered_config(cluster))
-    removed = set(golden) - set(fresh)
-    added = set(fresh) - set(golden)
-    allowed = set(L.C04_NEW_IDS[cluster])
-    assert not removed, f"{cluster}: model IDs dropped vs golden: {sorted(removed)}"
-    assert added <= allowed, (
-        f"{cluster}: model IDs added outside the approved C04 table: {sorted(added - allowed)}"
+    """P1 (REPLAN CR2, amendment G/H 2026-10-24): every cluster render carries
+    EXACTLY the frozen 58-ID catalog — the superset pattern means gpu also
+    renders the gpu-ai-local rungs as echoes and both drop the ruled 13.
+    Red at CA1 handoff: CA2 (catalog conversion) + CA3 (removals) not landed."""
+    fresh = set(L.all_models_of(L.rendered_config(cluster)))
+    assert fresh == set(L.CATALOG_IDS), (
+        f"{cluster}: rendered ID set diverges from the frozen CATALOG "
+        f"(missing {sorted(set(L.CATALOG_IDS) - fresh)}, "
+        f"unexpected {sorted(fresh - set(L.CATALOG_IDS))}) — awaiting CA2/CA3"
     )
+
+
+def test_repl_tables_match_frozen_decisions():
+    """Acceptance-5 support: the frozen tables must equal the arithmetic the
+    user ruled (58 = golden-union - removed + C04-approved-new; gpu partition
+    34+24). Pure table audit against the byte-untouched goldens — GREEN at
+    handoff by design; it fails only if a table drifts from the rulings."""
+    g = set(L.all_models_of(L.golden_config("gpu")))
+    a = set(L.all_models_of(L.golden_config("gpu-ai")))
+    c04_new = set(L.C04_NEW_IDS["gpu-ai"]) - set(L.C04_LADDER_35B_IDS) | set(L.C04_LADDER_35B_IDS)
+    derived = (g | a | c04_new) - set(L.REMOVED_IDS)
+    assert derived == set(L.CATALOG_IDS), f"CATALOG drift: {derived ^ set(L.CATALOG_IDS)}"
+    assert len(L.REMOVED_IDS) == 13
+    assert set(L.REMOVED_IDS) <= (g | a), "a REMOVED id never existed in the goldens"
+    assert len(L.GPU_ENABLED_IDS) == 34 and len(L.GPU_ECHO_IDS) == 24
+    assert set(L.ENABLEMENT["gpu-ai"]["enabled"]) == set(L.CATALOG_IDS)
+    assert not L.ENABLEMENT["gpu-ai"]["echo"]
+    assert set(L.GPUAI_LOCAL_CATALOG_IDS) <= set(L.GPU_ECHO_IDS), "gpu-ai-local rungs are gpu echoes (P5)"
+    assert set(L.GPU_DISABLED_IDS) <= set(L.GPU_ECHO_IDS), "legacy golden echoes stay echoed on gpu"
+    # legacy byte-pinned echoes: the 3 survivors are golden echoes today...
+    for mid in L.GPU_DISABLED_IDS:
+        assert L.is_echo_cmd(L.all_models_of(L.golden_config("gpu"))[mid]["cmd"])
+    # ...and exactly the 3 pre-replan golden echoes that survive the ruling.
+    assert set(L.GPU_DISABLED_IDS_PRE_REPLAN) - set(L.REMOVED_IDS) == set(L.GPU_DISABLED_IDS)
+
+
+@pytest.mark.parametrize("cluster", CLUSTERS)
+def test_c02_P4_removed_ids_absent_in_any_form(cluster):
+    """P4 (CR3 frozen 13): absent from models, from matrix.vars values, from
+    preload — 'removed' means not routable under any reference (dangling
+    matrix vars are a v262 hard load error, closure test re-pins consistency).
+    Red at CA1 handoff: names CA3 scope."""
+    cfg = L.rendered_config(cluster)
+    ids = set(L.all_models_of(cfg))
+    hit = ids & set(L.REMOVED_IDS)
+    varhit = {k: v for k, v in ((cfg.get("matrix") or {}).get("vars") or {}).items() if v in L.REMOVED_IDS}
+    prehit = set((((cfg.get("hooks") or {}).get("on_startup") or {}).get("preload") or [])) & set(L.REMOVED_IDS)
+    assert not hit and not varhit and not prehit, (
+        f"{cluster}: REMOVED ids still referenced — models {sorted(hit)}, "
+        f"matrix vars {varhit}, preload {sorted(prehit)} — awaiting CA3"
+    )
+
+
+@pytest.mark.parametrize("cluster", CLUSTERS)
+def test_c02_P5_offcluster_catalog_ids_echo_shaped(cluster):
+    """P5 (CR2): catalog IDs that postdate the golden render as fail-fast
+    ECHOES on clusters that don't enable them (shape + id-prefixed message;
+    the default message text is NOT golden-pinned), and as live cmds where
+    enabled. The CA1 isolation flip: absent -> present-as-echo.
+    Red at CA1 handoff: names CA2 scope (gpu side)."""
+    golden = set(L.all_models_of(L.golden_config(cluster)))
+    fresh = L.all_models_of(L.rendered_config(cluster))
+    enabled = set(L.ENABLEMENT[cluster]["enabled"])
+    for mid in sorted(set(L.CATALOG_IDS) - golden):
+        assert mid in fresh, f"{cluster}: catalog id {mid} not rendered at all (P5: echoes must be present; awaiting CA2)"
+        echo = L.is_echo_cmd(fresh[mid]["cmd"])
+        if mid in enabled:
+            assert not echo, f"{cluster}/{mid}: ENABLED rung rendered as echo — enablement wrong"
+        else:
+            assert echo and mid in fresh[mid]["cmd"], (
+                f"{cluster}/{mid}: off-cluster catalog rung must be id-prefixed fail-fast echo"
+            )
 
 
 @pytest.mark.parametrize("cluster", CLUSTERS)
@@ -103,7 +162,11 @@ def test_c02_2_cmd_flag_multisets_parity(cluster):
     golden = L.model_tokens(L.all_models_of(L.golden_config(cluster)))
     fresh = L.model_tokens(L.all_models_of(L.rendered_config(cluster)))
     diffs = []
-    for mid in sorted(set(golden) & set(fresh)):
+    # P2: surviving (not REMOVED) golden models keep EXACT token-multiset
+    # equality (amendment H: the bar itself is unchanged — REMOVED ids leave
+    # the loop because P1/P4 remove them from the render, not because the
+    # equality was loosened).
+    for mid in sorted(set(golden) & set(fresh) - set(L.REMOVED_IDS)):
         g, f = golden[mid]["cmd"], fresh[mid]["cmd"]
         if g != f:
             missing = list((g - f).elements())
@@ -121,7 +184,7 @@ def test_c02_2_per_model_fields_deep_equal(cluster):
     golden = L.model_tokens(L.all_models_of(L.golden_config(cluster)))
     fresh = L.model_tokens(L.all_models_of(L.rendered_config(cluster)))
     problems = []
-    for mid in sorted(set(golden) & set(fresh)):
+    for mid in sorted(set(golden) & set(fresh) - set(L.REMOVED_IDS)):  # P2 fields half
         if golden[mid]["rest"] != fresh[mid]["rest"]:
             problems.append(f"{mid}: {_first_diff_key(golden[mid]['rest'], fresh[mid]['rest'])}")
     assert not problems, f"{cluster}: per-model field divergence:\n" + "\n".join(problems)
@@ -144,16 +207,20 @@ def _assert_matrix_preserved(cluster: str, g: dict, f: dict) -> None:
     tests (division of labor preserved)."""
     gvars = (g.get("matrix") or {}).get("vars") or {}
     fvars = (f.get("matrix") or {}).get("vars") or {}
-    changed = {k: (v, fvars.get(k)) for k, v in gvars.items() if fvars.get(k) != v}
-    assert not changed, f"{cluster}: golden matrix vars changed/removed: {changed}"
+    # P6 (amendment H): additive preservation MODULO REMOVED — CA3 legitimately
+    # drops coder/kat/qwen3-text vars and set tokens (dangling vars would be a
+    # v262 load error); every OTHER golden var must map unchanged.
+    changed = {k: (v, fvars.get(k)) for k, v in gvars.items()
+               if v not in L.REMOVED_IDS and fvars.get(k) != v}
+    assert not changed, f"{cluster}: surviving golden matrix vars changed/removed: {changed}"
     gsets = (g.get("matrix") or {}).get("sets") or {}
     fsets = (f.get("matrix") or {}).get("sets") or {}
     assert set(gsets) <= set(fsets), (
         f"{cluster}: golden matrix sets vanished: {sorted(set(gsets) - set(fsets))}"
     )
     for name in gsets:
-        lost = L.matrix_member_ids(g, name) - L.matrix_member_ids(f, name)
-        assert not lost, f"{cluster}: matrix set {name} dropped golden members: {sorted(lost)}"
+        lost = L.matrix_member_ids(g, name) - L.matrix_member_ids(f, name) - set(L.REMOVED_IDS)
+        assert not lost, f"{cluster}: matrix set {name} dropped surviving golden members: {sorted(lost)}"
 
 
 @pytest.mark.parametrize("cluster", CLUSTERS)
@@ -194,9 +261,11 @@ def test_c02_3_golden_baselines_match_plan_inventory():
 
 @pytest.mark.parametrize("cluster", CLUSTERS)
 def test_c02_3_ids_survive_in_fresh_render(cluster):
+    """Survival half of the P1/P4 pair (amendment H): every golden ID except
+    the ruled REMOVED set must still be rendered on both clusters."""
     fresh = set(L.all_models_of(L.rendered_config(cluster)))
-    golden = set(L.all_models_of(L.golden_config(cluster)))
-    assert golden <= fresh, f"{cluster}: rendered IDs dropped vs golden: {sorted(golden - fresh)}"
+    golden = set(L.all_models_of(L.golden_config(cluster))) - set(L.REMOVED_IDS)
+    assert golden <= fresh, f"{cluster}: surviving golden IDs dropped vs golden: {sorted(golden - fresh)}"
 
 
 @pytest.mark.parametrize("cluster", CLUSTERS)
@@ -239,7 +308,8 @@ def test_c02_3_matrix_referential_closure(cluster):
 
 
 def test_c02_4_gpu_disabled_entries_byte_identical_echo():
-    """The 6 DISABLED cmd strings must render byte-identical to the golden:
+    """P3: the surviving DISABLED cmd strings (3 under ruling B — the kat
+    trio left with REMOVED_IDS) render byte-identical to the golden echoes:
     the echo body is the operator-facing reason contract (C02 acceptance 4)."""
     golden = L.all_models_of(L.golden_config("gpu"))
     fresh = L.all_models_of(L.rendered_config("gpu"))

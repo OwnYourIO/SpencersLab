@@ -10,6 +10,15 @@
 # passthrough, so synthetic schema entries render verbatim instead of being
 # composed. File-structure tests run WITHOUT helm; the composition tests use
 # the same skip gate as the render suite.
+#
+# REPLAN rebase (amendment I, 2026-10-24): the ladder DATA moves chart-side
+# into `config.families` (CR1), so the value-shape tests read families;
+# `config.models` remains the per-ID override/escape-hatch layer (merge-over-
+# expansion, CR1.5). Family-contract render tests (derivation, id:, merge
+# layering, enablement flips, duplicate-ID fail, override layering) are NEW
+# and name CA2 — none of that exists at HEAD. The per-ID composition/
+# precedence/ttl-proxy render bars are UNCHANGED: the escape-hatch + override
+# semantics they pin survive the rebase verbatim.
 
 from __future__ import annotations
 
@@ -42,64 +51,105 @@ def test_c02_filterpresets_named_entry():
     )
 
 
+def derived_family_ids(chart_cfg: dict) -> set[str]:
+    """The CR1.1 derivation rule applied to chart values:
+    id = rung.id | f"<family>-<quant>"."""
+    out = set()
+    for fam, spec in (chart_cfg.get("families") or {}).items():
+        for quant, rung in (spec.get("quants") or {}).items():
+            out.add((rung or {}).get("id") or f"{fam}-{quant}")
+    return out
+
+
 def test_c02_chart_models_are_composition_or_documented_escape_hatch():
-    """Every chart model is either a schema record (hf-composition: `hf` ref,
-    optional draft/spec/use/flags — never a raw cmd) or in the raw-cmd escape
-    hatch set {whisper-large-v3}. Precedence disabled > cmd > hf-composition
-    means a `cmd` key outside the escape set is a contract violation."""
-    models = L.chart_values()["config"]["models"]
+    """Families version (amendment I; old: chart config.models audit): the
+    chart catalog must carry ALL 58 IDs as family rungs, each rung (or its
+    family) supplying schema fields — raw cmd only for the documented
+    escape hatch {whisper-large-v3}. Red at handoff: CA2 has not converted
+    chart values to config.families."""
+    cfg = L.chart_values()["config"]
+    assert cfg.get("families"), "config.families missing — CA2 catalog conversion not landed"
+    assert derived_family_ids(cfg) == set(L.CATALOG_IDS), (
+        f"derived catalog diverges: +{sorted(derived_family_ids(cfg) - set(L.CATALOG_IDS))} "
+        f"-{sorted(set(L.CATALOG_IDS) - derived_family_ids(cfg))}"
+    )
     offenders = []
-    for mid, m in models.items():
-        if mid in L.CHART_RAW_CMD_IDS:
+    for fam, spec in cfg["families"].items():
+        fam = fam or {}
+        for quant, rung in (fam.get("quants") or {}).items():
+            mid = (rung or {}).get("id") or f"{fam and ''}{fam}-{quant}"
+            merged = {**(fam or {}), **(rung or {})}
+            merged.pop("quants", None)
+            if mid in L.CHART_RAW_CMD_IDS:
+                if "cmd" not in merged:
+                    offenders.append(f"{mid}: escape-hatch rung lost its raw cmd")
+                continue
+            if "cmd" in merged:
+                offenders.append(f"{mid}: raw cmd outside the escape hatch")
+            if "hf" not in merged and "disabled" not in merged:
+                offenders.append(f"{mid}: no hf ref and no disabled reason")
+    # the per-ID override layer may add schema records (gpu disabled: overrides
+    # etc.) but must never re-introduce the ladder (ids are family-owned now)
+    for mid, m in (cfg.get("models") or {}).items():
+        if mid in L.CHART_RAW_CMD_IDS or not isinstance(m, dict):
             continue
-        if "cmd" in m:
-            offenders.append(f"{mid}: raw cmd outside the escape hatch")
-        if "hf" not in m:
-            offenders.append(f"{mid}: no hf ref field")
-    assert not offenders, "chart values not in roster schema:\n" + "\n".join(sorted(offenders))
+        if "cmd" in m and mid not in L.CHART_RAW_CMD_IDS and "hf" not in m \
+           and mid not in derived_family_ids(cfg):
+            offenders.append(f"models.{mid}: raw cmd for a non-catalog, non-escape id")
+    assert not offenders, "chart families not in roster schema:\n" + "\n".join(sorted(offenders))
 
 
 def test_c02_chart_composition_hf_refs_match_golden():
-    """Conversion fidelity is a SOURCE check: each composition model's `hf`
-    value must equal the `-hf` token pair in that model's golden cmd, and
-    `draft` (where present) the `-hfd` pair — C02 converts 1:1 in golden
-    order, so a wrong ref cannot hide behind the cmd renderer.
-
-    The golden source is per-cluster by design: for the six gpu fail-fast IDs
-    the golden GPU cmd is the disable echo (no -hf token at all, by contract —
-    parity test_c02_4 pins it byte-exact), while their composition refs are
-    golden-pinned on gpu-ai where the chart default survives untouched.
-    (Amended 2026-10-23 per coord-routed defect B: the original single-gpu-golden
-    reading was unsatisfiable alongside the parity contract.)"""
-    models = L.chart_values()["config"]["models"]
+    """Conversion fidelity is a SOURCE check (amendment I: source moved from
+    flat config.models to config.families rungs; the BAR is unchanged): each
+    live catalog rung's effective `hf` equals the `-hf` token in that model's
+    golden cmd, routed by where the golden render still carries a live cmd
+    (B/D pattern; REMOVED ids skipped — absent from the future catalog)."""
+    cfg = L.chart_values()["config"]
+    assert cfg.get("families"), "config.families missing — CA2 not landed"
     goldens = {"gpu": L.all_models_of(L.golden_config("gpu")),
                "gpu-ai": L.all_models_of(L.golden_config("gpu-ai"))}
     problems = []
-    for mid in L.CHART_MODEL_IDS:
-        if mid in L.CHART_RAW_CMD_IDS:
-            continue
-        m = models[mid]
-        src = "gpu-ai" if mid in L.GPU_DISABLED_IDS else "gpu"
-        gcmd = goldens[src][mid]["cmd"]
-        want_hf = L.cmd_flag_value(gcmd, "-hf")
-        assert want_hf, f"golden {src} {mid} has no -hf token — spec premise broken"
-        if m.get("hf") != want_hf:
-            problems.append(f"{mid}: hf={m.get('hf')!r} but golden({src}) -hf={want_hf!r}")
-        want_hfd = L.cmd_flag_value(gcmd, "-hfd")
-        if want_hfd and m.get("draft") != want_hfd:
-            problems.append(f"{mid}: draft={m.get('draft')!r} but golden({src}) -hfd={want_hfd!r}")
-    assert not problems, "schema refs diverge from golden cmd tokens:\n" + "\n".join(problems)
+    for fam, spec in cfg["families"].items():
+        for quant, rung in (spec.get("quants") or {}).items():
+            mid = (rung or {}).get("id") or f"{fam}-{quant}"
+            if mid in L.CHART_RAW_CMD_IDS or mid in L.REMOVED_IDS:
+                continue
+            eff = {**(spec or {}), **(rung or {})}
+            eff.pop("quants", None)
+            src = "gpu" if mid in goldens["gpu"] else "gpu-ai"
+            gcmd = goldens[src][mid]["cmd"]
+            if L.is_echo_cmd(gcmd):  # golden echo (surviving disables): ref lives in the other golden
+                other = "gpu-ai" if src == "gpu" else "gpu"
+                gcmd, src = goldens[other][mid]["cmd"], other
+            want_hf = L.cmd_flag_value(gcmd, "-hf")
+            assert want_hf, f"golden {src} {mid} has no -hf token — spec premise broken"
+            if eff.get("hf") != want_hf:
+                problems.append(f"{mid}: hf={eff.get('hf')!r} but golden({src}) -hf={want_hf!r}")
+            want_hfd = L.cmd_flag_value(gcmd, "-hfd")
+            if want_hfd and eff.get("draft") != want_hfd:
+                problems.append(f"{mid}: draft={eff.get('draft')!r} but golden({src}) -hfd={want_hfd!r}")
+    assert not problems, "family refs diverge from golden cmd tokens:\n" + "\n".join(problems)
 
 
 def test_c02_vl_models_reference_filter_preset():
-    """The 12 vl-workload models must reference the preset by NAME
-    (`filters: vl-workload`), replacing the YAML anchor alias."""
-    models = L.chart_values()["config"]["models"]
+    """The 12 vl-workload rungs must reference the preset by NAME
+    (`filters: vl-workload`, family- or rung-level; amendment I re-points the
+    read from config.models to config.families)."""
+    cfg = L.chart_values()["config"]
+    assert cfg.get("families"), "config.families missing — CA2 not landed"
+    eff = {}
+    for fam, spec in cfg["families"].items():
+        for quant, rung in (spec.get("quants") or {}).items():
+            mid = (rung or {}).get("id") or f"{fam}-{quant}"
+            merged = {**(spec or {}), **(rung or {})}
+            merged.pop("quants", None)
+            eff[mid] = merged
     offenders = [
         mid for mid in L.VL_WORKLOAD_IDS
-        if models.get(mid, {}).get("filters") != "vl-workload"
+        if (eff.get(mid) or {}).get("filters") != "vl-workload"
     ]
-    assert not offenders, f"VL models not referencing filterPresets entry: {offenders}"
+    assert not offenders, f"VL rungs not referencing filterPresets entry: {offenders}"
 
 
 def test_c02_gpu_block_disabled_entries_use_schema_key():
@@ -163,10 +213,13 @@ def test_c02_macros_matrix_hooks_stay_top_level_single_source():
     ai_overlay = L.service_overlay("gpu-ai").get("config", {})
     assert isinstance(ai_overlay.get("matrix"), dict), "gpu-ai matrix override missing"
     assert isinstance(ai_overlay.get("hooks"), dict), "gpu-ai preload hooks missing"
-    for cluster, models in (("chart", chart_cfg["models"]), ("gpu-ai", ai_overlay.get("models", {}))):
+    sources = [("chart-models", chart_cfg.get("models") or {}),
+               ("gpu-ai-models", ai_overlay.get("models") or {}),
+               ("chart-families", chart_cfg.get("families") or {})]
+    for cluster, models in sources:
         for mid, m in models.items():
             assert "matrix" not in m and "hooks" not in m, (
-                f"{cluster}/{mid}: matrix/hooks leaked into a model entry (load error in v262)"
+                f"{cluster}/{mid}: matrix/hooks leaked into an entry (load error in v262)"
             )
 
 
@@ -283,3 +336,102 @@ def test_c02_schema_smoke_absent_from_parity_renders():
     pins it behaviorally): a render WITHOUT the overlay must not contain them."""
     baseline = L.all_models_of(L.rendered_config("gpu"))
     assert not [mid for mid in baseline if mid.startswith(SMOKE)]
+
+
+# ---------------------------------------------------------------------------
+# Family-contract render tests (REPLAN CR1; amendment I). RED at CA1 handoff:
+# HEAD's templates have no expansion step, so overlaid families are ignored
+# (smoke IDs never appear) and duplicate derived IDs render fine instead of
+# failing. All name CA2.
+# ---------------------------------------------------------------------------
+
+FAM = "smokefam"
+SMOKE_RUNG_ID = f"{FAM}-q4"
+SMOKE_OVERLAY = {"config": {"families": {FAM: {
+    "enabled": True,
+    "ttl": 0,
+    "use": ["threads"],
+    "quants": {
+        "q4": {"hf": "smolorg/Smoke-GGUF:Q4_K_M", "name": "Smoke Q4"},
+        "q8": {"hf": "smolorg/Smoke-GGUF:Q8_0", "id": "custom-smoke-id", "ttl": 300},
+        "off": {"hf": "smolorg/Smoke-GGUF:BF16", "enabled": False},
+    },
+}}}}
+
+
+@helm
+def test_fam_derivation_and_id_override():
+    """CR1.1: rendered ID = rung.id | <family>-<quant>."""
+    models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", SMOKE_OVERLAY))
+    assert SMOKE_RUNG_ID in models, f"derived id {SMOKE_RUNG_ID!r} not rendered — CA2 expansion missing"
+    assert "custom-smoke-id" in models and f"{FAM}-off" not in models
+    assert L.cmd_flag_value(models[SMOKE_RUNG_ID]["cmd"], "-hf") == "smolorg/Smoke-GGUF:Q4_K_M"
+
+
+@helm
+def test_fam_fields_merge_family_below_rung():
+    """CR1.2: family fields merge down; rung fields win (ttl: family 0 -> rung
+    300 for the custom-id rung; use/threads still inherited)."""
+    models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", SMOKE_OVERLAY))
+    rung = models["custom-smoke-id"]
+    assert rung.get("ttl") == 300, f"rung ttl override lost to family merge: {rung.get('ttl')!r}"
+    assert models[SMOKE_RUNG_ID].get("ttl") == 0, "family ttl did not merge down"
+    L.render_macro_or_literal(rung["cmd"], "threads", ("-t", "10"))
+    L.render_macro_or_literal(models[SMOKE_RUNG_ID]["cmd"], "threads", ("-t", "10"))
+
+
+@helm
+def test_fam_enablement_and_disabled_beats_enabled():
+    """CR1.3: not-enabled rung -> deviation-1 echo with the DEFAULT 'not
+    enabled' message (message text not pinned beyond that); a `disabled:`
+    beats enablement. The `off` rung (enabled: false at rung level) must echo
+    even though family.enabled is true; a models.<id>.disabled override on an
+    enabled rung also echoes with its own message."""
+    overlay = {"config": {"models": {SMOKE_RUNG_ID: {"disabled": "smoke ruled out"}}}}
+    merged = {**SMOKE_OVERLAY}
+    merged["config"] = {**SMOKE_OVERLAY["config"], **overlay["config"]}
+    models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", merged))
+    off = models.get(f"{FAM}-off")
+    assert off is not None, "not-enabled rung vanished instead of echoing (P5 contract)"
+    assert L.is_echo_cmd(off["cmd"]) and f"{FAM}-off" in off["cmd"] and "not enabled" in off["cmd"], off["cmd"]
+    dis = models[SMOKE_RUNG_ID]
+    assert L.is_echo_cmd(dis["cmd"]) and "smoke ruled out" in dis["cmd"], (
+        f"disabled overrode... wrong way: {dis['cmd']!r}"
+    )
+    assert "smolorg/Smoke-GGUF:Q4_K_M" not in dis["cmd"], "disabled rung still composed its hf cmd"
+
+
+@helm
+def test_fam_models_merge_over_expansion():
+    """CR1.5: raw config.models.<id> deep-merges OVER the expansion — tuned
+    overrides (ttl here, flags like gpu's regimes) win per-field while family-
+    sourced fields (hf, name) remain."""
+    overlay = {"config": {
+        "families": SMOKE_OVERLAY["config"]["families"],
+        "models": {SMOKE_RUNG_ID: {"ttl": 77, "flags": "--tuned-override 1"}},
+    }}
+    models = L.all_models_of(L.configmap_data("gpu", "llama-swap-config", "config.yaml", overlay))
+    m = models[SMOKE_RUNG_ID]
+    assert m.get("ttl") == 77 and m.get("name") == "Smoke Q4"
+    toks = set(L.cmd_tokens(m["cmd"]))
+    assert {"--tuned-override", "1"} <= toks and "smolorg/Smoke-GGUF:Q4_K_M" in toks
+
+
+@helm
+def test_fam_duplicate_derived_id_fails_render():
+    """CR1 + DECISIONS: a duplicate rendered ID fails the RENDER (loud), not a
+    silent overwrite — two smoke families deriving the same id."""
+    dup = {"config": {"families": {
+        "dupfam": {"enabled": True, "quants": {"x": {"hf": "a/b:Q4_K_M"}}},
+        "dupfam-x": {"enabled": True, "quants": {"": {"id": "dupfam-x", "hf": "a/b:Q4_K_M"}}},
+    }}}
+    with pytest.raises(AssertionError, match="helm template failed|duplicate"):
+        L.configmap_data("gpu", "llama-swap-config", "config.yaml", dup)
+
+
+@helm
+def test_fam_key_stripped_from_rendered_output():
+    """DECISIONS: `families` is a chart-values concept (like filterPresets) —
+    it must not leak into the rendered llama-swap config."""
+    cfg = L.configmap_data("gpu", "llama-swap-config", "config.yaml", SMOKE_OVERLAY)
+    assert "families" not in cfg, "families key leaked into rendered config (CA2)"

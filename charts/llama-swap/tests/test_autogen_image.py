@@ -5,6 +5,10 @@
 # they need no docker, no network, and run in CI wherever this suite runs.
 # All are RED until C01 lands (the directory/Dockerfile does not exist).
 #
+# REPLAN rebase (amendment L, 2026-10-24, CR4): ENTRYPOINT flips from the raw
+# console script to the repo-side entrypoint.sh (COPY + exec-form + shebang +
+# exec bit); the console script must STAY on PATH (the gated docker checks and
+# the chart's stub-based degrade contracts invoke it explicitly).
 # Build+run+inspect checks (chunk acceptance 1-3) are gated on a live docker
 # daemon + explicit opt-in (LLAMA_SWAP_IMAGE_EVIDENCE=1): the PR's own
 # docker-build.yaml job is the CI build proof (chunks/C01.md "Tests" —
@@ -90,16 +94,38 @@ def test_c01_immutable_install_from_pinned_commit():
     assert m, "no pip install of the github archive tarball pinned via ${AUTOGEN_COMMIT}:\n" + text
 
 
-def test_c01_nonroot_uid_and_entrypoint():
+def test_c01_nonroot_uid_and_path_cli():
     """uid/gid 65532 (container-creation convention — same as wekan-mcp's
-    USER 65532) and the console-script entrypoint that C03's initContainer
-    command relies on being on PATH."""
+    USER 65532); the console script stays on PATH via pip install (amendment
+    L: ENTRYPOINT no longer names it — the gated docker checks call it with an
+    explicit --entrypoint override)."""
     text = DOCKERFILE.read_text()
     user_lines = re.findall(r"^USER\s+(.+)$", text, re.M)
     assert user_lines, "no USER directive — image would run as root"
     assert any("65532" in u for u in user_lines), f"USER lines: {user_lines}"
-    ep = re.search(r"^ENTRYPOINT\s+.*llama-swap-config-autogen", text, re.M)
-    assert ep, "ENTRYPOINT must exec the console script llama-swap-config-autogen"
+    assert re.search(r"pip install[^\n]*llama-swap-config-autogen", text), \
+        "console script install line vanished — PATH contract broken"
+
+
+def test_c04_entrypoint_relocation_contract():
+    """CR4: Dockerfile COPYs entrypoint.sh, sets exec-form ENTRYPOINT
+    [\"/entrypoint.sh\"]; the repo file exists, is shebang-POSIX, and is
+    marked executable (COPY --chmod or explicit chmod/RUN chmod). Red at CA1
+    handoff on two counts: the file does not exist and the Dockerfile still
+    ENTRYPOINTs the console script."""
+    text = DOCKERFILE.read_text()
+    assert re.search(r"^ENTRYPOINT\s+\[\s*\"/entrypoint\.sh\"\s*\]", text, re.M), (
+        "ENTRYPOINT is not the exec-form [\"/entrypoint.sh\"] (CA4)"
+    )
+    assert re.search(r"^COPY\s+.*entrypoint\.sh", text, re.M), \
+        "entrypoint.sh is not COPY'd into the image (CA4)"
+    ep = L.ENTRYPOINT_FILE
+    assert ep.is_file(), f"{ep} missing — CA4 has not landed the entrypoint (wiring tests need this file too)"
+    first = ep.read_text().splitlines()[0].strip()
+    assert first in ("#!/bin/sh", "#!/bin/sh -e", "#!/usr/bin/env sh"), f"bad shebang: {first!r}"
+    assert os.access(ep, os.X_OK) or re.search(r"chmod\s+(0?755|a\+x)[^\n]*entrypoint\.sh", text) \
+        or re.search(r"COPY\s+--chmod=[^\s]+\s+.*entrypoint\.sh", text), \
+        "entrypoint.sh neither executable in-tree nor chmod'd in the Dockerfile"
 
 
 # ---------------------------------------------------------------------------

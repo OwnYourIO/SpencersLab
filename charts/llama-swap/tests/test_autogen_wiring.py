@@ -2,14 +2,18 @@
 # /app/gen, main-container env, degrade path, and the identity-key merge
 # safety that v262 -config/-config-dir demands.
 #
-# ALL tests here are RED at write time for the same right reason: the wiring
-# does not exist yet — no initContainer `autogen`, no ConfigMap
-# `llama-swap-autogen-base`, no LLAMA_SWAP_CONFIG_DIR env (the renders are the
-# pre-C03 chart). The degrade-script tests extract the initContainer command
-# FROM THE RENDER and execute it in a sandbox with a stubbed autogen CLI, so
-# the fail-open behavior (criterion 3) is a hard test CI can run — no docker,
-# no network. The real-tool / real-image proofs live (skippable) in
-# test_autogen_integration.py.
+# C03-era tests: the wiring existed as RED-vs-green through C03; post-C03
+# they pin the landed surface (all green at CA1 handoff except where CA4
+# re-bases them).
+#
+# REPLAN rebase (amendment K, 2026-10-24, CR4): the degrade logic MOVES OUT of
+# the k8s yaml into containers/llama-swap-autogen/entrypoint.sh. The three
+# fail-open contracts are now executed DIRECTLY against that repo file with
+# flags (--scan-dir/--base/--out/--home + a stub CLI on PATH) — daemon-free,
+# CI-runnable; red at CA1 handoff because the file does not exist yet (CA4).
+# The pod assertions FLIP: initContainer carries image + args + mounts and NO
+# command; the drift probes pin that the helper FAILS THE RENDER when args and
+# scanPaths disagree or when any command: is (re)introduced.
 
 from __future__ import annotations
 
@@ -189,59 +193,12 @@ def test_c03_2_base_yaml_macros_are_a_superset_slice(cluster):
 # ---------------------------------------------------------------------------
 
 
-def _init_script(cluster: str) -> str:
-    c = L.init_container(cluster, "autogen")
-    argv = list(c.get("command") or []) + list(c.get("args") or [])
-    assert argv, f"{cluster}: initContainer autogen has no command — degrade logic missing"
-    if "-c" in argv:
-        # The script is the element AFTER the last "-c"; the previous
-        # `len(argv) - 1 - ...` form returned the "-c" token itself (coord-
-        # routed defect C amendment, 2026-10-23).
-        return argv[len(argv) - argv[::-1].index("-c")]
-    return "\n".join(argv)
+ENTRYPOINT = L.ENTRYPOINT_FILE
 
-
-def _sandbox(cluster: str, tmp_path: Path, stub: str | None, ggufs: bool) -> tuple[Path, dict]:
-    """Rewrite the rendered script's contract paths into a throwaway tree and
-    expose the stub CLI on PATH. Path literals are pinned by the plan
-    (/app/gen, /app/autogen, /models mounts) — a dev-side path change is a
-    contract change, which is exactly what this test catches."""
-    sb = tmp_path / "sb"
-    script = _init_script(cluster)
-    for lit in (BASE_DIR, GEN_DIR, "/models"):
-        script = script.replace(lit, str(sb) + lit)
-    assert str(sb) in script, (
-        f"{cluster}: init script references none of the pinned mount paths "
-        f"({BASE_DIR}, {GEN_DIR}, /models) — cannot run the degrade contract"
-    )
-    (sb / "app/gen").mkdir(parents=True, exist_ok=True)
-    (sb / "app/autogen").mkdir(parents=True, exist_ok=True)
-    (sb / "app/autogen/base.yaml").write_text("models: []\n")  # presence only; stub never reads it
-    scanned = sb / "models/scanned"
-    scanned.mkdir(parents=True, exist_ok=True)
-    if ggufs:
-        d = scanned / "fixture-model"
-        d.mkdir(parents=True, exist_ok=True)
-        (d / "fixture-Q4_K_M.gguf").write_bytes(b"GGUF")  # script only counts files
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir(exist_ok=True)
-    if stub is not None:
-        (bin_dir / "llama-swap-config-autogen").write_text(stub)
-        os.chmod(bin_dir / "llama-swap-config-autogen", 0o755)
-    env = dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}", HOME=str(tmp_path))
-    return script, env
-
-
-def _comment_only(path: Path) -> bool:
-    if not path.exists():
-        return False
-    body = path.read_text()
-    if not body.strip():
-        return True
-    lines = [ln for ln in body.splitlines() if ln.strip()]
-    return all(ln.lstrip().startswith("#") for ln in lines) and bool(lines)
-
-
+# Stubbed autogen CLI (on PATH for the sandboxed entrypoint runs). FAIL_STUB
+# replays the pinned tool's real empty-scan behavior (source + live verified:
+# exit 1, "No models found" on stderr); OK_STUB emits the real generated-half
+# shape (ttl/cmd/name + <dir>:<QUANT> id).
 FAIL_STUB = """#!/bin/sh
 echo "stub: simulating the pinned tool's empty-scan failure" >&2
 echo 'ERROR: Generation failed: No models found.' >&2
@@ -252,12 +209,55 @@ OK_STUB = """#!/bin/sh
 out=""
 prev=""
 for a in "$@"; do
-  [ "$prev" = "-o" ] || [ "$prev" = "--output" ] && out="$a"
+  if [ "$prev" = "-o" ] || [ "$prev" = "--output" ]; then out="$a"; fi
   prev="$a"
 done
-printf 'models:\\n  fixture:Q4_K_M:\\n    ttl: 300\\n    cmd: ${binary} -m /models/scanned/fixture-model/fixture-Q4_K_M.gguf --port ${PORT} --host 0.0.0.0\\n    name: fixture:Q4_K_M\\n' > "$out"
+printf 'models:\n  fixture:Q4_K_M:\n    ttl: 300\n    cmd: ${binary} -m /models/scanned/fixture-model/fixture-Q4_K_M.gguf --port ${PORT} --host 0.0.0.0\n    name: fixture:Q4_K_M\n' > "$out"
 exit 0
 """
+
+
+
+def _require_entrypoint() -> str:
+    assert ENTRYPOINT.is_file(), (
+        f"{ENTRYPOINT} missing — CA4 has not landed the image entrypoint that "
+        "owns the generate/degrade/fail-open logic"
+    )
+    return str(ENTRYPOINT)
+
+
+def _ep_sandbox(tmp_path, stub: str | None, ggufs: bool, home: str | None = None):
+    """Flag-driven sandbox (no path rewriting — the entrypoint takes flags).
+    Returns argv + env for `sh entrypoint.sh --scan-dir … --base … --out …
+    --home …`."""
+    sb = tmp_path / "sb"
+    (sb / "app/gen").mkdir(parents=True, exist_ok=True)
+    (sb / "app/autogen").mkdir(parents=True, exist_ok=True)
+    (sb / "app/autogen/base.yaml").write_text("models: []\n")
+    scanned = sb / "models/scanned"
+    scanned.mkdir(parents=True, exist_ok=True)
+    if ggufs:
+        d = scanned / "fixture-model"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "fixture-Q4_K_M.gguf").write_bytes(b"GGUF")
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir(exist_ok=True)
+    if stub is not None:
+        sp = bin_dir / "llama-swap-config-autogen"
+        sp.write_text(stub)
+        import os
+        os.chmod(sp, 0o755)
+    home_dir = sb / ("home" if home is None else home)
+    argv = ["sh", _require_entrypoint(),
+            "--scan-dir", str(scanned),
+            "--base", str(sb / "app/autogen/base.yaml"),
+            "--out", str(sb / "app/gen/10-scanned.yaml"),
+            "--home", str(home_dir)]
+    env = dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}", HOME=str(tmp_path / "unset-home"))
+    return argv, env, (sb / "app/gen/10-scanned.yaml"), home_dir
+
+
+import os  # noqa: E402  (used by _ep_sandbox env PATH building; kept explicit for stub chmod)
 
 
 def test_c03_3_degrade_empty_scan_is_comment_only_and_exit0(tmp_path):
@@ -266,13 +266,14 @@ def test_c03_3_degrade_empty_scan_is_comment_only_and_exit0(tmp_path):
     gated integration file). The initContainer must degrade: write a
     comment-only 10-scanned.yaml and EXIT 0 — fail-open (DECISIONS
     "Degrade path") because crashlooping costs the lab's live consumers."""
-    script, env = _sandbox("gpu", tmp_path, stub=None, ggufs=False)
-    r = subprocess.run(["/bin/sh", "-c", script], capture_output=True, text=True,
-                       env=env, timeout=120, cwd=tmp_path)
+    argv, env, out_f, _home = _ep_sandbox(tmp_path, stub=None, ggufs=False)
+    r = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120, cwd=tmp_path)
     assert r.returncode == 0, f"degrade path must exit 0, got {r.returncode}\n{r.stderr}"
-    assert _comment_only(tmp_path / "sb/app/gen/10-scanned.yaml"), (
-        "empty scan did not leave a comment-only 10-scanned.yaml "
-        f"(content: {(tmp_path / 'sb/app/gen/10-scanned.yaml').exists() and (tmp_path / 'sb/app/gen/10-scanned.yaml').read_text()[:200]!r})"
+    assert _comment_only(out_f), (
+        f"empty scan did not leave a comment-only 10-scanned.yaml "
+        f"(exists={out_f.exists()}, content={out_f.read_text()[:200]!r})"
+        if out_f.exists() else
+        "empty scan left no 10-scanned.yaml at all"
     )
 
 
@@ -280,23 +281,20 @@ def test_c03_3_degrade_generate_failure_is_fail_open(tmp_path):
     """If generate runs but exits nonzero (crash, bad GGUF in the tree), the
     script must still exit 0 with a comment-only file — never propagate the
     failure into a pod crashloop."""
-    script, env = _sandbox("gpu", tmp_path, stub=FAIL_STUB, ggufs=True)
-    r = subprocess.run(["/bin/sh", "-c", script], capture_output=True, text=True,
-                       env=env, timeout=120, cwd=tmp_path)
+    argv, env, out_f, _home = _ep_sandbox(tmp_path, stub=FAIL_STUB, ggufs=True)
+    r = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120, cwd=tmp_path)
     assert r.returncode == 0, f"fail-open violated: rc={r.returncode}\n{r.stderr}\n{r.stdout}"
-    assert _comment_only(tmp_path / "sb/app/gen/10-scanned.yaml"), \
-        "after generate failure the scanned file must be comment-only"
+    assert _comment_only(out_f), "after generate failure the scanned file must be comment-only"
 
 
 def test_c03_3_degrade_success_keeps_generated_content(tmp_path):
     """Happy path stays untouched: when the (stubbed) generator succeeds, the
     script must not clobber its output — the file must parse as a models map
     containing the generated ID."""
-    script, env = _sandbox("gpu", tmp_path, stub=OK_STUB, ggufs=True)
-    r = subprocess.run(["/bin/sh", "-c", script], capture_output=True, text=True,
-                       env=env, timeout=120, cwd=tmp_path)
+    argv, env, out_f, _home = _ep_sandbox(tmp_path, stub=OK_STUB, ggufs=True)
+    r = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120, cwd=tmp_path)
     assert r.returncode == 0, f"rc={r.returncode}\n{r.stderr}"
-    f = tmp_path / "sb/app/gen/10-scanned.yaml"
+    f = out_f
     assert f.exists(), "successful generate left no output file"
     data = yaml.safe_load(f.read_text())
     assert isinstance(data, dict) and "fixture:Q4_K_M" in (data.get("models") or {}), \
@@ -367,3 +365,113 @@ def test_c03_5_reloader_annotation_covers_both_configmaps(cluster):
     assert needed <= set(match.split(",")), (
         f"{cluster}: neither auto-reload nor explicit match for both CMs: {ann}"
     )
+
+
+# ---------------------------------------------------------------------------
+# CR4/CA4 additions — red at CA1 handoff, all naming CA4
+# ---------------------------------------------------------------------------
+
+HOME_STUB = """#!/bin/sh
+out=""
+prev=""
+for a in "$@"; do
+  if [ "$prev" = "-o" ] || [ "$prev" = "--output" ]; then out="$a"; fi
+  prev="$a"
+done
+printf 'HOME=%s\n' "${HOME-unset}" > "__RECORD__"
+printf 'models:\n  fixture:Q4_K_M:\n    ttl: 300\n    cmd: ${binary} -m /models/scanned/fixture-model/fixture-Q4_K_M.gguf --port ${PORT} --host 0.0.0.0\n    name: fixture:Q4_K_M\n' > "$out"
+exit 0
+"""
+
+
+def test_c04_entrypoint_missing_required_flag_is_usage_error(tmp_path):
+    """CR4: a wiring bug must surface LOUDLY — missing --out exits nonzero with
+    a usage message. Degrade-rc0 stays reserved for scan-empty/generate-fail,
+    never for arg errors."""
+    ep = _require_entrypoint()
+    sb = tmp_path / "sb"
+    (sb / "scanned").mkdir(parents=True)
+    scanned_dir = tmp_path / "scan"
+    scanned_dir.mkdir()
+    r = subprocess.run(["sh", ep,
+                        "--scan-dir", str(scanned_dir),
+                        "--base", str(sb / "nonexistent-base.yaml"),
+                        "--home", str(sb / "home")],
+                       capture_output=True, text=True, timeout=120, cwd=tmp_path)
+    assert r.returncode != 0, "missing --out was silently accepted (usage error required)"
+    assert (r.stdout + r.stderr).strip(), "usage error produced no message"
+
+
+def test_c04_entrypoint_home_flag_drives_generate_home(tmp_path):
+    """CR4: --home exports HOME before invoking the generator — making the
+    C03-review writable-cache contract (finding #1) explicit on the CLI."""
+    record = tmp_path / "home-record"
+    stub = HOME_STUB.replace("__RECORD__", str(record))
+    argv, env, _out, home_dir = _ep_sandbox(tmp_path, stub=stub, ggufs=True)
+    r = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120, cwd=tmp_path)
+    assert r.returncode == 0, r.stderr
+    assert record.exists(), "stub never ran — generate not invoked"
+    seen = record.read_text().strip()
+    assert seen == f"HOME={home_dir}", (
+        f"--home not exported to generator (saw {seen!r}, want HOME={home_dir})"
+    )
+
+
+@pytest.mark.parametrize("cluster", CLUSTERS)
+def test_c04_initcontainer_args_not_command(cluster):
+    """CR4 pod shape: image + args + mounts ONLY — no shell in k8s yaml.
+    args carry the four flags; the --scan-dir set equals the base.yaml scan
+    list (both render from autogen.scanPaths); --base/--out match the mount
+    contract paths; --home present (the init-only writable cache)."""
+    c = L.init_container(cluster, "autogen")
+    assert not c.get("command"), (
+        f"{cluster}: initContainer still has a command script — CA4 moves it into the image entrypoint"
+    )
+    args = [str(a) for a in (c.get("args") or [])]
+    assert args, f"{cluster}: initContainer has neither command nor args — CA4 wiring missing"
+    scan_dirs = [args[i + 1] for i, a in enumerate(args) if a == "--scan-dir"]
+    base = L.configmap_data(cluster, BASE_CM, "base.yaml")
+    assert sorted(scan_dirs) == sorted(base["models"]), (
+        f"{cluster}: args scan-dirs {scan_dirs} != base.yaml models {base['models']}"
+    )
+    assert "--base" in args and args[args.index("--base") + 1] == BASE_FILE
+    assert "--out" in args and args[args.index("--out") + 1] == GEN_FILE
+    assert "--home" in args
+
+
+def _render_rc(cluster: str, overlay: dict) -> tuple[int, str]:
+    """helm template rc for an overlay render WITHOUT raising (drift probes
+    assert failure, which render_docs' raising helper cannot express)."""
+    import json
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="llamaswap-probe-") as tmp:
+        vals = L.extract_service_values(cluster, Path(tmp) / "vals.yaml")
+        ov = Path(tmp) / "ov.yaml"
+        ov.write_text(yaml.safe_dump(overlay))
+        cmd = ["helm", "template", "llama-swap", str(L.CHART_DIR), "-f", str(vals),
+               "-f", str(ov), "--set", "domain=spencerslab.com", "--set", f"clusterName={cluster}"]
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        del json
+        return out.returncode, out.stdout + out.stderr
+
+
+def test_c04_drift_probe_scanpaths_disagreement_fails_render():
+    """CR4 drift guard (args-driven re-arm): autogen.scanPaths gaining a path
+    the args don't carry must fail the render — 'disagree - edit both or
+    neither'. Red at handoff if HEAD's (script-based) guard lets it through."""
+    rc, _ = _render_rc("gpu", {"autogen": {"scanPaths": ["/models/scanned", "/models/extra"]}})
+    assert rc != 0, (
+        "scanPaths/args disagreement did not fail the render — CA4 args guard missing"
+    )
+
+
+def test_c04_drift_probe_command_reintroduction_fails_render():
+    """CR4 shell-reintroduction tripwire: ANY initContainer command on the
+    autogen container fails the render (the k8s yaml must stay shell-free).
+    At CA1 handoff the CURRENT chart legitimately HAS a command, so this is
+    expected-red until CA4 lands; the overlay proves the guard must reject
+    regardless of source."""
+    rc, out = _render_rc("gpu", {
+        "app-template": {"controllers": {"llama-swap": {"initContainers": {
+            "autogen": {"command": ["/bin/sh"]}}}}}})
+    assert rc != 0, "a command:/bin/sh passed the render — tripwire not armed (CA4)"

@@ -337,11 +337,14 @@ GPUAI_LOCAL_IDS = [
     "qwen36-heretic", "qwen36-huihui", "coder-next-ablit",
 ]
 
-# The six gpu fail-fast DISABLED entries (C02 acceptance 4) and, for C04, the
-# new gpu disabled entry (ornith 35B bf16).
+# P3 survivors (REPLAN amendment G, 2026-10-24): gpu fail-fast DISABLED entries
+# whose golden echo stays BYTE-PINNED. The pre-replan list held six; the kat
+# trio left with REMOVED_IDS under the user's CR3 ruling.
 GPU_DISABLED_IDS = [
-    "kat-coder-q4", "kat-coder-q6", "kat-coder-q8",
     "qwen3.6-35b-a3b-bf16", "qwen3.6-35b-a3b-1m", "qwen3-vl-30b-a3b-bf16",
+]
+GPU_DISABLED_IDS_PRE_REPLAN = GPU_DISABLED_IDS + [
+    "kat-coder-q4", "kat-coder-q6", "kat-coder-q8",
 ]
 
 # Raw-`cmd` escape hatch (plan C02: whisper keeps its /bin/sh bootstrap; nothing
@@ -415,3 +418,169 @@ def all_models_of(cfg: dict) -> dict:
     models = cfg.get("models")
     assert isinstance(models, dict), "rendered config lacks a models map"
     return models
+
+# ---------------------------------------------------------------------------
+# REPLAN 2026-10-24 frozen tables (user rulings; ground truth = DECISIONS.md
+# 'Replan decisions + user rulings' + plan CR2/CR3). CA1 freezes them here as
+# literals so review can diff verbatim against the rulings; the arithmetic
+# identity vs the (byte-untouched) goldens is pinned by
+# test_repl_tables_match_frozen_decisions in test_config_parity.py.
+# ---------------------------------------------------------------------------
+
+
+# FROZEN set of 13 (CR3): coder duo + kat trio + kat-1m trio + coder-next-ablit
+# (ruled in with the coder family) + ruling B's older text-only Qwen3 line.
+# The ENTIRE qwen3.6 line SURVIVES (incl. gpu's golden-pinned tuned 35B-q8).
+REMOVED_IDS = [
+    "coder-next-ablit",
+    "kat-coder-q4",
+    "kat-coder-q4-1m",
+    "kat-coder-q6",
+    "kat-coder-q6-1m",
+    "kat-coder-q8",
+    "kat-coder-q8-1m",
+    "qwen3-30b-a3b-q4",
+    "qwen3-30b-a3b-q8",
+    "qwen3-8b-q4",
+    "qwen3-8b-q8",
+    "qwen3-coder-next-q6",
+    "qwen3-coder-next-q8",
+]
+
+# CR2: the full post-replan rendered catalog — every cluster render must carry
+# EXACTLY these IDs (P1). gpu side = chart survivors, gpu-ai-local 20 added.
+CATALOG_IDS = [
+    "home-3b-v3",
+    "home-3b-v3-gpu",
+    "ornith-1.5-122b-q3",
+    "ornith-1.5-122b-q4",
+    "ornith-1.5-122b-q5",
+    "ornith-1.5-122b-q6",
+    "ornith-1.5-35b-a3b-bf16",
+    "ornith-1.5-35b-a3b-iq2xxs",
+    "ornith-1.5-35b-a3b-q3",
+    "ornith-1.5-35b-a3b-q4",
+    "ornith-1.5-35b-a3b-q5",
+    "ornith-1.5-35b-a3b-q6",
+    "ornith-1.5-35b-a3b-q8",
+    "qwen3-embedding-0.6b",
+    "qwen3-vl-2b-bf16",
+    "qwen3-vl-2b-q4",
+    "qwen3-vl-2b-q8",
+    "qwen3-vl-30b-a3b-bf16",
+    "qwen3-vl-30b-a3b-q4",
+    "qwen3-vl-30b-a3b-q8",
+    "qwen3-vl-30b-a3b-thinking-bf16",
+    "qwen3-vl-30b-a3b-thinking-q4",
+    "qwen3-vl-30b-a3b-thinking-q8",
+    "qwen3-vl-4b-bf16",
+    "qwen3-vl-4b-q4",
+    "qwen3-vl-4b-q8",
+    "qwen3-vl-4b-thinking-bf16",
+    "qwen3-vl-4b-thinking-q4",
+    "qwen3-vl-4b-thinking-q8",
+    "qwen3-vl-8b-bf16",
+    "qwen3-vl-8b-q4",
+    "qwen3-vl-8b-q8",
+    "qwen3.6-27b-q6",
+    "qwen3.6-27b-q8",
+    "qwen3.6-35b-a3b-1m",
+    "qwen3.6-35b-a3b-bf16",
+    "qwen3.6-35b-a3b-q6",
+    "qwen3.6-35b-a3b-q8",
+    "qwen3.6-35b-a3b-q8-visual",
+    "qwen3.8-27b-bf16",
+    "qwen3.8-27b-q4",
+    "qwen3.8-27b-q6",
+    "qwen3.8-27b-q8",
+    "qwen3.8-27b-q8-1m",
+    "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-orca-q6",
+    "qwen3.8-flash-next-q3",
+    "qwen3.8-flash-next-q4",
+    "qwen3.8-flash-next-q5",
+    "qwen3.8-flash-next-q6",
+    "qwen36-heretic",
+    "qwen36-huihui",
+    "qwen38-ara",
+    "qwen38-humanlike",
+    "qwen38-orca",
+    "qwen38-orca-f16",
+    "qwen38-rana",
+    "whisper-large-v3",
+]
+
+# gpu-ai-enabled catalog rungs after removals (20): these render as catalog
+# echoes on gpu (CA1 isolation flip: absent -> present-as-echo).
+GPUAI_LOCAL_CATALOG_IDS = [
+    "ornith-1.5-122b-q3",
+    "ornith-1.5-122b-q4",
+    "ornith-1.5-122b-q5",
+    "ornith-1.5-122b-q6",
+    "qwen3-embedding-0.6b",
+    "qwen3.6-35b-a3b-q8-visual",
+    "qwen3.8-27b-q8-1m",
+    "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-orca-q6",
+    "qwen3.8-flash-next-q3",
+    "qwen3.8-flash-next-q4",
+    "qwen3.8-flash-next-q5",
+    "qwen3.8-flash-next-q6",
+    "qwen36-heretic",
+    "qwen36-huihui",
+    "qwen38-ara",
+    "qwen38-humanlike",
+    "qwen38-orca",
+    "qwen38-orca-f16",
+    "qwen38-rana",
+]
+
+# gpu renders exactly these 24 as fail-fast echoes: the 3 surviving golden
+# byte-pinned echoes + the C04 ornith bf16 echo + 20 gpu-ai-local catalog IDs.
+GPU_ECHO_IDS = [
+    "ornith-1.5-122b-q3",
+    "ornith-1.5-122b-q4",
+    "ornith-1.5-122b-q5",
+    "ornith-1.5-122b-q6",
+    "ornith-1.5-35b-a3b-bf16",
+    "qwen3-embedding-0.6b",
+    "qwen3-vl-30b-a3b-bf16",
+    "qwen3.6-35b-a3b-1m",
+    "qwen3.6-35b-a3b-bf16",
+    "qwen3.6-35b-a3b-q8-visual",
+    "qwen3.8-27b-q8-1m",
+    "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-orca-q6",
+    "qwen3.8-flash-next-q3",
+    "qwen3.8-flash-next-q4",
+    "qwen3.8-flash-next-q5",
+    "qwen3.8-flash-next-q6",
+    "qwen36-heretic",
+    "qwen36-huihui",
+    "qwen38-ara",
+    "qwen38-humanlike",
+    "qwen38-orca",
+    "qwen38-orca-f16",
+    "qwen38-rana",
+]
+
+# Enablement matrix (CA1 freeze; DECISIONS arithmetic "58 = gpu 34+24 /
+# gpu-ai 58+0"). GPU_ENABLED_IDS derives from the frozen partition — CATALOG
+# minus the echoes — so the two lists cannot drift apart silently.
+GPU_ENABLED_IDS = [i for i in CATALOG_IDS if i not in set(GPU_ECHO_IDS)]
+ENABLEMENT = {
+    "gpu": {"enabled": GPU_ENABLED_IDS, "echo": GPU_ECHO_IDS},
+    "gpu-ai": {"enabled": CATALOG_IDS, "echo": []},
+}
+
+# Repo-side entrypoint (CR4): the degrade/generate contract moves out of the
+# chart into the image; CA1's wiring tests execute THIS file directly.
+ENTRYPOINT_FILE = REPO_ROOT / "containers" / "llama-swap-autogen" / "entrypoint.sh"
+
+_ECHO_CMD = re.compile("^/bin/sh -c \"echo '.*' >&2; exit 1\"\\n?$")
+
+
+def is_echo_cmd(cmd: str) -> bool:
+    """Fail-fast echo shape (ratified deviation-1 wording) — the loader-safe
+    predicate behind P3/P5 and the generalized B/D ref routing."""
+    return bool(_ECHO_CMD.match((cmd or "").strip()))
