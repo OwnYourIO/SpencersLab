@@ -59,12 +59,12 @@
       ]
     },
     "C02": {
-      "status": "in-review",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "dev_session": "ses_e906b4b35ffeYjT6z0rMPkVUUZ",
       "handoffs": [
         {
@@ -72,6 +72,13 @@
           "round": 1,
           "at": "2026-10-24",
           "result": "RESULT\nstatus: DONE\nchunk: C02\ncommit: 2273c9c98 (local, branch forgejo-auth-support, 1 file +56/−21)\nfiles_changed: [containers/coder-workspace/workspace-startup.sh — dual-host Forgejo auth: wire_forgejo (3-arg: token value, env-var NAME, host-or-URL) called per pair behind independent [ -n ] guards (FORGEJO_TOKEN/FORGEJO_HOST + new FORGEJO_TOKEN_CANONICAL/FORGEJO_HOST_CANONICAL); git config before fj, password=$<NAME> use-time indirection unchanged; known_hosts loop scans git.scifi.farm:22222, git.spencerslab.com:22222, github.com:22 via ssh-keyscan -p ([host]:22222 entries; skip/empty/unreachable-warn preserved); banner canonical→dev→GitHub]\ncommands_run: [sh -n/dash -n/bash -n workspace-startup.sh => EXIT 0/0/0 (AC1); bash tests/coder-workspace/startup-script.sh => EXIT 0, 34/0 (C02 gate, exactly TEST-SPEC forward-sim target); image-structure.sh => EXIT 0 (46/0); dockerfile-pins.sh => EXIT 0 (8/0) (C01 still green); bash tests/services/dev-git-auth.sh => EXIT 1 c-canonical-1 = fail-as-expected C03; /home/coder/.local/bin/helm dependency build/lint/template charts/coder => EXIT 0/0/0 (408 lines); timeout 20 ssh-keyscan -p 22 github.com => EXIT 0 (bare-host entries, github behavior byte-identical); dash end-to-end sim /tmp/opencode/fjsim2 — 4 probes EXIT 0: no-env zero-wire; both-pairs wired (literal password=$FORGEJO_TOKEN / $FORGEJO_TOKEN_CANONICAL, [host]:22222 entries, canonical-first banner); canonical-only (dev untouched); FAIL_FJ (exit 0, git-first ordering intact); npx aislop scan --changes => EXIT 0 (non-informative for sh per FRICTION)]\ndeviations: (1) No main.tf edit — coord launch wording assigned canonical env pass-through to C02, but chunks/C02.md scope lists script only and chunks/C03.md Tasks bullet 4 mandates both template env blocks (c-canonical-3); dev followed the chunk files; C03 remains sole owner of template env blocks. RESOLVED by coord: chunk files are ground truth, launch summary was the error, no plan change. (2) github.com scanned in the uniform loop with explicit -p 22, output proven byte-identical. (3) 3-arg wire_forgejo per DECISIONS ruling (2).\nfriction: none new — applied known workarounds successfully\nopen_questions: none after coord reconciliation of deviation 1\nnext_suggested: agent-review round 1 on C02 (startup-script.sh → 34/0, then plan Commands); C03 after approval"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "at": "2026-10-24",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [.agents/plans/2026/2026-10-feat-forgejo-auth-support/chunks/C02.md] (Review notes appended; no source/test edits)\ncommands_run: [bash tests/coder-workspace/startup-script.sh => PASS exit 0 (34/0); sh -n + dash -n + bash -n => PASS 0/0/0; image-structure.sh => PASS exit 0 (46/0); dockerfile-pins.sh => PASS exit 0 (8/0); helm dependency build/lint/template charts/coder => PASS exit 0/0/0 (408 lines); bash tests/services/dev-git-auth.sh => exit 1, sole FAIL c-canonical-1 (fail-as-expected C03; 15 green ok before fail-fast; c4 cross-verified via helm runs); git diff e520df0b2..HEAD -- tests/ => empty (contract immutable); git show 2273c9c98 --stat => 1 file +56/−21; independent reviewer dash probe harness (32/32, /tmp scratch, deleted): no-env zero-wire; partial/empty pair zero-action; canonical-only leaves dev untouched; literal $FORGEJO_TOKEN/_CANONICAL on disk (no config-time expansion, no stored secrets); git-before-fj; FAIL_FJ exit 0 + warn; known_hosts exactly [git.scifi.farm]:22222 + [git.spencerslab.com]:22222 + bare github.com matched by REAL ssh-keygen -F; empty-scan warn-only; untouched sections byte-identical]\ndeviations: none — per plan Commands + TEST-SPEC runbook; exit codes without pipes per FRICTION\nfriction: (1) probe harness initially let real system git answer stub calls (no PATH override), wrote two helper entries into reviewer ~/.gitconfig — resolved: entries unset + verified absent, re-ran with stub PATH + isolated HOME; later agents must stub PATH + isolated HOME before executing git-touching fragments · new; (2) dev-git-auth.sh prints 15 ok before c-canonical-1 (fail-fast ordering, c-canonical block precedes c4 ladder) vs TEST-SPEC's recorded 20 — behavior correct, evidence-count nit cross-verified c4 via helm · fixed\nopen_questions: none\nnext_suggested: mark C02 done; C03 dev may start (wave 2, depends_on satisfied)"
         }
       ]
     },
