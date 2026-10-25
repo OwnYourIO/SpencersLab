@@ -934,7 +934,7 @@ app-template:
           enabled: false
           image:
             repository: python
-            tag: 3.12.15-slim-bookworm
+            tag: 3.15.1-slim-bookworm
           command: ["sleep", "infinity"]
           env:
             TZ: Etc/UTC
