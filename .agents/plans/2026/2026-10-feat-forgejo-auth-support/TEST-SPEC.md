@@ -194,7 +194,7 @@ not this harness:
 | b-2 (1 ok) | pre-seeded stale helper in scratch `.gitconfig` is gone from the final real-git config dump |
 | b-3 (4 ok) | unapproved ⇒ stdout has the exit-1 URL + host-naming approval banner, helper IS wired, dev-host repo still clones, exit 0 |
 | b-4 (3 ok) | unapproved, no dev PAT ⇒ SSO-host clone SKIPPED with a pending-approval line (never raw fail), other-host repo proceeds, exit 0 |
-| b-5 (3 ok) | `FORGEJO_OAUTH_ID` unset ⇒ zero coder calls, helper wired, no unset, no banner — the C02-shipped opt-out contract (already green pre-implementation: a regression pin, like the four C02 invariant checks) |
+| b-5 (5 assertions, 2 ok lines emitted — per-row sum corrected 2026-10-25 per final review nit) | `FORGEJO_OAUTH_ID` unset ⇒ zero coder calls, helper wired, no unset, no banner — the C02-shipped opt-out contract (already green pre-implementation: a regression pin, like the four C02 invariant checks) |
 | b-6 (1 ok) | coder CLI absent from PATH ⇒ boot survives (exit 0), PAT fallback wired, warn/banner-ish line printed |
 | b-7 (6 ok) | across ALL scenarios with the canonical pair present: canonical helper IS wired every time and never unset — dev-pair-only SSO layering |
 
