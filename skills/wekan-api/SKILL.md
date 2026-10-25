@@ -44,7 +44,9 @@ The server exposes 26 typed tools:
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
   `get_checklist`, `list_rules`, `get_rule`, `list_custom_fields`,
   `get_custom_field`
-- **Write** (every tier except `wekan-readonly`): `create_card`,
+- **Write** (every tier except `wekan-readonly`): `create_card` (optional
+  `default_checked` map — checklist title → item titles to arrive CHECKED;
+  bounded-polls the rules-created checklist, then PUTs the exact-title items),
   `update_card`, `move_card`, `add_comment`, `add_checklist`,
   `add_checklist_item`, `toggle_checklist_item`, `delete_checklist_item` (destructive, scoped to
   one item), `create_rule`, `update_rule`, `remove_rule` (marked

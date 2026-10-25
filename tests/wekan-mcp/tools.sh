@@ -11,6 +11,13 @@
 # tests/services/dev-mcp-fleet.sh t7 (D24, M2 pin prep) — it lives in THAT
 # script and gates via `bash tests/services/dev-mcp-fleet.sh t7`.
 #
+# t9 is the post-plan Design H ① extension (user-approved 2026-10-25,
+# RESEARCH.md): create_card's optional default_checked parameter, its bounded
+# poll of the rules-created checklist, the v9.99-verified item-check route,
+# the per-checklist outcome surfacing, and the README/SKILL doc parity for
+# it. Registry arithmetic stays pinned by t2 (13 reads + 13 writes); wekan.py
+# and the login suite stay byte-pinned by t8.
+#
 # Statics-only by design (D8): the image has no pytest harness and none is
 # introduced; the live 25-tool round-trip is user acceptance after M1-M3.
 #
@@ -23,7 +30,7 @@
 # touch, D23); review may pass the pre-chunk commit.
 #
 # Usage:
-#   bash tests/wekan-mcp/tools.sh              # t1..t6 + t8
+#   bash tests/wekan-mcp/tools.sh              # t1..t6 + t8 + t9
 #   bash tests/wekan-mcp/tools.sh t2 t4        # subset
 set -euo pipefail
 
@@ -50,10 +57,10 @@ ok() {
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 8; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 8 9; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-6]|8)$ ]] || fail "unknown test id '$a' (expected t1..t6 or t8; t7 is tests/services/dev-mcp-fleet.sh)"
+    [[ "$a" =~ ^t([1-6]|8|9)$ ]] || fail "unknown test id '$a' (expected t1..t6, t8 or t9; t7 is tests/services/dev-mcp-fleet.sh)"
     WANT["$a"]=1
   done
 fi
@@ -375,6 +382,128 @@ if want t8; then
   else
     tail -n 20 "$login_log" >&2
     fail "t8: the login-mint regression suite failed (log: $login_log)"
+  fi
+fi
+
+# --- t9: create_card default_checked (Design H ①, RESEARCH.md) ---------------
+# The v9.99 createCard rules insert standard checklists asynchronously, so
+# same-activity rules cannot be relied on to pre-check items (sequential but
+# unordered dispatch). The contract: create_card gains an optional
+# default_checked map that, inside the one awaited tool call, bounded-polls
+# the rules-created checklist + its exact-title items and PUTs isFinished —
+# routes pinned against server/models/checklistItems.js and checklists.js at
+# tag v9.99 — and surfaces every per-checklist outcome in the response.
+# No new tools (t2 arithmetic), no wekan.py edits (t8 byte-pin), no item
+# creation (the rules own it), no unbounded waiting.
+if want t9; then
+  if python3 - "$SERVER" "$README" "$SKILL_API" <<'PY'
+import ast, re, sys
+
+src = open(sys.argv[1]).read()
+tree = ast.parse(src)
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+funcs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+def seg(name):
+    fn = funcs.get(name)
+    if fn is None:
+        bad(f't9: {name!r} is not defined in server.py')
+    return ast.get_source_segment(src, fn)
+
+# 1) create_card signature: default_checked is the trailing parameter,
+#    Optional[dict] (dict keeps the FastMCP schema like create_rule's), None default.
+cc = funcs.get('create_card')
+if cc is None:
+    bad('t9: create_card disappeared')
+argnames = [a.arg for a in cc.args.args]
+if argnames[-1] != 'default_checked':
+    bad(f't9: create_card must end with the optional default_checked parameter, got {argnames}')
+if not cc.args.defaults:
+    bad('t9: default_checked must carry a default (defaults align to the tail args)')
+dc_arg = cc.args.args[-1]
+if ast.unparse(dc_arg.annotation) != 'Optional[dict]':
+    bad(f't9: default_checked must be Optional[dict], got {ast.unparse(dc_arg.annotation)!r}')
+if ast.unparse(cc.args.defaults[-1]) != 'None':
+    bad('t9: default_checked must default to None (absent = existing create behavior unchanged)')
+
+cc_src = seg('create_card')
+if 'if default_checked:' not in cc_src:
+    bad('t9: the defaults path must be gated on default_checked being truthy — None/empty keeps the unchanged {id, title} behavior')
+if '"default_checked"' not in cc_src:
+    bad('t9: create_card must surface the outcome under the pinned "default_checked" response key')
+if '_apply_default_checked(' not in cc_src:
+    bad('t9: create_card must delegate to _apply_default_checked (the outcome applier)')
+
+# 2) helper: undecorated (registry stays 13+13 — t2), bounded poll, routes.
+ap = funcs.get('_apply_default_checked')
+if ap is None or ap.decorator_list:
+    bad('t9: _apply_default_checked must exist as a PLAIN helper, not a registered tool (no 27th tool)')
+ap_src = seg('_apply_default_checked')
+
+consts = {}
+for node in ast.walk(tree):
+    if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant) \
+            and isinstance(node.value.value, (int, float)) and not isinstance(node.value.value, bool):
+        for tgt in node.targets:
+            if isinstance(tgt, ast.Name) and 'POLL' in tgt.id:
+                consts[tgt.id] = node.value.value
+attempts = [v for k, v in consts.items() if k.endswith('POLL_ATTEMPTS')]
+interval = [v for k, v in consts.items() if k.endswith('POLL_INTERVAL_S')]
+if len(attempts) != 1 or len(interval) != 1:
+    bad(f't9: need exactly _*_POLL_ATTEMPTS and _*_POLL_INTERVAL_S module constants, found {sorted(consts)}')
+budget = attempts[0] * interval[0]
+if not (2.0 <= budget <= 12.0):
+    bad(f't9: poll budget {budget}s is not the bounded ~10s envelope (generous for the async rule cascade, never unbounded)')
+if 'range(_DEFAULT_CHECKED_POLL_ATTEMPTS)' not in ap_src or 'time.sleep(_DEFAULT_CHECKED_POLL_INTERVAL_S)' not in ap_src:
+    bad('t9: the poll must iterate range(<ATTEMPTS constant>) with time.sleep(<INTERVAL constant>) — a bounded budget, no while-True')
+if re.search(r'while\s+True', ap_src):
+    bad('t9: unbounded polling loop in _apply_default_checked')
+
+list_route = '/api/boards/{board_id}/cards/{card_id}/checklists'
+if f'{list_route}"' not in ap_src or '.get(' not in ap_src:
+    bad(f't9: the poll must GET {list_route} (v9.99 checklists.js list route, projects {{_id, title}})')
+if f'{list_route}/{{checklist_id}}"' not in ap_src:
+    bad(f't9: item titles must come from GET {list_route}/{{checklist_id}} (the route embedding items inline)')
+item_route = f'{list_route}/{{checklist_id}}/items/{{item_id}}'
+if item_route not in ap_src or '.put(' not in ap_src:
+    bad(f't9: the check must PUT {item_route} (v9.99 checklistItems.js L163-215 PUT route)')
+if '"isFinished"' not in ap_src or 'True' not in ap_src:
+    bad('t9: the check body must be {"isFinished": True} — v9.99 accepts isFinished on that PUT (checklistItems.js L195-200, direct.updateAsync: no activity, idempotent)')
+
+# 3) exact-title matching, never create: drift must show as missing, and
+#    item/checklist creation stays the board rules' job.
+if '== checklist_title' not in ap_src:
+    bad('t9: checklist lookup must match the title exactly')
+if 'strip()' in ap_src or '.lower()' in ap_src:
+    bad('t9: titles are byte-exact by contract — normalization would check a near-match silently')
+if '.post(' in ap_src:
+    bad('t9: default_checked may only CHECK items; creating missing checklists/items belongs to the createCard rules (duplication hazard)')
+
+# 4) outcome surfacing: every wanted title lands in exactly one visible bucket.
+ret = re.search(r'return\s*\{', ap_src)
+if not ret:
+    bad('t9: _apply_default_checked must return a dict')
+for key in ('"checked"', '"missing"', '"failed"'):
+    if key not in ap_src[ret.start():]:
+        bad(f't9: the per-checklist outcome must carry the {key} bucket (silent failure is not acceptable; missing = never found within budget, failed = found but PUT rejected)')
+cc_doc = ast.get_docstring(cc) or ''
+if not re.search(r'bounded', cc_doc, re.I) or 'missing' not in cc_doc or 'rules' not in cc_doc:
+    bad('t9: create_card docstring must explain the rules-async/bounded-poll contract and that missing outcomes are REPORTED, not raised (the card stays created)')
+
+# 5) doc parity for the extension itself (counts are t5's job, unchanged).
+if 'default_checked' not in open(sys.argv[2]).read():
+    bad('t9: README create_card row must mention default_checked')
+if 'default_checked' not in open(sys.argv[3]).read():
+    bad('t9: wekan-api SKILL write-tool list must mention default_checked on create_card')
+
+print('ok: t9 — create_card default_checked: trailing Optional[dict] param, bounded poll of the pinned v9.99 checklist/item routes with isFinished PUT, byte-exact titles, no item creation, checked/missing/failed surfaced, README+SKILL mention it')
+PY
+  then
+    checks=$((checks + 1))
+  else
+    fail 't9: the default_checked contract is not satisfied (reason printed above)'
   fi
 fi
 

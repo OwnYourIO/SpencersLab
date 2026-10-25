@@ -113,7 +113,7 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `get_rule` | read | One automation rule with full trigger and action |
 | `list_custom_fields` | read | Custom fields defined on a board (id/name/type) |
 | `get_custom_field` | read | One custom field with settings + placement flags |
-| `create_card` | write | New card in a list+swimlane |
+| `create_card` | write | New card in a list+swimlane; optional `default_checked` map (checklist title → item titles) waits for the rules-created checklist and pre-checks those items, reporting per-checklist checked/missing/failed |
 | `update_card` | write | Edit title/description/dates |
 | `move_card` | write | Move between lists/swimlanes |
 | `add_comment` | write | Post a comment on a card |

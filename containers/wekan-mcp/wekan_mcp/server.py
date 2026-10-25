@@ -30,6 +30,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import time
 from typing import Optional
 
 from fastmcp import FastMCP
@@ -308,6 +309,108 @@ def get_custom_field(board_id: str, custom_field_id: str) -> dict:
 # WRITE TOOLS (skipped entirely when WEKAN_MCP_READ_ONLY is set)
 # ==============================================================================
 
+# v9.99 createCard rules insert standard checklists asynchronously, AFTER the
+# REST card-create response flushes (server/rulesHelper.js cascade), and the
+# checklist document lands before its items are all in. So default_checked can
+# neither assume nor one-shot the checklist: it awaits both phases with a
+# bounded poll. Budget is sized for the observed ~1-2s cascade with headroom
+# for slow boards, and stays finite so a misconfigured/deleted rule set
+# surfaces as "missing" in the response instead of hanging the tool.
+_DEFAULT_CHECKED_POLL_ATTEMPTS = 25
+_DEFAULT_CHECKED_POLL_INTERVAL_S = 0.4
+
+
+def _apply_default_checked(
+    board_id: str,
+    card_id: str,
+    checklist_title: str,
+    item_titles: list,
+) -> dict:
+    """
+    Await one rules-created checklist (and the items inside it) on a card,
+    then set the wanted item titles to checked. Returns
+    {checked: [...applied or already-done titles...],
+     missing: [...titles never found within the poll budget...],
+     failed: [...found but rejected by the check PUT...]} — every wanted
+    title lands in exactly one bucket, so a degraded run is visible in the
+    response, never silent.
+
+    Titles are matched byte-exactly: the rules' item lists and the caller's
+    default_checked values are both maintained in this repo, and drift must
+    report as missing rather than silently checking a near-match. Never
+    creates checklists or items — creation belongs to the board rules;
+    re-applying to an already-checked item is a no-op read, not a rewrite.
+    """
+    wanted = list(dict.fromkeys(item_titles))
+    wanted_set = set(wanted)
+    if not wanted:
+        return {"checked": [], "missing": [], "failed": []}
+    checklist_id = None
+    # title -> (item_id, already_finished); the list route projects checklists
+    # to {_id, title} only (server/models/checklists.js GET), so item titles
+    # come from the single-checklist route, which embeds items inline.
+    found: dict = {}
+    for attempt in range(_DEFAULT_CHECKED_POLL_ATTEMPTS):
+        try:
+            if checklist_id is None:
+                for cl in _wekan.get(
+                    f"/api/boards/{board_id}/cards/{card_id}/checklists"
+                ) or []:
+                    if cl.get("title") == checklist_title:
+                        checklist_id = cl.get("_id")
+                        break
+            if checklist_id and len(found) < len(wanted_set):
+                doc = _wekan.get(
+                    f"/api/boards/{board_id}/cards/{card_id}/checklists/{checklist_id}"
+                ) or {}
+                for item in doc.get("items", []):
+                    title = item.get("title")
+                    if title in wanted_set and title not in found and item.get("_id"):
+                        found[title] = (item.get("_id"), bool(item.get("isFinished")))
+        except WekanError as e:
+            # A read failing mid-cascade (card visibility timing, transient
+            # 404/500 — sendJsonResult maps codes to HTTP status) counts as
+            # "not yet", not as fatal: the budget ends the poll, not errors.
+            log.debug("default_checked: poll attempt %d for %r: %s", attempt, checklist_title, e)
+        if checklist_id and len(found) >= len(wanted_set):
+            break
+        if attempt + 1 < _DEFAULT_CHECKED_POLL_ATTEMPTS:
+            time.sleep(_DEFAULT_CHECKED_POLL_INTERVAL_S)
+
+    checked: list = []
+    failed: list = []
+    for title in wanted:
+        if title not in found:
+            continue
+        item_id, already_finished = found[title]
+        if already_finished:
+            checked.append(title)
+            continue
+        try:
+            # v9.99 server/models/checklistItems.js PUT /api/boards/:boardId/
+            # cards/:cardId/checklists/:checklistId/items/:itemId (L163-215)
+            # accepts the isFinished key (L195-200) and writes through
+            # ChecklistItems.direct.updateAsync — hook-bypass: no activity,
+            # no rule re-trigger, idempotent, safe for repeat create_card.
+            _wekan.put(
+                f"/api/boards/{board_id}/cards/{card_id}/checklists/{checklist_id}/items/{item_id}",
+                json_body={"isFinished": True},
+            )
+            checked.append(title)
+        except WekanError as e:
+            log.warning(
+                "default_checked: could not check %r in checklist %r on card %s: %s",
+                title, checklist_title, card_id, e,
+            )
+            failed.append(title)
+
+    return {
+        "checked": checked,
+        "missing": [t for t in wanted if t not in found],
+        "failed": failed,
+    }
+
+
 @_write_tool
 def create_card(
     board_id: str,
@@ -315,10 +418,23 @@ def create_card(
     swimlane_id: str,
     title: str,
     description: str = "",
+    default_checked: Optional[dict] = None,
 ) -> dict:
     """
     Create a card in a specific list and swimlane. The service user is used
     as the card author. Returns the new card's id and title.
+
+    default_checked optionally maps a checklist TITLE to the list of item
+    titles that must arrive CHECKED on the new card, e.g. {"Model(s)":
+    ["Qwen Flash", "Local (gpu-ai)"]}. The board's createCard rules create
+    the standard checklists asynchronously after the card-create response,
+    so the tool bounded-polls (~10s) for each checklist and its items, then
+    PUTs isFinished on the exact-title matches — the checked state is set
+    without relying on rule dispatch order, which is unspecified. Item
+    titles already checked are left as-is; nothing is created here (the
+    rules own creation). The response gains "default_checked": {<title>:
+    {checked, missing, failed}}; the card is NOT rolled back on any default
+    failure, so callers must read "missing"/"failed" instead of assuming.
     """
     body = {
         "title": title,
@@ -327,7 +443,23 @@ def create_card(
         "swimlaneId": swimlane_id,
     }
     resp = _wekan.post(f"/api/boards/{board_id}/lists/{list_id}/cards", json_body=body) or {}
-    return {"id": resp.get("_id"), "title": title}
+    card_id = resp.get("_id")
+    if default_checked:
+        if not card_id:
+            raise WekanError(
+                f"card create returned no id for {title!r}; cannot apply default_checked"
+            )
+        return {
+            "id": card_id,
+            "title": title,
+            "default_checked": {
+                checklist_title: _apply_default_checked(
+                    board_id, card_id, checklist_title, titles or []
+                )
+                for checklist_title, titles in default_checked.items()
+            },
+        }
+    return {"id": card_id, "title": title}
 
 
 @_write_tool
