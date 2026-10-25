@@ -17,6 +17,9 @@
 # t12[C04 AC1] t13[C04 AC2] t14[C04 AC3+AC4]
 #
 # One shared script for three chunks is the user-approved layout (chunk files).
+# Amendment (ticket 2026-10-feat-board-coord-intake, D17/D24): t7's mcp-boards
+# image equality accepts wekan-mcp:(main|v[0-9]+) so that ticket's M2 pin-bump
+# lands without touching this file; every other fleet image stays strict.
 # Each chunk's review can run the whole file or only its own ids:
 #   bash tests/services/dev-mcp-fleet.sh              # t1..t14
 #   bash tests/services/dev-mcp-fleet.sh t1 t2 t3 t4 t5
@@ -728,7 +731,7 @@ fi
 # --- t7: four MCPServers + ingress paths (C03 AC2 + AC5) -----------------------
 if want t7 && [ -n "$hive_render" ]; then
   if python3 - "$hive_render" "$WORK/t7-count" <<'PY'
-import sys, yaml
+import re, sys, yaml
 
 render, count_file = sys.argv[1:3]
 ok_n = 0
@@ -809,8 +812,14 @@ try:
     ok('t7: MCPServer mcp-searxng — dev-local SEARXNG_URL + native HTTP env (C03 AC5)')
 
     bd = servers['mcp-boards']
-    if bd.get('image') != 'ghcr.io/ownyourio/wekan-mcp:main':
-        bad(f't7: mcp-boards image is {bd.get("image")!r}, expected ghcr.io/ownyourio/wekan-mcp:main (:main + Always pull per user decision; the login-capable build lands via C02)')
+    # D17/D24 (this ticket's M2 step): the wekan-mcp ref moves from :main to
+    # the immutable :v<run_number> of the C01 build once C01 merges, so the
+    # boards equality is generalized NOW to (main|v<digits>) — the pin-bump
+    # commit must not need a test edit. This is the deliberate exception: the
+    # other three fleet images stay strictly pinned above.
+    bd_image = str(bd.get('image') or '')
+    if not re.fullmatch(r'ghcr\.io/ownyourio/wekan-mcp:(main|v[0-9]+)', bd_image):
+        bad(f't7: mcp-boards image is {bd.get("image")!r}, expected ghcr.io/ownyourio/wekan-mcp:main or :v<run> (:main until M1 publishes the tag; :v<digits> after the M2 pin per D17/D24)')
     if bd.get('transport') != 'streamable-http' or bd.get('mcpPort') != 8080:
         bad(f't7: mcp-boards transport/mcpPort is {bd.get("transport")!r}/{bd.get("mcpPort")!r}, expected streamable-http/8080')
     bdenv = {(e or {}).get('name') for e in bd.get('env') or []}
@@ -827,7 +836,7 @@ try:
     envfrom = (mcp_c or {}).get('envFrom') or []
     if not any(((e or {}).get('secretRef') or {}).get('name') == 'wekan-mcp' for e in envfrom):
         bad(f't7: boards mcp container envFrom is {envfrom!r}, expected a secretRef to wekan-mcp — the three runtime values (WEKAN_BASE_URL/USERNAME/PASSWORD, emitted by the t9 ES template) land via envFrom (gpu homeassistant precedent); repeated spec.secrets names are rejected by the CRD list-map keyed by name (2026-10-25 user ruling)')
-    ok('t7: MCPServer mcp-boards — :main + Always, wekan-mcp consumed via podTemplateSpec envFrom, no hardcoded BASE_URL, no READ_ONLY (C03 AC2+AC5 as re-ruled 2026-10-25)')
+    ok('t7: MCPServer mcp-boards — image :main|:v<run> + Always pull, wekan-mcp consumed via podTemplateSpec envFrom, no hardcoded BASE_URL, no READ_ONLY (C03 AC2+AC5 as re-ruled 2026-10-25; this ticket\'s D17/D24 pin window)')
 
     ings = [d for d in by_kind(docs, 'Ingress')
             if (d.get('metadata') or {}).get('name') == 'mcp-multi-server-ingress']
