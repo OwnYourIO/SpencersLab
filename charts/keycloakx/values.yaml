@@ -67,7 +67,7 @@ keycloakx:
   database:
     vendor: "postgres"
     hostname: "pg-keycloak-rw"
-    port: "5432"
+    port: 5432
     database: "keycloak"
     user: "keycloak"
     existingSecret: "pg-keycloak-secret"
