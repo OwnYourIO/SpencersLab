@@ -22,35 +22,45 @@ If the user is just looking for UI help, general kanban advice, or non-WeKan too
 ## Prefer the wekan MCP server when it is available
 
 In SpencersLab, prefer the **`wekan` MCP server** over raw REST calls. It is an
-in-repo server (`containers/wekan-mcp`) deployed on the lab's ToolHive platform
-(`charts/hivetools`) on the gpu cluster as two privilege tiers sharing one image
-and one `WEKAN_TOKEN`:
+in-repo server (`containers/wekan-mcp`), published as
+`ghcr.io/ownyourio/wekan-mcp` and deployed on the lab's ToolHive platform
+(`charts/hivetools`). Three deployments share that image:
 
 - **`wekan-readonly`** — `https://mcp.gpu.spencerslab.com/wekan-readonly/mcp`
   (Keycloak OIDC audience `wekan-readonly`): read tools only; write tools are
   never registered (`WEKAN_MCP_READ_ONLY=true`).
 - **`wekan-admin`** — `https://mcp.gpu.spencerslab.com/wekan-admin/mcp`
-  (audience `wekan-admin`): the full 20-tool surface.
+  (audience `wekan-admin`): the full 25-tool surface. The two gpu tiers share
+  one long-lived `WEKAN_TOKEN`.
+- **`boards`** on the dev cluster — the pipeline board-intake endpoint. It
+  authenticates by login-mint instead: the pod gets `WEKAN_USERNAME` +
+  `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that
+  item's URI field) and the client exchanges the pair for a bearer at
+  startup, re-minting once on a 401.
 
-The server exposes 20 typed tools:
+The server exposes 25 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
-  `get_checklist`, `list_rules`, `get_rule`
-- **Write (admin tier only):** `create_card`, `update_card`, `move_card`,
-  `add_comment`, `add_checklist`, `toggle_checklist_item`, `create_rule`,
-  `update_rule`, `remove_rule` (marked destructive)
+  `get_checklist`, `list_rules`, `get_rule`, `list_custom_fields`,
+  `get_custom_field`
+- **Write** (every tier except `wekan-readonly`): `create_card`,
+  `update_card`, `move_card`, `add_comment`, `add_checklist`,
+  `toggle_checklist_item`, `delete_checklist_item` (destructive, scoped to
+  one item), `create_rule`, `update_rule`, `remove_rule` (marked
+  destructive), `create_custom_field`, `set_card_custom_field`
 
-Using it keeps the long-lived WeKan bearer token entirely out of model context
-(the token lives only in the server pod, injected via ExternalSecret +
-Bitwarden), and its errors are sanitized. It targets the bot-enabled instance
+Using it keeps the credential (bearer or login pair) entirely out of model
+context — it lives only in the server pod, injected via ExternalSecret +
+Bitwarden — and its errors are sanitized. It targets the bot-enabled instance
 `https://wekan.spencerslab.com` (`WITH_API=true`, password-based service user).
 
 Fall back to this skill's raw REST workflow only when:
 
 - the operation is intentionally omitted from the MCP surface — attachments,
-  webhooks, custom fields, admin/user management, imports/exports, and
-  destructive ops other than `remove_rule` (`delete_*`, `remove_member`); or
+  webhooks, admin/user management, imports/exports, and entity-level
+  destructive ops (`delete_board`, `delete_card`, `delete_list`,
+  `remove_member`); or
 - the MCP server is unavailable, or the task targets a different WeKan
   instance than the lab's.
 
