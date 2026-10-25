@@ -54,7 +54,9 @@ container images (`containers/`). **ArgoCD applies everything — never
   and `.agents/commands` symlink into the first two) plus hand-managed
   `plugin/` (`aislop-gate` quality gate on edits; `question-notify` pushes a
   Home Assistant notification to the user's phone whenever an `agent-*`
-  session asks a question) and `opencode.jsonc`.
+  session asks a question), `opencode.jsonc` (dev half of the agent tool
+  config) and `opencode-global.jsonc` (hard link to the machine-global
+  OpenCode config — see the next two bullets).
 - `.rulesync/` — the single source of truth for AI-tool config: `rules/`
   (→ this `AGENTS.md`), `subagents/` (→ `.opencode/agents/`), `commands/`
   (→ `.opencode/commands/`), `skills/` (→ `.opencode/skills/`: the
@@ -67,13 +69,22 @@ container images (`containers/`). **ArgoCD applies everything — never
   works without running rulesync first. Third-party skills stay in
   `.agents/skills/` (discovered via the `skills` paths in `opencode.jsonc`)
   — rulesync does not own them.
-- `.opencode/opencode.jsonc` — version-controlled OpenCode project config:
-  the lab MCP servers, permissions, skills paths and the default agent.
-  Merged over the machine-global config. LLM providers (`gpu-ai`/`gpu-moe`
-  with per-model `limit.context`) live in the machine-local globals —
-  `~/.config/opencode/opencode.json` and `~/.config/kilo/kilo.jsonc` are
-  real files since 2026-10-13 (`agent-config.jsonc` and its symlinks were
-  removed), so global-config edits are no longer version-controlled here.
+- `.opencode/opencode.jsonc` — version-controlled OpenCode project config,
+  the "dev" half of the agent tool config: the dev-cluster MCP servers
+  (`mcp.dev.scifi.farm`), permissions, skills paths and the default agent.
+  Merged over the machine-global config (project entries win; non-conflicting
+  global settings are preserved), so this repo sees the regular fleet too.
+- `.opencode/opencode-global.jsonc` — HARD LINK to
+  `~/.config/opencode/opencode.json`, the machine-global OpenCode config:
+  LLM providers (`gpu-ai`/`gpu-moe` with per-model `limit.context`), agents,
+  permissions and the regular MCP fleet (visible to every project on this
+  machine). While the link holds, editing either path edits the same file —
+  in-place writes keep the link, but a rename-and-replace save breaks it
+  silently; re-link with
+  `ln -f /home/coder/SpencersLab/.opencode/opencode-global.jsonc ~/.config/opencode/opencode.json`
+  (also needed once after this file first lands on `main`, because
+  merges/checkouts create fresh inodes). `~/.config/kilo/kilo.jsonc` is NOT
+  linked — kilo keeps its own machine-local config with an older fleet copy.
 - `.aislop/` — quality-gate config (`.aislop/config.yml`) consumed by
   `aislop ci` in CI and by local scans; `.opencode/plugin/aislop-gate/` is a
   hand-written OpenCode plugin (never rulesync-generated). Both enforce the
@@ -180,12 +191,14 @@ loaded into every session automatically.
 
 ## MCP servers
 
-Servers are defined in `.opencode/opencode.jsonc` (project-level, merged over
-the machine-global config) — edits flow through this repo's normal
-branch→merge flow. The machine globals
-(`~/.config/opencode/opencode.json`, `~/.config/kilo/kilo.jsonc`) carry the
-same fleet list for other projects; since 2026-10-13 they are real files, not
-symlinks, so keep them in sync by hand when a server is added or changed.
+Servers are split across two version-controlled files. The regular fleet
+lives in the machine-global OpenCode config (`~/.config/opencode/opencode.json`,
+hard-linked into the repo as `.opencode/opencode-global.jsonc`) — visible to
+every project. The 6 dev-cluster servers (`mcp.dev.scifi.farm`) are
+project-local in `.opencode/opencode.jsonc`; this repo sees the full fleet
+because project config merges over global. Edits to either file flow through
+this repo's normal branch→merge flow. `~/.config/kilo/kilo.jsonc` keeps its
+own older fleet copy, unmanaged — don't expect it to match.
 
 Servers are named `<priv>-<cluster>-<service>` in the client config
 (e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers

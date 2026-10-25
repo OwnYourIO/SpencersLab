@@ -57,14 +57,17 @@ Standard agent-context layout for this repo (mirrors root `AGENTS.md`):
   `container-creation`, `llama-swap`).
 - `.kilo` — tracked symlink to `.agents/`, so kilo loads the same agents,
   plans, and skills.
-- `.opencode/` — real tracked dir: `agents` and `skills` symlink back into
-  `.agents/`; opencode-only content lives here (`plugin/`, `opencode.json`).
-- `.opencode/opencode.json` — version-controlled OpenCode project config:
-  the lab MCP servers, permissions, skills paths and the default agent;
-  merged over the machine-global config. LLM providers (`gpu-ai`/`gpu-moe`)
-  live in the machine-local globals (`~/.config/opencode/opencode.json`,
-  `~/.config/kilo/kilo.jsonc` — real files since 2026-10-13, formerly
-  symlinks to a repo-root `agent-config.jsonc`).
+- `.opencode/` — real tracked dir holding the rulesync-generated `agents/`
+  and `commands/` surfaces (`.agents/agents` and `.agents/commands` symlink
+  into them); opencode-only content lives here (`plugin/`, `opencode.jsonc`,
+  `opencode-global.jsonc`, and the generated `skills/`).
+- `.opencode/opencode.jsonc` — version-controlled OpenCode project config
+  (the "dev" half): the dev-cluster MCP servers (`mcp.dev.scifi.farm`),
+  permissions, skills paths and the default agent; merged over the
+  machine-global config. `.opencode/opencode-global.jsonc` — hard link to
+  the machine-global config (`~/.config/opencode/opencode.json`): LLM
+  providers (`gpu-ai`/`gpu-moe`), agents and the regular MCP fleet.
+  `~/.config/kilo/kilo.jsonc` is not linked (kilo keeps its own copy).
 
 ## When to use / when not
 

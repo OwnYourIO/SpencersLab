@@ -9,8 +9,10 @@
   // MCP servers, repo-wide permissions and hooks deliberately stay OFF:
   // rulesync's OpenCode mcp/permissions adapters target a root opencode.jsonc
   // and rewrite the whole `mcp` key in flat V1 shape, which would fight the
-  // hand-maintained .opencode/opencode.jsonc (41 lab servers in the V2
-  // `mcp.servers` envelope, plus repo permissions). Hooks would write
+  // hand-maintained config pair — .opencode/opencode.jsonc (6 dev-cluster
+  // servers in the V2 `mcp.servers` envelope, plus repo permissions) and
+  // .opencode/opencode-global.jsonc (hard link to the machine-global config
+  // carrying the regular fleet). Hooks would write
   // .opencode/plugins/rulesync-hooks.js from nothing (no hooks in use).
   // Revisit these features when syncing to external repos.
   //
