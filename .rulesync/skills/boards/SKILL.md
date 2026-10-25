@@ -1,6 +1,6 @@
 ---
 name: boards
-description: WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority), card-driven kickoff where the four standard checklists (Services/Type/Model(s)/Research) and the slug + session custom fields supply the answers pipeline-kickoff would ask live, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Ready for Review), the card lifecycle with post-plan write-back (Finished stays human-owned), and the batched question protocol. MUST-loaded by agent-board-coord at run start; load it anywhere else when working the WeKan AI-Dev board card flow.
+description: WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority), card-driven kickoff where the four standard checklists (Services/Type/Model(s)/Research) and the slug + session custom fields supply the answers pipeline-kickoff would ask live, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Review), the card lifecycle with post-plan write-back (Finished stays human-owned), and the batched question protocol. MUST-loaded by agent-board-coord at run start; load it anywhere else when working the WeKan AI-Dev board card flow.
 targets: ["*"]
 ---
 
@@ -11,7 +11,7 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 ## Board facts
 
 - Instance: `https://wekan.spencerslab.com`; board **AI-Dev**; swimlane **In Process**.
-- Lists (six): **Not Started**, **Executing**, **Ready for Review**, **Rework**, **Finished**, **Low Priority** (deprioritised work — picked up last).
+- Lists (six): **Not Started**, **Executing**, **Review**, **Rework**, **Finished**, **Low Priority** (deprioritised work — picked up last).
 - Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned).
 - Custom fields: exactly TWO board-level text fields, `slug` and `session`, resolved by name with `list_custom_fields`. There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field.
 - The four standard checklists on every card (future cards via board rules, existing cards via the runbook backfill — the runbook owns their maintenance):
@@ -109,19 +109,19 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev`/`agent-rev
    `set_card_custom_field` for `slug` + `session`, then
    `delete_checklist_item` for every unchecked item of the four checklists.
 7. `add_comment` on the card: the research-session URL plus the merged TLDR
-   from RESEARCH.md → `move_card` to **Ready for Review** — the agent's
+   from RESEARCH.md → `move_card` to **Review** — the agent's
    final destination for research-only runs too; **Finished** stays
    human-owned.
 
 ## Card lifecycle
 
-**Ready for Review** is the agent's final destination; **Finished** is human-owned.
+**Review** is the agent's final destination; **Finished** is human-owned.
 
 - **Pickup** → `move_card` to **Executing** + `add_comment` claiming the card: session, the resolved model tiers (from the Model(s) checklist), the consumed checklist answers, the resolved slug, and the plan folder path.
 - **Plan approved** (after the question round) → `add_comment` that the plan is approved (plan path, worktree/branch), then the Post-plan card write-back below.
 - **Each chunk done** → `add_comment` with the chunk status (chunk id, dev/review verdict, commit).
-- **All chunks done + final whole-plan review passed** → `move_card` to **Ready for Review** + summary comment: branch, commit range, validation results, plan path.
-- **Never** `move_card` to **Finished** — a human moves Ready for Review → **Finished** (accept) or → **Rework** (send back).
+- **All chunks done + final whole-plan review passed** → `move_card` to **Review** + summary comment: branch, commit range, validation results, plan path.
+- **Never** `move_card` to **Finished** — a human moves Review → **Finished** (accept) or → **Rework** (send back).
 - Card picked from **Rework**: read its full comment history (`list_comments`) first; the comments are the rework context.
 - **Resume vs new run**: apply the D11 rule from Card pickup; a resumed run re-claims without re-minting the slug or re-running kickoff.
 

@@ -126,7 +126,7 @@ if want c3; then
     grep -qF 'Rework → Not Started → Low Priority' "$f" \
       || fail "c3: $f lacks the new pickup sequence 'Rework → Not Started → Low Priority'"
     grep -qF 'research-only' "$f" || fail "c3: $f never mentions the research-only loop"
-    grep -qF 'Ready for Review' "$f" || fail "c3: $f never states the Ready-for-Review research exit"
+    grep -qF 'Review — see the `boards` skill' "$f" || fail "c3: $f never states the Review-list research exit (the board's list is named Review)"
     grep -qF 'cf-<card' "$f" || fail "c3: $f lacks the cf-<card-…> slug rule (D10)"
     grep -qF 'slug' "$f" && grep -qF 'session' "$f" && grep -qF 'custom field' "$f" \
       || fail "c3: $f does not name the slug/session custom-field intake"
@@ -142,7 +142,7 @@ if want c3; then
   cat "$TMP/agents-section.md" "$TMP/fp-section.md" >"$TMP/new-text.md"
   python3 "$TMP/neg12.py" "$TMP/new-text.md" \
     || fail "c3: the new AGENTS.md text pairs 'models' with 'custom field' without negating it (D12)"
-  ok "c3: pickup order, research-only -> Ready for Review, slug/session cf intake, cf- slug, no-run-tag-for-card-runs + agent-coord keeps them; D12 negative holds in the new sections"
+  ok "c3: pickup order, research-only -> Review, slug/session cf intake, cf- slug, no-run-tag-for-card-runs + agent-coord keeps them; D12 negative holds in the new sections"
 fi
 
 # --- c4: main's combined dev-<service> row preserved verbatim (C04 AC2) --------

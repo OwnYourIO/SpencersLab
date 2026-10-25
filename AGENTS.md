@@ -170,7 +170,7 @@ role × permission matrix is in the `agents-sync` skill references
   folder, worktree, branch and session alike;
   card-driven runs carry no run tag (`agent-coord` keeps run tags);
   `Research`-labeled cards run the iterative research-only loop and end at
-  Ready for Review — see the `boards` skill.
+  Review — see the `boards` skill.
 - All Hard rules below (no hand-bumped versions, ExternalSecret+Bitwarden
   secrets, ArgoCD — never kubectl apply, git safety, MCP privilege tiers)
   apply to every pipeline agent unchanged.

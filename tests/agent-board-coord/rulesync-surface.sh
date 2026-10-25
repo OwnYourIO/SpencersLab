@@ -237,7 +237,7 @@ if want c4; then
     grep -qiE "^#{1,6}[[:space:]].*${title}" "$SKILL_GEN" \
       || fail "c4: the boards skill is missing its '${title}' section"
   done
-  for fact in 'wekan.spencerslab.com' 'AI-Dev' 'In Process' 'Not Started' 'Executing' 'Ready for Review' 'Rework' 'Finished' 'dev-boards' 'wekan-api'; do
+  for fact in 'wekan.spencerslab.com' 'AI-Dev' 'In Process' 'Not Started' 'Executing' '**Review**' 'Rework' 'Finished' 'dev-boards' 'wekan-api'; do
     grep -qF "$fact" "$SKILL_GEN" || fail "c4: the boards skill never names '$fact' (the board facts are incomplete)"
   done
   grep -qi 'human' "$SKILL_GEN" || fail "c4: the boards skill never assigns Finished to a human (the agent must never self-move to Finished)"
@@ -420,7 +420,7 @@ if want c16; then
     grep -qF 'Rework → Not Started → Low Priority' "$f" \
       || fail "c16: $f lacks the pinned pickup sequence 'Rework → Not Started → Low Priority'"
     grep -qF 'research-only' "$f" || fail "c16: $f never mentions the research-only branch"
-    grep -qF 'Ready for Review' "$f" || fail "c16: $f never states the Ready-for-Review exit"
+    grep -qF 'Review.' "$f" || fail "c16: $f never states the Review-list exit (the board's list is named Review)"
     grep -qF 'Research' "$f" || fail "c16: $f never names the Research label"
   done
   grep -qF 'cf-<card' "$TMP/agent-body.md" \
