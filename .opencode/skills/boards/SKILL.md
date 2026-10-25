@@ -25,7 +25,7 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 - The four standard checklists on every card (future cards via board rules, existing cards via the runbook backfill — the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
-  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash` + `Local` (gpu-ai). A createCard rule cannot check items reliably (checkItem races the checklist insertion and loses — verified on WeKan v9.99), so the default is applied by the flow: at claim time, if NO Model(s) item is checked, `toggle_checklist_item` those two to checked and route from them.
+  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash` + `Local` (gpu-ai), guaranteed at CREATION: agents creating cards pass `default_checked` to `create_card` (race-free by construction), and from WeKan v12.63+ onward one multi-action createCard rule covers UI-created cards too. On v9.99, UI-created cards may arrive with nothing checked — route from the default selection WITHOUT mutating the card (see kickoff).
   - **Research** — `before planning` | `after planning` | `agent decides`: WHEN this card's research belongs relative to the plan (checked items are the answer; several may be checked; `agent decides` delegates the call to the pipeline).
 - Access: the `dev-boards` MCP server — the wekan-mcp tool set (`get_card`, `list_cards_in_list`, `move_card`, `add_comment`, `list_comments`, `list_checklists`, `get_checklist`, `list_custom_fields`, `set_card_custom_field`, `delete_checklist_item`, …), write-capable; it is the agent's single MCP permission (narrow `dev_boards*`, D21).
 - `dev-boards` authenticates SERVER-SIDE via login-mint: `WEKAN_USERNAME` + `WEKAN_PASSWORD` arrive from the `wekan-mcp` Bitwarden LOGIN item and the instance URL rides that item's URI field (data, not values-config). The agent never handles credentials.
@@ -78,12 +78,12 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
 - **type** — the checked Type item; none checked → the question joins the
   batched round.
 - **models** — the sole routing input is the checked Model(s) items (D12).
-  Default first: if NO item is checked, `toggle_checklist_item` `Qwen Flash`
-  and `Local` (gpu-ai) to checked at claim time — the standard default
-  selection — and route from them. Then: exactly one checked → that model
-  for every tier; several checked → the largest drives planning (plan /
-  research / final review), the smallest drives code (test / dev / chunk
-  review); only **Local** checked →
+  Default first: if NO item is checked (a v9.99 UI-created card, before the
+  v12.63+ multi-action rule exists), route from the standard default
+  selection — `Qwen Flash` + `Local` (gpu-ai) — WITHOUT mutating the card.
+  Then: exactly one checked → that model for every tier; several checked →
+  the largest drives planning (plan / research / final review), the smallest
+  drives code (test / dev / chunk review); only **Local** checked →
   `gpu-ai/qwen3.8-27b-q6` for every role. The size order and the local
   mapping authority stay in `pipeline-models` — reference it, never
   duplicate its table. Record the resolved tiers in STATE.json
