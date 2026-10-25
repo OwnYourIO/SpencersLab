@@ -36,7 +36,7 @@
     }
   },
   "current_wave": 1,
-  "updated_at": "2026-10-25T02:20:00Z",
+  "updated_at": "2026-10-25T02:40:00Z",
   "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
@@ -126,14 +126,14 @@
       "dev_commit": "887b605a7"
     },
     "C03": {
-      "status": "in_review",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C02"
       ],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "status": "DONE",
@@ -149,6 +149,20 @@
           "friction": "none",
           "open_questions": "none",
           "next_suggested": "agent-review C03 (surface.sh minus c6 incl c16); then C04 wave 3"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C03",
+          "verdict": "APPROVED",
+          "review_session": "ses_e8f577723ffe3EUvGuEC2PLiVY",
+          "files_changed": [
+            ".agents/plans/2026/2026-10-feat-board-coord-intake/chunks/C03.md (review notes)"
+          ],
+          "commands_run": "surface.sh excl c6 @4fb347d48 => 17 ok; rulesync idempotent; tools.sh 8/8; C02 subset 16 ok; D1 pipeline skills byte-unchanged; frontmatter byte-diff vs bab7e7cc3 identical; aislop 0 err",
+          "deviations": "none",
+          "friction": "none",
+          "open_questions": "2 nits (optional at C04/polish): research-only step-arrow order vs skill; 'never restate them' wording",
+          "next_suggested": "C04 wave 3; C04 review adds c6 to full 18-check run"
         }
       ],
       "dev_session": "ses_e8f5c2c0fffelKef5wS8RaXnVX",
