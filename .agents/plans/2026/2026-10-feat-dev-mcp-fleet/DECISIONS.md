@@ -129,3 +129,14 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
     --name-only main HEAD` lists that single doc file.
   - Therefore: do NOT merge this branch into main (duplicate-history merge);
     any remaining delta is doc-only and lands by cherry-pick at the user's call.
+- 2026-10-25, **user ruling (post-sync boards failure)**: hivetools MCP servers consume
+  MULTIPLE keys from one Secret via the mcp container's `podTemplateSpec.envFrom.secretRef`
+  (gpu `homeassistant` precedent), never repeated `spec.secrets[]` entries — the toolhive
+  MCPServer CRD keys `spec.secrets` as a list-map on `name`, so duplicates are rejected at
+  apply time (`dev-hivetools` was OutOfSync/Failed and `mcp-boards` never existed).
+  Re-rules the immutable t7 boards block (test session `d241475f5`), which had encoded the
+  unimplementable three-entry shape; t7 now also asserts Secret-name uniqueness across every
+  rendered MCPServer. Accepted sub-decisions from the test author: the "no top-level env"
+  check stays targeted to WEKAN_BASE_URL (not a blanket spec.env ban), and a single-entry
+  `secrets[]` remains legitimate alongside `envFrom`. Fix is repo-side in C03 scope;
+  cluster convergence happens through ArgoCD after landing (no hand-mutation).
