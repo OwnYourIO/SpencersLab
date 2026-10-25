@@ -250,7 +250,7 @@ hivetools:
       enabled: true
       # Pinned to the first immutable build that includes supergateway (v31 ==
       # :main digest at 2026-09-28). Renovate bumps the :v<run> pin.
-      image: ghcr.io/ownyourio/renovate-mcp:v31
+      image: ghcr.io/ownyourio/renovate-mcp:v84
       # streamable-http (2026-09-27): renovate-mcp is stdio-only upstream, so
       # the image bridges it with supergateway (stdio → Streamable HTTP).
       # Same reason as searxng: the stdio proxy attach dies permanently after
@@ -284,7 +284,7 @@ hivetools:
             fsGroup: 1000
           initContainers:
             - name: clone
-              image: ghcr.io/ownyourio/renovate-mcp:v31  # same image ships git
+              image: ghcr.io/ownyourio/renovate-mcp:v84  # same image ships git
               env:
                 - name: HOME
                   value: /tmp
