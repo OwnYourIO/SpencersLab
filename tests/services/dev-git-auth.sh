@@ -757,8 +757,9 @@ PY
       fi
 
       # Second leg: the real deploy path — the coder: slice of
-      # custom-values/dev (what the ApplicationSet feeds the chart) must show
-      # the documented OVERRIDE_NEEDED slots, never the service sentinel.
+      # custom-values/dev (what the ApplicationSet feeds the chart) must
+      # resolve the wired provider slots to their UUIDs; the OVERRIDE_NEEDED
+      # era ended when the user supplied the item UUIDs (2026-10-25).
       coder_slice="$sso3_out.coder-block.yaml"
       if ! printf '%s\n' "$coder_cv" | python3 -c 'import sys, yaml; yaml.safe_dump(yaml.safe_load(sys.stdin.read()), sys.stdout)' >"$coder_slice" 2>"$sso3_err"; then
         tail -n 5 "$sso3_err" >&2
@@ -778,12 +779,22 @@ PY
       ' "$sso3f_out")
       [ -n "$coder_f_doc" ] ||
         fail "c-sso-3: the custom-values-slice render lost the coder-secrets ExternalSecret"
-      printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE_NEEDED' ||
-        fail "c-sso-3: the deploy-path render shows no OVERRIDE_NEEDED documented slot for the new items (the slots must be visible until the user fills them)"
-      if printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE_VIA_CUSTOM_VALUES'; then
-        fail "c-sso-3: the custom-values coder: slice did not resolve the service sentinel in the coder-secrets document"
+      ea_uuid=$(printf '%s\n' "$coder_cv_ids" |
+        sed -nE "s/^[[:space:]]*coder-external-auth:[[:space:]]*(${UUID_RE})[[:space:]]*(#.*)?$/\1/p" | head -n 1)
+      key_uuid=$(printf '%s\n' "$coder_cv_ids" |
+        sed -nE "s/^[[:space:]]*coder-token-encryption:[[:space:]]*(${UUID_RE})[[:space:]]*(#.*)?$/\1/p" | head -n 1)
+      [ -n "$ea_uuid" ] ||
+        fail "c-sso-3: custom-values/dev coder.bitwardenIds.coder-external-auth is not a real UUID (the slots were wired 2026-10-25 — this render leg proves the UUID resolves through the deploy path)"
+      [ -n "$key_uuid" ] ||
+        fail "c-sso-3: custom-values/dev coder.bitwardenIds.coder-token-encryption is not a real UUID (the slots were wired 2026-10-25 — this render leg proves the UUID resolves through the deploy path)"
+      printf '%s' "$coder_f_doc" | grep -q "$ea_uuid" ||
+        fail "c-sso-3: the deploy-path render does not carry the custom-values coder-external-auth UUID $ea_uuid in the coder-secrets document"
+      printf '%s' "$coder_f_doc" | grep -q "$key_uuid" ||
+        fail "c-sso-3: the deploy-path render does not carry the custom-values coder-token-encryption UUID $key_uuid in the coder-secrets document"
+      if printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE'; then
+        fail "c-sso-3: the custom-values coder: slice left an OVERRIDE_* string in the coder-secrets document (all four slots are wired — the deploy-path doc must be fully resolved)"
       fi
-      ok "c-sso-3: the custom-values coder-slice render shows OVERRIDE_NEEDED slots and no service sentinel"
+      ok "c-sso-3: the custom-values coder-slice render resolves both provider slots to their UUIDs and carries no OVERRIDE_* string"
     else
       tail -n 30 "$sso3_err" >&2
       fail "c-sso-3: helm template coder $chart_copy with the provider --set list failed"

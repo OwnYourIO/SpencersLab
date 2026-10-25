@@ -52,18 +52,17 @@ coder:
     coder-sso-secret: d07b1bec-d02c-4580-8544-b4e2000e1783   # shared dev SSO
     coder-pg: 47d1d689-b615-4461-8b57-b4e20015ae75           # shared dev DB item
     # coder-external-auth — the Forgejo OAuth app for coder.dev.scifi.farm
-    # (register on git.scifi.farm with redirect
+    # (registered on git.scifi.farm with redirect
     # https://coder.dev.scifi.farm/external-auth/forgejo/callback; username =
-    # client id, password = client secret). The item does not exist yet, so
-    # this is a must-fill placeholder (OVERRIDE_NEEDED), not the deploy-time
-    # service sentinel. Replace it with the item UUID once created.
-    coder-external-auth: OVERRIDE_NEEDED
+    # client id, password = client secret — the fields secret-coder.yaml
+    # reads as ea_client_id/ea_secret).
+    coder-external-auth: e04af1ad-d36f-42b3-9aa0-b4ee0035a382
     # coder-token-encryption — password = base64 of 32 random bytes, exactly
     # `dd if=/dev/urandom bs=32 count=1 | base64` output. A malformed or
     # wrong-length key crashloops coderd on the restart that follows the
     # first sync — generate it fresh, never hand-typed. This slot is
     # per-cluster: the gpu cluster carries its own distinct item.
-    coder-token-encryption: OVERRIDE_NEEDED
+    coder-token-encryption: 4a7b0218-e9af-4205-9fe6-b4ee00347021
 
 forgejo:
   bitwardenIds:

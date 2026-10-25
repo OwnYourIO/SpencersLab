@@ -390,8 +390,8 @@ PY
   fi
 
   # Leg 4 — the real deploy path: custom-values/gpu over the umbrella. The
-  # new slots may legitimately hold OVERRIDE_NEEDED until the user creates
-  # the items, but neither sentinel may render.
+  # provider slots are wired (user decision 2026-10-25 supplied the item
+  # UUIDs); this leg proves they resolve, and neither sentinel may render.
   gpu_f_out="$WORK/gpu-customvalues-render.yaml"
   if ! "$helm_bin" template gpu "$GPU" -f "$GPU_CUSTOM" \
     --set domain=test.example.com --set clusterName=gpu >"$gpu_f_out" 2>/dev/null; then
@@ -407,15 +407,25 @@ PY
   ' "$gpu_f_out")
   [ -n "$coder_f_doc" ] ||
     fail "g-sso-3: the -f custom-values render lost the coder-secrets ExternalSecret"
-  printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE_NEEDED' ||
-    fail "g-sso-3: the custom-values render shows no OVERRIDE_NEEDED documented slot for the new items (the slots must be visible on the deploy path)"
+  ea_uuid=$(printf '%s\n' "$gpu_custom_ids" |
+    sed -nE "s/^[[:space:]]*coder-external-auth:[[:space:]]*(${UUID_RE})[[:space:]]*(#.*)?$/\1/p" | head -n 1)
+  key_uuid=$(printf '%s\n' "$gpu_custom_ids" |
+    sed -nE "s/^[[:space:]]*coder-token-encryption:[[:space:]]*(${UUID_RE})[[:space:]]*(#.*)?$/\1/p" | head -n 1)
+  [ -n "$ea_uuid" ] ||
+    fail "g-sso-3: custom-values/gpu coder-external-auth is not a real UUID (the slots were wired 2026-10-25 — this render leg proves the UUID resolves through the deploy path)"
+  [ -n "$key_uuid" ] ||
+    fail "g-sso-3: custom-values/gpu coder-token-encryption is not a real UUID (the slots were wired 2026-10-25 — this render leg proves the UUID resolves through the deploy path)"
+  printf '%s' "$coder_f_doc" | grep -q "$ea_uuid" ||
+    fail "g-sso-3: the custom-values render does not carry the coder-external-auth UUID $ea_uuid in the coder-secrets document"
+  printf '%s' "$coder_f_doc" | grep -q "$key_uuid" ||
+    fail "g-sso-3: the custom-values render does not carry the coder-token-encryption UUID $key_uuid in the coder-secrets document"
   if printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE_VIA_CUSTOM_VALUES'; then
     fail "g-sso-3: the custom-values render did not resolve the service sentinel in the coder-secrets document"
   fi
   if printf '%s' "$coder_f_doc" | grep -q 'OVERRIDE_VIA_CLUSTER_ANNOTATION'; then
     fail "g-sso-3: the custom-values render did not resolve the legacy cluster-annotation sentinel in the coder-secrets document"
   fi
-  ok "g-sso-3: the custom-values render shows OVERRIDE_NEEDED slots and no service sentinel in the coder-secrets document"
+  ok "g-sso-3: the custom-values render resolves both provider slots to their UUIDs with no service or legacy-annotation sentinel"
 
   # --- g-sso-4: pairing guard (static) — each coder spends its single
   # provider slot on its OWN paired forge. Both files pinning the same host
