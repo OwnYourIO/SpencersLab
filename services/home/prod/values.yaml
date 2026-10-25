@@ -267,10 +267,24 @@ ingress:
 # Have to split wekan into 2 pods to handle 2 urls. 
 wekan:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
+  # FerretDB (the new chart's database) deploys on this instance only, idle,
+  # as the migration target for the home-mongodb data: point
+  # externalDatabase.url at it once the data is moved over. Rendered once
+  # because the two chart instances derive different labels (alias `boards`),
+  # and duplicate home-ferretdb manifests would clash on immutable pod
+  # selectors. Until then externalDatabase.url keeps WeKan on MongoDB and
+  # mirrors the MONGO_URL secretEnv below - keep them consistent; while that
+  # secretEnv entry is present it is what the deployment consumes (chart
+  # #6289 gate), and externalDatabase wins over ferretdb in the chart's
+  # computed URL. No /dbname in the URL: the live data sits in the database
+  # Meteor picks when no path is given.
+  ferretdb:
+    enabled: true
+  externalDatabase:
+    url: "mongodb://home-mongodb:27017"
   # This allows a local bot to login.
   env:
     # Required for the REST API used by the wekan-mcp server (charts/hivetools).
-    # Only enabled on this bot-facing instance, not on `boards`.
     - name: WITH_API
       value: "true"
     # Needed for long lived token generation. Disable after token(s) created.
@@ -313,8 +327,17 @@ wekan:
       nameOverride: wekan-mongodb
 boards:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
+  # FerretDB is rendered by the `wekan` instance only (shared by both, like
+  # the MongoDB it will replace - see the comment there); externalDatabase
+  # wiring is the same for both instances.
+  ferretdb:
+    enabled: false
+  externalDatabase:
+    url: "mongodb://home-mongodb:27017"
   env:
     - name: OIDC_REDIRECTION_ENABLED
+      value: "true"
+    - name: WITH_API
       value: "true"
     - name: METEOR_REACTIVITY_ORDER
       value: "oplog,polling"
