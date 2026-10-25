@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Run aislop quality gate on changed files
         run: npx --yes aislop@0.18.1 ci --changes --base origin/main --human

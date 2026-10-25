@@ -14,7 +14,7 @@
 # same host by charts/gpt-researcher/templates/ingress-backend.yaml).
 #
 # Consumed by charts/gpt-researcher as ghcr.io/ownyourio/gpt-researcher-frontend.
-FROM node:20-bookworm-slim
+FROM node:24-bookworm-slim
 
 # renovate: datasource=git-refs depName=assafelovic/gpt-researcher
 ARG GPTR_VERSION=5cdad9cb434754188b78bd998df18dd8d502cf7e
