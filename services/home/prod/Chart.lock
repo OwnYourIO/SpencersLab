@@ -23,6 +23,9 @@ dependencies:
 - name: cloudnative-pg
   repository: https://cloudnative-pg.github.io/charts
   version: 0.27.1
+- name: mongodb
+  repository: https://groundhog2k.github.io/helm-charts/
+  version: 0.7.6
 - name: wekan
   repository: https://wekan.github.io/charts/
   version: 12.64.0
@@ -47,5 +50,5 @@ dependencies:
 - name: app-template
   repository: https://bjw-s-labs.github.io/helm-charts/
   version: 5.0.1
-digest: sha256:acc7a80af01ef8b989a8a7c77289d101092af738ae9cac81633ed752dbeafe2f
-generated: "2026-10-25T14:31:13.992885023Z"
+digest: sha256:d2a83e23c858de7658489029341c7c869ee82a60cc855e120d1348513202305a
+generated: "2026-10-25T14:45:05.427227405Z"

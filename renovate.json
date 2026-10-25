@@ -234,6 +234,16 @@
         "kubernetes/kubernetes"
       ],
       "allowedVersions": "/^v1\\.36\\./"
+    },
+    {
+      "description": "Pin the home umbrella's mongodb chart: 0.7.6 renders the live home-mongodb StatefulSet byte-identical (services/home/prod/values.yaml keeps it that way). Any other version re-renders the running database, so bumps stay a deliberate manual change.",
+      "matchPackageNames": [
+        "mongodb"
+      ],
+      "matchFileNames": [
+        "services/home/**"
+      ],
+      "enabled": false
     }
   ]
 }

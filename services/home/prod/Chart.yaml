@@ -36,6 +36,13 @@ dependencies:
 - name: cloudnative-pg
   version: 0.27.1
   repository: https://cloudnative-pg.github.io/charts
+# WeKan's database. Chart wekan >= 10.86 no longer bundles it, so the umbrella
+# owns it: version is pinned to the chart that renders the live home-mongodb
+# StatefulSet byte-identical (mongo pinned to 7 in values.yaml - WeKan needs 7).
+# Do not bump casually: a different chart version re-renders the live database.
+- name: mongodb
+  version: 0.7.6
+  repository: https://groundhog2k.github.io/helm-charts/
 - name: wekan
   version: 12.64.0
   repository: https://wekan.github.io/charts/
