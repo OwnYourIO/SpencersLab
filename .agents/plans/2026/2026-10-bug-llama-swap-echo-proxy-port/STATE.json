@@ -1,0 +1,61 @@
+{
+  "feature": "2026/2026-10-bug-llama-swap-echo-proxy-port",
+  "plan_status": "approved",
+  "coord_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-25T17:20:05Z",
+  "kickoff": {
+    "slug": "bug-llama-swap-echo-proxy-port",
+    "type": "bug",
+    "run_tag": null,
+    "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/bug-llama-swap-echo-proxy-port",
+    "branch": "bug-llama-swap-echo-proxy-port",
+    "local": true,
+    "fast_lane": true,
+    "compressed": "Compressed kickoff (production gpu box down, 2026-10-25): no live intake round; scope, evidence and user rulings folded in by the launching coord session. Models: plan=qwen3.8-2.4t-a95b, rest=qwen3.8-27b unless the user overrides at plan approval.",
+    "models": {
+      "plan": "qwen3.8-2.4t-a95b",
+      "code": "qwen3.8-27b"
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "Executed ONLY by this ticket's agent-test session (immutable-tests rule)."
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "flash-next-q3 fit work (separate live investigation)",
+    "cluster-side boot verification (post-merge, ArgoCD sync; sibling ticket C05 evidence pass is the live proof)"
+  ]
+}
