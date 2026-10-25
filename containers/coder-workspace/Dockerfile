@@ -27,7 +27,7 @@
 # /usr/local/bin/workspace-startup.sh itself.
 
 # renovate: datasource=docker depName=debian
-FROM debian:13-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f
+FROM debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
 
 # pipefail matters here: the build-time version asserts pipe each CLI into
 # grep, and /bin/sh alone would only honor grep's exit status — a crashing
