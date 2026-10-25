@@ -4,20 +4,26 @@ bitwardenIds:
 
 
 k8s-monitoring:
-  # values.yaml for grafana/k8s-monitoring chart
+  # Values for the grafana/k8s-monitoring chart, v4 format: destinations is a
+  # map, Alloy instances live under collectors (presets replace the old
+  # named defaults), clusterMetrics is split into clusterMetrics/hostMetrics/
+  # costMetrics, service deployments moved to telemetryServices, and
+  # podLogs+gatherMethod:volumes is now podLogsViaLoki. See the chart's
+  # UPGRADING.md for the full v3→v4 mapping.
   cluster:
     name: "{{ .Release.Name }}"
 
-  # Define destinations - sending to your existing Prometheus
+  # Define destinations - sending to your existing Prometheus.
+  # v4: map keyed by destination name (v3 used a list).
   destinations:
     # Your existing kube-prometheus-stack Prometheus
-    - name: prometheus
+    prometheus:
       type: prometheus
       # TODO
       url: https://prometheus.spencerslab.com/api/v1/write
 
     # Loki for logs
-    - name: loki
+    loki:
       type: loki
       # TODO:
       url: https://loki.spencerslab.com/loki/api/v1/push
@@ -27,38 +33,15 @@ k8s-monitoring:
       #   username: ${LOKI_USERNAME}
       #   password: ${LOKI_PASSWORD}
 
-  # Cluster metrics collection
+  # Cluster metrics collection. Since v4 this covers only cluster-scoped
+  # sources; node-exporter metrics moved to hostMetrics and the
+  # node-exporter/kube-state-metrics deployments moved to telemetryServices.
   clusterMetrics:
     enabled: true
     destinations: ["prometheus"]
-    
-    node-exporter:
-      enabled: true
-      deploy: true
-      metricsTuning:
-        useIntegrationAllowList: true
-        includeMetrics:
-          - "node_cpu_seconds_total"
-          - "node_memory_.*"
-          - "node_filesystem_.*"
-          - "node_disk_.*"
-          - "node_network_.*"
-          - "node_load.*"
-
-        #includeMetrics:
-          - node_time_seconds
-          - node_boot_time_seconds
-          - node_uname_info
-          - node_disk_io_time_seconds_total
-          - node_disk_read_bytes_total
-          - node_disk_written_bytes_total
-          - node_context_switches_total
-        excludeMetrics:
-          #- node_sockstat_.*      # High cardinality socket stats
-          #- node_vmstat_.*        # Verbose VM stats
-          #- node_netstat_.*       # Detailed network stats
-          - node_scrape_.*        # Scrape metadata
-          #- node_cpu_guest_seconds_total  # Often unnecessary
+    # v4 leaves a feature unassigned unless set explicitly when more than one
+    # collector is defined. v3 routed this to alloy-metrics by default.
+    collector: alloy-metrics
 
     cadvisor:
       enabled: true
@@ -73,7 +56,7 @@ k8s-monitoring:
           - container_spec_cpu_quota
           - container_spec_memory_limit_bytes
           - machine_cpu_cores
-        
+
     kubelet:
       enabled: true
       metricsTuning:
@@ -83,19 +66,10 @@ k8s-monitoring:
           - kubelet_cgroup_manager_duration_seconds_bucket
           - kubelet_pleg_relist_duration_seconds_bucket
           - storage_operation_duration_seconds_count
-        
-    kube-state-metrics:
-      enabled: true
-      deploy: true
-      metricsTuning:
-        useDefaultAllowList: true
-        excludeMetrics:
-          - kube_pod_labels         # Creates series for every pod label
-          - kube_pod_annotations    # Creates series for every annotation
-          - kube_lease_*            # Lease objects churn frequently
-          - kube_replicaset_*       # ReplicaSets create many series
-          - kube_endpoint_*         # High churn in large clusters
-    apiserver:
+
+    # Key is apiServer since chart v2; the v1-era lowercase "apiserver" used
+    # here previously was silently ignored, so this tuning is newly active.
+    apiServer:
       enabled: true
       metricsTuning:
         useDefaultAllowList: true
@@ -106,92 +80,148 @@ k8s-monitoring:
           - "apiserver_storage_.*"
           - "workqueue_.*"
           - "rest_client_.*"
-    kepler:
-      enabled: false
-    opencost:
-      enabled: false
-    
+
+    # Deployment settings moved to telemetryServices below.
+    kube-state-metrics:
+      enabled: true
+      metricsTuning:
+        useDefaultAllowList: true
+        excludeMetrics:
+          - kube_pod_labels         # Creates series for every pod label
+          - kube_pod_annotations    # Creates series for every annotation
+          - kube_lease_*            # Lease objects churn frequently
+          - kube_replicaset_*       # ReplicaSets create many series
+          - kube_endpoint_*         # High churn in large clusters
+
+  # Node metrics — split out of clusterMetrics in v4.
+  hostMetrics:
+    enabled: true
+    destinations: ["prometheus"]
+    collector: alloy-metrics
+    linuxHosts:
+      enabled: true
+      metricsTuning:
+        useIntegrationAllowList: true
+        includeMetrics:
+          - "node_cpu_seconds_total"
+          - "node_memory_.*"
+          - "node_filesystem_.*"
+          - "node_disk_.*"
+          - "node_network_.*"
+          - "node_load.*"
+          - node_time_seconds
+          - node_boot_time_seconds
+          - node_uname_info
+          - node_disk_io_time_seconds_total
+          - node_disk_read_bytes_total
+          - node_disk_written_bytes_total
+          - node_context_switches_total
+        excludeMetrics:
+          #- node_sockstat_.*      # High cardinality socket stats
+          #- node_vmstat_.*        # Verbose VM stats
+          #- node_netstat_.*       # Detailed network stats
+          - node_scrape_.*        # Scrape metadata
+          #- node_cpu_guest_seconds_total  # Often unnecessary
+
+  # kepler/opencost stayed disabled (v3: clusterMetrics.kepler/opencost
+  # enabled: false) — costMetrics/hostMetrics.energyMetrics remain off and
+  # telemetryServices deploys neither.
 
   # Cluster events
   clusterEvents:
     enabled: true
     destinations: ["loki"]
+    collector: alloy-singleton
     namespaces: []
 
-  # ServiceMonitor/PodMonitor discovery
+  # ServiceMonitor/PodMonitor discovery. k8s-monitoring v4 no longer bundles
+  # the prometheus-operator CRDs; this wrapper installs them itself (see the
+  # prometheus-operator-crds dependency in Chart.yaml).
   prometheusOperatorObjects:
     enabled: true
     destinations: ["prometheus"]
+    collector: alloy-metrics
 
-  # Pod logs collection
-  podLogs:
+  # Pod logs collection — v3's podLogs with gatherMethod: volumes.
+  podLogsViaLoki:
     enabled: true
     destinations: ["loki"]
-    gatherMethod: volumes
+    collector: alloy-logs
+    # v4 default flipped to true; keep the long-standing behavior of also
+    # gathering lines already present in the file. Revisit together with
+    # collector storage if Alloy restarts cause historical-log spikes.
+    onlyGatherNewLogLines: false
 
   # Node logs (journald)
   nodeLogs:
     enabled: true
     destinations: ["loki"]
+    collector: alloy-logs
 
   # Annotation-based service discovery
   annotationAutodiscovery:
     enabled: true
     destinations: ["prometheus"]
+    collector: alloy-metrics
     metricsTuning:
       excludeMetrics:
         - "go_*"
         - "process_*"
 
-  # Alloy metrics instance
-  alloy-metrics:
-    enabled: true
-    alloy:
-      clustering:
-        enabled: false
-      mounts:
-        dockercontainers: true
-      resources:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          # 2026-09-07: 512Mi caused recurring OOMKills (media 248 restarts,
-          # monitoring 161). Matches alloy-logs below.
-          memory: 1Gi
+  # v3 sent self-reporting to alloy-metrics (receiver > metrics > singleton
+  # preference); pin it, since v4 would otherwise pick the singleton-preset
+  # collector.
+  selfReporting:
+    collector: alloy-metrics
 
-  # Alloy singleton
-  alloy-singleton:
-    enabled: true
-    alloy:
-      resources:
-        requests:
-          cpu: 50m
-          memory: 64Mi
+  # Alloy instances — v4 replaces the named alloy-* subcharts with this map.
+  # Presets reproduce the v3 named-instance defaults; receivers/profiles
+  # instances were disabled and are simply not defined.
+  collectors:
+    alloy-metrics:
+      presets: [statefulset]
+      alloy:
+        clustering:
+          enabled: false
+        mounts:
+          dockercontainers: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            # 2026-09-07: 512Mi caused recurring OOMKills (media 248 restarts,
+            # monitoring 161). Matches alloy-logs below.
+            memory: 1Gi
 
-  # Alloy logs instance
-  alloy-logs:
-    enabled: true
-    alloy:
-      clustering:
-        enabled: false
-      mounts:
-        varlog: true
-      resources:
-        requests:
-          cpu: 100m
-          memory: 256Mi
-        limits:
-          memory: 1Gi
+    # Alloy singleton
+    alloy-singleton:
+      presets: [singleton]
+      alloy:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
 
-  # Disable receivers
-  alloy-receiver:
-    enabled: false
+    # Alloy logs instance
+    alloy-logs:
+      presets: [daemonset, filesystem-log-reader]
+      alloy:
+        clustering:
+          enabled: false
+        mounts:
+          varlog: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
 
-  # Profiles collection
-  alloy-profiles:
-    enabled: false
-
-  # Configuration reloading
-  configAnalysis:
-    enabled: true
+  # Supplemental telemetry services — v4 moved the deploy toggles here from
+  # clusterMetrics.<service>.deploy.
+  telemetryServices:
+    node-exporter:
+      deploy: true
+    kube-state-metrics:
+      deploy: true

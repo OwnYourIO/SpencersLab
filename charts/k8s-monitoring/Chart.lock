@@ -2,5 +2,8 @@ dependencies:
 - name: k8s-monitoring
   repository: https://grafana.github.io/helm-charts
   version: 4.5.5
-digest: sha256:6d9ba8627cf4363b7f8d1f6e1839a3962b19310cf1c9f894e1f4d668ca8a18f3
-generated: "2026-10-24T21:11:56.030778227Z"
+- name: prometheus-operator-crds
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 26.0.1
+digest: sha256:8c20d918174348b980fa4fb2f5a2c10610f738758e6ed0933ea9d1239296b0d4
+generated: "2026-10-25T17:24:06.868113408Z"
