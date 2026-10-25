@@ -98,8 +98,13 @@ roster they address.
     {{- $_ := set $e "filters" (deepCopy (get $presets $e.filters)) -}}
   {{- end -}}
   {{- if not (hasKey $e "proxy") -}}
-    {{- /* ${PORT} cmds always proxy to the pod-local port llama-swap assigned */ -}}
-    {{- $_ := set $e "proxy" "http://localhost:${PORT}" -}}
+    {{- /* Fail-fast echo cmds never use ${PORT}; the deployed llama-swap (macros.go, byte-identical v262-v266) refuses to load a config whose proxy carries ${PORT} the (macro-expanded) cmd lacks, and it injects the default http://localhost:${PORT} proxy for any model missing the key before that check - the 2026-10-25 gpu crash-loop. So these entries carry an explicit ${PORT}-free proxy: "none" is url.Parse-safe at load and inert at runtime (the cmd exits 1 before any proxying), and omitting the key would re-trigger the default. */ -}}
+    {{- if regexMatch `^/bin/sh -c "echo '.*' >&2; exit 1"\n?$` $cmd -}}
+      {{- $_ := set $e "proxy" "none" -}}
+    {{- else -}}
+      {{- /* ${PORT} cmds proxy to the pod-local port llama-swap assigned */ -}}
+      {{- $_ := set $e "proxy" "http://localhost:${PORT}" -}}
+    {{- end -}}
   {{- end -}}
   {{- $_ := set $out $id $e -}}
 {{- end -}}
