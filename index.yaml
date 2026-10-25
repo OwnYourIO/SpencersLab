@@ -12773,6 +12773,18 @@ entries:
   okd:
   - apiVersion: v2
     appVersion: 2026.3.0
+    created: "2026-10-25T16:51:29.908531308Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 0837866f196d755c25357c87767342693061b49d53ceadd21ff45c8ffdfba4a9
+    name: okd
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/okd-1.0.2/okd-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 2026.3.0
     created: "2026-09-14T13:37:48.719154507Z"
     dependencies:
     - name: app-template
@@ -19502,4 +19514,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T16:19:02.807827415Z"
+generated: "2026-10-25T16:51:29.910141257Z"
