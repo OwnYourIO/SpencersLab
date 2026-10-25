@@ -54,9 +54,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   and `.agents/commands` symlink into the first two) plus hand-managed
   `plugin/` (`aislop-gate` quality gate on edits; `question-notify` pushes a
   Home Assistant notification to the user's phone whenever an `agent-*`
-  session asks a question), `opencode.jsonc` (dev half of the agent tool
-  config) and `opencode-global.jsonc` (hard link to the machine-global
-  OpenCode config — see the next two bullets).
+  session asks a question) and `opencode.jsonc` (dev half of the agent tool
+  config — see below).
 - `.rulesync/` — the single source of truth for AI-tool config: `rules/`
   (→ this `AGENTS.md`), `subagents/` (→ `.opencode/agents/`), `commands/`
   (→ `.opencode/commands/`), `skills/` (→ `.opencode/skills/`: the
@@ -71,20 +70,19 @@ container images (`containers/`). **ArgoCD applies everything — never
   — rulesync does not own them.
 - `.opencode/opencode.jsonc` — version-controlled OpenCode project config,
   the "dev" half of the agent tool config: the dev-cluster MCP servers
-  (`mcp.dev.scifi.farm`), permissions, skills paths and the default agent.
+  (`mcp.dev.scifi.farm`), the gpu-ai provider (this repo's llama endpoint,
+  `llama.spencerslab.com` — its model catalog churns with this repo's
+  llama-swap work), permissions, skills paths and the default agent.
   Merged over the machine-global config (project entries win; non-conflicting
   global settings are preserved), so this repo sees the regular fleet too.
-- `.opencode/opencode-global.jsonc` — HARD LINK to
-  `~/.config/opencode/opencode.json`, the machine-global OpenCode config:
-  LLM providers (`gpu-ai`/`gpu-moe` with per-model `limit.context`), agents,
-  permissions and the regular MCP fleet (visible to every project on this
-  machine). While the link holds, editing either path edits the same file —
-  in-place writes keep the link, but a rename-and-replace save breaks it
-  silently; re-link with
-  `ln -f /home/coder/SpencersLab/.opencode/opencode-global.jsonc ~/.config/opencode/opencode.json`
-  (also needed once after this file first lands on `main`, because
-  merges/checkouts create fresh inodes). `~/.config/kilo/kilo.jsonc` is NOT
-  linked — kilo keeps its own machine-local config with an older fleet copy.
+- `~/.config/opencode/opencode.json` — machine-local global OpenCode config,
+  NOT version-controlled: the regular MCP fleet (visible to every project on
+  this machine), the gpu-moe provider, agents and global permissions. Both
+  providers' model catalogs set per-model `limit.context`, fixing OpenCode's
+  200k fallback for uncataloged models. Regular-fleet/gpu-moe changes are
+  machine-local edits — record them in this file's table in the same change.
+  `~/.config/kilo/kilo.jsonc` is a separate machine-local file with an older
+  fleet copy.
 - `.aislop/` — quality-gate config (`.aislop/config.yml`) consumed by
   `aislop ci` in CI and by local scans; `.opencode/plugin/aislop-gate/` is a
   hand-written OpenCode plugin (never rulesync-generated). Both enforce the
@@ -191,14 +189,16 @@ loaded into every session automatically.
 
 ## MCP servers
 
-Servers are split across two version-controlled files. The regular fleet
-lives in the machine-global OpenCode config (`~/.config/opencode/opencode.json`,
-hard-linked into the repo as `.opencode/opencode-global.jsonc`) — visible to
-every project. The 6 dev-cluster servers (`mcp.dev.scifi.farm`) are
-project-local in `.opencode/opencode.jsonc`; this repo sees the full fleet
-because project config merges over global. Edits to either file flow through
-this repo's normal branch→merge flow. `~/.config/kilo/kilo.jsonc` keeps its
-own older fleet copy, unmanaged — don't expect it to match.
+Servers are split across two places. The regular fleet lives in the
+machine-local global config (`~/.config/opencode/opencode.json`, NOT
+version-controlled) — visible to every project. The 6 dev-cluster servers
+(`mcp.dev.scifi.farm`) are project-local in `.opencode/opencode.jsonc`
+(version-controlled); this repo sees the full fleet because project config
+merges over global. Dev-cluster server changes flow through this repo's
+normal branch→merge flow; regular-fleet changes are machine-local edits —
+record them in this repo's AGENTS.md table in the same change.
+`~/.config/kilo/kilo.jsonc` keeps its own older fleet copy, unmanaged — don't
+expect it to match.
 
 Servers are named `<priv>-<cluster>-<service>` in the client config
 (e.g. `readonly-gpu-kubernetes`, `readonly-home-postgres-immich`); servers
@@ -251,8 +251,10 @@ change.
   `.opencode/commands/` and `.opencode/skills/` are output of
   `rulesync generate`; edit the sources in `.rulesync/` (rules, subagents,
   commands, skills) and regenerate instead. `rulesync.jsonc` keeps the
-  MCP/permissions/hooks features OFF — the MCP fleet and repo permissions
-  stay hand-managed in `.opencode/opencode.jsonc`. Never run
+  MCP/permissions/hooks features OFF — the repo's MCP config (dev-cluster
+  servers, gpu-ai provider) and repo permissions stay hand-managed in
+  `.opencode/opencode.jsonc`; the regular MCP fleet lives outside the repo
+  in the machine-global config. Never run
   `rulesync gitignore` here (it would gitignore `AGENTS.md`).
 - **Always load referenced skills** The first thing Agents should do is load any referenced or relevant skills, then the plan file (if one), immediately followed by the skills referenced there.
 - **Every agent and subagent must keep `question` allowed** — explicitly, in

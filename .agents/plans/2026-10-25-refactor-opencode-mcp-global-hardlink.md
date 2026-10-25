@@ -94,7 +94,8 @@ rulesync generate --check
 ## User-owned steps
 
 - Review + merge the PR (agent never merges/pushes to main).
-- After merge: re-run the `ln -f` command from the main checkout (see caveats).
+- ~~After merge: re-run the `ln -f` command~~ — VOID, superseded by the
+  course correction below: there is no link to maintain anymore.
 
 ## Result (executed 2026-10-25)
 
@@ -121,3 +122,35 @@ Validation evidence:
   config-change restart was a race with the service restart, not a breakage.
 - Kilo config untouched (mtime/size unchanged).
 - `aislop ci --changes` (same gate as PR CI): 0 errors, 0 warnings.
+## Course correction — hard link dropped (same session)
+
+Post-commit investigation (empirical, git 2.56.0) showed git checkouts break
+hard links whenever the file's content changes (git writes a new inode) or
+the file disappears from the checked-out branch (repo path deleted; later
+re-created with a fresh inode). The break is silent and one-way: the global
+path keeps running on stale content until re-linked. User decision: drop the
+hard link entirely.
+
+**Final layout (supersedes the hard-link design above):**
+
+- `.opencode/opencode.jsonc` (version-controlled): the 6 dev-cluster MCP
+  servers + the `gpu-ai` provider (moved out of the global config verbatim,
+  83-model catalog + headerTimeout comments preserved) + permissions,
+  skills paths, default agent (unchanged).
+- `~/.config/opencode/opencode.json` (machine-local, NOT version-controlled):
+  the regular 39-server fleet + `gpu-moe` provider + agents + global
+  permissions. Back to a plain standalone file (links=1); backups at
+  `opencode.json.bak-20261025` (pre-fleet-restore) and
+  `opencode.json.bak-20261025-2` (pre-gpu-ai-move).
+- `.opencode/opencode-global.jsonc` deleted from the repo (git rm).
+- Docs adjusted to match (AGENTS.md via overview.md, subagent permissions
+  reverted to the single config file, agents-sync reference, rulesync.jsonc
+  comment, helm-chart-creation skill).
+
+Validation of the final state: both configs parse as strict JSON after
+comment stripping; repo config = 6 servers + gpu-ai only, global = 39
+servers + gpu-moe only, zero overlap, union 45; `opencode mcp list` reports
+45 servers; live probes answered from the project-local half (dev-searxng),
+the global-only half (readonly-global-wekan), and the gpu-ai provider (83
+models listed); global file link count 1; kilo untouched;
+`aislop ci --changes` 0 errors / 0 warnings.

@@ -60,14 +60,14 @@ Standard agent-context layout for this repo (mirrors root `AGENTS.md`):
 - `.opencode/` — real tracked dir holding the rulesync-generated `agents/`
   and `commands/` surfaces (`.agents/agents` and `.agents/commands` symlink
   into them); opencode-only content lives here (`plugin/`, `opencode.jsonc`,
-  `opencode-global.jsonc`, and the generated `skills/`).
+  and the generated `skills/`).
 - `.opencode/opencode.jsonc` — version-controlled OpenCode project config
-  (the "dev" half): the dev-cluster MCP servers (`mcp.dev.scifi.farm`),
-  permissions, skills paths and the default agent; merged over the
-  machine-global config. `.opencode/opencode-global.jsonc` — hard link to
-  the machine-global config (`~/.config/opencode/opencode.json`): LLM
-  providers (`gpu-ai`/`gpu-moe`), agents and the regular MCP fleet.
-  `~/.config/kilo/kilo.jsonc` is not linked (kilo keeps its own copy).
+  (the "dev" half): the dev-cluster MCP servers (`mcp.dev.scifi.farm`), the
+  gpu-ai provider, permissions, skills paths and the default agent; merged
+  over the machine-global config. The regular MCP fleet and the gpu-moe
+  provider live in the machine-local global config
+  (`~/.config/opencode/opencode.json`, not version-controlled);
+  `~/.config/kilo/kilo.jsonc` keeps its own older copy.
 
 ## When to use / when not
 

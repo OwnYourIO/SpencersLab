@@ -59,9 +59,6 @@ permissions:
     resource: .opencode/opencode.jsonc
     effect: ask
   - action: edit
-    resource: .opencode/opencode-global.jsonc
-    effect: ask
-  - action: edit
     resource: skills-lock.json
     effect: ask
   - action: edit

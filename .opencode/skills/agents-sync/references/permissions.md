@@ -29,7 +29,7 @@ Repo/agent context files get a per-file policy for the roles that edit the repo 
 | effect | resources | why |
 |---|---|---|
 | **allow** | `skills/**`, `.rulesync/rules/**`, `.rulesync/skills/**` | a chunk may legitimately update self-written skills or the repo-context rules (which generate `AGENTS.md`) — dev edits and reports it under `deviations` so the coordinator sees it |
-| **ask** | `.rulesync/**`, `.opencode/opencode.jsonc`, `.opencode/opencode-global.jsonc`, `skills-lock.json`, `rulesync.jsonc` | agent machinery (subagent/command sources, MCP fleet config — both the dev project config and the hard-linked machine-global config, registry lock, generator config): explicit user approval per edit (unattended subagents treat `ask` as blocked). Order matters: the broad `.rulesync/**` ask comes BEFORE the two `.rulesync/{rules,skills}/**` allows, so those allows win for context sources while everything else under `.rulesync/` still asks |
+| **ask** | `.rulesync/**`, `.opencode/opencode.jsonc`, `skills-lock.json`, `rulesync.jsonc` | agent machinery (subagent/command sources, repo MCP config — dev-cluster servers + gpu-ai provider, repo permissions, registry lock, generator config): explicit user approval per edit (unattended subagents treat `ask` as blocked). Order matters: the broad `.rulesync/**` ask comes BEFORE the two `.rulesync/{rules,skills}/**` allows, so those allows win for context sources while everything else under `.rulesync/` still asks |
 | **deny** | `AGENTS.md`, `.opencode/agents/**`, `.opencode/commands/**`, `.opencode/skills/**` | generated surfaces — `rulesync generate` owns them; a hand-edit is silently overwritten on the next generate, so the change belongs in the `.rulesync/` source instead |
 | **deny** | `.agents/**` (and `.kilo/**`, its symlink) | plans are coord/plan-owned; third-party skills in `.agents/skills/` are registry-managed — never hand-edited (self-written, in-repo skills live in top-level `skills/`) |
 
@@ -44,7 +44,7 @@ Exception: `board-coord` — the first coord-variant with any MCP access — get
 
 1. Extract every resource: `grep -hE 'resource: "?[^ "]' .rulesync/subagents/agent-*.md | sort | uniq -c`.
 2. For each path-shaped resource, confirm the target exists in the current layout (`ls`/`git ls-files` globs). Plans live per-ticket now: coord needs `.agents/plans/**/STATE.json` style, NOT root `.agents/plans/STATE.json` — with coord's leading `* * deny`, a stale root path silently locks coord out of its own state files.
-3. For each MCP prefix rule, list live servers (the `mcp` keys across BOTH fleet files — `.opencode/opencode-global.jsonc` regular fleet + `.opencode/opencode.jsonc` dev-cluster servers) and confirm the intended servers match a rule; anything unintended should hit deny or `ask`.
+3. For each MCP prefix rule, list live servers (the `mcp` keys across BOTH fleet locations — the regular fleet in the machine-local global config `~/.config/opencode/opencode.json` + the dev-cluster servers in `.opencode/opencode.jsonc`) and confirm the intended servers match a rule; anything unintended should hit deny or `ask`.
 4. Confirm the dev context-file denies are present and ordered AFTER `edit * allow` (last match wins), and the `.rulesync/**` ask precedes the two `.rulesync/{rules,skills}/**` allows.
 5. Confirm kick-off commands' state lookup matches the layout: `find .agents/plans -mindepth 2 -maxdepth 3 -name STATE.json` (month/ticket levels).
 
