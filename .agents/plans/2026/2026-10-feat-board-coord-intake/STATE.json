@@ -36,7 +36,7 @@
     }
   },
   "current_wave": 1,
-  "updated_at": "2026-10-25T01:20:00Z",
+  "updated_at": "2026-10-25T01:40:00Z",
   "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
@@ -86,13 +86,30 @@
       "dev_commit": "64ffa8b9b"
     },
     "C02": {
-      "status": "pending",
+      "status": "in_review",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C02",
+          "files_changed": [
+            ".rulesync/skills/boards/SKILL.md",
+            ".opencode/skills/boards/SKILL.md"
+          ],
+          "commands_run": "rulesync generate x2 => pass (2nd no-op); rulesync-surface.sh (16 checks excl c6+c16) => pass; aislop ci --changes => pass (0 err); scope 2 files",
+          "deviations": "wekan-api skill not loaded at run start (grounded in C01's merged docstrings/README instead); helm/gitops skills skipped as irrelevant to a prompt-contract chunk",
+          "friction": "aislop not on default PATH \u2014 npx --no-install workaround",
+          "open_questions": "none",
+          "next_suggested": "agent-review C02 (subset minus c6+c16); then C03 wave 2"
+        }
+      ],
+      "dev_session": "ses_e8f6788c2ffeD23rd2jUlSFP6Y",
+      "pre_chunk_commit": "4b7673494",
+      "dev_commit": "887b605a7"
     },
     "C03": {
       "status": "pending",
