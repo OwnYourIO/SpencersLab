@@ -17,11 +17,9 @@
 #
 # AC7 (regression) is not re-implemented here: run
 # tests/agent-board-coord/rulesync-surface.sh and agents-md.sh; their scope
-# allow-lists already carry this ticket's in-surface paths. agents-md.sh c8
-# checks AGENTS.md section-level deltas only when an explicit CHUNK_BASE
-# points at a pre-C02 commit — C02's legitimate `scripts/` bullet then trips
-# its allow-set: that is the plan's documented validation_at_fault hand-back,
-# not a C02 defect.
+# allow-lists carry this ticket's in-surface paths, and agents-md.sh c8's
+# AGENTS.md section allow-set includes "Where things live" — this ticket's
+# scripts/ bullet lands there, so the regression holds at any CHUNK_BASE.
 #
 # The suite is offline-deterministic: the agent-test session that wrote it
 # made no dev-boards/MCP call, and no check except t10 touches a live server

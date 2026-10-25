@@ -231,7 +231,7 @@ def sections(path):
     out[name] = "".join(buf)
     return out
 old, new = sections(sys.argv[1]), sections(sys.argv[2])
-allowed = {"MCP servers", "Agents", "Feature pipeline (agent-*)", "Pipeline specifics in this repo"}
+allowed = {"Where things live", "MCP servers", "Agents", "Feature pipeline (agent-*)", "Pipeline specifics in this repo"}
 changed = [n for n in old if old.get(n) != new.get(n)]
 extra = [n for n in new if n not in old]
 if extra:
