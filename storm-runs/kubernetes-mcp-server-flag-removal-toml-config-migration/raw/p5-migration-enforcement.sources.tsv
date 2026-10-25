@@ -1,0 +1,4 @@
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/docs/configuration-changes.md	Dropped-flag → TOML replacement table (v0.0.69)
+https://github.com/containers/kubernetes-mcp-server/blob/main/docs/configuration.md	read_only/stateless/port semantics (Configuration Reference)
+https://raw.githubusercontent.com/stacklok/toolhive/v0.56.0/cmd/thv-operator/api/v1beta1/mcpserver_types.go	spec.volumes hostPath-only; podTemplateSpec escape hatch
+https://github.com/containers/kubernetes-mcp-server/pull/1455	PR #1455 restore Streamable HTTP behind kube-rbac-proxy (disable_localhost_protection origin)

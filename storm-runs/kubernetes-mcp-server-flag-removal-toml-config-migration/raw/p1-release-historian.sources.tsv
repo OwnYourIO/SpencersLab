@@ -1,0 +1,5 @@
+https://github.com/containers/kubernetes-mcp-server/releases	containers/kubernetes-mcp-server releases (v0.0.1–v0.0.69, dates+changelogs)
+https://github.com/containers/kubernetes-mcp-server/pull/1423	PR #1423 "Config rework" (merged 2026-09-18)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.65/pkg/kubernetes-mcp-server/cmd/root.go	root.go at v0.0.65 (flag definitions)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/pkg/kubernetes-mcp-server/cmd/root.go	root.go at v0.0.69 (collapsed CLI + help text matching incident)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/docs/configuration-changes.md	Configuration Changes doc at v0.0.69 (dropped flag table, migration)

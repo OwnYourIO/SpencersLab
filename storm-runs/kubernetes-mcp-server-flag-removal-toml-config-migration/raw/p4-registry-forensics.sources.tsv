@@ -1,0 +1,7 @@
+https://ghcr.io/v2/containers/kubernetes-mcp-server/tags/list	ghcr tags list (fetched 2026-10-25 with anonymous pull token)
+https://ghcr.io/v2/containers/kubernetes-mcp-server/manifests/v0.0.65	v0.0.65 manifest digest sha256:5df586e2…
+https://ghcr.io/v2/containers/kubernetes-mcp-server/manifests/v0.0.69	v0.0.69 manifest digest sha256:1da9d62a…
+https://github.com/containers/kubernetes-mcp-server/issues/1560	Issue #1560: v0.0.68 container release failed; multi-platform image tag missing
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/.github/workflows/release-image.yml	release-image.yml: GHCR image built from root Dockerfile
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/Dockerfile	Dockerfile at v0.0.69 (baked config + ENV MCP_CONFIG_PATH + USER 65532)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/mcp-config-container-defaults.toml	Image default config: port = "8080"
