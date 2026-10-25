@@ -13838,6 +13838,19 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/pt750-1.0.1/pt750-1.0.1.tgz
     version: 1.0.1
+  qdrant:
+  - apiVersion: v2
+    appVersion: 1.11.0
+    created: "2026-10-25T14:40:47.965865365Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: ba117c9961bc29c8068b7e2f8df26deb4ef59dc0d51037c68836fe207291d2f1
+    name: qdrant
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/qdrant-1.0.0/qdrant-1.0.0.tgz
+    version: 1.0.0
   rallly:
   - apiVersion: v2
     appVersion: v4.5.14
@@ -15239,6 +15252,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/snapcast-1.0.1/snapcast-1.0.1.tgz
     version: 1.0.1
   supabase:
+  - apiVersion: v2
+    appVersion: 2024.08.19
+    created: "2026-10-25T14:40:48.163919014Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: d850cd1bd23eeeccd4a0fb64130a4b609d2fce97516d3269e69ef494ca6e81e0
+    name: supabase
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/supabase-1.0.127/supabase-1.0.127.tgz
+    version: 1.0.127
   - apiVersion: v2
     appVersion: 2024.08.19
     created: "2026-10-20T02:59:52.517627461Z"
@@ -19255,4 +19280,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T13:52:11.550053546Z"
+generated: "2026-10-25T14:40:48.164864132Z"
