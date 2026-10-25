@@ -58,12 +58,20 @@ Verified against WeKan v9.99 (`server/rulesHelper.js`, `server/models/rules.js`)
   (L400–404: `card.addLabel(action.labelId)`).
 - `addChecklistWithItems` takes `{checklistName, checklistItems}` with the
   items **comma-joined** — an item containing a comma splits in two.
-- **Rules matching one activity dispatch in parallel** — a `createCard` →
-  `checkItem` rule races the same-activity `addChecklistWithItems`
-  insertion and loses (the guarded lookup no-ops on the not-yet-existing
-  checklist; verified empirically on v9.99). Checked-by-default items
-  cannot be created this way; apply defaults in the consuming flow (e.g.
-  at card claim) instead.
+- **Rule execution order is unspecified** — rules matching one activity
+  execute sequentially (activities.js → RulesHelper.executeRules) but
+  trigger selection reads an UNSORTED Mongo cursor (reactiveCache.js), so
+  which rule runs first is a lottery. A same-activity `createCard` →
+  `checkItem` rule may run before the `addChecklistWithItems` insertion it
+  depends on — the guarded lookup no-ops and the outcome flips
+  nondeterministically (observed on the AI-Dev board). No ordering or
+  priority control exists in v9.99; deterministic multi-action rules arrive
+  only in WeKan v12.10+ (issue #4294). Do not build order-dependent rule
+  chains on v9.99.
+- **Item-added triggers are dead code** — checklist-item inserts emit
+  activityType `addChecklistItem` but TriggersDef only knows
+  `addedChecklistItem` (name mismatch, v9.99 through current main), so
+  two-stage "check the item when it appears" rules can never fire.
 - A `createCard` trigger fires for REST-created AND UI-created cards (the
   REST create route inserts the `createCard` activity), so creation-time
   automation covers both paths.
