@@ -32,7 +32,7 @@ app-template:
         main:
           image:
             repository: ghcr.io/thebadfella/pinchflat-ngx
-            tag: 2026.9.28
+            tag: 2026.10.20
           env:
             TZ: America/Denver
             PORT: &port 8945
