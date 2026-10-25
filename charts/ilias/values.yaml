@@ -24,7 +24,7 @@ app-template:
           image:
             repository: srsolutions/ilias
             # renovate: datasource=docker depName=srsolutions/ilias
-            tag: 11.3-php8.4-apache
+            tag: 11.5-php8.4-apache
           env:
             TZ: America/Denver
             ILIAS_AUTO_SETUP: "1"
@@ -118,7 +118,7 @@ app-template:
           image:
             repository: srsolutions/ilias
             # renovate: datasource=docker depName=srsolutions/ilias
-            tag: 11.3-php8.4-apache
+            tag: 11.5-php8.4-apache
           # args (NOT command): the image entrypoint must run first to
           # regenerate ilias.ini.php/client.ini.php from env; it execs this
           # afterwards. Run as the webserver user, exactly like the image's
