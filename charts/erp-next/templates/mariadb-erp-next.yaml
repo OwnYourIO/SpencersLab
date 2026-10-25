@@ -25,7 +25,7 @@ spec:
     # OutOfSync forever (the only defaulted field that shows in the diff).
     generate: false
   # renovate: datasource=docker depName=mariadb
-  image: mariadb:10.6.28
+  image: mariadb:13.0.2
   replicas: 1
   port: 3306
   storage:
