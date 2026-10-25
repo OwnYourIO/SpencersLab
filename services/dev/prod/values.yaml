@@ -188,7 +188,7 @@ hivetools:
     # differences are commented per entry.
     playwright:
       enabled: true
-      image: mcr.microsoft.com/playwright/mcp:v0.0.78
+      image: mcr.microsoft.com/playwright/mcp:v0.0.83
       transport: streamable-http
       mcpPort: 8931
       proxyPort: 8080
