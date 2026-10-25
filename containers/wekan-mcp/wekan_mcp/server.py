@@ -411,6 +411,34 @@ def _apply_default_checked(
     }
 
 
+def _validate_default_checked(default_checked: dict) -> None:
+    """
+    Reject a malformed default_checked before any card exists: a shape mistake
+    must surface as a clean tool error, not as a post-create surprise or a
+    silent per-character walk — the "never an exception after the card
+    exists" contract. Accepted shape is the documented one: a dict of
+    {checklist title: [item title, ...]}; an empty item list is a no-op,
+    not an error.
+    """
+    if not isinstance(default_checked, dict):
+        raise WekanError(
+            f"default_checked must be a dict mapping checklist title to a list "
+            f"of item titles, got {type(default_checked).__name__}"
+        )
+    for checklist_title, titles in default_checked.items():
+        if not isinstance(titles, list):
+            raise WekanError(
+                f"default_checked[{checklist_title!r}] must be a list of item "
+                f"titles, got {type(titles).__name__}"
+            )
+        for t in titles:
+            if not isinstance(t, str):
+                raise WekanError(
+                    f"default_checked[{checklist_title!r}] item titles must be "
+                    f"strings, got {type(t).__name__}"
+                )
+
+
 @_write_tool
 def create_card(
     board_id: str,
@@ -426,16 +454,20 @@ def create_card(
 
     default_checked optionally maps a checklist TITLE to the list of item
     titles that must arrive CHECKED on the new card, e.g. {"Model(s)":
-    ["Qwen Flash", "Local (gpu-ai)"]}. The board's createCard rules create
-    the standard checklists asynchronously after the card-create response,
-    so the tool bounded-polls (~10s) for each checklist and its items, then
-    PUTs isFinished on the exact-title matches — the checked state is set
-    without relying on rule dispatch order, which is unspecified. Item
-    titles already checked are left as-is; nothing is created here (the
-    rules own creation). The response gains "default_checked": {<title>:
-    {checked, missing, failed}}; the card is NOT rolled back on any default
-    failure, so callers must read "missing"/"failed" instead of assuming.
+    ["Qwen Flash", "Local (gpu-ai)"]}. A malformed map (not title -> list of
+    strings) is rejected BEFORE the card is created. The board's createCard
+    rules create the standard checklists asynchronously after the card-create
+    response, so the tool bounded-polls (~10s) for each checklist and its
+    items, then PUTs isFinished on the exact-title matches — the checked
+    state is set without relying on rule dispatch order, which is
+    unspecified. Item titles already checked are left as-is; nothing is
+    created here (the rules own creation). The response gains
+    "default_checked": {<title>: {checked, missing, failed}}; the card is
+    NOT rolled back on any default failure, so callers must read
+    "missing"/"failed" instead of assuming.
     """
+    if default_checked:
+        _validate_default_checked(default_checked)
     body = {
         "title": title,
         "description": description,

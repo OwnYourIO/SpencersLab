@@ -392,7 +392,9 @@ fi
 # default_checked map that, inside the one awaited tool call, bounded-polls
 # the rules-created checklist + its exact-title items and PUTs isFinished —
 # routes pinned against server/models/checklistItems.js and checklists.js at
-# tag v9.99 — and surfaces every per-checklist outcome in the response.
+# tag v9.99 — and surfaces every per-checklist outcome in the response. A
+# malformed map is shape-validated before the create POST, so an exception
+# only ever happens while no card exists.
 # No new tools (t2 arithmetic), no wekan.py edits (t8 byte-pin), no item
 # creation (the rules own it), no unbounded waiting.
 if want t9; then
@@ -435,6 +437,22 @@ if '"default_checked"' not in cc_src:
     bad('t9: create_card must surface the outcome under the pinned "default_checked" response key')
 if '_apply_default_checked(' not in cc_src:
     bad('t9: create_card must delegate to _apply_default_checked (the outcome applier)')
+
+# 1b) review-approved follow-up: a malformed map must raise BEFORE the card
+#     exists — the one crack in "never an exception after the card exists".
+va = funcs.get('_validate_default_checked')
+if va is None or va.decorator_list:
+    bad('t9: _validate_default_checked must exist as a PLAIN helper — validation is not a registered tool (t2 stays 13+13)')
+va_src = seg('_validate_default_checked')
+for needle in ('isinstance(default_checked, dict)', 'isinstance(titles, list)', 'isinstance(t, str)', 'raise WekanError'):
+    if needle not in va_src:
+        bad(f't9: the validator must contain {needle!r} — accepted shape is dict of title -> list of str, anything else rejected with WekanError')
+val_pos = cc_src.find('_validate_default_checked(')
+post_pos = cc_src.find('_wekan.post(')
+if val_pos == -1 or post_pos == -1 or val_pos > post_pos:
+    bad('t9: create_card must call _validate_default_checked BEFORE the card-create POST (statically ordered)')
+if cc_src.count('if default_checked:') != 2:
+    bad('t9: validation and application must each sit behind an `if default_checked:` gate — the None/empty path stays byte-unchanged')
 
 # 2) helper: undecorated (registry stays 13+13 — t2), bounded poll, routes.
 ap = funcs.get('_apply_default_checked')
@@ -498,7 +516,7 @@ if 'default_checked' not in open(sys.argv[2]).read():
 if 'default_checked' not in open(sys.argv[3]).read():
     bad('t9: wekan-api SKILL write-tool list must mention default_checked on create_card')
 
-print('ok: t9 — create_card default_checked: trailing Optional[dict] param, bounded poll of the pinned v9.99 checklist/item routes with isFinished PUT, byte-exact titles, no item creation, checked/missing/failed surfaced, README+SKILL mention it')
+print('ok: t9 — create_card default_checked: trailing Optional[dict] param, pre-POST shape validation (raises only while no card exists), bounded poll of the pinned v9.99 checklist/item routes with isFinished PUT, byte-exact titles, no item creation, checked/missing/failed surfaced, README+SKILL mention it')
 PY
   then
     checks=$((checks + 1))
