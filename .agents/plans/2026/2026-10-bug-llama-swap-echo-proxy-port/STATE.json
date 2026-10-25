@@ -55,15 +55,46 @@
       "note": "Executed ONLY by this ticket's agent-test session (immutable-tests rule)."
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C02",
+          "commit": "ee3538d38 (local)",
+          "note": "RESULT block lost in a server restart between launch and pickup; coord re-verified disk state: full suite 0f/124p/1s at ee3538d38 with rebuilt env (matches plan bar exactly), tree clean, commit message == intended. Dev's self-evidence deferred to review (re-derive everything, incl. the per-render diff claims).",
+          "commands_run": [
+            "pytest -q (coord, post env-rebuild) => 0f/124p/1s EXACT plan bar"
+          ]
+        },
+        {
+          "status": "DONE",
+          "chunk": "C02",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/C02.md Round-1 notes + coord doc-hygiene note"
+          ],
+          "commands_run": [
+            "0f/124p/1s EXACT; boot-safety 5/5 green",
+            "diff audit: scope=tpl +7/-2; gpu = exactly 24 proxy->none (ids==GPU_ECHO_IDS, echo bytes untouched, 34 live identical); gpu-ai byte-zero (sha re-derived 9f359249cee7); default 58->none; pre-shas match plan baselines via own archive render",
+            "helper fresh-eyes: classifier structural, future PORT-less raw cmds flagged by invariant (probed posture), why-comment claims re-verified vs fresh v262/v266 tarballs",
+            "aislop 0 attributable; goldens 0; sentinels/trio clean"
+          ],
+          "findings": [
+            "minor doc-hygiene (annotated); nit comment-length left per churn rule"
+          ],
+          "deviations": "none",
+          "friction": "ls266 wiped again - rebuild recipe confirmed ~1 min; aislop via npx",
+          "open_questions": "none",
+          "next_suggested": "C03 dev (pin unified-vulkan-266 + renovate manager + flag re-audit STOP-gate)"
+        }
+      ]
     },
     "C03": {
       "status": "pending",

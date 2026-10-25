@@ -29,4 +29,9 @@ FRICTION.md — items still relevant to this ticket's surface:
 - [open] Declared-CM byte figures are Python len(str) CHARS vs UTF-8 bytes —
   compare by sha256 of the config.yaml data string, never by re-counting
   lengths. Baseline shas recorded in the plan file (gpu c3a8e3297c89...,
-  gpu-ai 9f359249cee7..., default 4a8934101e35 — all pre-fix @90e660569).
+  gpu-ai 9f359249cee7..., default 4a8934101e35 — all pre-fix @90e660569).- [open] Server restarts wipe /tmp/opencode (helm + venvs gone mid-ticket). Recipe
+  (re-run after any wipe): curl get.helm.sh/helm-v3.16.4-linux-amd64.tar.gz | tar xz
+  -C /tmp/opencode && mv /tmp/opencode/linux-amd64/helm /tmp/opencode/bin/helm;
+  helm dependency update charts/llama-swap (app-template tgz also gone). Suite
+  ENV-SKIPS ~91 cases without helm - a post-wipe run is NOT a valid bar; always
+  rebuild before reading counts.
