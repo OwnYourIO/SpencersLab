@@ -9,7 +9,11 @@
 #
 # Contract source: chunks/C01.md|C03.md|C04.md "## Tests". AC trace:
 # t1[C01 AC3+AC5] t2[C01 AC1] t3[C01 AC2] t4[C01 AC4] t5[C01 AC5]
-# t6[C03 AC1] t7[C03 AC2+AC5] t8[C03 AC2] t9[C03 AC3] t10[C03 AC4] t11[C03 AC5]
+# t6[C03 AC1] t7[C03 AC2+AC5 — boards multi-key Secret consumption re-ruled
+#   2026-10-25 to podTemplateSpec envFrom; spec.secrets is a CRD list-map
+#   keyed by name and cannot repeat a Secret] t8[C03 AC2] t9[C03 AC3 —
+#   github-mcp store re-ruled 2026-10-24 to bitwarden-login/password]
+# t10[C03 AC4] t11[C03 AC5]
 # t12[C04 AC1] t13[C04 AC2] t14[C04 AC3+AC4]
 #
 # One shared script for three chunks is the user-approved layout (chunk files).
@@ -751,6 +755,20 @@ try:
         if name not in servers:
             bad(f't7: no MCPServer {name} in the slice render (present: {sorted(servers)}) — the dev hivetools.mcp entry is missing or disabled')
 
+    # MCPServer CRD declares spec.secrets x-kubernetes-list-type: map keyed by
+    # name — one Secret name may appear at most ONCE per server (live proof
+    # 2026-10-25: ArgoCD rejected mcp-boards "duplicate entries for key
+    # [name=wekan-mcp]", so it was never admitted — no pod, dead /boards
+    # backend). Multi-key Secrets go through podTemplateSpec envFrom instead
+    # (gpu homeassistant precedent; user ruling 2026-10-25). Enforced across
+    # every rendered MCPServer, not just boards, so no future entry repeats it.
+    for srv_name in sorted(servers):
+        sec_names = [(s or {}).get('name') for s in (servers[srv_name].get('secrets') or [])]
+        dupes = sorted({n for n in sec_names if sec_names.count(n) > 1})
+        if dupes:
+            bad(f't7: {srv_name} repeats Secret name(s) {dupes} in spec.secrets ({sec_names}) — the CRD list-map keyed by name rejects duplicates and the object is never admitted; use podTemplateSpec envFrom for a multi-key Secret (2026-10-25 ruling)')
+    ok(f't7: spec.secrets name-uniqueness holds across all {len(servers)} rendered MCPServers (CRD list-map keyed by name, 2026-10-25 ruling)')
+
     pw = servers['mcp-playwright']
     if pw.get('image') != 'mcr.microsoft.com/playwright/mcp:v0.0.78':
         bad(f't7: mcp-playwright image is {pw.get("image")!r}, expected mcr.microsoft.com/playwright/mcp:v0.0.78 (gpu:428-487 verbatim)')
@@ -795,15 +813,6 @@ try:
         bad(f't7: mcp-boards image is {bd.get("image")!r}, expected ghcr.io/ownyourio/wekan-mcp:main (:main + Always pull per user decision; the login-capable build lands via C02)')
     if bd.get('transport') != 'streamable-http' or bd.get('mcpPort') != 8080:
         bad(f't7: mcp-boards transport/mcpPort is {bd.get("transport")!r}/{bd.get("mcpPort")!r}, expected streamable-http/8080')
-    secrets = {(s or {}).get('name'): ((s or {}).get('key'), (s or {}).get('targetEnvName')) for s in (bd.get('secrets') or [])}
-    want_secrets = {
-        'wekan-mcp': {('WEKAN_BASE_URL', 'WEKAN_BASE_URL'), ('WEKAN_USERNAME', 'WEKAN_USERNAME'), ('WEKAN_PASSWORD', 'WEKAN_PASSWORD')},
-    }
-    got_by_secret = {}
-    for s in (bd.get('secrets') or []):
-        got_by_secret.setdefault((s or {}).get('name'), set()).add(((s or {}).get('key'), (s or {}).get('targetEnvName')))
-    if got_by_secret != want_secrets:
-        bad(f't7: mcp-boards secrets[] is {got_by_secret!r}, expected exactly the three wekan-mcp mappings (BASE_URL/USERNAME/PASSWORD -> same-named envs) — all three runtime values come from the t9 Secret, nothing hardcoded')
     bdenv = {(e or {}).get('name') for e in bd.get('env') or []}
     if 'WEKAN_BASE_URL' in bdenv:
         bad('t7: mcp-boards carries a top-level env WEKAN_BASE_URL — the base URL must arrive via the wekan-mcp Secret (data-driven from the Bitwarden item URI, OQ1 resolution), not a values-pinned host')
@@ -815,7 +824,10 @@ try:
     got_pull = (mcp_c or {}).get('imagePullPolicy') if mcp_c is not None else None
     if got_pull != 'Always':
         bad(f't7: mcp-boards podTemplateSpec container mcp imagePullPolicy is {got_pull!r}, expected Always (:main is a mutable tag)')
-    ok('t7: MCPServer mcp-boards — :main + Always, three wekan-mcp secret mappings, no hardcoded BASE_URL, no READ_ONLY (C03 AC2+AC5)')
+    envfrom = (mcp_c or {}).get('envFrom') or []
+    if not any(((e or {}).get('secretRef') or {}).get('name') == 'wekan-mcp' for e in envfrom):
+        bad(f't7: boards mcp container envFrom is {envfrom!r}, expected a secretRef to wekan-mcp — the three runtime values (WEKAN_BASE_URL/USERNAME/PASSWORD, emitted by the t9 ES template) land via envFrom (gpu homeassistant precedent); repeated spec.secrets names are rejected by the CRD list-map keyed by name (2026-10-25 user ruling)')
+    ok('t7: MCPServer mcp-boards — :main + Always, wekan-mcp consumed via podTemplateSpec envFrom, no hardcoded BASE_URL, no READ_ONLY (C03 AC2+AC5 as re-ruled 2026-10-25)')
 
     ings = [d for d in by_kind(docs, 'Ingress')
             if (d.get('metadata') or {}).get('name') == 'mcp-multi-server-ingress']
