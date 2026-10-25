@@ -24,6 +24,12 @@ seaweedfs:
   
   admin:
     enabled: true
+    # weed admin 4.46+ refuses a non-loopback bind without authentication, and
+    # the chart binds 0.0.0.0 so the kubelet httpGet probes can reach the pod.
+    # Admin is mesh-only (no public proxy route) and ran unauthenticated
+    # before this chart version, so opt out via -allowInsecureBind rather than
+    # introduce auth.
+    allowInsecureBind: true
 
     data:
       type: "persistentVolumeClaim"
