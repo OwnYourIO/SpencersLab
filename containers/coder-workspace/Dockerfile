@@ -58,7 +58,7 @@ ARG KUBECTL_VERSION=v1.36.5
 
 # uv runs the BMad skill tooling, whose setup only works under `uv run`.
 # renovate: datasource=github-releases depName=astral-sh/uv
-ARG UV_VERSION=0.13.1
+ARG UV_VERSION=0.13.5
 
 # forgejo-cli is the Forgejo-native client. Its release publishes binaries and
 # no checksum file, so this is the one hardcoded hash in the image and a
