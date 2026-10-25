@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e8ec41e70ffe1oeW8kKnugIfwF",
   "test_session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
-  "current_wave": 2,
-  "updated_at": "2026-10-25T14:25:29.985074+00:00",
+  "current_wave": 3,
+  "updated_at": "2026-10-25T15:05:31.408419+00:00",
   "kickoff": {
     "card": "j6iuM5XnhrJdi5YEL",
     "cardNumber": 50,
@@ -41,7 +41,7 @@
       "depends_on": [],
       "dev_rounds": 0,
       "review_rounds": 1,
-      "last_verdict": null,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "role": "test",
@@ -73,7 +73,7 @@
       ],
       "dev_rounds": 0,
       "review_rounds": 1,
-      "last_verdict": null,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "role": "test",
@@ -111,16 +111,44 @@
       "dev_session": "ses_e8e73b7ebffetiRK8xgjAM47HJ"
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C02"
       ],
       "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": [],
-      "note": "Round 2 FINAL: research landed (RESEARCH.md, RQ1 PASS/RQ2 NO/RQ3 named-host) + batched round answered (plan 'Round-2 answers'). C03 now FOLDS minor-1 (LIVE-branch allow-list += list_swimlanes/list_lists + nit-1 on-the-host clarifier + t11 STRENGTHENED re-pin, user OQ-R3). Posture per user ruling: resolvable -> full URL (D13 stands); UNRESOLVED (block self-probe: env absent / shape guard / answered-code outside {200,30x,401,403}) -> proceed + write RAW session id + RESULT flag (D23-r2). READY: user approval -> agent-test re-pin (t11/t12/t14/c12/c7 + t18/t19) -> dev -> review (live controls a+b; dev-leg + click-through are landing observations). Round-2 CHUNK_BASE = 72500166a."
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "role": "test",
+          "session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
+          "at": "2026-10-25T14:35:06.450015+00:00",
+          "result": "RESULT\nstatus: DONE\nchunk: C03 (test re-pin + new tests, round-2 inventory)\nfiles_changed: [tests/agent-board-coord/gate.sh (t18/t19 NEW; t11 strengthened; t12 carve; t14 scope; t15 round-aware; header/usage/trace), rulesync-surface.sh (c12 VERBATIM->absence+dynamic), agents-md.sh (c7 scope += round-2 surfaces), commit d1ed43e2f]\ncommands_run: [bash -n x3 => pass; CHUNK_BASE=72500166a sweep t1..t19 => 16 green + exactly t11/t18/t19 red-for-right-reason; rulesync-surface c1..c11 pass, c12 expected-red, c13..c17 pass; agents-md 8 ok both bases; a42dc2896/0ed96ed99 t12+t15 pass (backwards-compat); gate-r2 selftest => pass; aislop clean; commit local-only]\ndeviations: (1) t15 base-adaptive to reconcile plan AC6 vs C03 AC4 (pointer already in base body at 72500166a). (2) t18 adds 'openchamber--' absence + curl/RESULT substrings per round2.pins_repin_set. (3) plan's 'c18' ref = typo (suite ends c17). (4) t19 negatives kept to AC2's two enumerated greps.\nfriction: none new; two plan-internal wrinkles cost a reconciliation pass each (resolved here per pipeline-gates).\nopen_questions: none\nnext_suggested: agent-dev C03 at base 72500166a + d1ed43e2f; review battery at CHUNK_BASE=72500166a expecting 19/19 + manual live controls AC7(a)/(b)."
+        },
+        {
+          "role": "dev",
+          "session": "ses_e8c832a00ffeM2hyPl5DHrh7QC",
+          "at": "2026-10-25T14:46:58.481724+00:00",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [.rulesync/commands/pipeline-boards.md, .rulesync/commands/pipeline-boards-hourly.md, .rulesync/skills/boards/SKILL.md, .opencode/commands/pipeline-boards.md, .opencode/commands/pipeline-boards-hourly.md, .opencode/skills/boards/SKILL.md \u2014 commit 15ea0e482 (local only)]\ncommands_run: [block dry-run => pass (emitted gpu derived base, agent label kept); probe emitted base + ?session= => pass 303 auth-redirect, query preserved, never 400 (AC7 a+b); baseline pre-edit reds right-reason => pass; rulesync generate x2 + --check => pass; CHUNK_BASE=72500166a gate.sh => pass 21 ok (t1..t19); rulesync-surface default+base => pass 18 ok; agents-md default+base => pass 8 ok; committed-block re-extraction => pass (control of record); aislop => pass 0/0; scoped commit => pass]\ndeviations: (1) --threshold-0 amendment wording swap inside the amended note (t11 pins hold). (2) drafted bytes used verbatim across four files. (3) coord's uncommitted STATE/FRICTION left alone (correct). (4) AC7(a) run twice; post-commit run is the record.\nfriction: ask-gated rulesync generate prompts STILL not surfaced in subagent harness (3rd reproduction of the [open] drift item; no damage).\nopen_questions: none\nnext_suggested: agent-review C03 (gate 21 ok expected at 72500166a) + independent AC7 re-run -> final whole-plan re-review; landing stays user-owned."
+        },
+        {
+          "role": "review",
+          "session": "ses_e8c785843ffeBdHDFmC1owWBrJ",
+          "at": "2026-10-25T14:57:40.494395+00:00",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nverdict: APPROVED\nfiles_changed: [chunks/C03.md (Review notes)]\ncommands_run: [gate.sh @72500166a => 21 ok; t12/t15 @ticket base => 2 ok; rulesync-surface 18 ok x2 bases; agents-md 8 ok x2 bases; generate x2 + --check => pass; aislop => pass; red-before re-confirm => pass; AC7(a) block exec byte-equal => pass; AC7(b) 303 => pass; md5 ladder 4 files identical; diff-of-diffs src/gen identical; local-only posture => pass; host greps 6 files clean]\ndeviations: none; dev's four accepted.\nfriction: none new.\nopen_questions: none. deferred: t11 'host'->'host shell' window-hardening nit; agents-md.sh inherited 'C04' message wording; standing [open] friction items.\nnext_suggested: final whole-plan re-review (round-2 scope), landing user-owned."
+        },
+        {
+          "role": "final-review-r2",
+          "session": "ses_e8c6e1161ffercF8DnW2wlYwer",
+          "at": "2026-10-25T15:05:31.408419+00:00",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: plan (FINAL whole-plan re-review round 2, planning tier)\nverdict: APPROVED\nfiles_changed: [chunks/C03.md \"Final review (round 2)\"]\ncommands_run: [gate.sh @72500166a => 21 ok; t12/t15 @0ed96ed99 + @a42dc2896 => pass; rulesync-surface + agents-md both bases => pass; generate x2 + --check => pass; aislop 0/0; bare gate RUN/0; md5 ladder block x4 identical; block exec emits expected gpu base; probe 303 never 400 query preserved; UNRESOLVED sims x3 deterministic; host greps 6 surfaces 0 hits; agent-body round1-end..HEAD 0 lines; posture local-only main==origin/main]\ndeviations: none; dev-boards not re-called (round-2 LIVE-branch change text-only + t11-pinned).\nfriction: none new (ask-gate silent item now 5th benign reproduction).\nopen_questions: none; bookkeeping: set per-chunk last_verdict (noted).\nnext_suggested: plan complete -> user landing: PR 0ed96ed99..15ea0e482; re-point hourly UI task to /pipeline-boards-hourly + retire duplicate prompts; first-run eyeball Session origin line vs dashboard link (dev leg); card already in Review."
+        }
+      ],
+      "note": "Round 2 FINAL: research landed (RESEARCH.md, RQ1 PASS/RQ2 NO/RQ3 named-host) + batched round answered (plan 'Round-2 answers'). C03 now FOLDS minor-1 (LIVE-branch allow-list += list_swimlanes/list_lists + nit-1 on-the-host clarifier + t11 STRENGTHENED re-pin, user OQ-R3). Posture per user ruling: resolvable -> full URL (D13 stands); UNRESOLVED (block self-probe: env absent / shape guard / answered-code outside {200,30x,401,403}) -> proceed + write RAW session id + RESULT flag (D23-r2). READY: user approval -> agent-test re-pin (t11/t12/t14/c12/c7 + t18/t19) -> dev -> review (live controls a+b; dev-leg + click-through are landing observations). Round-2 CHUNK_BASE = 72500166a.",
+      "dev_session": "ses_e8c832a00ffeM2hyPl5DHrh7QC"
     }
   },
   "blocked": [],
@@ -208,5 +236,10 @@
       "at": "2026-10-25T14:25:29.985074+00:00",
       "note": "finalized with all five batched answers; RESULT deviations:none open_questions:none"
     }
+  },
+  "final_review_round2": {
+    "verdict": "APPROVED",
+    "session": "ses_e8c6e1161ffercF8DnW2wlYwer",
+    "at": "2026-10-25T15:05:31.408419+00:00"
   }
 }
