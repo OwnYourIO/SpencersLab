@@ -130,3 +130,14 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   not touched from this ticket (immutable to dev/review alike). Carried forward: the stale
   literal needs a re-pin by ticket 1's test session, or it will keep reading red for every
   later suite that chains it.
+- 2026-10-25, **D3 wording correction (from C02 review, evidence `lint_config` on renovate-mcp
+  44.115.13)**: D3 recorded the proposed rule as "lint clean". It is clean *on the floor rule*,
+  but the repo config as a whole emits 4 pre-existing `automerge-without-automerge-type`
+  warnings (packageRules[0..3]) under the current linter version — untouched by this ticket
+  (one branch, one concern). D3's mechanism choice and its rejected alternatives stand.
+- 2026-10-25, **residual risk of the floor, recorded so nobody reads it as a wall**:
+  `allowedVersions: ">= v0.0.68"` bounds DOWNWARD only. A future release that reworks the config
+  surface again (0.0.90 / 0.1.0 / 1.0.0) will still be proposed. What actually protects the fleet
+  is (a) no automerge applies to this package, so every bump waits on a human merge, and (b) the
+  repo-wide args/flag contract sweep (C01 t7). The user chose this posture explicitly over
+  digest-pinning.
