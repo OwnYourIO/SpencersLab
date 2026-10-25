@@ -12862,6 +12862,21 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/pictaria-1.0.1/pictaria-1.0.1.tgz
     version: 1.0.1
+  pinchflat-ngx:
+  - apiVersion: v2
+    appVersion: 2026.9.28
+    created: "2026-10-25T15:26:04.065317707Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Pinchflat-NGX - enhanced Pinchflat fork (Material 3 UI, disk staging)
+      for YouTube archiving
+    digest: ac5fab9bba9073fcbf819bc04910b0a0cb3c0670625875784c8c4f53692c526d
+    name: pinchflat-ngx
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/pinchflat-ngx-1.0.1/pinchflat-ngx-1.0.1.tgz
+    version: 1.0.1
   playsms:
   - apiVersion: v2
     appVersion: 1.4.x
@@ -19415,4 +19430,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T15:24:02.697115012Z"
+generated: "2026-10-25T15:26:04.468561715Z"
