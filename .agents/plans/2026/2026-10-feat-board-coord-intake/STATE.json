@@ -4,7 +4,7 @@
   "plan_approved_at": "2026-10-24",
   "plan_approved_by": "human (approval round; residual session-host closed via D20: SESSION_URL_BASE=https://openchamber--dev-thehackmeister-coder.dev.scifi.farm)",
   "coord_session": "ses_e998508e0ffeoJVWMDY1NHDEQJ",
-  "test_session": null,
+  "test_session": "ses_e8f96db33ffeojW4P5I4NnR9oP",
   "kickoff": {
     "slug": "feat-board-coord-intake",
     "type": "feat",
@@ -12,7 +12,7 @@
     "run_tag_note": "RETIRED for this flow per kickoff data \u2014 the slug alone names the run; sequential runs would be slug-1/-2 (see plan OQ2).",
     "worktree": "feat-board-coord-intake",
     "branch": "feat-board-coord-intake",
-    "stacked_on": "origin/main 5e35ba6da (re-cut 2026-10-25; previously stacked on feat-agent-board-coord-openrouter-qwen-qwen3-8-27b @ 09696ae57 — see recut)",
+    "stacked_on": "origin/main 5e35ba6da (re-cut 2026-10-25; previously stacked on feat-agent-board-coord-openrouter-qwen-qwen3-8-27b @ 09696ae57 \u2014 see recut)",
     "models": {
       "plan": "openrouter/qwen/qwen3.8-flash",
       "code": "openrouter/qwen/qwen3.8-flash"
@@ -37,7 +37,7 @@
   },
   "current_wave": 1,
   "updated_at": "2026-10-25T00:40:00Z",
-  "reverification": "2026-10-25 base 5e35ba6da — plan re-verified, deltas D21–D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
+  "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
     "research": "2026-10-24-feat-board-coord-intake-research.md",
@@ -91,5 +91,9 @@
     "Post-merge pin sequence (D17/D24): M1 user merges C01 -> CI publishes wekan-mcp:v<RUN>; M2 pin-bump commit (gpu wekan-readonly/wekan-admin + dev boards refs to :v<RUN>, tests/services/dev-mcp-fleet.sh t7 pre-generalized by agent-test); M3 merge -> ArgoCD recreates pods; verify tools/list == 25 on gpu wekan-admin and (once deployed) dev-boards.",
     "Session-link constant CLOSED 2026-10-24 (D20): SESSION_URL_BASE = https://openchamber--dev-thehackmeister-coder.dev.scifi.farm; links = <base>/?session=<id> \u2014 lands verbatim in the boards skill (C02).",
     "Merge/push to main (repo hard rule) \u2014 landing via user-created PR."
-  ]
+  ],
+  "test": {
+    "status": "done",
+    "note": "tests/wekan-mcp/tools.sh (C01) + recreated supersets tests/agent-board-coord/{rulesync-surface,agents-md}.sh (C02/C03/C04) + dev-mcp-fleet.sh t7 generalization (D24). All red pre-impl at the right checks, green in mock sim. D21 narrow dev_boards* asserted; wekan.py+login suite byte-pinned to 5e35ba6da."
+  }
 }
