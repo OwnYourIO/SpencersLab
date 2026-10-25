@@ -12,7 +12,7 @@
     "run_tag_note": "RETIRED for this flow per kickoff data \u2014 the slug alone names the run; sequential runs would be slug-1/-2 (see plan OQ2).",
     "worktree": "feat-board-coord-intake",
     "branch": "feat-board-coord-intake",
-    "stacked_on": "feat-agent-board-coord-openrouter-qwen-qwen3-8-27b @ 09696ae57",
+    "stacked_on": "origin/main 5e35ba6da (re-cut 2026-10-25; previously stacked on feat-agent-board-coord-openrouter-qwen-qwen3-8-27b @ 09696ae57 — see recut)",
     "models": {
       "plan": "openrouter/qwen/qwen3.8-flash",
       "code": "openrouter/qwen/qwen3.8-flash"
@@ -36,7 +36,8 @@
     }
   },
   "current_wave": 1,
-  "updated_at": "2026-10-25T00:10:00Z",
+  "updated_at": "2026-10-25T00:40:00Z",
+  "reverification": "2026-10-25 base 5e35ba6da — plan re-verified, deltas D21–D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
     "research": "2026-10-24-feat-board-coord-intake-research.md",
@@ -86,8 +87,8 @@
   },
   "blocked": [],
   "deferred": [
-    "Live WeKan board mutations (AI-Dev structure incl. Low Priority + Research label, slug/session custom fields only \u2014 D12 drops the models field, 4 createCard rules, existing-card checklist backfill) \u2014 user-owned, execute the dated board-automation runbook only on explicit go-ahead; gated on the AI-Dev board existing (verified absent 2026-10-24: admin-global-wekan list_boards => only 'Projects').",
-    "Post-merge pin sequence (D17): M1 user merges C01 -> CI publishes wekan-mcp:v<RUN>; M2 pin-bump commit (gpu wekan-readonly/wekan-admin + dev boards refs to :v<RUN>, tests/dev-mcp-fleet/boards.sh c5 pre-generalized by agent-test); M3 merge -> ArgoCD recreates pods; verify tools/list == 25.",
+    "Live WeKan board mutations (AI-Dev structure incl. Low Priority + Research label, slug/session custom fields only \u2014 D12 drops the models field, 4 createCard rules, existing-card checklist backfill) \u2014 user-owned, execute the dated board-automation runbook only on explicit go-ahead; gated on the AI-Dev board existing (re-verified absent 2026-10-25: admin-global-wekan list_boards => only 'Projects') AND the dev mcp-boards MCPServer deploying (D23 residual, absent 2026-10-25).",
+    "Post-merge pin sequence (D17/D24): M1 user merges C01 -> CI publishes wekan-mcp:v<RUN>; M2 pin-bump commit (gpu wekan-readonly/wekan-admin + dev boards refs to :v<RUN>, tests/services/dev-mcp-fleet.sh t7 pre-generalized by agent-test); M3 merge -> ArgoCD recreates pods; verify tools/list == 25 on gpu wekan-admin and (once deployed) dev-boards.",
     "Session-link constant CLOSED 2026-10-24 (D20): SESSION_URL_BASE = https://openchamber--dev-thehackmeister-coder.dev.scifi.farm; links = <base>/?session=<id> \u2014 lands verbatim in the boards skill (C02).",
     "Merge/push to main (repo hard rule) \u2014 landing via user-created PR."
   ]

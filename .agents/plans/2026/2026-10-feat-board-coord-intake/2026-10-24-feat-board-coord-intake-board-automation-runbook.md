@@ -2,32 +2,52 @@
 
 **Execution owner: the user.** This runbook ships with the plan; every board
 mutation below is DEFERRED until the user gives an explicit go-ahead (plan
-decision D5). Steps 1–2 additionally require the AI-Dev board prerequisite to
-be in place — as of 2026-10-24 `list_boards` (admin-global-wekan) still
-returns only "Projects".
+decision D5). Steps 1–2 additionally require the AI-Dev board prerequisite
+(Step 0) to be in place — re-verified 2026-10-25: `list_boards`
+(admin-global-wekan) still returns only "Projects".
+
+Base note (re-cut 2026-10-25): the `dev-boards` MCP server's credential
+wiring is main-canonical — Bitwarden LOGIN item **`wekan-mcp`** (real UUID
+`d8e2b2ca-792d-4e0a-86ae-b4ed0122c21a` in `custom-values/dev/prod-values.yaml`),
+ExternalSecret `services/dev/prod/templates/secret-wekan-mcp.yaml`
+(username + password + URI field → `WEKAN_USERNAME`/`WEKAN_PASSWORD`/
+`WEKAN_BASE_URL`, login-mint in-pod). The old-base `dev-wekan-boards`
+placeholder + `WEKAN_TOKEN` approach is SUPERSEDED — see DECISIONS D23. The
+`boards` MCPServer is also not yet deployed cluster-side (D23 residual).
 
 Access for the scriptable steps: `admin-global-wekan` MCP tools (gpu tier,
 full write surface, same wekan.spencerslab.com instance the `dev-boards`
-server will use). After C01 lands and the Step 4 M-sequence runs (M1 merge
+server targets). After C01 lands and the Step 4 M-sequence runs (M1 merge
 → M2 pin `:v<run>` → M3 sync), the
 new tools (`create_custom_field`, `set_card_custom_field`,
 `delete_checklist_item`, …) appear there too — the runbook can then run on
 the gpu tier before `dev-boards` itself is connected.
 
-## Step 0 — Gate: board structure (user-owned prerequisite, still pending)
+## Step 0 — Gate: board structure + bot account (user-owned prerequisite, still pending)
 
 On `https://wekan.spencerslab.com`:
-1. Service/bot account `ai-dev-bot` (password-based; `WITH_API=true`
-   instance) — token stored as Bitwarden `dev-wekan-boards` (the upstream
-   ticket's placeholder must get a real UUID before `dev-boards` works).
+1. Password-based bot account (`WITH_API=true` instance) whose username +
+   password are the values stored in the `wekan-mcp` Bitwarden LOGIN item
+   (best-guess name `ai-dev-bot`), and whose **URI field** is
+   `https://wekan.spencerslab.com`. `dev-boards` logs in as this user —
+   verify mint works: a live `dev-boards` `list_boards` call once its
+   MCPServer is deployed. (The GPU `wekan-readonly`/`wekan-admin` servers
+   use the token path — a long-lived bearer from the same login; mint one
+   via `POST /users/login` if not already stored, and note re-mint does
+   NOT revoke old tokens, issue #1437.)
 2. Board **AI-Dev**, swimlane **In Process**, lists:
    **Not Started, Executing, Ready for Review, Rework, Finished, Low
    Priority** ← Low Priority is NEW for this redesign.
 3. Board label named **Research** (any color). This label marks
    research-only cards (§ boards skill).
-4. Add `ai-dev-bot` as a board member (write role).
-5. Verify: `list_boards` shows AI-Dev for the bot token; `list_lists`
-   returns the six lists; `list_swimlanes` returns In Process.
+4. Add the bot as a board member (write role — REST create-rule +
+   custom-field writes need board WRITE access).
+5. Verify: `list_boards` shows AI-Dev for the bot; `list_lists` returns
+   the six lists; `list_swimlanes` returns In Process.
+6. Dev-cluster residual (D23): deploy + health of the `mcp-boards`
+   MCPServer is a separate user-owned follow-up on the dev-mcp-fleet
+   track (absent as of 2026-10-25); the pipeline's live leg (`dev-boards`)
+   can't run until it exists. Repo-side chunks are NOT gated on it.
 
 ## Step 1 — Board-level custom fields: exactly TWO (`slug`, `session`)
 
@@ -91,16 +111,20 @@ open-ended deferral:
    `services/gpu/prod/values.yaml` `wekan-readonly` + `wekan-admin`,
    `services/dev/prod/values.yaml` `boards`. Keep
    `imagePullPolicy: Always` (still correct for an immutable tag; the
-   upstream test contract expects it). `tests/dev-mcp-fleet/boards.sh` c5
-   was already generalized by this ticket's agent-test
-   (`wekan-mcp:(main|v[0-9]+)`) — no test edit needed here.
+   upstream test contract expects it). `tests/services/dev-mcp-fleet.sh`
+   t7 (dev-boards image equality) was already generalized by this
+   ticket's agent-test to `wekan-mcp:(main|v[0-9]+)` — no test edit needed
+   here. After the pin, renovate's docker manager tracks further
+   `:v<run>` bumps (precedent: `renovate-mcp:v31`).
 3. **M3** — user merges M2 → ArgoCD syncs → the MCPServer CRD image change
    recreates the pods (no manual restart step).
 4. Verify: `admin-global-wekan` tools/list shows the 25 tools incl.
    `set_card_custom_field` and `delete_checklist_item`; one
    `get_card`/`list_custom_fields` round-trip.
 5. `dev-boards` (dev cluster) rides the same image; its first live use
-   still waits on Step 0's `dev-wekan-boards` real UUID.
+   waits on Step 0 items 1/6 — valid bot credentials in the `wekan-mcp`
+   LOGIN item (real UUID already wired) AND the `mcp-boards` MCPServer
+   being deployed (D23 residual, dev-mcp-fleet track).
 
 ## Step 5 — Maintenance hooks
 

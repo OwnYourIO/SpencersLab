@@ -142,6 +142,9 @@ bodies accepted — `server/apiMiddleware.js` installs `bodyParser.json()`):
   not connected (dev-wekan-boards Bitwarden item still a placeholder) —
   research inspection used gpu-tier `admin-global-wekan` /
   `readonly-global-wekan` as designed.
+  **[SUPERSEDED 2026-10-25 re-cut: main wires `dev-boards` to the
+  `wekan-mcp` LOGIN item with real UUID via login-mint — see §11 and
+  DECISIONS D23.]**
 
 ## 8. Deploy reality (wekan-mcp)
 
@@ -158,6 +161,10 @@ bodies accepted — `server/apiMiddleware.js` installs `bodyParser.json()`):
   green. Renovate does not track this image.
 - No pytest harness in `containers/wekan-mcp/` — validation = static
   (py_compile + tool-registry grep) + CI build + live check post-merge.
+  **[SUPERSEDED 2026-10-25 re-cut: main added
+  `tests/containers/wekan-mcp-login.sh` (mock-server contract) and the
+  fleet tests moved to `tests/services/dev-mcp-fleet.sh` — see §11,
+  DECISIONS D24/D25.]**
 
 ## 9. Repo surface being reworded (verified this branch @ 09696ae57)
 
@@ -230,3 +237,47 @@ Session-URL scheme (targeted investigation, per ticket allowance):
   StatefulSet) — the earlier "manual pod restart" step is superseded;
   `imagePullPolicy: Always` stays correct for an immutable tag.
 
+
+## 11. New-base verification (2026-10-25, origin/main 5e35ba6da → branch 8ef6a8056)
+
+- wekan-mcp: `grep -c '^@mcp.tool' == 11`, `'^@_write_tool' == 9` → **20
+  tools** (README + wekan-api SKILL say 20; re-cut launch said 27 — false,
+  D22). Zero `customField` occurrences. `_slim_card` at server.py L96;
+  READ/WRITE section headers at L146/L258 — C01's insertion points.
+- `wekan.py`: login-mint (precedence WEKAN_TOKEN > USERNAME+PASSWORD;
+  POST /users/login; bounded refresh-on-401; credentials never echoed);
+  client verbs get/post/put/delete + `user_id` unchanged (L225-228) → C01
+  interface pins hold on the newer client. New gate:
+  `tests/containers/wekan-mcp-login.sh` (mock http.server, imports only
+  wekan.py — keep green; C01 doesn't edit wekan.py).
+- dev boards entry (`services/dev/prod/values.yaml` ~L409): image
+  `wekan-mcp:main` + Always; env entirely from Secret `wekan-mcp`:
+  `WEKAN_BASE_URL`+`WEKAN_USERNAME`+`WEKAN_PASSWORD` — ExternalSecret
+  `services/dev/prod/templates/secret-wekan-mcp.yaml` reads ONE LOGIN item
+  (`bitwardenIds.wekan-mcp` = d8e2b2ca…, REAL in
+  `custom-values/dev/prod-values.yaml` L35) via `bitwarden-login` (username/
+  password) + `bitwarden-uri` (URI field = instance URL, "data not config"
+  user decision 2026-10-24). gpu stays token-only. `boards-mcp`/
+  `dev-wekan-boards` artifacts no longer exist (superseded).
+- tests layout: `tests/dev-mcp-fleet/` + `tests/agent-board-coord/` GONE;
+  fleet now `tests/services/dev-mcp-fleet.sh` (t7 pins dev-boards image ==
+  `wekan-mcp:main` strictly — D24 generalization target) + container login
+  contract `tests/containers/wekan-mcp-login.sh`. Old agent-board-coord
+  scripts reachable: `git show 09696ae57:tests/agent-board-coord/...`.
+- pipeline agents main-side convention: broad `dev*` allow
+  (agent-plan L78 etc.); ported agent-board-coord L76 `dev_boards*` —
+  adjudicated keep (D21).
+- `permissions.md`: grep `board-coord` == 0 (row lost in the re-cut);
+  `overview.md`: same — C04 merges back (D25). AGENTS.md's MCP table now
+  carries the combined `dev-<service> (playwright, renovate, searxng,
+  boards)` row — keep verbatim.
+- Live dev cluster (readonly-dev-kubernetes, 2026-10-25): MCPServer CRDs =
+  kubernetes×2, playwright, renovate, searxng (pods 5 min old); **no
+  mcp-boards**, no mcp-github CRD; wekan-mcp image pins `:main` on gpu +
+  dev. Home cluster: wekan still `ghcr.io/wekan/wekan:v9.99` (deployed-tag
+  claim re-confirmed). admin-global-wekan `list_boards` → still only
+  "Projects" — AI-Dev absent (unchanged gate).
+- README on main: credential bullet updated for login-mint; the
+  "Image: bumps the VERSION file … `:<version>` + `:latest`" bullet and
+  the layout `VERSION` line are STILL stale (README L32-33, L48-53) —
+  C01 task stays valid.

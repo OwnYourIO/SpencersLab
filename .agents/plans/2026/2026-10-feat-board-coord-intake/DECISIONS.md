@@ -157,3 +157,45 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   runbook Step 0–4).
 - 2026-10-24: OQ1–OQ10 closed in the batched round (D10–D19); D13 residual
   host closed by D20. Plan APPROVED 2026-10-24 (human, approval round).
+
+## Re-cut re-verification (2026-10-25, base origin/main 5e35ba6da)
+- 2026-10-25 plan D21 (adjudication of the re-cut's permission question):
+  agent-board-coord KEEPS the narrow `dev_boards*` allow. main's broad
+  `dev*` convention serves agents that actually consume fleet tooling
+  (playwright/renovate/searxng); board-coord's MCP surface is card
+  intake/exit ONLY. Least privilege + the upstream ticket's
+  user-confirmed scoping ruling survive. agent frontmatter stays
+  byte-identical through C03 (test asserts narrow present, broad absent).
+- 2026-10-25 plan D22 (fact correction): the re-cut launch message claims
+  "server.py still has 27 tools"; VERIFIED FALSE — new base registers
+  exactly 20 (11 `@mcp.tool` + 9 `@_write_tool`, grep; README and
+  wekan-api SKILL concur, zero `customField` matches). C01's 20→25 math
+  and all pinned names STAND. Downstream agents: trust the grep, not the
+  handoff number.
+- 2026-10-25 plan D23 (prerequisites re-cut): the old plan's Bitwarden
+  `dev-wekan-boards` placeholder prerequisite is SUPERSEDED by main's
+  wiring — `wekan-mcp` LOGIN item with REAL UUID d8e2b2ca-792d-4e0a-86ae-
+  b4ed0122c21a (custom-values/dev L35), username+password+URI fields,
+  login-mint ExternalSecret; boards-mcp secret/ES template gone. New
+  residuals: (a) the item's credentials are a valid password-based WeKan
+  account pointing its URI at wekan.spencerslab.com, (b) `mcp-boards`
+  MCPServer actually DEPLOYS on dev (absent cluster-side 2026-10-25 while
+  playwright/renovate/searxng CRDs came up ~5 min prior — dev-mcp-fleet's
+  C03 fix-round in flight on main; re-check at M-time, out of this
+  ticket's control).
+- 2026-10-25 plan D24 (M-sequence adjustment to the new test layout):
+  D17's principle stands; the generalization target moves from the
+  deleted `tests/dev-mcp-fleet/boards.sh` c5 to
+  `tests/services/dev-mcp-fleet.sh` t7 (dev-boards image equality) —
+  agent-test accepts `wekan-mcp:(main|v[0-9]+)` now, other fleet images
+  stay strict. Post-pin, renovate's docker manager tracks `:v<run>` bumps
+  (pattern precedent: `renovate-mcp:v31`, no annotation required).
+- 2026-10-25 plan D25 (test/permissions surface regression on the new
+  base): `tests/agent-board-coord/` and the permissions.md board-coord
+  row are ABSENT on main (not part of the port). agent-test RECREATES
+  both scripts as supersets (reference reachable at
+  `git show 09696ae57:tests/agent-board-coord/<name>.sh`); C04 MERGES the
+  matrix row + roster + pipeline bullet into main's diverged files,
+  keeping main's combined `dev-<service>` table row verbatim. C01 gains
+  the `tests/containers/wekan-mcp-login.sh` regression gate (login-mint
+  client untouched by the tool additions).
