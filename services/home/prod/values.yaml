@@ -264,16 +264,6 @@ ingress:
       service: traefik
       port: 80
 
-# WeKan's database, owned by the umbrella: wekan chart >= 10.86 installs no
-# database of its own, and ArgoCD prunes anything these manifests stop
-# rendering, so this keeps the live home-mongodb StatefulSet in the app.
-# Pinned to render byte-identical to what wekan chart 9.99.0 shipped.
-mongodb:
-  image:
-    tag: 7.0.34
-  storage:
-    requestedSize: 2Gi
-
 # Have to split wekan into 2 pods to handle 2 urls. 
 wekan:
   root_url: OVERRIDE_VIA_CUSTOM_VALUES
