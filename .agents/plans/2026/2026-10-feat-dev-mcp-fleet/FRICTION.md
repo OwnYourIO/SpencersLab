@@ -27,3 +27,9 @@ Friction = anything an agent could not find or had no access to, crashes/tool/MC
 - open: post-sync endpoint verification tools/list mcp.dev.scifi.farm/{playwright,renovate,searxng,boards}/mcp; boards :v<run> pin after first CI build replaces :main if operator prefers pinning.
 - open: aislop `scan` is directory-only and its language set excludes YAML/bash, so file-level evidence for values/templates isn't obtainable — workaround: `scan --changes` (repo-wide) + manual comment-slop audit of added lines.
 - open: this branch's SHAs diverge from main's cherry-picked copies (branch rebased mid-run); treat `main..HEAD` as provenance only, never merge it into main.
+
+## 2026-10-25 dev-boards post-sync failure (live-cluster diagnosis, C03 reopened)
+- ROOT CAUSE (evidence: ArgoCD `dev-hivetools` operationState=Failed "failed to create typed patch object (default/mcp-boards; MCPServer): .spec.secrets: duplicate entries for key [name=wekan-mcp]" + toolhive MCPServer CRD `x-kubernetes-list-type: map` keyed by `name`): C03's boards entry referenced the `wekan-mcp` Secret three times in `spec.secrets[]` — one Secret name may appear only ONCE. MCPServer was never admitted; ingress `/boards` routes to a nonexistent proxy service, so the client catalog shows no dev-boards.
+- Rule to remember: a hivetools MCP server needing MULTIPLE keys from one Secret uses `podTemplateSpec` container `envFrom.secretRef` (gpu `homeassistant` precedent), NOT repeated `secrets[]` entries. Repo-wide sweep: dev-boards was the sole offender.
+- Ruled out with evidence: image (`:main`==`:v55` carries the C02 login code), Bitwarden item (`wekan-mcp` ES Ready/SecretSynced), ingress route (present), runtime crash (no pod ever created).
+- Still unverifiable cluster-side after the fix: the item's URI value (empty vs populated — SecretSynced cannot tell), service-account validity, `WITH_API=true` on the target instance.
