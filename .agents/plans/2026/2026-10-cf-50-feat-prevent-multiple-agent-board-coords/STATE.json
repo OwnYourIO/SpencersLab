@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords",
-  "plan_status": "complete",
+  "plan_status": "draft",
   "coord_session": "ses_e8ec41e70ffe1oeW8kKnugIfwF",
   "test_session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
   "current_wave": 2,
-  "updated_at": "2026-10-25T13:07:36.394150+00:00",
+  "updated_at": "2026-10-25T13:42:10.769906+00:00",
   "kickoff": {
     "card": "j6iuM5XnhrJdi5YEL",
     "cardNumber": 50,
@@ -109,6 +109,18 @@
         }
       ],
       "dev_session": "ses_e8e73b7ebffetiRK8xgjAM47HJ"
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "Round 2 (user change request 2026-10-25): dynamic session-origin. PRECONDITIONS before test/dev: (1) agent-research round RQ1-RQ3 lands RESEARCH.md (mechanism best-guess VSCODE_PROXY_URI command-!-block is NOT yet proven cross-coder - declared research need per launch instruction); (2) batched OQ-R1..R5 round answered + plan rework; (3) test session re-pins t12/t14/c12/c7 + writes t18/t19. Round-2 CHUNK_BASE = 72500166a."
     }
   },
   "blocked": [],
@@ -119,5 +131,52 @@
     "verdict": "APPROVED",
     "session": "ses_e8cd97405ffeS9S3m20buZ60gv",
     "at": "2026-10-25T13:07:36.394150+00:00"
+  },
+  "round2": {
+    "requested_at": "2026-10-25T13:22:18.626354+00:00",
+    "summary": "SESSION_URL_BASE (boards skill Config constants) must not be hardcoded; resolve dynamically (opencode skill/docs first, agent-research round if not enough). User feedback on card #50 in Review.",
+    "prior_final_review": "APPROVED (round 1 shipped C01+C02)",
+    "plan_replanned_at": "2026-10-25T13:40:48+00:00",
+    "plan_sections": "plan-of-record ROUND 2 section + chunks/C03.md + DECISIONS D18-D21(r2)",
+    "round2_base": "72500166a",
+    "mechanism_best_guess": "Session origin: !-block in both board commands; base = VSCODE_PROXY_URI with {{port}} -> openchamber app slug, lowercased; link shape $(SESSION_URL_BASE)/?session=<id> unchanged; UNRESOLVED -> no links + RESULT flag (fail-closed). Evidence + rejected candidates in plan ROUND 2 mechanism survey; DECISIONS D19 (r2).",
+    "research_needed": true,
+    "research_questions": {
+      "RQ1": "Dev-cluster coder (coder.dev.scifi.farm) parity: VSCODE_PROXY_URI injected for board-coord-capable workspaces there; coderd accepts agent-labelled named app subdomains (303 normalize); *-coder.dev.scifi.farm reachable + auth round-trip for an authenticated human via proxy-remote chain.",
+      "RQ2": "OpenChamber's own public-address mechanism (integrations post session links 'when the instance has a public address' - intake research section 10): where is that address configured/stored; is it agent-readable; does it beat env-derivation as the primary source.",
+      "RQ3": "Port-label fallback ({{port}} -> run-state port) vs named-app host: coderd subdomain-proxy auth posture per form (workspace-proxy RBAC vs app share=owner) and whether /?session= deep links render identically behind each."
+    },
+    "open_questions_pending_round": [
+      "OQ-R1 mechanism carrier + host form (best: identical block in BOTH commands, named-app slug)",
+      "OQ-R2 fail-closed posture (best: proceed card work, skip link writes, RESULT flag)",
+      "OQ-R3 fold minor-1 or keep separate (best: keep separate - user scope option)",
+      "OQ-R4 claim comment when UNRESOLVED (best: omit session line)",
+      "OQ-R5 which instance humans click (best: moot by construction)"
+    ],
+    "pins_repin_set": [
+      "gate.sh t12 (freeze-set carve-out)",
+      "gate.sh t14 scope allow-set",
+      "rulesync-surface.sh c12 (literal -> dynamic+negative)",
+      "agents-md.sh c7 scope allow-set",
+      "NEW gate.sh t18/t19"
+    ],
+    "pins_hold_set": [
+      "gate.sh t1..t10",
+      "t13 Current-state block byte-equality",
+      "t15/t16/t17",
+      "t11 (additive-safe)",
+      "rulesync-surface c8 + all content checks",
+      "agents-md.sh c1..c6/c8",
+      "agent-board-coord src+gen untouched (token text survives)",
+      "gate script untouched",
+      "AGENTS.md untouched",
+      "WeKan card #50 historical comments untouched"
+    ],
+    "plan_handoff": {
+      "role": "plan",
+      "session": "ses_e8cc5bce0ffevNcYgwMsUHS59Y",
+      "at": "2026-10-25T13:42:10.769906+00:00",
+      "result": "RESULT\nstatus: DONE\nchunk: plan (round 2)\nfiles_changed: [plan file ROUND 2 section, DECISIONS.md D18-D21(r2), STATE.json (C03 pending wave3, plan_status draft, round2.replan), chunks/C03.md (new)]\ncommands_run: [env survey + VSCODE_PROXY_URI probe => evidence; curl derived-named-host => 303 auth-redirect recognized; dev host => 400 (matches intake research); opencode-server/OpenChamber run-state probes => loopback-only; pin-inventory greps => re-pin set t12/t14/c12/c7 + new t18/t19; STATE.json round-trip => valid; git status => plan-folder-only]\ndeviations: RESEARCH NEED DECLARED (user-sanctioned hop) \u2014 best-guess mechanism (VSCODE_PROXY_URI-expanded Session origin !-block in both commands; named-app host) is grounded but dev-coder parity, OpenChamber's own public-address source, and port-label vs named proxy posture remain unproven from repo vantage. C03 is PRECONDITIONED on RESEARCH.md + the batched OQ round; research refines pins only, never re-shapes the contract. No commit by planner (coord commits folder).\nfriction: none new.\nopen_questions: OQ-R1 carrier/host form (best: identical block in BOTH commands, named-app host). OQ-R2 unresolved-origin posture (best: proceed card work, write no links, RESULT flag). OQ-R3 fold minor-1 into C03 (best: keep separate). OQ-R4 claim comment when unresolved (best: omit session line). OQ-R5 which instance humans click (best: moot by construction, per-run origin). Research questions for coord: RQ1 dev-coder VSCODE_PROXY_URI + subdomain parity + human reachability; RQ2 OpenChamber native public-address mechanism; RQ3 port-label vs named-proxy auth posture + deep-link rendering.\nnext_suggested: commit folder -> agent-research (RQ1-RQ3) -> relaunch plan session with RESEARCH.md + batched answers -> user approval -> agent-test re-pin (t12/t14/c12/c7, new t18/t19) -> C03 dev -> review with live origin control -> final re-review."
+    }
   }
 }
