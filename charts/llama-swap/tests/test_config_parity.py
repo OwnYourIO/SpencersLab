@@ -197,12 +197,29 @@ def test_c02_2_per_model_fields_deep_equal(cluster):
     test_cr5_ladder_descriptions_mention_tag), and a user-reviewed per-id
     before/after display table gating the PR (plan CR5 bar 2). IDs, aliases,
     cmd tokens (P2 above — untouched), echo byte-strings (P3), P4/P5/P6 stay
-    UNBENTED golden pins."""
-    golden = L.model_tokens(L.all_models_of(L.golden_config(cluster)))
-    fresh = L.model_tokens(L.all_models_of(L.rendered_config(cluster)))
+    UNBENTED golden pins.
+
+    C01 proxy supersession (amendment §7sexies, 2026-10-25): the golden pinned
+    `proxy: http://localhost:${PORT}` on its echo entries — the pre-check
+    binary's tolerance, not a load-safety truth (DECISIONS falsified
+    assumption 2). The validator-bearing binary rejects a ${PORT} proxy on a
+    portless cmd, so `proxy` leaves THIS comparison for exactly the entries
+    whose fresh render is echo-shaped (at handoff: the 3 GPU_DISABLED_IDS
+    survivors on gpu); live entries and every other field stay UNBENTED.
+    COMPENSATED, not bare: test_boot_safety.py owns the fresh-side proxy bar
+    (effective proxy ${PORT}-free on every echo entry; red on gpu at
+    handoff, names C02)."""
+    golden_raw = L.all_models_of(L.golden_config(cluster))
+    fresh_raw = L.all_models_of(L.rendered_config(cluster))
+    golden = L.model_tokens(golden_raw)
+    fresh = L.model_tokens(fresh_raw)
     problems = []
     for mid in sorted(set(golden) & set(fresh) - set(L.REMOVED_IDS)):  # P2 fields half
         g_rest, f_rest = _strip_display(golden[mid]["rest"]), _strip_display(fresh[mid]["rest"])
+        if L.is_echo_cmd(fresh_raw[mid].get("cmd") or ""):
+            # §7sexies carve — see docstring supersession paragraph.
+            g_rest = {k: v for k, v in g_rest.items() if k != "proxy"}
+            f_rest = {k: v for k, v in f_rest.items() if k != "proxy"}
         if g_rest != f_rest:
             problems.append(f"{mid}: {_first_diff_key(g_rest, f_rest)}")
     assert not problems, f"{cluster}: per-model field divergence:\n" + "\n".join(problems)

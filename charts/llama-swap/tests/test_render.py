@@ -156,7 +156,14 @@ def test_gpu_ai_tools_container_enabled_with_token(gpu_ai_values):
     assert names == ["main", "tools"]
 
     tools = next(c for c in dep["spec"]["template"]["spec"]["containers"] if c["name"] == "tools")
-    assert tools["image"] == "python:3.12.15-slim-bookworm"
+    # §7sexies amendment (2026-10-25): the pin follows the chart's managed
+    # image — renovate is the source of truth for the tag (the hardcoded
+    # 3.12.15 went stale on renovate bump dbaaadced; values-derived form
+    # keeps it live across future bumps). Intent unchanged: the tools
+    # sidecar uses the chart-pinned python image.
+    tools_img = yaml.safe_load((CHART_DIR / "values.yaml").read_text())[
+        "app-template"]["controllers"]["llama-swap"]["containers"]["tools"]["image"]
+    assert tools["image"] == f"{tools_img['repository']}:{tools_img['tag']}"
     assert tools["command"] == ["sleep", "infinity"]
     env = {e["name"]: e for e in tools.get("env", [])}
     assert env["HF_TOKEN"]["valueFrom"]["secretKeyRef"] == {"name": "hf-token", "key": "token"}

@@ -144,6 +144,30 @@ def rendered_config(cluster: str) -> dict:
     return configmap_data(cluster, "llama-swap-config", "config.yaml")
 
 
+@functools.lru_cache(maxsize=None)
+def _render_default_docs() -> tuple:
+    """docs of the chart-values-only render (NO service overlay) — the
+    'default' leg of the boot-safety invariant (CA2 full-catalog default-
+    disabled: every rendered entry is an echo)."""
+    cmd = [
+        "helm", "template", "llama-swap", str(CHART_DIR),
+        "--set", "domain=spencerslab.com",
+        "--set", "clusterName=default",
+    ]
+    out = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    if out.returncode != 0:
+        raise AssertionError(f"helm template failed for default:\n{out.stderr}")
+    docs = tuple(d for d in yaml.safe_load_all(out.stdout) if d)
+    return tuple(_freeze(d) for d in docs)
+
+
+def rendered_config_default() -> dict:
+    for doc in _thaw(_render_default_docs()):
+        if doc.get("kind") == "ConfigMap" and doc.get("metadata", {}).get("name") == "llama-swap-config":
+            return yaml.safe_load(doc["data"]["config.yaml"])
+    raise AssertionError("llama-swap-config not rendered for default")
+
+
 def golden_config(cluster: str) -> dict:
     path = GOLDEN_DIR / f"{cluster}.config.yaml"
     assert path.exists(), f"golden fixture {path} missing — fixture breakage, not a code red"
@@ -187,6 +211,130 @@ def model_tokens(cfg_models: dict) -> dict[str, dict]:
         rest = {k: v for k, v in m.items() if k != "cmd"}
         out[mid] = {"cmd": cmd_tokens(m.get("cmd", "")), "rest": rest}
     return out
+
+
+# ---------------------------------------------------------------------------
+# macros.go port-rule simulation (C01 boot-safety contract, 2026-10-25)
+# ---------------------------------------------------------------------------
+#
+# The deployed llama-swap (unified-vulkan-262 rebuild .. v266) hard-fails
+# config load with `proxy uses ${PORT} but cmd does not`; macros.go is
+# byte-identical across the v262-v266 source tarballs (verified 2026-10-25),
+# and there is no docker in this env, so this offline simulation is the
+# pre-merge boot proof (the never-run `-validate` replacement).
+#
+# Faithful to internal/config/macros.go resolveConfigMacros, step for step:
+# StripComments on cmd/cmdStop BEFORE expansion, the default proxy injected
+# for models without one BEFORE the rule, mergeModelMacros +
+# substituteMacroList, then the ${PORT} test on the EXPANDED strings.
+
+# MODEL_CONFIG_DEFAULT_PROXY (internal/config/model_config.go:11). A model
+# without a proxy key is given this BEFORE the port rule runs
+# (macros.go:127-129) — so key absence is not an escape from the rule; the
+# only escape for a ${PORT}-less cmd is an explicit ${PORT}-free proxy.
+LLAMA_SWAP_DEFAULT_PROXY = "http://localhost:${PORT}"
+
+
+def strip_cmd_comments(cmd: str) -> str:
+    """macros.go StripComments (commands.go): comment lines drop before macro
+    expansion, so a ${PORT} inside a cmd comment is not a port request."""
+    return "\n".join(ln for ln in cmd.split("\n") if not ln.strip().startswith("#"))
+
+
+def _go_macro_str(value) -> str:
+    """fmt.Sprintf("%v", v) for the scalar macro values llama-swap allows
+    (string, int, float, bool — validateMacro)."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return format(value, "g")
+    raise AssertionError(f"macro value must be scalar, got {type(value)}: {value!r}")
+
+
+def merge_model_macros(model_id, global_macros, model_macros):
+    """mergeModelMacros (macros.go:236): MODEL_ID first, then global macros in
+    declaration order; a model-level entry OVERRIDES a same-named global in
+    place (keeping the global's position), otherwise appends."""
+    merged = [("MODEL_ID", model_id)] + list(global_macros)
+    for name, value in model_macros:
+        for i, (existing, _) in enumerate(merged):
+            if existing == name:
+                merged[i] = (name, value)
+                break
+        else:
+            merged.append((name, value))
+    return merged
+
+
+def _substitute_macro_in_value(value, name, macro_value):
+    slug = f"${{{name}}}"
+    macro_str = _go_macro_str(macro_value)
+    if isinstance(value, str):
+        if value == slug:
+            return macro_value
+        return value.replace(slug, macro_str) if slug in value else value
+    if isinstance(value, dict):
+        return {k: _substitute_macro_in_value(v, name, macro_value) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_substitute_macro_in_value(v, name, macro_value) for v in value]
+    return value
+
+
+def substitute_macro_list(value, macros):
+    """substituteMacroList (macros.go:257): reversed declaration order, so a
+    macro value may reference only macros declared earlier than it."""
+    for name, macro_value in reversed(macros):
+        value = _substitute_macro_in_value(value, name, macro_value)
+    return value
+
+
+def effective_proxy(cfg: dict, model_id: str) -> str:
+    """The proxy string as the binary sees it at the port rule: binary default
+    when the key is absent/null, user macros expanded (same merge/substitute
+    pipeline as the cmd). Non-string results render via _go_macro_str (Go
+    fmt %v), as the Go string-conversion would."""
+    model = dict((cfg.get("models") or {}).get(model_id) or {})
+    model_macros = list((model.pop("macros", None) or {}).items())
+    proxy = model.get("proxy")
+    if proxy is None:
+        proxy = LLAMA_SWAP_DEFAULT_PROXY
+    macros = merge_model_macros(model_id, list((cfg.get("macros") or {}).items()), model_macros)
+    resolved = substitute_macro_list(proxy, macros)
+    return resolved if isinstance(resolved, str) else _go_macro_str(resolved)
+
+
+def port_rule_violations(cfg: dict) -> list[str]:
+    """Every model id the deployed binary rejects with `proxy uses ${PORT} but
+    cmd does not` (macros.go:182-184 — checked AFTER comment strip, default
+    proxy injection and user-macro expansion). Go stops at the first
+    violator; this enumerates all of them so a failure names every broken
+    entry instead of one of twenty-four."""
+    global_macros = list((cfg.get("macros") or {}).items())
+    models = cfg.get("models") or {}
+    violations = []
+    for model_id in sorted(models):
+        model = models.get(model_id)
+        if not isinstance(model, dict):
+            continue
+        model = dict(model)
+        model_macros = list((model.pop("macros", None) or {}).items())
+        if isinstance(model.get("cmd"), str):
+            model["cmd"] = strip_cmd_comments(model["cmd"])
+        if isinstance(model.get("cmdStop"), str):
+            model["cmdStop"] = strip_cmd_comments(model["cmdStop"])
+        model = substitute_macro_list(model, merge_model_macros(model_id, global_macros, model_macros))
+        cmd = model.get("cmd")
+        proxy = model.get("proxy")
+        cmd_str = cmd if isinstance(cmd, str) else ""
+        proxy_str = LLAMA_SWAP_DEFAULT_PROXY if proxy is None else proxy
+        proxy_str = proxy_str if isinstance(proxy_str, str) else _go_macro_str(proxy_str)
+        if "${PORT}" in proxy_str and "${PORT}" not in cmd_str:
+            violations.append(model_id)
+    return violations
 
 
 # ---------------------------------------------------------------------------

@@ -699,3 +699,137 @@ Audit note (acceptance 5): zero assertion-scope change to KEPT surface —
 test_config_parity.py and test_new_roster.py untouched by this session's round
 (diff-verified); schema additions are the two re-homed guards only; every other
 ledger line is a retirement or re-home.
+
+
+## 7sexies. C01 boot-safety contract — macros.go port-rule simulation + amendments (test session, 2026-10-25)
+
+Ticket: `.agents/plans/2026/2026-10-bug-llama-swap-echo-proxy-port/` — C01 is
+executed ONLY by this ticket's agent-test session (immutable-tests rule, DECISIONS
+conventions). Verified baseline on main @90e660569 (re-run this session,
+helm v3.16.4 + app-template 5.0.1): **1 failed / 118 passed / 1 skipped** —
+the single red is `test_render.py::test_gpu_ai_tools_container_enabled_with_token`
+(renovate drift), matching the plan's verified baseline.
+
+* **(N1) NEW `test_boot_safety.py` — invariant + echo pin (5 cases).**
+  - `test_c01_port_rule_invariant[default|gpu|gpu-ai]`: deterministic offline
+    python simulation of the deployed binary's `internal/config/macros.go`
+    port rule (byte-identical v262–v266 — tarballs diffed this session) over
+    the FULL rendered config of each leg: StripComments on cmd/cmdStop,
+    **default-proxy injection**, mergeModelMacros (MODEL_ID first + global +
+    entry-level overrides in place), substituteMacroList (reversed
+    declaration order), then the `${PORT}` test on the EXPANDED strings
+    (macros.go:182-184). Go stops at the first violator; the test enumerates
+    EVERY violating id (plan requirement; diagnosability of a 24-entry
+    crash-loop). This is the pre-merge boot proof that replaces the never-run
+    docker `-validate` (plan "Acceptance caveat").
+  - `test_c01_echo_entries_proxy_is_port_free[gpu|gpu-ai]` (the plan's
+    "proxy-absent" leg, re-expressed — see FIDELITY NOTE): every echo-shaped
+    entry (`testlib is_echo_cmd`) must carry a macro-EXPANDED proxy with NO
+    `${PORT}`. This is the compensating leg of the N2 excision (an excision
+    is never bare — §7quater P precedent), scoped to exactly the golden∩fresh
+    echo set's superset (24 gpu echoes ⊇ the 3 golden survivors).
+
+* **FIDELITY NOTE (plan impact — recorded for coord/user; the contract pins
+  the PROPERTY, the plan owns the mechanism).** `macros.go:127-129`
+  (byte-identical in ALL of v262–v266) injects `MODEL_CONFIG_DEFAULT_PROXY =
+  "http://localhost:${PORT}"` (model_config.go:11) into every model WITHOUT a
+  `proxy` key BEFORE the port rule — and upstream's own test
+  `config_test.go:228` ("Proxy value required if no ${PORT} in cmd", present
+  in v262 AND v266) proves a key-less model whose cmd lacks `${PORT}` fails
+  with exactly the incident error. Consequences:
+  - the planned C02 mechanism ("echo entries render WITHOUT a proxy key")
+    leaves the config unloadable: key absent → default proxy injected →
+    `${PORT}` in proxy, none in cmd → the same crash-loop. A simulation
+    that skipped the injection would certify a still-broken box; the
+    invariant (N1) includes the injection precisely so that cannot ship
+    green.
+  - the echo pin therefore asserts the binary-acceptable property — an
+    explicit, post-expansion `${PORT}`-FREE proxy on every echo entry —
+    instead of key absence, which is the one state the rule rejects
+    unconditionally for a portless cmd. The literal choice (e.g.
+    `proxy: "none"` — url.Parse-safe at load.go:188, runtime-inert:
+    doStart runs the cmd first, so the fail-fast echo UX is preserved) is
+    plan-owned; the test is satisfiable by any such choice and by no
+    other state.
+  - plan wording needing update to match (bars unchanged): C02 acceptance 4
+    ("exactly 24 proxy lines removed" → 24 proxy lines REPLACED with an
+    explicit `${PORT}`-free value) and the C02 note "Dropping proxy from
+    echo entries also stops llama-swap allocating ports … matches
+    pre-check intent" (allocation stops only via the explicit value —
+    absence re-triggers the default).
+  - DECISIONS should record the disproven assumption 3 (planned shape
+    insufficient) alongside 1 and 2 when coord touches it.
+
+* **(N2) `test_config_parity.py::test_c02_2_per_model_fields_deep_equal` —
+  golden-proxy supersession carve.** OLD: every non-cmd key except display
+  text (ttl/PROXY/aliases/capabilities/checkEndpoint/filters/env) deep-equal
+  vs golden. NEW: for EXACTLY the entries whose fresh render is echo-shaped,
+  `proxy` is excised from both sides; everything else is VERBATIM — every
+  other field on every entry, the proxy deep-equal on LIVE entries, the P2
+  cmd-token machinery (`cmd_tokens`/`model_tokens`), and the P3
+  byte-identical-echo test (diff-audited: the sole hunks sit inside this one
+  function; zero bytes changed elsewhere in the file). Scope at handoff: the
+  3 golden survivors GPU_DISABLED_IDS ⊂ GPU_ECHO_IDS —
+  qwen3.6-35b-a3b-bf16, qwen3.6-35b-a3b-1m, qwen3-vl-30b-a3b-bf16 — the only
+  golden∩fresh entries where the golden pins `proxy: http://localhost:${PORT}`
+  on an echo (the other 3 pre-replan golden echoes left with REMOVED_IDS;
+  the gpu-ai golden has no echoes). This is the EXPLICIT RECORDED
+  SUPERSESSION (DECISIONS falsified-assumption 2): the golden's echo proxy
+  lines encode the pre-check binary's tolerance, not a validator-checked
+  truth; the carve is compensated by the N1 echo pin, which asserts the
+  post-expansion property on all 24 gpu echoes — a strict superset of the 3.
+  The chunk's "fresh-side absent-assert leg RED in this loop on gpu" is
+  allocated to the dedicated N1 pin instead: under that allocation the
+  loop stays green at handoff (the carve is a no-op while fresh proxy ==
+  golden proxy), which is the ONLY allocation consistent with the plan's
+  handoff bar (3 reds, none named this test); same "red names the owning
+  chunk" pattern as §7bis P5.
+
+* **(N3) `test_render.py::test_gpu_ai_tools_container_enabled_with_token` —
+  stale python tag.** OLD: `assert tools["image"] ==
+  "python:3.12.15-slim-bookworm"` — out-dated by renovate bump dbaaadced
+  (values carry `python:3.15.1-slim-bookworm`); the verified main-branch red.
+  NEW: the assertion reads the chart's managed pin — `f"{repository}:{tag}"`
+  from `values.yaml →
+  app-template.controllers.llama-swap.containers.tools.image` — so a future
+  renovate bump cannot re-out-date the test (DECISIONS 2026-10-25: renovate
+  is the source of truth for managed tags; the test follows the chart, never
+  the reverse). Intent unchanged: the tools sidecar uses the chart-pinned
+  python image. Grep of the suite: this was the ONLY hardcoded image tag;
+  NO test pins the main llama-swap image (grep-verified, as C03's chunk
+  states), so C03's tag change cannot reopen a red.
+
+RED/GREEN classification at handoff (verified by full-suite run, gates off):
+  RED — all three implementation-missing, all naming C02, zero harness errors:
+  - `invariant[default]` — 58 violators == CATALOG_IDS (the full-catalog
+    default-disabled render: every entry an echo)
+  - `invariant[gpu]` — 24 violators == GPU_ECHO_IDS exactly
+  - `echo-pin[gpu]` — the same 24, enumerated
+  GREEN:
+  - `invariant[gpu-ai]` — 58 live: 56 composed cmds carry `${server-cmd}`
+    whose value holds `--port ${PORT}`; whisper-large-v3 + qwen38-rana raw
+    cmds carry literal `--port ${PORT}` (probed this session)
+  - `echo-pin[gpu-ai]` — vacuous (no echo entries)
+  - `deep-equal[gpu|gpu-ai]` — preservation (carve is a no-op at handoff)
+  - `test_gpu_ai_tools_container_enabled_with_token` — amended (N3)
+  - every other baseline green — zero collateral
+
+Exact post-amendment arithmetic (plan invariants: verified baseline, zero
+new skips, C02-done == 0 failures):
+  baseline        1f / 118p / 1s          (120 collected; verified this session)
+  + N1            +3 invariant, +2 echo-pin (F: invariant[default],
+                                            invariant[gpu], echo-pin[gpu];
+                                            P: invariant[gpu-ai], echo-pin[gpu-ai])
+  + N3            baseline 1f → 1p
+  handoff (C01)   **3f / 121p / 1s**      (125 collected — MATCHES THE PLAN)
+  C02 done        the 3 reds flip         **0f / 124p / 1s** (== C02
+                                            acceptance-1 bar, unchanged by
+                                            the FIDELITY NOTE)
+
+Goldens: `git diff -- charts/llama-swap/tests/golden` EMPTY (re-verified
+this session). P3 byte-pin + P2 token machinery byte-identical (diff
+audited). Files touched: `test_boot_safety.py` (NEW),
+`llama_swap_testlib.py` (additions only — default-render helper + simulation;
+148 insertions / 0 deletions), `test_config_parity.py` (N2),
+`test_render.py` (N3). No source file touched; nothing under
+`.agents/plans/`.
