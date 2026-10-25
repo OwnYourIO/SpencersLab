@@ -1,47 +1,116 @@
 {
     "child": {
         "child1": {
-            "directory": "",
-            "height": 1361,
-            "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-0 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-0ccb84d1-61cb-4d84-85aa-d9b5ed44d4d5_default_idx-seaweedfs-volume-0\/ && bash\"",
-            "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
-            "readOnly": false,
-            "synchronizedInput": true,
-            "title": "${id}: ${title}",
-            "type": "Terminal",
-            "uuid": "80806a06-1b77-4221-8691-9b059235c6a8",
-            "width": 434
-        },
-        "child2": {
             "child1": {
                 "directory": "",
                 "height": 1361,
-                "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-1 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-b6297b53-6c13-4f54-9786-4438f80d8f6f_default_idx-seaweedfs-volume-1 && bash\"",
+                    "overrideCommand": "ssh -t root@infra.spencerslab.com \"bash\"",
                 "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
                 "readOnly": false,
-                "synchronizedInput": true,
-                "title": "${id}: ${title}",
+                "synchronizedInput": false,
                 "type": "Terminal",
-                "uuid": "9292217b-31bc-4540-a220-e72743a01690",
-                "width": 732
+                "uuid": "7a507c69-739c-4e18-89b1-3e042d3a53c7",
+                "width": 601
             },
             "child2": {
                 "child1": {
                     "directory": "",
-                    "height": 1361,
-                    "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-2 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-83698893-00cc-46d5-bf93-be482b8a0728_default_idx-seaweedfs-volume-2 && bash\"",
+                    "height": 680,
+                    "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-0 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-0ccb84d1-61cb-4d84-85aa-d9b5ed44d4d5_default_idx-seaweedfs-volume-0\/ && bash\"",
                     "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
                     "readOnly": false,
                     "synchronizedInput": true,
                     "title": "${id}: ${title}",
                     "type": "Terminal",
-                    "uuid": "af398bd3-abdf-4670-aee2-767395878562",
-                    "width": 632
+                    "uuid": "80806a06-1b77-4221-8691-9b059235c6a8",
+                    "width": 601
+                },
+                "child2": {
+                    "directory": "",
+                    "height": 680,
+                    "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-4 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-a4463eb5-f3a6-4316-98dd-39d70cb27b61_default_idx-seaweedfs-volume-4 && bash\"",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "8249351a-6972-41cc-bcea-bb84ded7f1e8",
+                    "width": 601
+                },
+                "orientation": 1,
+                "position": 49,
+                "ratio": 0.499632623071271098,
+                "type": "Paned"
+            },
+            "orientation": 0,
+            "position": 17,
+            "ratio": 0.499584372402327503,
+            "type": "Paned"
+        },
+        "child2": {
+            "child1": {
+                "child1": {
+                    "directory": "",
+                    "height": 680,
+                    "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-1 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-b6297b53-6c13-4f54-9786-4438f80d8f6f_default_idx-seaweedfs-volume-1 && bash\"",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "title": "${id}: ${title}",
+                    "type": "Terminal",
+                    "uuid": "9292217b-31bc-4540-a220-e72743a01690",
+                    "width": 619
+                },
+                "child2": {
+                    "directory": "",
+                    "height": 680,
+                    "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-5 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-44585f98-301e-409e-984e-dd3c3641b9e8_default_idx-seaweedfs-volume-5\/ && bash\"",
+                    "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                    "readOnly": false,
+                    "synchronizedInput": true,
+                    "type": "Terminal",
+                    "uuid": "fb5278a5-7fee-41cc-bb7f-d98a0b1a9272",
+                    "width": 619
+                },
+                "orientation": 1,
+                "position": 49,
+                "ratio": 0.499632623071271098,
+                "type": "Paned"
+            },
+            "child2": {
+                "child1": {
+                    "child1": {
+                        "directory": "",
+                        "height": 680,
+                        "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-2 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-83698893-00cc-46d5-bf93-be482b8a0728_default_idx-seaweedfs-volume-2 && bash\"",
+                        "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                        "readOnly": false,
+                        "synchronizedInput": true,
+                        "title": "${id}: ${title}",
+                        "type": "Terminal",
+                        "uuid": "af398bd3-abdf-4670-aee2-767395878562",
+                        "width": 743
+                    },
+                    "child2": {
+                        "directory": "",
+                        "height": 680,
+                        "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-6 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-4d9e3fe4-3f5a-409b-a22c-2cb5ec9bb9a4_default_idx-seaweedfs-volume-6\/ && bash\"",
+                        "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
+                        "readOnly": false,
+                        "synchronizedInput": true,
+                        "type": "Terminal",
+                        "uuid": "769ed2b6-e2e9-4de8-8c9c-3971093c0e76",
+                        "width": 743
+                    },
+                    "orientation": 1,
+                    "position": 49,
+                    "ratio": 0.499632623071271098,
+                    "type": "Paned"
                 },
                 "child2": {
                     "child1": {
                         "directory": "",
-                        "height": 1361,
+                        "height": 680,
                         "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-3 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-2000b368-eeb9-4d42-bfa9-cd03d1a52ed7_default_idx-seaweedfs-volume-3 && bash\"",
                         "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
                         "readOnly": false,
@@ -49,38 +118,37 @@
                         "title": "${id}: ${title}",
                         "type": "Terminal",
                         "uuid": "2b60eb29-a38b-4ceb-993c-f217dd294206",
-                        "width": 819
+                        "width": 872
                     },
                     "child2": {
                         "directory": "",
-                        "height": 1361,
-                        "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-4 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-a4463eb5-f3a6-4316-98dd-39d70cb27b61_default_idx-seaweedfs-volume-4 && bash\"",
+                        "height": 680,
+                        "overrideCommand": "ssh -t root@infra.spencerslab.com \"cd \/var\/mnt\/seaweedfs-volume-7 && export STORAGE_PATH=\/var\/lib\/rancher\/k3s\/storage\/pvc-2766cc6c-e782-4ccb-8954-eeffa1b031c9_default_idx-seaweedfs-volume-7\/ && bash\"",
                         "profile": "2b7c4080-0ddd-46c5-8f23-563fd3ba789d",
                         "readOnly": false,
                         "synchronizedInput": true,
-                        "title": "${id}: ${title}",
                         "type": "Terminal",
-                        "uuid": "8249351a-6972-41cc-bcea-bb84ded7f1e8",
-                        "width": 819
+                        "uuid": "39fadbc2-c1e6-41c4-b4c8-b7f9a37c559d",
+                        "width": 872
                     },
-                    "orientation": 0,
-                    "position": 23,
-                    "ratio": 0.49969493593654668,
+                    "orientation": 1,
+                    "position": 49,
+                    "ratio": 0.499632623071271098,
                     "type": "Paned"
                 },
                 "orientation": 0,
-                "position": 18,
-                "ratio": 0.27816901408450706,
+                "position": 21,
+                "ratio": 0.459777227722772297,
                 "type": "Paned"
             },
             "orientation": 0,
-            "position": 21,
-            "ratio": 0.243594009983361059,
+            "position": 17,
+            "ratio": 0.276833631484794285,
             "type": "Paned"
         },
         "orientation": 0,
-        "position": 12,
-        "ratio": 0.126162790697674415,
+        "position": 34,
+        "ratio": 0.349709302325581395,
         "type": "Paned"
     },
     "height": 1361,
