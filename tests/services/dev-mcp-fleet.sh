@@ -59,10 +59,14 @@ GENERATED_SURFACES=(AGENTS.md .opencode/agents .opencode/commands .opencode/skil
 
 # Distinguishable test UUIDs so t9 can tie each rendered remoteRef.key to the
 # --set that resolved it (same rationale as dev-forgejo-runner's per-release
-# UUIDs). Non-MCP sentinels take one shared value; nothing asserts on it.
+# UUIDs). Non-MCP sentinels take one shared value; nothing asserts on it —
+# except forgejo-token-canonical (added 2026-10-25 for the
+# 2026-10-feat-forgejo-auth-support C03 sentinel on this umbrella): t9 ties
+# its remoteRef.key, so it gets its own value like the MCP pair.
 TEST_UUID="test-uuid"
 TEST_UUID_GITHUB="test-uuid-github-mcp"
 TEST_UUID_WEKAN="test-uuid-wekan-mcp"
+TEST_UUID_CANONICAL="test-uuid-forgejo-token-canonical"
 
 checks=0
 
@@ -408,10 +412,14 @@ fi
 
 # --- t5+t9: dev umbrella render (C01 AC5, C03 AC3) ----------------------------
 # One render feeds both: the umbrella has no chart dependencies, so it renders
-# offline; only helm itself is needed. The six --set bitwardenIds are the plan
-# Commands list (C01 t5 says "the six test bitwardenIds from plan Commands");
-# --set-ingesting github-mcp/wekan-mcp before C03 exists is inert and keeps
-# the command identical across chunks.
+# offline; only helm itself is needed. The --set bitwardenIds are the plan's
+# six Commands entries (C01 t5 says "the six test bitwardenIds from plan
+# Commands") plus bitwardenIds.forgejo-token-canonical — the seventh, added
+# 2026-10-25 when 2026-10-feat-forgejo-auth-support C03 landed its sentinel on
+# this umbrella: the t9 sweep resolves EVERY top-level sentinel, exactly what
+# the deploy-time custom-values layer does. --set-ingesting github-mcp/
+# wekan-mcp before C03 exists is inert and keeps the command identical across
+# chunks.
 umb_out=""
 if want t5 || want t9; then
   if [ -z "$helm_bin" ]; then
@@ -427,6 +435,7 @@ if want t5 || want t9; then
         --set "bitwardenIds.argocd-sso-secret=$TEST_UUID" \
         --set "bitwardenIds.github-pat=$TEST_UUID" \
         --set "bitwardenIds.forgejo-token=$TEST_UUID" \
+        --set "bitwardenIds.forgejo-token-canonical=$TEST_UUID_CANONICAL" \
         >"$umb_out" 2>"$umb_err"; then
       tail -n 30 "$umb_err" >&2
       fail "t5: helm template of $DEVUMB failed (log kept at $umb_err)"
@@ -517,14 +526,19 @@ fi
 # internal secretKey name stays 'token'), GITHUB_PERSONAL_ACCESS_TOKEN target.
 # wekan-mcp: THREE entries from the same LOGIN item — username+password
 # via bitwarden-login, base URL via bitwarden-uri (the OQ1 resolution: no
-# hardcoded host). Sentinel sweep follows the dev-forgejo-runner convention:
-# OVERRIDE_* may ride ONLY inside the appset-generator values blob (a real
-# deploy resolves it from custom-values via the cluster annotation).
+# hardcoded host). forgejo-token-canonical (added 2026-10-25): the documented
+# must-fill slot on this umbrella (custom-values/dev holds OVERRIDE_NEEDED per
+# the infra-forgejo t6 precedent + dev-git-auth c-canonical-2) — its rendered
+# ExternalSecret is pinned and tied to its --set UUID. Sentinel sweep follows
+# the dev-forgejo-runner convention, narrowed the same day to the
+# OVERRIDE_VIA_* deploy-time class: those may ride ONLY inside the appset-
+# generator values blob (a real deploy resolves them from custom-values via
+# the cluster annotation); no service/cluster sentinel may leak elsewhere.
 if want t9 && [ -n "$umb_out" ]; then
-  if python3 - "$umb_out" "$TEST_UUID_GITHUB" "$TEST_UUID_WEKAN" "$WORK/t9-count" <<'PY'
+  if python3 - "$umb_out" "$TEST_UUID_GITHUB" "$TEST_UUID_WEKAN" "$TEST_UUID_CANONICAL" "$WORK/t9-count" <<'PY'
 import sys, yaml
 
-render, uuid_github, uuid_wekan, count_file = sys.argv[1:5]
+render, uuid_github, uuid_wekan, uuid_canonical, count_file = sys.argv[1:6]
 ok_n = 0
 
 def ok(msg):
@@ -607,13 +621,28 @@ try:
         bad('t9: wekan-mcp template carries WEKAN_TOKEN — dev mints it in-pod from username+password (C02), the gpu token-only pattern must not be copied')
     ok('t9: ExternalSecret wekan-mcp — username/password <- bitwarden-login, url <- bitwarden-uri, three templated WEKAN_* env keys, no WEKAN_TOKEN (C03 AC3)')
 
+    # The sanctioned must-fill slot: pinned here so the narrowed sweep
+    # below can never hide an unresolved sentinel of the same class — the
+    # ladder's --set leg must actually reach this document.
+    canon = [d for d in docs if d.get('kind') == 'ExternalSecret'
+             and (d.get('metadata') or {}).get('name') == 'forgejo-token-canonical']
+    if len(canon) != 1:
+        bad(f't9: expected exactly one ExternalSecret named forgejo-token-canonical in the umbrella render ({len(canon)} found) — services/dev/prod/templates/secret-forgejo-token-canonical.yaml is missing or duplicated')
+    cdata = ((canon[0].get('spec') or {}).get('data')) or []
+    if len(cdata) != 1:
+        bad(f't9: forgejo-token-canonical has {len(cdata)} data entries, expected exactly 1 (one password read)')
+    crr = ((cdata[0] or {}).get('remoteRef') or {})
+    if crr.get('key') != uuid_canonical:
+        bad(f't9: forgejo-token-canonical remoteRef.key is {crr.get("key")!r}, expected the --set UUID {uuid_canonical!r} — the documented must-fill slot must resolve through the same ladder the deploy uses (its custom-values value is the OVERRIDE_NEEDED placeholder until the Bitwarden item exists)')
+    ok('t9: ExternalSecret forgejo-token-canonical — the documented must-fill slot renders with its remoteRef tied to the --set UUID (amended 2026-10-25)')
+
     for d in docs:
         if d.get('kind') == 'ApplicationSet':
             continue
         t = yaml.safe_dump(d)
-        if 'OVERRIDE_' in t:
-            bad(f't9: non-appset document {((d.get("metadata") or {}).get("name"))!r} ({d.get("kind")}) carries an OVERRIDE_* string — only the appset-generator values blob may hold unresolved placeholders')
-    ok('t9: zero OVERRIDE_* outside the ApplicationSet documents of the dev umbrella render (C03 AC3)')
+        if 'OVERRIDE_VIA_' in t:
+            bad(f't9: non-appset document {((d.get("metadata") or {}).get("name"))!r} ({d.get("kind")}) carries an OVERRIDE_VIA_* deploy-time sentinel — only the appset-generator values blob may hold unresolved placeholders')
+    ok('t9: zero OVERRIDE_VIA_* outside the ApplicationSet documents of the dev umbrella render (C03 AC3, narrowed 2026-10-25 with the must-fill pin above)')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
