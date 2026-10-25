@@ -234,6 +234,13 @@
         "kubernetes/kubernetes"
       ],
       "allowedVersions": "/^v1\\.36\\./"
+    },
+    {
+      "description": "Hold ghcr.io/containers/kubernetes-mcp-server on the TOML config surface (>= v0.0.68): upstream PR #1423 removed every runtime CLI flag in v0.0.68, so any bump crossing that boundary breaks the --config args charts/hivetools ships on every cluster (2026-10-25 crashloop incident, PR #704). Semver tag bumps on the TOML side keep flowing. Floor is a semver range, not a regex: docker versioning strips the v prefix, node-semver accepts the v-prefixed comparator.",
+      "matchPackageNames": [
+        "ghcr.io/containers/kubernetes-mcp-server"
+      ],
+      "allowedVersions": ">= v0.0.68"
     }
   ]
 }
