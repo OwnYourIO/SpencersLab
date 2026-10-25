@@ -141,3 +141,16 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   is (a) no automerge applies to this package, so every bump waits on a human merge, and (b) the
   repo-wide args/flag contract sweep (C01 t7). The user chose this posture explicitly over
   digest-pinning.
+- 2026-10-25, **ledger correction (C01 review nit → stale)**: `chunks/C01.md` hypothesized that
+  `configFile: {content: ""}` renders no ConfigMap. Refuted by the shipped template gate (it keys
+  on the `configFile` **map**, not `content`) and reproduced by two independent renders in C03's
+  dev and review rounds: empty `content` **does** render a ConfigMap whose `config.toml` is `""`,
+  which shadows the image-baked default. `skills/helm-chart-creation/references/mcp-servers.md`
+  documents the verified behavior. Nobody should "fix" the template to match the old note.
+- 2026-10-25, **tooling fact corrected (was a coord briefing error)**: `aislop` 0.18.1 does **not**
+  analyze markdown (analyzed set: TS/JS/Python/Go/Rust/Ruby/PHP/Java), so `scan --changes` is
+  vacuous for `.md` — prose quality gates for doc chunks are the contract tests plus a manual
+  `comment-slop` pass. Recorded so later dispatches don't claim otherwise.
+- 2026-10-25, **open nit (non-blocking, next touch of the doc file)**: the phrase "do not 'fix' the
+  floor down to v0.0.68" reads as self-contradictory on a literal pass (the floor *is* v0.0.68);
+  reword to "do not lower/raise the floor past the config surface we wrote for".
