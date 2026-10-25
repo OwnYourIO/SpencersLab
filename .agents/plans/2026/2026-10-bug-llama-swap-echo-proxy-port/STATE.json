@@ -4,7 +4,7 @@
   "coord_session": null,
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-10-25T17:20:05Z",
+  "updated_at": "2026-10-25",
   "kickoff": {
     "slug": "bug-llama-swap-echo-proxy-port",
     "type": "bug",
@@ -24,10 +24,34 @@
       "status": "pending",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": [],
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C01",
+          "commit": "c48c0b270 (tests-only, 5 files, +387/-4)",
+          "files_changed": [
+            "+test_boot_safety.py",
+            "llama_swap_testlib.py (+148/0)",
+            "test_config_parity.py (deep-equal proxy carve only)",
+            "test_render.py (python-tag amendment)",
+            "TEST_SPEC.md (7sexies)"
+          ],
+          "commands_run": [
+            "baseline repro 1f/118p/1s (renovate drift red confirmed) => pass",
+            "handoff pytest => 3f/121p/1s EXACT plan bar; reds: invariant[default 58==CATALOG], invariant[gpu 24==GPU_ECHO], echo-pin[gpu 24] - all implementation-missing naming C02, zero harness errors; 1 skip = pre-existing RUN_HF_CHECK",
+            "explicit greens probe => 8 passed (deep-equal both, P2x2, P3, amended tag test, invariant[gpu-ai], pin[gpu-ai])",
+            "simulation vs renders => gpu 58/24/24, gpu-ai 58 live/0 viol, default 58/58/58",
+            "goldens diff 0 bytes; testlib additions-only; git status tests-only => pass"
+          ],
+          "deviations": "(1) positive pin re-expressed: ABSENT proxy key is what the binary rejects (default injection) -> pin = effective post-expansion proxy is ${PORT}-FREE; satisfies plan goal, satisfiable. (2) deep-equal carve allocates only the proxy supersession; absent-assert lives in the dedicated pin. (3) pin parametrized {gpu, gpu-ai}; default-echo coverage via invariant[default]. All in 7sexies.",
+          "friction": "self-caught indent slip pre-run; probe syntax fixed; seeded FRICTION all held",
+          "open_questions": "RESOLVED by user ruling + this DECISIONS entry: echo proxy = literal 'none' (plan wording superseded). Bars unchanged; C02-done expected 0f/124p/1s.",
+          "next_suggested": "C01 review (simulation fidelity to macros.go is the audit headline), then C02 dev"
+        }
+      ],
       "note": "Executed ONLY by this ticket's agent-test session (immutable-tests rule)."
     },
     "C02": {

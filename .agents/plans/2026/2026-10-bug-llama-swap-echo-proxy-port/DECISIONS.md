@@ -84,3 +84,20 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   PR lands and ArgoCD syncs (user-owned). The sibling ticket's C05 evidence
   pass (c05_expected_evidence.yaml gpu_box "config load + model count") IS the
   live verification of this fix.
+## 2026-10-25 — C01 finding: third falsified assumption + reshaped C02 mechanism (coord)
+
+- FALSIFIED: "echo entries render WITHOUT a proxy key" (approved plan's C02
+  mechanism). macros.go:127-129 (byte-identical v262-v266) injects the default
+  `http://localhost:${PORT}` proxy into any model lacking the key BEFORE the
+  port rule runs; upstream's own config_test.go:228 pins that a key-less,
+  PORT-less cmd fails with the exact incident error. Dropping the key
+  reproduces the crash-loop.
+- CONTROLLING REWORD for C02 acceptance (supersedes the plan file's "24 proxy
+  lines removed" + "proxy absent" wording; user-ruled 2026-10-25): echo-shaped
+  entries render an EXPLICIT `${PORT}`-free proxy — literal `proxy: "none"`
+  (C01-verified url.Parse-safe at load.go:188; runtime-inert since the
+  fail-fast cmd exits before any proxying). GPU CM diff = exactly 24 proxy
+  lines CHANGED to `none`, nothing else; gpu-ai CM sha 9f359249cee7 unchanged.
+- C01's committed contract (c48c0b270) already pins the reshaped property
+  (port-free effective proxy) - dev implements to the contract, review audits
+  both.
