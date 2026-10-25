@@ -26,7 +26,7 @@ app-template:
             # channel. CAUTION: MinusPod publishes edge releases as
             # <ver>-cpu tags several times a day — only merge Renovate bumps
             # that match upstream STABLE release notes.
-            tag: 2.95.3-cpu
+            tag: 2.100.22-cpu
           env:
             TZ: America/Denver
             # LLM via llama-swap on the gpu cluster (OpenAI-compatible, no
