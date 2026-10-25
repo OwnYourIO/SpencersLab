@@ -89,12 +89,9 @@ forgejo-runner-dev:
     # Item `dev-forgejo-dev-runner` (username = runner uuid, password = registration
     # token). NOT `forgejo-token` — that is the Coder workspace access token.
     runner-token: d3dafd1a-3d88-454e-88d4-b4ec010ae2c2
-forgejo-runner-infra:
-  bitwardenIds:
-    # Item `dev-forgejo-prod-runner` (username = runner uuid, password =
-    # registration token). Created AFTER the infra instance boots
-    # (plan User action 7); never the `forgejo-token` item.
-    runner-token: b1add65b-44fb-4c8b-b7ad-b4ec010afc71
+    # The infra runner's item (dev-forgejo-prod-runner) was un-wired from dev by
+    # user decision 2026-10-25 — the item stays in the vault for the pending
+    # relocation (DECISIONS 2026-10-25), so it gets no dev slot.
 
 hivetools:
   bitwardenIds:

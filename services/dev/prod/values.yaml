@@ -96,15 +96,13 @@ charts:
   searxng:
     namespace: default
     ServerSideApply: "false"
-  # Client-only service: both runners dial out (forgejo-runner-dev
-  # in-cluster to dev-forgejo-http:3000, forgejo-runner-infra to the infra
-  # instance), so both deliberately get NO ingress.subdomains entries — the
-  # service trio's proxy leg is N/A by design, not an oversight.
+  # Client-only service: the runner dials out (forgejo-runner-dev
+  # in-cluster to dev-forgejo-http:3000), so it deliberately gets NO
+  # ingress.subdomains entry — the service trio's proxy leg is N/A by
+  # design, not an oversight. The infra-instance runner was un-wired from
+  # dev by user decision 2026-10-25; its registration relocation is
+  # pending, so the chart keeps the aliased-instance capability.
   forgejo-runner-dev:
-    namespace: default
-    ServerSideApply: "false"
-    chart: forgejo-runner
-  forgejo-runner-infra:
     namespace: default
     ServerSideApply: "false"
     chart: forgejo-runner
@@ -148,9 +146,6 @@ ingress:
 forgejo-runner-dev:
   runner:
     url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
-forgejo-runner-infra:
-  runner:
-    url: https://git.spencerslab.com   # mesh/LAN host of the infra instance
 
 # Coder is a wrapper chart (charts/coder): its subchart config, OIDC/PG
 # ExternalSecrets and the pg-coder CNPG cluster live in the chart itself.

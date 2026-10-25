@@ -13,6 +13,13 @@
 # TOP-LEVEL slices (the only values the appset merge flows), and the single
 # bitwardenIds.runner-token sentinel with 1<->2 custom-values parity. The
 # base-chart ground-truth render proves the values flow.
+# Supersession (2026-10-25 user decision, ticket 2026-10-feat-forgejo-auth-
+# support): dev deploys forgejo-runner-dev ONLY — the forgejo-runner-infra
+# alias, its top-level slice and its custom-values slot are un-wired from the
+# deployed surface (infra runner relocation pending). The chart keeps the
+# multi-instance capability, so the chart-level legs (t1-t4, t5's chart-
+# sentinel leg) are unchanged; the dev-deployed-slice legs (t5/t7-t10) assert
+# the single aliased app.
 #
 # Contract source: chunks/C01.md Tests list (t1-t10) — ONE script stays the
 # runner contract (predecessor ruling, DECISIONS.md).
@@ -603,9 +610,12 @@ def bad(msg):
     sys.exit(1)
 
 SENTINEL = 'OVERRIDE_VIA_CUSTOM_VALUES'
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-infra')
-URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000',
-        'forgejo-runner-infra': 'https://git.spencerslab.com'}
+# Deployed slice (amended 2026-10-25, user decision): dev aliases the chart
+# once. UNWIRED_KEY must be absent from services/dev — its standalone render
+# (t2/t3) is chart-capability proof, not a deployed state.
+APP_KEYS = ('forgejo-runner-dev',)
+UNWIRED_KEY = 'forgejo-runner-infra'
+URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000'}
 
 def load(path):
     # REDEFINED anchors are legal YAML (helm/Go accept them; PyYAML raises
@@ -632,18 +642,20 @@ try:
     sv = load(dev_vals)
     charts = sv.get('charts') or {}
     if 'forgejo-runner' in charts:
-        bad(f't5: {dev_vals} still has a charts.forgejo-runner entry (the two aliased entries replace it — the old app would not be pruned)')
+        bad(f't5: {dev_vals} still has a charts.forgejo-runner entry (the aliased entry replaces it — the old app would not be pruned)')
+    if UNWIRED_KEY in charts:
+        bad(f't5: {dev_vals} has charts.{UNWIRED_KEY} again — dev deploys the dev runner only (user decision 2026-10-25; infra relocation pending)')
     for key in APP_KEYS:
         e = charts.get(key)
         if not isinstance(e, dict):
-            bad(f't5: {dev_vals} has no charts.{key} entry (one aliased entry per Forgejo instance)')
+            bad(f't5: {dev_vals} has no charts.{key} entry (one aliased entry per deployed Forgejo instance)')
         if e.get('chart') != 'forgejo-runner':
-            bad(f't5: {dev_vals} charts.{key}.chart is {e.get("chart")!r}, expected forgejo-runner (the alias mechanism — both apps deploy the same chart)')
+            bad(f't5: {dev_vals} charts.{key}.chart is {e.get("chart")!r}, expected forgejo-runner (the alias mechanism — the app deploys the shared chart)')
         if e.get('namespace') != 'default':
             bad(f't5: {dev_vals} charts.{key}.namespace is {e.get("namespace")!r}, expected default')
         if str(e.get('ServerSideApply')) != 'false':
             bad(f't5: {dev_vals} charts.{key}.ServerSideApply is {e.get("ServerSideApply")!r}, expected "false"')
-    ok('t5: dev values carry charts.forgejo-runner-dev + charts.forgejo-runner-infra (chart: forgejo-runner, namespace default, ServerSideApply "false") and no charts.forgejo-runner')
+    ok('t5: dev values carry charts.forgejo-runner-dev (chart: forgejo-runner, namespace default, ServerSideApply "false") and no charts.forgejo-runner or charts.forgejo-runner-infra')
 
     for key in APP_KEYS:
         sl = sv.get(key)
@@ -652,12 +664,14 @@ try:
         url = ((sl.get('runner') or {}).get('url'))
         if url != URLS[key]:
             bad(f't5: the top-level {key} slice has runner.url {url!r}, expected {URLS[key]!r} (load-bearing: the only place the per-app URL flows)')
-    ok('t5: the top-level slices carry both per-app URLs (dev in-cluster http://dev-forgejo-http:3000, infra https://git.spencerslab.com)')
+    if UNWIRED_KEY in sv:
+        bad(f't5: {dev_vals} still has the top-level {UNWIRED_KEY}: slice — with no charts.{UNWIRED_KEY} entry it would ride the merged values to no Application (un-wired 2026-10-25)')
+    ok('t5: the top-level slice carries the dev in-cluster URL http://dev-forgejo-http:3000 and no infra slice remains')
 
-    # The client-only rationale must be documented adjacent to the two
-    # aliased entries, or the next reader assumes the missing ingress leg
-    # is an oversight. The comment region spans from the block above the
-    # first entry to the end of the second entry's block.
+    # The client-only rationale must be documented adjacent to the aliased
+    # entry, or the next reader assumes the missing ingress leg is an
+    # oversight. The comment region spans from the block above the entry to
+    # the end of its block.
     with open(dev_vals) as f:
         lines = f.read().splitlines()
     charts_idx = next((i for i, l in enumerate(lines) if re.match(r'^charts:\s*$', l)), None)
@@ -694,12 +708,18 @@ try:
     comments = [l for l in region if l.strip().startswith('#')]
     block_text = '\n'.join(comments)
     if not any(re.search(r'ingress|proxy', c, re.IGNORECASE) for c in comments):
-        bad(f't5: the aliased charts entries have no comment explaining the deliberately missing ingress/proxy leg (client-only service)')
-    covers_both = (re.search(r'forgejo-runner-dev', block_text) and re.search(r'forgejo-runner-infra', block_text)) \
-        or re.search(r'\bboth\b', block_text, re.IGNORECASE)
-    if not covers_both:
-        bad('t5: the client-only comment does not cover BOTH aliased entries — name forgejo-runner-dev + forgejo-runner-infra, or state "both"')
-    ok('t5: the aliased entries carry the client-only comment covering both apps (missing ingress/proxy leg by design)')
+        bad(f't5: the aliased charts entry has no comment explaining the deliberately missing ingress/proxy leg (client-only service)')
+    # Single client-only runner since 2026-10-25 (user decision): the old
+    # wording claiming BOTH dial out must fail, the deployed one must be
+    # named, and the un-wired infra instance must read as relocation-pending
+    # so its absence is never re-filed as an oversight.
+    if re.search(r'\bboth\b', block_text, re.IGNORECASE):
+        bad('t5: the trio-exemption comment still claims BOTH runners dial out — dev deploys forgejo-runner-dev only since 2026-10-25')
+    if not re.search(r'forgejo-runner-dev', block_text):
+        bad('t5: the trio-exemption comment does not name the single deployed runner (forgejo-runner-dev)')
+    if not (re.search(r'infra', block_text, re.IGNORECASE) and re.search(r'relocat|pending', block_text, re.IGNORECASE)):
+        bad('t5: the trio-exemption comment does not record the infra runner as un-wired with relocation pending (user decision 2026-10-25)')
+    ok('t5: the aliased entry carries the client-only comment for the single runner (infra relocation pending noted; still no ingress entry)')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -764,7 +784,8 @@ def bad(msg):
 
 SENTINEL = 'OVERRIDE_VIA_CUSTOM_VALUES'
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-infra')
+APP_KEYS = ('forgejo-runner-dev',)
+UNWIRED_KEY = 'forgejo-runner-infra'
 
 def load(path):
     # Same lenient anchor handling as the other loaders (see t5).
@@ -788,9 +809,11 @@ try:
             bad(f't7: {dev_cv} {key}.bitwardenIds.runner-token is {slot!r} — not a UUID and not the documented OVERRIDE_NEEDED placeholder')
         else:
             ok(f't7: {dev_cv} carries the {key}.bitwardenIds.runner-token slot')
+    if UNWIRED_KEY in cv:
+        bad(f't7: {dev_cv} still wires {UNWIRED_KEY} ({(cv[UNWIRED_KEY] or {}).get("bitwardenIds")}) — dev no longer deploys the infra runner (user decision 2026-10-25: relocation pending); the vault item stays, the dev slot must not')
     if 'forgejo-runner' in cv:
         bad(f't7: {dev_cv} still has the old top-level forgejo-runner: block (the per-app blocks replace it — it would keep riding the values of the app the appset prunes)')
-    ok(f't7: {dev_cv} no longer carries the old top-level forgejo-runner: block')
+    ok(f't7: {dev_cv} no longer carries the old top-level forgejo-runner: block or the un-wired {UNWIRED_KEY}: block')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
@@ -804,7 +827,7 @@ else
   exit 1
 fi
 
-# --- t8: sentinel parity 1<->2 (C01 c6) ------------------------------------
+# --- t8: sentinel parity 1<->1 (deployed slice, amended 2026-10-25) ---------
 if python3 - "$RUNNER/values.yaml" "$DEV_CV" "$WORK/t8-count" <<'PY'
 import re, sys, yaml
 
@@ -822,7 +845,8 @@ def bad(msg):
 
 SENTINEL = 'OVERRIDE_VIA_CUSTOM_VALUES'
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-infra')
+APP_KEYS = ('forgejo-runner-dev',)
+UNWIRED_KEY = 'forgejo-runner-infra'
 
 def load(path):
     # Same lenient anchor handling as the other loaders (see t5).
@@ -837,20 +861,22 @@ def load(path):
 try:
     chart_bw = load(chart_vals).get('bitwardenIds') or {}
     if set(chart_bw) != {'runner-token'}:
-        bad(f't8: {chart_vals} bitwardenIds keys are {sorted(chart_bw)}, expected exactly [runner-token] (one sentinel per chart install — the 1<->2 parity)')
+        bad(f't8: {chart_vals} bitwardenIds keys are {sorted(chart_bw)}, expected exactly [runner-token] (one sentinel per chart install — the 1<->1 parity of the deployed slice)')
     if chart_bw['runner-token'] != SENTINEL:
         bad(f't8: {chart_vals} bitwardenIds.runner-token is {chart_bw["runner-token"]!r}, expected {SENTINEL}')
     cv = load(dev_cv)
+    if UNWIRED_KEY in cv:
+        bad(f't8: {dev_cv} still has a top-level {UNWIRED_KEY}: block — dev deploys the dev runner only (user decision 2026-10-25); parity is 1<->1')
     for key in APP_KEYS:
         bw = (cv.get(key) or {}).get('bitwardenIds') or {}
         if set(bw) != {'runner-token'}:
-            bad(f't8: {dev_cv} {key}.bitwardenIds slots are {sorted(bw)}, expected exactly [runner-token] — one slot per app, matching the single chart sentinel')
+            bad(f't8: {dev_cv} {key}.bitwardenIds slots are {sorted(bw)}, expected exactly [runner-token] — one slot for the deployed app, matching the single chart sentinel')
         v = bw['runner-token']
         if v == SENTINEL:
             bad(f't8: {dev_cv} {key}.runner-token still carries the service sentinel {SENTINEL} — parity requires a real UUID or OVERRIDE_NEEDED')
         elif not (v == 'OVERRIDE_NEEDED' or (isinstance(v, str) and UUID_RE.match(v))):
             bad(f't8: {dev_cv} {key}.runner-token is {v!r} — not a UUID and not the documented OVERRIDE_NEEDED placeholder')
-    ok('t8: sentinel parity 1<->2 — the single chart sentinel matches exactly the two custom-values slots (UUID or OVERRIDE_NEEDED, never the service sentinel)')
+    ok('t8: sentinel parity 1<->1 — the single chart sentinel matches exactly the one deployed custom-values slot (UUID or OVERRIDE_NEEDED, never the service sentinel); the infra app stays un-wired pending relocation')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
@@ -896,9 +922,9 @@ def bad(msg):
     sys.exit(1)
 
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-infra')
-URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000',
-        'forgejo-runner-infra': 'https://git.spencerslab.com'}
+APP_KEYS = ('forgejo-runner-dev',)
+UNWIRED_KEY = 'forgejo-runner-infra'
+URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000'}
 
 def load(path):
     # Same lenient anchor handling as the other loaders (see t5).
@@ -933,14 +959,18 @@ try:
         if e.get('chart') != 'forgejo-runner':
             bad(f't9: the dev-appset values blob has charts.{key}.chart {e.get("chart")!r}, expected forgejo-runner (the alias mechanism)')
     if 'forgejo-runner' in charts:
-        bad('t9: the dev-appset values blob still has a charts.forgejo-runner entry (it must be replaced by the two aliased entries — the old app would not be pruned)')
-    ok('t9: dev-appset values blob carries charts.forgejo-runner-dev + charts.forgejo-runner-infra (each chart: forgejo-runner) and no charts.forgejo-runner')
+        bad('t9: the dev-appset values blob still has a charts.forgejo-runner entry (it must be replaced by the aliased entry — the old app would not be pruned)')
+    if UNWIRED_KEY in charts:
+        bad(f't9: the dev-appset values blob still has charts.{UNWIRED_KEY} — ArgoCD would deploy a second runner against the un-wired slot (user decision 2026-10-25: dev deploys runner-dev only)')
+    ok('t9: dev-appset values blob carries charts.forgejo-runner-dev (chart: forgejo-runner) and no charts.forgejo-runner or charts.forgejo-runner-infra')
 
     for key in APP_KEYS:
         got = ((vals.get(key) or {}).get('runner') or {}).get('url')
         if got != URLS[key]:
             bad(f't9: the dev-appset values blob has no top-level {key} slice with runner.url {URLS[key]!r} (got {got!r} — the per-app URL slice is missing or wrong)')
-    ok('t9: dev-appset values blob carries the top-level slices with both URLs')
+    if UNWIRED_KEY in vals:
+        bad(f't9: the dev-appset values blob still has a top-level {UNWIRED_KEY} slice (un-wired 2026-10-25)')
+    ok('t9: dev-appset values blob carries the top-level forgejo-runner-dev slice with the dev in-cluster URL, no infra slice')
 
     # "Resolved" = equal to what custom-values/dev carries for that app key —
     # the test asserts the flow, never the UUID value itself.
@@ -951,7 +981,7 @@ try:
             bad(f't9: the dev-appset values blob has {key}.bitwardenIds.runner-token {got!r}, expected the custom-values value {want!r}')
         if got != 'OVERRIDE_NEEDED' and not (isinstance(got, str) and UUID_RE.match(got)):
             bad(f't9: the dev-appset values blob {key}.bitwardenIds.runner-token {got!r} is not a resolved UUID (and not the documented OVERRIDE_NEEDED placeholder)')
-    ok('t9: dev-appset values blob carries both resolved runner-token UUIDs under their app keys')
+    ok('t9: dev-appset values blob carries the resolved dev runner-token UUID under its app key')
 
     subs = (vals.get('ingress') or {}).get('subdomains') or {}
     # Re-ruled by 2026/2026-10-feat-dev-mcp-fleet C01 AC5 (user ruling
@@ -1054,9 +1084,9 @@ def bad(msg):
     sys.exit(1)
 
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-infra')
-URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000',
-        'forgejo-runner-infra': 'https://git.spencerslab.com'}
+APP_KEYS = ('forgejo-runner-dev',)
+UNWIRED_KEY = 'forgejo-runner-infra'
+URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000'}
 
 def load(path):
     # Same lenient anchor handling as the other loaders (see t5).
@@ -1082,10 +1112,12 @@ try:
         if key not in by_app:
             bad(f't10: the generator has no appName {key} element (the charts.{key} entry is missing from the base values)')
         if by_app[key].get('chart') != 'forgejo-runner':
-            bad(f't10: element {key} has chart {by_app[key].get("chart")!r}, expected forgejo-runner (the alias mechanism — both apps deploy the same chart)')
+            bad(f't10: element {key} has chart {by_app[key].get("chart")!r}, expected forgejo-runner (the alias mechanism — the app deploys the shared chart)')
     if 'forgejo-runner' in by_app:
-        bad('t10: the generator still has an appName forgejo-runner element (the aliased entries replace it — the old app would not be pruned)')
-    ok('t10: generator elements include forgejo-runner-dev + forgejo-runner-infra, each chart: forgejo-runner, and no plain forgejo-runner element')
+        bad('t10: the generator still has an appName forgejo-runner element (the aliased entry replaces it — the old app would not be pruned)')
+    if UNWIRED_KEY in by_app:
+        bad(f't10: the generator still has an appName {UNWIRED_KEY} element (charts.{UNWIRED_KEY} was un-wired from services/dev — user decision 2026-10-25)')
+    ok('t10: generator elements include forgejo-runner-dev (chart: forgejo-runner) and no plain forgejo-runner or forgejo-runner-infra element')
     for key in APP_KEYS:
         blob = by_app[key].get('values')
         if not isinstance(blob, dict):
