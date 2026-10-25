@@ -236,9 +236,10 @@ If the server needs credentials:
    ExternalSecret stays unready and the server pod cannot start (a visible
    failure, not a silent one).
 
-4. Wire the secret into the server entry via `secrets:` (single/few keys,
-   github pattern) or `podTemplateSpec` `envFrom.secretRef` (many keys,
-   homeassistant pattern).
+4. Wire the secret into the server entry: `secrets:` takes **one entry per
+   Secret name** (single-key Secret, github pattern); a Secret that
+   contributes several env vars is consumed via the `mcp` container's
+   `podTemplateSpec` `envFrom.secretRef` (gpu homeassistant pattern).
 
 ## What is NOT needed (vs a normal service)
 
