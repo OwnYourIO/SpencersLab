@@ -36,7 +36,7 @@
     }
   },
   "current_wave": 1,
-  "updated_at": "2026-10-25T02:00:00Z",
+  "updated_at": "2026-10-25T02:20:00Z",
   "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
@@ -126,15 +126,34 @@
       "dev_commit": "887b605a7"
     },
     "C03": {
-      "status": "pending",
+      "status": "in_review",
       "wave": 2,
       "depends_on": [
         "C02"
       ],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C03",
+          "files_changed": [
+            ".rulesync/subagents/agent-board-coord.md",
+            ".rulesync/commands/pipeline-boards.md",
+            ".opencode/agents/agent-board-coord.md",
+            ".opencode/commands/pipeline-boards.md"
+          ],
+          "commands_run": "baseline c16 red pre-change; rulesync generate x2 no-op; surface.sh excl c6 => 17 ok; aislop 0 err; commit ba40a12c0; CHUNK_BASE=4fb347d48 re-run => 17 ok",
+          "deviations": "none (c6 excluded per guidance; frontmatter byte-identical per D21)",
+          "friction": "none",
+          "open_questions": "none",
+          "next_suggested": "agent-review C03 (surface.sh minus c6 incl c16); then C04 wave 3"
+        }
+      ],
+      "dev_session": "ses_e8f5c2c0fffelKef5wS8RaXnVX",
+      "pre_chunk_commit": "4fb347d48",
+      "dev_commit": "ba40a12c0"
     },
     "C04": {
       "status": "pending",
