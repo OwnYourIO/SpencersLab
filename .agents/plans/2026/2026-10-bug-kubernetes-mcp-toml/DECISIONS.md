@@ -123,3 +123,10 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   2026-09).
 - Stakater-reloader annotation for MCPServer pods if config hot-reload is
   ever wanted (`stateless` is restart-only anyway).
+- 2026-10-25, **user ruling (review gate)**: this ticket's no-regression gate is
+  `tests/services/dev-mcp-fleet.sh` **t6 + t8 + t11** only. Its t7 is red at baseline for a
+  sibling-owned reason — main merged PR #741 (playwright `v0.0.78 → v0.0.83`), which
+  invalidated the tag literal t7 pins — and ticket 1's owners are not amending it now. t7 is
+  not touched from this ticket (immutable to dev/review alike). Carried forward: the stale
+  literal needs a re-pin by ticket 1's test session, or it will keep reading red for every
+  later suite that chains it.
