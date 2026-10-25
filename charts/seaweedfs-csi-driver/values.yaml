@@ -4,6 +4,14 @@ clusterName: OVERRIDE_VIA_APPSET
 seaweedfs-csi-driver:
   volume-count: OVERRIDE_VIA_CUSTOM_VALUES
   seaweedfsFiler: OVERRIDE_VIA_CUSTOM_VALUES
+  # Chart 0.2.42 changed the CSIDriver fsGroupPolicy default from unset
+  # (= ReadWriteOnceWithFSType, which skips FUSE volumes) to File, making
+  # the kubelet recursively chown the whole volume whenever a pod with
+  # fsGroup mounts it. On the large shared volumes (50Ti media, 3Ti
+  # knowledge) that walk runs for hours and blocks every other mount of
+  # the same volume in kubelet's operation queue. None restores the
+  # pre-0.2.42 behaviour of never applying fsGroup to the FUSE mounts.
+  fsGroupPolicy: None
   concurrentWriters: 5
   concurrentReaders: 5
   cacheCapacityMB: 1024
