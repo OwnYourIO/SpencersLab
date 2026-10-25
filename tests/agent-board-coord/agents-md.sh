@@ -35,6 +35,11 @@ cd "$(git rev-parse --show-toplevel)"
 
 BASE="${CHUNK_BASE:-HEAD}"
 FEATURE=".agents/plans/2026/2026-10-feat-board-coord-intake"
+# Reused as a regression gate by the later cf-50 gate ticket sharing this
+# branch: its plan folder and in-scope surface must pass c7, or the
+# invariance checks here report a false scope violation. Content checks are
+# untouched.
+FEATURE2=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords"
 RULES_SRC=".rulesync/rules/overview.md"
 PERM_SRC=".rulesync/skills/agents-sync/references/permissions.md"
 PERM_GEN=".opencode/skills/agents-sync/references/permissions.md"
@@ -195,7 +200,10 @@ if want c7; then
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     case "$p" in
-      "AGENTS.md"|"$RULES_SRC"|"$PERM_SRC"|"$PERM_GEN"|tests/*|"$FEATURE"/*) : ;;
+      "AGENTS.md"|"$RULES_SRC"|"$PERM_SRC"|"$PERM_GEN"|tests/*|"$FEATURE"/*|\
+      "$FEATURE2"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
+      .opencode/commands/pipeline-boards-hourly.md|\
+      .rulesync/subagents/agent-board-coord.md|.opencode/agents/agent-board-coord.md) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

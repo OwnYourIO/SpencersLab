@@ -40,6 +40,12 @@ cd "$(git rev-parse --show-toplevel)"
 BASE="${CHUNK_BASE:-HEAD}"
 PORT_REF="${PORT_REF:-bab7e7cc3}"
 FEATURE=".agents/plans/2026/2026-10-feat-board-coord-intake"
+# This file is reused as a regression gate by the later cf-50 gate ticket,
+# which shares the branch; its scope list must admit that ticket's plan
+# folder and in-scope surface (the union-of-chunks convention above), or the
+# cf-50 folder's mere existence reads as a scope violation. Content checks
+# are untouched.
+FEATURE2=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords"
 RULES_SRC=".rulesync/rules/overview.md"
 
 SKILL_SRC=".rulesync/skills/boards/SKILL.md"
@@ -312,7 +318,9 @@ if want c8; then
     case "$p" in
       "$SKILL_SRC"|"$AGENT_SRC"|"$CMD_SRC"|"$PERM_SRC"|"$RULES_SRC"|\
       "$SKILL_GEN"|"$AGENT_GEN"|"$CMD_GEN"|"$PERM_GEN"|AGENTS.md|\
-      containers/wekan-mcp/*|skills/wekan-api/*|tests/*|"$FEATURE"/*) : ;;
+      containers/wekan-mcp/*|skills/wekan-api/*|tests/*|"$FEATURE"/*|\
+      "$FEATURE2"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
+      .opencode/commands/pipeline-boards-hourly.md) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
