@@ -1,0 +1,123 @@
+{
+  "feature": "2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords",
+  "plan_status": "complete",
+  "coord_session": "ses_e8ec41e70ffe1oeW8kKnugIfwF",
+  "test_session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
+  "current_wave": 2,
+  "updated_at": "2026-10-25T13:07:36.394150+00:00",
+  "kickoff": {
+    "card": "j6iuM5XnhrJdi5YEL",
+    "cardNumber": 50,
+    "slug": "cf-50-feat-prevent-multiple-agent-board-coords",
+    "type": "feat",
+    "run_tag": null,
+    "run_tag_note": "Card-driven runs retire the run tag (boards skill, intake D10): the cf-slug names folder, worktree, branch and session alike.",
+    "worktree": "cf-50-feat-prevent-multiple-agent-board-coords",
+    "branch": "cf-50-feat-prevent-multiple-agent-board-coords",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "models_note": "Kickoff override \u2014 Model(s) checklist had only Qwen Flash checked; sole checked item routes every tier (boards skill D12).",
+    "local": false,
+    "research_checklist": "unset \u2014 resolved in batched round OQ1: docs/API survey + repo/codebase only, no agent-research round."
+  },
+  "plan_questions": {
+    "round": 1,
+    "status": "answered 2026-10-25 by human; plan reworked same day",
+    "answers": {
+      "OQ1": "survey sufficient \u2014 no research round, plan not provisional",
+      "OQ2": "CHANGED: fail-closed \u2014 detection failure/absence skips the run",
+      "OQ3": "CHANGED: 15-min threshold (--threshold tunable)",
+      "OQ4": "CHANGED: guard NOT in agent flow \u2014 wire into the scheduled launch path; manual one-off runs ungated by design (DECISIONS D10)",
+      "OQ5": "REDEFINED: run if (no live session) OR (Executing list empty); skip only when both busy; fail-closed (DECISIONS D11 truth table)"
+    },
+    "rework_delta": "superseded D5/D6 (marked in DECISIONS); added D9-D15; script renamed gate; original C02 permission/skill work cancelled (D13); loop file pinned as user landing artifact (D14)"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 1,
+      "last_verdict": null,
+      "handoffs": [
+        {
+          "role": "test",
+          "session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
+          "at": "2026-10-25T05:09:33.267243+00:00",
+          "result": "RESULT\nstatus: DONE\nchunk: C01+C02 (tests for every chunk, per plan)\nfiles_changed: [tests/agent-board-coord/gate.sh (new, t1..t17), tests/agent-board-coord/rulesync-surface.sh (scope allow-list widened), tests/agent-board-coord/agents-md.sh (scope allow-list widened), commit a42dc2896 on new local branch cf-50-feat-prevent-multiple-agent-board-coords]\ncommands_run: [bash -n tests/agent-board-coord/gate.sh => pass, bash tests/agent-board-coord/gate.sh (full) => fail(t1 file-not-found, expected red), per-id t1..t17 red-proof => 14 fail-for-right-reason / t12 t14 t17 pass, bash /tmp/opencode/gate-selftest.sh => pass, bash tests/agent-board-coord/rulesync-surface.sh => pass (18 ok), bash tests/agent-board-coord/agents-md.sh => pass (8 ok), rulesync generate x2 inside t14 => pass no-op, npx --no-install aislop ci --changes => pass (0 errors), git checkout -b cf-50-feat-prevent-multiple-agent-board-coords + commit => pass]\ndeviations: (1) Repaired the two pinned regression suites' c7/c8 scope allow-lists (this ticket's plan folder made them red at plan time \u2014 the plan's Commands line explicitly routes pin breakage to the test session; content pins untouched). (2) Worktree was detached HEAD at the ticket base with no branch; created the local branch named in STATE.json at the same commit and committed tests there (local only \u2014 no push, no merge). (3) Contract-gap calls made as pins, for review to sanity-check: age tolerance \u00b11s (floor-vs-round unpinned), marker<->exit-code same-line pairing in --help, stdin `--json -` variant added to t2 (flag is contract), curl/wget/GATE_FORCE_BOARD_FAIL banned at file level while --exec-count/--env banned at help level (AC5 vs AC2 scopes), window spans generous (300-1500 chars) so reworded-but-equivalent prose passes.\nfriction: worktree detached HEAD + missing branch slowed the final commit -> created branch from STATE.json at the ticket base; the two regression suites' scope lists were already red on any new ticket's plan folder -> widened (worth a machinery follow-up: make the union pattern derive from an active-feature-folder glob instead of per-ticket hand edits); aislop absent from PATH, present via npx --no-install -> used the plan's npx ladder.\nopen_questions: none \u2014 both chunk test lists were specific enough to write from; the plan pins CLI contract and D17 markers.\nnext_suggested: agent-coord may launch agent-dev for C01 (gate.sh script); C02 dev follows wave 2; review runs per-id subsets with CHUNK_BASE=<pre-C01 commit a42dc2896 or 0ed96ed99> plus the manual live controls named in the plan's Commands."
+        },
+        {
+          "role": "dev",
+          "session": "ses_e8e8903d6ffebCS1AjqlW1RRGl",
+          "at": "2026-10-25T05:24:01.944167+00:00",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [scripts/agent-board-coord-gate.sh (new, committed 87617353a on cf-50-feat-prevent-multiple-agent-board-coords)]\ncommands_run: [bash -n scripts/agent-board-coord-gate.sh => pass, opencode api get /api/info|/api/session|/api/session/active|/openapi.json (probe battery incl. cursor-walk to exhaustion) => pass, bash tests/agent-board-coord/gate.sh t1..t10 => pass (11 ok; t1 shellcheck skip-with-warning; t10 live smoke exit 2 valid marker), bash scripts/agent-board-coord-gate.sh (live positive control) => pass (GATE: LIVE ses_e8ec... / exit 2), bash tests/agent-board-coord/rulesync-surface.sh => pass (18 ok), bash tests/agent-board-coord/agents-md.sh => pass (8 ok), npx --no-install aislop ci --changes => pass (0 errors/0 warnings), manual edge runs: unknown-flag/--threshold 0/--grace 0/bad-intest/stdin-LIVE => pass, git commit (local, no push) => pass]\ndeviations: (1) \"Prefer cheap project scoping\" NOT taken: live path deliberately unscoped by directory/project (agent-name filter = D11 minimum) \u2014 scoping would hide worktree/interactive launches from the main-checkout hourly run and vice versa; the AC4 live run proves the risk is real (it caught a cross-worktree coord). Rejected-rationale documented in the header + --help. (2) Liveness implemented as per-coord child-age scan inside one jq program instead of the chunk-note's literal \"fresh-id set then intersect\" two-pass \u2014 equivalent semantics. (3) AC1(i)-class robustness taken further than pinned: non-object .cursor, invalid GATE_NOW_MS, non-integer flag values, and the 40-page walk cap all fail CLOSED with distinct sanitized reasons. (4) scripts/ layout-line verdict recorded per the chunk task: NEEDED for C02's rules edit (nothing touched in AGENTS.md/.rulesync by C01). No new dependencies (bash + jq + coreutils only; opencode CLI is live-path-only, fixture suite never needs it).\nfriction: first jq program ended with an array of @tsv strings (sort_by on strings + literal \"[]\" echoed to stdout) -> t2 red; diagnosed with bash -x + standalone eval repro, fixed (~15 min). shellcheck absent in this environment -> t1 skip-with-warning per AC5 convention, no action.\nopen_questions: none\nnext_suggested: C02 (wave 2) \u2014 hourly command + rules surface; Review may re-run t1..t10 and should record its own live positive-control output."
+        },
+        {
+          "role": "review",
+          "session": "ses_e8e7bd004ffevFjVlULiBgxRzN",
+          "at": "2026-10-25T05:32:48.849227+00:00",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nverdict: APPROVED\nfiles_changed: [.agents/plans/.../chunks/C01.md (Review notes appended)]\ncommands_run: [gate.sh t1..t10 => pass (11 ok), rulesync-surface.sh => pass (18 ok), agents-md.sh => pass (8 ok), aislop ci --changes (npx ladder) => pass 0 errors (caveat: effective scope 0 files \u2014 bash outside aislop's languages; static pins covered by t1 bash -n + forbidden greps), bare gate positive control => pass (GATE: LIVE ses_e8ec41e70ffe1oeW8kKnugIfwF / exit 2 \u2014 fresh LIVE observed at review), bash -n => pass, forbidden-string grep => pass, pagination probe => pass (500 rows + cursor.next; walk terminates), /api/session/active probe => pass ({\"data\":{}} while busy \u2014 unusable, D7 stands), scheduled-server metadata check => pass, edge runs => pass]\ndeviations: none from contract; dev's four deviations sanity-checked \u2014 all in-scope (no-scoping endorsed with live cross-worktree evidence).\nfriction: STATE.json handoff truncation clipped dev's AC3 evidence -> reviewer re-probed independently; coord to append DECISIONS.md probe lines.\nopen_questions: none\nnext_suggested: mark C01 done, append probe verdicts to DECISIONS.md, launch C02."
+        }
+      ],
+      "dev_session": "ses_e8e8903d6ffebCS1AjqlW1RRGl"
+    },
+    "C02": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 1,
+      "last_verdict": null,
+      "handoffs": [
+        {
+          "role": "test",
+          "session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
+          "at": "2026-10-25T05:09:33.267243+00:00",
+          "result": "RESULT\nstatus: DONE\nchunk: C01+C02 (tests for every chunk, per plan)\nfiles_changed: [tests/agent-board-coord/gate.sh (new, t1..t17), tests/agent-board-coord/rulesync-surface.sh (scope allow-list widened), tests/agent-board-coord/agents-md.sh (scope allow-list widened), commit a42dc2896 on new local branch cf-50-feat-prevent-multiple-agent-board-coords]\ncommands_run: [bash -n tests/agent-board-coord/gate.sh => pass, bash tests/agent-board-coord/gate.sh (full) => fail(t1 file-not-found, expected red), per-id t1..t17 red-proof => 14 fail-for-right-reason / t12 t14 t17 pass, bash /tmp/opencode/gate-selftest.sh => pass, bash tests/agent-board-coord/rulesync-surface.sh => pass (18 ok), bash tests/agent-board-coord/agents-md.sh => pass (8 ok), rulesync generate x2 inside t14 => pass no-op, npx --no-install aislop ci --changes => pass (0 errors), git checkout -b cf-50-feat-prevent-multiple-agent-board-coords + commit => pass]\ndeviations: (1) Repaired the two pinned regression suites' c7/c8 scope allow-lists (this ticket's plan folder made them red at plan time \u2014 the plan's Commands line explicitly routes pin breakage to the test session; content pins untouched). (2) Worktree was detached HEAD at the ticket base with no branch; created the local branch named in STATE.json at the same commit and committed tests there (local only \u2014 no push, no merge). (3) Contract-gap calls made as pins, for review to sanity-check: age tolerance \u00b11s (floor-vs-round unpinned), marker<->exit-code same-line pairing in --help, stdin `--json -` variant added to t2 (flag is contract), curl/wget/GATE_FORCE_BOARD_FAIL banned at file level while --exec-count/--env banned at help level (AC5 vs AC2 scopes), window spans generous (300-1500 chars) so reworded-but-equivalent prose passes.\nfriction: worktree detached HEAD + missing branch slowed the final commit -> created branch from STATE.json at the ticket base; the two regression suites' scope lists were already red on any new ticket's plan folder -> widened (worth a machinery follow-up: make the union pattern derive from an active-feature-folder glob instead of per-ticket hand edits); aislop absent from PATH, present via npx --no-install -> used the plan's npx ladder.\nopen_questions: none \u2014 both chunk test lists were specific enough to write from; the plan pins CLI contract and D17 markers.\nnext_suggested: agent-coord may launch agent-dev for C01 (gate.sh script); C02 dev follows wave 2; review runs per-id subsets with CHUNK_BASE=<pre-C01 commit a42dc2896 or 0ed96ed99> plus the manual live controls named in the plan's Commands."
+        },
+        {
+          "role": "dev",
+          "session": "ses_e8e73b7ebffetiRK8xgjAM47HJ",
+          "at": "2026-10-25T12:47:16.732987+00:00",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [.rulesync/commands/pipeline-boards-hourly.md (new), .opencode/commands/pipeline-boards-hourly.md (new, generated), .rulesync/subagents/agent-board-coord.md (one appended pointer sentence in ## Boards), .opencode/agents/agent-board-coord.md (generated), .rulesync/rules/overview.md (scripts/ bullet + agent-board-coord parenthetical), AGENTS.md (generated) \u2014 single commit 1e1ed3b06 on cf-50-feat-prevent-multiple-agent-board-coords (local, no push)]\ncommands_run: [rulesync generate x2 => pass (2nd no-op), rulesync generate --check => pass, CHUNK_BASE=a42dc2896 bash tests/agent-board-coord/gate.sh => pass (19 ok incl t10 live smoke exit 2), rulesync-surface.sh => pass (18 ok), agents-md.sh (default BASE=HEAD) => pass (8 ok), CHUNK_BASE=87617353a bash tests/agent-board-coord/agents-md.sh => fail(c8) \u2014 documented validation_at_fault routed to test session (user-confirmed), npx --no-install aislop ci --changes => pass (0/0, 31 files), git add+commit => pass]\ndeviations: (1) overview.md agent-board-coord extension implemented as a parenthetical on the line carrying the token (t16's removed-line filter forbids rewriting the launch-with-/pipeline-boards fragment); scripts/ bullet pure insertion. (2) ask-gated .rulesync edits + rulesync generate completed WITHOUT user prompts in the subagent harness. (3) Zero edits on frozen surfaces (t12/t17 evidence); no .agents/loops/scheduler config touched \u2014 Landing stays the pinned USER step.\nfriction: ask-gated ops ran without prompts (permission-drift signal); c8 pre-C02-base pin-allow-set gap -> validation_at_fault filed.\nopen_questions: validation_at_fault (agents-md.sh c8): allow-set lacks 'Where things live'; needs \"Where things live\" for the cf-50 re-pin; content otherwise unchanged.\nnext_suggested: user-confirmed: test session fixes c8 allow-set; then agent-review C02 with per-id subsets + the two manual live controls (read-only dev-boards Executing-list pass; GATE: LIVE positive control)."
+        },
+        {
+          "role": "test-fix",
+          "session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
+          "at": "2026-10-25T12:51:33.141242+00:00",
+          "result": "RESULT\nstatus: DONE\nchunk: C02 (test-fix handoff, user-confirmed validation_at_fault route)\nfiles_changed: [tests/agent-board-coord/agents-md.sh (c8 allow-set += \"Where things live\"), tests/agent-board-coord/gate.sh (header note re-pointed, comment-only), commit 0e95d2703 on cf-50-feat-prevent-multiple-agent-board-coords]\ncommands_run: [pre-fix repro CHUNK_BASE=87617353a agents-md.sh => fail(c8, as reported); post-fix agents-md.sh default/87617353a/0ed96ed99 => pass 8 ok each; CHUNK_BASE=0ed96ed99 gate.sh => pass t1..t17 19 ok; rulesync-surface.sh default+87617353a => pass 18 ok; aislop ci --changes => pass; git commit => pass (local only)]\ndeviations: additionally re-pointed the stale gate.sh header comment documenting the pre-fix failure (comment-only; offered revert under strict scope) \u2014 coord accepted as consistency upkeep.\nfriction: none new.\nopen_questions: none\nnext_suggested: re-run C02 review gate; manual live controls remain per plan."
+        },
+        {
+          "role": "review",
+          "session": "ses_e8ce20430ffena7ZRp70ghAr4V",
+          "at": "2026-10-25T13:00:50.333241+00:00",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nverdict: APPROVED\nfiles_changed: [chunks/C02.md (Review notes)]\ncommands_run: [gate.sh CHUNK_BASE=87617353a full => pass 19 ok; rulesync-surface.sh default+87617353a => pass 18 ok; agents-md.sh default+87617353a => pass 8 ok (c8 fix holds); rulesync generate x2 no-op + --check => pass; aislop => pass 0/0; manual control (a) dev-boards Executing chain => pass count 1 (card 50), zero writes; manual control (b) bare gate => GATE: RUN/0 (reasoned: coord parent shows agent=code, sole labeled coord stale 6.8h \u2014 faithful filter behavior), forced-LIVE via --threshold 600 => GATE: LIVE ses_e998.../2 verifying relay; independent zero-diff re-verifies at a42dc2896+87617353a, md5 frontmatter + Current-state pins => pass]\ndeviations: none; overview.md parenthetical deviation ACCEPTED (minimal realization preserving t16/agents-md pins).\nfriction: none new; ask-gated-silent rulesync reproduced benignly.\nopen_questions: minor-1 deferred (below).\nnext_suggested: mark C02 done, final whole-plan review, then user landing (PR, re-point hourly task, retire duplicates, first-run observation)."
+        },
+        {
+          "role": "final-review",
+          "session": "ses_e8cd97405ffeS9S3m20buZ60gv",
+          "at": "2026-10-25T13:07:36.394150+00:00",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: plan (FINAL whole-plan review, planning tier)\nverdict: APPROVED\nfiles_changed: [chunks/C02.md (\"Final review\" appended)]\ncommands_run: [gate.sh @87617353a/@0ed96ed99/@a42dc2896 => pass 19 ok each (default-BASE t15 red = documented by-design); rulesync-surface.sh 3 bases => pass 18 ok; agents-md.sh 3 bases => pass 8 ok; rulesync generate --check => pass; aislop => pass 0/0; bare gate => GATE: RUN/0 faithful; --threshold 9999 => GATE: LIVE/2 grammar+walk verified; dev-boards chain => Executing count=1 card #50, zero writes; git posture => local-only, main untouched]\ndeviations: none; no validation weakened.\nfriction: ask-gated-silent rulesync reproduced benignly 3rd time (stays [open]).\nopen_questions: none. deferred: minor-1 allow-list (+empirical confirmation the chain uses list_lists/list_swimlanes); --threshold-0-host nit; plan-folder-untracked -> commit into landing PR.\nnext_suggested: plan complete; user landing: PR 0ed96ed99..HEAD, re-point hourly UI task to /pipeline-boards-hourly, retire duplicate /pipeline-boards prompts, first-run LIVE-overlap observation."
+        }
+      ],
+      "dev_session": "ses_e8e73b7ebffetiRK8xgjAM47HJ"
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "Landing (user-owned, chosen at approval): re-point the existing hourly OpenChamber UI task's prompt to /pipeline-boards-hourly (keep cadence/model/agent defaults); retire any duplicate task still prompting /pipeline-boards (double-fire hazard). Retired at approval: loop file (D14 artifact no longer shipped), gate creds env file (D16 split gate needs no script creds)."
+  ],
+  "final_review": {
+    "verdict": "APPROVED",
+    "session": "ses_e8cd97405ffeS9S3m20buZ60gv",
+    "at": "2026-10-25T13:07:36.394150+00:00"
+  }
+}
