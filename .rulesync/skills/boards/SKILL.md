@@ -26,12 +26,14 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 
 ## Config constants
 
-The values the flow writes onto the board, from the user-confirmed resolution D20. Copy verbatim; never re-derive or "correct" them.
+The values the flow writes onto the board. They are a written-onto-the-board contract: copy verbatim, never re-derive or "correct" them — with one exception. `SESSION_URL_BASE` is the single RUNTIME value: D18/D22 (cf-50 round 2) supersede intake-D20's copy-verbatim rule for that constant alone, and the literal intake-D20 shipped has since been proven a dead host (coderd answers it `400` — malformed app-host grammar), so no reader may treat it as valid. Every other constant below — `RESEARCH_LABEL` in particular — keeps the copy-verbatim/never-re-derive posture byte-exact.
 
-- `SESSION_URL_BASE = https://openchamber--dev-thehackmeister-coder.dev.scifi.farm` — the OpenChamber origin (the Coder app-host label order is user-confirmed; leave it as written).
-- Session links are exactly `$(SESSION_URL_BASE)/?session=<sessionID>` — the `/?session=` form is OpenChamber's own router format. Never a raw session id (D13).
+- `SESSION_URL_BASE` — THIS run's OpenChamber origin, defined as the launch command's `Session origin:` line value, copied verbatim. That line was produced at command expansion from the running workspace's Coder app-origin env `$VSCODE_PROXY_URI` (`{{port}}` → the `openchamber` app-slug label; host labels lowercased; the agent label KEPT — coderd parses it away for app slugs). coderd renders the env per deployment, so no label-order assumption survives and nothing is re-derived agent-side. Never a remembered, guessed or historically-observed host.
+- The block self-probes its derived host before emitting — one `curl -m 5` at expansion; recognized answers `200`/`30x`/`401`/`403`. `Session origin: UNRESOLVED` is defined precisely, three branches: the app-origin env absent (the launch is not Coder-hosted), the template shape unexpected (`{{port}}` missing), or the derived host answered a code outside the recognition set (`400` malformed, `000` = DNS/connect/timeout — e.g. a brand-new gpu workspace whose exact split-horizon DNS record has not landed; the probe degrades that to the fallback below instead of shipping a broken link). Honest limit: the probe proves coderd recognizes the host from the workspace's own DNS view — not the human LAN view, not the authenticated leg (landing observations cover those).
+- On `UNRESOLVED` the run PROCEEDS (user ruling 2026-10-25, D23 r2): every would-be link slot gets the RAW session id — claim-comment session line, `session` custom-field value, research-only result comment — and the RESULT records the fallback (open_questions/friction). Never silently re-guess a host, and never write a raw id when an origin DOES resolve.
+- Session links are exactly `$(SESSION_URL_BASE)/?session=<sessionID>` whenever this run's origin resolves — the `/?session=` form is OpenChamber's own router format (its integrations build the identical URL). Never a raw session id (D13) — that rule governs the resolved branch; the UNRESOLVED branch writes the raw id BY RULE, not by drift.
+- Consistency check (the drift check reworded, D23 r2): every link this run writes must equal this run's `Session origin:` value (or the raw-id fallback when it says UNRESOLVED); a mismatch → RESULT flag, never silently re-guess. Historical links are frozen history — card #50's old comments carry the retired literal and its `session` custom field was re-pointed 2026-10-25 — compare only THIS run's writes.
 - `RESEARCH_LABEL = Research` — matched case-insensitively.
-- Drift check: at the FIRST write-back, re-check the session link against `SESSION_URL_BASE` in an authenticated context; on drift, flag via RESULT — never silently re-guess.
 
 ## Card pickup
 
@@ -111,7 +113,9 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev`/`agent-rev
 6. Write-back exactly as in Post-plan card write-back (D19):
    `set_card_custom_field` for `slug` + `session`, then
    `delete_checklist_item` for every unchecked item of the four checklists.
-7. `add_comment` on the card: the research-session URL plus the merged TLDR
+7. `add_comment` on the card: the research session link — this run's
+   `Session origin:` URL, or the RAW session id on UNRESOLVED with the
+   fallback recorded in RESULT — plus the merged TLDR
    from RESEARCH.md → `move_card` to **Review** — the agent's
    final destination for research-only runs too; **Finished** stays
    human-owned.
@@ -120,7 +124,7 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev`/`agent-rev
 
 **Review** is the agent's final destination; **Finished** is human-owned.
 
-- **Pickup** → `move_card` to **Executing** + `add_comment` claiming the card: session, the resolved model tiers (from the Model(s) checklist), the consumed checklist answers, the resolved slug, and the plan folder path.
+- **Pickup** → `move_card` to **Executing** + `add_comment` claiming the card: the session line — this run's `Session origin:` link, or the RAW session id when it says UNRESOLVED (fallback recorded in RESULT) — the resolved model tiers (from the Model(s) checklist), the consumed checklist answers, the resolved slug, and the plan folder path.
 - **Plan approved** (after the question round) → `add_comment` that the plan is approved (plan path, worktree/branch), then the Post-plan card write-back below.
 - **Each chunk done** → `add_comment` with the chunk status (chunk id, dev/review verdict, commit).
 - **All chunks done + final whole-plan review passed** → `move_card` to **Review** + summary comment: branch, commit range, validation results, plan path.
@@ -135,9 +139,12 @@ Right after plan approval (research-only cards do the same immediately before th
 1. `list_custom_fields` on the AI-Dev board → the ids of the `slug` and
    `session` fields.
 2. `set_card_custom_field` (upsert): `slug` = the final
-   `cf-<cardNumber>-<type>-<desc>`; `session` = the full
-   `$(SESSION_URL_BASE)/?session=<sessionID>` — never the raw session id
-   (D13). This first write-back performs the Config constants drift re-check.
+   `cf-<cardNumber>-<type>-<desc>`; `session` =
+   `$(SESSION_URL_BASE)/?session=<sessionID>` when this run's
+   `Session origin:` resolved, or the RAW session id when it said UNRESOLVED
+   (fallback recorded in RESULT) — never a raw id when an origin resolves,
+   never a remembered host. This first write-back performs the Config
+   constants consistency check.
 3. `delete_checklist_item` for EVERY unchecked item of the Services / Type /
    Model(s) / Research checklists (checklist ids from `list_checklists`,
    item ids from `get_checklist`). The surviving checked items are the

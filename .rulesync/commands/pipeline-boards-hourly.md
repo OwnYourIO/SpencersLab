@@ -29,10 +29,14 @@ BOARD CHECK (LIVE branch only, read-only dev-boards calls): `list_boards` → th
 - ≥1 card → stop with ONE short line quoting the LIVE verdict (session id + age) and the card titles (max 5, then a truncation marker). No board WRITES ever on this path.
 - Any call failure, ambiguous board/list resolution, or unexpected output → board-check unavailable → stop with ONE short line (run skipped, fail-closed like the session gate: the empty-card disjunct cannot be proven).
 
-Until an Executing-empty verdict, the ONLY allowed dev-boards operations on the LIVE branch are reads: `list_boards`, `get_board`, `list_cards_in_list`, `get_card`, `list_comments`, checklist reads. Banned outright until that verdict: `move_card`, `add_comment`, `set_card_custom_field`, `delete_checklist_item`, `toggle_checklist_item`, and card creation.
+Until an Executing-empty verdict, the ONLY allowed dev-boards operations on the LIVE branch are reads: `list_boards`, `list_lists`, `list_swimlanes`, `get_board`, `list_cards_in_list`, `get_card`, `list_comments`, checklist reads. Banned outright until that verdict: `move_card`, `add_comment`, `set_card_custom_field`, `delete_checklist_item`, `toggle_checklist_item`, and card creation.
+
+Session origin rule: the 'Session origin:' line below was produced when this command expanded (outside the tool-permission flow, on the OpenChamber host). Its value IS this run's SESSION_URL_BASE — copy it verbatim into every session link. On 'Session origin: UNRESOLVED …' write the RAW session id wherever a link would go (user ruling 2026-10-25; D13's full-URL rule stands whenever an origin resolves) and record the fallback in RESULT. Never substitute a remembered, guessed or historically-observed host.
+!`if [ -z "${VSCODE_PROXY_URI:-}" ]; then printf 'Session origin: UNRESOLVED (no Coder app-origin env)\n'; elif printf '%s\n' "$VSCODE_PROXY_URI" | grep -qF '{{port}}'; then b=$(printf '%s\n' "$VSCODE_PROXY_URI" | sed 's/{{port}}/openchamber/' | tr 'A-Z' 'a-z'); c=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$b/" || true); case "$c" in 200|301|302|303|401|403) printf 'Session origin: %s\n' "$b";; *) printf 'Session origin: UNRESOLVED (derived host answered %s)\n' "$c";; esac; else printf 'Session origin: UNRESOLVED (unexpected VSCODE_PROXY_URI shape)\n'; fi`
 
 Notes:
 - Manual one-off launches use `/pipeline-boards` and are ungated by design — the guard lives only on this scheduled path.
 - A session shown LIVE here may be an interactive or worktree run — that it counts is deliberate: this launch asks "is anything running, however started".
-- A human-instructed forced-through launch: re-run the gate command above with `--threshold 0` and let its verdict steer this turn.
+- A human-instructed forced-through launch: the human re-runs the gate command above on the host shell with `--threshold 0` (agent-board-coord has no shell) and the run follows that verdict.
+- The `Session origin:` block probes its derived host once at expansion (a single curl, 5 s cap) — `UNRESOLVED` never blocks the run: the raw-session-id fallback in the rule above keeps the board record complete.
 - The board, swimlane and list names above must match the boards skill — on drift the check fails CLOSED (a skip); the boards skill remains the flow authority.
