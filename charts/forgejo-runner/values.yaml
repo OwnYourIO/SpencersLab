@@ -92,7 +92,7 @@ app-template:
             # Renovate's built-in helm-values manager tracks this pin
             # (dry-run verified 2026-10-23) — the extraction comes from
             # the manager, not from any per-line annotation.
-            tag: 29.9.1-dind
+            tag: 29.9.2-dind
           restartPolicy: Always
           securityContext:
             privileged: true
