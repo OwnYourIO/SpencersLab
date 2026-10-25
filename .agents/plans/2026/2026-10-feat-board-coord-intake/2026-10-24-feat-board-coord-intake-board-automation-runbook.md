@@ -99,6 +99,12 @@ agent's first write (upsert handles attach).
 
 ## Step 4 — Pin wekan-mcp IMMEDIATELY to the immutable `:v<run>` (D17, M-sequence)
 
+Status: **M1 done** 2026-10-25 — CI published `:v60`; digest-verified
+identical to rolling `:main` (sha256:0d13a6da9fc6…). **M2 done**
+2026-10-25 on branch `dep-wekan-mcp-v60-pin` (all three refs pinned to
+`:v60`, `imagePullPolicy: Always` retained, t7 green with no test edit).
+**M3 pending** — merge + ArgoCD pod recreation + 25-tool verification.
+
 `:main` is transitional only. The tag cannot exist before the merge
 (`docker-build.yaml` pushes on merge to `main`/`dev`; PR builds never push),
 so the pin lands as an explicit, sequenced post-merge step — not an

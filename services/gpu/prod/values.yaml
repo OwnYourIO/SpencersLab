@@ -670,11 +670,12 @@ hivetools:
     # WeKan, split into privilege tiers. Both share the same WEKAN_TOKEN
     # (wekan-mcp secret); the readonly tier hides/blocks write tools via the
     # WEKAN_MCP_READ_ONLY flag handled by the wekan-mcp image.
-    # Image tracks :main until the build with WEKAN_MCP_READ_ONLY support is
-    # published, then pin to the :v<run> tag.
+    # Pinned to :v60 — the first build carrying the 25-tool custom-field
+    # surface (ticket 2026-10-feat-board-coord-intake, D17/M2); renovate's
+    # docker manager tracks future :v<run> bumps (renovate-mcp:v31 precedent).
     wekan-readonly:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:main
+      image: ghcr.io/ownyourio/wekan-mcp:v60
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
@@ -711,7 +712,7 @@ hivetools:
                     - ALL
     wekan-admin:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:main
+      image: ghcr.io/ownyourio/wekan-mcp:v60
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.

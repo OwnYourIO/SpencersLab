@@ -407,7 +407,8 @@ hivetools:
     # renovate-managed follow-up.
     boards:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:main
+      # :v60 = the 25-tool custom-field build (ticket 2026-10-feat-board-coord-intake, D17/M2).
+      image: ghcr.io/ownyourio/wekan-mcp:v60
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
@@ -432,7 +433,7 @@ hivetools:
               envFrom:
                 - secretRef:
                     name: wekan-mcp
-              imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
+              imagePullPolicy: Always   # retained on the pinned tag: the fleet test contract asserts it, harmless for immutable tags
               securityContext:
                 runAsUser: 65532
                 runAsGroup: 65532
