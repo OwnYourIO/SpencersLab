@@ -64,6 +64,10 @@ Fall back to this skill's raw REST workflow only when:
 - the MCP server is unavailable, or the task targets a different WeKan
   instance than the lab's.
 
+Some gaps have MCP-native workarounds instead — card label assignment (no
+label tool; rules-engine round-trip) and per-card custom-field writes
+(upsert tool) are documented in `references/wekan-mcp-ops.md`.
+
 For deploying or modifying the MCP server itself, see
 `skills/helm-chart-creation/references/mcp-servers.md` (platform wiring) and
 `containers/wekan-mcp/README.md` (server internals).
@@ -132,6 +136,7 @@ Every script in `scripts/` uses this convention. `auth.py` validates the token b
 - `api-py-cheatsheet.md` — command-by-command map of the official `api.py` CLI, which is the newest surface. **Consult when the wiki/Redoc don't cover something** (esp. attachments, admin settings, imports).
 - `webhook-data.md` — outgoing webhook configuration, payload shape, activity-type catalog, receiver contract. **Consult for any event-driven feature.**
 - `config-reference.md` — server env vars that affect the API (`WITH_API`, `ROOT_URL`, `MONGO_URL`, `WRITABLE_PATH`, CORS, token lifetime, attachment settings). **Consult when setting up a test instance or debugging server-side errors.**
+- `wekan-mcp-ops.md` — field learnings from driving the lab's wekan-mcp servers through MCP: direct endpoint verification (session catalogs go stale after image swaps), slim-projection key names, rules-engine vocabulary + proven recipes (`addChecklistWithItems`, `addLabel`), `move_card`'s top-insert order semantics, the label-assignment workaround, custom-field upsert behavior, and the ToolHive/ghcr deploy-verify loop. **Consult when automating boards through MCP tools or verifying a deployed server.**
 
 **`scripts/`** — runnable Python examples. Each is self-contained and reads config from environment variables. All use only the stdlib except where marked.
 
