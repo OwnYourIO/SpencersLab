@@ -1,0 +1,4 @@
+https://github.com/containers/kubernetes-mcp-server/blob/main/docs/configuration.md	Configuration Reference (main branch, fetched 2026-10-25)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/docs/configuration-changes.md	Configuration Changes at v0.0.69 (dropped flags, MCP_CONFIG_PATH, migration examples)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/pkg/http/http.go	pkg/http/http.go at v0.0.69 (/mcp, /healthz endpoints)
+https://www.npmjs.com/package/kubernetes-mcp-server	npm wrapper docs confirming --config/--config-dir CLI (secondary)

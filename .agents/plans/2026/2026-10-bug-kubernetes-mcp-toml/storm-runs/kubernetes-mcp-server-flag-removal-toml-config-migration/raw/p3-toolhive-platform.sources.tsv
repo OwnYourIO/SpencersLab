@@ -1,0 +1,8 @@
+https://raw.githubusercontent.com/stacklok/toolhive/v0.56.0/cmd/thv-operator/api/v1beta1/mcpserver_types.go	MCPServer CRD types at toolhive v0.56.0
+https://github.com/stacklok/toolhive/releases	ToolHive releases v0.50.0–v0.56.0 (changelogs)
+https://github.com/stacklok/toolhive/commit/8abdc0438	Remove embedded registry.json in favour of toolhive-catalog (2026-02-21)
+https://github.com/stacklok/toolhive-catalog	stacklok/toolhive-catalog (193 servers, no kubernetes-mcp-server entry)
+https://raw.githubusercontent.com/stacklok/toolhive/80c3133f1/pkg/registry/data/registry.json	Last embedded registry.json (no kubernetes-mcp-server entry)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/charts/kubernetes-mcp-server/values.yaml	Upstream chart values (configFilePath, config, extraArgs note)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/charts/kubernetes-mcp-server/templates/deployment.yaml	Upstream chart deployment (--config args + ConfigMap mount)
+https://raw.githubusercontent.com/containers/kubernetes-mcp-server/v0.0.69/charts/kubernetes-mcp-server/templates/configmap.yaml	Upstream chart configmap (toToml)
