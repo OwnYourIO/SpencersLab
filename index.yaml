@@ -6153,6 +6153,18 @@ entries:
   erp-next:
   - apiVersion: v2
     appVersion: v16.34.2
+    created: "2026-10-25T15:29:11.393609004Z"
+    dependencies:
+    - name: erpnext
+      repository: https://helm.erpnext.com
+      version: 8.0.89
+    digest: 978721f1e8a9c5297f1927e198ffbd10ced32b0bf50c85c4309076c405d4047f
+    name: erp-next
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/erp-next-1.0.2/erp-next-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: v16.34.2
     created: "2026-09-14T01:17:25.200276765Z"
     dependencies:
     - name: erpnext
@@ -19430,4 +19442,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T15:26:04.468561715Z"
+generated: "2026-10-25T15:29:11.697437979Z"
