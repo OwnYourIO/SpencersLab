@@ -17,7 +17,7 @@ erpnext:
   dbRootUser: root
   image:
     repository: frappe/erpnext
-    tag: v16.34.2
+    tag: v16.52.1
     pullPolicy: IfNotPresent
   persistence:
     worker:
@@ -135,7 +135,7 @@ erpnext:
       initContainers:
         - name: validate-config
           # keep in sync with erpnext.image.tag
-          image: frappe/erpnext:v16.34.2
+          image: frappe/erpnext:v16.52.1
           imagePullPolicy: IfNotPresent
           command: ["bash", "-c"]
           args:
@@ -168,7 +168,7 @@ erpnext:
       containers:
         - name: create-site
           # keep in sync with erpnext.image.tag
-          image: frappe/erpnext:v16.34.2
+          image: frappe/erpnext:v16.52.1
           imagePullPolicy: IfNotPresent
           command: ["bash", "-c"]
           args:
