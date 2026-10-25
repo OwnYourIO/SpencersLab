@@ -4,7 +4,7 @@
   "coord_session": "ses_e8ec41e70ffe1oeW8kKnugIfwF",
   "test_session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
   "current_wave": 2,
-  "updated_at": "2026-10-25T13:42:10.769906+00:00",
+  "updated_at": "2026-10-25T14:07:21.071768+00:00",
   "kickoff": {
     "card": "j6iuM5XnhrJdi5YEL",
     "cardNumber": 50,
@@ -177,6 +177,12 @@
       "session": "ses_e8cc5bce0ffevNcYgwMsUHS59Y",
       "at": "2026-10-25T13:42:10.769906+00:00",
       "result": "RESULT\nstatus: DONE\nchunk: plan (round 2)\nfiles_changed: [plan file ROUND 2 section, DECISIONS.md D18-D21(r2), STATE.json (C03 pending wave3, plan_status draft, round2.replan), chunks/C03.md (new)]\ncommands_run: [env survey + VSCODE_PROXY_URI probe => evidence; curl derived-named-host => 303 auth-redirect recognized; dev host => 400 (matches intake research); opencode-server/OpenChamber run-state probes => loopback-only; pin-inventory greps => re-pin set t12/t14/c12/c7 + new t18/t19; STATE.json round-trip => valid; git status => plan-folder-only]\ndeviations: RESEARCH NEED DECLARED (user-sanctioned hop) \u2014 best-guess mechanism (VSCODE_PROXY_URI-expanded Session origin !-block in both commands; named-app host) is grounded but dev-coder parity, OpenChamber's own public-address source, and port-label vs named proxy posture remain unproven from repo vantage. C03 is PRECONDITIONED on RESEARCH.md + the batched OQ round; research refines pins only, never re-shapes the contract. No commit by planner (coord commits folder).\nfriction: none new.\nopen_questions: OQ-R1 carrier/host form (best: identical block in BOTH commands, named-app host). OQ-R2 unresolved-origin posture (best: proceed card work, write no links, RESULT flag). OQ-R3 fold minor-1 into C03 (best: keep separate). OQ-R4 claim comment when unresolved (best: omit session line). OQ-R5 which instance humans click (best: moot by construction, per-run origin). Research questions for coord: RQ1 dev-coder VSCODE_PROXY_URI + subdomain parity + human reachability; RQ2 OpenChamber native public-address mechanism; RQ3 port-label vs named-proxy auth posture + deep-link rendering.\nnext_suggested: commit folder -> agent-research (RQ1-RQ3) -> relaunch plan session with RESEARCH.md + batched answers -> user approval -> agent-test re-pin (t12/t14/c12/c7, new t18/t19) -> C03 dev -> review with live origin control -> final re-review."
+    },
+    "research_handoff": {
+      "role": "research",
+      "session": "ses_e8cb368d0ffexmi5THOZwkYN6H",
+      "at": "2026-10-25T14:07:21.071768+00:00",
+      "result": "RESULT (agent-research round, verbatim summary)\nstatus: DONE\nchunk: research (round 2)\nfiles_changed: [RESEARCH.md in feature folder]\ncommands_run: [env dump => pass (VSCODE_PROXY_URI present, gpu shape); buildinfo gpu+dev => pass (identical v2.35.2+5c2838a); curl probe matrix both coders => pass (303-normalizing derived/canonical incl ?session survival; D20 single-dash literal 400 DEAD HOST; port-form NXDOMAIN gpu / 303 via --resolve); DNS pattern map + Cloudflare DoH => pass (gpu exact-host view, dev true wildcard, split-horizon); npm pack @openchamber/web@2.1.0 + bundle greps => pass (no instance public address; browser-origin isPublicSessionOrigin); coder v2.35.2 source appurl.go/manifest.go/agent.go => pass (grammar + env generation proven upstream); docs fetches (wildcard-access-url, port-forwarding, OpenChamber DOCUMENTATION/REVERSE_PROXY) => pass; git status => pass (only RESEARCH.md added)]\ndeviations: none \u2014 VSCODE_PROXY_URI named-app !-block RETAINED with research endorsement + 3 refinements; port-label fallback downgraded strictly inferior.\nfriction: none new.\nopen_questions: OQ1 gpu wildcard DNS *-coder.spencerslab.com (user-owned); OQ2 card #50 stored session CF carries the dead literal \u2014 leave frozen vs manual fix; OQ3 do NOT strip agent label in block (resolved by design, informational); OQ4 first dev-coder launch eyeball-compare (landing observation).\nnext_suggested: batched user round (OQ-R1..R5 + research OQ1/OQ2) -> relaunch plan session -> re-pin -> C03."
     }
   }
 }
