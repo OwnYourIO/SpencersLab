@@ -231,3 +231,9 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   contracts (startup-script, dev-git-auth c1..c-canonical) stay green as
   regressions in every new chunk.
 
+
+## Post-plan user decisions (2026-10-25)
+- Infra forgejo-runner un-wired from the dev deployment (user: "I don't want the infra runner on dev... better place for it eventually; the dev one is good enough"). Mechanism: top-level forgejo-runner block with enabled:false on controller+headless service+persistence (all three required by app-template validation) + additive dig-gate on secret-runner-infra.yaml; charts/forgejo-runner infra capability + sentinels deliberately KEPT for relocation. Evidence: the `runners:` pins under the `charts:` entry never forwarded to the chart (base appset builds values from the top-level per-app block — confirmed from source and live Application valuesObject).
+- Sibling ticket 2026-10-feat-forgejo-infra-and-runner F02 acceptance criteria partially SUPERSEDED by this decision (two-runner deployed state is now runner-dev-only on dev; dev-forgejo-runner.sh t7/t8/t9/t10 contracts amended accordingly, chart-level legs intact).
+- Coder SSO Bitwarden UUIDs wired (user-supplied): dev coder-external-auth e04af1ad-d36f-42b3-9aa0-b4ee0035a382, dev coder-token-encryption 4a7b0218-e9af-4205-9fe6-b4ee00347021, gpu coder-external-auth 487e0cbc-ea58-4d70-9384-b4ee00354509, gpu coder-token-encryption a59487dd-0a84-454f-8669-b4ee0034a69c. forgejo-token-canonical stays OVERRIDE_NEEDED until the user creates that item.
+- Landing correction (review): origin/main still runs the pre-fusion two-Application runner topology, so merge is a topology REPLACEMENT (both old Applications pruned via resources-finalizer; dev runner PVCs recreate = cold image-cache once). Server-side housekeeping deferred: runner record on git.spencerslab.com + Bitwarden item dev-forgejo-prod-runner stay for the future relocation.
