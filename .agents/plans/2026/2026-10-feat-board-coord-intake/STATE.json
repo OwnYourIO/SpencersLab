@@ -36,7 +36,7 @@
     }
   },
   "current_wave": 1,
-  "updated_at": "2026-10-25T00:40:00Z",
+  "updated_at": "2026-10-25T01:00:00Z",
   "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
@@ -45,13 +45,31 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "in_review",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C01",
+          "files_changed": [
+            "containers/wekan-mcp/wekan_mcp/server.py",
+            "containers/wekan-mcp/README.md",
+            "skills/wekan-api/SKILL.md"
+          ],
+          "commands_run": "py_compile => pass; tools.sh t1-t8 => pass 8/8; wekan-mcp-login.sh => pass 6 ok; dev-mcp-fleet.sh => pass 36 ok; aislop ci --changes => pass (0 errors, 91/100); docker build => not run (daemon down, non-gating)",
+          "deviations": "create_custom_field adds authorId (v9.99 reads it; ownerless-audit fix); set_card_custom_field value:str typed; docstring staleness corrected in-scope; aislop narrative/size warnings pre-existing-style, AC6 additions-only",
+          "friction": "none (aislop+helm on PATH here)",
+          "open_questions": "none",
+          "next_suggested": "agent-review C01 (tools.sh first); C02 wave-1 independent"
+        }
+      ],
+      "dev_session": "ses_e8f7b292dffeZDE6ua7iwhtnuf",
+      "pre_chunk_commit": "c86e36375",
+      "dev_commit": "64ffa8b9b"
     },
     "C02": {
       "status": "pending",
