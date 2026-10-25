@@ -10141,6 +10141,22 @@ entries:
   k8s-monitoring:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-10-25T17:31:17.986586175Z"
+    dependencies:
+    - name: k8s-monitoring
+      repository: https://grafana.github.io/helm-charts
+      version: 4.5.5
+    - condition: k8s-monitoring.prometheusOperatorObjects.enabled
+      name: prometheus-operator-crds
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 26.0.1
+    digest: b1513e5ede5dfd167ab9430f7ec5aa5bac50de3d76851fed528b97c49e44938d
+    name: k8s-monitoring
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/k8s-monitoring-1.0.19/k8s-monitoring-1.0.19.tgz
+    version: 1.0.19
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-10-25T17:02:08.899669105Z"
     dependencies:
     - name: k8s-monitoring
@@ -19644,4 +19660,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T17:10:13.658526477Z"
+generated: "2026-10-25T17:31:17.98843568Z"
