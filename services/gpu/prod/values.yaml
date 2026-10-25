@@ -590,7 +590,7 @@ hivetools:
     # READ_ONLY_MODE (hides write tools + blocks write calls at runtime).
     homeassistant-readonly:
       enabled: true
-      image: zorak1103/ha-mcp:2026.9.2
+      image: zorak1103/ha-mcp:2026.10.2
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
@@ -623,7 +623,7 @@ hivetools:
                     - ALL
     homeassistant-admin:
       enabled: true
-      image: zorak1103/ha-mcp:2026.9.2
+      image: zorak1103/ha-mcp:2026.10.2
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
