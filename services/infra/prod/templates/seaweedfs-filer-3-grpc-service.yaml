@@ -11,6 +11,12 @@ spec:
       port: 18883
       protocol: TCP
       targetPort: 18888
+    # Required by seaweedfs-csi-driver >= v1.4.32 (see filer-0 service for
+    # the full rationale): the VAC store needs filer HTTP at the base port.
+    - name: swfs-filer
+      port: 8883
+      protocol: TCP
+      targetPort: 8888
   selector:
     app.kubernetes.io/component: filer
     app.kubernetes.io/name: seaweedfs

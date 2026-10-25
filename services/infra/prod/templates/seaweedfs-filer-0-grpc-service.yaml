@@ -11,6 +11,15 @@ spec:
       port: 18880
       protocol: TCP
       targetPort: 18888
+    # seaweedfs-csi-driver >= v1.4.32 reads/writes per-volume attributes on
+    # the filer's HTTP API (/.csi/vac) at every mount, dialing the base port
+    # of each seaweedfsFiler entry (8880-8884). gRPC alone (base+10000,
+    # 18880-18884 above) no longer suffices, so the HTTP port must be
+    # exposed too or every SeaweedFS mount fails with connection refused.
+    - name: swfs-filer
+      port: 8880
+      protocol: TCP
+      targetPort: 8888
   selector:
     app.kubernetes.io/component: filer
     app.kubernetes.io/name: seaweedfs
