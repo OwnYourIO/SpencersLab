@@ -7043,6 +7043,20 @@ entries:
   forgejo:
   - apiVersion: v2
     appVersion: 15.0.9
+    created: "2026-10-25T20:17:43.830408564Z"
+    dependencies:
+    - name: forgejo
+      repository: oci://code.forgejo.org/forgejo-helm
+      version: 17.3.1
+    description: Wrapper around the official Forgejo OCI chart — CNPG database, Bitwarden
+      ExternalSecrets, Keycloak OIDC source
+    digest: e0a50c9af5de31a1a23c14fee9b1f973a1409da60ae9e669ce6c0214db8710ac
+    name: forgejo
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-1.0.7/forgejo-1.0.7.tgz
+    version: 1.0.7
+  - apiVersion: v2
+    appVersion: 15.0.9
     created: "2026-10-24T16:47:40.897270015Z"
     dependencies:
     - name: forgejo
@@ -19781,4 +19795,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T19:14:01.47981061Z"
+generated: "2026-10-25T20:17:43.832066406Z"
