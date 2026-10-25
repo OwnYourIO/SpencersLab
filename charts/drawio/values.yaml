@@ -12,7 +12,7 @@ app-template:
         main:
           image:
             repository: jgraph/drawio
-            tag: 30.4.3
+            tag: 32.6.1
           env:
             TZ: Etc/UTC
           probes:
