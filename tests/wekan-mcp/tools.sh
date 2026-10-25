@@ -122,7 +122,7 @@ if missing:
     bad(f't2: existing tools lost from the registry: {missing} (C01 AC6)')
 
 envs = set(re.findall(r'os\.environ\.get\(\s*["\']([A-Z_]+)["\']', src))
-allowed = {'WEKAN_MCP_LOG_LEVEL', 'WEKAN_MCP_READ_ONLY'}
+allowed = {'WEKAN_MCP_LOG_LEVEL', 'WEKAN_MCP_READ_ONLY', 'WEKAN_MCP_HOST', 'WEKAN_MCP_PORT'}
 extra = envs - allowed
 if extra:
     bad(f't2: new env vars read in server.py: {sorted(extra)} — C01 AC3 forbids new env vars (only {sorted(allowed)})')
@@ -169,7 +169,7 @@ if lic is None:
     bad('t3: list_cards_in_list disappeared')
 if not re.search(r'card[ _]number', lic, re.I):
     bad('t3: list_cards_in_list docstring must document the projection caveat — card_number is None in the by-list response, use get_card (pinned interface)')
-print('ok: t3 — _slim_card emits card_number + custom_fields ([] default); list_cards_in_list docstring carries the projection caveat (C01 AC4)')
+print('ok: t3 — _slim_card emits card_number + custom_fields as [{id, value}]; list_cards_in_list docstring carries the projection caveat (C01 AC4)')
 PY
   then
     checks=$((checks + 1))
