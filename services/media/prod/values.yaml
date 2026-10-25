@@ -309,9 +309,13 @@ lidarr:
     - name: betanin-script
       mountPath: /config/scripts/betanin.sh
       subPath: betanin.sh
+    # Whole-Secret directory mount: file subPaths of an optional Secret are
+    # not materialized while the Secret is absent and left the container in a
+    # deterministic StartError (runc "not a directory", 14 restarts) — a
+    # directory mount tolerates empty/optional state and never collides with
+    # the /config PVC subtree. Key visible as /betanin-secrets/BETANIN_API_KEY.
     - name: betanin-secret
-      mountPath: /config/secrets/betanin/api_key
-      subPath: BETANIN_API_KEY
+      mountPath: /betanin-secrets
 
 radarr:
   env:
