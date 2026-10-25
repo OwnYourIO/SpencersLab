@@ -36,7 +36,7 @@
     }
   },
   "current_wave": 1,
-  "updated_at": "2026-10-25T01:40:00Z",
+  "updated_at": "2026-10-25T02:00:00Z",
   "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
@@ -86,12 +86,12 @@
       "dev_commit": "64ffa8b9b"
     },
     "C02": {
-      "status": "in_review",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "status": "DONE",
@@ -105,6 +105,20 @@
           "friction": "aislop not on default PATH \u2014 npx --no-install workaround",
           "open_questions": "none",
           "next_suggested": "agent-review C02 (subset minus c6+c16); then C03 wave 2"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C02",
+          "verdict": "APPROVED",
+          "review_session": "ses_e8f609e84ffe5d3LegaUA5Qy4S",
+          "files_changed": [
+            ".agents/plans/2026/2026-10-feat-board-coord-intake/chunks/C02.md (review notes)"
+          ],
+          "commands_run": "rulesync-surface.sh C02 subset (excl c6+c16) @4b7673494 => 16 ok; rulesync idempotent; tools.sh 8/8; aislop 0 err; scope 2 skill files; kickoff/models/gates/role-coord byte-unchanged",
+          "deviations": "none",
+          "friction": "none",
+          "open_questions": "minor (for C03): research-only loop steps 1-2 inherit folder-slug-vs-unset-Type ambiguity \u2014 add a one-line best-guess clarification; nit: claim comment session-link full-URL form",
+          "next_suggested": "C03 wave 2; C03 review adds c16"
         }
       ],
       "dev_session": "ses_e8f6788c2ffeD23rd2jUlSFP6Y",
