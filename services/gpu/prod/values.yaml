@@ -694,7 +694,7 @@ hivetools:
     # docker manager tracks future :v<run> bumps (renovate-mcp:v31 precedent).
     wekan-readonly:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:v60
+      image: ghcr.io/ownyourio/wekan-mcp:v87
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
@@ -731,7 +731,7 @@ hivetools:
                     - ALL
     wekan-admin:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:v60
+      image: ghcr.io/ownyourio/wekan-mcp:v87
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
