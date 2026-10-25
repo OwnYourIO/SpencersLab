@@ -19,7 +19,8 @@
 # c1[AC-files] c2[C03 AC3 + D21] c3[C03 AC4] c4[C02 AC2] c5[C03 command]
 # c6[C04 AC2 — green only once C04 lands] c7[C02 AC3] c8[C02 AC4 scope]
 # c9[C02 AC5 + C03 AC4] c10[C02 AC1 pickup order] c11[C02 AC1 checklists +
-# D9 drift detector] c12[C02 AC1 slug/session/cf-/D20 + D12 negative]
+# D9 drift detector] c12[C02 AC1 slug/session/cf- + cf-50 round-2 RE-PIN:
+# dead-literal ABSENCE + dynamic Session-origin phrases + D12 negative]
 # c13[C02 AC1 research-only + D15] c14[C02 AC1 D11 resume] c15[C02 AC1 C01
 # tool names] c16[C03 AC1 body+command deltas] c17[C02 AC4 byte-unchanged].
 #
@@ -375,22 +376,34 @@ if want c11; then
   ok "c11: four checklist titles with full item sets — Services regenerated from ls services/ (13 folders) + home-assistant/agent context; Research timing options; Model(s) default stated"
 fi
 
-# --- c12: slug/session custom fields, cf- slugs, D20 URL, no run tag (C02 AC1) --
+# --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
 if want c12; then
   for s in 'slug' 'session' 'custom field' 'cf-<card' 'session_rename'; do
     grep -qF "$s" "$SKILL_GEN" || fail "c12: the boards skill never states the intake fact '$s'"
   done
   grep -qF 'SESSION_URL_BASE' "$SKILL_GEN" \
-    || fail "c12: the boards skill lost the D20 config constant name"
-  grep -qF 'openchamber--dev-thehackmeister-coder.dev.scifi.farm' "$SKILL_GEN" \
-    || fail "c12: the D20 session-host constant must land VERBATIM (user-confirmed; agents copy it, never re-derive the label order)"
+    || fail "c12: the boards skill lost the config constant name"
+  # cf-50 round 2 (D18/D25-r2): the intake-D20 literal is a proven dead host
+  # (coderd answers it 400 — malformed app-host grammar), so PRESENCE is now
+  # the defect: the old VERBATIM sub-pin flips to absence pins plus the
+  # dynamic-resolution phrases the origin block ships.
+  if grep -qF 'openchamber--dev-thehackmeister-coder' "$SKILL_GEN"; then
+    fail "c12: the dead intake-D20 host literal is present in the boards skill — cf-50 D25 r2: absence is correctness, not drift"
+  fi
+  if grep -qF 'SESSION_URL_BASE = https://' "$SKILL_GEN"; then
+    fail "c12: SESSION_URL_BASE is hard-coded again — the value must be THIS run's Session origin: line (cf-50 D18 r2)"
+  fi
+  grep -qF 'Session origin:' "$SKILL_GEN" \
+    || fail "c12: the skill lost the dynamic SESSION_URL_BASE resolution source (the run's Session origin: line)"
+  grep -qF 'VSCODE_PROXY_URI' "$SKILL_GEN" \
+    || fail "c12: the skill lost the Coder app-origin env the command blocks derive from (cf-50 D19 r2)"
   grep -qF '?session=' "$SKILL_GEN" \
     || fail "c12: the session-link path format (OpenChamber router, research §10) is missing"
   grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag|omits/nulls' "$SKILL_GEN" \
     || fail "c12: the skill never retires the run tag for card-driven runs (D10/retirement rule)"
   python3 "$TMP/neg12.py" "$SKILL_GEN" \
     || fail "c12: a line pairs 'models' with 'custom field' without negating it — D12 dropped the models field (phrase the negation explicitly, e.g. 'no third field; routing rides the Model(s) checklist')"
-  ok "c12: slug/session custom fields + cf- slug rule + verbatim D20 session URL + run-tag retirement; no models/custom-field pairing"
+  ok "c12: slug/session custom fields + cf- slug rule + dead-literal ABSENCE + dynamic Session-origin phrases + run-tag retirement; no models/custom-field pairing"
 fi
 
 # --- c13: research-only iterative loop (C02 AC1, D14/D15/D19) ------------------

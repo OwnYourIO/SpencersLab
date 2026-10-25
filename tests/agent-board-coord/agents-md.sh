@@ -203,7 +203,9 @@ if want c7; then
       "AGENTS.md"|"$RULES_SRC"|"$PERM_SRC"|"$PERM_GEN"|tests/*|"$FEATURE"/*|\
       "$FEATURE2"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
       .opencode/commands/pipeline-boards-hourly.md|\
-      .rulesync/subagents/agent-board-coord.md|.opencode/agents/agent-board-coord.md) : ;;
+      .rulesync/subagents/agent-board-coord.md|.opencode/agents/agent-board-coord.md|\
+      .rulesync/commands/pipeline-boards.md|.opencode/commands/pipeline-boards.md|\
+      .rulesync/skills/boards/*|.opencode/skills/boards/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

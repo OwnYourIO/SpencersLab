@@ -1,19 +1,29 @@
 #!/usr/bin/env bash
 # agent-board-coord debounce-gate contract suite (2026/2026-10-cf-50-feat-
-# prevent-multiple-agent-board-coords, C01 + C02).
+# prevent-multiple-agent-board-coords, C01 + C02, + C03 round-2 re-pins).
 #
 # Pins D17's three-state session-operand contract for
-# scripts/agent-board-coord-gate.sh (t1..t10) and the /pipeline-boards-hourly
-# command surface plus the manual-path byte-freeze (t11..t17). Written before
+# scripts/agent-board-coord-gate.sh (t1..t10), the /pipeline-boards-hourly
+# command surface plus the manual-path byte-freeze (t11..t17), and the
+# round-2 Session-origin command/skill contract (t18/t19). Written before
 # the implementation exists — red-before-green by design:
 #   C01 not landed: t1 fails file-not-found; t2..t9 fail as invocation
 #     errors (exit 127); t10 fails-or-skips.
 #   C02 not landed: t11/t13/t15/t16 fail on missing strings/files;
 #     t12/t14/t17 are invariance guards — green at plan time and must HOLD.
+#   C03 not landed (round-2 base 72500166a): t11 red on the STRENGTHENED
+#     windows (LIVE allow-list lacks list_swimlanes/list_lists; the
+#     --threshold 0 note lacks the host clarifier); t18 red (no Session
+#     origin block anywhere); t19 red first on the dead host literal still
+#     shipped by the boards skill; rulesync-surface.sh c12 red on its
+#     absence pin. t12/t13/t14/t15/t16/t17 HOLD — green now, and t12/t15/
+#     t17 turn red the moment C03 touches a frozen byte.
 #
 # AC trace: t1[C01 AC2+AC5] t2[AC1 a] t3[AC1 b] t4[AC1 c] t5[AC1 d]
-# t6[AC1 e] t7[AC1 f] t8[AC1 g] t9[AC1 h+i] t10[C01 AC4] t11[C02 AC1]
-# t12[AC2] t13[AC3] t14[AC4] t15[AC5] t16[AC6] t17[AC2/D13].
+# t6[AC1 e] t7[AC1 f] t8[AC1 g] t9[AC1 h+i] t10[C01 AC4] t11[C02 AC1 +
+# C03 AC3 strengthened] t12[C02 AC2, C03 AC4 carve] t13[AC3] t14[AC4 +
+# C03 AC5 scope] t15[AC5 + C03 AC4 round-aware HOLD] t16[AC6] t17[AC2/D13]
+# t18[C03 AC1 origin block] t19[C03 AC2 skill dynamic contract].
 #
 # AC7 (regression) is not re-implemented here: run
 # tests/agent-board-coord/rulesync-surface.sh and agents-md.sh; their scope
@@ -39,9 +49,15 @@
 # documented minimum, so fixture mode must not require live project facts.
 #
 # Usage (harness conventions from tests/agent-board-coord/rulesync-surface.sh):
-#   bash tests/agent-board-coord/gate.sh                # t1..t17
+#   bash tests/agent-board-coord/gate.sh                # t1..t19
 #   bash tests/agent-board-coord/gate.sh t4 t9          # subset
-#   CHUNK_BASE=<pre-C01 commit> bash tests/agent-board-coord/gate.sh  # for t12/t14/t15/t16/t17
+#   CHUNK_BASE=<pre-chunk commit> bash tests/agent-board-coord/gate.sh  # for the BASE-relative guards
+# Chunk bases: C02-era guards ran 0ed96ed99/a42dc2896/87617353a; round-2
+# (C03) per-chunk base is 72500166a — t12/t15/t17 freeze against that base's
+# shipped round-1 content, t14 scopes the C03 delta, t18/t19 + strengthened
+# t11 go red until C03 lands. t15 auto-detects which round the base belongs
+# to (pointer absent in base → the one-sentence append rule; pointer present
+# → the byte-frozen HOLD) so every historical base stays meaningful.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -77,10 +93,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 17); do WANT["t$i"]=1; done
+  for i in $(seq 1 19); do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-9]|1[0-7])$ ]] || fail "unknown check id '$a' (expected t1..t17)"
+    [[ "$a" =~ ^t([1-9]|1[0-9])$ ]] || fail "unknown check id '$a' (expected t1..t19)"
     WANT["$a"]=1
   done
 fi
@@ -395,8 +411,11 @@ t11_contract() { # one file, the whole AC1 string set
     || fail "t11: $f does not tie the GATE: LIVE verdict to a BOARD CHECK section (AC1)"
   python3 "$TMP/win.py" --ci "$f" 900 'ai-dev' 'in process' 'executing' \
     || fail "t11: $f does not name board AI-Dev / swimlane In Process / list Executing as one passage (AC1)"
-  python3 "$TMP/win.py" "$f" 1500 'list_boards' 'get_board' 'list_cards_in_list' 'get_card' 'list_comments' \
-    || fail "t11: $f read-only allow list is incomplete (AC1: list_boards, get_board, list_cards_in_list, get_card, list_comments)"
+  # C03 AC3 (folded minor-1, D24 r2): the LIVE-branch resolution chain's own
+  # steps (list_swimlanes/list_lists) join the read allow-list — eight read
+  # operations pinned in one passage.
+  python3 "$TMP/win.py" "$f" 1500 'list_boards' 'get_board' 'list_cards_in_list' 'get_card' 'list_comments' 'list_swimlanes' 'list_lists' \
+    || fail "t11: $f read-only allow list is incomplete (C02 AC1 five tools + C03 AC3 folded minor-1: list_swimlanes, list_lists)"
   python3 "$TMP/win.py" "$f" 1500 'move_card' 'add_comment' 'set_card_custom_field' 'delete_checklist_item' 'toggle_checklist_item' \
     || fail "t11: $f write-deny list is incomplete (AC1 names all five banned operations)"
   python3 "$TMP/win.py" --ci "$f" 400 'unavailable' 'fail-closed' \
@@ -406,6 +425,11 @@ t11_contract() { # one file, the whole AC1 string set
   python3 "$TMP/win.py" --ci "$f" 300 'manual' 'ungated' \
     || fail "t11: $f never notes that manual one-off launches are ungated by design (AC1, D11)"
   grep -qF -- '--threshold 0' "$f" || fail "t11: $f does not carry the --threshold 0 forced-through escape note (AC1)"
+  # C03 AC3 (nit-1 folded): the escape is a HOST-shell action — agent-board-coord
+  # has no shell (t17), so the note must say whose shell; window pairs the
+  # substring with the host clarifier instead of trusting either alone.
+  python3 "$TMP/win.py" --ci "$f" 200 '--threshold 0' 'host' \
+    || fail "t11: $f pairs --threshold 0 with no on-the-host clarifier (C03 AC3 folded nit-1)"
   grep -qE '^[[:space:]]*agent:[[:space:]]+agent-board-coord$' "$f" \
     || fail "t11: $f frontmatter does not target agent agent-board-coord (AC1)"
   python3 "$TMP/argcheck.py" "$f" \
@@ -414,19 +438,22 @@ t11_contract() { # one file, the whole AC1 string set
 if want t11; then
   t11_contract "$CMD_SRC"
   t11_contract "$CMD_GEN"
-  ok "t11: C02 AC1 contract strings present in the hourly command source AND generated copy"
+  ok "t11: C02 AC1 contract strings + C03 AC3 strengthened windows in the hourly command source AND generated copy"
 fi
 
-# --- t12: manual-path byte-freeze (AC2) ---------------------------------------
+# --- t12: byte-freeze of the surfaces still frozen (C02 AC2 → C03 AC4 carve) --
+# Round-2 re-pin (D21 r2): the user's OQ-R1 answer re-opens the boards skill
+# and the /pipeline-boards command pair — C03 deliberately edits them, so
+# they leave the freeze set; everything else C02 froze stays frozen, and
+# t18/t19/t13 now guard the re-opened pair for WHAT it may contain.
 if want t12; then
-  if ! git diff --quiet "$BASE" -- \
-      "$CMD_BASE_SRC" "$CMD_BASE_GEN" "$BOARDS_SRC" "$BOARDS_GEN" "$AS_SRC" "$AS_GEN" 2>/dev/null; then
-    git diff --name-only "$BASE" -- "$CMD_BASE_SRC" "$CMD_BASE_GEN" "$BOARDS_SRC" "$BOARDS_GEN" "$AS_SRC" "$AS_GEN" >&2
-    fail "t12: a manual-path surface changed vs $BASE — /pipeline-boards, the boards skill and agents-sync references are byte-frozen (C02 AC2, D13)"
+  if ! git diff --quiet "$BASE" -- "$AS_SRC" "$AS_GEN" 2>/dev/null; then
+    git diff --name-only "$BASE" -- "$AS_SRC" "$AS_GEN" >&2
+    fail "t12: agents-sync references changed vs $BASE — still byte-frozen (C02 AC2, D13; C03 AC4 zero-edits)"
   fi
-  others=$(git ls-files --others --exclude-standard -- "$BOARDS_SRC" "$BOARDS_GEN" "$AS_SRC" "$AS_GEN" || true)
-  [ -z "$others" ] || fail "t12: new untracked file(s) under the byte-frozen manual-path dirs: $others"
-  ok "t12: /pipeline-boards, boards skill and agents-sync references byte-unchanged vs $BASE (worktree included)"
+  others=$(git ls-files --others --exclude-standard -- "$AS_SRC" "$AS_GEN" || true)
+  [ -z "$others" ] || fail "t12: new untracked file(s) under the byte-frozen agents-sync dirs: $others"
+  ok "t12: agents-sync references byte-unchanged vs $BASE (worktree included); boards/manual-command pair re-opened by the C03 carve"
 fi
 
 # --- t13: shared "Current state:" block byte-equality (AC3) -------------------
@@ -450,11 +477,12 @@ if want t14; then
     [ -n "$p" ] || continue
     case "$p" in
       "$GATE"|tests/*|AGENTS.md|"$RULES_SRC"|"$AGENT_SRC"|"$AGENT_GEN"|\
-      "$CMD_SRC"|"$CMD_GEN"|"$FEATURE"/*) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4)" ;;
+      "$CMD_SRC"|"$CMD_GEN"|"$CMD_BASE_SRC"|"$CMD_BASE_GEN"|\
+      "$BOARDS_SRC"/*|"$BOARDS_GEN"/*|"$FEATURE"/*) : ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces included (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
@@ -480,7 +508,12 @@ $snap_after" >"$TMP/noop.diff"
   fi
 fi
 
-# --- t15: agent body gains exactly one pointer sentence (AC5) -----------------
+# --- t15: hourly pointer — C02 AC5 append rule, C03 AC4 frozen HOLD -----------
+# Base-adaptive: a base predating the pointer (0ed96ed99, a42dc2896,
+# 87617353a) must see exactly one appended sentence; a base that already
+# ships it (72500166a onward) must see a byte-frozen agent body — the
+# pointer's $(SESSION_URL_BASE) token text survives verbatim and the
+# origin redefinition lives in the boards skill, not the agent (C03 AC4).
 body_of() { awk 'c>=2{print} /^---$/{c++}' "$1"; }   # skeleton convention from rulesync-surface c16
 if want t15; then
   n=0
@@ -489,38 +522,47 @@ if want t15; then
     git show "$BASE:$f" >"$TMP/base-$n.md" 2>/dev/null || fail "t15: $f not readable at $BASE"
     body_of "$TMP/base-$n.md" >"$TMP/base-body-$n"
     body_of "$f" >"$TMP/cur-body-$n"
-    if diff -q "$TMP/base-body-$n" "$TMP/cur-body-$n" >/dev/null; then
-      fail "t15: $f body identical to $BASE — the one-line hourly pointer is missing (C02 AC5 — red-before-C02)"
-    fi
-    # diff exits 1 on any difference; capture it once instead of re-running
-    # it per grep (every `diff | grep` pipeline would otherwise trip pipefail
-    # even when grep matches).
-    diff "$TMP/base-body-$n" "$TMP/cur-body-$n" >"$TMP/d-$n" || true
-    grep '^> ' "$TMP/d-$n" >"$TMP/add-$n" || true
-    grep '^< ' "$TMP/d-$n" >"$TMP/rem-$n" || true
-    add_n=$(sed 's/^> //' "$TMP/add-$n" | grep -cv '^[[:space:]]*$' || true)
-    rem_n=$(sed 's/^< //' "$TMP/rem-$n" | grep -cv '^[[:space:]]*$' || true)
-    [ "$add_n" -eq 1 ] \
-      || fail "t15: $f body has $add_n non-blank added line(s) — AC5 pins exactly ONE new pointer sentence"
-    [ "$rem_n" -le 1 ] \
-      || fail "t15: $f body rewrites $rem_n existing line(s) — only a one-sentence append to a single line is allowed"
-    if [ "$rem_n" -eq 1 ]; then
-      python3 - "$TMP/rem-$n" "$TMP/add-$n" <<'PY' || fail "t15: $f rewrote (not merely extended) a body line — the pointer must be additive so an old sentence cannot vanish"
+    base_has_pointer=0
+    if grep -qF 'pipeline-boards-hourly' "$TMP/base-body-$n"; then base_has_pointer=1; fi
+    if [ "$base_has_pointer" -eq 1 ]; then
+      if ! diff -q "$TMP/base-body-$n" "$TMP/cur-body-$n" >/dev/null; then
+        diff "$TMP/base-body-$n" "$TMP/cur-body-$n" | head -n 8 >&2
+        fail "t15: $f body changed vs $BASE, a base that already ships the hourly pointer — C03 AC4 holds the agent body byte-frozen"
+      fi
+    else
+      if diff -q "$TMP/base-body-$n" "$TMP/cur-body-$n" >/dev/null; then
+        fail "t15: $f body identical to $BASE — the one-line hourly pointer is missing (C02 AC5 — red-before-C02)"
+      fi
+      # diff exits 1 on any difference; capture it once instead of re-running
+      # it per grep (every `diff | grep` pipeline would otherwise trip pipefail
+      # even when grep matches).
+      diff "$TMP/base-body-$n" "$TMP/cur-body-$n" >"$TMP/d-$n" || true
+      grep '^> ' "$TMP/d-$n" >"$TMP/add-$n" || true
+      grep '^< ' "$TMP/d-$n" >"$TMP/rem-$n" || true
+      add_n=$(sed 's/^> //' "$TMP/add-$n" | grep -cv '^[[:space:]]*$' || true)
+      rem_n=$(sed 's/^< //' "$TMP/rem-$n" | grep -cv '^[[:space:]]*$' || true)
+      [ "$add_n" -eq 1 ] \
+        || fail "t15: $f body has $add_n non-blank added line(s) — AC5 pins exactly ONE new pointer sentence"
+      [ "$rem_n" -le 1 ] \
+        || fail "t15: $f body rewrites $rem_n existing line(s) — only a one-sentence append to a single line is allowed"
+      if [ "$rem_n" -eq 1 ]; then
+        python3 - "$TMP/rem-$n" "$TMP/add-$n" <<'PY' || fail "t15: $f rewrote (not merely extended) a body line — the pointer must be additive so an old sentence cannot vanish"
 import sys
 r = [ln[2:] for ln in open(sys.argv[1]).read().splitlines() if ln[2:].strip()]
 a = [ln[2:] for ln in open(sys.argv[2]).read().splitlines() if ln[2:].strip()]
 sys.exit(0 if len(r) == 1 and len(a) == 1 and r[0] in a[0] else 1)
 PY
+      fi
+      grep -qF 'pipeline-boards-hourly' "$TMP/add-$n" \
+        || fail "t15: $f pointer sentence does not name pipeline-boards-hourly (the sentence's whole purpose)"
+      grep -qiE 'manual' "$TMP/add-$n" \
+        || fail "t15: $f pointer sentence never mentions the ungated manual path (C02 task: one sentence covering both)"
     fi
-    grep -qF 'pipeline-boards-hourly' "$TMP/add-$n" \
-      || fail "t15: $f pointer sentence does not name pipeline-boards-hourly (the sentence's whole purpose)"
-    grep -qiE 'manual' "$TMP/add-$n" \
-      || fail "t15: $f pointer sentence never mentions the ungated manual path (C02 task: one sentence covering both)"
     for mech in 'GATE:' '--threshold' 'BOARD CHECK'; do
       ! grep -qF -- "$mech" "$TMP/cur-body-$n" || fail "t15: $f body carries gate mechanics '$mech' — mechanics live in the script/command only (AC5)"
     done
   done
-  ok "t15: exactly one additive pointer sentence in both agent body surfaces; no gate mechanics leaked into the body"
+  ok "t15: hourly pointer held per base round — one appended sentence vs pre-pointer bases, byte-frozen body vs bases shipping it; no gate mechanics in the body"
 fi
 
 # --- t16: rules surface additive (AC6) -----------------------------------------
@@ -584,6 +626,94 @@ if errs:
     print("; ".join(errs)); sys.exit(1)
 PY
   ok "t17: agent-board-coord frontmatter byte-identical to $BASE (source + generated) and the single narrow dev_boards* allow shape intact (D13)"
+fi
+
+# --- t18: Session origin block contract across all four command files (C03) ---
+# No concrete host is pinned anywhere in t18/t19: pinning one is exactly the
+# round-1 defect class (RESEARCH Contradiction 1 — the shipped intake-D20
+# literal answers 400, coderd rejects it as a malformed app host).
+origin_block() { awk '/^!`/ && /VSCODE_PROXY_URI/ {print; exit}' "$1"; }
+origin_lead() { grep -m1 '^Session origin rule:' "$1" || true; }
+if want t18; then
+  n=0
+  for f in "$CMD_BASE_SRC" "$CMD_BASE_GEN" "$CMD_SRC" "$CMD_GEN"; do
+    n=$((n + 1))
+    [ -f "$f" ] || fail "t18: $f is missing"
+    origin_block "$f" >"$TMP/blk-$n"
+    [ -s "$TMP/blk-$n" ] || fail "t18: $f carries no Session origin !-block (C03 AC1 — red-before-C03: the block is absent everywhere)"
+    origin_lead "$f" >"$TMP/lead-$n"
+    [ -s "$TMP/lead-$n" ] || fail "t18: $f lacks the 'Session origin rule:' lead-in line (C03 AC1: one identical line before each block)"
+    cmp -s "$TMP/blk-$n" "$TMP/blk-1" || fail "t18: the origin block differs between $CMD_BASE_SRC and $f — sources AND generated copies must carry the identical block (C03 AC1)"
+    cmp -s "$TMP/lead-$n" "$TMP/lead-1" || fail "t18: the lead-in differs between $CMD_BASE_SRC and $f (C03 AC1)"
+    for s in 'VSCODE_PROXY_URI' 's/{{port}}/openchamber/' '{{port}}' 'Session origin:' 'UNRESOLVED' 'RAW session id' 'RESULT' '-m 5' 'curl'; do
+      grep -qF -- "$s" "$f" || fail "t18: $f does not carry '$s' (C03 AC1 substring set: derivation, shape guard, emitted line, raw-id+RESULT fallback, probe)"
+    done
+    python3 "$TMP/win.py" "$f" 120 '200' '301' '302' '303' '401' '403' \
+      || fail "t18: $f lacks the self-probe recognition set {200,301,302,303,401,403} in one passage (D22 r2)"
+    if grep -qF 'openchamber--' "$f"; then fail "t18: $f contains a concrete OpenChamber host literal — the origin is emitted by the block, never stored (RESEARCH Implications.3)"; fi
+  done
+  # Hourly placement: the block sits after the GATE: SKIP stop rule (the
+  # SKIP one-line posture stays unaffected inert text) and before Notes:.
+  python3 - "$CMD_SRC" "$TMP/blk-3" <<'PY' || fail "t18: hourly placement broken — expected GATE: SKIP rule < origin block < Notes: heading (C03 Tasks)"
+import sys
+blk = open(sys.argv[2]).read().strip()
+txt = open(sys.argv[1]).read()
+a, b, c = txt.find('GATE: SKIP'), txt.find(blk), txt.find('\nNotes:')
+if not (-1 < a < b < c):
+    print(f'got GATE: SKIP at {a}, block at {b}, Notes: at {c}'); sys.exit(1)
+PY
+  # Manual command: the block follows the shared Current state: block.
+  python3 - "$CMD_BASE_SRC" "$TMP/blk-1" <<'PY' || fail "t18: manual-command placement wrong — the origin block must follow the Current state: block (C03 Tasks)"
+import sys
+blk = open(sys.argv[2]).read().strip()
+txt = open(sys.argv[1]).read()
+a, b = txt.find('state=$(find .agents/plans'), txt.find(blk)
+if not (-1 < a < b):
+    print(f'got Current state: block at {a}, origin block at {b}'); sys.exit(1)
+PY
+  ok "t18: identical Session origin lead-in + block in both sources and both generated copies, D22 probe strings + recognition set present, no host literal, placement per Tasks (C03 AC1)"
+fi
+
+# --- t19: boards-skill dynamic-origin contract (C03 AC2) -----------------------
+if want t19; then
+  for f in "$BOARDS_SRC/SKILL.md" "$BOARDS_GEN/SKILL.md"; do
+    [ -f "$f" ] || fail "t19: $f is missing"
+    # Negatives first: until C03 lands, the skill still ships the dead host —
+    # the red reason must name that, not a missing dynamic phrase.
+    if grep -qF 'openchamber--dev-thehackmeister-coder' "$f"; then
+      fail "t19: $f still ships the dead intake-D20 host literal (D25 r2: coderd answers it 400 — absence is correctness, not drift)"
+    fi
+    if grep -qF 'SESSION_URL_BASE = https://' "$f"; then
+      fail "t19: $f hard-codes SESSION_URL_BASE again (C03 AC2: the value is THIS run's Session origin line)"
+    fi
+    for s in 'SESSION_URL_BASE' 'Session origin:' 'VSCODE_PROXY_URI' 'UNRESOLVED'; do
+      grep -qF -- "$s" "$f" || fail "t19: $f lost '$s' (C03 AC2 dynamic contract)"
+    done
+    grep -qF '$(SESSION_URL_BASE)/?session=<sessionID>' "$f" \
+      || fail "t19: $f lost the byte-preserved link shape (C03 AC2: only the provenance moved, not the format)"
+    grep -qF 'Never a raw session id (D13)' "$f" \
+      || fail "t19: $f dropped D13's resolved-branch rule (C03 AC2: retained with its scope annotated)"
+    # UNRESOLVED is DEFINED precisely (D22 r2): the three block branches read
+    # as one passage, not scattered file-wide hits.
+    python3 "$TMP/win.py" --ci "$f" 900 'UNRESOLVED' 'absent' 'shape' 'answered' \
+      || fail "t19: $f does not define UNRESOLVED via all three branches (env absent / template shape / answered code) in one passage (C03 AC2)"
+    python3 "$TMP/win.py" --ci "$f" 400 'raw session id' 'proceed' \
+      || fail "t19: $f lacks the D23-r2 fallback posture (UNRESOLVED proceeds and writes the RAW session id)"
+    python3 "$TMP/win.py" --ci "$f" 600 'raw session id' 'RESULT' \
+      || fail "t19: $f does not bind the fallback to the RESULT record channel (C03 AC2)"
+    python3 "$TMP/win.py" --ci "$f" 200 'never' 're-guess' \
+      || fail "t19: $f lost the never-silently-re-guess ban (C03 AC2)"
+    python3 "$TMP/win.py" --ci "$f" 400 'consistency' 'mismatch' \
+      || fail "t19: $f does not carry the run-scoped consistency-vs-block check (C03 AC2: the drift check reworded)"
+    # Every other D20 constant keeps copy-verbatim byte-exact (D18 r2):
+    # RESEARCH_LABEL is the surviving exemplar of that set.
+    git show "$BASE:$f" >"$TMP/rl-src" 2>/dev/null || fail "t19: $f not readable at $BASE"
+    grep -F 'RESEARCH_LABEL = Research' "$TMP/rl-src" >"$TMP/rl-base" || fail "t19: RESEARCH_LABEL line absent at $BASE in $f"
+    grep -F 'RESEARCH_LABEL = Research' "$f" >"$TMP/rl-cur" || fail "t19: $f lost the RESEARCH_LABEL line entirely (D18 r2)"
+    cmp -s "$TMP/rl-base" "$TMP/rl-cur" \
+      || fail "t19: $f RESEARCH_LABEL line changed vs $BASE — only SESSION_URL_BASE's provenance moves (D18 r2)"
+  done
+  ok "t19: boards skill (src + gen) free of host literals, dynamic Session-origin definition with all three UNRESOLVED branches, raw-id+RESULT fallback, never-re-guess, consistency check, preserved link shape and verbatim RESEARCH_LABEL (C03 AC2)"
 fi
 
 printf 'PASS: agent-board-coord gate contract checks (%d ok)\n' "$checks"
