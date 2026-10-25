@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords",
-  "plan_status": "draft",
+  "plan_status": "approved",
   "coord_session": "ses_e8ec41e70ffe1oeW8kKnugIfwF",
   "test_session": "ses_e8e9d918effeYiSwJ8q1JVU7RG",
   "current_wave": 2,
-  "updated_at": "2026-10-25T14:07:21.071768+00:00",
+  "updated_at": "2026-10-25T14:25:29.985074+00:00",
   "kickoff": {
     "card": "j6iuM5XnhrJdi5YEL",
     "cardNumber": 50,
@@ -120,7 +120,7 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "note": "Round 2 (user change request 2026-10-25): dynamic session-origin. PRECONDITIONS before test/dev: (1) agent-research round RQ1-RQ3 lands RESEARCH.md (mechanism best-guess VSCODE_PROXY_URI command-!-block is NOT yet proven cross-coder - declared research need per launch instruction); (2) batched OQ-R1..R5 round answered + plan rework; (3) test session re-pins t12/t14/c12/c7 + writes t18/t19. Round-2 CHUNK_BASE = 72500166a."
+      "note": "Round 2 FINAL: research landed (RESEARCH.md, RQ1 PASS/RQ2 NO/RQ3 named-host) + batched round answered (plan 'Round-2 answers'). C03 now FOLDS minor-1 (LIVE-branch allow-list += list_swimlanes/list_lists + nit-1 on-the-host clarifier + t11 STRENGTHENED re-pin, user OQ-R3). Posture per user ruling: resolvable -> full URL (D13 stands); UNRESOLVED (block self-probe: env absent / shape guard / answered-code outside {200,30x,401,403}) -> proceed + write RAW session id + RESULT flag (D23-r2). READY: user approval -> agent-test re-pin (t11/t12/t14/c12/c7 + t18/t19) -> dev -> review (live controls a+b; dev-leg + click-through are landing observations). Round-2 CHUNK_BASE = 72500166a."
     }
   },
   "blocked": [],
@@ -139,24 +139,19 @@
     "plan_replanned_at": "2026-10-25T13:40:48+00:00",
     "plan_sections": "plan-of-record ROUND 2 section + chunks/C03.md + DECISIONS D18-D21(r2)",
     "round2_base": "72500166a",
-    "mechanism_best_guess": "Session origin: !-block in both board commands; base = VSCODE_PROXY_URI with {{port}} -> openchamber app slug, lowercased; link shape $(SESSION_URL_BASE)/?session=<id> unchanged; UNRESOLVED -> no links + RESULT flag (fail-closed). Evidence + rejected candidates in plan ROUND 2 mechanism survey; DECISIONS D19 (r2).",
-    "research_needed": true,
+    "mechanism_best_guess": "FINAL (was best guess): identical Session origin !-block in BOTH commands; VSCODE_PROXY_URI with {{port}}->openchamber, lowercased, agent label KEPT (parsed-away for slugs); block SELF-PROBE (curl -m 5; recognition codes {200,30x,401,403} else UNRESOLVED); UNRESOLVED -> proceed + RAW session id fallback + RESULT flag (D22/D23-r2). DECISIONS D22-D25; plan 'Round-2 answers'.",
+    "research_needed": false,
     "research_questions": {
       "RQ1": "Dev-cluster coder (coder.dev.scifi.farm) parity: VSCODE_PROXY_URI injected for board-coord-capable workspaces there; coderd accepts agent-labelled named app subdomains (303 normalize); *-coder.dev.scifi.farm reachable + auth round-trip for an authenticated human via proxy-remote chain.",
       "RQ2": "OpenChamber's own public-address mechanism (integrations post session links 'when the instance has a public address' - intake research section 10): where is that address configured/stored; is it agent-readable; does it beat env-derivation as the primary source.",
       "RQ3": "Port-label fallback ({{port}} -> run-state port) vs named-app host: coderd subdomain-proxy auth posture per form (workspace-proxy RBAC vs app share=owner) and whether /?session= deep links render identically behind each."
     },
-    "open_questions_pending_round": [
-      "OQ-R1 mechanism carrier + host form (best: identical block in BOTH commands, named-app slug)",
-      "OQ-R2 fail-closed posture (best: proceed card work, skip link writes, RESULT flag)",
-      "OQ-R3 fold minor-1 or keep separate (best: keep separate - user scope option)",
-      "OQ-R4 claim comment when UNRESOLVED (best: omit session line)",
-      "OQ-R5 which instance humans click (best: moot by construction)"
-    ],
+    "open_questions_pending_round": [],
     "pins_repin_set": [
-      "gate.sh t12 (freeze-set carve-out)",
+      "gate.sh t12 (freeze-set carve-out: boards dirs + /pipeline-boards pair leave)",
+      "gate.sh t11 STRENGTHENED (folded minor-1: allow-list window += list_swimlanes/list_lists; --threshold 0 window pairs on-the-host clarifier)",
       "gate.sh t14 scope allow-set",
-      "rulesync-surface.sh c12 (literal -> dynamic+negative)",
+      "rulesync-surface.sh c12 (literal VERBATIM -> absence + dynamic phrases; absence-pin covers single-dash dead literal + any SESSION_URL_BASE = https:// literal; NO positive host pin anywhere)",
       "agents-md.sh c7 scope allow-set",
       "NEW gate.sh t18/t19"
     ],
@@ -164,13 +159,13 @@
       "gate.sh t1..t10",
       "t13 Current-state block byte-equality",
       "t15/t16/t17",
-      "t11 (additive-safe)",
-      "rulesync-surface c8 + all content checks",
+      "t11 non-amended strings (additive-safe; verify 1500-char windows survive)",
+      "rulesync-surface c1..c11/c13..c18 (c12 excepted)",
       "agents-md.sh c1..c6/c8",
       "agent-board-coord src+gen untouched (token text survives)",
       "gate script untouched",
       "AGENTS.md untouched",
-      "WeKan card #50 historical comments untouched"
+      "WeKan card #50 COMMENTS untouched (CF already re-pointed by coord - executed context, not repo work)"
     ],
     "plan_handoff": {
       "role": "plan",
@@ -183,6 +178,35 @@
       "session": "ses_e8cb368d0ffexmi5THOZwkYN6H",
       "at": "2026-10-25T14:07:21.071768+00:00",
       "result": "RESULT (agent-research round, verbatim summary)\nstatus: DONE\nchunk: research (round 2)\nfiles_changed: [RESEARCH.md in feature folder]\ncommands_run: [env dump => pass (VSCODE_PROXY_URI present, gpu shape); buildinfo gpu+dev => pass (identical v2.35.2+5c2838a); curl probe matrix both coders => pass (303-normalizing derived/canonical incl ?session survival; D20 single-dash literal 400 DEAD HOST; port-form NXDOMAIN gpu / 303 via --resolve); DNS pattern map + Cloudflare DoH => pass (gpu exact-host view, dev true wildcard, split-horizon); npm pack @openchamber/web@2.1.0 + bundle greps => pass (no instance public address; browser-origin isPublicSessionOrigin); coder v2.35.2 source appurl.go/manifest.go/agent.go => pass (grammar + env generation proven upstream); docs fetches (wildcard-access-url, port-forwarding, OpenChamber DOCUMENTATION/REVERSE_PROXY) => pass; git status => pass (only RESEARCH.md added)]\ndeviations: none \u2014 VSCODE_PROXY_URI named-app !-block RETAINED with research endorsement + 3 refinements; port-label fallback downgraded strictly inferior.\nfriction: none new.\nopen_questions: OQ1 gpu wildcard DNS *-coder.spencerslab.com (user-owned); OQ2 card #50 stored session CF carries the dead literal \u2014 leave frozen vs manual fix; OQ3 do NOT strip agent label in block (resolved by design, informational); OQ4 first dev-coder launch eyeball-compare (landing observation).\nnext_suggested: batched user round (OQ-R1..R5 + research OQ1/OQ2) -> relaunch plan session -> re-pin -> C03."
+    },
+    "research_landed": "RESEARCH.md 2026-10-25 (agent-research round; citations S1-S23)",
+    "research_verdicts": {
+      "RQ1": "PASS - same build v2.35.2+5c2838a both coders; env coderd-generated per workspace [S1][S2]; derived named host 303-normalizes on BOTH, query preserved [S12]",
+      "RQ2": "NO - OpenChamber has no instance-level public address (browser-reported per-event origins only); env derivation remains the only sound source [S15-S17]",
+      "RQ3": "named-app host wins outright; port-label fallback evidence-DEAD (forward-dependency, owner visibility, gpu NXDOMAIN) [S3][S12][S20]"
+    },
+    "plan_questions": {
+      "round": 2,
+      "status": "answered 2026-10-25 by human; plan finalized same day",
+      "answers": {
+        "OQ-R1": "BOTH commands, named host, agent label kept - as research endorsed",
+        "OQ-R2": "CHANGED from best guess: UNRESOLVED -> proceed + write RAW session id in every link slot (D13 amendment scoped to fallback branch; D23-r2)",
+        "OQ-R3": "FOLD minor-1 into C03 (+ nit-1 on-the-host clarifier + t11 STRENGTHENED re-pin; D24-r2)",
+        "OQ-R4": "same ruling as OQ-R2 - raw id in claim comment too when UNRESOLVED",
+        "OQ-R5": "moot by construction (per-run origin); gpu DNS ruling: exact records only, NO wildcard landing step"
+      },
+      "rework_delta": "D22 (probe + unresolvable definition), D23 (D13 branch-scoped amendment, supersedes D20-r2 no-links), D24 (minor-1 folded, amends D21-r2 pin story), D25 (contradiction absorbed: D20 literal is DEAD HOST 400 - never valid; card #50 CF re-pointed by coord EXECUTED; DNS exact-records; port-label closed; 2.35.4 advisory = separate renovate lane)"
+    },
+    "executed_context": [
+      "coord 2026-10-25: card #50 session CF re-pointed to https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com/?session=ses_e8ec41e70ffe1oeW8kKnugIfwF (human-verified 200) + note comment; old comments frozen"
+    ],
+    "new_open_questions": [],
+    "approved_at": "2026-10-25T14:25:29.985074+00:00",
+    "plan_handoff_final": {
+      "role": "plan",
+      "session": "ses_e8cc5bce0ffevNcYgwMsUHS59Y",
+      "at": "2026-10-25T14:25:29.985074+00:00",
+      "note": "finalized with all five batched answers; RESULT deviations:none open_questions:none"
     }
   }
 }
