@@ -13746,6 +13746,18 @@ entries:
   privatebin:
   - apiVersion: v2
     appVersion: 1.7.4
+    created: "2026-10-25T13:45:56.110101674Z"
+    dependencies:
+    - name: privatebin
+      repository: https://privatebin.github.io/helm-chart/
+      version: 0.23.3
+    digest: 704253ff80be2c53596e9d732cc9649ef9c9e29b068a692f47f3b4989452149b
+    name: privatebin
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/privatebin-1.0.3/privatebin-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v2
+    appVersion: 1.7.4
     created: "2026-02-28T17:18:22.471893363Z"
     dependencies:
     - name: privatebin
@@ -19231,4 +19243,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T12:57:00.485374298Z"
+generated: "2026-10-25T13:45:56.112657446Z"
