@@ -6184,6 +6184,18 @@ entries:
   erp-next:
   - apiVersion: v2
     appVersion: v16.34.2
+    created: "2026-10-25T17:08:39.601990132Z"
+    dependencies:
+    - name: erpnext
+      repository: https://helm.erpnext.com
+      version: 8.0.89
+    digest: 19ad1722af2fa286ad38cff60eaa05697acbd811209f0246ccc45abe05416c77
+    name: erp-next
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/erp-next-1.0.3/erp-next-1.0.3.tgz
+    version: 1.0.3
+  - apiVersion: v2
+    appVersion: v16.34.2
     created: "2026-10-25T15:29:11.393609004Z"
     dependencies:
     - name: erpnext
@@ -9158,6 +9170,18 @@ entries:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/hyperion-1.0.5/hyperion-1.0.5.tgz
     version: 1.0.5
   ilias:
+  - apiVersion: v2
+    appVersion: "11.3"
+    created: "2026-10-25T17:08:39.853385021Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: e565fc0dbee4d54f5b151ad55b30d2b5a0e62182283624ee604208a2c863973e
+    name: ilias
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/ilias-1.0.3/ilias-1.0.3.tgz
+    version: 1.0.3
   - apiVersion: v2
     appVersion: "11.3"
     created: "2026-09-14T16:46:48.596828473Z"
@@ -19605,4 +19629,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T17:05:40.778454304Z"
+generated: "2026-10-25T17:08:39.855006264Z"
