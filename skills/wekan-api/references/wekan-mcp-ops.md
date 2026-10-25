@@ -58,6 +58,12 @@ Verified against WeKan v9.99 (`server/rulesHelper.js`, `server/models/rules.js`)
   (L400–404: `card.addLabel(action.labelId)`).
 - `addChecklistWithItems` takes `{checklistName, checklistItems}` with the
   items **comma-joined** — an item containing a comma splits in two.
+- **Rules matching one activity dispatch in parallel** — a `createCard` →
+  `checkItem` rule races the same-activity `addChecklistWithItems`
+  insertion and loses (the guarded lookup no-ops on the not-yet-existing
+  checklist; verified empirically on v9.99). Checked-by-default items
+  cannot be created this way; apply defaults in the consuming flow (e.g.
+  at card claim) instead.
 - A `createCard` trigger fires for REST-created AND UI-created cards (the
   REST create route inserts the `createCard` activity), so creation-time
   automation covers both paths.
