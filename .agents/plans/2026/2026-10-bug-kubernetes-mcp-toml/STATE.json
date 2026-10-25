@@ -1,0 +1,55 @@
+{
+  "feature": "2026/2026-10-bug-kubernetes-mcp-toml",
+  "plan_status": "draft",
+  "coord_session": "ses_e908dc2aeffenDK8IoJwj5SZQQ",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-25T17:31:14Z",
+  "kickoff": {
+    "slug": "kubernetes-mcp-toml",
+    "type": "bug",
+    "run_tag": "openrouter-qwen3-8-flash",
+    "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/bug-kubernetes-mcp-toml-openrouter-qwen3-8-flash",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "D9: machine-global opencode config lacks kubernetes MCP entries vs AGENTS.md claim (later ticket)",
+    "sessionAffinity: None hardening (optional)",
+    "/healthz probes via podTemplateSpec (future ticket)",
+    "OIDC re-enable for the tiers (parked in values comments)"
+  ]
+}
