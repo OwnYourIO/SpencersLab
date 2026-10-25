@@ -12,6 +12,7 @@ Generated agents carry `permissions:` blocks in their frontmatter (authored in `
 | role | edit | subagent | shell | MCP |
 |---|---|---|---|---|
 | coord | ONLY `.agents/plans/**/STATE.json`, `…/DECISIONS.md`, `…/FRICTION.md` (starts from `* * deny`) | plan/research/test/dev/review of same variant | none | none |
+| board-coord | same as coord | same as coord | none | `dev_boards*` allow ONLY — the first coord-variant with any MCP access, scoped to the AI-Dev board; a single MCP permission for card intake/exit, deliberately not the fleet-wide `dev*` the other agents carry |
 | plan | ONLY `.agents/plans/**` | none | read-only git | `admin*` deny; `readonly*`/`global*`/`dev*` allow |
 | research | ONLY `.agents/plans/**` (its `RESEARCH.md`, at the exact feature-folder path from its launch message) | none | read-only git | as plan; plus `webfetch`/`websearch` allowed |
 | test | ONLY chart/container `tests/` folders + the context allows below (starts from `edit * deny`) | none | git reads + `helm lint/template/unittest` | as plan |
@@ -37,6 +38,7 @@ Repo/agent context files get a per-file policy for the roles that edit the repo 
 ### MCP allow-lists
 
 This repo's servers follow the `<priv>-<cluster>-<service>` naming (`readonly-*` / `admin-*` / `global-*`), so the agents use the prefix rules `admin* deny, readonly* allow, global* allow` — subagents never mutate cluster state; mutations are a user step. Tier-less servers match none of those prefixes, and unlisted servers fall through to `ask` (= blocked in unattended runs), so the dev-cluster utility fleet (`dev-playwright`, `dev-renovate`, `dev-searxng`, `dev-boards`) is granted by a `dev*` allow added AFTER the `admin*` deny (2026-10-24, ticket 2026-10-feat-dev-mcp-fleet): under last-match-wins the deny stays the effective last match for `admin_*` tool names — `dev*` matches only `dev_*` names — and no tier-less `dev-*` name may shadow an `admin`-capable server; if the fleet ever gains one, put a specific deny after the `dev*` allow. A repo whose servers lack that naming needs explicit per-server allow-lists instead, with anything that can mutate systems the repo shouldn't touch denied.
+Exception: `board-coord` — the first coord-variant with any MCP access — gets a single explicit allow for the `dev-boards` wekan-mcp server (`dev_boards*`) and NOT the fleet-wide `dev*` the other agents carry; board ops are its intake and exit (card pickup, lifecycle, hand-back), not fleet tooling, so least privilege scopes it to the AI-Dev board and it gets no `readonly*`/`admin*` rules either.
 
 ## Audit checklist (run after files move or servers are renamed)
 

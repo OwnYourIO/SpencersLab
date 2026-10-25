@@ -94,7 +94,7 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{coord,plan,research,test,dev,review,fuser}.md`) —
+- `agent-*` (`.agents/agents/agent-{coord,plan,research,test,dev,review,fuser,board-coord}.md`) —
   chunk-based pipeline: `agent-coord` (primary) runs an approved plan through
   fresh `agent-plan`/`agent-test`/`agent-dev`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only
@@ -102,7 +102,12 @@ container images (`containers/`). **ArgoCD applies everything — never
   before marking the plan complete, then offers to plan fixes for the open
   friction items. `agent-fuser` (user-launched, on demand) compares parallel
   runs of the same ticket across branches and writes a user-confirmed fusion
-  plan back into the chosen base branch for that session to execute. Artifacts
+  plan back into the chosen base branch for that session to execute.
+  `agent-board-coord` — board-driven variant of `agent-coord`: pulls work from
+  the WeKan AI-Dev board via the `dev-boards` MCP server, takes its intake from
+  the card's standard checklists plus the `slug`/`session` custom fields
+  instead of the live kickoff questions, and defers user questions to a single
+  batched plan-question round; launch with `/pipeline-boards`. Artifacts
   live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
   `/pipeline` commands.
 
@@ -154,6 +159,16 @@ role × permission matrix is in the `agents-sync` skill references
   fuser writes `FUSION-REPORT.md` plus `<plan-file>-fusion.md` into the base
   branch's ticket folder and hands the confirmed plan back to that branch's
   pipeline session (its `coord_session` in `STATE.json`) for execution.
+- `agent-board-coord` is the board-driven variant: card intake from the WeKan
+  AI-Dev board replaces the live kickoff — pickup walks
+  `Rework → Not Started → Low Priority` (top card first), the
+  Services/Type/Model(s)/Research checklists plus the `slug` and `session`
+  custom fields supply the kickoff answers, the Model(s) checklist alone
+  routes models, `cf-<card-number>-<type>-<desc>` slugs name the feature
+  folder, worktree, branch and session alike;
+  card-driven runs carry no run tag (`agent-coord` keeps run tags);
+  `Research`-labeled cards run the iterative research-only loop and end at
+  Ready for Review — see the `boards` skill.
 - All Hard rules below (no hand-bumped versions, ExternalSecret+Bitwarden
   secrets, ArgoCD — never kubectl apply, git safety, MCP privilege tiers)
   apply to every pipeline agent unchanged.
