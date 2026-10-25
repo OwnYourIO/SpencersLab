@@ -18,7 +18,7 @@
 # Built and pushed by .github/workflows/docker-build.yaml as
 # ghcr.io/ownyourio/renovate-mcp. No ENTRYPOINT args: the MCPServer supplies
 # runtime configuration via env (RENOVATE_BASE_DIR, RENOVATE_MCP_REQUIRE_CLI).
-FROM node:26-bookworm-slim@sha256:367679cf9792759492a486e4aa4b421764d71a9546a6dae8aab81a99eb797b3e
+FROM node:26-bookworm-slim@sha256:28147155d47dc31abe0a46e0d12b59b2fb3d0a2dcc5dc65fce76a074180b16fe
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git ca-certificates \
