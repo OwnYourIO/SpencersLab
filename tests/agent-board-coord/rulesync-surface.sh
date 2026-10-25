@@ -352,13 +352,19 @@ if want c11; then
     grep -qF "\`$d\`" "$SKILL_GEN" \
       || fail "c11: the Services checklist does not name the services/$d folder as a code span — drift detector (D9) failed"
   done
+  for extra in 'home-assistant' 'agent context'; do
+    grep -qF "\`$extra\`" "$SKILL_GEN" \
+      || fail "c11: the Services checklist does not name the non-folder work target '$extra' as a code span"
+  done
   grep -qE 'feat.*bug.*debug.*dep.*refactor.*chore.*docs' "$SKILL_GEN" \
     || fail "c11: the Type checklist does not list feat|bug|debug|dep|refactor|chore|docs in one passage"
   grep -qE 'Qwen Large.*Qwen 27b.*Qwen Flash.*Local' "$SKILL_GEN" \
     || fail "c11: the Model(s) checklist does not list Qwen Large | Qwen 27b | Qwen Flash | Local"
-  python3 "$TMP/window.py" "$SKILL_GEN" 400 'Repo/codebase only' 'Upstream docs/API survey' 'Live cluster/board inspection' 'Deep research' \
-    || fail "c11: the Research checklist does not carry its five scopes (None + the four named scopes)"
-  ok "c11: four checklist titles with full item sets — Services regenerated from ls services/ (13 folders)"
+  python3 "$TMP/window.py" "$SKILL_GEN" 400 'before planning' 'after planning' 'agent decides' \
+    || fail "c11: the Research checklist does not carry its three timing options (before planning / after planning / agent decides)"
+  grep -qF 'Default selection' "$SKILL_GEN" \
+    || fail "c11: the Model(s) checklist does not state the default selection (Qwen Flash + Local (gpu-ai), applied at claim time)"
+  ok "c11: four checklist titles with full item sets — Services regenerated from ls services/ (13 folders) + home-assistant/agent context; Research timing options; Model(s) default stated"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, D20 URL, no run tag (C02 AC1) --

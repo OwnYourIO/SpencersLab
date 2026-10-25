@@ -23,10 +23,10 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 - Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned).
 - Custom fields: exactly TWO board-level text fields, `slug` and `session`, resolved by name with `list_custom_fields`. There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field.
 - The four standard checklists on every card (future cards via board rules, existing cards via the runbook backfill — the runbook owns their maintenance):
-  - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`. Re-derive this set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
+  - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
-  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai).
-  - **Research** — `None` | `Repo/codebase only` | `Upstream docs/API survey` | `Live cluster/board inspection` | `Deep research` (agent-research).
+  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash` + `Local` (gpu-ai). A createCard rule cannot check items reliably (checkItem races the checklist insertion and loses — verified on WeKan v9.99), so the default is applied by the flow: at claim time, if NO Model(s) item is checked, `toggle_checklist_item` those two to checked and route from them.
+  - **Research** — `before planning` | `after planning` | `agent decides`: WHEN this card's research belongs relative to the plan (checked items are the answer; several may be checked; `agent decides` delegates the call to the pipeline).
 - Access: the `dev-boards` MCP server — the wekan-mcp tool set (`get_card`, `list_cards_in_list`, `move_card`, `add_comment`, `list_comments`, `list_checklists`, `get_checklist`, `list_custom_fields`, `set_card_custom_field`, `delete_checklist_item`, …), write-capable; it is the agent's single MCP permission (narrow `dev_boards*`, D21).
 - `dev-boards` authenticates SERVER-SIDE via login-mint: `WEKAN_USERNAME` + `WEKAN_PASSWORD` arrive from the `wekan-mcp` Bitwarden LOGIN item and the instance URL rides that item's URI field (data, not values-config). The agent never handles credentials.
 - Tool behavior unclear → load the `wekan-api` skill for WeKan API semantics (on demand, never at run start).
@@ -75,10 +75,13 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
 
 - **type** — the checked Type item; none checked → the question joins the
   batched round.
-- **models** — the sole routing input is the checked Model(s) items (D12):
-  exactly one checked → that model for every tier; several checked → the
-  largest drives planning (plan / research / final review), the smallest
-  drives code (test / dev / chunk review); only **Local** checked →
+- **models** — the sole routing input is the checked Model(s) items (D12).
+  Default first: if NO item is checked, `toggle_checklist_item` `Qwen Flash`
+  and `Local` (gpu-ai) to checked at claim time — the standard default
+  selection — and route from them. Then: exactly one checked → that model
+  for every tier; several checked → the largest drives planning (plan /
+  research / final review), the smallest drives code (test / dev / chunk
+  review); only **Local** checked →
   `gpu-ai/qwen3.8-27b-q6` for every role. The size order and the local
   mapping authority stay in `pipeline-models` — reference it, never
   duplicate its table. Record the resolved tiers in STATE.json
@@ -94,7 +97,7 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
 
 ## Research-only cards — iterative loop
 
-Trigger: the card's labels include the **Research** board label — read board labels via `get_board` and the card's label ids via `get_card`, matched case-insensitively. The label is the ONLY trigger (D14); the Research checklist never fires this flow — on normal cards its checked items only scope research.
+Trigger: the card's labels include the **Research** board label — read board labels via `get_board` and the card's label ids via `get_card`, matched case-insensitively. The label is the ONLY trigger (D14); the Research checklist never fires this flow — on normal cards its checked items only time the research (before/after planning, or the agent decides).
 
 Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev`/`agent-review`. The run:
 
@@ -103,7 +106,7 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev`/`agent-rev
    kickoff: `cf-<cardNumber>-<type>-<desc>`. No `feat` default for an unset
    Type — it joins the round-2 questions.
 2. `agent-research` ROUND 1 — launch with the card request, the checked
-   Research-checklist scope, and the absolute feature-folder path; the
+   Research-checklist items, and the absolute feature-folder path; the
    summary lands in `RESEARCH.md` there.
 3. ONE batched `question` round for the user: refine/direct further
    research — carry every open question from RESEARCH.md plus the slug
