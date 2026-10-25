@@ -7011,6 +7011,22 @@ entries:
   forgejo-runner:
   - apiVersion: v2
     appVersion: 13.2.0
+    created: "2026-10-25T15:16:41.847416884Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Forgejo Actions runner — one 1-replica StatefulSet per release (privileged
+      DinD sidecar, declarative registration), deployed once per target Forgejo instance
+      (the dev ApplicationSet installs it twice)
+    digest: f28cc02a82237b0662f1b8a437537ffe4ef8e9446a21085a8fc5d1af8cd0afd9
+    name: forgejo-runner
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/forgejo-runner-1.0.2/forgejo-runner-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 13.2.0
     created: "2026-10-23T16:03:52.032804066Z"
     dependencies:
     - name: app-template
@@ -19328,4 +19344,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-25T15:15:01.574003Z"
+generated: "2026-10-25T15:16:43.427639332Z"
