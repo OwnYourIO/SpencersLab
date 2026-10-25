@@ -36,7 +36,7 @@
     }
   },
   "current_wave": 1,
-  "updated_at": "2026-10-25T02:40:00Z",
+  "updated_at": "2026-10-25T03:00:00Z",
   "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
@@ -170,15 +170,34 @@
       "dev_commit": "ba40a12c0"
     },
     "C04": {
-      "status": "pending",
+      "status": "in_review",
       "wave": 3,
       "depends_on": [
         "C03"
       ],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C04",
+          "files_changed": [
+            ".rulesync/rules/overview.md",
+            ".rulesync/skills/agents-sync/references/permissions.md",
+            "AGENTS.md",
+            ".opencode/skills/agents-sync/references/permissions.md"
+          ],
+          "commands_run": "baseline agents-md c2 + surface c6 red; rulesync generate x2 no-op; CHUNK_BASE=a9111ba0a agents-md.sh => 8/8; surface.sh full => 18/18; post-commit re-run 8/8+18/18; aislop 0 err; commit 464e6e873",
+          "deviations": "none (main's dev-<service> row kept verbatim; optional C03 polish skipped \u2014 out of C04 scope, agents-md c7 would fail)",
+          "friction": "grep line-wise needles vs rulesync verbatim wraps \u2014 2 red iterations, re-wrapped source",
+          "open_questions": "2 C03 nits (step-arrow order; 'never restate them') unaddressed \u2014 need agent-board-coord.md edits agents-md c7 scopes out of C04; fold into final-review fix pass or follow-up",
+          "next_suggested": "agent-review C04; then final whole-plan review"
+        }
+      ],
+      "dev_session": "ses_e8f52be07ffe5tZUou0fhA7jWJ",
+      "pre_chunk_commit": "a9111ba0a",
+      "dev_commit": "464e6e873"
     }
   },
   "blocked": [],
