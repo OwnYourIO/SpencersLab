@@ -94,11 +94,10 @@ traefik:
         enabled: true
         namespace: default
 
-  logs:
-    #general:
-    #  level: DEBUG
-    access:
-      enabled: true
+  # log:
+  #   level: DEBUG
+  accessLog:
+    enabled: true
 
 crowdsec:
   container_runtime: containerd
