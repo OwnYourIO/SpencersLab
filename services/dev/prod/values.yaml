@@ -401,11 +401,10 @@ hivetools:
     # the wekan-mcp Bitwarden LOGIN item — dev has no local wekan, so the base
     # URL stays data, never a values-pinned host (user decision 2026-10-24).
     # Admin tier: WEKAN_MCP_READ_ONLY is deliberately NOT set — server-side
-    # read-only is not enforced on dev (user decision 2026-10-24). All three
-    # runtime values arrive via the wekan-mcp Secret and the image mints the
-    # bearer in-pod from the credentials (containers/wekan-mcp).
-    # Image tracks :main until the login-capable build publishes, then pin to
-    # the :v<run> tag (renovate-managed).
+    # read-only is not enforced on dev (user decision 2026-10-24). The image
+    # mints the bearer in-pod from the credentials (containers/wekan-mcp).
+    # :main + Always pull per user decision; pinning to a :v<run> build is a
+    # renovate-managed follow-up.
     boards:
       enabled: true
       image: ghcr.io/ownyourio/wekan-mcp:main
@@ -414,16 +413,6 @@ hivetools:
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
       # oidc:
       #   audience: boards
-      secrets:
-        - name: wekan-mcp
-          key: WEKAN_BASE_URL
-          targetEnvName: WEKAN_BASE_URL
-        - name: wekan-mcp
-          key: WEKAN_USERNAME
-          targetEnvName: WEKAN_USERNAME
-        - name: wekan-mcp
-          key: WEKAN_PASSWORD
-          targetEnvName: WEKAN_PASSWORD
       resources:
         limits:
           cpu: '200m'
@@ -435,6 +424,14 @@ hivetools:
         spec:
           containers:
             - name: mcp
+              # The MCPServer CRD keys spec.secrets as a list-map on Secret
+              # name — one entry per Secret. A Secret contributing several env
+              # vars lands via the container's envFrom instead (wekan-mcp
+              # emits WEKAN_BASE_URL/USERNAME/PASSWORD; gpu homeassistant
+              # pattern).
+              envFrom:
+                - secretRef:
+                    name: wekan-mcp
               imagePullPolicy: Always   # :main is a mutable tag; always pull fresh
               securityContext:
                 runAsUser: 65532

@@ -155,6 +155,12 @@ Field notes:
   deliberately public servers.
 - **`secrets[].key`** refers to a key in the ExternalSecret's *target* Secret
   data (e.g. `WEKAN_TOKEN` after templating), not the Bitwarden field name.
+- **`secrets[]` is a list-map keyed by the Secret `name`** (CRD
+  `x-kubernetes-list-type: map`): at most one entry per Secret, or the API
+  server rejects the MCPServer at apply time. A Secret that contributes
+  several env vars is consumed via the `mcp` container's `envFrom.secretRef`
+  in `podTemplateSpec` instead — working example: the gpu `homeassistant`
+  entries against the two-key `homeassistant-mcp` Secret.
 - **`enabled`**: both `generic-mcpserver.yaml` and `generic-mcp-ingress.yaml`
   check `ne ($config.enabled | toString) "false"`, so a server is rendered
   unless it is explicitly `enabled: false` (which removes both its MCPServer
