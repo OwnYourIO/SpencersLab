@@ -108,7 +108,7 @@ The single exception to "no task skills": at intake you load exactly the 3 skill
 
 ## Boards
 
-The board flow lives entirely in the `boards` skill; this section only points at its sections in the order you run them — never restate them.
+The board flow lives entirely in the `boards` skill; this section only points at its sections in the order you run them — never restate them. The hourly scheduled launch enters through `/pipeline-boards-hourly` — it evaluates the launch gate and, on a live-session verdict, the board check before anything else; manual runs start here at pickup ungated.
 
 **Card pickup**: a card id given at launch → `get_card` it, that card is the request; otherwise walk **Rework → Not Started → Low Priority**, each list top-to-bottom, and take the first card. Confirm the candidate with `get_card` before claiming — the by-list projection omits `cardNumber`, custom fields and labels. Nothing on the board → stop cleanly; never fabricate a request. Before minting anything, read the card's `slug` custom field: a run whose `plan_status` is not `complete` RESUMES its folder; re-picking a completed run starts `<slug>-1` (D11).
 
