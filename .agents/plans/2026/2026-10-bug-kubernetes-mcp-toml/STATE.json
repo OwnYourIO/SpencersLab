@@ -18,14 +18,15 @@
   },
   "chunks": {
     "C01": {
-      "status": "dev_done",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
-        "RESULT status: DONE chunk: C01 files_changed: [charts/hivetools/templates/generic-mcpconfigmap.yaml (new), charts/hivetools/values.yaml, charts/hivetools/templates/rbac-kubernetes-mcp.yaml (comment-only)] commands_run: [python YAML parse of values => pass; hivetools-kubernetes-mcp-toml.sh => pass(16 ok, t1-t7 all green, run twice); dev-mcp-fleet.sh t6 t8 t11 => pass (t7 skipped: pre-existing sibling-owned red, per coord ruling); full helm template from /tmp copy => pass(exactly 2 ConfigMaps, both MCPServers with --config pair + v0.0.69, zero sentinels, nothing else disturbed); aislop scan --changes --json => pass(0 errors/0 warnings/0 fixable); git diff audit => rbac comment-only, Chart.yaml untouched] deviations: none \u2014 rbac touched comments-only exactly as C01.md's task list requires, no rule/semantics change friction: aislop not installed locally -> pinned npx fallback per aislop skill decision order. k1-k4 red at this commit = C02's unimplemented surface, not a C01 regression. open_questions: none next_suggested: review C01 (t1-t7 + dev-mcp-fleet t6/t8/t11 gate); C02 independent; C03 after C01"
+        "RESULT status: DONE chunk: C01 files_changed: [charts/hivetools/templates/generic-mcpconfigmap.yaml (new), charts/hivetools/values.yaml, charts/hivetools/templates/rbac-kubernetes-mcp.yaml (comment-only)] commands_run: [python YAML parse of values => pass; hivetools-kubernetes-mcp-toml.sh => pass(16 ok, t1-t7 all green, run twice); dev-mcp-fleet.sh t6 t8 t11 => pass (t7 skipped: pre-existing sibling-owned red, per coord ruling); full helm template from /tmp copy => pass(exactly 2 ConfigMaps, both MCPServers with --config pair + v0.0.69, zero sentinels, nothing else disturbed); aislop scan --changes --json => pass(0 errors/0 warnings/0 fixable); git diff audit => rbac comment-only, Chart.yaml untouched] deviations: none \u2014 rbac touched comments-only exactly as C01.md's task list requires, no rule/semantics change friction: aislop not installed locally -> pinned npx fallback per aislop skill decision order. k1-k4 red at this commit = C02's unimplemented surface, not a C01 regression. open_questions: none next_suggested: review C01 (t1-t7 + dev-mcp-fleet t6/t8/t11 gate); C02 independent; C03 after C01",
+        "RESULT status: DONE chunk: C01 (review) verdict: APPROVED files_changed: [chunks/C01.md notes fc8ea696d] commands_run: [hivetools-kubernetes-mcp-toml.sh => pass(16 ok t1-t7); dev-mcp-fleet t6 t8 t11 => pass(4 ok, t7 excluded per ruling); /tmp copy + dependency update + helm lint => pass; helm template + python assertions (args/TOML bytes/mount cross-check/image/securityContext) => pass; synthetic gate renders (configFile-less; admin.enabled=false) => pass(no stray CMs); OVERRIDE_ grep => none; rbac old-vs-new render => 9 docs identical; fleet greps (image refs, per-cluster overrides, custom-values, dead-flag literals) => clean; npx -y aislop scan --changes => clean; aislop ci --changes --base 5f1cb8acd^ => 100/0 errors; git diff audits (file set, Chart.yaml vs merge-base, tests/ untouched, secrets) => pass; tracked tree clean after every run] deviations: none (validations per reduced-gate ruling; aislop scoped via ci --changes --base since --changes on a clean tree covers 0 files) friction: none open_questions: none; one non-blocking nit recorded in C03's awareness (empty-configFile-content edge case) next_suggested: mark C01 done; C02 unblocked; C03 after C01"
       ],
       "dev_session": "ses_e8bc50eb3ffem4iNgfH14F8M2c"
     },
