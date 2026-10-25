@@ -11,6 +11,6 @@ dependencies:
 # CRDs from clusters that have no kube-prometheus-stack. Pinned to the chart
 # version previously bundled, so the rendered CRDs are unchanged.
 - name: prometheus-operator-crds
-  version: 26.0.1
+  version: 32.0.2
   repository: https://prometheus-community.github.io/helm-charts
   condition: k8s-monitoring.prometheusOperatorObjects.enabled
