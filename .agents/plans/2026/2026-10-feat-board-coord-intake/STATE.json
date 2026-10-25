@@ -1,0 +1,74 @@
+{
+  "feature": "2026/2026-10-feat-board-coord-intake",
+  "plan_status": "approved",
+  "plan_approved_at": "2026-10-24",
+  "plan_approved_by": "human (approval round; residual session-host closed via D20: SESSION_URL_BASE=https://openchamber--dev-thehackmeister-coder.dev.scifi.farm)",
+  "coord_session": "ses_e998508e0ffeoJVWMDY1NHDEQJ",
+  "test_session": null,
+  "kickoff": {
+    "slug": "feat-board-coord-intake",
+    "type": "feat",
+    "run_tag": null,
+    "run_tag_note": "RETIRED for this flow per kickoff data — the slug alone names the run; sequential runs would be slug-1/-2 (see plan OQ2).",
+    "worktree": "feat-board-coord-intake",
+    "branch": "feat-board-coord-intake",
+    "stacked_on": "feat-agent-board-coord-openrouter-qwen-qwen3-8-27b @ 09696ae57",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false
+  },
+  "current_wave": 1,
+  "updated_at": "2026-10-24T23:55:00Z",
+  "plan_artifacts": {
+    "plan": "2026-10-24-feat-board-coord-intake.md",
+    "research": "2026-10-24-feat-board-coord-intake-research.md",
+    "runbook": "2026-10-24-feat-board-coord-intake-board-automation-runbook.md"
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "Live WeKan board mutations (AI-Dev structure incl. Low Priority + Research label, slug/session custom fields only — D12 drops the models field, 4 createCard rules, existing-card checklist backfill) — user-owned, execute the dated board-automation runbook only on explicit go-ahead; gated on the AI-Dev board existing (verified absent 2026-10-24: admin-global-wekan list_boards => only 'Projects').",
+    "Post-merge pin sequence (D17): M1 user merges C01 -> CI publishes wekan-mcp:v<RUN>; M2 pin-bump commit (gpu wekan-readonly/wekan-admin + dev boards refs to :v<RUN>, tests/dev-mcp-fleet/boards.sh c5 pre-generalized by agent-test); M3 merge -> ArgoCD recreates pods; verify tools/list == 25.",
+    "Session-link constant CLOSED 2026-10-24 (D20): SESSION_URL_BASE = https://openchamber--dev-thehackmeister-coder.dev.scifi.farm; links = <base>/?session=<id> — lands verbatim in the boards skill (C02).",
+    "Merge/push to main (repo hard rule) — landing via user-created PR."
+  ]
+}
