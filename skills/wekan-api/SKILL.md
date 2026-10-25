@@ -38,7 +38,7 @@ in-repo server (`containers/wekan-mcp`), published as
   item's URI field) and the client exchanges the pair for a bearer at
   startup, re-minting once on a 401.
 
-The server exposes 25 typed tools:
+The server exposes 26 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
@@ -46,7 +46,7 @@ The server exposes 25 typed tools:
   `get_custom_field`
 - **Write** (every tier except `wekan-readonly`): `create_card`,
   `update_card`, `move_card`, `add_comment`, `add_checklist`,
-  `toggle_checklist_item`, `delete_checklist_item` (destructive, scoped to
+  `add_checklist_item`, `toggle_checklist_item`, `delete_checklist_item` (destructive, scoped to
   one item), `create_rule`, `update_rule`, `remove_rule` (marked
   destructive), `create_custom_field`, `set_card_custom_field`
 

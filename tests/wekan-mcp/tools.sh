@@ -77,9 +77,9 @@ src = open(sys.argv[1]).read()
 tree = ast.parse(src)
 
 READS = 13
-WRITES = 12
+WRITES = 13
 NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
-       'set_card_custom_field', 'delete_checklist_item']
+       'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item']
 BASE20 = ['list_boards', 'get_board', 'list_lists', 'list_swimlanes',
           'list_cards_in_list', 'get_card', 'list_comments', 'list_checklists',
           'get_checklist', 'list_rules', 'get_rule', 'create_card',
@@ -113,7 +113,7 @@ if len(writes) != WRITES:
     bad(f't2: {len(writes)} @_write_tool writes, expected exactly {WRITES} (C01 AC2)')
 all_tools = reads + writes
 if len(set(all_tools)) != READS + WRITES:
-    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly 25 distinct')
+    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly 26 distinct')
 for name in NEW:
     if all_tools.count(name) != 1:
         bad(f't2: new tool {name!r} registered {all_tools.count(name)} times, expected exactly once (names are the C02/C03 contract, D2)')
@@ -126,7 +126,7 @@ allowed = {'WEKAN_MCP_LOG_LEVEL', 'WEKAN_MCP_READ_ONLY', 'WEKAN_MCP_HOST', 'WEKA
 extra = envs - allowed
 if extra:
     bad(f't2: new env vars read in server.py: {sorted(extra)} — C01 AC3 forbids new env vars (only {sorted(allowed)})')
-print('ok: t2 — 13 @mcp.tool + 12 @_write_tool == 25 distinct names, the 5 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3)')
+print('ok: t2 — 13 @mcp.tool + 13 @_write_tool == 26 distinct names, the 6 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item extension)')
 PY
   then
     checks=$((checks + 1))
@@ -240,6 +240,14 @@ if '"attached"' not in b:
 if 'race' not in doc('set_card_custom_field'):
     bad('t4: set_card_custom_field docstring must note the whole-array read-modify-write race (D3 trade-off, documented)')
 
+b = body('add_checklist_item')
+if '/api/boards/{board_id}/cards/{card_id}/checklists/{checklist_id}/items' not in b or '.post(' not in b:
+    bad('t4: add_checklist_item must POST /api/boards/{board_id}/cards/{card_id}/checklists/{checklist_id}/items (v9.99 checklistItems.js add route)')
+if '"title"' not in b:
+    bad('t4: add_checklist_item JSON body must carry the pinned key "title"')
+if '"checklist_id"' not in b or '"id"' not in b:
+    bad('t4: add_checklist_item must return the pinned {id, checklist_id, title} shape')
+
 b = body('delete_checklist_item')
 if '/api/boards/{board_id}/cards/{card_id}/checklists/{checklist_id}/items/{item_id}' not in b or '.delete(' not in b:
     bad('t4: delete_checklist_item must DELETE the v9.99 checklist-items route (checklistItems.js ~L217, research §5)')
@@ -267,12 +275,13 @@ readme = open(sys.argv[1]).read()
 skill = open(sys.argv[2]).read()
 
 NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
-       'set_card_custom_field', 'delete_checklist_item']
+       'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item']
 
-if '25 typed tools' not in readme:
-    bad('t5: README must state the 25-tool surface (C01 AC5)')
-if '20 typed tools' in readme:
-    bad('t5: README still claims 20 typed tools')
+if '26 typed tools' not in readme:
+    bad('t5: README must state the 26-tool surface (add_checklist_item extension)')
+for stale in ('25 typed tools', '20 typed tools'):
+    if stale in readme:
+        bad(f't5: README still claims the stale tool count ({stale!r})')
 for n in NEW:
     if n not in readme:
         bad(f't5: README tool list is missing {n}')
@@ -285,9 +294,9 @@ for stale in ('bumped by CI', 'semver source of truth', ':latest', 'v<version>')
 if 'run_number' not in readme:
     bad('t5: README must describe the actual tag scheme (:v<run_number> + :<branch>) it already links to')
 
-if '25 typed tools' not in skill:
-    bad('t5: wekan-api SKILL must say 25 typed tools')
-for stale in ('20 typed tools', '20-tool'):
+if '26 typed tools' not in skill:
+    bad('t5: wekan-api SKILL must say 26 typed tools')
+for stale in ('25 typed tools', '20 typed tools', '20-tool'):
     if stale in skill:
         bad(f't5: wekan-api SKILL still claims the 20-tool surface ({stale!r})')
 if 'two privilege tiers sharing one image' in skill:

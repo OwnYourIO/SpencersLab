@@ -6,7 +6,7 @@ token stays out of the model's context.
 
 ## What this gives you
 
-- **25 typed tools** covering the high-frequency WeKan operations:
+- **26 typed tools** covering the high-frequency WeKan operations:
   read (boards, lists, swimlanes, cards, comments, checklists, automation
   rules, board custom fields) and write (create/update/move cards, add
   comments, add checklists, toggle or delete items, create/update/remove
@@ -119,6 +119,7 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `add_comment` | write | Post a comment on a card |
 | `add_checklist` | write | New checklist (with optional items) |
 | `toggle_checklist_item` | write | Mark an item done/undone |
+| `add_checklist_item` | write | Append an item to a card's existing checklist |
 | `delete_checklist_item` | write | **Destructive** — remove a checklist item |
 | `create_rule` | write | New automation rule (inline trigger + action) |
 | `update_rule` | write | Edit a rule's title/trigger/action |

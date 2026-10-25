@@ -416,6 +416,28 @@ def toggle_checklist_item(
 
 
 @_write_tool
+def add_checklist_item(
+    board_id: str,
+    card_id: str,
+    checklist_id: str,
+    title: str,
+) -> dict:
+    """
+    Append one item to a card's existing checklist — for extending the
+    standard option sets on cards created before the option existed (rules
+    only cover future cards). The item starts unchecked; use
+    toggle_checklist_item to check it. Checklist ids come from
+    list_checklists. WeKan answers 404 when the checklist does not belong
+    to that card.
+    """
+    resp = _wekan.post(
+        f"/api/boards/{board_id}/cards/{card_id}/checklists/{checklist_id}/items",
+        json_body={"title": title},
+    ) or {}
+    return {"id": resp.get("_id"), "checklist_id": checklist_id, "title": title}
+
+
+@_write_tool
 def delete_checklist_item(
     board_id: str,
     card_id: str,
