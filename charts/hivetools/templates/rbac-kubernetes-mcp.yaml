@@ -4,7 +4,8 @@ and mcp-kubernetes-admin, defined in values.yaml):
 
   kubernetes-mcp-readonly — strict read tier. View-equivalent get/list/watch
     across the cluster plus node observability, PVs and storageclasses. No
-    mutating verbs. The server also runs with --read-only (hides write tools).
+    mutating verbs. The server runs with read_only = true in its mounted
+    config.toml (hides write tools; RBAC is still the boundary).
 
   kubernetes-mcp-admin — read tier PLUS restart/rollout: pod delete (+ PDB-safe
     eviction), patch/update on workloads for rollout restart, and scale

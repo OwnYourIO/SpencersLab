@@ -1,0 +1,22 @@
+{{- /*
+Config-file delivery for mcp entries that declare configFile. Upstream image
+v0.0.68 deleted every runtime CLI flag, leaving only --config; the settings
+moved into config files (the kubernetes tiers mount the content rendered
+here). Entries without configFile render no ConfigMap, so the pass-through
+shape of every other server is untouched.
+*/}}
+{{- range $name, $config := .Values.mcp }}
+{{- if and $config (ne ($config.enabled | toString) "false") }}
+{{- if $config.configFile }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-{{ $name }}-config
+  namespace: {{ $.Values.namespace | default "default" }}
+data:
+  config.toml: |
+    {{- $config.configFile.content | nindent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}
