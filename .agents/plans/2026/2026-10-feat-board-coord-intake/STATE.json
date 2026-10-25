@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-feat-board-coord-intake",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "plan_approved_at": "2026-10-24",
   "plan_approved_by": "human (approval round; residual session-host closed via D20: SESSION_URL_BASE=https://openchamber--dev-thehackmeister-coder.dev.scifi.farm)",
   "coord_session": "ses_e998508e0ffeoJVWMDY1NHDEQJ",
@@ -36,7 +36,7 @@
     }
   },
   "current_wave": 3,
-  "updated_at": "2026-10-25T03:20:00Z",
+  "updated_at": "2026-10-25T03:45:00Z",
   "reverification": "2026-10-25 base 5e35ba6da \u2014 plan re-verified, deltas D21\u2013D25 (narrow dev_boards* kept; 20 tools not 27; login-mint base; tests recreated + dev-mcp-fleet.sh t7 generalization; mcp-boards not yet deployed). No user decision affected; plan_status stays approved.",
   "plan_artifacts": {
     "plan": "2026-10-24-feat-board-coord-intake.md",
@@ -224,5 +224,13 @@
   "test": {
     "status": "done",
     "note": "tests/wekan-mcp/tools.sh (C01) + recreated supersets tests/agent-board-coord/{rulesync-surface,agents-md}.sh (C02/C03/C04) + dev-mcp-fleet.sh t7 generalization (D24). All red pre-impl at the right checks, green in mock sim. D21 narrow dev_boards* asserted; wekan.py+login suite byte-pinned to 5e35ba6da."
+  },
+  "final_review": {
+    "verdict": "APPROVED",
+    "review_session": "ses_e8f45350effek5lp71ddseIwgF",
+    "validation": "tools.sh 8/8; wekan-mcp-login.sh 6 ok; rulesync-surface.sh full 18/18 @5e35ba6da; agents-md.sh full 8/8 @a9111ba0a; dev-mcp-fleet.sh 36/36; rulesync generate x2 no-op (clean tree); aislop ci --changes 0 err/0 warn",
+    "cross_chunk": "original requirement (a)-(f) fully met; wekan-mcp 25-tool extension coherent+safe (wekan.py/login byte-pinned, README+wekan-api parity); D21 narrow dev_boards* consistent across frontmatter/matrix/skill; no orphaned refs; AGENTS.md matches skill; generated surfaces not hand-edited; no secrets; D1 pipeline skills byte-unchanged",
+    "nits_deferred": "C03 step-arrow order + 'never restate them' wording + <card-number> spelling + new finding SKILL L82 date-frozen literal '2026-10-<cf-slug>' \u2014 all cosmetics, fold into a future polish ticket or the M2 prep commit",
+    "note": "agents-md.sh c7 is per-chunk scope; run at its contracted CHUNK_BASE (a9111ba0a), whole-plan scope gate is surface c8"
   }
 }
