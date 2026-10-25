@@ -76,6 +76,7 @@ Platform pieces in `charts/hivetools/`:
 | File | Role |
 |---|---|
 | `templates/generic-mcpserver.yaml` | Renders one `toolhive.stacklok.dev/v1beta1 MCPServer` per enabled `mcp.<name>` entry. |
+| `templates/generic-mcpconfigmap.yaml` | Renders one `ConfigMap mcp-<name>-config` (key `config.toml`) per enabled `mcp.<name>` entry declaring `configFile`; entries without it render nothing. |
 | `templates/generic-mcp-ingress.yaml` | Single shared Traefik `Ingress` on host `mcp.<subDomain\|clusterName>.<domain>` (TLS from `cluster-wildcard-cert`); adds one `path: /<name>` route per enabled server to the operator-derived Service `mcp-mcp-<name>-proxy:<mcpPort>` (paths do not carry the `mcp-` prefix). |
 | `templates/mcp-middleware.yaml` | Traefik middleware `normalize-mcp-path` — strips the `/<name>` prefix (`^/[^/]+(/.*)$` → `$1`) before the request reaches the server. |
 | `templates/mcpoidcconfig-keycloak.yaml` | Shared `MCPOIDCConfig` named `keycloak` (issuer `https://login.<domain>/realms/<realm>`, client `{{ .Values.keycloak.clientId }}`, client secret from ExternalSecret `mcp-sso`). Referenced per server via `oidcConfigRef`. |
@@ -119,6 +120,9 @@ mcp:
       - name: SOME_URL
         value: "https://..."
     args: []                      # optional container args
+    configFile:                   # optional; content → ConfigMap mcp-<name>-config
+      content: |                  # rendered verbatim under key config.toml
+        <file content>
     secrets:                      # optional; see Secrets recipe
       - name: <externalsecret-name>
         key: <key-in-target-secret-data>
@@ -161,6 +165,20 @@ Field notes:
   several env vars is consumed via the `mcp` container's `envFrom.secretRef`
   in `podTemplateSpec` instead — working example: the gpu `homeassistant`
   entries against the two-key `homeassistant-mcp` Secret.
+- **`configFile`**: for servers configured by a mounted file rather than by
+  args — kubernetes-mcp-server is the live case (v0.0.68 dropped every
+  runtime flag and added no env-var alternative, so the mounted file is the
+  only config route). `configFile.content` renders verbatim into ConfigMap
+  `mcp-<name>-config` (key `config.toml`) via
+  `templates/generic-mcpconfigmap.yaml`; the `mcp` container points at it
+  with `--config /etc/kubernetes-mcp-server/config.toml`. The volume must
+  ride `podTemplateSpec` because the MCPServer CRD's `spec.volumes` is
+  hostPath-only, and mounts the dirname as a **directory, not subPath** —
+  subPath projections never refresh on ConfigMap edits. Entries without
+  `configFile` render no ConfigMap; the gate is the map's presence, not its
+  `content`, so `content: ""` renders an empty `config.toml` that still
+  shadows the image-baked default. Tier contract: "Config-file delivery
+  (flag-less binaries)" in the Kubernetes access-model section.
 - **`enabled`**: both `generic-mcpserver.yaml` and `generic-mcp-ingress.yaml`
   check `ne ($config.enabled | toString) "false"`, so a server is rendered
   unless it is explicitly `enabled: false` (which removes both its MCPServer
@@ -262,7 +280,7 @@ Every cluster gets TWO kubernetes MCP servers (chart defaults in
 
 | Server | ServiceAccount / ClusterRole | Tier |
 |---|---|---|
-| `mcp-kubernetes-readonly` | `kubernetes-mcp-readonly` | Read tier only; also runs `--read-only` (write tools hidden from `tools/list`) |
+| `mcp-kubernetes-readonly` | `kubernetes-mcp-readonly` | Read tier only; `read_only = true` in its mounted `config.toml` also hides write tools from `tools/list` |
 | `mcp-kubernetes-admin` | `kubernetes-mcp-admin` | Read tier + restart/rollout tier (may be extended later — user decision 2026-09) |
 
 RBAC is the enforcement boundary for both. The read tier is shared (one
@@ -307,8 +325,9 @@ RBAC is the enforcement boundary for both. The read tier is shared (one
 - Note: on the **admin** server, `pods_exec`, `pods_run`, `resources_delete`,
   etc. still APPEAR in the MCP `tools/list` output — kubernetes-mcp-server has
   no per-verb tool gating. Calling them 403s. RBAC is the boundary, not tool
-  visibility. The **readonly** server runs `--read-only`, which hides the
-  write tools entirely.
+  visibility. The **readonly** server sets `read_only = true` in its mounted
+  `config.toml`, which hides the write tools entirely — the same hiding
+  semantics as the flag it replaced, never enforcement.
 
 **GitOps mechanics for restarts:**
 
@@ -321,6 +340,60 @@ RBAC is the enforcement boundary for both. The read tier is shared (one
 - **ArgoCD syncs cannot be triggered** through this server: argoproj.io is
   read-only, and a literal `argocd app sync` needs ArgoCD's own API/token
   anyway. Deliberately out of scope — revisit separately if wanted.
+
+### Config-file delivery (flag-less binaries)
+
+kubernetes-mcp-server v0.0.68 (upstream PR #1423 "Config rework") removed
+every runtime CLI flag: only bootstrap flags remain (`--config`,
+`--config-dir`, `--version`), and HTTP mode requires `port` in the TOML —
+no env-var route exists for any dropped setting. Both tiers get their config
+from per-tier ConfigMaps (`mcp-kubernetes-{readonly,admin}-config`, key
+`config.toml`, rendered by `templates/generic-mcpconfigmap.yaml` from
+`configFile.content`), volume-mounted through `podTemplateSpec` at
+`/etc/kubernetes-mcp-server` and read via
+`--config /etc/kubernetes-mcp-server/config.toml`.
+
+readonly tier `config.toml` (admin's is byte-identical minus the
+`read_only = true` line):
+
+```toml
+port = "8080"
+stateless = true
+read_only = true
+```
+
+The bytes are contractual: `port` is a quoted string, and unknown TOML keys
+fail startup hard — do not add `kubeconfig`/`toolsets` keys "for clarity"
+(in-cluster config via the ServiceAccount and the default `["core","config"]`
+toolsets are already correct). The mount shadows the image-baked
+`/etc/kubernetes-mcp-server/config.toml`, which sets `port` only — a
+zero-arg boot is stateful with write tools visible, unacceptable for the
+readonly tier, so the explicit `--config` always ships. `stateless` applies
+at startup only, and MCPServer pods carry no reloader annotation: config
+edits roll with the pod restart, not before it. `configuration_view` is
+disabled by default in HTTP mode since v0.0.68 — absent from `tools/list`
+on both tiers, expected behavior, not drift.
+
+History: before v0.0.68 these settings were runtime args
+(`--port 8080 --stateless --read-only` on the v0.0.65-era readonly
+tier); a Renovate bump carried that pin across the boundary and
+crash-looped both tiers on every cluster (2026-10 incident). Standing
+mitigations:
+
+- `renovate.json` floors the image with `allowedVersions: ">= v0.0.68"`.
+  The floor bounds downward only — a future config-surface rework (0.0.90,
+  0.1.0, 1.0.0) is still proposable; what gates the fleet is that no
+  automerge applies to this package (a human merges every bump) and
+  `tests/services/hivetools-kubernetes-mcp-toml.sh`, which asserts the
+  args/TOML/mount contract and sweeps every `mcp:` entry repo-wide.
+- The pin stays `v0.0.69`; do not "fix" the floor down to v0.0.68. The
+  multi-arch `v0.0.68` container tag was never published (upstream #1560,
+  fixed in v0.0.69) and Renovate only proposes forward from the current
+  pin.
+- Standing hazard for any config-surface-sensitive MCP image: `charts/hivetools`
+  ships from `main` by path with no chart-version pin, so a Renovate image
+  bump in chart defaults re-renders and re-deploys on EVERY cluster at
+  merge time — no canary, no release PR.
 
 ## In-repo images (`containers/<name>`)
 
