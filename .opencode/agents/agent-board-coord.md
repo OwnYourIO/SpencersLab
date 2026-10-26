@@ -70,6 +70,9 @@ permissions:
   - action: subagent
     resource: agent-research
     effect: allow
+  - action: execute
+    resource: '*'
+    effect: allow
   - action: dev_boards*
     resource: '*'
     effect: allow

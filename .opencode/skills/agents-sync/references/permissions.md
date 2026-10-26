@@ -6,13 +6,14 @@ Generated agents carry `permissions:` blocks in their frontmatter (authored in `
 - Resources are path globs for file tools (`edit`, `read`) and command globs for `shell` (e.g. `git status *`). `**` crosses directory boundaries.
 - `subagent` resources are target agent ids, matched **whole-value** — a rule without `*` matches exactly one id. Verified live on OpenCode v2.0.24 (2026-10-14) back when this repo still shipped `-bmad` overlay variants: a coordinator was denied the other variant's agents and allowed only its own four, and the `subagent` tool's "Available subagents" list shown to each coord contained exactly its 4 permitted same-variant agents. The naming scheme stays relevant for any overlay added later: variant names are prefix-free (overlays lead), so `agent-dev` is not a prefix of `agent-dev-bmad` — safe even if a build, saved approval, or hand-added wildcard rule ever behaves prefix-like.
 - `ask` pauses for the user; unattended subagents treat it as effectively blocked, so allow-lists decide what runs hands-free.
+- `execute` is the Code Mode action (resource `*`). Current builds route MCP tools and the `tools.opencode.*` namespace through Code Mode; the base `* * deny` silently removes it, hiding those tools no matter which MCP actions the agent allows ("nested tools enforce their rules" — V2 permissions doc). An agent that must reach an MCP server therefore needs `execute: * allow` IN ADDITION to its `<server>_<tool>` rule; execute grants nothing by itself — every call inside Code Mode re-checks the agent's allow-list.
 
 ## Role matrix (who may write what)
 
 | role | edit | subagent | shell | MCP |
 |---|---|---|---|---|
 | coord | ONLY `.agents/plans/**/STATE.json`, `…/DECISIONS.md`, `…/FRICTION.md` (starts from `* * deny`) | plan/research/test/dev/review of same variant | none | none |
-| board-coord | same as coord | same as coord | none | `dev_boards*` allow ONLY — the first coord-variant with any MCP access, scoped to the AI-Dev board; a single MCP permission for card intake/exit, deliberately not the fleet-wide `dev*` the other agents carry |
+| board-coord | same as coord | same as coord | none | `execute` allow (Code Mode — the transport for its MCP + `tools.opencode.*` grants; nested calls still re-check the allow-list) + `dev_boards*` allow ONLY — the first coord-variant with any MCP access, scoped to the AI-Dev board; a single MCP permission for card intake/exit, deliberately not the fleet-wide `dev*` the other agents carry |
 | plan | ONLY `.agents/plans/**` | none | read-only git | `admin*` deny; `readonly*`/`global*`/`dev*` allow |
 | research | ONLY `.agents/plans/**` (its `RESEARCH.md`, at the exact feature-folder path from its launch message) | none | read-only git | as plan; plus `webfetch`/`websearch` allowed |
 | test | ONLY chart/container `tests/` folders + the context allows below (starts from `edit * deny`) | none | git reads + `helm lint/template/unittest` | as plan |
