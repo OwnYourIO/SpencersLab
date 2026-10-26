@@ -3,9 +3,9 @@
   "plan_status": "approved",
   "approval_note": "USER APPROVED 2026-10-26 via coord's combined batched round: OQ1 stack on cf-52 HEAD b0c975bf6; OQ3 fold agent-dev edit tests/** deny; OQ4 carve-with-exclusion re-pin design; OQ2 (models/worktree) deferred to run-start kickoff (coord supplies; flash tiers per cf-52 precedent unless the launcher says otherwise). All confirmations matched the plan's best guesses — no plan text change needed beyond recording. AMENDED 2026-10-26: user-directed fold-in of the post-cf-52-landing suite base posture ('Fold into tests-edit-perms' via coord's batched round; DECISIONS D9-D12) — plan_status stays approved, the approval covers the folded text. RE-APPLIED the same day: the original amendment was authored dirty in the disposable integration worktree /home/coder/.config/openchamber/tmp/oc-integrate-Ozu2FO and lost when it was cleaned before landing (D12, FRICTION.md); re-authored in the cf-52 worktree at main tip 124fc2ae8 with all evidence re-verified live. Execution base supersedes kickoff.worktree's b0c975bf6 stack note: branch from main at/after 124fc2ae8 (= origin/main); operational CHUNK_BASEs 081b57889 (arm A) and default HEAD (arm B).",
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
-  "test_session": null,
+  "test_session": "ses_e8635bb4cffefHTWibtg4ZfsE6",
   "current_wave": 1,
-  "updated_at": "2026-10-26T18:20Z",
+  "updated_at": "2026-10-26T19:05Z",
   "kickoff": {
     "card": null,
     "slug": "bug-tests-edit-perms",
@@ -43,7 +43,12 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": [],
+      "handoffs": [
+        {
+          "round": "test-1",
+          "result": "RESULT\nstatus: BLOCKED\nchunk: C01\nfiles_changed: []\ncommands_run: [reads + both-arm matrix runs recorded the designed-red posture (coord-inwork@081b57889 6ok; gate@081b57889 FAIL t14 first on bug-kickoff-mints-run-branch; rulesync-surface@HEAD 18ok; agents-md@HEAD 8ok; +6/-0 coord deltas verified; agents-sync pairs byte-identical; rulesync 37.0.0 PATH); edit tests/coord-inwork/surface.sh => DENIED (permission.rejected: Permission denied: edit); edit tests/agent-board-coord/gate.sh x3 probes => DENIED; write tests/agent-perms/.probe => DENIED; probes removed, tree verified clean at 7bdb16401, no deliverable via side channel]\ndeviations: none — launch contract honored (stop at denial, no workarounds). Full prepared patch spec for ALL five deliverables + verified-facts packet delivered in the handoff body (not this RESULT) so the re-run rediscoveries nothing.\nfriction: bootstrap grant absent — every agent-test write to tests/** denied at the tool layer; evaluated policy is the unpatched frontmatter (.opencode/agents/agent-test.md edit-deny rows) — the ticket's own defect reproduced live on its run; resolution: stopped per contract, prepared spec handed back complete.\nopen_questions: OQ1 relaunch with the five-path grants actually attached; OQ2 fallback = dev applies prepared spec verbatim (discipline deviation, user decision); OQ3 fold the prepared spec into files for the re-run.\nnext_suggested: coord routes the grant-first path: minimal dev commit landing ONLY the agent-test tests/** allow + regenerate, then relaunch agent-test (fresh session picks up patched frontmatter) with the prepared spec; dev's own deny row + text rows + suite edits land after the tests exist.\nNOTE: full 26KB prepared patch spec (exact splice.py OR-form, atpos.py, i4/i5/t12/t14/t17/c8/c7 edits, tests/agent-perms/surface.sh A1-A10 design, sim proof plan) lives in the relaunch prompt from coord (session ses_e8635bb4cffefHTWibtg4ZfsE6)."
+        }
+      ],
       "scope_note": "amended 2026-10-26, re-applied same day (user fold-in D9-D12): + T4 sibling-folder admits (t14/c8/c7 also admit 2026-10-bug-kickoff-mints-run-branch + 2026-10-bug-session-origin-no-line), + T10 i4/t17 OR-form re-pin with both-operational-bases discipline (081b57889 arm A / default HEAD arm B), + AC9/A9/A10; AC7/Commands bases re-targeted to the pushed line; A8 count fixed 6→5; T7 cites re-verified; size stays M, single chunk retained."
     }
   },
