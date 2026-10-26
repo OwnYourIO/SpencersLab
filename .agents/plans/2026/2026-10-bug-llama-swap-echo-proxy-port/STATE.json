@@ -97,14 +97,14 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": "awaiting-review",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "status": "DONE",
@@ -129,13 +129,44 @@
           "friction": "global-renovate MCP host can't see worktree fs (configContent inline workaround); dry_run impossible on unpushed branch (compensated via registry simulation); pkill self-match SIGTERM'd own commit shell (retried)",
           "open_questions": "(1) review adjudication: packageRule substitution vs falsified recon. (2) out-of-scope finding: charts/ilias has 2 comment-annotated pins NO manager updates - candidate chore ticket.",
           "next_suggested": "C03 review (headline: mechanism deviation + flag-audit fidelity to b11810), then final whole-ticket review"
+        },
+        {
+          "status": "DONE",
+          "chunk": "C03",
+          "verdict": "APPROVED",
+          "files_changed": [
+            "chunks/C03.md Round-1 notes",
+            "STATE.json deferred (directed)"
+          ],
+          "commands_run": [
+            "bars exact (124p/1s/0f, shas pre==post==recorded, render diff == 1 image line x3, scope clean)",
+            "digest gates re-pulled own: 266 x2 0cc42f10, 262 038bb093",
+            "flag audit reproduced to arg.cpp@e3797b18 6/6 + whisper 4/4 + config-blob chain",
+            "renovate adjudication (a)(b)(c) all verified on 44.181.5 source + MCP final-config: packageRule faithful, no ilias sweep, annotation inert; CORRECTION: ilias IS tracked (6d556f0ba) - open-question-2 moot, no chore ticket",
+            "5973-tag registry run: regex matches 12, candidate set stable",
+            "aislop A/B identical 0-attributable; appVersion-only Chart.yaml diff, version 1.0.23 untouched"
+          ],
+          "findings": [
+            "minor-1 FOLDING PRE-MERGE: renovate.json:246 missing leading ^ (0 behavior change today; anchor per repo precedent)",
+            "2 nits recorded in chunk"
+          ],
+          "deviations": "none by reviewer",
+          "friction": "MCP host-fs blindness -> loopback HTTP byte-exact transfer; ghcr blob 307s need curl -L; tags/list pagination relative-Link",
+          "open_questions": "none (minor resolved by fold)",
+          "next_suggested": "micro dev (1-char anchor + JSON-valid + pytest bar), then final whole-ticket review"
         }
+      ],
+      "commits": [
+        "7a84fbd08",
+        "544c0d663",
+        "(+ pending micro-anchor commit)"
       ]
     }
   },
   "blocked": [],
   "deferred": [
     "flash-next-q3 fit work (separate live investigation)",
-    "cluster-side boot verification (post-merge, ArgoCD sync; sibling ticket C05 evidence pass is the live proof)"
+    "cluster-side boot verification (post-merge, ArgoCD sync; sibling ticket C05 evidence pass is the live proof)",
+    "C03 open question 2 (charts/ilias pins 'untracked' - chore ticket candidate): REVIEW-CORRECTED 2026-10-26 - ilias IS tracked by the built-in helm-values manager and actively updated (renovate 6d556f0ba 2026-10-24: 11.3->11.5-php8.4-apache, both pairs; pin == latest 11.x-php8.4-apache on Docker Hub, verified). Premise false - no chore ticket needed, no action."
   ]
 }
