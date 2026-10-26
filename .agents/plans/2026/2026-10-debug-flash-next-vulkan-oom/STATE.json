@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-debug-flash-next-vulkan-oom",
-  "plan_status": "draft",
+  "plan_status": "approved",
   "coord_session": "ses_e89b88646ffeor0bsAa1GwcHRr",
   "test_session": null,
   "kickoff": {
@@ -49,12 +49,12 @@
       "handoffs": []
     },
     "C02": {
-      "status": "pending",
+      "status": "skipped",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 0,
       "review_rounds": 0,
-      "last_verdict": null,
+      "last_verdict": "skipped-by-operator: debug-live chosen at approval 2026-10-26 (DECISIONS.md); rungs stay enabled, C03 edits q3 directly",
       "handoffs": []
     },
     "C03": {
@@ -70,7 +70,7 @@
     "C04": {
       "status": "pending",
       "wave": 3,
-      "depends_on": ["C02", "C03"],
+      "depends_on": ["C03"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
