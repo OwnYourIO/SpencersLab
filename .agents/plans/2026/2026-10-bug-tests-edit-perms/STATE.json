@@ -5,7 +5,7 @@
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e8635bb4cffefHTWibtg4ZfsE6",
   "current_wave": 1,
-  "updated_at": "2026-10-26T19:05Z",
+  "updated_at": "2026-10-26T19:25Z",
   "kickoff": {
     "card": null,
     "slug": "bug-tests-edit-perms",
@@ -47,6 +47,10 @@
         {
           "round": "test-1",
           "result": "RESULT\nstatus: BLOCKED\nchunk: C01\nfiles_changed: []\ncommands_run: [reads + both-arm matrix runs recorded the designed-red posture (coord-inwork@081b57889 6ok; gate@081b57889 FAIL t14 first on bug-kickoff-mints-run-branch; rulesync-surface@HEAD 18ok; agents-md@HEAD 8ok; +6/-0 coord deltas verified; agents-sync pairs byte-identical; rulesync 37.0.0 PATH); edit tests/coord-inwork/surface.sh => DENIED (permission.rejected: Permission denied: edit); edit tests/agent-board-coord/gate.sh x3 probes => DENIED; write tests/agent-perms/.probe => DENIED; probes removed, tree verified clean at 7bdb16401, no deliverable via side channel]\ndeviations: none — launch contract honored (stop at denial, no workarounds). Full prepared patch spec for ALL five deliverables + verified-facts packet delivered in the handoff body (not this RESULT) so the re-run rediscoveries nothing.\nfriction: bootstrap grant absent — every agent-test write to tests/** denied at the tool layer; evaluated policy is the unpatched frontmatter (.opencode/agents/agent-test.md edit-deny rows) — the ticket's own defect reproduced live on its run; resolution: stopped per contract, prepared spec handed back complete.\nopen_questions: OQ1 relaunch with the five-path grants actually attached; OQ2 fallback = dev applies prepared spec verbatim (discipline deviation, user decision); OQ3 fold the prepared spec into files for the re-run.\nnext_suggested: coord routes the grant-first path: minimal dev commit landing ONLY the agent-test tests/** allow + regenerate, then relaunch agent-test (fresh session picks up patched frontmatter) with the prepared spec; dev's own deny row + text rows + suite edits land after the tests exist.\nNOTE: full 26KB prepared patch spec (exact splice.py OR-form, atpos.py, i4/i5/t12/t14/t17/c8/c7 edits, tests/agent-perms/surface.sh A1-A10 design, sim proof plan) lives in the relaunch prompt from coord (session ses_e8635bb4cffefHTWibtg4ZfsE6)."
+        },
+        {
+          "round": "dev-bootstrap-1",
+          "result": "RESULT\nstatus: DONE (hand-back text lost; verified from disk by coord)\nchunk: C01\nevidence: commit 6472bbfbe — exactly +3/+3 (agent-test tests/** allow in source, generator-shaped mirror), tree clean, rulesync generate --check green; scoped to T1 only as ordered (no agent-dev deny, no tests, no agents-sync touches).\nsession: ses_e8625aee4ffeGhueCzBsWPzOh8"
         }
       ],
       "scope_note": "amended 2026-10-26, re-applied same day (user fold-in D9-D12): + T4 sibling-folder admits (t14/c8/c7 also admit 2026-10-bug-kickoff-mints-run-branch + 2026-10-bug-session-origin-no-line), + T10 i4/t17 OR-form re-pin with both-operational-bases discipline (081b57889 arm A / default HEAD arm B), + AC9/A9/A10; AC7/Commands bases re-targeted to the pushed line; A8 count fixed 6→5; T7 cites re-verified; size stays M, single chunk retained."
