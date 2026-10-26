@@ -124,7 +124,8 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [],
+      "blocked_on": "user-owned landing: commits stay local per operator choice 2026-10-26 (branch debug-flash-next-vulkan-oom-openrouter-qwen3-8-flash, fix = 5ea66f17d). C04 runs once the operator lands -> ArgoCD syncs the mmap regime to gpu-ai; consented one-attempt window = immediately after sync (operator answer). Resume with /pipeline-resume on this folder."
     }
   },
   "blocked": [],
