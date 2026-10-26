@@ -17,9 +17,9 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 - The five standard checklists on every card (future cards via the multi-action createCard rule — imported per the upgrade-ticket runbook — existing cards via backfill; the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
-  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash`, guaranteed at CREATION: agents creating cards pass `default_checked` to `create_card` (race-free by construction), and from WeKan v12.63+ onward the multi-action createCard rule covers UI-created cards too. A card that arrives with nothing checked routes from the default selection WITHOUT mutating the card (see kickoff).
-  - **Research** — `None` | `Before Planning` | `After Planning` | `Agent Decides`: WHEN this card's research belongs relative to the plan (checked items are the answer; several may be checked; `Agent Decides` delegates the call to the pipeline, `None` = no pre-planning research). Default checked: `Agent Decides` (same creation-time guarantees as the Model(s) default).
-  - **Human in the Loop** — `Research` | `Plan` | `PR` | `Deployment`: the stages AFTER which the agent must STOP and wait for human input on that card; the checked items are the active stop points. Default checked: `Plan` (every run pauses for human approval after planning). Same creation-time guarantees as the other defaults.
+  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash`. How the check lands: agents creating cards pass `default_checked` to `create_card` (race-free by construction); the board's multi-action createCard rule carries the checkItem extras, but they are DORMANT until WeKan fixes the broken checkItem rule action upstream (`checkListId` field typo, present v12.64→main — details in the wekan-v12-upgrade ticket). A card that arrives with the default unchecked routes from the default selection WITHOUT mutating the card (see kickoff).
+  - **Research** — `None` | `Before Planning` | `After Planning` | `Agent Decides`: WHEN this card's research belongs relative to the plan (checked items are the answer; several may be checked; `Agent Decides` delegates the call to the pipeline, `None` = no pre-planning research). Default: `Agent Decides` — the same check situation as Model(s): the agent path checks it now, the rule path is dormant until the upstream fix, and an unchecked card routes from the default.
+  - **Human in the Loop** — `Research` | `Plan` | `PR` | `Deployment`: the stages AFTER which the agent must STOP and wait for human input on that card; the checked items are the active stop points. Default: `Plan` — every run pauses for human approval after planning regardless of the checked state (that pause is a pipeline gate, not a card bit); the visible check follows the same situation as Model(s).
 - Access: the `dev-boards` MCP server — the wekan-mcp tool set (`get_card`, `list_cards_in_list`, `move_card`, `add_comment`, `list_comments`, `list_checklists`, `get_checklist`, `list_custom_fields`, `set_card_custom_field`, `delete_checklist_item`, …), write-capable; it is the agent's single MCP permission (narrow `dev_boards*`, D21).
 - `dev-boards` authenticates SERVER-SIDE via login-mint: `WEKAN_USERNAME` + `WEKAN_PASSWORD` arrive from the `wekan-mcp` Bitwarden LOGIN item and the instance URL rides that item's URI field (data, not values-config). The agent never handles credentials.
 - Tool behavior unclear → load the `wekan-api` skill for WeKan API semantics (on demand, never at run start).
@@ -85,8 +85,9 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   run's stop stages: after each checked stage the agent pauses and waits
   for human input before continuing. `Plan` (the default) = pause for plan
   approval; `Research` = pause with the research findings before planning;
-  `PR` / `Deployment` = pause before those actions. Nothing checked = run
-  through with no extra pauses.
+  `PR` / `Deployment` = pause before those actions. Nothing checked =
+  route from the default (`Plan`) WITHOUT mutating the card — the
+  plan-approval pause still happens.
 - **slug** — the `slug` custom field if already set; otherwise mint 2–3
   suggestions and put them in the batched round. The final slug is
   `cf-<cardNumber>-<type>-<desc>` (`cardNumber` comes from `get_card`).

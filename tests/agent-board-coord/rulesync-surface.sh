@@ -378,10 +378,10 @@ if want c11; then
     || fail "c11: the Human in the Loop checklist does not list Research | Plan | PR | Deployment in one passage"
   grep -qF 'Default selection: `Qwen Flash`' "$SKILL_GEN" \
     || fail "c11: the Model(s) checklist does not state its default selection (Qwen Flash alone)"
-  grep -qF 'Default checked: `Agent Decides`' "$SKILL_GEN" \
-    || fail "c11: the Research checklist does not state its default checked item (Agent Decides)"
-  grep -qF 'Default checked: `Plan`' "$SKILL_GEN" \
-    || fail "c11: the Human in the Loop checklist does not state its default checked item (Plan)"
+  grep -qF 'Default: `Agent Decides`' "$SKILL_GEN" \
+    || fail "c11: the Research checklist does not state its default item (Agent Decides)"
+  grep -qF 'Default: `Plan`' "$SKILL_GEN" \
+    || fail "c11: the Human in the Loop checklist does not state its default item (Plan)"
   ok "c11: five checklist titles with full item sets — Services regenerated from ls services/ (13 folders) + home-assistant/agent context; Research options + default; HITL items + default; Model(s) default stated"
 fi
 

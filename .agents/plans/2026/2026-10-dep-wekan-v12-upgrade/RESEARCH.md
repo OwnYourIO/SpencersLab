@@ -313,6 +313,57 @@ import THAT file. The shape/semantics findings below still apply.
   nAkfF4jzStZzFw23F) via `remove_rule`. Import FIRST — deleting before a
   confirmed import would leave new cards without checklists.
 
+**ROOT CAUSE 2026-10-26 (after the import landed): WeKan's `checkItem` /
+`uncheckItem` rule actions are dead upstream — field-name typo.**
+
+The import worked (rule `iacQY5QxQbPfzjgjR` created with all 7 extras
+attached; the 4 addChecklistWithItems extras demonstrably ran on the next
+card), but the 3 checkItem extras silently did nothing. Discriminating
+probes on a disposable card (each a live single-action rule, removed
+afterwards):
+
+| probe (human-path trigger → action)            | result      |
+|------------------------------------------------|-------------|
+| addChecklist 'TMP-PROBE' → removeChecklist     | FIRED ✓     |
+| addComment → checkItem (targets pre-existing)  | silent no-op ✗ |
+| addComment → removeChecklist 'Type'            | FIRED ✓     |
+| addComment → checkAll 'Research'               | FIRED ✓ (all 4 checked) |
+
+So triggers fire, extras execute in order, checklist-level actions work —
+only the item-level check/uncheck is dead. Source at tag v12.64 (and still
+in current `main`, v12.65 is latest): the lookup queries a field that does
+not exist — `checkListId` (capital L) — while ChecklistItems documents
+store `checklistId` (schema `models/checklistItems.js`, every insert/hook/
+index uses the lowercase form). Mongo `$in`-less equality on a missing
+field matches nothing, the guard swallows it, the action no-ops:
+
+- `server/rulesHelper.js` performAction — `checkItem` L1049 and
+  `uncheckItem` L1060: `getChecklistItem({title: …, checkListId: checkList._id})`
+- `server/notifications/storedRulePlans.js` L1665 — the durable-plan
+  capture repeats the SAME typo (`targetIds` stays empty → the saved
+  command checks nothing). `checkAll` works because it resolves via
+  `getChecklistItems({checklistId: …})` (correct field, L1659) —
+  which is exactly the asymmetry the probes showed.
+
+Consequences adopted on the live board:
+
+- The imported multi-action rule is KEPT as the SOLE createCard rule (the
+  five single-action checklist rules were deleted after verification card
+  `NT67a8J7jhDyjXLee` showed exactly five checklists, correct item sets,
+  no duplicates). Its 3 checkItem extras stay DORMANT but in place: the
+  day an upstream fix lands (3 tokens: `checkListId` → `checklistId` in
+  the three spots above) and the image upgrades, the defaults start
+  landing on every new card with zero board-side changes.
+- Until then, UI-created cards arrive with unchecked defaults and the flow
+  routes from the default selection WITHOUT mutating (skill wording
+  updated to say exactly this); agent-created cards get real checks via
+  `create_card default_checked`, which toggles items over REST and never
+  touches the broken rule action.
+- Open (user decision): file the upstream issue/PR against wekan/wekan —
+  public action, needs a go-ahead and a GitHub identity. Any rule-based
+  design on ANY WeKan ≤ current main that uses checkItem/uncheckItem is
+  silently inert; worth reporting beyond our own board.
+
 **Exact rule for the AI-Dev board** (import JSON; the board's current live
 item sets are copied verbatim from `dev-boards list_rules` 2026-10-25):
 
