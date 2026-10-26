@@ -17,7 +17,8 @@
 #
 # Contract source: chunks/C02.md + chunks/C03.md "## Tests". AC trace:
 # c1[AC-files] c2[C03 AC3 + D21; cf-52 RE-PIN: $PORT_REF frontmatter delta is
-# the two scoped shell allows only] c3[C03 AC4] c4[C02 AC2] c5[C03 command]
+# a sanctioned shell-allow form (the two scoped session allows; kickoff-mints
+# C02 extends the sanctioned forms to the three-allow SHELL3)] c3[C03 AC4] c4[C02 AC2] c5[C03 command]
 # c6[C04 AC2 — green only once C04 lands] c7[C02 AC3] c8[C02 AC4 scope;
 # cf-52 widenings] c9[C02 AC5 + C03 AC4] c10[C02 AC1 pickup order] c11[C02
 # AC1 checklists + D9 drift detector] c12[C02 AC1 slug/session/cf- + cf-50 round-2 RE-PIN:
@@ -235,15 +236,18 @@ EOF
   ok "c2: generated agent frontmatter (name, distinct color, question + dev_boards* allows, NO broad dev* (D21), five subagent allows, three edit allows only)"
 
   # C03 pinned this frontmatter byte-identical to the port commit. cf-52 D10
-  # re-pins: the block is now "identical to the port, or the port plus exactly
-  # the two scoped opencode-api shell allows" — every other permission drift
-  # still fails here, and tests/coord-inwork/surface.sh i4 pins the delta's
-  # existence, placement and literals, so this guard only loosens along the
-  # one user-approved axis (cf-50 D21 posture: a pin moves where the contract
+  # re-pins: the block is now "identical to the port, or the port plus a
+  # sanctioned shell-allow form" — the cf-52 SHELL2 (two scoped opencode-api
+  # session allows) or the kickoff-mints C02 SHELL3 (SHELL2 plus the third
+  # scoped `bash scripts/kickoff-mint-branch.sh *` mint allow); every other
+  # permission drift still fails here, and tests/coord-inwork/surface.sh i4
+  # plus tests/kickoff-branch/surface.sh m4 pin the delta's existence,
+  # placement and literals, so this guard only loosens along the two
+  # user-approved axes (cf-50 D21 posture: a pin moves where the contract
   # moves).
   git show "$PORT_REF:$AGENT_GEN" >"$TMP/c2-port-fm.md" 2>/dev/null \
     || fail "c2: $AGENT_GEN not readable at $PORT_REF"
-  python3 - "$TMP/c2-port-fm.md" "$AGENT_GEN" <<'EOF' || fail "c2: agent-board-coord generated frontmatter drifted from $PORT_REF beyond the two cf-52 scoped shell allows (C03 AC3; cf-52 D10 re-pin)"
+  python3 - "$TMP/c2-port-fm.md" "$AGENT_GEN" <<'EOF' || fail "c2: agent-board-coord generated frontmatter drifted from $PORT_REF beyond a sanctioned shell-allow form — cf-52 SHELL2 or kickoff-mints SHELL3 (C03 AC3; cf-52 D10 + kickoff-mints C02 re-pin)"
 import re, sys, yaml
 
 def fm(path):
@@ -252,21 +256,24 @@ def fm(path):
     return yaml.safe_load(m.group(1)) or {}
 
 a, b = fm(sys.argv[1]), fm(sys.argv[2])
-SHELL = [{"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"},
-         {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}]
+GET = {"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"}
+PATCH = {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}
+MINT = {"action": "shell", "resource": "bash scripts/kickoff-mint-branch.sh *", "effect": "allow"}
+FORMS = [[GET, PATCH, MINT], [GET, PATCH]]  # SHELL3 first: SHELL2 is its prefix
 pa, pb = a.get("permissions") or [], b.get("permissions") or []
 rest = lambda d: {k: v for k, v in d.items() if k != "permissions"}
 if rest(a) != rest(b):
     print("a non-permissions frontmatter key changed"); sys.exit(1)
 if pa == pb:
     sys.exit(0)
-kept = [p for p in pb if p not in SHELL]
-if kept == pa and [p for p in pb if p in SHELL] == SHELL:
-    sys.exit(0)
-print(f"{len(pb) - len(pa)} permission row(s) differ — only the two scoped shell allows are sanctioned")
+for form in FORMS:
+    kept = [p for p in pb if p not in form]
+    if kept == pa and [p for p in pb if p in form] == form:
+        sys.exit(0)
+print(f"{len(pb) - len(pa)} permission row(s) differ — only the cf-52 two-allow or the kickoff-mints three-allow sanctioned form is permitted")
 sys.exit(1)
 EOF
-  ok "c2: generated agent frontmatter frozen at $PORT_REF except the sanctioned cf-52 two-allow delta"
+  ok "c2: generated agent frontmatter frozen at $PORT_REF except a sanctioned shell-allow delta (cf-52 SHELL2 | kickoff-mints SHELL3)"
 fi
 
 # --- c3: the generated agent — body keeps the skeleton ------------------------
