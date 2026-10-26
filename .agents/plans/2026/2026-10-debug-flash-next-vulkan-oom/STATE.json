@@ -49,13 +49,21 @@
   ],
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "in-review",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "dev DONE (54340ac69; pytest test_c01_evidence.py 10/10 hard green post-landing)",
+      "dev_session": "ses_e87802c54ffe9SLJDtRgDZsUjj",
+      "handoffs": [
+        {
+          "at": "2026-10-26",
+          "from": "agent-dev",
+          "status": "DONE",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.agents/plans/2026/2026-10-debug-flash-next-vulkan-oom/EVIDENCE.md (new, 324 lines; committed 54340ac69, local only)]\ncommands_run: [pre-landing pytest C01/C04/blast-radius/regime -v => 8 passed/33 skipped (expected skip-gated baseline, helm-less skips loud), post-landing pytest test_c01_evidence.py -v => 10 passed (AC1-AC7 skip->evaluated->hard-green), full pytest . => 1 failed/51 passed/123 skipped (failure = test_config_schema.py::test_c02_schema_smoke_absent_from_parity_renders, pre-existing helm-less, fails identically with artifact absent), agent-readonly evidence via readonly-ai-gpu-kubernetes/readonly-monitoring-kubernetes/readonly-global-grafana + HTTP llama.spencerslab.com surfaces + HF Range-fetch GGUF parse + GHCR blob forensics (/versions.txt, ik layer, Mesa 25.2.8) => pass, user-run batched round (journalctl GTT boot lines 64038M, ttm/pages_limit=16393935, gttsize=-1, lockup_timeout=30000, crash-window kernel journal 1772 lines) => answered, all attributed in EVIDENCE.md]\ndeviations: one batched user-question round (required: AC2/AC3 host numbers unreachable via readonly surfaces; kubelet /var/log proxy index-only on k3s, Loki read tier down); nothing fabricated; no config/source edits; no load attempt; no admin MCP.\nfriction: (1) loki datasource 502 — loki-read 0/1, backend 132 restarts post-reboot; no C01 finding depends on it; Loki was never a valid source for upstream buffer splits on this box (logToStdout: proxy,http + alloy ships journal+stdout only). (2) vendored gguf-py GGUFReader can't parse truncated prefix + desyncs on unsloth split writer — worked around with stdlib parser, method note in EVIDENCE §5. (3) nodes_log on k3s returns /var/log dir index for every query — dead channel for boot.log.\nopen_questions: (a) validation_at_fault (light): test_config_schema.py::test_c02_schema_smoke_absent_from_parity_renders calls helm without the @helm gate its siblings carry => hard red in the documented helm-less worktree; pre-existing; route fix to a FRESH agent-test if wanted. (b) EVIDENCE §9 items 6-8 (free -h, /proc/cmdline, mem_info_*) + optional 9-11 awaiting-user — none gates C03. (c) Loki recovery operator-owned; not required by C01. (d) Branch B re-ask resolves NOT NEEDED: budget 62.54 GiB >= 10-13 GiB mmap-regime demand (25-30 GiB worst case).\nnext_suggested: record C01 done after review; launch C03 (wave 2) on branch A alone; C04-era render contracts need a helm-equipped surface."
+        }
+      ]
     },
     "C02": {
       "status": "skipped",
