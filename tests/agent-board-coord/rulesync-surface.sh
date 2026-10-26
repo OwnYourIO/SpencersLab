@@ -47,6 +47,9 @@ FEATURE=".agents/plans/2026/2026-10-feat-board-coord-intake"
 # cf-50 folder's mere existence reads as a scope violation. Content checks
 # are untouched.
 FEATURE2=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords"
+# Same union convention: the WeKan v12.64 upgrade ticket ran on this branch
+# (runbook + checked-in rule import JSON), so its folder is admitted too.
+FEATURE3=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade"
 RULES_SRC=".rulesync/rules/overview.md"
 
 SKILL_SRC=".rulesync/skills/boards/SKILL.md"
@@ -320,7 +323,7 @@ if want c8; then
       "$SKILL_SRC"|"$AGENT_SRC"|"$CMD_SRC"|"$PERM_SRC"|"$RULES_SRC"|\
       "$SKILL_GEN"|"$AGENT_GEN"|"$CMD_GEN"|"$PERM_GEN"|AGENTS.md|\
       containers/wekan-mcp/*|skills/wekan-api/*|tests/*|"$FEATURE"/*|\
-      "$FEATURE2"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
+      "$FEATURE2"/*|"$FEATURE3"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
       .opencode/commands/pipeline-boards-hourly.md) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
@@ -350,13 +353,13 @@ if want c10; then
   ok "c10: pickup walks Rework -> Not Started -> Low Priority inside the Card pickup passage"
 fi
 
-# --- c11: the four standard checklists (C02 AC1, D9 drift detector) ------------
+# --- c11: the five standard checklists (C02 AC1, D9 drift detector) ------------
 # The Services item set regenerates from `ls services/` at run time (D9): the
 # day a folder is added and the skill goes stale, this check fails loudly
 # instead of a doc drifting silently.
 if want c11; then
-  python3 "$TMP/window.py" "$SKILL_GEN" 900 'Services' 'Type' 'Model(s)' 'Research' \
-    || fail "c11: Services/Type/Model(s)/Research do not read as one checklist-definition passage"
+  python3 "$TMP/window.py" "$SKILL_GEN" 2500 'Services' 'Type' 'Model(s)' 'Research' 'Human in the Loop' \
+    || fail "c11: Services/Type/Model(s)/Research/Human in the Loop do not read as one checklist-definition passage"
   for d in $(ls services/); do
     grep -qF "\`$d\`" "$SKILL_GEN" \
       || fail "c11: the Services checklist does not name the services/$d folder as a code span — drift detector (D9) failed"
@@ -369,11 +372,17 @@ if want c11; then
     || fail "c11: the Type checklist does not list feat|bug|debug|dep|refactor|chore|docs in one passage"
   grep -qE 'Qwen Large.*Qwen 27b.*Qwen Flash.*Local' "$SKILL_GEN" \
     || fail "c11: the Model(s) checklist does not list Qwen Large | Qwen 27b | Qwen Flash | Local"
-  python3 "$TMP/window.py" "$SKILL_GEN" 400 'before planning' 'after planning' 'agent decides' \
-    || fail "c11: the Research checklist does not carry its three timing options (before planning / after planning / agent decides)"
-  grep -qF 'Default selection' "$SKILL_GEN" \
-    || fail "c11: the Model(s) checklist does not state the default selection (Qwen Flash + Local (gpu-ai), applied at claim time)"
-  ok "c11: four checklist titles with full item sets — Services regenerated from ls services/ (13 folders) + home-assistant/agent context; Research timing options; Model(s) default stated"
+  python3 "$TMP/window.py" "$SKILL_GEN" 500 'None' 'Before Planning' 'After Planning' 'Agent Decides' \
+    || fail "c11: the Research checklist does not carry its four options (None / Before Planning / After Planning / Agent Decides)"
+  grep -qE 'Human in the Loop.*`Research` \| `Plan` \| `PR` \| `Deployment`' "$SKILL_GEN" \
+    || fail "c11: the Human in the Loop checklist does not list Research | Plan | PR | Deployment in one passage"
+  grep -qF 'Default selection: `Qwen Flash`' "$SKILL_GEN" \
+    || fail "c11: the Model(s) checklist does not state its default selection (Qwen Flash alone)"
+  grep -qF 'Default checked: `Agent Decides`' "$SKILL_GEN" \
+    || fail "c11: the Research checklist does not state its default checked item (Agent Decides)"
+  grep -qF 'Default checked: `Plan`' "$SKILL_GEN" \
+    || fail "c11: the Human in the Loop checklist does not state its default checked item (Plan)"
+  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/ (13 folders) + home-assistant/agent context; Research options + default; HITL items + default; Model(s) default stated"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --

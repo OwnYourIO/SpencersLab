@@ -1,6 +1,6 @@
 ---
 name: boards
-description: WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority), card-driven kickoff where the four standard checklists (Services/Type/Model(s)/Research) and the slug + session custom fields supply the answers pipeline-kickoff would ask live, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Review), the card lifecycle with post-plan write-back (Finished stays human-owned), and the batched question protocol. MUST-loaded by agent-board-coord at run start; load it anywhere else when working the WeKan AI-Dev board card flow.
+description: WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority), card-driven kickoff where the five standard checklists (Services/Type/Model(s)/Research/Human in the Loop) and the slug + session custom fields supply the answers pipeline-kickoff would ask live, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Review), the card lifecycle with post-plan write-back (Finished stays human-owned), and the batched question protocol. MUST-loaded by agent-board-coord at run start; load it anywhere else when working the WeKan AI-Dev board card flow.
 targets: ["*"]
 ---
 
@@ -14,11 +14,12 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 - Lists (six): **Not Started**, **Executing**, **Review**, **Rework**, **Finished**, **Low Priority** (deprioritised work — picked up last).
 - Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned).
 - Custom fields: exactly TWO board-level text fields, `slug` and `session`, resolved by name with `list_custom_fields`. There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field.
-- The four standard checklists on every card (future cards via board rules, existing cards via the runbook backfill — the runbook owns their maintenance):
+- The five standard checklists on every card (future cards via the multi-action createCard rule — imported per the upgrade-ticket runbook — existing cards via backfill; the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
-  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash` + `Local` (gpu-ai), guaranteed at CREATION: agents creating cards pass `default_checked` to `create_card` (race-free by construction), and from WeKan v12.63+ onward one multi-action createCard rule covers UI-created cards too. On v9.99, UI-created cards may arrive with nothing checked — route from the default selection WITHOUT mutating the card (see kickoff).
-  - **Research** — `before planning` | `after planning` | `agent decides`: WHEN this card's research belongs relative to the plan (checked items are the answer; several may be checked; `agent decides` delegates the call to the pipeline).
+  - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash`, guaranteed at CREATION: agents creating cards pass `default_checked` to `create_card` (race-free by construction), and from WeKan v12.63+ onward the multi-action createCard rule covers UI-created cards too. A card that arrives with nothing checked routes from the default selection WITHOUT mutating the card (see kickoff).
+  - **Research** — `None` | `Before Planning` | `After Planning` | `Agent Decides`: WHEN this card's research belongs relative to the plan (checked items are the answer; several may be checked; `Agent Decides` delegates the call to the pipeline, `None` = no pre-planning research). Default checked: `Agent Decides` (same creation-time guarantees as the Model(s) default).
+  - **Human in the Loop** — `Research` | `Plan` | `PR` | `Deployment`: the stages AFTER which the agent must STOP and wait for human input on that card; the checked items are the active stop points. Default checked: `Plan` (every run pauses for human approval after planning). Same creation-time guarantees as the other defaults.
 - Access: the `dev-boards` MCP server — the wekan-mcp tool set (`get_card`, `list_cards_in_list`, `move_card`, `add_comment`, `list_comments`, `list_checklists`, `get_checklist`, `list_custom_fields`, `set_card_custom_field`, `delete_checklist_item`, …), write-capable; it is the agent's single MCP permission (narrow `dev_boards*`, D21).
 - `dev-boards` authenticates SERVER-SIDE via login-mint: `WEKAN_USERNAME` + `WEKAN_PASSWORD` arrive from the `wekan-mcp` Bitwarden LOGIN item and the instance URL rides that item's URI field (data, not values-config). The agent never handles credentials.
 - Tool behavior unclear → load the `wekan-api` skill for WeKan API semantics (on demand, never at run start).
@@ -70,16 +71,22 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
 - **type** — the checked Type item; none checked → the question joins the
   batched round.
 - **models** — the sole routing input is the checked Model(s) items (D12).
-  Default first: if NO item is checked (a v9.99 UI-created card, before the
-  v12.63+ multi-action rule exists), route from the standard default
-  selection — `Qwen Flash` + `Local` (gpu-ai) — WITHOUT mutating the card.
-  Then: exactly one checked → that model for every tier; several checked →
+  Default first: if NO item is checked (a card created outside the
+  multi-action rule's reach), route from the standard default selection —
+  `Qwen Flash` — WITHOUT mutating the card. Then: exactly one checked →
+  that model for every tier; several checked →
   the largest drives planning (plan / research / final review), the smallest
   drives code (test / dev / chunk review); only **Local** checked →
   `gpu-ai/qwen3.8-27b-q6` for every role. The size order and the local
   mapping authority stay in `pipeline-models` — reference it, never
   duplicate its table. Record the resolved tiers in STATE.json
   `kickoff.models` and in the claim comment — never as a custom field.
+- **human-in-the-loop** — the checked Human in the Loop items are THIS
+  run's stop stages: after each checked stage the agent pauses and waits
+  for human input before continuing. `Plan` (the default) = pause for plan
+  approval; `Research` = pause with the research findings before planning;
+  `PR` / `Deployment` = pause before those actions. Nothing checked = run
+  through with no extra pauses.
 - **slug** — the `slug` custom field if already set; otherwise mint 2–3
   suggestions and put them in the batched round. The final slug is
   `cf-<cardNumber>-<type>-<desc>` (`cardNumber` comes from `get_card`).
@@ -91,7 +98,7 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
 
 ## Research-only cards — iterative loop
 
-Trigger: the card's labels include the **Research** board label — read board labels via `get_board` and the card's label ids via `get_card`, matched case-insensitively. The label is the ONLY trigger (D14); the Research checklist never fires this flow — on normal cards its checked items only time the research (before/after planning, or the agent decides).
+Trigger: the card's labels include the **Research** board label — read board labels via `get_board` and the card's label ids via `get_card`, matched case-insensitively. The label is the ONLY trigger (D14); the Research checklist never fires this flow — on normal cards its checked items only time the research (`Before Planning` / `After Planning` / `Agent Decides`) or cancel it (`None`).
 
 Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev`/`agent-review`. The run:
 
@@ -112,7 +119,7 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev`/`agent-rev
    Finished-vs-Rework call — do not spin a second round.
 6. Write-back exactly as in Post-plan card write-back (D19):
    `set_card_custom_field` for `slug` + `session`, then
-   `delete_checklist_item` for every unchecked item of the four checklists.
+   `delete_checklist_item` for every unchecked item of the five checklists.
 7. `add_comment` on the card: the research session link — this run's
    `Session origin:` URL, or the RAW session id on UNRESOLVED with the
    fallback recorded in RESULT — plus the merged TLDR
@@ -146,10 +153,11 @@ Right after plan approval (research-only cards do the same immediately before th
    never a remembered host. This first write-back performs the Config
    constants consistency check.
 3. `delete_checklist_item` for EVERY unchecked item of the Services / Type /
-   Model(s) / Research checklists (checklist ids from `list_checklists`,
-   item ids from `get_checklist`). The surviving checked items are the
-   on-card decision record — the checked Model(s) options ARE the routing
-   record (D12).
+   Model(s) / Research / Human in the Loop checklists (checklist ids from
+   `list_checklists`, item ids from `get_checklist`). The surviving checked
+   items are the on-card decision record — the checked Model(s) options ARE
+   the routing record (D12), the surviving Human in the Loop items the
+   stop-point record.
 
 ## Batched question protocol
 
@@ -162,13 +170,13 @@ Until the plan is finalized, no one in this flow calls the `question` tool on th
 
 This REPLACES per-question escalation during the planning phase: questions accumulate, they do not block. (`question` stays allowed in every agent's permissions — the protocol decides when the one batched round happens, it does not revoke the tool.)
 
-The card answers in advance: the planner MUST NOT record a question whose answer the four checklists or the `slug`/`session` custom fields already give. The batched round carries only genuine gaps (an unchecked Type item, an unset `slug`), each with its best-guess recommendation first. Research-only cards run the same accumulation rule inside their own single follow-up round (Research-only cards, step 3).
+The card answers in advance: the planner MUST NOT record a question whose answer the five checklists or the `slug`/`session` custom fields already give. The batched round carries only genuine gaps (an unchecked Type item, an unset `slug`), each with its best-guess recommendation first. Research-only cards run the same accumulation rule inside their own single follow-up round (Research-only cards, step 3).
 
 ## Launch prompt to agent-plan
 
 When launching `agent-plan`, agent-board-coord MUST include this extra prompt text (in addition to the standard launch prompt):
 
 > Card context: <card title, card description, and card comments> — the card description is the request; the feature folder is <path>.
-> Checklist answers — already provided by the user, do not re-ask: for each of Services / Type / Model(s) / Research the CHECKED items, plus the card's `slug` and `session` custom-field values and its `cardNumber`.
+> Checklist answers — already provided by the user, do not re-ask: for each of Services / Type / Model(s) / Research / Human in the Loop the CHECKED items, plus the card's `slug` and `session` custom-field values and its `cardNumber`.
 > No-questions rule: until this plan is finalized you must NOT call the `question` tool. Record every question you would ask — question, the best-guess answer you take, and its impact — in the plan's Open questions section, and continue the work on the best guess.
 > Question return: when the plan is about to be written/finalized, return ALL accumulated questions — in RESULT `open_questions` and in the plan's Open questions section. They go to the user in one batched question round, and the plan session is re-launched with the answers before final approval.

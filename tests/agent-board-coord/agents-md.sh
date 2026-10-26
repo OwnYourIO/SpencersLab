@@ -40,6 +40,9 @@ FEATURE=".agents/plans/2026/2026-10-feat-board-coord-intake"
 # invariance checks here report a false scope violation. Content checks are
 # untouched.
 FEATURE2=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords"
+# Same union convention: the WeKan v12.64 upgrade ticket ran on this branch,
+# so its plan folder is admitted here as well.
+FEATURE3=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade"
 RULES_SRC=".rulesync/rules/overview.md"
 PERM_SRC=".rulesync/skills/agents-sync/references/permissions.md"
 PERM_GEN=".opencode/skills/agents-sync/references/permissions.md"
@@ -201,7 +204,7 @@ if want c7; then
     [ -n "$p" ] || continue
     case "$p" in
       "AGENTS.md"|"$RULES_SRC"|"$PERM_SRC"|"$PERM_GEN"|tests/*|"$FEATURE"/*|\
-      "$FEATURE2"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
+      "$FEATURE2"/*|"$FEATURE3"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
       .opencode/commands/pipeline-boards-hourly.md|\
       .rulesync/subagents/agent-board-coord.md|.opencode/agents/agent-board-coord.md|\
       .rulesync/commands/pipeline-boards.md|.opencode/commands/pipeline-boards.md|\

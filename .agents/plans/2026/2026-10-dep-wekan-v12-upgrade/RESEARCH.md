@@ -266,6 +266,12 @@ v12.10, depth-guard from v12.20; v12.64 is well inside):
   L1042-1050). `checkItem` does NOT run `substituteVars` on its names — keep
   literals (ours are).
 
+**SUPERSEDED 2026-10-26** — the import JSON below reflects the 2026-10-25
+item sets; the current sets (Research uppercased + `None`, Model(s) default
+Qwen Flash only, Research default Agent Decides, HITL default Plan, Human
+in the Loop checklist) live in `board-rules-v12.64.json` beside this file —
+import THAT file. The shape/semantics findings below still apply.
+
 **Exact rule for the AI-Dev board** (import JSON; the board's current live
 item sets are copied verbatim from `dev-boards list_rules` 2026-10-25):
 
