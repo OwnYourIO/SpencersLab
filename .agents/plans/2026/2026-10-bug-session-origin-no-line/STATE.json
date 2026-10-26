@@ -1,0 +1,60 @@
+{
+  "feature": "2026/2026-10-bug-session-origin-no-line",
+  "plan_status": "approved",
+  "coord_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-26",
+  "approval_note": "USER-APPROVED 2026-10-26 in the batched round (\"Approve both\") WITH the OQ1 override to the LIVE-DERIVE FALLBACK (script + scoped grants); OQ2/OQ3/OQ5/OQ6/OQ7 per best guesses; OQ4 answered in-session (audit: cf-52's probe ran via the coord's interactive shell tool pre-surface-change — D11). Rework recorded 2026-10-26 by the plan session per these answers; D10 supersedes D3's resolution leg. Approval came from the user's explicit batched answer, not planner judgment.",
+  "plan_handoffs": [
+    {
+      "round": "plan-1",
+      "session": "ses_e86e3d02dffet6Qt34ZGvaGATE",
+      "result": "RESULT (round 1, docs-only design — SUPERSEDED by plan-2-rework)\nstatus: DONE\nchunk: plan\nfiles_changed: [ticket folder: plan of record, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01.md]\ncommands_run: [skill loads => pass; reads of .rulesync/commands/*, boards SKILL src+gen, coord pair, sibling suites, cf-50/cf-52 folders, scripts/agent-board-coord-gate.sh => pass; git history checks (e9f4f88ff ancestor of origin/main; origin/main command file carries the block) => pass; read-only dev-boards live reads => pass (session CF + claim comment carry the cased precedent URL); STATE.json json.load => valid; git status => writes confined to the ticket folder]\ndeviations: none — committed nothing; asked no user questions; siblings cross-referenced only.\nfriction: none new.\nopen_questions: OQ1 mechanism docs-only vs live-derive; OQ2 claim-once in STATE.json; OQ3 canonical casing + card #52 annotation; OQ4 audit of cf-52's probe path; OQ5 agent-body summary tension defer-vs-fix; OQ6 type/slug; OQ7 base + landing stack.\nnext_suggested: coord batches OQ1–OQ7, re-launches with answers, then agent-test before dev."
+    },
+    {
+      "round": "plan-2-rework",
+      "session": "ses_e86e3d02dffet6Qt34ZGvaGATE",
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-10-26-bug-session-origin-no-line.md (rewritten — round-2 pivot, script+grant mechanism, 2-chunk table with cross-ticket stack gate), chunks/C01.md (re-cut: script + behavior suite, S), chunks/C02.md (new: skill text + fourth grant + regeneration + four-way re-pins, M, wave 2, depends_on [C01] + sibling-landed), DECISIONS.md (appended D10–D16: override, OQ4 audit answer, script contract, lowercase-canonical ruling, stack/re-pin design, approval provenance, seam rejection), STATE.json (plan_status approved + approval_note + C02 stack_gate), FRICTION.md (unchanged — no new friction)]\ncommands_run: [all round-1 investigation re-verified; skill-fragment grep of C01 (D16 tag) => pass; python STATE.json structural assert (approved, C01 w1 + C02 w2 depends C01) => pass; placeholder scan => clean; git status => writes confined to the ticket folder; sibling plan/suite re-reads (kickoff-mints Commands/scope, tests-edit-perms, gate.sh t14/case list, surface.sh i5/fmshape/splice, rulesync-surface c2/c8) => collision map current]\ndeviations: (1) OQ1 mechanism per USER OVERRIDE (docs-only best guess withdrawn — D10 supersedes D3's resolution leg; D1's contract verdict stands). (2) Chunk split 1→2 mirroring the sibling's script/text separation to keep C01 stack-independent and runnable now. (3) Round-1 plan's raw-id routing of the no-line state survives ONLY as the UNRESOLVED-terminal posture; a no-line launch is no longer itself a fallback trigger. (4) Added task C01/1.5: gate.sh t14 admits only $GATE + tests/* under scripts — one arm needed for the new script unless a landed sibling already widened it (verify-first, never duplicate). None gate the user's approval.\nfriction: none new (test-phase tests/** bootstrap gap persists — pre-logged carry-over line in FRICTION.md, owned by sibling tests-edit-perms).\nopen_questions: (1) NQ1 grant-glob shape bash scripts/session-origin.sh* no-space [BEST GUESS; whole-string matcher must hit the zero-arg call — C02 suite literal pin + one live matcher control at review]. (2) NQ2 permissions.md coord-shell cell folded into C02 [BEST GUESS: yes, mirrors the sibling's ruling; safe post-sibling via the landed carve]. (3) NQ3 UNRESOLVED-at-claim: board slots get RAW id only, reasons live in kickoff.session_origin+RESULT [BEST GUESS]. (4) NQ4 landing order kickoff-mints → this C02 (hard stack gate; tests-edit-perms anywhere) [BEST GUESS already wired as the gate — user's landing call].\nnext_suggested: coord records this RESULT verbatim in STATE.json, then agent-test writes tests/session-origin/script.sh (b1–b6, red-before-C01) — bootstrapped via parent-passed grants until tests-edit-perms lands — then C01 dev → review; C02 waits for the sibling's C02 on the stacked base (STATE.json stack_gate), agent-test's surface.sh + four-way re-pins before its dev."
+    }
+  ],
+  "kickoff": {
+    "card": null,
+    "slug": "bug-session-origin-no-line",
+    "type": "bug",
+    "run_tag": null,
+    "origin": "FOLLOW-UP — coordinator-driven friction follow-up from 2026/2026-10-cf-52-feat-coord-session-inwork FRICTION.md line 8 (coord(kickoff): manual `/pipeline-boards`-style launch carried no `Session origin:` line; SESSION_URL_BASE undefined by the copy-verbatim rule; coord improvised a live derivation). No WeKan card.",
+    "worktree": "null — coord mints at launch; base cf-52 branch HEAD (b0c975bf6) per OQ7; C02 additionally gated on 2026-10-bug-kickoff-mints-run-branch C02 landing on the stacked base (D14 stack gate)",
+    "models": null,
+    "local": null,
+    "research_checklist": "agent decides — planner judgment (D9): no agent-research round. Fully decidable from live repo artifacts, on-card board reads (dev-boards get_card/list_comments 2026-10-26) and the cf-50/cf-52 decision logs."
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "stack_gate": "C02 dev starts ONLY after 2026-10-bug-kickoff-mints-run-branch C02 (third coord shell allow + exactly-three re-pins of i4/c2/t17 + t12/i5 agents-sync carve) is landed on this base — the four-way re-pins target the post-sibling state (D14); on an un-landed sibling report BLOCKED-by-stack, never re-pin onto the two-allow reality",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "cf-52 FRICTION line 8 open->fixed re-status by cf-52's coord after this lands (coord-owned file)",
+    "cf-52 FRICTION line 10 (dev-boards MCP vanished post-restart; writes via admin-global-wekan) — separate concern, tracked there",
+    "agent-body 'never a raw id' summary tension (OQ5, user-confirmed defer) — body disclaims restatement; skill is the authority",
+    "NQ1 grant-glob shape and NQ3 UNRESOLVED-slot wording carry best guesses (bash scripts/session-origin.sh* / raw-id-only slots with reasons in RESULT+session_origin) — surface in C02 review only if the whole-string matcher disagrees"
+  ]
+}

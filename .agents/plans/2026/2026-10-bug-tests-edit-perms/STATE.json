@@ -1,0 +1,40 @@
+{
+  "feature": "2026/2026-10-bug-tests-edit-perms",
+  "plan_status": "approved",
+  "approval_note": "USER APPROVED 2026-10-26 via coord's combined batched round: OQ1 stack on cf-52 HEAD b0c975bf6; OQ3 fold agent-dev edit tests/** deny; OQ4 carve-with-exclusion re-pin design; OQ2 (models/worktree) deferred to run-start kickoff (coord supplies; flash tiers per cf-52 precedent unless the launcher says otherwise). All confirmations matched the plan's best guesses — no plan text change needed beyond recording.",
+  "coord_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-26",
+  "kickoff": {
+    "card": null,
+    "slug": "bug-tests-edit-perms",
+    "type": "bug",
+    "run_tag": null,
+    "origin": "FOLLOW-UP — coordinator-driven friction follow-up from 2026/2026-10-cf-52-feat-coord-session-inwork FRICTION.md line 9 (test(C01): agent-test frontmatter grants no edit-allow for tests/**; permission drift is silent). No WeKan card; coord selects this at the cf-52 end-of-session friction picker.",
+    "worktree": "null — coord mints at launch; stack on cf-52 branch HEAD (b0c975bf6) so tests/coord-inwork/surface.sh and base ref f11bfcb85 exist (plan Risks)",
+    "models": null,
+    "local": null
+  },
+  "plan_handoffs": [
+    {
+      "round": "plan-1",
+      "session": null,
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-bug-tests-edit-perms/2026-10-26-bug-tests-edit-perms.md, .agents/plans/2026/2026-10-bug-tests-edit-perms/STATE.json, .agents/plans/2026/2026-10-bug-tests-edit-perms/DECISIONS.md, .agents/plans/2026/2026-10-bug-tests-edit-perms/FRICTION.md, .agents/plans/2026/2026-10-bug-tests-edit-perms/chunks/C01.md]\ncommands_run: [git show --stat 1a6517c81 => pass (test-phase writes confirmed top-level tests/); grep sweep of .rulesync/subagents + .rulesync/skills for tests/** surfaces => pass (6 stale text sites + 2 permission blocks inventoried); agents-sync references source/generated diff -q => pass (byte-identical, cmp-style pair pin honest); review of gate.sh t12/t14, rulesync-surface c6/c7/c8, agents-md c5/c7/c8, surface.sh i5/i6 pins => pass (freeze/scope breakage + safe-anchor set established); no source files edited => pass (git status shows only the new untracked ticket folder)]\ndeviations: presented the chunk table to coord (not a human) for approval per subagent context; plan_status left draft per launch instructions\nfriction: none new — the plan-phase writes stayed within agent-plan's .agents/plans/** allow\nopen_questions: (OQ1) Base posture: stack the ticket branch on cf-52's HEAD b0c975bf6 (needs f11bfcb85 + the cf-52 suites present; Commands depend on it) — confirm, or wait for cf-52's PR to land first. (OQ2) Model tiers + worktree/branch naming: no kickoff answers were passed to this plan launch — coord to supply at run start. (OQ3) Confirm the D3 fold-in of agent-dev's edit tests/** deny (recommended: yes — matrix:55 regression note makes it mandatory). (OQ4) Confirm the D4 re-pin design (carve-with-exclusion for t12/i5 rather than a sanctioned-delta splice).\nnext_suggested: coord answers OQ1-O4 with the user (batched), sets plan_status approved, commits the ticket folder, then launches agent-test for C01 — passing tests/** edit grants for the bootstrap phase (cf-52 precedent; the last run that will need them) — followed by agent-dev.",
+      "note": "Session id: ticket-1 planner launched 2026-10-26 as agent-plan (model openrouter/qwen/qwen3.8-flash); handoff recorded by coord from the RESULT block received in the coord session."
+    }
+  ],
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

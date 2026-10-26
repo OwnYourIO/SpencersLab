@@ -1,0 +1,59 @@
+{
+  "feature": "2026/2026-10-bug-kickoff-mints-run-branch",
+  "plan_status": "approved",
+  "approval_note": "USER APPROVED 2026-10-26 in the plan session (approval-as-planned): all Open-questions best guesses stand — Q1 script+scoped grant, Q2 branch==basename, Q3 no AGENTS.md delta, Q4 permissions.md update, Q5 cf-52-lands-first, Q6 resume clause, Q7 type=bug.",
+  "coord_session": null,
+  "coord_session_note": "Friction follow-up planned by a coordinator-launched plan session in the cf-52 worktree; no WeKan card. The coordinator records its own sessionID here at kickoff (pipeline-kickoff session_rename return) per pipeline-conventions.",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-26T16:40Z",
+  "kickoff": {
+    "card": null,
+    "slug": "bug-kickoff-mints-run-branch",
+    "slug_note": "Proposed by planner (friction-driven ticket, no card minting). Plain agent-coord variant applies (not board-driven): run tag + final slug confirmed at kickoff Q&A; type=bug is the planner's best guess (OQ7).",
+    "type": "bug",
+    "run_tag": null,
+    "worktree": null,
+    "branch": null,
+    "branch_note": "This ticket is the ticket that makes kickoff's branch field true from the first run after it lands; until then kickoff runs keep minting by hand.",
+    "models": { "plan": null, "code": null },
+    "local": null,
+    "research_checklist": "not needed — fully repo-grounded (tool catalog, worktree/reflog evidence, suite anchors all read live in-session 2026-10-26)"
+  },
+  "provenance": {
+    "source_ticket": "2026/2026-10-cf-52-feat-coord-session-inwork",
+    "source_friction": "FRICTION.md line 12 (dev(C01), open) + STATE.json deferred[3]",
+    "planned_in_worktree": "cf-52-feat-coord-session-inwork (planning artifacts only)"
+  },
+  "plan_handoffs": [
+    {
+      "round": "plan-1",
+      "session": "unknown — launch hand-back was cut by a tool-surface change; folder evidence + in-session user approval complete",
+      "result": "RESULT not received verbatim. Recorded from disk: full ticket folder (plan of record with Verified facts / Severity-honestly / Risks, C01 script+suite, C02 text+grants+re-pins, DECISIONS with evidence) plus user APPROVED in-session with all Q1–Q7 best guesses standing (see approval_note)."
+    }
+  ],
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "execution prerequisite: cf-52 must land on main before C02 runs (its surface.sh i4 + c2 OR-arm are the re-pin starting point); landing is user-owned"
+  ]
+}
