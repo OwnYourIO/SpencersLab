@@ -6,7 +6,7 @@
   "coord_session_note": "Friction follow-up planned by a coordinator-launched plan session in the cf-52 worktree; no WeKan card. The coordinator records its own sessionID here at kickoff (pipeline-kickoff session_rename return) per pipeline-conventions.",
   "test_session": "ses_e85e70828ffebTQhy3U9Rc6Z0V",
   "current_wave": 2,
-  "updated_at": "2026-10-26T23:30Z",
+  "updated_at": "2026-10-26T23:55Z",
   "kickoff": {
     "card": null,
     "slug": "bug-kickoff-mints-run-branch",
@@ -63,19 +63,24 @@
       "dev_session": "ses_e85bc97beffe4Al7dlB1FxCXao"
     },
     "C02": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "round": "dev-1",
           "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [.rulesync/skills/{pipeline-kickoff,pipeline-role-coord,boards}/SKILL.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/subagents/agent-{coord,board-coord}.md, 6 generated mirrors]\ncommands_run: [kickoff-branch surface.sh m1..m6 PASS @HEAD + @081b57889 pre+post commit; script.sh 8 ok; agent-perms 10/coord-inwork 6/gate 21/rulesync-surface 18/agents-md 8 all PASS both arms; rulesync generate 6 mirrors, --check clean, x2 no-op; aislop 0/0/36; AC4 grep-trio pass; AC6 forbidden-path diff empty; tree clean]\ncommit: c6689202c (local, 12 files +30/-12)\ndeviations: (1) dispatch said 1-arg mint; shipped the landed 2-arg truth per D9/C01.md. (2) ticket-folder part of commit vacuous (dev owns no writes there). (3) C02.md task-7 re-pins not executed — test-1 ladders + tests-edit-perms admits already satisfy (verified without touching suites).\nfriction: none\nopen_questions: pipeline-overview.md coord shell row still says 'none' — stale same-class drift C02.md scoped OUT (permissions.md only); coord to log FRICTION for the overview-parity follow-up (also pre-image of session-origin NQ2).\nnext_suggested: fresh agent-review C02.",
           "dev_session": "ses_e85abdea9ffeGssMp6TfY5wIqI"
+        },
+        {
+          "round": "review-1",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [chunks/C02.md review notes]\ncommands_run: [all suites both arms green (6/8/10/6/21/18/8), generate --check + x2, aislop 100/0, AC4/AC6 re-run, boards zero-restatement grep 0, numstat +9/-0 x4 vs 081b57889, live positive control: 2-arg MINTED -> EXISTS -> REJECT(main-checkout), glob prefix-literal fnmatch pass]\ndeviations: none\nfriction: none\nopen_questions: none — FYIs: correct 1-arg wording in future dev dispatches (prompt-side); overview-parity FRICTION line awaits session-origin NQ2 fold-in.\nVERDICT: APPROVED (round 1; one minor m3-verbatim note + one pre-existing nit, both recorded; behaviorally covered by script.sh)",
+          "verdict": "APPROVED"
         }
       ],
       "dev_session": "ses_e85abdea9ffeGssMp6TfY5wIqI"
