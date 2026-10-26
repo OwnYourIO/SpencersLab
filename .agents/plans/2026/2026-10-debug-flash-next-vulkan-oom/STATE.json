@@ -13,6 +13,31 @@
   },
   "current_wave": 1,
   "updated_at": "2026-10-26",
+  "plan_session": "ses_e89b6a29dffeuGpuCjDAdKoRPX",
+  "research_session": "ses_e89ad5689ffeclc2NIu77s4W5r",
+  "research_handoffs": [
+    {
+      "at": "2026-10-26",
+      "from": "agent-research",
+      "status": "DONE",
+      "result": "RESULT\nstatus: DONE\nchunk: research (feeds C03 rewrite)\nfiles_changed: [RESEARCH.md in feature folder, committed 38650a85d on ticket branch]\ncommands_run: [git add+commit RESEARCH.md only => pass; storm_run.py init/merge => pass; ~20 web searches + ~15 webfetch/HTTP fetches (GitHub API, raw docs, HF READMEs) => pass]\ndeviations: Storm intermediates kept in /tmp/opencode/storm-runs/serving-an-838-gib-qwen38-flash-next-moe-gguf-on-strix-halo/ (launch rule: no file edits outside RESEARCH.md); ran perspective interviews inline instead of subagent fan-out; committed only RESEARCH.md, left coord's uncommitted STATE.json/FRICTION.md edits untouched.\nfriction: webfetch egress proxy intermittently 403/404 on GitHub URLs incl. valid ones (raw paths, discussion HTML) — resolution: execute-mode fetch against api.github.com; correct llama-swap repo is mostlygeek/llama-swap. fused top-k PR origin not directly sourceable — answered from logs + RFC threads, low-confidence source [32].\nopen_questions: (1) confirm historical crash log contains the load_tensors Vulkan_Host/CPU_Mapped buffer lines (Loki/llama-swap stream history) — proves mechanism on-box with zero repro; (2) C01 must-measure list: GTT default from dmesg, lockup_timeout, pod Mesa version (/versions.txt), ik-llama-server presence in unified-vulkan-266, tensor-name dump for UD-Q3_K_XL, unsloth MTP hc-layout check.\nnext_suggested: agent-plan reintegration pass: rewrite C03 around branch A (mmap + fit-off, MTP-off first attempt) with B as budget-complement contingency; fold six measurement items into C01."
+    }
+  ],
+  "plan_handoffs": [
+    {
+      "at": "2026-10-26",
+      "from": "agent-plan",
+      "status": "NEEDS_INFO",
+      "result": "RESULT\nstatus: NEEDS_INFO\nchunk: plan\nfiles_changed: [plan file, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01-C04.md]\ncommands_run: [git checkout -b debug-flash-next-vulkan-oom-openrouter-qwen3-8-flash => pass, git commit (00bb55f1b) => pass, readonly-ai-gpu-kubernetes pods_list/pods_get/nodes+events => pass, helm template => fail: helm binary absent in worktree (values-based reconstruction used), webfetch llama.gpu-ai /api/hardware => pass]\ndeviations: Worktree detached at main tip, no feature branch — created ticket branch (local, no history rewrite). Initial plan delivered WITH research questions as NEEDS_INFO per user's directed flow (plan -> research -> reintegrate) instead of role-skill default of refusing to plan pre-research.\nfriction: no helm in worktree env — C02/C03 surfaces must install helm or run checks in helm-equipped checkout. Pod exec unavailable via MCP (repo rule) — C01 carries exact user-run commands for Vulkan/amdgpu topology probes.\nopen_questions: Needs research: yes — (1) gfx1151/Strix-Halo mechanics of 'radv/amdgpu: Not enough memory for command submission' + Vulkan device-lost during ggml-vulkan init (GTT/BAR aperture semantics, RADV device-local heap reporting on unified memory, Mesa/amdgpu large-GEM bugs, kernel params incl. amdgpu.gttsize exact names/units/defaults, stability risk on single-node k3s). (2) Qwen3.8-Flash-Next support (arch qwen4exp, 512 experts/top-10, MTP) across llama.cpp builds: does b11810 fully support it on Vulkan; meaning of 'fused top-k mask not supported -> CPU' for correctness/perf; do qwen4exp routed-expert tensor names match -ot '\\.ffn_.*_exps\\.=CPU'? (3) Viable engines on gfx1151 for >=80 GiB GGUF: newer llama.cpp Vulkan APU fixes, ik_llama.cpp in unified-vulkan images, ROCm/HIP feasibility, GGML_VULKAN_* env/heap controls. (4) Real peak memory accounting for flash-next-q3 regime (83.8 GiB weights + --load-mode none + -ngl 99 + 256k q8 KV + 3.9 GiB MTP draft) on 127.3 GiB node / 2 GiB swap; GTT double-count at load; flag regime minimizing peak (lower -ngl, --no-kv-offload, ctx cut, drop draft, --n-cpu-moe). (5) Community success/failure reports for flash-next-class or >=80 GiB MoE GGUF on Ryzen AI MAX+ 395 with llama.cpp Vulkan — configs that worked (kernel params, Mesa versions), patterns matching this crash.\nnext_suggested: coord launches agent-research (pass feature-folder absolute path), then relaunch agent-plan to rewrite C03 + fold findings in before presenting plan for approval."
+    },
+    {
+      "at": "2026-10-26",
+      "from": "agent-plan",
+      "status": "DONE",
+      "pass": "reintegration (post-RESEARCH.md)",
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-10-26-debug-flash-next-vulkan-oom.md, DECISIONS.md, chunks/C01.md, C02.md, C03.md, C04.md] committed c7e82d112 (local; STATE.json/FRICTION.md untouched)\ncommands_run: [read RESEARCH.md in full => pass, git add(plan files only)+commit c7e82d112 => pass, grep consistency check (load-mode/gated/hc-layout across plan+chunks) => pass, STATE.json/FRICTION.md read-only => pass]\ndeviations: none beyond scope letter: C04 received runtime-cliff/MTP-gate details, C02 reframing (both encode branch logic RESEARCH established)\nfriction: none new (carried: no helm in worktree, no pod-exec via MCP — designed around in C01/C03)\nopen_questions: three operator decision points at approval: (1) C02 containment now vs debug-live, (2) pre-authorization of branch B (user-owned host ttm.pages_limit=32505856 + reboot) gated on C01's GTT measurement, (3) acceptance of C04's one-attempt freeze protocol / trio-eviction scheduling on the live single-node box\nnext_suggested: present chunk table + decision points to user; on approval coord flips plan_status=approved and launches wave 1 (C01 first — its EVIDENCE.md gates C03's A-vs-A+B fork; C02 only if containment chosen)"
+    }
+  ],
   "chunks": {
     "C01": {
       "status": "pending",
@@ -40,7 +65,7 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "gated": "research — rewritten by post-research planning pass before execution"
+      "gated": "resolved by reintegration pass c7e82d112 — C03 concrete; A-vs-A+B fork decided by C01 EVIDENCE.md GTT measurement before dev"
     },
     "C04": {
       "status": "pending",
