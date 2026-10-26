@@ -1,0 +1,127 @@
+# C04 live-verification procedure — the contract every consented-attempt run
+# must satisfy (ticket 2026/2026-10-debug-flash-next-vulkan-oom, chunks/C04.md
+# AC1-5; freeze protocol per DECISIONS 2026-10-22 + operator acceptance
+# 2026-10-26). Written by the agent-test session as the "command lists"
+# artifact the plan's Commands section prescribes: readonly MCP/HTTP steps are
+# agent-runnable; pod/host exec is NOT (repo rule) — those carry run_by: user
+# with the exact command.
+#
+# test_c04_verification.py audits this file's completeness AND validates the
+# recorded attempt artifacts against it, so a quietly-narrowed grep or a
+# second unsanctioned retry cannot pass review.
+
+meta:
+  ticket: 2026/2026-10-debug-flash-next-vulkan-oom
+  chunk: C04
+  written: 2026-10-26 agent-test session
+  endpoints:
+    base: https://llama.gpu-ai.spencerslab.com
+    surfaces: [readonly-ai-gpu-kubernetes, readonly-global-grafana (Loki), HTTP GET/POST]
+
+protocol:
+  one_attempt_per_variable_change: true
+  retry_loops_forbidden: true          # a crash-class attempt => STOP, capture, hand back via RESULT
+  operator_consent_required_before_attempt: true
+  solo_rung_trio_eviction_scheduled: true   # preloaded trio evicts during the attempt - schedule with operator
+  kernel_params_untouched: true             # lockup_timeout stays as C01 recorded it
+
+journal_clean_patterns:
+  # AC2: zero matches for ALL FOUR in the attempt window (during + 10 min after).
+  # Widened per RESEARCH §1.1: residence vs submission are separate observations;
+  # BO_VA is the kernel-side variant; ring-timeout is the separate DeviceLost class.
+  - amdgpu_vm_validate
+  - BO_VA
+  - "command submission"
+  - "ring .* timeout"
+
+steps:
+  - id: argocd-sync-check
+    when: always, before anything else
+    run_by: agent-readonly
+    surface: readonly-ai-gpu-kubernetes
+    expect: ArgoCD gpu-ai Applications Synced/Healthy after the user merge; never kubectl apply, never admin MCP
+
+  - id: branch-b-booted-values
+    when: only if the C01 gate triggered branch B
+    run_by: user
+    commands:
+      - dmesg | grep -E "VRAM|GTT memory ready"
+      - cat /sys/module/ttm/parameters/pages_limit
+      - kubectl describe node ai-gpu | grep -A5 Allocatable
+    expect: >-
+      booted GTT line matches ttm.pages_limit=32505856; kubelet allocatable
+      re-checked (GTT pages are pinned RAM) BEFORE any attempt
+
+  - id: consent-briefing
+    when: always
+    run_by: coord
+    expect: operator briefed on the freeze protocol and consent recorded before the trigger
+
+  - id: trigger-load
+    when: after consent
+    run_by: agent-readonly
+    surface: HTTP
+    command: "POST https://llama.gpu-ai.spencerslab.com/v1/chat/completions (model qwen3.8-flash-next-q3, tiny prompt)"
+    expect: solo rung per matrix; trio eviction is the accepted, scheduled consequence
+
+  - id: live-log-watch
+    when: during trigger-load
+    run_by: agent-readonly
+    surface: HTTP
+    command: "GET https://llama.gpu-ai.spencerslab.com/logs/stream/qwen3.8-flash-next-q3"
+    fingerprint_expect:
+      experts_placement: CPU_Mapped   # CPU-offloaded experts land file-backed/host, NOT Vulkan_Host
+      vulkan_host: near zero          # vs the C01-recorded pre-fix split in EVIDENCE.md
+      regime_lines: ["--load-mode mmap", "--fit off", "no --spec-type/draft flags"]
+      on_mismatch: stop, report, do not retry   # override did not compose as rendered
+
+  - id: journal-watch-window
+    when: during the attempt and 10 minutes after
+    run_by: agent-readonly
+    surface: readonly-global-grafana Loki
+    patterns_ref: journal_clean_patterns
+    expect: zero matches for every pattern; absence recorded with the window timestamps
+
+  - id: node-and-pod-health
+    when: after the attempt window
+    run_by: agent-readonly
+    surface: readonly-ai-gpu-kubernetes
+    expect: node Ready; no unexplained container restarts; trio running-state intact or documented clean reload (GET /running)
+
+  - id: serve-smoke
+    when: after q3 reaches running within healthCheckTimeout
+    run_by: agent-readonly
+    surface: HTTP
+    command: "POST /v1/chat/completions non-streaming, sanity answer"
+
+  - id: long-prefill-probe
+    when: after serve-smoke passes
+    run_by: agent-readonly
+    expect: ~8-16k-token prefill probe for the runtime ring-timeout class [36][20][52]
+    on_ring_timeout: >-
+      llama-side mitigation only: GGML_VK_MAX_NODES_PER_SUBMIT=1 env on the rung
+      and/or -ub 512 as a service-layer flags/env follow-up in THIS ticket, then re-probe
+    forbidden: changing kernel lockup_timeout or any /sys/module parameter
+
+  - id: mtp-gate-2
+    when: separate, second consented step - ONLY if C01's hc-layout verdict passed
+    run_by: mixed
+    on_pass: "re-add draft/spec blocks via the service override layer; second load attempt under the same journal watch"
+    on_fail: >-
+      record the blocked state + layout-current sidecar candidates (agentionai)
+      as follow-ups; never graft a pre-#28901 sidecar blindly
+
+  - id: memory-accounting
+    when: at peak of the consented load
+    run_by: user
+    commands:
+      - free -h
+    companion: llama.cpp allocation summary from the load log (already captured by live-log-watch)
+    expect: post-fix headroom table appended to EVIDENCE.md vs the C01 pre-fix numbers
+
+  - id: outcome-bookkeeping
+    when: after AC1-5 outcomes exist
+    run_by: coord
+    expect: >-
+      DECISIONS.md entry; q4 (103.7 GiB) testability evaluated with the operator
+      from the measured headroom; if earlier containment exists it stays until that decision

@@ -18,7 +18,8 @@
 #
 # Deliberately NOT asserted (C04 makes implementation-time header checks with
 # two outcomes, so any hard assert here would be wrong for one branch):
-# orca-q6 MTP pattern (embedded vs -hfd MTP-draft vs no spec), 122B MTP via
+# orca-q6 embedded-MTP resolution (only its first-cut ABSENCE is pinned, see
+# §8), 122B MTP via
 # prithivMLmods (filename regex verification), the `-ot` expert-offload regex
 # FIT itself (the plan allows a `fn-moe` macro substitute — flash-next tests
 # accept either `${moe}`/`${fn-moe}` reference or an emitted `-ot` token).
@@ -98,20 +99,30 @@ def test_c04_1_exact_hf_ref_per_approved_id(mid, ref):
 
 
 def test_c04_1_flashnext_mtp_draft_wired():
-    """flash-next q3/q4 take the in-repo MTP draft via -hfd with the
-    draft-mtp spec pair (DECISIONS: unconditional for the unsloth ladder)."""
-    m = models("gpu-ai")
-    for mid in FLASHNEXT:
-        cmd = m[mid]["cmd"]
-        toks = set(L.cmd_tokens(cmd))
-        assert toks & {"${moe}", "${fn-moe}", "-ot"}, (
-            f"{mid}: no expert-offload macro/token — fit gate outcome not reflected"
+    """ACCEPTANCE C03-1 (RE-EXPRESSED 2026-10-26 — TEST_SPEC §8): the old
+    contract — in-repo MTP draft "unconditional for the unsloth ladder" — was
+    superseded by this ticket's DECISIONS 2026-10-26 "MTP is a two-gate path:
+    off for the first load" (a pre-#28901 sidecar dies on b11810 with
+    check_tensor_dims 'output_hc_norm.weight' not found [54][55][38]). First
+    cut: the whole flash-next family renders with NO -hfd draft and NO spec
+    flags; re-add is C04 gate 2, layout-gated on C01's hc-layout verdict. The
+    expert-offload leg stays required (AC1 disjunction, checked on the
+    EXPANDED cmd so any sanctioned macro name passes)."""
+    cfg = L.rendered_config("gpu-ai")
+    m = L.all_models_of(cfg)
+    for mid in FLASHNEXT + [FLASHNEXT_ORCA]:
+        toks = set(L.cmd_tokens(m[mid]["cmd"]))
+        assert "-hfd" not in toks, (
+            f"{mid}: renders the MTP draft — C03's first cut is MTP-off"
         )
-    for mid in ["qwen3.8-flash-next-q3", "qwen3.8-flash-next-q4"]:
-        assert L.cmd_flag_value(m[mid]["cmd"], "-hfd") == L.C04_FLASHNEXT_DRAFT, (
-            f"{mid}: MTP draft ref wrong"
+        assert "--spec-type" not in toks and "--spec-draft-n-max" not in toks, (
+            f"{mid}: draft-MTP spec flags present — forbidden until C04's gate 2 passes"
         )
-        assert {"--spec-type", "draft-mtp", "--spec-draft-n-max", "2"} <= set(L.cmd_tokens(m[mid]["cmd"]))
+        etoks = set(L.cmd_tokens(L.effective_cmd(cfg, mid)).elements())
+        assert etoks & {"-ot", "--n-cpu-moe"}, (
+            f"{mid}: no expert-offload leg in the expanded cmd — AC1 requires the "
+            '-ot "\\.ffn_.*_exps\\.=CPU" regex or the justified --n-cpu-moe substitute'
+        )
 
 
 def test_c04_1_gpu_ai_only_families_present_as_echo_on_gpu():

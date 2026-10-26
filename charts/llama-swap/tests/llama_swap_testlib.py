@@ -292,6 +292,23 @@ def substitute_macro_list(value, macros):
     return value
 
 
+def effective_cmd(cfg: dict, model_id: str) -> str:
+    """The cmd as the llama-swap binary executes it: comment-stripped, then
+    model+global macros expanded through the same merge/substitute pipeline as
+    port_rule_violations. Regime contracts (debug-flash-next-vulkan-oom C03)
+    must assert on this stream — chart composition may carry placement inside
+    a macro reference whose raw render hides its tokens."""
+    model = dict((cfg.get("models") or {}).get(model_id) or {})
+    model_macros = list((model.pop("macros", None) or {}).items())
+    if isinstance(model.get("cmd"), str):
+        model["cmd"] = strip_cmd_comments(model["cmd"])
+    macros = merge_model_macros(model_id, list((cfg.get("macros") or {}).items()), model_macros)
+    expanded = substitute_macro_list(model, macros)
+    cmd = expanded.get("cmd")
+    assert isinstance(cmd, str), f"{model_id}: rendered cmd is not a string: {cmd!r}"
+    return cmd
+
+
 def effective_proxy(cfg: dict, model_id: str) -> str:
     """The proxy string as the binary sees it at the port rule: binary default
     when the key is absent/null, user macros expanded (same merge/substitute
@@ -511,10 +528,38 @@ C04_HF_REFS = {
     "ornith-1.5-35b-a3b-iq2xxs": "bartowski/Ornith-1.5-35B-A3B-GGUF:IQ2_XXS",
 }
 
-# Flash-next q3/q4 MTP draft is unconditional (in-repo mtp file, DECISIONS);
-# orca-q6 MTP and 122B MTP are header-check-conditional at C04 time — NOT
-# asserted here (see TEST_SPEC "deliberately untested").
+# MTP draft sidecar ref for the flash-next ladder. The PREVIOUS ticket's
+# "unconditional draft" contract was superseded by this ticket's DECISIONS
+# 2026-10-26 (MTP is a two-gate path: off for C03's first cut, re-added only
+# through C04's gate 2 on C01's hc-layout verdict). The constant stays as the
+# gate-2 candidate ref and the layout-check target.
 C04_FLASHNEXT_DRAFT = "unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0"
+
+# The flash-next family's rendered IDs — the ONLY surface C03 may change
+# (chunks/C03.md AC2 blast-radius rule; DECISIONS 2026-10-26 "${moe} untouched").
+# Both qwen3.8-flash-next and qwen3.8-flash-next-orca families.
+FLASHNEXT_FAMILY_IDS = [
+    "qwen3.8-flash-next-q3", "qwen3.8-flash-next-q4",
+    "qwen3.8-flash-next-q5", "qwen3.8-flash-next-q6",
+    "qwen3.8-flash-next-orca-q6",
+]
+
+# Pre-chunk render baseline (captured by the test session at commit 561d0559e,
+# clean tree, helm v3.16.4 + app-template 5.0.1, round-trip byte-verified).
+# This is the "approved pre-chunk table" chunks/C03.md AC2/AC3 diff against:
+# everything outside FLASHNEXT_FAMILY_IDS must stay identical through C03/C04.
+BASELINE_DIR = TESTS_DIR / "evidence" / "flashnext-pre-chunk-baseline"
+
+
+def baseline_raw(cluster: str) -> str:
+    path = BASELINE_DIR / f"{cluster}.config.yaml"
+    assert path.exists(), f"pre-chunk baseline fixture {path} missing — fixture breakage, not a code red"
+    return path.read_text()
+
+
+def baseline_config(cluster: str) -> dict:
+    return yaml.safe_load(baseline_raw(cluster))
+
 
 # gpu-ai preload (golden-derived; C04 "preload unchanged"): no new model may
 # enter it, and flash-next q5/q6 must appear in NO matrix set at all.

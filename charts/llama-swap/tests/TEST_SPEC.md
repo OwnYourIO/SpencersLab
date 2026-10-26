@@ -833,3 +833,153 @@ audited). Files touched: `test_boot_safety.py` (NEW),
 148 insertions / 0 deletions), `test_config_parity.py` (N2),
 `test_render.py` (N3). No source file touched; nothing under
 `.agents/plans/`.
+
+---
+
+## 8. debug-flash-next-vulkan-oom — C01/C03/C04 contracts (test session, 2026-10-26)
+
+Ticket: `.agents/plans/2026/2026-10-debug-flash-next-vulkan-oom` (branch
+`debug-flash-next-vulkan-oom-openrouter-qwen3-8-flash`). C02 was SKIPPED by
+the operator (debug-live, DECISIONS 2026-10-26) — no tests written for it.
+Assertions encode the chunk acceptance criteria; RESEARCH.md informed
+structure only (coord scope letter rule).
+
+### 8.1 Files written
+
+* `test_flashnext_regime.py` — C03 AC1/AC4 render contract + AC5 flag-audit
+  evidence gate. Regime asserted on the EXPANDED cmd
+  (`llama_swap_testlib.effective_cmd`, new helper: the macros.go-port
+  `_expanded` pipeline reused from the §7sexies simulation) because chart
+  composition may legitimately relocate placement under any macro name —
+  the contract is the token stream llama-swap executes.
+* `test_flashnext_blast_radius.py` — C03 AC2/AC3 vs the frozen pre-chunk
+  baseline (§8.3): `${moe}` byte-frozen, macro-ADD-only policy with
+  containment (a new macro may be referenced by flash-next cmds only), all
+  non-flash-next models/matrix/hooks/scalars identical, gpu render identical
+  with one documented exemption (§8.4), echo strings exact + macro-free.
+* `test_c01_evidence.py` — C01 AC1-7 + the chunk's grep addenda as artifact
+  validators over `EVIDENCE.md` (module-level gate: absent file = loud skip —
+  TEST_SPEC §4 style, the artifact is ticket-internal and the C03-era CI must
+  not red before wave 1 lands; once the file exists every check is HARD).
+* `test_c04_verification.py` + `evidence/c04_verification_procedure.yaml` —
+  the plan-Commands "command lists" artifact (readonly MCP/HTTP steps
+  `run_by: agent-readonly`, pod/host exec `run_by: user` — repo grants no
+  exec). Layer A audits the procedure's own completeness (four journal
+  patterns exact, freeze-protocol flags, user-run attribution, no /sys
+  writes, fingerprint contract, MTP disjunction, B conditional). Layer B
+  validates the EVIDENCE.md post-fix record vs AC1-5 — skipped until the
+  section exists (C04 is post-merge work).
+* `llama_swap_testlib.py` — `effective_cmd`, `FLASHNEXT_FAMILY_IDS`,
+  `baseline_raw/baseline_config`, and the `C04_FLASHNEXT_DRAFT` comment
+  re-homed from "unconditional" to "gate-2 candidate" (supersession §8.2).
+  Additions only; no frozen table moved.
+
+### 8.2 Re-expression (ledger, per §7 style)
+
+* `test_new_roster.py::test_c04_1_flashnext_mtp_draft_wired` — the ONLY
+  existing test modified. Old contract (prior ticket DECISIONS: "in-repo MTP
+  draft unconditional for the unsloth ladder", -hfd pinned on q3/q4) is
+  superseded by this ticket DECISIONS 2026-10-26 "MTP is a two-gate path —
+  off for the first load"; leaving the old asserts in place would make C03
+  AC1 (no spec/draft first cut) and AC7 (suite passes) mutually
+  unsatisfiable — the plan resolves the contradiction THROUGH the test
+  session ("goldens/contracts move via the agent-test session"), so this is
+  a RE-EXPRESSION, not a weakening: draft/-hfd/spec must now be ABSENT
+  family-wide (q3/q4/q5/q6/orca — the orca rung's per-rung `spec:` is part
+  of the same first cut), and the expert-offload leg is re-checked on the
+  expanded stream (macro-name-agnostic) instead of the raw
+  `${moe}`/`${fn-moe}` token set. Function name kept for cross-ticket grep
+  continuity; docstring carries the provenance. `C04_FLASHNEXT_DRAFT` stays
+  as the gate-2 sidecar ref.
+
+### 8.3 Baseline capture (the "approved pre-chunk table", plan Commands)
+
+`tests/evidence/flashnext-pre-chunk-baseline/{gpu,gpu-ai}.config.yaml` —
+verbatim ConfigMap `config.yaml` DATA strings captured 2026-10-26 at commit
+`561d0559e`, CLEAN TREE (no ticket edits existed; C02 skipped means the
+service layer carries no containment), helm **v3.16.4** + app-template
+5.0.1, via the harness extract-and-render path; round-trip byte-identical
+verified at capture (PROVENANCE.md). Why not the 2026-10-22 goldens: they
+predate the flash-next/ornith catalog, so golden-era parity cannot pin the
+surface C03 must preserve; goldens themselves are UNTOUCHED
+(`git diff -- charts/llama-swap/tests/golden` empty).
+
+### 8.4 Documented interpretations (contract preserved)
+
+Satisfiability self-test: both artifact-validator modules take an optional
+`FLASHNEXT_EVIDENCE=<path>` override; run against a synthetic fully-compliant
+fixture (/tmp, outside the repo) all 22 checks pass, and they correctly red on
+a fixture missing the tensor-name proof — the validators are satisfiable, not
+permanently-red, and negative-direction discrimination holds.
+
+* AC1 "contains no `--load-mode none`" read STRICTLY: a rightmost-wins
+  shadow (`none` still in the stream, `mmap` after it) FAILS — the pinned
+  dry-load path must be gone from the expanded stream, not outranked. The
+  pair form `--load-mode X` and the `--load-mode=X` form are both parsed.
+* AC3 "gpu byte-identical": enforced structurally on the parsed config +
+  EXACTLY on every cmd string, with one exemption — the derived display
+  fields (`name`/`description`) of the five gpu-echoed flash-next ids. The
+  `, MTP` name marker derives from family draft/spec presence, so C03's
+  sanctioned removal legitimately re-composes those two strings on gpu too.
+  Same display-excision lineage as ratified amendment P (§7); every other
+  byte, echo cmd strings included, is strict.
+* AC4 (C02-skipped branch): the chunk's "un-disable q3" step is vacuous; the
+  durable check is that NO flash-next id gains a `disabled:` stub and both
+  families keep `enabled: true` in the gpu-ai `config` layer.
+* `--no-host` is NOT asserted either way (C03: "evaluate, default OFF ...
+  decision + reason in the PR/DECISIONS" — a reasoned add is a recorded
+  outcome, not a contract violation).
+
+### 8.5 Red/green at write time (helm on PATH, gates off)
+
+Baseline this session pre-edit: **124 passed / 1 skipped / 0 failed** (green
+HEAD preserved — nothing existing was weakened except the §8.2 re-expression,
+which flips red by design).
+
+Handoff state: **16 failed / 142 passed / 8 skipped** (166 collected).
+
+* RED — 16, all naming the missing C03 regime (implementation-missing, none
+  is an error): `regime load_mode[5]` (stream carries `--load-mode none`),
+  `fit_off[5]` (flag absent), `first_cut_no_mtp[5]` (-hfd/spec present),
+  roster `flashnext_mtp_draft_wired[1]` (re-expressed, §8.2).
+  Dev flips all 16 by landing branch A; review re-runs.
+* GREEN — new passes 19: regime ×7 (the offload-leg param ×5 already hold
+  under ${moe}, q3 rung specifics, the YAML-only enablement audit),
+  blast-radius ×5 (equal today BY CONSTRUCTION — they turn red only when
+  C03/C04 steps outside the family zone), C04 procedure self-audit ×7
+  (hard pre-flight contract). Prior suite: 123 passed (the 124-head minus
+  the re-expressed roster pin, red by design) — nothing existing was
+  otherwise weakened.
+* SKIPPED — 8: prior §7sexies gate (1), new C01 artifact gate (1 module),
+  C04 post-fix record gates (5), RUN_FLAG_AUDIT (1). RUN_FLAG_AUDIT=1 is the
+  plan-Commands b11810 flag-existence audit — C03 dev must run it BEFORE
+  using the flags (AC5: absent flag = hard chunk fail).
+* HELMLESS degradation verified: with `helm` off PATH the 27 new render
+  tests skip loudly ("helm binary not on PATH") and the YAML-only enablement
+  test still RUNS (green) — a clearly-reported skip, never a false pass.
+
+### 8.6 Trace: acceptance criteria -> tests (this ticket)
+
+* C01-1 -> evidence `ac1_buffer_split_fingerprint_or_absent_statement`
+* C01-2 -> evidence `ac2_gtt_budget_measured`, `ac2_required_vs_budget_verdict`
+* C01-3 -> evidence `ac3_lockup_timeout_recorded_no_change`
+* C01-4 -> evidence `ac4_ik_presence_verdict`
+* C01-5 -> evidence `ac5_tensor_name_dump_verdicts`, `ac5_mtp_hc_layout_verdict_exact_tensor_name`
+* C01-6 -> evidence `ac6_pod_mesa_version`
+* C01-7 -> evidence `ac7_sources_timestamps_and_user_run_attribution`
+* C01 tasks 17-19 -> evidence `task_timeline_and_comparison_and_host_snapshot`
+* C03-1 -> regime `ac1_load_mode_mmap_and_never_none`[5], `ac1_fit_off_present`[5],
+  `ac1_first_cut_has_no_mtp_draft_or_spec`[5], `ac1_ngl99_and_expert_offload_leg`[5],
+  `ac1_q3_rung_specifics` (+ roster re-expression §8.2)
+* C03-2/3 -> blast `ac2_moe_macro_byte_frozen`, `ac2_non_flashnext_models_identical_gpu_ai`,
+  `ac2_matrix_hooks_scalars_identical`, `ac3_gpu_render_preserved`,
+  `ac3_gpu_flashnext_echoes_stay_macro_free`
+* C03-4 -> regime `ac4_service_layer_carries_no_flash_next_disable`
+* C03-5 -> regime `ac5_flags_exist_in_b11810` (RUN_FLAG_AUDIT)
+* C03-6 -> blast policy notes (B/C1 outcomes are DECISIONS/coord-owned; a
+  C1 rung ADDITION deliberately reds `ac2_non_flashnext_models_identical_gpu_ai`
+  and is re-baselined via the test session, never patched in dev/review)
+* C03-7 -> the whole suite + goldens untouched (§8.3)
+* C04-1..5 -> procedure A-layer ×7 (hard now) + post-fix B-layer validators ×5
+  (gated) — the recorded-attempt half is exactly "review re-runs criteria 1-5
+  read-only against recorded artifacts"
