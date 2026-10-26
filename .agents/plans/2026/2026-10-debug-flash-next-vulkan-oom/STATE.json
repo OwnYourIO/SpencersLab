@@ -2,8 +2,8 @@
   "feature": "2026/2026-10-debug-flash-next-vulkan-oom",
   "plan_status": "approved",
   "coord_session": "ses_e89b88646ffeor0bsAa1GwcHRr",
-  "test_session": null,
-  "test_session_note": "agent-test completed (commit 1279ce582) but its sessionID + RESULT were lost to a harness 'Tool result missing' failure after a machine reboot; reconstructed hand-off below. If a test fix is ever needed (validation_at_fault), launch a FRESH agent-test session — the original is unreachable.",
+  "test_session": "ses_e874015caffeLInoa6XqCzhWFd",
+  "test_session_note": "original test session lost with its RESULT to a harness failure after the reboot (hand-off reconstructed from commit 1279ce582); test_session now = the fresh agent-test that landed the approved @helm gate fix (ce6b3f88c) — future test fixes route here.",
   "kickoff": {
     "slug": "debug-flash-next-vulkan-oom",
     "type": "debug",
@@ -45,6 +45,15 @@
       "from": "agent-test",
       "status": "DONE (reconstructed — RESULT lost to harness failure; no sessionID returned)",
       "result": "RECONSTRUCTED FROM COMMIT 1279ce582 (13:54 UTC): 'pipeline(test): C01/C03/C04 contracts — regime render assertions, pre-chunk blast-radius baseline, evidence/attempt validators, C04 procedure artifact'. Body: covers C01/C03/C04 (C02 skipped by operator); 16 contract-reds name the missing C03 mmap regime; artifact validators skip-gated until ticket artifacts land (TEST_SPEC §8.5 ledger); goldens untouched. files_changed: TEST_SPEC.md, evidence/c04_verification_procedure.yaml, evidence/flashnext-pre-chunk-baseline/{PROVENANCE.md,gpu-ai.config.yaml,gpu.config.yaml}, llama_swap_testlib.py, test_c01_evidence.py, test_c04_verification.py, test_flashnext_blast_radius.py, test_flashnext_regime.py, test_new_roster.py (11 files, +3544/-16). Working tree clean at coord verification. open_questions: none recoverable. next_suggested: wave 1 — C01."
+    }
+  ],
+  "test_fix_handoffs": [
+    {
+      "at": "2026-10-26",
+      "from": "agent-test (fresh, operator-approved)",
+      "status": "DONE",
+      "session": "ses_e874015caffeLInoa6XqCzhWFd",
+      "result": "RESULT status DONE / chunk C01-validation-fix — @helm gate added to test_config_schema.py::test_c02_schema_smoke_absent_from_parity_renders (one-line, committed ce6b3f88c); BEFORE pytest . => 1 failed/51 passed/123 skipped, AFTER => 0 failed/51 passed/124 skipped with loud 'helm binary not on PATH' skip matching siblings; TEST_SPEC §8.5 verified to not enumerate this failure (no edit needed — deviation reported); aislop 0 issues. friction: python absent (python3), ruff unavailable — environment-only, ignored. open_questions: none."
     }
   ],
   "chunks": {
