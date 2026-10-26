@@ -705,24 +705,42 @@ config:
     # (arch qwen4exp, 512 experts/top-10). gpu-ai-only BY ENABLEMENT
     # (DECISIONS 2026-10-22 + REPLAN CR2: everywhere else it is a catalog
     # echo - no consumers on the gpu box and orcarouter is gated:auto with
-    # HF_TOKEN gpu-ai-side only). Fit evidence re-verified live at
-    # implementation (GGUF headers range-fetched; sizes re-summed from
-    # the HF API - no tag churn vs RESEARCH 4): ${moe}'s -ot
-    # \.ffn_.*_exps\.=CPU matched the fused routed-expert tensors
-    # (144/147 tensors) - no fn-moe substitute macro needed; shared
+    # HF_TOKEN gpu-ai-side only).
+    # C03 regime fix (ticket 2026-10-debug-flash-next-vulkan-oom): the
+    # ladder left ${moe}'s placement regime. Under ${moe}'s --load-mode none
+    # the -ot-offloaded experts land as Vulkan_Host = GTT-pinned RAM; C01
+    # measured those tensors at 51.99 GiB (144 of 1224) against the node's
+    # 62.54 GiB GTT budget - the q3 load died mid-load_tensors with kernel
+    # amdgpu_vm_validate ENOMEM (EVIDENCE.md §1-3). The flags below re-cut
+    # the same -ngl 99/-ot leg with --load-mode mmap: identical placement,
+    # but file-backed CPU_Mapped pages - reclaimable, no GTT pin (the
+    # maintainers' own workaround, RESEARCH §4.3). ${moe} itself stays
+    # byte-frozen: the q35/q36/ornith/vl-30b rungs load fine pinned because
+    # their demand stays under that budget (DECISIONS 2026-10-26 blast
+    # radius). The leg is a literal, not a new macro: the golden-era parity
+    # contract pins the rendered macro map exactly (test_c02_2 - even a
+    # family-scoped addition fails it), and the roster contract accepts the
+    # emitted -ot token. C04 fallback knob: mmap -> dio in this one line.
+    # --fit off is behavioral: llama.cpp defaults fit ON and the catalog
+    # never injected --fit (C01 EVIDENCE.md §8.1); off skips the dry-loads
+    # that mis-account GTT-backed buffers (RESEARCH §4.2(c)).
+    # -ot regex effectiveness re-verified at name level by C01; shared
     # experts (_shexp) stay GPU-resident as intended.
-    # MTP: flash-next takes the in-repo draft via -hfd
-    # (mtp-Qwen3.8-Flash-Next-Q8_0.gguf, 3.9 GiB, flat root file verified
-    # present live).
+    # MTP: off for the first cut (C04 gate 2 re-adds draft+spec only after
+    # a passing load; the unsloth sidecar passed C01's post-#28901
+    # hc-layout check, EVIDENCE.md §5).
     qwen3.8-flash-next:
       enabled: false
       hfRepo: unsloth/Qwen3.8-Flash-Next-GGUF
       tagCulture: unsloth-ud
       dispName: Qwen 3.8 Flash Next
       descBase: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10)
-      use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
-      draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
-      spec: {'type': 'draft-mtp', 'draft_n_max': 2}
+      use: [threads, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+      flags: |
+        -ngl 99
+        -ot "\.ffn_.*_exps\.=CPU"
+        --load-mode mmap
+        --fit off
       capabilities: {in: [text, image], out: [text]}
       ttl: 300
       quants:
@@ -748,24 +766,29 @@ config:
           descTail: "; {size} weights, experts on CPU; OVER the ~125 GiB node budget - enabled by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix), never preloaded"
 
     # orcarouter Uncensored Flash Next (gated:auto repo - downloads need
-    # HF_TOKEN, which only gpu-ai injects). MTP pattern mirrors the proven
-    # qwen38-orca daily driver (same publisher/build convention,
-    # embedded-MTP expectation); the header itself is not anonymously
-    # inspectable (401 GatedRepo, evidence in the C04 record). If a first
-    # load reports no MTP tensors: add
+    # HF_TOKEN, which only gpu-ai injects). C03: rides the unsloth family's
+    # mmap regime (same literal placement leg + --fit off, see that block's
+    # header for why a literal); the rung-level draft-MTP spec is out for
+    # the first cut. Gate-2 re-add path (C04): the header is not
+    # anonymously inspectable (401 GatedRepo, evidence in the C04 record),
+    # so probe embedded MTP first (the proven qwen38-orca publisher
+    # convention), else the standalone sidecar
     # draft: orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:MTP-draft.gguf
     # (file verified present live - NOTE the UPPERCASE name: llama.cpp's
-    # mtp- sidecar match is case-sensitive, TEST_SPEC 7(F)) or drop the
-    # spec block.
+    # mtp- sidecar match is case-sensitive, TEST_SPEC 7(F)).
     qwen3.8-flash-next-orca:
       enabled: false
       dispName: Qwen 3.8 Flash Next Uncensored
+      flags: |
+        -ngl 99
+        -ot "\.ffn_.*_exps\.=CPU"
+        --load-mode mmap
+        --fit off
       quants:
         q6:
           hf: "orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:Q6_K"
-          spec: {type: draft-mtp, draft_n_max: 2}
-          use: [threads, moe, ctx-256k, flash-and-q8, q38-sampling, q38-think]
-          description: "orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights; experts on CPU; over the ~125 GiB node budget like flash-next q6 - SOLO, never preloaded, may OOM; embedded-MTP per the qwen38-orca pattern"
+          use: [threads, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+          description: "orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights; experts on CPU (mmap placement), 256k ctx; over the ~125 GiB node budget like flash-next q6 - SOLO, never preloaded, may OOM; first cut loads WITHOUT MTP (C04 gate-2 re-add, see the family note)"
           capabilities: {in: [text, image], out: [text]}
           ttl: 300
 
