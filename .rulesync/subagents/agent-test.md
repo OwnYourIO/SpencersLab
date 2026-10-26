@@ -47,6 +47,9 @@ opencode:
       resource: containers/**/tests/**
       effect: allow
     - action: edit
+      resource: tests/**
+      effect: allow
+    - action: edit
       resource: skills/**
       effect: allow
     - action: edit
