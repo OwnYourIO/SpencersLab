@@ -1,8 +1,16 @@
 {
   "feature": "2026/2026-10-debug-flash-next-vulkan-oom",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e89b88646ffeor0bsAa1GwcHRr",
   "test_session": "ses_e874015caffeLInoa6XqCzhWFd",
+  "final_review_session": "ses_e8576dd31ffejw5YuF0LWMpGqK",
+  "final_review_handoff": {
+    "at": "2026-10-26",
+    "from": "agent-review (FINAL whole-plan, planning tier per kickoff)",
+    "status": "DONE",
+    "verdict": "APPROVED",
+    "result": "RESULT status DONE / chunk final-review / verdict APPROVED — step-0: STATE.json parses, coord edit committed 44557a9b2. Fresh suite: pytest 173/0/2 loud skips; RUN_FLAG_AUDIT=1 174/0/1 real b11810 fetch; RUN_HF_CHECK=1 1/0 sidecar live; helm lint + gpu-ai/gpu template + umbrellas rc=0 (pre-existing OVERRIDE_VIA_APPSET only); aislop npx@0.18.1 0/0/0 36 files. Whole-plan diff (merge-base..HEAD) vs goal+every AC: goal met (mmap regime loads+serves fnq3, EVIDENCE §13.2-6); joint C03+C04 final render = 5 FN ids mmap+fit-off+draft-mtp+n-max2 (orca spec-only), ${moe} frozen, gpu cmd-changed=[] (exempted display marker only), zero non-FN load-mode flips; rename/re-gate left no gaps (gate-2 contracts non-vacuous, no stale first-cut assumptions); residual chain land->§13.7 second consented load->§13.5 q4 fully fenced, live ConfigMap genuinely pre-landing (spec x11, FN spec-free). Hygiene: source delta 4 files, no generated/Chart.yaml/goldens/services/version/secret changes, nothing pushed, single-concern commits. Only nit: FRICTION Loki line stale -> coord re-stated fixed. FINAL REVIEW block in chunks/C04.md for plan-file transcription. friction: aislop/helm PATH gaps (npx /tmp routes), namespace-default confusion (known). open_questions: none. next_suggested: ticket complete on branch; user-owned landing chain remains."
+  },
   "test_session_note": "original test session lost with its RESULT to a harness failure after the reboot (hand-off reconstructed from commit 1279ce582); test_session now = the fresh agent-test that landed the approved @helm gate fix (ce6b3f88c) — future test fixes route here.",
   "kickoff": {
     "slug": "debug-flash-next-vulkan-oom",
