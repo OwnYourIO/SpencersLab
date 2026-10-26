@@ -1,12 +1,12 @@
 {
   "feature": "2026/2026-10-bug-kickoff-mints-run-branch",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "approval_note": "USER APPROVED 2026-10-26 in the plan session (approval-as-planned): all Open-questions best guesses stand — Q1 script+scoped grant, Q2 branch==basename, Q3 no AGENTS.md delta, Q4 permissions.md update, Q5 cf-52-lands-first, Q6 resume clause, Q7 type=bug.",
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "coord_session_note": "Friction follow-up planned by a coordinator-launched plan session in the cf-52 worktree; no WeKan card. The coordinator records its own sessionID here at kickoff (pipeline-kickoff session_rename return) per pipeline-conventions.",
   "test_session": "ses_e85e70828ffebTQhy3U9Rc6Z0V",
   "current_wave": 2,
-  "updated_at": "2026-10-26T23:55Z",
+  "updated_at": "2026-10-27T00:15Z",
   "kickoff": {
     "card": null,
     "slug": "bug-kickoff-mints-run-branch",
@@ -81,6 +81,11 @@
           "round": "review-1",
           "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [chunks/C02.md review notes]\ncommands_run: [all suites both arms green (6/8/10/6/21/18/8), generate --check + x2, aislop 100/0, AC4/AC6 re-run, boards zero-restatement grep 0, numstat +9/-0 x4 vs 081b57889, live positive control: 2-arg MINTED -> EXISTS -> REJECT(main-checkout), glob prefix-literal fnmatch pass]\ndeviations: none\nfriction: none\nopen_questions: none — FYIs: correct 1-arg wording in future dev dispatches (prompt-side); overview-parity FRICTION line awaits session-origin NQ2 fold-in.\nVERDICT: APPROVED (round 1; one minor m3-verbatim note + one pre-existing nit, both recorded; behaviorally covered by script.sh)",
           "verdict": "APPROVED"
+        },
+        {
+          "round": "final-review",
+          "session": "ses_e858616f1ffegy7jNXepUJPXmJ",
+          "result": "RESULT\nstatus: DONE\nchunk: final\nfiles_changed: [chunks/C02.md Final review]\ncommands_run: [7 suites x 2 arms = 77/77 rc0; bash -n; generate --check + x2 no-op; aislop 0/0/36; AC4 trio 6+4; AC6 zero; numstat +9/-0 x4; STATE json.load x2]\ndeviations: none — landing arithmetic reported from live refs (origin/main=74e4589d9, ahead 7)\nfriction: none new\nopen_questions: pass the three session-origin kickoff notes (m4 four-way extension duty; stale +12/-0 line-growth assumption; three-allow on lane branch not yet on origin/main) to that ticket's kickoff; commit final notes.\nVERDICT: APPROVED (whole plan; step-0 interleave create->mint->rename->mark->move judged unambiguous; basename-invariant end-to-end residual accepted as plan-scope grounding, not a pin gap)"
         }
       ],
       "dev_session": "ses_e85abdea9ffeGssMp6TfY5wIqI"
