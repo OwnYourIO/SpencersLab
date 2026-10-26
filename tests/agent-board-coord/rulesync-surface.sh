@@ -356,6 +356,13 @@ fi
 # D1). cf-52 widens the set: its coord-pair grants, the kickoff/role-coord
 # contract pair, tests/coord-inwork/* (tests/* already admits them) and its
 # plan folder (D10 — the pins move with the contract, not against it).
+# tests-edit-perms D4/D9 widening: that ticket's agent-test/agent-dev pairs,
+# the pipeline-overview pair (its permissions.md pair is PERM_SRC/PERM_GEN,
+# already admitted), the pipeline-role-test pair, its tests/agent-perms/*
+# suite (tests/* admits it) and the three follow-up ticket folders that the
+# cf-52 landing 124fc2ae8 introduced — a landing that adds plan folders must
+# not read as a scope violation here at any later base. The three folder
+# patterns are inline literals so agent-perms A9 window-greps them here.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -368,11 +375,18 @@ if want c8; then
       .opencode/commands/pipeline-boards-hourly.md|\
       .rulesync/subagents/agent-coord.md|.opencode/agents/agent-coord.md|\
       .rulesync/skills/pipeline-kickoff/SKILL.md|.opencode/skills/pipeline-kickoff/SKILL.md|\
-      .rulesync/skills/pipeline-role-coord/SKILL.md|.opencode/skills/pipeline-role-coord/SKILL.md) : ;;
+      .rulesync/skills/pipeline-role-coord/SKILL.md|.opencode/skills/pipeline-role-coord/SKILL.md|\
+      .rulesync/subagents/agent-test.md|.opencode/agents/agent-test.md|\
+      .rulesync/subagents/agent-dev.md|.opencode/agents/agent-dev.md|\
+      .rulesync/skills/agents-sync/references/pipeline-overview.md|.opencode/skills/agents-sync/references/pipeline-overview.md|\
+      .rulesync/skills/pipeline-role-test/*|.opencode/skills/pipeline-role-test/*|\
+      .agents/plans/2026/2026-10-bug-kickoff-mints-run-branch/*|\
+      .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
+      .agents/plans/2026/2026-10-bug-tests-edit-perms/*) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9 widening (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

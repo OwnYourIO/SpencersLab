@@ -203,6 +203,11 @@ if want c6; then
 fi
 
 # --- c7: scope — only C04's files changed (C04 AC3) -----------------------------
+# tests-edit-perms D4/D9 widening: that ticket's agent-test/agent-dev pairs,
+# the pipeline-overview pair (permissions.md is PERM_SRC/PERM_GEN, already
+# admitted), the pipeline-role-test pair and the three follow-up ticket
+# folders the cf-52 landing 124fc2ae8 introduced (folder patterns are inline
+# literals so agent-perms A9 window-greps them inside this block).
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -216,11 +221,18 @@ if want c7; then
       .rulesync/skills/pipeline-kickoff/SKILL.md|.opencode/skills/pipeline-kickoff/SKILL.md|\
       .rulesync/skills/pipeline-role-coord/SKILL.md|.opencode/skills/pipeline-role-coord/SKILL.md|\
       .rulesync/commands/pipeline-boards.md|.opencode/commands/pipeline-boards.md|\
-      .rulesync/skills/boards/*|.opencode/skills/boards/*) : ;;
+      .rulesync/skills/boards/*|.opencode/skills/boards/*|\
+      .rulesync/subagents/agent-test.md|.opencode/agents/agent-test.md|\
+      .rulesync/subagents/agent-dev.md|.opencode/agents/agent-dev.md|\
+      .rulesync/skills/agents-sync/references/pipeline-overview.md|.opencode/skills/agents-sync/references/pipeline-overview.md|\
+      .rulesync/skills/pipeline-role-test/*|.opencode/skills/pipeline-role-test/*|\
+      .agents/plans/2026/2026-10-bug-kickoff-mints-run-branch/*|\
+      .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
+      .agents/plans/2026/2026-10-bug-tests-edit-perms/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 widenings; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 widenings; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

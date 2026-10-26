@@ -16,6 +16,9 @@ permissions:
     resource: containers/**/tests/**
     effect: deny
   - action: edit
+    resource: tests/**
+    effect: deny
+  - action: edit
     resource: .agents/plans/**
     effect: deny
   - action: edit

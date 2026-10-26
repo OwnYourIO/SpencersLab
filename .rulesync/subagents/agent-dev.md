@@ -17,6 +17,9 @@ opencode:
       resource: containers/**/tests/**
       effect: deny
     - action: edit
+      resource: tests/**
+      effect: deny
+    - action: edit
       resource: .agents/plans/**
       effect: deny
       # Context files dev may update when a chunk needs it — report under deviations

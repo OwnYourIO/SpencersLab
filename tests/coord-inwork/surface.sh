@@ -25,9 +25,35 @@
 # work state is a runtime value this repo deliberately has zero consumers for
 # (D12) — the suite pins TEXT and frontmatter shape only.
 #
-# CHUNK_BASE=<ref> narrows the diff/splice checks to "since that commit";
-# default HEAD (working tree vs committed base — same convention as the
-# sibling suites in tests/agent-board-coord/).
+# Operational bases (2026-10-bug-tests-edit-perms D10/D11 fold-in): every run
+# must pass at BOTH default BASE=HEAD (arm B — the committed-delta posture on
+# the integrated line, main >= 124fc2ae8) AND CHUNK_BASE=081b57889 (arm A —
+# the landing parent of the cf-52 content 20ed5dfaf). i4 accepts either arm:
+# arm A = current equals the base with exactly the two scoped shell allows
+# spliced at the pinned position; arm B = current == base AND the base itself
+# already carries exactly those two allows at that position
+# (splice-idempotence, the c2 PORT_REF re-pin precedent 2f7bbb873).
+# Pre-landing bases are historical and need not pass: f11bfcb85 (an unrelated
+# renovate chore), 916044893 as a chunk base (its child 081b57889 is the
+# release-bot Chart.yaml commit the scope guards do not admit, D11), and the
+# cf-52 branch bases (b0c975bf6-era). CHUNK_BASE=<ref> otherwise narrows the
+# diff/splice checks to "since that commit"; default HEAD (working tree vs
+# committed base — same convention as the sibling suites in
+# tests/agent-board-coord/).
+#
+# tests-edit-perms carve: this ticket re-pins the agents-sync references byte
+# freeze (D4) — see the i5 block comment.
+#
+# tests-edit-perms fold-in (D9/D10): at HEAD of the integrated line the OLD
+# i4 exact-delta form could never pass — self-reference, cf-52's delta is
+# committed at the default base — so i4 gains the OR-form and its line twins
+# become arm-aware (empty diff => absolute presence pin of the six literal
+# allow rows, replacing the mechanical trap of cmp-ing an empty additions
+# file against the 6-line want file). i5 gains the D4 carve: the four
+# agents-sync references files (permissions.md + pipeline-overview.md, source
+# and generated) leave the byte freeze — this ticket's matrix/incident text
+# edit re-opens them; their integrity moves to source<->generated
+# byte-equality (gate.sh t12, tests/agent-perms/surface.sh A5).
 #
 # Usage:
 #   bash tests/coord-inwork/surface.sh           # i1..i6
@@ -189,11 +215,24 @@ if best is None or best > span:
 PY
 
 cat >"$TMP/splice.py" <<'PY'
-# i4/t17-style frontmatter delta contract: current permissions must equal the
-# base permissions with EXACTLY the two scoped shell allows spliced after the
-# `opencode '*' allow` rule — count, literals, order and position pinned at
-# once; any other change anywhere in the block fails (deny-baseline byte-
-# unchanged and "no other shell row" are enforced by the same equality).
+# i4/t17 frontmatter delta contract, OR-form (2026-10-bug-tests-edit-perms
+# D10). Either arm satisfies the contract:
+#   arm A (pre-delta base)  — current == base with EXACTLY the two scoped
+#     shell allows spliced after the `opencode '*' allow` rule: count,
+#     literals, order and position pinned at once (cf-52's original form).
+#   arm B (committed base)  — current == base AND base is itself idempotent
+#     under that splice: stripping the two allows and re-inserting them at
+#     the anchor reproduces base exactly. This is the posture the cf-52
+#     landing created at default BASE=HEAD (delta already committed, so
+#     arm A's equality is unreachable) — the c2 PORT_REF re-pin precedent
+#     (2f7bbb873) expressed as a splice instead of a constant ref, which
+#     keeps the suites' working-tree-vs-$BASE convention and its
+#     red-then-green-in-run workflow.
+# The OR-form never degenerates into "empty diff ⇒ pass": a fabricated extra
+# row breaks current == want AND current == base at once, and off-anchor
+# placement breaks arm B's strip/re-insert equality. deny-baseline
+# preservation and "no other shell row" are enforced for BOTH arms by the
+# shared equality checks plus the shell-set literal check below.
 # Source files nest the block under opencode:, generated files at top level —
 # read from whichever carries it.
 import re, sys, yaml
@@ -210,23 +249,41 @@ def perms(path):
     fm = yaml.safe_load(m.group(1)) or {}
     return (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
 
+def splice(seq):
+    anchor = [i for i, p in enumerate(seq)
+              if p == {"action": "opencode", "resource": "*", "effect": "allow"}]
+    if len(anchor) != 1:
+        return None, len(anchor)
+    i = anchor[0]
+    return seq[:i + 1] + SHELL + seq[i + 1:], i
+
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-anchor = [i for i, p in enumerate(b) if p == {"action": "opencode", "resource": "*", "effect": "allow"}]
-if len(anchor) != 1:
-    print(f"base must carry exactly one opencode '*' allow, found {len(anchor)}"); sys.exit(1)
-i = anchor[0]
-want = b[:i + 1] + SHELL + b[i + 1:]
+want, i = splice(b)
+if want is None:
+    print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
 if c == want:
-    pass
+    pass  # arm A — pre-delta base, sanctioned two-allow delta present
 else:
     if len(c) == len(b) and not any(p.get("action") == "shell" for p in c):
-        print("the two scoped shell allows are not applied (expected red before C01)"); sys.exit(1)
-    extra = [p for p in c if p not in want]
-    missing = [p for p in want if p not in c]
-    print(f"frontmatter delta is not exactly the two shell allows: extra={extra} missing={missing}")
-    sys.exit(1)
+        print("the two scoped shell allows are not applied (red before C01)"); sys.exit(1)
+    if c == b:  # arm B candidate — committed base
+        stripped = list(b)
+        for s in SHELL:
+            if s not in stripped:
+                print("arm B: current == base but the delta is absent at base — the contract never landed"); sys.exit(1)
+            stripped.remove(s)
+        again, _ = splice(stripped)
+        if again is None:
+            print("arm B: base minus the two shell allows no longer carries exactly one opencode '*' allow anchor"); sys.exit(1)
+        if b != again:
+            print("arm B: the committed base carries the shell allows off the pinned splice position — unauthorized drift"); sys.exit(1)
+    else:
+        extra = [p for p in c if p not in want]
+        missing = [p for p in want if p not in c]
+        print(f"frontmatter delta is not exactly the two shell allows in either arm: extra={extra} missing={missing}")
+        sys.exit(1)
 shells = [p.get("resource") for p in c if p.get("action") == "shell"]
 if shells != [s["resource"] for s in SHELL]:
     print(f"shell resources are {shells}, want exactly the two scoped session globs in order"); sys.exit(1)
@@ -235,6 +292,43 @@ if c[0] != b[0]:
 if need_dev_boards and not any(p.get("action") == "dev_boards*" and p.get("resource") == "*"
                                and p.get("effect") == "allow" for p in c):
     print("dev_boards* allow missing from a board-coord file"); sys.exit(1)
+PY
+
+# Arm-B twin of the line-level delta check (T10). The +6/-0 numstat and
+# literal-added-lines cmp are only meaningful while the delta is a working
+# change; at a committed base the diff is empty, so cmp of an empty additions
+# file against the 6-line want file is a mechanical trap that fails a healthy
+# tree. On an empty diff this check asserts the positive instead: the six
+# literal allow lines sit at the pinned position — directly after the three
+# lines of the `opencode '*' allow` rule. Matching is anchor-relative and
+# byte-exact, because the block's nesting shape differs between trees (the
+# source nests it under `opencode:`, the generated mirror does not): the item
+# dash must carry the anchor's own indent and the key lines one level deeper,
+# while the key text and order are pinned literally. Indentation therefore has
+# no degree of freedom left to drift in.
+cat >"$TMP/atpos.py" <<'PY'
+import re, sys
+path = sys.argv[1]
+m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+assert m, f"{path}: no YAML frontmatter"
+lines = [l.rstrip(" \t\r") for l in m.group(1).split("\n") if l.strip()]
+ANCHOR = re.compile(r"^(\s*)- action: opencode$")
+WANT = [('resource: opencode api get /api/session*', 'effect: allow'),
+        ('resource: opencode api patch /api/session/*', 'effect: allow')]
+hits = []
+for i, l in enumerate(lines):
+    am = ANCHOR.match(l)
+    if am and lines[i + 1:i + 3] == [f"{am.group(1)}  resource: '*'", f"{am.group(1)}  effect: allow"]:
+        hits.append((i, am.group(1)))
+if len(hits) != 1:
+    print(f"want exactly one '- action: opencode' + resource '*' + effect allow rule, found {len(hits)}"); sys.exit(1)
+ind = hits[0][1]
+want_lines = [x for rule in WANT for x in
+              (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
+at = hits[0][0] + 3
+if lines[at:at + 6] != want_lines:
+    print("the six literal shell allow lines do not follow the opencode '*' allow at the pinned position "
+          f"(want under indent '{ind}', got {lines[at:at + 6]})"); sys.exit(1)
 PY
 
 cat >"$TMP/fmshape.py" <<'PY'
@@ -377,39 +471,60 @@ if want i4; then
     case "$f" in *agent-board-coord*) adb=dev-boards ;; *) adb=none ;; esac
     git show "$BASE:$f" >"$TMP/base-$n.md" 2>/dev/null || fail "i4: $f not readable at $BASE"
     python3 "$TMP/splice.py" "$TMP/base-$n.md" "$f" "$adb" \
-      || fail "i4: $f frontmatter is not the base perms + exactly the two scoped shell allows after the opencode allow (base: $BASE)"
-    # Line-level twin of the semantic splice: the plan pins "exactly the two
-    # added allow-line pairs (count + literal match)"; additions-only keeps a
-    # reworded deny-baseline from hiding inside a rewrite.
-    ns=$(git diff --numstat "$BASE" -- "$f" | head -n 1 || true)
-    add=$(printf '%s' "${ns:-0	0}" | cut -f1)
-    del=$(printf '%s' "${ns:-0	0}" | cut -f2)
-    [ "$add" = "6" ] && [ "$del" = "0" ] \
-      || fail "i4: $f diff vs $BASE is +$add/-$del lines, want exactly +6/-0 (two 3-line allow rules, nothing else)"
-    git diff -U0 "$BASE" -- "$f" | grep '^+' | grep -v '^+++' | sed 's/^+//' | sed 's/^[[:space:]]*//' \
-      >"$TMP/add-$n.txt"
-    printf '%s\n' '- action: shell' 'resource: opencode api get /api/session*' 'effect: allow' \
-                  '- action: shell' 'resource: opencode api patch /api/session/*' 'effect: allow' \
-      >"$TMP/want-$n.txt"
-    cmp -s "$TMP/add-$n.txt" "$TMP/want-$n.txt" \
-      || fail "i4: $f added lines are not the literal two allow rules (see $TMP/add-$n.txt vs $TMP/want-$n.txt)"
+      || fail "i4: $f frontmatter is neither the base perms + exactly the two scoped shell allows after the opencode allow (arm A) nor a committed base already carrying them at that position (arm B) (base: $BASE)"
+    # Line-level twin of the semantic splice, arm-aware (T10/D10): the plan
+    # pins "exactly the two added allow-line pairs (count + literal match)"
+    # while the delta is a working change; additions-only keeps a reworded
+    # deny-baseline from hiding inside a rewrite. Once the delta is committed
+    # (empty diff at the base) those pins are vacuous-by-impossibility, so the
+    # twin switches to the absolute presence pin atpos.py — never "empty diff
+    # implies pass".
+    if git diff --quiet "$BASE" -- "$f"; then
+      python3 "$TMP/atpos.py" "$f" \
+        || fail "i4: $f has an empty diff vs $BASE (arm B posture) but does not carry the six literal shell allow lines directly after the opencode '*' allow"
+    else
+      ns=$(git diff --numstat "$BASE" -- "$f" | head -n 1 || true)
+      add=$(printf '%s' "${ns:-0	0}" | cut -f1)
+      del=$(printf '%s' "${ns:-0	0}" | cut -f2)
+      [ "$add" = "6" ] && [ "$del" = "0" ] \
+        || fail "i4: $f diff vs $BASE is +$add/-$del lines, want exactly +6/-0 (two 3-line allow rules, nothing else)"
+      git diff -U0 "$BASE" -- "$f" | grep '^+' | grep -v '^+++' | sed 's/^+//' | sed 's/^[[:space:]]*//' \
+        >"$TMP/add-$n.txt"
+      printf '%s\n' '- action: shell' 'resource: opencode api get /api/session*' 'effect: allow' \
+                    '- action: shell' 'resource: opencode api patch /api/session/*' 'effect: allow' \
+        >"$TMP/want-$n.txt"
+      cmp -s "$TMP/add-$n.txt" "$TMP/want-$n.txt" \
+        || fail "i4: $f added lines are not the literal two allow rules (see $TMP/add-$n.txt vs $TMP/want-$n.txt)"
+    fi
   done
   for f in "$COORD_GEN" "$BCOORD_GEN"; do
     python3 "$TMP/fmshape.py" "$f" "$( [ "$f" = "$BCOORD_GEN" ] && echo dev-boards || echo none )" \
       || fail "i4: generated $f breaks the permission shape that must hold through the delta"
   done
-  ok "i4: all four coord files carry exactly the two shell allows (splice + +6/-0 + literal lines); shapes, dev_boards* and deny-baseline intact"
+  ok "i4: all four coord files carry exactly the two shell allows (OR-form: splice arm A or committed-idempotence arm B; line twins arm-aware — +6/-0 + literal adds vs the pinned-position presence pin); shapes, dev_boards* and deny-baseline intact"
 fi
 
 # --- i5: freeze set — byte-unchanged vs the ticket base (AC5) ------------------
 if want i5; then
-  if ! git diff --quiet "$BASE" -- "${FREEZE_PATHS[@]}" 2>/dev/null; then
-    git diff --name-only "$BASE" -- "${FREEZE_PATHS[@]}" >&2
-    fail "i5: a byte-frozen surface (task 1.6 list) changed vs $BASE — the marker is purely UI: gate, commands, fuser, agents-sync, models/gates, AGENTS.md and templates stay untouched (D8/D12)"
+  # D4 carve (2026-10-bug-tests-edit-perms): the agents-sync references pair
+  # re-opened by this ticket's matrix/incident text leaves the byte freeze —
+  # a matrix row is prose, and delta-pinning prose across every future ticket
+  # is a treadmill; the row anchors that matter stay grepped by c5/c6 and the
+  # carve's integrity moves to source<->generated byte-equality (gate.sh t12,
+  # agent-perms A5). Everything else under the freeze set — including
+  # agents-sync's SKILL.md and its other references — stays byte-frozen.
+  # The exclusion literal below is shared verbatim with gate.sh t12 and is
+  # pinned by agent-perms A7(i) in both suites.
+  moved=$( { git diff --name-only "$BASE" -- "${FREEZE_PATHS[@]}" 2>/dev/null || true;
+             git ls-files --others --exclude-standard -- "${FREEZE_PATHS[@]}"; } \
+           | sort -u \
+           | grep -v -x -E -e '(\.rulesync|\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview)\.md' \
+           || true )
+  if [ -n "$moved" ]; then
+    printf '%s\n' "$moved" >&2
+    fail "i5: a byte-frozen surface (task 1.6 list) changed vs $BASE outside the tests-edit-perms D4 carve — gate, commands, fuser, the rest of agents-sync, models/gates, AGENTS.md and templates stay untouched (D8/D12); the carved permissions.md/pipeline-overview.md pair is guarded by t12/A5 pair-equality"
   fi
-  untracked=$(git ls-files --others --exclude-standard -- "${FREEZE_PATHS[@]}" || true)
-  [ -z "$untracked" ] || fail "i5: new untracked file(s) inside frozen dirs: $untracked"
-  ok "i5: freeze set byte-unchanged vs $BASE (worktree included) — gate script, commands, fuser/agents-sync/models/gates pairs, AGENTS.md, rules, templates"
+  ok "i5: freeze set byte-unchanged vs $BASE (worktree included) except the D4 agents-sync references carve — gate script, commands, fuser/models/gates pairs, AGENTS.md, rules, templates; carved pair guarded by t12 + agent-perms A5"
 fi
 
 # --- i6: regeneration contract (AC6) --------------------------------------------

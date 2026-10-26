@@ -31,8 +31,8 @@ Chunking rules live in the plan prompts: S tasks grouped up to 5, M tasks up to 
 | coord | `.agents/plans/**/{STATE.json,DECISIONS.md,FRICTION.md}` only (starts from deny-all) | plan/research/test/dev/review of same variant | none (deny `*`) | none (deny `*`) |
 | plan | `.agents/plans/**` only | none | git reads allowed, else ask | `admin*` deny; `readonly*`/`global*` allow |
 | research | `.agents/plans/**` only (writes `RESEARCH.md` at the exact feature-folder path from its launch message) | none | git reads allowed, else ask | as plan; plus `webfetch`/`websearch` |
-| test | chart/container `tests/` folders + context allows only (starts from `edit * deny`) | none | git reads + `helm lint/template/unittest` allowed, else ask | as plan |
-| dev | everything except `tests/`, plans; context files per-table (see `references/permissions.md`) | none | git reads + `helm lint/template` allowed, else ask | as plan |
+| test | test paths (`charts/**/tests/**`, `containers/**/tests/**`, top-level `tests/**`) + context allows only (starts from `edit * deny`) | none | git reads + `helm lint/template/unittest` allowed, else ask | as plan |
+| dev | everything except the test paths (`charts/**/tests/**`, `containers/**/tests/**`, `tests/**`), plans; context files per-table (see `references/permissions.md`) | none | git reads + `helm lint/template` allowed, else ask | as plan |
 | review | `.agents/plans/**` only (never edits code or tests; a faulty test escalates via coord to the test session, user-confirmed) | none | git reads + `helm lint/template` allowed, else ask | as plan |
 | fuser | `.agents/plans/**` only — the confirmed base worktree's ticket folder, entered via `session_move` (writes `FUSION-REPORT.md` + `<plan-file>-fusion.md`) | none | git reads (`status/log/diff/show/branch/merge-base/worktree list`) + `helm lint/template` + `opencode api` session get/prompt allowed, else ask | as plan |
 
