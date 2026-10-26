@@ -118,7 +118,7 @@
       "gated": "resolved by C01 evidence: branch A alone — no B re-ask"
     },
     "C04": {
-      "status": "in-review",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C03"],
       "dev_rounds": 1,
@@ -144,6 +144,12 @@
           "status": "DONE",
           "verdict": "APPROVED",
           "result": "RESULT\nstatus: DONE\nchunk: C04\nverdict: APPROVED (no blockers, no majors; two minor plan-owned criterion-wording revisions recommended — Review notes in chunks/C04.md)\nfiles_changed: [chunks/C04.md Review notes appended (uncommitted, coord to commit); step-0 committed coord STATE.json edit as 25199e9a3]\ncommands_run: [git commit step-0 => pass; pytest -q -rs => 173/0/2 loud honest skips; RUN_FLAG_AUDIT=1 => 174/0/1; RUN_HF_CHECK=1 => 1 passed live; helm lint chart => pass; template gpu-ai+gpu => rc=0; umbrellas lint+template => rc=0 (pre-existing warnings only); aislop ci --changes => 0/0/0; independent base-vs-HEAD render diff => cmd-changed = exactly 5 FN ids, spec-carriers 11->16 gained-only-FN, -hfd 6->10 (4 unsloth, orca spec-only), ${moe}/macros byte-equal, models-section-only ConfigMap change, gpu cmd-changed=[], restored lines byte-identical to 947c3eec9's removal; bite-check on both re-expressed contracts => presence+exact-value+absence pins, non-vacuous (base render empirically lacks tokens); Loki 4-pattern re-query incl. load-D full +10-min tail 22:21->22:36Z => 0 matches with crash-window sensitivity control returning matches; pod fc6d7c8fc-2jmkl Running 0 restarts; live ConfigMap mmap x5/fit-off x5/none x7/spec x11/hfd x6, FN spec-free = expected pre-landing state; git branch -r --contains on eb0a0cf92/3260dbac5/ed94f386a/25199e9a3 => empty]\ndeviations: added fresh live re-verification beyond artifact re-runs; helm binary sha drifted from recorded fc3073279 (extracted-binary nature) — version+behavior integrity, same route as test session.\nfriction: readonly-ai-gpu-kubernetes namespace confusion — workloads on 'default', pods_list_in_namespace gpu-ai returns empty table not error; EVIDENCE §13.1 silent on namespace — worth a §13.8 line next touch.\nopen_questions: none — AC1-substitute accepted (literal load_tensors split unattainable via any agent channel in EITHER regime, corroborated C01 §2; substitute chain regime-discriminating+quantified) with minor-1 wording revision recommended so the done-ledger isn't literally unsatisfiable; minor-2 = chart-level-vs-service-override wording. C04 done-able while MTP-load proof stays user-owned: YES per AC4 disjunct, provided coord records residuals + applies revisions.\nnext_suggested: commit review notes; flip C04 done; apply minor-1/2 revisions (plan-owned); record user-owned residuals (land -> second consented MTP load §13.7 -> q4 decision §13.5)."
+        },
+        {
+          "at": "2026-10-26",
+          "from": "agent-plan (wording revisions, review minors 1/2)",
+          "status": "DONE",
+          "result": "RESULT status DONE / chunk plan-revision — step-0 commits 59a057a81 (coord state) + 9a097995b (review notes), revision commit a7551a803 (8+/6- across chunks/C04.md, chunks/C03.md, DECISIONS.md append). minor-1: AC1 + task-3 wording now names the accepted substitute chain (mmap-warning fingerprint + destructor accounting Vulkan_Host ~0.6 GiB vs ~40 GiB pinned class + prefill throughput/truncation; bar unchanged, falsifiable form revised). minor-2: 'service override layer' -> chart-level family flags/draft/spec as ratified (also C04 gate-2 task + files-in-scope + C03 --no-host clause — same wording family, disclosed as deviations 1-2); contingency wording (C1 ik, dio fallback, runtime-cliff) and C02's genuine per-ID disabled: pattern intentionally untouched; plan-of-record file had no offending phrases (grep). Consistency greps clean; aislop via npx@0.18.1 => 0 issues 100/100. friction: aislop absent from PATH — npx pinned route, fixed. open_questions: none. next_suggested: flip C04 done per reviewer ruling; final whole-plan review."
         }
       ],
       "review_session": "ses_e858c348effeU6Bsg90YYGCz3R",
