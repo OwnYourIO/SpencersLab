@@ -866,22 +866,39 @@ app-template:
       containers:
         main:
           image:
+            # unified pipeline (vs the old vNNN-vulkan-bNNNN lineage: pre-
+            # #1071 Dockerfile, llama-server in /app, NO whisper.cpp,
+            # entrypoint /app/llama-swap - verified from the
+            # v262-vulkan-b11515 image history, 2026-10-17). whisper-server/
+            # sd-server/llama-server land in /usr/local/bin, entrypoint
+            # run.sh; the whisper bootstrap below dies without
+            # /usr/local/bin/whisper-server ("exec: whisper-server: not
+            # found" on the old lineage).
+            #
+            # unified-vulkan-266 = the llama-swap v266 release image.
+            # Re-pinned 2026-10-25: unified-vulkan-262 was REBUILT IN PLACE
+            # upstream - its digest moved to
+            # sha256:038bb09388681895e9d51e5cf02aaa38178cd6571273cd73b7df2712c416b48d
+            # and the rebuilt content carried the macros.go ${PORT}-proxy
+            # check that crash-looped the gpu box. The old "pinned to the
+            # release-versioned tag so the digest is stable" claim is
+            # falsified: trust the recorded digest + re-verification, never
+            # a tag's reputation. This tag's manifest digest:
+            # sha256:0cc42f1024b54be3de100ae7a7a2730047ca5c27cf7a354f8a9f63142f00c045
+            # (stable across two pulls, 2026-10-25). Freshness is
+            # renovate-managed (the packageRule for this dep in renovate.json
+            # scopes versioning to the unified-vulkan-<N> family the built-in
+            # helm-values manager's docker versioning can't parse), so the
+            # next release tag proposes a PR instead of drifting silently.
+            # Its llama.cpp is b11810 (e3797b18,
+            # 2026-10-22, per the build args in the image config blob),
+            # audited 2026-10-25 against ggml-org/llama.cpp@b11810 for
+            # every flag used below (-ot, --load-mode, --cache-reuse,
+            # --cache-ram, --n-cpu-moe, --no-mmproj, --flash-attn, --jinja,
+            # -hfd, --spec-type, ...).
             repository: ghcr.io/mostlygeek/llama-swap
-            # 2026-10-17: switched from the vNNN-vulkan-bNNNN lineage to the
-            # unified pipeline. The old lineage's vulkan tags were built by
-            # the pre-#1071 Dockerfile (llama-server in /app, NO whisper.cpp,
-            # entrypoint /app/llama-swap -config /app/config.yaml) — verified
-            # from the v262-vulkan-b11515 image history — so whisper-large-v3
-            # died with "exec: whisper-server: not found" after the 2026-10-17
-            # download-URL fix. unified-vulkan-262 is the v262-release image
-            # of the per-project pipeline: whisper-server/sd-server/llama-
-            # server in /usr/local/bin, entrypoint run.sh. Pinned to the
-            # release-versioned tag (not the floating unified-vulkan) so the
-            # digest is stable; same llama-swap v262 config schema. Its
-            # llama.cpp (889edf43, 2026-10-03) was audited for every flag
-            # used below (-ot, --load-mode, --cache-reuse, --cache-ram,
-            # --n-cpu-moe, --no-mmproj, --flash-attn, --jinja, ...).
-            tag: unified-vulkan-262
+            # renovate: datasource=docker depName=ghcr.io/mostlygeek/llama-swap
+            tag: unified-vulkan-266
           env:
             TZ: Etc/UTC
             # Cache downloaded models (-hf flag) on the models PVC
