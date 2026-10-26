@@ -4,7 +4,7 @@
   "coord_session": null,
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-10-25",
+  "updated_at": "2026-10-26",
   "kickoff": {
     "slug": "bug-llama-swap-echo-proxy-port",
     "type": "bug",
@@ -102,10 +102,35 @@
       "depends_on": [
         "C01"
       ],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "awaiting-review",
+      "handoffs": [
+        {
+          "status": "DONE",
+          "chunk": "C03",
+          "commits": [
+            "(2 local commits - pin + renovate.json; verify hashes via git log)"
+          ],
+          "files_changed": [
+            "charts/llama-swap/values.yaml (tag 262->266, honest comment, inline annotation)",
+            "charts/llama-swap/Chart.yaml (appVersion only)",
+            "renovate.json (1 packageRule)",
+            "chunks/C03.md (dev findings: STOP-gate evidence + flag audit)"
+          ],
+          "commands_run": [
+            "digest gate: 2x-pull 266 == sha256:0cc42f10.. both pulls == plan digest; 262 == drifted 038bb093.. => PASS",
+            "flag gate: image config-blob => llama.cpp e3797b18 (b11810, 10-22) + whisper 231638a0; ~40 flags all present in arg.cpp @ b11810 with compatible domains; whisper-server in /usr/local/bin => PASS (table in chunk)",
+            "renovate MCP: validate_config valid, lint_config 0 on new rule, test_package_rules MATCHES faithfully; registry 5973 tags: candidates 256..266, no update today, 267 would propose",
+            "pytest => 0f/124p/1s EXACT; lint --strict pass; renders x3: CM shas before==after (gpu 53d95bbff31c, gpu-ai 9f359249cee7 byte-zero, default e0aaecf4a70e); pod diff == exactly 1 image line per cluster",
+            "sentinels/trio/goldens/tests diff all clean; aislop A/B identical, 0 attributable"
+          ],
+          "deviations": "(1) customManager -> packageRule: plan recon FALSIFIED (built-in helm-values manager already extracts image pairs - renovate's dbaaadced python-tag bump in this very file is proof); packageRule avoids duplicate-dependency + ilias collateral sweep; satisfies acceptance-5's no-double-match bar stronger. (2) 2 commits.",
+          "friction": "global-renovate MCP host can't see worktree fs (configContent inline workaround); dry_run impossible on unpushed branch (compensated via registry simulation); pkill self-match SIGTERM'd own commit shell (retried)",
+          "open_questions": "(1) review adjudication: packageRule substitution vs falsified recon. (2) out-of-scope finding: charts/ilias has 2 comment-annotated pins NO manager updates - candidate chore ticket.",
+          "next_suggested": "C03 review (headline: mechanism deviation + flag-audit fidelity to b11810), then final whole-ticket review"
+        }
+      ]
     }
   },
   "blocked": [],
