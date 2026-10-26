@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-cf-52-feat-coord-session-inwork",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e8735fa11ffel4Bmjk59Yidu4q",
   "current_wave": 1,
-  "updated_at": "2026-10-26T14:40Z",
+  "updated_at": "2026-10-26T15:40Z",
   "kickoff": {
     "card": "52",
     "card_id": "Kw4TGuRr5m8j5oET2",
@@ -24,18 +24,27 @@
   },
   "chunks": {
     "C01": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "round": "test-1",
           "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [tests/coord-inwork/surface.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/gate.sh, tests/agent-board-coord/agents-md.sh]\ncommands_run: [bash -n x4 => pass; bash tests/coord-inwork/surface.sh i1|i2|i3|i4 => RED-as-designed (each names the missing contract: key-path/in-work-citation/shell-allows/pair-carry absent), i5 => GREEN, i6 => RED-as-designed; bash tests/agent-board-coord/rulesync-surface.sh => pass (18 ok); bash tests/agent-board-coord/gate.sh => fail at re-pinned t17 ONLY (red-before-C01: shell allows not applied), subset t1..t16+t18..t19 => pass (20 ok); bash tests/agent-board-coord/agents-md.sh => pass (8 ok); rulesync generate --check => clean; sim worktree (task-1.2/1.3/1.4 wording + rulesync generate): surface 6ok + rulesync-surface 18ok + gate 21ok + agents-md 8ok => pass, then removed; npx --no-install aislop ci --changes => 0 errors]\ndeviations: (1) rulesync-surface c2 re-pinned beyond the documented amendment set — its PORT_REF frontmatter byte-pin is the twin of t17's and cf-52 D10 re-opens the same bytes (plan Commands line 30 asserts the non-identity directly); minimal OR-form chosen, documented in the check's comment. (2) Deliverable \"spec file in feature folder\" not written: pipeline-role-test forbids test sessions from .agents/plans/; AC trace headers in the suites + this RESULT are the role's traceability convention (cf-50 precedent — that ticket's test session left none either). (3) agents-md c7 widened to the full touched-path set, not just the plan folder, for the same post-C01-consistency reason as t14. (4) i6 pair-sync compares source/generated modulo rulesync's deterministic re-serialization (targets flatten, blank line, trailing newline — raw byte-equality can never hold); generator authority stays with the --check + ×2-no-op component. (5) Plan Commands says \"8 touched surfaces\" for c8, C01 Tests says 10 paths; implemented 10 (5 source + 5 generated). (6) All files left uncommitted for coord/dev to land in the C01 commit (task 1.5 \"sources + generated committed together\" — include the four test files).\nfriction: (1) agent-test frontmatter grants NO edit allow for tests/** (only charts|containers/**/tests/**, skills/**, .rulesync rules/skills) — sibling suites under tests/agent-board-coord/ are writable only under the parent-passed permissions of this session; a literal agent-test launch in another harness would silently deny them (agents-sync lesson: permission drift is silent) — resolution: wrote through this session's grants; escalate a follow-up to add a tests/** allow to .rulesync/subagents/agent-test.md, NOT fixable by the test session itself · new · (2) none other\nopen_questions: none blocking — confirm the c2 re-pin posture (or route a revert if coord prefers BLOCKED-style adjudication; AC7 is otherwise unsatisfiable after C01)\nnext_suggested: launch agent-dev for C01 on the plan tier; reviewer's first step = re-run gate.sh (t17 must flip green) + rulesync-surface.sh + agents-md.sh + surface.sh, then the agents-sync permission audit over the two new shell grants, and record the agent-test tests/** permission-drift item in FRICTION.md"
+        },
+        {
+          "round": "dev-1",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.rulesync/subagents/agent-coord.md, .rulesync/subagents/agent-board-coord.md, .rulesync/skills/pipeline-kickoff/SKILL.md, .rulesync/skills/pipeline-role-coord/SKILL.md, .rulesync/skills/boards/SKILL.md, .opencode/agents/agent-coord.md, .opencode/agents/agent-board-coord.md, .opencode/skills/pipeline-kickoff/SKILL.md, .opencode/skills/pipeline-role-coord/SKILL.md, .opencode/skills/boards/SKILL.md, tests/coord-inwork/surface.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/gate.sh, tests/agent-board-coord/agents-md.sh, .agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork/**]\ncommands_run: [rulesync generate => pass (wrote exactly the 5 intended mirrors), rulesync generate 2nd run => pass (no-op), rulesync generate --check => pass (clean); bash tests/coord-inwork/surface.sh => pass (6 ok, pre-commit default BASE=HEAD AND post-commit CHUNK_BASE=f11bfcb85); bash tests/agent-board-coord/rulesync-surface.sh => pass (18 ok, both bases); bash tests/agent-board-coord/gate.sh => pass (21 ok incl. re-pinned t17, both bases); bash tests/agent-board-coord/agents-md.sh => pass (8 ok, both bases); npx --no-install aislop ci --changes => pass (0 errors, 0 warnings, 32 files); git status => clean tree, no un-regenerated drift]\ncommit: 1a6517c81 on branch cf-52-feat-coord-session-inwork (local; no push, no merge — landing is user-owned)\ndeviations: (1) The worktree sat on DETACHED HEAD and the branch named in STATE.json (cf-52-feat-coord-session-inwork) did not exist; the commit initially landed detached. Fixed locally by `git checkout -b cf-52-feat-coord-session-inwork` at the commit (f11bfcb85 base preserved, content untouched). Flag for the coord/kickoff flow: worktree_create apparently detaches without minting the slug branch. (2) AC6's \"byte-equal mirrors\" executed per D14(4): regeneration authority proven by --check + ×2-no-op + pairsync modulo rulesync re-serialization (the i6 contract as accepted).\nfriction: (1) 2026-10-26 · dev(C01) · ticket worktree detached, branch absent despite STATE.json kickoff.branch · resolution: committed detached then created the branch at the commit (local-only) · needs the kickoff/worktree surface to actually create the named branch — report only, no .rulesync fix in C01's freeze scope · new; (2) none otherwise — rulesync resolved on PATH (no npx-ladder degradation), tests ran unmodified.\nopen_questions: none blocking. Live controls from the plan's Commands (first scheduled run shows work.state open + kind survives; manual run no-op) are post-landing, user-owned."
+        },
+        {
+          "round": "review-1",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork/chunks/C01.md]\ncommands_run: [CHUNK_BASE=f11bfcb85 bash tests/coord-inwork/surface.sh => pass; CHUNK_BASE=f11bfcb85 bash tests/agent-board-coord/rulesync-surface.sh => pass; CHUNK_BASE=f11bfcb85 bash tests/agent-board-coord/gate.sh => pass; CHUNK_BASE=f11bfcb85 bash tests/agent-board-coord/agents-md.sh => pass; rulesync generate --check => pass; rulesync generate x2 idempotence => pass; npx --no-install aislop ci --changes => pass (0 errors, 0 warnings, 32 files); git diff f11bfcb85..1a6517c81 (stat + full) => reviewed; negative-pin greps (title strings, boards key-path) => pass; date +%s%3N probe => pass; git branch -vv/ls-remote => local-only, main untouched]\ndeviations: none\nfriction: none — suites ran unmodified at the chunk base; the only environment gap was shellcheck's absence (t1 skip-with-warning convention, not new friction)\nopen_questions: none\nnext_suggested: coord marks C01 done in STATE.json and runs the final whole-plan review (single-chunk plan: full diff f11bfcb85..1a6517c81 against the plan's goal), then the step-9 report; user-owned landing items (PR, first scheduled run observation, permissions.md follow-up) stay with the user/coord.\nVERDICT: APPROVED (round 1; findings: none — full review notes in chunks/C01.md; deferred: permissions.md coord-shell rows stale by design -> follow-up ticket candidate)"
         }
-      ]
+      ],
+      "dev_session": "ses_e871f45b2ffeIEN2HNtBKGTyWD"
     }
   },
   "plan_handoffs": [
@@ -61,8 +70,17 @@
         "Q3_manual_runs": "unconditional mark step in both variants — best guess confirmed"
       },
       "approval": "USER APPROVED 2026-10-26 via batched round Q4 = Approve. Coord applied plan_status: approved — the approval came from the user's explicit answer, not the coord's own judgment."
+    },
+    {
+      "round": "final-review",
+      "session": "ses_e870ebe56ffe3IUOH0d7JYc2wW",
+      "result": "RESULT\nstatus: DONE\nchunk: final\nfiles_changed: [.agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork/chunks/C01.md]\ncommands_run: [CHUNK_BASE=f11bfcb85 bash tests/coord-inwork/surface.sh => pass (6 ok); CHUNK_BASE=f11bfcb85 bash tests/agent-board-coord/rulesync-surface.sh => pass (18 ok); CHUNK_BASE=f11bfcb85 bash tests/agent-board-coord/gate.sh => pass (21 ok, t1 shellcheck skip-with-warning); CHUNK_BASE=f11bfcb85 bash tests/agent-board-coord/agents-md.sh => pass (8 ok); npx --no-install rulesync generate --check => pass (clean); npx --no-install aislop ci --changes => pass (0 errors, 32 files); bash tests/services/dev-mcp-fleet.sh t12 t13 t14 => pass (12 ok); node --test tests/opencode/question-notify.test.ts => pass (35/35); bash tests/services/hivetools-kubernetes-mcp-docs.sh => d1-d3 pass, d4 fail (cross-ticket scope-pin collision — Deferred 5, not cf-52's contract); git diff f11bfcb85..1a6517c81 full + per-file => reviewed; negative-pin greps (title strings .rulesync+.opencode => 0 hits; boards key-path => 0) => pass; permission audit over both coord variants (deny-baseline/last-match/placement/dev_boards*/question) => pass; git branch/log origin/main => local-only, main untouched]\ndeviations: none — reviewed exactly the launched scope; hivetools d4 judged as a branch-identity artifact of another ticket's pin (its AC contradicts nothing in cf-52's criteria), escalated as a Deferred follow-up rather than a validation_at_fault BLOCK, consistent with the recorded cf-50 R2 hand-widening friction class\nfriction: hivetools-kubernetes-mcp-docs d4 cannot distinguish \"this ticket touched generated surfaces\" from \"some other ticket on this branch did\" — resolution: adjudicated via acceptance criteria as referee, recorded as Deferred 5 (follow-up: allow-set for d4 like c8/t14/c7) · new\nopen_questions: none\nnext_suggested: coord marks the plan complete (single chunk done + final APPROVED), runs the step-9 report, appends the corrected DECISIONS Conventions entry (the one minor finding), and queues the deferred follow-ups (permissions.md rows, hivetools d4 allow-set, worktree detached-HEAD); landing stays user-owned (PR merge, first scheduled-run observation).\nVERDICT: APPROVED (final whole-plan review)"
     }
   ],
   "blocked": [],
-  "deferred": []
+  "deferred": [
+    "permissions.md role-matrix \"coord shell: none\" rows stale by design — follow-up ticket candidate (review C01)",
+    "hivetools-kubernetes-mcp-docs d4 needs a per-ticket allow-set like c8/t14/c7 (final review)",
+    "worktree_create detaches without minting the slug branch — kickoff surface follow-up (dev C01)"
+  ]
 }

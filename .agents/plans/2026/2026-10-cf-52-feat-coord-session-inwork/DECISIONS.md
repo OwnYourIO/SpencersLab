@@ -3,8 +3,8 @@
 Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision, alternatives rejected, why.
 
 ## Conventions
-- Card-driven run (WeKan #52): folder/branch/worktree named from the full `cf-52-feat-coord-session-inwork` slug (no run tag; card-driven runs retire it). Session title naming gains the in-work marker form under this ticket.
-- Agent-machinery validation = `rulesync generate` idempotence + `--check` + grep-contract suites (`tests/coord-inwork/marker.sh` new; `tests/agent-board-coord/*.sh` siblings with per-ticket scope widenings) — never helm.
+- Card-driven run (WeKan #52): folder/branch/worktree named from the full `cf-52-feat-coord-session-inwork` slug (no run tag; card-driven runs retire it). ~~Session title naming gains the in-work marker form under this ticket.~~ CORRECTED 2026-10-26 by coord per final-review finding D-round-2: titles stay bare slugs — the In-work mark is native OpenChamber session state (D8/D9), never a title convention.
+- Agent-machinery validation = `rulesync generate` idempotence + `--check` + grep-contract suites (`tests/coord-inwork/marker.sh` new; `tests/agent-board-coord/*.sh` siblings with per-ticket scope widenings) — never helm. CORRECTED 2026-10-26: the new suite shipped as `tests/coord-inwork/surface.sh` (i1..i6), not marker.sh.
 - Marker contract is single-sourced in `pipeline-kickoff`; consumer skills cite it, never restate it (same posture as boards→pipeline-models referencing).
 
 ## Decisions
@@ -17,6 +17,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 - 2026-10-26 plan: **D7 no deep research round.** Research timing = "agent decides": the mechanism survey is complete from live repo artifacts (tool catalog this pass, cf-50 AC3 probe verdicts, boards/kickoff/fuser texts). External knowledge would not change the plan; open interpretation goes to the batched round instead.
 
 ## Deferred
+- 2026-10-26 review(C01): permissions.md role-matrix "coord shell: none" rows go stale by design (agents-sync references byte-frozen this ticket) — follow-up ticket candidate. Landing controls exercise the whole-string shell-matcher assertion (manual, post-merge). Worktree detached-HEAD friction stays open (kickoff/worktree surface).
 - (from cf-50, unchanged) ask-gate silence audit in subagent harnesses; regression-suite scope lists hand-widened per ticket (glob-derive follow-up). Both reproduced as planning context here; neither folded (cf-50 R2 out-of-scope ruling stands).
 
 ## Round 2 — batched answers REJECTED the title-convention reading (2026-10-26; user answers are the source)
