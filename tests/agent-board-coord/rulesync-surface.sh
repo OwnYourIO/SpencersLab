@@ -16,17 +16,21 @@
 # THIS ticket's four chunks (the old scope belonged to the old C05).
 #
 # Contract source: chunks/C02.md + chunks/C03.md "## Tests". AC trace:
-# c1[AC-files] c2[C03 AC3 + D21] c3[C03 AC4] c4[C02 AC2] c5[C03 command]
-# c6[C04 AC2 — green only once C04 lands] c7[C02 AC3] c8[C02 AC4 scope]
-# c9[C02 AC5 + C03 AC4] c10[C02 AC1 pickup order] c11[C02 AC1 checklists +
-# D9 drift detector] c12[C02 AC1 slug/session/cf- + cf-50 round-2 RE-PIN:
+# c1[AC-files] c2[C03 AC3 + D21; cf-52 RE-PIN: $PORT_REF frontmatter delta is
+# the two scoped shell allows only] c3[C03 AC4] c4[C02 AC2] c5[C03 command]
+# c6[C04 AC2 — green only once C04 lands] c7[C02 AC3] c8[C02 AC4 scope;
+# cf-52 widenings] c9[C02 AC5 + C03 AC4] c10[C02 AC1 pickup order] c11[C02
+# AC1 checklists + D9 drift detector] c12[C02 AC1 slug/session/cf- + cf-50 round-2 RE-PIN:
 # dead-literal ABSENCE + dynamic Session-origin phrases + D12 negative]
 # c13[C02 AC1 research-only + D15] c14[C02 AC1 D11 resume] c15[C02 AC1 C01
-# tool names] c16[C03 AC1 body+command deltas] c17[C02 AC4 byte-unchanged].
+# tool names] c16[C03 AC1 body+command deltas] c17[C02 AC4 byte-unchanged;
+# cf-52 RE-PIN drops kickoff/role-coord from the frozen set].
 #
 # Red before C02/C03 (the ported skill is still the old two-list pickup and
 # live-question intake); c1-c5, c7, c9, c17 are already green and hold as
-# regressions.
+# regressions. cf-52 posture: this suite is a pure regression gate on the
+# coord-inwork ticket — all of c1..c17 are green before C01 and must HOLD
+# after it; the new contract is asserted by tests/coord-inwork/surface.sh.
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF=<ref> re-points the frontmatter
@@ -50,6 +54,9 @@ FEATURE2=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coo
 # Same union convention: the WeKan v12.64 upgrade ticket ran on this branch
 # (runbook + checked-in rule import JSON), so its folder is admitted too.
 FEATURE3=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade"
+# Same union-of-tickets scope posture for cf-52, which shares the branch and
+# legitimately re-opens the kickoff/role-coord pair plus the coord agents.
+FEATURE4=".agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork"
 RULES_SRC=".rulesync/rules/overview.md"
 
 SKILL_SRC=".rulesync/skills/boards/SKILL.md"
@@ -223,11 +230,39 @@ if not deny_all or not dev_boards or dev_boards[0] < deny_all[0]:
 EOF
   ok "c2: generated agent frontmatter (name, distinct color, question + dev_boards* allows, NO broad dev* (D21), five subagent allows, three edit allows only)"
 
-  # C03 forbids any frontmatter edit; the port commit is the byte-pin.
-  fm_port=$(git show "$PORT_REF:$AGENT_GEN" | sed -n '1,/^---$/p' | tail -n +2)
-  fm_cur=$(sed -n '1,/^---$/p' "$AGENT_GEN" | tail -n +2)
-  [ "$fm_port" = "$fm_cur" ] || fail "c2: agent frontmatter drifted from $PORT_REF — C03 keeps it byte-identical (no permission drift, C03 AC3)"
-  ok "c2: agent frontmatter byte-identical to the ported pre-chunk version ($PORT_REF)"
+  # C03 pinned this frontmatter byte-identical to the port commit. cf-52 D10
+  # re-pins: the block is now "identical to the port, or the port plus exactly
+  # the two scoped opencode-api shell allows" — every other permission drift
+  # still fails here, and tests/coord-inwork/surface.sh i4 pins the delta's
+  # existence, placement and literals, so this guard only loosens along the
+  # one user-approved axis (cf-50 D21 posture: a pin moves where the contract
+  # moves).
+  git show "$PORT_REF:$AGENT_GEN" >"$TMP/c2-port-fm.md" 2>/dev/null \
+    || fail "c2: $AGENT_GEN not readable at $PORT_REF"
+  python3 - "$TMP/c2-port-fm.md" "$AGENT_GEN" <<'EOF' || fail "c2: agent-board-coord generated frontmatter drifted from $PORT_REF beyond the two cf-52 scoped shell allows (C03 AC3; cf-52 D10 re-pin)"
+import re, sys, yaml
+
+def fm(path):
+    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+    assert m, f"{path}: no YAML frontmatter"
+    return yaml.safe_load(m.group(1)) or {}
+
+a, b = fm(sys.argv[1]), fm(sys.argv[2])
+SHELL = [{"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"},
+         {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}]
+pa, pb = a.get("permissions") or [], b.get("permissions") or []
+rest = lambda d: {k: v for k, v in d.items() if k != "permissions"}
+if rest(a) != rest(b):
+    print("a non-permissions frontmatter key changed"); sys.exit(1)
+if pa == pb:
+    sys.exit(0)
+kept = [p for p in pb if p not in SHELL]
+if kept == pa and [p for p in pb if p in SHELL] == SHELL:
+    sys.exit(0)
+print(f"{len(pb) - len(pa)} permission row(s) differ — only the two scoped shell allows are sanctioned")
+sys.exit(1)
+EOF
+  ok "c2: generated agent frontmatter frozen at $PORT_REF except the sanctioned cf-52 two-allow delta"
 fi
 
 # --- c3: the generated agent — body keeps the skeleton ------------------------
@@ -313,8 +348,10 @@ fi
 # --- c8: scope — changed paths limited to this ticket's in-scope files ---------
 # The union of C01-C04's file lists (the old ticket's eight-file scope cannot
 # hold when four chunks share this branch); anything outside it — notably the
-# pipeline-kickoff/pipeline-models/pipeline-role sources — is a contract
-# violation (C02 AC4, D1).
+# pipeline-models/pipeline-gates sources — is a contract violation (C02 AC4,
+# D1). cf-52 widens the set: its coord-pair grants, the kickoff/role-coord
+# contract pair, tests/coord-inwork/* (tests/* already admits them) and its
+# plan folder (D10 — the pins move with the contract, not against it).
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -323,8 +360,11 @@ if want c8; then
       "$SKILL_SRC"|"$AGENT_SRC"|"$CMD_SRC"|"$PERM_SRC"|"$RULES_SRC"|\
       "$SKILL_GEN"|"$AGENT_GEN"|"$CMD_GEN"|"$PERM_GEN"|AGENTS.md|\
       containers/wekan-mcp/*|skills/wekan-api/*|tests/*|"$FEATURE"/*|\
-      "$FEATURE2"/*|"$FEATURE3"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
-      .opencode/commands/pipeline-boards-hourly.md) : ;;
+      "$FEATURE2"/*|"$FEATURE3"/*|"$FEATURE4"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
+      .opencode/commands/pipeline-boards-hourly.md|\
+      .rulesync/subagents/agent-coord.md|.opencode/agents/agent-coord.md|\
+      .rulesync/skills/pipeline-kickoff/SKILL.md|.opencode/skills/pipeline-kickoff/SKILL.md|\
+      .rulesync/skills/pipeline-role-coord/SKILL.md|.opencode/skills/pipeline-role-coord/SKILL.md) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
@@ -474,19 +514,22 @@ if want c16; then
   ok "c16: agent body + command mirror the skill's pinned strings (pickup order, research-only exit, cf-slug/no-run-tag, checklist intake)"
 fi
 
-# --- c17: pipeline-kickoff / pipeline-models / role skills byte-unchanged ------
+# --- c17: pipeline-models / pipeline-gates byte-unchanged ----------------------
 # D1 + C02 AC4: the board flow overrides the kickoff QUESTIONS from the skill
-# text; the kickoff/models/role sources themselves stay untouched through this
-# whole ticket, so any diff on them is scope escape.
+# text; the models/gates sources stay untouched through this whole ticket, so
+# any diff on them is scope escape. cf-52 RE-PIN: pipeline-kickoff and
+# pipeline-role-coord LEAVE the byte set — cf-52 legitimately re-opens them
+# with the in-work/done authority (D6/D10, cf-50 D21 posture); their content
+# is guarded by tests/coord-inwork/surface.sh i1/i2, not by invariance here.
 if want c17; then
   if ! git diff --quiet "$BASE" -- \
-      .rulesync/skills/pipeline-kickoff .rulesync/skills/pipeline-models .rulesync/skills/pipeline-gates \
-      .opencode/skills/pipeline-kickoff .opencode/skills/pipeline-models .opencode/skills/pipeline-gates \
-      .rulesync/skills/pipeline-role-coord .opencode/skills/pipeline-role-coord 2>/dev/null; then
-    git diff --name-only "$BASE" -- .rulesync/skills/pipeline-* .opencode/skills/pipeline-* >&2
-    fail "c17: a pipeline-kickoff/pipeline-models/pipeline-gates/pipeline-role-coord file changed vs $BASE (D1: they stay untouched; the boards skill overrides the questions, not the sources)"
+      .rulesync/skills/pipeline-models .rulesync/skills/pipeline-gates \
+      .opencode/skills/pipeline-models .opencode/skills/pipeline-gates 2>/dev/null; then
+    git diff --name-only "$BASE" -- .rulesync/skills/pipeline-models .rulesync/skills/pipeline-gates \
+      .opencode/skills/pipeline-models .opencode/skills/pipeline-gates >&2
+    fail "c17: a pipeline-models/pipeline-gates file changed vs $BASE (they stay byte-pinned; only kickoff/role-coord were re-opened by cf-52 D10)"
   fi
-  ok "c17: pipeline-kickoff, pipeline-models, pipeline-gates and pipeline-role-coord are byte-unchanged vs $BASE"
+  ok "c17: pipeline-models and pipeline-gates (source + generated) are byte-unchanged vs $BASE (kickoff/role-coord re-opened by cf-52, i1/i2-guarded)"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"

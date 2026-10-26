@@ -22,7 +22,8 @@
 # AC trace: t1[C01 AC2+AC5] t2[AC1 a] t3[AC1 b] t4[AC1 c] t5[AC1 d]
 # t6[AC1 e] t7[AC1 f] t8[AC1 g] t9[AC1 h+i] t10[C01 AC4] t11[C02 AC1 +
 # C03 AC3 strengthened] t12[C02 AC2, C03 AC4 carve] t13[AC3] t14[AC4 +
-# C03 AC5 scope] t15[AC5 + C03 AC4 round-aware HOLD] t16[AC6] t17[AC2/D13]
+# C03 AC5 scope; cf-52 widenings] t15[AC5 + C03 AC4 round-aware HOLD] t16[AC6]
+# t17[AC2/D13; cf-52 RE-PIN = base + two scoped shell allows]
 # t18[C03 AC1 origin block] t19[C03 AC2 skill dynamic contract].
 #
 # AC7 (regression) is not re-implemented here: run
@@ -30,6 +31,14 @@
 # allow-lists carry this ticket's in-surface paths, and agents-md.sh c8's
 # AGENTS.md section allow-set includes "Where things live" — this ticket's
 # scripts/ bullet lands there, so the regression holds at any CHUNK_BASE.
+#
+# cf-52 posture (this branch shares the suite): t17 is RE-PINNED from D13's
+# byte-freeze to the coord pair's delta contract — the four coord files must
+# differ from the chunk base by exactly the two scoped `opencode api` session
+# allows (D10), so t17 is the designed-red line until C01 lands; t14's
+# allow-set carries cf-52's in-scope paths. Everything else in this file
+# HOLDs: t11/t13/t16 (commands untouched), t12 (agents-sync still frozen —
+# cf-52 touches nothing in it), t15, t18/t19.
 #
 # The suite is offline-deterministic: the agent-test session that wrote it
 # made no dev-boards/MCP call, and no check except t10 touches a live server
@@ -70,9 +79,20 @@ NOW_MS=1700000000000
 FXDIR="$(pwd)"
 
 FEATURE=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coords"
+# cf-52 shares the branch and re-opens the coord-pair permission surface; its
+# in-scope paths join the t14 allow-set (same union-of-tickets posture as
+# rulesync-surface.sh c8) and t17 is re-pinned from D13's byte-freeze to its
+# sanctioned two-allow delta.
+FEATURE3=".agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork"
 RULES_SRC=".rulesync/rules/overview.md"
 AGENT_SRC=".rulesync/subagents/agent-board-coord.md"
 AGENT_GEN=".opencode/agents/agent-board-coord.md"
+COORD_SRC=".rulesync/subagents/agent-coord.md"
+COORD_GEN=".opencode/agents/agent-coord.md"
+KICK_SRC_DIR=".rulesync/skills/pipeline-kickoff"
+KICK_GEN_DIR=".opencode/skills/pipeline-kickoff"
+RC_SRC_DIR=".rulesync/skills/pipeline-role-coord"
+RC_GEN_DIR=".opencode/skills/pipeline-role-coord"
 CMD_BASE_SRC=".rulesync/commands/pipeline-boards.md"
 CMD_BASE_GEN=".opencode/commands/pipeline-boards.md"
 CMD_SRC=".rulesync/commands/pipeline-boards-hourly.md"
@@ -478,11 +498,13 @@ if want t14; then
     case "$p" in
       "$GATE"|tests/*|AGENTS.md|"$RULES_SRC"|"$AGENT_SRC"|"$AGENT_GEN"|\
       "$CMD_SRC"|"$CMD_GEN"|"$CMD_BASE_SRC"|"$CMD_BASE_GEN"|\
-      "$BOARDS_SRC"/*|"$BOARDS_GEN"/*|"$FEATURE"/*) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope)" ;;
+      "$BOARDS_SRC"/*|"$BOARDS_GEN"/*|"$FEATURE"/*|\
+      "$FEATURE3"/*|"$COORD_SRC"|"$COORD_GEN"|\
+      "$KICK_SRC_DIR"/*|"$KICK_GEN_DIR"/*|"$RC_SRC_DIR"/*|"$RC_GEN_DIR"/*) : ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces included (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces and the cf-52 coord-pair widening included (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
@@ -583,18 +605,51 @@ if want t16; then
   ok "t16: scripts/ bullet + hourly-variant line in rules source AND AGENTS.md; nothing removed beyond the allowed sentence extension"
 fi
 
-# --- t17: D13 permission byte-pin — agent frontmatter unchanged, dev_boards* ---
+# --- t17: coord-pair frontmatter — cf-52 RE-PIN of the D13 byte-pin ------------
+# Round-1 D13 pinned agent-board-coord's frontmatter byte-identical (zero
+# permission changes; the gate rode the !-block). cf-52 D10 re-opens exactly
+# that surface: the sanctioned diff vs base is the two scoped `opencode api`
+# session allows (agent-fuser precedent), added to BOTH coord variants — the
+# plain pair gains the same two-line pin. Everything else about the block
+# still holds (narrow dev_boards*, question allow, subagent/edit allows,
+# deny-baseline ordering, placement). Red before C01: the delta is absent —
+# that is the designed red, the contract simply has not landed yet.
 if want t17; then
   n=0
-  for f in "$AGENT_SRC" "$AGENT_GEN"; do
+  for f in "$COORD_SRC" "$COORD_GEN" "$AGENT_SRC" "$AGENT_GEN"; do
     n=$((n + 1))
+    case "$f" in *agent-board-coord*) adb=dev-boards ;; *) adb=none ;; esac
     git show "$BASE:$f" >"$TMP/base-fm-$n.md" 2>/dev/null || fail "t17: $f not readable at $BASE"
-    sed -n '1,/^---$/p' "$TMP/base-fm-$n.md" | tail -n +2 >"$TMP/fm-base-$n"
-    sed -n '1,/^---$/p' "$f" | tail -n +2 >"$TMP/fm-cur-$n"
-    cmp -s "$TMP/fm-base-$n" "$TMP/fm-cur-$n" \
-      || fail "t17: frontmatter of $f drifted from $BASE — D13 pins ZERO permission changes; the gate rides the !-block, not permissions"
+    python3 - "$TMP/base-fm-$n.md" "$f" "$adb" <<'EOF' || fail "t17: frontmatter of $f is not the $BASE perms + exactly the two scoped shell allows after the opencode '*' allow (red before C01 — base: $BASE)"
+import re, sys, yaml
+SHELL = [{"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"},
+         {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}]
+def perms(path):
+    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+    assert m, f"{path}: no YAML frontmatter"
+    fm = yaml.safe_load(m.group(1)) or {}
+    return (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
+b, c = perms(sys.argv[1]), perms(sys.argv[2])
+if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
+    print("deny-baseline first rule changed at base"); sys.exit(1)
+anchor = [i for i, p in enumerate(b) if p == {"action": "opencode", "resource": "*", "effect": "allow"}]
+if len(anchor) != 1:
+    print(f"base must carry exactly one opencode '*' allow, found {len(anchor)}"); sys.exit(1)
+i = anchor[0]
+if c != b[:i + 1] + SHELL + b[i + 1:]:
+    if len(c) == len(b) and not any(p.get("action") == "shell" for p in c):
+        print("the two scoped shell allows are not applied yet")
+    else:
+        extra = [p for p in c if p not in b and p not in SHELL]
+        missing = [p for p in b if p not in c]
+        print(f"delta is not exactly the two shell allows (extra={extra}, removed={missing}); placement must be after the opencode '*' allow")
+    sys.exit(1)
+if sys.argv[3] == "dev-boards" and not any(
+        p.get("action") == "dev_boards*" and p.get("resource") == "*" and p.get("effect") == "allow" for p in c):
+    print("dev_boards* allow missing from the board-coord file"); sys.exit(1)
+EOF
   done
-  python3 - "$AGENT_GEN" <<'PY' || fail "t17: generated agent permission block violates the D13 byte-pin shape"
+  python3 - "$AGENT_GEN" <<'PY' || fail "t17: generated agent-board-coord permission block breaks the shape that must hold through the cf-52 delta"
 import re, sys, yaml
 text = open(sys.argv[1]).read()
 m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
@@ -603,11 +658,12 @@ perms = (yaml.safe_load(m.group(1)) or {}).get("permissions") or []
 errs = []
 db = [p for p in perms if p.get("action") == "dev_boards*"]
 if len(db) != 1 or db[0].get("effect") != "allow" or db[0].get("resource") != "*":
-    errs.append("dev_boards* must appear EXACTLY once as allow '*' — the pre-existing single allow is the whole board surface (D13)")
+    errs.append("dev_boards* must appear EXACTLY once as allow '*' — the pre-existing single allow is the whole board surface (D13 held through the cf-52 delta)")
 if any(p.get("action") == "dev*" for p in perms):
-    errs.append("broad dev* allow appeared — C02 adds no permission surface at all (D13)")
-if any(p.get("action") == "shell" for p in perms):
-    errs.append("a shell permission row appeared — the scoped shell allow was CANCELLED by D13 (the !-block runs outside tool permissions)")
+    errs.append("broad dev* allow appeared")
+shells = [p.get("resource") for p in perms if p.get("action") == "shell"]
+if shells != ["opencode api get /api/session*", "opencode api patch /api/session/*"]:
+    errs.append(f"shell rows are {shells}, want exactly the two cf-52 scoped session allows (any other shell grant is scope escape)")
 if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in perms):
     errs.append("question allow lost (repo hard rule)")
 deny_at = next((i for i, p in enumerate(perms) if p.get("action") == "*" and p.get("resource") == "*" and p.get("effect") == "deny"), None)
@@ -625,7 +681,26 @@ if edits != want_edits:
 if errs:
     print("; ".join(errs)); sys.exit(1)
 PY
-  ok "t17: agent-board-coord frontmatter byte-identical to $BASE (source + generated) and the single narrow dev_boards* allow shape intact (D13)"
+  python3 - "$COORD_GEN" <<'PY' || fail "t17: generated agent-coord permission block breaks the shape that must hold through the cf-52 delta"
+import re, sys, yaml
+text = open(sys.argv[1]).read()
+m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+assert m, "no YAML frontmatter"
+perms = ((yaml.safe_load(m.group(1)) or {}).get("permissions")) or []
+errs = []
+if any(p.get("action") == "dev*" or p.get("action") == "dev_boards*" for p in perms):
+    errs.append("a board MCP allow appeared on the plain coord — dev_boards* belongs to agent-board-coord only")
+shells = [p.get("resource") for p in perms if p.get("action") == "shell"]
+if shells != ["opencode api get /api/session*", "opencode api patch /api/session/*"]:
+    errs.append(f"shell rows are {shells}, want exactly the two cf-52 scoped session allows")
+if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in perms):
+    errs.append("question allow lost (repo hard rule)")
+if not any(p.get("action") == "opencode" and p.get("resource") == "*" and p.get("effect") == "allow" for p in perms):
+    errs.append("the opencode '*' allow anchor vanished (the splice point of the two grants)")
+if errs:
+    print("; ".join(errs)); sys.exit(1)
+PY
+  ok "t17: all four coord files = base perms + exactly the two scoped shell allows (placement pinned); dev_boards*/question/subagent/edit shapes hold on both generated variants (cf-52 D10 re-pin)"
 fi
 
 # --- t18: Session origin block contract across all four command files (C03) ---

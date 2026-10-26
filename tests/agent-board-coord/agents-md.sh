@@ -15,7 +15,8 @@
 # Contract source: chunks/C04.md "## Tests". AC trace:
 # c1[AC3 regen] c2[AC2 roster] c3[AC1 new facts + D10/D11/D12/D17-era no-run-
 # tag] c4[AC2 dev-<service> verbatim + no re-split] c5[AC2 permissions row,
-# D21] c6[AC4 coord text unchanged] c7[AC3 scope] c8[AC4 section preservation].
+# D21] c6[AC4 coord text unchanged] c7[AC3 scope; cf-50 + cf-52 widenings]
+# c8[AC4 section preservation].
 #
 # Red before C04 (grep board-coord AGENTS.md: zero matches today); c1, c4,
 # c6, c7, c8 are green at the base already and hold as regressions.
@@ -43,6 +44,10 @@ FEATURE2=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coo
 # Same union convention: the WeKan v12.64 upgrade ticket ran on this branch,
 # so its plan folder is admitted here as well.
 FEATURE3=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade"
+# Same posture for cf-52, which re-opens the coord pair and the
+# kickoff/role-coord contract pair (its AGENTS.md delta stays absent — the
+# content pins c2-c6/c8 HOLD untouched; only the scope list widens).
+FEATURE4=".agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork"
 RULES_SRC=".rulesync/rules/overview.md"
 PERM_SRC=".rulesync/skills/agents-sync/references/permissions.md"
 PERM_GEN=".opencode/skills/agents-sync/references/permissions.md"
@@ -204,15 +209,18 @@ if want c7; then
     [ -n "$p" ] || continue
     case "$p" in
       "AGENTS.md"|"$RULES_SRC"|"$PERM_SRC"|"$PERM_GEN"|tests/*|"$FEATURE"/*|\
-      "$FEATURE2"/*|"$FEATURE3"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
+      "$FEATURE2"/*|"$FEATURE3"/*|"$FEATURE4"/*|scripts/*|.rulesync/commands/pipeline-boards-hourly.md|\
       .opencode/commands/pipeline-boards-hourly.md|\
       .rulesync/subagents/agent-board-coord.md|.opencode/agents/agent-board-coord.md|\
+      .rulesync/subagents/agent-coord.md|.opencode/agents/agent-coord.md|\
+      .rulesync/skills/pipeline-kickoff/SKILL.md|.opencode/skills/pipeline-kickoff/SKILL.md|\
+      .rulesync/skills/pipeline-role-coord/SKILL.md|.opencode/skills/pipeline-role-coord/SKILL.md|\
       .rulesync/commands/pipeline-boards.md|.opencode/commands/pipeline-boards.md|\
       .rulesync/skills/boards/*|.opencode/skills/boards/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to C04's in-scope files (base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 widenings; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

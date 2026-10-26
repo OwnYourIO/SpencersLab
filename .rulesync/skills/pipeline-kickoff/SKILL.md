@@ -31,6 +31,11 @@ Run this before resolving or creating a feature folder for a NEW ticket; skip al
 
 - **Worktree + branch**: `opencode` tool `worktree_create` with name `<slug>-<run tag>` (flat, no slashes).
 - **Session**: `session_rename` to the slug. The call returns YOUR OWN sessionID — keep it: the planner records it under `coord_session` in `STATE.json`, and `agent-fuser` uses it to hand fusion plans back to this session.
+- **In-work mark** — on the sessionID the rename returned, mark the session in-work in OpenChamber. Single authority for the coordinator work-state contract: `pipeline-role-coord` and `boards` cite this bullet, never restate it.
+  - Read-merge-write ONLY: `opencode api get /api/session/<sessionID>` → keep ALL current metadata (notably `openchamber.kind`) → set `metadata.openchamber.work = {state:"open", openedAt:<epoch-ms>, openedBy:"auto"}` (compute the epoch-ms inline in the command string — `$(date +%s%3N)` — no separate `date`/`jq` call is granted) → `opencode api patch /api/session/<sessionID> -d '{"metadata": <full merged object>}'`. PATCH replaces `metadata` whole — a partial write deletes the siblings (proven 2026-10-26) — so only the fully merged object may go back.
+  - Idempotent: skip the write when the read already shows `work.state == "open"` — chat-launched runs are auto-opened by their first message, so the mark is a no-op there; scheduled runs are the real target.
+  - Values are fixed to what OpenChamber accepts (its zod schema): `state open|done`; `openedBy auto|jev|user`, and the coord writes `auto`; `doneAt` is the ms timestamp on the done write; never write `suggestDoneAt` or `reviewOffer` (Jev-owned fields).
+  - Why: OpenChamber auto-opens chat-launched sessions on a sent message but EXCLUDES scheduled runs — this mark is what puts a coordinator session in the sidebar's In-work block. Purely UI: nothing in the pipeline reads it.
 - **Move in**: `session_move` the session to the worktree directory so every subagent of this run works there.
 
 ## Hand off to planning

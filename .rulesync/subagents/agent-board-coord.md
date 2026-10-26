@@ -55,6 +55,12 @@ opencode:
     - action: opencode
       resource: '*'
       effect: allow
+    - action: shell
+      resource: opencode api get /api/session*
+      effect: allow
+    - action: shell
+      resource: opencode api patch /api/session/*
+      effect: allow
     - action: subagent
       resource: '*'
       effect: deny

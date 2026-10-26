@@ -102,6 +102,9 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   EVERY surface is named from the full slug (D10): feature folder
   `2026-10-<cf-slug>`, worktree `<cf-slug>`, branch `<cf-slug>`, and
   `session_rename` to `<cf-slug>`.
+- **In-work mark** — after the `session_rename` returns the sessionID, mark
+  the session in-work per `pipeline-kickoff` (citation only — the contract,
+  its values and its commands live there, never here).
 - **No run tag** — card-driven runs retire the run tag entirely: STATE.json
   `kickoff` carries `card` (the id) + `slug` and omits/nulls `run_tag`.
 
