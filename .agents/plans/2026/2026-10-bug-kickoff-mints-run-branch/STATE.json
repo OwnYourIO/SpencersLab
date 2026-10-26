@@ -2,22 +2,25 @@
   "feature": "2026/2026-10-bug-kickoff-mints-run-branch",
   "plan_status": "approved",
   "approval_note": "USER APPROVED 2026-10-26 in the plan session (approval-as-planned): all Open-questions best guesses stand — Q1 script+scoped grant, Q2 branch==basename, Q3 no AGENTS.md delta, Q4 permissions.md update, Q5 cf-52-lands-first, Q6 resume clause, Q7 type=bug.",
-  "coord_session": null,
+  "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "coord_session_note": "Friction follow-up planned by a coordinator-launched plan session in the cf-52 worktree; no WeKan card. The coordinator records its own sessionID here at kickoff (pipeline-kickoff session_rename return) per pipeline-conventions.",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-10-26T16:40Z",
+  "updated_at": "2026-10-26T21:45Z",
   "kickoff": {
     "card": null,
     "slug": "bug-kickoff-mints-run-branch",
     "slug_note": "Proposed by planner (friction-driven ticket, no card minting). Plain agent-coord variant applies (not board-driven): run tag + final slug confirmed at kickoff Q&A; type=bug is the planner's best guess (OQ7).",
     "type": "bug",
     "run_tag": null,
-    "worktree": null,
-    "branch": null,
+    "worktree": "cf-52-feat-coord-session-inwork (landing-lane reuse; branch at 6fe2afb1b = origin/main + tests-edit-perms complete)",
+    "branch": "cf-52-feat-coord-session-inwork",
     "branch_note": "This ticket is the ticket that makes kickoff's branch field true from the first run after it lands; until then kickoff runs keep minting by hand.",
-    "models": { "plan": null, "code": null },
-    "local": null,
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
     "research_checklist": "not needed — fully repo-grounded (tool catalog, worktree/reflog evidence, suite anchors all read live in-session 2026-10-26)"
   },
   "provenance": {
@@ -45,7 +48,9 @@
     "C02": {
       "status": "pending",
       "wave": 2,
-      "depends_on": ["C01"],
+      "depends_on": [
+        "C01"
+      ],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
@@ -55,5 +60,6 @@
   "blocked": [],
   "deferred": [
     "execution prerequisite: cf-52 must land on main before C02 runs (its surface.sh i4 + c2 OR-arm are the re-pin starting point); landing is user-owned"
-  ]
+  ],
+  "execution_notes": "Base drift since planning (all re-verified live at run start): cf-52 + tests-edit-perms are LANDED — C02's 'cf-52 lands first' prerequisite is satisfied; the suites now also include tests/agent-perms/surface.sh (5th regression) with arm-A=081b57889/arm-B=HEAD discipline, the D4 agents-sync carve, and folder admits for all three bug-* tickets (this one included). The mints plan's older base refs (b0c975bf6/f11bfcb85/916044893) are historical; operational arms are 081b57889 and current HEAD. Test-phase note: C02's contract suite is designed-red until C02 dev lands the third allow — expected; C01-phase regressions must stay green at HEAD throughout."
 }
