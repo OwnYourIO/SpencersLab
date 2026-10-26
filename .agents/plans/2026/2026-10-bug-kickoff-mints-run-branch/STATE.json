@@ -5,8 +5,8 @@
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "coord_session_note": "Friction follow-up planned by a coordinator-launched plan session in the cf-52 worktree; no WeKan card. The coordinator records its own sessionID here at kickoff (pipeline-kickoff session_rename return) per pipeline-conventions.",
   "test_session": "ses_e85e70828ffebTQhy3U9Rc6Z0V",
-  "current_wave": 1,
-  "updated_at": "2026-10-26T22:40Z",
+  "current_wave": 2,
+  "updated_at": "2026-10-26T23:00Z",
   "kickoff": {
     "card": null,
     "slug": "bug-kickoff-mints-run-branch",
@@ -37,12 +37,12 @@
   ],
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "round": "test-1",
@@ -53,6 +53,11 @@
           "round": "dev-1",
           "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [scripts/kickoff-mint-branch.sh (new), + agent-test's 5 deliverables included unmodified in the commit]\ncommands_run: [bash -n => pass; kickoff-branch/script.sh 8 ok ALL PASS (t1 shellcheck skip per convention); kickoff-branch/surface.sh designed-red posture UNCHANGED (m1 flipped green with script; m2/m3/m4 red naming C02 artifacts; m5/m6 hold); agent-perms 10, coord-inwork 6, gate 21, rulesync-surface 18, agents-md 8 all pass; rulesync --check clean + x2 no-op; aislop 100/0/36]\ncommit: 5a335aff2 (local only)\ndeviations: (1) main-vs-linked detection via git-dir/common-dir equality, not porcelain string match (suite leaves impl unpinned; avoids path-quoting hazards). (2) branch regex leading class [A-Za-z0-9._] without dash — C01.md's literal class contradicted its own no-leading-option intent + t6 pin; implemented intent. (3) mode 755 via pre-push local amend to match gate.sh precedent.\nfriction: none\nopen_questions: none\nnext_suggested: agent-review C01; then C02 (m2/m3/m4 flip duty)",
           "dev_session": "ses_e85bc97beffe4Al7dlB1FxCXao"
+        },
+        {
+          "round": "review-1",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [chunks/C01.md review notes]\ncommands_run: [script.sh 8 ok; surface.sh posture exact (m1 green, m2/m3/m4 designed-red naming C02, m5/m6 HOLD); five legacy suites 10/6/21/18/8 pass @HEAD; generate --check pass; aislop 0/0; scratch negative controls (main-checkout mint, cross-worktree checked-out -> EXISTS, -lead/--help -> REJECT) pass; amend diff mode-only]\ndeviations: none\nfriction: none\nopen_questions: coord to record landed wordings in DECISIONS (regex leading class without dash per task's own parenthetical + t6; main-vs-linked via git-dir/common-dir equality per suite's declared implementation freedom) so C02 pins reference truth not stale literals.\nnext_suggested: C01 done -> launch C02 dev (m2/m3/m4 flip duty).\nVERDICT: APPROVED (round 1; two non-blocking nits recorded)",
+          "verdict": "APPROVED"
         }
       ],
       "dev_session": "ses_e85bc97beffe4Al7dlB1FxCXao"
