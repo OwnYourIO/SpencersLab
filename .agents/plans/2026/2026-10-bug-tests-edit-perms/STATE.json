@@ -5,7 +5,7 @@
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e8635bb4cffefHTWibtg4ZfsE6",
   "current_wave": 1,
-  "updated_at": "2026-10-26T20:10Z",
+  "updated_at": "2026-10-26T20:55Z",
   "kickoff": {
     "card": null,
     "slug": "bug-tests-edit-perms",
@@ -41,8 +41,8 @@
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 2,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "round": "test-1",
@@ -61,6 +61,11 @@
           "round": "dev-2",
           "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.rulesync/subagents/agent-dev.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/skills/agents-sync/references/pipeline-overview.md, .rulesync/skills/pipeline-role-test/SKILL.md, 4 regenerated mirrors (.opencode counterparts), tests/agent-perms/surface.sh + 4 amended suites (agent-test-authored, committed verbatim)]\ncommands_run: [rulesync generate x2 no-op => pass; --check => pass; agent-perms 10ok both arms pre+post; coord-inwork 6ok both; gate 21ok both; rulesync-surface 18ok both; agents-md 8ok both; bash -n x5 => pass; aislop 0/0 36 files => pass; commit 16844785b; git status clean]\ndeviations: none\nfriction: none — D5 wording satisfied every A3/A4 needle first regeneration\nopen_questions: none\nnext_suggested: agent-review C01 (five suites both arms first, AC8 aislop review-owned)\ncommit: 16844785b",
           "dev_session": "ses_e8625aee4ffeGhueCzBsWPzOh8"
+        },
+        {
+          "round": "review-1",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [chunks/C01.md review notes]\ncommands_run: [five suites 10/6/21/18/8 ok at BOTH arms (081b57889 + HEAD) — reviewer-run; generate --check clean, generate x2 no-op; aislop 0/0/36; atpos/carve/references cmp pass; ls-tree counts 26 at all pre-fix refs; /tmp negative controls: fabricated extra row + off-anchor drift rejected by splice.py/t17 at both arms + atpos at line level; t14/c8/c7 green with dirty C01.md at both bases]\ndeviations: none\nfriction: none\nopen_questions: minor non-gating — drift-incident '27 tracked files when discovered' is 26 at every pre-fix ref (27 only post-ticket); coord to route one-word fix or accept.\nnext_suggested: record APPROVED, commit review notes, polish count, final whole-plan review.\nVERDICT: APPROVED (round 1; minor + two nits recorded in C01.md review notes)",
+          "verdict": "APPROVED"
         }
       ],
       "scope_note": "amended 2026-10-26, re-applied same day (user fold-in D9-D12): + T4 sibling-folder admits (t14/c8/c7 also admit 2026-10-bug-kickoff-mints-run-branch + 2026-10-bug-session-origin-no-line), + T10 i4/t17 OR-form re-pin with both-operational-bases discipline (081b57889 arm A / default HEAD arm B), + AC9/A9/A10; AC7/Commands bases re-targeted to the pushed line; A8 count fixed 6→5; T7 cites re-verified; size stays M, single chunk retained.",
