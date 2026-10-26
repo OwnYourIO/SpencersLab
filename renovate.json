@@ -241,6 +241,16 @@
         "ghcr.io/containers/kubernetes-mcp-server"
       ],
       "allowedVersions": ">= v0.0.68"
+    },
+    {
+      "description": "Scope the llama-swap image pin (extracted by the built-in helm-values manager from the repository:/tag: pair in charts/llama-swap/values.yaml) to llama-swap's release-versioned unified-vulkan-<N> tag family. Under the manager's default docker versioning the tag never parses as semver, so no update was ever proposed (the unified-vulkan-262 in-place rebuild of 2026-10-25, which crash-looped the gpu box, passed through unnoticed). A non-slash-wrapped regex would be an invalid semver range, hence versioning (not allowedVersions).",
+      "matchPackageNames": [
+        "ghcr.io/mostlygeek/llama-swap"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "versioning": "regex:unified-vulkan-(?<major>\\d+)$"
     }
   ]
 }
