@@ -34,7 +34,11 @@
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF=<ref> re-points the frontmatter
-# byte-pin (default bab7e7cc3, the port commit).
+# byte-pin. Default 916044893 (main's tip when cf-52 landed): the pin must
+# anchor on the tree the two-allow delta was applied TO, not the ticket's
+# branch point — main moved the block independently (Code Mode execute
+# allow), so a stale anchor reads sanctioned platform drift as a contract
+# violation. The original anchor was bab7e7cc3 (the port commit).
 #
 # Usage:
 #   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c17
@@ -43,7 +47,7 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 BASE="${CHUNK_BASE:-HEAD}"
-PORT_REF="${PORT_REF:-bab7e7cc3}"
+PORT_REF="${PORT_REF:-916044893}"
 FEATURE=".agents/plans/2026/2026-10-feat-board-coord-intake"
 # This file is reused as a regression gate by the later cf-50 gate ticket,
 # which shares the branch; its scope list must admit that ticket's plan
