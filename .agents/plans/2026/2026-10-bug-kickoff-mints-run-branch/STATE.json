@@ -6,7 +6,7 @@
   "coord_session_note": "Friction follow-up planned by a coordinator-launched plan session in the cf-52 worktree; no WeKan card. The coordinator records its own sessionID here at kickoff (pipeline-kickoff session_rename return) per pipeline-conventions.",
   "test_session": "ses_e85e70828ffebTQhy3U9Rc6Z0V",
   "current_wave": 1,
-  "updated_at": "2026-10-26T22:10Z",
+  "updated_at": "2026-10-26T22:40Z",
   "kickoff": {
     "card": null,
     "slug": "bug-kickoff-mints-run-branch",
@@ -40,7 +40,7 @@
       "status": "pending",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
@@ -48,8 +48,14 @@
           "round": "test-1",
           "result": "RESULT\nstatus: DONE\nchunk: C01 (authored C01+C02 test lists in one session)\nfiles_changed: [tests/kickoff-branch/script.sh (new 311L, t1..t8 scratch-repo behavior), tests/kickoff-branch/surface.sh (new 587L, m1..m6 C02 text-pins incl SHELL3 arm-aware twins + negative controls), tests/coord-inwork/surface.sh + tests/agent-board-coord/{gate.sh,rulesync-surface.sh} (sanctioned-forms ladder re-pins: green through C01 at both arms, three-allow duty lives in m4 designed-red)]\ncommands_run: [script.sh red naming missing script; surface.sh red m2/m3/m4 naming missing contracts, m5/m6 HOLD-green; 5 legacy suites green BOTH arms (081b57889 + HEAD 74e4589d9); bash -n all touched; SIM: 7 suites x 2 arms x uncommitted+committed geometries = 14/14 green, drift controls correct (two-allow regression rejected at mint-carrying base, accepted pre-mint); sim removed clean; aislop 0/0]\ndeviations: (1) gate.sh SUITE re-pinned (t17/t14) contrary to plan line 'gate.sh must stay green untouched' — unavoidable or C02 landing turns it red; gate SCRIPT stays byte-frozen (verified). (2) t14 also needed scripts/* admission for C01 itself (collision map predated the suite). (3) ladder-style re-pins per arm-scoping directive; absolute three-allow red duty in m4. (4) C02.md's c8/c7 FEATURE4 admits already satisfied by tests-edit-perms fold-in — no edit, sim-verified. (5) agent-perms zero edits by design (A10 extracts shipped mechanisms — transitive coverage verified). (6) m3 matrix-row pin accepts the established 'same as coord' idiom.\nfriction: (1) write tool denied /tmp/opencode staging paths (tests/** grant native but sim staging outside repo) — resolved via shell heredocs. (2) two latent designed-red satisfiability bugs found only in SIM; lesson: always run red suites against a green-side fixture (worth a pipeline-role-test note).\nopen_questions: plan Commands 'gate.sh must stay green untouched' wording now literally inaccurate post-re-pin — coord to amend plan text (done: see DECISIONS D8).\nnext_suggested: record test_session + relaunch C01 dev for scripts/kickoff-mint-branch.sh; review runs script.sh t1..t8 + five legacy suites at both arms.",
           "session": "ses_e85e70828ffebTQhy3U9Rc6Z0V"
+        },
+        {
+          "round": "dev-1",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [scripts/kickoff-mint-branch.sh (new), + agent-test's 5 deliverables included unmodified in the commit]\ncommands_run: [bash -n => pass; kickoff-branch/script.sh 8 ok ALL PASS (t1 shellcheck skip per convention); kickoff-branch/surface.sh designed-red posture UNCHANGED (m1 flipped green with script; m2/m3/m4 red naming C02 artifacts; m5/m6 hold); agent-perms 10, coord-inwork 6, gate 21, rulesync-surface 18, agents-md 8 all pass; rulesync --check clean + x2 no-op; aislop 100/0/36]\ncommit: 5a335aff2 (local only)\ndeviations: (1) main-vs-linked detection via git-dir/common-dir equality, not porcelain string match (suite leaves impl unpinned; avoids path-quoting hazards). (2) branch regex leading class [A-Za-z0-9._] without dash — C01.md's literal class contradicted its own no-leading-option intent + t6 pin; implemented intent. (3) mode 755 via pre-push local amend to match gate.sh precedent.\nfriction: none\nopen_questions: none\nnext_suggested: agent-review C01; then C02 (m2/m3/m4 flip duty)",
+          "dev_session": "ses_e85bc97beffe4Al7dlB1FxCXao"
         }
-      ]
+      ],
+      "dev_session": "ses_e85bc97beffe4Al7dlB1FxCXao"
     },
     "C02": {
       "status": "pending",
