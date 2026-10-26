@@ -891,6 +891,24 @@ structure only (coord scope letter rule).
   `${moe}`/`${fn-moe}` token set. Function name kept for cross-ticket grep
   continuity; docstring carries the provenance. `C04_FLASHNEXT_DRAFT` stays
   as the gate-2 sidecar ref.
+* 2026-10-26 GATE-2 FOLLOW-ON to the entry above (operator GO per DECISIONS;
+  chart commit eb0a0cf92 — the flip this entry anticipated): both absence
+  contracts re-expressed back to the WIRED shape, read against the exact
+  re-added render. `test_c04_1_flashnext_mtp_draft_wired` now pins `-hfd`
+  == `C04_FLASHNEXT_DRAFT` + `--spec-type draft-mtp` +
+  `--spec-draft-n-max 2` on q3/q4/q5/q6, spec ALONE on orca-q6 (embedded-MTP
+  expectation kept; what resolves at runtime stays deliberately unasserted);
+  the expert-offload clause is unchanged.
+  `test_flashnext_regime.py::test_c03_ac1_first_cut_has_no_mtp_draft_or_spec`
+  becomes `test_c04_gate2_mtp_draft_spec_readded` (same 5-way parametrize,
+  same expanded-stream read), adding the `--spec-draft-p-min` ABSENCE pin —
+  gate 2 restored the exact lines C03 removed (EVIDENCE.md §13.7), which
+  carry no p-min. Renamed rather than kept under a wrong-label name; the
+  first-cut window stays documented here and in §8.5, and git history keeps
+  the old name greppable. Blast-radius contracts are untouched — the gate-2
+  diff lies inside `FLASHNEXT_FAMILY_IDS` and the `, MTP` display marker
+  returns to the §8.4-exempted shape (both verified green by dev's render
+  audit at eb0a0cf92).
 
 ### 8.3 Baseline capture (the "approved pre-chunk table", plan Commands)
 
@@ -958,6 +976,19 @@ Handoff state: **16 failed / 142 passed / 8 skipped** (166 collected).
   tests skip loudly ("helm binary not on PATH") and the YAML-only enablement
   test still RUNS (green) — a clearly-reported skip, never a false pass.
 
+STEADY STATE after the gate-2 contract re-expression (§8.2 follow-on),
+measured 2026-10-26 with helm v3.16.4 on PATH (/tmp/opencode/bin,
+app-template 5.0.1 vendored): **173 passed / 0 failed / 2 skipped**; the two
+skips are the opt-in network evidence gates (RUN_FLAG_AUDIT, RUN_HF_CHECK —
+reasons shown by -rs). Armed re-runs both pass: RUN_FLAG_AUDIT=1 => 174/0/1,
+RUN_HF_CHECK=1 => liveness 1 passed (the re-added -hfd sidecar ref resolves
+live). History preserved: the 16 write-time REDs went green with C03 dev
+(5ea66f17d: 168/0/7), then the gate-2 re-add eb0a0cf92 flipped the 5×
+first-cut absence + 1× roster re-expression red BY DESIGN (6 failed / 167
+passed / 2 skipped, dev stage-2 run) — the §8.2 follow-on re-greened them
+against the wired shape. The 5 C04 post-fix validators now run HARD (the
+EVIDENCE.md §13 section they gate on has landed).
+
 ### 8.6 Trace: acceptance criteria -> tests (this ticket)
 
 * C01-1 -> evidence `ac1_buffer_split_fingerprint_or_absent_statement`
@@ -969,8 +1000,9 @@ Handoff state: **16 failed / 142 passed / 8 skipped** (166 collected).
 * C01-7 -> evidence `ac7_sources_timestamps_and_user_run_attribution`
 * C01 tasks 17-19 -> evidence `task_timeline_and_comparison_and_host_snapshot`
 * C03-1 -> regime `ac1_load_mode_mmap_and_never_none`[5], `ac1_fit_off_present`[5],
-  `ac1_first_cut_has_no_mtp_draft_or_spec`[5], `ac1_ngl99_and_expert_offload_leg`[5],
-  `ac1_q3_rung_specifics` (+ roster re-expression §8.2)
+  `ac1_first_cut_has_no_mtp_draft_or_spec`[5] (superseded post-gate-2 by
+  `test_c04_gate2_mtp_draft_spec_readded`[5], §8.2), `ac1_ngl99_and_expert_offload_leg`[5],
+  `ac1_q3_rung_specifics` (+ roster re-expression §8.2, gate-2 follow-on)
 * C03-2/3 -> blast `ac2_moe_macro_byte_frozen`, `ac2_non_flashnext_models_identical_gpu_ai`,
   `ac2_matrix_hooks_scalars_identical`, `ac3_gpu_render_preserved`,
   `ac3_gpu_flashnext_echoes_stay_macro_free`

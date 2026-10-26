@@ -26,10 +26,13 @@ _ok, _reason = L.helm_ready()
 FN = L.FLASHNEXT_FAMILY_IDS
 EXPERT_OT = r"\.ffn_.*_exps\.=CPU"
 
-# MTP/spec surface that the first cut must NOT carry (C03 "MTP off for the
-# first load"; DECISIONS 2026-10-26 "two-gate path"). The draft sidecar arrives
-# via -hfd, the spec block renders --spec-type/--spec-draft-* literals.
-_MTP_TOKENS = ("-hfd", "--spec-type", "draft-mtp", "--spec-draft-n-max")
+# Gate-2 MTP shape (the first-cut absence window closed through C04's gate 2:
+# hc-layout verdict EVIDENCE.md §5 + journal-clean load §13.2-4 + operator
+# DECISIONS GO; chart commit eb0a0cf92). The draft sidecar arrives via -hfd,
+# the spec block renders --spec-type/--spec-draft-n-max literals with no
+# p-min; orca-q6 carries the spec ALONE — embedded MTP is the qwen38-orca
+# publisher convention, see the probe-on-miss note in values.yaml.
+FN_ORCA = "qwen3.8-flash-next-orca-q6"
 
 
 def _skip_without_helm() -> None:
@@ -93,13 +96,36 @@ def test_c03_ac1_fit_off_present(mid):
 
 
 @pytest.mark.parametrize("mid", FN)
-def test_c03_ac1_first_cut_has_no_mtp_draft_or_spec(mid):
-    toks = set(L.cmd_tokens(_expanded("gpu-ai", mid)))
-    found = sorted(t for t in _MTP_TOKENS if t in toks)
-    assert not found, (
-        f"{mid}: MTP surface {found} present — first cut renders NO draft/spec "
-        "(C03 AC1); re-add is C04's gate 2, layout-gated on C01's hc-layout verdict"
+def test_c04_gate2_mtp_draft_spec_readded(mid):
+    """Replaces test_c03_ac1_first_cut_has_no_mtp_draft_or_spec (TEST_SPEC
+    §8.2 gate-2 ledger): C03's first cut rendered no draft/spec, and C04's
+    gate 2 re-added them (EVIDENCE.md §13.7). Contract is the re-added shape
+    exactly as landed in eb0a0cf92: draft-mtp spec with draft_n_max 2 on all
+    five rungs, and the unsloth sidecar on -hfd for the four unsloth rungs;
+    orca-q6 stays spec-only (embedded MTP, probe-on-miss)."""
+    cmd = _expanded("gpu-ai", mid)
+    toks = set(L.cmd_tokens(cmd))
+    st = _flag_values(cmd, "--spec-type")
+    assert st and st[-1] == "draft-mtp", (
+        f"{mid}: --spec-type is {st[-1] if st else None!r}, gate-2 contract is 'draft-mtp'"
     )
+    nmax = _flag_values(cmd, "--spec-draft-n-max")
+    assert nmax and nmax[-1] == "2", (
+        f"{mid}: --spec-draft-n-max is {nmax[-1] if nmax else None!r}, gate-2 spec block carries draft_n_max: 2"
+    )
+    assert "--spec-draft-p-min" not in toks, (
+        f"{mid}: --spec-draft-p-min rendered — gate-2 re-add restored the exact removed lines, which carry no p-min (EVIDENCE.md §13.7)"
+    )
+    hfd = _flag_values(cmd, "-hfd")
+    if mid == FN_ORCA:
+        assert not hfd, (
+            f"{mid}: -hfd {hfd[-1] if hfd else None!r} rendered — orca rides embedded MTP; wiring a "
+            "standalone sidecar is a contract change, re-home it through the test session"
+        )
+    else:
+        assert hfd and hfd[-1] == L.C04_FLASHNEXT_DRAFT, (
+            f"{mid}: -hfd is {hfd[-1] if hfd else None!r}, gate-2 sidecar ref is {L.C04_FLASHNEXT_DRAFT!r}"
+        )
 
 
 @pytest.mark.parametrize("mid", FN)

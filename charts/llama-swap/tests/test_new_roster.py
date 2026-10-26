@@ -99,24 +99,36 @@ def test_c04_1_exact_hf_ref_per_approved_id(mid, ref):
 
 
 def test_c04_1_flashnext_mtp_draft_wired():
-    """ACCEPTANCE C03-1 (RE-EXPRESSED 2026-10-26 — TEST_SPEC §8): the old
-    contract — in-repo MTP draft "unconditional for the unsloth ladder" — was
-    superseded by this ticket's DECISIONS 2026-10-26 "MTP is a two-gate path:
-    off for the first load" (a pre-#28901 sidecar dies on b11810 with
-    check_tensor_dims 'output_hc_norm.weight' not found [54][55][38]). First
-    cut: the whole flash-next family renders with NO -hfd draft and NO spec
-    flags; re-add is C04 gate 2, layout-gated on C01's hc-layout verdict. The
-    expert-offload leg stays required (AC1 disjunction, checked on the
-    EXPANDED cmd so any sanctioned macro name passes)."""
+    """ACCEPTANCE C03-1 (GATE-2 RE-EXPRESSION 2026-10-26 — TEST_SPEC §8.2):
+    the two-gate path ran its full course — first cut MTP-off (DECISIONS
+    2026-10-26), no-MTP load proved journal-clean (EVIDENCE.md §13.2-4), and
+    gate 2 re-added the sidecar draft at family level (chart commit
+    eb0a0cf92). The name again describes the contract, as it did on the prior
+    ticket: -hfd pinned to C04_FLASHNEXT_DRAFT with the draft-mtp spec block
+    on q3/q4/q5/q6; orca-q6 carries the spec alone (embedded MTP —
+    publisher convention, probe-on-miss per values.yaml; deliberately NOT
+    asserting which resolves at runtime). The expert-offload leg stays
+    required (AC1 disjunction, checked on the EXPANDED cmd so any sanctioned
+    macro name passes)."""
     cfg = L.rendered_config("gpu-ai")
     m = L.all_models_of(cfg)
     for mid in FLASHNEXT + [FLASHNEXT_ORCA]:
-        toks = set(L.cmd_tokens(m[mid]["cmd"]))
-        assert "-hfd" not in toks, (
-            f"{mid}: renders the MTP draft — C03's first cut is MTP-off"
+        cmd = m[mid]["cmd"]
+        hfd = L.cmd_flag_value(cmd, "-hfd")
+        if mid == FLASHNEXT_ORCA:
+            assert hfd is None, (
+                f"{mid}: renders a standalone -hfd draft — orca's gate-2 shape is embedded-MTP + spec only; "
+                "wiring the sidecar changes the contract (re-home via the test session)"
+            )
+        else:
+            assert hfd == L.C04_FLASHNEXT_DRAFT, (
+                f"{mid}: -hfd is {hfd!r}, gate-2 sidecar ref is {L.C04_FLASHNEXT_DRAFT!r}"
+            )
+        assert L.cmd_flag_value(cmd, "--spec-type") == "draft-mtp", (
+            f"{mid}: spec-type is {L.cmd_flag_value(cmd, '--spec-type')!r}, gate-2 contract is 'draft-mtp'"
         )
-        assert "--spec-type" not in toks and "--spec-draft-n-max" not in toks, (
-            f"{mid}: draft-MTP spec flags present — forbidden until C04's gate 2 passes"
+        assert L.cmd_flag_value(cmd, "--spec-draft-n-max") == "2", (
+            f"{mid}: draft_n_max is {L.cmd_flag_value(cmd, '--spec-draft-n-max')!r}, gate-2 spec block carries 2"
         )
         etoks = set(L.cmd_tokens(L.effective_cmd(cfg, mid)).elements())
         assert etoks & {"-ot", "--n-cpu-moe"}, (
