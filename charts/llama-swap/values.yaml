@@ -726,9 +726,12 @@ config:
     # that mis-account GTT-backed buffers (RESEARCH §4.2(c)).
     # -ot regex effectiveness re-verified at name level by C01; shared
     # experts (_shexp) stay GPU-resident as intended.
-    # MTP: off for the first cut (C04 gate 2 re-adds draft+spec only after
-    # a passing load; the unsloth sidecar passed C01's post-#28901
-    # hc-layout check, EVIDENCE.md §5).
+    # MTP: re-added through C04 gate 2 (DECISIONS two-gate path) only after
+    # the no-MTP mmap regime loads proved journal-clean live and the sidecar
+    # passed C01's post-#28901 hc-layout check (EVIDENCE.md §5, §13.2-4).
+    # The draft-mtp runtime DeviceLost class (#27306) stays under watch at
+    # the gate-2 consented load; the long-prefill class measured clean
+    # without it (EVIDENCE.md §13.6).
     qwen3.8-flash-next:
       enabled: false
       hfRepo: unsloth/Qwen3.8-Flash-Next-GGUF
@@ -736,6 +739,8 @@ config:
       dispName: Qwen 3.8 Flash Next
       descBase: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10)
       use: [threads, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+      draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+      spec: {'type': 'draft-mtp', 'draft_n_max': 2}
       flags: |
         -ngl 99
         -ot "\.ffn_.*_exps\.=CPU"
@@ -768,11 +773,11 @@ config:
     # orcarouter Uncensored Flash Next (gated:auto repo - downloads need
     # HF_TOKEN, which only gpu-ai injects). C03: rides the unsloth family's
     # mmap regime (same literal placement leg + --fit off, see that block's
-    # header for why a literal); the rung-level draft-MTP spec is out for
-    # the first cut. Gate-2 re-add path (C04): the header is not
-    # anonymously inspectable (401 GatedRepo, evidence in the C04 record),
-    # so probe embedded MTP first (the proven qwen38-orca publisher
-    # convention), else the standalone sidecar
+    # header for why a literal). Gate-2 (C04) restored the rung-level spec
+    # per the two-gate path; the header is still not anonymously inspectable
+    # (401 GatedRepo, evidence in the C04 record), so on a load that reports
+    # no MTP tensors: probe embedded first (the proven qwen38-orca publisher
+    # convention), else wire the standalone sidecar
     # draft: orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:MTP-draft.gguf
     # (file verified present live - NOTE the UPPERCASE name: llama.cpp's
     # mtp- sidecar match is case-sensitive, TEST_SPEC 7(F)).
@@ -787,8 +792,9 @@ config:
       quants:
         q6:
           hf: "orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:Q6_K"
+          spec: {type: draft-mtp, draft_n_max: 2}
           use: [threads, ctx-256k, flash-and-q8, q38-sampling, q38-think]
-          description: "orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights; experts on CPU (mmap placement), 256k ctx; over the ~125 GiB node budget like flash-next q6 - SOLO, never preloaded, may OOM; first cut loads WITHOUT MTP (C04 gate-2 re-add, see the family note)"
+          description: "orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights; experts on CPU (mmap placement), 256k ctx; over the ~125 GiB node budget like flash-next q6 - SOLO, never preloaded, may OOM; C04 gate-2 spec re-added, embedded-MTP expected per the qwen38-orca pattern (miss-path note above)"
           capabilities: {in: [text, image], out: [text]}
           ttl: 300
 
