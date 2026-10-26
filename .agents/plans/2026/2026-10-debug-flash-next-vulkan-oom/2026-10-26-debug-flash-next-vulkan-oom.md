@@ -1,6 +1,7 @@
 # PLAN: gpu-ai flash-next Vulkan device-lost — fix the GTT-pinned load regime (branch A)
 feature: 2026/2026-10-debug-flash-next-vulkan-oom
 run-tag: openrouter-qwen3-8-flash
+status: complete (2026-10-26 — FINAL whole-plan review APPROVED; see "Final review" below and STATE.json `plan_status`)
 revised: 2026-10-26 (post-research reintegration pass — RESEARCH.md folded in; supersedes the initial placeholder plan of the same file)
 
 ## Goal
@@ -58,3 +59,13 @@ Restore `qwen3.8-flash-next-q3` (and the rest of the flash-next ladder) to a loa
 - Post-load cliffs are a *different class* (ring-timeout DeviceLost at long prefill [36][20][52], deprecated MTP sidecar [54][55]) — C03/C04 pre-empt via MTP-off-first, ub/nodes-per-submit mitigations; they don't block the load fix.
 - Golden configs in `charts/llama-swap/tests/golden/` predate the flash-next catalog; the test session re-captures as part of C02/C03 contracts.
 - Landing is user-owned (PR only); chart `version:` untouched (release.yaml bumps), image pins untouched (renovate-owned).
+
+## Final review (2026-10-26)
+
+**Verdict: APPROVED — plan complete on the branch** (zero blockers/majors/minors; the full FINAL REVIEW block is in `chunks/C04.md` — read it, this section is the ledger summary, not a copy).
+
+- Fresh tallies (whole-plan re-run, merge-base `60078f12c`…HEAD): `pytest charts/llama-swap/tests -q -rs` => **173/0/2** (both skips loud + named); `RUN_FLAG_AUDIT=1` => **174/0/1** (b11810 arg.cpp genuinely fetched); `RUN_HF_CHECK=1` => gate-2 `-hfd` sidecar **live-resolves**; chart + both-umbrella lint/template => rc=0 (pre-existing OVERRIDE_VIA_APPSET warnings only); `aislop ci --changes` => **0 errors / 0 warnings**.
+- Joint C03+C04 final render (gpu-ai): all **5 flash-next rungs = `--load-mode mmap` + `--fit off` + `--spec-type draft-mtp` + `--spec-draft-n-max 2`** (orca-q6 spec-only, no `-hfd`); `${moe}` byte-frozen; gpu render cmd-unchanged (only the §8.4-exempted `, MTP` display marker); zero non-FN load-mode flips.
+- Goal met and proven live: the mmap regime loads and serves flash-next-q3 on gpu-ai (EVIDENCE §13.2–6); AC1 carries the accepted substitute proof chain (C04 review minor-1 revision).
+
+**Remaining chain — fully user-owned, fenced by repo law (no agent-executable work hidden behind it):** open/merge the ticket branch PR → ArgoCD syncs gpu-ai → **second consented MTP-enabled load per EVIDENCE §13.7** (one-attempt freeze protocol, journal watch, trio eviction accepted) → **q4 testable-next decision per EVIDENCE §13.5**. Open FRICTION items carry to the post-completion friction round (coord).
