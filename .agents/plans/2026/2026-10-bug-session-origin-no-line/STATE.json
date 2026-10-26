@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-bug-session-origin-no-line",
   "plan_status": "approved",
-  "coord_session": null,
+  "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-10-26",
+  "updated_at": "2026-10-27T00:30Z",
   "approval_note": "USER-APPROVED 2026-10-26 in the batched round (\"Approve both\") WITH the OQ1 override to the LIVE-DERIVE FALLBACK (script + scoped grants); OQ2/OQ3/OQ5/OQ6/OQ7 per best guesses; OQ4 answered in-session (audit: cf-52's probe ran via the coord's interactive shell tool pre-surface-change — D11). Rework recorded 2026-10-26 by the plan session per these answers; D10 supersedes D3's resolution leg. Approval came from the user's explicit batched answer, not planner judgment.",
   "plan_handoffs": [
     {
@@ -24,10 +24,14 @@
     "type": "bug",
     "run_tag": null,
     "origin": "FOLLOW-UP — coordinator-driven friction follow-up from 2026/2026-10-cf-52-feat-coord-session-inwork FRICTION.md line 8 (coord(kickoff): manual `/pipeline-boards`-style launch carried no `Session origin:` line; SESSION_URL_BASE undefined by the copy-verbatim rule; coord improvised a live derivation). No WeKan card.",
-    "worktree": "null — coord mints at launch; base cf-52 branch HEAD (b0c975bf6) per OQ7; C02 additionally gated on 2026-10-bug-kickoff-mints-run-branch C02 landing on the stacked base (D14 stack gate)",
-    "models": null,
-    "local": null,
-    "research_checklist": "agent decides — planner judgment (D9): no agent-research round. Fully decidable from live repo artifacts, on-card board reads (dev-boards get_card/list_comments 2026-10-26) and the cf-50/cf-52 decision logs."
+    "worktree": "cf-52-feat-coord-session-inwork (landing-lane reuse; branch 8 ahead of origin/main=74e4589d9 at run start)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "research_checklist": "agent decides — planner judgment (D9): no agent-research round. Fully decidable from live repo artifacts, on-card board reads (dev-boards get_card/list_comments 2026-10-26) and the cf-50/cf-52 decision logs.",
+    "branch": "cf-52-feat-coord-session-inwork"
   },
   "chunks": {
     "C01": {
@@ -42,7 +46,9 @@
     "C02": {
       "status": "pending",
       "wave": 2,
-      "depends_on": ["C01"],
+      "depends_on": [
+        "C01"
+      ],
       "stack_gate": "C02 dev starts ONLY after 2026-10-bug-kickoff-mints-run-branch C02 (third coord shell allow + exactly-three re-pins of i4/c2/t17 + t12/i5 agents-sync carve) is landed on this base — the four-way re-pins target the post-sibling state (D14); on an un-landed sibling report BLOCKED-by-stack, never re-pin onto the two-allow reality",
       "dev_rounds": 0,
       "review_rounds": 0,
@@ -56,5 +62,6 @@
     "cf-52 FRICTION line 10 (dev-boards MCP vanished post-restart; writes via admin-global-wekan) — separate concern, tracked there",
     "agent-body 'never a raw id' summary tension (OQ5, user-confirmed defer) — body disclaims restatement; skill is the authority",
     "NQ1 grant-glob shape and NQ3 UNRESOLVED-slot wording carry best guesses (bash scripts/session-origin.sh* / raw-id-only slots with reasons in RESULT+session_origin) — surface in C02 review only if the whole-string matcher disagrees"
-  ]
+  ],
+  "execution_notes": "Stack reality at run start (supersedes planning-era arithmetic): cf-52 + tests-edit-perms LANDED on origin/main; kickoff-mints LANDED on lane (origin/main+8) — the coord pair carries THREE scoped shell allows and i4/c2/t17/t14 ladders are at their three-allow forms. C02 duties: (1) FOURTH scoped allow bash scripts/session-origin.sh* — the exactly-three duty in tests/kickoff-branch/surface.sh m4 MUST be extended to exactly-four by this ticket's test phase (D14 handoff note); (2) stale +12/-0 vs f11bfcb85 line-growth assumptions re-derived against the landed ladder forms; (3) USER FOLD-IN (2026-10-27 batched): the cf-52 data-envelope friction line — pipeline-kickoff's read-merge-write recipe must state the {'data':...} response envelope explicitly (unwrap before reading metadata; re-verify via the list endpoint or .data) so the idempotent-skip and sibling-preserving merge cannot silently read nothing and wipe openchamber.kind on PATCH-whole-replace; rides in C02's kickoff-pair text duty, i1 windows must stay green (re-pin only if a window genuinely moves)."
 }
