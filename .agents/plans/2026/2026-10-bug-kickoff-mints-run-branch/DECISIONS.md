@@ -21,3 +21,4 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 
 - 2026-10-26 plan: cf-52 FRICTION line 9 (agent-test `tests/**` allow) — this ticket's test session may hit it; workaround precedent documented in cf-52 (parent-passed grants). Not folded in.
 - 2026-10-26 plan: active-feature-folder glob for the c7/c8 allow-lists (cf-50 open line) — separate machinery ticket.
+- 2026-10-26 coord: **D8 test-1 adjudications.** Accepted all six deviations (each evidence-backed; the gate-SUITE re-pin contradicts only the plan's own wording, not its freeze intent — the gate SCRIPT remains byte-frozen, verified by i5). Plan Commands line amended in place (below) to read: gate.sh suite re-pinned t17/t14 sanctioned-forms ladder (green through C01, three-allow duty enforced by kickoff-branch surface.sh m4); gate SCRIPT byte-frozen. Test-1 friction (2) accepted as a pipeline-role-test lesson for the friction queue.
