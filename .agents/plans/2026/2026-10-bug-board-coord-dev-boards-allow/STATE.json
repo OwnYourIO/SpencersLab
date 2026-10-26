@@ -1,0 +1,27 @@
+{
+  "feature": "2026/2026-10-bug-board-coord-dev-boards-allow",
+  "plan_status": "draft",
+  "coord_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-26",
+  "origin": "cf-70 run FRICTION item 1 (agent-board-coord dev-boards MCP not registered); planned standalone by agent-plan 2026-10-26, no board card",
+  "baseline": "main 74e4589d9; rulesync generate --check pass; agent-perms + coord-inwork suites pass; rulesync-surface c8 / agents-md c7 red only on dirty main checkout (cf-49 in-flight edits) — run from clean worktree",
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "AC7 live proof: next agent-board-coord launch catalog carries dev-boards tools (human/coord)",
+    "cf-70 FRICTION item 1 open->fixed write-back rides on AC7 (cf-70's coord, not this ticket)",
+    "sibling ticket for cf-70 FRICTION item 2 (opencode/shell grants on coord variants)"
+  ]
+}

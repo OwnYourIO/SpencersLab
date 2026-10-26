@@ -101,9 +101,7 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   `cf-<cardNumber>-<type>-<desc>` (`cardNumber` comes from `get_card`).
   EVERY surface is named from the full slug (D10): feature folder
   `2026-10-<cf-slug>`, worktree `<cf-slug>`, branch `<cf-slug>`, and
-  `session_rename` to `<cf-slug>`. The branch named there is minted by
-  kickoff's `kickoff-mint-branch.sh` step — citation only; the mechanics
-  live in `pipeline-kickoff`, never here.
+  `session_rename` to `<cf-slug>`.
 - **In-work mark** — after the `session_rename` returns the sessionID, mark
   the session in-work per `pipeline-kickoff` (citation only — the contract,
   its values and its commands live there, never here).

@@ -1,0 +1,70 @@
+{
+  "feature": "cf-70-debug-wekan-enter-submit",
+  "plan_status": "complete",
+  "coord_session": "ses_e85bfecb1ffejpDAfp91lHp8b1",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-26T22:45:00Z",
+  "kickoff": {
+    "card": {
+      "id": "fWAw8RKWjcDpmrQf5",
+      "number": 70,
+      "board": "AI-Dev",
+      "labels": ["Research"],
+      "picked_from": "Not Started",
+      "final_list": "Review"
+    },
+    "slug": "cf-70-debug-wekan-enter-submit",
+    "slug_best_guess": false,
+    "type": { "checked": "debug", "note": "human confirmed in batched round; checked on card" },
+    "services": { "checked": null, "note": "no repo change; research names services/home as the follow-up's checklist item if a card is ever cut" },
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash",
+      "source": "Model(s) checklist fully unchecked -> standard default Qwen Flash, card not mutated"
+    },
+    "research_timing": "unchecked -> default Agent Decides",
+    "human_in_the_loop": "unchecked -> default Plan; loop paused at the batched round, ended at Review",
+    "run_tag": null,
+    "session_link_policy": "raw session id — launch carried no Session origin: line (UNRESOLVED); fallback recorded and applied to all link slots"
+  },
+  "research": {
+    "session": "ses_e85b7b485ffewcM1MFpkzzhQlF",
+    "rounds": [
+      {
+        "round": 1,
+        "status": "DONE",
+        "session": "ses_e85b7b485ffewcM1MFpkzzhQlF",
+        "handoff": {
+          "status": "DONE",
+          "chunk": "plan-research",
+          "files_changed": [".agents/plans/2026/2026-10-cf-70-debug-wekan-enter-submit/RESEARCH.md"],
+          "deviations": "STORM interviews realized as five primary-source evidence tracks in one session; no mutations.",
+          "friction": "GitHub webfetch arrives proxied (re-ran via execute+fetch); wekan-v12 tarball dir from the upgrade ticket gone (re-downloaded).",
+          "open_questions": "4 — satisfaction of all fields; multi-user bulk option; type re-slug; upstream-report need.",
+          "next_suggested": "batched question round, then wrap (setting is the fix; no code change)"
+        }
+      }
+    ],
+    "follow_up_asked": true,
+    "follow_up_round": "not needed — all four batched answers took the recommended route",
+    "batched_round": {
+      "asked": "2026-10-26",
+      "answers": {
+        "slug_type": "keep cf-70-debug-wekan-enter-submit (debug)",
+        "resolution": "setting is the answer — wrap",
+        "bulk_mongosh": "no",
+        "upstream_reply": "no"
+      }
+    }
+  },
+  "write_back": {
+    "custom_fields": { "slug": "cf-70-debug-wekan-enter-submit", "session": "ses_e85bfecb1ffejpDAfp91lHp8b1" },
+    "checklists": "33 unchecked items deleted across the five standard checklists; surviving record: Type/debug checked",
+    "result_comment": "posted with research-session raw id + merged TLDR + residual verification item",
+    "card_moved": "Executing -> Review"
+  },
+  "chunks": {},
+  "blocked": [],
+  "deferred": []
+}

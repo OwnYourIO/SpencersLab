@@ -58,9 +58,6 @@ permissions:
   - action: shell
     resource: opencode api patch /api/session/*
     effect: allow
-  - action: shell
-    resource: bash scripts/kickoff-mint-branch.sh *
-    effect: allow
   - action: subagent
     resource: '*'
     effect: deny

@@ -1,11 +1,13 @@
 {
   "feature": "2026/2026-10-cf-49-bug-friction-followup-cards",
-  "plan_status": "draft",
+  "plan_status": "complete",
   "coord_session": null,
-  "coord_session_note": "unavailable at planning time (harness exposed no session_rename); per Execution kickoff step 2 coord captures it via session_rename retry, or records it when the user launches/resumes the run in the worktree",
-  "test_session": null,
-  "current_wave": 1,
+  "coord_session_note": "unavailable at planning time (harness exposed no session_rename); execution kickoff delegated to agent-dev (D17); re-capture per pipeline-role-coord step 0 when the harness grants session tools or the run is resumed in the worktree under the new coord grants (D19)",
+  "test_session": "ses_e86798c94ffeqQBgzaAuTE8o4d",
+  "test_session_note": "authored whole-plan suite cfef11905 (via first interrupted attempt, verified+re-run) + sibling re-pins; D18 sync b11324fea; owns the re-pin round for the user-approved grants (D19) — re-pin executed in continuation session ses_e8637eb40ffeBn34LBH5jQgG1d, commit 434e2ae8b",
+  "current_wave": 3,
   "updated_at": "2026-10-26",
+  "state_note": "RECONSTRUCTED 2026-10-26 by coord from full in-context records after the main-checkout copy silently regressed to a pre-kickoff draft snapshot (FRICTION entry; worktree replica restored by dev at 07caad91a — this file is the authoritative coord authorship again)",
   "kickoff": {
     "card": "Qtg6ugujrHLhZHQXQ",
     "card_number": 49,
@@ -16,8 +18,8 @@
     "branch": "cf-49-bug-friction-followup-cards",
     "base_branch": "cf-52-feat-coord-session-inwork",
     "pinned_base": "ad89ff557",
-    "base_note": "USER OVERRIDE Q6: branch from cf-52 tip, NOT main (main is not an ancestor of the base; merge-base f11bfcb85). Kickoff step 1 re-verifies the tip live (it advanced b0c975bf6 -> ad89ff557 once); kickoff step 4 merges main -> merge commit M = every CHUNK_BASE/diff-scope base; M recorded here when created",
-    "diff_base": "M (to be recorded after kickoff merge)",
+    "base_note": "USER OVERRIDE Q6: branch from cf-52 tip, NOT main (main is not an ancestor of the base; merge-base f11bfcb85). Kickoff step 1 re-verified live: tip did NOT move. Kickoff step 4 merged main -> merge commit M = every CHUNK_BASE/diff-scope base.",
+    "diff_base": "M (recorded below as 656b3409559a0ae5a26dabce554bd21b4a25b461)",
     "models": {
       "plan": "openrouter/qwen/qwen3.8-flash",
       "code": "openrouter/qwen/qwen3.8-flash"
@@ -25,35 +27,142 @@
     "local": false,
     "note": "card-driven run, no run tag (boards D10); checklist answers: Services=agent context, Type=bug, Model(s)=Qwen Flash, Research=none->Agent Decides, HITL=none->Plan (plan-approval pause stands); all 7 batched-round questions answered 2026-10-26, see plan file record"
   },
+  "kickoff_executed": {
+    "at": "2026-10-26",
+    "executor": "agent-dev ses_e86a06659ffeJ3yRUrZJyuA9k0 (user-directed: coord has no shell, harness lacks session_move)",
+    "base_live": "ad89ff5572e7e824ccd0591ff2a03d46b10209a2 (tip did NOT move; pin sanity re-check passed)",
+    "merge_commit_M": "656b3409559a0ae5a26dabce554bd21b4a25b461 (parents ad89ff557 + main 916044893)",
+    "folder_commit": "d9773af0dccd6ed9db9dba9109888268f3cb43f8",
+    "worktree": "/home/coder/SpencersLab/.agents/worktrees/cf-49-bug-friction-followup-cards",
+    "diff_base": "656b3409559a0ae5a26dabce554bd21b4a25b461",
+    "rulesync": "generate x2 idempotent (2nd no-op), --check exit 0",
+    "note": "coord STATE glob does not reach worktree copies (read+edit denied; no session_move) — state-sync convention: coord authors ONLY the main-checkout copy; every subagent launch cp's coord files (STATE.json/DECISIONS.md/FRICTION.md) into the worktree folder and commits the replica; worktree copy is never hand-edited"
+  },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "done_commit": "0df229333 (dev) + 5bed6d6be/545329203 (review state-sync + notes)",
+      "dev_session": "ses_e8670c24bffehR5X3J4OWH3emp",
+      "dev_commit": "0df229333 (on state-sync 6b01e302a; source .rulesync/skills/pipeline-role-coord/SKILL.md + generated mirror committed together)",
+      "handoffs": [
+        {
+          "at": "2026-10-26 dev",
+          "session": "ses_e8670c24bffehR5X3J4OWH3emp",
+          "summary": "RESULT status: DONE chunk: C01 — step-10 rewrite: items widened to open FRICTION + DECISIONS Deferred; verbatim option-A label (byte-exact, U+2192 confirmed); run semantics per D5; generic board pointer, board-vocab grep = 0; rulesync ladder x2 no-op + --check 0; source+generated committed together (0df229333 on 6b01e302a); t1/t2/t3 flipped green, HOLD t4/t5/t11/t12 green, siblings 18/8/21/6 ok, full suite halts at designed t6 red, aislop 100/0/0; deviations: shell authoring (file tools deny worktree paths — sanctioned precedent), lead-in reworded (dev-owned prose), no scope creep; friction: none new; open_questions: none"
+        },
+        {
+          "at": "2026-10-26 review",
+          "session": "ses_e866bbc8cffeQkngZsqO23gmQe",
+          "summary": "RESULT status: DONE chunk: C01 verdict: APPROVED (no blockers/majors; one record-accuracy nit + two Deferred items recorded in chunks/C01.md review notes) — independent re-runs: OPT_A codepoint byte-exact; board-vocab grep 0; t1/t2/t3 flipped, t4 frozen byte-equal vs M source+generated, t5 pairsync + ladder no-op + --check clean; full surface.sh halts exactly at designed t6; t7-t10/t13/t14 fail naming C02/C03 contracts only (t10 freeze pins passed); siblings 18/8/21/6 ok at CHUNK_BASE=M; rulesync x2 standalone no dirt + --check 0; aislop 100 (0/0/0, 36 files); scope check: 2 in-scope files + ticket tests + plan-folder bookkeeping only; commits 5bed6d6be (state sync) + 545329203 (review notes); observation: surface.sh fail() exits at first red — designed-red enumeration needs per-test subset runs; durable note: coord should record subagent sessionIDs at LAUNCH"
+        }
+      ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 3,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (round 2, ses_e8612fdd6ffeejrZRpOHVQ6X5K; round 1 was CHANGES_REQUESTED — permissions.md row defect fixed in a057aa310, pins re-anchored 93225a502)",
+      "dev_session": "ses_e866551bdffeR4ryuqoThBLN7A",
+      "dev_commits": "1692a1e9e (pre-C02 sync) + c49628002 (boards section + mirror); extension: 07caad91a + 0f45fdedb (pointer + D19 grants); review r1: c777a0d8a + edad6c84d; fix: a057aa310 (permissions.md 5-cell row + coord shell cells) + re-anchor 93225a502 ($GRANTS_DOC byte-move); review r2: b9cb60de0 + 2640afe04",
+      "pending": null,
+      "handoffs": [
+        {
+          "at": "2026-10-26 dev (round 1)",
+          "session": "ses_e866551bdffeR4ryuqoThBLN7A",
+          "summary": "RESULT status: BLOCKED chunk: C02 — scope: BLOCKED covered ONLY the ask-gated agent-board-coord pointer edit (edit -> permission.rejected, no prompt surfaceable in subagent context; NOT worked around; source+mirror byte-unchanged vs M confirmed by t10 frontmatter+pairsync). DONE+committed: boards section (option B verbatim quoting C01's option-A label + question string, A+B=>B-wins, create_card direct-to-Review with live ids, 4 payload labels, 5-checklist default_checked map, {missing,failed} reading + toggle_checklist_item recovery w/ non-rollback semantics, source-card traceability, 4 never-touch prohibitions) + generated mirror (c49628002); t6-t9 flipped green; HOLD t4/t5/t11/t12 + siblings 18/8/21/6 green; rulesync ladder no-op + --check 0; aislop 0/0/0; offline self-check 28/28. Ready-to-apply sentence proposed and later applied verbatim in the extension."
+        },
+        {
+          "at": "2026-10-26 dev (round 2 = C02-extension, user-approved)",
+          "session": "ses_e866551bdffeR4ryuqoThBLN7A",
+          "summary": "RESULT status: DONE chunk: C02-extension — W1: pointer sentence applied verbatim between Card-lifecycle and Batched-question-protocol paragraphs + mirror. W2 (in-record user approval quoted in commit body 0f45fdedb): dev edit-allow for .rulesync/subagents/** ordered to win (commands/config/lock stay ask; generated stay deny); both coord roles +15-rule LOCAL-GIT shell allow-list in cf-52 grammar (status/log/rev-parse/diff/show/merge-base/branch --show-current/worktree list|add/merge/add/commit; exact+space-star pairs so difftool/mergetool/commit-tree sneak in nowhere; NO push/fetch/pull/rebase/reset/checkout/clean; -C forms unmatched); permissions.md reference updated (matrix rows x2, context table allow row + ordering, audit item 4, dated drift-history entry). rulesync generate x2 no-op + --check 0; exactly 8 sanctioned files; aislop 0/0/0; tree clean; nothing pushed. INCIDENT handled: main-checkout coord files had regressed to pre-kickoff draft (STATE plan_status draft, no handoffs, DECISIONS without D17/D18, FRICTION 2-of-6); dev caught by live verification, restored worktree replica from 1692a1e9e (07caad91a), proceeded on recorded approval; main-checkout repair coord-owned. expected-red-for-repin (test session owns; untouched): surface.sh t10 (frontmatter freeze vs M now carries approved grants) + t12 (scope allow-list: add agent-{dev,coord} sources+mirrors, agents-sync src+mirror); agents-md.sh c7 (in-scope set); rulesync-surface.sh c2 (board-coord gen-frontmatter); gate.sh t12 (agents-sync references freeze); coord-inwork surface.sh i4 (agent-coord frontmatter freeze). friction NEW: main-checkout silent regression (same incident family as the STATE-rewrite drop) — durable fix: coord append-only discipline + restore-from-known-good duty after every sync. open_questions: coord must repair main copy + append D19 text (done by coord immediately after this handback); residual: git merge * allows --abort/--continue (intended)."
+        },
+        {
+          "at": "2026-10-26 review round 1",
+          "session": "ses_e8627e9cbffetles4ENPDwzfGh",
+          "result": "RESULT\nstatus: CHANGES_REQUESTED\nchunk: C02\nverdict: CHANGES_REQUESTED — boards section, pointer sentence and D19 grants all correct, verified and pinned; ONE major doc defect from 0f45fdedb: permissions.md:26 board-coord role-matrix row malformed (5-cell row lost its shell cell — diff deleted it, fused MCP text (execute/dev_boards*) into the subagent cell, claimed a nonexistent subagent delta, MCP column left empty). Now byte-frozen as the $GRANTS baseline — fix pre-C03. Blast radius: permissions.md-only; gate.sh t12 + coord-inwork i5 GRANTS anchors need one further test-session re-pin; agent-file anchors (t10/i4/c2/t17) unaffected. Everything else in the chunk already carries green.\ncommands_run: [STEP 0 sync c777a0d8a => pass, surface.sh @M => t1-t12 green / designed halt at t13, t13/t14 individually red-by-design naming C03 clauses => as expected, siblings 8/18/21/6 ok, standalone ladder x2 no-op + --check 0 tree-clean, aislop 100/0/0/0 36 files, own negative control (uncommitted injected git push grant) => t10+i4 FAIL naming file + $GRANTS, restored, re-PASS, re-pin 434e2ae8b deletion audit => every removal replaced by same-mechanism re-anchor, verbatim codepoint check OPT_A/OPT_B/title/4 labels/map/question string byte-exact plan<->tests<->source<->mirror, zero 24-hex ids in section, grants YAML audit (6 agent files) => 15 git rules src==gen per coord, no push/fetch/pull/rebase/reset/checkout/switch/clean match, no -C reachable, difftool/mergetool/commit-tree/commit-graph ungranted, dev ordering correct, question allow intact, diff --name-only M..HEAD => 21 paths all attributable, D16 walk re-executed read-only => ids re-verified, no card created]\ndeviations: (1) reviewer re-ran the D16 walk independently (matched coord's record). (2) round-1 pointer sentence not byte-verifiable vs original proposal (not on the bus) — verified vs chunk spec + mirror parity; nit. (3) writes limited to plan folder + commits c777a0d8a/edad6c84d.\nfriction: permissions.md being GRANTS-byte-pinned makes deferred fixes costlier — fix now (noted in review notes); otherwise known items behaved as documented\nopen_questions: none for the user — concrete dev fix specified\nnext_suggested: dev fix commit (source+mirror) -> test re-pin of gate t12 + i5 GRANTS anchors -> fresh re-review C02."
+        },
+        {
+          "at": "2026-10-26 dev fix (review round 1 response)",
+          "session": "ses_e866551bdffeR4ryuqoThBLN7A",
+          "result": "RESULT\nstatus: DONE\nchunk: C02-fix-review-round-1\nfiles_changed: [.rulesync/skills/agents-sync/references/permissions.md (board-coord row restored 5-cell with truthful cells; both coord rows' shell cells name cf-52's two opencode api session globs), .opencode/skills/agents-sync/references/permissions.md (regenerated mirror)]\ncommit: a057aa310 — exactly 2 files, 4+/-4 lines; tree clean\ncommands_run: [anchor-asserted patch (2/2 unique; MCP cell byte-restored from pre-damage text) => pass, programmatic 5-cell validation of all 9 role-matrix rows => pass, rulesync generate => wrote exactly 1 mirror, x2 no-op snapshot-confirmed, --check exit 0, diff --stat => exactly source+mirror, CHUNK_BASE=M surface.sh FULL => t1-t12 green halt designed t13 (t10 green on re-anchored $GRANTS), agents-md 8 ok, rulesync-surface 18 ok, gate.sh t12 => FAIL permissions-pair byte-anchor vs $GRANTS=0f45fdedb (sanctioned re-pin, verbatim line reported), coord-inwork i5 => FAIL same byte-anchor paired guard (sanctioned), aislop 0/0/0]\nexpected-red-for-repin: [gate.sh t12 + coord-inwork i5 — permissions-pair $GRANTS byte-anchors moved solely by the sanctioned doc fix; re-anchor to a057aa310 is a byte move, not a loosening (reviewer negative control already proved pin strength)]\ndeviations: none\nfriction: none new\nopen_questions: none\nnext_suggested: route the t12/i5 re-anchor to the test session, then C02 round-2 review (first step: re-run t1-t12 + gate/i5 green; D16 live walk already recorded RESOLVED + independently re-verified — no repeat needed), then wave 3 (C03)."
+        },
+        {
+          "at": "2026-10-26 review round 2",
+          "session": "ses_e8612fdd6ffeejrZRpOHVQ6X5K",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nverdict: APPROVED\nfiles_changed: [chunks/C02.md (round-2 notes, commit 2640afe04), STATE.json replica sync b9cb60de0]\ncommands_run: [a057aa310 substance: exactly 2 files, restored board-coord row 5-cell with all cells byte-identical to pre-damage M row EXCEPT the truthful shell delta; live YAML cross-check all 4 coord files (43=41+execute+dev_boards*, shell lists ordered-equal, rosters equal, glob strings byte-exact vs frontmatter); 8/8 matrix rows 5-cell both trees => pass. 93225a502 discipline: identical cmp loops, $GRANTS_DOC referenced ONLY by t12/i5, boundary proven by own negative control (injected drift => t12+i5 FAIL naming a057aa310 while t10 stayed GREEN; revert => PASS) => pass. Battery @M: surface t1-t12 green/halt t13 by design, t13/t14 solo red-C03, agents-md 8 / rulesync-surface 18 / gate 21 (t12 green new anchor) / coord-inwork 6 (i5 green), standalone ladder x2 no-op + --check 0 tree-clean, aislop 0/0/0 36 files, diff --name-only M..HEAD => 22 paths set-identical to round-1 (21 was record miscount; zero scope growth), delta = a057aa310 + 93225a502 + 2 syncs => all pass]\ndeviations: (1) D18 cp applied PER-FILE-DIRECTION not blindly — main STATE ahead, main chunks BEHIND (review notes worktree-only); synced STATE only, chunk files restored to worktree HEAD (finding escalated to coord: logged as D20). (2) negative control on source side only (mirror runs identical cmp loop).\nfriction: main-vs-worktree divergence is directional; blind whole-folder cp would destroy review records — fixed via D20 convention\nopen_questions: none\nnext_suggested: mark C02 done; wave 3 (C03) — expect agents-md c2/c3/c6 + surface t13/t14 flip green there."
+        }
+      ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C01", "C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (round 1, ses_e86020f21ffeNvo4QreXfA2foQ; notes commit 0b9cffe66)",
+      "dev_session": "ses_e8609eb1dfferlGwoe3AbDxDSv",
+      "dev_commits": "33fe58941 (D20 directional sync) + 497f8f7f7 (overview.md three-disposition clause + AGENTS.md mirror, exactly 2 files)",
+      "pending": null,
+      "handoffs": [
+        {
+          "at": "2026-10-26 dev",
+          "session": "ses_e8609eb1dfferlGwoe3AbDxDSv",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [.rulesync/rules/overview.md (coord friction description -> three dispositions: planned only (the default), planned and run to completion in the same coordinator session, or - on board-driven runs - handed to a new follow-up card that lands in Review with its suggested run settings checked (the card replaces the plan launches there)), AGENTS.md (regenerated mirror only), plan STATE.json + DECISIONS.md (D20 directional sync)]\ncommands_run: [STEP-0 per-file diff main<->worktree => 2 files synced, commit 33fe58941, edit rules source => t13 outcome-window + stale-absence green on source+AGENTS.md, rulesync generate => wrote exactly AGENTS.md, t14 parity green, x2 no-op + --check 0 (re-verified post-suite), surface.sh FULL @M => PASS 14 ok (t1-t12 held, t13/t14 flipped - the designed reds, and only they), agents-md.sh 8 ok (c2/c3/c6 HOLD-green unchanged - no pinned phrase in the edited clause), rulesync-surface 18 ok, gate 21 ok, coord-inwork 6 ok, aislop ci --changes => 0/0/0 36 files, diff --name-only M..HEAD => prior 22 + overview.md + AGENTS.md only (zero scope escape)]\ndeviations: session launched at main checkout root; first worktree edit permission.rejected despite the new dev allow -> resolved via tools.opencode.session_move INTO the worktree (edit then passed the normal gate; zero shell-circumvention). C03 task 2 judged: agent-board-coord bullet narrates intake only - no change needed (minimal diff).\nfriction: subagent launch anchoring at main checkout gates worktree edits until session_move (durable: coord should session_move at launch - same family as coord re-role item); main DECISIONS.md joined-line defect (D19 merged into section heading by D20 append) - coord repair landed immediately after this handback\nopen_questions: none; no validation_at_fault candidates - every pre-pinned expectation flipped green as designed\nnext_suggested: C03 round-1 review (battery at M first), then final whole-plan review + step-10 disposition round on this ticket's open FRICTION items - the shipped flow's own first dogfood."
+        },
+        {
+          "at": "2026-10-26 review round 1",
+          "session": "ses_e86020f21ffeNvo4QreXfA2foQ",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nverdict: APPROVED (no blockers, no majors, no minors; one ALTITUDE OBSERVATION recorded in chunks/C03.md round-1 notes re: step-10's blocked-run trigger - carry into final whole-plan review)\nfiles_changed: [chunks/C03.md (review notes, 0b9cffe66), STATE/DECISIONS/FRICTION replica sync 81defcf03]\ncommands_run: [surface.sh FULL @M => 14 ok/0 fail (t13/t14 flipped; no genuine-miss vs at-fault discrimination needed), agents-md 8 / rulesync-surface 18 / gate 21 (t12 anchor green, C03 carve correct) / coord-inwork 6, standalone generate#1 wrote NOTHING (committed AGENTS.md == generator byte-for-byte) + #2 no-op + --check 0 tree-clean, aislop exit 0, diff --name-only M..HEAD => 24 paths = 22 + overview.md + AGENTS.md exactly, rules-dir diff => only overview.md, independent absence grep 'offers to plan fixes' => 0 hits both trees, git show 497f8f7f7 => exactly 2 in-scope files, tests untouched since 2640afe04, board-coord bullet + Batched-question-protocol existence => pass]\ndeviations: (1) launch skill list is dev-role pin; loaded role contracts + agents-sync/rulesync/verification-before-completion (plan references none). (2) STEP-0 sync from main's UNCOMMITTED working-tree coord files (branch blobs = the regressed draft family) — FLAG: main-side coord copies remain uncommitted. (3) live board walk not re-run (D16 RESOLVED + re-verified at C02). (4) /tmp write denied -> shell heredoc battery. (5) session_move worked for the review namespace exactly as the new FRICTION item predicted.\nfriction: none new\nopen_questions: none\nnext_suggested: record + mark C03 done; FINAL whole-plan review (carry the altitude observation); then step-10 disposition round on the open FRICTION items - the shipped flow's own first dogfood."
+        }
+      ]
     }
   },
   "blocked": [],
-  "deferred": []
+  "deferred": [
+    "2026-10-26 step-10 round answered (user, option B — cards REPLACE plan launches): 5 follow-up cards created directly in Review with suggested run settings fully checked after bounded re-read/toggle recovery: Kickoff mints run branch (bug) | Coord worktree globs (bug) | SessionIDs at launch (chore) | Self-move launch convention (docs) | Board reachability probe (feat); traceability comments on #49 + correction comment. Items intentionally NOT followed up this round (unchecked): D10 stale pipeline-role-test line, plan-edits-own-fields wording, main-checkout regression guards, C01 review leftovers, board Test-list drift, git-grants chain verifier, dormant checkItem rule. AGENTS.md trigger nuance: user declined (leave as shipped). Card #49 moved to Review; plan_status complete."
+  ],
+  "plan_handoffs": [
+    {
+      "at": "2026-10-26 round 1",
+      "session": "ses_e86c2abc9ffeD2B36urFwTvp63",
+      "result": "RESULT\nstatus: NEEDS_INFO\nchunk: plan\nfiles_changed: [plan file, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01-C03.md]\ncommands_run: [python3 -m json.tool STATE.json => pass, git merge-base --is-ancestor cf-52 => NOT-MERGED pass, grep baselines => pass]\ndeviations: planning ran in the main checkout (no worktree); two kickoff-environment friction items seeded by planner directly into FRICTION.md; loaded agents-sync/boards/pipeline-role-plan/conventions/role-coord/writing-plans/rulesync instead of the helm trio (agent-context card); plan NOT self-approved.\nfriction: no worktree_create/session_move/session_rename in harness · open; pipeline-role-test stale \"no global tests/\" line · open (D10 dogfood candidate)\nopen_questions: 7 (slug; worktree creation; option-A semantics; option-B replace-vs-add; checklist map; cf-52 base; traceability) — all answered in the 2026-10-26 batched round\nnext_suggested: batched round -> relaunch plan with answers -> approval pause -> agent-test"
+    },
+    {
+      "at": "2026-10-26 round 2 (finalized with batched answers)",
+      "session": "ses_e86c2abc9ffeD2B36urFwTvp63",
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [plan file, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01-C03.md]\ncommands_run: [git rev-parse/log + merge-base checks (base=ad89ff557, main NOT ancestor, merge-base f11bfcb85) => pass, git diff cf-52..tip per-file (step 10 byte-identical @line 30; boards zone + ## Boards body untouched; overview/AGENTS.md zero-line diffs) => pass, git merge-tree main ad89ff557 (conflicts ONLY tests/agent-board-coord/{agents-md,rulesync-surface}.sh) => pass, grep action:execute (only agent-board-coord) => pass, json.tool STATE.json => pass, stale-base-reference grep => pass, aislop scan --changes => pass (100, 0/0/0)]\ndeviations: none (in-folder rework; DECISIONS append-only; D7 supersession pointer, D12-D16 appended, Deferred last)\nfriction: cf-52 tip moved between rounds (b0c975bf6 -> ad89ff557) — kickoff live re-verification + M-based pins · open\nopen_questions: none — all 7 answered; residuals handled as kickoff/validation mechanics\nnext_suggested: plan-approval pause; on approval Execution kickoff steps 1-6, then agent-test once before C01 dev."
+    },
+    {
+      "at": "2026-10-26 execution kickoff",
+      "session": "ses_e86a06659ffeJ3yRUrZJyuA9k0",
+      "result": "RESULT\nstatus: DONE\nchunk: kickoff\nfiles_changed: [tests/agent-board-coord/agents-md.sh (conflict resolved as union: FEATURE3=cf-52 folder + FEATURE4=wekan folder, c7 widened), tests/agent-board-coord/rulesync-surface.sh (2 conflicts resolved: FEATURE3/FEATURE4 union + c8 widening; second hunk = HEAD superset branch), merge commit 656b34095 (M), plan folder relocated + committed d9773af0d]\ncommands_run: [git rev-parse cf-52 => LIVE TIP ad89ff5572, TIP DID NOT MOVE, sanity: step 10 still line 30, no remote cf-52 ref => pass, git merge-tree fresh vs current main 916044893 => conflicts EXACTLY the two predicted scripts => pass, git worktree add => pass, git merge main => conflicts as predicted, resolved, 0 unmerged, bash -n + per-parent diff verify (true union) => pass, rulesync 37.0.0 generate run1 \"up to date\" + run2 NO-OP snapshot + --check exit 0 => pass, git commit --no-edit => M = 656b3409559a0ae5a26dabce554bd21b4a25b461 (parents ad89ff557 + 916044893), cp -r folder + add + commit => FOLDER COMMIT d9773af0dccd6ed9db9dba9109888268f3cb43f8, final status => clean]\ndeviations: (1) edit tool permission-denied in subagent session -> shell python3 exact-string patches, verified bash -n + per-parent diffs. (2) merge carried main's deletion of services/dev/prod/templates/secret-forgejo-token-canonical.yaml (legitimate auto-merge). (3) M not written into STATE.json by dev (coord owns) — supplied for write-back. (4) main-checkout copy preserved untouched. Nothing pushed; no merges toward main.\nfriction: subagent edit denied on worktree paths despite worktree-scoped kickoff -> shell authoring sanctioned · open\nopen_questions: none\nnext_suggested: coord records kickoff, launches agent-test (t1-t14 + siblings at CHUNK_BASE=656b34095) before C01 dev."
+    },
+    {
+      "at": "2026-10-26 agent-test (whole plan)",
+      "session": "ses_e86798c94ffeqQBgzaAuTE8o4d",
+      "result": "RESULT\nstatus: DONE\nchunk: tests\nfiles_changed: [tests/coord-friction-cards/surface.sh (new, t1-t14 — committed cfef11905 by the first, interrupted-but-complete attempt, verified+re-run by this session), tests/agent-board-coord/rulesync-surface.sh (c2 base-adaptive, c8 FEATURE5), tests/agent-board-coord/agents-md.sh (c7 FEATURE5; C03 pass-through documented), tests/agent-board-coord/gate.sh (t14 FEATURE5, t15 friction-pointer branch, t16 bullet confinement, t17 base-adaptive), tests/coord-inwork/surface.sh (i1 done-label exclusion, i4 base-adaptive, i5 AGENTS.md/rules carve), plan FRICTION.md (D18 replica sync -> b11324fea)]\ncommands_run: [git log/status/ls-tree => pass, cp coord files + commit b11324fea => pass, siblings at CHUNK_BASE=M: rulesync-surface 18 ok / agents-md 8 ok / gate 21 ok (pre-existing shellcheck skip) / coord-inwork 6 ok => all pass, surface.sh HOLD t4 t5 t11 t12 => pass (incl. rulesync ladder x2 no-op + --check), per-test red runs t1-t3/t6-t10/t13-t14 => fail-as-designed naming the missing contracts, aislop ci --changes => pass (100, 0/0/0, 36 files), bash -n all five suites => pass, tree clean post-runs => pass]\ndeviations: (1) suite files shell-authored (file tools deny worktree paths) — verified by execution. (2) t12/t14 allow-lists admit sibling tests paths (test session owns sibling re-pins per plan Commands; aa529d707 precedent). (3) t13/t14 pin the C03 sentence by outcome-words-in-window + shared-fragment parity (body prose dev-owned). (4) No RED indicates a faulty test; no test weakened.\nfriction: full-set re-runs pay the rulesync ladder serially (~6 min; shared working tree) · STATE.json test_session coord-owned, not authored by test session\nopen_questions: none\nnext_suggested: launch agent-dev C01 with CHUNK_BASE=M; review flips t1-t3; HOLD stays green."
+    },
+    {
+      "at": "2026-10-26 tests-repin (D19 baseline)",
+      "session": "ses_e8637eb40ffeBn34LBH5jQgG1d",
+      "result": "RESULT\nstatus: DONE\nchunk: tests-repin\nfiles_changed: [tests/coord-friction-cards/surface.sh, tests/agent-board-coord/agents-md.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/gate.sh, tests/coord-inwork/surface.sh, plan-folder replica sync 28c4c3f4f]\ncommits: [28c4c3f4f coord: state sync (pre-repin), 434e2ae8b test(cf-49): re-pin for user-approved D19 grants baseline (aa529d707 precedent) — negative-control evidence in commit body]\ncommands_run: [STEP 0 cp+diff+commit => pass, first-red enumeration at M (5 suites) => matched handback 6 exactly, hidden-red enumeration => 5 co-reds found (gate t14/t17, rulesync-surface c8, coord-inwork i5, surface t14-scope), post-repin full surface.sh @M => t1-t12 GREEN incl t10 pointer clause, halt at designed t13; t13/t14 individually => red-by-design naming C03 content clause; agents-md 8 ok; rulesync-surface 18 ok; gate 21 ok; coord-inwork 6 ok; ladders ran tree-clean-after; negative controls (injected git push grant + unauthorized permissions/agents-sync edits) => t10/i4/c2/t17/t12 ALL FAIL as designed (no pin weakened to no-op), reverted; aislop ci --changes => pass 0/0/0 36 files; git status clean => pass]\ndeviations: (1) re-pinned 5 checks hidden behind fail()-at-first-red beyond the handback's six — all same sanctioned-delta, documented per suite header; t17 shape sets now derive from frozen GRANTS baseline; i5/t12 carve ONLY the permissions.md pair byte-pinned vs baseline. (2) t14 allow-list widened with t12 for correct final C03 scope; t14 stays red-by-design. (3) shell authoring (edit deny persists for test role); one bad replacement caught by bash -n mid-edit, restored + widening reapplied, final diff verified clean. (4) edits confined to tests/** + STEP 0 replica; nothing pushed.\nfriction: six-pin handback list was per-suite-first-red only — co-reds invisible without subset enumeration (mechanism already noted by C01 review; resolution this round: full individual enumeration before touching); designed-red runs leave /tmp/opencode/coord-friction-test.* (cosmetic, known)\nopen_questions: none — C02 review runs with CHUNK_BASE=M expecting surface t1-t12 + halt at t13, siblings 8/18/21/6, negative-control proof in 434e2ae8b body\nnext_suggested: record re-pin handoff, launch fresh agent-review C02 (owns D16 live-board record)."
+    },
+    {
+      "at": "2026-10-26 tests-reanchor (a057aa310 byte move)",
+      "session": "ses_e86798c94ffeqQBgzaAuTE8o4d",
+      "result": "RESULT\nstatus: DONE\nchunk: tests-reanchor\nfiles_changed: [tests/agent-board-coord/gate.sh (new $GRANTS_DOC=a057aa310 var + rev-parse guard; t12 permissions-pair byte pin re-anchored; header cites a057aa310 + review finding), tests/coord-inwork/surface.sh (identical re-anchor on the paired guard i5; i4 frontmatter anchors untouched on $GRANTS), step-0 replica sync dd6dbcbe0]\ncommit: 93225a502\ncommands_run: [baseline red confirm (gate t12 + i5 fail-as-claimed @M) => pass, surface t10 green on $GRANTS => pass (frontmatter pins correctly unaffected), git show a057aa310 --name-only => exactly the two permissions.md files (justifies the split-anchor design), bash -n => pass, gate.sh => 21 ok (t12 green new anchor), coord-inwork => 6 ok, surface.sh full => t1-t12 green designed halt t13, agents-md 8 ok, rulesync-surface 18 ok, negative control (injected line in .rulesync permissions.md => t12 rc=1 + i5 rc=1, revert clean) => pass, aislop => 100/0/0/0 36 files, tree clean => pass]\ndeviations: (1) anchor moved as NEW $GRANTS_DOC instead of bumping $GRANTS: $GRANTS still names the grants commit for all frontmatter/shape pins (a057aa310 touched no agent file — wholesale bumping would re-anchor frontmatter pins under grants wording); strictness unchanged, byte-exact cmp injection-tested. (2) shell python3 edits (file-tool deny persists). (3) negative control on source side only; mirror runs the identical cmp loop. (4) surface.sh needed no edit (frontmatter-only $GRANTS users + scope already admits the permissions pair).\nfriction: none new — reused documented workarounds\nopen_questions: none\nnext_suggested: round-2 C02 review; wave 3 (C03) unblocked — watch agents-md.sh c2/c3/c6 + t13/t14 flip green there."
+    },
+    {
+      "at": "2026-10-26 final whole-plan review",
+      "session": "ses_e85f6ff94ffe6GtIF2SQeMGSA1",
+      "result": "RESULT\nstatus: DONE\nchunk: final\nverdict: APPROVED — seams closed byte-exactly (OPT_A/OPT_B codepoints plan<->tests<->source<->mirror<->boards; pointer names section title verbatim; overview clause matches step-10 disposition-by-disposition; role-coord zero board vocab); D6->D19 grants story coherent (15 local-git rules ordered-equal in both coord sources, forbidden verbs unreachable, no -C matchable, cf-52 globs + question allows x8, dev allow ordered to win, truthful 5-cell matrix, split-anchor green at M); diff hygiene: 27-commit linear range, 14 state-sync commits plan-folder-only, no orphan expectations from cfef11905, 25-path union attributable, frozen/out-of-scope empty-diff vs M; C03 altitude observation ADJUDICATED accept-as-is (post-completion framing predates the ticket, authoritative trigger lives in step 10; zero-re-pin one-liner available if the user wants the nuance).\ncommands_run: [session_move => pass, D20 sync (STATE only; DECISIONS/FRICTION byte-identical) commit 1c957583a => pass, surface FULL 14 ok, agents-md 8, rulesync-surface 18, gate 21, coord-inwork 6, generate#1 wrote nothing + #2 no-op + --check 0 tree-clean, aislop 0/0/0 36 files, log M..HEAD 27 linear + state-sync plan-only 14/14, diff 25 paths attributable, codepoint seam checks, frontmatter grants audit, frozen empty-diff, stale-phrase grep 0 all trees, branch -r => cf-49 NOT pushed]\nfindings: none blocking; record-accuracy nits (stale pending fields, CHANGES_REQUESTD typo, condensed reconstructed handoffs) — cleared by coord in the completion write; Deferred unchanged (board Test-list drift, git-grant chaining verifier, dormant checkItem rule, D10 stale-docs line)\nLANDING-PR FLAG (human): main's branch blobs of the cf-49 folder are the pre-kickoff draft snapshot; main's WORKING-COPIES of the three coord files remain uncommitted (byte-match the branch after the final sync) — discard/stash those three in the main checkout before landing; the merge supersedes the draft.\ndeviations: (1) notes to plan file ## Final review (036dac0ad) per coord launch directive over chunk-file default. (2) live walk not re-run (D16 RESOLVED + independently re-verified at C02; zero board writes by this run since).\nfriction: none new — session_move worked for the review namespace as FRICTION item 10 predicted\nopen_questions: none — one coordination judgment for the step-10 round: whether the user wants the whenever-stops trigger nuance added to AGENTS.md (zero-re-pin one-liner; default no)\nnext_suggested: plan_status complete; run the shipped step-10 disposition round — open FRICTION items + Deferred, options A+B on this board-driven run (D10's stale-docs item designated first follow-up card — the flow's own first dogfood)."
+    }
+  ]
 }
