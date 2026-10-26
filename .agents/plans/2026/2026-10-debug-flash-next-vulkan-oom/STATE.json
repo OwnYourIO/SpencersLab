@@ -92,12 +92,13 @@
       "handoffs": []
     },
     "C03": {
-      "status": "in-review",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": "dev DONE (5ea66f17d; 16 contract-reds -> 0 failed/168 passed/7 skipped with pinned helm executed)",
+      "review_rounds": 1,
+      "last_verdict": "REVIEW APPROVED (168/0/7 re-run independently; base-vs-HEAD render diff: gpu-ai cmd-changed = exactly 5 FN ids, gpu byte-identical; tests diff = only approved @helm gate; nothing pushed)",
+      "review_session": "ses_e872c0436ffeggOKkx8q6dL8AS",
       "dev_session": "ses_e873caa5affemPQfN71cM90nhz",
       "handoffs": [
         {
@@ -105,6 +106,13 @@
           "from": "agent-dev",
           "status": "DONE",
           "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [charts/llama-swap/values.yaml (flash-next + flash-next-orca family blocks; committed 5ea66f17d local), chunks/C03.md Dev notes appended (same commit)]\ncommands_run: [provisioned pinned helm v3.16.4 (sha256-verified) to /tmp/opencode/bin/helm => pass, 27 render contracts EXECUTED zero helm-skips; BEFORE pytest charts/llama-swap/tests => 16 failed/152 passed/7 skipped (exactly TEST_SPEC 8.5 reds); RUN_FLAG_AUDIT=1 pytest -k flags_exist => 1 passed (AC5 pre-edit) + manual llama.cpp b11810 arg.cpp line-reads (load-mode mmap/dio, --fit, --no-host) => pass; AFTER full suite => 0 failed/168 passed/7 skipped; helm lint charts/llama-swap => pass; helm template (clusterName=gpu-ai) => rc=0; umbrella lint+template services/gpu-ai/prod + services/gpu/prod => pass (pre-existing OVERRIDE_VIA_APPSET warnings only); aislop ci --changes => 0/0; post-commit re-run => 168/0/7 + flag-audit pass]\ndeviations: (1) mechanism = family-level literal flags: leg, NOT a new macro — first attempt (fn-moe in gpu-ai service macros) turned test_c02_2_config_layer_macros_matrix_hooks_scalars red (golden-era parity pins the macro map by FULL equality; overrides blast-radius allowance); fn-moe fully reverted pre-commit, final diff = 1 file. (2) flash-next-orca regime-shifted too — mandated (inside FLASHNEXT_FAMILY_IDS / AC1). (3) No service-file edits needed; AC4 vacuous under C02-skipped. (4) DECISIONS.md left to coord — B-skip/C1-skip/no-host-OFF recorded here for transcription.\nfriction: chunk's macro mechanism-option cannot satisfy the immutable suite (golden parity vs blast-radius allowance contradiction) — resolution: emitted-token literal per test_new_roster pre-accepted shape; cost one suite iteration. No-helm worktree — resolution: pinned helm v3.16.4 provisioned; C04 render checks should reuse it. One malformed edit call errored harmlessly (harness noise).\nopen_questions: (a) C04 needs operator GO + window (one-attempt protocol, trio eviction, user-run host commands per procedure artifact); buffer-split proof arrives ONLY from GET /logs/stream/qwen3.8-flash-next-q3 read immediately post-load (logToStdout: proxy,http) — the 5 skip-gated post-fix evidence tests need that capture. (b) If serving quality demands, single-line knobs: mmap->dio, +--no-host, or per-rung override — confirm no re-plan for that shape. (c) EVIDENCE §9 items 6-8/9-11 awaiting-user, none gating. (d) FYI: blast-radius macro-add allowance now unused by construction; no test change needed.\nnext_suggested: agent-review on C03 (re-run with PATH=/tmp/opencode/bin; expect 168/0/7 + flag-audit), then C04."
+        },
+        {
+          "at": "2026-10-26",
+          "from": "agent-review",
+          "status": "DONE",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nverdict: APPROVED (no blocker/major/minor; two cosmetic nits in chunks/C03.md Review notes)\nfiles_changed: [chunks/C03.md Review notes (coord committed)]\ncommands_run: [/tmp/opencode/bin/helm v3.16.4 still present (no re-provision); pytest charts/llama-swap/tests -rs -q => 168 passed/0 failed/7 skipped 22.10s, all 7 skips honest (5x C04 post-load evidence-gated, RUN_FLAG_AUDIT, RUN_HF_CHECK); RUN_FLAG_AUDIT=1 -k flags_exist => 1 passed (real network fetch confirmed); helm lint chart => 0 failed; template clusterName=gpu-ai => rc=0; umbrellas gpu-ai/gpu lint+template => rc=0 (pre-existing OVERRIDE_VIA_APPSET only); aislop ci --changes => 0/0 rc=0; independent arg.cpp@b11810 fetch, dev line-citations exact; git-archive base 4243c6a44 vs HEAD render diff => gpu-ai cmd-changed = exactly the 5 FN ids, gpu cmd-changed = [] byte-identical, only contract-exempted name/description fields moved, ${moe} frozen, matrix/preload/ttl/hooks unchanged; tests-diff since 1279ce582 => only approved @helm gate; services/goldens/Chart.yaml zero diff; git branch -r --contains => empty (nothing pushed)]\ndeviations: added independent base-vs-HEAD render diff beyond the suite (rigor); copied same vendored app-template 5.0.1 tarball for the base archive after proving Chart.yaml identical.\nfriction: base git archive lacks untracked app-template tgz — resolved with same 5.0.1 vendored tarball; verified flag-audit really network-fetches (skip branch would show SKIPPED).\nopen_questions: none\nnext_suggested: commit review notes; flip C03 done; C04 needs operator GO + window, post-load captures via GET /logs/stream at load time, reuse pinned helm."
         }
       ],
       "gated": "resolved by C01 evidence: branch A alone — no B re-ask"
