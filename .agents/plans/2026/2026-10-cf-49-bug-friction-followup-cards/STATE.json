@@ -1,0 +1,59 @@
+{
+  "feature": "2026/2026-10-cf-49-bug-friction-followup-cards",
+  "plan_status": "draft",
+  "coord_session": null,
+  "coord_session_note": "unavailable at planning time (harness exposed no session_rename); per Execution kickoff step 2 coord captures it via session_rename retry, or records it when the user launches/resumes the run in the worktree",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-26",
+  "kickoff": {
+    "card": "Qtg6ugujrHLhZHQXQ",
+    "card_number": 49,
+    "slug": "cf-49-bug-friction-followup-cards",
+    "slug_status": "CONFIRMED in 2026-10-26 batched round (Q1)",
+    "run_tag": null,
+    "worktree": "cf-49-bug-friction-followup-cards",
+    "branch": "cf-49-bug-friction-followup-cards",
+    "base_branch": "cf-52-feat-coord-session-inwork",
+    "pinned_base": "ad89ff557",
+    "base_note": "USER OVERRIDE Q6: branch from cf-52 tip, NOT main (main is not an ancestor of the base; merge-base f11bfcb85). Kickoff step 1 re-verifies the tip live (it advanced b0c975bf6 -> ad89ff557 once); kickoff step 4 merges main -> merge commit M = every CHUNK_BASE/diff-scope base; M recorded here when created",
+    "diff_base": "M (to be recorded after kickoff merge)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "note": "card-driven run, no run tag (boards D10); checklist answers: Services=agent context, Type=bug, Model(s)=Qwen Flash, Research=none->Agent Decides, HITL=none->Plan (plan-approval pause stands); all 7 batched-round questions answered 2026-10-26, see plan file record"
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C01", "C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

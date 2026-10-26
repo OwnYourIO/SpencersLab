@@ -1065,9 +1065,12 @@ karakeep:
           image:
             repository: docker.io/getmeili/meilisearch
             tag: v1.55.0
+          # v1.51 stabilized the dumpless upgrade and renamed the flag to
+          # --upgrade-db; renovate bumps the tag but not args, so the old
+          # name hard-exits as "unexpected argument" past v1.51.
           args:
             - /bin/meilisearch
-            - --experimental-dumpless-upgrade
+            - --upgrade-db
           env:
             MEILI_NO_ANALYTICS: true
             MEILI_MASTER_KEY:

@@ -253,7 +253,7 @@ for key in coder-external-auth coder-token-encryption; do
     fail "g-sso-2: the custom-values ${key} entry is still the service sentinel: $custom_entry"
   fi
   # OVERRIDE_NEEDED is the documented must-fill slot until the user creates
-  # the per-cluster Bitwarden item (forgejo-token-canonical precedent).
+  # the per-cluster Bitwarden item (the infra-forgejo t6 precedent).
   printf '%s' "$custom_entry" |
     grep -qE "^[[:space:]]*${key}:[[:space:]]*(OVERRIDE_NEEDED|${UUID_RE})[[:space:]]*(#.*)?$" ||
     fail "g-sso-2: the custom-values ${key} value is neither a real UUID nor the documented OVERRIDE_NEEDED placeholder: $custom_entry"

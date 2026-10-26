@@ -13,10 +13,9 @@
 # tracks upstream without a pin in this image.
 #
 # Token git auth is optional and driven by env the template supplies. No env,
-# no action: GITHUB_TOKEN, FORGEJO_TOKEN + FORGEJO_HOST (dev instance),
-# FORGEJO_TOKEN_CANONICAL + FORGEJO_HOST_CANONICAL (canonical instance), and
+# no action: GITHUB_TOKEN, FORGEJO_TOKEN + FORGEJO_HOST (dev instance), and
 # FORGEJO_OAUTH_ID (the coder external-auth provider id covering
-# FORGEJO_HOST's instance) — each Forgejo pair is guarded independently.
+# FORGEJO_HOST's instance).
 # When FORGEJO_OAUTH_ID is set and its provider is approved, the per-user
 # SSO token replaces the dev host's PAT helper for git-over-https: git
 # consults credential helpers BEFORE the agent's GIT_ASKPASS, so the helper
@@ -182,10 +181,10 @@ configure_git_token() {
     "!f() { echo username=token; echo \"password=\$${env_var}\"; }; f"
 }
 
-# One host of the dual-forge wiring, called once per Forgejo env pair.
-# Arguments: the token value, the NAME of the env var holding it (the helper
-# above must keep echoing $<NAME> so git expands it at use time — nothing
-# secret is ever persisted to the home PVC), the host-or-URL, and an optional
+# Wires one Forgejo host. Arguments: the token value, the NAME of the env var
+# holding it (the helper above must keep echoing $<NAME> so git expands it at
+# use time — nothing secret is ever persisted to the home PVC), the
+# host-or-URL, and an optional
 # fourth "no-helper" mode for hosts whose per-user SSO token should answer
 # through the agent's GIT_ASKPASS instead (a wired helper is consulted first
 # and would shadow it forever on the PVC). fj keeps the bot PAT in every
@@ -250,22 +249,18 @@ if [ -n "${FORGEJO_OAUTH_ID:-}" ] && [ -n "${FORGEJO_HOST:-}" ]; then
   fi
 fi
 
-# The lab runs two Forgejo instances; each pair is optional on its own —
-# no env for a pair, no action for that host. An approved dev host keeps the
-# call (fj still needs the bot PAT) but in no-helper mode, so only the SSO
-# token answers git. The canonical pair is never SSO-gated: this coder
-# server has one provider slot and it serves the dev instance (pairing
-# ruling 2026-10-24).
+# The Forgejo pair is optional — no env, no action for the host. An approved
+# dev host keeps the call (fj still needs the bot PAT) but in no-helper mode,
+# so only the SSO token answers git. This coder server has one external-auth
+# provider slot and it serves the dev instance (pairing ruling 2026-10-24);
+# the canonical forge stays reachable over SSH keys via the host pre-trust
+# above — its PAT plumbing (forgejo-token-canonical) was removed unused.
 sso_wire_mode=
 if [ "$sso_approved" = 1 ]; then
   sso_wire_mode=no-helper
 fi
 if [ -n "${FORGEJO_TOKEN:-}" ] && [ -n "${FORGEJO_HOST:-}" ]; then
   wire_forgejo "${FORGEJO_TOKEN}" FORGEJO_TOKEN "${FORGEJO_HOST}" "$sso_wire_mode"
-fi
-
-if [ -n "${FORGEJO_TOKEN_CANONICAL:-}" ] && [ -n "${FORGEJO_HOST_CANONICAL:-}" ]; then
-  wire_forgejo "${FORGEJO_TOKEN_CANONICAL}" FORGEJO_TOKEN_CANONICAL "${FORGEJO_HOST_CANONICAL}"
 fi
 
 # Git rejects commits from a process with no identity; the template passes the

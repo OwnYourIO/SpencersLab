@@ -45,7 +45,7 @@
 # setting the TTL is a user action, not a template feature.
 #
 # namespace must name the namespace that holds the git-auth secrets
-# (github-pat, forgejo-token, forgejo-token-canonical — rendered by
+# (github-pat, forgejo-token — rendered by
 # services/dev/prod): a workspace elsewhere starts with no git credentials,
 # and its home PVC lands there too.
 
@@ -480,23 +480,6 @@ resource "kubernetes_deployment_v1" "main" {
           env {
             name  = "FORGEJO_OAUTH_ID"
             value = "forgejo"
-          }
-          # The canonical instance (git.spencerslab.com) is a separate
-          # Secret so one PAT never points at two concerns; it stays
-          # optional until custom-values carries the new item's real UUID.
-          env {
-            name = "FORGEJO_TOKEN_CANONICAL"
-            value_from {
-              secret_key_ref {
-                name     = "forgejo-token-canonical"
-                key      = "FORGEJO_TOKEN_CANONICAL"
-                optional = true
-              }
-            }
-          }
-          env {
-            name  = "FORGEJO_HOST_CANONICAL"
-            value = "git.spencerslab.com"
           }
           resources {
             requests = {

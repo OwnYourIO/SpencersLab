@@ -39,7 +39,6 @@ REAL_DASH=$(command -v dash) || { printf 'FAIL: precondition: dash not available
 DEV_HOST=git.scifi.farm
 CAN_HOST=git.spencerslab.com
 DEV_PAT=pat-dev-777
-CAN_PAT=pat-can-888
 SSO_TOKEN_VALUE=sso-user-token-ZXCV99
 SSO_URL="https://${DEV_HOST}/login/oauth/authorize?client_id=coder-stub&state=st8"
 OAUTH_ID=forgejo
@@ -166,7 +165,6 @@ EOF
     SSO_STUB="${SSO_STUB:-none}" \
     CODER_USER=tester CODER_USER_EMAIL=tester@example.com \
     FORGEJO_HOST="$DEV_HOST" FORGEJO_TOKEN="$DEV_PAT" \
-    FORGEJO_HOST_CANONICAL="$CAN_HOST" FORGEJO_TOKEN_CANONICAL="$CAN_PAT" \
     FORGEJO_OAUTH_ID="$OAUTH_ID" \
     "$@" \
     "$REAL_DASH" "$STARTUP" >"$logdir/out" 2>"$logdir/err" || RC=$?
@@ -176,8 +174,6 @@ EOF
 
 dev_set_calls()  { grep -E "config .*credential\.https://${DEV_HOST}\.helper" "$GIT_LOG" | grep -v -- '--unset' || true; }
 dev_unset_calls(){ grep -E -- "--unset" "$GIT_LOG" | grep -E "credential\.https://${DEV_HOST}\.helper" || true; }
-can_set_calls()  { grep -E "config .*credential\.https://${CAN_HOST}\.helper" "$GIT_LOG" | grep -v -- '--unset' || true; }
-can_unset_calls(){ grep -E -- "--unset" "$GIT_LOG" | grep -E "credential\.https://${CAN_HOST}\.helper" || true; }
 
 # ================= b-1: approved SSO + PAT pair ⇒ per-user wins ==============
 SSO_STUB=approved run_scenario b1 yes no
@@ -257,16 +253,16 @@ grep -qiE 'approv|SSO|WARN' "$OUT" ||
   fail "b-6: CLI-missing printed no warn/banner line at all (banner-without-URL is the accepted shape)"
 ok "b-6: missing coder CLI ⇒ warn/banner + PAT fallback, boot exit 0"
 
-# ============ b-7: canonical pair invariant across ALL scenarios ============
-# The dev coder has ONE provider slot spent on the dev forge; the canonical
-# pair keeps today's PAT wiring no matter what SSO state the dev host is in.
+# ============ b-7: canonical PAT wiring is gone across ALL scenarios ========
+# The canonical pair's PAT plumbing (forgejo-token-canonical) was removed
+# unused 2026-10-26; the boot must never touch CAN_HOST credentials in any
+# SSO state. CAN_HOST stays a clone-URL host only (SSH-key access and the
+# gpu coder's external-auth provider still live there).
 for s in b1 b2 b3 b4 b5 b6; do
   log="$WORK/$s.logs/git.log"
-  [ -n "$(grep -E "config .*credential\.https://${CAN_HOST}\.helper" "$log" | grep -v -- '--unset' || true)" ] ||
-    fail "b-7: scenario $s — the canonical host's PAT helper was not wired; SSO logic leaked onto the canonical pair"
-  [ -z "$(grep -E -- "--unset" "$log" | grep -E "credential\.https://${CAN_HOST}\.helper" || true)" ] ||
-    fail "b-7: scenario $s — an unset targeted the canonical host; only the SSO-approved dev host may be unset"
-  ok "b-7: $s — canonical helper wired, never unset (dev-pair-only SSO layering)"
+  [ -z "$(grep -E "credential\.https://${CAN_HOST}\.helper" "$log" || true)" ] ||
+    fail "b-7: scenario $s — a CAN_HOST credential-helper call (set or unset) reappeared; the removed canonical PAT plumbing must not come back"
+  ok "b-7: $s — no canonical-host credential calls (PAT plumbing removed)"
 done
 
 rm -rf "$WORK"

@@ -33,11 +33,6 @@ bitwardenIds:
   # login, WITH_API=true); the user must populate/verify the item — the
   # boards pod fails fast on an empty URI (visible by design).
   wekan-mcp: d8e2b2ca-792d-4e0a-86ae-b4ed0122c21a
-  # forgejo-token-canonical (password = access token for git.spencerslab.com).
-  # The Bitwarden item does not exist yet, so this is a must-fill placeholder
-  # (OVERRIDE_NEEDED), not the deploy-time service sentinel. Replace it with
-  # the item UUID once the item is created.
-  forgejo-token-canonical: OVERRIDE_NEEDED
 
 base:
   bitwardenIds:

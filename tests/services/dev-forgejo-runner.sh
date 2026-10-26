@@ -1001,35 +1001,24 @@ try:
     ok('t9: dev ingress.subdomains within the approved set (original four + searxng; no runner entry, no unapproved addition)')
 
     # Sentinels may remain only inside the appset-generator resource (the
-    # values blob, where per-app placeholders ride to the base chart); the
-    # service sentinel must not survive anywhere, and no other rendered
-    # resource may carry a deploy-time OVERRIDE_VIA_* string. The documented
-    # OVERRIDE_NEEDED must-fill placeholder is tolerated in exactly one
-    # pinned document (below): infra-forgejo t6 precedent + dev-git-auth.sh
-    # c-canonical-2 tolerance — the same narrowing the C06-post review
-    # approved on this ticket. The github-mcp OVERRIDE_NEEDED allowance
-    # added for the dev-mcp-fleet interim was RETIRED by the DECISIONS
+    # values blob, where per-app placeholders ride to the base chart). The
+    # pinned OVERRIDE_NEEDED tolerance for forgejo-token-canonical was
+    # retired together with that wiring (removed unused 2026-10-26), so NO
+    # non-appset document may carry any OVERRIDE_ string. A future must-fill
+    # slot needs its own contract amendment, not a widened allow — the
+    # github-mcp allowance was retired the same way by the DECISIONS
     # 2026-10-24 post-approval ruling (the real items exist — dev-github
-    # LOGIN 522b1cc4 reused for github-mcp, searxng LOGIN f90806ff — and
-    # custom-values must carry the UUIDs); do not widen this tolerance with
-    # another blanket allow — the pinned-slot pattern below is the way.
+    # LOGIN 522b1cc4 reused for github-mcp, searxng LOGIN f90806ff).
     raw = open(render).read()
     if 'OVERRIDE_VIA_CUSTOM_VALUES' in raw:
         bad('t9: the rendered dev umbrella still carries the OVERRIDE_VIA_CUSTOM_VALUES service sentinel (the -f file did not resolve it)')
-    override_docs = []
     for d in docs:
         if d.get('kind') == 'ApplicationSet':
             continue
         t = yaml.safe_dump(d)
-        if 'OVERRIDE_VIA_' in t:
-            bad(f"t9: non-appset document {((d.get('metadata') or {}).get('name'))!r} carries an OVERRIDE_VIA_* deploy-time sentinel — only the appset-generator resource may hold per-app placeholders")
         if 'OVERRIDE_' in t:
-            override_docs.append(((d.get('metadata') or {}).get('name'), t))
-    if [n for (n, _) in override_docs] != ['forgejo-token-canonical']:
-        bad(f"t9: expected exactly the forgejo-token-canonical ExternalSecret to hold a non-deploy-time OVERRIDE_ string outside the appset generator; found {[n for (n, _) in override_docs]}")
-    if 'OVERRIDE_NEEDED' not in override_docs[0][1]:
-        bad('t9: the pinned forgejo-token-canonical document does not carry the documented OVERRIDE_NEEDED must-fill placeholder (custom-values/dev lost the slot or the remoteRef drifted)')
-    ok('t9: no OVERRIDE_VIA_* outside appset-generator resources; the only tolerated OVERRIDE_ string is the pinned forgejo-token-canonical OVERRIDE_NEEDED must-fill')
+            bad(f"t9: non-appset document {((d.get('metadata') or {}).get('name'))!r} carries an OVERRIDE_* string — deploy-time sentinels may ride only in the appset-generator values blob, and the canonical must-fill slot was retired with its wiring")
+    ok('t9: no OVERRIDE_* strings outside the appset-generator resource (canonical slot retired 2026-10-26)')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))

@@ -1263,15 +1263,14 @@ else
   # legitimate renders instead of defects. github-mcp/wekan-mcp were added to
   # that block by 2026/2026-10-feat-dev-mcp-fleet C03 (user ruling
   # 2026-10-24); --set-ingesting keys the chart does not have yet is inert,
-  # so the list stays correct before and after C03 lands. forgejo-token-
-  # canonical joins the ladder for 2026-10-feat-forgejo-auth-support C03
-  # (2026-10-25 adaptation) — same reason its twin forgejo-token is here.
+  # so the list stays correct before and after C03 lands. The
+  # forgejo-token-canonical leg was dropped 2026-10-26 when that wiring was
+  # removed unused (2026-10-feat-forgejo-auth-support scope cut).
   if ! "$helm_bin" template "$DEVUMB" \
       --set domain=scifi.farm --set subDomain=dev --set clusterName=dev \
       --set bitwardenIds.cert-manager-solver-token=u \
       --set bitwardenIds.argocd-sso-secret=u \
       --set bitwardenIds.github-pat=u --set bitwardenIds.forgejo-token=u \
-      --set bitwardenIds.forgejo-token-canonical=u \
       --set bitwardenIds.github-mcp=u --set bitwardenIds.wekan-mcp=u \
       --set hivetools.bitwardenIds.mcp-sso=u \
       >"$dev_out" 2>"$WORK/dev-umb.err"; then

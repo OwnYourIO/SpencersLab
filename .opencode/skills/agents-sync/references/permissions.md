@@ -8,6 +8,16 @@ Generated agents carry `permissions:` blocks in their frontmatter (authored in `
 - `ask` pauses for the user; unattended subagents treat it as effectively blocked, so allow-lists decide what runs hands-free.
 - `execute` is the Code Mode action (resource `*`). Current builds route MCP tools and the `tools.opencode.*` namespace through Code Mode; the base `* * deny` silently removes it, hiding those tools no matter which MCP actions the agent allows ("nested tools enforce their rules" — V2 permissions doc). An agent that must reach an MCP server therefore needs `execute: * allow` IN ADDITION to its `<server>_<tool>` rule; execute grants nothing by itself — every call inside Code Mode re-checks the agent's allow-list.
 
+## Hand-managed global policy arrays
+
+The machine (`~/.config/opencode/opencode.json`) and project (`.opencode/opencode.jsonc`) `permissions` arrays live outside rulesync and apply to every agent BEFORE its own rules append. Last-match-wins makes their ORDER load-bearing; the shape is broad → blanket → exceptions:
+
+1. **Universal default FIRST** — `{ action: "*", resource: "*", effect: "ask" }` (overrides the built-in base's `* * allow`). Placed at the END instead, it silently converts every allow above it into an ask. The failure is role-shaped: generated agents restate their own rules last and look healthy, while built-ins (`plan`, `build`, `general`) and hand-authored stage profiles without a matching rule prompt on everything they do — the classic symptom is "every new agent asks for skills" while the pipeline runs silently.
+2. **Blanket allows next** — `read *`, `shell *`, `skill *`, `webfetch`, `websearch`, `codesearch`, per-`playwright_*`, `external_directory`…
+3. **Exceptions LAST** — `read *.env` / `*.env.*` ask, then `read *.env.example` allow (if `read * allow` follows them, `.env` protection is a no-op); the `shell "*>*"` redirect guard AFTER `shell * allow` (before it, dead code).
+
+After editing either array, re-derive the last match by hand for at least: a `skill <new-id>` load (allow), reading `.env` (ask), reading `.env.example` (allow), plain `git status` (allow), `echo x > f` (ask), and one unlisted action (ask).
+
 ## Role matrix (who may write what)
 
 | role | edit | subagent | shell | MCP |

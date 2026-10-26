@@ -241,3 +241,26 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 ## Post-rebase correction (2026-10-25) — supersedes the "Mechanism" wording above
 - The 2026-10-25 un-wire entry described the gate-trio mechanism (enabled:false x3 + ES dig-gate) built against the pre-refactor dual-controller chart. main then landed 2026-10-refactor-forgejo-runner-per-instance (single-runner chart deployed per instance via `chart:` alias). The rebase DROPPED commit 8ead9a714 (obsolete mechanism; never pushed, not an ancestor of HEAD) and re-landed the same user decision as alias removal: services/dev forgejo-runner-infra chart-entry + top-level slice deleted, custom-values/dev forgejo-runner-infra block deleted (commit 0a3f5c216). charts/forgejo-runner stays byte-identical to base; capability + vault item (b1add65b) reserved for the user's future relocation.
 - Companion test resolution (ebcdbf421): the approved C03 canonical sentinel broke three base-owned scans; dispositions mirror the already-reviewed t6/c-canonical-2 tolerance — t9 blanket OVERRIDE_* scans in dev-forgejo-runner.sh + dev-mcp-fleet.sh narrowed to the OVERRIDE_VIA_ class with the must-fill slot pinned present (non-vacuity drift-proven); forgejo-ssh-gateway.sh t8 dev --set ladder extended with bitwardenIds.forgejo-token-canonical. KNOWN BY DESIGN: t9 pins the OVERRIDE_NEEDED placeholder's presence — wiring the canonical UUID later must update that pin in the same round.
+
+## Post-plan user decision (2026-10-26) — canonical wiring REMOVED, supersedes the entries above
+- User ruling: `forgejo-token-canonical` is "no longer used, please remove".
+  The whole canonical PAT branch is deleted (2026-10-26, uncommitted on main
+  per user instruction; plan of record
+  `.agents/plans/2026-10-26-bug-cluster-health-followups.md`): the dev ES
+  template, the `bitwardenIds` sentinel, the `OVERRIDE_NEEDED` custom-values
+  slot, the `FORGEJO_TOKEN_CANONICAL`/`FORGEJO_HOST_CANONICAL` envs in
+  kubernetes-hardened/main.tf, and the canonical `wire_forgejo` pair in
+  workspace-startup.sh. C02's single-host `wire_forgejo` factoring, the
+  known-hosts pre-trust of git.spencerslab.com:22222 and the SSH key banner
+  stay — canonical access remains via registered SSH keys + the gpu coder's
+  external-auth provider. This moots the pending "User action 1" (create the
+  Bitwarden item) and the 2026-10-25 "stays OVERRIDE_NEEDED" lines.
+- Test disposition: dev-git-auth c-canonical-1..4 deleted and c-canonical-5
+  inverted (renders must contain NO canonical ES/slot); dev-forgejo-runner t9
+  restored to the pre-C03 blanket OVERRIDE_* ban; dev-mcp-fleet t9 canonical
+  presence pin → absence pin and its `--set` ladder leg dropped;
+  forgejo-ssh-gateway t8 ladder leg dropped; startup-script canonical
+  checks retired; startup-sso-behavior b-7 flipped to "no CAN_HOST credential
+  call may reappear"; gpu-coder-sso precedent comment re-pointed to
+  infra-forgejo t6. All suites re-run green except pre-existing-at-HEAD
+  renovate-drift pins (dind 29.9.2, playwright v0.0.83) and gateway t1/t11.

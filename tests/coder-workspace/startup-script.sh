@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Acceptance checks for containers/coder-workspace/workspace-startup.sh —
 # the baked startup contract the Coder templates call. Covers criterion 1
-# (POSIX sh, set -eu), the env contract, the SSH + clone jobs, the dual-host
-# Forgejo wiring (2026-10-feat-forgejo-auth-support C02), the SSO polite-gate
-# statics (same ticket C06 — the behavioral proof is
+# (POSIX sh, set -eu), the env contract, the SSH + clone jobs, the
+# Forgejo wiring (2026-10-feat-forgejo-auth-support C02; the canonical-pair
+# wiring was removed unused 2026-10-26 — the dev pair only), the SSO
+# polite-gate statics (same ticket C06 — the behavioral proof is
 # tests/coder-workspace/startup-sso-behavior.sh), and the forbidden strings.
 # Each check prints one pass/fail line; any fail makes the script
 # exit non-zero.
@@ -60,7 +61,7 @@ fi
 # These are the exact env names the hardened template will export; a rename on
 # either side would silently break workspace startup.
 for var in OPENCODE_SERVER_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST \
-  FORGEJO_TOKEN_CANONICAL FORGEJO_HOST_CANONICAL FORGEJO_OAUTH_ID CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
+  FORGEJO_OAUTH_ID CODER_USER CODER_USER_EMAIL WORKSPACE_GIT_REPOS; do
   if grep -Eq "(^|[^A-Za-z0-9_])\\\$\\{?${var}" "$STARTUP"; then
     pass "env: \${${var}} is read by the startup script"
   else
@@ -68,35 +69,20 @@ for var in OPENCODE_SERVER_PASSWORD GITHUB_TOKEN FORGEJO_TOKEN FORGEJO_HOST \
   fi
 done
 
-# --- dual-host Forgejo wiring (2026-10-feat-forgejo-auth-support C02) -------
-# One wire_forgejo function serves both Forgejo pairs, so the canonical pair
-# inherits the dev pair's guard/order/failure semantics instead of a drifting
-# inline copy. The token travels by env-var NAME: the helper must expand it at
-# use time, because the home PVC outlives the Secret and a config-time value
+# --- Forgejo wiring (2026-10-feat-forgejo-auth-support C02) ------------------
+# wire_forgejo serves the (single) Forgejo pair, so the pair inherits the
+# guard/order/failure semantics instead of a drifting inline copy. The token
+# travels by env-var NAME: the helper must expand it at use time, because the
+# home PVC outlives the Secret and a config-time value
 # would persist the token on disk.
-if code_lines "$STARTUP" | grep -qE '\[ -n "?\$\{?FORGEJO_TOKEN_CANONICAL'; then
-  pass "wire: the canonical pair sits behind its own -n guard (no env, no action)"
-else
-  fail "wire: FORGEJO_TOKEN_CANONICAL is not read in a '-n' guard context — the optional-pair contract is unmet"
-fi
-
 if code_lines "$STARTUP" | grep -qE '^[[:space:]]*wire_forgejo[[:space:]]*\([[:space:]]*\)[[:space:]]*\{'; then
-  pass "wire: wire_forgejo is defined (single wiring path for both hosts)"
+  pass "wire: wire_forgejo is defined (single wiring path for the pair)"
 else
-  fail "wire: no wire_forgejo function definition — the dual-host block was not factored out"
+  fail "wire: no wire_forgejo function definition — the wiring block was not factored out"
 fi
 
-can_ref=$(code_lines "$STARTUP" \
-  | grep -E 'wire_forgejo.*FORGEJO_TOKEN_CANONICAL|password=\\\$\{?FORGEJO_TOKEN_CANONICAL' \
-  | head -n 1 || true)
-if [ -n "$can_ref" ]; then
-  pass "helper: the canonical token is referenced by name at the wiring site or in a helper body"
-else
-  fail "helper: nothing references \$FORGEJO_TOKEN_CANONICAL by name — the helper would expand some other (or no) token at use time"
-fi
-
-# Both hosts seed fj through the function: every 'add-token' call-site must live
-# inside wire_forgejo's body, not next to it for one pair only.
+# Every 'add-token' call-site must live inside wire_forgejo's body — a call
+# next to it would bypass the shared failure semantics.
 wf_body=$(awk '
   /^[[:space:]]*wire_forgejo[[:space:]]*\(/ { f = 1 }
   f { print }
@@ -105,7 +91,7 @@ wf_body=$(awk '
 at_all=$(code_lines "$STARTUP" | grep -cF 'add-token' || true)
 at_wf=$(printf '%s\n' "$wf_body" | grep -cF 'add-token' || true)
 if [ "${at_wf:-0}" -ge 1 ] && [ "${at_all:-0}" -eq "${at_wf:-0}" ]; then
-  pass "fj: 'fj auth add-token' is invoked only from wire_forgejo (both hosts share it)"
+  pass "fj: 'fj auth add-token' is invoked only from wire_forgejo"
 else
   fail "fj: ${at_all:-0} add-token call-site(s), ${at_wf:-0} inside wire_forgejo — one pair bypasses the shared function"
 fi
@@ -184,8 +170,7 @@ fi
 # The dev-pair wiring must become conditional on SSO state. Accepted layouts
 # (DECISIONS 2026-10-24 replan): a no-helper marker at the call site, or a
 # guard conditional naming the SSO state variable in the call's immediate
-# window. Canonical's call must stay free of SSO influence (pairing ruling:
-# the dev coder's one slot serves the dev forge only).
+# window.
 dev_wire=$(grep -nE 'wire_forgejo[[:space:]]+"?\$\{?FORGEJO_TOKEN([^_A-Za-z0-9]|$)' "$STARTUP" || true)
 gate_hit=""
 while IFS=: read -r lineno _; do
@@ -201,27 +186,6 @@ if [ -n "$gate_hit" ]; then
   pass "sso: the dev-pair wire_forgejo call is gated on SSO state (marker or guard at line $gate_hit)"
 else
   fail "sso: the dev-pair wire_forgejo call is unconditional — with approved SSO the PAT helper would still shadow askpass"
-fi
-
-can_wire=$(grep -nE 'wire_forgejo.*FORGEJO_TOKEN_CANONICAL' "$STARTUP" || true)
-can_hit=""
-while IFS=: read -r lineno _; do
-  [ -n "$lineno" ] || continue
-  lo=$((lineno > 1 ? lineno - 1 : 1))
-  # Window is deliberately ONE line above the call here (vs 5 for the dev
-  # gate): a guard at the canonical call site sits directly above it, while a
-  # wider window would false-positive on the dev pair's own SSO lines that
-  # usually precede the canonical block.
-  if sed -n "${lo},${lineno}p" "$STARTUP" | grep -vE '^[[:space:]]*#' |
-    grep -qiE 'no[-_]?helper|sso'; then
-    can_hit=$lineno
-    break
-  fi
-done <<< "$can_wire"
-if [ -z "$can_hit" ]; then
-  pass "sso: the canonical call site carries no SSO reference (per-user layering is dev-pair-only)"
-else
-  fail "sso: SSO logic leaked to the canonical wire_forgejo call (line $can_hit) — canonical must keep the shipped PAT behavior"
 fi
 
 # No-disk, extended to the OAuth token: whatever the CLI captured must never
