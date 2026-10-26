@@ -322,3 +322,182 @@ public HTTPS to `llama.spencerslab.com` (health, api/hardware, running, logs, lo
 `api.github.com`. Capture session: 2026-10-26T14:01–14:36Z. Ephemeral raw captures kept under
 /tmp/opencode (gguf_final.out, fnq3_full.txt, apt-layer dpkg status) — quoted inline here, not
 tracked in the repo. No cluster mutation, no config edit, no load attempt, no agent-run kubectl exec.
+
+## 13. C04 post-fix record — the mmap regime verified live (agent-dev, 2026-10-26T22:30Z+)
+
+ticket: 2026/2026-10-debug-flash-next-vulkan-oom · chunk: C04 · branch: debug-flash-next-vulkan-oom-openrouter-qwen3-8-flash
+Source tags as in §1-12 ([MCP]/[HTTP]/[PROM]/[CONFIGMAP]/[LOG]); new tag `[SSE]` = per-model buffer
+replay fetched through the llama-swap UI's same-origin channel via the playwright MCP (the only
+agent-reachable route to `GET /logs/stream/<id>` — the sandbox egress proxy buffers long-open
+streams and times them out; plain GETs are unaffected). All cluster reads readonly; no admin MCP;
+no kubectl apply; no pod/host exec by the agent; kernel params untouched (§13.4).
+
+### 13.1 Landed + synced precheck (procedure step `argocd-sync-check`)
+
+- ArgoCD on gpu-ai: all 8 Applications incl. `gpu-ai` and `gpu-ai-llama-swap` — **Synced / Healthy** [MCP resources_list argoproj.io/v1alpha1 Application].
+- Live ConfigMap `llama-swap-config`: `--load-mode mmap` ×5 and `--fit off` ×5 — exactly the five flash-next-family rungs; `--load-mode none` remains only on the untouched `${moe}` rungs (7 occurrences) [CONFIGMAP 21:5xZ]. Matches the C03 render contract byte-for-byte on the flag surface.
+- Pod `gpu-ai-llama-swap-fc6d7c8fc-2jmkl` on node ai-gpu: image pin `unified-vulkan-266` unchanged, started **16:14:35Z** via reloader on ConfigMap hash `aef19b7f8233…` [MCP pods_get] — the merged branch rolled out with **0 restarts** since.
+
+### 13.2 Load-attempt record — AC1 (flash-next-q3 reached running; regime applied; one agent attempt, no retries)
+
+| load | trigger (xff) | matrix event | Health check passed | load time | verdict |
+|---|---|---|---|---|---|
+| A | operator (UI) | 16:15:50Z | 16:16:21Z | 24.55 s (buffer rel) | model loaded, listening :10047 [LOG-proxy + SSE] |
+| B | operator | 21:28:18Z | 21:28:37Z | 19.22 s | loaded; served; clean TTL-300s unload 21:34:33Z [LOG-proxy] |
+| C | operator | 21:46:33Z | 21:46:48Z | 13.33 s | loaded; 14 min heavy use (§13.6 prefills); clean TTL exit 22:00:5xZ [SSE] |
+| D (agent consented attempt) | agent POST /v1/chat/completions (tiny prompt, stream) | 22:20:37Z | 22:21:04Z | 26.66 s | loaded within healthCheckTimeout; evicted 0.6 s post-health by a matrix/preload race (§13.7) before the agent request was forwarded |
+
+Regime actually applied at load — every one of the four sessions prints, ~0.2 s after `loading model
+'unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q3_K_XL'`:
+
+> `0.00.4xx W llama_model_loader: tensor overrides to CPU are used with mmap enabled - consider using --load-mode none for better performance` [SSE]
+
+— a warning that exists **only** when the `-ot` CPU overrides and mmap placement are simultaneously
+active; absent from the §2 crash session (pinned regime) and from all `-ot`-less rungs. The expanded
+runtime cmd of the live rung (`GET /running`, 21:56Z [HTTP]) carries `-ngl 99`,
+`-ot "\.ffn_.*_exps\.=CPU"`, `--load-mode mmap`, `--fit off` and **no `--spec-type`/`-hfd` flags** —
+the first cut exactly as rendered. MTP absence is also proven positively at load: no
+`common_speculative_init_result: loading draft model` line in any flash-next session, while the
+healthy 27b-q4 rung's buffer prints exactly that line on the same box [SSE].
+
+Method finding: `load_tensors:` buffer-split INFO lines never reach the per-model buffer on this box
+at runtime verbosity 3 — verified against the working `qwen3.8-27b-q4` rung too (zero
+`load_tensors`/`model buffer`/`offloaded` rows in its buffer, despite the print site being
+`LLAMA_LOG_INFO` in b11810 `src/llama-model.cpp:2016`). The §2/§11 expectation "the split arrives at
+C04" is therefore void by method on this box; §13.3 carries the substitute fingerprints.
+
+### 13.3 Buffer-class quantification (Vulkan_Host vs CPU_Mapped — AC1 fingerprint intent)
+
+- Session C clean teardown printed the `~llama_context` accounting [SSE, 22:00:5xZ]:
+  `Vulkan0 compute buffer size of 2070.8440 MiB` and `Vulkan_Host compute buffer size of 614.5625 MiB`
+  — the whole observed **Vulkan_Host** residency is ≈ 0.6 GiB (under 1 GiB) vs the pre-fix class
+  split recorded from upstream #30987 (§2: `Vulkan_Host model buffer 40681 MiB`) and §3's 55.8+4.75
+  GiB pinned demand arithmetic — ~65× smaller than the crash-regime Vulkan_Host weight buffer.
+- Experts placement under the new regime: the `-ot`-overridden 144 tensors (51.99 GiB, §5) bind to
+  the file-backed **CPU_Mapped** buffer class (the mmap loader warning above names the combination;
+  RESEARCH §4.3 maintainers' workaround) — reclaimable page cache, not GTT pins.
+- Host-side corroboration (§13.5 table): MemAvailable never fell below 102.5 GiB with the 83.8 GiB
+  model resident and active while the pod working set read 85.3–98.7 GiB — the >13 GiB delta of the
+  working set beyond non-reclaimable demand is reclaimable file-backed pages; the pinned regime
+  converted the same model into unreclaimable GTT/anonymous memory and died at the 62.54 GiB GTT
+  budget (§3) before such RSS even completed.
+
+### 13.4 Journal-clean proof — AC2
+
+Window 2026-10-26T16:14:30Z → 22:26Z (config rollout; all four loads; ~45 min active serving
+including 50k-token prefills; agent attempt; +10 min tail). Stream
+`{cluster="gpu-ai", job="integrations/kubernetes/journal"}` [Loki — read path RECOVERED, C01's 502
+no longer applies]:
+
+| journal_clean_patterns (all four per procedure) | matches |
+|---|---|
+| `amdgpu_vm_validate` | 0 matches — clean |
+| `BO_VA` | 0 matches — clean |
+| `command submission` | 0 matches — clean |
+| `ring .* timeout` | 0 matches — clean |
+
+Sensitivity control: identical selector+filter returns matches in the 03:25–03:45Z crash window
+(§1's 1772-line flood; e.g. `amdgpu 0000:c2:00.0: [drm] *ERROR* amdgpu_vm_validate() failed.`)
+[Loki] — the zero rows above are discrimination, not missing data. Zero `*ERROR*` lines anywhere in
+the post-landing window [Loki]. One non-contract WARN recorded verbatim: 17:12:51Z
+`amdgpu 0000:c2:00.0: Fence fallback timer expired on ring comp_1.1.0` (level=warning) — matches
+none of the four patterns, no reset/hang/device-lost line before or after it, serving unaffected
+(loads B/C/D all passed health afterwards, 50k-token prefills completed). Node ai-gpu **Ready**
+throughout [MCP]; pod **0 unexplained restarts** since rollout. Trio running-state: documented clean
+reload cycles — matrix preload targets [home-3b-v3, qwen3-embedding-0.6b, qwen3.6-35b-a3b-q8,
+qwen3.8-27b-q4/q6] at 16:16:21Z / 22:00:58Z / 22:21:04Z with health passes 22:01:07Z / 22:21:20Z;
+solo-rung eviction of the trio during loads is the operator-accepted scheduled consequence
+(DECISIONS 2026-10-26). Agent-side: one single load attempt, no retry loops; kernel `lockup_timeout`
+(30000 ms, §4) and all `/sys/module` params left **untouched** — no host change in any branch.
+
+### 13.5 Memory accounting at load-active peak — AC5 numbers
+
+| moment (UTC) | state | MemAvailable GiB | pod working-set GiB |
+|---|---|---|---|
+| 03:35 (§1 era) | pinned attempt crashed, memory freed | 83.22 | n/a (old pod) |
+| 14:08 (§7) | pre-fix comparison: 27b-q6 pinned + mmap PLE | 72.73 | — |
+| 21:50 | flash-next-q3 resident, 50k-ctx churn | 106.12 | 97.76 |
+| 21:55 | resident, active | 105.45 | 98.67 |
+| 22:00 | resident, final requests | 102.99 | 89.00 |
+| 22:00:50 | teardown | 102.56 | 85.34 |
+
+`free -h` mirrors the [PROM] rows (C01 §7 precedent; MemTotal 125.08 GiB re-verified 22:1xZ).
+Non-reclaimable demand under the new regime ≈ **19–22 GiB** (MemTotal − MemAvailable at peak: KV
+≈3 GiB + Vulkan0 compute ≈2.1 GiB + runtime anon/misc); weights ≈80 GiB stay reclaimable page
+cache. Headroom table, pre-fix vs post-fix: the pinned regime demanded 62–67 GiB of *GTT-pinned*
+RAM against the 62.54 GiB budget (crash, §3); the mmap regime pins ≈0 GiB of weights, device/GTT
+demand ≈10–13 GiB — **≈50 GiB GTT headroom** where pre-fix there was none.
+
+q4 decision input (chunk task 7): q4 = 103.7 GiB weights, same regime → device/GTT demand
+essentially unchanged (~10–13 GiB + ~1–2 GiB denser GPU-resident share; fits the 62.54 GiB budget
+comfortably); host side = 103.7 GiB file-backed + ~20 GiB non-reclaimable ≈ 124 GiB vs MemTotal
+125.08 — fits only SOLO with page-cache reclaim pressure at 262k-ctx churn (the family comment's
+own "tight against ~125 GiB, SOLO only" reading). Verdict: technically testable next under the same
+one-attempt protocol — **operator/coord decision, DECISIONS.md entry pending (coord-owned)**.
+
+### 13.6 Serve smoke + long-prefill probe — AC1/AC3
+
+- Serve smoke (sane completion) — on-record for this exact config through the operator's live
+  clients: activity captures (agent-readable, `has_capture: true`) incl. id 168 fnq3
+  `input 5019 / output 549, prompt 164.12 t/s, decode 10.89 t/s`, id 167 `input 50593 /
+  output 726 @ 202.15/6.71 t/s` — coherent served answers, HTTP 200 [HTTP activity API].
+  Agent-literal POSTs: environment-limited, recorded honestly — the sandbox egress proxy swallows
+  POST bodies (499 at client timeouts; GETs unaffected), and the in-cluster UI channel got the
+  queue/status stream only: request id 182 (the consented trigger) completed 22:20:46Z with the
+  llama-swap loading-status narrative, **not** a model answer, because load D was evicted 0.6 s
+  post-health before forwarding (§13.7 race) — capture `GET /api/captures/182` holds the full
+  exchange [HTTP]. The AC1 "reached running" gate is met by four health-passed loads; the
+  "sane completion" gate is met by the recorded captures above.
+- Long-prefill probe (runtime ring-timeout class, procedure step `long-prefill-probe`): server-side
+  records from the live buffer [SSE], all under the fixed regime:
+  `prompt eval time = 102546.76 ms / 21723 tokens (211.84 tokens per second)` (concurrent slot),
+  `prompt eval time = 250275.75 ms / 50593 tokens (202.15 tokens per second)` + `cache_tokens 49238`
+  reuse, decodes 6.71–15.43 t/s, every slot `stop processing: ... truncated = 0`, clean teardown —
+  prefills **far beyond the 8–16k requirement, clean**. No ring-timeout, no DeviceLost: the
+  llama-side mitigations (`GGML_VK_MAX_NODES_PER_SUBMIT`, `-ub 512`) were therefore NOT applied
+  (procedure rule: mitigate only if the class bites); kernel params untouched in every branch.
+  The agent's own ~8k-token drill probe (31,167 chars, fired 22:24Z) was still FIFO-starved behind
+  the operator's live 26-min 135,864-token request when cancelled client-side at 22:26Z to stop
+  surprise loads during production use — recorded as environment limitation, not a model failure.
+
+### 13.7 Gate 2 — MTP re-add (AC4): second gate passed on layout + render; cluster proof user-owned
+
+- Gate conditions: C01 §5 hc-layout verdict **passed** (unsloth sidecar post-#28901; main GGUF
+  carries `output_hc_norm.weight`) AND a passing, journal-clean no-MTP load (§13.2/§13.4) → gate 2
+  open per DECISIONS two-gate path; operator GO covers "the next round of changes" (2026-10-26).
+- Re-added: flash-next family `draft:` + `spec:` restored in `charts/llama-swap/values.yaml` — the
+  exact removed lines from commit 947c3eec9 (`draft: unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0`,
+  `spec: {type: draft-mtp, draft_n_max: 2}`) plus the orca-q6 rung-level `spec:` (TEST_SPEC §8.2:
+  the orca first-cut removal included it). Orca keeps the documented probe-on-miss path: embedded
+  MTP first (qwen38-orca publisher convention), else the standalone sidecar
+  `orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:MTP-draft.gguf` — NOTE the UPPERCASE `MTP-` file
+  name, the llama.cpp `mtp-` sidecar match is case-sensitive (TEST_SPEC §7(F)).
+- Validation: helm lint/template re-executed; full chart suite re-run — the first-cut absence
+  contracts flip red **by design** (5× `test_c03_ac1_first_cut_has_no_mtp_draft_or_spec` +
+  1× `test_c04_1_flashnext_mtp_draft_wired` hardcode the pre-gate-2 state and do not model the
+  re-add; routed to the test session as validation_at_fault via RESULT — tests untouched by dev).
+- The second consented load of the MTP-enabled rung executes only after the operator lands the
+  branch to main (ArgoCD pulls main; PR is user-owned — agents never push/merge): same
+  journal-watch, fingerprint and one-attempt discipline; trio eviction accepted. Final serving
+  regime at record time: **`--load-mode mmap` on, `--fit off` on, MTP re-added on the branch /
+  off on the cluster until landing** — all §13.2/§13.6 timings are the no-MTP regime.
+- Scheduling follow-ups (not kernel/journal issues; no config change made outside the consented
+  scope): (1) load D was evicted 0.6 s after health by a same-second trio-preload matrix event —
+  a llama-swap v265 solo-vs-preload race worth an operator look; (2) queued solo requests starve
+  behind long in-flight main-set streams (~10 min observed); (3) agent POSTs through the sandbox
+  egress proxy do not reach workloads (bodies swallowed) — use the UI same-origin channel or an
+  operator-side curl for future smoke needs.
+
+### 13.8 C04 provenance appendix
+
+Readonly MCP: `readonly-ai-gpu-kubernetes` (pods/pods_get/pods_top, nodes via resources_list,
+ConfigMap, argoproj Applications), `readonly-global-grafana` (Loki label/stats/LogQL incl. the
+crash-window sensitivity control + Prometheus instants; datasources `prometheus`/`P8E80F9AEF21F6940`).
+HTTP: `llama.gpu-ai.spencerslab.com` (+ public alias) — /health, /running, /api/hardware, /logs,
+/api/metrics/activity, /api/captures/182, POST /v1/chat/completions (trigger + probes), and the
+same-origin UI fetch channel (playwright MCP) for `/logs/stream/qwen3.8-flash-next-q3` replays
+(37,190 B, 4 sessions) + the served-request record. GitHub API: b11810 `src/llama-model.cpp` print
+site + llama-swap `internal/server/{server,log}.go`, `internal/logmon/group.go` (log-routing
+forensics). Repo-side: helm v3.16.4 re-provisioned to /tmp/opencode/bin (sha256 fc3073279…,
+FRICTION item), chart suite before/after edits. No admin MCP, no kubectl apply, no version/image-tag
+bump, no test edit, no kernel/host mutation, no user-run host command was needed for this chunk.
