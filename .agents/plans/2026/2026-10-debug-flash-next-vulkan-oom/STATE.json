@@ -3,6 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e89b88646ffeor0bsAa1GwcHRr",
   "test_session": null,
+  "test_session_note": "agent-test completed (commit 1279ce582) but its sessionID + RESULT were lost to a harness 'Tool result missing' failure after a machine reboot; reconstructed hand-off below. If a test fix is ever needed (validation_at_fault), launch a FRESH agent-test session — the original is unreachable.",
   "kickoff": {
     "slug": "debug-flash-next-vulkan-oom",
     "type": "debug",
@@ -36,6 +37,14 @@
       "status": "DONE",
       "pass": "reintegration (post-RESEARCH.md)",
       "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-10-26-debug-flash-next-vulkan-oom.md, DECISIONS.md, chunks/C01.md, C02.md, C03.md, C04.md] committed c7e82d112 (local; STATE.json/FRICTION.md untouched)\ncommands_run: [read RESEARCH.md in full => pass, git add(plan files only)+commit c7e82d112 => pass, grep consistency check (load-mode/gated/hc-layout across plan+chunks) => pass, STATE.json/FRICTION.md read-only => pass]\ndeviations: none beyond scope letter: C04 received runtime-cliff/MTP-gate details, C02 reframing (both encode branch logic RESEARCH established)\nfriction: none new (carried: no helm in worktree, no pod-exec via MCP — designed around in C01/C03)\nopen_questions: three operator decision points at approval: (1) C02 containment now vs debug-live, (2) pre-authorization of branch B (user-owned host ttm.pages_limit=32505856 + reboot) gated on C01's GTT measurement, (3) acceptance of C04's one-attempt freeze protocol / trio-eviction scheduling on the live single-node box\nnext_suggested: present chunk table + decision points to user; on approval coord flips plan_status=approved and launches wave 1 (C01 first — its EVIDENCE.md gates C03's A-vs-A+B fork; C02 only if containment chosen)"
+    }
+  ],
+  "test_handoffs": [
+    {
+      "at": "2026-10-26",
+      "from": "agent-test",
+      "status": "DONE (reconstructed — RESULT lost to harness failure; no sessionID returned)",
+      "result": "RECONSTRUCTED FROM COMMIT 1279ce582 (13:54 UTC): 'pipeline(test): C01/C03/C04 contracts — regime render assertions, pre-chunk blast-radius baseline, evidence/attempt validators, C04 procedure artifact'. Body: covers C01/C03/C04 (C02 skipped by operator); 16 contract-reds name the missing C03 mmap regime; artifact validators skip-gated until ticket artifacts land (TEST_SPEC §8.5 ledger); goldens untouched. files_changed: TEST_SPEC.md, evidence/c04_verification_procedure.yaml, evidence/flashnext-pre-chunk-baseline/{PROVENANCE.md,gpu-ai.config.yaml,gpu.config.yaml}, llama_swap_testlib.py, test_c01_evidence.py, test_c04_verification.py, test_flashnext_blast_radius.py, test_flashnext_regime.py, test_new_roster.py (11 files, +3544/-16). Working tree clean at coord verification. open_questions: none recoverable. next_suggested: wave 1 — C01."
     }
   ],
   "chunks": {
