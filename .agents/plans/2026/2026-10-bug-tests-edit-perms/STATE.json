@@ -5,7 +5,7 @@
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e8635bb4cffefHTWibtg4ZfsE6",
   "current_wave": 1,
-  "updated_at": "2026-10-26T19:50Z",
+  "updated_at": "2026-10-26T20:10Z",
   "kickoff": {
     "card": null,
     "slug": "bug-tests-edit-perms",
@@ -37,10 +37,10 @@
   ],
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "in-progress",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 2,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
@@ -56,9 +56,15 @@
           "round": "test-2",
           "result": "RESULT (condensed from full handoff; suite posture authoritative on disk)\nstatus: DONE\nchunk: C01\nfiles_changed: [tests/agent-perms/surface.sh (new 438L), tests/coord-inwork/surface.sh, tests/agent-board-coord/gate.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/agents-md.sh]\ncommands_run: [re-probe write => pass (grants live post-bootstrap); main matrix @HEAD+@081b57889: agent-perms RED A2/A3/A4 named-missing-contract (A1 GREEN — bootstrap pre-satisfied T5, deviation (1); A5-A10 GREEN), coord-inwork 6ok both, gate 21ok both, rulesync-surface 18ok both, agents-md 8ok both; SIM post-dev proof: agent-perms 10 ok both arms, all legacy green both arms, aislop 100/0; sim removed, tree clean; negative controls: fabricated allow rows, rule swap/drop, indent drift, before-pivot placement all rejected; carve literal shared byte-identical atpos.py twins verified]\ndeviations: (1) A1 green at handoff (T1 bootstrap landed T5's exact payload — regression bite proven negatively). (2) harness POSIX-class fix in sectgrep row matcher ([[:space:]] -> [ \\t], Python 3.14) exposed by sim, re-proved both sides. (3) t17 gains arm-aware line twin (i4 parity, strengthening). (4)/(5) label/permdelta reporting notes.\nfriction: none — tests/** writes landed natively on the granted frontmatter (the ticket's defect demonstrably closed for this session)\nopen_questions: none\nnext_suggested: agent-dev remaining scope T6 (agent-dev deny row), T7 (five text sites — verified-passing wording: matrix test/dev rows, 2026-10-26 drift-incident entry naming 'top-level `tests/`', pipeline-overview rows, role-test false-claim removal + top-level write-surface), T8 generate x2 + --check, T9 ONE commit sources+mirrors+the five test files; suites are read-only to dev.",
           "session": "ses_e8635bb4cffefHTWibtg4ZfsE6"
+        },
+        {
+          "round": "dev-2",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.rulesync/subagents/agent-dev.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/skills/agents-sync/references/pipeline-overview.md, .rulesync/skills/pipeline-role-test/SKILL.md, 4 regenerated mirrors (.opencode counterparts), tests/agent-perms/surface.sh + 4 amended suites (agent-test-authored, committed verbatim)]\ncommands_run: [rulesync generate x2 no-op => pass; --check => pass; agent-perms 10ok both arms pre+post; coord-inwork 6ok both; gate 21ok both; rulesync-surface 18ok both; agents-md 8ok both; bash -n x5 => pass; aislop 0/0 36 files => pass; commit 16844785b; git status clean]\ndeviations: none\nfriction: none — D5 wording satisfied every A3/A4 needle first regeneration\nopen_questions: none\nnext_suggested: agent-review C01 (five suites both arms first, AC8 aislop review-owned)\ncommit: 16844785b",
+          "dev_session": "ses_e8625aee4ffeGhueCzBsWPzOh8"
         }
       ],
-      "scope_note": "amended 2026-10-26, re-applied same day (user fold-in D9-D12): + T4 sibling-folder admits (t14/c8/c7 also admit 2026-10-bug-kickoff-mints-run-branch + 2026-10-bug-session-origin-no-line), + T10 i4/t17 OR-form re-pin with both-operational-bases discipline (081b57889 arm A / default HEAD arm B), + AC9/A9/A10; AC7/Commands bases re-targeted to the pushed line; A8 count fixed 6→5; T7 cites re-verified; size stays M, single chunk retained."
+      "scope_note": "amended 2026-10-26, re-applied same day (user fold-in D9-D12): + T4 sibling-folder admits (t14/c8/c7 also admit 2026-10-bug-kickoff-mints-run-branch + 2026-10-bug-session-origin-no-line), + T10 i4/t17 OR-form re-pin with both-operational-bases discipline (081b57889 arm A / default HEAD arm B), + AC9/A9/A10; AC7/Commands bases re-targeted to the pushed line; A8 count fixed 6→5; T7 cites re-verified; size stays M, single chunk retained.",
+      "dev_session": "ses_e8625aee4ffeGhueCzBsWPzOh8"
     }
   },
   "blocked": [],
