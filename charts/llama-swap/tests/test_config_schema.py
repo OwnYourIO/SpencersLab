@@ -364,6 +364,7 @@ def test_c02_synthetic_raw_cmd_passthrough_verbatim(synthetic_overlay):
     assert set(L.cmd_tokens(cmd)) == {"llama-server", "--smoke-raw-only", "1"}
 
 
+@helm
 def test_c02_schema_smoke_absent_from_parity_renders():
     """Guard that the smoke fixtures never leak into the baseline renders the
     parity file compares against goldens (cache keys differ by overlay, this
