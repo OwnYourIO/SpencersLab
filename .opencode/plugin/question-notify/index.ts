@@ -1,9 +1,10 @@
 // OpenCode V2 local plugin: pushes a notification to the user's phone via Home
-// Assistant when (1) an agent-* session asks a question (question tool hook)
-// or (2) a top-level session finishes an assistant turn or stops on a terminal
-// execution failure (event stream). Hand-written — rulesync must never generate
-// or delete this file (rulesync's hooks feature is OFF in rulesync.jsonc; no
-// other writer exists).
+// Assistant when (1) an agent-* session asks a question (question tool hook),
+// (2) a top-level session finishes an assistant turn or stops on a terminal
+// execution failure (event stream), or (3) any session blocks on a permission
+// approval ask (the durable permission.asked event on the same stream).
+// Hand-written — rulesync must never generate or delete this file (rulesync's
+// hooks feature is OFF in rulesync.jsonc; no other writer exists).
 //
 // Why raw MCP JSON-RPC instead of the MCP tools: plugins run in the OpenCode
 // server process, outside any agent session — MCP tools exist for models, not
@@ -18,7 +19,11 @@
 // Failure policy: a notification must never delay or break the agent —
 // everything here is fire-and-forget with stderr logging only. A lifecycle
 // session lookup that fails suppresses its push rather than pinging about a
-// session whose topology could not be verified.
+// session whose topology could not be verified. An approval lookup that fails
+// still pushes with the `session` label: the ask needs a human regardless of
+// whose record could not be read, so dropping the push is the worst outcome
+// (.agents/plans/2026/2026-10-feat-ha-lifecycle-notify/DECISIONS.md,
+// 2026-10-26 lookup-failure policy).
 //
 // Verified against @opencode/plugin 2.1.2 types (dist/promise/tool.d.ts):
 // the execute.before event carries { tool, sessionID, agent, messageID, id,
@@ -30,26 +35,36 @@
 // and transient status events need neither a heuristic nor a dedup map; legacy
 // session.idle/session.error and interrupts stay ignored on purpose — the plan's
 // grep commands pin the pair.
+// The approval trigger is the durable permission.asked event, re-grounded
+// against the installed v2.1.4 binary: the server publishes it only when the
+// ruleset effect resolves to `ask` and exactly once per request id, so no
+// plugin-side dedup beyond the shared cooldown is needed. The payload carries
+// no agent name (the title reads it from the session record) and a v1-compat
+// twin shares the type string with permission/patterns fields, hence the
+// tolerant field reads in approvalExcerpt.
 // Unverified at write time (watch ~/.local/share/opencode/log/opencode.log):
 // - Whether this ha-mcp build accepts tools/call without the initialized
 //   notification; we send the full handshake anyway.
 // - The per-event envelope of the lifecycle stream. The loop logs the keys of
 //   the first lifecycle event once, so the user-owned live smoke confirms the
-//   shape; handleLifecycle's dual read already covers the flat variant.
+//   shape; handleLifecycle's dual read already covers the flat variant. The
+//   permission path mirrors this with its own one-shot flag and dual reads.
 
 const NOTIFY_DOMAIN = "notify";
 const NOTIFY_SERVICE = "mobile_app_pixel_6";
 const MCP_SERVER_KEY = "admin-global-homeassistant";
 const AGENT_PREFIX = "agent-";
-const COOLDOWN_MS = 15_000; // one push per session per question burst
+const COOLDOWN_MS = 15_000; // one push per session per burst, shared by the question and approval paths
 const MAX_MESSAGE = 240;
 const FINISHED_EVENT = "session.execution.succeeded";
 const CRASH_EVENT = "session.execution.failed";
+const PERMISSION_ASK_EVENT = "permission.asked";
 
-// Exported seam: tests/opencode/question-notify.test.ts drives the whole
-// lifecycle decision matrix offline through handleLifecycle with fakes for the
-// session lookups and the push, so no test needs a server or a socket.
-// The helpers are pure.
+// Exported seam: tests/opencode/question-notify.test.ts and
+// permission-ask-notify.test.ts drive the lifecycle and approval decision
+// matrices offline through handleLifecycle / handlePermission with injected
+// fakes for the session lookups, the push, and the cooldown gate, so no test
+// needs a server or a socket. The helpers are pure.
 
 // A non-string body collapses to "" rather than "undefined": a notification
 // for a missing part is empty, never misleading.
@@ -67,6 +82,10 @@ export function finishedTitle(agent: string): string {
 
 export function crashTitle(agent: string): string {
   return `OpenCode: ${agent} stopped`;
+}
+
+export function approvalTitle(agent: string): string {
+  return `OpenCode: ${agent} needs approval`;
 }
 
 // A missing session record is unknown topology, not top-level: the failure
@@ -100,6 +119,26 @@ export function crashExcerpt(error: any): string {
   return typeof error?.type === "string" && error.type ? error.type : "unknown error";
 }
 
+// Excerpt precedence from the Permission.Request call sites (plan Grounding #9):
+// the human-written `message` wins; otherwise the action word with at most the
+// first three resources. `metadata` is never read: edit asks embed whole diffs
+// there. The action/resources and permission/patterns dual read spans the
+// v1-compat twin sharing the `permission.asked` type string, and
+// "permission request" is the documented degrade when neither carries text.
+export function approvalExcerpt(data: any): string {
+  if (typeof data?.message === "string" && data.message) return data.message;
+  const action =
+    typeof data?.action === "string"
+      ? data.action
+      : typeof data?.permission === "string"
+        ? data.permission
+        : "";
+  const items = Array.isArray(data?.resources) ? data.resources : Array.isArray(data?.patterns) ? data.patterns : [];
+  const shown = items.filter((item: any) => typeof item === "string").slice(0, 3);
+  if (!action) return "permission request";
+  return shown.length > 0 ? `${action}: ${shown.join(", ")}` : action;
+}
+
 export async function handleLifecycle(deps: any, event: any): Promise<void> {
   const type = event?.type;
   if (type !== FINISHED_EVENT && type !== CRASH_EVENT) return;
@@ -121,6 +160,33 @@ export async function handleLifecycle(deps: any, event: any): Promise<void> {
     // Swallowed by design: the caller's stream must keep consuming, and a
     // partial lookup must not reach the phone.
     console.error("[question-notify] lifecycle push suppressed:", err?.message ?? err);
+  }
+}
+
+// Every session that blocks on an approval needs a human, whatever its
+// parentage, so — unlike lifecycle — there is no topology filter here
+// (DECISIONS 2026-10-26: scope-all-sessions).
+export async function handlePermission(deps: any, event: any): Promise<void> {
+  if (event?.type !== PERMISSION_ASK_EVENT) return;
+  try {
+    const sessionID: string | undefined = event.data?.sessionID ?? event.sessionID;
+    if (!sessionID) return;
+    // Gate before the lookup: the cooldown key is the sessionID alone and an
+    // approval push needs no session record to decide whether to fire — the
+    // record only refines the title.
+    if (!deps.allowPush(sessionID)) return;
+    let agent = "session";
+    try {
+      const info = await deps.getSession(sessionID);
+      if (typeof info?.agent === "string" && info.agent) agent = info.agent;
+    } catch (err: any) {
+      // Degrade, never suppress: an imprecise title beats a silently dropped
+      // block (DECISIONS 2026-10-26: lookup-failure policy).
+      console.error("[question-notify] approval session lookup failed:", err?.message ?? err);
+    }
+    await deps.notify(approvalTitle(agent), truncate(approvalExcerpt(event.data ?? event)));
+  } catch (err: any) {
+    console.error("[question-notify] approval push failed:", err?.message ?? err);
   }
 }
 
@@ -208,8 +274,19 @@ export default {
   id: "local.question-notify",
   async setup(ctx: any) {
     const lastNotified = new Map<string, number>();
+    // One cooldown gate, keyed on sessionID alone, shared by the question hook
+    // and the approval dispatch: a question push and a near-simultaneous ask
+    // for one session yield a single phone push (intake: burst → one push).
+    // Stamps on the push attempt, not on transport success.
+    const allowPush = (key: string): boolean => {
+      const now = Date.now();
+      if (now - (lastNotified.get(key) ?? 0) < COOLDOWN_MS) return false;
+      lastNotified.set(key, now);
+      return true;
+    };
     let debugLogged = false;
     let lifecycleDebugLogged = false;
+    let permissionDebugLogged = false;
 
     await ctx.tool.hook("execute.before", async (event: any) => {
       try {
@@ -228,11 +305,7 @@ export default {
           }
         }
         if (typeof agent !== "string" || !agent.startsWith(AGENT_PREFIX)) return;
-
-        const key = sessionID ?? agent;
-        const now = Date.now();
-        if (now - (lastNotified.get(key) ?? 0) < COOLDOWN_MS) return;
-        lastNotified.set(key, now);
+        if (!allowPush(sessionID ?? agent)) return;
 
         void sendHANotify(ctx, questionTitle(agent), firstQuestion(event.input)).catch((err) =>
           console.error("[question-notify] notify failed:", err?.message ?? err),
@@ -248,6 +321,7 @@ export default {
     // consumption; the returned cleanup aborts the subscription on unload.
     const controller = new AbortController();
     const deps = {
+      allowPush,
       getSession: (sessionID: string) => ctx.session.get({ sessionID }),
       getMessages: (sessionID: string) => ctx.session.context({ sessionID }),
       notify: (title: string, message: string) => sendHANotify(ctx, title, message),
@@ -275,8 +349,23 @@ export default {
               Object.keys(event?.data ?? {}),
             );
           }
+          if (event?.type === PERMISSION_ASK_EVENT && !permissionDebugLogged) {
+            permissionDebugLogged = true;
+            console.error(
+              "[question-notify] first permission event keys:",
+              Object.keys(event ?? {}),
+              "data keys:",
+              Object.keys(event?.data ?? {}),
+            );
+          }
+          // Both handlers self-filter on event.type, so each event goes to
+          // both; the void-catch guards stay as the outer belt against a
+          // handler rejecting on a shape it did not anticipate.
           void handleLifecycle(deps, event).catch((err: any) =>
             console.error("[question-notify] lifecycle handler failed:", err?.message ?? err),
+          );
+          void handlePermission(deps, event).catch((err: any) =>
+            console.error("[question-notify] permission handler failed:", err?.message ?? err),
           );
         }
       })().catch((err: any) => console.error("[question-notify] event stream ended:", err?.message ?? err));

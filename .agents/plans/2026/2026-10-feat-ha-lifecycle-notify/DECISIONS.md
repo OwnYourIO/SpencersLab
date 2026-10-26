@@ -62,6 +62,54 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 - 2026-10-24 plan: `session.execution.interrupted` (user/shutdown/superseded/
   inactivity) never notifies. Rejected: notifying on `shutdown`/`inactivity`
   — not requested; user-initiated interrupts must stay silent.
+- 2026-10-26 plan(C02): Approval-ask trigger = durable `permission.asked` event
+  on the existing `ctx.event.subscribe` stream (v2.1.4 grounding, plan
+  Grounding #7–#12). Rejected: V1-compat `permission.updated` bus event (zero
+  string hits in the installed binary — pre-2.x surface, gone); a
+  `ctx.permission` plugin hook (no such plugin-ctx namespace exists; all
+  `permission:{` hits are the HTTP/RPC client and the TUI state cache);
+  `session.permission.*` events (those strings are SDK method paths for
+  list/get/create/sync/reply, not event types); `execute.before` (asks are
+  published inside a tool's `assert(…)` by the permission service, never by a
+  permission-named tool — the hook fires on executes, not on blocks);
+  `form.created` (the elicitation system the question tool already covers via
+  the existing tool hook — subscribing both would double-push; AC 5 grep-pins
+  the absence). Server-side precision proven: publish happens only when the
+  ruleset effect resolves to `ask`, once per request ID (duplicate-ID guard).
+- 2026-10-26 plan(C02): Scope = ALL asking sessions (pipeline `agent-*` children
+  included), deliberately diverging from lifecycle's top-level-only filter.
+  Rationale: a session blocked on approval is waiting for a human regardless of
+  parentage — suppressing child asks re-creates exactly the gap the user
+  reported ("privs aren't triggered" during pipeline runs). The top-level-only
+  rule exists to damp per-turn finish noise; approval asks are rare and
+  actionable, and the 15 s cooldown bounds burst volume. Intake #1
+  (user-confirmed).
+- 2026-10-26 plan(C02): Cooldown = the SAME per-session `lastNotified` Map as
+  the question path, extracted into one `allowPush(key)` gate inside `setup`,
+  same key namespace (sessionID). Consequence: a question push and a
+  near-simultaneous approval ask for one session yield a single phone push —
+  accepted intentionally (intake #2: burst → one push; the phone cares about
+  the session, not the trigger class). Rejected: separate per-trigger maps
+  (double-pushes on question+ask races) and per-trigger key namespacing
+  (`question:<id>` vs `permission:<id>` defeats the stated burst requirement).
+- 2026-10-26 plan(C02): Lookup-failure policy = PUSH with the existing
+  `"session"` fallback label, unlike lifecycle's suppress-on-unknown. That
+  suppression exists to avoid pinging about unverifiable TOPOLOGY; approval
+  pushes need no topology decision, and silently dropping a push for a blocked
+  session is the worst failure mode for this feature. Stderr log on the failed
+  lookup preserves diagnosability.
+- 2026-10-26 plan(C02): Excerpt contract = `message` → `action + first ≤3
+  resources` → V1 twin (`permission + patterns`) → `"permission request"`;
+  `metadata` never rendered (edit asks embed whole diffs — noise on a phone).
+  The payload lacks a tool display name; `action` IS the permission category
+  (shell/edit/read/…), the best available degrade per intake #3. Cap stays at
+  the notify boundary (`truncate`, 240).
+- 2026-10-26 plan(C02): Grounding re-pinned against the INSTALLED v2.1.4 (the
+  CLI self-updated from the 2.0.32 C01 was planned against — discovered live at
+  replan). C01's full suite re-run green (35/35) on this branch first; C01's
+  shipped text and greps are untouched. Both payload variants (V2 native,
+  V1-compat twin sharing the `permission.asked` type string) get tolerant reads
+  because the service build live at smoke time is user-owned.
 
 ## Deferred
 - Per-agent or quiet-hours configuration for lifecycle pushes (options via
@@ -74,3 +122,11 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   diagnosable. Non-blocking; fold into a later plugin touch or close as accepted.
 - 2026-10-24 review(C01) nit: `"session"` fallback string for an unknown agent
   name in the push title. Cosmetic.
+- 2026-10-26 final(C01+C02) minor: plugin header comment (index.ts:31) still
+  says "the installed CLI (v2.0.32) predates the checked types" while the
+  v2.1.4 re-grounding note sits at :38–39 — behavior-neutral stale wording;
+  fix on the next plugin touch.
+- 2026-10-26 final(C01+C02) doc: AGENTS.md question-notify blurb (rulesync
+  source `.rulesync/rules/`) now understates the plugin (lifecycle + approval
+  pushes). Update the source and `rulesync generate` alongside the PR, or as
+  a separate hygiene ticket.
