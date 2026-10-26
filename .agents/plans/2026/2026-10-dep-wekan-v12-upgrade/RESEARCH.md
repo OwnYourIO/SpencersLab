@@ -272,6 +272,47 @@ Qwen Flash only, Research default Agent Decides, HITL default Plan, Human
 in the Loop checklist) live in `board-rules-v12.64.json` beside this file —
 import THAT file. The shape/semantics findings below still apply.
 
+**LIVE FINDINGS 2026-10-26 (post-upgrade, proven on the deployed v12.64):**
+
+- **Where the import actually lives** (user report "no JSON import option"
+  — it is real but misnamed): board → **Rules** screen → button **"Export
+  selected"** (yes, the import hides behind the export button) → the popup
+  has an **Import** section: "Import into" board selector (defaults to the
+  current board) + a paste textarea ("Paste exported rules (JSON or CSV)…")
+  + button **"Import rules from JSON"** → "Imported N rule(s)". The parser
+  accepts a top-level array of `{title, trigger, action, extraTriggers?,
+  extraActions?}` entries — exactly `board-rules-v12.64.json`'s shape;
+  creation goes through the `rules.createRule` + `rules.addPart` Meteor
+  methods (client/components/rules/rulesImportExport.js), in part order.
+- **REST cannot create multi-action rules — confirmed at tag AND live.**
+  POST/PUT `/api/boards/:boardId/rules` destructure only `{title, trigger,
+  action}` (+`enabled` on PUT); extras in the body are ignored
+  (server/models/rules.js @ v12.64). Both require `checkBoardAdmin` — the
+  dev-boards bot HAS it (live `update_rule` succeeds), so board-admin is no
+  longer an open question. `rules.createRule`/`rules.addPart` are Meteor
+  methods with no REST route (server/rulesButton.js).
+- **Rule-generated activities do NOT trigger secondary rules on v12.64**
+  (the durable-plan system replaced the old cascade): `prepareRulePlan`
+  selects only rules matching the ORIGINAL activity; plan-written
+  activities skip `executeRules` via the one-shot `deferSyncActivity`
+  slots (server/lib/syncActivityScope.js). Proven live with a probe rule
+  (trigger addChecklist/'TMP-PROBE' → action removeChecklist): it FIRED on
+  a manually-added checklist (human path) but the same-shape default rules
+  never fired on rule-created checklists (test card iWjx2EALzm6nh27NL kept
+  all items unchecked). Consequence: no REST-only workaround exists for
+  new-card defaults — the one multi-action import rule is the only path.
+  The three addChecklist-trigger default rules created during this probe
+  were removed again (board is back to the six pre-probe rules).
+- **Cutover sequence**: user pastes `board-rules-v12.64.json` via the
+  popup → agent verifies behaviorally on a disposable card (five
+  checklists + Qwen Flash/Agent Decides/Plan checked — note
+  `list_rules`/`get_rule` cannot verify extras: `_slim_rule` drops them
+  AND the REST serializer only returns them once they exist) → agent
+  deletes the five single-action createCard rules (KyhZnoxhKs6nBSiBX,
+  NKqcv5hmatKtumtby, jN9SzDtuyGaNRP43F, SCCBtZR928JuMAQBh,
+  nAkfF4jzStZzFw23F) via `remove_rule`. Import FIRST — deleting before a
+  confirmed import would leave new cards without checklists.
+
 **Exact rule for the AI-Dev board** (import JSON; the board's current live
 item sets are copied verbatim from `dev-boards list_rules` 2026-10-25):
 
