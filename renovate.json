@@ -250,7 +250,7 @@
       "matchDatasources": [
         "docker"
       ],
-      "versioning": "regex:unified-vulkan-(?<major>\\d+)$"
+      "versioning": "regex:^unified-vulkan-(?<major>\\d+)$"
     }
   ]
 }
