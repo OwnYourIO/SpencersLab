@@ -2,19 +2,24 @@
   "feature": "2026/2026-10-bug-tests-edit-perms",
   "plan_status": "approved",
   "approval_note": "USER APPROVED 2026-10-26 via coord's combined batched round: OQ1 stack on cf-52 HEAD b0c975bf6; OQ3 fold agent-dev edit tests/** deny; OQ4 carve-with-exclusion re-pin design; OQ2 (models/worktree) deferred to run-start kickoff (coord supplies; flash tiers per cf-52 precedent unless the launcher says otherwise). All confirmations matched the plan's best guesses — no plan text change needed beyond recording. AMENDED 2026-10-26: user-directed fold-in of the post-cf-52-landing suite base posture ('Fold into tests-edit-perms' via coord's batched round; DECISIONS D9-D12) — plan_status stays approved, the approval covers the folded text. RE-APPLIED the same day: the original amendment was authored dirty in the disposable integration worktree /home/coder/.config/openchamber/tmp/oc-integrate-Ozu2FO and lost when it was cleaned before landing (D12, FRICTION.md); re-authored in the cf-52 worktree at main tip 124fc2ae8 with all evidence re-verified live. Execution base supersedes kickoff.worktree's b0c975bf6 stack note: branch from main at/after 124fc2ae8 (= origin/main); operational CHUNK_BASEs 081b57889 (arm A) and default HEAD (arm B).",
-  "coord_session": null,
+  "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-10-26",
+  "updated_at": "2026-10-26T18:20Z",
   "kickoff": {
     "card": null,
     "slug": "bug-tests-edit-perms",
     "type": "bug",
     "run_tag": null,
     "origin": "FOLLOW-UP — coordinator-driven friction follow-up from 2026/2026-10-cf-52-feat-coord-session-inwork FRICTION.md line 9 (test(C01): agent-test frontmatter grants no edit-allow for tests/**; permission drift is silent). No WeKan card; coord selects this at the cf-52 end-of-session friction picker.",
-    "worktree": "null — coord mints at launch; stack on cf-52 branch HEAD (b0c975bf6) so tests/coord-inwork/surface.sh and base ref f11bfcb85 exist (plan Risks)",
-    "models": null,
-    "local": null
+    "worktree": "cf-52-feat-coord-session-inwork (landing-lane reuse: user's integration flow consumes this branch; branch == origin/main == a5fbf4440 at run start)",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "branch": "cf-52-feat-coord-session-inwork",
+    "models_note": "No kickoff override from the user — flash tiers per the cf-52 precedent recorded at approval (OQ2 disposition)."
   },
   "plan_handoffs": [
     {
