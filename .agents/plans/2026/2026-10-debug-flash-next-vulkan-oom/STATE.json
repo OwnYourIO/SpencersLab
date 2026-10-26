@@ -92,14 +92,22 @@
       "handoffs": []
     },
     "C03": {
-      "status": "pending",
+      "status": "in-review",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": [],
-      "gated": "resolved by reintegration pass c7e82d112 — C03 concrete; A-vs-A+B fork decided by C01 EVIDENCE.md GTT measurement before dev"
+      "last_verdict": "dev DONE (5ea66f17d; 16 contract-reds -> 0 failed/168 passed/7 skipped with pinned helm executed)",
+      "dev_session": "ses_e873caa5affemPQfN71cM90nhz",
+      "handoffs": [
+        {
+          "at": "2026-10-26",
+          "from": "agent-dev",
+          "status": "DONE",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [charts/llama-swap/values.yaml (flash-next + flash-next-orca family blocks; committed 5ea66f17d local), chunks/C03.md Dev notes appended (same commit)]\ncommands_run: [provisioned pinned helm v3.16.4 (sha256-verified) to /tmp/opencode/bin/helm => pass, 27 render contracts EXECUTED zero helm-skips; BEFORE pytest charts/llama-swap/tests => 16 failed/152 passed/7 skipped (exactly TEST_SPEC 8.5 reds); RUN_FLAG_AUDIT=1 pytest -k flags_exist => 1 passed (AC5 pre-edit) + manual llama.cpp b11810 arg.cpp line-reads (load-mode mmap/dio, --fit, --no-host) => pass; AFTER full suite => 0 failed/168 passed/7 skipped; helm lint charts/llama-swap => pass; helm template (clusterName=gpu-ai) => rc=0; umbrella lint+template services/gpu-ai/prod + services/gpu/prod => pass (pre-existing OVERRIDE_VIA_APPSET warnings only); aislop ci --changes => 0/0; post-commit re-run => 168/0/7 + flag-audit pass]\ndeviations: (1) mechanism = family-level literal flags: leg, NOT a new macro — first attempt (fn-moe in gpu-ai service macros) turned test_c02_2_config_layer_macros_matrix_hooks_scalars red (golden-era parity pins the macro map by FULL equality; overrides blast-radius allowance); fn-moe fully reverted pre-commit, final diff = 1 file. (2) flash-next-orca regime-shifted too — mandated (inside FLASHNEXT_FAMILY_IDS / AC1). (3) No service-file edits needed; AC4 vacuous under C02-skipped. (4) DECISIONS.md left to coord — B-skip/C1-skip/no-host-OFF recorded here for transcription.\nfriction: chunk's macro mechanism-option cannot satisfy the immutable suite (golden parity vs blast-radius allowance contradiction) — resolution: emitted-token literal per test_new_roster pre-accepted shape; cost one suite iteration. No-helm worktree — resolution: pinned helm v3.16.4 provisioned; C04 render checks should reuse it. One malformed edit call errored harmlessly (harness noise).\nopen_questions: (a) C04 needs operator GO + window (one-attempt protocol, trio eviction, user-run host commands per procedure artifact); buffer-split proof arrives ONLY from GET /logs/stream/qwen3.8-flash-next-q3 read immediately post-load (logToStdout: proxy,http) — the 5 skip-gated post-fix evidence tests need that capture. (b) If serving quality demands, single-line knobs: mmap->dio, +--no-host, or per-rung override — confirm no re-plan for that shape. (c) EVIDENCE §9 items 6-8/9-11 awaiting-user, none gating. (d) FYI: blast-radius macro-add allowance now unused by construction; no test change needed.\nnext_suggested: agent-review on C03 (re-run with PATH=/tmp/opencode/bin; expect 168/0/7 + flag-audit), then C04."
+        }
+      ],
+      "gated": "resolved by C01 evidence: branch A alone — no B re-ask"
     },
     "C04": {
       "status": "pending",
