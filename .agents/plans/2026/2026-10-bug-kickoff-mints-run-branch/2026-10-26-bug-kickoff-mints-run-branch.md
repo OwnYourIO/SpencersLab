@@ -37,7 +37,7 @@ Observed data loss: **none** — both workarounds (`checkout -b` at/after the co
 - regression: `bash tests/coord-inwork/surface.sh` (i4 re-pinned for the third grant; i1/i2/i3/i5/i6 must hold)
 - regression: `bash tests/agent-board-coord/rulesync-surface.sh` (c2 sanctioned-delta arm + c8 FEATURE4; c1–c17 others hold)
 - regression: `bash tests/agent-board-coord/agents-md.sh` (c7 FEATURE4; all content pins hold)
-- regression: `bash tests/agent-board-coord/gate.sh` (must stay green untouched — gate is frozen)
+- regression: `bash tests/agent-board-coord/gate.sh` — (AMENDED 2026-10-26 coord per D8: the gate SUITE is re-pinned by test-1 as sanctioned-forms ladders for t17/t14 — green through C01 at both arms, the three-allow duty enforced by tests/kickoff-branch/surface.sh m4, scripts/* admitted in t14 for C01's own script; the gate SCRIPT scripts/agent-board-coord-gate.sh stays byte-frozen — i5 verifies)
 - regen: `npx --no-install rulesync generate --check` clean + `generate` ×2 second-run no-op
 - lint: `npx --no-install aislop ci --changes` (0 errors)
 - grep-proof trio (each run against source AND generated mirror): `kickoff-mint-branch` present in `pipeline-kickoff/SKILL.md`, `pipeline-role-coord/SKILL.md`, `boards/SKILL.md` (pairs), and the resource string `bash scripts/kickoff-mint-branch.sh *` present in `agent-coord.md`/`agent-board-coord.md` source + generated (4 files).
