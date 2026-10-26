@@ -1,11 +1,11 @@
 {
   "feature": "2026/2026-10-bug-tests-edit-perms",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "approval_note": "USER APPROVED 2026-10-26 via coord's combined batched round: OQ1 stack on cf-52 HEAD b0c975bf6; OQ3 fold agent-dev edit tests/** deny; OQ4 carve-with-exclusion re-pin design; OQ2 (models/worktree) deferred to run-start kickoff (coord supplies; flash tiers per cf-52 precedent unless the launcher says otherwise). All confirmations matched the plan's best guesses — no plan text change needed beyond recording. AMENDED 2026-10-26: user-directed fold-in of the post-cf-52-landing suite base posture ('Fold into tests-edit-perms' via coord's batched round; DECISIONS D9-D12) — plan_status stays approved, the approval covers the folded text. RE-APPLIED the same day: the original amendment was authored dirty in the disposable integration worktree /home/coder/.config/openchamber/tmp/oc-integrate-Ozu2FO and lost when it was cleaned before landing (D12, FRICTION.md); re-authored in the cf-52 worktree at main tip 124fc2ae8 with all evidence re-verified live. Execution base supersedes kickoff.worktree's b0c975bf6 stack note: branch from main at/after 124fc2ae8 (= origin/main); operational CHUNK_BASEs 081b57889 (arm A) and default HEAD (arm B).",
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e8635bb4cffefHTWibtg4ZfsE6",
   "current_wave": 1,
-  "updated_at": "2026-10-26T20:55Z",
+  "updated_at": "2026-10-26T21:30Z",
   "kickoff": {
     "card": null,
     "slug": "bug-tests-edit-perms",
@@ -37,7 +37,7 @@
   ],
   "chunks": {
     "C01": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 2,
@@ -66,6 +66,11 @@
           "round": "review-1",
           "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [chunks/C01.md review notes]\ncommands_run: [five suites 10/6/21/18/8 ok at BOTH arms (081b57889 + HEAD) — reviewer-run; generate --check clean, generate x2 no-op; aislop 0/0/36; atpos/carve/references cmp pass; ls-tree counts 26 at all pre-fix refs; /tmp negative controls: fabricated extra row + off-anchor drift rejected by splice.py/t17 at both arms + atpos at line level; t14/c8/c7 green with dirty C01.md at both bases]\ndeviations: none\nfriction: none\nopen_questions: minor non-gating — drift-incident '27 tracked files when discovered' is 26 at every pre-fix ref (27 only post-ticket); coord to route one-word fix or accept.\nnext_suggested: record APPROVED, commit review notes, polish count, final whole-plan review.\nVERDICT: APPROVED (round 1; minor + two nits recorded in C01.md review notes)",
           "verdict": "APPROVED"
+        },
+        {
+          "round": "final-review",
+          "session": "ses_e85f73d25ffeGYBMihWSvkMVvD",
+          "result": "RESULT\nstatus: DONE\nchunk: final\nfiles_changed: [chunks/C01.md (Final whole-plan review)]\ncommands_run: [5 suites @081b57889 10/6/21/18/8 ok + @HEAD identical, all rc0 => pass; rulesync generate --check + x2 no-op => pass; aislop ci --changes 0/0/36 => pass; all-roles edit-surface sweep + targeted zero-diff scope check => pass; ls-tree counts 26/25/26/27 => review-1 minor closed; 16 independent OR-form negative controls on shipped mechanisms both arms => pass; atpos/carve cross-suite twins cmp => pass]\ndeviations: none\nfriction: none (one trail-text nit: review-1 said 26 at every pre-fix ref; 081b57889 is 25 — recorded nit, no action)\nopen_questions: none — D5 history count judged fine as planner-vantage history, no CORRECTED annotation\nnext_suggested: close-out + hand user the PR-ready branch.\nVERDICT: APPROVED (whole plan)"
         }
       ],
       "scope_note": "amended 2026-10-26, re-applied same day (user fold-in D9-D12): + T4 sibling-folder admits (t14/c8/c7 also admit 2026-10-bug-kickoff-mints-run-branch + 2026-10-bug-session-origin-no-line), + T10 i4/t17 OR-form re-pin with both-operational-bases discipline (081b57889 arm A / default HEAD arm B), + AC9/A9/A10; AC7/Commands bases re-targeted to the pushed line; A8 count fixed 6→5; T7 cites re-verified; size stays M, single chunk retained.",
