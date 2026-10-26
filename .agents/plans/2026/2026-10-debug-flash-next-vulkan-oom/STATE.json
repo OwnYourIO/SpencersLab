@@ -125,7 +125,7 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "blocked_on": "user-owned landing: commits stay local per operator choice 2026-10-26 (branch debug-flash-next-vulkan-oom-openrouter-qwen3-8-flash, fix = 5ea66f17d). C04 runs once the operator lands -> ArgoCD syncs the mmap regime to gpu-ai; consented one-attempt window = immediately after sync (operator answer). Resume with /pipeline-resume on this folder."
+      "blocked_on": "CLEARED 2026-10-26: operator landed the branch, config synced, flash-next loaded on gpu-ai ('that loaded'); GO recorded in DECISIONS.md for C04 verification + gate-2 MTP re-add ('next round of changes'). Prior note: runs once operator lands -> ArgoCD syncs the mmap regime; window = immediately after sync. Resume with /pipeline-resume on this folder."
     }
   },
   "blocked": [],
