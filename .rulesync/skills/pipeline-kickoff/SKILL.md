@@ -18,13 +18,13 @@ Run this before resolving or creating a feature folder for a NEW ticket; skip al
    - `Qwen Large` — `openrouter/qwen/qwen3.8-2.4t-a95b`
    - `Qwen 27b` — `openrouter/qwen/qwen3.8-27b`
    - `Qwen Flash` — `openrouter/qwen/qwen3.8-flash`
-   - `Local (gpu-ai)` — run the checked models on the self-hosted `gpu-ai` provider, assume q6 quantizations
+   - `Local (gpu-ai)` — run the checked models on the self-hosted `gpu-ai` provider (quants per the `pipeline-models` local mapping)
 
    Derive the routing with the size order and local mapping defined in the `pipeline-models` skill:
    - Exactly one model option checked → that model for BOTH tiers (planning and the other agents).
-   - Several model options checked → the LARGEST checked model is the planning tier (`agent-plan`, `agent-research`, and the final whole-plan review); the SMALLEST checked model is the code tier (`agent-test`, `agent-dev`, chunk `agent-review`). Options in between are unused.
-   - Only `Local (gpu-ai)` checked, no model → default `gpu-ai/qwen3.8-27b-q6` for every role.
-   - `Local` unchecked → provider `openrouter` for all chosen models; `Local` checked → provider `gpu-ai` with the `-q6` model ids from `pipeline-models`.
+   - Several model options checked → the LARGEST checked model is the planning tier (`agent-plan`, `agent-research`, and the final whole-plan review); the SMALLEST checked model is the code tier (`agent-test`, `agent-dev-local`/`agent-dev-pr`, chunk `agent-review`). Options in between are unused.
+   - `Local` unchecked → provider `openrouter` for all chosen models; `Local` checked → provider `gpu-ai` with the quants defined by the `pipeline-models` local mapping (never restate its table here): 27b+Local → `gpu-ai/qwen3.8-27b-q4` unless another quant is explicitly requested; Flash+Local → assume Qwen Flash Next, `gpu-ai/qwen3.8-flash-next-q3` (combination rule — there is no plain-flash local route); Large+Local keeps its assumed-q6 row.
+   - Only `Local (gpu-ai)` checked, no model → default `gpu-ai/qwen3.8-27b-q4` for every role (follows the 27b local default).
 3. **Run tag** — compose `<provider>-<model>` from the planning-tier model with the model sanitized (`.` and `/` → `-`), then offer: the bare tag, tag + run number (count of existing runs with the same prefix, +1), tag + variant (if the chosen model uses one), or a user-provided string.
 
 ## Name the run's surfaces from the answers

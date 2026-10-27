@@ -99,8 +99,12 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   `Qwen Flash` — WITHOUT mutating the card. Then: exactly one checked →
   that model for every tier; several checked →
   the largest drives planning (plan / research / final review), the smallest
-  drives code (test / dev / chunk review); only **Local** checked →
-  `gpu-ai/qwen3.8-27b-q6` for every role. The size order and the local
+  drives code (test / dev / chunk review). The combos are routes, not
+  options: `Qwen Flash` + `Local` checked together → assume it's Qwen Flash
+  Next, `gpu-ai/qwen3.8-flash-next-q3` (default q3; other flash-next quants
+  only on explicit request); `Qwen 27b` + `Local` → `gpu-ai/qwen3.8-27b-q4`
+  unless another quant is explicitly requested; only **Local** checked →
+  `gpu-ai/qwen3.8-27b-q4` for every role. The size order and the local
   mapping authority stay in `pipeline-models` — reference it, never
   duplicate its table. Record the resolved tiers in STATE.json
   `kickoff.models` and in the claim comment — never as a custom field.
