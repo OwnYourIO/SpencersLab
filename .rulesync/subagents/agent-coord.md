@@ -2,9 +2,7 @@
 targets:
   - '*'
 name: agent-coord
-description: >-
-  Coordinator: runs an approved plan chunk by chunk via plan/research/dev/review
-  subagents; writes only STATE.json, DECISIONS.md and FRICTION.md
+description: 'Coordinator: runs an approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md (commit-only alias of agent-coord-local — kept for command/gate/saved-approval continuity)'
 opencode:
   mode: primary
   color: '#06b6d4'
@@ -60,6 +58,51 @@ opencode:
     - action: shell
       resource: opencode api patch /api/session/*
       effect: allow
+    # Git: commit stays allow (not ask) so scheduled runs can land chunk
+    # commits unattended; only main INTO the branch is a sanctioned
+    # merge; push is denied outright so a drifted run fails loudly.
+    - action: shell
+      resource: git status *
+      effect: allow
+    - action: shell
+      resource: git log *
+      effect: allow
+    - action: shell
+      resource: git diff *
+      effect: allow
+    - action: shell
+      resource: git show *
+      effect: allow
+    - action: shell
+      resource: git branch *
+      effect: allow
+    - action: shell
+      resource: git merge-base *
+      effect: allow
+    - action: shell
+      resource: git rev-parse *
+      effect: allow
+    - action: shell
+      resource: git ls-files *
+      effect: allow
+    - action: shell
+      resource: git add *
+      effect: allow
+    - action: shell
+      resource: git commit *
+      effect: allow
+    - action: shell
+      resource: git checkout *
+      effect: allow
+    - action: shell
+      resource: git switch *
+      effect: allow
+    - action: shell
+      resource: git merge main*
+      effect: allow
+    - action: shell
+      resource: git push*
+      effect: deny
     - action: subagent
       resource: '*'
       effect: deny
@@ -70,7 +113,7 @@ opencode:
       resource: agent-test
       effect: allow
     - action: subagent
-      resource: agent-dev
+      resource: agent-dev-local
       effect: allow
     - action: subagent
       resource: agent-review

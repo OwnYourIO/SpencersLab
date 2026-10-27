@@ -2,10 +2,7 @@
 targets:
   - '*'
 name: agent-board-coord
-description: >-
-  Board-driven coordinator: pulls work cards from the WeKan AI-Dev board and runs
-  the approved plan chunk by chunk via plan/research/dev/review subagents; writes
-  only STATE.json, DECISIONS.md and FRICTION.md
+description: 'Board-driven coordinator: pulls work cards from the WeKan AI-Dev board and runs the approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md (commit-only alias of agent-board-coord-local — kept for command/gate/saved-approval continuity)'
 opencode:
   mode: primary
   color: '#22c55e'
@@ -61,6 +58,51 @@ opencode:
     - action: shell
       resource: opencode api patch /api/session/*
       effect: allow
+    # Git: commit stays allow (not ask) so scheduled runs can land chunk
+    # commits unattended; only main INTO the branch is a sanctioned
+    # merge; push is denied outright so a drifted run fails loudly.
+    - action: shell
+      resource: git status *
+      effect: allow
+    - action: shell
+      resource: git log *
+      effect: allow
+    - action: shell
+      resource: git diff *
+      effect: allow
+    - action: shell
+      resource: git show *
+      effect: allow
+    - action: shell
+      resource: git branch *
+      effect: allow
+    - action: shell
+      resource: git merge-base *
+      effect: allow
+    - action: shell
+      resource: git rev-parse *
+      effect: allow
+    - action: shell
+      resource: git ls-files *
+      effect: allow
+    - action: shell
+      resource: git add *
+      effect: allow
+    - action: shell
+      resource: git commit *
+      effect: allow
+    - action: shell
+      resource: git checkout *
+      effect: allow
+    - action: shell
+      resource: git switch *
+      effect: allow
+    - action: shell
+      resource: git merge main*
+      effect: allow
+    - action: shell
+      resource: git push*
+      effect: deny
     - action: subagent
       resource: '*'
       effect: deny
@@ -71,7 +113,7 @@ opencode:
       resource: agent-test
       effect: allow
     - action: subagent
-      resource: agent-dev
+      resource: agent-dev-local
       effect: allow
     - action: subagent
       resource: agent-review
@@ -123,7 +165,7 @@ The board flow lives entirely in the `boards` skill; this section only points at
 
 **Card-driven kickoff** — replaces the live `pipeline-kickoff` questions for board runs; the override lives in the skill's text, which is why the MUST-load list still carries `/pipeline-kickoff` and `/pipeline-models`. The checked items of the five standard checklists (Services / Type / Model(s) / Research / Human in the Loop) and the `slug` / `session` custom fields ARE the user's answers: consume them, never re-ask; only genuine gaps join the batched round. Model routing reads the Model(s) checklist alone (D12 — no `models` custom field exists): exactly one checked → that model for every tier; several → the largest drives planning and the smallest drives code, size mapping per `pipeline-models`; record the resolved tiers in STATE.json `kickoff.models` and the claim comment, never as a custom field. No run tag — card-driven runs retire run tags entirely: the final `cf-<cardNumber>-<type>-<desc>` slug names the feature folder, worktree, branch and session title alike (D10).
 
-**Research-only cards — iterative loop**: the **Research** board label is the only trigger; research-only cards never reach `agent-plan`/`agent-test`/`agent-dev`/`agent-review`. Run the skill's loop: claim → `agent-research` round 1 → ONE batched follow-up question round → further research in the SAME research session (via its sessionID) → result comment (research-session URL + merged TLDR) → write-back → Review. When the `slug` field or a Type item is still unset and round 1 must already name the folder, mint the best-guess `cf-<cardNumber>-<type>-<desc>` and continue rather than blocking — the single follow-up round confirms or replaces it.
+**Research-only cards — iterative loop**: the **Research** board label is the only trigger; research-only cards never reach `agent-plan`/`agent-test`/`agent-dev-local`/`agent-dev-pr`/`agent-review`. Run the skill's loop: claim → `agent-research` round 1 → ONE batched follow-up question round → further research in the SAME research session (via its sessionID) → result comment (research-session URL + merged TLDR) → write-back → Review. When the `slug` field or a Type item is still unset and round 1 must already name the folder, mint the best-guess `cf-<cardNumber>-<type>-<desc>` and continue rather than blocking — the single follow-up round confirms or replaces it.
 
 **Card lifecycle + Post-plan card write-back**: claim on pickup — move to Executing plus a claim comment carrying the session as the full `$(SESSION_URL_BASE)/?session=<sessionID>` link (never a raw id), the resolved model tiers, the consumed checklist answers, the resolved slug and the plan-folder path; progress comment per chunk; right after plan approval run the write-back (`list_custom_fields`, then `set_card_custom_field` for `slug` + `session`, then `delete_checklist_item` for every unchecked item of the five checklists — the surviving checked items are the on-card record); after the whole-plan review passes, move the card to Review. **Finished** is human-owned — the card never reaches it by your hand. A card picked from Rework: read its full comment history first — the comments are the rework context.
 

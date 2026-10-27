@@ -120,24 +120,33 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{coord,plan,research,test,dev-pr,dev-local,review,fuser,board-coord}.md`;
+- `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,research,test,dev-pr,dev-local,review,fuser,board-coord,board-coord-local,board-coord-pr}.md`;
   the implementer ships as `agent-dev-local`/`agent-dev-pr` — local commits only,
   pr additionally pushes the ticket branch; coords launch their matching dev) —
   chunk-based pipeline: `agent-coord` (primary) runs an approved plan through
-  fresh `agent-plan`/`agent-test`/`agent-dev`/`agent-review` subagents (plus
+  fresh `agent-plan`/`agent-test`/`agent-dev-local`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only
   shared memory; when all chunks are done it runs a final whole-plan review
   before marking the plan complete, then offers to plan fixes for the open
-  friction items. `agent-fuser` (user-launched, on demand) compares parallel
+  friction items. The coord agents come in three names each: `agent-coord` and
+  `agent-board-coord` are commit-only aliases of `agent-coord-local` and
+  `agent-board-coord-local` (kept for command/gate/saved-approval continuity —
+  an edit to a twin must land on both in one commit), while
+  `agent-coord-pr`/`agent-board-coord-pr` additionally push the ticket branch
+  for remote build/test under `pipeline-push-pr`. `agent-fuser` (user-launched, on demand) compares parallel
   runs of the same ticket across branches and writes a user-confirmed fusion
   plan back into the chosen base branch for that session to execute.
-  `agent-board-coord` — board-driven variant of `agent-coord` (manual launches run ungated via `/pipeline-boards`; the hourly scheduled launch runs the gated `/pipeline-boards-hourly`): pulls work from
+  `agent-board-coord` — board-driven family (the alias plus its `-local`/`-pr`
+  variants; manual launches run ungated via `/pipeline-boards` or
+  `/pipeline-boards-pr`; the hourly scheduled launch runs the gated
+  `/pipeline-boards-hourly` on the alias, and the gate counts all three
+  board-coord names): pulls work from
   the WeKan AI-Dev board via the `dev-boards` MCP server, takes its intake from
   the card's standard checklists plus the `slug`/`session` custom fields
   instead of the live kickoff questions, and defers user questions to a single
   batched plan-question round; launch with `/pipeline-boards`. Artifacts
   live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
-  `/pipeline` commands.
+  `/pipeline` commands (`/pipeline-pr` for push-for-remote-build/test runs).
 
 ## Feature pipeline (agent-*)
 
@@ -145,9 +154,12 @@ A chunk-based pipeline for multi-step work, complementary to the standalone
 `planner`/`code` agents (single-shot planning/implementation) and the
 `0-pipeline` SDLC stages (large features with docs). `agent-coord` runs an
 approved plan chunk by chunk through fresh `agent-plan`/`agent-test`/
-`agent-dev`/`agent-review` subagents; files are the only shared memory.
+`agent-dev-local`/`agent-review` subagents (`agent-dev-pr` on the `-pr`
+variants); files are the only shared memory.
 Launch with `/pipeline` (plan if needed, then run) or `/pipeline-resume`
-(feature folder as argument).
+(feature folder as argument) — the plain aliases, commit-only; use
+`/pipeline-pr`/`/pipeline-resume-pr` when the branch gets pushed for remote
+build/test.
 
 Each feature lives in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`
 (the dated plan file, `STATE.json`, `DECISIONS.md`, `FRICTION.md`, `chunks/`
@@ -170,7 +182,8 @@ role × permission matrix is in the `agents-sync` skill references
   + proxy values entry), and every `OVERRIDE_VIA_CUSTOM_VALUES` placeholder
   matched 1:1 by a `custom-values/` entry. `agent-plan` records these in
   the plan file's "Commands"; `agent-test` writes every chunk's test files
-  in one session after planning (before any dev), `agent-dev` runs them
+  in one session after planning (before any dev), the chunk's dev variant
+  (`agent-dev-local`/`agent-dev-pr`) runs them
   while implementing and `agent-review` re-runs them as the first step of
   every review; `agent-coord` gates a chunk done only when they pass. A test
   judged faulty is never fixed by the reviewer — coord asks the user and
@@ -187,14 +200,18 @@ role × permission matrix is in the `agents-sync` skill references
   fuser writes `FUSION-REPORT.md` plus `<plan-file>-fusion.md` into the base
   branch's ticket folder and hands the confirmed plan back to that branch's
   pipeline session (its `coord_session` in `STATE.json`) for execution.
-- `agent-board-coord` is the board-driven variant: card intake from the WeKan
+- `agent-board-coord` (the commit-only alias of `agent-board-coord-local`,
+  with `agent-board-coord-pr` pushing for remote build/test) is the board-driven
+  family: card intake from the WeKan
   AI-Dev board replaces the live kickoff — pickup walks
   `Rework → Not Started → Low Priority` (top card first), the
   Services/Type/Model(s)/Research checklists plus the `slug` and `session`
   custom fields supply the kickoff answers, the Model(s) checklist alone
   routes models, `cf-<card-number>-<type>-<desc>` slugs name the feature
   folder, worktree, branch and session alike;
-  card-driven runs carry no run tag (`agent-coord` keeps run tags);
+  card-driven runs carry no run tag (`agent-coord` keeps run tags); the hourly
+  gate counts all three board-coord names alike, so no live board run hides
+  from it;
   `Research`-labeled cards run the iterative research-only loop and end at
   Review — see the `boards` skill.
 - All Hard rules below (no hand-bumped versions, ExternalSecret+Bitwarden
