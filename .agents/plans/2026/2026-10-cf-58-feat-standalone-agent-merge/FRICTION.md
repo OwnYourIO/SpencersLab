@@ -1,0 +1,9 @@
+# Friction
+
+Append-only. Never delete entries — re-status them: open → fixed (cause repaired) or ignored (accepted). Agents read this at run start so known workarounds are not rediscovered.
+
+Friction = anything an agent could not find or had no access to, crashes/tool/MCP failures, stale docs/plans, forced repeats or workarounds — each with the resolution actually used. Agents report via RESULT `friction:`; cord appends (its own items included).
+
+- 2026-10-26 · coord(kickoff) · coord session has read/write/shell DENIED (scheduled OpenChamber launch context) — board MCP + opencode api were worked around via HTTP; plan-folder creation delegated to the plan subagent (this folder) · resolution: subagent-driven writes; coord owns only what its permissions allow · open
+- 2026-10-26 · coord(kickoff) · `session_rename`/`worktree_create` absent from the coord harness — session surfaces carry raw session ids and the `cf-58-feat-standalone-agent-merge` worktree/branch may not exist yet · resolution: subagent self-move-into-worktree convention applies; if the worktree is absent at chunk time, dev creates/commits on the ticket branch in the main checkout per the cf-52 precedent (commit local, never push) · open
+- 2026-10-26 · plan(plan) · provider catalog drift vs live serving: `qwen3.8-flash-next-*` served by llama-swap (chart + gpu-ai values verified) but absent from `.opencode/opencode.jsonc` gpu-ai catalog; `qwen3.8-27b-q4` catalog entry lacks `capabilities.tools: true` · resolution: C06 plans the catalog patch; until then local flash-next routing is a documented assumption, not a verifiable fact · open
