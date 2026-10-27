@@ -625,24 +625,31 @@ fi
 # content is row-anchored by rulesync-surface c6 / agents-md c5, and the
 # NEW invariant itself by agent-perms A1-A4. The exclusion literal below is
 # shared verbatim with coord-inwork i5 (the A7 pin greps both).
+# cf-75 C02 re-pin (2026-10-27): plan-and-result.md joins the carve (source +
+# generated) — C02 rewrites its validation_at_fault routing sentence (the
+# retry-cap/deviation wording is untouched), guarded by the same pair-
+# equality loop below, agent-perms A5 + validation-fix t6; the exclusion
+# literal moves in lockstep in t12, i5 and A7's needles (three-way pin —
+# editing one without the others fails A7).
 if want t12; then
   moved=$( { git diff --name-only "$BASE" -- "$AS_SRC" "$AS_GEN" 2>/dev/null || true;
              git ls-files --others --exclude-standard -- "$AS_SRC" "$AS_GEN"; } \
            | sort -u \
-           | grep -v -x -E -e '(\.rulesync|\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview)\.md' \
+           | grep -v -x -E -e '(\.rulesync|\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview|plan-and-result)\.md' \
            || true )
   if [ -n "$moved" ]; then
     printf '%s\n' "$moved" >&2
-    fail "t12: an agents-sync file changed vs $BASE outside the tests-edit-perms D4 carve — only references/permissions.md + references/pipeline-overview.md (source and generated) may move; the rest stays byte-frozen (C02 AC2, D13; C03 AC4 zero-edits)"
+    fail "t12: an agents-sync file changed vs $BASE outside the carve — only references/permissions.md + pipeline-overview.md + plan-and-result.md (source and generated) may move; the rest stays byte-frozen (tests-edit-perms D4; cf-75 C02 grew the trio; C03 AC4 zero-edits elsewhere)"
   fi
   for pair in "$AS_SRC/references/permissions.md|$AS_GEN/references/permissions.md" \
-              "$AS_SRC/references/pipeline-overview.md|$AS_GEN/references/pipeline-overview.md"; do
+              "$AS_SRC/references/pipeline-overview.md|$AS_GEN/references/pipeline-overview.md" \
+              "$AS_SRC/references/plan-and-result.md|$AS_GEN/references/plan-and-result.md"; do
     IFS='|' read -r psrc pgen <<<"$pair"
     [ -f "$psrc" ] && [ -f "$pgen" ] || fail "t12: carved pair file missing ($psrc / $pgen)"
     cmp -s "$psrc" "$pgen" \
       || fail "t12: carved pair drifted source<->generated: $psrc vs $pgen are not byte-identical — rulesync copies these verbatim, so the text edit must land in the source and regenerate, never in the mirror"
   done
-  ok "t12: agents-sync byte-unchanged vs $BASE except the tests-edit-perms D4 carve (permissions.md + pipeline-overview.md pair, guarded byte-equal source<->generated); boards/manual-command pair re-opened by the C03 carve"
+  ok "t12: agents-sync byte-unchanged vs $BASE except the carved references trio (permissions.md + pipeline-overview.md + plan-and-result.md pairs, guarded byte-equal source<->generated); boards/manual-command pair re-opened by the C03 carve"
 fi
 
 # --- t13: shared "Current state:" block byte-equality (AC3) -------------------
@@ -681,6 +688,17 @@ fi
 # rulesync-surface c17 still fences pipeline-gates, and every cf-58 surface
 # has its own content suite. Infra dirs (charts/containers/services/
 # custom-values) stay OUTSIDE the allow-set.
+# cf-75 widening (agent-test, 2026-10-27; same per-contract enumeration):
+# C02 re-opens the pipeline-gates pair (its content suite is
+# tests/pipeline-gates/validation-fix.sh; rulesync-surface c17's gates
+# byte-freeze left with that RE-PIN — the sentence above holds only up to
+# cf-75) and the pipeline-role-review pair (content: validation-fix t3), and
+# adds plan-and-result.md to the carved agents-sync references trio (pair
+# equality: validation-fix t6 + agent-perms A5/A7). C01 adds the new
+# skills/wekan-mcp dir and the wekan-api pointer edit; C04 adds the
+# hand-managed .opencode/plugin/board-context dir (rulesync never touches
+# .opencode/plugin/ — AGENTS.md); plus this ticket's own plan folder (inline
+# literal for the agent-perms A9 window-pin).
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -691,6 +709,8 @@ if want t14; then
       "$BOARDS_SRC"/*|"$BOARDS_GEN"/*|"$FEATURE"/*|\
       "$FEATURE3"/*|.rulesync/subagents/*|.opencode/agents/*|\
       .rulesync/commands/*|.opencode/commands/*|\
+      .rulesync/skills/pipeline-gates/*|.opencode/skills/pipeline-gates/*|\
+      .rulesync/skills/pipeline-role-review/*|.opencode/skills/pipeline-role-review/*|\
       "$KICK_SRC_DIR"/*|"$KICK_GEN_DIR"/*|"$RC_SRC_DIR"/*|"$RC_GEN_DIR"/*|\
       .rulesync/skills/pipeline-push-pr/*|.opencode/skills/pipeline-push-pr/*|\
       .rulesync/skills/pipeline-models/*|.opencode/skills/pipeline-models/*|\
@@ -699,19 +719,22 @@ if want t14; then
       .rulesync/skills/role-planner/*|.opencode/skills/role-planner/*|\
       .rulesync/skills/role-code/*|.opencode/skills/role-code/*|\
       .rulesync/skills/role-debug/*|.opencode/skills/role-debug/*|\
-      .opencode/opencode.jsonc|\
+      .opencode/opencode.jsonc|.opencode/plugin/board-context/*|\
+      skills/wekan-mcp/*|skills/wekan-api/*|\
       "$AS_SRC"/references/permissions.md|"$AS_GEN"/references/permissions.md|\
       "$AS_SRC"/references/pipeline-overview.md|"$AS_GEN"/references/pipeline-overview.md|\
+      "$AS_SRC"/references/plan-and-result.md|"$AS_GEN"/references/plan-and-result.md|\
       .rulesync/skills/pipeline-role-test/*|.opencode/skills/pipeline-role-test/*|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-kickoff-mints-run-branch/*|\
       .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
       .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
-      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 widenings)" ;;
+      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
+      .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*) : ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit and the cf-58 agent-surface widening included (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening and the cf-75 skill/plugin/gates/review/plan-and-result/own-folder admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

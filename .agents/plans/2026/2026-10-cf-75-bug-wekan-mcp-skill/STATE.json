@@ -17,7 +17,9 @@
   "plan_approved_at": "2026-10-27 (user approval in batched round — all 7 recommendations confirmed)",
   "coord_session": "ses_e809acf91ffeDTtY5LkI5dYOCd",
   "plan_session": "ses_e80961223ffeUNpbIX5dajj0w8",
-  "test_session": null,
+  "test_session": "ses_e8054d958ffe4qBopA4lrsWn8J",
+  "test_handoff_at": "2026-10-27",
+  "test_handoff_notes": "agent-test DONE: 4 chunk suites (skill-surface.sh t1-t8, validation-fix.sh t1-t7, board-context.sh t1-t6, board-context.test.ts S1-S9) + guard widenings (rulesync-surface c8/c17, agents-md c7, gate.sh t14/t12, agent-perms A5/A7/A9+CARVE_RE, coord-inwork i5). Two harness defects fixed in inherited validation-fix.sh (base-run + throwaway-clone sim proven). No chunk test-list amendments. Residual flag: legacy freeze sites kickoff-branch m6 / session-origin s6 left per cf-58 precedent — deferred, see DECISIONS.",
   "plan_handoff": [
     {
       "at": "2026-10-27",

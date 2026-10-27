@@ -99,3 +99,15 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   modify functionality; coord escalates only that.
 - 2026-10-27 human: agent-board keeps `dev-boards*` as its only MCP grant
   — no admin-global-wekan fallback.
+
+## Deferred
+- 2026-10-27 test(test): legacy freeze sites `tests/agent-kickoff-branch` m6 and `tests/session-origin` s6 byte-freeze AGENTS.md/rules/commands/pipeline-gates paths that C01–C04 legitimately edit; left untouched per the cf-58 precedent (outside this ticket's Commands/gate set; default-BASE runs stay green post-chunk). A future ticket should re-pin them to the post-cf-75 bytes. Not this run's gate.
+
+## Test phase (2026-10-27, agent-test ses_e8054d958ffe4qBopA4lrsWn8J)
+- 2026-10-27 test: inherited un-handed-back suites were KEPT where sound
+  (not rewritten) after base-run + throwaway-clone simulation proved them
+  plan-conformant; two harness defects fixed in validation-fix.sh. Guard
+  widenings (rulesync-surface c8/c17, agents-md c7, gate t14/t12,
+  agent-perms A5/A7/A9+CARVE_RE, coord-inwork i5) executed as the plan's
+  declared agent-test prerogative — all prior assertions survive
+  (nothing skipped/weakened/deleted).

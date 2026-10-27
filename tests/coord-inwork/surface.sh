@@ -126,10 +126,15 @@ CF_GEN=(.opencode/agents/agent-coord.md .opencode/agents/agent-coord-local.md
 # (gate.sh fixtures, rulesync-surface c18 pairings, agents-md.sh content
 # pins, tests/pipeline-models/surface.sh). The D4 agents-sync carve line in
 # the i5 block below stays byte-identical (pinned verbatim by agent-perms A7).
+# cf-75 RE-PIN (2026-10-27): pipeline-gates LEAVES the freeze too — C02
+# rewrites its validation_at_fault bullet (the silent-route contract), and
+# its content is guarded by tests/pipeline-gates/validation-fix.sh, same
+# posture as the cf-58 departures. The carve line grows to the three-file
+# references trio with it (plan-and-result.md is C02's third rewrite site);
+# the exclusion literal moves in lockstep with gate.sh t12 + agent-perms A7.
 FREEZE_PATHS=(
   .rulesync/skills/pipeline-role-fuser .opencode/skills/pipeline-role-fuser
   .rulesync/skills/agents-sync .opencode/skills/agents-sync
-  .rulesync/skills/pipeline-gates .opencode/skills/pipeline-gates
   .agents/plans/templates
 )
 
@@ -563,16 +568,20 @@ if want i5; then
   # agents-sync's SKILL.md and its other references — stays byte-frozen.
   # The exclusion literal below is shared verbatim with gate.sh t12 and is
   # pinned by agent-perms A7(i) in both suites.
+  # cf-75 C02 re-pin (2026-10-27): plan-and-result.md joins the carve (the
+  # trio literal moves in lockstep with t12/A7), and the pipeline-gates pair
+  # left FREEZE_PATHS above — its silent-route rewrite is guarded by
+  # tests/pipeline-gates/validation-fix.sh, not by invariance here.
   moved=$( { git diff --name-only "$BASE" -- "${FREEZE_PATHS[@]}" 2>/dev/null || true;
              git ls-files --others --exclude-standard -- "${FREEZE_PATHS[@]}"; } \
            | sort -u \
-           | grep -v -x -E -e '(\.rulesync|\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview)\.md' \
+           | grep -v -x -E -e '(\.rulesync|\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview|plan-and-result)\.md' \
            || true )
   if [ -n "$moved" ]; then
     printf '%s\n' "$moved" >&2
-    fail "i5: a byte-frozen surface (task 1.6 list) changed vs $BASE outside the tests-edit-perms D4 carve — gate, commands, fuser, the rest of agents-sync, models/gates, AGENTS.md and templates stay untouched (D8/D12); the carved permissions.md/pipeline-overview.md pair is guarded by t12/A5 pair-equality"
+    fail "i5: a byte-frozen surface (task 1.6 list, minus the cf-58 and cf-75 departures) changed vs $BASE outside the agents-sync references carve — fuser, the rest of agents-sync and templates stay untouched (D8/D12); the carved permissions.md/pipeline-overview.md/plan-and-result.md trio is guarded by t12/A5 pair-equality; gates moved to validation-fix.sh at cf-75 C02"
   fi
-  ok "i5: freeze set byte-unchanged vs $BASE (worktree included) except the D4 agents-sync references carve — gate script, commands, fuser/models/gates pairs, AGENTS.md, rules, templates; carved pair guarded by t12 + agent-perms A5"
+  ok "i5: freeze set byte-unchanged vs $BASE (worktree included) except the agents-sync references carve — fuser pairs, carve-excluded agents-sync internals, templates; gates/commands/AGENTS/rules/models left at the cf-58/cf-75 re-pins; carved trio guarded by t12 + agent-perms A5"
 fi
 
 # --- i6: regeneration contract (AC6) --------------------------------------------
