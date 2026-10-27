@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e8575ef66ffeP2I53dUmdNGL5P",
   "test_session": "ses_e854109f5ffe2yBdtisUw48vR6",
-  "current_wave": 3,
-  "updated_at": "2026-10-27T13:10Z",
+  "current_wave": 5,
+  "updated_at": "2026-10-27T15:05Z",
   "git_history_note": "2026-10-27: user ruling — the pickup convention is REBASE the ticket branch onto main (often), not merge; rules source + AGENTS.md updated in commit 8801c2569. Branch rebased onto main tip e25919a2a (which unexpectedly carries a DRAFT copy of this ticket's plan folder from a landed docs commit) — 9 branch commits replayed clean, tree verified identical to pre-rebase tip 2060d62eb. Hash remap old->new: 997f5995->c03fc90b, 0bfd0433->51cd153e, 986b289c->7fb71625, 6ad45786->21a7ee70, 203bb217->4e12c97f, 0af55155->b61a4716, 2132f332->7e9d6d0a, 76b44312->833da163, 2060d62e->a767cff6; rules commit NEW 8801c2569 at tip.",
   "approval": "2026-10-27: user approved the 6-chunk plan with R1-R3 as derived; per user ruling the plan-folder copy into the worktree folded into the first folder-touching agent (agent-test bootstrap, done via cp -r, 10 files verified; main-checkout original left for the user to delete).",
   "coord_handoff_format_note": "RESULT blocks below are coord-compressed faithfully from the sessions' own outputs (near-verbatim; verbose command lists tightened) because the coord harness truncates single lines over ~2000 chars and lacks shell for surgical repair — full provenance rides the session ids. This exception is recorded in FRICTION.md.",
@@ -154,13 +154,21 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": ["C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e82603253ffeQv4FnxHdoSPD5Q",
+      "handoffs": [
+        {"from": "agent-dev", "session": "ses_e82603253ffeQv4FnxHdoSPD5Q", "received_at": "2026-10-27T14:30Z",
+         "result": "RESULT status BLOCKED (validation_at_fault x2; implementation DONE, commit 40a8a5724, 18 files). Lifecycle rework in boards/role-coord/3 board-coord sources/3 commands/overview+AGENTS.md+mirrors. Flips: i7 full green, agents-md c9 green; c11/c18 crashed on suite helper bugs (window.py int(argv[2]) vs --ci at 5 sites; c18 _DEV pre-assign NameError when Stage map valid) - repaired-helper replica passes all C05 arms. Widenings landed: hourly no-shell Notes refresh, role-coord 5a/5c/8 + line-49 dev-variant ids. HOLD re-runs all green; aislop 100/0/0. Deviations: alias edited for byte-parity (c18 names all six); boards description fold-trim for c9 literal; vacuous kickoff/models timing-edit (zero refs). Escalation: route window.py --ci + _DEV hoist to test session."},
+        {"from": "agent-test (user-approved round 4)", "session": "ses_e854109f5ffe2yBdtisUw48vR6", "received_at": "2026-10-27T14:45Z",
+         "result": "RESULT status DONE, commit e7bcf9997 (one file, 19+/3-). window.py --ci branch (mirrors negwin/win convention; non-ci paths byte-identical) + _DEV hoist with why-comment. c18 FULL green; c11 red EXACTLY the two C06 windows (scratch proof: rest green); whole suite stops only at c11; HOLD spots c9/i7/t14/t17/t20 green; M-suite fails at M1 (C06 reason). Era posture into wave 5: only c11 windows + M1/M2/M3/M5 red; full matrix green after C06."},
+        {"from": "agent-review", "session": "ses_e8229f1f2ffecN0bf6AveOd2uu", "received_at": "2026-10-27T15:00Z",
+         "result": "RESULT status APPROVED. All gates re-run per-id (c1-c18 stops only at c11 C06 windows; i1-i7 7/7; c1-c9 9/9; t1-t20 20/20; A1-A13 13/13; P 6/6; S 10/10; M4/M6; generate no-op x2 + --check; aislop 100/0/0). Lifecycle semantics match DECISIONS ruling in full; LABEL trigger byte-stable; cutover DOCUMENTED ONLY - reviewer verified read-only on the board that card #58 still carries Research. Test-fix commit verified as exactly the two approved fixes. Six dev deviations all accepted. Ledger: stale bare agent-dev at pipeline-kickoff:25/pipeline-models:17 (C06-owned, expect incidental clearing) + pipeline-role-test:12 (unowned; hygiene follow-up-card candidate next to dev-mcp-fleet.sh). Next: C06 then final whole-plan review."}
+      ]
     },
     "C06": {
       "status": "pending",
