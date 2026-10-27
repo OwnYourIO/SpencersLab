@@ -23,7 +23,13 @@
   "lifecycle": ["plan", "test", "code", "review"],
   "research": "after-planning (coordinator launches agent-research post-approval; legacy Research checklist)",
   "research_session": "ses_e80a1c05fffe9PBSY6qRB61DSP",
-  "research_status": "done (RESEARCH.md written 2026-10-27; no replan — targeted amendment round into plan + C01/C02/C03/C05 pending; 4 research questions batched to user)",
+  "research_status": "done + amendment round applied 2026-10-27 (RESEARCH.md folded into plan + C01–C05 + DECISIONS; architecture unchanged)",
+  "research_answers": {
+    "R1": "upstream-plan-gate",
+    "R2": "vision-off",
+    "R3": "128GB",
+    "R4": "kv-grow-deferred"
+  },
   "chunks": {
     "C01": {
       "status": "pending",
@@ -55,7 +61,7 @@
     "C05": {
       "status": "pending",
       "wave": 2,
-      "depends_on": ["C01", "C02"],
+      "depends_on": ["C01", "C02", "C03"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
