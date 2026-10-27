@@ -3,8 +3,9 @@
   "plan_status": "approved",
   "coord_session": "ses_e8575ef66ffeP2I53dUmdNGL5P",
   "test_session": "ses_e854109f5ffe2yBdtisUw48vR6",
-  "current_wave": 2,
-  "updated_at": "2026-10-27T02:45Z",
+  "current_wave": 3,
+  "updated_at": "2026-10-27T13:10Z",
+  "git_history_note": "2026-10-27: user ruling — the pickup convention is REBASE the ticket branch onto main (often), not merge; rules source + AGENTS.md updated in commit 8801c2569. Branch rebased onto main tip e25919a2a (which unexpectedly carries a DRAFT copy of this ticket's plan folder from a landed docs commit) — 9 branch commits replayed clean, tree verified identical to pre-rebase tip 2060d62eb. Hash remap old->new: 997f5995->c03fc90b, 0bfd0433->51cd153e, 986b289c->7fb71625, 6ad45786->21a7ee70, 203bb217->4e12c97f, 0af55155->b61a4716, 2132f332->7e9d6d0a, 76b44312->833da163, 2060d62e->a767cff6; rules commit NEW 8801c2569 at tip.",
   "approval": "2026-10-27: user approved the 6-chunk plan with R1-R3 as derived; per user ruling the plan-folder copy into the worktree folded into the first folder-touching agent (agent-test bootstrap, done via cp -r, 10 files verified; main-checkout original left for the user to delete).",
   "coord_handoff_format_note": "RESULT blocks below are coord-compressed faithfully from the sessions' own outputs (near-verbatim; verbose command lists tightened) because the coord harness truncates single lines over ~2000 chars and lacks shell for surgical repair — full provenance rides the session ids. This exception is recorded in FRICTION.md.",
   "handoffs": [
