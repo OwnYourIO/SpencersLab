@@ -4,7 +4,7 @@
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e85775dfeffeXUvaopNrHlcYoq",
   "current_wave": 2,
-  "updated_at": "2026-10-27T02:20Z",
+  "updated_at": "2026-10-27T02:50Z",
   "approval_note": "USER-APPROVED 2026-10-26 in the batched round (\"Approve both\") WITH the OQ1 override to the LIVE-DERIVE FALLBACK (script + scoped grants); OQ2/OQ3/OQ5/OQ6/OQ7 per best guesses; OQ4 answered in-session (audit: cf-52's probe ran via the coord's interactive shell tool pre-surface-change — D11). Rework recorded 2026-10-26 by the plan session per these answers; D10 supersedes D3's resolution leg. Approval came from the user's explicit batched answer, not planner judgment.",
   "plan_handoffs": [
     {
@@ -62,15 +62,15 @@
       "dev_session": "ses_e8546890affePHkSBml1lK6oeP"
     },
     "C02": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
       "stack_gate": "C02 dev starts ONLY after 2026-10-bug-kickoff-mints-run-branch C02 (third coord shell allow + exactly-three re-pins of i4/c2/t17 + t12/i5 agents-sync carve) is landed on this base — the four-way re-pins target the post-sibling state (D14); on an un-landed sibling report BLOCKED-by-stack, never re-pin onto the two-allow reality",
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "round": "test-1",
@@ -82,6 +82,11 @@
           "round": "dev-1",
           "dev_session": "ses_e852dc3dbffe0SOb175Uc8EKYm",
           "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [boards pair (two-leg resolution + resolver-unavailable + claim-once), kickoff pair (D17 envelope sentence inside the kind-parenthesis per test-1 geometry), role-coord pair (fourth-grant containment), coord pair sources+mirrors (FOURTH scoped allow, NQ1 no-space glob), permissions.md pair (four-glob cells + dated drift entry) — 12 files +32/-12]\ncommands_run: [surface.sh 7 ok BOTH arms (s1/s2/s4/s5/s7 flipped, s3/s6 held); script.sh 7 ok; seven legacy suites all counts green both arms pre+post; generate x2 no-op + --check clean; aislop 0/0/36; curl-count==1 both trees; withdrawn-string/dead-literal/hard-base greps all zero]\ncommit: 46fa76e86 (local, no push)\ndeviations: (1) kickoff pair touched despite C02.md pre-fold-in HARD-FROZEN line — D17 fold-in moved s7's duty here; admits already landed (t14/c7/c8). (2) 2.8/2.9 not re-executed (test-1 ladders already carry them; zero suite edits verifiable). (3) pipeline-overview left untouched — s5 doesn't needle it; overview parity rides NQ2 decision. (4) no kickoff origin cross-ref (task names none). (5) entry-orientation folded into claim-once bullet.\nfriction: none new — first-run green all seven checks\nopen_questions: NQ1 live whole-string matcher control remains Review-manual (s4 pins spelling both ways)\nnext_suggested: agent-review C02 (battery + NQ1 matcher + live-control family)"
+        },
+        {
+          "round": "review-1",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [chunks/C02.md review notes]\ncommands_run: [91 checks x 2 arms ALL green (surface 7 + script 7 + 7 legacy); generate --check + x2 no-op; aislop 0/0/36; live family: canonical rc0 plan-exact base, env-absent rc0, misuse rc1 x2; NQ1: doc-check (V2 '*'=zero-or-more whole-value) + fnmatch/regex/prefix battery => authorized under all available semantics, STILL-OPEN for definitive live coord control at first post-merge raw-chat claim (landing note 3); zero tests/ delta in 46fa76e86 confirmed]\ndeviations: none — NQ1 live leg honestly recorded not-faked\nfriction: none new (bun-compiled opencode + upstream raw paths 404 => matcher semantics resolved via official V2 docs)\nopen_questions: FYIs — M1 permissions.md trailing-space rationale prose factually wrong (no-space grant robust under both semantics) -> next agents-sync touch; M2 mirror overview-parity friction here -> done at close-out (D20)\nVERDICT: APPROVED (round 1)"
         }
       ],
       "dev_session": "ses_e852dc3dbffe0SOb175Uc8EKYm"
