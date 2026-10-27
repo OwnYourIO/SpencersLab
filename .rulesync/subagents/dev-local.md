@@ -136,6 +136,22 @@ opencode:
     - action: dev*
       resource: '*'
       effect: allow
+      # Workspace isolation surface: a run with no worktree can mint one and
+      # move its session in via the opencode MCP tools (the native-tool path
+      # executing-plans / using-git-worktrees expect). No execute row: these
+      # roles have no deny baseline, so Code Mode falls through to the global
+      # ask — an interactive standalone run gets one prompt, while unattended
+      # pipeline devs stay structurally blocked from minting surfaces their
+      # coordinator owns.
+    - action: opencode_worktree_create
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_session_move
+      resource: '*'
+      effect: allow
 ---
 All repo layout, conventions, and hard rules live in `AGENTS.md` — it is loaded into your context automatically; follow it. Your role contract lives in the skills below — load them before doing anything else.
 

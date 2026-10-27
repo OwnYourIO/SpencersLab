@@ -92,6 +92,20 @@ opencode:
     - action: shell
       resource: helm template*
       effect: allow
+      # Workspace isolation surface: a run with no worktree can mint one and
+      # move its session in via the opencode MCP tools (the native-tool path
+      # executing-plans / using-git-worktrees expect). No execute row: this
+      # role has no deny baseline, so Code Mode falls through to the global
+      # ask — the interactive agent approves once per run.
+    - action: opencode_worktree_create
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_session_move
+      resource: '*'
+      effect: allow
 ---
 All repo layout, conventions, and hard rules live in `AGENTS.md` — read it first and follow it. Your role contract lives in the skills below — load it before doing anything else.
 

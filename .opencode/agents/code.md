@@ -89,6 +89,15 @@ permissions:
   - action: shell
     resource: helm template*
     effect: allow
+  - action: opencode_worktree_create
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_list
+    resource: '*'
+    effect: allow
+  - action: opencode_session_move
+    resource: '*'
+    effect: allow
 ---
 All repo layout, conventions, and hard rules live in `AGENTS.md` — read it first and follow it. Your role contract lives in the skills below — load it before doing anything else.
 

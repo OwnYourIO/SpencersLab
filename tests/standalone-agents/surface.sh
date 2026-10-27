@@ -116,12 +116,23 @@ def perms(p):
     fm = yaml.safe_load(m.group(1)) or {}
     return (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
 def sh(res, eff): return {"action": "shell", "resource": res, "effect": eff}
+# Isolation RE-PIN (2026-10-27, bug-coord-opencode-perms): every implementer
+# block — standalone dev trio and pipeline agent-dev pair alike (the dynamic
+# S3 arm pins the lists equal, same block by construction) — additionally
+# ends with the workspace-isolation rows: opencode worktree create/list +
+# session move. execute stays UNGRANTED deliberately (these roles have no
+# deny baseline, so Code Mode falls through to the global ask — interactive
+# runs approve once, unattended pipeline devs stay blocked from minting
+# surfaces their coordinator owns).
+ISOLATE = [{"action": "opencode_worktree_create", "resource": "*", "effect": "allow"},
+           {"action": "opencode_worktree_list",   "resource": "*", "effect": "allow"},
+           {"action": "opencode_session_move",    "resource": "*", "effect": "allow"}]
 SUFFIX = {
   "local": [sh("git add *", "allow"), sh("git commit *", "allow"), sh("git push*", "deny")],
   "pr": [sh("git add *", "allow"), sh("git commit *", "allow"), sh("git push*", "allow"),
          sh("git push*main*", "deny"), sh("git push --force*", "deny"), sh("git push -f*", "deny"),
          sh("git push * --force*", "deny"), sh("git push * -f*", "deny")],
-}[variant]
+}[variant] + ISOLATE
 b, c = perms(base_file), perms(target)
 if len(c) != len(b) + len(SUFFIX):
     print(f"{target}: {len(c)} rules, want {len(b)}+{len(SUFFIX)} (base block + the {variant} git rows, nothing else)"); sys.exit(1)
@@ -295,9 +306,9 @@ if want s3; then
   if git cat-file -e "${TB}:.rulesync/subagents/agent-dev.md" 2>/dev/null; then
     git show "$TB:.rulesync/subagents/agent-dev.md" >"$TMP/base-agent-dev.md"
     python3 "$TMP/blockdiff.py" "$TMP/base-agent-dev.md" "$DEV_LOCAL" local \
-      || fail "S3[AC1]: dev-local's block is not the ticket-base implementer list + [add allow, commit allow, push deny] after the git reads — C04 copies the C02 agent-dev-local block verbatim"
+      || fail "S3[AC1]: dev-local's block is not the ticket-base implementer list + [add allow, commit allow, push deny] + [worktree create/list, session move] after the git reads — C04 copies the C02 agent-dev-local block verbatim, the 2026-10-27 isolation landing appended its sanctioned rows"
     python3 "$TMP/blockdiff.py" "$TMP/base-agent-dev.md" "$DEV_PR" pr \
-      || fail "S3[AC1]: dev-pr's block is not the ticket-base implementer list + [add allow, commit allow, push allow, main/force deny x5] after the git reads, in order"
+      || fail "S3[AC1]: dev-pr's block is not the ticket-base implementer list + [add allow, commit allow, push allow, main/force deny x5] + [worktree create/list, session move] after the git reads, in order"
     pinned_note="pinned-copy arm run vs ticket base"
   else
     [ -f "$ADEV_LOCAL" ] || fail "S3[AC1]: neither the ticket-base agent-dev.md nor agent-dev-local.md is readable — the pinned contract cannot be verified"
@@ -450,16 +461,24 @@ PY
   ok "S6[AC4]: git-write audit — no-write roster clean; dev/dev-local commit-allow push-deny; dev-pr push-allow with main/force denies; merge at ask"
 fi
 
-# --- S7: code.md untouched, no code variants, byte-unchanged fold-free files ------
+# --- S7: code.md pipeline-clean, no code variants, byte-unchanged fold-free files --
 if want s7; then
   grep -qE '^[[:space:]]*/pipeline' .rulesync/subagents/code.md \
     && fail "S7[AC5]: code.md MUST-loads a pipeline-* skill — the standalone code agent runs WITHOUT pipeline context"
   variants=$(ls .rulesync/subagents/code-*.md 2>/dev/null || true)
   [ -z "$variants" ] || fail "S7[AC5]: code variants exist ($variants) — the card is explicit: NO variants for code"
+  # code.md left the byte-freeze with the isolation landing (2026-10-27,
+  # bug-coord-opencode-perms): its sanctioned delta is the three opencode_*
+  # workspace-isolation rows, pinned present below; the pipeline-MUST-load
+  # and no-variants pins above stay the file's real invariants.
   moved=$(git diff --name-only "$TB" -- .rulesync/subagents/ask.md .rulesync/subagents/review.md \
-          .rulesync/subagents/planner.md .rulesync/subagents/code.md | grep -v '^$' || true)
-  [ -z "$moved" ] || fail "S7[AC5]: $moved changed vs ticket base $TB — these four subagent files must be byte-unchanged (the fold-ins land in their role SKILLs, not the agent files)"
-  ok "S7[AC5]: code.md clean of pipeline MUST-loads and unvarianted; ask/review/planner/code subagent files byte-unchanged vs $TB"
+          .rulesync/subagents/planner.md | grep -v '^$' || true)
+  [ -z "$moved" ] || fail "S7[AC5]: $moved changed vs ticket base $TB — these three subagent files must be byte-unchanged (the fold-ins land in their role SKILLs, not the agent files)"
+  for row in opencode_worktree_create opencode_worktree_list opencode_session_move; do
+    grep -qF "action: $row" .rulesync/subagents/code.md \
+      || fail "S7[AC5]: code.md lost the workspace-isolation row '$row' (sanctioned 2026-10-27; execute deliberately ungranted — Code Mode falls to the global ask)"
+  done
+  ok "S7[AC5]: code.md clean of pipeline MUST-loads and unvarianted, carrying the sanctioned isolation rows; ask/review/planner subagent files byte-unchanged vs $TB"
 fi
 
 # --- S8: permissions.md Standalone-agents subsection + mirror integrity -----------
