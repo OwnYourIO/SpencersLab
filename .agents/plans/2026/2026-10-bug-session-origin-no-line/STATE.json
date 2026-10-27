@@ -4,7 +4,7 @@
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e85775dfeffeXUvaopNrHlcYoq",
   "current_wave": 2,
-  "updated_at": "2026-10-27T01:45Z",
+  "updated_at": "2026-10-27T02:20Z",
   "approval_note": "USER-APPROVED 2026-10-26 in the batched round (\"Approve both\") WITH the OQ1 override to the LIVE-DERIVE FALLBACK (script + scoped grants); OQ2/OQ3/OQ5/OQ6/OQ7 per best guesses; OQ4 answered in-session (audit: cf-52's probe ran via the coord's interactive shell tool pre-surface-change — D11). Rework recorded 2026-10-26 by the plan session per these answers; D10 supersedes D3's resolution leg. Approval came from the user's explicit batched answer, not planner judgment.",
   "plan_handoffs": [
     {
@@ -62,13 +62,13 @@
       "dev_session": "ses_e8546890affePHkSBml1lK6oeP"
     },
     "C02": {
-      "status": "pending",
+      "status": "in-progress",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
       "stack_gate": "C02 dev starts ONLY after 2026-10-bug-kickoff-mints-run-branch C02 (third coord shell allow + exactly-three re-pins of i4/c2/t17 + t12/i5 agents-sync carve) is landed on this base — the four-way re-pins target the post-sibling state (D14); on an un-landed sibling report BLOCKED-by-stack, never re-pin onto the two-allow reality",
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
@@ -77,8 +77,14 @@
           "session": "ses_e85775dfeffeXUvaopNrHlcYoq",
           "result": "RESULT\nstatus: DONE\nchunk: C01+C02 (single test phase)\nfiles_changed: [tests/session-origin/script.sh (285L, b0..b6 verdict contract + loopback fixtures + fragment-parity ladder), tests/session-origin/surface.sh (713L, s1..s7: two-leg boards resolution + claim-once + carry-inventory HOLD + four-allow absolute duty with per-arm geometry + containment/permissions cell + pair-sync/freeze + D17 envelope window with cf-52 i1 six windows surviving UNMODIFIED), tests/coord-inwork/surface.sh + tests/agent-board-coord/{gate.sh,rulesync-surface.sh} + tests/kickoff-branch/surface.sh (sanctioned-FORMS ladders SHELL2|3|4, m4 floor SHELL3, stale-count cases widened, +12/-0 assumption re-based to landed arms armA=c6689202c/armB=HEAD)]\ncommands_run: [bash -n x6 => pass; script.sh designed-red naming missing script; surface.sh s1/s2/s4/s5/s6/s7 designed-red naming C02 artifacts, s3 HOLD-green; 7 legacy suites green BOTH arms before AND after re-pins; SIM full payload: 9 suites x 2 arms x uncommitted+committed = 18/18x2 green; live control emitted plan-canonical lowercased origin rc=0; negatives: fabricated fifth row rejected by all six grant surfaces, envelope-absent => s7 red alone, three-allow rejected at C02 arm; rulesync x2 no-op + --check; aislop 100/0]\ndeviations: (1) nine suites not eight. (2) t14 has no ladder — scripts/* admission already covers C01. (3) ladder-not-exactly-four widening per controlling geometry (s4 carries the absolute duty; m4 floor SHELL3). (4) m4-shape/m3 stale 'exactly-one bash grant'/'same three' cases honestly widened. (5) line-growth literals re-based to landed commits. (6) three behavior pins derived from C01's own sentences (misuse-precedes-probe, single-probe bound, recognition-set effect). (7) UNRESOLVED (no board-command expansion) NOT pinned — D10 retired it (coord ruled: annotate as historical, see D18). (8) D17 envelope window cap 400 placed after '(notably openchamber.kind)', BEFORE work-key — sim proved all six i1 windows survive unmodified.\nfriction: (1) Unicode heredoc bytes blocked whole-block edits — ASCII-anchored minimal edits + sim re-verify. (2) STATE/C02 'exactly-FOUR' vs prompt 'green-through-C01' tension — resolved by ladder + s4 carrier, geometry documented in all six headers.\nopen_questions: (1) stale Conventions literal — coord annotated D18. (2) NQ1 live whole-string matcher confirmation stays a Review-manual control at C02 review.\nnext_suggested: dev C01 (script), gate = script.sh green + legacy holds both arms; C02 dev after C01 + stack re-check; C02 review runs surface s1..s7 both arms + NQ1/live-origin controls.",
           "applies_to": "C02"
+        },
+        {
+          "round": "dev-1",
+          "dev_session": "ses_e852dc3dbffe0SOb175Uc8EKYm",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [boards pair (two-leg resolution + resolver-unavailable + claim-once), kickoff pair (D17 envelope sentence inside the kind-parenthesis per test-1 geometry), role-coord pair (fourth-grant containment), coord pair sources+mirrors (FOURTH scoped allow, NQ1 no-space glob), permissions.md pair (four-glob cells + dated drift entry) — 12 files +32/-12]\ncommands_run: [surface.sh 7 ok BOTH arms (s1/s2/s4/s5/s7 flipped, s3/s6 held); script.sh 7 ok; seven legacy suites all counts green both arms pre+post; generate x2 no-op + --check clean; aislop 0/0/36; curl-count==1 both trees; withdrawn-string/dead-literal/hard-base greps all zero]\ncommit: 46fa76e86 (local, no push)\ndeviations: (1) kickoff pair touched despite C02.md pre-fold-in HARD-FROZEN line — D17 fold-in moved s7's duty here; admits already landed (t14/c7/c8). (2) 2.8/2.9 not re-executed (test-1 ladders already carry them; zero suite edits verifiable). (3) pipeline-overview left untouched — s5 doesn't needle it; overview parity rides NQ2 decision. (4) no kickoff origin cross-ref (task names none). (5) entry-orientation folded into claim-once bullet.\nfriction: none new — first-run green all seven checks\nopen_questions: NQ1 live whole-string matcher control remains Review-manual (s4 pins spelling both ways)\nnext_suggested: agent-review C02 (battery + NQ1 matcher + live-control family)"
         }
-      ]
+      ],
+      "dev_session": "ses_e852dc3dbffe0SOb175Uc8EKYm"
     }
   },
   "blocked": [],
