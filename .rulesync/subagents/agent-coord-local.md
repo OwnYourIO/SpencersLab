@@ -64,6 +64,14 @@ opencode:
     - action: shell
       resource: bash scripts/session-origin.sh*
       effect: allow
+    - action: shell
+      resource: date *
+      effect: allow
+    # In-work mark epoch: the kickoff recipe embeds $(date +%s%3N) in the
+    # patch payload, and the shell matcher extracts command substitutions
+    # and checks the date subcommand against this list on its own — the
+    # global config's `date *` allow sits before this agent's deny baseline
+    # and loses under last-match-wins, so the grant lives here.
     # Git: commit stays allow (not ask) so scheduled runs can land chunk
     # commits unattended; only main INTO the branch is a sanctioned
     # merge; push is denied outright so a drifted run fails loudly.

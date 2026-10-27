@@ -92,6 +92,20 @@ opencode:
     - action: shell
       resource: opencode api post /api/session/*
       effect: allow
+    # Fusion hand-back surface: the fuser enters the confirmed base
+    # worktree via session_move before writing (pipeline-role-fuser).
+    # `execute` is the Code Mode transport that exposes tools.opencode.*
+    # at all; the `opencode` '*' anchor above names no <server>_<tool>
+    # action, so these per-tool rows are the actual grant.
+    - action: execute
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_session_move
+      resource: '*'
+      effect: allow
     - action: admin*
       resource: '*'
       effect: deny

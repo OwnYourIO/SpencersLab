@@ -89,6 +89,15 @@ permissions:
   - action: shell
     resource: opencode api post /api/session/*
     effect: allow
+  - action: execute
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_list
+    resource: '*'
+    effect: allow
+  - action: opencode_session_move
+    resource: '*'
+    effect: allow
   - action: admin*
     resource: '*'
     effect: deny

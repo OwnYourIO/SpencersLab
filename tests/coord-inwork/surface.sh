@@ -304,9 +304,16 @@ SANCTIONED_SCRIPTS = ("bash scripts/kickoff-mint-branch.sh *", "bash scripts/ses
 others = [p.get("resource") for p in perms if p.get("action") == "shell"
           and not str(p.get("resource", "")).startswith(("opencode api", "git "))
           and p.get("resource") != "*"
-          and p.get("resource") not in SANCTIONED_SCRIPTS]
+          and p.get("resource") not in SANCTIONED_SCRIPTS
+          and p.get("resource") != "date *"]
 if others:
-    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the two cf-52 sanctioned script allows + the git block + the ask baseline, nothing more)")
+    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the two cf-52 sanctioned script allows + the date allow + the git block + the ask baseline, nothing more)")
+# 2026-10-27 date-grant re-pin: the kickoff in-work mark embeds
+# $(date +%s%3N) in the patch payload; the shell matcher extracts command
+# substitutions and checks the date subcommand against this agent's own
+# list, so the allow is a presence duty, not merely an admitted row.
+if not any(p.get("action") == "shell" and p.get("resource") == "date *" and p.get("effect") == "allow" for p in perms):
+    errs.append("the `date *` allow is gone (the in-work mark's epoch subcommand would fall back to the deny baseline — the global date allow never reaches it)")
 slot = "agent-dev-pr" if cls == "pr" else "agent-dev-local"
 subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
 want_subs = sorted(["agent-plan", "agent-test", slot, "agent-review", "agent-research"])
@@ -362,6 +369,9 @@ WANT2 = [('resource: opencode api get /api/session*', 'effect: allow'),
          ('resource: opencode api patch /api/session/*', 'effect: allow')]
 WANT3 = WANT2 + [('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow')]
 WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
+# 2026-10-27 date-grant re-pin: SHELL5 = SHELL4 + the `date *` triple (the
+# in-work mark's $(date +%s%3N) epoch subcommand grant).
+WANT5 = WANT4 + [('resource: date *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -372,15 +382,15 @@ if len(hits) != 1:
 ind = hits[0][1]
 at = hits[0][0] + 3
 matched = 0
-for want in (WANT4, WANT3, WANT2):  # longest first: shorter blocks are its prefixes
+for want in (WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are its prefixes
     want_lines = [x for rule in want for x in
                   (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
     if lines[at:at + 3 * len(want)] == want_lines:
         matched = 3 * len(want)
         break
 if not matched:
-    print("none of the sanctioned literal blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve) "
-          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 12]})"); sys.exit(1)
+    print("none of the sanctioned literal blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve, SHELL5 fifteen) "
+          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
 # cf-58 merge re-pin: after the matched sanctioned block the only permitted
 # continuation is comment lines (source tree only — the rulesync YAML
 # round-trip strips them from the generated mirror) plus the sanctioned git

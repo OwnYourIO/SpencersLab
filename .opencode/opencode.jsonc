@@ -1001,118 +1001,19 @@
       "resource": "*",
       "effect": "ask"
     },
+    // Playwright browser tools (2026-10-27 re-spell): the 23 bare
+    // `playwright_browser_*` actions that stood here matched nothing —
+    // permission actions name the normalized <server>_<tool> id, and the
+    // real servers are `dev-playwright` (this file) and `global-playwright`
+    // (machine fleet). The two prefix allows replace them; newly covered
+    // vs the old list: browser_emulate_media, browser_find.
     {
-      "action": "playwright_browser_navigate",
+      "action": "dev-playwright_browser_*",
       "resource": "*",
       "effect": "allow"
     },
     {
-      "action": "playwright_browser_close",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_resize",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_console_messages",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_handle_dialog",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_evaluate",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_file_upload",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_drop",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_fill_form",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_press_key",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_type",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_navigate_back",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_network_requests",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_network_request",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_run_code_unsafe",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_take_screenshot",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_snapshot",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_click",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_drag",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_hover",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_select_option",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_tabs",
-      "resource": "*",
-      "effect": "allow"
-    },
-    {
-      "action": "playwright_browser_wait_for",
+      "action": "global-playwright_browser_*",
       "resource": "*",
       "effect": "allow"
     },

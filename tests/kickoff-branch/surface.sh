@@ -254,7 +254,7 @@ BAD = "git -C * checkout -b *"
 # no-allow skeleton the form3/form4 controls splice into; form3/form4 splice
 # the canonical forms after the opencode '*' allow anchor on ANY base, so
 # those modes must not require the cf-52 rows up front.
-SANCTIONED = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN,
+SANCTIONED = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *",
               "git status *", "git log *", "git diff *", "git show *", "git branch *",
               "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
               "git commit *", "git checkout *", "git switch *", "git merge main*", "git push*"}
@@ -330,6 +330,13 @@ GET = {"action": "shell", "resource": "opencode api get /api/session*", "effect"
 PATCH = {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}
 MINT = {"action": "shell", "resource": "bash scripts/kickoff-mint-branch.sh *", "effect": "allow"}
 ORIGIN = {"action": "shell", "resource": "bash scripts/session-origin.sh*", "effect": "allow"}
+# Date-grant RE-PIN (2026-10-27): the in-work mark embeds $(date +%s%3N) in
+# the patch payload; the shell matcher checks the substitution's `date`
+# subcommand against the agent's own list, so the family carries a `date *`
+# allow. Same discipline as the git block and the naming rows: both arms
+# strip it from the core projection (the shell-allow ladder geometry is
+# unchanged) and a separate check admits it at most once, whole.
+DATE = {"action": "shell", "resource": "date *", "effect": "allow"}
 SHELL3 = [GET, PATCH, MINT]
 SHELL4 = [GET, PATCH, MINT, ORIGIN]
 # cf-58 MERGE RE-PIN (2026-10-27): the merged coord family additionally
@@ -388,8 +395,8 @@ def splice(seq, form):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC]
-c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC]
+b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE]
+c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE]
 if ORIGIN in b:
     forms = [SHELL4]
 else:
@@ -433,9 +440,12 @@ if gb and gb != GITBLOCK:
 nb = [p for p in c if p in NAMING]
 if nb and nb != NAMING:
     print("kickoff naming rows are present but are not exactly the sanctioned four in order — unsanctioned naming surface"); sys.exit(1)
+dt = [p for p in c if p == DATE]
+if dt and dt != [DATE]:
+    print("the date allow is present more than once or with a different effect — unsanctioned date surface"); sys.exit(1)
 shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells not in ([s["resource"] for s in SHELL3], [s["resource"] for s in SHELL4]):
-    print(f"shell resources are {shells}, want exactly the three or four scoped allows in order (the only other sanctioned shell surface is the cf-58 git block, checked whole above)"); sys.exit(1)
+    print(f"shell resources are {shells}, want exactly the three or four scoped allows in order (the only other sanctioned shell surfaces are the cf-58 git block and the date allow, both checked whole above)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
 if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resource") == "*"
@@ -459,6 +469,8 @@ WANT3 = [('resource: opencode api get /api/session*', 'effect: allow'),
          ('resource: opencode api patch /api/session/*', 'effect: allow'),
          ('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow')]
 WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
+# 2026-10-27 date-grant re-pin: SHELL5 = SHELL4 + the `date *` triple.
+WANT5 = WANT4 + [('resource: date *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -469,15 +481,15 @@ if len(hits) != 1:
 ind = hits[0][1]
 at = hits[0][0] + 3
 matched = 0
-for want in (WANT4, WANT3):  # longest first: WANT3 is WANT4's prefix
+for want in (WANT5, WANT4, WANT3):  # longest first: shorter blocks are prefixes
     want_lines = [x for rule in want for x in
                   (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
     if lines[at:at + 3 * len(want)] == want_lines:
         matched = 3 * len(want)
         break
 if not matched:
-    print("neither the nine-line SHELL3 block nor the twelve-line SHELL4 block of literal shell allow lines "
-          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 12]})"); sys.exit(1)
+    print("none of the nine-line SHELL3 block, the twelve-line SHELL4 block or the fifteen-line SHELL5 block of literal shell allow lines "
+          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
 # cf-58 merge re-pin: after the sanctioned SHELL3/SHELL4 block the only
 # permitted continuation is comment lines plus the sanctioned fourteen-row
 # git block (whole, in order, ending the shell surface); any other shell row
@@ -669,7 +681,7 @@ if want m4; then
   python3 "$TMP/splice3.py" "$TMP/a-t4.md" "$TMP/a-t4.md" none >/dev/null \
     || fail "m4: CONTROL FAILED — splice3 rejects the committed posture at itself (arm-B idempotence: the landed SHELL4 + sanctioned git block must satisfy the mechanism)"
   python3 "$TMP/atpos3.py" "$TMP/a-t4.md" >/dev/null \
-    || fail "m4: CONTROL FAILED — atpos3 rejects the committed posture's twelve-line SHELL4 block + sanctioned git-block continuation (the landed-line arm-B posture)"
+    || fail "m4: CONTROL FAILED — atpos3 rejects the committed posture's fifteen-line SHELL5 block + sanctioned git-block continuation (the landed-line arm-B posture)"
   if python3 "$TMP/atpos3.py" "$TMP/a-fifth.md" >/dev/null 2>&1; then
     fail "m4: CONTROL FAILED — atpos3 accepted a fabricated FIFTH row continuing the block (the sanctioned twelve)"
   fi

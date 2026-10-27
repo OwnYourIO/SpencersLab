@@ -65,6 +65,9 @@ permissions:
     resource: bash scripts/session-origin.sh*
     effect: allow
   - action: shell
+    resource: date *
+    effect: allow
+  - action: shell
     resource: git status *
     effect: allow
   - action: shell
