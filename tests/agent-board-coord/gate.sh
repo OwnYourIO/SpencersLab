@@ -9,21 +9,23 @@
 # the implementation exists — red-before-green by design:
 #   C01 not landed: t1 fails file-not-found; t2..t9 fail as invocation
 #     errors (exit 127); t10 fails-or-skips.
-# Current red posture (2026-10-26, kickoff-mints test phase; 2026-10-27
-#   session-origin test-phase re-pin): none — t17 is
-#   the sanctioned shell-allow FORMS LADDER (SHELL2 cf-52 two-allow committed
-#   posture at both operational arms today; SHELL3 with the third scoped mint
-#   allow accepted the moment kickoff-mints C02's delta appeared (landed at
-#   c6689202c), and SHELL4 with the fourth scoped `bash scripts/session-origin.sh*`
-#   origin grant accepted the moment session-origin C02 lands; required rung
-#   gated by what the base carries), t12's carve, t14's widening (now incl.
-#   scripts/* for C01's mint script) and the OR-form landed with the earlier
-#   test phases. The designed reds of the session-origin test phase are
-#   tests/session-origin/* (script.sh until C01, surface.sh s1/s2/s4/s5/s7
-#   until C02), not anything here; this file must stay fully green at both
-#   operational bases THROUGH C01 and after C02 lands.
+# Current red posture (2026-10-27, cf-58 test phase + cf-52 merge): the
+#   DESIGNED REDS of cf-58 in this file were t17 and t20 — both landed with
+#   C03 (six-family files + widened liveness filter). t1..t16, t18, t19 are
+#   HOLD: green now and green at the C03/C05/C06 landings (t14/t15/t16
+#   re-pinned from byte-freeze arms to presence/allow-set guards, see the
+#   cf-58 header note; the historical operational bases of the earlier
+#   tickets — 081b57889, f11bfcb85, 916044893, 72500166a — stay documented
+#   above and need not pass every check between chunks;
+#   "red-between-chunks-by-design" per DECISIONS). MERGE NOTE: the cf-52
+#   session-origin/kickoff-mints shell-allow ladder lives ON TOP of the cf-58
+#   contract — t17's cfpins admits the two sanctioned script allows
+#   (`bash scripts/kickoff-mint-branch.sh *`, `bash scripts/session-origin.sh*`)
+#   between the API pair and the git block; the absolute presence duties live
+#   in tests/kickoff-branch/surface.sh m4 and tests/session-origin/surface.sh
+#   s4, and the atpos twin pins the twelve-line SHELL4 literal block.
 #   C02 not landed: t11/t13/t15/t16 fail on missing strings/files;
-#     t12/t14/t17 are invariance guards — green at plan time and must HOLD.
+#     t12/t14 are invariance guards — green at plan time and must HOLD.
 #   C03 not landed (round-2 base 72500166a): t11 red on the STRENGTHENED
 #     windows (LIVE allow-list lacks list_swimlanes/list_lists; the
 #     --threshold 0 note lacks the host clarifier); t18 red (no Session
@@ -49,11 +51,22 @@
 # AGENTS.md section allow-set includes "Where things live" — this ticket's
 # scripts/ bullet lands there, so the regression holds at any CHUNK_BASE.
 #
-# cf-52 posture (this branch shares the suite): t17 is RE-PINNED from D13's
-# byte-freeze to the coord pair's delta contract — the four coord files must
-# differ from the chunk base by exactly the two scoped `opencode api` session
-# allows (D10); t14's allow-set carries cf-52's in-scope paths. Everything
-# else in this file HOLDs: t11/t13/t16 (commands untouched), t15, t18/t19.
+# cf-52 posture (this branch shares the suite): t17 was RE-PINNED from D13's
+# byte-freeze to the coord pair's delta contract (the two scoped `opencode
+# api` session allows, D10); t14's allow-set carried cf-52's in-scope paths.
+# cf-58 RE-PIN (2026-10-cf-58-feat-standalone-agent-merge, C03): the coord
+# family is SIX agents now (2 alias + 4 variants) and their sanctioned
+# permission content grows the git block, so the exact-two-allow delta is
+# retired — t17 re-pins to the ABSOLUTE family contract (API containment at
+# the pinned position + git-only additional shell rows + variant rosters,
+# cfpins.py, the coord-inwork i4 twin convention); the historical arm A /
+# arm B refs (081b57889, f11bfcb85, 916044893) stay documented above. t14's
+# allow-set admits the cf-58 surfaces (the whole subagent/command/skill tree
+# is this ticket's workshop; infra dirs stay fenced). t15/t16 shed their
+# byte-freeze arms because C03/C05 legitimately edit the agent bodies and
+# the rules bullets — the surviving contract is the hourly-pointer presence
+# and the scripts/gate facts. t20 (new) pins the widened liveness filter.
+# t11/t12/t13/t18/t19 HOLD unchanged.
 #
 # tests-edit-perms posture (2026-10-26, D4/D9/D10/D11 fold-in) — the current
 # discipline for this suite and its siblings:
@@ -98,7 +111,7 @@
 # documented minimum, so fixture mode must not require live project facts.
 #
 # Usage (harness conventions from tests/agent-board-coord/rulesync-surface.sh):
-#   bash tests/agent-board-coord/gate.sh                # t1..t19
+#   bash tests/agent-board-coord/gate.sh                # t1..t20
 #   bash tests/agent-board-coord/gate.sh t4 t9          # subset
 #   CHUNK_BASE=<pre-chunk commit> bash tests/agent-board-coord/gate.sh  # for the BASE-relative guards
 # Chunk bases: C02-era guards ran 0ed96ed99/a42dc2896/87617353a; round-2
@@ -129,6 +142,17 @@ FEATURE=".agents/plans/2026/2026-10-cf-50-feat-prevent-multiple-agent-board-coor
 # which lists it by exact path — the t14 widening is path-admission, not
 # invariance.
 FEATURE3=".agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork"
+# cf-58 joins the union-of-tickets scope posture (same convention as the two
+# widenings above): its plan folder, the whole subagent/command/skill tree it
+# rewrites, the generated mirrors, the gate script itself, and the hand-
+# managed .opencode/opencode.jsonc catalog (C06). Infra dirs stay fenced.
+FEATURE5=".agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge"
+CF_SRC=(.rulesync/subagents/agent-coord.md .rulesync/subagents/agent-coord-local.md
+        .rulesync/subagents/agent-coord-pr.md .rulesync/subagents/agent-board-coord.md
+        .rulesync/subagents/agent-board-coord-local.md .rulesync/subagents/agent-board-coord-pr.md)
+CF_GEN=(.opencode/agents/agent-coord.md .opencode/agents/agent-coord-local.md
+        .opencode/agents/agent-coord-pr.md .opencode/agents/agent-board-coord.md
+        .opencode/agents/agent-board-coord-local.md .opencode/agents/agent-board-coord-pr.md)
 RULES_SRC=".rulesync/rules/overview.md"
 AGENT_SRC=".rulesync/subagents/agent-board-coord.md"
 AGENT_GEN=".opencode/agents/agent-board-coord.md"
@@ -158,10 +182,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 19); do WANT["t$i"]=1; done
+  for i in $(seq 1 20); do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-9]|1[0-9])$ ]] || fail "unknown check id '$a' (expected t1..t19)"
+    [[ "$a" =~ ^t([1-9]|1[0-9]|20)$ ]] || fail "unknown check id '$a' (expected t1..t20)"
     WANT["$a"]=1
   done
 fi
@@ -307,9 +331,46 @@ for want in (WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
 if not matched:
     print("no sanctioned literal allow block (SHELL2 six lines, SHELL3 nine, SHELL4 twelve) "
           f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 12]})"); sys.exit(1)
-nxt = lines[at + matched] if at + matched < len(lines) else ""
-if nxt.strip() == "- action: shell":
-    print("a further '- action: shell' row continues the block after the sanctioned form — unsanctioned shell grant"); sys.exit(1)
+# cf-58 merge re-pin: after the matched sanctioned block the only permitted
+# continuation is comment lines (source tree only — the rulesync YAML
+# round-trip strips them from the generated mirror) plus the sanctioned git
+# block, whole and in order — the thirteen shared rows plus the variant
+# tail: push-deny on -local/alias files, push-allow + push-main deny + the
+# four force-flag denies on -pr files; any other shell row is unsanctioned.
+COMMON = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: allow") for r in
+          ("git status *", "git log *", "git diff *", "git show *", "git branch *",
+           "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
+           "git commit *", "git checkout *", "git switch *", "git merge main*")]
+def T(r, e):
+    return (f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
+TAILS = [[T("git push*", "deny")],
+         [T("git push*", "allow"), T("git push*main*", "deny"), T("git push --force*", "deny"),
+          T("git push -f*", "deny"), T("git push * --force*", "deny"), T("git push * -f*", "deny")]]
+k = at + matched
+gi = saw = 0
+chosen = None
+while k < len(lines):
+    if lines[k].lstrip().startswith("#"):
+        k += 1
+        continue
+    if lines[k].strip() == "- action: shell":
+        saw = 1
+        if gi < len(COMMON):
+            if lines[k:k + 3] != list(COMMON[gi]):
+                print(f"a shell row continues the block after the sanctioned form and is not the next sanctioned git-block row (want {COMMON[gi]}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
+            gi += 1
+            k += 3
+            continue
+        if chosen is not None:
+            print("a shell row continues after the complete sanctioned git block — unsanctioned shell grant"); sys.exit(1)
+        chosen = next((t for t in TAILS if lines[k:k + 3 * len(t)] == [ln for tr in t for ln in tr]), None)
+        if chosen is None:
+            print(f"the git block's tail is neither the -local push-deny row nor the -pr push sextet (got {lines[k:k + 18]}) — unsanctioned shell grant"); sys.exit(1)
+        k += 3 * len(chosen)
+        continue
+    break
+if saw and (gi != len(COMMON) or chosen is None):
+    print(f"the git block continues the shell surface but is truncated or reordered (matched {gi} of {len(COMMON)} shared rows, tail {'found' if chosen else 'missing'})"); sys.exit(1)
 PY
 
 cat >"$TMP/argcheck.py" <<'PY'
@@ -599,36 +660,57 @@ if want t13; then
 fi
 
 # --- t14: AC4 — changed paths == Files in scope, then rulesync no-op ----------
-# tests-edit-perms D4/D9 widening: this ticket's in-scope paths join the
-# union-of-tickets allow-set — the agent-test/agent-dev permission pairs, the
-# four carved agents-sync references files, the pipeline-role-test pair and
-# tests/** — PLUS the three follow-up ticket folders that 124fc2ae8 (main's
-# tip when this ticket started) introduced: a landing that adds plan folders
-# must not read as a scope violation for every later guard. The folder
-# patterns are written inline as literals (not variables) so the agent-perms
-# A9 pin can window-grep them inside this block.
+# tests-edit-perms D4/D9 widening (kept verbatim): that ticket's in-scope
+# paths join the union-of-tickets allow-set — the agent-test/agent-dev-perm
+# pairs era paths, the four carved agents-sync references files, the
+# pipeline-role-test pair and tests/** — PLUS the three follow-up ticket
+# folders that 124fc2ae8 introduced: a landing that adds plan folders must
+# not read as a scope violation for every later guard. The folder patterns
+# are written inline as literals (not variables) so the agent-perms A9 pin
+# can window-grep them inside this block.
+# cf-58 widening (C03/C04/C06): this ticket rewrites the whole agent-
+# definition surface — subagent/command sources, their generated mirrors,
+# the new skill dirs and the hand-managed .opencode/opencode.jsonc — so
+# those join as directory wildcards (the retired pre-split dev-path literal
+# is gone with the rename sweep, agent-perms A13). Skill dirs are widened
+# one per edited contract, NOT a blanket skills/* — pipeline-role-dev joins
+# with the C03 description fold-in (validation_at_fault round 3: C03's
+# user-pinned edit tripped the enumeration gap); an unsanctioned skill edit
+# still fails here. Granularity trades to the
+# positive guards: t12 still fences agents-sync outside the carve,
+# rulesync-surface c17 still fences pipeline-gates, and every cf-58 surface
+# has its own content suite. Infra dirs (charts/containers/services/
+# custom-values) stay OUTSIDE the allow-set.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     case "$p" in
-      "$GATE"|scripts/*|tests/*|AGENTS.md|"$RULES_SRC"|"$AGENT_SRC"|"$AGENT_GEN"|\
+      "$GATE"|scripts/*|tests/*|AGENTS.md|"$RULES_SRC"|"$AGENT_SRC"|"$AGENT_GEN"|"$COORD_SRC"|"$COORD_GEN"|\
       "$CMD_SRC"|"$CMD_GEN"|"$CMD_BASE_SRC"|"$CMD_BASE_GEN"|\
       "$BOARDS_SRC"/*|"$BOARDS_GEN"/*|"$FEATURE"/*|\
-      "$FEATURE3"/*|"$COORD_SRC"|"$COORD_GEN"|\
+      "$FEATURE3"/*|.rulesync/subagents/*|.opencode/agents/*|\
+      .rulesync/commands/*|.opencode/commands/*|\
       "$KICK_SRC_DIR"/*|"$KICK_GEN_DIR"/*|"$RC_SRC_DIR"/*|"$RC_GEN_DIR"/*|\
+      .rulesync/skills/pipeline-push-pr/*|.opencode/skills/pipeline-push-pr/*|\
+      .rulesync/skills/pipeline-models/*|.opencode/skills/pipeline-models/*|\
+      .rulesync/skills/role-dev/*|.opencode/skills/role-dev/*|\
+      .rulesync/skills/pipeline-role-dev/*|.opencode/skills/pipeline-role-dev/*|\
+      .rulesync/skills/role-planner/*|.opencode/skills/role-planner/*|\
+      .rulesync/skills/role-code/*|.opencode/skills/role-code/*|\
+      .rulesync/skills/role-debug/*|.opencode/skills/role-debug/*|\
+      .opencode/opencode.jsonc|\
       "$AS_SRC"/references/permissions.md|"$AS_GEN"/references/permissions.md|\
       "$AS_SRC"/references/pipeline-overview.md|"$AS_GEN"/references/pipeline-overview.md|\
-      .rulesync/subagents/agent-test.md|.opencode/agents/agent-test.md|\
-      .rulesync/subagents/agent-dev.md|.opencode/agents/agent-dev.md|\
       .rulesync/skills/pipeline-role-test/*|.opencode/skills/pipeline-role-test/*|\
+      .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-kickoff-mints-run-branch/*|\
       .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
       .agents/plans/2026/2026-10-bug-tests-edit-perms/*) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 widenings)" ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders) and the kickoff-mints scripts/* admit (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit and the cf-58 agent-surface widening included (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
@@ -654,286 +736,181 @@ $snap_after" >"$TMP/noop.diff"
   fi
 fi
 
-# --- t15: hourly pointer — C02 AC5 append rule, C03 AC4 frozen HOLD -----------
-# Base-adaptive: a base predating the pointer (0ed96ed99, a42dc2896,
-# 87617353a) must see exactly one appended sentence; a base that already
-# ships it (72500166a onward) must see a byte-frozen agent body — the
-# pointer's $(SESSION_URL_BASE) token text survives verbatim and the
-# origin redefinition lives in the boards skill, not the agent (C03 AC4).
+# --- t15: hourly pointer — presence HOLD (cf-58 RE-PIN) ------------------------
+# Original C02 AC5 pinned the pointer as exactly ONE appended sentence and
+# C03 AC4 froze the agent body byte-identical from a base shipping the
+# pointer. cf-58 C03/C05 legitimately EDIT the board-coord bodies (variant
+# files copy the paragraph, C05 rewrites its checklist enumeration), so the
+# frozen-body arm is retired; what survives — the actual contract — is that
+# the hourly pointer sentence stays present in both trees and no gate
+# mechanics ever leak into the agent body. Red posture: HOLD green now, red
+# only if a chunk drops the pointer or leaks mechanics.
 body_of() { awk 'c>=2{print} /^---$/{c++}' "$1"; }   # skeleton convention from rulesync-surface c16
 if want t15; then
   n=0
   for f in "$AGENT_SRC" "$AGENT_GEN"; do
     n=$((n + 1))
-    git show "$BASE:$f" >"$TMP/base-$n.md" 2>/dev/null || fail "t15: $f not readable at $BASE"
-    body_of "$TMP/base-$n.md" >"$TMP/base-body-$n"
-    body_of "$f" >"$TMP/cur-body-$n"
-    base_has_pointer=0
-    if grep -qF 'pipeline-boards-hourly' "$TMP/base-body-$n"; then base_has_pointer=1; fi
-    if [ "$base_has_pointer" -eq 1 ]; then
-      if ! diff -q "$TMP/base-body-$n" "$TMP/cur-body-$n" >/dev/null; then
-        diff "$TMP/base-body-$n" "$TMP/cur-body-$n" | head -n 8 >&2
-        fail "t15: $f body changed vs $BASE, a base that already ships the hourly pointer — C03 AC4 holds the agent body byte-frozen"
-      fi
-    else
-      if diff -q "$TMP/base-body-$n" "$TMP/cur-body-$n" >/dev/null; then
-        fail "t15: $f body identical to $BASE — the one-line hourly pointer is missing (C02 AC5 — red-before-C02)"
-      fi
-      # diff exits 1 on any difference; capture it once instead of re-running
-      # it per grep (every `diff | grep` pipeline would otherwise trip pipefail
-      # even when grep matches).
-      diff "$TMP/base-body-$n" "$TMP/cur-body-$n" >"$TMP/d-$n" || true
-      grep '^> ' "$TMP/d-$n" >"$TMP/add-$n" || true
-      grep '^< ' "$TMP/d-$n" >"$TMP/rem-$n" || true
-      add_n=$(sed 's/^> //' "$TMP/add-$n" | grep -cv '^[[:space:]]*$' || true)
-      rem_n=$(sed 's/^< //' "$TMP/rem-$n" | grep -cv '^[[:space:]]*$' || true)
-      [ "$add_n" -eq 1 ] \
-        || fail "t15: $f body has $add_n non-blank added line(s) — AC5 pins exactly ONE new pointer sentence"
-      [ "$rem_n" -le 1 ] \
-        || fail "t15: $f body rewrites $rem_n existing line(s) — only a one-sentence append to a single line is allowed"
-      if [ "$rem_n" -eq 1 ]; then
-        python3 - "$TMP/rem-$n" "$TMP/add-$n" <<'PY' || fail "t15: $f rewrote (not merely extended) a body line — the pointer must be additive so an old sentence cannot vanish"
-import sys
-r = [ln[2:] for ln in open(sys.argv[1]).read().splitlines() if ln[2:].strip()]
-a = [ln[2:] for ln in open(sys.argv[2]).read().splitlines() if ln[2:].strip()]
-sys.exit(0 if len(r) == 1 and len(a) == 1 and r[0] in a[0] else 1)
-PY
-      fi
-      grep -qF 'pipeline-boards-hourly' "$TMP/add-$n" \
-        || fail "t15: $f pointer sentence does not name pipeline-boards-hourly (the sentence's whole purpose)"
-      grep -qiE 'manual' "$TMP/add-$n" \
-        || fail "t15: $f pointer sentence never mentions the ungated manual path (C02 task: one sentence covering both)"
-    fi
+    body_of "$f" >"$TMP/t15-body-$n"
+    grep -qF 'pipeline-boards-hourly' "$TMP/t15-body-$n" \
+      || fail "t15: $f body lost the hourly pointer sentence (C02 AC5 presence — the pointer survives every cf-58 body edit)"
     for mech in 'GATE:' '--threshold' 'BOARD CHECK'; do
-      ! grep -qF -- "$mech" "$TMP/cur-body-$n" || fail "t15: $f body carries gate mechanics '$mech' — mechanics live in the script/command only (AC5)"
+      ! grep -qF -- "$mech" "$TMP/t15-body-$n" || fail "t15: $f body carries gate mechanics '$mech' — mechanics live in the script/command only (AC5)"
     done
   done
-  ok "t15: hourly pointer held per base round — one appended sentence vs pre-pointer bases, byte-frozen body vs bases shipping it; no gate mechanics in the body"
+  ok "t15: hourly pointer sentence present in source and mirror; no gate mechanics in the agent bodies (cf-58 presence re-pin of the frozen-body arms)"
 fi
 
-# --- t16: rules surface additive (AC6) -----------------------------------------
+# --- t16: rules surface — cf-58 RE-PIN of the additive-only arm ----------------
+# The scripts/ bullet + the hourly-command name are presence pins; the
+# deletion guard survives but narrows to the facts cf-58 may NOT remove:
+# the scripts/ entry and the gate-script reference (cf-50 AC6's merged
+# surface). cf-58 rewrites the AGENT bullets in the rules source (C02/C03/
+# C04/C05 overview tasks), so the old "no deleted line except the
+# agent-board-coord sentence" freeze contradicts the plan; deleted lines
+# mentioning the scripts/gate facts are the violation that matters.
 if want t16; then
   for f in "$RULES_SRC" AGENTS.md; do
     grep -qE '^[[:space:]]*[-*][[:space:]].*`scripts/`' "$f" \
-      || fail "t16: $f has no scripts/ bullet — the rules entry is missing (C02 AC6 — red-before-C02)"
+      || fail "t16: $f has no scripts/ bullet — the rules entry is missing (C02 AC6)"
     grep -qF 'pipeline-boards-hourly' "$f" \
       || fail "t16: $f never names pipeline-boards-hourly (AC6: agents-section extension)"
-  done
-  for f in "$RULES_SRC" AGENTS.md; do
-    git diff "$BASE" -- "$f" | grep '^-' | grep -v '^---' | grep -v 'agent-board-coord' >"$TMP/rem-lines.txt" || true
+    git diff "$BASE" -- "$f" | grep '^-' | grep -v '^---' | grep -E 'scripts/|agent-board-coord-gate\.sh' >"$TMP/rem-lines.txt" || true
     if [ -s "$TMP/rem-lines.txt" ]; then
       cat "$TMP/rem-lines.txt" >&2
-      fail "t16: $f deletes a line unrelated to the agent-board-coord sentence — the rules surface is additive-only (AC6)"
+      fail "t16: $f deletes a line carrying the scripts/ or gate-script fact — cf-58 may rewrite AGENT bullets, but the cf-50 scripts/ surface stays (agent-perms A7 sibling discipline)"
     fi
   done
-  ok "t16: scripts/ bullet + hourly-variant line in rules source AND AGENTS.md; nothing removed beyond the allowed sentence extension"
+  ok "t16: scripts/ bullet + hourly-variant name present in rules source AND AGENTS.md; no scripts/gate fact deleted (cf-58 re-pin of the additive-only arm)"
 fi
 
-# --- t17: coord-pair frontmatter — cf-52 RE-PIN, tests-edit-perms D10 OR-form --
-# Round-1 D13 pinned agent-board-coord's frontmatter byte-identical (zero
-# permission changes; the gate rode the !-block). cf-52 D10 re-opened exactly
-# that surface with the two scoped `opencode api` session allows (agent-fuser
-# precedent shape), added to BOTH coord variants. tests-edit-perms D10 now
-# extends the acceptance to c2's OR-form (see the surface paragraph):
-#   arm A (pre-delta base, e.g. CHUNK_BASE=081b57889): current == the base
-#     perms with exactly the two shell allows spliced after the `opencode
-#     '*' allow` — the cf-52-era posture;
-#   arm B (committed base, default BASE=HEAD on the integrated line):
-#     current == base AND base is itself idempotent under that splice. The
-#     old exact-delta form is dead code at HEAD (self-reference — cf-52's
-#     delta is committed at the default base), which is why t17 red at HEAD
-#     was this ticket's designed-red class, fixed here and NOT by dropping
-#     the contract: the shape blocks below stay UNCONDITIONAL for both arms
-#     (question allow, exactly two scoped shell rows, five subagent allows,
-#     three edit allows, dev_boards* after the deny-all, no broad dev*), and
-#     the arm-aware line twins pin the six literal allow lines either as the
-#     +6/-0 additions (arm A) or at the pinned position (arm B, atpos.py —
-#     replacing the mechanical trap of cmp-ing an empty additions file).
-# Unauthorized drift fails in either arm: a fabricated extra row breaks both
-# equalities at once (AC9(iii) negative control, exercised by agent-perms A10).
-# kickoff-mints C02 re-pin (test phase): the accepted forms widen from the
-# cf-52 SHELL2 (two scoped session allows) to a sanctioned-FORMS ladder —
-# SHELL3 appends the third scoped `bash scripts/kickoff-mint-branch.sh *`
-# mint allow (LAND at c6689202c), SHELL4 appends the fourth scoped
-# `bash scripts/session-origin.sh*` origin-resolver allow (session-origin C02).
-# arm A normalizes the base (strip sanctioned rows, re-splice the
-# form) so the two-allow committed base paired with exactly the +3 mint delta
-# (the kickoff-mints C02 review geometry) and today's three-allow base pairs
-# with exactly the +3 session-origin triple (this ticket's C02 review
-# geometry); arm B keeps strip/re-insert idempotence. A base already carrying
-# the origin allow admits SHELL4 only (no regress to three), one carrying the
-# mint allow admits SHELL4|SHELL3 (no regress to two). Green through this
-# ticket's C01 at both operational arms; the absolute four-allow presence duty
-# lives in tests/session-origin/surface.sh s4 (and the three-allow floor in
-# tests/kickoff-branch/surface.sh m4), not here.
-if want t17; then
-  n=0
-  for f in "$COORD_SRC" "$COORD_GEN" "$AGENT_SRC" "$AGENT_GEN"; do
-    n=$((n + 1))
-    case "$f" in *agent-board-coord*) adb=dev-boards ;; *) adb=none ;; esac
-    git show "$BASE:$f" >"$TMP/base-fm-$n.md" 2>/dev/null || fail "t17: $f not readable at $BASE"
-    python3 - "$TMP/base-fm-$n.md" "$f" "$adb" <<'EOF' || fail "t17: frontmatter of $f is not a sanctioned shell-allow form (SHELL2 cf-52 two-allow / SHELL3 kickoff-mints three-allow / SHELL4 session-origin four-allow, gated by what the base carries) in either arm — arm A: normalized-base splice after the opencode '*' allow; arm B: committed-base idempotence at the pinned position — red before C01 only if the grants are absent (base: $BASE)"
+# --- t17: coord-family frontmatter — cf-58 RE-PIN (absolute family contract) ---
+# History: D13 froze the board-coord frontmatter bytes; cf-52 re-pinned to
+# "base + exactly the two scoped opencode-api session allows" (arm A/arm B
+# splice OR-form, historical refs 081b57889 / f11bfcb85 / 916044893 stay
+# documented in the header); tests-edit-perms D10 made the arms OR-form.
+# cf-58 C03 supersedes the delta form: the sanctioned content is now the API
+# pair PLUS the git block on all SIX family agents, so t17 pins the
+# absolute family contract on every one of the twelve files — API
+# containment (the two session allows exactly, no third API grant — the
+# cf-52 axis that made the delta meaningful), pinned position (atpos line
+# twin at the committed/posture), git-only additional shell rows, variant
+# dev-slot rosters, plan-state edit allows, board extras, deny-baseline and
+# question allow. The arm-aware empty-diff twin keeps the cf-52 T10
+# discipline: never "empty diff implies pass".
+# argv: file, class(local|pr), board(0|1) — same guard as coord-inwork i4
+# (each suite carries its own copy by the suites' self-contained convention).
+cat >"$TMP/cfpins.py" <<'PY'
+# (identical contract to tests/coord-inwork/surface.sh cfpins.py — keep in
+# step when either moves; agent-perms A10 proves the pattern non-vacuous.)
 import re, sys, yaml
-GET = {"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"}
-PATCH = {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}
-MINT = {"action": "shell", "resource": "bash scripts/kickoff-mint-branch.sh *", "effect": "allow"}
-ORIGIN = {"action": "shell", "resource": "bash scripts/session-origin.sh*", "effect": "allow"}
-SHELL2 = [GET, PATCH]
-SHELL3 = [GET, PATCH, MINT]
-SHELL4 = [GET, PATCH, MINT, ORIGIN]
-def perms(path):
-    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
-    assert m, f"{path}: no YAML frontmatter"
-    fm = yaml.safe_load(m.group(1)) or {}
-    return (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
-def splice(seq, form):
-    anchor = [i for i, p in enumerate(seq)
-              if p == {"action": "opencode", "resource": "*", "effect": "allow"}]
-    if len(anchor) != 1:
-        return None, len(anchor)
-    i = anchor[0]
-    return seq[:i + 1] + form + seq[i + 1:], i
-b, c = perms(sys.argv[1]), perms(sys.argv[2])
-if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
-    print("deny-baseline first rule changed at base"); sys.exit(1)
-if ORIGIN in b:
-    forms = [SHELL4]
-elif MINT in b:
-    forms = [SHELL4, SHELL3]
+path, cls, board = sys.argv[1], sys.argv[2], sys.argv[3] == '1'
+m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+assert m, f"{path}: no YAML frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+perms = (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
+API = [{"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"},
+       {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}]
+errs = []
+if perms and perms[0] != {"action": "*", "resource": "*", "effect": "deny"}:
+    errs.append("deny-baseline first rule changed")
+if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in perms):
+    errs.append("question allow lost (repo hard rule)")
+api_rows = [p for p in perms if p.get("action") == "shell" and str(p.get("resource", "")).startswith("opencode api")]
+if api_rows != API:
+    errs.append(f"opencode-api shell rows are {api_rows}, want exactly the two scoped session allows in get/patch order")
+anchors = [i for i, p in enumerate(perms) if p == {"action": "opencode", "resource": "*", "effect": "allow"}]
+if len(anchors) != 1:
+    errs.append(f"want exactly one opencode '*' allow anchor, found {len(anchors)}")
 else:
-    forms = [SHELL4, SHELL3, SHELL2]
-norm = [p for p in b if p not in SHELL4]
-hit = None
-for form in forms:
-    want, i = splice(norm, form)
-    if want is None:
-        print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
-    if c == want:
-        hit = "arm A"
-        break
-if hit is None:
-    if not any(p.get("action") == "shell" for p in c):
-        print("no sanctioned shell allow form is applied yet"); sys.exit(1)
-    if c == b:  # arm B candidate — committed base (tests-edit-perms D10)
-        rebuilt = False
-        for form in forms:
-            stripped = list(b)
-            if not all(s in stripped for s in form):
-                continue
-            for sx in form:
-                stripped.remove(sx)
-            again, _ = splice(stripped, form)
-            if again is not None and b == again:
-                rebuilt = True
-                break
-        if not rebuilt:
-            print("arm B: current == base but the base is not a sanctioned allow form (SHELL2, SHELL3 or SHELL4) at the pinned splice position — the contract never landed or drifted off-anchor"); sys.exit(1)
-    else:
-        want, _ = splice(norm, SHELL4)
-        extra = [p for p in c if p not in want]
-        missing = [p for p in want if p not in c]
-        print(f"delta is not a sanctioned shell-allow form in either arm (extra={extra}, missing={missing}); placement must be after the opencode '*' allow")
-        sys.exit(1)
-shells = [p.get("resource") for p in c if p.get("action") == "shell"]
-if shells not in ([s["resource"] for s in SHELL2], [s["resource"] for s in SHELL3],
-                  [s["resource"] for s in SHELL4]):
-    print(f"shell resources are {shells}, want exactly the two-, three- or four-allow sanctioned form in order"); sys.exit(1)
-if sys.argv[3] == "dev-boards" and not any(
-        p.get("action") == "dev_boards*" and p.get("resource") == "*" and p.get("effect") == "allow" for p in c):
-    print("dev_boards* allow missing from the board-coord file"); sys.exit(1)
-EOF
-    # Arm-aware line twin (tests-edit-perms T10), keyed to the ALLOW COUNT THE
-    # BASE CARRIES (kickoff-mints ladder): a no-allow base pairs with +6
-    # (SHELL2) or +9 (SHELL3); the two-allow committed base (today's HEAD, the
-    # C02 review geometry) pairs with exactly the +3 mint triple; a
-    # three-allow base satisfies the twin only through an empty diff. At a
-    # committed (empty-diff) base the twin is the absolute pinned-position
-    # presence pin — never "empty diff implies pass".
+    i = anchors[0]
+    if perms[i + 1:i + 3] != API:
+        errs.append("the api pair does not sit directly after the opencode '*' allow (pinned splice position)")
+SANCTIONED_SCRIPTS = ("bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*")
+others = [p.get("resource") for p in perms if p.get("action") == "shell"
+          and not str(p.get("resource", "")).startswith(("opencode api", "git "))
+          and p.get("resource") != "*"
+          and p.get("resource") not in SANCTIONED_SCRIPTS]
+if others:
+    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = API pair + the two cf-52 sanctioned script allows + git block + ask baseline)")
+slot = "agent-dev-pr" if cls == "pr" else "agent-dev-local"
+subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
+want_subs = sorted(["agent-plan", "agent-test", slot, "agent-review", "agent-research"])
+if subs != want_subs:
+    errs.append(f"subagent allows {subs}, want the five roles with dev slot {slot}")
+edits = sorted(p.get("resource") for p in perms if p.get("action") == "edit")
+if edits != sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"]):
+    errs.append(f"edit allows are {edits}, want only the three plan-state files")
+if board:
+    db = [i for i, p in enumerate(perms) if p.get("action") == "dev_boards*"]
+    if len(db) != 1 or db[0] < 1 or perms[db[0]].get("effect") != "allow":
+        errs.append("the single narrow dev_boards* allow is gone (board variants keep it)")
+    if not any(p.get("action") == "execute" and p.get("effect") == "allow" for p in perms):
+        errs.append("execute allow lost from a board variant (Code Mode transport)")
+    if any(p.get("action") == "dev*" for p in perms):
+        errs.append("broad dev* allow appeared on a board variant (D21)")
+if errs:
+    print("; ".join(errs)); sys.exit(1)
+PY
+if want t17; then
+  for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
+    [ -f "$f" ] || fail "t17[C03]: $f missing — the six-agent coord family is the re-pinned contract set (red before C03)"
+  done
+  for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
+    # *-pr.md not *-pr — the bare pattern never matches .md names and falls
+    # through to the -local arms (validation_at_fault round 3).
+    case "$f" in *-pr.md) cls=pr ;; *) cls=local ;; esac
+    case "$f" in *board-coord*) board=1 ;; *) board=0 ;; esac
+    python3 "$TMP/cfpins.py" "$f" "$cls" "$board" \
+      || fail "t17[C03]: $f violates the absolute coord-family contract (class $cls, board $board) — cf-58 C03 API containment + git-only shells + roster slot + shapes (base: $BASE)"
     if git diff --quiet "$BASE" -- "$f"; then
       python3 "$TMP/atpos.py" "$f" \
-        || fail "t17: $f has an empty diff vs $BASE (arm B posture) but does not carry a sanctioned literal allow block (six, nine or twelve lines) directly after the opencode '*' allow"
-    else
-      bc=$(git show "$BASE:$f" | grep -c '^[[:space:]]*- action: shell' || true)
-      ns=$(git diff --numstat "$BASE" -- "$f" | head -n 1 || true)
-      add=$(printf '%s' "${ns:-0	0}" | cut -f1)
-      del=$(printf '%s' "${ns:-0	0}" | cut -f2)
-      case "$bc:$add" in
-        0:6) rng='1,6' ;;
-        0:9) rng='1,9' ;;
-        0:12) rng='1,12' ;;
-        2:3) rng='7,9' ;;
-        3:3) rng='10,12' ;;
-        *) fail "t17: $f diff vs $BASE is +$add/-$del on a base carrying $bc shell allows — want +6 (SHELL2 on a no-allow base), +9 (SHELL3 on a no-allow base), +12 (SHELL4 on a no-allow base), +3 (the mint triple on the two-allow posture) or +3 (the session-origin triple on the three-allow posture) (base: $BASE)" ;;
-      esac
-      [ "$del" = "0" ] \
-        || fail "t17: $f diff vs $BASE removes $del lines — the sanctioned delta is additions-only"
-      git diff -U0 "$BASE" -- "$f" | grep '^+' | grep -v '^+++' | sed 's/^+//' | sed 's/^[[:space:]]*//' \
-        >"$TMP/t17-add-$n.txt"
-      printf '%s\n' '- action: shell' 'resource: opencode api get /api/session*' 'effect: allow' \
-                    '- action: shell' 'resource: opencode api patch /api/session/*' 'effect: allow' \
-                    '- action: shell' 'resource: bash scripts/kickoff-mint-branch.sh *' 'effect: allow' \
-                    '- action: shell' 'resource: bash scripts/session-origin.sh*' 'effect: allow' \
-        | sed -n "${rng}p" >"$TMP/t17-want-$n.txt"
-      cmp -s "$TMP/t17-add-$n.txt" "$TMP/t17-want-$n.txt" \
-        || fail "t17: $f added lines are not the literal sanctioned allow rules (see $TMP/t17-add-$n.txt vs $TMP/t17-want-$n.txt)"
+        || fail "t17[C03]: $f has an empty diff vs $BASE (committed posture) but does not carry the six literal API allow lines directly after the opencode '*' allow"
     fi
   done
-  python3 - "$AGENT_GEN" <<'PY' || fail "t17: generated agent-board-coord permission block breaks the shape that must hold through the cf-52 delta"
-import re, sys, yaml
-text = open(sys.argv[1]).read()
-m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
-assert m, "no YAML frontmatter"
-perms = (yaml.safe_load(m.group(1)) or {}).get("permissions") or []
-errs = []
-db = [p for p in perms if p.get("action") == "dev_boards*"]
-if len(db) != 1 or db[0].get("effect") != "allow" or db[0].get("resource") != "*":
-    errs.append("dev_boards* must appear EXACTLY once as allow '*' — the pre-existing single allow is the whole board surface (D13 held through the cf-52 delta)")
-if any(p.get("action") == "dev*" for p in perms):
-    errs.append("broad dev* allow appeared")
-shells = [p.get("resource") for p in perms if p.get("action") == "shell"]
-_want2 = ["opencode api get /api/session*", "opencode api patch /api/session/*"]
-if shells not in (_want2, _want2 + ["bash scripts/kickoff-mint-branch.sh *"],
-                  _want2 + ["bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*"]):
-    errs.append(f"shell rows are {shells}, want exactly the cf-52 two-allow, kickoff-mints three-allow or session-origin four-allow sanctioned form (any other shell grant is scope escape)")
-if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in perms):
-    errs.append("question allow lost (repo hard rule)")
-deny_at = next((i for i, p in enumerate(perms) if p.get("action") == "*" and p.get("resource") == "*" and p.get("effect") == "deny"), None)
-db_at = perms.index(db[0]) if db else None
-if deny_at is None or db_at is None or db_at < deny_at:
-    errs.append("the dev_boards allow no longer follows the leading deny-all (last-match-wins would deny it)")
-subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
-want_subs = sorted(["agent-plan", "agent-test", "agent-dev", "agent-review", "agent-research"])
-if subs != want_subs:
-    errs.append(f"subagent allows are {subs}, want exactly {want_subs}")
-edits = sorted(p.get("resource") for p in perms if p.get("action") == "edit")
-want_edits = sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"])
-if edits != want_edits:
-    errs.append(f"edit allows are {edits}, want ONLY the three plan-state files")
-if errs:
-    print("; ".join(errs)); sys.exit(1)
-PY
-  python3 - "$COORD_GEN" <<'PY' || fail "t17: generated agent-coord permission block breaks the shape that must hold through the cf-52 delta"
-import re, sys, yaml
-text = open(sys.argv[1]).read()
-m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
-assert m, "no YAML frontmatter"
-perms = ((yaml.safe_load(m.group(1)) or {}).get("permissions")) or []
-errs = []
-if any(p.get("action") == "dev*" or p.get("action") == "dev_boards*" for p in perms):
-    errs.append("a board MCP allow appeared on the plain coord — dev_boards* belongs to agent-board-coord only")
-shells = [p.get("resource") for p in perms if p.get("action") == "shell"]
-_want2 = ["opencode api get /api/session*", "opencode api patch /api/session/*"]
-if shells not in (_want2, _want2 + ["bash scripts/kickoff-mint-branch.sh *"],
-                  _want2 + ["bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*"]):
-    errs.append(f"shell rows are {shells}, want exactly the cf-52 two-allow, kickoff-mints three-allow or session-origin four-allow sanctioned form")
-if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in perms):
-    errs.append("question allow lost (repo hard rule)")
-if not any(p.get("action") == "opencode" and p.get("resource") == "*" and p.get("effect") == "allow" for p in perms):
-    errs.append("the opencode '*' allow anchor vanished (the splice point of the two grants)")
-if errs:
-    print("; ".join(errs)); sys.exit(1)
-PY
-  ok "t17: all four coord files satisfy the sanctioned shell-allow forms ladder (SHELL2 cf-52 | SHELL3 kickoff-mints | SHELL4 session-origin, base-gated) in one of its arms (arm A normalized splice / arm B committed-idempotence) with arm-aware literal-line twins keyed to the base allow count; dev_boards*/question/subagent/edit shapes hold unconditionally on both generated variants (cf-52 D10 contract, tests-edit-perms D10 OR-form, kickoff-mints C02 + session-origin C02 ladders)"
+  ok "t17[C03]: all twelve coord-family files carry the absolute family contract (two scoped API allows at the pinned position, git-only additional shell rows, variant rosters, plan-state edits, board extras, deny-baseline + question allow); committed files line-twinned at pinned position"
+fi
+
+# --- t20: liveness filter counts ALL THREE board-coord names (cf-58 C03) --------
+# The plan names the gate's single-literal filter a double-launch risk if it
+# misses a name: scheduled launches create the ALIAS (agent-board-coord),
+# manual -local/-pr runs create the variants, and a stale gate lets two
+# board-coord runs collide. Pins: (a) the three exact names appear as quoted
+# literals in the script, (b) no startswith-style prefix matching (the
+# agents-sync exact-names lesson), (c) the old single-equality filter line
+# is gone, (d) --help/usage text names all three, (e) fixture behavior: one
+# fresh session of EACH name -> LIVE; only stale ones of the three -> RUN;
+# a fresh FOREIGN agent -> RUN.
+if want t20; then
+  grep -qF '"agent-board-coord"' "$GATE" \
+    || fail "t20[C03]: $GATE lacks the exact quoted alias name (red before C03)"
+  grep -qF '"agent-board-coord-local"' "$GATE" \
+    || fail "t20[C03]: $GATE lacks the exact quoted -local name (red before C03)"
+  grep -qF '"agent-board-coord-pr"' "$GATE" \
+    || fail "t20[C03]: $GATE lacks the exact quoted -pr name (red before C03)"
+  ! grep -qE 'startswith|StartsWith|\| startswith' "$GATE" \
+    || fail "t20[C03]: $GATE matches agent names by prefix — C03 pins explicit enumeration (agents-sync lesson: exact names only)"
+  ! grep -qF 'map(select(.agent == "agent-board-coord"))' "$GATE" \
+    || fail "t20[C03]: the old single-literal filter is still the liveness expression — C03 replaced it (red before C03)"
+  run_gate --help
+  cat "$TMP/g.out" "$TMP/g.err" >"$TMP/t20-help.txt"
+  for n in agent-board-coord agent-board-coord-local agent-board-coord-pr; do
+    grep -qF "$n" "$TMP/t20-help.txt" \
+      || fail "t20[C03]: --help/usage text never names $n — the header/usage update is part of the filter widening"
+  done
+  for n in agent-board-coord agent-board-coord-local agent-board-coord-pr; do
+    envelope "$(sess "ses_$n" "$n" "fresh $n run" 2400 360)" >"$TMP/t20-$n.json"
+    run_gate --json "$TMP/t20-$n.json"
+    expect_verdict "t20 fixture: one fresh $n session counts as live" 2 "^GATE: LIVE ses_$n( |$)"
+  done
+  envelope "$(sess ses_a1 agent-board-coord 'stale alias' 2400 1200)" \
+           "$(sess ses_a2 agent-board-coord-local 'stale local' 2400 1200)" \
+           "$(sess ses_a3 agent-board-coord-pr 'stale pr' 2400 1200)" >"$TMP/t20_stale.json"
+  run_gate --json "$TMP/t20_stale.json"
+  expect_verdict "t20 fixture: only stale board-coord sessions -> RUN" 0 '^GATE: RUN( |$)'
+  envelope "$(sess ses_x agent-coord-pr 'fresh foreign coord' 2400 120)" >"$TMP/t20_foreign.json"
+  run_gate --json "$TMP/t20_foreign.json"
+  expect_verdict "t20 fixture: a fresh NON-board-coord session stays RUN" 0 '^GATE: RUN( |$)'
+  ok "t20[C03]: liveness set = the three explicit board-coord names (alias + -local + -pr) in code AND usage text, no prefix matching, old single-literal filter gone; fixtures prove LIVE each / RUN stale-only / RUN foreign"
 fi
 
 # --- t18: Session origin block contract across all four command files (C03) ---

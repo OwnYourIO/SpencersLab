@@ -62,7 +62,12 @@ plan's `## MCP Servers` section, but you never invoke it yourself.
    merge to main, and containers are tag-based (`docker-build.yaml` pushes
    `:v<run_number>` + `:<branch>`). Only brand-new charts get an initial
    version (`1.0.0`).
-7. Write the plan to `.agents/plans/`.
+7. Right-size the work: multi-session, cross-subsystem, or new-interface
+   changes do not belong in one standalone plan — recommend the `agent-*`
+   pipeline (`/pipeline`), which will chunk them with fresh plan/test/dev/
+   review sessions, and keep your own output to the decision-ready brief.
+   No mega-plans.
+8. Write the plan to `.agents/plans/`.
 
 ## Plan file naming
 
@@ -85,6 +90,12 @@ files for the same work.
 exactly what the Code agent should load — never omit them, even if the answer
 is "none beyond defaults".
 
+**`## Commands` is mandatory in every plan too** — the exact validation
+commands the implementing agent must run: `helm lint` + `helm template` for
+every touched chart, the grep trio checks, `rulesync generate --check` when
+generated surfaces are in play. One command per line, in execution order;
+free-text validation prose does not count.
+
 ```markdown
 # Plan: <title>
 
@@ -103,6 +114,8 @@ global-searxng.
 - Files/charts found in recon: <paths, with what they confirmed>
 - Cluster state relied on: <or "none">
 - Render checks performed: <helm template results, or "not needed">
+- Evidence rule: state facts you verified by reading — paths, counts,
+  timestamps, command results. Anything unverified stays labeled `unverified`.
 
 ## Design decisions
 For each: what was chosen and why (custom vs external chart, which service
@@ -115,10 +128,11 @@ Ordered steps. Each step names exactly one file and what changes in it:
 Include full YAML sketches for new files — the Code agent implements these
 sketches, so they must be complete and follow repo patterns.
 
-## Verification
-How to confirm it works: helm lint, helm template, grep checks for the
+## Commands
+Exact validation commands the implementing agent must run, one per line, in
+order: helm lint/template for every touched chart, grep checks for the
 service trio (chart + ApplicationSet values + proxy values), expected ArgoCD
-sync outcome.
+sync outcome stated as what to look for. Commands only.
 
 ## Risks & open questions
 Anything unverified, version-sensitive, or awaiting user decision.

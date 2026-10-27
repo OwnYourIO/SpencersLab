@@ -62,6 +62,20 @@
 # missing C02 (or C01 script) artifact. s3 + the byte-equality/freeze/regen
 # components are HOLD guards: green now, red if C02 escapes scope.
 #
+# cf-58 merge re-pin (2026-10-27): the standalone-agent merge lands the
+# sanctioned git block + the agent-dev → agent-dev-local roster rename on the
+# coord family. s4's mechanism re-pins accordingly: the arm comparisons run
+# on git-block-stripped core projections with a whole-block tail check
+# (splice4), the line twin admits the fourteen-row git block as the only
+# sanctioned continuation (atpos4), the shape check admits exactly that
+# block as the only git surface and pins the alias's -local roster (shape4),
+# and the soundness controls build their no-allow base from the live
+# skeleton. s4(b)'s diff-shape arm CANNOT express a merge delta: it is
+# designed-red in the merge window under BASE=pre-merge-HEAD and green again
+# at the merge commit (empty diff → arm-B atpos posture), provable
+# pre-commit via CHUNK_BASE=<merge snapshot>. s2's HEAD-relative byte pin
+# greens again at the same commit for the same reason.
+#
 # Usage (harness convention from tests/coord-inwork/surface.sh):
 #   bash tests/session-origin/surface.sh             # s1..s7
 #   bash tests/session-origin/surface.sh s4          # subset (designed-red inventory runs per check)
@@ -92,10 +106,12 @@ CMD_FILES=(.rulesync/commands/pipeline-boards.md .opencode/commands/pipeline-boa
            .rulesync/commands/pipeline-boards-hourly.md .opencode/commands/pipeline-boards-hourly.md)
 
 ORIGIN_RES='bash scripts/session-origin.sh*'
-# arm A of the sanctioned geometry lives at the sibling's landed commit (the
-# three-allow base this ticket's delta rides; the pre-landing refs are
-# historical per the tests-edit-perms discipline, so c6689202c is the
-# test-phase-chosen operational arm A documented in STATE execution_notes).
+# Historical arm-A reference: the sibling's landed commit (the three-allow
+# base this ticket's delta rode; the pre-landing refs are historical per the
+# tests-edit-perms discipline, documented in STATE execution_notes). Since
+# the cf-58 merge re-pin (2026-10-27) the s4 soundness controls derive their
+# no-allow base from the live skeleton (synth strip-shell) instead, so ARM_A
+# is kept for the record only.
 ARM_A="c6689202c"
 
 checks=0
@@ -273,6 +289,28 @@ SHELL4 = [
     {"action": "shell", "resource": "bash scripts/kickoff-mint-branch.sh *", "effect": "allow"},
     {"action": "shell", "resource": "bash scripts/session-origin.sh*", "effect": "allow"},
 ]
+# cf-58 MERGE RE-PIN (2026-10-27): the merged coord family additionally
+# carries the sanctioned git block after the SHELL4 block (pinned absolutely
+# across all twelve family files by the cfpins contract in
+# tests/coord-inwork/surface.sh i4 and tests/agent-board-coord/gate.sh t17).
+# Both arms compare core projections (git block stripped); a separate check
+# admits the block only whole and in order. The four-allow duty keeps teeth.
+GITBLOCK = [
+    {"action": "shell", "resource": "git status *", "effect": "allow"},
+    {"action": "shell", "resource": "git log *", "effect": "allow"},
+    {"action": "shell", "resource": "git diff *", "effect": "allow"},
+    {"action": "shell", "resource": "git show *", "effect": "allow"},
+    {"action": "shell", "resource": "git branch *", "effect": "allow"},
+    {"action": "shell", "resource": "git merge-base *", "effect": "allow"},
+    {"action": "shell", "resource": "git rev-parse *", "effect": "allow"},
+    {"action": "shell", "resource": "git ls-files *", "effect": "allow"},
+    {"action": "shell", "resource": "git add *", "effect": "allow"},
+    {"action": "shell", "resource": "git commit *", "effect": "allow"},
+    {"action": "shell", "resource": "git checkout *", "effect": "allow"},
+    {"action": "shell", "resource": "git switch *", "effect": "allow"},
+    {"action": "shell", "resource": "git merge main*", "effect": "allow"},
+    {"action": "shell", "resource": "git push*", "effect": "deny"},
+]
 def perms(path):
     m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
     assert m, f"{path}: no YAML frontmatter"
@@ -288,30 +326,35 @@ def splice(seq):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-want, i = splice([p for p in b if p not in SHELL4])
+b_core = [p for p in b if p not in GITBLOCK]
+c_core = [p for p in c if p not in GITBLOCK]
+want, i = splice([p for p in b_core if p not in SHELL4])
 if want is None:
     print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
-if c == want:
+if c_core == want:
     pass  # arm A — the +3-on-a-three-allow-base geometry a C02 review run sees
 else:
-    if not any(p.get("resource") == SHELL4[3]["resource"] for p in c):
+    if not any(p.get("resource") == SHELL4[3]["resource"] for p in c_core):
         print(f"the fourth scoped allow '{SHELL4[3]['resource']}' is MISSING (red before C02 dev phase — the session-origin resolver grant has not landed; the landed three-allow posture satisfies the re-pinned sibling ladders, not this contract)"); sys.exit(1)
-    if c == b:  # arm B candidate — committed base
-        stripped = list(b)
+    if c_core == b_core:  # arm B candidate — committed base
+        stripped = list(b_core)
         for s in SHELL4:
             if s not in stripped:
                 print("arm B: current == base but the four-allow delta is absent at base — the contract never landed (the three-allow state is rejected at the C02 arm)"); sys.exit(1)
             stripped.remove(s)
         again, _ = splice(stripped)
-        if again is None or b != again:
+        if again is None or b_core != again:
             print("arm B: the committed base does not idempotently rebuild as the four scoped allows at the pinned splice position — unsanctioned drift"); sys.exit(1)
     else:
-        extra = [p for p in c if p not in want]
-        missing = [p for p in want if p not in c]
+        extra = [p for p in c_core if p not in want]
+        missing = [p for p in want if p not in c_core]
         print(f"frontmatter delta is not exactly the four scoped allows in either arm: extra={extra} missing={missing}"); sys.exit(1)
-shells = [p.get("resource") for p in c if p.get("action") == "shell"]
+gb = [p for p in c if p in GITBLOCK]
+if gb and gb != GITBLOCK:
+    print("git-block rows are present but are not exactly the sanctioned fourteen rows in order — unsanctioned git surface"); sys.exit(1)
+shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells != [s["resource"] for s in SHELL4]:
-    print(f"shell resources are {shells}, want exactly the four scoped allows in order (any fifth shell grant is unsanctioned)"); sys.exit(1)
+    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the only other sanctioned shell surface is the cf-58 git block, checked whole above)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
 if need_dev_boards and not any(p.get("action") == "dev_boards*" and p.get("resource") == "*"
@@ -322,8 +365,9 @@ PY
 cat >"$TMP/atpos4.py" <<'PY'
 # Arm-B line twin: the TWELVE literal allow lines (two session triples, the
 # mint triple, the session-origin triple) directly after the opencode '*'
-# allow anchor at the anchor's own indent; nothing else may continue the
-# shell block (a thirteenth row is an unsanctioned fifth grant).
+# allow anchor at the anchor's own indent; the only sanctioned continuation
+# is the cf-58 git block (comment lines + the fourteen git rows, whole and
+# in order) — any other shell row is an unsanctioned fifth grant.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
@@ -348,9 +392,32 @@ at = hits[0][0] + 3
 if lines[at:at + 12] != want_lines:
     print("the twelve literal shell allow lines (two session triples + mint triple + session-origin triple) do not follow the "
           f"opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 12]})"); sys.exit(1)
-nxt = lines[at + 12] if at + 12 < len(lines) else ""
-if nxt.strip() == "- action: shell":
-    print("a fifth '- action: shell' row continues the block after the sanctioned twelve — unsanctioned shell grant"); sys.exit(1)
+# cf-58 merge re-pin: after the sanctioned twelve, the only permitted
+# continuation is comment lines plus the sanctioned fourteen-row git block
+# (whole, in order, ending the shell surface); any other shell row is an
+# unsanctioned grant.
+GB = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
+      for r, e in [("git status *", "allow"), ("git log *", "allow"), ("git diff *", "allow"),
+                   ("git show *", "allow"), ("git branch *", "allow"), ("git merge-base *", "allow"),
+                   ("git rev-parse *", "allow"), ("git ls-files *", "allow"), ("git add *", "allow"),
+                   ("git commit *", "allow"), ("git checkout *", "allow"), ("git switch *", "allow"),
+                   ("git merge main*", "allow"), ("git push*", "deny")]]
+k = at + 12
+gi = saw = 0
+while k < len(lines):
+    if lines[k].lstrip().startswith("#"):
+        k += 1
+        continue
+    if lines[k].strip() == "- action: shell":
+        saw = 1
+        if gi >= len(GB) or lines[k:k + 3] != list(GB[gi]):
+            print(f"a shell row continues the block after the sanctioned twelve and is not the next sanctioned git-block row (want {GB[gi] if gi < len(GB) else 'nothing'}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
+        gi += 1
+        k += 3
+        continue
+    break
+if saw and gi != len(GB):
+    print(f"the git block continues the shell surface but is truncated or reordered (matched {gi} of {len(GB)} sanctioned rows)"); sys.exit(1)
 PY
 
 cat >"$TMP/synth.py" <<'PY'
@@ -370,9 +437,19 @@ def block(item_ind, resource):
 ORIGIN = "bash scripts/session-origin.sh*"
 MINT = "bash scripts/kickoff-mint-branch.sh *"
 BAD = "git -C * checkout -b *"
+# cf-58 merge re-pin (2026-10-27): strip-shell removes every sanctioned
+# shell triple (the SHELL4 allows + the fourteen-row git block) to build the
+# no-allow skeleton the form4 control splices into; form4 splices the
+# canonical four-allow form after the opencode '*' allow anchor on ANY base,
+# so those modes must not require the cf-52 rows up front.
+SANCTIONED = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN,
+              "git status *", "git log *", "git diff *", "git show *", "git branch *",
+              "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
+              "git commit *", "git checkout *", "git switch *", "git merge main*", "git push*"}
 i_o = find(ORIGIN); i_m = find(MINT); i_p = find("opencode api patch /api/session/*")
-assert i_p >= 0, "fixture source must carry the cf-52 two-allow posture"
-item_ind = lines[i_p][: len(lines[i_p]) - len(lines[i_p].lstrip())][:-2]
+if mode not in ("strip-shell", "form4"):
+    assert i_p >= 0, "fixture source must carry the cf-52 two-allow posture"
+item_ind = lines[i_p][: len(lines[i_p]) - len(lines[i_p].lstrip())][:-2] if i_p >= 0 else None
 if mode == "add-origin":
     out = lines if i_o >= 0 else (lines[: i_m + 2] + block(item_ind, ORIGIN) + lines[i_m + 2:])
 elif mode == "strip-origin":
@@ -385,6 +462,23 @@ elif mode == "off-anchor":
 elif mode == "fifth-row":
     assert i_o >= 0, "add a fifth row only to a four-allow fixture"
     out = lines[: i_o + 2] + block(item_ind, BAD) + lines[i_o + 2:]
+elif mode == "strip-shell":
+    out, k = [], 0
+    while k < len(lines):
+        if (lines[k].strip() == "- action: shell" and k + 2 < len(lines)
+                and lines[k + 1].strip().startswith("resource: ")
+                and lines[k + 1].strip()[len("resource: "):] in SANCTIONED
+                and lines[k + 2].strip().startswith("effect: ")):
+            k += 3
+        else:
+            out.append(lines[k]); k += 1
+elif mode == "form4":
+    j = next(k for k, l in enumerate(lines) if l.strip() == "- action: opencode")
+    # items sit at the anchor's own indent (resource lines two deeper) — the
+    # item_ind convention of the other modes above.
+    ind = lines[j][: len(lines[j]) - len(lines[j].lstrip())]
+    rows = ["opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN]
+    out = lines[: j + 3] + [x for r in rows for x in block(ind, r)] + lines[j + 3:]
 else:
     print(f"unknown synth mode {mode}"); sys.exit(2)
 open(dst, "w").write("\n".join(out))
@@ -394,8 +488,9 @@ cat >"$TMP/shape4.py" <<'PY'
 # Parsed shape contract on both trees (m4-shape.py convention, widened to the
 # two sanctioned bash grants): source == generated including order
 # (last-match-wins makes order load-bearing), exactly the mint + origin pair
-# as bash grants, no git-touching shell grant, question allow kept, and the
-# variant's MCP posture.
+# as bash grants, the sanctioned cf-58 git block as the only git surface
+# (raw git -C still rejected), question allow kept, and the variant's MCP
+# posture.
 import re, sys, yaml
 src, gen, need_dev_boards = sys.argv[1], sys.argv[2], sys.argv[3] == 'dev-boards'
 def perms(path):
@@ -408,16 +503,32 @@ ps, pg = perms(src), perms(gen)
 errs = []
 if ps != pg:
     errs.append(f"parsed permission lists differ between {src} and {gen} (order included) — regenerate, never hand-edit the mirror")
+# cf-58 merge re-pin: the blanket git ban yields to the sanctioned git
+# block (fourteen rows, whole and in order — pinned absolutely across the
+# family by cfpins i4/t17); the raw 'git -C' mechanism stays rejected.
+GB = [("git status *", "allow"), ("git log *", "allow"), ("git diff *", "allow"),
+      ("git show *", "allow"), ("git branch *", "allow"), ("git merge-base *", "allow"),
+      ("git rev-parse *", "allow"), ("git ls-files *", "allow"), ("git add *", "allow"),
+      ("git commit *", "allow"), ("git checkout *", "allow"), ("git switch *", "allow"),
+      ("git merge main*", "allow"), ("git push*", "deny")]
+gitrows = [(p.get("resource"), p.get("effect")) for p in ps
+           if p.get("action") == "shell" and str(p.get("resource", "")).startswith("git ")]
+if gitrows and gitrows != GB:
+    errs.append(f"git shell grants are {gitrows}, want exactly the sanctioned cf-58 git block in order (or none)")
 for p in ps:
-    if p.get("action") == "shell" and "git " in str(p.get("resource", "")):
-        errs.append("a raw git shell grant exists (scope escape)")
+    if p.get("action") == "shell" and "git -C" in str(p.get("resource", "")):
+        errs.append("a raw git -C shell grant exists (scope escape — the plan's rejected mechanism)")
 bashish = [p.get("resource") for p in ps if p.get("action") == "shell" and str(p.get("resource", "")).startswith("bash ")]
 if bashish != ["bash scripts/kickoff-mint-branch.sh *", ORIGIN]:
     errs.append(f"bash shell grants are {bashish}, want exactly the mint + session-origin pair in splice order")
 if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in ps):
     errs.append("question allow lost (repo hard rule)")
 subs = sorted(p.get("resource") for p in ps if p.get("action") == "subagent" and p.get("effect") == "allow")
-if subs != sorted(["agent-plan", "agent-test", "agent-dev", "agent-review", "agent-research"]):
+# cf-58 merge re-pin: the tested files are the unsuffixed aliases, which are
+# byte-identical -local twins by construction (cf-58 DECISIONS Q2/R2) — the
+# dev slot is agent-dev-local; the variant rosters themselves are pinned by
+# the cfpins family contract.
+if subs != sorted(["agent-plan", "agent-test", "agent-dev-local", "agent-review", "agent-research"]):
     errs.append(f"subagent allows are {subs}")
 edits = sorted(p.get("resource") for p in ps if p.get("action") == "edit")
 if edits != sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"]):
@@ -542,30 +653,38 @@ fi
 
 # --- s4: the FOURTH scoped allow — absolute presence duty (C02 AC4) ----------------
 if want s4; then
-  git show "$ARM_A:$COORD_SRC" >"$TMP/s4-armA-base.md" 2>/dev/null || fail "s4: $COORD_SRC not readable at $ARM_A"
+  # cf-58 MERGE RE-PIN (2026-10-27): mirror of the kickoff-branch m4 re-pin —
+  # the no-allow base is the live skeleton (synth strip-shell), the committed
+  # posture is exercised as arm-B idempotence at the live file itself, and
+  # splice4/atpos4 admit the sanctioned git block (core projection +
+  # whole-block continuation). Teeth unchanged: the four-allow form must be
+  # satisfiable; the three-allow state, a fifth row and off-anchor placement
+  # must be refused.
   git show "$BASE:$COORD_SRC" >"$TMP/s4-base.md" 2>/dev/null || fail "s4: $COORD_SRC not readable at $BASE"
+  python3 "$TMP/synth.py" "$COORD_SRC" "$TMP/s4-skel.md" strip-shell
+  python3 "$TMP/synth.py" "$TMP/s4-skel.md" "$TMP/s4-canon.md" form4
   python3 "$TMP/synth.py" "$COORD_SRC" "$TMP/s4-four.md" add-origin
   python3 "$TMP/synth.py" "$COORD_SRC" "$TMP/s4-three.md" strip-origin
   python3 "$TMP/synth.py" "$TMP/s4-four.md" "$TMP/s4-fifth.md" fifth-row
   python3 "$TMP/synth.py" "$COORD_SRC" "$TMP/s4-off.md" off-anchor
   # controls (deterministic today AND after C02 — the contract's soundness and
   # its refusals):
-  for b in "$TMP/s4-armA-base.md" "$TMP/s4-base.md"; do
-    python3 "$TMP/splice4.py" "$b" "$TMP/s4-four.md" none >/dev/null \
-      || fail "s4: CONTROL FAILED — splice4 rejects the sanctioned four-allow form at base $(basename "$b") (the contract would be unsatisfiable for C02 dev)"
-  done
+  python3 "$TMP/splice4.py" "$TMP/s4-skel.md" "$TMP/s4-canon.md" none >/dev/null \
+    || fail "s4: CONTROL FAILED — splice4 rejects the canonical four-allow form at the no-allow skeleton base (the contract would be unsatisfiable for C02 dev)"
+  python3 "$TMP/splice4.py" "$TMP/s4-four.md" "$TMP/s4-four.md" none >/dev/null \
+    || fail "s4: CONTROL FAILED — splice4 rejects the committed posture at itself (arm-B idempotence: the landed SHELL4 + sanctioned git block must satisfy the mechanism)"
   python3 "$TMP/atpos4.py" "$TMP/s4-four.md" >/dev/null \
-    || fail "s4: CONTROL FAILED — atpos4 rejects the sanctioned twelve-literal-line form (line twin unsatisfiable)"
-  if python3 "$TMP/splice4.py" "$TMP/s4-base.md" "$TMP/s4-three.md" none >/dev/null 2>&1; then
+    || fail "s4: CONTROL FAILED — atpos4 rejects the committed posture's twelve literal lines + sanctioned git-block continuation (line twin unsatisfiable)"
+  if python3 "$TMP/splice4.py" "$TMP/s4-skel.md" "$TMP/s4-three.md" none >/dev/null 2>&1; then
     fail "s4: CONTROL FAILED — splice4 accepted the three-allow state at the C02 arm (this suite owns the designed-red: the fourth grant MUST be required)"
   fi
-  if python3 "$TMP/splice4.py" "$TMP/s4-base.md" "$TMP/s4-fifth.md" none >/dev/null 2>&1; then
+  if python3 "$TMP/splice4.py" "$TMP/s4-skel.md" "$TMP/s4-fifth.md" none >/dev/null 2>&1; then
     fail "s4: CONTROL FAILED — splice4 accepted a fabricated FIFTH shell row (git -C after the origin triple)"
   fi
   if python3 "$TMP/atpos4.py" "$TMP/s4-fifth.md" >/dev/null 2>&1; then
     fail "s4: CONTROL FAILED — atpos4 accepted the fabricated fifth row continuing the block"
   fi
-  if python3 "$TMP/splice4.py" "$TMP/s4-base.md" "$TMP/s4-off.md" none >/dev/null 2>&1; then
+  if python3 "$TMP/splice4.py" "$TMP/s4-skel.md" "$TMP/s4-off.md" none >/dev/null 2>&1; then
     fail "s4: CONTROL FAILED — splice4 accepted the origin allow placed off the anchor"
   fi
   # the real files: OR-form vs $BASE + arm-aware line twin (the sanctioned

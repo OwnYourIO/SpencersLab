@@ -21,6 +21,19 @@
 # Red before C04 (grep board-coord AGENTS.md: zero matches today); c1, c4,
 # c6, c7, c8 are green at the base already and hold as regressions.
 #
+# cf-58 RE-PIN (2026-10-cf-58-feat-standalone-agent-merge; C02/C03/C04/C05):
+# c2's exact roster-set literal was the PRE-SPLIT row — re-pinned to the
+# variant form C02's overview task pins verbatim, plus the pre-split row's
+# absence and the new /pipeline-pr command name (C03). c6's 'Launch with
+# the' literal relaxed to 'Launch with' — C03 legitimately rewrites the
+# launch sentence (`/pipeline` = commit-only alias; `/pipeline-pr` =
+# remote); the surviving contract is that launch guidance exists, not the
+# article (judgment recorded here). c7 admits the cf-58 surfaces (directory
+# wildcards for the agent-definition tree + opencode.jsonc + this ticket's
+# plan folder; the retired pre-split dev-path literal leaves with the
+# rename sweep — agent-perms A13). c9 (new): AGENTS.md + rules carry the
+# Lifecycle wording (C05) and a standalone dev-family entry (C04).
+#
 # c1 runs rulesync generate twice via the PATH/npx ladder; the first run may
 # materialize pending generation, so the gate is that the SECOND run changes
 # nothing. rulesync is ask-gated in unattended subagent shells, so an
@@ -29,7 +42,7 @@
 # CHUNK_BASE=<ref> makes the scope and additive-only checks diff against that
 # commit (review passes the pre-chunk commit); default HEAD.
 #
-# Usage: bash tests/agent-board-coord/agents-md.sh            # c1..c8
+# Usage: bash tests/agent-board-coord/agents-md.sh            # c1..c9
 #        bash tests/agent-board-coord/agents-md.sh c3 c5      # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -68,10 +81,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 8); do WANT["c$i"]=1; done
+  for i in $(seq 1 9); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c[1-8]$ ]] || fail "unknown check id '$a' (expected c1..c8)"
+    [[ "$a" =~ ^c([1-8]|9)$ ]] || fail "unknown check id '$a' (expected c1..c9)"
     WANT["$a"]=1
   done
 fi
@@ -92,6 +105,48 @@ for i, line in enumerate(open(sys.argv[1]), 1):
 if bad:
     print(" | ".join(bad))
     sys.exit(1)
+PY
+
+cat >"$TMP/negwin.py" <<'PY'
+# Co-location window (the sibling suites' win.py convention, same code):
+# needles must read as one passage; --ci folds case for prose needles.
+import sys
+argv = sys.argv[1:]
+ci = argv[0] == '--ci'
+if ci:
+    argv = argv[1:]
+path, span = argv[0], int(argv[1])
+needles = argv[2:]
+text = open(path).read()
+if ci:
+    text = text.lower(); needles = [n.lower() for n in needles]
+pts = []
+for n in needles:
+    start, found = 0, 0
+    while True:
+        i = text.find(n, start)
+        if i < 0:
+            break
+        pts.append((i, n)); start = i + 1; found += 1
+    if not found:
+        print(f'missing needle: {n}'); sys.exit(1)
+pts.sort()
+need = len(set(needles))
+cnt, have, best, left = {}, 0, None, 0
+for right, (p, n) in enumerate(pts):
+    cnt[n] = cnt.get(n, 0) + 1
+    if cnt[n] == 1:
+        have += 1
+    while have == need:
+        s = p - pts[left][0]
+        if best is None or s < best:
+            best = s
+        cnt[pts[left][1]] -= 1
+        if cnt[pts[left][1]] == 0:
+            have -= 1
+        left += 1
+if best is None or best > span:
+    print(f'no window of {span} chars covers all needles (min span {best})'); sys.exit(1)
 PY
 
 # --- c1: rulesync generate twice — the second run is a no-op (C04 AC3) --------
@@ -121,14 +176,31 @@ $snap_after" >"$TMP/noop.diff"
 fi
 
 # --- c2: the roster re-gains board-coord in source AND generated (C04 AC2) ----
+# Two-era pin (the suite's own re-pin convention — "the pins move where the
+# contract moves"): C02's pinned roster literal is the contract until C03
+# rewrites the bullet to name the coord variants; whichever era the tree is
+# in, the pre-split row must be gone once the dev variants exist. The
+# presence of agent-coord-local.md selects the C03-era arm.
 if want c2; then
   for f in AGENTS.md "$RULES_SRC"; do
     grep -q 'board-coord' "$f" || fail "c2: $f never names board-coord (the roster entry is missing)"
     grep -qF 'agent-{coord,plan,research,test,dev,review,fuser,board-coord}' "$f" \
-      || fail "c2: $f does not carry the exact roster set agent-{...,fuser,board-coord}"
+      && fail "c2[cf-58 C02]: $f still carries the pre-split roster row verbatim (red posture: fires today until C02 lands)"
+    grep -qF 'dev-pr' "$f" && grep -qF 'dev-local' "$f" \
+      || fail "c2[cf-58 C02]: $f never names the dev variants (red before C02 — the split is invisible in the roster)"
+    if [ -f .rulesync/subagents/agent-coord-local.md ]; then
+      for name in agent-coord-local agent-coord-pr agent-board-coord-local agent-board-coord-pr; do
+        grep -qF "$name" "$f" || fail "c2[cf-58 C03]: $f never names $name (C03's rewritten Agents bullet must name the coord variants + aliases)"
+      done
+      grep -qF '/pipeline-pr' "$f" || fail "c2[cf-58 C03]: $f lacks the /pipeline-pr launch guidance (C03's launch-sentence rewrite)"
+      grep -qF '/pipeline-boards-pr' "$f" || fail "c2[cf-58 C03]: $f lacks the /pipeline-boards-pr command name"
+    else
+      grep -qF 'agent-{coord,plan,research,test,dev-pr,dev-local,review,fuser,board-coord}' "$f" \
+        || fail "c2[cf-58 C02]: $f does not carry C02's pinned roster set agent-{...,dev-pr,dev-local,...} (red before C02)"
+    fi
     grep -qF '/pipeline-boards' "$f" || fail "c2: $f never mentions /pipeline-boards"
   done
-  ok "c2: board-coord roster entry + /pipeline-boards in AGENTS.md and the rules source"
+  ok "c2: roster era-correct (C02 literal or C03 variant names), pre-split row retired, board-coord + /pipeline-boards (+ /pipeline-pr post-C03) in AGENTS.md and the rules source"
 fi
 
 # --- c3: the redesigned intake facts in the new board-coord text (C04 AC1) -----
@@ -197,7 +269,7 @@ if want c6; then
       || fail "c6: $f lost the pipeline-kickoff mention — agent-coord's live kickoff questions stand"
     grep -qF 'pipeline-gates` for' "$f" \
       || fail "c6: $f reworded the pipeline-skills sentence (the coord-side kickoff/model-routing description is out of C04's scope)"
-    grep -qF 'Launch with the' "$f" || fail "c6: $f lost the /pipeline launch sentence"
+    grep -qF 'Launch with' "$f" || fail "c6[cf-58 relaxed]: $f lost the /pipeline launch sentence — C03 may reword it (alias/-pr pairing), but launch guidance must exist"
   done
   ok "c6: the agent-coord kickoff/gates/launch sentences still present in source + AGENTS.md (no global run-tag retirement)"
 fi
@@ -223,16 +295,18 @@ if want c7; then
       .rulesync/commands/pipeline-boards.md|.opencode/commands/pipeline-boards.md|\
       .rulesync/skills/boards/*|.opencode/skills/boards/*|\
       .rulesync/subagents/agent-test.md|.opencode/agents/agent-test.md|\
-      .rulesync/subagents/agent-dev.md|.opencode/agents/agent-dev.md|\
       .rulesync/skills/agents-sync/references/pipeline-overview.md|.opencode/skills/agents-sync/references/pipeline-overview.md|\
       .rulesync/skills/pipeline-role-test/*|.opencode/skills/pipeline-role-test/*|\
       .agents/plans/2026/2026-10-bug-kickoff-mints-run-branch/*|\
       .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
-      .agents/plans/2026/2026-10-bug-tests-edit-perms/*) : ;;
+      .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
+      .rulesync/subagents/*|.opencode/agents/*|.rulesync/commands/*|.opencode/commands/*|\
+      .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
+      .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 widenings; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface widenings; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
@@ -271,6 +345,31 @@ if bad:
 EOF
     ok "c8: only allowed AGENTS.md sections changed vs $BASE"
   fi
+fi
+
+# --- c9: cf-58 AGENTS.md + rules content — Lifecycle wording + dev family --------
+# C05: the board-coord specifics bullet re-names the checklist (Lifecycle,
+# eight stages, checked-stages-only) and the old slash-enumeration naming
+# Research-as-checklist is gone. C04: a STANDALONE dev-family entry (the
+# line naming dev-local/dev-pr WITHOUT the agent- prefix — the pipeline
+# family cannot satisfy it). Red before C04/C05 — the new wording is absent
+# and the retired enumeration still present.
+if want c9; then
+  for f in AGENTS.md "$RULES_SRC"; do
+    python3 "$TMP/negwin.py" --ci "$f" 400 'lifecycle' 'checked' \
+      || fail "c9[cf-58 C05]: $f lacks the Lifecycle wording (eight stages, checked-stages-only — the board-coord bullet rewrite; red before C05)"
+    if grep -qE 'Model\(s\)[[:space:]]*/[[:space:]]*Research([[:space:]]*/[[:space:]]*Human| checklists)' "$f"; then
+      fail "c9[cf-58 C05]: $f still enumerates the retired Research CHECKLIST (Model(s)/Research/... or 'Research checklists') — the LABEL wording may stay, the checklist enumeration must become Lifecycle"
+    fi
+    python3 - "$f" <<'PY' || fail "c9[cf-58 C04]: $f has no standalone dev-family line (a line naming dev-local AND dev-pr without the agent- prefix — red before C04)"
+import sys
+lines = open(sys.argv[1]).read().splitlines()
+hits = [l for l in lines if "dev-local" in l and "dev-pr" in l]
+standalone = [l for l in hits if "agent-" not in l]
+sys.exit(0 if standalone else 1)
+PY
+  done
+  ok "c9: AGENTS.md + rules carry the Lifecycle wording, the retired Research-checklist enumeration is gone, and the standalone dev family has its own entry"
 fi
 
 printf 'PASS: agent-board-coord agents-md checks (%d ok)\n' "$checks"

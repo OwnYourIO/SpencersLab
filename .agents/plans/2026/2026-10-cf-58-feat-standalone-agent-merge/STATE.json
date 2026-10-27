@@ -1,11 +1,23 @@
 {
   "feature": "2026/2026-10-cf-58-feat-standalone-agent-merge",
-  "plan_status": "draft",
+  "plan_status": "complete",
   "coord_session": "ses_e8575ef66ffeP2I53dUmdNGL5P",
-  "test_session": null,
-  "current_wave": 1,
-  "updated_at": "2026-10-27T00:05Z",
-  "question_round": "2026-10-27: batched round answered 9/9 (slug kept; both dev families split; coord aliases kept; Single Session / nothing-checked / Deploy semantics confirmed; Flash+Local=>flash-next q3 combination rule, no fifth option; catalog entries accepted now; debug full rewrite). Plan reworked, pending user approval.",
+  "test_session": "ses_e854109f5ffe2yBdtisUw48vR6",
+  "current_wave": 5,
+  "updated_at": "2026-10-27T15:05Z",
+  "git_history_note": "2026-10-27: user ruling — the pickup convention is REBASE the ticket branch onto main (often), not merge; rules source + AGENTS.md updated in commit 8801c2569. Branch rebased onto main tip e25919a2a (which unexpectedly carries a DRAFT copy of this ticket's plan folder from a landed docs commit) — 9 branch commits replayed clean, tree verified identical to pre-rebase tip 2060d62eb. Hash remap old->new: 997f5995->c03fc90b, 0bfd0433->51cd153e, 986b289c->7fb71625, 6ad45786->21a7ee70, 203bb217->4e12c97f, 0af55155->b61a4716, 2132f332->7e9d6d0a, 76b44312->833da163, 2060d62e->a767cff6; rules commit NEW 8801c2569 at tip.",
+  "approval": "2026-10-27: user approved the 6-chunk plan with R1-R3 as derived; per user ruling the plan-folder copy into the worktree folded into the first folder-touching agent (agent-test bootstrap, done via cp -r, 10 files verified; main-checkout original left for the user to delete).",
+  "coord_handoff_format_note": "RESULT blocks below are coord-compressed faithfully from the sessions' own outputs (near-verbatim; verbose command lists tightened) because the coord harness truncates single lines over ~2000 chars and lacks shell for surgical repair — full provenance rides the session ids. This exception is recorded in FRICTION.md.",
+  "handoffs": [
+    {
+      "from": "agent-test",
+      "session": "ses_e854109f5ffe2yBdtisUw48vR6",
+      "received_at": "2026-10-27T00:35Z",
+      "result": "RESULT\nstatus: DONE\nchunk: tests\nfiles_changed: [tests/pipeline-push-pr/surface.sh, tests/standalone-agents/surface.sh, tests/pipeline-models/surface.sh, tests/agent-perms/surface.sh, tests/coord-inwork/surface.sh, tests/agent-board-coord/gate.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/agents-md.sh, .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/ (bootstrap copy, 10 files - coord-owned commit)]\ncommands_run: [bootstrap cp -r + 10-file verification => pass; bash -n x8 suites => pass; each chunk suite => fail for the RIGHT reason pre-implementation (P1 skill absent, S1 dev.md absent, M1 q4 route absent, A2 agent-dev-local absent, i4 family absent, c2 roster stale, agents-md c2 pre-split row, t17 family absent); HOLD subsets pass (A1/A4-A9, i1/i2/i3/i5, c1/c3-c7/c9/c10/c12-c17, t1-t16/t18/t19, S6-roster/S7, M4/M6, P4/P6); A13 sweep probe red names exactly the pre-split files; npx --no-install aislop ci --changes => pass]\ndeviations: [cf-52-era exact-delta/splice arms (A10, i4, t17) superseded by C02/C03's sanctioned git-block delta - re-pinned to absolute presence/containment pins + fabricated-row negative controls; A13 rename-sweep scoped to binding surfaces + era-gated prose; scope guards widened to directory wildcards; c19 folded into c18; c11/c18 needles are judgment window-tokens; red-between-chunks by design, per-chunk subsets documented in each suite header]\nfriction: [heredoc-nested generation artifacts caught by bash -n + probe runs; cross-suite helper pins fragile under sanctioned rewrites - replaced with in-file guards]\nopen_questions: [pipeline-role-dev description + boards prose stale post-C02; AGENTS.md Pipeline-specifics agent-dev bullet ownership; C06 escape clause window-pins; chunk gating on per-chunk subsets]\nnext_suggested: coord writes approved + test_session, commits folder + tests, launches C01 then wave order"
+    }
+  ],
+  "coord_gating_note": "Chunk review gates run the per-chunk documented subsets from each suite header (cross-chunk red is by design); full green suite only at final whole-plan review.",
+  "question_round": "2026-10-27: batched round answered 9/9 (slug kept; both dev families split; coord aliases kept; Single Session / nothing-checked / Deploy semantics confirmed; Flash+Local=>flash-next q3 combination rule, no fifth option; catalog entries accepted now; debug full rewrite). Plan reworked, then approved.",
   "kickoff": {
     "card": "En98XdBL255NgRpAx",
     "cardNumber": 58,
@@ -21,62 +33,155 @@
     "models_note": "Model(s) checklist: Qwen Large + Qwen Flash checked — largest (Qwen Large) drives planning, smallest (Qwen Flash) drives code (boards skill D12).",
     "local": false,
     "hitl": ["PR"],
-    "hitl_note": "Human in the Loop: PR checked, Plan unchecked — the default plan-approval pause still applies (pipeline gate, not a card bit). Research = None: no pre-planning research round."
+    "hitl_note": "Human in the Loop: PR checked, Plan unchecked — the default plan-approval pause still applies (pipeline gate, not a card bit). Research = None: no pre-planning research round.",
+    "session_origin": "UNRESOLVED (no Session origin line at launch expansion; session_rename absent from harness) — raw session ids on all board surfaces; fallback recorded per boards skill; in-work mark + worktree create + session move performed via OpenChamber local HTTP equivalent of the sanctioned opencode api calls."
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e85030630ffeGB23MVRH94K7Yl",
+      "handoffs": [
+        {
+          "from": "agent-dev",
+          "session": "ses_e85030630ffeGB23MVRH94K7Yl",
+          "received_at": "2026-10-27T01:05Z",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.rulesync/skills/pipeline-push-pr/SKILL.md (CREATE, source), .opencode/skills/pipeline-push-pr/SKILL.md (CREATE, generated mirror); the coord/test bootstrap (plan folder 10 files + 8 test suites) committed as-is]\ncommands_run: [git branch => empty (detached HEAD) then cf-58-feat-standalone-agent-merge; git switch -c cf-58-feat-standalone-agent-merge at 997f59952 => pass; bootstrap commit chore(cf-58): plan folder + cf-58 test suites => 997f59952; pipeline-push-pr pre-C01 => fail P1 skill-absent red-as-designed; rulesync generate => wrote exactly the mirror, no collateral; x2 => no-op idempotence; --check clean; P1-P6 => 6/6 green re-run on committed tree; grep -rn pipeline-push-pr .rulesync/subagents => empty (AC4); HOLD arms green (agent-perms A5-A9, coord-inwork i1-i3/i5, gate t1-t16/t18/t19, rulesync-surface c1/c3-c7/c9/c10/c12-c17); aislop => 0/0, 37 files; C01 commit 986b289c6; git log -3 => 986b289c6/997f59952/0180f3852]\ndeviations: [(1) worktree on detached HEAD at main tip (OpenChamber side-effect; FRICTION item 8 - branch never existed locally/remotely); named the mandated branch via git switch -c before the base commit; no other branch, no push, main untouched. (2) base commit = exactly the handed-in uncommitted set. (3) no agent files touched; AC4 no-references-yet arm self-flips at C02]\nfriction: [detached-HEAD worktree creation — naming-at-HEAD resolved; suggests gate/worktree flow assert branch ref post-create]\nopen_questions: [branch-ref assertion for future board runs]\nnext_suggested: C02 (P4 flip + A11 expect the MUST-load lines; skill name/frontmatter stable)"
+        },
+        {
+          "from": "agent-review",
+          "session": "ses_e84fe0ee5ffe9KjVtWGpKqb72B",
+          "received_at": "2026-10-27T01:20Z",
+          "result": "RESULT\nstatus: APPROVED\nchunk: C01\nfiles_changed: [chunks/C01.md (review notes; committed later by C04 dev as 0bfd0433e)]\ncommands_run: [P1-P6 => pass; rulesync generate --check + double-generate => clean/no-op; agent-perms A1/A4-A9 => 7/7; coord-inwork i1/i2/i3/i5 => 4/4; rulesync-surface c1/c3-c7/c9/c10/c12-c17 => 14/14 + c8 at CHUNK_BASE=0180f3852 => pass; agents-md c1/c3-c8 => 7/7 + c7 at CHUNK_BASE => pass; gate t1-t16/t18/t19 => 20/20 + t14 at CHUNK_BASE => pass; standalone-agents S7 => pass, S6 roster arm green (documented red-before-C04 at dev.md); pipeline-models M4/M6 => 2/2; aislop => score 100, 0/0, 37 files; grep pipeline-push-pr .rulesync/subagents => empty; git branch --contains + ls-remote refs/heads/cf-58* => main unmoved, nothing pushed]\ndeviations: [verdict word carried in status per launch override; S6 run fully to confirm the HOLD claim; scope guards re-run at real CHUNK_BASE; no validation weakened]\nfriction: [FRICTION item 8 + STATE C01 write still pending coord when review ran]\nopen_questions: [minor (not dev-facing): skill's 'what a push triggers' says docker-build/release fire ONLY on merge to main - docker-build also PR-builds (never-push) and publishes on dev; plan-pinned text, contract holds; optional 'only'-drop later]\nnext_suggested: record C01 done + FRICTION item 8 evidence, then C04 or C02"
+        }
+      ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e84bef093ffe3DWddlIi0SCvfz",
+      "handoffs": [
+        {
+          "from": "agent-dev (resume after harness kill; full text in session)",
+          "session": "ses_e84bef093ffe3DWddlIi0SCvfz",
+          "received_at": "2026-10-27T03:24Z",
+          "result": "RESULT\nstatus: BLOCKED (validation_at_fault A11; implementation DONE)\nchunk: C02\nfiles_changed: [.rulesync/subagents/agent-dev.md (DELETE), agent-dev-local.md + agent-dev-pr.md (CREATE), .opencode/agents/agent-dev.md mirror swept by generate delete:true, agent-dev-{local,pr}.md mirrors, permissions.md + mirror, overview.md, AGENTS.md — commit 2132f332a (8 files); bootstrap coord-records commit 0af551554]\ncommands_run: [branch => cf-58-feat-standalone-agent-merge; rulesync generate x2 + --check clean; P1-P6 6/6 with P4 flip ENGAGED; S1-S10 10/10 with S3 dynamic ENGAGED; A1-A9 9/9; A11 FAIL (policy loop); A13 FAIL (unconditional C03-era arms); i1/i2/i3/i5, c-HOLD, agents-md c1-c8 (c2 flipped green), gate t1-t16/t18/t19, M4/M6 green; era-reds named C03/C05 causes; CHUNK_BASE=0af551554 dual-base pass; aislop 0/0 x2; never pushed; main untouched]\ndeviations: [A11 family.py policy filter fnmatch(action,'*') is a tautology -> MCP-tier rows overwrite git verdicts; unsatisfiable with S3 + C02.md order for any in-scope content; proven by segment replay; routed for test re-pin. A13 remaining red = unconditional C03-era arms. AC1-AC5 satisfied; AC6 green except A11 helper]\nfriction: [harness kill mid-turn (own generate retired agent-dev from roster) - resumed from git state; fail() short-circuit required per-id runs]\nopen_questions: [route A11 + A13 to test session; pipeline-role-dev description stale, no chunk owns the file; tests/services/dev-mcp-fleet.sh AGENT_SOURCES names retired path (other ticket)]\nnext_suggested: test re-pin, review on 2132f332a unchanged, then C03"
+        },
+        {
+          "from": "agent-test (validation fixes, user-approved round 2)",
+          "session": "ses_e854109f5ffe2yBdtisUw48vR6",
+          "received_at": "2026-10-27T03:40Z",
+          "result": "RESULT\nstatus: DONE\nchunk: C02-validation-fix\nfiles_changed: [tests/agent-perms/surface.sh — commit 76b44312d (single file)]\ncommands_run: [pre-fix reproduction A11/A13 fail as escalated; post-fix A1-A9+A11+A13 => 11 ok; P1-P6 6/6 (P4 flip engaged); S1-S10 10/10 (S3 engaged); no collateral flips; era-red remainder: until C03 A10/A12/i4/i6/i7/t17/t20/c2 + A13 gated trio self-arms; until C05 i7-stage/c11/c18/c9; until C06 M1/M2/M3/M5+c11 windows]\ndeviations: [fix 2 = era-gating on .rulesync/commands/pipeline-pr.md existence rather than moving A13 wholesale — preserves header's documented C02 coverage of AC5; fix 1 comparator mirrors policy.py, '*' action-baseline still glob-matched so A10 controls preserved]\nfriction: none\nopen_questions: none\nnext_suggested: C02 review at 76b44312d closes the chunk; C03 flips the era-reds"
+        },
+        {
+          "from": "agent-review",
+          "session": "ses_e847fbf93ffeJw9bA3gYdhtEM7",
+          "received_at": "2026-10-27T04:00Z",
+          "result": "RESULT\nstatus: APPROVED\nchunk: C02\nfiles_changed: [chunks/C02.md (review notes, uncommitted — folds into coord's next records commit)]\ncommands_run: [A1-A9+A11+A13 11/11; P1-P6 6/6; S1-S10 10/10; i1/i2/i3/i5 4/4; agents-md c1-c8 8/8; rulesync-surface 15/15; gate 20/20; M4/M6 2/2; generate x2 zero writes + --check clean; aislop 0/0 37 files; CHUNK_BASE=0af551554 re-runs pass; git show 0af551554 --stat => exactly the four coord-record files; independent comparator demo reproduced the old tautology bug + stripped-deny control => fix load-bearing; HEAD 76b44312d tree clean]\ndeviations: [none new; header nit logged for future test touch]\nfriction: [none]\nopen_questions: [PIN for C03 launch: fold .rulesync/skills/pipeline-role-dev/SKILL.md description (agent-dev => variant ids) + mirror into C03 (user ruling; DECISIONS line's C02-ownership contradicted by C02.md Files-in-scope). Ledger: dev-mcp-fleet.sh AGENT_SOURCES:51 red collateral => FRICTION + follow-up-card candidate in final report, not chunk-gating]\nnext_suggested: record C02 done, ledger, launch C03 with the pipeline-role-dev fold-in"
+        }
+      ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e82ac2433ffeYhlRI94RV5jEGn",
+      "handoffs": [
+        {
+          "from": "agent-dev (2nd attempt; 1st vanished mid-rebase)",
+          "session": "ses_e82ac2433ffeYhlRI94RV5jEGn",
+          "received_at": "2026-10-27T13:35Z",
+          "result": "RESULT\nstatus: BLOCKED (validation_at_fault x2; implementation DONE, committed 3373667eb)\nchunk: C03\nfiles_changed: [6 coord-family sources + mirrors, 4 command pointer-lines + 3 NEW -pr commands + mirrors, scripts/agent-board-coord-gate.sh, pipeline-role-coord + pipeline-role-dev SKILL.md (pinned fold-in) + mirrors, permissions.md, overview.md, AGENTS.md — 35 files +1725/-55]\ncommands_run: [branch verified, never pushed; six sources deterministic-transform built, alias<->local byte-identical save name+description; generate zero deletions, x2 idempotent, --check clean; per-class family.py: push origin main=>deny, feature=>allow on coord-pr; A13 green after stale agent-dev boards-reference fix in all 3 board sources; gate 19/19; agents-md 8/8; rulesync-surface 16/16; i7 red only at C05 stage-gate needle; P/S suites green; aislop 100/0/0]\ndeviations: [role-dev description fold-in per user ruling (outside C03.md list); boards body one agent-name ref updated under byte-stable-except-names clause (3-source parity); descriptions moved to single-line flow scalars (parsed equality survives)]\nfriction: [*-pr) classifier can never match *-pr.md filenames (agent-perms:793, coord-inwork:463, gate:784) — first live exposure; reproduced deterministically]\nopen_questions: [route to test session: (1) *-pr)->*-pr.md) at 3 callers (inverted-guard risk); (2) t14 case list lacks pipeline-role-dev arms (comment claims wildcard widening; siblings admit); (3) ledger: hourly Notes 'no shell' stale (C05), role-coord 5a/5c/8 generic agent-dev mentions]\nnext_suggested: user-confirm re-pins -> test session -> re-run A12/i4/t17/t14 -> review 3373667eb unchanged"
+        },
+        {
+          "from": "agent-test (validation fixes, user-approved round 3)",
+          "session": "ses_e854109f5ffe2yBdtisUw48vR6",
+          "received_at": "2026-10-27T13:55Z",
+          "result": "RESULT\nstatus: DONE\nchunk: C03-validation-fix\nfiles_changed: [tests/agent-perms/surface.sh, tests/coord-inwork/surface.sh, tests/agent-board-coord/gate.sh — commit 6fe3fc8e6 (amended pre-verification; branch unpushed so no published history rewritten)]\ncommands_run: [A12/i4/t17 green at 3373667eb; t14 green HEAD + CHUNK_BASE=9dc78b9f; A10+A13 green first time; P 6/6, S 10/10; HOLD sets green (A1-A9+A11 10ok, i1-i6 5ok, t-set 18ok, c2/c8/c13/c16/c17, c2/c6/c7, M4/M6); era-red remainder EXACTLY: until C05 i7(stage-gate only)/c11/c18/c9; until C06 M1/M2/M3/M5 + c11 windows; aislop 0/0; grep sweep no remaining trailing-anchored *-pr)]\ndeviations: [escalation said 'two files' but defect names 3 callers — treated caller list authoritative; t14 fixed by arms addition not restructure]\nfriction: none\nopen_questions: none\nnext_suggested: close C03 (A1-A13 + t1-t20 fully green), launch C05"
+        },
+        {
+          "from": "agent-review",
+          "session": "ses_e826feee1ffeatlPVbbrAzkEoT",
+          "received_at": "2026-10-27T14:15Z",
+          "result": "RESULT\nstatus: APPROVED\nchunk: C03\nfiles_changed: [chunks/C03.md (review notes, committed with coord records)]\ncommands_run: [HEAD/log as mandated; generate x2 no-op + --check; agent-perms A1-A13 13/13; gate t1-t20 22 ok at HEAD + t14@CHUNK_BASE; coord-inwork i1-i6 green + i7 single C05 needle; P1-P6; S1-S10; rulesync-surface 16 green / red exactly c11+c18; agents-md red only c9; models green M4/M6 red M1/M2/M3/M5; alias parity + 3-source board md5; vanish forensics clean (no half-work leakage; rebase tree delta = main's Chart.yaml ingest only); conflict-marker scan clean; aislop 0/0]\ndeviations: [none — per-id runs per short-circuit rule]\nfriction: [head-masked exit codes in grep pipelines — re-ran per-file]\nopen_questions: [C05 ledger must read: role-coord generic agent-dev mentions = steps 5a/5c/8 AND line-49 launch list (unguarded); C05.md Files-in-scope lacks pipeline-boards-hourly.md (no-shell line) — widen at launch; rebase-pickup has NO git rebase grant for pipeline roles (fails closed; user decision); C03's 'commit re-pinned tests together' task was moot (tests read-only to dev) — record so later chunks don't copy the deviation]\nnext_suggested: records + launch C05 widened"
+        }
+      ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e84f42842ffeq9QlwdSKFhy7HZ",
+      "handoffs": [
+        {
+          "from": "agent-dev",
+          "session": "ses_e84f42842ffeq9QlwdSKFhy7HZ",
+          "received_at": "2026-10-27T01:50Z",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [.rulesync/subagents/dev.md, dev-local.md, dev-pr.md, debug.md; .opencode/agents/{dev,dev-local,dev-pr,debug}.md (GENERATED); .rulesync/skills/role-dev/SKILL.md (CREATE) + mirror; .rulesync/skills/role-planner/SKILL.md, role-code/SKILL.md, role-debug/SKILL.md (rewrite) + mirrors; .rulesync/skills/agents-sync/references/permissions.md + mirror; .rulesync/rules/overview.md; AGENTS.md — commit 6ad457865, 20 files]\ncommands_run: [git branch => cf-58-feat-standalone-agent-merge; bootstrap commit chunks/C01.md alone => 0bfd0433e; standalone-agents S6/S7 pre-change => HOLD arms green, dev-family red-as-designed; pipeline-push-pr pre-change => 6/6; rulesync generate => 10 files, no collateral; x2 => no-op; --check clean; standalone-agents S1-S10 => 10/10 re-run green on committed tree; pipeline-push-pr => P4 red (pinned test defect, not fixable by dev), rest pass; agent-perms A1/A4-A9 7/7; coord-inwork i1/i2/i3/i5; pipeline-models M4/M6; rulesync-surface c1/c3-c7/c9/c10/c12-c17 14/14; agents-md c1-c8 pass at default + CHUNK_BASE=0bfd0433e; gate t1-t16/t18/t19 20/20; aislop => score 100, 0/0, 37 files; no push, main unmoved, commits local]\ndeviations: [(1) role-dev description double-quoted (prose ': ' breaks plain YAML scalar for S4 parser) - formatting only. (2) two one-line why-comments inside copied permission blocks - not parsed, blockdiff invariant holds. (3) P4 red BY C04's mandate (Tasks + S3 require dev-pr MUST-load /pipeline-push-pr while P4's pre-C02 arm greps ALL subagents) - no AC weakened, reference kept. (4) nothing outside Files-in-scope touched; STATE/plan/DECISIONS/FRICTION/tests left as handed]\nfriction: [co-location needles need phrases contiguous on one line - rewrote needle-first; standing lesson: check the suite's literal needles before wrapping prose]\nopen_questions: [AGENT-TEST RE-PIN REQUIRED for P4 (route to test session); agents-md c9 C04 arm satisfied, overall red until C05 by design; c11/t17/t20/A2/A3/A10-A13 red owned by C02/C03/C05/C06]\nnext_suggested: record C04, route P4 re-pin, launch C02 (its sources engage S3 dynamic pair-compare and flip P4)"
+        },
+        {
+          "from": "agent-review(r1)",
+          "session": "ses_e84e59c26ffeGv6Y3gL9mB0Sdr",
+          "received_at": "2026-10-27T02:05Z",
+          "result": "RESULT\nstatus: BLOCKED\nchunk: C04\nfiles_changed: [chunks/C04.md (round-1 review notes, uncommitted)]\ncommands_run: [C04 gate sweep => all green except pipeline-push-pr P4 FAIL (names only dev-pr.md); rulesync generate x2 + --check clean; aislop 0/0, 37 files; P5/P6 explicit re-run => pass]\ndeviations: [none - no code or test edited; explicit-id re-runs after suite fail() short-circuit]\nfriction: [fail() short-circuits at first red hiding downstream arms - re-run remaining ids explicitly]\nopen_questions: [validation_at_fault: P4's pre-C02 absence-grep over ALL .rulesync/subagents contradicts C04.md Tasks + standalone-agents S3:318-319 (mutually unsatisfiable between wave-1 and C02); C04 implementation correct and approvable once re-pinned. Re-pin for test session: narrow P4 pre-C02 grep to .rulesync/subagents/agent-*.md (empty today, flip branch unchanged) + update header posture to admit dev-pr.md from C04]\nnext_suggested: route P4 re-pin to test session ses_e854109f5ffe2yBdtisUw48vR6, re-run P1-P6, record C04 done without a dev round, launch C02"
+        },
+        {
+          "from": "agent-test (validation fix, user-approved via question round)",
+          "session": "ses_e854109f5ffe2yBdtisUw48vR6",
+          "received_at": "2026-10-27T02:15Z",
+          "result": "RESULT\nstatus: DONE\nchunk: C04-validation-fix\nfiles_changed: [tests/pipeline-push-pr/surface.sh — commit 203bb2175, single file, +11/-6, header-posture + P4 hunks only]\ncommands_run: [bash -n => pass; grep -ln pipeline-push-pr .rulesync/subagents/agent-*.md => empty (precondition); pipeline-push-pr P1-P6 => 6/6; standalone-agents S1-S10 => 10/10; flip branch byte-unchanged]\ndeviations: [none - exactly the adjudicated re-pin]\nfriction: [none]\nopen_questions: [none]\nnext_suggested: fold into C04 records; P4 self-flips at C02; re-run both suites at C02 review"
+        },
+        {
+          "from": "agent-review(r2)",
+          "session": "ses_e84ca74faffeHRrEfjlMVRnvwD",
+          "received_at": "2026-10-27T02:30Z",
+          "result": "RESULT\nstatus: APPROVED\nchunk: C04\nfiles_changed: [chunks/C04.md (round-2 review notes, uncommitted)]\ncommands_run: [git show 203bb2175 => single test file, header+P4 hunks only, flip branch byte-unchanged; pipeline-push-pr P1-P6 => 6/6; standalone-agents S1-S10 => 10/10; agent-perms A1/A4-A9 7/7; coord-inwork i1-i3/i5 4/4; pipeline-models M4/M6 2/2; rulesync-surface 14/14; agents-md c1-c8 7/7 + CHUNK_BASE pass; gate 20/20; rulesync generate --check clean; aislop 0/0 37 files; independent parses reproduce r1: dev==dev-local name/desc-only, dev-local/dev-pr blocks vs ticket-base agent-dev.md + C02 suffix spec exact, debug reads-allow/push-deny/add-commit-at-ask, no-git-write roster 6/6 clean; git diff 6ad457865..HEAD => tests-only]\ndeviations: [none - launch scope executed as written; verdict word in status per r1 convention]\nfriction: [none new]\nopen_questions: [no-action ledger notes: (1) pipeline-push-pr/surface.sh:8 intro sentence stale vs corrected posture block - optional one-word narrowing at any future test touch; (2) pre-existing <cluster>-<priv>-<service> word-order drift in role-code's lifted MCP paragraph - future hygiene pass, out of ticket scope]\nnext_suggested: commit chunks/C04.md notes with coord records; proceed to C02 (wave 2)"
+        }
+      ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": ["C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e82603253ffeQv4FnxHdoSPD5Q",
+      "handoffs": [
+        {"from": "agent-dev", "session": "ses_e82603253ffeQv4FnxHdoSPD5Q", "received_at": "2026-10-27T14:30Z",
+         "result": "RESULT status BLOCKED (validation_at_fault x2; implementation DONE, commit 40a8a5724, 18 files). Lifecycle rework in boards/role-coord/3 board-coord sources/3 commands/overview+AGENTS.md+mirrors. Flips: i7 full green, agents-md c9 green; c11/c18 crashed on suite helper bugs (window.py int(argv[2]) vs --ci at 5 sites; c18 _DEV pre-assign NameError when Stage map valid) - repaired-helper replica passes all C05 arms. Widenings landed: hourly no-shell Notes refresh, role-coord 5a/5c/8 + line-49 dev-variant ids. HOLD re-runs all green; aislop 100/0/0. Deviations: alias edited for byte-parity (c18 names all six); boards description fold-trim for c9 literal; vacuous kickoff/models timing-edit (zero refs). Escalation: route window.py --ci + _DEV hoist to test session."},
+        {"from": "agent-test (user-approved round 4)", "session": "ses_e854109f5ffe2yBdtisUw48vR6", "received_at": "2026-10-27T14:45Z",
+         "result": "RESULT status DONE, commit e7bcf9997 (one file, 19+/3-). window.py --ci branch (mirrors negwin/win convention; non-ci paths byte-identical) + _DEV hoist with why-comment. c18 FULL green; c11 red EXACTLY the two C06 windows (scratch proof: rest green); whole suite stops only at c11; HOLD spots c9/i7/t14/t17/t20 green; M-suite fails at M1 (C06 reason). Era posture into wave 5: only c11 windows + M1/M2/M3/M5 red; full matrix green after C06."},
+        {"from": "agent-review", "session": "ses_e8229f1f2ffecN0bf6AveOd2uu", "received_at": "2026-10-27T15:00Z",
+         "result": "RESULT status APPROVED. All gates re-run per-id (c1-c18 stops only at c11 C06 windows; i1-i7 7/7; c1-c9 9/9; t1-t20 20/20; A1-A13 13/13; P 6/6; S 10/10; M4/M6; generate no-op x2 + --check; aislop 100/0/0). Lifecycle semantics match DECISIONS ruling in full; LABEL trigger byte-stable; cutover DOCUMENTED ONLY - reviewer verified read-only on the board that card #58 still carries Research. Test-fix commit verified as exactly the two approved fixes. Six dev deviations all accepted. Ledger: stale bare agent-dev at pipeline-kickoff:25/pipeline-models:17 (C06-owned, expect incidental clearing) + pipeline-role-test:12 (unowned; hygiene follow-up-card candidate next to dev-mcp-fleet.sh). Next: C06 then final whole-plan review."}
+      ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": ["C05"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "DONE (chunk gates green; final review pending)",
+      "dev_session": "ses_e821d6df9ffeIRbU8WlMq2vXK7",
+      "handoffs": [
+        {"from": "agent-dev", "session": "ses_e821d6df9ffeIRbU8WlMq2vXK7", "received_at": "2026-10-27T15:35Z",
+         "result": "RESULT status DONE, commit 53629c70f (7 files: pipeline-models/pipeline-kickoff/boards sources + 3 mirrors + .opencode/opencode.jsonc). M1-M6 6/6; c11 FULLY flipped (both C06 windows); FULL MATRIX green for the first time (A 13, i 7, t 22, agents-md 9, P 6, S 10); generate no-op x2 + --check; aislop 0/0. Catalog: q4 tools=true, flash-next q3/q4 added (262144), entries 83->85 (+2 only). Incidental ledger clears (kickoff:25/models:17 agent-dev -> variants); role-test:12 untouched per launch. Open: whether flash-next entries should claim image input (chart family declares it; C06.md's q8-shape wording followed) - hygiene call for final report."}
+      ]
     }
   },
   "blocked": [],

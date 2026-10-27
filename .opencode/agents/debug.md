@@ -46,6 +46,9 @@ permissions:
     resource: git diff*
     effect: allow
   - action: shell
+    resource: git push*
+    effect: deny
+  - action: shell
     resource: ls *
     effect: allow
 ---

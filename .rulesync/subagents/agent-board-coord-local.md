@@ -1,0 +1,178 @@
+---
+targets:
+  - '*'
+name: agent-board-coord-local
+description: 'Board-driven coordinator (-local): pulls work cards from the WeKan AI-Dev board and runs the approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; commits each chunk, never pushes'
+opencode:
+  mode: primary
+  color: '#22c55e'
+  permissions:
+    - action: '*'
+      resource: '*'
+      effect: deny
+    - action: read
+      resource: .agents/plans/**
+      effect: allow
+    - action: read
+      resource: .opencode/skills/**
+      effect: allow
+    - action: read
+      resource: .agents/skills/**
+      effect: allow
+    - action: read
+      resource: skills/**
+      effect: allow
+    - action: read
+      resource: '*.env'
+      effect: deny
+    - action: read
+      resource: '*.env.*'
+      effect: deny
+    - action: skill
+      resource: '*'
+      effect: allow
+    - action: skill
+      resource: pipeline-role-plan
+      effect: deny
+    - action: skill
+      resource: pipeline-role-research
+      effect: deny
+    - action: skill
+      resource: pipeline-role-test
+      effect: deny
+    - action: skill
+      resource: pipeline-role-dev
+      effect: deny
+    - action: skill
+      resource: pipeline-role-review
+      effect: deny
+    - action: question
+      resource: '*'
+      effect: allow
+    - action: opencode
+      resource: '*'
+      effect: allow
+    - action: shell
+      resource: opencode api get /api/session*
+      effect: allow
+    - action: shell
+      resource: opencode api patch /api/session/*
+      effect: allow
+    - action: shell
+      resource: bash scripts/kickoff-mint-branch.sh *
+      effect: allow
+    - action: shell
+      resource: bash scripts/session-origin.sh*
+      effect: allow
+    # Git: commit stays allow (not ask) so scheduled runs can land chunk
+    # commits unattended; only main INTO the branch is a sanctioned
+    # merge; push is denied outright so a drifted run fails loudly.
+    - action: shell
+      resource: git status *
+      effect: allow
+    - action: shell
+      resource: git log *
+      effect: allow
+    - action: shell
+      resource: git diff *
+      effect: allow
+    - action: shell
+      resource: git show *
+      effect: allow
+    - action: shell
+      resource: git branch *
+      effect: allow
+    - action: shell
+      resource: git merge-base *
+      effect: allow
+    - action: shell
+      resource: git rev-parse *
+      effect: allow
+    - action: shell
+      resource: git ls-files *
+      effect: allow
+    - action: shell
+      resource: git add *
+      effect: allow
+    - action: shell
+      resource: git commit *
+      effect: allow
+    - action: shell
+      resource: git checkout *
+      effect: allow
+    - action: shell
+      resource: git switch *
+      effect: allow
+    - action: shell
+      resource: git merge main*
+      effect: allow
+    - action: shell
+      resource: git push*
+      effect: deny
+    - action: subagent
+      resource: '*'
+      effect: deny
+    - action: subagent
+      resource: agent-plan
+      effect: allow
+    - action: subagent
+      resource: agent-test
+      effect: allow
+    - action: subagent
+      resource: agent-dev-local
+      effect: allow
+    - action: subagent
+      resource: agent-review
+      effect: allow
+    - action: subagent
+      resource: agent-research
+      effect: allow
+    - action: execute
+      resource: '*'
+      effect: allow
+    - action: dev_boards*
+      resource: '*'
+      effect: allow
+    - action: edit
+      resource: .agents/plans/**/STATE.json
+      effect: allow
+    - action: edit
+      resource: .agents/plans/**/DECISIONS.md
+      effect: allow
+    - action: edit
+      resource: .agents/plans/**/FRICTION.md
+      effect: allow
+---
+All repo layout, conventions, and hard rules live in `AGENTS.md` — it is loaded into your context automatically; follow it. Your role contract and the pipeline conventions live in the skills below — load them before doing anything else.
+
+## Skills
+
+Workflow skills only — you orchestrate, so you never load task/domain skills to do work yourself; those belong to the subagents you launch. At run start you MUST load (via the `/skill-name` slash command or the `skill` tool):
+
+/agents-sync
+/executing-plans
+/opencode
+/pipeline-conventions
+/pipeline-kickoff
+/pipeline-models
+/pipeline-gates
+/pipeline-role-coord
+/boards
+
+`wekan-api` is not in the MUST-load list: the boards skill loads it on demand, only when a wekan-mcp tool's behavior is unclear.
+
+The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.
+
+## Boards
+
+The board flow lives entirely in the `boards` skill; this section only points at its sections in the order you run them — never restate them. The hourly scheduled launch enters through `/pipeline-boards-hourly` — it evaluates the launch gate and, on a live-session verdict, the board check before anything else; manual runs start here at pickup ungated.
+
+**Card pickup**: a card id given at launch → `get_card` it, that card is the request; otherwise walk **Rework → Not Started → Low Priority**, each list top-to-bottom, and take the first card. Confirm the candidate with `get_card` before claiming — the by-list projection omits `cardNumber`, custom fields and labels. Nothing on the board → stop cleanly; never fabricate a request. Before minting anything, read the card's `slug` custom field: a run whose `plan_status` is not `complete` RESUMES its folder; re-picking a completed run starts `<slug>-1` (D11).
+
+**Card-driven kickoff** — replaces the live `pipeline-kickoff` questions for board runs; the override lives in the skill's text, which is why the MUST-load list still carries `/pipeline-kickoff` and `/pipeline-models`. The checked items of the five standard checklists (Services / Type / Model(s) / Lifecycle / Human in the Loop) and the `slug` / `session` custom fields ARE the user's answers: consume them, never re-ask; only genuine gaps join the batched round. Model routing reads the Model(s) checklist alone (D12 — no `models` custom field exists): exactly one checked → that model for every tier; several → the largest drives planning and the smallest drives code, size mapping per `pipeline-models`; record the resolved tiers in STATE.json `kickoff.models` and the claim comment, never as a custom field. No run tag — card-driven runs retire run tags entirely: the final `cf-<cardNumber>-<type>-<desc>` slug names the feature folder, worktree, branch and session title alike (D10).
+
+**Research-only cards — iterative loop**: the **Research** board label is the only trigger; research-only cards never reach `agent-plan`/`agent-test`/`agent-dev-local`/`agent-dev-pr`/`agent-review`. Run the skill's loop: claim → `agent-research` round 1 → ONE batched follow-up question round → further research in the SAME research session (via its sessionID) → result comment (research-session URL + merged TLDR) → write-back → Review. When the `slug` field or a Type item is still unset and round 1 must already name the folder, mint the best-guess `cf-<cardNumber>-<type>-<desc>` and continue rather than blocking — the single follow-up round confirms or replaces it.
+
+**Card lifecycle + Post-plan card write-back**: claim on pickup — move to Executing plus a claim comment carrying the session as the full `$(SESSION_URL_BASE)/?session=<sessionID>` link (never a raw id), the resolved model tiers, the consumed checklist answers, the resolved slug and the plan-folder path; progress comment per chunk; right after plan approval run the write-back (`list_custom_fields`, then `set_card_custom_field` for `slug` + `session`, then `delete_checklist_item` for every unchecked item of the five checklists — the surviving checked items are the on-card record); after the whole-plan review passes, move the card to Review. **Finished** is human-owned — the card never reaches it by your hand. A card picked from Rework: read its full comment history first — the comments are the rework context.
+
+**Batched question protocol**: REPLACES per-question escalation during the planning phase — no user questions until the plan question round; the agent-plan launch prompt carries the protocol verbatim (the skill's Launch prompt to agent-plan section). The card answers in advance: that one round carries only genuine gaps (an unchecked Type item, an unset `slug`), each with its best-guess recommendation first.

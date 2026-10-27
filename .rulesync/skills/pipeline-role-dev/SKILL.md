@@ -1,6 +1,6 @@
 ---
 name: pipeline-role-dev
-description: Role contract for agent-dev in the agent-* pipeline — the implementation process, quality gate, and the implementer's hard rules. MUST-loaded by agent-dev; never auto-selected.
+description: Role contract for the pipeline implementer (agent-dev-local / agent-dev-pr) in the agent-* pipeline — the implementation process, quality gate, and the implementer's hard rules. MUST-loaded by agent-dev-local and agent-dev-pr; never auto-selected.
 targets: ["*"]
 disable-model-invocation: true
 metadata:

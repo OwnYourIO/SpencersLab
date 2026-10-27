@@ -37,6 +37,7 @@ Session origin rule: the 'Session origin:' line below was produced when this com
 Notes:
 - Manual one-off launches use `/pipeline-boards` and are ungated by design — the guard lives only on this scheduled path.
 - A session shown LIVE here may be an interactive or worktree run — that it counts is deliberate: this launch asks "is anything running, however started".
-- A human-instructed forced-through launch: the human re-runs the gate command above on the host shell with `--threshold 0` (agent-board-coord has no shell) and the run follows that verdict.
+- A human-instructed forced-through launch: the human re-runs the gate command above on the host shell with `--threshold 0` (agent-board-coord's own shell is scoped to git plus the two own-session API rows — the gate script is not agent-runnable; the earliest scheduled launches carried no shell at all and reached OpenChamber only through its local HTTP API) and the run follows that verdict.
 - The `Session origin:` block probes its derived host once at expansion (a single curl, 5 s cap) — `UNRESOLVED` never blocks the run: the raw-session-id fallback in the rule above keeps the board record complete.
 - The board, swimlane and list names above must match the boards skill — on drift the check fails CLOSED (a skip); the boards skill remains the flow authority.
+- For runs that push the branch to be built/tested remotely, use `/pipeline-boards-pr` (manual one-off only — this scheduled launch never pushes; unattended runs keep -local semantics).

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # agent-board-coord-gate.sh — answers the SESSION operand of the scheduled
-# board-coord launch gate: "is another agent-board-coord session working right
-# now?"
+# board-coord launch gate: "is another board-coord session working right now?"
+# — counting the agent-board-coord alias and its -local/-pr variants alike.
 #
 # The WeKan Executing operand is deliberately NOT evaluated here: a bash
 # script cannot hold an MCP session, so the board check is the agent's own
@@ -12,7 +12,9 @@
 # Network surface: the local `opencode api` CLI only. It carries the TUI's
 # server discovery and auth, so this file holds no credentials (D1, D16).
 #
-# The coord filter is the agent name alone. The listing API also accepts a
+# The coord filter is the agent name alone, enumerated explicitly for all
+# three board-coord ids (alias + variants) — exact names, never prefix
+# matching. The listing API also accepts a
 # directory/project scope — smaller walks, but rejected: a manual or worktree
 # launch must stay visible to the main-checkout hourly run and the other way
 # around (D11: interactive launches count).
@@ -44,7 +46,11 @@ usage() {
   cat <<'EOF'
 agent-board-coord-gate.sh — session operand of the /pipeline-boards-hourly gate
 
-Answers one question: is another agent-board-coord session working right now?
+Answers one question: is another board-coord session working right now? The
+liveness set is the three explicit agent ids — "agent-board-coord" (the alias
+the hourly launch creates), "agent-board-coord-local" and
+"agent-board-coord-pr" (the variants a manual run uses) — so no live run hides
+behind a name the gate does not count.
 The WeKan Executing operand is the agent's own turn (read-only dev-boards) and
 only runs on LIVE — this script never touches a board.
 
@@ -79,9 +85,11 @@ Flags:
                           can never mask real activity.
   --help                  This text.
 
-Liveness set: sessions with agent == "agent-board-coord", minus --self, minus
-anything created inside --grace. No directory or project scoping — interactive
-and worktree launches are supposed to count (D11).
+Liveness set: sessions whose agent is exactly one of "agent-board-coord",
+"agent-board-coord-local", or "agent-board-coord-pr" (explicit enumeration —
+each board-coord name counts, missing one would let two runs collide), minus
+--self, minus anything created inside --grace. No directory or project
+scoping — interactive and worktree launches are supposed to count (D11).
 
 Failure policy: fail-closed. A missing dependency, an unreachable CLI, a
 non-JSON response, an exhausted page cap, or an unreadable, empty, malformed,
@@ -210,7 +218,7 @@ if ! jq -r \
   --arg self "$self" '
   def clamped($ms): ($ms | if . < 0 then 0 else . end);
   . as $all
-  | map(select(.agent == "agent-board-coord"))
+  | map(select(.agent == "agent-board-coord" or .agent == "agent-board-coord-local" or .agent == "agent-board-coord-pr"))
   | map(select(.id != $self))
   | map(select((($now - (.time.created // 0)) | clamped(.)) >= $grace_ms))
   | map(

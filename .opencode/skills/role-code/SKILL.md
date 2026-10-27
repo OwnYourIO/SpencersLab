@@ -33,6 +33,10 @@ pasted into chat.
   plan file for it.
 - Read every file you will touch before editing it. Match the surrounding
   style.
+- No pipeline context: you never load `pipeline-*` skills. Handed a pipeline
+  ticket folder (`.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`) or a chunk
+  id, stop and say the work belongs to the `dev` agent or the `agent-*`
+  pipeline — do not implement it.
 
 ## Method
 

@@ -1,8 +1,8 @@
 ---
 targets:
   - '*'
-name: agent-dev
-description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test)'
+name: agent-dev-pr
+description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test); pushes the ticket branch for remote build/test per pipeline-push-pr'
 opencode:
   mode: all
   color: '#f59e0b'
@@ -108,6 +108,31 @@ opencode:
     - action: shell
       resource: git log *
       effect: allow
+      # Git writes: push allowed for remote build/test, main/force still never
+    - action: shell
+      resource: git add *
+      effect: allow
+    - action: shell
+      resource: git commit *
+      effect: allow
+    - action: shell
+      resource: git push*
+      effect: allow
+    - action: shell
+      resource: git push*main*
+      effect: deny
+    - action: shell
+      resource: 'git push --force*'
+      effect: deny
+    - action: shell
+      resource: 'git push -f*'
+      effect: deny
+    - action: shell
+      resource: 'git push * --force*'
+      effect: deny
+    - action: shell
+      resource: 'git push * -f*'
+      effect: deny
     - action: shell
       resource: helm lint *
       effect: allow
@@ -141,5 +166,6 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 /executing-plans
 /pipeline-conventions
 /pipeline-role-dev
+/pipeline-push-pr
 
 Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).

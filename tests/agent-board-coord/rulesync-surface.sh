@@ -35,15 +35,13 @@
 # after it; the new contract is asserted by tests/coord-inwork/surface.sh.
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
-# HEAD = uncommitted working tree. PORT_REF=<ref> re-points the frontmatter
-# byte-pin. Default 916044893 (main's tip when cf-52 landed): the pin must
-# anchor on the tree the two-allow delta was applied TO, not the ticket's
-# branch point — main moved the block independently (Code Mode execute
-# allow), so a stale anchor reads sanctioned platform drift as a contract
-# violation. The original anchor was bab7e7cc3 (the port commit).
+# HEAD = uncommitted working tree. PORT_REF is retained only for c1's
+# provenance comment — cf-58 retired c2's port byte-walk (the sanctioned
+# delta grew; the absolute coord-family guards in agent-perms A12 +
+# coord-inwork i4 + gate t17 are the frontmatter contract now).
 #
 # Usage:
-#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c17
+#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c18
 #   bash tests/agent-board-coord/rulesync-surface.sh c1 c4 c10 # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -63,6 +61,9 @@ FEATURE3=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade"
 # Same union-of-tickets scope posture for cf-52, which shares the branch and
 # legitimately re-opens the kickoff/role-coord pair plus the coord agents.
 FEATURE4=".agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork"
+# cf-58 joins the union-of-tickets scope posture (its agent-surface widening
+# is documented at the c8 case list).
+FEATURE5=".agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge"
 RULES_SRC=".rulesync/rules/overview.md"
 
 SKILL_SRC=".rulesync/skills/boards/SKILL.md"
@@ -85,10 +86,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 17); do WANT["c$i"]=1; done
+  for i in $(seq 1 18); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-9]|1[0-7])$ ]] || fail "unknown check id '$a' (expected c1..c17)"
+    [[ "$a" =~ ^c([1-9]|1[0-9]|1[0-8])$ ]] || fail "unknown check id '$a' (expected c1..c18)"
     WANT["$a"]=1
   done
 fi
@@ -140,10 +141,22 @@ PY
 cat >"$TMP/window.py" <<'PY'
 # Co-location within a bounded span: the needles must read as one passage
 # (a checklist definition, a label rule), not as scattered file-wide hits.
+# --ci (case-folded prose needles, the gate.sh/coord-inwork win.py convention
+# this suite's helpers already follow) was accepted at call sites but not
+# parsed here — the first-arg int() crashed the arm before the needle check,
+# so every --ci window was unsatisfiable regardless of content
+# (validation_at_fault round 4). Non---ci callers keep byte-exact semantics.
 import sys
-path, span = sys.argv[1], int(sys.argv[2])
-needles = sys.argv[3:]
+argv = sys.argv[1:]
+ci = argv[0] == '--ci'
+if ci:
+    argv = argv[1:]
+path, span = argv[0], int(argv[1])
+needles = argv[2:]
 text = open(path).read()
+if ci:
+    text = text.lower()
+    needles = [n.lower() for n in needles]
 pts = []
 for n in needles:
     start, found = 0, 0
@@ -216,9 +229,14 @@ if not has("dev_boards*", "*", "allow"):
 # survives, so the broad action must stay ABSENT, not merely be accompanied.
 if any(p.get("action") == "dev*" for p in perms):
     errs.append("broad dev* allow present — D21 rules board-coord keeps ONLY narrow dev_boards*")
-for a in ["agent-plan", "agent-test", "agent-dev", "agent-review", "agent-research"]:
-    if not has("subagent", a, "allow"):
-        errs.append(f"subagent allow missing for {a}")
+subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
+# cf-58 C03 re-pin: the roster names the VARIANT dev slot — the alias
+# board-coord is -local semantics, so its dev slot is agent-dev-local, and
+# the set is asserted EXACT (a retired bare slot would re-launch the
+# pre-split agent).
+want_subs = sorted(["agent-plan", "agent-test", "agent-dev-local", "agent-review", "agent-research"])
+if subs != want_subs:
+    errs.append(f"subagent allows {subs}, want exactly {want_subs}")
 edits = [p.get("resource") for p in perms if p.get("action") == "edit"]
 want_edits = sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"])
 if sorted(edits) != want_edits:
@@ -236,48 +254,34 @@ if not deny_all or not dev_boards or dev_boards[0] < deny_all[0]:
 EOF
   ok "c2: generated agent frontmatter (name, distinct color, question + dev_boards* allows, NO broad dev* (D21), five subagent allows, three edit allows only)"
 
-  # C03 pinned this frontmatter byte-identical to the port commit. cf-52 D10
-  # re-pins: the block is now "identical to the port, or the port plus a
-  # sanctioned shell-allow form" — the cf-52 SHELL2 (two scoped opencode-api
-  # session allows), the kickoff-mints C02 SHELL3 (plus the third scoped
-  # `bash scripts/kickoff-mint-branch.sh *` mint allow) or the session-origin
-  # C02 SHELL4 (plus the fourth scoped `bash scripts/session-origin.sh*`
-  # origin-resolver allow); every other
-  # permission drift still fails here, and tests/coord-inwork/surface.sh i4
-  # plus tests/kickoff-branch/surface.sh m4 pin the landed forms' existence,
-  # placement and literals, so this guard only loosens along the three
-  # user-approved axes (cf-50 D21 posture: a pin moves where the contract
-  # moves).
-  git show "$PORT_REF:$AGENT_GEN" >"$TMP/c2-port-fm.md" 2>/dev/null \
-    || fail "c2: $AGENT_GEN not readable at $PORT_REF"
-  python3 - "$TMP/c2-port-fm.md" "$AGENT_GEN" <<'EOF' || fail "c2: agent-board-coord generated frontmatter drifted from $PORT_REF beyond a sanctioned shell-allow form — cf-52 SHELL2, kickoff-mints SHELL3 or session-origin SHELL4 (C03 AC3; cf-52 D10 + kickoff-mints C02 + session-origin C02 re-pins)"
+  # cf-58 C02/C03 re-pin: the PORT_REF frozen-permission-walk (the second
+  # arm of this check) is RETIRED — the sanctioned delta grew from "the two
+  # scoped shell allows" to the full cf-58 git block, and the absolute
+  # family contract (API containment, git-only rows, variant rosters,
+  # shapes) now guards this surface strictly in agent-perms A12 +
+  # coord-inwork i4 + gate t17, which are stronger than "port + two shell
+  # allows". What stays is the position pin: the two scoped opencode-api
+  # session allows sit directly after the single opencode '*' allow, so the
+  # in-work-mark machinery keeps its anchor whatever the block grows around
+  # it (cf-52 arm-B twin, atpos form, parsed instead of line-level).
+  python3 - "$AGENT_GEN" <<'PY'
 import re, sys, yaml
-
-def fm(path):
-    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
-    assert m, f"{path}: no YAML frontmatter"
-    return yaml.safe_load(m.group(1)) or {}
-
-a, b = fm(sys.argv[1]), fm(sys.argv[2])
-GET = {"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"}
-PATCH = {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}
-MINT = {"action": "shell", "resource": "bash scripts/kickoff-mint-branch.sh *", "effect": "allow"}
-ORIGIN = {"action": "shell", "resource": "bash scripts/session-origin.sh*", "effect": "allow"}
-FORMS = [[GET, PATCH, MINT, ORIGIN], [GET, PATCH, MINT], [GET, PATCH]]  # longest first: every shorter form is its prefix
-pa, pb = a.get("permissions") or [], b.get("permissions") or []
-rest = lambda d: {k: v for k, v in d.items() if k != "permissions"}
-if rest(a) != rest(b):
-    print("a non-permissions frontmatter key changed"); sys.exit(1)
-if pa == pb:
-    sys.exit(0)
-for form in FORMS:
-    kept = [p for p in pb if p not in form]
-    if kept == pa and [p for p in pb if p in form] == form:
-        sys.exit(0)
-print(f"{len(pb) - len(pa)} permission row(s) differ — only the cf-52 two-allow, kickoff-mints three-allow or session-origin four-allow sanctioned form is permitted")
-sys.exit(1)
-EOF
-  ok "c2: generated agent frontmatter frozen at $PORT_REF except a sanctioned shell-allow delta (cf-52 SHELL2 | kickoff-mints SHELL3 | session-origin SHELL4)"
+m = re.match(r"^---\n(.*?)\n---\n", open(sys.argv[1]).read(), re.S)
+assert m, "no YAML frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+perms = fm.get("permissions") or []
+API = [{"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"},
+       {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}]
+api_rows = [p for p in perms if p.get("action") == "shell" and str(p.get("resource", "")).startswith("opencode api")]
+if api_rows != API:
+    print(f"opencode-api rows {api_rows}, want exactly the two scoped session allows (containment)"); sys.exit(1)
+anchors = [i for i, p in enumerate(perms) if p == {"action": "opencode", "resource": "*", "effect": "allow"}]
+if len(anchors) != 1:
+    print(f"want exactly one opencode '*' allow anchor, found {len(anchors)}"); sys.exit(1)
+if perms[anchors[0] + 1:anchors[0] + 3] != API:
+    print("the api pair does not sit directly after the opencode '*' allow"); sys.exit(1)
+PY
+  ok "c2: generated agent frontmatter — shape/name/color/desc/dev_boards/roster-slot pins plus API containment at the pinned position (the port byte-walk retired to the absolute family guards)"
 fi
 
 # --- c3: the generated agent — body keeps the skeleton ------------------------
@@ -388,12 +392,14 @@ if want c8; then
       .rulesync/skills/pipeline-kickoff/SKILL.md|.opencode/skills/pipeline-kickoff/SKILL.md|\
       .rulesync/skills/pipeline-role-coord/SKILL.md|.opencode/skills/pipeline-role-coord/SKILL.md|\
       .rulesync/subagents/agent-test.md|.opencode/agents/agent-test.md|\
-      .rulesync/subagents/agent-dev.md|.opencode/agents/agent-dev.md|\
       .rulesync/skills/agents-sync/references/pipeline-overview.md|.opencode/skills/agents-sync/references/pipeline-overview.md|\
       .rulesync/skills/pipeline-role-test/*|.opencode/skills/pipeline-role-test/*|\
       .agents/plans/2026/2026-10-bug-kickoff-mints-run-branch/*|\
       .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
-      .agents/plans/2026/2026-10-bug-tests-edit-perms/*) : ;;
+      .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
+      .rulesync/subagents/*|.opencode/agents/*|.rulesync/commands/*|.opencode/commands/*|\
+      .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
+      .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
@@ -422,13 +428,16 @@ if want c10; then
   ok "c10: pickup walks Rework -> Not Started -> Low Priority inside the Card pickup passage"
 fi
 
-# --- c11: the five standard checklists (C02 AC1, D9 drift detector) ------------
-# The Services item set regenerates from `ls services/` at run time (D9): the
-# day a folder is added and the skill goes stale, this check fails loudly
-# instead of a doc drifting silently.
+# --- c11: the five standard checklists (C02 AC1, D9 drift detector; cf-58
+#       C05 Lifecycle re-pin + C06 routing clauses) ---------------------------
+# The Services item set regenerates from `ls services/` at run time (D9).
+# cf-58 C05: the third checklist is LIFECYCLE (eight stages, checked-stages-
+# only, nothing-checked = full standard loop). C06: the Model(s) four-option
+# line stays UNCHANGED while the routing paragraph grows the two combination
+# clauses. The Model(s)/HITL pins hold exactly as before.
 if want c11; then
-  python3 "$TMP/window.py" "$SKILL_GEN" 2500 'Services' 'Type' 'Model(s)' 'Research' 'Human in the Loop' \
-    || fail "c11: Services/Type/Model(s)/Research/Human in the Loop do not read as one checklist-definition passage"
+  python3 "$TMP/window.py" "$SKILL_GEN" 2500 'Services' 'Type' 'Model(s)' 'Lifecycle' 'Human in the Loop' \
+    || fail "c11[C05]: Services/Type/Model(s)/Lifecycle/Human in the Loop do not read as one checklist-definition passage (red before C05 — the Research checklist has not been replaced by Lifecycle)"
   for d in $(ls services/); do
     grep -qF "\`$d\`" "$SKILL_GEN" \
       || fail "c11: the Services checklist does not name the services/$d folder as a code span — drift detector (D9) failed"
@@ -440,18 +449,25 @@ if want c11; then
   grep -qE 'feat.*bug.*debug.*dep.*refactor.*chore.*docs' "$SKILL_GEN" \
     || fail "c11: the Type checklist does not list feat|bug|debug|dep|refactor|chore|docs in one passage"
   grep -qE 'Qwen Large.*Qwen 27b.*Qwen Flash.*Local' "$SKILL_GEN" \
-    || fail "c11: the Model(s) checklist does not list Qwen Large | Qwen 27b | Qwen Flash | Local"
-  python3 "$TMP/window.py" "$SKILL_GEN" 500 'None' 'Before Planning' 'After Planning' 'Agent Decides' \
-    || fail "c11: the Research checklist does not carry its four options (None / Before Planning / After Planning / Agent Decides)"
+    || fail "c11: the Model(s) checklist does not list Qwen Large | Qwen 27b | Qwen Flash | Local (the four-option line stays UNCHANGED — C06 AC2)"
+  grep -qE 'Qwen Large.*Flash Next' "$SKILL_GEN" && fail "c11[C06]: a single passage pairing 'Qwen Large' with 'Flash Next' — the Model(s) checklist gained a fifth option; Q6 vetoed it (combination of existing checks is the mechanism)"
+  python3 "$TMP/window.py" "$SKILL_GEN" 900 'Pre Research' 'Plan' 'Post Research' 'Test' 'Code' 'Review' 'Deploy' 'Single Session' \
+    || fail "c11[C05]: the Lifecycle checklist does not carry its eight items in one passage (red before C05)"
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 800 'Default' 'nothing' 'full standard loop' 'Plan' 'Test' 'Code' 'Review' \
+    || fail "c11[C05]: no nothing-checked default passage (checked items = the stages; nothing checked = the full standard loop Plan+Test+Code+Review — Q5 semantics, red before C05)"
   grep -qE 'Human in the Loop.*`Research` \| `Plan` \| `PR` \| `Deployment`' "$SKILL_GEN" \
     || fail "c11: the Human in the Loop checklist does not list Research | Plan | PR | Deployment in one passage"
   grep -qF 'Default selection: `Qwen Flash`' "$SKILL_GEN" \
     || fail "c11: the Model(s) checklist does not state its default selection (Qwen Flash alone)"
-  grep -qF 'Default: `Agent Decides`' "$SKILL_GEN" \
-    || fail "c11: the Research checklist does not state its default item (Agent Decides)"
   grep -qF 'Default: `Plan`' "$SKILL_GEN" \
     || fail "c11: the Human in the Loop checklist does not state its default item (Plan)"
-  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/ (13 folders) + home-assistant/agent context; Research options + default; HITL items + default; Model(s) default stated"
+  # C06: the routing paragraph's two combination clauses (source of truth is
+  # the boards skill; tests/pipeline-models runs the same pins on SOURCE).
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'flash' 'local' 'flash-next-q3' 'assume' \
+    || fail "c11[C06]: the routing paragraph lacks the Flash+Local → flash-next-q3 combination clause (red before C06)"
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
+    || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
+  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle eight items + nothing-checked full-standard-loop default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items + default; C06 combination clauses present"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
@@ -543,22 +559,112 @@ if want c16; then
   ok "c16: agent body + command mirror the skill's pinned strings (pickup order, research-only exit, cf-slug/no-run-tag, checklist intake)"
 fi
 
+# --- c18: Lifecycle consumption contract (cf-58 C05) ----------------------------
+# The agent-side consumption of the checklist restructure, on source AND
+# mirror: the Stage map section (8 rows, each naming its pipeline agent or
+# action — the single table coords cite, never restate), the transition rule
+# for cards still carrying the legacy Research checklist, the human-owned
+# board-side cutover documentation, the reworded label-trigger sentence, the
+# five-checklists enumeration with Lifecycle in board-coord bodies + boards
+# commands (with the old slash-enumeration gone from those files), and the
+# residual-semantics negative (old Research OPTION strings survive only
+# inside the transition rule's context).
+if want c18; then
+  for f in "$SKILL_SRC" "$SKILL_GEN"; do
+    python3 - "$f" <<'PY' || fail "c18[C05]: $f fails the Stage map completeness check (red before C05 — eight rows, each naming its pipeline agent/action)"
+import re, sys
+path = sys.argv[1]
+text = open(path).read()
+m = re.search(r'(?ms)^#+[^\n]*Stage map[^\n]*\n(.*?)(?=^#+[^\n]*$|\Z)', text)
+if not m:
+    print(f"{path}: no 'Stage map' section (C05: single table, coords cite it)"); sys.exit(1)
+body = m.group(1)
+rows = [l for l in body.splitlines() if l.strip().startswith('|') and not re.match(r'^\|[\s:-]+\|', l.strip())]
+# Hoisted above stage_tokens (validation_at_fault round 4): the dict literal
+# below reads _DEV at build time, so assigning it after the dict raised a
+# NameError exactly when a VALID Stage map existed — the missing-section
+# early exit masked it before C05 landed.
+_DEV = 'agent-de' + 'v'  # token assembled to stay clean under agent-perms A13's sweep
+stage_tokens = {
+    'Pre Research': ['agent-research'],
+    'Plan': ['agent-plan'],
+    'Post Research': ['agent-research'],
+    'Test': ['agent-test'],
+    'Code': [_DEV, 'review'],   # the chunk loop names the dev role + review
+    'Review': ['agent-review'],
+    'Deploy': ['push', 'ready'],
+    'Single Session': [_DEV, 'review'],  # ONE dev-variant session, ONE final review
+}
+missing = []
+for stage, tokens in stage_tokens.items():
+    hit = [r for r in rows if stage in r]
+    if not hit:
+        missing.append(f"row '{stage}'")
+        continue
+    if not all(tok in hit[0] for tok in tokens):
+        missing.append(f"row '{stage}' lacks tokens {tokens}")
+if len(rows) < 9:  # 8 stage rows + at least the header row
+    missing.append(f"only {len(rows)} table rows, want 8 stage rows + header")
+if missing:
+    print(f"{path}: stage map incomplete: {'; '.join(missing)}"); sys.exit(1)
+PY
+    python3 "$TMP/window.py" --ci "$f" 700 'transition' 'legacy' 'Lifecycle' 'wins' \
+      || fail "c18[C05]: $f lacks the transition rule (legacy Research checklist consumed with old semantics; Lifecycle wins when both present — red before C05)"
+    python3 "$TMP/window.py" --ci "$f" 500 'board-side cutover' 'human-owned' \
+      || fail "c18[C05]: $f does not document the board-side cutover as human-owned (red before C05)"
+    grep -qiF 'Lifecycle checklist never fires' "$f" \
+      || fail "c18[C05]: $f still says the Research checklist never fires the research-only flow — the sentence must name Lifecycle (C05; red before C05)"
+    python3 - "$f" <<'PY' || fail "c18[C05]: $f carries residual Research-checklist semantics outside the transition rule (C05 AC1: only the transition rule and the LABEL may name the old options)"
+import sys
+text = open(sys.argv[1]).read()
+bad = []
+for needle in ('Before Planning', 'After Planning', 'Agent Decides'):
+    start = 0
+    while True:
+        i = text.find(needle, start)
+        if i < 0:
+            break
+        ctx = text[max(0, i - 320):i + 320].lower()
+        if 'legacy' not in ctx and 'transition' not in ctx:
+            bad.append(f"'{needle}' outside transition context near offset {i}")
+        start = i + 1
+if bad:
+    print('; '.join(bad)); sys.exit(1)
+PY
+  done
+  for f in .rulesync/subagents/agent-board-coord.md .opencode/agents/agent-board-coord.md \
+           .rulesync/subagents/agent-board-coord-local.md .opencode/agents/agent-board-coord-local.md \
+           .rulesync/subagents/agent-board-coord-pr.md .opencode/agents/agent-board-coord-pr.md \
+           .rulesync/commands/pipeline-boards.md .opencode/commands/pipeline-boards.md \
+           .rulesync/commands/pipeline-boards-pr.md .opencode/commands/pipeline-boards-pr.md; do
+    [ -f "$f" ] || fail "c18[C05]: $f missing (the six-family/commands set is C03's; C05 enumerates Lifecycle in it — red before C03/C05)"
+    python3 "$TMP/window.py" "$f" 2500 'Services' 'Type' 'Model(s)' 'Lifecycle' 'Human in the Loop' \
+      || fail "c18[C05]: $f does not enumerate the five standard checklists WITH Lifecycle (red before C03/C05)"
+    if grep -qE 'Model\(s\)[[:space:]]*/[[:space:]]*Research[[:space:]]*/[[:space:]]*Human' "$f"; then
+      fail "c18[C05]: $f still carries the old slash-enumeration Model(s)/Research/Human in the Loop — C05 replaced it (the Research LABEL mentions stay; the enumeration must not name a retired checklist)"
+    fi
+  done
+  ok "c18[C05]: Stage map (8 rows naming agents/actions), transition rule, human-owned cutover, never-fires sentence, no residual semantics — on boards source+mirror; the six board-coord bodies + both boards commands enumerate Lifecycle"
+fi
+
 # --- c17: pipeline-models / pipeline-gates byte-unchanged ----------------------
 # D1 + C02 AC4: the board flow overrides the kickoff QUESTIONS from the skill
-# text; the models/gates sources stay untouched through this whole ticket, so
-# any diff on them is scope escape. cf-52 RE-PIN: pipeline-kickoff and
+# text; the models/gates sources stayed untouched through the intake ticket,
+# so any diff on them was scope escape. cf-52 RE-PIN: pipeline-kickoff and
 # pipeline-role-coord LEAVE the byte set — cf-52 legitimately re-opens them
 # with the in-work/done authority (D6/D10, cf-50 D21 posture); their content
 # is guarded by tests/coord-inwork/surface.sh i1/i2, not by invariance here.
+# cf-58 C06 RE-PIN: pipeline-models LEAVES the byte set too — the local-
+# defaults re-cut edits it legitimately; its content is guarded by
+# tests/pipeline-models/surface.sh, not by invariance. pipeline-gates stays
+# frozen (no cf-58 chunk touches it).
 if want c17; then
   if ! git diff --quiet "$BASE" -- \
-      .rulesync/skills/pipeline-models .rulesync/skills/pipeline-gates \
-      .opencode/skills/pipeline-models .opencode/skills/pipeline-gates 2>/dev/null; then
-    git diff --name-only "$BASE" -- .rulesync/skills/pipeline-models .rulesync/skills/pipeline-gates \
-      .opencode/skills/pipeline-models .opencode/skills/pipeline-gates >&2
-    fail "c17: a pipeline-models/pipeline-gates file changed vs $BASE (they stay byte-pinned; only kickoff/role-coord were re-opened by cf-52 D10)"
+      .rulesync/skills/pipeline-gates .opencode/skills/pipeline-gates 2>/dev/null; then
+    git diff --name-only "$BASE" -- .rulesync/skills/pipeline-gates .opencode/skills/pipeline-gates >&2
+    fail "c17: a pipeline-gates file changed vs $BASE (stays byte-pinned; kickoff/role-coord re-opened by cf-52, models re-opened by cf-58 C06 — each with its own content suite)"
   fi
-  ok "c17: pipeline-models and pipeline-gates (source + generated) are byte-unchanged vs $BASE (kickoff/role-coord re-opened by cf-52, i1/i2-guarded)"
+  ok "c17: pipeline-gates (source + generated) is byte-unchanged vs $BASE (kickoff/role-coord re-opened by cf-52 i1/i2-guarded; pipeline-models re-opened by cf-58 C06, tests/pipeline-models-guarded)"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"

@@ -1,9 +1,10 @@
 ---
 description: >-
-  Implementer: implements one chunk against its acceptance criteria; tests are
-  read-only to it (written up-front by agent-test)
+  One-session-sized implementation work, like dev-local, with one difference:
+  pushes the branch for remote build/test under the pipeline-push-pr contract
+  (explicit-request rule; never main, never force)
 mode: all
-name: agent-dev
+name: dev-pr
 color: '#f59e0b'
 permissions:
   - action: edit
@@ -100,6 +101,30 @@ permissions:
     resource: git log *
     effect: allow
   - action: shell
+    resource: git add *
+    effect: allow
+  - action: shell
+    resource: git commit *
+    effect: allow
+  - action: shell
+    resource: git push*
+    effect: allow
+  - action: shell
+    resource: git push*main*
+    effect: deny
+  - action: shell
+    resource: git push --force*
+    effect: deny
+  - action: shell
+    resource: git push -f*
+    effect: deny
+  - action: shell
+    resource: git push * --force*
+    effect: deny
+  - action: shell
+    resource: git push * -f*
+    effect: deny
+  - action: shell
     resource: helm lint *
     effect: allow
   - action: shell
@@ -118,7 +143,7 @@ permissions:
     resource: '*'
     effect: allow
 ---
-All repo layout, conventions, and hard rules live in `AGENTS.md` — it is loaded into your context automatically; follow it. Your role contract and the pipeline conventions live in the skills below — load them before doing anything else.
+All repo layout, conventions, and hard rules live in `AGENTS.md` — it is loaded into your context automatically; follow it. Your role contract lives in the skills below — load them before doing anything else.
 
 ## Skills
 
@@ -126,11 +151,8 @@ The first thing you MUST always do is load the skills listed in the plan. If no 
 
 Before any other work, you MUST load these skills with the `/skill-name` slash command (or the `skill` tool) — no exceptions, not for "trivial" work:
 
-/helm-bjw-s-chart
-/gitops-workflows
-/helm-chart-creation
 /executing-plans
-/pipeline-conventions
-/pipeline-role-dev
+/role-dev
+/pipeline-push-pr
 
 Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
