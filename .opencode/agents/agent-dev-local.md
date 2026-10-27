@@ -1,9 +1,9 @@
 ---
 description: >-
   Implementer: implements one chunk against its acceptance criteria; tests are
-  read-only to it (written up-front by agent-test)
+  read-only to it (written up-front by agent-test); commits only, never pushes
 mode: all
-name: agent-dev
+name: agent-dev-local
 color: '#f59e0b'
 permissions:
   - action: edit
@@ -99,6 +99,15 @@ permissions:
   - action: shell
     resource: git log *
     effect: allow
+  - action: shell
+    resource: git add *
+    effect: allow
+  - action: shell
+    resource: git commit *
+    effect: allow
+  - action: shell
+    resource: git push*
+    effect: deny
   - action: shell
     resource: helm lint *
     effect: allow
