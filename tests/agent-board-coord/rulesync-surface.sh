@@ -139,10 +139,22 @@ PY
 cat >"$TMP/window.py" <<'PY'
 # Co-location within a bounded span: the needles must read as one passage
 # (a checklist definition, a label rule), not as scattered file-wide hits.
+# --ci (case-folded prose needles, the gate.sh/coord-inwork win.py convention
+# this suite's helpers already follow) was accepted at call sites but not
+# parsed here — the first-arg int() crashed the arm before the needle check,
+# so every --ci window was unsatisfiable regardless of content
+# (validation_at_fault round 4). Non---ci callers keep byte-exact semantics.
 import sys
-path, span = sys.argv[1], int(sys.argv[2])
-needles = sys.argv[3:]
+argv = sys.argv[1:]
+ci = argv[0] == '--ci'
+if ci:
+    argv = argv[1:]
+path, span = argv[0], int(argv[1])
+needles = argv[2:]
 text = open(path).read()
+if ci:
+    text = text.lower()
+    needles = [n.lower() for n in needles]
 pts = []
 for n in needles:
     start, found = 0, 0
@@ -566,6 +578,11 @@ if not m:
     print(f"{path}: no 'Stage map' section (C05: single table, coords cite it)"); sys.exit(1)
 body = m.group(1)
 rows = [l for l in body.splitlines() if l.strip().startswith('|') and not re.match(r'^\|[\s:-]+\|', l.strip())]
+# Hoisted above stage_tokens (validation_at_fault round 4): the dict literal
+# below reads _DEV at build time, so assigning it after the dict raised a
+# NameError exactly when a VALID Stage map existed — the missing-section
+# early exit masked it before C05 landed.
+_DEV = 'agent-de' + 'v'  # token assembled to stay clean under agent-perms A13's sweep
 stage_tokens = {
     'Pre Research': ['agent-research'],
     'Plan': ['agent-plan'],
@@ -576,7 +593,6 @@ stage_tokens = {
     'Deploy': ['push', 'ready'],
     'Single Session': [_DEV, 'review'],  # ONE dev-variant session, ONE final review
 }
-_DEV = 'agent-de' + 'v'  # token assembled to stay clean under agent-perms A13's sweep
 missing = []
 for stage, tokens in stage_tokens.items():
     hit = [r for r in rows if stage in r]
