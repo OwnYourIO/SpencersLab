@@ -171,13 +171,17 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": ["C05"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "DONE (chunk gates green; final review pending)",
+      "dev_session": "ses_e821d6df9ffeIRbU8WlMq2vXK7",
+      "handoffs": [
+        {"from": "agent-dev", "session": "ses_e821d6df9ffeIRbU8WlMq2vXK7", "received_at": "2026-10-27T15:35Z",
+         "result": "RESULT status DONE, commit 53629c70f (7 files: pipeline-models/pipeline-kickoff/boards sources + 3 mirrors + .opencode/opencode.jsonc). M1-M6 6/6; c11 FULLY flipped (both C06 windows); FULL MATRIX green for the first time (A 13, i 7, t 22, agents-md 9, P 6, S 10); generate no-op x2 + --check; aislop 0/0. Catalog: q4 tools=true, flash-next q3/q4 added (262144), entries 83->85 (+2 only). Incidental ledger clears (kickoff:25/models:17 agent-dev -> variants); role-test:12 untouched per launch. Open: whether flash-next entries should claim image input (chart family declares it; C06.md's q8-shape wording followed) - hygiene call for final report."}
+      ]
     }
   },
   "blocked": [],
