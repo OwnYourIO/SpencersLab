@@ -203,8 +203,11 @@ role × permission matrix is in the `agents-sync` skill references
   family: card intake from the WeKan
   AI-Dev board replaces the live kickoff — pickup walks
   `Rework → Not Started → Low Priority` (top card first), the
-  Services/Type/Model(s)/Research checklists plus the `slug` and `session`
-  custom fields supply the kickoff answers, the Model(s) checklist alone
+  Services/Type/Model(s)/Lifecycle/Human in the Loop checklists plus the
+  `slug` and `session` custom fields supply the kickoff answers — the
+  checked Lifecycle items are the stages the run executes
+  (checked-stages-only; nothing checked = the standard
+  Plan+Test+Code+Review loop), the Model(s) checklist alone
   routes models, `cf-<card-number>-<type>-<desc>` slugs name the feature
   folder, worktree, branch and session alike;
   card-driven runs carry no run tag (`agent-coord` keeps run tags); the hourly
