@@ -1,0 +1,72 @@
+{
+  "feature": "2026/2026-10-cf-75-bug-wekan-mcp-skill",
+  "kickoff": {
+    "card": "BhukC6WP3t5MfX2Gr",
+    "slug": "cf-75-bug-wekan-mcp-skill",
+    "type": "bug",
+    "run_tag": null,
+    "worktree": "cf-75-bug-wekan-mcp-skill",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com"
+  },
+  "plan_status": "draft",
+  "coord_session": "ses_e809acf91ffeDTtY5LkI5dYOCd",
+  "plan_session": "ses_e80961223ffeUNpbIX5dajj0w8",
+  "test_session": null,
+  "plan_handoff": [
+    {
+      "at": "2026-10-27",
+      "role": "agent-plan",
+      "session": "ses_e80961223ffeUNpbIX5dajj0w8",
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/2026-10-27-bug-cf-75-bug-wekan-mcp-skill.md, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01.md..C04.md]\ncommands_run: [python3 STATE.json schema/kickoff assertions => pass; dev-boards live read probe (list_boards/get_board/list_swimlanes/list_lists/list_custom_fields) => pass; grep/ls surveys of FRICTION corpus + server.py + rulesync surfaces => informational]\ndeviations: none — folder/STATE/plan/chunks built per pipeline-role-plan; kickoff recorded exactly as launched (run_tag null, local false, single-model both tiers); plan left uncommitted for coord per role\nfriction: no aislop PATH check done in this session (planner wrote plan only; known npx --no-install ladder noted in plan Commands); boards skill six-list text drifts from live In Process swimlane (non-pipeline Test list present) — captured as plan risk, board structure is human-owned\nopen_questions: (1) final slug confirm -> cf-75-bug-wekan-mcp-skill; (2) retire 2026-10-docs-wekan-mcp-arg-ergonomics draft + follow-up card (C01 absorbs)?; (3) card #74 duplicates C02 - cover here and close #74?; (4) agent-board in scope now (C03)?; (5) prefetch plugin in scope now, last + degrade-safe (C04)?; (6) who adjudicates 'the fix changes functionality' on validation_at_fault auto-route -> test session NEEDS_INFO, coord escalates; (7) agent-board MCP grants dev-boards-only, no admin-global-wekan fallback?\nnext_suggested: batched question round; relaunch plan session with answers if anything changes; then approve + post-plan write-back; post-plan agent-research before Test (feeds C04 hook-semantics assumption)"
+    }
+  ],
+  "current_wave": 1,
+  "updated_at": "2026-10-27",
+  "model_routing_note": "card Model(s) checklist sole check Qwen Flash -> same model every tier (boards kickoff rule: exactly one checked -> that model for every tier)",
+  "lifecycle_note": "legacy Research checklist, 'After Planning' checked -> transition rule: standard Plan+Test+Code+Review loop PLUS an agent-research round after planning; no Lifecycle stage gate",
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
