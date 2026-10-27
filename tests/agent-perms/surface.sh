@@ -32,9 +32,16 @@
 # onto this suite: alias↔local equality (the drift guard), git-row order,
 # push-policy last-match, roster dev slot, plus fabricated-row negative
 # controls proving the guards never degenerate into "empty diff ⇒ pass".
-# A10/A11/A12 are RED before C02/C03 (variant/alias files absent); A13's
-# rename sweep is RED before C02 (bare pre-split references still live in
-# AGENTS.md and the case-arm literals until the chunks land).
+# A10/A11/A12 are RED before C02/C03 (variant/alias files absent — the red
+# names the missing file/row); A13's rename sweep is RED before C02 (bare
+# pre-split references still live in AGENTS.md and the case-arm literals
+# until the chunks land); A13's -pr command pairing + pointer
+# arms self-engage with pipeline-pr.md (era-gated like the AGENTS pins —
+# C02's AC5 sweep coverage must not be held hostage by unlanded C03
+# content). Validation-at-fault re-pins, user-approved: C04 round (P4 of
+# the pipeline-push-pr suite) and C02 round (A11's policy filter is
+# action-scoped — the first form's fnmatch(action,"*") was a tautology that
+# let the block's trailing MCP-tier rows overwrite the git verdicts).
 # After each chunk lands, `bash tests/agent-perms/surface.sh` must pass the
 # subset its chunk owns; the full suite is green at the end of C03.
 #
@@ -375,7 +382,15 @@ def cmd():
         path, command = sys.argv[2], sys.argv[3]
         verdict = None
         for r in perms(path):
-            if not (r.get("action") == "shell" or _fm.fnmatch(str(r.get("action", "")), "*")):
+            # Action-scoped (validation_at_fault fix, C02 review 2026-10-27):
+            # the rule's action must BE shell or glob-match it — the old
+            # fnmatch(action,"*") test was a tautology that counted the
+            # block's trailing MCP-tier rows (readonly*/global*/dev* with
+            # resource '*') as shell candidates, silently overwriting the
+            # git verdicts. The '*' deny-baseline stays in play (its action
+            # glob-matches shell), so A10's stripped-deny control semantics
+            # are unchanged.
+            if not (r.get("action") == "shell" or _fm.fnmatch("shell", str(r.get("action", "")))):
                 continue
             if _fm.fnmatch(command, str(r.get("resource", ""))):
                 verdict = r.get("effect")
@@ -908,6 +923,12 @@ PY
     fi
   done
   # C03 AC4 command→agent pairing — source AND generated frontmatter target.
+  # The four PRE-EXISTING pairings + the hourly-never-pr rule hold in BOTH
+  # eras (plain targets are C03-unchanged); the three -pr commands and the
+  # pointer lines ship WITH pipeline-pr.md itself, so their arms self-engage
+  # on its existence — same era-gating pattern as the AGENTS/RULES pins
+  # above. Without the gate A13's C02-era sweep coverage (the rename sweep
+  # is C02's own AC5) would be held hostage by unlanded C03 content.
   pair() { # cmd-name  want-agent
     local c="$1" a="$2"
     for d in ".rulesync/commands" ".opencode/commands"; do
@@ -921,22 +942,27 @@ PY
   pair pipeline-resume agent-coord
   pair pipeline-boards agent-board-coord
   pair pipeline-boards-hourly agent-board-coord
-  pair pipeline-pr agent-coord-pr
-  pair pipeline-resume-pr agent-coord-pr
-  pair pipeline-boards-pr agent-board-coord-pr
   # the hourly command never points at a -pr variant (an unattended run never pushes)
   ! grep -qE 'agent:[[:space:]]+.*-pr' .rulesync/commands/pipeline-boards-hourly.md .opencode/commands/pipeline-boards-hourly.md \
     || fail "A13[C03 AC4]: pipeline-boards-hourly targets a -pr agent — scheduled runs stay -local semantics (R2)"
-  # pointer lines on the four plain commands (C03 Tasks)
-  grep -qF '/pipeline-pr' .rulesync/commands/pipeline.md \
-    || fail "A13[C03 AC4]: pipeline.md lacks the '/pipeline-pr' pointer line (red before C03)"
-  grep -qF '/pipeline-pr' .rulesync/commands/pipeline-resume.md \
-    || fail "A13[C03 AC4]: pipeline-resume.md lacks the '/pipeline-pr' pointer line (red before C03)"
-  grep -qF '/pipeline-boards-pr' .rulesync/commands/pipeline-boards.md \
-    || fail "A13[C03 AC4]: pipeline-boards.md lacks the '/pipeline-boards-pr' pointer line (red before C03)"
-  grep -qF '/pipeline-boards-pr' .rulesync/commands/pipeline-boards-hourly.md \
-    || fail "A13[C03 AC4]: hourly command lacks the '/pipeline-boards-pr' pointer line (red before C03)"
-  ok "A13[C02 AC5 + C03 AC4/AC7]: binding surfaces and suites free of the retired dev-role wiring; AGENTS.md/rules roster row present; seven commands pair to the right agents (plain→aliases, -pr→variants, hourly never -pr); pointer lines landed"
+  if [ -f .rulesync/commands/pipeline-pr.md ]; then
+    pair pipeline-pr agent-coord-pr
+    pair pipeline-resume-pr agent-coord-pr
+    pair pipeline-boards-pr agent-board-coord-pr
+    # pointer lines on the four plain commands (C03 Tasks)
+    grep -qF '/pipeline-pr' .rulesync/commands/pipeline.md \
+      || fail "A13[C03 AC4]: pipeline.md lacks the '/pipeline-pr' pointer line (red before C03)"
+    grep -qF '/pipeline-pr' .rulesync/commands/pipeline-resume.md \
+      || fail "A13[C03 AC4]: pipeline-resume.md lacks the '/pipeline-pr' pointer line (red before C03)"
+    grep -qF '/pipeline-boards-pr' .rulesync/commands/pipeline-boards.md \
+      || fail "A13[C03 AC4]: pipeline-boards.md lacks the '/pipeline-boards-pr' pointer line (red before C03)"
+    grep -qF '/pipeline-boards-pr' .rulesync/commands/pipeline-boards-hourly.md \
+      || fail "A13[C03 AC4]: hourly command lacks the '/pipeline-boards-pr' pointer line (red before C03)"
+    a13_pair_note="seven commands paired (plain→aliases, -pr→variants), pointer lines landed"
+  else
+    a13_pair_note="-pr command trio absent yet — its pairing + pointer arms engage with pipeline-pr.md (red-before-C03 by era, not a C02 failure)"
+  fi
+  ok "A13[C02 AC5 + C03 AC4/AC7]: binding surfaces and suites free of the retired dev-role wiring; AGENTS.md/rules roster row era-correct; four plain commands pair unchanged, hourly never -pr; $a13_pair_note"
 fi
 
 printf 'PASS: agent-perms contract checks (%d ok)\n' "$checks"
