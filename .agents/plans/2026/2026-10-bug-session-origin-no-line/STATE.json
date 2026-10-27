@@ -4,7 +4,7 @@
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e85775dfeffeXUvaopNrHlcYoq",
   "current_wave": 1,
-  "updated_at": "2026-10-27T00:50Z",
+  "updated_at": "2026-10-27T01:20Z",
   "approval_note": "USER-APPROVED 2026-10-26 in the batched round (\"Approve both\") WITH the OQ1 override to the LIVE-DERIVE FALLBACK (script + scoped grants); OQ2/OQ3/OQ5/OQ6/OQ7 per best guesses; OQ4 answered in-session (audit: cf-52's probe ran via the coord's interactive shell tool pre-surface-change — D11). Rework recorded 2026-10-26 by the plan session per these answers; D10 supersedes D3's resolution leg. Approval came from the user's explicit batched answer, not planner judgment.",
   "plan_handoffs": [
     {
@@ -35,10 +35,10 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "in-progress",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
@@ -47,8 +47,14 @@
           "session": "ses_e85775dfeffeXUvaopNrHlcYoq",
           "result": "RESULT\nstatus: DONE\nchunk: C01+C02 (single test phase)\nfiles_changed: [tests/session-origin/script.sh (285L, b0..b6 verdict contract + loopback fixtures + fragment-parity ladder), tests/session-origin/surface.sh (713L, s1..s7: two-leg boards resolution + claim-once + carry-inventory HOLD + four-allow absolute duty with per-arm geometry + containment/permissions cell + pair-sync/freeze + D17 envelope window with cf-52 i1 six windows surviving UNMODIFIED), tests/coord-inwork/surface.sh + tests/agent-board-coord/{gate.sh,rulesync-surface.sh} + tests/kickoff-branch/surface.sh (sanctioned-FORMS ladders SHELL2|3|4, m4 floor SHELL3, stale-count cases widened, +12/-0 assumption re-based to landed arms armA=c6689202c/armB=HEAD)]\ncommands_run: [bash -n x6 => pass; script.sh designed-red naming missing script; surface.sh s1/s2/s4/s5/s6/s7 designed-red naming C02 artifacts, s3 HOLD-green; 7 legacy suites green BOTH arms before AND after re-pins; SIM full payload: 9 suites x 2 arms x uncommitted+committed = 18/18x2 green; live control emitted plan-canonical lowercased origin rc=0; negatives: fabricated fifth row rejected by all six grant surfaces, envelope-absent => s7 red alone, three-allow rejected at C02 arm; rulesync x2 no-op + --check; aislop 100/0]\ndeviations: (1) nine suites not eight. (2) t14 has no ladder — scripts/* admission already covers C01. (3) ladder-not-exactly-four widening per controlling geometry (s4 carries the absolute duty; m4 floor SHELL3). (4) m4-shape/m3 stale 'exactly-one bash grant'/'same three' cases honestly widened. (5) line-growth literals re-based to landed commits. (6) three behavior pins derived from C01's own sentences (misuse-precedes-probe, single-probe bound, recognition-set effect). (7) UNRESOLVED (no board-command expansion) NOT pinned — D10 retired it (coord ruled: annotate as historical, see D18). (8) D17 envelope window cap 400 placed after '(notably openchamber.kind)', BEFORE work-key — sim proved all six i1 windows survive unmodified.\nfriction: (1) Unicode heredoc bytes blocked whole-block edits — ASCII-anchored minimal edits + sim re-verify. (2) STATE/C02 'exactly-FOUR' vs prompt 'green-through-C01' tension — resolved by ladder + s4 carrier, geometry documented in all six headers.\nopen_questions: (1) stale Conventions literal — coord annotated D18. (2) NQ1 live whole-string matcher confirmation stays a Review-manual control at C02 review.\nnext_suggested: dev C01 (script), gate = script.sh green + legacy holds both arms; C02 dev after C01 + stack re-check; C02 review runs surface s1..s7 both arms + NQ1/live-origin controls.",
           "applies_to": "C01"
+        },
+        {
+          "round": "dev-1",
+          "dev_session": "ses_e8546890affePHkSBml1lK6oeP",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [scripts/session-origin.sh (755), + test-1's six files committed byte-unmodified (md5-verified)]\ncommands_run: [script.sh b0..b6 ALL PASS (7 ok, shellcheck skip-with-warning documented); surface.sh s3+s6 green, s1/s2/s4/s5/s7 designed-red naming C02 artifacts (s6 green-at-C01 = correct geometry per suite's own posture line — deviation (2)); seven legacy suites green at default HEAD AND armA c6689202c (b0c975bf6 arm proven stale pre-existing, control run without script — deviation (3)); rulesync --check clean; aislop 0/0/36; live control: script emits plan-canonical lowercased origin rc=0 (recorded for review notes)]\ncommit: 6cd624702 (local, no push)\ndeviations: (1) no t14 arm — scripts/* already admitted, verify-first honored. (2) s6 flipped green with C01's artifact (expected per suite geometry). (3) stale b0c975bf6 arm superseded by live arms per execution_notes. (4) no test edits. (5) shellcheck absent — documented skip posture.\nfriction: parent-brief divergence twice resolved by verify-first + control runs, not guesses.\nopen_questions: none\nnext_suggested: agent-review C01 (battery + live control + s6 note), then C02 behind stack gate (already satisfied on this base)."
         }
-      ]
+      ],
+      "dev_session": "ses_e8546890affePHkSBml1lK6oeP"
     },
     "C02": {
       "status": "pending",
