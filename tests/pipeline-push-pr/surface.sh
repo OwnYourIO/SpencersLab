@@ -15,8 +15,13 @@
 # suites — historical arm A=081b57889 / arm B refs stay documented there;
 # this ticket's surfaces are all NEW, so every P check is a plain tree check):
 # P1-P3,P5 red before C01 lands (skill files absent — the red names the
-# missing file/contract, never a harness fault); P4 vacuous-green (absence
-# proves it) and flips to the C02 wiring pin once agent-dev-pr.md exists;
+# missing file/contract, never a harness fault); P4 expects no AGENT-*
+# (agent-*.md — the pipeline family whose wiring C02/C03 own) references
+# pre-C02 and ADMITS the standalone dev-pr.md reference from C04 on: C04's
+# Tasks and tests/standalone-agents/surface.sh S2/S3 mandate and guard it
+# (dev.md/dev-local.md stay forbidden there), so the C01-era all-subagents
+# grep was mutually unsatisfiable — validation-at-fault re-pin, 2026-10-27,
+# user-approved. P4 flips to the C02 wiring pin once agent-dev-pr.md exists;
 # P6 HOLD posture (generator honesty of the committed tree).
 #
 # Offline-deterministic: no server, no session; the generator arm runs the
@@ -205,12 +210,12 @@ if want p3; then
   ok "P3[AC3]: all five contracts + the Deploy hook read as passages in source AND mirror (applies-to, push rules with the AGENTS.md citations, CI-on-push facts, PR-creation fallback, verify-after-push, Deploy stage hook)"
 fi
 
-# --- P4: AC4 no-agent-references-yet, flipping to the C02 wiring pin -----------
+# --- P4: AC4 no AGENT-* references yet, flipping to the C02 wiring pin ---------
 if want p4; then
   if [ ! -f "$DEVPR" ]; then
-    refs=$(grep -rln 'pipeline-push-pr' .rulesync/subagents 2>/dev/null || true)
-    [ -z "$refs" ] || fail "P4[AC4]: subagents reference the skill before C02/C03 ($refs) — C01 ends with the grep empty (dangling reference)"
-    ok "P4[AC4]: no subagent references pipeline-push-pr yet (C01 posture)"
+    refs=$(grep -ln 'pipeline-push-pr' .rulesync/subagents/agent-*.md 2>/dev/null || true)
+    [ -z "$refs" ] || fail "P4[AC4]: pipeline-family subagents reference the skill before C02 ($refs) — C01 ends with the agent-*.md grep empty (dangling reference)"
+    ok "P4[AC4]: no agent-*.md references pipeline-push-pr yet (C01 posture; the standalone dev-pr.md reference is C04's mandate, pinned by tests/standalone-agents — validation-at-fault re-pin 2026-10-27)"
   else
     grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' "$DEVPR" \
       || fail "P4[C02-flip]: $DEVPR exists but does not MUST-load /pipeline-push-pr (C02 AC4)"
