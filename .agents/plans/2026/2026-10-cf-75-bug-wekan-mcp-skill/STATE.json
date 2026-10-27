@@ -30,6 +30,13 @@
   "updated_at": "2026-10-27",
   "model_routing_note": "card Model(s) checklist sole check Qwen Flash -> same model every tier (boards kickoff rule: exactly one checked -> that model for every tier)",
   "lifecycle_note": "legacy Research checklist, 'After Planning' checked -> transition rule: standard Plan+Test+Code+Review loop PLUS an agent-research round after planning; no Lifecycle stage gate",
+  "research_session": "ses_e807c79deffeZiUEiBT9HqL7Pl",
+  "research_handoff": {
+    "at": "2026-10-27",
+    "status": "DONE",
+    "summary": "RESEARCH.md (424 lines): prompt-hook admission PROVEN for interactive+command+scheduled legs (opencode v2.1.4 source + OpenChamber 2.5.2 scheduler); never-throw is a correctness requirement (throwing hook blocks prompt admission); once-guard needs per-session flag (fresh messageID per attempt); instructions.entry.put = session-lifetime, not child-inherited, offered as durability add-on; live-fire scope narrowed to deployment legs; re-resolve-on-id-error doctrine backed cross-lab. No replan — plan pre-delegated absorption to C04 dev via RESEARCH.md.",
+    "open_questions_residual": ["subagent context-hook coverage", "OpenChamber dispatch timeout bound", "which agent-pinning leg the live task uses"]
+  },
   "chunks": {
     "C01": {
       "status": "pending",
