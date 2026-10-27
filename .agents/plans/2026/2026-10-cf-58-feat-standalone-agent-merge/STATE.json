@@ -60,13 +60,33 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e84bef093ffe3DWddlIi0SCvfz",
+      "handoffs": [
+        {
+          "from": "agent-dev (resume after harness kill; full text in session)",
+          "session": "ses_e84bef093ffe3DWddlIi0SCvfz",
+          "received_at": "2026-10-27T03:24Z",
+          "result": "RESULT\nstatus: BLOCKED (validation_at_fault A11; implementation DONE)\nchunk: C02\nfiles_changed: [.rulesync/subagents/agent-dev.md (DELETE), agent-dev-local.md + agent-dev-pr.md (CREATE), .opencode/agents/agent-dev.md mirror swept by generate delete:true, agent-dev-{local,pr}.md mirrors, permissions.md + mirror, overview.md, AGENTS.md — commit 2132f332a (8 files); bootstrap coord-records commit 0af551554]\ncommands_run: [branch => cf-58-feat-standalone-agent-merge; rulesync generate x2 + --check clean; P1-P6 6/6 with P4 flip ENGAGED; S1-S10 10/10 with S3 dynamic ENGAGED; A1-A9 9/9; A11 FAIL (policy loop); A13 FAIL (unconditional C03-era arms); i1/i2/i3/i5, c-HOLD, agents-md c1-c8 (c2 flipped green), gate t1-t16/t18/t19, M4/M6 green; era-reds named C03/C05 causes; CHUNK_BASE=0af551554 dual-base pass; aislop 0/0 x2; never pushed; main untouched]\ndeviations: [A11 family.py policy filter fnmatch(action,'*') is a tautology -> MCP-tier rows overwrite git verdicts; unsatisfiable with S3 + C02.md order for any in-scope content; proven by segment replay; routed for test re-pin. A13 remaining red = unconditional C03-era arms. AC1-AC5 satisfied; AC6 green except A11 helper]\nfriction: [harness kill mid-turn (own generate retired agent-dev from roster) - resumed from git state; fail() short-circuit required per-id runs]\nopen_questions: [route A11 + A13 to test session; pipeline-role-dev description stale, no chunk owns the file; tests/services/dev-mcp-fleet.sh AGENT_SOURCES names retired path (other ticket)]\nnext_suggested: test re-pin, review on 2132f332a unchanged, then C03"
+        },
+        {
+          "from": "agent-test (validation fixes, user-approved round 2)",
+          "session": "ses_e854109f5ffe2yBdtisUw48vR6",
+          "received_at": "2026-10-27T03:40Z",
+          "result": "RESULT\nstatus: DONE\nchunk: C02-validation-fix\nfiles_changed: [tests/agent-perms/surface.sh — commit 76b44312d (single file)]\ncommands_run: [pre-fix reproduction A11/A13 fail as escalated; post-fix A1-A9+A11+A13 => 11 ok; P1-P6 6/6 (P4 flip engaged); S1-S10 10/10 (S3 engaged); no collateral flips; era-red remainder: until C03 A10/A12/i4/i6/i7/t17/t20/c2 + A13 gated trio self-arms; until C05 i7-stage/c11/c18/c9; until C06 M1/M2/M3/M5+c11 windows]\ndeviations: [fix 2 = era-gating on .rulesync/commands/pipeline-pr.md existence rather than moving A13 wholesale — preserves header's documented C02 coverage of AC5; fix 1 comparator mirrors policy.py, '*' action-baseline still glob-matched so A10 controls preserved]\nfriction: none\nopen_questions: none\nnext_suggested: C02 review at 76b44312d closes the chunk; C03 flips the era-reds"
+        },
+        {
+          "from": "agent-review",
+          "session": "ses_e847fbf93ffeJw9bA3gYdhtEM7",
+          "received_at": "2026-10-27T04:00Z",
+          "result": "RESULT\nstatus: APPROVED\nchunk: C02\nfiles_changed: [chunks/C02.md (review notes, uncommitted — folds into coord's next records commit)]\ncommands_run: [A1-A9+A11+A13 11/11; P1-P6 6/6; S1-S10 10/10; i1/i2/i3/i5 4/4; agents-md c1-c8 8/8; rulesync-surface 15/15; gate 20/20; M4/M6 2/2; generate x2 zero writes + --check clean; aislop 0/0 37 files; CHUNK_BASE=0af551554 re-runs pass; git show 0af551554 --stat => exactly the four coord-record files; independent comparator demo reproduced the old tautology bug + stripped-deny control => fix load-bearing; HEAD 76b44312d tree clean]\ndeviations: [none new; header nit logged for future test touch]\nfriction: [none]\nopen_questions: [PIN for C03 launch: fold .rulesync/skills/pipeline-role-dev/SKILL.md description (agent-dev => variant ids) + mirror into C03 (user ruling; DECISIONS line's C02-ownership contradicted by C02.md Files-in-scope). Ledger: dev-mcp-fleet.sh AGENT_SOURCES:51 red collateral => FRICTION + follow-up-card candidate in final report, not chunk-gating]\nnext_suggested: record C02 done, ledger, launch C03 with the pipeline-role-dev fold-in"
+        }
+      ]
     },
     "C03": {
       "status": "pending",
