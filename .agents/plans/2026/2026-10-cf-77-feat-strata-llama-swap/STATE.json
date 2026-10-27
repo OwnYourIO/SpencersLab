@@ -2,7 +2,8 @@
   "feature": "2026/2026-10-cf-77-feat-strata-llama-swap",
   "plan_status": "approved",
   "coord_session": "ses_e80cd0c80ffe2e91W28uP8tWZO",
-  "test_session": null,
+  "test_session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+  "test_handoff_note": "One test session authored C01-C05 contracts (commit c375b238b; 12 files). Verbatim RESULT recorded under chunks.C01.handoffs[0]; chunk->file map: C01 containers/strata/tests/test_dockerfile.py; C02 charts/strata/tests/{strata_testlib.py,conftest.py,schema/*,test_render.py,test_config_schema.py}; C03 charts/strata/tests/test_wiring.py + charts/llama-swap/tests/{test_config_parity.py,evidence/strata-peers-expected.yaml}; C04 test_runbook_completeness.py; C05 test_strix_fallback.py. Tests are reds-by-design until dev lands; pre-existing unrelated red: tests/renovate/dockerfile-pins.sh stale uv literal (coder-workspace ticket's, untouched).",
   "current_wave": 1,
   "updated_at": "2026-10-27",
   "kickoff": {
@@ -38,7 +39,17 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "test",
+          "session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+          "at": "2026-10-27",
+          "commit": "c375b238b",
+          "status": "DONE",
+          "files": ["containers/strata/tests/test_dockerfile.py"],
+          "open_question_verbatim": "RESIDUAL 1 — renovate ARG-pin, coord decision before C01 dev: the C01-mandated shape (# renovate: datasource=docker depName=ghcr.io/niko1221/strata above ARG STRATA_VERSION=0.2.7, flavor suffixes in the FROM lines) is extracted by NO repo manager — live-verified in Python simulation and the real node/JS regex engine: 0 extractions; the built-in dockerfile manager cannot rewrite a partial-suffix variable tag (repo:${VAR}-flavor). Workable shapes: (a) per-flavor whole-tag ARGs + docker comment above each FROM (built-in rewrites; caveat: cross-flavor candidate bleed needs a versioning rule its own ticket), or (b) literal FROM tags + recorded digests, manual bump cadence (renovate.json untouched — test writer's recommendation for v1). renovate.json NOT edited (hard rule). Tests stay red on the mandated shape via two tripwires until the decision lands."
+        }
+      ]
     },
     "C02": {
       "status": "pending",
@@ -47,7 +58,17 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "test",
+          "session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+          "at": "2026-10-27",
+          "commit": "c375b238b",
+          "status": "DONE",
+          "files": ["charts/strata/tests/strata_testlib.py", "charts/strata/tests/conftest.py", "charts/strata/tests/schema/config-schema.v266.json", "charts/strata/tests/schema/PROVENANCE.json", "charts/strata/tests/test_render.py", "charts/strata/tests/test_config_schema.py"],
+          "note": "testlib+schema fixtures shared with C03/C05; AC5 required/forbidden token lists per research amendments (forbidden: --resident-budget-gib, STRATA_KV_GROW_HOLD, --prompt-cache-every, --kv-grow, vision args); --batch-mtp deliberately on neither list."
+        }
+      ]
     },
     "C03": {
       "status": "pending",
@@ -56,7 +77,17 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "test",
+          "session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+          "at": "2026-10-27",
+          "commit": "c375b238b",
+          "status": "DONE",
+          "files": ["charts/strata/tests/test_wiring.py", "charts/llama-swap/tests/test_config_parity.py", "charts/llama-swap/tests/evidence/strata-peers-expected.yaml"],
+          "note": "peers evidence expectation pinned by test session (residual-4: dev must not author it); parity test made stricter — additive peers delta pinned exactly, gpu box asserted peer-less. Its single red clears when C03 lands."
+        }
+      ]
     },
     "C05": {
       "status": "pending",
@@ -65,7 +96,17 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "test",
+          "session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+          "at": "2026-10-27",
+          "commit": "c375b238b",
+          "status": "DONE",
+          "files": ["charts/strata/tests/test_strix_fallback.py"],
+          "note": "DNF alternation bar per (p|s) matrix shape (membership-bar false-fail fixed in test audit)."
+        }
+      ]
     },
     "C04": {
       "status": "pending",
@@ -74,7 +115,17 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "test",
+          "session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+          "at": "2026-10-27",
+          "commit": "c375b238b",
+          "status": "DONE",
+          "files": ["charts/strata/tests/test_runbook_completeness.py"],
+          "note": "token list covers the plan's remaining [VERIFY] command markers (sdbootutil, ulimit, getenforce|aa-status, rpm|Tumbleweed, expert-cache, 96Gi, trio); void-token scan excludes *.md so the runbook may name the voids it forbids."
+        }
+      ]
     }
   },
   "blocked": [],
