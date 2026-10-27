@@ -11,7 +11,8 @@
 #
 # AC trace: i1[C01 AC2 kickoff authority] i2[AC3 role-coord wiring]
 # i3[AC4 boards citation + key-path non-leak] i4[AC1 scoped shell grants —
-# forms ladder SHELL2|SHELL3 after kickoff-mints C02] i5[AC5 freeze set]
+# forms ladder SHELL2|SHELL3 after kickoff-mints C02, widened to
+# SHELL2|SHELL3|SHELL4 by session-origin C02] i5[AC5 freeze set]
 # i6[AC6 regeneration contract].
 #
 # Red before C01: i1–i4 and i6 (its pair-carry component) — the contract text
@@ -30,14 +31,19 @@
 # must pass at BOTH default BASE=HEAD (arm B — the committed-delta posture on
 # the integrated line, main >= 124fc2ae8) AND CHUNK_BASE=081b57889 (arm A —
 # the landing parent of the cf-52 content 20ed5dfaf). i4 accepts either arm
-# over a sanctioned-FORMS ladder (2026-10-bug-kickoff-mints-run-branch C02):
+# over a sanctioned-FORMS ladder (widened by
+# 2026-10-bug-kickoff-mints-run-branch C02, widened again by
+# 2026-10-bug-session-origin-no-line C02):
 # SHELL2 = cf-52's two scoped session allows, SHELL3 = SHELL2 plus the third
-# scoped `bash scripts/kickoff-mint-branch.sh *` mint allow. arm A = current
+# scoped `bash scripts/kickoff-mint-branch.sh *` mint allow, SHELL4 = SHELL3
+# plus the fourth scoped `bash scripts/session-origin.sh*` origin-resolver
+# allow (NO-SPACE glob, NQ1 — the resolver call is zero-arg). arm A = current
 # equals the base normalized to exactly one admitted form's allows spliced at
 # the pinned position; arm B = current == base AND the base itself is
 # idempotent under that form's strip/re-insert (splice-idempotence, the c2
-# PORT_REF re-pin precedent 2f7bbb873). A base already carrying the mint
-# allow admits SHELL3 only — the ladder never weakens a post-C02 state.
+# PORT_REF re-pin precedent 2f7bbb873). A base already carrying the origin
+# allow admits SHELL4 only, and one carrying the mint allow never admits
+# SHELL2 — the ladder never weakens a post-landing state.
 # Pre-landing bases are historical and need not pass: f11bfcb85 (an unrelated
 # renovate chore), 916044893 as a chunk base (its child 081b57889 is the
 # release-bot Chart.yaml commit the scope guards do not admit, D11), and the
@@ -222,29 +228,32 @@ PY
 cat >"$TMP/splice.py" <<'PY'
 # i4/t17 frontmatter delta contract, OR-form over a sanctioned-FORMS ladder
 # (2026-10-bug-tests-edit-perms D10; widened by
-# 2026-10-bug-kickoff-mints-run-branch C02):
-#   SHELL2 — cf-52's two scoped session-API allows (the committed posture at
-#     both operational arms through C01);
-#   SHELL3 — SHELL2 plus the third scoped mint allow (the C02 posture).
+# 2026-10-bug-kickoff-mints-run-branch C02 to SHELL3; widened again by
+# 2026-10-bug-session-origin-no-line C02 to SHELL4):
+#   SHELL2 — cf-52's two scoped session-API allows;
+#   SHELL3 — SHELL2 plus the third scoped mint allow (kickoff-mints, landed);
+#   SHELL4 — SHELL3 plus the fourth scoped `bash scripts/session-origin.sh*`
+#     origin-resolver allow (session-origin C02; NO-SPACE glob — NQ1).
 # Either arm per admitted form:
 #   arm A (delta pending) — current == the base normalized to exactly the
 #     form's allows at the `opencode '*' allow` anchor: sanctioned rows are
-#     stripped from the base first, so a no-allow base AND the two-allow
-#     committed base both reach the same sanctioned posture (the +3-mint
-#     geometry a C02 review run sees).
+#     stripped from the base first, so a no-allow base AND the three-allow
+#     committed base both reach the same sanctioned posture (the +3-origin
+#     geometry a session-origin C02 review run sees).
 #   arm B (delta committed) — current == base AND base is idempotent under
 #     that form's strip/re-insert — the c2 PORT_REF re-pin precedent
 #     (2f7bbb873) expressed as a splice instead of a constant ref, which
 #     keeps the suites' working-tree-vs-$BASE convention and its
 #     red-then-green-in-run workflow.
-# Ladder gating: a base already carrying the mint allow admits ONLY SHELL3
-# (post-C02 states never regress to two-allow); a base without it admits
-# either form — which is exactly "green through C01, flips only where C02
-# legitimately moves the contract". The OR-form never degenerates into
-# "empty diff => pass": every unsanctioned row survives normalization and
-# breaks both arms' equalities, and the shell-set literal check rejects a
-# fourth shell grant in either form. deny-baseline preservation and
-# dev_boards* presence are enforced for BOTH arms below.
+# Ladder gating: a base already carrying the origin allow admits ONLY SHELL4
+# (post-session-origin states never regress); a base carrying the mint allow
+# admits SHELL4 or SHELL3 — green through this ticket's C01 and red-free at
+# today's three-allow posture, while the absolute "four allows exist NOW"
+# duty lives in tests/session-origin/surface.sh s4. The OR-form never
+# degenerates into "empty diff => pass": every unsanctioned row survives
+# normalization and breaks both arms' equalities, and the shell-set literal
+# check rejects a fifth shell grant in every form. deny-baseline preservation
+# and dev_boards* presence are enforced for BOTH arms below.
 # Source files nest the block under opencode:, generated files at top level —
 # read from whichever carries it.
 import re, sys, yaml
@@ -252,8 +261,10 @@ base_path, cur_path, need_dev_boards = sys.argv[1], sys.argv[2], sys.argv[3] == 
 GET = {"action": "shell", "resource": "opencode api get /api/session*", "effect": "allow"}
 PATCH = {"action": "shell", "resource": "opencode api patch /api/session/*", "effect": "allow"}
 MINT = {"action": "shell", "resource": "bash scripts/kickoff-mint-branch.sh *", "effect": "allow"}
+ORIGIN = {"action": "shell", "resource": "bash scripts/session-origin.sh*", "effect": "allow"}
 SHELL2 = [GET, PATCH]
 SHELL3 = [GET, PATCH, MINT]
+SHELL4 = [GET, PATCH, MINT, ORIGIN]
 
 def perms(path):
     text = open(path).read()
@@ -273,8 +284,13 @@ def splice(seq, form):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-forms = ([SHELL3] if MINT in b else [SHELL3, SHELL2])
-norm = [p for p in b if p not in SHELL3]
+if ORIGIN in b:
+    forms = [SHELL4]
+elif MINT in b:
+    forms = [SHELL4, SHELL3]
+else:
+    forms = [SHELL4, SHELL3, SHELL2]
+norm = [p for p in b if p not in SHELL4]
 hit = None
 for form in forms:
     want, i = splice(norm, form)
@@ -299,16 +315,17 @@ if hit is None:
                 rebuilt = True
                 break
         if not rebuilt:
-            print("arm B: current == base but the base is not a sanctioned allow form (SHELL2 or SHELL3) at the pinned splice position — the contract never landed or drifted off-anchor"); sys.exit(1)
+            print("arm B: current == base but the base is not a sanctioned allow form (SHELL2, SHELL3 or SHELL4) at the pinned splice position — the contract never landed or drifted off-anchor"); sys.exit(1)
     else:
-        want, _ = splice(norm, SHELL3)
+        want, _ = splice(norm, SHELL4)
         extra = [p for p in c if p not in want]
         missing = [p for p in want if p not in c]
         print(f"frontmatter delta is not a sanctioned shell-allow form in either arm: extra={extra} missing={missing}")
         sys.exit(1)
 shells = [p.get("resource") for p in c if p.get("action") == "shell"]
-if shells not in ([s["resource"] for s in SHELL2], [s["resource"] for s in SHELL3]):
-    print(f"shell resources are {shells}, want exactly the two- or three-allow sanctioned form in order"); sys.exit(1)
+if shells not in ([s["resource"] for s in SHELL2], [s["resource"] for s in SHELL3],
+                  [s["resource"] for s in SHELL4]):
+    print(f"shell resources are {shells}, want exactly the two-, three- or four-allow sanctioned form in order"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
 if need_dev_boards and not any(p.get("action") == "dev_boards*" and p.get("resource") == "*"
@@ -347,6 +364,7 @@ ANCHOR = re.compile(r"^(\s*)- action: opencode$")
 WANT2 = [('resource: opencode api get /api/session*', 'effect: allow'),
          ('resource: opencode api patch /api/session/*', 'effect: allow')]
 WANT3 = WANT2 + [('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow')]
+WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -357,15 +375,15 @@ if len(hits) != 1:
 ind = hits[0][1]
 at = hits[0][0] + 3
 matched = 0
-for want in (WANT3, WANT2):
+for want in (WANT4, WANT3, WANT2):  # longest first: shorter blocks are its prefixes
     want_lines = [x for rule in want for x in
                   (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
     if lines[at:at + 3 * len(want)] == want_lines:
         matched = 3 * len(want)
         break
 if not matched:
-    print("neither the six-line SHELL2 block nor the nine-line SHELL3 block of literal shell allow lines "
-          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 9]})"); sys.exit(1)
+    print("none of the sanctioned literal blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve) "
+          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 12]})"); sys.exit(1)
 nxt = lines[at + matched] if at + matched < len(lines) else ""
 if nxt.strip() == "- action: shell":
     print("a further '- action: shell' row continues the block after the sanctioned form — unsanctioned fourth shell grant"); sys.exit(1)
@@ -390,8 +408,9 @@ if any(p.get("action") == "dev*" for p in perms):
     errs.append("broad dev* allow appeared")
 shells = [p.get("resource") for p in perms if p.get("action") == "shell"]
 want2 = ["opencode api get /api/session*", "opencode api patch /api/session/*"]
-if shells not in (want2, want2 + ["bash scripts/kickoff-mint-branch.sh *"]):
-    errs.append(f"shell resources {shells} != the two- or three-allow sanctioned form in order")
+if shells not in (want2, want2 + ["bash scripts/kickoff-mint-branch.sh *"],
+                  want2 + ["bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*"]):
+    errs.append(f"shell resources {shells} != the two-, three- or four-allow sanctioned form in order")
 subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
 if subs != sorted(["agent-plan", "agent-test", "agent-dev", "agent-review", "agent-research"]):
     errs.append(f"subagent allows are {subs}")
@@ -504,11 +523,13 @@ if want i3; then
 fi
 
 # --- i4: frontmatter delta on the coord pair — sanctioned shell-allow forms ----
-# (AC1; kickoff-mints C02 widens "exactly the two cf-52 allows" to the forms
-# ladder SHELL2|SHELL3 — green through C01 at both operational arms, admits
-# the third scoped mint allow the moment C02's delta appears, and still
-# rejects any fourth row, off-anchor placement, or a two-allow regression
-# against a base that already carries three.)
+# (AC1; kickoff-mints C02 widened "exactly the two cf-52 allows" to the forms
+# ladder SHELL2|SHELL3, and session-origin C02 widens it to SHELL2|SHELL3|SHELL4
+# — green through this ticket's C01 at both operational arms, admits the fourth
+# scoped origin-resolver allow the moment C02's delta appears, and still
+# rejects any fifth row, off-anchor placement, or a regression against a base
+# that already carries the higher rung. The absolute four-allow presence duty
+# lives in tests/session-origin/surface.sh s4, never here.)
 if want i4; then
   n=0
   for f in "$COORD_SRC" "$COORD_GEN" "$BCOORD_SRC" "$BCOORD_GEN"; do
@@ -516,18 +537,20 @@ if want i4; then
     case "$f" in *agent-board-coord*) adb=dev-boards ;; *) adb=none ;; esac
     git show "$BASE:$f" >"$TMP/base-$n.md" 2>/dev/null || fail "i4: $f not readable at $BASE"
     python3 "$TMP/splice.py" "$TMP/base-$n.md" "$f" "$adb" \
-      || fail "i4: $f frontmatter is not a sanctioned shell-allow form (SHELL2 cf-52 two-allow or SHELL3 kickoff-mints three-allow, gated by what the base carries) in either arm — arm A: normalized-base splice at the opencode allow; arm B: committed-base idempotence at that position (base: $BASE)"
+      || fail "i4: $f frontmatter is not a sanctioned shell-allow form (SHELL2 cf-52 two-allow / SHELL3 kickoff-mints three-allow / SHELL4 session-origin four-allow, gated by what the base carries) in either arm — arm A: normalized-base splice at the opencode allow; arm B: committed-base idempotence at that position (base: $BASE)"
     # Line-level twin of the semantic splice, arm-aware (T10/D10), now keyed
     # to the ALLOW COUNT THE BASE CARRIES: a no-allow base pairs with the
-    # cf-52 +6 delta or the full +9 SHELL3 delta; a two-allow base (today's
-    # HEAD, the C02 review geometry) pairs with exactly the +3 mint triple;
-    # a three-allow base can only satisfy the twin through an empty diff.
+    # cf-52 +6 delta, the full +9 SHELL3 delta or the full +12 SHELL4 delta;
+    # a two-allow base pairs with exactly the +3 mint triple; a three-allow
+    # base (session-origin's C02 review geometry) pairs with exactly the
+    # +3 origin triple; a four-allow base can only satisfy the twin through
+    # an empty diff.
     # Additions-only keeps a reworded deny-baseline from hiding inside a
     # rewrite. On an empty diff the twin switches to the absolute
     # presence pin atpos.py — never "empty diff implies pass".
     if git diff --quiet "$BASE" -- "$f"; then
       python3 "$TMP/atpos.py" "$f" \
-        || fail "i4: $f has an empty diff vs $BASE (arm B posture) but does not carry a sanctioned literal allow block (six or nine lines) directly after the opencode '*' allow"
+        || fail "i4: $f has an empty diff vs $BASE (arm B posture) but does not carry a sanctioned literal allow block (six, nine or twelve lines) directly after the opencode '*' allow"
     else
       bc=$(git show "$BASE:$f" | grep -c '^[[:space:]]*- action: shell' || true)
       ns=$(git diff --numstat "$BASE" -- "$f" | head -n 1 || true)
@@ -536,8 +559,10 @@ if want i4; then
       case "$bc:$add" in
         0:6) rng='1,6' ;;
         0:9) rng='1,9' ;;
+        0:12) rng='1,12' ;;
         2:3) rng='7,9' ;;
-        *) fail "i4: $f diff vs $BASE is +$add/-$del on a base carrying $bc shell allows — want +6 (SHELL2 on a no-allow base), +9 (SHELL3 on a no-allow base) or +3 (the mint triple on the two-allow posture) (base: $BASE)" ;;
+        3:3) rng='10,12' ;;
+        *) fail "i4: $f diff vs $BASE is +$add/-$del on a base carrying $bc shell allows — want +6 (SHELL2 on a no-allow base), +9 (SHELL3 on a no-allow base), +12 (SHELL4 on a no-allow base), +3 (the mint triple on the two-allow posture) or +3 (the origin triple on the three-allow posture) (base: $BASE)" ;;
       esac
       [ "$del" = "0" ] \
         || fail "i4: $f diff vs $BASE removes $del lines — the sanctioned delta is additions-only"
@@ -546,6 +571,7 @@ if want i4; then
       printf '%s\n' '- action: shell' 'resource: opencode api get /api/session*' 'effect: allow' \
                     '- action: shell' 'resource: opencode api patch /api/session/*' 'effect: allow' \
                     '- action: shell' 'resource: bash scripts/kickoff-mint-branch.sh *' 'effect: allow' \
+                    '- action: shell' 'resource: bash scripts/session-origin.sh*' 'effect: allow' \
         | sed -n "${rng}p" >"$TMP/want-$n.txt"
       cmp -s "$TMP/add-$n.txt" "$TMP/want-$n.txt" \
         || fail "i4: $f added lines are not the literal sanctioned allow rules (see $TMP/add-$n.txt vs $TMP/want-$n.txt)"
@@ -555,7 +581,7 @@ if want i4; then
     python3 "$TMP/fmshape.py" "$f" "$( [ "$f" = "$BCOORD_GEN" ] && echo dev-boards || echo none )" \
       || fail "i4: generated $f breaks the permission shape that must hold through the delta"
   done
-  ok "i4: all four coord files carry a sanctioned shell-allow form (OR-form over the forms ladder: normalized-splice arm A or committed-idempotence arm B; line twins arm-aware, keyed to the base's allow count — +6/+9/+0-empty/atpos); shapes, dev_boards* and deny-baseline intact"
+  ok "i4: all four coord files carry a sanctioned shell-allow form (OR-form over the forms ladder SHELL2|SHELL3|SHELL4: normalized-splice arm A or committed-idempotence arm B; line twins arm-aware, keyed to the base's allow count — +6/+9/+12/+3-empty/atpos); shapes, dev_boards* and deny-baseline intact"
 fi
 
 # --- i5: freeze set — byte-unchanged vs the ticket base (AC5) ------------------
