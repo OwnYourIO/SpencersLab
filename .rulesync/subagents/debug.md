@@ -48,6 +48,11 @@ opencode:
     - action: shell
       resource: git diff*
       effect: allow
+      # add/commit stay at the shell-ask baseline (interactive agent);
+      # push is denied outright — landing is never debug's job
+    - action: shell
+      resource: git push*
+      effect: deny
     - action: shell
       resource: ls *
       effect: allow

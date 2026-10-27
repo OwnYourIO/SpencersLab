@@ -51,6 +51,19 @@ Repo/agent context files get a per-file policy for the roles that edit the repo 
 This repo's servers follow the `<priv>-<cluster>-<service>` naming (`readonly-*` / `admin-*` / `global-*`), so the agents use the prefix rules `admin* deny, readonly* allow, global* allow` — subagents never mutate cluster state; mutations are a user step. Tier-less servers match none of those prefixes, and unlisted servers fall through to `ask` (= blocked in unattended runs), so the dev-cluster utility fleet (`dev-playwright`, `dev-renovate`, `dev-searxng`, `dev-boards`) is granted by a `dev*` allow added AFTER the `admin*` deny (2026-10-24, ticket 2026-10-feat-dev-mcp-fleet): under last-match-wins the deny stays the effective last match for `admin_*` tool names — `dev*` matches only `dev_*` names — and no tier-less `dev-*` name may shadow an `admin`-capable server; if the fleet ever gains one, put a specific deny after the `dev*` allow. A repo whose servers lack that naming needs explicit per-server allow-lists instead, with anything that can mutate systems the repo shouldn't touch denied.
 Exception: `board-coord` — the first coord-variant with any MCP access — gets a single explicit allow for the `dev-boards` wekan-mcp server (`dev_boards*`) and NOT the fleet-wide `dev*` the other agents carry; board ops are its intake and exit (card pickup, lifecycle, hand-back), not fleet tooling, so least privilege scopes it to the AI-Dev board and it gets no `readonly*`/`admin*` rules either.
 
+### Standalone agents
+
+The standalone (non-`agent-*`) family carries its own posture, pinned by
+`tests/standalone-agents/surface.sh`:
+
+| agent | edit | subagent | shell git | MCP |
+|---|---|---|---|---|
+| `dev-local` (plain `dev` is its byte-identical alias — edit both in one commit or the pair silently drifts) | the implementer block verbatim: everything except the test paths and `.agents/plans/**`, with the context-file table applied | none | git reads allow + `git add *`/`git commit *` allow + `git push*` deny | `admin*` deny; `readonly*`/`global*`/`dev*` allow |
+| `dev-pr` | same block | none | identical except `git push*` ALLOW with the trailing `git push*main*` + four force-flag denies — the only standalone push allow, mirroring `agent-dev-pr` | as `dev-local` |
+| `debug` | `edit * allow` | none | git reads allow; `git add`/`git commit` fall through to the shell-`ask` baseline (interactive agent); `git push*` explicit deny | no rules — falls through to the client default (ask) |
+
+No-git-write roster: `planner`, `ask`, the standalone `review`, and the pipeline's `agent-plan`/`agent-research`/`agent-review` carry no `git add`/`commit`/`push` allow — read-only git at most (card requirement, pinned by S6). `role-dev`'s and `role-debug`'s Git-safety sections are the contract mirror of these rows; changing a row here means changing the contract skill in the same commit.
+
 ## Audit checklist (run after files move or servers are renamed)
 
 1. Extract every resource: `grep -hE 'resource: "?[^ "]' .rulesync/subagents/agent-*.md | sort | uniq -c`.

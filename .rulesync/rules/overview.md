@@ -93,13 +93,27 @@ container images (`containers/`). **ArgoCD applies everything — never
 
 - `planner` (`.agents/agents/planner.md`) — writes implementation-ready
   plans to `.agents/plans/`. Use before any non-trivial change. (Named
-  `planner`, not `plan`, to stay clear of the built-in plan mode.)
+  `planner`, not `plan`, to stay clear of the built-in plan mode.) Its
+  contract makes a `## Commands` validation section mandatory in every plan,
+  records verified facts with evidence, and recommends the pipeline over
+  mega-plans; read-only git — no commits.
 - `code` (`.agents/agents/code.md`) — executes plans. Runs in fresh sessions:
-  the plan file tells it which skills and MCP servers to load.
+  the plan file tells it which skills and MCP servers to load. Explicitly no
+  pipeline context: a ticket folder or chunk id is redirected to the `dev`
+  family.
+- `dev` family (`.agents/agents/dev.md`, `dev-local.md`, `dev-pr.md`) —
+  standalone one-session-sized implementers carrying the pipeline's
+  discipline: `dev-local` commits, never pushes; `dev-pr` additionally
+  pushes the branch for remote build/test under `pipeline-push-pr`; plain
+  `dev` is a commit-only alias of `dev-local` — an edit to one lands on both
+  in the same commit. Handed a ticket folder + chunk id they run pipeline
+  work; the `role-dev` skill is their contract.
 - `ask` (`.agents/agents/ask.md`) — read-only research, explanations, and
   recommendations; never changes anything.
 - `debug` (`.agents/agents/debug.md`) — systematic diagnosis and minimal
-  targeted fixes.
+  targeted fixes; role contract rewritten with the agent-* guidance (method,
+  repo validation, quality gate, git hygiene — add/commit at `ask`, push
+  denied — scope tripwire, RESULT-shaped reporting).
 - `review` (`.agents/agents/review.md`) — advisory code review; never edits.
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
