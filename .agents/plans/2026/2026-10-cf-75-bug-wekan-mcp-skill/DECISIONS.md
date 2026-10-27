@@ -76,3 +76,26 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - OQ5 plugin in scope (best guess yes, degrade-safe).
 - OQ6 functionality-change adjudication by the test session (best guess).
 - OQ7 agent-board grant breadth: dev-boards only (best guess).
+
+## Batched round — ANSWERED + PLAN APPROVED (2026-10-27, human; folded in by plan session)
+- 2026-10-27 human: ALL seven questions confirmed at the recommended best
+  guesses; plan APPROVED to execute (approval itself recorded by coord in
+  STATE.json — plan session did not touch `plan_status`).
+- 2026-10-27 human: slug FINAL = `cf-75-bug-wekan-mcp-skill`.
+- 2026-10-27 human+plan: docs-ergonomics draft RETIRED, absorbed by C01.
+  Mechanism (planner call, per the user's delegation): coord-owned
+  bookkeeping, not a chunk task — dev/test/review permission-wise cannot
+  write another ticket's plan folder or the board, so the draft's STATE
+  re-status and its follow-up-card close ride the coordinator at C01's
+  done gate (spelled out in chunks/C01.md "Coord bookkeeping").
+  Rejected: a dev task editing the sibling folder (silent permission
+  denial at best).
+- 2026-10-27 human: card #74 is covered by C02 here; **coord board-side
+  duty at run end: move #74 to Review** (with this card's Review move) —
+  never an agent chunk task.
+- 2026-10-27 human: validation-fix adjudicator wording is now the C02
+  acceptance criterion: mechanical repairs route SILENTLY back to
+  `test_session`; the TEST session flags NEEDS_INFO when a fix would
+  modify functionality; coord escalates only that.
+- 2026-10-27 human: agent-board keeps `dev-boards*` as its only MCP grant
+  — no admin-global-wekan fallback.

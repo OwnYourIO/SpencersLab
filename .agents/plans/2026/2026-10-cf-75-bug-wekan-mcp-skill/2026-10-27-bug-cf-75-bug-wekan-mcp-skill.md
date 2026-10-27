@@ -5,7 +5,11 @@ origin: WeKan AI-Dev card #75 `BhukC6WP3t5MfX2Gr` (board-driven run; the card
 description is the request). Third claim — two earlier claims went stale
 without a plan folder; slug `cf-75-bug-wekan-mcp-context` is TAKEN by a
 landed sibling fix (`2026/2026-10-bug-board-coord-dev-boards-allow`,
-plan_status complete).
+plan_status complete). APPROVED 2026-10-27 after the batched question
+round — every open question confirmed at its recommended answer (plan
+file, Open questions section); coordinator records the approval state
+plus its board-side duties (draft-ticket retirement at C01 done, card
+#74 → Review at run end) in STATE.json.
 
 ## Goal
 Stop agents from rediscovering the wekan-mcp/dev-boards call surface by
@@ -17,8 +21,10 @@ board/swimlane/list/custom-field/label IDs resolved, an `agent-board`
 worker that owns that surface, and (last, degrade-safe) an OpenCode plugin
 that injects the same block ahead of a board-coord session's first prompt.
 Separately: coord agents stop asking the user before routing a test fix
-back to its authoring session — they route automatically and ask only when
-the fix would modify functionality.
+back to its authoring session — mechanical repairs route **silently** to
+the `test_session`; the TEST session flags NEEDS_INFO when a fix would
+change functionality and only then does coord escalate to the user
+(adjudicator rule confirmed 2026-10-27, OQ6).
 
 ## Verified facts (evidence, this planning pass 2026-10-27)
 - **Tool surface:** `containers/wekan-mcp/wekan_mcp/server.py` registers 13
@@ -54,7 +60,9 @@ the fix would modify functionality.
   t5/t9 — keep those regions intact. The draft ticket
   `2026/2026-10-docs-wekan-mcp-arg-ergonomics` (plan_status draft, never
   executed) planned the same call-shape docs for wekan-api — superseded by
-  this ticket (OQ2). Coord test-fix "ask the user" text lives in
+  this ticket (OQ2, resolved 2026-10-27: C01 absorbs it; the draft's STATE
+  re-status + its board follow-up-card close are coord-owned bookkeeping —
+  DECISIONS). Coord test-fix "ask the user" text lives in
   `.rulesync/skills/pipeline-role-coord/SKILL.md` (step 2.d),
   `pipeline-gates/SKILL.md`, `pipeline-role-review/SKILL.md` (final
   sentence), `agents-sync/references/{pipeline-overview,plan-and-result,permissions}.md`,
@@ -145,36 +153,25 @@ C04 dev must read RESEARCH.md if it exists.
 - Deployed wekan-mcp may lag repo source (cf-49): skill teaches probing
   `tools/list` over trusting docs; the new docs stamp evidence dates.
 
-## Open questions (batched round — best guesses applied in the plan)
-1. **Final slug** (card `slug` custom field unset): `cf-75-bug-wekan-mcp-skill`
-   (recommended — provisional, every surface already carries it) vs
-   another `<desc>`. Impact: folder/worktree/branch/session rename only,
-   cheap now. Taken: `cf-75-bug-wekan-mcp-context`.
-2. **Supersede draft ticket `2026/2026-10-docs-wekan-mcp-arg-ergonomics`?**
-   Best guess: YES — its call-shape/table content lands in `skills/wekan-mcp`
-   here (C01); retire the draft folder (mark `plan_status: complete` as
-   absorbed, or delete the branch) and close its board follow-up card.
-   Impact: avoids two owners for the same docs; its AGENTS.md skills-list
-   task also rides C01.
-3. **Card #74 "coord route test fixes automatically" (Not Started) duplicates
-   C02.** Best guess: cover here (same files — one change), and the human
-   closes/skips #74 as delivered by #75. Impact: if separated, C02 comes
-   out of this plan and #74 runs its own ticket.
-4. **`agent-board` in scope now?** ("It'd be nice") Best guess: YES (C03) —
-   it gives the collector command a natural owning agent and the card
-   already asked for it. Alternative: defer; the command frontmatter would
-   re-point to `agent-board-coord` (one-line edit inside C03's file set).
-5. **Prefetch plugin in scope now?** ("curious about") Best guess: YES,
-   last and degrade-safe (C04 as scoped). Alternative: skip C04 — the
-   collector command already covers the scheduled-job paste path.
-6. **Auto-routing boundary detail:** who decides that a validation fix
-   "needs to modify functionality"? Best guess: coord routes
-   `validation_at_fault` silently to the test session; the TEST session
-   flags a functionality-changing fix via RESULT (escalate +
-   `needs-replan`) instead of writing it. Alternative: coord pre-judges
-   from the reviewer's explanation (less reliable — reviewer never edits
-   and may under-describe).
-7. **agent-board MCP grant breadth:** best guess `dev-boards*` only
-   (single write-capable authority, mirrors the board-coord narrow grant);
-   alternative adds `admin-global-wekan` fallback (rejected — cf-70's
-   catalog-gap root cause is fixed; fallback grants widen attack surface).
+## Open questions — RESOLVED (2026-10-27 batched round; plan APPROVED)
+1. **Final slug: `cf-75-bug-wekan-mcp-skill`** — user-confirmed. Names
+   folder/branch/worktree/session for the run (`-context` stays taken by
+   the landed sibling fix).
+2. **Draft ticket `2026/2026-10-docs-wekan-mcp-arg-ergonomics` superseded** —
+   user-confirmed absorbed by C01. Retirement mechanism (planner call,
+   recorded in DECISIONS): the draft's STATE status write + its board
+   follow-up card close are **coord-owned bookkeeping steps** — dev/test/
+   review never touch another ticket's plan folder or the board.
+3. **Card #74 covered by C02** — user-confirmed; moving #74 to Review is
+   a **coord board-side duty at the end of the run**, not an agent task
+   (DECISIONS).
+4. **agent-board in scope (C03)** — user-confirmed.
+5. **Prefetch plugin in scope (C04)** — user-confirmed: last wave,
+   degrade-safe, default-OFF fallback, live-fire proof stands as AC.
+6. **Auto-routing adjudicator** — user-confirmed as the best guess and
+   now AC wording: mechanical validation repairs route **silently** back
+   to `test_session`; the TEST session flags NEEDS_INFO when a fix would
+   change functionality; coord then escalates to the user (and marks
+   needs-replan if the plan itself moves).
+7. **agent-board grants: `dev-boards*` ONLY** — user-confirmed, no
+   admin-global-wekan fallback.
