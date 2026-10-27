@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e85775dfeffeXUvaopNrHlcYoq",
-  "current_wave": 1,
-  "updated_at": "2026-10-27T01:20Z",
+  "current_wave": 2,
+  "updated_at": "2026-10-27T01:45Z",
   "approval_note": "USER-APPROVED 2026-10-26 in the batched round (\"Approve both\") WITH the OQ1 override to the LIVE-DERIVE FALLBACK (script + scoped grants); OQ2/OQ3/OQ5/OQ6/OQ7 per best guesses; OQ4 answered in-session (audit: cf-52's probe ran via the coord's interactive shell tool pre-surface-change — D11). Rework recorded 2026-10-26 by the plan session per these answers; D10 supersedes D3's resolution leg. Approval came from the user's explicit batched answer, not planner judgment.",
   "plan_handoffs": [
     {
@@ -35,12 +35,12 @@
   },
   "chunks": {
     "C01": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "handoffs": [
         {
           "round": "test-1",
@@ -52,6 +52,11 @@
           "round": "dev-1",
           "dev_session": "ses_e8546890affePHkSBml1lK6oeP",
           "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [scripts/session-origin.sh (755), + test-1's six files committed byte-unmodified (md5-verified)]\ncommands_run: [script.sh b0..b6 ALL PASS (7 ok, shellcheck skip-with-warning documented); surface.sh s3+s6 green, s1/s2/s4/s5/s7 designed-red naming C02 artifacts (s6 green-at-C01 = correct geometry per suite's own posture line — deviation (2)); seven legacy suites green at default HEAD AND armA c6689202c (b0c975bf6 arm proven stale pre-existing, control run without script — deviation (3)); rulesync --check clean; aislop 0/0/36; live control: script emits plan-canonical lowercased origin rc=0 (recorded for review notes)]\ncommit: 6cd624702 (local, no push)\ndeviations: (1) no t14 arm — scripts/* already admitted, verify-first honored. (2) s6 flipped green with C01's artifact (expected per suite geometry). (3) stale b0c975bf6 arm superseded by live arms per execution_notes. (4) no test edits. (5) shellcheck absent — documented skip posture.\nfriction: parent-brief divergence twice resolved by verify-first + control runs, not guesses.\nopen_questions: none\nnext_suggested: agent-review C01 (battery + live control + s6 note), then C02 behind stack gate (already satisfied on this base)."
+        },
+        {
+          "round": "review-1",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [chunks/C01.md review notes]\ncommands_run: [script.sh 7 ok; surface per-check inventory matches claims; s6 ATTRIBUTION control (script-only removal -> reds on absent-script line) => green is script-caused not pin-weakening; 7 legacy suites @HEAD + 6 @c6689202c ALL PASS; md5 anchor 38c0d85b9 vs 6cd624702 six test files BYTE-IDENTICAL; whole-chain byte-identical vs 4 command files x4; live controls L1 canonical rc0 / L2 env-absent / L3 shape / L4 misuse rc1 verbatim; --check clean; aislop 0/0; stale b0c975bf6 arm proven pre-existing via control worktree]\ndeviations: none — dev-1 (1)-(5) all ACCEPTED with independent evidence\nfriction: none new\nopen_questions: none; close-out housekeeping: annotate C01.md stale base + commit-shape lines; NQ1 matcher stays C02-review control\nVERDICT: APPROVED (round 1)"
         }
       ],
       "dev_session": "ses_e8546890affePHkSBml1lK6oeP"
