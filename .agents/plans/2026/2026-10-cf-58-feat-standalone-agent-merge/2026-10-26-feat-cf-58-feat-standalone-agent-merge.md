@@ -59,6 +59,99 @@ Coord runs one chunk at a time (waves only encode ordering here; every later chu
 8. **"investigate"** — `debug` keeps its name; C04 does a FULL rewrite of `role-debug` folded with the agent-* guidance, not a minimal patch.
 9. **Deploy** — confirmed best guess: `-pr` pushes the ticket branch + opens the PR under the explicit-user-request rule; `-local` reports "ready — commits local"; merge to main + ArgoCD sync stay human-owned.
 
+## Final whole-plan review — 2026-10-27, fresh agent-review session — VERDICT: APPROVED
+
+Scope: `git diff e25919a2a..HEAD` (HEAD d3c92ff2f; 19 commits; merge-base =
+e25919a2a, the base the user-ruled rebase landed on; main has since advanced to
+e27b83825 with the cf-52 stack — see landing note below). No chunk-level
+findings: every chunk's acceptance criteria re-verified against the diff and
+all five card asks are visibly shipped.
+
+**Validation (run fresh this session, full ids, not subsets):**
+- tests/pipeline-push-pr/surface.sh => 6 ok PASS
+- tests/standalone-agents/surface.sh => 10 ok PASS
+- tests/pipeline-models/surface.sh => 6 ok PASS
+- tests/agent-perms/surface.sh => 13 ok PASS
+- tests/coord-inwork/surface.sh => 7 ok PASS (the two "missing needle: pre
+  research" lines are i7's NEGATIVE window arm working — proves role-coord
+  cites the stage map without restating it)
+- tests/agent-board-coord/gate.sh => 22 ok PASS (t1 shellcheck
+  skip-with-warning per its AC5 convention)
+- tests/agent-board-coord/rulesync-surface.sh => 19 ok PASS (c11/c18 fully
+  flipped — C05+C06 windows green)
+- tests/agent-board-coord/agents-md.sh => 9 ok PASS
+- rulesync generate x2 => both no-ops; --check clean; tree stays clean
+- npx --no-install aislop ci --changes => 0 errors / 0 warnings, 37 files
+
+**Cross-chunk coherence (the between-chunks sweep):** boards Stage map ↔
+pipeline-role-coord loop (5a/5c/8 dev variants, citation-only stage-gate
+bullet) ↔ kickoff derivation ↔ pipeline-models routing ↔ boards routing
+paragraph — one consistent contract (checked-stages-only; nothing checked =
+Plan+Test+Code+Review; Deploy = -pr push per pipeline-push-pr / -local
+report-and-stop; Single Session = one dev-variant session + one final review).
+All three alias pairs (agent-coord, agent-board-coord, dev) byte-identical to
+their -local twins save name+description tag, in source AND mirrors; rosters
+wire -local→agent-dev-local / -pr→agent-dev-pr in all six coord sources; the
+four plain commands still target the aliases, the three new -pr commands the
+-pr variants, hourly never -pr; gate enumerates exactly the three board-coord
+names; AGENTS.md matches the generated surfaces (all era-correct); the
+permissions.md matrix rows match the live frontmatter blocks. No bare
+`agent-dev` survives in any binding surface; Research-checklist semantics
+survive ONLY in the transition rule + the untouched LABEL trigger.
+
+**Hard rules across the whole history:** `git ls-remote origin
+'refs/heads/cf-58*'` empty (never pushed); branch contains no commit outside
+the 19, zero merge commits, sole committer, reflog clean of force/reset; main
+never advanced by this branch; no secrets in the diff (pattern scan =
+false-positive prose only); zero files under `charts/` touched, no version
+bumps.
+
+**Minor (record hygiene, non-blocking):**
+- m1: FRICTION.md item 3 (provider catalog drift) still `open` although C06
+  shipped the patch — re-status to `fixed` at plan-complete (the Q7
+  unverified-tool-calling question is a separate open item).
+- m2: plan file line 4 still reads "awaiting plan approval" while
+  STATE.json/DECISIONS record the 2026-10-27 approval — cosmetic status line.
+- m3: STATE.json shows C06 `review_rounds: 0` — C06 never had a dedicated
+  chunk review; this final review covered its ACs directly (M1–M6 + catalog
+  diff + serving-fact greps). The launch brief's "all six chunks
+  review-approved" slightly overstated; the substance is now reviewed.
+
+**Deferred ledger for the final report (out of verdict):** five user-approved
+test re-pins, all escalation-clean and test-files-only (P4 → 4e12c97f; A11/A13
+→ 833da163; classifier+t14 → 6fe3fc8e; window.py/_DEV → e7bcf999; pattern:
+latent helper defects surfaced only when later content satisfied earlier arms
+— probe-runs with real content belong in test authoring). Unowned hygiene
+candidates: pipeline-role-test:12 stale `agent-dev` prose;
+tests/services/dev-mcp-fleet.sh AGENT_SOURCES:51 retired path (other ticket's
+suite); NEW finding this review — agents-sync references prose naming the
+retired id (plan-and-result.md:75 chunk loop, pipeline-overview.md:46 api
+example, syncing-to-other-repos.md:59 spot-check example; SKILL.md:30 /
+pipeline-overview.md:6 / permissions.md:7 are historical naming-scheme
+illustrations, permissions.md:87 deliberately historical) — never in any
+chunk's Files-in-scope and A13's sweep judgment deliberately exempted skill
+prose; group into one hygiene card. C04-recorded: role-code/role-dev MCP
+paragraph `<cluster>-<priv>-<service>` word-order drift (globs correct);
+pipeline-push-pr "only on merge to main" optional wording drop;
+pipeline-push-pr/surface.sh:8 intro sentence. User decisions: rebase-pickup
+has NO `git rebase` grant for any pipeline role (verified: 0 grant lines —
+fails closed, pickup stays human-run); flash-next catalog entries declare
+`input: ["text"]` while the llama-swap chart family declares image input too
+(plan-pinned q8 shape; hygiene call); Q7 flash-next tool-calling unverified
+(accepted risk; failure mode = catalog flag flip). Machine-local global
+config flash-next entries + Openrouter Large/Flash q6 assumptions:
+DECISIONS-deferred. User-owned chores: delete the uncommitted main-checkout
+draft folder; the copy of this folder on main (draft, from the landed docs
+commit at e25919a2a) is coherently superseded by this branch's records —
+append-only respected, no content lost, plan file + C06.md byte-identical,
+landing overwrites it cleanly. Landing note: main has moved (cf-52 stack);
+a read-only `git merge-tree` probe shows the next pickup rebase will conflict
+in 11 shared files (coord/board-coord alias pairs, permissions.md,
+pipeline-role-coord, gate.sh, rulesync-surface.sh, coord-inwork/surface.sh) —
+expected pickup work under the rebase rule, not a defect of this branch.
+Harness friction (roster freeze, coord shell denial, session losses, STATE
+rebuild): follow-up-card candidates per FRICTION.md.
+
 ### Residual notes (non-blocking, derived — veto at approval if wrong)
 - R1: the standalone `dev` also ships a plain alias (`dev` = alias of `dev-local`), derived from the Q3 rationale (plain name = safe commit-only default; ergonomics for direct user launches). Unlike the coord aliases this preserves nothing existing (dev is new) — it is pure ergonomics; dropping it is a two-file delete.
 - R2: the hourly scheduled launch stays on the plain `agent-board-coord` (the alias) — scheduled runs are `-local` semantics by construction; `agent-board-coord-local` exists for explicit local-variant launches and parity with the coord family.
