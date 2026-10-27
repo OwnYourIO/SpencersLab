@@ -1,10 +1,20 @@
 {
   "feature": "2026/2026-10-cf-58-feat-standalone-agent-merge",
-  "plan_status": "draft",
+  "plan_status": "approved",
   "coord_session": "ses_e8575ef66ffeP2I53dUmdNGL5P",
-  "test_session": null,
+  "test_session": "ses_e854109f5ffe2yBdtisUw48vR6",
   "current_wave": 1,
-  "updated_at": "2026-10-27T00:05Z",
+  "updated_at": "2026-10-27T00:35Z",
+  "approval": "2026-10-27: user approved the 6-chunk plan with R1-R3 as derived; per user ruling the plan-folder copy into the worktree folded into the first folder-touching agent (agent-test bootstrap, done via cp -r, 10 files verified; main-checkout original left for the user to delete).",
+  "handoffs": [
+    {
+      "from": "agent-test",
+      "session": "ses_e854109f5ffe2yBdtisUw48vR6",
+      "received_at": "2026-10-27T00:35Z",
+      "result": "RESULT\nstatus: DONE\nchunk: tests\nfiles_changed: [tests/pipeline-push-pr/surface.sh, tests/standalone-agents/surface.sh, tests/pipeline-models/surface.sh, tests/agent-perms/surface.sh, tests/coord-inwork/surface.sh, tests/agent-board-coord/gate.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/agents-md.sh, .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/ (bootstrap copy, 10 files - coord-owned commit)]\ncommands_run: [bootstrap cp -r + 10-file verification => pass; bash -n x8 suites => pass; bash tests/pipeline-push-pr/surface.sh => fail(P1 red: skill absent - right reason); bash tests/standalone-agents/surface.sh => fail(S1 red: dev.md absent); bash tests/pipeline-models/surface.sh => fail(M1 red: q4 route absent); bash tests/agent-perms/surface.sh => fail(A2 red: agent-dev-local absent); bash tests/coord-inwork/surface.sh => fail(i4 red: family absent); bash tests/agent-board-coord/rulesync-surface.sh => fail(c2 red: roster slot stale); bash tests/agent-board-coord/agents-md.sh => fail(c2 red: pre-split roster row); bash tests/agent-board-coord/gate.sh => fail(t17 red: family absent); HOLD subsets A1/A4-A9, i1/i2/i3/i5, c1/c3-c7/c9/c10/c12-c17, t1-t16/t18/t19, S6-roster/S7, M4/M6, P4/P6 => pass; A13 sweep probe => red names exactly the pre-split files; npx --no-install aislop ci --changes => pass]\ndeviations: [cf-52-era exact-delta/splice arms (agent-perms A10, coord-inwork i4, gate t17) superseded by C02/C03's sanctioned git-block delta - re-pinned to absolute presence/containment pins + fabricated-row negative controls preserving the non-vacuity discipline; A13 rename-sweep scoped to binding surfaces + era-gated prose + the 8 cf-58 suites; scope guards (i5/t14/c8/c7) widened to directory wildcards; c19 idea folded into c18; c11 nothing-checked-default and c18 transition-rule needles are judgment window-tokens; tests are red now by design across chunks (per-chunk subsets documented in each suite header)]\nfriction: [heredoc-nested generation produced two escaped-code artifacts (blockdiff/family helper mangles) - caught by bash -n + probe runs, fixed in-session; old cross-suite helper-extraction pins (splice/t17 markers) proved fragile under sanctioned rewrites - replaced with in-file shipped guards]\nopen_questions: [pipeline-role-dev description and boards research-only prose stale post-C02 but byte-stable by plan - re-pin in C02 or leave for final review?; AGENTS.md 'Pipeline specifics' agent-dev bullet not explicitly owned by C03; C06 escape clause in three wordings - M1 pins a window not a verbatim; chunk reviews gate on documented per-chunk subsets (red-between-chunks by design)]\nnext_suggested: coord writes plan_status=approved + test_session, commits bootstrap folder + test files, notes the un-deleted main-checkout original for the user, then launches C01 (wave order C01 -> C04 -> C02 -> C03 -> C05 -> C06)"
+    }
+  ],
+  "coord_gating_note": "Chunk review gates run the per-chunk documented subsets from each suite header (cross-chunk red is by design); full green suite only at final whole-plan review.",
   "question_round": "2026-10-27: batched round answered 9/9 (slug kept; both dev families split; coord aliases kept; Single Session / nothing-checked / Deploy semantics confirmed; Flash+Local=>flash-next q3 combination rule, no fifth option; catalog entries accepted now; debug full rewrite). Plan reworked, pending user approval.",
   "kickoff": {
     "card": "En98XdBL255NgRpAx",

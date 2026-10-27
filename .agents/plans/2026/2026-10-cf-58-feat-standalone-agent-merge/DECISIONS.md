@@ -26,5 +26,11 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 - 2026-10-27 plan (batched round): **Q8 debug** — name `debug` kept (no `investigate` agent/rename); C04's debug work upgraded from minimal patch to a FULL `role-debug` rewrite folded with the agent-* guidance (method, repo-validation discipline, quality gate, git hygiene, scope tripwire, RESULT-shaped reporting), user noting it would be mostly rewritten anyway.
 
 ## Deferred
-- Openrouter-side local mappings for Large/Flash (q6 assumptions, absent from the provider catalog) — pre-existing, untouched by this ticket; note for a future models-hygiene pass.
+- Openrouter-side local mappings for Large/Flash (q6 assumptions, absent from the provider catalog) — pre-existing, untouched by this ticket; note for the final report / a future models-hygiene pass.
 - Whether the machine-local global config (`~/.config/opencode/opencode.json`) gpu catalogs need matching flash-next entries — machine-local edit, out of repo scope; record in the final report if the user wants it.
+
+## Deferred (coord answers to agent-test's open questions, 2026-10-27)
+- pipeline-role-dev "MUST-loaded by agent-dev" + boards research-only prose: re-pinned by C02's dev-split wording and C05's boards edit respectively (both own those files per their Files-in-scope) — NOT left for final review; C01 dev instructed to keep agent files pointing at the new dev ids where an agent file references them.
+- AGENTS.md "Pipeline specifics" bullet naming `agent-dev`: folded into C03 — its rulesync regenerate must also correct the agent-dev line to the `-pr`/`-local` ids (same-commit rule).
+- C06 escape-clause window-token pins (three wordings): accepted, no verbatim literal required.
+- Chunk-review gating on the per-suite documented subsets (cross-chunk red by design): adopted; full suite only at final whole-plan review.
