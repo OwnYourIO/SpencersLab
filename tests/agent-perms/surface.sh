@@ -789,9 +789,13 @@ if want a12; then
     f="${CF_SRC[$i]}"; g="${CF_GEN[$i]}"
     python3 "$TMP/family.py" api "$f" || fail "A12[C03]: $f in-work-mark API containment broken"
     python3 "$TMP/family.py" api "$g" || fail "A12[C03]: $g in-work-mark API containment broken"
+    # *-pr.md, not *-pr: the files end in .md, so a bare *-pr would never
+    # match and every -pr file would fall through to the -local arms —
+    # unsatisfiable for correct content AND blind to a stale -pr roster
+    # (validation_at_fault round 3).
     case "$f" in
-      *-pr) slot=agent-dev-pr; cls=pr;;
-      *)    slot=agent-dev-local; cls=local;;
+      *-pr.md) slot=agent-dev-pr; cls=pr;;
+      *)       slot=agent-dev-local; cls=local;;
     esac
     python3 "$TMP/family.py" roster "$f" "$slot" || fail "A12[C03]: $f roster dev slot wrong (want $slot)"
     python3 "$TMP/family.py" gitrows "$f" "$cls"  || fail "A12[C03]: $f git block wrong for class $cls"

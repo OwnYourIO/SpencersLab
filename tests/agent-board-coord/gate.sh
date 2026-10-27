@@ -604,7 +604,11 @@ fi
 # definition surface — subagent/command sources, their generated mirrors,
 # the new skill dirs and the hand-managed .opencode/opencode.jsonc — so
 # those join as directory wildcards (the retired pre-split dev-path literal
-# is gone with the rename sweep, agent-perms A13). Granularity trades to the
+# is gone with the rename sweep, agent-perms A13). Skill dirs are widened
+# one per edited contract, NOT a blanket skills/* — pipeline-role-dev joins
+# with the C03 description fold-in (validation_at_fault round 3: C03's
+# user-pinned edit tripped the enumeration gap); an unsanctioned skill edit
+# still fails here. Granularity trades to the
 # positive guards: t12 still fences agents-sync outside the carve,
 # rulesync-surface c17 still fences pipeline-gates, and every cf-58 surface
 # has its own content suite. Infra dirs (charts/containers/services/
@@ -623,6 +627,7 @@ if want t14; then
       .rulesync/skills/pipeline-push-pr/*|.opencode/skills/pipeline-push-pr/*|\
       .rulesync/skills/pipeline-models/*|.opencode/skills/pipeline-models/*|\
       .rulesync/skills/role-dev/*|.opencode/skills/role-dev/*|\
+      .rulesync/skills/pipeline-role-dev/*|.opencode/skills/pipeline-role-dev/*|\
       .rulesync/skills/role-planner/*|.opencode/skills/role-planner/*|\
       .rulesync/skills/role-code/*|.opencode/skills/role-code/*|\
       .rulesync/skills/role-debug/*|.opencode/skills/role-debug/*|\
@@ -781,7 +786,9 @@ if want t17; then
     [ -f "$f" ] || fail "t17[C03]: $f missing — the six-agent coord family is the re-pinned contract set (red before C03)"
   done
   for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
-    case "$f" in *-pr) cls=pr ;; *) cls=local ;; esac
+    # *-pr.md not *-pr — the bare pattern never matches .md names and falls
+    # through to the -local arms (validation_at_fault round 3).
+    case "$f" in *-pr.md) cls=pr ;; *) cls=local ;; esac
     case "$f" in *board-coord*) board=1 ;; *) board=0 ;; esac
     python3 "$TMP/cfpins.py" "$f" "$cls" "$board" \
       || fail "t17[C03]: $f violates the absolute coord-family contract (class $cls, board $board) — cf-58 C03 API containment + git-only shells + roster slot + shapes (base: $BASE)"

@@ -459,8 +459,11 @@ if want i4; then
     [ -f "$f" ] || fail "i4[C03]: $f missing — the in-work-mark citation is asserted across ALL SIX coord-family agents (source + mirror), replacing the two-agent pins (red before C03)"
   done
   for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
+    # *-pr.md (with the extension) — a bare *-pr never matches the .md
+    # filenames and would silently evaluate -pr files under -local
+    # expectations (validation_at_fault round 3).
     case "$f" in
-      *-pr) cls=pr ;; *) cls=local ;;
+      *-pr.md) cls=pr ;; *) cls=local ;;
     esac
     case "$f" in *board-coord*) board=1 ;; *) board=0 ;; esac
     python3 "$TMP/cfpins.py" "$f" "$cls" "$board" \
