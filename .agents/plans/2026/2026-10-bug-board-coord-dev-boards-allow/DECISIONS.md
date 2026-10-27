@@ -94,3 +94,11 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   after the harness reload the Code Mode catalog exposed `dev-boards` as
   `tools["dev-boards"]` (26 tools, snake_case args, called natively for the card
   pickup/claim). A board-coord run on the fixed grants is the formal AC7 turnstile.
+- LANDING SHA: 9081717e9 on branch `bug-board-coord-dev-boards-allow` (base 4813c13d3).
+  Post-commit re-verify: kickoff-branch m4 6 ok + session-origin s4 7 ok — designed-red
+  window closed exactly as the e0d7fb767 precedent predicts (empty diff vs HEAD now).
+  Full battery green at the commit: rulesync-surface 19, gate 22, agents-md 9,
+  coord-inwork 7, agent-perms 14, standalone-agents 10, pipeline-push-pr 6,
+  kickoff-branch 6, session-origin 7. aislop run: 0 applicable files (bash/markdown
+  diff is outside the six engine languages), clean 100/100; gate plugin flagged no
+  edit this landing.

@@ -12,7 +12,7 @@
     "date": "2026-10-27",
     "branch": "bug-board-coord-dev-boards-allow",
     "base": "4813c13d3",
-    "note": "plan_status complete = implementation + offline suites green; AC7 live proof (next agent-board-coord launch carries dev-boards tools in catalog) and the cf-70 FRICTION item-1 write-back ride on that boot — cf-70's coord's action, per DECISIONS. Landing commit sha appended by the trailing records commit."
+    "note": "plan_status complete = implementation + offline suites green; AC7 live proof (next agent-board-coord launch carries dev-boards tools in catalog) and the cf-70 FRICTION item-1 write-back ride on that boot — cf-70's coord's action, per DECISIONS. Landing commit: 9081717e9 (branch bug-board-coord-dev-boards-allow)."
   },
   "chunks": {
     "C01": {
