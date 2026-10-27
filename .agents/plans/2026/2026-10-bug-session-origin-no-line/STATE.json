@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-bug-session-origin-no-line",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e899def27ffeHg8Hl5wywFMluP",
   "test_session": "ses_e85775dfeffeXUvaopNrHlcYoq",
   "current_wave": 2,
-  "updated_at": "2026-10-27T02:50Z",
+  "updated_at": "2026-10-27T03:10Z",
   "approval_note": "USER-APPROVED 2026-10-26 in the batched round (\"Approve both\") WITH the OQ1 override to the LIVE-DERIVE FALLBACK (script + scoped grants); OQ2/OQ3/OQ5/OQ6/OQ7 per best guesses; OQ4 answered in-session (audit: cf-52's probe ran via the coord's interactive shell tool pre-surface-change — D11). Rework recorded 2026-10-26 by the plan session per these answers; D10 supersedes D3's resolution leg. Approval came from the user's explicit batched answer, not planner judgment.",
   "plan_handoffs": [
     {
@@ -87,6 +87,12 @@
           "round": "review-1",
           "verdict": "APPROVED",
           "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [chunks/C02.md review notes]\ncommands_run: [91 checks x 2 arms ALL green (surface 7 + script 7 + 7 legacy); generate --check + x2 no-op; aislop 0/0/36; live family: canonical rc0 plan-exact base, env-absent rc0, misuse rc1 x2; NQ1: doc-check (V2 '*'=zero-or-more whole-value) + fnmatch/regex/prefix battery => authorized under all available semantics, STILL-OPEN for definitive live coord control at first post-merge raw-chat claim (landing note 3); zero tests/ delta in 46fa76e86 confirmed]\ndeviations: none — NQ1 live leg honestly recorded not-faked\nfriction: none new (bun-compiled opencode + upstream raw paths 404 => matcher semantics resolved via official V2 docs)\nopen_questions: FYIs — M1 permissions.md trailing-space rationale prose factually wrong (no-space grant robust under both semantics) -> next agents-sync touch; M2 mirror overview-parity friction here -> done at close-out (D20)\nVERDICT: APPROVED (round 1)"
+        },
+        {
+          "round": "final-review",
+          "session": "ses_e850b9e7bffekAwgz7LzwM1LkA",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: final\ncommands_run: [9 suites x 2 arms = 182/182 checks rc0; generate --check + x2 no-op; aislop 0/0/36; live L1 plan-exact-base rc0 / L2 env-absent rc0 / L4 misuse rc1 x2; grant-count 4/4/4/4; frozen surfaces empty-diff; lane coherence across three stacked tickets holds]\ndeviations: none\nfriction: none new (one test-prose nit at kickoff-branch/surface.sh:204-205 stale comment, cosmetic, test-1-owned)\nopen_questions: none\nVERDICT: APPROVED (whole plan; both chunks confirmed by fresh full battery)"
         }
       ],
       "dev_session": "ses_e852dc3dbffe0SOb175Uc8EKYm"
