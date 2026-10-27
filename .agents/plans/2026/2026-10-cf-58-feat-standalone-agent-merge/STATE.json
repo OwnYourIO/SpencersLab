@@ -90,13 +90,33 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e82ac2433ffeYhlRI94RV5jEGn",
+      "handoffs": [
+        {
+          "from": "agent-dev (2nd attempt; 1st vanished mid-rebase)",
+          "session": "ses_e82ac2433ffeYhlRI94RV5jEGn",
+          "received_at": "2026-10-27T13:35Z",
+          "result": "RESULT\nstatus: BLOCKED (validation_at_fault x2; implementation DONE, committed 3373667eb)\nchunk: C03\nfiles_changed: [6 coord-family sources + mirrors, 4 command pointer-lines + 3 NEW -pr commands + mirrors, scripts/agent-board-coord-gate.sh, pipeline-role-coord + pipeline-role-dev SKILL.md (pinned fold-in) + mirrors, permissions.md, overview.md, AGENTS.md — 35 files +1725/-55]\ncommands_run: [branch verified, never pushed; six sources deterministic-transform built, alias<->local byte-identical save name+description; generate zero deletions, x2 idempotent, --check clean; per-class family.py: push origin main=>deny, feature=>allow on coord-pr; A13 green after stale agent-dev boards-reference fix in all 3 board sources; gate 19/19; agents-md 8/8; rulesync-surface 16/16; i7 red only at C05 stage-gate needle; P/S suites green; aislop 100/0/0]\ndeviations: [role-dev description fold-in per user ruling (outside C03.md list); boards body one agent-name ref updated under byte-stable-except-names clause (3-source parity); descriptions moved to single-line flow scalars (parsed equality survives)]\nfriction: [*-pr) classifier can never match *-pr.md filenames (agent-perms:793, coord-inwork:463, gate:784) — first live exposure; reproduced deterministically]\nopen_questions: [route to test session: (1) *-pr)->*-pr.md) at 3 callers (inverted-guard risk); (2) t14 case list lacks pipeline-role-dev arms (comment claims wildcard widening; siblings admit); (3) ledger: hourly Notes 'no shell' stale (C05), role-coord 5a/5c/8 generic agent-dev mentions]\nnext_suggested: user-confirm re-pins -> test session -> re-run A12/i4/t17/t14 -> review 3373667eb unchanged"
+        },
+        {
+          "from": "agent-test (validation fixes, user-approved round 3)",
+          "session": "ses_e854109f5ffe2yBdtisUw48vR6",
+          "received_at": "2026-10-27T13:55Z",
+          "result": "RESULT\nstatus: DONE\nchunk: C03-validation-fix\nfiles_changed: [tests/agent-perms/surface.sh, tests/coord-inwork/surface.sh, tests/agent-board-coord/gate.sh — commit 6fe3fc8e6 (amended pre-verification; branch unpushed so no published history rewritten)]\ncommands_run: [A12/i4/t17 green at 3373667eb; t14 green HEAD + CHUNK_BASE=9dc78b9f; A10+A13 green first time; P 6/6, S 10/10; HOLD sets green (A1-A9+A11 10ok, i1-i6 5ok, t-set 18ok, c2/c8/c13/c16/c17, c2/c6/c7, M4/M6); era-red remainder EXACTLY: until C05 i7(stage-gate only)/c11/c18/c9; until C06 M1/M2/M3/M5 + c11 windows; aislop 0/0; grep sweep no remaining trailing-anchored *-pr)]\ndeviations: [escalation said 'two files' but defect names 3 callers — treated caller list authoritative; t14 fixed by arms addition not restructure]\nfriction: none\nopen_questions: none\nnext_suggested: close C03 (A1-A13 + t1-t20 fully green), launch C05"
+        },
+        {
+          "from": "agent-review",
+          "session": "ses_e826feee1ffeatlPVbbrAzkEoT",
+          "received_at": "2026-10-27T14:15Z",
+          "result": "RESULT\nstatus: APPROVED\nchunk: C03\nfiles_changed: [chunks/C03.md (review notes, committed with coord records)]\ncommands_run: [HEAD/log as mandated; generate x2 no-op + --check; agent-perms A1-A13 13/13; gate t1-t20 22 ok at HEAD + t14@CHUNK_BASE; coord-inwork i1-i6 green + i7 single C05 needle; P1-P6; S1-S10; rulesync-surface 16 green / red exactly c11+c18; agents-md red only c9; models green M4/M6 red M1/M2/M3/M5; alias parity + 3-source board md5; vanish forensics clean (no half-work leakage; rebase tree delta = main's Chart.yaml ingest only); conflict-marker scan clean; aislop 0/0]\ndeviations: [none — per-id runs per short-circuit rule]\nfriction: [head-masked exit codes in grep pipelines — re-ran per-file]\nopen_questions: [C05 ledger must read: role-coord generic agent-dev mentions = steps 5a/5c/8 AND line-49 launch list (unguarded); C05.md Files-in-scope lacks pipeline-boards-hourly.md (no-shell line) — widen at launch; rebase-pickup has NO git rebase grant for pipeline roles (fails closed; user decision); C03's 'commit re-pinned tests together' task was moot (tests read-only to dev) — record so later chunks don't copy the deviation]\nnext_suggested: records + launch C05 widened"
+        }
+      ]
     },
     "C04": {
       "status": "done",
