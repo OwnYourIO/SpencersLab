@@ -56,6 +56,12 @@
 # in the merge window under BASE=pre-merge-HEAD and green again at the merge
 # commit (empty diff → arm-B atpos posture), provable pre-commit via
 # CHUNK_BASE=<merge snapshot>.
+# The kickoff naming landing (2026-10-27, bug-coord-opencode-perms) inherits
+# the same discipline: its execute/opencode_* rows are stripped from the core
+# projections and whole-checked tail-style (like the git block), so the parsed
+# arms go green in-window; m4(b)'s classifier stays designed-red until the
+# landing commit flips the files to the empty-diff arm-B posture. The absolute
+# naming duty lives in tests/agent-perms/surface.sh A12 (family.py naming).
 #
 # Sibling posture: the legacy suites keep their regression duty through this
 # ticket by widening to the sanctioned-FORMS ladder (two-allow cf-52 form OR
@@ -348,6 +354,21 @@ GITBLOCK = [
     {"action": "shell", "resource": "git merge main*", "effect": "allow"},
     {"action": "shell", "resource": "git push*", "effect": "deny"},
 ]
+# Naming RE-PIN (2026-10-27, bug-coord-opencode-perms): the coord family now
+# additionally carries the kickoff naming surface — `execute` (the Code Mode
+# transport for tools.opencode.*) + four opencode_* per-tool allows, MCP-style
+# <server>_<tool>. Same discipline as the git block directly above: both arms
+# strip these rows from the core projection (the shell-allow ladder geometry
+# is unchanged) and a separate check admits the four per-tool rows only whole
+# and in order. The absolute naming duty lives in
+# tests/agent-perms/surface.sh A12, never here.
+EXEC = {"action": "execute", "resource": "*", "effect": "allow"}
+NAMING = [
+    {"action": "opencode_worktree_create", "resource": "*", "effect": "allow"},
+    {"action": "opencode_worktree_list", "resource": "*", "effect": "allow"},
+    {"action": "opencode_session_move", "resource": "*", "effect": "allow"},
+    {"action": "opencode_session_rename", "resource": "*", "effect": "allow"},
+]
 
 def perms(path):
     text = open(path).read()
@@ -367,8 +388,8 @@ def splice(seq, form):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-b_core = [p for p in b if p not in GITBLOCK]
-c_core = [p for p in c if p not in GITBLOCK]
+b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC]
+c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC]
 if ORIGIN in b:
     forms = [SHELL4]
 else:
@@ -409,6 +430,9 @@ if hit is None:
 gb = [p for p in c if p in GITBLOCK]
 if gb and gb != GITBLOCK:
     print("git-block rows are present but are not exactly the sanctioned fourteen rows in order — unsanctioned git surface"); sys.exit(1)
+nb = [p for p in c if p in NAMING]
+if nb and nb != NAMING:
+    print("kickoff naming rows are present but are not exactly the sanctioned four in order — unsanctioned naming surface"); sys.exit(1)
 shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells not in ([s["resource"] for s in SHELL3], [s["resource"] for s in SHELL4]):
     print(f"shell resources are {shells}, want exactly the three or four scoped allows in order (the only other sanctioned shell surface is the cf-58 git block, checked whole above)"); sys.exit(1)
@@ -710,7 +734,7 @@ if want m4; then
     python3 "$TMP/m4-shape.py" "$s" "$g" "$adb" \
       || fail "m4: permission shape contract broken for the $s/$g pair"
   done
-  ok "m4: coord files carry a sanctioned shell-allow form (three-allow landed posture or the four-allow form the moment session-origin C02's delta appears — the absolute four-allow duty lives in tests/session-origin/surface.sh s4); OR-form + arm-aware line twins, controls reject a fabricated row, a fifth row and off-anchor placement; deny-baseline, question, subagent/edit allows and the dev*/git-grant negatives hold in both trees"
+  ok "m4: coord files carry a sanctioned shell-allow form (three-allow landed posture or the four-allow form the moment session-origin C02's delta appears — the absolute four-allow duty lives in tests/session-origin/surface.sh s4); OR-form + arm-aware line twins, controls reject a fabricated row, a fifth row and off-anchor placement; deny-baseline, question, subagent/edit allows and the dev*/git-grant negatives hold in both trees; the naming landing keeps this geometry (parsed arms green in-window via the core-strip, m4(b) designed-red until the landing commit; the absolute naming duty is A12 in tests/agent-perms/surface.sh)"
 fi
 
 # --- m5: the regeneration contract (C02 AC5; ladder skip-with-warning) ---------

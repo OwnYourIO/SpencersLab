@@ -1,8 +1,8 @@
 ---
 description: >-
-  Coordinator (-local): runs an approved plan chunk by chunk via
-  plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and
-  FRICTION.md; commits each chunk, never pushes
+  Coordinator (commit-only alias of agent-coord-local): runs an approved plan
+  chunk by chunk via plan/research/dev/review subagents; writes only STATE.json,
+  DECISIONS.md and FRICTION.md; commits each chunk, never pushes
 mode: primary
 name: agent-coord
 color: '#06b6d4'
@@ -123,6 +123,21 @@ permissions:
     effect: allow
   - action: subagent
     resource: agent-research
+    effect: allow
+  - action: execute
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_create
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_list
+    resource: '*'
+    effect: allow
+  - action: opencode_session_move
+    resource: '*'
+    effect: allow
+  - action: opencode_session_rename
+    resource: '*'
     effect: allow
   - action: edit
     resource: .agents/plans/**/STATE.json

@@ -2,7 +2,7 @@
 targets:
   - '*'
 name: agent-coord
-description: 'Coordinator (-local): runs an approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; commits each chunk, never pushes'
+description: 'Coordinator (commit-only alias of agent-coord-local): runs an approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; commits each chunk, never pushes'
 opencode:
   mode: primary
   color: '#06b6d4'
@@ -126,6 +126,25 @@ opencode:
       effect: allow
     - action: subagent
       resource: agent-research
+      effect: allow
+    # Kickoff naming surface: Code Mode's `execute` is the only transport
+    # that exposes the `tools.opencode.*` namespace, and nested calls
+    # re-check the agent's allow-list — so the reachable set is pinned by
+    # the four per-tool allows (worktree create/list, session rename/move).
+    - action: execute
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_create
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_session_move
+      resource: '*'
+      effect: allow
+    - action: opencode_session_rename
+      resource: '*'
       effect: allow
     - action: edit
       resource: .agents/plans/**/STATE.json

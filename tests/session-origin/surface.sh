@@ -75,6 +75,12 @@
 # at the merge commit (empty diff → arm-B atpos posture), provable
 # pre-commit via CHUNK_BASE=<merge snapshot>. s2's HEAD-relative byte pin
 # greens again at the same commit for the same reason.
+# The kickoff naming landing (2026-10-27, bug-coord-opencode-perms) inherits
+# the same discipline: splice4 strips the execute/opencode_* naming rows from
+# the core projections (whole-and-order tail check, the four-allow duty keeps
+# its teeth), so the parsed arms go green in-window; s4(b) stays designed-red
+# until the landing commit flips the files to the empty-diff arm-B posture.
+# The absolute naming duty lives in tests/agent-perms/surface.sh A12.
 #
 # Usage (harness convention from tests/coord-inwork/surface.sh):
 #   bash tests/session-origin/surface.sh             # s1..s7
@@ -311,6 +317,20 @@ GITBLOCK = [
     {"action": "shell", "resource": "git merge main*", "effect": "allow"},
     {"action": "shell", "resource": "git push*", "effect": "deny"},
 ]
+# Naming RE-PIN (2026-10-27, bug-coord-opencode-perms): the coord family now
+# additionally carries the kickoff naming surface — `execute` (the Code Mode
+# transport for tools.opencode.*) + four opencode_* per-tool allows, MCP-style
+# <server>_<tool>. Same discipline as the git block: both arms strip these rows
+# from the core projection (the four-allow duty keeps its teeth) and a separate
+# check admits the four per-tool rows only whole and in order. The absolute
+# naming duty lives in tests/agent-perms/surface.sh A12, never here.
+EXEC = {"action": "execute", "resource": "*", "effect": "allow"}
+NAMING = [
+    {"action": "opencode_worktree_create", "resource": "*", "effect": "allow"},
+    {"action": "opencode_worktree_list", "resource": "*", "effect": "allow"},
+    {"action": "opencode_session_move", "resource": "*", "effect": "allow"},
+    {"action": "opencode_session_rename", "resource": "*", "effect": "allow"},
+]
 def perms(path):
     m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
     assert m, f"{path}: no YAML frontmatter"
@@ -326,8 +346,8 @@ def splice(seq):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-b_core = [p for p in b if p not in GITBLOCK]
-c_core = [p for p in c if p not in GITBLOCK]
+b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC]
+c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC]
 want, i = splice([p for p in b_core if p not in SHELL4])
 if want is None:
     print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
@@ -352,6 +372,9 @@ else:
 gb = [p for p in c if p in GITBLOCK]
 if gb and gb != GITBLOCK:
     print("git-block rows are present but are not exactly the sanctioned fourteen rows in order — unsanctioned git surface"); sys.exit(1)
+nb = [p for p in c if p in NAMING]
+if nb and nb != NAMING:
+    print("kickoff naming rows are present but are not exactly the sanctioned four in order — unsanctioned naming surface"); sys.exit(1)
 shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells != [s["resource"] for s in SHELL4]:
     print(f"shell resources are {shells}, want exactly the four scoped allows in order (the only other sanctioned shell surface is the cf-58 git block, checked whole above)"); sys.exit(1)

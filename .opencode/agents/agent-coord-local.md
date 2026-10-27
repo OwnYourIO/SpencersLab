@@ -124,6 +124,21 @@ permissions:
   - action: subagent
     resource: agent-research
     effect: allow
+  - action: execute
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_create
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_list
+    resource: '*'
+    effect: allow
+  - action: opencode_session_move
+    resource: '*'
+    effect: allow
+  - action: opencode_session_rename
+    resource: '*'
+    effect: allow
   - action: edit
     resource: .agents/plans/**/STATE.json
     effect: allow

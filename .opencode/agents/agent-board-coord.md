@@ -1,9 +1,9 @@
 ---
 description: >-
-  Board-driven coordinator (-local): pulls work cards from the WeKan AI-Dev
-  board and runs the approved plan chunk by chunk via plan/research/dev/review
-  subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; commits each
-  chunk, never pushes
+  Board-driven coordinator (commit-only alias of agent-board-coord-local): pulls
+  work cards from the WeKan AI-Dev board and runs the approved plan chunk by
+  chunk via plan/research/dev/review subagents; writes only STATE.json,
+  DECISIONS.md and FRICTION.md; commits each chunk, never pushes
 mode: primary
 name: agent-board-coord
 color: '#22c55e'
@@ -126,6 +126,18 @@ permissions:
     resource: agent-research
     effect: allow
   - action: execute
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_create
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_list
+    resource: '*'
+    effect: allow
+  - action: opencode_session_move
+    resource: '*'
+    effect: allow
+  - action: opencode_session_rename
     resource: '*'
     effect: allow
   - action: dev_boards*

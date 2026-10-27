@@ -127,6 +127,25 @@ opencode:
     - action: subagent
       resource: agent-research
       effect: allow
+    # Kickoff naming surface: Code Mode's `execute` is the only transport
+    # that exposes the `tools.opencode.*` namespace, and nested calls
+    # re-check the agent's allow-list — so the reachable set is pinned by
+    # the four per-tool allows (worktree create/list, session rename/move).
+    - action: execute
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_create
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_session_move
+      resource: '*'
+      effect: allow
+    - action: opencode_session_rename
+      resource: '*'
+      effect: allow
     - action: edit
       resource: .agents/plans/**/STATE.json
       effect: allow

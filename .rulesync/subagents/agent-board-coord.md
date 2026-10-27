@@ -2,7 +2,7 @@
 targets:
   - '*'
 name: agent-board-coord
-description: 'Board-driven coordinator (-local): pulls work cards from the WeKan AI-Dev board and runs the approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; commits each chunk, never pushes'
+description: 'Board-driven coordinator (commit-only alias of agent-board-coord-local): pulls work cards from the WeKan AI-Dev board and runs the approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; commits each chunk, never pushes'
 opencode:
   mode: primary
   color: '#22c55e'
@@ -128,6 +128,22 @@ opencode:
       resource: agent-research
       effect: allow
     - action: execute
+      resource: '*'
+      effect: allow
+    # Kickoff naming surface: nested calls re-check the agent's allow-list,
+    # so the reachable set of `tools.opencode.*` is pinned by the four
+    # per-tool allows (worktree create/list, session rename/move) — nothing
+    # else in the namespace, dev_boards* stays the only MCP server grant.
+    - action: opencode_worktree_create
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_session_move
+      resource: '*'
+      effect: allow
+    - action: opencode_session_rename
       resource: '*'
       effect: allow
     - action: dev_boards*

@@ -128,6 +128,18 @@ permissions:
   - action: execute
     resource: '*'
     effect: allow
+  - action: opencode_worktree_create
+    resource: '*'
+    effect: allow
+  - action: opencode_worktree_list
+    resource: '*'
+    effect: allow
+  - action: opencode_session_move
+    resource: '*'
+    effect: allow
+  - action: opencode_session_rename
+    resource: '*'
+    effect: allow
   - action: dev_boards*
     resource: '*'
     effect: allow

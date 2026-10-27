@@ -295,6 +295,10 @@ cat >"$TMP/family.py" <<'PY'
 #                                opencode '*' allow rule.
 #   board FILE                 — dev_boards* allow once, after the leading
 #                                deny-all; execute allow present.
+#   naming FILE                — the execute transport allow plus exactly the
+#                                four kickoff opencode_* per-tool allows in
+#                                order (worktree create/list, session
+#                                move/rename); no other opencode_* row.
 import re, sys, yaml
 
 def fm(path):
@@ -312,6 +316,14 @@ def skillloads(path):
 
 def sh(res, eff):
     return {"action": "shell", "resource": res, "effect": eff}
+
+# The kickoff naming surface (2026-10-27): MCP actions are permissioned as
+# <server>_<tool>, so these rows — not the inert `opencode` anchor — are the
+# grant, and `execute` is the transport that exposes the namespace at all.
+NAMING = [{"action": "opencode_worktree_create", "resource": "*", "effect": "allow"},
+          {"action": "opencode_worktree_list",   "resource": "*", "effect": "allow"},
+          {"action": "opencode_session_move",    "resource": "*", "effect": "allow"},
+          {"action": "opencode_session_rename",  "resource": "*", "effect": "allow"}]
 
 GIT_READS = ["git status *", "git log *", "git diff *", "git show *", "git branch *",
              "git merge-base *", "git rev-parse *", "git ls-files *"]
@@ -431,6 +443,17 @@ def cmd():
             fail(f"board: {path} lost the execute allow (Code Mode transport)")
         if any(r.get("action") == "dev*" for r in p):
             fail(f"board: {path} grew the broad dev* allow (D21: narrow dev_boards* only)")
+    elif op == "naming":
+        path = sys.argv[2]
+        p = perms(path)
+        if not any(r.get("action") == "execute" and r.get("resource") == "*" and r.get("effect") == "allow" for r in p):
+            fail(f"naming: {path} lacks the execute allow — Code Mode is the only transport for tools.opencode.*, without it the naming surface is invisible")
+        seq = [r for r in p if r in NAMING]
+        if seq != NAMING:
+            fail(f"naming: {path} kickoff naming rows are {seq}, want exactly the four per-tool allows (worktree create/list, session move/rename) in order")
+        extra = [r for r in p if str(r.get("action", "")).startswith("opencode_") and r not in NAMING]
+        if extra:
+            fail(f"naming: {path} grew unsanctioned opencode_* rows: {extra} — the role contract grants the naming surface only")
     else:
         fail(f"family.py: unknown subcommand '{op}'"); sys.exit(2)
 
@@ -689,6 +712,27 @@ PY
   if python3 "$TMP/family.py" parity "${CF_SRC[0]}" "$TMP/fab-alias.md" >/dev/null 2>&1; then
     fail "A10[family-integrity]: NEGATIVE CONTROL FAILED — the parity guard accepted a fabricated permission row (it degenerated; alias drift would pass silently)"
   fi
+  # (b2) naming negative control — dropping a kickoff naming row must red the
+  # guard (the same shipped code the A12 live loop runs)
+  python3 - "${CF_SRC[1]}" "$TMP/fab-naming.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+text = open(src).read()
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+assert m, f"{src}: no frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+target["permissions"] = [p for p in (target.get("permissions") or [])
+                         if p.get("action") != "opencode_session_move"]
+if key:
+    fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  if python3 "$TMP/family.py" naming "$TMP/fab-naming.md" >/dev/null 2>&1; then
+    fail "A10[family-integrity]: NEGATIVE CONTROL FAILED — the naming guard accepted a file missing the session_move allow"
+  fi
   # (c) push-policy controls on the -pr variant (real file denies main; stripping denies flips it)
   v=$(python3 "$TMP/family.py" policy "${CF_SRC[2]}" 'git push origin main' 2>/dev/null || true)
   [ "$v" = "deny" ] || fail "A10[family-integrity]: effective verdict for 'git push origin main' on agent-coord-pr is '$v', want deny (trailing main deny load-bearing; red-before-C03 when the file is absent)"
@@ -724,7 +768,7 @@ PY
   python3 "$TMP/sectgrep.py" "$SUITE_GATE" all \
     '081b57889' 'f11bfcb85' '916044893' 'historical' 'arm A' 'arm B' 'cf-58' \
     || fail "A10[family-integrity]: $SUITE_GATE header lost the cf-52-era base documentation (arm A/arm B refs, historical markers) or the cf-58 re-pin note"
-  ok "A10[family-integrity]: parity/policy guards reject fabricated drift and flip on stripped denies (negative controls pass), the history anchors resolve, and the re-pinned sibling blocks keep their shipped twins"
+  ok "A10[family-integrity]: parity/policy/naming guards reject fabricated drift and flip on stripped denies (negative controls pass), the history anchors resolve, and the re-pinned sibling blocks keep their shipped twins"
 fi
 
 # --- A11: agent-dev variant pair — git rows + push policy + wiring (C02) --------
@@ -799,6 +843,8 @@ if want a12; then
     esac
     python3 "$TMP/family.py" roster "$f" "$slot" || fail "A12[C03]: $f roster dev slot wrong (want $slot)"
     python3 "$TMP/family.py" gitrows "$f" "$cls"  || fail "A12[C03]: $f git block wrong for class $cls"
+    python3 "$TMP/family.py" naming "$f" || fail "A12[C03]: $f kickoff naming surface broken (want the execute allow + the four opencode_* allows in order)"
+    python3 "$TMP/family.py" naming "$g" || fail "A12[C03]: $g kickoff naming surface broken on the generated mirror"
     case "$f" in
       *board-coord*) python3 "$TMP/family.py" board "$f" || fail "A12[C03]: $f board extras (dev_boards*/execute) broken";;
     esac
