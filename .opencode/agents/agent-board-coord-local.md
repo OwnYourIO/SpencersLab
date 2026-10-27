@@ -140,7 +140,7 @@ permissions:
   - action: opencode_session_rename
     resource: '*'
     effect: allow
-  - action: dev_boards*
+  - action: dev-boards*
     resource: '*'
     effect: allow
   - action: edit

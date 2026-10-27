@@ -706,7 +706,8 @@ if want t14; then
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-kickoff-mints-run-branch/*|\
       .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
-      .agents/plans/2026/2026-10-bug-tests-edit-perms/*) : ;;
+      .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
+      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
@@ -841,9 +842,9 @@ edits = sorted(p.get("resource") for p in perms if p.get("action") == "edit")
 if edits != sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"]):
     errs.append(f"edit allows are {edits}, want only the three plan-state files")
 if board:
-    db = [i for i, p in enumerate(perms) if p.get("action") == "dev_boards*"]
+    db = [i for i, p in enumerate(perms) if p.get("action") == "dev-boards*"]
     if len(db) != 1 or db[0] < 1 or perms[db[0]].get("effect") != "allow":
-        errs.append("the single narrow dev_boards* allow is gone (board variants keep it)")
+        errs.append("the single narrow dev-boards* allow is gone (board variants keep it)")
     if not any(p.get("action") == "execute" and p.get("effect") == "allow" for p in perms):
         errs.append("execute allow lost from a board variant (Code Mode transport)")
     if any(p.get("action") == "dev*" for p in perms):

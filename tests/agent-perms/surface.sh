@@ -19,7 +19,8 @@
 # A6[AC5-regen/AC6-hold] A7[AC6-AC7] A8[AC6-parse-safety] A9[AC9-admits]
 # A10[AC9-or-form→cf-58 mechanism-integrity] A11[C02 git rows + push policy]
 # A12[C03 six-family: alias parity, git block order, roster dev slot]
-# A13[C02 AC5/C03 AC7 rename sweep + command→agent pairing].
+# A13[C02 AC5/C03 AC7 rename sweep + command→agent pairing]
+# A14[bug-board-coord-dev-boards-allow AC6: MCP action-glob vs registered server-name spelling].
 #
 # Red posture: A1-A4 — the permission rows and the text rows do not exist
 # yet; every red line names the missing rule/row, never a harness fault.
@@ -41,8 +42,12 @@
 # content). Validation-at-fault re-pins, user-approved: C04 round (P4 of
 # the pipeline-push-pr suite) and C02 round (A11's policy filter is
 # action-scoped — the first form's fnmatch(action,"*") was a tautology that
-# let the block's trailing MCP-tier rows overwrite the git verdicts).
-# After each chunk lands, `bash tests/agent-perms/surface.sh` must pass the
+# let the block's trailing MCP-tier rows overwrite the git verdicts). A14 is
+# the 2026-10-bug-board-coord-dev-boards-allow guard: RED against the
+# pre-fix frontmatter (all three board-coord files carried the dead
+# underscore glob), GREEN at this landing; its fabricated-dev_boards*
+# negative control proves the guard non-vacuous offline. After each chunk
+# lands, `bash tests/agent-perms/surface.sh` must pass the
 # subset its chunk owns; the full suite is green at the end of C03.
 #
 # Sweep-scope judgment (recorded for review): C02 AC5 ("no bare agent-dev
@@ -137,11 +142,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 13); do WANT["a$i"]=1; done
+  for i in $(seq 1 14); do WANT["a$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^a([1-9]|1[0-3])$ ]] || fail "unknown check id '$a' (expected A1..A13)"
+    [[ "$lc" =~ ^a([1-9]|1[0-4])$ ]] || fail "unknown check id '$a' (expected A1..A14)"
     WANT["$lc"]=1
   done
 fi
@@ -293,7 +298,7 @@ cat >"$TMP/family.py" <<'PY'
 #   api FILE                   — exactly the two scoped opencode-api shell
 #                                allows, in order, directly after the single
 #                                opencode '*' allow rule.
-#   board FILE                 — dev_boards* allow once, after the leading
+#   board FILE                 — dev-boards* allow once, after the leading
 #                                deny-all; execute allow present.
 #   naming FILE                — the execute transport allow plus exactly the
 #                                four kickoff opencode_* per-tool allows in
@@ -436,13 +441,13 @@ def cmd():
         path = sys.argv[2]
         p = perms(path)
         deny_at = next((i for i, r in enumerate(p) if r.get("action") == "*" and r.get("resource") == "*" and r.get("effect") == "deny"), None)
-        db = [i for i, r in enumerate(p) if r.get("action") == "dev_boards*"]
+        db = [i for i, r in enumerate(p) if r.get("action") == "dev-boards*"]
         if deny_at is None or len(db) != 1 or db[0] < deny_at or p[db[0]].get("effect") != "allow":
-            fail(f"board: {path} dev_boards* single allow-after-deny-all shape broken (found deny@{deny_at}, dev_boards@{db})")
+            fail(f"board: {path} dev-boards* single allow-after-deny-all shape broken (found deny@{deny_at}, dev-boards@{db})")
         if not any(r.get("action") == "execute" and r.get("resource") == "*" and r.get("effect") == "allow" for r in p):
             fail(f"board: {path} lost the execute allow (Code Mode transport)")
         if any(r.get("action") == "dev*" for r in p):
-            fail(f"board: {path} grew the broad dev* allow (D21: narrow dev_boards* only)")
+            fail(f"board: {path} grew the broad dev* allow (D21: narrow dev-boards* only)")
     elif op == "naming":
         path = sys.argv[2]
         p = perms(path)
@@ -846,7 +851,7 @@ if want a12; then
     python3 "$TMP/family.py" naming "$f" || fail "A12[C03]: $f kickoff naming surface broken (want the execute allow + the four opencode_* allows in order)"
     python3 "$TMP/family.py" naming "$g" || fail "A12[C03]: $g kickoff naming surface broken on the generated mirror"
     case "$f" in
-      *board-coord*) python3 "$TMP/family.py" board "$f" || fail "A12[C03]: $f board extras (dev_boards*/execute) broken";;
+      *board-coord*) python3 "$TMP/family.py" board "$f" || fail "A12[C03]: $f board extras (dev-boards*/execute) broken";;
     esac
     python3 "$TMP/pairsync.py" "$f" "$g" agent \
       || fail "A12[C03]: $f and $g out of sync — regenerate, never hand-edit .opencode/"
@@ -1013,6 +1018,88 @@ PY
     a13_pair_note="-pr command trio absent yet — its pairing + pointer arms engage with pipeline-pr.md (red-before-C03 by era, not a C02 failure)"
   fi
   ok "A13[C02 AC5 + C03 AC4/AC7]: binding surfaces and suites free of the retired dev-role wiring; AGENTS.md/rules roster row era-correct; four plain commands pair unchanged, hourly never -pr; $a13_pair_note"
+fi
+
+# --- A14: MCP action-glob spelling vs the project's registered server names ---
+# 2026-10-bug-board-coord-dev-boards-allow AC6. OpenCode registers each MCP
+# tool as `<config server name>_<tool>` with hyphens kept (opencode.ai docs
+# "Glob patterns": my-mcp* matches my-mcp_search), so an action glob that
+# re-spells a server name with underscores matches NOTHING and dies silently
+# behind the family's leading deny-all — the dev_boards* failure that cost
+# board runs their native board surface. Offline by construction: parses the
+# subagent sources plus .opencode/opencode.jsonc, no OpenCode runtime. Scope:
+# project-registered servers only — machine-global fleet names are not repo-
+# resolvable, and separator-free family-wide globs (dev*, readonly*, admin*,
+# global*) stay exempt because they match by leading segment under any reading.
+# Red posture: against the pre-fix frontmatter this check REDS on all three
+# board-coord files — verified 2026-10-27 against git base 4813c13d3 before
+# the source re-spell landed. The live matcher proof (AC7) rides on the next
+# agent-board-coord launch, not on this suite.
+if want a14; then
+  cat >"$TMP/mcpshape.py" <<'PY'
+import json, re, sys, glob, yaml
+
+def strip_jsonc(s):
+    out, i, n, instr, esc = [], 0, len(s), False, False
+    while i < n:
+        c = s[i]
+        if instr:
+            out.append(c)
+            if esc: esc = False
+            elif c == '\\': esc = True
+            elif c == '"': instr = False
+            i += 1
+            continue
+        if c == '"':
+            instr = True; out.append(c); i += 1; continue
+        if c == '/' and i + 1 < n and s[i+1] == '/':
+            while i < n and s[i] != '\n': i += 1
+            continue
+        if c == '/' and i + 1 < n and s[i+1] == '*':
+            j = s.find('*/', i + 2)
+            i = n if j < 0 else j + 2
+            continue
+        out.append(c); i += 1
+    return re.sub(r',(\s*[}\]])', r'\1', ''.join(out))
+
+SERVERS = set(json.loads(strip_jsonc(open(".opencode/opencode.jsonc").read()))
+              .get("mcp", {}).get("servers", {}))
+FAMILY = ("dev", "admin", "readonly", "global")
+
+def offenders(path):
+    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+    if not m:
+        return []
+    fm = yaml.safe_load(m.group(1)) or {}
+    perms = (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
+    bad = []
+    for p in perms:
+        a = str(p.get("action", ""))
+        if not a.endswith("*"):
+            continue
+        stem = a[:-1].split("*")[0]
+        if stem in FAMILY:
+            continue
+        if stem.startswith(FAMILY) and stem not in SERVERS:
+            bad.append(a)
+    return bad
+
+if len(sys.argv) == 3 and sys.argv[1] == "control":
+    sys.exit(0 if offenders(sys.argv[2]) else 1)
+
+hits = []
+for path in sorted(glob.glob(".rulesync/subagents/agent-*.md")):
+    hits += [f"{path}: {a}" for a in offenders(path)]
+if hits:
+    print("; ".join(hits))
+    sys.exit(1)
+PY
+  python3 "$TMP/mcpshape.py" \
+    || fail "A14[AC6]: a server-name-shaped MCP action glob diverges from the registered server name by separator substitution — the dead-literal class (2026-10-bug-board-coord-dev-boards-allow)"
+  sed 's/dev-boards\*/dev_boards*/' .rulesync/subagents/agent-board-coord.md >"$TMP/fake-divergent.md"
+  python3 "$TMP/mcpshape.py" control "$TMP/fake-divergent.md" \
+    || fail "A14[AC6]: NEGATIVE CONTROL FAILED — the guard accepted a fabricated dev_boards* (it degenerated; real spelling drift would pass silently)"
+  ok "A14[AC6]: every per-server MCP action glob in .rulesync/subagents/ equals a name registered in .opencode/opencode.jsonc mcp.servers verbatim (hyphen included); separator-substituted fabrication rejected; family-wide globs exempt"
 fi
 
 printf 'PASS: agent-perms contract checks (%d ok)\n' "$checks"

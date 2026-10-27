@@ -247,17 +247,17 @@ if want c5; then
   for f in "$PERM_SRC" "$PERM_GEN"; do
     row=$(grep -E '^\|[[:space:]]*board-coord[[:space:]]*\|' "$f" || true)
     [ -n "$row" ] || fail "c5: $f has no board-coord row in the role matrix"
-    echo "$row" | grep -qF 'dev_boards' \
-      || fail "c5: $f board-coord row does not carry the NARROW dev_boards* spelling (D21)"
+    echo "$row" | grep -qF 'dev-boards' \
+      || fail "c5: $f board-coord row does not carry the NARROW dev-boards* spelling (D21 — server-name spelling, re-pinned 2026-10-27 by 2026-10-bug-board-coord-dev-boards-allow)"
     # The row may mention broad `dev*` ONLY as the denial D21 records; an
     # un-negated `dev*` in the row would re-grant the fleet-wide surface.
     if echo "$row" | grep -qF '`dev*`' && ! echo "$row" | grep -qE 'not[^|]*`dev\*`'; then
-      fail "c5: $f board-coord row grants/mentions \`dev*\` without negating it — D21: narrow dev_boards* only"
+      fail "c5: $f board-coord row grants/mentions \`dev*\` without negating it — D21: narrow dev-boards* only"
     fi
     grep -qE '^\|[[:space:]]*coord[[:space:]]*\|' "$f" \
       || fail "c5: $f lost the coord row (merge, do not replace)"
   done
-  ok "c5: permissions.md (source + generated) carries the board-coord row with narrow dev_boards*, coord row intact"
+  ok "c5: permissions.md (source + generated) carries the board-coord row with narrow dev-boards*, coord row intact"
 fi
 
 # --- c6: the agent-coord (non-board) text C04 must leave alone (C04 AC4) -------
@@ -302,7 +302,8 @@ if want c7; then
       .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
       .rulesync/subagents/*|.opencode/agents/*|.rulesync/commands/*|.opencode/commands/*|\
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
-      .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*) : ;;
+      .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
+      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

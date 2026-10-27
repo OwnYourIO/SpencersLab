@@ -133,7 +133,7 @@ opencode:
     # Kickoff naming surface: nested calls re-check the agent's allow-list,
     # so the reachable set of `tools.opencode.*` is pinned by the four
     # per-tool allows (worktree create/list, session rename/move) — nothing
-    # else in the namespace, dev_boards* stays the only MCP server grant.
+    # else in the namespace, dev-boards* stays the only MCP server grant.
     - action: opencode_worktree_create
       resource: '*'
       effect: allow
@@ -146,7 +146,7 @@ opencode:
     - action: opencode_session_rename
       resource: '*'
       effect: allow
-    - action: dev_boards*
+    - action: dev-boards*
       resource: '*'
       effect: allow
     - action: edit

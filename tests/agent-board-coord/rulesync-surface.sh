@@ -7,7 +7,7 @@
 # RE-CREATED on the re-cut base as a SUPERSET of the deleted
 # `git show 09696ae57:tests/agent-board-coord/rulesync-surface.sh` (D25): c1-c8
 # keep the upstream ticket's pinned contracts (five section titles, the
-# frontmatter shape, narrow dev_boards*, the launch-command target) so the
+# frontmatter shape, narrow dev-boards*, the launch-command target) so the
 # new checks extend, never replace, them (D7). Deliberate adaptations to the
 # new base: id selection so C02/C03 reviews can run before C04 lands the
 # permissions row (the dev-mcp-fleet.sh convention), the rulesync npx ladder
@@ -222,13 +222,13 @@ def has(a, r, e):
     return any(p.get("action") == a and p.get("resource") == r and p.get("effect") == e for p in perms)
 if not has("question", "*", "allow"):
     errs.append("explicit question allow missing (repo hard rule)")
-if not has("dev_boards*", "*", "allow"):
-    errs.append("dev_boards* allow missing (the variant's single MCP permission)")
+if not has("dev-boards*", "*", "allow"):
+    errs.append("dev-boards* allow missing (the variant's single MCP permission — server-name spelling: MCP tool ids keep the hyphen, re-pinned 2026-10-27 by 2026-10-bug-board-coord-dev-boards-allow)")
 # D21 adjudication: the re-cut onto main brought a fleet-wide `dev*`
 # convention, but board-coord consumes card intake/exit only — least privilege
 # survives, so the broad action must stay ABSENT, not merely be accompanied.
 if any(p.get("action") == "dev*" for p in perms):
-    errs.append("broad dev* allow present — D21 rules board-coord keeps ONLY narrow dev_boards*")
+    errs.append("broad dev* allow present — D21 rules board-coord keeps ONLY narrow dev-boards*")
 subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
 # cf-58 C03 re-pin: the roster names the VARIANT dev slot — the alias
 # board-coord is -local semantics, so its dev slot is agent-dev-local, and
@@ -247,12 +247,12 @@ if errs:
 # last-match-wins: the allow must sit after the leading deny-all
 idx = {i: p for i, p in enumerate(perms)}
 deny_all = [i for i, p in idx.items() if p.get("action") == "*" and p.get("resource") == "*" and p.get("effect") == "deny"]
-dev_boards = [i for i, p in idx.items() if p.get("action") == "dev_boards*"]
-if not deny_all or not dev_boards or dev_boards[0] < deny_all[0]:
-    print("the dev_boards allow does not follow the leading deny-all (last-match-wins would deny it)")
+boards_allow = [i for i, p in idx.items() if p.get("action") == "dev-boards*"]
+if not deny_all or not boards_allow or boards_allow[0] < deny_all[0]:
+    print("the dev-boards allow does not follow the leading deny-all (last-match-wins would deny it)")
     sys.exit(1)
 EOF
-  ok "c2: generated agent frontmatter (name, distinct color, question + dev_boards* allows, NO broad dev* (D21), five subagent allows, three edit allows only)"
+  ok "c2: generated agent frontmatter (name, distinct color, question + dev-boards* allows, NO broad dev* (D21), five subagent allows, three edit allows only)"
 
   # cf-58 C02/C03 re-pin: the PORT_REF frozen-permission-walk (the second
   # arm of this check) is RETIRED — the sanctioned delta grew from "the two
@@ -281,7 +281,7 @@ if len(anchors) != 1:
 if perms[anchors[0] + 1:anchors[0] + 3] != API:
     print("the api pair does not sit directly after the opencode '*' allow"); sys.exit(1)
 PY
-  ok "c2: generated agent frontmatter — shape/name/color/desc/dev_boards/roster-slot pins plus API containment at the pinned position (the port byte-walk retired to the absolute family guards)"
+  ok "c2: generated agent frontmatter — shape/name/color/desc/dev-boards/roster-slot pins plus API containment at the pinned position (the port byte-walk retired to the absolute family guards)"
 fi
 
 # --- c3: the generated agent — body keeps the skeleton ------------------------
@@ -327,7 +327,7 @@ if want c6; then
   for f in "$PERM_SRC" "$PERM_GEN"; do
     grep -qE '^\|[[:space:]]*board-coord[[:space:]]*\|' "$f" \
       || fail "c6: $f has no board-coord row in the role matrix (C04 restores it — excluded from C02/C03 review runs)"
-    grep -q 'dev_boards' "$f" || fail "c6: $f does not explain the dev_boards allow"
+    grep -q 'dev-boards' "$f" || fail "c6: $f does not explain the dev-boards allow"
     grep -qE '^\|[[:space:]]*coord[[:space:]]*\|' "$f" \
       || fail "c6: $f lost the coord row (the matrix must stay, not be replaced)"
   done
@@ -399,7 +399,8 @@ if want c8; then
       .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
       .rulesync/subagents/*|.opencode/agents/*|.rulesync/commands/*|.opencode/commands/*|\
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
-      .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*) : ;;
+      .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
+      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

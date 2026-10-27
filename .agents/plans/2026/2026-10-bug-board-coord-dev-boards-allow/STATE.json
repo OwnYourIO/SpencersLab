@@ -1,27 +1,44 @@
 {
   "feature": "2026/2026-10-bug-board-coord-dev-boards-allow",
-  "plan_status": "draft",
+  "plan_status": "complete",
   "coord_session": null,
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-10-26",
+  "updated_at": "2026-10-27",
   "origin": "cf-70 run FRICTION item 1 (agent-board-coord dev-boards MCP not registered); planned standalone by agent-plan 2026-10-26, no board card",
   "baseline": "main 74e4589d9; rulesync generate --check pass; agent-perms + coord-inwork suites pass; rulesync-surface c8 / agents-md c7 red only on dirty main checkout (cf-49 in-flight edits) — run from clean worktree",
+  "landing": {
+    "mode": "direct (user instruction 'fix it in this session' during the cf-75 board run — no agent-test/agent-dev pipeline; code agent landed C01 whole)",
+    "date": "2026-10-27",
+    "branch": "bug-board-coord-dev-boards-allow",
+    "base": "4813c13d3",
+    "note": "plan_status complete = implementation + offline suites green; AC7 live proof (next agent-board-coord launch carries dev-boards tools in catalog) and the cf-70 FRICTION item-1 write-back ride on that boot — cf-70's coord's action, per DECISIONS. Landing commit sha appended by the trailing records commit."
+  },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "DONE (direct landing; offline validation: rulesync-surface 19 ok, gate 22 ok, agents-md 9 ok, coord-inwork 7 ok, agent-perms 14 ok incl. new A14 red-before/green-after, standalone-agents 10 ok, pipeline-push-pr 6 ok; kickoff-branch m4 + session-origin s4 designed-red in the fix->commit window, green re-verified at the landing commit)",
+      "handoffs": [
+        {
+          "from": "code (direct, user-instructed)",
+          "status": "DONE",
+          "chunk": "C01",
+          "deviations": "suite scope 5->7 (kickoff-branch/session-origin gained pins post-plan); single source file -> all three board-coord sources per alias-twin discipline; new check shipped as A14 (plan's A11 slot taken by cf-58)",
+          "friction": "see FRICTION.md 2026-10-27 entries (scheduled-session agent=code, designed-window red m4/s4)",
+          "open_questions": "AC7 live boot; schedule job's agent selection (user-side); playwright_browser_* sweep rides the cf-70-item-2 sibling ticket"
+        }
+      ]
     }
   },
   "blocked": [],
   "deferred": [
     "AC7 live proof: next agent-board-coord launch catalog carries dev-boards tools (human/coord)",
     "cf-70 FRICTION item 1 open->fixed write-back rides on AC7 (cf-70's coord, not this ticket)",
-    "sibling ticket for cf-70 FRICTION item 2 (opencode/shell grants on coord variants)"
+    "sibling ticket for cf-70 FRICTION item 2 (opencode/shell grants on coord variants)",
+    "OpenChamber scheduled-launch agent selection: this run spawned as code, not agent-board-coord (FRICTION 2026-10-27 item 1) — user-side schedule check"
   ]
 }

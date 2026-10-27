@@ -56,3 +56,41 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 - The `playwright_browser_*` rules in hand-managed `.opencode/opencode.jsonc` may be
   dead under the same tool-id model (no server named plain `playwright`); out of scope,
   recorded here as a candidate for the item-2 sibling sweep.
+
+## Landing record (2026-10-27)
+- 2026-10-27 direct-landing (user instruction "fix it in this session" — the ticket ran
+  with NO agent-test/agent-dev pipeline: the `code` agent of the cf-75 board session
+  landed C01 whole, plan-of-record tasks T1-T6, in one branch commit set on
+  `bug-board-coord-dev-boards-allow`): the dead `dev_boards*` re-spelled to
+  `dev-boards*` in ALL THREE board-coord sources (alias + `-local` + `-pr` — the plan's
+  file list named only the alias; the alias-twin same-commit discipline and the
+  t17/A12/coord-inwork/kickoff-branch/session-origin board arms pin the literal on
+  every variant, so a one-file fix would have landed a red family) plus their
+  generated mirrors via `rulesync generate` (second run no-op, `--check` clean).
+- Suite re-pins grew from five to SEVEN: tests/kickoff-branch/surface.sh and
+  tests/session-origin/surface.sh had gained `dev_boards*` pins between the plan base
+  (74e4589d9) and this landing base (4813c13d3 — the cf-52 SHELL4/cf-58 re-pins);
+  grep-enumerated per the chunk's discipline, re-pinned with the others.
+- A14 shipped as the new check id in tests/agent-perms/surface.sh (the plan's "A11"
+  slot was taken by cf-58's git-rows check at landing time; A14 was free). RED-BEFORE
+  EVIDENCE (AC6 posture assertion): the checker run against
+  `git show 4813c13d3:.rulesync/subagents/agent-board-coord{,-local,-pr}.md` flagged
+  `dev_boards*` in all three files (live-verified 2026-10-27 pre-commit); green after.
+  Negative control (fabricated dev_boards* file rejected) ships inside the check.
+- T5 SWEEP (record-only): `.rulesync/` is free of further server-name-shaped globs
+  with separator divergence (family-wide `dev*`/`readonly*`/`admin*`/`global*` are the
+  exempt leading-segment forms). The hand-managed `.opencode/opencode.jsonc` permissions
+  array carries ~dozens of `playwright_browser_*` ACTION rows (L1005+) — under the same
+  tool-id model those can match no registered server (`dev-playwright`/`global-playwright`
+  ids keep the hyphen) — CONFIRMED candidate for the cf-70-item-2 sibling ticket; NOT
+  edited here (hand-managed project config, out of scope). The inert
+  `action: opencode '*'` anchors (documented by e0d7fb767 as the pin the suites splice
+  against) are the same class — left standing per that commit's decision.
+- Designed-window red (e0d7fb767 precedent): m4/s4 in kickoff-branch/session-origin
+  delta-walk `git show HEAD:` vs worktree, so between source-fix and commit they read
+  "extra dev-boards*/missing dev_boards*" — green expected at the landing commit;
+  verified post-commit below.
+- Live proof (AC7) status: THIS very session proved the hyphen model empirically —
+  after the harness reload the Code Mode catalog exposed `dev-boards` as
+  `tools["dev-boards"]` (26 tools, snake_case args, called natively for the card
+  pickup/claim). A board-coord run on the fixed grants is the formal AC7 turnstile.

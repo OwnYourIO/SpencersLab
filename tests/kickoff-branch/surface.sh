@@ -438,9 +438,9 @@ if shells not in ([s["resource"] for s in SHELL3], [s["resource"] for s in SHELL
     print(f"shell resources are {shells}, want exactly the three or four scoped allows in order (the only other sanctioned shell surface is the cf-58 git block, checked whole above)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
-if need_dev_boards and not any(p.get("action") == "dev_boards*" and p.get("resource") == "*"
+if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resource") == "*"
                                and p.get("effect") == "allow" for p in c):
-    print("dev_boards* allow missing from a board-coord file"); sys.exit(1)
+    print("dev-boards* allow missing from a board-coord file"); sys.exit(1)
 PY
 
 cat >"$TMP/atpos3.py" <<'PY'
@@ -511,7 +511,7 @@ cat >"$TMP/m4-shape.py" <<'PY'
 # last-match-wins makes order load-bearing), no shell grant touches git, the
 # bash grants are exactly the landed mint pair or the landed mint + landed
 # session-origin pair (no third bash grant), question allow kept, and the
-# variant's MCP posture (none on plain coord, single dev_boards* after deny on
+# variant's MCP posture (none on plain coord, single dev-boards* after deny on
 # board-coord).
 import re, sys, yaml
 src, gen, need_dev_boards = sys.argv[1], sys.argv[2], sys.argv[3] == 'dev-boards'
@@ -534,14 +534,14 @@ if [p.get("resource") for p in bashish] not in (["bash scripts/kickoff-mint-bran
 if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in ps):
     errs.append("question allow lost (repo hard rule)")
 if need_dev_boards:
-    db = [i for i, p in enumerate(ps) if p.get("action") == "dev_boards*"]
+    db = [i for i, p in enumerate(ps) if p.get("action") == "dev-boards*"]
     deny_at = next((i for i, p in enumerate(ps) if p.get("action") == "*" and p.get("effect") == "deny"), None)
     if len(db) != 1 or not (deny_at is not None and db[0] > deny_at):
-        errs.append("the single narrow dev_boards* allow after the deny-all is gone")
+        errs.append("the single narrow dev-boards* allow after the deny-all is gone")
     if any(p.get("action") == "dev*" for p in ps):
         errs.append("broad dev* allow appeared (D21)")
 else:
-    if any(p.get("action") in ("dev*", "dev_boards*") for p in ps):
+    if any(p.get("action") in ("dev*", "dev_boards*", "dev-boards*") for p in ps):
         errs.append("a board MCP allow appeared on the plain coord")
 if errs:
     print("; ".join(errs)); sys.exit(1)

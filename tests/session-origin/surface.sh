@@ -380,9 +380,9 @@ if shells != [s["resource"] for s in SHELL4]:
     print(f"shell resources are {shells}, want exactly the four scoped allows in order (the only other sanctioned shell surface is the cf-58 git block, checked whole above)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
-if need_dev_boards and not any(p.get("action") == "dev_boards*" and p.get("resource") == "*"
+if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resource") == "*"
                                and p.get("effect") == "allow" for p in c):
-    print("dev_boards* allow missing from a board-coord file"); sys.exit(1)
+    print("dev-boards* allow missing from a board-coord file"); sys.exit(1)
 PY
 
 cat >"$TMP/atpos4.py" <<'PY'
@@ -557,14 +557,14 @@ edits = sorted(p.get("resource") for p in ps if p.get("action") == "edit")
 if edits != sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"]):
     errs.append(f"edit allows are {edits}")
 if need_dev_boards:
-    db = [i for i, p in enumerate(ps) if p.get("action") == "dev_boards*"]
+    db = [i for i, p in enumerate(ps) if p.get("action") == "dev-boards*"]
     deny_at = next((i for i, p in enumerate(ps) if p.get("action") == "*" and p.get("effect") == "deny"), None)
     if len(db) != 1 or not (deny_at is not None and db[0] > deny_at):
-        errs.append("the single narrow dev_boards* allow after the deny-all is gone")
+        errs.append("the single narrow dev-boards* allow after the deny-all is gone")
     if any(p.get("action") == "dev*" for p in ps):
         errs.append("broad dev* allow appeared (D21)")
 else:
-    if any(p.get("action") in ("dev*", "dev_boards*") for p in ps):
+    if any(p.get("action") in ("dev*", "dev_boards*", "dev-boards*") for p in ps):
         errs.append("a board MCP allow appeared on the plain coord")
 if errs:
     print("; ".join(errs)); sys.exit(1)
@@ -756,7 +756,7 @@ if want s4; then
     python3 "$TMP/shape4.py" "$s" "$g" "$adb" \
       || fail "s4: permission shape contract broken for the $s/$g pair"
   done
-  ok "s4: fourth scoped allow 'bash scripts/session-origin.sh*' present in all four coord files at the pinned position (OR-form + line twins 3:3/0:12/atpos12; controls accept the sanctioned form and reject the three-allow state, a fabricated fifth row and off-anchor placement); fmshape, deny-baseline, dev_boards*/none posture and the NQ1 glob spelling hold"
+  ok "s4: fourth scoped allow 'bash scripts/session-origin.sh*' present in all four coord files at the pinned position (OR-form + line twins 3:3/0:12/atpos12; controls accept the sanctioned form and reject the three-allow state, a fabricated fifth row and off-anchor placement); fmshape, deny-baseline, dev-boards*/none posture and the NQ1 glob spelling hold"
 fi
 
 # --- s5: containment + permissions.md (C02 AC5/AC6) ---------------------------------

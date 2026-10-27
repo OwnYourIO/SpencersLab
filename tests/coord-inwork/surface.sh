@@ -316,9 +316,9 @@ edits = sorted(p.get("resource") for p in perms if p.get("action") == "edit")
 if edits != sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"]):
     errs.append(f"edit allows are {edits}, want only the three plan-state files")
 if board:
-    db = [i for i, p in enumerate(perms) if p.get("action") == "dev_boards*"]
+    db = [i for i, p in enumerate(perms) if p.get("action") == "dev-boards*"]
     if len(db) != 1 or db[0] < 1 or perms[db[0]].get("effect") != "allow":
-        errs.append("the single narrow dev_boards* allow is gone (board variants keep it)")
+        errs.append("the single narrow dev-boards* allow is gone (board variants keep it)")
     if not any(p.get("action") == "execute" and p.get("effect") == "allow" for p in perms):
         errs.append("execute allow lost from a board variant (Code Mode transport)")
     if any(p.get("action") == "dev*" for p in perms):
