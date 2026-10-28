@@ -11,17 +11,15 @@ clusterName: OVERRIDE_VIA_APPSET
 
 # Chart definitions for appset-charts.yaml (rendered by the base chart).
 # Each chart can have: namespace, ServerSideApply, version, repository
+#
+# cf-77 run 2 (Q-C consolidation): Strata is deliberately NOT a charts: entry
+# here — it is a second controller of the llama-swap Application (enabled by
+# the seven flags in the llama-swap block below). No ingress host by the Q4
+# ruling, no appset entry by the consolidation ruling; the old standalone
+# release prunes via GitOps at the next sync.
 charts:
   # Internal charts (no version/repository - uses charts/ directory)
   llama-swap:
-    namespace: default
-    ServerSideApply: "false"
-  # cf-77: the internal Strata engine pod (release gpu-ai-strata; its
-  # ClusterIP Service is the peers proxy target below). Privileged +
-  # hostPath device mounts, like llama-swap — same ServerSideApply
-  # "false" posture. No ingress.subdomains entry: the deliberate trio
-  # deviation, commented at the ingress block.
-  strata:
     namespace: default
     ServerSideApply: "false"
   external-secrets-bitwarden:
@@ -112,6 +110,50 @@ llama-swap:
                   secretKeyRef:
                     name: hf-token
                     key: token
+      # The second controller of this Application (cf-77 run 2, Q-C
+      # consolidation). The chart ships it default-OFF; the SEVEN scalars
+      # below flip it ON — controller + service + the five strata-*
+      # persistence entries. They flip TOGETHER by design: advancedMounts
+      # onto a disabled controller hard-fails the render, and the template-
+      # side companion guard catches the reverse gap, so no partial set can
+      # deploy a headless or configless pod (the suite's subset probes pin
+      # both directions).
+      # Scalars ONLY, never lists: Helm deep-merge REPLACES lists wholesale,
+      # so overriding engineProfile args, model env lists or mount lists from
+      # this block would silently truncate the chart's seed (run-1 warning,
+      # relocated here). Scalars (e.g. a per-model unloadTimeout) may be
+      # overridden from the strata data block below — keep the chart pod
+      # block's 420 > 180 + 30 grace/unload invariant intact when doing so.
+      strata:
+        enabled: true
+    service:
+      strata:
+        enabled: true
+    persistence:
+      strata-config:
+        enabled: true
+      strata-profile:
+        enabled: true
+      strata-kfd:
+        enabled: true
+      strata-dri:
+        enabled: true
+      strata-shm:
+        enabled: true
+  # Workload DATA for that controller: deep-merged OVER the chart's strata:
+  # container (pod shape, inner llama-swap config, run-config profiles,
+  # (p | s) matrix — see charts/llama-swap/values.yaml). Peer models route
+  # through config.peers below. Keyless by C-A: the run-config profiles ship
+  # api_key "none" and no secret chain exists to re-add.
+  strata:
+    # ROCr device index hiding the 8060S (PR #3636 ran 0); the on-target
+    # rocminfo gate retargets this key, never the template (C04 runbook).
+    rocrVisibleDevices: "0"
+    # RAM law (Q2): the inner posture is lazy + ttl 0 — the llama.cpp trio
+    # coexists only until the first Strata request pins the ~47 GiB arena;
+    # the escape is POST /api/models/unload on the inner instance, and final
+    # arena sizing is fixed by the on-target --plan gate (C04 human step 3),
+    # not here.
   config:
     macros:
       q38-common: |
@@ -385,13 +427,16 @@ llama-swap:
         preload:
           - qwen3.8-27b-q8
           - qwen3-embedding-0.6b
-    # cf-77: routes the internal strata pod's models through this surface
-    # (charts/strata, release gpu-ai-strata). Peers is NOT a blanket URL
+    # cf-77: routes the internal strata pod's models through this surface —
+    # since the run-2 consolidation the pod is a controller of THIS release,
+    # so the proxy is the in-app cluster-internal Service name (app-template
+    # fullname + controller key; pinned verbatim by the suite's peers
+    # evidence file). Peers is NOT a blanket URL
     # proxy: `models` must list the inner IDs explicitly — one per line, so
     # the C05 strix append lands as a clean one-liner. The proxy carries NO
     # /v1 suffix: the request path is appended verbatim, a suffix would
     # double-prefix every route (RESEARCH §3). No apiKey — the inner runs
-    # apiKeys: [] (the Q4/Q5 quarantine; the peers entry points at a URL,
+    # apiKeys: [] (the keyless C-A ruling; the peers entry points at a URL,
     # not a secret). responseHeader 1800 is the cold-start knob (O2): the
     # first Strata request pins the ~47 GiB arena, which takes minutes.
     # This matches the inner healthCheckTimeout. Peer models stay OUT of
@@ -399,7 +444,7 @@ llama-swap:
     # the RAM law remains operator discipline (C04 runbook).
     peers:
       strata:
-        proxy: http://gpu-ai-strata.default.svc.cluster.local:8080
+        proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
         models:
           - qwen3.8-flash-next-strata
           - qwen3.8-flash-next-strata-strix
@@ -437,30 +482,3 @@ llama-swap:
         # 66.2 GiB) is solo - dense-weight resident too big for the trio.
         # flash-next q5/q6 are deliberately in NO set at all (see vars note).
         solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
-
-# charts/strata release values — the ApplicationSet values slice for the
-# internal Strata engine pod (chart defaults in charts/strata/values.yaml;
-# deep-merged). Peer models route through config.peers above.
-strata:
-  # Repo law puts the OVERRIDE_VIA_CUSTOM_VALUES sentinel in this service
-  # block and the UUID in custom-values/gpu-ai/prod-values.yaml. That UUID is
-  # a PENDING placeholder until the operator creates the Bitwarden item
-  # `strata` (plan human step 1, DECISIONS Q5) — until then the strata pod
-  # alone strands on the missing secret and the llama.cpp surface is
-  # unaffected.
-  bitwardenIds:
-    strata-api-key: OVERRIDE_VIA_CUSTOM_VALUES
-  # ROCr device index hiding the 8060S (PR #3636 ran 0); the on-target
-  # rocminfo gate retargets this key, never the template (C04 runbook).
-  rocrVisibleDevices: "0"
-  # RAM law (Q2): the inner posture is lazy + ttl 0 — the llama.cpp trio
-  # coexists only until the first Strata request pins the ~47 GiB arena; the
-  # escape is POST /api/models/unload on the inner instance, and final arena
-  # sizing is fixed by the on-target --plan gate (C04 human step 3), not
-  # here. The chart's commented toggles (preload flip, --kv-grow R4,
-  # --vision R2, --batch-mtp) edit charts/strata/values.yaml, not this
-  # block: engineProfile.args and the model env are LISTS and Helm
-  # deep-merge replaces lists wholesale, so overriding them here would
-  # silently truncate the seed. Scalars (e.g. the per-model unloadTimeout)
-  # may be overridden from this block — keep terminationGracePeriodSeconds
-  # 420 > unloadTimeout + 30 s drain intact when doing so.

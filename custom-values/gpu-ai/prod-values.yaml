@@ -20,13 +20,3 @@ hivetools:
 llama-swap:
   bitwardenIds:
     hf-token: 2ebdd082-4996-440b-a8c1-b4de01130738
-
-# Strata engine API key — placeholder, NOT a real UUID: the Bitwarden item
-# `strata` (fields store, custom field api_key) does not exist yet. Human
-# pre-sync step (plan human-owned step 1, DECISIONS Q5): create it and
-# replace PENDING-OPERATOR-UUID via its own PR. Until then the strata pod
-# alone strands on the secret (the llama.cpp surface is unaffected — the
-# peers route carries no key material).
-strata:
-  bitwardenIds:
-    strata-api-key: PENDING-OPERATOR-UUID
