@@ -1,9 +1,10 @@
 # containers/strata — `ghcr.io/ownyourio/strata`
 
 Strata inference engine (Qwen3.8-Flash-Next host) + llama-swap supervisor,
-bundled for the gpu-ai `strata` pod (`charts/strata`, cf-77). PID 1 is
-llama-swap; the engine runs as its supervised child via the documented
-`strata serve` CLI and a run-config JSON. The upstream launch path
+bundled for the gpu-ai `strata` pod — the in-chart strata controller of
+`charts/llama-swap` (cf-77). PID 1 is llama-swap; the engine runs as its
+supervised child via the documented `strata serve` CLI and a run-config
+JSON. The upstream launch path
 (tini + `/opt/strata/entrypoint.sh run`) is deliberately NOT used —
 [Niko1221/Strata issue #3421](https://github.com/Niko1221/Strata/issues/3421)
 (engine-as-child without the wrapper is "a larger design", still open there)
@@ -120,10 +121,11 @@ self-tunes with `tools/hip/tune_hipblaslt.cpp` (PR #3636 ran gfx1201 on
 `.github/workflows/docker-build.yaml` detects this changed directory on PRs
 (build-only, never pushes) and on merges to `main`/`dev` pushes
 `:v<run_number>` (immutable, monotonic) + `:main` (rolling). There is no
-version or tag to bump by hand here. `charts/strata` follows the repo's
-new-container rule: `:main` + `pullPolicy: Always` with a pin-me note until
-the first `:v<run>` exists, then Renovate-pinned `:v<run>`. Bundle size: the
-gfx120x base is ~2.8 GB on disk and the added halo engine root measures
+version or tag to bump by hand here. The in-chart strata controller of
+`charts/llama-swap` follows the repo's new-container rule: `:main` +
+`pullPolicy: Always` with a pin-me note until the first `:v<run>` exists,
+then Renovate-pinned `:v<run>`. Bundle size: the gfx120x base is ~2.8 GB
+on disk and the added halo engine root measures
 ~0.65 GB uncompressed (layer-listing arithmetic, 2026-10-28) plus the
 supervisor's single Go binary — the accepted price of one image serving
 both flavors (splitting into two container dirs is only on "past

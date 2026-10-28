@@ -1,8 +1,9 @@
 # Strata engine + llama-swap supervisor bundle for the gpu-ai strata pod
-# (consumer: charts/strata). PID 1 is llama-swap and the engine arrives as
-# its child through the documented `serve` CLI + run-config JSON; the
-# upstream tini + entrypoint.sh launch path is replaced by design. The
-# interface contract C02/C05 build against lives in README.md.
+# (consumer: the in-chart strata controller of charts/llama-swap). PID 1
+# is llama-swap and the engine arrives as its child through the documented
+# `serve` CLI + run-config JSON; the upstream tini + entrypoint.sh launch
+# path is replaced by design. The interface contract C02/C05 build against
+# lives in README.md.
 
 # Pin shape = the 2026-10-27 coord ruling (b): literal flavor-complete tags,
 # no renovate comment on this depName (no repo manager extracts a

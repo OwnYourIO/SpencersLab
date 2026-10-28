@@ -1,5 +1,0 @@
-# Tests run from the source checkout, not from the installed chart.
-tests/
-*.pyc
-__pycache__/
-.pytest_cache/
