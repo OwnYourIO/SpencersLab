@@ -74,13 +74,13 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
       "dev_rounds": 1,
       "dev_session": "ses_e7c4d2efffferl2SYgYlxR0a3R",
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7c409fdaffer0ZNhPcK9rsexY, 2026-10-28: losslessness independently proven (0 lost/0 unexplained/1 sanctioned diff); OFF byte-parity reproduced; scope + untouched-pins corroborated; the residual no-live-path red genuinely C03-attributed per the test docstring; 1 plan-doc nit non-blocking)",
       "handoffs": [
         {
           "stage": "dev",
@@ -91,6 +91,14 @@
           "files": ["charts/strata/** (9 tracked files deleted, dir gone incl. gitignored dep tgz)", "containers/strata/Dockerfile", "containers/strata/README.md"],
           "validations": "re-home pre-verified: templates pairwise diff = sanctioned deltas only; values structured compare vs parent — superset pod block, keyless removals, persistence 1:1; README content preserved via git history for C04 (flagged); pytest charts/llama-swap 21F/243P/2S (dir-absent GREEN; no-live-path clears fully only when C03 rewrites 4 service-comment lines per the test docstring's own attribution — same wave, not a faulty test); containers 17P; helm clean; aislop 100; scope exact",
           "ledger_note": "wave-2 end-state expectation: 13F = C03:9 + C04:11 + no-live-path flipping with C03 — C02 review must not chase that red"
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7c409fdaffer0ZNhPcK9rsexY",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "21F/243P/2S exact with full attribution; containers 17P; OFF byte-parity reproduced (451c149a…); ls-files zero; workflows/gitignore/parent lock zero churn; aislop 100; re-home losslessness machine-checked (0 lost/0 unexplained/1 sanctioned diff)",
+          "nit_recorded": "chunks/C02.md task-3 remainder list under-enumerates (both remainder sets owned+pinned downstream) — plan-doc refinement, not rework"
         }
       ]
     },
