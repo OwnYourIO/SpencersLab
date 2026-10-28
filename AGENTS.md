@@ -195,6 +195,18 @@ role × permission matrix is in the `agents-sync` skill references
   judged faulty is never fixed by the reviewer — coord routes a mechanical
   repair silently back to the test session; only a fix that session flags
   `NEEDS_INFO` as functionality-changing becomes a user question.
+- There is no docker daemon in agent sessions (Coder workspace). A
+  container chunk's `docker build` AC is CI-primary: `docker-build.yaml`
+  on the pushed branch is authoritative; locally, dev captures
+  build-critical facts from the pinned base images' GHCR layer tar-listings
+  and manifest digests and reports them honestly in `commands_run`. A
+  `docker build => no-daemon, CI-deferred` line is the designed passing
+  gate shape, not a deviation (ruled 2026-10-28, cf-77).
+- Agent-shell tooling recipes: `helm` lives at `~/.local/bin` — export
+  `PATH=$HOME/.local/bin:$PATH` before suite runs and renders (without it
+  pytest silently mass-skips its helm-guarded tests); `aislop` runs via
+  `npx`; pytest runs per-directory (test basenames duplicate across chart
+  suites).
 - Deep research is commissioned, never ad hoc: any agent that needs it
   reports the need via RESULT, `agent-coord` launches `agent-research`
   (storm skill + `global-searxng`), and the summary lands in the feature
