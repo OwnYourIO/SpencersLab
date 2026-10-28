@@ -1,0 +1,10 @@
+apiVersion: v2
+name: strata
+description: Internal Strata engine pod (llama-swap supervisor owning strata serve) for gpu-ai — exposed through the existing llama-swap surface only (cf-77)
+type: application
+version: 1.0.0
+appVersion: "0.2.7"
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/

@@ -1,0 +1,25 @@
+# Pinned expectation for the ONLY additive delta cf-77 C03 allows on the
+# gpu-ai outer llama-swap render against the byte-immutable golden
+# (test_c02_2_config_layer_macros_matrix_hooks_scalars). The gpu box gets no
+# peers entry — its golden stays untouched. Authored in the cf-77 test session
+# (coordinator residual 4: golden/evidence expectations are test-writer
+# property); dev must not edit this file.
+#
+# models_allowed encodes the C05 endpoint state; the test pins must_include,
+# allowed-set membership, first-element ordering, and no duplicates — so the
+# interim (C03-only, one ID) and final (C05, two IDs) renders both hold while
+# any other content fails loudly.
+#
+# Shape provenance: RESEARCH §3 (peer entry = required proxy+models;
+# responseHeader 1800 = O2 cold-start ruling; no apiKey = inner `apiKeys: []`
+# quarantine; NO /v1 suffix — paths append verbatim).
+strata:
+  proxy: http://gpu-ai-strata.default.svc.cluster.local:8080
+  timeouts:
+    responseHeader: 1800
+    connect: 30
+  models_must_include:
+    - qwen3.8-flash-next-strata
+  models_allowed:
+    - qwen3.8-flash-next-strata
+    - qwen3.8-flash-next-strata-strix

@@ -99,15 +99,68 @@ def test_c03_ac2_non_flashnext_models_identical_gpu_ai():
 # --- AC2: catalog-wide config surface other than models/macros is identical
 
 
+# cf-77 peers carve-out (user ruling 2026-10-28; run cf-77-feat-strata-
+# llama-swap, cross-ticket escalation routed through the test session). The
+# Q4-mandated gpu-ai `peers:` entry IS a top-level delta this 2026-10-26
+# baseline predates — sanctioned, so it gets an EXACT exception instead of a
+# baseline re-capture (the fixture stays byte-intact; history keeps the delta
+# visible). Tolerated shape, pinned to evidence/strata-peers-expected.yaml as
+# the single source: peers absent from the base; peers == {"strata": {proxy,
+# models, timeouts}} with the evidence's proxy/timeouts and models equal to
+# one of the evidence's two sanctioned lists. Anything else — another
+# top-level key, a second peer, apiKey/filters, a byte off proxy/timeouts, or
+# a models list outside the sanctioned states — stays RED. C05 grows the
+# models list by appending the strix id: that flows through the evidence
+# file's models_allowed state, and the evidence update is TEST-SESSION
+# property — C05 dev routes its list change via RESULT/coord, never edits
+# the evidence itself.
+
+
+_STRATA_PEERS_EVIDENCE = L.TESTS_DIR / "evidence" / "strata-peers-expected.yaml"
+
+
+def _cf77_peers_carved(base: dict, cur: dict) -> bool:
+    """True iff the ONLY top-level base→cur difference is the pinned cf-77
+    peers delta (then callers carve `peers` and stay strict on everything
+    else). Exactness lives here: key sets and values compared against the
+    evidence file, never against a copy of its contents."""
+    import yaml
+
+    if "peers" in base or base.get("peers") is not None:
+        return False
+    if cur.get("peers") is None:
+        return False
+    others = [k for k in (set(base) | set(cur)) - {"models", "macros", "peers"}
+              if base.get(k) != cur.get(k)]
+    if others:
+        return False
+    evidence = yaml.safe_load(_STRATA_PEERS_EVIDENCE.read_text())["strata"]
+    peers = cur["peers"]
+    if not isinstance(peers, dict) or set(peers) != {"strata"}:
+        return False
+    entry = peers["strata"]
+    if not isinstance(entry, dict) or set(entry) != {"proxy", "models", "timeouts"}:
+        return False
+    if entry["proxy"] != evidence["proxy"] or entry["timeouts"] != evidence["timeouts"]:
+        return False
+    return entry["models"] in (list(evidence["models_must_include"]),
+                               list(evidence["models_allowed"]))
+
+
 def test_c03_ac2_matrix_hooks_scalars_identical():
     _skip_without_helm()
     base = L.baseline_config("gpu-ai")
     cur = L.rendered_config("gpu-ai")
+    carved = _cf77_peers_carved(base, cur)
     diffs = []
-    for key in sorted((set(base) | set(cur)) - {"models", "macros"}):
+    for key in sorted((set(base) | set(cur)) - {"models", "macros"} -
+                      ({"peers"} if carved else set())):
         b, c = base.get(key), cur.get(key)
         if b != c:
             diffs.append(f"{key}: {b!r} -> {c!r}")
+    if not carved and cur.get("peers") != base.get("peers"):
+        diffs.append("peers delta present but NOT the pinned cf-77 evidence shape — "
+                     "see the carve-out comment; evidence changes route through the test session")
     assert not diffs, (
         "gpu-ai: non-models config surface diverged (matrix sets/vars guard the solo-"
         "matrix membership and no-preload rules C03 must keep; hooks.preload and the "
