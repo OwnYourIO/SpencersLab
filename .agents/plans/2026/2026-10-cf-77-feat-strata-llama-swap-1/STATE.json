@@ -77,10 +77,22 @@
       "status": "pending",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
+      "dev_session": "ses_e7c4d2efffferl2SYgYlxR0a3R",
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "dev",
+          "session": "ses_e7c4d2efffferl2SYgYlxR0a3R",
+          "at": "2026-10-28",
+          "commit": "99a9c010e",
+          "status": "DONE",
+          "files": ["charts/strata/** (9 tracked files deleted, dir gone incl. gitignored dep tgz)", "containers/strata/Dockerfile", "containers/strata/README.md"],
+          "validations": "re-home pre-verified: templates pairwise diff = sanctioned deltas only; values structured compare vs parent — superset pod block, keyless removals, persistence 1:1; README content preserved via git history for C04 (flagged); pytest charts/llama-swap 21F/243P/2S (dir-absent GREEN; no-live-path clears fully only when C03 rewrites 4 service-comment lines per the test docstring's own attribution — same wave, not a faulty test); containers 17P; helm clean; aislop 100; scope exact",
+          "ledger_note": "wave-2 end-state expectation: 13F = C03:9 + C04:11 + no-live-path flipping with C03 — C02 review must not chase that red"
+        }
+      ]
     },
     "C03": {
       "status": "pending",
