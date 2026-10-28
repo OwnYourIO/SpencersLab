@@ -56,11 +56,29 @@ permissions:
     resource: .opencode/skills/**
     effect: deny
   - action: edit
-    resource: .kilo/**
+    resource: .kilo/plans/**
     effect: deny
   - action: edit
-    resource: .agents/**
+    resource: .kilo/skills/**
     effect: deny
+  - action: edit
+    resource: .kilo/agents/**
+    effect: deny
+  - action: edit
+    resource: .kilo/commands/**
+    effect: deny
+  - action: edit
+    resource: .agents/skills/**
+    effect: deny
+  - action: edit
+    resource: .agents/agents/**
+    effect: deny
+  - action: edit
+    resource: .agents/commands/**
+    effect: deny
+  - action: edit
+    resource: .agents/notes/**
+    effect: allow
   - action: read
     resource: '*'
     effect: allow

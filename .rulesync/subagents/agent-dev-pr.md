@@ -60,15 +60,37 @@ opencode:
     - action: edit
       resource: .opencode/skills/**
       effect: deny
-      # Plans and registry-managed third-party skills stay closed
-      # (.kilo is a symlink to .agents; both spellings listed because
-      # matchers differ on symlink resolution — order: this deny is last)
+      # Agent machinery (ticket plans, synced third-party skills, agent and
+      # command definitions) stays closed (.kilo is a symlink to .agents;
+      # both spellings listed because matchers differ on symlink resolution
+      # — order: these denies are last). .agents/notes/** is free-form repo
+      # content (AGENTS.md): the former blanket .agents/** deny over-reached
+      # it and forced shell-channel runbook writes twice (cf-77 FRICTION
+      # 2026-10-27/28).
     - action: edit
-      resource: .kilo/**
+      resource: .kilo/plans/**
       effect: deny
     - action: edit
-      resource: .agents/**
+      resource: .kilo/skills/**
       effect: deny
+    - action: edit
+      resource: .kilo/agents/**
+      effect: deny
+    - action: edit
+      resource: .kilo/commands/**
+      effect: deny
+    - action: edit
+      resource: .agents/skills/**
+      effect: deny
+    - action: edit
+      resource: .agents/agents/**
+      effect: deny
+    - action: edit
+      resource: .agents/commands/**
+      effect: deny
+    - action: edit
+      resource: .agents/notes/**
+      effect: allow
     - action: read
       resource: '*'
       effect: allow
