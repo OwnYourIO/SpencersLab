@@ -1,0 +1,37 @@
+{{- /*
+Gated on the strata controller flag (index form: dotted access through the
+hyphenated app-template key is a Go-lexer error). Silent while the seven
+strata flags stay OFF. No pre-sync quarantine note lives here: under the
+keyless ruling (C-A) no secret state exists for the pod to strand on.
+*/ -}}
+{{- if (index .Values "app-template" "controllers" "strata" "enabled") -}}
+{{- /* .Release.Name doubles as the app-template fullname here: it always
+contains the chart name (gpu-ai-llama-swap), so fullname dedups to it and
+the controller-suffix rule yields <release>-strata exactly. */ -}}
+{{- $strataSvc := printf "%s-strata" .Release.Name -}}
+strata is the second controller of THIS release and stays cluster-INTERNAL
+by the operator's Q4 ruling — no ingress, no host of its own. The sanctioned
+client route is the gpu-ai llama-swap `peers:` entry, which rewrites the
+request model to the inner ID on forward. Its proxy URL is this controller's
+Service — app-template fullname plus the controller key, e.g.
+gpu-ai-llama-swap-strata — never guessed, and with NO /v1 suffix: the
+request path appends verbatim (RESEARCH §3):
+
+  http://{{ $strataSvc }}.default.svc.cluster.local:8080
+
+Debug access from outside the cluster (kubectl only — this is not a client
+path):
+
+  kubectl -n default port-forward svc/{{ $strataSvc }} 8080:8080
+  curl -s http://127.0.0.1:8080/health      # the supervisor — answers while the arena is cold
+  curl -s http://127.0.0.1:8080/v1/models   # inner roster; lazy posture means nothing is pinned yet
+
+Keyless by the C-A ruling: both run-configs ship api_key "none", no secret
+exists for this workload, and clients send no Authorization header.
+
+The first Strata request pins the ~47 GiB arena and takes minutes (startup
+probe 150x10s + healthCheckTimeout 1800 absorb it); afterwards residency is
+permanent (ttl 0) — POST /api/models/unload/qwen3.8-flash-next-strata is the
+escape, sized by unloadTimeout 180. Send that first request only while the
+llama.cpp trio is idle and strata cold (RAM law, runbook sequencing).
+{{- end -}}
