@@ -41,13 +41,27 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e8035f9d4ffeHsspi4Xb56ZqAo",
+      "handoffs": [
+        {
+          "at": "2026-10-27",
+          "role": "agent-dev-local",
+          "session": "ses_e8035f9d4ffeHsspi4Xb56ZqAo",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [skills/wekan-mcp/SKILL.md, skills/wekan-mcp/references/call-shapes.md, skills/wekan-api/SKILL.md, .rulesync/rules/overview.md, AGENTS.md (generated)]\ncommands_run: [bash tests/wekan-mcp/skill-surface.sh t1-t8 => pass; bash tests/wekan-mcp/tools.sh => pass; bash tests/agent-board-coord/rulesync-surface.sh => pass; bash tests/agent-board-coord/agents-md.sh => pass; bash tests/agent-board-coord/gate.sh => pass; bash tests/agent-perms/surface.sh => pass; bash tests/standalone-agents/surface.sh => pass; node --test tests/opencode/question-notify.test.ts => pass; npx --no-install rulesync generate x2 (second no-op) + generate --check => pass; npx --no-install aislop ci --changes rc=0 + scan --changes 0/0 => pass; banned-vocab + L<digits> + schema single-owner greps => clean; git diff --name-only bd9e1cf3c..HEAD subset declared files => pass]\ndeviations: two wording-level calls inside declared tasks — (1) wekan-api pointer = 6-line division-of-labour paragraph, pointer-only, pinned regions byte-untouched (tools.sh green); (2) server path is wekan_mcp/server.py (underscore) — read at real path, docs cite correctly. Commit c5025339a local-only, no push, main untouched; mid-implementation schema-footer fix (card AND checklist ids) amended while unpublished.\nfriction: none blocking; glob-hides-dot-directories recurred — shell-find workaround; rulesync+aislop resolved via npx --no-install ladder.\nopen_questions: none\nnext_suggested: agent-review on C01 with CHUNK_BASE=bd9e1cf3c; coord bookkeeping at C01 done gate (draft retirement + follow-up card close), then C02."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-review",
+          "session": "ses_e80286135ffeVt1ivdFKSqTQAi",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nverdict: APPROVED\nfiles_changed: [chunks/C01.md (Review notes only)]\ncommands_run: [skill-surface.sh => pass 8 ok; tools.sh => pass 9 ok; CHUNK_BASE=bd9e1cf3c rulesync-surface.sh => pass 19 ok; agents-md.sh => pass 9 ok; gate.sh => pass 22 ok; agent-perms/surface.sh => pass 14 ok; standalone-agents/surface.sh => pass 10 ok; node question-notify.test.ts => pass 35/0; rulesync generate --check + fresh-generate no-op proof => pass; aislop ci --changes --base bd9e1cf3c => rc=0 0/0; python3 AST cross-check of server.py 26 signatures vs docs => pass; git scope checks => clean]\ndeviations: none from review; dev's two wording deviations judged compliant against ACs\nfriction: none blocking (skill-surface t6 resolves rulesync from PATH fine; glob dot-dir workaround applied)\nopen_questions: none\nnext_suggested: coord marks C01 done + bookkeeping (draft STATE re-status + follow-up card close), then C02.\nreview-note: DEFERRED (out of C01 scope): wekan-api pinned 'full 25-tool surface' line vs 26-tool truth (README + new docs) — pre-existing, inside tools.sh-pinned region."
+        }
+      ]
     },
     "C02": {
       "status": "pending",
