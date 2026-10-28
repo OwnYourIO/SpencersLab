@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-cf-77-feat-strata-llama-swap",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e80cd0c80ffe2e91W28uP8tWZO",
   "test_session": "ses_e8054aefeffeLm55D1vBNX4SfX",
   "test_handoff_note": "One test session authored C01-C05 contracts (commit c375b238b; 12 files). Verbatim RESULT recorded under chunks.C01.handoffs[0]; chunk->file map: C01 containers/strata/tests/test_dockerfile.py; C02 charts/strata/tests/{strata_testlib.py,conftest.py,schema/*,test_render.py,test_config_schema.py}; C03 charts/strata/tests/test_wiring.py + charts/llama-swap/tests/{test_config_parity.py,evidence/strata-peers-expected.yaml}; C04 test_runbook_completeness.py; C05 test_strix_fallback.py. Tests are reds-by-design until dev lands; pre-existing unrelated red: tests/renovate/dockerfile-pins.sh stale uv literal (coder-workspace ticket's, untouched).",
@@ -242,5 +242,12 @@
     }
   },
   "blocked": [],
+  "final_review": {
+    "session": "ses_e7f36487fffelXd4YwNMtiV7Vw",
+    "at": "2026-10-28",
+    "verdict": "APPROVED",
+    "scope": "whole-plan ca0a406..6524f10df (+coord records), planning-tier session",
+    "summary": "full suite green (0F/71P, 0F/173P+2S, 17P); all between-chunk seams clean (exe/peers byte-equality, sentinel chain, runbook↔defaults, DECISIONS end-to-end, repo law); test assets frozen since carve-out; aislop 100/100 CI-form; carried nits all non-blocking-recorded (NOTES.txt strands + sprig quoted-int → one next-touch round candidate; C04 minor+nits recorded)"
+  },
   "deferred": ["8060S+R9700 split mode (follow-up ticket; trigger: short-prompt-dominated traffic)", "source-build container path (guide 2B) unless the 2C bundled image fails on-target", "live benchmark acceptance run (operator-consented, post-merge)", "renovate flavor-scoped versioning rule / ignore for the strata Dockerfile tags (future ticket; interim: human closes/ignores cross-flavor-bleed update PRs — coord ruling shape (b) consequence, DECISIONS 2026-10-27 coordination round)"]
 }
