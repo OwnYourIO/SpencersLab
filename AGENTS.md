@@ -55,12 +55,10 @@ container images (`containers/`). **ArgoCD applies everything — never
   `commands/`, `skills/` (rulesync output — never hand-edit; `.agents/agents`
   and `.agents/commands` symlink into the first two) plus hand-managed
   `plugin/` (`aislop-gate` quality gate on edits; `question-notify` pushes a
-  Home Assistant notification to the user's phone whenever an `agent-*`
-  session asks a question; `board-context` prefetches the board-context block
-  from dev-boards into a board-coord session's first prompt — hand-written
-  like the other two, never rulesync-generated; ships disabled until its
-  live-fire proof is cited in the source) and `opencode.jsonc` (dev half of
-  the agent tool config — see below).
+  Home Assistant notification to the user's phone when an `agent-*` session
+  asks a question, a top-level session finishes or stops on a failure, or a
+  permission approval is still pending 15 s) and `opencode.jsonc` (dev half
+  of the agent tool config — see below).
 - `.rulesync/` — the single source of truth for AI-tool config: `rules/`
   (→ this `AGENTS.md`), `subagents/` (→ `.opencode/agents/`), `commands/`
   (→ `.opencode/commands/`), `skills/` (→ `.opencode/skills/`: the
