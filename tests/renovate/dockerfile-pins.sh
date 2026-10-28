@@ -58,8 +58,8 @@ const CODESERVER_SHA256 = '65bcd20b524d03eb1b5adb7f360244599ef0e5b74089a46a982d3
 // Criterion 2, verbatim. registryUrl '' means the comment has no
 // registryUrl attribute (only the forgejo-cli line does).
 const EXPECTED_NEW = [
-  { datasource: 'node-version', depName: 'node', registryUrl: '', currentValue: 'v26.12.0' },
-  { datasource: 'golang-version', depName: 'golang', registryUrl: '', currentValue: '1.27.2' },
+  { datasource: 'node-version', depName: 'node', registryUrl: '', currentValue: '26.12.1' },
+  { datasource: 'golang-version', depName: 'golang', registryUrl: '', currentValue: '1.27.3' },
   { datasource: 'forgejo-releases', depName: 'forgejo-contrib/forgejo-cli', registryUrl: 'https://codeberg.org', currentValue: 'v0.7.0' },
   { datasource: 'npm', depName: '@opencode/cli', registryUrl: '', currentValue: '2.1.4' },
   { datasource: 'npm', depName: '@openchamber/web', registryUrl: '', currentValue: '2.5.1' },
@@ -67,7 +67,7 @@ const EXPECTED_NEW = [
 const EXPECTED_GITPIN = [
   { datasource: 'github-releases', depName: 'helm/helm', registryUrl: '', currentValue: 'v3.22.1' },
   { datasource: 'github-releases', depName: 'kubernetes/kubernetes', registryUrl: '', currentValue: 'v1.36.5' },
-  { datasource: 'github-releases', depName: 'astral-sh/uv', registryUrl: '', currentValue: '0.13.1' },
+  { datasource: 'github-releases', depName: 'astral-sh/uv', registryUrl: '', currentValue: '0.13.5' },
 ];
 
 let pass = 0, fail = 0;

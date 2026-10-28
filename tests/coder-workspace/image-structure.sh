@@ -21,15 +21,15 @@ DOCKERFILE="$CONTAINER_DIR/Dockerfile"
 STARTUP="$CONTAINER_DIR/workspace-startup.sh"
 
 # Pinned values (DECISIONS #1/#3; C01 acceptance criteria 2/3/5).
-BASE_IMAGE='debian:13-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f'
+BASE_IMAGE='debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad'
 FJ_SHA256='6803c12eed17bfadb40ba95da2a6ab58f9b4a7dc10eabfe3512fce7e2fe6216f'
 
 declare -A PIN=(
-  [NODE_VERSION]='v26.12.0'
-  [GO_VERSION]='1.27.2'
+  [NODE_VERSION]='26.12.1'
+  [GO_VERSION]='1.27.3'
   [HELM_VERSION]='v3.22.1'
   [KUBECTL_VERSION]='v1.36.5'
-  [UV_VERSION]='0.13.1'
+  [UV_VERSION]='0.13.5'
   [FJ_VERSION]='v0.7.0'
   [OPENCODE_VERSION]='2.1.4'
   [OPENCHAMBER_VERSION]='2.5.1'
