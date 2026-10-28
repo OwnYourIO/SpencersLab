@@ -1,11 +1,18 @@
 {
   "feature": "2026/2026-10-cf-77-feat-strata-llama-swap-1",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e80cd0c80ffe2e91W28uP8tWZO",
   "test_session": "ses_e8054aefeffeLm55D1vBNX4SfX",
   "test_handoff_note": "Run-2 re-author pass commit ad8927767 — one suite dir charts/llama-swap/tests/ (91 new/updated, test_strata_* prefix to dodge basename collisions), standalone chart tests dir retired, evidence peers-URL flipped (carve-out reads live so it re-aligns), OFF-parity baseline captured at 44f5f80d2 (double-render deterministic). RED LEDGER: r2-C01→47 (render 20 + config_schema 16 + strix 11), r2-C02→2 (dir-absent + no-live-path), r2-C03→9 (wiring 7 + parity/blast-radius pair), r2-C04→11 (runbook). Greens today 24 (preservation/OFF/parity/untouched/self-checks). One green-early documented: subset_guard controller-only probe passes pre-C01 (docstring marks it not-a-cleared-gate). ESCALATION resolved by coord: strict no-live-path gate kept, 3 containers-pointer lines folded into C02 scope (DECISIONS 2026-10-28 coord entry). Runbook token set = mechanical re-pin via test session if C04 prose words differently.",
   "current_wave": 3,
   "updated_at": "2026-10-28",
+  "final_review": {
+    "session": "ses_e7bf73a12fferKeIaqolqBmBQE",
+    "at": "2026-10-28",
+    "verdict": "APPROVED",
+    "scope": "whole run 2: 1b1f6d5d0..95a634659, planning-tier fresh session",
+    "summary": "suite 0F/264P+2S + containers 17P re-run; OFF byte-parity 451c149a…; production-like ON render 11 objects +4 delta, peers≡evidence, v266 green, zero strata-chain; gpu-box base≡HEAD byte-identical; untouched pins zero churn; aislop 100/0/0 over 48 files; both rulings (C-A keyless-chain-gone, C-B one-Application) machine-verified; Q-D toggle chain zero lost lines vs run-1; candidates: port-forward + step-5-numbering non-blocking-recorded, quoted-int DISPROVEN (bytes are quoted)"
+  },
   "kickoff": {
     "card": "gCcXSu3DZd6NEp97v",
     "card_note": "identity reference only — run 2 is NOT board-driven; card sits in Review, untouched by the pipeline during this run",
