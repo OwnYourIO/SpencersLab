@@ -1038,6 +1038,77 @@ app-template:
           # privileged).
           seccompProfile:
             type: Unconfined
+      # Weight staging as a first-class citizen: the packaged CLI's install
+      # verb is the only authority on the quant layout (repo tree has no
+      # tokenizer/pack listing; the C02 seed paths were VERIFY-marked
+      # hypotheses and the tokenizer one proved a shape error on-target).
+      # `strata install` never starts or serves, so the RAM law is untouched;
+      # markers under /data/install make it idempotent across pod restarts.
+      initContainers:
+        model-fetch:
+          image:
+            repository: ghcr.io/ownyourio/strata
+            # Same rolling tag + PIN-ME habit as the main container of this
+            # pod (brand-new in-repo image; :v<run> pin lands with the first
+            # docker-build.yaml merge).
+            tag: main
+            pullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              # /data/install is the terminal CLI's fixed default root; bind it
+              # to the shared claim so downloads persist exactly where the serve
+              # profiles point (/models/strata). Without the symlink the pull
+              # lands in the ephemeral container layer and vanishes.
+              mkdir -p /models/strata
+              rm -rf /data/install
+              ln -sfn /models/strata /data/install
+              IFS=,
+              for tok in ${STRATA_QUANTS:-q3}; do
+                [ -n "$tok" ] || continue
+                TOK=$(printf '%s' "$tok" | tr 'a-z' 'A-Z')
+                case "$TOK" in
+                  Q3) SIZE=IQ3_S ;;
+                  *)  SIZE=$(printenv "STRATA_MODEL_$TOK" || true) ;;
+                esac
+                if [ -z "$SIZE" ]; then
+                  echo "model-fetch: no model id mapped for quant '$tok' - set env STRATA_MODEL_$TOK (catalog: strata launch --family qwen --model invalid --plan --output json)" >&2
+                  exit 1
+                fi
+                MARK="/data/install/.installed-$TOK"
+                if [ -f "$MARK" ]; then
+                  echo "model-fetch: $tok already staged, skipping"
+                  continue
+                fi
+                echo "model-fetch: staging $tok as $SIZE (family qwen)"
+                /opt/strata/terminal/bin/strata install --family qwen --model "$SIZE" --yes
+                touch "$MARK"
+              done
+              echo "model-fetch: quants [${STRATA_QUANTS:-q3}] staged under /models/strata"
+          env:
+            # Quant set, comma-separated: "q3" today; "q3,q4,q5,q6" for the
+            # full set once each token has a model id — only q3→IQ3_S is
+            # catalog-confirmed (launch --plan, 2026-10-28); q4/q5/q6 map via
+            # STRATA_MODEL_Q4/Q5/Q6 sidecars of this env (loud fail otherwise,
+            # nothing half-guessed). Override deep-merges from the service
+            # block: app-template.controllers.strata.initContainers.model-fetch.env.
+            STRATA_QUANTS: "q3"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            # Download + symlink only: no GPU device access, so the main
+            # container's privileged deviation does not extend here.
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       containers:
         strata:
           image:
