@@ -111,13 +111,13 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C02"],
       "dev_rounds": 1,
       "dev_session": "ses_e7fe5358fffeEt6UETzFrkTqgb",
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7f7bf122ffeautCNODOoje3Ob, 2026-10-28: all 7 validations exact incl. independent 20-probe stress of the carve-out guard; peers byte-exact vs evidence + v266 schema uncarved-subtree; list-merge deviation safe; scope clean; 1 dead-condition nit in guard, non-blocking)",
       "handoffs": [
         {
           "stage": "test",
@@ -149,6 +149,14 @@
           "files": ["charts/llama-swap/tests/test_flashnext_blast_radius.py", "charts/strata/tests/test_render.py"],
           "validations": "llama-swap 0F/173P+2S (carve-out byte-pinned to evidence file, 12 discriminator probes all strict); strata 16F/55P (+1 AC2 no-ES assert); containers 17P",
           "convention": "C05 peers models-list growth flows ONLY via test-session update of strata-peers-expected.yaml — dev never edits evidence"
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7f7bf122ffeautCNODOoje3Ob",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "7/7 exact: llama-swap 0F/173P+2S; charts/strata 16F/55P with all C02/C03-owned green, reds in-kind c04:5+c05:11; containers 17P; helm all pass; peers byte-exact vs evidence + v266 (documented carve, uncarved peers subtree); gpu box peer-less; wiring greps + zero-UUID clean",
+          "notes": "independent 20-probe import battery corroborates the carve-out strictness (refuses modification, order games, second peer, byte drift); C05 can grow the seam WITHOUT touching frozen evidence (models_allowed encodes final state); nit recorded: guard line-129 dead condition (test-session's property, opportunistic)"
         }
       ]
     },
