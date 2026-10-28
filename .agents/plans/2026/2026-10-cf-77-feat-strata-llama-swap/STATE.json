@@ -161,12 +161,13 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01", "C02", "C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "dev_session": "ses_e7f70d4ddffeup3Bmj7Qc09mx3",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7f5fd577ffevTKjL3k0idLx0G, 2026-10-28: all validations exact; scope extension APPROVED after 4-part verification incl. machine-proven base-vs-HEAD byte-identity; eight-set byte-exact, R1 hypothesis posture respected; peers seam sanctioned final state; 1 non-blocking nit quoted-zero hardening)",
       "handoffs": [
         {
           "stage": "test",
@@ -176,6 +177,24 @@
           "status": "DONE",
           "files": ["charts/strata/tests/test_strix_fallback.py"],
           "note": "DNF alternation bar per (p|s) matrix shape (membership-bar false-fail fixed in test audit)."
+        },
+        {
+          "stage": "dev",
+          "session": "ses_e7f70d4ddffeup3Bmj7Qc09mx3",
+          "at": "2026-10-28",
+          "commit": "1e4639812",
+          "status": "DONE",
+          "files": ["charts/strata/values.yaml", "charts/strata/templates/configmap-strata.yaml", "charts/strata/templates/configmap-strata-profile.yaml", "services/gpu-ai/prod/values.yaml", "charts/strata/README.md"],
+          "validations": "charts/strata 5F/66P (all 11 test_c05_* green by name; remaining reds exactly the 5 test_c04_*); llama-swap 0F/173P+2S sanctioned final state; containers 17P; helm + both renders clean; inner 2-model config v266-valid; peers seam = evidence models_allowed order-exact; aislop 100/100; comment-slop hand pass",
+          "deviations_declared": ["configmap-strata.yaml scope extension — rocrVisibleDevicesByModel per-ID map (C02 template injected the shared ROCR key into EVERY model, colliding with the strix flip fact; primary byte-identical)", "strix §5 eight-set lives in profile env{} (AC2 pins profile-layer extraction; constants are upstream-recipe not values-gated)", "no NOTES.txt edit, README-only fallback section (C04 weaves)"]
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7f5fd577ffevTKjL3k0idLx0G",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "charts/strata 5F/66P exact (reds = 5 test_c04_* in-kind); llama-swap 0F/173P+2S sanctioned final; containers 17P; helm+renders clean; 29-probe extract-and-render battery; base-vs-HEAD byte-identity via git archive; test assets byte-frozen since f7b308a6d; aislop 100/100",
+          "notes_for_C04": "README already carries several runbook tokens; 'one-at-a-time' citation still missing from both docs — C04 must add; nit: unquoted-YAML-int 0 vs sprig default (quoted pattern shipped is unaffected)"
         }
       ]
     },
