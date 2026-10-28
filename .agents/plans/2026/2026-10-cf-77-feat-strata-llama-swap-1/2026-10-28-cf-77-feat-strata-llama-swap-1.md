@@ -36,7 +36,7 @@ Verified mechanics the chunks implement:
 | id  | title | size | wave | depends_on | why the dependency |
 |-----|-------|------|------|------------|--------------------|
 | C01 | charts/llama-swap absorbs strata: in-chart controller + moved gated templates + keyless + mount re-keys | M | 1 | [] | — |
-| C02 | delete `charts/strata/` (dir fully re-homed by C01 + test re-home) | S | 2 | [C01] | deletion is safe only after the content lands in the parent |
+| C02 | delete `charts/strata/` (dir fully re-homed by C01 + test re-home) + 3 pointer-prose rewords in containers/strata (image untouched) | S | 2 | [C01] | deletion is safe only after the content lands in the parent |
 | C03 | gpu-ai service values: appset entry out, flags + config nested into `llama-swap:` block, peers URL, custom-values extraction | M | 2 | [C01] | flag/config paths must match C01's landed chart shape (not C02 — the grep-level absence of the dir is asserted by tests regardless of C02 order) |
 | C04 | docs: runbook keyless + swap sequencing; chart-README re-home into charts/llama-swap/README.md | S | 3 | [C01, C03] | documents the final landed shape; last |
 
