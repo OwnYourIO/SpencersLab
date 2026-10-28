@@ -402,6 +402,7 @@ llama-swap:
         proxy: http://gpu-ai-strata.default.svc.cluster.local:8080
         models:
           - qwen3.8-flash-next-strata
+          - qwen3.8-flash-next-strata-strix
         timeouts:
           responseHeader: 1800
           connect: 30

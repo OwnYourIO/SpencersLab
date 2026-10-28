@@ -20,6 +20,16 @@ bitwardenIds: {}
 # (C04 runbook) retargets it with a values edit, not a template edit.
 rocrVisibleDevices: "0"
 
+# Per-model ROCr overrides; a model absent here inherits the value above.
+# The strix fallback must name the OTHER silicon: the primary's index
+# deliberately hides the 8060S, so reusing that value would leave the
+# gfx1151 model with no device to bind. "1" mirrors PR #3636's
+# enumeration (dGPU first, chip second) — VERIFY at the same rocminfo
+# gate; on a chip-only node (the fallback's main scenario) the chip is 0,
+# so set "0" or "" to inherit there.
+rocrVisibleDevicesByModel:
+  qwen3.8-flash-next-strata-strix: "1"
+
 # ---------------------------------------------------------------------------
 # The INNER llama-swap declared config. configmap-strata.yaml renders this
 # subtree to /app/config/config.yaml; keys prefixed `engineProfile` are
@@ -100,6 +110,49 @@ config:
       # hooks:
       #   on_startup:
       #     preload: [qwen3.8-flash-next-strata]
+
+    qwen3.8-flash-next-strata-strix:
+      name: Qwen3.8-Flash-Next IQ3_S (Strix Halo 8060S fallback)
+      description: Strata engine, gfx1151 build on the 8060S iGPU; arena lives in shared LPDDR5X, manual/secondary use, unloads on idle (see charts/strata/README.md, Strix-alone fallback).
+      # Same serve wrapper as the primary (C01 interface freeze) — the
+      # gfx1151-vs-gfx1201 switch is the exe key inside the second
+      # profile, never the image or this flag list.
+      cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-strix-iq3_s.json --host 127.0.0.1 --port ${PORT}'
+      # ttl > 0 = idle SECONDS before unload (the tri-state trap: 0 is
+      # never, not immediately). Secondary use should hand the LPDDR5X
+      # arena back when quiet instead of holding it like the primary's
+      # pinned residency — 1800 is the operator-toggle default, set 0 to
+      # pin forever once warm.
+      ttl: 1800
+      # Page-locked in LPDDR5X just like the primary's VRAM arena — the
+      # same force-kill window logic applies (RESEARCH contradictions #4).
+      unloadTimeout: 180
+      checkEndpoint: /health
+      # The §5 eight-set rides in the run-config profile below instead:
+      # those literals are upstream-recipe constants, not values-gated,
+      # so their single source is engineProfileStrix.env. Only the
+      # no-default fail-fast key lives at this layer (same quarantine as
+      # the primary — unset ${env.} breaks config load, stranding this
+      # pod only).
+      env:
+        - "STRATA_API_KEY=${env.STRATA_API_KEY}"
+      # Rounds differ from the primary's output: the §5 switches are
+      # KL-gated (STRIX_HALO §5 "changes bits") — never A/B the two
+      # profiles token-for-token, compare on the bench suite instead.
+
+  matrix:
+    # The two engines are ALTERNATIVES, never co-loadable: the arenas pin
+    # RAM additively on the 128 GB node and co-residency recreates #1715's
+    # global OOM (RESEARCH §7). "(p | s)" expands to one-model combos, so
+    # the solver evicts the resident arena before starting the other —
+    # the preload-empty hook alone would not stop a request-driven
+    # co-load. vars name model IDs, not aliases (llama-swap matrix
+    # semantics). Both stay lazily reachable; nothing preloads.
+    vars:
+      p: qwen3.8-flash-next-strata
+      s: qwen3.8-flash-next-strata-strix
+    sets:
+      main: "(p | s)"
 
   # -------------------------------------------------------------------------
   # The run-config JSON rendered VERBATIM to /profile/strata-iq3_s.json
@@ -199,6 +252,93 @@ config:
     parallel: 4
     # The cmd's --host flag binds loopback (the supervisor is the pod's only
     # in-pod listener, DECISIONS secrets); the PR ran 0.0.0.0 on a laptop.
+    host: "127.0.0.1"
+
+  # -------------------------------------------------------------------------
+  # The Strix-alone fallback's run-config, rendered VERBATIM to
+  # /profile/strata-strix-iq3_s.json by the same profile ConfigMap. Seed:
+  # UPSTREAM docs/STRIX_HALO.md §5 fast-config — the R1 ruling says NOT
+  # the card's numbers, and not the primary's arena recipe either: the
+  # 8060S runs on shared LPDDR5X, so the residency math is a different
+  # fix-class (#1715). Final sizing: strata serve --plan --output json
+  # (C04, human step 3).
+  # -------------------------------------------------------------------------
+  engineProfileStrix:
+    # C01 interface freeze (containers/strata README): halo label = the
+    # gfx1151 root. Pointing the rx9070 exe at the 8060S loads the wrong
+    # arch kernels; exe is the ONLY flavor switch (same image, same
+    # terminal entry, same weights).
+    exe: /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata
+    # RESEARCH §7 verbatim eight-set — the spellings ARE upstream literals
+    # (normalizing case or names silently no-ops the engine's env parsing,
+    # AC2's bar). gfx1151 auto-enables much of this from §4; §5 sets them
+    # explicitly because they change bits (KL-gated rounds). To disable
+    # the whole auto-set: STRATA_GFX1151_DEFAULTS=0.
+    env:
+      STRATA_PF_FUSED: "1"
+      STRATA_PF_GEMM: "1"
+      STRATA_HC_UPMIX: "1"
+      STRATA_PA_FAST: "1"
+      STRATA_HIP_WMMA: "1"
+      STRATA_SELECT_WMMA: "1"
+      STRATA_PF_SWITCH_MIN_T: "4096"
+      STRATA_PREFILL_STREAM_MIN: "128"
+      # STRATA_PF_FUSED_KQ=1 applies only to K-quant packs; the shipped
+      # IQ3_S pack is not one — enable if the on-target pack ever changes.
+      # STRATA_HC_UPMIX=1 carries the #2706 split-mode hazard history:
+      # startup-log check gate in the fallback runbook (README), flip it
+      # to "0" here if the hazard reproduces on this engine build.
+    args:
+      # Same staged weights/pack/MTP as the primary — one /models/strata
+      # layout serves both profiles (the matrix never runs them at once).
+      - --pack /models/strata/packs/iq3_s
+      - --native /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+      - --ple-gguf /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf
+      - --expert-profile /models/strata/data/expert-profile.bin
+      # VERIFY (R1): the 24576/55 pair has NO upstream source — it is the
+      # card guide's number pair, and 24576 also equals the model's total
+      # expert count, the likely misattribution origin (RESEARCH §7).
+      # They ship because #1715's fix-class is exactly this shape: on a
+      # 128 GB Strix Halo, --expert-cache auto WITHOUT --resident-budget-gib
+      # OOMs globally — the opposite of the primary, where resident-budget
+      # would flip --mmap-experts and break the page-locked arena. Both
+      # numbers are HYPOTHESES until the strata serve --plan --output json
+      # gate (C04 human step 3) finalizes them against real RAM; note
+      # --expert-cache N counts expert SLOTS, not MiB (RESEARCH §2).
+      - --expert-cache 24576
+      - --resident-budget-gib 55
+      # STRIX_HALO §5/§6 fast-config-class prefill chunk for the chip
+      # alone (the primary's 32768 is the PR's R9700-machine value).
+      - --prefill 16384
+      - --max-context 262144
+      - --kv int8
+      - --spec 4
+      - --spec-min-p 0.5
+      - --mtp-window 8192
+      - --mtp /models/strata/mtp/rt
+      # Deliberately absent: --kv-grow (R4 deferral covers strix too),
+      # --vision (R2 off for both profiles), --conversation-cache* (the
+      # primary's 24 GiB x 16 slots is the PR's R9700-machine budget —
+      # the chip's share is the --plan gate's to size, not ours to seed).
+    # Person-wins layer (RESEARCH §2), same rule as the primary.
+    user_args: []
+    # Same tokenizer-shard hypothesis as the primary — --plan gate.
+    tokenizer: /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+    model_name: qwen3.8-flash-next
+    # The matching halo engine root for lib_dirs (the exe's ROCm runtime
+    # ships inside it — same packaged-engine VERIFY as the primary).
+    lib_dirs:
+      - /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo
+    backend: hip
+    aliases:
+      - qwen3.8-flash-next
+    # The visible set is renumbered by the ROCr filter injected per model
+    # above, so [0] is the first (only) visible GPU — the chip for this
+    # profile, whatever its pre-filter index was.
+    gpu: [0]
+    # Mirrors the primary seed (same family recipe); the --plan gate
+    # reviews it for the chip too.
+    parallel: 4
     host: "127.0.0.1"
 
 # ---------------------------------------------------------------------------

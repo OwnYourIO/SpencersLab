@@ -1,10 +1,10 @@
 {{- /*
-Renders config.engineProfile VERBATIM as the strata run-config JSON at
-/profile/<name> — strata serve takes no tuning flags (RESEARCH §2), so the
-on-target --plan fixups (C04 step 3) land as one values edit under
-config.engineProfile, never as a template change. Key vocabulary is
-upstream-owned (profiles.py, RESEARCH §2): helm's JSON writer only
-reorders/escapes, it does not rename.
+Renders the run-config JSONs VERBATIM under /profile — strata serve takes no
+tuning flags (RESEARCH §2), so on-target --plan fixups (C04 step 3) land as
+values edits under config.engineProfile*, never as template changes. Each
+inner model cmd names its profile file with --profile, so the second file is
+the whole flavor switch. Key vocabulary is upstream-owned (profiles.py,
+RESEARCH §2): helm's JSON writer only reorders/escapes, it does not rename.
 */ -}}
 apiVersion: v1
 kind: ConfigMap
@@ -14,3 +14,5 @@ metadata:
 data:
   strata-iq3_s.json: |
     {{- .Values.config.engineProfile | toPrettyJson | nindent 4 }}
+  strata-strix-iq3_s.json: |
+    {{- .Values.config.engineProfileStrix | toPrettyJson | nindent 4 }}

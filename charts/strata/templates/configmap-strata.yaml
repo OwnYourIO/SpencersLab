@@ -2,9 +2,12 @@
 Renders the INNER llama-swap declared config from .Values.config. Keys
 prefixed engineProfile* are chart-side layers (the run-config bodies
 configmap-strata-profile.yaml writes), not llama-swap keys — stripped here.
-ROCR_VISIBLE_DEVICES is injected per model from .Values.rocrVisibleDevices so
-the on-target rocminfo gate (C04 runbook) retargets the device without an
-edit to the rendered config.
+ROCm visibility is injected per model from the values (on-target rocminfo
+gate, C04 runbook): rocrVisibleDevices by default, rocrVisibleDevicesByModel
+overrides by model ID. The override exists because the two inner engines
+target different silicon — the primary's index deliberately hides the
+8060S, so a shared value would leave the strix fallback with no gfx1151
+device to bind.
 */ -}}
 {{- $cfg := deepCopy .Values.config -}}
 {{- range $k := keys $cfg -}}
@@ -12,9 +15,10 @@ edit to the rendered config.
     {{- $_ := unset $cfg $k -}}
   {{- end -}}
 {{- end -}}
-{{- $rocr := printf "ROCR_VISIBLE_DEVICES=%s" .Values.rocrVisibleDevices -}}
-{{- range $model := $cfg.models | default dict -}}
-  {{- $_ := set $model "env" (concat ($model.env | default list) (list $rocr)) -}}
+{{- $byModel := .Values.rocrVisibleDevicesByModel | default dict -}}
+{{- range $name, $model := $cfg.models | default dict -}}
+  {{- $dev := default $.Values.rocrVisibleDevices (get $byModel $name) -}}
+  {{- $_ := set $model "env" (concat ($model.env | default list) (list (printf "ROCR_VISIBLE_DEVICES=%s" $dev))) -}}
 {{- end -}}
 apiVersion: v1
 kind: ConfigMap
