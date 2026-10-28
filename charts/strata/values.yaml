@@ -1,0 +1,368 @@
+# charts/strata — the gpu-ai internal Strata engine pod (cf-77).
+#
+# One privileged pod whose llama-swap supervisor (from the containers/strata
+# image, ghcr.io/ownyourio/strata) owns `strata serve` as a supervised child;
+# public exposure happens THROUGH the existing gpu-ai llama-swap `peers:`
+# route (C03), never from this chart: the deliberate trio-rule deviation —
+# no ingress.subdomains entry here — is the operator's Q4 ruling in
+# DECISIONS 2026-10-27 (a host of its own would publish the pod the peers
+# hop exists to keep private).
+
+# Bitwarden item UUIDs arrive via custom-values (the service-level
+# OVERRIDE_VIA_CUSTOM_VALUES sentinel in services/gpu-ai/prod/values.yaml is
+# repo law; the UUID itself is a human pre-sync step until the operator
+# creates the Bitwarden item `strata`, DECISIONS Q5). Empty by default:
+# secret templates guard on these keys so a render without them stays clean.
+bitwardenIds: {}
+
+# ROCr device index for the engine (PR #3636 hid the 8060S APU with 0).
+# Injected into every model's env at render; the on-target rocminfo gate
+# (C04 runbook) retargets it with a values edit, not a template edit.
+rocrVisibleDevices: "0"
+
+# ---------------------------------------------------------------------------
+# The INNER llama-swap declared config. configmap-strata.yaml renders this
+# subtree to /app/config/config.yaml; keys prefixed `engineProfile` are
+# chart-side layers (run-config JSON bodies consumed by the profile
+# ConfigMap, not llama-swap keys) and are stripped there. The result must
+# validate against the deployed supervisor's v266-pinned schema (the exact
+# tag the image was harvested from — main-only keys false-fail, RESEARCH
+# "Implications/Validation").
+# ---------------------------------------------------------------------------
+config:
+  # 1800 s absorbs the cold arena pin: 46.84 GiB at the PR's measured
+  # 17.3 GiB/s plus engine init (RESEARCH §3/O2; llama-swap restarts the
+  # countdown whenever /health reports new progress, so this bounds the
+  # worst case, not the steady state).
+  healthCheckTimeout: 1800
+
+  # ${PORT} base — pod-local, mirrors the outer instance's numbering habit;
+  # nothing else binds these ports (the engine stays on 127.0.0.1).
+  startPort: 10001
+
+  # Q2 lazy posture: nothing ever unloads on a timer.
+  globalTTL: 0
+
+  # Empty = default-allow. The quarantine decision (DECISIONS 2026-10-27
+  # secrets): the gate lives in ${env.STRATA_API_KEY} breaking config load
+  # until the operator lands the secret, and the outer peers entry needs no
+  # key material.
+  apiKeys: []
+
+  # Upstream engine lines (the pin progress log, the /health JSON) must
+  # reach pod stdout — they are the C04 --plan-gate and unload-timing
+  # evidence trail.
+  logToStdout: "both"
+
+  models:
+    qwen3.8-flash-next-strata:
+      name: Qwen3.8-Flash-Next IQ3_S (R9700 arena)
+      description: Strata engine, experts pinned in a ~47 GiB page-locked RAM arena on the R9700; first request pays the cold pin (minutes), then residency is permanent (ttl 0).
+      # serve takes only --profile/--host/--port (RESEARCH §2) — every
+      # tuning knob lives in the run-config JSON below. `exec` hands the
+      # process to llama-swap for stop/unload, and the ulimit wrapper is
+      # load-bearing: no 0.2.x release self-raises nofile (PR #2399 open)
+      # and HIP expert memory creation fails at ~1k FDs (RESEARCH §2,
+      # contradiction #5). ${PORT} with no hardcoded port keeps this
+      # SanitizeCommand-safe and needs no proxy key.
+      cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-iq3_s.json --host 127.0.0.1 --port ${PORT}'
+      # ttl 0 = NEVER unload (the tri-state trap: 0 is permanent, not
+      # immediate). The escape hatch while the arena is pinned is
+      # POST /api/models/unload/qwen3.8-flash-next-strata (runbook).
+      ttl: 0
+      # llama-swap force-kills at unloadTimeout (global default 10 s) long
+      # before the 420 s pod grace matters — a ~47 GiB page-locked unload
+      # needs this raised window (RESEARCH §3, contradiction #4; timed
+      # unload verification is a C04 on-target gate). terminationGrace-
+      # PeriodSeconds(420) > this + the engine's 30 s drain is the
+      # invariant — keep both values' pairing true when editing either.
+      unloadTimeout: 180
+      # Strata's /health answers only once the model is loaded and needs no
+      # key (RESEARCH §3) — the upstream doc's integration shape.
+      checkEndpoint: /health
+      # PR #3636 one-at-a-time arm's switches (RESEARCH §5; the strix
+      # eight-set is a superset and stays C05's) plus the chart-injected
+      # ROCR entry. STRATA_KV_GROW stays off per the R4 ruling.
+      env:
+        - "STRATA_PF_FUSED=1"
+        - "STRATA_PF_GEMM=1"
+        - "STRATA_PA_FAST=1"
+        - "STRATA_HIP_WMMA=1"
+        - "STRATA_SELECT_WMMA=1"
+        - "STRATA_PREFILL_CPU_SHARE=auto"
+        # No default on purpose: an unset ${env.} reference is a hard
+        # llama-swap config-load failure — that breakage IS the pre-sync
+        # quarantine (plan human step 1), stranding this pod only.
+        - "STRATA_API_KEY=${env.STRATA_API_KEY}"
+      # Lazy by ruling (Q2 + RESEARCH §3: preloading matrix alternatives
+      # swap-loads each other — C05's (p|s) case). Preload flip, only if
+      # on-target ever wants a boot-pinned arena:
+      # hooks:
+      #   on_startup:
+      #     preload: [qwen3.8-flash-next-strata]
+
+  # -------------------------------------------------------------------------
+  # The run-config JSON rendered VERBATIM to /profile/strata-iq3_s.json
+  # (key vocabulary: RESEARCH §2, measured from profiles.py). Seed: PR #3636
+  # readable fork config r9700-arena-pf32k.json (RESEARCH §5) with the
+  # DECISIONS amendment round applied — every removal below is a documented
+  # toggle. The on-target `strata serve --profile ... --plan --output json`
+  # gate (C04, human step 3) fixes final sizing numbers; the R1 ruling is
+  # that no repo value is trusted against real RAM until then.
+  # -------------------------------------------------------------------------
+  engineProfile:
+    # C01 interface freeze (containers/strata README): engine binaries are
+    # referenced from this key, never from cmd — switching flavor = switching
+    # profile, not image. rx9070 label = the gfx120x (R9700) root.
+    exe: /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata
+    # serve's engine child inherits llama-swap's model env (the layer above,
+    # single source of truth); a duplicate here would let serve silently
+    # re-pin a value the chart gates (rocrVisibleDevices, the API key).
+    # C05's strix profile carries its own §5 eight-set instead.
+    env: {}
+    # Paths live under /models/strata on the shared llama-swap claim — the
+    # staging layout the C04 runbook creates (~135-160 GB: 83.62 GB GGUF
+    # pair + pack [size unconfirmed] + MTP ~6 GB, RESEARCH §4). The prefix
+    # keeps this engine's files out of llama.cpp's LLAMA_CACHE=/models
+    # layout on the same disk (DECISIONS Q3).
+    args:
+      - --pack /models/strata/packs/iq3_s
+      # IQ3_S two-shard GGUF (file names measured from the HF repo tree,
+      # ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF@ed59f920); shard 2 is
+      # the PLE file (RESEARCH §4).
+      - --native /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+      - --ple-gguf /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf
+      - --expert-profile /models/strata/data/expert-profile.bin
+      # N is a SLOT count (N times the largest expert blob), not MiB — the
+      # "expert-cache 24576" card-guide number was the conversation cache
+      # (contradiction #3). Seed `auto` per the PR; this node is
+      # identical-class to #1715's 128 GB machine, so the --plan gate fixes
+      # the final number, values-configurable here.
+      - --expert-cache auto
+      - --spec 4
+      - --spec-min-p 0.5
+      - --mtp /models/strata/mtp/rt
+      - --max-context 262144
+      # int8 is the engine default; explicit because the PR ran it
+      # explicitly (RESEARCH §5).
+      - --kv int8
+      - --mtp-window 8192
+      - --prefill 32768
+      # "24576" lives HERE (the misattribution correction, RESEARCH §5):
+      # 24 GiB x 16 slots is the PR's parked-conversation budget — VERIFY
+      # against --plan output (C04 step 3) before the first accepted
+      # request, this plus the arena is the 128 GB math (R3).
+      - --conversation-cache-mib 24576
+      - --conversation-cache-slots 16
+      # Removed per the DECISIONS amendment round — each stays one values
+      # edit away if a ruling changes:
+      # --kv-resident 32768: batch-column item, dropped with the --batch 4
+      #   posture (Q2: one agent at a time, PR stall incident).
+      # --batch-mtp: same batch family; the one-at-a-time arm is the chosen
+      #   posture, so it stays off the seed. Re-add as
+      #   "- --batch-mtp" above if on-target A/B ever wants it.
+      # --kv-grow (R4 deferred, +2-3% @64K only): re-add as
+      #   "- --kv-grow" above; the ulimit wrapper in cmd already covers its
+      #   fd dependency (PR #2399-open regime) and the documented env alias
+      #   is STRATA_KV_GROW=1. The card guide's hold-env mitigation is
+      #   VOID — 0 upstream hits (RESEARCH §2 measured absence). Needs the
+      #   on-target fd experiment (C04) first.
+      # --vision (R2 off for v1; the recipe ran it and mmproj ~0.9 GB):
+      #   re-add as "- --vision /models/strata/mmproj-Qwen3.8-Flash-Next-BF16.gguf"
+      #   above. The vision{} run-config key stays available for that flip.
+      # --resident-budget-gib: removed from the primary — it implies
+      #   --mmap-experts, the opposite of the page-locked arena this
+      #   architecture pins (contradiction #3). It belongs to the Strix
+      #   #1715 fix-class, which is C05's territory.
+      # --prompt-cache-every: removed — #4206 makes it a no-op at the
+      #   --prefill 32768 edge (RESEARCH §2); only pairs with
+      #   --prompt-cache, which the recipe never used.
+    # Person-wins layer that survives config rewrites (RESEARCH §2): empty
+    # until an operator out-ranks the seed.
+    user_args: []
+    # Run-config vocabulary (RESEARCH §2). Pointing the tokenizer at the
+    # main GGUF shard is the hypothesis to confirm at the --plan gate.
+    tokenizer: /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+    model_name: qwen3.8-flash-next
+    # The PR pointed lib_dirs at TheRock's multiarch tree; in the bundled
+    # image the ROCm runtime ships inside the engine root (RESEARCH §1) —
+    # VERIFY at the --plan gate that the packaged engine needs no re-point.
+    lib_dirs:
+      - /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070
+    backend: hip
+    # The peer hop always rewrites the request model to this bare ID
+    # (RESEARCH §3), so routing does not depend on aliases; these carry the
+    # PR's family alias for direct/debug hits on the inner surface.
+    aliases:
+      - qwen3.8-flash-next
+    gpu: [0]
+    parallel: 4
+    # The cmd's --host flag binds loopback (the supervisor is the pod's only
+    # in-pod listener, DECISIONS secrets); the PR ran 0.0.0.0 on a laptop.
+    host: "127.0.0.1"
+
+# ---------------------------------------------------------------------------
+# Pod shape (app-template 5.0.1, repo standard; nesting per charts/llama-swap).
+# ---------------------------------------------------------------------------
+app-template:
+  defaultPodOptions:
+    # Invariant: 420 > unloadTimeout(180) + --shutdown-timeout drain(30
+    # default, 0..300) + slack (RESEARCH §3 amendment). The kubelet SIGKILL
+    # window must beat a clean arena stop or it leaves a half-pinned arena.
+    terminationGracePeriodSeconds: 420
+    securityContext:
+      # DOCKER.md runtime contract: group video+render on the device nodes.
+      # Numeric GIDs are distro-local — the C04 runbook resolves them
+      # on-target and sets this key (deep-merged via the service block).
+      supplementalGroups: []
+
+  controllers:
+    strata:
+      type: deployment
+      # A ~47 GiB pinned arena must never ride a RollingUpdate overlap —
+      # two pods would double-pin the node (#2257 class; the repo lived it
+      # 2026-10-18/19, DECISIONS).
+      strategy: Recreate
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        strata:
+          image:
+            repository: ghcr.io/ownyourio/strata
+            # PIN-ME: brand-new container, no :v<run> exists yet (repo
+            # new-container rule) — docker-build.yaml publishes :v<run_number>
+            # on the first merge; replace this rolling tag with the pin
+            # (+ the renovate habit) as soon as one exists.
+            tag: main
+            pullPolicy: Always
+          # C01 interface freeze (containers/strata README): PID 1 is the
+          # harvested llama-swap binary; args override the image CMD, which
+          # documents the same default config path.
+          args:
+            - "-config"
+            - "/app/config/config.yaml"
+          env:
+            # Consumed as ${env.STRATA_API_KEY} by the inner config (see
+            # the env note there). Keyless-target caveat the plan flagged
+            # (DECISIONS: the key also switches off Strata's DNS-rebinding
+            # Host gate, moot behind the supervisor's loopback hop); the
+            # engine's request-side enforcement rides the C04 on-target
+            # first-request check — flip the run-config api_key to "none"
+            # there if the supervisor hop must stay key-free.
+            STRATA_API_KEY:
+              secretKeyRef:
+                name: strata-api-key
+                key: api_key
+          probes:
+            # Every probe hits the supervisor's own /health — a kubelet
+            # probe at a model/upstream endpoint triggers loads (repo
+            # lesson) and peers/`/upstream` passthrough is not probe-safe
+            # (RESEARCH §3 caveat). llama-swap answers /health itself, so
+            # probes never flap mid-swap (DECISIONS probes ruling).
+            startup:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8080
+                # 150x10s absorbs the cold arena pin in parallel with
+                # healthCheckTimeout (plan Goal, O2 pairing).
+                periodSeconds: 10
+                failureThreshold: 150
+            liveness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8080
+            readiness:
+              enabled: true
+              custom: true
+              spec:
+                httpGet:
+                  path: /health
+                  port: 8080
+          resources:
+            # 128 GB node (R3): pinned arena ~47 GiB + conversation cache
+            # 24 GiB + KV/pack page-cache headroom (RESEARCH §4) against
+            # node allocatable — the runbook's pre-sync MemAvailable check
+            # owns the final sizing, and the node's llama.cpp trio must
+            # stay evictable around this reservation (RAM law, plan Goal).
+            requests:
+              cpu: 8
+              memory: 96Gi
+            # NO limits.memory, deliberately: a cgroup cap kills the
+            # page-locked arena (#1601 stays deferred while this holds;
+            # DOCKER.md's runtime contract via the C01 README). No CPU
+            # limit either — arena sizing wants every idle cycle.
+          securityContext:
+            # DECISIONS 2026-10-27 device-access ruling: privileged +
+            # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
+            # the plugin advertises by count and cannot name gfx1201 vs the
+            # 8060S on this mixed APU+dGPU node; chip hiding happens inside
+            # via rocrVisibleDevices. Accepted deviation from the repo
+            # drop-ALL standard, confined to this pod by the (b) architecture
+            # (the llama.cpp pod keeps its unprivileged shape untouched).
+            # Documented-not-built fallback once a naming-capable plugin
+            # exists: amd.com/gpu + IPC_LOCK/SYS_RESOURCE + non-privileged.
+            privileged: true
+
+  service:
+    strata:
+      controller: strata
+      ports:
+        http:
+          port: 8080
+      # ClusterIP only, and NO ingress entry in this chart or its service
+      # values: Q4 internal-only ruling, the deliberate trio deviation
+      # (DECISIONS rework). The C03 peers proxy URL is
+      # http://<this-rendered-service>.default.svc.cluster.local:8080 —
+      # read it from NOTES.txt, and keep the no-/v1-suffix shape (the path
+      # appends verbatim, RESEARCH §3).
+
+  persistence:
+    config:
+      # Mounted as a DIRECTORY, never subPath: subPath mounts do not receive
+      # ConfigMap updates, which silently killed hot reload in the 2026-10-17
+      # llama-swap incident (repo lesson).
+      type: configMap
+      name: strata-config
+      globalMounts:
+        - path: /app/config
+    profile:
+      # Directory for the same hot-reload reason; the cmd's --profile path
+      # is inside here (strata-iq3_s.json).
+      type: configMap
+      name: strata-profile
+      globalMounts:
+        - path: /profile
+    models:
+      # Q3: the EXISTING 500Gi shared claim, mounted whole. This chart
+      # creates no PVC (tests pin that), and strata files stay under
+      # /models/strata per the engineProfile path comment. RWO multi-pod
+      # same-node mount on local-path is the single-node-cluster pattern;
+      # on-target verification rides C04 along with the capacity check.
+      existingClaim: llama-swap
+      globalMounts:
+        - path: /models
+    kfd:
+      type: hostPath
+      hostPath: /dev/kfd
+      hostPathType: CharDevice
+      globalMounts:
+        - path: /dev/kfd
+    dri:
+      type: hostPath
+      hostPath: /dev/dri
+      hostPathType: Directory
+      globalMounts:
+        - path: /dev/dri
+    shm:
+      # DOCKER.md's --shm-size 2g equivalent (C01 README runtime contract).
+      type: emptyDir
+      medium: Memory
+      sizeLimit: 2Gi
+      globalMounts:
+        - path: /dev/shm

@@ -1,0 +1,26 @@
+{{- /*
+Renders the INNER llama-swap declared config from .Values.config. Keys
+prefixed engineProfile* are chart-side layers (the run-config bodies
+configmap-strata-profile.yaml writes), not llama-swap keys — stripped here.
+ROCR_VISIBLE_DEVICES is injected per model from .Values.rocrVisibleDevices so
+the on-target rocminfo gate (C04 runbook) retargets the device without an
+edit to the rendered config.
+*/ -}}
+{{- $cfg := deepCopy .Values.config -}}
+{{- range $k := keys $cfg -}}
+  {{- if hasPrefix "engineProfile" $k -}}
+    {{- $_ := unset $cfg $k -}}
+  {{- end -}}
+{{- end -}}
+{{- $rocr := printf "ROCR_VISIBLE_DEVICES=%s" .Values.rocrVisibleDevices -}}
+{{- range $model := $cfg.models | default dict -}}
+  {{- $_ := set $model "env" (concat ($model.env | default list) (list $rocr)) -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: strata-config
+  namespace: default
+data:
+  config.yaml: |
+    {{- toYaml $cfg | nindent 4 }}
