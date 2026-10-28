@@ -4,10 +4,14 @@
 #
 # Plain pytest, no docker daemon required: these check the Dockerfile/README
 # SURFACE (pins, digests, copy plan, entrypoint, documented runtime contract).
-# The `# renovate:` parseability checks read renovate.json LIVE and simulate
-# the built-in dockerfile manager's ARG-expansion rewrite rules faithfully to
-# renovate's lib/modules/manager/dockerfile/extract.ts — so an escalation here
-# tracks the real config, not a snapshot of it.
+# Pin FORM = the 2026-10-27 coordination ruling (b) (DECISIONS "coordination
+# round"): literal flavor-complete FROM tags, tag→digest pairing recorded in
+# the README contract, NO renovate ARG-pin comment — no repo manager extracts
+# a datasource=docker ARG pin (live-verified in both engines). The
+# `# renovate:` claim model still reads renovate.json LIVE and simulates the
+# built-in dockerfile manager's ARG-expansion rewrite rules faithfully to
+# renovate's lib/modules/manager/dockerfile/extract.ts — load-bearing for the
+# unclaimed-comment tripwire and the supervisor-stage pin.
 
 from __future__ import annotations
 
@@ -27,11 +31,12 @@ LLAMA_SWAP_DEP = "ghcr.io/mostlygeek/llama-swap"
 STRATA_VERSION = "0.2.7"
 FLAVOR_PRIMARY = "rocm-gfx120x"
 FLAVOR_STRIX = "rocm-gfx1151"
-# RESEARCH §1 measured digests; recorded-comment requirement is the
-# in-place-rebuild guard (the unified-vulkan-262 crash-loop class), with
-# issue #3421 as the documented WHY (contradictions #6/#7).
+# RESEARCH §1 measured digests — the pin VALUES that survive every ruling.
+# Under the 2026-10-27 coordination ruling (b) their recorded home is the
+# C01 README contract (in-place-rebuild guard, the unified-vulkan-262 crash-
+# loop class; issue #3421 is the documented WHY, contradictions #6/#7).
 FLAVOR_PINS = {
-    # flavor tag suffix -> (expanded full tag, recorded digest)
+    # flavor tag suffix -> (full literal tag, recorded digest)
     FLAVOR_PRIMARY: (f"{STRATA_VERSION}-{FLAVOR_PRIMARY}", "sha256:703efd51c040152e9fceb993688b01ca0374535a5bfd86c14a60b5e60c96407a"),
     FLAVOR_STRIX: (f"{STRATA_VERSION}-{FLAVOR_STRIX}", "sha256:29ecd5cf8b0e21525dbb5c0191d7743d62fa356da646cb6aaf0546e5a31a8b3f"),
 }
@@ -166,40 +171,64 @@ def test_ac2_strata_flavor_from_lines(dockerfile):
     assert tags == want, f"flavor tags {sorted(tags)} != pinned 0.2.7 pair (RESEARCH §1 pin amendment)"
 
 
-def test_ac2_digests_recorded_next_to_flavor_pins(dockerfile):
-    """Anchor on the FLAVOR SUFFIX, not the expanded full tag: under the shape
-    C01 task 2 mandates (ARG STRATA_VERSION=0.2.7 + flavor suffix derived in
-    the FROM lines) the literal "0.2.7-rocm-gfx120x" never appears on a
-    non-comment line. The window around the pin line must carry the digest AND
-    name the full tag it belongs to — the pairing is what makes the
-    in-place-rebuild guard checkable."""
-    lines = dockerfile.splitlines()
-    for flavor, (full_tag, digest) in FLAVOR_PINS.items():
-        anchor = next((i for i, ln in enumerate(lines)
-                       if flavor in ln and not ln.strip().startswith("#")), None)
-        assert anchor is not None, f"no non-comment line carries the {flavor} flavor"
-        window = "\n".join(lines[max(0, anchor - 5): anchor + 4])
-        assert digest in window, (
-            f"{flavor}: RESEARCH §1 digest {digest[:19]}… not recorded adjacent to the pin "
-            "(in-place-rebuild guard — the #3421 WHY)"
+def test_ac2_strata_from_tags_are_literal(dockerfile):
+    """Ruling (b) FORM tripwire: both strata FROM refs carry the literal
+    flavor-complete tag (optionally @sha256-pinned) — no $-expansion anywhere
+    in the ref. The retired ARG+suffix shape and the rejected per-flavor
+    whole-tag ARG shape (a) both fail here; a future docker-manager migration
+    must reopen this at coord through the test session, not as a silent
+    Dockerfile edit. Tag VALUES and the pair stay pinned by
+    test_ac2_strata_flavor_from_lines."""
+    deps = [d for d in _builtin_dockerfile_deps(dockerfile) if STRATA_DEP in d["expanded"]]
+    for d in deps:
+        assert "$" not in d["ref"], (
+            f"{d['ref']}: $-expansion-pinned strata tag — ruling (b) is literal tags "
+            "(DECISIONS coordination round); variable pin shapes are a decision point, not an edit"
         )
-        assert full_tag in window, f"{flavor}: digest recorded without naming {full_tag} beside it"
+        assert _tag_of(d["ref"]) in {
+            f"{STRATA_VERSION}-{FLAVOR_PRIMARY}", f"{STRATA_VERSION}-{FLAVOR_STRIX}"
+        }, f"{d['ref']}: literal FROM tag diverges from the ruled 0.2.7 flavor pair"
 
 
-def test_ac2_strata_pin_comment_is_docker_datasource():
-    """AC2, literal: datasource MUST be docker (container tags, not
-    github-releases — 0.2.4–0.2.6 are releases with NO images; a github-
-    releases pin would propose unshippable versions). A silent switch to a
-    github datasource is the failure mode the chunk forbids; if the parseability
-    tests below stay red, that is the renovate.json escalation, not a license
-    to change the datasource here."""
-    text = DOCKERFILE.read_text() if DOCKERFILE.is_file() else ""
-    assert re.search(
-        r"#\s*renovate:\s*datasource=docker\s+depName=" + re.escape(STRATA_DEP) + r"\b",
-        text,
-    ), f"no '# renovate: datasource=docker depName={STRATA_DEP}' comment in the Dockerfile"
-    wrong = re.findall(r"#\s*renovate:\s*datasource=github-\S+\s+depName=" + re.escape(STRATA_DEP), text)
-    assert not wrong, f"strata pin switched to a github datasource: {wrong}"
+def test_ac2_no_strata_renovate_pin_comment(dockerfile):
+    """Ruling (b): the strata pins carry NO renovate comment — none of the
+    repo's managers extracts a datasource=docker ARG pin, and the silent
+    switch to a github datasource the chunk forbade stays forbidden. Any
+    renovate comment naming the strata depName reds here in either drift
+    direction: the retired ARG-pin shape re-introduced, or an
+    ahead-of-ticket automated-pin migration. Both are coord decisions."""
+    offenders = re.findall(
+        r"#\s*renovate:[^\n]*depName=" + re.escape(STRATA_DEP), dockerfile)
+    assert not offenders, f"renovate comment(s) on the strata depName: {offenders} — ruling (b) retired them"
+
+
+def test_ac2_readme_records_tag_digest_pairing(readme):
+    """The in-place-rebuild guard's home under ruling (b): the README contract
+    pairs each literal flavor tag with its RESEARCH §1 digest (#3421 is the
+    WHY of recording at all — asserted by test_readme_documents_image_interface).
+    Pairing must be legible: same line, or the digest within two lines of a
+    line naming the tag."""
+    lines = readme.splitlines()
+    for flavor, (full_tag, digest) in FLAVOR_PINS.items():
+        idxs = [i for i, ln in enumerate(lines) if full_tag in ln]
+        assert idxs, f"README never names {full_tag} (ruling (b) records the pin contract here)"
+        assert any(digest in "\n".join(lines[max(0, i - 2): i + 3]) for i in idxs), (
+            f"{full_tag}: RESEARCH §1 digest {digest[:19]}… not paired with its tag in the README"
+        )
+
+
+def test_ac2_dockerfile_digest_pins_match_the_record(dockerfile):
+    """A FROM line MAY pin @sha256 directly (belt over the README-only record)
+    — then it must equal the recorded pair. Two surfaces carrying different
+    digests is how an in-place rebuild survives re-recording of one of them."""
+    recorded = {t: dg for t, dg in FLAVOR_PINS.values()}
+    tags = "|".join(re.escape(t) for t in recorded)
+    for tag, hex64 in re.findall(
+        re.escape(STRATA_DEP) + r":(" + tags + r")@sha256:([0-9a-f]{64})", dockerfile
+    ):
+        assert recorded[tag] == f"sha256:{hex64}", (
+            f"{tag}: FROM pins sha256:{hex64[:16]}… but the record says {recorded[tag][:22]}…"
+        )
 
 
 def test_ac2_all_arg_version_pins_carry_renovate_comments(dockerfile):
@@ -216,7 +245,9 @@ def test_ac2_all_arg_version_pins_carry_renovate_comments(dockerfile):
 
 
 # ---------------------------------------------------------------------------
-# AC2 — manager parseability (the coordinator's residual 1, verified live)
+# AC2 — pin FORM + renovate-claim guards (residual 1 closed by the
+# 2026-10-27 coordination ruling (b): literal tags, README digest record,
+# no renovate ARG-pin comment; bump cadence manual until a future ticket)
 # ---------------------------------------------------------------------------
 
 
@@ -247,36 +278,9 @@ def test_ac2_every_renovate_comment_is_claimed_by_a_repo_manager(dockerfile):
                 continue
         unclaimed.append((ln.strip(), nxt.strip()[:60]))
     assert not unclaimed, (
-        f"renovate comments no repo manager extracts: {unclaimed} — cross-check "
-        "renovate.json customManagers datasource sets"
-    )
-
-
-def test_ac2_strata_docker_pin_is_tracked_by_a_repo_manager(dockerfile):
-    """The escalation probe. The repo's ARG-pin custom managers narrow
-    `datasource` captures to github-tags|github-releases|git-refs (Dockerfile
-    git-pin) and node-version|golang-version|forgejo-releases|npm (containers
-    tool-pin) — NEITHER accepts docker. The built-in dockerfile manager
-    extracts the expanded FROM ref but can only rewrite a line containing the
-    expanded currentValue verbatim: whole-tag variables (repo:${VAR}) work,
-    partial-suffix tags (repo:${VAR}-flavor) never land. So the C01-mandated
-    shape is tracked ONLY if renovate.json gains docker on one of those two
-    managers, or the Dockerfile ships one of the tracked alternative shapes
-    (per-flavor full-tag ARGs consumed as whole tags, or literal FROM tags).
-    This test is the tripwire for the coordinator's decision — do NOT weaken
-    it, and do NOT silently switch the strata pin to a github datasource."""
-    claims = _custom_claims(dockerfile, "containers/strata/Dockerfile")
-    custom_tracked = any(
-        c["datasource"] == "docker" and c["depName"] == STRATA_DEP for c in claims
-    )
-    deps = [d for d in _builtin_dockerfile_deps(dockerfile) if STRATA_DEP in d["expanded"]]
-    builtin_tracked = bool(deps) and all(d["writable"] for d in deps)
-    assert custom_tracked or builtin_tracked, (
-        f"{STRATA_DEP} docker-ARG pin extracted by NO repo manager: custom ARG-pin managers "
-        "exclude datasource=docker and the built-in dockerfile manager cannot rewrite a "
-        "partial-suffix variable tag. Coord decision needed (extend renovate.json datasource "
-        "set vs restructure the pin per this test's docstring) — reported in the cf-77 test "
-        "session RESULT open_questions."
+        f"renovate comments no repo manager extracts: {unclaimed} — under ruling (b) the strata "
+        "pins carry no renovate comment; an unclaimable comment is the retired ARG-pin shape or "
+        "an unsupported datasource returning (route via coord — do NOT edit renovate.json here)"
     )
 
 

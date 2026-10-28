@@ -102,12 +102,6 @@ STRIX_EIGHT_SET = [
     "STRATA_PF_SWITCH_MIN_T=4096", "STRATA_PREFILL_STREAM_MIN=128",
 ]
 
-# RESEARCH §1 digests recorded 2026-10-27 (in-place-rebuild guard, repo law;
-# why-citation: issue #3421).
-STRATA_DIGEST_GFX120X = "sha256:703efd51c040152e9fceb993688b01ca0374535a5bfd86c14a60b5e60c96407a"
-STRATA_DIGEST_GFX1151 = "sha256:29ecd5cf8b0e21525dbb5c0191d7743d62fa356da646cb6aaf0546e5a31a8b3f"
-LLAMA_SWAP_DIGEST = "sha256:0cc42f1024b54be3de100ae7a7a2730047ca5c27cf7a354f8a9f63142f00c045"
-
 # C03 AC2 / RESEARCH §3: proxy must carry NO /v1 suffix — the request path
 # appends verbatim, a /v1 there double-prefixes and every route 404s.
 PEERS_PROXY = f"http://{RELEASE}.{NAMESPACE}.svc.cluster.local:8080"
