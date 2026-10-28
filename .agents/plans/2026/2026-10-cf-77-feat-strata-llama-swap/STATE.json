@@ -114,7 +114,8 @@
       "status": "pending",
       "wave": 2,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
+      "dev_session": "ses_e7fe5358fffeEt6UETzFrkTqgb",
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [
@@ -126,6 +127,28 @@
           "status": "DONE",
           "files": ["charts/strata/tests/test_wiring.py", "charts/llama-swap/tests/test_config_parity.py", "charts/llama-swap/tests/evidence/strata-peers-expected.yaml"],
           "note": "peers evidence expectation pinned by test session (residual-4: dev must not author it); parity test made stricter — additive peers delta pinned exactly, gpu box asserted peer-less. Its single red clears when C03 lands."
+        },
+        {
+          "stage": "dev",
+          "session": "ses_e7fe5358fffeEt6UETzFrkTqgb",
+          "at": "2026-10-28",
+          "commit": "27552d755",
+          "status": "DONE",
+          "files": ["services/gpu-ai/prod/values.yaml", "custom-values/gpu-ai/prod-values.yaml"],
+          "validations": "charts/strata 13 C03 reds green (16F/54P, reds in-kind C05:11+C04:5); llama-swap canary green but 1 cross-ticket red escalated (flashnext blast-radius guard vs peers delta — see test fixup below); containers 17P; helm all pass; extract-and-render peers exact vs v266 schema; wiring greps pass; PENDING placeholder only, no UUIDs",
+          "escalation": "flashnext guard collision: user ruled BYTE-PINNED CARVE-OUT (2026-10-28), routed to test session",
+          "deviations": "strata: block ships sentinel+rocrVisibleDevices only; list-valued engineProfile overrides WOULD truncate (helm list merge) — scalars override-safe, documented; no reloader/extra appset edits (byte-mirrors llama-swap sibling)"
+        },
+        {
+          "stage": "test-fixup",
+          "session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+          "at": "2026-10-28",
+          "commit": "f7b308a6d",
+          "status": "DONE",
+          "trigger": "user ruling on dev escalation + queued C02 nit",
+          "files": ["charts/llama-swap/tests/test_flashnext_blast_radius.py", "charts/strata/tests/test_render.py"],
+          "validations": "llama-swap 0F/173P+2S (carve-out byte-pinned to evidence file, 12 discriminator probes all strict); strata 16F/55P (+1 AC2 no-ES assert); containers 17P",
+          "convention": "C05 peers models-list growth flows ONLY via test-session update of strata-peers-expected.yaml — dev never edits evidence"
         }
       ]
     },
