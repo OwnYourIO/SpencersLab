@@ -86,7 +86,11 @@ jobs:
       - name: Add repositories
         run: |
           for dir in $(ls -d charts/*/); do
-            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ print $1, $3 }' | while read name url; do
+            # NAME + first URL-shaped field: a dependency with an empty
+            # REPOSITORY column shifts "unpacked" into $3, and
+            # `helm repo add <name> unpacked` breaks this step under bash -e
+            # (cf-77 r2 finding — repro: declared subchart with repository: "")
+            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; exit } }' | while read name url; do
               if [[ ! "$url" =~ ^oci:// ]]; then
                 helm repo add "$name" "$url"
               fi
@@ -164,7 +168,11 @@ jobs:
       - name: Add repositories
         run: |
           for dir in $(ls -d charts/*/); do
-            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ print $1, $3 }' | while read name url; do
+            # NAME + first URL-shaped field: a dependency with an empty
+            # REPOSITORY column shifts "unpacked" into $3, and
+            # `helm repo add <name> unpacked` breaks this step under bash -e
+            # (cf-77 r2 finding — repro: declared subchart with repository: "")
+            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ for (i = 2; i <= NF; i++) if ($i ~ /^(https?|oci|file):\/\//) { print $1, $i; exit } }' | while read name url; do
               if [[ ! "$url" =~ ^oci:// ]]; then
                 helm repo add "$name" "$url"
               fi
