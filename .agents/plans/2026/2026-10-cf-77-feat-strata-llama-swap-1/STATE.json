@@ -145,10 +145,22 @@
       "status": "pending",
       "wave": 3,
       "depends_on": ["C01", "C03"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
+      "dev_session": "ses_e7c15e867ffe2utSDRb7vT0KnC",
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "dev",
+          "session": "ses_e7c15e867ffe2utSDRb7vT0KnC",
+          "at": "2026-10-28",
+          "commit": "fc937e23a",
+          "status": "DONE",
+          "files": [".agents/notes/strata-host-prep-gpu-ai.md", "charts/llama-swap/README.md"],
+          "validations": "charts/llama-swap suite 0F/264P+2S — ALL GREEN first time (11 test_c04_* green by name; no token pin wrong, zero re-pins needed); containers 17P; helm clean; gate greps clean; aislop 100/Healthy; scope exactly 2 files",
+          "deviations": "runbook edit via documented shell-channel fallback (edit-deny on .agents/notes — run-1 nuance, surgical python with per-match assertions + git status scope proof)"
+        }
+      ]
     }
   },
   "blocked": [],
