@@ -111,12 +111,12 @@
       ]
     },
     "C04": {
-      "status": "dev-done-awaiting-review",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C03"],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "dev_session": "ses_e7ffac5b6ffeIeUgGNbc2BX9uZ",
       "handoffs": [
         {
@@ -130,6 +130,12 @@
           "role": "agent-test (repair round — first SILENT route under the C02 contract; no user question raised)",
           "session": "ses_e7fe826eaffeNQy8UNQm80tb74",
           "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [tests/opencode/board-context.test.ts]\ncommands_run: [node board-context.test.ts => 28/0; question-notify => 35/0; tools/skill-surface/validation-fix/board-context/rulesync-surface/agents-md/gate/agent-perms/standalone-agents => all pass; X1 re-pin === livefire bytes => pass; X2 re-pin === SKILL.md fence + verified ids => pass; aislop ci --changes => 0/0; t.timeout absence probed v26.5.0 => confirmed undefined]\ndeviations: none — both repairs adjudicated mechanical, no implementation touched\nfriction: livefire scratch L4 has a `k=` vs `k: ` pattern bug for scalar lines (out of repo scope; reviewer note)\nopen_questions: none\nnext_suggested: agent-review C04 at CHUNK_BASE=2aab8cc20 (no dev relaunch; AC6 degrade evidence cited in 7bbca8195)."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-review",
+          "session": "ses_e7fe0908affe1d7M8QXWA0B7Et",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nverdict: APPROVED\nfiles_changed: [chunks/C04.md (Review notes only; 3 non-blocking nits recorded)]\ncommands_run: [board-context.test.ts => 28/0; question-notify => 35/0; full bash guard set 9/8/8/6/19/9/22/14/10 => pass; rulesync x2 no-op + --check => pass; aislop ci --changes --base 2aab8cc20 => rc0 0/0/39 files; livefire re-run L1-L3 => pass (L4 known scratch bug); reviewer's own fence cross-checks X-r1/r2/r3 + corrected drift scan => all PASS; t.timeout probe => undefined on v26.5.0; scope => 3 impl + 1 test + plan-folder only; banned-string/literal-URL scans => clean]\ndeviations: none from review — silent C02 repair route adjudicated CORRECT (re-pin strictly tighter, footer included; no NEEDS_INFO owed)\nfriction: reviewer write-denied under /tmp/opencode (correct posture) — node --input-type=module heredoc used instead\nopen_questions: none\nnext_suggested: coord gates C04 done, then final whole-plan review; run-end board moves (#75 + #74 -> Review) user-confirmed duties."
         }
       ]
     }
