@@ -199,12 +199,13 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C02", "C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "dev_session": "ses_e7f52e660ffemspN1Iv9krSuX7",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7f42597fffeHRTApFW6fG9ZJs, 2026-10-28: 0F/71P first all-green; shell-channel write byte-tight (machinery 0 bytes in commit); full fidelity sweep incl. live card cross-check of kernel≥6.18.4; void-token discipline held; 1 minor + 3 nits non-blocking; NOTES.txt strands-nit FOLDED to final review, quoted-int stays next-touch)",
       "handoffs": [
         {
           "stage": "test",
@@ -214,6 +215,28 @@
           "status": "DONE",
           "files": ["charts/strata/tests/test_runbook_completeness.py"],
           "note": "token list covers the plan's remaining [VERIFY] command markers (sdbootutil, ulimit, getenforce|aa-status, rpm|Tumbleweed, expert-cache, 96Gi, trio); void-token scan excludes *.md so the runbook may name the voids it forbids."
+        },
+        {
+          "stage": "dev",
+          "session": "ses_e7f52e660ffemspN1Iv9krSuX7",
+          "at": "2026-10-28",
+          "commit": "6524f10df",
+          "status": "DONE",
+          "files": [".agents/notes/strata-host-prep-gpu-ai.md", "charts/strata/README.md"],
+          "validations": "charts/strata 0F/71P (first all-green — 5 c04 reds cleared, nothing regressed); llama-swap 0F/173P+2S; containers 17P; helm clean; aislop 100/100; docs-only chunk",
+          "deviations_declared": ["runbook written via shell channel — dev edit-deny blanket-blocks .agents/** including repo-content .agents/notes/ pinned by the chunk+frozen test (permission drift, reported not self-served; fix proposal routed to coord: narrow deny to plans/skills/agents/commands in .rulesync + regenerate)", "one-at-a-time citation gap from C05 review closed (README rung 4 + runbook §4/§9 with exact provenance)", "engine-key parked question documented as check + api_key:none flip path, not solved blind", "NOTES.txt strands-typo NOT fixed (C02-owned, next-touch)"],
+          "escalations": [
+            "permission-denys narrowing for .agents/notes (agents-sync fix candidate — post-run friction round)",
+            "opportunistics for final review to consider: NOTES.txt 'stands→strands' nit (C02), quoted-int 0 vs sprig default nit (C05)"
+          ]
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7f42597fffeHRTApFW6fG9ZJs",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "charts/strata 0F/71P first all-green; llama-swap 0F/173P+2S; containers 17P; helm clean; aislop 100/100 both forms + directory extension; scope 2 files 562+/0−; plans-machinery 0 bytes in commit; live card cross-check (kernel≥6.18.4 card-sourced); repo-side claim grep battery all verified",
+          "disposition": "NOTES.txt strands-nit folded into FINAL whole-plan review agenda; quoted-int nit stays next-touch (needs its own re-render round); C04 review recorded 1 minor + 3 nits non-blocking in chunks/C04.md"
         }
       ]
     }
