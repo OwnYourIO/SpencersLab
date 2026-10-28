@@ -42,11 +42,13 @@
 //   working shape (plain object with async setup(ctx), NOT the docs'
 //   Plugin.define). setup registers exactly one ctx.session.hook("prompt", ...).
 //
-// The EXPECTED block below transcribes the C01 canonical schema with the
-// plan's verified-fact ids; skill-surface.sh t3 pins the schema's single
-// markdown owner. If C01's skill text drifts from this transcription, this
-// suite fails on a real two-owners drift — the fix is adjudicated through the
-// C02 validation-fix route, never by weakening the constant.
+// The EXPECTED block below is the landed C01 schema fence byte-for-byte —
+// line-per-entry indented, with the re-resolve footer the schema prose
+// declares part of the schema itself — carrying the plan's verified-fact ids;
+// skill-surface.sh t3 pins the schema's single markdown owner. If C01's skill
+// text drifts from this transcription, this suite fails on a real two-owners
+// drift — the fix is adjudicated through the C02 validation-fix route, never
+// by weakening the constant.
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -76,10 +78,23 @@ const EXPECTED_BLOCK = [
   `Board context (collected ${COLLECTED_AT}, ${SERVER_ID})`,
   "board_id: TNQJ2BrXenZovngTS",
   "swimlane_id: jLzy39L7djCRr67SF",
-  "lists: Not Started=XhDyShvuwhGWzWH2z, Executing=qZ9CLZqCRbv7NQQ6R, Review=2B6wWGJ8Tetp5QWDJ, Rework=y9tsvb3AguKWhzCoF, Finished=DHw56fMKy3qyfudz4, Low Priority=M4JS9LfaypJbB97At, Test=jNYNdCPPkX8Bs95s4",
-  "custom_fields: slug=RaNeqvh9YoT4bnkZ8, session=zZw4PwMoLeodJy3eT",
-  "labels: Research=ysSmS5, Ready for Work=mkbxeo",
-  "card and checklist ids are never pre-collected — they stay live",
+  "lists:",
+  "  Not Started=XhDyShvuwhGWzWH2z",
+  "  Executing=qZ9CLZqCRbv7NQQ6R",
+  "  Review=2B6wWGJ8Tetp5QWDJ",
+  "  Rework=y9tsvb3AguKWhzCoF",
+  "  Finished=DHw56fMKy3qyfudz4",
+  "  Low Priority=M4JS9LfaypJbB97At",
+  "  Test=jNYNdCPPkX8Bs95s4",
+  "custom_fields:",
+  "  slug=RaNeqvh9YoT4bnkZ8",
+  "  session=zZw4PwMoLeodJy3eT",
+  "labels:",
+  "  Research=ysSmS5",
+  "  Ready for Work=mkbxeo",
+  "Card and checklist ids are not included — they are live per-card data,",
+  "resolved at use time. On any id-shaped call error, re-resolve this block",
+  "against the live board before retrying.",
 ].join("\n");
 
 const FIELDS = {
@@ -362,13 +377,25 @@ describe("S6 never-throw degrade — failing and hanging legs must not block adm
 
   // A hook whose fetch leg hangs blocks admission for the whole budget; the
   // bounded race inside the handler (not the transport's abort) is the guard
-  // the offline fake exercises — resolveNever above never settles on purpose.
-  it("settles within the fetch budget when the resolve leg hangs", async (t) => {
-    t.timeout(5000);
+  // the offline fake exercises — the hanging resolve arm never settles on
+  // purpose. TestContext.timeout is absent on this box's Node v26.5.0
+  // (probed: typeof undefined), so the budget is a hand-raced watchdog below.
+  it("settles within the fetch budget when the resolve leg hangs", async () => {
     const { deps, calls } = fakeHandlerDeps({ agent: "agent-board-coord", resolveHangs: true, fetchTimeoutMs: 30 });
     const handler = seam("createPromptHandler")(deps, { enabled: true });
     const ev = coordEvent("ses_a", "msg_1");
-    const err = await runHandler(handler, ev);
+    const budgetMs = 5000;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const err = await Promise.race([
+      runHandler(handler, ev).then((outcome) => {
+        clearTimeout(timer);
+        return outcome;
+      }),
+      new Promise<string>((resolve) => {
+        timer = setTimeout(() => resolve("hang"), budgetMs);
+      }),
+    ]);
+    assert.notEqual(err, "hang", `hook never settled within ${budgetMs}ms — a hanging leg stalls prompt admission (AC 4)`);
     assert.equal(err, null, "a hanging leg must resolve the hook, not stall it");
     assert.equal(ev.prompt.text, "run the hourly board gate");
     assert.equal(calls.log.length, 1);
