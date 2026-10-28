@@ -87,13 +87,21 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "dev-done-awaiting-review",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e8010b85bffe5Eh0rEB4U6vguE",
+      "handoffs": [
+        {
+          "at": "2026-10-28",
+          "role": "agent-dev-local",
+          "session": "ses_e8010b85bffe5Eh0rEB4U6vguE",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [.rulesync/subagents/agent-board.md, .rulesync/commands/wekan-board-context.md, .rulesync/skills/boards/SKILL.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/rules/overview.md, .opencode/agents/agent-board.md, .opencode/commands/wekan-board-context.md, .opencode/skills/boards/SKILL.md, .opencode/skills/agents-sync/references/permissions.md, AGENTS.md] (commit 2bc2946d4, local-only, no push, main untouched)\ncommands_run: [board-context.sh t1-t6 => pass 6 ok; tools.sh => 9 ok; skill-surface.sh => 8 ok incl. schema single-owner scan; validation-fix.sh => 8 ok; rulesync-surface.sh => 19 ok; agents-md.sh => 9 ok; gate.sh => 22 ok; agent-perms/surface.sh => 14 ok (A14 dev-boards* spelling); standalone-agents/surface.sh => 10 ok; node question-notify => 35/0; rulesync generate x2 no-op + --check => pass; permissions.md mirror cmp byte-identical; aislop ci --changes --base 07a036886 => 100/0/0; LIVE smoke (dev-boards read-only sequence) => pass, ids equal verified facts, zero drift; git diff --name-only 07a036886..HEAD => exactly 10 files; gate agent-board([^-]|$) grep => zero hits + byte-untouched]\ndeviations: none — read-areas = coord-family set verbatim; Test list emitted inside lists: per schema (swimlane membership only filter), matches plan's live-probe fact\nfriction: none blocking; rulesync/aislop subshell-capture hiccup resolved with plain if/else\nopen_questions: none\nnext_suggested: agent-review C03 at CHUNK_BASE=07a036886 (reviewer repeats live smoke), then wave 3 C04 (dev must read RESEARCH.md)."
+        }
+      ]
     },
     "C04": {
       "status": "pending",
