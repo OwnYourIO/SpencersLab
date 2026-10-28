@@ -181,6 +181,20 @@ def test_c02_ac2_models_mount_is_shared_llama_swap_claim():
     assert not S.find_kind(docs, "PersistentVolumeClaim"), "chart must not create a PVC (Q3)"
 
 
+@helm
+def test_c02_ac2_default_render_has_no_external_secret():
+    """AC2's last clause (plan Commands "WITHOUT the bitwardenIds set"):
+    the chart default bitwardenIds: {} must render NO ExternalSecret — the
+    guard keeps clusters without the secret wiring render-clean (repo law).
+    The set side (sentinel-free render + ES with test UUID) is C03's
+    extract-and-render half, in test_wiring.py."""
+    docs, _raw = _default_render()
+    assert not S.find_kind(docs, "ExternalSecret"), (
+        "ExternalSecret rendered with bitwardenIds unset — the strata-api-key "
+        "guard is not cluster-optional"
+    )
+
+
 # --- AC6: no ingress, ClusterIP 8080 ------------------------------------------
 
 
