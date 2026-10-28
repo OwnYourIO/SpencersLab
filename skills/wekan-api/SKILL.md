@@ -21,6 +21,13 @@ If the user is just looking for UI help, general kanban advice, or non-WeKan too
 
 ## Prefer the wekan MCP server when it is available
 
+For generic MCP board work — call shapes, projections, failure modes, the
+board-context block schema — load the `wekan-mcp` skill (`skills/wekan-mcp/`);
+it owns the agent-side tool surface. This section keeps the deployment and
+credential story, and the rest of this skill owns raw REST plus server
+internals (with the rules-engine vocabulary and MCP-over-HTTP recipe in
+`references/wekan-mcp-ops.md`).
+
 In SpencersLab, prefer the **`wekan` MCP server** over raw REST calls. It is an
 in-repo server (`containers/wekan-mcp`), published as
 `ghcr.io/ownyourio/wekan-mcp` and deployed on the lab's ToolHive platform

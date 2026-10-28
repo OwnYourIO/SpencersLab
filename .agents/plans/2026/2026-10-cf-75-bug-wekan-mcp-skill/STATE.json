@@ -1,0 +1,169 @@
+{
+  "feature": "2026/2026-10-cf-75-bug-wekan-mcp-skill",
+  "kickoff": {
+    "card": "BhukC6WP3t5MfX2Gr",
+    "slug": "cf-75-bug-wekan-mcp-skill",
+    "type": "bug",
+    "run_tag": null,
+    "worktree": "cf-75-bug-wekan-mcp-skill",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com"
+  },
+  "plan_status": "complete",
+  "plan_approved_at": "2026-10-27 (user approval in batched round — all 7 recommendations confirmed)",
+  "coord_session": "ses_e809acf91ffeDTtY5LkI5dYOCd",
+  "plan_session": "ses_e80961223ffeUNpbIX5dajj0w8",
+  "test_session": "ses_e7fe826eaffeNQy8UNQm80tb74",
+  "test_session_note": "authoring session ses_e8054d958ffe4qBopA4lrsWn8J; C04 repair round ran as its continuation (new id recorded for later fix rounds)",
+  "test_handoff_at": "2026-10-27",
+  "test_handoff_notes": "agent-test DONE: 4 chunk suites (skill-surface.sh t1-t8, validation-fix.sh t1-t7, board-context.sh t1-t6, board-context.test.ts S1-S9) + guard widenings (rulesync-surface c8/c17, agents-md c7, gate.sh t14/t12, agent-perms A5/A7/A9+CARVE_RE, coord-inwork i5). Two harness defects fixed in inherited validation-fix.sh (base-run + throwaway-clone sim proven). No chunk test-list amendments. Residual flag: legacy freeze sites kickoff-branch m6 / session-origin s6 left per cf-58 precedent — deferred, see DECISIONS.",
+  "plan_handoff": [
+    {
+      "at": "2026-10-27",
+      "role": "agent-plan",
+      "session": "ses_e80961223ffeUNpbIX5dajj0w8",
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/2026-10-27-bug-cf-75-bug-wekan-mcp-skill.md, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01.md..C04.md]\ncommands_run: [python3 STATE.json schema/kickoff assertions => pass; dev-boards live read probe (list_boards/get_board/list_swimlanes/list_lists/list_custom_fields) => pass; grep/ls surveys of FRICTION corpus + server.py + rulesync surfaces => informational]\ndeviations: none — folder/STATE/plan/chunks built per pipeline-role-plan; kickoff recorded exactly as launched (run_tag null, local false, single-model both tiers); plan left uncommitted for coord per role\nfriction: no aislop PATH check done in this session (planner wrote plan only; known npx --no-install ladder noted in plan Commands); boards skill six-list text drifts from live In Process swimlane (non-pipeline Test list present) — captured as plan risk, board structure is human-owned\nopen_questions: (1) final slug confirm -> cf-75-bug-wekan-mcp-skill; (2) retire 2026-10-docs-wekan-mcp-arg-ergonomics draft + follow-up card (C01 absorbs)?; (3) card #74 duplicates C02 - cover here and close #74?; (4) agent-board in scope now (C03)?; (5) prefetch plugin in scope now, last + degrade-safe (C04)?; (6) who adjudicates 'the fix changes functionality' on validation_at_fault auto-route -> test session NEEDS_INFO, coord escalates; (7) agent-board MCP grants dev-boards-only, no admin-global-wekan fallback?\nnext_suggested: batched question round; relaunch plan session with answers if anything changes; then approve + post-plan write-back; post-plan agent-research before Test (feeds C04 hook-semantics assumption)"
+    }
+  ],
+  "current_wave": 3,
+  "updated_at": "2026-10-27",
+  "model_routing_note": "card Model(s) checklist sole check Qwen Flash -> same model every tier (boards kickoff rule: exactly one checked -> that model for every tier)",
+  "lifecycle_note": "legacy Research checklist, 'After Planning' checked -> transition rule: standard Plan+Test+Code+Review loop PLUS an agent-research round after planning; no Lifecycle stage gate",
+  "research_session": "ses_e807c79deffeZiUEiBT9HqL7Pl",
+  "research_handoff": {
+    "at": "2026-10-27",
+    "status": "DONE",
+    "summary": "RESEARCH.md (424 lines): prompt-hook admission PROVEN for interactive+command+scheduled legs (opencode v2.1.4 source + OpenChamber 2.5.2 scheduler); never-throw is a correctness requirement (throwing hook blocks prompt admission); once-guard needs per-session flag (fresh messageID per attempt); instructions.entry.put = session-lifetime, not child-inherited, offered as durability add-on; live-fire scope narrowed to deployment legs; re-resolve-on-id-error doctrine backed cross-lab. No replan — plan pre-delegated absorption to C04 dev via RESEARCH.md.",
+    "open_questions_residual": ["subagent context-hook coverage", "OpenChamber dispatch timeout bound", "which agent-pinning leg the live task uses"]
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e8035f9d4ffeHsspi4Xb56ZqAo",
+      "handoffs": [
+        {
+          "at": "2026-10-27",
+          "role": "agent-dev-local",
+          "session": "ses_e8035f9d4ffeHsspi4Xb56ZqAo",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [skills/wekan-mcp/SKILL.md, skills/wekan-mcp/references/call-shapes.md, skills/wekan-api/SKILL.md, .rulesync/rules/overview.md, AGENTS.md (generated)]\ncommands_run: [bash tests/wekan-mcp/skill-surface.sh t1-t8 => pass; bash tests/wekan-mcp/tools.sh => pass; bash tests/agent-board-coord/rulesync-surface.sh => pass; bash tests/agent-board-coord/agents-md.sh => pass; bash tests/agent-board-coord/gate.sh => pass; bash tests/agent-perms/surface.sh => pass; bash tests/standalone-agents/surface.sh => pass; node --test tests/opencode/question-notify.test.ts => pass; npx --no-install rulesync generate x2 (second no-op) + generate --check => pass; npx --no-install aislop ci --changes rc=0 + scan --changes 0/0 => pass; banned-vocab + L<digits> + schema single-owner greps => clean; git diff --name-only bd9e1cf3c..HEAD subset declared files => pass]\ndeviations: two wording-level calls inside declared tasks — (1) wekan-api pointer = 6-line division-of-labour paragraph, pointer-only, pinned regions byte-untouched (tools.sh green); (2) server path is wekan_mcp/server.py (underscore) — read at real path, docs cite correctly. Commit c5025339a local-only, no push, main untouched; mid-implementation schema-footer fix (card AND checklist ids) amended while unpublished.\nfriction: none blocking; glob-hides-dot-directories recurred — shell-find workaround; rulesync+aislop resolved via npx --no-install ladder.\nopen_questions: none\nnext_suggested: agent-review on C01 with CHUNK_BASE=bd9e1cf3c; coord bookkeeping at C01 done gate (draft retirement + follow-up card close), then C02."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-review",
+          "session": "ses_e80286135ffeVt1ivdFKSqTQAi",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nverdict: APPROVED\nfiles_changed: [chunks/C01.md (Review notes only)]\ncommands_run: [skill-surface.sh => pass 8 ok; tools.sh => pass 9 ok; CHUNK_BASE=bd9e1cf3c rulesync-surface.sh => pass 19 ok; agents-md.sh => pass 9 ok; gate.sh => pass 22 ok; agent-perms/surface.sh => pass 14 ok; standalone-agents/surface.sh => pass 10 ok; node question-notify.test.ts => pass 35/0; rulesync generate --check + fresh-generate no-op proof => pass; aislop ci --changes --base bd9e1cf3c => rc=0 0/0; python3 AST cross-check of server.py 26 signatures vs docs => pass; git scope checks => clean]\ndeviations: none from review; dev's two wording deviations judged compliant against ACs\nfriction: none blocking (skill-surface t6 resolves rulesync from PATH fine; glob dot-dir workaround applied)\nopen_questions: none\nnext_suggested: coord marks C01 done + bookkeeping (draft STATE re-status + follow-up card close), then C02.\nreview-note: DEFERRED (out of C01 scope): wekan-api pinned 'full 25-tool surface' line vs 26-tool truth (README + new docs) — pre-existing, inside tools.sh-pinned region."
+        }
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e801f249bffeGKT6ETHmgzQ1yP",
+      "handoffs": [
+        {
+          "at": "2026-10-28",
+          "role": "agent-dev-local",
+          "session": "ses_e801f249bffeGKT6ETHmgzQ1yP",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [.rulesync/skills/pipeline-role-coord/SKILL.md, .rulesync/skills/pipeline-gates/SKILL.md, .rulesync/skills/pipeline-role-review/SKILL.md, .rulesync/skills/agents-sync/references/pipeline-overview.md, .rulesync/skills/agents-sync/references/plan-and-result.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/rules/overview.md, AGENTS.md, .opencode/skills/pipeline-role-coord/SKILL.md, .opencode/skills/pipeline-gates/SKILL.md, .opencode/skills/pipeline-role-review/SKILL.md, .opencode/skills/agents-sync/references/{permissions,pipeline-overview,plan-and-result}.md] (commit 15ffcae4b, local-only, sources+mirrors same commit)\ncommands_run: [validation-fix.sh base-run => red t1 as pinned; validation-fix.sh t1-t7 post-edit => pass 8 ok; post-commit re-run => pass (t6 walk: source commits carry generated surfaces); npx --no-install rulesync generate x2 (second no-op) + --check => pass; old-phrasing repo sweep => zero non-allowlisted hits; aislop scan --changes/--staged + ci --changes => 0/0; agent-perms+standalone-agents+rulesync-surface+agents-md+gate => pass; skill-surface.sh + tools.sh => pass; node question-notify.test.ts => 35/0; git diff dca8a25d2..HEAD => exactly 14 declared files]\ndeviations: none — tasks executed as written; gates<->2.d cross-citation kept short per anti-slop note\nfriction: none blocking\nopen_questions: none\nnext_suggested: agent-review on C02 with CHUNK_BASE=dca8a25d2 (incl. now-meaningful t6 commit walk), then card #74 coverage bookkeeping at run end."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-review",
+          "session": "ses_e80185ab4ffePECgexzgTio3eM",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nverdict: APPROVED\nfiles_changed: [chunks/C02.md (Review notes only)]\ncommands_run: [CHUNK_BASE=dca8a25d2 validation-fix.sh t1-t7 => pass 8 ok; skill-surface.sh => pass 8 ok; tools.sh => pass 9 ok; rulesync-surface.sh => pass 19 ok; agents-md.sh => pass 9 ok; gate.sh => pass 22 ok; agent-perms/surface.sh => pass 14 ok; standalone-agents/surface.sh => pass 10 ok (S10 skip pre-existing by design); node question-notify => 35/0; rulesync generate x2 no-op + --check => pass; aislop ci --changes --base dca8a25d2 => 100, 0/0; old-phrasing/validation_at_fault sweeps => clean; git diff --name-only dca8a25d2..HEAD => exactly 14 files; get_card #74 => informational]\ndeviations: none (t6 anchors on merge-base main HEAD by design — stricter, green)\nfriction: none\nopen_questions: none\nnext_suggested: mark C02 done (wave 1 complete), book run-end card #74 duty, launch wave 2 C03.\nreview-confirm: card #74 ask fully covered by new wording incl. OQ6 adjudicator."
+        }
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e8010b85bffe5Eh0rEB4U6vguE",
+      "handoffs": [
+        {
+          "at": "2026-10-28",
+          "role": "agent-dev-local",
+          "session": "ses_e8010b85bffe5Eh0rEB4U6vguE",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nfiles_changed: [.rulesync/subagents/agent-board.md, .rulesync/commands/wekan-board-context.md, .rulesync/skills/boards/SKILL.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/rules/overview.md, .opencode/agents/agent-board.md, .opencode/commands/wekan-board-context.md, .opencode/skills/boards/SKILL.md, .opencode/skills/agents-sync/references/permissions.md, AGENTS.md] (commit 2bc2946d4, local-only, no push, main untouched)\ncommands_run: [board-context.sh t1-t6 => pass 6 ok; tools.sh => 9 ok; skill-surface.sh => 8 ok incl. schema single-owner scan; validation-fix.sh => 8 ok; rulesync-surface.sh => 19 ok; agents-md.sh => 9 ok; gate.sh => 22 ok; agent-perms/surface.sh => 14 ok (A14 dev-boards* spelling); standalone-agents/surface.sh => 10 ok; node question-notify => 35/0; rulesync generate x2 no-op + --check => pass; permissions.md mirror cmp byte-identical; aislop ci --changes --base 07a036886 => 100/0/0; LIVE smoke (dev-boards read-only sequence) => pass, ids equal verified facts, zero drift; git diff --name-only 07a036886..HEAD => exactly 10 files; gate agent-board([^-]|$) grep => zero hits + byte-untouched]\ndeviations: none — read-areas = coord-family set verbatim; Test list emitted inside lists: per schema (swimlane membership only filter), matches plan's live-probe fact\nfriction: none blocking; rulesync/aislop subshell-capture hiccup resolved with plain if/else\nopen_questions: none\nnext_suggested: agent-review C03 at CHUNK_BASE=07a036886 (reviewer repeats live smoke), then wave 3 C04 (dev must read RESEARCH.md)."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-review",
+          "session": "ses_e80030513ffek4Iw2hcFVWH0Kw",
+          "result": "RESULT\nstatus: DONE\nchunk: C03\nverdict: APPROVED\nfiles_changed: [chunks/C03.md (Review notes only)]\ncommands_run: [board-context.sh t1-t6 => 6 ok; tools.sh => 9; skill-surface.sh => 8; validation-fix.sh => 8; rulesync-surface.sh => 19; agents-md.sh => 9; gate.sh => 22; agent-perms => 14; standalone-agents => 10; question-notify 35/0; generate --check + no-op double-run => pass; aislop ci --changes --base 07a036886 => 100/0/0; LIVE smoke re-run => ids equal verified facts zero drift, block parses vs schema; git diff 07a036886..2bc2946d4 => exactly 10 files, 0 deletions]\ndeviations: none from review; dev's Test-list deviation judged CORRECT against schema normative swimlane-membership filter\nfriction: none blocking (reviewer's own rulesync subshell-capture hiccup, re-ran clean)\nopen_questions: none\nnext_suggested: gate C03 done, launch wave 3 C04 (dev reads RESEARCH.md); cosmetic nit: plan-echoed 'six round-trips' vs five-call sequence — align when boards text next moves."
+        }
+      ]
+    },
+    "C04": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": ["C03"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e7ffac5b6ffeIeUgGNbc2BX9uZ",
+      "handoffs": [
+        {
+          "at": "2026-10-28",
+          "role": "agent-dev-local",
+          "session": "ses_e7ffac5b6ffeIeUgGNbc2BX9uZ",
+          "result": "RESULT\nstatus: BLOCKED (validation_at_fault — both defects test-side, dev judges no implementation fault)\nchunk: C04\nfiles_changed: [.opencode/plugin/board-context/index.ts (new), .rulesync/rules/overview.md, AGENTS.md (generated, same commit 7bbca8195, local-only)]\ncommands_run: [node --test board-context.test.ts => FAIL 24 pass/4 fail (all 4 root-caused test-side); question-notify => 35/0; tools.sh 9; skill-surface.sh 8 (t3 re-pinned: formatter mirror + AGENTS.md sentence create no second markdown owner); board-context.sh 6; validation-fix.sh 8; rulesync-surface.sh 19; agents-md.sh 9; gate.sh 22; agent-perms 14; standalone-agents 10; rulesync x2 no-op + --check pass; aislop ci 0/0; scope => 3 declared files; E1 formatBlock bytes === schema fence (placeholders substituted) PASS; E2 hanging leg settles 31ms + logs once + prompt untouched PASS; LIVE-FIRE L1-L4 read-only dev-boards => zero drift]\nfriction: scratch evidence kept /tmp/opencode/cf75-c04-evidence.mjs + cf75-c04-livefire.mjs for reviewer\nopen_questions: TEST DEFECT 1: EXPECTED_BLOCK stale transcription (pre-C01-landing) — landed schema is line-per-entry indented + 3-line re-resolve footer (declared part of itself); suite header prescribes exactly this C02-route fix; correct bytes = livefire mjs output with collectedAt=2026-10-27T12:00:00Z. TEST DEFECT 2: t.timeout(5000) absent on Node v26.5.0 (typeof undefined; file never executed a body pre-C04 at ERR_MODULE_NOT_FOUND). Both mechanical, test-side.\ndeviations: within-chord wording: (1) once-guard consumes slot on any attempt incl failures (re-fetching every prompt pays the 8s budget repeatedly; absence is normal per boards rule; commented); (2) no README (not in scope; landing+enable steps in plugin header); (3) collectedAt full ms-precision ISO (schema says <ISO-8601>).\nnext_suggested: route both defects to test session (defect 1 silently per C02, defect 2 harness-repair); after re-pin expect 28/28 with NO dev relaunch; then agent-review CHUNK_BASE=2aab8cc20 (re-run live-fire + schema-fence cross-check). ON-arm admission leg: approved degraded outcome (user answer 5) — ship default-OFF, ON reserved as user post-merge check; landing+enable steps in plugin header."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-test (repair round — first SILENT route under the C02 contract; no user question raised)",
+          "session": "ses_e7fe826eaffeNQy8UNQm80tb74",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [tests/opencode/board-context.test.ts]\ncommands_run: [node board-context.test.ts => 28/0; question-notify => 35/0; tools/skill-surface/validation-fix/board-context/rulesync-surface/agents-md/gate/agent-perms/standalone-agents => all pass; X1 re-pin === livefire bytes => pass; X2 re-pin === SKILL.md fence + verified ids => pass; aislop ci --changes => 0/0; t.timeout absence probed v26.5.0 => confirmed undefined]\ndeviations: none — both repairs adjudicated mechanical, no implementation touched\nfriction: livefire scratch L4 has a `k=` vs `k: ` pattern bug for scalar lines (out of repo scope; reviewer note)\nopen_questions: none\nnext_suggested: agent-review C04 at CHUNK_BASE=2aab8cc20 (no dev relaunch; AC6 degrade evidence cited in 7bbca8195)."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-review",
+          "session": "ses_e7fe0908affe1d7M8QXWA0B7Et",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nverdict: APPROVED\nfiles_changed: [chunks/C04.md (Review notes only; 3 non-blocking nits recorded)]\ncommands_run: [board-context.test.ts => 28/0; question-notify => 35/0; full bash guard set 9/8/8/6/19/9/22/14/10 => pass; rulesync x2 no-op + --check => pass; aislop ci --changes --base 2aab8cc20 => rc0 0/0/39 files; livefire re-run L1-L3 => pass (L4 known scratch bug); reviewer's own fence cross-checks X-r1/r2/r3 + corrected drift scan => all PASS; t.timeout probe => undefined on v26.5.0; scope => 3 impl + 1 test + plan-folder only; banned-string/literal-URL scans => clean]\ndeviations: none from review — silent C02 repair route adjudicated CORRECT (re-pin strictly tighter, footer included; no NEEDS_INFO owed)\nfriction: reviewer write-denied under /tmp/opencode (correct posture) — node --input-type=module heredoc used instead\nopen_questions: none\nnext_suggested: coord gates C04 done, then final whole-plan review; run-end board moves (#75 + #74 -> Review) user-confirmed duties."
+        }
+      ]
+    }
+  },
+  "final_review": {
+    "rounds": 2,
+    "last_verdict": "APPROVED",
+    "handoffs": [
+      {
+        "at": "2026-10-28",
+        "role": "agent-review (final whole-plan)",
+        "session": "ses_e7fd6dc20ffeKKv9VNDseB4XUy",
+        "result": "RESULT\nstatus: BLOCKED\nchunk: final-review\nverdict: implementation CLEAN, goal fully shipped (all 5 card asks, single-owner schema chain C01->C03->C04 intact, C02 contract consistent, out-of-scope discipline clean, hard rules incl. per-commit same-commit generated-surface audit across 17 commits OK, live collector smoke zero drift, aislop 0/0)\nvalidation_at_fault (single mechanical test-side gap, cross-seam artifact invisible to per-chunk reviews): rulesync-surface c8 + agents-md c7 + gate t14 path-allow-lists miss .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/STATE.json at CHUNK_BASE=merge-base — the coord bookkeeping write the PLAN itself mandates (OQ2 user-approved, dca8a25d2); no dev/test/review commit touches that path; reviewer adjudication: mechanical one-line allow-list widening per suite, no functionality change, NEEDS_INFO not expected — route SILENTLY per C02\nfriction (reviewer): per-chunk review shapes structurally blind to coord commits between chunk bases — only full-range guard runs surface sanctioned-bookkeeping allow-list gaps; t7/t6 'red at full range' is CHUNK_BASE export propagation, not independent defects\ntwo non-blocking nits + findings appended under ## Final review in the plan file."
+      },
+      {
+        "at": "2026-10-28",
+        "role": "agent-test (repair round 2 — second SILENT route under C02; no user question)",
+        "session": "ses_e7fc7e149ffeO5yvvbSnGlnP4T",
+        "result": "RESULT\nstatus: DONE\nchunk: final-review\nfiles_changed: [tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/agents-md.sh, tests/agent-board-coord/gate.sh, tests/pipeline-gates/validation-fix.sh, tests/wekan-mcp/board-context.sh] (commit eb32a8f3a)\ndeviations: two judgment calls inside delegated scope — folder-* admit form (matches sibling convention, coord-owned folders gate writes, not the path list) + env -u CHUNK_BASE containment on the two chain loops (harness defect that caused the misattributed propagation reds). No AC moved, nothing weakened.\nopen_questions: observation — agent-perms A9 window-pin lacks the new admit (pin-coverage gap, deferred).\nnext_suggested: re-review close-out."
+      },
+      {
+        "at": "2026-10-28",
+        "role": "agent-review (final round 2 — repair close-out)",
+        "session": "ses_e7fbec421ffe2qVBZkiUy5h0AL",
+        "result": "RESULT\nstatus: DONE\nchunk: final-review (round 2)\nverdict: APPROVED — whole plan done\ncommands_run: [repair diff => exactly 5 tests/ files, purely additive; CHUNK_BASE=ca0a4066 rulesync-surface 19 / agents-md 9 / gate 22 => pass; poisoned-env validation-fix 8 / board-context 6 => pass; default-shape all 10 bash suites + board-context.test.ts 28/0 + question-notify 35/0 => pass; rulesync --check + no-op => pass; aislop ci --base ca0a4066 => 100 0/0/0 39 files; throwaway-worktree negative/positive admit controls => as expected]\ndeviations: none — repair compliant with C02 silent-route + round-1 prescription; judgment calls both hold vs strictly-nothing-weakened\nopen_questions: none\nnext_suggested: commit close-out, plan_status complete, board moves #75+#74 -> Review (coord), PR/landing user-owned (branch local-only, origin has no cf-75 ref)."
+      }
+    ]
+  },
+  "blocked": [],
+  "deferred": []
+}

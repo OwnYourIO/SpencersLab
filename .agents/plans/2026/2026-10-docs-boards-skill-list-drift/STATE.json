@@ -1,0 +1,46 @@
+{
+  "feature": "2026/2026-10-docs-boards-skill-list-drift",
+  "plan_status": "planned",
+  "plan_status_note": "Planning complete 2026-10-28 (agent-plan pass, single S chunk). NOT approved and NOT kicked off: no coord session, no worktree/branch mint, no board card. The plan folder rides branch cf-75-bug-wekan-mcp-skill as its plan of record for a future run to execute. The future coord sets plan_status -> approved (it owns that field), then kickoff.",
+  "source_friction": {
+    "ticket": "2026/2026-10-cf-75-bug-wekan-mcp-skill",
+    "file": "FRICTION.md",
+    "entry": "2026-10-27 · plan(plan) · boards skill six-list text vs live In Process swimlane (non-pipeline Test list) · open",
+    "checked_by_user": "2026-10-28, cf-75 friction follow-up round 2",
+    "re_status_at_done_gate": "coord writes cf-75 FRICTION item open -> fixed (OQ1; no other role may write that folder)"
+  },
+  "board_card": null,
+  "execution_branch": "cf-75-bug-wekan-mcp-skill",
+  "execution_branch_note": "This plan of record lives on an unmerged branch, not on main: the run that executes it works on this branch or one cut FROM it (a main-cut worktree would not contain this folder, and the admits are pinned to the suites as they stand here).",
+  "kickoff": null,
+  "coord_session": null,
+  "plan_session": null,
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-28",
+  "planning_evidence": {
+    "live_probe": "dev-boards reads 2026-10-28: AI-Dev TNQJ2BrXenZovngTS; swimlanes In Process jLzy39L7djCRr67SF (7 lists: the six pipeline + non-pipeline Test jNYNdCPPkX8Bs95s4), Up Next MoZHQz3C4dSW4Atya (8), Farm BkNBQgMLJBvmCgMAQ (6); 21 lists board-wide",
+    "guard_baseline": "10 boards-touching suites rc=0 at BASE=HEAD 2026-10-28; tests/pipeline-models/surface.sh red at M3 (pre-existing, unlanded C06), m5 green",
+    "admits_red": "c8/c7/t14 red at CHUNK_BASE=ca0a40669f97605c92cdd593f9907dbc32f9d354 on this ticket's folder; a9 green until widened (four-site lockstep duty)",
+    "frozen_count_sites": [
+      ".rulesync/skills/boards/SKILL.md",
+      ".opencode/skills/boards/SKILL.md"
+    ]
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "cf-75 FRICTION item 2 re-status at this ticket's done gate (coord-owned)",
+    "tests/pipeline-models/surface.sh M3 stays red — belongs to the flash-next C06 work, not this ticket"
+  ]
+}

@@ -146,6 +146,15 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   `kickoff` carries `card` (the id) + `slug` + `session_origin` (the claim-once
   slot record — Config constants) and omits/nulls `run_tag`.
 
+## Board context block (consumer side)
+
+A launch prompt may carry a pre-collected Board context block — structural ids resolved on the live board before the run started. Its producer is the `/wekan-board-context` collector command; the format's single normative home is the `wekan-mcp` skill's schema section — cite it, never restate it here. Consumer rule, for the whole run:
+
+- Block present → use its ids for the whole run without re-running the resolution calls: the first six board round-trips are already spent.
+- At claim the coordinator records the block as STATE.json `kickoff.board_context` (alongside `card`, `slug`, `session_origin`).
+- Block absent → normal, not a gap: resolve ids top-down exactly as before.
+- Any id-shaped call error (404, not-found, or an empty projection where the block's ids promised data) → re-resolve the block against the live board before retrying, and note the drift in RESULT. The board structure is human-owned and drifts, so the block is a starting context, never a freeze — the schema's own re-resolve footer binds here too.
+
 ## Research-only cards — iterative loop
 
 Trigger: the card's labels include the **Research** board label — read board labels via `get_board` and the card's label ids via `get_card`, matched case-insensitively. The label is the ONLY trigger (D14); the Lifecycle checklist never fires this flow — its Pre/Post Research items are stages of normal cards (a legacy-Research card per the transition rule behaves the same: its checklist only times research, it never marks a card research-only).

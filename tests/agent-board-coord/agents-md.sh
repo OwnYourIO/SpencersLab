@@ -280,6 +280,15 @@ fi
 # admitted), the pipeline-role-test pair and the three follow-up ticket
 # folders the cf-52 landing 124fc2ae8 introduced (folder patterns are inline
 # literals so agent-perms A9 window-greps them inside this block).
+# cf-75 widening (agent-test, same union-of-tickets convention): the new
+# skills/wekan-mcp skill + the wekan-api pointer edit + the hand-managed
+# .opencode/plugin/board-context plugin dir + this ticket's own plan folder
+# (a scope guard that reds on the mere existence of the running ticket's
+# folder buries every later check — cf-58's A9 note).
+# cf-75 final-review widening: the OQ2-approved draft retirement is a coord
+# bookkeeping write into the superseded sibling folder
+# 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, dca8a25d2) — same
+# sanctioned-plan-folder class as c8's enumerations, admitted whole.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -303,11 +312,14 @@ if want c7; then
       .rulesync/subagents/*|.opencode/agents/*|.rulesync/commands/*|.opencode/commands/*|\
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
-      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*) : ;;
+      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
+      skills/wekan-mcp/*|skills/wekan-api/*|.opencode/plugin/board-context/*|\
+      .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
+      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface widenings; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder widenings; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

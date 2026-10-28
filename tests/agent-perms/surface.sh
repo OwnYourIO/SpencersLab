@@ -108,6 +108,8 @@ PERM_SRC=".rulesync/skills/agents-sync/references/permissions.md"
 PERM_GEN=".opencode/skills/agents-sync/references/permissions.md"
 POV_SRC=".rulesync/skills/agents-sync/references/pipeline-overview.md"
 POV_GEN=".opencode/skills/agents-sync/references/pipeline-overview.md"
+PAR_SRC=".rulesync/skills/agents-sync/references/plan-and-result.md"
+PAR_GEN=".opencode/skills/agents-sync/references/plan-and-result.md"
 RT_SRC=".rulesync/skills/pipeline-role-test/SKILL.md"
 RT_GEN=".opencode/skills/pipeline-role-test/SKILL.md"
 RULES_SRC=".rulesync/rules/overview.md"
@@ -127,9 +129,11 @@ SUITE_PUSH="tests/pipeline-push-pr/surface.sh"
 SUITE_STANDALONE="tests/standalone-agents/surface.sh"
 SUITE_MODELS="tests/pipeline-models/surface.sh"
 
-# The D4 carve set: exactly these four paths may move inside the agents-sync
-# dirs; the exclusion regex is grepped inside both guarded suites (A7).
-CARVE_RE='^(\.rulesync|\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview)\.md$'
+# The D4 carve set, grown to the cf-75 C02 trio (2026-10-27): exactly these
+# six paths may move inside the agents-sync dirs; the exclusion regex is
+# grepped inside both guarded suites (A7) and its literal moves in lockstep
+# across gate.sh t12, coord-inwork i5 and A7's needles.
+CARVE_RE='^(\.rulesync|\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview|plan-and-result)\.md$'
 
 checks=0
 FAILED=0
@@ -600,12 +604,15 @@ fi
 
 # --- A5: agents-sync references pairs byte-identical source<->mirror (AC5) -----
 if want a5; then
-  for pair in "$PERM_SRC|$PERM_GEN" "$POV_SRC|$POV_GEN"; do
+  # cf-75 C02 re-pin: plan-and-result.md joins the carved pair-equality loop
+  # (it leaves the gate t12 / coord-inwork i5 byte-freeze with the widened
+  # carve, so this is the pin that keeps its mirror regenerated).
+  for pair in "$PERM_SRC|$PERM_GEN" "$POV_SRC|$POV_GEN" "$PAR_SRC|$PAR_GEN"; do
     IFS='|' read -r s g <<<"$pair"
     cmp -s "$s" "$g" \
       || fail "A5[AC5]: $s and its generated mirror $g are not byte-identical — rulesync copies these verbatim, so a text edit must land in the source and regenerate"
   done
-  ok "A5[AC5]: the two agents-sync references pairs are byte-identical source<->generated (HOLD before and after dev — rulesync copies verbatim)"
+  ok "A5[AC5]: the three agents-sync references pairs are byte-identical source<->generated (HOLD before and after dev — rulesync copies verbatim)"
 fi
 
 # --- A6: regeneration contract (AC5 regen / AC6 hold) --------------------------
@@ -632,18 +639,23 @@ if want a6; then
 fi
 
 # --- A7: re-pin HOLD posture — carve present, sanctioned agents-sync delta -----
+# cf-75 C02 re-pin (2026-10-27): the carve trio grew with plan-and-result.md;
+# the needles below must match the exclusion lines in gate.sh t12 and
+# coord-inwork i5 byte-for-byte, and those two lines must match each other —
+# all four sites move together or A7 goes red (the three-way lockstep is the
+# point: a carve widened in one suite only must leak the freeze elsewhere).
 if want a7; then
   python3 "$TMP/blockwin.py" "$SUITE_GATE" t12 \
-    "grep -v -x -E -e '(\\.rulesync|\\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview)\\.md'" \
+    "grep -v -x -E -e '(\\.rulesync|\\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview|plan-and-result)\\.md'" \
     || fail "A7[AC6-AC7]: gate.sh t12 lacks the D4 carve exclusion line — the re-pin did not land"
   python3 "$TMP/blockwin.py" "$SUITE_SURFACE" i5 \
-    "grep -v -x -E -e '(\\.rulesync|\\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview)\\.md'" \
+    "grep -v -x -E -e '(\\.rulesync|\\.opencode)/skills/agents-sync/references/(permissions|pipeline-overview|plan-and-result)\\.md'" \
     || fail "A7[AC6-AC7]: surface.sh i5 lacks the D4 carve exclusion line — the re-pin did not land"
   others=$( { git diff --name-only "$BASE" -- .rulesync/skills/agents-sync .opencode/skills/agents-sync 2>/dev/null || true;
               git ls-files --others --exclude-standard -- .rulesync/skills/agents-sync .opencode/skills/agents-sync; } \
             | grep -Ev "$CARVE_RE" || true )
-  [ -z "$others" ] || { printf '%s\n' "$others" >&2; fail "A7[AC6-AC7]: agents-sync paths changed vs $BASE beyond the four carved references files (base: $BASE) — the byte-freeze carve is EXACTLY permissions.md + pipeline-overview.md (source and generated), no other frozen-dir edit is sanctioned"; }
-  ok "A7[AC6-AC7]: t12/i5 carve lines present; no agents-sync delta vs $BASE outside the carved four (worktree included)"
+  [ -z "$others" ] || { printf '%s\n' "$others" >&2; fail "A7[AC6-AC7]: agents-sync paths changed vs $BASE beyond the six carved references files (base: $BASE) — the byte-freeze carve is EXACTLY permissions.md + pipeline-overview.md + plan-and-result.md (source and generated), no other frozen-dir edit is sanctioned"; }
+  ok "A7[AC6-AC7]: t12/i5 carve lines present; no agents-sync delta vs $BASE outside the carved six (worktree included)"
 fi
 
 # --- A8: parse-safety of every touched suite (AC6-parse-safety) ----------------
@@ -659,8 +671,12 @@ fi
 # cf-58 re-pin: the loop grows a fourth slug — this ticket's own folder must
 # be admitted by the same blocks (a scope guard that reds on the mere
 # existence of the running ticket's plan folder buries every later check).
+# cf-75 re-pin (2026-10-27): the same rule adds 2026-10-cf-75-bug-wekan-mcp-
+# skill — its plan folder's STATE.json/handoff commits land on this branch
+# like cf-58's did, and every t14/c8/c7 run against a pre-chunk base would
+# otherwise read them as scope violations.
 if want a9; then
-  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge; do
+  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge 2026-10-cf-75-bug-wekan-mcp-skill; do
     python3 "$TMP/blockwin.py" "$SUITE_GATE" t14 ".agents/plans/2026/$slug/*" \
       || fail "A9[AC9-admits]: gate.sh t14 does not admit $slug inside its if-want block (the D9 widening did not land)"
     python3 "$TMP/blockwin.py" "$SUITE_RULESYNC" c8 ".agents/plans/2026/$slug/*" \
@@ -668,7 +684,7 @@ if want a9; then
     python3 "$TMP/blockwin.py" "$SUITE_AGENTSMD" c7 ".agents/plans/2026/$slug/*" \
       || fail "A9[AC9-admits]: agents-md.sh c7 does not admit $slug inside its if-want block"
   done
-  ok "A9[AC9-admits]: all three 2026-10-bug-* follow-up folders and the cf-58 ticket folder are admitted inside the t14, c8 and c7 blocks (windowed, not file-global)"
+  ok "A9[AC9-admits]: all three 2026-10-bug-* follow-up folders, the cf-58 ticket folder and the cf-75 ticket folder are admitted inside the t14, c8 and c7 blocks (windowed, not file-global)"
 fi
 
 # --- A10: cf-58 family-mechanism integrity + negative controls (C03-owned) -----

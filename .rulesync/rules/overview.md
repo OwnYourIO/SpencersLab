@@ -44,19 +44,21 @@ container images (`containers/`). **ArgoCD applies everything — never
   `/pipeline-resume`); a symlink to `.opencode/commands/`, which rulesync
   generates from `.rulesync/commands/`.
 - `skills/` — self-written skills (`helm-chart-creation`, `container-creation`,
-  `llama-swap`). `.agents/skills/` — third-party skills, tracked in git and
-  synced from their GitHub sources (provenance + integrity hashes in the root
-  `skills-lock.json`); don't hand-edit those.
+  `llama-swap`, `wekan-mcp`, `wekan-api`). `.agents/skills/` — third-party skills,
+  tracked in git and synced from their GitHub sources (provenance + integrity
+  hashes in the root `skills-lock.json`); don't hand-edit those.
 - `.kilo` — tracked symlink to `.agents/`, so kilo loads the same agents,
   plans, and skills.
 - `.opencode/` — tracked dir holding the **generated** surfaces: `agents/`,
   `commands/`, `skills/` (rulesync output — never hand-edit; `.agents/agents`
   and `.agents/commands` symlink into the first two) plus hand-managed
   `plugin/` (`aislop-gate` quality gate on edits; `question-notify` pushes a
-  Home Assistant notification to the user's phone when an `agent-*` session
-  asks a question, a top-level session finishes or stops on a failure, or a
-  permission approval is still pending 15 s) and `opencode.jsonc` (dev half
-  of the agent tool config — see below).
+  Home Assistant notification to the user's phone whenever an `agent-*`
+  session asks a question; `board-context` prefetches the board-context block
+  from dev-boards into a board-coord session's first prompt — hand-written
+  like the other two, never rulesync-generated; ships disabled until its
+  live-fire proof is cited in the source) and `opencode.jsonc` (dev half of
+  the agent tool config — see below).
 - `.rulesync/` — the single source of truth for AI-tool config: `rules/`
   (→ this `AGENTS.md`), `subagents/` (→ `.opencode/agents/`), `commands/`
   (→ `.opencode/commands/`), `skills/` (→ `.opencode/skills/`: the
@@ -146,6 +148,11 @@ container images (`containers/`). **ArgoCD applies everything — never
   batched plan-question round; launch with `/pipeline-boards`. Artifacts
   live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
   `/pipeline` commands (`/pipeline-pr` for push-for-remote-build/test runs).
+- `agent-board` (`.agents/agents/agent-board.md`) — WeKan board-MCP worker:
+  card ops, board-context collection, and board reads through the `dev-boards`
+  MCP surface (its only MCP grant, no `admin-global-wekan` fallback). Not a
+  pipeline coordinator — it launches no subagents and writes no files; the
+  `/wekan-board-context` collector command runs as it.
 
 ## Feature pipeline (agent-*)
 
@@ -185,8 +192,9 @@ role × permission matrix is in the `agents-sync` skill references
   (`agent-dev-local`/`agent-dev-pr`) runs them
   while implementing and `agent-review` re-runs them as the first step of
   every review; `agent-coord` gates a chunk done only when they pass. A test
-  judged faulty is never fixed by the reviewer — coord asks the user and
-  routes the fix back to the test session.
+  judged faulty is never fixed by the reviewer — coord routes a mechanical
+  repair silently back to the test session; only a fix that session flags
+  `NEEDS_INFO` as functionality-changing becomes a user question.
 - Deep research is commissioned, never ad hoc: any agent that needs it
   reports the need via RESULT, `agent-coord` launches `agent-research`
   (storm skill + `global-searxng`), and the summary lands in the feature

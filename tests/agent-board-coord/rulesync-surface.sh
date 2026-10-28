@@ -26,7 +26,8 @@
 # dead-literal ABSENCE + dynamic Session-origin phrases + D12 negative]
 # c13[C02 AC1 research-only + D15] c14[C02 AC1 D11 resume] c15[C02 AC1 C01
 # tool names] c16[C03 AC1 body+command deltas] c17[C02 AC4 byte-unchanged;
-# cf-52 RE-PIN drops kickoff/role-coord from the frozen set].
+# cf-52 RE-PIN drops kickoff/role-coord from the frozen set; cf-75 C02 RE-PIN
+# drops gates — content now guarded by tests/pipeline-gates/validation-fix.sh].
 #
 # Red before C02/C03 (the ported skill is still the old two-list pickup and
 # live-question intake); c1-c5, c7, c9, c17 are already green and hold as
@@ -64,6 +65,11 @@ FEATURE4=".agents/plans/2026/2026-10-cf-52-feat-coord-session-inwork"
 # cf-58 joins the union-of-tickets scope posture (its agent-surface widening
 # is documented at the c8 case list).
 FEATURE5=".agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge"
+# cf-75 (2026-10-cf-75-bug-wekan-mcp-skill) joins the same posture: its plan
+# folder plus the surfaces its chunks declare (the new skills/wekan-mcp skill,
+# the wekan-api pointer edit, and the hand-managed board-context plugin dir)
+# are admitted at c8 — agent-test's prerogative per the plan's scope caveat,
+# never dev's.
 RULES_SRC=".rulesync/rules/overview.md"
 
 SKILL_SRC=".rulesync/skills/boards/SKILL.md"
@@ -378,6 +384,11 @@ fi
 # cf-52 landing 124fc2ae8 introduced — a landing that adds plan folders must
 # not read as a scope violation here at any later base. The three folder
 # patterns are inline literals so agent-perms A9 window-greps them here.
+# cf-75 final-review widening: the OQ2-approved draft retirement is a coord
+# bookkeeping write into the SUPERSEDED sibling folder
+# 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, commit dca8a25d2) — the
+# same sanctioned-plan-folder class as the enumerations above, admitted whole
+# so no further retirement note reddens the full-range scope shape.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -400,11 +411,14 @@ if want c8; then
       .rulesync/subagents/*|.opencode/agents/*|.rulesync/commands/*|.opencode/commands/*|\
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
-      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*) : ;;
+      .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
+      skills/wekan-mcp/*|.opencode/plugin/board-context/*|\
+      .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
+      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9 widening (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9 and cf-75 (skills/wekan-mcp, board-context plugin, own plan folder) widenings (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----
@@ -659,13 +673,20 @@ fi
 # defaults re-cut edits it legitimately; its content is guarded by
 # tests/pipeline-models/surface.sh, not by invariance. pipeline-gates stays
 # frozen (no cf-58 chunk touches it).
+# cf-75 C02 RE-PIN (2026-10-27): pipeline-gates LEAVES the byte set — this
+# ticket's C02 rewrites its validation_at_fault bullet to the silent-route
+# contract; the content guard is tests/pipeline-gates/validation-fix.sh t2,
+# exactly the re-pin posture of the two departures above. The convention in
+# this suite is that a re-opened surface simply leaves the frozen set (no
+# substitute freeze is invented for it), so after this departure c17's set
+# is empty and the check stands as a documented no-op: undeclared-surface
+# edits are fenced by gate.sh t14's per-contract enumeration and the
+# scope-escape class that motivated c17; each pipeline contract's content by
+# its own suite (kickoff → coord-inwork i1/i2, role-coord → i1-style +
+# validation-fix t1, models → tests/pipeline-models, gates → validation-fix
+# t2, agents-sync → the t12/i5/A7 carve trio).
 if want c17; then
-  if ! git diff --quiet "$BASE" -- \
-      .rulesync/skills/pipeline-gates .opencode/skills/pipeline-gates 2>/dev/null; then
-    git diff --name-only "$BASE" -- .rulesync/skills/pipeline-gates .opencode/skills/pipeline-gates >&2
-    fail "c17: a pipeline-gates file changed vs $BASE (stays byte-pinned; kickoff/role-coord re-opened by cf-52, models re-opened by cf-58 C06 — each with its own content suite)"
-  fi
-  ok "c17: pipeline-gates (source + generated) is byte-unchanged vs $BASE (kickoff/role-coord re-opened by cf-52 i1/i2-guarded; pipeline-models re-opened by cf-58 C06, tests/pipeline-models-guarded)"
+  ok "c17: no-op — every pipeline skill pair this check ever byte-froze was later re-opened by a sanctioned ticket (kickoff/role-coord cf-52, models cf-58 C06, gates cf-75 C02); each surface now carries its own content suite, and undeclared-surface edits fail at gate t14"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"
