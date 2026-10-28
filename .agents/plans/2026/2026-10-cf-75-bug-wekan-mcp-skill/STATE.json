@@ -140,6 +140,18 @@
       ]
     }
   },
+  "final_review": {
+    "rounds": 1,
+    "last_verdict": "BLOCKED-validation_at_fault",
+    "handoffs": [
+      {
+        "at": "2026-10-28",
+        "role": "agent-review (final whole-plan)",
+        "session": "ses_e7fd6dc20ffeKKv9VNDseB4XUy",
+        "result": "RESULT\nstatus: BLOCKED\nchunk: final-review\nverdict: implementation CLEAN, goal fully shipped (all 5 card asks, single-owner schema chain C01->C03->C04 intact, C02 contract consistent, out-of-scope discipline clean, hard rules incl. per-commit same-commit generated-surface audit across 17 commits OK, live collector smoke zero drift, aislop 0/0)\nvalidation_at_fault (single mechanical test-side gap, cross-seam artifact invisible to per-chunk reviews): rulesync-surface c8 + agents-md c7 + gate t14 path-allow-lists miss .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/STATE.json at CHUNK_BASE=merge-base — the coord bookkeeping write the PLAN itself mandates (OQ2 user-approved, dca8a25d2); no dev/test/review commit touches that path; reviewer adjudication: mechanical one-line allow-list widening per suite, no functionality change, NEEDS_INFO not expected — route SILENTLY per C02\nfriction (reviewer): per-chunk review shapes structurally blind to coord commits between chunk bases — only full-range guard runs surface sanctioned-bookkeeping allow-list gaps; t7/t6 'red at full range' is CHUNK_BASE export propagation, not independent defects\ntwo non-blocking nits + findings appended under ## Final review in the plan file."
+      }
+    ]
+  },
   "blocked": [],
   "deferred": []
 }

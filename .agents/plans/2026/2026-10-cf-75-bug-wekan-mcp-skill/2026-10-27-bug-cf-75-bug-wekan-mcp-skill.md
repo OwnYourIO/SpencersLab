@@ -175,3 +175,125 @@ C04 dev must read RESEARCH.md if it exists.
    needs-replan if the plan itself moves).
 7. **agent-board grants: `dev-boards*` ONLY** — user-confirmed, no
    admin-global-wekan fallback.
+
+## Final review (2026-10-28, agent-review, whole branch ca0a4066..a77a9b31e)
+
+Verdict: **BLOCKED — validation_at_fault** (one mechanical test-side
+allow-list gap; zero findings against the implementation). All five card
+asks shipped and wired; the fix below routes silently to the test session
+per this ticket's own C02 contract, and a re-review of the re-pin only is
+expected to conclude APPROVED with no dev relaunch.
+
+### Finding (blocker-class only because it reddens an instructed run shape; test-side, mechanical)
+- **validation_at_fault:** `tests/agent-board-coord/rulesync-surface.sh`
+  (c8 case-list, ~line 410), `tests/agent-board-coord/agents-md.sh` (c7
+  case-list, ~line 313), `tests/agent-board-coord/gate.sh` (t14 case-list,
+  line ~733) — none admits
+  `.agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/STATE.json`,
+  which the plan *mandates* the coordinator write at C01's done gate
+  (OQ2 user-approved; chunks/C01 "Coord bookkeeping"; DECISIONS
+  "C01 done-gate bookkeeping"). Landed as coord commit `dca8a25d2`. At
+  every per-chunk base the three guards pass (each chunk base is at or
+  after the bookkeeping commit, or the commit didn't exist yet at the
+  C01-review time — a genuine cross-seam blind spot); run against the
+  full branch range (`CHUNK_BASE=ca0a4066`) all three fail
+  `path outside the ticket's in-scope files`, cascading red into
+  validation-fix.sh t7 and board-context.sh t6 only when CHUNK_BASE is
+  exported through the env (default-shape runs green). The guards' own
+  doctrine already enumerates sanctioned landing plan-folder adds ("a
+  landing that adds plan folders must not read as a scope violation here
+  at any later base" — rulesync-surface c8 comment; cf-58 A9 note in
+  agents-md c7), and the plan's Commands scope caveat pre-declared this
+  exact class: "allow-lists go red on any new ticket folder — widening
+  them is agent-test's prerogative, never dev's." Fix: add
+  `.agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/STATE.json`
+  (or that folder's `*`) to the three case-lists; strictly mechanical,
+  tightens nothing, no NEEDS_INFO owed. No implementation file is at
+  fault — no dev/test/review commit touches the sibling folder (per-
+  commit audit: only `dca8a25d2`, a coord commit).
+
+### Validation matrix (final reviewer, all re-run fresh)
+- Chunk bases (throwaway detached worktrees reproducing each chunk's
+  review state): C01 @ c5025339a — skill-surface 8 ok, tools 9,
+  rulesync-surface (CHUNK_BASE=bd9e1cf3c) 19, agents-md 9, gate 22,
+  agent-perms 14, standalone-agents 10, question-notify 35/0. C02 @
+  15ffcae4b — validation-fix 8 ok (t6 commit walk meaningful), + same set
+  vs dca8a25d2 all green. C03 @ 2bc2946d4 — board-context.sh 6 ok, +
+  suite set vs 07a036886 all green. C04 @ cf33808bf —
+  board-context.test.ts 28/0, question-notify 35/0, + full set vs
+  2aab8cc20 green incl. coord-inwork 7 ok.
+- Full branch @ HEAD: all four new suites + tools.sh + gate.sh +
+  agent-perms + standalone-agents + coord-inwork PASS; rulesync-surface/
+  agents-md PASS at default shape, FAIL c8/c7 only at the instructed
+  full-range shape (the finding above).
+- `npx --no-install rulesync generate` ×2 from clean tree: both no-op,
+  tree byte-clean; `generate --check` => "All files are up to date."
+- `npx --no-install aislop ci --changes --base ca0a4066` => rc=0,
+  0 errors / 0 warnings / 0 fixable over 39 files.
+- LIVE dev-boards read-only collector smoke (list_boards → get_board →
+  list_swimlanes → list_lists → list_custom_fields): **zero drift** vs
+  the Verified-facts — board `TNQJ2BrXenZovngTS`, In Process
+  `jLzy39L7djCRr67SF` (+ Up Next, Farm), the six pipeline lists + Test
+  `jNYNdCPPkX8Bs95s4`, CFs exactly `slug RaNeqvh9YoT4bnkZ8` + `session
+  zZw4PwMoLeodJy3eT` carrying `{id, name, type}`, labels Research
+  `ysSmS5` / Ready for Work `mkbxeo`.
+
+### Whole-plan view (the seams per-chunk reviews could not see)
+1. **Goal coverage: complete.** Skill (`skills/wekan-mcp/` 13+13-tool
+   docs, ten call-shape rules, schema), collector
+   (`/wekan-board-context`), worker (`agent-board`), plugin
+   (`.opencode/plugin/board-context/`, DEFAULT_ENABLED=false per the
+   user-approved degrade), coord auto-routing incl. card #74's duplicate
+   ask (C02 wording covers it — verified against the card text at the
+   C02 review). Single-owner chain intact: schema normative home =
+   `skills/wekan-mcp/SKILL.md` and it is the ONLY markdown carrying
+   `Board context (collected` repo-wide outside `.agents/plans/`;
+   the command and generated command carry zero copies (pointer-only,
+   "the format's single normative home"); agent-board's body cites the
+   one home; the boards consumer rule cites it; the plugin formatter is
+   byte-pinned to the schema fence (skill-surface t3 +
+   board-context.test.ts 28/0 re-run green at HEAD).
+2. **Cross-chunk consistency: clean.** The plan-and-result.md:75
+   contract sentence reads identically to gates + coord 2.d (silent
+   route, test-session adjudication, NEEDS_INFO-only escalation,
+   needs-replan); the surviving `ask the user` hits are exactly the
+   legit non-routing set (retry cap, generic BLOCKED, kickoff/intake,
+   friction multi-select, fuser confirms, admin-MCP confirm, boards
+   plan-phase protocol) — the boards batched-question protocol is
+   plan-phase, correctly untouched by both C02 and C03. All seven C02
+   surfaces + the three C03 mirrors regenerate byte-consistent (rulesync
+   no-op proof above). No orphan text found between the C02 surfaces
+   and the C03 boards addition.
+3. **Out-of-scope discipline: clean on the branch.** Zero
+   `containers/` changes; zero machine-local config; the only
+   out-of-chunk-declared file on the whole range is the sanctioned
+   coord bookkeeping commit (the finding's subject); 0 merge commits,
+   main not advanced from this branch, `origin` has no
+   `cf-75-bug-wekan-mcp-skill` ref (local-only run honored), and main's
+   independent tip `974e86767` is not an ancestor of HEAD (no stale
+   rebase claims either way).
+4. **Deferred/FRICTION: all recorded, none silently dropped.** DECISIONS
+   "Deferred" holds the wekan-api "full 25-tool surface" pin contradiction
+   (C01 review) and the legacy freeze sites m6/s6 (test phase); C03
+   review's Deferred holds the plan-and-result STATE-example posture; the
+   three C04 nits (once-guard TTL-lookup-only eviction, late-rejection
+   arm coverage, header-scan-before-agent-filter slot consumption) sit
+   in chunks/C04.md Review notes; FRICTION carries the live items incl.
+   the never-executed-suites doctrine entry with its open status.
+5. **Hard rules: clean.** Every commit with `.opencode/` generated
+   surfaces carries its `.rulesync/` source in the same commit (audited
+   all 17); AGENTS.md current vs sources; no version/tag bumps, no
+   secrets, no kubectl/apply anywhere; aislop 0/0 over the full range
+   corroborates the comment-slop posture the C04 review adjudicated.
+
+### Nits (non-blocking, no change requested this pass)
+- The boards consumer rule's producer sentence names only the collector
+  command; the schema home names both producers (command + prefetch
+  plugin). Harmless (plugin emits the identical schema and is
+  default-OFF pending the user's landing/enable), but align the
+  attribution when the boards text gets its next wording pass — same
+  round as the recorded "first six round-trips" vs five-call nit.
+- The per-chunk review shape (CHUNK_BASE at or after each dev commit)
+  structurally cannot cover coord commits landing between chunks; a
+  full-range scope-guard run in final review is the only shape that
+  can — worth a doctrine line for future final reviews.
