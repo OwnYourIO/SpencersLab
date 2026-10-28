@@ -186,8 +186,9 @@ role × permission matrix is in the `agents-sync` skill references
   (`agent-dev-local`/`agent-dev-pr`) runs them
   while implementing and `agent-review` re-runs them as the first step of
   every review; `agent-coord` gates a chunk done only when they pass. A test
-  judged faulty is never fixed by the reviewer — coord asks the user and
-  routes the fix back to the test session.
+  judged faulty is never fixed by the reviewer — coord routes a mechanical
+  repair silently back to the test session; only a fix that session flags
+  `NEEDS_INFO` as functionality-changing becomes a user question.
 - Deep research is commissioned, never ad hoc: any agent that needs it
   reports the need via RESULT, `agent-coord` launches `agent-research`
   (storm skill + `global-searxng`), and the summary lands in the feature
