@@ -145,6 +145,11 @@ container images (`containers/`). **ArgoCD applies everything — never
   batched plan-question round; launch with `/pipeline-boards`. Artifacts
   live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
   `/pipeline` commands (`/pipeline-pr` for push-for-remote-build/test runs).
+- `agent-board` (`.agents/agents/agent-board.md`) — WeKan board-MCP worker:
+  card ops, board-context collection, and board reads through the `dev-boards`
+  MCP surface (its only MCP grant, no `admin-global-wekan` fallback). Not a
+  pipeline coordinator — it launches no subagents and writes no files; the
+  `/wekan-board-context` collector command runs as it.
 
 ## Feature pipeline (agent-*)
 
