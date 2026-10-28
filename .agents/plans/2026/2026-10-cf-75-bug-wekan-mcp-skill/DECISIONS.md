@@ -112,3 +112,12 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   agent-perms A5/A7/A9+CARVE_RE, coord-inwork i5) executed as the plan's
   declared agent-test prerogative — all prior assertions survive
   (nothing skipped/weakened/deleted).
+
+## C01 done-gate bookkeeping (2026-10-28, coord — user-approved OQ2 duty)
+- 2026-10-28 coord: draft `2026-10-docs-wekan-mcp-arg-ergonomics` STATE
+  re-statused `draft → absorbed` with a cross-reference note to cf-75/C01
+  (content landed in skills/wekan-mcp/ + the AGENTS.md skills line).
+  (b) The duty's "follow-up board card" half is **N/A**: the draft was
+  minted from cf-70 FRICTION item 3, never from a card, and a full-board
+  scan (every list, both extra swimlanes) 2026-10-28 found no ergonomics
+  card — closed with evidence instead of hunting a random one.

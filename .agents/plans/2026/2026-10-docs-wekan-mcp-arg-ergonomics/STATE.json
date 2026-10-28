@@ -1,10 +1,11 @@
 {
   "feature": "2026/2026-10-docs-wekan-mcp-arg-ergonomics",
-  "plan_status": "draft",
+  "plan_status": "absorbed",
+  "absorbed_by": "2026-10-cf-75-bug-wekan-mcp-skill chunk C01 (skills/wekan-mcp) — re-statused 2026-10-28 at C01's done gate by cf-75's coordinator per the user-approved batched-round decision (OQ2: retire draft, absorbed by C01). Call-shape content landed in skills/wekan-mcp/ (SKILL.md rules + references/call-shapes.md 26-tool table); the AGENTS.md skills-list task landed in the same chunk. No follow-up board card existed for this draft (minted from cf-70 FRICTION item 3, not from a card) — verified by full-board list scan 2026-10-28, so the card-close half of the retirement duty is N/A.",
   "coord_session": null,
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "2026-10-26",
+  "updated_at": "2026-10-28",
   "chunks": {
     "C01": {
       "status": "pending",
