@@ -11101,6 +11101,18 @@ entries:
   llama-swap:
   - apiVersion: v2
     appVersion: unified-vulkan-266
+    created: "2026-10-28T14:36:59.977136609Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: ebfbefd692b05d12701b3e8c97bd4b3b4148f4fe72b0f15f3bc12bf108e9e69b
+    name: llama-swap
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/llama-swap-1.0.27/llama-swap-1.0.27.tgz
+    version: 1.0.27
+  - apiVersion: v2
+    appVersion: unified-vulkan-266
     created: "2026-10-26T23:50:24.358822871Z"
     dependencies:
     - name: app-template
@@ -15801,6 +15813,22 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/snapcast-1.0.1/snapcast-1.0.1.tgz
     version: 1.0.1
+  strata:
+  - apiVersion: v2
+    appVersion: 0.2.7
+    created: "2026-10-28T14:37:00.369012678Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: Internal Strata engine pod (llama-swap supervisor owning strata serve)
+      for gpu-ai — exposed through the existing llama-swap surface only (cf-77)
+    digest: 6fbe465f920cbe1107d8b0b48487beba1581d70847193d7db8b03fc03d272d25
+    name: strata
+    type: application
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/strata-1.0.1/strata-1.0.1.tgz
+    version: 1.0.1
   supabase:
   - apiVersion: v2
     appVersion: 2024.08.19
@@ -19896,4 +19924,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-26T23:50:24.359830125Z"
+generated: "2026-10-28T14:37:00.371160644Z"
