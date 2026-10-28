@@ -57,16 +57,17 @@ def test_c03_charts_strata_entry_removed():
 def test_c03_seven_flags_present_true_under_llama_swap_overlay():
     """The flags are SCALARS only (deep-merge replaces lists wholesale — the
     engineProfile/model-env/mount lists are never overridden from the service
-    block; run-1's list-warning comment relocates here)."""
+    block; run-1's list-warning comment relocates here). The dig path IS the
+    chart's gate path verbatim — overlay spelling matching the chart contract
+    is part of what this checks."""
     block = _service_doc()["llama-swap"]
     missing = []
     for path in S.FLAG_PATHS:
-        full = f"app-template.{path}"
-        found, val = S.dig(block, full)
+        found, val = S.dig(block, path)
         if not (found and val is True):
-            missing.append(full)
+            missing.append(path)
     assert not missing, (
-        f"llama-swap.app-template overlay lacks the true-ified flags {missing} — "
+        f"llama-swap overlay lacks the true-ified flags {missing} — "
         "r2-C03 sets all seven TOGETHER (a partial set fails the render by design)"
     )
 
@@ -129,23 +130,42 @@ def test_c03_peers_evidence_is_the_pin_and_the_testlib_agrees():
 
 @helm
 def test_c03_extract_and_render_yields_on_shape_keyless():
-    """Proves the OVERLAY PATH SPELLING: extracting the service llama-swap
-    block onto the parent chart must render the ON object set with zero
-    sentinels and zero secret chain (AC2)."""
-    docs = L.render_docs("gpu-ai")
+    """Proves the OVERLAY PATH SPELLING end-to-end: extracting the service
+    llama-swap block onto the parent chart under the REAL appset release name
+    must render the ON object set with zero STRATA sentinels and zero
+    strata secret chain (AC2). The parent's own pre-ticket hf-token sentinel
+    and ExternalSecret are legitimate siblings outside C-A's scope — the
+    assertions are name-scoped accordingly. Rendered via
+    S.render_service_overlay, NOT L.render_docs: that helper pins release
+    `llama-swap`, which would name every object WITHOUT the cluster prefix
+    and miss the consolidated identity the peers evidence checks."""
+    docs, raw = S.render_service_overlay()
     ids = S.obj_ids(docs)
     assert {
         ("Deployment", S.STRATA_OBJECT_NAME), ("Service", S.STRATA_OBJECT_NAME),
         ("ConfigMap", S.CM_CONFIG), ("ConfigMap", S.CM_PROFILE),
-    } <= ids, f"ON objects missing from the service-overlay render: {sorted(ids)[:8]}…"
-    raw = yaml.safe_dump_all(list(docs))
-    assert "OVERRIDE_VIA" not in raw, "sentinel reached the rendered manifests"
-    assert "strata-api-key" not in raw and "ExternalSecret" not in raw, (
-        "secret-chain artifacts in the service-overlay render (C-A)"
+    } <= ids, f"ON objects missing from the release-named service render: {sorted(ids)[:8]}…"
+    strata_sentinels = [ln.strip()[:90] for ln in raw.splitlines()
+                        if "OVERRIDE_VIA" in ln and "strata" in ln.lower()]
+    assert not strata_sentinels, (
+        f"strata sentinel reached the render: {strata_sentinels}"
     )
-    cfg = L.rendered_config("gpu-ai")
+    assert "strata-api-key" not in raw, "the retired strata secret name survived in the render (C-A)"
+    es_strata = [d["metadata"]["name"] for d in S.find_kind(docs, "ExternalSecret")
+                 if "strata" in d["metadata"]["name"]]
+    assert not es_strata, f"strata ExternalSecret rendered — C-A deleted the chain: {es_strata}"
+    outer = [d for d in S.find_kind(docs, "ConfigMap") if d["metadata"]["name"] == "llama-swap-config"]
+    assert outer, (
+        "outer llama-swap config ConfigMap missing — the parent's RAW templates carry "
+        "static names (llama-swap-config, strata-config); only app-template-owned "
+        "objects take the release prefix"
+    )
+    cfg = yaml.safe_load(outer[0]["data"]["config.yaml"])
     assert set(cfg["peers"]) == {S.PEER_NAME}
     assert set(cfg["peers"][S.PEER_NAME]["models"]) == {S.PRIMARY_ID, S.STRIX_ID}
+    assert cfg["peers"][S.PEER_NAME]["proxy"] == S.PEERS_PROXY, (
+        "service-overlay render must carry the consolidated peers URL"
+    )
 
 
 # --- custom-values extraction (r2-C03) -------------------------------------------

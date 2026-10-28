@@ -106,10 +106,23 @@
       "status": "pending",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
+      "dev_session": "ses_e7c381251ffezxZ5rIbGqMSFKN",
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        {
+          "stage": "dev",
+          "session": "ses_e7c381251ffezxZ5rIbGqMSFKN",
+          "at": "2026-10-28",
+          "commit": "44c7a7c04",
+          "status": "DONE-with-test-asset-escalation",
+          "files": ["services/gpu-ai/prod/values.yaml", "custom-values/gpu-ai/prod-values.yaml"],
+          "validations": "suite 21F→13F; 8 of 10 C03-attributed reds flipped green by name (incl. parity canary + blast-radius + c02-no-live-path); production-like ON render proves the AC2 substance: gpu-ai-llama-swap-strata Deployment+Service + 2 ConfigMaps, peers byte-equal evidence, models intact, zero secret-chain/sentinels, v266 green, mount triples OFF≡ON, strata six paths + Recreate + grace 420; containers 17P; aislop clean",
+          "escalation": "2 residual reds are frozen-test-asset defects, not contract changes: (1) seven_flags test dig PREPENDS app-template. onto FLAG_PATHS that already carry the prefix → demands a doubled path that renders ZERO strata objects (counterfactual-rendered); testlib comment itself says FLAG_PATHS should be bare for overlay digs; (2) extract-and-render recipe renders release 'llama-swap' (test pins gpu-ai-llama-swap-strata — the C01 forward_flag) and its blanket OVERRIDE_VIA filter hits the parent's legitimate pre-existing hf-token sentinel (present pre-C03). Coord ruling per current contract: mechanical repair, routed silently to the test session.",
+          "deviations": "none from chunk shape; exactly the 2 scope files"
+        }
+      ]
     },
     "C04": {
       "status": "pending",

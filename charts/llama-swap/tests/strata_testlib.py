@@ -67,8 +67,11 @@ SEVEN_FLAGS = (
     "app-template.persistence.strata-shm.enabled=true",
 )
 FLAG_PATHS = tuple(f.rsplit("=", 1)[0] for f in SEVEN_FLAGS)
-# Proper subsets for the divergence guards (render --set needs key=value —
-# bare paths are only for the service-overlay dig checks).
+# FLAG_PATHS carry the chart-root key path (already app-template.-prefixed) —
+# the same string is BOTH the --set key (with =value appended in SEVEN_FLAGS)
+# and the service-overlay dig path: overlay and chart gate path spelling must
+# be IDENTICAL, and that identity is itself r2-C03's contract. Derived proper
+# subsets for the divergence guards (--set needs key=value, never bare keys):
 SEVEN_FLAGS_PERSISTENCE = SEVEN_FLAGS[2:]
 SEVEN_FLAGS_CONTROLLER_SERVICE = SEVEN_FLAGS[:2]
 CANONICAL_MISSING_CONTROLLER = re.compile(r"No enabled controller found with identifier")
@@ -244,6 +247,19 @@ def service_strata_overlay() -> dict:
         "services/gpu-ai/prod/values.yaml llama-swap block has no strata: sub-key — r2-C03 not landed"
     )
     return block["strata"]
+
+
+def render_service_overlay(cluster: str = "gpu-ai") -> tuple:
+    """Extract-and-render of the service's llama-swap block onto the parent
+    chart under the REAL appset release name (gpu-ai-llama-swap). L.
+    render_docs cannot serve here: it renders as release `llama-swap`, so
+    every object name loses the cluster prefix — while the consolidated
+    identity (gpu-ai-llama-swap-strata) the peers evidence pins IS what this
+    render must produce. Returns (docs, raw stdout) for line-scoped scans."""
+    block = yaml.safe_load(SERVICE_VALUES.read_text())["llama-swap"]
+    docs_t, raw = _render_cached(RELEASE, DOMAIN_SET + (f"clusterName={cluster}",),
+                                 yaml.safe_dump(block, sort_keys=True))
+    return docs_t, raw
 
 
 # ---------------------------------------------------------------------------
