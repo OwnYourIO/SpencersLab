@@ -68,3 +68,8 @@ STATE.json `deferred` (split mode, renovate flavor-scoping rule, live bench).
   made editable via the narrowed `.agents` subtree denies + explicit allow) stands.
 - Re-validated: `rulesync generate` + `--check` clean · agent-perms 14/14 ·
   rulesync-surface 19/19.
+- **Landing amended (owner, same day, commit `e6dcf7fe3`):** friction cards are created
+  into **Review**, not Not Started — records awaiting the owner's call, outside the
+  pickup walk, so they can never be auto-run into a duplicate of shipped work; the
+  owner re-enters one to the pipeline via Rework. Cards #64–67 already sit in Review,
+  consistent with the rule.
