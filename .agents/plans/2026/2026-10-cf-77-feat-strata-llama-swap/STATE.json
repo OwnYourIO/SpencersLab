@@ -5,7 +5,7 @@
   "test_session": "ses_e8054aefeffeLm55D1vBNX4SfX",
   "test_handoff_note": "One test session authored C01-C05 contracts (commit c375b238b; 12 files). Verbatim RESULT recorded under chunks.C01.handoffs[0]; chunk->file map: C01 containers/strata/tests/test_dockerfile.py; C02 charts/strata/tests/{strata_testlib.py,conftest.py,schema/*,test_render.py,test_config_schema.py}; C03 charts/strata/tests/test_wiring.py + charts/llama-swap/tests/{test_config_parity.py,evidence/strata-peers-expected.yaml}; C04 test_runbook_completeness.py; C05 test_strix_fallback.py. Tests are reds-by-design until dev lands; pre-existing unrelated red: tests/renovate/dockerfile-pins.sh stale uv literal (coder-workspace ticket's, untouched).",
   "current_wave": 1,
-  "updated_at": "2026-10-27",
+  "updated_at": "2026-10-28",
   "kickoff": {
     "card": "gCcXSu3DZd6NEp97v",
     "slug": "cf-77-feat-strata-llama-swap",
@@ -33,12 +33,13 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "dev_session": "ses_e80256056ffe6gNnRxw9Cqqh3x",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e8015e3e0ffeRw6zOWz9Du11hF, 2026-10-28: containers suite 17/17 green, other baselines unchanged, all digests live-re-verified vs GHCR, 2 non-blocking nits in chunks/C01.md review notes; AC1 closes on the CI build when the human pushes the branch)",
       "handoffs": [
         {
           "stage": "test",
@@ -48,6 +49,25 @@
           "status": "DONE",
           "files": ["containers/strata/tests/test_dockerfile.py"],
           "open_question_verbatim": "RESIDUAL 1 — renovate ARG-pin, coord decision before C01 dev: the C01-mandated shape (# renovate: datasource=docker depName=ghcr.io/niko1221/strata above ARG STRATA_VERSION=0.2.7, flavor suffixes in the FROM lines) is extracted by NO repo manager — live-verified in Python simulation and the real node/JS regex engine: 0 extractions; the built-in dockerfile manager cannot rewrite a partial-suffix variable tag (repo:${VAR}-flavor). Workable shapes: (a) per-flavor whole-tag ARGs + docker comment above each FROM (built-in rewrites; caveat: cross-flavor candidate bleed needs a versioning rule its own ticket), or (b) literal FROM tags + recorded digests, manual bump cadence (renovate.json untouched — test writer's recommendation for v1). renovate.json NOT edited (hard rule). Tests stay red on the mandated shape via two tripwires until the decision lands."
+        },
+        {
+          "stage": "dev",
+          "session": "ses_e80256056ffe6gNnRxw9Cqqh3x",
+          "at": "2026-10-28",
+          "commit": "fcc7e676b",
+          "status": "DONE",
+          "files": ["containers/strata/Dockerfile", "containers/strata/README.md"],
+          "engine_binary_contract": "exe literals for C02/C05: /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata (primary) and /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata (strix); supervisor /usr/local/bin/llama-swap; measured from pinned GHCR layer tar-listings 2026-10-28, digests re-verified vs RESEARCH §1",
+          "deviations": "CMD neutralized to documented default config flag + HEALTHCHECK NONE (inherited upstream Cmd run / healthcheck presume the removed launch path); runtime base = gfx120x image via stage alias (keeps 2-strata-FROM tripwire green); docker build best-effort only (no daemon) — CI is the plan-designated authoritative gate",
+          "validations": "pytest containers/strata/tests 17/17 green (by-design reds cleared); aislop 100/0/0; other suites unchanged-by-chunk"
+        },
+        {
+          "stage": "review",
+          "session": "ses_e8015e3e0ffeRw6zOWz9Du11hF",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "containers 17/17 green; charts/strata 62F/8P and charts/llama-swap 1F/172P+2S unchanged by-design; aislop 100/100; scope git-show clean; renovate-grep 0; GHCR digest re-verification live (3/3 match); per-directory pytest rule honored",
+          "notes": "dev deviations (CMD neutralize, HEALTHCHECK NONE, stage-alias base) judged correct+minimal; 2 non-blocking nits in chunks/C01.md Review notes; AC1 deferred to CI gate (plan-sanctioned)"
         }
       ]
     },
