@@ -1,0 +1,63 @@
+{
+  "feature": "2026/2026-10-docs-notify-plugin-hygiene",
+  "plan_status": "complete",
+  "coord_session": "ses_e9096a43fffeMRYwOW41pTTvoI",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-27",
+  "kickoff": {
+    "slug": "notify-plugin-hygiene",
+    "type": "docs",
+    "run_tag": "openrouter-qwen-qwen3-8-flash (reused from the ha-lifecycle-notify run — same surface by design, both edits must land on feat/ha-lifecycle-notify before its PR)",
+    "worktree": "feat-ha-lifecycle-notify-openrouter-qwen3-8-flash",
+    "branch": "feat/ha-lifecycle-notify",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "test_stage_skipped": true,
+    "test_skip_reason": "user-approved at plan approval 2026-10-27: pure doc/comment touch, tests out of scope; existing 76-test suite + md5 pins + snapshot-diff battery are the regression net"
+  },
+  "ticket": {
+    "wekan": null,
+    "note": "local-only doc/comment hygiene ticket; closes the two deferred items of 2026/2026-10-feat-ha-lifecycle-notify (stale v2.0.32 header wording; AGENTS.md question-notify blurb)"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e81b5734fffeXJHsF4GxXXiFta",
+      "handoffs": [
+        {
+          "at": "2026-10-27",
+          "role": "dev",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.opencode/plugin/question-notify/index.ts (comment lines only), .rulesync/rules/overview.md (:55–58 blurb), AGENTS.md (written only by `rulesync generate`)]\ncommands_run: [cp plugin → /tmp/opencode/qn-hygiene-before.ts + md5sum => pass (3129d1d92015f953581bbf7332b860d2 = anchor), md5sum both test files => pass (8b5d8382… / 0a522f0f… = pins, pre- and post-edit via md5sum -c), opencode --version => pass (v2.1.4 — confirms the 3 'installed' sites :32/:34/:40 were stale), baseline node --test 'tests/opencode/*.test.ts' => pass (76/76 exit 0), rulesync generate --check (baseline) => pass (exit 0), 3× comment-only header edits => pass (aislop-gate 0 errors each; 1 warning = accepted-by-design file-too-large), AC3 snapshot-diff non-comment-changed-lines => pass (0), AC4 diff <(grep -v '^//' before) <(grep -v '^//' after) => pass (empty — code byte-identical), AC5 recast greps => pass (no 'installed'; 'at first shipping'/'v2.0.32'/'v2.1.4'/'2.1.2' all hit), edit overview.md + rulesync generate => pass (exit 0, wrote exactly 1 file AGENTS.md, diff = intended blurb hunk only), 2nd rulesync generate => pass (no-op, porcelain unchanged), rulesync generate --check (final) => pass (exit 0), node --test 'tests/opencode/*.test.ts' (final) => pass (76/76 exit 0), blurb greps => pass ('approval is still pending' in AGENTS.md; 'whenever an' gone; AGENTS.md bullet == overview.md source bullet via sed-extract diff), git status --porcelain => pass (delta over pre-chunk set = exactly M .rulesync/rules/overview.md + M AGENTS.md, no deletions), which aislop => fail-expected (CLI absent — carried ignored FRICTION, gate covered writes)]\ndeviations: none — stayed inside 'Files in scope'; :40 kept minimal (ragged short line, 1-line change) instead of re-flowing the whole approval paragraph, matching DECISIONS' 'one-line historical recast'; no commits, no STATE.json/chunk-checkbox writes (coord-owned).\nfriction: none new — aislop CLI absence carried as ignored FRICTION (gate ran on every plugin write: 0 errors); informational: gate reports 454 lines vs DECISIONS' '453-line' wording for the accepted file-too-large warning (warning accepted either way, plugin line count unchanged by this chunk).\nopen_questions: none — Needs research: no.\nnext_suggested: review agent runs every AC command fresh against this worktree state (suite + pins + AC3–AC8 battery); then coord commits C01 together with the pre-existing C03 dirt onto feat/ha-lifecycle-notify before that PR opens."
+        },
+        {
+          "at": "2026-10-27",
+          "role": "review",
+          "result": "RESULT\nstatus: APPROVED\nchunk: C01\nfiles_changed: [.agents/plans/2026/2026-10-docs-notify-plugin-hygiene/chunks/C01.md (Review notes section only)]\ncommands_run: [node --test 'tests/opencode/*.test.ts' => pass (76/76, exit 0), md5sum both test files => pass (8b5d8382… / 0a522f0f… = pins), md5sum /tmp/opencode/qn-hygiene-before.ts => pass (3129d1d9… = anchor), opencode --version => pass (v2.1.4), AC3 diff|grep non-comment => pass (0), AC4 grep -v '^//' diff => pass (empty), AC5 ! grep 'installed' + 'at first shipping'/v2.0.32/v2.1.4/2.1.2 greps => pass, python difflib token compare of recast paragraphs => pass (tense-only changes, tails verbatim), wc -l before/after plugin => pass (453=453), sed-range diff source bullet vs AGENTS.md bullet => pass (byte-identical), rulesync generate --check => pass (exit 0), 2nd rulesync generate + porcelain diff => pass (no-op, 0 deletions), git status --porcelain scope audit => pass (delta = overview.md + AGENTS.md only), grep 'approval is still pending' AGENTS.md + ! grep 'whenever an' (.rulesync + all generated surfaces) => pass, git show 4f7f81adb --stat + git rev-list HEAD ^4f7f81adb => pass (interim C03 commit, 0 commits since), find repo '*qn-hygiene*' => pass (no leak), node ESM import of plugin => pass, which aislop => fail-expected (CLI absent, carried ignored FRICTION; gate covered dev writes)]\ndeviations: none — read-only throughout; only sanctioned write was the chunk-file Review notes (role contract). Did not touch STATE.json or checkboxes (coord-owned). Ran `rulesync generate` twice as plan-Commands validation; proven no-op so no file state changed.\nfriction: none new — carried items honored (aislop CLI absent ⇒ gate coverage; quoted-glob suite command).\nopen_questions: none\nnext_suggested: coord records verdict + flips C01 checkboxes/STATE.json; both deferred sibling items are now closed — the feat/ha-lifecycle-notify branch (C03 uncommitted final state + these hygiene edits) is ready for the user-owned commit/PR landing; optional cosmetic reflow of index.ts:40 can fold into any future plugin touch\nVERDICT: APPROVED (round 1; all 9 ACs re-verified fresh; pins reflect final uncommitted C03 state, confirming the snapshot battery was the right scope instrument since HEAD's copies differ — 4f7f81adb is an interim commit; blurb accurate incl. all-asking-sessions scope verified against code; one non-blocking cosmetic nit)"
+        }
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "final_review": {
+    "at": "2026-10-27",
+    "verdict": "APPROVED",
+    "result": "RESULT\nstatus: DONE\nchunk: final\nfiles_changed: [.agents/plans/2026/2026-10-docs-notify-plugin-hygiene/chunks/C01.md (Review notes — final review section only)]\ncommands_run: [node --test 'tests/opencode/*.test.ts' => pass (76/76, exit 0; tap-fallback block after default reporter omitted summary — plan-pinned path), md5sum both test files + snapshot anchor => pass (8b5d8382…/0a522f0f…/3129d1d9…), wc -l plugin before/after => pass (453=453), AC3 diff|grep non-comment => pass (0), AC4 grep -v '^//' diff => pass (empty; hunks only :32–40), recast greps (! installed / at first shipping / v2.0.32 / v2.1.4 / 2.1.2) => pass, opencode --version => pass (v2.1.4), rulesync generate --check => pass (exit 0), blurb greps (approval is still pending / ! whenever an in AGENTS.md) => pass, git status --porcelain scope audit => pass (delta = overview.md + AGENTS.md; 0 deletions; .opencode/ M-only), git diff of both blurb files => pass (same single hunk byte-identical), grep constants :71–74 => pass]\ndeviations: none — read-only throughout; sanctioned write only (chunk Review notes). Ran --check instead of plain rulesync generate for the no-op proof (per-chunk round already proved plain-generate no-op; --check green implies currency).\nfriction: default node --test summary lines did not print this run — resolution: plan-pinned tap fallback (carried FRICTION item, re-status fits; not new)\nopen_questions: none\nnext_suggested: coord records the final verdict in STATE.json and hands the branch to the user for landing (dirty set: plugin [C03 final + hygiene comments], permission test [C03 rewrite], overview.md + AGENTS.md pair, sibling plan-folder incl. untracked chunks/C03.md, hygiene plan folder; keep overview.md+AGENTS.md atomic and plugin+test pair together in any commit split). Live smoke + PR remain user-owned.\nVERDICT: APPROVED (final whole-plan review; deferred items verified genuinely closed against code not citations; out-of-scope held; landing state coherent as one PR; one nit on round-1 note wording recorded)"
+  },
+  "plan_handoffs": [
+    {
+      "at": "2026-10-27",
+      "role": "plan",
+      "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-docs-notify-plugin-hygiene/2026-10-27-docs-notify-plugin-hygiene.md, .agents/plans/2026/2026-10-docs-notify-plugin-hygiene/STATE.json, .agents/plans/2026/2026-10-docs-notify-plugin-hygiene/DECISIONS.md, .agents/plans/2026/2026-10-docs-notify-plugin-hygiene/FRICTION.md, .agents/plans/2026/2026-10-docs-notify-plugin-hygiene/chunks/C01.md]\ncommands_run: [node --test 'tests/opencode/*.test.ts' => pass (76/76, exit 0, ~3.9s), md5sum plugin+both test files => pass (anchors recorded: 3129d1d9…/8b5d8382…/0a522f0f…, pins match live worktree), opencode --version => pass (v2.1.4 — v2.0.32 header claims confirmed stale), grep -nE 'installed|v2\\..*' plugin => pass (exactly 3 'installed' sites: :32/:34/:40), grep -n question-notify AGENTS.md .rulesync/rules/*.md => pass (source = overview.md:55), rulesync --version => pass (37.0.0 global binary), rulesync generate --check => pass (exit 0, baseline green), rulesync generate => pass (true no-op: git dirty set unchanged — offline generation verified), grep -c 'whenever' AGENTS.md => pass (exactly 1, the blurb), python3 -m json.tool STATE.json => pass]\ndeviations: (1) 'git diff -U0 comment-only' validation replaced with snapshot-diff + non-comment byte-identity because C03 is uncommitted in this worktree — documented in DECISIONS. (2) agent-test launch skipped for C01 (tests explicitly out of scope) — flagged in STATE.json kickoff and plan Risks. (3) 'generation cannot run here' fallback branch not needed — rulesync generate verifiably runs (probed).\nfriction: none new — carried ignored items honored and pinned in plan Commands/DECISIONS Conventions (aislop CLI absent ⇒ aislop-gate coverage; quoted-glob suite command; re-wrap slip lesson from sibling dev(C03) noted in chunk tasks)\nopen_questions: none — Needs research: no (all facts grounded from live worktree + sibling DECISIONS/STATE). Awaiting user approval to set plan_status=approved\nnext_suggested: user approves C01 plan → coord sets plan_status approved, skips agent-test, launches agent-dev for C01 (snapshot first, comment-only edits, rulesync source edit + generate), then agent-review re-runs the 9-AC battery fresh; coord/user commit both hygiene items onto feat/ha-lifecycle-notify before opening the PR"
+    }
+  ]
+}
