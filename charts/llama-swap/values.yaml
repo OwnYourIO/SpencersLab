@@ -1084,7 +1084,16 @@ app-template:
                   continue
                 fi
                 echo "model-fetch: staging $tok as $SIZE (family qwen)"
-                /opt/strata/terminal/bin/strata install --family qwen --model "$SIZE" --yes
+                # The wrapper's documented passthrough form (`install --family …`)
+                # cannot parse: argparse refuses to swallow a leading --family into
+                # its REMAINDER positional (deploy 2026-10-28: "unrecognized
+                # arguments: --family"). Try the canonical `--` separator first;
+                # fall back to the raw form if the wrapper rejects/eats it. Both
+                # attempts print through, so a regression here is self-evidencing.
+                if ! /opt/strata/terminal/bin/strata install -- --family qwen --model "$SIZE" --yes; then
+                  echo "model-fetch: separator form failed; retrying wrapper-documented form" >&2
+                  /opt/strata/terminal/bin/strata install --family qwen --model "$SIZE" --yes
+                fi
                 touch "$MARK"
               done
               echo "model-fetch: quants [${STRATA_QUANTS:-q3}] staged under /models/strata"
