@@ -46,9 +46,9 @@ container images (`containers/`). **ArgoCD applies everything — never
   `/pipeline-resume`); a symlink to `.opencode/commands/`, which rulesync
   generates from `.rulesync/commands/`.
 - `skills/` — self-written skills (`helm-chart-creation`, `container-creation`,
-  `llama-swap`). `.agents/skills/` — third-party skills, tracked in git and
-  synced from their GitHub sources (provenance + integrity hashes in the root
-  `skills-lock.json`); don't hand-edit those.
+  `llama-swap`, `wekan-mcp`, `wekan-api`). `.agents/skills/` — third-party skills,
+  tracked in git and synced from their GitHub sources (provenance + integrity
+  hashes in the root `skills-lock.json`); don't hand-edit those.
 - `.kilo` — tracked symlink to `.agents/`, so kilo loads the same agents,
   plans, and skills.
 - `.opencode/` — tracked dir holding the **generated** surfaces: `agents/`,
