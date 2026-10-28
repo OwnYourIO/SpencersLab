@@ -4,7 +4,7 @@
   "coord_session": "ses_e80cd0c80ffe2e91W28uP8tWZO",
   "test_session": "ses_e8054aefeffeLm55D1vBNX4SfX",
   "test_handoff_note": "One test session authored C01-C05 contracts (commit c375b238b; 12 files). Verbatim RESULT recorded under chunks.C01.handoffs[0]; chunk->file map: C01 containers/strata/tests/test_dockerfile.py; C02 charts/strata/tests/{strata_testlib.py,conftest.py,schema/*,test_render.py,test_config_schema.py}; C03 charts/strata/tests/test_wiring.py + charts/llama-swap/tests/{test_config_parity.py,evidence/strata-peers-expected.yaml}; C04 test_runbook_completeness.py; C05 test_strix_fallback.py. Tests are reds-by-design until dev lands; pre-existing unrelated red: tests/renovate/dockerfile-pins.sh stale uv literal (coder-workspace ticket's, untouched).",
-  "current_wave": 1,
+  "current_wave": 2,
   "updated_at": "2026-10-28",
   "kickoff": {
     "card": "gCcXSu3DZd6NEp97v",
@@ -72,12 +72,13 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "dev_session": "ses_e800cb305ffeF55AyQ6618WUPp",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7ff4483dffe2Ch70XwHZaSDpw, 2026-10-28: all renders/suites exact, 7/7 dev deviations judged correct+minimal, no blockers; 1 minor + 2 nits in chunks/C02.md Review notes)",
       "handoffs": [
         {
           "stage": "test",
@@ -87,6 +88,25 @@
           "status": "DONE",
           "files": ["charts/strata/tests/strata_testlib.py", "charts/strata/tests/conftest.py", "charts/strata/tests/schema/config-schema.v266.json", "charts/strata/tests/schema/PROVENANCE.json", "charts/strata/tests/test_render.py", "charts/strata/tests/test_config_schema.py"],
           "note": "testlib+schema fixtures shared with C03/C05; AC5 required/forbidden token lists per research amendments (forbidden: --resident-budget-gib, STRATA_KV_GROW_HOLD, --prompt-cache-every, --kv-grow, vision args); --batch-mtp deliberately on neither list."
+        },
+        {
+          "stage": "dev",
+          "session": "ses_e800cb305ffeF55AyQ6618WUPp",
+          "at": "2026-10-28",
+          "commit": "5ab666dd3",
+          "status": "DONE",
+          "files": ["charts/strata/Chart.yaml", "charts/strata/Chart.lock", "charts/strata/.helmignore", "charts/strata/values.yaml", "charts/strata/templates/configmap-strata.yaml", "charts/strata/templates/configmap-strata-profile.yaml", "charts/strata/templates/secret-strata.yaml", "charts/strata/templates/NOTES.txt"],
+          "validations": "helm dep/lint/template pass; both bitwardenIds renders pass (sentinel-free); pytest charts/strata 29F/41P (all 32 C02-owned green; remaining reds C03:13 C05:11 C04:5); llama-swap baseline exact 1F/172P+2S; containers 17P; aislop 100/100",
+          "deviations_declared": ["no templates/common.yaml (app-template 5.0.1 full subchart carries the loader)", "chart default bitwardenIds:{} guard-style — sentinel lives solely in C03's service block (frozen C03 test mandates it; matches AGENTS.md wording)", "engineProfile.env renders {} — STRATA_* switches live only at the llama-swap model-env layer (avoids serve re-applying seed literals over the values gate)", "--batch-mtp kept off default args as commented toggle", "no domain key in chart values (internal pod)", "tokenizer/lib_dirs/pack paths are VERIFY-marked seed hypotheses for the on-target --plan gate (C04 human step 3)", "aislop YAML blind-spot: chart comments hand-inspected per comment-slop three-clause (C01-review precedent)"],
+          "open_question_carried_to_C04": "engine-side request-key enforcement when STRATA_API_KEY resolves (inner proxy hop injects no Authorization) — first-request on-target check or flip the run-config api_key path"
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7ff4483dffe2Ch70XwHZaSDpw",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "helm dep/lint/template pass; both renders exact (1 ES w/ test-uuid / 0 ES, zero sentinels); charts/strata 29F/41P exact, 32 C02 green, reds in-kind (C03:13/C05:11/C04:5, no leak); llama-swap 1F/172P+2S exact; containers 17P; aislop 100/100",
+          "queued_for_test_session": "nit (non-blocking): add default-render 'no ExternalSecret' assert to charts/strata/tests/test_render.py for AC2's no-ES clause — route to test session when next open (coord batches with any later test fix)"
         }
       ]
     },
