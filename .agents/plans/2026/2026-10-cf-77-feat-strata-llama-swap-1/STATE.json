@@ -43,13 +43,35 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "dev_session": "ses_e7c8d37b1ffeJ9JyfGK5nsVVmd",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7c59901effed6VKOj7a6xgolN, 2026-10-28: all 6 ACs independently re-run; 22F/242P/2S exact attribution; OFF byte-parity sha 451c149a…; seccomp-Unconfined deviation formally ACCEPTED (ruling-sourced, inert today, future-guarded); 1 nit + 1 observation non-blocking; launch note: review took 6 provider-retries to land — transient flake, see FRICTION)",
+      "handoffs": [
+        {
+          "stage": "dev",
+          "session": "ses_e7c8d37b1ffeJ9JyfGK5nsVVmd",
+          "at": "2026-10-28",
+          "commit": "f4591f38f",
+          "status": "DONE",
+          "files": ["charts/llama-swap/values.yaml", "charts/llama-swap/templates/configmap-strata.yaml", "charts/llama-swap/templates/configmap-strata-profile.yaml", "charts/llama-swap/templates/NOTES.txt"],
+          "validations": "charts/llama-swap 69F→22F/242P (all 47 C01 targets green by name; remaining reds exactly C02:2+C03:9+C04:11); OFF byte-parity held vs evidence fixture; untouched pins green (release.yaml/.gitignore/Chart.yaml/Chart.lock/dep-list/no-secret-template/parent-bitwardenIds); ON render +4 objects exact, zero secret-chain artifacts; subset renders fail loudly; containers 17P; aislop ci --changes 100/Healthy",
+          "deviations_declared": ["seccomp Unconfined added per Q-C pod-shape key list though run-1 NEVER shipped it on the strata pod (dev flagged for review weighing — inert for privileged, OFF parity unaffected)", "strix description reworded to avoid the charts/strata path literal (C02 gate)", "NOTES.txt created new (parent had none), <release>-strata derivation", "controller-ON/persistence-OFF divergence guard implemented via companion-flag fail in template", "proto3 scratch found misleading (tools re-key omitted main) — implemented from DECISIONS+tests as authority"],
+          "forward_flag_C03": "evidence expects gpu-ai-llama-swap-strata under release name 'llama-swap' — appset release IS gpu-ai-llama-swap, derivation matches; noted so it isn't a surprise red"
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7c59901effed6VKOj7a6xgolN",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "all 6 ACs re-run independently; pytest 22F/242P/2S by-name exact; OFF byte-parity (fixture sha 451c149a…); seven-flag ON +4 objects, zero secret strings; 5 subset probes fail loudly naming strata; dep-list app-template only; scope 4 files; aislop 100/Healthy; move-fidelity verbatim-minus-sanctioned-deltas incl. main's readOnly /app/tools preservation",
+          "adjudications": "seccomp Unconfined ACCEPTED (ruling-sourced, inert under privileged, OFF-parity-verified, future-guarded; no test pin forces either direction)",
+          "launch_note": "6 provider retries (5x 'Provider returned error') — transient flake, FRICTION fixed-entry"
+        }
+      ]
     },
     "C02": {
       "status": "pending",
