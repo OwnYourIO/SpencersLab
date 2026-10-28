@@ -52,3 +52,19 @@ Board cards #64–67 on AI-Dev track the same items.
 
 Deferred by design: nothing new — carried items stay in the run-2 folder's
 STATE.json `deferred` (split mode, renovate flavor-scoping rule, live bench).
+
+## Owner fine-tunes (same-day review of this batch)
+
+- **Routing placement reverted** (commit `c9c2b0299`): `pipeline-role-coord` step 10
+  is back to its original standalone-ticket launch — correct for boardless
+  `agent-coord` runs. The board-card intake override now lives in the `boards` skill
+  as a new "Friction follow-up (board override)" section (card per checked item into
+  Not Started via `create_card`; the rule creates the five checklists — never manual
+  `add_checklist`, the #64–67 duplication lesson; dormant rule checks are toggled by
+  hand; the closing session does not claim or move the new cards).
+- **.kilo blanket deny restored** (commit `953bf2bf9`): `.kilo` symlinks into
+  `.agents` and is slated for removal, so the five dev-family sources deny `.kilo/**`
+  wholesale again — no subtree grading. Card #64's actual fix (`.agents/notes/**`
+  made editable via the narrowed `.agents` subtree denies + explicit allow) stands.
+- Re-validated: `rulesync generate` + `--check` clean · agent-perms 14/14 ·
+  rulesync-surface 19/19.
