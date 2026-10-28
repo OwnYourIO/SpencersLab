@@ -101,6 +101,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   — no admin-global-wekan fallback.
 
 ## Deferred
+- 2026-10-28 test(final-repair): agent-perms A9 window-pins the five enumerated slug admits but not the new sibling-folder (`2026-10-docs-wekan-mcp-arg-ergonomics/*`) admit — a future edit could drop the admit silently; only a full-range guard run catches it. Add the sixth slug when agent-test next touches those suites.
 - 2026-10-28 review(C01): wekan-api's pinned "full 25-tool surface" sentence contradicts the 26-tool truth (README + new skills/wekan-mcp docs + this run's probe). Pre-existing and INSIDE the tools.sh-pinned region — untouchable by C01. A follow-up ticket should re-pin that region when the wekan-api doc set is next revised.
 - 2026-10-27 test(test): legacy freeze sites `tests/agent-kickoff-branch` m6 and `tests/session-origin` s6 byte-freeze AGENTS.md/rules/commands/pipeline-gates paths that C01–C04 legitimately edit; left untouched per the cf-58 precedent (outside this ticket's Commands/gate set; default-BASE runs stay green post-chunk). A future ticket should re-pin them to the post-cf-75 bytes. Not this run's gate.
 

@@ -13,7 +13,7 @@
     "local": false,
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com"
   },
-  "plan_status": "approved",
+  "plan_status": "complete",
   "plan_approved_at": "2026-10-27 (user approval in batched round — all 7 recommendations confirmed)",
   "coord_session": "ses_e809acf91ffeDTtY5LkI5dYOCd",
   "plan_session": "ses_e80961223ffeUNpbIX5dajj0w8",
@@ -141,14 +141,26 @@
     }
   },
   "final_review": {
-    "rounds": 1,
-    "last_verdict": "BLOCKED-validation_at_fault",
+    "rounds": 2,
+    "last_verdict": "APPROVED",
     "handoffs": [
       {
         "at": "2026-10-28",
         "role": "agent-review (final whole-plan)",
         "session": "ses_e7fd6dc20ffeKKv9VNDseB4XUy",
         "result": "RESULT\nstatus: BLOCKED\nchunk: final-review\nverdict: implementation CLEAN, goal fully shipped (all 5 card asks, single-owner schema chain C01->C03->C04 intact, C02 contract consistent, out-of-scope discipline clean, hard rules incl. per-commit same-commit generated-surface audit across 17 commits OK, live collector smoke zero drift, aislop 0/0)\nvalidation_at_fault (single mechanical test-side gap, cross-seam artifact invisible to per-chunk reviews): rulesync-surface c8 + agents-md c7 + gate t14 path-allow-lists miss .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/STATE.json at CHUNK_BASE=merge-base — the coord bookkeeping write the PLAN itself mandates (OQ2 user-approved, dca8a25d2); no dev/test/review commit touches that path; reviewer adjudication: mechanical one-line allow-list widening per suite, no functionality change, NEEDS_INFO not expected — route SILENTLY per C02\nfriction (reviewer): per-chunk review shapes structurally blind to coord commits between chunk bases — only full-range guard runs surface sanctioned-bookkeeping allow-list gaps; t7/t6 'red at full range' is CHUNK_BASE export propagation, not independent defects\ntwo non-blocking nits + findings appended under ## Final review in the plan file."
+      },
+      {
+        "at": "2026-10-28",
+        "role": "agent-test (repair round 2 — second SILENT route under C02; no user question)",
+        "session": "ses_e7fc7e149ffeO5yvvbSnGlnP4T",
+        "result": "RESULT\nstatus: DONE\nchunk: final-review\nfiles_changed: [tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/agents-md.sh, tests/agent-board-coord/gate.sh, tests/pipeline-gates/validation-fix.sh, tests/wekan-mcp/board-context.sh] (commit eb32a8f3a)\ndeviations: two judgment calls inside delegated scope — folder-* admit form (matches sibling convention, coord-owned folders gate writes, not the path list) + env -u CHUNK_BASE containment on the two chain loops (harness defect that caused the misattributed propagation reds). No AC moved, nothing weakened.\nopen_questions: observation — agent-perms A9 window-pin lacks the new admit (pin-coverage gap, deferred).\nnext_suggested: re-review close-out."
+      },
+      {
+        "at": "2026-10-28",
+        "role": "agent-review (final round 2 — repair close-out)",
+        "session": "ses_e7fbec421ffe2qVBZkiUy5h0AL",
+        "result": "RESULT\nstatus: DONE\nchunk: final-review (round 2)\nverdict: APPROVED — whole plan done\ncommands_run: [repair diff => exactly 5 tests/ files, purely additive; CHUNK_BASE=ca0a4066 rulesync-surface 19 / agents-md 9 / gate 22 => pass; poisoned-env validation-fix 8 / board-context 6 => pass; default-shape all 10 bash suites + board-context.test.ts 28/0 + question-notify 35/0 => pass; rulesync --check + no-op => pass; aislop ci --base ca0a4066 => 100 0/0/0 39 files; throwaway-worktree negative/positive admit controls => as expected]\ndeviations: none — repair compliant with C02 silent-route + round-1 prescription; judgment calls both hold vs strictly-nothing-weakened\nopen_questions: none\nnext_suggested: commit close-out, plan_status complete, board moves #75+#74 -> Review (coord), PR/landing user-owned (branch local-only, origin has no cf-75 ref)."
       }
     ]
   },

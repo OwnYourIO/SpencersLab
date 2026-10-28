@@ -297,3 +297,69 @@ expected to conclude APPROVED with no dev relaunch.
   structurally cannot cover coord commits landing between chunks; a
   full-range scope-guard run in final review is the only shape that
   can — worth a doctrine line for future final reviews.
+
+### Round 2 close-out (2026-10-28, agent-review ses-repair-closure, repair commit eb32a8f3a)
+
+Verdict: **APPROVED — the whole plan is done.** The round-1
+validation_at_fault was routed silently per the C02 contract and the
+repair lands green in every shape that mattered. Round 1's implementation
+verdicts are not disturbed: the repair touched no implementation file.
+
+**Repair diff verified.** `git show eb32a8f3a` — exactly five files, all
+under `tests/` (rulesync-surface.sh, agents-md.sh, gate.sh,
+validation-fix.sh, board-context.sh), +24/−5, purely additive: one
+case-list branch admitting
+`.agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*` in each of
+the three scope guards, and `env -u CHUNK_BASE` on the chain children of
+validation-fix t7 / board-context t6. Every prior pattern, the catch-all
+`fail` arms, and all check counts are unchanged (19/9/22/8/6 pre- and
+post-repair); no assertion skipped, weakened, or deleted.
+
+**Failed shapes re-run green (HEAD = eb32a8f3a, clean tree, node v26.5.0).**
+- Full range (`CHUNK_BASE=ca0a4066` = merge-base, full suites):
+  rulesync-surface 19 ok, agents-md 9 ok, gate 22 ok — the three round-1
+  reds are now green.
+- Poisoned-env chain suites (same exported CHUNK_BASE): validation-fix
+  8 ok, board-context 6 ok — the round-1 cascade was env propagation and
+  the containment removes it.
+- Default-shape full set: tools 9, skill-surface 8, validation-fix 8,
+  board-context 6, rulesync-surface 19, agents-md 9, gate 22, agent-perms
+  14, standalone-agents 10, coord-inwork 7 — all PASS, zero `not ok`;
+  board-context.test.ts 28/28 pass 0 skip, question-notify.test.ts
+  35/35 pass 0 skip.
+- `rulesync generate --check` => "All files are up to date"; fresh
+  generate is a byte-clean no-op. `aislop ci --changes --base ca0a4066`
+  => rc=0, 100, 0 errors / 0 warnings / 0 fixable over 39 files.
+- Throwaway-worktree controls: a probe path under a not-admitted future
+  ticket folder fails all three guards with it named; a probe file inside
+  the admitted sibling folder is not flagged by any of them — the widening
+  is exactly the sanctioned folder, fail-closed everywhere else.
+
+**The executor's two judgment calls, assessed against "strictly nothing
+weakened": both compliant.** (1) Folder-`*` over the STATE.json-only
+literal: the same case-lists already admit every other sanctioned plan
+folder whole (cf-58, dev-boards-allow, tests-edit-perms, the ticket's own
+folder), round 1's fix text expressly allowed it, and c8's own doctrine
+("a landing that adds plan folders must not read as a scope violation
+here at any later base") argues for whole-folder admission; writes into
+another ticket's folder stay permission-blocked at the pipeline level, so
+the path list is not the enforcement seam for them. (2) The `env -u
+CHUNK_BASE` containment: the children's documented default shape is
+`BASE=${CHUNK_BASE:-HEAD}` and t7/t6 never read CHUNK_BASE themselves —
+an ambient base re-basing them was accidental coupling, not assertion
+surface; base-shape probes belong in direct invocations, which this round
+ran green. Determinism up, coverage unchanged.
+
+**Deferred (for DECISIONS, not blockers)** — carried from the repair
+session and confirmed here: agent-perms A9's windowed pin list
+(`tests/agent-perms/surface.sh`, the five-slug loop) does not include
+`2026-10-docs-wekan-mcp-arg-ergonomics`, so a future deletion or
+misplacement of the three new admit branches would not be caught by A9 —
+pin-coverage gap only; the guards themselves are tight (controls above).
+Suggested: add the sixth slug (and update A9's ok-message enumeration)
+when agent-test next touches these suites. Round 1's two nits stand
+unchanged.
+
+Run-end user-owned duties unchanged from round 1: board moves (#75 + #74
+→ Review), branch landing via PR (local-only run honored — origin still
+carries no `cf-75-bug-wekan-mcp-skill` ref).
