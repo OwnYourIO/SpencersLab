@@ -129,5 +129,5 @@
     }
   },
   "blocked": [],
-  "deferred": ["8060S+R9700 split mode (follow-up ticket; trigger: short-prompt-dominated traffic)", "source-build container path (guide 2B) unless the 2C bundled image fails on-target", "live benchmark acceptance run (operator-consented, post-merge)"]
+  "deferred": ["8060S+R9700 split mode (follow-up ticket; trigger: short-prompt-dominated traffic)", "source-build container path (guide 2B) unless the 2C bundled image fails on-target", "live benchmark acceptance run (operator-consented, post-merge)", "renovate flavor-scoped versioning rule / ignore for the strata Dockerfile tags (future ticket; interim: human closes/ignores cross-flavor-bleed update PRs — coord ruling shape (b) consequence, DECISIONS 2026-10-27 coordination round)"]
 }
