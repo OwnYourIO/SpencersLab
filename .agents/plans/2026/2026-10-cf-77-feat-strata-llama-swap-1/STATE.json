@@ -4,7 +4,7 @@
   "coord_session": "ses_e80cd0c80ffe2e91W28uP8tWZO",
   "test_session": "ses_e8054aefeffeLm55D1vBNX4SfX",
   "test_handoff_note": "Run-2 re-author pass commit ad8927767 — one suite dir charts/llama-swap/tests/ (91 new/updated, test_strata_* prefix to dodge basename collisions), standalone chart tests dir retired, evidence peers-URL flipped (carve-out reads live so it re-aligns), OFF-parity baseline captured at 44f5f80d2 (double-render deterministic). RED LEDGER: r2-C01→47 (render 20 + config_schema 16 + strix 11), r2-C02→2 (dir-absent + no-live-path), r2-C03→9 (wiring 7 + parity/blast-radius pair), r2-C04→11 (runbook). Greens today 24 (preservation/OFF/parity/untouched/self-checks). One green-early documented: subset_guard controller-only probe passes pre-C01 (docstring marks it not-a-cleared-gate). ESCALATION resolved by coord: strict no-live-path gate kept, 3 containers-pointer lines folded into C02 scope (DECISIONS 2026-10-28 coord entry). Runbook token set = mechanical re-pin via test session if C04 prose words differently.",
-  "current_wave": 1,
+  "current_wave": 3,
   "updated_at": "2026-10-28",
   "kickoff": {
     "card": "gCcXSu3DZd6NEp97v",
@@ -103,13 +103,13 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
       "dev_rounds": 1,
       "dev_session": "ses_e7c381251ffezxZ5rIbGqMSFKN",
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7c2468f1ffeWVF9D5KpN3nJRX, 2026-10-28: 11F/253P/2S reds all test_c04_*; independent production-like ON render byte-equal evidence; hf-token sentinel proven pre-ticket; repair scrutiny via counterfactual renders — guard intent preserved (revived secret-chain/sentinel still reds, per-flag falses still red); scope exact, churn zero; 2 nits + 1 plan-doc observation recorded non-blocking)",
       "handoffs": [
         {
           "stage": "dev",
@@ -130,6 +130,14 @@
           "status": "DONE",
           "trigger": "coord-routed mechanical repair of the 2 dev-escalated frozen-asset defects (no NEEDS_INFO — no functional change)",
           "validations": "11F/253P/2S with reds EXACTLY test_c04_* by name; wiring 17/17; containers 17P; OFF-parity + untouched pins green; escalation facts all independently reproduced before fixing; one authoring slip self-caught pre-commit (static ConfigMap names — only app-template objects take the release prefix)"
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7c2468f1ffeWVF9D5KpN3nJRX",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "all ledgers re-run exact; production-like ON render independently reproduced (byte-equal peers evidence, triples OFF≡ON, zero strata-chain); hf-token sentinel proven pre-ticket (17aecd49d); counterfactuals prove repair preserved guard intent; scopes exact; aislop 0/0 both bases",
+          "non_blocking_notes": "STATE.json ride-along in test commit; stale C04-sweep prose in C02-gate docstring; plan-doc AC2 blanket OVERRIDE_* wording vs recipe — all in chunks/C03.md for final review"
         }
       ]
     },
