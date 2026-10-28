@@ -142,13 +142,13 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C01", "C03"],
       "dev_rounds": 1,
       "dev_session": "ses_e7c15e867ffe2utSDRb7vT0KnC",
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (review ses_e7c03c3c4ffeVna4TtdC9Jx7n3, 2026-10-28: lossless re-home + runbook surgery independently verified — 12+ cross-refs resolve, surviving gates byte-verbatim, GID/ROCR paths vs shipped chart confirmed, every doc claim traces to a production-like render, prose discipline clean; scope 2 files; 2 nits + 1 observation for final sweep: runbook-vs-NOTES port-forward number, 'plan human step 5' run-1 numbering, unquoted rocrVisibleDevices: 0 in C03 service block)",
       "handoffs": [
         {
           "stage": "dev",
@@ -159,6 +159,14 @@
           "files": [".agents/notes/strata-host-prep-gpu-ai.md", "charts/llama-swap/README.md"],
           "validations": "charts/llama-swap suite 0F/264P+2S — ALL GREEN first time (11 test_c04_* green by name; no token pin wrong, zero re-pins needed); containers 17P; helm clean; gate greps clean; aislop 100/Healthy; scope exactly 2 files",
           "deviations": "runbook edit via documented shell-channel fallback (edit-deny on .agents/notes — run-1 nuance, surgical python with per-match assertions + git status scope proof)"
+        },
+        {
+          "stage": "review",
+          "session": "ses_e7c03c3c4ffeVna4TtdC9Jx7n3",
+          "at": "2026-10-28",
+          "verdict": "APPROVED",
+          "validations": "0F/264P/2S re-run exact; containers 17P; helm clean; doc sweeps bitwarden/PENDING/strand/charts-strata zero; production-like render 11 objects, all doc claims trace; aislop 100/Healthy",
+          "sweep_candidates_final_review": ["runbook-vs-NOTES port-forward number", "'plan human step 5' run-1-era numbering residue", "unquoted rocrVisibleDevices: 0 in C03 service block (sprig-default adjacency)"]
         }
       ]
     }
