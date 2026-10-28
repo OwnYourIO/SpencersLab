@@ -249,5 +249,11 @@
     "scope": "whole-plan ca0a406..6524f10df (+coord records), planning-tier session",
     "summary": "full suite green (0F/71P, 0F/173P+2S, 17P); all between-chunk seams clean (exe/peers byte-equality, sentinel chain, runbook↔defaults, DECISIONS end-to-end, repo law); test assets frozen since carve-out; aislop 100/100 CI-form; carried nits all non-blocking-recorded (NOTES.txt strands + sprig quoted-int → one next-touch round candidate; C04 minor+nits recorded)"
   },
+  "friction_round": {
+    "at": "2026-10-28",
+    "offered": 8,
+    "selected": ["No-daemon posture → document as repo convention"],
+    "outcome": "follow-up agent-plan launch cancelled by user in-session (ses_e7d56399bffec9wZuDWJFpRzRn); NOT retried — reopen on request; other 7 items left open in FRICTION.md"
+  },
   "deferred": ["8060S+R9700 split mode (follow-up ticket; trigger: short-prompt-dominated traffic)", "source-build container path (guide 2B) unless the 2C bundled image fails on-target", "live benchmark acceptance run (operator-consented, post-merge)", "renovate flavor-scoped versioning rule / ignore for the strata Dockerfile tags (future ticket; interim: human closes/ignores cross-flavor-bleed update PRs — coord ruling shape (b) consequence, DECISIONS 2026-10-27 coordination round)"]
 }
