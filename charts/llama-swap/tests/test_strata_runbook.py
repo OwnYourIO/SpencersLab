@@ -163,7 +163,10 @@ def test_c04_no_dangling_standalone_chart_paths():
 
 def test_c04_void_token_only_in_negative_context():
     """STRATA_KV_GROW_HOLD is the card guide's fiction (run-1 RESEARCH §2:
-    VOID); docs may NAME its non-existence but never instruct with it."""
+    VOID); docs may NAME its non-existence but never instruct with it.
+    Line-scoped scan — doc authors: keep the negation on the token's own
+    line, prose hard-wrap can push it off and read as a miss (cf-77 r2
+    FRICTION)."""
     NEGATION = re.compile(
         r"void|does not exist|doesn.t exist|nonexistent|no such|not.*(exist|found)|"
         r"misattribut|never|don.t (use|set)|do not (use|set)|myth|fiction|bogus",
@@ -177,7 +180,9 @@ def test_c04_void_token_only_in_negative_context():
 
 def test_c04_no_kubectl_apply_instruction():
     """AGENTS.md hard rule: the runbook documents re-PR flows; any 'kubectl
-    apply' occurrence must be inside that prohibition."""
+    apply' occurrence must be inside that prohibition. Line-scoped scan —
+    doc authors: keep the negation on the token's own line (cf-77 r2
+    FRICTION)."""
     NEGATION = re.compile(r"never|no |don.t|do not|prohibit|forbid|instead|via (a )?pr|re-pr", re.I)
     offenders = [
         ln for ln in _occurrence_lines("kubectl apply") if not NEGATION.search(ln)
