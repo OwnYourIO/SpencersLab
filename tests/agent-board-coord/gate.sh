@@ -730,7 +730,8 @@ if want t14; then
       .agents/plans/2026/2026-10-bug-session-origin-no-line/*|\
       .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
-      .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*) : ;;
+      .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
+      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"

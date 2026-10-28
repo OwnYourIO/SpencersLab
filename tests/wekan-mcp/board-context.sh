@@ -276,9 +276,11 @@ if want t6; then
     fail "t6: agent-board-coord-gate.sh references agent-board — the hourly gate counts the three board-coord names ONLY (agent-board is not a coordinator; C03 AC6)"
   fi
   git diff --quiet "$TB" -- "$GATE_SCRIPT" || fail "t6: $GATE_SCRIPT changed since $TB — this ticket touches nothing in it (prove-by-diff, AC6)"
+  # env -u CHUNK_BASE: same default-shape containment as validation-fix.sh t7 —
+  # an ambient base must not silently re-base these regression children.
   for s in tests/agent-board-coord/gate.sh tests/agent-perms/surface.sh tests/standalone-agents/surface.sh; do
     log="$TMP/$(basename "$s").log"
-    if timeout 600 bash "$s" >"$log" 2>&1; then
+    if env -u CHUNK_BASE timeout 600 bash "$s" >"$log" 2>&1; then
       :
     else
       tail -n 20 "$log" >&2

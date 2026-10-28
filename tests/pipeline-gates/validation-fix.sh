@@ -294,11 +294,16 @@ fi
 
 # --- t7: existing suites stay green (C02 AC7) -----------------------------------
 if want t7; then
+  # env -u CHUNK_BASE pins the chain to each child suite's documented default
+  # shape: this suite never reads CHUNK_BASE itself, so an ambient base from
+  # the caller's shell re-based the children's scope guards by accident (cf-75
+  # final-review: that leak made t7 read as an independent failure of suites
+  # that were green). Base-shape probes belong in direct suite invocations.
   for s in tests/agent-perms/surface.sh tests/standalone-agents/surface.sh \
            tests/agent-board-coord/rulesync-surface.sh tests/agent-board-coord/agents-md.sh \
            tests/agent-board-coord/gate.sh; do
     log="$TMP/$(basename "$s").log"
-    if timeout 600 bash "$s" >"$log" 2>&1; then
+    if env -u CHUNK_BASE timeout 600 bash "$s" >"$log" 2>&1; then
       :
     else
       tail -n 20 "$log" >&2

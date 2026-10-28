@@ -384,6 +384,11 @@ fi
 # cf-52 landing 124fc2ae8 introduced — a landing that adds plan folders must
 # not read as a scope violation here at any later base. The three folder
 # patterns are inline literals so agent-perms A9 window-greps them here.
+# cf-75 final-review widening: the OQ2-approved draft retirement is a coord
+# bookkeeping write into the SUPERSEDED sibling folder
+# 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, commit dca8a25d2) — the
+# same sanctioned-plan-folder class as the enumerations above, admitted whole
+# so no further retirement note reddens the full-range scope shape.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -408,7 +413,8 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
       skills/wekan-mcp/*|.opencode/plugin/board-context/*|\
-      .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*) : ;;
+      .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
+      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
