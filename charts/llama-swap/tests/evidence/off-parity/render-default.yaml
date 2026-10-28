@@ -1,0 +1,1762 @@
+---
+# Source: llama-swap/charts/app-template/templates/common.yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpu-ai-llama-swap
+  labels:
+    app.kubernetes.io/instance: gpu-ai-llama-swap
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: llama-swap
+    helm.sh/chart: app-template-5.0.1
+  namespace: default
+---
+# Source: llama-swap/templates/configmap-llama-swap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-swap-config
+  namespace: default
+data:
+  config.yaml: |
+    apiKeys: []
+    globalTTL: 0
+    healthCheckTimeout: 3600
+    includeAliasesInList: true
+    logLevel: info
+    logToStdout: proxy,http
+    macros:
+      big-ub: "-b 2048 \n-ub 2048\n"
+      ctx-1m: "-c 1010000 \n--rope-scaling yarn --rope-scale 4 --yarn-orig-ctx 262144\n-b
+        512 -ub 512\n"
+      ctx-256k: "--ctx-size 262144\n-b 2048 \n-ub 2048\n"
+      flash-and-q8: |
+        --flash-attn on
+        --cache-type-k q8_0
+        --cache-type-v q8_0
+      moe: "-ngl 99 \n-ot \"\\.ffn_.*_exps\\.=CPU\" \n--load-mode none\n"
+      moe-vl-q4: |
+        -ngl 99
+        --n-cpu-moe 38
+        --load-mode none
+      moe-vl-q8: |
+        -ngl 99
+        --n-cpu-moe 44
+        --load-mode none
+      server-cmd: |
+        llama-server
+        --port ${PORT}
+        --host 0.0.0.0
+        --jinja
+      threads: |
+        -t 10
+    matrix:
+      sets:
+        main: (q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q35q6 | q35q8 | q35bf16
+          | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4
+          | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8
+          | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf
+          | wsp) & homecpu
+      vars:
+        emb06: qwen3-embedding-0.6b
+        fnorca: qwen3.8-flash-next-orca-q6
+        fnq3: qwen3.8-flash-next-q3
+        fnq4: qwen3.8-flash-next-q4
+        homecpu: home-3b-v3
+        homegpu: home-3b-v3-gpu
+        o122q3: ornith-1.5-122b-q3
+        o122q4: ornith-1.5-122b-q4
+        o122q5: ornith-1.5-122b-q5
+        o122q6: ornith-1.5-122b-q6
+        orniq2: ornith-1.5-35b-a3b-iq2xxs
+        ornq3: ornith-1.5-35b-a3b-q3
+        ornq4: ornith-1.5-35b-a3b-q4
+        ornq5: ornith-1.5-35b-a3b-q5
+        ornq6: ornith-1.5-35b-a3b-q6
+        ornq8: ornith-1.5-35b-a3b-q8
+        ornqbf: ornith-1.5-35b-a3b-bf16
+        q27bq6: qwen3.6-27b-q6
+        q27bq8: qwen3.6-27b-q8
+        q35b1m: qwen3.6-35b-a3b-1m
+        q35bf16: qwen3.6-35b-a3b-bf16
+        q35q6: qwen3.6-35b-a3b-q6
+        q35q8: qwen3.6-35b-a3b-q8
+        q35q8v: qwen3.6-35b-a3b-q8-visual
+        q36her: qwen36-heretic
+        q36hui: qwen36-huihui
+        q38ara: qwen38-ara
+        q38bf16: qwen3.8-27b-bf16
+        q38f16: qwen38-orca-f16
+        q38hum: qwen38-humanlike
+        q38orca: qwen38-orca
+        q38q4: qwen3.8-27b-q4
+        q38q6: qwen3.8-27b-q6
+        q38q8: qwen3.8-27b-q8
+        q38q81m: qwen3.8-27b-q8-1m
+        q38q8v: qwen3.8-27b-q8-visual
+        q38rana: qwen38-rana
+        v4tbf: qwen3-vl-4b-thinking-bf16
+        v4tq4: qwen3-vl-4b-thinking-q4
+        v4tq8: qwen3-vl-4b-thinking-q8
+        v30tbf: qwen3-vl-30b-a3b-thinking-bf16
+        v30tq4: qwen3-vl-30b-a3b-thinking-q4
+        v30tq8: qwen3-vl-30b-a3b-thinking-q8
+        vl2bbf: qwen3-vl-2b-bf16
+        vl2bq4: qwen3-vl-2b-q4
+        vl2bq8: qwen3-vl-2b-q8
+        vl4bbf: qwen3-vl-4b-bf16
+        vl4bq4: qwen3-vl-4b-q4
+        vl4bq8: qwen3-vl-4b-q8
+        vl8bbf: qwen3-vl-8b-bf16
+        vl8bq4: qwen3-vl-8b-q4
+        vl8bq8: qwen3-vl-8b-q8
+        vl30bbf: qwen3-vl-30b-a3b-bf16
+        vl30bq4: qwen3-vl-30b-a3b-q4
+        vl30bq8: qwen3-vl-30b-a3b-q8
+        wsp: whisper-large-v3
+    models:
+      home-3b-v3:
+        cmd: |
+          /bin/sh -c "echo 'home-3b-v3 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Home Assistant 3B v3 model on CPU, Q4_K_M quant; runs in parallel
+          with GPU models
+        name: Home 3B v3 (Q4_K_M) - CPU
+        proxy: none
+        ttl: 0
+      home-3b-v3-gpu:
+        cmd: |
+          /bin/sh -c "echo 'home-3b-v3-gpu is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Home Assistant 3B v3 model on GPU, Q8_0 quant
+        name: Home 3B v3 (Q8_0) - GPU
+        proxy: none
+        ttl: 0
+      ornith-1.5-35b-a3b-bf16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-35b-a3b-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 35B with 3B active parameters (MoE), BF16 (no quant);
+          66.2 GiB weights, experts on CPU, 256k ctx
+        name: Ornith 1.5 35B A3B (BF16)
+        proxy: none
+        ttl: 0
+      ornith-1.5-35b-a3b-iq2xxs:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-35b-a3b-iq2xxs is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 35B with 3B active parameters (MoE), IQ2_XXS quant; 9.6
+          GiB weights, experts on CPU, 256k ctx
+        name: Ornith 1.5 35B A3B (IQ2_XXS)
+        proxy: none
+        ttl: 0
+      ornith-1.5-35b-a3b-q3:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-35b-a3b-q3 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 35B with 3B active parameters (MoE), Q3_K_XL quant; 16.6
+          GiB weights, experts on CPU, 256k ctx
+        name: Ornith 1.5 35B A3B (Q3_K_XL)
+        proxy: none
+        ttl: 0
+      ornith-1.5-35b-a3b-q4:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-35b-a3b-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 35B with 3B active parameters (MoE), Q4_K_M quant; 20.2
+          GiB weights, experts on CPU, 256k ctx
+        name: Ornith 1.5 35B A3B (Q4_K_M)
+        proxy: none
+        ttl: 0
+      ornith-1.5-35b-a3b-q5:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-35b-a3b-q5 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 35B with 3B active parameters (MoE), Q5_K_M quant; 23.6
+          GiB weights, experts on CPU, 256k ctx
+        name: Ornith 1.5 35B A3B (Q5_K_M)
+        proxy: none
+        ttl: 0
+      ornith-1.5-35b-a3b-q6:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-35b-a3b-q6 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 35B with 3B active parameters (MoE), Q6_K quant; 27.2
+          GiB weights, experts on CPU, 256k ctx
+        name: Ornith 1.5 35B A3B (Q6_K)
+        proxy: none
+        ttl: 0
+      ornith-1.5-35b-a3b-q8:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-35b-a3b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 35B with 3B active parameters (MoE), Q8_0 quant; 35.2
+          GiB weights, experts on CPU, 256k ctx
+        name: Ornith 1.5 35B A3B (Q8_0)
+        proxy: none
+        ttl: 0
+      ornith-1.5-122b-q3:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-122b-q3 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+          UD-Q3_K_XL quant; 55.7 GiB weights, experts on CPU, 256k ctx; SOLO; no MTP draft
+          published (see the C04 family note)
+        name: Ornith 1.5 122B (UD-Q3_K_XL)
+        proxy: none
+        ttl: 300
+      ornith-1.5-122b-q4:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-122b-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+          UD-Q4_K_XL quant; 74.2 GiB weights, experts on CPU, 256k ctx; SOLO; no MTP draft
+          published (see the C04 family note)
+        name: Ornith 1.5 122B (UD-Q4_K_XL)
+        proxy: none
+        ttl: 300
+      ornith-1.5-122b-q5:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-122b-q5 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+          UD-Q5_K_XL quant; 88.1 GiB weights, experts on CPU, 256k ctx; SOLO; no MTP draft
+          published (see the C04 family note)
+        name: Ornith 1.5 122B (UD-Q5_K_XL)
+        proxy: none
+        ttl: 300
+      ornith-1.5-122b-q6:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'ornith-1.5-122b-q6 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+          UD-Q6_K_XL quant; 106.4 GiB weights, marginal against the ~125 GiB budget -
+          SOLO only; no MTP draft published (see the C04 family note)
+        name: Ornith 1.5 122B (UD-Q6_K_XL)
+        proxy: none
+        ttl: 300
+      qwen3-embedding-0.6b:
+        cmd: |
+          /bin/sh -c "echo 'qwen3-embedding-0.6b is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen3-Embedding 0.6B text embeddings via /v1/embeddings, Q8_0 quant;
+          always-ready sidecar
+        name: Qwen3 Embedding 0.6B (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3-vl-2b-bf16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-2b-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, BF16 (no quant);
+          faster processing for simpler descriptions
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 2B Instruct (BF16)
+        proxy: none
+        ttl: 0
+      qwen3-vl-2b-q4:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-2b-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, Q4_K_M quant; faster
+          processing for simpler descriptions
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 2B Instruct (Q4_K_M)
+        proxy: none
+        ttl: 0
+      qwen3-vl-2b-q8:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-2b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, Q8_0 quant; faster
+          processing for simpler descriptions
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 2B Instruct (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3-vl-4b-bf16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-4b-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, BF16 (no quant)
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 4B Instruct (BF16)
+        proxy: none
+        ttl: 0
+      qwen3-vl-4b-q4:
+        aliases:
+        - qwen3-vl-4b
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-4b-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, Q4_K_M quant
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 4B Instruct (Q4_K_M)
+        proxy: none
+        ttl: 0
+      qwen3-vl-4b-q8:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-4b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, Q8_0 quant
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 4B Instruct (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3-vl-4b-thinking-bf16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-4b-thinking-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Reasoning vision-language model for Immich image analysis, BF16 (no
+          quant); good balance of speed and accuracy
+        name: Qwen3 VL 4B Thinking (BF16)
+        proxy: none
+        ttl: 0
+      qwen3-vl-4b-thinking-q4:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-4b-thinking-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Reasoning vision-language model for Immich image analysis, Q4_K_M
+          quant; good balance of speed and accuracy
+        name: Qwen3 VL 4B Thinking (Q4_K_M)
+        proxy: none
+        ttl: 0
+      qwen3-vl-4b-thinking-q8:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-4b-thinking-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Reasoning vision-language model for Immich image analysis, Q8_0 quant;
+          good balance of speed and accuracy
+        name: Qwen3 VL 4B Thinking (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3-vl-8b-bf16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-8b-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, BF16 (no quant)
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 8B Instruct (BF16)
+        proxy: none
+        ttl: 0
+      qwen3-vl-8b-q4:
+        aliases:
+        - qwen3-vl-8b
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-8b-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, Q4_K_M quant
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 8B Instruct (Q4_K_M)
+        proxy: none
+        ttl: 0
+      qwen3-vl-8b-q8:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-8b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language model for Immich image analysis, Q8_0 quant
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 8B Instruct (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3-vl-30b-a3b-bf16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-30b-a3b-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language MoE model for Immich image analysis, BF16 (no quant),
+          CPU-offloaded experts
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 30B A3B Instruct (BF16)
+        proxy: none
+        ttl: 0
+      qwen3-vl-30b-a3b-q4:
+        aliases:
+        - qwen3-vl-30b-a3b
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-30b-a3b-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language MoE model for Immich image analysis, Q4_K_M quant,
+          CPU-offloaded experts
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 30B A3B Instruct (Q4_K_M)
+        proxy: none
+        ttl: 0
+      qwen3-vl-30b-a3b-q8:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-30b-a3b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Vision-language MoE model for Immich image analysis, Q8_0 quant,
+          CPU-offloaded experts
+        filters:
+          setParamsByID:
+            ${MODEL_ID}:caption:
+              chat_template_kwargs:
+                enable_thinking: false
+              seed: 42
+              temperature: 0.1
+            ${MODEL_ID}:tags:
+              chat_template_kwargs:
+                enable_thinking: false
+              temperature: 0.2
+        name: Qwen3 VL 30B A3B Instruct (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3-vl-30b-a3b-thinking-bf16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-30b-a3b-thinking-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Reasoning vision-language MoE model for Immich image analysis, BF16
+          (no quant), CPU-offloaded experts; higher accuracy for complex images
+        name: Qwen3 VL 30B A3B Thinking (BF16)
+        proxy: none
+        ttl: 0
+      qwen3-vl-30b-a3b-thinking-q4:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-30b-a3b-thinking-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Reasoning vision-language MoE model for Immich image analysis, Q4_K_M
+          quant, CPU-offloaded experts; higher accuracy for complex images
+        name: Qwen3 VL 30B A3B Thinking (Q4_K_M)
+        proxy: none
+        ttl: 0
+      qwen3-vl-30b-a3b-thinking-q8:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3-vl-30b-a3b-thinking-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Reasoning vision-language MoE model for Immich image analysis, Q8_0
+          quant, CPU-offloaded experts; higher accuracy for complex images
+        name: Qwen3 VL 30B A3B Thinking (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3.6-27b-q6:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.6-27b-q6 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.6 27B general purpose model, Q6_K quant
+        name: Qwen 3.6 27B (Q6_K)
+        proxy: none
+        ttl: 0
+      qwen3.6-27b-q8:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.6-27b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.6 27B general purpose model, Q8_0 quant
+        name: Qwen 3.6 27B (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3.6-35b-a3b-1m:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.6-35b-a3b-1m is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant
+        name: Qwen 3.6 35B A3B (Q8_0) - 1M
+        proxy: none
+        ttl: 0
+      qwen3.6-35b-a3b-bf16:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.6-35b-a3b-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.6 35B with 3B active parameters (MoE), BF16 (no quant)
+        name: Qwen 3.6 35B A3B (BF16)
+        proxy: none
+        ttl: 0
+      qwen3.6-35b-a3b-q6:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.6-35b-a3b-q6 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.6 35B with 3B active parameters (MoE), UD-Q6_K quant
+        name: Qwen 3.6 35B A3B (UD-Q6_K)
+        proxy: none
+        ttl: 0
+      qwen3.6-35b-a3b-q8:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.6-35b-a3b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.6 35B with 3B active parameters (MoE), Q8_0 quant
+        name: Qwen 3.6 35B A3B (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3.6-35b-a3b-q8-visual:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.6-35b-a3b-q8-visual is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.6 35B A3B (MoE), Q8_0; vision on (auto mmproj), experts on
+          CPU, 256k ctx; cache_reuse disabled by llama.cpp in multimodal mode
+        name: Qwen 3.6 35B A3B (Q8_0) - Visual
+        proxy: none
+        ttl: 0
+      qwen3.8-27b-bf16:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-27b-bf16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 27B dense model, BF16 (no quant)
+        name: Qwen 3.8 27B (BF16)
+        proxy: none
+        ttl: 0
+      qwen3.8-27b-q4:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-27b-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 27B dense model, UD-Q4_K_XL quant
+        name: Qwen 3.8 27B (UD-Q4_K_XL)
+        proxy: none
+        ttl: 0
+      qwen3.8-27b-q6:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-27b-q6 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 27B dense model, UD-Q6_K_XL quant
+        name: Qwen 3.8 27B (UD-Q6_K_XL)
+        proxy: none
+        ttl: 0
+      qwen3.8-27b-q8:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-27b-q8 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 27B dense model, Q8_0 quant
+        name: Qwen 3.8 27B (Q8_0)
+        proxy: none
+        ttl: 0
+      qwen3.8-27b-q8-1m:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-27b-q8-1m is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Plain Qwen 3.8 27B, Q8_0; 1M ctx (YaRN x4), KV in system RAM
+        name: Qwen 3.8 27B (Q8_0) - 1M
+        proxy: none
+        ttl: 300
+      qwen3.8-27b-q8-visual:
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-27b-q8-visual is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Plain Qwen 3.8 27B, Q8_0; MTP draft, vision on (auto mmproj), 256k
+          ctx; cache_reuse disabled by llama.cpp in multimodal mode
+        name: Qwen 3.8 27B (Q8_0, MTP) - Visual
+        proxy: none
+        ttl: 300
+      qwen3.8-flash-next-orca-q6:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-flash-next-orca-q6 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights;
+          experts on CPU (mmap placement), 256k ctx; over the ~125 GiB node budget like
+          flash-next q6 - SOLO, never preloaded, may OOM; C04 gate-2 spec re-added, embedded-MTP
+          expected per the qwen38-orca pattern (miss-path note above)
+        name: Qwen 3.8 Flash Next Uncensored (Q6_K, MTP)
+        proxy: none
+        ttl: 300
+      qwen3.8-flash-next-q3:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-flash-next-q3 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q3_K_XL
+          quant; 83.8 GiB weights, experts on CPU, 256k ctx; SOLO - largest resident this
+          node has attempted (RESEARCH §4A regime test)
+        name: Qwen 3.8 Flash Next (UD-Q3_K_XL, MTP)
+        proxy: none
+        ttl: 300
+      qwen3.8-flash-next-q4:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-flash-next-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q4_K_XL
+          quant; 103.7 GiB weights, experts on CPU, 256k ctx; tight against the ~125 GiB
+          node budget - SOLO only
+        name: Qwen 3.8 Flash Next (UD-Q4_K_XL, MTP)
+        proxy: none
+        ttl: 300
+      qwen3.8-flash-next-q5:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-flash-next-q5 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q5_K_XL
+          quant; 147.4 GiB weights, experts on CPU; OVER the ~125 GiB node budget - enabled
+          by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix),
+          never preloaded
+        name: Qwen 3.8 Flash Next (UD-Q5_K_XL, MTP)
+        proxy: none
+        ttl: 300
+      qwen3.8-flash-next-q6:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-flash-next-q6 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q6_K_XL
+          quant; 157.5 GiB weights, experts on CPU; OVER the ~125 GiB node budget - enabled
+          by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix),
+          never preloaded
+        name: Qwen 3.8 Flash Next (UD-Q6_K_XL, MTP)
+        proxy: none
+        ttl: 300
+      qwen36-heretic:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen36-heretic is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: llmfan46 heretic abliteration, native MTP preserved; mradermacher
+          mirror; experts-on-CPU; 256k ctx
+        name: Qwen3.6 35B A3B heretic (Q4_K_M, MTP)
+        proxy: none
+        ttl: 300
+      qwen36-huihui:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen36-huihui is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: huihui-ai classic abliteration, dedicated MTP GGUF; experts-on-CPU;
+          256k ctx
+        name: Qwen3.6 35B A3B huihui abliterated (Q4_K, MTP)
+        proxy: none
+        ttl: 300
+      qwen38-ara:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen38-ara is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Max-quality/coding build; draft-MTP n-max 3, 256k ctx
+        name: Qwen3.8 27B heretic-ara (Q6_K-MTP)
+        proxy: none
+        ttl: 300
+      qwen38-humanlike:
+        cmd: |
+          /bin/sh -c "echo 'qwen38-humanlike is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Text-only humanlike chat; low reasoning effort, 128k ctx
+        name: Qwen3.8 27B Humanlike-Chat 2.0 (Q6_K)
+        proxy: none
+        ttl: 300
+      qwen38-orca:
+        aliases:
+        - qwen3.8
+        - local/qwen3.8-27b
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen38-orca is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen3.8 27B daily driver; draft-MTP speculative decoding, 256k ctx
+        name: Qwen3.8 27B Uncensored (Q6_K, MTP)
+        proxy: none
+        ttl: 300
+      qwen38-orca-f16:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen38-orca-f16 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Reference F16 build; ttl 180 so it evicts fast
+        name: Qwen3.8 27B Uncensored (F16, MTP)
+        proxy: none
+        ttl: 180
+      qwen38-rana:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen38-rana is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: mradermacher mirror; borrowed ggml-org official MTP draft (experimental),
+          256k ctx
+        name: Qwen3.8 27B RANA abliterated (Q6_K, MTP)
+        proxy: none
+        ttl: 300
+      whisper-large-v3:
+        capabilities:
+          in:
+          - audio
+          out:
+          - text
+        checkEndpoint: /health
+        cmd: |
+          /bin/sh -c "echo 'whisper-large-v3 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Audio transcription (whisper.cpp ggml-large-v3) for podcast processing
+        name: Whisper Large v3
+        proxy: none
+        ttl: 0
+    performance:
+      enable: true
+      every: 5s
+    sendLoadingState: true
+    startPort: 10001
+    unloadTimeout: 30
+---
+# Source: llama-swap/templates/configmap-tools.yaml
+# Operator provisioning tools for the llama-swap `tools` sidecar (disabled by
+# default; gpu-ai enables it). Scripts ship read-only via this ConfigMap,
+# mounted at /app/tools.
+#
+# SIZE LIMIT: this ConfigMap is applied client-side (ServerSideApply: "false"
+# on both gpu and gpu-ai), so kubectl stores the whole object in the
+# last-applied-configuration annotation, which the API server caps at 256 KiB.
+# Embedding the vendored b11515 converter here (~870 KiB) broke syncs with
+# "metadata.annotations: Too long". Therefore ONLY the operator CLI and its
+# provenance pin are embedded; `llama_tools.py prepare` fetches the converter
+# files from the pinned raw.githubusercontent.com URLs in
+# converter-source.json (sha256-verified before publish, staged to
+# /models/.tools/converter/). The vendored copies under scripts/conversion/
+# and scripts/gguf-py/ stay in git for CI contract tests — they are the
+# source of truth the pins were taken from.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-swap-tools
+  namespace: default
+data:
+  llama_tools.py: |
+    #!/usr/bin/env python3
+    """llama-swap operator provisioning tools (gpu-ai tools sidecar).
+    
+    Everything here is EXPLICIT, operator-run work (kubectl exec into the `tools`
+    container). Nothing runs automatically: no in-request downloads, no implicit
+    conversion, no smoke tests on startup.
+    
+    Commands:
+      status                 Report provisioning state of the known artifacts.
+      prepare                Create/reuse the venv, fetch + hash-verify the
+                             pinned b11515 converter files, fetch the cyber LoRA
+                             adapter + its base model config.
+      convert-cyber          Convert the staged PEFT adapter to GGUF (f16),
+                             atomic publish + SHA-256 record.
+      download <artifact>    Fetch one explicitly named artifact (consent gate:
+                             refuses to run without an artifact name).
+      verify                 Size + SHA-256 checks of provisioned artifacts.
+      smoke-test <model>     Pod-local check: /v1/models then a tiny chat
+                             completion against the named model. Never runs
+                             automatically.
+    
+    Design rules:
+      - HF_TOKEN (when set) is used for downloads but NEVER logged.
+      - All downloads go to a temp file first, then atomic rename. Interrupted
+        downloads resume via HTTP Range when the server supports it.
+      - Conversion failures fail loudly (non-zero exit, converter output passed
+        through); nothing is published unless the converter succeeded.
+      - This script is stdlib-only on purpose: it must run in the slim sidecar
+        image BEFORE `prepare` has built the venv.
+    """
+    
+    from __future__ import annotations
+    
+    import argparse
+    import hashlib
+    import json
+    import os
+    import subprocess
+    import sys
+    import urllib.error
+    import urllib.request
+    from pathlib import Path
+    
+    # ---------------------------------------------------------------------------
+    # Layout — everything hangs off the models PVC so it survives restarts.
+    # ---------------------------------------------------------------------------
+    
+    MODELS_DIR = Path(os.environ.get("MODELS_DIR", "/models"))
+    TOOLS_ROOT = MODELS_DIR / ".tools"
+    VENV_DIR = TOOLS_ROOT / "venv"
+    CONVERTER_DIR = TOOLS_ROOT / "converter"
+    CYBER_DIR = TOOLS_ROOT / "cyber"
+    ADAPTER_DIR = CYBER_DIR / "adapter"
+    BASE_CONFIG_DIR = CYBER_DIR / "base-config"
+    
+    # Where the chart mounts the read-only tool scripts (ConfigMap llama-swap-tools).
+    TOOLS_SRC = Path(os.environ.get("TOOLS_SRC", "/app/tools"))
+    
+    # Converter provenance. The b11515 converter needs the repo-local `conversion`
+    # package AND the repo-local `gguf-py` package (PyPI's gguf stopped at 0.9.1;
+    # b11515 ships 0.19.0). Those files are too large to embed in the
+    # llama-swap-tools ConfigMap (~870 KiB breaks the 256 KiB
+    # last-applied-configuration annotation the API server allows on client-side
+    # apply — ArgoCD syncs failed with "metadata.annotations: Too long"), so the
+    # ConfigMap ships only this script + the provenance pin
+    # (converter-source.json: repo, tag, commit, per-file sha256). `prepare`
+    # fetches each file from the pinned raw.githubusercontent.com URL and
+    # verifies its sha256 BEFORE publishing it under CONVERTER_DIR, which mirrors
+    # the llama.cpp tree so convert_lora_to_gguf.py's own
+    # `Path(__file__).parent / 'gguf-py'` probe finds it. The chart's git source
+    # keeps matching vendored copies (scripts/conversion, scripts/gguf-py) for
+    # offline CI contract tests; provenance hashes guard both.
+    PROVENANCE_FILE = "converter-source.json"
+    PROVENANCE_LICENSE_KEY = "LLAMA_CPP_LICENSE"  # attribution only, never staged
+    
+    CYBER_ADAPTER_REPO = "nico248000000000/Qwen3.8-27B-Uncensored-cyber-LoRA"
+    CYBER_ADAPTER_FILES = ("adapter_config.json", "adapter_model.safetensors")
+    CYBER_BASE_REPO = "orcarouter/Qwen3.8-27B-Uncensored"
+    CYBER_BASE_FILES = ("config.json",)
+    
+    CYBER_LORA_GGUF = MODELS_DIR / "qwen38-cyber-lora-f16.gguf"
+    
+    # Explicitly downloadable artifacts (the `download` consent gate only accepts
+    # names listed here).
+    ARTIFACTS = {
+        "rana-mtp": {
+            "url": (
+                "https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF"
+                "/resolve/main/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf"
+            ),
+            "dest": MODELS_DIR / "rana/mtp-Qwen3.8-27B-RANA-abliterated-Q8_0.gguf",
+            "description": "RANA abliterated MTP draft model (Q8_0)",
+        },
+        "rana-mmproj": {
+            "url": (
+                "https://huggingface.co/aboliterant/Qwen3.8-27B-RANA-abliterated-GGUF"
+                "/resolve/main/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf"
+            ),
+            "dest": MODELS_DIR / "rana/mmproj-Qwen3.8-27B-RANA-abliterated-F16.gguf",
+            "description": "RANA abliterated vision projector (F16)",
+        },
+    }
+    
+    # torch must come from the CPU wheel index; the sidecar has no GPU and the
+    # default PyPI torch wheel would drag in CUDA libraries. The gguf package is
+    # NOT pip-installed: b11515's converter needs the repo-local gguf-py 0.19.0,
+    # which is vendored in the chart and staged next to the converter.
+    TORCH_INDEX_URL = "https://download.pytorch.org/whl/cpu"
+    VENV_PACKAGES = ["transformers", "safetensors", "huggingface_hub", "numpy", "pyyaml", "tqdm"]
+    
+    LLAMA_SWAP_URL = os.environ.get("LLAMA_SWAP_URL", "http://localhost:8080")
+    
+    HF_API = "https://huggingface.co"
+    
+    
+    # ---------------------------------------------------------------------------
+    # Small helpers
+    # ---------------------------------------------------------------------------
+    
+    def log(msg: str) -> None:
+        print(f"[llama-tools] {msg}", flush=True)
+    
+    
+    def hf_token() -> str | None:
+        token = os.environ.get("HF_TOKEN", "").strip()
+        return token or None
+    
+    
+    def sha256_file(path: Path) -> str:
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(8 * 1024 * 1024), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    
+    
+    def write_sha256(path: Path) -> str:
+        digest = sha256_file(path)
+        (path.parent / (path.name + ".sha256")).write_text(digest + "\n")
+        return digest
+    
+    
+    def read_sha256(path: Path) -> str | None:
+        sidecar = path.parent / (path.name + ".sha256")
+        if not sidecar.exists():
+            return None
+        return sidecar.read_text().strip().split()[0]
+    
+    
+    def redact(text: str) -> str:
+        """Belt-and-braces: never let the token reach stdout/stderr."""
+        token = hf_token()
+        if token:
+            text = text.replace(token, "[REDACTED]")
+        return text
+    
+    
+    def http_get(url: str, dest: Path, *, desc: str = "", auth: bool = True,
+                 expected_sha256: str | None = None) -> None:
+        """Download url to dest with temp-file + resume + atomic rename.
+    
+        The partial file lives at <dest>.part so an interrupted run can resume.
+        The token is attached only for huggingface.co URLs and never logged.
+    
+        With expected_sha256 set (pinned converter files): an existing dest is
+        re-checked against the pin (mismatch → re-download), and the temp file is
+        hash-verified BEFORE the atomic publish — a mismatch aborts loudly and
+        publishes nothing.
+        """
+        label = desc or dest.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists():
+            if expected_sha256 is None:
+                log(f"{label}: already present ({dest.stat().st_size} bytes), skipping")
+                return
+            actual = sha256_file(dest)
+            if actual == expected_sha256:
+                log(f"{label}: already present ({dest.stat().st_size} bytes), sha256 matches pin — skipping")
+                return
+            log(f"{label}: present but sha256 {actual[:16]}... != pin {expected_sha256[:16]}... — re-downloading")
+            dest.unlink()
+    
+        tmp = dest.parent / (dest.name + ".part")
+        resume_from = tmp.stat().st_size if tmp.exists() else 0
+    
+        headers = {"User-Agent": "llama-swap-tools/1.0"}
+        token = hf_token()
+        if auth and token and "huggingface.co" in url:
+            headers["Authorization"] = f"Bearer {token}"
+        if resume_from > 0:
+            headers["Range"] = f"bytes={resume_from}-"
+            log(f"{label}: resuming at byte {resume_from}")
+    
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            resp = urllib.request.urlopen(req, timeout=60)
+        except urllib.error.HTTPError as e:
+            if e.code == 416 and resume_from > 0:
+                # Range not satisfiable: the partial file is already complete.
+                log(f"{label}: partial file already complete, finalizing")
+                _publish_verified(tmp, dest, expected_sha256, label)
+                return
+            if e.code == 401:
+                raise SystemExit(
+                    f"[llama-tools] ERROR: 401 Unauthorized for {url} — this repo needs an "
+                    "HF token (HF_TOKEN env) and, for gated repos, accepted license terms."
+                ) from e
+            raise SystemExit(f"[llama-tools] ERROR: HTTP {e.code} for {url}") from e
+    
+        mode = "ab" if (resume_from > 0 and resp.status == 206) else "wb"
+        if mode == "wb" and resume_from > 0:
+            log(f"{label}: server ignored Range, restarting download")
+    
+        total = 0
+        with open(tmp, mode) as f:
+            while True:
+                chunk = resp.read(8 * 1024 * 1024)
+                if not chunk:
+                    break
+                f.write(chunk)
+                total += len(chunk)
+        log(f"{label}: downloaded {total} bytes (now {tmp.stat().st_size})")
+    
+        _publish_verified(tmp, dest, expected_sha256, label)
+    
+    
+    def _publish_verified(tmp: Path, dest: Path, expected_sha256: str | None, label: str) -> None:
+        """Hash-check the temp file (when pinned), then atomically publish it."""
+        if expected_sha256 is not None:
+            actual = sha256_file(tmp)
+            if actual != expected_sha256:
+                tmp.unlink(missing_ok=True)
+                raise SystemExit(
+                    f"[llama-tools] ERROR: sha256 mismatch for {label}: "
+                    f"expected {expected_sha256[:16]}..., got {actual[:16]}... — "
+                    "nothing published (upstream file changed or download corrupt; "
+                    "re-run to retry, or check scripts/converter-source.json pins)"
+                )
+        os.replace(tmp, dest)  # atomic publish
+        digest = write_sha256(dest)
+        log(f"{label}: published sha256={digest[:16]}...")
+    
+    
+    # ---------------------------------------------------------------------------
+    # Commands
+    # ---------------------------------------------------------------------------
+    
+    def cmd_status(_: argparse.Namespace) -> int:
+        log("Provisioning status")
+        log(f"  models dir: {MODELS_DIR} ({'exists' if MODELS_DIR.exists() else 'MISSING'})")
+    
+        def report(name: str, path: Path) -> bool:
+            if not path.exists():
+                log(f"  [missing ] {name}: {path}")
+                return False
+            digest = read_sha256(path)
+            state = "ok" if digest else "present (no sha256 record)"
+            log(f"  [present ] {name}: {path} ({path.stat().st_size} bytes, {state})")
+            return True
+    
+        ok = True
+        ok &= report("cyber LoRA GGUF (converted)", CYBER_LORA_GGUF)
+        for key, art in ARTIFACTS.items():
+            ok &= report(f"artifact {key}", Path(art["dest"]))
+    
+        log("  Tooling:")
+        log(f"    venv:      {'ready' if (VENV_DIR / 'bin/python').exists() else 'not prepared (run: prepare)'}")
+        log(f"    converter: {'staged + hash-verified' if converter_staged() else 'not staged (run: prepare)'}")
+        adapter = all((ADAPTER_DIR / f).exists() for f in CYBER_ADAPTER_FILES)
+        log(f"    adapter:   {'fetched' if adapter else 'not fetched (run: prepare)'}")
+        base = all((BASE_CONFIG_DIR / f).exists() for f in CYBER_BASE_FILES)
+        log(f"    base cfg:  {'fetched' if base else 'not fetched (run: prepare)'}")
+        log(f"  HF_TOKEN:    {'set' if hf_token() else 'NOT SET (gated repos will fail)'}")
+    
+        if ok:
+            log("All runtime artifacts present.")
+        else:
+            log("Some artifacts are missing — see commands above. (This never blocks the pod.)")
+        return 0
+    
+    
+    def ensure_venv() -> Path:
+        py = VENV_DIR / "bin/python"
+        if py.exists():
+            log(f"venv exists at {VENV_DIR}, reusing")
+            return VENV_DIR
+        log(f"creating venv at {VENV_DIR}")
+        TOOLS_ROOT.mkdir(parents=True, exist_ok=True)
+        subprocess.run([sys.executable, "-m", "venv", str(VENV_DIR)], check=True)
+        log("installing torch (CPU wheel — this is the large one)")
+        subprocess.run(
+            [str(py), "-m", "pip", "install", "--quiet", "torch",
+             "--index-url", TORCH_INDEX_URL],
+            check=True,
+        )
+        log(f"installing {', '.join(VENV_PACKAGES)}")
+        subprocess.run(
+            [str(py), "-m", "pip", "install", "--quiet", *VENV_PACKAGES],
+            check=True,
+        )
+        return VENV_DIR
+    
+    
+    def load_provenance() -> dict:
+        """Parse converter-source.json from the ConfigMap mount."""
+        src = TOOLS_SRC / PROVENANCE_FILE
+        if not src.exists():
+            raise SystemExit(
+                f"[llama-tools] ERROR: {src} missing — is the llama-swap-tools "
+                "ConfigMap mounted at /app/tools?"
+            )
+        try:
+            return json.loads(src.read_text())
+        except json.JSONDecodeError as e:
+            raise SystemExit(f"[llama-tools] ERROR: {src} does not parse: {e}") from e
+    
+    
+    def converter_pins(meta: dict) -> dict[str, tuple[str, str]]:
+        """upstream_path -> (raw url, expected sha256) for every runtime file."""
+        url_pattern = meta["raw_url_pattern"]
+        return {
+            info["upstream_path"]: (url_pattern.format(path=info["upstream_path"]), info["sha256"])
+            for rel, info in meta["files"].items()
+            if rel != PROVENANCE_LICENSE_KEY
+        }
+    
+    
+    def stage_converter() -> None:
+        """Fetch the pinned b11515 converter files into CONVERTER_DIR.
+    
+        Every file is sha256-verified against converter-source.json BEFORE it is
+        published; already-staged files with a matching hash are skipped, so the
+        step is restart-safe and idempotent. The staged layout mirrors the
+        llama.cpp tree (convert_lora_to_gguf.py at the root, conversion/ and
+        gguf-py/ packages beside it).
+        """
+        meta = load_provenance()
+        pins = converter_pins(meta)
+        log(f"staging converter from {meta['repository']} @ {meta['tag']} -> {CONVERTER_DIR}")
+        for upstream_path, (url, expected) in sorted(pins.items()):
+            http_get(
+                url,
+                CONVERTER_DIR / upstream_path,
+                desc=f"converter {upstream_path}",
+                auth=False,  # raw.githubusercontent.com needs no token
+                expected_sha256=expected,
+            )
+        log(f"converter staged ({len(pins)} files, all sha256-verified)")
+    
+    
+    def converter_staged() -> bool:
+        """True when every pinned converter file is staged with the right hash."""
+        try:
+            pins = converter_pins(load_provenance())
+        except SystemExit:
+            return False
+        for upstream_path, (_, expected) in pins.items():
+            path = CONVERTER_DIR / upstream_path
+            if not path.exists() or sha256_file(path) != expected:
+                return False
+        return True
+    
+    
+    def cmd_prepare(_: argparse.Namespace) -> int:
+        ensure_venv()
+        stage_converter()
+    
+        for name in CYBER_ADAPTER_FILES:
+            http_get(
+                f"{HF_API}/{CYBER_ADAPTER_REPO}/resolve/main/{name}",
+                ADAPTER_DIR / name,
+                desc=f"adapter {name}",
+            )
+        for name in CYBER_BASE_FILES:
+            http_get(
+                f"{HF_API}/{CYBER_BASE_REPO}/resolve/main/{name}",
+                BASE_CONFIG_DIR / name,
+                desc=f"base model {name}",
+            )
+        log("prepare complete: venv ready, converter staged + hash-verified, "
+            "adapter + base config fetched")
+        log("next: llama_tools.py convert-cyber")
+        return 0
+    
+    
+    def cmd_convert_cyber(_: argparse.Namespace) -> int:
+        missing = [
+            what
+            for what, present in (
+                (f"venv (run prepare)", (VENV_DIR / "bin/python").exists()),
+                ("converter (run prepare)", (CONVERTER_DIR / "convert_lora_to_gguf.py").exists()),
+                (f"adapter in {ADAPTER_DIR} (run prepare)",
+                 all((ADAPTER_DIR / f).exists() for f in CYBER_ADAPTER_FILES)),
+                (f"base config in {BASE_CONFIG_DIR} (run prepare)",
+                 all((BASE_CONFIG_DIR / f).exists() for f in CYBER_BASE_FILES)),
+            )
+            if not present
+        ]
+        if missing:
+            log("ERROR: cannot convert, missing: " + "; ".join(missing))
+            return 1
+    
+        outfile = MODELS_DIR / ".qwen38-cyber-lora-f16.tmp"
+        if outfile.exists():
+            outfile.unlink()  # never publish over a stale partial conversion
+    
+        cmd = [
+            str(VENV_DIR / "bin/python"),
+            str(CONVERTER_DIR / "convert_lora_to_gguf.py"),
+            "--outtype", "f16",
+            "--base", str(BASE_CONFIG_DIR),
+            "--outfile", str(outfile),
+            str(ADAPTER_DIR),
+        ]
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(CONVERTER_DIR) + os.pathsep + env.get("PYTHONPATH", "")
+        # gguf resolves via the vendored gguf-py staged under CONVERTER_DIR (the
+        # converter script probes for it next to itself); no NO_LOCAL_GGUF here.
+        log("running vendored convert_lora_to_gguf.py (b11515)")
+        proc = subprocess.run(cmd, env=env)
+        if proc.returncode != 0:
+            if outfile.exists():
+                outfile.unlink()
+            log(f"ERROR: converter exited {proc.returncode} — nothing published")
+            return proc.returncode
+    
+        os.replace(outfile, CYBER_LORA_GGUF)  # atomic publish
+        digest = write_sha256(CYBER_LORA_GGUF)
+        log(f"published {CYBER_LORA_GGUF} ({CYBER_LORA_GGUF.stat().st_size} bytes)")
+        log(f"sha256={digest}")
+        log("next: llama_tools.py verify, then enable qwen38-cyber in values.yaml (phase 2)")
+        return 0
+    
+    
+    def cmd_download(args: argparse.Namespace) -> int:
+        art = ARTIFACTS.get(args.artifact)
+        if art is None:  # pragma: no cover - argparse choices guard this
+            raise SystemExit(f"[llama-tools] unknown artifact {args.artifact!r}")
+        dest = Path(art["dest"])
+        if dest.exists() and not args.force:
+            log(f"{args.artifact}: already present at {dest} (use --force to re-download)")
+            return 0
+        if dest.exists():
+            dest.unlink()
+        http_get(art["url"], dest, desc=args.artifact)
+        return 0
+    
+    
+    def cmd_verify(_: argparse.Namespace) -> int:
+        failures = 0
+        targets = [CYBER_LORA_GGUF, *(Path(a["dest"]) for a in ARTIFACTS.values())]
+        for path in targets:
+            if not path.exists():
+                log(f"[skip   ] {path} — not provisioned")
+                continue
+            size = path.stat().st_size
+            if size == 0:
+                log(f"[FAIL   ] {path} — empty file")
+                failures += 1
+                continue
+            expected = read_sha256(path)
+            if expected is None:
+                log(f"[warn   ] {path} — present ({size} bytes) but no sha256 record")
+                continue
+            actual = sha256_file(path)
+            if actual != expected:
+                log(f"[FAIL   ] {path} — sha256 mismatch (expected {expected[:16]}..., got {actual[:16]}...)")
+                failures += 1
+            else:
+                log(f"[ok     ] {path} — {size} bytes, sha256 matches")
+        if failures:
+            log(f"verify: {failures} artifact(s) FAILED")
+            return 1
+        log("verify: all present artifacts pass")
+        return 0
+    
+    
+    def cmd_smoke_test(args: argparse.Namespace) -> int:
+        model = args.model
+        try:
+            with urllib.request.urlopen(f"{LLAMA_SWAP_URL}/v1/models", timeout=30) as resp:
+                models = json.load(resp)
+        except Exception as e:  # noqa: BLE001 — report any connectivity failure verbatim
+            log(f"ERROR: cannot reach llama-swap at {LLAMA_SWAP_URL}: {e}")
+            return 1
+        ids = [m.get("id") for m in models.get("data", [])]
+        if model in ids:
+            log(f"model {model!r} listed ({len(ids)} models total)")
+        else:
+            log(f"ERROR: model {model!r} NOT in /v1/models; available: {', '.join(sorted(ids))}")
+            return 1
+    
+        payload = json.dumps({
+            "model": model,
+            "messages": [{"role": "user", "content": "Reply with exactly: OK"}],
+            "max_tokens": 16,
+            "stream": False,
+        }).encode()
+        req = urllib.request.Request(
+            f"{LLAMA_SWAP_URL}/v1/chat/completions",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        log(f"requesting a tiny chat completion from {model!r} (may trigger a cold load)...")
+        try:
+            with urllib.request.urlopen(req, timeout=3600) as resp:
+                completion = json.load(resp)
+        except Exception as e:  # noqa: BLE001
+            log(f"ERROR: chat completion failed: {e}")
+            return 1
+        choice = (completion.get("choices") or [{}])[0]
+        text = (choice.get("message") or {}).get("content", "")
+        log(f"smoke-test response: {text[:200]!r}")
+        log("smoke-test complete")
+        return 0
+    
+    
+    # ---------------------------------------------------------------------------
+    # CLI
+    # ---------------------------------------------------------------------------
+    
+    def build_parser() -> argparse.ArgumentParser:
+        parser = argparse.ArgumentParser(
+            prog="llama_tools.py",
+            description="Operator provisioning tools for llama-swap (gpu-ai). "
+                        "Nothing here runs automatically.",
+        )
+        sub = parser.add_subparsers(dest="command", required=True)
+    
+        sub.add_parser("status", help="report provisioning state").set_defaults(func=cmd_status)
+        sub.add_parser("prepare", help="venv + converter + adapter staging").set_defaults(func=cmd_prepare)
+        sub.add_parser("convert-cyber", help="convert the staged LoRA adapter to GGUF").set_defaults(func=cmd_convert_cyber)
+    
+        p_dl = sub.add_parser("download", help="fetch one explicitly named artifact")
+        p_dl.add_argument("artifact", choices=sorted(ARTIFACTS),
+                          help="artifact to download (required — consent gate)")
+        p_dl.add_argument("--force", action="store_true", help="re-download even if present")
+        p_dl.set_defaults(func=cmd_download)
+    
+        sub.add_parser("verify", help="size + sha256 checks").set_defaults(func=cmd_verify)
+    
+        p_smoke = sub.add_parser("smoke-test", help="pod-local llama-swap smoke check")
+        p_smoke.add_argument("model", help="model ID to hit (e.g. qwen38-orca)")
+        p_smoke.set_defaults(func=cmd_smoke_test)
+    
+        return parser
+    
+    
+    def main(argv: list[str] | None = None) -> int:
+        args = build_parser().parse_args(argv)
+        try:
+            return args.func(args)
+        except SystemExit:
+            raise
+        except Exception as e:  # noqa: BLE001 — last-resort redaction of any message
+            print(redact(f"[llama-tools] ERROR: {e}"), file=sys.stderr)
+            return 1
+    
+    
+    if __name__ == "__main__":
+        sys.exit(main())
+  converter-source.json: |
+    {
+      "schema_version": 1,
+      "description": "Provenance of the vendored llama.cpp b11515 LoRA-converter subset. 2026-10-17: the chart image moved to ghcr.io/mostlygeek/llama-swap:unified-vulkan-262 (llama.cpp 889edf43, 2026-10-03 — six days OLDER than b11515); this subset stays pinned to b11515 (the newer of the two, still byte-accurate) until a deliberate re-vendor/re-prove. The converter shipped with the image is not standalone: it imports the repo-local conversion/ package and the repo-local gguf-py package (PyPI gguf stopped at 0.9.1; b11515 ships a much newer build). A minimal lazy-import subset for the Qwen3 architecture is vendored here. Every file below was fetched from raw.githubusercontent.com at tag b11515 on 2026-10-10 and is byte-for-byte identical (sha256 verified); the subset was re-proven by an offline synthetic PEFT->GGUF conversion before adoption. History: previously pinned to b10015 (the v240 image build).",
+      "repository": "https://github.com/ggml-org/llama.cpp",
+      "tag": "b11515",
+      "commit": "3d65c90d04d337e88f2b1f7f0061f40a5324e662",
+      "license": "MIT (see LLAMA_CPP_LICENSE in this directory)",
+      "raw_url_pattern": "https://raw.githubusercontent.com/ggml-org/llama.cpp/b11515/{path}",
+      "runtime_venv": ["torch (CPU wheel)", "transformers", "safetensors", "huggingface_hub", "numpy", "pyyaml", "tqdm"],
+      "files": {
+        "convert_lora_to_gguf.py": {
+          "upstream_path": "convert_lora_to_gguf.py",
+          "sha256": "3c5f109f3d7a5ef530ea388d8e994512df6f544ce1aa8b2e39be446223637b93"
+        },
+        "LLAMA_CPP_LICENSE": {
+          "upstream_path": "LICENSE",
+          "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d"
+        },
+        "conversion/__init__.py": {
+          "upstream_path": "conversion/__init__.py",
+          "sha256": "77594dc497d6fb8942468744f8f944c16ddb33a5d7971414a44e3a327f4b9633"
+        },
+        "conversion/base.py": {
+          "upstream_path": "conversion/base.py",
+          "sha256": "0273bafadc663bd57f46537e7dce6782a1777bc18bd0202e2e98969fb009f13e"
+        },
+        "conversion/qwen.py": {
+          "upstream_path": "conversion/qwen.py",
+          "sha256": "de5b282b3413744ce9dd6b47790236ce62ff00388a31fa33144bfd3a748b5ff5"
+        },
+        "gguf-py/gguf/__init__.py": {
+          "upstream_path": "gguf-py/gguf/__init__.py",
+          "sha256": "3ccfc0104cd7ea88c6028743b7bf3f2c89b5f474425de03a217a6072320d7c2f"
+        },
+        "gguf-py/gguf/constants.py": {
+          "upstream_path": "gguf-py/gguf/constants.py",
+          "sha256": "304ffbe04757e347595c09e067b470bfbe92317297518b004e02e516f1c94e49"
+        },
+        "gguf-py/gguf/gguf.py": {
+          "upstream_path": "gguf-py/gguf/gguf.py",
+          "sha256": "f0c0eeedad0911784b52ffed8e162a0eb5ae6d535ce35705bc16196e46597a72"
+        },
+        "gguf-py/gguf/gguf_reader.py": {
+          "upstream_path": "gguf-py/gguf/gguf_reader.py",
+          "sha256": "d0ea743200e19d7ef0a4c969edcc4a6dba8e3656a790b217e3bdc7b31170718e"
+        },
+        "gguf-py/gguf/gguf_writer.py": {
+          "upstream_path": "gguf-py/gguf/gguf_writer.py",
+          "sha256": "b12d746e1199861736432a897f1487ef50cda7e8a41df5bb8f41b653bf97fb9d"
+        },
+        "gguf-py/gguf/lazy.py": {
+          "upstream_path": "gguf-py/gguf/lazy.py",
+          "sha256": "dbc98e3ee9ef8606df34e9d91f98ab29c2697e6824995f1dd8952938c135ad85"
+        },
+        "gguf-py/gguf/metadata.py": {
+          "upstream_path": "gguf-py/gguf/metadata.py",
+          "sha256": "7cedac3b8457271a3f58e5531a7e6958fdecb9ea072f7895ba5d7f6693c9db29"
+        },
+        "gguf-py/gguf/quants.py": {
+          "upstream_path": "gguf-py/gguf/quants.py",
+          "sha256": "2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b"
+        },
+        "gguf-py/gguf/tensor_mapping.py": {
+          "upstream_path": "gguf-py/gguf/tensor_mapping.py",
+          "sha256": "595a1147fd35cd2522e1c897542e1f63866bdd2f742e3f6497d8aa78ab0eb064"
+        },
+        "gguf-py/gguf/utility.py": {
+          "upstream_path": "gguf-py/gguf/utility.py",
+          "sha256": "da920e2c62166ec9f30e407e9fb35ec29fda671310ffbf0f8ce856b62f1c70d7"
+        },
+        "gguf-py/gguf/vocab.py": {
+          "upstream_path": "gguf-py/gguf/vocab.py",
+          "sha256": "353c35e8a52c2afdd113a7a8ce0ddade6cf9b5bb9cf150f965269ea41af3e5fd"
+        }
+      }
+    }
+---
+# Source: llama-swap/templates/pvc-llama-swap-default.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-swap
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Parameterized so clusters can size independently (gpu rides the 300Gi
+      # default; gpu-ai overrides to 500Gi). Chart default unchanged.
+      storage: 300Gi
+---
+# Source: llama-swap/charts/app-template/templates/common.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpu-ai-llama-swap
+  labels:
+    app.kubernetes.io/instance: gpu-ai-llama-swap
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: llama-swap
+    app.kubernetes.io/service: gpu-ai-llama-swap
+    helm.sh/chart: app-template-5.0.1
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/controller: llama-swap
+    app.kubernetes.io/instance: gpu-ai-llama-swap
+    app.kubernetes.io/name: llama-swap
+---
+# Source: llama-swap/charts/app-template/templates/common.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-ai-llama-swap
+  labels:
+    app.kubernetes.io/controller: llama-swap
+    app.kubernetes.io/instance: gpu-ai-llama-swap
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: llama-swap
+    helm.sh/chart: app-template-5.0.1
+  annotations:
+    reloader.stakater.com/auto: "true"
+  namespace: default
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/controller: llama-swap
+      app.kubernetes.io/name: llama-swap
+      app.kubernetes.io/instance: gpu-ai-llama-swap
+  template:
+    metadata:
+      labels: 
+        app.kubernetes.io/controller: llama-swap
+        app.kubernetes.io/instance: gpu-ai-llama-swap
+        app.kubernetes.io/name: llama-swap
+    spec: 
+      enableServiceLinks: false
+      serviceAccountName: gpu-ai-llama-swap
+      automountServiceAccountToken: false
+      hostIPC: false
+      hostNetwork: false
+      hostPID: false
+      dnsPolicy: ClusterFirst
+      containers: 
+        - env:
+          - name: LLAMA_CACHE
+            value: /models
+          - name: LLAMA_SWAP_CONFIG
+            value: /app/config/config.yaml
+          - name: LLAMA_SWAP_WATCH_CONFIG
+            value: "true"
+          - name: TZ
+            value: Etc/UTC
+          image: ghcr.io/mostlygeek/llama-swap:unified-vulkan-266
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          name: main
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          resources:
+            limits:
+              amd.com/gpu: 1
+            requests:
+              cpu: 1000m
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          volumeMounts:
+          - mountPath: /app/config
+            name: config
+          - mountPath: /models
+            name: models
+          - mountPath: /app/tools
+            name: tools
+            readOnly: true
+      volumes: 
+        - configMap:
+            name: llama-swap-config
+          name: config
+        - name: models
+          persistentVolumeClaim:
+            claimName: llama-swap
+        - configMap:
+            name: llama-swap-tools
+          name: tools
+---
+# Source: llama-swap/templates/secret-hf-token.yaml
+# HuggingFace token for gated model repos (orcarouter et al.). Consumed as
+# HF_TOKEN by the llama-swap main container (-hf downloads) and the tools
+# sidecar (LoRA adapter + base config fetches) — both consumers are wired in
+# services/gpu-ai/prod/values.yaml, where this secret is guaranteed. Mirrors
+# the repo's ExternalSecret + Bitwarden pattern (charts/audiomuse-ai).
+# Guarded on bitwardenIds.hf-token so clusters without it (gpu) render clean.

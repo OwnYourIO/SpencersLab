@@ -1,20 +1,27 @@
-# Pinned expectation for the ONLY additive delta cf-77 C03 allows on the
-# gpu-ai outer llama-swap render against the byte-immutable golden
+# Pinned expectation for the ONLY additive delta cf-77 allows on the gpu-ai
+# outer llama-swap render against the byte-immutable golden
 # (test_c02_2_config_layer_macros_matrix_hooks_scalars). The gpu box gets no
 # peers entry — its golden stays untouched. Authored in the cf-77 test session
 # (coordinator residual 4: golden/evidence expectations are test-writer
 # property); dev must not edit this file.
 #
-# models_allowed encodes the C05 endpoint state; the test pins must_include,
-# allowed-set membership, first-element ordering, and no duplicates — so the
-# interim (C03-only, one ID) and final (C05, two IDs) renders both hold while
-# any other content fails loudly.
+# models_allowed encodes the run-1 C05 final state; the test pins
+# must_include, allowed-set membership, first-element ordering, and no
+# duplicates — the models/timeouts/no-apiKey clauses are UNCHANGED by run 2.
 #
-# Shape provenance: RESEARCH §3 (peer entry = required proxy+models;
-# responseHeader 1800 = O2 cold-start ruling; no apiKey = inner `apiKeys: []`
-# quarantine; NO /v1 suffix — paths append verbatim).
+# 2026-10-28 run-2 re-author (Test-authority item 5, Q-C consolidation): the
+# proxy flips to the in-app controller's Service name —
+# gpu-ai-llama-swap-strata (app-template fullname + controller key). This file
+# is the SINGLE source for the peers shape; the run-2 C03 dev edits
+# services/gpu-ai/prod/values.yaml to match it, never the reverse. Both
+# consumers (parity addendum + flashnext blast-radius carve-out) read it live,
+# so the flip re-aligns their sanctioned-state sets automatically.
+#
+# Shape provenance: run-1 RESEARCH §3 (peer entry = required proxy+models;
+# responseHeader 1800 = O2 cold-start ruling; no apiKey = keyless posture,
+# hardened by run-2 C-A); NO /v1 suffix — paths append verbatim.
 strata:
-  proxy: http://gpu-ai-strata.default.svc.cluster.local:8080
+  proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
   timeouts:
     responseHeader: 1800
     connect: 30

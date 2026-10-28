@@ -270,11 +270,12 @@ def test_c02_2_config_layer_macros_matrix_hooks_scalars(cluster):
     skip = {"models", "macros", "matrix", "hooks"}
     g_scalars = {k: v for k, v in g.items() if k not in skip}
     f_scalars = {k: v for k, v in f.items() if k not in skip}
-    # cf-77 C03 AC5 addendum (test-session-authored; see the evidence file):
+    # cf-77 peers allowance (test-session-authored; see the evidence file):
     # `peers` is the one additive top-level delta the golden tolerates, and
     # only on gpu-ai — popping it here keeps the pre-existing strict equality
     # for everything else while _assert_strata_peers pins the delta exactly.
-    # Before C03 lands this fails ("peers missing on gpu-ai") by design.
+    # Run-2 (Q-C consolidation) re-authored the evidence's proxy URL: the
+    # delta is now RED until r2-C03 flips the service values to match.
     _assert_strata_peers(cluster, f_scalars.pop("peers", None))
     assert g_scalars == f_scalars, (
         f"{cluster}: top-level config keys diverged: {_first_diff_key(g_scalars, f_scalars)}"
@@ -295,7 +296,10 @@ def _assert_strata_peers(cluster: str, peers) -> None:
     assert set(peers) == {"strata"}, f"peer entries: {sorted(peers)}"
     p = peers["strata"]
     assert "apiKey" not in p, "inner apiKeys: [] is the quarantine posture — a key here contradicts Q4/Q5"
-    assert p.get("proxy") == expected["proxy"], f"proxy {p.get('proxy')!r}"
+    assert p.get("proxy") == expected["proxy"], (
+        f"proxy {p.get('proxy')!r} != evidence {expected['proxy']!r} — run-2 C03 flips the "
+        "service values to the consolidated Service name (evidence is the single source)"
+    )
     assert p.get("timeouts") == expected["timeouts"], f"timeouts {p.get('timeouts')!r}"
     models = p.get("models") or []
     assert models and models[0] == expected["models_must_include"][0], f"models {models}"

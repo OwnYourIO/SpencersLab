@@ -1,9 +1,11 @@
-# C05 contract — Strix-alone fallback profile on the strata pod
-# (chunks/C05.md AC1–AC5).
+# r2-C01 Strix fallback contract — the gfx1151 second inner model on the
+# consolidated strata pod (run-1 C05 semantics; the chart body lands with
+# run-2 C01's relocation, so every red here names r2-C01).
 #
-# The fallback rides the bundled gfx1151 engine (C01) as a SECOND inner model,
-# selected by ID and never co-resident with the R9700 primary: both arenas pin
-# RAM, and co-loading recreates #1715's global OOM (RESEARCH §7).
+# The fallback rides the bundled gfx1151 engine (containers/strata, untouched
+# by run 2) as a SECOND inner model, selectable by ID and never co-resident
+# with the R9700 primary: both arenas pin RAM, and co-loading recreates
+# #1715's global OOM (run-1 RESEARCH §7).
 
 from __future__ import annotations
 
@@ -19,7 +21,7 @@ schema_gated = pytest.mark.skipif(not (_ok and _js_ok), reason=_js_reason if _ok
 
 
 def _docs():
-    return S.render_strata()[0]
+    return S.render_on()[0]
 
 
 def _models(docs):
@@ -34,11 +36,11 @@ def _primary_profile(docs):
     return S.profile_json(docs, S.PROFILE_PRIMARY_FILE)
 
 
-# --- AC1: both inner models + alternation --------------------------------------
+# --- AC1 (run-1 C05): both inner models + alternation --------------------------
 
 
 @helm
-def test_c05_ac1_both_models_present():
+def test_c01_strix_both_models_present_keyless():
     models = _models(_docs())
     assert {S.PRIMARY_ID, S.STRIX_ID} <= set(models), f"inner models: {sorted(models)}"
     for mid in (S.PRIMARY_ID, S.STRIX_ID):
@@ -46,12 +48,15 @@ def test_c05_ac1_both_models_present():
         assert m.get("checkEndpoint") == "/health"
         assert m.get("unloadTimeout") == 180, (
             f"{mid}: a 10s global unloadTimeout force-kills a page-locked arena "
-            "(RESEARCH contradictions #4) — strix inherits the raised window"
+            "(run-1 RESEARCH contradictions #4) — strix inherits the raised window"
+        )
+        assert not any("STRATA_API_KEY" in e for e in S.env_list(m)), (
+            f"{mid}: STRATA_API_KEY passthrough survived in model env (C-A)"
         )
 
 
 @helm
-def test_c05_ac1_cmds_share_terminal_entry_per_model_profiles():
+def test_c01_strix_cmds_share_terminal_entry_per_model_profiles():
     models = _models(_docs())
     for mid, profile_file in ((S.PRIMARY_ID, S.PROFILE_PRIMARY_FILE), (S.STRIX_ID, S.PROFILE_STRIX_FILE)):
         cmd = S.norm_ws(models[mid]["cmd"])
@@ -59,19 +64,18 @@ def test_c05_ac1_cmds_share_terminal_entry_per_model_profiles():
         assert f"--profile /profile/{profile_file}" in cmd, f"{mid}: wrong/missing profile: {cmd}"
         assert "ulimit -n 524288" in cmd, f"{mid}: nofile wrapper missing (PR #2399-open keeps it mandatory)"
         assert "--kv-grow" not in cmd, f"{mid}: R4 deferral applies to strix too"
-    # ${PORT} without an explicit proxy key — the C02 cmd-shape contract, per model
     for mid in (S.PRIMARY_ID, S.STRIX_ID):
         assert "proxy" not in models[mid]
 
 
 @helm
-def test_c05_ac1_matrix_alternation_never_co_loads():
-    """DECISIONS 'matrix not groups': the (p|s) set is the guard that the inner
-    solver never admits both arenas — preload-empty alone would not stop a
-    request-driven co-load. Checked on the DNF COMBOS, not var membership: the
-    contract expression "(p | s)" mentions both arenas while the alternation
-    must expand to one-model combos ([p],[s]); a combo holding both is what
-    recreates #1715 (arenas are additive on a 128 GB node, RESEARCH §7)."""
+def test_c01_strix_matrix_alternation_never_co_loads():
+    """The (p|s) set guards that the inner solver never admits both arenas —
+    preload-empty alone would not stop a request-driven co-load. Checked on
+    the DNF COMBOS, not var membership: the contract expression "(p | s)"
+    mentions both arenas while the alternation must expand to one-model
+    combos ([p],[s]); a combo holding both recreates #1715 (arenas add up on
+    the 128 GB node, run-1 RESEARCH §7)."""
     cfg = S.inner_config(_docs())
     matrix = cfg.get("matrix") or {}
     assert "groups" not in cfg, "llama-swap hard-errors when matrix and groups coexist"
@@ -90,10 +94,10 @@ def test_c05_ac1_matrix_alternation_never_co_loads():
     L.assert_matrix_closure(cfg, "strata-inner")
 
 
-def test_harness_matrix_expansion_matches_skill_semantics():
-    """Self-check for matrix_expansions so review can trust the C05 bar:
-    the llama-swap skill's documented example expands to [g,v],[q,v],[m,v],
-    a bare alternation to single-model combos, and '+name' inlines the
+def test_c01_harness_matrix_expansion_matches_skill_semantics():
+    """Self-check for matrix_expansions so review can trust the alternation
+    bar: the llama-swap skill's documented example expands to [g,v],[q,v],
+    [m,v]; a bare alternation to single-model combos; '+name' inlines the
     referenced set's combos."""
     cfg = {"matrix": {"vars": {"g": "G", "q": "Q", "m": "M", "v": "V"},
                       "sets": {"standard": "(g | q | m) & v",
@@ -108,20 +112,20 @@ def test_harness_matrix_expansion_matches_skill_semantics():
 
 
 @helm
-def test_c05_ac1_preload_stays_empty():
+def test_c01_strix_preload_stays_empty():
     hooks = S.inner_config(_docs()).get("hooks") or {}
     preload = ((hooks.get("on_startup") or {}).get("preload")) or []
     assert preload == [], (
-        "preloading two matrix alternatives swap-loads them (RESEARCH §3 warning) — "
+        "preloading two matrix alternatives swap-loads them (run-1 RESEARCH §3 warning) — "
         "the lazy Q2 posture is the contract"
     )
 
 
-# --- AC2: strix profile content; primary untouched ------------------------------
+# --- AC2: strix profile content; primary untouched -------------------------------
 
 
 @helm
-def test_c05_ac2_strix_eight_set_env_verbatim():
+def test_c01_strix_eight_set_env_verbatim():
     env = _strix_profile(_docs()).get("env") or {}
     want = dict(e.split("=", 1) for e in S.STRIX_EIGHT_SET)
     got = {k: str(v) for k, v in env.items()}
@@ -130,22 +134,23 @@ def test_c05_ac2_strix_eight_set_env_verbatim():
 
 
 @helm
-def test_c05_ac2_strix_hypothesis_pair_present_and_verify_marked():
+def test_c01_strix_hypothesis_pair_present_and_verify_marked():
     """expert-cache 24576 / resident-budget 55 ship as VERIFY-marked
-    hypotheses (no upstream source, RESEARCH §7) — the finalizer is the
-    on-target --plan gate (C04), and the values comment must say so."""
+    hypotheses (no upstream source, run-1 RESEARCH §7) — the finalizer is the
+    on-target --plan gate (runbook), and the values comment must say so."""
     profile = _strix_profile(_docs())
     pairs = S.arg_pairs(profile)
     assert ("--expert-cache", "24576") in pairs, f"strix expert-cache pair: {pairs}"
     assert ("--resident-budget-gib", "55") in pairs, f"strix resident-budget pair: {pairs}"
-    text = S.read(S.CHART_DIR / "values.yaml", "C05 task 2 writes config.engineProfileStrix")
+    assert profile.get("api_key") == S.API_KEY_NONE, "strix profile lost the C-A keyless pin"
+    text = S.read(S.CHART_DIR / "values.yaml", "r2-C01 relocates config.engineProfileStrix under strata:")
     region = S.values_region(text, "engineProfileStrix")
     assert "VERIFY" in region, "hypothesis pair lacks its VERIFY marker"
     assert "--plan" in region, "the values comment must name the --plan gate as the finalizer (R1)"
 
 
 @helm
-def test_c05_ac2_strix_recipe_args_and_backend():
+def test_c01_strix_recipe_args_and_backend():
     profile = _strix_profile(_docs())
     pairs = S.arg_pairs(profile)
     for flag, value in (
@@ -160,8 +165,8 @@ def test_c05_ac2_strix_recipe_args_and_backend():
 
 
 @helm
-def test_c05_ac2_strix_exe_is_halo_root_from_readme():
-    readme = S.read(S.CONTAINER_DIR / "README.md", "C01 froze the two-flavor exe contract")
+def test_c01_strix_exe_is_halo_root_from_container_readme():
+    readme = S.read(S.CONTAINER_DIR / "README.md", "the two-flavor exe contract, containers/strata (untouched)")
     exe = _strix_profile(_docs())["exe"]
     assert exe in S.engine_exe_paths(readme), f"strix exe {exe!r} not a README contract path"
     assert "-hip-halo/" in exe, (
@@ -172,7 +177,7 @@ def test_c05_ac2_strix_exe_is_halo_root_from_readme():
 
 
 @helm
-def test_c05_ac2_primary_profile_unchanged():
+def test_c01_strix_primary_profile_unchanged():
     """Render-diff-additive rule: the strix numbers must not migrate into the
     primary, and the R2/R4 exclusions must not move."""
     profile = _primary_profile(_docs())
@@ -194,55 +199,12 @@ def test_c05_ac2_primary_profile_unchanged():
 
 
 @schema_gated
-def test_c05_ac3_inner_config_with_both_models_validates():
+def test_c01_inner_config_with_both_models_validates():
     errs = S.schema_errors(S.inner_config(_docs()))
     assert not errs, [(list(e.absolute_path), e.message) for e in errs[:8]]
 
 
 @schema_gated
-def test_c05_ac3_both_profiles_are_json_maps():
+def test_c01_both_profiles_are_json_maps():
     for fn in (S.PROFILE_PRIMARY_FILE, S.PROFILE_STRIX_FILE):
         assert isinstance(S.profile_json(_docs(), fn), dict)
-
-
-# --- AC4: outer peers list + bare-ID routing precondition -----------------------
-
-
-def test_c05_ac4_peers_models_contain_both_ids():
-    peer = L.service_overlay("gpu-ai")["config"]["peers"][S.PEER_NAME]
-    assert set(peer["models"]) >= {S.PRIMARY_ID, S.STRIX_ID}, peer["models"]
-
-
-def test_c05_ac4_no_outer_shadow_of_inner_ids():
-    """Bare-ID routing works only while exactly one peer serves the ID and no
-    outer model/alias shadows it (RESEARCH §3, O1 resolved) — a future outer
-    roster addition named *-strata would silently steal the route."""
-    outer = L.rendered_config("gpu-ai")
-    ids = set(L.all_models_of(outer))
-    aliases = {a for m in L.all_models_of(outer).values() for a in (m.get("aliases") or [])}
-    shadowed = ({S.PRIMARY_ID, S.STRIX_ID} & ids) | ({S.PRIMARY_ID, S.STRIX_ID} & aliases)
-    assert not shadowed, f"outer surface shadows inner IDs: {sorted(shadowed)}"
-
-
-# --- AC5: fallback runbook section ----------------------------------------------
-
-
-def test_c05_ac5_readme_fallback_section_epoch_labeled():
-    """History vs current-epoch citations are the AC5 bar: the 1,265/59.1 @8K
-    row is engine-0.1.40-era, the bundled engine is 0.1.52 — restating the old
-    numbers unlabeled is the perf-myth failure mode this ticket keeps hitting."""
-    text = S.read(S.CHART_DIR / "README.md", "C05 task 4 adds the fallback runbook section")
-    lowered = text.lower()
-    assert "strix" in lowered and "fallback" in lowered, "no strix fallback section"
-    window = lowered[lowered.index("strix"):]
-    assert "0.1.40" in window, "History citation not epoch-labeled (engine-0.1.40-era)"
-    assert any(tok in text for tok in ("1,265", "1265")) and "59.1" in text, "History perf row not cited"
-    assert any(tok in text for tok in ("KL-gated", "KL gated")), "the 'rounds differ' caveat is part of AC5"
-
-
-def test_c05_ac5_hazard_citations_present():
-    text = S.read(S.CHART_DIR / "README.md", "C05 fallback runbook")
-    assert "#2706" in text, "HC_UPMIX split-mode hazard history (log-check gate) must ride the runbook"
-    assert "#1715" in text, "the 8060S/LPDDR5X co-residency warning cites #1715 (guide Step 5)"
-    assert "8060S" in text
-    assert "--plan" in text, "final numbers are the --plan gate's — the runbook must point there"

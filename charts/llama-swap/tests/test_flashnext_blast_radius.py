@@ -109,10 +109,15 @@ def test_c03_ac2_non_flashnext_models_identical_gpu_ai():
 # models, timeouts}} with the evidence's proxy/timeouts and models equal to
 # one of the evidence's two sanctioned lists. Anything else — another
 # top-level key, a second peer, apiKey/filters, a byte off proxy/timeouts, or
-# a models list outside the sanctioned states — stays RED. C05 grows the
-# models list by appending the strix id: that flows through the evidence
-# file's models_allowed state, and the evidence update is TEST-SESSION
-# property — C05 dev routes its list change via RESULT/coord, never edits
+# a models list outside the sanctioned states — stays RED. The helper READS
+# THE EVIDENCE LIVE, so the run-2 re-author of that file (proxy URL flipping
+# from gpu-ai-strata to the consolidated gpu-ai-llama-swap-strata name)
+# re-aligns the sanctioned state automatically: between the re-author and
+# r2-C03 flipping the service values, this test is RED BY DESIGN — the red
+# names run-2's C03, never a license to touch the evidence or this guard.
+# C05 grows the models list by appending the strix id: that flows through the
+# evidence file's models_allowed state, and the evidence update is TEST-SESSION
+# property — dev routes any peers-shape change via RESULT/coord, never edits
 # the evidence itself.
 
 
