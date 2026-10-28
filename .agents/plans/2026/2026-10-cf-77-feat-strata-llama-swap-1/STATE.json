@@ -121,6 +121,15 @@
           "validations": "suite 21F→13F; 8 of 10 C03-attributed reds flipped green by name (incl. parity canary + blast-radius + c02-no-live-path); production-like ON render proves the AC2 substance: gpu-ai-llama-swap-strata Deployment+Service + 2 ConfigMaps, peers byte-equal evidence, models intact, zero secret-chain/sentinels, v266 green, mount triples OFF≡ON, strata six paths + Recreate + grace 420; containers 17P; aislop clean",
           "escalation": "2 residual reds are frozen-test-asset defects, not contract changes: (1) seven_flags test dig PREPENDS app-template. onto FLAG_PATHS that already carry the prefix → demands a doubled path that renders ZERO strata objects (counterfactual-rendered); testlib comment itself says FLAG_PATHS should be bare for overlay digs; (2) extract-and-render recipe renders release 'llama-swap' (test pins gpu-ai-llama-swap-strata — the C01 forward_flag) and its blanket OVERRIDE_VIA filter hits the parent's legitimate pre-existing hf-token sentinel (present pre-C03). Coord ruling per current contract: mechanical repair, routed silently to the test session.",
           "deviations": "none from chunk shape; exactly the 2 scope files"
+        },
+        {
+          "stage": "test-repair",
+          "session": "ses_e8054aefeffeLm55D1vBNX4SfX",
+          "at": "2026-10-28",
+          "commit": "ae9be427e",
+          "status": "DONE",
+          "trigger": "coord-routed mechanical repair of the 2 dev-escalated frozen-asset defects (no NEEDS_INFO — no functional change)",
+          "validations": "11F/253P/2S with reds EXACTLY test_c04_* by name; wiring 17/17; containers 17P; OFF-parity + untouched pins green; escalation facts all independently reproduced before fixing; one authoring slip self-caught pre-commit (static ConfigMap names — only app-template objects take the release prefix)"
         }
       ]
     },
