@@ -110,13 +110,21 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "dev-blocked-validation-at-fault",
       "wave": 3,
       "depends_on": ["C03"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e7ffac5b6ffeIeUgGNbc2BX9uZ",
+      "handoffs": [
+        {
+          "at": "2026-10-28",
+          "role": "agent-dev-local",
+          "session": "ses_e7ffac5b6ffeIeUgGNbc2BX9uZ",
+          "result": "RESULT\nstatus: BLOCKED (validation_at_fault — both defects test-side, dev judges no implementation fault)\nchunk: C04\nfiles_changed: [.opencode/plugin/board-context/index.ts (new), .rulesync/rules/overview.md, AGENTS.md (generated, same commit 7bbca8195, local-only)]\ncommands_run: [node --test board-context.test.ts => FAIL 24 pass/4 fail (all 4 root-caused test-side); question-notify => 35/0; tools.sh 9; skill-surface.sh 8 (t3 re-pinned: formatter mirror + AGENTS.md sentence create no second markdown owner); board-context.sh 6; validation-fix.sh 8; rulesync-surface.sh 19; agents-md.sh 9; gate.sh 22; agent-perms 14; standalone-agents 10; rulesync x2 no-op + --check pass; aislop ci 0/0; scope => 3 declared files; E1 formatBlock bytes === schema fence (placeholders substituted) PASS; E2 hanging leg settles 31ms + logs once + prompt untouched PASS; LIVE-FIRE L1-L4 read-only dev-boards => zero drift]\nfriction: scratch evidence kept /tmp/opencode/cf75-c04-evidence.mjs + cf75-c04-livefire.mjs for reviewer\nopen_questions: TEST DEFECT 1: EXPECTED_BLOCK stale transcription (pre-C01-landing) — landed schema is line-per-entry indented + 3-line re-resolve footer (declared part of itself); suite header prescribes exactly this C02-route fix; correct bytes = livefire mjs output with collectedAt=2026-10-27T12:00:00Z. TEST DEFECT 2: t.timeout(5000) absent on Node v26.5.0 (typeof undefined; file never executed a body pre-C04 at ERR_MODULE_NOT_FOUND). Both mechanical, test-side.\ndeviations: within-chord wording: (1) once-guard consumes slot on any attempt incl failures (re-fetching every prompt pays the 8s budget repeatedly; absence is normal per boards rule; commented); (2) no README (not in scope; landing+enable steps in plugin header); (3) collectedAt full ms-precision ISO (schema says <ISO-8601>).\nnext_suggested: route both defects to test session (defect 1 silently per C02, defect 2 harness-repair); after re-pin expect 28/28 with NO dev relaunch; then agent-review CHUNK_BASE=2aab8cc20 (re-run live-fire + schema-fence cross-check). ON-arm admission leg: approved degraded outcome (user answer 5) — ship default-OFF, ON reserved as user post-merge check; landing+enable steps in plugin header."
+        }
+      ]
     }
   },
   "blocked": [],
