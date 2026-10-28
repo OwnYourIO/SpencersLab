@@ -210,6 +210,10 @@ Right after plan approval (research-only cards do the same immediately before th
    this run executes, the surviving Human in the Loop items the stop-point
    record.
 
+## Friction follow-up (board override)
+
+On `agent-board-coord` family runs, the coordinator's `pipeline-role-coord` step 10 is overridden: each checked friction item becomes an intake CARD, never an in-session `agent-plan` ticket. Create one card per item with `create_card` into **Not Started** (next-pickup order — the pickup walk takes the top card first), title stating the fix and description quoting the full `FRICTION.md` line plus its ticket/chunk context. The board's createCard rule adds the five standard checklists automatically — do NOT `add_checklist` (it duplicates them; proven on cards #64–67, 2026-10-28); the rule's checkItem extras stay dormant, so check the answers the friction context already knows via `toggle_checklist_item` (typically Services `agent context`, Type `chore`, Model(s) `Qwen Flash`). This is intake, not a run: the closing session does not claim or move these cards — they wait in Not Started for a future pickup, and only the owner moves them out of Review to Finished.
+
 ## Batched question protocol
 
 Until the plan is finalized, no one in this flow calls the `question` tool on the user:
