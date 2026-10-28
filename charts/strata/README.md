@@ -68,3 +68,111 @@ retargets the primary covers both keys. Unset values inherit
 defaults to `ttl: 1800` — the LPDDR5X arena comes back after 30 quiet
 minutes. Manual escape is the same: `POST /api/models/unload/qwen3.8-flash-next-strata-strix`
 on the inner instance, bounded by `unloadTimeout: 180`.
+
+## Validation ladder (post-sync, operator-consented, one-attempt protocol)
+
+Enablement gates 1–6 in `.agents/notes/strata-host-prep-gpu-ai.md` §3 come
+first; this ladder runs after the first request has loaded the engine (that
+file's step 3.7). The protocol is one attempt per consented session — the
+posture inherited from the flash-next OOM ticket (plan Deferred) — and every
+fix it discovers returns through a PR to this repo; ArgoCD applies
+everything, no step below runs `kubectl apply`.
+
+**1 — Devices and ulimits in the pod.**
+
+```
+kubectl -n default exec deploy/gpu-ai-strata -- ls -l /dev/kfd /dev/dri
+kubectl -n default exec deploy/gpu-ai-strata -- sh -c 'ulimit -l'
+```
+
+`ulimit -l` must read `unlimited` (the §1.5 host drop-in half). The nofile
+proof belongs to the engine child, not a fresh exec shell:
+`cat /proc/<engine-pid>/limits` → NoFile soft `524288` (runbook §5). Device
+targeting proof: the `--plan` JSON (or, if the image ships `rocminfo`, that
+under `ROCR_VISIBLE_DEVICES`) must show exactly the one device each profile
+bound — gfx1201 for the primary, the 8060S for strix.
+
+**2 — Startup-log fingerprints** (`kubectl -n default logs
+deploy/gpu-ai-strata`; `logToStdout: both` is what makes this evidence
+trail exist): the expert-cache sizing lines and memory-guard source line
+(the `--plan` gate's numbers meeting reality), `nice +5`, and the hipBLASLt
+line — `hipBLASLt tuning enabled (… gfx1151 … 100401)` expected on a strix
+load; its **absence expected on gfx1201** — no 1201 table exists for
+100401 (RESEARCH §6), no action, do not treat silence as failure. The four
+bad signs to stop on: LOW VRAM free, health progress unchanged for 60 s,
+registration FAILED, oom-kill (host `dmesg`). Strix additionally runs the
+#2706 `STRATA_HC_UPMIX` check above.
+
+**3 — Prompt runs 4K/16K/64K through the OUTER surface**
+(`llama.<domain>`, e.g. `POST https://llama.spencerslab.com/v1/chat/completions`
+with `"model": "qwen3.8-flash-next-strata"`). The authoritative tok/s is
+the engine-side number in the pod log — client wall-clock adds two proxy
+hops and measures routing, not inference.
+
+**4 — Bench acceptance, `standard-v1`.** Run the PR #3636 protocol
+(`strata-qwen38-thinking-v1-draft.1` class) against the inner supervisor —
+remote `--url` requires HTTPS, so the loopback form runs in-pod:
+
+```
+kubectl -n default exec deploy/gpu-ai-strata -- \
+  /opt/strata/terminal/bin/strata bench run --url http://127.0.0.1:8080 \
+  --suite standard-v1 --optional-concurrency --track custom
+```
+
+Acceptance gate: within **~10%** of RESEARCH §5's **one-at-a-time** column
+(batch numbers are not the bar — that posture was rejected, Q2): decode ≈80
+tok/s @64K; short 570-token prompts 429–443 tok/s with the CPU share vs 224
+control; 64K/128K/200K prompt ≈2,519 tok/s. Provenance: single machine,
+2026-10-21 (the fork's `bench/results/2026-10-21-…` dir, RESEARCH §5) — the
+PR machine had 124 GiB vs our 128 GB (R3), so drift is expected; the gate
+applies to OUR reproduction of the same posture, and where the WeKan card's
+table differs from these cited figures the card is superseded.
+
+**5 — Conversation-cache reuse.** Send the same ~30K-token conversation
+twice; the second pass must land materially faster (the
+`--conversation-cache-mib 24576` × 16-slot budget working, RESEARCH §2/§5 —
+not `--prompt-cache`, which is not shipped: #4206 makes it a no-op at the
+`--prefill 32768` edge).
+
+**6 — Anthropic smoke + engine-key enforcement.** `POST
+/v1/messages` through `llama.<domain>` — routing and SSE are confirmed to
+pass the peers hop (RESEARCH §3; the ingress chain already stamps
+responseHeaderTimeout 0), so this checks the Strata side, not the plumbing.
+It also answers the question C02 parked: the inner hop injects no
+Authorization (`apiKeys: []`, peers carries no key material) while the
+engine got `STRATA_API_KEY` from the secret. If this first request 401s at
+the engine, the documented flip is run-config `api_key: "none"` (RESEARCH
+§2): add it under `config.engineProfile` — the profile ConfigMap renders
+that block verbatim — re-PR, re-sync. Config-vs-env precedence for the key
+is exactly what this rung measures; if `"none"` in the run-config does not
+override the env, escalate to coord instead of improvising an env-layer
+removal.
+
+**7 — 128K and 200K needle runs.** `--max-context 262144` admits them;
+watch host `dmesg` and `free -g` throughout and stop on any bad sign from
+rung 2 — the long prompts are where arena + conversation-cache + page-cache
+pressure compounds.
+
+**8 — Shared-claim capacity re-check.** Before each session: the
+`/models/strata` staging budget (~135–160 GB, GGUF pair + pack + MTP) and
+the #1250 page-cache note live in the runbook §2 — the claim doubles as the
+IQ3_S page-cache floor, so a slow first pin may be cold cache, not a broken
+arena.
+
+## Provenance and cross-links
+
+- Source of every number and gate above/beside: feature folder
+  `.agents/plans/2026/2026-10-cf-77-feat-strata-llama-swap/` — plan of
+  record, `DECISIONS.md`, `RESEARCH.md` §1–§7 (section cites inline),
+  `chunks/C04.md`; WeKan card #77. Recipe/bench provenance: PR #3636 fork
+  `jiayeZhu/Strata@bench-strix-halo-r9700-022`, bench epoch 2026-10-21.
+- Operator runbook (host prep, enablement gates 1–6, RAM law, R4 flip
+  recipe, deferred modes, resolved-question ledger Q/O/R):
+  `.agents/notes/strata-host-prep-gpu-ai.md`.
+- Image pins and upgrades: the tag→digest ledger in
+  `containers/strata/README.md` is the bump record. Cadence per the
+  coordination ruling: **manual** — built-in renovate extraction will keep
+  firing interim PRs with cross-flavor candidate bleed on the shared
+  depName; the human closes/ignores those until the flavor-scoping ticket
+  (STATE.json `deferred`) and bumps only against the ledger + re-bench
+  (plan human step 5).
