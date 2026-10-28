@@ -6,6 +6,13 @@
   "test_handoff_note": "Run-2 re-author pass commit ad8927767 — one suite dir charts/llama-swap/tests/ (91 new/updated, test_strata_* prefix to dodge basename collisions), standalone chart tests dir retired, evidence peers-URL flipped (carve-out reads live so it re-aligns), OFF-parity baseline captured at 44f5f80d2 (double-render deterministic). RED LEDGER: r2-C01→47 (render 20 + config_schema 16 + strix 11), r2-C02→2 (dir-absent + no-live-path), r2-C03→9 (wiring 7 + parity/blast-radius pair), r2-C04→11 (runbook). Greens today 24 (preservation/OFF/parity/untouched/self-checks). One green-early documented: subset_guard controller-only probe passes pre-C01 (docstring marks it not-a-cleared-gate). ESCALATION resolved by coord: strict no-live-path gate kept, 3 containers-pointer lines folded into C02 scope (DECISIONS 2026-10-28 coord entry). Runbook token set = mechanical re-pin via test session if C04 prose words differently.",
   "current_wave": 3,
   "updated_at": "2026-10-28",
+  "friction_round": {
+    "at": "2026-10-28",
+    "offered": 6,
+    "selected": ["narrow .agents/notes deny", "wrap-line docstring note", "no-daemon convention (re-run of run-1 election)"],
+    "outcome": "ROUTING CORRECTED BY OWNER: friction follow-ups enter as board cards, not in-session agent-plan launches. Cards created: #64 (deny narrowing), #65 (wrap-line docstrings), #66 (no-daemon posture as repo law), #67 (pipeline-role-coord step-10 text fix itself). The coordinator could not edit its own contract source (read/edit denied by design; rulesync generate outside the git-only shell) — hence #67.",
+    "cards": ["#64 p6G4WByHL4uC6L3D8", "#65 Wg4YsvjNzgDMPw9fX", "#66 Ch2tMQQTbNawW8jjP", "#67 cLhezr7wtXzmefnoP"]
+  },
   "final_review": {
     "session": "ses_e7bf73a12fferKeIaqolqBmBQE",
     "at": "2026-10-28",
