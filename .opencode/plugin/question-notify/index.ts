@@ -1,8 +1,9 @@
 // OpenCode V2 local plugin: pushes a notification to the user's phone via Home
 // Assistant when (1) an agent-* session asks a question (question tool hook),
 // (2) a top-level session finishes an assistant turn or stops on a terminal
-// execution failure (event stream), or (3) any session blocks on a permission
-// approval ask (the durable permission.asked event on the same stream).
+// execution failure (event stream), or (3) a permission approval ask is still
+// pending 15 s after the server published it (the durable permission.asked
+// event on the same stream; permission.replied for that request cancels it).
 // Hand-written — rulesync must never generate or delete this file (rulesync's
 // hooks feature is OFF in rulesync.jsonc; no other writer exists).
 //
@@ -11,10 +12,11 @@
 // for plugins. The lab's ha-mcp servers are remote streamable-HTTP endpoints
 // in the cluster, so the plugin speaks MCP directly (initialize →
 // notifications/initialized → tools/call call_service). Deterministic: no
-// model in the loop. The server URL is discovered at runtime from
-// ctx.mcp.list() (falls back to parsing .opencode/opencode.jsonc), so nothing
-// is hard-coded. The ADMIN endpoint is required: the readonly ha-mcp server
-// runs READ_ONLY_MODE and rejects service calls.
+// model in the loop. The server URL is discovered at runtime from the ctx's
+// MCP config view (ctx.mcp.transform — the only view whose entries carry
+// full server configs), with the ctx.mcp.list() status scan demoted to a
+// compat fallback, so nothing is hard-coded. The ADMIN endpoint is required:
+// the readonly ha-mcp server runs READ_ONLY_MODE and rejects service calls.
 //
 // Failure policy: a notification must never delay or break the agent —
 // everything here is fire-and-forget with stderr logging only. A lifecycle
@@ -28,20 +30,26 @@
 // Verified against @opencode/plugin 2.1.2 types (dist/promise/tool.d.ts):
 // the execute.before event carries { tool, sessionID, agent, messageID, id,
 // input } directly — we read event.agent and keep a ctx.session.get fallback
-// only because the installed CLI (v2.0.32) predates the checked types.
-// Lifecycle triggers are the durable V2 execution pair below, grounded against
-// the installed v2.0.32 binary (see .agents/plans/2026/2026-10-feat-ha-lifecycle-
-// notify). They fire once per terminal outcome of an agent-loop run, so retries
-// and transient status events need neither a heuristic nor a dedup map; legacy
-// session.idle/session.error and interrupts stay ignored on purpose — the plan's
-// grep commands pin the pair.
+// only because the v2.0.32 CLI at first shipping predated the checked types.
+// Lifecycle triggers are the durable V2 execution pair below, grounded at first
+// shipping against the v2.0.32 binary (see .agents/plans/2026/2026-10-feat-ha-
+// lifecycle-notify). They fire once per terminal outcome of an agent-loop run,
+// so retries and transient status events need neither a heuristic nor a dedup
+// map; legacy session.idle/session.error and interrupts stay ignored on purpose
+// — the plan's grep commands pin the pair.
 // The approval trigger is the durable permission.asked event, re-grounded
-// against the installed v2.1.4 binary: the server publishes it only when the
-// ruleset effect resolves to `ask` and exactly once per request id, so no
-// plugin-side dedup beyond the shared cooldown is needed. The payload carries
-// no agent name (the title reads it from the session record) and a v1-compat
-// twin shares the type string with permission/patterns fields, hence the
-// tolerant field reads in approvalExcerpt.
+// on the v2.1.4 binary: the server publishes it only when the
+// ruleset effect resolves to `ask` and exactly once per request id. The push
+// is pending-only, because the server's single publish site is oblivious to
+// the client's auto-approve setting: an arrival-time push rings clients that
+// had already answered (the live bug behind C03). permission.replied for the
+// request id cancels the pending push whatever its reply value: every server
+// resolution path emits it (Grounding #14). The cooldown gate therefore runs
+// in the timer callback, at the actual push attempt — a cancelled ask
+// consumes no stamp. The payload carries no agent name (the title reads it from the
+// session record at fire time) and a v1-compat twin shares the type string
+// with permission/patterns fields, hence the tolerant field reads in
+// approvalExcerpt.
 // Unverified at write time (watch ~/.local/share/opencode/log/opencode.log):
 // - Whether this ha-mcp build accepts tools/call without the initialized
 //   notification; we send the full handshake anyway.
@@ -55,16 +63,23 @@ const NOTIFY_SERVICE = "mobile_app_pixel_6";
 const MCP_SERVER_KEY = "admin-global-homeassistant";
 const AGENT_PREFIX = "agent-";
 const COOLDOWN_MS = 15_000; // one push per session per burst, shared by the question and approval paths
+// How long an approval ask must stay unanswered before it rings the phone.
+// The same literal as COOLDOWN_MS by coincidence, not by design: pending-
+// detection and burst-suppression are independent user-visible behaviors and
+// merging the constants would couple them (DECISIONS 2026-10-27).
+const PENDING_NOTIFY_MS = 15_000;
 const MAX_MESSAGE = 240;
 const FINISHED_EVENT = "session.execution.succeeded";
 const CRASH_EVENT = "session.execution.failed";
 const PERMISSION_ASK_EVENT = "permission.asked";
+const PERMISSION_REPLY_EVENT = "permission.replied";
 
 // Exported seam: tests/opencode/question-notify.test.ts and
 // permission-ask-notify.test.ts drive the lifecycle and approval decision
 // matrices offline through handleLifecycle / handlePermission with injected
-// fakes for the session lookups, the push, and the cooldown gate, so no test
-// needs a server or a socket. The helpers are pure.
+// fakes for the session lookups, the push, the cooldown gate, and the
+// pending-timer plumbing (schedule/cancel/timers/pendingMs), so no test needs
+// a server, a socket, or a real 15 s wait. The helpers are pure.
 
 // A non-string body collapses to "" rather than "undefined": a notification
 // for a missing part is empty, never misleading.
@@ -166,27 +181,73 @@ export async function handleLifecycle(deps: any, event: any): Promise<void> {
 // Every session that blocks on an approval needs a human, whatever its
 // parentage, so — unlike lifecycle — there is no topology filter here
 // (DECISIONS 2026-10-26: scope-all-sessions).
+//
+// Pending-only contract (plan Grounding #13–#15): an ask arms a per-request-id
+// timer and otherwise reads nothing — no cooldown gate, no session record —
+// because auto-approving clients answer milliseconds after asked, and a
+// cancelled ask must consume no cooldown stamp (DECISIONS 2026-10-27). Every
+// server resolution path emits permission.replied, so any reply value cancels.
 export async function handlePermission(deps: any, event: any): Promise<void> {
-  if (event?.type !== PERMISSION_ASK_EVENT) return;
+  const type = event?.type;
+  if (type !== PERMISSION_ASK_EVENT && type !== PERMISSION_REPLY_EVENT) return;
   try {
-    const sessionID: string | undefined = event.data?.sessionID ?? event.sessionID;
-    if (!sessionID) return;
-    // Gate before the lookup: the cooldown key is the sessionID alone and an
-    // approval push needs no session record to decide whether to fire — the
-    // record only refines the title.
-    if (!deps.allowPush(sessionID)) return;
-    let agent = "session";
-    try {
-      const info = await deps.getSession(sessionID);
-      if (typeof info?.agent === "string" && info.agent) agent = info.agent;
-    } catch (err: any) {
-      // Degrade, never suppress: an imprecise title beats a silently dropped
-      // block (DECISIONS 2026-10-26: lookup-failure policy).
-      console.error("[question-notify] approval session lookup failed:", err?.message ?? err);
+    // The field names stay unharmonized on purpose: the asked cancel key is
+    // `id`, the replied one is `requestID`, and both envelope twins carry the
+    // same names — only the nesting position varies (Grounding #13).
+    if (type === PERMISSION_REPLY_EVENT) {
+      const requestID: string | undefined = event.data?.requestID ?? event.requestID;
+      const handle = requestID === undefined ? undefined : deps.timers.get(requestID);
+      if (handle === undefined) return;
+      // Unkey first: a deps.cancel that throws must not leave the entry
+      // behind, or the guarded callback could still find it and push.
+      deps.timers.delete(requestID);
+      deps.cancel(handle);
+      return;
     }
-    await deps.notify(approvalTitle(agent), truncate(approvalExcerpt(event.data ?? event)));
+    const sessionID: string | undefined = event.data?.sessionID ?? event.sessionID;
+    const requestID: string | undefined = event.data?.id ?? event.id;
+    // An ask without a cancel key or without a gate key stays unarmed: a
+    // timer nobody can cancel would push after the human has already answered.
+    if (!sessionID || !requestID) return;
+    const payload = event.data ?? event;
+    // The holder exists because the callback must compare against the handle
+    // deps.schedule returns. Even a 0 ms pendingMs cannot fire the callback
+    // before schedule returns, so assigning after the call stays race-free.
+    const armed: { handle?: any } = {};
+    armed.handle = deps.schedule(async () => {
+      try {
+        // The live map entry must be this callback's own handle: clearTimeout
+        // can lose the race against an expiring timer, and a redelivered or
+        // cancelled ask replaces the entry — its stale callback stays silent.
+        if (deps.timers.get(requestID) !== armed.handle) return;
+        deps.timers.delete(requestID);
+        // Gate before the lookup: the cooldown key is the sessionID alone and
+        // an approval push needs no session record to decide whether to fire
+        // — the record only refines the title.
+        if (!deps.allowPush(sessionID)) return;
+        let agent = "session";
+        try {
+          const info = await deps.getSession(sessionID);
+          if (typeof info?.agent === "string" && info.agent) agent = info.agent;
+        } catch (err: any) {
+          // Degrade, never suppress: an imprecise title beats a silently
+          // dropped block (DECISIONS 2026-10-26: lookup-failure policy).
+          console.error("[question-notify] approval session lookup failed:", err?.message ?? err);
+        }
+        await deps.notify(approvalTitle(agent), truncate(approvalExcerpt(payload)));
+      } catch (err: any) {
+        // A rejecting timer callback would surface as an unhandled rejection
+        // and can kill the host process: swallow at this boundary instead.
+        console.error("[question-notify] approval push failed:", err?.message ?? err);
+      }
+    }, deps.pendingMs);
+    // Redelivery (stream reconnect) may replay a live id: keep at most one
+    // handle per request so the old timer cannot fire alongside the new.
+    const stale = deps.timers.get(requestID);
+    if (stale !== undefined) deps.cancel(stale);
+    deps.timers.set(requestID, armed.handle);
   } catch (err: any) {
-    console.error("[question-notify] approval push failed:", err?.message ?? err);
+    console.error("[question-notify] approval timer wiring failed:", err?.message ?? err);
   }
 }
 
@@ -199,7 +260,48 @@ function firstQuestion(input: any): string {
   return "question pending";
 }
 
-async function haMcpUrl(ctx: any): Promise<string | null> {
+// Exported URL-discovery seam (tests/opencode/ha-mcp-url.test.ts). Leg 1 is
+// the v2.1.4 MCP config view, ctx.mcp.transform: the only ctx surface whose
+// entries carry full server configs, fed from every config document —
+// including the machine-global one the 2026-10-25 fleet split moved this
+// entry into, invisible to the retired project-file leg (plan Grounding
+// #18–#22). A fresh register/dispose per call keeps fleet config edits live
+// without a restart (DECISIONS 2026-10-28: no caching). Never rejects: an
+// all-miss resolves null, and sendHANotify owns the missing-URL stderr line.
+export async function haMcpUrl(ctx: any): Promise<string | null> {
+  let url: string | undefined;
+  let registration: any;
+  try {
+    registration = await ctx.mcp?.transform?.((editor: any) => {
+      // Recomputes re-invoke live registrations until dispose (Grounding
+      // #21): this fires 0..N times per call and the capture stays pure. A
+      // throw past this callback would fail the plugin's whole registration
+      // group and poison later transforms for the process lifetime — the
+      // guard stays inside on purpose.
+      try {
+        const cfg = editor?.get?.(MCP_SERVER_KEY);
+        if (typeof cfg?.url === "string") url = cfg.url;
+      } catch {
+        // a poisoned config read is a leg-1 miss; leg 2 owns the rest
+      }
+    });
+  } catch {
+    // transform absent, throwing, or rejecting: a leg-1 miss
+  } finally {
+    try {
+      // A leaked registration would keep re-firing on every state recompute,
+      // so it is always awaited closed here; a rejecting dispose cannot undo
+      // a completed capture.
+      await registration?.dispose?.();
+    } catch {
+      // never reject the seam (failure policy)
+    }
+  }
+  if (typeof url === "string") return url;
+  // Leg 2 (compat): the pre-split status-list scan, kept verbatim. On
+  // v2.1.4 its entries carry name+status only (Grounding #20), so nothing
+  // can match, but it costs nothing and covers builds whose list() answers
+  // full configs (DECISIONS 2026-10-28).
   try {
     const list = await ctx.mcp?.list?.();
     const entries: any[] = Array.isArray(list) ? list : (list?.servers ?? []);
@@ -208,19 +310,9 @@ async function haMcpUrl(ctx: any): Promise<string | null> {
       if (name === MCP_SERVER_KEY && typeof cfg?.url === "string") return cfg.url;
     }
   } catch {
-    // fall through to config parsing
+    // list absent or rejecting: both legs missed
   }
-  try {
-    const { readFileSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    const raw = readFileSync(join(ctx.location.directory, ".opencode", "opencode.jsonc"), "utf8");
-    const idx = raw.indexOf(`"${MCP_SERVER_KEY}"`);
-    if (idx < 0) return null;
-    const m = raw.slice(idx).match(/"url"\s*:\s*"([^"]+)"/);
-    return m ? m[1] : null;
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 let rpcSeq = 0;
@@ -274,8 +366,15 @@ export default {
   id: "local.question-notify",
   async setup(ctx: any) {
     const lastNotified = new Map<string, number>();
+    // Read the pending window per setup, never at module load: a cached read
+    // would pin one test run's OPENCODE_NOTIFY_PENDING_MS onto every later
+    // setup (chunks/C03.md AC 15). Only a finite number >= 0 is a legal
+    // window; anything else keeps the shipped constant.
+    const envPendingMs = Number(process.env.OPENCODE_NOTIFY_PENDING_MS);
+    const pendingMs = Number.isFinite(envPendingMs) && envPendingMs >= 0 ? envPendingMs : PENDING_NOTIFY_MS;
+    const pendingApproval = new Map<string, any>();
     // One cooldown gate, keyed on sessionID alone, shared by the question hook
-    // and the approval dispatch: a question push and a near-simultaneous ask
+    // and the fired approval path: a question push and a near-simultaneous ask
     // for one session yield a single phone push (intake: burst → one push).
     // Stamps on the push attempt, not on transport success.
     const allowPush = (key: string): boolean => {
@@ -325,6 +424,10 @@ export default {
       getSession: (sessionID: string) => ctx.session.get({ sessionID }),
       getMessages: (sessionID: string) => ctx.session.context({ sessionID }),
       notify: (title: string, message: string) => sendHANotify(ctx, title, message),
+      timers: pendingApproval,
+      schedule: (fn: any, ms: number) => setTimeout(fn, ms),
+      cancel: (handle: any) => clearTimeout(handle),
+      pendingMs,
     };
     // A subscription that cannot start must not reject setup: the question hook
     // above is already registered and has its own verified-working contract.
@@ -371,6 +474,13 @@ export default {
       })().catch((err: any) => console.error("[question-notify] event stream ended:", err?.message ?? err));
     }
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      // Abort first (the cleanup contract the tests pin), then disarm every
+      // still-pending approval timer: a surviving handle would push for a
+      // session whose server just unloaded.
+      for (const handle of pendingApproval.values()) clearTimeout(handle);
+      pendingApproval.clear();
+    };
   },
 };
