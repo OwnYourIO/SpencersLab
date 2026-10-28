@@ -121,3 +121,13 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   minted from cf-70 FRICTION item 3, never from a card, and a full-board
   scan (every list, both extra swimlanes) 2026-10-28 found no ergonomics
   card — closed with evidence instead of hunting a random one.
+
+## Running-contract note after C02 (2026-10-28, coord)
+- From commit 15ffcae4b forward this run obeys the NEW contract even
+  though this session's skills were loaded pre-change: on a future
+  `validation_at_fault`, the repair routes SILENTLY to `test_session`
+  (ses_e8054d958ffe4qBopA4lrsWn8J) — the old "always ask the user" step
+  2.d is dead; only a test-session NEEDS_INFO (functionality-changing
+  fix) reaches the user, plus the untouched retry-cap/generic-BLOCKED
+  asks. Card #74 closure at run end: move #74 to Review (board-side,
+  coord-only).

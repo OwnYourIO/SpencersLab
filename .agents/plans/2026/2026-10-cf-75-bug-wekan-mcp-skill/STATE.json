@@ -28,7 +28,7 @@
       "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/2026-10-27-bug-cf-75-bug-wekan-mcp-skill.md, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01.md..C04.md]\ncommands_run: [python3 STATE.json schema/kickoff assertions => pass; dev-boards live read probe (list_boards/get_board/list_swimlanes/list_lists/list_custom_fields) => pass; grep/ls surveys of FRICTION corpus + server.py + rulesync surfaces => informational]\ndeviations: none — folder/STATE/plan/chunks built per pipeline-role-plan; kickoff recorded exactly as launched (run_tag null, local false, single-model both tiers); plan left uncommitted for coord per role\nfriction: no aislop PATH check done in this session (planner wrote plan only; known npx --no-install ladder noted in plan Commands); boards skill six-list text drifts from live In Process swimlane (non-pipeline Test list present) — captured as plan risk, board structure is human-owned\nopen_questions: (1) final slug confirm -> cf-75-bug-wekan-mcp-skill; (2) retire 2026-10-docs-wekan-mcp-arg-ergonomics draft + follow-up card (C01 absorbs)?; (3) card #74 duplicates C02 - cover here and close #74?; (4) agent-board in scope now (C03)?; (5) prefetch plugin in scope now, last + degrade-safe (C04)?; (6) who adjudicates 'the fix changes functionality' on validation_at_fault auto-route -> test session NEEDS_INFO, coord escalates; (7) agent-board MCP grants dev-boards-only, no admin-global-wekan fallback?\nnext_suggested: batched question round; relaunch plan session with answers if anything changes; then approve + post-plan write-back; post-plan agent-research before Test (feeds C04 hook-semantics assumption)"
     }
   ],
-  "current_wave": 1,
+  "current_wave": 2,
   "updated_at": "2026-10-27",
   "model_routing_note": "card Model(s) checklist sole check Qwen Flash -> same model every tier (boards kickoff rule: exactly one checked -> that model for every tier)",
   "lifecycle_note": "legacy Research checklist, 'After Planning' checked -> transition rule: standard Plan+Test+Code+Review loop PLUS an agent-research round after planning; no Lifecycle stage gate",
@@ -64,13 +64,27 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e801f249bffeGKT6ETHmgzQ1yP",
+      "handoffs": [
+        {
+          "at": "2026-10-28",
+          "role": "agent-dev-local",
+          "session": "ses_e801f249bffeGKT6ETHmgzQ1yP",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [.rulesync/skills/pipeline-role-coord/SKILL.md, .rulesync/skills/pipeline-gates/SKILL.md, .rulesync/skills/pipeline-role-review/SKILL.md, .rulesync/skills/agents-sync/references/pipeline-overview.md, .rulesync/skills/agents-sync/references/plan-and-result.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/rules/overview.md, AGENTS.md, .opencode/skills/pipeline-role-coord/SKILL.md, .opencode/skills/pipeline-gates/SKILL.md, .opencode/skills/pipeline-role-review/SKILL.md, .opencode/skills/agents-sync/references/{permissions,pipeline-overview,plan-and-result}.md] (commit 15ffcae4b, local-only, sources+mirrors same commit)\ncommands_run: [validation-fix.sh base-run => red t1 as pinned; validation-fix.sh t1-t7 post-edit => pass 8 ok; post-commit re-run => pass (t6 walk: source commits carry generated surfaces); npx --no-install rulesync generate x2 (second no-op) + --check => pass; old-phrasing repo sweep => zero non-allowlisted hits; aislop scan --changes/--staged + ci --changes => 0/0; agent-perms+standalone-agents+rulesync-surface+agents-md+gate => pass; skill-surface.sh + tools.sh => pass; node question-notify.test.ts => 35/0; git diff dca8a25d2..HEAD => exactly 14 declared files]\ndeviations: none — tasks executed as written; gates<->2.d cross-citation kept short per anti-slop note\nfriction: none blocking\nopen_questions: none\nnext_suggested: agent-review on C02 with CHUNK_BASE=dca8a25d2 (incl. now-meaningful t6 commit walk), then card #74 coverage bookkeeping at run end."
+        },
+        {
+          "at": "2026-10-28",
+          "role": "agent-review",
+          "session": "ses_e80185ab4ffePECgexzgTio3eM",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nverdict: APPROVED\nfiles_changed: [chunks/C02.md (Review notes only)]\ncommands_run: [CHUNK_BASE=dca8a25d2 validation-fix.sh t1-t7 => pass 8 ok; skill-surface.sh => pass 8 ok; tools.sh => pass 9 ok; rulesync-surface.sh => pass 19 ok; agents-md.sh => pass 9 ok; gate.sh => pass 22 ok; agent-perms/surface.sh => pass 14 ok; standalone-agents/surface.sh => pass 10 ok (S10 skip pre-existing by design); node question-notify => 35/0; rulesync generate x2 no-op + --check => pass; aislop ci --changes --base dca8a25d2 => 100, 0/0; old-phrasing/validation_at_fault sweeps => clean; git diff --name-only dca8a25d2..HEAD => exactly 14 files; get_card #74 => informational]\ndeviations: none (t6 anchors on merge-base main HEAD by design — stricter, green)\nfriction: none\nopen_questions: none\nnext_suggested: mark C02 done (wave 1 complete), book run-end card #74 duty, launch wave 2 C03.\nreview-confirm: card #74 ask fully covered by new wording incl. OQ6 adjudicator."
+        }
+      ]
     },
     "C03": {
       "status": "pending",
