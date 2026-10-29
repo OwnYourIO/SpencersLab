@@ -1,52 +1,66 @@
-# PLAN: More models for Strata (card #86)
+# PLAN: More models for Strata (card #86) — FINAL (post-answer round)
 feature: 2026/2026-10-cf-86-feat-more-strata-models
 
 ## Goal
-Widen the gpu-ai model roster where the node's RAM law allows it: add fit-tested Strata rungs (Coder IQ1_M coding rung, an abliterated/uncensored IQ3_XXS-class rung) as alternatives in the Strata pod's inner llama-swap, add heretic-style coding ablations of flash-next and 27B to the llama.cpp catalog, and make every new *and already-served-but-unrouted* model agent-routable via `.opencode/opencode.jsonc` with correct context limits. RESEARCH.md governs feasibility: Strata swaps per-profile (no live swap), only ≤~50 GiB-arena rungs fit, flash-next Q4-on-Strata and Ornith-122B-on-Strata are ruled out.
+Widen the gpu-ai roster within the node's RAM law, per the answered batched round: two Strata ablation rungs (SC117 public GSQ-RCO-abliterated IQ3_XXS + orcarouter gated Uncensored IQ3_XXS manual pack) as time-shared inner-matrix alternatives, heretic-style coding ablations of flash-next and 27B on the llama.cpp side, and full provider-catalog routing in `.opencode/opencode.jsonc`. The user's two overrides (ornith-122B-Q4 and flash-next-Q4 "should fit / served from Strata") are NOT folded in as verdicts: an explicitly scheduled After-Planning research round re-verifies them; C06 carries both shapes behind that gate.
+
+## Scope decisions from the batched round (U-rulings, full text in DECISIONS.md)
+- U1 breadth-with-swaps: multi-profile Strata catalog stands, 3–6 min cold pins accepted.
+- U2 BOTH ablated Strata rungs (SC117 + orcarouter); HF_TOKEN chain verified present on the llama.cpp side (AC-pinned in C02); gated-download mechanics for the Strata init are a research item (R-d).
+- U3 Coder IQ1_M declined — the draft's Coder chunk is DELETED (see renumber map).
+- U4 qwen3.6-35B-A3B on Strata declined (no duplicate).
+- U5 OVERRIDE (VERIFICATION-PENDING): ornith ladder + flash-next-orca-q6 "served from Strata" + opencode.jsonc entries wanted — collides with RESEARCH's blocked rulings; re-verification is R-a/R-c, not a silent fold.
+- U6 OVERRIDE (VERIFICATION-PENDING): flash-next Q4 "should fit. Double check." — re-derivation is R-b.
+- U7 slug `cf-86-feat-more-strata-models` kept.
+
+**Renumber map (draft → final):** old C01 (Coder) deleted; old C02→C01 (SC117); NEW C02 (orcarouter); old C03→C03; old C04→C04; old C05→C05; NEW C06 (research-gated). All pre-existing chunks were `pending`, so renumbering is contract-clean; nobody should chase draft ids after this commit.
+
+## Scheduled stage: After-Planning research round (card's legacy Research checklist has After Planning checked)
+Launched by coord as `agent-research` AFTER plan approval and BEFORE the test session writes C06's tests (C01, C03–C05 are unaffected and may already be in test/dev; C02 proceeds normally except its token-mechanics step consumes the R-d answer — unanswered R-d at C02 dev time ⇒ NEEDS_INFO, not improvisation). Its summary lands as an appended section in this folder's RESEARCH.md. Scope:
+- **R-a Ornith-1.5-122B Q4 on Strata:** re-derive the arena math from primary sources; explicitly test whether the existing ruling conflated (i) page-locked arena fit, (ii) llama.cpp/llama-swap LOADER support, (iii) node RAM ceiling; which 122B Q4 GGUFs exist in Strata-validated packings; current state of upstream #3574/#4460 and the announced community optimization.
+- **R-b flash-next Q4 on Strata:** which Q4 (unsloth UD-IQ4_XS 55 GiB experts vs UD-Q4_K_XL 72 GiB vs orcarouter IQ4_XS ~97.5 GB files); pin down what the "125 GiB" figure actually caps (node spendable RAM vs cgroup 96Gi vs `--memory-limit-mib 92160`) against the measured IQ3_S 46.84 GiB anchor; whether a Q4 profile fits with trimmed conversation-cache/KV and at what decode-ROI (documented −15% decode on R9700 at UD-Q4_K_XL).
+- **R-c what "served from Strata" concretely requires today:** setup.sh catalog inventory for unsloth/ornith/orcarouter paths, upstream issue status at run date, GGUF file existence for Q4 rungs, manual-pack (ORCA.md-class) feasibility at Q4 sizes, models-PVC capacity math (500Gi claim vs +43–111 GB packs).
+- **R-d gated-pack download for the Strata init:** does setup/manual path honor `HF_TOKEN` (huggingface_hub); may the init container consume the EXISTING `hf-token` Secret (same Application/namespace) as a DOWNLOAD-ONLY exception to the keyless C-A ruling, or is a new secret required; serving posture stays keyless either way.
+Flip map: R-a/R-b/R-c CONFIRM a fit → C06 executes Shape A (new Strata Q4 profile(s) + one-line catalog adds); RECONFIRM blocked → C06 Shape B (verdict record only, no code — llama.cpp serving + C05's hygiene entries already answer the card). R-d decides C02's token mechanics only (existing Secret vs NEEDS_INFO→user).
 
 ## Out of scope
-- Any Strata profile ≥ UD-IQ4_XS experts class (arena fails the 125 GiB node — RESEARCH Q2/Q4).
-- Ornith-1.5-122B **on Strata** (upstream #3574 closed "add later", #4460 open) — stays llama.cpp-only; watch item, not work.
-- Re-serving qwen3.8-27b-q4/q6, flash-next-q4, ornith-1.5-122b rungs on llama.cpp — all already served and enabled ([repo] gpu-ai enablement + models overrides); only *routing entries* are missing (C05).
-- qwen3.6-35B-A3B as a Strata profile (duplicates the served llama.cpp rung; best-guess decline — Open question Q4).
-- New services, charts, ApplicationSets, secrets, container rebuilds (unless the C02 fallback path trips — see Risks).
+- Coder IQ1_M Strata rung (U3 declined). qwen3.6-35B-A3B Strata profile (U4 declined).
+- Any Strata Q4 profile unless R-a/R-b confirm — C06 Shape A is the only sanctioned path; forcing it before the research verdict is out of scope.
+- Re-serving 27B Q4/Q6, flash-next-q4, ornith rungs on llama.cpp (already served/enabled); C05 only routes them.
+- New services/charts/ApplicationSets/secrets beyond the hf-token consumption question (R-d); container rebuilds only if C02's manual-pack step proves image-side.
 
 ## Commands
-Repo validation, not unit tests (AGENTS.md "Pipeline specifics"). Export PATH first: `export PATH=$HOME/.local/bin:$PATH` (without helm on PATH pytest mass-skips its guarded tests).
+Repo validation, not unit tests (AGENTS.md "Pipeline specifics"). `export PATH=$HOME/.local/bin:$PATH` first (helm off PATH ⇒ pytest mass-skips).
 - chart: `helm lint charts/llama-swap && helm template charts/llama-swap --debug >/dev/null`
-- service render (extract-and-render, TEST_SPEC §1 pattern): `python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml'))['llama-swap']; yaml.safe_dump(d, open('/tmp/gpuai-vals.yaml','w'))" && helm template llama-swap charts/llama-swap -f /tmp/gpuai-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai >/dev/null`
-- suite (per-directory, basenames duplicate across chart suites): `python3 -m pytest charts/llama-swap/tests -q` — green means the chunk's new test files pass AND pre-existing ones (parity/schema/strata/off-parity/untouched) still pass; golden + `tests/evidence/strata-peers-expected.yaml` re-pins are the **test author's** property (dev never edits them).
-- catalog: `python3 -c "import re,json; json.loads(re.sub(r'^\s*//.*$','',open('.opencode/opencode.jsonc').read(),flags=re.M))"` plus presence greps of every new/hygiene model id under the gpu-ai provider `models` map.
-- trio cross-surface grep per new inner Strata id (chart `strata.config.models` + service `peers.strata.models` + provider catalog): `grep -rn "<id>" charts/llama-swap/values.yaml services/gpu-ai/prod/values.yaml .opencode/opencode.jsonc` — must hit all three (peers list intentionally lists inner ids one per line).
-- container (only if C02 falls back to a manual-pack init): `docker build => no-daemon, CI-deferred` (docker-build.yaml on the pushed branch is authoritative — the designed passing shape, cf-77 ruling).
+- service render (TEST_SPEC §1 extract-and-render): `python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml'))['llama-swap']; yaml.safe_dump(d, open('/tmp/gpuai-vals.yaml','w'))" && helm template llama-swap charts/llama-swap -f /tmp/gpuai-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai >/dev/null`
+- suite (per-directory): `python3 -m pytest charts/llama-swap/tests -q` — new chunk tests pass AND pre-existing parity/schema/off-parity/untouched suites stay green; golden + `tests/evidence/strata-peers-expected.yaml` re-pins are test-author property (dev never edits).
+- catalog: `python3 -c "import re,json; json.loads(re.sub(r'^\s*//.*$','',open('.opencode/opencode.jsonc').read(),flags=re.M))"` + presence greps of every new/hygiene id under gpu-ai `models`.
+- trio grep per new Strata id (chart `strata.config.models` + service `peers.strata.models` + catalog): `grep -rn "<id>" charts/llama-swap/values.yaml services/gpu-ai/prod/values.yaml .opencode/opencode.jsonc` — all three surfaces.
+- hf-token trio (U2 verification, C02 AC): `grep -rn "hf-token" charts/llama-swap/templates/secret-hf-token.yaml custom-values/gpu-ai/prod-values.yaml services/gpu-ai/prod/values.yaml` — ExternalSecret template + UUID + consumer wiring all present (verified TRUE at plan time: UUID 2ebdd082-…; the gated `qwen3.8-flash-next-orca-q6` serves with it today = the token has orcarouter access).
+- container (only if C02's pack step lands image-side): `docker build => no-daemon, CI-deferred` (docker-build.yaml on the pushed branch authoritative).
+- on-target (human-owned, NOT agent commands): setup catalog inventory capture on the claim, `strata serve --plan` verification of any new profile, models-PVC free-capacity check. Recorded as runbook follow-ups in RESULT.
 - quality gate: `npx aislop ci --changes`.
 
 ## Chunks
 | id  | title | size | wave | depends_on | why the dependency |
 |-----|-------|------|------|------------|--------------------|
-| C01 | Coder IQ1_M as a Strata coding rung | M | 1 | [] | first new inner profile: establishes the profile-file/matrix/token pattern the later chunks extend |
-| C02 | Abliterated/uncensored IQ3_XXS-class Strata rung | M | 2 | [C01] | edits the same template + matrix + service lines C01 just re-pinned; token-vs-manual-pack gate inherits C01's checkout-inspection evidence |
-| C03 | flash-next heretic-2 Q4_K_M llama.cpp rung | M | 3 | [C02] | file-level serialization only: same chart-catalog families/matrix block + gpu-ai golden re-pin chain (one re-pin per wave, no branch conflicts) |
-| C04 | 27B heretic Q4_K_M-MTP llama.cpp rung | M | 4 | [C03] | same serialization rationale as C03 |
-| C05 | Provider-catalog entries + context sizes + Q4-default routing | M | 5 | [C01,C02,C03,C04] | needs the final exact served ids from all four; also carries the routing-default flip (Open Q6) and hygiene entries |
+| C01 | SC117 abliterated IQ3_XXS Strata rung (`qwen3.8-flash-next-strata-abliterated`) | M | 1 | [] | first new inner profile: establishes the profile/matrix/strip pattern C02/C06 extend |
+| C02 | orcarouter gated Uncensored IQ3_XXS Strata rung (`qwen3.8-flash-next-strata-orca`, manual pack + HF_TOKEN) | M | 2 | [C01] | same template/matrix/service lines; consumes the R-d token answer |
+| C03 | flash-next heretic-2 Q4_K_M llama.cpp rung (`qwen3.8-flash-next-heretic-q4`) | M | 3 | [C02] | file serialization only: shared families/matrix regions + gpu-ai golden re-pin chain |
+| C04 | 27B heretic Q4_K_M-MTP llama.cpp rung (`qwen38-heretic`) | M | 4 | [C03] | same serialization rationale |
+| C05 | Provider-catalog entries + context sizes + Q4-default routing | M | 5 | [C01,C02,C03,C04] | needs final landed ids; hygiene entries land regardless of research outcome (U5 second half) |
+| C06 | **PENDING-AFTER-PLAN-RESEARCH** — Strata Q4 rungs (flash-next Q4 per U6, ornith-122B Q4 per U5), both shapes | M | 6 | [C01,C02,C05] + research verdicts R-a/R-b/R-c | pattern+gated-token precedent from C01/C02; catalog consumer |
 
 ## Wave order
-Strictly linear: 1. C01 → 2. C02 → 3. C03 → 4. C04 → 5. C05. C03/C04 are functionally independent of each other but touch the same `families:`/`matrix` regions and the same golden, so they chain to avoid merge conflicts; C05 is pure consumer and could theoretically run hygiene-only earlier, but keeping one final catalog commit honors "one plan of record, one catalog landing".
-
-## Open questions (batched round — best guesses taken, plan proceeds on them)
-1. **Coexist vs breadth (RESEARCH Q1):** true coexistence (≤~30 GiB arenas only) or catalog breadth with 3–6 min swaps? *Best guess:* breadth/time-share — add Coder + an IQ3_XXS-class rung as matrix alternatives with ttl 3600. *Impact if flipped:* C02 drops (only Coder survives); plan shrinks to C01+C03..C05.
-2. **Uncensored Strata rung wanted? (RESEARCH Q2)** *Best guess:* yes, via SC117's public GSQ-RCO-abliterated ISTA set (exact installer-validated sizes, ungated) — rejected: orcarouter IQ3_XXS manual pack (gated HF_TOKEN passthrough would re-introduce the secret chain the keyless C-A ruling deleted). *Impact if declined:* C02 deleted; if the user wants orcarouter specifically, C02 grows an init-container capability + CI-deferred container build.
-3. **Coder trade accepted? (RESEARCH Q3)** — ~91% of full on SWE-Verified, weaker general/multilingual. *Best guess:* accept as a dedicated coding profile. *Impact if declined:* C02 becomes the only new Strata rung; catalog keeps one entry less.
-4. **qwen3.6-35B-A3B on Strata? (RESEARCH Q4)** — fast, coexists, but duplicates the served llama.cpp rung. *Best guess:* decline. *Impact if yes:* +1 profile in C02's shape (qwen36 family token), +1 catalog entry in C05.
-5. **Catalog hygiene in cf-86? (RESEARCH Q5)** — ornith ladder + `qwen3.8-flash-next-orca-q6` are served but unroutable. *Best guess:* in scope (the card explicitly asks to update opencode.jsonc). *Impact if separate card:* C05 loses the hygiene bullet only.
-6. **Where does "Q4 default" land? (card's make-Q4-the-default ask)** — Strata Q4 fails the arena (RESEARCH ruling 2). *Best guess:* the *routing* default moves to the llama.cpp `qwen3.8-flash-next-q4` rung in `.opencode/opencode.jsonc`-adjacent config, and the Strata profile stays IQ3_S. NOTE: the agent-route default itself lives in the `.rulesync` pipeline-models skill (cf-83 set it to `gpu-ai/qwen3.8-flash-next-strata`) — flipping it touches rulesync sources + generated mirrors. *Impact:* if the user means the pipeline model default, add a small rulesync re-route task to C05 (cf-83 C01 pattern); if they mean only "Q4 must be present+selectable", it's already true and C05 is verification-only.
-7. **Slug confirm** (minted this run): keep `cf-86-feat-more-strata-models`. *Impact if replaced:* folder/worktree/branch renames before any dev lands.
+Strictly linear: C01 → C02 → C03 → C04 → C05 → C06. C06 is additionally gated on the research round: it must not enter test/dev until its shape is fixed (test session writes C06 tests only after the flip). C03/C04 are functionally independent but share edit regions and the golden, hence chained.
 
 ## Risks / assumptions
-- **New-profile run-config seeds are analogous, not yet on-target-generated.** The profile ConfigMap seeds (paths under `Strata-data/models/<MODEL>/…`) are derived from the measured iq3_s layout; the checkout's setup writes its own JSON on the claim and the on-target `strata serve --plan` verification stays **human-owned** (cf-77 C04 runbook discipline). A wrong seed path is exactly the crash class cf-77 recorded — chunk ACs pin render-shape only, not on-target serving.
-- **C02 has a gate:** if the pinned checkout's setup catalog carries no abliterated entry (verify via `./setup.sh --help` inventory recorded on the claim), the fallback is an ORCA.md-style manual pack (init-container capability + container surface, CI-deferred build). Dev must escalate NEEDS_INFO at the gate, not improvise.
-- **Residency math:** each new swap rung holds ttl 3600 + unloadTimeout 180; the 96Gi cgroup and `--memory-limit-mib 92160` stay valid for all planned rungs (largest new arena ~49.8 GiB < 50 GiB IQ3_S). No matrix set may co-load two arena models — suite pins this.
-- **Inner aliases stay unique** inside the inner llama-swap (engineProfile `aliases`/`model_name` of new profiles must not shadow `qwen3.8-flash-next`).
-- Label-drift surface: this run's pipeline set (`Context`) comes from the card's `Pipeline: Context` board label — recorded on the card, not in these files (board convention).
-- Stale chart comment "180B-class" (flash-next descBase) is a known contradiction (RESEARCH cautions) — fix rides C03's family-block touch if trivial, else leave.
-- Provider-catalog context values: all new Strata/llama.cpp rungs are 262144-class (`--max-context 262144` / `-c 262144`); no 1M variants added.
+- **The two user overrides sit on a sourced contradiction.** RESEARCH [S1][S11] rules 122B off-node and UD-Q4_K_XL past the arena; the user says they fit / belong on Strata. The plan honors BOTH: research re-derives from primary sources before a line of C06 Shape A is written; DECISIONS records the overrides as VERIFICATION-PENDING, not flipped verdicts. If research reconfirms blocked, the honest card answer is the llama.cpp serving + catalog routing (C05) — Shape B.
+- **C-A keyless tension:** C02's gated download would consume the existing `hf-token` Secret in the Strata init container — a deliberate, DOWNLOAD-ONLY exception to the keyless ruling (which deleted serving-side keys). R-d rules; serving stays keyless unconditionally.
+- New-profile run-config seeds are analogous, not on-target-generated (cf-77 crash precedent); on-target `--plan` verification and setup-inventory capture are human-owned runbook steps.
+- Disk: +~90–150 GB of packs against the 500Gi models PVC (plus the existing set) — capacity is an on-target human gate before C02/C06 provisioning runs.
+- Residency: every new Strata rung ttl 3600 + unloadTimeout 180; 96Gi cgroup and `--memory-limit-mib 92160` unchanged for IQ3_XXS-class arenas (~50 GiB ≤ today's IQ3_S). A Q4 rung (55–72 GiB experts) does NOT fit that envelope — C06 Shape A would need its own budget ruling (research-informed), flagging the documented −15% decode ROI regardless.
+- Inner aliases stay unique inside the inner supervisor (no shadowing of `qwen3.8-flash-next`).
+- Label-drift surface: this run's pipeline set comes from the card's `Pipeline:` board label — recorded on the card, not in files.
+- Stale "180B-class" descBase comment: rides C03 if trivial, else chores card.
+- All new catalog entries are 262144-class; no 1M variants.
