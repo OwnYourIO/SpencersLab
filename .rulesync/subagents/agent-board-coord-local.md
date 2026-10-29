@@ -67,6 +67,9 @@ opencode:
     - action: shell
       resource: date *
       effect: allow
+    - action: shell
+      resource: bash scripts/board-preload-probe.sh *
+      effect: allow
     # In-work mark epoch: the kickoff recipe embeds $(date +%s%3N) in the
     # patch payload, and the shell matcher extracts command substitutions
     # and checks the date subcommand against this list on its own — the

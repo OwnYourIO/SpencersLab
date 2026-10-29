@@ -57,7 +57,9 @@ container images (`containers/`). **ArgoCD applies everything — never
   `plugin/` (`aislop-gate` quality gate on edits; `question-notify` pushes a
   Home Assistant notification to the user's phone when an `agent-*` session
   asks a question, a top-level session finishes or stops on a failure, or a
-  permission approval is still pending 15 s) and `opencode.jsonc` (dev half
+  permission approval is still pending 15 s; `board-context` prefetches the
+  AI-Dev board structure into the first prompt of a board-coord tick, so the
+  hourly run starts with the ids resolved) and `opencode.jsonc` (dev half
   of the agent tool config — see below).
 - `.rulesync/` — the single source of truth for AI-tool config: `rules/`
   (→ this `AGENTS.md`), `subagents/` (→ `.opencode/agents/`), `commands/`
@@ -253,9 +255,10 @@ board labels name the locks it takes — no such label means the single
 `default` pipeline, and several labels block all of those pipelines
 all-or-nothing. Cards with disjoint sets run as parallel
 `agent-board-coord` iterations; the hourly entry point is the live OpenChamber
-loop `.agents/loops/pipeline-worker.md` (enabled at `0 * * * *` since
-2026-10-29; the repo file ships `enabled: false` — the toggle is human-owned
-and `/pipeline-boards-hourly` + its gate stay the documented fallback). The
+loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as synced and
+enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo file ships
+`enabled: false` — the toggle is human-owned and `/pipeline-boards-hourly`
++ its gate stay the documented fallback). The
 top-level "finished" push reaches the phone unless the coord marked the
 session no-work AND the launch was of the scheduled kind — the `boards`
 skill's no-op marker, read by `question-notify`; manual no-ops always push.
