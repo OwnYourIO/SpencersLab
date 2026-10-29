@@ -52,6 +52,17 @@
 # lands, `bash tests/agent-perms/surface.sh` must pass the
 # subset its chunk owns; the full suite is green at the end of C03.
 #
+# cf-85 RE-PIN (2026-10-29, 2026-10-cf-85-refactor-wekan-slug-session-link):
+# the board write-back roster shrinks from two custom fields to one — `slug`
+# carrying the combined `[<slug>](<session link>)` link — so A15's roster arm
+# re-pins from the two-field form to the one-field form instead of being
+# deleted: cf-76's duty (the roster count is pinned, no third field may sneak
+# back as a wording artifact, `create_custom_field` stays absent, the
+# fabricated-row control stays) survives the roster shrinking. A15's roster
+# arm is this suite's only red leg until the flip commit lands; A9 grows the
+# cf-85 plan-folder admit so the running ticket's own folder never reads as a
+# scope violation in t14/c8/c7.
+#
 # Sweep-scope judgment (recorded for review): C02 AC5 ("no bare agent-dev
 # in .rulesync/, .opencode/, AGENTS.md, tests/") is implemented on the
 # BINDING surfaces — subagent/command sources and their generated mirrors —
@@ -726,8 +737,9 @@ fi
 # skill — its plan folder's STATE.json/handoff commits land on this branch
 # like cf-58's did, and every t14/c8/c7 run against a pre-chunk base would
 # otherwise read them as scope violations.
+# cf-85 (2026-10-29) joins the same admit for the running ticket's folder.
 if want a9; then
-  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge 2026-10-cf-75-bug-wekan-mcp-skill; do
+  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge 2026-10-cf-75-bug-wekan-mcp-skill 2026-10-cf-85-refactor-wekan-slug-session-link; do
     python3 "$TMP/blockwin.py" "$SUITE_GATE" t14 ".agents/plans/2026/$slug/*" \
       || fail "A9[AC9-admits]: gate.sh t14 does not admit $slug inside its if-want block (the D9 widening did not land)"
     python3 "$TMP/blockwin.py" "$SUITE_RULESYNC" c8 ".agents/plans/2026/$slug/*" \
@@ -735,7 +747,7 @@ if want a9; then
     python3 "$TMP/blockwin.py" "$SUITE_AGENTSMD" c7 ".agents/plans/2026/$slug/*" \
       || fail "A9[AC9-admits]: agents-md.sh c7 does not admit $slug inside its if-want block"
   done
-  ok "A9[AC9-admits]: all three 2026-10-bug-* follow-up folders, the cf-58 ticket folder and the cf-75 ticket folder are admitted inside the t14, c8 and c7 blocks (windowed, not file-global)"
+  ok "A9[AC9-admits]: the three 2026-10-bug-* follow-up folders, the cf-58, cf-75 and cf-85 ticket folders are admitted inside the t14, c8 and c7 blocks (windowed, not file-global)"
 fi
 
 # --- A10: cf-58 family-mechanism integrity + negative controls (C03-owned) -----
@@ -1270,13 +1282,33 @@ PY
       grep -q "$CFN" "$f" \
         && fail "A15[C07]: $f references $CFN — the custom-field route was retired with D19; the worker only READS Pipeline: labels"
     done
-    # The custom-field roster stays at exactly TWO fields (slug + session) —
-    # pipeline identity must not sneak back in as a third field by any
-    # wording rewrite (C07 AC2).
-    grep -Eiq 'custom fields:.*exactly two' .rulesync/skills/boards/SKILL.md \
-      || fail "A15[C07]: the boards skill lost its 'Custom fields: exactly two' pin"
-    grep -Eq '`slug`[^`]*`session`|`session`[^`]*`slug`' .rulesync/skills/boards/SKILL.md \
-      || fail "A15[C07]: the two-field roster no longer names slug and session"
+    # cf-85 RE-PIN of cf-76's roster fence (AC1/AC3): the flow's roster is now
+    # exactly ONE board-level text field — `slug`, carrying the combined
+    # `[<slug>](<session link>)` link — with the legacy `session` field named
+    # only as retired and never read or written. cf-76's intent is unchanged:
+    # the count is pinned, the sentence must keep naming the field the fence
+    # protects, and neither the `models` route nor a third field may sneak
+    # back in through a wording rewrite. Red until the flip commit lands.
+    roster=$(grep -m1 -Ei '^[-*][[:space:]]+Custom fields:' .rulesync/skills/boards/SKILL.md || true)
+    [ -n "$roster" ] \
+      || fail "A15[cf-85 AC3]: the boards skill has no 'Custom fields:' roster bullet — the fence's anchor moved (harness fault, report it)"
+    if echo "$roster" | grep -Eiq 'exactly (two|three)'; then
+      fail "A15[cf-85 AC3]: the roster still counts the retired session field — the flow's roster is the single slug field (red until the flip lands)"
+    fi
+    echo "$roster" | grep -Eiq 'exactly one' \
+      || fail "A15[cf-85 AC3]: the boards skill lost its 'Custom fields: exactly one' roster pin"
+    echo "$roster" | grep -qF '`slug`' \
+      || fail "A15[cf-85 AC3]: the roster sentence does not name the slug field"
+    echo "$roster" | grep -Eq '\[<slug>\]\(' \
+      || fail "A15[cf-85 AC3]: the roster does not state the combined [<slug>](<session link>) value the one field carries"
+    echo "$roster" | grep -qF '`session`' \
+      || fail "A15[cf-85 AC3]: the roster does not name the retired session field — the retirement belongs where the roster is stated"
+    echo "$roster" | grep -Eiq 'retired|never (read|written|reads|writes)' \
+      || fail "A15[cf-85 AC3]: the roster does not mark the session field retired / never read or written"
+    echo "$roster" | grep -qF 'third field' \
+      || fail "A15[C07 AC2]: the roster lost the third-field negation — the fence this guard exists for"
+    echo "$roster" | grep -qF 'models' \
+      || fail "A15[C07 AC2]: the roster lost the D12 no-models-field negation"
     # Fabricated-row control (A10/A14 discipline): drop one row from a TMP
     # copy and require the locktools guard to reject the crippled file.
     python3 - "${CF_SRC[3]}" "$TMP/lock-dropped.md" <<'PY'
@@ -1326,7 +1358,7 @@ PY
     then
       fail "A15[C07]: plugin/permission/skill three-way parity broken — one of the single sources drifted"
     fi
-    ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, and the plugin constants match the permission rows and the boards-skill call strings"
+    ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, the plugin constants match the permission rows and the boards-skill call strings, and the roster fence holds the cf-85 one-field slug roster"
   fi
 fi
 

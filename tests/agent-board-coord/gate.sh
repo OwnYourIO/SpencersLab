@@ -45,6 +45,13 @@
 # duty lives in tests/session-origin/surface.sh s4, never here)]
 # t18[C03 AC1 origin block] t19[C03 AC2 skill dynamic contract].
 #
+# cf-85 (2026-10-29, cf-85-refactor-wekan-slug-session-link): t14's plan-folder
+# admit is this suite's only cf-85 duty. Every other arm is a HOLD — the flip
+# rewrites the boards skill's custom-field passages, the three board-coord
+# twins and the manual /pipeline-boards pair, while t11/t13/t18 probe the
+# HOURLY command pair and t19's windows sit on the Config-constants resolution
+# text the flip leaves intact.
+#
 # AC7 (regression) is not re-implemented here: run
 # tests/agent-board-coord/rulesync-surface.sh and agents-md.sh; their scope
 # allow-lists carry this ticket's in-surface paths, and agents-md.sh c8's
@@ -702,6 +709,12 @@ fi
 # hand-managed .opencode/plugin/board-context dir (rulesync never touches
 # .opencode/plugin/ — AGENTS.md); plus this ticket's own plan folder (inline
 # literal for the agent-perms A9 window-pin).
+# cf-85 (2026-10-29): the running ticket's own plan folder joins the admit —
+# its plan/STATE/handoff commits land on this branch like cf-58's and cf-75's
+# did, so a t14 run at any pre-chunk base must not read the folder as a scope
+# escape. cf-85's content edits ride the .rulesync/skills/*, .opencode/skills/*,
+# .rulesync/subagents/*, .opencode/agents/*, .rulesync/commands/*,
+# .opencode/commands/*, tests/* and AGENTS.md admits already in this set.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -734,11 +747,12 @@ if want t14; then
       .agents/plans/2026/2026-10-bug-tests-edit-perms/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
-      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*) : ;;
+      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
+      .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening and the cf-75 skill/plugin/gates/review/plan-and-result/own-folder admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits and the cf-75/cf-85 own-folder admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

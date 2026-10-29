@@ -82,6 +82,23 @@
 # until the landing commit flips the files to the empty-diff arm-B posture.
 # The absolute naming duty lives in tests/agent-perms/surface.sh A12.
 #
+# cf-85 RE-PIN (2026-10-29, cf-85-refactor-wekan-slug-session-link): the board
+# write-back becomes ONE custom field — `slug` carrying the combined
+# `[<slug>](<session link>)` link, raw session id in the link half when the
+# origin says UNRESOLVED (DECISIONS D11) — so this suite's cf-85 legs are:
+#   s3's new 'raw session id'+'link half' window — DESIGNED RED against the
+#     pre-flip text (the slot list still names the retired session field),
+#     green at the flip commit;
+#   s2's b2 write-back byte-pin — the block cf-85 legitimately rewrites, so it
+#     is byte-equal until the flip edits it, red ONLY for a CHUNK_BASE=<pre-
+#     chunk> run inside the edit window, and green again at the flip commit
+#     (same in-window red as s6's command freeze, which the flip's command
+#     edits cause and which greens the same way);
+#   s2's b1/b3 byte-pins and every s3 window/carry string — HOLD: the flip
+#     must leave the claim-comment bullet, the research step-7 sentence, the
+#     resolution-leg text and the `slug`/`session`/`custom field` substrings
+#     intact, so a red there names an out-of-scope edit.
+#
 # Usage (harness convention from tests/coord-inwork/surface.sh):
 #   bash tests/session-origin/surface.sh             # s1..s7
 #   bash tests/session-origin/surface.sh s4          # subset (designed-red inventory runs per check)
@@ -621,17 +638,41 @@ if want s2; then
   done
   # the three consumer bullets resolve THROUGH the amended definition and must
   # not be touched (AC2 byte-unchanged vs the chunk base):
+  # cf-85 RE-PIN (2026-10-29): b1 (claim-comment bullet) and b3 (research
+  # step-7 session link) stay byte-frozen for cf-85 too — they resolve through
+  # the amended definition, they are not the definition. b2 (write-back step 2)
+  # is the slot cf-85 legitimately rewrites, so that leg is designed-red only
+  # inside the flip's edit window (CHUNK_BASE=<pre-chunk commit> with the
+  # edited sources in the worktree) and green again at the flip commit, where
+  # $BASE already carries the combined-value block — the cf-50 posture that
+  # also reddens s6's command freeze in-window.
+  # b1 is extracted as ONE bullet rather than a sed range: the bullet ends on
+  # the same words the old end anchor looked for, and sed searches a range's
+  # end pattern only in lines AFTER the start line, so the old range ran to the
+  # next such line far below and byte-pinned the Post-plan write-back, the
+  # batched-question sentence and the launch prompt as well — all three of
+  # which cf-85 legitimately edits (surface map 1g/1h/1i). Same duty (the
+  # claim comment stays byte-unchanged), no longer pinning the text below it.
+  extract_bullet() { # file needle outfile — the bullet naming the needle plus
+    # its continuation lines, stopping at the next bullet or heading
+    awk -v n="$2" '
+      !p && index($0, n) { p = 1; print; next }
+      p && (/^- / || /^## /) { exit }
+      p { print }' "$1" > "$3"
+  }
   n=0
   for f in "$BOARD_SRC" "$BOARD_GEN"; do
     n=$((n + 1))
     git show "$BASE:$f" >"$TMP/s2-base-$n.md" 2>/dev/null || fail "s2: $f not readable at $BASE"
-    extract_block "$TMP/s2-base-$n.md" 'claiming the card:' 'plan folder path\.' "$TMP/s2-b1"
-    extract_block "$f"            'claiming the card:' 'plan folder path\.' "$TMP/s2-c1"
+    extract_bullet "$TMP/s2-base-$n.md" 'claiming the card:' "$TMP/s2-b1"
+    extract_bullet "$f"                   'claiming the card:' "$TMP/s2-c1"
+    [ -s "$TMP/s2-b1" ] || fail "s2: the claim-comment bullet is not found at $BASE in $f (its wording moved — harness/base fault, report it)"
     cmp -s "$TMP/s2-b1" "$TMP/s2-c1" || fail "s2: $f Pickup consumer bullet (session line … plan folder path) moved vs $BASE — AC2 pins it byte-unchanged (minimal contact: it resolves through the amended definition)"
     extract_block "$TMP/s2-base-$n.md" '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-b2"
     extract_block "$f"            '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-c2"
     [ -s "$TMP/s2-b2" ] || fail "s2: write-back step 2 block not found at $BASE in $f (anchor moved — harness/base fault, report it)"
-    cmp -s "$TMP/s2-b2" "$TMP/s2-c2" || fail "s2: $f write-back step 2 (session custom-field slot) moved vs $BASE — AC2 byte-pin (the raw-id-vs-link sentence is the amended definition's consumer, not its holder)"
+    [ -s "$TMP/s2-c2" ] || fail "s2: write-back step 2 block not found in $f — the '(upsert)' opener or the 'constants consistency check.' close moved (cf-85 AC2 keeps both: the single upsert still closes on the consistency check)"
+    cmp -s "$TMP/s2-b2" "$TMP/s2-c2" || fail "s2: $f write-back step 2 (the slug field's combined-value slot) differs from $BASE — designed-red ONLY inside cf-85's edit window; at the flip commit the block matches $BASE again, and byte-unchanged anywhere else means the flip did not land"
     extract_block "$TMP/s2-base-$n.md" 'add_comment` on the card: the research session link' 'from RESEARCH.md' "$TMP/s2-b3"
     extract_block "$f"            'add_comment` on the card: the research session link' 'from RESEARCH.md' "$TMP/s2-c3"
     cmp -s "$TMP/s2-b3" "$TMP/s2-c3" || fail "s2: $f research-only step 7 session-link sentence moved vs $BASE — AC2 byte-pin"
@@ -654,6 +695,13 @@ if want s3; then
       || fail "s3: $f lost the D23-r2 fallback posture window (t19)"
     python3 "$TMP/win.py" --ci "$f" 600 'raw session id' 'RESULT' \
       || fail "s3: $f lost the fallback/RESULT binding window (t19)"
+    # cf-85 AC5: the UNRESOLVED bullet's slot list re-points from the retired
+    # `session` custom-field value to the `slug` field's LINK HALF. The raw-id
+    # posture itself is untouched (the two windows above are its older legs
+    # and stay green), so this pairing is the leg that reddens until the flip
+    # lands — DECISIONS D11 keeps it the single shape, no bare-slug fork.
+    python3 "$TMP/win.py" --ci "$f" 400 'raw session id' 'link half' \
+      || fail "s3[cf-85 AC5]: $f's UNRESOLVED bullet does not name the slug field's link half among the raw-id slots (red before the flip — the slot list still points at the retired session field)"
     python3 "$TMP/win.py" --ci "$f" 200 'never' 're-guess' \
       || fail "s3: $f lost the never-silently-re-guess window (t19)"
     python3 "$TMP/win.py" --ci "$f" 400 'consistency' 'mismatch' \
@@ -683,7 +731,7 @@ if want s3; then
   done
   neg=$(grep -rn -e 'in-work:' -e 'done:' .rulesync/skills .opencode/skills 2>/dev/null || true)
   [ -z "$neg" ] || fail "s3: withdrawn title-convention strings under the skill trees (i1 negative, tree-wide): $neg"
-  ok "s3: full t19/c12/i3 carry inventory holds in both boards trees (strings, windows, section window, key-path + dead-literal + title negatives, RESEARCH_LABEL byte)"
+  ok "s3: full t19/c12/i3 carry inventory holds in both boards trees (strings, windows, section window, key-path + dead-literal + title negatives, RESEARCH_LABEL byte) + the cf-85 AC5 link-half slot re-point"
 fi
 
 # --- s4: the FOURTH scoped allow — absolute presence duty (C02 AC4) ----------------

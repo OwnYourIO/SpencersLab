@@ -1,0 +1,82 @@
+{
+  "feature": "2026/2026-10-cf-85-refactor-wekan-slug-session-link",
+  "plan_status": "approved",
+  "coord_session": "ses_e77830f83ffegJAtN0vKA6tGip",
+  "test_session": "ses_e7762e30cffeA6Rsn21xXVB5mX",
+  "current_wave": 1,
+  "updated_at": "2026-10-29",
+  "kickoff": {
+    "card": "DNoEkqdDJ3YJjuwbg",
+    "slug": "cf-85-refactor-wekan-slug-session-link",
+    "run_tag": null,
+    "worktree": "cf-85-refactor-wekan-slug-session-link",
+    "branch": "cf-85-refactor-wekan-slug-session-link",
+    "local": true,
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata",
+      "code": "gpu-ai/qwen3.8-flash-next-strata"
+    },
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "board_context": null,
+    "board_ids_live": {
+      "note": "No Board context block was collected; ids resolved live by the coordinator at kickoff.",
+      "board": "TNQJ2BrXenZovngTS",
+      "lists": {
+        "not_started": "XhDyShvuwhGWzWH2z",
+        "executing": "qZ9CLZqCRbv7NQQ6R",
+        "review": "2B6wWGJ8Tetp5QWDJ",
+        "rework": "y9tsvb3AguKWhzCoF",
+        "low_priority": "M4JS9LfaypJbB97At"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "session": "zZw4PwMoLeodJy3eT"
+      }
+    }
+  },
+  "plan": {
+    "handoffs": [
+      {
+        "at": "2026-10-29T15:40:00Z",
+        "role": "plan",
+        "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/2026-10-29-cf-85-refactor-wekan-slug-session-link.md, .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/STATE.json, .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/DECISIONS.md, .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/FRICTION.md, .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/chunks/C01.md]\ncommands_run: [grep survey of set_card_custom_field/custom-field/slug pins => located all 7 source + 5 test surfaces, rulesync --version => pass (37.0.0, matches CI pin), python3 json.load STATE.json => pass, git status => clean except new plan folder]\ndeviations: none\nfriction: plan-file naming precedent conflicts in-repo (cf-76 double-type vs cf-77 slug-only) — resolution: cf-77 form, recorded as DECISIONS D9; nothing blocked\nopen_questions: OQ1 final slug — the `slug` field is unset: confirm `cf-85-refactor-wekan-slug-session-link` (recommended; folder/worktree/branch already minted under it; anything else renames every surface). OQ2 UNRESOLVED fallback shape — `[<slug>](<raw session id>)` (recommended; keeps D23 r2 raw-id posture + uniform resume parse) vs bare `<slug>`. OQ3 legacy `session` board field — retire in contract now, board deletion/backfill left human-owned (recommended) vs raise an explicit removal card this run. OQ4 literal-markdown display (WeKan may show the literal string unrendered) — proceed with the literal form the card requests (recommended) vs reconsider the combined-field format.\nnext_suggested: coord runs the ONE batched question round (OQ1–OQ4, recommended answers first) and the plan-approval gate; on approval launch agent-test for C01's suite re-pins (Test stage), then the dev-local variant."
+      },
+      {
+        "at": "2026-10-29T16:20:00Z",
+        "role": "plan-r2 (batched answers folded)",
+        "plan_session": "ses_e777d4990ffeG2S3CilYb5ODZs",
+        "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/2026-10-29-cf-85-refactor-wekan-slug-session-link.md, .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/DECISIONS.md, .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/chunks/C01.md]\ncommands_run: [python3 json.load STATE.json => pass (unchanged), grep answer-fold-in markers over plan/DECISIONS => pass (Round-2 header, ALL ANSWERED section, Run close-out section, D10–D13 present), git status => clean except the plan folder]\ndeviations: none — every answer folded as instructed (OQ3 non-default choice implemented as a coord close-out step, C01 kept the sole chunk; STATE.json untouched per the no-chunk-change rule)\nfriction: none\nopen_questions: none\nnext_suggested: coordinator runs the plan-approval gate on this plan; on approval set plan_status approved, do the Post-plan card write-back per the boards skill, then Phase 2: agent-test writes C01's suite re-pins (Test stage) before the dev-local flip commit; remember the Run close-out removal card after the final review."
+      }
+    ]
+  },
+  "chunks": {
+    "C01": {
+      "status": "in-progress",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e770b0674ffebXtBEa2c7YNY8m",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T17:10:00Z",
+          "role": "test",
+          "result": "RESULT\nstatus: DONE\nchunk: C01 (test)\nfiles_changed: [tests/agent-perms/surface.sh, tests/agent-board-coord/gate.sh, tests/agent-board-coord/rulesync-surface.sh, tests/agent-board-coord/agents-md.sh, tests/session-origin/surface.sh] — uncommitted in the working tree for coord to commit with the flip. A15 re-pinned to the one-field roster (count pinned + third-field/models negations kept, fabricated-row control + three-way parity); gate t14 + A9/c8/c7 admits for the cf-85 plan folder; new c19 (combined form across boards src+gen, twins+mirrors, commands+mirrors equal counts, ONE set_card_custom_field, no session-field write, roster count one, bare-vs-link resume parse, twin identity, source↔mirror parity, rules+AGENTS mention, AC10 negative greps); c9 via parsed frontmatter value (desc.py); agents-md c3 pair pin; session-origin s3 raw-session-id→link-half window, s2-b2 re-scoped as the flip's own slot with empty-block guard, b1 one-bullet extractor.\ncommands_run: [bash -n => ok x5, agent-perms => exit 1 first red A15[AC3], 14 legs green; gate => exit 0 22 ok; rulesync-surface => exit 1 first red c19[AC6], c1..c18 green; agents-md => exit 1 first red c3[AC8]; session-origin => exit 1 first red s3[AC5], s1/s2/s4..s7 green; CHUNK_BASE=617e18488 arm => designed reds only s3 (+s2-b2/m4 in-window arms), kickoff-branch/coord-inwork PASS; negative greps pre-flip: two-field wording 8+22 hits, combined form 0 => as expected; rulesync generate --check => exit 0; npx aislop ci --changes => 0/0]\npost_flip_proof: throwaway detached worktree with needle-faithful flip of the 7 sources + rulesync generate => ALL green (agent-perms 15, gate 22, rulesync-surface 20, agents-md 9, session-origin 7 + script 7, coord-inwork 7, kickoff-branch 6, pipeline-gates/validation-fix 8, pipeline-models 6, pipeline-push-pr 6); reference flip /tmp/opencode/cf85-flip-reference.patch (968 lines) + /tmp/opencode/flip.py — /tmp only, not repo\ndeviations: test-side mechanical harness repairs only (c9 folded-scalar; s2-b1 extraction scope) — no criterion changed; PLAN DEFECT recorded: C01 Tests t2 / plan Commands name a '| **boards** |' parity row existing nowhere in the repo — c19 implements AC6 truthfully instead (equal-count source presence + mirrors + rules/AGENTS + parity legs), no weakening\nfriction: PRE-EXISTING, NOT cf-85: tests/wekan-mcp/board-context.sh t4 red at pristine HEAD — stays red before/after the flip, never attribute to this ticket; c19/A15 stop at first failure (suite convention) — dev iterates one red at a time\nopen_questions: none\nnext_suggested: agent-dev-local for the C01 flip — 7 sources + rulesync generate (7 mirrors) in ONE commit (DECISIONS D5), no push; then agent-review re-runs the suites at the flip commit"
+        },
+        {
+          "at": "2026-10-29T18:05:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.rulesync/skills/boards/SKILL.md, .rulesync/subagents/agent-board-coord.md, .rulesync/subagents/agent-board-coord-local.md, .rulesync/subagents/agent-board-coord-pr.md, .rulesync/commands/pipeline-boards.md, .rulesync/commands/pipeline-boards-pr.md, .rulesync/rules/overview.md, .opencode/skills/boards/SKILL.md, .opencode/agents/agent-board-coord.md, .opencode/agents/agent-board-coord-local.md, .opencode/agents/agent-board-coord-pr.md, .opencode/commands/pipeline-boards.md, .opencode/commands/pipeline-boards-pr.md, AGENTS.md] (14 edited by dev; the 5 test files stay as agent-test wrote them, untouched; NOTHING committed — T7 is coord's)\ncommands_run: [rulesync generate => pass (7 files, only expected mirrors; no unrelated drift), rulesync generate --check => pass (exit 0; idempotence re-proven in gate t14), bash tests/agent-perms/surface.sh => pass (15 ok, A15 one-field roster fence green), bash tests/agent-board-coord/gate.sh => pass (22 ok incl. rulesync no-op regen), bash tests/agent-board-coord/rulesync-surface.sh => pass (20 ok, c19 designed-red went green), bash tests/agent-board-coord/agents-md.sh => pass (9 ok, c3 combined-form pin green), bash tests/session-origin/surface.sh BASE=HEAD => designed-red s2-b2 exactly as cf-85 documents (edit-window red; green at the flip commit), CHUNK_BASE=617e18488 bash tests/session-origin/surface.sh => designed-red s2-b2 — names the combined-value write-back block (the AC9 demonstration), bash tests/session-origin/surface.sh s1/s3/s5/s7 => pass each (s3 link-half window green), bash tests/session-origin/surface.sh s4 => designed in-window red (BASE-relative twin diff-shape arm, green at commit — cf-58-documented posture), s2 byte-pin verification (b1+b3 byte-identical vs HEAD both trees, b2 anchors resolve in flipped text) => pass, AC10 negatives grep '`slug` + `session`' and '`session` custom' over .rulesync .opencode AGENTS.md => pass (both empty), '[<slug>](' src-gen count parity over all 7 pairs (7/7, 1/1, 1/1, 2/2, 2/2, 2/2, 2/2) => pass, npx aislop ci --changes => pass (0 errors, 0 warnings, 53 files), bash tests/wekan-mcp/board-context.sh => FAIL t4 'agent-board matcher row' — pre-existing at HEAD, unchanged by the flip, NOT cf-85]\ndeviations: wording mine within the pinned needles per the launch brief (reference consulted, its semicolon-colon and plus-the-the artifacts not reproduced); UNRESOLVED bullet additionally states the D11 binding shape [<slug>](<raw session id>) explicitly (makes the single fallback form local, all suites accept); line-wrapping in write-back/overview differs from the reference (needle-neutral, count-parity verified)\nfriction: session-origin's cf-85 note lists s2-b2 + s6 as the in-window reds but s4's twin-file diff-shape arm also reddens in-window for ANY twin body edit (base-relative additions-only assumption) — resolution: subset runs + manual byte-pin verification; green at the flip commit is structural (empty diff, atpos arm); suggests coord a FRICTION entry so the next board-surface ticket doesn't re-derive it; my attempt to reproduce the post-commit green in a throwaway /tmp detached worktree was denied by this session's shell grant (git worktree add) — no artifact created; post-commit green rests on the test session's post_flip_proof + the anchor/byte verification above\nopen_questions: none\nnext_suggested: coord T7 — single commit of tests+sources+generated+state on cf-85-refactor-wekan-slug-session-link (no push, HITL PR stop + local:true), then agent-review re-runs the full Commands (session-origin s2/s4/s6 green with BASE=flip commit); remember the coord-owned Run close-out: the session-field removal card into Review + #85 sequence; dev made NO board writes"
+        },
+        {
+          "at": "2026-10-29T18:40:00Z",
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nverdict: APPROVED (round 1, pending-flip review of the working tree @ 617e184 — no blockers, no majors, 4 nits non-blocking)\nfiles_changed: [.agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/chunks/C01.md] (Review notes only — no code or test edited)\ncommands_run: [rulesync generate => pass (no-op, tree unchanged), rulesync generate --check => pass (exit 0), bash tests/agent-perms/surface.sh => pass (15 ok, A15 one-field roster fence green), bash tests/agent-board-coord/gate.sh => pass (22 ok incl. generate idempotence + t14/t17 admits), bash tests/agent-board-coord/rulesync-surface.sh => pass (20 ok, c19 designed-red now green), bash tests/agent-board-coord/agents-md.sh => pass (9 ok, c3 combined-form pin green), bash tests/session-origin/surface.sh BASE=HEAD => designed-red exit 1 at s2-b2 + s4 + s6 ONLY (the three documented BASE-relative in-window arms; s1/s3/s5/s7 pass standalone, s3 new link-half window green), CHUNK_BASE=617e18488 => same designed-red (617e18488 == HEAD pre-chunk), grep -rn '`slug` + `session`' .rulesync .opencode AGENTS.md => pass (empty), grep -rn '`session` custom' .rulesync .opencode AGENTS.md => pass (empty; slash/and variants empty too), parity grep '[<slug>](' src-gen counts per pair => pass (6|6, 2|2 x3, 1|1 x2, rules|AGENTS 2|2) + set_card_custom_field counts equal per pair, npx aislop ci --changes => pass (0 errors, 0 warnings, 53 files), s2 b1/b3 byte-pin manual verification vs HEAD both trees => pass, s6 fragment parity manual (6 fragments x 5 surfaces) => pass miss=0, twin identity md5 (added lines + kickoff/write-back lines) => pass, twin/command frontmatter unchanged vs HEAD => pass x10, live board read-only get_card #85 + list_custom_fields => evidence of zero dev board writes]\npost_commit_expectation: session-origin must show 7 ok once the flip commit exists (s2-b2 anchors resolve in flipped text; b1/b3 verified byte-unchanged by hand; s4 goes empty-diff at commit; s6 freeze empty-diff) — nothing unproven except the literal re-run, coord owns it\nreview_nits (non-blocking, in chunks/C01.md Review notes): s2-b1 re-pin comment mechanism sentence inaccurate (old sed range ran to EOF); incidental byte-freeze on batched-question/launch-prompt passages lost (now content-pinned by c19); A15 roster fence reads one bullet line; boards skill line 109 generic plural set custom fields\ndeviations: none in the diff; process note — chunk T7 names dev as committer but the role contract puts the commit with coord: commit all 19 files + the plan folder as ONE commit (D5) carrying the designed-red line in the message (AC9 documentation)\nfriction: none new (dev's two FRICTION entries reproduced exactly as logged; resolution: subset runs + manual byte/fragment verification)\nopen_questions: none\nnext_suggested: coord commits the flip, re-runs the Commands (session-origin 7 ok expected), sets C01 done, then final whole-plan review, then D12 Run close-out card into Review + #85 summary/Review move + pipeline_release(done)"
+        }
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
