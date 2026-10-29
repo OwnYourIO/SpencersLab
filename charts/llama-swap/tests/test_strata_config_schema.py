@@ -234,15 +234,21 @@ def test_c01_removed_items_are_commented_values_toggles():
 
 @helm
 def test_c01_seam_exe_matches_container_readme_form():
-    """The engine binary's FILENAME is the containers/strata build-log capture
-    (untouched by run 2). Pinned: the contract FORM, the rx9070 label for the
-    primary, and chart literal == README literal (interface freeze)."""
+    """Post-transplant (2026-10-29): the primary's exe is the engine the
+    model-fetch setup COMPILED into the checkout on the claim — the seam to
+    containers/strata is the documented compile flow ("compiles the
+    checkout's AMD engine"), no longer a packaged label dir. Strix still
+    pins the packaged halo root (test_strata_strix covers that seam)."""
     readme = S.read(S.CONTAINER_DIR / "README.md", "the C01 image contract lives in the container, unchanged")
     exe = S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)["exe"]
-    documented = S.engine_exe_paths(readme)
-    assert documented, f"container README documents no exe contract path of the form {S.ENGINE_ROOT}/<label>/<binary>"
-    assert exe in documented, f"profile exe {exe!r} not among README contract paths {sorted(documented)}"
-    assert "-hip-rx9070/" in exe, "primary profile exe must sit under the gfx120x (rx9070) engine root"
+    assert exe == "/models/strata/Strata/engine/strata", (
+        f"primary profile exe {exe!r} must be the checkout-compiled engine "
+        "(generated run-config baseline, 2026-10-29 transplant)"
+    )
+    assert "compiles the checkout" in readme, (
+        "container README no longer documents the setup compile the primary "
+        "exe seam relies on — re-establish before landing a profile change"
+    )
 
 
 @helm

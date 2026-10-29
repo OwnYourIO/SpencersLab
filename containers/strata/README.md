@@ -26,6 +26,11 @@ digests below rather than trusting a mutable tag.
 - The engine binaries are referenced **from each profile's run-config `exe`
   key, NOT from the `cmd`** — `serve` picks its engine from the run-config
   (RESEARCH §2), so switching flavor = switching profile file, not image.
+  Post-transplant (2026-10-29): the PRIMARY profile points at the engine
+  setup compiles into the claim-side checkout (`/models/strata/Strata/engine/
+  strata`, gfx1201, venv ROCm SDK); the packaged rx9070 root above stays a
+  documented image surface and the escalation reference, and the STRIX
+  profile is the packaged-path consumer (halo root, gfx1151).
 - Binary names are measured, not invented: captured from the pinned upstream
   layers via registry tar-listing (2026-10-27/28) and re-printed to every CI
   build log by the verify step in `Dockerfile`. `strata-vision` and

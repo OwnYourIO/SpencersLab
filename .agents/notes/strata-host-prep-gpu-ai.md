@@ -182,33 +182,40 @@ strings in values — the template's sprig `default` treats an unquoted YAML
 `charts/llama-swap/values.yaml` (`strata.rocrVisibleDevices*`); the gpu-ai
 service block overrides `rocrVisibleDevices`.
 
-## 2. Staging weights on the shared claim (human-owned, before enablement 3.2)
+## 2. Provisioning weights on the shared claim (automated by model-fetch; human verifies before enablement 3.2)
 
-The pod mounts the existing `llama-swap` 500Gi claim at `/models` (DECISIONS
-Q3); Strata's files live under `/models/strata/`, kept out of llama.cpp's
-`LLAMA_CACHE=/models` layout, in exactly the shape the profile args name
-(`charts/llama-swap/values.yaml`, `strata.config.engineProfile.args`):
+The strata pod's `model-fetch` init container (charts/llama-swap, strata
+controller) does what this section used to hand to you: it copies the
+image-pinned Strata source checkout to `/models/strata/Strata` and runs the
+documented `./setup.sh --backend hip --family qwen --model <id> --no-start
+--yes` per `STRATA_QUANTS` token (default `q3` = IQ3_S). Setup compiles the
+gfx1201 engine once into `Strata/engine/`, then provisions — this IS the
+"exact prep commands on this image" the earlier revision left [VERIFY]:
 
 ```
-/models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
-/models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf   # PLE file (--ple-gguf)
-/models/strata/packs/iq3_s/          # prepared pack — size UNCONFIRMED (RESEARCH §4; IQ3_XXS-class ~40 GB precedent)
-/models/strata/mtp/rt/               # MTP draft layer ~6 GB
-/models/strata/data/expert-profile.bin
+/models/strata/Strata-data/models/IQ3_S/…-00001-of-00002.gguf   # --native
+/models/strata/Strata-data/models/IQ3_S/…-00002-of-00002.gguf   # PLE file (--ple-gguf)
+/models/strata/Strata-data/packs/iq3_s/                         # pack; the tokenizer rides INSIDE it (…/tokenizer/ — a directory)
+/models/strata/Strata-data/mtp/rt/                             # MTP draft layer
+/models/strata/Strata/data/expert-profile.bin                  # setup-derived, checkout-relative
 ```
 
-The GGUF pair is 83.62 GB on disk (`ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF`
-IQ3_S, two shards, revision `ed59f920…`; sha256s recorded in the upstream
-repo's `model-manifest.json` — RESEARCH §4). Budget the area **135–160 GB**
-(GGUFs + pack + MTP + headroom). Pack/MTP/expert-profile preparation is the
-engine's own setup flow (upstream docs) — [VERIFY: exact prep commands on
-this image]; this runbook fixes only where the results must land.
+The profile args name exactly this layout (2026-10-29 transplant: the
+generated run-config `Strata/strata-iq3_s.json` is the source of truth;
+`strata.config.engineProfile` mirrors it). The GGUF pair is 83.62 GB on disk
+(`ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF` IQ3_S, two shards, revision
+`ed59f920…`; sha256s recorded in the upstream repo's `model-manifest.json` —
+RESEARCH §4). Budget the area **135–160 GB** (GGUFs + pack + MTP + headroom).
 
-Capacity check before enabling: find the host directory backing the claim
-(`kubectl get pv | grep llama-swap` → local-path storage dir) and `df -h` it
-against the 135–160 GB budget. Page-cache note (#1250, shared-disk class):
-the claim disk doubles as the IQ3_S page-cache floor — cached model bytes
-read as used RAM but are reclaimable; under pressure
+Human verification (the old staging duty shrinks to watching): the init log
+runs `model-fetch: setup.sh for q3 as IQ3_S …` through
+`quants [q3] provisioned`; per-file `.done` markers and `/models/strata/.setup-Q3`
+make the whole step idempotent across reboots; the supervisor container only
+starts AFTER init succeeds, so a Running pod with `/health` green is itself
+provisioning proof. Capacity: `df -h` the claim's host dir (`kubectl get pv`
+→ local-path storage dir). Page-cache note (#1250, shared-disk class): the
+claim disk doubles as the IQ3_S page-cache floor — cached model bytes read as
+used RAM but are reclaimable; under pressure
 `sync && echo 1 > /proc/sys/vm/drop_caches` on the host frees them without
 evicting anything live.
 

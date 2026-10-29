@@ -104,23 +104,30 @@ VOID_ENV_TOKEN = "STRATA_KV_GROW_HOLD"
 
 PRIMARY_FORBIDDEN_FLAGS = [
     "--resident-budget-gib", "--prompt-cache", "--kv-grow", "--vision",
-    "--kv-resident",
+    # --kv-resident was listed here under the run-1 reading of RESEARCH §5
+    # ("batch-column item"); the generated run-config for THIS node proves
+    # setup itself pairs it with --ple-io ram outside any --batch context
+    # (2026-10-29 transplant), so it is baseline now, not forbidden.
 ]
-# r2-C01 relocates the run-1 seed verbatim except the secret-chain lines; the
-# run-1 rationale for each pair/flag (PR #3636 r9700-arena-pf32k minus the named
-# exclusions) carries over — see the run-1 chunk C02 AC5 + amendments.
-# --batch-mtp is on neither list: the one-at-a-time clause removes
-# --batch/--kv-resident and says nothing of the distinct flag.
+# Baseline = the run-config setup GENERATED on this node
+# (/models/strata/Strata/strata-iq3_s.json, 2026-10-29) — it supersedes the
+# PR #3636 seed: --prefill auto (machine-sized, PR's 32768 demoted to a
+# documented toggle), --conversation-cache*/--mtp-window absent (engine
+# defaults + toggles), and the Strata-data paths + --ple-io ram /
+# --kv-resident 32768 pair are now REQUIRED so a revert to the seed guesses
+# (or to the pre-transplant flat paths) goes red. --batch-mtp remains on
+# neither list (one-at-a-time posture; RESEARCH §5).
 PRIMARY_REQUIRED_PAIRS = [
-    ("--prefill", "32768"),
-    ("--conversation-cache-mib", "24576"),
-    ("--conversation-cache-slots", "16"),
+    ("--pack", "/models/strata/Strata-data/packs/iq3_s"),
+    ("--native", "/models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf"),
     ("--expert-cache", "auto"),
     ("--max-context", "262144"),
     ("--kv", "int8"),
     ("--spec", "4"),
     ("--spec-min-p", "0.5"),
-    ("--mtp-window", "8192"),
+    ("--prefill", "auto"),
+    ("--ple-io", "ram"),
+    ("--kv-resident", "32768"),
 ]
 PRIMARY_REQUIRED_FLAGS = [
     "--pack", "--native", "--ple-gguf", "--expert-profile", "--mtp",

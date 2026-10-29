@@ -1510,97 +1510,103 @@ strata:
 
     # -----------------------------------------------------------------------
     # The run-config JSON rendered VERBATIM to /profile/strata-iq3_s.json
-    # (key vocabulary: RESEARCH §2, measured from profiles.py). Seed: PR #3636
-    # readable fork config r9700-arena-pf32k.json (RESEARCH §5) with the
-    # DECISIONS amendment round applied — every removal below is a documented
-    # toggle. The on-target `strata serve --profile ... --plan --output json`
-    # gate (C04, human step 3) fixes final sizing numbers; the R1 ruling is
-    # that no repo value is trusted against real RAM until then.
+    # (key vocabulary: RESEARCH §2, measured from profiles.py). SOURCE OF
+    # TRUTH: the run-config setup GENERATED for this node
+    # (/models/strata/Strata/strata-iq3_s.json, cat 2026-10-29) — it
+    # supersedes the PR #3636 seed and corrects every seeded path guess:
+    # weights/pack/MTP live under Strata-data, the tokenizer is a DIRECTORY
+    # riding inside the pack (the seed's GGUF-file pointer was the crash
+    # strata.py named), and the engine is the checkout's own gfx1201
+    # compile. The on-target --plan gate (C04) is now verification, not
+    # discovery; every deliberate deviation from the generated file is a
+    # documented toggle below.
     # -----------------------------------------------------------------------
     engineProfile:
       # C-A keyless shipped default: "none" = the engine checks no key. It
       # binds loopback (see host below), so only the supervisor proxy can
       # reach it and the pod's auth posture is fully decided by the apiKeys
-      # above — a key here would gate nothing reachable.
+      # above — a key here would gate nothing reachable. (The generated file
+      # omits the key; "none" states the same posture explicitly.)
       api_key: "none"
-      # C01 interface freeze (containers/strata README): engine binaries are
-      # referenced from this key, never from cmd — switching flavor = switching
-      # profile, not image. rx9070 label = the gfx120x (R9700) root.
-      exe: /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata
+      # exe = the engine model-fetch's setup COMPILED for this machine
+      # (gfx1201 via the checkout's venv ROCm SDK). The checkout lives on the
+      # shared claim, so the path is pod-stable; the packaged /opt/strata
+      # engines remain the strix fallback's runtime. Switching flavor =
+      # switching profile file, never the image (C01 interface freeze).
+      exe: /models/strata/Strata/engine/strata
       # serve's engine child inherits llama-swap's model env (the layer
       # above, single source of truth); a duplicate here would let serve
       # silently re-pin a value the chart gates (rocrVisibleDevices). C05's
       # strix profile carries its own §5 eight-set instead.
       env: {}
-      # Paths live under /models/strata on the shared llama-swap claim — the
-      # staging layout the C04 runbook creates (~135-160 GB: 83.62 GB GGUF
-      # pair + pack [size unconfirmed] + MTP ~6 GB, RESEARCH §4). The prefix
-      # keeps this engine's files out of llama.cpp's LLAMA_CACHE=/models
-      # layout on the same disk (DECISIONS Q3).
+      # setup's own choices, kept verbatim: engine-relative cwd and the
+      # progress log on the claim (the --plan-gate and unload-timing
+      # evidence trail).
+      cwd: /models/strata/Strata
+      log: /models/strata/Strata/strata-iq3_s.log
+      # Paths are SETUP's measured layout on the shared claim (2026-10-29):
+      # weights/pack/MTP under Strata-data, expert-profile in the checkout's
+      # data/. The prefix keeps this engine's files out of llama.cpp's
+      # LLAMA_CACHE=/models layout on the same disk (DECISIONS Q3).
       args:
-        - --pack /models/strata/packs/iq3_s
-        # IQ3_S two-shard GGUF (file names measured from the HF repo tree,
-        # ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF@ed59f920); shard 2 is
-        # the PLE file (RESEARCH §4).
-        - --native /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
-        - --ple-gguf /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf
-        - --expert-profile /models/strata/data/expert-profile.bin
-        # N is a SLOT count (N times the largest expert blob), not MiB — the
-        # "expert-cache 24576" card-guide number was the conversation cache
-        # (contradiction #3). Seed `auto` per the PR; this node is
-        # identical-class to #1715's 128 GB machine, so the --plan gate fixes
-        # the final number, values-configurable here.
+        - --pack /models/strata/Strata-data/packs/iq3_s
+        # IQ3_S two-shard GGUF (ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF;
+        # shard 2 is the PLE file, RESEARCH §4); setup's .done markers sit
+        # beside them.
+        - --native /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+        - --ple-gguf /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf
+        - --expert-profile /models/strata/Strata/data/expert-profile.bin
+        # N in --expert-cache counts expert SLOTS, not MiB (RESEARCH §2);
+        # `auto` is both the PR's and setup's choice — the --plan gate
+        # verifies the resolved arena against real RAM (R1/R3).
         - --expert-cache auto
         - --spec 4
         - --spec-min-p 0.5
-        - --mtp /models/strata/mtp/rt
+        - --mtp /models/strata/Strata-data/mtp/rt
         - --max-context 262144
-        # int8 is the engine default; explicit because the PR ran it
-        # explicitly (RESEARCH §5).
+        # int8 KV: the engine default AND the PR's explicit choice.
         - --kv int8
-        - --mtp-window 8192
-        - --prefill 32768
-        # "24576" lives HERE (the misattribution correction, RESEARCH §5):
-        # 24 GiB x 16 slots is the PR's parked-conversation budget — VERIFY
-        # against --plan output (C04 step 3) before the first accepted
-        # request, this plus the arena is the 128 GB math (R3).
-        - --conversation-cache-mib 24576
-        - --conversation-cache-slots 16
-        # Removed per the DECISIONS amendment round — each stays one values
-        # edit away if a ruling changes:
-        # --kv-resident 32768: batch-column item, dropped with the --batch 4
-        #   posture (Q2: one agent at a time, PR stall incident).
-        # --batch-mtp: same batch family; the one-at-a-time arm is the chosen
-        #   posture, so it stays off the seed. Re-add as
-        #   "- --batch-mtp" above if on-target A/B ever wants it.
-        # --kv-grow (R4 deferred, +2-3% @64K only): re-add as
-        #   "- --kv-grow" above; the ulimit wrapper in cmd already covers its
-        #   fd dependency (PR #2399-open regime) and the documented env alias
-        #   is STRATA_KV_GROW=1. The card guide's hold-env mitigation is
-        #   VOID — 0 upstream hits (RESEARCH §2 measured absence). Needs the
-        #   on-target fd experiment (C04) first.
-        # --vision (R2 off for v1; the recipe ran it and mmproj ~0.9 GB):
-        #   re-add as "- --vision /models/strata/mmproj-Qwen3.8-Flash-Next-BF16.gguf"
-        #   above. The vision{} run-config key stays available for that flip.
-        # --resident-budget-gib: removed from the primary — it implies
-        #   --mmap-experts, the opposite of the page-locked arena this
-        #   architecture pins (contradiction #3). It belongs to the Strix
-        #   #1715 fix-class, which is C05's territory.
-        # --prompt-cache-every: removed — #4206 makes it a no-op at the
-        #   --prefill 32768 edge (RESEARCH §2); only pairs with
-        #   --prompt-cache, which the recipe never used.
+        # Machine-tuned by setup (adopted verbatim): the n-gram PLE table
+        # stays RAM-resident — the quant card's own recommendation when RAM
+        # allows — with a 32768-cell resident KV window, and prefill sized
+        # automatically for the node instead of the PR's hand-picked 32768.
+        - --ple-io ram
+        - --kv-resident 32768
+        - --prefill auto
+        # Documented deviations/toggles, one values edit away (verbatim
+        # provenance kept for the record):
+        # --prefill 32768: the PR #3636 R9700-machine number; setup chose
+        #   `auto` here — override only on --plan/bench evidence.
+        # --conversation-cache-mib 24576 / --conversation-cache-slots 16:
+        #   the PR's parked-conversation budget — the real home of the
+        #   guide's "24576" (RESEARCH §5 contradiction #3). Setup ships its
+        #   default instead (40% free RAM above floor, capped 8 GiB);
+        #   re-add both lines to pin the PR budget.
+        # --mtp-window 8192: guide-class long-context knob, absent from the
+        #   generated config; re-add to restore it.
+        # --kv-grow (R4 deferred, +2-3% @64K only): re-add "- --kv-grow";
+        #   the cmd's ulimit wrapper already covers its fd dependency and
+        #   the env alias is STRATA_KV_GROW=1 — the guide's hold-env is VOID
+        #   (RESEARCH §2). Needs the on-target fd experiment (C04) first.
+        # --vision (R2 off for v1): mmproj-Qwen3.8-Flash-Next-BF16.gguf
+        #   ships at the quant repo root (~0.9 GB); the vision{} run-config
+        #   key stays available for the flip.
+        # --resident-budget-gib implies --mmap-experts, the opposite of the
+        #   page-locked arena (contradiction #3) — strix/#1715 territory.
+        # --prompt-cache-every: #4206 no-op at prefill edges; never adopted.
       # Person-wins layer that survives config rewrites (RESEARCH §2): empty
       # until an operator out-ranks the seed.
       user_args: []
-      # Run-config vocabulary (RESEARCH §2). Pointing the tokenizer at the
-      # main GGUF shard is the hypothesis to confirm at the --plan gate.
-      tokenizer: /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
-      model_name: qwen3.8-flash-next
-      # The PR pointed lib_dirs at TheRock's multiarch tree; in the bundled
-      # image the ROCm runtime ships inside the engine root (RESEARCH §1) —
-      # VERIFY at the --plan gate that the packaged engine needs no re-point.
+      # A DIRECTORY, not the GGUF file (the seed's shard path was the
+      # tokenizer-missing crash strata.py named): the tokenizer rides inside
+      # the pack, measured 2026-10-29.
+      tokenizer: /models/strata/Strata-data/packs/iq3_s/tokenizer
+      model_name: qwen3.8-flash-next-iq3_s
+      # The compiled engine's ROCm runtime = the checkout venv's SDK trees
+      # (setup's own choice) — not the packaged image roots.
       lib_dirs:
-        - /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib
       backend: hip
       # The peer hop always rewrites the request model to this bare ID
       # (RESEARCH §3), so routing does not depend on aliases; these carry the
@@ -1650,12 +1656,12 @@ strata:
         # startup-log check gate in the fallback runbook (README), flip it
         # to "0" here if the hazard reproduces on this engine build.
       args:
-        # Same staged weights/pack/MTP as the primary — one /models/strata
-        # layout serves both profiles (the matrix never runs them at once).
-        - --pack /models/strata/packs/iq3_s
-        - --native /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
-        - --ple-gguf /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf
-        - --expert-profile /models/strata/data/expert-profile.bin
+        # Same Strata-data layout as the primary (measured 2026-10-29) — one
+        # staged set serves both profiles; the matrix never runs them at once.
+        - --pack /models/strata/Strata-data/packs/iq3_s
+        - --native /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+        - --ple-gguf /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf
+        - --expert-profile /models/strata/Strata/data/expert-profile.bin
         # VERIFY (R1): the 24576/55 pair has NO upstream source — it is the
         # card guide's number pair, and 24576 also equals the model's total
         # expert count, the likely misattribution origin (RESEARCH §7).
@@ -1669,22 +1675,23 @@ strata:
         - --expert-cache 24576
         - --resident-budget-gib 55
         # STRIX_HALO §5/§6 fast-config-class prefill chunk for the chip
-        # alone (the primary's 32768 is the PR's R9700-machine value).
+        # alone (the primary runs setup's --prefill auto).
         - --prefill 16384
         - --max-context 262144
         - --kv int8
         - --spec 4
         - --spec-min-p 0.5
         - --mtp-window 8192
-        - --mtp /models/strata/mtp/rt
+        - --mtp /models/strata/Strata-data/mtp/rt
         # Deliberately absent: --kv-grow (R4 deferral covers strix too),
         # --vision (R2 off for both profiles), --conversation-cache* (the
         # primary's 24 GiB x 16 slots is the PR's R9700-machine budget —
         # the chip's share is the --plan gate's to size, not ours to seed).
       # Person-wins layer (RESEARCH §2), same rule as the primary.
       user_args: []
-      # Same tokenizer-shard hypothesis as the primary — --plan gate.
-      tokenizer: /models/strata/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+      # Tokenizer rides inside the pack — a DIRECTORY (strata.py appends
+      # /vocab.json; same measured correction as the primary).
+      tokenizer: /models/strata/Strata-data/packs/iq3_s/tokenizer
       model_name: qwen3.8-flash-next
       # The matching halo engine root for lib_dirs (the exe's ROCm runtime
       # ships inside it — same packaged-engine VERIFY as the primary).
