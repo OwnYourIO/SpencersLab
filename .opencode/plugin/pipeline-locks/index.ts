@@ -40,7 +40,7 @@
 // /pipeline-tick command and the .pipeline/config.json option loader (D8).
 // Heartbeats follow ACTIVITY only
 // (D20): the clock keeps ticking through human stop points and an idle lock
-// goes stale like any other. C06 adds the tick command and the config loader.
+// goes stale like any other.
 // The seam export surface stays ADDITIVE — later chunks extend this file,
 // never reshape what the core suite pins.
 

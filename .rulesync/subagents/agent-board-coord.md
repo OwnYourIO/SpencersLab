@@ -157,6 +157,24 @@ opencode:
     - action: dev-boards*
       resource: '*'
       effect: allow
+    # cf-76 C07 lease-lock surface: the four pipeline-locks plugin tools,
+    # declared after the dev-boards anchor because the claim must precede
+    # the move. INERT on v2.1.4 — plugin tools are reachable only through
+    # Code Mode (D29/D34 flat registry ids), where the operative grant is
+    # the execute allow above; these rows match those shipped ids and
+    # pre-grant the surface for a release that exposes them natively.
+    - action: pipeline_claim
+      resource: '*'
+      effect: allow
+    - action: pipeline_release
+      resource: '*'
+      effect: allow
+    - action: pipeline_heartbeat
+      resource: '*'
+      effect: allow
+    - action: pipeline_status
+      resource: '*'
+      effect: allow
     - action: edit
       resource: .agents/plans/**/STATE.json
       effect: allow

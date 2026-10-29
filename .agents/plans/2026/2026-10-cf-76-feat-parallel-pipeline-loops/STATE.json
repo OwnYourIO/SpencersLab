@@ -157,14 +157,25 @@
       ]
     },
     "C07": {
-      "status": "pending",
+      "status": "done",
       "wave": 6,
       "depends_on": ["C06"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "dev_session": null,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e79253f2bffee03jIs1XEi9Vtn",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T10:10:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: DONE\nchunk: C07\nfiles_changed: [.rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md, .rulesync/subagents/agent-board-coord.md, .rulesync/subagents/agent-board-coord-local.md, .rulesync/subagents/agent-board-coord-pr.md, .opencode/agents/agent-board-coord.md, .opencode/agents/agent-board-coord-local.md, .opencode/agents/agent-board-coord-pr.md, .opencode/plugin/pipeline-locks/index.ts (NIT-1 comment-only +1/-1)]\ncommands_run: [4 plugin suites => 30/34/20/12 green post-NIT-1, siblings => 35/41/28/15, agent-perms final tree => PASS 15 ok A15 GREEN (trio rows sources+mirrors, lock-block equality, no-other-agent grep, non-allow verdicts x3, create_custom_field negative x9, exactly-TWO pins, fabricated row-drop control, three-way parity incl Pipeline:/default), rulesync-surface => 19 ok c2 era-gate ENGAGED green, standalone 10 ok, coord-inwork 7 ok, kickoff-branch plain-HEAD => documented designed-red-in-window m4 / landing => 6 ok, session-origin plain-HEAD => documented designed-red-in-window s2/s4 / landing => 7 ok, git stash create SNAP 22c34421a; CHUNK_BASE=SNAP all six surfaces => PASS 15/10/19/7/6/7, rulesync generate x2 no-op + --check rc=0, aislop rc=0 D36-only, TICK_PROMPT triple-reader => pass, create_custom_field sweep => 0, pickup walk 1-4 byte-unchanged, git scope => exactly 9 files, no plan/test/command/AGENTS edits, no stray procs, helm => n/a; coord live check post-dev: pipeline_status via Code Mode => {groups:[],session:null,lastReap:null} (surface live-real)]\ndeviations: 1) boards-skill frontmatter description edit REVERTED to HEAD bytes (rulesync fold-wrap broke c9's single-line grep; Tasks never required it; the ## Parallel pipeline loops section carries the contract). 2) AC5 coordinator items ride the launch ruling: D22 follow-up card already created by coord at plan approval (documented; dev zero board writes = AC6 kept); plan-append for coord/plan: mark COORDINATOR-TASK bullet done + record card id. 3) m4/s2/s4 in-window reds are their headers' documented pre-landing posture, green at CHUNK_BASE snapshot; absolute duties in A15/c2 both green; s2's sed range pins Pickup-to-EOF so lifecycle additions necessarily sit inside it.\nfriction: rulesync folds long frontmatter descriptions ~100 cols breaking c9-style line-greps invisibly — keep descriptions byte-stable unless pin checked first; pgrep self-match recurred (workaround applied).\nopen_questions: optional future test-round softening of m4/s2/s4 in-window forms — coord ruling DEFERRED (landing-posture green is the contract; in-window reds documented-by-design with snapshot proof)\nevidence: /tmp/opencode/cf76-C07-evidence.md\nnext_suggested: review at landing posture (CHUNK_BASE=22c34421a or post-commit), coord commits + plan-append of AC5 done-notes, then final whole-plan review."
+        },
+        {
+          "at": "2026-10-29T10:40:00Z",
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C07\nverdict: APPROVED\nfiles_changed: [chunks/C07.md (review notes only)]\ncommands_run: [4 plugin suites => 30/34/20/12, siblings => 35/41/28/15, agent-perms FULL plain-HEAD => 15 ok A15 GREEN, rulesync-surface => 19 ok c2 engaged non-vacuous, standalone => 10 ok, coord-inwork => 7 ok, kickoff-branch plain-HEAD => FAIL only at documented m4, session-origin plain-HEAD => FAIL only at documented s2, CHUNK_BASE=22c34421a all six => PASS 15/10/19/7/6/7 (snapshot live), rulesync x2 no-op + --check rc=0, aislop rc=0 D36-only, trio byte-equality sha256 sources+mirrors => pass, no-other-agent grep => trio only, create_custom_field sweep => 0, exactly-TWO pin live-verified, three-way parity TOOL_NAMES/LABEL_PREFIX/DEFAULT_PIPELINE => pass, TICK_PROMPT triple parity => pass, NIT-1 audit => comment-only, frontmatter description vs HEAD => byte-identical, pickup walk => byte-unchanged, git scope => 9 files + bookkeeping only, dev-boards read-only live: labels {Research,Ready for Work} zero Pipeline:, fields exactly {slug,session}, six In-Process lists no Timeout, follow-up card Wg93SkHZ7bMLWJYBA present in Not Started, helm => n/a]\ndeviations: none — deviation 1 verified byte-exact; deviation 2 verified live (D22 card exists, exact title); deviation 3 adjudicated FAITHFUL (headers document in-window reds + landing green re-proven non-vacuous; coord's DEFERRED-softening ruling stands; not validation-at-fault)\nfriction: none new\nopen_questions: none — coord-side plan-append remains (AC5 done-notes + card id) then commit\nnext_suggested: commit C07; post-landing plain-HEAD runs go fully green per headers; launch final whole-plan review (C07 was last chunk)"
+        }
+      ]
     }
   },
   "blocked": [],

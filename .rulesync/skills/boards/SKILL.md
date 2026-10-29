@@ -11,9 +11,9 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 ## Board facts
 
 - Instance: `https://wekan.spencerslab.com`; board **AI-Dev**; swimlane **In Process**.
-- Lists (six): **Not Started**, **Executing**, **Review**, **Rework**, **Finished**, **Low Priority** (deprioritised work — picked up last).
-- Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned).
-- Custom fields: exactly TWO board-level text fields, `slug` and `session`, resolved by name with `list_custom_fields`. There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field.
+- Lists (six today, seven once the D22 follow-up card lands): **Not Started**, **Executing**, **Review**, **Rework**, **Finished**, **Low Priority** (deprioritised work — picked up last), **Timeout** (reaper destination, created via the D22 follow-up card — never a pickup source; its triage is human-owned like **Review**'s).
+- Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned). Labels whose name starts with `Pipeline:` mark the pipelines a card blocks on the lease-lock surface (Parallel pipeline loops): the TRIMMED remainder of the label name is one pipeline/lock name, ONE card may carry several, and a card with no such label runs on the single `default` pipeline. `Pipeline:` labels are human-created in the WeKan UI and never agent-created or agent-mutated — the same posture as **Research** (D17/D19).
+- Custom fields: exactly TWO board-level text fields, `slug` and `session`, resolved by name with `list_custom_fields`. There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field. Nor a `pipeline` field — that route was retired with D19: pipeline identity is LABELS, never a third field.
 - The five standard checklists on every card (future cards via the multi-action createCard rule — imported per the upgrade-ticket runbook — existing cards via backfill; the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
@@ -77,6 +77,8 @@ The values the flow writes onto the board. They are a written-onto-the-board con
 
 The card description is the request. Claim the card per the Card lifecycle before kickoff.
 
+The walk never visits **Executing** — a card there is owned by the run holding its pipeline lock set, and one session runs one card — nor **Timeout** (reaper destination; its triage is human-owned). On parallel-pipeline runs the candidate is additionally filtered by lock-set availability per Parallel pipeline loops below.
+
 Resume vs new run (D11) — before minting anything, read the card's `slug` custom field:
 
 - It names an existing feature folder whose `STATE.json` `plan_status` is not
@@ -86,6 +88,19 @@ Resume vs new run (D11) — before minting anything, read the card's `slug` cust
   → start a new sequential run `<slug>-1`; each further completed re-pick
   continues the sequence `<slug>-2`, ….
 - Unset, or no matching folder → fresh kickoff.
+
+## Parallel pipeline loops
+
+The worker iteration one hourly tick drives — C06's tick prompt names exactly this section: run exactly one Parallel pipeline loops iteration, first `pipeline_status`, then follow the skill. One session, one card, one iteration; the card-driven kickoff, Stage map and RESULT machinery all run unchanged underneath it.
+
+- **Transport (D29/D34).** The four lock tools — `pipeline_claim`, `pipeline_release`, `pipeline_heartbeat`, `pipeline_status` — are plugin tools. On v2.1.4 they are reachable ONLY through Code Mode: call `tools.pipeline_claim` etc. from inside `execute` (flat registry ids). They never appear in the native provider tool snapshot, so nothing here relies on the family's per-tool permission rows — those rows are inert future-proofing and the operative grant is the `execute` allow. The `.pipeline/` runtime dir is plugin-owned: agents never read, write, or delete its files — the four tools are the only surface.
+- **Derive the pipeline set from the card's labels (D17).** `get_card` the candidate → its `label_ids`; resolve names through `get_board`'s labels (the by-list projection strips labels — the single-card read is the source). Every label whose name starts with `Pipeline:` contributes its TRIMMED remainder as one lock name (matching is case-sensitive on the exact `Pipeline:` prefix; an empty remainder is ignored; duplicates dedupe). NO matching label ⇒ the single `default` pipeline. The claim input is (cardId + derived set) — never a typed pipeline id, never a hand-typed set. Card #76 itself carries no `Pipeline:` label, so today every card derives `default` — serialized, exactly yesterday's behavior.
+- **Pick per lock availability.** Call `pipeline_status` first — cheap, and it proves the plugin is alive in this session. Then run the existing pickup walk (Rework → Not Started → Low Priority, top first) but SKIP a candidate whose ENTIRE derived set is not free: any locked member ⇒ skip the card, its set overlaps a live run. Never pick or restart a card in **Executing**; never pick from **Timeout**.
+- **Claim before anything else.** `pipeline_claim(cardId, pipelines, cardTitle)` is all-or-nothing over the derived set and MUST precede the `move_card` to **Executing** and the claim comment — no board move and no code edit happens on an unclaimed card. An `ok:false reason:"locked"` answer names the holder: move to the next candidate, at most 3 claim attempts per session, then report "no eligible work" and end the session cleanly. The claim comment records the DERIVED PIPELINE SET alongside the session line — a typo'd label silently falls back to `default`, so the set rides on the card to keep label drift visible (plan Risks).
+- **Heartbeats are automatic.** The engine beats the claimed set on root and subagent activity; `pipeline_heartbeat` only force-beats every lock file of the calling session's root claim — not a routine duty.
+- **Human stops (D20/D21).** The stale clock (2 h) keeps ticking through every stop point — the plan-approval pause is no exception. An answer inside the window resumes ordinary heartbeats and the lock is fine; past it the reaper reaps the set — the card moves to **Timeout** with a Home Assistant alert, or, until the D22 follow-up card lands a deterministic list-creation tool, queues `.pipeline/timeouts.jsonl` plus a card comment: that degrade is the shipped interim, never a failure. The run then stops at its next PIPELINE LOCK LOST signal. No release-at-stop, no re-claim dance — a re-picked card is a fresh claim under the normal Resume-vs-new-run rule.
+- **Exit.** Card to **Review** + summary comment → `pipeline_release(outcome:"done")` — the Review hand-off IS the release point (D6); **Finished** is human-owned and never touches the lock. A blocked card: `add_comment` with the reason, then `pipeline_release(outcome:"abandoned")` — or keep the lock and let it go stale (prefer abandon-release when the card should stay re-pickable for another run, keep-and-stale when THIS run may resume). **PIPELINE LOCK LOST** from any tool answer or hook: stop immediately — no commit, no card move; only a fresh run re-claims.
+- **Board-side prerequisites — human-owned, never agent-executed (cf-76).** (1) `Pipeline:<name>` labels are created in the WeKan UI as parallel tracks are wanted; until then every card runs the single `default` pipeline. (2) The **Timeout** list lands via the coordinator-created follow-up card requesting a `create_list` tool for the wekan-mcp surface; until it does, the reaper degrades as above and nothing else is needed. Lists, checklists, labels and rules stay human-owned: this flow only READS labels (`get_card` + `get_board` are the sole board calls the lock surface adds) and mutates nothing — the custom-field roster stays the two fields above.
 
 ## Card-driven kickoff — replaces pipeline-kickoff Q1–Q3 for board runs
 
@@ -182,9 +197,10 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
 **Review** is the agent's final destination; **Finished** is human-owned.
 
 - **Pickup** → `move_card` to **Executing** + `add_comment` claiming the card: the session line — this run's `Session origin:` link, or the RAW session id when it says UNRESOLVED (fallback recorded in RESULT) — the resolved model tiers (from the Model(s) checklist), the consumed checklist answers, the resolved slug, and the plan folder path.
+- **Lock set before the move** — every entry path (a tick, a manual `/pipeline-boards` with a card id, or one without) calls `pipeline_claim` for the card's derived pipeline set BEFORE that `move_card` to **Executing** and the claim comment (Parallel pipeline loops). A manually-addressed card whose set is not fully free is reported and left — never forced.
 - **Plan approved** (after the question round) → `add_comment` that the plan is approved (plan path, worktree/branch), then the Post-plan card write-back below.
 - **Each chunk done** → `add_comment` with the chunk status (chunk id, dev/review verdict, commit).
-- **All chunks done + final whole-plan review passed** → `move_card` to **Review** + summary comment: branch, commit range, validation results, plan path.
+- **All chunks done + final whole-plan review passed** → `move_card` to **Review** + summary comment: branch, commit range, validation results, plan path; once the comment lands, `pipeline_release(outcome:"done")` hands the lock set back (D6 — **Review** is the release point, **Finished** never touches the lock).
 - **Never** `move_card` to **Finished** — a human moves Review → **Finished** (accept) or → **Rework** (send back).
 - Card picked from **Rework**: read its full comment history (`list_comments`) first; the comments are the rework context.
 - **Resume vs new run**: apply the D11 rule from Card pickup; a resumed run re-claims without re-minting the slug or re-running kickoff.

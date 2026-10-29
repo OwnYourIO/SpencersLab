@@ -146,6 +146,18 @@ permissions:
   - action: dev-boards*
     resource: '*'
     effect: allow
+  - action: pipeline_claim
+    resource: '*'
+    effect: allow
+  - action: pipeline_release
+    resource: '*'
+    effect: allow
+  - action: pipeline_heartbeat
+    resource: '*'
+    effect: allow
+  - action: pipeline_status
+    resource: '*'
+    effect: allow
   - action: edit
     resource: .agents/plans/**/STATE.json
     effect: allow
