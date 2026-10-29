@@ -243,6 +243,38 @@ The agent files themselves are repo-agnostic on purpose (they work the same
 in HomeAssistant/CuratedForest); repo grounding lives in this file, which is
 loaded into every session automatically.
 
+## Pipeline worker iterations
+
+The `pipeline-locks` plugin (`.opencode/plugin/pipeline-locks/`, hand-
+managed) serializes board work per pipeline: a card's `Pipeline:<name>`
+board labels name the locks it takes — no such label means the single
+`default` pipeline, and several labels block all of those pipelines
+all-or-nothing. Cards with disjoint sets run as parallel
+`agent-board-coord` iterations; the hourly entry point is the OpenChamber
+loop file `.agents/loops/pipeline-worker.md` (shipped disabled until the
+cf-76 live smoke passes — until then `/pipeline-boards-hourly` and its gate
+stay the fallback). `/pipeline-tick` (plugin command) reaps stale locks
+first, then prompts the worker; the loop body ships the plain-text
+equivalent (D30). Rules for worker sessions — the `boards` skill owns the
+detail:
+
+- One card per session; never pick or restart a card already in **Executing**
+  — pickup walks `Rework → Not Started → Low Priority`.
+- `pipeline_claim` BEFORE any board move or code edit (the whole label set or
+  nothing — a contended claim names the holder); validations green → card to
+  Review → `pipeline_release(outcome:"done")`. Finished stays human-owned.
+  Blocked → comment + `outcome:"abandoned"`, or let the lock go stale per the
+  boards skill.
+- The `pipeline_*` tools are Code-Mode only (`execute` → `tools.pipeline_claim`
+  etc., flat names) — on v2.1.4 they never appear in the native tool snapshot.
+- `PIPELINE LOCK LOST` = stop immediately: no commit, no card move — only a
+  fresh run re-claims. The plugin owns `.pipeline/` files; agents never
+  read, write, or delete them.
+- Stale locks (no heartbeat for 2 h) are reaped: the card moves to the
+  **Timeout** list (or queues in `.pipeline/timeouts.jsonl` until that list
+  exists) with a Home Assistant alert; Timeout triage is human-owned, like
+  Review.
+
 ## MCP servers
 
 Servers are split across two places. The regular fleet lives in the

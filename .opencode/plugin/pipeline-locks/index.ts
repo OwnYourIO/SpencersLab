@@ -34,9 +34,11 @@
 // Chunk map (cf-76): C03 shipped the lock store + the four tools; C04 added
 // the heartbeat/lifecycle engine — tool hooks, the deferred event loop,
 // beat/reap timers, the parent-walk resolveRoot and the set-wide lock-lost
-// reaction; C05 (this state) adds the reaper — stale locks to .reaped/, the
-// card's Timeout move with the timeouts.jsonl degrade, the HA alert, and the
-// /pipeline-reap + /pipeline-status commands. Heartbeats follow ACTIVITY only
+// reaction; C05 added the reaper — stale locks to .reaped/, the card's
+// Timeout move with the timeouts.jsonl degrade, the HA alert, and the
+// /pipeline-reap + /pipeline-status commands; C06 (this state) adds the
+// /pipeline-tick command and the .pipeline/config.json option loader (D8).
+// Heartbeats follow ACTIVITY only
 // (D20): the clock keeps ticking through human stop points and an idle lock
 // goes stale like any other. C06 adds the tick command and the config loader.
 // The seam export surface stays ADDITIVE — later chunks extend this file,
@@ -52,13 +54,23 @@ export const LABEL_PREFIX = "Pipeline:";
 export const DEFAULT_PIPELINE = "default";
 export const TOOL_NAMES = ["pipeline_claim", "pipeline_release", "pipeline_heartbeat", "pipeline_status"];
 
+// The worker prompt the tick executor sends after its reap. This sentence IS
+// the shipped loop-file body (D30: slash dispatch from loop text is unproven
+// on v2.1.4, so the loop file carries the plain text and /pipeline-tick stays
+// the documented swap target until the live smoke proves dispatch) — C07's
+// boards-skill iteration section and A15's parity arm pin both sides, so the
+// three must agree on this exact wording.
+export const TICK_PROMPT = "Load the boards skill and run exactly one Parallel pipeline loops iteration. First call pipeline_status, then follow the skill.";
+
 // The instruction-entry key the claim pins and release removes (D16 lineage).
 const PIN_KEY = "pipeline-lock";
 // Runtime dir at the canonical root and its members (conventions: DECISIONS
-// header — locks/, events.log, meta/lastReap written by C05).
+// header — locks/, events.log, meta/lastReap written by C05, config.json
+// read by the C06 loader).
 const RUNTIME_DIR = ".pipeline";
 const LOCKS_DIR = "locks";
 const EVENTS_FILE = "events.log";
+const CONFIG_FILE = "config.json";
 // Storage keys live in one flat namespace per plugin id (ctx.storage is
 // plugin-id + project-id scoped and shared across worktrees — D26, so the
 // claim bookkeeping rebuilds after a server restart from any location).
@@ -179,6 +191,94 @@ export function derivePipelineSet(labelNames: string[]): string[] {
     .filter((name) => name.length > 0);
   const set = [...new Set(kept)];
   return set.length > 0 ? set.sort() : [DEFAULT_PIPELINE];
+}
+
+// D8: plugin options ride .pipeline/config.json ONLY — an optional file at
+// the runtime dir; anything absent or unusable lands on these baked defaults
+// (D13 keeps maxWorkers reserved and unwired, D21 owns the stale window).
+function configDefaults(): any {
+  return {
+    staleMs: DEFAULT_STALE_MS,
+    timerMs: DEFAULT_TIMER_MS,
+    reapEveryMs: DEFAULT_REAP_EVERY_MS,
+    hookThrottleMs: DEFAULT_HOOK_THROTTLE_MS,
+    // D12: a failed root marks the lock and lets the reaper do the rest;
+    // D16: the strict guard is ON, its throw is the stop signal.
+    releaseOnFailure: false,
+    strictLockLoss: true,
+    haNotify: true,
+    maxWorkers: null,
+    board: { ...BOARD_DEFAULTS },
+  };
+}
+
+const CONFIG_NUMBER_KEYS = ["staleMs", "timerMs", "reapEveryMs", "hookThrottleMs"];
+const CONFIG_BOOLEAN_KEYS = ["releaseOnFailure", "strictLockLoss", "haNotify"];
+const CONFIG_BOARD_KEYS = ["boardTitle", "swimlaneTitle", "timeoutListTitle"];
+
+export async function loadConfig(deps: any, dir: string): Promise<any> {
+  // A testable seam over the one option file: callers inject the promises
+  // readFile (sync fs is structurally banned in this module — the tick suite
+  // pins it) and a stderr log. Wrong-typed values fall back per key WITHOUT
+  // coercion, so a config typo cannot quietly rewrite a cadence into NaN or
+  // a string; a malformed file costs exactly one log line and never a throw
+  // — a plugin that refuses to load is worse than one on defaults. Unknown
+  // keys, top-level or inside board, are ignored.
+  const cfg = configDefaults();
+  const warn = (line: string): void => {
+    try {
+      if (typeof deps?.log === "function") deps.log(`config.json: ${line}`);
+    } catch {
+      // a broken logger cannot break the loader contract
+    }
+  };
+  let raw: unknown;
+  try {
+    if (typeof deps?.readFile !== "function") return cfg;
+    raw = await deps.readFile(join(String(dir ?? ""), CONFIG_FILE));
+  } catch (err: any) {
+    if (err?.code === "ENOENT") return cfg; // the normal state — no file, no warn
+    warn(`read failed (${String(err?.code ?? err)}) — defaults stand`);
+    return cfg;
+  }
+  let parsed: any;
+  try {
+    parsed = JSON.parse(String(raw));
+  } catch {
+    warn("file is not valid JSON — defaults stand");
+    return cfg;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    warn("file is not a JSON object — defaults stand");
+    return cfg;
+  }
+  for (const key of CONFIG_NUMBER_KEYS) {
+    const value = parsed[key];
+    if (value === undefined) continue;
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) cfg[key] = value;
+    else warn(`${key} is not a positive number — default stands`);
+  }
+  for (const key of CONFIG_BOOLEAN_KEYS) {
+    const value = parsed[key];
+    if (value === undefined) continue;
+    if (typeof value === "boolean") cfg[key] = value;
+    else warn(`${key} is not a boolean — default stands`);
+  }
+  if (parsed.maxWorkers !== undefined) {
+    if (typeof parsed.maxWorkers === "number" && Number.isFinite(parsed.maxWorkers) && parsed.maxWorkers >= 0) cfg.maxWorkers = parsed.maxWorkers;
+    else warn("maxWorkers is not a number — default stands");
+  }
+  if (parsed.board !== undefined) {
+    if (parsed.board && typeof parsed.board === "object" && !Array.isArray(parsed.board)) {
+      for (const key of CONFIG_BOARD_KEYS) {
+        const value = parsed.board[key];
+        if (value === undefined) continue;
+        if (typeof value === "string" && value) cfg.board[key] = value;
+        else warn(`board.${key} is not a string — default stands`);
+      }
+    } else warn("board is not an object — defaults stand");
+  }
+  return cfg;
 }
 
 export async function resolveLockRoot(deps: any, startDir: string): Promise<string> {
@@ -1027,6 +1127,38 @@ async function acquireReaperGuard(env: any, fsx: any): Promise<boolean> {
   return false;
 }
 
+// The heartbeat-race restore is only safe while the live path is still
+// vacant. A pass that frees pipelines can be followed by a fresh O_EXCL
+// claim of the same pipeline BEFORE the rename-back runs, and renaming back
+// then would overwrite the new holder's file with this dead record — its
+// next beat would see a foreign record and take the whole-set lost path
+// (C05 review Minor-1: same defect class as C04 MAJOR-1, fs-syscall-wide
+// instead of minutes-wide). Prove the destination absent first; on occupied
+// or unreadable state leave the copy under .reaped for forensics and audit
+// restored:false — a live claim is worth more than a resurrected dead one.
+async function restoreRacedLock(env: any, fsx: any, path: string, reapedPath: string, copy: any, pass: any): Promise<void> {
+  const pipeline = basename(path, ".json");
+  let destination = "vacant";
+  try {
+    await fsx.stat(path);
+    destination = "occupied";
+  } catch (err: any) {
+    if (err?.code !== "ENOENT") destination = "unreadable";
+  }
+  if (destination === "vacant") {
+    try {
+      await fsx.rename(reapedPath, path);
+      await appendEvent(env, { ev: "reap_raced", pipeline, cardId: copy?.cardId ?? null, setId: copy?.setId ?? null, trigger: pass.trigger, restored: true });
+      return;
+    } catch (err: any) {
+      logNote(env, `heartbeat-race restore failed for ${pipeline}: ${String(err?.code ?? err)}`);
+      return;
+    }
+  }
+  await appendEvent(env, { ev: "reap_raced", pipeline, cardId: copy?.cardId ?? null, setId: copy?.setId ?? null, trigger: pass.trigger, restored: false });
+  logNote(env, `heartbeat-race restore skipped for ${pipeline}: the lock path is ${destination}`);
+}
+
 async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise<any | null> {
   // BOTH clock and disk must say dead: stale iff pass.now − max(heartbeatAt,
   // mtime) ≥ staleMs, so a hand-touched or freshly-beat mtime legitimately
@@ -1061,12 +1193,7 @@ async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise
   const copy = await readLock(env, reapedPath);
   const copyHbMs = copy ? Date.parse(String(copy.heartbeatAt ?? "")) : Number.NaN;
   if (Number.isFinite(copyHbMs) && pass.now - copyHbMs < pass.staleMs) {
-    try {
-      await fsx.rename(reapedPath, path);
-      await appendEvent(env, { ev: "reap_raced", pipeline, cardId: copy?.cardId ?? null, setId: copy?.setId ?? null, trigger: pass.trigger });
-    } catch (err: any) {
-      logNote(env, `heartbeat-race restore failed for ${pipeline}: ${String(err?.code ?? err)}`);
-    }
+    await restoreRacedLock(env, fsx, path, reapedPath, copy, pass);
     return null;
   }
   const entry = {
@@ -1467,6 +1594,29 @@ function buildCommandSpecs(env: any, ctx: any): any[] {
         return text;
       },
     },
+    {
+      name: "pipeline-tick",
+      description:
+        "Run one pipeline worker tick: reap stale locks first, then prompt this session with the worker text (boards skill, exactly one iteration). Takes no arguments.",
+      execute: async (input: any) => {
+        // Reap-before-prompt (C06 AC 2) as plain code: the sweep lands
+        // whoever dispatches this command, and the shipped D30 loop body
+        // never names it — determinism without dispatch rides on the
+        // claim-time and timer reaps the same guarded pass serves.
+        let reapSummary: string;
+        try {
+          const res = await reapStale(env, { trigger: "tick" });
+          reapSummary = res?.skipped ? "reap skipped (guard held elsewhere)" : `reaped ${Array.isArray(res?.reaped) ? res.reaped.length : 0} stale lock(s)`;
+        } catch (err: any) {
+          // A broken reap must still hand the session its work prompt —
+          // claim-time reaping covers one missed sweep.
+          reapSummary = `reap failed: ${String(err?.message ?? err)}`;
+        }
+        await appendEvent(env, { ev: "tick", sessionID: String(input?.sessionID ?? ""), reap: reapSummary });
+        await say(input, TICK_PROMPT);
+        return `pipeline-locks tick: ${reapSummary}`;
+      },
+    },
   ];
 }
 
@@ -1608,24 +1758,18 @@ export default {
         boardId: null,
         sessionGet: async (sessionID: string) =>
           typeof ctx?.session?.get === "function" ? ((await ctx.session.get({ sessionID })) ?? undefined) : undefined,
-        config: {
-          staleMs: DEFAULT_STALE_MS,
-          timerMs: DEFAULT_TIMER_MS,
-          reapEveryMs: DEFAULT_REAP_EVERY_MS,
-          hookThrottleMs: DEFAULT_HOOK_THROTTLE_MS,
-          // D12: a failed root marks the lock and lets the reaper do the
-          // rest; D16: the strict guard is ON, its throw is the stop signal.
-          releaseOnFailure: false,
-          strictLockLoss: true,
-          haNotify: true,
-          maxWorkers: null,
-          board: { ...BOARD_DEFAULTS },
-        },
         // The claim-time and reap-timer legs run the real guarded reaper —
         // C05 replaced C03's no-op stub without changing either call site.
         reapStale: async (o: any) => await reapStale(env, { trigger: String(o?.trigger ?? "timer") }),
         signal: shutdown.signal,
       };
+
+      // D8: the only options channel — .pipeline/config.json read here, at
+      // setup, through the loadConfig seam (no module-scope fs read; the tick
+      // suite pins setup-through-the-seam with a staleMs that is impossible
+      // as a default). The loader never rejects, so a malformed or unreadable
+      // file lands on the baked defaults plus a stderr line.
+      env.config = await loadConfig({ readFile: (path: string) => fsp.readFile(path, "utf8"), log }, env.runtimeDir);
 
       // The reap's MCP legs bind lazily: URL discovery runs at the first
       // board/alert call, so an offline setup degrades inside the seams' own
@@ -1678,7 +1822,8 @@ export default {
 
       if (typeof ctx?.command?.transform === "function") {
         // C01 fact 4's proven chain: transform + editor.add is how a plugin
-        // command joins the location registry; C06's tick lands here too.
+        // command joins the location registry — tick, reap and status all
+        // ride it.
         try {
           await ctx.command.transform((editor: any) => {
             for (const spec of buildCommandSpecs(env, ctx)) editor.add(spec);

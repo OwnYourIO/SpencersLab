@@ -136,14 +136,25 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": ["C05"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "dev_session": null,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e794ced87ffeH1VaaoTUEOOImU",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T09:15:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: DONE\nchunk: C06\nfiles_changed: [.opencode/plugin/pipeline-locks/index.ts (1799->1944: TICK_PROMPT + loadConfig/configDefaults seams + CONFIG_FILE, pipeline-tick executor on the proven transform+add chain, setup config via loadConfig, C05 Minor-1 restore-TOCTOU hardening via restoreRacedLock), .agents/loops/pipeline-worker.md (NEW first loops file: name/schedule hourly/enabled:false/model openrouter/qwen/qwen3.8-flash per Q2/agent agent-board-coord per D15; D30 plain-text body VERBATIM; /pipeline-tick documented as swap target in an HTML comment only), .rulesync/rules/overview.md (+32 Pipeline-worker section), AGENTS.md (regenerated, exactly +32), /tmp deliverables (runbook + nonvacuity proof)]\ncommands_run: [tick => pass 12/12 green, core => 30/30, engine => 34/34, reap => 20/20 (all re-run AFTER final round-trip), siblings => 35/41/28/15, agent-perms A1..A14 + A15 ENGAGED verbatim pre-C07 red, standalone 10 ok, rulesync-surface 19 ok (c8 admits .agents/loops/), coord-inwork 7, kickoff-branch 6 (m6 regeneration-equivalence green after AGENTS regen), session-origin 7, rulesync generate x2 no-op + --check => pass, aislop rc=0 D36-only, grep pins => pass, scratch nonvacuity LEG1 restored:false foreign-intact / LEG2 restored:true => pass, live: 9 hot-reloads zero setup-degraded + pipeline_status round-trip => pass (groups[]/lastReap null), canonical .pipeline/ dir-only no reaper.lock leak, /pipeline-tick + /pipeline-reap NOT fired against live board, helm => n/a]\ndeviations: 1) AC6 runbook not written into chunks/C06.md — plan-folder writes hard-denied to dev (edit+write rejected, no shell bypass); body at /tmp/opencode/cf76-C06-live-smoke-runbook.md for plan-session append (C01 precedent). 2) Tick executor posts exactly ONE prompt; reap summary rides command return + events.log tick audit (AC2 one-worker-prompt-per-tick). 3) loadConfig warns per wrong-typed key (only malformed-JSON one-line pinned; per-key warns for drift visibility). 4) TOCTOU hardening extracted as restoreRacedLock + restored:true|false audit field (R4 pins event presence only, green). 5) TICK_PROMPT == loop-file sentence == the string C07's skill text must carry: one constant, three pinned readers.\nfriction: C06 checklist-body task not executable by dev (plan-folder deny, correct posture) — reported; routing done by coord.\nopen_questions: none\nnext_suggested: coord routes plan-append of the runbook into chunks/C06.md, commits C06, launches C07 review then C07."
+        },
+        {
+          "at": "2026-10-29T09:45:00Z",
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C06\nverdict: APPROVED\nfiles_changed: [chunks/C06.md (review notes appended; runbook untouched)]\ncommands_run: [tick => pass 12/12 first green, core => 30/30, engine => 34/34, reap => 20/20, siblings => 35/41/28/15, agent-perms A1..A14 + A15 verbatim pre-C07 red, rulesync-surface 19 ok incl c8 admitting .agents/loops/, standalone 10, coord-inwork 7, kickoff-branch 6 (m6 green via regeneration carve), session-origin 7, rulesync generate x2 no-op + --check pass, aislop rc=0 D36-only, TICK_PROMPT===loop-prose===suite byte-check => identical, AGENTS.md hunk vs rules source => byte-identical +32 only, sync-fs grep => 0, await say count => 1, nonvacuity scratch independently re-run => LEG1/LEG2 pass, runbook vs artifact => verbatim, scheduled-tasks docs => timezone omission doc-legal, pipeline-reap/status diff audit => untouched, fallback surfaces intact, git status => sanctioned append only, helm => n/a]\ndeviations: none — dev deviations 1-5 all adjudicated FAITHFUL; AGENTS section states nothing the code does not do; runbook covers every draft item minus coord-adjudicated stale wording; NIT-1 (duplicate chunk-map sentence) routed to C07 dev, NIT-2 (STATE current_wave lag) coord-side, OBS-1 stat-rename micro-window accepted\nfriction: none new\nopen_questions: none\nnext_suggested: commit C06; launch C07 (perm rows + boards skill; engages A15 green + third TICK_PROMPT reader; NIT-1 rides)"
+        }
+      ]
     },
     "C07": {
       "status": "pending",
