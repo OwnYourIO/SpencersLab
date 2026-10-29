@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-cf-85-refactor-wekan-slug-session-link",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e77830f83ffegJAtN0vKA6tGip",
   "test_session": "ses_e7762e30cffeA6Rsn21xXVB5mX",
   "current_wave": 1,
@@ -51,7 +51,7 @@
   },
   "chunks": {
     "C01": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
@@ -76,6 +76,17 @@
         }
       ]
     }
+  },
+  "final_round": {
+    "status": "approved",
+    "review_session": "ses_e76ebdcd2ffeMbgr5salfIeDd2",
+    "handoffs": [
+      {
+        "at": "2026-10-29T19:30:00Z",
+        "role": "final-review",
+        "result": "RESULT\nstatus: DONE\nchunk: final\nverdict: APPROVED (no blockers, no majors, no minors; 4 nits non-blocking)\nfiles_changed: [chunks/C01.md (final notes)]\ncommands_run: [rulesync generate --check => pass (exit 0) + idempotent no-op re-proven (37.0.0 = CI pin), agent-perms => 15 ok (A15 one-field roster fence green), gate => 22 ok (t14 scope + generate idempotence), rulesync-surface => 20 ok (c19 green), agents-md => 9 ok (c3 combined-form pin green), session-origin (BASE=HEAD=efe8d8bee) => 7 ok — s2-b2/s4/s6 GREEN at the flip commit (the deferred literal post-commit re-run, exactly as the chunk review proved structurally), CHUNK_BASE=617e18488 session-origin => designed red on s2 naming the combined-value write-back block (AC9 after-state, artifacts inspected), AC10 negative greps (.rulesync .opencode AGENTS.md) => empty incl. slash/and variants, npx aislop ci --changes => pass (0/0, 53 files), sibling regression coord-inwork 7 / kickoff-branch 8+6 / session-origin script 7 / pipeline-gates validation-fix 8 / pipeline-models 6 / pipeline-push-pr 6 / standalone-agents 10 / wekan-mcp skill-surface 8 + tools 9 => all pass, wekan-mcp board-context t4 + create-list t2 => PRE-EXISTING reds verified unchanged-by-cf-85 (empty diffs under tests/wekan-mcp + containers, anchors byte-identical at 617e18488; BASE-vs-merge-base stale arms) — Deferred, not touched, byte-pin verification vs 617e18488 (claim-comment bullet + research step-7, both trees) => pass (D8 holds; at BASE=HEAD s2 pins are self-comparisons — hand check required, done), write-back audits (1 upsert, 0 session assignments, consistency-check close, both trees) => pass, twin added-line md5 identity src+gen => pass (-local vs -pr body delta unchanged), [<slug>]( parity 7|7, 2|2 x3, 1|1 x2, rules|AGENTS 2|2 => pass, git scope audit (24 files = 7 src + 7 gen + 5 suites + 5 plan folder; only STATE.json dirty beyond; branch local-only, main…HEAD 0/1) => pass, live read-only get_card/list_comments/get_board #85 => old two-field values intact = correct frozen history (run's write-back predates the flip; new parse reads bare slug as whole), 5 comments all coord's => zero dev/review board writes]\ndeviations: sibling suites run as regression insurance (additive only); board access strictly read-only; only chunks/C01.md written under .agents/plans/\nfriction: two BASE-stale pre-existing wekan-mcp reds (board-context t4 lacks a BASE override; create-list has CF68_BASE) read as failures to later board-surface tickets — proven unchanged, Deferred; session-origin s2 byte-pins are self-comparisons at BASE=HEAD so pre-chunk byte-pin checks need hands — next board-surface ticket should not re-derive\nopen_questions: none\nnext_suggested: coord commits plan-folder bookkeeping, D12 Run close-out card into Review, #85 summary + move to Review + pipeline_release(done); branch stays local (HITL PR, local: true) — landing user-owned"
+      }
+    ]
   },
   "blocked": [],
   "deferred": []

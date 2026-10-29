@@ -24,3 +24,6 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 ## Deferred
 - Board-side removal of the legacy `session` custom field: owner-owned, and per D12 the cf-85 run itself raises the removal-request card at close-out (lands in Review awaiting the owner) — no longer a bare note.
 - WeKan display fidelity of markdown in text custom fields: runtime observation only — the user confirmed the literal format (D13); closed as a repo concern.
+- 2026-10-29 review(final) Deferred: two BASE-stale pre-existing reds surfaced by full-suite regression — `tests/wekan-mcp/board-context.sh` t4 (lacks a `<REF>_BASE` override; `create-list.sh` t2 has `CF68_BASE`) — re-anchoring is a separate ticket; cf-85 proved unchanged-by-them (FRICTION entry carries the evidence).
+- 2026-10-29 review(final) Deferred: the historical intake runbook still says "exactly TWO (`slug`, `session`)" custom fields — stale wording outside this ticket's surfaces; worth folding a pointer into the D12 removal-card description at close-out (done there).
+- 2026-10-29 review(final) Deferred: 4 open FRICTION entries await the run-close user call (Step 10 multi-select; board-override → each checked item becomes a Review card, never an in-session plan ticket).
