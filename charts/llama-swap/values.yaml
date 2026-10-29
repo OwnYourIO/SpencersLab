@@ -1038,12 +1038,20 @@ app-template:
           # privileged).
           seccompProfile:
             type: Unconfined
-      # Weight staging as a first-class citizen: the packaged CLI's install
-      # verb is the only authority on the quant layout (repo tree has no
-      # tokenizer/pack listing; the C02 seed paths were VERIFY-marked
-      # hypotheses and the tokenizer one proved a shape error on-target).
-      # `strata install` never starts or serves, so the RAM law is untouched;
-      # markers under /data/install make it idempotent across pod restarts.
+      # Weight staging as a first-class citizen: upstream provisions models
+      # headlessly ONLY through the source-checkout installer — the packaged
+      # CLI's `install` verb is a shim for the checkout's setup.py ("this
+      # folder has no installer", first deploy 2026-10-28) and docs/
+      # LLAMA_SWAP.md says the integration "needs a source checkout, not the
+      # desktop installer". So the image embeds the pinned checkout
+      # (containers/strata Dockerfile, strata-src stage) and this init copies
+      # it onto the claim and runs the documented
+      # `./setup.sh --family qwen --model <id> --no-start --yes`: setup owns
+      # the whole artifact story (shards, tokenizer, pack, draft data, its
+      # own engine fetch) and writes strata-<model>.json run configs beside
+      # the checkout — hence the checkout lives under /models/strata, so
+      # every output persists on the shared claim. --no-start keeps the RAM
+      # law untouched (setup never serves); markers make it idempotent.
       initContainers:
         model-fetch:
           image:
@@ -1059,13 +1067,31 @@ app-template:
           args:
             - |
               set -eu
-              # /data/install is the terminal CLI's fixed default root; bind it
-              # to the shared claim so downloads persist exactly where the serve
-              # profiles point (/models/strata). Without the symlink the pull
-              # lands in the ephemeral container layer and vanishes.
+              fail() { echo "model-fetch: $*" >&2; exit 1; }
+              [ -f /opt/strata/src/Strata/setup.sh ] \
+                || fail "image carries no source checkout - containers/strata must be rebuilt (strata-src stage, 2026-10-29 contract)"
               mkdir -p /models/strata
+              # /data/install stays the CLI's install-dir anchor, bound to the
+              # claim so discovery tools (models list --install-dir default)
+              # see what setup produced.
               rm -rf /data/install
               ln -sfn /models/strata /data/install
+              SRC=/models/strata/Strata
+              if [ ! -d "$SRC" ]; then
+                cp -a /opt/strata/src/Strata "$SRC"
+              else
+                [ -f "$SRC/setup.sh" ] || fail "$SRC exists without setup.sh - refusing to overwrite"
+              fi
+              # setup.sh needs a python3 on PATH; this image ships only the
+              # terminal's bundled interpreter — find it, else self-diagnose.
+              if ! command -v python3 >/dev/null 2>&1; then
+                for c in /opt/strata/terminal/bin/python3 /opt/strata/terminal/bin/python \
+                         /opt/strata/terminal/usr/bin/python3 /opt/strata/terminal/python/bin/python3; do
+                  if [ -x "$c" ]; then ln -sf "$c" /usr/local/bin/python3; break; fi
+                done
+              fi
+              command -v python3 >/dev/null 2>&1 \
+                || fail "no python3 to drive setup.sh; terminal layout: $(find /opt/strata/terminal -maxdepth 3 -name 'python*' 2>/dev/null | tr '\n' ' ')"
               IFS=,
               for tok in ${STRATA_QUANTS:-q3}; do
                 [ -n "$tok" ] || continue
@@ -1075,28 +1101,21 @@ app-template:
                   *)  SIZE=$(printenv "STRATA_MODEL_$TOK" || true) ;;
                 esac
                 if [ -z "$SIZE" ]; then
-                  echo "model-fetch: no model id mapped for quant '$tok' - set env STRATA_MODEL_$TOK (catalog: strata launch --family qwen --model invalid --plan --output json)" >&2
+                  echo "model-fetch: no model id mapped for quant '$tok' - set env STRATA_MODEL_$TOK (catalog: ./setup.sh --help in $SRC)" >&2
                   exit 1
                 fi
-                MARK="/data/install/.installed-$TOK"
+                MARK="/models/strata/.setup-$TOK"
                 if [ -f "$MARK" ]; then
-                  echo "model-fetch: $tok already staged, skipping"
+                  echo "model-fetch: $tok already set up, skipping"
                   continue
                 fi
-                echo "model-fetch: staging $tok as $SIZE (family qwen)"
-                # The wrapper's documented passthrough form (`install --family …`)
-                # cannot parse: argparse refuses to swallow a leading --family into
-                # its REMAINDER positional (deploy 2026-10-28: "unrecognized
-                # arguments: --family"). Try the canonical `--` separator first;
-                # fall back to the raw form if the wrapper rejects/eats it. Both
-                # attempts print through, so a regression here is self-evidencing.
-                if ! /opt/strata/terminal/bin/strata install -- --family qwen --model "$SIZE" --yes; then
-                  echo "model-fetch: separator form failed; retrying wrapper-documented form" >&2
-                  /opt/strata/terminal/bin/strata install --family qwen --model "$SIZE" --yes
-                fi
+                echo "model-fetch: setup.sh for $tok as $SIZE (family qwen; downloads start here)"
+                ( cd "$SRC" && ./setup.sh --family qwen --model "$SIZE" --context 262144 --vision no --no-start --yes )
                 touch "$MARK"
               done
-              echo "model-fetch: quants [${STRATA_QUANTS:-q3}] staged under /models/strata"
+              ls -la "$SRC"/strata-*.json 2>/dev/null \
+                || echo "model-fetch: WARNING no strata-*.json run config found - inspect $SRC before serving"
+              echo "model-fetch: quants [${STRATA_QUANTS:-q3}] provisioned via checkout on the claim"
           env:
             # Quant set, comma-separated: "q3" today; "q3,q4,q5,q6" for the
             # full set once each token has a model id — only q3→IQ3_S is
