@@ -361,9 +361,9 @@ cat >"$TMP/atpos.py" <<'PY'
 # nests under `opencode:`, the generated mirror does not): the item dash
 # carries the anchor's own indent, keys one level deeper. Indentation has no
 # degree of freedom left to drift in; the only sanctioned continuation after
-# the matched form is the cf-58 git block (comment lines in the source tree
-# + the fourteen git rows, whole and in order) — any other shell row is
-# unsanctioned.
+# the matched form is the cf-72 B block (comment lines in the source tree
+# + the sixty-eight shared git rows plus the variant push tail, whole and in
+# order) — any other shell row is unsanctioned.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
@@ -396,21 +396,93 @@ for want in (WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are i
 if not matched:
     print("none of the sanctioned literal blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve, SHELL5 fifteen) "
           f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
-# cf-58 merge re-pin: after the matched sanctioned block the only permitted
-# continuation is comment lines (source tree only — the rulesync YAML
-# round-trip strips them from the generated mirror) plus the sanctioned git
-# block, whole and in order — the thirteen shared rows plus the variant
-# tail: push-deny on -local/alias files, push-allow + push-main deny + the
-# four force-flag denies on -pr files; any other shell row is unsanctioned.
-COMMON = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: allow") for r in
-          ("git status *", "git log *", "git diff *", "git show *", "git branch *",
-           "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
-           "git commit *", "git checkout *", "git switch *", "git merge main*")]
+# cf-72 B-block re-pin (2026-10-29, card #72): after the matched sanctioned
+# block the only permitted continuation is comment lines (source tree only —
+# the rulesync YAML round-trip strips them from the generated mirror) plus
+# the sanctioned git block, whole and in order — the sixty-eight SHARED rows
+# (one `git *` broad-write allow, the 51-row deny floor, the 16 exception
+# re-allows) plus the variant push tail: the two-row alias/-local tail
+# (`git push*` + the `git *push*` substring row), the seven-row -pr tail
+# (main-leg, zero-arg -C and every force spelling). EFFECT-AWARE and
+# ORDER-CARRIED: the floor guards the broad allow only BEHIND it and the
+# re-allows ride over the floor only BEHIND it, so each row's effect and
+# index are the security contract, not its membership.
 def T(r, e):
     return (f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
-TAILS = [[T("git push*", "deny")],
-         [T("git push*", "allow"), T("git push*main*", "deny"), T("git push --force*", "deny"),
-          T("git push -f*", "deny"), T("git push * --force*", "deny"), T("git push * -f*", "deny")]]
+COMMON = [T(r, e) for r, e in (
+    ("git *", "allow"),
+    ("git checkout main*", "deny"),
+    ("git * checkout main*", "deny"),
+    ("git checkout * main*", "deny"),
+    ("git * checkout * main*", "deny"),
+    ("git switch main*", "deny"),
+    ("git * switch main*", "deny"),
+    ("git switch * main*", "deny"),
+    ("git * switch * main*", "deny"),
+    ("git update-ref*", "deny"),
+    ("git * update-ref*", "deny"),
+    ("git symbolic-ref*", "deny"),
+    ("git * symbolic-ref*", "deny"),
+    ("git branch -f main*", "deny"),
+    ("git * branch -f main*", "deny"),
+    ("git branch --force main*", "deny"),
+    ("git * branch --force main*", "deny"),
+    ("git branch -d main*", "deny"),
+    ("git branch -d * main*", "deny"),
+    ("git * branch -d main*", "deny"),
+    ("git * branch -d * main*", "deny"),
+    ("git branch -D main*", "deny"),
+    ("git branch -D * main*", "deny"),
+    ("git * branch -D main*", "deny"),
+    ("git * branch -D * main*", "deny"),
+    ("git branch -m main*", "deny"),
+    ("git branch -m * main*", "deny"),
+    ("git * branch -m main*", "deny"),
+    ("git * branch -m * main*", "deny"),
+    ("git branch -M main*", "deny"),
+    ("git branch -M * main*", "deny"),
+    ("git * branch -M main*", "deny"),
+    ("git * branch -M * main*", "deny"),
+    ("git branch -c main*", "deny"),
+    ("git * branch -c main*", "deny"),
+    ("git branch -c * main*", "deny"),
+    ("git * branch -c * main*", "deny"),
+    ("git branch -C main*", "deny"),
+    ("git * branch -C main*", "deny"),
+    ("git branch -C * main*", "deny"),
+    ("git * branch -C * main*", "deny"),
+    ("git worktree add * main*", "deny"),
+    ("git * worktree add * main*", "deny"),
+    ("git pull*", "deny"),
+    ("git * pull*", "deny"),
+    ("git merge *", "deny"),
+    ("git * merge *", "deny"),
+    ("git config alias*", "deny"),
+    ("git * config alias*", "deny"),
+    ("git * --force*", "deny"),
+    ("git * -f *", "deny"),
+    ("git * -P *", "deny"),
+    ("git merge main*", "allow"),
+    ("git * merge main*", "allow"),
+    ("git merge --abort", "allow"),
+    ("git * merge --abort", "allow"),
+    ("git merge --continue", "allow"),
+    ("git * merge --continue", "allow"),
+    ("git checkout -b * main*", "allow"),
+    ("git * checkout -b * main*", "allow"),
+    ("git checkout -B * main*", "allow"),
+    ("git * checkout -B * main*", "allow"),
+    ("git switch -c * main*", "allow"),
+    ("git * switch -c * main*", "allow"),
+    ("git switch -C * main*", "allow"),
+    ("git * switch -C * main*", "allow"),
+    ("git worktree add -b * main*", "allow"),
+    ("git * worktree add -b * main*", "allow"),
+)]
+TAILS = [[T("git push*", "deny"), T("git *push*", "deny")],
+         [T("git push*main*", "deny"), T("git * push *main*", "deny"), T("git * push", "deny"),
+          T("git push -f*", "deny"), T("git push -P*", "deny"), T("git * push -f*", "deny"),
+          T("git * push -P*", "deny")]]
 k = at + matched
 gi = saw = 0
 chosen = None
@@ -430,7 +502,7 @@ while k < len(lines):
             print("a shell row continues after the complete sanctioned git block — unsanctioned shell grant"); sys.exit(1)
         chosen = next((t for t in TAILS if lines[k:k + 3 * len(t)] == [ln for tr in t for ln in tr]), None)
         if chosen is None:
-            print(f"the git block's tail is neither the -local push-deny row nor the -pr push sextet (got {lines[k:k + 18]}) — unsanctioned shell grant"); sys.exit(1)
+            print(f"the git block's tail is neither the two-row alias/-local push tail nor the seven-row -pr push tail (got {lines[k:k + 21]}) — unsanctioned shell grant"); sys.exit(1)
         k += 3 * len(chosen)
         continue
     break

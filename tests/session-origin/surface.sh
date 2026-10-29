@@ -66,11 +66,13 @@
 # sanctioned git block + the agent-dev → agent-dev-local roster rename on the
 # coord family. s4's mechanism re-pins accordingly: the arm comparisons run
 # on git-block-stripped core projections with a whole-block tail check
-# (splice4), the line twin admits the fourteen-row git block as the only
-# sanctioned continuation (atpos4), the shape check admits exactly that
+# (splice4), the line twin admits the cf-72 B block as the only sanctioned
+# continuation (atpos4 — sixty-eight effect-aware shared rows + the two-/
+# seven-row push tail), the shape check admits exactly that
 # block as the only git surface and pins the alias's -local roster (shape4),
 # and the soundness controls build their no-allow base from the live
-# skeleton. s4(b)'s diff-shape arm CANNOT express a merge delta: it is
+# skeleton (git rows projected, not enumerated). s4(b)'s diff-shape arm
+# CANNOT express a merge delta: it is
 # designed-red in the merge window under BASE=pre-merge-HEAD and green again
 # at the merge commit (empty diff → arm-B atpos posture), provable
 # pre-commit via CHUNK_BASE=<merge snapshot>. s2's HEAD-relative byte pin
@@ -81,6 +83,12 @@
 # its teeth), so the parsed arms go green in-window; s4(b) stays designed-red
 # until the landing commit flips the files to the empty-diff arm-B posture.
 # The absolute naming duty lives in tests/agent-perms/surface.sh A12.
+# cf-72 B-block re-pin (2026-10-29, card #72): the fourteen-row reads list is
+# replaced by the broad-grant-plus-floor block (68 shared + 2 push-tail rows
+# on this suite's alias/-local test set); splice4's whole-block equality,
+# atpos4's literal walk and shape4's GB carry it, and the diff-shape arm
+# keeps the merge-window discipline — pre-commit proof via
+# CHUNK_BASE=$(git stash create), arm-B green at the landing commit.
 #
 # cf-85 RE-PIN (2026-10-29, cf-85-refactor-wekan-slug-session-link): the board
 # write-back becomes ONE custom field — `slug` carrying the combined
@@ -325,21 +333,82 @@ DATE = {"action": "shell", "resource": "date *", "effect": "allow"}
 # tests/coord-inwork/surface.sh i4 and tests/agent-board-coord/gate.sh t17).
 # Both arms compare core projections (git block stripped); a separate check
 # admits the block only whole and in order. The four-allow duty keeps teeth.
+# cf-72 B block (this suite's splice runs on the ALIAS/-local files only:
+# sixty-eight shared rows + the two-row push tail; the -pr tail's 75-row
+# sequence is pinned absolutely by coord-inwork i4, gate t17 and A12).
+def is_git(p):
+    return p.get("action") == "shell" and str(p.get("resource", "")).startswith("git ")
 GITBLOCK = [
-    {"action": "shell", "resource": "git status *", "effect": "allow"},
-    {"action": "shell", "resource": "git log *", "effect": "allow"},
-    {"action": "shell", "resource": "git diff *", "effect": "allow"},
-    {"action": "shell", "resource": "git show *", "effect": "allow"},
-    {"action": "shell", "resource": "git branch *", "effect": "allow"},
-    {"action": "shell", "resource": "git merge-base *", "effect": "allow"},
-    {"action": "shell", "resource": "git rev-parse *", "effect": "allow"},
-    {"action": "shell", "resource": "git ls-files *", "effect": "allow"},
-    {"action": "shell", "resource": "git add *", "effect": "allow"},
-    {"action": "shell", "resource": "git commit *", "effect": "allow"},
-    {"action": "shell", "resource": "git checkout *", "effect": "allow"},
-    {"action": "shell", "resource": "git switch *", "effect": "allow"},
+    {"action": "shell", "resource": "git *", "effect": "allow"},
+    {"action": "shell", "resource": "git checkout main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * checkout main*", "effect": "deny"},
+    {"action": "shell", "resource": "git checkout * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * checkout * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git switch main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * switch main*", "effect": "deny"},
+    {"action": "shell", "resource": "git switch * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * switch * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git update-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git * update-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git symbolic-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git * symbolic-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -f main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -f main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch --force main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch --force main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -d main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -d * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -d main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -d * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -D main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -D * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -D main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -D * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -m main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -m * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -m main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -m * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -M main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -M * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -M main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -M * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -c main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -c main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -c * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -c * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -C main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -C main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -C * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -C * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git worktree add * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * worktree add * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git pull*", "effect": "deny"},
+    {"action": "shell", "resource": "git * pull*", "effect": "deny"},
+    {"action": "shell", "resource": "git merge *", "effect": "deny"},
+    {"action": "shell", "resource": "git * merge *", "effect": "deny"},
+    {"action": "shell", "resource": "git config alias*", "effect": "deny"},
+    {"action": "shell", "resource": "git * config alias*", "effect": "deny"},
+    {"action": "shell", "resource": "git * --force*", "effect": "deny"},
+    {"action": "shell", "resource": "git * -f *", "effect": "deny"},
+    {"action": "shell", "resource": "git * -P *", "effect": "deny"},
     {"action": "shell", "resource": "git merge main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * merge main*", "effect": "allow"},
+    {"action": "shell", "resource": "git merge --abort", "effect": "allow"},
+    {"action": "shell", "resource": "git * merge --abort", "effect": "allow"},
+    {"action": "shell", "resource": "git merge --continue", "effect": "allow"},
+    {"action": "shell", "resource": "git * merge --continue", "effect": "allow"},
+    {"action": "shell", "resource": "git checkout -b * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * checkout -b * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git checkout -B * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * checkout -B * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git switch -c * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * switch -c * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git switch -C * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * switch -C * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git worktree add -b * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * worktree add -b * main*", "effect": "allow"},
     {"action": "shell", "resource": "git push*", "effect": "deny"},
+    {"action": "shell", "resource": "git *push*", "effect": "deny"},
 ]
 # Naming RE-PIN (2026-10-27, bug-coord-opencode-perms): the coord family now
 # additionally carries the kickoff naming surface — `execute` (the Code Mode
@@ -370,8 +439,8 @@ def splice(seq):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE]
-c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE]
+b_core = [p for p in b if not is_git(p) and p not in NAMING and p != EXEC and p != DATE]
+c_core = [p for p in c if not is_git(p) and p not in NAMING and p != EXEC and p != DATE]
 want, i = splice([p for p in b_core if p not in SHELL4])
 if want is None:
     print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
@@ -393,9 +462,9 @@ else:
         extra = [p for p in c_core if p not in want]
         missing = [p for p in want if p not in c_core]
         print(f"frontmatter delta is not exactly the four scoped allows in either arm: extra={extra} missing={missing}"); sys.exit(1)
-gb = [p for p in c if p in GITBLOCK]
+gb = [p for p in c if is_git(p)]
 if gb and gb != GITBLOCK:
-    print("git-block rows are present but are not exactly the sanctioned fourteen rows in order — unsanctioned git surface"); sys.exit(1)
+    print("git-block rows are present but are not exactly the cf-72 B block for an alias/-local file — sixty-eight shared rows + the two-row push tail — in order — unsanctioned git surface"); sys.exit(1)
 nb = [p for p in c if p in NAMING]
 if nb and nb != NAMING:
     print("kickoff naming rows are present but are not exactly the sanctioned four in order — unsanctioned naming surface"); sys.exit(1)
@@ -404,7 +473,7 @@ if dt and dt != [DATE]:
     print("the date allow is present more than once or with a different effect — unsanctioned date surface"); sys.exit(1)
 shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells != [s["resource"] for s in SHELL4]:
-    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the only other sanctioned shell surfaces are the cf-58 git block and the date allow, both checked whole above)"); sys.exit(1)
+    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the only other sanctioned shell surfaces are the cf-72 git block and the date allow, both checked whole above)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
 if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resource") == "*"
@@ -417,8 +486,9 @@ cat >"$TMP/atpos4.py" <<'PY'
 # mint triple, the session-origin triple, the date triple — 2026-10-27
 # date-grant re-pin) directly after the opencode '*' allow anchor at the
 # anchor's own indent; the only sanctioned continuation
-# is the cf-58 git block (comment lines + the fourteen git rows, whole and
-# in order) — any other shell row is an unsanctioned grant.
+# is the cf-72 B block (comment lines + the sixty-eight shared git rows plus
+# the variant push tail, whole and in order) — any other shell row is an
+# unsanctioned grant.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
@@ -444,32 +514,112 @@ at = hits[0][0] + 3
 if lines[at:at + 15] != want_lines:
     print("the fifteen literal shell allow lines (two session triples + mint triple + session-origin triple + date triple) do not follow the "
           f"opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
-# cf-58 merge re-pin: after the sanctioned fifteen, the only permitted
-# continuation is comment lines plus the sanctioned fourteen-row git block
-# (whole, in order, ending the shell surface); any other shell row is an
-# unsanctioned grant.
-GB = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
-      for r, e in [("git status *", "allow"), ("git log *", "allow"), ("git diff *", "allow"),
-                   ("git show *", "allow"), ("git branch *", "allow"), ("git merge-base *", "allow"),
-                   ("git rev-parse *", "allow"), ("git ls-files *", "allow"), ("git add *", "allow"),
-                   ("git commit *", "allow"), ("git checkout *", "allow"), ("git switch *", "allow"),
-                   ("git merge main*", "allow"), ("git push*", "deny")]]
+# cf-72 B-block re-pin: after the sanctioned fifteen, the only permitted
+# continuation is comment lines plus the sanctioned git block — sixty-eight
+# effect-aware shared rows, then the variant push tail (two rows on
+# alias/-local files, seven on -pr files) ending the shell surface; any
+# other shell row is an unsanctioned grant.
+def T(r, e):
+    return (f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
+COMMON = [T(r, e) for r, e in (
+    ("git *", "allow"),
+    ("git checkout main*", "deny"),
+    ("git * checkout main*", "deny"),
+    ("git checkout * main*", "deny"),
+    ("git * checkout * main*", "deny"),
+    ("git switch main*", "deny"),
+    ("git * switch main*", "deny"),
+    ("git switch * main*", "deny"),
+    ("git * switch * main*", "deny"),
+    ("git update-ref*", "deny"),
+    ("git * update-ref*", "deny"),
+    ("git symbolic-ref*", "deny"),
+    ("git * symbolic-ref*", "deny"),
+    ("git branch -f main*", "deny"),
+    ("git * branch -f main*", "deny"),
+    ("git branch --force main*", "deny"),
+    ("git * branch --force main*", "deny"),
+    ("git branch -d main*", "deny"),
+    ("git branch -d * main*", "deny"),
+    ("git * branch -d main*", "deny"),
+    ("git * branch -d * main*", "deny"),
+    ("git branch -D main*", "deny"),
+    ("git branch -D * main*", "deny"),
+    ("git * branch -D main*", "deny"),
+    ("git * branch -D * main*", "deny"),
+    ("git branch -m main*", "deny"),
+    ("git branch -m * main*", "deny"),
+    ("git * branch -m main*", "deny"),
+    ("git * branch -m * main*", "deny"),
+    ("git branch -M main*", "deny"),
+    ("git branch -M * main*", "deny"),
+    ("git * branch -M main*", "deny"),
+    ("git * branch -M * main*", "deny"),
+    ("git branch -c main*", "deny"),
+    ("git * branch -c main*", "deny"),
+    ("git branch -c * main*", "deny"),
+    ("git * branch -c * main*", "deny"),
+    ("git branch -C main*", "deny"),
+    ("git * branch -C main*", "deny"),
+    ("git branch -C * main*", "deny"),
+    ("git * branch -C * main*", "deny"),
+    ("git worktree add * main*", "deny"),
+    ("git * worktree add * main*", "deny"),
+    ("git pull*", "deny"),
+    ("git * pull*", "deny"),
+    ("git merge *", "deny"),
+    ("git * merge *", "deny"),
+    ("git config alias*", "deny"),
+    ("git * config alias*", "deny"),
+    ("git * --force*", "deny"),
+    ("git * -f *", "deny"),
+    ("git * -P *", "deny"),
+    ("git merge main*", "allow"),
+    ("git * merge main*", "allow"),
+    ("git merge --abort", "allow"),
+    ("git * merge --abort", "allow"),
+    ("git merge --continue", "allow"),
+    ("git * merge --continue", "allow"),
+    ("git checkout -b * main*", "allow"),
+    ("git * checkout -b * main*", "allow"),
+    ("git checkout -B * main*", "allow"),
+    ("git * checkout -B * main*", "allow"),
+    ("git switch -c * main*", "allow"),
+    ("git * switch -c * main*", "allow"),
+    ("git switch -C * main*", "allow"),
+    ("git * switch -C * main*", "allow"),
+    ("git worktree add -b * main*", "allow"),
+    ("git * worktree add -b * main*", "allow"),
+)]
+TAILS = [[T("git push*", "deny"), T("git *push*", "deny")],
+         [T("git push*main*", "deny"), T("git * push *main*", "deny"), T("git * push", "deny"),
+          T("git push -f*", "deny"), T("git push -P*", "deny"), T("git * push -f*", "deny"),
+          T("git * push -P*", "deny")]]
 k = at + 15
 gi = saw = 0
+chosen = None
 while k < len(lines):
     if lines[k].lstrip().startswith("#"):
         k += 1
         continue
     if lines[k].strip() == "- action: shell":
         saw = 1
-        if gi >= len(GB) or lines[k:k + 3] != list(GB[gi]):
-            print(f"a shell row continues the block after the sanctioned twelve and is not the next sanctioned git-block row (want {GB[gi] if gi < len(GB) else 'nothing'}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
-        gi += 1
-        k += 3
+        if gi < len(COMMON):
+            if lines[k:k + 3] != list(COMMON[gi]):
+                print(f"a shell row continues the block after the sanctioned form and is not the next sanctioned git-block row (want {COMMON[gi]}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
+            gi += 1
+            k += 3
+            continue
+        if chosen is not None:
+            print("a shell row continues after the complete sanctioned git block — unsanctioned shell grant"); sys.exit(1)
+        chosen = next((t for t in TAILS if lines[k:k + 3 * len(t)] == [ln for tr in t for ln in tr]), None)
+        if chosen is None:
+            print(f"the git block's tail is neither the two-row alias/-local push tail nor the seven-row -pr push tail (got {lines[k:k + 21]}) — unsanctioned shell grant"); sys.exit(1)
+        k += 3 * len(chosen)
         continue
     break
-if saw and gi != len(GB):
-    print(f"the git block continues the shell surface but is truncated or reordered (matched {gi} of {len(GB)} sanctioned rows)"); sys.exit(1)
+if saw and (gi != len(COMMON) or chosen is None):
+    print(f"the git block continues the shell surface but is truncated or reordered (matched {gi} of {len(COMMON)} shared rows, tail {'found' if chosen else 'missing'})"); sys.exit(1)
 PY
 
 cat >"$TMP/synth.py" <<'PY'
@@ -489,15 +639,18 @@ def block(item_ind, resource):
 ORIGIN = "bash scripts/session-origin.sh*"
 MINT = "bash scripts/kickoff-mint-branch.sh *"
 BAD = "git -C * checkout -b *"
-# cf-58 merge re-pin (2026-10-27): strip-shell removes every sanctioned
-# shell triple (the SHELL4 allows + the fourteen-row git block) to build the
-# no-allow skeleton the form4 control splices into; form4 splices the
-# canonical four-allow form after the opencode '*' allow anchor on ANY base,
-# so those modes must not require the cf-52 rows up front.
-SANCTIONED = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *",
-              "git status *", "git log *", "git diff *", "git show *", "git branch *",
-              "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
-              "git commit *", "git checkout *", "git switch *", "git merge main*", "git push*"}
+# cf-72 re-pin (2026-10-29): the git block grew past any enumeration — the
+# B block is sixty-eight shared rows + a two-/seven-row tail — so strip-shell
+# projects on resource.startswith("git ") to build the no-allow skeleton the
+# form4 control splices into. Pinning stays honest: the whole-sequence
+# controls (splice4's projection equality, atpos4's literal walk) re-check
+# every landed row against the declared block, so the skeleton only has to
+# be git-free. form4 splices the canonical four-allow form after the opencode
+# '*' allow anchor on ANY base, so those modes must not require the cf-52
+# rows up front.
+SHELL_ROWS = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *"}
+def sanctioned(res):
+    return res in SHELL_ROWS or res.startswith("git ")
 i_o = find(ORIGIN); i_m = find(MINT); i_p = find("opencode api patch /api/session/*")
 if mode not in ("strip-shell", "form4"):
     assert i_p >= 0, "fixture source must carry the cf-52 two-allow posture"
@@ -519,7 +672,7 @@ elif mode == "strip-shell":
     while k < len(lines):
         if (lines[k].strip() == "- action: shell" and k + 2 < len(lines)
                 and lines[k + 1].strip().startswith("resource: ")
-                and lines[k + 1].strip()[len("resource: "):] in SANCTIONED
+                and sanctioned(lines[k + 1].strip()[len("resource: "):])
                 and lines[k + 2].strip().startswith("effect: ")):
             k += 3
         else:
@@ -540,9 +693,9 @@ cat >"$TMP/shape4.py" <<'PY'
 # Parsed shape contract on both trees (m4-shape.py convention, widened to the
 # two sanctioned bash grants): source == generated including order
 # (last-match-wins makes order load-bearing), exactly the mint + origin pair
-# as bash grants, the sanctioned cf-58 git block as the only git surface
-# (raw git -C still rejected), question allow kept, and the variant's MCP
-# posture.
+# as bash grants, the cf-72 B block as the only git surface
+# (an explicit 'git -C' row still rejected), question allow kept, and the
+# variant's MCP posture.
 import re, sys, yaml
 src, gen, need_dev_boards = sys.argv[1], sys.argv[2], sys.argv[3] == 'dev-boards'
 def perms(path):
@@ -555,18 +708,86 @@ ps, pg = perms(src), perms(gen)
 errs = []
 if ps != pg:
     errs.append(f"parsed permission lists differ between {src} and {gen} (order included) — regenerate, never hand-edit the mirror")
-# cf-58 merge re-pin: the blanket git ban yields to the sanctioned git
-# block (fourteen rows, whole and in order — pinned absolutely across the
-# family by cfpins i4/t17); the raw 'git -C' mechanism stays rejected.
-GB = [("git status *", "allow"), ("git log *", "allow"), ("git diff *", "allow"),
-      ("git show *", "allow"), ("git branch *", "allow"), ("git merge-base *", "allow"),
-      ("git rev-parse *", "allow"), ("git ls-files *", "allow"), ("git add *", "allow"),
-      ("git commit *", "allow"), ("git checkout *", "allow"), ("git switch *", "allow"),
-      ("git merge main*", "allow"), ("git push*", "deny")]
+# cf-72 B-block re-pin: the blanket git ban yields to the sanctioned git
+# block (sixty-eight shared rows + the two-row alias/-local push tail, whole
+# and in order — pinned absolutely across the family by cfpins i4/t17); the
+# explicit 'git -C' row shape stays rejected (broad `git *` + floor replaced
+# the cf-52 per-verb grants, DECISIONS D10).
+GB = [
+       ("git *", "allow"),
+       ("git checkout main*", "deny"),
+       ("git * checkout main*", "deny"),
+       ("git checkout * main*", "deny"),
+       ("git * checkout * main*", "deny"),
+       ("git switch main*", "deny"),
+       ("git * switch main*", "deny"),
+       ("git switch * main*", "deny"),
+       ("git * switch * main*", "deny"),
+       ("git update-ref*", "deny"),
+       ("git * update-ref*", "deny"),
+       ("git symbolic-ref*", "deny"),
+       ("git * symbolic-ref*", "deny"),
+       ("git branch -f main*", "deny"),
+       ("git * branch -f main*", "deny"),
+       ("git branch --force main*", "deny"),
+       ("git * branch --force main*", "deny"),
+       ("git branch -d main*", "deny"),
+       ("git branch -d * main*", "deny"),
+       ("git * branch -d main*", "deny"),
+       ("git * branch -d * main*", "deny"),
+       ("git branch -D main*", "deny"),
+       ("git branch -D * main*", "deny"),
+       ("git * branch -D main*", "deny"),
+       ("git * branch -D * main*", "deny"),
+       ("git branch -m main*", "deny"),
+       ("git branch -m * main*", "deny"),
+       ("git * branch -m main*", "deny"),
+       ("git * branch -m * main*", "deny"),
+       ("git branch -M main*", "deny"),
+       ("git branch -M * main*", "deny"),
+       ("git * branch -M main*", "deny"),
+       ("git * branch -M * main*", "deny"),
+       ("git branch -c main*", "deny"),
+       ("git * branch -c main*", "deny"),
+       ("git branch -c * main*", "deny"),
+       ("git * branch -c * main*", "deny"),
+       ("git branch -C main*", "deny"),
+       ("git * branch -C main*", "deny"),
+       ("git branch -C * main*", "deny"),
+       ("git * branch -C * main*", "deny"),
+       ("git worktree add * main*", "deny"),
+       ("git * worktree add * main*", "deny"),
+       ("git pull*", "deny"),
+       ("git * pull*", "deny"),
+       ("git merge *", "deny"),
+       ("git * merge *", "deny"),
+       ("git config alias*", "deny"),
+       ("git * config alias*", "deny"),
+       ("git * --force*", "deny"),
+       ("git * -f *", "deny"),
+       ("git * -P *", "deny"),
+       ("git merge main*", "allow"),
+       ("git * merge main*", "allow"),
+       ("git merge --abort", "allow"),
+       ("git * merge --abort", "allow"),
+       ("git merge --continue", "allow"),
+       ("git * merge --continue", "allow"),
+       ("git checkout -b * main*", "allow"),
+       ("git * checkout -b * main*", "allow"),
+       ("git checkout -B * main*", "allow"),
+       ("git * checkout -B * main*", "allow"),
+       ("git switch -c * main*", "allow"),
+       ("git * switch -c * main*", "allow"),
+       ("git switch -C * main*", "allow"),
+       ("git * switch -C * main*", "allow"),
+       ("git worktree add -b * main*", "allow"),
+       ("git * worktree add -b * main*", "allow"),
+       ("git push*", "deny"),
+       ("git *push*", "deny")]
 gitrows = [(p.get("resource"), p.get("effect")) for p in ps
            if p.get("action") == "shell" and str(p.get("resource", "")).startswith("git ")]
 if gitrows and gitrows != GB:
-    errs.append(f"git shell grants are {gitrows}, want exactly the sanctioned cf-58 git block in order (or none)")
+    errs.append(f"git shell grants are {gitrows}, want exactly the cf-72 B block for an alias/-local file (68 shared rows + the two-row push tail) in order (or none)")
 for p in ps:
     if p.get("action") == "shell" and "git -C" in str(p.get("resource", "")):
         errs.append("a raw git -C shell grant exists (scope escape — the plan's rejected mechanism)")

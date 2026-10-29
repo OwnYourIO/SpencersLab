@@ -475,11 +475,12 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
+      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
       .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder) and cf-85 (own plan folder) widenings (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder) and cf-72 (own plan folder) widenings (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

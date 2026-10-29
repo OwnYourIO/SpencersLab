@@ -341,21 +341,93 @@ for want in (WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are p
 if not matched:
     print("no sanctioned literal allow block (SHELL2 six lines, SHELL3 nine, SHELL4 twelve, SHELL5 fifteen) "
           f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
-# cf-58 merge re-pin: after the matched sanctioned block the only permitted
-# continuation is comment lines (source tree only — the rulesync YAML
-# round-trip strips them from the generated mirror) plus the sanctioned git
-# block, whole and in order — the thirteen shared rows plus the variant
-# tail: push-deny on -local/alias files, push-allow + push-main deny + the
-# four force-flag denies on -pr files; any other shell row is unsanctioned.
-COMMON = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: allow") for r in
-          ("git status *", "git log *", "git diff *", "git show *", "git branch *",
-           "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
-           "git commit *", "git checkout *", "git switch *", "git merge main*")]
+# cf-72 B-block re-pin (2026-10-29, card #72): after the matched sanctioned
+# block the only permitted continuation is comment lines (source tree only —
+# the rulesync YAML round-trip strips them from the generated mirror) plus
+# the sanctioned git block, whole and in order — the sixty-eight SHARED rows
+# (one `git *` broad-write allow, the 51-row deny floor, the 16 exception
+# re-allows) plus the variant push tail: the two-row alias/-local tail
+# (`git push*` + the `git *push*` substring row), the seven-row -pr tail
+# (main-leg, zero-arg -C and every force spelling). EFFECT-AWARE and
+# ORDER-CARRIED: the floor guards the broad allow only BEHIND it and the
+# re-allows ride over the floor only BEHIND it, so each row's effect and
+# index are the security contract, not its membership.
 def T(r, e):
     return (f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
-TAILS = [[T("git push*", "deny")],
-         [T("git push*", "allow"), T("git push*main*", "deny"), T("git push --force*", "deny"),
-          T("git push -f*", "deny"), T("git push * --force*", "deny"), T("git push * -f*", "deny")]]
+COMMON = [T(r, e) for r, e in (
+    ("git *", "allow"),
+    ("git checkout main*", "deny"),
+    ("git * checkout main*", "deny"),
+    ("git checkout * main*", "deny"),
+    ("git * checkout * main*", "deny"),
+    ("git switch main*", "deny"),
+    ("git * switch main*", "deny"),
+    ("git switch * main*", "deny"),
+    ("git * switch * main*", "deny"),
+    ("git update-ref*", "deny"),
+    ("git * update-ref*", "deny"),
+    ("git symbolic-ref*", "deny"),
+    ("git * symbolic-ref*", "deny"),
+    ("git branch -f main*", "deny"),
+    ("git * branch -f main*", "deny"),
+    ("git branch --force main*", "deny"),
+    ("git * branch --force main*", "deny"),
+    ("git branch -d main*", "deny"),
+    ("git branch -d * main*", "deny"),
+    ("git * branch -d main*", "deny"),
+    ("git * branch -d * main*", "deny"),
+    ("git branch -D main*", "deny"),
+    ("git branch -D * main*", "deny"),
+    ("git * branch -D main*", "deny"),
+    ("git * branch -D * main*", "deny"),
+    ("git branch -m main*", "deny"),
+    ("git branch -m * main*", "deny"),
+    ("git * branch -m main*", "deny"),
+    ("git * branch -m * main*", "deny"),
+    ("git branch -M main*", "deny"),
+    ("git branch -M * main*", "deny"),
+    ("git * branch -M main*", "deny"),
+    ("git * branch -M * main*", "deny"),
+    ("git branch -c main*", "deny"),
+    ("git * branch -c main*", "deny"),
+    ("git branch -c * main*", "deny"),
+    ("git * branch -c * main*", "deny"),
+    ("git branch -C main*", "deny"),
+    ("git * branch -C main*", "deny"),
+    ("git branch -C * main*", "deny"),
+    ("git * branch -C * main*", "deny"),
+    ("git worktree add * main*", "deny"),
+    ("git * worktree add * main*", "deny"),
+    ("git pull*", "deny"),
+    ("git * pull*", "deny"),
+    ("git merge *", "deny"),
+    ("git * merge *", "deny"),
+    ("git config alias*", "deny"),
+    ("git * config alias*", "deny"),
+    ("git * --force*", "deny"),
+    ("git * -f *", "deny"),
+    ("git * -P *", "deny"),
+    ("git merge main*", "allow"),
+    ("git * merge main*", "allow"),
+    ("git merge --abort", "allow"),
+    ("git * merge --abort", "allow"),
+    ("git merge --continue", "allow"),
+    ("git * merge --continue", "allow"),
+    ("git checkout -b * main*", "allow"),
+    ("git * checkout -b * main*", "allow"),
+    ("git checkout -B * main*", "allow"),
+    ("git * checkout -B * main*", "allow"),
+    ("git switch -c * main*", "allow"),
+    ("git * switch -c * main*", "allow"),
+    ("git switch -C * main*", "allow"),
+    ("git * switch -C * main*", "allow"),
+    ("git worktree add -b * main*", "allow"),
+    ("git * worktree add -b * main*", "allow"),
+)]
+TAILS = [[T("git push*", "deny"), T("git *push*", "deny")],
+         [T("git push*main*", "deny"), T("git * push *main*", "deny"), T("git * push", "deny"),
+          T("git push -f*", "deny"), T("git push -P*", "deny"), T("git * push -f*", "deny"),
+          T("git * push -P*", "deny")]]
 k = at + matched
 gi = saw = 0
 chosen = None
@@ -375,7 +447,7 @@ while k < len(lines):
             print("a shell row continues after the complete sanctioned git block — unsanctioned shell grant"); sys.exit(1)
         chosen = next((t for t in TAILS if lines[k:k + 3 * len(t)] == [ln for tr in t for ln in tr]), None)
         if chosen is None:
-            print(f"the git block's tail is neither the -local push-deny row nor the -pr push sextet (got {lines[k:k + 18]}) — unsanctioned shell grant"); sys.exit(1)
+            print(f"the git block's tail is neither the two-row alias/-local push tail nor the seven-row -pr push tail (got {lines[k:k + 21]}) — unsanctioned shell grant"); sys.exit(1)
         k += 3 * len(chosen)
         continue
     break
@@ -715,6 +787,8 @@ fi
 # escape. cf-85's content edits ride the .rulesync/skills/*, .opencode/skills/*,
 # .rulesync/subagents/*, .opencode/agents/*, .rulesync/commands/*,
 # .opencode/commands/*, tests/* and AGENTS.md admits already in this set.
+# cf-72 (2026-10-29) adds its own plan-folder admit the same way — the D9
+# rule: a scope guard must never red on the running ticket's bookkeeping.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -748,11 +822,12 @@ if want t14; then
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
-      .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*) : ;;
+      .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
+      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits and the cf-75/cf-85 own-folder admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits and the cf-75/cf-85/cf-72 own-folder admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
