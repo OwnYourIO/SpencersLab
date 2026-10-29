@@ -679,3 +679,73 @@ describe("R10 audit-line shape battery (C05 Tests-list leg, Minor-2 close)", () 
     assert.deepEqual(lockFiles(envB), [], "the owned survivor is freed beside the audit");
   });
 });
+
+describe("R11 degrade-path card comment (F1 MAJOR close — D22/plan/boards-skill: jsonl + CARD COMMENT)", () => {
+  // The approved interim contract is "the reaper degrades to
+  // .pipeline/timeouts.jsonl + card comment" (plan Out-of-scope + Risks,
+  // D22 Q4 ruling, boards skill "shipped interim" bullet). The shipped
+  // catch path queued the row and the audit but never attempted
+  // add_comment — a reaped card sat in Executing with no on-card marker.
+  // Fix direction (a) as recommended by the final review: best-effort
+  // add_comment whenever cardId + a board client are reachable, isolated
+  // so a failing comment still falls to queueTimeoutRow. These legs are
+  // the honest pre-dev red; R3's row/audit/outcome pins stay untouched
+  // and green (the review verified the degrade arms assert no call
+  // census beyond move_card === 0, which this contract preserves).
+  const TIMEOUT_ABSENT_LISTS = [
+    { id: "L-not", title: "Not Started", swimlane_id: "SW-in" },
+    { id: "L-exec", title: "Executing", swimlane_id: "SW-in" },
+  ];
+
+  function assertD22CommentBody(body: any, label: string) {
+    assert.equal(typeof body, "string", `${label}: the comment must ride the args.comment body key (live call-shape, reviewed C05 (e))`);
+    assert.match(body, /Timed out: no heartbeat for 2h/, `${label}: the D21 window wording is what the card says`);
+    assert.ok(!/3h/.test(body), `${label}: the retired 3 h wording must not resurface`);
+    assert.ok(body.length <= 240, `${label}: the question-notify MAX_MESSAGE bound is the message discipline for every outbound reap text`);
+  }
+
+  it("Timeout-list-absent (board fully up): the card gets its comment, the row still queues, the move is skipped", async () => {
+    const env = baseEnv({ client: recordingClient({ list_lists: TIMEOUT_ABSENT_LISTS }) });
+    await seam("moveCardToTimeout")(env, { cardId: "cD", pipelines: ["a", "b"], sessionID: "sD", setId: "setD" });
+    const names = env.client.calls.map((c: any) => c.name);
+    assert.ok(!names.includes("move_card"), "no Timeout list, no move — the target does not exist");
+    const comments = env.client.calls.filter((c: any) => c.name === "add_comment");
+    assert.equal(comments.length, 1, "F1: the degrade promises an on-card marker — add_comment must be attempted once when the board is up and the card id known");
+    assertD22CommentBody(comments[0]?.args?.comment, "degrade comment");
+    assert.match(String(comments[0]?.args?.comment), /pipelines: [^"]*\ba\b[^"]*\bb\b|\bb\b[^"]*\ba\b/, "the marker names every pipeline of the reaped claim");
+    assert.match(String(comments[0]?.args?.comment), /session[^\w]*sD/);
+    const rows = readTimeouts(env);
+    assert.equal(rows.length, 1, "the jsonl queue is the triage mechanism — the comment supplements it, never replaces it");
+    assert.deepEqual([...rows[0].pipelines].sort(), ["a", "b"]);
+    assert.ok(readEvents(env).some((l) => l.ev === "board_move_err"), "the skipped move stays audited beside the comment");
+  });
+
+  it("a failing degrade comment still queues the row and audits it — exactly ONE attempt, no retry storm", async () => {
+    for (const [arm, legs] of [
+      ["timeout-absent+comment-fails", { list_lists: TIMEOUT_ABSENT_LISTS, add_comment: new Error("comment leg down") }],
+      ["timeout-present+comment-fails", { add_comment: new Error("comment leg down") }],
+    ] as const) {
+      const env = baseEnv({ client: recordingClient(legs as any) });
+      await seam("moveCardToTimeout")(env, { cardId: "cD", pipelines: ["a"], sessionID: "sD", setId: "setD" });
+      const comments = env.client.calls.filter((c: any) => c.name === "add_comment");
+      assert.ok(comments.length >= 1, `${arm}: the comment must be attempted even when the move half failed`);
+      assert.equal(comments.length, 1, `${arm}: best-effort means ONE attempt — a retry storm against a rejecting board endpoint would stall the pass`);
+      const rows = readTimeouts(env);
+      assert.equal(rows.length, 1, `${arm}: a failed comment must still fall to queueTimeoutRow (D22 interim = row + best-effort comment)`);
+      assert.ok(readEvents(env).some((l) => l.ev === "board_move_err"), `${arm}: the board_move_err audit rides the degrade regardless of the comment outcome`);
+    }
+  });
+
+  it("through reapStale the degrade comment fires ONCE PER CARD, like every other card leg (R2/R7 grouping discipline)", async () => {
+    const env = baseEnv({ client: recordingClient({ list_lists: TIMEOUT_ABSENT_LISTS }) });
+    env.notify = async () => {};
+    seedLock(env, { pipeline: "d1", cardId: "cG", setId: "setG", sessionID: "sG", pipelineSet: ["d1", "d2"] }, 3 * HOUR);
+    seedLock(env, { pipeline: "d2", cardId: "cG", setId: "setG", sessionID: "sG", pipelineSet: ["d1", "d2"] }, 3 * HOUR);
+    await seam("reapStale")(env, { trigger: "tick" });
+    const comments = env.client.calls.filter((c: any) => c.name === "add_comment");
+    assert.equal(comments.length, 1, "two reaped members of one card = one comment, exactly as one move + one alert per card are already pinned");
+    assert.match(String(comments[0]?.args?.comment), /d1.*d2|d2.*d1/, "the single comment still names the WHOLE set (union discipline)");
+    assert.equal(readTimeouts(env).length, 1, "one queue row per card too");
+    assert.deepEqual(lockFiles(env), [], "the reaps themselves landed");
+  });
+});

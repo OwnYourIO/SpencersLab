@@ -193,3 +193,192 @@ decisions (DECISIONS.md r2: D17–D22) — no open question blocks any chunk:
 LABELS starting `Pipeline:` (remainder = lock name; a card may block several
 pipelines; no such label ⇒ the single `default` pipeline). Labels are
 human-owned and only READ by the worker (D17–D19).
+
+## FINAL whole-plan review
+
+Fresh `agent-review` session, 2026-10-29, plain post-landing HEAD
+`5ade6c54462fe9da3f709d90ccdfc25f5a9d3654` (base `26e3b7cee0a0…`), branch
+`cf-76-feat-parallel-pipeline-loops`, clean tree. Scope: the whole plan —
+Goal, Out of scope, every chunk AC, DECISIONS D1–D36 + r5/r6 rulings,
+FRICTION resolutions, cross-chunk coherence.
+
+### Validation battery (all run fresh, this session, at plain HEAD)
+
+| Check | Result |
+|---|---|
+| `node --test tests/opencode/pipeline-locks-core.test.ts` | **30/30 pass** |
+| `node --test tests/opencode/pipeline-locks-engine.test.ts` | **34/34 pass** |
+| `node --test tests/opencode/pipeline-locks-reap.test.ts` | **20/20 pass** |
+| `node --test tests/opencode/pipeline-locks-tick.test.ts` | **12/12 pass** |
+| siblings question-notify / permission-ask-notify / board-context / ha-mcp-url | **35/41/28/15 pass** (all 8 files in `tests/opencode/` run — no additions beyond the eight) |
+| `bash tests/agent-perms/surface.sh` | **15 ok — A15 GREEN**, no A15 red |
+| `bash tests/standalone-agents/surface.sh` | **10 ok** |
+| `bash tests/agent-board-coord/rulesync-surface.sh` | **19 ok** (c2 era-gate engaged, non-vacuous) |
+| `bash tests/coord-inwork/surface.sh` | **7 ok** |
+| `bash tests/kickoff-branch/surface.sh` | **6/6 ok — fully green at plain HEAD** (the documented merge-window red cleared at the landing commit, claim holds) |
+| `bash tests/session-origin/surface.sh` | **7/7 ok — fully green at plain HEAD** (same) |
+| `npx --yes rulesync@37.0.0 generate` ×2 + `--check` | both generates no-op ("All files are up to date"), `--check` rc=0 |
+| `npx aislop ci --changes` | rc=0. CI-parity form (pinned `aislop@0.18.1 --changes --base origin/main`, and `--base 26e3b7cee0`) = **0 errors, 1 warning = D36 `complexity/file-too-large` on index.ts only**, score 99. Note: the bare form (default base=HEAD on a clean tree) now reports 0 warnings — the D36 warning surfaces only with an explicit diff base; the gate passes in every form |
+| `helm lint` / `helm template` | n/a — zero chart files in the diff |
+
+### Goal vs shipped reality (item a)
+
+- **Label-derived sets** — `derivePipelineSet` (index.ts:184) implements D17
+  exactly (case-sensitive `Pipeline:` prefix, trimmed remainder, empty
+  dropped, dedupe, `["default"]` fallback); single-source `LABEL_PREFIX` /
+  `DEFAULT_PIPELINE` constants, suite-pinned. ✔
+- **All-or-nothing claim** — `acquireSetWithRollback` (sorted-order O_EXCL +
+  full rollback, index.ts:424), shared claim identity in every file,
+  set-wide lock-lost reaction with the MAJOR-1-closed ownership guard
+  (index.ts:637). Core-suite race legs cover it. ✔
+- **2 h window** — `DEFAULT_STALE_MS = 7200000` single source (index.ts:98),
+  `max(heartbeatAt, mtime)` formula, suite-pinned incl. the wrong-type
+  config leg. ✔
+- **Timeout + HA alert degrade contract** — Timeout move via the D24
+  sequence (index.ts:1364), HA alert title/message per D11, per-card
+  grouping — **EXCEPT the degrade's card comment: see Finding F1 (major).**
+- **Hourly tick disabled** — loop file `enabled: false` byte-pinned, flash
+  model (Q2), alias agent (D15), D30 plain-text body, `/pipeline-tick`
+  documented swap target only; tick executor reaps-before-prompt (AC2). ✔
+- **Commit policy end-to-end** — pipeline implementers carry explicit
+  `git add *` / `git commit *` denies (agent-dev-local/-pr sources +
+  mirrors); coords keep the allows; role-dev never-commit rule + role-coord
+  sole-committer rewrite landed; the branch history itself obeys it: 8
+  commits = 7 chunk commits (each message carries chunk id + review verdict
+  + APPROVED) + 1 routed test-round commit, all coordinator-made (dev
+  commit attempts were hard-denied in-run per FRICTION). ✔
+- **ralph→pipeline rename, precedent reuse, board-addition docs, commit
+  ownership move** — all present; "ralph" survives only as the historical
+  reference in this plan file + DECISIONS conventions. ✔
+- **Out of scope held** — zero diff on `containers/`, the hourly gate
+  script, the `pipeline-boards*` commands, `pipeline-models`/`pipeline-gates`
+  skills, standalone `dev*`/`code`/`debug` agents, plain `agent-coord*`
+  agents; `maxWorkers` reserved-not-wired (configDefaults + parsed, never
+  read); no docker/helm work. ✔
+
+### Cross-chunk consistency (item b)
+
+- **TICK_PROMPT three-way** — byte-verified in this session: plugin constant
+  (index.ts:63) == loop-file body == boards-skill section intro == tick
+  suite `D30_BODY` literal. ✔
+- **D29 flat names everywhere** — flat `spec.name` on all four tools
+  (double-prefix rationale commented), Code-Mode call shape in every tool
+  description, boards-skill Transport bullet, AGENTS.md worker line,
+  permission-row actions; the live Code-Mode catalog of THIS session lists
+  exactly `tools.pipeline_*`. ✔
+- **D30 plain-text body everywhere** — shipped body contains no slash
+  command (suite asserts `!prose.includes("/pipeline-tick")`); every
+  `/pipeline-tick` mention repo-wide is doc/swap-target. ✔
+- **D22 follow-up card** — card `Wg93SkHZ7bMLWJYBA` LIVE-VERIFIED in Not
+  Started with the exact specified title and D22-quoting description;
+  references consistent across C07.md, STATE.json, boards skill;
+  `create_list`/`create_label` confirmed absent from the live dev-boards
+  toolset (26 tools). ✔
+- **D17/D19 label posture** — boards skill (Board facts + Parallel section +
+  prerequisites bullet), AGENTS.md worker section, C07 chunk and DECISIONS
+  all agree: human-created, agent-read-only, exactly-TWO custom fields,
+  no `pipeline` field reintroduced (`create_custom_field` = 0 hits in every
+  touched file, suite-pinned). ✔
+
+### Leftovers / hygiene (item c)
+
+- No probe/scratch/mock artifacts committed; `/tmp` appears only as
+  evidence pointers inside plan documents (the sanctioned C01 evidence-log
+  shape). No untracked files. `.pipeline/` gitignored with the D10
+  why-comment; the canonical-root `.pipeline/` dir is empty (benign residue
+  per C05/C06 live notes, no `reaper.lock` leak). ✔
+- `maxWorkers` reserved-not-implemented as Q8 ruled. ✔
+- Frozen surfaces zero-diff: commands dirs, gate script, models/gates pairs
+  (kickoff-branch m6 re-verified green at plain HEAD). ✔
+- Stale comments: C06's pending-repair note adjudicated historical (D33);
+  NIT-1 duplicate chunk-map sentence fixed in C07; D11's "3h" is
+  append-only history superseded by D21 (shipped texts all say 2h). Two
+  cosmetic carry-overs: chunks/C06.md lacks its trailing newline (OBS-2)
+  and the index.ts header wrap "ACTIVITY only / (D20):" reads awkwardly.
+  ✔ (nits only)
+
+### Human prerequisites (item d)
+
+Both genuinely surfaced and live-verified: (1) `Pipeline:` labels are
+human-created (zero exist on the live board → every card derives
+`default`, the serialized today-behavior — nothing fails); (2) the Timeout
+list arrives via follow-up card Wg93SkHZ7bMLWJYBA — until then the reaper
+degrades to `timeouts.jsonl` and never hard-fails (code path verified:
+`moveCardToTimeout` catch → `queueTimeoutRow`, suite R3 pins every arm). ✔
+
+### STATE.json honesty (item e)
+
+Statuses/verdicts/handoffs match the git log chunk-for-chunk (C04's two
+review rounds incl. CHANGES_REQUESTED → MAJOR-1 fix → APPROVED are all
+there; test session's five handoffs map to the test-round commits). ✔
+except F2 below.
+
+### Findings
+
+**F1 — major: the degrade-path card comment is promised but not shipped
+(fell between chunks).** Plan Out of scope: "the reaper degrades to
+`.pipeline/timeouts.jsonl` + card comment"; plan Risks: "reaped cards queue
+in `.pipeline/timeouts.jsonl` + card comment"; DECISIONS D22 (user's Q4
+ruling): "the reaper uses the `.pipeline/timeouts.jsonl` fallback + the card
+comment (C05 degrade)"; boards skill Human-stops bullet: "queues
+`.pipeline/timeouts.jsonl` plus a card comment: that degrade is the shipped
+interim". Shipped reality: `moveCardToTimeout`'s catch path runs
+`queueTimeoutRow` ONLY (jsonl row + `board_move_err` audit) — no
+`add_comment` is attempted on any degrade arm, including the
+Timeout-list-absent arm where the board leg is fully up (get_card +
+list_lists succeeded). The `queueTimeoutRow` header comment even claims
+"The D22 interim contract in code". C05's Tasks/AC4 and the reap suite R3
+defined the degrade without the comment, dev implemented that, and every
+review approved against AC4 — nobody cross-checked the ruling/plan/skill
+prose against the chunk contract, so the gap is unadjudicated. Impact:
+until the D22 follow-up lands (it sits in Not Started, so this arm is the
+LIVE path, not a corner case), a reaped card stays in Executing with no
+on-card marker of what happened — HA push + jsonl row still fire, so this
+is a visibility gap, not a correctness/safety one; nothing hard-fails.
+Fix options (coord/owner picks): (a) implement the comment — C05 seam,
+best-effort `add_comment` in the degrade arm whenever cardId + board client
+are reachable (isolate it so a failed comment still falls to
+`queueTimeoutRow`; R3 stays green as pinned), routed to a C05-era dev
+session via coord; or (b) owner ruling to correct the four prose sites to
+the shipped degrade (jsonl + audit + HA alert; card stays put). Recommended:
+(a) — it is the faithful reading of D22 and keeps the boards skill's
+"shipped interim" sentence true.
+
+**F2 — minor: STATE.json bookkeeping staleness.** `current_wave: 4` and
+`updated_at: 2026-10-29T02:45:00Z` while all seven chunks are done through
+wave 6 with handoffs to 10:40. Exactly the C06-review NIT-2 routed to coord
+and never applied. Resume readers would misread the wave. Coord-owned fix,
+two fields.
+
+**F3 — minor (shape note, no action required): the test-round-2 commit**
+`346573276` is a tests-only coord commit between C05 and C06 without a
+review verdict in the message (every other commit carries one). It honors
+"coord sole committer" and its pins were battiered in the C06 review; it
+deviates benignly from the "one commit per chunk (code + tests + state)"
+wording. Recorded for history.
+
+**Nits:** chunks/C06.md trailing-newline absence (OBS-2 carry-over);
+index.ts header comment wrap (cosmetic); DECISIONS D11 "3h" is append-only
+history superseded by D21 (shipped texts correct).
+
+### Deferred (not defects of this branch)
+
+- **Board drift observed during this review:** the live In Process swimlane
+  now has SEVEN lists — a human-created `Test` list appeared after the C07
+  review's live read; `Timeout` is still absent. The boards skill's "six
+  today" inventory line is stale against the live board. Zero functional
+  impact (the pickup walk visits only Rework/Not Started/Low Priority; the
+  Timeout resolution is title + swimlane-echo exact, and the board-context
+  re-resolve protocol covers id drift). Human-owned board hygiene; the next
+  boards-surface ticket should refresh the inventory line.
+
+### Verdict
+
+**CHANGES_REQUESTED** — the battery is fully green and every other Goal
+claim, cross-chunk contract and hygiene check holds; the single major (F1)
+blocks marking the plan complete: the shipped degrade does not post the
+card comment the plan, the D22 ruling and the boards skill promise, and the
+operative skill text currently describes behavior the code lacks. Route F1
+per the finding (coord → C05-era seam fix, or owner ruling to amend the
+prose); F2 is a two-field coord bookkeeping fix. F3/nits/deferred do not
+block.

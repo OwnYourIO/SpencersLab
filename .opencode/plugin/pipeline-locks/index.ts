@@ -123,13 +123,15 @@ const HA_SERVER_KEY = "admin-global-homeassistant";
 const BOARD_DEFAULTS = { boardTitle: "AI-Dev", swimlaneTitle: "In Process", timeoutListTitle: "Timeout" };
 
 // The user-facing reap texts: D21's 2 h window is what the card comment
-// says, D11 pins the alert title verbatim, and the message ceiling is
-// question-notify's MAX_MESSAGE contract.
+// says, D11 pins the alert title verbatim.
 const TIMEOUT_COMMENT = "Timed out: no heartbeat for 2h";
 const REAP_ALERT_TITLE = "OpenCode: pipeline lock reaped";
 const NOTIFY_DOMAIN = "notify";
 const HA_NOTIFY_SERVICE = "mobile_app_pixel_6";
-const ALERT_MAX_MESSAGE = 240;
+// question-notify's MAX_MESSAGE bound, shared by every outbound reap text:
+// the phone alert and the card comment must carry one ceiling, not two
+// truths that can drift apart.
+const MAX_OUTBOUND_MESSAGE = 240;
 
 // board-context's FETCH_TIMEOUT_MS precedent on every reaper MCP call: a
 // hanging ingress may not stall the claim-time or timer reap paths.
@@ -1338,12 +1340,14 @@ export async function reapStale(env: any, input: any = {}): Promise<{ reaped: an
   }
 }
 
-// The D22 interim contract in code: until the follow-up card lands a
-// create_list tool in wekan-mcp, a board may not HAVE a Timeout list at all,
-// and any other leg can fail the same way. Every failure arm appends the
-// full card row to timeouts.jsonl and audits the reason — the reaped
-// pipelines are already free, so a lost board move never means a held
-// pipeline.
+// The row half of the D22 interim contract (the comment half rides
+// reapCommentBody): until the follow-up card lands a create_list tool in
+// wekan-mcp, a board may not HAVE a Timeout list at all, and any other leg
+// can fail the same way. Every failure arm appends the full card row to
+// timeouts.jsonl and audits the reason — the row is the triage mechanism
+// and the best-effort comment supplements it, never replaces it; the
+// reaped pipelines are already free, so a lost board move never means a
+// held pipeline.
 async function queueTimeoutRow(env: any, info: any, reason: string): Promise<void> {
   const row = {
     at: new Date(env?.now?.() ?? Date.now()).toISOString(),
@@ -1361,11 +1365,27 @@ async function queueTimeoutRow(env: any, info: any, reason: string): Promise<voi
   await appendEvent(env, { ev: "board_move_err", cardId: row.cardId, setId: row.setId, sessionID: row.sessionID, reason });
 }
 
+// One builder for every path that owes the card the reap marker — the
+// move-success leg and the degrade legs alike — so the D21 sentence, the
+// holder, and the full named set cannot drift between arms. The named set
+// arrives already unioned upstream (a legacy record without pipelineSet
+// reads as just its own pipeline).
+function reapCommentBody(info: any): string {
+  const pipelines = Array.isArray(info?.pipelines) ? info.pipelines : [];
+  return `${TIMEOUT_COMMENT} (session ${String(info?.sessionID ?? "")}, pipelines: ${pipelines.join(", ")})`.slice(0, MAX_OUTBOUND_MESSAGE);
+}
+
 export async function moveCardToTimeout(env: any, info: any): Promise<void> {
   // D24 pins the sequence: get_card → list_lists → move_card → add_comment.
   // The Timeout target resolves against the card's OWN swimlane echo because
   // list titles repeat across swimlanes — a namesake in another swimlane
-  // must never be the move target.
+  // must never be the move target. With no target the move is skipped but
+  // the comment still lands: D22's interim is jsonl row + CARD COMMENT, and
+  // the list-absent arm is precisely where the board is up and the on-card
+  // marker is most needed (F1). The comment is best-effort and attempted
+  // once per leg — its failure falls to the same catch as any other, so the
+  // row and audit still land and a rejecting endpoint cannot cause a retry
+  // storm.
   try {
     const callTool =
       typeof env?.client?.callTool === "function"
@@ -1382,15 +1402,20 @@ export async function moveCardToTimeout(env: any, info: any): Promise<void> {
     const lists = asArray(await callTool("list_lists", { board_id: env?.boardId ?? null }));
     const wanted = String(env?.config?.board?.timeoutListTitle ?? BOARD_DEFAULTS.timeoutListTitle);
     const target = lists.find((l: any) => String(l?.title ?? "") === wanted && String(l?.swimlane_id ?? "") === swimlane);
-    if (!target) throw new Error(`no ${wanted} list in the card's swimlane`);
-    await callTool("move_card", {
-      board_id: env?.boardId ?? null,
-      card_id: String(info.cardId),
-      from_list_id: fromList,
-      to_list_id: target.id,
-    });
-    const comment = `${TIMEOUT_COMMENT} (session ${String(info.sessionID ?? "")}, pipelines: ${(Array.isArray(info?.pipelines) ? info.pipelines : []).join(", ")})`;
-    await callTool("add_comment", { board_id: env?.boardId ?? null, card_id: String(info.cardId), comment });
+    if (target) {
+      await callTool("move_card", {
+        board_id: env?.boardId ?? null,
+        card_id: String(info.cardId),
+        from_list_id: fromList,
+        to_list_id: target.id,
+      });
+    }
+    await callTool("add_comment", { board_id: env?.boardId ?? null, card_id: String(info.cardId), comment: reapCommentBody(info) });
+    if (!target) {
+      // queueTimeoutRow is total (its own arms catch), so this leg cannot
+      // throw past it into the catch and double-book the row.
+      await queueTimeoutRow(env, info, `no ${wanted} list in the card's swimlane`);
+    }
   } catch (err: any) {
     await queueTimeoutRow(env, info, String(err?.message ?? err?.code ?? err));
   }
@@ -1402,7 +1427,7 @@ export async function sendHaReapAlert(env: any, info: any): Promise<void> {
   try {
     if (typeof env?.callHA !== "function") return;
     const pipelines = Array.isArray(info?.pipelines) ? info.pipelines : [];
-    const message = `card=${String(info?.cardId ?? "")} pipelines=${pipelines.join(",")} age=${Number(info?.ageMin) || 0}min session=${String(info?.sessionID ?? "")}`.slice(0, ALERT_MAX_MESSAGE);
+    const message = `card=${String(info?.cardId ?? "")} pipelines=${pipelines.join(",")} age=${Number(info?.ageMin) || 0}min session=${String(info?.sessionID ?? "")}`.slice(0, MAX_OUTBOUND_MESSAGE);
     await env.callHA("call_service", {
       domain: NOTIFY_DOMAIN,
       service: HA_NOTIFY_SERVICE,

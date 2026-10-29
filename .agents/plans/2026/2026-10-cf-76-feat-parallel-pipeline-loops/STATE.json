@@ -17,8 +17,29 @@
   "plan_status": "approved",
   "coord_session": "ses_e7aa56f12ffe69NSQ12a34w2kG",
   "test_session": "ses_e7a7a5365ffebXvYX1abzgniGv",
-  "current_wave": 4,
-  "updated_at": "2026-10-29T02:45:00Z",
+  "current_wave": 6,
+  "updated_at": "2026-10-29T11:00:00Z",
+  "final_round": {
+    "status": "changes-requested",
+    "review_session": "ses_e79029eefffen59V9QdZRsgNmX",
+    "handoffs": [
+      {
+        "at": "2026-10-29T10:55:00Z",
+        "role": "final-review",
+        "result": "RESULT\nstatus: CHANGES_REQUESTED\nchunk: final\nfiles_changed: [plan file (## FINAL whole-plan review appended)]\ncommands_run: [ALL green at plain HEAD 5ade6c544: 4 plugin suites 30/34/20/12, 4 siblings 35/41/28/15, agent-perms 15 ok A15 GREEN, standalone 10, rulesync-surface 19 c2 engaged, coord-inwork 7, kickoff-branch 6/6 + session-origin 7/7 fully green (merge-window-clears-at-landing claim verified holds), rulesync x2 no-op + --check rc=0, aislop CI-parity pinned-0.18.1 --base form rc=0 0 errors 1 warning D36-only, per-commit scope audit => 7 chunk commits with verdicts + 1 routed test-round commit, TICK_PROMPT three-way byte => pass, D29/D30 sweeps => pass, create_custom_field => 0, single-source greps => pass, banned literals => 0, frozen-surface diffs => empty, ralph sweep historical-only, /tmp sweep pointers-only, .pipeline residue clean, dev-boards live reads => labels zero Pipeline:, follow-up card present, create_list/create_label absent, drift noted: human Test list added to In Process (7 lists, no Timeout) zero impact, helm => n/a]\ndeviations: none — review-notes-only write sanctioned\nFINDINGS: F1 MAJOR fell-between-chunks — degrade-path card COMMENT promised by plan Out-of-scope/Risks, D22 ruling text, boards-skill bullet, and D11 ('add_comment on the reaped card when the board leg is up') but moveCardToTimeout catch runs queueTimeoutRow only (jsonl + board_move_err; index.ts:1394->1347); no add_comment on any degrade arm incl. the Timeout-absent arm where board IS up; C05 AC4/suite R3 defined degrade without it, every review approved vs AC4 so unadjudicated until now; LIVE path until follow-up card Wg93SkHZ7bMLWJYBA lands; HA push + jsonl still fire (visibility gap not safety). Routing recommended: C05-era dev seam fix (best-effort comment, isolated so failure still queues, R3 stays green) OR owner prose-amend ruling. F2 minor: STATE current_wave/updated_at stale (coord applies now). F3 minor no-action: 346573276 tests-only commit shape benign. Deferred: boards-skill lists-inventory refresh after human Test-list drift (board hygiene, not branch defect).\nopen_questions: F1 routing = coord/owner call\nnext_suggested: route F1 seam fix + suite pin, apply F2, re-run final review for the delta, then plan complete + card to Review"
+      },
+      {
+        "at": "2026-10-29T11:10:00Z",
+        "role": "test-round-3 (F1 pins first)",
+        "result": "RESULT\nstatus: DONE\nchunk: test-round-3\nfiles_changed: [tests/opencode/pipeline-locks-reap.test.ts]\ncommands_run: [reap => 20 pass / 3 fail — exactly the new R11 legs red honest-pre-dev, prior legs green; core+engine+tick => 76/76; aislop 0/0; git scope => pass]\ndeviations: R3 needed NO re-pin (degrade legs carry no no-extra-call prohibitions — final reviewer's claim confirmed); pins are pure additions in a new R11 describe; ≤240 leg is a bound assertion mirroring R6\nopen_questions: none\nnext_suggested: route R11 reds to C05 dev; passing impl lands reap 23/23 and restores the D22 sentence without touching prose"
+      },
+      {
+        "at": "2026-10-29T11:30:00Z",
+        "role": "dev-local (C05-final-fix, F1)",
+        "result": "RESULT\nstatus: DONE\nchunk: C05-final-fix\nfiles_changed: [.opencode/plugin/pipeline-locks/index.ts (reapCommentBody single-source builder shared by move-success + degrade arms, MAX_OUTBOUND_MESSAGE 240 ceiling single literal; moveCardToTimeout restructured: Timeout-absent arm attempts add_comment ONCE per card then queueTimeoutRow with absent-list reason; comment throw falls to outer catch -> row + board_move_err still land, one attempt, no retry storm; queueTimeoutRow header truthfulness)]\ncommands_run: [reap => 23/23 x2 at final bytes (R11 3/3 green, 20 prior legs intact), core => 30/30, engine => 34/34, tick => 12/12, siblings => 35/41/28/15, /tmp non-vacuity scratch (comment-throws=>row+audit+ONE attempt; healthy leg=>exact D24 no row; absent+fails) => 3/3 then deleted, six bash surfaces => 15/10/19/7/6/7 rc=0 unchanged-shape, rulesync --check => pass (zero .rulesync edits), aislop 0.18.1 --base form rc=0 D36-only, grep pins => pass (no ALERT_MAX_MESSAGE residue), live: hot-reload x4 clean + pipeline_status + pipeline_heartbeat => pass, git scope => index.ts only, helm => n/a]\ndeviations: 1) degrade comment scoped to arms with confirmed card shape (post get_card+list_lists); pre-read failures stay row-only. 2) Timeout-absent sequence get_card->list_lists->add_comment->row, move skipped (R7's exact 4-name pin is the move-SUCCESS sequence, stays green; degrade census pre-cleared by final reviewer). 3) ceiling renamed MAX_OUTBOUND_MESSAGE (identifier unpinned). 4) queueTimeoutRow inside try safe — total function, its arms catch.\nopen_questions: none\nnext_suggested: coord commits final round (fix + R11 pins + plan/STATE bookkeeping), final review closes F1 and re-verifies the whole-plan verdict"
+      }
+    ]
+  },
   "chunks": {
     "C01": {
       "status": "done",
