@@ -1092,18 +1092,15 @@ app-template:
               fi
               command -v python3 >/dev/null 2>&1 \
                 || fail "no python3 to drive setup.sh; terminal layout: $(find /opt/strata/terminal -maxdepth 3 -name 'python*' 2>/dev/null | tr '\n' ' ')"
-              # setup.sh Step 4 COMPILES the AMD engine for the checkout (the
-              # packaged /opt/strata engine belongs to the serve side; setup
-              # wants its own tree — deploy 2026-10-29: "[X] a C++ compiler
-              # and git are needed"). build-essential+git are layer-local, so
-              # this apt runs once per pod start (~1 min, quiet); the compile
-              # itself lands in the checkout on the claim and is kept-and-
-              # skipped by setup across all later boots.
-              if ! command -v git >/dev/null 2>&1 || ! command -v c++ >/dev/null 2>&1; then
-                echo "model-fetch: installing build-essential git (engine-compile deps)"
-                apt-get update -qq
-                DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends build-essential git >/dev/null
-              fi
+              # setup.sh Step 4 compiles the AMD engine for the checkout.
+              # git + a C++ compiler are BAKED into the image (2026-10-29
+              # owner ruling: runtime apt in an init container = pod-start
+              # mirror dependency + non-reproducible layer); the Dockerfile
+              # verify step pins the same two commands, so a missing tool
+              # fails the build, not the boot.
+              command -v git >/dev/null 2>&1 \
+                && command -v c++ >/dev/null 2>&1 \
+                || fail "image lacks git/c++ for the engine compile - containers/strata must be rebuilt (build-deps RUN, 2026-10-29 contract)"
               IFS=,
               for tok in ${STRATA_QUANTS:-q3}; do
                 [ -n "$tok" ] || continue
