@@ -401,6 +401,9 @@ fi
 # 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, commit dca8a25d2) — the
 # same sanctioned-plan-folder class as the enumerations above, admitted whole
 # so no further retirement note reddens the full-range scope shape.
+# board-tick-cleanup widening (2026-10-29): the hand-managed question-notify
+# reader edit + the loop-file truth fix + this ticket's own plan folder
+# (agent-perms A9 window-pin), all in-scope per its chunks/C02.md.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -428,7 +431,8 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
-      .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) : ;;
+      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore|\
+      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

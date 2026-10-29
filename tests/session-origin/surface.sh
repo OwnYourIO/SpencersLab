@@ -75,6 +75,13 @@
 # at the merge commit (empty diff → arm-B atpos posture), provable
 # pre-commit via CHUNK_BASE=<merge snapshot>. s2's HEAD-relative byte pin
 # greens again at the same commit for the same reason.
+# board-tick-cleanup RE-PIN (2026-10-chore-board-tick-cleanup, 2026-10-29):
+# splice4/atpos4/synth/shape4 admit C01's trailing `ls *` allow and C03's
+# scoped preload-probe allow the same way the date row was admitted — strip
+# from the core, admit at most once whole, atpos4 now a SHELL5|SHELL6 ladder
+# with the single ls trailer. The fourth-allow duty keeps its teeth; the
+# absolute presences live in agent-perms A16 / tests/board-preload-probe/
+# surface.sh, so this suite never reddens a healthy pre-wave tree.
 # The kickoff naming landing (2026-10-27, bug-coord-opencode-perms) inherits
 # the same discipline: splice4 strips the execute/opencode_* naming rows from
 # the core projections (whole-and-order tail check, the four-allow duty keeps
@@ -302,6 +309,14 @@ SHELL4 = [
 # strip it from the core projection (the four-allow duty keeps its teeth)
 # and a separate check admits it at most once, whole.
 DATE = {"action": "shell", "resource": "date *", "effect": "allow"}
+# board-tick-cleanup RE-PIN (2026-10-29): C01's trailing `ls *` allow and
+# C03's scoped preload-probe allow strip from the core projection like the
+# date row (the four-allow duty keeps its teeth; the suites stay green in
+# every era so the probe wave lands as an increment), each admitted at most
+# once, whole. Absolute presence: agent-perms A16 (ls), tests/board-preload-
+# probe/surface.sh B2 (probe).
+LS = {"action": "shell", "resource": "ls *", "effect": "allow"}
+PROBE = {"action": "shell", "resource": "bash scripts/board-preload-probe.sh *", "effect": "allow"}
 # cf-58 MERGE RE-PIN (2026-10-27): the merged coord family additionally
 # carries the sanctioned git block after the SHELL4 block (pinned absolutely
 # across all twelve family files by the cfpins contract in
@@ -353,8 +368,8 @@ def splice(seq):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE]
-c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE]
+b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
+c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
 want, i = splice([p for p in b_core if p not in SHELL4])
 if want is None:
     print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
@@ -385,9 +400,15 @@ if nb and nb != NAMING:
 dt = [p for p in c if p == DATE]
 if dt and dt != [DATE]:
     print("the date allow is present more than once or with a different effect — unsanctioned date surface"); sys.exit(1)
+ltr = [p for p in c if p.get("action") == "shell" and p.get("resource") == "ls *"]
+if ltr and ltr != [LS]:
+    print("the trailing ls allow is present more than once or with a non-allow effect — unsanctioned ls surface"); sys.exit(1)
+prt = [p for p in c if p.get("action") == "shell" and str(p.get("resource", "")).startswith("bash scripts/board-preload-probe.sh")]
+if prt and prt != [PROBE]:
+    print("the preload-probe allow is present more than once, off-spelling, or with a non-allow effect — unsanctioned probe surface (OQ-N1: exactly one scoped row)"); sys.exit(1)
 shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells != [s["resource"] for s in SHELL4]:
-    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the only other sanctioned shell surfaces are the cf-58 git block and the date allow, both checked whole above)"); sys.exit(1)
+    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the other sanctioned shell surfaces are the cf-58 git block, the date allow, the trailing ls allow and the preload-probe allow, all checked whole above)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
 if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resource") == "*"
@@ -396,23 +417,27 @@ if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resou
 PY
 
 cat >"$TMP/atpos4.py" <<'PY'
-# Arm-B line twin: the FIFTEEN literal allow lines (two session triples, the
-# mint triple, the session-origin triple, the date triple — 2026-10-27
-# date-grant re-pin) directly after the opencode '*' allow anchor at the
-# anchor's own indent; the only sanctioned continuation
-# is the cf-58 git block (comment lines + the fourteen git rows, whole and
-# in order) — any other shell row is an unsanctioned grant.
+# Arm-B line twin: forms-aware since the board-tick-cleanup re-pin (2026-10-29)
+# — the sanctioned literal block is the fifteen allow lines (two session
+# triples, the mint triple, the session-origin triple, the date triple) or
+# eighteen (plus the OQ-N1 scoped preload-probe triple, which lands after
+# `date *` before the git block). Ladder rungs are OPTIONAL continuations:
+# absolute probe presence lives in tests/board-preload-probe/surface.sh, the
+# anchor-relative geometry keeps its teeth either way. The only sanctioned
+# continuation after the git block is the single trailing `ls *` allow
+# (presence duty: agent-perms A16) — any other shell row is unsanctioned.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
 assert m, f"{path}: no YAML frontmatter"
 lines = [l.rstrip(" \t\r") for l in m.group(1).split("\n") if l.strip()]
 ANCHOR = re.compile(r"^(\s*)- action: opencode$")
-WANT = [('resource: opencode api get /api/session*', 'effect: allow'),
-        ('resource: opencode api patch /api/session/*', 'effect: allow'),
-        ('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow'),
-        ('resource: bash scripts/session-origin.sh*', 'effect: allow'),
-        ('resource: date *', 'effect: allow')]
+WANT5 = [('resource: opencode api get /api/session*', 'effect: allow'),
+         ('resource: opencode api patch /api/session/*', 'effect: allow'),
+         ('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow'),
+         ('resource: bash scripts/session-origin.sh*', 'effect: allow'),
+         ('resource: date *', 'effect: allow')]
+WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -421,32 +446,43 @@ for i, l in enumerate(lines):
 if len(hits) != 1:
     print(f"want exactly one '- action: opencode' + resource '*' + effect allow rule, found {len(hits)}"); sys.exit(1)
 ind = hits[0][1]
-want_lines = [x for rule in WANT for x in
-              (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
 at = hits[0][0] + 3
-if lines[at:at + 15] != want_lines:
-    print("the fifteen literal shell allow lines (two session triples + mint triple + session-origin triple + date triple) do not follow the "
-          f"opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
-# cf-58 merge re-pin: after the sanctioned fifteen, the only permitted
+matched = 0
+for want in (WANT6, WANT5):  # longest first: the pre-probe era matches WANT5
+    want_lines = [x for rule in want for x in
+                  (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
+    if lines[at:at + 3 * len(want)] == want_lines:
+        matched = 3 * len(want)
+        break
+if not matched:
+    print("neither the fifteen-line SHELL5 block nor the eighteen-line SHELL6 block (with the preload-probe triple) follows the "
+          f"opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 18]})"); sys.exit(1)
+# cf-58 merge re-pin: after the sanctioned literal block the only permitted
 # continuation is comment lines plus the sanctioned fourteen-row git block
-# (whole, in order, ending the shell surface); any other shell row is an
-# unsanctioned grant.
+# (whole, in order), then board-tick-cleanup C01's single trailing ls allow;
+# any other shell row is an unsanctioned grant.
 GB = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
       for r, e in [("git status *", "allow"), ("git log *", "allow"), ("git diff *", "allow"),
                    ("git show *", "allow"), ("git branch *", "allow"), ("git merge-base *", "allow"),
                    ("git rev-parse *", "allow"), ("git ls-files *", "allow"), ("git add *", "allow"),
                    ("git commit *", "allow"), ("git checkout *", "allow"), ("git switch *", "allow"),
                    ("git merge main*", "allow"), ("git push*", "deny")]]
-k = at + 15
+LS_TRAILER = (f"{ind}- action: shell", f"{ind}  resource: ls *", f"{ind}  effect: allow")
+k = at + matched
 gi = saw = 0
+ls_seen = False
 while k < len(lines):
     if lines[k].lstrip().startswith("#"):
         k += 1
         continue
     if lines[k].strip() == "- action: shell":
         saw = 1
+        if gi == len(GB) and not ls_seen and lines[k:k + 3] == list(LS_TRAILER):
+            ls_seen = True
+            k += 3
+            continue
         if gi >= len(GB) or lines[k:k + 3] != list(GB[gi]):
-            print(f"a shell row continues the block after the sanctioned twelve and is not the next sanctioned git-block row (want {GB[gi] if gi < len(GB) else 'nothing'}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
+            print(f"a shell row continues the block after the sanctioned literal and is not the next sanctioned git-block row or the single trailing ls allow (want {GB[gi] if gi < len(GB) else LS_TRAILER}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
         gi += 1
         k += 3
         continue
@@ -478,6 +514,7 @@ BAD = "git -C * checkout -b *"
 # canonical four-allow form after the opencode '*' allow anchor on ANY base,
 # so those modes must not require the cf-52 rows up front.
 SANCTIONED = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *",
+              "ls *", "bash scripts/board-preload-probe.sh *",
               "git status *", "git log *", "git diff *", "git show *", "git branch *",
               "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
               "git commit *", "git checkout *", "git switch *", "git merge main*", "git push*"}
@@ -554,8 +591,10 @@ for p in ps:
     if p.get("action") == "shell" and "git -C" in str(p.get("resource", "")):
         errs.append("a raw git -C shell grant exists (scope escape — the plan's rejected mechanism)")
 bashish = [p.get("resource") for p in ps if p.get("action") == "shell" and str(p.get("resource", "")).startswith("bash ")]
-if bashish != ["bash scripts/kickoff-mint-branch.sh *", ORIGIN]:
-    errs.append(f"bash shell grants are {bashish}, want exactly the mint + session-origin pair in splice order")
+if bashish not in (["bash scripts/kickoff-mint-branch.sh *", ORIGIN],
+                    ["bash scripts/kickoff-mint-branch.sh *", ORIGIN,
+                     "bash scripts/board-preload-probe.sh *"]):
+    errs.append(f"bash shell grants are {bashish}, want the mint + session-origin pair in splice order, or those plus the OQ-N1 preload-probe row (the probe wave lands after date *; absolute duty is tests/board-preload-probe/surface.sh)")
 if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in ps):
     errs.append("question allow lost (repo hard rule)")
 subs = sorted(p.get("resource") for p in ps if p.get("action") == "subagent" and p.get("effect") == "allow")
@@ -743,7 +782,14 @@ if want s4; then
       case "$bc:$add" in
         0:12) rng='1,12' ;;
         3:3) rng='10,12' ;;
-        *) fail "s4: $f diff vs $BASE is +$add/-$del on a base carrying $bc shell allows — want +3 (the session-origin triple on the landed three-allow posture) or +12 (the full four-allow form on a no-allow base), additions only (base: $BASE)" ;;
+        # board-tick-cleanup geometries (mirror of kickoff-branch m4): the ls
+        # trailer on the landed 19-row posture (C01), the preload-probe triple
+        # on the 20-row post-C01 posture (C03). Comment-bearing deltas keep
+        # the date-wave posture: designed-red mid-window, green at the
+        # committed arm-B twin.
+        19:3) rng='13,15' ;;
+        20:3) rng='16,18' ;;
+        *) fail "s4: $f diff vs $BASE is +$add/-$del on a base carrying $bc shell allows — want +3 (the session-origin triple on the landed three-allow posture, the ls trailer on the 19-row posture, or the preload-probe triple on the 20-row post-C01 posture) or +12 (the full four-allow form on a no-allow base), additions only (base: $BASE)" ;;
       esac
       [ "$del" = "0" ] || fail "s4: $f diff vs $BASE removes $del lines — the sanctioned delta is additions-only"
       git diff -U0 "$BASE" -- "$f" | grep '^+' | grep -v '^+++' | sed 's/^+//' | sed 's/^[[:space:]]*//' \
@@ -752,6 +798,8 @@ if want s4; then
                     '- action: shell' 'resource: opencode api patch /api/session/*' 'effect: allow' \
                     '- action: shell' 'resource: bash scripts/kickoff-mint-branch.sh *' 'effect: allow' \
                     '- action: shell' 'resource: bash scripts/session-origin.sh*' 'effect: allow' \
+                    '- action: shell' 'resource: ls *' 'effect: allow' \
+                    '- action: shell' 'resource: bash scripts/board-preload-probe.sh *' 'effect: allow' \
         | sed -n "${rng}p" >"$TMP/s4-want-$n.txt"
       cmp -s "$TMP/s4-add-$n.txt" "$TMP/s4-want-$n.txt" \
         || fail "s4: $f added lines are not the literal sanctioned allow rules (see $TMP/s4-add-$n.txt vs $TMP/s4-want-$n.txt)"

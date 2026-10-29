@@ -55,6 +55,17 @@
 # tests-edit-perms carve: this ticket re-pins the agents-sync references byte
 # freeze (D4) — see the i5 block comment.
 #
+# board-tick-cleanup RE-PIN (2026-10-chore-board-tick-cleanup C01/C03, test
+# session, 2026-10-29): the coord shell block gains the trailing `ls *` allow
+# (12 sources, user ruling "go on all agents") and the OQ-N1 scoped preload-
+# probe allow (six coord variants, lands after `date *`). i4's forms ladder
+# and cfpins ADMIT both rows — never demand them, so this suite stays the
+# zero-red regression guard in both waves: the absolute ls duty is agent-perms
+# A16, the absolute probe duty is tests/board-preload-probe/surface.sh B2,
+# the session-origin s4 posture one ticket later (the sibling posture this
+# repo already runs). Ladder/trailer geometry is data-listed so a future
+# sanctioned row joins as an entry, per the C01 extensibility duty.
+#
 # tests-edit-perms fold-in (D9/D10): at HEAD of the integrated line the OLD
 # i4 exact-delta form could never pass — self-reference, cf-52's delta is
 # committed at the default base — so i4 gains the OR-form and its line twins
@@ -305,14 +316,16 @@ else:
     i = anchors[0]
     if perms[i + 1:i + 3] != API:
         errs.append("the api pair does not sit directly after the opencode '*' allow (pinned splice position)")
-SANCTIONED_SCRIPTS = ("bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*")
+SANCTIONED_SCRIPTS = ("bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*",
+                      "bash scripts/board-preload-probe.sh *")
 others = [p.get("resource") for p in perms if p.get("action") == "shell"
           and not str(p.get("resource", "")).startswith(("opencode api", "git "))
           and p.get("resource") != "*"
           and p.get("resource") not in SANCTIONED_SCRIPTS
-          and p.get("resource") != "date *"]
+          and p.get("resource") != "date *"
+          and not (p.get("resource") == "ls *" and p.get("effect") == "allow")]
 if others:
-    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the two cf-52 sanctioned script allows + the date allow + the git block + the ask baseline, nothing more)")
+    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the sanctioned script allows (mint, origin, preload-probe) + the date allow + the git block + the trailing ls allow + the ask baseline, nothing more)")
 # 2026-10-27 date-grant re-pin: the kickoff in-work mark embeds
 # $(date +%s%3N) in the patch payload; the shell matcher extracts command
 # substitutions and checks the date subcommand against this agent's own
@@ -377,6 +390,14 @@ WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
 # 2026-10-27 date-grant re-pin: SHELL5 = SHELL4 + the `date *` triple (the
 # in-work mark's $(date +%s%3N) epoch subcommand grant).
 WANT5 = WANT4 + [('resource: date *', 'effect: allow')]
+# 2026-10-29 board-tick-cleanup forms-ladder duty (C01 Notes for dev: the
+# re-pin stays extensible so C03's probe wave is an increment, not a rewrite):
+# SHELL6 = SHELL5 + the scoped preload-probe triple (OQ-N1, lands after
+# `date *`, before the git block). Rungs are OPTIONAL matches — the absolute
+# probe presence lives in tests/board-preload-probe/surface.sh, the absolute
+# ls presence in tests/agent-perms/surface.sh A16; this twin never reddens a
+# healthy pre-wave tree.
+WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -387,15 +408,15 @@ if len(hits) != 1:
 ind = hits[0][1]
 at = hits[0][0] + 3
 matched = 0
-for want in (WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are its prefixes
+for want in (WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are its prefixes
     want_lines = [x for rule in want for x in
                   (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
     if lines[at:at + 3 * len(want)] == want_lines:
         matched = 3 * len(want)
         break
 if not matched:
-    print("none of the sanctioned literal blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve, SHELL5 fifteen) "
-          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
+    print("none of the sanctioned literal blocks (SHELL2 six lines through SHELL6 eighteen) "
+          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 18]})"); sys.exit(1)
 # cf-58 merge re-pin: after the matched sanctioned block the only permitted
 # continuation is comment lines (source tree only — the rulesync YAML
 # round-trip strips them from the generated mirror) plus the sanctioned git
@@ -411,9 +432,16 @@ def T(r, e):
 TAILS = [[T("git push*", "deny")],
          [T("git push*", "allow"), T("git push*main*", "deny"), T("git push --force*", "deny"),
           T("git push -f*", "deny"), T("git push * --force*", "deny"), T("git push * -f*", "deny")]]
+# board-tick-cleanup C01: the shell block's sanctioned trailer is exactly one
+# trailing `ls *` allow after the complete git tail (the user ruling "go on all
+# agents" lands at the block tail, before the subagent deny). Data-listed like
+# the date rung so a future trailer is an entry, not a rewrite; zero rows is
+# the pre-wave era (presence duty: agent-perms A16, never this twin).
+TRAILER = [T("ls *", "allow")]
 k = at + matched
 gi = saw = 0
 chosen = None
+trailer_seen = False
 while k < len(lines):
     if lines[k].lstrip().startswith("#"):
         k += 1
@@ -427,7 +455,11 @@ while k < len(lines):
             k += 3
             continue
         if chosen is not None:
-            print("a shell row continues after the complete sanctioned git block — unsanctioned shell grant"); sys.exit(1)
+            if not trailer_seen and lines[k:k + 3] == list(TRAILER[0]):
+                trailer_seen = True
+                k += 3
+                continue
+            print("a shell row continues after the complete sanctioned git block and its trailing ls allow — unsanctioned shell grant"); sys.exit(1)
         chosen = next((t for t in TAILS if lines[k:k + 3 * len(t)] == [ln for tr in t for ln in tr]), None)
         if chosen is None:
             print(f"the git block's tail is neither the -local push-deny row nor the -pr push sextet (got {lines[k:k + 18]}) — unsanctioned shell grant"); sys.exit(1)

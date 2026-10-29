@@ -30,6 +30,13 @@
 # pre-cf-58 tree — byte-unchanged pins and the pinned-block reconstruction
 # read from it, so no base drift can soften them.
 #
+# board-tick-cleanup C01 RE-PIN (2026-10-29): the sanctioned SUFFIX grows the
+# explicit `ls *` allow row (both variants) — S3's pinned-copy arm is red
+# until the trio lands it. The dynamic giteffect arms need no edit: C01 mirrors
+# the row onto agent-dev-{local,pr} at the same position, so the
+# pipeline-vs-standalone lists stay equal beyond the git-effect delta by
+# construction.
+#
 # Offline-deterministic: pure tree/parse checks + the rulesync ladder arm
 # (skip-warn per c7/t14 precedent). No server, no session, no MCP.
 #
@@ -129,11 +136,19 @@ def sh(res, eff): return {"action": "shell", "resource": res, "effect": eff}
 ISOLATE = [{"action": "opencode_worktree_create", "resource": "*", "effect": "allow"},
            {"action": "opencode_worktree_list",   "resource": "*", "effect": "allow"},
            {"action": "opencode_session_move",    "resource": "*", "effect": "allow"}]
+# board-tick-cleanup C01 (user ruling "should go on all agents"): the trio's
+# explicit `ls *` allow lands after the git block and before the helm rows
+# (C01.md placement — mirrored on the agent-dev pair, so the giteffect
+# delta-aware comparator keeps the non-git-write lists equal by construction).
+# It joins SUFFIX because the pinned-copy reconstruction grows by exactly this
+# row: len(c) == len(b) + len(SUFFIX) is the demand that turns the arm red
+# before dev and honest after.
+LS = sh("ls *", "allow")
 SUFFIX = {
-  "local": [sh("git add *", "allow"), sh("git commit *", "allow"), sh("git push*", "deny")],
+  "local": [sh("git add *", "allow"), sh("git commit *", "allow"), sh("git push*", "deny"), LS],
   "pr": [sh("git add *", "allow"), sh("git commit *", "allow"), sh("git push*", "allow"),
          sh("git push*main*", "deny"), sh("git push --force*", "deny"), sh("git push -f*", "deny"),
-         sh("git push * --force*", "deny"), sh("git push * -f*", "deny")],
+         sh("git push * --force*", "deny"), sh("git push * -f*", "deny"), LS],
 }[variant] + ISOLATE
 b, c = perms(base_file), perms(target)
 if len(c) != len(b) + len(SUFFIX):
@@ -353,9 +368,9 @@ if want s3; then
   if git cat-file -e "${TB}:.rulesync/subagents/agent-dev.md" 2>/dev/null; then
     git show "$TB:.rulesync/subagents/agent-dev.md" >"$TMP/base-agent-dev.md"
     python3 "$TMP/blockdiff.py" "$TMP/base-agent-dev.md" "$DEV_LOCAL" local \
-      || fail "S3[AC1]: dev-local's block is not the ticket-base implementer list + [add allow, commit allow, push deny] + [worktree create/list, session move] after the git reads — C04 copies the C02 agent-dev-local block verbatim, the 2026-10-27 isolation landing appended its sanctioned rows"
+      || fail "S3[AC1]: dev-local's block is not the ticket-base implementer list + [add allow, commit allow, push deny, ls allow] + [worktree create/list, session move] after the git reads — C04 copies the C02 agent-dev-local block verbatim, the 2026-10-27 isolation landing appended its sanctioned rows, board-tick-cleanup C01 the ls allow"
     python3 "$TMP/blockdiff.py" "$TMP/base-agent-dev.md" "$DEV_PR" pr \
-      || fail "S3[AC1]: dev-pr's block is not the ticket-base implementer list + [add allow, commit allow, push allow, main/force deny x5] + [worktree create/list, session move] after the git reads, in order"
+      || fail "S3[AC1]: dev-pr's block is not the ticket-base implementer list + [add allow, commit allow, push allow, main/force deny x5, ls allow] + [worktree create/list, session move] after the git reads, in order"
     pinned_note="pinned-copy arm run vs ticket base"
   else
     [ -f "$ADEV_LOCAL" ] || fail "S3[AC1]: neither the ticket-base agent-dev.md nor agent-dev-local.md is readable — the pinned contract cannot be verified"

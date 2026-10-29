@@ -215,27 +215,33 @@ def rows(lines):
 b, n = rows(base), rows(new)
 blabels = [r.split("|")[1].strip() for r in b]
 nlabels = [r.split("|")[1].strip() for r in n]
-# Base matchers must survive in order, exactly once each (insertion of the
-# agent-board row is the only sanctioned matrix move).
+# Base matchers must survive in order; the agent-board row's DELIVERY posture
+# is era-gated (mechanical repair, board-tick-cleanup test wave): at cf-75's
+# own base the row was the sanctioned single ADDITION; with cf-75 merged to
+# main it rides every later TB, so presence — already grep-pinned — plus
+# "no OTHER unexplained row appeared vs the base" is the permanent form.
 missing = [x for x in blabels if nlabels.count(x) < 1]
 if missing:
     print(f"base matchers lost: {missing}"); sys.exit(1)
 added = [x for x in nlabels if x not in blabels]
-if added != [] and not (len(added) == 1 and added[0] in ("board", "agent-board")):
+if added and not (len(added) == 1 and added[0] in ("board", "agent-board")):
     print(f"unexpected matcher rows added: {added}"); sys.exit(1)
-if not added:
+if "agent-board" not in nlabels and "board" not in nlabels:
     print("no agent-board matcher row found"); sys.exit(1)
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
-    # tests/pipeline-gates/validation-fix.sh); every other base row must
-    # survive byte-identical.
-    if label == "review":
+    # tests/pipeline-gates/validation-fix.sh). The coord/board-coord/agent-
+    # board/dev-local/dev-pr cells move per board-tick-cleanup C01 (same-
+    # commit matrix duty, plan Grounded facts W3 — the cells list the `ls *`
+    # row; the *local/*-pr reference idioms stay byte-stable). Every other
+    # base row must survive byte-identical.
+    if label in ("review", "coord", "board-coord", "agent-board", "dev-local", "dev-pr"):
         continue
     if r not in n:
-        print(f"base row '{label}' changed byte-wise — only the agent-board row is added and only the review row may move (C02)"); sys.exit(1)
+        print(f"base row '{label}' changed byte-wise — only the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, and board-tick-cleanup C01's five shell-cell updates; nothing else may drift"); sys.exit(1)
 PY
-  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the C02-moved review row, and gains exactly one agent-board row (C03 AC4)"
+  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells) and carries the agent-board row (era-gated presence — post-landing it rides the base too)"
 fi
 
 # --- t5: regen no-op + --check, and same-commit source/generated shape (AC6) ----

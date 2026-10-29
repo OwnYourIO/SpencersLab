@@ -2,7 +2,7 @@
   "feature": "2026/2026-10-chore-board-tick-cleanup",
   "plan_status": "approved",
   "coord_session": "ses_e782f071affeLNM8jA1r3ocobm",
-  "test_session": null,
+  "test_session": "ses_e77bd9589ffeUWsfPsH64hS5Ah",
   "current_wave": 1,
   "updated_at": "2026-10-29T14:52Z",
   "kickoff": {
@@ -28,6 +28,17 @@
       "new_gaps": ["OQ-N1 probe capability grant (best guess: scripts/board-preload-probe.sh + one scoped bash row on the six coord variants)", "OQ-N2 pre-merge silence-leg proof ceiling (best guess: accept unit-complete LF6 + post-merge first-fire belt)"],
       "gate_round_2026_10_29": "USER APPROVED plan revision 2 (plan_status -> approved). OQ-N1 APPROVED scoped probe-script row (scripts/board-preload-probe.sh + one scoped bash allow on all six coord variants, same-commit matrix + suite re-pins). OQ-N2 APPROVED live-partial ceiling: flip proceeds on unit-complete LF6, first post-merge hourly fire is the optional belt. LF5's one real test push pre-announced to user."
     }
+  },
+  "test_wave_handoff": {
+    "at": "2026-10-29T15:05Z",
+    "session": "ses_e77bd9589ffeUWsfPsH64hS5Ah",
+    "status": "DONE",
+    "summary": "All three chunks' tests written in one session: C01 unified/extensible re-pins (A16 carrier, SHELL6 optional rung ladders, blockdiff SUFFIX, 19-3/20-3 shapes); C02 T9/T10 both-direction matrix + noop-marker/surface.sh N1-N5; C03 board-context S10 era arms (cards:==0 per AC4) + board-preload-probe/surface.sh B1-B5. Simulated waves green, reverted; designed-reds by carrier. Pre-existing reds NOT this ticket: pipeline-models M3 (other ticket's catalog patch).",
+    "adjudications_to_COORD_DECISIONS": [
+      "probe invocation argument-bearing (spaced literal can't match zero-arg) — DECISIONS.md 2026-10-29 coord entry 1",
+      "node --test explicit-file form (MODULE_NOT_FOUND on Node v26.5.0) — DECISIONS.md 2026-10-29 coord entry 2",
+      "tests/wekan-mcp/board-context.sh t4 era-gate repair landed in the test wave"
+    ]
   },
   "friction": [
     "2026-10-29: planning-tier override openrouter/qwen/qwen3.8-2.4t-a95b died twice (agent-research AND agent-plan launches) with 'Provider returned error'; successful runs used agent defaults. This run proceeds on defaults until the openrouter large route recovers; alternate-large candidates per pipeline-models: openrouter/openai/gpt-6-astra, openrouter/qwen/qwen3.8-max-0902."

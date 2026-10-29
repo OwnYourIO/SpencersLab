@@ -289,6 +289,10 @@ fi
 # bookkeeping write into the superseded sibling folder
 # 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, dca8a25d2) — same
 # sanctioned-plan-folder class as c8's enumerations, admitted whole.
+# board-tick-cleanup widening (2026-10-29, agent-test): the hand-managed
+# question-notify reader + the loop-file truth edit + this ticket's own plan
+# folder (the agent-perms A9 window pin; a guard red on the running ticket's
+# folder buries every later check).
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -314,8 +318,10 @@ if want c7; then
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
       skills/wekan-mcp/*|skills/wekan-api/*|.opencode/plugin/board-context/*|\
+      .opencode/plugin/question-notify/*|.agents/loops/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
-      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*) : ;;
+      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
+      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
@@ -325,6 +331,10 @@ fi
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
 # Section-level comparison, not line-level: an in-line extension reads as
 # deletion+addition and would hide a cross-section edit in a line diff.
+# board-tick-cleanup C02 widens the allowed set with "Pipeline worker
+# iterations" — the OQ10 docs-only truth task + silence rule edit exactly that
+# section's worker sentence (chunks/C02.md Tasks; AGENTS.md regenerates from
+# the sanctioned .rulesync/rules/overview.md delta).
 if want c8; then
   if git diff --quiet "$BASE" -- AGENTS.md 2>/dev/null; then
     ok "c8: AGENTS.md shows no delta vs $BASE (committed) — content checks c2-c6 carry the gate"
@@ -343,7 +353,8 @@ def sections(path):
     out[name] = "".join(buf)
     return out
 old, new = sections(sys.argv[1]), sections(sys.argv[2])
-allowed = {"Where things live", "MCP servers", "Agents", "Feature pipeline (agent-*)", "Pipeline specifics in this repo"}
+allowed = {"Where things live", "MCP servers", "Agents", "Feature pipeline (agent-*)", "Pipeline specifics in this repo",
+           "Pipeline worker iterations"}
 changed = [n for n in old if old.get(n) != new.get(n)]
 extra = [n for n in new if n not in old]
 if extra:
