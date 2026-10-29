@@ -106,8 +106,11 @@ Pod/spec side (an image cannot provide it):
 - stop window 120 s (`--stop-timeout 120`), and llama-swap's per-model
   `unloadTimeout` (default 10 s force-kill) must exceed that drain — the
   binding constraint pairing is RESEARCH §3, C02's config.
-- NO container memory limit — the page-locked arena must size against real
-  RAM; a cgroup cap breaks it (#1601 stays deferred while this holds).
+- Memory limit is a CONSUMER-side pair: the chart caps the container at
+  72Gi AND declares `--memory-limit-mib` to the engine (#1601 posture: a
+  caged page-lock must be told its cage, or it gets OOM-killed mid-pin).
+  DOCKER.md's no-cap default presumes a dedicated box; the shared gpu-ai
+  node changed that calculus 2026-10-29. The image serves either policy.
 - devices `/dev/kfd` + `/dev/dri` (hostPath + the pod's privileged shape,
   DECISIONS 2026-10-27) and process groups `video` + `render`.
 - Root: the image keeps the upstream root user (no uid-65532 is created).

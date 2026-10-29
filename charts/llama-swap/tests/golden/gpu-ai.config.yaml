@@ -1,10 +1,11 @@
 apiKeys: []
 globalTTL: 0
 healthCheckTimeout: 3600
+# 2026-10-29 OOM ruling (cf-77 strata): qwen3.8-27b-q8 dropped from preload —
+# llama.cpp lives on unified RAM the strata arena now shares; lazy-load only.
 hooks:
   on_startup:
     preload:
-    - qwen3.8-27b-q8
     - qwen3-embedding-0.6b
 includeAliasesInList: true
 logLevel: info

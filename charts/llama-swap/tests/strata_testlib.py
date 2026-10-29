@@ -104,7 +104,12 @@ VOID_ENV_TOKEN = "STRATA_KV_GROW_HOLD"
 
 PRIMARY_FORBIDDEN_FLAGS = [
     "--resident-budget-gib", "--prompt-cache", "--kv-grow", "--vision",
-    # --kv-resident was listed here under the run-1 reading of RESEARCH §5
+    # --ple-io (any value): the engine default maps the 28.8 GiB n-gram
+    # table from disk; setup's node-probed `ram` choice + the trio warm is
+    # what OOM-killed the node 2026-10-29. Re-admitting it is a test-
+    # session re-pin paired with a real capacity plan, not a silent edit.
+    "--ple-io",
+    # --kv-resident was listed under the run-1 reading of RESEARCH §5
     # ("batch-column item"); the generated run-config for THIS node proves
     # setup itself pairs it with --ple-io ram outside any --batch context
     # (2026-10-29 transplant), so it is baseline now, not forbidden.
@@ -126,8 +131,10 @@ PRIMARY_REQUIRED_PAIRS = [
     ("--spec", "4"),
     ("--spec-min-p", "0.5"),
     ("--prefill", "auto"),
-    ("--ple-io", "ram"),
     ("--kv-resident", "32768"),
+    # 2026-10-29 OOM pairing: a cgroup limit without the engine knowing it
+    # gets the arena killed mid-pin; this pair is the #1601 contract.
+    ("--memory-limit-mib", "66560"),
 ]
 PRIMARY_REQUIRED_FLAGS = [
     "--pack", "--native", "--ple-gguf", "--expert-profile", "--mtp",

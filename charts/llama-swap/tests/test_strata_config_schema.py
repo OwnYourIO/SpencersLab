@@ -72,7 +72,11 @@ def test_c01_ac4_top_level_config_literals():
 @helm
 def test_c01_ac4_model_residency_and_stop_windows():
     m = _primary_model(_docs())
-    assert m.get("ttl") == 0, "ttl 0 = NEVER unload (tri-state trap; per-model, on top of globalTTL 0)"
+    assert m.get("ttl") == 3600, (
+        "time-share residency (2026-10-29 OOM post-mortem): permanent pin "
+        "beside uncapped llama.cpp demand harvested the node; 3600s idle "
+        "hands the arena back; flip to 0 only for dedicated windows"
+    )
     assert m.get("unloadTimeout") == 180, (
         "llama-swap force-kills at the GLOBAL default 10s long before the 420s grace "
         "matters — a ~47 GiB page-locked unload needs the raised window (run-1 contradictions #4)"

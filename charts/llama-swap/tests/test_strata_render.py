@@ -210,15 +210,27 @@ def test_c01_probes_on_llama_swap_health_only():
 
 
 @helm
-def test_c01_memory_request_no_limit():
+def test_c01_memory_cgroup_and_engine_cap():
+    """Post-OOM doctrine (2026-10-29): an UNCAPPED page-lock on a node where
+    the llama.cpp trio is uncapped too is what reaped cluster system pods.
+    The pinned shape is cgroup-cap + engine-awareness as a PAIR (PR #1601):
+    limits.memory bounds the blast radius, --memory-limit-mib keeps the
+    arena inside it."""
     ctr = S.strata_container(_on())
-    req = ctr.get("resources", {}).get("requests", {})
-    assert req.get("memory") == "96Gi", f"request {req}"
+    res = ctr.get("resources", {})
+    req = res.get("requests", {})
+    assert req.get("memory") == "64Gi", f"request {req}"
     assert req.get("cpu") in ("8", 8, "8000m"), f"request {req}"
-    limits = ctr.get("resources", {}).get("limits") or {}
-    assert "memory" not in limits, (
-        "limits.memory would cgroup-kill the pinned arena (Q2 lazy posture, run-1 "
-        "RESEARCH §4 — no container memory limit is also DOCKER.md's runtime contract)"
+    limits = res.get("limits") or {}
+    assert limits.get("memory") == "72Gi", (
+        f"limits {limits} — strata MUST be cgroup-bounded (2026-10-29 OOM: "
+        "unbounded pin + unbounded trio = kernel harvesting system pods)"
+    )
+    cap = dict(S.arg_pairs(S.profile_json(_on(), S.PROFILE_PRIMARY_FILE))).get("--memory-limit-mib")
+    assert cap and int(cap) <= 72 * 1024, (
+        f"--memory-limit-mib {cap!r}: the engine must be TOLD its cgroup "
+        "(#1601 pairing) and size inside it — a limit without the flag "
+        "just gets the arena OOM-killed mid-pin"
     )
     assert "amd.com/gpu" not in {**req, **limits}, (
         "the amd.com/gpu resource contradicts the privileged+hostPath device ruling"

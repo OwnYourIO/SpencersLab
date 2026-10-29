@@ -561,9 +561,11 @@ def baseline_config(cluster: str) -> dict:
     return yaml.safe_load(baseline_raw(cluster))
 
 
-# gpu-ai preload (golden-derived; C04 "preload unchanged"): no new model may
-# enter it, and flash-next q5/q6 must appear in NO matrix set at all.
-C04_PRELOAD_PINNED = ["qwen3.8-27b-q8", "qwen3-embedding-0.6b"]
+# gpu-ai preload (2026-10-29 OOM ruling re-pin; C04 "no new model may enter
+# it" carries over): the list is embedding-only — q8 went lazy with the
+# strata arena sharing the node's RAM — and flash-next q5/q6 must appear in
+# NO matrix set at all.
+C04_PRELOAD_PINNED = ["qwen3-embedding-0.6b"]
 
 
 def all_models_of(cfg: dict) -> dict:

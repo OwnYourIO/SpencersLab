@@ -260,18 +260,22 @@ escape (§4).
 
 - `grep MemAvailable /proc/meminfo` plus `free -g` with the llama.cpp trio
   idle: MemAvailable must cover the shipped profile's implied budget —
-  arena read measured 46.84 GiB + the conversation-cache budget (24576 MiB,
-  16 slots, the PR's values — how it actually splits on this node is
-  `--plan`'s answer) + KV/pack page-cache headroom, which together the
-  `96Gi` pod request encodes (RESEARCH §4; `charts/llama-swap/values.yaml`
-  resources comment).
+  arena read measured 46.84 GiB + the conversation-cache budget (the engine
+  default cap 8 GiB on this node; the PR's 24576 MiB x 16 slots is a
+  documented toggle — how it actually splits is `--plan`'s answer) +
+  KV/pack headroom, which together the `64Gi` request / `72Gi` cgroup cap
+  encode (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment —
+  the 2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with
+  the paired 72Gi cap + `--memory-limit-mib 66560`).
 - Total pod requests vs node allocatable — the strata pod must schedule
   alongside llama-swap's 4Gi:
   `kubectl describe node <gpu-ai-node>` → Allocatable block and the
-  Requests summary; 96Gi + 4Gi under allocatable-minus-daemonsets, nothing
+  Requests summary; 64Gi + 4Gi under allocatable-minus-daemonsets, nothing
   else claiming the balance.
-- No memory **limit** on the container is deliberate (#1601 posture) — a
-  cgroup cap breaks the page-locked arena.
+- The container's memory **limit** (72Gi) ships PAIRED with the engine's
+  `--memory-limit-mib 66560` — #1601's informed-limit posture, adopted
+  after the 2026-10-29 node OOM made uncapped pinning an unacceptable
+  failure mode. Never move one without the other.
 
 **3.4 R1 gate: `--plan` reconciliation (human step 3), before the first
 accepted request.** The on-target finalizer, run per profile; repo numbers
@@ -376,12 +380,16 @@ The engine posture is one at a time — the PR's one-at-a-time arm: no
 `--batch`, `STRATA_PREFILL_CPU_SHARE=auto` (the `--batch 4` stall incident
 after 85 min is why batch was rejected, DECISIONS Q2). The operational law
 follows from the arena: once `qwen3.8-flash-next-strata` takes a request its
-~47 GiB page-locked arena stays resident permanently (`ttl: 0`), and the
-llama.cpp trio's ~90–119 GiB preallocation cannot coexist with it on 128 GB.
-Therefore:
+~47 GiB page-locked arena stays resident for up to an hour of idle
+(`ttl: 3600`; time-share adopted after the 2026-10-29 node OOM — the old
+`ttl: 0` permanent pin beside the llama.cpp trio's ~90–119 GiB
+preallocation is what harvested the node), and the 72Gi cgroup now keeps
+strata's own worst case inside its own container. Therefore:
 
-- No trio requests while Strata is warm; no Strata request while the trio is
-  mid-session. Trio coexistence ends at the first Strata request.
+- No Strata request while a large trio model is mid-session (cold pin +
+  warm trio exceeds 125 GB even capped); no large trio request while the
+  arena is warm. Let the idle side cool down first — llama-swap's per-model
+  unloads now do real RAM arithmetic on this node.
 - Peer models are invisible to the OUTER matrix (peers are not roster
   entries) — nothing enforces this automatically; it is operator discipline.
 - Escape when the RAM is needed back: `POST /api/models/unload/<id>` on the
@@ -455,8 +463,11 @@ ignore lands (future ticket, STATE.json `deferred`).
   via `tools/hip/tune_hipblaslt.cpp`; PR #3636 ran gfx1201 on
   7.14.1/hipBLASLt 1.4.1 fine without a table — table ABSENCE on this arch
   is expected, no action (ladder rung 2).
-- **`--memory-limit-mib` / cgroup handling (#1601)** — moot while the
-  container carries no memory limit; revisit only if policy forces one.
+- **`--memory-limit-mib` / cgroup handling (#1601)** — CLOSED by the
+  2026-10-29 OOM: the container now carries `limits.memory 72Gi` paired
+  with the engine's `--memory-limit-mib 66560` (see §3.3; the pair is the
+  posture, never one without the other). The uncapped-arena era lived
+  while strata owned the box's rhythm; shared residency ended it.
 
 ## 8. Resolved-question ledger (where each ruling landed)
 

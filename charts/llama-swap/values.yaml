@@ -1214,18 +1214,21 @@ app-template:
                   path: /health
                   port: 8080
           resources:
-            # 128 GB node (R3): pinned arena ~47 GiB + conversation cache
-            # 24 GiB + KV/pack page-cache headroom (RESEARCH §4) against
-            # node allocatable — the runbook's pre-sync MemAvailable check
-            # owns the final sizing, and the node's llama.cpp trio must
-            # stay evictable around this reservation (RAM law, plan Goal).
+            # 128 GB node (R3). OOM post-mortem 2026-10-29: the setup-chosen
+            # `--ple-io ram` (+28.8 GiB resident) atop a ~47 GiB arena with
+            # the llama.cpp trio warm blew node RAM and the kernel harvested
+            # cluster system pods. Caps now bound the blast radius: the
+            # container cgroup stops strata at 72Gi (kernel victims stay
+            # inside THIS cgroup), and the engine's --memory-limit-mib
+            # (PR #1601 pairing: a cgroup limit must be declared to the
+            # engine) sizes the arena/conv-cache inside 65 GiB of it — the
+            # supervisor + venv headroom fills the rest. Coexistence is
+            # time-shared (ttl below), not simultaneous residency.
             requests:
               cpu: 8
-              memory: 96Gi
-            # NO limits.memory, deliberately: a cgroup cap kills the
-            # page-locked arena (#1601 stays deferred while this holds;
-            # DOCKER.md's runtime contract via the C01 README). No CPU
-            # limit either — arena sizing wants every idle cycle.
+              memory: 64Gi
+            limits:
+              memory: 72Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
             # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
@@ -1428,7 +1431,7 @@ strata:
     models:
       qwen3.8-flash-next-strata:
         name: Qwen3.8-Flash-Next IQ3_S (R9700 arena)
-        description: Strata engine, experts pinned in a ~47 GiB page-locked RAM arena on the R9700; first request pays the cold pin (minutes), then residency is permanent (ttl 0).
+        description: Strata engine, experts pinned in a page-locked RAM arena on the R9700, capped at 65 GiB engine-side; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back (set ttl 0 to pin forever).
         # serve takes only --profile/--host/--port (RESEARCH §2) — every
         # tuning knob lives in the run-config JSON below. `exec` hands the
         # process to llama-swap for stop/unload, and the ulimit wrapper is
@@ -1437,10 +1440,16 @@ strata:
         # contradiction #5). ${PORT} with no hardcoded port keeps this
         # SanitizeCommand-safe and needs no proxy key.
         cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-iq3_s.json --host 127.0.0.1 --port ${PORT}'
-        # ttl 0 = NEVER unload (the tri-state trap: 0 is permanent, not
-        # immediate). The escape hatch while the arena is pinned is
-        # POST /api/models/unload/qwen3.8-flash-next-strata (runbook).
-        ttl: 0
+        # ttl 3600 = unload after 1h idle (tri-state: 0 = never, -1 =
+        # globalTTL). The 2026-10-29 OOM post-mortem settled the residency
+        # policy: with the arena capped but uncapped-by-default llama.cpp
+        # models wanting the same 125 GB, PERMANENT residency (the run-1
+        # Q2 posture) turns every cold strata load into a coin-flip for the
+        # trio. Time-sharing hands the ~47-65 GiB back after quiet; the
+        # cost is re-paying the minutes-long cold pin after an idle hour.
+        # Set ttl: 0 to pin forever (dedicated-window mode); manual escape
+        # remains POST /api/models/unload/qwen3.8-flash-next-strata.
+        ttl: 3600
         # llama-swap force-kills at unloadTimeout (global default 10 s) long
         # before the 420 s pod grace matters — a ~47 GiB page-locked unload
         # needs this raised window (RESEARCH §3, contradiction #4; timed
@@ -1454,6 +1463,12 @@ strata:
         # PR #3636 one-at-a-time arm's switches (RESEARCH §5; the strix
         # eight-set is a superset and stays C05's) plus the chart-injected
         # ROCR entry. STRATA_KV_GROW stays off per the R4 ruling.
+        # Strata's DNS-rebinding guard sees the peers-forwarded Service
+        # Host (llama-swap passes the client Host through; docs/
+        # LLAMA_SWAP.md "Host is not allowed") — with the api_key
+        # deliberately absent (C-A), the allow-list is the documented
+        # other answer. The engine ignores ports, so the Service-DNS
+        # shapes cover in-cluster callers; localhost always passes.
         env:
           - "STRATA_PF_FUSED=1"
           - "STRATA_PF_GEMM=1"
@@ -1461,6 +1476,7 @@ strata:
           - "STRATA_HIP_WMMA=1"
           - "STRATA_SELECT_WMMA=1"
           - "STRATA_PREFILL_CPU_SHARE=auto"
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
         # Lazy by ruling (Q2 + RESEARCH §3: preloading matrix alternatives
         # swap-loads each other — C05's (p|s) case). Preload flip, only if
         # on-target ever wants a boot-pinned arena:
@@ -1487,9 +1503,13 @@ strata:
         checkEndpoint: /health
         # The §5 eight-set rides in the run-config profile below instead:
         # those literals are upstream-recipe constants, not values-gated,
-        # so their single source is engineProfileStrix.env. No env list at
+        # so their single source is engineProfileStrix.env. No SECRETS at
         # this layer — the keyless ruling (C-A) removed the last entry that
-        # lived here; the absence is the posture, not an omission.
+        # lived here; the absence is the posture, not an omission. The one
+        # non-secret this layer carries is the peers-forwarded Host
+        # allow-list (same DNS-rebinding reason as the primary).
+        env:
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
         # Rounds differ from the primary's output: the §5 switches are
         # KL-gated (STRIX_HALO §5 "changes bits") — never A/B the two
         # profiles token-for-token, compare on the bench suite instead.
@@ -1566,17 +1586,25 @@ strata:
         - --max-context 262144
         # int8 KV: the engine default AND the PR's explicit choice.
         - --kv int8
-        # Machine-tuned by setup (adopted verbatim): the n-gram PLE table
-        # stays RAM-resident — the quant card's own recommendation when RAM
-        # allows — with a 32768-cell resident KV window, and prefill sized
-        # automatically for the node instead of the PR's hand-picked 32768.
-        - --ple-io ram
+        # Machine-tuned by setup, adopted with two 2026-10-29 post-OOM
+        # edits: --ple-io ram REMOVED (back to the engine's file/mmap
+        # default — the 28.8 GiB n-gram table reads sparsely, and RAM-
+        # resident only made sense on a node with nothing else warm), and
+        # --memory-limit-mib ADDED so the engine sizes the page-locked
+        # arena inside the container's 72Gi cgroup instead of guessing at
+        # free node RAM (PR #1601 pairing; 65 GiB leaves supervisor +
+        # conv-cache headroom under the cap). The 32768-cell resident KV
+        # window and auto-sized prefill stay as setup chose them.
         - --kv-resident 32768
         - --prefill auto
+        - --memory-limit-mib 66560
         # Documented deviations/toggles, one values edit away (verbatim
         # provenance kept for the record):
         # --prefill 32768: the PR #3636 R9700-machine number; setup chose
         #   `auto` here — override only on --plan/bench evidence.
+        # --ple-io ram: put the 28.8 GiB n-gram table back in RAM — only
+        #   sane with the trio idle (the OOM post-mortem above); re-add
+        #   after loading, never alongside residency.
         # --conversation-cache-mib 24576 / --conversation-cache-slots 16:
         #   the PR's parked-conversation budget — the real home of the
         #   guide's "24576" (RESEARCH §5 contradiction #3). Setup ships its

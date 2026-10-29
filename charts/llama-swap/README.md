@@ -36,9 +36,11 @@ private. The peers proxy is `http://gpu-ai-llama-swap-strata.default.svc.cluster
 with NO `/v1` suffix — the request path appends verbatim (RESEARCH §3).
 Pod shape: privileged + hostPath `/dev/kfd` + `/dev/dri`, `strategy:
 Recreate` (a RollingUpdate overlap would double-pin the arena — the #2257
-class), grace 420 s > `unloadTimeout` 180 s + drain 30 s, shm 2 GiB, and NO
-container memory limit on purpose (#1601 posture — a cgroup cap breaks the
-page-locked arena).
+class), grace 420 s > `unloadTimeout` 180 s + drain 30 s, shm 2 GiB.
+Memory is a PAIRED cap, not the DOCKER.md default of none: `limits.memory
+72Gi` cgroup + `--memory-limit-mib 66560` declared to the engine (#1601's
+informed-limit posture) — the 2026-10-29 node OOM harvest ended the
+uncapped-pinning era on a node the trio also lives on.
 
 ### Keyless posture
 
@@ -46,9 +48,13 @@ Engine and inner supervisor run unauthenticated in-cluster, mirroring the
 outer llama-swap's own `apiKeys: []`: both run-config profiles ship
 `api_key: "none"` and the inner config carries `apiKeys: []`. The engine
 binds 127.0.0.1 via serve's `--host`, so the supervisor proxy is its only
-client. No secret exists for this workload: nothing to create in any secret
-store, nothing injected into the pod, no Authorization header anywhere in
-the chain.
+client. Because llama-swap passes the client `Host` header through, the
+engine's DNS-rebinding guard needs to know the Service name the peers hop
+delivers — each model's env carries `STRATA_ALLOWED_HOSTS` with the three
+Service-DNS shapes (ports ignored; localhost always passes). This is the
+documented keyless counterpart of setting an api_key. No secret exists for
+this workload: nothing to create in any secret store, nothing injected into
+the pod, no Authorization header anywhere in the chain.
 
 ### Image contract (interface freeze)
 
@@ -94,7 +100,7 @@ on-target `strata serve --plan` re-check (runbook §3.4) → re-bench.
 
 | ID | Engine | Device | Residency |
 |---|---|---|---|
-| `qwen3.8-flash-next-strata` | gfx1201 (`hip-rx9070` root) | R9700 via OCuLink | lazy, `ttl: 0` — permanent once warm |
+| `qwen3.8-flash-next-strata` | checkout-compiled gfx1201 engine | R9700 via OCuLink | lazy, `ttl: 3600` — time-shared (unloads 1h idle; set `ttl: 0` to pin for dedicated windows) |
 | `qwen3.8-flash-next-strata-strix` | gfx1151 (`hip-halo` root) | 8060S iGPU | lazy, `ttl: 1800` — idle-released |
 
 The inner `matrix` set `main: "(p | s)"` makes the two **alternatives**: the

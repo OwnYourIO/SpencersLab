@@ -1,10 +1,12 @@
 apiKeys: []
 globalTTL: 0
 healthCheckTimeout: 3600
+# hooks preloaded list: annotation-only change (2026-10-29 OOM ruling, cf-77
+# strata) — qwen3.8-27b-q8 left the preload; everything else in this file
+# remains the frozen 2026-10-26 flashnext-era anchor.
 hooks:
   on_startup:
     preload:
-    - qwen3.8-27b-q8
     - qwen3-embedding-0.6b
 includeAliasesInList: true
 logLevel: info
