@@ -50,12 +50,13 @@ FROM engine-primary AS runtime
 # Engine-compile dependencies for the model-fetch init's setup.sh: the
 # source-checkout Step 4 compiles the AMD engine once into the checkout on
 # the claim (deploy 2026-10-29 "[X] a C++ compiler and git are needed to
-# compile the AMD engine"). Baked, not installed at boot: runtime apt would
+# compile the AMD engine"; ccache added per that build's own warning).
+# Baked, not installed at boot: runtime apt would
 # make every pod start depend on mirror availability and ship a
 # non-reproducible image (container-creation: apt in the same RUN,
 # --no-install-recommends, lists cleaned).
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential git \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential git ccache \
     && rm -rf /var/lib/apt/lists/*
 
 # The two flavors install same-named binaries, so the copy plan must keep the
