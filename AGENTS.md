@@ -254,10 +254,14 @@ managed) serializes board work per pipeline: a card's `Pipeline:<name>`
 board labels name the locks it takes — no such label means the single
 `default` pipeline, and several labels block all of those pipelines
 all-or-nothing. Cards with disjoint sets run as parallel
-`agent-board-coord` iterations; the hourly entry point is the OpenChamber
-loop file `.agents/loops/pipeline-worker.md` (shipped disabled until the
-cf-76 live smoke passes — until then `/pipeline-boards-hourly` and its gate
-stay the fallback). `/pipeline-tick` (plugin command) reaps stale locks
+`agent-board-coord` iterations; the hourly entry point is the live OpenChamber
+loop `.agents/loops/pipeline-worker.md` (enabled at `0 * * * *` since
+2026-10-29; the repo file ships `enabled: false` — the toggle is human-owned
+and `/pipeline-boards-hourly` + its gate stay the documented fallback). The
+top-level "finished" push reaches the phone unless the coord marked the
+session no-work AND the launch was of the scheduled kind — the `boards`
+skill's no-op marker, read by `question-notify`; manual no-ops always push.
+`/pipeline-tick` (plugin command) reaps stale locks
 first, then prompts the worker; the loop body ships the plain-text
 equivalent (D30). Rules for worker sessions — the `boards` skill owns the
 detail:

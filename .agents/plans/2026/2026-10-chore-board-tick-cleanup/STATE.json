@@ -45,22 +45,31 @@
   ],
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e77810a99ffeWfz2N8E3lFdky7",
+      "handoffs": [
+        "2026-10-29T15:20Z dev DONE C01: 12 sources gained exactly one ls * row at convention positions (agent-board after shell-deny + placement comment + OQ9 body clause); matrix cells + drift entry; rulesync mirrors regenerated, idempotent; A16 green, one stale t1 pin routed to test session.",
+        "2026-10-29T15:25Z test-repair DONE C01-validation-repair: board-context.sh t1 minimal sanctioned admit (ls_gate owns shell-allow decisions; era tolerance + banned arms intact; non-vacuity controls 9/9).",
+        "2026-10-29T15:35Z review DONE C01: APPROVED — all suites green except declared pre-existing (M3) + C02 carriers; non-vacuity probed independently; 2 Deferred candidates logged."
+      ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e77642664ffeBEJH63JX3aQnrk",
+      "handoffs": [
+        "2026-10-29T15:40Z dev DONE C02: reader noWorkSuppressed (FINISHED+top-level+marker reason non-empty+kind==scheduled) wired after getSession before getMessages/cooldown; boards-skill No-op marker subsection + both exits cite it; docs-truth pair landed; all plan Commands green (question-notify 47/47 T9/T10 green, noop-marker N1-N5, rulesync clean+idempotent); zero permission deltas; deviations declared+judged honest (pre-existing size warning, N1-forced guard shape, no needle edits).",
+        "2026-10-29T15:55Z review DONE C02: APPROVED — commands_run full green except declared pre-existing M3; byte-identity structural (0 deleted plugin lines); conjunction exact; two normative homes verified by census; cooldown unconsumed (T10); writer-side predicate confirmed; minor fold-forward: 'since 2026-10-29' enable-date phrasing -> fold into C03's overview/AGENTS passage. Review notes in chunks/C02.md."
+      ]
     },
     "C03": {
       "status": "pending",

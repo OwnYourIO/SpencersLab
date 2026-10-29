@@ -37,6 +37,13 @@
 // so retries and transient status events need neither a heuristic nor a dedup
 // map; legacy session.idle/session.error and interrupts stay ignored on purpose
 // — the plan's grep commands pin the pair.
+// The finished push has exactly one suppression (OQ4 ruling, 2026-10-29): a
+// scheduled OpenChamber launch whose coord marked the session no-work — the
+// boards skill's marker contract is the writer authority and noWorkSuppressed
+// reads both legs off the session record the lookup already fetched. What
+// keeps alerting: crash, question and approval pushes, scheduled runs that
+// did work, and manual /pipeline-boards ends even when marked — every
+// unknown or malformed shape alerts (fail-loud).
 // The approval trigger is the durable permission.asked event, re-grounded
 // on the v2.1.4 binary: the server publishes it only when the
 // ruleset effect resolves to `ask` and exactly once per request id. The push
@@ -111,6 +118,22 @@ export function isTopLevel(info: any): boolean {
   return !info.parentID;
 }
 
+// Reader half of the no-op marker contract — the writer is the boards skill,
+// which marks every no-op end whatever the launcher. The conjunction with the
+// scheduled kind is the OQ4 ruling: marker presence alone never mutes, so a
+// mis-marked manual run still alerts and the unsafe "missed real alert"
+// direction is confined to scheduled ticks. Well-formedness is the non-empty
+// string `reason` alone — `at` is the writer's audit stamp, never a gate
+// (OQ2) — and any other shape returns false so the caller pushes (fail-loud).
+export function noWorkSuppressed(info: any): boolean {
+  // Dual read: the record may arrive bare or wrapped in a { data: ... } envelope.
+  const metadata = info?.metadata ?? info?.data?.metadata;
+  if (!metadata || typeof metadata !== "object") return false;
+  if (!metadata.openchamber || metadata.openchamber.kind !== "scheduled") return false;
+  const marker = metadata.pipelineNoop;
+  return typeof marker === "object" && marker !== null && typeof marker.reason === "string" && marker.reason !== "";
+}
+
 // Newest-first scan over assistant `content` parts only: a turn commonly ends
 // on a tool or reasoning part, and the top-level `text` on user/system records
 // is the user's own prompt — reading it would echo it back as the answer.
@@ -166,6 +189,12 @@ export async function handleLifecycle(deps: any, event: any): Promise<void> {
     if (!isTopLevel(info)) return;
     const agent = typeof info.agent === "string" && info.agent ? info.agent : "session";
     if (type === FINISHED_EVENT) {
+      // Returns before getMessages and before any push attempt: the
+      // suppression consumes nothing, so a later real completion is unaffected.
+      if (noWorkSuppressed(info)) {
+        console.error("[question-notify] suppressed no-work finished push", sessionID);
+        return;
+      }
       const messages = await deps.getMessages(sessionID);
       await deps.notify(finishedTitle(agent), truncate(lastAssistantExcerpt(messages) || "no text output"));
     } else {

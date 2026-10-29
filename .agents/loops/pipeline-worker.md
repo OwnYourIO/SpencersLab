@@ -13,10 +13,15 @@ timezone is omitted so the server default applies; the model is the code
 tier by the Q2 ruling and the agent is the board-coord ALIAS (D15 — the
 command/gate/saved-approval continuity name).
 
-Shipped DISABLED (D9/Q5): /pipeline-boards-hourly and its gate stay the
-fallback entry point. Enabling this loop is a human decision, gated on the
-live-smoke checklist in
-.agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/chunks/C06.md.
+Live state, verified 2026-10-29 against OpenChamber scheduledTasks (RESEARCH
+W2 F5 in .agents/plans/2026/2026-10-chore-board-tick-cleanup/): this file
+syncs as the "pipeline-worker" task — enabled, cron 0 * * * * UTC, agent
+agent-board-coord, lastRun 2026-10-29T13:19:41Z success. The frontmatter
+enabled: false is the repo-shipped default, not the live toggle: scheduler
+decisions are human-owned (OQ10 ruling, docs-only reconciliation), and
+/pipeline-boards-hourly with its gate stays the documented fallback entry.
+The legacy "Hourly Pipeline call" daily task (also enabled, runs no gate) is
+human-owned scheduler hygiene — retiring or repointing it is the owner's call.
 
 Swap target (checklist item 3): slash dispatch of a plugin command from loop
 text is unproven on the pinned OpenCode v2.1.4 (D30 — opencode run sent a
