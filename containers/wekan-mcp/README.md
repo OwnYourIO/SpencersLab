@@ -6,12 +6,13 @@ token stays out of the model's context.
 
 ## What this gives you
 
-- **26 typed tools** covering the high-frequency WeKan operations:
+- **27 typed tools** covering the high-frequency WeKan operations:
   read (boards, lists, swimlanes, cards, comments, checklists, automation
-  rules, board custom fields) and write (create/update/move cards, add
-  comments, add checklists, toggle or delete items, create/update/remove
-  automation rules, create board custom fields, set per-card custom-field
-  values). Entity-level destructive operations (`delete_board`,
+  rules, board custom fields) and write (create lists, create/update/move
+  cards, add comments, add checklists, toggle or delete items,
+  create/update/remove automation rules, create board custom fields, set
+  per-card custom-field values). Entity-level destructive operations
+  (`delete_board`,
   `delete_card`, ...) are intentionally omitted — `remove_rule` and
   `delete_checklist_item` are the two marked-destructive exceptions, both
   scoped hygiene operations needed for automation and checklist pruning.
@@ -116,6 +117,7 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `create_card` | write | New card in a list+swimlane; optional `default_checked` map (checklist title → item titles) waits for the rules-created checklist and pre-checks those items, reporting per-checklist checked/missing/failed |
 | `update_card` | write | Edit title/description/dates |
 | `move_card` | write | Move between lists/swimlanes |
+| `create_list` | write | New list (column) on a board; optional `swimlane_id` (default = board's first swimlane) and `position` (0-based reposition as a second, non-atomic leg — a miss reports `positioned: false` + `position_error`, never fails the create) |
 | `add_comment` | write | Post a comment on a card |
 | `add_checklist` | write | New checklist (with optional items) |
 | `toggle_checklist_item` | write | Mark an item done/undone |

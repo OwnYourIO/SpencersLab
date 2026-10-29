@@ -37,7 +37,7 @@ in-repo server (`containers/wekan-mcp`), published as
   (Keycloak OIDC audience `wekan-readonly`): read tools only; write tools are
   never registered (`WEKAN_MCP_READ_ONLY=true`).
 - **`wekan-admin`** — `https://mcp.gpu.spencerslab.com/wekan-admin/mcp`
-  (audience `wekan-admin`): the full 25-tool surface. The two gpu tiers share
+  (audience `wekan-admin`): the full 27-tool surface. The two gpu tiers share
   one long-lived `WEKAN_TOKEN`.
 - **`boards`** on the dev cluster — the pipeline board-intake endpoint. It
   authenticates by login-mint instead: the pod gets `WEKAN_USERNAME` +
@@ -45,7 +45,7 @@ in-repo server (`containers/wekan-mcp`), published as
   item's URI field) and the client exchanges the pair for a bearer at
   startup, re-minting once on a 401.
 
-The server exposes 26 typed tools:
+The server exposes 27 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
@@ -57,7 +57,11 @@ The server exposes 26 typed tools:
   `update_card`, `move_card`, `add_comment`, `add_checklist`,
   `add_checklist_item`, `toggle_checklist_item`, `delete_checklist_item` (destructive, scoped to
   one item), `create_rule`, `update_rule`, `remove_rule` (marked
-  destructive), `create_custom_field`, `set_card_custom_field`
+  destructive), `create_custom_field`, `set_card_custom_field`,
+  `create_list` (optional `swimlane_id` + `position`; omitted `swimlane_id`
+  binds the board's first swimlane, and `position` rides a second, non-atomic
+  same-board move POST — a failed reposition reports `positioned: false` +
+  `position_error` and never fails the create)
 
 Using it keeps the credential (bearer or login pair) entirely out of model
 context — it lives only in the server pod, injected via ExternalSecret +

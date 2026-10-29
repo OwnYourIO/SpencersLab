@@ -22,8 +22,8 @@ the repo source, so docs are claims and the live `tools/list` is fact.
 
 | Server id | Deployment | Write surface | Credential |
 |---|---|---|---|
-| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 26 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
-| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 26 tools | one long-lived service-user bearer in the pod env |
+| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 27 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
+| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 27 tools | one long-lived service-user bearer in the pod env |
 | `readonly-global-wekan` | gpu `wekan-readonly` deployment | none — with `WEKAN_MCP_READ_ONLY=true` write tools are never registered, so they are absent from `tools/list` and uncallable even by accident | same bearer story as the admin tier |
 
 All three run the image built from `containers/wekan-mcp`, and every read or

@@ -15,7 +15,7 @@
 # RESEARCH.md): create_card's optional default_checked parameter, its bounded
 # poll of the rules-created checklist, the v9.99-verified item-check route,
 # the per-checklist outcome surfacing, and the README/SKILL doc parity for
-# it. Registry arithmetic stays pinned by t2 (13 reads + 13 writes); wekan.py
+# it. Registry arithmetic stays pinned by t2 (13 reads + 14 writes); wekan.py
 # and the login suite stay byte-pinned by t8.
 #
 # Statics-only by design (D8): the image has no pytest harness and none is
@@ -84,7 +84,7 @@ src = open(sys.argv[1]).read()
 tree = ast.parse(src)
 
 READS = 13
-WRITES = 13
+WRITES = 14
 NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
        'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item']
 BASE20 = ['list_boards', 'get_board', 'list_lists', 'list_swimlanes',
@@ -120,7 +120,7 @@ if len(writes) != WRITES:
     bad(f't2: {len(writes)} @_write_tool writes, expected exactly {WRITES} (C01 AC2)')
 all_tools = reads + writes
 if len(set(all_tools)) != READS + WRITES:
-    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly 26 distinct')
+    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly 27 distinct')
 for name in NEW:
     if all_tools.count(name) != 1:
         bad(f't2: new tool {name!r} registered {all_tools.count(name)} times, expected exactly once (names are the C02/C03 contract, D2)')
@@ -133,7 +133,7 @@ allowed = {'WEKAN_MCP_LOG_LEVEL', 'WEKAN_MCP_READ_ONLY', 'WEKAN_MCP_HOST', 'WEKA
 extra = envs - allowed
 if extra:
     bad(f't2: new env vars read in server.py: {sorted(extra)} — C01 AC3 forbids new env vars (only {sorted(allowed)})')
-print('ok: t2 — 13 @mcp.tool + 13 @_write_tool == 26 distinct names, the 6 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item extension)')
+print('ok: t2 — 13 @mcp.tool + 14 @_write_tool == 27 distinct names, the 6 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item extension)')
 PY
   then
     checks=$((checks + 1))
@@ -282,11 +282,12 @@ readme = open(sys.argv[1]).read()
 skill = open(sys.argv[2]).read()
 
 NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
-       'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item']
+       'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item',
+       'create_list']
 
-if '26 typed tools' not in readme:
-    bad('t5: README must state the 26-tool surface (add_checklist_item extension)')
-for stale in ('25 typed tools', '20 typed tools'):
+if '27 typed tools' not in readme:
+    bad('t5: README must state the 27-tool surface (cf-68 create_list parity)')
+for stale in ('26 typed tools', '25 typed tools', '20 typed tools'):
     if stale in readme:
         bad(f't5: README still claims the stale tool count ({stale!r})')
 for n in NEW:
@@ -301,11 +302,11 @@ for stale in ('bumped by CI', 'semver source of truth', ':latest', 'v<version>')
 if 'run_number' not in readme:
     bad('t5: README must describe the actual tag scheme (:v<run_number> + :<branch>) it already links to')
 
-if '26 typed tools' not in skill:
-    bad('t5: wekan-api SKILL must say 26 typed tools')
-for stale in ('25 typed tools', '20 typed tools', '20-tool'):
+if '27 typed tools' not in skill:
+    bad('t5: wekan-api SKILL must say 27 typed tools')
+for stale in ('26 typed tools', '25 typed tools', '20 typed tools', '20-tool'):
     if stale in skill:
-        bad(f't5: wekan-api SKILL still claims the 20-tool surface ({stale!r})')
+        bad(f't5: wekan-api SKILL still claims the stale tool count ({stale!r})')
 if 'two privilege tiers sharing one image' in skill:
     bad('t5: the SKILL still says all tiers share one WEKAN_TOKEN — dev boards login-mints from WEKAN_USERNAME/WEKAN_PASSWORD (D23 wiring)')
 if 'WEKAN_USERNAME' not in skill:
@@ -319,7 +320,7 @@ if i < 0:
 window = skill[i:i + 400]
 if 'custom field' in window.lower():
     bad('t5: custom fields are no longer on the omitted surface — 25 tools include the five custom-field/checklist-delete tools (C01 AC5)')
-print('ok: t5 — README + wekan-api SKILL agree with the 25-tool surface, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5)')
+print('ok: t5 — README + wekan-api SKILL agree with the 27-tool surface, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5)')
 PY
   then
     checks=$((checks + 1))
