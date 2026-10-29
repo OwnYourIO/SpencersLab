@@ -55,6 +55,18 @@
 # tests-edit-perms carve: this ticket re-pins the agents-sync references byte
 # freeze (D4) — see the i5 block comment.
 #
+# board-tick-cleanup RE-PIN (2026-10-chore-board-tick-cleanup C01/C03, test
+# session, 2026-10-29; re-seated 2026-10-30 into the scoped-read family after
+# the preload-probe row): the coord shell block gains the `ls *` allow
+# (12 sources, user ruling "go on all agents") and the OQ-N1 scoped preload-
+# probe allow (six coord variants, lands after `date *`). i4's forms ladder
+# and cfpins ADMIT both rows — never demand them, so this suite stays the
+# zero-red regression guard in both waves: the absolute ls duty is agent-perms
+# A16, the absolute probe duty is tests/board-preload-probe/surface.sh B2,
+# the session-origin s4 posture one ticket later (the sibling posture this
+# repo already runs). Ladder geometry is data-listed so a future
+# sanctioned row joins as an entry, per the C01 extensibility duty.
+#
 # tests-edit-perms fold-in (D9/D10): at HEAD of the integrated line the OLD
 # i4 exact-delta form could never pass — self-reference, cf-52's delta is
 # committed at the default base — so i4 gains the OR-form and its line twins
@@ -305,14 +317,16 @@ else:
     i = anchors[0]
     if perms[i + 1:i + 3] != API:
         errs.append("the api pair does not sit directly after the opencode '*' allow (pinned splice position)")
-SANCTIONED_SCRIPTS = ("bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*")
+SANCTIONED_SCRIPTS = ("bash scripts/kickoff-mint-branch.sh *", "bash scripts/session-origin.sh*",
+                      "bash scripts/board-preload-probe.sh *")
 others = [p.get("resource") for p in perms if p.get("action") == "shell"
           and not str(p.get("resource", "")).startswith(("opencode api", "git "))
           and p.get("resource") != "*"
           and p.get("resource") not in SANCTIONED_SCRIPTS
-          and p.get("resource") != "date *"]
+          and p.get("resource") != "date *"
+          and not (p.get("resource") == "ls *" and p.get("effect") == "allow")]
 if others:
-    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the two cf-52 sanctioned script allows + the date allow + the git block + the ask baseline, nothing more)")
+    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the sanctioned scoped-read family (mint, origin, preload-probe, date, ls — the 2026-10-30 re-seat) + the git block + the ask baseline, nothing more)")
 # 2026-10-27 date-grant re-pin: the kickoff in-work mark embeds
 # $(date +%s%3N) in the patch payload; the shell matcher extracts command
 # substitutions and checks the date subcommand against this agent's own
@@ -353,17 +367,18 @@ PY
 # while the key text and order are pinned literally. Indentation therefore has
 # no degree of freedom left to drift in.
 cat >"$TMP/atpos.py" <<'PY'
-# Arm-B twin of the line-level delta check (T10), forms-aware (kickoff-mints):
-# exactly one sanctioned literal block — the six-line SHELL2 block (cf-52) or
-# the nine-line SHELL3 block (mint triple appended) — directly after the three
-# lines of the `opencode '*' allow` rule. Matching is anchor-relative and
-# byte-exact because the block's nesting shape differs between trees (source
-# nests under `opencode:`, the generated mirror does not): the item dash
-# carries the anchor's own indent, keys one level deeper. Indentation has no
-# degree of freedom left to drift in; the only sanctioned continuation after
-# the matched form is the cf-72 B block (comment lines in the source tree
-# + the sixty-eight shared git rows plus the variant push tail, whole and in
-# order) — any other shell row is unsanctioned.
+# Arm-B line twin, forms-aware. The sanctioned literal family block (GET/PATCH
+# pair, mint, session-origin, date, probe, ls — the 2026-10-30 merge re-seat
+# put `ls *` INSIDE the scoped-read family after the probe row: cf-72 made the
+# push tail the absolute-last shell rows, so the retired trailing-ls rung is
+# OBSOLETE for the coord family). Rungs are OPTIONAL longest-first
+# continuations — absolute presences live in agent-perms A16 (ls) and
+# tests/board-preload-probe/surface.sh B2 (probe); this twin never reddens a
+# healthy pre-wave tree. Block matching skips source-tree comment lines
+# (rulesync strips them from the generated mirror); row bytes, count and order
+# stay pinned exactly like the continuation walk. The only sanctioned
+# continuation after the matched family is the cf-72 B block; any other shell
+# row is unsanctioned.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
@@ -374,9 +389,9 @@ WANT2 = [('resource: opencode api get /api/session*', 'effect: allow'),
          ('resource: opencode api patch /api/session/*', 'effect: allow')]
 WANT3 = WANT2 + [('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow')]
 WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
-# 2026-10-27 date-grant re-pin: SHELL5 = SHELL4 + the `date *` triple (the
-# in-work mark's $(date +%s%3N) epoch subcommand grant).
 WANT5 = WANT4 + [('resource: date *', 'effect: allow')]
+WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
+WANT7 = WANT6 + [('resource: ls *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -386,16 +401,26 @@ if len(hits) != 1:
     print(f"want exactly one '- action: opencode' + resource '*' + effect allow rule, found {len(hits)}"); sys.exit(1)
 ind = hits[0][1]
 at = hits[0][0] + 3
-matched = 0
-for want in (WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are its prefixes
-    want_lines = [x for rule in want for x in
-                  (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
-    if lines[at:at + 3 * len(want)] == want_lines:
-        matched = 3 * len(want)
+def noncomment(pos):
+    while pos < len(lines) and lines[pos].lstrip().startswith("#"):
+        pos += 1
+    return pos
+matched_end = 0
+for want in (WANT7, WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
+    pos = at
+    ok = True
+    for rule in want:
+        pos = noncomment(pos)
+        if lines[pos:pos + 3] != [f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}"]:
+            ok = False
+            break
+        pos += 3
+    if ok:
+        matched_end = pos
         break
-if not matched:
-    print("none of the sanctioned literal blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve, SHELL5 fifteen) "
-          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
+if not matched_end:
+    print("none of the sanctioned literal family blocks (SHELL2 six lines through SHELL7 twenty-one, "
+          f"comments skipped) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 24]})"); sys.exit(1)
 # cf-72 B-block re-pin (2026-10-29, card #72): after the matched sanctioned
 # block the only permitted continuation is comment lines (source tree only —
 # the rulesync YAML round-trip strips them from the generated mirror) plus
@@ -483,7 +508,7 @@ TAILS = [[T("git push*", "deny"), T("git *push*", "deny")],
          [T("git push*main*", "deny"), T("git * push *main*", "deny"), T("git * push", "deny"),
           T("git push -f*", "deny"), T("git push -P*", "deny"), T("git * push -f*", "deny"),
           T("git * push -P*", "deny")]]
-k = at + matched
+k = matched_end
 gi = saw = 0
 chosen = None
 while k < len(lines):
