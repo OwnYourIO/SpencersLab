@@ -20,7 +20,9 @@
 # A10[AC9-or-form→cf-58 mechanism-integrity] A11[C02 git rows + push policy]
 # A12[C03 six-family: alias parity, git block order, roster dev slot]
 # A13[C02 AC5/C03 AC7 rename sweep + command→agent pairing]
-# A14[bug-board-coord-dev-boards-allow AC6: MCP action-glob vs registered server-name spelling].
+# A14[bug-board-coord-dev-boards-allow AC6: MCP action-glob vs registered server-name spelling]
+# A15[cf-76 C07: pipeline_* lock-tool rows on the board-coord trio + tool/label-constant
+# parity across plugin ↔ permission rows ↔ boards skill].
 #
 # Red posture: A1-A4 — the permission rows and the text rows do not exist
 # yet; every red line names the missing rule/row, never a harness fault.
@@ -78,11 +80,15 @@
 # refs b0c975bf6/1a6517c81) are historical and need not pass.
 #
 # Usage (harness convention from tests/coord-inwork/surface.sh):
-#   bash tests/agent-perms/surface.sh            # A1..A13
+#   bash tests/agent-perms/surface.sh            # A1..A15
 #   bash tests/agent-perms/surface.sh A1 A4      # subset (ids case-insensitive)
 # Chunk-owned subsets (red-between-chunks is by design per DECISIONS):
-#   C02 review: A1..A11 + A13 (A10/A12 belong to C03)
-#   C03 review: full suite
+#   C02 review: A1..A11 + A13 (A10/A12 belong to C03; the devlocal/devpr
+#     add/commit rows are DENY-pinned here — cf-76 C02 moved commit ownership
+#     to the coord, so A11 is red until that flip lands)
+#   C03 review: full suite minus A15
+#   C07 review: full suite (A15 skips until the pipeline-locks plugin exists,
+#     then engages red-before-C07-dev and pins the landed surface)
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -146,11 +152,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 14); do WANT["a$i"]=1; done
+  for i in $(seq 1 15); do WANT["a$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^a([1-9]|1[0-4])$ ]] || fail "unknown check id '$a' (expected A1..A14)"
+    [[ "$lc" =~ ^a([1-9]|1[0-5])$ ]] || fail "unknown check id '$a' (expected A1..A15)"
     WANT["$lc"]=1
   done
 fi
@@ -336,9 +342,14 @@ NAMING = [{"action": "opencode_worktree_create", "resource": "*", "effect": "all
 
 GIT_READS = ["git status *", "git log *", "git diff *", "git show *", "git branch *",
              "git merge-base *", "git rev-parse *", "git ls-files *"]
+# cf-76 C02 (D7): the pipeline implementers no longer stage or commit — the
+# coordinator is the sole committer (one commit per chunk: code + tests +
+# state). The rows stay as explicit DENIES (fail-loud parity with the push
+# deny), placed where the allows were. The standalone dev trio keeps its
+# allows; tests/standalone-agents/surface.sh S3 pins the deliberate delta.
 DEV_SUFFIX = {
-    "devlocal": [sh("git add *", "allow"), sh("git commit *", "allow"), sh("git push*", "deny")],
-    "devpr": [sh("git add *", "allow"), sh("git commit *", "allow"), sh("git push*", "allow"),
+    "devlocal": [sh("git add *", "deny"), sh("git commit *", "deny"), sh("git push*", "deny")],
+    "devpr": [sh("git add *", "deny"), sh("git commit *", "deny"), sh("git push*", "allow"),
               sh("git push*main*", "deny"), sh("git push --force*", "deny"), sh("git push -f*", "deny"),
               sh("git push * --force*", "deny"), sh("git push * -f*", "deny")],
 }
@@ -463,6 +474,46 @@ def cmd():
         extra = [r for r in p if str(r.get("action", "")).startswith("opencode_") and r not in NAMING]
         if extra:
             fail(f"naming: {path} grew unsanctioned opencode_* rows: {extra} — the role contract grants the naming surface only")
+    elif op == "locktools":
+        # cf-76 C07: the board-coord trio owns the lease-lock tool surface.
+        # Exactly the four pipeline_* allow rows (resource '*'), in the
+        # declared order, sitting after the dev-boards* MCP row — the claim
+        # must precede moves, so the grant block follows its board anchor —
+        # and nothing else in the pipeline_ namespace (no globs, no denies
+        # riding along that a later edit could silently invert).
+        path = sys.argv[2]
+        p = perms(path)
+        LOCK = [{"action": a, "resource": "*", "effect": "allow"} for a in
+                ("pipeline_claim", "pipeline_release", "pipeline_heartbeat", "pipeline_status")]
+        for w in LOCK:
+            n = sum(1 for r in p if r == w)
+            if n != 1:
+                fail(f"locktools: {path} row {w['action']} appears {n} times, want exactly the one allow")
+        seq = [r for r in p if r in LOCK]
+        if seq != LOCK:
+            fail(f"locktools: {path} pipeline_* rows out of the declared order: {[r['action'] for r in seq]}")
+        extra = [r for r in p if str(r.get("action", "")).startswith("pipeline_") and r not in LOCK]
+        if extra:
+            fail(f"locktools: {path} grew unsanctioned pipeline_* rows: {extra}")
+        db = [i for i, r in enumerate(p) if r.get("action") == "dev-boards*"]
+        first = [i for i, r in enumerate(p) if r == LOCK[0]]
+        if db and first and first[0] < db[0]:
+            fail(f"locktools: {path} the pipeline_* block precedes the dev-boards* row — C07 adds it AFTER")
+        if not db:
+            fail(f"locktools: {path} lost its dev-boards* anchor (the board-coord block shape)")
+    elif op == "action":
+        # Last-match verdict for a TOOL action name (MCP/tool rows are
+        # permissioned as <action> '<server>_<tool>' style, cf A14's
+        # spelling finding) — used to prove the lock surface stays closed
+        # for the non-board families (deny-all baseline -> 'deny').
+        import fnmatch as _fm
+        path, action = sys.argv[2], sys.argv[3]
+        verdict = None
+        for r in perms(path):
+            a = str(r.get("action", ""))
+            if action == a or _fm.fnmatch(action, a):
+                verdict = r.get("effect")
+        print(verdict)
     else:
         fail(f"family.py: unknown subcommand '{op}'"); sys.exit(2)
 
@@ -831,7 +882,44 @@ if want a11; then
     || fail "A11[C02]: the local description does not name its difference ('commits only, never pushes' — C02 Tasks)"
   python3 "$TMP/win.py" "$DEV_PR_SRC" 600 'pushes' 'remote build/test' \
     || fail "A11[C02]: the pr description does not name its difference ('pushes the ticket branch for remote build/test' — C02 Tasks)"
-  ok "A11[C02]: dev-variant pair carries the declared git rows in order, effective push policy per variant, the pr-only push-skill wiring, naming descriptions; pre-split files retired"
+  # cf-76 C02 (D7) — the commit-ownership contract in suite form: pipeline
+  # implementers evaluate to DENY for add/commit (work stays in the tree for
+  # the coordinator), the coord family evaluates to ALLOW (coord is the sole
+  # committer, one commit per chunk). Mirrors how the standalone-agents suite
+  # pins its no-git-write roster — verdicts, not row presence alone.
+  for f in "$DEV_LOCAL_SRC" "$DEV_LOCAL_GEN" "$DEV_PR_SRC" "$DEV_PR_GEN"; do
+    v=$(python3 "$TMP/family.py" policy "$f" 'git commit -m x' 2>/dev/null || true)
+    [ "$v" = "deny" ] || fail "A11[C02]: $f 'git commit -m x' verdict '$v', want deny (implementers never commit — D7)"
+    v=$(python3 "$TMP/family.py" policy "$f" 'git add -A' 2>/dev/null || true)
+    [ "$v" = "deny" ] || fail "A11[C02]: $f 'git add -A' verdict '$v', want deny (the coordinator stages the chunk)"
+  done
+  for f in "${CF_SRC[1]}" "${CF_SRC[4]}"; do
+    v=$(python3 "$TMP/family.py" policy "$f" 'git commit -m x' 2>/dev/null || true)
+    [ "$v" = "allow" ] || fail "A11[C02]: $f 'git commit -m x' verdict '$v', want allow (the sole-committer half of the contract — agent-coord-local / agent-board-coord-local)"
+  done
+  # Negative control (cf-52 non-vacuity rule): the matcher must be
+  # effect-sensitive — flip the dev-local commit deny onto allow in a TMP
+  # copy and require the verdict to move. A control that cannot move means
+  # the real guard would pass on drifted rows forever.
+  python3 - "$DEV_LOCAL_SRC" "$TMP/flip-control.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+text = open(src).read()
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+assert m, "no frontmatter"
+data = yaml.safe_load(m.group(1))
+rows = ((data.get("opencode") or {}).get("permissions")) or data.get("permissions") or []
+flipped = False
+for r in rows:
+    if r.get("action") == "shell" and r.get("resource") == "git commit *" and r.get("effect") == "deny":
+        r["effect"] = "allow"
+        flipped = True
+assert flipped, "control fixture: no 'git commit * deny' row found to flip"
+open(dst, "w").write("---\n" + yaml.safe_dump(data) + "---\n" + m.group(2))
+PY
+  v=$(python3 "$TMP/family.py" policy "$TMP/flip-control.md" 'git commit -m x' 2>/dev/null || true)
+  [ "$v" = "allow" ] || fail "A11[C02]: NEGATIVE CONTROL FAILED — flipping the deny row did not move the verdict ('$v'), the matcher is inert"
+  ok "A11[C02]: dev-variant pair carries the declared git rows in order (cf-76: add/commit DENY), effective push AND commit policy per family, the commit-ownership control proves the matcher; the pr-only push-skill wiring + naming descriptions; pre-split files retired"
 fi
 
 # --- A12: coord family — six files, alias parity, block order, rosters (C03) ----
@@ -1116,6 +1204,130 @@ PY
   python3 "$TMP/mcpshape.py" control "$TMP/fake-divergent.md" \
     || fail "A14[AC6]: NEGATIVE CONTROL FAILED — the guard accepted a fabricated dev_boards* (it degenerated; real spelling drift would pass silently)"
   ok "A14[AC6]: every per-server MCP action glob in .rulesync/subagents/ equals a name registered in .opencode/opencode.jsonc mcp.servers verbatim (hyphen included); separator-substituted fabrication rejected; family-wide globs exempt"
+fi
+
+# --- A15: cf-76 C07 — pipeline_* lock surface on the board-coord trio ----------
+# Red posture: engages once .opencode/plugin/pipeline-locks/index.ts exists
+# (C03+), and stays RED until C07's permission rows + boards-skill text land
+# — chunk subsets before C07 skip this check. Pins (C07 AC 1-4): the four
+# allow rows on all three board-coord sources AND their generated mirrors;
+# no OTHER subagent granted them (the lock surface belongs to the board
+# family — agent-coord-local / agent-plan / agent-dev-local must evaluate
+# non-allow); and the three-way single-source parity: the plugin's TOOL_NAMES
+# constants == the permission-row actions == the call strings in the boards
+# skill, plus the `Pipeline:` prefix and `default` pipeline constants
+# mirrored in the skill text (the grep-parity discipline the rulesync
+# suites run on the board-context block).
+if want a15; then
+  if [ ! -f .opencode/plugin/pipeline-locks/index.ts ]; then
+    skip "a15: pipeline-locks plugin absent — the cf-76 lock surface has not landed (checks engage from C03 onward)"
+  else
+    for i in 3 4 5; do
+      python3 "$TMP/family.py" locktools "${CF_SRC[$i]}" \
+        || fail "A15[C07]: ${CF_SRC[$i]} lacks the four pipeline_* allow rows after dev-boards* (red before C07 dev)"
+      python3 "$TMP/family.py" locktools "${CF_GEN[$i]}" \
+        || fail "A15[C07]: generated mirror ${CF_GEN[$i]} lacks the rows — regenerate, never hand-edit .opencode/"
+    done
+    # The three sources must carry the SAME lock block (alias/pr parity is a
+    # one-commit duty, C07 Tasks) — A12's parsed-equality covers alias↔local
+    # wholesale; this pins the -pr twin on the new rows specifically.
+    if ! python3 - "${CF_SRC[3]}" "${CF_SRC[4]}" "${CF_SRC[5]}" <<'PY'
+import re, sys, yaml
+def perms(p):
+    m = re.match(r"^---\n(.*?)\n---\n", open(p).read(), re.S)
+    assert m, f"{p}: no YAML frontmatter"
+    fm = yaml.safe_load(m.group(1)) or {}
+    return (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
+lock = lambda p: [r for r in perms(p) if str(r.get("action", "")).startswith("pipeline_")]
+blocks = [lock(p) for p in sys.argv[1:4]]
+if not (blocks[0] == blocks[1] == blocks[2]):
+    print(f"pipeline_* blocks differ across the trio: {blocks}"); sys.exit(1)
+PY
+    then
+      fail "A15[C07]: the three board-coord sources drifted on the pipeline_* block"
+    fi
+    # No other agent may hold the lock surface (C07 AC3).
+    for f in .rulesync/subagents/agent-*.md; do
+      case "$f" in
+        *agent-board-coord*) continue ;;
+      esac
+      grep -qE 'action:[[:space:]]+pipeline_' "$f" \
+        && fail "A15[C07]: $f grew a pipeline_* row — the board-coord family owns the lock surface (C07 AC3)"
+    done
+    for f in .rulesync/subagents/agent-coord-local.md .rulesync/subagents/agent-plan.md .rulesync/subagents/agent-dev-local.md; do
+      v=$(python3 "$TMP/family.py" action "$f" 'pipeline_claim' 2>/dev/null || true)
+      [ "$v" != "allow" ] || fail "A15[C07]: pipeline_claim evaluates to '$v' on $f — the lock surface must stay closed outside the board family (negative assert)"
+    done
+    # D19 retired the custom-field creation step (r1 D4 superseded): NO
+    # surface this ticket touches may reference the dev-boards custom-field
+    # create tool — pipeline identity is LABELS. Needle assembled from two
+    # halves so this very suite cannot self-match the grep.
+    CFN='create_custom_'"field"
+    for f in .rulesync/skills/boards/SKILL.md .opencode/skills/boards/SKILL.md \
+             "${CF_SRC[3]}" "${CF_SRC[4]}" "${CF_SRC[5]}" \
+             "${CF_GEN[3]}" "${CF_GEN[4]}" "${CF_GEN[5]}" \
+             .opencode/plugin/pipeline-locks/index.ts; do
+      grep -q "$CFN" "$f" \
+        && fail "A15[C07]: $f references $CFN — the custom-field route was retired with D19; the worker only READS Pipeline: labels"
+    done
+    # The custom-field roster stays at exactly TWO fields (slug + session) —
+    # pipeline identity must not sneak back in as a third field by any
+    # wording rewrite (C07 AC2).
+    grep -Eiq 'custom fields:.*exactly two' .rulesync/skills/boards/SKILL.md \
+      || fail "A15[C07]: the boards skill lost its 'Custom fields: exactly two' pin"
+    grep -Eq '`slug`[^`]*`session`|`session`[^`]*`slug`' .rulesync/skills/boards/SKILL.md \
+      || fail "A15[C07]: the two-field roster no longer names slug and session"
+    # Fabricated-row control (A10/A14 discipline): drop one row from a TMP
+    # copy and require the locktools guard to reject the crippled file.
+    python3 - "${CF_SRC[3]}" "$TMP/lock-dropped.md" <<'PY'
+import re, sys, yaml
+text = open(sys.argv[1]).read()
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+data = yaml.safe_load(m.group(1))
+rows = (data.get("opencode") or {}).get("permissions") or data["permissions"]
+before = len(rows)
+rows[:] = [r for r in rows if r.get("action") != "pipeline_heartbeat"]
+assert len(rows) == before - 1, "fixture: pipeline_heartbeat row not found"
+open(sys.argv[2], "w").write("---\n" + yaml.safe_dump(data) + "---\n" + m.group(2))
+PY
+    python3 "$TMP/family.py" locktools "$TMP/lock-dropped.md" >/dev/null 2>&1 \
+      && fail "A15[C07]: NEGATIVE CONTROL FAILED — locktools accepted a file with the heartbeat row stripped (guard is inert)"
+    # Three-way parity: plugin constants == row actions == boards-skill call
+    # strings; label prefix + default pipeline mirrored into the skill text.
+    if ! python3 - .opencode/plugin/pipeline-locks/index.ts "${CF_SRC[4]}" .rulesync/skills/boards/SKILL.md <<'PY'
+import re, sys, yaml
+src_path, agent_path, skill_path = sys.argv[1:4]
+src = open(src_path).read()
+def const_list(name):
+    m = re.search(r"const\s+" + name + r"[^=\n]*=\s*\[([^\]]*)\]", src)
+    assert m, f"plugin module no longer defines {name} as a single array literal (AC10 single source)"
+    return re.findall(r'"([^"]+)"', m.group(1))
+def const_str(name):
+    m = re.search(r"const\s+" + name + r"[^=\n]*=\s*\"([^\"]*)\"", src)
+    assert m, f"plugin module no longer defines {name} as a single string constant"
+    return m.group(1)
+tools = const_list("TOOL_NAMES")
+assert len(tools) == 4 and all(t.startswith("pipeline_") for t in tools), f"TOOL_NAMES must be the four pipeline_* tools, saw {tools}"
+m = re.match(r"^---\n(.*?)\n---\n", open(agent_path).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+rows = (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
+row_actions = sorted(r.get("action") for r in rows if str(r.get("action", "")).startswith("pipeline_"))
+if row_actions != sorted(tools):
+    print(f"permission rows {row_actions} != plugin TOOL_NAMES {sorted(tools)}"); sys.exit(1)
+skill = open(skill_path).read()
+missing = [t for t in tools if t not in skill]
+if missing:
+    print(f"boards skill never names {missing} — the Parallel pipeline loops section and the plugin disagree on the tool surface (AC1 parity)"); sys.exit(1)
+if const_str("LABEL_PREFIX") not in skill:
+    print("the plugin's label prefix is not the string the boards skill teaches — single-source drift (D17)"); sys.exit(1)
+if "`default`" not in skill:
+    print("the boards skill lost the `default` pipeline fallback wording (D17)"); sys.exit(1)
+PY
+    then
+      fail "A15[C07]: plugin/permission/skill three-way parity broken — one of the single sources drifted"
+    fi
+    ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, and the plugin constants match the permission rows and the boards-skill call strings"
+  fi
 fi
 
 printf 'PASS: agent-perms contract checks (%d ok)\n' "$checks"

@@ -1,0 +1,132 @@
+{
+  "feature": "2026/2026-10-cf-76-feat-parallel-pipeline-loops",
+  "kickoff": {
+    "slug": "cf-76-feat-parallel-pipeline-loops",
+    "card": "kWCcqDcJ8M2PvsDEw",
+    "card_number": 76,
+    "run_tag": "none",
+    "worktree": "cf-76-feat-parallel-pipeline-loops",
+    "branch": "cf-76-feat-parallel-pipeline-loops",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com"
+  },
+  "plan_status": "approved",
+  "coord_session": "ses_e7aa56f12ffe69NSQ12a34w2kG",
+  "test_session": "ses_e7a7a5365ffebXvYX1abzgniGv",
+  "current_wave": 1,
+  "updated_at": "2026-10-29T02:45:00Z",
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e7a4c4997ffe7TRL4pEoMOiNEz",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T03:20:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [/tmp/opencode/cf76-C01-evidence.md, /tmp/opencode/pipeline-locks-probe/** (throwaway probe, never committed), /tmp/opencode/mock/** (throwaway)]\ncommands_run: [opencode --version => v2.1.4 pass, 11x ephemeral opencode run --standalone probe legs (timeout-bounded, all exited; runA 124 = designed setup-throw lesson, runC..runM green legs) => pass, mock SSE server 4711 boot+kill via pidfile => pass, live board read pair get_board+get_card => pass, node --test {question-notify,permission-ask-notify,board-context,ha-mcp-url} => pass x4, bash tests/agent-perms/surface.sh A1..A10,A12..A15 => pass, A11 => designed-red pre-C02 (unchanged), bash tests/standalone-agents/surface.sh S1 S2 S4..S10 => pass, full => designed-red at S3 (unchanged delta-aware msg), bash tests/agent-board-coord/rulesync-surface.sh => pass, coord-inwork/kickoff-branch/session-origin surface.sh => pass x3, node --test pipeline-locks-core => designed-red ERR_MODULE_NOT_FOUND pre-C03 (unchanged), pgrep/port recheck => no stray probe procs/listeners, git status => 8 pre-existing test-session files, zero probe artifacts]\ndeviations: 1) Chunk recipe opencode serve --port 4096 collides with the production server — used opencode run --standalone + scripted local SSE mock instead; within the Notes' own escape hatch. 2) AC5 edit-notes for coord to apply: C07 — plugin tools Code-Mode-only on 2.1.4, pin that shape in permission rows; C03 — per-add options.namespace required, executor ctx has progress too, setup body try/catch-wrapped; C04 — instruction-pin arms capability-gated (fact 6 REFUTED: no ctx.session.instructions on 2.1.4, D16 degraded path is PRIMARY), child-map key = flat data.parentID, session.updated never emitted (created-only); C06 — slash-dispatch runtime check recorded in evidence file for live-smoke list. 3) Evidence NOT written into DECISIONS.md/chunk file (launch instruction supersedes chunk Files in scope).\nfriction: production serve owns the recipe's probe port — resolution: --standalone private server; pkill -f self-matched its own shell cmdline — resolution: pidfile-based kill; 2.1.4 openai driver ALWAYS streams — resolution: SSE mock; session.created key assumption wrong (actual flat data.sessionID) — resolution: fixed mid-run, shape pinned; ctx.command.list() non-array crashed probe setup — resolution: shape-normalized + safe() wrapping.\nopen_questions: coord to confirm (a) C07 wording pivots to Code-Mode tool access shape (recommend yes), (b) whether D16 degraded signaling also simplifies C04 AC3 pin-the-STOP wording, (c) new DECISIONS entries D26+ for facts 5 and 10.\nnext_suggested: coord applies the four chunk edit-notes + records decisions, marks C01 done, launches C02 then unblocks wave-2 C03."
+        },
+        {
+          "at": "2026-10-29T03:40:00Z",
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [chunks/C01.md (review notes)]\ncommands_run: [node --test question-notify/permission-ask-notify/board-context/ha-mcp-url => pass x4, node --test pipeline-locks-{core,engine,reap,tick} => designed-red ERR_MODULE_NOT_FOUND x4 (expected pre-C03), agent-perms surface A1-A10,A12-A15 => pass (A15 skip designed), A11 => designed-red (names wanted deny rows), standalone-agents S1,S2,S4-S10 => pass (S10 arm proved rulesync generate --check clean), full => designed-red at S3 (same delta-aware msg), rulesync-surface => pass (19 ok), coord-inwork/kickoff-branch/session-origin => pass (7/6/7 ok), opencode --version => v2.1.4, pgrep production set + port 4711 recheck => clean, git status/ls probes => zero repo artifacts, all claimed /tmp evidence present, dev-boards get_board+get_card live read-only pair => matches evidence fact 11 verbatim, helm => n/a]\ndeviations: none (verdict: APPROVED; review-notes-only write per role contract)\nfriction: none new (pgrep -f self-match hazard recurred — workaround already in FRICTION.md)\nopen_questions: one minor (C06 amendment section's pending-repair wording stale — routed tick-suite repair landed after it; coord re-status, non-blocking) + one nit (evidence header omits runB/-wt artifacts)\nnext_suggested: coord marks C01 done, re-statuses the stale C06 note, launches C02 against the A11/S3 reds"
+        }
+      ]
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "dev_session": null,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "dev_session": null,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "dev_session": null,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": ["C04"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "dev_session": null,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 5,
+      "depends_on": ["C05"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "dev_session": null,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C07": {
+      "status": "pending",
+      "wave": 6,
+      "depends_on": ["C06"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "dev_session": null,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "plan": {
+    "status": "approved",
+    "approved_at": "2026-10-29T02:40:00Z",
+    "session": "ses_e7a9fb86bffeqcG4UNCQje88HR",
+    "handoffs": [
+      {
+        "at": "2026-10-29T02:15:00Z",
+        "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/2026-10-29-feat-cf-76-feat-parallel-pipeline-loops.md, .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/STATE.json, .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/DECISIONS.md, .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/FRICTION.md, .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/chunks/C01.md … C07.md]\ncommands_run: [node -e \"JSON.parse STATE.json\" => pass, ls templates/chunks boilerplate => pass, opencode --version (v2.1.4) => pass, grep wekan-mcp tool surface => pass, rulesync CI pin check (rulesync@37.0.0) => pass, docs.openchamber.dev/scheduled-tasks fetch => pass]\ndeviations: none — feature folder/STATE fields exactly as the launch specified; plan_status left \"draft\" pending the batched round + approval\nfriction: none\nopen_questions:\n  Q1 (slug) Card slug field is UNSET; coordinator minted cf-76-feat-parallel-pipeline-loops — confirm or replace (renames folder/worktree/branch/session)? Best guess: keep.\n  Q2 (loop model) Hourly tick session default model: openrouter/qwen/qwen3.8-2.4t-a95b (planning tier — the tick session IS the coordinator) vs cheaper openrouter/qwen/qwen3.8-flash for mostly-idle ticks? Best guess: planning tier (shipped in C06 as a one-line constant).\n  Q3 (commit policy, card note 4) Plan's reading: strip git add/commit from pipeline implementers (agent-dev-local/-pr, explicit deny, fail-loud), coord becomes sole committer (one commit per chunk: code+tests+state); standalone dev/dev-local/dev-pr/code/debug unchanged; \"delicate branch work\" = mint/rebase/push keep their existing narrow grants (dev-pr keeps its push allow). Confirm?\n  Q4 (Timeout list) wekan-mcp has no create_list → documented human step (WeKan UI, swimlane \"In Process\"); reaper degrades to .pipeline/timeouts.jsonl until it exists. Alternative: add create_list to containers/wekan-mcp as a follow-up card. Best guess: human step now.\n  Q5 (transition) Keep /pipeline-boards-hourly + gate as fallback; user re-points the OpenChamber hourly task to the new loop (shipped enabled:false) and retires the old task after the live-smoke checklist; gate deprecation later. Confirm?\n  Q6 (human-wait keep-alive) Locks stay live while the root session is blocked on a question/permission ask (plugin-side detection). Alternative: release at each stop point, re-claim on resume. Best guess: keep-alive (D5).\n  Q7 (failure policy) releaseOnFailure: false — failed/interrupted runs keep the lock, go stale, get reaped to Timeout with the HA alert. Best guess: false (handoff assumption).\n  Q8 (concurrency cap) maxWorkers slot cap deferred (config key reserved; the pipeline field is the knob). Best guess: defer.\nnext_suggested: Batched question round with the user (Q1–Q8), re-launch plan if answers change chunks, then plan approval → agent-test writes all four plugin suites + suite pins → C01 first"
+      },
+      {
+        "at": "2026-10-29T02:35:00Z",
+        "result": "RESULT (plan round 2, batched answers + label directive applied)\nstatus: DONE\nchunk: plan\nfiles_changed: [plan file, DECISIONS.md, STATE.json, chunks/C01.md, C03.md, C04.md, C05.md, C06.md, C07.md]\ncommands_run: [node -e \"JSON.parse STATE.json\" => pass, grep stale-reference sweep => pass (remaining hits intentional), grep 7200000/derivePipelineSet parity => pass]\ndeviations: none — every answer applied as directed; keep-alive machinery fully excised (C04 AC6 greps for its absence); custom-field operator step retired from C07 with negative grep AC\nfriction: none\nopen_questions: none — Q1–Q8 answered and recorded as decisions (D17–D22); label directive introduced no new gaps\nnext_suggested: Present the plan for final approval; on approval set plan_status approved → coord records the D22 follow-up card task → agent-test writes the four plugin suites + suite pins → C01 first"
+      }
+    ]
+  },
+  "test": {
+    "status": "done",
+    "session": "ses_e7a7a5365ffebXvYX1abzgniGv",
+    "handoffs": [
+      {
+        "at": "2026-10-29T02:55:00Z",
+        "result": "RESULT\nstatus: DONE\nchunk: test\nfiles_changed: [tests/opencode/pipeline-locks-core.test.ts, tests/opencode/pipeline-locks-engine.test.ts, tests/opencode/pipeline-locks-reap.test.ts, tests/opencode/pipeline-locks-tick.test.ts, tests/agent-perms/surface.sh, tests/agent-board-coord/rulesync-surface.sh, tests/standalone-agents/surface.sh]\ncommands_run: [node --test tests/opencode/pipeline-locks-{core,engine,reap,tick}.test.ts => fail (ERR_MODULE_NOT_FOUND — honest red before C03..C06, the board-context precedent shape), node --test question-notify/permission-ask-notify/board-context/ha-mcp-url.test.ts => pass (×4, re-run after all edits), bash tests/agent-perms/surface.sh A1..A10,A12..A15 => pass (A15 correctly skips pre-plugin), bash tests/agent-perms/surface.sh A11 => fail (red-before-C02-dev, message names the wanted deny rows), bash tests/standalone-agents/surface.sh S1 S2 S4..S10 => pass, full => fails at S3 (red-before-C02-dev, delta-aware pin), bash tests/agent-board-coord/rulesync-surface.sh => pass (19 ok; c8 fixed, c2 gate dormant), bash tests/coord-inwork/surface.sh + tests/kickoff-branch/surface.sh + tests/session-origin/surface.sh => pass (untouched regressions), bash -n on the three edited suites + python-compile of family.py/giteffect.py/all inline heredocs => pass, grep of C07 negative pins against the current tree (no create_custom_field, exactly-two hold) => pass, npx --yes aislop ci --changes => pass (0 errors, 0 warnings), rulesync generate --check => pass via standalone S10 arm; helm => n/a (no chart)]\ndeviations: 1. tests/standalone-agents/surface.sh edited although C02 AC4 says it passes UNCHANGED: its S3 dynamic arm pinned pipeline agent-dev-{local,pr} permission lists EQUAL to the standalone trio — mathematically incompatible with C02's deliberate allow→deny delta; re-pinned delta-aware (accept-as-written candidate, flagged for adjudication). 2. rulesync-surface c8 allow-set widened for the ticket's own paths (was red pre-edits on the untracked plan folder); c2 gains the four rows behind a skill-text era-gate. 3. Seam-contract choices documented in suite headers (deps-first signatures; env-carried state maps; board-context-shaped storage fake; pin key pipeline-lock; reapStale(env,{trigger}) -> {reaped,skipped}; lockStatus groups shape; TICK_PROMPT export; timer/schedule injection). 4. reap suite uses wall-clock Date.now env (reaper compares injected now against REAL file mtimes); core/engine keep fixed T0. 5. All 64 tests over the four new files + A11/S3 are red by design pre-dev; none weakened toward what exists today.\nfriction: rulesync-surface c8 red on any in-flight ticket's untracked plan folder until the ticket widens the allow-set — resolution: widened in the same change. C02's targeted-addition-only assumption underestimated pin propagation (standalone S3 encodes the old contract) — resolution: delta-aware re-pin, flagged for adjudication.\nopen_questions: Q1 (S3 re-pin) accept as written or C02 dev owns the edit? Q2 (Timeout-list resolution) pinned get_card -> list_lists -> move_card -> add_comment with swimlane filter from the card's own swimlane_id echo? Q3 (heartbeatAt format) ISO-8601 everywhere? Q4 (status/meta file) metaPath = runtimeDir/meta/lastReap as pinned?\nnext_suggested: coord marks the test phase done and launches C01 (verification chunk, no tests owned) — C02 dev first touches code against the A11/S3 reds; every chunk's review starts with the plan Commands per-file runs."
+      }
+    ]
+  }
+}

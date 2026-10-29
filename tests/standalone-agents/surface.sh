@@ -18,7 +18,9 @@
 # base's agent-dev.md plus the C02 Tasks' git-row lists, so C04 can land
 # before C02 (wave-1 order) and still assert "same block by construction";
 # the dynamic compare against agent-dev-{local,pr}.md engages once C02 lands
-# and must hold forever after. S6's no-git-write roster + S7 are HOLD checks
+# and must hold forever after — re-pinned by cf-76 C02 (D7) as the DELTA-AWARE
+# form: the pipeline pair may differ from the standalone trio ONLY on the git
+# add/commit effects (deny vs allow), everything else stays parsed-equal. S6's no-git-write roster + S7 are HOLD checks
 # (card: "verified already true, pinned by a test") — green now, and they
 # fail loudly if C04 grants writes where the card forbids them.
 #
@@ -118,7 +120,7 @@ def perms(p):
 def sh(res, eff): return {"action": "shell", "resource": res, "effect": eff}
 # Isolation RE-PIN (2026-10-27, bug-coord-opencode-perms): every implementer
 # block — standalone dev trio and pipeline agent-dev pair alike (the dynamic
-# S3 arm pins the lists equal, same block by construction) — additionally
+# S3 arm pins the lists equal beyond the cf-76 git-effect delta) — additionally
 # ends with the workspace-isolation rows: opencode worktree create/list +
 # session move. execute stays UNGRANTED deliberately (these roles have no
 # deny baseline, so Code Mode falls through to the global ask — interactive
@@ -152,6 +154,51 @@ if idx != sorted(idx):
 last_read = max(i for i, r in enumerate(c) if r in b and r.get("action") == "shell" and str(r.get("resource", "")).startswith("git "))
 if min(idx) <= last_read:
     print(f"{target}: git write rows must sit AFTER the existing git reads (read at {last_read}, first write at {min(idx)})"); sys.exit(1)
+PY
+
+cat >"$TMP/giteffect.py" <<'PY'
+# cf-76 C02 sanctioned-delta comparator: pipeline agent-dev-{local,pr} vs
+# standalone dev-{local,pr}. The two permission lists must be IDENTICAL
+# (dict + order) except on the `git add *` / `git commit *` shell rows,
+# where the pipeline variant carries DENY (the coordinator is the sole
+# committer, D7) and the standalone keeps ALLOW (user-supervised, no
+# coordinator exists to take the commit). argv: agent-file standalone-file
+# variant. Any other divergence — an order shift, a lost isolation row, a
+# re-equalized git effect — exits 1 with the reason.
+import re, sys, yaml
+
+def perms(p):
+    m = re.match(r"^---\n(.*?)\n---\n", open(p).read(), re.S)
+    assert m, f"{p}: no YAML frontmatter"
+    fm = yaml.safe_load(m.group(1)) or {}
+    return (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
+
+agent, standalone, variant = sys.argv[1:4]
+GIT_WRITE = ("git add *", "git commit *")
+
+def split(p):
+    rows = perms(p)
+    git = [r for r in rows if r.get("action") == "shell" and r.get("resource") in GIT_WRITE]
+    rest = [r for r in rows if not (r.get("action") == "shell" and r.get("resource") in GIT_WRITE)]
+    return rows, git, rest
+
+a_rows, a_git, a_rest = split(agent)
+s_rows, s_git, s_rest = split(standalone)
+want = {
+    "local": {"git add *": "deny", "git commit *": "deny"},
+    "pr": {"git add *": "deny", "git commit *": "deny"},
+}[variant]
+for r in a_git:
+    if r["effect"] != want[r["resource"]]:
+        print(f"{agent}: {r['resource']} effect {r['effect']}, want {want[r['resource']]} (cf-76 C02: pipeline implementers never commit)"); sys.exit(1)
+for r in s_git:
+    if r["effect"] != "allow":
+        print(f"{standalone}: {r['resource']} effect {r['effect']}, want allow (the standalone dev family is UNCHANGED by cf-76 — D7 scope)"); sys.exit(1)
+if len(a_git) != 2 or len(s_git) != 2:
+    print(f"{agent}: {len(a_git)} / {standalone}: {len(s_git)} git-write rows, want the add+commit pair each"); sys.exit(1)
+if a_rest != s_rest:
+    i = next((i for i, (x, y) in enumerate(zip(a_rest, s_rest)) if x != y), min(len(a_rest), len(s_rest)))
+    print(f"non-git-write blocks differ at index {i}: agent {a_rest[i] if i < len(a_rest) else None} vs standalone {s_rest[i] if i < len(s_rest) else None} (lengths {len(a_rest)}/{len(s_rest)}) — only the add/commit effects may diverge"); sys.exit(1)
 PY
 
 cat >"$TMP/policy.py" <<'PY'
@@ -315,11 +362,16 @@ if want s3; then
     pinned_note="agent-dev.md gone at base (post-landing) — dynamic arm only"
   fi
   if [ -f "$ADEV_LOCAL" ]; then
-    python3 "$TMP/eq.py" "$ADEV_LOCAL" "$DEV_LOCAL" \
-      || fail "S3[AC1]: dev-local != agent-dev-local (post-C02 tree — AC1 pins the two lists equal, same block by construction)"
-    python3 "$TMP/eq.py" "$ADEV_PR" "$DEV_PR" \
-      || fail "S3[AC1]: dev-pr != agent-dev-pr (post-C02 tree — modulo name/description, the permission lists must agree)"
-    pinned_note="$pinned_note; dynamic agent-dev pair compare ENGAGED"
+    # cf-76 C02 re-pin (D7): the pipeline implementers' block now DELIBERATELY
+    # differs from the standalone trio on exactly the git add/commit effects
+    # (deny vs allow — the coordinator owns commits; standalone dev commits
+    # its own work). Everything else must still agree, list order included;
+    # a silent re-equalization would undo C02, an unlisted drift would hide.
+    python3 "$TMP/giteffect.py" "$ADEV_LOCAL" "$DEV_LOCAL" local \
+      || fail "S3[AC1]: dev-local vs agent-dev-local drifted beyond the sanctioned cf-76 git add/commit effect delta"
+    python3 "$TMP/giteffect.py" "$ADEV_PR" "$DEV_PR" pr \
+      || fail "S3[AC1]: dev-pr vs agent-dev-pr drifted beyond the sanctioned cf-76 git add/commit effect delta"
+    pinned_note="$pinned_note; dynamic agent-dev pair compare ENGAGED (cf-76 delta-aware)"
   else
     pinned_note="$pinned_note; agent-dev pair absent (C04 before C02)"
   fi

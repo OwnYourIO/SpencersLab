@@ -230,6 +230,18 @@ if not has("question", "*", "allow"):
     errs.append("explicit question allow missing (repo hard rule)")
 if not has("dev-boards*", "*", "allow"):
     errs.append("dev-boards* allow missing (the variant's single MCP permission — server-name spelling: MCP tool ids keep the hyphen, re-pinned 2026-10-27 by 2026-10-bug-board-coord-dev-boards-allow)")
+# cf-76 C07 era-gate: the four pipeline_* allow rows engage on the generated
+# mirror as soon as the boards skill teaches the call surface (the skill
+# text lands with the same chunk; before it the grant is unshipped and this
+# check must not hold earlier chunks' runs hostage — the A13/-pr pattern).
+try:
+    skill_text = open(".rulesync/skills/boards/SKILL.md").read()
+except OSError:
+    skill_text = ""
+if "pipeline_claim" in skill_text:
+    for tool in ("pipeline_claim", "pipeline_release", "pipeline_heartbeat", "pipeline_status"):
+        if not has(tool, "*", "allow"):
+            errs.append(f"{tool} allow missing (cf-76 C07: the boards skill already names the lock surface — the grant must follow)")
 # D21 adjudication: the re-cut onto main brought a fleet-wide `dev*`
 # convention, but board-coord consumes card intake/exit only — least privilege
 # survives, so the broad action must stay ABSENT, not merely be accompanied.
@@ -414,7 +426,9 @@ if want c8; then
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
       skills/wekan-mcp/*|.opencode/plugin/board-context/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
-      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*) : ;;
+      .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
+      .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
+      .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
