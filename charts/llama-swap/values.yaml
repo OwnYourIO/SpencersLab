@@ -1141,11 +1141,18 @@ app-template:
             # block: app-template.controllers.strata.initContainers.model-fetch.env.
             STRATA_QUANTS: "q3"
           resources:
+            # limits.memory 1Gi OOM-KILLED the engine compile (exit 137, 8
+            # restarts 2026-10-29: step 4 runs `ninja -j 16` clang jobs the
+            # moment configure completes — the 1Gi cap was sized for pip and
+            # downloads, not for a compile). 32Gi bounds the parallel clang
+            # peak inside a cgroup so a runaway build can never eat into the
+            # llama.cpp trio; 2Gi request keeps pod scheduling honest without
+            # stacking on the main container's 96Gi reservation.
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 200m
+              memory: 2Gi
             limits:
-              memory: 1Gi
+              memory: 32Gi
           securityContext:
             # HIP GPU detection (setup.sh --backend hip) needs the same device
             # view as the main container, so the earlier download-only
