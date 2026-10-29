@@ -195,6 +195,11 @@
         "at": "2026-10-29T07:55:00Z",
         "role": "test-repair-3 (C05 validation_at_fault: reap suite R1-1/R2-3)",
         "result": "RESULT\nstatus: DONE\nchunk: test-repair-3\nfiles_changed: [tests/opencode/pipeline-locks-reap.test.ts]\ncommands_run: [reap => pass 18/18 (was 16/18 with the two defective legs), core => pass 30/30 untouched, engine => pass 32/32 untouched, aislop => rc=0 D36-only, git scope => pass]\ndeviations: both repairs pure fixture-shaping, zero contract change (R1-1 expected array swapped to the helper's own sort order + annotated so the next reader doesn't re-flip it; R2-3 re-utimes line added — the same file's R1 legs already use it; without it the leg contradicts R1-1's identical-input MUST-SURVIVE pin). Minors 2/3 NOT folded — assigned to the C06-wave test round per C04 review routing\nfriction: none\nopen_questions: none\nnext_suggested: coord commits C05 (dev index.ts + this repair + state), re-queues the C05 review; C06 test round adds Minor-2 scan-rebuild + Minor-3 missing-key pins"
+      },
+      {
+        "at": "2026-10-29T08:40:00Z",
+        "role": "test-round-2 (C06-wave minor pins)",
+        "result": "RESULT\nstatus: DONE\nchunk: test-round-2\nfiles_changed: [tests/opencode/pipeline-locks-engine.test.ts, tests/opencode/pipeline-locks-reap.test.ts]\ncommands_run: [core => pass 30/30 untouched, engine => pass 34/34 (+2 GREEN pins), reap => pass 20/20 (+2 GREEN pins), tick => designed-red 0/12 unchanged own census, 4 siblings => pass, aislop => 0/0, git scope => pass]\ndeviations: all four routed pins green against shipped code; two authoring corrections inside own new legs (wrapper destructure; E9 rebuild-skip semantics pinned observably on the rebuild with the separate cross-check-refusal behavior left as an annotated NOTE — unpinned so its future change goes red in its own leg)\nfriction: none\nopen_questions: none\nnext_suggested: coord commits the round; C06 dev owns the tick suite's twelve designed-reds; C07 A15 bash parity engages as pinned"
       }
     ]
   }

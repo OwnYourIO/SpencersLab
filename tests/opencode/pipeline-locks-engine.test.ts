@@ -326,6 +326,32 @@ describe("E2 lock-lost is SET-wide (AC 3, D18/D16)", () => {
     await assert.rejects(seam("toolBefore")(env, { tool: "edit", sessionID: "ses_child" }), /PIPELINE LOCK LOST/);
     void timers;
   });
+
+  it("strictLockLoss absent-key reads as DEFAULT ON; only an explicit false disarms (C04 Minor-3, D16/D32)", async () => {
+    // The shipped shape is `strictLockLoss !== false` — every unset variant
+    // (key deleted, no config member at all) must guard, while the single
+    // documented OFF switch (explicit false) suppresses ONLY the throw: the
+    // set-wide lock-lost cleanup still runs, because loss detection is not
+    // the guard (D18 owns that half).
+    const { env: envOn } = baseEnv();
+    delete envOn.config.strictLockLoss;
+    await claimed(envOn, "s1", ["a", "b"]);
+    rmSync(join(envOn.locksDir, "a.json"));
+    await assert.rejects(seam("toolBefore")(envOn, { tool: "edit", sessionID: "s1" }), /PIPELINE LOCK LOST/, "missing key must behave as ON — a config file predating the key must not silently disarm the stop guard");
+    assert.deepEqual(lockFiles(envOn), [], "the lost-pass cleanup ran regardless of the guard arm");
+
+    const { env: envOff } = baseEnv({ config: { strictLockLoss: false } });
+    await claimed(envOff, "s3", ["a", "b"]);
+    rmSync(join(envOff.locksDir, "a.json"));
+    let err: any = null;
+    try {
+      await seam("toolBefore")(envOff, { tool: "bash", sessionID: "s3" });
+    } catch (e) {
+      err = e;
+    }
+    assert.equal(err, null, "explicit false is the ONLY disarm shape");
+    assert.deepEqual(lockFiles(envOff), [], "the OFF arm suppresses the throw, not the D18 set-wide cleanup — survivors still freed");
+  });
 });
 
 describe("E3 child mapping via events (AC 4, handoff B.9)", () => {
@@ -701,5 +727,106 @@ describe("E8 setup wiring — subscribe shape, deferral under a hung read, abort
     stream.stop();
     cleanup();
     assert.equal(seen.subscribeArgs[0]?.signal?.aborted, true, "cleanup must abort the event stream");
+  });
+});
+
+describe("E9 setup restart-resume rebuild from ctx.storage (C04 Minor-2 close, D26)", () => {
+  // The durable store is plugin-id + project-id scoped and shared across
+  // worktree/main locations (D26 probe), so a server restart in ANY
+  // location must repopulate the in-process views from the scan rows.
+  // Raw ctx.storage shape per the C01 fact-5 probe: positional set(key,
+  // value), get(key) answering undefined for absent keys, scan({prefix})
+  // answering {entries:[{key,value}]}. Claim rows are keyed claim/<sessionID>
+  // with {sessionID, setId, cardId, pipelineSet}; child rows keyed
+  // child/<sessionID> with {sessionID, rootID, parentID} — that row shape is
+  // the rebuild contract this leg pins (dev may not silently rename it).
+  function rawStorage(seeds: Array<{ key: string; value: any }>) {
+    const items = new Map<string, any>(seeds.map((s) => [s.key, s.value]));
+    return {
+      items,
+      api: {
+        get: async (key: string) => items.get(key),
+        set: async (key: string, value: any) => void items.set(key, value),
+        remove: async (key: string) => void items.delete(key),
+        scan: async (opts: { prefix: string }) => ({
+          entries: [...items.entries()]
+            .filter(([k]) => k.startsWith(opts.prefix))
+            .map(([key, value]) => ({ key, value })),
+        }),
+      },
+    };
+  }
+
+  function executorText(result: any): string {
+    if (typeof result === "string") return result;
+    return String(result?.content ?? JSON.stringify(result ?? {}));
+  }
+
+  it("restores claims + child maps from the scan; malformed rows are skipped, not half-loaded", async () => {
+    const runtimeDir = mkdtempSync("/tmp/opencode/pllocks-engine-rebuild.XXXXXX");
+    const storage = rawStorage([
+      { key: "claim/ses_r1", value: { sessionID: "ses_r1", setId: "setR1", cardId: "cardR", pipelineSet: ["alpha"] } },
+      { key: "child/ses_c1", value: { sessionID: "ses_c1", rootID: "ses_r1", parentID: "ses_r1" } },
+      { key: "child/ses_skip", value: { sessionID: "ses_skip" } },
+      { key: "claim/junk", value: "not-an-object" },
+    ]);
+    const seen: any = { toolSpecs: [] };
+    const ctx: any = {
+      tool: {
+        transform: async (fn: any) => void fn({ namespace: "", add: (s: any) => void seen.toolSpecs.push(s) }),
+        hook: async () => {},
+      },
+      command: { transform: async (fn: any) => void fn({ add: () => {} }) },
+      event: { subscribe: () => ({ [Symbol.asyncIterator]: () => ({ next: async () => ({ value: undefined, done: true }) }) }) },
+      session: { get: async () => undefined, prompt: async () => {}, instructions: { entry: { put: async () => {}, remove: async () => {} } } },
+      mcp: { list: async () => [] },
+      storage: storage.api,
+      location: { directory: runtimeDir },
+    };
+    const cleanup = await Promise.race([
+      mod.default.setup(ctx),
+      new Promise((_r, rej) => setTimeout(() => rej(new Error("setup blocked on the rebuild")), 2000)),
+    ]);
+    assert.equal(typeof cleanup, "function", "setup must still return its cleanup even with a full storage scan");
+    try {
+      const spec = (name: string) => {
+        const s = seen.toolSpecs.find((t: any) => t.name === name);
+        assert.ok(s, `tool ${name} not registered — the rebuild leg needs the tool executors (saw ${JSON.stringify(seen.toolSpecs.map((t: any) => t.name))})`);
+        return s;
+      };
+      // (a) the rebuilt CLAIM row: a second claim from the restored root is
+      // refused exactly like a live in-process one — one card per iteration.
+      const recl = executorText(await spec("pipeline_claim").execute({ cardId: "cardR2", pipelines: ["beta"] }, { sessionID: "ses_r1" }));
+      assert.match(recl, /already_held/, "the restored claim view must drive the same already_held refusal a live claim gets (D26 rebuild is not a read-only echo)");
+      // (b) negative control BEFORE the child arm: an unmapped session has
+      // no claim, so its heartbeat answers no_claim — not lock_lost.
+      const stranger = executorText(await spec("pipeline_heartbeat").execute({}, { sessionID: "ses_zzz" }));
+      assert.match(stranger, /no_claim/, "unmapped sessions must stay invisible to the rebuilt view");
+      // (c) the rebuilt CHILD row: ses_c1 resolves through the restored map
+      // to ses_r1's claim; its lock files never existed (storage rows only),
+      // so the set-wide lock-lost path runs and the dead row is cleaned out
+      // of the durable store too.
+      const beaten = executorText(await spec("pipeline_heartbeat").execute({}, { sessionID: "ses_c1" }));
+      assert.match(beaten, /lock_lost/, "the restored child→root mapping must feed the heartbeat path, not just status views");
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      assert.equal(storage.items.has("claim/ses_r1"), false, "lock-lost removes the rebuilt row — no zombie claim survives to the next restart");
+      // (d) malformed rows are SKIPPED by the rebuild's shape validation:
+      // child/ses_skip lacks rootID, so ses_skip stays unmapped — the
+      // heartbeat finds no claim through it (a half-loaded child row would
+      // resolve it into ses_r1's dead claim and answer lock_lost instead).
+      const skip = executorText(await spec("pipeline_heartbeat").execute({}, { sessionID: "ses_skip" }));
+      assert.match(skip, /no_claim/, `the rootID-less child row must not map ses_skip: ${skip.slice(0, 160)}`);
+      // (e) a fresh unrelated claim sails through the rebuilt env untouched.
+      const fresh = executorText(await spec("pipeline_claim").execute({ cardId: "cardX", pipelines: ["x"] }, { sessionID: "sQ" }));
+      assert.match(fresh, /"ok":\s*true/, `junk rows must not gate a valid claim: ${fresh.slice(0, 160)}`);
+      assert.ok(existsSync(join(runtimeDir, ".pipeline", "locks", "x.json")), "the fresh claim wrote its lock through the rebuilt env");
+      // NOTE (observed, NOT pinned here): claiming AS a session whose raw
+      // storage row exists but failed shape validation answers already_held
+      // via the claim leg's storage cross-check (index ~373) — reviewed
+      // deviation-3-adjacent behavior, distinct from the rebuild view this
+      // leg contracts; pinning it would freeze a non-rebuild concern.
+    } finally {
+      cleanup();
+    }
   });
 });

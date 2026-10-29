@@ -512,6 +512,33 @@ describe("R7 moveCardToTimeout unit legs (AC 4)", () => {
     assert.match(text, /pipelines: [^"]*\ba\b[^"]*\bb\b|\bb\b[^"]*\ba\b/, "the comment names every pipeline of the reaped claim");
     assert.match(text, /session[^\w]*s1/);
   });
+
+  it("accepts the client FLAT ({callTool}) and NESTED ({api:{callTool}}) identically (C05 Minor-3, deviation-5 convergence)", async () => {
+    // The suite header documented the flat shape while the fixture nests
+    // under .api; the implementation tolerates both (flat checked FIRST).
+    // Pin both arms against the SAME scenario so future drift — a
+    // flat-only or nested-only refactor — goes red here, not silently in
+    // production discovery. The live call-shapes addendum: add_comment's
+    // body key is `comment`, so it rides here too.
+    const outcomes: any[] = [];
+    for (const shape of ["flat", "nested"]) {
+      const rec = recordingClient();
+      const env = baseEnv();
+      env.client = shape === "flat" ? { callTool: rec.api.callTool } : rec.api;
+      await seam("moveCardToTimeout")(env, { cardId: "c1", pipelines: ["a", "b"], sessionID: "s1", setId: "set1" });
+      outcomes.push({
+        names: rec.calls.map((c: any) => c.name),
+        move: rec.calls.find((c: any) => c.name === "move_card")?.args,
+        comment: JSON.stringify(rec.calls.find((c: any) => c.name === "add_comment")?.args),
+      });
+      assert.deepEqual(readTimeouts(env), [], `${shape}: a fully working client must never queue a degrade row`);
+    }
+    assert.deepEqual(outcomes[0].names, ["get_card", "list_lists", "move_card", "add_comment"], "flat arm keeps the D24 sequence");
+    assert.deepEqual(outcomes[1].names, outcomes[0].names, "nested arm must converge on the same sequence");
+    assert.deepEqual(outcomes[1].move, outcomes[0].move, "same move args from both shapes");
+    assert.equal(outcomes[1].comment, outcomes[0].comment, "byte-identical comment leg from both shapes");
+    assert.match(String(JSON.parse(outcomes[0].comment).comment ?? ""), /Timed out: no heartbeat for 2h/, "the comment body rides the `comment` key (live call-shape, reviewed (e))");
+  });
 });
 
 describe("R8 module hygiene (AC 8)", () => {
@@ -581,5 +608,74 @@ describe("R9 command executors route through the seams (AC 9)", () => {
     } finally {
       cleanup();
     }
+  });
+});
+
+describe("R10 audit-line shape battery (C05 Tests-list leg, Minor-2 close)", () => {
+  // "every events.log line parses as JSON with at + ev" was implicit until
+  // now (readEvents JSON.parses the whole file, so a malformed line reddens
+  // four legs indirectly). This leg makes it explicit AND pins the record
+  // shape of the three reap-era audit classes against the suite's own
+  // conventions, so a future appendEvent refactor that renames or drops a
+  // correlating field fails here instead of silently breaking status/alert
+  // forensics.
+  function assertAuditLines(env: any, expectedEvents: string[]) {
+    const raw = readFileSync(env.eventsPath, "utf8");
+    const lines = raw.split("\n").filter((l) => l.trim());
+    assert.ok(lines.length >= expectedEvents.length, `expected at least ${expectedEvents.length} audit lines, saw ${lines.length}`);
+    const evs: string[] = [];
+    for (const line of lines) {
+      let obj: any;
+      assert.doesNotThrow(() => (obj = JSON.parse(line)), `unparseable JSONL audit line: ${line.slice(0, 120)}`);
+      assert.ok(typeof obj.ev === "string" && obj.ev.length > 0, "every audit line carries a non-empty ev");
+      assert.ok(!Number.isNaN(Date.parse(obj.at)), `every audit line carries an ISO at, saw ${JSON.stringify(obj.at)}`);
+      evs.push(obj.ev);
+    }
+    for (const want of expectedEvents) {
+      assert.ok(evs.includes(want), `no ${want} line in the log, saw ${JSON.stringify(evs)}`);
+    }
+    return lines.map((l) => JSON.parse(l));
+  }
+
+  it("reaped, board_move_err and lock_lost records carry their contract fields beside at+ev", async () => {
+    // (a) reap pass over a stale lock whose board leg rejects: the file
+    // moves, the card degrades — both halves must be audited completely.
+    const envA = baseEnv({ client: recordingClient({ get_card: new Error("board exploded") }) });
+    envA.notify = async () => {};
+    seedLock(envA, { pipeline: "aud", cardId: "cA", setId: "setA", sessionID: "sA", pipelineSet: ["aud"] }, 3 * HOUR);
+    await seam("reapStale")(envA, { trigger: "command" });
+    const recsA = assertAuditLines(envA, ["reaped", "board_move_err"]);
+    const reaped = recsA.find((r) => r.ev === "reaped");
+    for (const field of ["pipeline", "setId", "cardId", "sessionID", "ageMin", "trigger"]) {
+      assert.ok(reaped[field] !== undefined, `the reaped record lost ${field} — status/alert correlation depends on it`);
+    }
+    assert.equal(typeof reaped.ageMin, "number");
+    assert.equal(reaped.trigger, "command");
+    const bme = recsA.find((r) => r.ev === "board_move_err");
+    for (const field of ["cardId", "setId", "sessionID", "reason"]) {
+      assert.ok(bme[field] !== undefined && String(bme[field]).length > 0, `board_move_err lost ${field} — the degrade must name why the card stayed`);
+    }
+
+    // (b) lock_lost from the engine path on this suite's env: a deleted
+    // member under a live two-pipeline claim names the WHOLE set + cause
+    // (D18 set-wide signal, reviewed C04 (b)).
+    const envB = baseEnv();
+    envB.sessToRoot = new Map();
+    envB.executing = new Set();
+    envB.lastBeat = new Map();
+    envB.negative = new Map();
+    seedLock(envB, { pipeline: "x1", cardId: "cB", setId: "setB", sessionID: "sB", pipelineSet: ["x1", "x2"] }, 60000);
+    seedLock(envB, { pipeline: "x2", cardId: "cB", setId: "setB", sessionID: "sB", pipelineSet: ["x1", "x2"] }, 60000);
+    envB.claims.set("sB", { setId: "setB", cardId: "cB", pipelineSet: ["x1", "x2"] });
+    rmSync(join(envB.locksDir, "x1.json"));
+    await seam("toolBefore")(envB, { tool: "read", sessionID: "sB" });
+    const recsB = assertAuditLines(envB, ["lock_lost"]);
+    const lost = recsB.find((r) => r.ev === "lock_lost");
+    assert.equal(lost.setId, "setB");
+    assert.equal(lost.cardId, "cB");
+    assert.equal(lost.sessionID, "sB");
+    assert.deepEqual([...lost.pipelineSet].sort(), ["x1", "x2"], "the lock_lost record names the whole lost set, not just the trigger member");
+    assert.ok(typeof lost.cause === "string" && lost.cause.length > 0, "the cause half of the reviewed (b) shape");
+    assert.deepEqual(lockFiles(envB), [], "the owned survivor is freed beside the audit");
   });
 });
