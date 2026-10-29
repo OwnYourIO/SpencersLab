@@ -1105,12 +1105,19 @@ app-template:
               for tok in ${STRATA_QUANTS:-q3}; do
                 [ -n "$tok" ] || continue
                 TOK=$(printf '%s' "$tok" | tr 'a-z' 'A-Z')
+                FAM=qwen
                 case "$TOK" in
                   Q3) SIZE=IQ3_S ;;
                   *)  SIZE=$(printenv "STRATA_MODEL_$TOK" || true) ;;
                 esac
+                # STRATA_MODEL_Qx may name another catalog family as
+                # "family/model" (e.g. unsloth/UD-Q4_K_XL — the q4/q5 the
+                # qwen family does not carry); a bare name stays qwen.
+                case "$SIZE" in
+                  */*) FAM=${SIZE%%/*}; SIZE=${SIZE#*/} ;;
+                esac
                 if [ -z "$SIZE" ]; then
-                  echo "model-fetch: no model id mapped for quant '$tok' - set env STRATA_MODEL_$TOK (catalog: ./setup.sh --help in $SRC)" >&2
+                  echo "model-fetch: no model id mapped for quant '$tok' - set env STRATA_MODEL_$TOK=[family/]model (catalog: ./setup.sh --help in $SRC)" >&2
                   exit 1
                 fi
                 MARK="/models/strata/.setup-$TOK"
@@ -1118,7 +1125,7 @@ app-template:
                   echo "model-fetch: $tok already set up, skipping"
                   continue
                 fi
-                echo "model-fetch: setup.sh for $tok as $SIZE (family qwen, backend hip; downloads start here)"
+                echo "model-fetch: setup.sh for $tok as $FAM/$SIZE (downloads start here)"
                 # --backend hip is mandatory, not a preference: setup.sh probes
                 # NVIDIA by default and hard-stops "no NVIDIA GPU found" on this
                 # AMD node (deploy 2026-10-29); SOURCE_INSTALL.md AMD section
@@ -1126,19 +1133,23 @@ app-template:
                 # mounts /dev/kfd + /dev/dri (persistence advancedMounts below)
                 # — the HIP probe must see the card, or it fails the same lie
                 # in the other direction.
-                ( cd "$SRC" && ./setup.sh --backend hip --family qwen --model "$SIZE" --context 262144 --vision no --no-start --yes )
+                ( cd "$SRC" && ./setup.sh --backend hip --family "$FAM" --model "$SIZE" --context 262144 --vision no --no-start --yes )
                 touch "$MARK"
               done
               ls -la "$SRC"/strata-*.json 2>/dev/null \
                 || echo "model-fetch: WARNING no strata-*.json run config found - inspect $SRC before serving"
               echo "model-fetch: quants [${STRATA_QUANTS:-q3}] provisioned via checkout on the claim"
           env:
-            # Quant set, comma-separated: "q3" today; "q3,q4,q5,q6" for the
-            # full set once each token has a model id — only q3→IQ3_S is
-            # catalog-confirmed (launch --plan, 2026-10-28); q4/q5/q6 map via
-            # STRATA_MODEL_Q4/Q5/Q6 sidecars of this env (loud fail otherwise,
-            # nothing half-guessed). Override deep-merges from the service
-            # block: app-template.controllers.strata.initContainers.model-fetch.env.
+            # Quant set, comma-separated: "q3" today. Only q3=IQ3_S carries
+            # a built-in mapping (qwen family); further tokens need
+            # STRATA_MODEL_Qx=[family/]model — the qwen family caps at the
+            # four ISTA quants (Q2_0/IQ2_XS/IQ3_XXS/IQ3_S), so q4/q5 come
+            # from the unsloth family (UD-Q4_K_XL ~104 GB incl. the shared
+            # 28.8 GB n-gram shard; UD-Q5_K_XL ~147 GB — past this node's
+            # arena model, see the runbook budget table). Loud fail for
+            # unmapped tokens; markers keep each quant idempotent. Override
+            # deep-merges from the service block:
+            # app-template.controllers.strata.initContainers.model-fetch.env.
             STRATA_QUANTS: "q3"
           resources:
             # limits.memory 1Gi OOM-KILLED the engine compile (exit 137, 8
@@ -1217,18 +1228,25 @@ app-template:
             # 128 GB node (R3). OOM post-mortem 2026-10-29: the setup-chosen
             # `--ple-io ram` (+28.8 GiB resident) atop a ~47 GiB arena with
             # the llama.cpp trio warm blew node RAM and the kernel harvested
-            # cluster system pods. Caps now bound the blast radius: the
-            # container cgroup stops strata at 72Gi (kernel victims stay
-            # inside THIS cgroup), and the engine's --memory-limit-mib
-            # (PR #1601 pairing: a cgroup limit must be declared to the
-            # engine) sizes the arena/conv-cache inside 65 GiB of it — the
-            # supervisor + venv headroom fills the rest. Coexistence is
-            # time-shared (ttl below), not simultaneous residency.
+            # cluster system pods. Caps bound the blast radius: the container
+            # cgroup stops strata (kernel victims stay inside THIS cgroup)
+            # and the engine's --memory-limit-mib (PR #1601 pairing: a
+            # cgroup limit must be declared to the engine) sizes arena +
+            # conversation cache + KV inside 90 GiB of it — supervisor and
+            # venv headroom fill the rest. Coexistence is time-shared (ttl
+            # below), not simultaneous residency.
             requests:
               cpu: 8
               memory: 64Gi
+            # 96Gi ceiling = ~50 GiB IQ3_S arena + 32 GiB conversation cache
+            # + ~13 GiB worst-case 4-slot KV + engine/supervisor headroom
+            # (owner budget ruling 2026-10-29). Node is 125 GiB: a fully
+            # warm strata pod leaves the llama.cpp trio NO real headroom —
+            # the ttl:3600 time-share and the cgroup cap are what keep the
+            # next collision inside this container instead of the whole
+            # node. Raise --memory-limit-mib in lockstep with this number.
             limits:
-              memory: 72Gi
+              memory: 96Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
             # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
@@ -1431,7 +1449,7 @@ strata:
     models:
       qwen3.8-flash-next-strata:
         name: Qwen3.8-Flash-Next IQ3_S (R9700 arena)
-        description: Strata engine, experts pinned in a page-locked RAM arena on the R9700, capped at 65 GiB engine-side; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back (set ttl 0 to pin forever).
+        description: Strata engine, experts pinned in a page-locked RAM arena on the R9700, capped at 90 GiB engine-side with a 32 GiB conversation-cache budget; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back (set ttl 0 to pin forever).
         # serve takes only --profile/--host/--port (RESEARCH §2) — every
         # tuning knob lives in the run-config JSON below. `exec` hands the
         # process to llama-swap for stop/unload, and the ulimit wrapper is
@@ -1445,8 +1463,8 @@ strata:
         # policy: with the arena capped but uncapped-by-default llama.cpp
         # models wanting the same 125 GB, PERMANENT residency (the run-1
         # Q2 posture) turns every cold strata load into a coin-flip for the
-        # trio. Time-sharing hands the ~47-65 GiB back after quiet; the
-        # cost is re-paying the minutes-long cold pin after an idle hour.
+        # trio. Time-sharing hands the budgeted ~50-90 GiB back after quiet;
+        # the cost is re-paying the minutes-long cold pin after an idle hour.
         # Set ttl: 0 to pin forever (dedicated-window mode); manual escape
         # remains POST /api/models/unload/qwen3.8-flash-next-strata.
         ttl: 3600
@@ -1586,22 +1604,45 @@ strata:
         - --max-context 262144
         # int8 KV: the engine default AND the PR's explicit choice.
         - --kv int8
-        # Machine-tuned by setup, adopted with two 2026-10-29 post-OOM
-        # edits: --ple-io ram REMOVED (back to the engine's file/mmap
-        # default — the 28.8 GiB n-gram table reads sparsely, and RAM-
-        # resident only made sense on a node with nothing else warm), and
-        # --memory-limit-mib ADDED so the engine sizes the page-locked
-        # arena inside the container's 72Gi cgroup instead of guessing at
-        # free node RAM (PR #1601 pairing; 65 GiB leaves supervisor +
-        # conv-cache headroom under the cap). The 32768-cell resident KV
-        # window and auto-sized prefill stay as setup chose them.
+        # Machine-tuned by setup, adopted with 2026-10-29 post-OOM edits:
+        # --ple-io ram REMOVED (back to the engine's file/mmap default — the
+        # 28.8 GiB n-gram table reads sparsely; RAM-resident only made sense
+        # on a node with nothing else warm), and --memory-limit-mib declared
+        # so the engine sizes its page-locked arena inside the container's
+        # 96Gi cgroup instead of guessing at free node RAM (PR #1601
+        # pairing; 90 GiB = arena ~50 + conversation cache 32 + worst-case
+        # 4-slot KV ~13, per the owner budget ruling). KV-int8 math here is
+        # ~13 KiB/token (only 12 of 48 layers carry full attention), so a
+        # full 256k park costs ~3.3 GiB and the 32768 MiB budget parks
+        # roughly 9-10 of those — or dozens of typical 30-50k sessions.
         - --kv-resident 32768
         - --prefill auto
-        - --memory-limit-mib 66560
+        - --memory-limit-mib 92160
+        - --conversation-cache-mib 32768
+        - --conversation-cache-slots 16
+        # Context-extension toggle (EXPERIMENTAL, off by policy): the
+        # engine answers past the trained 262144 with llama.cpp-style rope
+        # scaling — add
+        #   "- --max-context 524288" (replacing 262144)
+        #   "- --rope-scaling yarn"
+        #   "- --rope-scale 2"
+        # Costs, all documented upstream: yarn's mscale (~1.069 at factor 2)
+        # makes EVERY run a slightly different model (a 64-token greedy
+        # prompt diverges ~19 tokens in — short-context quality is not
+        # "native"); KV doubles per parked session (~6.5 GiB/park → half the
+        # park count on the 32 GiB budget) and the rope tables add ~0.26
+        # KiB/token; KV is allocated before expert-cache auto-sizing, so the
+        # arena shrinks to make room (#765 budgeting order). One scaling
+        # setting per process — never mix scaled and unscaled sessions on
+        # one cache. Verify with a needle probe before trusting recall.
         # Documented deviations/toggles, one values edit away (verbatim
         # provenance kept for the record):
         # --prefill 32768: the PR #3636 R9700-machine number; setup chose
         #   `auto` here — override only on --plan/bench evidence.
+        # --conversation-cache-mib 24576 / --conversation-cache-slots 16:
+        #   the PR's parked budget — superseded by the owner's 32768×16
+        #   above; the real home of the guide's "24576" (RESEARCH §5
+        #   contradiction #3).
         # --ple-io ram: put the 28.8 GiB n-gram table back in RAM — only
         #   sane with the trio idle (the OOM post-mortem above); re-add
         #   after loading, never alongside residency.

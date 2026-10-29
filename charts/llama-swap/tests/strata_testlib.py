@@ -114,14 +114,12 @@ PRIMARY_FORBIDDEN_FLAGS = [
     # setup itself pairs it with --ple-io ram outside any --batch context
     # (2026-10-29 transplant), so it is baseline now, not forbidden.
 ]
-# Baseline = the run-config setup GENERATED on this node
-# (/models/strata/Strata/strata-iq3_s.json, 2026-10-29) — it supersedes the
-# PR #3636 seed: --prefill auto (machine-sized, PR's 32768 demoted to a
-# documented toggle), --conversation-cache*/--mtp-window absent (engine
-# defaults + toggles), and the Strata-data paths + --ple-io ram /
-# --kv-resident 32768 pair are now REQUIRED so a revert to the seed guesses
-# (or to the pre-transplant flat paths) goes red. --batch-mtp remains on
-# neither list (one-at-a-time posture; RESEARCH §5).
+# Baseline = the generated run-config (2026-10-29 transplant) PLUS the
+# owner budget ruling of the same day: --prefill auto (machine-sized),
+# Strata-data paths and --kv-resident required so a revert to the seed
+# guesses goes red; --memory-limit-mib 92160 inside the 96Gi cgroup
+# (#1601 pair); conversation-cache 32768 x 16 explicit. --mtp-window stays
+# absent (toggle); --batch-mtp on neither list (one-at-a-time posture).
 PRIMARY_REQUIRED_PAIRS = [
     ("--pack", "/models/strata/Strata-data/packs/iq3_s"),
     ("--native", "/models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf"),
@@ -133,8 +131,13 @@ PRIMARY_REQUIRED_PAIRS = [
     ("--prefill", "auto"),
     ("--kv-resident", "32768"),
     # 2026-10-29 OOM pairing: a cgroup limit without the engine knowing it
-    # gets the arena killed mid-pin; this pair is the #1601 contract.
-    ("--memory-limit-mib", "66560"),
+    # gets the arena killed mid-pin; this pair is the #1601 contract (90 GiB
+    # inside the 96Gi cgroup, owner budget ruling same day).
+    ("--memory-limit-mib", "92160"),
+    # Owner budget ruling 2026-10-29: 32 GiB parked-conversation budget,
+    # 16 slots (IQ3_S full-256k park ~= 3.3 GiB of it).
+    ("--conversation-cache-mib", "32768"),
+    ("--conversation-cache-slots", "16"),
 ]
 PRIMARY_REQUIRED_FLAGS = [
     "--pack", "--native", "--ple-gguf", "--expert-profile", "--mtp",

@@ -692,6 +692,20 @@
             "context": 262144
           }
         },
+        "qwen3.8-flash-next-strata": {
+          "modelID": "qwen3.8-flash-next-strata",
+          "name": "Qwen 3.8 Flash Next (Strata IQ3_S arena, R9700)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          // Trained ceiling 262144; the engine refuses past it without rope
+          // scaling (documented experimental toggle in charts/llama-swap).
+          "limit": {
+            "context": 262144
+          }
+        },
         "qwen38-ara": {
           "modelID": "qwen38-ara",
           "name": "Qwen3.8 27B heretic-ara (Q6_K-MTP)",

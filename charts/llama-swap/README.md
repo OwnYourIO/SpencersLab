@@ -38,9 +38,10 @@ Pod shape: privileged + hostPath `/dev/kfd` + `/dev/dri`, `strategy:
 Recreate` (a RollingUpdate overlap would double-pin the arena — the #2257
 class), grace 420 s > `unloadTimeout` 180 s + drain 30 s, shm 2 GiB.
 Memory is a PAIRED cap, not the DOCKER.md default of none: `limits.memory
-72Gi` cgroup + `--memory-limit-mib 66560` declared to the engine (#1601's
+96Gi` cgroup + `--memory-limit-mib 92160` declared to the engine (#1601's
 informed-limit posture) — the 2026-10-29 node OOM harvest ended the
-uncapped-pinning era on a node the trio also lives on.
+uncapped-pinning era on a node the trio also lives on. Conversation cache:
+32 GiB × 16 slots (IQ3_S parks ~3.3 GiB per full 256k conversation).
 
 ### Keyless posture
 

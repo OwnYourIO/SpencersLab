@@ -222,12 +222,12 @@ def test_c01_memory_cgroup_and_engine_cap():
     assert req.get("memory") == "64Gi", f"request {req}"
     assert req.get("cpu") in ("8", 8, "8000m"), f"request {req}"
     limits = res.get("limits") or {}
-    assert limits.get("memory") == "72Gi", (
+    assert limits.get("memory") == "96Gi", (
         f"limits {limits} — strata MUST be cgroup-bounded (2026-10-29 OOM: "
         "unbounded pin + unbounded trio = kernel harvesting system pods)"
     )
     cap = dict(S.arg_pairs(S.profile_json(_on(), S.PROFILE_PRIMARY_FILE))).get("--memory-limit-mib")
-    assert cap and int(cap) <= 72 * 1024, (
+    assert cap and int(cap) <= 96 * 1024, (
         f"--memory-limit-mib {cap!r}: the engine must be TOLD its cgroup "
         "(#1601 pairing) and size inside it — a limit without the flag "
         "just gets the arena OOM-killed mid-pin"

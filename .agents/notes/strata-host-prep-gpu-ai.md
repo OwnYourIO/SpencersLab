@@ -263,17 +263,18 @@ escape (§4).
   arena read measured 46.84 GiB + the conversation-cache budget (the engine
   default cap 8 GiB on this node; the PR's 24576 MiB x 16 slots is a
   documented toggle — how it actually splits is `--plan`'s answer) +
-  KV/pack headroom, which together the `64Gi` request / `72Gi` cgroup cap
+  KV/pack headroom, which together the `64Gi` request / `96Gi` cgroup cap
   encode (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment —
   the 2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with
-  the paired 72Gi cap + `--memory-limit-mib 66560`).
+  the paired 96Gi cap + `--memory-limit-mib 92160` + explicit 32768 MiB
+  x 16-slot conversation cache).
 - Total pod requests vs node allocatable — the strata pod must schedule
   alongside llama-swap's 4Gi:
   `kubectl describe node <gpu-ai-node>` → Allocatable block and the
   Requests summary; 64Gi + 4Gi under allocatable-minus-daemonsets, nothing
   else claiming the balance.
-- The container's memory **limit** (72Gi) ships PAIRED with the engine's
-  `--memory-limit-mib 66560` — #1601's informed-limit posture, adopted
+- The container's memory **limit** (96Gi) ships PAIRED with the engine's
+  `--memory-limit-mib 92160` — #1601's informed-limit posture, adopted
   after the 2026-10-29 node OOM made uncapped pinning an unacceptable
   failure mode. Never move one without the other.
 
@@ -383,7 +384,7 @@ follows from the arena: once `qwen3.8-flash-next-strata` takes a request its
 ~47 GiB page-locked arena stays resident for up to an hour of idle
 (`ttl: 3600`; time-share adopted after the 2026-10-29 node OOM — the old
 `ttl: 0` permanent pin beside the llama.cpp trio's ~90–119 GiB
-preallocation is what harvested the node), and the 72Gi cgroup now keeps
+preallocation is what harvested the node), and the 96Gi cgroup now keeps
 strata's own worst case inside its own container. Therefore:
 
 - No Strata request while a large trio model is mid-session (cold pin +
@@ -464,7 +465,7 @@ ignore lands (future ticket, STATE.json `deferred`).
   7.14.1/hipBLASLt 1.4.1 fine without a table — table ABSENCE on this arch
   is expected, no action (ladder rung 2).
 - **`--memory-limit-mib` / cgroup handling (#1601)** — CLOSED by the
-  2026-10-29 OOM: the container now carries `limits.memory 72Gi` paired
+  2026-10-29 OOM: the container now carries `limits.memory 96Gi` paired
   with the engine's `--memory-limit-mib 66560` (see §3.3; the pair is the
   posture, never one without the other). The uncapped-arena era lived
   while strata owned the box's rhythm; shared residency ended it.
