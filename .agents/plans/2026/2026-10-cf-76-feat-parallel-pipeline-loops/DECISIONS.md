@@ -61,6 +61,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 
 ## Deferred
 
+- AGENTS.md general Hard-rule sentence "Commit locally on that branch" predates the pipeline split; superseded for `agent-dev-*` by the enforced denies (C02 review note) — candidate for a future docs pass.
 - `maxWorkers` worker-slot cap (D13, re-confirmed Q8).
 - `create_list` tool in containers/wekan-mcp (D22) — follow-up CARD created by the coordinator per C07; until it lands the reaper degrades to timeouts.jsonl.
 - Deprecation/removal of `/pipeline-boards-hourly` + gate after the transition proves out (D9, re-confirmed Q5).

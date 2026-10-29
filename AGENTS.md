@@ -122,8 +122,9 @@ container images (`containers/`). **ArgoCD applies everything — never
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
 - `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,research,test,dev-pr,dev-local,review,fuser,board-coord,board-coord-local,board-coord-pr}.md`;
-  the implementer ships as `agent-dev-local`/`agent-dev-pr` — local commits only,
-  pr additionally pushes the ticket branch; coords launch their matching dev) —
+  the implementer ships as `agent-dev-local`/`agent-dev-pr` — no commits (the
+  coordinator commits each approved chunk; the pr variant additionally pushes
+  the ticket branch); coords launch their matching dev) —
   chunk-based pipeline: `agent-coord` (primary) runs an approved plan through
   fresh `agent-plan`/`agent-test`/`agent-dev-local`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only

@@ -27,6 +27,7 @@ Always applies when you write or edit code, comments, or docstrings: load `comme
 ## Hard rules
 
 - Tests are read-only to you — `agent-test` wrote them before you started. If a test looks wrong against the acceptance criteria, STOP and return `status: BLOCKED` with its name and why; the coordinator routes the fix to the test session. Never special-case code to satisfy a test, never skip, weaken or delete one.
+- Never `git add` or `git commit` — leave the work in the tree; the coordinator commits the chunk (your code + the tests + the state files) once review approves.
 - Do not refactor beyond the chunk. Note tempting refactors under open_questions.
 - Escalate via `NEEDS_INFO` or open_questions to the coordinator; use the question tool only when blocked on a decision only the user can make.
 - Deep research is not your job: if answering the chunk needs research you cannot ground quickly, report it in open_questions (`Needs research: yes`) and let the coordinator route it to `agent-research`.

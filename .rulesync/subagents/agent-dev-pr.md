@@ -2,7 +2,7 @@
 targets:
   - '*'
 name: agent-dev-pr
-description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test); pushes the ticket branch for remote build/test per pipeline-push-pr'
+description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test); no commits — the coordinator commits each approved chunk; pushes the ticket branch for remote build/test per pipeline-push-pr'
 opencode:
   mode: all
   color: '#f59e0b'
@@ -121,13 +121,16 @@ opencode:
     - action: shell
       resource: git log *
       effect: allow
-      # Git writes: push allowed for remote build/test, main/force still never
+      # Git writes: add/commit denied — the coordinator commits the chunk
+      # once review approves (cf-76 D7, loud-denial parity with the push
+      # denies below); push stays allowed for remote build/test, main/force
+      # still never
     - action: shell
       resource: git add *
-      effect: allow
+      effect: deny
     - action: shell
       resource: git commit *
-      effect: allow
+      effect: deny
     - action: shell
       resource: git push*
       effect: allow

@@ -28,9 +28,18 @@
 #       off-anchor placement)
 #   m5  the regeneration contract (generate --check + second-run no-op, the
 #       PATH/npx skip-with-warning ladder — c7/t14/A6 precedent)
-#   m6  the no-touch set — AGENTS.md, .rulesync/rules, both commands dirs,
-#       the gate SCRIPT, pipeline-models/gates pairs byte-unchanged vs $BASE
-#       (C02 AC6; the Q3/DECISIONS promise that AGENTS.md stays frozen)
+#   m6  the no-touch set vs $BASE — commands dirs, the gate SCRIPT and the
+#       pipeline-models/gates pairs byte-unchanged (C02 AC6, i5/c17
+#       dependency). AGENTS.md + .rulesync/rules carry the cf-76 D7
+#       REGENERATION-EQUIV CARVE (validation_at_fault re-pin, same class as
+#       the accepted S3 delta-aware arm): the kickoff-era blanket freeze
+#       ("Q3/DECISIONS promise that AGENTS.md stays frozen") was retired by
+#       the approved plan — C02 AC5 MANDATES editing .rulesync/rules/overview.md
+#       and regenerating AGENTS.md, and C06/C07 regenerate it again. The
+#       delta is admitted ONLY as a rulesync regeneration of the .rulesync/
+#       sources (generate --check; a hand-edit or unregenerated source still
+#       fails this arm — no blind path whitelist), fail-closed when the
+#       generator is unresolvable (the freeze it replaced was unconditional)
 #
 # Red posture (post-landing, 2026-10-26/27): m1–m4 are GREEN — C01's script
 # landed at 5a335aff2, C02's text + third grant landed at c6689202c, and m4
@@ -38,8 +47,9 @@
 # 2026-10-bug-session-origin-no-line (green at today's three-allow posture,
 # accepting the fourth the moment that C02 lands; its designed-red carrier is
 # tests/session-origin/surface.sh s4, not this file). m5 and m6 are HOLD
-# guards: green at the test phase, and they turn red if any later chunk
-# escapes scope or leaves a mirror stale. Both arms (BASE=HEAD and
+# guards: green at the test phase; m6's frozen paths turn red if any later
+# chunk escapes scope, and the carved AGENTS.md/.rulesync/rules surfaces turn
+# red on a hand-edit or a stale mirror via the regeneration-equivalence check. Both arms (BASE=HEAD and
 # CHUNK_BASE=081b57889) keep passing until session-origin C02 lands, after
 # which both arms (HEAD and the new landed posture) must go fully green again
 # on one commit.
@@ -772,16 +782,36 @@ if want m5; then
   fi
 fi
 
-# --- m6: no-touch set vs $BASE (C02 AC6; Q3/DECISIONS AGENTS.md freeze) --------
+# --- m6: no-touch set vs $BASE + the cf-76 D7 regeneration carve ----------------
+# Frozen members keep the original diff-vs-$BASE walk; AGENTS.md and
+# .rulesync/rules moved to regeneration-equivalence (the blanket freeze
+# contradicted the approved plan's MANDATED overview.md edit + AGENTS.md
+# regeneration — C02 AC5; C06/C07 regenerate again, all covered by the same
+# carve). The equivalence is the m5/c7/A6 ladder's own `generate --check`:
+# a hand-edited AGENTS.md no longer matches the generator output, and an
+# unregenerated rules edit fails the same way — so an UNMATCHED delta still
+# goes red here while a genuine regeneration stays green. Fail-closed when
+# rulesync cannot be resolved: a carve that silently degrades to
+# anything-goes would be weaker than the freeze it replaces.
 if want m6; then
-  NOTOUCH=(AGENTS.md .rulesync/rules .rulesync/commands .opencode/commands
+  NOTOUCH=(.rulesync/commands .opencode/commands
            scripts/agent-board-coord-gate.sh
            .rulesync/skills/pipeline-models .opencode/skills/pipeline-models
            .rulesync/skills/pipeline-gates .opencode/skills/pipeline-gates)
   moved=$( { git diff --name-only "$BASE" -- "${NOTOUCH[@]}" 2>/dev/null || true;
              git ls-files --others --exclude-standard -- "${NOTOUCH[@]}"; } | sort -u || true )
-  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "m6: a no-touch path moved vs $BASE — AGENTS.md/.rulesync/rules/commands dirs/the gate script/pipeline-models/pipeline-gates stay untouched (C02 AC6, i5/c17 dependency)"; }
-  ok "m6[hold]: AGENTS.md, rules, both commands dirs, the gate script, pipeline-models/gates pairs byte-unchanged vs $BASE (worktree included)"
+  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "m6: a no-touch path moved vs $BASE — commands dirs/the gate script/pipeline-models/pipeline-gates stay untouched (C02 AC6, i5/c17 dependency)"; }
+  RS6=""
+  if command -v rulesync >/dev/null 2>&1; then
+    RS6="rulesync"
+  elif npx --no-install rulesync --version >/dev/null 2>&1; then
+    RS6="npx --no-install rulesync"
+  fi
+  [ -n "$RS6" ] \
+    || fail "m6: AGENTS.md/.rulesync/rules may only change as a rulesync regeneration, but rulesync is not resolvable here (PATH or npx cache) — the carve cannot be verified, and the arm stays fail-closed (unlike m5's warning-skip, which guards a different duty)"
+  timeout 180 $RS6 generate --check >"$TMP/m6-check.log" 2>&1 \
+    || { tail -n 15 "$TMP/m6-check.log" >&2; fail "m6: the AGENTS.md/.rulesync/rules delta is NOT regeneration-explained — generate --check is not clean (hand-edit of a generated surface, or a rules edit with no mirror — cf-76 D7 carve)"; }
+  ok "m6[hold]: commands dirs, the gate script and the pipeline-models/gates pairs byte-unchanged vs $BASE; AGENTS.md + .rulesync/rules carry the cf-76 regeneration carve and generate --check proves every delta is the current sources' output (via $RS6)"
 fi
 
 printf 'PASS: kickoff-mints contract checks (%d ok)\n' "$checks"

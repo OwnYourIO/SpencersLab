@@ -2,7 +2,7 @@
 targets:
   - '*'
 name: agent-dev-local
-description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test); commits only, never pushes'
+description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test); no commits — the coordinator commits each approved chunk; never pushes'
 opencode:
   mode: all
   color: '#f59e0b'
@@ -121,13 +121,16 @@ opencode:
     - action: shell
       resource: git log *
       effect: allow
-      # Git writes: commit-capable, push never (agent-dev-pr is the push variant)
+      # Git writes: staged/committed by the coordinator once the chunk's
+      # review approves (cf-76 D7) — these explicit denies make a drifted dev
+      # fail loudly instead of committing outside the chunk contract, the
+      # same posture as the push deny
     - action: shell
       resource: git add *
-      effect: allow
+      effect: deny
     - action: shell
       resource: git commit *
-      effect: allow
+      effect: deny
     - action: shell
       resource: git push*
       effect: deny
