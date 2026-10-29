@@ -34,6 +34,11 @@
 # regressions. cf-52 posture: this suite is a pure regression gate on the
 # coord-inwork ticket — all of c1..c17 are green before C01 and must HOLD
 # after it; the new contract is asserted by tests/coord-inwork/surface.sh.
+# cf-83 posture: C01 re-pins two needles of this gate — c11's Flash+Local
+# routing-clause window now demands flash-next-strata (red before the dev's
+# source edit + regenerate; the new contract's full text lives in
+# tests/pipeline-models/surface.sh), and c8 admits this ticket's plan folder
+# (D6 landing-widening). Every other arm stays green and holds.
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF is retained only for c1's
@@ -401,6 +406,13 @@ fi
 # 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, commit dca8a25d2) — the
 # same sanctioned-plan-folder class as the enumerations above, admitted whole
 # so no further retirement note reddens the full-range scope shape.
+# cf-83 C01 widening (D6, same landing-widening precedent): the strata
+# re-route ticket's plan folder must read as admitted before its bookkeeping
+# commits, else the full board-coord suite treats the mere untracked folder
+# as scope escape. Its skill-source/mirror and tests edits are already
+# admitted by the .rulesync/skills/*, .opencode/skills/* and tests/* lines;
+# the folder pattern is an inline literal so scope-block window greps (the
+# A9 convention) still match this admission here.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -428,11 +440,12 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
+      .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9 and cf-75 (skills/wekan-mcp, board-context plugin, own plan folder) widenings (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder) and cf-83 D6 (plan folder) widenings (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----
@@ -463,7 +476,9 @@ fi
 # cf-58 C05: the third checklist is LIFECYCLE (eight stages, checked-stages-
 # only, nothing-checked = full standard loop). C06: the Model(s) four-option
 # line stays UNCHANGED while the routing paragraph grows the two combination
-# clauses. The Model(s)/HITL pins hold exactly as before.
+# clauses. The Model(s)/HITL pins hold exactly as before. cf-83 C01 RE-PIN:
+# the Flash+Local combination clause demands flash-next-strata — the route
+# moves, the option set and Q6 veto guards stay byte-identical.
 if want c11; then
   python3 "$TMP/window.py" "$SKILL_GEN" 2500 'Services' 'Type' 'Model(s)' 'Lifecycle' 'Human in the Loop' \
     || fail "c11[C05]: Services/Type/Model(s)/Lifecycle/Human in the Loop do not read as one checklist-definition passage (red before C05 — the Research checklist has not been replaced by Lifecycle)"
@@ -492,11 +507,13 @@ if want c11; then
     || fail "c11: the Human in the Loop checklist does not state its default item (Plan)"
   # C06: the routing paragraph's two combination clauses (source of truth is
   # the boards skill; tests/pipeline-models runs the same pins on SOURCE).
-  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'flash' 'local' 'flash-next-q3' 'assume' \
-    || fail "c11[C06]: the routing paragraph lacks the Flash+Local → flash-next-q3 combination clause (red before C06)"
+  # cf-83 C01 re-pin: the Flash+Local needle moved q3 -> strata — this window
+  # is red until the dev's source edit plus regenerate lands the new mirror.
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'flash' 'local' 'flash-next-strata' 'assume' \
+    || fail "c11[C06/cf-83]: the routing paragraph lacks the Flash+Local → flash-next-strata combination clause (red before C01 dev)"
   python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
     || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
-  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle eight items + nothing-checked full-standard-loop default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items + default; C06 combination clauses present"
+  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle eight items + nothing-checked full-standard-loop default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items + default; combination clauses present with the cf-83 strata re-pin"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
