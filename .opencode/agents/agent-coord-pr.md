@@ -125,6 +125,9 @@ permissions:
   - action: shell
     resource: git push * -f*
     effect: deny
+  - action: shell
+    resource: ls *
+    effect: allow
   - action: subagent
     resource: '*'
     effect: deny
