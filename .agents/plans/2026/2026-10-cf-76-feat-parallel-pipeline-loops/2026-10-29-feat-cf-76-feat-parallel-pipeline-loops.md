@@ -382,3 +382,151 @@ operative skill text currently describes behavior the code lacks. Route F1
 per the finding (coord → C05-era seam fix, or owner ruling to amend the
 prose); F2 is a two-field coord bookkeeping fix. F3/nits/deferred do not
 block.
+
+### Round 2 (F1 closure + full battery)
+
+Fresh `agent-review` session, 2026-10-29, plain post-landing HEAD
+`728217a3f1af4e99c8f369bbea5c7dbff3514bc0` (base `26e3b7cee0…`), branch
+`cf-76-feat-parallel-pipeline-loops`, clean tree. Scope: F1 closure
+end-to-end, the full validation battery re-run fresh at this new HEAD, and
+the whole-plan delta incl. the two commits added since round 1
+(`346573276` tests-only, `728217a3f` final-round fix).
+
+#### F1 closure — verified end-to-end
+
+- **Single-source comment builder.** `reapCommentBody` (index.ts:1373) is
+  the ONLY builder of the reap marker; the single `add_comment` call site
+  (index.ts:1413) uses it on BOTH arms — move-success (after `move_card`)
+  and Timeout-absent (after `list_lists`). D21 sentence, session, named set
+  and the 240 ceiling cannot drift between arms. ✔
+- **Timeout-absent arm** runs `get_card → list_lists → add_comment →
+  queueTimeoutRow(absent-list reason)` with the move skipped (`if (target)`
+  guard); this is exactly the arm where the board is up and F1's promised
+  marker was missing. `R7`'s exact 4-name pin guards the move-SUCCESS
+  sequence unchanged (`get_card → list_lists → move_card → add_comment`),
+  suite green. Dev deviation-1 scoping (no comment attempt on the
+  pre-read-failure arms where the board client just failed) is the faithful
+  reading of D11's "when the board leg is up" and of fix option (a). ✔
+- **Failure isolation.** A throwing `add_comment` falls to the outer catch:
+  row + `board_move_err` audit still land, ONE attempt, no retry machinery
+  anywhere around the call. No double-row: `queueTimeoutRow` is total
+  (writeFile arm wrapped, `appendEvent` catches internally, row is
+  primitive-only) — R11 leg 1's `rows.length === 1` pins it. ✔
+- **`MAX_OUTBOUND_MESSAGE` rename residue-free.** Single constant
+  (index.ts:134) shared by the card comment and the HA message; zero
+  `ALERT_MAX_MESSAGE` occurrences in code (one historical quote in
+  STATE.json handoff text only). ✔
+- **`queueTimeoutRow` header truthful.** Now states "the row half of the
+  D22 interim contract (the comment half rides reapCommentBody)" — the
+  comment half exists. ✔
+- **Prose ↔ code parity restored.** All four F1 prose sites (plan
+  Out-of-scope, plan Risks, D22 ruling, boards-skill "shipped interim"
+  bullet) now describe shipped behavior; no prose amendment needed. ✔
+- **R11 green and non-vacuous (independently judged).** Fresh run at HEAD:
+  reap 23/23. Independent red-green probe in /tmp scratch: the SAME suite
+  against the pre-fix `index.ts` of `5ade6c544` gives 20 pass / 3 fail, and
+  the three failures are EXACTLY the three R11 legs (R3's degrade legs stay
+  green — the no-re-pin claim holds). The legs assert observable behavior
+  (call census, comment body content, row counts, audit presence), cover
+  both comment-failing arms incl. timeout-PRESENT, and pin per-card
+  grouping through the full `reapStale` path. ✔
+
+#### Validation battery (all re-run fresh, this session, at plain HEAD)
+
+| Check | Result |
+|---|---|
+| `node --test tests/opencode/pipeline-locks-core.test.ts` | **30/30 pass** |
+| `node --test tests/opencode/pipeline-locks-engine.test.ts` | **34/34 pass** |
+| `node --test tests/opencode/pipeline-locks-reap.test.ts` | **23/23 pass** (20 prior + R11's 3) |
+| `node --test tests/opencode/pipeline-locks-tick.test.ts` | **12/12 pass** |
+| siblings question-notify / permission-ask-notify / board-context / ha-mcp-url | **35/41/28/15 pass** |
+| `bash tests/agent-perms/surface.sh` | **15 ok — A15 GREEN**, rc=0 |
+| `bash tests/standalone-agents/surface.sh` | **10 ok**, rc=0 |
+| `bash tests/agent-board-coord/rulesync-surface.sh` | **19 ok**, rc=0 (c2 era-gate engaged, non-vacuous) |
+| `bash tests/coord-inwork/surface.sh` | **7 ok**, rc=0 |
+| `bash tests/kickoff-branch/surface.sh` | **6/6 ok at plain HEAD**, rc=0 (merge-window claim holds at this HEAD) |
+| `bash tests/session-origin/surface.sh` | **7/7 ok at plain HEAD**, rc=0 (same) |
+| `npx --yes rulesync@37.0.0 generate` ×2 + `--check` | both no-op ("All files are up to date"), `--check` rc=0, tree stays clean |
+| `npx aislop@0.18.1 ci --changes --base 26e3b7cee0` | rc=0 — **0 errors, 1 warning = D36 `complexity/file-too-large` on index.ts only** (1970 lines), score 99 |
+| `npx aislop@0.18.1 ci --changes --base origin/main` (CI parity) | rc=0 — same single D36 warning |
+| `helm lint` / `helm template` | n/a — zero chart files in the diff |
+
+#### Delta since round 1 (whole-plan re-check)
+
+- **Commit shape.** `5ade6c544..HEAD` = exactly ONE commit touching exactly
+  4 files: index.ts (F1 fix, +65/−23 confined to the reaper text block +
+  `moveCardToTimeout`), reap suite (+70, pure R11 addition — R1–R10
+  byte-untouched), plan file (+191 = round-1 review section), STATE.json
+  (+25 = F2 fix + `final_round` block). Message carries chunk id + outcome
+  counts; correctly no review verdict (this round is it). `346573276`
+  stays the F3-recorded benign tests-only shape (tests + 5 STATE lines,
+  coord-committed). Whole branch: 9 commits = 7 chunk commits (each with
+  chunk id + verdict + APPROVED) + test-round-2 + final-round, all
+  coordinator-authored. ✔
+- **No scope creep.** Full-branch diff stat (42 files) unchanged in
+  character from round 1's audit: plugin + 4 suites, loop file, plan
+  folder, board-coord trio + dev-variant pair (sources+mirrors), boards
+  skill pair, role-dev/-coord, permissions.md, overview.md + AGENTS.md,
+  surface suites, `.gitignore`. Frozen surfaces still zero-diff
+  (kickoff-branch/session-origin pins re-verified green at plain HEAD).
+  Single-source constants intact (`DEFAULT_STALE_MS` 7200000 once + its
+  why-comment; `LABEL_PREFIX`/`DEFAULT_PIPELINE`/`TICK_PROMPT` unchanged;
+  loop file `enabled: false` + flash model + D30 plain-text body). ✔
+- **Goal claims vs shipped** all re-held at this HEAD (labels D17,
+  all-or-nothing D18, 2 h D21, Timeout + card comment + HA alert degrade
+  D22/D11 — now COMPLETE, disabled hourly flash tick D9/D30, commit policy
+  D7). ✔
+- **Human prerequisites live-verified fresh (read-only dev-boards,
+  2026-10-29 ~09:58 UTC):** board labels are still exactly
+  {Research, Ready for Work} — zero `Pipeline:` → every card derives
+  `default` (serialized today-behavior, nothing fails); the In Process
+  swimlane has SEVEN lists — the six standard + the human `Test` list
+  (round-1 drift note confirmed), **Timeout still absent** → the fixed
+  degrade arm IS the live path; follow-up card `Wg93SkHZ7bMLWJYBA` present
+  in Not Started with the exact specified title. Flow degrades, never
+  blocks. ✔
+- **STATE bookkeeping.** `current_wave: 6` ✔ (F2 fields applied), chunk
+  statuses/verdicts match the git log, `final_round` carries the 3 handoffs
+  (round-1 review, test-round-3 pins-first, C05-final-fix) with
+  `status: changes-requested` accurate pending this round. ✔
+- **DECISIONS/FRICTION consistent.** D22's full contract is the
+  authoritative entry; FRICTION resolutions match history. ✔
+
+#### Findings
+
+None at blocker or major severity.
+
+**Nits (no action required):**
+
+- STATE timestamp cosmetics: `updated_at: 2026-10-29T11:00:00Z` lags the
+  two handoffs appended in the same commit (11:10/11:30), and the run's
+  "Z"-suffixed timestamps run consistently ~1 h ahead of git/wall-clock
+  UTC (the 09:55-UTC commit carries the 10:55–11:30 records). Sequence is
+  monotone and correctly ordered; wave/status/handoffs all correct — no
+  resume reader is misled. F2's root pattern (updated_at not tracking the
+  last write) recurred cosmetically.
+- DECISIONS `Deferred` bullet for `create_list` says "degrades to
+  timeouts.jsonl" without the comment half — shorthand; the authoritative
+  D22 entry carries the full contract, the log is append-only, and nothing
+  requires an entry.
+- Round-1 carry-over nits unchanged: chunks/C06.md trailing newline,
+  index.ts header wrap, D11 "3h" append-only history.
+
+**Deferred (re-confirmed, not defects of this branch):** the human `Test`
+list drift in In Process (boards-skill "six today" inventory line refresh
+belongs to the next boards-surface ticket); zero functional impact
+re-verified — pickup walks only Rework/Not Started/Low Priority and the
+Timeout resolution is title + swimlane-echo exact, so `Test` can never
+match.
+
+#### Verdict (round 2)
+
+**APPROVED** — F1 is closed end-to-end (single-source builder shared by
+both arms, isolate-once semantics, rename residue-free, truthful headers,
+prose↔code parity restored) and pinned by R11 legs proven non-vacuous via
+an independent red-green probe; F2's fields are fixed; the full battery is
+green at the new plain HEAD; the delta added no scope creep; human
+prerequisites stay surfaced with the flow degrading, not blocking. The
+round-1 nits and the deferred board-hygiene item do not block. The plan is
+complete: coord may update `final_round` bookkeeping and hand the card to
+Review.

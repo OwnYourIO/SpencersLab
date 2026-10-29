@@ -66,11 +66,17 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - 2026-10-29 coord: D36 — aislop `file-too-large` warning on the plugin index.ts is accepted as design-inherent: the four cf-76 suites deliberately grep/read ONE module (K1 single-source constants + reap/tick pins) and C04–C06 grow it further; splitting would break the suite-pinned contract. Gate is rc=0 (warning, not error); documented here so C07 review doesn't re-litigate.
 - 2026-10-29 coord: concurrent-writer incident CLOSED as attributed: the 05:16 unattributed draft came from the credit-failed twin launch session `ses_e79fd6ad4ffeKEWENFiSz4BmBv` (its start was confirmed by the launch error carrying that sessionID; it errored out mid-run). The real C03 dev (ses_e79e5da16ffept94yl0w8eQA4q) audited and fixed the draft before adoption; STATE attribution is now real. Lesson: a subagent launch that dies on credits may already have written — audit the tree before re-launching the same chunk.
 
+## Decisions (r7 — final round, coord 2026-10-29)
+
+- 2026-10-29 coord: D37 (F1 ruling) — the final review's fell-between-chunks finding (degrade arm missing the promised per-card Timeout comment) is resolved by the CODE fix, not prose amendment: the approved plan/D22/D11 text IS the contract and the user was told that shape twice (claim comment + approval comment). Contract-first R11 pins; best-effort comment failure-isolated into the jsonl queue, one attempt per card; final review round 2 APPROVED with an independent red-green probe.
+- 2026-10-29 coord: optional in-window softening of kickoff-branch m4 / session-origin s2–s4 for the pipeline_* geometry stays DEFERRED — their headers document red-in-window/green-at-landing, both re-proven at final HEAD; not validation-at-fault.
+
 ## Deferred
 
-- C03 review nit: dual `inputSchema`+`input` keys on the tool specs — collapse candidate during C07 (non-blocking, suite-adjacent).
+- C03 review nit: dual `inputSchema`+`input` keys on the tool specs — collapse candidate during C07 (non-blocking, suite-adjacent; C07 did not perform it — still open).
 - AGENTS.md general Hard-rule sentence "Commit locally on that branch" predates the pipeline split; superseded for `agent-dev-*` by the enforced denies (C02 review note) — candidate for a future docs pass.
 - `maxWorkers` worker-slot cap (D13, re-confirmed Q8).
-- `create_list` tool in containers/wekan-mcp (D22) — follow-up CARD created by the coordinator per C07; until it lands the reaper degrades to timeouts.jsonl.
+- `create_list` tool in containers/wekan-mcp (D22) — follow-up CARD created by the coordinator (Wg93SkHZ7bMLWJYBA, Not Started); until it lands the reaper degrades to timeouts.jsonl + best-effort card comment (D37).
 - Deprecation/removal of `/pipeline-boards-hourly` + gate after the transition proves out (D9, re-confirmed Q5).
+- boards-skill lists-inventory refresh after the human `Test`-list drift in In Process (final review note — board hygiene, not a branch defect).
 - OS-level reaper cron (out of scope above).
