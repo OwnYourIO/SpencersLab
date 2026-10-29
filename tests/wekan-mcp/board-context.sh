@@ -2,7 +2,9 @@
 # agent-board + /wekan-board-context collector contract
 # (2026/2026-10-cf-75-bug-wekan-mcp-skill, C03): the board-MCP worker agent
 # (generated surface, deny-all baseline, dev-boards* as its ONLY MCP grant —
-# hyphen spelling, no global-wekan fallback per OQ7), the collector command
+# hyphen spelling, no global-wekan fallback per OQ7; board-tick-cleanup C01's
+# OQ9 ruling adds the one trailing `ls *` shell allow after the shell deny,
+# gated in t1), the collector command
 # (six-step resolution sequence, AI-Dev/In Process defaults, fenced output,
 # pointer-not-copy of the C01 schema), the boards-skill consumer rule (additive
 # — the rulesync-surface pinned section titles must survive), the agent-board
@@ -81,9 +83,23 @@ if not perms or perms[0] != deny:
 allows = [p for p in perms if p.get("effect") == "allow"]
 # The chunk asserts the allow set EXACTLY: read areas, skill, question,
 # execute, and dev-boards* as the only MCP grant. Anything extra (a dev*,
-# a readonly*, an edit, a shell) is a privilege deviation, not a draft.
+# a readonly*, an edit) is a privilege deviation, not a draft. Shell's ONE
+# exception is board-tick-cleanup C01 (OQ9 user ruling): a trailing `ls *`
+# allow sitting AFTER the shell-'*' deny. ls_gate owns count, exact shape
+# and position for EVERY shell allow — no other shell grant can slip past
+# it — which is what lets the action-set arm below discount shell without
+# widening the ban (mirror of the t4 sanctioned-moves treatment).
+LS_ALLOW = {"action": "shell", "resource": "ls *", "effect": "allow"}
+SHELL_DENY = {"action": "shell", "resource": "*", "effect": "deny"}
+shell_allows = [p for p in perms if p.get("action") == "shell" and p.get("effect") == "allow"]
+deny_at = next((i for i, p in enumerate(perms) if p == SHELL_DENY), None)
+ls_gate_ok = (not shell_allows) or (
+    len(shell_allows) == 1 and shell_allows[0] == LS_ALLOW
+    and deny_at is not None and perms.index(LS_ALLOW) > deny_at)
+if not ls_gate_ok:
+    errs.append(f"shell allows {shell_allows}, want none or exactly the one 'ls *' allow AFTER the shell '*' deny (C01/OQ9 read-only exception — last-match-wins only grants ls reads)")
 want_actions = sorted({"read", "skill", "question", "execute", "dev-boards*"})
-got_actions = sorted({p.get("action") for p in allows})
+got_actions = sorted({p.get("action") for p in allows if p.get("action") != "shell"})
 if got_actions != want_actions:
     errs.append(f"allow actions {got_actions}, want exactly {want_actions}")
 if not any(p.get("action") == "question" and p.get("resource") == "*" for p in allows):
@@ -95,7 +111,11 @@ for banned in ("dev*", "readonly*", "admin*", "global*", "global-wekan*"):
     if any(p.get("action") == banned and p.get("effect") == "allow" for p in perms):
         errs.append(f"broad/forbidden MCP allow {banned!r} present (OQ7: dev-boards* ONLY)")
 for action in ("shell", "edit", "subagent"):
-    if any(p.get("action") == action and p.get("effect") == "allow" for p in perms):
+    # shell allows are adjudicated by ls_gate above (the era before C01 — no
+    # shell allow at all — also passes); edit and subagent stay unconditional
+    # family-spec bans. The '*' DENY row stays mandatory for all three: C01
+    # appends a read grant, it never removes a denial.
+    if action != "shell" and any(p.get("action") == action and p.get("effect") == "allow" for p in perms):
         errs.append(f"{action} allow present — the family spec denies it")
     if not any(p.get("action") == action and p.get("resource") == "*" and p.get("effect") == "deny" for p in perms):
         errs.append(f"{action} '*' deny row missing (explicit denial, not fallthrough)")
@@ -104,7 +124,7 @@ if "dev_boards" in text:
 if errs:
     print("; ".join(errs)); sys.exit(1)
 PY
-  ok "t1: generated agent-board — name/mode, deny-all baseline, allow set exactly read/skill/question/execute/dev-boards*, shell+edit+subagent denied, no underscore or broad MCP grant (C03 AC1)"
+  ok "t1: generated agent-board — name/mode, deny-all baseline, allow set exactly read/skill/question/execute/dev-boards* with at most the one C01 trailing 'ls *' shell allow gated to sit after the shell-'*' deny, shell+edit+subagent '*' denies kept, no underscore or broad MCP grant (C03 AC1 + C01/OQ9 read-only exception)"
 fi
 
 # --- t2: collector command — sequence, defaults, pointer-not-copy (C03 AC2) -----

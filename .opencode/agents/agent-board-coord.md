@@ -69,6 +69,12 @@ permissions:
     resource: date *
     effect: allow
   - action: shell
+    resource: bash scripts/board-preload-probe.sh *
+    effect: allow
+  - action: shell
+    resource: ls *
+    effect: allow
+  - action: shell
     resource: git *
     effect: allow
   - action: shell
