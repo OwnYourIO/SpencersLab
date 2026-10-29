@@ -49,3 +49,26 @@ Wave 1: C01 only. The ticket is one atomic contract change: the three source edi
 
 ## HITL
 `PR` checked + plan-approval pause: after C01's final review, the branch is handed off for a user-created PR (never merged/pushed by the run unless the user explicitly asks; AGENTS.md git-safety rules apply unchanged).
+
+## Final review (whole plan) — 2026-10-29, agent-review(chunk: final) — VERDICT: APPROVED
+
+Scope: the complete change is the single commit `ea9a3daf2` against base `eb8a963` (chunk table: C01 only, wave 1 — this is the whole plan). Fresh tree at HEAD, clean before and after all runs.
+
+Validation (full Commands block, this session, `PATH=$HOME/.local/bin:$PATH`, no env overrides):
+- `bash tests/pipeline-models/surface.sh` (M1..M6) → PASS 6 ok, exit 0. M1/M2/M5 subset re-verified under `env -i` → PASS 3 ok, exit 0 (no hidden env dependency).
+- `bash tests/agent-board-coord/rulesync-surface.sh` (c1..c18) → PASS 19 ok, exit 0.
+- `rulesync generate && rulesync generate --check && rulesync generate` → PASS: check clean, both generates no-op; `git status --porcelain` empty afterwards (tree byte-identical; AC5). The suites' own M6/c7 run the same generate gates in-suite.
+- drift-grep pair → exact Commands-stated shapes: kickoff/boards (src+mirror) show only `…-strata` hits with zero q3 text; PM `qwen3.8-flash-next-q3` hits only in the combination bullet (src L31 / mirror L32).
+- scope: `git diff --name-only eb8a963..ea9a3daf2` = 5 plan-folder files + 3 sources + 3 mirrors + 2 suites ⊆ C01 Files in scope; no untracked files; every FORBIDDEN-list path untouched (`.opencode/opencode.jsonc`, subagents/commands/rules, AGENTS.md, charts/services, `.agents/loops`, `tests/opencode`) (AC6).
+- `npx aislop ci --changes` → PASS, exit 0, score 100, 0 errors / 0 warnings / 0 fixable, 53 files (AC7).
+- No helm validation applies (no chart/service touched — confirmed by the scope list).
+
+AC walkthrough: AC1–AC8 all met, each covered by a passing validation (suite AC-trace header maps them). Coherence sweeps beyond the suite set: (a) old route string `assume Qwen Flash Next: \`gpu-ai/qwen3.8-flash-next-q3\`` survives only in the two absence-guard needles inside `surface.sh` (the guard itself) and in historical/plan documentation (cf-58's own folder, this ticket's C01 task text + STATE handoffs) — none is a contract surface; (b) repo-wide `flash-next` over `.rulesync`/`.opencode`/agents/commands/AGENTS.md hits only the 3 sources + 3 mirrors + the provider catalog — the plan's "exactly 3 source files, 4 spots" verified fact holds; no fourth contract surface fell between chunks; (c) remaining `qwen3.8-flash-next-q3` presences are all sanctioned: the PM bullet's documented-alternate sentence (Q1), the catalog entry (Q4/D7: no catalog edits; M3 HOLD keeps it honest), and the serving authorities' legacy q3 rungs (M4 invariant proves the alternate routes to a served id). Strata clause carries `peers` + `arena`, SOLO-eviction claim dropped, `-strix` confined to the one clause (src L49 / mirror L50 only, never route form), four-option picker + `Default selection: Qwen Flash` byte-stable, `strix`-absence guards pass on kickoff/boards (AC2/AC3, Q2/Q3).
+
+User rulings + decisions: Q1–Q4 and slug honored (verified above); D1–D8 each implemented as recorded — D5's TB/CF58_BASE residue in `surface.sh` is comment-only provenance notes (grep confirms no code reference), the c17 byte-freeze arm remains the documented no-op the plan predicted.
+
+Findings: no blocker, no major, no minor, no nit. No new chunk-specific comments for `chunks/C01.md` (its Round 1 APPROVED notes stand; re-validation this round reproduced them).
+
+Handoff notes (human/coord-owned, not findings):
+- HITL: branch `cf-83-refactor-strata-flash` carries the work as local commit `ea9a3daf2`; no upstream configured, nothing pushed. The PR is user-created. Stack topology: the branch sits on 11 unmerged cf-76-series commits above `origin/main` (`62bd3fa8b`) — a PR from this branch carries both series; landing order is the user's decision (cf-76's own closeout already sits at board Review).
+- Coord bookkeeping (not reviewer-writable): FRICTION.md line 8 (surface.sh M3 structural-red, status `open`) can be re-statused `fixed` this run — M3 green measured here without env overrides; and STATE.json plan_status → complete on acceptance of this verdict.

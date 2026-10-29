@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-cf-83-refactor-strata-flash",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e780a1b36ffehaIOEwsAqGJZPc",
   "test_session": "ses_e77e8e9c1ffeLWcDk1SacH5Fuw",
   "current_wave": 1,
@@ -33,6 +33,18 @@
         "at": "2026-10-29T12:10:00Z",
         "role": "plan-finalize (answers folded)",
         "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-83-refactor-strata-flash/2026-10-29-refactor-cf-83-refactor-strata-flash.md, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/chunks/C01.md, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/DECISIONS.md]\ncommands_run: [plan-file rewrite + re-read => pass, C01.md rewrite (q3-alternate shape) + AC/Tests re-read => pass, DECISIONS append (Q1–Q4 + slug as user-confirmed, superseding best guesses) + Deferred Q4 re-status => pass, STATE.json parse (unchanged: plan_status draft, C01 pending, kickoff block per launch facts) => pass, git status (only the untracked plan folder; no FORBIDDEN-surface touches) => pass]\ndeviations: none — answers folded as-is; the Q1/Q2 interaction resolved via the single-authority convention (named q3 alternate only in the pipeline-models combination bullet; kickoff/boards pure id swap with generic escape), consistent with the suites' own byte-pinned restatement rules; approval intentionally left to the coordinator's Plan pause rather than a direct in-session question.\nfriction: none new (prior item — surface.sh M3 structurally red on post-cf-58 bases — remains folded into C01 test scope as DECISIONS D5).\nopen_questions: none — Q1–Q4 and slug all answered in the batched round; nothing further blocks execution.\nnext_suggested: plan_status is AWAITING the coordinator's approval gate (draft); on human approval set approved, then launch agent-test for C01 (both suites' re-pins, expected red on M1/M2/M5/c11 pre-dev), then agent-dev-local (3 source edits + rulesync generate + greens), chunk review re-running the full Commands."
+      }
+    ]
+  },
+  "final_round": {
+    "status": "approved",
+    "review_session": "ses_e77bdce68ffeZ6IoicfjH3xQOI",
+    "handoffs": [
+      {
+        "at": "2026-10-29T14:40:00Z",
+        "role": "final-review",
+        "verdict": "APPROVED",
+        "result": "RESULT\nstatus: DONE\nchunk: final\nverdict: APPROVED\nfiles_changed: [.agents/plans/2026/2026-10-cf-83-refactor-strata-flash/2026-10-29-refactor-cf-83-refactor-strata-flash.md]\ncommands_run: [git status/rev-parse/log @ ea9a3daf2 => pass, bash tests/pipeline-models/surface.sh (full M1..M6, no env) => pass(6 ok), bash tests/agent-board-coord/rulesync-surface.sh (full c1..c18) => pass(19 ok), env -i bash tests/pipeline-models/surface.sh M1 M2 M5 => pass(3 ok), rulesync generate + generate --check + second generate no-op with tree check => pass, drift-grep 1 kickoff/boards src+mirror => pass (only -strata, zero q3), drift-grep 2 PM q3 => pass (combination bullet only: src L31 + mirror L32), git grep old q3 route string repo-wide => pass (survives only in suite absence-needles + plan/historical docs, no contract surface), git grep strix skills surfaces => pass (PM strata row clause only), git grep flash-next over .rulesync/.opencode/agents/commands/AGENTS.md => pass (3 src + 3 mirror + catalog only — no fourth contract spot), scope git diff --name-only eb8a963..ea9a3daf2 + untracked + FORBIDDEN check => pass, npx aislop ci --changes => pass(exit 0, score 100, 0 errors/0 warnings/0 fixable, 53 files), grep TB/CF58_BASE surface.sh => pass (comment-only residue per D5), git branch -vv + @{upstream} + ls-remote => pass (local-only, nothing pushed)]\ndeviations: none — validations run exactly per the plan's Commands block (plus read-only coherence sweeps beyond it); the only write is the sanctioned FINAL review section in the plan file.\nfriction: none\nopen_questions: none\nnext_suggested: coordinator flips STATE.json plan_status → complete (and re-statuses FRICTION M3 item → fixed, green measured this run), commits the plan-folder bookkeeping, executes the HITL handoff — branch cf-83-refactor-strata-flash ready for the user-created PR (note: it stacks on 11 unmerged cf-76 commits; landing order user-owned)."
       }
     ]
   },
