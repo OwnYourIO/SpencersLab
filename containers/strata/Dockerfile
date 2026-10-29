@@ -26,6 +26,20 @@ FROM ghcr.io/niko1221/strata:0.2.7-rocm-gfx1151 AS engine-strix
 # (RESEARCH §3). Only the single binary is harvested, see below.
 FROM ghcr.io/mostlygeek/llama-swap:unified-vulkan-266 AS supervisor
 
+# Source-checkout stage: headless weight provisioning IS a source-checkout
+# operation — upstream's llama-swap integration doc ("needs a source
+# checkout, not the desktop installer", docs/LLAMA_SWAP.md) and TERMINAL
+# install error ("this folder has no installer (setup.py)") both require
+# the repo's setup.sh tree, which the packaged images do not carry. The
+# first-quant pin is v0.2.7, matching the engine packages below; bump it
+# WITH the flavor tags per the README ledger (manual cadence, ruling (b) —
+# no renovate comment: this image carries zero directives by the C01
+# contract). No .git: updates land through image rebuilds, not in-place pulls.
+FROM alpine:3.22 AS strata-src
+RUN apk add --no-cache git ca-certificates \
+    && git clone --depth 1 --branch v0.2.7 https://github.com/Niko1221/Strata /opt/strata/src/Strata \
+    && rm -rf /opt/strata/src/Strata/.git
+
 # Runtime base = the gfx120x image: engine root
 # 0.1.52-linux-x86_64-hip-rx9070, the terminal tree at
 # /opt/strata/terminal, and the baked ROCm env/STRATA_COMPONENTS_DIR all
@@ -44,6 +58,11 @@ COPY --from=engine-strix /opt/strata/components/engine/0.1.52-linux-x86_64-hip-h
 # resolves /usr/local/bin (COPY preserves the executable bit).
 COPY --from=supervisor /usr/local/bin/llama-swap /usr/local/bin/llama-swap
 
+# setup.sh tree for the model-fetch init container (chart contract): copied
+# to the claim at first boot so setup's outputs (run configs, Strata-data)
+# persist on the PVC alongside the weights.
+COPY --from=strata-src /opt/strata/src/Strata /opt/strata/src/Strata
+
 # Interface freeze (README.md contract): a broken surface fails this build,
 # not the running pod. The `strata` names under both label dirs are measured
 # facts, not guesses — and the find re-prints every non-library executable
@@ -53,6 +72,7 @@ RUN set -eux; \
     test -x /opt/strata/terminal/bin/strata; \
     test -x /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata; \
     test -x /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata; \
+    test -f /opt/strata/src/Strata/setup.sh; \
     find /opt/strata/components/engine -mindepth 2 -maxdepth 2 -type f -perm -u+x ! -name '*.so*' -exec ls -l '{}' +
 
 # The base image's Cmd is an argument to its own entrypoint.sh launch path;

@@ -20,6 +20,7 @@ digests below rather than trusting a mutable tag.
 | Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata` |
 | Engine exe — fallback (Strix / gfx1151, C05) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata` |
 | Engine root layout | both roots live under `/opt/strata/components/engine/<label>/` as **distinct dirs** (same-named binaries per flavor — never merge them) |
+| Source checkout (headless provisioning) | `/opt/strata/src/Strata` — shallow clone at `v0.2.7`, `.git` removed. The packaged tree carries NO installer (`strata install` is a shim for the checkout's setup.py), and upstream's llama-swap doc is explicit: the integration "needs a source checkout, not the desktop installer" — so the chart's `model-fetch` init copies this tree to the claim and runs `./setup.sh` there |
 
 - The engine binaries are referenced **from each profile's run-config `exe`
   key, NOT from the `cmd`** — `serve` picks its engine from the run-config
@@ -37,8 +38,15 @@ digests below rather than trusting a mutable tag.
   below and outlives no rebuild (RESEARCH §1, DOCKER.md says the same).
   Upgrading is a commit: change both FROM tags + the ledger, CI rebuilds.
 - Not baked, by AC4: no secrets, no model weights, no prepared packs.
-  Weights mount at runtime from the shared models claim under
-  `/models/strata/` (chart territory, C02/C04).
+  Provisioning is runtime work on the shared claim: the `model-fetch` init
+  container (charts/llama-swap, strata controller) copies the source checkout
+  to `/models/strata/Strata` and runs the documented
+  `./setup.sh --family qwen --model <id> --no-start --yes` per quant token —
+  setup owns fetching shards, tokenizer, packs and draft data (into
+  `Strata-data` beside the checkout) and writes `strata-<model>.json` run
+  configs there. The serve profiles must then match those artifacts, not
+  hand-seeded paths (the first deploy's seed-path failure is the evidence
+  trail; reconcile with `strata models list --install-dir /data/install`).
 
 ## Pin ledger — literal tags + recorded digests (coord ruling shape (b))
 
@@ -57,6 +65,11 @@ Every bump re-verifies the digest **before** it ships and re-benches after.
 Supervisor stage: `ghcr.io/mostlygeek/llama-swap:unified-vulkan-266` =
 `sha256:0cc42f1024b54be3de100ae7a7a2730047ca5c27cf7a354f8a9f63142f00c045`
 (RESEARCH §3; re-verified 2026-10-28 against the registry manifest HEAD).
+
+Source stage: `github.com/Niko1221/Strata` clone at tag `v0.2.7` — bump
+WITH the flavor tags (same release line; `strata doctor`/setup expectations
+assume checkout≈engine coherence). Alpine builder base `alpine:3.22` is a
+build-time-only fetch, not a runtime surface.
 
 Renovate posture under the ruling: **no `# renovate:` comment names the
 strata depName** — no repo manager extracts a `datasource=docker` ARG-pin
