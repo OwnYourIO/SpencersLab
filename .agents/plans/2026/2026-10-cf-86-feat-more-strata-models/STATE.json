@@ -18,6 +18,13 @@
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
     "board_context": null
   },
+  "plan_answers": "2026-10-29 batched round U1-U7 resolved; user rulings + the two VERIFICATION-PENDING overrides (U5, U6) recorded in DECISIONS.md; renumber map in the plan file",
+  "research_stage": {
+    "name": "after-plan-research",
+    "status": "scheduled",
+    "scope": ["R-a ornith-122B-Q4 Strata fit re-derivation", "R-b flash-next-Q4 Strata fit re-derivation", "R-c what served-from-Strata requires today (catalog/upstream/GGUFs/PVC)", "R-d gated-pack HF_TOKEN mechanics for the strata init"],
+    "gate": "agent-research after plan approval, before C06 test authoring; findings appended to RESEARCH.md; C01+C03-C05 unaffected and may proceed; C02's HF_TOKEN mechanics wait on R-d (NEEDS_INFO if unanswered at dev time)"
+  },
   "chunks": {
     "C01": {
       "status": "pending",
@@ -63,6 +70,16 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": []
+    },
+    "C06": {
+      "status": "pending-after-plan-research",
+      "wave": 6,
+      "depends_on": ["C01", "C02", "C05"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "gate": "R-a/R-b/R-c verdicts fix the shape (A=Strata Q4 profile(s), B=verdict record only); test session writes C06 tests only after the flip"
     }
   },
   "blocked": [],
