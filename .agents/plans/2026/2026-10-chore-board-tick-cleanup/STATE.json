@@ -1,0 +1,79 @@
+{
+  "feature": "2026/2026-10-chore-board-tick-cleanup",
+  "plan_status": "approved",
+  "coord_session": "ses_e782f071affeLNM8jA1r3ocobm",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-29T14:52Z",
+  "kickoff": {
+    "slug": "board-tick-cleanup",
+    "type": "chore",
+    "run_tag": "openrouter-qwen3-8-2-4t-a95b",
+    "worktree": "board-tick-cleanup-openrouter-qwen3-8-2-4t-a95b",
+    "branch": "board-tick-cleanup-openrouter-qwen3-8-2-4t-a95b",
+    "card": null,
+    "local": false,
+    "push_semantics": "-local (user ruling 2026-10-29): commit-only, never push; user opens the PR",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-27b",
+      "effective": "agent defaults (override route dead 2026-10-29, see friction; batch round re-confirmed: all planning-tier launches stay on defaults)"
+    },
+    "batch_round_2026_10_29": {
+      "confirmed": ["OQ1 option-B", "OQ2 marker shape metadata.pipelineNoop{at,reason}", "OQ3 rename self-id", "OQ5 gate stops uncovered/alerting", "OQ6 silence accepted, digest=follow-up card", "OQ8 decide at live-fire, refactor out", "OQ9 agent-board included", "OQ10 docs-only reconciliation", "OQ11 record-only"],
+      "changed": [
+        "OQ4: suppression scheduled-only — reader conjoins metadata.openchamber.kind=='scheduled' with the well-formed marker; writer still marks every no-op end; manual /pipeline-boards no-ops keep alerting",
+        "OQ7: live-fire LF1..LF7 AGENT-OWNED in-worktree (user: 'No, you go ahead and run it here when ready'); only PR merge + scheduler hygiene remain user-owned"
+      ],
+      "new_gaps": ["OQ-N1 probe capability grant (best guess: scripts/board-preload-probe.sh + one scoped bash row on the six coord variants)", "OQ-N2 pre-merge silence-leg proof ceiling (best guess: accept unit-complete LF6 + post-merge first-fire belt)"],
+      "gate_round_2026_10_29": "USER APPROVED plan revision 2 (plan_status -> approved). OQ-N1 APPROVED scoped probe-script row (scripts/board-preload-probe.sh + one scoped bash allow on all six coord variants, same-commit matrix + suite re-pins). OQ-N2 APPROVED live-partial ceiling: flip proceeds on unit-complete LF6, first post-merge hourly fire is the optional belt. LF5's one real test push pre-announced to user."
+    }
+  },
+  "friction": [
+    "2026-10-29: planning-tier override openrouter/qwen/qwen3.8-2.4t-a95b died twice (agent-research AND agent-plan launches) with 'Provider returned error'; successful runs used agent defaults. This run proceeds on defaults until the openrouter large route recovers; alternate-large candidates per pipeline-models: openrouter/openai/gpt-6-astra, openrouter/qwen/qwen3.8-max-0902."
+  ],
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "plan_handoff": {
+    "at": "2026-10-29T14:19Z",
+    "session": "ses_e78015275ffedZPAQoMlqg6rcf",
+    "status": "NEEDS_INFO",
+    "summary": "Plan of record + RESEARCH.md (both briefs folded) + 3 chunks; aislop green; OQ1-OQ11 in plan Open questions; verified facts: 22 agent sources carry permission blocks, 10 already allow ls, 12 lack it, 9 stage agents carry none; W3's ls row also hits SHELL5-literal arms of tests/coord-inwork, tests/agent-board-coord, tests/kickoff-branch, tests/session-origin (widened same-commit re-pin duty in C01)."
+  },
+  "blocked": [],
+  "deferred": [
+    "W1 B1 cards: projections (user ruling 2026-10-29: enable-as-is only)",
+    "containers/wekan-mcp composite get_board_context tool (follow-up board card after W1 lands)",
+    "OQ-b structural-leg parallelization (only if live-fire proves 8s budget tight)",
+    "W2 Option A didWork RPC (user chose Option B)",
+    "N-consecutive-suppressions digest alert (OQ6 follow-up card if it ever hurts)",
+    "Scheduler hygiene: OpenChamber legacy 'Hourly Pipeline call' daily task — human-owned"
+  ]
+}
