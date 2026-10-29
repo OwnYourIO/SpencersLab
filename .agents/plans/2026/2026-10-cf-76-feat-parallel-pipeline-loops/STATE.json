@@ -17,7 +17,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e7aa56f12ffe69NSQ12a34w2kG",
   "test_session": "ses_e7a7a5365ffebXvYX1abzgniGv",
-  "current_wave": 1,
+  "current_wave": 4,
   "updated_at": "2026-10-29T02:45:00Z",
   "chunks": {
     "C01": {
@@ -84,14 +84,35 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "dev_session": null,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "dev_session": "ses_e79c3b001ffe6Y9Tg6uYts8km5",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T06:30:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [.opencode/plugin/pipeline-locks/index.ts (1158 lines; +7 exported engine seams: heartbeatSet/toolBefore/toolAfter/handleEvent/runBeatTick/startEngine/resolveRoot-promoted; internals checkMember/handleLockLost/markSetFailed/childKeyOf; bindStorage +scan; setup engine-state/config/rebuild/hooks/deferred-loop/startEngine/cleanup)]\ncommands_run: [engine suite => pass 32/32 x3, core => pass 30/30 x3 (combined 62/62), reap => designed-red 0/18 own-census zero C04-caused, tick => designed-red 0/12 all C06 absences, 4 existing siblings => pass 35/41/28/15, agent-perms A1..A14 => pass, A15 => designed-red verbatim unchanged, standalone 10 ok, rulesync-surface 19 ok, coord-inwork 7 ok, kickoff-branch 6 ok, session-origin 7 ok, rulesync generate --check => pass, aislop => rc=0 0 errors 1 warning = D36, grep pins => pass (for-await 700-char window clean, 20 exports additive, question/permission comment-only), live: hot-reload + real Code Mode pipeline_status round-trip => pass (D35 shape, zero error lines, hooks not wedging tool execution), helm => n/a]\ndeviations: 1) toolHeartbeat reworked to delegate to heartbeatSet (D18 set-wide; lost-pass carries reason:lock_lost + LOCK_LOST_STOP note — no core test pinned the old shape). 2) checkMember adds transient-unreadable class: non-ENOENT read failures skip the beat instead of destroying a live claim (EMFILE safety beyond suite wording). 3) Negative cache covers claimless-top sessions too (findClaim on returned id — window cannot hide a claim). 4) Strict guard throws on the detecting pass only; afterward claim cleared, later hooks pass through (stop reaches worker via first throw + pin + tool answers). 5) File 1158 lines — file-too-large accepted D36.\nfriction: log-grep self-match hazard recurred — filtered spawning/args lines (already in FRICTION.md); intermediate unused-constants aislop warnings self-resolved by edit ordering.\nopen_questions: none\nnext_suggested: commit C04, review re-runs the battery, then C05 replaces env.reapStale (reap-timer leg already awaits it with {trigger} semantics)."
+        },
+        {
+          "at": "2026-10-29T06:55:00Z",
+          "role": "review-r1",
+          "result": "RESULT\nstatus: CHANGES_REQUESTED\nchunk: C04\nfiles_changed: [chunks/C04.md (review notes only)]\ncommands_run: [engine => pass 32/32, core => pass 30/30, reap/tick => designed-red own censuses zero C04-caused (reapStale confirmed ABSENT from export list), 4 siblings => pass, agent-perms A1..A14 pass / A15 verbatim designed-red, standalone 10, rulesync-surface 19, coord-inwork 7, kickoff-branch 6, session-origin 7, rulesync --check => pass, aislop rc=0 (D36 only), independent greps => pass (for-await window covers whole loop; D20 pins green for the right reason; guard scope + default-ON; respond() intact), helm => n/a]\ndeviations: none (verdict CHANGES_REQUESTED: MAJOR-1 handleLockLost unconditionally rm's the stolen trigger member — after C05 reap+re-claim that file belongs to a FRESH healthy claim; the resumed ghost's next hook would delete the new claimant's lock and cascade-kill the live run. Fix ~5 lines: re-read and delete only missing-or-ours (rec.sessionID===root || rec.setId===entry.setId); E2 theft fixture keeps passing via the setId arm; no suite edit. Minors 1–3 + C06 live-smoke notes recorded in chunk file, routed to C06/test era)\nfriction: none new\nopen_questions: none\nnext_suggested: round-2 dev fix (handleLockLost rm loop only), re-run engine+core, quick re-review of the fixed loop"
+        },
+        {
+          "at": "2026-10-29T07:05:00Z",
+          "role": "dev-local-r2",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nfiles_changed: [.opencode/plugin/pipeline-locks/index.ts (handleLockLost cleanup loop only; delete only missing-or-ours via rec.sessionID===root || rec.setId===entry.setId; foreign/unreadable member paths left untouched with logNote; no tests, no .rulesync)]\ncommands_run: [engine => pass 32/32 x2 (E2 stolen leg green on setId arm), core => pass 30/30 x2, reap+tick => designed-red unchanged 30 fail/0 pass, 4 siblings => pass, live hot-reload + pipeline_status + pipeline_heartbeat no_claim round-trips => pass (hooks un-wedged, zero load-failure lines), aislop => rc=0 D36 only, banned-literal sweep => pass, scratch cascade check in /tmp (non-vacuity: foreign setId SURVIVES, our survivor deleted) => pass, helm => n/a]\ndeviations: none — adjudicated MAJOR-1 shape exactly; unreadable-class falls to leave-untouched (corrupt-file floor is the C05 reaper per review (c)); Minors 1–3 + Nit-1 untouched, ride C06/test routing per review\nfriction: log-grep self-match third recurrence (already in FRICTION.md)\nopen_questions: none\nnext_suggested: commit C04 r2, review re-verifies MAJOR-1 closure; C05 replaces env.reapStale"
+        },
+        {
+          "at": "2026-10-29T07:20:00Z",
+          "role": "review-r2",
+          "result": "RESULT\nstatus: DONE\nchunk: C04\nverdict: APPROVED\nfiles_changed: [chunks/C04.md (review notes only)]\ncommands_run: [engine => pass 32/32, core => pass 30/30, reap => designed-red 0/18 (reapStale still ABSENT from exports; env-await at 786), tick => designed-red 0/12, siblings => pass 35/41/28/15, agent-perms A1..A14 + A15 verbatim designed-red, 5 bash surfaces 10/19/7/6/7, rulesync --check => pass, aislop rc=0 D36-only, independent cascade scratch (foreign-survives / E2-setId-arm / corrupt-untouched) => pass x3, opencode.db dev-session forensics (exactly ONE file-mutating edit; nothing else changed — proven) => pass, +21 landmark shift arithmetic => pass, git scope => pass, helm => n/a]\ndeviations: none — MAJOR-1 closed exactly as adjudicated, no drift; Minors 1–3 + Nit-1 carried to C06/test routing\nfriction: reviewer scratch needed mkdtemp per leg (artifact, not code)\nopen_questions: none\nnext_suggested: coord commits C04 r2; launches C05; live-smoke notes 1–4 from r1 stand"
+        }
+      ]
     },
     "C05": {
       "status": "pending",
