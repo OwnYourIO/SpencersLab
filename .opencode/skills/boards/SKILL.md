@@ -80,7 +80,9 @@ The values the flow writes onto the board. They are a written-onto-the-board con
 3. Confirm the candidate with `get_card` — the by-list projection omits
    `cardNumber`, custom fields and labels, so pickup facts always come from
    the single-card read.
-4. Nothing anywhere → report no work and stop cleanly: RESULT
+4. Nothing anywhere → write the no-op marker with reason `no-cards` (the
+   No-op marker subsection; a failed write never delays the end), then
+   report no work and stop cleanly: RESULT
    `status: NEEDS_INFO`, `open_questions: no cards on the AI-Dev board`.
    Never fabricate a request.
 
@@ -105,11 +107,42 @@ The worker iteration one hourly tick drives — C06's tick prompt names exactly 
 - **Transport (D29/D34).** The four lock tools — `pipeline_claim`, `pipeline_release`, `pipeline_heartbeat`, `pipeline_status` — are plugin tools. On v2.1.4 they are reachable ONLY through Code Mode: call `tools.pipeline_claim` etc. from inside `execute` (flat registry ids). They never appear in the native provider tool snapshot, so nothing here relies on the family's per-tool permission rows — those rows are inert future-proofing and the operative grant is the `execute` allow. The `.pipeline/` runtime dir is plugin-owned: agents never read, write, or delete its files — the four tools are the only surface.
 - **Derive the pipeline set from the card's labels (D17).** `get_card` the candidate → its `label_ids`; resolve names through `get_board`'s labels (the by-list projection strips labels — the single-card read is the source). Every label whose name starts with `Pipeline:` contributes its TRIMMED remainder as one lock name (matching is case-sensitive on the exact `Pipeline:` prefix; an empty remainder is ignored; duplicates dedupe). NO matching label ⇒ the single `default` pipeline. The claim input is (cardId + derived set) — never a typed pipeline id, never a hand-typed set. Card #76 itself carries no `Pipeline:` label, so today every card derives `default` — serialized, exactly yesterday's behavior.
 - **Pick per lock availability.** Call `pipeline_status` first — cheap, and it proves the plugin is alive in this session. Then run the existing pickup walk (Rework → Not Started → Low Priority, top first) but SKIP a candidate whose ENTIRE derived set is not free: any locked member ⇒ skip the card, its set overlaps a live run. Never pick or restart a card in **Executing**; never pick from **Timeout**.
-- **Claim before anything else.** `pipeline_claim(cardId, pipelines, cardTitle)` is all-or-nothing over the derived set and MUST precede the `move_card` to **Executing** and the claim comment — no board move and no code edit happens on an unclaimed card. An `ok:false reason:"locked"` answer names the holder: move to the next candidate, at most 3 claim attempts per session, then report "no eligible work" and end the session cleanly. The claim comment records the DERIVED PIPELINE SET alongside the session line — a typo'd label silently falls back to `default`, so the set rides on the card to keep label drift visible (plan Risks).
+- **Claim before anything else.** `pipeline_claim(cardId, pipelines, cardTitle)` is all-or-nothing over the derived set and MUST precede the `move_card` to **Executing** and the claim comment — no board move and no code edit happens on an unclaimed card. An `ok:false reason:"locked"` answer names the holder: move to the next candidate, at most 3 claim attempts per session, then write the no-op marker with reason `no-claimable-cards` (No-op marker — a failed write never delays the end), report "no eligible work" and end the session cleanly. The claim comment records the DERIVED PIPELINE SET alongside the session line — a typo'd label silently falls back to `default`, so the set rides on the card to keep label drift visible (plan Risks).
 - **Heartbeats are automatic.** The engine beats the claimed set on root and subagent activity; `pipeline_heartbeat` only force-beats every lock file of the calling session's root claim — not a routine duty.
 - **Human stops (D20/D21).** The stale clock (2 h) keeps ticking through every stop point — the plan-approval pause is no exception. An answer inside the window resumes ordinary heartbeats and the lock is fine; past it the reaper reaps the set — the card moves to **Timeout** with a Home Assistant alert, or, until the D22 follow-up card lands a deterministic list-creation tool, queues `.pipeline/timeouts.jsonl` plus a card comment: that degrade is the shipped interim, never a failure. The run then stops at its next PIPELINE LOCK LOST signal. No release-at-stop, no re-claim dance — a re-picked card is a fresh claim under the normal Resume-vs-new-run rule.
 - **Exit.** Card to **Review** + summary comment → `pipeline_release(outcome:"done")` — the Review hand-off IS the release point (D6); **Finished** is human-owned and never touches the lock. A blocked card: `add_comment` with the reason, then `pipeline_release(outcome:"abandoned")` — or keep the lock and let it go stale (prefer abandon-release when the card should stay re-pickable for another run, keep-and-stale when THIS run may resume). **PIPELINE LOCK LOST** from any tool answer or hook: stop immediately — no commit, no card move; only a fresh run re-claims.
 - **Board-side prerequisites — human-owned, never agent-executed (cf-76).** (1) `Pipeline:<name>` labels are created in the WeKan UI as parallel tracks are wanted; until then every card runs the single `default` pipeline. (2) The **Timeout** list lands via the coordinator-created follow-up card requesting a `create_list` tool for the wekan-mcp surface; until it does, the reaper degrades as above and nothing else is needed. Lists, checklists, labels and rules stay human-owned: this flow only READS labels (`get_card` + `get_board` are the sole board calls the lock surface adds) and mutates nothing — the custom-field roster stays the two fields above.
+
+### No-op marker (alert suppression)
+
+A run that ends without ever claiming marks its OWN session record so the
+finished push can stay quiet on scheduled ticks: top-level `metadata.pipelineNoop =
+{ at: <epoch-ms>, reason: "no-cards" | "no-claimable-cards" }` — never nested
+under `openchamber.*` (the app owns that namespace; the run only reads
+`openchamber.kind` there). Writer predicate, conjunctive, observable from the
+session's own tool calls: ZERO successful `pipeline_claim` (a `locked`/`ok:false`
+answer is not a claim; a held lock means work — never mark, the alert stays)
+AND zero board writes. Mark ONLY at the two exits citing this subsection —
+the gate's SKIP/LIVE replies stay unmarked (OQ5) — and regardless of launcher:
+suppression is the READER's conjunction (question-notify), which additionally
+requires the record's OpenChamber launch kind to be the scheduled one, so a
+marked manual run keeps alerting — there the marker is forensic evidence, not
+a mute button (OQ4). Well-formedness for the reader is a non-empty string
+`reason`; `at` is the audit stamp, never a gate (OQ2).
+
+Recipe — the whole-metadata mandate of the `pipeline-kickoff` in-work mark
+applies verbatim (citation only: PATCH replaces `metadata` whole, so
+read-merge-write or the siblings the reader and OpenChamber depend on die);
+self-identify with the sessionID your `session_rename` returns — a no-op exit
+renamed nothing yet, so rename to `no-op <yyyy-mm-ddThh:mm>`: the
+current-session form answers the id and the title is the human breadcrumb
+(OQ3). Then `opencode api get /api/session/<id>` → unwrap the `{"data": …}`
+envelope → merge the marker into the CURRENT FULL metadata →
+`opencode api patch /api/session/<id> -d '{"metadata": <merged>}'`, epoch
+inline via `$(date +%s%3N)`. Any leg failing → end cleanly anyway: no marker
+means the alert stands (fail-loud), never a retry loop, never a stall. RESULT
+posture is unchanged — no-op ends still report `status: NEEDS_INFO` and stop
+cleanly; the marker write or its failure rides in `commands_run`.
 
 ## Card-driven kickoff — replaces pipeline-kickoff Q1–Q3 for board runs
 
