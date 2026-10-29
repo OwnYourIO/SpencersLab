@@ -21,9 +21,16 @@
   "plan_answers": "2026-10-29 batched round U1-U7 resolved; user rulings + the two VERIFICATION-PENDING overrides (U5, U6) recorded in DECISIONS.md; renumber map in the plan file",
   "research_stage": {
     "name": "after-plan-research",
-    "status": "scheduled",
+    "status": "complete",
     "scope": ["R-a ornith-122B-Q4 Strata fit re-derivation", "R-b flash-next-Q4 Strata fit re-derivation", "R-c what served-from-Strata requires today (catalog/upstream/GGUFs/PVC)", "R-d gated-pack HF_TOKEN mechanics for the strata init"],
-    "gate": "agent-research after plan approval, before C06 test authoring; findings appended to RESEARCH.md; C01+C03-C05 unaffected and may proceed; C02's HF_TOKEN mechanics wait on R-d (NEEDS_INFO if unanswered at dev time)"
+    "gate": "agent-research after plan approval, before C06 test authoring; findings appended to RESEARCH.md; C01+C03-C05 unaffected and may proceed; C02's HF_TOKEN mechanics wait on R-d (NEEDS_INFO if unanswered at dev time)",
+    "session": "ses_e7772eee9ffe4XMvtfDzXmiXNC",
+    "verdicts": {
+      "R-a": "SHAPE-B — ornith-122B-Q4 blocked on Strata by v0.2.7 kernel constants (not RAM/arch/files); #3574 closed by bot 'add later', #4460 + prereqs open; absence-arm record + re-watch trigger",
+      "R-b": "SHAPE-A — flash-next Q4 FITS: UD-IQ4_XS (arena 55.4 GiB, --memory-limit-mib 102400 + cgroup 108Gi, conv-cache unchanged) or UD-Q4_K_XL (arena 71.7 GiB, needs conv trim 32->8 + cgroup 100Gi); round-1 'fails math' overturned — conflated coexistence + owner conv-cache budget with single-profile load (U6 override CORRECT)",
+      "R-c": "hygiene pair has no Strata path (ornith ladder: no family; orca Q6: ram 118 > node); only unsloth Q4 rungs catalog-served; +260-290 GB writes vs 500Gi shared claim — on-target df is the human disk gate",
+      "R-d": "existing hf-token Secret SANCTIONED for C02 (download-only secretKeyRef on model-fetch init, no new Bitwarden item, serve path stays keyless); setup.py@v0.2.7 has zero auth support -> gated pack arrives via Branch B manual download+pack (curl+Bearer, iq_pack via STRATA_GGUF_PY)"
+    }
   },
   "chunks": {
     "C01": {
@@ -72,14 +79,15 @@
       "handoffs": []
     },
     "C06": {
-      "status": "pending-after-plan-research",
+      "status": "pending",
       "wave": 6,
       "depends_on": ["C01", "C02", "C05"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "gate": "R-a/R-b/R-c verdicts fix the shape (A=Strata Q4 profile(s), B=verdict record only); test session writes C06 tests only after the flip"
+      "gate": "RESEARCH GATE CLEARED (post-plan round): Shape A = qwen3.8-flash-next-strata-q4 (recommended rung UD-IQ4_XS; alt UD-Q4_K_XL needs conv-cache trim 32->8 + envelope reversal sign-off); ornith-1.5-122b-strata-q4 = Shape B (absence-arm + DECISIONS record). Before Shape-A dev: user rung+envelope ruling AND on-target /models df (+260-290 GB). mmap-pin AC mandatory (PLE-RAM blows both envelopes).",
+      "gate_status": "cleared-pending-user-rulings"
     }
   },
   "blocked": [],
