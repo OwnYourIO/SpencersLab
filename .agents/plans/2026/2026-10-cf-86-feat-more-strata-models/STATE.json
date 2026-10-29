@@ -86,8 +86,8 @@
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "gate": "RESEARCH GATE CLEARED (post-plan round): Shape A = qwen3.8-flash-next-strata-q4 (recommended rung UD-IQ4_XS; alt UD-Q4_K_XL needs conv-cache trim 32->8 + envelope reversal sign-off); ornith-1.5-122b-strata-q4 = Shape B (absence-arm + DECISIONS record). Before Shape-A dev: user rung+envelope ruling AND on-target /models df (+260-290 GB). mmap-pin AC mandatory (PLE-RAM blows both envelopes).",
-      "gate_status": "cleared-pending-user-rulings"
+      "gate": "FINAL SHAPE (Rounds 2+3): SHAPE-A-tweak — qwen3.8-flash-next-strata-q4 = UD-Q4_K_XL + conv-cache 8192 + --slot-save-path /models/strata/sessions + cgroup 100Gi/--memory-limit-mib 95232 + negative-pins + PLE-RAM mmap pin at --plan gate; ornith id = SHAPE-B (absence-arm). Human on-target HIP round-trip gate first; fallback pre-registered = UD-IQ4_XS envelope. Disk gate: user ruled 'Enough free — proceed'.",
+      "gate_status": "cleared"
     }
   },
   "blocked": [],
