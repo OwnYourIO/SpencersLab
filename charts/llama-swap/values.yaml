@@ -1109,8 +1109,15 @@ app-template:
                   echo "model-fetch: $tok already set up, skipping"
                   continue
                 fi
-                echo "model-fetch: setup.sh for $tok as $SIZE (family qwen; downloads start here)"
-                ( cd "$SRC" && ./setup.sh --family qwen --model "$SIZE" --context 262144 --vision no --no-start --yes )
+                echo "model-fetch: setup.sh for $tok as $SIZE (family qwen, backend hip; downloads start here)"
+                # --backend hip is mandatory, not a preference: setup.sh probes
+                # NVIDIA by default and hard-stops "no NVIDIA GPU found" on this
+                # AMD node (deploy 2026-10-29); SOURCE_INSTALL.md AMD section
+                # names the explicit selector. The init container therefore
+                # mounts /dev/kfd + /dev/dri (persistence advancedMounts below)
+                # — the HIP probe must see the card, or it fails the same lie
+                # in the other direction.
+                ( cd "$SRC" && ./setup.sh --backend hip --family qwen --model "$SIZE" --context 262144 --vision no --no-start --yes )
                 touch "$MARK"
               done
               ls -la "$SRC"/strata-*.json 2>/dev/null \
@@ -1131,12 +1138,13 @@ app-template:
             limits:
               memory: 1Gi
           securityContext:
-            # Download + symlink only: no GPU device access, so the main
-            # container's privileged deviation does not extend here.
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
+            # HIP GPU detection (setup.sh --backend hip) needs the same device
+            # view as the main container, so the earlier download-only
+            # non-privileged shape is lifted: privileged + /dev/kfd +
+            # /dev/dri here mirrors the pod's already-accepted device
+            # deviation (DECISIONS 2026-10-27). No serve, no pins —
+            # --no-start keeps the RAM law out of init's way.
+            privileged: true
       containers:
         strata:
           image:
@@ -1312,6 +1320,10 @@ app-template:
         strata:
           strata:
             - path: /dev/kfd
+          # model-fetch probes HIP hardware during setup (see init
+          # container comment) — the card must be visible to it too.
+          model-fetch:
+            - path: /dev/kfd
     strata-dri:
       enabled: false
       type: hostPath
@@ -1320,6 +1332,8 @@ app-template:
       advancedMounts:
         strata:
           strata:
+            - path: /dev/dri
+          model-fetch:
             - path: /dev/dri
     strata-shm:
       # DOCKER.md's --shm-size 2g equivalent (C01 README runtime contract).
