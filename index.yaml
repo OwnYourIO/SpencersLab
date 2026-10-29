@@ -11101,6 +11101,18 @@ entries:
   llama-swap:
   - apiVersion: v2
     appVersion: unified-vulkan-266
+    created: "2026-10-29T03:46:40.027383777Z"
+    dependencies:
+    - name: app-template
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    digest: 8fd5effe5d847029edb57be5a3e59d965d9d0132415ff1a3f1af6b346be60f00
+    name: llama-swap
+    urls:
+    - https://github.com/OwnYourIO/SpencersLab/releases/download/llama-swap-1.0.36/llama-swap-1.0.36.tgz
+    version: 1.0.36
+  - apiVersion: v2
+    appVersion: unified-vulkan-266
     created: "2026-10-29T03:24:10.022227568Z"
     dependencies:
     - name: app-template
@@ -20020,4 +20032,4 @@ entries:
     urls:
     - https://github.com/OwnYourIO/SpencersLab/releases/download/zigbee2mqtt-1.0.1/zigbee2mqtt-1.0.1.tgz
     version: 1.0.1
-generated: "2026-10-29T03:24:10.024371799Z"
+generated: "2026-10-29T03:46:40.02890126Z"
