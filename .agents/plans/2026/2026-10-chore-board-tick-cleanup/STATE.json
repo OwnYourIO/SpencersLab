@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-chore-board-tick-cleanup",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e782f071affeLNM8jA1r3ocobm",
   "test_session": "ses_e77bd9589ffeUWsfPsH64hS5Ah",
   "current_wave": 1,
-  "updated_at": "2026-10-29T14:52Z",
+  "updated_at": "2026-10-29T22:40Z",
   "kickoff": {
     "slug": "board-tick-cleanup",
     "type": "chore",
@@ -72,13 +72,19 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e769c7227ffeL3R8lnqobB0BaE",
+      "handoffs": [
+        "2026-10-29T21:45Z dev DONE C03 (T1-T3): header truth + AGENTS.md sentence; probe script + grant wave (12 uniform positions); flip with CITATION-PENDING; only red = designed S10 citation gate.",
+        "2026-10-29T22:10Z coord T4: LF6 degraded verdict + usage-refusal smoke; LF1/LF2/LF7 pass (211708Z); LF4/LF5 pass (211730Z); LF4 re-run FAIL (212124Z) -> diagnose round: probe-session writer non-compliance (cd-wrapped api call denied by whole-string allow, false ACK; race disproven 3 ways), leg prompt tightened; re-runs 215900Z + 220244Z pass; LF5 human receipt user-confirmed ~22:03Z.",
+        "2026-10-29T21:55Z dev DONE C03-T5: live-fire citation in source beside DEFAULT_ENABLED (S10 gate GREEN, 233/233, all suites except declared-M3).",
+        "2026-10-29T22:20Z review DONE C03: APPROVED — full Commands green (233/233 incl ON-era citation arm); grant wave 1/row x6 uniform, A12 untouched; plugin diff comments + 1 boolean; evidence audit vs run dirs exact, STUBREPLAY absent from claims; LF4 fail disclosed not laundered; 3 cosmetic nits folded-forward. Review notes in chunks/C03.md."
+      ]
     }
   },
   "plan_handoff": {
@@ -88,12 +94,20 @@
     "summary": "Plan of record + RESEARCH.md (both briefs folded) + 3 chunks; aislop green; OQ1-OQ11 in plan Open questions; verified facts: 22 agent sources carry permission blocks, 10 already allow ls, 12 lack it, 9 stage agents carry none; W3's ls row also hits SHELL5-literal arms of tests/coord-inwork, tests/agent-board-coord, tests/kickoff-branch, tests/session-origin (widened same-commit re-pin duty in C01)."
   },
   "blocked": [],
+  "final_review": {
+    "at": "2026-10-29T22:40Z",
+    "session": "ses_e7626f6c3ffeGTeoYlY15C3cPv",
+    "verdict": "APPROVED",
+    "summary": "Full diff vs main reviewed: 13 bash suites rc=0, node 233/233 (T9/T10 + S9/S10 era arms), rulesync clean+idempotent, aislop --base main rc0 (9 warnings all out-of-diff or declared pre-existing). Permission delta pure addition (+12 ls, +6 probe rows, zero removals); boards-skill/pipelineNoop census holds; three rulings shipped as ruled. No findings route to dev or test. M3 re-confirmed out-of-ticket (branch diff touches no models/catalog file)."
+  },
   "deferred": [
     "W1 B1 cards: projections (user ruling 2026-10-29: enable-as-is only)",
     "containers/wekan-mcp composite get_board_context tool (follow-up board card after W1 lands)",
-    "OQ-b structural-leg parallelization (only if live-fire proves 8s budget tight)",
+    "OQ-b structural-leg parallelization (live-fire LF7 proved the budget fine — not needed)",
     "W2 Option A didWork RPC (user chose Option B)",
     "N-consecutive-suppressions digest alert (OQ6 follow-up card if it ever hurts)",
-    "Scheduler hygiene: OpenChamber legacy 'Hourly Pipeline call' daily task — human-owned"
+    "Scheduler hygiene: OpenChamber legacy 'Hourly Pipeline call' daily task — human-owned",
+    "OQ-N2 belt: observe the FIRST post-merge scheduled hourly fire for the suppressed-no-work silence ([question-notify] stderr line + no push) — optional, user-side",
+    "tests/pipeline-models M3 pre-existing red — owned by the gpu-ai catalog ticket, not this branch"
   ]
 }
