@@ -47,6 +47,17 @@ RUN apk add --no-cache git ca-certificates \
 # second flavor's engine root and the supervisor binary.
 FROM engine-primary AS runtime
 
+# Engine-compile dependencies for the model-fetch init's setup.sh: the
+# source-checkout Step 4 compiles the AMD engine once into the checkout on
+# the claim (deploy 2026-10-29 "[X] a C++ compiler and git are needed to
+# compile the AMD engine"). Baked, not installed at boot: runtime apt would
+# make every pod start depend on mirror availability and ship a
+# non-reproducible image (container-creation: apt in the same RUN,
+# --no-install-recommends, lists cleaned).
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends build-essential git \
+    && rm -rf /var/lib/apt/lists/*
+
 # The two flavors install same-named binaries, so the copy plan must keep the
 # label dirs distinct — merging them under one dir would silently shadow the
 # R9700 engine with the halo one (or vice versa) at exe-resolution time.
@@ -73,6 +84,8 @@ RUN set -eux; \
     test -x /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata; \
     test -x /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata; \
     test -f /opt/strata/src/Strata/setup.sh; \
+    command -v git >/dev/null; \
+    command -v c++ >/dev/null; \
     find /opt/strata/components/engine -mindepth 2 -maxdepth 2 -type f -perm -u+x ! -name '*.so*' -exec ls -l '{}' +
 
 # The base image's Cmd is an argument to its own entrypoint.sh launch path;

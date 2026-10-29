@@ -21,6 +21,7 @@ digests below rather than trusting a mutable tag.
 | Engine exe — fallback (Strix / gfx1151, C05) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata` |
 | Engine root layout | both roots live under `/opt/strata/components/engine/<label>/` as **distinct dirs** (same-named binaries per flavor — never merge them) |
 | Source checkout (headless provisioning) | `/opt/strata/src/Strata` — shallow clone at `v0.2.7`, `.git` removed. The packaged tree carries NO installer (`strata install` is a shim for the checkout's setup.py), and upstream's llama-swap doc is explicit: the integration "needs a source checkout, not the desktop installer" — so the chart's `model-fetch` init copies this tree to the claim and runs `./setup.sh` there |
+| Compile toolchain (baked, not runtime-installed) | `build-essential` + `git` via apt in the runtime stage — setup.sh Step 4 compiles the checkout's AMD engine once onto the claim; the verify RUN fails the BUILD if either tool goes missing (owner ruling 2026-10-29: no pod-start apt) |
 
 - The engine binaries are referenced **from each profile's run-config `exe`
   key, NOT from the `cmd`** — `serve` picks its engine from the run-config
