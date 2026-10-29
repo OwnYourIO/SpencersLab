@@ -229,7 +229,7 @@ describe("R1 stale reap happy path (AC 2)", () => {
     env.claims.set("s1", { setId: "set1", cardId: "c1", pipelineSet: ["a"] });
     const res = await seam("reapStale")(env, { trigger: "tick" });
     assert.ok(res && Array.isArray(res.reaped), `reapStale must answer a summary, saw ${JSON.stringify(res)}`);
-    assert.deepEqual(lockFiles(env), ["z.json", "r.json"], "max(heartbeatAt, mtime) rescues a hand-edited stale heartbeat — the formula from the tasks is load-bearing");
+    assert.deepEqual(lockFiles(env), ["r.json", "z.json"], "max(heartbeatAt, mtime) rescues a hand-edited stale heartbeat — the formula from the tasks is load-bearing (lockFiles sorts; survivors are exactly {r, z})");
     assert.equal(reapedFiles(env).length, 1);
     assert.match(reapedFiles(env)[0], /^a\..+\.json$/, "reaped files land as .reaped/<name>.<ts>.json");
     const evs = readEvents(env);
@@ -302,6 +302,10 @@ describe("R2 set-grouped card legs (AC 3)", () => {
     const rec = seedLock(env, { pipeline: "solo", cardId: "c9", setId: "set9", sessionID: "s9", pipelineSet: ["solo"] }, 3 * HOUR);
     delete (rec as any).pipelineSet;
     writeFileSync(join(env.locksDir, "solo.json"), JSON.stringify(rec));
+    // The rewrite stamps mtime to the real wall clock; the pinned
+    // max(heartbeatAt, mtime) formula would then (correctly) skip the file —
+    // stale it again the same way the R1 mtime legs do.
+    utimesSync(join(env.locksDir, "solo.json"), secs(env.clock - 3 * HOUR), secs(env.clock - 3 * HOUR));
     const moves: any[] = [];
     env.moveCardToTimeout = async (info: any) => void moves.push(info);
     env.notify = async () => {};

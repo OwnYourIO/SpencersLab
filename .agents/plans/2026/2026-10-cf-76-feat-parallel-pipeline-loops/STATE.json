@@ -115,14 +115,25 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": ["C04"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "dev_session": null,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e7987d321ffeI0hg7FqBKQBvv2",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T07:40:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: BLOCKED\nchunk: C05\nfiles_changed: [.opencode/plugin/pipeline-locks/index.ts (1178->1799: reapStale/moveCardToTimeout/sendHaReapAlert exports, guard/race/degrade/per-card legs, lazy dev-boards + admin-global-homeassistant URL discovery, /pipeline-reap + /pipeline-status commands, env.reapStale no-op replaced, timeoutsPath/staleMs/board config into setup), /tmp throwaway proof files only]\ncommands_run: [reap suite => 16/18 (two defective legs R1-1 l232 order-expectation vs .sort() helper — unsatisfiable; R2-3 missing re-utime makes the suite's own max(heartbeat,mtime) formula correctly skip — mutually contradictory with R1-1's pinned shape; REPAIRED-COPY SUITE => 18/18 x2 proving implementation satisfies every leg's intent; evidence /tmp/opencode/cf76-C05-validation-at-fault.md), core => pass 30/30, engine => pass 32/32, tick => designed-red 0/12 all C06 seams (census: reap/status commands now present), 4 siblings => pass, agent-perms A1..A14 / A15 verbatim designed-red, standalone 10, rulesync-surface 19, coord-inwork 7, kickoff-branch 6, session-origin 7, rulesync --check => pass, aislop rc=0 D36-only, grep pins => pass, live: reload clean + pipeline_status + pipeline_heartbeat round-trips => pass (live /pipeline-reap deliberately NOT fired — launch forbids real reap against live board), helm => n/a]\ndeviations: 1) validation_at_fault BLOCKED driver — two reap-suite legs no faithful implementation can pass; mechanical repairs (array swap; one utimesSync line) proven in /tmp repaired copy => 18/18; tests untouched per role contract. 2) reapStale split into phase helpers to clear function-too-long; pinned seam shapes unchanged. 3) one lazy list_boards OUTSIDE the D24-pinned per-card sequence (R7 asserts exactly 4 calls). 4) project-config discovery uses promises API (sync read banned by tick T4). 5) env.client read dual-shape (fixture nests .api; header flat). 6) live reap not fired; carry for C06 live-smoke: manual /pipeline-reap dispatch check (never against live stale cards); D22 follow-up card stays C07 coord task.\nfriction: the two suite defects were invisible pre-implementation (seam-not-export masked them) — future test-era suites could smoke their own max()-formula legs against a stub; log-grep self-match recurred (in FRICTION.md).\nopen_questions: none for the user — routing decision is coord's: test-session mechanical repair of the two legs, then reap 18/18 and review.\nnext_suggested: coord routes the two-leg test repair (verbatim proposals in the evidence file), re-runs reap for expected 18/18, commits C05 (code + repaired suite + state), launches review."
+        },
+        {
+          "at": "2026-10-29T08:20:00Z",
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C05\nverdict: APPROVED\nfiles_changed: [chunks/C05.md (review notes only)]\ncommands_run: [reap => pass 18/18 post-repair own run, core => 30/30, engine => 32/32, tick => designed-red 0/12 own census all C06 absences (registration saw-list [pipeline-reap,pipeline-status] confirms additive), siblings => 35/41/28/15, agent-perms A1..A14 + A15 verbatim designed-red, standalone 10, rulesync-surface 19, coord-inwork 7, kickoff-branch 6, session-origin 7, rulesync --check => pass, aislop rc=0 D36-only (function-too-long gone), grep audits => pass (move_card single call site, no list_swimlanes, 7200000 single-source, reapStale wired 367+830), verbatim-diff vs shipped MCP precedents => code-identical modulo names, wekan-mcp call-shapes checks => pass, git scope => pass, .pipeline residue => empty canonical dir from first live timer pass, zero files, no guard leak, helm => n/a]\ndeviations: none — test-repair-3 independently adjudicated mechanical (INTENT preserved/strengthened, routing correct, no escalation); dev deviations 2/3/4/5 faithful engineering not contract drift\nfriction: dev's no-.pipeline-dir claim stale after first timer tick (harmless empty dir; C06 smoke item)\nopen_questions: none\nnext_suggested: commit C05; launch C06; Minor-1 (restore TOCTOU hardening) to C06 dev; Minor-2/3 + C04 Minors 2/3 into the C06-wave test round"
+        }
+      ]
     },
     "C06": {
       "status": "pending",
@@ -179,6 +190,11 @@
         "at": "2026-10-29T04:25:00Z",
         "role": "test-repair-2 (C02 validation_at_fault: kickoff-branch m6)",
         "result": "RESULT\nstatus: DONE\nchunk: test-repair-2\nfiles_changed: [tests/kickoff-branch/surface.sh]\ncommands_run: [bash -n => pass, bash tests/kickoff-branch/surface.sh full BASE=HEAD working tree => pass (6 ok), m6 tamper control: hand-edit AGENTS.md => m6 red (NOT regeneration-explained), restore => green, CHUNK_BASE=081b57889 arm A => documented historical posture, adds no new red, coord-inwork => pass 7 ok, agent-perms full => pass 14 ok (A11 green post-C02 flip), standalone-agents full => pass 10 ok (S3 delta-aware engaged), aislop ci --changes => pass]\ndeviations: none — adjudicated shape implemented: frozen kickoff members keep diff-vs-BASE walk; AGENTS.md + .rulesync/rules carve = regeneration-equivalence via generate --check, fail-closed when rulesync unresolvable; non-vacuity control proved the carve has teeth\nopen_questions: none\nnext_suggested: coord commits C02 (implementation + suite repair together, sole-committer rule) and re-queues C02 review — kickoff-branch now 6/6 green at landed posture"
+      },
+      {
+        "at": "2026-10-29T07:55:00Z",
+        "role": "test-repair-3 (C05 validation_at_fault: reap suite R1-1/R2-3)",
+        "result": "RESULT\nstatus: DONE\nchunk: test-repair-3\nfiles_changed: [tests/opencode/pipeline-locks-reap.test.ts]\ncommands_run: [reap => pass 18/18 (was 16/18 with the two defective legs), core => pass 30/30 untouched, engine => pass 32/32 untouched, aislop => rc=0 D36-only, git scope => pass]\ndeviations: both repairs pure fixture-shaping, zero contract change (R1-1 expected array swapped to the helper's own sort order + annotated so the next reader doesn't re-flip it; R2-3 re-utimes line added — the same file's R1 legs already use it; without it the leg contradicts R1-1's identical-input MUST-SURVIVE pin). Minors 2/3 NOT folded — assigned to the C06-wave test round per C04 review routing\nfriction: none\nopen_questions: none\nnext_suggested: coord commits C05 (dev index.ts + this repair + state), re-queues the C05 review; C06 test round adds Minor-2 scan-rebuild + Minor-3 missing-key pins"
       }
     ]
   }

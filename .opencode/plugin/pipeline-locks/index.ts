@@ -31,19 +31,20 @@
 // an injected deps env so the suites run offline against tmp dirs.
 // Hand-written; rulesync must never generate or delete this file.
 //
-// Chunk map (cf-76): C03 shipped the lock store + the four tools; C04 (this
-// state) adds the heartbeat/lifecycle engine — tool hooks, the deferred event
-// loop, beat/reap timers, the parent-walk resolveRoot and the set-wide
-// lock-lost reaction. Heartbeats follow ACTIVITY only (D20): the clock keeps
-// ticking through human stop points and an idle lock goes stale like any
-// other. C05 replaces the env.reapStale hook with the real reaper + board/HA
-// legs, C06 adds the tick command and the config loader. The seam export
-// surface stays ADDITIVE — later chunks extend this file, never reshape what
-// the core suite pins.
+// Chunk map (cf-76): C03 shipped the lock store + the four tools; C04 added
+// the heartbeat/lifecycle engine — tool hooks, the deferred event loop,
+// beat/reap timers, the parent-walk resolveRoot and the set-wide lock-lost
+// reaction; C05 (this state) adds the reaper — stale locks to .reaped/, the
+// card's Timeout move with the timeouts.jsonl degrade, the HA alert, and the
+// /pipeline-reap + /pipeline-status commands. Heartbeats follow ACTIVITY only
+// (D20): the clock keeps ticking through human stop points and an idle lock
+// goes stale like any other. C06 adds the tick command and the config loader.
+// The seam export surface stays ADDITIVE — later chunks extend this file,
+// never reshape what the core suite pins.
 
 import { randomUUID } from "node:crypto";
 import fsp from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 // Single sources for C07's parity greps — each of these literals must occur
 // exactly once in this file (core suite K1, A15's python parity reader).
@@ -69,9 +70,9 @@ const CLAIM_KEY_PREFIX = "claim/";
 const HOLDER_READ_DELAYS_MS = [0, 2, 5, 15, 40];
 
 // Engine cadences (C04). Baked defaults until C06's loader feeds the file:
-// timerMs is the activity-beat interval, reapEveryMs the reap cadence C05
-// fills in, hookThrottleMs the per-pipeline heartbeat throttle pinned by
-// AC2. NEGATIVE_CACHE_MS bounds how long an unresolvable parent walk stays
+// timerMs is the activity-beat interval, reapEveryMs the cadence the C05
+// reaper runs on, hookThrottleMs the per-pipeline heartbeat throttle pinned
+// by AC2. NEGATIVE_CACHE_MS bounds how long an unresolvable parent walk stays
 // unanswered — re-checked after the window so a session that gains a claim
 // or a parent is picked up without a restart.
 const DEFAULT_TIMER_MS = 300000;
@@ -79,6 +80,48 @@ const DEFAULT_REAP_EVERY_MS = 600000;
 const DEFAULT_HOOK_THROTTLE_MS = 30000;
 const NEGATIVE_CACHE_MS = 60000;
 const RESOLVE_MAX_HOPS = 16;
+
+// D21 ruled the stale window at 2 h — the reap uses staleMs default 7200000,
+// not the handoff's 3 h; C06's config loader may override it per deployment.
+const DEFAULT_STALE_MS = 7200000;
+
+// The reaper's cross-process guard (D27: one plugin instance per location
+// dir, all sharing one lock dir): mkdir is the atomic test-and-set, so one
+// concurrent pass runs. Five minutes is far past the longest plausible pass,
+// so an older guard belongs to a killed reaper and is safe to steal — once.
+const REAPER_GUARD_DIR = "reaper.lock";
+const GUARD_STALE_MS = 300000;
+
+// Reaped locks land under the locks dir as <name>.<pass-ts>.json: the rename
+// is the atomic claim (two reapers cannot both move one file) and the copies
+// stay readable for forensics.
+const REAPED_SUBDIR = ".reaped";
+
+// The two MCP endpoints the reaper reaches. Their URLs are discovered at
+// runtime — these server keys are the module's only literals. dev-boards
+// mints the board login server-side (the plugin handles no credential); the
+// HA alert needs the ADMIN tier because the readonly ha-mcp rejects service
+// calls (question-notify's verified fact).
+const BOARD_SERVER_KEY = "dev-boards";
+const HA_SERVER_KEY = "admin-global-homeassistant";
+
+// Board titles the card leg reads (D8 baked defaults; C06's loader may
+// override). Titles repeat across swimlanes, so the Timeout list resolves
+// against the card's own swimlane echo, never by title alone (D24).
+const BOARD_DEFAULTS = { boardTitle: "AI-Dev", swimlaneTitle: "In Process", timeoutListTitle: "Timeout" };
+
+// The user-facing reap texts: D21's 2 h window is what the card comment
+// says, D11 pins the alert title verbatim, and the message ceiling is
+// question-notify's MAX_MESSAGE contract.
+const TIMEOUT_COMMENT = "Timed out: no heartbeat for 2h";
+const REAP_ALERT_TITLE = "OpenCode: pipeline lock reaped";
+const NOTIFY_DOMAIN = "notify";
+const HA_NOTIFY_SERVICE = "mobile_app_pixel_6";
+const ALERT_MAX_MESSAGE = 240;
+
+// board-context's FETCH_TIMEOUT_MS precedent on every reaper MCP call: a
+// hanging ingress may not stall the claim-time or timer reap paths.
+const MCP_CALL_TIMEOUT_MS = 8_000;
 
 // Ordinary beats would flood the audit at tool-call frequency; every tenth
 // one is logged, forced beats (manual, child_mapped, execution_started) all
@@ -319,8 +362,8 @@ export async function claimLockSet(env: any, input: any): Promise<any> {
   const cardId = input?.cardId;
 
   try {
-    // Reap-before-claim: the hook is a no-op stub until C05 lands; awaiting
-    // it here keeps the claim-time ordering contract stable across chunks.
+    // Reap-before-claim: a dead run's stale lock must not starve a fresh
+    // claim, so every claimant sweeps once through the guarded reaper.
     if (typeof env?.reapStale === "function") await env.reapStale({ trigger: "claim" });
   } catch (err: any) {
     logNote(env, `claim-time reap hook failed, continuing: ${String(err?.code ?? err?.message ?? err)}`);
@@ -430,7 +473,8 @@ export async function releaseLockSet(env: any, input: any): Promise<any> {
 
 export async function lockStatus(env: any, input: any = {}): Promise<any> {
   // Every lock file, grouped by setId/card so a multi-pipeline claim reads as
-  // ONE unit (D18). lastReap is a C05 product — absent until then.
+  // ONE unit (D18). lastReap is the reaper's meta file — null until the first
+  // reap writes it.
   const fsx = storeFs(env);
   let names: string[] = [];
   try {
@@ -796,6 +840,452 @@ export function startEngine(env: any): { stop(): void } {
   };
 }
 
+// C05 — the reaper and its card legs. A lock nobody heartbeats through the
+// stale window is a dead run holding a pipeline: free the file, park the
+// card, ring the phone. The reap itself is the only guaranteed outcome —
+// board, HA and storage legs each degrade to their own audit line.
+
+// Raw MCP-over-HTTP mechanics: asArray/parseSseData/unwrapToolResult/
+// makeCallTool are copied verbatim from .opencode/plugin/board-context/
+// index.ts (the recipe provenance lives in that file's header and in
+// skills/wekan-api/references/wekan-mcp-ops.md). Duplicated, never imported:
+// plugin discovery loads every module under .opencode/plugin/, so a cross-
+// plugin import would register board-context a second time as a dependency
+// entry of this plugin.
+function asArray(value: any): any[] {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") {
+    const found = Object.values(value).find((entry) => Array.isArray(entry));
+    if (Array.isArray(found)) return found;
+  }
+  return [];
+}
+
+function parseSseData(text: string): any | null {
+  try {
+    if (text.includes("data:")) {
+      const data = text
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .pop()
+        ?.slice(5)
+        .trim();
+      return data ? JSON.parse(data) : null;
+    }
+    return text.trim() ? JSON.parse(text) : null;
+  } catch {
+    return null;
+  }
+}
+
+function unwrapToolResult(rpcBody: any): any {
+  if (rpcBody?.error) throw new Error(`MCP error ${rpcBody.error.code}: ${rpcBody.error.message}`);
+  const result = rpcBody?.result;
+  if (!result) throw new Error("MCP response carried no result");
+  const structured = result.structuredContent;
+  if (structured && typeof structured === "object") {
+    return structured.result !== undefined ? structured.result : structured;
+  }
+  for (const part of asArray(result.content)) {
+    if (part?.type === "text" && typeof part.text === "string") {
+      try {
+        return JSON.parse(part.text);
+      } catch {
+        return part.text;
+      }
+    }
+  }
+  return result;
+}
+
+function makeCallTool(url: string): (name: string, args: any) => Promise<any> {
+  let sessionId: string | null = null;
+  let seq = 0;
+
+  const post = async (method: string, params: any) => {
+    const isNotification = method.startsWith("notifications/");
+    const payload: any = { jsonrpc: "2.0", method, params };
+    if (!isNotification) payload.id = ++seq;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+    };
+    if (sessionId) headers["Mcp-Session-Id"] = sessionId;
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(MCP_CALL_TIMEOUT_MS),
+    });
+    sessionId = res.headers.get("mcp-session-id") ?? sessionId;
+    if (isNotification) return null;
+    const body = parseSseData(await res.text());
+    if (body === null) throw new Error(`unparseable ${method} response`);
+    return body;
+  };
+
+  return async (name, args) => {
+    if (!sessionId) {
+      await post("initialize", {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "opencode-pipeline-locks", version: "1.0.0" },
+      });
+      await post("notifications/initialized", {});
+    }
+    const body = await post("tools/call", { name, arguments: args });
+    return unwrapToolResult(body);
+  };
+}
+
+// Runtime URL discovery for one named MCP server, the two shipped precedents'
+// arms in order: ctx.mcp.transform editor.get — the only ctx view whose
+// entries carry full server configs (question-notify's verified shape) — then
+// the ctx.mcp.list() scan (compat twin for builds whose list answers
+// configs). opts.projectConfig adds board-context's third leg, the project-
+// config text: dev-boards is configured in the project file, while the HA
+// admin entry lives in the machine-global config that file cannot show — so
+// HA discovery stops at the two live arms. Never rejects: null means no URL
+// and every caller owns its degrade.
+async function discoverMcpUrl(ctx: any, serverKey: string, opts: any = {}): Promise<string | null> {
+  let url: string | undefined;
+  let registration: any;
+  try {
+    registration = await ctx?.mcp?.transform?.((editor: any) => {
+      try {
+        const cfg = editor?.get?.(serverKey);
+        if (typeof cfg?.url === "string") url = cfg.url;
+      } catch {
+        // a poisoned config read is a leg-1 miss; the next arms own the rest
+      }
+    });
+  } catch {
+    // transform absent or rejecting: leg-1 miss
+  } finally {
+    try {
+      // A leaked transform registration keeps re-firing on every config
+      // recompute, so it closes here always; a rejecting dispose cannot
+      // undo a completed capture.
+      await registration?.dispose?.();
+    } catch {
+      // never reject the seam
+    }
+  }
+  if (typeof url === "string") return url;
+  try {
+    const list = await ctx?.mcp?.list?.();
+    const entries: any[] = Array.isArray(list) ? list : asArray(list?.servers);
+    for (const entry of entries) {
+      const [name, cfg] = Array.isArray(entry) ? entry : [entry?.name, entry];
+      if (name === serverKey && typeof cfg?.url === "string") return cfg.url;
+    }
+  } catch {
+    // list absent or rejecting: the live arms missed
+  }
+  if (opts?.projectConfig !== true) return null;
+  try {
+    // The promises API only — a sync read here would block the server event
+    // loop, which this module structurally never does (the tick suite pins).
+    const raw = await fsp.readFile(join(String(ctx?.location?.directory ?? ""), ".opencode", "opencode.jsonc"), "utf8");
+    const idx = raw.indexOf(`"${serverKey}"`);
+    if (idx < 0) return null;
+    const match = raw.slice(idx).match(/"url"\s*:\s*"([^"]+)"/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+async function acquireReaperGuard(env: any, fsx: any): Promise<boolean> {
+  const guard = join(env.runtimeDir, REAPER_GUARD_DIR);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await fsx.mkdir(env.runtimeDir, { recursive: true });
+      await fsx.mkdir(guard);
+      return true;
+    } catch (err: any) {
+      if (err?.code !== "EEXIST") {
+        logNote(env, `reaper guard could not be created: ${String(err?.code ?? err)}`);
+        return false;
+      }
+      if (attempt > 0) return false; // lost the steal race — a live reaper owns it now
+      let ageMs = Number.NaN;
+      try {
+        ageMs = (env?.now?.() ?? Date.now()) - (await fsx.stat(guard)).mtimeMs;
+      } catch {
+        return false; // the guard vanished mid-race: its holder is releasing it
+      }
+      if (ageMs < GUARD_STALE_MS) return false;
+      try {
+        await fsx.rm(guard, { recursive: true, force: true });
+      } catch (err: any) {
+        logNote(env, `stale reaper guard could not be removed: ${String(err?.code ?? err)}`);
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
+async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise<any | null> {
+  // BOTH clock and disk must say dead: stale iff pass.now − max(heartbeatAt,
+  // mtime) ≥ staleMs, so a hand-touched or freshly-beat mtime legitimately
+  // rescues a file. Older-schema tolerance: unknown keys survive the
+  // restore, a missing heartbeatAt falls to mtime, a parse-error record
+  // reaps by mtime with cardId unknown.
+  const path = join(env.locksDir, name);
+  const pipeline = basename(name, ".json");
+  const rec = await readLock(env, path); // parse error or unknown shape → null
+  let mtimeMs = Number.NaN;
+  try {
+    mtimeMs = (await fsx.stat(path)).mtimeMs;
+  } catch {
+    return null; // vanished between readdir and stat
+  }
+  const hbMs = rec ? Date.parse(String(rec.heartbeatAt ?? "")) : Number.NaN;
+  const lastMs = Math.max(Number.isFinite(hbMs) ? hbMs : Number.NEGATIVE_INFINITY, mtimeMs);
+  if (pass.now - lastMs < pass.staleMs) return null;
+  // The rename is the atomic claim: two reapers (or a racing release)
+  // cannot both move one file.
+  const reapedPath = join(pass.reapedDir, `${pipeline}.${pass.now}.json`);
+  try {
+    await fsx.mkdir(pass.reapedDir, { recursive: true });
+    await fsx.rename(path, reapedPath);
+  } catch (err: any) {
+    logNote(env, `reap could not claim ${pipeline}: ${String(err?.code ?? err)}`);
+    return null;
+  }
+  // Re-read the moved copy: a heartbeat that wrote between the stale check
+  // and the rename shows up as a fresh heartbeatAt. That lock is alive —
+  // put it back and run no card leg for it.
+  const copy = await readLock(env, reapedPath);
+  const copyHbMs = copy ? Date.parse(String(copy.heartbeatAt ?? "")) : Number.NaN;
+  if (Number.isFinite(copyHbMs) && pass.now - copyHbMs < pass.staleMs) {
+    try {
+      await fsx.rename(reapedPath, path);
+      await appendEvent(env, { ev: "reap_raced", pipeline, cardId: copy?.cardId ?? null, setId: copy?.setId ?? null, trigger: pass.trigger });
+    } catch (err: any) {
+      logNote(env, `heartbeat-race restore failed for ${pipeline}: ${String(err?.code ?? err)}`);
+    }
+    return null;
+  }
+  const entry = {
+    pipeline,
+    setId: rec?.setId ?? null,
+    cardId: rec?.cardId ?? null,
+    sessionID: rec?.sessionID ?? null,
+    pipelineSet: Array.isArray(rec?.pipelineSet) ? rec.pipelineSet : [],
+    ageMin: Math.max(0, Math.round((pass.now - lastMs) / 60000)),
+  };
+  await appendEvent(env, {
+    ev: "reaped",
+    pipeline: entry.pipeline,
+    setId: entry.setId,
+    cardId: entry.cardId,
+    sessionID: entry.sessionID,
+    ageMin: entry.ageMin,
+    trigger: pass.trigger,
+  });
+  return entry;
+}
+
+async function clearDeadHolders(env: any, reaped: any[]): Promise<void> {
+  for (const r of reaped) {
+    // Free this instance's view of the dead holder — but only the claim the
+    // reaped file belongs to: after D20's resume path the same session can
+    // already hold a FRESH claim whose caches must survive.
+    const sid = r.sessionID == null ? "" : String(r.sessionID);
+    const owned = sid ? env?.claims?.get(sid) : null;
+    if (owned && (owned.setId == null || String(owned.setId) === String(r.setId))) {
+      env.claims.delete(sid);
+      try {
+        if (env?.storage) {
+          const row = await env.storage.get(claimKeyOf(sid), null);
+          if (row && (row.setId == null || String(row.setId) === String(r.setId))) await env.storage.remove(claimKeyOf(sid));
+        }
+      } catch (err: any) {
+        logNote(env, `reap storage cleanup failed for ${sid}: ${String(err?.code ?? err)}`);
+      }
+    }
+    // A dead pipeline's throttle stamps must not make its next claimant's
+    // first beats silent (lock-lost cleanup precedent).
+    env?.lastBeat?.delete(r.pipeline);
+    env?.beatSeq?.delete(r.pipeline);
+  }
+}
+
+async function writeReapMeta(env: any, fsx: any, now: number, trigger: string, reaped: any[]): Promise<void> {
+  try {
+    await fsx.mkdir(dirname(env.metaPath), { recursive: true });
+    await fsx.writeFile(env.metaPath, JSON.stringify({ at: new Date(now).toISOString(), trigger, reaped: reaped.map((r) => r.pipeline) }));
+  } catch (err: any) {
+    logNote(env, `lastReap meta write failed: ${String(err?.code ?? err)}`);
+  }
+}
+
+async function runReapCardLegs(env: any, reaped: any[]): Promise<void> {
+  // Per-CARD legs (D18): two reaped members of one claim are ONE timeout
+  // event. The named set is the union of the group's reaped pipelines with
+  // every reaped record's pipelineSet, so a partially-reaped set still reads
+  // complete on the card and on the phone.
+  const byCard = new Map<string, any>();
+  for (const r of reaped) {
+    const key = String(r.cardId ?? "");
+    let group: any = byCard.get(key);
+    if (!group) {
+      group = { cardId: r.cardId ?? null, setId: r.setId ?? null, sessionID: r.sessionID ?? null, names: new Set<string>(), ageMin: 0 };
+      byCard.set(key, group);
+    }
+    group.names.add(r.pipeline);
+    for (const p of r.pipelineSet) group.names.add(p);
+    group.ageMin = Math.max(group.ageMin, Number(r.ageMin) || 0);
+  }
+  const moveLeg = typeof env?.moveCardToTimeout === "function" ? env.moveCardToTimeout : (info: any) => moveCardToTimeout(env, info);
+  const alertLeg = typeof env?.notify === "function" ? env.notify : (info: any) => sendHaReapAlert(env, info);
+  for (const group of byCard.values()) {
+    const info = {
+      cardId: group.cardId,
+      setId: group.setId,
+      sessionID: group.sessionID,
+      ageMin: group.ageMin,
+      pipelines: [...group.names].sort(),
+    };
+    // The real seam never rejects (its own degrade arm); the belt stays
+    // because env.moveCardToTimeout may be a caller-injected fake.
+    try {
+      await moveLeg(info);
+    } catch (err: any) {
+      logNote(env, `board leg failed for card ${String(group.cardId ?? "?")}: ${String(err?.message ?? err)}`);
+    }
+    // Alert AFTER the file move and after the board leg: a dead board
+    // still rings, a dead HA never disturbs the reap (D11).
+    if (env?.config?.haNotify !== false) {
+      try {
+        await alertLeg(info);
+      } catch (err: any) {
+        logNote(env, `HA alert failed: ${String(err?.message ?? err)}`);
+      }
+    }
+  }
+}
+
+export async function reapStale(env: any, input: any = {}): Promise<{ reaped: any[]; skipped?: boolean }> {
+  // One guarded pass in four phases: collect confirmed reaps per file, free
+  // the dead holders' caches, stamp meta/lastReap, then run the per-card
+  // board and alert legs. The guard releases in all outcomes.
+  const trigger = String(input?.trigger ?? "timer");
+  const fsx = storeFs(env);
+  if (!(await acquireReaperGuard(env, fsx))) return { reaped: [], skipped: true };
+  try {
+    const pass = {
+      now: env?.now?.() ?? Date.now(),
+      staleMs: Number(env?.config?.staleMs) || DEFAULT_STALE_MS,
+      trigger,
+      reapedDir: join(env.locksDir, REAPED_SUBDIR),
+    };
+    const reaped: any[] = [];
+    let names: string[] = [];
+    try {
+      names = (await fsx.readdir(env.locksDir)).filter((name: string) => name.endsWith(".json")).sort();
+    } catch {
+      // no locks dir: nothing is held, nothing to reap
+    }
+    for (const name of names) {
+      const entry = await reapOneLock(env, fsx, name, pass);
+      if (entry) reaped.push(entry);
+    }
+    if (reaped.length > 0) {
+      await clearDeadHolders(env, reaped);
+      await writeReapMeta(env, fsx, pass.now, trigger, reaped);
+      await runReapCardLegs(env, reaped);
+    }
+    return { reaped };
+  } finally {
+    try {
+      await fsx.rm(join(env.runtimeDir, REAPER_GUARD_DIR), { recursive: true, force: true });
+    } catch (err: any) {
+      // A surviving guard blocks reaps only until GUARD_STALE_MS lets the
+      // next pass steal it; a loud note is all this failure can still do.
+      logNote(env, `reaper guard release failed: ${String(err?.code ?? err)}`);
+    }
+  }
+}
+
+// The D22 interim contract in code: until the follow-up card lands a
+// create_list tool in wekan-mcp, a board may not HAVE a Timeout list at all,
+// and any other leg can fail the same way. Every failure arm appends the
+// full card row to timeouts.jsonl and audits the reason — the reaped
+// pipelines are already free, so a lost board move never means a held
+// pipeline.
+async function queueTimeoutRow(env: any, info: any, reason: string): Promise<void> {
+  const row = {
+    at: new Date(env?.now?.() ?? Date.now()).toISOString(),
+    cardId: info?.cardId ?? null,
+    setId: info?.setId ?? null,
+    pipelines: Array.isArray(info?.pipelines) ? info.pipelines : [],
+    sessionID: info?.sessionID ?? null,
+    reason,
+  };
+  try {
+    await storeFs(env).writeFile(String(env?.timeoutsPath), JSON.stringify(row) + "\n", { encoding: "utf8", flag: "a" });
+  } catch (err: any) {
+    logNote(env, `timeouts.jsonl append failed: ${String(err?.code ?? err)}`);
+  }
+  await appendEvent(env, { ev: "board_move_err", cardId: row.cardId, setId: row.setId, sessionID: row.sessionID, reason });
+}
+
+export async function moveCardToTimeout(env: any, info: any): Promise<void> {
+  // D24 pins the sequence: get_card → list_lists → move_card → add_comment.
+  // The Timeout target resolves against the card's OWN swimlane echo because
+  // list titles repeat across swimlanes — a namesake in another swimlane
+  // must never be the move target.
+  try {
+    const callTool =
+      typeof env?.client?.callTool === "function"
+        ? (name: string, args: any) => env.client.callTool(name, args)
+        : typeof env?.client?.api?.callTool === "function"
+          ? (name: string, args: any) => env.client.api.callTool(name, args)
+          : null;
+    if (!callTool) throw new Error(`no ${BOARD_SERVER_KEY} client (URL undiscovered)`);
+    if (!info?.cardId) throw new Error("reaped record carries no cardId");
+    const card = await callTool("get_card", { board_id: env?.boardId ?? null, card_id: String(info.cardId) });
+    const fromList = String(card?.list_id ?? "");
+    const swimlane = String(card?.swimlane_id ?? "");
+    if (!fromList) throw new Error("get_card answered no list_id");
+    const lists = asArray(await callTool("list_lists", { board_id: env?.boardId ?? null }));
+    const wanted = String(env?.config?.board?.timeoutListTitle ?? BOARD_DEFAULTS.timeoutListTitle);
+    const target = lists.find((l: any) => String(l?.title ?? "") === wanted && String(l?.swimlane_id ?? "") === swimlane);
+    if (!target) throw new Error(`no ${wanted} list in the card's swimlane`);
+    await callTool("move_card", {
+      board_id: env?.boardId ?? null,
+      card_id: String(info.cardId),
+      from_list_id: fromList,
+      to_list_id: target.id,
+    });
+    const comment = `${TIMEOUT_COMMENT} (session ${String(info.sessionID ?? "")}, pipelines: ${(Array.isArray(info?.pipelines) ? info.pipelines : []).join(", ")})`;
+    await callTool("add_comment", { board_id: env?.boardId ?? null, card_id: String(info.cardId), comment });
+  } catch (err: any) {
+    await queueTimeoutRow(env, info, String(err?.message ?? err?.code ?? err));
+  }
+}
+
+export async function sendHaReapAlert(env: any, info: any): Promise<void> {
+  // D11: fire-and-forget. Whatever an alert costs lands in env.log; the
+  // call resolving is not a precondition of any reap outcome.
+  try {
+    if (typeof env?.callHA !== "function") return;
+    const pipelines = Array.isArray(info?.pipelines) ? info.pipelines : [];
+    const message = `card=${String(info?.cardId ?? "")} pipelines=${pipelines.join(",")} age=${Number(info?.ageMin) || 0}min session=${String(info?.sessionID ?? "")}`.slice(0, ALERT_MAX_MESSAGE);
+    await env.callHA("call_service", {
+      domain: NOTIFY_DOMAIN,
+      service: HA_NOTIFY_SERVICE,
+      data: { title: REAP_ALERT_TITLE, message },
+    });
+  } catch (err: any) {
+    logNote(env, `HA reap alert failed: ${String(err?.message ?? err)}`);
+  }
+}
+
 // The tool response IS the lock-identity channel (D28). `content` is the
 // field the 2.1.4 host renders for the agent — the probe's { content: ... }
 // return is the proven shape, and a raw-object return surfaced through Code
@@ -909,6 +1399,75 @@ function buildToolSpecs(env: any): any[] {
     input: definitions[i].schema,
     execute: definitions[i].execute,
   }));
+}
+
+// Commands ride C01 fact 4's proven shape: ctx.command.transform +
+// editor.add({name, description, execute({sessionID, prompt, delivery})}),
+// answering through ctx.session.prompt on the invocation's own envelope —
+// the synthetic message is a command's only answer channel on v2.1.4.
+function buildCommandSpecs(env: any, ctx: any): any[] {
+  const say = async (input: any, text: string): Promise<void> => {
+    try {
+      // The probe's live envelope carries prompt as an object ({text, files,
+      // …}); a bare string (offline suites) must not spread into numeric
+      // junk keys on the real prompt call.
+      const base = input?.prompt && typeof input.prompt === "object" ? input.prompt : {};
+      await ctx?.session?.prompt?.({ ...base, sessionID: input?.sessionID, text, delivery: input?.delivery });
+    } catch (err: any) {
+      logNote(env, `command reply could not be posted: ${String(err?.message ?? err)}`);
+    }
+  };
+  return [
+    {
+      name: "pipeline-reap",
+      description:
+        "Run one stale-lock reap pass now: guarded scan of .pipeline/locks, stale files to .reaped/, their cards through the Timeout board leg (or the timeouts.jsonl degrade), one HA alert per reaped card. Answers the pass summary. Takes no arguments.",
+      execute: async (input: any) => {
+        let text: string;
+        try {
+          const res = await reapStale(env, { trigger: "command" });
+          if (res?.skipped) text = "pipeline-locks reap: skipped — another reaper holds the guard.";
+          else if (!Array.isArray(res?.reaped) || res.reaped.length === 0) text = "pipeline-locks reap: no stale locks.";
+          else
+            text = `pipeline-locks reap: reaped ${res.reaped.length} lock(s): ${res.reaped
+              .map((r: any) => `${r.pipeline} (card=${String(r.cardId ?? "?")} holder=${String(r.sessionID ?? "?")} idle=${r.ageMin}min)`)
+              .join("; ")}`;
+        } catch (err: any) {
+          text = `pipeline-locks reap failed: ${String(err?.message ?? err)}`;
+        }
+        await say(input, text);
+        return text;
+      },
+    },
+    {
+      name: "pipeline-status",
+      description:
+        "Answer the lock state: every held claim grouped by setId with card, holder, state, heartbeat age and pipeline names, plus the last reap. Takes no arguments.",
+      execute: async (input: any) => {
+        let text: string;
+        try {
+          const st = await lockStatus(env, { sessionID: input?.sessionID });
+          const groups: any[] = Array.isArray(st?.groups) ? st.groups : [];
+          const lines = groups.map(
+            (g: any) =>
+              `claim ${String(g.setId ?? "?")} card=${String(g.cardId ?? "?")} holder=${String(g.holder ?? "?")} state=${String(
+                g.state ?? "live",
+              )} age=${Math.max(0, Math.round((Number(g.ageMs) || 0) / 60000))}min pipelines: ${[...(g.pipelines ?? [])].sort().join(", ")}`,
+          );
+          const last = st?.lastReap;
+          const lastLine =
+            last && typeof last.at === "string"
+              ? `lastReap: ${last.at} reaped ${(Array.isArray(last.reaped) ? last.reaped : []).join(",")}`
+              : "lastReap: none";
+          text = [`pipeline-locks status: ${groups.length} claim(s) held`, ...lines, lastLine].join("\n");
+        } catch (err: any) {
+          text = `pipeline-locks status failed: ${String(err?.message ?? err)}`;
+        }
+        await say(input, text);
+        return text;
+      },
+    },
+  ];
 }
 
 export async function resolveRoot(env: any, sessionID: any): Promise<string> {
@@ -1033,6 +1592,7 @@ export default {
         runtimeDir: join(root, RUNTIME_DIR),
         locksDir: join(root, RUNTIME_DIR, LOCKS_DIR),
         eventsPath: join(root, RUNTIME_DIR, EVENTS_FILE),
+        timeoutsPath: join(root, RUNTIME_DIR, "timeouts.jsonl"),
         metaPath: join(root, RUNTIME_DIR, "meta", "lastReap"),
         now: () => Date.now(),
         claims: new Map<string, any>(),
@@ -1043,9 +1603,13 @@ export default {
         negative: new Map<string, number>(),
         storage: bindStorage(ctx),
         pin: bindPin(ctx),
+        // Resolved once at first board use, outside the D24-pinned per-card
+        // call sequence (see openBoardClient).
+        boardId: null,
         sessionGet: async (sessionID: string) =>
           typeof ctx?.session?.get === "function" ? ((await ctx.session.get({ sessionID })) ?? undefined) : undefined,
         config: {
+          staleMs: DEFAULT_STALE_MS,
           timerMs: DEFAULT_TIMER_MS,
           reapEveryMs: DEFAULT_REAP_EVERY_MS,
           hookThrottleMs: DEFAULT_HOOK_THROTTLE_MS,
@@ -1055,18 +1619,75 @@ export default {
           strictLockLoss: true,
           haNotify: true,
           maxWorkers: null,
+          board: { ...BOARD_DEFAULTS },
         },
-        // C05 replaces this hook with the reaper; the claim and the reap
-        // timer await it now so the ordering contract does not change then.
-        reapStale: async () => ({}),
+        // The claim-time and reap-timer legs run the real guarded reaper —
+        // C05 replaced C03's no-op stub without changing either call site.
+        reapStale: async (o: any) => await reapStale(env, { trigger: String(o?.trigger ?? "timer") }),
         signal: shutdown.signal,
       };
+
+      // The reap's MCP legs bind lazily: URL discovery runs at the first
+      // board/alert call, so an offline setup degrades inside the seams' own
+      // arms (the D22 interim contract) instead of touching the network at
+      // load. A success caches the transport; a miss retries on the next
+      // pass — the fleet config can gain an entry after plugin load without
+      // a restart, which is why question-notify re-resolves per push.
+      let boardCallTool: ((name: string, args: any) => Promise<any>) | null = null;
+      const openBoardClient = async (): Promise<any> => {
+        if (boardCallTool) return boardCallTool;
+        const url = await discoverMcpUrl(ctx, BOARD_SERVER_KEY, { projectConfig: true });
+        if (!url) return null;
+        const callTool = makeCallTool(url);
+        try {
+          const boards = asArray(await callTool("list_boards", {}));
+          const board = boards.find((b: any) => b?.title === env.config.board.boardTitle);
+          if (board) env.boardId = String(board.id);
+        } catch (err: any) {
+          log(`board id unresolved, card legs will degrade: ${String(err?.message ?? err)}`);
+        }
+        boardCallTool = callTool;
+        return callTool;
+      };
+      env.client = {
+        callTool: async (name: string, args: any) => {
+          const callTool = await openBoardClient().catch((err: any) => {
+            log(`dev-boards discovery failed: ${String(err?.message ?? err)}`);
+            return null;
+          });
+          if (!callTool) throw new Error(`no ${BOARD_SERVER_KEY} client (URL undiscovered)`);
+          return callTool(name, args);
+        },
+      };
+      // question-notify's call_service mechanics against the ADMIN tier (the
+      // readonly ha-mcp rejects service calls); the project-config discovery
+      // leg stays excluded — a machine-global entry is invisible to it.
+      env.callHA = async (toolName: string, args: any) => {
+        const url = await discoverMcpUrl(ctx, HA_SERVER_KEY);
+        if (!url) throw new Error(`no ${HA_SERVER_KEY} URL discovered`);
+        return makeCallTool(url)(toolName, args);
+      };
+
       if (typeof ctx?.tool?.transform === "function") {
         await ctx.tool.transform((editor: any) => {
           for (const spec of buildToolSpecs(env)) editor.add(spec);
         });
       } else {
         log("degraded: no ctx.tool.transform — lock tools not registered, store seams still load");
+      }
+
+      if (typeof ctx?.command?.transform === "function") {
+        // C01 fact 4's proven chain: transform + editor.add is how a plugin
+        // command joins the location registry; C06's tick lands here too.
+        try {
+          await ctx.command.transform((editor: any) => {
+            for (const spec of buildCommandSpecs(env, ctx)) editor.add(spec);
+          });
+        } catch (err: any) {
+          log(`command registration failed: ${String(err?.message ?? err)}`);
+        }
+      } else {
+        log("degraded: no ctx.command.transform — reap/status commands not registered");
       }
 
       try {
