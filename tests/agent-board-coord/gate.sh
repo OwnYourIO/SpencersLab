@@ -801,7 +801,8 @@ fi
 # positive guards: t12 still fences agents-sync outside the carve,
 # rulesync-surface c17 still fences pipeline-gates, and every cf-58 surface
 # has its own content suite. Infra dirs (charts/containers/services/
-# custom-values) stay OUTSIDE the allow-set.
+# custom-values) stay OUTSIDE the allow-set — the only exceptions are the
+# exact cf-86 files named below, never a directory.
 # cf-75 widening (agent-test, 2026-10-27; same per-contract enumeration):
 # C02 re-opens the pipeline-gates pair (its content suite is
 # tests/pipeline-gates/validation-fix.sh; rulesync-surface c17's gates
@@ -826,6 +827,13 @@ fi
 # on another ticket's already-landed folder buries every later check (same class as
 # the own-folder admits above). containers/wekan-mcp/* joins per the c8 union —
 # cf-68's create_list landed the container surface on this branch.
+# cf-86 widening (C06 test round, 2026-10-30): this branch now carries a
+# serving-model ticket, so t14 admits cf-86's plan folder and the exact files
+# its chunks declare (chart values, the strata profile ConfigMap template, the
+# gpu-ai overlay) plus that chart's tests tree — otherwise every dirty serving
+# tree mid-chunk reddens t14, and with it validation-fix t7. Rationale for
+# keeping the admits literal rather than manifest-driven: the c8 block of
+# tests/agent-board-coord/rulesync-surface.sh.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -865,11 +873,14 @@ if want t14; then
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
       .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
-      .agents/plans/2026-10-30-chore-coord-surface-grants.md) : ;;
+      .agents/plans/2026-10-30-chore-coord-surface-grants.md|\
+      .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
+      charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
+      services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits and the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits and the cf-86 plan-folder/serving-files admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

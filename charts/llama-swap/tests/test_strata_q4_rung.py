@@ -9,7 +9,8 @@
 # with the container cgroup at 100Gi (lockstep pair), UD-Q4_K_XL paths.
 # Negative pins: NO --batch, NO --layer-split, NO --prompt-cache 0, NO
 # --ple-io ram (session files are disabled by the first three; PLE stays mmap
-# per the v0.2.7 +28.8 GiB RAM-resident hazard).
+# per the v0.2.7 +28.8 GiB RAM-resident hazard), and NO --ple-gguf sidecar
+# (setup emits one only for ≤2-shard packs; this family has four shards).
 #
 # The Round-2 UD-IQ4_XS fallback (conv 32768 / 108Gi / 102400) is NOT a second
 # passing shape: it is a human-owned on-target outcome (first HIP session
@@ -23,9 +24,12 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 import yaml
 
+import llama_swap_testlib as L
 import strata_testlib as S
 
 _ok, _reason = S.env_ready()
@@ -160,10 +164,16 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
     joined = " ".join(S.arg_tokens(_profile()))
     tokens = set(S.cmd_flag_tokens(joined))
     banned_flags = {"--batch", "--layer-split", "--ple-io"}
+    assert tokens, "the q4 profile renders no flags at all — every negative pin below passes vacuously"
     assert not tokens & banned_flags, f"negative-pinned flags present in strata-q4.json: {sorted(tokens & banned_flags)}"
     assert "--prompt-cache 0" not in joined, "--prompt-cache 0 in the Q4 arm (disables session files)"
-    assert S.Q4_SLOT_SAVE_PATH in dict(S.arg_pairs(_profile())), (
-        "negative pins passed but the session path vanished — the pair is what makes the arm meaningful"
+    # The session path is a VALUE, not a flag: arg_pairs keys are flags, so
+    # membership in the key set can never hold for any correct profile.
+    pairs = dict(S.arg_pairs(_profile()))
+    assert pairs.get("--slot-save-path") == S.Q4_SLOT_SAVE_PATH, (
+        f"negative pins passed but the session path vanished — --slot-save-path is "
+        f"{pairs.get('--slot-save-path')!r}, want {S.Q4_SLOT_SAVE_PATH!r}; the pair is what "
+        "makes the arm meaningful"
     )
 
 
@@ -250,3 +260,73 @@ def test_c06_no_token_touch_for_the_q4_rung():
     for e in secrets:
         name = e["valueFrom"].get("secretKeyRef", {}).get("name")
         assert name == "hf-token", f"init consumes an unexpected Secret {name!r} for the ungated q4 pack"
+
+
+# --- AC4/AC6: the pack shape, then the live source it stages from (gated) -----
+
+
+@helm
+def test_c06_pack_profile_carries_no_ple_gguf_line():
+    """setup.py@v0.2.7 emits `--ple-gguf` only for packs of two shards or fewer
+    (`["--ple-gguf", ple] if len(shards) <= 2 else []`), and this family has
+    four. A guessed shard here is the wrong-weights failure, so the line's
+    absence is a pin, not an omission."""
+    args = dict(S.arg_pairs(_profile()))
+    assert "--ple-gguf" not in args, (
+        f"q4 profile carries --ple-gguf {args['--ple-gguf']!r} — a 4-shard pack gets no PLE "
+        "sidecar from setup, and a hand-written one points at the wrong weights"
+    )
+
+
+hf_gated = pytest.mark.skipif(
+    os.environ.get("RUN_HF_CHECK") != "1",
+    reason="evidence gate: RUN_HF_CHECK=1 re-reads the unsloth UD-Q4_K_XL tree the q4 pack stages from",
+)
+
+# Read 2026-10-30 from the HF tree API with no credential — the family lists
+# anonymously, which is what makes AC4's "no new secret material" true. The
+# chart's pack comment names these same four sizes; its SUM line (111,334,256,784)
+# is 398,000 B below the sum of its own cited shards, so the per-shard values
+# below are the authority and the comment waits on the docs round (TEST_SPEC
+# §9.12 records the discrepancy and who owes the fix).
+Q4_REPO = "unsloth/Qwen3.8-Flash-Next-GGUF"
+Q4_REF = "UD-Q4_K_XL"
+Q4_SHARD_BYTES = {
+    "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf": 10_946_624,
+    "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00002-of-00004.gguf": 49_859_583_136,
+    "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00003-of-00004.gguf": 49_376_141_504,
+    "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00004-of-00004.gguf": 12_087_983_520,
+}
+Q4_PACK_TOTAL = sum(Q4_SHARD_BYTES.values())
+
+
+@hf_gated
+def test_c06_q4_shard_family_is_the_four_shard_pack_it_stages_from():
+    """Churn guard for the pack source: the RAM/VRAM pair was sized for this
+    family's bytes, and a re-shard changes both the download and what setup
+    stages. Same discipline as the llama.cpp pick arms — the loader/setup rule
+    (llama_swap_testlib.hf_pick/hf_split_family) is mirrored here, so a tree
+    re-organization goes red in review instead of on the node."""
+    entries = L.hf_tree(Q4_REPO, Q4_REF)
+    shards = {e["path"]: int(e["size"]) for e in entries if str(e["path"]).endswith(".gguf")}
+    assert shards, f"no .gguf under {Q4_REPO}:{Q4_REF} — the pack source vanished or moved"
+    assert shards == Q4_SHARD_BYTES, (
+        f"{Q4_REPO}:{Q4_REF} shard set moved: {shards} != the pinned {Q4_SHARD_BYTES} — "
+        "re-run the source gate and re-pin through the test session"
+    )
+    assert sum(shards.values()) == Q4_PACK_TOTAL, (
+        f"family total {sum(shards.values())} != the {Q4_PACK_TOTAL} the envelope math counts"
+    )
+    paths = [e["path"] for e in entries]
+    picked = L.hf_pick(paths, Q4_REF)
+    declared = L.hf_split_info(picked)[2] if picked else 0
+    family = L.hf_split_family(paths, picked) if picked else []
+    assert picked and declared == 4 and len(family) == 4, (
+        f"{Q4_REF} no longer resolves to a complete 4-of-4 family (pick {picked!r}, "
+        f"declared {declared}, family {family}) — a partial pack serves as wrong weights"
+    )
+    staged = dict(S.arg_pairs(_profile())).get("--native") or ""
+    assert picked and staged.endswith(picked.rpartition("/")[2]), (
+        f"profile --native {staged!r} is not the primary shard of the live family "
+        f"({picked!r}) — the pack would stage from other files"
+    )

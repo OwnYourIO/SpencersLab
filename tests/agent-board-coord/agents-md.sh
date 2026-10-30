@@ -315,6 +315,11 @@ fi
 # on another ticket's already-landed folder buries every later check (same class as
 # the own-folder admits above). containers/wekan-mcp/* joins per the c8 union —
 # cf-68's create_list landed the container surface on this branch.
+# cf-86 widening (C06 test round, 2026-10-30): cf-86's plan folder plus the
+# exact serving files its chunks declare (chart values, the strata profile
+# ConfigMap template, the gpu-ai overlay) and that chart's tests tree — no
+# directory admits, and no other chart or service. Why not manifest-driven:
+# the c8 block of tests/agent-board-coord/rulesync-surface.sh.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -348,11 +353,14 @@ if want c7; then
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
       .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
-      .agents/plans/2026-10-30-chore-coord-surface-grants.md) : ;;
+      .agents/plans/2026-10-30-chore-coord-surface-grants.md|\
+      .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
+      charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
+      services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files widenings; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
