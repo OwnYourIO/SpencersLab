@@ -126,23 +126,33 @@ llama-swap:
       # block's 420 > 180 + 30 grace/unload invariant intact when doing so.
       strata:
         enabled: true
-        # cf-86 C01: the strata provisioning set grows the manual "abl"
-        # token — the SC117 GSQ-RCO-abliterated IQ3_XXS pack. Branch B of
-        # the chunk's catalog gate (2026-10-30): the pinned v0.2.7 setup
-        # catalog carries no abliterated family (zero abliterated/SC117 hits
-        # in setup.py; the qwen family pins the plain ISTA repo), so "abl"
-        # is the manual-pack routing key handled inside the chart's
-        # model-fetch args, and the value names the staged tier IQ3_XXS.
-        # SC117 is a public ungated pack — the fetch stays anonymous and NO
-        # token enters this chain (the keyless C-A posture holds until
-        # C02's download-only exception for the gated orca pack).
-        # Scalars only; the chart keeps the script, this block sets the
-        # two env scalars.
+        # cf-86 C01+C02: the strata provisioning set carries two manual
+        # routing keys — "abl" (SC117 GSQ-RCO-abliterated IQ3_XXS) and
+        # "orca" (orcarouter Uncensored IQ3_XXS, the U2 ruling's gated
+        # second rung). Both are branch B: the pinned v0.2.7 setup catalog
+        # carries neither family (zero abliterated/SC117 hits in setup.py,
+        # and ORCA.md: "no --family orca"), so the chart's model-fetch args
+        # pack them manually and the env values name the staged tiers.
+        # Token posture (R-d ruling, DECISIONS 2026-10-29): the orca bytes
+        # are HF-gated (resolve/main answers 401 + Bearer challenge), so the
+        # gated fetch consumes the EXISTING hf-token Secret via
+        # secretKeyRef — DOWNLOAD-ONLY, on this init container alone. The
+        # keyless C-A serve posture is untouched: no token, key or secret
+        # reference reaches the strata container, the inner config or any
+        # run-config profile; the suite pins both directions.
+        # Scalars plus the one sanctioned secretKeyRef; the chart keeps the
+        # script, this block sets the env entries.
         initContainers:
           model-fetch:
             env:
-              STRATA_QUANTS: "q3,abl"
+              STRATA_QUANTS: "q3,abl,orca"
               STRATA_MODEL_ABL: abl/IQ3_XXS
+              STRATA_MODEL_ORCA: orca/IQ3_XXS
+              HF_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: hf-token
+                    key: token
     service:
       strata:
         enabled: true
@@ -467,10 +477,13 @@ llama-swap:
     peers:
       strata:
         proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
+        # cf-86 wave (evidence/strata-peers-expected.yaml models_states): one
+        # route per landed inner arena — C01 abliterated, C02 orca.
         models:
           - qwen3.8-flash-next-strata
           - qwen3.8-flash-next-strata-strix
           - qwen3.8-flash-next-strata-abliterated
+          - qwen3.8-flash-next-strata-orca
         timeouts:
           responseHeader: 1800
           connect: 30
