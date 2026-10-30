@@ -94,22 +94,29 @@ def test_c02_inner_alias_unique_and_not_the_outer_orca_id():
     invisibly (the plan's frozen-id rule)."""
     cfg = S.inner_config(_docs())
     _model(S.ORCA_INNER_ID)
-    aliases = {}
+
+    def claimed(surface) -> list:
+        val = surface.get("aliases")
+        return [val] if isinstance(val, str) else list(val or [])
+
+    # The shipped alias surface is the run-config profile's `aliases` list (the
+    # inner supervisor's route keys) — model-level aliases are accepted too in
+    # case a rung spells them there.
+    holders = []
     for mid, m in cfg["models"].items():
-        for a in (m.get("aliases") or []):
-            aliases.setdefault(a, []).append(f"model:{mid}")
-    for mid, m in cfg["models"].items():
+        if ORCA_INNER_ALIAS in claimed(m):
+            holders.append(f"model:{mid}")
         prof_file = S.profile_file_of(m)
-        if prof_file:
-            alias = S.profile_json(_docs(), prof_file).get("swappabel_alias")
-            if alias:
-                aliases.setdefault(alias, []).append(f"profile:{prof_file}")
-    holders = aliases.get(ORCA_INNER_ALIAS, [])
+        if prof_file and ORCA_INNER_ALIAS in claimed(S.profile_json(_docs(), prof_file)):
+            holders.append(f"profile:{prof_file}")
     assert holders, (
-        f"no inner surface carries the frozen alias {ORCA_INNER_ALIAS!r} "
-        f"(inner aliases: {sorted(aliases)})"
+        f"no inner surface claims the frozen alias {ORCA_INNER_ALIAS!r} "
+        f"(aliases seen: {sorted({a for m in cfg['models'].values() for a in claimed(m)})})"
     )
-    assert len(holders) == 1, f"inner alias {ORCA_INNER_ALIAS} held by {holders} — aliases must be unique"
+    # Uniqueness is per route key, NOT global: primary/strix legitimately share
+    # the family alias qwen3.8-flash-next today, but one key resolving to two
+    # arenas would route a request ambiguously.
+    assert len(holders) == 1, f"inner alias {ORCA_INNER_ALIAS} claimed by {holders} — one key, one arena"
     assert ORCA_INNER_ALIAS != OUTER_ORCA_ID
 
 
@@ -120,7 +127,7 @@ def test_c02_matrix_alternatives_extend_to_o():
     cfg = S.inner_config(_docs())
     vars_ = (cfg.get("matrix") or {}).get("vars") or {}
     assert vars_.get("o") == S.ORCA_INNER_ID, f"matrix.vars.o = {vars_.get('o')!r}"
-    arenas = set(S.INNER_MATRIX_VARS)
+    arenas = set(S.INNER_MATRIX_VARS.values())  # combos hold resolved MODEL ids, not letters
     for combo in S.matrix_expansions(cfg).get("main", []):
         clash = combo & arenas
         assert len(clash) <= 1, f"matrix combo co-loads arenas {sorted(clash)}"
@@ -163,7 +170,16 @@ def test_c02_pack_paths_strata_data_shaped_and_distinct():
         val = args.get(flag) or ""
         assert val.startswith("/models/strata/Strata-data/"), f"{flag} = {val!r} outside Strata-data"
         assert val != primary.get(flag), f"{flag} reuses the IQ3_S path — orca would serve the primary's weights"
-    assert args.get("--tokenizer"), "--tokenizer (the pack's tokenizer dir) missing"
+    prof = _profile()
+    tok = prof.get("tokenizer")
+    assert isinstance(tok, str) and tok.startswith("/models/strata/Strata-data/"), (
+        f"profile-level tokenizer = {tok!r} — the run-config vocabulary spells tokenizer as a "
+        "top-level key beside args (setup.py@v0.2.7 SETUP_KEYS), never as an engine arg"
+    )
+    assert not any("tokenizer" in str(a) for a in S.arg_tokens(prof)), "tokenizer spelled as an engine arg"
+    assert tok != S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE).get("tokenizer"), (
+        "orca arena resolves the IQ3_S pack's tokenizer directory — the tokenizer dir rides inside each pack"
+    )
 
 
 @helm

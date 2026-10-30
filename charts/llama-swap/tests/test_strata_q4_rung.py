@@ -95,7 +95,7 @@ def test_c06_matrix_alternatives_over_all_five_arenas():
     cfg = S.inner_config(_docs())
     vars_ = (cfg.get("matrix") or {}).get("vars") or {}
     assert vars_.get("q") == S.Q4_ID, f"matrix.vars.q = {vars_.get('q')!r}"
-    arenas = set(S.INNER_MATRIX_VARS)
+    arenas = set(S.INNER_MATRIX_VARS.values())  # combos hold resolved MODEL ids, not letters
     combos = S.matrix_expansions(cfg).get("main", [])
     for combo in combos:
         clash = combo & arenas

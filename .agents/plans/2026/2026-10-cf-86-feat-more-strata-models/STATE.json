@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e77776738ffe0o3T6H95UMtL2m",
   "test_session": "ses_e762a6e57ffeKxIM263C9NJN2G",
-  "current_wave": 1,
+  "current_wave": 2,
   "updated_at": "2026-10-29",
   "kickoff": {
     "card": "Yb9sccTQ3wq2445ib",
@@ -49,18 +49,19 @@
   },
   "chunks": {
     "C01": {
-      "status": "dev-complete-test-repair-routed",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 2,
-      "review_rounds": 1,
-      "last_verdict": "DONE(dev-round-2, awaiting-review-2)",
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
       "dev_session": "ses_e75a13294ffebnCa7z8ID1ZPTa",
       "handoffs": [
         "2026-10-30 dev C01 (ses_e75a13294ffebnCa7z8ID1ZPTa): status NEEDS_INFO — implementation COMPLETE + render-verified (values.yaml +192 abl_pack manual-init path per catalog gate: setup.py@v0.2.7 provably cannot fetch SC117; configmap-strata-profile +2; services/gpu-ai/prod/values.yaml +18, STRATA_QUANTS=\"q3,abl\" STRATA_MODEL_ABL=\"abl/IQ3_XXS\", peers 3-id wave); 5/7 designed reds cleared; aislop clean; forbidden surfaces untouched. Blocked on validation_at_fault arms 1&2 (arenas keys-vs-values; --tokenizer vs top-level tokenizer key) + latent twins in C02/C06 test files — routed to test session (mechanical). Deviations recorded in dev session: manual pack staging; shared stock rt for --mtp (ORCA.md law); abl = pseudo-family routing key. On-target human notes: serve --plan check, +~76GB+1.4GiB PVC, q3-before-abl_pack init ordering precondition.",
         "2026-10-30 test-repair C01 (ses_e762a6e57ffeKxIM263C9NJN2G): DONE — both allegations adjudicated MECHANICAL against pinned-checkout sources (SETUP_KEYS top-level tokenizer; matrix_expansions returns model-ids). Repaired arenas keys→values in 3 files (incl. latent q4 twin), re-expressed tokenizer law as 4-part top-level assertion, fixed latent alias-surface fault (profile `aliases` list; per-route-key uniqueness of frozen alias). +2 additive AC-backed arms (inner alias no-shadow; init-env staging). C01 file 14/14 green; suite 52 failed/283 passed/3 skipped — residual == §9.3 designed pendings, no other green moved; aislop 100; TEST_SPEC §9.6 repair ledger. Deviation question re goldens: already ACCEPTED (test_stage.coord_ruling).",
         "2026-10-30 review C01 round 1 (ses_e7520fb43ffeg2KzxmzLZVK9CH): CHANGES_REQUESTED — validations re-run green (posture 52/283/3 verified 1:1, C01 file 14/14, aislop clean, everything else VERIFIED CLEAN incl. Branch-B gate forcing, SC117 public tree byte-match, profile byte-equality, keyless render). Findings: MAJOR values.yaml:1136 abl_dl uses curl — provably absent from pinned strata image (upstream Dockerfile apt lists + repo verify-step pin only git/c++); violates bake+verify law. MINOR: venv/gguf-py guards run after ~76GB downloads — move above. NIT: completed-un-mv'd .part wedges later boots. Fix-routed to dev session; review notes appended to chunks/C01.md.",
-        "2026-10-30 dev C01 round 2 (ses_e75a13294ffebnCa7z8ID1ZPTa): DONE (honesty note: round-1 launch never applied fixes — applied now, verified tree-first). All 3 findings fixed in values.yaml only: urllib.request downloader via $SRC/.venv/bin/python (setup's own stdlib path; byte-size pinned 47342144896+28800138432 re-verified live; C02 reuses same call w/ Authorization header); guards moved above mkdir/abl_dl; .part wedge cured (size==want→rc0 zero-requests; >want→wipe+refetch; Range-200 restart; 4-range-retries then loud fail keeping partial; never mv truncated). Validation: sh -n OK; embedded python functional harness (happy/truncate-resume/retry-keep/completion-cure/corrupt-wipe) ALL PASS; pytest C01 file 14 passed; full suite 52/283/3 unchanged residual map; aislop clean. Scope: 3 impl files only, tests untouched. New deviations: none (byte-pin = mechanism of finding-3 cure). Friction: heredoc-at-base-indent YAML law (commented in place); /tmp evidence doesn't survive sessions — record URLs not temp paths."
+        "2026-10-30 dev C01 round 2 (ses_e75a13294ffebnCa7z8ID1ZPTa): DONE (honesty note: first round-2 launch applied NOTHING — re-verified tree-first, applied now). All 3 findings fixed in values.yaml only: urllib.request downloader via $SRC/.venv/bin/python (setup's own stdlib path; byte pins 47342144896+28800138432 re-verified live; C02 reuses same call + Authorization header); guards moved above mkdir/abl_dl; .part wedge cured (size==want→rc0 zero-requests; >want→wipe+refetch; Range-200 restart; 4-range-retries then loud fail keeping partial; never mv truncated). Validation: sh -n OK; embedded-python functional harness ALL PASS; C01 file 14 passed; full suite 52/283/3 unchanged; aislop clean. Friction: heredoc-at-base-indent YAML law (commented in place); /tmp evidence doesn't survive sessions — record URLs, not temp paths.",
+        "2026-10-30 review C01 round 2 (ses_e7504eb56ffeK7JG3RQTPC64fz): APPROVED — all 3 round-1 findings cured, verified at 4 levels incl. live anonymous HF tree byte-match, 206-with-Range resume real, cross-host CDN hop preserves Range (measured), zero curl invocations in rendered script, no new tool deps beyond baked git/c++ + venv python; guard ordering rendered-line-verified; wedge semantics proven by two dash/python harnesses over the rendered code. Nothing else moved (profile deep-equality, keyless, peers wave, trio grep as designed; test-file diffs match §9.6 line-for-line, strictly stronger). Suite 52/283/3 1:1 residual, C01 file 14/14, preservation set 75 passed, aislop 100. Two new non-blocking nits in chunks/C01.md (fail-immediately on declared total; -s skip without size check) + DEFERRED: no suite arm pins the pack-script/downloader invariants — reviewer recommends an additive C02 test arm (no curl/wget, both byte literals, .setup-ABL marker) and C02 gated-reuse measured against the huggingface.co→us.aws.cdn.hf.co hop. next_suggested: commit C01, wave 2."
       ]
     },
     "C02": {
