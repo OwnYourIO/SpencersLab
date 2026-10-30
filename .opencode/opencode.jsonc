@@ -104,78 +104,6 @@
             "context": 8192
           }
         },
-        "kat-coder-q4": {
-          "modelID": "kat-coder-q4",
-          "name": "KAT Coder V2.5 Dev (Q4_K_M)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 262144
-          }
-        },
-        "kat-coder-q6": {
-          "modelID": "kat-coder-q6",
-          "name": "KAT Coder V2.5 Dev (Q6_K)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 262144
-          }
-        },
-        "kat-coder-q8": {
-          "modelID": "kat-coder-q8",
-          "name": "KAT Coder V2.5 Dev (Q8_0)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 262144
-          }
-        },
-        "kat-coder-q4-1m": {
-          "modelID": "kat-coder-q4-1m",
-          "name": "KAT Coder V2.5 Dev (Q4_K_M) - 1M",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 1010000
-          }
-        },
-        "kat-coder-q6-1m": {
-          "modelID": "kat-coder-q6-1m",
-          "name": "KAT Coder V2.5 Dev (Q6_K) - 1M",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 1010000
-          }
-        },
-        "kat-coder-q8-1m": {
-          "modelID": "kat-coder-q8-1m",
-          "name": "KAT Coder V2.5 Dev (Q8_0) - 1M",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 1010000
-          }
-        },
         "local/qwen3.8-27b": {
           "modelID": "local/qwen3.8-27b",
           "name": "Qwen3.8 27B Uncensored (Orca Q6_K, MTP)",
@@ -183,44 +111,53 @@
             "context": 262144
           }
         },
-        "qwen3-30b-a3b-q4": {
-          "modelID": "qwen3-30b-a3b-q4",
-          "name": "Qwen 3 30B A3B Instruct (Q4_K_M)",
+        // Ornith 1.5 122B: 262144 trained ceiling (model card), no rope scaling.
+        // SOLO in the name: over the node's resident-RAM budget, so each rung
+        // evicts (or OOMs alongside) everything else it meets.
+        "ornith-1.5-122b-q3": {
+          "modelID": "ornith-1.5-122b-q3",
+          "name": "Ornith 1.5 122B (UD-Q3_K_XL) - SOLO",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
           "limit": {
             "context": 262144
           }
         },
-        "qwen3-30b-a3b-q8": {
-          "modelID": "qwen3-30b-a3b-q8",
-          "name": "Qwen 3 30B A3B Instruct (Q8_0)",
+        "ornith-1.5-122b-q4": {
+          "modelID": "ornith-1.5-122b-q4",
+          "name": "Ornith 1.5 122B (UD-Q4_K_XL) - SOLO",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
           "limit": {
             "context": 262144
           }
         },
-        "qwen3-8b-q4": {
-          "modelID": "qwen3-8b-q4",
-          "name": "Qwen 3 8B (Q4_K_M)",
+        "ornith-1.5-122b-q5": {
+          "modelID": "ornith-1.5-122b-q5",
+          "name": "Ornith 1.5 122B (UD-Q5_K_XL) - SOLO",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
           "limit": {
             "context": 262144
           }
         },
-        "qwen3-8b-q8": {
-          "modelID": "qwen3-8b-q8",
-          "name": "Qwen 3 8B (Q8_0)",
-          "limit": {
-            "context": 262144
-          }
-        },
-        "qwen3-coder-next-q6": {
-          "modelID": "qwen3-coder-next-q6",
-          "name": "Qwen 3 Coder Next (Q6_K)",
-          "limit": {
-            "context": 262144
-          }
-        },
-        "qwen3-coder-next-q8": {
-          "modelID": "qwen3-coder-next-q8",
-          "name": "Qwen 3 Coder Next (Q8_0)",
+        "ornith-1.5-122b-q6": {
+          "modelID": "ornith-1.5-122b-q6",
+          "name": "Ornith 1.5 122B (UD-Q6_K_XL) - SOLO",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
           "limit": {
             "context": 262144
           }
@@ -668,6 +605,30 @@
             "context": 1010000
           }
         },
+        "qwen3.8-flash-next-heretic-q4": {
+          "modelID": "qwen3.8-flash-next-heretic-q4",
+          "name": "Qwen 3.8 Flash Next Heretic Uncensored (Q4_K_M, MTP) - SOLO",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 262144
+          }
+        },
+        "qwen3.8-flash-next-orca-q6": {
+          "modelID": "qwen3.8-flash-next-orca-q6",
+          "name": "Qwen 3.8 Flash Next Uncensored (Q6_K, MTP) - SOLO",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 262144
+          }
+        },
         "qwen3.8-flash-next-q3": {
           "modelID": "qwen3.8-flash-next-q3",
           "name": "Qwen 3.8 Flash Next (UD-Q3_K_XL, MTP)",
@@ -706,9 +667,49 @@
             "context": 262144
           }
         },
+        "qwen3.8-flash-next-strata-abliterated": {
+          "modelID": "qwen3.8-flash-next-strata-abliterated",
+          "name": "Qwen 3.8 Flash Next Abliterated (Strata IQ3_XXS arena, R9700)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          // Trained ceiling 262144; the engine refuses past it without rope
+          // scaling (documented experimental toggle in charts/llama-swap).
+          "limit": {
+            "context": 262144
+          }
+        },
+        "qwen3.8-flash-next-strata-orca": {
+          "modelID": "qwen3.8-flash-next-strata-orca",
+          "name": "Qwen 3.8 Flash Next Uncensored (Strata IQ3_XXS arena, R9700)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          // Trained ceiling 262144; the engine refuses past it without rope
+          // scaling (documented experimental toggle in charts/llama-swap).
+          "limit": {
+            "context": 262144
+          }
+        },
         "qwen38-ara": {
           "modelID": "qwen38-ara",
           "name": "Qwen3.8 27B heretic-ara (Q6_K-MTP)",
+          "limit": {
+            "context": 262144
+          }
+        },
+        "qwen38-heretic": {
+          "modelID": "qwen38-heretic",
+          "name": "Qwen3.8 27B Heretic Uncensored (Q4_K_M-mtp, MTP)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
           "limit": {
             "context": 262144
           }
@@ -759,18 +760,6 @@
           "capabilities": {
             "tools": true,
             "input": ["text", "image"],
-            "output": ["text"]
-          },
-          "limit": {
-            "context": 262144
-          }
-        },
-        "coder-next-ablit": {
-          "modelID": "coder-next-ablit",
-          "name": "Qwen3-Coder-Next 80B A3B abliterated (Q4_K_M)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
             "output": ["text"]
           },
           "limit": {

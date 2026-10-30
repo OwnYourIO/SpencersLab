@@ -110,13 +110,17 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": ["C01", "C02", "C03", "C04"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e74085f4cffeQm05vafkHSKL8B",
+      "handoffs": [
+        "2026-10-30 dev C05 round 1 (ses_e74085f4cffeQm05vafkHSKL8B): DONE — .opencode/opencode.jsonc ONLY: +4 landed-id registrations + 5 hygiene entries (ornith ladder 4 rungs q3-q6 per RENDER (chunk's q8 not served — deviation), orca-q6), names '- SOLO' suffix on over-budget rungs, ctx 262144 where render declares it, capabilities image only where render declares vision (both Strata arenas text-only), qwen38-heretic name byte-identical to render, insertions alphabetical, 82 keys 0 dupes. C06's q4 entry NOT created (frozen-id rule). Catalog file 2 failed/16 passed (residual = q4-crossing pair ONLY); FULL 9/333/7 = C06 7 + crossing 2, every message read; render sha byte-IDENTICAL vs HEAD (helm untouched — proven via stash/pop); blast+parity 94 passed; liveness 41/0; surface.sh + rulesync-surface.sh rc 0 (Q4-default conditional arm NOT taken — no user approval, absence guard green); mutation probes ×7 all bite; aislop clean. LEDGER CORRECTION (probe-measured): no_phantom's allow-list == C06-FINAL five ⇒ pre-registered q4 entry would PASS no_phantom+removed-13; the true q4 pin is the designed-red crossing pair + frozen-id rule + Notes. OPEN Q: strix served+routed but plan-omitted from hygiene — no add made; flagged for user call (run-end friction follow-up candidate). Machine-local gpu-moe catalog still names 9/13 ruled ids — USER-owned edit, recorded per AGENTS.md; pre-v2 .bak dead surface untouched.",
+        "2026-10-30 review C05 round 1 (ses_e73f7fc9affeksivsXZ2U6guQM): APPROVED — boundary verified (only jsonc + coord STATE dirty; zero moves charts/services/tests/goldens/rulesync), render byte-parity RE-PROVED independently via git-archive export (OFF dba1…==era-3; gpu-ai 44959… both; config.yaml 38,364 B/9c78… both — no stash/pop needed), catalog accounting 82 = 50+5+3+24 zero unclassified, removed-13 = 0 hits across 10 surfaces, trio 2/1/2, ornith-strata 0 hits (Shape-B absent), name/capability byte-compares pass, full suite 9/333/7 exact, RUN_HF_CHECK 41/0, aislop clean. ADJUDICATIONS: ornith q8 in chunk = stale parenthetical (no o122q8 exists anywhere; render-truth is the chunk's own method; q8 entry would phantom-redden) — deviation accepted; -SOLO + capabilities render-truth accepted; qwen38-heretic name byte-identical confirmed; DEV LEDGER CORRECTION SOUND (models_allowed == five incl q4 ⇒ crossing-2 not clearable at C05, trio[q4] fails on C05-FORBIDDEN surface; true pin = frozen-id + trio leg); U5 fidelity clean (no Strata pretence). MINOR-1 → test session: rulesync-surface.sh c8 allow-set lacks cf-86 plan-folder pattern (cf-83 D6 precedent widening) — until landed, run gate post-STATE-landing or CHUNK_BASE at landing commit. USER-BUCKET: strix catalog entry (plan-omitted); 10 pre-existing unroutable gpu-ai live rungs (nit-1). next: C06 dev clears final 2."
+      ]
     },
     "C06": {
       "status": "pending",
