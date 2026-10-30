@@ -222,15 +222,29 @@ def test_c01_memory_cgroup_and_engine_cap():
     assert req.get("memory") == "64Gi", f"request {req}"
     assert req.get("cpu") in ("8", 8, "8000m"), f"request {req}"
     limits = res.get("limits") or {}
-    assert limits.get("memory") == "96Gi", (
+    # cf-86 C06 lockstep law (DECISIONS "cf-86 envelope + timing decisions" /
+    # U8+Round-3): the cgroup pair is one UNIT — 96Gi with the 92160 engine cap
+    # while the Q4 rung is unwired, 100Gi with 95232 once it lands. Raising one
+    # leg alone is what #1601 exists to prevent, so only the two sanctioned
+    # pairs are legal; the exact final pair is pinned in test_strata_q4_rung.py.
+    pair = {
+        "96Gi": {"--memory-limit-mib": "92160"},
+        S.Q4_CGROUP_LIMIT: {"--memory-limit-mib": str(S.Q4_MEMORY_LIMIT_MIB)},
+    }
+    assert limits.get("memory") in pair, (
         f"limits {limits} — strata MUST be cgroup-bounded (2026-10-29 OOM: "
-        "unbounded pin + unbounded trio = kernel harvesting system pods)"
+        "unbounded pin + unbounded trio = kernel harvesting system pods) and "
+        f"only the sanctioned pairs {sorted(pair)} are legal"
     )
     cap = dict(S.arg_pairs(S.profile_json(_on(), S.PROFILE_PRIMARY_FILE))).get("--memory-limit-mib")
-    assert cap and int(cap) <= 96 * 1024, (
+    assert cap and int(cap) <= 100 * 1024, (
         f"--memory-limit-mib {cap!r}: the engine must be TOLD its cgroup "
         "(#1601 pairing) and size inside it — a limit without the flag "
         "just gets the arena OOM-killed mid-pin"
+    )
+    assert cap == pair[limits["memory"]]["--memory-limit-mib"], (
+        f"lockstep broken: cgroup {limits['memory']} with engine cap {cap!r} "
+        f"(pairing law: {pair[limits['memory']]})"
     )
     assert "amd.com/gpu" not in {**req, **limits}, (
         "the amd.com/gpu resource contradicts the privileged+hostPath device ruling"

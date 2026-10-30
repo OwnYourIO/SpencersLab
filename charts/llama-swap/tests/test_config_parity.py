@@ -96,15 +96,19 @@ def test_repl_tables_match_frozen_decisions():
     """Acceptance-5 support: the frozen tables must equal the arithmetic the
     user ruled (58 = golden-union - removed + C04-approved-new; gpu partition
     34+24). Pure table audit against the byte-untouched goldens — GREEN at
-    handoff by design; it fails only if a table drifts from the rulings."""
+    handoff by design; it fails only if a table drifts from the rulings.
+    cf-86 amendment (2026-10-29): the two new heretic rungs postdate the
+    goldens, so the identity is golden-union − removed + CF86_NEW_IDS and the
+    partition is 34+26 (DECISIONS 'cf-86 model/source decisions')."""
     g = set(L.all_models_of(L.golden_config("gpu")))
     a = set(L.all_models_of(L.golden_config("gpu-ai")))
     c04_new = set(L.C04_NEW_IDS["gpu-ai"]) - set(L.C04_LADDER_35B_IDS) | set(L.C04_LADDER_35B_IDS)
     derived = (g | a | c04_new) - set(L.REMOVED_IDS)
-    assert derived == set(L.CATALOG_IDS), f"CATALOG drift: {derived ^ set(L.CATALOG_IDS)}"
+    assert not set(L.CF86_NEW_IDS) & (g | a), "a cf-86 rung predates the goldens — table wrong"
+    assert derived | set(L.CF86_NEW_IDS) == set(L.CATALOG_IDS), f"CATALOG drift: {derived | set(L.CF86_NEW_IDS) ^ set(L.CATALOG_IDS)}"
     assert len(L.REMOVED_IDS) == 13
     assert set(L.REMOVED_IDS) <= (g | a), "a REMOVED id never existed in the goldens"
-    assert len(L.GPU_ENABLED_IDS) == 34 and len(L.GPU_ECHO_IDS) == 24
+    assert len(L.GPU_ENABLED_IDS) == 34 and len(L.GPU_ECHO_IDS) == 26
     assert set(L.ENABLEMENT["gpu-ai"]["enabled"]) == set(L.CATALOG_IDS)
     assert not L.ENABLEMENT["gpu-ai"]["echo"]
     assert set(L.GPUAI_LOCAL_CATALOG_IDS) <= set(L.GPU_ECHO_IDS), "gpu-ai-local rungs are gpu echoes (P5)"
@@ -304,9 +308,13 @@ def _assert_strata_peers(cluster: str, peers) -> None:
     models = p.get("models") or []
     assert models and models[0] == expected["models_must_include"][0], f"models {models}"
     assert list(dict.fromkeys(models)) == models, f"duplicate peer models: {models}"
-    assert set(models) == set(expected["models_allowed"]) or set(models) == set(expected["models_must_include"]), (
-        f"models {models} is neither the C03 interim nor the C05 final sanctioned set "
-        f"{sorted(expected['models_allowed'])}"
+    # cf-86: the peers list grows one id per landed Strata rung, so the exact
+    # ORDERED list must equal one sanctioned wave in models_states — "any
+    # subset of the final five" would let a phantom (or a dropped strix) pass.
+    assert models in expected["models_states"], (
+        f"models {models} is not one of the sanctioned peer waves "
+        f"{expected['models_states']} — cf-86 grows this list per chunk; "
+        "wave changes route through the test session, never a dev edit"
     )
 
 

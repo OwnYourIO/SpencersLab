@@ -1,0 +1,44 @@
+{
+  "aliases": [
+    "qwen3.8-flash-next"
+  ],
+  "api_key": "none",
+  "args": [
+    "--pack /models/strata/Strata-data/packs/iq3_s",
+    "--native /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf",
+    "--ple-gguf /models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf",
+    "--expert-profile /models/strata/Strata/data/expert-profile.bin",
+    "--expert-cache 24576",
+    "--resident-budget-gib 55",
+    "--prefill 16384",
+    "--max-context 262144",
+    "--kv int8",
+    "--spec 4",
+    "--spec-min-p 0.5",
+    "--mtp-window 8192",
+    "--mtp /models/strata/Strata-data/mtp/rt"
+  ],
+  "backend": "hip",
+  "env": {
+    "STRATA_HC_UPMIX": "1",
+    "STRATA_HIP_WMMA": "1",
+    "STRATA_PA_FAST": "1",
+    "STRATA_PF_FUSED": "1",
+    "STRATA_PF_GEMM": "1",
+    "STRATA_PF_SWITCH_MIN_T": "4096",
+    "STRATA_PREFILL_STREAM_MIN": "128",
+    "STRATA_SELECT_WMMA": "1"
+  },
+  "exe": "/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata",
+  "gpu": [
+    0
+  ],
+  "host": "127.0.0.1",
+  "lib_dirs": [
+    "/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo"
+  ],
+  "model_name": "qwen3.8-flash-next",
+  "parallel": 4,
+  "tokenizer": "/models/strata/Strata-data/packs/iq3_s/tokenizer",
+  "user_args": []
+}

@@ -166,6 +166,141 @@ SECRET_CHAIN_TOKENS = [
 # wiring tests assert render==evidence, so drift between the two is loud.
 PEERS_PROXY = f"http://{STRATA_OBJECT_NAME}.{NAMESPACE}.svc.cluster.local:8080"
 
+# Peers evidence is a WAVE TABLE, not one list: cf-86 grows the outer
+# models_allowed one id per landed Strata rung (C01 → C02 → C06), and the
+# suite must stay correct at every intermediate wave because dev lands the
+# chunks in order. models_allowed stays the C06-final set (the five frozen
+# ids); models_states pins every sanctioned intermediate list, oldest first.
+# A peers list that matches no state is a phantom or a lost entry.
+def strata_peers_evidence() -> dict:
+    if not PEERS_EVIDENCE.exists():
+        raise AssertionError(f"{PEERS_EVIDENCE.name} evidence is missing")
+    data = yaml.safe_load(PEERS_EVIDENCE.read_text())
+    if not isinstance(data, dict) or not isinstance(data.get("strata"), dict):
+        raise AssertionError(f"{PEERS_EVIDENCE.name} must carry a strata: mapping")
+    ev = data["strata"]
+    states = ev.get("models_states")
+    if not isinstance(states, list) or not states:
+        raise AssertionError(
+            f"{PEERS_EVIDENCE.name} needs models_states — every wave's exact "
+            "ordered peer list is pinned so consumers stay wave-correct"
+        )
+    final = ev.get("models_allowed")
+    if not isinstance(final, list) or not final or states[-1] != final:
+        raise AssertionError(
+            f"{PEERS_EVIDENCE.name}: last models_states must equal models_allowed "
+            "(the ruled final peer set)"
+        )
+    prev: set = set()
+    for i, ids in enumerate(states):
+        if not isinstance(ids, list) or not ids or len(set(ids)) != len(ids):
+            raise AssertionError(f"models_states[{i}] must be a non-empty duplicate-free list")
+        if not set(ids) <= set(final):
+            raise AssertionError(f"models_states[{i}] names a peer outside the final set")
+        if not prev <= set(ids):
+            raise AssertionError(f"models_states[{i}] drops a peer an earlier wave served")
+        prev = set(ids)
+    return ev
+
+
+def expected_strata_peers(served_model_ids) -> list:
+    """The sanctioned ordered peers list for the strata rungs this render
+    actually serves (wave lookup against models_states)."""
+    ev = strata_peers_evidence()
+    served = set(served_model_ids)
+    for ids in ev["models_states"]:
+        if set(ids) <= served and served <= set(ev["models_allowed"]):
+            if set(ids) == (served & set(ev["models_allowed"])):
+                return ids
+    raise AssertionError(
+        f"served strata ids {sorted(served)} match no sanctioned peers wave — "
+        f"states {[sorted(s) for s in ev['models_states']]}"
+    )
+
+# --- cf-86 frozen ids / pins (plan 2026-10-29 + DECISIONS "Renumap +
+# final-shape decisions" + C06 FINAL pins) -----------------------------------
+# The five inner-matrix ids frozen by the plan; C05 consumes them verbatim and
+# the peers evidence lists them in this order. Profile filenames are frozen by
+# the chunk cmd literals (C01 "--profile /profile/strata-abliterated-iq3_xxs.json",
+# C02 strata-orca-iq3_xxs.json, C06 strata-q4.json).
+ABL_ID = "qwen3.8-flash-next-strata-abliterated"        # C01
+ORCA_INNER_ID = "qwen3.8-flash-next-strata-orca"        # C02
+Q4_ID = "qwen3.8-flash-next-strata-q4"                  # C06
+PROFILE_ABL_FILE = "strata-abliterated-iq3_xxs.json"
+PROFILE_ORCA_FILE = "strata-orca-iq3_xxs.json"
+PROFILE_Q4_FILE = "strata-q4.json"
+INNER_IDS = (PRIMARY_ID, STRIX_ID, ABL_ID, ORCA_INNER_ID, Q4_ID)
+# Inner matrix letters frozen by the chunks: vars grow p|s -> +c (C01) -> +o
+# (C02) -> +q (C06); every set must keep them ALTERNATIVES.
+INNER_MATRIX_VARS = {
+    "p": PRIMARY_ID, "s": STRIX_ID, "c": ABL_ID, "o": ORCA_INNER_ID, "q": Q4_ID,
+}
+# C02 gated-pack marker (manual-pack idempotency contract).
+ORCA_PACK_MARKER = "/models/strata/.pack-orca"
+
+# C06 FINAL envelope (U8 + Round-3, DECISIONS authority — a deviation re-opens
+# the gate): the Q4 rung rides its OWN pair (cgroup 100Gi + engine 95232), the
+# IQ3_S/IQ3_XXS rungs keep the 92160/96Gi pair. Round-3 preconditions: session
+# files are disabled by --batch / --layer-split / --prompt-cache 0, and PLE
+# stays mmap (no --ple-io ram) per the v0.2.7 +28.8 GiB RAM-resident hazard.
+Q4_MEMORY_LIMIT_MIB = 95232
+Q4_CGROUP_LIMIT = "100Gi"
+Q4_CONV_CACHE_MIB = 8192
+Q4_CONV_CACHE_SLOTS = 16
+Q4_SLOT_SAVE_PATH = "/models/strata/sessions"
+Q4_FORBIDDEN_TOKENS = ("--batch", "--layer-split", "--ple-io")
+
+# Inner model id -> the run-config file its cmd's --profile names. The
+# strata-profile ConfigMap's key set must equal exactly this table for the
+# arenas the inner config serves — a profile with no arena (or an arena with
+# no profile) is a render bug, and the count grows one per landed rung.
+INNER_PROFILE_FILES = {
+    PRIMARY_ID: PROFILE_PRIMARY_FILE,
+    STRIX_ID: PROFILE_STRIX_FILE,
+    ABL_ID: PROFILE_ABL_FILE,
+    ORCA_INNER_ID: PROFILE_ORCA_FILE,
+    Q4_ID: PROFILE_Q4_FILE,
+}
+
+
+def expected_profile_files(inner_ids) -> set:
+    served = set(inner_ids)
+    unknown = served - set(INNER_PROFILE_FILES)
+    assert not unknown, f"inner arena ids outside the frozen profile table: {sorted(unknown)}"
+    return {INNER_PROFILE_FILES[i] for i in served}
+
+
+def profile_files(docs) -> set:
+    """Key set of the rendered strata-profile ConfigMap (the run-config files
+    the supervisor mounts)."""
+    cm = by_name_kind(docs, "ConfigMap", CM_PROFILE)
+    return set(cm.get("data") or {})
+
+
+def profile_file_of(model: dict) -> str:
+    """The /profile/<file> name a serve cmd points at ('' when absent)."""
+    m = re.search(r"--profile\s+(\S+)", str(model.get("cmd") or ""))
+    return m.group(1).rsplit("/", 1)[-1] if m else ""
+
+
+def serve_path_secret_hits(docs) -> list[str]:
+    """The C-A keyless law, scoped to the SERVE path: strata main container,
+    the inner supervisor config, and every rendered run-config profile. cf-86
+    C02 (R-d ruling) sanctions the hf-token Secret as a DOWNLOAD-ONLY consumer
+    on the model-fetch init, so initContainers are deliberately NOT part of
+    this scan — test_strata_orca_rung.py pins that exception's placement."""
+    hits = []
+    pod = strata_pod(docs)
+    for ctr in pod["spec"].get("containers") or []:
+        blob = yaml.safe_dump(ctr)
+        hits += [f"container {ctr.get('name')}: {tok}" for tok in SECRET_CHAIN_TOKENS + ["HF_TOKEN"]
+                 if tok in blob]
+    cm_profile = by_name_kind(docs, "ConfigMap", CM_PROFILE)
+    blob = yaml.safe_dump(cm_profile.get("data") or {})
+    hits += [f"{CM_PROFILE}: {tok}" for tok in SECRET_CHAIN_TOKENS if tok in blob]
+    hits += [f"inner config: {tok}" for tok in SECRET_CHAIN_TOKENS if tok in yaml.safe_dump(inner_config(docs))]
+    return hits
+
 
 # ---------------------------------------------------------------------------
 # Environment gating
