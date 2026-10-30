@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-cf-89-feat-wekan-mcp-board-provisioning",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e72e3c15cffeLcluMGX4vo90XA",
   "test_session": "ses_e72233dbaffeZYIO8UwqgZb1IT",
   "current_wave": 1,
@@ -98,6 +98,12 @@
       "role": "agent-test (C01+C02 wave)",
       "session": "ses_e72233dbaffeZYIO8UwqgZb1IT",
       "result": "status: DONE | files: tests/wekan-mcp/board-provisioning.sh (new, t1-t7), rest-overview-v102.sh (new, t1-t5), tools.sh/skill-surface.sh/create-list.sh count pins 27→31 | red-at-base + fixture green-after + 3 mutation falsifications proven | LIVE PROBE AC9: dev-boards bot IS AI-Dev board admin (create_rule 2iQ3MtQZhM778b8nT ok, remove_rule ok, zero residue) — no user grant follow-up | open_questions→coord: (1) board-context.sh t4 pre-existing red → WAIVED as known-red for cf-89 (cf-70 drift, not owned here; follow-up card at close) (2) create-list.sh t2 single-hunk pin → C01 must land server.py as ONE additive hunk (coord ruling, passed to dev)"
+    },
+    {
+      "at": "2026-10-30",
+      "role": "agent-review (final whole-plan)",
+      "session": "ses_e715a8fbfffe4mI5dQh9IT5NCh",
+      "result": "verdict: APPROVED | range 3a7995579..bc30af6f6: full suite re-run independently green (board-context t4-only waived, re-proved byte-identical at main in detached worktree; non-vacuity re-proven); aislop 100/0/0; registry AST 14+17=31, README/call-shapes 1:1; server.py 244/0 one hunk; wekan.py + Dockerfile + pyproject + services/charts/generated 0-diff; forbidden scope absent; card-ask coverage complete with color/permission correctly absent per blessed research verdict; zero probe residue live | findings: 1 new nit (silent malformed-member skip in list_board_members — one log.warning fix) | deferred: post-bump live tools/list probe (deployed dev-boards still 26), board-context t4 pin card, server.py size re-anchoring ticket, BOARD_COLORS doc correction card"
     }
   ]
 }
