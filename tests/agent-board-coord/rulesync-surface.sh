@@ -49,6 +49,11 @@
 # body/command deltas all stay satisfiable under the new wording (slug,
 # session and custom field all still occur; the reworded command sentence
 # still names both substrings).
+# cf-86 posture: c8-only widening — C05 landed catalog + plan-folder commits
+# on this branch; its chart/tests/evidence folders were already admitted, but
+# its own plan folder was not, so any dirty or untracked plan-folder state
+# (mid-chunk bookkeeping, this round's rulesync-surface.sh re-pin) read as
+# scope escape.
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF is retained only for c1's
@@ -453,6 +458,12 @@ fi
 # folders ride the changed-paths walk; guards red on landed folders bury later checks.
 # merge2 round (2026-10-31): cf-88 lands a ROOT plan doc, not a folder — admitted
 # whole like the folders; question-notify stays admitted for CHUNK_BASE runs.
+# cf-86 widening (2026-10-30, same D6 precedent): the more-strata-models
+# ticket's plan folder joins the admit list — its bookkeeping commits (STATE
+# handoffs, approved chunk files) land on this branch like every ticket since
+# cf-58, and any untracked/dirty plan-folder state reddened c8 before then.
+# Inline literal per the A9 window-grep convention (agent-perms A9's pinned
+# slug loop does NOT demand this slug: cf-86 lands no t14/c7 block admits).
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -481,6 +492,7 @@ if want c8; then
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
+      .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
       .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
       .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
@@ -490,7 +502,7 @@ if want c8; then
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder) and cf-72 (own plan folder) widenings (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder) and cf-86 (plan folder) widenings (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----
