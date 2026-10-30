@@ -1015,3 +1015,202 @@ EVIDENCE.md §13 section they gate on has landed).
 * C04-1..5 -> procedure A-layer ×7 (hard now) + post-fix B-layer validators ×5
   (gated) — the recorded-attempt half is exactly "review re-runs criteria 1-5
   read-only against recorded artifacts"
+
+## 9. cf-86 feat-more-strata-models — C01..C06 contracts (test session, 2026-10-29/30)
+
+Ticket: `.agents/plans/2026/2026-10-cf-86-feat-more-strata-models` (branch
+`cf-86-feat-more-strata-models`). Two ablated Strata arenas (C01 SC117
+abliterated IQ3_XXS, C02 gated orcarouter IQ3_XXS), two llama.cpp heretic
+rungs (C03 flash-next Q4_K_M, C04 27B Q4_K_M-MTP), the provider catalog
+(C05) and the FINAL Shape-A-tweak Strata Q4 arena (C06). Frozen ids/files come
+from DECISIONS "Renumap + final-shape decisions" + the C06 FINAL pin block;
+the peers evidence and every golden/frozen table are test-writer property —
+dev edits surfaces, never these files.
+
+### 9.1 Files written
+
+* `test_strata_abliterated_rung.py` (C01) — arena + residency-contract
+  equality with the primary, serve-flag surface ⊆ {--profile,--host,--port},
+  matrix ⊇ {p,s,c} with the no-two-arenas-per-combo law, profile ConfigMap
+  key set == the profiles the served arenas name, run-config shape
+  (`model_name: qwen3.8-flash-next-abliterated-iq3_xxs`, `api_key "none"`,
+  `user_args []`, exe/cwd/backend identity = primary's), envelope equality
+  with the primary (#1601 pair + conversation-cache arms), Strata-data path
+  SHAPE + distinctness from the IQ3_S pair, node-bleed flag absence
+  (--ple-io/--batch/--layer-split/--prompt-cache/--vision), strip-list arm,
+  keyless-serve guard, peers-wave equality.
+* `test_strata_orca_rung.py` (C02) — arena + contract, inner alias
+  `qwen3.8-flash-next-orca` unique across model aliases AND profile
+  `swappabel_alias` and never equal to the outer `…-orca-q6`, matrix `o` +
+  alternation, four-profile ConfigMap + IQ3_XXS-orca shape with the primary's
+  memory declaration verbatim, pack-path shape/distinctness, **token-placement
+  law** (`HF_TOKEN` via `secretKeyRef: hf-token` on the model-fetch init — and
+  ONLY there; serve path/inner `apiKeys`/every profile stays keyless),
+  manual-pack invariants (`.pack-orca` marker named, `fail()` helper kept, no
+  `rm -rf` of Strata-data), peers four-id wave.
+* `test_heretic_rungs_flashnext.py` (C03) — exact expansion id
+  `qwen3.8-flash-next-heretic-q4` (no sibling variant), mmap-regime legs
+  compared against the DONOR's rendered legs (`-ngl 99`, the byte-exact `-ot`
+  string, `--load-mode mmap`, `--fit off`) rather than restated, 262144 only,
+  gate-verified `-hf`, draft-mtp n-max 2 (the pack carries MTP), no preload and
+  no services models-layer override, `fnher` in `solo` only, the two-mmap-
+  rungs-never-co-load law, gpu echo macro-free, chart-default render family-
+  off, RUN_HF_CHECK-armed liveness for BOTH cf-86 refs in one network pass.
+* `test_heretic_rungs_27b.py` (C04) — exact id `qwen38-heretic`, dense regime
+  (-ngl 999 / --load-mode none / -np 1, compared against sibling `qwen38-ara`)
+  with the MoE/mmap legs asserted ABSENT (the regime-difference proof the chunk
+  demands), `-c 262144`, gate-verified `-hf`, embedded-MTP (no `-hfd` draft)
+  with draft-mtp n-max 2, ttl 300, `q38her` in `main` only + never-two-dense-
+  per-combo, no preload / no models-layer entry, gpu echo, no second raw-cmd
+  escape hatch.
+* `test_catalog_contract.py` (C05) — a comment-respecting JSONC loader (URLs
+  carry `//`), presence+shape (modelID==key, `limit.context` 262144,
+  `capabilities.tools: true`, no invented `limit.output`) for the cf-86 new
+  ids; the hygiene half read from the RENDER (enabled `ornith-1.5-122b-*` +
+  `qwen3.8-flash-next-orca-q6` + `qwen3.6-35b-a3b-q6`), the card's already-
+  served asks verified, the **no-phantom arm** (catalog key ⊆ render models ∪
+  render aliases ∪ peers-routed arenas ∪ `:tags`/`:caption` workload aliases —
+  the allow-list is explicit so review counts it), the ruled 13 never return,
+  trio grep (chart+service+catalog) per new id, provider settings/
+  `default_agent: plan` byte-stable, the Q6-default absence guard (§9.4), and
+  the ornith Shape-B absence-arm.
+* `test_strata_q4_rung.py` (C06) — arena + contract + five-way alternation
+  (no combo with two arenas, all five reachable), the FINAL pin block verbatim
+  (`--conversation-cache-mib 8192`, `…-slots 16`,
+  `--slot-save-path /models/strata/sessions`, `--memory-limit-mib 95232`),
+  UD-Q4_K_XL path markers (shape + "Q4" class marker, names never guessed),
+  negative pins (--batch / --layer-split / --prompt-cache 0 / --ple-io absent,
+  session path present), four earlier profiles byte-unchanged with IQ3_S
+  keeping 92160, the 100Gi↔95232 lockstep (requests stay 64Gi, grace stays
+  420), peers five-id final order, init `q4` token + `STRATA_MODEL_Q4:
+  unsloth/UD-Q4_K_XL` + idempotent `mkdir -p /models/strata/sessions`, and no
+  new Secret consumer (unsloth ungated).
+* `evidence/strata-profiles-pre-cf86/{strata-iq3_s.json,
+  strata-strix-iq3_s.json}` + `PROVENANCE.md` — the pre-cf-86 run-config
+  captures the "existing profiles byte-unchanged" arms compare against
+  (branch tip `4f7126689`, parsed-JSON equality: helm re-wrap is not behavior).
+* `evidence/strata-peers-expected.yaml` — re-authored with `models_states`:
+  the wave table (2→3→4→5 ordered peer lists) that keeps the SAME immutable
+  suite correct between chunks. `models_allowed` stays the C06-final five.
+* `strata_testlib.py` — cf-86 constants (ABL/ORCA/Q4 ids, profile files,
+  `INNER_MATRIX_VARS`, `ORCA_PACK_MARKER`, the Q4 envelope + negative-pin
+  tuple) plus `strata_peers_evidence`/`expected_strata_peers` (the wave law,
+  validated on load), `INNER_PROFILE_FILES`/`expected_profile_files`/
+  `profile_files`/`profile_file_of`, and `serve_path_secret_hits` (the
+  keyless law scoped to the serve path, §9.2). Additions only.
+* `llama_swap_testlib.py` — `CF86_NEW_IDS`/`CF86_NEW_FAMILY`/`CF86_HF_REFS`
+  (the two refs verified against the live HF API by this session) /
+  `CF86_MATRIX_VARS` (letter→id) / `CF86_SET_ADDITIONS` /
+  `CF86_MOE_OFFLOAD_LEG`, and the frozen roster tables grown by exactly the
+  two new ids (CATALOG 58→60, GPU_ECHO 24→26, GPUAI_LOCAL 20→22 — partition
+  60 = gpu 34+26 / gpu-ai 60+0).
+
+### 9.2 Amendments to existing files (never weaken; re-expression ledger)
+
+* `test_config_parity.py::test_repl_tables_match_frozen_decisions` — the
+  frozen-table identity is now golden-union − REMOVED + `CF86_NEW_IDS` (the
+  two rungs postdate the byte-untouched goldens, which stay byte-untouched)
+  and the partition assertion moves to 34+26. New arm: a cf-86 id may not
+  predate the goldens.
+* `test_config_parity.py::_assert_strata_peers` and
+  `test_flashnext_blast_radius.py::_cf77_peers_carved` and
+  `test_strata_wiring.py` peers arms — subset-of-final semantics replaced by
+  exact ordered equality against a sanctioned `models_states` wave (a subset
+  of the five would let a phantom or a dropped `strix` through).
+* `test_strata_wiring.py::test_c03_extract_and_render_yields_on_shape_keyless`
+  and the outer-shadow/preload arms — pinned pair {primary,strix} → the wave
+  law / `S.INNER_IDS` (five arenas), so the guards cover C01/C02/C06 without
+  being re-written per chunk.
+* `test_flashnext_blast_radius.py` — cf-86 delta allowances: the gpu-ai model
+  additions must be exactly `CF86_NEW_IDS` (each live, not echo), the gpu
+  roster may gain exactly those two as fail-fast echoes, and `matrix` moves
+  from byte-equality to `_cf86_matrix_violations`: baseline vars byte-equal,
+  new vars ⊆ the pinned letters with pinned ids, no baseline DNF combo lost,
+  and every NEW combo must actually pair a cf-86 rung (a re-pairing of
+  existing rungs changes co-residency for models this ticket does not own).
+  Everything else in that file stays strict.
+* `test_strata_render.py::test_c01_memory_cgroup_and_engine_cap` — the 96Gi
+  pin becomes the sanctioned PAIR set {96Gi ↔ 92160, 100Gi ↔ 95232} with an
+  explicit lockstep assertion (C06 raises both legs together; either leg
+  alone is what #1601 exists to prevent). The exact final pair is pinned
+  again in `test_strata_q4_rung.py`.
+* C01's "no HF_TOKEN/secretKeyRef anywhere in the strata pod chain" is
+  re-expressed as two arms, not relaxed: the SERVE path (containers, inner
+  config, profiles) is keyless unconditionally (`serve_path_secret_hits`),
+  and while the orca arena is unserved the init chain must be token-free too.
+  From C02 on, `test_strata_orca_rung.py` owns the R-d download-only
+  exception and pins its placement. Contract preserved; scope made explicit.
+* Model-dir/pack dir NAMES are not pinned (C01/C02/C06 gates parameterize
+  them: "never guessed"). The executable part is path SHAPE (under
+  `/models/strata/Strata-data/`, Q4-class marker) + distinctness from the
+  IQ3_S primary's files — an arena pointing at another arena's weights is the
+  failure those arms catch.
+
+### 9.3 Red/green at write time (helm on PATH, gates off)
+
+`python3 -m pytest charts/llama-swap/tests -q` → **59 failed, 274 passed,
+3 skipped** (baseline before this session's work: 264 passed / 2 skipped — no
+previously green test was weakened).
+
+RED (implementation-missing; each message names its chunk/id): C01 7,
+C02 8, C03 6, C04 7, C06 7, C05 13 (5 new-id presence + 5 trio greps +
+hygiene + no-phantom + removed-13), and 11 from pre-existing files that the
+frozen-table growth turns red by design: `test_config_parity`
+model-id-sets/echo-shape/CR5-display ×8, `test_new_roster` roster-exactness
+×2, `test_config_schema` families-composition audit ×1 — all clear when
+C03/C04 land the rungs (AC3 "roster/schema approved-ID tables").
+
+GREEN (preservation, must stay green): pre-cf-86 profile deep-equality (C01/
+C02/C06), serve-path keyless (C01/C02/C06), inner-config strip list, profile/
+arena agreement, peers-wave law at the current two-arena state, matrix no-co-
+load laws, chart-default family-off, gpu echo macro-free, no-preload and no-
+models-layer arms, catalog card-ask greps (27B Q4/Q6, flash-next Q4 at
+262144 — already served today), provider-settings stability, the Q6-default
+absence guard and the ornith Shape-B absence arm.
+
+ARMED evidence (run by this session, not in the default suite):
+`RUN_HF_CHECK=1 pytest test_heretic_rungs_flashnext.py::test_c03_hf_pack_
+resolves_live` → passed (both cf-86 refs resolve through the loader mirror:
+`spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M`,
+`0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp`);
+`RUN_HF_CHECK=1 pytest test_hf_liveness.py` → passed (no existing ref moved).
+
+### 9.4 Conditionals NOT executed
+
+* C05's Q4-default routing flip (U6): no user approval recorded, so the arm
+  is a non-asserted conditional (§5.5 lineage). Its executable half is the
+  absence guard: the pipeline-models combination bullet and the gpu-ai
+  favorites row must still route to `gpu-ai/qwen3.8-flash-next-strata`. If
+  the user rules the flip in, the re-pin of `tests/pipeline-models/surface.sh`
+  + `tests/agent-board-coord/rulesync-surface.sh` + `rulesync generate` is a
+  test-session step — those two scripts were not touched or run by this
+  session.
+* C06's UD-IQ4_XS fallback (conv 32768 / 108Gi / 102400) is deliberately NOT
+  a second passing shape: it triggers only from the on-target HIP session
+  save/restore gate, and the revert is a test-session re-pin with the
+  DECISIONS citation.
+* On-target human gates stay out of the suite (never agent commands): the
+  `strata serve --plan` PLE-mmap confirmation, the models-PVC capacity spot
+  check, the first HIP save/restore round-trip, and the `--pack`/native path
+  existence on the claim.
+
+### 9.5 Trace: acceptance criteria -> tests
+
+* C01-2/-3/-4/-5/-6 -> `test_strata_abliterated_rung.py` (entry/matrix,
+  profile+envelope, strip list, keyless, peers wave) +
+  `evidence/strata-peers-expected.yaml` states.
+* C02-2/-3/-4/-5/-6 -> `test_strata_orca_rung.py` (arena/alias/matrix/
+  profiles, token placement both directions, pack-step invariants, peers).
+* C03-1/-2/-3/-4 -> `test_heretic_rungs_flashnext.py` (id/legs/-hf/MTP,
+  fnher-solo-only, mmap co-load law, gpu echo + chart-default off); C03-5 ->
+  the armed liveness arm.
+* C04-1/-2/-3/-4 -> `test_heretic_rungs_27b.py` (id/regime-difference proof/
+  -hf/embedded MTP/ttl, q38her-main-only + dense co-load law, no preload or
+  models-layer entry, gpu echo, rana escape hatch intact).
+* C05-1/-2/-3/-5 -> `test_catalog_contract.py` (presence+shape, no-phantom +
+  removed-13, card-ask greps, trio grep + provider stability); C05-4 ->
+  §9.4 conditional guard.
+* C06-1/-2/-3/-4/-5/-6 -> `test_strata_q4_rung.py` (arena + five-way
+  alternation, FINAL pins + negative pins, lockstep + grace + requests, init
+  token/dir/no-new-secret, peers five-id) + `test_catalog_contract.py`
+  (q4 entry via the C05 presence list, no-phantom, ornith absence-arm).

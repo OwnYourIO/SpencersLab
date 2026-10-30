@@ -602,7 +602,10 @@ REMOVED_IDS = [
 ]
 
 # CR2: the full post-replan rendered catalog — every cluster render must carry
-# EXACTLY these IDs (P1). gpu side = chart survivors, gpu-ai-local 20 added.
+# EXACTLY these IDs (P1). gpu side = chart survivors, gpu-ai-local added.
+# cf-86 growth (2026-10-29): +qwen3.8-flash-next-heretic-q4 (C03) and
+# +qwen38-heretic (C04) — both gpu-ai-only, so the partition moves to
+# 60 = gpu 34+26 / gpu-ai 60+0 (card ask; the gpu side only echoes them, P5).
 CATALOG_IDS = [
     "home-3b-v3",
     "home-3b-v3-gpu",
@@ -649,6 +652,7 @@ CATALOG_IDS = [
     "qwen3.8-27b-q8",
     "qwen3.8-27b-q8-1m",
     "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-heretic-q4",
     "qwen3.8-flash-next-orca-q6",
     "qwen3.8-flash-next-q3",
     "qwen3.8-flash-next-q4",
@@ -657,6 +661,7 @@ CATALOG_IDS = [
     "qwen36-heretic",
     "qwen36-huihui",
     "qwen38-ara",
+    "qwen38-heretic",
     "qwen38-humanlike",
     "qwen38-orca",
     "qwen38-orca-f16",
@@ -664,8 +669,8 @@ CATALOG_IDS = [
     "whisper-large-v3",
 ]
 
-# gpu-ai-enabled catalog rungs after removals (20): these render as catalog
-# echoes on gpu (CA1 isolation flip: absent -> present-as-echo).
+# gpu-ai-enabled catalog rungs (22 after the cf-86 pair): these render as
+# catalog echoes on gpu (CA1 isolation flip: absent -> present-as-echo).
 GPUAI_LOCAL_CATALOG_IDS = [
     "ornith-1.5-122b-q3",
     "ornith-1.5-122b-q4",
@@ -675,6 +680,7 @@ GPUAI_LOCAL_CATALOG_IDS = [
     "qwen3.6-35b-a3b-q8-visual",
     "qwen3.8-27b-q8-1m",
     "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-heretic-q4",
     "qwen3.8-flash-next-orca-q6",
     "qwen3.8-flash-next-q3",
     "qwen3.8-flash-next-q4",
@@ -683,14 +689,16 @@ GPUAI_LOCAL_CATALOG_IDS = [
     "qwen36-heretic",
     "qwen36-huihui",
     "qwen38-ara",
+    "qwen38-heretic",
     "qwen38-humanlike",
     "qwen38-orca",
     "qwen38-orca-f16",
     "qwen38-rana",
 ]
 
-# gpu renders exactly these 24 as fail-fast echoes: the 3 surviving golden
-# byte-pinned echoes + the C04 ornith bf16 echo + 20 gpu-ai-local catalog IDs.
+# gpu renders these as fail-fast echoes: the 3 surviving golden byte-pinned
+# echoes + the C04 ornith bf16 echo + the gpu-ai-local catalog IDs (22 after
+# the cf-86 pair land, C03/C04).
 GPU_ECHO_IDS = [
     "ornith-1.5-122b-q3",
     "ornith-1.5-122b-q4",
@@ -704,6 +712,7 @@ GPU_ECHO_IDS = [
     "qwen3.6-35b-a3b-q8-visual",
     "qwen3.8-27b-q8-1m",
     "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-heretic-q4",
     "qwen3.8-flash-next-orca-q6",
     "qwen3.8-flash-next-q3",
     "qwen3.8-flash-next-q4",
@@ -712,6 +721,7 @@ GPU_ECHO_IDS = [
     "qwen36-heretic",
     "qwen36-huihui",
     "qwen38-ara",
+    "qwen38-heretic",
     "qwen38-humanlike",
     "qwen38-orca",
     "qwen38-orca-f16",
@@ -719,8 +729,10 @@ GPU_ECHO_IDS = [
 ]
 
 # Enablement matrix (CA1 freeze; DECISIONS arithmetic "58 = gpu 34+24 /
-# gpu-ai 58+0"). GPU_ENABLED_IDS derives from the frozen partition — CATALOG
-# minus the echoes — so the two lists cannot drift apart silently.
+# gpu-ai 58+0", cf-86 moves the partition to 60 = gpu 34+26 / gpu-ai 60+0 —
+# the two new rungs are gpu-ai-only, gpu only echoes them). GPU_ENABLED_IDS
+# derives from the frozen partition — CATALOG minus the echoes — so the two
+# lists cannot drift apart silently.
 GPU_ENABLED_IDS = [i for i in CATALOG_IDS if i not in set(GPU_ECHO_IDS)]
 ENABLEMENT = {
     "gpu": {"enabled": GPU_ENABLED_IDS, "echo": GPU_ECHO_IDS},
@@ -757,6 +769,42 @@ LADDER_QUANT_KEYS = {"q3", "q4", "q5", "q6", "q8", "bf16"}
 # grammar cannot carry. Their NAME still faces the parenthesized-TAG rule;
 # the before/after display table (CR5 bar 2) is the human review of their text.
 DESC_PROSE_EXEMPT_FAMILIES = {"qwen3.8-flash-next-orca"}
+
+# ---------------------------------------------------------------------------
+# cf-86 frozen tables (plan 2026-10-29 + DECISIONS "Renumap + final-shape
+# decisions"). The two llama.cpp rungs C03/C04 land as chart-family data;
+# both render LIVE on gpu-ai and as catalog ECHOES on gpu (their families are
+# default-disabled chart-side, gpu-ai-only BY ENABLEMENT like the orca family).
+# ---------------------------------------------------------------------------
+
+CF86_NEW_IDS = ["qwen3.8-flash-next-heretic-q4", "qwen38-heretic"]
+CF86_NEW_FAMILY = {  # rendered ID -> (family, quant key) per the CR1.1 grammar
+    "qwen3.8-flash-next-heretic-q4": ("qwen3.8-flash-next-heretic", "q4"),
+    "qwen38-heretic": ("qwen38", "heretic"),
+}
+# -hf refs verified live against the HF API by the cf-86 test session
+# (2026-10-29): spiritfather's heretic-2 republish carries Q4_K_M shards +
+# Q4_K_M/MTP + mtp/mtp-* draft + mmproj/*; 0bserverx's 27B heretic ladder
+# carries the embedded-MTP RVN-Q4_K_M-mtp.gguf at 16,998,720,736 B (~17.0 GB,
+# RESEARCH [S22]). A source-gate deviation re-pins THIS table via the test
+# session, never a silent dev edit.
+CF86_HF_REFS = {
+    "qwen3.8-flash-next-heretic-q4": "spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M",
+    "qwen38-heretic": "0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp",
+}
+# Matrix vars the chunks add, letter -> rendered id (C03 fnher into the gpu-ai
+# SOLO alternation, C04 q38her into the gpu-ai main dense alternation).
+CF86_MATRIX_VARS = {
+    "fnher": "qwen3.8-flash-next-heretic-q4",
+    "q38her": "qwen38-heretic",
+}
+CF86_SET_ADDITIONS = {  # set name -> the ONLY vars its expression may gain
+    "solo": {"fnher"},
+    "main": {"q38her"},
+}
+# The mmap-regime literals C03 copies verbatim from the flash-next/orca
+# families (the -ot string is byte-exact contract, TEST_SPEC §8 lineage).
+CF86_MOE_OFFLOAD_LEG = '-ot "\\.ffn_.*_exps\\.=CPU"'
 
 
 def rung_effective_ref(chart_cfg: dict, fam: str, spec: dict, quant: str) -> str | None:

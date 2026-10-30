@@ -20,6 +20,16 @@
 # Shape provenance: run-1 RESEARCH §3 (peer entry = required proxy+models;
 # responseHeader 1800 = O2 cold-start ruling; no apiKey = keyless posture,
 # hardened by run-2 C-A); NO /v1 suffix — paths append verbatim.
+#
+# 2026-10-29 cf-86 re-author (this ticket's frozen-id rule, DECISIONS
+# "Renumap + final-shape decisions"): the peers models list GROWS one id per
+# landed Strata rung — C01 abliterated, C02 orca, C06 q4. Every intermediate
+# state is an EXACT sanctioned list, listed oldest-first in models_states, so
+# the SAME immutable suite stays wave-correct from the pre-cf-86 pair through
+# C06's five-id final state: a peers list outside these exact ordered lists is
+# a phantom or a lost entry. models_allowed = the C06-final allowed set (the
+# five frozen ids, verbatim per the plan/chunk titles); a list merely INSIDE
+# that set but not one of the states is still red.
 strata:
   proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
   timeouts:
@@ -30,3 +40,19 @@ strata:
   models_allowed:
     - qwen3.8-flash-next-strata
     - qwen3.8-flash-next-strata-strix
+    - qwen3.8-flash-next-strata-abliterated
+    - qwen3.8-flash-next-strata-orca
+    - qwen3.8-flash-next-strata-q4
+  models_states:
+    # cf-77 run-2 final (pre-cf-86):
+    - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix]
+    # cf-86 C01 landed:
+    - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
+       qwen3.8-flash-next-strata-abliterated]
+    # cf-86 C02 landed:
+    - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
+       qwen3.8-flash-next-strata-abliterated, qwen3.8-flash-next-strata-orca]
+    # cf-86 C06 landed (five-id final state):
+    - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
+       qwen3.8-flash-next-strata-abliterated, qwen3.8-flash-next-strata-orca,
+       qwen3.8-flash-next-strata-q4]
