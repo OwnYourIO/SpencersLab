@@ -120,20 +120,61 @@ def test_c04_q38her_var_and_main_membership():
     )
 
 
+# Census discriminator for the dense class. `-ngl 999` is the leg AC2 names, and
+# it is substring-safe in this catalog (it is the longest -ngl value, and it also
+# catches the raw-cmd escape hatch qwen38-rana, which tokenizing would miss).
+# `-np 1` is NOT a discriminator — q36-common injects it into the MoE rungs too,
+# so a census keyed on it swept qwen36-heretic/qwen36-huihui in and made the
+# one-dense-per-combo law unsatisfiable (18 sanctioned clashes on the landed
+# render). `-ngl 99` is equally unusable as a key: it is a substring of `-ngl 999`.
+# test_c04_regime_censuses_are_mutually_exclusive is the standing guard for that
+# class.
+DENSE_LEG = "-ngl 999"
+
+
 @helm
 def test_c04_never_two_dense_rungs_in_one_combo():
-    """The trio math assumes ONE dense resident per combo. Dense class is
-    identified by its regime leg (-np 1) so the law survives rung churn."""
+    """The trio math assumes ONE dense resident per combo."""
     cfg = _ai()
     models = L.all_models_of(cfg)
-    dense_ids = {mid for mid, m in models.items() if "-np 1" in L.effective_cmd(cfg, mid)}
+    dense_ids = {mid for mid in models if DENSE_LEG in L.effective_cmd(cfg, mid)}
     assert NEW_ID in dense_ids, (
-        f"{NEW_ID} carries no dense-regime leg (-np 1) — C04 not landed or keyed to the wrong regime"
+        f"{NEW_ID} carries no dense-regime leg ({DENSE_LEG!r}) — C04 not landed or keyed to "
+        "the wrong regime"
     )
-    for name, combos in S.matrix_expansions(cfg).items():
-        for combo in combos:
-            clash = combo & dense_ids
-            assert len(clash) <= 1, f"matrix set {name!r} co-loads dense rungs {sorted(clash)}"
+    combos = [(name, combo) for name, cs in S.matrix_expansions(cfg).items() for combo in cs]
+    assert dense_ids and combos, (
+        f"law would pass vacuously: dense census {len(dense_ids)}, matrix combos {len(combos)}"
+    )
+    assert any(dense_ids & combo for _, combo in combos), (
+        f"no matrix combo contains a dense-classed rung — census {sorted(dense_ids)} matches no "
+        "membership, so the clash loop below proves nothing"
+    )
+    for name, combo in combos:
+        clash = combo & dense_ids
+        assert len(clash) <= 1, f"matrix set {name!r} co-loads dense rungs {sorted(clash)}"
+
+
+@helm
+def test_c04_regime_censuses_are_mutually_exclusive():
+    """Census-key guard: the dense leg and the MoE expert-offload leg must
+    partition the render by regime. A leg that a shared `use:` macro injects into
+    both families (the `-np 1` fault) collapses the partition here, in the file
+    that defines the census, instead of turning a membership law elsewhere into
+    an unsatisfiable red."""
+    cfg = _ai()
+    cmds = {mid: L.effective_cmd(cfg, mid) for mid in L.all_models_of(cfg)}
+    dense = {mid for mid, cmd in cmds.items() if DENSE_LEG in cmd}
+    moe = {mid for mid, cmd in cmds.items() if L.CF86_MOE_OFFLOAD_LEG in cmd}
+    assert dense and moe, f"regime census collapsed: dense={len(dense)}, MoE={len(moe)}"
+    shared = sorted(dense & moe)
+    assert not shared, (
+        f"rungs carry both regime discriminators ({DENSE_LEG!r} and the -ot expert-offload leg) "
+        f"— the census keys are not regime-exclusive: {shared}"
+    )
+    assert NEW_ID in dense and SIBLING_ID in dense, (
+        f"the q38 dense family census is {sorted(dense)} — neither {NEW_ID} nor {SIBLING_ID} is in it"
+    )
 
 
 @helm
