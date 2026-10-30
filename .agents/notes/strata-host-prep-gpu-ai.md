@@ -206,6 +206,12 @@ generated run-config `Strata/strata-iq3_s.json` is the source of truth;
 (`ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF` IQ3_S, two shards, revision
 `ed59f920…`; sha256s recorded in the upstream repo's `model-manifest.json` —
 RESEARCH §4). Budget the area **135–160 GB** (GGUFs + pack + MTP + headroom).
+That figure is the q3-era area; the cf-86 rungs stack on top of it, and the
+Q4 rung is the biggest of them: its four shards are 111,334,654,784 B before
+`iq_pack` writes its own copy, and its session files land in
+`/models/strata/sessions` at ~4.7 GiB per full 262k conversation. `df -h
+/models/strata` (human step) before the `q4` token first runs, and again
+after, is the gate on that growth.
 
 Human verification (the old staging duty shrinks to watching): the init log
 runs `model-fetch: setup.sh for q3 as IQ3_S …` through
@@ -267,16 +273,25 @@ escape (§4).
   encode (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment —
   the 2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with
   the paired 96Gi cap + `--memory-limit-mib 92160` + explicit 32768 MiB
-  x 16-slot conversation cache).
+  x 16-slot conversation cache). The UD-Q4_K_XL rung
+  (`qwen3.8-flash-next-strata-q4`) rides the OTHER pair: `100Gi` cgroup +
+  `--memory-limit-mib 95232`, conversation cache trimmed to 8192 MiB x 16 —
+  71.7 GiB pinned experts + 8 GiB cache + ~13 GiB worst-case KV ≈ 92.7 GiB
+  inside the 125 GiB node. MemAvailable before a Q4 request must clear THAT
+  number, not the ~47 GiB IQ3_S figure above; the pairs are per-rung inside
+  one pod, so the IQ3-class profiles keep 92160 within the same cgroup.
 - Total pod requests vs node allocatable — the strata pod must schedule
   alongside llama-swap's 4Gi:
   `kubectl describe node <gpu-ai-node>` → Allocatable block and the
   Requests summary; 64Gi + 4Gi under allocatable-minus-daemonsets, nothing
   else claiming the balance.
-- The container's memory **limit** (96Gi) ships PAIRED with the engine's
-  `--memory-limit-mib 92160` — #1601's informed-limit posture, adopted
-  after the 2026-10-29 node OOM made uncapped pinning an unacceptable
-  failure mode. Never move one without the other.
+- The container's memory **limit** ships PAIRED with the engine's
+  `--memory-limit-mib` — #1601's informed-limit posture, adopted after the
+  2026-10-29 node OOM made uncapped pinning an unacceptable failure mode.
+  Two pairs ship today: `96Gi` + `92160` (the IQ3_S / IQ3_XXS arenas) and
+  `100Gi` + `95232` (the UD-Q4_K_XL arena). Never move one leg without the
+  other, and never read one leg as the whole pod's budget: the cgroup is the
+  pod's, the cap belongs to whichever arena is loaded.
 
 **3.4 R1 gate: `--plan` reconciliation (human step 3), before the first
 accepted request.** The on-target finalizer, run per profile; repo numbers
@@ -384,8 +399,9 @@ follows from the arena: once `qwen3.8-flash-next-strata` takes a request its
 ~47 GiB page-locked arena stays resident for up to an hour of idle
 (`ttl: 3600`; time-share adopted after the 2026-10-29 node OOM — the old
 `ttl: 0` permanent pin beside the llama.cpp trio's ~90–119 GiB
-preallocation is what harvested the node), and the 96Gi cgroup now keeps
-strata's own worst case inside its own container. Therefore:
+preallocation is what harvested the node), and the cgroup cap keeps strata's
+own worst case inside its own container (`96Gi` for the IQ3-class arenas,
+`100Gi` for the Q4 one). Therefore:
 
 - No Strata request while a large trio model is mid-session (cold pin +
   warm trio exceeds 125 GB even capped); no large trio request while the
@@ -465,10 +481,12 @@ ignore lands (future ticket, STATE.json `deferred`).
   7.14.1/hipBLASLt 1.4.1 fine without a table — table ABSENCE on this arch
   is expected, no action (ladder rung 2).
 - **`--memory-limit-mib` / cgroup handling (#1601)** — CLOSED by the
-  2026-10-29 OOM: the container now carries `limits.memory 96Gi` paired
-  with the engine's `--memory-limit-mib 66560` (see §3.3; the pair is the
-  posture, never one without the other). The uncapped-arena era lived
-  while strata owned the box's rhythm; shared residency ended it.
+  2026-10-29 OOM: the container carries a per-rung pair — `limits.memory
+  96Gi` + `--memory-limit-mib 92160` on the IQ3-class arenas, `100Gi` +
+  `95232` on the UD-Q4_K_XL arena (66560 is a superseded figure; §3.3 carries
+  the shipped pairs). The pair is the posture, never one
+  leg without the other. The uncapped-arena era lived while strata owned
+  the box's rhythm; shared residency ended it.
 
 ## 8. Resolved-question ledger (where each ruling landed)
 

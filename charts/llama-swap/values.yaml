@@ -2401,11 +2401,14 @@ strata:
         # GSQ-RCO files, unsloth's quants compress the projections Strata's
         # kernels read as BF16); the tokenizer directory rides inside it.
         - --pack /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl
-        # Shard 1 of four (10,946,624 B — the embeddings/first layers; shards
-        # 2-3 are the ~49.9+49.4 GB expert halves, shard 4 the 12.1 GB tail;
-        # bytes pinned in setup's UNSLOTH_SHARDS, sum 111,334,256,784 = the
-        # 111.3 GB download). No --ple-gguf line here on purpose: setup's step
-        # 7 emits it only for ≤2-shard packs (verified in setup.py@v0.2.7:
+        # Shard 1 of four: 10,946,624 B (embeddings + first layers); shards 2-3
+        # are the 49,859,583,136 B and 49,376,141,504 B expert halves, shard 4
+        # the 12,087,983,520 B tail. Those four byte counts are setup's own
+        # UNSLOTH_SHARDS pins, and they sum to 111,334,654,784 B — the total
+        # the RAM envelope is sized against. Sum them from the shards rather
+        # than trusting a label: setup's `download_gb: 111.3` is a rounded
+        # figure. No --ple-gguf line here on purpose: setup's step 7 emits it
+        # only for ≤2-shard packs (verified in setup.py@v0.2.7:
         # `["--ple-gguf", ple] if len(shards) <= 2 else []`), and pointing one
         # at a guessed shard would be the wrong-weights failure.
         - --native /models/strata/Strata-data/models/unsloth-UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf

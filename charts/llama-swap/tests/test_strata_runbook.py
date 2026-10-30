@@ -227,3 +227,179 @@ def test_c04_parent_readme_homes_the_image_contract():
         ("split", "deferred split-mode pointer"),
     ):
         assert tok.lower() in text.lower(), f"parent README lost {why} ({tok!r})"
+
+
+# --- cf-86 C06 docs round: the shipped PAIRS doctrine, pinned per doc ---------
+#
+# The pod cgroup and the engine's --memory-limit-mib move as one unit (#1601),
+# and C06 put a SECOND pair in play (100Gi + 95232 for the UD-Q4_K_XL arena)
+# while the render itself shows only one cgroup — so the docs are the only
+# place the two-pair doctrine exists, and a doc drift there is invisible to the
+# render arms. Each doc is pinned AS WRITTEN: the note spells the conversation
+# cache "32768 MiB x 16-slot" and the README "32 GiB × 16 slots"; that is house
+# style, so the token sets are per-file and no doc is edited to unify them.
+#
+# Docs hard-wrap, so a pair can straddle a line break; the pairing checks run on
+# paragraph-joined text (wrapped lines joined, blank-line paragraph breaks kept)
+# and each pin keeps a bounded, period-free window so a match cannot be
+# manufactured across a sentence or paragraph boundary.
+
+DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
+    "runbook note": (
+        (r"32768 MiB\s+x 16-slot conversation cache", "note's IQ3-class cache shape (MiB spelling)"),
+        (r"8192 MiB\s+x 16", "note's Q4 cache trim"),
+        (r"135[\u2013-]160\s*GB", "the q3-era area budget, kept (run-1 RESEARCH §4)"),
+        (r"111,334,654,784\s*B", "the Q4 family byte total the budget grows by"),
+        (r"df -h\s+/models/strata", "the human capacity gate around the first q4 run"),
+        (r"before the\s+`q4`\s+token first runs", "when that capacity gate fires"),
+    ),
+    "parent README": (
+        (r"32\s*GiB\s+.\s+16\s*slots", "README's IQ3-class cache shape (GiB spelling)"),
+        (r"8\s*GiB\s+.\s+16", "README's Q4 cache trim"),
+        (r"135[\u2013-]160\s*GB", "the capacity budget survived the pair rewrite"),
+        (r"unsloth\s+UD-Q4_K_XL", "the README names the Q4 arena's source family"),
+    ),
+}
+
+# Per doc: both shipped pairs must appear as PAIRS (cgroup within a short window
+# of the cap), and the pod-vs-rung distinction that makes "two pairs" readable
+# when the render carries one cgroup.
+DOC_PAIRS: tuple[tuple[str, str], ...] = (
+    (r"96Gi[^.]{0,140}?92160", "the IQ3-class pair: 96Gi cgroup + 92160 engine cap"),
+    (r"100Gi[^.]{0,140}?95232", "the Q4 pair: 100Gi cgroup + 95232 engine cap"),
+)
+PER_RUNG_DOCTRINE = (
+    r"(per-rung|the cgroup is the\s+pod.s|inside (the )?one strata pod|inside the same cgroup)"
+)
+
+SUPERSEDED_CAP_FIGURES = {
+    "66560": re.compile(r"superseded|retired|no longer|was the|old", re.I),
+}
+SUPERSEDED_SLIPS = ("111,334,256,784",)
+
+
+def _flat(text: str) -> str:
+    """Join wrapped lines; keep blank-line paragraph breaks as line breaks so a
+    windowed pattern cannot span paragraphs. Indentation from the wrap collapses
+    to one space, so patterns use \\s+ at any point a doc may have wrapped."""
+    joined = text.replace("\r\n", "\n").replace("\n\n", "\x00").replace("\n", " ").replace("\x00", "\n")
+    return re.sub(r"[ \t]+", " ", joined)
+
+
+def test_c06_both_docs_name_both_shipped_cgroup_pairs():
+    """#1601's pair is per-rung: a doc that names only one pair re-opens the
+    2026-10-29 failure mode (one leg moved alone)."""
+    problems = []
+    for label, path in (("runbook note", S.RUNBOOK_NOTE), ("parent README", S.PARENT_README)):
+        flat = _flat(S.read(path, "cf-86 C06 docs round"))
+        for pat, why in DOC_PAIRS:
+            if not re.search(pat, flat):
+                problems.append(f"{label}: no {why} (window {pat!r})")
+    assert not problems, "shipped pairs missing from the docs:\n" + "\n".join(problems)
+
+
+def test_c06_both_docs_name_the_pod_vs_rung_distinction():
+    """The cgroup belongs to the pod, the cap to whichever arena is loaded.
+    Without that sentence, two named pairs read as two live cgroups — which the
+    render contradicts."""
+    offenders = [
+        label for label, path in (("runbook note", S.RUNBOOK_NOTE), ("parent README", S.PARENT_README))
+        if not re.search(PER_RUNG_DOCTRINE, _flat(S.read(path, "cf-86 C06 docs round")))
+    ]
+    assert not offenders, f"docs missing the per-rung/one-pod distinction: {offenders}"
+
+
+def test_c06_cache_shapes_pinned_per_doc_house_style():
+    """Every doc carries its own envelope vocabulary; the shipped numbers must
+    be present in the spelling that doc uses (MiB vs GiB, 'x' vs '×')."""
+    texts = {
+        "runbook note": _flat(S.read(S.RUNBOOK_NOTE, "cf-86 C06 docs round")),
+        "parent README": _flat(S.read(S.PARENT_README, "cf-86 C06 docs round")),
+    }
+    missing = [
+        f"  {label}: {pat!r} — {why}"
+        for label, specs in DOC_TOKENS.items()
+        for pat, why in specs
+        if not re.search(pat, texts[label])
+    ]
+    assert not missing, "doc token missing (label, pattern, rationale):\n" + "\n".join(missing)
+
+
+def test_c06_session_files_path_named_in_both_docs():
+    """The Q4 rung round-trips deep conversations through engine session files;
+    the path is a shipped value (Q4_SLOT_SAVE_PATH) and the docs are the operator's
+    only pointer to it."""
+    offenders = []
+    for label, path in (("runbook note", S.RUNBOOK_NOTE), ("parent README", S.PARENT_README)):
+        flat = _flat(S.read(path, "cf-86 C06 docs round"))
+        if S.Q4_SLOT_SAVE_PATH not in flat:
+            offenders.append(f"{label}: {S.Q4_SLOT_SAVE_PATH} not named")
+            continue
+        linked = re.search(
+            rf"session files?[^.]{{0,160}}{re.escape(S.Q4_SLOT_SAVE_PATH)}"
+            rf"|{re.escape(S.Q4_SLOT_SAVE_PATH)}[^.]{{0,160}}session files?",
+            flat,
+        )
+        if not linked:
+            offenders.append(f"{label}: {S.Q4_SLOT_SAVE_PATH} named but not tied to session files")
+    assert not offenders, "session-files doctrine missing:\n" + "\n".join(offenders)
+
+
+def test_c06_capacity_growth_qualifies_the_q3_era_budget():
+    """135–160 GB is a q3-era area figure; a doc that keeps it without the Q4
+    growth in the same breath under-promise by ~111 GB of shards."""
+    note = _flat(S.read(S.RUNBOOK_NOTE, "cf-86 C06 docs round"))
+    readme = _flat(S.read(S.PARENT_README, "cf-86 C06 docs round"))
+    for label, text in (("runbook note", note), ("parent README", readme)):
+        assert re.search(r"135[\u2013-]160\s*GB", text), f"{label} lost the 135–160 GB capacity budget"
+    assert re.search(r"135[\u2013-]160\s*GB.{0,700}?111,334,654,784", note, re.S), (
+        "the note keeps the q3-era budget without the Q4 shard total beside it — the number "
+        "reads as the whole picture"
+    )
+
+
+def test_c06_doc_and_comment_byte_totals_agree_with_the_pinned_shards():
+    """The 398,000 B slip class: a cited total that is not the sum of the cited
+    shards. The live-pinned per-shard bytes (test_strata_q4_rung.py) are the
+    authority; docs and the chart comment must sum to the same number, and the
+    superseded slip must not come back."""
+    from test_strata_q4_rung import Q4_PACK_TOTAL, Q4_SHARD_BYTES
+
+    assert Q4_PACK_TOTAL == 111_334_654_784, (
+        f"pinned shard sum {Q4_PACK_TOTAL} moved — re-run the live source gate before "
+        "re-pinning the docs"
+    )
+    cited = {}
+    for label, path in (("runbook note", S.RUNBOOK_NOTE), ("parent README", S.PARENT_README),
+                        ("chart values.yaml", S.CHART_DIR / "values.yaml")):
+        text = _flat(S.read(path, "cf-86 C06 docs round"))
+        cited[label] = text
+        for slip in SUPERSEDED_SLIPS:
+            assert slip not in text, f"{label} carries the superseded total {slip}"
+    assert f"{Q4_PACK_TOTAL:,} B" in cited["runbook note"], (
+        f"the note's cited total is not the pinned {Q4_PACK_TOTAL:,} B"
+    )
+    for size in Q4_SHARD_BYTES.values():
+        assert f"{size:,} B" in cited["chart values.yaml"], (
+            f"chart comment no longer states shard {size:,} B — its arithmetic can no longer "
+            "be checked against the live tree"
+        )
+    assert f"{Q4_PACK_TOTAL:,} B" in cited["chart values.yaml"], (
+        f"chart comment's stated sum is not {Q4_PACK_TOTAL:,} B — the sum of its own cited shards"
+    )
+
+
+def test_c06_superseded_cap_figures_stay_labeled():
+    """A retired envelope number may be named only as retired (same
+    line-scoped discipline as the kubectl-apply and VOID-token arms — doc
+    authors: keep the marker on the figure's own line, prose wraps)."""
+    offenders = []
+    for label, path in (("runbook note", S.RUNBOOK_NOTE), ("parent README", S.PARENT_README)):
+        text = S.read(path, "cf-86 C06 docs round")
+        for figure, marker in SUPERSEDED_CAP_FIGURES.items():
+            offenders += [
+                f"{label}: {ln.strip()[:90]}"
+                for ln in text.splitlines()
+                if re.search(rf"(?<![\d.]){figure}(?![\d.])", ln) and not marker.search(ln)
+            ]
+    assert not offenders, "superseded cap figure stated without a supersession marker:\n" + "\n".join(offenders)
