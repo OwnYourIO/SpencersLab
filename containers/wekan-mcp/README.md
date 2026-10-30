@@ -6,12 +6,14 @@ token stays out of the model's context.
 
 ## What this gives you
 
-- **27 typed tools** covering the high-frequency WeKan operations:
+- **31 typed tools** covering the high-frequency WeKan operations:
   read (boards, lists, swimlanes, cards, comments, checklists, automation
-  rules, board custom fields) and write (create lists, create/update/move
-  cards, add comments, add checklists, toggle or delete items,
-  create/update/remove automation rules, create board custom fields, set
-  per-card custom-field values). Entity-level destructive operations
+  rules, board custom fields, board members) and write (create lists,
+  rename a board title, create swimlanes, create board labels,
+  create/update/move cards, add comments, add checklists, toggle or delete
+  items, create/update/remove automation rules, create board custom
+  fields, set per-card custom-field values). Entity-level destructive
+  operations
   (`delete_board`,
   `delete_card`, ...) are intentionally omitted — `remove_rule` and
   `delete_checklist_item` are the two marked-destructive exceptions, both
@@ -114,6 +116,7 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `get_rule` | read | One automation rule with full trigger and action |
 | `list_custom_fields` | read | Custom fields defined on a board (id/name/type) |
 | `get_custom_field` | read | One custom field with settings + placement flags |
+| `list_board_members` | read | Board members: `user_id` + nine normalized role booleans; `username` is always null (usernames ride site-admin-gated REST only) and `username_resolution` says why |
 | `create_card` | write | New card in a list+swimlane; optional `default_checked` map (checklist title → item titles) waits for the rules-created checklist and pre-checks those items, reporting per-checklist checked/missing/failed |
 | `update_card` | write | Edit title/description/dates |
 | `move_card` | write | Move between lists/swimlanes |
@@ -128,6 +131,9 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `remove_rule` | write | **Destructive** — delete a rule + its trigger/action |
 | `create_custom_field` | write | New board custom field (REST caveats in docstring) |
 | `set_card_custom_field` | write | Set a card's custom-field value (upsert) |
+| `update_board` | write | Rename a board's title only (dedicated title route; board id and the cardNumber sequence survive by construction; board-admin gate) |
+| `create_swimlane` | write | New swimlane (row); optional `sort` is honored, else appends at max+1; hydrated `{id, title, sort}` |
+| `create_label` | write | New-or-reused board label: (name, color) idempotent; 25 named colors validated client-side (hex rejected), gate board-admin-or-site-admin |
 
 Entity-level destructive tools (`delete_board`, `delete_card`,
 `delete_list`, `remove_member`) are **intentionally omitted**. The two

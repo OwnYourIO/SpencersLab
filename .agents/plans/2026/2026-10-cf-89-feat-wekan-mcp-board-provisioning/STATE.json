@@ -20,13 +20,27 @@
   "pipelines": ["Local"],
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "review APPROVED",
+      "dev_session": "ses_e720636e6ffeVP3Axix2boBVnc",
+      "handoffs": [
+        {
+          "at": "2026-10-30",
+          "role": "agent-dev-local",
+          "session": "ses_e720636e6ffeVP3Axix2boBVnc",
+          "result": "status: DONE | chunk: C01 | files: server.py (ONE contiguous additive hunk: _LABEL_COLORS 25 names incl white, _embedded_error guard, list_board_members @mcp.tool + update_board/create_swimlane/create_label @_write_tool; registry 14+17=31; wekan.py byte-stable), README 31-tools + 4 rows, skills/wekan-mcp SKILL two tier cells, call-shapes header+4 stamped rows, skills/wekan-api SKILL 31 both lines; zero 27-residue | commands: board-provisioning PASS (9 ok), tools PASS, skill-surface PASS, create-list PASS (6 ok incl single-hunk pin), board-context RED at t4 only (WAIVED, re-confirmed identical fail at clean HEAD via stash), wekan-mcp-login PASS, py_compile PASS, docker build => no-daemon CI-deferred (zero-diff Dockerfile/pyproject), aislop rc=0 (0 err, 9 warn, 93) | deviations: none; aislop WARNs adjudicated kept (section-banner convention; file-too-large pre-existing 871→1116 — split would violate single-hunk pin, needs own ticket) | open_questions: server.py size refactor deferred to a future re-anchoring ticket | friction: none new"
+        },
+        {
+          "at": "2026-10-30",
+          "role": "agent-review",
+          "session": "ses_e71f4cd8effeWXlAdSDpUNKLLW",
+          "result": "verdict: APPROVED (round 1) | all C01 commands re-run independently: suites green, board-context t4 failure reproduced byte-identical at clean HEAD in a detached worktree (C01 not implicated), red-before cross-check proves non-vacuous green, AST recount 14+17=31 with only the four added, server.py 244/0 purely additive, wekan.py byte-stable, aislop rc=0 score 93 | AC1-AC10 all pass | findings: 4 nits (degrade-path silent null echo parity; RESEARCH §-pointers/planning refs in comments; create_swimlane docstring should name `sort` key; README rewrap cosmetic) — not blocking | live: dev-boards list_rules shows zero probe residue; NOTE deployed dev-boards exposes 26 tools (image predates cf-68 create_list) — docs' 31 is a repo-surface claim until post-bump live tools/list probe (user-owned) | validations_modified: none | deferred: server.py size refactor (own re-anchoring ticket), board-context t4 pin repair (follow-up card), post-bump live probe"
+        }
+      ]
     },
     "C02": {
       "status": "pending",

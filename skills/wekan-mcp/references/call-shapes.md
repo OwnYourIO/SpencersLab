@@ -1,6 +1,6 @@
 # wekan-mcp tool call shapes — the full table
 
-Tool → args → response shape for all 27 tools registered by
+Tool → args → response shape for all 31 tools registered by
 `containers/wekan-mcp/wekan_mcp/server.py`. Rows are anchored on the server's
 **function names**, never line numbers — lines drift with every build, names
 survive. One row per registered tool, one evidence stamp per row:
@@ -35,6 +35,7 @@ parameter; the direct-probe recipe is in
 | `get_rule` | `board_id`, `rule_id` | — | one rule document, same shape as a `list_rules` item. | source-only |
 | `list_custom_fields` | `board_id` | — | `[{id, name, type}]` — the name key is `name`, not `title` (the board-level list route projects to these three; verified on the deployed v9.99 API). | live probe 2026-10-27 |
 | `get_custom_field` | `board_id`, `custom_field_id` | — | `{id, name, type, settings, show_on_card, automatically_on_card, always_on_card}` — dropdown options live in `settings.dropdownItems`; `always_on_card` is read-only through this server (see `create_custom_field`). | source-only |
+| `list_board_members` | `board_id` | — | `{board_id, title, members: [{user_id, username, is_admin, is_active, is_no_comments, is_comment_only, is_worker, is_normal_assigned_only, is_comment_assigned_only, is_read_only, is_read_assigned_only}], username_resolution}` — nine normalized booleans (present⇒true, absent⇒false); `username` is always null because usernames ride only site-admin-gated REST routes, and the `username_resolution` note says so; ownership is the entry with `is_admin=true`; `grantedBy` provenance is omitted. | source-only (v12.65 source-check 2026-10-30; live tools/list probe post-merge, user-owned) |
 
 ## Write tools — registered by `_write_tool`, absent from the readonly tier
 
@@ -54,6 +55,9 @@ parameter; the direct-probe recipe is in
 | `remove_rule` | `board_id`, `rule_id` | — | `{removed, rule_id}` — DESTRUCTIVE, no undo; recreation only via `create_rule`. | source-only |
 | `create_custom_field` | `board_id`, `name`, `type` | `settings`, `show_on_card`, `automatically_on_card`, `show_label_on_minicard`, `show_sum_at_top_of_list` | `{id}` — `type` is text/number/date/dropdown/checkbox/currency/stringtemplate; `settings` must be a JSON object (`{"dropdownItems": [...]}` for dropdowns), never the dumped-string form. Server-side, create ignores the always-on-card flag and does not backfill existing cards — `automatically_on_card=true` covers future cards, `set_card_custom_field` attaches existing ones. | source-only |
 | `set_card_custom_field` | `board_id`, `card_id`, `custom_field_id`, `value` | — | `{card_id, custom_field_id, value, attached}` — upsert: the dedicated value route silently no-ops on an unattached field, so the tool attaches-if-missing with a whole-array write (documented read-modify-write race; both legs skip archived cards). `value` is stored verbatim — text/date as strings, dropdown as an option id; number/checkbox coercion is not expressible through this typed schema (raw REST via `/wekan-api`). | source-only |
+| `update_board` | `board_id`, `title` | — | `{id, title, key, color, permission, archived, renamed}` — title-only rename via the dedicated title route (bare whole-board PUT is 405 upstream: never rebuild it from POST+DELETE); the board id and the cardNumber sequence survive by construction; gate `checkBoardAdmin` at v12.65 (plain member ⇒ 403, title unchanged; 404 board not found); a failed read-back nulls the echo fields without failing the rename. | source-only (v12.65 source-check 2026-10-30; live tools/list probe post-merge, user-owned) |
+| `create_swimlane` | `board_id`, `title` | `sort` | `{id, title, sort}` — an explicit `sort` is honored (the key is gated on `sort is not None` so the legal `sort=0` survives), omitted appends at max(live sibling sort)+1; `sort` is read back from the single-swimlane route because the collection route projects it away; a POST answer without `_id` is a failure regardless of status. | source-only (v12.65 source-check 2026-10-30; live tools/list probe post-merge, user-owned) |
+| `create_label` | `board_id`, `name` | `color` (default `green`) | `{label_id, name, color}` — (name, color) is the idempotency key: an existing pair returns its id, the same name with a different color creates a SECOND label (no rename-by-name); `color` must be one of the 25 named colors (white included) and hex is rejected client-side with the allowed list before any request; gate is board-admin-or-site-admin, and the handler's answer is the bare label-id string. | source-only (v12.65 source-check 2026-10-30; live tools/list probe post-merge, user-owned) |
 
 ## Surface deliberately absent
 

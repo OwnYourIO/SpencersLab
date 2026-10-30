@@ -854,6 +854,250 @@ def set_card_custom_field(
 
 
 # ==============================================================================
+# v102 BOARD PROVISIONING (cf-89) — deliberately ONE additive block spanning
+# both kinds, not split across the READ/WRITE sections above: the sibling
+# contract tests/wekan-mcp/create-list.sh pins server.py to a single additive
+# hunk against the pre-ticket base (one reviewable block). Route facts are
+# grounded on upstream v12.65 (RESEARCH.md, source-checked 2026-10-30);
+# v9.88 is the documented low bound the 200-guards below defend.
+# ==============================================================================
+
+# The 25 label colors of WeKan's config/const.js (LABEL_COLORS = ALLOWED_
+# COLORS), byte-identical from v9.88 through v12.65 (RESEARCH.md §3). This
+# list is a version pin: a WeKan upgrade that moves the palette drifts the
+# client-side gate against the server's own 400, so re-verify on upgrade.
+_LABEL_COLORS = (
+    "white", "green", "yellow", "orange", "red", "purple", "blue", "sky",
+    "lime", "pink", "black", "silver", "peachpuff", "crimson", "plum",
+    "darkgreen", "slateblue", "magenta", "gold", "navy", "gray",
+    "saddlebrown", "paleturquoise", "mistyrose", "indigo",
+)
+
+
+def _embedded_error(resp, what: str) -> None:
+    """
+    Reject an error body that arrived with HTTP 200. At the v9.88 low bound
+    WeKan's catch sends the serialized Meteor.Error body at status 200, and
+    WekanClient raises only when the dict carries BOTH `error` and `reason`
+    — the single-key {"error": msg} fallback would otherwise read as a
+    success (RESEARCH.md §5). The live v12.65 server answers real 4xx, so
+    this guards the documented bound, not the common path. Safe per tool:
+    every caller owns its expected shape (title echo, {_id}, bare label-id
+    string, board document), and none of those can carry a top-level
+    `error` key legitimately.
+    """
+    if isinstance(resp, dict) and "error" in resp:
+        reason = f" ({resp['reason']})" if "reason" in resp else ""
+        raise WekanError(
+            f"{what}: WeKan answered 200 with an error body: {resp['error']}{reason}"
+        )
+
+
+@mcp.tool
+def list_board_members(board_id: str) -> dict:
+    """
+    List a board's members: user ids plus nine normalized role booleans —
+    isAdmin and isActive (schema-required) and the seven optional role
+    flags; present reads as true, absent as false. Board ownership is the
+    entry with is_admin=true (there is no owner field); grantedBy
+    provenance is omitted.
+
+    No username is resolved and none is fetched: usernames ride only the
+    site-admin-gated GET /api/users routes and the service user is not
+    site admin, so each entry carries username: null plus the
+    username_resolution note saying why — silent nulls are the documented
+    anti-pattern.
+
+    v12.65 route facts (source-checked 2026-10-30): GET /api/boards/:id is
+    gated checkBoardAccess — 403 when the service user is not a member,
+    404 when the board does not exist. At the 9.88 low bound both arrive
+    as 200 + embedded error body; the guard below catches that shape.
+    """
+    doc = _wekan.get(f"/api/boards/{board_id}") or {}
+    _embedded_error(doc, "list_board_members")
+    if not isinstance(doc, dict) or "_id" not in doc or not isinstance(doc.get("members"), list):
+        raise WekanError(
+            f"list_board_members: board document for {board_id} lacks _id "
+            f"and/or a members list; got {doc!r}"
+        )
+    members = []
+    for m in doc.get("members", []):
+        if not isinstance(m, dict):
+            continue
+        entry = {"user_id": m.get("userId"), "username": None}
+        for wire, snake in (
+            ("isAdmin", "is_admin"),
+            ("isActive", "is_active"),
+            ("isNoComments", "is_no_comments"),
+            ("isCommentOnly", "is_comment_only"),
+            ("isWorker", "is_worker"),
+            ("isNormalAssignedOnly", "is_normal_assigned_only"),
+            ("isCommentAssignedOnly", "is_comment_assigned_only"),
+            ("isReadOnly", "is_read_only"),
+            ("isReadAssignedOnly", "is_read_assigned_only"),
+        ):
+            entry[snake] = bool(m.get(wire))
+        members.append(entry)
+    return {
+        "board_id": doc.get("_id"),
+        "title": doc.get("title"),
+        "members": members,
+        "username_resolution": (
+            "WeKan publishes usernames only on site-admin-gated routes "
+            "(GET /api/users[/:userId]); the service user is not site admin "
+            "— resolve names out-of-band"
+        ),
+    }
+
+
+@_write_tool
+def update_board(board_id: str, title: str) -> dict:
+    """
+    Rename a board — title only. The sanctioned REST rename is the
+    dedicated title route (a $set of the title field, hook-bypass: no
+    activity, no rules); a bare PUT of the whole board document is 405
+    upstream (#5299), so never rebuild one out of POST+DELETE — that
+    would mint a new board id and reset the board. The cardNumber
+    sequence is not on the board document at all (per-board counter
+    cardNumber-<boardId> in the Counters collection), so a rename
+    preserves the board id, every child id, and the whole
+    cf-<cardNumber> slug sequence by construction.
+
+    v12.65 route facts (source-checked 2026-10-30): the gate is
+    checkBoardAdmin — a plain write member gets 403 and the title stays
+    unchanged; 404 means the board does not exist or is not visible to
+    the service user. No REST route changes board color or permission,
+    and board key (2-10 capitals, auto-assigned on insert, REST-
+    immutable) cannot be changed here — the echo only carries it.
+
+    The echo is hydrated from a GET of the board document; a failed
+    read-back nulls the echoed fields and logs a warning — the rename
+    already succeeded and nothing rolls back (precedent: create_list).
+    """
+    resp = _wekan.put(f"/api/boards/{board_id}/title", json_body={"title": title})
+    _embedded_error(resp, "update_board")
+    if not isinstance(resp, dict) or resp.get("_id") != board_id:
+        raise WekanError(
+            f"update_board: title PUT for board {board_id} answered without a "
+            f"matching _id; rename unconfirmed: {resp!r}"
+        )
+    board: dict = {}
+    try:
+        board = _wekan.get(f"/api/boards/{board_id}") or {}
+    except WekanError as e:
+        log.warning(
+            "update_board: rename of board %s succeeded but read-back failed: %s",
+            board_id, e,
+        )
+    if isinstance(board, dict) and board.get("_id") == board_id:
+        return {
+            "id": board_id,
+            "title": board.get("title"),
+            "key": board.get("key"),
+            "color": board.get("color"),
+            "permission": board.get("permission"),
+            "archived": board.get("archived", False),
+            "renamed": True,
+        }
+    return {
+        "id": board_id,
+        "title": None,
+        "key": None,
+        "color": None,
+        "permission": None,
+        "archived": None,
+        "renamed": True,
+    }
+
+
+@_write_tool
+def create_swimlane(board_id: str, title: str, sort: Optional[int] = None) -> dict:
+    """
+    Create a swimlane (row) on a board. sort is an explicit position the
+    server honors since upstream #3624; omitted sort appends at
+    max(live sibling sort)+1. The key is sent only when sort is not None
+    — a bare-truthy gate would silently drop the legal sort=0. The
+    response {id, title, sort} is hydrated from the single-swimlane GET:
+    the create POST answers only {_id}, and the collection GET projects
+    sort away (read-back precedent: create_list). A failed read-back
+    nulls the echoed sort — the swimlane was still created.
+
+    v12.65 route facts (source-checked 2026-10-30): gate is
+    checkBoardWriteAccess — 403 when the service user lacks board write
+    access, 404 when the board does not exist. At the 9.88 low bound an
+    auth or schema failure can arrive as 200 + a serialized error body,
+    so a response without _id is a failure regardless of status code.
+    """
+    body: dict = {"title": title}
+    if sort is not None:
+        body["sort"] = sort
+    resp = _wekan.post(f"/api/boards/{board_id}/swimlanes", json_body=body)
+    _embedded_error(resp, "create_swimlane")
+    swimlane_id = resp.get("_id") if isinstance(resp, dict) else None
+    if not swimlane_id:
+        raise WekanError(
+            f"create_swimlane: swimlane create for {title!r} returned no id "
+            f"(rejected or not created): {resp!r}"
+        )
+    sort_out = None
+    try:
+        full = _wekan.get(f"/api/boards/{board_id}/swimlanes/{swimlane_id}") or {}
+    except WekanError as e:
+        full = {}
+        log.warning("create_swimlane: could not hydrate swimlane %s: %s", swimlane_id, e)
+    if isinstance(full, dict):
+        sort_out = full.get("sort")
+    return {"id": swimlane_id, "title": title, "sort": sort_out}
+
+
+@_write_tool
+def create_label(board_id: str, name: str, color: str = "green") -> dict:
+    """
+    Create a board label, or reuse the existing one: (name, color) is the
+    idempotency key, so re-creating an existing pair returns the existing
+    label id, while the same name with a different color creates a
+    second label — there is no rename-by-name here.
+
+    color must be one of the 25 named colors of WeKan's config/const.js
+    (white included); an unknown or hex value is rejected client-side,
+    naming the allowed list, before any request — the server's own 400
+    (Invalid label color ...) stays the authority. The documented
+    {"label": {name, color}} body form is the only one exposed; the
+    string-form passthrough exists server-side but is not surfaced
+    through this typed schema. tool-side color defaults to green, which
+    is also the server's default.
+
+    v12.65 route facts (source-checked 2026-10-30): the label route is
+    gated inline board-admin-or-site-admin and answers clean 401/403/404
+    (404 board not found, 403 not an admin); the handler returns the
+    label id as a BARE JSON string — the new id, or the existing one for
+    an idempotent repeat.
+    """
+    if color not in _LABEL_COLORS:
+        raise WekanError(
+            f"create_label: unknown color {color!r}. Allowed colors: "
+            f"{', '.join(_LABEL_COLORS)} — WeKan stores named colors only, "
+            f"hex values are never valid."
+        )
+    resp = _wekan.put(
+        f"/api/boards/{board_id}/labels",
+        json_body={"label": {"name": name, "color": color}},
+    )
+    if isinstance(resp, str):
+        if not resp:
+            raise WekanError(
+                f"create_label: label PUT for {name!r} answered an empty "
+                f"string, not a label id"
+            )
+        return {"label_id": resp, "name": name, "color": color}
+    _embedded_error(resp, "create_label")
+    raise WekanError(
+        f"create_label: unexpected non-string response for label {name!r} on "
+        f"board {board_id}: {resp!r}"
+    )
+
+
+# ==============================================================================
 # Entrypoint
 # ==============================================================================
 

@@ -37,7 +37,7 @@ in-repo server (`containers/wekan-mcp`), published as
   (Keycloak OIDC audience `wekan-readonly`): read tools only; write tools are
   never registered (`WEKAN_MCP_READ_ONLY=true`).
 - **`wekan-admin`** — `https://mcp.gpu.spencerslab.com/wekan-admin/mcp`
-  (audience `wekan-admin`): the full 27-tool surface. The two gpu tiers share
+  (audience `wekan-admin`): the full 31-tool surface. The two gpu tiers share
   one long-lived `WEKAN_TOKEN`.
 - **`boards`** on the dev cluster — the pipeline board-intake endpoint. It
   authenticates by login-mint instead: the pod gets `WEKAN_USERNAME` +
@@ -45,12 +45,14 @@ in-repo server (`containers/wekan-mcp`), published as
   item's URI field) and the client exchanges the pair for a bearer at
   startup, re-minting once on a 401.
 
-The server exposes 27 typed tools:
+The server exposes 31 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
   `get_checklist`, `list_rules`, `get_rule`, `list_custom_fields`,
-  `get_custom_field`
+  `get_custom_field`, `list_board_members` (user ids + nine normalized
+  role booleans; usernames are site-admin-gated REST, so each entry
+  carries `username: null` + a `username_resolution` note)
 - **Write** (every tier except `wekan-readonly`): `create_card` (optional
   `default_checked` map — checklist title → item titles to arrive CHECKED;
   bounded-polls the rules-created checklist, then PUTs the exact-title items),
@@ -61,7 +63,13 @@ The server exposes 27 typed tools:
   `create_list` (optional `swimlane_id` + `position`; omitted `swimlane_id`
   binds the board's first swimlane, and `position` rides a second, non-atomic
   same-board move POST — a failed reposition reports `positioned: false` +
-  `position_error` and never fails the create)
+  `position_error` and never fails the create),
+  `update_board` (title-only rename via the dedicated title route — board id
+  and the cardNumber sequence survive by construction; board-admin gate),
+  `create_swimlane` (optional explicit `sort`, else appends at max+1; the
+  hydrated echo carries the actual `sort`), and `create_label` ((name, color)
+  idempotent, 25 named colors validated client-side — hex rejected with the
+  allowed list before any request)
 
 Using it keeps the credential (bearer or login pair) entirely out of model
 context — it lives only in the server pod, injected via ExternalSecret +
