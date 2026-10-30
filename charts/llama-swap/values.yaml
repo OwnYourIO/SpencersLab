@@ -1201,6 +1201,130 @@ app-template:
                     || fail "abl pack: iq_pack failed (nothing is marked, the next boot resumes)"
                 fi
               }
+              # Manual pack for the gated orcarouter Uncensored IQ3_XXS pair
+              # (cf-86 C02, the second ablated rung of the U2 ruling). The
+              # catalog gate has two proofs at v0.2.7: setup.py carries no
+              # orca family (docs/ORCA.md: "OrcaRouter is not an installer
+              # menu entry, and there is no --family orca"), and setup.py has
+              # ZERO download-auth support (no HF_TOKEN/Authorization/Bearer
+              # path in the whole 628 KB installer) — so even a catalog family
+              # could never fetch a gated repo, and branch B is forced. The
+              # recipe is ORCA.md verbatim: stage both shards under their
+              # original names (iq_pack reads the split pair from one
+              # directory), pack with --compat-bf16 (Orca's quantizer, unlike
+              # SC117's above, compressed the projections Strata's kernels
+              # read as BF16), output to the ORCA.md-named pack dir. The
+              # BYTES are gated (resolve/main 401 + Bearer challenge measured
+              # 2026-10-30) while the tree metadata is public, so this fetch
+              # is the one hf-token Secret consumer the R-d ruling sanctions,
+              # strictly DOWNLOAD-ONLY: no token reaches the strata container,
+              # the inner config, or any profile (C-A keyless serve posture).
+              orca_pack() {
+                # $1 = quant tier (IQ3_XXS — the only validated Orca quant).
+                # Same Strata-data staging shape as abl_pack, -orca suffix.
+                tier=$1
+                tierl=$(printf '%s' "$tier" | tr 'A-Z' 'a-z')
+                dir=/models/strata/Strata-data/models/$tier-orca
+                pack=/models/strata/Strata-data/packs/orca-$tierl
+                stem=Qwen3.8-Flash-Next-Uncensored-$tier
+                s1=$dir/$stem-00001-of-00002.gguf
+                # ORCA.md: this pack's PLE table rides in shard 1 (its example
+                # profile points --native and --ple-gguf at the same shard);
+                # shard 2 still must be staged — iq_pack reads both halves.
+                s2=$dir/$stem-00002-of-00002.gguf
+                # Guards before any byte moves (C01 review law): never start
+                # 85.20 GB of downloads for a pack this init cannot build.
+                [ -x "$SRC/.venv/bin/python" ] \
+                  || fail "orca pack: $SRC/.venv missing - the q3 token must provision before orca"
+                ggufpy=$SRC/third_party/llama.cpp/gguf-py
+                [ -d "$ggufpy" ] \
+                  || fail "orca pack: no gguf-py at $ggufpy - setup unpacks the pinned llama.cpp source during provisioning"
+                mkdir -p "$dir"
+                # Same venv-urllib downloader as abl_dl (no shell HTTP client
+                # is baked into this image — bake+verify law), extended with
+                # the gated leg. Header law, measured 2026-10-30: the 401 +
+                # Bearer gate sits at the huggingface.co ORIGIN (an invalid
+                # Bearer 401s before any redirect), the public chain 302s to
+                # a PRE-SIGNED us.aws.cdn.hf.co URL whose Signature/Expires
+                # query authorizes the CDN leg (Range crosses the hop: 206
+                # Content-Range), and CPython's own redirect_request copies
+                # Authorization onto every cross-host hop — auto-following
+                # would leak the token to the whole chain. So: no auto-follow,
+                # walk hops manually over an hf.co-family allowlist, Bearer
+                # ONLY on the token host, CDN leg on signature + Range.
+                orca_dl() {
+                  [ -s "$2" ] && { echo "model-fetch: $(basename "$2") already staged"; return 0; }
+                  "$SRC/.venv/bin/python" - "$1" "$2.part" "$3" <<'PY' || fail "orca pack: download failed for $1 (partial kept as $2.part for a resume)"
+              import os, sys, urllib.error, urllib.parse, urllib.request
+              url, part, want = sys.argv[1], sys.argv[2], int(sys.argv[3])
+              token = os.environ.get("HF_TOKEN")
+              if not token:
+                  sys.exit("orca dl: HF_TOKEN is empty - the gated pack needs the hf-token secretKeyRef on this init (R-d download-only)")
+              TOKEN_HOST = "huggingface.co"
+              PLATFORM = (".hf.co", ".huggingface.co")
+              class NoAutoRedirect(urllib.request.HTTPRedirectHandler):
+                  # returning None surfaces the 302 as HTTPError instead of
+                  # urllib re-issuing the request (and its Authorization
+                  # header) at the next host
+                  def redirect_request(self, req, fp, code, msg, headers, newurl):
+                      return None
+              opener = urllib.request.build_opener(NoAutoRedirect())
+              def open_ranged(target, have, depth=0):
+                  host = urllib.parse.urlsplit(target).netloc
+                  headers = {"Authorization": "Bearer " + token} if host == TOKEN_HOST else {}
+                  if have:
+                      headers["Range"] = "bytes=%d-" % have
+                  try:
+                      return opener.open(urllib.request.Request(target, headers=headers), timeout=120)
+                  except urllib.error.HTTPError as err:
+                      if err.code not in (301, 302, 303, 307, 308) or depth >= 4:
+                          raise
+                      nxt = urllib.parse.urljoin(err.geturl(), err.headers.get("Location", ""))
+                      nh = urllib.parse.urlsplit(nxt).netloc
+                      if nh != TOKEN_HOST and not nh.endswith(PLATFORM):
+                          sys.exit("orca dl: refusing off-platform redirect %s -> %s (the token never leaves %s)" % (err.geturl(), nh, TOKEN_HOST))
+                      return open_ranged(nxt, have, depth + 1)
+              for _ in range(4):
+                  have = os.path.getsize(part) if os.path.exists(part) else 0
+                  if have > want:
+                      os.remove(part); have = 0  # corrupt leftover: restart rather than wedge
+                  if have == want:
+                      break
+                  try:
+                      with open_ranged(url, have) as r:
+                          if have and r.status == 200:
+                              os.remove(part); have = 0  # Range ignored: restart cleanly
+                          with open(part, "ab" if have else "wb") as f:
+                              while True:
+                                  chunk = r.read(1048576)
+                                  if not chunk:
+                                      break
+                                  f.write(chunk)
+                  except (urllib.error.URLError, OSError) as err:
+                      sys.stderr.write("orca dl: attempt failed: %s (%s)\n" % (err, part))
+              final = os.path.getsize(part) if os.path.exists(part) else 0
+              sys.exit(0 if final == want else "orca dl: %s ended at %d of %d bytes (partial kept for a resume)" % (url, final, want))
+              PY
+                  mv "$2.part" "$2" || fail "orca pack: rename failed for $2"
+                }
+                # Byte pins are the HF tree-API literals the pack contract is
+                # built on (sum 85202668032 = ORCA.md's 85.20 GB); the
+                # downloader renames a .part only on an exact match.
+                orca_dl "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/resolve/main/$stem-00001-of-00002.gguf" "$s1" 44637691008
+                orca_dl "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/resolve/main/$stem-00002-of-00002.gguf" "$s2" 40564977024
+                # setup's own completeness guard (native_experts.txt is
+                # written last by iq_pack): a crash between pack build and the
+                # marker re-enters here instead of serving a partial pack.
+                if [ ! -f "$pack/native_experts.txt" ] || [ ! -f "$pack/tokenizer/vocab.json" ]; then
+                  # --compat-bf16 is ORCA.md's answer to THIS quantizer: it
+                  # expands only the hyper-connection/small-attention/PLE
+                  # projections Orca compressed but Strata reads as BF16;
+                  # experts, native attention, embeddings and the PLE table
+                  # stay untouched (and the table stays on disk).
+                  ( cd "$SRC" && STRATA_GGUF_PY="$ggufpy" .venv/bin/python tools/iq_pack.py --gguf "$s1" --out "$pack" --compat-bf16 ) \
+                    || fail "orca pack: iq_pack failed (nothing is marked, the next boot resumes)"
+                fi
+              }
               IFS=,
               for tok in ${STRATA_QUANTS:-q3}; do
                 [ -n "$tok" ] || continue
@@ -1213,8 +1337,9 @@ app-template:
                 # STRATA_MODEL_Qx may name another catalog family as
                 # "family/model" (e.g. unsloth/UD-Q4_K_XL — the q4/q5 the
                 # qwen family does not carry); a bare name stays qwen. The
-                # pseudo-family "abl" is deliberately NOT a catalog name: it
-                # routes the token to the manual pack above.
+                # pseudo-families "abl" and "orca" are deliberately NOT
+                # catalog names: they route the token to the manual packs
+                # above.
                 case "$SIZE" in
                   */*) FAM=${SIZE%%/*}; SIZE=${SIZE#*/} ;;
                 esac
@@ -1231,6 +1356,26 @@ app-template:
                   echo "model-fetch: manual pack for $tok ($SIZE abliterated tier — no setup.sh catalog entry)"
                   abl_pack "$SIZE"
                   touch "$MARK"
+                  continue
+                fi
+                if [ "$FAM" = orca ]; then
+                  # The 85.20 GB gated pack carries its OWN completeness
+                  # marker at the chunk-frozen path: touched only after the
+                  # staged shards AND the pack built (orca_pack fail-exits on
+                  # any partial), so an interrupted pack re-enters the step
+                  # instead of being marked done — a marker written early
+                  # would make a partial pack permanent and the arena would
+                  # serve missing weights. Re-entry is cheap: the -s skip and
+                  # the native_experts.txt guard short-circuit everything but
+                  # a genuinely missing byte.
+                  OMARK="/models/strata/.pack-orca"
+                  if [ -f "$OMARK" ]; then
+                    echo "model-fetch: orca pack complete, skipping"
+                    continue
+                  fi
+                  echo "model-fetch: gated manual pack for $tok ($SIZE orcarouter Uncensored — no setup.sh catalog entry)"
+                  orca_pack "$SIZE"
+                  touch "$OMARK"
                   continue
                 fi
                 echo "model-fetch: setup.sh for $tok as $FAM/$SIZE (downloads start here)"
@@ -1667,20 +1812,41 @@ strata:
         env:
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
 
+      qwen3.8-flash-next-strata-orca:
+        name: Qwen3.8-Flash-Next Uncensored IQ3_XXS (R9700 arena)
+        description: Strata engine on the gated orcarouter Uncensored pack at IQ3_XXS via the ORCA.md manual pack (the only validated Orca quant) — same ~50 GiB arena class (ORCA.md measures the 49.8 GiB expert arena) and 90 GiB engine cap as the IQ3_S flagship, experts pinned in the page-locked RAM arena on the R9700 with the 32 GiB conversation-cache budget; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        # Same serve wrapper as the primary (C01 interface freeze); the pack
+        # switch lives entirely in the profile file.
+        cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-orca-iq3_xxs.json --host 127.0.0.1 --port ${PORT}'
+        # Residency contract copied from the primary verbatim (same law as
+        # the abliterated rung): ttl/unloadTimeout/checkEndpoint equality
+        # keeps the time-share discipline and the 420 s grace invariant
+        # rung-wide.
+        ttl: 3600
+        unloadTimeout: 180
+        checkEndpoint: /health
+        # Engine defaults like the other R9700 XXS rung: no PR/strix switch
+        # set (silicon/recipe-specific), only the peers-forwarded Host
+        # allow-list; ROCR entry injected by the template from the global
+        # index.
+        env:
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
+
     matrix:
       # The engines are ALTERNATIVES, never co-loadable: the arenas pin
       # RAM additively on the 128 GB node and co-residency recreates #1715's
-      # global OOM (RESEARCH §7). "(p | s | c)" expands to one-model combos,
-      # so the solver evicts the resident arena before starting the other —
-      # the preload-empty hook alone would not stop a request-driven
+      # global OOM (RESEARCH §7). "(p | s | c | o)" expands to one-model
+      # combos, so the solver evicts the resident arena before starting the
+      # other — the preload-empty hook alone would not stop a request-driven
       # co-load. vars name model IDs, not aliases (llama-swap matrix
       # semantics). All stay lazily reachable; nothing preloads.
       vars:
         p: qwen3.8-flash-next-strata
         s: qwen3.8-flash-next-strata-strix
         c: qwen3.8-flash-next-strata-abliterated
+        o: qwen3.8-flash-next-strata-orca
       sets:
-        main: "(p | s | c)"
+        main: "(p | s | c | o)"
 
     # -----------------------------------------------------------------------
     # The run-config JSON rendered VERBATIM to /profile/strata-iq3_s.json
@@ -1994,6 +2160,85 @@ strata:
       # anyway (RESEARCH §3).
       aliases:
         - qwen3.8-flash-next-abliterated
+      gpu: [0]
+      parallel: 4
+      host: "127.0.0.1"
+
+    # -----------------------------------------------------------------------
+    # The gated orcarouter Uncensored IQ3_XXS swap rung's run-config, rendered
+    # VERBATIM to /profile/strata-orca-iq3_xxs.json by the same profile
+    # ConfigMap. Shape: the primary's memory declaration byte-unchanged (ORCA
+    # .md measures this pack's expert arena at ~49.8 GiB — today's IQ3_S
+    # envelope, RESEARCH [S23]/Q4 table: "fits solo, ≈ today's IQ3_S shape"),
+    # pack/weights/tokenizer switched to the ORCA.md layout staged by model-
+    # fetch's gated orca step. Two Orca-specific deviations from the SC117
+    # profile above, both from docs/ORCA.md at the pinned checkout: the pack
+    # was built with --compat-bf16, and Orca's PLE table rides INSIDE shard 1
+    # (its example config points --native and --ple-gguf at the same file),
+    # unlike the GSQ-RCO tiers where shard 2 IS the PLE file. The names here
+    # follow ORCA.md's own pack/shard literals; the IQ3_S pair's files stay
+    # off this arena (serving the flagship's weights under an uncensored id
+    # is the failure the distinctness arms catch).
+    # -----------------------------------------------------------------------
+    engineProfileOrca:
+      # Keyless SERVE posture, identical to the other profiles (C-A): the
+      # hf-token Secret the R-d ruling sanctions is consumed by the model-
+      # fetch INIT for the gated download and stops there — this profile
+      # carries no secret reference of any kind.
+      api_key: "none"
+      # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
+      # backend/gpu/parallel/host to the primary and the abliterated rung.
+      exe: /models/strata/Strata/engine/strata
+      env: {}
+      cwd: /models/strata/Strata
+      # Own progress log on the claim (the --plan-gate and unload-timing
+      # evidence trail for THIS rung).
+      log: /models/strata/Strata/strata-orca-iq3_xxs.log
+      args:
+        # Fresh iq_pack --compat-bf16 pack built from the Orca shards by
+        # model-fetch (pack dir named by ORCA.md itself); the tokenizer
+        # directory rides inside it.
+        - --pack /models/strata/Strata-data/packs/orca-iq3_xxs
+        # ORCA.md: both file pointers take the SAME first shard — this
+        # pack's PLE lookup table lives inside shard 1 and stays on disk
+        # (unchanged by --compat-bf16), so there is no shard-2 PLE file here.
+        - --native /models/strata/Strata-data/models/IQ3_XXS-orca/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf
+        - --ple-gguf /models/strata/Strata-data/models/IQ3_XXS-orca/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf
+        # Same qwen-architecture expert profile as the other profiles.
+        - --expert-profile /models/strata/Strata/data/expert-profile.bin
+        - --expert-cache auto
+        - --spec 4
+        - --spec-min-p 0.5
+        # Shared stock draft-head runtime staged by the q3 provisioning —
+        # ORCA.md's own Preparation section uses the ORIGINAL model's MTP rt
+        # for this foreign pack ("the target model verifies every proposal");
+        # the abliteration never touched the draft head.
+        - --mtp /models/strata/Strata-data/mtp/rt
+        - --max-context 262144
+        - --kv int8
+        # Memory declaration byte-equal to the serving pair: the #1601
+        # cgroup lockstep (92160 inside the 96Gi limit) and the owner's
+        # parked-conversation budget are node-wide, and this arena sits at
+        # the IQ3_S anchor's size — no re-tune, no second untracked budget.
+        - --kv-resident 32768
+        - --prefill auto
+        - --memory-limit-mib 92160
+        - --conversation-cache-mib 32768
+        - --conversation-cache-slots 16
+      # Person-wins layer (RESEARCH §2), same rule as the other profiles.
+      user_args: []
+      tokenizer: /models/strata/Strata-data/packs/orca-iq3_xxs/tokenizer
+      model_name: qwen3.8-flash-next-orca-iq3_xxs
+      lib_dirs:
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib
+      backend: hip
+      # UNIQUE inner alias per the frozen-id rule: NOT the family alias
+      # (primary/strix hold that legitimately together) and NOT the OUTER
+      # llama.cpp id qwen3.8-flash-next-orca-q6 — one name on two engines
+      # would split the orca family across surfaces invisibly.
+      aliases:
+        - qwen3.8-flash-next-orca
       gpu: [0]
       parallel: 4
       host: "127.0.0.1"

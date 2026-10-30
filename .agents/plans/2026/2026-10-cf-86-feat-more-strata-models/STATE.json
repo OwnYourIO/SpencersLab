@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e77776738ffe0o3T6H95UMtL2m",
   "test_session": "ses_e762a6e57ffeKxIM263C9NJN2G",
-  "current_wave": 2,
+  "current_wave": 3,
   "updated_at": "2026-10-29",
   "kickoff": {
     "card": "Yb9sccTQ3wq2445ib",
@@ -65,14 +65,17 @@
       ]
     },
     "C02": {
-      "status": "test-armed",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e74e12331ffeR6SKXffkX95VBt",
       "handoffs": [
-        "2026-10-30 test-arms C02 (ses_e762a6e57ffeKxIM263C9NJN2G): DONE — +6 additive arms (downloader law, byte pins, .setup-ORCA marker law) in test_strata_orca_rung.py + TEST_SPEC §9.7; suite 52/283/3 → 54/286/4 (collected 338→344 exact); C01 file still 14/14. Repaired own author fault (peers arm _service_docs double-unpack — had been red-for-wrong-reason two rounds; now fails with designed message; grepped for twins, none). MEASUREMENTS: orcarouter METADATA public (200 anon) / BYTES gated (resolve 401+WWW-Authenticate Bearer, gated:auto); SC117 answers 206 Range (C01 keyless justified). Byte pins: SC117 47342144896+28800138432; orca 44637691008+40564977024 (Σ85.20GB == RESEARCH [S23]). C01 nits deliberately NOT pinned (would reopen approved chunk) — routed back as open question. Unmeasurable-statically flag for C02 dev/review: does venv python3.12 urllib forward Authorization across huggingface.co→us.aws.cdn.hf.co redirect — dev must verify + design around it. next: C02 dev vs 10 red arms, 3 green regression walls."
+        "2026-10-30 test-arms C02 (ses_e762a6e57ffeKxIM263C9NJN2G): DONE — +6 additive arms (downloader law, byte pins, .setup-ORCA marker law) in test_strata_orca_rung.py + TEST_SPEC §9.7; suite 52/283/3 → 54/286/4 (collected 338→344 exact); C01 file still 14/14. Repaired own author fault (peers arm _service_docs double-unpack — had been red-for-wrong-reason two rounds; now fails with designed message; grepped for twins, none). MEASUREMENTS: orcarouter METADATA public (200 anon) / BYTES gated (resolve 401+WWW-Authenticate Bearer, gated:auto); SC117 answers 206 Range (C01 keyless justified). Byte pins: SC117 47342144896+28800138432; orca 44637691008+40564977024 (Σ85.20GB == RESEARCH [S23]). C01 nits deliberately NOT pinned (would reopen approved chunk) — routed back as open question. Unmeasurable-statically flag for C02 dev/review: does venv python3.12 urllib forward Authorization across huggingface.co→us.aws.cdn.hf.co redirect — dev must verify + design around it. next: C02 dev vs 10 red arms, 3 green regression walls.",
+        "2026-10-30 dev C02 round 1 (ses_e74e12331ffeR6SKXffkX95VBt): DONE — orca_pack gated manual-pack (ORCA.md verbatim, --compat-bf16 per pack needs it, IQ3_XXS shards staged by original names, .pack-orca marker post-success), reuses C01 downloader law + NEW redirect-trust law (manual ≤4-hop walk, HF allowlist, Authorization only to token host, CDN leg = pre-signed signature+Range); matrix.vars.o, sets.main (p|s|c|o), engineProfileOrca (primary memory envelope byte-equal, own log, unique alias); 4th profile CM file; service init env q3,abl,orca + STRATA_MODEL_ORCA + HF_TOKEN secretKeyRef DOWNLOAD-ONLY on model-fetch init (R-d), peers 4-id wave. REDIRECT MEASUREMENT (fact correction, acceptance-bearing): test round's '3.12 strips Authorization cross-host' does NOT reproduce — CPython 3.12 source + 3.14 probe show redirect_request FORWARDS Authorization (only content-* dropped); real hazard = token LEAK, design immune either way; live: orca 401+WWW-Authenticate at origin (fake token, no secret touched), public chain 302→pre-signed CDN URL 206 Range (pins live-confirmed); do_open wire trace: origin sees authorization, CDN never does. Deviations: loop-token routing (not unconditional step, chunk Notes mandate helper-shape sharing); --ple-gguf → shard 1 for orca (ORCA.md: PLE rides inside shard 1, deliberate break from two-file shape, shard 2 still staged for iq_pack pair); trio grep 2/3 by design (C05 owns catalog). Validations: orca file 15 passed/1 skipped (3 green walls intact), abliterated 14/14, preservation 91, FULL SUITE 44/296/4 (cleared exactly C02's 10; residual per-file messages all designed class, read not counted), live arms 2 passed, aislop clean. On-target human notes: df ~85.2GB+pack before first orca provisioning; serve --plan; R-d real-token 206 probe if pack 401s on-target (rotation = human).",
+        "2026-10-30 review C02 round 1 (ses_e74c803f0ffeWEmxC4rX85xvGt): APPROVED — validations all green, review re-ran everything: FULL SUITE 44/296/4 (344 collected, dev touched no test), residual map 1:1 with EVERY message read (designed class); orca 15/1-skip, abliterated 14/14 (C01 no regression), preservation 90+1-skip, live arms pass (pins 44637691008+40564977024 == ORCA.md 85.20GB), sh/dash/bash -n on 328-line render, py_compile both heredocs, aislop clean. SECURITY LAWS re-verified by review's own wire-trace harness: Authorization ONLY on huggingface.co leg, CDN gets pre-signed+Range no-auth, evil.example.com refused ZERO connections, look-alikes refused, 4-hop cap, .part semantics; keyless serve path per-object scanned; secretKeyRef init-only. ADJUDICATIONS: (1) dev's redirect fact-correction SOUND (CPython 3.12.7 source + 3.14 repro) — ledger truth, stripping hypothesis false, no suite text asserts it; (2) --ple-gguf→shard-1 justified verbatim by ORCA.md; (3) --compat-bf16 vs C01 no-compat consistent per-quantizer; (4) catalog absence = C05's, not a finding. Findings: 1 minor (no arm pins profile-path↔staging-path pairing — additive arm recorded for test session, chunks/C02.md), 2 nits (netloc-vs-hostname port refusal, no scheme pin — both fail-closed). Review friction: render-diff must pair HEAD chart+service; harness must satisfy local 3.14 urllib surface while image runs 3.12 (law is interpreter-independent)."
       ]
     },
     "C03": {
@@ -115,5 +118,8 @@
     }
   },
   "blocked": [],
-  "deferred": []
+  "deferred": [
+    "PRE-C06 test-session batch (owner: ses_e762a6e57ffeKxIM263C9NJN2G): (a) additive path-pairing arm — staged paths derived from init script dir=/pack=/stem= must equal profile --pack/--native/--ple-gguf/tokenizer strings (C02 review minor, benefits C06 q4 rung); (b) re-word the 5 bare-KeyError arms in C03/C04 files to designed-message class when those files are next touched; (c) C01 r2 nits laws (fail-immediately on declared-total mismatch; size-check the -s skip arm) if coord elects a hardening follow-up — NOT accepted silently into approved C01.",
+    "FINAL-REVIEW carry list: on-target human gates (serve --plan per new profile at first deploy; df headroom; R-d real-token 206 probe only if pack 401s on-target)."
+  ]
 }
