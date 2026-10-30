@@ -18,6 +18,10 @@
 from __future__ import annotations
 
 import json
+import os
+import re
+import urllib.error
+import urllib.request
 
 import pytest
 import yaml
@@ -26,10 +30,40 @@ import strata_testlib as S
 
 _ok, _reason = S.env_ready()
 helm = pytest.mark.skipif(not _ok, reason=_reason)
+hf_live = pytest.mark.skipif(
+    os.environ.get("RUN_HF_CHECK") != "1",
+    reason="evidence gate: RUN_HF_CHECK=1 re-reads the two HF trees the pack pins come from",
+)
 
 ORCA_INNER_ALIAS = "qwen3.8-flash-next-orca"
 OUTER_ORCA_ID = "qwen3.8-flash-next-orca-q6"
 PACK_MARKER = S.ORCA_PACK_MARKER
+
+# Byte sizes of every object the pack step stages are the contract the downloader
+# compares against, so they are pinned from the HF tree API, not from ORCA.md's
+# rounded GB figures. Provenance, read 2026-10-30 with no credential anywhere in
+# the request:
+#   GET /api/models/SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF/tree/main/IQ3_XXS
+#     -> 200: 47342144896 + 28800138432
+#   GET /api/models/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/tree/main
+#     -> 200: …-IQ3_XXS-00001-of-00002.gguf 44637691008, …-00002-of-00002.gguf
+#        40564977024 (sum 85202668032 = the 85.20 GB RESEARCH [S23] measures)
+# The tree METADATA is public for both repos; the BYTES are not always:
+#   GET …/orcarouter/…/resolve/main/<IQ3_XXS shard> anonymous -> 401 + Bearer
+#     challenge (repo `gated: "auto"`), which is what makes AC3's init token
+#     load-bearing rather than decorative; the same request on SC117 answers 206
+#     with a Range header, which is what keeps C01's path keyless.
+HF_REPO_ABL = "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF"
+HF_REPO_ORCA = "orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF"
+ABL_SHARD_BYTES = (47342144896, 28800138432)
+ORCA_SHARD_BYTES = (44637691008, 40564977024)
+
+# The pinned strata image carries no shell HTTP client (C01 review finding 1,
+# major: upstream docker/Dockerfile@v0.2.7 apt lists + this repo's verify step
+# pin only git/c++), so a download that names one of these breaks the
+# model-fetch init, and the strata Deployment's Recreate strategy takes the
+# serving arenas down with it.
+_HTTP_CLIENT = re.compile(r"\b(curl|wget|aria2c|axel)\b")
 
 
 def _docs():
@@ -66,6 +100,27 @@ def _init_container(docs) -> dict:
 def _init_script(docs) -> str:
     ctr = _init_container(docs)
     return "\n".join([str(x) for x in (ctr.get("command") or [])] + [str(x) for x in (ctr.get("args") or [])])
+
+
+def _body_lines(docs) -> list:
+    """Numbered script lines that can execute. The staging rationale comments
+    NAME curl to forbid it, so an invocation law runs over non-comment lines
+    only — the same scoping the C01 review used when it counted zero
+    invocations."""
+    return [(n, ln) for n, ln in enumerate(_init_script(docs).splitlines()) if not ln.strip().startswith("#")]
+
+
+def _pins_size(body, size: int) -> bool:
+    return any(re.search(rf"(?<!\d){size}(?!\d)", ln) for _, ln in body)
+
+
+def _marker_pattern(body) -> str:
+    """How the orca completeness marker can be spelled in the script: the chunk's
+    literal path, or a shell variable assigned to it (C01's shape assigns once and
+    references "$MARK" in the guard and the touch). Returns the regex alternation
+    that matches any of those spellings."""
+    names = [m.group(1) for _, ln in body if (m := re.match(r"^(\w+)=\S*(?:pack-orca|setup-ORCA)", ln.strip()))]
+    return r"\.pack-orca|\.setup-ORCA" + "".join(rf"|\$\{{{n}\}}|\${n}\b" for n in names)
 
 
 # --- AC2: the fourth arena, its contract, the alternation ---------------------
@@ -256,7 +311,7 @@ def test_c02_peers_carries_the_orca_arena_once():
     """AC5: the outer peers list is the evidence's four-id wave once C02 lands
     (no dups, no phantom). The wave law itself lives in the evidence file +
     strata_testlib; this is the chunk-facing pin."""
-    docs, _raw = _service_docs()
+    docs = _service_docs()
     served = set(S.inner_config(docs)["models"])
     if S.ORCA_INNER_ID not in served:
         pytest.fail(
@@ -268,3 +323,145 @@ def test_c02_peers_carries_the_orca_arena_once():
     assert peers == S.expected_strata_peers(served), f"peers {peers} diverge from the wave for {sorted(served)}"
     assert S.ORCA_INNER_ID in peers, f"orca arena has no peers route: {peers}"
     assert len(set(peers)) == len(peers), f"duplicate peers models: {peers}"
+
+
+# --- AC6 addendum (C01 review deferral): laws of the code path C02 reuses -----
+# C01 review round 2 deferred these because nothing pinned them: the pack step's
+# downloader mechanism, its byte pins, and the completeness-marker ordering. C02
+# stages its 85.20 GB gated pack through the same init and the same downloader,
+# so a regression on this path is C02 acceptance, not C01 archaeology.
+
+
+@helm
+def test_c02_downloader_reuses_the_venv_urllib_path_not_a_shell_client():
+    """Staging is driven by the checkout venv interpreter over stdlib urllib —
+    the image provably carries no curl, and setup's own downloader is the same
+    stdlib call. C02's gated fetch must extend that body with an Authorization
+    header, not introduce a second client."""
+    body = _body_lines(_docs())
+    offenders = [ln.strip() for _, ln in body if _HTTP_CLIENT.search(ln)]
+    assert not offenders, f"model-fetch init invokes a shell HTTP client: {offenders}"
+    assert any(".venv/bin/python" in ln for _, ln in body), (
+        "no $SRC/.venv/bin/python download driver — C01's staging mechanism was replaced"
+    )
+    assert any("urllib.request" in ln for _, ln in body), "the staged fetch is no longer stdlib urllib"
+
+
+@helm
+def test_c02_abliterated_stage_keeps_the_byte_pins_the_orca_stage_copies():
+    """Each download invocation carries its HF-tree byte size: the downloader
+    loops until that size and `mv`s only on an exact match, so the pin is what
+    keeps a truncated shard out of iq_pack. Green today on the C01 path; it is
+    the shape C02's orca stage must reproduce."""
+    body = _body_lines(_docs())
+    assert any(HF_REPO_ABL in ln for _, ln in body), f"init script no longer names {HF_REPO_ABL}"
+    for size in ABL_SHARD_BYTES:
+        assert _pins_size(body, size), f"abliterated shard byte pin {size} missing from the init script"
+    unpinned = [ln.strip() for _, ln in body if "resolve/main" in ln and not re.search(r"(?<!\d)\d{8,}(?!\d)", ln)]
+    assert not unpinned, f"download invocation with no byte pin: {unpinned}"
+
+
+@helm
+def test_c02_reuse_source_marks_the_pack_only_after_it_builds():
+    """The marker discipline C02 has to copy, pinned on the path it copies from:
+    skip when the marker exists, run the pack, `touch` the marker last. A marker
+    written before the pack completes makes a partial pack permanent — the skip
+    guard means nothing ever re-enters the step, and the arena serves missing
+    weights."""
+    body = _body_lines(_docs())
+    assign = [(n, ln) for n, ln in body if re.match(r"^\s*\w+=\S*\.setup-", ln)]
+    assert assign, "no /models/strata/.setup-* marker assignment — C01's skip-guard pattern is gone"
+    var = re.match(r"^\s*(\w+)=", assign[0][1]).group(1)
+    guard = re.compile(r'\[\s*-f\s+"\$' + var + r'["}]')
+    touch = re.compile(r'touch\s+"\$' + var + r'["}]')
+    assert any(guard.search(ln) for _, ln in body), (
+        f"the .setup marker has no `-f` skip guard — every boot re-provisions: {assign}"
+    )
+    pack_calls = [n for n, ln in body if re.match(r"^\s*abl_pack\b", ln)]
+    touches = [n for n, ln in body if touch.search(ln)]
+    assert pack_calls and touches, f"abl_pack call or marker touch missing (packs: {pack_calls}, touches: {touches})"
+    assert min(touches) > min(pack_calls), (
+        f"marker touched at line {min(touches)} before abl_pack at {min(pack_calls)} — "
+        "the marker claims a pack the step has not built yet"
+    )
+
+
+@helm
+def test_c02_orca_stage_pins_the_orcarouter_byte_sizes():
+    """Branch-B staging of the gated IQ3_XXS pair through the same byte-pinned
+    downloader. The repo literal is what stops the orca id from fetching some
+    other repo's bytes; the sizes are the tree-API literals pinned above."""
+    body = _body_lines(_docs())
+    assert any(HF_REPO_ORCA in ln for _, ln in body), (
+        f"model-fetch init never names {HF_REPO_ORCA} — the gated orca pack step (branch B) is not landed"
+    )
+    for size in ORCA_SHARD_BYTES:
+        assert _pins_size(body, size), (
+            f"orca shard byte pin {size} missing — an un-pinned 40 GB download cannot be "
+            "distinguished from a truncated one"
+        )
+    unpinned = [ln.strip() for _, ln in body if "resolve/main" in ln and not re.search(r"(?<!\d)\d{8,}(?!\d)", ln)]
+    assert not unpinned, f"download invocation with no byte pin: {unpinned}"
+
+
+@helm
+def test_c02_orca_marker_is_touched_only_after_the_pack_completes():
+    """AC6 idempotency for the 85 GB rung: the chunk's `.pack-orca` marker sits
+    behind a `-f` skip guard and is touched only after the staged shards and the
+    pack step have run (the touch follows the byte-pinned downloads in script
+    order), so an interrupted pack re-enters the step instead of being marked done."""
+    body = _body_lines(_docs())
+    pattern = _marker_pattern(body)
+    refs = [(n, ln) for n, ln in body if re.search(pattern, ln)]
+    assert refs, f"model-fetch init has no {PACK_MARKER} completeness marker reference — C02 not landed"
+    assert any(re.search(rf"\[\s*-f\s+\"?({pattern})", ln) for _, ln in refs), (
+        f"no `-f` skip guard on the orca marker — every boot re-downloads 85.20 GB: {[ln for _, ln in refs]}"
+    )
+    touches = [n for n, ln in refs if re.search(rf"touch\s+\"?({pattern})", ln)]
+    assert touches, f"nothing touches the orca marker: {[ln for _, ln in refs]}"
+    staged = [
+        n for n, ln in body if any(re.search(rf"(?<!\d){size}(?!\d)", ln) for size in ORCA_SHARD_BYTES)
+    ]
+    assert staged, "no byte-pinned orca download to order the marker against (see the byte-pin arm)"
+    assert min(touches) > max(staged), (
+        f"orca marker touched at line {min(touches)}, before its staged shards at "
+        f"{max(staged)} — a pack that never completed would be marked complete"
+    )
+
+
+@hf_live
+def test_c02_pack_pins_still_match_the_live_hf_trees():
+    """Re-reads both trees the literals above came from, anonymously — no
+    credential is sent, so this arm proves the metadata is public while the
+    orca BYTES stay token-gated (401 + Bearer challenge on resolve/main), which
+    is the fact AC3's download-only token rests on."""
+    sizes = {f["path"]: f.get("size") or (f.get("lfs") or {}).get("size") for f in _tree(HF_REPO_ABL, "IQ3_XXS")}
+    abl = {name: size for name, size in sizes.items() if name.endswith(".gguf")}
+    assert sorted(abl.values()) == sorted(ABL_SHARD_BYTES), f"SC117 IQ3_XXS tree now reports {abl} — re-pin the literals"
+
+    orca = {
+        f["path"]: f.get("size") or (f.get("lfs") or {}).get("size")
+        for f in _tree(HF_REPO_ORCA)
+        if "-IQ3_XXS-" in f["path"] and f["path"].endswith(".gguf")
+    }
+    assert sorted(orca.values()) == sorted(ORCA_SHARD_BYTES), f"orcarouter IQ3_XXS tree now reports {orca} — re-pin"
+
+    shard = next(name for name in orca if name.endswith("-00001-of-00002.gguf"))
+    try:
+        urllib.request.urlopen(f"https://huggingface.co/{HF_REPO_ORCA}/resolve/main/{shard}", timeout=30)
+        gated = False
+    except urllib.error.HTTPError as err:
+        gated = err.code in (401, 403)
+    assert gated, (
+        f"{HF_REPO_ORCA}/resolve/main served {shard} anonymously — the gated premise behind "
+        "the init-token exception (R-d) needs re-ruling"
+    )
+
+
+def _tree(repo: str, path: str = "") -> list:
+    """Anonymous HF tree listing. Deliberately sends no Authorization header and
+    never reads HF_TOKEN: a suite arm that consumed the token could not tell a
+    public repo from a gated one."""
+    url = f"https://huggingface.co/api/models/{repo}/tree/main" + (f"/{path}" if path else "")
+    with urllib.request.urlopen(url, timeout=30) as resp:
+        return json.loads(resp.read())
