@@ -1,10 +1,24 @@
 {
   "feature": "2026/2026-10-chore-board-tick-cleanup",
   "plan_status": "complete",
+  "merge_rounds": [
+    {
+      "at": "2026-10-30T04:30Z",
+      "reason": "main advanced during the run (cf-72 coord restructure, cf-85 slug flip, cf-68 create-list, cf-83 strata, cf-87 labels); the hourly no-op alerts the user reported were correct pre-merge behavior (main lacked the whole delta); the 23:14 board-context block the user pasted independently proved the W1 preload live through the real scheduled prompt path.",
+      "commits": ["811f95bc8 merge main (parents 28aa22955 + 3a7995579)"],
+      "rounds": [
+        "dev merge-sources: 6 coord sources re-seated (ls+probe INSIDE cf-72 scoped-read family; -pr auto-merge tail violation repaired; matcher verdicts ls-allow/probe-arg-allow/zero-arg-deny x12 surfaces), rulesync mirrors regenerated",
+        "test merge-tests: 7 suites re-derived to merged shape (A16-in-cf-72-form, 7-row family admits, obsolete coord LS_TRAILER rung removed, MERGE_HEAD proof rungs added)",
+        "test merge-tests-t4fix: board-context t4 coord-pr admitted as byte-exact settled-form pin (teeth kept; blanket skip rejected as toothless)",
+        "review merge-review: APPROVED 2026-10-30 — full Commands green on the committed tree (233/233, M3 green post-cf-83), no silent drops, boards-skill marker subsection coexists with cf-85 flip cleanly"
+      ],
+      "coord_notes": ["User edit-permission was denied while agent-board-coord-local.md sat conflicted (frontmatter reload = live silent-drift incident; recorded in DECISIONS.md)", "git commit matcher rejected long merge messages; short -m + amend succeeded (friction)", "ls grant from C01 verified working in the coordinator's own shell"]
+    }
+  ],
   "coord_session": "ses_e782f071affeLNM8jA1r3ocobm",
   "test_session": "ses_e77bd9589ffeUWsfPsH64hS5Ah",
   "current_wave": 1,
-  "updated_at": "2026-10-29T22:40Z",
+  "updated_at": "2026-10-30T04:40Z",
   "kickoff": {
     "slug": "board-tick-cleanup",
     "type": "chore",
