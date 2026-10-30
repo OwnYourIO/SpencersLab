@@ -1783,3 +1783,60 @@ FULL plain: **343 passed, 8 skipped, 0 failed**. FULL armed
 (`RUN_HF_CHECK=1 RUN_FLAG_AUDIT=1`): **351 passed, 0 failed, 0 skipped** — the
 first fully-armed zero-red run of the ticket. The 2 above dev's projected 349
 are the additive arms in this section, not a counting difference.
+
+### 9.13 C06 docs round, test half — the shipped PAIRS doctrine pinned per doc (2026-10-30)
+
+The docs (runbook note + parent README) are the only surface where the two-pair
+doctrine exists: the render carries ONE cgroup (100Gi; 96Gi is the superseded-era
+value), so render arms cannot see a doc that drops or un-pairs a leg. Seven arms
+added to test_strata_runbook.py (file 11 → 18 tests), pinning the docs AS WRITTEN
+— the note spells the conversation cache `32768 MiB x 16-slot`/`8192 MiB x 16`,
+the README `32 GiB × 16 slots`/`8 GiB × 16`; house style, so token sets are
+per-file and no doc was edited to unify them.
+
+Pinned truths (per doc unless noted): both pairs as PAIRS (`96Gi` within a
+bounded, period-free window of `92160`; `100Gi` of `95232`) in BOTH docs; the
+per-rung/one-pod distinction (without it "two pairs" asserts two live cgroups,
+which the render contradicts — the doctrine is pinned, not the wording); each
+doc's cache spellings; `/models/strata/sessions` in both docs AND tied to
+session files (path alone passes nothing); the 135–160 GB budget in both, and
+in the note qualified by the Q4 shard total `111,334,654,784` beside it; the
+`66560` figure carrying a supersession marker on its own line; and byte
+arithmetic — the note's total and the chart-comment total must equal the
+live-pinned `Q4_PACK_TOTAL` (imported from test_strata_q4_rung, which reads the
+HF tree), all four shard byte counts stay in the chart comment, and the
+superseded slip `111,334,256,784` must not return (it already fired once on the
+pre-round values.yaml — the real-world proof the arm matters).
+
+Honest absences (reported, not manufactured): the README does not state the
+111,334,654,784 total — the note and the chart comment carry it, so the
+budget-qualification assert is note-scoped. `_flat` joins hard-wrapped lines but
+keeps blank-line paragraph breaks, and pair windows exclude `.` — a match cannot
+bridge sentences; patterns use `\s+` wherever a doc may have wrapped.
+
+Non-vacuity: 24 mutation probes via monkeypatched S.read (docs never touched on
+disk) — drop either cap, either cache spelling, the sessions path or its
+session-files link, the 111 GB total, the 135–160 budget, unlabel 66560, or
+re-introduce the byte slip in values.yaml → the owning arm goes RED naming the
+cause; substituted HEAD text turns all seven arms RED. One probe initially
+self-missed (double-escaped `\\s` in the probe regex, not the arm) — corrected
+and re-proved.
+
+Render unmoved: `helm template gpu-ai-llama-swap` (7-flag set) byte-identical
+HEAD vs dirty tree (sha 37692703… on both), values.yaml delta verified
+comments-only; goldens/off-parity untouched (3/3 green).
+
+Scope-guard widening follow-on (same class as §9.12, same KEEP pattern): the
+docs round dirtied two never-admitted files — the runbook note and the parent
+README — reddening c8/t14/c7 on the docs round's own tree. Widened with exact
+file literals (never a directory) in all three, and the c8 standing probe loop
+gained `.agents/notes/strata-remediation-plan.md` to prove the notes admit
+cannot silently grow to `.agents/notes/*`. Probes: dirty tree 19/22/9 ok;
+unadmitted configmap-strata.yaml and the sibling note both still rc 1 in all
+three; whole-ticket range rc 0; agent-perms 15 ok (A9 window-pins intact).
+
+Posture (helm on PATH): per-file runbook 18, q4_rung 11+1, render 25,
+off-parity 3, blast-radius 5, catalog 18. FULL plain **350 passed, 8 skipped,
+0 failed**; FULL armed **358 passed, 0 failed, 0 skipped** — exactly the §9.12
+counts +7 arms, render byte-unchanged underneath. aislop ci --changes: score
+100, 0 errors, 0 warnings.

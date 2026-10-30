@@ -37,11 +37,19 @@ with NO `/v1` suffix — the request path appends verbatim (RESEARCH §3).
 Pod shape: privileged + hostPath `/dev/kfd` + `/dev/dri`, `strategy:
 Recreate` (a RollingUpdate overlap would double-pin the arena — the #2257
 class), grace 420 s > `unloadTimeout` 180 s + drain 30 s, shm 2 GiB.
-Memory is a PAIRED cap, not the DOCKER.md default of none: `limits.memory
-96Gi` cgroup + `--memory-limit-mib 92160` declared to the engine (#1601's
-informed-limit posture) — the 2026-10-29 node OOM harvest ended the
-uncapped-pinning era on a node the trio also lives on. Conversation cache:
-32 GiB × 16 slots (IQ3_S parks ~3.3 GiB per full 256k conversation).
+Memory is a PAIRED cap, not the DOCKER.md default of none: the pod cgroup and
+the engine's `--memory-limit-mib` move as one unit (#1601's informed-limit
+posture) — the 2026-10-29 node OOM harvest ended the uncapped-pinning era on a
+node the trio also lives on. The pair is PER-RUNG inside the one strata pod:
+`limits.memory 96Gi` + `--memory-limit-mib 92160` is the IQ3_S / IQ3_XXS
+envelope (arena ~50 GiB), while the `qwen3.8-flash-next-strata-q4` arena
+(unsloth UD-Q4_K_XL) raises the pod to `100Gi` with its own `95232` — 71.7 GiB
+pinned experts + 8 GiB conversation cache + ~13 GiB worst-case KV — and the
+smaller rungs keep their 92160 cap inside the same cgroup. Conversation cache:
+32 GiB × 16 slots on the IQ3-class rungs (IQ3_S parks ~3.3 GiB per full 256k
+conversation); the Q4 rung trims it to 8 GiB × 16 and round-trips deep
+conversations through engine session files under `/models/strata/sessions`
+instead of holding them parked in RAM.
 
 ### Keyless posture
 
