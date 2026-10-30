@@ -2,7 +2,7 @@
   "feature": "2026/2026-10-cf-86-feat-more-strata-models",
   "plan_status": "approved",
   "coord_session": "ses_e77776738ffe0o3T6H95UMtL2m",
-  "test_session": null,
+  "test_session": "ses_e762a6e57ffeKxIM263C9NJN2G",
   "current_wave": 1,
   "updated_at": "2026-10-29",
   "kickoff": {
@@ -31,6 +31,21 @@
       "R-c": "hygiene pair has no Strata path (ornith ladder: no family; orca Q6: ram 118 > node); only unsloth Q4 rungs catalog-served; +260-290 GB writes vs 500Gi shared claim — on-target df is the human disk gate",
       "R-d": "existing hf-token Secret SANCTIONED for C02 (download-only secretKeyRef on model-fetch init, no new Bitwarden item, serve path stays keyless); setup.py@v0.2.7 has zero auth support -> gated pack arrives via Branch B manual download+pack (curl+Bearer, iq_pack via STRATA_GGUF_PY)"
     }
+  },
+  "test_stage": {
+    "name": "test-authoring-all-chunks",
+    "status": "complete",
+    "session": "ses_e762a6e57ffeKxIM263C9NJN2G",
+    "summary": "All 6 chunks' tests written in one session (red/green map in TEST_SPEC §9.3). Post-session suite: 59 failed / 274 passed / 3 skipped — ALL reds designed (48 new-file C01–C06 implementation reds + 11 frozen-table-growth reds in test_config_parity ×8 / test_new_roster ×2 / test_config_schema ×1, clearing when C03/C04 land); no previously green test weakened. aislop ci --changes clean (59 files).",
+    "coord_ruling": "Deviation (1) ACCEPTED (see DECISIONS 2026-10-30 coord entry): goldens stay byte-invariant; dev must NOT touch charts/llama-swap/tests/evidence/ goldens; sanctioned delta enforced by frozen-table growth + exact new-id allowances in test_flashnext_blast_radius."
+  },
+  "run_state": {
+    "status": "resumed-human-directed",
+    "detail": "Context lock was reaped 2026-10-29T20:24:38Z (2 h stale — no force-beat before the U8 question pause + long subagent chain). Run stopped per contract; the owner then instructed 'Please continue' (2026-10-30) — original session re-claimed Context (new setId ce72239d, claim succeeded ⇒ no other holder), bookkeeping below stands. Heartbeat discipline active: force pipeline_heartbeat before every question pause and around every subagent launch/hand-back.",
+    "branch_head_at_stop": "4f7126689",
+    "uncommitted_at_stop": "8 modified + 7 untracked test files, all under charts/llama-swap/tests/ — committed at resume as the test wave",
+    "resume": "RESUMED in-session 2026-10-30 by human direction (supersedes the fresh-run default for this run; the re-claim's atomicity was the safety check). Next: wave C01 dev → review → coord commit, then C02→C06; final whole-plan review; card to Review + release done.",
+    "handoff_result_verbatim": "status: DONE | chunk: test | open_questions: coord to accept deviation (1) — C03/C04 chunk text asks for golden re-pins, the suite instead enforces byte-invariant goldens + exact sanctioned delta; if accepted, dev must NOT touch charts/llama-swap/tests/evidence/ goldens (they already match the amended arms). | next_suggested: hand the dev wave (C01 first) the green/red map in TEST_SPEC §9.3; on-target steps stay human (strata serve --plan PLE-mmap pin, PVC spot check, first HIP session round-trip). Full RESULT text lives in the test session (ses_e762a6e57ffeKxIM263C9NJN2G) and TEST_SPEC §9; deviations (2)–(6) recorded there: C01 no-secret re-expressed as serve-path/keyless-until-C02 arms; model/pack dir NAMES parameterized by chunk gates not pinned; C05 Q4-default flip arm NOT executed (no user approval — absence guard only); C06 IQ4_XS fallback deliberately not a second passing shape; no commit per pipeline rule."
   },
   "chunks": {
     "C01": {
