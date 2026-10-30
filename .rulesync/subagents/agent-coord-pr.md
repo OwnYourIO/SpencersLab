@@ -70,74 +70,250 @@ opencode:
     - action: shell
       resource: bash scripts/board-preload-probe.sh *
       effect: allow
+    # The `ls *` read grant (user ruling 2026-10-29): placed in the scoped-read
+    # family, not at the git tail — the push tail is the load-bearing last rows.
+    - action: shell
+      resource: ls *
+      effect: allow
     # In-work mark epoch: the kickoff recipe embeds $(date +%s%3N) in the
     # patch payload, and the shell matcher extracts command substitutions
     # and checks the date subcommand against this list on its own — the
     # global config's `date *` allow sits before this agent's deny baseline
     # and loses under last-match-wins, so the grant lives here.
-    # Git: commit stays allow (not ask) so scheduled runs can land chunk
-    # commits unattended; only main INTO the branch is a sanctioned merge;
-    # push allowed for remote build/test, main/force deny rows last.
+    # Git: sole-committer broad write (owner ruling 2026-10-29, card #72) —
+    # one `git *` allow closed by a pinned deny floor, not an allow-list.
+    # Advancing main needs make-main-HEAD (checkout/switch/worktree-add on a
+    # main target), ref plumbing, merge INTO main, a push, or a git alias —
+    # every leg is floored; the exception re-allows ride directly after the
+    # floor and the push tail is the load-bearing LAST rows, never reorder.
+    # Residual (D27): `-C` write verbs act on the TARGET worktree's current
+    # branch — never main-publishable, chain (4). Push allowed for remote
+    # build/test, main/force deny rows last.
     - action: shell
-      resource: git status *
+      resource: git *
       effect: allow
     - action: shell
-      resource: git log *
-      effect: allow
+      resource: git checkout main*
+      effect: deny
     - action: shell
-      resource: git diff *
-      effect: allow
+      resource: git * checkout main*
+      effect: deny
     - action: shell
-      resource: git show *
-      effect: allow
+      resource: git checkout * main*
+      effect: deny
     - action: shell
-      resource: git branch *
-      effect: allow
+      resource: git * checkout * main*
+      effect: deny
     - action: shell
-      resource: git merge-base *
-      effect: allow
+      resource: git switch main*
+      effect: deny
     - action: shell
-      resource: git rev-parse *
-      effect: allow
+      resource: git * switch main*
+      effect: deny
     - action: shell
-      resource: git ls-files *
-      effect: allow
+      resource: git switch * main*
+      effect: deny
     - action: shell
-      resource: git add *
-      effect: allow
+      resource: git * switch * main*
+      effect: deny
     - action: shell
-      resource: git commit *
-      effect: allow
+      resource: git update-ref*
+      effect: deny
     - action: shell
-      resource: git checkout *
-      effect: allow
+      resource: git * update-ref*
+      effect: deny
     - action: shell
-      resource: git switch *
-      effect: allow
+      resource: git symbolic-ref*
+      effect: deny
+    - action: shell
+      resource: git * symbolic-ref*
+      effect: deny
+    - action: shell
+      resource: git branch -f main*
+      effect: deny
+    - action: shell
+      resource: git * branch -f main*
+      effect: deny
+    - action: shell
+      resource: git branch --force main*
+      effect: deny
+    - action: shell
+      resource: git * branch --force main*
+      effect: deny
+    - action: shell
+      resource: git branch -d main*
+      effect: deny
+    - action: shell
+      resource: git branch -d * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -d main*
+      effect: deny
+    - action: shell
+      resource: git * branch -d * main*
+      effect: deny
+    - action: shell
+      resource: git branch -D main*
+      effect: deny
+    - action: shell
+      resource: git branch -D * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -D main*
+      effect: deny
+    - action: shell
+      resource: git * branch -D * main*
+      effect: deny
+    - action: shell
+      resource: git branch -m main*
+      effect: deny
+    - action: shell
+      resource: git branch -m * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -m main*
+      effect: deny
+    - action: shell
+      resource: git * branch -m * main*
+      effect: deny
+    - action: shell
+      resource: git branch -M main*
+      effect: deny
+    - action: shell
+      resource: git branch -M * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -M main*
+      effect: deny
+    - action: shell
+      resource: git * branch -M * main*
+      effect: deny
+    - action: shell
+      resource: git branch -c main*
+      effect: deny
+    - action: shell
+      resource: git * branch -c main*
+      effect: deny
+    - action: shell
+      resource: git branch -c * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -c * main*
+      effect: deny
+    - action: shell
+      resource: git branch -C main*
+      effect: deny
+    - action: shell
+      resource: git * branch -C main*
+      effect: deny
+    - action: shell
+      resource: git branch -C * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -C * main*
+      effect: deny
+    - action: shell
+      resource: git worktree add * main*
+      effect: deny
+    - action: shell
+      resource: git * worktree add * main*
+      effect: deny
+    - action: shell
+      resource: git pull*
+      effect: deny
+    - action: shell
+      resource: git * pull*
+      effect: deny
+    - action: shell
+      resource: git merge *
+      effect: deny
+    - action: shell
+      resource: git * merge *
+      effect: deny
+    - action: shell
+      resource: git config alias*
+      effect: deny
+    - action: shell
+      resource: git * config alias*
+      effect: deny
+    - action: shell
+      resource: git * --force*
+      effect: deny
+    - action: shell
+      resource: git * -f *
+      effect: deny
+    - action: shell
+      resource: git * -P *
+      effect: deny
     - action: shell
       resource: git merge main*
       effect: allow
     - action: shell
-      resource: git push*
+      resource: git * merge main*
+      effect: allow
+    - action: shell
+      resource: git merge --abort
+      effect: allow
+    - action: shell
+      resource: git * merge --abort
+      effect: allow
+    - action: shell
+      resource: git merge --continue
+      effect: allow
+    - action: shell
+      resource: git * merge --continue
+      effect: allow
+    - action: shell
+      resource: git checkout -b * main*
+      effect: allow
+    - action: shell
+      resource: git * checkout -b * main*
+      effect: allow
+    - action: shell
+      resource: git checkout -B * main*
+      effect: allow
+    - action: shell
+      resource: git * checkout -B * main*
+      effect: allow
+    - action: shell
+      resource: git switch -c * main*
+      effect: allow
+    - action: shell
+      resource: git * switch -c * main*
+      effect: allow
+    - action: shell
+      resource: git switch -C * main*
+      effect: allow
+    - action: shell
+      resource: git * switch -C * main*
+      effect: allow
+    - action: shell
+      resource: git worktree add -b * main*
+      effect: allow
+    - action: shell
+      resource: git * worktree add -b * main*
       effect: allow
     - action: shell
       resource: git push*main*
       effect: deny
     - action: shell
-      resource: git push --force*
+      resource: git * push *main*
+      effect: deny
+    - action: shell
+      resource: git * push
       effect: deny
     - action: shell
       resource: git push -f*
       effect: deny
     - action: shell
-      resource: git push * --force*
+      resource: git push -P*
       effect: deny
     - action: shell
-      resource: git push * -f*
+      resource: git * push -f*
       effect: deny
     - action: shell
-      resource: ls *
-      effect: allow
+      resource: git * push -P*
+      effect: deny
     - action: subagent
       resource: '*'
       effect: deny

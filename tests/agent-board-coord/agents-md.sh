@@ -14,12 +14,20 @@
 #
 # Contract source: chunks/C04.md "## Tests". AC trace:
 # c1[AC3 regen] c2[AC2 roster] c3[AC1 new facts + D10/D11/D12/D17-era no-run-
-# tag] c4[AC2 dev-<service> verbatim + no re-split] c5[AC2 permissions row,
-# D21] c6[AC4 coord text unchanged] c7[AC3 scope; cf-50 + cf-52 widenings]
-# c8[AC4 section preservation].
+# tag + cf-85 AC8 combined slug value] c4[AC2 dev-<service> verbatim + no
+# re-split] c5[AC2 permissions row, D21] c6[AC4 coord text unchanged]
+# c7[AC3 scope; cf-50 + cf-52 + cf-85 widenings] c8[AC4 section preservation].
 #
 # Red before C04 (grep board-coord AGENTS.md: zero matches today); c1, c4,
 # c6, c7, c8 are green at the base already and hold as regressions.
+#
+# cf-85 (2026-10-29, cf-85-refactor-wekan-slug-session-link): c3's combined-
+# form pin is the DESIGNED RED — AGENTS.md and the rules source must name the
+# single slug field WITH its `[<slug>](<session link>)` value, so the pin is
+# red against the pre-flip text and green at the flip commit. c7 admits the
+# cf-85 plan folder. c3's slug/session/custom-field substrings stay pinned on
+# purpose: the retired field's name survives in the summary text, while the
+# two-field wording is fenced by rulesync-surface.sh c19's tree-wide negatives.
 #
 # cf-58 RE-PIN (2026-10-cf-58-feat-standalone-agent-merge; C02/C03/C04/C05):
 # c2's exact roster-set literal was the PRE-SPLIT row — re-pinned to the
@@ -215,6 +223,12 @@ if want c3; then
     grep -qF 'cf-<card' "$f" || fail "c3: $f lacks the cf-<card-…> slug rule (D10)"
     grep -qF 'slug' "$f" && grep -qF 'session' "$f" && grep -qF 'custom field' "$f" \
       || fail "c3: $f does not name the slug/session custom-field intake"
+    # cf-85 AC8: the summary surfaces name ONE field, and name it with the
+    # combined value the field carries. `session` stays present as the retired
+    # field's name (the line above pins that); the pair-as-two-fields wording
+    # is fenced by rulesync-surface.sh c19's tree-wide negatives.
+    grep -qF '[<slug>](' "$f" \
+      || fail "c3[cf-85 AC8]: $f never states the combined [<slug>](<session link>) value of the slug field (red before the cf-85 flip)"
     grep -qF 'Model(s) checklist' "$f" \
       || fail "c3: $f does not route models from the Model(s) checklist alone (D12)"
     grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag' "$f" \
@@ -227,7 +241,7 @@ if want c3; then
   cat "$TMP/agents-section.md" "$TMP/fp-section.md" >"$TMP/new-text.md"
   python3 "$TMP/neg12.py" "$TMP/new-text.md" \
     || fail "c3: the new AGENTS.md text pairs 'models' with 'custom field' without negating it (D12)"
-  ok "c3: pickup order, research-only -> Review, slug/session cf intake, cf- slug, no-run-tag-for-card-runs + agent-coord keeps them; D12 negative holds in the new sections"
+  ok "c3: pickup order, research-only -> Review, slug/session cf intake, cf- slug, no-run-tag-for-card-runs + agent-coord keeps them, cf-85 combined [<slug>](<session link>) value; D12 negative holds in the new sections"
 fi
 
 # --- c4: main's combined dev-<service> row preserved verbatim (C04 AC2) --------
@@ -289,10 +303,18 @@ fi
 # bookkeeping write into the superseded sibling folder
 # 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, dca8a25d2) — same
 # sanctioned-plan-folder class as c8's enumerations, admitted whole.
+# cf-85 (2026-10-29): the running ticket's own plan folder joins the admit;
+# its content edits ride the boards-skill, subagent, command, rules, AGENTS.md
+# and tests/* admits already in this set.
 # board-tick-cleanup widening (2026-10-29, agent-test): the hand-managed
 # question-notify reader + the loop-file truth edit + this ticket's own plan
 # folder (the agent-perms A9 window pin; a guard red on the running ticket's
 # folder buries every later check).
+# merge round (2026-10-30): cf-68 + cf-83 plan folders join the admit — `git merge
+# main` moves the changed-paths walk across ticket-base boundaries, and a guard red
+# on another ticket's already-landed folder buries every later check (same class as
+# the own-folder admits above). containers/wekan-mcp/* joins per the c8 union —
+# cf-68's create_list landed the container surface on this branch.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -317,15 +339,19 @@ if want c7; then
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
-      skills/wekan-mcp/*|skills/wekan-api/*|.opencode/plugin/board-context/*|\
+      skills/wekan-mcp/*|skills/wekan-api/*|containers/wekan-mcp/*|.opencode/plugin/board-context/*|\
       .opencode/plugin/question-notify/*|.agents/loops/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
-      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*) : ;;
+      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*|\
+      .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
+      .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
+      .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
+      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder widenings; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------

@@ -4,14 +4,15 @@ description: >-
   WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card
   pickup (a given card id, else the top card walking Rework → Not Started → Low
   Priority), card-driven kickoff where the five standard checklists
-  (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the slug + session
-  custom fields supply the answers pipeline-kickoff would ask live, the
-  checked-stages-only Lifecycle stage gate with its single-authority Stage map,
-  run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative
-  research-only loop for Research-labelled cards (ending at Review), the card
-  lifecycle with post-plan write-back (Finished stays human-owned), and the
-  batched question protocol. MUST-loaded by agent-board-coord at run start; load
-  it anywhere else when working the WeKan AI-Dev board card flow.
+  (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the single slug
+  custom field (combined `[<slug>](<session link>)` value) supply the answers
+  pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate
+  with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs
+  naming every surface, the iterative research-only loop for Research-labelled
+  cards (ending at Review), the card lifecycle with post-plan write-back
+  (Finished stays human-owned), and the batched question protocol. MUST-loaded
+  by agent-board-coord at run start; load it anywhere else when working the
+  WeKan AI-Dev board card flow.
 ---
 # Boards
 
@@ -22,7 +23,7 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 - Instance: `https://wekan.spencerslab.com`; board **AI-Dev**; swimlane **In Process**.
 - Lists (six today, seven once the D22 follow-up card lands): **Not Started**, **Executing**, **Review**, **Rework**, **Finished**, **Low Priority** (deprioritised work — picked up last), **Timeout** (reaper destination, created via the D22 follow-up card — never a pickup source; its triage is human-owned like **Review**'s).
 - Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned). Labels whose name starts with `Pipeline:` mark the pipelines a card blocks on the lease-lock surface (Parallel pipeline loops): the TRIMMED remainder of the label name is one pipeline/lock name, ONE card may carry several, and a card with no such label runs on the single `default` pipeline. `Pipeline:` labels are human-created in the WeKan UI and never agent-created or agent-mutated — the same posture as **Research** (D17/D19).
-- Custom fields: exactly TWO board-level text fields, `slug` and `session`, resolved by name with `list_custom_fields`. There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field. Nor a `pipeline` field — that route was retired with D19: pipeline identity is LABELS, never a third field.
+- Custom fields: exactly ONE board-level text field — `slug`, carrying the combined `[<slug>](<session link>)` link value — resolved by name with `list_custom_fields`; the legacy `session` field may linger on the live board but is retired: never read, never written (its board-level removal is human-owned). There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field. Nor a `pipeline` field — that route was retired with D19: pipeline identity is LABELS, never a third field.
 - The five standard checklists on every card (future cards via the multi-action createCard rule — imported per the upgrade-ticket runbook — existing cards via backfill; the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
@@ -65,9 +66,9 @@ The values the flow writes onto the board. They are a written-onto-the-board con
 - Two-leg resolution of this run's `Session origin:` slot (D10/D13, ticket 2026-10-bug-session-origin-no-line): **leg 1** — a launch whose board command expanded takes that command's `Session origin:` line, copy-verbatim, canonical. **leg 2** — a launch with no board command expansion (a raw-chat kickoff, or a restart-reinjected leg that carried no line) runs `bash scripts/session-origin.sh` ONCE at claim and treats its emitted line exactly like the command's line: same vocabulary, same recognition set, same lowercased canonical host; the script executes the block's own derivation and probe fragments byte-equivalently (D12). The free-hand ban holds for both legs — block-or-script are the only sanctioned channels, never an ad-hoc env read or hand-run probe. If the script itself cannot run (grant absent or denied, file missing): the slot takes `Session origin: UNRESOLVED (session resolver unavailable)` — a terminal reason. Leg 2's line carries the block's three reason branches plus that token, and every UNRESOLVED — block-emitted, script-emitted, or resolver-unavailable — routes to the raw-id fallback below unchanged (D23 r2).
 - Claim-once record (OQ2/D14): at claim the run writes the slot's line value verbatim — resolved base or the UNRESOLVED line — to STATE.json `kickoff.session_origin`; every later leg of the run RE-USES the recorded value instead of re-resolving, including a post-restart re-supplied launch, and only a run that has established none resolves. A no-line launch is never a stall: the sanctioned manual entry is `/pipeline-boards` (its expansion emits the line, leg 1) and a command-less launch runs the identical flow through the script leg (leg 2).
 - The block self-probes its derived host before emitting — one `curl -m 5` at expansion; recognized answers `200`/`30x`/`401`/`403`. `Session origin: UNRESOLVED` is defined precisely, three branches: the app-origin env absent (the launch is not Coder-hosted), the template shape unexpected (`{{port}}` missing), or the derived host answered a code outside the recognition set (`400` malformed, `000` = DNS/connect/timeout — e.g. a brand-new gpu workspace whose exact split-horizon DNS record has not landed; the probe degrades that to the fallback below instead of shipping a broken link). Honest limit: the probe proves coderd recognizes the host from the workspace's own DNS view — not the human LAN view, not the authenticated leg (landing observations cover those).
-- On `UNRESOLVED` the run PROCEEDS (user ruling 2026-10-25, D23 r2): every would-be link slot gets the RAW session id — claim-comment session line, `session` custom-field value, research-only result comment — and the RESULT records the fallback (open_questions/friction). Never silently re-guess a host, and never write a raw id when an origin DOES resolve.
+- On `UNRESOLVED` the run PROCEEDS (user ruling 2026-10-25, D23 r2): every would-be link slot gets the RAW session id — claim-comment session line, the `slug` field's link half (`[<slug>](<raw session id>)`), research-only result comment — and the RESULT records the fallback (open_questions/friction). Never silently re-guess a host, and never write a raw id when an origin DOES resolve.
 - Session links are exactly `$(SESSION_URL_BASE)/?session=<sessionID>` whenever this run's origin resolves — the `/?session=` form is OpenChamber's own router format (its integrations build the identical URL). Never a raw session id (D13) — that rule governs the resolved branch; the UNRESOLVED branch writes the raw id BY RULE, not by drift.
-- Consistency check (the drift check reworded, D23 r2): every link this run writes must equal this run's `Session origin:` value (or the raw-id fallback when it says UNRESOLVED); a mismatch → RESULT flag, never silently re-guess. Historical links are frozen history — card #50's old comments carry the retired literal and its `session` custom field was re-pointed 2026-10-25 — compare only THIS run's writes. Whichever leg supplied the slot, the comparison baseline is the recorded `kickoff.session_origin` — a later leg re-uses it rather than re-resolving, so cross-leg drift is impossible by construction.
+- Consistency check (the drift check reworded, D23 r2): every link this run writes must equal this run's `Session origin:` value (or the raw-id fallback when it says UNRESOLVED); a mismatch → RESULT flag, never silently re-guess. Historical links are frozen history — card #50's old comments carry the retired literal and its `session` field was re-pointed 2026-10-25 — compare only THIS run's writes. Whichever leg supplied the slot, the comparison baseline is the recorded `kickoff.session_origin` — a later leg re-uses it rather than re-resolving, so cross-leg drift is impossible by construction.
 - `RESEARCH_LABEL = Research` — matched case-insensitively.
 
 ## Card pickup
@@ -90,7 +91,7 @@ The card description is the request. Claim the card per the Card lifecycle befor
 
 The walk never visits **Executing** — a card there is owned by the run holding its pipeline lock set, and one session runs one card — nor **Timeout** (reaper destination; its triage is human-owned). On parallel-pipeline runs the candidate is additionally filtered by lock-set availability per Parallel pipeline loops below.
 
-Resume vs new run (D11) — before minting anything, read the card's `slug` custom field:
+Resume vs new run (D11) — before minting anything, read the card's `slug` custom field (parse: a combined `[<slug>](<session link>)` value yields the slug as its bracketed link text; a legacy bare value yields the slug whole):
 
 - It names an existing feature folder whose `STATE.json` `plan_status` is not
   `complete` → RESUME that run: no kickoff minting, no new slug — continue
@@ -111,7 +112,7 @@ The worker iteration one hourly tick drives — C06's tick prompt names exactly 
 - **Heartbeats are automatic.** The engine beats the claimed set on root and subagent activity; `pipeline_heartbeat` only force-beats every lock file of the calling session's root claim — not a routine duty.
 - **Human stops (D20/D21).** The stale clock (2 h) keeps ticking through every stop point — the plan-approval pause is no exception. An answer inside the window resumes ordinary heartbeats and the lock is fine; past it the reaper reaps the set — the card moves to **Timeout** with a Home Assistant alert, or, until the D22 follow-up card lands a deterministic list-creation tool, queues `.pipeline/timeouts.jsonl` plus a card comment: that degrade is the shipped interim, never a failure. The run then stops at its next PIPELINE LOCK LOST signal. No release-at-stop, no re-claim dance — a re-picked card is a fresh claim under the normal Resume-vs-new-run rule.
 - **Exit.** Card to **Review** + summary comment → `pipeline_release(outcome:"done")` — the Review hand-off IS the release point (D6); **Finished** is human-owned and never touches the lock. A blocked card: `add_comment` with the reason, then `pipeline_release(outcome:"abandoned")` — or keep the lock and let it go stale (prefer abandon-release when the card should stay re-pickable for another run, keep-and-stale when THIS run may resume). **PIPELINE LOCK LOST** from any tool answer or hook: stop immediately — no commit, no card move; only a fresh run re-claims.
-- **Board-side prerequisites — human-owned, never agent-executed (cf-76).** (1) `Pipeline:<name>` labels are created in the WeKan UI as parallel tracks are wanted; until then every card runs the single `default` pipeline. (2) The **Timeout** list lands via the coordinator-created follow-up card requesting a `create_list` tool for the wekan-mcp surface; until it does, the reaper degrades as above and nothing else is needed. Lists, checklists, labels and rules stay human-owned: this flow only READS labels (`get_card` + `get_board` are the sole board calls the lock surface adds) and mutates nothing — the custom-field roster stays the two fields above.
+- **Board-side prerequisites — human-owned, never agent-executed (cf-76).** (1) `Pipeline:<name>` labels are created in the WeKan UI as parallel tracks are wanted; until then every card runs the single `default` pipeline. (2) The **Timeout** list lands via the coordinator-created follow-up card requesting a `create_list` tool for the wekan-mcp surface; until it does, the reaper degrades as above and nothing else is needed. Lists, checklists, labels and rules stay human-owned: this flow only READS labels (`get_card` + `get_board` are the sole board calls the lock surface adds) and mutates nothing — the custom-field roster stays the single `slug` field above.
 
 ### No-op marker (alert suppression)
 
@@ -160,7 +161,7 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   the largest drives planning (plan / research / final review), the smallest
   drives code (test / dev / chunk review). The combos are routes, not
   options: `Qwen Flash` + `Local` checked together → assume it's Qwen Flash
-  Next, `gpu-ai/qwen3.8-flash-next-q3` (default q3; other flash-next quants
+  Next, `gpu-ai/qwen3.8-flash-next-strata` (Strata default; other flash-next quants
   only on explicit request); `Qwen 27b` + `Local` → `gpu-ai/qwen3.8-27b-q4`
   unless another quant is explicitly requested; only **Local** checked →
   `gpu-ai/qwen3.8-27b-q4` for every role. The size order and the local
@@ -225,7 +226,8 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
    Residual unknowns ride along in the final comment for the human's
    Finished-vs-Rework call — do not spin a second round.
 6. Write-back exactly as in Post-plan card write-back (D19):
-   `set_card_custom_field` for `slug` + `session`, then
+   `set_card_custom_field` for the `slug` combined `[<slug>](<session link>)`
+   value, then
    `delete_checklist_item` for every unchecked item of the five checklists.
 7. `add_comment` on the card: the research session link — this run's
    `Session origin:` URL, or the RAW session id on UNRESOLVED with the
@@ -251,15 +253,15 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
 
 Right after plan approval (research-only cards do the same immediately before their Ready-for-Review move, D19):
 
-1. `list_custom_fields` on the AI-Dev board → the ids of the `slug` and
-   `session` fields.
-2. `set_card_custom_field` (upsert): `slug` = the final
-   `cf-<cardNumber>-<type>-<desc>`; `session` =
-   `$(SESSION_URL_BASE)/?session=<sessionID>` when this run's
-   `Session origin:` resolved, or the RAW session id when it said UNRESOLVED
-   (fallback recorded in RESULT) — never a raw id when an origin resolves,
-   never a remembered host. This first write-back performs the Config
-   constants consistency check.
+1. `list_custom_fields` on the AI-Dev board → the id of the `slug` field.
+2. `set_card_custom_field` (upsert): `slug` = the combined value
+   `[<slug>](<session link>)` — the final `cf-<cardNumber>-<type>-<desc>` as
+   the link text, and the `<session link>` half exactly as the Config
+   constants define it: `$(SESSION_URL_BASE)/?session=<sessionID>` when this
+   run's `Session origin:` resolved, or the RAW session id when it said
+   UNRESOLVED (fallback recorded in RESULT) — never a raw id when an origin
+   resolves, never a remembered host. This first write-back performs the
+   Config constants consistency check.
 3. `delete_checklist_item` for EVERY unchecked item of the Services / Type /
    Model(s) / Lifecycle / Human in the Loop checklists (checklist ids from
    `list_checklists`, item ids from `get_checklist`). The surviving checked
@@ -283,13 +285,13 @@ Until the plan is finalized, no one in this flow calls the `question` tool on th
 
 This REPLACES per-question escalation during the planning phase: questions accumulate, they do not block. (`question` stays allowed in every agent's permissions — the protocol decides when the one batched round happens, it does not revoke the tool.)
 
-The card answers in advance: the planner MUST NOT record a question whose answer the five checklists or the `slug`/`session` custom fields already give. The batched round carries only genuine gaps (an unchecked Type item, an unset `slug`), each with its best-guess recommendation first. Research-only cards run the same accumulation rule inside their own single follow-up round (Research-only cards, step 3).
+The card answers in advance: the planner MUST NOT record a question whose answer the five checklists or the `slug` custom field already gives. The batched round carries only genuine gaps (an unchecked Type item, an unset `slug`), each with its best-guess recommendation first. Research-only cards run the same accumulation rule inside their own single follow-up round (Research-only cards, step 3).
 
 ## Launch prompt to agent-plan
 
 When launching `agent-plan`, agent-board-coord MUST include this extra prompt text (in addition to the standard launch prompt):
 
 > Card context: <card title, card description, and card comments> — the card description is the request; the feature folder is <path>.
-> Checklist answers — already provided by the user, do not re-ask: for each of Services / Type / Model(s) / Lifecycle / Human in the Loop the CHECKED items, plus the card's `slug` and `session` custom-field values and its `cardNumber`.
+> Checklist answers — already provided by the user, do not re-ask: for each of Services / Type / Model(s) / Lifecycle / Human in the Loop the CHECKED items, plus the card's `slug` custom-field value (the combined `[<slug>](<session link>)` link) and its `cardNumber`.
 > No-questions rule: until this plan is finalized you must NOT call the `question` tool. Record every question you would ask — question, the best-guess answer you take, and its impact — in the plan's Open questions section, and continue the work on the best guess.
 > Question return: when the plan is about to be written/finalized, return ALL accumulated questions — in RESULT `open_questions` and in the plan's Open questions section. They go to the user in one batched question round, and the plan session is re-launched with the answers before final approval.

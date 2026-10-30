@@ -19,6 +19,8 @@
 # A6[AC5-regen/AC6-hold] A7[AC6-AC7] A8[AC6-parse-safety] A9[AC9-admits]
 # A10[AC9-or-form→cf-58 mechanism-integrity] A11[C02 git rows + push policy]
 # A12[C03 six-family: alias parity, git block order, roster dev slot]
+# A12+cf-72[AC6: B-block rows 70/75 + the 90-command per-class verdict matrix
+# through family.py policybatch over all six sources and six mirrors]
 # A13[C02 AC5/C03 AC7 rename sweep + command→agent pairing]
 # A14[bug-board-coord-dev-boards-allow AC6: MCP action-glob vs registered server-name spelling]
 # A15[cf-76 C07: pipeline_* lock-tool rows on the board-coord trio + tool/label-constant
@@ -28,11 +30,22 @@
 # fabricated-strip/duplicate negative controls, the 22/9 verified counts and
 # the permissions.md matrix + drift move].
 #
+# cf-72 re-pin (2026-10-29, card #72, candidate B): the coord family's git
+# surface is no longer a reads allow-list — A12's GIT_SHARED/TAIL_* block (and
+# the sibling suites' atpos/splice pins) declare the B contract, and the AC6
+# verdict matrix is evaluated THROUGH family.py's shipped last-match loop
+# (policybatch), never a hand-rolled second semantics. RED before the B block
+# lands, green at the landing commit; the matrix's tail cells (G3-G5) are
+# what make a future row reorder fail as a VERDICT drift, not just a text diff.
+#
 # Red posture: A1-A4 — the permission rows and the text rows do not exist
 # yet; every red line names the missing rule/row, never a harness fault.
-# A16 (board-tick-cleanup C01) joins the red-before-dev posture: it names the
-# not-yet-landed `ls *` row on the 12 sources that lack it and the unmoved
-# matrix rows, greens with the C01 commit, HOLDs after.
+# A16 (board-tick-cleanup C01) shipped with the C01 commit and HOLDs: it
+# names any source/mirror that lost its `ls *` row. The 2026-10-30 merge
+# re-seat moved the coord-family row INSIDE the scoped-read family (after the
+# preload-probe row, before cf-72's absolute-last push tail); the
+# dev/standalone/agent-board positions are unchanged. A16 pins COUNT and
+# EFFECT, so the re-seat moves neither — only this note records it.
 # A5-A8 are HOLD posture (green now, must stay green). A9 pinned the TEST
 # phase's own suite re-pins (folder admits), green from this file's landing
 # and HOLD through dev. A10 is the cf-58 RE-PIN of the old mechanism test:
@@ -58,6 +71,17 @@
 # negative control proves the guard non-vacuous offline. After each chunk
 # lands, `bash tests/agent-perms/surface.sh` must pass the
 # subset its chunk owns; the full suite is green at the end of C03.
+#
+# cf-85 RE-PIN (2026-10-29, 2026-10-cf-85-refactor-wekan-slug-session-link):
+# the board write-back roster shrinks from two custom fields to one — `slug`
+# carrying the combined `[<slug>](<session link>)` link — so A15's roster arm
+# re-pins from the two-field form to the one-field form instead of being
+# deleted: cf-76's duty (the roster count is pinned, no third field may sneak
+# back as a wording artifact, `create_custom_field` stays absent, the
+# fabricated-row control stays) survives the roster shrinking. A15's roster
+# arm is this suite's only red leg until the flip commit lands; A9 grows the
+# cf-85 plan-folder admit so the running ticket's own folder never reads as a
+# scope violation in t14/c8/c7.
 #
 # Sweep-scope judgment (recorded for review): C02 AC5 ("no bare agent-dev
 # in .rulesync/, .opencode/, AGENTS.md, tests/") is implemented on the
@@ -313,6 +337,11 @@ cat >"$TMP/family.py" <<'PY'
 #                                tick-cleanup C01 AC1: the explicit ls allow on
 #                                every permission-bearing source and mirror).
 #   policy FILE CMD            — prints the effective last-match verdict.
+#   policybatch FILE CLASS     — re-verdicts the cf-72 AC6 matrix (stdin TSV
+#                                class<TAB>want<TAB>command, '#' lines skipped)
+#                                through the SAME last-match loop as policy —
+#                                the matrix is lifted through the shipped
+#                                projection, never a hand-rolled second one.
 #   roster FILE SLOT           — subagent allows == the five roles with SLOT
 #                                in the dev position, leading '*' deny first.
 #   api FILE                   — exactly the two scoped opencode-api shell
@@ -350,8 +379,91 @@ NAMING = [{"action": "opencode_worktree_create", "resource": "*", "effect": "all
           {"action": "opencode_session_move",    "resource": "*", "effect": "allow"},
           {"action": "opencode_session_rename",  "resource": "*", "effect": "allow"}]
 
-GIT_READS = ["git status *", "git log *", "git diff *", "git show *", "git branch *",
-             "git merge-base *", "git rev-parse *", "git ls-files *"]
+# cf-72 (card #72, owner ruling 2026-10-29, candidate B): the coord family's
+# reads allow-list is GONE. The B block (chunks/C01.md "The block") is one
+# `git *` broad-write allow closed by a pinned deny floor — rows 1-68 shared
+# by all six sources, effect-aware ORDER being the contract: the floor only
+# guards the allow because it follows it, and the 16 exception re-allows only
+# ride over the floor because they follow IT. gitrows compares the WHOLE
+# sequence, so any reorder, insertion, drop or effect flip fails at its index.
+GIT_SHARED = [
+    sh("git *", "allow"),
+    sh("git checkout main*", "deny"),
+    sh("git * checkout main*", "deny"),
+    sh("git checkout * main*", "deny"),
+    sh("git * checkout * main*", "deny"),
+    sh("git switch main*", "deny"),
+    sh("git * switch main*", "deny"),
+    sh("git switch * main*", "deny"),
+    sh("git * switch * main*", "deny"),
+    sh("git update-ref*", "deny"),
+    sh("git * update-ref*", "deny"),
+    sh("git symbolic-ref*", "deny"),
+    sh("git * symbolic-ref*", "deny"),
+    sh("git branch -f main*", "deny"),
+    sh("git * branch -f main*", "deny"),
+    sh("git branch --force main*", "deny"),
+    sh("git * branch --force main*", "deny"),
+    sh("git branch -d main*", "deny"),
+    sh("git branch -d * main*", "deny"),
+    sh("git * branch -d main*", "deny"),
+    sh("git * branch -d * main*", "deny"),
+    sh("git branch -D main*", "deny"),
+    sh("git branch -D * main*", "deny"),
+    sh("git * branch -D main*", "deny"),
+    sh("git * branch -D * main*", "deny"),
+    sh("git branch -m main*", "deny"),
+    sh("git branch -m * main*", "deny"),
+    sh("git * branch -m main*", "deny"),
+    sh("git * branch -m * main*", "deny"),
+    sh("git branch -M main*", "deny"),
+    sh("git branch -M * main*", "deny"),
+    sh("git * branch -M main*", "deny"),
+    sh("git * branch -M * main*", "deny"),
+    sh("git branch -c main*", "deny"),
+    sh("git * branch -c main*", "deny"),
+    sh("git branch -c * main*", "deny"),
+    sh("git * branch -c * main*", "deny"),
+    sh("git branch -C main*", "deny"),
+    sh("git * branch -C main*", "deny"),
+    sh("git branch -C * main*", "deny"),
+    sh("git * branch -C * main*", "deny"),
+    sh("git worktree add * main*", "deny"),
+    sh("git * worktree add * main*", "deny"),
+    sh("git pull*", "deny"),
+    sh("git * pull*", "deny"),
+    sh("git merge *", "deny"),
+    sh("git * merge *", "deny"),
+    sh("git config alias*", "deny"),
+    sh("git * config alias*", "deny"),
+    sh("git * --force*", "deny"),
+    sh("git * -f *", "deny"),
+    sh("git * -P *", "deny"),
+    sh("git merge main*", "allow"),
+    sh("git * merge main*", "allow"),
+    sh("git merge --abort", "allow"),
+    sh("git * merge --abort", "allow"),
+    sh("git merge --continue", "allow"),
+    sh("git * merge --continue", "allow"),
+    sh("git checkout -b * main*", "allow"),
+    sh("git * checkout -b * main*", "allow"),
+    sh("git checkout -B * main*", "allow"),
+    sh("git * checkout -B * main*", "allow"),
+    sh("git switch -c * main*", "allow"),
+    sh("git * switch -c * main*", "allow"),
+    sh("git switch -C * main*", "allow"),
+    sh("git * switch -C * main*", "allow"),
+    sh("git worktree add -b * main*", "allow"),
+    sh("git * worktree add -b * main*", "allow"),
+]
+# The push tails are the load-bearing LAST rows (T-2 on alias/-local, T-7 on
+# -pr, DECISIONS D15): the -local substring row `git *push*` exists because
+# the spaced `git * push*` leaks quoted args (`git commit -am 'push
+# posture'` slipped in simulation — probe finding F1).
+TAIL_LOCAL = [sh("git push*", "deny"), sh("git *push*", "deny")]
+TAIL_PR = [sh("git push*main*", "deny"), sh("git * push *main*", "deny"),
+           sh("git * push", "deny"), sh("git push -f*", "deny"), sh("git push -P*", "deny"),
+           sh("git * push -f*", "deny"), sh("git * push -P*", "deny")]
 # cf-76 C02 (D7): the pipeline implementers no longer stage or commit — the
 # coordinator is the sole committer (one commit per chunk: code + tests +
 # state). The rows stay as explicit DENIES (fail-loud parity with the push
@@ -363,24 +475,36 @@ DEV_SUFFIX = {
               sh("git push*main*", "deny"), sh("git push --force*", "deny"), sh("git push -f*", "deny"),
               sh("git push * --force*", "deny"), sh("git push * -f*", "deny")],
 }
-COORD_SUFFIX = {
-    "local": [sh(r, "allow") for r in GIT_READS] +
-             [sh("git add *", "allow"), sh("git commit *", "allow"),
-              sh("git checkout *", "allow"), sh("git switch *", "allow"),
-              sh("git merge main*", "allow"), sh("git push*", "deny")],
-    "pr": [sh(r, "allow") for r in GIT_READS] +
-          [sh("git add *", "allow"), sh("git commit *", "allow"),
-           sh("git checkout *", "allow"), sh("git switch *", "allow"),
-           sh("git merge main*", "allow"), sh("git push*", "allow"),
-           sh("git push*main*", "deny"), sh("git push --force*", "deny"), sh("git push -f*", "deny"),
-           sh("git push * --force*", "deny"), sh("git push * -f*", "deny")],
-}
+# cf-72 B block totals: 70 rows alias/-local, 75 rows -pr — tails absolute
+# last, variant flip changes ONLY the tail (A12 gitrows pins whole+order per
+# class; the AC6 verdict matrix below pins what the sequence EVALUATES to).
+COORD_SUFFIX = {"local": GIT_SHARED + TAIL_LOCAL, "pr": GIT_SHARED + TAIL_PR}
 
 def fail(*msgs):
     print("; ".join(str(m) for m in msgs)); sys.exit(1)
 
 def is_git(row):
     return row.get("action") == "shell" and str(row.get("resource", "")).startswith("git ")
+
+def verdict(path, command):
+    # The single shipped last-match-wins projection (cf-72: lifted out of the
+    # policy branch so policy and policybatch share ONE matcher — matrix
+    # verdicts proven through any other semantics would prove nothing).
+    import fnmatch as _fm
+    out = None
+    for r in perms(path):
+        # Action-scoped (validation_at_fault fix, C02 review 2026-10-27):
+        # the rule's action must BE shell or glob-match it — the old
+        # fnmatch(action,"*") test was a tautology that counted the block's
+        # trailing MCP-tier rows (readonly*/global*/dev* with resource '*')
+        # as shell candidates, silently overwriting the git verdicts. The '*'
+        # deny-baseline stays in play (its action glob-matches shell), so
+        # A10's stripped-deny control semantics are unchanged.
+        if not (r.get("action") == "shell" or _fm.fnmatch("shell", str(r.get("action", "")))):
+            continue
+        if _fm.fnmatch(command, str(r.get("resource", ""))):
+            out = r.get("effect")
+    return out
 
 def cmd():
     op = sys.argv[1]
@@ -434,23 +558,28 @@ def cmd():
         if wrong:
             fail(f"lsrow: {path} grew a malformed ls row: {wrong}")
     elif op == "policy":
-        import fnmatch as _fm
-        path, command = sys.argv[2], sys.argv[3]
-        verdict = None
-        for r in perms(path):
-            # Action-scoped (validation_at_fault fix, C02 review 2026-10-27):
-            # the rule's action must BE shell or glob-match it — the old
-            # fnmatch(action,"*") test was a tautology that counted the
-            # block's trailing MCP-tier rows (readonly*/global*/dev* with
-            # resource '*') as shell candidates, silently overwriting the
-            # git verdicts. The '*' deny-baseline stays in play (its action
-            # glob-matches shell), so A10's stripped-deny control semantics
-            # are unchanged.
-            if not (r.get("action") == "shell" or _fm.fnmatch("shell", str(r.get("action", "")))):
+        print(verdict(sys.argv[2], sys.argv[3]))
+    elif op == "policybatch":
+        # cf-72 AC6: the verdict matrix through the shipped matcher. argv:
+        # file, class; stdin TSV lines class<TAB>want<TAB>command ('#'-lines
+        # skipped). Any cell whose effective verdict differs from the chunk's
+        # declared one exits 1 naming command + want + got.
+        path, cls = sys.argv[2], sys.argv[3]
+        bad, n = [], 0
+        for line in sys.stdin:
+            line = line.rstrip("\n")
+            if not line or line.startswith("#"):
                 continue
-            if _fm.fnmatch(command, str(r.get("resource", ""))):
-                verdict = r.get("effect")
-        print(verdict)
+            c, want, command = line.split("\t")
+            if c != cls:
+                continue
+            n += 1
+            got = verdict(path, command)
+            if got != want:
+                bad.append(f"'{command}': want {want} got {got}")
+        if bad:
+            print(f"policybatch({cls}): {path} verdict drift — " + "; ".join(bad)); sys.exit(1)
+        print(f"policybatch({cls}): {path} all {n} matrix cells green")
     elif op == "roster":
         path, slot = sys.argv[2], sys.argv[3]
         p = perms(path)
@@ -532,12 +661,12 @@ def cmd():
         # for the non-board families (deny-all baseline -> 'deny').
         import fnmatch as _fm
         path, action = sys.argv[2], sys.argv[3]
-        verdict = None
+        out = None
         for r in perms(path):
             a = str(r.get("action", ""))
             if action == a or _fm.fnmatch(action, a):
-                verdict = r.get("effect")
-        print(verdict)
+                out = r.get("effect")
+        print(out)
     else:
         fail(f"family.py: unknown subcommand '{op}'"); sys.exit(2)
 
@@ -751,8 +880,13 @@ fi
 # skill — its plan folder's STATE.json/handoff commits land on this branch
 # like cf-58's did, and every t14/c8/c7 run against a pre-chunk base would
 # otherwise read them as scope violations.
+# cf-85 (2026-10-29) joins the same admit for the running ticket's folder.
+# cf-72 re-pin (2026-10-29): 2026-10-cf-72-chore-coord-git-read-globs joins
+# the window loop — the three scope guards must admit this ticket's own plan
+# folder or the very run landing the B block reddens on its own bookkeeping
+# (D9, same precedent chain).
 if want a9; then
-  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge 2026-10-cf-75-bug-wekan-mcp-skill 2026-10-chore-board-tick-cleanup; do
+  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge 2026-10-cf-75-bug-wekan-mcp-skill 2026-10-cf-85-refactor-wekan-slug-session-link 2026-10-cf-72-chore-coord-git-read-globs 2026-10-chore-board-tick-cleanup 2026-10-cf-68-feat-wekan-mcp-create-list 2026-10-cf-83-refactor-strata-flash; do
     python3 "$TMP/blockwin.py" "$SUITE_GATE" t14 ".agents/plans/2026/$slug/*" \
       || fail "A9[AC9-admits]: gate.sh t14 does not admit $slug inside its if-want block (the D9 widening did not land)"
     python3 "$TMP/blockwin.py" "$SUITE_RULESYNC" c8 ".agents/plans/2026/$slug/*" \
@@ -760,7 +894,7 @@ if want a9; then
     python3 "$TMP/blockwin.py" "$SUITE_AGENTSMD" c7 ".agents/plans/2026/$slug/*" \
       || fail "A9[AC9-admits]: agents-md.sh c7 does not admit $slug inside its if-want block"
   done
-  ok "A9[AC9-admits]: all three 2026-10-bug-* follow-up folders, the cf-58 ticket folder and the cf-75 ticket folder are admitted inside the t14, c8 and c7 blocks (windowed, not file-global)"
+  ok "A9[AC9-admits]: the three 2026-10-bug-* follow-up folders, the cf-58, cf-75, cf-85 and cf-72 ticket folders are admitted inside the t14, c8 and c7 blocks (windowed, not file-global)"
 fi
 
 # --- A10: cf-58 family-mechanism integrity + negative controls (C03-owned) -----
@@ -778,6 +912,10 @@ fi
 #       `git push origin main`; stripping the trailing denies from a TMP copy
 #       must flip that verdict to allow — proving the deny rows are load-
 #       bearing in the shipped matcher, not decorative;
+#   (c2) cf-72 adds the twin flip on the alias/-local side: stripping the
+#       declared T-2 tail from a TMP copy of a -local file must flip
+#       `git push origin main` to allow — the B block's broad `git *` allow
+#       is real, so the tail alone stands between it and a published main;
 #   (d) documentation discipline: the re-pinned coord-inwork i4 / gate t17
 #       blocks keep the arm-aware line twin (atpos + empty-diff branch) and
 #       their headers keep naming the historical bases + this ticket.
@@ -853,6 +991,31 @@ open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) 
 PY
   v=$(python3 "$TMP/family.py" policy "$TMP/pr-stripped.md" 'git push origin main' 2>/dev/null || true)
   [ "$v" = "allow" ] || fail "A10[family-integrity]: NEGATIVE CONTROL FAILED — stripping the trailing deny rows did not flip 'git push origin main' to allow on the TMP copy (matcher is inert; the real guard would pass on drift)"
+  # (c2) cf-72 tail-strip control on a -local file: removing the declared T-2
+  # push rows from a TMP copy of agent-coord-local must flip
+  # 'git push origin main' to allow — the broad `git *` allow is real, so
+  # only the tail stands between it and a published main (non-vacuity of the
+  # substring floor, the same discipline (c) proves for -pr's T-7).
+  python3 - "${CF_SRC[1]}" "$TMP/local-stripped.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+text = open(src).read()
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+rows = target.get("permissions") or []
+kept = [p for p in rows if not (p.get("action") == "shell" and p.get("effect") == "deny"
+                                 and p.get("resource") in ("git push*", "git *push*"))]
+assert len(rows) - len(kept) == 2, f"fixture: T-2 must be exactly the two declared deny rows, found {len(rows) - len(kept)}"
+target["permissions"] = kept
+if key:
+    fm["opencode"] = target
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  v=$(python3 "$TMP/family.py" policy "$TMP/local-stripped.md" 'git push origin main' 2>/dev/null || true)
+  [ "$v" = "allow" ] || fail "A10[family-integrity]: NEGATIVE CONTROL FAILED — stripping the T-2 push tail did not flip 'git push origin main' to allow on the -local TMP copy (verdict '$v') — the tail-strip non-vacuity control is inert"
   # (d) the re-pinned sibling blocks keep their shipped line twins + header discipline
   for f in "$SUITE_SURFACE" "$SUITE_GATE"; do
     python3 "$TMP/blockwin.py" "$f" "$( [ "$f" = "$SUITE_SURFACE" ] && echo i4 || echo t17 )" \
@@ -865,7 +1028,7 @@ PY
   python3 "$TMP/sectgrep.py" "$SUITE_GATE" all \
     '081b57889' 'f11bfcb85' '916044893' 'historical' 'arm A' 'arm B' 'cf-58' \
     || fail "A10[family-integrity]: $SUITE_GATE header lost the cf-52-era base documentation (arm A/arm B refs, historical markers) or the cf-58 re-pin note"
-  ok "A10[family-integrity]: parity/policy/naming guards reject fabricated drift and flip on stripped denies (negative controls pass), the history anchors resolve, and the re-pinned sibling blocks keep their shipped twins"
+  ok "A10[family-integrity]: parity/policy/naming guards reject fabricated drift and flip on stripped push tails on BOTH classes (negative controls pass), the history anchors resolve, and the re-pinned sibling blocks keep their shipped twins"
 fi
 
 # --- A11: agent-dev variant pair — git rows + push policy + wiring (C02) --------
@@ -952,6 +1115,215 @@ fi
 # ticket's new silent-failure mode; it runs on BOTH the sources (where drift
 # is written) and the generated mirrors (where a half-regenerated pair hides).
 if want a12; then
+  # AC6 verdict matrix (cf-72): chunks/C01.md "Tests" — every declared cell,
+  # class<TAB>want<TAB>command. G1/G2 apply to both classes; G3/G4/G5 carry
+  # the per-class expectations the chunk's groups state (T-2 owns alias/
+  # -local's blanket push denial, T-7 owns -pr's main/force/zero-arg shapes;
+  # the "only" labels name the governing tail, not a cross-class allow — a
+  # -pr main-leg deny also lands on -local, via the broader T-2 blanket).
+  # policybatch re-evaluates each command through family.py's shipped
+  # last-match loop — the suite's own projection, never a second matcher.
+  cat >"$TMP/ac6.matrix" <<'AC6'
+# G1 — ALLOW on ALL SIX files (chunks/C01.md first matrix paragraph; the
+# chunk's shorthand cells are lifted concretely: "git -C <any> show" with the
+# same repo path the adjacent cell uses, "lock/unlock" as two cells).
+local	allow	git status
+pr	allow	git status
+local	allow	git status --porcelain
+pr	allow	git status --porcelain
+local	allow	git -C /home/coder/SpencersLab log --oneline main..HEAD
+pr	allow	git -C /home/coder/SpencersLab log --oneline main..HEAD
+local	allow	git -C /home/coder/SpencersLab show HEAD:AGENTS.md
+pr	allow	git -C /home/coder/SpencersLab show HEAD:AGENTS.md
+local	allow	git worktree list
+pr	allow	git worktree list
+local	allow	git worktree add /tmp/x feat-1
+pr	allow	git worktree add /tmp/x feat-1
+local	allow	git worktree remove /tmp/x
+pr	allow	git worktree remove /tmp/x
+local	allow	git worktree prune
+pr	allow	git worktree prune
+local	allow	git worktree lock /tmp/x feat-1
+pr	allow	git worktree lock /tmp/x feat-1
+local	allow	git worktree unlock /tmp/x feat-1
+pr	allow	git worktree unlock /tmp/x feat-1
+local	allow	git -C /tmp/x checkout other-branch
+pr	allow	git -C /tmp/x checkout other-branch
+local	allow	git add -A
+pr	allow	git add -A
+local	allow	git commit -m x
+pr	allow	git commit -m x
+local	allow	git commit --amend
+pr	allow	git commit --amend
+local	allow	git -C /tmp/x commit --amend
+pr	allow	git -C /tmp/x commit --amend
+local	allow	git reset --hard HEAD~1
+pr	allow	git reset --hard HEAD~1
+local	allow	git clean -fdx
+pr	allow	git clean -fdx
+local	allow	git rebase main
+pr	allow	git rebase main
+local	allow	git rebase -i main
+pr	allow	git rebase -i main
+local	allow	git cherry-pick abc
+pr	allow	git cherry-pick abc
+local	allow	git revert abc
+pr	allow	git revert abc
+local	allow	git fetch
+pr	allow	git fetch
+local	allow	git fetch origin main
+pr	allow	git fetch origin main
+local	allow	git checkout -b cf-99-x main
+pr	allow	git checkout -b cf-99-x main
+local	allow	git checkout -B cf-99-x main
+pr	allow	git checkout -B cf-99-x main
+local	allow	git -C /tmp/wk checkout -b cf-99-x main
+pr	allow	git -C /tmp/wk checkout -b cf-99-x main
+local	allow	git switch -c cf-99-x main
+pr	allow	git switch -c cf-99-x main
+local	allow	git worktree add -b feat2 /tmp/y main
+pr	allow	git worktree add -b feat2 /tmp/y main
+local	allow	git merge main
+pr	allow	git merge main
+local	allow	git -C /tmp/wk merge main
+pr	allow	git -C /tmp/wk merge main
+local	allow	git merge --abort
+pr	allow	git merge --abort
+local	allow	git -C /tmp/wk merge --abort
+pr	allow	git -C /tmp/wk merge --abort
+local	allow	git branch -d old-branch
+pr	allow	git branch -d old-branch
+local	allow	git branch -M feat3 feat2
+pr	allow	git branch -M feat3 feat2
+local	allow	git ls-remote
+pr	allow	git ls-remote
+# G2 — DENY on ALL SIX files: the make-main-HEAD legs (incl. every -C twin),
+# plumbing, main-targeted branch verbs, pull, merge-INTO-non-main, the alias
+# cap and the force family. `git log --grep push` denies class-wide: via the
+# T-2 substring row on alias/-local, via T-7's `git * push` zero-arg row on
+# -pr (the chunk's "(substring, -local class)" note names the -local leg).
+local	deny	git checkout main
+pr	deny	git checkout main
+local	deny	git checkout main-2
+pr	deny	git checkout main-2
+local	deny	git -C /home/coder/SpencersLab checkout main
+pr	deny	git -C /home/coder/SpencersLab checkout main
+local	deny	git checkout -B main feature
+pr	deny	git checkout -B main feature
+local	deny	git -C x checkout -B main feature
+pr	deny	git -C x checkout -B main feature
+local	deny	git switch main
+pr	deny	git switch main
+local	deny	git -C x switch main
+pr	deny	git -C x switch main
+local	deny	git update-ref refs/heads/main abc
+pr	deny	git update-ref refs/heads/main abc
+local	deny	git -C x update-ref refs/heads/main abc
+pr	deny	git -C x update-ref refs/heads/main abc
+local	deny	git symbolic-ref HEAD refs/heads/main
+pr	deny	git symbolic-ref HEAD refs/heads/main
+local	deny	git branch -f main feature
+pr	deny	git branch -f main feature
+local	deny	git -C x branch -f main feature
+pr	deny	git -C x branch -f main feature
+local	deny	git branch --force main feature
+pr	deny	git branch --force main feature
+local	deny	git branch -d main
+pr	deny	git branch -d main
+local	deny	git branch -D main
+pr	deny	git branch -D main
+local	deny	git branch -m feat main
+pr	deny	git branch -m feat main
+local	deny	git -C x branch -m feat main
+pr	deny	git -C x branch -m feat main
+local	deny	git branch -M feat main
+pr	deny	git branch -M feat main
+local	deny	git branch -c feat main
+pr	deny	git branch -c feat main
+local	deny	git branch -C feat main
+pr	deny	git branch -C feat main
+local	deny	git worktree add /tmp/w main
+pr	deny	git worktree add /tmp/w main
+local	deny	git -C x worktree add /tmp/w main
+pr	deny	git -C x worktree add /tmp/w main
+local	deny	git pull
+pr	deny	git pull
+local	deny	git -C x pull --rebase
+pr	deny	git -C x pull --rebase
+local	deny	git merge feature-x
+pr	deny	git merge feature-x
+local	deny	git -C /home/coder/SpencersLab merge feature-x
+pr	deny	git -C /home/coder/SpencersLab merge feature-x
+local	deny	git config alias.p push
+pr	deny	git config alias.p push
+local	deny	git -C x config alias.p 'push --force'
+pr	deny	git -C x config alias.p 'push --force'
+local	deny	git checkout -f feat
+pr	deny	git checkout -f feat
+local	deny	git clean -f -d
+pr	deny	git clean -f -d
+local	deny	git worktree remove --force /tmp/x
+pr	deny	git worktree remove --force /tmp/x
+local	deny	git fetch --force origin feat
+pr	deny	git fetch --force origin feat
+local	deny	git rebase -f upstream
+pr	deny	git rebase -f upstream
+local	deny	git log --grep push
+pr	deny	git log --grep push
+# G3 — DENY on alias/-local (T-2). The pr-side want follows chain (4): plain
+# and quoted-arg push live on -pr (D15's substring row is absent BY DESIGN
+# there); the -C zero-arg, main-refspec and force shapes stay denied.
+local	deny	git push
+pr	allow	git push
+local	deny	git push origin feature
+pr	allow	git push origin feature
+local	deny	git -C /tmp/x push
+pr	deny	git -C /tmp/x push
+local	deny	git -C /home/coder/SpencersLab push origin main
+pr	deny	git -C /home/coder/SpencersLab push origin main
+local	deny	git -C /home/coder/SpencersLab push --force origin feature-x
+pr	deny	git -C /home/coder/SpencersLab push --force origin feature-x
+local	deny	git commit -am 'push posture'
+pr	allow	git commit -am 'push posture'
+# G4 — ALLOW only on -pr (feature push lives; the blanket T-2 denies each on
+# alias/-local).
+local	deny	git push origin feature-x
+pr	allow	git push origin feature-x
+local	deny	git push -u origin feature-x
+pr	allow	git push -u origin feature-x
+local	deny	git -C /tmp/wk push origin feature-x
+pr	allow	git -C /tmp/wk push origin feature-x
+# G5 — DENY on -pr (T-7): main-leg refspecs, the zero-arg -C footgun and
+# every force spelling incl. --force-with-lease (D14 never-force ruling).
+# Alias/-local denies the same shapes via its blanket tail, so want is deny
+# on both classes — the group names the TAIL that carries them where push
+# otherwise lives. (`git push` and `git push origin feature` ride G3/G4
+# rows: the same command+want pair would duplicate cells, not coverage.)
+local	deny	git push origin main
+pr	deny	git push origin main
+local	deny	git push HEAD:main
+pr	deny	git push HEAD:main
+local	deny	git push origin feature-x:main
+pr	deny	git push origin feature-x:main
+local	deny	git -C x push origin main
+pr	deny	git -C x push origin main
+local	deny	git -C x push :main
+pr	deny	git -C x push :main
+local	deny	git -C /home/coder/SpencersLab push
+pr	deny	git -C /home/coder/SpencersLab push
+local	deny	git push --force origin feature
+pr	deny	git push --force origin feature
+local	deny	git push -f origin feature
+pr	deny	git push -f origin feature
+local	deny	git -C x push -f
+pr	deny	git -C x push -f
+local	deny	git push -P origin feature
+pr	deny	git push -P origin feature
+local	deny	git push --force-with-lease origin feat
+pr	deny	git push --force-with-lease origin feat
+local	deny	git -C /tmp/wk push --force-with-lease HEAD:feature-x
+pr	deny	git -C /tmp/wk push --force-with-lease HEAD:feature-x
+AC6
   for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
     [ -f "$f" ] || fail "A12[C03]: $f missing (red before C03 — six coord-family agents + mirrors are the C03 shape)"
   done
@@ -977,6 +1349,10 @@ if want a12; then
     esac
     python3 "$TMP/family.py" roster "$f" "$slot" || fail "A12[C03]: $f roster dev slot wrong (want $slot)"
     python3 "$TMP/family.py" gitrows "$f" "$cls"  || fail "A12[C03]: $f git block wrong for class $cls"
+    python3 "$TMP/family.py" policybatch "$f" "$cls" <"$TMP/ac6.matrix" >/dev/null \
+      || fail "A12[AC6-matrix]: $f (class $cls) verdicts a cf-72 matrix cell differently than declared — the broad allow, the floor's ORDER, the re-allows or the push tail drifted from the chunk contract (failing cells named above; table = $TMP/ac6.matrix)"
+    python3 "$TMP/family.py" policybatch "$g" "$cls" <"$TMP/ac6.matrix" >/dev/null \
+      || fail "A12[AC6-matrix]: generated mirror $g (class $cls) verdicts a cf-72 matrix cell wrong — the mirror is the runtime surface; a regen that parses to different verdicts is a defect, not noise"
     python3 "$TMP/family.py" naming "$f" || fail "A12[C03]: $f kickoff naming surface broken (want the execute allow + the four opencode_* allows in order)"
     python3 "$TMP/family.py" naming "$g" || fail "A12[C03]: $g kickoff naming surface broken on the generated mirror"
     case "$f" in
@@ -1000,7 +1376,7 @@ if want a12; then
     || fail "A12[C03]: the agent-coord alias lacks its '(commit-only alias of agent-coord-local...)' description tag"
   grep -qF 'commit-only alias of agent-board-coord-local' "${CF_SRC[3]}" \
     || fail "A12[C03]: the agent-board-coord alias lacks its '(commit-only alias of agent-board-coord-local...)' description tag"
-  ok "A12[C03]: six coord-family agents (+mirrors) exist and sync; alias↔local parity holds; API containment, git-block order, roster dev slots, board extras, and the -pr-only push wiring all carry the C03 shape"
+  ok "A12[C03 + cf-72 AC6]: six coord-family agents (+mirrors) exist and sync; alias↔local parity holds; API containment, git-block order (B block 70/75), roster dev slots, board extras, and the -pr-only push wiring all carry the C03 shape; every AC6 matrix cell evaluates as declared through family.py on sources AND mirrors"
 fi
 
 # --- A13: rename sweep + command→agent pairing (C02 AC5 + C03 AC4/AC7) ----------
@@ -1295,13 +1671,33 @@ PY
       grep -q "$CFN" "$f" \
         && fail "A15[C07]: $f references $CFN — the custom-field route was retired with D19; the worker only READS Pipeline: labels"
     done
-    # The custom-field roster stays at exactly TWO fields (slug + session) —
-    # pipeline identity must not sneak back in as a third field by any
-    # wording rewrite (C07 AC2).
-    grep -Eiq 'custom fields:.*exactly two' .rulesync/skills/boards/SKILL.md \
-      || fail "A15[C07]: the boards skill lost its 'Custom fields: exactly two' pin"
-    grep -Eq '`slug`[^`]*`session`|`session`[^`]*`slug`' .rulesync/skills/boards/SKILL.md \
-      || fail "A15[C07]: the two-field roster no longer names slug and session"
+    # cf-85 RE-PIN of cf-76's roster fence (AC1/AC3): the flow's roster is now
+    # exactly ONE board-level text field — `slug`, carrying the combined
+    # `[<slug>](<session link>)` link — with the legacy `session` field named
+    # only as retired and never read or written. cf-76's intent is unchanged:
+    # the count is pinned, the sentence must keep naming the field the fence
+    # protects, and neither the `models` route nor a third field may sneak
+    # back in through a wording rewrite. Red until the flip commit lands.
+    roster=$(grep -m1 -Ei '^[-*][[:space:]]+Custom fields:' .rulesync/skills/boards/SKILL.md || true)
+    [ -n "$roster" ] \
+      || fail "A15[cf-85 AC3]: the boards skill has no 'Custom fields:' roster bullet — the fence's anchor moved (harness fault, report it)"
+    if echo "$roster" | grep -Eiq 'exactly (two|three)'; then
+      fail "A15[cf-85 AC3]: the roster still counts the retired session field — the flow's roster is the single slug field (red until the flip lands)"
+    fi
+    echo "$roster" | grep -Eiq 'exactly one' \
+      || fail "A15[cf-85 AC3]: the boards skill lost its 'Custom fields: exactly one' roster pin"
+    echo "$roster" | grep -qF '`slug`' \
+      || fail "A15[cf-85 AC3]: the roster sentence does not name the slug field"
+    echo "$roster" | grep -Eq '\[<slug>\]\(' \
+      || fail "A15[cf-85 AC3]: the roster does not state the combined [<slug>](<session link>) value the one field carries"
+    echo "$roster" | grep -qF '`session`' \
+      || fail "A15[cf-85 AC3]: the roster does not name the retired session field — the retirement belongs where the roster is stated"
+    echo "$roster" | grep -Eiq 'retired|never (read|written|reads|writes)' \
+      || fail "A15[cf-85 AC3]: the roster does not mark the session field retired / never read or written"
+    echo "$roster" | grep -qF 'third field' \
+      || fail "A15[C07 AC2]: the roster lost the third-field negation — the fence this guard exists for"
+    echo "$roster" | grep -qF 'models' \
+      || fail "A15[C07 AC2]: the roster lost the D12 no-models-field negation"
     # Fabricated-row control (A10/A14 discipline): drop one row from a TMP
     # copy and require the locktools guard to reject the crippled file.
     python3 - "${CF_SRC[3]}" "$TMP/lock-dropped.md" <<'PY'
@@ -1351,7 +1747,7 @@ PY
     then
       fail "A15[C07]: plugin/permission/skill three-way parity broken — one of the single sources drifted"
     fi
-    ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, and the plugin constants match the permission rows and the boards-skill call strings"
+    ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, the plugin constants match the permission rows and the boards-skill call strings, and the roster fence holds the cf-85 one-field slug roster"
   fi
 fi
 
@@ -1375,7 +1771,7 @@ if want a16; then
   [ -z "$no_perm_landing" ] \
     || fail "A16[C01 fact]: a NON-stage agent lost its permission block: $no_perm_landing (the nine stage agents are the permissionless set — W3 verified)"
   misses=$(grep -L 'resource: ls \*' "${permed[@]}" || true)
-  [ -z "$misses" ] || { printf '%s\n' "$misses" >&2; fail "A16[C01 AC1]: the plan's grep -L over the permission-bearing sources is not empty — files missing the 'resource: ls *' row (red before C01 dev: 12 sources have not moved)"; }
+  [ -z "$misses" ] || { printf '%s\n' "$misses" >&2; fail "A16[C01 AC1]: the plan's grep -L over the permission-bearing sources is not empty — files missing the 'resource: ls *' row (HOLD since the C01 landing: a row drifted away)"; }
   for f in "${permed[@]}"; do
     c=$(grep -c 'resource: ls \*' "$f")
     [ "$c" -eq 1 ] || fail "A16[C01 AC1]: $f carries $c 'resource: ls *' rows, want exactly one"
@@ -1407,7 +1803,7 @@ target = outer if isinstance(outer, dict) and "permissions" in outer else fm
 rows = target.get("permissions") or []
 before = len(rows)
 rows[:] = [r for r in rows if not (r.get("action") == "shell" and r.get("resource") == "ls *")]
-assert len(rows) == before - 1, "fixture: no 'ls *' allow row found to strip (the live loop reddens first — red before C01 dev)"
+assert len(rows) == before - 1, "fixture: no 'ls *' allow row found to strip (the live loop reddens first — the row is mandatory since C01)"
 target["permissions"] = rows
 if outer is not target:
     fm["opencode"] = target
@@ -1427,7 +1823,7 @@ outer = fm.get("opencode")
 target = outer if isinstance(outer, dict) and "permissions" in outer else fm
 rows = target.get("permissions") or []
 ls = [r for r in rows if r.get("action") == "shell" and r.get("resource") == "ls *" and r.get("effect") == "allow"]
-assert len(ls) == 1, "fixture: duplicate only a landed single ls row (red before C01 dev)"
+assert len(ls) == 1, "fixture: duplicate only a landed single ls row"
 rows.append(dict(ls[0]))
 target["permissions"] = rows
 if outer is not target:

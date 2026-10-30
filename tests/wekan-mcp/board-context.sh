@@ -248,20 +248,36 @@ if added and not (len(added) == 1 and added[0] in ("board", "agent-board")):
     print(f"unexpected matcher rows added: {added}"); sys.exit(1)
 if "agent-board" not in nlabels and "board" not in nlabels:
     print("no agent-board matcher row found"); sys.exit(1)
+# The coord-pr cell moved twice in the 2026-10-30 merge round — cf-72's main-
+# side T-7 tail rewrite plus the scoped-read re-seat rider (in-family
+# preload-probe + `ls *` rows), per the reconciliation entry at the bottom of
+# .rulesync/skills/agents-sync/references/permissions.md. Admitted EXACTLY,
+# never as a blanket skip: the TB form still rides (pre-merge trees, via the
+# byte-equal walk below) and the pinned settled form rides; anything else — a
+# dropped ls/probe grant, a reworded tail, any gained row — reddens.
+COORD_PR_SETTLED = """| coord-pr | same as coord | plan/research/test/dev-pr/review | as coord-local — same scoped-read family (the probe and `ls *` rows ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
     # tests/pipeline-gates/validation-fix.sh). The coord/board-coord/agent-
     # board/dev-local/dev-pr cells move per board-tick-cleanup C01 (same-
     # commit matrix duty, plan Grounded facts W3 — the cells list the `ls *`
-    # row; the *local/*-pr reference idioms stay byte-stable). Every other
-    # base row must survive byte-identical.
+    # row). The coord-local/board-coord-local/board-coord-pr reference-idiom
+    # cells stay byte-stable (measured 2026-10-30: coord-pr is the ONLY other
+    # mover — its cell is literal prose, admitted byte-exactly via
+    # COORD_PR_SETTLED, not skipped). Every other base row must survive
+    # byte-identical.
     if label in ("review", "coord", "board-coord", "agent-board", "dev-local", "dev-pr"):
         continue
     if r not in n:
-        print(f"base row '{label}' changed byte-wise — only the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, and board-tick-cleanup C01's five shell-cell updates; nothing else may drift"); sys.exit(1)
+        if label == "coord-pr":
+            cur = [x for x in n if x.split("|")[1].strip() == "coord-pr"]
+            if len(cur) == 1 and cur[0] == COORD_PR_SETTLED:
+                continue
+            print(f"coord-pr row is neither the TB form nor the pinned settled form (cf-72 T-7 tail + the in-family ls/preload-probe rider) — got {cur}; the admission is byte-exact: dropping a grant, rewording the tail or any other gain is unadmitted drift"); sys.exit(1)
+        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, and the byte-exact coord-pr settled admission; nothing else may drift"); sys.exit(1)
 PY
-  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells) and carries the agent-board row (era-gated presence — post-landing it rides the base too)"
+  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too)"
 fi
 
 # --- t5: regen no-op + --check, and same-commit source/generated shape (AC6) ----

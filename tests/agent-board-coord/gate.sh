@@ -45,6 +45,13 @@
 # duty lives in tests/session-origin/surface.sh s4, never here)]
 # t18[C03 AC1 origin block] t19[C03 AC2 skill dynamic contract].
 #
+# cf-85 (2026-10-29, cf-85-refactor-wekan-slug-session-link): t14's plan-folder
+# admit is this suite's only cf-85 duty. Every other arm is a HOLD — the flip
+# rewrites the boards skill's custom-field passages, the three board-coord
+# twins and the manual /pipeline-boards pair, while t11/t13/t18 probe the
+# HOURLY command pair and t19's windows sit on the Config-constants resolution
+# text the flip leaves intact.
+#
 # AC7 (regression) is not re-implemented here: run
 # tests/agent-board-coord/rulesync-surface.sh and agents-md.sh; their scope
 # allow-lists carry this ticket's in-surface paths, and agents-md.sh c8's
@@ -302,6 +309,20 @@ PY
 # shared between the two trees and indentation must not stay free to drift).
 # The delta check still rejects any extra rule before or after the pinned six.
 cat >"$TMP/atpos.py" <<'PY'
+# Arm-B line twin (tests-edit-perms T10/D10), forms-aware. The sanctioned
+# literal family block (GET/PATCH pair, mint, session-origin, date, probe,
+# ls — 2026-10-30 merge re-seat: `ls *` joined the scoped-read family AFTER
+# the probe row, per the reconciliation entry in permissions.md; the retired
+# trailing-ls rung after the git block is OBSOLETE for the coord family
+# because cf-72 made the push tail the absolute-last shell rows) sits
+# directly after the three lines of the `opencode '*' allow` rule. Rungs are
+# OPTIONAL longest-first continuations — absolute presences live in
+# agent-perms A16 (ls) and tests/board-preload-probe/surface.sh B2 (probe),
+# so this twin never reddens a healthy pre-wave tree. Block matching skips
+# source-tree comment lines (rulesync strips them from the generated mirror);
+# row bytes, count and order stay pinned exactly like the continuation walk.
+# The only sanctioned continuation after the matched family is the cf-72 git
+# block; any other shell row is unsanctioned.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
@@ -312,15 +333,9 @@ WANT2 = [('resource: opencode api get /api/session*', 'effect: allow'),
          ('resource: opencode api patch /api/session/*', 'effect: allow')]
 WANT3 = WANT2 + [('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow')]
 WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
-# 2026-10-27 date-grant re-pin: SHELL5 = SHELL4 + the `date *` triple (the
-# in-work mark's $(date +%s%3N) epoch subcommand grant).
-# 2026-10-29 board-tick-cleanup forms-ladder duty (keep the re-pin extensible
-# so the C03 probe wave is an increment, not a rewrite): SHELL6 = SHELL5 + the
-# scoped preload-probe triple (OQ-N1). Rungs are OPTIONAL — absolute probe
-# presence is tests/board-preload-probe/surface.sh B2, absolute ls presence is
-# agent-perms A16; this twin never reddens a healthy pre-wave tree.
 WANT5 = WANT4 + [('resource: date *', 'effect: allow')]
 WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
+WANT7 = WANT6 + [('resource: ls *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -330,39 +345,116 @@ if len(hits) != 1:
     print(f"want exactly one '- action: opencode' + resource '*' + effect allow rule, found {len(hits)}"); sys.exit(1)
 ind = hits[0][1]
 at = hits[0][0] + 3
-matched = 0
-for want in (WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
-    want_lines = [x for rule in want for x in
-                  (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
-    if lines[at:at + 3 * len(want)] == want_lines:
-        matched = 3 * len(want)
+def noncomment(pos):
+    while pos < len(lines) and lines[pos].lstrip().startswith("#"):
+        pos += 1
+    return pos
+matched_end = 0
+for want in (WANT7, WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
+    pos = at
+    ok = True
+    for rule in want:
+        pos = noncomment(pos)
+        if lines[pos:pos + 3] != [f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}"]:
+            ok = False
+            break
+        pos += 3
+    if ok:
+        matched_end = pos
         break
-if not matched:
-    print("no sanctioned literal allow block (SHELL2 six lines through SHELL6 eighteen) "
-          f"follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 18]})"); sys.exit(1)
-# cf-58 merge re-pin: after the matched sanctioned block the only permitted
-# continuation is comment lines (source tree only — the rulesync YAML
-# round-trip strips them from the generated mirror) plus the sanctioned git
-# block, whole and in order — the thirteen shared rows plus the variant
-# tail: push-deny on -local/alias files, push-allow + push-main deny + the
-# four force-flag denies on -pr files; any other shell row is unsanctioned.
-COMMON = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: allow") for r in
-          ("git status *", "git log *", "git diff *", "git show *", "git branch *",
-           "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
-           "git commit *", "git checkout *", "git switch *", "git merge main*")]
+if not matched_end:
+    print("none of the sanctioned literal family blocks (SHELL2 six lines through SHELL7 twenty-one, "
+          f"comments skipped) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 24]})"); sys.exit(1)
+# cf-72 B-block re-pin (2026-10-29, card #72): after the matched sanctioned
+# block the only permitted continuation is comment lines (source tree only —
+# the rulesync YAML round-trip strips them from the generated mirror) plus
+# the sanctioned git block, whole and in order — the sixty-eight SHARED rows
+# (one `git *` broad-write allow, the 51-row deny floor, the 16 exception
+# re-allows) plus the variant push tail: the two-row alias/-local tail
+# (`git push*` + the `git *push*` substring row), the seven-row -pr tail
+# (main-leg, zero-arg -C and every force spelling). EFFECT-AWARE and
+# ORDER-CARRIED: the floor guards the broad allow only BEHIND it and the
+# re-allows ride over the floor only BEHIND it, so each row's effect and
+# index are the security contract, not its membership.
 def T(r, e):
     return (f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
-TAILS = [[T("git push*", "deny")],
-         [T("git push*", "allow"), T("git push*main*", "deny"), T("git push --force*", "deny"),
-          T("git push -f*", "deny"), T("git push * --force*", "deny"), T("git push * -f*", "deny")]]
-# board-tick-cleanup C01: exactly one trailing `ls *` allow after the complete
-# git tail is the sanctioned shell-block trailer (zero = pre-wave era; the
-# presence duty is agent-perms A16, not this twin).
-TRAILER = [T("ls *", "allow")]
-k = at + matched
+COMMON = [T(r, e) for r, e in (
+    ("git *", "allow"),
+    ("git checkout main*", "deny"),
+    ("git * checkout main*", "deny"),
+    ("git checkout * main*", "deny"),
+    ("git * checkout * main*", "deny"),
+    ("git switch main*", "deny"),
+    ("git * switch main*", "deny"),
+    ("git switch * main*", "deny"),
+    ("git * switch * main*", "deny"),
+    ("git update-ref*", "deny"),
+    ("git * update-ref*", "deny"),
+    ("git symbolic-ref*", "deny"),
+    ("git * symbolic-ref*", "deny"),
+    ("git branch -f main*", "deny"),
+    ("git * branch -f main*", "deny"),
+    ("git branch --force main*", "deny"),
+    ("git * branch --force main*", "deny"),
+    ("git branch -d main*", "deny"),
+    ("git branch -d * main*", "deny"),
+    ("git * branch -d main*", "deny"),
+    ("git * branch -d * main*", "deny"),
+    ("git branch -D main*", "deny"),
+    ("git branch -D * main*", "deny"),
+    ("git * branch -D main*", "deny"),
+    ("git * branch -D * main*", "deny"),
+    ("git branch -m main*", "deny"),
+    ("git branch -m * main*", "deny"),
+    ("git * branch -m main*", "deny"),
+    ("git * branch -m * main*", "deny"),
+    ("git branch -M main*", "deny"),
+    ("git branch -M * main*", "deny"),
+    ("git * branch -M main*", "deny"),
+    ("git * branch -M * main*", "deny"),
+    ("git branch -c main*", "deny"),
+    ("git * branch -c main*", "deny"),
+    ("git branch -c * main*", "deny"),
+    ("git * branch -c * main*", "deny"),
+    ("git branch -C main*", "deny"),
+    ("git * branch -C main*", "deny"),
+    ("git branch -C * main*", "deny"),
+    ("git * branch -C * main*", "deny"),
+    ("git worktree add * main*", "deny"),
+    ("git * worktree add * main*", "deny"),
+    ("git pull*", "deny"),
+    ("git * pull*", "deny"),
+    ("git merge *", "deny"),
+    ("git * merge *", "deny"),
+    ("git config alias*", "deny"),
+    ("git * config alias*", "deny"),
+    ("git * --force*", "deny"),
+    ("git * -f *", "deny"),
+    ("git * -P *", "deny"),
+    ("git merge main*", "allow"),
+    ("git * merge main*", "allow"),
+    ("git merge --abort", "allow"),
+    ("git * merge --abort", "allow"),
+    ("git merge --continue", "allow"),
+    ("git * merge --continue", "allow"),
+    ("git checkout -b * main*", "allow"),
+    ("git * checkout -b * main*", "allow"),
+    ("git checkout -B * main*", "allow"),
+    ("git * checkout -B * main*", "allow"),
+    ("git switch -c * main*", "allow"),
+    ("git * switch -c * main*", "allow"),
+    ("git switch -C * main*", "allow"),
+    ("git * switch -C * main*", "allow"),
+    ("git worktree add -b * main*", "allow"),
+    ("git * worktree add -b * main*", "allow"),
+)]
+TAILS = [[T("git push*", "deny"), T("git *push*", "deny")],
+         [T("git push*main*", "deny"), T("git * push *main*", "deny"), T("git * push", "deny"),
+          T("git push -f*", "deny"), T("git push -P*", "deny"), T("git * push -f*", "deny"),
+          T("git * push -P*", "deny")]]
+k = matched_end
 gi = saw = 0
 chosen = None
-trailer_seen = False
 while k < len(lines):
     if lines[k].lstrip().startswith("#"):
         k += 1
@@ -376,14 +468,10 @@ while k < len(lines):
             k += 3
             continue
         if chosen is not None:
-            if not trailer_seen and lines[k:k + 3] == list(TRAILER[0]):
-                trailer_seen = True
-                k += 3
-                continue
-            print("a shell row continues after the complete sanctioned git block and its trailing ls allow — unsanctioned shell grant"); sys.exit(1)
+            print("a shell row continues after the complete sanctioned git block — unsanctioned shell grant"); sys.exit(1)
         chosen = next((t for t in TAILS if lines[k:k + 3 * len(t)] == [ln for tr in t for ln in tr]), None)
         if chosen is None:
-            print(f"the git block's tail is neither the -local push-deny row nor the -pr push sextet (got {lines[k:k + 18]}) — unsanctioned shell grant"); sys.exit(1)
+            print(f"the git block's tail is neither the two-row alias/-local push tail nor the seven-row -pr push tail (got {lines[k:k + 21]}) — unsanctioned shell grant"); sys.exit(1)
         k += 3 * len(chosen)
         continue
     break
@@ -717,6 +805,19 @@ fi
 # hand-managed .opencode/plugin/board-context dir (rulesync never touches
 # .opencode/plugin/ — AGENTS.md); plus this ticket's own plan folder (inline
 # literal for the agent-perms A9 window-pin).
+# cf-85 (2026-10-29): the running ticket's own plan folder joins the admit —
+# its plan/STATE/handoff commits land on this branch like cf-58's and cf-75's
+# did, so a t14 run at any pre-chunk base must not read the folder as a scope
+# escape. cf-85's content edits ride the .rulesync/skills/*, .opencode/skills/*,
+# .rulesync/subagents/*, .opencode/agents/*, .rulesync/commands/*,
+# .opencode/commands/*, tests/* and AGENTS.md admits already in this set.
+# cf-72 (2026-10-29) adds its own plan-folder admit the same way — the D9
+# rule: a scope guard must never red on the running ticket's bookkeeping.
+# merge round (2026-10-30): cf-68 + cf-83 plan folders join the admit — `git merge
+# main` moves the changed-paths walk across ticket-base boundaries, and a guard red
+# on another ticket's already-landed folder buries every later check (same class as
+# the own-folder admits above). containers/wekan-mcp/* joins per the c8 union —
+# cf-68's create_list landed the container surface on this branch.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -739,7 +840,7 @@ if want t14; then
       .rulesync/skills/role-debug/*|.opencode/skills/role-debug/*|\
       .opencode/opencode.jsonc|.opencode/plugin/board-context/*|\
       .opencode/plugin/question-notify/*|.agents/loops/*|\
-      skills/wekan-mcp/*|skills/wekan-api/*|\
+      skills/wekan-mcp/*|skills/wekan-api/*|containers/wekan-mcp/*|\
       "$AS_SRC"/references/permissions.md|"$AS_GEN"/references/permissions.md|\
       "$AS_SRC"/references/pipeline-overview.md|"$AS_GEN"/references/pipeline-overview.md|\
       "$AS_SRC"/references/plan-and-result.md|"$AS_GEN"/references/plan-and-result.md|\
@@ -751,11 +852,15 @@ if want t14; then
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
-      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*) : ;;
+      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*|\
+      .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
+      .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
+      .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
+      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening and the cf-75 skill/plugin/gates/review/plan-and-result/own-folder admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits and the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
@@ -879,7 +984,7 @@ others = [p.get("resource") for p in perms if p.get("action") == "shell"
           and p.get("resource") != "date *"
           and not (p.get("resource") == "ls *" and p.get("effect") == "allow")]
 if others:
-    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = API pair + the sanctioned script allows (mint, origin, preload-probe) + the date allow + git block + trailing ls allow + ask baseline)")
+    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = API pair + the sanctioned scoped-read family (mint, origin, preload-probe, date, ls — the 2026-10-30 re-seat) + git block + ask baseline)")
 # 2026-10-27 date-grant re-pin: the kickoff in-work mark embeds
 # $(date +%s%3N) in the patch payload; the shell matcher extracts command
 # substitutions and checks the date subcommand against this agent's own

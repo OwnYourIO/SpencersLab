@@ -1,0 +1,101 @@
+{
+  "feature": "2026/2026-10-cf-68-feat-wekan-mcp-create-list",
+  "plan_status": "complete",
+  "coord_session": "ses_e780f0226ffe85KXYnPfJoJ4IZ",
+  "test_session": "ses_e77dee764ffexC00sclJ5CyapK",
+  "current_wave": 1,
+  "updated_at": "2026-10-29",
+  "kickoff": {
+    "slug": "cf-68-feat-wekan-mcp-create-list",
+    "run_tag": null,
+    "card_number": 68,
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "card": "Wg93SkHZ7bMLWJYBA",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "worktree": "cf-68-feat-wekan-mcp-create-list",
+    "branch": "cf-68-feat-wekan-mcp-create-list",
+    "lifecycle": "standard Plan+Test+Code+Review (legacy Research checklist all-unchecked -> stage gate does not apply)",
+    "hitl": "default Plan pause (plan-approval gate applies)",
+    "board_context": {
+      "collected": "2026-10-29",
+      "server": "dev-boards",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At"
+      },
+      "custom_field_ids_observed": {
+        "slug_or_session_a": "RaNeqvh9YoT4bnkZ8",
+        "slug_or_session_b": "zZw4PwMoLeodJy3eT",
+        "note": "names resolve via list_custom_fields before use (key is name, not title)"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Ready for Work": "mkbxeo",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5"
+      },
+      "re_resolve": "card and checklist ids are live per-card data; on any id-shaped call error re-resolve this block against the live board before retrying"
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e77c6f859ffeEpIrZAYgCr0Yno",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T15:35:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [containers/wekan-mcp/wekan_mcp/server.py, containers/wekan-mcp/README.md, skills/wekan-mcp/SKILL.md, skills/wekan-mcp/references/call-shapes.md, skills/wekan-api/SKILL.md]\ncommands_run: [bash tests/wekan-mcp/create-list.sh => pass (6 ok, t1..t5 incl. t4a/t4b regression gates + t5 red-green probe), bash tests/wekan-mcp/tools.sh => pass (9 ok), bash tests/wekan-mcp/skill-surface.sh => pass (8 ok, rulesync --check clean), bash tests/containers/wekan-mcp-login.sh => pass (6 ok + docker-skip designed shape), python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py => pass, npx aislop ci --changes => pass (rc=0, 0 errors, score 94 >= floor 80; the 8 warnings are 7 pre-existing decorative section-separator lines + pre-existing file-size, all on base content — see deviations), git diff scope check (tracked changes outside tests/ = the 5 declared files) => pass, git diff eb8a96346 -- server.py hunk census (1 additive hunk, 0 removals) => pass, docker build => no-daemon, CI-deferred (designed passing shape, 2026-10-28/cf-77 rule; no Dockerfile/requirements changes so no build-critical facts changed)]\ndeviations: three wording-level, none semantic — (1) wekan-api L40 fixed to \"the full 27-tool surface\" (chunk's \"full, 27 tools\" is the tier-table cell phrasing; the sentence here keeps its original shape; t3 pins only the absence of \"25-tool surface\"). (2) position_error is always present in the response dict (null unless the reposition leg ran and failed) rather than added only on failure — the suite's pinned response-surface literals require the key in-source, and the call-shapes/README rows document the null semantics; a superset of the plan's \"plus position_error on a failed reposition\". (3) aislop's pre-existing warnings are explained-not-fixed by design: repairing them would delete base lines and break AC7's one-additive-hunk pin plus the t5 gate byte-pins; my hunk adds zero new findings.\nfriction: aislop --changes on server.py surfaces 7 pre-existing separator warnings inviting `aislop fix`, which would violate C01's zero-diff AC — resolution: verified flagged lines are all base content, left untouched, CI rc=0 recorded · none otherwise (known workarounds from FRICTION applied without incident: bare scoped commands, npx aislop, board-context.sh t4 pre-existing red NOT run/routed)\nopen_questions: none for the chunk; coord bookkeeping: FRICTION 2026-10-29 item \"stale 'full 25-tool surface' line\" is now CLOSED (fixed in skills/wekan-api/SKILL.md, suite t3 green) — re-status to fixed\nnext_suggested: agent-review re-runs t1-t5 + the two sibling suites + py_compile (review-first-step per repo rule); after approval, coord commits the one shippable unit (tool + docs + agent-test's three suite files) on cf-68-feat-wekan-mcp-create-list — no push/merge (user-owned PR landing; live tools/list probe post-merge is user-owned per D7)"
+        },
+        {
+          "at": "2026-10-29T15:55:00Z",
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/chunks/C01.md]\ncommands_run: [bash tests/wekan-mcp/create-list.sh => pass (6 ok), bash tests/wekan-mcp/tools.sh => pass (9 ok), bash tests/wekan-mcp/skill-surface.sh => pass (8 ok), bash tests/containers/wekan-mcp-login.sh => pass (6 ok + docker-skip), python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py => pass, npx aislop ci --changes => pass (rc=0, score 94, 0 errors, 8 verified-base-content warnings), git diff eb8a96346 hunk census + flagged-line byte-check vs base => pass, docker build => no-daemon, CI-deferred]\ndeviations: none (reviewer); dev's three deviations all adjudicated and accepted — recorded in chunks/C01.md Review notes\nfriction: none new\nopen_questions: none\nnext_suggested: coord marks C01 approved and commits the chunk (5 dev + 3 test files); final whole-plan review then covers this same single-chunk diff — live tools/list probe stays user-owned post-merge (D7)"
+        },
+        {
+          "at": "2026-10-29T16:20:00Z",
+          "role": "final-review",
+          "result": "RESULT\nstatus: DONE\nchunk: final\nfiles_changed: [.agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/chunks/C01.md]\ncommands_run: [bash tests/wekan-mcp/create-list.sh => pass (6 ok), bash tests/wekan-mcp/tools.sh => pass (9 ok), bash tests/wekan-mcp/skill-surface.sh => pass (8 ok), bash tests/containers/wekan-mcp-login.sh => pass (6 ok + docker-skip), python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py => pass, npx aislop ci --changes => pass (rc=0, score 100, 0 errors), docker info rc=1 => docker build no-daemon, CI-deferred (designed shape), git merge-base/rev-parse/status sanity (eb8a96346..fd8719bc2, 1 commit, clean tree) => pass, repo-wide stale-count + create_list sweep => pass, independent AST census 13 reads + 14 writes = 27 => pass, STATE.json json.load => pass, templates/FRICTION.md placeholder-line verification => pass]\ndeviations: none (final reviewer); all three C01 dev deviations re-verified as coherent across surfaces, adjudicated in round 1.\nfriction: none new (aislop run-scope variance and the stale fail-message nit recorded as observations in chunks/C01.md, not as friction)\nopen_questions: none\nnext_suggested: coord books final APPROVED in STATE.json and moves card #68 to Review + pipeline_release(done); user-owned tail: PR->merge, renovate :v87 image bump, live tools/list probe (present on dev-boards/admin tiers, absent on readonly), then the human Timeout-list and a separate reaper-wiring card (D5)"
+        }
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": [],
+  "plan": {
+    "status": "approved",
+    "approved_at": "2026-10-29T14:25:00Z",
+    "session": "ses_e780195c7ffeJ5JRpRzj5gjGO5",
+    "handoffs": [
+      {
+        "at": "2026-10-29T14:21:33Z",
+        "result": "RESULT\nstatus: NEEDS_INFO\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/2026-10-29-feat-cf-68-feat-wekan-mcp-create-list.md, .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/STATE.json, .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/DECISIONS.md, .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/FRICTION.md, .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/chunks/C01.md]\ncommands_run: [curl+grep of wekan `server/models/lists.js` @ v12.64 and main (create + move/reposition routes) => pass, `git status`/merge-base sanity => pass, `python3 -c json.load STATE.json` => pass, `bash tests/wekan-mcp/tools.sh` => pass (base green), `bash tests/wekan-mcp/skill-surface.sh` => pass (base green), `bash tests/containers/wekan-mcp-login.sh` => pass (base green)]\ndeviations: none\nfriction: prior plan-session died before writing (launch carried full kickoff payload; clean fresh start, no re-asks) · v9.99-vs-v12.64 deployed-version ambiguity (resolved: chart 12.65.0 pins v12.64; routes re-verified at the tag) · stale \"25-tool surface\" line in wekan-api SKILL.md risks a missed parity edit (recorded in plan blast radius + D6; suite t3 asserts its absence) — open, test/dev close it\nopen_questions: [\"Q1 create_list arg name: `title` (repo-wide create-tool consistency, chosen) or the card sketch's `list_title`? No consumer wired yet, docs follow the choice.\", \"Q2 Include the optional `position` (post-create reposition via .../lists/:listId/move, verified on v12.64) or ship append-only? Best guess: include — the card explicitly asks 'sort placement'.\", \"Q3 Response hydrate from the single-list GET ({id,title,swimlane_id,sort,positioned}) or minimal {id,title}? Best guess: hydrate — omitting swimlane_id must still surface the bound swimlane for target-resolution callers.\", \"Q4 Flip the 26-tool pins in tests/wekan-mcp/{tools,skill-surface}.sh to 27 in this change (best guess — sanctioned mechanism) or refactor them to derive live?\", \"Q5 Stamp the new call-shapes.md row source-only 2026-10-29 (v12.64 source check; best guess) or hold the row until the post-merge live tools/list probe?\"]\nnext_suggested: Run the batched plan-question round with the user (HITL=Plan default pause incl. the 5 open questions), relaunch plan with answers for final approval, then on plan_status: approved launch agent-test for C01's tests/wekan-mcp/create-list.sh before dev"
+      }
+    ]
+  },
+  "test": {
+    "status": "done",
+    "session": "ses_e77dee764ffexC00sclJ5CyapK",
+    "handoffs": [
+      {
+        "at": "2026-10-29T15:11:48Z",
+        "result": "RESULT\nstatus: DONE\nchunk: test\nfiles_changed: [tests/wekan-mcp/create-list.sh, tests/wekan-mcp/tools.sh, tests/wekan-mcp/skill-surface.sh]\ncommands_run: [bash -n x5 suites => pass (create-list.sh was invalid bash at receipt; repaired), bash tests/wekan-mcp/create-list.sh => red-by-design (t1 registration absent, fail-fast), create-list.sh t1/t2/t3/t4/t5 subsets => each red for a real not-yet-implemented reason, tools.sh => red-by-design (t2 26-vs-27 pins; green on pristine HEAD), skill-surface.sh => red-by-design (t4 26-vs-27 pins), tests/containers/wekan-mcp-login.sh => pass (6 ok + docker-skip designed shape), board-context.sh => fail (pre-existing on pristine HEAD — cf-75 suite vs drifted permissions matrix, out of this plan's Commands, untouched), python3 -m py_compile server.py => pass, mock-clone full run: create-list.sh => pass 6 ok, tools.sh + skill-surface.sh => green via t4a/t4b (satisfiability proof, clone removed), npx aislop scan --changes => pass (100, 0 findings), git status => pass (test files only, no commits)]\ndeviations: Prior crashed runs had actually written all three files (the brief said a clean fresh start) — audited as sole author, kept the correct sibling 26-to-27 re-pins per D6/D8, and fixed four defects in create-list.sh (missing outer fi -> invalid bash; missing t2 else-fail -> silently-green leg; t3 grep -c set-e silent death; position-key pin re-scoped from the call segment to the `if position is not None:` gate block to match the repo's pre-build json_body style). Green-after-dev proven only in a throwaway /tmp clone with a spec-compliant mock create_list + doc flips — no real server.py/docs touched. No commits.\nfriction: prior test-run's files were written but never executed — t2 could not fail and the suite did not parse; resolution: bash -n + per-subset red census + mock-clone green proof · board-context.sh t4 red at pristine HEAD (cf-75 suite vs drifted permissions matrix) — pre-existing, not this ticket, not in the plan Commands; flagged for coord · stale 25-tool surface line: suite-side absence pin now written (create-list t3) — dev side still open until C01 lands (FRICTION open item closes with dev)\nopen_questions: none\nnext_suggested: launch agent-dev-local for C01 — server.py create_list + the four doc-flips must land together; green bar = create-list.sh (t1..t5), tools.sh, skill-surface.sh, login suite, py_compile; review re-runs the same set as step 1."
+      }
+    ]
+  }
+}

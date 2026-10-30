@@ -66,20 +66,30 @@
 # sanctioned git block + the agent-dev → agent-dev-local roster rename on the
 # coord family. s4's mechanism re-pins accordingly: the arm comparisons run
 # on git-block-stripped core projections with a whole-block tail check
-# (splice4), the line twin admits the fourteen-row git block as the only
-# sanctioned continuation (atpos4), the shape check admits exactly that
+# (splice4), the line twin admits the cf-72 B block as the only sanctioned
+# continuation (atpos4 — sixty-eight effect-aware shared rows + the two-/
+# seven-row push tail), the shape check admits exactly that
 # block as the only git surface and pins the alias's -local roster (shape4),
 # and the soundness controls build their no-allow base from the live
-# skeleton. s4(b)'s diff-shape arm CANNOT express a merge delta: it is
+# skeleton (git rows projected, not enumerated). s4(b)'s diff-shape arm
+# CANNOT express a merge delta: it is
 # designed-red in the merge window under BASE=pre-merge-HEAD and green again
 # at the merge commit (empty diff → arm-B atpos posture), provable
 # pre-commit via CHUNK_BASE=<merge snapshot>. s2's HEAD-relative byte pin
 # greens again at the same commit for the same reason.
+# 2026-10-30 merge round: with conflict stages in the index a snapshot is not
+# creatable (git stash create refuses) and the verification round may not git
+# add, so s2(b2), s4 and the s6 commands freeze run MERGE_HEAD-rung variants
+# while a merge is in flight — each pre-validates the exact posture the merge
+# commit governs through afterwards (atpos4 / strict main-side byte source).
 # board-tick-cleanup RE-PIN (2026-10-chore-board-tick-cleanup, 2026-10-29):
-# splice4/atpos4/synth/shape4 admit C01's trailing `ls *` allow and C03's
+# splice4/atpos4/synth/shape4 admit C01's `ls *` allow (in-family since the
+# 2026-10-30 merge re-seat) and C03's
 # scoped preload-probe allow the same way the date row was admitted — strip
-# from the core, admit at most once whole, atpos4 now a SHELL5|SHELL6 ladder
-# with the single ls trailer. The fourth-allow duty keeps its teeth; the
+# from the core, admit at most once whole, atpos4 now a SHELL5|SHELL6|SHELL7
+# ladder with ls as the seventh family row (the s4 19:3 geometry stays the
+# historical C01 window, where ls landed as the then-sanctioned trailer).
+# The fourth-allow duty keeps its teeth; the
 # absolute presences live in agent-perms A16 / tests/board-preload-probe/
 # surface.sh, so this suite never reddens a healthy pre-wave tree.
 # The kickoff naming landing (2026-10-27, bug-coord-opencode-perms) inherits
@@ -88,6 +98,29 @@
 # its teeth), so the parsed arms go green in-window; s4(b) stays designed-red
 # until the landing commit flips the files to the empty-diff arm-B posture.
 # The absolute naming duty lives in tests/agent-perms/surface.sh A12.
+# cf-72 B-block re-pin (2026-10-29, card #72): the fourteen-row reads list is
+# replaced by the broad-grant-plus-floor block (68 shared + 2 push-tail rows
+# on this suite's alias/-local test set); splice4's whole-block equality,
+# atpos4's literal walk and shape4's GB carry it, and the diff-shape arm
+# keeps the merge-window discipline — pre-commit proof via
+# CHUNK_BASE=$(git stash create), arm-B green at the landing commit.
+#
+# cf-85 RE-PIN (2026-10-29, cf-85-refactor-wekan-slug-session-link): the board
+# write-back becomes ONE custom field — `slug` carrying the combined
+# `[<slug>](<session link>)` link, raw session id in the link half when the
+# origin says UNRESOLVED (DECISIONS D11) — so this suite's cf-85 legs are:
+#   s3's new 'raw session id'+'link half' window — DESIGNED RED against the
+#     pre-flip text (the slot list still names the retired session field),
+#     green at the flip commit;
+#   s2's b2 write-back byte-pin — the block cf-85 legitimately rewrites, so it
+#     is byte-equal until the flip edits it, red ONLY for a CHUNK_BASE=<pre-
+#     chunk> run inside the edit window, and green again at the flip commit
+#     (same in-window red as s6's command freeze, which the flip's command
+#     edits cause and which greens the same way);
+#   s2's b1/b3 byte-pins and every s3 window/carry string — HOLD: the flip
+#     must leave the claim-comment bullet, the research step-7 sentence, the
+#     resolution-leg text and the `slug`/`session`/`custom field` substrings
+#     intact, so a red there names an out-of-scope edit.
 #
 # Usage (harness convention from tests/coord-inwork/surface.sh):
 #   bash tests/session-origin/surface.sh             # s1..s7
@@ -323,21 +356,82 @@ PROBE = {"action": "shell", "resource": "bash scripts/board-preload-probe.sh *",
 # tests/coord-inwork/surface.sh i4 and tests/agent-board-coord/gate.sh t17).
 # Both arms compare core projections (git block stripped); a separate check
 # admits the block only whole and in order. The four-allow duty keeps teeth.
+# cf-72 B block (this suite's splice runs on the ALIAS/-local files only:
+# sixty-eight shared rows + the two-row push tail; the -pr tail's 75-row
+# sequence is pinned absolutely by coord-inwork i4, gate t17 and A12).
+def is_git(p):
+    return p.get("action") == "shell" and str(p.get("resource", "")).startswith("git ")
 GITBLOCK = [
-    {"action": "shell", "resource": "git status *", "effect": "allow"},
-    {"action": "shell", "resource": "git log *", "effect": "allow"},
-    {"action": "shell", "resource": "git diff *", "effect": "allow"},
-    {"action": "shell", "resource": "git show *", "effect": "allow"},
-    {"action": "shell", "resource": "git branch *", "effect": "allow"},
-    {"action": "shell", "resource": "git merge-base *", "effect": "allow"},
-    {"action": "shell", "resource": "git rev-parse *", "effect": "allow"},
-    {"action": "shell", "resource": "git ls-files *", "effect": "allow"},
-    {"action": "shell", "resource": "git add *", "effect": "allow"},
-    {"action": "shell", "resource": "git commit *", "effect": "allow"},
-    {"action": "shell", "resource": "git checkout *", "effect": "allow"},
-    {"action": "shell", "resource": "git switch *", "effect": "allow"},
+    {"action": "shell", "resource": "git *", "effect": "allow"},
+    {"action": "shell", "resource": "git checkout main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * checkout main*", "effect": "deny"},
+    {"action": "shell", "resource": "git checkout * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * checkout * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git switch main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * switch main*", "effect": "deny"},
+    {"action": "shell", "resource": "git switch * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * switch * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git update-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git * update-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git symbolic-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git * symbolic-ref*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -f main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -f main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch --force main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch --force main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -d main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -d * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -d main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -d * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -D main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -D * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -D main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -D * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -m main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -m * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -m main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -m * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -M main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -M * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -M main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -M * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -c main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -c main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -c * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -c * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -C main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -C main*", "effect": "deny"},
+    {"action": "shell", "resource": "git branch -C * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * branch -C * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git worktree add * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git * worktree add * main*", "effect": "deny"},
+    {"action": "shell", "resource": "git pull*", "effect": "deny"},
+    {"action": "shell", "resource": "git * pull*", "effect": "deny"},
+    {"action": "shell", "resource": "git merge *", "effect": "deny"},
+    {"action": "shell", "resource": "git * merge *", "effect": "deny"},
+    {"action": "shell", "resource": "git config alias*", "effect": "deny"},
+    {"action": "shell", "resource": "git * config alias*", "effect": "deny"},
+    {"action": "shell", "resource": "git * --force*", "effect": "deny"},
+    {"action": "shell", "resource": "git * -f *", "effect": "deny"},
+    {"action": "shell", "resource": "git * -P *", "effect": "deny"},
     {"action": "shell", "resource": "git merge main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * merge main*", "effect": "allow"},
+    {"action": "shell", "resource": "git merge --abort", "effect": "allow"},
+    {"action": "shell", "resource": "git * merge --abort", "effect": "allow"},
+    {"action": "shell", "resource": "git merge --continue", "effect": "allow"},
+    {"action": "shell", "resource": "git * merge --continue", "effect": "allow"},
+    {"action": "shell", "resource": "git checkout -b * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * checkout -b * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git checkout -B * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * checkout -B * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git switch -c * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * switch -c * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git switch -C * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * switch -C * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git worktree add -b * main*", "effect": "allow"},
+    {"action": "shell", "resource": "git * worktree add -b * main*", "effect": "allow"},
     {"action": "shell", "resource": "git push*", "effect": "deny"},
+    {"action": "shell", "resource": "git *push*", "effect": "deny"},
 ]
 # Naming RE-PIN (2026-10-27, bug-coord-opencode-perms): the coord family now
 # additionally carries the kickoff naming surface — `execute` (the Code Mode
@@ -368,8 +462,8 @@ def splice(seq):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-b_core = [p for p in b if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
-c_core = [p for p in c if p not in GITBLOCK and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
+b_core = [p for p in b if not is_git(p) and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
+c_core = [p for p in c if not is_git(p) and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
 want, i = splice([p for p in b_core if p not in SHELL4])
 if want is None:
     print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
@@ -391,9 +485,9 @@ else:
         extra = [p for p in c_core if p not in want]
         missing = [p for p in want if p not in c_core]
         print(f"frontmatter delta is not exactly the four scoped allows in either arm: extra={extra} missing={missing}"); sys.exit(1)
-gb = [p for p in c if p in GITBLOCK]
+gb = [p for p in c if is_git(p)]
 if gb and gb != GITBLOCK:
-    print("git-block rows are present but are not exactly the sanctioned fourteen rows in order — unsanctioned git surface"); sys.exit(1)
+    print("git-block rows are present but are not exactly the cf-72 B block for an alias/-local file — sixty-eight shared rows + the two-row push tail — in order — unsanctioned git surface"); sys.exit(1)
 nb = [p for p in c if p in NAMING]
 if nb and nb != NAMING:
     print("kickoff naming rows are present but are not exactly the sanctioned four in order — unsanctioned naming surface"); sys.exit(1)
@@ -402,13 +496,13 @@ if dt and dt != [DATE]:
     print("the date allow is present more than once or with a different effect — unsanctioned date surface"); sys.exit(1)
 ltr = [p for p in c if p.get("action") == "shell" and p.get("resource") == "ls *"]
 if ltr and ltr != [LS]:
-    print("the trailing ls allow is present more than once or with a non-allow effect — unsanctioned ls surface"); sys.exit(1)
+    print("the ls allow is present more than once or with a non-allow effect — unsanctioned ls surface"); sys.exit(1)
 prt = [p for p in c if p.get("action") == "shell" and str(p.get("resource", "")).startswith("bash scripts/board-preload-probe.sh")]
 if prt and prt != [PROBE]:
     print("the preload-probe allow is present more than once, off-spelling, or with a non-allow effect — unsanctioned probe surface (OQ-N1: exactly one scoped row)"); sys.exit(1)
 shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells != [s["resource"] for s in SHELL4]:
-    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the other sanctioned shell surfaces are the cf-58 git block, the date allow, the trailing ls allow and the preload-probe allow, all checked whole above)"); sys.exit(1)
+    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the other sanctioned shell surfaces are the cf-72 git block, the date allow, and the in-family preload-probe/ls rows — ls/probe checked whole above; probe presence in tests/board-preload-probe/surface.sh, ls presence in agent-perms A16)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
 if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resource") == "*"
@@ -417,15 +511,18 @@ if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resou
 PY
 
 cat >"$TMP/atpos4.py" <<'PY'
-# Arm-B line twin: forms-aware since the board-tick-cleanup re-pin (2026-10-29)
-# — the sanctioned literal block is the fifteen allow lines (two session
-# triples, the mint triple, the session-origin triple, the date triple) or
-# eighteen (plus the OQ-N1 scoped preload-probe triple, which lands after
-# `date *` before the git block). Ladder rungs are OPTIONAL continuations:
-# absolute probe presence lives in tests/board-preload-probe/surface.sh, the
-# anchor-relative geometry keeps its teeth either way. The only sanctioned
-# continuation after the git block is the single trailing `ls *` allow
-# (presence duty: agent-perms A16) — any other shell row is unsanctioned.
+# Arm-B line twin: forms-aware since the board-tick-cleanup re-pin, re-seated
+# by the 2026-10-30 merge: the sanctioned literal family is the 15 allow
+# lines (two session triples, the mint triple, the session-origin triple,
+# the date triple), the 18-line SHELL6 (plus the OQ-N1 scoped preload-probe
+# triple) or the 21-line SHELL7 (plus the in-family `ls *` row — the
+# trailing-ls rung is OBSOLETE for the coord family: cf-72 made the push tail
+# the absolute-last shell rows). The ladder floor stays
+# SHELL5: this suite owns the absolute FOUR-allow presence duty (s4), so a
+# three-allow tree must red here. Block matching skips source-tree comment
+# lines; row bytes, count and order stay pinned like the continuation walk.
+# The only sanctioned continuation is the cf-72 B block — any other shell row
+# is unsanctioned.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
@@ -438,6 +535,7 @@ WANT5 = [('resource: opencode api get /api/session*', 'effect: allow'),
          ('resource: bash scripts/session-origin.sh*', 'effect: allow'),
          ('resource: date *', 'effect: allow')]
 WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
+WANT7 = WANT6 + [('resource: ls *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -447,48 +545,132 @@ if len(hits) != 1:
     print(f"want exactly one '- action: opencode' + resource '*' + effect allow rule, found {len(hits)}"); sys.exit(1)
 ind = hits[0][1]
 at = hits[0][0] + 3
-matched = 0
-for want in (WANT6, WANT5):  # longest first: the pre-probe era matches WANT5
-    want_lines = [x for rule in want for x in
-                  (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
-    if lines[at:at + 3 * len(want)] == want_lines:
-        matched = 3 * len(want)
+def noncomment(pos):
+    while pos < len(lines) and lines[pos].lstrip().startswith("#"):
+        pos += 1
+    return pos
+matched_end = 0
+for want in (WANT7, WANT6, WANT5):  # longest first; the SHELL5 floor carries the s4 presence duty
+    pos = at
+    ok = True
+    for rule in want:
+        pos = noncomment(pos)
+        if lines[pos:pos + 3] != [f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}"]:
+            ok = False
+            break
+        pos += 3
+    if ok:
+        matched_end = pos
         break
-if not matched:
-    print("neither the fifteen-line SHELL5 block nor the eighteen-line SHELL6 block (with the preload-probe triple) follows the "
-          f"opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 18]})"); sys.exit(1)
-# cf-58 merge re-pin: after the sanctioned literal block the only permitted
-# continuation is comment lines plus the sanctioned fourteen-row git block
-# (whole, in order), then board-tick-cleanup C01's single trailing ls allow;
-# any other shell row is an unsanctioned grant.
-GB = [(f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
-      for r, e in [("git status *", "allow"), ("git log *", "allow"), ("git diff *", "allow"),
-                   ("git show *", "allow"), ("git branch *", "allow"), ("git merge-base *", "allow"),
-                   ("git rev-parse *", "allow"), ("git ls-files *", "allow"), ("git add *", "allow"),
-                   ("git commit *", "allow"), ("git checkout *", "allow"), ("git switch *", "allow"),
-                   ("git merge main*", "allow"), ("git push*", "deny")]]
-LS_TRAILER = (f"{ind}- action: shell", f"{ind}  resource: ls *", f"{ind}  effect: allow")
-k = at + matched
+if not matched_end:
+    print("neither the fifteen-line SHELL5 block, the eighteen-line SHELL6 block nor the twenty-one-line SHELL7 block (with the "
+          f"preload-probe and ls rows) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 24]})"); sys.exit(1)
+# cf-72 B-block re-pin: after the sanctioned literal block the only permitted
+# continuation is comment lines plus the sanctioned git block — sixty-eight
+# effect-aware shared rows, then the variant push tail (two rows on
+# alias/-local files, seven on -pr files) ending the shell surface; any
+# other shell row is an unsanctioned grant.
+def T(r, e):
+    return (f"{ind}- action: shell", f"{ind}  resource: {r}", f"{ind}  effect: {e}")
+COMMON = [T(r, e) for r, e in (
+    ("git *", "allow"),
+    ("git checkout main*", "deny"),
+    ("git * checkout main*", "deny"),
+    ("git checkout * main*", "deny"),
+    ("git * checkout * main*", "deny"),
+    ("git switch main*", "deny"),
+    ("git * switch main*", "deny"),
+    ("git switch * main*", "deny"),
+    ("git * switch * main*", "deny"),
+    ("git update-ref*", "deny"),
+    ("git * update-ref*", "deny"),
+    ("git symbolic-ref*", "deny"),
+    ("git * symbolic-ref*", "deny"),
+    ("git branch -f main*", "deny"),
+    ("git * branch -f main*", "deny"),
+    ("git branch --force main*", "deny"),
+    ("git * branch --force main*", "deny"),
+    ("git branch -d main*", "deny"),
+    ("git branch -d * main*", "deny"),
+    ("git * branch -d main*", "deny"),
+    ("git * branch -d * main*", "deny"),
+    ("git branch -D main*", "deny"),
+    ("git branch -D * main*", "deny"),
+    ("git * branch -D main*", "deny"),
+    ("git * branch -D * main*", "deny"),
+    ("git branch -m main*", "deny"),
+    ("git branch -m * main*", "deny"),
+    ("git * branch -m main*", "deny"),
+    ("git * branch -m * main*", "deny"),
+    ("git branch -M main*", "deny"),
+    ("git branch -M * main*", "deny"),
+    ("git * branch -M main*", "deny"),
+    ("git * branch -M * main*", "deny"),
+    ("git branch -c main*", "deny"),
+    ("git * branch -c main*", "deny"),
+    ("git branch -c * main*", "deny"),
+    ("git * branch -c * main*", "deny"),
+    ("git branch -C main*", "deny"),
+    ("git * branch -C main*", "deny"),
+    ("git branch -C * main*", "deny"),
+    ("git * branch -C * main*", "deny"),
+    ("git worktree add * main*", "deny"),
+    ("git * worktree add * main*", "deny"),
+    ("git pull*", "deny"),
+    ("git * pull*", "deny"),
+    ("git merge *", "deny"),
+    ("git * merge *", "deny"),
+    ("git config alias*", "deny"),
+    ("git * config alias*", "deny"),
+    ("git * --force*", "deny"),
+    ("git * -f *", "deny"),
+    ("git * -P *", "deny"),
+    ("git merge main*", "allow"),
+    ("git * merge main*", "allow"),
+    ("git merge --abort", "allow"),
+    ("git * merge --abort", "allow"),
+    ("git merge --continue", "allow"),
+    ("git * merge --continue", "allow"),
+    ("git checkout -b * main*", "allow"),
+    ("git * checkout -b * main*", "allow"),
+    ("git checkout -B * main*", "allow"),
+    ("git * checkout -B * main*", "allow"),
+    ("git switch -c * main*", "allow"),
+    ("git * switch -c * main*", "allow"),
+    ("git switch -C * main*", "allow"),
+    ("git * switch -C * main*", "allow"),
+    ("git worktree add -b * main*", "allow"),
+    ("git * worktree add -b * main*", "allow"),
+)]
+TAILS = [[T("git push*", "deny"), T("git *push*", "deny")],
+         [T("git push*main*", "deny"), T("git * push *main*", "deny"), T("git * push", "deny"),
+          T("git push -f*", "deny"), T("git push -P*", "deny"), T("git * push -f*", "deny"),
+          T("git * push -P*", "deny")]]
+k = matched_end
 gi = saw = 0
-ls_seen = False
+chosen = None
 while k < len(lines):
     if lines[k].lstrip().startswith("#"):
         k += 1
         continue
     if lines[k].strip() == "- action: shell":
         saw = 1
-        if gi == len(GB) and not ls_seen and lines[k:k + 3] == list(LS_TRAILER):
-            ls_seen = True
+        if gi < len(COMMON):
+            if lines[k:k + 3] != list(COMMON[gi]):
+                print(f"a shell row continues the block after the sanctioned form and is not the next sanctioned git-block row (want {COMMON[gi]}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
+            gi += 1
             k += 3
             continue
-        if gi >= len(GB) or lines[k:k + 3] != list(GB[gi]):
-            print(f"a shell row continues the block after the sanctioned literal and is not the next sanctioned git-block row or the single trailing ls allow (want {GB[gi] if gi < len(GB) else LS_TRAILER}, got {lines[k:k + 3]}) — unsanctioned shell grant"); sys.exit(1)
-        gi += 1
-        k += 3
+        if chosen is not None:
+            print("a shell row continues after the complete sanctioned git block — unsanctioned shell grant"); sys.exit(1)
+        chosen = next((t for t in TAILS if lines[k:k + 3 * len(t)] == [ln for tr in t for ln in tr]), None)
+        if chosen is None:
+            print(f"the git block's tail is neither the two-row alias/-local push tail nor the seven-row -pr push tail (got {lines[k:k + 21]}) — unsanctioned shell grant"); sys.exit(1)
+        k += 3 * len(chosen)
         continue
     break
-if saw and gi != len(GB):
-    print(f"the git block continues the shell surface but is truncated or reordered (matched {gi} of {len(GB)} sanctioned rows)"); sys.exit(1)
+if saw and (gi != len(COMMON) or chosen is None):
+    print(f"the git block continues the shell surface but is truncated or reordered (matched {gi} of {len(COMMON)} shared rows, tail {'found' if chosen else 'missing'})"); sys.exit(1)
 PY
 
 cat >"$TMP/synth.py" <<'PY'
@@ -508,16 +690,21 @@ def block(item_ind, resource):
 ORIGIN = "bash scripts/session-origin.sh*"
 MINT = "bash scripts/kickoff-mint-branch.sh *"
 BAD = "git -C * checkout -b *"
-# cf-58 merge re-pin (2026-10-27): strip-shell removes every sanctioned
-# shell triple (the SHELL4 allows + the fourteen-row git block) to build the
-# no-allow skeleton the form4 control splices into; form4 splices the
-# canonical four-allow form after the opencode '*' allow anchor on ANY base,
-# so those modes must not require the cf-52 rows up front.
-SANCTIONED = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *",
-              "ls *", "bash scripts/board-preload-probe.sh *",
-              "git status *", "git log *", "git diff *", "git show *", "git branch *",
-              "git merge-base *", "git rev-parse *", "git ls-files *", "git add *",
-              "git commit *", "git checkout *", "git switch *", "git merge main*", "git push*"}
+# cf-72 re-pin (2026-10-29): the git block grew past any enumeration — the
+# B block is sixty-eight shared rows + a two-/seven-row tail — so strip-shell
+# projects on resource.startswith("git ") to build the no-allow skeleton the
+# form4 control splices into. Pinning stays honest: the whole-sequence
+# controls (splice4's projection equality, atpos4's literal walk) re-check
+# every landed row against the declared block, so the skeleton only has to
+# be git-free. form4 splices the canonical four-allow form after the opencode
+# '*' allow anchor on ANY base, so those modes must not require the cf-52
+# rows up front. 2026-10-30 merge re-seat: the scoped-read family grew to
+# seven rows (…, date *, preload-probe, ls *) — both new rows join the strip
+# set so the skeleton stays truly no-allow in every era.
+SHELL_ROWS = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *",
+              "bash scripts/board-preload-probe.sh *", "ls *"}
+def sanctioned(res):
+    return res in SHELL_ROWS or res.startswith("git ")
 i_o = find(ORIGIN); i_m = find(MINT); i_p = find("opencode api patch /api/session/*")
 if mode not in ("strip-shell", "form4"):
     assert i_p >= 0, "fixture source must carry the cf-52 two-allow posture"
@@ -539,7 +726,7 @@ elif mode == "strip-shell":
     while k < len(lines):
         if (lines[k].strip() == "- action: shell" and k + 2 < len(lines)
                 and lines[k + 1].strip().startswith("resource: ")
-                and lines[k + 1].strip()[len("resource: "):] in SANCTIONED
+                and sanctioned(lines[k + 1].strip()[len("resource: "):])
                 and lines[k + 2].strip().startswith("effect: ")):
             k += 3
         else:
@@ -560,9 +747,9 @@ cat >"$TMP/shape4.py" <<'PY'
 # Parsed shape contract on both trees (m4-shape.py convention, widened to the
 # two sanctioned bash grants): source == generated including order
 # (last-match-wins makes order load-bearing), exactly the mint + origin pair
-# as bash grants, the sanctioned cf-58 git block as the only git surface
-# (raw git -C still rejected), question allow kept, and the variant's MCP
-# posture.
+# as bash grants, the cf-72 B block as the only git surface
+# (an explicit 'git -C' row still rejected), question allow kept, and the
+# variant's MCP posture.
 import re, sys, yaml
 src, gen, need_dev_boards = sys.argv[1], sys.argv[2], sys.argv[3] == 'dev-boards'
 def perms(path):
@@ -575,18 +762,86 @@ ps, pg = perms(src), perms(gen)
 errs = []
 if ps != pg:
     errs.append(f"parsed permission lists differ between {src} and {gen} (order included) — regenerate, never hand-edit the mirror")
-# cf-58 merge re-pin: the blanket git ban yields to the sanctioned git
-# block (fourteen rows, whole and in order — pinned absolutely across the
-# family by cfpins i4/t17); the raw 'git -C' mechanism stays rejected.
-GB = [("git status *", "allow"), ("git log *", "allow"), ("git diff *", "allow"),
-      ("git show *", "allow"), ("git branch *", "allow"), ("git merge-base *", "allow"),
-      ("git rev-parse *", "allow"), ("git ls-files *", "allow"), ("git add *", "allow"),
-      ("git commit *", "allow"), ("git checkout *", "allow"), ("git switch *", "allow"),
-      ("git merge main*", "allow"), ("git push*", "deny")]
+# cf-72 B-block re-pin: the blanket git ban yields to the sanctioned git
+# block (sixty-eight shared rows + the two-row alias/-local push tail, whole
+# and in order — pinned absolutely across the family by cfpins i4/t17); the
+# explicit 'git -C' row shape stays rejected (broad `git *` + floor replaced
+# the cf-52 per-verb grants, DECISIONS D10).
+GB = [
+       ("git *", "allow"),
+       ("git checkout main*", "deny"),
+       ("git * checkout main*", "deny"),
+       ("git checkout * main*", "deny"),
+       ("git * checkout * main*", "deny"),
+       ("git switch main*", "deny"),
+       ("git * switch main*", "deny"),
+       ("git switch * main*", "deny"),
+       ("git * switch * main*", "deny"),
+       ("git update-ref*", "deny"),
+       ("git * update-ref*", "deny"),
+       ("git symbolic-ref*", "deny"),
+       ("git * symbolic-ref*", "deny"),
+       ("git branch -f main*", "deny"),
+       ("git * branch -f main*", "deny"),
+       ("git branch --force main*", "deny"),
+       ("git * branch --force main*", "deny"),
+       ("git branch -d main*", "deny"),
+       ("git branch -d * main*", "deny"),
+       ("git * branch -d main*", "deny"),
+       ("git * branch -d * main*", "deny"),
+       ("git branch -D main*", "deny"),
+       ("git branch -D * main*", "deny"),
+       ("git * branch -D main*", "deny"),
+       ("git * branch -D * main*", "deny"),
+       ("git branch -m main*", "deny"),
+       ("git branch -m * main*", "deny"),
+       ("git * branch -m main*", "deny"),
+       ("git * branch -m * main*", "deny"),
+       ("git branch -M main*", "deny"),
+       ("git branch -M * main*", "deny"),
+       ("git * branch -M main*", "deny"),
+       ("git * branch -M * main*", "deny"),
+       ("git branch -c main*", "deny"),
+       ("git * branch -c main*", "deny"),
+       ("git branch -c * main*", "deny"),
+       ("git * branch -c * main*", "deny"),
+       ("git branch -C main*", "deny"),
+       ("git * branch -C main*", "deny"),
+       ("git branch -C * main*", "deny"),
+       ("git * branch -C * main*", "deny"),
+       ("git worktree add * main*", "deny"),
+       ("git * worktree add * main*", "deny"),
+       ("git pull*", "deny"),
+       ("git * pull*", "deny"),
+       ("git merge *", "deny"),
+       ("git * merge *", "deny"),
+       ("git config alias*", "deny"),
+       ("git * config alias*", "deny"),
+       ("git * --force*", "deny"),
+       ("git * -f *", "deny"),
+       ("git * -P *", "deny"),
+       ("git merge main*", "allow"),
+       ("git * merge main*", "allow"),
+       ("git merge --abort", "allow"),
+       ("git * merge --abort", "allow"),
+       ("git merge --continue", "allow"),
+       ("git * merge --continue", "allow"),
+       ("git checkout -b * main*", "allow"),
+       ("git * checkout -b * main*", "allow"),
+       ("git checkout -B * main*", "allow"),
+       ("git * checkout -B * main*", "allow"),
+       ("git switch -c * main*", "allow"),
+       ("git * switch -c * main*", "allow"),
+       ("git switch -C * main*", "allow"),
+       ("git * switch -C * main*", "allow"),
+       ("git worktree add -b * main*", "allow"),
+       ("git * worktree add -b * main*", "allow"),
+       ("git push*", "deny"),
+       ("git *push*", "deny")]
 gitrows = [(p.get("resource"), p.get("effect")) for p in ps
            if p.get("action") == "shell" and str(p.get("resource", "")).startswith("git ")]
 if gitrows and gitrows != GB:
-    errs.append(f"git shell grants are {gitrows}, want exactly the sanctioned cf-58 git block in order (or none)")
+    errs.append(f"git shell grants are {gitrows}, want exactly the cf-72 B block for an alias/-local file (68 shared rows + the two-row push tail) in order (or none)")
 for p in ps:
     if p.get("action") == "shell" and "git -C" in str(p.get("resource", "")):
         errs.append("a raw git -C shell grant exists (scope escape — the plan's rejected mechanism)")
@@ -660,17 +915,56 @@ if want s2; then
   done
   # the three consumer bullets resolve THROUGH the amended definition and must
   # not be touched (AC2 byte-unchanged vs the chunk base):
+  # cf-85 RE-PIN (2026-10-29): b1 (claim-comment bullet) and b3 (research
+  # step-7 session link) stay byte-frozen for cf-85 too — they resolve through
+  # the amended definition, they are not the definition. b2 (write-back step 2)
+  # is the slot cf-85 legitimately rewrites, so that leg is designed-red only
+  # inside the flip's edit window (CHUNK_BASE=<pre-chunk commit> with the
+  # edited sources in the worktree) and green again at the flip commit, where
+  # $BASE already carries the combined-value block — the cf-50 posture that
+  # also reddens s6's command freeze in-window.
+  # b1 is extracted as ONE bullet rather than a sed range: the bullet ends on
+  # the same words the old end anchor looked for, and sed searches a range's
+  # end pattern only in lines AFTER the start line, so the old range ran to the
+  # next such line far below and byte-pinned the Post-plan write-back, the
+  # batched-question sentence and the launch prompt as well — all three of
+  # which cf-85 legitimately edits (surface map 1g/1h/1i). Same duty (the
+  # claim comment stays byte-unchanged), no longer pinning the text below it.
+  extract_bullet() { # file needle outfile — the bullet naming the needle plus
+    # its continuation lines, stopping at the next bullet or heading
+    awk -v n="$2" '
+      !p && index($0, n) { p = 1; print; next }
+      p && (/^- / || /^## /) { exit }
+      p { print }' "$1" > "$3"
+  }
   n=0
   for f in "$BOARD_SRC" "$BOARD_GEN"; do
     n=$((n + 1))
     git show "$BASE:$f" >"$TMP/s2-base-$n.md" 2>/dev/null || fail "s2: $f not readable at $BASE"
-    extract_block "$TMP/s2-base-$n.md" 'claiming the card:' 'plan folder path\.' "$TMP/s2-b1"
-    extract_block "$f"            'claiming the card:' 'plan folder path\.' "$TMP/s2-c1"
+    extract_bullet "$TMP/s2-base-$n.md" 'claiming the card:' "$TMP/s2-b1"
+    extract_bullet "$f"                   'claiming the card:' "$TMP/s2-c1"
+    [ -s "$TMP/s2-b1" ] || fail "s2: the claim-comment bullet is not found at $BASE in $f (its wording moved — harness/base fault, report it)"
     cmp -s "$TMP/s2-b1" "$TMP/s2-c1" || fail "s2: $f Pickup consumer bullet (session line … plan folder path) moved vs $BASE — AC2 pins it byte-unchanged (minimal contact: it resolves through the amended definition)"
-    extract_block "$TMP/s2-base-$n.md" '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-b2"
     extract_block "$f"            '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-c2"
-    [ -s "$TMP/s2-b2" ] || fail "s2: write-back step 2 block not found at $BASE in $f (anchor moved — harness/base fault, report it)"
-    cmp -s "$TMP/s2-b2" "$TMP/s2-c2" || fail "s2: $f write-back step 2 (session custom-field slot) moved vs $BASE — AC2 byte-pin (the raw-id-vs-link sentence is the amended definition's consumer, not its holder)"
+    [ -s "$TMP/s2-c2" ] || fail "s2: write-back step 2 block not found in $f — the '(upsert)' opener or the 'constants consistency check.' close moved (cf-85 AC2 keeps both: the single upsert still closes on the consistency check)"
+    if mh=$(git rev-parse -q --verify MERGE_HEAD 2>/dev/null); then
+      # 2026-10-30 MERGE-WINDOW RUNG: inside a main-merge $BASE (branch HEAD)
+      # still predates cf-85's flip, so the raw $BASE pin would read the
+      # legitimately-merged block as drift — and worse, resolving the block to
+      # the BRANCH side (losing the flip) would pass it. Inside the window the
+      # duty is strict against the flip commit itself: MERGE_HEAD (main) must
+      # be the byte-source. At the merge commit (no MERGE_HEAD) the original
+      # $BASE pin governs again.
+      git show "$mh:$f" >"$TMP/s2-mh-$n.md" 2>/dev/null || fail "s2: $f not readable at MERGE_HEAD (harness/base fault, report it)"
+      extract_block "$TMP/s2-mh-$n.md" '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-b2"
+      [ -s "$TMP/s2-b2" ] || fail "s2: write-back step 2 block not found at MERGE_HEAD in $f (anchor moved — harness fault, report it)"
+      cmp -s "$TMP/s2-b2" "$TMP/s2-c2" \
+        || fail "s2[merge-window]: $f write-back step 2 does not carry MERGE_HEAD's cf-85 combined-value block — the flip must land with this merge, never be resolved away to the branch side"
+    else
+      extract_block "$TMP/s2-base-$n.md" '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-b2"
+      [ -s "$TMP/s2-b2" ] || fail "s2: write-back step 2 block not found at $BASE in $f (anchor moved — harness/base fault, report it)"
+      cmp -s "$TMP/s2-b2" "$TMP/s2-c2" || fail "s2: $f write-back step 2 (the slug field's combined-value slot) differs from $BASE — designed-red ONLY inside cf-85's edit window; at the flip commit the block matches $BASE again, and byte-unchanged anywhere else means the flip did not land"
+    fi
     extract_block "$TMP/s2-base-$n.md" 'add_comment` on the card: the research session link' 'from RESEARCH.md' "$TMP/s2-b3"
     extract_block "$f"            'add_comment` on the card: the research session link' 'from RESEARCH.md' "$TMP/s2-c3"
     cmp -s "$TMP/s2-b3" "$TMP/s2-c3" || fail "s2: $f research-only step 7 session-link sentence moved vs $BASE — AC2 byte-pin"
@@ -693,6 +987,13 @@ if want s3; then
       || fail "s3: $f lost the D23-r2 fallback posture window (t19)"
     python3 "$TMP/win.py" --ci "$f" 600 'raw session id' 'RESULT' \
       || fail "s3: $f lost the fallback/RESULT binding window (t19)"
+    # cf-85 AC5: the UNRESOLVED bullet's slot list re-points from the retired
+    # `session` custom-field value to the `slug` field's LINK HALF. The raw-id
+    # posture itself is untouched (the two windows above are its older legs
+    # and stay green), so this pairing is the leg that reddens until the flip
+    # lands — DECISIONS D11 keeps it the single shape, no bare-slug fork.
+    python3 "$TMP/win.py" --ci "$f" 400 'raw session id' 'link half' \
+      || fail "s3[cf-85 AC5]: $f's UNRESOLVED bullet does not name the slug field's link half among the raw-id slots (red before the flip — the slot list still points at the retired session field)"
     python3 "$TMP/win.py" --ci "$f" 200 'never' 're-guess' \
       || fail "s3: $f lost the never-silently-re-guess window (t19)"
     python3 "$TMP/win.py" --ci "$f" 400 'consistency' 'mismatch' \
@@ -722,7 +1023,7 @@ if want s3; then
   done
   neg=$(grep -rn -e 'in-work:' -e 'done:' .rulesync/skills .opencode/skills 2>/dev/null || true)
   [ -z "$neg" ] || fail "s3: withdrawn title-convention strings under the skill trees (i1 negative, tree-wide): $neg"
-  ok "s3: full t19/c12/i3 carry inventory holds in both boards trees (strings, windows, section window, key-path + dead-literal + title negatives, RESEARCH_LABEL byte)"
+  ok "s3: full t19/c12/i3 carry inventory holds in both boards trees (strings, windows, section window, key-path + dead-literal + title negatives, RESEARCH_LABEL byte) + the cf-85 AC5 link-half slot re-point"
 fi
 
 # --- s4: the FOURTH scoped allow — absolute presence duty (C02 AC4) ----------------
@@ -774,6 +1075,20 @@ if want s4; then
     if git diff --quiet "$BASE" -- "$f"; then
       python3 "$TMP/atpos4.py" "$f" \
         || fail "s4: $f has an empty diff vs $BASE (arm B posture) but does not carry the twelve literal allow lines at the pinned position"
+    elif git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+      # 2026-10-30 MERGE-WINDOW RUNG (mirrors tests/kickoff-branch m4): the
+      # worktree delta vs $BASE is the merge RESOLUTION — cf-72's block
+      # restructure (+194/-18-class) is not an additions-only grant delta and
+      # no historical geometry expresses it; the documented snapshot proof
+      # (CHUNK_BASE=$(git stash create)) is refused while conflict stages sit
+      # in the index and a verification round may not git add. The rung proves
+      # the stronger thing directly: the live file must carry the exact
+      # posture the merge commit will run through arm B — the literal
+      # SHELL5/6/7 family block at the pinned position and the whole cf-72
+      # continuation with the push tail absolute-last. A mis-resolved file
+      # reddens here; non-merge windows stay on the geometry ladder.
+      python3 "$TMP/atpos4.py" "$f" \
+        || fail "s4: $f is mid-merge (MERGE_HEAD present) and the resolution does not pre-validate the landing commit's arm-B posture — want the literal sanctioned family block + whole cf-72 continuation at the pinned position before the merge commit"
     else
       bc=$(git show "$BASE:$f" | grep -c '^[[:space:]]*- action: shell' || true)
       ns=$(git diff --numstat "$BASE" -- "$f" | head -n 1 || true)
@@ -849,9 +1164,18 @@ if want s6; then
     IFS='|' read -r s g <<<"$pair"
     cmp -s "$s" "$g" || fail "s6: $s vs $g not byte-identical — rulesync copies these references verbatim (t12 carve posture)"
   done
-  moved=$( { git diff --name-only "$BASE" -- .rulesync/commands .opencode/commands 2>/dev/null || true;
+  # 2026-10-30 merge-window rung: while a main merge is in flight cf-85's
+  # command edits legitimately move the boards-command pair vs $BASE (branch
+  # HEAD) — the freeze duty is that THIS TICKET never moves a command, so the
+  # in-window reference is MERGE_HEAD itself (measured: branch side moved zero
+  # command files; any ticket-side command move would still show red here,
+  # with extra teeth: it refuses worktrees that resolve the pair away from
+  # main too). At the merge commit the original $BASE reference governs again.
+  cmdbase="$BASE"
+  if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then cmdbase=$(git rev-parse MERGE_HEAD); fi
+  moved=$( { git diff --name-only "$cmdbase" -- .rulesync/commands .opencode/commands 2>/dev/null || true;
              git ls-files --others --exclude-standard -- .rulesync/commands .opencode/commands; } | sort -u || true )
-  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "s6: a command file moved vs $BASE — the commands stay byte-frozen to this ticket (t11/t13/t18 + plan Out of scope; the script is the 5th copy, never a 6th block edit)"; }
+  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "s6: a command file moved vs $cmdbase — the commands stay byte-frozen to this ticket (t11/t13/t18 + plan Out of scope; the script is the 5th copy, never a 6th block edit)"; }
   # the five-surface fragment-parity ladder, both trees (belt to script.sh b6:
   # plan Commands names it HERE too — it guards C02 from touching commands or
   # the landed C01 script between the chunks):

@@ -1,0 +1,81 @@
+{
+  "feature": "2026-10-cf-72-chore-coord-git-read-globs",
+  "plan_status": "complete",
+  "coord_session": "ses_e7836adcaffe58iwUyIXsDoU1u",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-29",
+  "kickoff": {
+    "card": "xG4ucCJRWEny5mBYX",
+    "card_number": 72,
+    "slug": "cf-72-chore-coord-git-read-globs",
+    "type": "chore",
+    "run_tag": null,
+    "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/cf-72-chore-coord-git-read-globs",
+    "branch": "cf-72-chore-coord-git-read-globs",
+    "branch_sha": "a92649bd3913f7e2d43be21e553ee55795fcbc10",
+    "pipelines": [
+      "default"
+    ],
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "board_context": null
+  },
+  "stages": {
+    "authority": "owner batched round 2026-10-29: Candidate B (broad git WRITE for the sole-committer coord family) ordered over plan-recommended A; worktree * widened; execution = Single Session; type chore + slug confirmed; git-show asymmetry documented only",
+    "plan": true,
+    "test": false,
+    "code": true,
+    "review_final": true,
+    "deploy": false,
+    "single_session": true,
+    "human_stops": [
+      "Plan (default pause) — DONE, approved 2026-10-29 incl. round-2 boundary calls (strict 'git *push*' floor kept; -pr zero-arg own-worktree push allowed as designed)"
+    ]
+  },
+  "notes": [
+    "Owner scheduled this directly mid-cf-69-review (quote: do it on this tick). Evidence gathered during the cf-69 run: session ses_e7836adcaffe58iwUyIXsDoU1u \u2014 git -C denied, git worktree list absent, ls denied (out of scope), git show HEAD:<denied-read path> reads agent machinery through the shell.",
+    "Branch cut from main a92649bd3 \u2014 cf-69 branch (SSE helper) stays separate: one branch, one concern. If both land, cf-72 must rebase over cf-69 (surface suites live in tests/, both touch them differently).",
+    "Plan R2: block = 1 broad allow + 51-row deny floor + 16 exception re-allows + tails (70 rows -local/alias, 75 -pr). Wave plan after approval: Plan(pause done)->Code(single session, no agent-test pre-round)->Review(final). Coord sets stages/single_session on approval. Post-landing commit-message caution: -local substring floor denies command text containing 'push'.",
+    "close(2026-10-29): C01 done; final review APPROVED (940-cell independent re-eval, adversarial probes, all 9 suites green, m4(b)/s4(b) retired as predicted). One chunk commit 786ccd778 (26 files) + this bookkeeping. Card -> Review. Landing to main stays user-owned."
+  ],
+  "chunks": {
+    "C01": {
+      "title": "Broad git write grant: 6 sources + regen + deny-floor pins + 90-cell verdict matrices + matrix rows + own-folder admits",
+      "size": "L",
+      "wave": 1,
+      "depends_on": [],
+      "status": "done",
+      "retries": 0,
+      "dev_session": "ses_e777a1463ffe0sJlYe0TJfFRvd",
+      "handoffs": [
+        { "at": "2026-10-29", "role": "dev", "status": "BLOCKED", "summary": "Grant-permitted surface DONE: six sources carry the B block (70 rows -local/alias, 75 -pr), twins byte-identical save name/description, rulesync generate + --check + second-run no-op green, permissions.md matrix rows + decision log moved (source+mirror byte-identical), 90-cell AC6 smoke via shipped family.py over sources+mirrors green (git log --grep push = DENY-all-six per chunk table), aislop 0/0, scope clean. BLOCKER: tests/** pins = dev edit-DENY (no ask). Deviations recorded: unquoted `git *` resources (js-yaml byte-form parity; all rows start 'git ' so alias-kill N/A); .rulesync edits applied without interactive ask (flagged). Full blocked inventory in dev RESULT (agent-perms tables + A12 verdict loop + A10/A9; coord-inwork atpos; kickoff-branch splice3/synth/atpos3; session-origin splice4/shape4/synth/atpos4; gate t17/t14; rulesync c8; agents-md c7; designed-red m4/s4(b) arms until commit; stash-snapshot CHUNK_BASE proof post-commit)." },
+        { "at": "2026-10-29", "role": "test(pins)", "status": "DONE", "summary": "Entire dev inventory landed across 7 suites: agent-perms GIT_SHARED68+TAILS tables, A12 90x2=180-row verdict matrices via policybatch sharing the lifted verdict() (1080 file-cells/run), A10 (c2) non-vacuity, A9 cf-72 admit; coord-inwork/gate atpos 68-pair effect-aware COMMON + TAILS walk; kickoff-branch synth/splice3 projection+membership split/atpos3; session-origin splice4/shape4 70-pair/atpos4/synth; c8/c7/t14 admits. Fail-loud proven: fabricated row-flip reddens gitrows+policybatch+atpos3 simultaneously. m4(b)/s4(b) retire post-commit (caution recorded). Re-pins should be scripted from machine-extracted fragments (self-caught typo lesson)." },
+        { "at": "2026-10-29", "role": "final-review", "status": "APPROVED", "summary": "All 9 suites green fresh (m4(b)/s4(b) retired-green as predicted), rulesync --check + no-op regen, twin parity 4 pairs + -pr deltas only tail/comment/roster/skill, M3 byte-identical vs base, 26-file scope exact, floor parse on all 12 emitted files (deny-all first, git* allow, 51 floor + 16 re-allows + tails last, 70/75, src==mir), independent 940-cell matrix re-eval 0 mismatches, adversarial probes (checkout -B main / worktree add --detach main / --force-with-lease / -C main push on -pr / zero-arg push allow on -pr / log --grep push) all as designed. Goal fit PROVEN: git -C main-checkout log allowed. Minors: filter-branch exotic-slip pair -> floor next touch; branch -fd combined-flag inside D13 accepted class." }
+      ],
+      "test_session": "ses_e775fed12ffeDSXUx1D0eJMa9C",
+      "review_session": "ses_e772976bbffeeB4QZxp464JyH6"
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "bare ls / compound VAR= read-only shell posture (card: separate posture, not widened)",
+    "post-landing coord commits (incl. this ticket's own): the strict 'git *push*' substring floor denies any -local/alias command TEXT containing push — commit messages must reword or use -F (owner-accepted cost, round-2 Q1)",
+    "final-review minor: add 'git filter-branch*' + 'git * filter-branch*' pair to the deny floor at the next touch of the six sources (exotic main-rewrite slip; D13-accepted class meanwhile) — owner's call via follow-up card",
+    "final-review note: 'git branch -fd main' combined-flag form slips the floor by one token position — inside the D13 accepted local-only/unpublishable/reflog-repairable class; floor row would need '-fd' enumeration to close"
+  ],
+  "plan": {
+    "file": "2026-10-29-chore-coord-git-read-globs.md",
+    "written": "2026-10-29",
+    "open_questions": 2,
+    "batched_round": "round-2 NEW gaps: Q1 substring push floor strictness on -local (keep recommended); Q2 zero-arg git push ALLOWED on -pr (confirm)",
+    "baseline_suite_states": "agent-perms 15/15 PASS; coord-inwork 7/7; kickoff-branch 6/6; session-origin 7/7; standalone-agents 10/10; pipeline-push-pr 6/6; gate.sh FAIL t14 + rulesync-surface FAIL c8 + agents-md FAIL c7 (own plan folder not yet admitted \u2014 design); pipeline-models FAIL M3 only (pre-existing catalog era-red, out of scope)",
+    "revision": "R2 (2026-10-29 batched round answered: Candidate B ordered; design A superseded \u2014 DECISIONS D10-D17)",
+    "round1_closed": "B ordered; worktree * granted under floor; Single Session; type chore; slug; git-show asymmetry documented only",
+    "validated": "90/90 AC6 matrix cells closed via unmodified family.py policy (2026-10-29 probe)"
+  }
+}

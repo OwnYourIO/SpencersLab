@@ -2,7 +2,7 @@
 # skills/wekan-mcp surface contract (2026/2026-10-cf-75-bug-wekan-mcp-skill,
 # C01): the new generic MCP board skill — frontmatter, the three server ids,
 # the ten call-shape rule tokens, the one normative Board context block schema
-# (repo-wide single owner outside plan folders), the 26-tool call-shapes
+# (repo-wide single owner outside plan folders), the 27-tool call-shapes
 # reference with per-entry evidence stamps anchored on server.py FUNCTION
 # names, the wekan-api pointer without duplication, and the AGENTS.md
 # self-written-skills line.
@@ -124,10 +124,10 @@ if want t3; then
   ok "t3: the Board context schema header is owned solely by $SKILL (C01 AC2)"
 fi
 
-# --- t4: call-shapes.md — 26 live-extracted tool rows, stamps, no line refs -----
+# --- t4: call-shapes.md — 27 live-extracted tool rows, stamps, no line refs -----
 if want t4; then
   [ -f "$CALLS" ] || fail "t4: $CALLS does not exist (C01 Task 2: the full tool->args->shape table)"
-  python3 - "$SERVER" "$CALLS" <<'PY' || fail "t4: call-shapes.md violates the 26-row/stamp/no-line-numbers contract (reason above)"
+  python3 - "$SERVER" "$CALLS" <<'PY' || fail "t4: call-shapes.md violates the 27-row/stamp/no-line-numbers contract (reason above)"
 import ast, re, sys
 
 tree = ast.parse(open(sys.argv[1]).read())
@@ -139,8 +139,8 @@ for node in tree.body:
                 names.append(node.name)
             elif isinstance(d, ast.Name) and d.id == "_write_tool":
                 names.append(node.name)
-if len(names) != 26:
-    print(f"server.py registers {len(names)} tools, expected 26 — re-read the registry, the test follows server.py"); sys.exit(1)
+if len(names) != 27:
+    print(f"server.py registers {len(names)} tools, expected 27 — re-read the registry, the test follows server.py"); sys.exit(1)
 
 text = open(sys.argv[2]).read()
 bad = []
@@ -162,7 +162,7 @@ hits = re.findall(r"\bL\d+\b", text)
 if hits:
     print(f"line-number refs present: {hits[:5]} — DECISIONS: cite server.py function names, never line numbers"); sys.exit(1)
 PY
-  ok "t4: call-shapes.md has exactly one stamped row per @mcp.tool function in server.py (26, names read live) and zero L<digits> refs (C01 AC3)"
+  ok "t4: call-shapes.md has exactly one stamped row per @mcp.tool function in server.py (27, names read live) and zero L<digits> refs (C01 AC3)"
 fi
 
 # --- t5: regression — the tools.sh suite still pins wekan-api (C01 AC4) ---------

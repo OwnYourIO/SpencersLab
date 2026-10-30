@@ -27,13 +27,28 @@
 # c13[C02 AC1 research-only + D15] c14[C02 AC1 D11 resume] c15[C02 AC1 C01
 # tool names] c16[C03 AC1 body+command deltas] c17[C02 AC4 byte-unchanged;
 # cf-52 RE-PIN drops kickoff/role-coord from the frozen set; cf-75 C02 RE-PIN
-# drops gates — content now guarded by tests/pipeline-gates/validation-fix.sh].
+# drops gates — content now guarded by tests/pipeline-gates/validation-fix.sh]
+# c19[cf-85 AC2/AC3/AC4/AC6/AC7/AC10 — the single `slug` field carrying
+# `[<slug>](<session link>)`].
 #
 # Red before C02/C03 (the ported skill is still the old two-list pickup and
 # live-question intake); c1-c5, c7, c9, c17 are already green and hold as
 # regressions. cf-52 posture: this suite is a pure regression gate on the
 # coord-inwork ticket — all of c1..c17 are green before C01 and must HOLD
 # after it; the new contract is asserted by tests/coord-inwork/surface.sh.
+# cf-83 posture: C01 re-pins two needles of this gate — c11's Flash+Local
+# routing-clause window now demands flash-next-strata (red before the dev's
+# source edit + regenerate; the new contract's full text lives in
+# tests/pipeline-models/surface.sh), and c8 admits this ticket's plan folder
+# (D6 landing-widening). Every other arm stays green and holds.
+# cf-85 posture (2026-10-29): c19 is the DESIGNED RED — it pins the one-field
+# write-back the flip introduces, so it is red against the pre-flip sources
+# and green at the flip commit (tests + sources + mirrors in one commit,
+# DECISIONS D5). c8 admits the cf-85 plan folder; every other arm is a HOLD —
+# c12's presence set, c14's resume rule, c15's tool names and c16's
+# body/command deltas all stay satisfiable under the new wording (slug,
+# session and custom field all still occur; the reworded command sentence
+# still names both substrings).
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF is retained only for c1's
@@ -42,7 +57,7 @@
 # coord-inwork i4 + gate t17 are the frontmatter contract now).
 #
 # Usage:
-#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c18
+#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c19
 #   bash tests/agent-board-coord/rulesync-surface.sh c1 c4 c10 # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -92,10 +107,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 18); do WANT["c$i"]=1; done
+  for i in $(seq 1 19); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-9]|1[0-9]|1[0-8])$ ]] || fail "unknown check id '$a' (expected c1..c18)"
+    [[ "$a" =~ ^c([1-9]|1[0-9])$ ]] || fail "unknown check id '$a' (expected c1..c19)"
     WANT["$a"]=1
   done
 fi
@@ -103,12 +118,14 @@ want() { [ -n "${WANT[$1]:-}" ]; }
 
 # Shared assertion helpers for the content checks (each small, single-purpose).
 cat >"$TMP/neg12.py" <<'PY'
-# D12 pins the board surface to exactly two custom fields, so a surface must
-# never present a `models` custom field as existing. A line pairing "models"
-# with "custom field" fails — unless the same line negates it: "no `models`
-# custom field exists" is D12's own clarification quoted verbatim in the
-# plan's C03 task text, and forbidding it would punish dev for recording the
-# decision. The negation word is the difference between denial and announcement.
+# D12 dropped the `models` custom field, so a surface must never present a
+# `models` custom field as existing. A line pairing "models" with "custom
+# field" fails — unless the same line negates it: "no `models` custom field
+# exists" is D12's own clarification quoted verbatim in the plan's C03 task
+# text, and forbidding it would punish dev for recording the decision. The
+# negation word is the difference between denial and announcement. (Roster
+# count is not this guard's business: cf-85 shrank the roster to one field,
+# the models negation survives either way.)
 import re, sys
 pat = re.compile(r'models.*custom.?field', re.I)
 neg = re.compile(r"\b(no|not|never|dropped|doesn'?t|does not|absent|omits?)\b", re.I)
@@ -190,6 +207,23 @@ for right, (p, n) in enumerate(pts):
         left += 1
 if best is None or best > span:
     print(f'no window of {span} chars covers all needles (min span {best})'); sys.exit(1)
+PY
+
+cat >"$TMP/desc.py" <<'PY'
+# Frontmatter description value, not the file bytes: rulesync re-serializes a
+# changed description as a folded block scalar, so a byte grep of a description
+# phrase depends on where the 80-column wrap lands and breaks whenever the
+# description changes length (cf-85 surface map 1a edits it). Exit 0 = needle
+# present in the parsed value.
+import re, sys, yaml
+text = open(sys.argv[1]).read()
+m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+if not m:
+    print("no parsable frontmatter"); sys.exit(2)
+desc = " ".join(((yaml.safe_load(m.group(1)) or {}).get("description") or "").split())
+needle = " ".join(sys.argv[2].split())
+if needle not in desc:
+    print(f"'{needle}' not in the description value"); sys.exit(1)
 PY
 
 # --- c1: all eight source + generated files exist ----------------------------
@@ -401,9 +435,22 @@ fi
 # 2026-10-docs-wekan-mcp-arg-ergonomics (STATE.json, commit dca8a25d2) — the
 # same sanctioned-plan-folder class as the enumerations above, admitted whole
 # so no further retirement note reddens the full-range scope shape.
+# cf-83 C01 widening (D6, same landing-widening precedent): the strata
+# re-route ticket's plan folder must read as admitted before its bookkeeping
+# commits, else the full board-coord suite treats the mere untracked folder
+# as scope escape. Its skill-source/mirror and tests edits are already
+# admitted by the .rulesync/skills/*, .opencode/skills/* and tests/* lines;
+# the folder pattern is an inline literal so scope-block window greps (the
+# A9 convention) still match this admission here.
+# cf-85 (2026-10-29): same own-folder admit; its surface edits ride the
+# .rulesync/skills/*, .rulesync/subagents/*, .opencode/agents/*,
+# .rulesync/commands/*, .opencode/commands/*, .rulesync/rules, tests/* and
+# AGENTS.md admits already in this set.
 # board-tick-cleanup widening (2026-10-29): the hand-managed question-notify
 # reader edit + the loop-file truth fix + this ticket's own plan folder
 # (agent-perms A9 window-pin), all in-scope per its chunks/C02.md.
+# merge round (2026-10-30): cf-68 joins the admit beside cf-83 — merged ticket
+# folders ride the changed-paths walk; guards red on landed folders bury later checks.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -431,18 +478,24 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
-      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore|\
-      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*) : ;;
+      .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
+      .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
+      .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
+      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
+      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*|\
+      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9 and cf-75 (skills/wekan-mcp, board-context plugin, own plan folder) widenings (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder) and cf-72 (own plan folder) widenings (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----
 if want c9; then
-  grep -qF 'MUST-loaded by agent-board-coord' "$SKILL_GEN" \
-    || fail "c9: the boards skill no longer declares itself MUST-loaded by agent-board-coord"
+  python3 "$TMP/desc.py" "$SKILL_GEN" 'MUST-loaded by agent-board-coord' \
+    || fail "c9: the boards skill's frontmatter description no longer declares itself MUST-loaded by agent-board-coord (the value, not the bytes — a changed description re-wraps the mirror's folded scalar)"
+  python3 "$TMP/desc.py" "$SKILL_SRC" 'MUST-loaded by agent-board-coord' \
+    || fail "c9: the boards skill SOURCE lost its MUST-loaded declaration — the mirror regenerates from it, never the reverse"
   grep -qiE 'on demand[^.]*run start|never at run start' "$SKILL_GEN" \
     || fail "c9: the boards skill lost the 'wekan-api on demand, never at run start' note"
   grep -qE '^[[:space:]]*/pipeline-kickoff[[:space:]]*$' "$AGENT_GEN" \
@@ -467,7 +520,9 @@ fi
 # cf-58 C05: the third checklist is LIFECYCLE (eight stages, checked-stages-
 # only, nothing-checked = full standard loop). C06: the Model(s) four-option
 # line stays UNCHANGED while the routing paragraph grows the two combination
-# clauses. The Model(s)/HITL pins hold exactly as before.
+# clauses. The Model(s)/HITL pins hold exactly as before. cf-83 C01 RE-PIN:
+# the Flash+Local combination clause demands flash-next-strata — the route
+# moves, the option set and Q6 veto guards stay byte-identical.
 if want c11; then
   python3 "$TMP/window.py" "$SKILL_GEN" 2500 'Services' 'Type' 'Model(s)' 'Lifecycle' 'Human in the Loop' \
     || fail "c11[C05]: Services/Type/Model(s)/Lifecycle/Human in the Loop do not read as one checklist-definition passage (red before C05 — the Research checklist has not been replaced by Lifecycle)"
@@ -496,14 +551,19 @@ if want c11; then
     || fail "c11: the Human in the Loop checklist does not state its default item (Plan)"
   # C06: the routing paragraph's two combination clauses (source of truth is
   # the boards skill; tests/pipeline-models runs the same pins on SOURCE).
-  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'flash' 'local' 'flash-next-q3' 'assume' \
-    || fail "c11[C06]: the routing paragraph lacks the Flash+Local → flash-next-q3 combination clause (red before C06)"
+  # cf-83 C01 re-pin: the Flash+Local needle moved q3 -> strata — this window
+  # is red until the dev's source edit plus regenerate lands the new mirror.
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 'flash' 'local' 'flash-next-strata' 'assume' \
+    || fail "c11[C06/cf-83]: the routing paragraph lacks the Flash+Local → flash-next-strata combination clause (red before C01 dev)"
   python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
     || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
-  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle eight items + nothing-checked full-standard-loop default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items + default; C06 combination clauses present"
+  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle eight items + nothing-checked full-standard-loop default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items + default; combination clauses present with the cf-83 strata re-pin"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
+# cf-85 keeps this arm a HOLD: it pins SUBSTRINGS, not the pair wording —
+# after the flip `slug` names the one field and `session` the retired one, and
+# c19 owns the combined-form and the retired-wording negatives.
 if want c12; then
   for s in 'slug' 'session' 'custom field' 'cf-<card' 'session_rename'; do
     grep -qF "$s" "$SKILL_GEN" || fail "c12: the boards skill never states the intake fact '$s'"
@@ -705,6 +765,114 @@ fi
 # t2, agents-sync → the t12/i5/A7 carve trio).
 if want c17; then
   ok "c17: no-op — every pipeline skill pair this check ever byte-froze was later re-opened by a sanctioned ticket (kickoff/role-coord cf-52, models cf-58 C06, gates cf-75 C02); each surface now carries its own content suite, and undeclared-surface edits fail at gate t14"
+fi
+
+# --- c19: cf-85 single-`slug` contract across the board surfaces (AC2/AC3/AC4/AC6/AC7/AC10) --
+# The card write-back moves from two custom-field writes (`slug` + `session`)
+# to ONE: `slug` carrying the markdown link `[<slug>](<session link>)`, whose
+# link half is the Config-constants session link (the RAW session id on
+# UNRESOLVED, DECISIONS D11). Every surface that carried the pair wording must
+# carry the combined form; the write-back issues one upsert and writes no
+# `session` value; the resume parse stays backward compatible with a legacy
+# bare value; the three twins keep identical edited sentences (alias-twin
+# rule); and the pair wording is gone from every rulesync surface. Red before
+# the flip commit, green at it — the flip is one commit (DECISIONS D5), so the
+# mirrors are asserted here rather than regenerated.
+CF85_SKILL=("$SKILL_SRC" "$SKILL_GEN")
+CF85_SURF=(
+  "$SKILL_SRC" "$SKILL_GEN"
+  .rulesync/subagents/agent-board-coord.md .rulesync/subagents/agent-board-coord-local.md .rulesync/subagents/agent-board-coord-pr.md
+  .opencode/agents/agent-board-coord.md .opencode/agents/agent-board-coord-local.md .opencode/agents/agent-board-coord-pr.md
+  "$CMD_SRC" .rulesync/commands/pipeline-boards-pr.md
+  "$CMD_GEN" .opencode/commands/pipeline-boards-pr.md
+)
+if want c19; then
+  for f in "${CF85_SURF[@]}"; do
+    [ -f "$f" ] || fail "c19: $f missing — cf-85 surface list (harness fault)"
+    grep -qF '[<slug>](' "$f" \
+      || fail "c19[AC6]: $f never states the combined [<slug>](<session link>) value the single slug field carries (red before the cf-85 flip)"
+  done
+  for f in "${CF85_SKILL[@]}"; do
+    wb="$TMP/wb-${f//\//_}.txt"
+    awk '/^## Post-plan card write-back/{p=1; next} p && /^## /{exit} p' "$f" >"$wb"
+    [ -s "$wb" ] || fail "c19: $f has no 'Post-plan card write-back' section — the section title moved (harness fault, report it)"
+    nw=$(grep -c 'set_card_custom_field' "$wb")
+    [ "$nw" -eq 1 ] \
+      || fail "c19[AC2]: $f's write-back names $nw set_card_custom_field calls — the contract is ONE upsert writing the combined value (the two-write form is the red state)"
+    if grep -Eq '`session`[[:space:]]*=' "$wb"; then
+      fail "c19[AC2]: $f's write-back still assigns a session field value — the field left the contract: never read, never written (red before the flip)"
+    fi
+    python3 "$TMP/window.py" --ci "$wb" 400 'set_card_custom_field' 'upsert' '[<slug>](' \
+      || fail "c19[AC2]: $f's write-back does not state the single upsert writing the [<slug>](...) link as one passage (red before the flip)"
+    python3 "$TMP/window.py" --ci "$wb" 300 'list_custom_fields' 'slug' \
+      || fail "c19[AC2]: $f's write-back step 1 no longer resolves the slug field id by name with list_custom_fields"
+    # AC3: the Board-facts roster bullet follows the roster from two fields to
+    # the single slug field; counting two is the red state. (The roster bullet
+    # itself, with its third-field and models negations, is pinned by
+    # tests/agent-perms/surface.sh A15 — this leg only fence the count here.)
+    if grep -Eiq 'Custom fields: exactly two' "$f"; then
+      fail "c19[AC3]: $f still counts exactly two custom fields — the roster is the single slug field (red before the flip)"
+    fi
+    roster=$(grep -m1 -Ei '^[-*][[:space:]]+Custom fields:' "$f" || true)
+    echo "$roster" | grep -Eiq 'exactly one' \
+      || fail "c19[AC3]: $f's Custom-fields roster bullet does not count exactly one field (red before the flip)"
+    # AC4: resume keeps reading legacy bare values (boards skill 'Resume vs new
+    # run' is where the parse lives).
+    python3 "$TMP/window.py" --ci "$f" 400 'bare' 'link text' 'slug whole' \
+      || fail "c19[AC4]: $f's resume text does not state the backward-compatible parse — a legacy bare value still yields the slug whole, a combined value yields its bracketed link text (red before the flip)"
+  done
+  # AC7: the alias-twin rule — one commit, identical write-back sentences.
+  if ! python3 - .rulesync/subagents/agent-board-coord.md .rulesync/subagents/agent-board-coord-local.md .rulesync/subagents/agent-board-coord-pr.md <<'PY'
+import sys
+sets = []
+for p in sys.argv[1:4]:
+    hits = {l.strip() for l in open(p) if '[<slug>](' in l}
+    if not hits:
+        print(f"{p}: no line carries the combined [<slug>](...) write-back form"); sys.exit(1)
+    sets.append(hits)
+if not (sets[0] == sets[1] == sets[2]):
+    print("the three board-coord twins carry different combined-write-back lines"); sys.exit(1)
+PY
+  then
+    fail "c19[AC7]: the three twin sources drifted on the combined write-back sentence — the alias-twin rule demands all three edited identically in this one commit"
+  fi
+  # The plan's parity grep: the combined form appears the same number of times
+  # in every source↔generated pair (rulesync generate --check fences general
+  # mirror drift; this names the needle whose count must match).
+  for pair in "$SKILL_SRC|$SKILL_GEN" "$CMD_SRC|$CMD_GEN" \
+              ".rulesync/commands/pipeline-boards-pr.md|.opencode/commands/pipeline-boards-pr.md" \
+              ".rulesync/subagents/agent-board-coord.md|.opencode/agents/agent-board-coord.md" \
+              ".rulesync/subagents/agent-board-coord-local.md|.opencode/agents/agent-board-coord-local.md" \
+              ".rulesync/subagents/agent-board-coord-pr.md|.opencode/agents/agent-board-coord-pr.md" \
+              "$RULES_SRC|AGENTS.md"; do
+    src=${pair%|*}; gen=${pair#*|}
+    n_src=$(grep -cF '[<slug>](' "$src" || true)
+    n_gen=$(grep -cF '[<slug>](' "$gen" || true)
+    [ "$n_src" = "$n_gen" ] \
+      || fail "c19[AC6/AC7]: the combined slug-link form appears $n_src times in $src but $n_gen times in $gen — a half-flipped surface (regenerate, never hand-edit .opencode/)"
+  done
+  # AC6's AGENTS.md half: the rules source and its generated AGENTS.md carry
+  # the board-runs summary sentence, so both must state the combined value —
+  # without this leg the rules|AGENTS.md parity pair above is vacuously true
+  # at 0 = 0 and a summary left on the retired pair would read as consistent.
+  for f in "$RULES_SRC" AGENTS.md; do
+    [ "$(grep -cF '[<slug>](' "$f")" -ge 1 ] \
+      || fail "c19[AC6]: $f never states the combined [<slug>](<session link>) write-back value — the AGENTS.md board-runs summary must match the skill's one-field posture (red before the flip)"
+  done
+  # AC10: the retired pair wording must be gone from every rulesync surface.
+  for needle in '`slug` + `session`' '`session` custom'; do
+    hits=$(grep -rn -F -e "$needle" .rulesync .opencode AGENTS.md || true)
+    [ -z "$hits" ] || { printf '%s\n' "$hits" >&2; fail "c19[AC10]: the retired pair wording '$needle' survives in a rulesync surface — the history bullet re-points to 'its session field was re-pointed 2026-10-25' (fact unchanged, needle retired)"; }
+  done
+  # The skill's frontmatter description is part of the source and flips with
+  # it (cf-85 surface map 1a). It carries the pair wording in plain prose, so
+  # neither AC10 needle (both backtick-delimited) would catch it.
+  for f in "${CF85_SKILL[@]}"; do
+    if grep -Eiq 'slug[ `]*([+/]|and)[ `]*session\b' "$f"; then
+      fail "c19[AC6]: $f still pairs the slug and session custom fields — the frontmatter description carries the one-field roster (red before the flip)"
+    fi
+  done
+  ok "c19: cf-85 one-field write-back holds across the boards pair, the three twins (+ mirrors) and the two commands (+ mirrors) — combined [<slug>](<session link>) form present, one upsert with no session assignment, single-field roster clause, legacy-bare resume parse, twins identical, retired pair wording absent from .rulesync/.opencode/AGENTS.md"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"

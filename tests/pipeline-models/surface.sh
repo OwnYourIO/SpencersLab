@@ -1,30 +1,44 @@
 #!/usr/bin/env bash
 # pipeline-models local-default routing + provider-catalog surface suite
-# (2026/2026-10-cf-58-feat-standalone-agent-merge, C06).
+# (2026/2026-10-cf-58-feat-standalone-agent-merge, C06; re-pinned by
+# 2026/2026-10-cf-83-refactor-strata-flash, C01).
 #
-# Pins chunks/C06.md: the local model re-cut (27b+Local → q4 unless another
-# quant is requested; Flash+Local ⇒ Qwen Flash Next q3 as a COMBINATION rule —
-# no fifth picker option; Local-only default → q4) across pipeline-models,
-# pipeline-kickoff and the boards skill, plus the .opencode/opencode.jsonc
-# gpu-ai catalog patch (tools on q4, two flash-next entries) and the
-# serving-fact cross-check against the chart/gpu-ai values.
+# Pins chunks/C01.md: the Flash+Local combination routes to
+# gpu-ai/qwen3.8-flash-next-strata (Strata default) across pipeline-models,
+# pipeline-kickoff and the boards skill; qwen3.8-flash-next-q3 survives ONLY
+# as the documented explicit-request alternate in the pipeline-models
+# combination bullet (Q1 — never a route form, never a table row; Q2 — the
+# favorited table carries exactly one gpu-ai flash-next row, keyed strata,
+# its operations clause stating the peers/arena serving truth and naming the
+# -strix sibling inside that clause only, Q3; D4 — the clause drops the
+# SOLO-eviction claim, which describes only the legacy q3/q4 rungs in the
+# outer solo set); kickoff and boards carry the pure route-id swap with zero
+# q3/strix text (single-authority convention). Kept from cf-58 C06: the
+# 27b+Local → q4 unless-escape, the Local-only default → q4, the four-option
+# picker with the Q6 no-fifth-option veto, stale q6 mappings gone, plus the
+# gpu-ai catalog presence HOLD (D5 re-base; Q4 — this ticket edits no
+# catalog) and the serving-fact cross-check against the chart/gpu-ai values.
 #
-# AC trace: M1[AC1 pipeline-models] M2[AC2 kickoff] M3[AC3 catalog]
-# M4[AC4 serving facts] M5[AC2 boards routing + Model(s) stability]
-# M6[AC5 mirrors/regen].
+# AC trace (cf-83 C01): M1[AC1–AC3 pipeline-models] M2[AC1–AC3 kickoff]
+# M3[catalog HOLD — DECISIONS D5] M4[AC8 serving facts] M5[AC1–AC3 boards
+# routing + Model(s) stability] M6[AC5 mirrors/regen].
 #
-# Red posture: M1, M2, M3, M5 are red before C06 — the combination rule, the
-# q4/q3 routes and the catalog entries do not exist yet (every red names the
-# missing route/entry, never a harness fault). M4 is a HOLD invariant pinned
-# by the plan's verified serving facts (the ids route TO must appear in the
-# serving authority; green today, red the day routing drifts to an unserved
-# id). M6 is HOLD now (mirrors honest) and re-arms red between the C06 edit
-# and its regenerate.
+# Red posture (cf-83): M1, M2 and M5 are red before the C01 dev edit — the
+# sources still route Flash+Local to q3, so the strata route needles and the
+# q3/strix absence guards name the missing re-route (never a harness fault).
+# Inside them the q3+'explicit' alternate window and the picker/q4 pins
+# HOLD across red→green. M3 is a presence HOLD: green already (cf-77 landed
+# the entries) and green after — Q4 forbids catalog edits. M4 is a HOLD
+# invariant pinned by the plan's verified serving facts (every id the
+# contract names appears in a serving authority; green today, red the day
+# routing drifts to an unserved id). M6 is HOLD now (mirrors honest) and
+# re-arms red between the dev source edit and its regenerate.
 #
-# Base discipline: the catalog-delta arm diffs against this ticket's own base
-# TB=$(git merge-base main HEAD); the historical operational bases of the
-# sibling suites (081b57889-era arms, f11bfcb85, 916044893) are documented
-# there and are not re-pinned here.
+# Base discipline: no ticket-base diff remains in this suite since the cf-83
+# re-pin — the cf-58 M3 delta arm and its TB/CF58_BASE read are retired
+# (DECISIONS D5: self-contradictory on any post-cf-58 base, measured at
+# eb8a963; the rejected alternative, a historical CF58_BASE default, would
+# hide a stale ref that passes only when the env is set by accident).
 #
 # Offline-deterministic: tree/parse checks only; JSONC is parsed with node
 # evaluating the file as an object literal (the plan's "JSONC-tolerant"
@@ -35,10 +49,6 @@
 #   bash tests/pipeline-models/surface.sh M3 M4      # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-
-TB="${CF58_BASE:-$(git merge-base main HEAD 2>/dev/null || git rev-parse HEAD)}"
-git rev-parse --verify "${TB}^{commit}" >/dev/null 2>&1 \
-  || { echo "harness: ticket base '$TB' is not a commit in this repo" >&2; exit 2; }
 
 PM_SRC=".rulesync/skills/pipeline-models/SKILL.md"
 PM_GEN=".opencode/skills/pipeline-models/SKILL.md"
@@ -133,7 +143,7 @@ if n(f1) != n(f2):
     print("frontmatter drift between source and generated mirror"); sys.exit(1)
 PY
 
-# --- M1: pipeline-models local-mapping contracts (AC1) ---------------------------
+# --- M1: pipeline-models local-mapping contracts (AC1–AC3) -----------------------
 if want m1; then
   for f in "$PM_SRC" "$PM_GEN"; do
     [ -f "$f" ] || fail "M1[AC1]: $f missing"
@@ -148,13 +158,24 @@ if want m1; then
       || fail "M1[AC1]: $f never routes 27b+Local to gpu-ai/qwen3.8-27b-q4 (red before C06)"
     python3 "$TMP/win.py" --ci "$f" 400 'qwen3.8-27b-q4' 'unless' \
       || fail "M1[AC1]: $f's q4 route lacks the 'unless another quant is requested' escape clause"
-    # Flash+Local combination rule, pinned verbatim
+    # Flash+Local combination rule, pinned verbatim (cf-83 re-pin: same
+    # phrases, new route)
     grep -qF 'assume Qwen Flash Next' "$f" \
-      || fail "M1[AC1]: $f lacks the combination rule's pinned phrasing 'assume Qwen Flash Next' (red before C06)"
-    grep -qF 'gpu-ai/qwen3.8-flash-next-q3' "$f" \
-      || fail "M1[AC1]: $f never routes Flash+Local to gpu-ai/qwen3.8-flash-next-q3 (red before C06)"
+      || fail "M1[AC1]: $f lacks the combination rule's pinned phrasing 'assume Qwen Flash Next' (cf-83 keeps the phrase — red only if dev deleted it)"
+    grep -qF 'gpu-ai/qwen3.8-flash-next-strata' "$f" \
+      || fail "M1[AC1]: $f never routes Flash+Local to gpu-ai/qwen3.8-flash-next-strata (red before C01: the sources still route the combo to q3)"
     grep -qF 'There is no plain-flash local route' "$f" \
-      || fail "M1[AC1]: $f lacks the pinned 'There is no plain-flash local route.' clause (red before C06)"
+      || fail "M1[AC1]: $f lacks the pinned 'There is no plain-flash local route.' clause (cf-83 keeps this phrase too)"
+    # AC1 absence guard pins the ROUTE FORM, not the bare id: q3 legitimately
+    # survives as the alternate sentence (Q1), so only the old routed string
+    # is stale.
+    grep -qF 'assume Qwen Flash Next: `gpu-ai/qwen3.8-flash-next-q3`' "$f" \
+      && fail "M1[AC1]: $f still carries the old route string 'assume Qwen Flash Next: gpu-ai/qwen3.8-flash-next-q3' (red before C01)"
+    # AC2 documented-alternate (pipeline-models only, PM pair only): the
+    # alternate sentence must co-locate q3 with its explicit-request escape —
+    # windowed, not bare grep, so a stray mention elsewhere cannot satisfy it.
+    python3 "$TMP/win.py" --ci "$f" 300 'qwen3.8-flash-next-q3' 'explicit' \
+      || fail "M1[AC2]: $f no longer documents qwen3.8-flash-next-q3 as the explicit-request alternate in the combination bullet (cf-83 Q1)"
     # Local-only default follows the 27b default (q6 → q4)
     python3 "$TMP/win.py" --ci "$f" 300 'no model' 'qwen3.8-27b-q4' \
       || fail "M1[AC1]: $f's Local-only default is not qwen3.8-27b-q4 (was q6; C06 re-cuts it)"
@@ -162,16 +183,33 @@ if want m1; then
     grep -qF 'qwen3.8-flash-q6' "$f" && fail "M1[AC1]: $f still references qwen3.8-flash-q6 — C06 drops it outright, not as a fallback"
     grep -qF '27b → `gpu-ai/qwen3.8-27b-q6`' "$f" && fail "M1[AC1]: $f still maps 27b to q6 as the default route"
     grep -qF 'basename + `-q6`' "$f" && fail "M1[AC1]: $f still states the basename + -q6 assumption rule (stale after the q4 re-cut)"
-    # favorited-models table additions
-    python3 "$TMP/win.py" --ci "$f" 400 'qwen3.8-flash-next-q3' 'solo' \
-      || fail "M1[AC1]: $f's favorited table lacks the flash-next-q3 row with the SOLO-eviction clause (C06 Tasks)"
+    # favorited-models table (cf-83 Q2: exactly one gpu-ai flash-next row,
+    # keyed strata, replacing the q3 row)
+    grep -qF '| `gpu-ai` | `qwen3.8-flash-next-strata` |' "$f" \
+      || fail "M1[AC3]: $f's favorited table has no gpu-ai row keyed qwen3.8-flash-next-strata (red before C01: the q3 row stands)"
+    python3 "$TMP/win.py" --ci "$f" 400 'qwen3.8-flash-next-strata' 'peers' 'arena' \
+      || fail "M1[AC3]: $f's strata row lacks the peers/arena operations clause (dedicated Strata pod through the outer llama-swap peers seam; the IQ3_S arena pin makes cold start minutes-long — the serving truth D4 records)"
+    # Inverted from the cf-58 q3+solo window: a peer-served model is invisible
+    # to the outer matrix's SOLO-eviction semantics, so that claim may no
+    # longer sit on the default route's row (D4 — it describes only the
+    # legacy q3/q4 solo-set rungs).
+    grep -F '| `gpu-ai` | `qwen3.8-flash-next-strata` |' "$f" | grep -qiF 'solo' \
+      && fail "M1[AC3]: $f's strata row still claims SOLO/matrix eviction — the clause must be the peers/arena one (cf-83 D4)"
+    grep -qF '| `qwen3.8-flash-next-q3`' "$f" \
+      && fail "M1[AC2]: $f still carries a favorited row keyed qwen3.8-flash-next-q3 — q3's alternate status is rule text, never a table row (Q2; red before C01)"
+    # Q3: the -strix sibling is named inside the strata row's operations
+    # clause ONLY — never as a row, never in route syntax, never elsewhere.
+    grep -qF 'gpu-ai/qwen3.8-flash-next-strata-strix' "$f" \
+      && fail "M1[AC3]: $f gives -strix the gpu-ai/ route form — strix is never agent-routable (Q3/D7)"
+    grep -F 'strix' "$f" | grep -vF '| `gpu-ai` | `qwen3.8-flash-next-strata` |' | grep -q . \
+      && fail "M1[AC3]: $f names strix outside the strata row's operations clause (Q3: that clause is strix's one location)"
     python3 "$TMP/win.py" --ci "$f" 400 'qwen3.8-27b-q6' 'alternate' \
       || fail "M1[AC1]: $f's q6 row was not re-labelled the verified alternate (C06 Tasks)"
   done
-  ok "M1[AC1]: pipeline-models carries the four-option picker (no fifth), q4 27b+Local route with the unless-escape, the pinned Flash+Local combination rule, Local-only q4, stale q6 routes gone, favorited table updated"
+  ok "M1[AC1–AC3]: pipeline-models carries the four-option picker (no fifth), q4 27b+Local route with the unless-escape, the pinned combination bullet now routing Flash+Local to flash-next-strata with the old q3 route string gone and q3 documented as the explicit-request alternate, Local-only q4, stale q6 routes gone, and the single strata favorited row with the peers/arena clause (no solo claim; strix confined to that clause)"
 fi
 
-# --- M2: pipeline-kickoff — four options, cites, updated derivation (AC2) --------
+# --- M2: pipeline-kickoff — four options, cites, strata derivation (AC1–AC3) -----
 if want m2; then
   for f in "$PK_SRC" "$PK_GEN"; do
     [ -f "$f" ] || fail "M2[AC2]: $f missing"
@@ -187,23 +225,39 @@ if want m2; then
     # derivation updated: routes to the new ids
     grep -qF 'qwen3.8-27b-q4' "$f" \
       || fail "M2[AC2]: $f's derivation still defaults Local to q6 (no q4 route yet — red before C06)"
-    grep -qF 'flash-next-q3' "$f" \
-      || fail "M2[AC2]: $f's derivation lacks the Flash+Local → flash-next-q3 combination rule (red before C06)"
+    grep -qF 'flash-next-strata' "$f" \
+      || fail "M2[AC1]: $f's derivation lacks the Flash+Local → flash-next-strata combination route (red before C01: kickoff still names q3)"
+    # Single-authority (Q1): kickoff cites pipeline-models for the quants and
+    # "never restates its table" — the cf-83 change there is a pure route-id
+    # swap, so zero q3 text (and zero strix text, Q3) may exist on this pair.
+    grep -qF 'qwen3.8-flash-next-q3' "$f" \
+      && fail "M2[AC2]: $f names qwen3.8-flash-next-q3 — the named alternate lives only in the pipeline-models bullet (red before C01)"
+    grep -qF 'strix' "$f" \
+      && fail "M2[AC3]: $f names strix — only the pipeline-models strata row clause may name it (Q3)"
     grep -qF 'qwen3.8-27b-q6' "$f" && fail "M2[AC2]: $f still cites qwen3.8-27b-q6 as the Local default (stale after C06)"
     grep -qF 'qwen3.8-flash-q6' "$f" && fail "M2[AC2]: $f still cites the dropped flash-q6 mapping"
   done
-  ok "M2[AC2]: kickoff keeps the four pinned options, cites pipeline-models, and its derivation carries the q4 default + flash-next-q3 combination rule with no stale q6 claims"
+  ok "M2[AC1–AC3]: kickoff keeps the four pinned options, cites pipeline-models, and its derivation carries the q4 default + flash-next-strata combination route with no q3/strix restatement and no stale q6 claims"
 fi
 
-# --- M3: gpu-ai provider catalog (AC3) -------------------------------------------
+# --- M3: gpu-ai provider catalog — presence HOLD (DECISIONS D5 re-base) --------
+# cf-83 C01 re-bases this arm: the cf-58 delta contract (exactly +2 added
+# entries vs TB=$(git merge-base main HEAD) AND a tools-less q4 at that base)
+# is self-contradictory once cf-58/cf-77 catalog state lives in the base
+# itself — proven red-by-construction at eb8a963 ("added entries are []",
+# "q4: fields other than capabilities changed"). Rejected alternative kept
+# out by design: a historical CF58_BASE default — a hidden stale ref passing
+# only when the env happens to be set. Q4 rules no catalog edits on this
+# ticket, so this arm is the guard against the catalog losing or reshaping
+# an entry a route needs: green before AND after the dev edit.
 if want m3; then
-  [ -f "$CAT" ] || fail "M3[AC3]: $CAT missing"
-  git show "$TB:$CAT" >"$TMP/catalog-base.jsonc" 2>/dev/null || fail "M3[AC3]: $CAT not readable at ticket base $TB"
+  [ -f "$CAT" ] || fail "M3[HOLD]: $CAT missing"
   cat >"$TMP/catalog.js" <<'JS'
 // JSONC-tolerant parse (the plan's mandate): evaluate the file as a JS object
-// literal so line/block comments are legal — bare jq chokes. Deep-compare
-// against the ticket-base copy: exactly two added entries, q4 gains the tools
-// capability, everything else byte-identical in parsed form.
+// literal so line/block comments are legal — bare jq chokes. Presence shape
+// for every id the contract routes to or documents: modelID equal to the key,
+// tools capability (subagents are tool-capable by plan requirement), the
+// 262144 context pin, a descriptive name.
 const fs = require('fs');
 function load(p) {
   const src = fs.readFileSync(p, 'utf8');
@@ -216,56 +270,43 @@ function gpuModels(o) {
   if (!g) throw new Error('no gpu-ai provider found');
   return g.models || {};
 }
-const base = gpuModels(load(process.argv[2])), cur = gpuModels(load(process.argv[3]));
+const cur = gpuModels(load(process.argv[2]));
 let errs = [];
-const bkeys = Object.keys(base), ckeys = Object.keys(cur);
-const added = ckeys.filter(k => !bkeys.includes(k));
-const removed = bkeys.filter(k => !ckeys.includes(k));
-if (removed.length) errs.push(`entries removed: ${removed}`);
-const wantAdded = ['qwen3.8-flash-next-q3', 'qwen3.8-flash-next-q4'];
-if (added.length !== 2 || !wantAdded.every(k => added.includes(k)))
-  errs.push(`added entries are ${added}, want exactly the two flash-next rungs (entry-count delta exactly +2)`);
 const q4 = cur['qwen3.8-27b-q4'];
 if (!q4 || !q4.capabilities || q4.capabilities.tools !== true)
-  errs.push('qwen3.8-27b-q4 lacks capabilities.tools=true (agents cannot use the new default)');
-for (const k of wantAdded) {
+  errs.push('qwen3.8-27b-q4 lacks capabilities.tools=true (agents cannot use the 27b+Local default)');
+for (const k of ['qwen3.8-flash-next-q3', 'qwen3.8-flash-next-q4', 'qwen3.8-flash-next-strata']) {
   const e = cur[k];
-  if (!e) continue;
+  if (!e) { errs.push(`${k}: catalog entry missing`); continue; }
   if (e.modelID !== k) errs.push(`${k}: modelID is ${e.modelID}, want the key`);
   if (!e.capabilities || e.capabilities.tools !== true) errs.push(`${k}: capabilities.tools not true`);
   if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context not 262144`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
 }
-const stripTools = e => { const c = JSON.parse(JSON.stringify(e)); delete c.capabilities; return c; };
-for (const k of bkeys) {
-  if (!ckeys.includes(k)) continue;
-  if (k === 'qwen3.8-27b-q4') {
-    if (JSON.stringify(stripTools(cur[k])) !== JSON.stringify(base[k]))
-      errs.push(`${k}: fields other than capabilities changed (only the tools capability is sanctioned)`);
-  } else if (JSON.stringify(cur[k]) !== JSON.stringify(base[k])) {
-    errs.push(`${k}: changed but the diff contract allows only the three pinned entries`);
-  }
-}
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
-  node "$TMP/catalog.js" "$TMP/catalog-base.jsonc" "$CAT" \
-    || fail "M3[AC3]: catalog contract violated (red before C06: the tools capability and the two flash-next entries are absent — the red names the missing piece)"
-  ok "M3[AC3]: catalog parses; q4 declares tools; flash-next-q3/q4 exist with modelID/name/tools/262144; entry delta exactly +2; no other entry changed"
+  node "$TMP/catalog.js" "$CAT" \
+    || fail "M3[HOLD]: gpu-ai catalog presence contract violated — the red names the missing/reshaped entry (HOLD across C01: Q4 forbids catalog edits, cf-77 landed these)"
+  ok "M3[HOLD]: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (presence HOLD, cf-83 D5 re-base)"
 fi
 
-# --- M4: serving-fact cross-check (AC4) -------------------------------------------
+# --- M4: serving-fact cross-check (AC8) -------------------------------------------
 if want m4; then
-  for id in qwen3.8-27b-q4 qwen3.8-flash-next-q3 qwen3.8-flash-next-q4; do
+  # cf-83 list = the ids the contract TEXT names: the two default routes
+  # (27b+Local → q4, Flash+Local → strata) plus q3 as the documented
+  # explicit-request alternate. flash-next-q4 stays OUT — the generic escape
+  # names no ids; it joins if contract text ever names one.
+  for id in qwen3.8-27b-q4 qwen3.8-flash-next-strata qwen3.8-flash-next-q3; do
     if grep -qF "$id" charts/llama-swap/values.yaml || grep -qF "$id" services/gpu-ai/prod/values.yaml; then
       :
     else
-      fail "M4[AC4]: routed id '$id' is absent from both serving authorities (charts/llama-swap/values.yaml, services/gpu-ai/prod/values.yaml) — routing must never point at an unserved id"
+      fail "M4[AC8]: contract-named id '$id' is absent from both serving authorities (charts/llama-swap/values.yaml, services/gpu-ai/prod/values.yaml) — routing must never point at an unserved id"
     fi
   done
-  ok "M4[AC4]: every id this chunk routes to (q4, flash-next q3/q4) appears in the serving authority (HOLD invariant)"
+  ok "M4[AC8]: every id the contract names (27b-q4 + flash-next-strata defaults, flash-next-q3 documented alternate) appears in the serving authority (HOLD invariant)"
 fi
 
-# --- M5: boards skill — Model(s) line stable, routing gains both clauses (AC2) -----
+# --- M5: boards skill — Model(s) line stable, routing clauses re-pinned (AC1) -----
 if want m5; then
   for f in "$BD_SRC" "$BD_GEN"; do
     [ -f "$f" ] || fail "M5[AC2]: $f missing"
@@ -279,14 +320,21 @@ for l in open(sys.argv[1]):
     if 'Qwen Large' in l and 'Qwen Flash' in l and 'Next' in l:
         sys.exit(1)
 PY
-    # routing paragraph combination clauses
-    python3 "$TMP/win.py" --ci "$f" 600 'flash' 'local' 'flash-next-q3' 'assume' \
-      || fail "M5[AC2]: $f's routing paragraph lacks the Flash+Local → flash-next-q3 'assume Qwen Flash Next' clause (red before C06)"
+    # routing paragraph combination clauses (cf-83 re-pin: strata route)
+    python3 "$TMP/win.py" --ci "$f" 600 'flash' 'local' 'flash-next-strata' 'assume' \
+      || fail "M5[AC1]: $f's routing paragraph lacks the Flash+Local → flash-next-strata 'assume' clause (red before C01: boards still names q3)"
+    # Single-authority (Q1/Q3): boards "references it, never duplicates its
+    # table" — the generic escape names no ids, so zero q3/strix text lives
+    # on this pair.
+    grep -qF 'qwen3.8-flash-next-q3' "$f" \
+      && fail "M5[AC2]: $f names qwen3.8-flash-next-q3 — the named alternate lives only in the pipeline-models bullet (red before C01)"
+    grep -qF 'strix' "$f" \
+      && fail "M5[AC3]: $f names strix — only the pipeline-models strata row clause may name it (Q3)"
     python3 "$TMP/win.py" --ci "$f" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
       || fail "M5[AC2]: $f's routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
     grep -qF 'qwen3.8-27b-q6' "$f" && fail "M5[AC2]: $f still routes only-Local to qwen3.8-27b-q6 (stale default after C06)"
   done
-  ok "M5[AC2]: boards Model(s) line byte-stable (four options, Qwen Flash default, no fifth) with both combination clauses in the routing paragraph"
+  ok "M5[AC1–AC3]: boards Model(s) line byte-stable (four options, Qwen Flash default, no fifth); routing paragraph carries the strata combination clause and the 27b+Local q4 unless-clause with no q3/strix restatement"
 fi
 
 # --- M6: mirror integrity + regeneration contract (AC5) ----------------------------

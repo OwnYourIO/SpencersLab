@@ -541,6 +541,82 @@ def move_card(
 
 
 @_write_tool
+def create_list(
+    board_id: str,
+    title: str,
+    swimlane_id: Optional[str] = None,
+    position: Optional[int] = None,
+) -> dict:
+    """
+    Create a list (column) on a board, optionally bound to a swimlane and
+    optionally repositioned after creation. The response is hydrated from a
+    single-list read-back so a caller that omitted swimlane_id learns which
+    swimlane WeKan actually bound.
+
+    v12.64 facts (server/models/lists.js, source-checked 2026-10-29): the
+    create route APPENDS — it sets sort from the board-wide live-list count,
+    so on a multi-swimlane board the new column is not necessarily last
+    inside the chosen swimlane. The route binds swimlaneId from the body or
+    falls back to the board's default (first) swimlane, so the key is sent
+    only when swimlane_id is given — omitting it must not arrive as an empty
+    value, which would defeat that fallback. position is 0-based from the
+    left, among the board's live lists, and rides a second, same-board move
+    POST (the only REST-driven placement control for a new list); it is not
+    atomic with the create. A failed reposition leaves the list live at the
+    board end and reports positioned=false + position_error — it never
+    fails the create and nothing rolls back (precedent: create_card's
+    default_checked outcome buckets). A failed read-back nulls the echoed
+    swimlane_id and sort instead of surfacing a succeeded create as an
+    error (precedent: list_lists' hydrate warning).
+    """
+    body: dict = {"title": title}
+    if swimlane_id:
+        body["swimlaneId"] = swimlane_id
+    resp = _wekan.post(f"/api/boards/{board_id}/lists", json_body=body) or {}
+    list_id = resp.get("_id")
+
+    positioned = True
+    position_error: Optional[str] = None
+    if position is not None:
+        move_body: dict = {"position": position}
+        if swimlane_id:
+            move_body["toSwimlaneId"] = swimlane_id
+        try:
+            _wekan.post(
+                f"/api/boards/{board_id}/lists/{list_id}/move", json_body=move_body
+            )
+        except WekanError as e:
+            # The create already landed: report the placement miss, never
+            # raise it into a failed create (no rollback by design).
+            positioned = False
+            position_error = str(e)
+            log.warning("create_list: reposition of list %s failed: %s", list_id, e)
+
+    swimlane_bound = None
+    sort = None
+    if list_id:
+        try:
+            full = _wekan.get(f"/api/boards/{board_id}/lists/{list_id}") or {}
+        except WekanError as e:
+            # Degrade the echoed fields to null: the list exists, so a
+            # read-back miss must not surface as a create error.
+            full = {}
+            log.warning("create_list: could not hydrate list %s: %s", list_id, e)
+        if isinstance(full, dict):
+            swimlane_bound = full.get("swimlaneId")
+            sort = full.get("sort")
+
+    return {
+        "id": list_id,
+        "title": title,
+        "swimlane_id": swimlane_bound,
+        "sort": sort,
+        "positioned": positioned,
+        "position_error": position_error,
+    }
+
+
+@_write_tool
 def add_comment(board_id: str, card_id: str, comment: str) -> dict:
     """Add a comment on a card, authored by the service user."""
     body = {"authorId": _wekan.user_id, "comment": comment}

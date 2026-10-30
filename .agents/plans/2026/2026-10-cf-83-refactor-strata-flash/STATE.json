@@ -1,0 +1,84 @@
+{
+  "feature": "2026/2026-10-cf-83-refactor-strata-flash",
+  "plan_status": "complete",
+  "coord_session": "ses_e780a1b36ffehaIOEwsAqGJZPc",
+  "test_session": "ses_e77e8e9c1ffeLWcDk1SacH5Fuw",
+  "current_wave": 1,
+  "updated_at": "2026-10-29",
+  "kickoff": {
+    "slug": "cf-83-refactor-strata-flash",
+    "card": "uiMiWq3CYWgCBtyoF",
+    "card_number": 83,
+    "run_tag": null,
+    "worktree": "cf-83-refactor-strata-flash",
+    "branch": "cf-83-refactor-strata-flash",
+    "branch_minted_at": "eb8a96346d3a6f8600f6546bc2792c6f41e49e02",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com"
+  },
+  "plan_round": {
+    "status": "awaiting-human-approval",
+    "plan_session": "ses_e78058a10ffekWPdvBGIFqPor6",
+    "handoffs": [
+      {
+        "at": "2026-10-29T11:30:00Z",
+        "role": "plan",
+        "result": "RESULT\nstatus: NEEDS_INFO\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-83-refactor-strata-flash/2026-10-29-refactor-cf-83-refactor-strata-flash.md, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/STATE.json, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/DECISIONS.md, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/FRICTION.md, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/chunks/C01.md]\ncommands_run: [git branch/log/status @ eb8a963 => pass, grep flash-next|strata surfaces (.rulesync/.opencode/tests/charts/services) => pass, bash tests/pipeline-models/surface.sh (full, M1-M2 green M3 structural-red) => fail(expected, pinned), bash tests/pipeline-models/surface.sh M4 M5 M6 => pass, bash tests/agent-board-coord/rulesync-surface.sh (full c1..c18) => pass (19 ok), bash rulesync-surface.sh c11 c17 => pass, rulesync --version (37.0.0) + generate --check via M6 => pass, readonly-ai-gpu-kubernetes pods_list (strata pod Running 1/1, outer 2/2) => pass, STATE.json parse => pass]\ndeviations: none — single chunk instead of a source/test chunk pair (rationale pinned in the plan: sources+needles only land atomically; agent-test writes both suites' re-pins pre-dev, the designed red→green pairing); FRICTION.md left at template per plan-role file ownership, M3 finding reported here instead.\nfriction: tests/pipeline-models/surface.sh M3 catalog-delta arm is structurally red on any post-cf-58 base (TB=merge-base self-contradiction, measured @ eb8a963) — resolution: folded into C01's test scope as a presence-HOLD re-base (DECISIONS D5).\nopen_questions: Q1 — Does Strata FULLY replace flash-next-q3 as the Flash+Local default, q3/q4 demoted to explicit-request-only quants? (best guess: yes, per card wording; plan premise). Q2 — Favorited table: replace the single q3 row with a strata row and keep the escape wording generic, or keep a q3 alternate row too? (best guess: replace, generic escape). Q3 — Document the -strix fallback only inside the pipeline-models row's operations clause, never as a route? (best guess: yes). Q4 — Any provider-catalog edit this ticket (e.g. add -strix for agent-routability)? (best guess: no — cf-77 landed what the route needs; strix stays manual/secondary).\nnext_suggested: batched question round to the human on Q1–Q4 → relaunch planner with answers → plan approval → agent-test writes both suites' re-pins (expected red on M1/M2/M5/c11), then agent-dev-local C01 source edits + rulesync generate (full green), then chunk review."
+      },
+      {
+        "at": "2026-10-29T12:10:00Z",
+        "role": "plan-finalize (answers folded)",
+        "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-10-cf-83-refactor-strata-flash/2026-10-29-refactor-cf-83-refactor-strata-flash.md, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/chunks/C01.md, .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/DECISIONS.md]\ncommands_run: [plan-file rewrite + re-read => pass, C01.md rewrite (q3-alternate shape) + AC/Tests re-read => pass, DECISIONS append (Q1–Q4 + slug as user-confirmed, superseding best guesses) + Deferred Q4 re-status => pass, STATE.json parse (unchanged: plan_status draft, C01 pending, kickoff block per launch facts) => pass, git status (only the untracked plan folder; no FORBIDDEN-surface touches) => pass]\ndeviations: none — answers folded as-is; the Q1/Q2 interaction resolved via the single-authority convention (named q3 alternate only in the pipeline-models combination bullet; kickoff/boards pure id swap with generic escape), consistent with the suites' own byte-pinned restatement rules; approval intentionally left to the coordinator's Plan pause rather than a direct in-session question.\nfriction: none new (prior item — surface.sh M3 structurally red on post-cf-58 bases — remains folded into C01 test scope as DECISIONS D5).\nopen_questions: none — Q1–Q4 and slug all answered in the batched round; nothing further blocks execution.\nnext_suggested: plan_status is AWAITING the coordinator's approval gate (draft); on human approval set approved, then launch agent-test for C01 (both suites' re-pins, expected red on M1/M2/M5/c11 pre-dev), then agent-dev-local (3 source edits + rulesync generate + greens), chunk review re-running the full Commands."
+      }
+    ]
+  },
+  "final_round": {
+    "status": "approved",
+    "review_session": "ses_e77bdce68ffeZ6IoicfjH3xQOI",
+    "handoffs": [
+      {
+        "at": "2026-10-29T14:40:00Z",
+        "role": "final-review",
+        "verdict": "APPROVED",
+        "result": "RESULT\nstatus: DONE\nchunk: final\nverdict: APPROVED\nfiles_changed: [.agents/plans/2026/2026-10-cf-83-refactor-strata-flash/2026-10-29-refactor-cf-83-refactor-strata-flash.md]\ncommands_run: [git status/rev-parse/log @ ea9a3daf2 => pass, bash tests/pipeline-models/surface.sh (full M1..M6, no env) => pass(6 ok), bash tests/agent-board-coord/rulesync-surface.sh (full c1..c18) => pass(19 ok), env -i bash tests/pipeline-models/surface.sh M1 M2 M5 => pass(3 ok), rulesync generate + generate --check + second generate no-op with tree check => pass, drift-grep 1 kickoff/boards src+mirror => pass (only -strata, zero q3), drift-grep 2 PM q3 => pass (combination bullet only: src L31 + mirror L32), git grep old q3 route string repo-wide => pass (survives only in suite absence-needles + plan/historical docs, no contract surface), git grep strix skills surfaces => pass (PM strata row clause only), git grep flash-next over .rulesync/.opencode/agents/commands/AGENTS.md => pass (3 src + 3 mirror + catalog only — no fourth contract spot), scope git diff --name-only eb8a963..ea9a3daf2 + untracked + FORBIDDEN check => pass, npx aislop ci --changes => pass(exit 0, score 100, 0 errors/0 warnings/0 fixable, 53 files), grep TB/CF58_BASE surface.sh => pass (comment-only residue per D5), git branch -vv + @{upstream} + ls-remote => pass (local-only, nothing pushed)]\ndeviations: none — validations run exactly per the plan's Commands block (plus read-only coherence sweeps beyond it); the only write is the sanctioned FINAL review section in the plan file.\nfriction: none\nopen_questions: none\nnext_suggested: coordinator flips STATE.json plan_status → complete (and re-statuses FRICTION M3 item → fixed, green measured this run), commits the plan-folder bookkeeping, executes the HITL handoff — branch cf-83-refactor-strata-flash ready for the user-created PR (note: it stacks on 11 unmerged cf-76 commits; landing order user-owned)."
+      }
+    ]
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e77c9f0c4ffes1FrPEoAJiY1HL",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "at": "2026-10-29T12:40:00Z",
+          "role": "test",
+          "test_session": "ses_e77e8e9c1ffeLWcDk1SacH5Fuw",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [tests/pipeline-models/surface.sh, tests/agent-board-coord/rulesync-surface.sh]\ncommands_run: [baseline bash tests/pipeline-models/surface.sh + rulesync-surface.sh pre-edit => fail(M3-structural, c8-folder — both expected), bash -n both suites => pass, bash tests/pipeline-models/surface.sh (full) => fail(designed: M1 first-red on strata needle), bash surface.sh M1..M6 individually => M1:fail(designed) M2:fail(designed) M3:pass M4:pass M5:fail(designed) M6:pass, bash rulesync-surface.sh (full) => fail(designed: c11 strata window; c1..c10 incl. re-widened c8 green in-run), rulesync-surface.sh c12..c18 => pass(7ok), greenability simulation of every re-pinned leg against the plan's target wording on scratch copies => pass (absence guards FIRED on current sources as negative controls), npx aislop ci --changes => pass(0 errors/0 warnings)]\ndeviations: none — red posture exactly as the chunk's Tests section states (M1/M2/M5 + c11 designed-red, M3/M4/M6 + all other c-arms green); c8's baseline red on the untracked plan folder is closed by the in-scope D6 widening (chunk Tests lists it), and the M3 structural red is cured by the D5 presence-HOLD re-base — both are test-file edits, no source touched.\nfriction: none new — suite fail-fast hides arms behind the first red; mapped by per-arm subset runs (the suite's own Usage convention), no workaround invented.\nopen_questions: none\nnext_suggested: agent-dev-local for C01 — edit the three .rulesync skill sources per Tasks + `rulesync generate`; greens M1/M2/M5/c11; then review re-runs the full Commands block (both suites, regen idempotence, drift-grep pair, scope, aislop)."
+        },
+        {
+          "at": "2026-10-29T13:30:00Z",
+          "role": "dev-local",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [.rulesync/skills/pipeline-models/SKILL.md, .rulesync/skills/pipeline-kickoff/SKILL.md, .rulesync/skills/boards/SKILL.md, .opencode/skills/pipeline-models/SKILL.md, .opencode/skills/pipeline-kickoff/SKILL.md, .opencode/skills/boards/SKILL.md]\ncommands_run: [baseline (pre-edit) bash tests/pipeline-models/surface.sh per-arm => M1:fail(designed) M2:fail(designed) M3:pass M4:pass M5:fail(designed) M6:pass, baseline bash tests/agent-board-coord/rulesync-surface.sh => fail(designed: c11 strata window), 4 source edits (PM L31 bullet + PM L49 table row, PK L26, BD L121) => pass, rulesync 37.0.0 generate => pass (wrote exactly the 3 skill mirrors, 3 files total; no AGENTS.md/agents/commands rewrite), git status vs expected mirror list => pass (scope exact, FORBIDDEN list untouched), bash tests/pipeline-models/surface.sh (full M1..M6, no env, post-edit) => pass (6 ok — M1/M2/M5 flipped green), bash tests/agent-board-coord/rulesync-surface.sh (full c1..c18) => pass (19 ok — c11 flipped green), rulesync generate x2 idempotence => pass (both re-runs no-op), rulesync generate --check => pass (clean), M6 pairsync source<->mirror honesty => pass (via suite), drift-grep 1 (kickoff/boards src+mirror) => pass (only …-strata hits, zero q3 text), drift-grep 2 (pipeline-models q3) => pass (hits only in the combination-rule bullet: src L31 + mirror L32), git grep 'assume Qwen Flash Next: `gpu-ai/qwen3.8-flash-next-q3`' over .rulesync+.opencode => pass (empty — old route string gone), scope: git diff --name-only eb8a963..HEAD + git status --porcelain => pass (HEAD still at eb8a963, no commits; tree changes ⊆ Files-in-scope incl. agent-test's pre-existing suite re-pins), npx aislop ci --changes => pass (0 errors / 0 warnings / 0 fixable, 53 files)]\ndeviations: none — wording exactly per Tasks + the user-confirmed Q1–Q4 answers (q3 survives ONLY as the documented explicit-request alternate inside the PM combination bullet; single strata row with the peers/arena cold-start clause replacing the SOLO-eviction claim per D4; `-strix` named only inside that row's clause per Q3; kickoff/boards minimal id swaps with the generic escape per the single-authority convention); provider catalog, subagent bodies, charts/services, and both test suites untouched (suites read-only); no commit made — work left in the tree for the coordinator\nfriction: first boards edit missed on oldString — the read tool's line-number prefix visually adds one column before the content, so the 2-space indent read as 3; resolution: verified raw bytes with `sed -n | cat -A` and re-applied (standard recipe, no workaround needed elsewhere)\nopen_questions: none\nnext_suggested: agent-review for C01 — re-run the full Commands block (both suites, regen idempotence, drift-grep pair, scope vs eb8a963, aislop) and validate AC1–AC8; then the coordinator commits sources + mirrors + tests + bookkeeping as the single chunk commit"
+        },
+        {
+          "at": "2026-10-29T14:00:00Z",
+          "role": "review",
+          "review_session": "ses_e77c38ba6ffe6Bjg52PNU1Ivwm",
+          "verdict": "APPROVED",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nverdict: APPROVED\nfiles_changed: [.agents/plans/2026/2026-10-cf-83-refactor-strata-flash/chunks/C01.md]\ncommands_run: [git rev-parse/log/status @ eb8a963 (HEAD exact, 8 modified + untracked plan folder) => pass, bash tests/pipeline-models/surface.sh (full M1..M6, no env) => pass(6 ok), bash tests/agent-board-coord/rulesync-surface.sh (full c1..c18) => pass(19 ok), rulesync 37.0.0 generate x2 + generate --check with pre/post byte snapshot => pass (both generates no-op, check clean, tree byte-identical), drift-grep 1 kickoff/boards src+mirror => pass (only -strata hits, zero q3 text), drift-grep 2 PM q3 => pass (combination bullet only: src L31 + mirror L32), git grep 'assume Qwen Flash Next: `-q3`' over .rulesync+.opencode => pass (empty), git grep strix in edited pairs => pass (strata row clause only), git grep Model(s)/Default-selection + per-file hunk counts (boards src+mirror 1 hunk each) => pass (four-option line byte-stable, no fifth), scope git diff --name-only eb8a963..HEAD + worktree + untracked => pass (⊆ Files in scope, FORBIDDEN untouched), source<->mirror body diff incl. HEAD-shape compare => pass (agree modulo pre-existing rulesync frontmatter normalization), npx aislop ci --changes => pass(0 errors/0 warnings/0 fixable, 53 files, score 100), grep TB/CF58_BASE residue surface.sh => pass (comment-only), env -i bash surface.sh M1 M5 => pass]\ndeviations: none — validations re-run exactly per Commands (added byte-snapshot guard around rulesync generate to keep the uncommitted dev tree safe, and an env-free subset rerun as an extra no-hidden-env check; both read-only w.r.t. the diff).\nfriction: none\nopen_questions: none\nnext_suggested: coordinator commits the C01 change set as one commit (sources + mirrors + suite re-pins + plan-folder bookkeeping; twin-alias rule satisfied by construction), flips STATE.json C01→done/approved verdict, and proceeds to the plan-level final review + HITL PR handoff (branch stays local; landing/PR is user-owned per AGENTS.md git-safety)."
+        }
+      ]
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

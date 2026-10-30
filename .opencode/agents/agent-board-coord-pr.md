@@ -72,65 +72,233 @@ permissions:
     resource: bash scripts/board-preload-probe.sh *
     effect: allow
   - action: shell
-    resource: git status *
+    resource: ls *
     effect: allow
   - action: shell
-    resource: git log *
+    resource: git *
     effect: allow
   - action: shell
-    resource: git diff *
-    effect: allow
+    resource: git checkout main*
+    effect: deny
   - action: shell
-    resource: git show *
-    effect: allow
+    resource: git * checkout main*
+    effect: deny
   - action: shell
-    resource: git branch *
-    effect: allow
+    resource: git checkout * main*
+    effect: deny
   - action: shell
-    resource: git merge-base *
-    effect: allow
+    resource: git * checkout * main*
+    effect: deny
   - action: shell
-    resource: git rev-parse *
-    effect: allow
+    resource: git switch main*
+    effect: deny
   - action: shell
-    resource: git ls-files *
-    effect: allow
+    resource: git * switch main*
+    effect: deny
   - action: shell
-    resource: git add *
-    effect: allow
+    resource: git switch * main*
+    effect: deny
   - action: shell
-    resource: git commit *
-    effect: allow
+    resource: git * switch * main*
+    effect: deny
   - action: shell
-    resource: git checkout *
-    effect: allow
+    resource: git update-ref*
+    effect: deny
   - action: shell
-    resource: git switch *
-    effect: allow
+    resource: git * update-ref*
+    effect: deny
+  - action: shell
+    resource: git symbolic-ref*
+    effect: deny
+  - action: shell
+    resource: git * symbolic-ref*
+    effect: deny
+  - action: shell
+    resource: git branch -f main*
+    effect: deny
+  - action: shell
+    resource: git * branch -f main*
+    effect: deny
+  - action: shell
+    resource: git branch --force main*
+    effect: deny
+  - action: shell
+    resource: git * branch --force main*
+    effect: deny
+  - action: shell
+    resource: git branch -d main*
+    effect: deny
+  - action: shell
+    resource: git branch -d * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -d main*
+    effect: deny
+  - action: shell
+    resource: git * branch -d * main*
+    effect: deny
+  - action: shell
+    resource: git branch -D main*
+    effect: deny
+  - action: shell
+    resource: git branch -D * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -D main*
+    effect: deny
+  - action: shell
+    resource: git * branch -D * main*
+    effect: deny
+  - action: shell
+    resource: git branch -m main*
+    effect: deny
+  - action: shell
+    resource: git branch -m * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -m main*
+    effect: deny
+  - action: shell
+    resource: git * branch -m * main*
+    effect: deny
+  - action: shell
+    resource: git branch -M main*
+    effect: deny
+  - action: shell
+    resource: git branch -M * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -M main*
+    effect: deny
+  - action: shell
+    resource: git * branch -M * main*
+    effect: deny
+  - action: shell
+    resource: git branch -c main*
+    effect: deny
+  - action: shell
+    resource: git * branch -c main*
+    effect: deny
+  - action: shell
+    resource: git branch -c * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -c * main*
+    effect: deny
+  - action: shell
+    resource: git branch -C main*
+    effect: deny
+  - action: shell
+    resource: git * branch -C main*
+    effect: deny
+  - action: shell
+    resource: git branch -C * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -C * main*
+    effect: deny
+  - action: shell
+    resource: git worktree add * main*
+    effect: deny
+  - action: shell
+    resource: git * worktree add * main*
+    effect: deny
+  - action: shell
+    resource: git pull*
+    effect: deny
+  - action: shell
+    resource: git * pull*
+    effect: deny
+  - action: shell
+    resource: git merge *
+    effect: deny
+  - action: shell
+    resource: git * merge *
+    effect: deny
+  - action: shell
+    resource: git config alias*
+    effect: deny
+  - action: shell
+    resource: git * config alias*
+    effect: deny
+  - action: shell
+    resource: git * --force*
+    effect: deny
+  - action: shell
+    resource: git * -f *
+    effect: deny
+  - action: shell
+    resource: git * -P *
+    effect: deny
   - action: shell
     resource: git merge main*
     effect: allow
   - action: shell
-    resource: git push*
+    resource: git * merge main*
+    effect: allow
+  - action: shell
+    resource: git merge --abort
+    effect: allow
+  - action: shell
+    resource: git * merge --abort
+    effect: allow
+  - action: shell
+    resource: git merge --continue
+    effect: allow
+  - action: shell
+    resource: git * merge --continue
+    effect: allow
+  - action: shell
+    resource: git checkout -b * main*
+    effect: allow
+  - action: shell
+    resource: git * checkout -b * main*
+    effect: allow
+  - action: shell
+    resource: git checkout -B * main*
+    effect: allow
+  - action: shell
+    resource: git * checkout -B * main*
+    effect: allow
+  - action: shell
+    resource: git switch -c * main*
+    effect: allow
+  - action: shell
+    resource: git * switch -c * main*
+    effect: allow
+  - action: shell
+    resource: git switch -C * main*
+    effect: allow
+  - action: shell
+    resource: git * switch -C * main*
+    effect: allow
+  - action: shell
+    resource: git worktree add -b * main*
+    effect: allow
+  - action: shell
+    resource: git * worktree add -b * main*
     effect: allow
   - action: shell
     resource: git push*main*
     effect: deny
   - action: shell
-    resource: git push --force*
+    resource: git * push *main*
+    effect: deny
+  - action: shell
+    resource: git * push
     effect: deny
   - action: shell
     resource: git push -f*
     effect: deny
   - action: shell
-    resource: git push * --force*
+    resource: git push -P*
     effect: deny
   - action: shell
-    resource: git push * -f*
+    resource: git * push -f*
     effect: deny
   - action: shell
-    resource: ls *
-    effect: allow
+    resource: git * push -P*
+    effect: deny
   - action: subagent
     resource: '*'
     effect: deny
@@ -216,10 +384,10 @@ The board flow lives entirely in the `boards` skill; this section only points at
 
 **Card pickup**: a card id given at launch → `get_card` it, that card is the request; otherwise walk **Rework → Not Started → Low Priority**, each list top-to-bottom, and take the first card. Confirm the candidate with `get_card` before claiming — the by-list projection omits `cardNumber`, custom fields and labels. Nothing on the board → stop cleanly; never fabricate a request. Before minting anything, read the card's `slug` custom field: a run whose `plan_status` is not `complete` RESUMES its folder; re-picking a completed run starts `<slug>-1` (D11).
 
-**Card-driven kickoff** — replaces the live `pipeline-kickoff` questions for board runs; the override lives in the skill's text, which is why the MUST-load list still carries `/pipeline-kickoff` and `/pipeline-models`. The checked items of the five standard checklists (Services / Type / Model(s) / Lifecycle / Human in the Loop) and the `slug` / `session` custom fields ARE the user's answers: consume them, never re-ask; only genuine gaps join the batched round. Model routing reads the Model(s) checklist alone (D12 — no `models` custom field exists): exactly one checked → that model for every tier; several → the largest drives planning and the smallest drives code, size mapping per `pipeline-models`; record the resolved tiers in STATE.json `kickoff.models` and the claim comment, never as a custom field. No run tag — card-driven runs retire run tags entirely: the final `cf-<cardNumber>-<type>-<desc>` slug names the feature folder, worktree, branch and session title alike (D10).
+**Card-driven kickoff** — replaces the live `pipeline-kickoff` questions for board runs; the override lives in the skill's text, which is why the MUST-load list still carries `/pipeline-kickoff` and `/pipeline-models`. The checked items of the five standard checklists (Services / Type / Model(s) / Lifecycle / Human in the Loop) and the card's `slug` custom field (the combined `[<slug>](<session link>)` link value — the legacy `session` field is retired, never read or written) ARE the user's answers: consume them, never re-ask; only genuine gaps join the batched round. Model routing reads the Model(s) checklist alone (D12 — no `models` custom field exists): exactly one checked → that model for every tier; several → the largest drives planning and the smallest drives code, size mapping per `pipeline-models`; record the resolved tiers in STATE.json `kickoff.models` and the claim comment, never as a custom field. No run tag — card-driven runs retire run tags entirely: the final `cf-<cardNumber>-<type>-<desc>` slug names the feature folder, worktree, branch and session title alike (D10).
 
 **Research-only cards — iterative loop**: the **Research** board label is the only trigger; research-only cards never reach `agent-plan`/`agent-test`/`agent-dev-local`/`agent-dev-pr`/`agent-review`. Run the skill's loop: claim → `agent-research` round 1 → ONE batched follow-up question round → further research in the SAME research session (via its sessionID) → result comment (research-session URL + merged TLDR) → write-back → Review. When the `slug` field or a Type item is still unset and round 1 must already name the folder, mint the best-guess `cf-<cardNumber>-<type>-<desc>` and continue rather than blocking — the single follow-up round confirms or replaces it.
 
-**Card lifecycle + Post-plan card write-back**: claim on pickup — move to Executing plus a claim comment carrying the session as the full `$(SESSION_URL_BASE)/?session=<sessionID>` link (never a raw id), the resolved model tiers, the consumed checklist answers, the resolved slug and the plan-folder path; progress comment per chunk; right after plan approval run the write-back (`list_custom_fields`, then `set_card_custom_field` for `slug` + `session`, then `delete_checklist_item` for every unchecked item of the five checklists — the surviving checked items are the on-card record); after the whole-plan review passes, move the card to Review. **Finished** is human-owned — the card never reaches it by your hand. A card picked from Rework: read its full comment history first — the comments are the rework context.
+**Card lifecycle + Post-plan card write-back**: claim on pickup — move to Executing plus a claim comment carrying the session as the full `$(SESSION_URL_BASE)/?session=<sessionID>` link (never a raw id), the resolved model tiers, the consumed checklist answers, the resolved slug and the plan-folder path; progress comment per chunk; right after plan approval run the write-back (`list_custom_fields`, then `set_card_custom_field` for the `slug` combined `[<slug>](<session link>)` value, then `delete_checklist_item` for every unchecked item of the five checklists — the surviving checked items are the on-card record); after the whole-plan review passes, move the card to Review. **Finished** is human-owned — the card never reaches it by your hand. A card picked from Rework: read its full comment history first — the comments are the rework context.
 
 **Batched question protocol**: REPLACES per-question escalation during the planning phase — no user questions until the plan question round; the agent-plan launch prompt carries the protocol verbatim (the skill's Launch prompt to agent-plan section). The card answers in advance: that one round carries only genuine gaps (an unchecked Type item, an unset `slug`), each with its best-guess recommendation first.

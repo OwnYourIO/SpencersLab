@@ -146,7 +146,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   `/pipeline-boards-hourly` on the alias, and the gate counts all three
   board-coord names): pulls work from
   the WeKan AI-Dev board via the `dev-boards` MCP server, takes its intake from
-  the card's standard checklists plus the `slug`/`session` custom fields
+  the card's standard checklists plus the `slug` custom field (combined
+  `[<slug>](<session link>)` link value)
   instead of the live kickoff questions, and defers user questions to a single
   batched plan-question round; launch with `/pipeline-boards`. Artifacts
   live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
@@ -228,7 +229,8 @@ role × permission matrix is in the `agents-sync` skill references
   AI-Dev board replaces the live kickoff — pickup walks
   `Rework → Not Started → Low Priority` (top card first), the
   Services/Type/Model(s)/Lifecycle/Human in the Loop checklists plus the
-  `slug` and `session` custom fields supply the kickoff answers — the
+  `slug` custom field's combined `[<slug>](<session link>)` value supply the
+  kickoff answers — the
   checked Lifecycle items are the stages the run executes
   (checked-stages-only; nothing checked = the standard
   Plan+Test+Code+Review loop), the Model(s) checklist alone
