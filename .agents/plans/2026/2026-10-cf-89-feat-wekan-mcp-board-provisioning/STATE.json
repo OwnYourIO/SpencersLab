@@ -1,0 +1,43 @@
+{
+  "feature": "2026/2026-10-cf-89-feat-wekan-mcp-board-provisioning",
+  "plan_status": "approved",
+  "coord_session": "ses_e72e3c15cffeLcluMGX4vo90XA",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-30",
+  "kickoff": {
+    "slug": "cf-89-feat-wekan-mcp-board-provisioning",
+    "card": "phrhiExtY4B9TAZmg",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "run_tag": null,
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata",
+      "code": "gpu-ai/qwen3.8-flash-next-strata"
+    },
+    "worktree": "cf-89-feat-wekan-mcp-v102-tools",
+    "branch": "cf-89-feat-wekan-mcp-board-provisioning"
+  },
+  "pipelines": ["Local"],
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
