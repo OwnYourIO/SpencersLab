@@ -1107,6 +1107,9 @@ dev edits surfaces, never these files.
 
 ### 9.2 Amendments to existing files (never weaken; re-expression ledger)
 
+Author-side validation faults found by the C01 dev round (and the mechanical
+repairs applied to them, incl. the latent C02/C06 twins) are ledgered in §9.6.
+
 * `test_config_parity.py::test_repl_tables_match_frozen_decisions` — the
   frozen-table identity is now golden-union − REMOVED + `CF86_NEW_IDS` (the
   two rungs postdate the byte-untouched goldens, which stay byte-untouched)
@@ -1146,7 +1149,7 @@ dev edits surfaces, never these files.
   IQ3_S primary's files — an arena pointing at another arena's weights is the
   failure those arms catch.
 
-### 9.3 Red/green at write time (helm on PATH, gates off)
+### 9.3 Red/green at write time (helm on PATH, gates off) — superseded by §9.6
 
 `python3 -m pytest charts/llama-swap/tests -q` → **59 failed, 274 passed,
 3 skipped** (baseline before this session's work: 264 passed / 2 skipped — no
@@ -1214,3 +1217,59 @@ resolves_live` → passed (both cf-86 refs resolve through the loader mirror:
   alternation, FINAL pins + negative pins, lockstep + grace + requests, init
   token/dir/no-new-secret, peers five-id) + `test_catalog_contract.py`
   (q4 entry via the C05 presence list, no-phantom, ornith absence-arm).
+
+### 9.6 Coord-ordered validation repair (C01 dev round 1, 2026-10-30)
+
+C01 dev round 1 returned NEEDS_INFO(validation_at_fault): the implementation
+was complete and render-verified, two §9 arms were author-side faults. Both
+verified against the pinned-checkout vocabulary before editing — mechanical
+(ACs and intent unchanged), so the test session repaired them rather than
+re-opening the chunk.
+
+Faults + resolutions:
+
+* `arenas = set(S.INNER_MATRIX_VARS)` collects the matrix LETTERS while
+  `strata_testlib.matrix_expansions` returns combos of resolved MODEL IDs →
+  the no-co-load arm was vacuous and the reachability arm unsatisfiable for
+  any render. Fixed to `set(S.INNER_MATRIX_VARS.values())` in
+  `test_strata_abliterated_rung.py`, and in the latent twins
+  `test_strata_orca_rung.py` / `test_strata_q4_rung.py` (those files were red
+  for other reasons, so the fault was invisible until C02/C06).
+* `--tokenizer` is not an engine arg. The run-config vocabulary
+  (setup.py@v0.2.7 `SETUP_KEYS`) and both serving profiles spell `tokenizer`
+  as a TOP-LEVEL profile key beside `args`, resolving to the tokenizer
+  DIRECTORY inside each pack. Re-expressed in C01 + the C02 twin as: the
+  profile-level `tokenizer` exists, is under `/models/strata/Strata-data/`,
+  appears in NO engine arg, and differs from the IQ3_S primary's — same
+  resolution law, now pinned on the right surface.
+* Proactive same-class latent fix (no dev round needed yet): the inner alias
+  surface is the profile's `aliases` LIST (the shipped primary/strix pair both
+  declare the family alias `qwen3.8-flash-next`; there is no `swappabel_alias`
+  key in this chart). `test_c02_inner_alias_unique_and_not_the_outer_orca_id`
+  now reads model-level and profile-level `aliases` and pins per-key
+  uniqueness of the FROZEN alias (one route key → one arena) plus the ≠
+  outer-`…-orca-q6` law; global alias uniqueness is NOT the shipped shape and
+  was never the chunk's intent.
+* Coverage gaps closed in the same pass (additive, AC-backed):
+  `test_c01_inner_alias_is_frozen_and_does_not_shadow_the_family` pins the
+  frozen alias `qwen3.8-flash-next-abliterated` present on the new arena and
+  `qwen3.8-flash-next` NOT claimed by it (chunk C01 task 2 — the two serving
+  arenas already share that key);
+  `test_c01_init_env_stages_the_abliterated_set` pins AC6's other half — the
+  model-fetch init renders `STRATA_QUANTS` carrying `abl` and a non-empty
+  `STRATA_MODEL_ABL`, both as literal scalars (no `valueFrom`), so an arena
+  that routes but never stages its pack cannot pass C01.
+
+Post-repair posture (helm on PATH, gates off, dev's C01 implementation in the
+tree UNCOMMITTED): `python3 -m pytest charts/llama-swap/tests -q` → **52
+failed, 283 passed, 3 skipped** (was 59/274/3). `test_strata_abliterated_rung.py`
+is fully green (14 passed, including the two new arms) and exactly the 7 C01
+reds §9.3 listed are gone; the residual 52 are the §9.3 designed pendings
+unchanged — C02 8, C03 6, C04 7, C05 13, C06 7 = 41 new-file reds, plus the
+11 frozen-table-growth reds (`test_config_parity` ×8, `test_new_roster` ×2,
+`test_config_schema` ×1) that clear when C03/C04 land the rungs. No
+previously green test moved (test total 336 → 338 = the two added arms; skips
+unchanged at 3); the repaired C02/C06 reds now fail with their designed
+"chunk not landed" messages instead of harness-shaped ones;
+`RUN_HF_CHECK=1` arms still pass; `npx aislop ci --changes` clean
+(0 errors / 0 warnings).

@@ -126,6 +126,23 @@ llama-swap:
       # block's 420 > 180 + 30 grace/unload invariant intact when doing so.
       strata:
         enabled: true
+        # cf-86 C01: the strata provisioning set grows the manual "abl"
+        # token — the SC117 GSQ-RCO-abliterated IQ3_XXS pack. Branch B of
+        # the chunk's catalog gate (2026-10-30): the pinned v0.2.7 setup
+        # catalog carries no abliterated family (zero abliterated/SC117 hits
+        # in setup.py; the qwen family pins the plain ISTA repo), so "abl"
+        # is the manual-pack routing key handled inside the chart's
+        # model-fetch args, and the value names the staged tier IQ3_XXS.
+        # SC117 is a public ungated pack — the fetch stays anonymous and NO
+        # token enters this chain (the keyless C-A posture holds until
+        # C02's download-only exception for the gated orca pack).
+        # Scalars only; the chart keeps the script, this block sets the
+        # two env scalars.
+        initContainers:
+          model-fetch:
+            env:
+              STRATA_QUANTS: "q3,abl"
+              STRATA_MODEL_ABL: abl/IQ3_XXS
     service:
       strata:
         enabled: true
@@ -453,6 +470,7 @@ llama-swap:
         models:
           - qwen3.8-flash-next-strata
           - qwen3.8-flash-next-strata-strix
+          - qwen3.8-flash-next-strata-abliterated
         timeouts:
           responseHeader: 1800
           connect: 30

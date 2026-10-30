@@ -1101,6 +1101,106 @@ app-template:
               command -v git >/dev/null 2>&1 \
                 && command -v c++ >/dev/null 2>&1 \
                 || fail "image lacks git/c++ for the engine compile - containers/strata must be rebuilt (build-deps RUN, 2026-10-29 contract)"
+              # Manual pack for the abliterated GSQ-RCO set (cf-86 C01). The
+              # pinned checkout's setup catalog carries NO abliterated family:
+              # verified at the v0.2.7 setup.py (image copy at
+              # /opt/strata/src/Strata/setup.py) — zero hits for abliterated /
+              # SC117, and the qwen family pins the plain ISTA repo — so
+              # setup.sh can never fetch this pack. The recipe is SC117's own
+              # strata/README.md migration section: stage both shards under
+              # their original names in one directory (iq_pack auto-finds
+              # shard 2) and build a NEW native pack — the IQ3_S pack's
+              # native_experts.txt no longer matches after the ablation moved
+              # tensor offsets, and reusing it serves wrong weights under a
+              # new id. The pack is public/ungated: the fetch stays
+              # anonymous (the C-A keyless posture is untouched — no token
+              # appears anywhere in this chain).
+              abl_pack() {
+                # $1 = quant tier (IQ3_XXS today). Staging mirrors setup's own
+                # Strata-data layout: models/<tier>/ for shards, packs/<tier>
+                # for the iq_pack output — with an -abliterated suffix because
+                # these are different bytes than the catalog tier of the same
+                # name.
+                tier=$1
+                tierl=$(printf '%s' "$tier" | tr 'A-Z' 'a-z')
+                dir=/models/strata/Strata-data/models/$tier-abliterated
+                pack=/models/strata/Strata-data/packs/abliterated-$tierl
+                stem=Qwen3.8-Flash-Next-GSQ-RCO-abliterated-$tier
+                s1=$dir/$stem-00001-of-00002.gguf
+                # shard 2 is the 28.8 GB n-gram (PLE) table — the IQ3_XXS tier
+                # ships it just like IQ3_S (verified in the HF tree).
+                s2=$dir/$stem-00002-of-00002.gguf
+                # iq_pack needs the checkout venv (numpy) and gguf-py from
+                # setup's pinned llama.cpp source (it also exports the pack's
+                # tokenizer/ itself). Both land with the q3 iteration, which
+                # runs before abl in the same init — name the precondition
+                # loudly instead of booting a half-provisioned arena, and name
+                # it BEFORE staging: the ~76 GB of downloads below must never
+                # start for a pack this init cannot build.
+                [ -x "$SRC/.venv/bin/python" ] \
+                  || fail "abl pack: $SRC/.venv missing - the q3 token must provision before abl"
+                ggufpy=$SRC/third_party/llama.cpp/gguf-py
+                [ -d "$ggufpy" ] \
+                  || fail "abl pack: no gguf-py at $ggufpy - setup unpacks the pinned llama.cpp source during provisioning"
+                mkdir -p "$dir"
+                # Staging goes through the venv interpreter, NOT curl: the
+                # pinned strata image provably carries no curl binary (its
+                # apt lists at v0.2.7 are python3/ca-certificates/tini + the
+                # hip libraries, this repo's build adds only build-essential/
+                # git/ccache, and the containers/strata verify step pins just
+                # git and c++ — the bake+verify law forbids assuming a tool
+                # at boot that the build never checks). setup's own downloader
+                # is stdlib urllib, so this reuses the interpreter the pack
+                # step already needs; C02's gated fetch reuses the same path
+                # with an Authorization header. $3 is the HF-tree byte size
+                # (LFS-pointer verified): a .part that finished downloading
+                # between pods gets RENAMED, not re-requested — curl -C - on
+                # a complete file exits non-zero and would wedge every later
+                # boot. Python lines sit at the YAML block's base indent
+                # because the heredoc must reach them unindented.
+                abl_dl() {
+                  [ -s "$2" ] && { echo "model-fetch: $(basename "$2") already staged"; return 0; }
+                  "$SRC/.venv/bin/python" - "$1" "$2.part" "$3" <<'PY' || fail "abl pack: download failed for $1 (partial kept as $2.part for a resume)"
+              import os, sys, urllib.error, urllib.request
+              url, part, want = sys.argv[1], sys.argv[2], int(sys.argv[3])
+              for _ in range(4):
+                  have = os.path.getsize(part) if os.path.exists(part) else 0
+                  if have > want:
+                      os.remove(part); have = 0  # corrupt leftover: restart rather than wedge
+                  if have == want:
+                      break
+                  try:
+                      req = urllib.request.Request(url, headers={"Range": "bytes=%d-" % have} if have else {})
+                      with urllib.request.urlopen(req, timeout=120) as r:
+                          if have and r.status == 200:
+                              os.remove(part); have = 0  # Range ignored: restart cleanly
+                          with open(part, "ab" if have else "wb") as f:
+                              while True:
+                                  chunk = r.read(1048576)
+                                  if not chunk:
+                                      break
+                                  f.write(chunk)
+                  except (urllib.error.URLError, OSError) as err:
+                      sys.stderr.write("abl dl: attempt failed: %s (%s)\n" % (err, part))
+              final = os.path.getsize(part) if os.path.exists(part) else 0
+              sys.exit(0 if final == want else "abl dl: %s ended at %d of %d bytes (partial kept for a resume)" % (url, final, want))
+              PY
+                  mv "$2.part" "$2" || fail "abl pack: rename failed for $2"
+                }
+                abl_dl "https://huggingface.co/SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF/resolve/main/$tier/$stem-00001-of-00002.gguf" "$s1" 47342144896
+                abl_dl "https://huggingface.co/SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF/resolve/main/$tier/$stem-00002-of-00002.gguf" "$s2" 28800138432
+                # setup's own completeness guard (native_experts.txt is
+                # written last by iq_pack): a crash between pack build and the
+                # marker re-enters here instead of serving a partial pack.
+                if [ ! -f "$pack/native_experts.txt" ] || [ ! -f "$pack/tokenizer/vocab.json" ]; then
+                  # GSQ-RCO files keep the BF16 hyper-connection projections
+                  # the engine reads natively, so this is the plain qwen-family
+                  # pack call — NOT ORCA.md's --compat-bf16, which only
+                  # quantizers that compressed those projections need.
+                  ( cd "$SRC" && STRATA_GGUF_PY="$ggufpy" .venv/bin/python tools/iq_pack.py --gguf "$s1" --out "$pack" ) \
+                    || fail "abl pack: iq_pack failed (nothing is marked, the next boot resumes)"
+                fi
+              }
               IFS=,
               for tok in ${STRATA_QUANTS:-q3}; do
                 [ -n "$tok" ] || continue
@@ -1112,7 +1212,9 @@ app-template:
                 esac
                 # STRATA_MODEL_Qx may name another catalog family as
                 # "family/model" (e.g. unsloth/UD-Q4_K_XL — the q4/q5 the
-                # qwen family does not carry); a bare name stays qwen.
+                # qwen family does not carry); a bare name stays qwen. The
+                # pseudo-family "abl" is deliberately NOT a catalog name: it
+                # routes the token to the manual pack above.
                 case "$SIZE" in
                   */*) FAM=${SIZE%%/*}; SIZE=${SIZE#*/} ;;
                 esac
@@ -1123,6 +1225,12 @@ app-template:
                 MARK="/models/strata/.setup-$TOK"
                 if [ -f "$MARK" ]; then
                   echo "model-fetch: $tok already set up, skipping"
+                  continue
+                fi
+                if [ "$FAM" = abl ]; then
+                  echo "model-fetch: manual pack for $tok ($SIZE abliterated tier — no setup.sh catalog entry)"
+                  abl_pack "$SIZE"
+                  touch "$MARK"
                   continue
                 fi
                 echo "model-fetch: setup.sh for $tok as $FAM/$SIZE (downloads start here)"
@@ -1407,6 +1515,10 @@ strata:
   # enumeration (dGPU first, chip second) — VERIFY at the same rocminfo
   # gate; on a chip-only node (the fallback's main scenario) the chip is 0,
   # so set "0" or "" to inherit there.
+  # New R9700 rungs (the abliterated IQ3_XXS arena, later Q4 rungs) get NO
+  # entry here on purpose: they target the same dGPU as the primary and
+  # inherit the global index — per-rung entries would multiply the
+  # retargeting surface at the rocminfo gate without naming a difference.
   rocrVisibleDevicesByModel:
     qwen3.8-flash-next-strata-strix: "1"
 
@@ -1532,19 +1644,43 @@ strata:
         # KL-gated (STRIX_HALO §5 "changes bits") — never A/B the two
         # profiles token-for-token, compare on the bench suite instead.
 
+      qwen3.8-flash-next-strata-abliterated:
+        name: Qwen3.8-Flash-Next Abliterated IQ3_XXS (R9700 arena)
+        description: Strata engine on the public SC117 GSQ-RCO-abliterated pack at IQ3_XXS — same ~50 GiB arena class and 90 GiB engine cap as the IQ3_S flagship, experts pinned in the page-locked RAM arena on the R9700 with the 32 GiB conversation-cache budget; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        # Same serve wrapper as the primary (C01 interface freeze) — the
+        # pack/quant switch lives entirely in the profile file; serve takes
+        # no tuning flags.
+        cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-abliterated-iq3_xxs.json --host 127.0.0.1 --port ${PORT}'
+        # Residency contract copied from the primary verbatim: ttl/unload-
+        # Timeout/checkEndpoint equality is what keeps the time-share
+        # discipline and the 420 s grace invariant rung-wide, not per-rung.
+        ttl: 3600
+        unloadTimeout: 180
+        checkEndpoint: /health
+        # This rung rides the engine's defaults: NO env switch set — neither
+        # the primary's PR #3636 one-at-a-time arm nor the strix eight-set
+        # (both are silicon/recipe-specific; re-deriving switches for an XXS
+        # ablation is an on-target bench call, not a copy-paste). The one
+        # entry is the peers-forwarded Host allow-list (DNS-rebinding guard,
+        # same reason as the other two); the ROCR entry is injected by the
+        # template from the global index.
+        env:
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
+
     matrix:
-      # The two engines are ALTERNATIVES, never co-loadable: the arenas pin
+      # The engines are ALTERNATIVES, never co-loadable: the arenas pin
       # RAM additively on the 128 GB node and co-residency recreates #1715's
-      # global OOM (RESEARCH §7). "(p | s)" expands to one-model combos, so
-      # the solver evicts the resident arena before starting the other —
+      # global OOM (RESEARCH §7). "(p | s | c)" expands to one-model combos,
+      # so the solver evicts the resident arena before starting the other —
       # the preload-empty hook alone would not stop a request-driven
       # co-load. vars name model IDs, not aliases (llama-swap matrix
-      # semantics). Both stay lazily reachable; nothing preloads.
+      # semantics). All stay lazily reachable; nothing preloads.
       vars:
         p: qwen3.8-flash-next-strata
         s: qwen3.8-flash-next-strata-strix
+        c: qwen3.8-flash-next-strata-abliterated
       sets:
-        main: "(p | s)"
+        main: "(p | s | c)"
 
     # -----------------------------------------------------------------------
     # The run-config JSON rendered VERBATIM to /profile/strata-iq3_s.json
@@ -1775,5 +1911,89 @@ strata:
       gpu: [0]
       # Mirrors the primary seed (same family recipe); the --plan gate
       # reviews it for the chip too.
+      parallel: 4
+      host: "127.0.0.1"
+
+    # -----------------------------------------------------------------------
+    # The SC117 abliterated IQ3_XXS swap rung's run-config, rendered VERBATIM
+    # to /profile/strata-abliterated-iq3_xxs.json by the same profile
+    # ConfigMap. Shape: a clone of the primary's run-config (same engine
+    # build, same memory declaration — the 43 GB IQ3_XXS expert set sits
+    # inside today's ~50 GiB arena envelope, RESEARCH Q4 table) with the
+    # pack/weights/tokenizer switched to the SC117 set staged by model-
+    # fetch's manual abl step. The catalog gate (2026-10-30, pinned v0.2.7
+    # setup.py) proved setup carries no abliterated family, so these paths
+    # follow SC117's own strata/README.md migration recipe, NOT a setup.sh
+    # catalog layout — and they must stay off the IQ3_S pair's files: the
+    # ablation moved tensor offsets, and pointing a new arena at the old
+    # pack serves wrong weights under a new id.
+    # -----------------------------------------------------------------------
+    engineProfileAbliterated:
+      # C-A keyless shipped default (identical posture to the other two —
+      # SC117 is a public ungated pack, so this profile carries no secret
+      # reference of any kind, not even a disabled one).
+      api_key: "none"
+      # Engine build is per-node, not per-rung: byte-identical exe/cwd/
+      # lib_dirs/backend/gpu/parallel/host to the primary (same compiled
+      # gfx1201 checkout engine, same ROCm trees).
+      exe: /models/strata/Strata/engine/strata
+      # serve's engine child inherits this model's env layer (the layer
+      # above keeps single-source truth); a duplicate here could silently
+      # re-pin values the chart gates.
+      env: {}
+      cwd: /models/strata/Strata
+      # Own progress log on the claim (the --plan-gate and unload-timing
+      # evidence trail for THIS rung).
+      log: /models/strata/Strata/strata-abliterated-iq3_xxs.log
+      args:
+        # Fresh iq_pack pack built from the SC117 shards by model-fetch
+        # (never the iq3_s pack — see the header); the tokenizer directory
+        # rides inside it, same measured layout as the primary's pack.
+        - --pack /models/strata/Strata-data/packs/abliterated-iq3_xxs
+        # SC117's own two-shard IQ3_XXS (47.34 GB + shard 2, the 28.8 GB
+        # n-gram/PLE table — the XXS tier ships PLE just like IQ3_S, HF-tree
+        # verified at the chunk gate).
+        - --native /models/strata/Strata-data/models/IQ3_XXS-abliterated/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf
+        - --ple-gguf /models/strata/Strata-data/models/IQ3_XXS-abliterated/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00002-of-00002.gguf
+        # Same qwen-architecture expert profile the other two profiles share
+        # (setup's checkout data; the coder family is the only variant).
+        - --expert-profile /models/strata/Strata/data/expert-profile.bin
+        - --expert-cache auto
+        - --spec 4
+        - --spec-min-p 0.5
+        # Shared stock draft-head runtime staged on the claim by the q3
+        # provisioning (setup's mtp_fetch path). SC117 ships its own
+        # strata/rt built from the SAME pinned stock BF16 checkpoint — the
+        # abliteration never touched the MTP head — and ORCA.md prescribes
+        # the same shared rt for foreign packs; the target model verifies
+        # every draft, so acceptance is this pack's only variable.
+        - --mtp /models/strata/Strata-data/mtp/rt
+        - --max-context 262144
+        - --kv int8
+        # Memory declaration byte-equal to the IQ3_S pair: the #1601 cgroup
+        # lockstep (92160 inside the 96Gi limit) and the owner's parked-
+        # conversation budget are node-wide, and the XXS arena is SMALLER
+        # than the IQ3_S anchor's — no re-tune, no second untracked budget.
+        - --kv-resident 32768
+        - --prefill auto
+        - --memory-limit-mib 92160
+        - --conversation-cache-mib 32768
+        - --conversation-cache-slots 16
+      # Person-wins layer (RESEARCH §2), same rule as the other profiles.
+      user_args: []
+      tokenizer: /models/strata/Strata-data/packs/abliterated-iq3_xxs/tokenizer
+      model_name: qwen3.8-flash-next-abliterated-iq3_xxs
+      lib_dirs:
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib
+      backend: hip
+      # UNIQUE inner alias — deliberately not the primary's bare
+      # qwen3.8-flash-next: two engine profiles claiming one alias inside
+      # one supervisor is a shadowing hazard for direct/debug hits, and the
+      # peer hop always rewrites the request model to the bare inner ID
+      # anyway (RESEARCH §3).
+      aliases:
+        - qwen3.8-flash-next-abliterated
+      gpu: [0]
       parallel: 4
       host: "127.0.0.1"

@@ -93,12 +93,16 @@ def test_c01_matrix_grows_to_three_alternatives():
     for model_id, letter in want.items():
         assert vars_.get(letter) == model_id, f"matrix.vars.{letter} = {vars_.get(letter)!r}, want {model_id!r}"
     combos = S.matrix_expansions(cfg).get("main", [])
-    arenas = set(S.INNER_MATRIX_VARS)
+    # matrix_expansions resolves vars to MODEL ids, so the arena set must be the
+    # VALUES of the letter table — intersecting on the letters (p/s/c/…) would
+    # match nothing and make the law vacuously true.
+    arenas = set(S.INNER_MATRIX_VARS.values())
     for combo in combos:
         clash = combo & arenas
         assert len(clash) <= 1, f"matrix combo co-loads arenas {sorted(clash)} — arenas must stay alternatives"
-    assert {next(iter(c & arenas)) for c in combos if c & arenas} >= set(want), (
-        f"arenas reachable in sets.main: {sorted({next(iter(c & arenas)) for c in combos if c & arenas})}"
+    reachable = {next(iter(c & arenas)) for c in combos if c & arenas}
+    assert set(want) <= reachable, (
+        f"arenas reachable in sets.main: {sorted(reachable)}, want at least {sorted(set(want))}"
     )
 
 
@@ -170,7 +174,22 @@ def test_c01_paths_are_strata_data_shaped_and_distinct():
         val = args.get(flag) or ""
         assert val.startswith("/models/strata/Strata-data/"), f"{flag} = {val!r} outside Strata-data"
         assert val != primary.get(flag), f"{flag} reuses the IQ3_S primary's path — wrong weights behind a new id"
-    assert args.get("--tokenizer"), "--tokenizer (a DIRECTORY inside the pack) missing from the profile"
+    # tokenizer is a TOP-LEVEL run-config key, never an engine arg: the pinned
+    # checkout's vocabulary (setup.py@v0.2.7 SETUP_KEYS) and both serving
+    # profiles spell it beside `args`, and it resolves to the tokenizer
+    # DIRECTORY riding inside each pack (the seed's GGUF-file pointer was the
+    # crash strata.py named).
+    prof = _profile_for(S.ABL_ID)
+    tok = prof.get("tokenizer")
+    assert isinstance(tok, str) and tok.startswith("/models/strata/Strata-data/"), (
+        f"profile-level tokenizer = {tok!r} — absent, or spelled as an engine arg instead of the profile key"
+    )
+    assert not any("tokenizer" in str(a) for a in S.arg_tokens(prof)), (
+        "tokenizer appears among the engine args — the engine never parses it there"
+    )
+    assert tok != S.profile_json(_on(), S.PROFILE_PRIMARY_FILE).get("tokenizer"), (
+        "abliterated arena resolves the IQ3_S pack's tokenizer directory — each pack carries its own"
+    )
 
 
 @helm
@@ -186,8 +205,24 @@ def test_c01_node_bleed_flags_stay_absent():
     assert S.VOID_ENV_TOKEN not in S.env_list(_model(S.ABL_ID))
 
 
-# --- AC3 preservation: the pre-cf-86 profiles are untouched -------------------
+@helm
+def test_c01_inner_alias_is_frozen_and_does_not_shadow_the_family():
+    """C01 freezes the inner alias `qwen3.8-flash-next-abliterated` and forbids
+    a claim on `qwen3.8-flash-next`: the two serving arenas already share that
+    family alias, so a third claimant on the same route key would spread
+    requests across arenas invisibly."""
+    prof = _profile_for(S.ABL_ID)
+    val = prof.get("aliases")
+    claimed = {val} if isinstance(val, str) else set(val or [])
+    assert "qwen3.8-flash-next-abliterated" in claimed, (
+        f"abliterated profile aliases {sorted(claimed)}, want the frozen 'qwen3.8-flash-next-abliterated'"
+    )
+    assert "qwen3.8-flash-next" not in claimed, (
+        "the abliterated arena shadows the family alias qwen3.8-flash-next"
+    )
 
+
+# --- AC3 preservation: the pre-cf-86 profiles are untouched -------------------
 
 @helm
 def test_c01_existing_profiles_byte_unchanged():
@@ -236,6 +271,33 @@ def test_c01_serve_path_is_keyless():
                 f"strata init carries {tok} before C02's R-d-gated orca rung exists — "
                 "C01's pack is ungated (keyless posture untouched)"
             )
+
+
+@helm
+def test_c01_init_env_stages_the_abliterated_set():
+    """C01 AC6's other half: the arena is only real if the model-fetch init is
+    told to stage it — STRATA_QUANTS must carry the `abl` iteration and
+    STRATA_MODEL_ABL must name a model. Both are literal scalars: the set is
+    ungated SC117 material, so the C01 keys themselves never become secret
+    references (C02's download-only hf-token exception, when it lands, is
+    scoped to its own rung and pinned there)."""
+    docs, _raw = S.render_service_overlay()
+    inits = {c.get("name"): c for c in S.strata_pod(docs)["spec"].get("initContainers") or []}
+    fetch = inits.get("model-fetch")
+    assert fetch, f"strata pod has no model-fetch init (inits: {sorted(inits)})"
+    entries = {e.get("name"): e for e in fetch.get("env") or []}
+    quants = (entries.get("STRATA_QUANTS") or {}).get("value")
+    assert "abl" in str(quants or "").split(","), (
+        f"STRATA_QUANTS = {quants!r} — the abl iteration never runs, so no pack lands"
+    )
+    abl = (entries.get("STRATA_MODEL_ABL") or {}).get("value")
+    assert isinstance(abl, str) and abl.strip(), (
+        f"STRATA_MODEL_ABL = {abl!r} — the init has no model to fetch (catalog-gate value missing)"
+    )
+    for name in ("STRATA_QUANTS", "STRATA_MODEL_ABL"):
+        entry = entries.get(name)
+        assert entry, f"model-fetch env lacks {name} (env: {sorted(entries)})"
+        assert "valueFrom" not in entry, f"{name} sourced via valueFrom — C01 stages scalars only"
 
 
 @helm
