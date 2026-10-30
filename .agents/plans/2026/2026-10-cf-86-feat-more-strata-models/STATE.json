@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-cf-86-feat-more-strata-models",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e77776738ffe0o3T6H95UMtL2m",
   "test_session": "ses_e762a6e57ffeKxIM263C9NJN2G",
   "current_wave": 4,
@@ -40,7 +40,19 @@
     "coord_ruling": "Deviation (1) ACCEPTED (see DECISIONS 2026-10-30 coord entry): goldens stay byte-invariant; dev must NOT touch charts/llama-swap/tests/evidence/ goldens; sanctioned delta enforced by frozen-table growth + exact new-id allowances in test_flashnext_blast_radius."
   },
   "run_state": {
-    "status": "resumed-human-directed",
+    "status": "completed",
+    "final_round": {
+      "at": "2026-10-30",
+      "session": "ses_e7365b333ffe19XSvXagYKnaQC",
+      "verdict": "APPROVED",
+      "posture": "plain 350P/8S/0F, armed 358P/0S/0F — zero residual first time in ticket; all guards rc 0 clean + range; aislop 100 CI+range postures",
+      "routed_run_end": [
+        "chores card: descBase 180B-vs-177B/125B + KLD phrasing; four values.yaml 96Gi pair-comment sites (2261/2341 in-range, 2035/1501 pre-made-false); cf-78 stale reference; era-3 PROVENANCE '(15 lines)'; RESEARCH Q4-total ledger nit",
+        "convention promotions to agents-sync: set(<dict>) vacuous-law, SETUP_KEYS-before-flag-arms, read-every-failure-message, baseline-proof triple, c8 literal-admits+probe-loop",
+        "engine: pipeline-locks heartbeat vs multi-hour chains; dev-boards MCP vanish post-restart; list_comments empty-text",
+        "user calls: strix entry; 10 unroutable rungs; machine-local catalogs; pipeline-default Q4 re-route (conditional arm); watch #4460; on-target runbook (6 items, final-review RESULT)"
+      ]
+    },
     "detail": "Context lock was reaped 2026-10-29T20:24:38Z (2 h stale — no force-beat before the U8 question pause + long subagent chain). Run stopped per contract; the owner then instructed 'Please continue' (2026-10-30) — original session re-claimed Context (new setId ce72239d, claim succeeded ⇒ no other holder), bookkeeping below stands. Heartbeat discipline active: force pipeline_heartbeat before every question pause and around every subagent launch/hand-back.",
     "branch_head_at_stop": "4f7126689",
     "uncommitted_at_stop": "8 modified + 7 untracked test files, all under charts/llama-swap/tests/ — committed at resume as the test wave",
