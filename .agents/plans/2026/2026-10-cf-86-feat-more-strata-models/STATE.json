@@ -65,13 +65,15 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "test-armed",
       "wave": 2,
       "depends_on": ["C01"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        "2026-10-30 test-arms C02 (ses_e762a6e57ffeKxIM263C9NJN2G): DONE — +6 additive arms (downloader law, byte pins, .setup-ORCA marker law) in test_strata_orca_rung.py + TEST_SPEC §9.7; suite 52/283/3 → 54/286/4 (collected 338→344 exact); C01 file still 14/14. Repaired own author fault (peers arm _service_docs double-unpack — had been red-for-wrong-reason two rounds; now fails with designed message; grepped for twins, none). MEASUREMENTS: orcarouter METADATA public (200 anon) / BYTES gated (resolve 401+WWW-Authenticate Bearer, gated:auto); SC117 answers 206 Range (C01 keyless justified). Byte pins: SC117 47342144896+28800138432; orca 44637691008+40564977024 (Σ85.20GB == RESEARCH [S23]). C01 nits deliberately NOT pinned (would reopen approved chunk) — routed back as open question. Unmeasurable-statically flag for C02 dev/review: does venv python3.12 urllib forward Authorization across huggingface.co→us.aws.cdn.hf.co redirect — dev must verify + design around it. next: C02 dev vs 10 red arms, 3 green regression walls."
+      ]
     },
     "C03": {
       "status": "pending",

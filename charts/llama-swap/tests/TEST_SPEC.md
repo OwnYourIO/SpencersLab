@@ -1108,7 +1108,9 @@ dev edits surfaces, never these files.
 ### 9.2 Amendments to existing files (never weaken; re-expression ledger)
 
 Author-side validation faults found by the C01 dev round (and the mechanical
-repairs applied to them, incl. the latent C02/C06 twins) are ledgered in §9.6.
+repairs applied to them, incl. the latent C02/C06 twins) are ledgered in §9.6;
+the C02 test round's additive pack arms and its one author-fault repair
+(`test_c02_peers_carries_the_orca_arena_once` unpack) are in §9.7.
 
 * `test_config_parity.py::test_repl_tables_match_frozen_decisions` — the
   frozen-table identity is now golden-union − REMOVED + `CF86_NEW_IDS` (the
@@ -1273,3 +1275,78 @@ unchanged at 3); the repaired C02/C06 reds now fail with their designed
 "chunk not landed" messages instead of harness-shaped ones;
 `RUN_HF_CHECK=1` arms still pass; `npx aislop ci --changes` clean
 (0 errors / 0 warnings).
+
+### 9.7 C02 test round — pack-script arms (C01 review deferral, 2026-10-30)
+
+C01 reached APPROVED (r2, f0b29ccc7) with one deferred item: no suite arm pinned
+the manual-pack script's invariants — downloader mechanism, byte pins, marker
+ordering. C02 stages its 85.20 GB gated pack through that same init and the same
+downloader, so a regression there is C02 acceptance. Six additive arms landed in
+`test_strata_orca_rung.py`; no existing arm was touched.
+
+Pinned literals, read 2026-10-30 with no credential in the request:
+
+| object | bytes | source |
+| --- | --- | --- |
+| SC117 …-abliterated IQ3_XXS shard 1 / 2 | 47342144896 / 28800138432 | `/api/models/…/tree/main/IQ3_XXS` → 200 |
+| orcarouter …-Uncensored IQ3_XXS shard 1 / 2 | 44637691008 / 40564977024 | `/api/models/…/tree/main` → 200 (sum 85202668032 = RESEARCH [S23]'s 85.20 GB) |
+
+Measured with the same anonymous requests: the orcarouter **tree metadata** is
+public, while `resolve/main` on the shard answers **401 + `WWW-Authenticate:
+Bearer`** (repo `gated: "auto"`) — that is the fact AC3's download-only token
+rests on, and SC117's equivalent answers 206 with a Range header (why C01 stays
+keyless). C02 dev: the gate is on the bytes, not the listing.
+
+New arms (`test_strata_orca_rung.py`, law → posture before C02 dev):
+
+* `test_c02_downloader_reuses_the_venv_urllib_path_not_a_shell_client` — no
+  `curl`/`wget`/`aria2c`/`axel` invocation on any executable script line (the
+  rationale comments name curl to forbid it, hence the comment-stripped scan),
+  and the fetch stays `$SRC/.venv/bin/python` + stdlib `urllib.request` — the
+  mechanism C01 review finding 1 forced. GREEN today.
+* `test_c02_abliterated_stage_keeps_the_byte_pins_the_orca_stage_copies` — both
+  SC117 literals present and every `resolve/main` invocation carries a ≥8-digit
+  byte pin. GREEN today; it is the shape C02 must copy, so dropping a pin is
+  caught even if only the C01 half is edited.
+* `test_c02_reuse_source_marks_the_pack_only_after_it_builds` — C01's
+  `.setup-$TOK` marker sits behind a `-f` skip guard and is `touch`ed only after
+  `abl_pack` returns (variable name derived from the assignment, so a rename
+  cannot false-fail it). GREEN today; it pins the pattern C02 copies.
+* `test_c02_orca_stage_pins_the_orcarouter_byte_sizes` — the init names
+  `orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF` and pins both IQ3_XXS sizes on
+  the invocation lines. RED until C02 lands (designed pending).
+* `test_c02_orca_marker_is_touched_only_after_the_pack_completes` — the chunk's
+  `/models/strata/.pack-orca` marker (or a variable assigned to it) needs a `-f`
+  skip guard, a `touch`, and the touch must follow the byte-pinned downloads in
+  script order — a marker written early would make a partial 85 GB pack
+  permanent. RED until C02 lands.
+* `test_c02_pack_pins_still_match_the_live_hf_trees` (`RUN_HF_CHECK=1`, skipped
+  by default) — re-reads both trees anonymously and asserts the literals still
+  match, plus the 401-on-`resolve/main` gating fact. It deliberately never reads
+  `HF_TOKEN`: an arm that sent the token could not tell a public repo from a
+  gated one.
+
+Also repaired in this pass (author fault, §9.6 class): `test_c02_peers_carries_
+the_orca_arena_once` did `docs, _raw = _service_docs()`, but the local wrapper
+already indexes `[0]`, so the arm died on `ValueError: too many values to
+unpack` and was counted among C02's designed reds for the wrong reason. Now
+`docs = _service_docs()`; it fails with its designed "C02 not landed" message.
+No other file carries that mistake (grep over the suite).
+
+Deliberately NOT pinned: C01's two r2 nits — read the declared total
+(`Content-Range`/`Content-Length`) and exit before re-downloading on a pin
+mismatch, and size-check the `[ -s … ]` skip arm. Both are laws over
+already-APPROVED C01 code; pinning them now would put an approved chunk in the
+red and reopen it. If coord wants them, they are a C01-scoped follow-up change
+that C02's reuse benefits from — not C02 acceptance.
+
+Post-repair posture (helm on PATH, gates off): `python3 -m pytest
+charts/llama-swap/tests -q` → **54 failed, 286 passed, 4 skipped** (was
+52/283/3; 338 → 344 collected = the six new arms). `test_strata_orca_rung.py` =
+10 failed / 5 passed / 1 skipped, i.e. its designed reds 8 → 10 by exactly the
+two orca-specific arms; `test_strata_abliterated_rung.py` still 14/14; every
+other file's red count is unchanged (catalog 13, parity 8, q4 7, heretic-27B 7,
+heretic-fn 6, new_roster 2, schema 1). Skips 3 → 4 = the new `RUN_HF_CHECK`
+arm. Armed pass: `RUN_HF_CHECK=1 pytest test_strata_orca_rung.py::
+test_c02_pack_pins_still_match_the_live_hf_trees test_hf_liveness.py …
+test_c03_hf_pack_resolves_live` → 3 passed. `npx aislop ci --changes` clean.
