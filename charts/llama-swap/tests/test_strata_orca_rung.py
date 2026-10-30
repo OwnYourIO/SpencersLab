@@ -387,6 +387,93 @@ def test_c02_reuse_source_marks_the_pack_only_after_it_builds():
 
 
 @helm
+def test_c02_orca_profile_serves_exactly_the_staged_paths():
+    """The pairing law the C02 review deferred: the arena is only correct if the
+    paths the run-config profile serves are the paths the init stages — a profile
+    pointing one directory off serves the wrong weights or none, and every other
+    arm stays green. Derived from both sides of the render (script assignments and
+    profile args), so a rename on one side goes red instead of a literal on the
+    other side drifting with it."""
+    docs = _docs()
+    tier = _staged_tier(_service_docs())
+    staged = _staged_paths(_init_script(docs), tier)
+    prof = _profile()
+    args = dict(S.arg_pairs(prof))
+
+    assert tier == "IQ3_XXS", f"orca staging tier {tier!r} — IQ3_XXS is the only validated Orca quant"
+    assert args.get("--pack") == staged["pack"], (
+        f"profile --pack {args.get('--pack')!r} != the pack the init builds at {staged['pack']!r}"
+    )
+    assert prof.get("tokenizer") == f"{staged['pack']}/tokenizer", (
+        f"profile tokenizer {prof.get('tokenizer')!r} != iq_pack's exported directory "
+        f"{staged['pack']}/tokenizer (the pack carries its own tokenizer/)"
+    )
+    assert args.get("--native") == staged["s1"], (
+        f"profile --native {args.get('--native')!r} != staged shard 1 {staged['s1']!r} "
+        "(the file iq_pack was run against)"
+    )
+    # ORCA.md's example profile points --native and --ple-gguf at the SAME shard
+    # for this pack: its PLE table rides inside shard 1, unlike the SC117 pair.
+    assert args.get("--ple-gguf") == staged["s1"], (
+        f"profile --ple-gguf {args.get('--ple-gguf')!r} != staged shard 1 {staged['s1']!r} — "
+        "the orcarouter PLE table lives in shard 1 (ORCA.md)"
+    )
+    legs = _orca_download_legs(_init_script(docs))
+    for key in ("s1", "s2"):
+        assert key in legs, (
+            f"the init never downloads ${{{key}}} ({staged[key]!r}) — iq_pack reads both "
+            "shard halves, so an unstaged half is a broken pack"
+        )
+        assert legs[key] in ORCA_SHARD_BYTES, (
+            f"the ${{{key}}} leg carries byte pin {legs[key]}, outside the tree-API "
+            f"pins {ORCA_SHARD_BYTES} — the resume/verify target and the evidence disagree"
+        )
+
+
+def _staged_tier(service_docs) -> str:
+    """The quant tier the init stages for the orca pseudo-family, read from the
+    rendered model-fetch env (`STRATA_MODEL_ORCA=[family/]TIER`)."""
+    entries = {e.get("name"): e for e in _init_container(service_docs).get("env") or []}
+    value = (entries.get("STRATA_MODEL_ORCA") or {}).get("value")
+    assert isinstance(value, str) and "/" in value, (
+        f"model-fetch env STRATA_MODEL_ORCA = {value!r} — the init has no orca routing token"
+    )
+    return value.rsplit("/", 1)[-1]
+
+
+def _staged_paths(script: str, tier: str) -> dict:
+    """The staging layout from the orca_pack body: dir/pack/stem assignments plus
+    the two shard paths, expanded with the tier the loop passes."""
+    body = re.search(r"^orca_pack\(\) \{\n(.*?)\n\}$", script, re.S | re.M)
+    assert body, "no orca_pack function in the model-fetch init — the C02 pack step is not landed"
+    block = body.group(1)
+
+    def assign(name: str) -> str:
+        m = re.search(rf"^\s*{name}=(\S+)\s*$", block, re.M)
+        assert m, f"orca_pack assigns no {name} — the staging layout changed shape, re-express this arm"
+        return m.group(1)
+
+    def expand(value: str, seen: dict) -> str:
+        out = value.replace("$tierl", tier.lower()).replace("$tier", tier)
+        for name, val in seen.items():
+            out = out.replace(f"${name}", val)
+        return out
+
+    paths, order = {}, ("dir", "pack", "stem", "s1", "s2")
+    for name in order:
+        paths[name] = expand(assign(name), paths)
+    return paths
+
+
+def _orca_download_legs(script: str) -> dict:
+    """Variable the each orca_dl writes -> its byte pin. Keys are bare names
+    (`s1`), so they line up with the orca_pack assignments the pairing law
+    compares against."""
+    return {m.group(1): int(m.group(2)) for m in re.finditer(
+        r'orca_dl\s+"[^"]+"\s+"\$\{?(\w+)\}?"\s+(\d+)', script)}
+
+
+@helm
 def test_c02_orca_stage_pins_the_orcarouter_byte_sizes():
     """Branch-B staging of the gated IQ3_XXS pair through the same byte-pinned
     downloader. The repo literal is what stops the orca id from fetching some

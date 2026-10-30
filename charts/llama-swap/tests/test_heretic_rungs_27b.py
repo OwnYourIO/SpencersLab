@@ -12,6 +12,11 @@
 # with embedded MTP per RESEARCH [S22]). Live resolution runs in
 # test_heretic_rungs_flashnext.py::test_c03_hf_pack_resolves_live under
 # RUN_HF_CHECK=1 (it checks both cf-86 refs in one network pass).
+#
+# Message class: every red before C04 lands names C04 (the guards in _cmd/_model
+# and the explicit asserts), never a bare KeyError. In a count-only residual map
+# an arm that dies on KeyError is indistinguishable from suite breakage — the
+# C02 round proved that costs a dev round to untangle.
 
 from __future__ import annotations
 
@@ -36,6 +41,12 @@ def _cmd() -> str:
     models = L.all_models_of(cfg)
     assert NEW_ID in models, f"gpu-ai render has no {NEW_ID} — C04 not landed"
     return L.effective_cmd(cfg, NEW_ID)
+
+
+def _model() -> dict:
+    models = L.all_models_of(_ai())
+    assert NEW_ID in models, f"gpu-ai render has no {NEW_ID} — C04 not landed"
+    return models[NEW_ID]
 
 
 # --- AC1: the rung and its dense regime -------------------------------------
@@ -88,8 +99,7 @@ def test_c04_hf_ref_is_the_gate_verified_pack_with_embedded_mtp():
 
 @helm
 def test_c04_ttl_matches_dense_siblings():
-    models = L.all_models_of(_ai())
-    assert models[NEW_ID].get("ttl") == 300, f"{NEW_ID} ttl = {models[NEW_ID].get('ttl')!r}, siblings use 300"
+    assert _model().get("ttl") == 300, f"{NEW_ID} ttl = {_model().get('ttl')!r}, siblings use 300"
 
 
 # --- AC2: matrix law — main dense alternation only ---------------------------
@@ -115,7 +125,9 @@ def test_c04_never_two_dense_rungs_in_one_combo():
     cfg = _ai()
     models = L.all_models_of(cfg)
     dense_ids = {mid for mid, m in models.items() if "-np 1" in L.effective_cmd(cfg, mid)}
-    assert NEW_ID in dense_ids
+    assert NEW_ID in dense_ids, (
+        f"{NEW_ID} carries no dense-regime leg (-np 1) — C04 not landed or keyed to the wrong regime"
+    )
     for name, combos in S.matrix_expansions(cfg).items():
         for combo in combos:
             clash = combo & dense_ids

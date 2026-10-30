@@ -136,19 +136,27 @@ _STRATA_PEERS_EVIDENCE = L.TESTS_DIR / "evidence" / "strata-peers-expected.yaml"
 
 
 def _cf77_peers_carved(base: dict, cur: dict) -> bool:
-    """True iff the ONLY top-level base→cur difference is the pinned cf-77
-    peers delta (then callers carve `peers` and stay strict on everything
-    else). Exactness lives here: key sets and values compared against the
-    evidence file, never against a copy of its contents."""
+    """True iff the ONLY top-level base→cur differences are the pinned cf-77
+    peers delta plus (from cf-86 on) matrix growth that is itself inside the
+    sanctioned additive shape (then callers carve `peers` and stay strict on
+    everything else). Exactness lives here: key sets and values compared against
+    the evidence file, never against a copy of its contents."""
     import yaml
 
     if "peers" in base or base.get("peers") is not None:
         return False
     if cur.get("peers") is None:
         return False
-    others = [k for k in (set(base) | set(cur)) - {"models", "macros", "peers"}
+    others = [k for k in (set(base) | set(cur)) - {"models", "macros", "peers", "matrix"}
               if base.get(k) != cur.get(k)]
     if others:
+        return False
+    # matrix joins the carve ONLY while the cf-86 guard below reports nothing:
+    # the sanctioned vars/sets growth and the peers wave are the same change
+    # (a new rung needs both a matrix letter and a peers route), and any matrix
+    # edit outside the pinned additive shape still refuses the carve, so the
+    # peers delta goes red together with it.
+    if base.get("matrix") != cur.get("matrix") and _cf86_matrix_violations(base, cur):
         return False
     evidence = yaml.safe_load(_STRATA_PEERS_EVIDENCE.read_text())["strata"]
     peers = cur["peers"]
@@ -228,19 +236,23 @@ def test_c03_ac2_matrix_hooks_scalars_identical():
 
 def test_c03_ac3_gpu_render_preserved():
     """AC3 'byte-identical to pre-chunk', enforced structurally on the parsed
-    config + exactly on every cmd STRING. One documented exemption: the derived
+    config + exactly on every cmd STRING. Two documented allowances: the derived
     display fields (name/description) of the five gpu-echoed flash-next ids —
-    removing the family draft/spec legitimately drops the ', MTP' name marker.
-    Same display-excision lineage as ratified amendment P (TEST_SPEC §7);
-    everything else, echo cmds included, is strict."""
+    removing the family draft/spec legitimately drops the ', MTP' name marker
+    (same display-excision lineage as ratified amendment P, TEST_SPEC §7) — and
+    matrix.vars gaining the cf-86 letters, which the shared chart catalog forces
+    onto every cluster. The vars allowance is the confined one
+    (llama_swap_testlib.cf86_matrix_growth_violations): pinned letters only, and
+    no gpu combo changes. Everything else, echo cmds included, is strict."""
     _skip_without_helm()
     base = L.baseline_config("gpu")
     cur = L.rendered_config("gpu")
     display_exempt = {"name", "description"}
     diffs = []
-    for key in sorted((set(base) | set(cur)) - {"models"}):
+    for key in sorted((set(base) | set(cur)) - {"models", "matrix"}):
         if base.get(key) != cur.get(key):
             diffs.append(f"{key}: {base.get(key)!r} -> {cur.get(key)!r}")
+    diffs += L.cf86_matrix_growth_violations(base, cur)
     base_models = L.all_models_of(base)
     cur_models = L.all_models_of(cur)
     gained = sorted(set(cur_models) - set(base_models))

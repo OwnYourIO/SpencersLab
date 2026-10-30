@@ -18,7 +18,10 @@
 
 from __future__ import annotations
 
+import json
 import os
+import re
+import urllib.request
 
 import pytest
 
@@ -160,11 +163,25 @@ def test_c03_gpu_render_echoes_the_rung_macro_free():
 
 
 @helm
-def test_c03_chart_default_render_has_no_heretic_rung():
+def test_c03_chart_default_render_keeps_the_rung_echo_only():
     """`enabled: false` chart-side: the bare chart render (no service overlay)
-    must not gain the family — that is what keeps every other cluster clean."""
+    must not gain a RUNNABLE heretic rung. Absence is not the chart's mechanism
+    for that — CR1.4/P5 renders every catalog id, enabled or not, as the standard
+    id-prefixed fail-fast echo (test_boot_safety documents the default render as
+    entirely echo entries), so the executable law is echo-shaped and
+    macro-free."""
     models = L.all_models_of(L.rendered_config_default())
-    assert NEW_ID not in models, f"chart default render enables {NEW_ID}"
+    entry = models.get(NEW_ID)
+    assert entry, (
+        f"chart default render has no {NEW_ID} entry at all — the catalog lost it "
+        "(P5 superset law: every catalog id renders everywhere)"
+    )
+    cmd = entry.get("cmd") or ""
+    assert L.is_echo_cmd(cmd), f"chart default render makes {NEW_ID} runnable: {cmd!r}"
+    assert NEW_ID in cmd, f"chart default render/{NEW_ID} echo is not id-prefixed: {cmd!r}"
+    assert "${" not in cmd and "--fit" not in cmd and "-ot" not in cmd, (
+        f"chart default render/{NEW_ID} echo resolved content: {cmd!r}"
+    )
 
 
 # --- liveness (gated like the existing hf checks) ----------------------------
@@ -180,3 +197,68 @@ def test_c03_hf_pack_resolves_live():
             ("gpu-ai", "qwen38-heretic", "-hf", L.CF86_HF_REFS["qwen38-heretic"])]
     problems = hf_check.collect_problems(refs)
     assert not problems, "cf-86 -hf refs failed to resolve:\n" + "\n".join(problems)
+
+
+# Source-gate byte evidence, read from the HF tree API on 2026-10-30 with no
+# credential (spiritfather's republication is ungated — that is why this pack
+# needs no token leg, unlike the C02 orca fetch). Pinned so a re-upload or a
+# repo re-organization turns red instead of silently changing the ~130.8 GiB of
+# weights the node pulls:
+#   Q4_K_M/Qwen3.8-Flash-Next-heretic-2-Q4_K_M-0000N-of-00005.gguf  (N = 1..5)
+#   mtp/mtp-Qwen3.8-Flash-Next-heretic-2-Q8_0.gguf                  (the named draft)
+# Recorded at the same read, NOT asserted as a law: Q4_K_M/MTP/ holds only
+# shards 1+6 of 6 and its files carry an uppercase "-MTP-", which defeats
+# hf_check's case-sensitive "-mtp-" skip while the HF listing sorts that
+# directory ahead of the trunk — llama.cpp's find_best_model takes the first
+# case-insensitive Q4_K_M[.-] hit, so the on-target pick needs verification
+# (C03 dev recorded the same hazard; the chunk's AC5 asks existence only).
+HERETIC_REPO = "spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF"
+HERETIC_TRUNK_BYTES = [10945472, 682434912, 54400261312, 47643214976, 37673027808]
+HERETIC_TRUNK_TOTAL = 140409884480
+HERETIC_DRAFT_BYTES = 4137429280
+
+
+@hf_gated
+def test_c03_hf_pack_bytes_still_match_the_source_gate():
+    """Churn guard for AC5's source gate: the Q4_K_M trunk must stay a complete
+    1..5 shard set at the pinned per-shard sizes, and the draft sidecar the gate
+    named must still exist at its pinned size (a silently resized pack is a
+    different model)."""
+    shards = _shards_by_index(_tree(HERETIC_REPO, "Q4_K_M"))
+    assert sorted(shards) == list(range(1, 6)), (
+        f"Q4_K_M trunk is no longer a complete 1..5 set: {sorted(shards)}"
+    )
+    assert [shards[i] for i in range(1, 6)] == HERETIC_TRUNK_BYTES, (
+        f"Q4_K_M shard sizes changed — re-run the source gate and re-pin here: "
+        f"{[shards.get(i) for i in range(1, 6)]}"
+    )
+    assert sum(shards.values()) == HERETIC_TRUNK_TOTAL, (
+        f"trunk total {sum(shards.values())} != gate-verified {HERETIC_TRUNK_TOTAL} (130.8 GiB)"
+    )
+    draft = {
+        f["path"]: f.get("size") or (f.get("lfs") or {}).get("size")
+        for f in _tree(HERETIC_REPO, "mtp")
+        if f["path"].endswith(".gguf")
+    }
+    assert list(draft.values()) == [HERETIC_DRAFT_BYTES], (
+        f"mtp/ draft sidecar set changed — the two-gate precedent re-pins through the test session: {draft}"
+    )
+
+
+def _shards_by_index(entries: list) -> dict:
+    """Shard number -> byte size for a split GGUF listing (…-0000N-of-0000M.gguf)."""
+    out = {}
+    for f in entries:
+        m = re.search(r"-(\d{5})-of-\d{5}\.gguf$", f["path"])
+        if m:
+            out[int(m.group(1))] = f.get("size") or (f.get("lfs") or {}).get("size")
+    return out
+
+
+def _tree(repo: str, path: str = "") -> list:
+    """Anonymous HF tree listing (stdlib only). Sends no Authorization header on
+    purpose: an ungated pack's evidence must stay re-checkable without a token,
+    and an arm that sent one could not tell a public repo from a gated one."""
+    url = f"https://huggingface.co/api/models/{repo}/tree/main" + (f"/{path}" if path else "")
+    with urllib.request.urlopen(url, timeout=30) as resp:
+        return json.loads(resp.read())

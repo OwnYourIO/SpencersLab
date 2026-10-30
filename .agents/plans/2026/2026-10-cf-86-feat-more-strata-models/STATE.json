@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e77776738ffe0o3T6H95UMtL2m",
   "test_session": "ses_e762a6e57ffeKxIM263C9NJN2G",
-  "current_wave": 3,
+  "current_wave": 4,
   "updated_at": "2026-10-29",
   "kickoff": {
     "card": "Yb9sccTQ3wq2445ib",
@@ -79,17 +79,19 @@
       ]
     },
     "C03": {
-      "status": "dev-complete-test-routed",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C02"],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": "DONE_WITH_CONCERNS(dev-round-1)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "dev_session": "ses_e74ae7c51ffeRvOGDX53xoNIKH",
       "handoffs": [
         "2026-10-30 dev C03 round 1 (ses_e74ae7c51ffeRvOGDX53xoNIKH): DONE_WITH_CONCERNS — family qwen3.8-flash-next-heretic chart-side (enabled:false default, mmap-regime flags verbatim -ngl 99/-ot exps=CPU/--load-mode mmap/--fit off) + matrix var fnher + service enablement + sets.solo alternation insert (after fnq4, before fnorca); rendered cmd name/ttl/spec verified. SOURCE GATE (live, record for files): spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF ungated, Q4_K_M = complete 5-shard trunk 140,409,884,480 B (130.8 GiB, README agrees); MTP head mtp/mtp-…Q8_0 4,137,429,280 B; mmproj BF16/F16/Q8_0 ship; per-<QUANT>/MTP/ dirs hold ONLY shards 1+6-of-6 — llama.cpp download.cpp@889edf43 find_best_model takes first case-insensitive Q4_K_M[.-] hit = that 2/6 pair (uppercase -MTP- defeats the *-mtp-* skip) => auto-draft-download would grab an unloadable set; README: head must be in-model, -md does not work; MTP needs unmerged PR #27836; stock master ignores head tensors. Pack says 177B total/~3B active (KLD Q4_K_M 0.0361) — corrects RESEARCH [S16] 125B/6B figures (different table). Validations: C03 file 8 passed/1 failed (6 designed reds cleared); FULL SUITE 44/296/4 → 42/298/4; RUN_HF_CHECK arms 2 passed; aislop 100; lint/renders pass. DEVIATIONS: spec: KEPT (expected-off; chunk two-gate precedent; PR-unmerged hazard recorded; C06/on-target arbiter) — review adjudicates; descBase '180B-class' NOT fixed (not trivial — feeds evidence-baked descriptions = test-session re-pin; + source conflict 177B vs 125B) — deferred to chores; capabilities text+image declared (mmproj can't auto-pick, manual staging noted). 4 PRE-GREEN ARMS ROUTED TO TEST SESSION: (1) default-render no-heretic arm unsatisfiable as written (CR1.4 echo required by sibling arm) — re-express as fail-fast-echo-present; (2) blast-radius peers-carve-out interlock disabled by sanctioned cf-86 matrix key — needs allowance (verified peers delta == evidence models_states[2] exact, _cf86_matrix_violations zero); (3) gpu vars-growth (fnher) has no allowance — models/sets unchanged; (4) off-parity byte-baseline broken by legit catalog growth — PROVENANCE.md sanctioned re-baseline route. Dev tried shell-writing RESEARCH.md, reverted when perms denied — coord files records instead (this handoff + DECISIONS)."
 ,
-        "coord-note 2026-10-30 (test-repair open_question 2): GREENLIGHT — C04 gets a byte-evidence arm mirroring C03's (0bserverx embedded-MTP pack 16,998,720,736 B, already in CF86_HF_REFS comment); route to the test session BEFORE C04 dev. open_question 1 (-hf auto-pick hazard): routed to C03 REVIEW as an adjudication (arm vs on-target human note vs dev-round-2 pin) — engineering call, not a user question."
+        "coord-note 2026-10-30 (test-repair open_question 2): GREENLIGHT — C04 gets a byte-evidence arm mirroring C03's (0bserverx embedded-MTP pack 16,998,720,736 B, already in CF86_HF_REFS comment); route to the test session BEFORE C04 dev. open_question 1 (-hf auto-pick hazard): routed to C03 REVIEW as an adjudication (arm vs on-target human note vs dev-round-2 pin) — engineering call, not a user question.",
+        "2026-10-30 test-repair C03 (ses_e762a6e57ffeKxIM263C9NJN2G): DONE — full text lives in TEST_SPEC §9.8 ledger (folding per convention): all 4 routed arms adjudicated MECHANICAL & repaired (echo-only re-expression; peers carve-out allows cf-86 matrix iff violations==[]; gpu vars-growth shared-law allowance; OFF baseline era1→era2 via PROVENANCE with new chunk-independent STRUCTURAL arm + re-capture cadence); queued deferrals landed: C02 path-pairing arm, C03 RUN_HF_CHECK byte-churn arm (trunk 5×=140,409,884,480 B + mtp draft 4,137,429,280 B), 9 bare-KeyError arms re-worded. Suite 42/298/4 → 38/304/5 (failed = 42−4 exact; +3 new arms; every message read); RUN_HF_CHECK 29/0; negative probes non-vacuous; aislop 100. 10 files uncommitted — must land in C03's chunk commit with the fixture+PROVENANCE. C01 r2 nits still unpinned (approved-chunk law).",
+        "2026-10-30 review C03 round 1 (ses_e746f8b4cffel6nFVCfgOd2mYo): APPROVED — re-validated everything independently (38/304/5 exact; RUN_FLAG_AUDIT regime 23 passed; fixture sha == era-2; two mutation probes confirm non-vacuity; authorship boundary clean). ADJ1 spec: KEPT upheld at pinned image (b11810: --spec-type arg defined, draft-mtp valid choice, impl instantiated only with -hfd ⇒ startup-safe no-op; PR #27836 still draft; fleet renders same legs). ADJ2 -hf auto-pick hazard verified at pinned image (find_best_model byte-identical @889edf43↔b11810; unsorted recursive listing; case-insensitive full-path regex vs case-sensitive mtp- skip; simulated pick = Q4_K_M/MTP/ 1-of-6 → 404s → LOUD download fail, NOT corrupt-model load). RULING (b): ship + on-target runbook in chunks/C03.md (pre-stage trunk into /models hf-cache, or -hff; unsloth lowercase sidecars = why fleet never hit this; q38ara single-file fine). MINOR → C04 test round: off_parity.py:77 {target} NameError. DEFERRED rec → C04 test round: find_best_model-pick churn arm."
       ]
     },
     "C04": {
@@ -124,7 +126,8 @@
   },
   "blocked": [],
   "deferred": [
-    "PRE-C06 test-session batch (owner: ses_e762a6e57ffeKxIM263C9NJN2G): (a) additive path-pairing arm — staged paths derived from init script dir=/pack=/stem= must equal profile --pack/--native/--ple-gguf/tokenizer strings (C02 review minor, benefits C06 q4 rung); (b) re-word the 5 bare-KeyError arms in C03/C04 files to designed-message class when those files are next touched; (c) C01 r2 nits laws (fail-immediately on declared-total mismatch; size-check the -s skip arm) if coord elects a hardening follow-up — NOT accepted silently into approved C01.",
-    "FINAL-REVIEW carry list: on-target human gates (serve --plan per new profile at first deploy; df headroom; R-d real-token 206 probe only if pack 401s on-target)."
+    "C04 TEST ROUND (before C04 dev; owner ses_e762a6e57ffeKxIM263C9NJN2G): (a) C04 byte-evidence arm — 0bserverx embedded-MTP 27B pack 16,998,720,736 B (greenlit coord-note C03); (b) off_parity.py:77 {target} NameError → designed-message class (C03 review minor); (c) RUN_HF_CHECK find_best_model-pick churn arm per cf-86 refs (C03 review deferred rec); (d) C04-era OFF structural check + re-capture per §9.8 cadence.",
+    "C01 r2-nit laws (declared-total fail-fast; -s size-check) — only if a hardening follow-up is elected; NOT silently reopened into the approved chunk.",
+    "FINAL-REVIEW carry list: on-target human gates (serve --plan per new profile at first deploy; df headroom; R-d real-token 206 probe only if pack 401s on-target); C03 -hf first-boot runbook choice pre-stage-trunk vs -hff (chunks/C03.md); descBase 180B-vs-177B/125B conflict → CHORES CARD at run end (friction follow-up, not this ticket)."
   ]
 }
