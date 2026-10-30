@@ -39,6 +39,11 @@
 # source edit + regenerate; the new contract's full text lives in
 # tests/pipeline-models/surface.sh), and c8 admits this ticket's plan folder
 # (D6 landing-widening). Every other arm stays green and holds.
+# cf-86 posture: c8-only widening — C05 landed catalog + plan-folder commits
+# on this branch; its chart/tests/evidence folders were already admitted, but
+# its own plan folder was not, so any dirty or untracked plan-folder state
+# (mid-chunk bookkeeping, this round's rulesync-surface.sh re-pin) read as
+# scope escape.
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF is retained only for c1's
@@ -413,6 +418,12 @@ fi
 # admitted by the .rulesync/skills/*, .opencode/skills/* and tests/* lines;
 # the folder pattern is an inline literal so scope-block window greps (the
 # A9 convention) still match this admission here.
+# cf-86 widening (2026-10-30, same D6 precedent): the more-strata-models
+# ticket's plan folder joins the admit list — its bookkeeping commits (STATE
+# handoffs, approved chunk files) land on this branch like every ticket since
+# cf-58, and any untracked/dirty plan-folder state reddened c8 before then.
+# Inline literal per the A9 window-grep convention (agent-perms A9's pinned
+# slug loop does NOT demand this slug: cf-86 lands no t14/c7 block admits).
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -441,11 +452,12 @@ if want c8; then
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
+      .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
       .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder) and cf-83 D6 (plan folder) widenings (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 and cf-86 (plan folder) widenings (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----
