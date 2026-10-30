@@ -95,13 +95,15 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "test-armed",
       "wave": 4,
       "depends_on": ["C03"],
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "handoffs": [
+        "2026-10-30 test-round C04 (ses_e762a6e57ffeKxIM263C9NJN2G): DONE — (a) 0bserverx live re-verify: flat single-file embedded-mtp ladder, RVN-Q4_K_M-mtp.gguf 16,998,720,736 B CONFIRMS CF86_HF_REFS (no re-pin), gated:False, no split-family exposure; arm pins size + two neighbour files proving the -mtp suffix is load-bearing. (b) off_parity.py:77 NameError repaired + suite-wide symtable scan clean, detector non-vacuity proven. (c) loader-ordering churn guard test_c04_hf_pick_resolves_to_a_complete_file_set (download.cpp pick rule mirrored in shared hf_* helpers; qwen38-heretic pick COMPLETE; heretic-2 pinned as KNOWN-BROKEN 2-of-6 — red-on-upstream-fix signal to retire C03 runbook). (d) OWN §9.8 matrix law repaired pre-dev (was over-strict + false chart-sets-purity claim; now confined CF86_SET_ADDITIONS law, probes both directions; C03 fetcher deduped to hf_tree). Suite 38/304/7 (failure SET identical; +2 gated skips). COORD ANSWERS: (1) services/gpu-ai/prod/values.yaml sets.main overlay edit PRE-AUTHORIZED for C04 dev; (2) CONFIRMED goldens stay byte-invariant (deviation(1) governs; AC4 're-pin' wording superseded — ledger truth); (3) heretic-2 auto-pick stays runbooked per review ADJ2. [Entry relocated here from C06 by coord after a mis-anchored insert briefly left C06's handoffs array unclosed — JSON validity re-checked by next reader.]"
+      ]
     },
     "C05": {
       "status": "pending",
