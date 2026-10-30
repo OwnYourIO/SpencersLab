@@ -1455,3 +1455,111 @@ message read: C04 7 (`test_heretic_rungs_27b`), C04-era frozen-table growth 11
 `RUN_HF_CHECK=1 pytest test_heretic_rungs_flashnext.py test_strata_orca_rung.py
 test_hf_liveness.py` → 29 passed, 0 skipped. `npx --yes aislop@latest ci
 --changes` clean.
+
+### 9.9 C04 test round — source gate, loader-pick guard, C04-era matrix law (2026-10-30)
+
+Run before C04 dev starts; covers STATE deferred[0] items (a)–(d). No existing
+arm weakened.
+
+**(a) C04 source gate re-verified live, no re-pin needed.** Anonymous recursive
+tree read of `0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF`
+(`gated: False`, 182 files): the ladder is FLAT and SINGLE-FILE, MTP embedded in
+the file name — `RVN-Q4_K_M-mtp.gguf` **16,998,720,736 B** (exactly the number
+recorded in `CF86_HF_REFS`' comment and RESEARCH [S22]), so the ref
+`…:Q4_K_M-mtp` is correct and C04 needs no `draft:` sidecar and no split-family
+exposure. Two neighbours are pinned alongside it because they are what makes the
+suffix load-bearing: `RVN-Q4_K_M.gguf` = 16,547,399,968 B and
+`Qwen3.8-27B-Heretic-Q4_K_M.gguf` = 16,547,400,032 B — a suffix-less ref does not
+resolve to a slightly different build, it resolves to a *different file*. New
+arm: `test_c04_hf_pack_bytes_still_match_the_source_gate` (`RUN_HF_CHECK=1`).
+
+**(c) Loader-ordering churn guard, with the C03 finding as its provenance.**
+`find_best_model`/`get_gguf_split_info`/`get_split_files` read from
+`common/download.cpp@889edf43`: the sidecar filter is a **case-sensitive** name
+test (`mmproj`, `imatrix`, `mtp-`, `eagle3-`, `dflash-`, `dspark-`), the QUANT
+search is **case-insensitive over the full path** (a directory name can satisfy
+it), only shard 1 of a split family is ever picked, and `get_split_files`
+collects whatever shards exist **without checking the declared count**.
+`llama_swap_testlib.hf_tree/hf_split_info/hf_is_model_file/hf_pick/hf_split_family`
+mirror that faithfully; `test_c04_hf_pick_resolves_to_a_complete_file_set`
+(`RUN_HF_CHECK=1`) runs the pick for every cf-86 ref:
+
+* `qwen38-heretic` → `RVN-Q4_K_M-mtp.gguf`, single file, complete ✓ (this is the
+  arm that, run against spiritfather at C03 authoring time, would have caught
+  the hazard).
+* `qwen3.8-flash-next-heretic-q4` → `Q4_K_M/MTP/…-MTP-00001-of-00006.gguf`,
+  family = shards **1+6 of 6** — the C03 hazard, reproduced live and pinned as
+  the known-broken shape (`C03_PACK_PICK`: exact pick path + exact family +
+  declared count). Upstream fixing or re-shuffling that tree turns the arm red
+  and re-pins through the test session, which is also the signal that coord can
+  retire the C03 runbook note. The C03 file's hazard comment now points here
+  instead of saying "needs verification".
+
+Probes: helper faithfulness (split parsing, `mtp-` skip vs uppercase `-MTP-`
+non-skip, shard-1-only pick), and the arm's non-vacuity — mutating the pinned
+family, or pointing `qwen38-heretic`'s ref at the heretic-2 repo, both go red
+with named messages.
+
+**(b) `test_strata_off_parity` NameError repaired.** The §9.8 structural arm's
+ConfigMap-metadata assertion referenced the deleted local `target`, so that
+failure path raised `NameError` instead of the designed message. Now
+`the {name} ConfigMap metadata diverged` (verified by mutating a copied fixture:
+designed AssertionError). Suite-wide re-scan for the same class: symtable walk
+over all 29 files flagging global lookups absent from the module namespace and
+builtins → only `__file__`/`__conditional_annotations__` (runtime/compiler
+dunders). Detector non-vacuity proven by re-injecting `{target}` into a scratch
+copy: reported at the exact function and line.
+
+**(d) C04-era matrix law corrected — the §9.8 version would have blocked C04.**
+`cf86_matrix_growth_violations` forbade ALL combo change and asserted "only the
+gpu-ai service overlay may put a letter into a set". False for C04: `q38her`
+joins the **chart-level** `sets.main` (chunk task 3), which the gpu box and
+every default-OFF render ride, so a sanctioned C04 render would have gone red
+there and in `test_c03_ac3_gpu_render_preserved` — a false red costing a dev
+round. Confined replacement, driven by `CF86_SET_ADDITIONS`
+(`solo` ← fnher, `main` ← q38her):
+
+* no baseline combo may disappear;
+* a set may only gain letters its `CF86_SET_ADDITIONS` entry names;
+* each gained combo must contain exactly one cf-86 id, and it must be one that
+  this set is allowed to gain;
+* the gained combo must be a baseline combo with exactly one member swapped for
+  that id — the new rung takes an existing alternation slot and never opens a
+  new co-residency class.
+
+Probes (in-memory on the parsed OFF config): sanctioned C04 delta → clean;
+`fnher` into chart main → named refusal; unpinned letter → refusal; pinned
+letter with the wrong id → refusal; baseline combo dropped → refusal; `q38her`
+gaining a `vl2bq4` partner → refusal.gpu-ai's own
+`_cf86_matrix_violations` keeps its looser "new combo must pair a cf-86 rung"
+rule: it guards the overlay's surface, it is green, and tightening it now is
+churn, not a repair — the asymmetry is deliberate.
+
+Cadence through C04 (for review): **no fixture re-capture before C04 lands** —
+the structural arm is green today and must still be green immediately after the
+C04 commit; the byte arm going red at that commit is expected and is the trigger
+for the test-session re-capture, never for a dev edit. Expected C04-era delta of
+the default-OFF render, and nothing else: `models` +`qwen38-heretic` as an
+id-prefixed fail-fast echo (~17 lines), `matrix.vars` +`q38her: qwen38-heretic`
+(1 line), `matrix.sets.main` expression +`| q38her` (same line, expansions gain
+only `{qwen38-heretic, home-3b-v3}`-shaped pairs). The structural arm cannot be
+exercised end-to-end before the chart edit exists (it renders the chart itself),
+so the law was verified at helper level by simulation; the arm runs for real in
+C04's round. Goldens: `tests/golden/{gpu,gpu-ai}.config.yaml` stay
+byte-untouched — the approved-ID arms derive `golden-union − REMOVED_IDS +
+CF86_NEW_IDS` (`test_config_parity::test_c02_1`) and the blast-radius arms allow
+gained ids ⊆ `CF86_NEW_IDS`, so C04 requires no golden re-pin under this
+lineage (chunk AC4's "goldens re-pinned" wording is flagged to coord).
+
+Authorship-internal dedup (no assertion changed): the §9.8 C03 byte arm fetched
+its own HF listing; it now calls `llama_swap_testlib.hf_tree`, so every cf-86
+evidence arm reads the same listing the pick guard reasons about. Re-ran that arm
+unarmed (skip), armed (pass) and negative (mutation still red).
+
+Posture (helm on PATH, gates off, C04 not yet landed): `python3 -m pytest
+charts/llama-swap/tests -q` → **38 failed, 304 passed, 7 skipped** — identical
+failure set to §9.8 (C04 7 + frozen-table 11 + C05 13 + C06 7, every message
+read), skips +2 = the two new `RUN_HF_CHECK` arms. Armed: `RUN_HF_CHECK=1
+test_heretic_rungs_flashnext.py test_strata_orca_rung.py test_hf_liveness.py` →
+29 passed; the two C04 evidence arms → 2 passed. `npx --yes aislop@latest ci
+--changes` clean.

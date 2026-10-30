@@ -792,8 +792,10 @@ CF86_HF_REFS = {
     "qwen3.8-flash-next-heretic-q4": "spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M",
     "qwen38-heretic": "0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp",
 }
-# Matrix vars the chunks add, letter -> rendered id (C03 fnher into the gpu-ai
-# SOLO alternation, C04 q38her into the gpu-ai main dense alternation).
+# Matrix vars the chunks add, letter -> rendered id. fnher joins the gpu-ai
+# SOLO alternation (service overlay); q38her joins the CHART-level main dense
+# alternation, which the gpu box and every default render ride (C04 task 3),
+# while gpu-ai narrows main with its own overlay expression.
 CF86_MATRIX_VARS = {
     "fnher": "qwen3.8-flash-next-heretic-q4",
     "q38her": "qwen38-heretic",
@@ -807,14 +809,99 @@ CF86_SET_ADDITIONS = {  # set name -> the ONLY vars its expression may gain
 CF86_MOE_OFFLOAD_LEG = '-ot "\\.ffn_.*_exps\\.=CPU"'
 
 
+# --- HF loader-pick simulation (llama.cpp common/download.cpp@889edf43) -----
+# The `-hf repo:QUANT` legs in this chart are resolved by llama-server's own
+# downloader, so a catalog ref can name a repo whose best-match pick is a
+# partial split family and every chart-side arm stays green. These functions
+# mirror find_best_model / get_gguf_split_info / get_split_files faithfully:
+# the sidecar filter is a CASE-SENSITIVE substring test on the file NAME, while
+# the QUANT search is case-INSENSITIVE over the FULL PATH (a directory name can
+# satisfy it), and only shard 1 of a split family is ever picked.
+
+HF_SIDECAR_TOKENS = ("mmproj", "imatrix", "mtp-", "eagle3-", "dflash-", "dspark-")
+_HF_SPLIT_RE = re.compile(r"^(.+)-([0-9]{5})-of-([0-9]{5})$", re.IGNORECASE)
+
+
+def hf_split_info(path: str) -> tuple[str, int, int]:
+    """(prefix, index, count) for a GGUF path. An unsplit file has index ==
+    count == 1 and prefix == the path minus its .gguf suffix."""
+    stem = path[: -len(".gguf")] if path.endswith(".gguf") else path
+    m = _HF_SPLIT_RE.match(stem)
+    if m:
+        return m.group(1), int(m.group(2)), int(m.group(3))
+    return stem, 1, 1
+
+
+def hf_is_model_file(path: str) -> bool:
+    """True unless the file name carries a sidecar token (mmproj/imatrix/draft
+    heads). Case-sensitive, as in the loader: an uppercase -MTP- in a file name
+    does NOT exclude it from being picked as the model."""
+    if not path.endswith(".gguf"):
+        return False
+    name = path.rsplit("/", 1)[-1]
+    return not any(tok in name for tok in HF_SIDECAR_TOKENS)
+
+
+def hf_pick(paths: list[str], tag: str) -> str | None:
+    """The file llama.cpp selects for `-hf repo:tag`, in listing order: the
+    first model file whose PATH matches `tag[.-]` case-insensitively, skipping
+    any non-first shard of a split family. None means no match (the loader then
+    errors out unless the tag was empty)."""
+    pat = re.compile(re.escape(tag) + r"[.-]", re.IGNORECASE)
+    for path in paths:
+        if not hf_is_model_file(path) or not pat.search(path):
+            continue
+        _, index, count = hf_split_info(path)
+        if count > 1 and index != 1:
+            continue
+        return path
+    return None
+
+
+def hf_split_family(paths: list[str], picked: str) -> list[str]:
+    """Every listed file the loader would download for `picked`: same split
+    prefix and same declared shard count. A single-file pick returns itself.
+    The loader never verifies the count is satisfied — a family shipping 2 of
+    6 shards downloads 2 files and then fails to load, which is what the
+    completeness assertion in the cf-86 arms is for."""
+    prefix, _, count = hf_split_info(picked)
+    if count <= 1:
+        return [picked]
+    return [p for p in paths if hf_split_info(p)[:1] == (prefix,) and hf_split_info(p)[2] == count]
+
+
+def hf_tree(repo: str, path: str = "", recursive: bool = True) -> list[dict]:
+    """Live file listing of an HF repo subtree as [{path, size}], in API order —
+    the order llama.cpp iterates, so a repo re-organization can change the pick.
+    Sends no credential: an arm that sent one could not tell a public repo from a
+    gated one, and both cf-86 packs list anonymously (gated: False)."""
+    import json
+    import urllib.request
+
+    url = f"https://huggingface.co/api/models/{repo}/tree/main" + (f"/{path}" if path else "")
+    if recursive:
+        url += "?recursive=true"
+    with urllib.request.urlopen(url, timeout=60) as resp:  # noqa: S310 - fixed HF host
+        entries = json.loads(resp.read())
+    return [
+        {"path": e["path"], "size": e.get("size") or (e.get("lfs") or {}).get("size")}
+        for e in entries
+        if e.get("type") == "file"
+    ]
+
+
 def cf86_matrix_growth_violations(base: dict, cur: dict) -> list[str]:
     """The confined shape of sanctioned cf-86 matrix growth in a render where
     the new rungs are NOT enabled: existing vars stay byte-equal, additions are
-    only the pinned letters at their pinned ids, and every set's DNF expansion
-    stays identical — a chart-level var joins every cluster's render, but only the
-    gpu-ai service overlay may put it into a set, so co-residency must not move
-    anywhere else. Expansions are compared, not expressions, so values or helm
-    re-wrapping cannot hide a pairing change."""
+    only the pinned letters at their pinned ids, and an expression may gain a
+    letter only for the (set, var) pairs in CF86_SET_ADDITIONS — C04's `q38her`
+    joins the CHART-level main alternation, so the gpu box and every default-OFF
+    render legitimately gain combos with it (the rung stays an echo there).
+    A gained combo must be a baseline combo with exactly one member swapped for
+    that new id: the new rung takes an existing alternation slot and never opens
+    a new co-residency class. Baseline combos never disappear. Expansions are
+    compared, not expressions, so values or helm re-wrapping cannot hide a
+    pairing change."""
     import strata_testlib as S
 
     out = []
@@ -826,12 +913,30 @@ def cf86_matrix_growth_violations(base: dict, cur: dict) -> list[str]:
     for name in sorted(set(c_vars) - set(b_vars)):
         if CF86_MATRIX_VARS.get(name) != c_vars[name]:
             out.append(f"matrix.vars.{name} = {c_vars[name]!r}: not a cf-86 pinned letter/value")
+    new_ids = set(CF86_NEW_IDS)
     b_exp, c_exp = S.matrix_expansions(base), S.matrix_expansions(cur)
     for name in sorted(set(b_exp) | set(c_exp)):
-        b_combos = sorted(map(sorted, b_exp.get(name, [])))
-        c_combos = sorted(map(sorted, c_exp.get(name, [])))
-        if b_combos != c_combos:
-            out.append(f"matrix.sets.{name}: combos changed: {b_combos} -> {c_combos}")
+        b_combos = {frozenset(c) for c in b_exp.get(name, [])}
+        c_combos = {frozenset(c) for c in c_exp.get(name, [])}
+        lost = sorted(sorted(c) for c in b_combos - c_combos)
+        if lost:
+            out.append(f"matrix.sets.{name}: baseline combos lost: {lost}")
+        allowed_ids = {CF86_MATRIX_VARS[v] for v in CF86_SET_ADDITIONS.get(name, ())}
+        for combo in sorted(map(sorted, c_combos - b_combos)):
+            combo_f = frozenset(combo)
+            picked = sorted(combo_f & new_ids)
+            if len(picked) != 1:
+                out.append(f"matrix.sets.{name}: new combo {combo} pairs {len(picked)} cf-86 rungs")
+                continue
+            if picked[0] not in allowed_ids:
+                allowed = sorted(CF86_SET_ADDITIONS.get(name, ()))
+                out.append(f"matrix.sets.{name}: new combo {combo} adds {picked[0]!r}; "
+                           f"only {allowed} may join this set")
+                continue
+            if not any((b - {drop}) | {picked[0]} == combo_f
+                       for b in b_combos for drop in b - new_ids):
+                out.append(f"matrix.sets.{name}: new combo {combo} opens a co-residency class "
+                           "no baseline combo has (the new id must take an existing slot)")
     return out
 
 

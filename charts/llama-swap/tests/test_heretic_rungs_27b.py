@@ -9,9 +9,9 @@
 # were keyed to the right memory law instead of copy-pasted.
 #
 # The -hf ref is the source-gate literal (CF86_HF_REFS: 0bserverx pack, Q4_K_M
-# with embedded MTP per RESEARCH [S22]). Live resolution runs in
-# test_heretic_rungs_flashnext.py::test_c03_hf_pack_resolves_live under
-# RUN_HF_CHECK=1 (it checks both cf-86 refs in one network pass).
+# with embedded MTP per RESEARCH [S22]). Live arms under RUN_HF_CHECK=1: ref
+# resolution in test_heretic_rungs_flashnext.py::test_c03_hf_pack_resolves_live
+# (both cf-86 refs in one network pass), byte pins and the loader-pick guard here.
 #
 # Message class: every red before C04 lands names C04 (the guards in _cmd/_model
 # and the explicit asserts), never a bare KeyError. In a count-only residual map
@@ -19,6 +19,8 @@
 # C02 round proved that costs a dev round to untangle.
 
 from __future__ import annotations
+
+import os
 
 import pytest
 
@@ -173,3 +175,90 @@ def test_c04_rana_escape_hatch_stays_the_only_new_raw_cmd():
     assert raw <= {"qwen38-rana", "whisper-large-v3"}, (
         f"raw-cmd (curl) entries beyond the documented escape hatches: {sorted(raw)}"
     )
+
+
+# --- AC5: source-gate byte evidence + loader-pick churn (gated) --------------
+
+hf_gated = pytest.mark.skipif(
+    os.environ.get("RUN_HF_CHECK") != "1",
+    reason="evidence gate: RUN_HF_CHECK=1 re-reads the C04 pack and re-derives the cf-86 loader picks",
+)
+
+# Read 2026-10-30 from the HF tree API with no credential (repo reports
+# gated: False, so this pack needs no token leg). The layout is flat and
+# single-file: RVN-Q4_K_M-mtp.gguf carries the MTP head IN MODEL, which is why
+# C04 has no draft: sidecar and no split-family exposure.
+C04_REPO = "0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF"
+C04_PACK_BYTES = 16998720736  # RVN-Q4_K_M-mtp.gguf — the ref's target (~17.0 GB, RESEARCH [S22])
+C04_PLAIN_BYTES = 16547399968  # RVN-Q4_K_M.gguf — what the ref resolves to WITHOUT -mtp
+
+
+@hf_gated
+def test_c04_hf_pack_bytes_still_match_the_source_gate():
+    """Churn guard for AC5's source gate: a re-upload or a re-ladder turns red
+    instead of silently changing the ~17.0 GB the node pulls. Both files are
+    pinned because the size difference between them is what makes the `-mtp`
+    suffix load-bearing — a suffix-less ref resolves to other weights."""
+    sizes = {e["path"]: e["size"] for e in L.hf_tree(C04_REPO)}
+    assert sizes.get("RVN-Q4_K_M-mtp.gguf") == C04_PACK_BYTES, (
+        f"RVN-Q4_K_M-mtp.gguf is {sizes.get('RVN-Q4_K_M-mtp.gguf')!r}, not the gate-verified "
+        f"{C04_PACK_BYTES} — re-run the source gate and re-pin CF86_HF_REFS via the test session"
+    )
+    assert sizes.get("RVN-Q4_K_M.gguf") == C04_PLAIN_BYTES, (
+        f"RVN-Q4_K_M.gguf is {sizes.get('RVN-Q4_K_M.gguf')!r}, not {C04_PLAIN_BYTES} — the "
+        "sibling that separates an embedded-MTP ref from a plain one moved"
+    )
+
+
+# Loader-ORDERING churn guard: the byte arms and hf_check's liveness pass only
+# ask whether the ref RESOLVES. The pick rule lives in llama.cpp's downloader
+# (mirrored by llama_swap_testlib.hf_pick/hf_split_family, cited there), and it
+# can land the loader on a partial split family while every chart-side arm stays
+# green — that is how cf-86 C03's heretic-2 ref resolves to a 2-of-6 pair (C03
+# review finding, runbook-handled). Pinning each ref's current pick keeps a
+# silently re-organized tree red in either direction.
+C03_ID = "qwen3.8-flash-next-heretic-q4"
+C03_PACK_PICK = {
+    "pick": "Q4_K_M/MTP/Qwen3.8-Flash-Next-heretic-2-Q4_K_M-MTP-00001-of-00006.gguf",
+    "family": [
+        "Q4_K_M/MTP/Qwen3.8-Flash-Next-heretic-2-Q4_K_M-MTP-00001-of-00006.gguf",
+        "Q4_K_M/MTP/Qwen3.8-Flash-Next-heretic-2-Q4_K_M-MTP-00006-of-00006.gguf",
+    ],
+    "shards_declared": 6,
+}
+
+
+@hf_gated
+def test_c04_hf_pick_resolves_to_a_complete_file_set():
+    """`qwen38-heretic`'s ref must keep picking a COMPLETE file set (a single
+    file, or a split family whose every declared shard exists). The same rule
+    run against C03's ref at authoring time is what would have caught its
+    hazard; today that pick is pinned as the known-broken shape
+    (C04_PACK_PICK), so an upstream fix or a re-shuffle goes red and re-pins
+    through the test session instead of quietly changing what the loader pulls."""
+    problems = []
+    for mid in L.CF86_NEW_IDS:
+        ref = L.CF86_HF_REFS[mid]
+        repo, _, tag = ref.rpartition(":")
+        entries = L.hf_tree(repo)
+        paths = [e["path"] for e in entries]
+        picked = L.hf_pick(paths, tag)
+        if picked is None:
+            problems.append(f"{mid}: -hf {ref} matches no model file under the loader's pick rule")
+            continue
+        family = L.hf_split_family(paths, picked)
+        declared = L.hf_split_info(picked)[2]
+        if mid == C03_ID:
+            if picked != C03_PACK_PICK["pick"] or family != C03_PACK_PICK["family"]:
+                problems.append(
+                    f"{mid}: pick/family changed from the runbook-pinned broken shape "
+                    f"(pick {picked!r}, family {family}) — the tree moved; re-pin via the test "
+                    "session and tell coord whether the C03 runbook note can go"
+                )
+            continue
+        if declared > 1 and len(family) != declared:
+            problems.append(
+                f"{mid}: -hf {ref} picks {picked!r} from a {declared}-shard family but only "
+                f"{len(family)} shards exist: {family}"
+            )
+    assert not problems, "cf-86 loader pick outside its pinned shape:\n" + "\n".join(problems)

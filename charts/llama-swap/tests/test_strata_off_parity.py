@@ -74,7 +74,7 @@ def test_c01_off_render_changed_only_by_sanctioned_catalog_growth():
         "or a template gate moved in the default-OFF render (r2-C01)"
     )
     assert {k: v for k, v in cur_cm.items() if k != "data"} == {k: v for k, v in base_cm.items() if k != "data"}, (
-        f"{target} ConfigMap metadata diverged"
+        f"the {name} ConfigMap metadata diverged"
     )
 
     cur_cfg = S.yaml.safe_load(cur_cm["data"]["config.yaml"])

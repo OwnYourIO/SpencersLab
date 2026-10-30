@@ -18,10 +18,8 @@
 
 from __future__ import annotations
 
-import json
 import os
 import re
-import urllib.request
 
 import pytest
 
@@ -206,12 +204,14 @@ def test_c03_hf_pack_resolves_live():
 # weights the node pulls:
 #   Q4_K_M/Qwen3.8-Flash-Next-heretic-2-Q4_K_M-0000N-of-00005.gguf  (N = 1..5)
 #   mtp/mtp-Qwen3.8-Flash-Next-heretic-2-Q8_0.gguf                  (the named draft)
-# Recorded at the same read, NOT asserted as a law: Q4_K_M/MTP/ holds only
-# shards 1+6 of 6 and its files carry an uppercase "-MTP-", which defeats
-# hf_check's case-sensitive "-mtp-" skip while the HF listing sorts that
-# directory ahead of the trunk — llama.cpp's find_best_model takes the first
-# case-insensitive Q4_K_M[.-] hit, so the on-target pick needs verification
-# (C03 dev recorded the same hazard; the chunk's AC5 asks existence only).
+# Measured at the same read, pinned as a known-broken pick (NOT as a servable
+# shape) by test_heretic_rungs_27b.py::test_c04_hf_pick_resolves_to_a_complete_file_set:
+# Q4_K_M/MTP/ holds only shards 1+6 of 6 and spells them uppercase "-MTP-", so
+# the loader's case-SENSITIVE name filter (mirrored by hf_check) does not skip
+# them, the recursive listing sorts that directory ahead of the trunk, and
+# llama.cpp's find_best_model returns that 2-of-6 pair as the primary
+# (C03 dev recorded the same hazard; AC5 asks existence only, and the runbook
+# carries the operator-side fix).
 HERETIC_REPO = "spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF"
 HERETIC_TRUNK_BYTES = [10945472, 682434912, 54400261312, 47643214976, 37673027808]
 HERETIC_TRUNK_TOTAL = 140409884480
@@ -224,7 +224,7 @@ def test_c03_hf_pack_bytes_still_match_the_source_gate():
     1..5 shard set at the pinned per-shard sizes, and the draft sidecar the gate
     named must still exist at its pinned size (a silently resized pack is a
     different model)."""
-    shards = _shards_by_index(_tree(HERETIC_REPO, "Q4_K_M"))
+    shards = _shards_by_index(L.hf_tree(HERETIC_REPO, "Q4_K_M", recursive=False))
     assert sorted(shards) == list(range(1, 6)), (
         f"Q4_K_M trunk is no longer a complete 1..5 set: {sorted(shards)}"
     )
@@ -235,11 +235,8 @@ def test_c03_hf_pack_bytes_still_match_the_source_gate():
     assert sum(shards.values()) == HERETIC_TRUNK_TOTAL, (
         f"trunk total {sum(shards.values())} != gate-verified {HERETIC_TRUNK_TOTAL} (130.8 GiB)"
     )
-    draft = {
-        f["path"]: f.get("size") or (f.get("lfs") or {}).get("size")
-        for f in _tree(HERETIC_REPO, "mtp")
-        if f["path"].endswith(".gguf")
-    }
+    draft = {e["path"]: e["size"] for e in L.hf_tree(HERETIC_REPO, "mtp", recursive=False)
+             if e["path"].endswith(".gguf")}
     assert list(draft.values()) == [HERETIC_DRAFT_BYTES], (
         f"mtp/ draft sidecar set changed — the two-gate precedent re-pins through the test session: {draft}"
     )
@@ -251,14 +248,5 @@ def _shards_by_index(entries: list) -> dict:
     for f in entries:
         m = re.search(r"-(\d{5})-of-\d{5}\.gguf$", f["path"])
         if m:
-            out[int(m.group(1))] = f.get("size") or (f.get("lfs") or {}).get("size")
+            out[int(m.group(1))] = f["size"]
     return out
-
-
-def _tree(repo: str, path: str = "") -> list:
-    """Anonymous HF tree listing (stdlib only). Sends no Authorization header on
-    purpose: an ungated pack's evidence must stay re-checkable without a token,
-    and an arm that sent one could not tell a public repo from a gated one."""
-    url = f"https://huggingface.co/api/models/{repo}/tree/main" + (f"/{path}" if path else "")
-    with urllib.request.urlopen(url, timeout=30) as resp:
-        return json.loads(resp.read())
