@@ -70,6 +70,11 @@ opencode:
     - action: shell
       resource: bash scripts/board-preload-probe.sh *
       effect: allow
+    # The `ls *` read grant (user ruling 2026-10-29): placed in the scoped-read
+    # family, not at the git tail — the push tail is the load-bearing last rows.
+    - action: shell
+      resource: ls *
+      effect: allow
     # In-work mark epoch: the kickoff recipe embeds $(date +%s%3N) in the
     # patch payload, and the shell matcher extracts command substitutions
     # and checks the date subcommand against this list on its own — the
@@ -309,9 +314,6 @@ opencode:
     - action: shell
       resource: git * push -P*
       effect: deny
-    - action: shell
-      resource: ls *
-      effect: allow
     - action: subagent
       resource: '*'
       effect: deny

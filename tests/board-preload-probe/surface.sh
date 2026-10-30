@@ -116,6 +116,10 @@ for path in sys.argv[1:]:
         bad.append(f"{path}: probe row absent (live grep arm names it first — cannot happen)")
     elif d is None or g is None or not (d < p < g):
         bad.append(f"{path}: probe row at {p} is not between the date allow ({d}) and the git block ({g}) — the uniform block shape broke")
+    else:
+        nxt = perms[p + 1]
+        if not (nxt.get("action") == "shell" and nxt.get("resource") == "ls *" and nxt.get("effect") == "allow"):
+            bad.append(f"{path}: the row after the probe allow is not the in-family `ls *` allow ({nxt}) — the 2026-10-30 re-seat order is …date, probe, ls directly before the git block")
 if bad:
     print("; ".join(bad)); sys.exit(1)
 PY
