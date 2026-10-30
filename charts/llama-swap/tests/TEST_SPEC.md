@@ -1563,3 +1563,105 @@ read), skips +2 = the two new `RUN_HF_CHECK` arms. Armed: `RUN_HF_CHECK=1
 test_heretic_rungs_flashnext.py test_strata_orca_rung.py test_hf_liveness.py` →
 29 passed; the two C04 evidence arms → 2 passed. `npx --yes aislop@latest ci
 --changes` clean.
+
+### 9.10 C04 test-repair round — census-key fault class + era-3 OFF re-capture (2026-10-30)
+
+C04 dev round 1 cleared 17 reds (38/304/7 → 22/320/7, implementation complete
+and uncommitted) and routed one validation fault back. Verified against the
+landed render before editing; ruling MECHANICAL — the AC2 law and its intent are
+unchanged, only the census discriminator was wrong.
+
+**Fault 1 — `test_c04_never_two_dense_rungs_in_one_combo` census.** The arm
+classed dense rungs by `-np 1`, which `${q36-common}` also injects, so
+`qwen36-heretic`/`qwen36-huihui` (MoE: `-ngl 99` + `-ot "\.ffn_.*_exps\.=CPU"`)
+joined the dense census and the law became unsatisfiable: 18 sanctioned
+dense×q36 co-loads exist on the landed render (16 on HEAD, legal since
+2026-10-18). Re-keyed on `-ngl 999`, the leg AC2 names: census = 12 ids, exactly
+the `qwen38` dense family, `qwen38-heretic` included, MoE overlap empty, 0
+clashes across all 165 combos. `NEW_ID ∈ dense_ids` and the ≤1-dense-per-combo
+law are kept, and the arm now refuses to pass vacuously (census non-empty,
+combos present, at least one combo actually containing a dense rung) — the
+green side had never been exercised at authoring because the `NEW_ID` guard
+aborted first.
+
+**Fault class named, second instance.** *Domain-mismatched census* — instance 1
+is §9.6's `arenas = set(INNER_MATRIX_VARS)` (matrix LETTERS collected where the
+DNF parser yields model IDs: one arm vacuous, its twin unsatisfiable); instance
+2 is this macro-shared flag. Its enabling class, the *early-abort guard that
+masks the green side* (§9.8 FRICTION), recurs here too: an arm that stops at a
+"chunk not landed" assert never runs the loop whose unsatisfiability would have
+exposed the census fault while the file was still unwritten.
+
+Discipline this implies, and the guard that now enforces it —
+`test_c04_regime_censuses_are_mutually_exclusive`: a census key must (a) belong
+to one regime family only — check the rendered `macros` map, where `-np 1` is in
+BOTH `q36-common` and `q38-common` while `-ngl 999` is only in `q38-common`;
+(b) be substring-safe against longer values (`-ngl 99` is a prefix of `-ngl 999`
+and must never be a census key; `-ngl 999` is the longest `-ngl` value and also
+catches the raw-cmd hatch `qwen38-rana`, which token-exact matching via
+`cmd_flag_value` would miss); (c) be paired, in the same file, with a
+mutual-exclusion assert over the two regimes so the misclassification goes red at
+the census, not as an unsatisfiable law elsewhere; (d) sit in an arm that asserts
+its own non-vacuity. Suite sweep for other censuses
+(`grep 'in L.effective_cmd'` → 3 sites): the C03 file's `--fit off` census is
+clean (that leg appears in no macro).
+
+Probes: injecting a real `qwen38-heretic × qwen3.8-27b-q4` combo → named clash;
+reverting the key to `-np 1` → the law goes red AND the new guard catches it
+("the census keys are not regime-exclusive").
+
+**Era-3 OFF re-capture (authorized by the §9.9 cadence).** Structural arm green
+on the landed render (dev verified, re-verified here), so the byte fixture moved.
+Delta verified before capture and again line-by-line at capture: models gained
+exactly `qwen38-heretic` as an id-prefixed echo (15 lines), `matrix.vars` gained
+exactly `q38her: qwen38-heretic`, `matrix.sets.main` gained exactly the `q38her`
+alternative — one gained pair `{qwen38-heretic, home-3b-v3}`, a baseline pair
+with one member swapped; every other object, entry and key byte-identical,
+double-capture deterministic, 6 kinds, zero "strata" strings. Capture artifact
+worth knowing when reading the diff: the `main` line shows 5 lines removed / 5
+added because the inserted token moved helm's YAML fold — the expression string
+differs only by `| q38her` (string-compare and expansion-compare both confirm).
+Era chain: `451c149ad…` → `0aa2241c2…` → `dba1c075d2582b7512b073461d95c85b2d0f66ab0867d43a048f0037737e045f`.
+C06 adds no llama.cpp catalog id, so era 3 should be this ticket's last
+catalog-driven move.
+
+Posture (helm on PATH, gates off, C04 implementation uncommitted in the tree):
+`python3 -m pytest charts/llama-swap/tests -q` → **20 failed, 323 passed,
+7 skipped**. The residual is exactly the two pending chunks — `test_catalog_contract`
+13 (C05) + `test_strata_q4_rung` 7 (C06), every message read; parity 34/34,
+roster 30/30, schema 22/22, blast-radius 5/5, off-parity 3/3, heretic-27B
+10 passed + 2 gated skips. Armed: `RUN_HF_CHECK=1` across the four HF-bearing
+files → 41 passed / 0 skipped; `RUN_FLAG_AUDIT=1 test_flashnext_regime.py` → 23
+passed. Passed count is 323, not the projected 322, because of the one new guard
+arm. `npx --yes aislop@latest ci --changes` clean (0 errors / 0 warnings); the
+undefined-global symtable scan re-run over 29 files → dunder hits only.
+
+### 9.11 Same round, second repair — C05 trio-scope (found by test-side sweep, not by dev)
+
+While reading the C05 residual messages, the trio arm was found over-scoped at
+authoring: `test_c05_trio_grep_three_surfaces` was parametrized over
+`CF86_NEW_CATALOG_IDS` (5), but the plan Commands line and chunk C05 AC5 both
+scope the trio grep to the NEW **Strata** ids (chart `strata.config.models` +
+service `peers.strata.models` + catalog). The two llama.cpp family ids have no
+service surface BY DESIGN — the gpu-ai overlay enables families, carrying matrix
+letters (`q38her`) rather than ids; chunk C05 FORBIDS `services/**`, and C04's
+own AC1 arm bans a models-layer entry for `qwen38-heretic` there. Left as
+written, C05 dev would have been forced to violate C04 to go green — a third
+instance of the unsatisfiable-law class (§9.6 letter-vs-ID census, §9.10
+macro-shared census key; this one is scope, not membership, and it was latent:
+the two params were red at the catalog assert, so the unsatisfiable service
+assert had never been reached).
+
+Repair: `CF86_TRIO_IDS` (3 Strata ids) drives the trio arm; registration for all
+five ids stays AC1's job (`test_c05_new_ids_registered` already parametrizes the
+full 5-id list, so no coverage is lost), and the family ids' live-serve side is
+pinned by the C03/C04 gpu- render arms. New guard
+`test_c05_trio_scope_is_strata_ids_only` pins the split — moving an id between
+the lists now requires a law amendment. Probe: appending `qwen38-heretic` to the
+trio list → guard red ("trio scope moved").
+
+Posture after the repair: **18 failed, 324 passed, 7 skipped** — residual
+exactly C05 11 (5 registration + hygiene + phantom + removed-return + 3 trio,
+every message read; trio arms red at the catalog/chart assert = correct
+pre-dev posture) + C06 7. Earlier §9.10 counts (20/323) include the 2 unsatisfiable
+trio params and predate the +1 guard arm: 20−2=18, 323−2+1=324.

@@ -53,11 +53,11 @@ data:
         -t 10
     matrix:
       sets:
-        main: (q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q35q6 | q35q8 | q35bf16
-          | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4
-          | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8
-          | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf
-          | wsp) & homecpu
+        main: (q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q38her | q35q6 | q35q8
+          | q35bf16 | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 |
+          vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4
+          | v4tbf | v30tq8 | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6
+          | ornq8 | ornqbf | wsp) & homecpu
       vars:
         emb06: qwen3-embedding-0.6b
         fnher: qwen3.8-flash-next-heretic-q4
@@ -89,6 +89,7 @@ data:
         q38ara: qwen38-ara
         q38bf16: qwen3.8-27b-bf16
         q38f16: qwen38-orca-f16
+        q38her: qwen38-heretic
         q38hum: qwen38-humanlike
         q38orca: qwen38-orca
         q38q4: qwen3.8-27b-q4
@@ -908,6 +909,20 @@ data:
           /bin/sh -c "echo 'qwen38-ara is not enabled on this cluster - see the chart catalog' >&2; exit 1"
         description: Max-quality/coding build; draft-MTP n-max 3, 256k ctx
         name: Qwen3.8 27B heretic-ara (Q6_K-MTP)
+        proxy: none
+        ttl: 300
+      qwen38-heretic:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen38-heretic is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen3.8 27B Heretic Uncensored, Q4_K_M-mtp quant; 15.8 GiB weights
+          (embedded MTP), heretic-style uncensored abliteration in the Q4_K_M size class
+        name: Qwen3.8 27B Heretic Uncensored (Q4_K_M-mtp, MTP)
         proxy: none
         ttl: 300
       qwen38-humanlike:

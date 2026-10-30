@@ -43,6 +43,15 @@ CF86_NEW_CATALOG_IDS = [
     "qwen3.8-flash-next-heretic-q4", "qwen38-heretic",
 ]
 
+# Trio law covers the Strata ids only (chunk C05 AC5, plan Commands trio grep).
+# The two llama.cpp family ids have no service surface BY DESIGN: they ride the
+# chart-side family — the gpu-ai overlay carries matrix letters (q38her), never
+# the id — C05's plan forbids it touching services/**, and C04's AC1 arm bans a
+# models-layer entry for qwen38-heretic there. Registration for all five ids is
+# AC1's job (CF86_NEW_CATALOG_IDS); their live-serve side is pinned by the
+# C03/C04 files' gpu-ai render arms.
+CF86_TRIO_IDS = [S.ABL_ID, S.ORCA_INNER_ID, S.Q4_ID]
+
 # The card's already-served asks (C05 AC3): verification greps, no edits.
 CARD_ASK_IDS = ["qwen3.8-27b-q4", "qwen3.8-27b-q6", "qwen3.8-flash-next-q4"]
 
@@ -192,7 +201,7 @@ def test_c05_removed_ids_never_return(catalog):
 # --- AC5: trio surfaces for the new ids -------------------------------------
 
 
-@pytest.mark.parametrize("model_id", CF86_NEW_CATALOG_IDS)
+@pytest.mark.parametrize("model_id", CF86_TRIO_IDS)
 def test_c05_trio_grep_three_surfaces(model_id):
     """chart values + service peers entry + provider catalog = three surfaces
     (plan Commands trio grep)."""
@@ -201,6 +210,23 @@ def test_c05_trio_grep_three_surfaces(model_id):
     assert model_id in chart, f"{model_id} absent from charts/llama-swap/values.yaml"
     assert model_id in svc, f"{model_id} absent from services/gpu-ai/prod/values.yaml"
     assert model_id in OPENCODE_JSONC.read_text(), f"{model_id} absent from .opencode/opencode.jsonc"
+
+
+def test_c05_trio_scope_is_strata_ids_only():
+    """Guard for the trio-scope fault class: an id whose service surface does
+    not exist by design (llama.cpp family ids ride the chart-side family; the
+    overlay carries letters, and C05's plan forbids services/**) must never be
+    dragged into the trio law — doing so makes it unsatisfiable and forces a
+    cross-chunk AC violation. Moving an id between these lists is a law
+    amendment, not a test edit."""
+    assert CF86_TRIO_IDS == [S.ABL_ID, S.ORCA_INNER_ID, S.Q4_ID], (
+        f"trio scope moved: {CF86_TRIO_IDS} — Strata ids only, per chunk C05 AC5"
+    )
+    for mid in ("qwen3.8-flash-next-heretic-q4", "qwen38-heretic"):
+        assert mid in CF86_NEW_CATALOG_IDS and mid not in CF86_TRIO_IDS, (
+            f"{mid} is a llama.cpp family id: registered (AC1) and served via the family, "
+            "never trio-grepped on the service surface"
+        )
 
 
 # --- provider surface preservation ------------------------------------------

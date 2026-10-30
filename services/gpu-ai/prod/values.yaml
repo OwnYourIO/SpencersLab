@@ -230,7 +230,7 @@ llama-swap:
       # q38-sampling's 0.7): per Qwen3.6 card guidance from the STORM run.
       q36-sampling: |
         --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
-    # gpu-ai runs the ENTIRE catalog live (frozen ENABLEMENT table: 59 enabled,
+    # gpu-ai runs the ENTIRE catalog live (frozen ENABLEMENT table: 60 enabled,
     # zero echoes). Overrides at family level; per-rung data and tuned variants
     # stay chart-side / in the models layer below. flash-next q5/q6 are ENABLED
     # here per the operator's accepted OOM-churn decision 2026-10-22 (never
@@ -509,7 +509,11 @@ llama-swap:
         # 2026-10-23 (C04): the Ornith 1.5 35B A3B ladder (qwen35moe, same
         # expert-offload class as the q35* entries - header-verified) joins
         # the MoE alternation; it stays ONE MoE resident, IQ2..Q8 rungs.
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | q38orca | q38ara | q38rana | q38hum | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu"
+        # 2026-10-30 (cf-86 C04): q38her (0bserverx heretic Q4_K_M-MTP,
+        # ~17 GB) joins the dense alternation - another member of the ~38 GiB
+        # dense weight class the trio math above budgets, never two dense
+        # residents in one combo.
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | q38orca | q38ara | q38rana | q38hum | q38her | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
         # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;

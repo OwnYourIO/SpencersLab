@@ -647,6 +647,28 @@ config:
           description: Reference F16 build; ttl 180 so it evicts fast
           capabilities: {in: [text, image], out: [text]}
           ttl: 180
+        # cf-86 C04 (2026-10-30): 0bserverx heretic-style abliteration of the
+        # 27B line - chosen by the measured ablation ranking (heretic-style
+        # stays ~0.019-0.035 KLD from the original where huihui-style sits at
+        # 0.204 with +8-10% perplexity, RESEARCH [S17][S18]). Distinct from
+        # ara above: ara is the heretic-ara Q6_K-MTP build; this is the
+        # 0bserverx uncensored rung in the Q4_K_M size class (~17 GB, dense
+        # weight class the main-set trio math already budgets). MTP head is
+        # EMBEDDED in the RVN-Q4_K_M-mtp.gguf single file (source gate live,
+        # 16,998,720,736 B, flat ladder, ungated) - no draft: sidecar unlike
+        # rana's borrowed ggml-org draft. mmproj ships flat beside the
+        # quants, so the sibling search resolves it: vision declared.
+        heretic:
+          hf: "0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [q38-common, q38-sampling, q38-think]
+          flags: |
+            -c 262144
+          disp: Qwen3.8 27B Heretic Uncensored
+          size: 15.8 GiB
+          descTail: "; {size} weights (embedded MTP), heretic-style uncensored abliteration in the Q4_K_M size class"
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 300
 
     # Always-ready embedding sidecar (2026-10-16, gpu-ai): coexists with
     # the dense + MoE trio via the matrix main set there, so RAG
@@ -904,6 +926,10 @@ config:
       q38rana: qwen38-rana
       q38hum: qwen38-humanlike
       q38f16: qwen38-orca-f16
+      # cf-86 C04: 0bserverx heretic Q4_K_M-MTP (~17 GB) - the dense class
+      # sits inside the one-dense-resident assumption the main-set trio math
+      # already budgets, so it joins the dense alternation below.
+      q38her: qwen38-heretic
       # 1M context + visual variants (2026-10-13/15): the base q38q8/q35q8
       # IDs are the text-only caching versions on gpu-ai (--no-mmproj +
       # cache_reuse), these siblings keep the mmproj / 1M ctx.
@@ -933,7 +959,7 @@ config:
       # default the gpu box rides). ornqbf is routable but fail-fast on gpu
       # (services/gpu disabled override) - matrix membership of a disabled
       # echo is the established pattern on that box.
-      main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q35q6 | q35q8 | q35bf16 | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf | wsp) & homecpu"
+      main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q38her | q35q6 | q35q8 | q35bf16 | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf | wsp) & homecpu"
 
 app-template:
   global:
