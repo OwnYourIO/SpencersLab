@@ -2,7 +2,7 @@
   "feature": "2026/2026-10-cf-89-feat-wekan-mcp-board-provisioning",
   "plan_status": "approved",
   "coord_session": "ses_e72e3c15cffeLcluMGX4vo90XA",
-  "test_session": null,
+  "test_session": "ses_e72233dbaffeZYIO8UwqgZb1IT",
   "current_wave": 1,
   "updated_at": "2026-10-30",
   "kickoff": {
@@ -39,5 +39,25 @@
     }
   },
   "blocked": [],
-  "deferred": []
+  "deferred": [],
+  "run_handoffs": [
+    {
+      "at": "2026-10-30",
+      "role": "agent-research (pre-plan round)",
+      "session": "ses_e72def0e5ffeLSV5nks6CBojVC",
+      "result": "status: DONE | chunk: plan (pre-planning research round) | files: RESEARCH.md | verdicts: pin is chart 12.65.0/upstream v12.65 not 9.88; update_board=PUT …/title only (no color/permission routes exist); create_swimlane confirmed + sort honored, hydrate via single GET; create_label=PUT …/labels 25 named colors incl white, bare-string-id response, (name,color) idempotency; list_board_members: userId + 8-9 role booleans, no username at bot privilege | deviations: storm intermediates in /tmp; interim mv briefly swept another ticket's storm-runs — restored, repo verified clean | open_questions: (1) accept v12.65 grounding (2) bot board-admin? (3) label ergonomics (4) docs refresh scope — all resolved in the batched round"
+    },
+    {
+      "at": "2026-10-30",
+      "role": "agent-plan",
+      "session": "ses_e72b5a4c7ffeE7DQIcYkipN3N8",
+      "result": "status: DONE | chunk: plan | 2 chunks (C01 M tool surface + count-pin flips + live probe; C02 S rest-overview docs refresh), wave 1 id order | batched round answers applied, slug renamed to cf-89-feat-wekan-mcp-board-provisioning, plan_status approved"
+    },
+    {
+      "at": "2026-10-30",
+      "role": "agent-test (C01+C02 wave)",
+      "session": "ses_e72233dbaffeZYIO8UwqgZb1IT",
+      "result": "status: DONE | files: tests/wekan-mcp/board-provisioning.sh (new, t1-t7), rest-overview-v102.sh (new, t1-t5), tools.sh/skill-surface.sh/create-list.sh count pins 27→31 | red-at-base + fixture green-after + 3 mutation falsifications proven | LIVE PROBE AC9: dev-boards bot IS AI-Dev board admin (create_rule 2iQ3MtQZhM778b8nT ok, remove_rule ok, zero residue) — no user grant follow-up | open_questions→coord: (1) board-context.sh t4 pre-existing red → WAIVED as known-red for cf-89 (cf-70 drift, not owned here; follow-up card at close) (2) create-list.sh t2 single-hunk pin → C01 must land server.py as ONE additive hunk (coord ruling, passed to dev)"
+    }
+  ]
 }
