@@ -43,13 +43,39 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "review APPROVED (round 2)",
+      "dev_session": "ses_e71e99738ffeWEGMByw0tHViut",
+      "handoffs": [
+        {
+          "at": "2026-10-30",
+          "role": "agent-dev-local",
+          "session": "ses_e71e99738ffeWEGMByw0tHViut",
+          "result": "status: DONE | chunk: C02 | files: skills/wekan-api/references/rest-api-overview.md only (+38/-7): header re-stamp v12.65; Boards PUT …/title subsection (body/gate {_id,title}/cardNumber-Counters rationale/405 bare PUT #5299/color-permission-key REST-immutable); Labels PUT subsection (gate, 3 body forms, 25 colors incl white, 400 hex, bare-string id, (name,color) idempotency/second label); Swimlanes (sort pass-through #3624, max+1 over non-archived, {_id}-only, collection-vs-single projections); members nine booleans + site-admin username note (four-flag body replaced); Labels: bulk card-labels route documented | commands: rest-overview-v102 PASS (6 ok, red-at-HEAD t1 pre-edit confirmed), C01 suites all PASS, board-context fail t4 ONLY (waived, byte-identical before/after), wekan-mcp-login PASS, aislop rc=0 0err 0warn, scope ⊆ declared | deviations: one in-bounds stamp-line edit (Automation-rules intro parenthetical, AC5 carve-out) | open_questions: rules body sentence 'board write access' stale vs checkBoardAdmin (no C02 task) + POST /api/boards BOARD_COLORS unstamped — both flagged, candidate follow-up docs card"
+        },
+        {
+          "at": "2026-10-30",
+          "role": "agent-review",
+          "session": "ses_e71e0a52affetV7HuldZ6fi8HF",
+          "result": "verdict: CHANGES_REQUESTED (round 1) | 1 major M1 (Automation-rules gate clause stamped v12.65 next to falsified v9.99 'board write access' claim; fix option (a) coord-blessed, fix text recorded in C02.md) + m2 (L192 no-usernames overstatement vs grantedBy exception) + m3 (L210 unverified endpoint-acceptance claim) | all suites independently green incl. clean-HEAD byte-identical board-context t4 re-proof; AC1-AC6 substantively met"
+        },
+        {
+          "at": "2026-10-30",
+          "role": "agent-dev-local (round 2 fix)",
+          "session": "ses_e71e99738ffeWEGMByw0tHViut",
+          "result": "status: DONE | M1 blessed text verbatim; m2 bounded to members[]/grantedBy exception per RESEARCH §4; m3 stored-shape reword; only rest-api-overview.md touched; rest-overview-v102 + regression green, board-context t4-only waived signature unchanged, aislop 0/0"
+        },
+        {
+          "at": "2026-10-30",
+          "role": "agent-review",
+          "session": "ses_e71604465ffea78r3XGSlzksVe",
+          "result": "verdict: APPROVED (round 2, fresh session) | three fixed lines match blessed texts + sourcing re-checked (no re-derivation, no wekan-mcp tool prose); full suite line re-run green (rest-overview 6, board-provisioning 9, tools 9, skill-surface 8, create-list 6, login 6); board-context t4-only waived signature stands; aislop 100/0/0; AC1-AC6 re-confirmed; no new findings any severity"
+        }
+      ]
     }
   },
   "blocked": [],

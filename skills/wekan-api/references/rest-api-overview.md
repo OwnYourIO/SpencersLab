@@ -1,6 +1,6 @@
 # WeKan REST API Overview
 
-Endpoint reference for the current WeKan REST API, distilled from the wiki (`REST-API-*` pages), the repo's `docs/API/*.md`, the generated Redoc HTML, and `api.py`. **This is version-lagged.** For anything critical, verify against `models/*.js` and `api.py` for your pinned WeKan version.
+Endpoint reference for the current WeKan REST API, distilled from the wiki (`REST-API-*` pages), the repo's `docs/API/*.md`, the generated Redoc HTML, and `api.py`. **Version pinning (re-stamped 2026-10-30):** the lab's server is chart-pinned wekan 12.65.0 = upstream **v12.65**; the Boards, Board members and roles, Swimlanes, and Labels sections were re-verified against the registered handlers at that tag (v9.88 checked as the documented low bound — no drift on those routes). The remaining sections stay **version-lagged**: for anything critical, verify against `models/*.js` and `api.py` for your pinned WeKan version.
 
 ## Table of contents
 
@@ -121,6 +121,14 @@ Valid colors: `belize`, `nephritis`, `pomegranate`, `pumpkin`, `wisteria`, `midn
 
 Response: `{ "_id": "<newBoardId>", "defaultSwimlaneId": "..." }`.
 
+### `PUT /api/boards/:id/title` — rename a board
+
+Body: `{"title": "New title"}`. Gate at v12.65: `checkBoardAdmin` (board admin or site admin) — a normal member gets **HTTP 403** and the title is unchanged (v9.88 was looser: board write access sufficed; verified 2026-10-30). Response: `{"_id": "<boardId>", "title": "<new title>"}`.
+
+The handler `$set`s the title only, so the board `_id` and the per-board `cardNumber` sequence survive a rename by construction — the counter lives in the `Counters` collection (`_id = "cardNumber-<boardId>"`), not on the board document, so every list/card/swimlane id and `cf-<cardNumber>` slug rides through untouched.
+
+**There is no bare `PUT /api/boards/:id`** — it answers **405** at v9.88, v12.65 and v12.74 (upstream #5299); do not fetch-modify-put a full board document, none is writable. Board `color`, `permission` and `key` are set at create only and are REST-immutable afterwards.
+
 ### `DELETE /api/boards/:id`
 
 Deletes the board.
@@ -155,7 +163,11 @@ Returns all attachments on the board:
 
 ### `PUT /api/boards/:id/labels` — add a label
 
-Body: `{ "label": { "name": "urgent", "color": "red" } }`. Label colors: `green`, `yellow`, `orange`, `red`, `purple`, `blue`, `sky`, `lime`, `pink`, `black`, `silver`, `peachpuff`, `crimson`, `plum`, `darkgreen`, `slateblue`, `magenta`, `gold`, `navy`, `gray`, `saddlebrown`, `paleturquoise`, `mistyrose`, `indigo`.
+Gate: board admin or site admin (clean 401/403/404 with an `{"error": ...}` body). Accepted body forms (verified v12.65, 2026-10-30; identical at v9.88): `{"label": {"name": "urgent", "color": "red"}}`; `{"label": {"name": "urgent"}}` — color defaults to `green`; or the string form `{"label": "urgent"}`. A missing or garbage `label` answers a clean 400 (#5510).
+
+Label colors — the 25 names in `config/const.js`, identical at v9.88 and v12.65: `white`, `green`, `yellow`, `orange`, `red`, `purple`, `blue`, `sky`, `lime`, `pink`, `black`, `silver`, `peachpuff`, `crimson`, `plum`, `darkgreen`, `slateblue`, `magenta`, `gold`, `navy`, `gray`, `saddlebrown`, `paleturquoise`, `mistyrose`, `indigo`. Unknown or hex colors answer 400 `Invalid label color '<x>'. Allowed colors: ...`. (Board colors are a different set — see `POST /api/boards` above.)
+
+Response: a **bare JSON string** — the label id, new or existing, e.g. `"aB3xY9"`; parse it as a string, not an object. The idempotency key is (name, color): re-PUTting an existing (name, color) returns the existing id, while the same name with a different color creates a second label and returns the new id — never promise "rename by name".
 
 ### `GET /api/boards/:id/cards_count`
 
@@ -177,6 +189,14 @@ Total counts (admin).
 
 ## Board members and roles
 
+The board document (`GET /api/boards/:id`, see [Boards](#boards)) stores `members[]` as an array of objects, and carries no usernames except the v12.65 `members.$.grantedBy` provenance array for team/org-granted memberships (shape verified v12.65, 2026-10-30; same at v9.88):
+
+- `userId` — the member's user id.
+- Required booleans: `isAdmin`, `isActive`.
+- Seven optional booleans: `isNoComments`, `isCommentOnly`, `isWorker`, `isNormalAssignedOnly`, `isCommentAssignedOnly`, `isReadOnly`, `isReadAssignedOnly`.
+
+Nine role booleans per entry in total — 2 required + 7 optional. There is no `owner` field: ownership is the members entry with `isAdmin: true`. No route at board-member privilege publishes usernames — the user-lookup routes (`GET /api/users`, `GET /api/users/:userId`) are site-admin-only (v12.65).
+
 ### `POST /api/boards/:id/members/:userId/add`
 
 Adds a member to the board. **The `isAdmin: true` field in the body is ignored** on this endpoint — new members come in without admin. To promote them, immediately call the role-setting endpoint below.
@@ -187,11 +207,12 @@ Removes a member. Removing a *deleted* user has silently no-op'd in older versio
 
 ### `POST /api/boards/:id/members/:userId` — set role
 
-Body:
+Body: the role booleans — the stored entry keeps `isAdmin`/`isActive` required and the seven flags optional:
 
 ```json
 {
   "isAdmin": true,
+  "isActive": true,
   "isNoComments": false,
   "isCommentOnly": false,
   "isWorker": false
@@ -202,6 +223,7 @@ Body:
 - `isNoComments` — read-only.
 - `isCommentOnly` — can comment but not edit cards.
 - `isWorker` — limited role (assigned work only).
+- `isNormalAssignedOnly`, `isCommentAssignedOnly`, `isReadOnly`, `isReadAssignedOnly` — the remaining four optional flags ride the same stored entry; their UI semantics live in the upstream board schema (verify on your version).
 
 ## Lists
 
@@ -227,11 +249,20 @@ Body: `{ "title": "In progress" }`. Response: `{ "_id": "<newListId>" }`.
 
 ## Swimlanes
 
-Swimlanes are the horizontal rows. A board has at least one (the default swimlane, whose ID is returned when the board is created).
+Swimlanes are the horizontal rows. A board has at least one (the default swimlane, whose ID is returned when the board is created). Route bodies verified v12.65, 2026-10-30; identical at v9.88.
 
 ### `GET /api/boards/:boardId/swimlanes`
+
+Array of `{_id, title}` — the collection projection carries no `sort`.
+
 ### `GET /api/boards/:boardId/swimlanes/:swimlaneId`
-### `POST /api/boards/:boardId/swimlanes` — body `{ "title": "..." }`
+
+The single-swimlane GET returns the full document **including `sort`**, filtered to `archived: false`. It is the only route that reads `sort` back.
+
+### `POST /api/boards/:boardId/swimlanes` — body `{ "title": "...", "sort": <number> }`
+
+`title` required, `sort` optional; gate is board write access. An explicit finite `sort` is honored (#3624 — fixed long before the pinned tags); an omitted one appends at max(live sibling sorts)+1, computed over `archived: false` siblings only, so sequential creates land in creation order. Response: `{ "_id": "<newSwimlaneId>" }` only — no title, no sort; read the created swimlane back from the single GET above.
+
 ### `PUT /api/boards/:boardId/swimlanes/:swimlaneId`
 ### `DELETE /api/boards/:boardId/swimlanes/:swimlaneId`
 ### `GET /api/boards/:boardId/swimlanes/:swimlaneId/cards`
@@ -303,7 +334,7 @@ Body depends on field type: `{ "value": "..." }` for text/number; item id for dr
 
 ## Automation rules
 
-Board automation rules (IFTTT-style, issue #2674). A rule links a **trigger** (an activity event, a schedule, or a manual button) to an **action**. The REST API embeds the full trigger and action inline, so a rule is self-contained. Verified against `server/models/rules.js` on WeKan v9.99 (the lab's deployed version). Writes require board **write** access; reads require board membership.
+Board automation rules (IFTTT-style, issue #2674). A rule links a **trigger** (an activity event, a schedule, or a manual button) to an **action**. The REST API embeds the full trigger and action inline, so a rule is self-contained. Verified against `server/models/rules.js` on WeKan v9.99 (the lab's deployed version at check time; gate re-checked from the v12.65 tag 2026-10-30). Writes require board **admin** (`checkBoardAdmin`) at v12.65 — board write access was the v9.99-era gate; reads require board membership.
 
 ### `GET /api/boards/:boardId/rules`
 
@@ -408,7 +439,7 @@ For `dropdown` fields, there are additional endpoints to add/edit/delete items �
 
 ## Labels
 
-Labels live on the board document (`board.labels`). Create/update via `PUT /api/boards/:id/labels` (see [Boards](#boards)). To apply to a card, add the label's `_id` to `card.labelIds` via a card update.
+Labels live on the board document (`board.labels`). Create/update via `PUT /api/boards/:id/labels` (see [Boards](#boards)) — it answers a bare JSON string label id and is idempotent on (name, color) (v12.65, 2026-10-30). To apply to a card, add the label's `_id` to `card.labelIds` via a card update, or use the bulk route `POST /api/boards/:boardId/cards/labels` with body `{"cardIds": ["..."], "addLabelIds": ["..."]}` — present at v9.88 and v12.65; a label id not on the board answers 400.
 
 ## Integrations (webhooks)
 
