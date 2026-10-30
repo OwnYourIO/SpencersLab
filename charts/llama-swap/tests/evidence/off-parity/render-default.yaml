@@ -60,6 +60,7 @@ data:
           | wsp) & homecpu
       vars:
         emb06: qwen3-embedding-0.6b
+        fnher: qwen3.8-flash-next-heretic-q4
         fnorca: qwen3.8-flash-next-orca-q6
         fnq3: qwen3.8-flash-next-q3
         fnq4: qwen3.8-flash-next-q4
@@ -772,6 +773,22 @@ data:
         description: Plain Qwen 3.8 27B, Q8_0; MTP draft, vision on (auto mmproj), 256k
           ctx; cache_reuse disabled by llama.cpp in multimodal mode
         name: Qwen 3.8 27B (Q8_0, MTP) - Visual
+        proxy: none
+        ttl: 300
+      qwen3.8-flash-next-heretic-q4:
+        capabilities:
+          in:
+          - text
+          - image
+          out:
+          - text
+        cmd: |
+          /bin/sh -c "echo 'qwen3.8-flash-next-heretic-q4 is not enabled on this cluster - see the chart catalog' >&2; exit 1"
+        description: Qwen 3.8 Flash Next Heretic, Q4_K_M quant; 130.8 GiB weights, experts
+          on CPU (mmap placement), 256k ctx; heretic-style abliteration (KLD ~0.02-0.035
+          from the original against 0.204 huihui-style); over the ~125 GiB node budget
+          like orca-q6 - SOLO, never preloaded, may OOM
+        name: Qwen 3.8 Flash Next Heretic (Q4_K_M, MTP)
         proxy: none
         ttl: 300
       qwen3.8-flash-next-orca-q6:

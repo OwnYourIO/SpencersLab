@@ -431,6 +431,8 @@ def test_cr5_display_presence(cluster):
     """Every catalog id on every cluster render carries a NON-EMPTY name AND
     description — red if CB2 deletes display text without composing it."""
     fresh = L.all_models_of(L.rendered_config(cluster))
+    absent = sorted(mid for mid in L.CATALOG_IDS if mid not in fresh)
+    assert not absent, f"{cluster}: catalog id(s) {absent} not rendered at all — awaiting CA2/CA3"
     gaps = [f"{mid} ({k})" for mid in L.CATALOG_IDS for k in DISPLAY_FIELDS
             if not str(fresh[mid].get(k) or "").strip()]
     assert not gaps, f"{cluster}: display text missing on {gaps}"
@@ -444,6 +446,8 @@ def test_cr5_display_name_grammar(cluster):
     explicit text is data, never grammar). Echo renders with no -hf ref are
     skipped here (P5 owns their shape; presence above covers their text)."""
     fresh = L.all_models_of(L.rendered_config(cluster))
+    absent = sorted(mid for mid in L.CATALOG_IDS if mid not in fresh)
+    assert not absent, f"{cluster}: catalog id(s) {absent} not rendered at all — awaiting CA2/CA3"
     exempt = L.CHART_RAW_CMD_IDS | L.GPUAI_RAW_CMD_IDS | _models_layer_display_overrides(cluster)
     problems = []
     for mid in L.CATALOG_IDS:

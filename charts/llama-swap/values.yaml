@@ -798,6 +798,54 @@ config:
           capabilities: {in: [text, image], out: [text]}
           ttl: 300
 
+    # heretic-style coding ablation of Flash Next (cf-86 C03): trohrbaugh's
+    # heretic-2 (custom Heretic fork) republished as static quants by
+    # spiritfather. Why this ablation and not another: the measured ranking
+    # (RESEARCH [S17][S18]) puts heretic-style ~0.019-0.035 KLD from the
+    # original where huihui-style sits at 0.204 with +8-10% perplexity, and a
+    # second orcarouter rung is already served as orca/ara. Ungated repo, so
+    # unlike the orca family the download path needs no HF_TOKEN; gpu-ai-only
+    # BY ENABLEMENT, everywhere else it is the catalog echo.
+    # Rides the same mmap regime as the unsloth/orca families - see the
+    # flash-next header for why the placement leg is a literal and not a
+    # macro. 130.8 GiB of trunk weights is over the ~125 GiB node budget like
+    # orca-q6, so SOLO in the matrix, never preloaded, may still OOM on load.
+    # MTP, two-gate shape (the orca family's miss-path note applies the same
+    # way): the pack ships the NextN head both as mtp/mtp-*-Q8_0.gguf and as a
+    # pre-grafted <QUANT>/MTP/ shard pair. Source-gate measurement, do not
+    # re-derive: llama.cpp find_best_model (common/download.cpp, mirrored by
+    # tests/hf_check.py) takes the FIRST case-insensitive "Q4_K_M[.-]" hit in
+    # the tree listing; the MTP pair sorts before the trunk, its basename
+    # carries uppercase "MTP-" which the case-sensitive sidecar filter does
+    # NOT skip, and the repo publishes only shards 1 and 6 of that 6-shard
+    # split (its README has users clone trunk shards 2..5 into the -MTP-
+    # pattern by hand). A load that dies on missing -MTP- shards is escaped by
+    # pinning a trunk shard with --hf-file in the models layer.
+    # The head also needs llama.cpp PR #27836, unmerged at the pinned image -
+    # a stock build ignores head tensors, so treat spec decode as expected-off
+    # until the image carries it.
+    # mmproj ships too (mmproj/), hence vision declared - but llama.cpp's
+    # sibling search only accepts a sidecar sharing the model file's directory,
+    # and here projector and quants live in different folders: image input
+    # needs the projector staged on-target, text is what the routing uses.
+    qwen3.8-flash-next-heretic:
+      enabled: false
+      dispName: Qwen 3.8 Flash Next Heretic
+      flags: |
+        -ngl 99
+        -ot "\.ffn_.*_exps\.=CPU"
+        --load-mode mmap
+        --fit off
+      quants:
+        q4:
+          hf: "spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [threads, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+          size: 130.8 GiB
+          descTail: "; {size} weights, experts on CPU (mmap placement), 256k ctx; heretic-style abliteration (KLD ~0.02-0.035 from the original against 0.204 huihui-style); over the ~125 GiB node budget like orca-q6 - SOLO, never preloaded, may OOM"
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 300
+
 
   # Concurrency matrix (replaces legacy groups routing).
   # One GPU model at a time; homecpu (CPU) may run alongside any GPU model.
@@ -870,6 +918,9 @@ config:
       fnq3: qwen3.8-flash-next-q3
       fnq4: qwen3.8-flash-next-q4
       fnorca: qwen3.8-flash-next-orca-q6
+      # cf-86 C03: heretic-2 Q4_K_M ablation, same solo weight class (130.8
+      # GiB trunk) as the other flash-next rungs - solo, never preloaded.
+      fnher: qwen3.8-flash-next-heretic-q4
       o122q3: ornith-1.5-122b-q3
       o122q4: ornith-1.5-122b-q4
       o122q5: ornith-1.5-122b-q5

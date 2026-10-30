@@ -807,6 +807,34 @@ CF86_SET_ADDITIONS = {  # set name -> the ONLY vars its expression may gain
 CF86_MOE_OFFLOAD_LEG = '-ot "\\.ffn_.*_exps\\.=CPU"'
 
 
+def cf86_matrix_growth_violations(base: dict, cur: dict) -> list[str]:
+    """The confined shape of sanctioned cf-86 matrix growth in a render where
+    the new rungs are NOT enabled: existing vars stay byte-equal, additions are
+    only the pinned letters at their pinned ids, and every set's DNF expansion
+    stays identical — a chart-level var joins every cluster's render, but only the
+    gpu-ai service overlay may put it into a set, so co-residency must not move
+    anywhere else. Expansions are compared, not expressions, so values or helm
+    re-wrapping cannot hide a pairing change."""
+    import strata_testlib as S
+
+    out = []
+    b_vars = (base.get("matrix") or {}).get("vars") or {}
+    c_vars = (cur.get("matrix") or {}).get("vars") or {}
+    for name, val in sorted(b_vars.items()):
+        if c_vars.get(name) != val:
+            out.append(f"matrix.vars.{name}: {val!r} -> {c_vars.get(name)!r}")
+    for name in sorted(set(c_vars) - set(b_vars)):
+        if CF86_MATRIX_VARS.get(name) != c_vars[name]:
+            out.append(f"matrix.vars.{name} = {c_vars[name]!r}: not a cf-86 pinned letter/value")
+    b_exp, c_exp = S.matrix_expansions(base), S.matrix_expansions(cur)
+    for name in sorted(set(b_exp) | set(c_exp)):
+        b_combos = sorted(map(sorted, b_exp.get(name, [])))
+        c_combos = sorted(map(sorted, c_exp.get(name, [])))
+        if b_combos != c_combos:
+            out.append(f"matrix.sets.{name}: combos changed: {b_combos} -> {c_combos}")
+    return out
+
+
 def rung_effective_ref(chart_cfg: dict, fam: str, spec: dict, quant: str) -> str | None:
     """CR5 HF resolution order: rung hf literal > {repo | fam.hfRepo} :
     {tag | tagCultures[fam.tagCulture][quant]}."""

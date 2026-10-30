@@ -230,7 +230,7 @@ llama-swap:
       # q38-sampling's 0.7): per Qwen3.6 card guidance from the STORM run.
       q36-sampling: |
         --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
-    # gpu-ai runs the ENTIRE catalog live (frozen ENABLEMENT table: 58 enabled,
+    # gpu-ai runs the ENTIRE catalog live (frozen ENABLEMENT table: 59 enabled,
     # zero echoes). Overrides at family level; per-rung data and tuned variants
     # stay chart-side / in the models layer below. flash-next q5/q6 are ENABLED
     # here per the operator's accepted OOM-churn decision 2026-10-22 (never
@@ -263,6 +263,8 @@ llama-swap:
       qwen3.8-27b:
         enabled: true
       qwen3.8-flash-next:
+        enabled: true
+      qwen3.8-flash-next-heretic:
         enabled: true
       qwen3.8-flash-next-orca:
         enabled: true
@@ -516,5 +518,9 @@ llama-swap:
         # 2026-10-23 (C04): flash-next q3/q4 + orca-q6 + the 122B UD ladder
         # join here (55.7-156.1 GiB weight classes); ornqbf (Ornith 35B BF16,
         # 66.2 GiB) is solo - dense-weight resident too big for the trio.
+        # 2026-10-30 (cf-86 C03): fnher (heretic-2 Q4_K_M, 130.8 GiB trunk)
+        # joins the same alternation - another mmap/fit-off flash-next-class
+        # rung, so it must stay an ALTERNATIVE: two of them resident at once
+        # blow the node budget (the suite pins that law on the --fit off leg).
         # flash-next q5/q6 are deliberately in NO set at all (see vars note).
-        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnher | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"

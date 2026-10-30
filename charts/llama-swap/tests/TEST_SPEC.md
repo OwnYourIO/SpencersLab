@@ -1350,3 +1350,108 @@ heretic-fn 6, new_roster 2, schema 1). Skips 3 → 4 = the new `RUN_HF_CHECK`
 arm. Armed pass: `RUN_HF_CHECK=1 pytest test_strata_orca_rung.py::
 test_c02_pack_pins_still_match_the_live_hf_trees test_hf_liveness.py …
 test_c03_hf_pack_resolves_live` → 3 passed. `npx aislop ci --changes` clean.
+
+### 9.8 C03 test-repair round — four routed arms + the OFF-fixture cadence (2026-10-30)
+
+C03 dev round 1 cleared its 6 designed reds (44/296/4 → 42/298/4) and routed
+four previously-green arms back as authorship faults. All four verified against
+primary sources first; all four MECHANICAL — no AC in `chunks/C03.md` weakened,
+re-expressed or dropped, so the test session repaired them rather than
+re-opening the chunk. Dev touched no test file.
+
+Adjudication (claim → verification → ruling):
+
+1. `test_c03_chart_default_render_has_no_heretic_rung` — UNSATISFIABLE as
+   written, confirmed from the chart's own established law: CR1.4/P5 renders
+   EVERY catalog id in EVERY render as the id-prefixed fail-fast echo
+   (`test_boot_safety.py` documents the bare render as entirely echo entries,
+   and this file's gpu-echo positive arm requires echo existence). Absence is
+   not the chart's mechanism for "not enabled". Re-expressed as
+   `test_c03_chart_default_render_keeps_the_rung_echo_only`: entry present,
+   `is_echo_cmd`, id-prefixed, macro- and flag-free. Same intent (no servable
+   process chart-side), executable shape.
+2. `test_c03_ac2_matrix_hooks_scalars_identical` — real author fault:
+   `_cf77_peers_carved` demanded `others == {models, macros, peers}`, so the
+   sanctioned cf-86 `matrix` key disabled the peers carve-out and guaranteed
+   red for ANY sanctioned matrix growth. Fix: `matrix` joins the carve only
+   while `_cf86_matrix_violations(base, cur) == []`, so the peers wave and the
+   matrix wave stay ONE change and any matrix edit outside the pinned additive
+   shape still refuses the carve and goes red together with it. Negative cases
+   verified live: wrong letter value, unpinned letter, rewritten `sets` — all
+   three still refuse the carve and name the violation.
+3. `test_c03_ac3_gpu_render_preserved` — same class, gpu side. Verified diff is
+   exactly `matrix.vars` + `fnher` with every set expansion identical. New
+   shared helper `llama_swap_testlib.cf86_matrix_growth_violations` confines the
+   allowance: existing vars byte-equal, additions only the pinned
+   `CF86_MATRIX_VARS` letters at their pinned ids, and every set's DNF
+   EXPANSION unchanged (expansions, not expressions — helm re-wrapping cannot
+   hide a pairing change). The gpu set expressions never grow: only the gpu-ai
+   overlay puts a new letter into a set, so co-residency must not move
+   anywhere else.
+4. `test_c01_off_render_byte_identical_to_baseline` — legit catalog growth, and
+   the sanctioned PROVENANCE route (test-session re-capture) taken. Because
+   C04 grows the default render again, the file now splits the gate: the new
+   chunk-independent structural arm
+   `test_c01_off_render_changed_only_by_sanctioned_catalog_growth` pins what may
+   move — object set identical, every non-config object byte-identical, config
+   identical outside `models`/`matrix`, gained ids ⊆ `CF86_NEW_IDS` arriving as
+   id-prefixed echoes, existing entries frozen, matrix confined by the same
+   helper — and the byte arm stays pinned to the fixture. **Cadence (authorship
+   call, recorded in PROVENANCE.md):** the test session re-captures the fixture
+   in the LANDING chunk's test round, and only while the structural arm is
+   green; red there means dev changed the default-OFF render and re-capturing
+   would bake the leak into the baseline. Era chain 1 `451c149ad…` (run-2 base)
+   → era 2 `0aa2241c2c…` (C03), delta verified before re-capture: models gained
+   exactly `qwen3.8-flash-next-heretic-q4` as an echo, `matrix.vars` gained
+   exactly `fnher`, nothing else moved (double-capture diff clean, 6 kinds, zero
+   "strata" strings).
+
+New arms (additive):
+
+* `test_c03_hf_pack_bytes_still_match_the_source_gate` (`RUN_HF_CHECK=1`) —
+   answers the C03 friction that the source gate's byte evidence was recorded
+   but not pinned. Anonymous tree reads only (no `Authorization` header on
+   purpose: an ungated pack's evidence must stay re-checkable without a token):
+   `Q4_K_M` trunk a complete 1..5 shard set at 10945472 / 682434912 /
+   54400261312 / 47643214976 / 37673027808 (sum 140409884480 = the gate's
+   130.8 GiB) and `mtp/mtp-…-Q8_0.gguf` at 4137429280. Re-upload or
+   re-organization goes red instead of silently changing what the node pulls.
+* `test_c02_orca_profile_serves_exactly_the_staged_paths` — the C02 review
+   path-pairing deferral. Derives `dir`/`pack`/`stem`/`s1`/`s2` from the
+   rendered `orca_pack` body and the tier from the rendered
+   `STRATA_MODEL_ORCA`, then requires the arena's `--pack`, `--native`,
+   `--ple-gguf` and `tokenizer` to be exactly those staged paths (this pack's
+   PLE table rides in shard 1 per ORCA.md, so `--native == --ple-gguf == s1`),
+   and that both shard halves are actually `orca_dl` destinations with a byte
+   pin in `ORCA_SHARD_BYTES`. Derived on both sides, so a rename on one side
+   goes red instead of a literal drifting with it.
+* C04-era message class (deferred §9.6 item): the 5 bare-`KeyError` arms in
+   `test_heretic_rungs_27b.py` (via a new `_model()` guard) and the 4 in
+   `test_config_parity.py` (`test_cr5_display_presence`,
+   `test_cr5_display_name_grammar` now assert absent ids "— awaiting CA2/CA3")
+   fail with their designed message. A count-only residual map cannot tell a
+   KeyError arm from suite breakage — the C02 round showed that costs a dev
+   round to untangle.
+
+Recorded, NOT asserted: the `-hf` loader hazard. `Q4_K_M/MTP/` holds only
+shards 1+6-of-6 and spells them uppercase `-MTP-`, which defeats hf_check's
+case-sensitive `-mtp-` skip and sorts ahead of the trunk, so llama.cpp's
+`find_best_model` first-hit (case-insensitive `Q4_K_M[.-]`) would pick an
+incomplete 2/6 set. It is a live-loader behavior question (MTP also needs
+unmerged llama.cpp PR #27836), outside AC5's "resolves" wording — filed for
+coord, asserted nowhere.
+
+Posture (helm on PATH, gates off, C03 implementation UNCOMMITTED in the tree):
+`python3 -m pytest charts/llama-swap/tests -q` → **38 failed, 304 passed,
+5 skipped** (was 42/298/4; 344 → 347 collected = the two new always-on/gated
+arms plus the orca pairing arm). Exactly the four routed arms moved red→green;
+the counts differ from the coord's quoted 38/302/4 only by the added arms.
+Fully green: `test_heretic_rungs_flashnext.py` 9+2sk (11 armed),
+`test_flashnext_blast_radius.py` 5/5, `test_strata_off_parity.py` 3/3,
+`test_strata_orca_rung.py` 16+1sk. Residual 38, all designed pendings, every
+message read: C04 7 (`test_heretic_rungs_27b`), C04-era frozen-table growth 11
+(`test_config_parity` 8, `test_new_roster` 2, `test_config_schema` 1), C05 13
+(`test_catalog_contract`), C06 7 (`test_strata_q4_rung`). Armed pass
+`RUN_HF_CHECK=1 pytest test_heretic_rungs_flashnext.py test_strata_orca_rung.py
+test_hf_liveness.py` → 29 passed, 0 skipped. `npx --yes aislop@latest ci
+--changes` clean.
