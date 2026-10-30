@@ -79,13 +79,16 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "dev-complete-test-routed",
       "wave": 3,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "last_verdict": "DONE_WITH_CONCERNS(dev-round-1)",
+      "dev_session": "ses_e74ae7c51ffeRvOGDX53xoNIKH",
+      "handoffs": [
+        "2026-10-30 dev C03 round 1 (ses_e74ae7c51ffeRvOGDX53xoNIKH): DONE_WITH_CONCERNS — family qwen3.8-flash-next-heretic chart-side (enabled:false default, mmap-regime flags verbatim -ngl 99/-ot exps=CPU/--load-mode mmap/--fit off) + matrix var fnher + service enablement + sets.solo alternation insert (after fnq4, before fnorca); rendered cmd name/ttl/spec verified. SOURCE GATE (live, record for files): spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF ungated, Q4_K_M = complete 5-shard trunk 140,409,884,480 B (130.8 GiB, README agrees); MTP head mtp/mtp-…Q8_0 4,137,429,280 B; mmproj BF16/F16/Q8_0 ship; per-<QUANT>/MTP/ dirs hold ONLY shards 1+6-of-6 — llama.cpp download.cpp@889edf43 find_best_model takes first case-insensitive Q4_K_M[.-] hit = that 2/6 pair (uppercase -MTP- defeats the *-mtp-* skip) => auto-draft-download would grab an unloadable set; README: head must be in-model, -md does not work; MTP needs unmerged PR #27836; stock master ignores head tensors. Pack says 177B total/~3B active (KLD Q4_K_M 0.0361) — corrects RESEARCH [S16] 125B/6B figures (different table). Validations: C03 file 8 passed/1 failed (6 designed reds cleared); FULL SUITE 44/296/4 → 42/298/4; RUN_HF_CHECK arms 2 passed; aislop 100; lint/renders pass. DEVIATIONS: spec: KEPT (expected-off; chunk two-gate precedent; PR-unmerged hazard recorded; C06/on-target arbiter) — review adjudicates; descBase '180B-class' NOT fixed (not trivial — feeds evidence-baked descriptions = test-session re-pin; + source conflict 177B vs 125B) — deferred to chores; capabilities text+image declared (mmproj can't auto-pick, manual staging noted). 4 PRE-GREEN ARMS ROUTED TO TEST SESSION: (1) default-render no-heretic arm unsatisfiable as written (CR1.4 echo required by sibling arm) — re-express as fail-fast-echo-present; (2) blast-radius peers-carve-out interlock disabled by sanctioned cf-86 matrix key — needs allowance (verified peers delta == evidence models_states[2] exact, _cf86_matrix_violations zero); (3) gpu vars-growth (fnher) has no allowance — models/sets unchanged; (4) off-parity byte-baseline broken by legit catalog growth — PROVENANCE.md sanctioned re-baseline route. Dev tried shell-writing RESEARCH.md, reverted when perms denied — coord files records instead (this handoff + DECISIONS)."
+      ]
     },
     "C04": {
       "status": "pending",
