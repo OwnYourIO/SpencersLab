@@ -1665,3 +1665,121 @@ exactly C05 11 (5 registration + hygiene + phantom + removed-return + 3 trio,
 every message read; trio arms red at the catalog/chart assert = correct
 pre-dev posture) + C06 7. Earlier §9.10 counts (20/323) include the 2 unsatisfiable
 trio params and predate the +1 guard arm: 20−2=18, 323−2+1=324.
+
+### 9.12 C06 test round — keys-vs-values (class instance 3), the per-arena pairing selector, and the scope-guard widening (2026-10-30)
+
+C06 dev round 1 landed the implementation (4 files) and routed two reds as
+validation faults. Both verified against the landed render before editing; both
+MECHANICAL — the AC and its intent survive, only the validation expression was
+wrong. Off-parity 3/3 green on the C06 render: no era-4 OFF re-capture is owed
+(the q4 arena is a Strata inner arena; CR1.4/P5 echoes llama.cpp catalog ids
+only, and the OFF byte arm proves the render did not move).
+
+**Repair 1 — `test_c06_negative_pins_absent_from_the_q4_arm` (keys vs values).**
+The arm asked `S.Q4_SLOT_SAVE_PATH in dict(S.arg_pairs(_profile()))`:
+`arg_pairs` yields `(flag, value)` pairs, so the dict's KEYS are flags, and a
+path value can never be a member — the arm was unsatisfiable for any correct
+profile (`--slot-save-path /models/strata/sessions` renders exactly as pinned).
+Repaired to assert the pair itself (`pairs.get("--slot-save-path") ==
+Q4_SLOT_SAVE_PATH`) and added the self-non-vacuity assert the arm lacked
+(`tokens` non-empty, else every negative pin in it passes on an empty profile).
+Census-class instance 3: instance 1 §9.6 (matrix letters collected where the
+parser yields model ids), instance 2 §9.10 (macro-shared flag as census key),
+instance 3 this one (value tested for membership in a key set). All three are
+the same underlying slip — a collection read at the wrong side of a pair — and
+all three were invisible at authoring because an earlier guard aborted first.
+Probes: session path removed from the profile → red naming the value; the old
+keys-form re-tested on the landed render → still False.
+
+**Repair 2 — `test_c01_memory_cgroup_and_engine_cap` (per-arena pairing).**
+The pairing table read the engine cap from `PROFILE_PRIMARY_FILE`
+unconditionally, so once the sanctioned cgroup pair moved to 100Gi it demanded
+the IQ3_S arena grow to 95232 — contradicted by the per-pair law in
+`test_c06_existing_profiles_stay_byte_unchanged_iq3_s_keeps_92160` and by the
+byte-frozen pre-cf-86 capture of `strata-iq3_s.json`. Three arms, mutually
+unsatisfiable under C06's five-arena shape. Repaired by keying the pair leg on
+the cgroup: the profile that must equal the pair value is the arena the cgroup
+was sized for (`PROFILE_Q4_FILE` under 100Gi, `PROFILE_PRIMARY_FILE` under
+96Gi), and the law's real subject — containment — is now asserted directly for
+every cap the render states (`cap <= cgroup MiB`).
+Scope of the containment law matters: a universal "every profile must state a
+cap" version of the intent would have been its own unsatisfiable arm — the
+strix run shape states `--expert-cache`/`--resident-budget-gib` instead of
+`--memory-limit-mib`, and its file is byte-frozen by the pre-cf-86 capture, so
+adding a cap there is not this ticket's call. Probes: 96Gi + IQ3_S 92160 shape
+still legal (selector covers both pair shapes); q4 cap forced to 92160 under
+100Gi → "lockstep broken"; an IQ3_XXS cap of 103000 under 100Gi → containment
+red; IQ3_S byte-pin vs the pre-cf-86 capture → green (92160 unmoved).
+
+**Additive arms written this round (no AC changed).**
+`test_c06_pack_profile_carries_no_ple_gguf_line` — setup.py@v0.2.7 emits
+`--ple-gguf` only for ≤2-shard packs; the unsloth family has four shards, so a
+hand-written sidecar would be wrong weights. Probe: injected sidecar → red.
+`test_c06_q4_shard_family_is_the_four_shard_pack_it_stages_from`
+(RUN_HF_CHECK) — no such arm existed: the q4 file had no live-HF coverage, so
+the pack source was unpinned while the C03/C04 llama.cpp packs are pinned. It
+reads the live HF tree with no credential (the anonymous listing IS the evidence
+behind AC4's "no new secret material") and pins the four shard names+bytes, the
+total, a complete 4-of-4 pick under the mirrored loader rule, and that the
+profile's `--native` is that primary shard. Probes: shard 4 removed → red; one
+shard's bytes shifted → red.
+
+**Byte-total discrepancy (dev handoff vs live tree).** Dev's round-1 ledger
+reports "Live tree: exactly 4 files, 111,334,256,784 B == setup pins
+byte-identical". The live tree read here gives per-shard sizes
+10,946,624 / 49,859,583,136 / 49,376,141,504 / 12,087,983,520 — all four match
+the chart's pack comment — summing to **111,334,654,784**, i.e. 398,000 B above
+the total the chart comment cites (values.yaml ~L2406). So the per-shard facts
+hold and the cited SUM is a transcription slip (the 111.3 GB figure is setup's
+rounded `download_gb`), not upstream churn. The suite pins the per-shard values
+and the true total; the comment waits on the deferred docs round (README L41
+96Gi + the host-prep note are stale for the Q4 pair too, and
+`test_strata_runbook.py` pins that literal — docs and arm must move together).
+Restating dev's own lesson: a baseline/live claim in a ledger carries the proof
+triple (ref, tree state, verbatim numbers) or it is a citation, not a
+measurement.
+
+**Scope guards: c8 widened, and its twins were red too.** c8 admits no serving
+surface at all, so any dirty chart/services tree reddened it mid-chunk, and a
+range base (`CHUNK_BASE=merge-base`) reddened it on cf-86's own committed test
+tree. Chosen design: **literal per-file admits** for exactly what cf-86's
+chunks declare (`charts/llama-swap/values.yaml`,
+`charts/llama-swap/templates/configmap-strata-profile.yaml`,
+`services/gpu-ai/prod/values.yaml`, `charts/llama-swap/tests/*`) — no directory
+admits — behind a `c8_admits()` function plus a **standing negative probe loop**
+(`containers/strata/Dockerfile`,
+`charts/llama-swap/templates/deployment.yaml`, `charts/home-assistant/values.yaml`,
+`services/home/agents/prod/values.yaml`, `.github/workflows/ci.yaml` must stay
+outside), so a widening cannot silently become a catch-all. **Manifest-driven
+admits rejected**: the plan folder is itself admitted and rewritten mid-run, so
+reading "Files in scope" would let the scoped party grow its own allow-list, and
+agent-perms A9 window-greps literal admits inside the if-want block, which a
+parsed loop cannot satisfy without re-pinning A9.
+Same-class reds the routed item did not name, found by running the family:
+`gate.sh` t14 and `agents-md.sh` c7 lack the same admits (dirty C06 tree: both
+red on the cf-86 plan folder; `pipeline-gates/validation-fix.sh` t7 then fails
+transitively because it runs agents-md.sh). Widened identically — plan folder +
+the three serving files + the chart tests tree, literals only, gate.sh's "infra
+dirs stay OUTSIDE the allow-set" sentence amended to name the exception. The
+standing probe loop lives in c8 only (one copy of the machinery; t14/c7 keep
+their own A9-windowed literals).
+Probe evidence for all three: dirty C06 tree → rc 0 (rulesync-surface 19 ok,
+gate 22 ok, agents-md 9 ok); dirty unadmitted `configmap-strata.yaml` → all
+three rc 1; tampered c8 admit to `charts/**` → the probe loop itself fires
+("a serving widening grew into a catch-all"); whole-ticket range
+(`CHUNK_BASE=617e18488`) → all three rc 0; clean HEAD with the edited gate files
+→ 19/22/9 ok and agent-perms 15 ok (A9 window-pins intact).
+Environment note for anyone repeating the clean-HEAD comparison: a fresh
+worktree cannot run the strata pytest suites — the `app-template` subchart
+dependency is absent there and every render errors ("found in Chart.yaml, but
+missing in charts/ directory"), so clean-HEAD pytest numbers are meaningless;
+the gate suites do not render and do compare.
+
+**Posture (helm on PATH; C06 implementation uncommitted in the tree).**
+Per-file: q4_rung 11 passed + 1 gated skip, strata_render 25, blast-radius 5,
+off-parity 3, catalog contract 18, orca 16+1, abliterated 14, heretic-27B
+10+2, heretic-flashnext 9+2, config parity 34, new_roster 30, config_schema 22.
+FULL plain: **343 passed, 8 skipped, 0 failed**. FULL armed
+(`RUN_HF_CHECK=1 RUN_FLAG_AUDIT=1`): **351 passed, 0 failed, 0 skipped** — the
+first fully-armed zero-red run of the ticket. The 2 above dev's projected 349
+are the additive arms in this section, not a counting difference.

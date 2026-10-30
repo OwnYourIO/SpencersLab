@@ -39,11 +39,13 @@
 # source edit + regenerate; the new contract's full text lives in
 # tests/pipeline-models/surface.sh), and c8 admits this ticket's plan folder
 # (D6 landing-widening). Every other arm stays green and holds.
-# cf-86 posture: c8-only widening — C05 landed catalog + plan-folder commits
-# on this branch; its chart/tests/evidence folders were already admitted, but
-# its own plan folder was not, so any dirty or untracked plan-folder state
-# (mid-chunk bookkeeping, this round's rulesync-surface.sh re-pin) read as
-# scope escape.
+# cf-86 posture: c8-only widenings. This round-1 posture line (C05 era) admitted
+# the ticket's plan folder only; the C06 test round added the rest of its
+# declared surface — the serving trio (chart values, strata profile ConfigMap
+# template, gpu-ai overlay) plus charts/llama-swap/tests/**, none of which the
+# contract-built admit list covered, so c8 reddened on any dirty serving tree
+# mid-chunk and over the whole-ticket range (CHUNK_BASE=merge-base). See the c8
+# block for why the admits stayed literal rather than manifest-driven.
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF is retained only for c1's
@@ -424,11 +426,23 @@ fi
 # cf-58, and any untracked/dirty plan-folder state reddened c8 before then.
 # Inline literal per the A9 window-grep convention (agent-perms A9's pinned
 # slug loop does NOT demand this slug: cf-86 lands no t14/c7 block admits).
+# cf-86 serving-surface widening (2026-10-30 C06 test round, same prerogative
+# as every widening above): the admit list was assembled from CONTRACT tickets,
+# so it carried no serving surface at all — a model ticket's own chart/services
+# edits reddened c8 on any dirty tree mid-chunk, and its chart test tree
+# reddened over a range base (CHUNK_BASE=merge-base). Admits are the exact
+# files cf-86's chunks declare (chart values, the strata profile ConfigMap
+# template, the gpu-ai overlay) plus that chart's tests tree — deliberately NOT
+# charts/** or services/**, so a stray serving edit still goes red, and the
+# probe loop below keeps that true without a human remembering to check.
+# Manifest-driven admits (reading each chunk's "Files in scope") were rejected:
+# the plan folder is itself admitted and rewritten mid-run, so dev would grow
+# its own allow-list — a scope guard that trusts the scoped party is not a
+# guard — and agent-perms A9 window-greps literal admits inside the if-want
+# block, which a parsed loop cannot satisfy (it would need re-pinning too).
 if want c8; then
-  { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
-  while IFS= read -r p; do
-    [ -n "$p" ] || continue
-    case "$p" in
+  c8_admits() {
+    case "$1" in
       "$SKILL_SRC"|"$AGENT_SRC"|"$CMD_SRC"|"$PERM_SRC"|"$RULES_SRC"|\
       "$SKILL_GEN"|"$AGENT_GEN"|"$CMD_GEN"|"$PERM_GEN"|AGENTS.md|\
       containers/wekan-mcp/*|skills/wekan-api/*|tests/*|"$FEATURE"/*|\
@@ -453,11 +467,29 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
-      .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) : ;;
-      *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
+      charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
+      services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*|\
+      .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) return 0 ;;
+      *) return 1 ;;
     esac
+  }
+  { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    c8_admits "$p" || fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)"
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 and cf-86 (plan folder) widenings (base: $BASE)"
+  # Widening, not a catch-all: paths no ticket on this branch has ever declared
+  # must stay outside the admit list. A probe path need not exist on disk — the
+  # check is on the pattern set, and containers/strata/Dockerfile is a real
+  # serving surface (cf-86 builds no image, so it is not admissible by it).
+  for p in containers/strata/Dockerfile charts/llama-swap/templates/deployment.yaml \
+           charts/home-assistant/values.yaml services/home/agents/prod/values.yaml \
+           .github/workflows/ci.yaml; do
+    if c8_admits "$p"; then
+      fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
+    fi
+  done
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6, and cf-86 (plan folder + declared serving trio + its chart tests tree) widenings; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

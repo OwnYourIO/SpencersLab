@@ -236,7 +236,20 @@ def test_c01_memory_cgroup_and_engine_cap():
         "unbounded pin + unbounded trio = kernel harvesting system pods) and "
         f"only the sanctioned pairs {sorted(pair)} are legal"
     )
-    cap = dict(S.arg_pairs(S.profile_json(_on(), S.PROFILE_PRIMARY_FILE))).get("--memory-limit-mib")
+    # The pair leg is PER-ARENA: one cgroup bounds the pod, and the cap that has
+    # to equal the pair value is the arena the cgroup was sized for — the Q4 rung
+    # under 100Gi, the IQ3_S primary under 96Gi. Reading the primary's cap under
+    # the 100Gi cgroup would demand the smaller arenas grow to 95232, which the
+    # per-pair law in test_strata_q4_rung.py and the byte-frozen pre-cf-86
+    # capture both forbid — the two arms would be mutually unsatisfiable.
+    binding = (S.PROFILE_Q4_FILE if limits.get("memory") == S.Q4_CGROUP_LIMIT
+               else S.PROFILE_PRIMARY_FILE)
+    caps = {f: dict(S.arg_pairs(S.profile_json(_on(), f))).get("--memory-limit-mib")
+            for f in sorted(S.profile_files(_on()))}
+    assert binding in caps and caps, (
+        f"rendered profile set {sorted(caps)} lacks the pair-binding profile {binding!r}"
+    )
+    cap = caps[binding]
     assert cap and int(cap) <= 100 * 1024, (
         f"--memory-limit-mib {cap!r}: the engine must be TOLD its cgroup "
         "(#1601 pairing) and size inside it — a limit without the flag "
@@ -246,6 +259,18 @@ def test_c01_memory_cgroup_and_engine_cap():
         f"lockstep broken: cgroup {limits['memory']} with engine cap {cap!r} "
         f"(pairing law: {pair[limits['memory']]})"
     )
+    # Containment is the law's real subject: every cap the render states must sit
+    # inside the one cgroup. A profile that states no cap is not covered — the
+    # strix run shape pins expert-cache/resident-budget instead and its file is
+    # byte-frozen by the pre-cf-86 capture, so adding a cap there is not this
+    # ticket's call.
+    assert limits["memory"].endswith("Gi"), f"unpinned cgroup unit {limits['memory']!r}"
+    cgroup_mib = int(limits["memory"][:-2]) * 1024
+    for fname, stated in sorted(caps.items()):
+        assert stated is None or int(stated) <= cgroup_mib, (
+            f"{fname} --memory-limit-mib {stated} exceeds the {limits['memory']} cgroup — that "
+            "engine is told a cap its container cannot hold (#1601 pairing, other leg)"
+        )
     assert "amd.com/gpu" not in {**req, **limits}, (
         "the amd.com/gpu resource contradicts the privileged+hostPath device ruling"
     )

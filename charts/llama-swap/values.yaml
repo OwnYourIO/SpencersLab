@@ -1148,6 +1148,16 @@ app-template:
               [ -f /opt/strata/src/Strata/setup.sh ] \
                 || fail "image carries no source checkout - containers/strata must be rebuilt (strata-src stage, 2026-10-29 contract)"
               mkdir -p /models/strata
+              # Session-file landing zone for the Q4 rung's --slot-save-path
+              # (strata-q4.json): same claim as the weights, so a saved
+              # conversation outlives a ttl unload AND a pod Recreate. Created
+              # here, idempotently, because the engine writes only on demand
+              # and a missing directory surfaces as a save error at the worst
+              # possible moment (an operator trying to free the arena). The
+              # engine's own --session-min-free-mib 4096 default guards the
+              # claim's free space; the disk gate for this rung's ~4.7 GiB per
+              # 262k conversation file is a human on-target check.
+              mkdir -p /models/strata/sessions
               # /data/install stays the CLI's install-dir anchor, bound to the
               # claim so discovery tools (models list --install-dir default)
               # see what setup produced.
@@ -1575,8 +1585,17 @@ app-template:
             # the ttl:3600 time-share and the cgroup cap are what keep the
             # next collision inside this container instead of the whole
             # node. Raise --memory-limit-mib in lockstep with this number.
+            # cf-86 C06 raises the ceiling to 100Gi for the UD-Q4_K_XL rung:
+            # its declared pair is 95232 MiB inside 100Gi (71.7 GiB pinned
+            # experts + 8 GiB trimmed conversation cache + ~13 GiB worst-case
+            # KV ≈ 92.7, RESEARCH Round 2/3 [A1]) — the pair is PER-RUNG, so
+            # the IQ3_S/IQ3_XXS profiles keep their 92160 cap inside this same
+            # cgroup and ride the smaller arena; nothing about the smaller
+            # rungs' envelope changed. 100Gi is the largest cap this node has
+            # ever carried, which is precisely why the matrix keeps all five
+            # arenas as alternatives and the 420 s grace stays untouched.
             limits:
-              memory: 96Gi
+              memory: 100Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
             # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
@@ -1909,21 +1928,46 @@ strata:
         env:
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
 
+      qwen3.8-flash-next-strata-q4:
+        name: Qwen3.8-Flash-Next Unsloth UD-Q4_K_XL (R9700 arena)
+        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena, a conversation-cache trim from 32 to 8 GiB (upstream's own default class) and disk-backed session files in place of RAM parking; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 100Gi/95232 pair; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        # Same serve wrapper as the primary, byte-for-byte except the profile
+        # file (the suite asserts exactly this equality — the ulimit wrapper is
+        # load-bearing, and a per-rung wrapper drift is invisible until fd
+        # exhaustion): the pack/quant/memory switch lives entirely in the
+        # profile file; serve takes no tuning flags.
+        cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-q4.json --host 127.0.0.1 --port ${PORT}'
+        # Residency contract copied from the primary verbatim (rung-wide law,
+        # same as the abliterated/orca rungs): ttl/unloadTimeout/checkEndpoint
+        # equality keeps the time-share discipline and the 420 s grace
+        # invariant, which C06 must not touch.
+        ttl: 3600
+        unloadTimeout: 180
+        checkEndpoint: /health
+        # Engine defaults like the other R9700 rungs: no PR/strix switch set
+        # (silicon/recipe-specific), only the peers-forwarded Host allow-list;
+        # the ROCR entry is injected by the template from the global index.
+        env:
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
+
     matrix:
       # The engines are ALTERNATIVES, never co-loadable: the arenas pin
       # RAM additively on the 128 GB node and co-residency recreates #1715's
-      # global OOM (RESEARCH §7). "(p | s | c | o)" expands to one-model
+      # global OOM (RESEARCH §7). "(p | s | c | o | q)" expands to one-model
       # combos, so the solver evicts the resident arena before starting the
       # other — the preload-empty hook alone would not stop a request-driven
-      # co-load. vars name model IDs, not aliases (llama-swap matrix
+      # co-load. The Q4 arena is the largest of the five (71.7 GiB pinned
+      # experts), which is exactly why it rides the alternation instead of a
+      # slot of its own. vars name model IDs, not aliases (llama-swap matrix
       # semantics). All stay lazily reachable; nothing preloads.
       vars:
         p: qwen3.8-flash-next-strata
         s: qwen3.8-flash-next-strata-strix
         c: qwen3.8-flash-next-strata-abliterated
         o: qwen3.8-flash-next-strata-orca
+        q: qwen3.8-flash-next-strata-q4
       sets:
-        main: "(p | s | c | o)"
+        main: "(p | s | c | o | q)"
 
     # -----------------------------------------------------------------------
     # The run-config JSON rendered VERBATIM to /profile/strata-iq3_s.json
@@ -2316,6 +2360,146 @@ strata:
       # would split the orca family across surfaces invisibly.
       aliases:
         - qwen3.8-flash-next-orca
+      gpu: [0]
+      parallel: 4
+      host: "127.0.0.1"
+
+    # -----------------------------------------------------------------------
+    # The unsloth UD-Q4_K_XL Q4 rung's run-config, rendered VERBATIM to
+    # /profile/strata-q4.json by the same profile ConfigMap (cf-86 C06).
+    # Shape: the primary's engine/paths layer byte-unchanged, data paths and
+    # the memory pair moved — this is the wave's only Shape-A TWEAK rather than
+    # a Shape-A copy. Authority for every number: DECISIONS "Research verdicts
+    # + final rulings" (R-b OVERTURN: it fits; U8: this rung + this trim),
+    # RESEARCH Rounds 2-3 [A1][A2][A11].
+    # Paths are setup v0.2.7's own naming for a catalog family install (read at
+    # the pinned tag, sha256 4a786bb8…c280e1): family tag "unsloth-" prefixes
+    # BOTH the staged-shard dir and the lowercased pack dir, and step 7 of the
+    # installer emits --pack + --native(shard 1) ONLY — for a 4-shard pack it
+    # deliberately writes no --ple-gguf, because the engine finds the PLE
+    # table's shard itself from shard 1. The MTP runtime is the shared one the
+    # q3 provisioning already staged.
+    # -----------------------------------------------------------------------
+    engineProfileStrataQ4:
+      # Keyless serve posture (C-A), identical to the other four profiles:
+      # unsloth's files are public/ungated, so C02's download-only hf-token
+      # exception must NOT spread here — no secret reference anywhere in this
+      # arm.
+      api_key: "none"
+      # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
+      # backend/gpu/parallel/host to the primary and the two XXS rungs (the
+      # suite asserts this equality; only data paths may differ).
+      exe: /models/strata/Strata/engine/strata
+      env: {}
+      cwd: /models/strata/Strata
+      # Own progress log on the claim (the on-target --plan gate and the
+      # session round-trip gate both read this file).
+      log: /models/strata/Strata/strata-q4.log
+      args:
+        # Pack iq_pack built by setup from the four unsloth shards with
+        # --compat-bf16 (the unsloth family's own pack_args — unlike SC117's
+        # GSQ-RCO files, unsloth's quants compress the projections Strata's
+        # kernels read as BF16); the tokenizer directory rides inside it.
+        - --pack /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl
+        # Shard 1 of four (10,946,624 B — the embeddings/first layers; shards
+        # 2-3 are the ~49.9+49.4 GB expert halves, shard 4 the 12.1 GB tail;
+        # bytes pinned in setup's UNSLOTH_SHARDS, sum 111,334,256,784 = the
+        # 111.3 GB download). No --ple-gguf line here on purpose: setup's step
+        # 7 emits it only for ≤2-shard packs (verified in setup.py@v0.2.7:
+        # `["--ple-gguf", ple] if len(shards) <= 2 else []`), and pointing one
+        # at a guessed shard would be the wrong-weights failure.
+        - --native /models/strata/Strata-data/models/unsloth-UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf
+        # Same qwen-architecture expert profile (the unsloth family carries no
+        # family-specific profile file of its own).
+        - --expert-profile /models/strata/Strata/data/expert-profile.bin
+        - --expert-cache auto
+        - --spec 4
+        - --spec-min-p 0.5
+        # Shared stock draft-head runtime staged by the q3 provisioning — the
+        # unsloth quantization never touched the draft head, and the target
+        # model verifies every proposal.
+        - --mtp /models/strata/Strata-data/mtp/rt
+        - --max-context 262144
+        - --kv int8
+        # KV-streaming RAM budget byte-equal to the serving rungs: the budget
+        # below already counts the worst-case ~13 GiB 4-slot KV, and C06's
+        # ruling moved only the conversation-cache term.
+        - --kv-resident 32768
+        - --prefill auto
+        # THE LOCKSTEP PAIR (PR #1601): cgroup limits.memory 100Gi above, this
+        # cap inside it. Round-2/3 envelope: pinned experts 71.7 GiB + trimmed
+        # conversation cache 8 GiB + worst-case 4-slot KV ~13 GiB ≈ 92.7 GiB,
+        # so 95232 MiB (93 GiB) leaves ~25 GiB of node headroom against the
+        # 125 GiB node — vs the IQ3_S pair's 92160/96Gi. The pair is per-rung;
+        # the IQ3_S and IQ3_XXS profiles keep 92160 untouched.
+        - --memory-limit-mib 95232
+        # Conversation-cache trim 32→8 GiB (slots unchanged at 16): the price
+        # of the 71.7 GiB arena. Not a novel concession — 8192 MiB is upstream's
+        # OWN default ceiling ("40% of the RAM left above min-free, at most
+        # 8192 MiB", DETAILS.md@v0.2.7 [A11]); the 32 GiB was the owner's
+        # 2026-10-29 uplift. At 8 GiB the fleet's typical 30-50k turns still
+        # park ~12-21 of them; only ≥256k parks go scarce (2), and those
+        # round-trip through the session files below instead of re-prefilling
+        # 1.7-3 min.
+        - --conversation-cache-mib 8192
+        - --conversation-cache-slots 16
+        # Disk-backed conversation state (Strata 0.2.7 native: --slot-save-path
+        # + POST /slots/N?action=save|restore; DETAILS.md@v0.2.7 "Session files
+        # (disk)" names the flag and its config alias "slot_save_path", so the
+        # pinned checkout needs no rebuild for this rung). On the shared claim,
+        # so files outlive both a ttl unload and a pod Recreate. ~1.2 GB per
+        # 63k tokens → ~4.7 GiB per 262k conversation; restore measures 1-5 s on
+        # NVMe class against 1.7-3 min of re-prefill (Round 3 §3). Runbook shape
+        # from the same section: only slot 0, one request at a time (otherwise
+        # 501/400), and a file is bound to the geometry it was written under
+        # (engine version, --kv, --kv-resident, --max-context, --mtp-window) —
+        # editing those terms on this arm retires the saved files, which is one
+        # more reason the terms below stay stable. Nothing calls save/restore
+        # automatically — upstream's automation (#3341/#3565/#3891/#4306) is
+        # still open at 0.2.7, so this is a runbook/orchestration affordance,
+        # not an eviction path. The engine's own --session-min-free-mib 4096
+        # default guards the claim against a zero-free write; the sessions dir
+        # is created by model-fetch.
+        - --slot-save-path /models/strata/sessions
+        # NEGATIVE PINS — the trim's justification depends on all four staying
+        # out of this arm (suite-pinned; RESEARCH Round 3 §4):
+        #   --batch, --layer-split, --prompt-cache 0 each DISABLE session files
+        #   (verbatim at v0.2.7: "Not supported with --layer-split,
+        #   --peer-device, --batch or --prompt-cache 0"), so adding any of them
+        #   would silently void the round-trip the trim bought;
+        #   --ple-io ram would make the 28.8 GiB n-gram table RAM-resident —
+        #   the exact +28.8 GiB that blew node RAM and got cluster system pods
+        #   OOM-harvested on 2026-10-29. This is a hazard, not a theoretical
+        #   worry: setup's own installer AUTO-ADDS --ple-io ram here, because
+        #   its SSD-path test is `ram >= ram_gb(48) + table_gb(28.8) + 16`
+        #   = 92.8 GB and this node has 128 — so whatever the claim's setup-
+        #   generated config says, THIS file is the serving authority and it
+        #   pins the engine's mmap default. PLE-RAM-vs-mmap is confirmed at the
+        #   human-owned on-target `strata serve --plan` gate, never from here.
+        # Pre-registered fallback (human-owned on-target gate, DECISIONS):
+        # session files are documented Linux+CUDA and untested on HIP. If the
+        # first HIP save/restore round-trip fails, the trim loses its
+        # justification and this rung reverts to the Round-2 UD-IQ4_XS envelope
+        # (--conversation-cache-mib 32768, cgroup 108Gi, --memory-limit-mib
+        # 102400) — a routed re-pin by the test session, never a dev edit.
+      # Person-wins layer (RESEARCH §2), same rule as the other profiles.
+      user_args: []
+      tokenizer: /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl/tokenizer
+      model_name: qwen3.8-flash-next-unsloth-ud-q4_k_xl
+      lib_dirs:
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib
+      backend: hip
+      # UNIQUE inner alias per the frozen-id rule: NOT the family alias
+      # (primary/strix hold that legitimately together) and NOT the outer
+      # llama.cpp ids of the same quant class (qwen3.8-flash-next-q4 /
+      # qwen3.8-flash-next-heretic-q4) — one name on two engines would split
+      # the flash-next Q4 family across surfaces invisibly. The name is
+      # setup's own family name for this repo (fam["name"] =
+      # qwen3.8-flash-next-unsloth), so a direct/debug hit reads as the
+      # quantization source, which is the distinction an operator needs.
+      aliases:
+        - qwen3.8-flash-next-unsloth
       gpu: [0]
       parallel: 4
       host: "127.0.0.1"

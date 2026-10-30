@@ -695,6 +695,24 @@
             "context": 262144
           }
         },
+        "qwen3.8-flash-next-strata-q4": {
+          "modelID": "qwen3.8-flash-next-strata-q4",
+          "name": "Qwen 3.8 Flash Next (Strata UD-Q4_K_XL arena, R9700)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          // Trained ceiling 262144; the engine refuses past it without rope
+          // scaling (documented experimental toggle in charts/llama-swap).
+          // This rung trades ~10-30% decode speed for +5 pt Q8_0 top-token
+          // match, and its 8 GiB conversation cache parks ~2 256k-class
+          // conversations in RAM — deeper ones round-trip through engine
+          // session files (charts/llama-swap strata-q4 profile).
+          "limit": {
+            "context": 262144
+          }
+        },
         "qwen38-ara": {
           "modelID": "qwen38-ara",
           "name": "Qwen3.8 27B heretic-ara (Q6_K-MTP)",
