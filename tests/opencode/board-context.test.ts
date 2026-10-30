@@ -532,36 +532,3 @@ describe("S9 setup wiring — one prompt hook, explicit enabled gate (AC 1, AC 6
     assert.equal(ev.prompt.text.includes(EXPECTED_BLOCK), Boolean(enabled));
   });
 });
-
-// C03 (2026/2026-10-chore-board-tick-cleanup) ships the enable-as-is decision:
-// the flip commits a constant and a proof citation, nothing else. These arms
-// keep that scope honest offline — the live-fire legs LF1..LF7 are runbook
-// evidence, not test files (chunk "Tests": live legs are runbook steps).
-describe("S10 enable-as-is scope guards (C03 AC 4, OQ-N1/N2 shape)", () => {
-  const PLUGIN = ".opencode/plugin/board-context/index.ts";
-
-  it("carries no cards: projection — extending the block into B1 is a follow-up card, not this flip (C03 AC 4)", () => {
-    const source = readFileSync(PLUGIN, "utf8");
-    assert.equal((source.match(/cards:/g) ?? []).length, 0,
-      "plugin source contains a cards: section marker — enable-as-is only (plan Out of scope: the cards: projections ride a follow-up board card; adjudication: chunk Tests' 'exactly one' wording yields to AC 4's grep -c == 0)");
-  });
-
-  it("lists the resolution legs it internalizes without enumerating card lists", () => {
-    const source = readFileSync(PLUGIN, "utf8");
-    for (const leg of ["list_boards", "get_board", "list_swimlanes", "list_lists", "list_custom_fields"]) {
-      assert.ok(source.includes(leg), `leg ${leg} vanished — the shipped five-leg structure prefetch is the enabled surface (RESEARCH W1 F4)`);
-    }
-    assert.ok(!source.includes("list_cards_in_list"),
-      "list_cards_in_list joined the prefetch — pickup enumerations stay live per-card data (schema exclusion, C03 Files-in-scope 'NOT touched')");
-  });
-
-  it("an ON constant only ships with the C03 runbook citation beside it (AC 1; era-arm sibling)", () => {
-    const enabled = mod.DEFAULT_ENABLED ?? mod.default?.DEFAULT_ENABLED;
-    if (enabled !== true) return; // OFF era: nothing to certify yet
-    const source = readFileSync(PLUGIN, "utf8");
-    assert.match(source, /live-fire 2026-\d\d-\d\dT/,
-      "the flip needs the runbook-shaped proof citation (C03 Citation line: 'live-fire <stamp> (worktree probes)') — no half-proven hook ships on");
-    assert.match(source, /worktree probes/,
-      "the citation must claim exactly what ran: worktree-instance evidence, not main-checkout proof (C03 Notes for dev: do not claim location proof the run never had)");
-  });
-});

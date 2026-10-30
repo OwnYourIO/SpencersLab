@@ -24,11 +24,7 @@
 # A13[C02 AC5/C03 AC7 rename sweep + command→agent pairing]
 # A14[bug-board-coord-dev-boards-allow AC6: MCP action-glob vs registered server-name spelling]
 # A15[cf-76 C07: pipeline_* lock-tool rows on the board-coord trio + tool/label-constant
-# parity across plugin ↔ permission rows ↔ boards skill];
-# A16[board-tick-cleanup C01 AC1-AC4: the explicit `ls *` allow on every
-# permission-bearing source and mirror, the effective 'ls -a' verdict, the
-# fabricated-strip/duplicate negative controls, the 22/9 verified counts and
-# the permissions.md matrix + drift move].
+# parity across plugin ↔ permission rows ↔ boards skill].
 #
 # cf-72 re-pin (2026-10-29, card #72, candidate B): the coord family's git
 # surface is no longer a reads allow-list — A12's GIT_SHARED/TAIL_* block (and
@@ -40,12 +36,6 @@
 #
 # Red posture: A1-A4 — the permission rows and the text rows do not exist
 # yet; every red line names the missing rule/row, never a harness fault.
-# A16 (board-tick-cleanup C01) shipped with the C01 commit and HOLDs: it
-# names any source/mirror that lost its `ls *` row. The 2026-10-30 merge
-# re-seat moved the coord-family row INSIDE the scoped-read family (after the
-# preload-probe row, before cf-72's absolute-last push tail); the
-# dev/standalone/agent-board positions are unchanged. A16 pins COUNT and
-# EFFECT, so the re-seat moves neither — only this note records it.
 # A5-A8 are HOLD posture (green now, must stay green). A9 pinned the TEST
 # phase's own suite re-pins (folder admits), green from this file's landing
 # and HOLD through dev. A10 is the cf-58 RE-PIN of the old mechanism test:
@@ -183,11 +173,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 16); do WANT["a$i"]=1; done
+  for i in $(seq 1 15); do WANT["a$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^a([1-9]|1[0-6])$ ]] || fail "unknown check id '$a' (expected A1..A16)"
+    [[ "$lc" =~ ^a([1-9]|1[0-5])$ ]] || fail "unknown check id '$a' (expected A1..A15)"
     WANT["$lc"]=1
   done
 fi
@@ -333,9 +323,6 @@ cat >"$TMP/family.py" <<'PY'
 #   gitrows FILE CLASS         — CLASS devlocal|devpr|local|pr: the git rows
 #                                exactly as the plan declares, in order, and
 #                                nothing else added beyond base+suffix.
-#   lsrow FILE                 — exactly one {shell, "ls *", allow} row (board-
-#                                tick-cleanup C01 AC1: the explicit ls allow on
-#                                every permission-bearing source and mirror).
 #   policy FILE CMD            — prints the effective last-match verdict.
 #   policybatch FILE CLASS     — re-verdicts the cf-72 AC6 matrix (stdin TSV
 #                                class<TAB>want<TAB>command, '#' lines skipped)
@@ -543,20 +530,6 @@ def cmd():
             if git != suffix:
                 fail(f"gitrows({cls}): {path} git-row sequence is not the declared coord block in order "
                      f"({len(git)} rows seen, {len(suffix)} declared; diff at first mismatch)")
-    elif op == "lsrow":
-        # board-tick-cleanup C01: one explicit `ls *` allow per permission-
-        # bearing file. Count, not position: placement correctness is the
-        # EFFECT duty — policy FILE 'ls -a' below must answer allow, which is
-        # only true if the row sits after every catch-all deny that would
-        # shadow it (agent-board's `shell *` deny, the family baselines).
-        path = sys.argv[2]
-        want = sh("ls *", "allow")
-        n = sum(1 for r in perms(path) if r == want)
-        if n != 1:
-            fail(f"lsrow: {path} carries {n} exact {{shell, 'ls *', allow}} rows, want exactly one")
-        wrong = [r for r in perms(path) if r.get("action") == "shell" and r.get("resource") == "ls *" and r != want]
-        if wrong:
-            fail(f"lsrow: {path} grew a malformed ls row: {wrong}")
     elif op == "policy":
         print(verdict(sys.argv[2], sys.argv[3]))
     elif op == "policybatch":
@@ -865,8 +838,7 @@ fi
 # --- A8: parse-safety of every touched suite (AC6-parse-safety) ----------------
 if want a8; then
   for f in "$0" "$SUITE_SURFACE" "$SUITE_GATE" "$SUITE_RULESYNC" "$SUITE_AGENTSMD" \
-           "$SUITE_PUSH" "$SUITE_STANDALONE" "$SUITE_MODELS" \
-           tests/noop-marker/surface.sh tests/board-preload-probe/surface.sh; do
+           "$SUITE_PUSH" "$SUITE_STANDALONE" "$SUITE_MODELS"; do
     bash -n "$f" || fail "A8[AC6-parse-safety]: bash -n failed on $f"
   done
   ok "A8[AC6-parse-safety]: all five touched/created suite files + the three cf-58-new suites parse (bash -n)"
@@ -886,7 +858,7 @@ fi
 # folder or the very run landing the B block reddens on its own bookkeeping
 # (D9, same precedent chain).
 if want a9; then
-  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge 2026-10-cf-75-bug-wekan-mcp-skill 2026-10-cf-85-refactor-wekan-slug-session-link 2026-10-cf-72-chore-coord-git-read-globs 2026-10-chore-board-tick-cleanup 2026-10-cf-68-feat-wekan-mcp-create-list 2026-10-cf-83-refactor-strata-flash; do
+  for slug in 2026-10-bug-kickoff-mints-run-branch 2026-10-bug-session-origin-no-line 2026-10-bug-tests-edit-perms 2026-10-cf-58-feat-standalone-agent-merge 2026-10-cf-75-bug-wekan-mcp-skill 2026-10-cf-85-refactor-wekan-slug-session-link 2026-10-cf-72-chore-coord-git-read-globs; do
     python3 "$TMP/blockwin.py" "$SUITE_GATE" t14 ".agents/plans/2026/$slug/*" \
       || fail "A9[AC9-admits]: gate.sh t14 does not admit $slug inside its if-want block (the D9 widening did not land)"
     python3 "$TMP/blockwin.py" "$SUITE_RULESYNC" c8 ".agents/plans/2026/$slug/*" \
@@ -1749,118 +1721,6 @@ PY
     fi
     ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, the plugin constants match the permission rows and the boards-skill call strings, and the roster fence holds the cf-85 one-field slug roster"
   fi
-fi
-
-# --- A16: board-tick-cleanup C01 — the explicit `ls *` allow everywhere --------
-# User ruling 2026-10-29 ("Honestly, it should go on all agents"), interpreted
-# by the plan as: every source carrying a permissions: block gains exactly one
-# {shell, "ls *", allow} row. Pinned as three duties: row COUNT (AC1), EFFECTIVE
-# verdict for 'ls -a' == allow on sources AND generated mirrors (AC4 — the
-# verdict is the position test: agent-board's row must sit after its shell-'*'
-# deny, else last-match-wins shadows it), and the MATRIX move (permissions.md
-# rows + drift entry — the drift lesson a permission-block change is only done
-# when its matrix row moved too). The nine stage agents verified permission-
-# less (count fact, add nothing — plan Grounded facts W3).
-# Red before C01 dev: the 12 lacking sources name their missing row; the
-# matrix rows name their unmoved text. HOLD after landing.
-if want a16; then
-  mapfile -t permed < <(grep -l 'permissions:' .rulesync/subagents/*.md)
-  [ "${#permed[@]}" -eq 22 ] \
-    || fail "A16[C01 AC1]: ${#permed[@]} sources carry a permissions: block, want the plan's verified 22"
-  no_perm_landing=$(grep -L 'permissions:' .rulesync/subagents/*.md | grep -v '/[0-9]' || true)
-  [ -z "$no_perm_landing" ] \
-    || fail "A16[C01 fact]: a NON-stage agent lost its permission block: $no_perm_landing (the nine stage agents are the permissionless set — W3 verified)"
-  misses=$(grep -L 'resource: ls \*' "${permed[@]}" || true)
-  [ -z "$misses" ] || { printf '%s\n' "$misses" >&2; fail "A16[C01 AC1]: the plan's grep -L over the permission-bearing sources is not empty — files missing the 'resource: ls *' row (HOLD since the C01 landing: a row drifted away)"; }
-  for f in "${permed[@]}"; do
-    c=$(grep -c 'resource: ls \*' "$f")
-    [ "$c" -eq 1 ] || fail "A16[C01 AC1]: $f carries $c 'resource: ls *' rows, want exactly one"
-    g=".opencode/agents/$(basename "$f")"
-    [ -f "$g" ] || fail "A16[C01 AC5]: generated mirror $g missing"
-    gm=$(grep -c 'resource: ls \*' "$g")
-    [ "$gm" -eq 1 ] || fail "A16[C01 AC1/AC5]: mirror $g carries $gm ls rows, want exactly one (sources + generated land together)"
-    python3 "$TMP/family.py" lsrow "$f" || fail "A16[C01 AC1]: $f parsed ls duty broken"
-    python3 "$TMP/family.py" lsrow "$g" || fail "A16[C01 AC1]: $g parsed ls duty broken on the generated mirror"
-    v=$(python3 "$TMP/family.py" policy "$f" 'ls -a' 2>/dev/null || true)
-    [ "$v" = "allow" ] || fail "A16[C01 AC4]: $f effective verdict for 'ls -a' is '$v', want allow"
-    v=$(python3 "$TMP/family.py" policy "$g" 'ls -a' 2>/dev/null || true)
-    [ "$v" = "allow" ] || fail "A16[C01 AC4]: mirror $g verdict '$v', want allow"
-  done
-  # Negative controls (cf-52/cf-58 non-vacuity rule — the shipped guards must
-  # reject drift): a stripped copy flips the verdict, a duplicated copy and an
-  # effect-minted copy red the count guard, and a PRE-deny placement on an
-  # agent-board-shaped block evaluates to not-allow (that file's shadowing
-  # catch-all is exactly what AC4 calls out).
-  python3 - "${permed[0]}" "$TMP/ls-stripped.md" <<'PY'
-import re, sys, yaml
-src, dst = sys.argv[1], sys.argv[2]
-text = open(src).read()
-m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
-assert m, "no frontmatter"
-fm = yaml.safe_load(m.group(1)) or {}
-outer = fm.get("opencode")
-target = outer if isinstance(outer, dict) and "permissions" in outer else fm
-rows = target.get("permissions") or []
-before = len(rows)
-rows[:] = [r for r in rows if not (r.get("action") == "shell" and r.get("resource") == "ls *")]
-assert len(rows) == before - 1, "fixture: no 'ls *' allow row found to strip (the live loop reddens first — the row is mandatory since C01)"
-target["permissions"] = rows
-if outer is not target:
-    fm["opencode"] = target
-open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
-PY
-  v=$(python3 "$TMP/family.py" policy "$TMP/ls-stripped.md" 'ls -a' 2>/dev/null || true)
-  [ "$v" != "allow" ] || fail "A16[C01]: NEGATIVE CONTROL FAILED — 'ls -a' still evaluates allow with the row stripped (matcher inert; the real guard would pass on drift)"
-  python3 "$TMP/family.py" lsrow "$TMP/ls-stripped.md" >/dev/null 2>&1 \
-    && fail "A16[C01]: NEGATIVE CONTROL FAILED — lsrow accepted the stripped fixture"
-  python3 - "${permed[0]}" "$TMP/ls-dup.md" <<'PY'
-import re, sys, yaml
-src, dst = sys.argv[1], sys.argv[2]
-text = open(src).read()
-m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
-fm = yaml.safe_load(m.group(1)) or {}
-outer = fm.get("opencode")
-target = outer if isinstance(outer, dict) and "permissions" in outer else fm
-rows = target.get("permissions") or []
-ls = [r for r in rows if r.get("action") == "shell" and r.get("resource") == "ls *" and r.get("effect") == "allow"]
-assert len(ls) == 1, "fixture: duplicate only a landed single ls row"
-rows.append(dict(ls[0]))
-target["permissions"] = rows
-if outer is not target:
-    fm["opencode"] = target
-open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
-PY
-  python3 "$TMP/family.py" lsrow "$TMP/ls-dup.md" >/dev/null 2>&1 \
-    && fail "A16[C01]: NEGATIVE CONTROL FAILED — lsrow accepted a duplicated ls row"
-  python3 - .rulesync/subagents/agent-board.md "$TMP/ls-misplaced.md" <<'PY'
-import re, sys, yaml
-src, dst = sys.argv[1], sys.argv[2]
-text = open(src).read()
-m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
-fm = yaml.safe_load(m.group(1)) or {}
-outer = fm.get("opencode")
-target = outer if isinstance(outer, dict) and "permissions" in outer else fm
-rows = target.get("permissions") or []
-rows[:] = [r for r in rows if not (r.get("action") == "shell" and r.get("resource") == "ls *")]
-deny_at = next(i for i, r in enumerate(rows)
-               if r.get("action") == "shell" and r.get("resource") == "*" and r.get("effect") == "deny")
-rows.insert(deny_at, {"action": "shell", "resource": "ls *", "effect": "allow"})
-target["permissions"] = rows
-if outer is not target:
-    fm["opencode"] = target
-open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
-PY
-  v=$(python3 "$TMP/family.py" policy "$TMP/ls-misplaced.md" 'ls -a' 2>/dev/null || true)
-  [ "$v" != "allow" ] || fail "A16[C01]: NEGATIVE CONTROL FAILED — an ls allow placed BEFORE agent-board's shell-'*' deny still evaluates allow (the AC4 position test is decoration)"
-  for f in "$PERM_SRC" "$PERM_GEN"; do
-    for row in coord board-coord dev-local dev-pr agent-board; do
-      python3 "$TMP/sectgrep.py" "$f" row "$row" 'ls *' \
-        || fail "A16[C01 matrix]: $f '$row' row does not carry the ls * token — a permission-block change is only done when its matrix row moved too (permissions.md drift lesson)"
-    done
-    python3 "$TMP/sectgrep.py" "$f" section 'Drift incidents' 'ls *' \
-      || fail "A16[C01 matrix]: $f Drift-incidents section has no ls-* entry for the 2026-10-29 ruling (12 sources, re-pinned suites)"
-  done
-  ok "A16[C01 AC1-AC5]: 22 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow, every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
 fi
 
 printf 'PASS: agent-perms contract checks (%d ok)\n' "$checks"

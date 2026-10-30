@@ -37,20 +37,19 @@
 // tests/wekan-mcp/skill-surface.sh t3 keeps the schema owned by that markdown
 // file alone (code mirrors are not doc copies).
 //
-// Shipping state: merged on main as cf-75 C04 (7bbca8195) behind the AC6
-// degraded outcome (user ruling 2026-10-27 OQ5). The cf-75 worktree legs ran
+// Shipping state (AC6 degraded outcome, user ruling 2026-10-27 OQ5):
+// DEFAULT_ENABLED=false. Live-fire legs executed from the cf-75 worktree
 // 2026-10-28: URL discovery via the project-config arm + the real
 // initialize/tools/call handshake + the five resolution calls + formatBlock
-// against live dev-boards returned the plan's verified-fact ids (read-only) —
-// the resolution path is proven, the ON arm through a real admission was not
-// yet. Enablement is this file's ticket 2026/2026-10-chore-board-tick-cleanup
-// (C03): the user ruling 2026-10-29 (OQ7) re-statused the live-fire legs from
-// user-owned (main checkout) to AGENT-OWNED, executed in-worktree — a
-// worktree-rooted instance loads this checkout's location plugins, so the
-// branch's own code is what the legs prove. scripts/board-preload-probe.sh
-// runs the legs (C03 runbook LF1..LF7); the proof citation sits beside
-// DEFAULT_ENABLED and the flip is nothing else. "No half-proven hook ships
-// on" still holds — only the citation's author changed.
+// against live dev-boards returned the plan's verified-fact ids (read-only).
+// The ON arm has NOT been proven through a real admission because that leg is
+// deployment-side: it needs this plugin loaded at the hourly run's location
+// (the MAIN checkout — location plugins load per directory, so pre-landing it
+// is absent there) and an agent-board-coord session that actually runs.
+// Landing steps (user-owned): merge the branch; the config watcher reloads
+// plugins, or restart the server. Enable step: re-run the live-fire through the
+// real admission path in the main checkout, record the proof citation beside
+// DEFAULT_ENABLED, then flip it. No half-proven hook ships on.
 
 const MCP_SERVER_KEY = "dev-boards";
 const BOARD_TITLE = "AI-Dev";
@@ -62,33 +61,7 @@ const CANONICAL_HEADER = "Board context (collected";
 // prompt's admission open-endedly (RESEARCH.md Implication 2).
 export const FETCH_TIMEOUT_MS = 8_000;
 // See the shipping-state header block.
-// live-fire 2026-10-29T21:17Z-22:03Z (worktree probes, C03 T4):
-// LF1 p ses_bpplf1202610292117081098922 — the block read back in the
-//   first prompt, zero structural dev-boards reads;
-// LF2 p ses_bpplf2202610292117161098922 — the plain-text loop door
-//   fires the hook too, OQ-a closed live (no /pipeline-tick swap owed);
-// LF4 p x3 + 1 fail recorded — ses_e76799437ffeu7jSBjRwXU2z6Q,
-//   ses_e765394b2ffe7ao3oKjw0MXfQK and ses_e765029a3ffeiZBUjzM3XSD4sG
-//   wrote the marker live with the probeSentinel sibling intact;
-//   ses_e767600b8ffe0dz1BfG8kA1fAu wrapped its api call in `cd … &&`,
-//   the whole-string shell allow denied it, the run ended unmarked
-//   (alert stands — the safe direction) and the leg prompt since pins
-//   the bare command shape;
-// LF5 p — the 220244Z record: succeeded + manual shape + well-formed
-//   marker ⇒ the conjunction keeps alerting, and the user confirmed the
-//   finished-push receipt ~22:03Z (one per run, not a double-fire);
-// LF6 degraded per the approved OQ-N2 ceiling — kind:"scheduled" is
-//   OpenChamber-stamped and the shared server runs main-checkout
-//   plugins until merge, so C02's both-direction unit matrix is the
-//   pin and the first post-merge hourly fire the optional belt;
-// LF7 p — no FETCH_TIMEOUT_MS (8000 ms) breach or degrade line in the
-//   211708Z instance logs.
-// Evidence: /tmp/opencode/board-preload-probe/ run dirs 211702Z,
-// 211708Z, 211730Z, 212124Z, 215900Z, 220244Z (context/record/log
-// readbacks) + the chunk Review-notes ledger. OQ-e caveat: OIDC
-// re-enablement breaks this credential-free MCP leg for plugin and
-// session alike — the restamp duty rides this note.
-export const DEFAULT_ENABLED = true;
+export const DEFAULT_ENABLED = false;
 // A session's once-slot outlives any plausible first-prompt retry burst but
 // not the run; the set is in-memory because a server restart already resets
 // the plugin, and a re-fired prompt without the block re-injects harmlessly.

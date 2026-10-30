@@ -24,6 +24,12 @@ permissions:
     resource: skills/**
     effect: allow
   - action: read
+    resource: .agents/loops/**
+    effect: allow
+  - action: read
+    resource: .opencode/agents/**
+    effect: allow
+  - action: read
     resource: '*.env'
     effect: deny
   - action: read
@@ -69,10 +75,16 @@ permissions:
     resource: date *
     effect: allow
   - action: shell
-    resource: bash scripts/board-preload-probe.sh *
+    resource: ls
     effect: allow
   - action: shell
     resource: ls *
+    effect: allow
+  - action: shell
+    resource: pwd
+    effect: allow
+  - action: shell
+    resource: pwd *
     effect: allow
   - action: shell
     resource: git *

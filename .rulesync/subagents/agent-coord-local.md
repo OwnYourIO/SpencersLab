@@ -23,6 +23,12 @@ opencode:
       resource: skills/**
       effect: allow
     - action: read
+      resource: .agents/loops/**
+      effect: allow
+    - action: read
+      resource: .opencode/agents/**
+      effect: allow
+    - action: read
       resource: '*.env'
       effect: deny
     - action: read
@@ -68,18 +74,27 @@ opencode:
       resource: date *
       effect: allow
     - action: shell
-      resource: bash scripts/board-preload-probe.sh *
+      resource: ls
       effect: allow
-    # The `ls *` read grant (user ruling 2026-10-29): placed in the scoped-read
-    # family, not at the git tail — the push tail is the load-bearing last rows.
     - action: shell
       resource: ls *
+      effect: allow
+    - action: shell
+      resource: pwd
+      effect: allow
+    - action: shell
+      resource: pwd *
       effect: allow
     # In-work mark epoch: the kickoff recipe embeds $(date +%s%3N) in the
     # patch payload, and the shell matcher extracts command substitutions
     # and checks the date subcommand against this list on its own — the
     # global config's `date *` allow sits before this agent's deny baseline
     # and loses under last-match-wins, so the grant lives here.
+    # Surface checks (cf-88 postmortem 2026-10-30): verifying its own kickoff
+    # surfaces (worktree/branch present, session location) is coordination, not
+    # investigation — denied ls/pwd probes once masqueraded as a broken env and
+    # a healthy run was abandoned. Command pairs: `ls *`/`pwd *` miss the bare
+    # forms; `ls*`/`pwd*` would shadow lsof/pwdx-style tools.
     # Git: sole-committer broad write (owner ruling 2026-10-29, card #72) —
     # one `git *` allow closed by a pinned deny floor, not an allow-list.
     # Advancing main needs make-main-HEAD (checkout/switch/worktree-add on a

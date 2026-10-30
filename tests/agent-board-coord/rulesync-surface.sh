@@ -446,11 +446,6 @@ fi
 # .rulesync/skills/*, .rulesync/subagents/*, .opencode/agents/*,
 # .rulesync/commands/*, .opencode/commands/*, .rulesync/rules, tests/* and
 # AGENTS.md admits already in this set.
-# board-tick-cleanup widening (2026-10-29): the hand-managed question-notify
-# reader edit + the loop-file truth fix + this ticket's own plan folder
-# (agent-perms A9 window-pin), all in-scope per its chunks/C02.md.
-# merge round (2026-10-30): cf-68 joins the admit beside cf-83 — merged ticket
-# folders ride the changed-paths walk; guards red on landed folders bury later checks.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -479,11 +474,10 @@ if want c8; then
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
-      .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
       .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
-      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*|\
-      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore) : ;;
+      .agents/plans/2026-10-30-chore-coord-surface-grants.md|\
+      .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

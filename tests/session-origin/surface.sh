@@ -77,21 +77,6 @@
 # at the merge commit (empty diff → arm-B atpos posture), provable
 # pre-commit via CHUNK_BASE=<merge snapshot>. s2's HEAD-relative byte pin
 # greens again at the same commit for the same reason.
-# 2026-10-30 merge round: with conflict stages in the index a snapshot is not
-# creatable (git stash create refuses) and the verification round may not git
-# add, so s2(b2), s4 and the s6 commands freeze run MERGE_HEAD-rung variants
-# while a merge is in flight — each pre-validates the exact posture the merge
-# commit governs through afterwards (atpos4 / strict main-side byte source).
-# board-tick-cleanup RE-PIN (2026-10-chore-board-tick-cleanup, 2026-10-29):
-# splice4/atpos4/synth/shape4 admit C01's `ls *` allow (in-family since the
-# 2026-10-30 merge re-seat) and C03's
-# scoped preload-probe allow the same way the date row was admitted — strip
-# from the core, admit at most once whole, atpos4 now a SHELL5|SHELL6|SHELL7
-# ladder with ls as the seventh family row (the s4 19:3 geometry stays the
-# historical C01 window, where ls landed as the then-sanctioned trailer).
-# The fourth-allow duty keeps its teeth; the
-# absolute presences live in agent-perms A16 / tests/board-preload-probe/
-# surface.sh, so this suite never reddens a healthy pre-wave tree.
 # The kickoff naming landing (2026-10-27, bug-coord-opencode-perms) inherits
 # the same discipline: splice4 strips the execute/opencode_* naming rows from
 # the core projections (whole-and-order tail check, the four-allow duty keeps
@@ -342,14 +327,18 @@ SHELL4 = [
 # strip it from the core projection (the four-allow duty keeps its teeth)
 # and a separate check admits it at most once, whole.
 DATE = {"action": "shell", "resource": "date *", "effect": "allow"}
-# board-tick-cleanup RE-PIN (2026-10-29): C01's trailing `ls *` allow and
-# C03's scoped preload-probe allow strip from the core projection like the
-# date row (the four-allow duty keeps its teeth; the suites stay green in
-# every era so the probe wave lands as an increment), each admitted at most
-# once, whole. Absolute presence: agent-perms A16 (ls), tests/board-preload-
-# probe/surface.sh B2 (probe).
-LS = {"action": "shell", "resource": "ls *", "effect": "allow"}
-PROBE = {"action": "shell", "resource": "bash scripts/board-preload-probe.sh *", "effect": "allow"}
+# cf-88 re-pin (2026-10-30): the surface-check pairs (ls/pwd bare + spaced)
+# ride the block after the date allow; stripped from the core projection like
+# DATE so the four-allow duty keeps its teeth, admitted at most once, whole.
+DIAG = [{"action": "shell", "resource": "ls", "effect": "allow"},
+        {"action": "shell", "resource": "ls *", "effect": "allow"},
+        {"action": "shell", "resource": "pwd", "effect": "allow"},
+        {"action": "shell", "resource": "pwd *", "effect": "allow"}]
+# The cf-88 pair also grew the READ surface (loop file + agent definitions,
+# for diagnosing the same kickoff surfaces); stripped from the core
+# projection like DATE, admitted at most once, whole, in order.
+READDIAG = [{"action": "read", "resource": ".agents/loops/**", "effect": "allow"},
+            {"action": "read", "resource": ".opencode/agents/**", "effect": "allow"}]
 # cf-58 MERGE RE-PIN (2026-10-27): the merged coord family additionally
 # carries the sanctioned git block after the SHELL4 block (pinned absolutely
 # across all twelve family files by the cfpins contract in
@@ -462,8 +451,8 @@ def splice(seq):
 b, c = perms(base_path), perms(cur_path)
 if b[0] != {"action": "*", "resource": "*", "effect": "deny"}:
     print("deny-baseline first rule changed at base — the suite's premise broke"); sys.exit(1)
-b_core = [p for p in b if not is_git(p) and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
-c_core = [p for p in c if not is_git(p) and p not in NAMING and p != EXEC and p != DATE and p != LS and p != PROBE]
+b_core = [p for p in b if not is_git(p) and p not in NAMING and p != EXEC and p != DATE and p not in DIAG and p not in READDIAG]
+c_core = [p for p in c if not is_git(p) and p not in NAMING and p != EXEC and p != DATE and p not in DIAG and p not in READDIAG]
 want, i = splice([p for p in b_core if p not in SHELL4])
 if want is None:
     print(f"base must carry exactly one opencode '*' allow, found {i}"); sys.exit(1)
@@ -494,15 +483,15 @@ if nb and nb != NAMING:
 dt = [p for p in c if p == DATE]
 if dt and dt != [DATE]:
     print("the date allow is present more than once or with a different effect — unsanctioned date surface"); sys.exit(1)
-ltr = [p for p in c if p.get("action") == "shell" and p.get("resource") == "ls *"]
-if ltr and ltr != [LS]:
-    print("the ls allow is present more than once or with a non-allow effect — unsanctioned ls surface"); sys.exit(1)
-prt = [p for p in c if p.get("action") == "shell" and str(p.get("resource", "")).startswith("bash scripts/board-preload-probe.sh")]
-if prt and prt != [PROBE]:
-    print("the preload-probe allow is present more than once, off-spelling, or with a non-allow effect — unsanctioned probe surface (OQ-N1: exactly one scoped row)"); sys.exit(1)
+dg = [p for p in c if p in DIAG]
+if dg and dg != DIAG:
+    print("the cf-88 diagnostic rows are present but not exactly the sanctioned ls/pwd pairs in order — unsanctioned diagnostic surface"); sys.exit(1)
+rd = [p for p in c if p in READDIAG]
+if rd and rd != READDIAG:
+    print("the cf-88 read allows are present but not exactly the sanctioned pair in order — unsanctioned read surface"); sys.exit(1)
 shells = [p.get("resource") for p in c_core if p.get("action") == "shell"]
 if shells != [s["resource"] for s in SHELL4]:
-    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the other sanctioned shell surfaces are the cf-72 git block, the date allow, and the in-family preload-probe/ls rows — ls/probe checked whole above; probe presence in tests/board-preload-probe/surface.sh, ls presence in agent-perms A16)"); sys.exit(1)
+    print(f"shell resources are {shells}, want exactly the four scoped allows in order (the only other sanctioned shell surfaces are the cf-72 git block, the date allow and the cf-88 diagnostic rows, all checked whole above)"); sys.exit(1)
 if c[0] != b[0]:
     print("deny-baseline line drifted"); sys.exit(1)
 if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resource") == "*"
@@ -511,31 +500,27 @@ if need_dev_boards and not any(p.get("action") == "dev-boards*" and p.get("resou
 PY
 
 cat >"$TMP/atpos4.py" <<'PY'
-# Arm-B line twin: forms-aware since the board-tick-cleanup re-pin, re-seated
-# by the 2026-10-30 merge: the sanctioned literal family is the 15 allow
-# lines (two session triples, the mint triple, the session-origin triple,
-# the date triple), the 18-line SHELL6 (plus the OQ-N1 scoped preload-probe
-# triple) or the 21-line SHELL7 (plus the in-family `ls *` row — the
-# trailing-ls rung is OBSOLETE for the coord family: cf-72 made the push tail
-# the absolute-last shell rows). The ladder floor stays
-# SHELL5: this suite owns the absolute FOUR-allow presence duty (s4), so a
-# three-allow tree must red here. Block matching skips source-tree comment
-# lines; row bytes, count and order stay pinned like the continuation walk.
-# The only sanctioned continuation is the cf-72 B block — any other shell row
-# is unsanctioned.
+# Arm-B line twin: the TWENTY-SEVEN literal allow lines (two session triples,
+# the mint triple, the session-origin triple, the date triple — 2026-10-27
+# date-grant re-pin — plus the ls/pwd surface-check pairs, 2026-10-30 cf-88
+# re-pin) directly after the opencode '*' allow anchor at the
+# anchor's own indent; the only sanctioned continuation
+# is the cf-72 B block (comment lines + the sixty-eight shared git rows plus
+# the variant push tail, whole and in order) — any other shell row is an
+# unsanctioned grant.
 import re, sys
 path = sys.argv[1]
 m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
 assert m, f"{path}: no YAML frontmatter"
 lines = [l.rstrip(" \t\r") for l in m.group(1).split("\n") if l.strip()]
 ANCHOR = re.compile(r"^(\s*)- action: opencode$")
-WANT5 = [('resource: opencode api get /api/session*', 'effect: allow'),
-         ('resource: opencode api patch /api/session/*', 'effect: allow'),
-         ('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow'),
-         ('resource: bash scripts/session-origin.sh*', 'effect: allow'),
-         ('resource: date *', 'effect: allow')]
-WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
-WANT7 = WANT6 + [('resource: ls *', 'effect: allow')]
+WANT = [('resource: opencode api get /api/session*', 'effect: allow'),
+        ('resource: opencode api patch /api/session/*', 'effect: allow'),
+        ('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow'),
+        ('resource: bash scripts/session-origin.sh*', 'effect: allow'),
+        ('resource: date *', 'effect: allow'),
+        ('resource: ls', 'effect: allow'), ('resource: ls *', 'effect: allow'),
+        ('resource: pwd', 'effect: allow'), ('resource: pwd *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -544,28 +529,13 @@ for i, l in enumerate(lines):
 if len(hits) != 1:
     print(f"want exactly one '- action: opencode' + resource '*' + effect allow rule, found {len(hits)}"); sys.exit(1)
 ind = hits[0][1]
+want_lines = [x for rule in WANT for x in
+              (f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}")]
 at = hits[0][0] + 3
-def noncomment(pos):
-    while pos < len(lines) and lines[pos].lstrip().startswith("#"):
-        pos += 1
-    return pos
-matched_end = 0
-for want in (WANT7, WANT6, WANT5):  # longest first; the SHELL5 floor carries the s4 presence duty
-    pos = at
-    ok = True
-    for rule in want:
-        pos = noncomment(pos)
-        if lines[pos:pos + 3] != [f"{ind}- action: shell", f"{ind}  {rule[0]}", f"{ind}  {rule[1]}"]:
-            ok = False
-            break
-        pos += 3
-    if ok:
-        matched_end = pos
-        break
-if not matched_end:
-    print("neither the fifteen-line SHELL5 block, the eighteen-line SHELL6 block nor the twenty-one-line SHELL7 block (with the "
-          f"preload-probe and ls rows) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 24]})"); sys.exit(1)
-# cf-72 B-block re-pin: after the sanctioned literal block the only permitted
+if lines[at:at + 3 * len(WANT)] != want_lines:
+    print("the twenty-seven literal shell allow lines (two session triples + mint triple + session-origin triple + date triple + ls/pwd pairs) do not follow the "
+          f"opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 15]})"); sys.exit(1)
+# cf-72 B-block re-pin: after the sanctioned twenty-seven, the only permitted
 # continuation is comment lines plus the sanctioned git block — sixty-eight
 # effect-aware shared rows, then the variant push tail (two rows on
 # alias/-local files, seven on -pr files) ending the shell surface; any
@@ -646,7 +616,7 @@ TAILS = [[T("git push*", "deny"), T("git *push*", "deny")],
          [T("git push*main*", "deny"), T("git * push *main*", "deny"), T("git * push", "deny"),
           T("git push -f*", "deny"), T("git push -P*", "deny"), T("git * push -f*", "deny"),
           T("git * push -P*", "deny")]]
-k = matched_end
+k = at + 3 * len(WANT)
 gi = saw = 0
 chosen = None
 while k < len(lines):
@@ -698,11 +668,8 @@ BAD = "git -C * checkout -b *"
 # every landed row against the declared block, so the skeleton only has to
 # be git-free. form4 splices the canonical four-allow form after the opencode
 # '*' allow anchor on ANY base, so those modes must not require the cf-52
-# rows up front. 2026-10-30 merge re-seat: the scoped-read family grew to
-# seven rows (…, date *, preload-probe, ls *) — both new rows join the strip
-# set so the skeleton stays truly no-allow in every era.
-SHELL_ROWS = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *",
-              "bash scripts/board-preload-probe.sh *", "ls *"}
+# rows up front.
+SHELL_ROWS = {"opencode api get /api/session*", "opencode api patch /api/session/*", MINT, ORIGIN, "date *", "ls", "ls *", "pwd", "pwd *"}
 def sanctioned(res):
     return res in SHELL_ROWS or res.startswith("git ")
 i_o = find(ORIGIN); i_m = find(MINT); i_p = find("opencode api patch /api/session/*")
@@ -846,10 +813,8 @@ for p in ps:
     if p.get("action") == "shell" and "git -C" in str(p.get("resource", "")):
         errs.append("a raw git -C shell grant exists (scope escape — the plan's rejected mechanism)")
 bashish = [p.get("resource") for p in ps if p.get("action") == "shell" and str(p.get("resource", "")).startswith("bash ")]
-if bashish not in (["bash scripts/kickoff-mint-branch.sh *", ORIGIN],
-                    ["bash scripts/kickoff-mint-branch.sh *", ORIGIN,
-                     "bash scripts/board-preload-probe.sh *"]):
-    errs.append(f"bash shell grants are {bashish}, want the mint + session-origin pair in splice order, or those plus the OQ-N1 preload-probe row (the probe wave lands after date *; absolute duty is tests/board-preload-probe/surface.sh)")
+if bashish != ["bash scripts/kickoff-mint-branch.sh *", ORIGIN]:
+    errs.append(f"bash shell grants are {bashish}, want exactly the mint + session-origin pair in splice order")
 if not any(p.get("action") == "question" and p.get("effect") == "allow" for p in ps):
     errs.append("question allow lost (repo hard rule)")
 subs = sorted(p.get("resource") for p in ps if p.get("action") == "subagent" and p.get("effect") == "allow")
@@ -945,26 +910,11 @@ if want s2; then
     extract_bullet "$f"                   'claiming the card:' "$TMP/s2-c1"
     [ -s "$TMP/s2-b1" ] || fail "s2: the claim-comment bullet is not found at $BASE in $f (its wording moved — harness/base fault, report it)"
     cmp -s "$TMP/s2-b1" "$TMP/s2-c1" || fail "s2: $f Pickup consumer bullet (session line … plan folder path) moved vs $BASE — AC2 pins it byte-unchanged (minimal contact: it resolves through the amended definition)"
+    extract_block "$TMP/s2-base-$n.md" '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-b2"
     extract_block "$f"            '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-c2"
+    [ -s "$TMP/s2-b2" ] || fail "s2: write-back step 2 block not found at $BASE in $f (anchor moved — harness/base fault, report it)"
     [ -s "$TMP/s2-c2" ] || fail "s2: write-back step 2 block not found in $f — the '(upsert)' opener or the 'constants consistency check.' close moved (cf-85 AC2 keeps both: the single upsert still closes on the consistency check)"
-    if mh=$(git rev-parse -q --verify MERGE_HEAD 2>/dev/null); then
-      # 2026-10-30 MERGE-WINDOW RUNG: inside a main-merge $BASE (branch HEAD)
-      # still predates cf-85's flip, so the raw $BASE pin would read the
-      # legitimately-merged block as drift — and worse, resolving the block to
-      # the BRANCH side (losing the flip) would pass it. Inside the window the
-      # duty is strict against the flip commit itself: MERGE_HEAD (main) must
-      # be the byte-source. At the merge commit (no MERGE_HEAD) the original
-      # $BASE pin governs again.
-      git show "$mh:$f" >"$TMP/s2-mh-$n.md" 2>/dev/null || fail "s2: $f not readable at MERGE_HEAD (harness/base fault, report it)"
-      extract_block "$TMP/s2-mh-$n.md" '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-b2"
-      [ -s "$TMP/s2-b2" ] || fail "s2: write-back step 2 block not found at MERGE_HEAD in $f (anchor moved — harness fault, report it)"
-      cmp -s "$TMP/s2-b2" "$TMP/s2-c2" \
-        || fail "s2[merge-window]: $f write-back step 2 does not carry MERGE_HEAD's cf-85 combined-value block — the flip must land with this merge, never be resolved away to the branch side"
-    else
-      extract_block "$TMP/s2-base-$n.md" '`set_card_custom_field` (upsert)' 'constants consistency check\.' "$TMP/s2-b2"
-      [ -s "$TMP/s2-b2" ] || fail "s2: write-back step 2 block not found at $BASE in $f (anchor moved — harness/base fault, report it)"
-      cmp -s "$TMP/s2-b2" "$TMP/s2-c2" || fail "s2: $f write-back step 2 (the slug field's combined-value slot) differs from $BASE — designed-red ONLY inside cf-85's edit window; at the flip commit the block matches $BASE again, and byte-unchanged anywhere else means the flip did not land"
-    fi
+    cmp -s "$TMP/s2-b2" "$TMP/s2-c2" || fail "s2: $f write-back step 2 (the slug field's combined-value slot) differs from $BASE — designed-red ONLY inside cf-85's edit window; at the flip commit the block matches $BASE again, and byte-unchanged anywhere else means the flip did not land"
     extract_block "$TMP/s2-base-$n.md" 'add_comment` on the card: the research session link' 'from RESEARCH.md' "$TMP/s2-b3"
     extract_block "$f"            'add_comment` on the card: the research session link' 'from RESEARCH.md' "$TMP/s2-c3"
     cmp -s "$TMP/s2-b3" "$TMP/s2-c3" || fail "s2: $f research-only step 7 session-link sentence moved vs $BASE — AC2 byte-pin"
@@ -1049,7 +999,7 @@ if want s4; then
   python3 "$TMP/splice4.py" "$TMP/s4-four.md" "$TMP/s4-four.md" none >/dev/null \
     || fail "s4: CONTROL FAILED — splice4 rejects the committed posture at itself (arm-B idempotence: the landed SHELL4 + sanctioned git block must satisfy the mechanism)"
   python3 "$TMP/atpos4.py" "$TMP/s4-four.md" >/dev/null \
-    || fail "s4: CONTROL FAILED — atpos4 rejects the committed posture's fifteen literal lines + sanctioned git-block continuation (line twin unsatisfiable)"
+    || fail "s4: CONTROL FAILED — atpos4 rejects the committed posture's twenty-seven literal lines + sanctioned git-block continuation (line twin unsatisfiable)"
   if python3 "$TMP/splice4.py" "$TMP/s4-skel.md" "$TMP/s4-three.md" none >/dev/null 2>&1; then
     fail "s4: CONTROL FAILED — splice4 accepted the three-allow state at the C02 arm (this suite owns the designed-red: the fourth grant MUST be required)"
   fi
@@ -1075,20 +1025,6 @@ if want s4; then
     if git diff --quiet "$BASE" -- "$f"; then
       python3 "$TMP/atpos4.py" "$f" \
         || fail "s4: $f has an empty diff vs $BASE (arm B posture) but does not carry the twelve literal allow lines at the pinned position"
-    elif git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
-      # 2026-10-30 MERGE-WINDOW RUNG (mirrors tests/kickoff-branch m4): the
-      # worktree delta vs $BASE is the merge RESOLUTION — cf-72's block
-      # restructure (+194/-18-class) is not an additions-only grant delta and
-      # no historical geometry expresses it; the documented snapshot proof
-      # (CHUNK_BASE=$(git stash create)) is refused while conflict stages sit
-      # in the index and a verification round may not git add. The rung proves
-      # the stronger thing directly: the live file must carry the exact
-      # posture the merge commit will run through arm B — the literal
-      # SHELL5/6/7 family block at the pinned position and the whole cf-72
-      # continuation with the push tail absolute-last. A mis-resolved file
-      # reddens here; non-merge windows stay on the geometry ladder.
-      python3 "$TMP/atpos4.py" "$f" \
-        || fail "s4: $f is mid-merge (MERGE_HEAD present) and the resolution does not pre-validate the landing commit's arm-B posture — want the literal sanctioned family block + whole cf-72 continuation at the pinned position before the merge commit"
     else
       bc=$(git show "$BASE:$f" | grep -c '^[[:space:]]*- action: shell' || true)
       ns=$(git diff --numstat "$BASE" -- "$f" | head -n 1 || true)
@@ -1097,25 +1033,34 @@ if want s4; then
       case "$bc:$add" in
         0:12) rng='1,12' ;;
         3:3) rng='10,12' ;;
-        # board-tick-cleanup geometries (mirror of kickoff-branch m4): the ls
-        # trailer on the landed 19-row posture (C01), the preload-probe triple
-        # on the 20-row post-C01 posture (C03). Comment-bearing deltas keep
-        # the date-wave posture: designed-red mid-window, green at the
-        # committed arm-B twin.
-        19:3) rng='13,15' ;;
-        20:3) rng='16,18' ;;
-        *) fail "s4: $f diff vs $BASE is +$add/-$del on a base carrying $bc shell allows — want +3 (the session-origin triple on the landed three-allow posture, the ls trailer on the 19-row posture, or the preload-probe triple on the 20-row post-C01 posture) or +12 (the full four-allow form on a no-allow base), additions only (base: $BASE)" ;;
+        75:23) cf88=full ;;
+        75:18) cf88=nocomment ;;
+        *) fail "s4: $f diff vs $BASE is +$add/-$del on a base carrying $bc shell allows — want +3 (the session-origin triple on the landed three-allow posture), +12 (the full four-allow form on a no-allow base) or +23/+18 (the cf-88 surface-check delta on the landed five-allow posture — 18 grant rows, sources additionally carry the 5-line why-comment), additions only (base: $BASE)" ;;
       esac
       [ "$del" = "0" ] || fail "s4: $f diff vs $BASE removes $del lines — the sanctioned delta is additions-only"
       git diff -U0 "$BASE" -- "$f" | grep '^+' | grep -v '^+++' | sed 's/^+//' | sed 's/^[[:space:]]*//' \
         >"$TMP/s4-add-$n.txt"
+      if [ "${cf88:-}" = "full" ] || [ "${cf88:-}" = "nocomment" ]; then
+        printf '%s\n' '- action: read' 'resource: .agents/loops/**' 'effect: allow' \
+                      '- action: read' 'resource: .opencode/agents/**' 'effect: allow' \
+                      '- action: shell' 'resource: ls' 'effect: allow' \
+                      '- action: shell' 'resource: ls *' 'effect: allow' \
+                      '- action: shell' 'resource: pwd' 'effect: allow' \
+                      '- action: shell' 'resource: pwd *' 'effect: allow' >"$TMP/s4-want-$n.txt"
+        if [ "${cf88:-}" = "full" ]; then
+          printf '%s\n' '# Surface checks (cf-88 postmortem 2026-10-30): verifying its own kickoff' \
+                        '# surfaces (worktree/branch present, session location) is coordination, not' \
+                        '# investigation — denied ls/pwd probes once masqueraded as a broken env and' \
+                        '# a healthy run was abandoned. Command pairs: `ls *`/`pwd *` miss the bare' \
+                        '# forms; `ls*`/`pwd*` would shadow lsof/pwdx-style tools.' >>"$TMP/s4-want-$n.txt"
+        fi
+      else
       printf '%s\n' '- action: shell' 'resource: opencode api get /api/session*' 'effect: allow' \
                     '- action: shell' 'resource: opencode api patch /api/session/*' 'effect: allow' \
                     '- action: shell' 'resource: bash scripts/kickoff-mint-branch.sh *' 'effect: allow' \
                     '- action: shell' 'resource: bash scripts/session-origin.sh*' 'effect: allow' \
-                    '- action: shell' 'resource: ls *' 'effect: allow' \
-                    '- action: shell' 'resource: bash scripts/board-preload-probe.sh *' 'effect: allow' \
         | sed -n "${rng}p" >"$TMP/s4-want-$n.txt"
+      fi
       cmp -s "$TMP/s4-add-$n.txt" "$TMP/s4-want-$n.txt" \
         || fail "s4: $f added lines are not the literal sanctioned allow rules (see $TMP/s4-add-$n.txt vs $TMP/s4-want-$n.txt)"
     fi
@@ -1164,18 +1109,9 @@ if want s6; then
     IFS='|' read -r s g <<<"$pair"
     cmp -s "$s" "$g" || fail "s6: $s vs $g not byte-identical — rulesync copies these references verbatim (t12 carve posture)"
   done
-  # 2026-10-30 merge-window rung: while a main merge is in flight cf-85's
-  # command edits legitimately move the boards-command pair vs $BASE (branch
-  # HEAD) — the freeze duty is that THIS TICKET never moves a command, so the
-  # in-window reference is MERGE_HEAD itself (measured: branch side moved zero
-  # command files; any ticket-side command move would still show red here,
-  # with extra teeth: it refuses worktrees that resolve the pair away from
-  # main too). At the merge commit the original $BASE reference governs again.
-  cmdbase="$BASE"
-  if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then cmdbase=$(git rev-parse MERGE_HEAD); fi
-  moved=$( { git diff --name-only "$cmdbase" -- .rulesync/commands .opencode/commands 2>/dev/null || true;
+  moved=$( { git diff --name-only "$BASE" -- .rulesync/commands .opencode/commands 2>/dev/null || true;
              git ls-files --others --exclude-standard -- .rulesync/commands .opencode/commands; } | sort -u || true )
-  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "s6: a command file moved vs $cmdbase — the commands stay byte-frozen to this ticket (t11/t13/t18 + plan Out of scope; the script is the 5th copy, never a 6th block edit)"; }
+  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "s6: a command file moved vs $BASE — the commands stay byte-frozen to this ticket (t11/t13/t18 + plan Out of scope; the script is the 5th copy, never a 6th block edit)"; }
   # the five-surface fragment-parity ladder, both trees (belt to script.sh b6:
   # plan Commands names it HERE too — it guards C02 from touching commands or
   # the landed C01 script between the chunks):

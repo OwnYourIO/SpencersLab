@@ -135,9 +135,6 @@ permissions:
     resource: git push * -f*
     effect: deny
   - action: shell
-    resource: ls *
-    effect: allow
-  - action: shell
     resource: helm lint *
     effect: allow
   - action: shell

@@ -306,15 +306,6 @@ fi
 # cf-85 (2026-10-29): the running ticket's own plan folder joins the admit;
 # its content edits ride the boards-skill, subagent, command, rules, AGENTS.md
 # and tests/* admits already in this set.
-# board-tick-cleanup widening (2026-10-29, agent-test): the hand-managed
-# question-notify reader + the loop-file truth edit + this ticket's own plan
-# folder (the agent-perms A9 window pin; a guard red on the running ticket's
-# folder buries every later check).
-# merge round (2026-10-30): cf-68 + cf-83 plan folders join the admit — `git merge
-# main` moves the changed-paths walk across ticket-base boundaries, and a guard red
-# on another ticket's already-landed folder buries every later check (same class as
-# the own-folder admits above). containers/wekan-mcp/* joins per the c8 union —
-# cf-68's create_list landed the container surface on this branch.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -339,28 +330,21 @@ if want c7; then
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
-      skills/wekan-mcp/*|skills/wekan-api/*|containers/wekan-mcp/*|.opencode/plugin/board-context/*|\
-      .opencode/plugin/question-notify/*|.agents/loops/*|\
+      skills/wekan-mcp/*|skills/wekan-api/*|.opencode/plugin/board-context/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
-      .agents/plans/2026/2026-10-chore-board-tick-cleanup/*|\
-      .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
-      .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
-      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*) : ;;
+      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
+      .agents/plans/2026-10-30-chore-coord-surface-grants.md) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72 plan-folder widenings + cf-88 surface-grants root plan doc; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
 # Section-level comparison, not line-level: an in-line extension reads as
 # deletion+addition and would hide a cross-section edit in a line diff.
-# board-tick-cleanup C02 widens the allowed set with "Pipeline worker
-# iterations" — the OQ10 docs-only truth task + silence rule edit exactly that
-# section's worker sentence (chunks/C02.md Tasks; AGENTS.md regenerates from
-# the sanctioned .rulesync/rules/overview.md delta).
 if want c8; then
   if git diff --quiet "$BASE" -- AGENTS.md 2>/dev/null; then
     ok "c8: AGENTS.md shows no delta vs $BASE (committed) — content checks c2-c6 carry the gate"
@@ -379,8 +363,7 @@ def sections(path):
     out[name] = "".join(buf)
     return out
 old, new = sections(sys.argv[1]), sections(sys.argv[2])
-allowed = {"Where things live", "MCP servers", "Agents", "Feature pipeline (agent-*)", "Pipeline specifics in this repo",
-           "Pipeline worker iterations"}
+allowed = {"Where things live", "MCP servers", "Agents", "Feature pipeline (agent-*)", "Pipeline specifics in this repo"}
 changed = [n for n in old if old.get(n) != new.get(n)]
 extra = [n for n in new if n not in old]
 if extra:

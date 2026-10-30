@@ -2,9 +2,7 @@
 # agent-board + /wekan-board-context collector contract
 # (2026/2026-10-cf-75-bug-wekan-mcp-skill, C03): the board-MCP worker agent
 # (generated surface, deny-all baseline, dev-boards* as its ONLY MCP grant —
-# hyphen spelling, no global-wekan fallback per OQ7; board-tick-cleanup C01's
-# OQ9 ruling adds the one trailing `ls *` shell allow after the shell deny,
-# gated in t1), the collector command
+# hyphen spelling, no global-wekan fallback per OQ7), the collector command
 # (six-step resolution sequence, AI-Dev/In Process defaults, fenced output,
 # pointer-not-copy of the C01 schema), the boards-skill consumer rule (additive
 # — the rulesync-surface pinned section titles must survive), the agent-board
@@ -83,23 +81,9 @@ if not perms or perms[0] != deny:
 allows = [p for p in perms if p.get("effect") == "allow"]
 # The chunk asserts the allow set EXACTLY: read areas, skill, question,
 # execute, and dev-boards* as the only MCP grant. Anything extra (a dev*,
-# a readonly*, an edit) is a privilege deviation, not a draft. Shell's ONE
-# exception is board-tick-cleanup C01 (OQ9 user ruling): a trailing `ls *`
-# allow sitting AFTER the shell-'*' deny. ls_gate owns count, exact shape
-# and position for EVERY shell allow — no other shell grant can slip past
-# it — which is what lets the action-set arm below discount shell without
-# widening the ban (mirror of the t4 sanctioned-moves treatment).
-LS_ALLOW = {"action": "shell", "resource": "ls *", "effect": "allow"}
-SHELL_DENY = {"action": "shell", "resource": "*", "effect": "deny"}
-shell_allows = [p for p in perms if p.get("action") == "shell" and p.get("effect") == "allow"]
-deny_at = next((i for i, p in enumerate(perms) if p == SHELL_DENY), None)
-ls_gate_ok = (not shell_allows) or (
-    len(shell_allows) == 1 and shell_allows[0] == LS_ALLOW
-    and deny_at is not None and perms.index(LS_ALLOW) > deny_at)
-if not ls_gate_ok:
-    errs.append(f"shell allows {shell_allows}, want none or exactly the one 'ls *' allow AFTER the shell '*' deny (C01/OQ9 read-only exception — last-match-wins only grants ls reads)")
+# a readonly*, an edit, a shell) is a privilege deviation, not a draft.
 want_actions = sorted({"read", "skill", "question", "execute", "dev-boards*"})
-got_actions = sorted({p.get("action") for p in allows if p.get("action") != "shell"})
+got_actions = sorted({p.get("action") for p in allows})
 if got_actions != want_actions:
     errs.append(f"allow actions {got_actions}, want exactly {want_actions}")
 if not any(p.get("action") == "question" and p.get("resource") == "*" for p in allows):
@@ -111,11 +95,7 @@ for banned in ("dev*", "readonly*", "admin*", "global*", "global-wekan*"):
     if any(p.get("action") == banned and p.get("effect") == "allow" for p in perms):
         errs.append(f"broad/forbidden MCP allow {banned!r} present (OQ7: dev-boards* ONLY)")
 for action in ("shell", "edit", "subagent"):
-    # shell allows are adjudicated by ls_gate above (the era before C01 — no
-    # shell allow at all — also passes); edit and subagent stay unconditional
-    # family-spec bans. The '*' DENY row stays mandatory for all three: C01
-    # appends a read grant, it never removes a denial.
-    if action != "shell" and any(p.get("action") == action and p.get("effect") == "allow" for p in perms):
+    if any(p.get("action") == action and p.get("effect") == "allow" for p in perms):
         errs.append(f"{action} allow present — the family spec denies it")
     if not any(p.get("action") == action and p.get("resource") == "*" and p.get("effect") == "deny" for p in perms):
         errs.append(f"{action} '*' deny row missing (explicit denial, not fallthrough)")
@@ -124,7 +104,7 @@ if "dev_boards" in text:
 if errs:
     print("; ".join(errs)); sys.exit(1)
 PY
-  ok "t1: generated agent-board — name/mode, deny-all baseline, allow set exactly read/skill/question/execute/dev-boards* with at most the one C01 trailing 'ls *' shell allow gated to sit after the shell-'*' deny, shell+edit+subagent '*' denies kept, no underscore or broad MCP grant (C03 AC1 + C01/OQ9 read-only exception)"
+  ok "t1: generated agent-board — name/mode, deny-all baseline, allow set exactly read/skill/question/execute/dev-boards*, shell+edit+subagent denied, no underscore or broad MCP grant (C03 AC1)"
 fi
 
 # --- t2: collector command — sequence, defaults, pointer-not-copy (C03 AC2) -----
@@ -235,49 +215,27 @@ def rows(lines):
 b, n = rows(base), rows(new)
 blabels = [r.split("|")[1].strip() for r in b]
 nlabels = [r.split("|")[1].strip() for r in n]
-# Base matchers must survive in order; the agent-board row's DELIVERY posture
-# is era-gated (mechanical repair, board-tick-cleanup test wave): at cf-75's
-# own base the row was the sanctioned single ADDITION; with cf-75 merged to
-# main it rides every later TB, so presence — already grep-pinned — plus
-# "no OTHER unexplained row appeared vs the base" is the permanent form.
+# Base matchers must survive in order, exactly once each (insertion of the
+# agent-board row is the only sanctioned matrix move).
 missing = [x for x in blabels if nlabels.count(x) < 1]
 if missing:
     print(f"base matchers lost: {missing}"); sys.exit(1)
 added = [x for x in nlabels if x not in blabels]
-if added and not (len(added) == 1 and added[0] in ("board", "agent-board")):
+if added != [] and not (len(added) == 1 and added[0] in ("board", "agent-board")):
     print(f"unexpected matcher rows added: {added}"); sys.exit(1)
-if "agent-board" not in nlabels and "board" not in nlabels:
+if not added:
     print("no agent-board matcher row found"); sys.exit(1)
-# The coord-pr cell moved twice in the 2026-10-30 merge round — cf-72's main-
-# side T-7 tail rewrite plus the scoped-read re-seat rider (in-family
-# preload-probe + `ls *` rows), per the reconciliation entry at the bottom of
-# .rulesync/skills/agents-sync/references/permissions.md. Admitted EXACTLY,
-# never as a blanket skip: the TB form still rides (pre-merge trees, via the
-# byte-equal walk below) and the pinned settled form rides; anything else — a
-# dropped ls/probe grant, a reworded tail, any gained row — reddens.
-COORD_PR_SETTLED = """| coord-pr | same as coord | plan/research/test/dev-pr/review | as coord-local — same scoped-read family (the probe and `ls *` rows ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
-    # tests/pipeline-gates/validation-fix.sh). The coord/board-coord/agent-
-    # board/dev-local/dev-pr cells move per board-tick-cleanup C01 (same-
-    # commit matrix duty, plan Grounded facts W3 — the cells list the `ls *`
-    # row). The coord-local/board-coord-local/board-coord-pr reference-idiom
-    # cells stay byte-stable (measured 2026-10-30: coord-pr is the ONLY other
-    # mover — its cell is literal prose, admitted byte-exactly via
-    # COORD_PR_SETTLED, not skipped). Every other base row must survive
-    # byte-identical.
-    if label in ("review", "coord", "board-coord", "agent-board", "dev-local", "dev-pr"):
+    # tests/pipeline-gates/validation-fix.sh); every other base row must
+    # survive byte-identical.
+    if label == "review":
         continue
     if r not in n:
-        if label == "coord-pr":
-            cur = [x for x in n if x.split("|")[1].strip() == "coord-pr"]
-            if len(cur) == 1 and cur[0] == COORD_PR_SETTLED:
-                continue
-            print(f"coord-pr row is neither the TB form nor the pinned settled form (cf-72 T-7 tail + the in-family ls/preload-probe rider) — got {cur}; the admission is byte-exact: dropping a grant, rewording the tail or any other gain is unadmitted drift"); sys.exit(1)
-        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, and the byte-exact coord-pr settled admission; nothing else may drift"); sys.exit(1)
+        print(f"base row '{label}' changed byte-wise — only the agent-board row is added and only the review row may move (C02)"); sys.exit(1)
 PY
-  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too)"
+  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the C02-moved review row, and gains exactly one agent-board row (C03 AC4)"
 fi
 
 # --- t5: regen no-op + --check, and same-commit source/generated shape (AC6) ----
