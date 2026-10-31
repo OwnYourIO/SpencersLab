@@ -2,13 +2,17 @@
 
 feature: 2026/2026-10-cf-11-feat-immich-hugo-pipeline
 rework: 2026-10-31 (owner answer round — DECISIONS.md "OWNER ANSWER ROUND"; deltas 6–9)
+final: 2026-10-31 (owner N1–N3 answers folded — DECISIONS R11–R14; last planning pass)
 
 ## Goal
 
 Build the owner-locked phase-1 pipeline: a **host-backend Forgejo runner on a
 PVC** that syncs Immich preview derivatives **into the site's EXISTING page
-bundles** (additive-only, allowlist-mapped; one PR, update-in-place, farm-gated
-review) and deploys CuratedForest.com to Netlify via CLI (merge→main =
+bundles** — every allowlist entry names its target page (`page:` REQUIRED, no
+fallback), writes are additive-only, and where a page's gallery call would not
+include the synced files, sync extends the page with its own machine-marked
+gallery call (idempotent, owner N2); one PR, update-in-place, farm-gated
+review. Deploys CuratedForest.com to Netlify via CLI (merge→main =
 curatedforest.com; PR→main = curatedforest.farm, last PR wins). Sync fires on
 a **daily** schedule + workflow_dispatch. Card #11 builds and validates the
 host-backend runner mode **on DEV**; the prod runner on gpu is delegated to
@@ -24,7 +28,7 @@ docs remain the evidence base.
 | Surface | Repo | Status |
 |---|---|---|
 | Sync/publish tooling, toolchain image, runner chart host mode (**dev validation release**), secret seeder + watchdog (**gpu wiring**) | SpencersLab (this repo, branch worktree) | fully buildable/validatable now |
-| Workflows (deploy/sync), allowlist `sync-albums.yaml`, album archetype | CuratedForest.com | staged in this ticket folder (`site-staging/`); local checkout dirty + pre-Forgejo, stays UNTOUCHED; applied to the Forgejo clone in C07 once the owner migrates the repo |
+| Workflows (deploy/sync) + the `sync-albums.yaml` page-mapping allowlist | CuratedForest.com | staged in this ticket folder (`site-staging/`); local checkout dirty + pre-Forgejo, stays UNTOUCHED; applied to the Forgejo clone in C07 once the owner migrates the repo |
 
 Cluster map (owner answer round): **dev** = this ticket's runner-mode
 validation; **gpu** = seeder/watchdog wiring + future prod runner (card #88);
@@ -46,8 +50,10 @@ SpencersLab chunks are independently validatable.
 - Album-change EVENT triggers (socket.io shim) — phase 2. Old-LFS removal —
   separate card. IPP/folio B′ companion — separate.
 - Any auto-merge; zero template changes to `layouts/_shortcodes/gallery.html`;
-  no destructive edits to ANY existing repo file (generalized hard guard; the
-  two manual derivatives in `current-grows` stay untouched).
+  no destructive edits to ANY existing repo file — the ONLY permitted machine
+  edits of existing files are the append-only front-matter marker (N1) and
+  sync's own machine-marked gallery blocks (N2); the two manual derivatives in
+  `current-grows` stay untouched.
 - Netlify cutover (disconnect git builds on both sites) + LFS-object
   carry-over during migration — owner jobs, not chunks (answer 5).
 - Touching `/home/coder/CuratedForest.com` working tree.
@@ -97,12 +103,12 @@ npx aislop ci --changes
 
 | id  | title | size | wave | depends_on | why the dependency |
 |-----|-------|------|------|------------|--------------------|
-| C01 | Sync + publish tooling: album→existing-bundle mapping, additive-only writer, fixture-based E2E | M | 1 | [] | core logic; defines the tool contract C06 calls |
+| C01 | Sync + publish tooling: album→existing-bundle mapping (page: required), additive-only writer + machine-marked gallery-call extension, fixture-based E2E | M | 1 | [] | core logic; defines the tool contract C06 calls |
 | C02 | `forgejo-host-runner` toolchain image (runner+hugo+netlify-cli+git-lfs) | M | 2 | [C01] | Dockerfile COPYs C01's modules |
 | C03 | `charts/forgejo-runner` host-backend MODE + DEV validation release `forgejo-runner-dev-host` (gpu prod = card #88) | L | 1 | [] | chart-internal; image NAME plan-locked; dev instance in-cluster URL |
 | C04 | `charts/forgejo-secret-seed` — Bitwarden→Forgejo repo-secret seeder, **gpu wiring** | M | 1 | [] | independent chart; secrets rule compliance |
 | C05 | `charts/forgejo-run-watchdog` — schedule-failure watchdog (INCLUDED phase 1, answer 3), **gpu wiring** | M | 3 | [C04] | reuses C04's PAT/URL values pattern |
-| C06 | Site-repo artifacts staged: deploy+sync workflows (daily cron), sync-albums.yaml mapping schema, archetype | M | 2 | [C01] | workflows call C01's tool contract |
+| C06 | Site-repo artifacts staged: deploy+sync workflows (daily cron), sync-albums.yaml page-mapping schema (no archetype/section — N3) | M | 2 | [C01] | workflows call C01's tool contract |
 | C07 | Apply staged artifacts to CuratedForest.com on Forgejo (branch+PR) | S | 3 | [C06] | blocked on owner precondition (repo migrated to Forgejo) |
 
 ## Wave order
@@ -130,16 +136,19 @@ npx aislop ci --changes
 - CuratedForest.com gallery contract: page resources sorted by `Name`; calls
   vary — no-glob `.ByType "image"` (current-grows, `sort="desc"`),
   case-insensitive jpg glob (past-designs), semantic-prefix globs
-  (grow-environments `v6-*`…`2017-pfc-*`) → appended files only render where
-  their names satisfy the page's existing call (C01 verifies, answer 9).
+  (grow-environments `v6-*`…`2017-pfc-*`). Owner N2 settled the fit problem:
+  sync AUTO-EXTENDS pages with a machine-marked gallery call when no existing
+  call includes the synced files (idempotent, additive-only otherwise —
+  DECISIONS R12; C01 pins the exact edit shape).
 - `.gitattributes` LFS-tracks jpg/jpeg/png/gif/webp/svg (derivatives land as
   LFS automatically; post-migration LFS lives in Forgejo storage);
   `netlify.toml` pins HUGO_VERSION 0.151.0; repo dirty (2 ahead + WIP).
 - Agent env: `hugo v0.151.0+extended` at `~/.local/bin` (exact site pin) →
   C06 render gate; pytest 9.1.1; hadolint; helm.
 - Board scan at rework (dev-boards MCP): card #88 NOT yet visible (Low
-  Priority list empty) — the delegation reference follows the owner answer
-  round verbatim; coord re-verifies when the card lands.
+  Priority list empty) — RESOLVED per owner: #87/#88 were auto-routed by the
+  board classifier into its new Context swimlane lists (board drift, human
+  triage); the delegation reference stands, no action needed (DECISIONS R14).
 
 ## Risks / assumptions
 
@@ -150,30 +159,14 @@ npx aislop ci --changes
   runtime mitigation (hostNetwork/MTU), not chart work.
 - Runner registration + migration (with LFS objects) + tokens + gpu cluster
   annotation entries are owner preconditions; C07 and live verification
-  depend on them. Card #88's existence/state re-verified at dev time.
-- Best guesses for the NEW seam questions (N1–N3 below) carry impact if
-  flipped; they gate no chunk's render/lint acceptance, only C01's writer
-  policy (which implements the BG until answered).
+  depend on them.
+- Gallery-call parsing is best-effort regex (C01 notes); the safe failure for
+  unparseable calls is the machine-marked block, never an authored rewrite.
 
-## Open questions (NEW — surfaced by the rework; one more batched round)
+## Open questions
 
-1. **N1 — front-matter policy on existing target pages.** Sync never touches
-   existing keys; BG = append-only machine marker keys (`immich_synced:
-   {albums: [...], at: <date>}`) so provenance is auditable, and gating of
-   photos added to PUBLISHED pages = the PR review on farm (adding
-   `draft: true` to a published page would un-publish it = destructive).
-   Alternative: no front-matter writes at all. Impact: C01 writer module.
-2. **N2 — glob-matching contract.** BG: allowlist carries an optional
-   `prefix:` per album; sync verifies at runtime that the resulting filenames
-   satisfy one of the target page's existing `{{< gallery >}}` match globs
-   (or the call has no match → `.ByType "image"` takes everything) and REFUSES
-   LOUDLY on mismatch; editing a page's gallery call to fit is an owner
-   action, never sync's. Impact: C01 verification module + allowlist docs.
-3. **N3 — target-page selection UX.** BG: `page:` in sync-albums.yaml is the
-   bundle directory path relative to `content/` (the dir holding
-   `index.md`/`_index.md`); albums without `page:` take the optional new
-   `content/photos/` posture. Alternative: page-side opt-in marker. Impact:
-   allowlist schema (C01/C06).
+None — N1–N3 settled by the owner (final answer round below). New genuine
+gaps surfaced during build enter the pipeline's normal RESULT/coord path.
 
 ### Resolved (owner answer round 2026-10-31 — recorded in DECISIONS.md)
 
@@ -183,6 +176,15 @@ bot-owned immich-sync · Q5 Netlify cutover + LFS carry-over = owner jobs ·
 Q6 registration = ORG-scoped · Q7 cadence = DAILY · Q8 topology = dev-first
 validation + gpu prod via card #88 (fixture E2E) · Q9 seam = albums INTO
 existing pages, additive-only · Q10 (old open-q list) subsumed by the above.
+
+### Resolved (final N-round 2026-10-31 — DECISIONS R11–R13)
+
+N1 front matter on existing pages = append-only machine-marker keys, never
+touch existing keys/flags; gate = PR + farm preview (as recommended) ·
+N2 gallery fit = AUTO-EXTEND: sync manages machine-marked gallery calls
+(idempotent, minimal, same PR; overrides the refuse-on-mismatch BG) ·
+N3 `page:` REQUIRED on every allowlist entry — NO content/photos/ fallback
+posture anywhere (overrides the BG; schema-invalid entries fail loud).
 
 ## User actions (preconditions — consolidated)
 
@@ -211,5 +213,4 @@ existing pages, additive-only · Q10 (old open-q list) subsumed by the above.
 - Card #88: gpu prod runner + gpu→Immich path (owns live E2E against real Immich).
 - Watchdog upgrade to Immich native album trigger when it ships (phase 2 shim).
 - actions/cache for hugo/LFS warm builds; pin forgejo-host-runner `:main` →
-  `:v<run>` once CI publishes; old-LFS removal card; optional hugo.yaml
-  `docSections += photos` if the owner uses the new-section posture.
+  `:v<run>` once CI publishes; old-LFS removal card.

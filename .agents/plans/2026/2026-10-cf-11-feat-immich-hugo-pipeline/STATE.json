@@ -116,12 +116,13 @@
   },
   "chunks": {
     "C01": {
-      "title": "Sync + publish tooling: album->existing-bundle mapping, additive-only writer, fixture-based E2E",
+      "title": "Sync + publish tooling: album->existing-bundle mapping (page: required), additive-only writer + machine-marked gallery-call extension, fixture-based E2E",
       "size": "M",
       "wave": 1,
       "depends_on": [],
       "repo": "SpencersLab",
-      "status": "pending"
+      "status": "pending",
+      "note": "N1 as-recommended; N2 pinned edit shape in contract section 5 (owner override); N3 page: required, no fallback"
     },
     "C02": {
       "title": "forgejo-host-runner toolchain image (runner+hugo+netlify-cli+git-lfs; CI-primary build)",
@@ -161,14 +162,15 @@
       "status": "pending"
     },
     "C06": {
-      "title": "Site-repo artifacts staged: deploy+sync workflows (daily cron), sync-albums.yaml page-mapping schema, archetype + hugo render gate",
+      "title": "Site-repo artifacts staged: deploy+sync workflows (daily cron), sync-albums.yaml page-mapping schema (no archetype/section - N3) + hugo render gate",
       "size": "M",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
       "repo": "SpencersLab-staged -> CuratedForest.com",
-      "status": "pending"
+      "status": "pending",
+      "note": "render-gate fixtures cover gallery-call extension pre/post (N2); archetype and photos-section artifacts dropped (N3)"
     },
     "C07": {
       "title": "Apply staged artifacts to CuratedForest.com on Forgejo (branch + PR)",
@@ -180,7 +182,7 @@
       "repo": "CuratedForest.com (Forgejo)",
       "status": "pending",
       "blocked_on": "owner precondition: repo migrated to Forgejo WITH LFS objects",
-      "note": "staging set changed by rework: no photos/_index.md, no mandatory hugo.yaml edit"
+      "note": "staging set per final fold: workflows + sync-albums.yaml only (no archetype, no _index, no hugo.yaml edit)"
     }
   },
   "blocked": [
