@@ -283,6 +283,9 @@ first, then prompts the worker; the loop body ships the plain-text
 equivalent (D30). Rules for worker sessions — the `boards` skill owns the
 detail:
 
+- Repo identity: SpencersLab (default picker — no-Repo:-label cards and
+  `Repo: SpencersLab` cards are this repo's pickups; `Repo:` semantics live
+  in the boards skill).
 - One card per session; never pick or restart a card already in **Executing**
   — pickup walks `Rework → Not Started → Low Priority`.
 - `pipeline_claim` BEFORE any board move or code edit (the whole label set or
