@@ -68,6 +68,9 @@ opencode:
       resource: bash scripts/kickoff-mint-branch.sh *
       effect: allow
     - action: shell
+      resource: bash scripts/kickoff-warm-location.sh *
+      effect: allow
+    - action: shell
       resource: bash scripts/session-origin.sh*
       effect: allow
     - action: shell
