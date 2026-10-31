@@ -488,20 +488,27 @@ def test_c07_source_checkout_clone_tracks_the_flavor_tag(dockerfile, readme):
     )
 
 
-def test_c07_engine_package_labels_are_one_fact_across_three_surfaces(dockerfile, readme):
-    """The engine package label (0.1.54-linux-x86_64-hip-{rx9070,halo}) must be
-    the SAME literal in the Dockerfile (COPY --from + verify test -x), the
-    README exe ledger, and the chart's strix profile (values.yaml engine exe +
-    lib_dirs — the only packaged root the chart names; the primary rides the
-    claim-compiled version-free path). A pinned packaged root that drifts from
-    the image's actual dirs is a profile pointing at a nonexistent path — a
-    runtime strata error, not a build failure. Version-free arms
-    (test_readme_exe_contract_paths_shape) stay green through both waves; this
-    one is the re-pin's pin-set arm."""
+def test_c07_engine_package_labels_are_one_fact_across_four_surfaces(dockerfile, readme):
+    """The engine package label (0.1.55-linux-x86_64-hip-{rx9070,halo}) must be
+    the SAME literal on all four surfaces that name a packaged root: the
+    Dockerfile (COPY --from + verify test -x), the containers README exe
+    ledger, the chart's strix profile (values.yaml engine exe + lib_dirs —
+    the only packaged root the CHART code names; the primary rides the
+    claim-compiled version-free path), and the chart README engine-exe table
+    (added by the §9.21 FINAL3 §2 widening — that table drifting a stale label
+    was the drift root cause: operators read the chart README as truth). A
+    pinned packaged root that drifts from the image's actual dirs is a profile
+    pointing at a nonexistent path — a runtime strata error, not a build
+    failure. Version-free arms (test_readme_exe_contract_paths_shape) stay
+    green through both waves; this one is the re-pin's pin-set arm.
+    (Renamed from ..._three_surfaces; the era-2 PROVENANCE prose still names
+    the old arm name — correct for its era, era-3's PROVENANCE carries the
+    new one.)"""
     surfaces = {
         "Dockerfile": dockerfile,
         "README": readme,
         "values.yaml": (REPO_ROOT / "charts" / "llama-swap" / "values.yaml").read_text(),
+        "chart README": (REPO_ROOT / "charts" / "llama-swap" / "README.md").read_text(),
     }
 
     def labels(text: str) -> set[str]:

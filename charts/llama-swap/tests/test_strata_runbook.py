@@ -444,3 +444,34 @@ def test_c08_note_arithmetic_and_cleanup_trio_agree_with_the_pinned_ship():
         if not re.search(pat, note):
             problems.append(f"missing (window {pat!r}): {why}")
     assert not problems, "orca-quant/cleanup doctrine drifted in the runbook note:\n" + "\n".join(problems)
+
+
+# --- §9.21 (FINAL3 §3): the alternation string is render-joined prose -------
+
+import pytest
+
+_ok, _reason = S.env_ready()
+helm = pytest.mark.skipif(not _ok, reason=_reason)
+
+
+@helm
+def test_c09_runbook_alternation_ties_to_the_rendered_sets_main():
+    """The note's §3.8 pre-declares this very law ("that string is the
+    alternation the runbook pin law ties to the live render"): BOTH places
+    the note spells the strata matrix alternation — the §3.8 preload warning
+    and the §4 RAM law — must equal the rendered sets.main. A values edit
+    that changes the set reddens the docs lines in the same session; the
+    count==2 half reddens if a docs rewrite silently drops one anchor."""
+    note = S.read(S.RUNBOOK_NOTE, "the §3.8/§4 alternation anchors")
+    expr = ((S.inner_config(S.render_on()[0]).get("matrix") or {}).get("sets") or {}).get("main")
+    assert expr, "rendered strata matrix carries no sets.main"
+    hits = re.findall(r'"?\( ?[a-z](?: ?\| ?[a-z])+ ?\)\"?', note)
+    assert len(hits) == 2, (
+        f"the note anchors {len(hits)} strata alternation strings {hits}, want exactly 2 "
+        "(the §3.8 preload warning + the §4 RAM law)"
+    )
+    stale = [h.strip('"') for h in hits if h.strip('"') != expr]
+    assert not stale, (
+        f"runbook alternation {sorted(set(stale))} drifted from the rendered sets.main "
+        f"{expr!r} — the docs line must land WITH the values edit, never after"
+    )

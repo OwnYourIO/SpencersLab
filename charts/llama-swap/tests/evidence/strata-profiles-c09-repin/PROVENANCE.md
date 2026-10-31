@@ -39,8 +39,11 @@ Authority: C09 chunks/C09.md (0.2.9 image rides engine packages 0.1.55 —
 the README pin ledger re-read the [C2] flavor digests live 2026-10-31 and
 records the 0.1.55 exe rows; a fixture pinning 0.1.54 points the profile at
 a nonexistent packaged dir), cross-checked by
-`containers/strata/tests/test_dockerfile.py::test_c07_engine_package_labels_are_one_fact_across_three_surfaces`
-and the strix-region arms in `test_strata_thin_init.py`.
+`containers/strata/tests/test_dockerfile.py::test_c07_engine_package_labels_are_one_fact_across_four_surfaces`
+and the strix-region arms in `test_strata_thin_init.py`. (§9.21 later widened
+this cross-check arm to four surfaces — the chart README table joins as the
+fourth, the FINAL3 §2 drift root cause — under the name
+`test_c07_engine_package_labels_are_one_fact_across_four_surfaces`.)
 
 Anchor law carried forward unchanged:
 `test_c07_strix_fixture_ties_to_the_built_halo_root` pins this fixture's

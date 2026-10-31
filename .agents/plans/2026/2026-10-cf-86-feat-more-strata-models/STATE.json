@@ -23,7 +23,7 @@
  },
  "coord_session": "ses_e77776738ffe0o3T6H95UMtL2m",
  "test_session": "ses_e762a6e57ffeKxIM263C9NJN2G",
- "current_wave": 4,
+ "current_wave": 9,
  "updated_at": "2026-10-31",
  "kickoff": {
   "card": "Yb9sccTQ3wq2445ib",
@@ -65,7 +65,7 @@
   "coord_ruling": "Deviation (1) ACCEPTED (see DECISIONS 2026-10-30 coord entry): goldens stay byte-invariant; dev must NOT touch charts/llama-swap/tests/evidence/ goldens; sanctioned delta enforced by frozen-table growth + exact new-id allowances in test_flashnext_blast_radius."
  },
  "run_state": {
-  "status": "completed",
+  "status": "revision-3-closing (waves 7-9 + docs x2 landed; third-final verification pass pending)",
   "final_round": {
    "at": "2026-10-30",
    "session": "ses_e7365b333ffe19XSvXagYKnaQC",
@@ -259,6 +259,7 @@
   "u10_1": "27B-on-Strata: NO-GO ANSWER RECORD (family-guard citation + dense-parity argument + ORCA_Q4_K_S name-collision correction) — no chunk.",
   "u10_2": "Ornith-on-Strata: C09 (wave 9) carry chunk authored — phased, perf-A/B with pre-recorded outcomes.",
   "reserved": "C11 = Flash-Next orca Q4_K_S MoE election (R5 open-item #1) — NOT pre-written.",
-  "plan_status_gate": "stays needs-replan: ONE owner batch item pending — the C11 election (planner best-guess: decline). If declined (or unanswered→decline posture per coord), plan_status may flip to approved citing U10.2 + the recorded U10.1 answer; C09 approval is pre-covered by U10.2 scope."
+  "plan_status_gate": "RESOLVED 2026-10-31: U11 (proceed C09, decline C11) flipped plan_status approved; C09 dev r1+r2 + landing round + review r1 APPROVED + docs round #2 + law-close (§9.21); third-final-review CHANGES_REQUESTED closed via routings 1-3 — verification pass pending at this writing.",
+  "c11": "DECLINED by U11 — reservation dissolves; the R4-Q door record + engine-defs governance stay in the standing record for any future explicit ask."
  }
 }

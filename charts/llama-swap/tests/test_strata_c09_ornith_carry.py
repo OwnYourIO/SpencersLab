@@ -121,8 +121,11 @@ def test_c09_hunk1_bumps_kNativeHBytes_from_1024_to_2048():
 
 
 def test_c09_hunk2_adds_X12_to_STRATA_D_FMTS():
-    """UD-Q4_K_XL's routed downs need Q3_K_M (X(12)) down-supported
-    (shard-3 census [C10]); GU already covers gate/up — exactly ONE addition."""
+    """UD-Q4_K_XL's routed expert downs need Q4_K (fmt 12 — X(12))
+    down-supported (checkpoint census: routed downs ∈ {Q4_K(12), Q5_K(13)},
+    no Q3_K anywhere — the r1-finding-1 correction the landing commit carried;
+    the first wording said Q3_K_M). GU already instantiates 12 for gate/up —
+    only the down list is short: exactly ONE addition per branch."""
     text = S.read(CARRY_PATCH, "hunk 2 of the carry")
     hunk2 = text.split("iq_kernels.cu")[-1]
     assert re.search(r"STRATA_D_FMTS", hunk2), "the D_FMTS macro left the hunk"

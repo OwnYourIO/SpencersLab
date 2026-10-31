@@ -56,7 +56,7 @@ under `/models/strata/sessions` instead of holding them parked in RAM.
 ### Keyless posture
 
 Engine and inner supervisor run unauthenticated in-cluster, mirroring the
-outer llama-swap's own `apiKeys: []`: both run-config profiles ship
+outer llama-swap's own `apiKeys: []`: all five run-config profiles ship
 `api_key: "none"` and the inner config carries `apiKeys: []`. The engine
 binds 127.0.0.1 via serve's `--host`, so the supervisor proxy is its only
 client. Because llama-swap passes the client `Host` header through, the
@@ -72,8 +72,8 @@ the pod, no Authorization header anywhere in the chain.
 | Surface | Value |
 |---|---|
 | serve CLI entry (what the llama-swap `cmd` execs) | `/opt/strata/terminal/bin/strata` |
-| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.54-linux-x86_64-hip-rx9070/strata` |
-| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo/strata` |
+| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-rx9070/strata` |
+| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo/strata` |
 | Engine root layout | both roots live under `/opt/strata/components/engine/<label>/` as **distinct dirs** (same-named binaries per flavor — never merge them) |
 | Weight-staging entrypoint (what the `model-fetch` init execs) | `/opt/strata/bin/fetch_models.sh` — exec form so an image without the baked driver fails at container start; sources `/opt/strata/bin/byte_pins.env` and calls `/opt/strata/bin/hf_fetch.py`. The logic lives in `containers/strata/files/` and is build-verified; this chart states intent + the env contract (`STRATA_QUANTS`, `STRATA_MODEL_<TOK>` scalars, the gated rung's `HF_TOKEN` secretKeyRef on that init only) |
 
@@ -114,10 +114,15 @@ on-target `strata serve --plan` re-check (runbook §3.4) → re-bench.
 |---|---|---|---|
 | `qwen3.8-flash-next-strata` | checkout-compiled gfx1201 engine | R9700 via OCuLink | lazy, `ttl: 3600` — time-shared (unloads 1h idle; set `ttl: 0` to pin for dedicated windows) |
 | `qwen3.8-flash-next-strata-strix` | gfx1151 (`hip-halo` root) | 8060S iGPU | lazy, `ttl: 1800` — idle-released |
+| `qwen3.8-flash-next-strata-orca` | checkout-compiled gfx1201 engine (same claim binary) | R9700 via OCuLink | lazy, `ttl: 3600` |
+| `qwen3.8-flash-next-strata-q4` | checkout-compiled gfx1201 engine (same claim binary) | R9700 via OCuLink | lazy, `ttl: 3600` |
+| `ornith-1.5-122b-strata-q4` | checkout-compiled gfx1201 engine — the carry-patched one | R9700 via OCuLink | lazy, `ttl: 3600` |
 
-The inner `matrix` set `main: "(p | s)"` makes the two **alternatives**: the
-solver evicts the resident arena before starting the other, so they are
-never co-loadable (arenas are additive on the 128 GB node).
+The inner `matrix` set `main: "(p | s | o | q | n)"` makes the five
+**alternatives**: the solver evicts the resident arena before starting the
+other, so no two are ever co-loadable (arenas are additive on the 128 GB
+node — q4's 71.7 GiB pinned experts is the largest, ornith's ~40–48 GiB
+class the second).
 
 ### Strix-alone fallback (`qwen3.8-flash-next-strata-strix`)
 
@@ -145,9 +150,10 @@ them as hypotheses until that output is read on this node.
 **Perf expectations — cite the epoch, not just the number.** The
 STRIX_HALO History row of 1,265 prompt / 59.1 decode tok/s @8K is
 engine-0.1.40-era (measured with no §5 env switches); the engine packaged in
-the image is 0.1.54-era (the flavor pin's engine package — the primary arena
-runs whatever engine setup compiled into the claim checkout, which only moves
-when that checkout is refreshed). The current-epoch §6 row (0.2.3 class, Windows) reads 685/783/749
+the image is 0.1.55-era (the flavor pin's engine package — the primary arena
+runs whatever engine setup compiled into the claim checkout, which moves when
+the driver's marker-keyed migration recompiles it on first boot after a pin
+bump). The current-epoch §6 row (0.2.3 class, Windows) reads 685/783/749
 prompt tok/s @4K/8K/64K — same order of magnitude, different machine class.
 The §5 fast-config is KL-gated: decoded rounds differ from the primary
 profile's output, so never diff the two token-for-token; compare on

@@ -73,12 +73,15 @@ def test_c01_strix_cmds_share_terminal_entry_per_model_profiles():
 
 @helm
 def test_c01_strix_matrix_alternation_never_co_loads():
-    """The (p|s) set guards that the inner solver never admits both arenas —
-    preload-empty alone would not stop a request-driven co-load. Checked on
-    the DNF COMBOS, not var membership: the contract expression "(p | s)"
-    mentions both arenas while the alternation must expand to one-model
-    combos ([p],[s]); a combo holding both recreates #1715 (arenas add up on
-    the 128 GB node, run-1 RESEARCH §7)."""
+    """The era-1 "(p | s)" set guards that the inner solver never admits both
+    arenas — preload-empty alone would not stop a request-driven co-load.
+    Checked on the DNF COMBOS, not var membership: the expression mentions
+    both arenas while the alternation must expand to one-model combos
+    ([p],[s]); a combo holding both recreates #1715 (arenas add up on the
+    128 GB node, run-1 RESEARCH §7). Today's sets.main is the five-letter
+    alternation — its all-arenas law is test_strata_c09_ornith_arena.py::
+    test_c09_alternation_expands_five_arenas_and_ornith_only_swaps; this arm
+    stays the founding p/s pair check."""
     cfg = S.inner_config(_docs())
     matrix = cfg.get("matrix") or {}
     assert "groups" not in cfg, "llama-swap hard-errors when matrix and groups coexist"

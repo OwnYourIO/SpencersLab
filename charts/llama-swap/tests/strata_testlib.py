@@ -588,8 +588,9 @@ def engine_exe_paths(text: str) -> set[str]:
 # combo, '|' alternates combos, '+name' inlines another set (skill: "(g | q |
 # m) & v" → [g,v],[q,v],[m,v]; a combo listing two models admits their
 # co-residency, only the requested model starts). Flat membership of the var
-# references is the wrong bar for the (p | s) contract — that expression
-# mentions both arenas while no combo may ever hold both.
+# references is the wrong bar for the C01-era "(p | s)" contract, and stays
+# wrong for today's five-letter sets.main: the alternation names every arena
+# while no combo may ever hold more than one.
 
 
 _M_DSL_TOKEN = re.compile(r"&|\||\(|\)|\+[A-Za-z0-9_]+|[A-Za-z0-9_]+")

@@ -273,16 +273,17 @@ def test_c05_default_route_flip_not_applied_without_a_repin():
 def test_c05_ornith_strata_id_present_only_where_it_should_be():
     """§9.17 flip of the C06 Shape-B absence arm (U10.2 supersession: the
     owner expects Ornith ON Strata; the absence law became a presence law at
-    C09 authoring — designed-red until dev lands). The flip keeps teeth in
-    both directions: the id must be PRESENT on exactly its three surfaces
-    (chart values, the profile template's rendered data home = services peers/
-    env lines included, the gpu-ai overlay — live_code_grep spans charts/ +
-    services/), every other live hit is a phantom home, and the llama.cpp
-    ornith ladder must SURVIVE (its retirement is a separate owner election —
-    C09 forbidden list)."""
+    C09 authoring). The flip keeps teeth in both directions: the id must be
+    PRESENT on exactly its declared homes (chart values + the chart README's
+    five-id inner-models table — the §9.15 presence-era roster row, FINAL3
+    §2 — and the gpu-ai overlay peers route; live_code_grep spans charts/ +
+    services/ + containers/), every other live hit is a phantom home, and the
+    llama.cpp ornith ladder must SURVIVE (its retirement is a separate owner
+    election — C09 forbidden list)."""
     hits = S.live_code_grep("ornith-1.5-122b-strata")
     allowed_homes = {
         "charts/llama-swap/values.yaml",
+        "charts/llama-swap/README.md",
         "services/gpu-ai/prod/values.yaml",
     }
     assert hits, (

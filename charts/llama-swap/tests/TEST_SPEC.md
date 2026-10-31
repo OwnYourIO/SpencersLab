@@ -2458,3 +2458,67 @@ tethers are era-advanced, not weakened.
 
 No commits; STATE.json untouched. Landing (commit of dev round + this round)
 stays coord/user-owned.
+
+### 9.21 FINAL3 round-3 law closes — presence home, four-surface label law, runbook pin law (2026-10-31)
+
+REVIEW-FINAL3-2026-10-31.md §6/§7 routed three record/docs defects; dev's docs round
+landed uncommitted (chart README 0.1.55 rows + five-id inner table; host-prep note
+runbook rewrite). This round closes the test-surface obligations by name:
+
+1. **The named red** — `test_catalog_contract.py::test_c05_ornith_strata_id_present_only_
+   where_it_should_be`: `allowed_homes` widened to three surfaces, adding
+   `charts/llama-swap/README.md` (the mandated five-id inner-models table is the §9.15
+   presence-era roster row — operators read the chart README as truth). Negative teeth
+   unchanged: any other live_code_grep hit is a phantom home.
+2. **Label law widened to FOUR surfaces** — renamed
+   `test_dockerfile.py::test_c07_engine_package_labels_are_one_fact_across_four_surfaces`
+   (was `_three_surfaces`); `charts/llama-swap/README.md`'s engine-exe table joins the
+   Dockerfile, the containers README and the chart's values.yaml strix profile. Pair-
+   expected like the other prose surfaces; values.yaml stays the halo-only surface.
+   This is the FINAL3 §2 drift root cause pinned as law: a stale label in the table
+   operators read reddens the suite. The era-2 (C07) PROVENANCE keeps the OLD arm name —
+   frozen history; era-3's PROVENANCE carries the new name plus the rename note.
+3. **NEW runbook pin law** — `test_strata_runbook.py::test_c09_runbook_alternation_ties_
+   to_the_rendered_sets_main`: the note carries the strata matrix alternation TWICE
+   (§3.8 preload warning, §4 RAM law); the regex finds exactly-2 lowercase-pipe-
+   alternations and each must equal the rendered sets.main `(p | s | o | q | n)`. The
+   count==2 half reddens if a docs rewrite silently drops an anchor — the §3.8 text
+   pre-declared this law ("that string is the alternation the runbook pin law ties to
+   the live render"), so values edits and docs lines must land together.
+4. **Peers-evidence header era-honest rewrite** (`evidence/strata-peers-expected.yaml`
+   header prose only — chain data untouched, its states already end at five): the C01/
+   C02/C06/C09 growth chain named; `models_states` = APPEND-ONLY history (six states, the
+   C08 sweep the one sanctioned shrink); `models_allowed` = the CURRENT ruled set — five
+   served ids since C09.
+5. **Carry-over wording** (era-honest labels, no law weakened):
+   - `test_strata_c09_ornith_carry.py` hunk-2 docstring: Q3_K_M → **Q4_K (fmt 12)**,
+     routed downs ∈ {Q4_K(12), Q5_K(13)}, no Q3_K anywhere — the r1-finding-1 correction
+     the landing commit carried in the patch/values prose. (`chunks/C09.md` still says
+     Q3_K_M in its prose — coord/plan surface, not mine.)
+   - `strata_testlib.py` DSL comment + `test_strata_strix.py::test_c01_strix_matrix_
+     alternation_never_co_loads` docstring: era-LABELLED — the era-1 `(p | s)` founding-
+     pair check stays what the arm is; today's five-letter alternation's all-arenas law
+     lives in `test_strata_c09_ornith_arena.py::test_c09_alternation_expands_five_arenas_
+     and_ornith_only_swaps` (verified before deciding: that arm already enforces ≤1 arena
+     per combo AND all-five reachable, so no substance gap exists to widen into).
+
+Probe record (fresh file copies to /tmp/opencode — the previous round's backups were NOT
+reused): P-A stray `ornith-1.5-122b-strata` needle appended to
+`.github/workflows/aislop.yaml` -> presence arm red NAMING the stray file; P-B
+0.1.55→0.1.56 halo label in the chart README -> four-surface arm red naming
+"chart README engine labels … lack …"; P-C §4 anchor shortened to `(p | s | o | q)` ->
+runbook law red ("drifted from the rendered sets.main"); P-C2 a docs rewrite dropping the
+§3.8 anchor -> the count half red ("want exactly 2", 1 found). All mutated files diffed
+clean after restore.
+
+Posture truth (measured, both envs, after 1–4 landed): FULL plain **0F / 407P / 9S**,
+FULL armed (`RUN_HF_CHECK=1 RUN_FLAG_AUDIT=1`) **0F / 416P / 0S** — both exactly +1
+against the FINAL3 §1 pair (406/415): the runbook pin arm is NEW. 9 plain skips unchanged
+and named (7× RUN_HF_CHECK + RUN_FLAG_AUDIT); containers 24P (the rename is not an
+addition); guards rulesync-surface 19 / gate 22 / agents-md 9 / agent-perms 15 all rc 0 ON
+THE DIRTY TREE incl. dev's docs round — the three §9.19 admit files already carry
+`.agents/notes/strata-host-prep-gpu-ai.md` and `charts/llama-swap/README.md`, no extend
+was needed; `aislop ci --changes` 0 errors / 0 warnings over 64 files.
+
+No commits; STATE.json untouched. Everything (dev docs round + this round) lands via
+coord.
