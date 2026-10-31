@@ -252,6 +252,8 @@ DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
         (r"111,334,654,784\s*B", "the Q4 family byte total the budget grows by"),
         (r"df -h\s+/models/strata", "the human capacity gate around the first q4 run"),
         (r"before the\s+`q4`\s+token first runs", "when that capacity gate fires"),
+        (r"97,473,155,200\s*B", "the orca IQ4_XS trio Σ (C08 docs round; == the live-pinned shards, see the c08-note arm below)"),
+        (r"packs/orca-iq4_xs", "the IQ4_XS pack path the profile serves and the df gate measures"),
     ),
     "parent README": (
         (r"32\s*GiB\s+.\s+16\s*slots", "README's IQ3-class cache shape (GiB spelling)"),
@@ -403,3 +405,42 @@ def test_c06_superseded_cap_figures_stay_labeled():
                 if re.search(rf"(?<![\d.]){figure}(?![\d.])", ln) and not marker.search(ln)
             ]
     assert not offenders, "superseded cap figure stated without a supersession marker:\n" + "\n".join(offenders)
+
+
+def test_c08_note_arithmetic_and_cleanup_trio_agree_with_the_pinned_ship():
+    """C08 docs-round law: the note's orca IQ4_XS block must SUM to the live-
+    pinned trio (same anti-slip discipline as the q4 totals arm — a cited
+    total that is not the sum of its cited shards is the 398,000 B class),
+    and the claim-cleanup trio must keep the coord-ruling shape: the tier-
+    independent `.pack-orca` marker line FIRST, and `.setup-ABL` spelled as
+    the driver actually writes it (MARK=.setup-$TOK — dev's correction of the
+    coord draft's wrong path, recorded in TEST_SPEC 9.18). The strix row's
+    honest no-cap shape is pinned too: #1601's pairing covers three rungs,
+    not four, and a doc that hides that re-opens the one-leg-as-pod-budget
+    misread."""
+    from test_strata_c08_rung_shifts import IQ4_PACK_TOTAL, IQ4_SHARD_BYTES
+
+    assert IQ4_PACK_TOTAL == 97_473_155_200, (
+        f"the pinned orca trio sum {IQ4_PACK_TOTAL} moved — re-run the live tree arm "
+        "before re-pinning the note"
+    )
+    note = _flat(S.read(S.RUNBOOK_NOTE, "cf-86 C08 docs round"))
+    problems = []
+    if f"{IQ4_PACK_TOTAL:,} B" not in note:
+        problems.append(f"note's orca Σ is not the pinned {IQ4_PACK_TOTAL:,} B")
+    for size in IQ4_SHARD_BYTES.values():
+        if f"{size:,}" not in note:
+            problems.append(f"note no longer cites shard {size:,} B — its Σ cannot be re-derived by hand")
+    if "orca-iq3_xxs" not in note:
+        problems.append("the cleanup block stopped naming the swept packs/orca-iq3_xxs — nothing gets reclaimed")
+    for pat, why in (
+        (r"FIRST[^.]{0,90}?\.pack-orca", "the marker line goes FIRST or nothing gets reclaimed"),
+        (r"\.pack-orca`?\s+is\s+tier-INDEPENDENT", "the WHY of the marker-first order"),
+        (r"rm\s+-f\s+/models/strata/\.pack-orca", "the exact FIRST command (coord ruling 2026-10-31)"),
+        (r"\.setup-ABL\b", "the swept abl token's marker, spelled as the driver writes it (.setup-$TOK)"),
+        (r"strix row carries no\s+`?--memory-limit-mib", "strix's honest no-cap shape"),
+        (r"strix [^|]{0,60}?\|\s*none declared", "the caps table keeps strix's cap cell honest"),
+    ):
+        if not re.search(pat, note):
+            problems.append(f"missing (window {pat!r}): {why}")
+    assert not problems, "orca-quant/cleanup doctrine drifted in the runbook note:\n" + "\n".join(problems)

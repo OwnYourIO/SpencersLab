@@ -266,20 +266,20 @@ escape (§4).
 
 - `grep MemAvailable /proc/meminfo` plus `free -g` with the llama.cpp trio
   idle: MemAvailable must cover the shipped profile's implied budget —
-  arena read measured 46.84 GiB + the conversation-cache budget (the engine
-  default cap 8 GiB on this node; the PR's 24576 MiB x 16 slots is a
-  documented toggle — how it actually splits is `--plan`'s answer) +
-  KV/pack headroom, which together the `64Gi` request / `96Gi` cgroup cap
-  encode (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment —
-  the 2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with
-  the paired 96Gi cap + `--memory-limit-mib 92160` + explicit 32768 MiB
-  x 16-slot conversation cache). The UD-Q4_K_XL rung
-  (`qwen3.8-flash-next-strata-q4`) rides the OTHER pair: `100Gi` cgroup +
-  `--memory-limit-mib 95232`, conversation cache trimmed to 8192 MiB x 16 —
-  71.7 GiB pinned experts + 8 GiB cache + ~13 GiB worst-case KV ≈ 92.7 GiB
-  inside the 125 GiB node. MemAvailable before a Q4 request must clear THAT
-  number, not the ~47 GiB IQ3_S figure above; the pairs are per-rung inside
-  one pod, so the IQ3-class profiles keep 92160 within the same cgroup.
+  arena read measured 46.84 GiB + the conversation-cache budget (the
+  shipped primary declares an explicit 32768 MiB x 16-slot conversation
+  cache; the engine's own default ceiling is 8192 MiB) + KV/pack headroom,
+  which the `64Gi` request inside the pod's `100Gi` cgroup encodes
+  (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment — the
+  2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with the
+  paired 96Gi cgroup + `--memory-limit-mib 92160`; cf-86 C06 raised that
+  cgroup to 100Gi for the UD-Q4_K_XL rung and left the 92160 cap where it
+  was). The UD-Q4_K_XL rung (`qwen3.8-flash-next-strata-q4`) rides the
+  bigger pair: `100Gi` cgroup + `--memory-limit-mib 95232`, conversation
+  cache trimmed to 8192 MiB x 16 — 71.7 GiB pinned experts + 8 GiB cache +
+  ~13 GiB worst-case KV ≈ 92.7 GiB inside the 125 GiB node. MemAvailable
+  before a Q4 request must clear THAT number, not the ~47 GiB IQ3_S figure
+  above. The caps table below states the shipped per-rung state.
 - Total pod requests vs node allocatable — the strata pod must schedule
   alongside llama-swap's 4Gi:
   `kubectl describe node <gpu-ai-node>` → Allocatable block and the
@@ -288,10 +288,58 @@ escape (§4).
 - The container's memory **limit** ships PAIRED with the engine's
   `--memory-limit-mib` — #1601's informed-limit posture, adopted after the
   2026-10-29 node OOM made uncapped pinning an unacceptable failure mode.
-  Two pairs ship today: `96Gi` + `92160` (the IQ3_S / IQ3_XXS arenas) and
-  `100Gi` + `95232` (the UD-Q4_K_XL arena). Never move one leg without the
-  other, and never read one leg as the whole pod's budget: the cgroup is the
-  pod's, the cap belongs to whichever arena is loaded.
+  Two pairs are in the history, one cgroup ships: the pre-C06 pair was
+  `96Gi` + `92160`, and C06 raised the pod's cgroup to `100Gi` with the
+  `95232` cap for the UD-Q4_K_XL arena while the smaller rungs kept their
+  `92160`. Never move one leg without the other, and never read one leg as
+  the whole pod's budget: the cgroup is the pod's, the cap belongs to
+  whichever arena is loaded.
+
+As shipped after cf-86 C08 — one pod cgroup (`100Gi`), the cap per rung;
+`--plan` (§3.4) still finalizes what actually becomes resident:
+
+| Rung (profile) | `--memory-limit-mib` | conversation cache | pinned arena read |
+|---|---|---|---|
+| primary (`strata-iq3_s.json`) | 92160 | 32768 MiB x 16 slots | 46.84 GiB (IQ3_S pair) |
+| strix (`strata-strix-iq3_s.json`) | none declared | engine default | `--expert-cache 24576` + `--resident-budget-gib 55` |
+| orca (`strata-orca-iq4_xs.json`) | 92160 | 8192 MiB x 16 slots | 57.7 GiB experts (90.78 GiB staged) |
+| q4 (`strata-q4.json`) | 95232 | 8192 MiB x 16 slots | 71.7 GiB of the 111,334,654,784 B set |
+
+The strix row carries no `--memory-limit-mib` at all — its bound is the
+`--expert-cache 24576` / `--resident-budget-gib 55` hypothesis pair (§3.4)
+plus the pod cgroup, so #1601's pairing covers three rungs, not four. The
+orca row is the tier the U9.2 owner ruling moved to IQ4_XS under the
+unchanged ID `qwen3.8-flash-next-strata-orca`: `strata-data/orca` IQ4_XS,
+three shards at the flat repo root — 44,766,155,936 + 44,735,995,008 +
+7,971,004,256 B, Σ 97,473,155,200 B (90.78 GiB; the 97.47 GB of RESEARCH
+R4 [B7]) — gated bytes through model-fetch. It fits 92160 ONLY with the
+cache trimmed to 8192: 57.7 GiB pinned experts + 8 GiB cache + ~13 GiB
+worst-case KV + ~6 GiB supervisor ≈ 84.7, while conv 32 would declare
+108.7, past even the 100Gi cgroup. `iq_pack` writes its own copy under
+`Strata-data/packs/orca-iq4_xs`, so `df -h /models/strata` before and
+after the first `orca` token gates that growth the way the q4 token's does.
+
+Claim cleanup, needed on any claim that already ran the pre-shift boot. The marker
+line goes FIRST or nothing gets reclaimed: `/models/strata/.pack-orca` is
+tier-INDEPENDENT, so with an IQ3_XXS pack on disk the C08-era driver prints
+"orca pack complete, skipping" and never stages the IQ4_XS trio the profile
+now points at (coord ruling 2026-10-31: "FIRST claim-cleanup step:
+`rm -f /models/strata/.pack-orca`"). Nothing is deployed on-target today,
+so this binds the first post-landing provisioning:
+
+```
+rm -f  /models/strata/.pack-orca                # FIRST: the marker is tier-independent
+rm -rf /models/strata/.setup-ABL                # marker of the swept abl token
+rm -rf /models/strata/Strata-data/models/IQ3_XXS-abliterated
+rm -rf /models/strata/Strata-data/packs/abliterated-iq3_xxs
+rm -rf /models/strata/Strata-data/models/IQ3_XXS-orca
+rm -rf /models/strata/Strata-data/packs/orca-iq3_xxs
+```
+
+The swept shards are 76,142,283,328 B (SC117 IQ3_XXS pair, 76.14 GB) plus
+85,202,668,032 B (orca IQ3_XXS pair, 85.20 GB) — ~161 GB of claim area,
+against the new trio's 97.47 GB of staged shards (its own `iq_pack` copy
+lands beside them); `df -h /models/strata` before and after is the record.
 
 **3.4 R1 gate: `--plan` reconciliation (human step 3), before the first
 accepted request.** The on-target finalizer, run per profile; repo numbers
@@ -307,7 +355,7 @@ kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
 What the two runs **finalize** (the shipped values this gate is gated on):
 
 - Primary (`strata-iq3_s.json`): `--expert-cache auto` → the resolved slot
-  count for this node; the `--conversation-cache-mib 24576` × 16 slots
+  count for this node; the `--conversation-cache-mib 32768` × 16 slots
   budget against real 128 GB RAM (C02 sizing, R3); the tokenizer-shard and
   packaged-`lib_dirs` VERIFY markers (C02 declared them hypotheses for this
   gate).
@@ -400,8 +448,8 @@ follows from the arena: once `qwen3.8-flash-next-strata` takes a request its
 (`ttl: 3600`; time-share adopted after the 2026-10-29 node OOM — the old
 `ttl: 0` permanent pin beside the llama.cpp trio's ~90–119 GiB
 preallocation is what harvested the node), and the cgroup cap keeps strata's
-own worst case inside its own container (`96Gi` for the IQ3-class arenas,
-`100Gi` for the Q4 one). Therefore:
+own worst case inside its own container (one `100Gi` cgroup; the cap
+inside it is per rung — 92160 primary and orca, 95232 Q4). Therefore:
 
 - No Strata request while a large trio model is mid-session (cold pin +
   warm trio exceeds 125 GB even capped); no large trio request while the
