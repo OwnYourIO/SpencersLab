@@ -183,12 +183,10 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
 def test_c06_existing_profiles_stay_byte_unchanged_iq3_s_keeps_92160():
     """AC2's second half: the four earlier profiles are untouched, and the
     IQ3_S pair (92160 inside 96Gi-era pins) keeps its numbers — the lockstep
-    law is per-pair, not a global raise."""
-    import json
-
+    law is per-pair, not a global raise. Fixtures are era-mapped in
+    strata_testlib (strix's C07-era chain guarded in test_strata_strix)."""
     for file in (S.PROFILE_PRIMARY_FILE, S.PROFILE_STRIX_FILE):
-        before = json.loads((S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / file).read_text())
-        assert before == S.profile_json(_docs(), file), f"{file} diverged from the pre-cf-86 capture"
+        assert S.profile_fixture(file) == S.profile_json(_docs(), file), f"{file} diverged from its frozen-era capture"
     iq3s = dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)))
     assert iq3s.get("--memory-limit-mib") == "92160", (
         f"IQ3_S engine cap moved to {iq3s.get('--memory-limit-mib')!r} — the Q4 rung rides its OWN pair"

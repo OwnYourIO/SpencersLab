@@ -9,6 +9,9 @@
 
 from __future__ import annotations
 
+import json
+import re
+
 import pytest
 
 import llama_swap_testlib as L
@@ -174,6 +177,60 @@ def test_c01_strix_exe_is_halo_root_from_container_readme():
         "wrong-arch kernels against the 8060S"
     )
     assert exe != _primary_profile(_docs())["exe"], "strix and primary must not share one exe path"
+
+
+# --- C07 re-pin era chain (TEST_SPEC 9.16): the fixture law survived the move ----
+
+
+def test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair():
+    """C07 AC3/U9.4 re-pinned the engine (0.1.52 -> 0.1.54) and PROVENANCE
+    routed the fixture re-pin to the test session. The byte-invariance law
+    survives intact: era 2 may differ from era 1 in ONLY the sanctioned
+    engine-root pair, so the three preservation arms (abliterated/orca/q4)
+    keep whole-file deep-equality with no exempt-key hole."""
+    era1 = json.loads(
+        (S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / S.PROFILE_STRIX_FILE).read_text()
+    )
+    era2 = S.profile_fixture(S.PROFILE_STRIX_FILE)
+    root1 = f"{S.ENGINE_ROOT}/0.1.52-linux-x86_64-hip-halo"
+    root2 = f"{S.ENGINE_ROOT}/0.1.54-linux-x86_64-hip-halo"
+    assert era1["exe"] == f"{root1}/strata" and era1["lib_dirs"] == [root1], (
+        "the pre-cf-86 capture must stay byte-frozen — era files are append-only history"
+    )
+    moved = {k for k in era1 | era2 if era1.get(k) != era2.get(k)}
+    assert moved == {"exe", "lib_dirs"}, (
+        f"the sanctioned C07 delta is exactly the engine-root pair, got {sorted(moved)} — "
+        "anything else moving is an un-sanctioned re-tune riding the re-pin"
+    )
+    assert era2["exe"] == f"{root2}/strata" and era2["lib_dirs"] == [root2], (
+        "era 2 must pin the re-pinned 0.1.54 halo root exactly — a root moved to a "
+        "different label without PROVENANCE is an unsanctioned re-pin"
+    )
+    assert not (S.EVIDENCE_DIR / "strata-profiles-c07-repin" / S.PROFILE_PRIMARY_FILE).exists(), (
+        "the primary profile rides the version-free claim-compiled pack root — an "
+        "engine re-pin cannot move its era; an era-2 primary file is a false pin"
+    )
+
+
+def test_c07_strix_fixture_ties_to_the_built_halo_root():
+    """Anti-drift tether (the repair's strengthening half): the frozen
+    fixture's exe/lib_dirs must name THE halo root the containers/strata
+    Dockerfile itself COPYs and test -x-es. The fixture cannot silently
+    drift back toward 0.1.52, and a future image re-pin reddens this arm
+    (plus the container three-surface arm) before any render arm can go
+    stale — the era chain then re-runs through the test session."""
+    dockerfile = S.read(S.CONTAINER_DIR / "Dockerfile", "the C07 build's engine COPY/verify lines")
+    labels = {m.group(0) for m in re.finditer(r"\d+\.\d+\.\d+-linux-x86_64-hip-halo", dockerfile)}
+    assert len(labels) == 1, (
+        f"the Dockerfile names {sorted(labels)} halo roots — one era builds exactly one; "
+        "a mid-re-pin half-edit must not let the fixture chase whichever it reads first"
+    )
+    root = f"{S.ENGINE_ROOT}/{next(iter(labels))}"
+    era2 = S.profile_fixture(S.PROFILE_STRIX_FILE)
+    assert era2["exe"] == f"{root}/strata" and era2["lib_dirs"] == [root], (
+        f"strix fixture exe/lib_dirs ({era2.get('exe')!r}, {era2.get('lib_dirs')!r}) "
+        f"drifted from the build-verified halo root {root!r}"
+    )
 
 
 @helm

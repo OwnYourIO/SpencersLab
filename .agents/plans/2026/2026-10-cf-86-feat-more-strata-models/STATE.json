@@ -181,12 +181,20 @@
    "gate_status": "cleared"
   },
   "C07": {
-   "status": "pending",
+   "status": "done",
    "wave": 7,
    "depends_on": [
     "C06"
    ],
-   "handoffs": []
+   "dev_rounds": 1,
+   "review_rounds": 1,
+   "last_verdict": "APPROVED",
+   "dev_session": "ses_e703f1c4bffesw38YpKG59nDAO",
+   "handoffs": [
+    "2026-10-31 dev C07 r1 (ses_e703f1c4bffesw38YpKG59nDAO) NEEDS_INFO(validation_at_fault, impl complete): lift delivered — files/fetch_models.sh 285L + hf_fetch.py 111L two-mode (anon urlopen / gated verbatim hop-walk: NoAutoRedirect, Bearer-at-token-host-only, HF allowlist, 4-hop cap; shared 4-attempt .part wedge loop; token-never-argv) + byte_pins.env 24L sourced + existence-guard (one added line, checkout-guard idiom); chart init -> exec-form one-line (−348L); v0.2.8/0.1.54 re-pin (GHCR digests 39545670…/c4b970d0… live-read, Dockerfile clone tag, labels, README ledger, strix legs; citations re-verified at v0.2.8: setup.py 639,798B sha 0eba1327…, zero SC117/orca/auth hits; #4518/#4051/#4420); verify-step extended (build NEVER executes driver). Containers 24P; chart 17F = 14 C08-era + 3 strix-fixture arms (byte-frozen captures vs mandated exe re-pin) routed to test session. Merge-window runbook: docker-build :main before pod replacement or sync hold; loud exec-form boot guard self-heals under Always.",
+    "2026-10-31 fixture-repair (ses_e762a6e57ffeKxIM263C9NJN2G) DONE: ERA-CHAIN chosen over scoped-arm (no exempt-key hole) — era-1 frozen on disk, strata-profiles-c07-repin/ era-2 appended, PROVENANCE 28d0ed3→547ba10, delta=={exe,lib_dirs} strix-only verified programmatically pre-capture (primary 0 keys); 3 preservation arms whole-file deep-equal vs era map (transitive freeze machine-verifiable); +2 tether arms in test_strata_strix.py (era-delta literals + fixture==Dockerfile halo-root; 5 drift probes incl Dockerfile→0.1.55 pending shape). Suite 14F/380P/9S, armed 14F/389P/0S (14=C08-era only); §9.16 records re-pin-vs-frozen-fixture class.",
+    "2026-10-31 review C07 r1 (ses_e6fe4cba2ffeIzlSbHc2s5I3uH) APPROVED: all re-run exact; 11-object render diff = ONLY strix exe/lib_dirs + init command moved (resources/env/mounts/strategy byte-equal, one hf-token secretKeyRef); VERBATIM-LAW PROVEN at loop/byte level (old anon≡gated modulo opener; new≡both modulo mode labels; literals≡pins); GHCR==ledger==FLAVOR_PINS; own era-2 drift-injection bit both tethers (restored, file-copy discipline); args:[]==absent-key scratch-proved (nit vs blind fixes); dev-5 charts README ACCEPTED (README-twin false-pin doctrine); SC117 INTACT-and-working this round (queued deletion = its 14 reds); boundaries clean; MINOR→C08: six stale v0.2.7 comment cites L1917/2081/2117/2148/2156/2176 re-stamp; friction: /tmp pollution + py_compile __pycache__ hygiene."
+   ]
   },
   "C08": {
    "status": "pending",

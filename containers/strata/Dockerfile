@@ -12,12 +12,18 @@
 # unified-vulkan-262 in-place rebuild are the why. Strata releases 0.2.4-0.2.6
 # ship NO images: the GHCR tag list, not the release list, is the truth of
 # what can be pinned (RESEARCH §1).
-FROM ghcr.io/niko1221/strata:0.2.7-rocm-gfx120x AS engine-primary
+#
+# 0.2.7 -> 0.2.8 (cf-86 C07, U9.4): the release whose engine packages carry
+# #4518 (the conv cache no longer runs short when the PLE table is locked) —
+# exactly the Round-2 tension class on this node — plus #4051 (engine memory
+# handoff) and #4420 (idle-slot prefix keep). Both flavor tags exist at 0.2.8
+# and their digests are the README ledger pair (re-read at this bump).
+FROM ghcr.io/niko1221/strata:0.2.8-rocm-gfx120x AS engine-primary
 
 # gfx1151 sibling bundled for the Strix-alone fallback C05 supervises; its
-# existence at the same 0.2.7 tag is what makes the single-image bundle viable
-# (RESEARCH §1 measured).
-FROM ghcr.io/niko1221/strata:0.2.7-rocm-gfx1151 AS engine-strix
+# existence at the same flavor tag is what makes the single-image bundle viable
+# (RESEARCH §1 measured, re-measured at 0.2.8).
+FROM ghcr.io/niko1221/strata:0.2.8-rocm-gfx1151 AS engine-strix
 
 # Supervisor stage: the golden release-versioned family the existing chart
 # rides, kept honest by the renovate.json versioning packageRule. Manifest
@@ -31,17 +37,18 @@ FROM ghcr.io/mostlygeek/llama-swap:unified-vulkan-266 AS supervisor
 # checkout, not the desktop installer", docs/LLAMA_SWAP.md) and TERMINAL
 # install error ("this folder has no installer (setup.py)") both require
 # the repo's setup.sh tree, which the packaged images do not carry. The
-# first-quant pin is v0.2.7, matching the engine packages below; bump it
-# WITH the flavor tags per the README ledger (manual cadence, ruling (b) —
-# no renovate comment: this image carries zero directives by the C01
-# contract). No .git: updates land through image rebuilds, not in-place pulls.
+# checkout tag tracks the flavor tags (v0.2.8 here), so setup.py's catalog
+# and the bundled engine packages stay one release line; bump it WITH them
+# per the README ledger (manual cadence, ruling (b) — no renovate comment:
+# this image carries zero directives by the C01 contract). No .git: updates
+# land through image rebuilds, not in-place pulls.
 FROM alpine:3.22 AS strata-src
 RUN apk add --no-cache git ca-certificates \
-    && git clone --depth 1 --branch v0.2.7 https://github.com/Niko1221/Strata /opt/strata/src/Strata \
+    && git clone --depth 1 --branch v0.2.8 https://github.com/Niko1221/Strata /opt/strata/src/Strata \
     && rm -rf /opt/strata/src/Strata/.git
 
 # Runtime base = the gfx120x image: engine root
-# 0.1.52-linux-x86_64-hip-rx9070, the terminal tree at
+# 0.1.54-linux-x86_64-hip-rx9070, the terminal tree at
 # /opt/strata/terminal, and the baked ROCm env/STRATA_COMPONENTS_DIR all
 # arrive laid out once instead of being re-copied; the bundle adds only the
 # second flavor's engine root and the supervisor binary.
@@ -62,7 +69,7 @@ RUN apt-get update \
 # The two flavors install same-named binaries, so the copy plan must keep the
 # label dirs distinct — merging them under one dir would silently shadow the
 # R9700 engine with the halo one (or vice versa) at exe-resolution time.
-COPY --from=engine-strix /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo
+COPY --from=engine-strix /opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo /opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo
 
 # The unified image's Vulkan llama.cpp stack, run.sh launcher and /models
 # workingdir stay behind on purpose: ROCm owns this container's GPU path and
@@ -75,16 +82,35 @@ COPY --from=supervisor /usr/local/bin/llama-swap /usr/local/bin/llama-swap
 # persist on the PVC alongside the weights.
 COPY --from=strata-src /opt/strata/src/Strata /opt/strata/src/Strata
 
+# Weight staging lives in the image, not in the chart (cf-86 C07 lift):
+# files/fetch_models.sh is the driver the strata pod's model-fetch init execs,
+# files/hf_fetch.py its downloader (anon + gated modes) and files/byte_pins.env
+# the shard byte literals it sources. Baking them is what lets the verify step
+# below check them — a 330-line chart heredoc is logic no build ever parses.
+# The driver must end up executable: exec-form command + mode 644 is an
+# "exec format error" at container start, which keeps the chart's boot guard
+# loud but makes it useless.
+COPY files/ /opt/strata/bin/
+RUN chmod 0755 /opt/strata/bin/fetch_models.sh
+
 # Interface freeze (README.md contract): a broken surface fails this build,
 # not the running pod. The `strata` names under both label dirs are measured
 # facts, not guesses — and the find re-prints every non-library executable
 # there into the build log so the C02/C05 profile `exe` literals can be
 # checked against what upstream actually shipped at this pin.
+# The fetch trio is verified by syntax + interface only: RUNNING the driver
+# here would stage ~183 GB of weights inside CI, with no claim and no token.
 RUN set -eux; \
     test -x /opt/strata/terminal/bin/strata; \
-    test -x /opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata; \
-    test -x /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata; \
+    test -x /opt/strata/components/engine/0.1.54-linux-x86_64-hip-rx9070/strata; \
+    test -x /opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo/strata; \
     test -f /opt/strata/src/Strata/setup.sh; \
+    test -x /opt/strata/bin/fetch_models.sh; \
+    test -f /opt/strata/bin/hf_fetch.py; \
+    test -f /opt/strata/bin/byte_pins.env; \
+    sh -n /opt/strata/bin/fetch_models.sh; \
+    /opt/strata/terminal/python/bin/python3 -m py_compile /opt/strata/bin/hf_fetch.py; \
+    rm -rf /opt/strata/bin/__pycache__; \
     command -v git >/dev/null; \
     command -v c++ >/dev/null; \
     find /opt/strata/components/engine -mindepth 2 -maxdepth 2 -type f -perm -u+x ! -name '*.so*' -exec ls -l '{}' +

@@ -226,18 +226,16 @@ def test_c01_inner_alias_is_frozen_and_does_not_shadow_the_family():
 
 @helm
 def test_c01_existing_profiles_byte_unchanged():
-    """Byte-unchanged existing profiles, enforced against the captured pre-
-    cf-86 fixtures (evidence/strata-profiles-pre-cf86/) on the PARSED JSON —
+    """Byte-unchanged existing profiles, enforced against their frozen-era
+    captures (era map in strata_testlib — primary pre-cf-86, strix the C07
+    re-pin era, chain guarded in test_strata_strix) on the PARSED JSON —
     helm re-wrap is not behavior, a changed arg is. The outer goldens stay
     byte-invariant too (additive-preservation precedent, TEST_SPEC)."""
-    import json
-
-    fixtures = S.EVIDENCE_DIR / "strata-profiles-pre-cf86"
     for file in (S.PROFILE_PRIMARY_FILE, S.PROFILE_STRIX_FILE):
-        before = json.loads((fixtures / file).read_text())
+        before = S.profile_fixture(file)
         after = S.profile_json(_on(), file)
         assert before == after, (
-            f"{file} diverged from the pre-cf-86 capture — C01 may only ADD a "
+            f"{file} diverged from its frozen-era capture — C01 may only ADD a "
             f"profile; drift here is a re-tune of a serving rung: {sorted(set(before) ^ set(after))}"
         )
 

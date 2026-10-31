@@ -91,6 +91,23 @@ STRIX_ID = "qwen3.8-flash-next-strata-strix"
 PROFILE_PRIMARY_FILE = "strata-iq3_s.json"
 PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 
+# Era-mapped frozen captures for the byte-unchanged preservation arms
+# (TEST_SPEC 9.16): the primary's frozen era is still pre-cf-86 (an engine
+# re-pin cannot touch its version-free pack root); C07's sanctioned
+# 0.1.52->0.1.54 halo re-pin moved the strix profile's era. The chain —
+# era1 vs era2 delta == exactly {exe, lib_dirs} — is guarded in
+# test_strata_strix.py, so a whole-file deep-equal here stays a law with
+# no exempt-key hole for later rounds to widen.
+PROFILE_FIXTURE_ERA = {
+    PROFILE_PRIMARY_FILE: "strata-profiles-pre-cf86",
+    PROFILE_STRIX_FILE: "strata-profiles-c07-repin",
+}
+
+
+def profile_fixture(file: str) -> dict:
+    """Parsed JSON of a profile's frozen-era capture (era map above)."""
+    return json.loads((EVIDENCE_DIR / PROFILE_FIXTURE_ERA[file] / file).read_text())
+
 # C01 interface contract (containers/strata/README.md freezes these; the
 # container itself is untouched by run 2 — RESEARCH §1).
 SERVE_ENTRY = "/opt/strata/terminal/bin/strata"
