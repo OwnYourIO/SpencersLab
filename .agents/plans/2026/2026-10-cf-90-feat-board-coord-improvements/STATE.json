@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e6f74d6f5ffeUXj2HQl29vGcwf",
   "test_session": "ses_e6d1e15f0ffen3EgDuCAEhq09x",
-  "current_wave": 1,
+  "current_wave": 2,
   "updated_at": "2026-10-31T15:45:00Z",
   "handoffs": [
     "RESULT (plan, 2026-10-31, ses_e6e12ba47ffeDfz9WmIw7RVPrw) status: DONE; 7 chunks/3 waves drafted; RESEARCH.md untouched; batched questions returned (7); friction carried: deployed dev-boards lags repo (:v87 pin, create_label/create_list absent -> REST fallback + L4 ledger card); stale residue forced -2 worktree/branch suffix -> proceed on -2, C03 cleanup prevents recurrence.",
@@ -112,13 +112,17 @@
       "handoffs": []
     },
     "C07": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C03"],
       "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1 read-back; coord-executed board action, no dev)",
+      "dev_session": null,
+      "handoffs": [
+        "C07 executed by COORD 2026-10-31T18:2xZ: Inbox re-resolved live (PjEZ39rXBdpNcpncs @ Backlog MoZHQz3C4dSW4Atya — NOT the prefetched block, per NOTE); six cite targets identity-confirmed via get_card (#74/#87/#68/#62/#60/#61) before citing; 8 CREATE cards placed in Inbox with appendix content + Parent card #90 line + parent-labels-in-body line (Bucket Color, Pipeline: CICD — minus Research, citing label-tool cards #74/#87, the deployed-surface degrade); create_card took no default_checked (probe: deployed build) -> toggle_checklist_item fallback for Services/Type/Model(s) on all 8 per plan-appendix answers under coord ruling (a); five checklists auto-added by the board createCard rule (never add_checklist); single ledger comment nQSXJ4A8W4BJHRfct on card #90 with the full L1..L12 table; DECISIONS id-table appended.",
+        "RESULT (C07 review r1, fresh ses_e6c6fc3e1ffeYUqUdOn2xCcB2C) status: DONE verdict APPROVED — suite surface.sh t1..t4 4 ok (t3 green post-C03); AC1 recomputed on live board: exactly 8 expected titles in Inbox each once, ids 1:1 with DECISIONS table, card numbers 78-85; AC2 six cite cards identity-confirmed, unmoved, no ledger-era comments; AC3 samples L1+L12 bodies carry the three required lines, checklist answers per ruling (a) incl. L7 correction, Qwen Flash checked, five checklists no dups; AC4 exactly one ledger comment; AC5 id table verified on the board. Non-blocking: MINOR-1 forward-reference (C05 pointer in L7/L10-L12 bodies) self-marked in bodies, DECISIONS half-line added by coord at commit time (done); NIT-1 'no run tag' comment line stale in both loop files after C02 — ROUTED INTO C04 (its own file scope); NIT-2 legacy Research checklist 4th-slot on new cards (human-owned Lifecycle cutover not landed — transition rule covers). Read-only throughout."
+      ]
     },
     "C06": {
       "status": "pending",
