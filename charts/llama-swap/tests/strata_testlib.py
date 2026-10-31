@@ -191,12 +191,15 @@ SECRET_CHAIN_TOKENS = [
 # wiring tests assert render==evidence, so drift between the two is loud.
 PEERS_PROXY = f"http://{STRATA_OBJECT_NAME}.{NAMESPACE}.svc.cluster.local:8080"
 
-# Peers evidence is a WAVE TABLE, not one list: cf-86 grows the outer
+# Peers evidence is a WAVE TABLE, not one list: cf-86 grew the outer
 # models_allowed one id per landed Strata rung (C01 → C02 → C06), and the
 # suite must stay correct at every intermediate wave because dev lands the
-# chunks in order. models_allowed stays the C06-final set (the five frozen
-# ids); models_states pins every sanctioned intermediate list, oldest first.
-# A peers list that matches no state is a phantom or a lost entry.
+# chunks in order. models_allowed is the C08-final set (four ids — the
+# abliterated arena was swept by U9.3); models_states pins every sanctioned
+# wave list, oldest first, history included. The one sanctioned SHRINK is a
+# removal-only transition dropping exactly the swept abliterated id (the
+# law below); a peers list that matches no state is still a phantom or a
+# lost entry.
 def strata_peers_evidence() -> dict:
     if not PEERS_EVIDENCE.exists():
         raise AssertionError(f"{PEERS_EVIDENCE.name} evidence is missing")

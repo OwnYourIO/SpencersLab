@@ -2183,3 +2183,54 @@ env_contract is the FAM-routing law carrier).
 Carried to the docs/review round (NOT test surfaces): dev's DEVIATION —
 charts/README.md post-sweep false pins (the IQ3_XXS-in-envelope sentence, the
 96Gi×32Gi rows) — and the host-prep note's SC117/96Gi wording (cf-77 route).
+
+### 9.18 Docs round, law half — the runbook note's orca-quant block pinned (2026-10-31)
+
+Tree: dev's docs round dirty (host-prep note §3.3/§3.4/§4 post-C08 rewrite,
+hf_fetch.py header wording, fetch_models.sh git mode 100755 staged) + this
+law half. Runbook suite 18→19 arms.
+
+Law additions:
+- `DOC_TOKENS["runbook note"]` +2 windowed tokens — the trio Σ
+  `97,473,155,200 B` and the pack path `packs/orca-iq4_xs` (ride the existing
+  token arm; all pre-existing windows kept byte-identical).
+- New arm `test_c08_note_arithmetic_and_cleanup_trio_agree_with_the_pinned_
+  ship` (the 19th): the note's orca block must SUM to the live-pinned trio —
+  Σ imported from `test_strata_c08_rung_shifts.IQ4_PACK_TOTAL` (with the
+  pin-sum guard mirrored from the q4 totals arm) and all three per-shard
+  comma-groups cited, so the cited total stays hand-re-derivable — plus the
+  cleanup trio law (`rm -f /models/strata/.pack-orca` named, marker-line-FIRST
+  window, `tier-INDEPENDENT` WHY, `.setup-ABL` spelled as the driver writes
+  it) and strix's honest no-cap shape (prose + table cell).
+- Law-design note: table-cell windows bound on PIPES, not periods — the first
+  draft's period-bounded window died on the dot inside `…strix-iq3_s.json`
+  and reddened the law, not the doc. Fixed the law; the note was never touched.
+
+Record truth — dev's two corrections of coord-draft errors, now law-pinned:
+- **strix-no-cap**: the caps table's strix cap cell is `none declared` and the
+  prose names the bound as the `--expert-cache 24576`/`--resident-budget-gib
+  55` hypothesis pair + the pod cgroup — #1601's pairing covers THREE rungs,
+  not four. A falsified cap cell (the coord draft said four) reddens the arm.
+- **marker-path**: the cleanup trio names `/models/strata/.setup-ABL` — the
+  driver's own `MARK="/models/strata/.setup-$TOK"` shape — not the coord
+  draft's invented path. Probe D3 (.setup-ABLITERATED revival) reddens it.
+
+No new law needed for fetch_models.sh git mode: the image's exec bit comes
+from the Dockerfile's own `chmod 0755 /opt/strata/bin/fetch_models.sh`
+(build-side law, containers suite); the git mode 100755 is repo hygiene,
+consistent with intent, and nothing test-side should depend on git bits.
+The earlier-deferred "stale services/gpu-ai comment wording" item is CLOSED —
+the C08 impl sweep took that surface with it (zero strata-flavoured abl/
+IQ3_XXS/96Gi wording left; the c08 absence arm pins the surfaces by grep).
+
+Probes (file copies, restored, note diff-clean): D1 Σ last-digit drift ->
+token arm + arithmetic arm both red; D2 pack-path drift -> token arm red;
+D3 falsified `.setup-ABL` line -> arithmetic arm red; D4 strix cap cell ->
+92160 -> arithmetic arm red. (First probe round's sed/argv anchors were
+mis-specified — nothing mutated, caught by the helper's own assert, re-run
+clean; §9.16 file-copy discipline held.)
+
+Posture: per-file runbook 19P/0F; FULL plain 0F/376P/8S, armed 0F/384P/0S
+(+1 arm exactly vs §9.17 posture); containers 24P; gates 19/22/9/15 rc 0 on
+the dirty tree; aislop ci --changes 100, 0/0/0. STATE.json untouched this
+round. No commits.
