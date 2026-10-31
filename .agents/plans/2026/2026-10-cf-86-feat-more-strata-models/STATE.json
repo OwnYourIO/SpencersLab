@@ -65,7 +65,7 @@
   "coord_ruling": "Deviation (1) ACCEPTED (see DECISIONS 2026-10-30 coord entry): goldens stay byte-invariant; dev must NOT touch charts/llama-swap/tests/evidence/ goldens; sanctioned delta enforced by frozen-table growth + exact new-id allowances in test_flashnext_blast_radius."
  },
  "run_state": {
-  "status": "revision-3-closing (waves 7-9 + docs x2 landed; third-final verification pass pending)",
+  "status": "complete (revisions 1-3 landed; third-final gate lifted by verification pass)",
   "final_round": {
    "at": "2026-10-30",
    "session": "ses_e7365b333ffe19XSvXagYKnaQC",
