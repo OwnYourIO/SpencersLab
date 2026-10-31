@@ -25,18 +25,20 @@
 # (question-allow phrasing of the dev baselines, AGENTS.md section shape)
 # keep the suite honest.
 #
-# Dev TODO carried here because the chunk scopes it (C06 "Files in scope"
-# names tests/agent-perms/surface.sh): landing the pair takes agent-perms A16
-# from its verified 22 permission-bearing sources to 24, widens the family
-# roster forms there (A12's family.py `roster` 5-role set grows by the class
-# launch — alias/local carry agent-dev-deploy, the -pr pair agent-dev-
-# deploy-pr, matching this suite's t6), and re-pins any roster-shape arm in
-# those files IN THE C06 COMMIT. Do NOT re-pin gate t17 / coord-inwork i4 /
-# session-origin s4 / kickoff-branch m4 roster or ladder arms — those ids
-# are already pre-existing-red (warm-location drift, see gate.sh's cf-90
-# header note) and their drift Review card owns the whole re-pin; record the
-# interaction in RESULT deviations instead. This suite deliberately leaves
-# agent-perms untouched so A16/A12 stay green for the wave-1/wave-2 gates.
+# C06 TEST RE-PIN (recorded DONE — discharges the duty this header carried):
+# landing the pair moved agent-perms A16 22 -> 24, grew the family.py roster
+# guard five roles to six ERA-GATED on the pipeline-role-deploy skill pair
+# (alias/local launch agent-dev-deploy, the -pr pair agent-dev-deploy-pr —
+# this suite's t6 shape), admitted the live [-]deploy pair in A13's retired-
+# token lookaheads, and MOVED THE MATRIX: permissions.md gained the
+# dev-deploy/dev-deploy-pr rows plus the coord/coord-pr roster cells (the
+# agents-sync law — the duty C03's worktree_remove grant kept), with tests/
+# wekan-mcp/board-context.sh t4 re-settled to the new bytes. The re-pin lands
+# in the test round (sole test author; the C06 dev tree shipped no test
+# edits). gate t17 / coord-inwork i4 / session-origin s4 / kickoff-branch m4
+# roster and ladder arms stay UNTOUCHED — those ids are pre-existing-red
+# (warm-location drift, gate.sh cf-90 header note) and their drift Review
+# card owns that whole re-pin.
 #
 # Selection / known-baseline note: no check here invokes a suite carrying the
 # pre-existing main-HEAD reds (agent-board-coord gate t17, coord-inwork i4,

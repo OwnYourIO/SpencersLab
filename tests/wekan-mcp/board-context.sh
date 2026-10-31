@@ -243,15 +243,27 @@ nlabels = [r.split("|")[1].strip() for r in n]
 missing = [x for x in blabels if nlabels.count(x) < 1]
 if missing:
     print(f"base matchers lost: {missing}"); sys.exit(1)
+# cf-90 C06 widening: the sanctioned row ADDITIONS are the cf-75 agent-board
+# row (era-gated: post-merge it rides the base too) and the deploy PAIR —
+# dev-deploy/dev-deploy-pr. Admitted as the exact set, never as a blanket
+# skip: any other gained matcher still reddens.
 added = [x for x in nlabels if x not in blabels]
-if added and not (len(added) == 1 and added[0] in ("board", "agent-board")):
+admitted = {"board", "agent-board", "dev-deploy", "dev-deploy-pr"}
+if added and not set(added) <= admitted:
     print(f"unexpected matcher rows added: {added}"); sys.exit(1)
 if "agent-board" not in nlabels and "board" not in nlabels:
     print("no agent-board matcher row found"); sys.exit(1)
-# The coord-pr cell moved thrice: cf-72's main-side T-7 tail rewrite, the
+import os
+if os.path.exists(".rulesync/subagents/agent-dev-deploy.md"):
+    for dep in ("dev-deploy", "dev-deploy-pr"):
+        if dep not in nlabels:
+            print(f"cf-90 C06 era: the deploy pair shipped but the '{dep}' matcher row is absent — the matrix must carry the new roles"); sys.exit(1)
+# The coord-pr cell moved four times: cf-72's main-side T-7 tail rewrite, the
 # scoped-read re-seat rider (in-family ls/preload-probe — the 2026-10-30
-# admission this constant replaces), and cf-88's union wording ("the probe row
-# and the cf-88 surface block ride it too"), landed 2026-10-31 (merge2). The
+# admission this constant replaces), cf-88's union wording ("the probe row
+# and the cf-88 surface block ride it too"), landed 2026-10-31 (merge2), and
+# cf-90 C06's launch-cell widen (the roster names the class's deploy variant
+# — the agents-sync law of the matrix moving with every permission change). The
 # constant below is the landed byte, pinned like the TB form — a future cell
 # edit must arrive with a re-pin, not silently pass. The cf-88 wording also
 # carries the owner's round-2 zero-arg-push ruling inline:
@@ -260,7 +272,7 @@ if "agent-board" not in nlabels and "board" not in nlabels:
 # never as a blanket skip: the TB form still rides (pre-merge trees, via the
 # byte-equal walk below) and the pinned settled form rides; anything else — a
 # dropped ls/probe grant, a reworded tail, any gained row — reddens.
-COORD_PR_SETTLED = """| coord-pr | same as coord | plan/research/test/dev-pr/review | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
+COORD_PR_SETTLED = """| coord-pr | same as coord | plan/research/test/dev-pr/dev-deploy-pr/review | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
@@ -279,10 +291,10 @@ for r in b:
             cur = [x for x in n if x.split("|")[1].strip() == "coord-pr"]
             if len(cur) == 1 and cur[0] == COORD_PR_SETTLED:
                 continue
-            print(f"coord-pr row is neither the TB form nor the pinned settled form (cf-72 T-7 tail + the cf-88 union rider) — got {cur}; the admission is byte-exact: dropping a grant, rewording the tail or any other gain is unadmitted drift"); sys.exit(1)
-        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, and the byte-exact coord-pr settled admission; nothing else may drift"); sys.exit(1)
+            print(f"coord-pr row is neither the TB form nor the pinned settled form (cf-72 T-7 tail + the cf-88 union rider + the cf-90 C06 launch-cell widen) — got {cur}; the admission is byte-exact: dropping a grant, rewording the tail or any other gain is unadmitted drift"); sys.exit(1)
+        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, cf-90 C06's deploy-pair rows + coord roster cell, and the byte-exact coord-pr settled admission; nothing else may drift"); sys.exit(1)
 PY
-  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too)"
+  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, cf-90 C06's deploy-pair rows + coord roster cell + the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too); with the deploy pair shipped, both dev-deploy matchers must be present"
 fi
 
 # --- t5: regen no-op + --check, and same-commit source/generated shape (AC6) ----
@@ -325,8 +337,22 @@ if want t6; then
   git diff --quiet "$TB" -- "$GATE_SCRIPT" || fail "t6: $GATE_SCRIPT changed since $TB — this ticket touches nothing in it (prove-by-diff, AC6)"
   # env -u CHUNK_BASE: same default-shape containment as validation-fix.sh t7 —
   # an ambient base must not silently re-base these regression children.
+  # cf-90 selection note (agent-test, mechanical): gate.sh's child runs as an
+  # ID SUBSET excluding t17 — t17 is red at pristine main HEAD from the
+  # pre-existing warm-location permissions drift tracked outside cf-90 (the
+  # gate.sh cf-90 header note); running it whole would attribute that drift
+  # red to this ticket and to every later chunk gate. The same subset
+  # discipline tests/provider-loops/surface.sh t6 ships. The other children
+  # run whole: agent-perms + standalone-agents must be fully green here.
   for s in tests/agent-board-coord/gate.sh tests/agent-perms/surface.sh tests/standalone-agents/surface.sh; do
     log="$TMP/$(basename "$s").log"
+    if [ "$s" = "tests/agent-board-coord/gate.sh" ]; then
+      gate_ids=$(seq 1 20 | grep -v '^17$' | sed 's/^/t/' | tr '\n' ' ')
+      # shellcheck disable=SC2086
+      env -u CHUNK_BASE timeout 600 bash "$s" $gate_ids >"$log" 2>&1 \
+        || { tail -n 20 "$log" >&2; fail "t6: bash $s (ids minus the pre-existing t17) failed (log: $log)"; }
+      continue
+    fi
     if env -u CHUNK_BASE timeout 600 bash "$s" >"$log" 2>&1; then
       :
     else
@@ -334,7 +360,7 @@ if want t6; then
       fail "t6: bash $s failed (log: $log)"
     fi
   done
-  ok "t6: gate script byte-untouched and free of agent-board references; gate/agent-perms/standalone-agents suites pass (C03 AC6 regression)"
+  ok "t6: gate script byte-untouched and free of agent-board references; gate contract (ids minus the known-red t17), agent-perms and standalone-agents suites pass (C03 AC6 regression)"
 fi
 
 printf 'PASS: wekan-mcp board-context checks (%d ok)\n' "$checks"
