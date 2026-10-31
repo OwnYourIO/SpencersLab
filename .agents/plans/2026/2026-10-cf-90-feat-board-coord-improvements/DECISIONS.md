@@ -114,6 +114,8 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
   "API-scheduled-never-takes-unlabeled" / "Local-scheduled-takes-unlabeled-
   with-ask") + C04 (loop bodies, AC1/AC2, tests t2/t7).
 
+- 2026-10-31 · **Coord rulings during wave-1 (agent-test escalation + C01 deviation).** (a) C07 ledger cards' Services checklist: the chunk Tasks line and the plan appendix disagreed for L4/L7 — RULING: follow the plan appendix (the declared card-content authority): L4 (deployed dev-boards pin bump) and L7 (kopia deploy location) are Services=`dev`; L1–L3/L5/L6 remain `agent context`. (b) C01's staged re-probed fixture (/tmp/opencode/cf-90-c01/) vs the committed fixture: engine plans byte-identical and the committed fixture already carries Inbox — RULING: keep the committed fixture; the staged file stays as probe evidence, not a repo file. The underlying chunk-note/tests-deny drift is logged in FRICTION as fixed.
+
 ## Deferred
 - The one live provisioning run (lists+labels+rules on AI-Dev) — post-merge,
   human-confirmed, per the card's Deploy-ish hand-off posture.

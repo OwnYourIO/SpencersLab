@@ -2,13 +2,14 @@
   "feature": "2026/2026-10-cf-90-feat-board-coord-improvements",
   "plan_status": "approved",
   "coord_session": "ses_e6f74d6f5ffeUXj2HQl29vGcwf",
-  "test_session": null,
+  "test_session": "ses_e6d1e15f0ffen3EgDuCAEhq09x",
   "current_wave": 1,
   "updated_at": "2026-10-31T15:45:00Z",
   "handoffs": [
     "RESULT (plan, 2026-10-31, ses_e6e12ba47ffeDfz9WmIw7RVPrw) status: DONE; 7 chunks/3 waves drafted; RESEARCH.md untouched; batched questions returned (7); friction carried: deployed dev-boards lags repo (:v87 pin, create_label/create_list absent -> REST fallback + L4 ledger card); stale residue forced -2 worktree/branch suffix -> proceed on -2, C03 cleanup prevents recurrence.",
     "RESULT (plan rework 1, batched answers folded): answers 1-3,7 confirmed; 4 (unlabeled), 5 (Inbox), 6 (content-based cleanup) corrected planner guesses across plan/C01/C03/C04/C06/C07/DECISIONS; open_questions none.",
-    "RESULT (plan rework 2, final approval edit): user ruling verbatim in DECISIONS — Local task is the planned scheduled taker of unlabeled cards (with ask-at-claim); API scheduled walk takes ONLY Provider: API; ask instruction on every flavor; negative pins (API-never-takes-unlabeled) in C03/C04 tests; STATE plan_status flip left to coord. status: DONE, deviations: none, friction: none, open_questions: none, next_suggested: coord approves, write-back, agent-test."
+    "RESULT (plan rework 2, final approval edit): user ruling verbatim in DECISIONS — Local task is the planned scheduled taker of unlabeled cards (with ask-at-claim); API scheduled walk takes ONLY Provider: API; ask instruction on every flavor; negative pins (API-never-takes-unlabeled) in C03/C04 tests; STATE plan_status flip left to coord. status: DONE, deviations: none, friction: none, open_questions: none, next_suggested: coord approves, write-back, agent-test.",
+    "RESULT (agent-test, ses_e6d1e15f0ffen3EgDuCAEhq09x, 2026-10-31T17:2xZ) status: DONE chunk: plan — all chunks' tests written, committed (0bb48a2e9), every new/extended id passes its HOLD duty or fails with a designed-red message naming the not-yet-landed surface; sibling pre-existing reds excluded by documented per-id selection (baseline reds: gate t17, coord-inwork i4, session-origin s4, kickoff-branch m4, wekan-mcp create-list t2 + board-provisioning t2/t7 cascade — warm-location perms drift / merged cf-68 base, outside cf-90). Gate id lists per chunk in suite headers (C01: wekan-board-provision t1..t8; C02: agents-md c3 + rulesync-surface c12 c20 + session-origin s3; C03: noop-marker N6 + rulesync-surface c21 c22 + coord-inwork i8 + agent-perms A12; C04: provider-loops t1 with t6 gate-subset minus t17; C05: pipeline-push-pr P7 P8; C06: agent-dev-deploy t1 + A16 22->24 TODO; C07: cf90-ledger t1 t2 t4 now, t3 in wave 2). commands_run: harness bash -n all suites => pass; rulesync generate --check => pass; npx aislop ci --changes => pass 0e/0w; commit => pass. deviations: (1) C07 runbook at tests/cf90-ledger/readback-runbook.md not chunk-file notes (chunk files plan/coord-owned) — coord cites in C07 Review notes; (2) kickoff-branch/pipeline-models hold NO run-tag pins, shape negatives live in rulesync-surface c20(b) tree-wide; (3) C03 pins distributed into existing suites (rulesync-surface c21/c22, coord-inwork i8, agent-perms A12, noop-marker N6); (4) s6/m6 freeze-list admits for pipeline.md/pipeline-pr.md + wekan-board-provision.md per cf-85 merge-window precedent; (5) all listed reds are designed; (6) baseline respected; (7) provider-loops t6 runs ids t1..t16+t18..t20. friction: mawk multi-byte regex silent fail -> ASCII-only patterns; set -e post-heredoc aborts -> if!/||fail convention; YAML bools vs strings -> lower-cased frontmatter compare. open_questions: C07 Services for L4+L7 — chunk says agent context, plan appendix (authority) says dev — coord rules before wave 2. next_suggested: coord starts wave 1 (C01, C02, C03); C07 Services ruling recorded before its wave-2 pass."
   ],
   "kickoff": {
     "card": "sYoFwL73kZzZH55dQ",
@@ -51,13 +52,18 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; coord-directed minor+nits fixed in dev round 2, suite green after)",
+      "dev_session": "ses_e6cd69a82ffeHivgPYniE2MHSe",
+      "handoffs": [
+        "RESULT (C01 dev round 1, ses_e6cd69a82ffeHivgPYniE2MHSe, 2026-10-31T17:5xZ) status: DONE chunk: C01 — AC1-AC8 verified; suite t1..t8 9/9 green; engine: 28-action live-fixture plan + zero-action full-provisioned plan + clean failure paths; rulesync double-generate no-op + --check green; aislop ci --changes 100/100 0e/0w (ruff engines absent locally, CI covers); zero live board writes (5 read-only probes only). files_changed: scripts/provision-board.py, skills/wekan-board-provision/SKILL.md, .rulesync/commands/wekan-board-provision.md + generated .opencode/commands mirror, .rulesync/rules/overview.md + regenerated AGENTS.md; re-probed fixture staged outside repo at /tmp/opencode/cf-90-c01/. deviations: (1) fixture regenerate NOTE collides with dev tests/** deny — staged + plan-equivalence proven; COORD RULING: keep committed fixture (already Inbox-carrying, byte-identical engine plan), staged file dropped; (2) skill also named in overview.md skills list (keep-lists-current duty); (3) ruff-backed aislop engines skipped locally. friction: tests-deny-vs-chunk-note (resolved: staging+adjudication); SKILL.md frontmatter YAML colon-quote gotcha (fixed in-chunk, t5 caught; upstream note). open_questions: none. next_suggested: coord commits C01 after review; C02 next.",
+        "RESULT (C01 review r1, fresh session ses_e6cc99919ffeTzgJPPfkxVRcuO) status: DONE verdict APPROVED — validations re-run green (suite 9/9, rulesync --check + double-generate no-op, aislop 100/100, AC1/AC2 dry-run sets exact, failure probes pass, coord ruling (b) byte-identical re-verified). Findings: minor — provision-board.py existing_rule_keys canonical fallback trigger-only match (human non-bucket Planning rule would suppress pair); nits — schema key unversioned; SKILL.md apply-order wording. None blocking; coord directed fix now (pre-merge live provisioning is the ticket's core deliverable). No test edits, no special-casing found in suite audit.",
+        "RESULT (C01 dev round 2 = fix round, ses_e6cd69a82ffeHivgPYniE2MHSe continued) status: DONE — all three findings applied: canonical key now requires action.addLabel == 'Bucket: <listName>' (case-insensitive), SNAPSHOT_SCHEMA constant + exit-2 on drift, SKILL.md reword preserves every t5 pin. suite t1..t8 9 ok exit 0; aislop 100/100; probes A-D pass; tests/fixture untouched. C01 done gate met (dev DONE + review APPROVED + commands green in review commands_run)."
+      ]
     },
     "C02": {
       "status": "pending",

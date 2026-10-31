@@ -44,7 +44,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   `/pipeline-resume`); a symlink to `.opencode/commands/`, which rulesync
   generates from `.rulesync/commands/`.
 - `skills/` — self-written skills (`helm-chart-creation`, `container-creation`,
-  `llama-swap`, `wekan-mcp`, `wekan-api`). `.agents/skills/` — third-party skills,
+  `llama-swap`, `wekan-mcp`, `wekan-api`, `wekan-board-provision`).
+  `.agents/skills/` — third-party skills,
   tracked in git and synced from their GitHub sources (provenance + integrity
   hashes in the root `skills-lock.json`); don't hand-edit those.
 - `.kilo` — tracked symlink to `.agents/`, so kilo loads the same agents,
@@ -155,6 +156,10 @@ container images (`containers/`). **ArgoCD applies everything — never
   MCP surface (its only MCP grant, no `admin-global-wekan` fallback). Not a
   pipeline coordinator — it launches no subagents and writes no files; the
   `/wekan-board-context` collector command runs as it.
+- `/wekan-board-provision` (default agent) — board-structure provisioning
+  entry: runs the `wekan-board-provision` skill over the offline engine
+  `scripts/provision-board.py` (idempotent action plan, dry-run-first,
+  additive-only, `Inbox` never mirrored into Planning).
 
 ## Feature pipeline (agent-*)
 
