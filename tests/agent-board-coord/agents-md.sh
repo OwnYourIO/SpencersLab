@@ -42,6 +42,18 @@
 # rename sweep — agent-perms A13). c9 (new): AGENTS.md + rules carry the
 # Lifecycle wording (C05) and a standalone dev-family entry (C04).
 #
+# cf-90 RE-PIN (2026-10-31, agent-test; C02 naming round): c3's 'agent-coord
+# keeps run tags' presence pin FLIPS to the global-retirement posture — the
+# keeps-wording becomes the defect and the every-flavor window is DESIGNED
+# RED until C02 lands the overview.md replacement sentence; c6's comment +
+# verdict reword to the retirement-compatible framing its three arms always
+# had (they grep surviving structure, never the run-tag sentence); c7 admits
+# the cf-90 plan folder + skills/wekan-board-provision (C01).
+# KNOWN REDS in sibling suites (gate t17, coord-inwork i4, session-origin s4,
+# kickoff-branch m4, wekan-mcp create-list t2) are pre-existing
+# permissions-matrix/base drift tracked OUTSIDE cf-90 — cf-90 chunk gates
+# never run those ids (the selection notes live in gate.sh's cf-90 header).
+#
 # c1 runs rulesync generate twice via the PATH/npx ladder; the first run may
 # materialize pending generation, so the gate is that the SECOND run changes
 # nothing. rulesync is ask-gated in unattended subagent shells, so an
@@ -233,15 +245,23 @@ if want c3; then
       || fail "c3: $f does not route models from the Model(s) checklist alone (D12)"
     grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag' "$f" \
       || fail "c3: $f never retires the run tag for card-driven runs"
-    grep -qF 'keeps run tags' "$f" \
-      || fail "c3: $f must state agent-coord KEEPS run tags — AGENTS.md does not globally retire them"
+    # cf-90 C02 FLIP (2026-10-31): GLOBAL retirement replaces the old
+    # 'agent-coord keeps run tags' posture — the keeps-wording is now the
+    # defect, and the summary surfaces must state both-family scope with the
+    # slug naming all four surfaces. Designed red until C02 lands.
+    if grep -qF 'keeps run tags' "$f"; then
+      fail "c3[C02 AC4]: $f still says agent-coord KEEPS run tags — the retirement is global (cf-90 C02); flip the sentence in the rules source, never by hand-editing AGENTS.md"
+    fi
+    if python3 "$TMP/negwin.py" --ci "$f" 1200 'run tag' 'retir' 'worktree' 'branch'; then :;
+    elif python3 "$TMP/negwin.py" --ci "$f" 1200 'run tag' 'retir' 'session'; then :;
+    else fail "c3[C02 AC4]: $f lacks the global retirement passage (run tag + retired + slug names worktree/branch/session) (red before C02 dev)"; fi
   done
   awk '/^## Agents/{f=1; next} /^## /{if (f) exit} f' AGENTS.md >"$TMP/agents-section.md"
   awk '/^## Feature pipeline/{f=1; next} /^## /{if (f) exit} f' AGENTS.md >"$TMP/fp-section.md"
   cat "$TMP/agents-section.md" "$TMP/fp-section.md" >"$TMP/new-text.md"
   python3 "$TMP/neg12.py" "$TMP/new-text.md" \
     || fail "c3: the new AGENTS.md text pairs 'models' with 'custom field' without negating it (D12)"
-  ok "c3: pickup order, research-only -> Review, slug/session cf intake, cf- slug, no-run-tag-for-card-runs + agent-coord keeps them, cf-85 combined [<slug>](<session link>) value; D12 negative holds in the new sections"
+  ok "c3: pickup order, research-only -> Review, slug/session cf intake, cf- slug, GLOBAL run-tag retirement (cf-90 C02 flip: keeps-run-tags rejected), cf-85 combined [<slug>](<session link>) value; D12 negative holds in the new sections"
 fi
 
 # --- c4: main's combined dev-<service> row preserved verbatim (C04 AC2) --------
@@ -274,9 +294,13 @@ if want c5; then
   ok "c5: permissions.md (source + generated) carries the board-coord row with narrow dev-boards*, coord row intact"
 fi
 
-# --- c6: the agent-coord (non-board) text C04 must leave alone (C04 AC4) -------
-# Run tags and the live kickoff questions stay for the plain flow; these are
-# main's own sentences, pinned as byte-presence so a global rewrite fails.
+# --- c6: the agent-coord text C04 must leave alone (C04 AC4) -------------------
+# The live kickoff QUESTIONS and the pipeline-kickoff/pipeline-gates
+# references stay (cf-90 C02 retires only the run tag, not the question
+# flow — Q1 slug suggestions remain for cardless runs). Post-C02 the
+# ok-note reads retirement-compatible: these arms never pinned the run-tag
+# sentence itself, only the surviving structure (see c3 for the flipped
+# run-tag pins).
 if want c6; then
   for f in AGENTS.md "$RULES_SRC"; do
     grep -qF 'pipeline-kickoff' "$f" \
@@ -285,7 +309,7 @@ if want c6; then
       || fail "c6: $f reworded the pipeline-skills sentence (the coord-side kickoff/model-routing description is out of C04's scope)"
     grep -qF 'Launch with' "$f" || fail "c6[cf-58 relaxed]: $f lost the /pipeline launch sentence — C03 may reword it (alias/-pr pairing), but launch guidance must exist"
   done
-  ok "c6: the agent-coord kickoff/gates/launch sentences still present in source + AGENTS.md (no global run-tag retirement)"
+  ok "c6: the agent-coord kickoff/gates/launch sentences still present in source + AGENTS.md (cf-90 C02: questions stand, only the run tag retired — c3 pins the new posture)"
 fi
 
 # --- c7: scope — only C04's files changed (C04 AC3) -----------------------------
@@ -329,6 +353,9 @@ fi
 # cf-86 C09 round (2026-10-31, owner U11): + one exact path — the vendored
 # carry/ornith-q36.patch chunks/C09.md declares (same one-path-at-a-time rule;
 # rulesync-surface c8's probe loop keeps carry/ itself out).
+# cf-90 widening (2026-10-31, agent-test): the running ticket's plan folder +
+# the hand-written skills/wekan-board-provision dir (C01); its skill/command/
+# agent/AGENTS/tests/loops/scripts edits ride the wildcards already in this set.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -370,7 +397,9 @@ if want c7; then
       containers/strata/Dockerfile|containers/strata/README.md|\
       containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
       containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
-      containers/strata/carry/ornith-q36.patch) : ;;
+      containers/strata/carry/ornith-q36.patch|\
+      .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
+      skills/wekan-board-provision/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

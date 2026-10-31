@@ -29,7 +29,17 @@
 # cf-52 RE-PIN drops kickoff/role-coord from the frozen set; cf-75 C02 RE-PIN
 # drops gates — content now guarded by tests/pipeline-gates/validation-fix.sh]
 # c19[cf-85 AC2/AC3/AC4/AC6/AC7/AC10 — the single `slug` field carrying
-# `[<slug>](<session link>)`].
+# `[<slug>](<session link>)`]; cf-90 joins as c20[C02 naming round: global
+# run-tag retirement + mint-shape negatives + slug auto-accept] c21[C03
+# Provider filtering — final-approval pickup split + ask-on-every-flavor]
+# c22[C03 follow-up-card protocol + friction destination flipped to Inbox].
+#
+# cf-90 posture (2026-10-31): c20-c22 are DESIGNED RED until their chunks
+# land — C02 owns c20's wording flips (its Tests list names THIS suite's
+# c12/c16), C03 owns c21/c22. c12/c16 gained the flipped arms + HOLD
+# negatives with them; everything else is a HOLD regression as before.
+# The pre-existing reds of sibling suites (gate t17 etc.) are listed in
+# gate.sh's header — nothing here invokes those suites.
 #
 # Red before C02/C03 (the ported skill is still the old two-list pickup and
 # live-question intake); c1-c5, c7, c9, c17 are already green and hold as
@@ -66,7 +76,7 @@
 # coord-inwork i4 + gate t17 are the frontmatter contract now).
 #
 # Usage:
-#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c19
+#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c22
 #   bash tests/agent-board-coord/rulesync-surface.sh c1 c4 c10 # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -116,10 +126,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 19); do WANT["c$i"]=1; done
+  for i in $(seq 1 22); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-9]|1[0-9])$ ]] || fail "unknown check id '$a' (expected c1..c19)"
+    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-2])$ ]] || fail "unknown check id '$a' (expected c1..c22)"
     WANT["$a"]=1
   done
 fi
@@ -295,7 +305,19 @@ subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" 
 # board-coord is -local semantics, so its dev slot is agent-dev-local, and
 # the set is asserted EXACT (a retired bare slot would re-launch the
 # pre-split agent).
-want_subs = sorted(["agent-plan", "agent-test", "agent-dev-local", "agent-review", "agent-research"])
+# cf-90 C06 era-gate (agent-test): once the pipeline-role-deploy skill pair
+# exists, the coord family's roster has widened with its class's launch
+# (the alias carries plain agent-dev-deploy; tests/agent-dev-deploy t6
+# enforces the per-class rule across all twelve family files). Before C06
+# lands, the skill is absent and the 5-role set stays the contract — the
+# same era-gating discipline as the pipeline_* arms above, so waves 1-2
+# keep a green HOLD and a C06 that ships the hook WITHOUT the roster reddens here.
+import os
+want_subs = ["agent-plan", "agent-test", "agent-dev-local", "agent-review", "agent-research"]
+if os.path.exists(".rulesync/skills/pipeline-role-deploy/SKILL.md"):
+    want_subs = sorted(want_subs + ["agent-dev-deploy"])
+else:
+    want_subs = sorted(want_subs)
 if subs != want_subs:
     errs.append(f"subagent allows {subs}, want exactly {want_subs}")
 edits = [p.get("resource") for p in perms if p.get("action") == "edit"]
@@ -482,6 +504,11 @@ fi
 # its own allow-list — a scope guard that trusts the scoped party is not a
 # guard — and agent-perms A9 window-greps literal admits inside the if-want
 # block, which a parsed loop cannot satisfy (it would need re-pinning too).
+# cf-90 widening (2026-10-31, agent-test): the running ticket's plan folder +
+# the hand-written skills/wekan-board-provision dir (C01; skills/* stays
+# enumerated per contract, exactly as wekan-mcp was admitted). Loop and test
+# edits ride the .agents/loops/*, tests/*, .rulesync/skills/*, .opencode/* and
+# AGENTS.md admits already in this set.
 if want c8; then
   c8_admits() {
     case "$1" in
@@ -521,6 +548,8 @@ if want c8; then
       containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
       containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
       containers/strata/carry/ornith-q36.patch|\
+      .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
+      skills/wekan-board-provision/*|\
       .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore) return 0 ;;
       *) return 1 ;;
     esac
@@ -558,7 +587,7 @@ if want c8; then
       fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
     fi
   done
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc) and cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces) widenings; undeclared serving paths still rejected (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces) and cf-90 (plan folder + skills/wekan-board-provision admits) widenings; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----
@@ -659,9 +688,20 @@ if want c12; then
     || fail "c12: the session-link path format (OpenChamber router, research §10) is missing"
   grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag|omits/nulls' "$SKILL_GEN" \
     || fail "c12: the skill never retires the run tag for card-driven runs (D10/retirement rule)"
+  # cf-90 C02 FLIP (2026-10-31): the card-driven-only posture is retired
+  # globally — the boards retirement bullet now states BOTH-family scope and
+  # cites pipeline-kickoff for the mechanics. Designed red before C02 dev;
+  # the or-form accepts either global wording ('every flavor' or
+  # 'both families' — the plan's two phrasings across the chunk table).
+  if grep -qF 'keeps run tag' "$SKILL_GEN"; then
+    fail "c12[C02 AC4]: the boards skill still says agent-coord KEEPS run tags — the retirement is global now (cf-90 C02), supersede this wording"
+  fi
+  if python3 "$TMP/window.py" --ci "$SKILL_GEN" 1200 'run tag' 'retir' 'flavor'; then :;
+  elif python3 "$TMP/window.py" --ci "$SKILL_GEN" 1200 'run tag' 'retir' 'famil'; then :;
+  else fail "c12[C02 AC1/AC4]: the boards retirement bullet does not name the GLOBAL scope in one passage (run tag + retire + 'every flavor'/'both families') citing pipeline-kickoff (red before C02 dev)"; fi
   python3 "$TMP/neg12.py" "$SKILL_GEN" \
     || fail "c12: a line pairs 'models' with 'custom field' without negating it — D12 dropped the models field (phrase the negation explicitly, e.g. 'no third field; routing rides the Model(s) checklist')"
-  ok "c12: slug/session custom fields + cf- slug rule + dead-literal ABSENCE + dynamic Session-origin phrases + run-tag retirement; no models/custom-field pairing"
+  ok "c12: slug/session custom fields + cf- slug rule + dead-literal ABSENCE + dynamic Session-origin phrases + GLOBAL run-tag retirement (cf-90 C02 flip: no 'keeps run tags', scope named with the kickoff cite); no models/custom-field pairing"
 fi
 
 # --- c13: research-only iterative loop (C02 AC1, D14/D15/D19) ------------------
@@ -716,6 +756,10 @@ if want c16; then
     || fail "c16: the agent body does not route models from the Model(s) checklist (D12 — the sole routing input)"
   grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag' "$TMP/agent-body.md" \
     || fail "c16: the agent body never retires the run tag for card-driven runs"
+  # cf-90 C02 HOLD negative: the body keeps the retirement sentence true —
+  # the keeps-run-tags era must not sneak back through a body restatement.
+  grep -qF 'keeps run tag' "$TMP/agent-body.md" \
+    && fail "c16[C02 AC4]: the agent body re-adopts 'keeps run tags' — retirement is global (cf-90 C02), the card-runs sentence must stay the retire-shape"
   python3 "$TMP/neg12.py" "$TMP/agent-body.md" \
     || fail "c16: agent body pairs 'models' with 'custom field' without negating it (D12)"
   grep -qE 'slug' "$CMD_GEN" && grep -qE 'session' "$CMD_GEN" \
@@ -944,6 +988,151 @@ PY
     fi
   done
   ok "c19: cf-85 one-field write-back holds across the boards pair, the three twins (+ mirrors) and the two commands (+ mirrors) — combined [<slug>](<session link>) form present, one upsert with no session assignment, single-field roster clause, legacy-bare resume parse, twins identical, retired pair wording absent from .rulesync/.opencode/AGENTS.md"
+fi
+
+# --- c20: cf-90 C02 naming round — global run-tag retirement + auto-accept ------
+# Designed red before C02 dev lands; the retirement scan (arm a) is the
+# AC1 authority: every surviving run-tag mention in the named surfaces must
+# be retirement wording or the null-record convention.
+KICK_SRC20=".rulesync/skills/pipeline-kickoff/SKILL.md"
+KICK_GEN20=".opencode/skills/pipeline-kickoff/SKILL.md"
+C20_SURF=(
+  "$KICK_SRC20" "$KICK_GEN20"
+  .rulesync/commands/pipeline.md .opencode/commands/pipeline.md
+  .rulesync/commands/pipeline-pr.md .opencode/commands/pipeline-pr.md
+  "$RULES_SRC" AGENTS.md
+  .rulesync/skills/pipeline-role-plan/SKILL.md .opencode/skills/pipeline-role-plan/SKILL.md
+  .rulesync/skills/agents-sync/references/plan-and-result.md .opencode/skills/agents-sync/references/plan-and-result.md
+  .rulesync/skills/agents-sync/references/pipeline-overview.md .opencode/skills/agents-sync/references/pipeline-overview.md
+)
+if want c20; then
+  for f in "${C20_SURF[@]}"; do
+    offenders=$(grep -inE 'run.?tag' "$f" 2>/dev/null | grep -viE 'retir|null|omitted' || true)
+    [ -z "$offenders" ] || { printf '%s\n' "$offenders" >&2; fail "c20[C02 AC1]: $f keeps run-tag text outside retirement/null wording (red before C02 dev — run tags are retired for EVERY flavor; only retirement sentences and the STATE null-record convention may name them)"; }
+  done
+  # (b) mint-shape negatives: no <slug>-<run tag> / <slug>-<tag> surface
+  # survives anywhere (the D11 sequential <slug>-1 form is a different rule).
+  hits=$(grep -rn -F -e '<slug>-<run tag>' -e '<slug>-<tag>' .rulesync .opencode AGENTS.md 2>/dev/null || true)
+  [ -z "$hits" ] || { printf '%s\n' "$hits" >&2; fail "c20[C02 Tests, negative pin]: a <slug>-<run tag> or <slug>-<tag> worktree-shape assertion survives above — C02's Tests list REQUIRES it gone (red before C02 dev)"; }
+  # (c) bare-slug minting (AC2): the kickoff line now names worktree/branch
+  # as the bare slug. Two tolerated renderings of the same contract.
+  for f in "$KICK_SRC20" "$KICK_GEN20"; do
+    if grep -qF 'name `<slug>`' "$f" || grep -qiE 'bare `<slug>`' "$f"; then :; else
+      fail "c20[C02 AC2]: $f never mints worktree/branch as the BARE <slug> (the 'name \`<slug>\`' contract — red before C02 dev)"
+    fi
+  done
+  # (d) the STATE example follows the null-record convention (AC1).
+  for f in .rulesync/skills/agents-sync/references/plan-and-result.md .opencode/skills/agents-sync/references/plan-and-result.md; do
+    grep -qF '"worktree": "<slug>"' "$f" \
+      || fail "c20[C02]: $f's STATE kickoff example does not show worktree = the bare <slug> (red before C02 dev)"
+  done
+  # (e) HOLD: the questions sentence still enumerates slug + models (C02 only
+  # drops the run-tag member — a wholesale deletion reddens here).
+  for f in .rulesync/commands/pipeline.md .opencode/commands/pipeline.md \
+           .rulesync/commands/pipeline-pr.md .opencode/commands/pipeline-pr.md; do
+    python3 "$TMP/window.py" --ci "$f" 300 'kickoff questions' 'slug' 'models' \
+      || fail "c20[C02 AC1/HOLD]: $f lost the slug+models enumeration of the kickoff questions sentence"
+  done
+  # (f) overview.md + AGENTS.md state the global retirement + slug-names-all
+  # (the replacement sentence the C02 Tasks pin).
+  for f in "$RULES_SRC" AGENTS.md; do
+    python3 "$TMP/window.py" --ci "$f" 1200 'run tag' 'retir' 'worktree' 'branch' \
+      || fail "c20[C02 AC4]: $f does not state the retirement AND the slug-names-folder/worktree/branch/session rule in one passage (red before C02 dev)"
+  done
+  # (g) slug auto-accept (AC3): the boards pair carries the sentence.
+  for f in "$SKILL_SRC" "$SKILL_GEN"; do
+    grep -qiE 'auto.?accept' "$f" \
+      || fail "c20[C02 AC3]: $f has no auto-accept wording — a slug derived from card content is auto-accepted (red before C02 dev)"
+    python3 "$TMP/window.py" --ci "$f" 900 'auto-accept' 'batched' \
+      || fail "c20[C02 AC3]: $f's auto-accept sentence does not name the batched round it never joins (red before C02 dev)"
+  done
+  # (h) ls/pwd verify-and-close (AC5) — GREEN NOW: the six generated coord
+  # copies must each carry the four cf-88 diagnostic rows exactly once, so
+  # review's evidence for the DECISIONS.md verdict is this passing arm, not
+  # a hand-run grep. A drifted copy (or a silent permission edit) reddens.
+  for f in .opencode/agents/agent-coord.md .opencode/agents/agent-coord-local.md \
+           .opencode/agents/agent-coord-pr.md .opencode/agents/agent-board-coord.md \
+           .opencode/agents/agent-board-coord-local.md .opencode/agents/agent-board-coord-pr.md; do
+    for row in 'ls' 'ls \*' 'pwd' 'pwd \*'; do
+      c=$(grep -cE "^[[:space:]]+resource: ${row}$" "$f" || true)
+      [ "$c" -eq 1 ] \
+        || fail "c20[C02 AC5/HOLD]: $f carries $c 'resource: $row' rows, want exactly 1 — the ls/pwd close is VERIFY-only: the grants exist, no code change is expected (a red here means drift, fix via source + regenerate)"
+    done
+  done
+  ok "c20[C02 AC1-AC4]: run-tag retirement scan, mint-shape negatives, bare-<slug> kickoff + STATE example, questions sentence holds, global wording in rules+AGENTS, boards auto-accept"
+fi
+
+# --- c21: cf-90 C03 provider filtering (final-approval ruling) -------------------
+if want c21; then
+  grep -qE '^#{2,4}[[:space:]].*[Pp]rovider [Ff]iltering' "$SKILL_SRC" \
+    || fail "c21[C03 AC1]: $SKILL_SRC has no 'Provider filtering' subsection heading (red before C03 dev)"
+  python3 - "$SKILL_SRC" "$SKILL_GEN" <<'PY' || fail "c21[C03 AC1]: the Provider filtering section pins fail (detail above; both boards trees must carry them)"
+import re, sys
+def section(path, title):
+    text = open(path).read()
+    m = re.search(r'(?ms)^#+[^\n]*' + title + r'[^\n]*\n(.*?)(?=^#{1,4}[^\n]*$|\Z)', text)
+    return (m.group(1) if m else None)
+for path in sys.argv[1:]:
+    s = section(path, 'Provider filtering')
+    if s is None:
+        print(f"{path}: 'Provider filtering' section not found"); sys.exit(1)
+    t = s.lower()
+    def need(*needles):
+        for n in needles:
+            if n not in t:
+                print(f"{path}: section lacks needle {n!r}"); sys.exit(1)
+    # per-flavor pickup rule (POSITIVE: Local = planned taker of unlabeled;
+    # NEGATIVE: API scheduled walk takes ONLY explicit Provider: API)
+    need('provider: api', 'only', 'provider: local', 'unlabeled', 'planned', 'taker')
+    # ask-before-routing + human-labeling request on EVERY flavor
+    need('which provider', 'routing', 'apply', 'human-owned')
+    # cite, never restate
+    need('pipeline-models')
+    # API meets unlabeled only via a user-initiated manual run
+    need('manual')
+    if 'claimable by both' in t or 'whichever claims' in t or 'either may take' in t:
+        print(f"{path}: superseded batched-round shape survived in the section"); sys.exit(1)
+PY
+  strays=$(grep -rinE 'claimable by both|whichever claims (the )?first|either may take' .rulesync/skills .opencode/skills 2>/dev/null || true)
+  [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "c21[C03 Tests]: the superseded unlabeled posture survives in a skill surface — the final-approval ruling named ONE planned scheduled taker"; }
+  ok "c21[C03 AC1]: Provider filtering pins — API-only/Local+unlabeled planned taker, ask-before-routing + human-owned labeling on every flavor, pipeline-models cite, manual-only API exception, superseded shapes absent"
+fi
+
+# --- c22: cf-90 C03 follow-up-card protocol + friction destination flip ----------
+if want c22; then
+  grep -qE '^#{2,4}[[:space:]].*Follow-?up cards' "$SKILL_SRC" \
+    || fail "c22[C03 AC1]: $SKILL_SRC has no 'Follow-up cards' subsection heading (red before C03 dev)"
+  python3 - "$SKILL_SRC" "$SKILL_GEN" <<'PY' || fail "c22[C03 AC1 + AC3]: follow-up/friction pins fail (detail above)"
+import re, sys
+def section(text, title):
+    m = re.search(r'(?ms)^#+[^\n]*' + title + r'[^\n]*\n(.*?)(?=^#{1,4}[^\n]*$|\Z)', text)
+    return (m.group(1) if m else None)
+def need(path, t, *needles):
+    for n in needles:
+        if n not in t:
+            print(f"{path}: passage lacks needle {n!r}"); sys.exit(1)
+for path in sys.argv[1:]:
+    text = open(path).read()
+    s = section(text, 'Follow-?up cards')
+    if s is None:
+        print(f"{path}: 'Follow-up cards' section not found"); sys.exit(1)
+    t = s.lower()
+    if not (t.count('post-research') or (t.count('post research'))):
+        print(f"{path}: timing sentence missing"); sys.exit(1)
+    need(path, t, 'before', 'test', 'inbox', 'backlog', 'list_lists',
+         'except', 'research', 'default_checked', 'toggle_checklist_item',
+         'add_checklist', 'never', 'labels to apply', 'body')
+    if not re.search(r'label[ -]tool', t):
+        print(f"{path}: the labels-in-body degrade does not cite the label-tool card"); sys.exit(1)
+    f = section(text, 'Friction follow-up')
+    if f is None:
+        print(f"{path}: 'Friction follow-up' section lost"); sys.exit(1)
+    ft = f.lower()
+    need(path, ft, 'inbox', 'backlog', 'never visits')
+    if re.search(r'(landing in|into|to)\s*\*\*review\*\*', ft):
+        print(f"{path}: the friction destination still reads Review — the batched-round ruling repointed it to Inbox"); sys.exit(1)
+PY
+  ok "c22[C03 AC1+AC3]: follow-up protocol pins (timing, Inbox destination + list_lists re-resolve, except-Research parent labels, default_checked-or-toggle, never-add_checklist, labels-in-body degrade citing the label-tool card) and the friction section flipped to Inbox with the Backlog non-intake rationale"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"

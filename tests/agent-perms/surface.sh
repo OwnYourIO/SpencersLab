@@ -30,6 +30,17 @@
 # fabricated-strip/duplicate negative controls, the 22/9 verified counts and
 # the permissions.md matrix + drift move].
 #
+# cf-90 RE-PIN (2026-10-31, agent-test; C03): NAMING grew to FIVE rows —
+# opencode_worktree_remove inserted after worktree_list for the work-complete
+# cleanup step — and A12 gained the permissions.md matrix-move + stale-"four"
+# duties. A10/A12 are DESIGNED RED until C03 dev lands the row on all six
+# coord sources AND mirrors (alias parity keeps them equal, so the pair arms
+# stay satisfied); A16's 22-source count is C06-dev's re-pin when the deploy
+# pair lands (tests/agent-dev-deploy/surface.sh header carries the TODO — the
+# count must move 22→24 IN the C06 commit, so wave-1/2 gates keep A16 green).
+# SELECTION NOTE: nothing in this suite is pre-existing-red today; the drift
+# reds live in the sibling suites (gate t17/i4/s4/m4 — see gate.sh header).
+#
 # cf-72 re-pin (2026-10-29, card #72, candidate B): the coord family's git
 # surface is no longer a reads allow-list — A12's GIT_SHARED/TAIL_* block (and
 # the sibling suites' atpos/splice pins) declare the B contract, and the AC6
@@ -350,8 +361,8 @@ cat >"$TMP/family.py" <<'PY'
 #   board FILE                 — dev-boards* allow once, after the leading
 #                                deny-all; execute allow present.
 #   naming FILE                — the execute transport allow plus exactly the
-#                                four kickoff opencode_* per-tool allows in
-#                                order (worktree create/list, session
+#                                five kickoff opencode_* per-tool allows in
+#                                order (worktree create/list/remove, session
 #                                move/rename); no other opencode_* row.
 import re, sys, yaml
 
@@ -374,10 +385,15 @@ def sh(res, eff):
 # The kickoff naming surface (2026-10-27): MCP actions are permissioned as
 # <server>_<tool>, so these rows — not the inert `opencode` anchor — are the
 # grant, and `execute` is the transport that exposes the namespace at all.
-NAMING = [{"action": "opencode_worktree_create", "resource": "*", "effect": "allow"},
-          {"action": "opencode_worktree_list",   "resource": "*", "effect": "allow"},
-          {"action": "opencode_session_move",    "resource": "*", "effect": "allow"},
-          {"action": "opencode_session_rename",  "resource": "*", "effect": "allow"}]
+# cf-90 C03 (2026-10-31, agent-test): the fifth row joins for the
+# work-complete cleanup step (worktree_remove, inserted into the worktree
+# group so session rows stay last) — DESIGNED RED on all six coord variants
+# + mirrors + permissions.md until C03 dev lands the grant.
+NAMING = [{"action": "opencode_worktree_create",  "resource": "*", "effect": "allow"},
+          {"action": "opencode_worktree_list",    "resource": "*", "effect": "allow"},
+          {"action": "opencode_worktree_remove",  "resource": "*", "effect": "allow"},
+          {"action": "opencode_session_move",     "resource": "*", "effect": "allow"},
+          {"action": "opencode_session_rename",   "resource": "*", "effect": "allow"}]
 
 # cf-72 (card #72, owner ruling 2026-10-29, candidate B): the coord family's
 # reads allow-list is GONE. The B block (chunks/C01.md "The block") is one
@@ -623,7 +639,7 @@ def cmd():
             fail(f"naming: {path} lacks the execute allow — Code Mode is the only transport for tools.opencode.*, without it the naming surface is invisible")
         seq = [r for r in p if r in NAMING]
         if seq != NAMING:
-            fail(f"naming: {path} kickoff naming rows are {seq}, want exactly the four per-tool allows (worktree create/list, session move/rename) in order")
+            fail(f"naming: {path} kickoff naming rows are {seq}, want exactly the five per-tool allows (worktree create/list/remove, session move/rename) in order — the fifth row is cf-90 C03's scoped worktree_remove")
         extra = [r for r in p if str(r.get("action", "")).startswith("opencode_") and r not in NAMING]
         if extra:
             fail(f"naming: {path} grew unsanctioned opencode_* rows: {extra} — the role contract grants the naming surface only")
@@ -1353,7 +1369,7 @@ AC6
       || fail "A12[AC6-matrix]: $f (class $cls) verdicts a cf-72 matrix cell differently than declared — the broad allow, the floor's ORDER, the re-allows or the push tail drifted from the chunk contract (failing cells named above; table = $TMP/ac6.matrix)"
     python3 "$TMP/family.py" policybatch "$g" "$cls" <"$TMP/ac6.matrix" >/dev/null \
       || fail "A12[AC6-matrix]: generated mirror $g (class $cls) verdicts a cf-72 matrix cell wrong — the mirror is the runtime surface; a regen that parses to different verdicts is a defect, not noise"
-    python3 "$TMP/family.py" naming "$f" || fail "A12[C03]: $f kickoff naming surface broken (want the execute allow + the four opencode_* allows in order)"
+    python3 "$TMP/family.py" naming "$f" || fail "A12[C03]: $f kickoff naming surface broken (want the execute allow + the five opencode_* allows in order — the fifth is cf-90 C03's worktree_remove)"
     python3 "$TMP/family.py" naming "$g" || fail "A12[C03]: $g kickoff naming surface broken on the generated mirror"
     case "$f" in
       *board-coord*) python3 "$TMP/family.py" board "$f" || fail "A12[C03]: $f board extras (dev-boards*/execute) broken";;
@@ -1361,6 +1377,19 @@ AC6
     python3 "$TMP/pairsync.py" "$f" "$g" agent \
       || fail "A12[C03]: $f and $g out of sync — regenerate, never hand-edit .opencode/"
   done
+  # cf-90 C03 (agent-test): the work-complete cleanup grant — naming grew to
+  # five rows (worktree_remove, red above until the six variants + mirrors
+  # carry it), and per the agents-sync drift lesson a permission-block change
+  # is only done when permissions.md moved WITH it: the matrix must enumerate
+  # the fifth allow, and the stale "four … naming/per-tool allows" prose must
+  # not survive in the coord sources or either permissions.md tree.
+  for f in "$PERM_SRC" "$PERM_GEN"; do
+    grep -qF 'opencode_worktree_remove' "$f" \
+      || fail "A12[C03 matrix]: $f has not moved the naming row — permissions.md must enumerate opencode_worktree_remove with the coord/board-coord cells (red before C03 dev; the drift lesson A16 already pins)"
+  done
+  stale=$(grep -rinE 'four[^.]*(per-tool|naming|`opencode_)' .rulesync/subagents/agent-coord.md .rulesync/subagents/agent-coord-local.md .rulesync/subagents/agent-coord-pr.md .rulesync/subagents/agent-board-coord.md .rulesync/subagents/agent-board-coord-local.md .rulesync/subagents/agent-board-coord-pr.md "$PERM_SRC" "$PERM_GEN" 2>/dev/null \
+          | grep -vE 'four (force-flag )?denies' || true)
+  [ -z "$stale" ] || { printf '%s\n' "$stale" >&2; fail "A12[C03]: the four-allows wording survives above — the coord naming surface is FIVE per-tool allows since cf-90 C03's worktree_remove grant (red before C03 dev)"; }
   # MUST-load wiring: /pipeline-push-pr ONLY on the -pr pair (sources + mirrors)
   for f in "${CF_SRC[2]}" "${CF_GEN[2]}" "${CF_SRC[5]}" "${CF_GEN[5]}"; do
     grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' "$f" \
@@ -1376,7 +1405,7 @@ AC6
     || fail "A12[C03]: the agent-coord alias lacks its '(commit-only alias of agent-coord-local...)' description tag"
   grep -qF 'commit-only alias of agent-board-coord-local' "${CF_SRC[3]}" \
     || fail "A12[C03]: the agent-board-coord alias lacks its '(commit-only alias of agent-board-coord-local...)' description tag"
-  ok "A12[C03 + cf-72 AC6]: six coord-family agents (+mirrors) exist and sync; alias↔local parity holds; API containment, git-block order (B block 70/75), roster dev slots, board extras, and the -pr-only push wiring all carry the C03 shape; every AC6 matrix cell evaluates as declared through family.py on sources AND mirrors"
+  ok "A12[C03 + cf-72 AC6 + cf-90 C03]: six coord-family agents (+mirrors) exist and sync; alias↔local parity holds; API containment, git-block order (B block 70/75), roster dev slots, board extras, and the -pr-only push wiring all carry the C03 shape; every AC6 matrix cell evaluates as declared through family.py on sources AND mirrors; the naming surface is the FIVE-row shape and permissions.md moved with it"
 fi
 
 # --- A13: rename sweep + command→agent pairing (C02 AC5 + C03 AC4/AC7) ----------

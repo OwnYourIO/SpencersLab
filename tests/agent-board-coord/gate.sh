@@ -127,6 +127,22 @@
 # t11 go red until C03 lands. t15 auto-detects which round the base belongs
 # to (pointer absent in base → the one-sentence append rule; pointer present
 # → the byte-frozen HOLD) so every historical base stays meaningful.
+#
+# cf-90 RE-PIN (2026-10-31, agent-test; 2026/2026-10-cf-90-feat-board-coord-
+# improvements): t14 admits this ticket's surfaces — the cf-90 plan folder,
+# the skills/wekan-board-provision hand-written skill (C01), the
+# pipeline-role-plan pair (C02 flips its step-8 kickoff-answer list) and the
+# pipeline-role-deploy pair C06 creates (t14 enumerates skill dirs per
+# contract — this is that enumeration). SELECTION NOTE: t17 is red at
+# pristine main HEAD — the coord-family shell rows drifted when main
+# 7e07a6273 added `bash scripts/kickoff-warm-location.sh *` without moving
+# the pinned family forms; that pre-existing permissions-matrix drift is
+# tracked on its own Review card OUTSIDE cf-90 (FRICTION baseline note), so
+# cf-90's chunk gates run this suite as an id subset EXCLUDING t17 (the
+# sibling suites' analogous ids: coord-inwork i4, session-origin s4,
+# kickoff-branch m4, wekan-mcp create-list t2) — never the whole suite, and
+# never read those reds as cf-90's.
+# tests/provider-loops/surface.sh t6 encodes the subset for the C04 gate.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -848,6 +864,10 @@ fi
 # arms live in the already-admitted chart tests tree). The carry DIRECTORY is
 # still not admitted; a second patch file needs its own literal (the c8 probe
 # loop re-proves it).
+# cf-90 (2026-10-31, agent-test): the running ticket's plan folder, its
+# skills/wekan-board-provision dir (C01, hand-written skill tree), the
+# pipeline-role-plan pair (C02) and the pipeline-role-deploy pair (C06) join
+# the per-contract enumeration.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -895,11 +915,15 @@ if want t14; then
       containers/strata/Dockerfile|containers/strata/README.md|\
       containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
       containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
-      containers/strata/carry/ornith-q36.patch) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
+      containers/strata/carry/ornith-q36.patch|\
+      .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
+      skills/wekan-board-provision/*|\
+      .rulesync/skills/pipeline-role-plan/*|.opencode/skills/pipeline-role-plan/*|\
+      .rulesync/skills/pipeline-role-deploy/*|.opencode/skills/pipeline-role-deploy/*) : ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits and the cf-86 plan-folder/serving-files/docs/image-build-surface admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits and the cf-90 folder/provision-skill/role-plan/role-deploy admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

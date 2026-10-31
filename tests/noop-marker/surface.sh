@@ -21,10 +21,18 @@
 #   N5  RESULT posture intact — the no-op ends still read NEEDS_INFO (C02:
 #       "RESULT stays as today"); the suppression is an ALERT-scope change,
 #       never a status change.
+#   N6  archive-on-no-cards exit (cf-90 C03) — BOTH no-op ends PATCH the
+#       session `{"archived": true}` after the marker write and NEVER ask
+#       about closing out; the marker recipe (rename → get → merge → patch
+#       whole-metadata) stays intact around the new step; PATCH failure
+#       still ends cleanly.
 #
 # Red posture: N1-N4 name not-yet-landed C02 text (plugin predicate, skill
 # subsection, truth sentences) — red before dev, HOLD after. N5 is green now
-# and must stay green (the chunk edits these very passages).
+# and must stay green (the chunk edits these very passages). N6 (cf-90 C03)
+# is red until the archive-on-no-cards exit text lands; its two HOLD arms —
+# marker-recipe order and the whole-metadata read-merge-write mandate — are
+# green now and must stay green through the C03 edit.
 #
 # Offline-deterministic text pins over the trees; no server, no session. The
 # behavior matrix lives in tests/opencode/question-notify.test.ts T9/T10; the
@@ -32,7 +40,7 @@
 # chunk's proof surface per OQ-N2).
 #
 # Usage:
-#   bash tests/noop-marker/surface.sh            # N1..N5
+#   bash tests/noop-marker/surface.sh            # N1..N6
 #   bash tests/noop-marker/surface.sh N2         # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -54,11 +62,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5; do WANT["n$i"]=1; done
+  for i in 1 2 3 4 5 6; do WANT["n$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^n[1-5]$ ]] || fail "unknown check id '$a' (expected N1..N5)"
+    [[ "$lc" =~ ^n[1-6]$ ]] || fail "unknown check id '$a' (expected N1..N6)"
     WANT["$lc"]=1
   done
 fi
@@ -231,6 +239,48 @@ if want n5; then
       || fail "N5[C02]: $f's claim-cap stop lost its clean-end wording (HOLD — the marker rides BEFORE the end, it does not replace it)"
   done
   ok "N5[C02]: both no-op exits still end NEEDS_INFO + clean stops (alert-scope change only)"
+fi
+
+# --- N6: archive-on-no-cards exit (cf-90 C03 AC1 — red before C03 dev) ----------
+# The no-cards end ARCHIVES its own session, never asks. Pins: the literal
+# archive body in BOTH exits, the never-ask sentence naming the "should I
+# close out?" question, the failure-still-clean posture, and the two HOLD
+# arms proving the marker recipe (write it FIRST, whole-metadata
+# read-merge-write) survives around the new step. C03 chunk Notes-for-dev:
+# the PATCH is a NEW step after the recipe, never a rewrite of it.
+if want n6; then
+  for f in "$BOARD_SRC" "$BOARD_GEN"; do
+    [ -f "$f" ] || fail "N6: $f missing (harness fault)"
+    grep -qF '{"archived": true}' "$f" \
+      || fail "N6[C03 AC1]: $f lacks the native OpenCode archive body {\"archived\": true} — the no-cards exit archives its own session (RESEARCH F4; red before C03 dev)"
+    grep -qF 'close out' "$f" \
+      || fail "N6[C03 AC1]: $f has no never-ask sentence — a no-cards end must be stated NEVER to ask \"should I close out?\" (the posture that replaces it: archive and stop)"
+    python3 "$TMP/win.py" --ci "$f" 1200 'Nothing anywhere' 'archiv' \
+      || fail "N6[C03 AC1]: Card pickup step 4 (the no-cards end) does not carry the archive step near its exit line (red before C03 dev)"
+    python3 "$TMP/win.py" --ci "$f" 1200 'no eligible work' 'archiv' \
+      || fail "N6[C03 AC1]: the claim-cap stop does not carry the archive step near its exit line (red before C03 dev)"
+    python3 "$TMP/win.py" --ci "$f" 700 'archiv' 'never' \
+      || fail "N6[C03 AC1]: the archive step is not bound to its never-ask sentence in ONE passage"
+    python3 "$TMP/win.py" --ci "$f" 700 'archiv' 'failure' \
+      || fail "N6[C03 Tasks]: $f does not state the PATCH-failure posture (any PATCH failure → end cleanly anyway, recorded in commands_run — the marker-failure posture, never a retry loop)"
+    python3 "$TMP/win.py" --ci "$f" 900 'PATCH replaces' 'read-merge-write' \
+      || fail "N6[C03 Notes-for-dev]: the whole-metadata read-merge-write mandate was reordered or reworded away — the archive PATCH rides AFTER the recipe; the recipe itself stays byte-true"
+    if ! python3 - "$f" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+m = re.search(r'(?ms)^#+[^\n]*No-op marker[^\n]*\n(.*?)(?=^#{1,4}[^\n]*$|\Z)', text)
+if not m:
+    print("No-op marker subsection lost"); sys.exit(1)
+s = m.group(1)
+meta = s.find('\'{"metadata":')
+arch = s.find('{"archived": true}')
+if arch >= 0 and meta >= 0 and arch < meta:
+    print("archive PATCH placed BEFORE the marker write — posture: marker first, then archive, then stop"); sys.exit(1)
+sys.exit(0)
+PY
+    then fail "N6[C03]: marker-recipe-before-archive order broken in $f (reason above)"; fi
+  done
+  ok "N6[C03 AC1]: both no-op exits archive {\"archived\": true} after the marker write, with the never-ask + failure-still-clean posture; marker recipe order and the whole-metadata mandate intact"
 fi
 
 printf 'PASS: no-op marker contract checks (%d ok)\n' "$checks"
