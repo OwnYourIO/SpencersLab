@@ -713,6 +713,12 @@ fi
 # tree mid-chunk reddens t14, and with it validation-fix t7. Rationale for
 # keeping the admits literal rather than manifest-driven: the c8 block of
 # tests/agent-board-coord/rulesync-surface.sh.
+# cf-86 C07 round (2026-10-31, owner U9.4): the init lift + v0.2.8 re-pin make
+# containers/strata/ a declared serving surface of this ticket, so the same
+# prerogative admits exactly the paths chunks/C07.md names — Dockerfile,
+# README.md, the three files/ entries, and the image suite's test file. Still
+# no directory admits (the three files/ paths are named one by one), and no
+# other container.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -749,11 +755,14 @@ if want t14; then
       .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
       charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
       services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*|\
-      .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md) : ;;
+      .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md|\
+      containers/strata/Dockerfile|containers/strata/README.md|\
+      containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
+      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result/own-folder admits and the cf-86 plan-folder/serving-files/docs admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result/own-folder admits and the cf-86 plan-folder/serving-files/docs/image-build-surface admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then

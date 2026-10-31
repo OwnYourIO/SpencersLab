@@ -472,6 +472,9 @@ if want c8; then
       charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
       services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*|\
       .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md|\
+      containers/strata/Dockerfile|containers/strata/README.md|\
+      containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
+      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
       .opencode/plugin/pipeline-locks/*|.agents/loops/*|.gitignore) return 0 ;;
       *) return 1 ;;
     esac
@@ -483,21 +486,27 @@ if want c8; then
   done <"$TMP/changed.txt"
   # Widening, not a catch-all: paths no ticket on this branch has ever declared
   # must stay outside the admit list. A probe path need not exist on disk — the
-  # check is on the pattern set, and containers/strata/Dockerfile is a real
-  # serving surface (cf-86 builds no image, so it is not admissible by it).
+  # check is on the pattern set.
   # cf-86 docs round (2026-10-30): the runbook NOTE and the parent README join
   # the admits as exact files — test_strata_runbook.py pins both docs'
   # doctrine, so a docs round that moves the doctrine must move them.
+  # cf-86 C07 round (2026-10-31, owner U9.4): the image lift makes the strata
+  # image a cf-86 serving surface after all — the admits are the four paths
+  # chunks/C07.md declares (Dockerfile, README, files/, its test file), still
+  # never containers/** or containers/strata/* as a whole; the earlier probe
+  # entry (containers/strata/Dockerfile, "cf-86 builds no image") is retired
+  # with that premise, and its teeth move to the sibling-image probes below.
   # .agents/notes/* and charts/llama-swap/* as wholes are NOT admitted
   # (next loop proves the neighbours stay out).
-  for p in containers/strata/Dockerfile charts/llama-swap/templates/deployment.yaml \
+  for p in containers/strata/.dockerignore containers/music-assistant/Dockerfile \
+           charts/llama-swap/templates/deployment.yaml \
            charts/home-assistant/values.yaml services/home/agents/prod/values.yaml \
            .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md; do
     if c8_admits "$p"; then
       fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
     fi
   done
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6, and cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs) widenings; undeclared serving paths still rejected (base: $BASE)"
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6, and cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces) widenings; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----

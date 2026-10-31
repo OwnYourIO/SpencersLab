@@ -297,6 +297,9 @@ fi
 # tree — no
 # directory admits, and no other chart or service. Why not manifest-driven:
 # the c8 block of tests/agent-board-coord/rulesync-surface.sh.
+# cf-86 C07 round (2026-10-31, owner U9.4): chunks/C07.md declares the strata
+# image surfaces (Dockerfile, README, the three files/ entries, its test file) —
+# admitted one path at a time, same reasoning as the chart trio above.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -327,11 +330,14 @@ if want c7; then
       .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
       charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
       services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*|\
-      .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md) : ;;
+      .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md|\
+      containers/strata/Dockerfile|containers/strata/README.md|\
+      containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
+      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-86 plan-folder/serving-files/docs widenings; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-86 plan-folder/serving-files/docs/image-build-surface widenings; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
