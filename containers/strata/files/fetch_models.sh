@@ -23,6 +23,18 @@
 
 set -eu
 fail() { echo "model-fetch: $*" >&2; exit 1; }
+# An interpreter that survives image replacement: PATH python3 first, then the
+# terminal's bundled candidates (Strata's runtime ships its own python under
+# /opt/strata/terminal, not a distro one). Echoes the path, rc 1 when none.
+find_python3() {
+  p=$(command -v python3 || true)
+  [ -n "$p" ] && { echo "$p"; return 0; }
+  for c in /opt/strata/terminal/bin/python3 /opt/strata/terminal/bin/python \
+           /opt/strata/terminal/usr/bin/python3 /opt/strata/terminal/python/bin/python3; do
+    [ -x "$c" ] && { echo "$c"; return 0; }
+  done
+  return 1
+}
 # The byte literals every download leg verifies against are a baked sibling,
 # not a copy of them here: one home, sourced. Fail before any work if the
 # image predates the bake — an unbound pin would surface as a cryptic shell
@@ -74,6 +86,28 @@ if [ -d "$SRC" ] && [ "$( [ -f "$CHECKOUT_MARKER" ] && cat "$CHECKOUT_MARKER" )"
   # because a build over a stale cache is how a half-migrated engine could get
   # stamped as good.
   rm -rf "$SRC/build-hip"
+  # The claim venv's bin/python is a symlink into the interpreter of whichever
+  # image provisioned it; an image bump dangles it while the wheel-installed
+  # tools beside it (cmake/ninja binaries) keep working — and setup.sh never
+  # runs again on a provisioned claim (.setup-* markers skip it), so nothing
+  # else rebuilds this venv. Re-point it when this image's interpreter matches
+  # the venv's site-packages minor; a mismatch stays untouched and the guards
+  # below fail loud instead of half-working (2026-10-31 first-boot finding).
+  if [ -d "$SRC/.venv" ] && [ ! -x "$SRC/.venv/bin/python" ]; then
+    imgpy=$(find_python3 || true)
+    if [ -n "$imgpy" ] \
+       && [ -d "$SRC/.venv/lib/python$("$imgpy" -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')/site-packages" ]; then
+      ln -sfn "$imgpy" "$SRC/.venv/bin/python"
+      ln -sfn "$imgpy" "$SRC/.venv/bin/python3"
+      echo "model-fetch: claim venv python dangled at the previous image - re-pointed at $imgpy"
+    fi
+  fi
+  # Metadata reads need an interpreter even where the venv stays broken: claim
+  # venv first, image python3 as the fallback.
+  PY="$SRC/.venv/bin/python"
+  if [ ! -x "$PY" ]; then
+    PY=$(find_python3) || fail "checkout migration: no usable python (claim venv broken and the image ships none)"
+  fi
   # Nobody else recompiles a provisioned claim — the .setup-* markers make every
   # installed quant skip setup.sh — so the recompile lives here: the same
   # cmake/ninja pair and the same fixed HIP defs setup.py drives at this tag
@@ -89,9 +123,9 @@ if [ -d "$SRC" ] && [ "$( [ -f "$CHECKOUT_MARKER" ] && cat "$CHECKOUT_MARKER" )"
     # only ever follows a green compile.
     [ -x "$SRC/.venv/bin/cmake" ] \
       || fail "checkout migration: $SRC/engine/BUILD.json promises a compiled engine but $SRC/.venv/bin/cmake is missing - fix the claim venv; the marker stays unwritten and the next boot re-enters"
-    archs=$("$SRC/.venv/bin/python" -c 'import json,sys; print(";".join(json.load(open(sys.argv[1]))["archs"]))' "$SRC/engine/BUILD.json") \
+    archs=$("$PY" -c 'import json,sys; print(";".join(json.load(open(sys.argv[1]))["archs"]))' "$SRC/engine/BUILD.json") \
       || fail "checkout migration: cannot read archs from $SRC/engine/BUILD.json"
-    libdirs=$("$SRC/.venv/bin/python" -c 'import json,sys; print(";".join(json.load(open(sys.argv[1])).get("lib_dirs", [])))' "$SRC/engine/BUILD.json") \
+    libdirs=$("$PY" -c 'import json,sys; print(";".join(json.load(open(sys.argv[1])).get("lib_dirs", [])))' "$SRC/engine/BUILD.json") \
       || fail "checkout migration: cannot read lib_dirs from $SRC/engine/BUILD.json"
     if [ -x /opt/rocm/bin/hipcc ] && [ -e /opt/rocm/lib/libhipblas.so ]; then
       rocm=/opt/rocm
@@ -144,10 +178,8 @@ fi
 # setup.sh needs a python3 on PATH; this image ships only the
 # terminal's bundled interpreter — find it, else self-diagnose.
 if ! command -v python3 >/dev/null 2>&1; then
-  for c in /opt/strata/terminal/bin/python3 /opt/strata/terminal/bin/python \
-           /opt/strata/terminal/usr/bin/python3 /opt/strata/terminal/python/bin/python3; do
-    if [ -x "$c" ]; then ln -sf "$c" /usr/local/bin/python3; break; fi
-  done
+  p=$(find_python3 || true)
+  if [ -n "$p" ]; then ln -sf "$p" /usr/local/bin/python3; fi
 fi
 command -v python3 >/dev/null 2>&1 \
   || fail "no python3 to drive setup.sh; terminal layout: $(find /opt/strata/terminal -maxdepth 3 -name 'python*' 2>/dev/null | tr '\n' ' ')"

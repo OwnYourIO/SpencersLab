@@ -2522,3 +2522,35 @@ was needed; `aislop ci --changes` 0 errors / 0 warnings over 64 files.
 
 No commits; STATE.json untouched. Everything (dev docs round + this round) lands via
 coord.
+
+### 9.22 first-boot defect round — dangling claim-venv python across image swaps (2026-10-31)
+
+Pod log (gpu-ai-llama-swap-strata, first boot on the merged 0.2.9 image): migration
+fired correctly, then `line 92: /models/strata/Strata/.venv/bin/python: not found`.
+Root cause: the claim venv's `bin/python` is a symlink into the *provisioning* image's
+interpreter — an image swap can dangle it while wheel-installed `cmake`/`ninja` binaries
+keep working; setup.sh never re-runs on a marker-provisioned claim, so nothing rebuilds
+it. The C09 migration (written before that world existed) shelled the claim venv python
+unguarded for BUILD.json metadata; the download-step guards (207/291) would fail next
+boot on the same claim.
+
+Fix (branch `bug-strata-claim-venv-heal` off main): (1) `find_python3()` resolver
+(PATH python3, then terminal candidates — now the single home for that list); (2)
+migration HEALS the venv when `! -x .venv/bin/python` and the image interpreter's minor
+matches the venv's `lib/pythonX.Y/site-packages` — `ln -sfn` on python+python3 only,
+venv content untouched (data-state law intact); (3) `$PY` = healed venv python else
+image python, fail-loud when neither; metadata reads go through `$PY`.
+New law arm `test_c09_migration_heals_a_claim_venv_whose_python_dangles_at_the_image`
+(one-executable-home for the candidate list, executable-test heal, both symlinks,
+minor gate, bare-venv-`-c` reads forbidden, $PY resolution present). Behaviour proven
+by extraction harnesses run from the real script text: main path (dangling → re-pointed
+→ ARCHS/LIBDIRS read clean, rc 0) and minor-mismatch fallback (no heal, image python
+carries the reads, rc 0). Posture: carry file 18P+1S, FULL 408P/9S/0F, containers 24P,
+lint + both renders pass.
+
+Pre-existing, NOT this round: `gate.sh` t17[C03] (`.rulesync/subagents/agent-coord.md`
+coord-family contract) is FLAKY on `origin/main` itself — reproduced failing in a fresh
+detached origin/main worktree with clean /tmp/opencode, and observed passing once
+unproven-repeatably elsewhere. Same-check `coord-inwork` i4 and the `validation-fix`
+cascade fail identically on pristine origin/main. A nondeterministic gate is a louder
+problem than a red one: own debug card recommended.

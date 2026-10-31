@@ -288,6 +288,38 @@ def test_c09_migration_never_deletes_data_state():
     assert not offenders, f"data-state deletion in the driver: {offenders}"
 
 
+def test_c09_migration_heals_a_claim_venv_whose_python_dangles_at_the_image():
+    # 2026-10-31 first-boot law: $SRC/.venv/bin/python is a symlink into the
+    # provisioning image's interpreter — an image swap can dangle it while the
+    # wheel-installed cmake/ninja keep working, and setup.sh never re-runs on a
+    # marker-provisioned claim. The migration must HEAL it (ln -sfn only, never
+    # touching .venv content; site-packages minor gate), fall back to the image
+    # interpreter otherwise, and never shell a bare claim-venv python for
+    # BUILD.json metadata. Static-shape arm; behaviour proven by the harness
+    # recorded in the fix round (TEST_SPEC).
+    text = _driver()
+    assert text.count("/opt/strata/terminal/bin/python3") == 1, (
+        "terminal interpreter candidates live in exactly one resolver (find_python3)"
+    )
+    assert '! -x "$SRC/.venv/bin/python"' in text, (
+        "heal must test executability — a dangling symlink is not -x"
+    )
+    assert re.search(r'ln -sfn "\$imgpy" "\$SRC/\.venv/bin/python3?"', text), (
+        "heal re-points via ln -sfn (no content rewrite of the venv)"
+    )
+    assert 'ln -sfn "$imgpy" "$SRC/.venv/bin/python3"' in text, (
+        "both interpreter names are re-pointed"
+    )
+    assert "site-packages" in text, "the minor-match gate reads the venv's site-packages dir"
+    assert '"$SRC/.venv/bin/python" -c' not in text, (
+        'migration metadata reads go through "$PY" (venv-first, image-fallback) — '
+        "a bare claim-venv python dangles across image swaps (2026-10-31 boot)"
+    )
+    assert 'PY="$SRC/.venv/bin/python"' in text and "PY=$(find_python3)" in text, (
+        "explicit $PY resolution: claim venv first, image python3 fallback"
+    )
+
+
 # --- the GGUF-direct ornith leg (NO pack) -------------------------------------
 
 
