@@ -190,8 +190,9 @@ def test_c07_init_image_stays_the_rolling_same_image_pair():
 @helm
 def test_c07_env_scalar_law_survives_the_lift_on_both_renders():
     """Chart default keeps STRATA_QUANTS: "q3" as a scalar; the gpu-ai overlay
-    carries the three-token set + the two STRATA_MODEL_* scalars + exactly one
-    secretKeyRef (hf-token/token) on the init. The script reads
+    carries the four-token set (C09 grew the `orn` pseudo-family token) + the
+    two STRATA_MODEL_* scalars + exactly one secretKeyRef (hf-token/token) on
+    the init. The script reads
     HF_TOKEN from its process env — plumbing must not move or wrap (R-d
     download-only law). C08's sweep shrank the set from q3,abl,orca,q4 and
     deleted STRATA_MODEL_ABL (U9.3): the swept scalar's ABSENCE is part of the
@@ -202,7 +203,7 @@ def test_c07_env_scalar_law_survives_the_lift_on_both_renders():
     )
     docs = S.render_service_overlay()[0]
     env = {e.get("name"): e for e in (_init(docs).get("env") or []) if isinstance(e, dict)}
-    assert (env.get("STRATA_QUANTS") or {}).get("value") == "q3,orca,q4", env.get("STRATA_QUANTS")
+    assert (env.get("STRATA_QUANTS") or {}).get("value") == "q3,orca,q4,orn", env.get("STRATA_QUANTS")
     assert "STRATA_MODEL_ABL" not in env, (
         "the swept abliterated scalar is back — C08 U9.3 deleted it; a revival "
         "without PROVENANCE is an un-sanctioned re-add"

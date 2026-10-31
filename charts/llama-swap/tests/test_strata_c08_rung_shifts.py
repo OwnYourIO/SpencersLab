@@ -57,7 +57,11 @@ IQ4_SHARD_BYTES = {
 IQ4_PACK_TOTAL = sum(IQ4_SHARD_BYTES.values())
 
 PROFILE_ORCA_C08_FILE = "strata-orca-iq4_xs.json"
-C08_PEERS_ORDER = [S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID]
+# The live final peers wave. Authored as the C08 post-sweep four-id order;
+# C09's ornith arena grew the fifth (growth-only, the evidence chain records
+# both states — this constant follows models_allowed, the §9.17 flip-by-name
+# convention for wave-companion arms).
+FINAL_PEERS_ORDER = [S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID]
 
 RETIRED_C01_TEST = S.TESTS_DIR / "test_strata_abliterated_rung.py"
 
@@ -90,12 +94,14 @@ def test_c08_sc117_arena_gone_from_the_inner_config_and_matrix():
 
 
 @helm
-def test_c08_sets_main_expression_is_the_shrunk_alternation_literal():
-    """The chart data line is chunk-frozen: "(p | s | o | q)" — literal pin so
-    a silently reordered or c-keeping edit reds without matrix-solver masking."""
-    text = S.read(S.CHART_DIR / "values.yaml", "C08 edits sets.main in the strata matrix")
-    assert re.search(r'^\s*main:\s*"\(p \| s \| o \| q\)"', text, re.M), (
-        "sets.main is not the C08 four-arm alternation; today's line: "
+def test_c08_sets_main_expression_is_the_current_alternation_literal():
+    """The chart data line is chunk-frozen per wave: "(p | s | o | q)" at the
+    C08 sweep, "(p | s | o | q | n)" since C09 — literal pin so a silently
+    reordered edit, a resurrected c, or a co-load shape reds without
+    matrix-solver masking."""
+    text = S.read(S.CHART_DIR / "values.yaml", "C09 extends sets.main in the strata matrix")
+    assert re.search(r'^\s*main:\s*"\(p \| s \| o \| q \| n\)"', text, re.M), (
+        "sets.main is not the C09 five-arm alternation; today's line: "
         f"{[ln.strip() for ln in text.splitlines() if ln.strip().startswith('main:')]}"
     )
     assert 'main: "(p | s | c | o | q)"' not in text, "the c-arm is still in the alternation"
@@ -111,15 +117,18 @@ def test_c08_abliterated_profile_gone_from_the_render_and_template_data():
 
 
 @helm
-def test_c08_service_env_and_peers_shrink_to_the_three_token_state():
+def test_c08_service_env_and_peers_track_the_current_wave_state():
+    """C08 pinned the post-sweep three-token/four-id state; C09 grew the
+    `orn` token and the fifth peers id (wave-companion flip, §9.17 by-name).
+    The swept-token absence half of the law stays permanent."""
     inits = {c.get("name"): c for c in S.strata_pod(_service())["spec"].get("initContainers") or []}
     env = {e.get("name"): e for e in (inits["model-fetch"].get("env") or []) if isinstance(e, dict)}
-    assert (env.get("STRATA_QUANTS") or {}).get("value") == "q3,orca,q4", env.get("STRATA_QUANTS")
+    assert (env.get("STRATA_QUANTS") or {}).get("value") == "q3,orca,q4,orn", env.get("STRATA_QUANTS")
     assert "STRATA_MODEL_ABL" not in env, "STRATA_MODEL_ABL survives the sweep"
     assert (env.get("STRATA_MODEL_ORCA") or {}).get("value") == "orca/IQ4_XS", env.get("STRATA_MODEL_ORCA")
     outer = S.by_name_kind(_service(), "ConfigMap", "llama-swap-config")
     peers = S.yaml.safe_load(outer["data"]["config.yaml"])["peers"][S.PEER_NAME]["models"]
-    assert peers == C08_PEERS_ORDER, f"peers {peers}, want the C08 four-id wave (== the flipped evidence)"
+    assert peers == FINAL_PEERS_ORDER, f"peers {peers}, want the current five-id wave (== the evidence final state)"
 
 
 @helm
@@ -309,11 +318,19 @@ def test_c08_catalog_wave_tables_shrink_with_the_sweep():
     """The test-session's own C08 flip, pinned as an expectation: at C08 landing
     CF86_NEW_CATALOG_IDS 5->4, CF86_TRIO_IDS 3->2, INNER_MATRIX_VARS/
     INNER_PROFILE_FILES drop c, PROFILE_ORCA_FILE becomes the iq4_xs name —
-    one atomic mechanical edit by the test side at C08 dev landing."""
+    one atomic mechanical edit by the test side at C08 dev landing. The sweep
+    halves are PERMANENT (a revived abliterated/c entry is unsanctioned); the
+    trio SIZE is a wave companion: C09 grew it 2->3 with the ornith arena
+    (§9.19 flip ledger), so the trio is checked against the catalog's own
+    Strata-id projection rather than a frozen size."""
     import test_catalog_contract as C
 
     assert S.ABL_ID not in C.CF86_NEW_CATALOG_IDS, "CF86_NEW_CATALOG_IDS still five (flip at C08 landing)"
-    assert C.CF86_TRIO_IDS == [S.ORCA_INNER_ID, S.Q4_ID], f"trio {C.CF86_TRIO_IDS}, want 2"
+    strata_trio = [i for i in C.CF86_TRIO_IDS if i in set(S.INNER_IDS)]
+    assert C.CF86_TRIO_IDS == strata_trio, f"trio carries non-Strata ids: {C.CF86_TRIO_IDS}"
+    assert S.ABL_ID not in C.CF86_TRIO_IDS and C.CF86_TRIO_IDS[0] == S.ORCA_INNER_ID, (
+        f"the swept id is back at the head of the trio: {C.CF86_TRIO_IDS}"
+    )
     assert "c" not in S.INNER_MATRIX_VARS, "INNER_MATRIX_VARS still has c"
     assert S.PROFILE_ORCA_FILE == PROFILE_ORCA_C08_FILE, "the frozen profile-file name flip is pending"
 

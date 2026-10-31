@@ -264,18 +264,25 @@ def expected_strata_peers(served_model_ids) -> list:
 ABL_ID = "qwen3.8-flash-next-strata-abliterated"        # C01, swept by C08
 ORCA_INNER_ID = "qwen3.8-flash-next-strata-orca"        # C02
 Q4_ID = "qwen3.8-flash-next-strata-q4"                  # C06
+ORNITH_ID = "ornith-1.5-122b-strata-q4"                 # C09 (fresh id family)
 PROFILE_ABL_FILE = "strata-abliterated-iq3_xxs.json"    # swept; absence-pinned
 PROFILE_ORCA_FILE = "strata-orca-iq4_xs.json"
 PROFILE_Q4_FILE = "strata-q4.json"
-INNER_IDS = (PRIMARY_ID, STRIX_ID, ORCA_INNER_ID, Q4_ID)
+PROFILE_ORNITH_FILE = "strata-ornith-q4.json"
+INNER_IDS = (PRIMARY_ID, STRIX_ID, ORCA_INNER_ID, Q4_ID, ORNITH_ID)
 # Inner matrix letters frozen by the chunks: vars grow p|s -> +c (C01) -> +o
-# (C02) -> +q (C06), and C08's sweep removes c again; every set must keep them
-# ALTERNATIVES.
+# (C02) -> +q (C06), C08's sweep removes c again, and C09 adds n. The retired
+# c is NEVER reused (frozen-table hygiene — a fresh letter names a fresh rung).
 INNER_MATRIX_VARS = {
-    "p": PRIMARY_ID, "s": STRIX_ID, "o": ORCA_INNER_ID, "q": Q4_ID,
+    "p": PRIMARY_ID, "s": STRIX_ID, "o": ORCA_INNER_ID, "q": Q4_ID, "n": ORNITH_ID,
 }
 # C02 gated-pack marker (manual-pack idempotency contract).
 ORCA_PACK_MARKER = "/models/strata/.pack-orca"
+# C09 claim-checkout migration: marker carries image-version + carry-N so a
+# future bump re-fires; the completeness marker for the GGUF-direct ornith
+# leg (no .pack-* equivalent — q36 has no iq_pack step).
+CHECKOUT_MARKER = "/models/strata/.checkout-0.2.9-carry1"
+ORNITH_DL_MARKER = "/models/strata/.dl-ornith"
 
 # C06 FINAL envelope (U8 + Round-3, DECISIONS authority — a deviation re-opens
 # the gate): the Q4 rung rides its OWN pair (cgroup 100Gi + engine 95232), the
@@ -298,7 +305,22 @@ INNER_PROFILE_FILES = {
     STRIX_ID: PROFILE_STRIX_FILE,
     ORCA_INNER_ID: PROFILE_ORCA_FILE,
     Q4_ID: PROFILE_Q4_FILE,
+    ORNITH_ID: PROFILE_ORNITH_FILE,
 }
+
+# C09 GGUF-direct ornith leg — live-verified tree read 2026-10-31 (anonymous):
+# ungated repo (tree 200, gated=false), ranged resolve of a shard answers 206
+# with GGUF magic and no Bearer challenge — the exact opposite premise of
+# orca's gated trio, which is why the orn legs ride hf_fetch's ANON mode and
+# HF_TOKEN must never touch them. Paths and sizes verbatim from that read.
+HF_REPO_ORNITH = "unsloth/Ornith-1.5-122B-GGUF"
+ORNITH_SHARD_PATHS = (
+    "UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf",
+    "UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00002-of-00003.gguf",
+    "UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00003-of-00003.gguf",
+)
+ORNITH_SHARD_BYTES = (10942929, 49971099680, 29731729056)
+ORNITH_TOTAL_BYTES = 79713771665  # == sum(ORNITH_SHARD_BYTES), R5 [C7]
 
 
 def expected_profile_files(inner_ids) -> set:

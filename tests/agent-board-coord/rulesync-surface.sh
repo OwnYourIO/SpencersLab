@@ -520,6 +520,7 @@ if want c8; then
       containers/strata/Dockerfile|containers/strata/README.md|\
       containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
       containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
+      containers/strata/carry/ornith-q36.patch|\
       .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore) return 0 ;;
       *) return 1 ;;
     esac
@@ -541,9 +542,15 @@ if want c8; then
   # never containers/** or containers/strata/* as a whole; the earlier probe
   # entry (containers/strata/Dockerfile, "cf-86 builds no image") is retired
   # with that premise, and its teeth move to the sibling-image probes below.
+  # cf-86 C09 round (2026-10-31, owner U11): one more exact build-context
+  # file joins the admits — the vendored carry patch chunks/C09.md declares.
+  # The carry/ DIRECTORY and any second patch file stay OUT (probe below):
+  # a third hunk would mean re-research, not a new file, and the scope guard
+  # keeps that expensive.
   # .agents/notes/* and charts/llama-swap/* as wholes are NOT admitted
   # (next loop proves the neighbours stay out).
   for p in containers/strata/.dockerignore containers/music-assistant/Dockerfile \
+           containers/strata/carry/ornith-strata-fixups.patch containers/gemma/serve.Dockerfile \
            charts/llama-swap/templates/deployment.yaml \
            charts/home-assistant/values.yaml services/home/agents/prod/values.yaml \
            .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md; do

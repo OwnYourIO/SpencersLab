@@ -49,6 +49,7 @@ strata:
     - qwen3.8-flash-next-strata-strix
     - qwen3.8-flash-next-strata-orca
     - qwen3.8-flash-next-strata-q4
+    - ornith-1.5-122b-strata-q4
   models_states:
     # cf-77 run-2 final (pre-cf-86):
     - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix]
@@ -62,6 +63,11 @@ strata:
     - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
        qwen3.8-flash-next-strata-abliterated, qwen3.8-flash-next-strata-orca,
        qwen3.8-flash-next-strata-q4]
-    # cf-86 C08 landed (SC117 sweep, U9.3 — final state):
+    # cf-86 C08 landed (SC117 sweep, U9.3 — four-id state):
     - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
        qwen3.8-flash-next-strata-orca, qwen3.8-flash-next-strata-q4]
+    # cf-86 C09 landed (ornith-on-Strata carry, U10.2 — final state; the one
+    # growth since the sweep — no law amendment, the monotone chain holds):
+    - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
+       qwen3.8-flash-next-strata-orca, qwen3.8-flash-next-strata-q4,
+       ornith-1.5-122b-strata-q4]

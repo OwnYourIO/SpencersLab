@@ -2234,3 +2234,147 @@ Posture: per-file runbook 19P/0F; FULL plain 0F/376P/8S, armed 0F/384P/0S
 (+1 arm exactly vs §9.17 posture); containers 24P; gates 19/22/9/15 rc 0 on
 the dirty tree; aislop ci --changes 100, 0/0/0. STATE.json untouched this
 round. No commits.
+
+### 9.19 C09 test round (pre-C09-dev) — ornith carry + arena, the by-name flip ledger (2026-10-31)
+
+Wave 9 kickoff (U11: owner proceeds C09). This round authors EVERY designed-red
+C09 arm before dev touches anything, applies the §9.17 by-name flip list, extends
+the gate admits (pre-authorized admit-lag class, third occurrence), and probes
+non-vacuity. Baseline entering the round: 0F/376P/8S plain, 0F/384P/0S armed,
+containers 24P, gates 19/22/9/15.
+
+New files (the C09 pair):
+- **test_strata_c09_ornith_carry.py** — image/driver side, 17 arms + 1 live arm:
+  patch 2-hunk shape law (hunk COUNT is law — a third hunk = re-research per the
+  chunk Notes), per-hunk content (kNativeHBytes 1024→2048 removal+addition;
+  X(12) into STRATA_D_FMTS), >=2 comment lines citing #3574 + the drop trigger,
+  build COPY + git apply before the .git rm, verify layer (`git apply --check
+  --reverse` + both grep assertions — the ONLY pre-merge proof since CI never
+  compiles HIP), README [C2] digest pair + 0.1.55 exe rows; the claim-checkout
+  migration laws (marker-keyed + content-compared + carry-N re-arming, cp -a
+  source-only sync list, rsync ban (baked-tool law), build-hip wipe before
+  recompile, guard<sync<recompile<marker ordering = loud-fail law, and the
+  whole-script data-state negative: bare `rm -rf "$SRC"` + any rm touching
+  Strata-data/packs/.venv/strata-*.json/.dl-/.pack-/.setup-/.done/engine/ are
+  offenders); the GGUF-direct orn legs (three anon hf_fetch calls with the
+  verbatim repo paths, DECISIONS citation in the orn arm, .dl-ornith skip-guard
+  before / write after the complete set, NO pack and NO HF_TOKEN in the window,
+  original repo names under Strata-data); byte_pins three literals + the Σ==sum
+  anti-slip law; and the live arm (RUN_HF_CHECK=1): tree paths+sizes == the
+  constants, ranged resolve of shard 2 answers 206 with GGUF magic and NO Bearer
+  challenge — the ungated premise proven live 2026-10-31 (gated=false), the
+  mirror-image of orca's gated-trio law.
+- **test_strata_c09_ornith_arena.py** — chart side, 11 helm arms: residency
+  contract (ttl/unloadTimeout/checkEndpoint equality, ulimit-wrapped cmd
+  byte-mirroring the primary except the profile file, keyless api_key), env arms
+  (ALLOWED_HOSTS + STRATA_DENSE_MMQ=1 per #3926 — chunk-declared, absence is
+  drift), alias anti-split parameterized (chunk freezes the ARENA id, not the
+  alias), matrix letter **n** with the QUOTING law (see law fixes), five-arena
+  alternation + explicit ornith×q4 never-co-load (the two biggest pinned arenas),
+  q36 closed-world ⊆ Q36_SURFACE + REQUIRED {--native,--max-context 262144,--mtp
+  2} (PARAMETERIZED per the chunk dev-round gate: dev's setup.py@v0.2.9 +
+  engine.hpp read is the authority; legitimate generated additions re-pin
+  through the test session, never a silent dev edit), flash-next-only flag-class
+  negatives (--conversation-cache*/--slot-save-path/--memory-limit-mib cannot
+  parse on the q36 surface), --native original-names/Strata-data/no-pack,
+  model_name honesty (names ornith, never borrows flash-next, admits the q4
+  class), claim-compiled-engine exe law (packaged halo roots are UNPATCHED —
+  the gfx120x-only caveat made executable), configmap +strata-ornith-q4.json.
+
+Flip ledger BY NAME (the §9.17 discipline):
+- strata_testlib.py: +ORNITH_ID/PROFILE_ORNITH_FILE/CHECKOUT_MARKER/
+  ORNITH_DL_MARKER/HF_REPO_ORNITH/ORNITH_SHARD_PATHS/ORNITH_SHARD_BYTES/
+  ORNITH_TOTAL_BYTES; INNER_IDS 4->5, INNER_MATRIX_VARS +n, INNER_PROFILE_FILES
+  +ornith. No wave-loader law amendment was needed (growth-only chain).
+- evidence/strata-peers-expected.yaml: models_allowed 4->5 (+ the frozen id),
+  models_states appended (C09-landed state; the monotone chain holds — C09
+  grows, no law change).
+- test_catalog_contract.py: CF86_NEW_CATALOG_IDS 4->5, CF86_TRIO_IDS 2->3
+  (+ornith; trio grep 3/3 per the chunk), trio-scope guard literal re-pinned,
+  **absence->presence flip**: test_c05_ornith_strata_id_absent_everywhere ->
+  test_c05_ornith_strata_id_present_only_where_it_should_be (teeth both ways:
+  no-hits reds, phantom-home reds, ladder-survival leg, peers-route leg).
+- test_strata_thin_init.py: STRATA_QUANTS literal "q3,orca,q4" -> "q3,orca,q4,orn".
+- test_strata_q4_rung.py: test_c06_matrix_alternatives_over_all_four_arenas ->
+  ..._over_the_full_arena_set (name follows the table, not the era); peers
+  literal grown to the five-id wave; header cross-ref re-pointed at the new
+  presence arm.
+- test_strata_c08_rung_shifts.py: C08_PEERS_ORDER -> FINAL_PEERS_ORDER (five
+  ids); test_c08_sets_main_expression_is_the_shrunk_alternation_literal ->
+  ..._current_alternation_literal ("(p | s | o | q | n)");
+  test_c08_service_env_and_peers_shrink_to_the_three_token_state ->
+  ..._track_the_current_wave_state (four-token env + five-id peers; the swept-
+  token ABSENCE half stays permanent); test_c08_catalog_wave_tables_shrink_with_
+  the_sweep successor arm: trio SIZE check relaxed to Strata-projection + head==
+  orca + ABL-absence (the sweep halves stay permanent, the size is a wave
+  companion — the exact trio literal is now held by test_c05_trio_scope_is_
+  strata_ids_only).
+- test_strata_image_fetch.py: byte_pins era law 3->6 literals + two Σ totals
+  (orca trio + ornith trio, two named totals); env_contract law gains the
+  `[ "$FAM" = orn ]` pseudo-family presence.
+- containers/strata/tests/test_dockerfile.py: STRATA_VERSION 0.2.8->0.2.9,
+  FLAVOR_PINS digests -> the R5 [C2] pair verbatim, ENGINE_VERSION 0.1.54->
+  0.1.55, STALE_STRATA_TAGS +0.2.8, STALE_ENGINE_VERSION 0.1.52->0.1.54.
+- gates: gate.sh t14 + services/gpu-ai admit literal `containers/strata/carry/
+  ornith-q36.patch` (note added); rulesync-surface.sh c8 admit same literal +
+  TWO new negative probes (containers/strata/carry/ornith-strata-fixups.patch —
+  a second patch file stays out; containers/gemma/serve.Dockerfile — sibling
+  images stay out); agents-md.sh c7 admit same literal.
+
+NOT flipped (deliberate, by name): the §9.16 strix era-2 tether arms
+(test_strata_strix.py re-pin fixtures vs 0.1.54) stay green THIS round and
+redden at dev's 0.1.55 landing — the era-3 capture pairs with that landing per
+the chunk Tests note ("strix 0.1.55 arms flip only at dev, paired"), in the
+C09-LANDING test round. No doc-red arms: the host-prep note wording is not in
+C09's Files in scope, so authoring a red there would invent scope. The outer
+CF86_MATRIX_VARS/CF86_SET_ADDITIONS tables (flashnext matrices) are untouched —
+inner-letter growth rides the strata INNER tables + the arena combo laws.
+
+Law-design fixes caught by probes (law fixed, never the doc/driver):
+1. cp -a sync-list per-entry regex: `(^|[\s/"'])tools([\s"'/]|$)` missed
+   `tools;` (semicolon not in the class) -> word-boundary form `(?<!\w)e\b`.
+2. Marker laws were literal-grepped; the C01 marker-law shape (variable-
+   extracted, accepts printf > "$VAR") is what a real driver writes — both
+   migration arms rewritten to extract the marker var and match through it.
+3. Presence arm render leg: Strata arenas NEVER enter the outer models map (they
+   route via peers.strata.models, same posture as orca/q4) — the leg was reading
+   the wrong surface; rewritten against the peer route.
+4. NEW CHART-SIDE TRAP, probe-caught (G/H): helm's YAML-1.1 parser resolves a
+   BARE matrix letter `n:` to the boolean False — an unquoted `n: ornith-...`
+   renders vars {"false": ...} and sets.main "(... | n)" fails to resolve at
+   RUNTIME, not just in the test reader. The matrix arm now pins the quoted
+   `"n": <id>` form directly (bare `n:` reddens naming the hazard); a testlib
+   normalizer that would have hidden this was written and REVERTED.
+
+Probes (file copies to /tmp/opencode, restored, diffs clean): patch 3-hunk drift
+-> count law red, content arms green on good constants; #3574 per-hunk comment
+teeth; c8 admit rc 0 with the untracked patch present (admit positive) and the
+two negative probes green; migration law A-satisfiability (correctly ordered
+synthetic block -> all five laws green), B early-marker write -> ordering law red
+with the line numbers, C1 bare `rm -rf "$SRC"` red, C2 `rm -rf "$SRC/Strata-data"`
+red; presence arm D phantom-home red / E no-hits red / H2 satisfaction green
+(chart+services injection only); F1 co-load `(p q n | s | o)` -> arena combo law
+AND the q4 cross-file alternation law both red; F2b well-shaped synthetic with a
+SMUGGLED --conversation-cache-mib -> exactly the two smuggle arms red, 9
+satisfaction arms green; J six-literal byte_pins -> carry Σ arm + image_fetch era
+arm both green, J2 Σ comment off-by-one -> carry Σ leg red. Probe-anchor slips
+caught BEFORE mutation: a `set -u` anchor (the driver line is `set -eu`), a
+4-space arena injection (models keys are 6-space), an ambiguous template
+`{{- end -}}` anchor — helper asserts fired, nothing mutated; and the final
+per-file recount initially mis-ran WITHOUT `PATH=$HOME/.local/bin` (the AGENTS.md
+recipe — helm-guarded arms skipped instead of running; re-ran green-of-green).
+
+Posture (final, this round): per-file carry 16F/1P/1S (the P = the never_deletes
+negative, green before dev BY DESIGN; the S = the live arm), arena 11F, catalog
+3F, q4 2F, c08 2F, thin_init 1F, image_fetch 2F, wiring/orca/strix/parity/blast/
+runbook all green; FULL plain 37F/369P/9S, armed 37F/378P/0S (live arms green
+armed: the ungated premise holds today); containers 7F/17P; gates 19/22/9/15 rc
+0 on the dirty tree; aislop ci --changes 0 errors/0 warnings over 64 files.
+
+Expected red dev clears at C09 landing: **44 = 37 charts + 7 containers**, every
+red C09-named (designed), zero accidental. Plus the §9.16 strix tether reddening
+at dev's 0.1.55 landing (era-3 capture is the LANDING test round's job, paired).
+The dev-round gate rides the q36 surface arms: dev records the setup.py@v0.2.9 +
+engine.hpp read in commands_run; legitimate surface additions come back through
+this test session for a re-pin, never a dev edit of the arena file. No commits
+this round (landing stays user-owned); STATE.json untouched.

@@ -843,6 +843,11 @@ fi
 # README.md, the three files/ entries, and the image suite's test file. Still
 # no directory admits (the three files/ paths are named one by one), and no
 # other container.
+# cf-86 C09 round (2026-10-31, owner U11): chunks/C09.md declares one more
+# exact build-context file — the vendored carry/ornith-q36.patch (its test
+# arms live in the already-admitted chart tests tree). The carry DIRECTORY is
+# still not admitted; a second patch file needs its own literal (the c8 probe
+# loop re-proves it).
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -889,7 +894,8 @@ if want t14; then
       .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md|\
       containers/strata/Dockerfile|containers/strata/README.md|\
       containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
-      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py) : ;;
+      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
+      containers/strata/carry/ornith-q36.patch) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"

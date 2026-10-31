@@ -326,6 +326,9 @@ fi
 # cf-86 C07 round (2026-10-31, owner U9.4): chunks/C07.md declares the strata
 # image surfaces (Dockerfile, README, the three files/ entries, its test file) —
 # admitted one path at a time, same reasoning as the chart trio above.
+# cf-86 C09 round (2026-10-31, owner U11): + one exact path — the vendored
+# carry/ornith-q36.patch chunks/C09.md declares (same one-path-at-a-time rule;
+# rulesync-surface c8's probe loop keeps carry/ itself out).
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -366,7 +369,8 @@ if want c7; then
       .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md|\
       containers/strata/Dockerfile|containers/strata/README.md|\
       containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
-      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py) : ;;
+      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
+      containers/strata/carry/ornith-q36.patch) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"

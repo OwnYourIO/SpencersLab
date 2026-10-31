@@ -123,22 +123,24 @@ def test_c07_hf_fetch_is_one_file_two_modes_anon_and_gated():
 @helm
 def test_c07_byte_pins_env_carries_the_era_exact_literal_set():
     """The lift's pin-set law: one assignment per staged shard, the Σ total
-    comment riding along, and the set EXACT — no extra byte literal without a
-    plan. Content is era-dependent: since the C08 sweep only the orcarouter
-    IQ4_XS trio ships (Σ 97,473,155,200 = R4 [B7]); the C07-era four retired at
-    the landing flip (TEST_SPEC 9.17). A literal that drifted from the HF-tree
-    read is a silent truncated-shard acceptance."""
+    comments riding along, and the set EXACT — no extra byte literal without
+    a plan. Content is era-dependent: since the C08 sweep the orcarouter
+    IQ4_XS trio (Σ 97,473,155,200 = R4 [B7]), and C09 adds the three ornith
+    UD-Q4_K_XL GGUF-direct shards (Σ 79,713,771,665 = R5 [C7]) — six
+    literals, two totals. A literal that drifted from an HF-tree read is a
+    silent truncated-shard acceptance."""
     pins = _pins()
-    for size in ORCA_BYTES_ERA:
+    for size in ORCA_BYTES_ERA + S.ORNITH_SHARD_BYTES:
         assert re.search(rf"^[A-Z][A-Z0-9_]*={size}$", pins, re.M), (
-            f"byte_pins.env has no NAME={size} assignment — the pin this pack "
-            "contract was built on (HF tree API 2026-10-31) is missing or renamed"
+            f"byte_pins.env has no NAME={size} assignment — the pin a pack/leg "
+            "contract was built on (HF tree API reads 2026-10-30/31) is missing or renamed"
         )
-    assert "97473155200" in pins, "the Σ total comment must ride with the orca trio"
+    for total in ("97473155200", str(S.ORNITH_TOTAL_BYTES)):
+        assert total in pins, f"the Σ total comment {total} must ride with its shard set"
     extra = set(re.findall(r"^[A-Z][A-Z0-9_]*=(\d{8,})$", pins, re.M))
-    assert extra == {str(s) for s in ORCA_BYTES_ERA}, (
-        f"byte_pins.env literals {sorted(extra)} != the C08-era trio — a 4th byte "
-        "literal needs a plan (wave table TEST_SPEC 9.14/9.17)"
+    assert extra == {str(s) for s in ORCA_BYTES_ERA + S.ORNITH_SHARD_BYTES}, (
+        f"byte_pins.env literals {sorted(extra)} != the C09-era six — a 7th byte "
+        "literal needs a plan (wave table TEST_SPEC 9.14/9.17/9.19)"
     )
 
 
@@ -291,9 +293,9 @@ def test_c07_guard_before_bytes_ordering_survives_the_lift():
 def test_c07_env_contract_scalars_and_pseudo_family_routing_in_the_script():
     """The env contract lands inside the script now: IFS=, loop over
     STRATA_QUANTS (default q3), STRATA_MODEL_$TOK mapping, and the pseudo-
-    family routing — since the C08 sweep ORCA-ONLY: the abl case-arm's absence
-    is part of the law (U9.3), alongside the verbatim `--backend hip` setup.sh
-    line."""
+    family routing — C08 swept abliterated (its case-arm's absence stays
+    law, U9.3), C09 added the orn GGUF-direct arm. Alongside the verbatim
+    `--backend hip` setup.sh line."""
     script = _fetch_sh()
     assert re.search(r"IFS=,", script), "the comma-split loop over STRATA_QUANTS is gone"
     assert re.search(r'STRATA_QUANTS:-q3', script), "the chart-side q3 default contract is gone"
@@ -305,6 +307,9 @@ def test_c07_env_contract_scalars_and_pseudo_family_routing_in_the_script():
         "without PROVENANCE is unsanctioned"
     )
     assert re.search(r'\[ "\$FAM" = orca \]', script), "the orca pseudo-family arm left the lift"
+    assert re.search(r'\[ "\$FAM" = orn \]', script), (
+        'no [ "$FAM" = orn ] pseudo-family arm — C09 routes the GGUF-direct rung the orca way, not as a catalog name'
+    )
     assert "--backend hip" in script, "the mandatory --backend hip leg (2026-10-29 deploy) left the setup.sh call"
 
 

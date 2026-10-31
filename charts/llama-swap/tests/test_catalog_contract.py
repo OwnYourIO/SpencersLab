@@ -39,20 +39,20 @@ CTX = 262144
 # C03/C04 llama.cpp rungs, and C06's own appended entry. C05 must not register
 # anything else that does not serve (the no-phantom arm is the guard).
 CF86_NEW_CATALOG_IDS = [
-    S.ORCA_INNER_ID, S.Q4_ID,
+    S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID,
     "qwen3.8-flash-next-heretic-q4", "qwen38-heretic",
 ]
 
 # Trio law covers the Strata ids only (chunk C05 AC5, plan Commands trio grep).
 # The two llama.cpp family ids have no service surface BY DESIGN: they ride the
-# chart-side family — the gpu-ai overlay carries matrix letters (q38her), never
-# the id — C05's plan forbids it touching services/**, and C04's AC1 arm bans a
-# models-layer entry for qwen38-heretic there. Registration for all four ids is
+# chart-side family — the overlay carries letters (q38her), never the id —
+# C05's plan forbids it touching services/**, and C04's AC1 arm bans a
+# models-layer entry for qwen38-heretic there. Registration for all five ids is
 # AC1's job (CF86_NEW_CATALOG_IDS); their live-serve side is pinned by the
-# C03/C04 files' gpu-ai render arms. The trio shrank 3->2 at C08's U9.3 sweep:
-# the abliterated arena's trio grep is dead (its surfaces are swept — absence
-# pinned in test_strata_c08_rung_shifts.py), orca and q4 remain.
-CF86_TRIO_IDS = [S.ORCA_INNER_ID, S.Q4_ID]
+# C03/C04 files' gpu-ai render arms. The trio shrank 3->2 at C08's U9.3 sweep
+# and grew back 2->3 at C09 (chunks/C09.md b: "trio grep 3/3 for the new id" —
+# the ornith arena carries chart + service + catalog surfaces like orca/q4).
+CF86_TRIO_IDS = [S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID]
 
 # The card's already-served asks (C05 AC3): verification greps, no edits.
 CARD_ASK_IDS = ["qwen3.8-27b-q4", "qwen3.8-27b-q6", "qwen3.8-flash-next-q4"]
@@ -221,9 +221,9 @@ def test_c05_trio_scope_is_strata_ids_only():
     dragged into the trio law — doing so makes it unsatisfiable and forces a
     cross-chunk AC violation. Moving an id between these lists is a law
     amendment, not a test edit."""
-    assert CF86_TRIO_IDS == [S.ORCA_INNER_ID, S.Q4_ID], (
+    assert CF86_TRIO_IDS == [S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID], (
         f"trio scope moved: {CF86_TRIO_IDS} — Strata ids only, per chunk C05 AC5 "
-        "(shrunk 3->2 by C08's U9.3 sweep)"
+        "(shrunk 3->2 by C08's U9.3 sweep, grown 2->3 by C09's ornith arena)"
     )
     for mid in ("qwen3.8-flash-next-heretic-q4", "qwen38-heretic"):
         assert mid in CF86_NEW_CATALOG_IDS and mid not in CF86_TRIO_IDS, (
@@ -270,14 +270,36 @@ def test_c05_default_route_flip_not_applied_without_a_repin():
     )
 
 
-def test_c05_ornith_strata_id_absent_everywhere():
-    """C06 Shape-B record in executable form: no `ornith-1.5-122b-strata*` id
-    may exist in any live surface while the llama.cpp ornith ladder and the
-    C05 hygiene entries do."""
+def test_c05_ornith_strata_id_present_only_where_it_should_be():
+    """§9.17 flip of the C06 Shape-B absence arm (U10.2 supersession: the
+    owner expects Ornith ON Strata; the absence law became a presence law at
+    C09 authoring — designed-red until dev lands). The flip keeps teeth in
+    both directions: the id must be PRESENT on exactly its three surfaces
+    (chart values, the profile template's rendered data home = services peers/
+    env lines included, the gpu-ai overlay — live_code_grep spans charts/ +
+    services/), every other live hit is a phantom home, and the llama.cpp
+    ornith ladder must SURVIVE (its retirement is a separate owner election —
+    C09 forbidden list)."""
     hits = S.live_code_grep("ornith-1.5-122b-strata")
-    assert not hits, f"Shape-B ornith Strata id appeared in live surfaces: {hits}"
+    allowed_homes = {
+        "charts/llama-swap/values.yaml",
+        "services/gpu-ai/prod/values.yaml",
+    }
+    assert hits, (
+        "no ornith-1.5-122b-strata hit in any live surface — C09 not landed "
+        "(the Shape-B absence era ended with U10.2; this arm is its presence twin)"
+    )
+    strays = [h for h in hits if h not in allowed_homes]
+    assert not strays, f"ornith Strata id found outside its declared surfaces: {strays}"
     served, _aliases = _render_surface()
-    assert any(m.startswith("ornith-1.5-122b-") for m in served), (
-        "the llama.cpp ornith ladder disappeared from the gpu-ai render — the "
-        "absence-arm's counterpart is what makes today's ornith path real"
+    assert any(m.startswith("ornith-1.5-122b-") and m != S.ORNITH_ID for m in served), (
+        "the llama.cpp ornith ladder disappeared from the gpu-ai render — C09 keeps it "
+        "as the A/B baseline; its retirement is an owner election, not a dev edit"
+    )
+    # Strata arenas route through the peer (their ids never enter the outer
+    # models map — same posture as orca/q4), so render-side presence reads the
+    # strata peer's models list, not the outer map.
+    peers = ((L.rendered_config("gpu-ai").get("peers") or {}).get(S.PEER_NAME) or {}).get("models") or []
+    assert S.ORNITH_ID in peers, (
+        f"the Strata ornith arena {S.ORNITH_ID} is not on the {S.PEER_NAME} peer route: {peers}"
     )

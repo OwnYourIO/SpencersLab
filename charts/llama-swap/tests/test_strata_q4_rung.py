@@ -18,9 +18,10 @@
 # the test session for a re-pin with the DECISIONS citation — never a dev edit
 # of this file.
 #
-# Cross-referenced arms living elsewhere: the ornith Shape-B absence-arm
-# (test_catalog_contract.py::test_c05_ornith_strata_id_absent_everywhere) and
-# the q4 catalog entry + no-phantom law (same file).
+# Cross-referenced arms living elsewhere: the ornith-Strata presence arm
+# (test_catalog_contract.py::test_c05_ornith_strata_id_present_only_where_it_
+# should_be — the C09 flip of the old Shape-B absence arm) and the q4 catalog
+# entry + no-phantom law (same file).
 
 from __future__ import annotations
 
@@ -97,9 +98,11 @@ def test_c06_q4_arena_served_with_residency_contract():
 
 
 @helm
-def test_c06_matrix_alternatives_over_all_four_arenas():
-    """(Named five-arenas at authoring; C08's U9.3 sweep — the arenas are four
-    now, the alternation law is unchanged.)"""
+def test_c06_matrix_alternatives_over_the_full_arena_set():
+    """(Named five at authoring, four after C08's sweep, five again at C09's
+    `n` — the name now follows the table, not the era, so the wave-companions
+    in test_strata_c09_ornith_arena.py carry the growth law and this arm just
+    asserts the alternation.)"""
     cfg = S.inner_config(_docs())
     vars_ = (cfg.get("matrix") or {}).get("vars") or {}
     assert vars_.get("q") == S.Q4_ID, f"matrix.vars.q = {vars_.get('q')!r}"
@@ -112,7 +115,7 @@ def test_c06_matrix_alternatives_over_all_four_arenas():
             "another arena recreates #1715's node OOM"
         )
     reachable = {next(iter(c & arenas)) for c in combos if c & arenas}
-    assert reachable == arenas, f"arenas reachable in sets.main: {sorted(reachable)}, want all four"
+    assert reachable == arenas, f"arenas reachable in sets.main: {sorted(reachable)}, want all of them"
     assert S.profile_files(_docs()) == S.expected_profile_files(cfg["models"]), (
         "profile ConfigMap key set diverges from the served arenas"
     )
@@ -228,9 +231,10 @@ def test_c06_peers_wave_is_the_final_id_set():
     peers = yaml.safe_load(outer["data"]["config.yaml"])["peers"][S.PEER_NAME]["models"]
     assert peers == S.expected_strata_peers(served), f"peers {peers} diverge from the wave for {sorted(served)}"
     if S.Q4_ID in served:
-        assert peers == [S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID], (
-            f"the C08-final peers list must be the four served ids in card order: {peers} "
-            "(five at C06 authoring; C08's U9.3 sweep removed the abliterated entry)"
+        assert peers == [S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID], (
+            f"the final peers list must be the served Strata ids in card order: {peers} "
+            "(four after C08's sweep; C09's ornith arena grows the fifth — the evidence wave "
+            "chain records both states)"
         )
 
 

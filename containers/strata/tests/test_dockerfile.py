@@ -28,13 +28,13 @@ README = CONTAINER_DIR / "README.md"
 
 STRATA_DEP = "ghcr.io/niko1221/strata"
 LLAMA_SWAP_DEP = "ghcr.io/mostlygeek/llama-swap"
-# C07 (U9.4) re-pin: v0.2.8 (app 0.2.8 + engine packages 0.1.54, #4518 PLE/conv
-# fix) rides the same rebuild as the init lift. Designed-red until dev lands the
-# re-pin: the tag/digest/pairing arms below read these constants, so they name
-# the moved pin, not a weakened law. Digests re-read live from GHCR 2026-10-31
-# (anonymous token+manifest read; RESEARCH R4 [B2] carried the same digests —
-# chained re-verification, R3 law).
-STRATA_VERSION = "0.2.8"
+# C09 (U10.2/U11) re-pin: v0.2.9 (app 0.2.9 + engine packages 0.1.55) rides
+# the vendored-constants carry rebuild (chunks/C09.md a). Designed-red until
+# dev lands the re-pin: the tag/digest/pairing arms below read these
+# constants, so they name the moved pin, not a weakened law. Digests from
+# RESEARCH R5 [C2] (GHCR 0.2.9 pair, chained re-verification, R3 law — dev
+# re-reads live at landing).
+STRATA_VERSION = "0.2.9"
 FLAVOR_PRIMARY = "rocm-gfx120x"
 FLAVOR_STRIX = "rocm-gfx1151"
 # RESEARCH §1 measured digests — the pin VALUES that survive every ruling.
@@ -43,14 +43,16 @@ FLAVOR_STRIX = "rocm-gfx1151"
 # loop class; issue #3421 is the documented WHY, contradictions #6/#7).
 FLAVOR_PINS = {
     # flavor tag suffix -> (full literal tag, recorded digest)
-    FLAVOR_PRIMARY: (f"{STRATA_VERSION}-{FLAVOR_PRIMARY}", "sha256:39545670326d386a779efdba4a9a4a84844c904d13e1bf04e23556068da97f99"),
-    FLAVOR_STRIX: (f"{STRATA_VERSION}-{FLAVOR_STRIX}", "sha256:c4b970d0940b084502093f6949ac1a3411ec4e64bc58f557e6283715409ac799"),
+    FLAVOR_PRIMARY: (f"{STRATA_VERSION}-{FLAVOR_PRIMARY}", "sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39"),
+    FLAVOR_STRIX: (f"{STRATA_VERSION}-{FLAVOR_STRIX}", "sha256:2ac97575713efaa37299d914c628d3f1d40b68b893dd78430f7ea4bd18c5084a"),
 }
-# C07 re-pin: engine package labels baked via COPY --from + verify test -x, and
-# the source-checkout clone tag the setup.sh provisioning runs against.
-ENGINE_VERSION = "0.1.54"
-STALE_STRATA_TAGS = ("0.2.7", "0.2.4", "0.2.5", "0.2.6")
-STALE_ENGINE_VERSION = "0.1.52"
+# C09 re-pin: engine package labels baked via COPY --from + verify test -x
+# (0.1.54 retires with the v0.2.8 era), and the source-checkout clone tag the
+# setup.sh provisioning runs against — the strata-src stage also applies
+# carry/ornith-q36.patch (the two-hunk constants carry).
+ENGINE_VERSION = "0.1.55"
+STALE_STRATA_TAGS = ("0.2.7", "0.2.4", "0.2.5", "0.2.6", "0.2.8")
+STALE_ENGINE_VERSION = "0.1.54"
 ENGINE_ROOT = "/opt/strata/components/engine"
 SERVE_ENTRY = "/opt/strata/terminal/bin/strata"
 FETCH_ENTRY = "/opt/strata/bin/fetch_models.sh"
