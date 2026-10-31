@@ -50,7 +50,7 @@ The single authority for the Lifecycle consumption; `pipeline-role-coord` and th
 | `Test` | the ONE `agent-test` session writing every chunk's tests before implementation |
 | `Code` | the chunk loop: the coord's `agent-dev-local`/`agent-dev-pr` variant implements, `agent-review` reviews, one chunk at a time |
 | `Review` | the final whole-plan review — one fresh `agent-review` session over all chunks |
-| `Deploy` | the `-pr` variants: push the ticket branch + open the PR per `pipeline-push-pr` (the explicit-user-request rule still governs); the `-local` variants incl. the alias: report "ready — commits local" and stop; merge and ArgoCD sync stay human-owned either way |
+| `Deploy` | the `-pr` variants: push the ticket branch + open the PR per `pipeline-push-pr` (the explicit-user-request rule still governs); the `-local` variants incl. the alias: report "ready — commits local" and stop; merge and ArgoCD sync stay human-owned either way; a checked `Deploy` additionally launches the coord's deploy fixer per `pipeline-role-coord` step 8b — definition-only until first fire |
 | `Single Session` | replaces the Test/Code fan-out: ONE session of the coord's `agent-dev-local`/`agent-dev-pr` variant implements the whole approved plan (running the plan's Commands itself — no chunk loop, no separate test session), then ONE final `agent-review`; `Plan` still runs when checked |
 
 ### Transition — cards still carrying the legacy Research checklist
@@ -320,6 +320,8 @@ On `agent-board-coord` family runs, the coordinator's `pipeline-role-coord` step
 ## Batched question protocol
 
 Until the plan is finalized, no one in this flow calls the `question` tool on the user:
+
+**One sanctioned exception**: the Provider filtering kickoff-round question — a run that takes an unlabeled card asks which provider applies at claim, before any planning work starts (Provider filtering subsection); the batched round below is unaffected by it.
 
 - `agent-board-coord` AND every agent it launches for research/planning work MUST NOT ask the user questions.
 - Every question is recorded in the plan file's **Open questions** section — the question, the best-guess answer taken, and its impact — and work continues on the best guess.

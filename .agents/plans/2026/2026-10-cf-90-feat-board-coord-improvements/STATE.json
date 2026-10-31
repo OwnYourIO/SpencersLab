@@ -24,6 +24,7 @@
     },
     "local": false,
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "origin_dir": "/home/coder/SpencersLab",
     "board_context": {
       "board_id": "TNQJ2BrXenZovngTS",
       "swimlane_id": "jLzy39L7djCRr67SF",
@@ -154,7 +155,19 @@
     "verdict": "REPLAN-CANDIDATES: 2 text-only drift fixes (both-approval runbook; GitHub draft-PR CI premise FALSE) — folded via fix round per researcher's own route; no chunk decomposition change. RESEARCH.md post-planning section appended by the session.",
     "at": "2026-10-31"
   },
-  "final_review": null,
+  "final_review": {
+    "r1": {
+      "session": "ses_e6bdf5d71ffefkNZTqWp5kk29z",
+      "verdict": "CHANGES_REQUESTED",
+      "at": "2026-10-31",
+      "summary": "All validations re-run: no cf-90-attributable reds (full suite incl. chart-smoke baseline-identity at 7e07a6273). Card-ask walk: all bullets SHIPPED or DEFERRED-BY-DESIGN with the card's own scoping as license. Cross-chunk coherence verified (boards internal, step-8b/step-10/exit, run-tag completeness, loop-skill-stagemap, six-twin parity, matrix-frontmatter parity post-5b89752e3, C01/C03/live-board Inbox agreement). FINDINGS: MAJOR L10 card body carried the void F8 premise without pointer -> FIXED by coord via update_card (corrected contract + assumed-flow pointer; DECISIONS fold entry). MINOR boards batched-protocol exception sentence + C06 wording folds (commit-less variant, minted-vs-inherited, survival path, optional Stage-map Deploy clause) -> dev-variant fix round r1. MINOR C07 timing bookkeeping -> DECISIONS line done. NITs: stale '(also enabled, runs no gate)' prose RULED IGNORED; -2-residue FRICTION item closeable fixed; origin_dir recorded. HUMAN post-merge runbook: approve BOTH loop tasks (API fingerprint rotated + Local first-time), Always-Allow toggles both, one live /wekan-board-provision run, card Finished call.",
+      "handoff": "full RESULT verbatim captured in chunks review-notes appends + this summary; commands_run: every suite green or documented-baseline-red (gate t17, s4, m4, i4, create-list t2, board-provisioning t2/t7 cascade); rulesync x2+--check; aislop 0e/0w; node --test 12/12; dev-boards live spot-checks incl. L10 staleness discovery.",
+      "fold_round": {
+        "dev_sweep": "ses_e6bbca6aaffeCpwb0puzJYK3Lm — DONE: boards batched-protocol exception sentence (verbatim, precedes the ban), role-deploy commit-less-variant + minted-vs-inherited + survival-path, Stage-map Deploy pointer clause (agent-name-free per c18/t5); rulesync x2+--check clean; gate subset (rulesync-surface 23, agents-md 9, noop 6, provider-loops 7, deploy 6, push-pr 9, gate minus t17 21) + aislop 0e/0w all green; tests untouched.",
+        "coord_folds": "L10 card body corrected via update_card (corrected tier contract + assumed-flow pointer); DECISIONS final-review fold entry + C07 timing substance line + nit rulings; origin_dir recorded; FRICTION -2-residue and MINOR-1 closed fixed."
+      }
+    }
+  },
   "blocked": [],
   "deferred": []
 }
