@@ -94,13 +94,18 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, after routed t3 test-repair)",
+      "dev_session": "ses_e6c684dceffec3GfyxXXYXZ6k4",
+      "handoffs": [
+        "RESULT (C04 dev r1, ses_e6c684dceffec3GfyxXXYXZ6k4) status: BLOCKED-on-validation, files DONE — both loop files complete per AC1-AC3/AC7 (API provider contract + ask + sibling/hand-off + retirement lines in pipeline-worker.md comment block lines 26-41; pipeline-worker-local.md new with pinned frontmatter, planned-taker body, D30 prompt); gate script byte-unchanged; no OpenChamber ops; aislop 0e/0w; HOLDs green (noop-marker 6 ok, gate minus t17 21 ok, pipeline-locks-tick node --test 12/12). Blocker = validation_at_fault on tests/provider-loops/surface.sh t3 (grep 'qwen\\.3\\.8' mis-escaped; t1 and t3 mutually unsatisfiable — normative spelling qwen3.8-flash-next-strata). deviations: (1) API provider sentences placed in comment block — prose verbatim-pinned to plugin TICK_PROMPT by pipeline-locks-tick.test.ts HOLD; body-incl-comments is the prompt (RESEARCH F3) so instruction reaches scheduled runs; t2/t5 needles pass; COORD ACCEPTED, recorded in DECISIONS; (2) C07 NIT-1 'run-tag absent' wording disproven in pipeline-worker.md (blob identical main/HEAD, zero git -S hits) — retirement line folded anyway, Local file verified clean; (3) no DECISIONS writes by dev (matrix deny, C01/C02 class). Route: t3 mechanical repair to test session (silent per gates 2.d).",
+        "RESULT (validation repair, test session ses_e6d1e15f0ffen3EgDuCAEhq09x continued) status: DONE — t3 dot moved (qwen\\.3\\.8 -> qwen3\\.8, single mis-escape site enumerated across sibling suites: t1 pin, t3 messages, rulesync c11, pipeline-models M1/M2/M4/M5, noop-marker — all normative); provider-loops now 7/7, noop N1..N6, gate minus t17 green; aislop 0e/0w. Item-2 finding: NO prose-placement pin existed (t2/t5 use whole-file co-location windows incl. comments; t7 strips only frontmatter) — placement satisfies the suite as designed, nothing relaxed. Committed by test session itself: 4c80e4881.",
+        "RESULT (C04 review r1, fresh ses_e6c596e4effegQZMJ2Ie1N0xa6) status: DONE verdict APPROVED — all seven validations re-run independently green (provider-loops 7/7, noop-marker N1..N6, gate subset, TICK_PROMPT HOLD 12/12, gate script byte-unchanged vs two baselines, frontmatter exact, aislop 0e/0w); final-approval semantics verified in both bodies incl. negative-shape zero-hits; deviations 1-2 mechanically verified as adjudicated; t3 repair integrity confirmed (one-line, fully anchored). MINOR-1: DECISIONS entry for the placement acceptance was claimed-but-absent -> appended by coord at commit time (done). Loop files commit-ready."
+      ]
     },
     "C05": {
       "status": "pending",

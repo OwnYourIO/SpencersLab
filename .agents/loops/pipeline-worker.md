@@ -23,6 +23,23 @@ enabled: true is the owner's own toggle as landed on main (080c9878a,
 The legacy "Hourly Pipeline call" daily task (also enabled, runs no gate) is
 human-owned scheduler hygiene — retiring or repointing it is the owner's call.
 
+cf-90 Provider round: this scheduled task serves `Provider: API` — its walk
+takes only cards explicitly labeled `Provider: API`, never unlabeled cards;
+the Local sibling pipeline-worker-local.md (hourly :30) is the planned taker
+of cards without a Provider label. The pickup-filter semantics live in the
+boards skill's Provider filtering section — this file names the provider,
+never restating the walk. A run pointed at an unlabeled card arrives only
+through a manual launch the user initiates, and it asks which provider
+applies before any Model(s)/provider routing, then requests the human apply
+the matching `Provider:` label (labels stay human-owned). OpenChamber
+hand-offs stay human-owned and one-time (DECISIONS): the Local task's first
+sync needs the loopApprovals approval (its task fingerprint), and
+permissionAutoAccept ("Always Allow") is toggled once per task in the task
+UI — the file format cannot express it, the toggle survives loop re-sync,
+and ledger card L1 tracks removing the need. Run tags are retired for every
+flavor (cf-90): each run's surfaces are named by the card's final slug
+alone.
+
 Swap target (checklist item 3): slash dispatch of a plugin command from loop
 text is unproven on the pinned OpenCode v2.1.4 (D30 — opencode run sent a
 "/cmd" line as literal text), so the body below is the plain-text worker
