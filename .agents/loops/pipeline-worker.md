@@ -1,7 +1,7 @@
 ---
 name: pipeline-worker
-schedule: "0 * * * *"
-enabled: false
+schedule: 0 * * * *
+enabled: true
 model: openrouter/qwen/qwen3.8-flash
 agent: agent-board-coord
 ---
@@ -17,8 +17,8 @@ Live state, verified 2026-10-29 against OpenChamber scheduledTasks (RESEARCH
 W2 F5 in .agents/plans/2026/2026-10-chore-board-tick-cleanup/): this file
 syncs as the "pipeline-worker" task — enabled, cron 0 * * * * UTC, agent
 agent-board-coord, lastRun 2026-10-29T13:19:41Z success. The frontmatter
-enabled: false is the repo-shipped default, not the live toggle: scheduler
-decisions are human-owned (OQ10 ruling, docs-only reconciliation), and
+enabled: true is the owner's own toggle as landed on main (080c9878a,
+2026-10-30): scheduler decisions stay human-owned (OQ10 ruling), and
 /pipeline-boards-hourly with its gate stays the documented fallback entry.
 The legacy "Hourly Pipeline call" daily task (also enabled, runs no gate) is
 human-owned scheduler hygiene — retiring or repointing it is the owner's call.

@@ -257,8 +257,9 @@ all-or-nothing. Cards with disjoint sets run as parallel
 `agent-board-coord` iterations; the hourly entry point is the live OpenChamber
 loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as synced and
 enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo file ships
-`enabled: false` — the toggle is human-owned and `/pipeline-boards-hourly`
-+ its gate stay the documented fallback). The
+`enabled: true` — the owner's own toggle, landed via main 080c9878a;
+scheduler hygiene stays human-owned — and `/pipeline-boards-hourly` + its
+gate stay the documented fallback). The
 top-level "finished" push reaches the phone unless the coord marked the
 session no-work AND the launch was of the scheduled kind — the `boards`
 skill's no-op marker, read by `question-notify`; manual no-ops always push.

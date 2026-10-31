@@ -15,8 +15,9 @@
 #   N4  scheduler docs truth (AC6) — the loop file and AGENTS.md/rules stop
 #       claiming "shipped disabled" as current fact; the live OpenChamber state
 #       and the human-owned hygiene are named; the silence rule rides the
-#       generated sentence. The repo file's `enabled: false` frontmatter STAYS
-#       (OQ10: docs-only; live toggles are the user's).
+#       generated sentence. The frontmatter keeps exactly ONE enabled: row;
+#       its value is settled `true` since main 080c9878a (the owner's own
+#       toggle — OQ10 bounds who flips it, not what the bytes may pin).
 #   N5  RESULT posture intact — the no-op ends still read NEEDS_INFO (C02:
 #       "RESULT stays as today"); the suppression is an ALERT-scope change,
 #       never a status change.
@@ -191,16 +192,23 @@ fi
 
 # --- N4: scheduler docs truth (AC6, OQ10 docs-only ruling) ----------------------
 if want n4; then
-  # Negative arms first: the stale PRESENT-TENSE claims leave; the frontmatter
-  # truth (`enabled: false` ships disabled in the repo) stays.
+  # Negative arms first: the stale PRESENT-TENSE claims leave. The frontmatter
+  # carries exactly one enabled: row, and its value is the settled one: main
+  # 080c9878a recorded the human exercising the OQ10-owned toggle (false ->
+  # true, 2026-10-30). The permanent duty is the single authoritative row —
+  # a second row or a silent flip-back mid-file reddens here, while the value
+  # itself tracks landed state and a future deliberate flip re-pins the
+  # settled-value arm rather than deleting it.
   grep -qF 'Shipped DISABLED (D9/Q5)' "$LOOP" \
     && fail "N4[C02 AC6]: $LOOP still asserts 'Shipped DISABLED (D9/Q5)' as current fact — 2026-10-29 OpenChamber state contradicts it (RESEARCH W2 F5)"
   grep -qF 'shipped disabled until the cf-76 live smoke passes' "$RULES_SRC" \
     && fail "N4[C02 AC6]: $RULES_SRC still claims the loop ships disabled until the live smoke as current fact — reconcile to the 2026-10-29 state (AGENTS.md regenerates from it)"
   grep -qF 'shipped disabled until the cf-76 live smoke passes' AGENTS.md \
     && fail "N4[C02 AC6]: AGENTS.md still carries the stale fallback-entry sentence — regenerate from the rules source"
-  grep -qE '^enabled: false$' "$LOOP" \
-    || fail "N4[C02 OQ10]: $LOOP lost its enabled:false frontmatter — docs-only task: the repo file stays disabled; the LIVE toggle is human-owned"
+  [ "$(grep -cE '^enabled: (true|false)$' "$LOOP")" -eq 1 ] \
+    || fail "N4[C02 OQ10]: $LOOP does not carry exactly one frontmatter enabled: row — the repo toggle must be a single authoritative line"
+  grep -qE '^enabled: true$' "$LOOP" \
+    || fail "N4[settled 080c9878a]: $LOOP frontmatter is not enabled: true — the human-owned flip landed on main; a future deliberate flip re-pins this arm to the new settled value, it is never deleted"
   # Positive arms: the verified live state is named, the hygiene is human-owned,
   # and the silence rule rides the generated sentence.
   python3 "$TMP/win.py" --ci "$LOOP" 900 'openchamber' 'enabled' '2026-10-29' \
@@ -211,7 +219,7 @@ if want n4; then
     python3 "$TMP/win.py" --ci "$f" 400 'scheduled' 'no-work' \
       || fail "N4[C02 Tasks]: $f lacks the silence-rule clause (a top-level scheduled-finished push happens unless the coord marked the session no-work) — red before C02 dev"
   done
-  ok "N4[C02 AC6]: stale current-tense claims gone, frontmatter truth kept, live state + human-owned hygiene + silence clause recorded"
+  ok "N4[C02 AC6]: stale current-tense claims gone, one authoritative settled enabled: row, live state + human-owned hygiene + silence clause recorded"
 fi
 
 # --- N5: RESULT posture unchanged (C02: "RESULT stays as today") ----------------

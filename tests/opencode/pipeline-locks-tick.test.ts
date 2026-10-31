@@ -157,7 +157,12 @@ describe("T2 the loop file — OpenChamber shape, shipped disabled (AC 3)", () =
     assert.equal(fields.agent, "agent-board-coord", "the tick session runs as the board-coord ALIAS (D15)");
     assert.equal(fields.model, "openrouter/qwen/qwen3.8-flash", "Q2 ruling: the loop/worker session runs the code tier");
     assert.equal(fields.schedule, "0 * * * *", "hourly cadence spans the 2 h stale window twice (D21)");
-    assert.match(readFileSync(LOOP, "utf8"), /^enabled:\s*false$/m, "the bytes carry the literal `enabled: false` — a careless flip must fail loudly (AC 3)");
+    // The literal tracks the LANDED toggle, not a frozen default: the owner
+    // flipped false -> true on main 080c9878a (2026-10-30). The AC-3 duty is
+    // unchanged — an unsynchronized flip must fail loudly — so the byte
+    // stays pinned and a future deliberate flip re-pins it rather than
+    // deleting the assertion.
+    assert.match(readFileSync(LOOP, "utf8"), /^enabled:\s*true$/m, "the bytes carry the literal `enabled: true` — the settled owner toggle (080c9878a); an unsynchronized flip must fail loudly (AC 3)");
   });
 
   it("ships the D30 plain-text worker body as the DEFAULT (fact 4 live-deferred on v2.1.4)", () => {

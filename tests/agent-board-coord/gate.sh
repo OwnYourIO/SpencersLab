@@ -310,11 +310,10 @@ PY
 # The delta check still rejects any extra rule before or after the pinned six.
 cat >"$TMP/atpos.py" <<'PY'
 # Arm-B line twin (tests-edit-perms T10/D10), forms-aware. The sanctioned
-# literal family block (GET/PATCH pair, mint, session-origin, date, probe,
-# ls — 2026-10-30 merge re-seat: `ls *` joined the scoped-read family AFTER
-# the probe row, per the reconciliation entry in permissions.md; the retired
-# trailing-ls rung after the git block is OBSOLETE for the coord family
-# because cf-72 made the push tail the absolute-last shell rows) sits
+# literal family block (GET/PATCH pair, mint, session-origin, date, then the
+# scoped-read tail — preload-probe plus the cf-88 ls/pwd diagnostic pairs,
+# `ls *` deduped into one row serving both waves; cf-72's absolute-last push
+# tail rules out any row trailing the git block) sits
 # directly after the three lines of the `opencode '*' allow` rule. Rungs are
 # OPTIONAL longest-first continuations — absolute presences live in
 # agent-perms A16 (ls) and tests/board-preload-probe/surface.sh B2 (probe),
@@ -334,8 +333,16 @@ WANT2 = [('resource: opencode api get /api/session*', 'effect: allow'),
 WANT3 = WANT2 + [('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow')]
 WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
 WANT5 = WANT4 + [('resource: date *', 'effect: allow')]
-WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
-WANT7 = WANT6 + [('resource: ls *', 'effect: allow')]
+# 2026-10-30 cf-88 re-pin: verifying the run's own kickoff surfaces is
+# coordination, not investigation — the ls/pwd surface-check pairs (bare +
+# spaced rows) joined the family. The 2026-10-31 merge union: the canonical
+# literal is WANT10 = SHELL5 + [preload-probe, ls, ls *, pwd, pwd *] (ten
+# rows / thirty lines, `ls *` deduped across the waves). The merge-1
+# WANT6/WANT7 and cf-88's WANT9 are BROKEN prefixes of the union (neither
+# lands whole), so only SHELL2..5 and WANT10 survive the ladder.
+WANT10 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow'),
+                  ('resource: ls', 'effect: allow'), ('resource: ls *', 'effect: allow'),
+                  ('resource: pwd', 'effect: allow'), ('resource: pwd *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -350,7 +357,7 @@ def noncomment(pos):
         pos += 1
     return pos
 matched_end = 0
-for want in (WANT7, WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
+for want in (WANT10, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
     pos = at
     ok = True
     for rule in want:
@@ -363,8 +370,9 @@ for want in (WANT7, WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorte
         matched_end = pos
         break
 if not matched_end:
-    print("none of the sanctioned literal family blocks (SHELL2 six lines through SHELL7 twenty-one, "
-          f"comments skipped) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 24]})"); sys.exit(1)
+    print("none of the sanctioned literal family blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve, "
+          "SHELL5 fifteen, SHELL10 thirty — comments skipped, the union family's broken intermediate "
+          f"rungs never match) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 30]})"); sys.exit(1)
 # cf-72 B-block re-pin (2026-10-29, card #72): after the matched sanctioned
 # block the only permitted continuation is comment lines (source tree only —
 # the rulesync YAML round-trip strips them from the generated mirror) plus
@@ -856,7 +864,8 @@ if want t14; then
       .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
-      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*) : ;;
+      .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
+      .agents/plans/2026-10-30-chore-coord-surface-grants.md) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 widenings)" ;;
     esac
   done <"$TMP/changed.txt"
@@ -982,9 +991,9 @@ others = [p.get("resource") for p in perms if p.get("action") == "shell"
           and p.get("resource") != "*"
           and p.get("resource") not in SANCTIONED_SCRIPTS
           and p.get("resource") != "date *"
-          and not (p.get("resource") == "ls *" and p.get("effect") == "allow")]
+          and not (p.get("resource") in ("ls", "ls *", "pwd", "pwd *") and p.get("effect") == "allow")]
 if others:
-    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = API pair + the sanctioned scoped-read family (mint, origin, preload-probe, date, ls — the 2026-10-30 re-seat) + git block + ask baseline)")
+    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = API pair + the sanctioned script allows (mint, origin, preload-probe) + the date allow + the four cf-88 diagnostic allows (ls, ls *, pwd, pwd * — deduped ls) + git block + ask baseline)")
 # 2026-10-27 date-grant re-pin: the kickoff in-work mark embeds
 # $(date +%s%3N) in the patch payload; the shell matcher extracts command
 # substitutions and checks the date subcommand against this agent's own

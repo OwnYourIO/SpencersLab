@@ -451,6 +451,8 @@ fi
 # (agent-perms A9 window-pin), all in-scope per its chunks/C02.md.
 # merge round (2026-10-30): cf-68 joins the admit beside cf-83 — merged ticket
 # folders ride the changed-paths walk; guards red on landed folders bury later checks.
+# merge2 round (2026-10-31): cf-88 lands a ROOT plan doc, not a folder — admitted
+# whole like the folders; question-notify stays admitted for CHUNK_BASE runs.
 if want c8; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -483,6 +485,7 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
       .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
       .agents/plans/2026/2026-10-chore-board-tick-cleanup/*|\
+      .agents/plans/2026-10-30-chore-coord-surface-grants.md|\
       .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore) : ;;
       *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
     esac

@@ -324,9 +324,9 @@ others = [p.get("resource") for p in perms if p.get("action") == "shell"
           and p.get("resource") != "*"
           and p.get("resource") not in SANCTIONED_SCRIPTS
           and p.get("resource") != "date *"
-          and not (p.get("resource") == "ls *" and p.get("effect") == "allow")]
+          and not (p.get("resource") in ("ls", "ls *", "pwd", "pwd *") and p.get("effect") == "allow")]
 if others:
-    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the sanctioned scoped-read family (mint, origin, preload-probe, date, ls — the 2026-10-30 re-seat) + the git block + the ask baseline, nothing more)")
+    errs.append(f"non-API non-git shell rows present: {others} (coord shell surface = the two API allows + the sanctioned scoped-read family (mint, origin, preload-probe, date) + the four cf-88 diagnostic allows (ls, ls *, pwd, pwd * — the ls row deduped, serving C01's grant duty and the cf-88 pair) + the git block + the ask baseline, nothing more)")
 # 2026-10-27 date-grant re-pin: the kickoff in-work mark embeds
 # $(date +%s%3N) in the patch payload; the shell matcher extracts command
 # substitutions and checks the date subcommand against this agent's own
@@ -368,10 +368,10 @@ PY
 # no degree of freedom left to drift in.
 cat >"$TMP/atpos.py" <<'PY'
 # Arm-B line twin, forms-aware. The sanctioned literal family block (GET/PATCH
-# pair, mint, session-origin, date, probe, ls — the 2026-10-30 merge re-seat
-# put `ls *` INSIDE the scoped-read family after the probe row: cf-72 made the
-# push tail the absolute-last shell rows, so the retired trailing-ls rung is
-# OBSOLETE for the coord family). Rungs are OPTIONAL longest-first
+# pair, mint, session-origin, date, then the scoped-read tail — the preload-
+# probe row and the cf-88 ls/pwd diagnostic pairs, with `ls *` deduped into
+# one row serving both waves; cf-72 made the push tail the absolute-last
+# shell rows, so no rung trails the git block any more). Rungs are OPTIONAL longest-first
 # continuations — absolute presences live in agent-perms A16 (ls) and
 # tests/board-preload-probe/surface.sh B2 (probe); this twin never reddens a
 # healthy pre-wave tree. Block matching skips source-tree comment lines
@@ -390,8 +390,16 @@ WANT2 = [('resource: opencode api get /api/session*', 'effect: allow'),
 WANT3 = WANT2 + [('resource: bash scripts/kickoff-mint-branch.sh *', 'effect: allow')]
 WANT4 = WANT3 + [('resource: bash scripts/session-origin.sh*', 'effect: allow')]
 WANT5 = WANT4 + [('resource: date *', 'effect: allow')]
-WANT6 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow')]
-WANT7 = WANT6 + [('resource: ls *', 'effect: allow')]
+# 2026-10-30 cf-88 re-pin: verifying the run's own kickoff surfaces is
+# coordination, not investigation — the ls/pwd surface-check pairs (bare +
+# spaced rows) joined the family. The 2026-10-31 merge union: the canonical
+# literal is WANT10 = SHELL5 + [preload-probe, ls, ls *, pwd, pwd *] (ten
+# rows / thirty lines). The merge-1 WANT6/WANT7 and cf-88's WANT9 are BROKEN
+# prefixes of the union (neither lands whole), so only the pre-wave SHELL2..5
+# rungs and WANT10 survive the ladder.
+WANT10 = WANT5 + [('resource: bash scripts/board-preload-probe.sh *', 'effect: allow'),
+                  ('resource: ls', 'effect: allow'), ('resource: ls *', 'effect: allow'),
+                  ('resource: pwd', 'effect: allow'), ('resource: pwd *', 'effect: allow')]
 hits = []
 for i, l in enumerate(lines):
     am = ANCHOR.match(l)
@@ -406,7 +414,7 @@ def noncomment(pos):
         pos += 1
     return pos
 matched_end = 0
-for want in (WANT7, WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
+for want in (WANT10, WANT5, WANT4, WANT3, WANT2):  # longest first: shorter blocks are prefixes
     pos = at
     ok = True
     for rule in want:
@@ -419,8 +427,9 @@ for want in (WANT7, WANT6, WANT5, WANT4, WANT3, WANT2):  # longest first: shorte
         matched_end = pos
         break
 if not matched_end:
-    print("none of the sanctioned literal family blocks (SHELL2 six lines through SHELL7 twenty-one, "
-          f"comments skipped) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 24]})"); sys.exit(1)
+    print("none of the sanctioned literal family blocks (SHELL2 six lines, SHELL3 nine, SHELL4 twelve, "
+          "SHELL5 fifteen, SHELL10 thirty — comments skipped, the union family's broken intermediate "
+          f"rungs never match) follows the opencode '*' allow at the pinned position (want under indent '{ind}', got {lines[at:at + 30]})"); sys.exit(1)
 # cf-72 B-block re-pin (2026-10-29, card #72): after the matched sanctioned
 # block the only permitted continuation is comment lines (source tree only —
 # the rulesync YAML round-trip strips them from the generated mirror) plus

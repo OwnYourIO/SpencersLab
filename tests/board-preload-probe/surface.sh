@@ -97,8 +97,9 @@ if want b2; then
       || fail "B2[OQ-N1]: $f carries $c rows of 'resource: $PROBE_RES', want exactly one (the approved spaced-plan literal, counted as a fixed string — an unspaced minting fails the position python below, not this count)"
   done
   # Uniform position (the mint/session-origin/date grant precedent): the row
-  # lands after `date *`, before the git block — parsed order, all twelve
-  # files; a per-variant drift would read as a non-uniform block.
+  # lands after `date *`, and the cf-88 surface block (ls, ls *, pwd, pwd *)
+  # follows it directly, the whole ten-row family before the git block —
+  # parsed order, all twelve files; a per-variant drift reads as non-uniform.
   if ! python3 - "${CF_SRC[@]}" "${CF_GEN[@]}" <<'PY'
 import re, sys, yaml
 PROBE = "bash scripts/board-preload-probe.sh *"
@@ -117,9 +118,10 @@ for path in sys.argv[1:]:
     elif d is None or g is None or not (d < p < g):
         bad.append(f"{path}: probe row at {p} is not between the date allow ({d}) and the git block ({g}) — the uniform block shape broke")
     else:
-        nxt = perms[p + 1]
-        if not (nxt.get("action") == "shell" and nxt.get("resource") == "ls *" and nxt.get("effect") == "allow"):
-            bad.append(f"{path}: the row after the probe allow is not the in-family `ls *` allow ({nxt}) — the 2026-10-30 re-seat order is …date, probe, ls directly before the git block")
+        block = perms[p + 1:p + 5]
+        want = [{"action": "shell", "resource": r, "effect": "allow"} for r in ("ls", "ls *", "pwd", "pwd *")]
+        if block != want:
+            bad.append(f"{path}: the cf-88 surface block after the probe row is {block}, want the four diagnostic allows in order (ls, ls *, pwd, pwd * — ls * deduped, one row serving C01 and cf-88) directly before the git block")
 if bad:
     print("; ".join(bad)); sys.exit(1)
 PY
@@ -150,7 +152,32 @@ PY
 )
     [ "$v" = "allow" ] || fail "B3[OQ-N1]: $f effective verdict for '$PROBE_RES lf1' is '$v', want allow (a deny-baseline family that forgets the row reads the probe as ungranted)"
   done
-  ok "B3[OQ-N1]: every coord variant effectively allows the spaced probe call (last-match-wins verdict, not row presence alone)"
+  # cf-88 union cells: the diagnostic verdicts ride the same family — bare
+  # `ls`/`pwd` and the spaced `ls -a` form must evaluate allow on sources AND
+  # mirrors through the shipped-matcher simulation (same engine as agent-perms
+  # A16/A12).
+  for f in "${CF_SRC[@]}" "${CF_GEN[@]}"; do
+    for cmd in "ls" "pwd" "ls -a worktree-check"; do
+      v=$(python3 - "$f" "$cmd" <<'PYPOL' 2>/dev/null || true
+import fnmatch, re, sys, yaml
+path, command = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+perms = (fm.get("opencode") or {}).get("permissions") or fm.get("permissions") or []
+verdict = None
+for r in perms:
+    a = str(r.get("action", ""))
+    if not (a == "shell" or fnmatch.fnmatch("shell", a)):
+        continue
+    if fnmatch.fnmatch(command, str(r.get("resource", ""))):
+        verdict = r.get("effect")
+print(verdict)
+PYPOL
+)
+      [ "$v" = "allow" ] || fail "B3[cf-88 union]: $f verdict for '$command' is '$v', want allow (the diagnostic pairs must evaluate through the matcher, not just sit in the block)"
+    done
+  done
+  ok "B3[OQ-N1 + cf-88]: every coord variant/mirror effectively allows the spaced probe call and the bare/spaced diagnostic commands (last-match-wins verdicts, not row presence alone)"
 fi
 
 # --- B4: the matrix moves with the rows (permissions.md drift lesson) -----------
