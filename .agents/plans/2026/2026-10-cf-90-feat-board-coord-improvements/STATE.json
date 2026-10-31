@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-cf-90-feat-board-coord-improvements",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e6f74d6f5ffeUXj2HQl29vGcwf",
   "test_session": "ses_e6d1e15f0ffen3EgDuCAEhq09x",
   "current_wave": 3,
@@ -166,6 +166,12 @@
         "dev_sweep": "ses_e6bbca6aaffeCpwb0puzJYK3Lm — DONE: boards batched-protocol exception sentence (verbatim, precedes the ban), role-deploy commit-less-variant + minted-vs-inherited + survival-path, Stage-map Deploy pointer clause (agent-name-free per c18/t5); rulesync x2+--check clean; gate subset (rulesync-surface 23, agents-md 9, noop 6, provider-loops 7, deploy 6, push-pr 9, gate minus t17 21) + aislop 0e/0w all green; tests untouched.",
         "coord_folds": "L10 card body corrected via update_card (corrected tier contract + assumed-flow pointer); DECISIONS final-review fold entry + C07 timing substance line + nit rulings; origin_dir recorded; FRICTION -2-residue and MINOR-1 closed fixed."
       }
+    },
+    "r2": {
+      "session": "ses_e6bb56fc6ffekvp0qoFiVj755h",
+      "verdict": "APPROVED",
+      "at": "2026-10-31",
+      "summary": "All r1 findings verified closed (L10 board body corrected + pointer, L11/L12 anchors hold, boards exception + stage-map clause, role-deploy folds, bookkeeping, STATE valid JSON); gate subset + aislop + TICK parity all green at f62b66ae6; fold commits one-concern each. plan_status complete; card to Review; human runbook rides the summary comment."
     }
   },
   "blocked": [],
