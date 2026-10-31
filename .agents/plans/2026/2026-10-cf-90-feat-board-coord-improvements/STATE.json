@@ -1,0 +1,119 @@
+{
+  "feature": "2026/2026-10-cf-90-feat-board-coord-improvements",
+  "plan_status": "approved",
+  "coord_session": "ses_e6f74d6f5ffeUXj2HQl29vGcwf",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-10-31T15:45:00Z",
+  "handoffs": [
+    "RESULT (plan, 2026-10-31, ses_e6e12ba47ffeDfz9WmIw7RVPrw) status: DONE; 7 chunks/3 waves drafted; RESEARCH.md untouched; batched questions returned (7); friction carried: deployed dev-boards lags repo (:v87 pin, create_label/create_list absent -> REST fallback + L4 ledger card); stale residue forced -2 worktree/branch suffix -> proceed on -2, C03 cleanup prevents recurrence.",
+    "RESULT (plan rework 1, batched answers folded): answers 1-3,7 confirmed; 4 (unlabeled), 5 (Inbox), 6 (content-based cleanup) corrected planner guesses across plan/C01/C03/C04/C06/C07/DECISIONS; open_questions none.",
+    "RESULT (plan rework 2, final approval edit): user ruling verbatim in DECISIONS — Local task is the planned scheduled taker of unlabeled cards (with ask-at-claim); API scheduled walk takes ONLY Provider: API; ask instruction on every flavor; negative pins (API-never-takes-unlabeled) in C03/C04 tests; STATE plan_status flip left to coord. status: DONE, deviations: none, friction: none, open_questions: none, next_suggested: coord approves, write-back, agent-test."
+  ],
+  "kickoff": {
+    "card": "sYoFwL73kZzZH55dQ",
+    "card_number": 90,
+    "slug": "cf-90-feat-board-coord-improvements",
+    "run_tag": null,
+    "worktree": "cf-90-feat-board-coord-improvements-2",
+    "branch": "cf-90-feat-board-coord-improvements-2",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Ready for Work": "mkbxeo",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5",
+        "Pipeline: Context": "3PGnrD",
+        "Bucket Color": "yBfNJJ"
+      }
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C02"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C07": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C05", "C03"],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
