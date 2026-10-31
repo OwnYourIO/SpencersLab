@@ -49,12 +49,25 @@
     "note": "User-directed: research-only loop has no worktree step, so the ticket folder first existed only as untracked files in the main checkout; landed on the card-11 worktree the user provided (virgin at main HEAD 7e07a6273). Branch name differs from the confirmed slug — folder keeps the slug (see DECISIONS.md)."
   },
   "research": {
+    "sessions": {
+      "rounds_1_2": "ses_e6cf6956cffejLq0VsvPNB7gP2",
+      "round_3_forgejo": "ses_e6c427bdfffe07tnxGLClMfb97",
+      "round_4_curatedforest": "ses_e6c427bdaffeWFU5UdZEyQPjG0"
+    },
     "session": "ses_e6cf6956cffejLq0VsvPNB7gP2",
     "model": "openrouter/qwen/qwen3.8-2.4t-a95b",
+    "documents": {
+      "RESEARCH.md": "rounds 1-2 (option space + Netlify delivery + B' companion) — canonical",
+      "RESEARCH-forgejo-runner.md": "round 3 (isolated session, own sources [1]-[55]) — Forgejo runner vs CronJob, Immich webhook reality",
+      "RESEARCH-curatedforest-repo.md": "round 4 (isolated session, own sources [1]-[30]) — CuratedForest.com repo survey + Immich seam + keep-vs-alternatives"
+    },
     "rounds": [
       { "round": 1, "status": "DONE", "sources": 77, "open_questions": 10 },
-      { "round": 2, "status": "DONE", "sources": 106, "note": "final round; open questions resolved into recommended defaults; batched human round held between rounds" }
-    ]
+      { "round": 2, "status": "DONE", "sources": 106, "note": "final round; open questions resolved into recommended defaults; batched human round held between rounds" },
+      { "round": 3, "status": "DONE", "note": "user-directed isolated follow-up: runner-vs-CronJob + webhook reality", "document": "RESEARCH-forgejo-runner.md" },
+      { "round": 4, "status": "DONE", "note": "user-directed isolated follow-up: CuratedForest.com survey; corrects round-2 LFS-quota figures", "document": "RESEARCH-curatedforest-repo.md" }
+    ],
+    "state": "awaiting user direction-lock before planning"
   },
   "chunks": {},
   "blocked": [],
