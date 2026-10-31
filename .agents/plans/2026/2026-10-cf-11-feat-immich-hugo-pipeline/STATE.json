@@ -1,6 +1,6 @@
 {
   "feature": "2026-10-cf-11-feat-immich-hugo-pipeline",
-  "plan_status": "draft",
+  "plan_status": "approved",
   "run_kind": "build",
   "coord_session": "ses_e6cf97059ffeZ3eS21acBwATI0",
   "test_session": null,
