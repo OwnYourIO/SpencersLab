@@ -1,6 +1,15 @@
 {
  "feature": "2026/2026-10-cf-86-feat-more-strata-models",
- "plan_status": "approved",
+ "plan_status": "complete",
+ "revision_final_round_2026_10_31": {
+  "session": "ses_e6f3844cdffeumVUvGmyP3FvZm",
+  "verdict": "APPROVED",
+  "range": "617e18488..5a03cec40 — 29 commits",
+  "posture_agent_shell": "plain 0F/373P/11S; armed 0F/381P/3S (3 skips = torch-gated convert_lora env arms, honest posture not regression); containers 24P; guards 19/22/9/15/6/8/7 rc 0; aislop 100 at range base",
+  "ledger_correction": "§9.17/§9.18 'parallel run' attribution is WRONG — 376/384 vs 373/381 is env skip-gating (torch/jsonschema), correction routed to test session next ledger touch; numbers themselves stand per-environment",
+  "incident": "the FIRST final-review launch committed+pushed 5a03cec40 itself (review must not write git); content verified sound, commit stands; PUSH reported to owner — remote-branch disposition is owner-only",
+  "carry": "consolidated across chunks/C07.md + C08.md final addenda (test-ledger note; law-constrained docs rewords README L114-119 + note L257/L434/L531-537 + values 1191/1271/1701/2060 wording; owner merge-window: PR first -> docker-build = first-ever 0.2.8 CI evidence -> sync-hold decision -> operator six-line claim cleanup .pack-orca-FIRST + serve --plan gates + HIP round-trip; user bucket: strix/10-unroutable/twins/Q4-default/remote-branch; chores: PIN-ME 1209-vs-1160, descBase+KLD, cf-78, PROVENANCE 14-lines, NVMe/heartbeat/dev-boards/list_comments, agents-sync promotions)"
+ },
  "rework_round_2026_10_31": {
   "trigger": "owner review at Review — 4 items; research round R4 completed (RESEARCH.md § R4), NO claim held (Context busy on live run ses_e70be6d0effek6EHNQRYj3x3Fn at 00:02Z; re-claim refused by the lease — correct). Card sits in Review awaiting owner move (Rework for the fresh-tick path) or explicit in-session direction once Context frees.",
   "owner_items": [
