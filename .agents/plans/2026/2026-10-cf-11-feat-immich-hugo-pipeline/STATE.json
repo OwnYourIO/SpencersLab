@@ -67,7 +67,17 @@
       { "round": 3, "status": "DONE", "note": "user-directed isolated follow-up: runner-vs-CronJob + webhook reality", "document": "RESEARCH-forgejo-runner.md" },
       { "round": 4, "status": "DONE", "note": "user-directed isolated follow-up: CuratedForest.com survey; corrects round-2 LFS-quota figures", "document": "RESEARCH-curatedforest-repo.md" }
     ],
-    "state": "awaiting user direction-lock before planning"
+    "state": "direction-locked; planning in progress"
+  },
+  "direction_locked": {
+    "date": "2026-10-31",
+    "spine": "forgejo-runner (PVC + host backend)",
+    "repo_home": "CuratedForest.com → in-cluster Forgejo (owner-driven precondition)",
+    "deploy": "merge→main=curatedforest.com prod deploy; PR→farm curatedforest.farm (last PR wins); runner builds + netlify deploy CLI; Netlify remains host",
+    "sync_landing": "PR by the sync job, human review+merge",
+    "immich_triggers": "schedule + workflow_dispatch phase 1; album-event shim deferred phase 2",
+    "old_lfs_removal": "separate follow-up card → Low Priority",
+    "claim_at_resume": "contended (default held by card 'Add repos: context and label support filtering.') — owner-directed interactive resume, no lock, card stays in Review"
   },
   "chunks": {},
   "blocked": [],
