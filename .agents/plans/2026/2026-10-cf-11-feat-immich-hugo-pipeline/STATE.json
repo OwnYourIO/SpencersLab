@@ -5,7 +5,7 @@
   "coord_session": "ses_e6cf97059ffeZ3eS21acBwATI0",
   "test_session": null,
   "current_wave": 0,
-  "updated_at": "2026-10-31T22:55:20Z",
+  "updated_at": "2026-10-31T23:27:37Z",
   "kickoff": {
     "card": "3wb5ejxZj36juM2a9",
     "card_number": 11,
@@ -102,7 +102,7 @@
         "document": "RESEARCH-curatedforest-repo.md"
       }
     ],
-    "state": "direction-locked; build plan drafted 2026-10-31 (draft; pending approval)"
+    "state": "direction-locked; plan REWORKED per owner answer round 2026-10-31 (draft; pending owner re-approval)"
   },
   "direction_locked": {
     "date": "2026-10-31",
@@ -116,7 +116,7 @@
   },
   "chunks": {
     "C01": {
-      "title": "Immich sync + Forgejo publish tooling (Python stdlib, containers/forgejo-host-runner)",
+      "title": "Sync + publish tooling: album->existing-bundle mapping, additive-only writer, fixture-based E2E",
       "size": "M",
       "wave": 1,
       "depends_on": [],
@@ -134,15 +134,16 @@
       "status": "pending"
     },
     "C03": {
-      "title": "charts/forgejo-runner host-backend mode + home release forgejo-runner-cf wiring",
+      "title": "charts/forgejo-runner host-backend MODE + DEV validation release forgejo-runner-dev-host (gpu prod = card #88)",
       "size": "L",
       "wave": 1,
       "depends_on": [],
       "repo": "SpencersLab",
-      "status": "pending"
+      "status": "pending",
+      "note": "rework R1/R2: home target superseded; prod E2E gated on card #88 (network path + gpu runner)"
     },
     "C04": {
-      "title": "charts/forgejo-secret-seed: Bitwarden->Forgejo repo-secret seeder + home wiring",
+      "title": "charts/forgejo-secret-seed: Bitwarden->Forgejo repo-secret seeder + GPU wiring (org repo on git.spencerslab.com)",
       "size": "M",
       "wave": 1,
       "depends_on": [],
@@ -150,7 +151,7 @@
       "status": "pending"
     },
     "C05": {
-      "title": "charts/forgejo-run-watchdog: schedule-failure watchdog (DEFERRABLE)",
+      "title": "charts/forgejo-run-watchdog: schedule-failure watchdog (INCLUDED phase 1) + GPU wiring",
       "size": "M",
       "wave": 3,
       "depends_on": [
@@ -160,7 +161,7 @@
       "status": "pending"
     },
     "C06": {
-      "title": "Site-repo artifacts staged in site-staging/ (workflows, archetype, photos section) + hugo render gate",
+      "title": "Site-repo artifacts staged: deploy+sync workflows (daily cron), sync-albums.yaml page-mapping schema, archetype + hugo render gate",
       "size": "M",
       "wave": 2,
       "depends_on": [
@@ -178,20 +179,28 @@
       ],
       "repo": "CuratedForest.com (Forgejo)",
       "status": "pending",
-      "blocked_on": "owner precondition: repo migrated to Forgejo WITH LFS objects"
+      "blocked_on": "owner precondition: repo migrated to Forgejo WITH LFS objects",
+      "note": "staging set changed by rework: no photos/_index.md, no mandatory hugo.yaml edit"
     }
   },
   "blocked": [
     "C07"
   ],
-  "deferred": [
-    "C05 (optional; owner may cut at plan approval)"
-  ],
+  "deferred": [],
   "plan": {
     "file": "2026-10-31-feat-immich-hugo-pipeline.md",
     "drafted_at": "2026-10-31T22:55:20Z",
     "drafted_by": "agent-plan",
     "waves": 3,
-    "note": "draft pending the standing plan-approval pause; 10 open questions batched to owner"
-  }
+    "note": "rework draft per owner answer round (deltas 6-9); 3 new open questions (N1-N3) batched for one more round; superseded P2 home placement -> dev validation + card #88 gpu",
+    "reworked_at": "2026-10-31T23:27:37Z"
+  },
+  "replans": [
+    {
+      "date": "2026-10-31",
+      "by": "agent-plan",
+      "reason": "owner answer round deltas 6-9: org-scoped registration; daily cadence; topology override (dev-first validation release, gpu prod delegated to card #88, fixture-based E2E); seam pivot (albums mapped INTO existing page bundles, additive-only)",
+      "decisions_block": "DECISIONS.md REWORK DECISIONS R1-R10"
+    }
+  ]
 }
