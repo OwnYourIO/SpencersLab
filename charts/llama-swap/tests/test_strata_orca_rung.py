@@ -98,20 +98,50 @@ def _init_container(docs) -> dict:
 
 
 def _init_script(docs) -> str:
-    ctr = _init_container(docs)
-    return "\n".join([str(x) for x in (ctr.get("command") or [])] + [str(x) for x in (ctr.get("args") or [])])
+    """C07 re-anchor (chunks/C07.md): the pack/download bodies now live in the
+    image source — this suite's script-text laws follow the code, the render
+    only keeps env/mounts. Red until the C07 port lands the file; the wave
+    replacements (IQ4_XS tier, SC117 deletion) live in
+    test_strata_c08_rung_shifts.py."""
+    return S.read(S.FETCH_SH, "cf-86 C07 lift — the pack bodies live in the baked driver now")
 
 
 def _body_lines(docs) -> list:
-    """Numbered script lines that can execute. The staging rationale comments
-    NAME curl to forbid it, so an invocation law runs over non-comment lines
-    only — the same scoping the C01 review used when it counted zero
-    invocations."""
-    return [(n, ln) for n, ln in enumerate(_init_script(docs).splitlines()) if not ln.strip().startswith("#")]
+    """Numbered lines that can execute. The staging rationale comments NAME curl
+    to forbid it, so an invocation law runs over non-comment lines only — the
+    same scoping the C01 review used when it counted zero invocations.
+    C07 re-anchor: the driver and its sourced pins file are read as ONE program
+    (byte_pins.env is a source-time inclusion, so a law that used to see a
+    literal on the leg line sees it in the pins now)."""
+    text = _init_script(docs) + "\n" + S.read(S.BYTE_PINS_ENV, "the driver sources its byte literals (C07)")
+    return [(n, ln) for n, ln in enumerate(text.splitlines()) if not ln.strip().startswith("#")]
+
+
+def _downloader_text() -> str:
+    """The other half of the lifted pair: hf_fetch.py, where the urllib client
+    and the redirect-trust law live after C07."""
+    return S.read(S.HF_FETCH_PY, "cf-86 C07 lift — the downloaders are a baked file, not a heredoc")
 
 
 def _pins_size(body, size: int) -> bool:
     return any(re.search(rf"(?<!\d){size}(?!\d)", ln) for _, ln in body)
+
+
+def _unpinned_legs(body) -> list[str]:
+    """A download leg must state the byte count it verifies against — as a
+    literal (pre-C07 shape) or as a byte_pins.env var the pins file assigns
+    (post-C07 shape). Anything else is an un-pinned multi-GB download."""
+    assigned = {m.group(1) for _, ln in body for m in re.finditer(r"^([A-Z][A-Z0-9_]*)=\d{8,}$", ln)}
+    out = []
+    for _, ln in body:
+        if "resolve/main" not in ln:
+            continue
+        if re.search(r"(?<!\d)\d{8,}(?!\d)", ln):
+            continue
+        if any(f"${name}" in ln or f"${{{name}}}" in ln for name in assigned):
+            continue
+        out.append(ln.strip())
+    return out
 
 
 def _marker_pattern(body) -> str:
@@ -344,7 +374,7 @@ def test_c02_downloader_reuses_the_venv_urllib_path_not_a_shell_client():
     assert any(".venv/bin/python" in ln for _, ln in body), (
         "no $SRC/.venv/bin/python download driver — C01's staging mechanism was replaced"
     )
-    assert any("urllib.request" in ln for _, ln in body), "the staged fetch is no longer stdlib urllib"
+    assert "urllib.request" in _downloader_text(), "the staged fetch is no longer stdlib urllib"
 
 
 @helm
@@ -356,8 +386,8 @@ def test_c02_abliterated_stage_keeps_the_byte_pins_the_orca_stage_copies():
     body = _body_lines(_docs())
     assert any(HF_REPO_ABL in ln for _, ln in body), f"init script no longer names {HF_REPO_ABL}"
     for size in ABL_SHARD_BYTES:
-        assert _pins_size(body, size), f"abliterated shard byte pin {size} missing from the init script"
-    unpinned = [ln.strip() for _, ln in body if "resolve/main" in ln and not re.search(r"(?<!\d)\d{8,}(?!\d)", ln)]
+        assert _pins_size(body, size), f"abliterated shard byte pin {size} missing from the staging program"
+    unpinned = _unpinned_legs(body)
     assert not unpinned, f"download invocation with no byte pin: {unpinned}"
 
 
@@ -400,7 +430,10 @@ def test_c02_orca_profile_serves_exactly_the_staged_paths():
     prof = _profile()
     args = dict(S.arg_pairs(prof))
 
-    assert tier == "IQ3_XXS", f"orca staging tier {tier!r} — IQ3_XXS is the only validated Orca quant"
+    assert tier == "IQ3_XXS", (
+        f"orca staging tier {tier!r} — the C07-era wave pins IQ3_XXS; C08's shift to "
+        "IQ4_XS is pinned (with its own path law) in test_strata_c08_rung_shifts.py"
+    )
     assert args.get("--pack") == staged["pack"], (
         f"profile --pack {args.get('--pack')!r} != the pack the init builds at {staged['pack']!r}"
     )
@@ -418,7 +451,7 @@ def test_c02_orca_profile_serves_exactly_the_staged_paths():
         f"profile --ple-gguf {args.get('--ple-gguf')!r} != staged shard 1 {staged['s1']!r} — "
         "the orcarouter PLE table lives in shard 1 (ORCA.md)"
     )
-    legs = _orca_download_legs(_init_script(docs))
+    legs = _orca_download_legs(_init_script(docs), _body_lines(docs))
     for key in ("s1", "s2"):
         assert key in legs, (
             f"the init never downloads ${{{key}}} ({staged[key]!r}) — iq_pack reads both "
@@ -465,12 +498,18 @@ def _staged_paths(script: str, tier: str) -> dict:
     return paths
 
 
-def _orca_download_legs(script: str) -> dict:
-    """Variable the each orca_dl writes -> its byte pin. Keys are bare names
-    (`s1`), so they line up with the orca_pack assignments the pairing law
-    compares against."""
-    return {m.group(1): int(m.group(2)) for m in re.finditer(
-        r'orca_dl\s+"[^"]+"\s+"\$\{?(\w+)\}?"\s+(\d+)', script)}
+def _orca_download_legs(script: str, body) -> dict:
+    """Variable each orca_dl writes -> the byte count it verifies against, with
+    byte_pins.env vars resolved (pre-C07 the count sat on the leg line as a
+    literal). Keys are bare names (`s1`), so they line up with the orca_pack
+    assignments the pairing law compares against."""
+    assigned = {m.group(1): int(m.group(2)) for _, ln in body
+                for m in re.finditer(r"^([A-Z][A-Z0-9_]*)=(\d{8,})$", ln)}
+    legs = {}
+    for m in re.finditer(r'orca_dl\s+"[^"]+"\s+"\$\{?(\w+)\}?"\s+(\$?\{?[A-Z][A-Z0-9_]*\}?|\d+)', script):
+        pin = m.group(2)
+        legs[m.group(1)] = int(pin) if pin.isdigit() else assigned.get(pin.strip("${}"))
+    return legs
 
 
 @helm
@@ -487,7 +526,7 @@ def test_c02_orca_stage_pins_the_orcarouter_byte_sizes():
             f"orca shard byte pin {size} missing — an un-pinned 40 GB download cannot be "
             "distinguished from a truncated one"
         )
-    unpinned = [ln.strip() for _, ln in body if "resolve/main" in ln and not re.search(r"(?<!\d)\d{8,}(?!\d)", ln)]
+    unpinned = _unpinned_legs(body)
     assert not unpinned, f"download invocation with no byte pin: {unpinned}"
 
 
@@ -506,10 +545,8 @@ def test_c02_orca_marker_is_touched_only_after_the_pack_completes():
     )
     touches = [n for n, ln in refs if re.search(rf"touch\s+\"?({pattern})", ln)]
     assert touches, f"nothing touches the orca marker: {[ln for _, ln in refs]}"
-    staged = [
-        n for n, ln in body if any(re.search(rf"(?<!\d){size}(?!\d)", ln) for size in ORCA_SHARD_BYTES)
-    ]
-    assert staged, "no byte-pinned orca download to order the marker against (see the byte-pin arm)"
+    staged = [n for n, ln in body if re.search(r"\borca_dl\s+\"https?://", ln)]
+    assert staged, "no orca download leg to order the marker against (see the byte-pin arm)"
     assert min(touches) > max(staged), (
         f"orca marker touched at line {min(touches)}, before its staged shards at "
         f"{max(staged)} — a pack that never completed would be marked complete"

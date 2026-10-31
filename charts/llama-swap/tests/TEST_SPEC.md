@@ -1840,3 +1840,192 @@ off-parity 3, blast-radius 5, catalog 18. FULL plain **350 passed, 8 skipped,
 0 failed**; FULL armed **358 passed, 0 failed, 0 skipped** — exactly the §9.12
 counts +7 arms, render byte-unchanged underneath. aislop ci --changes: score
 100, 0 errors, 0 warnings.
+
+### 9.14 Revision round 2 — C07 test half: the staging laws RE-HOMED from the render to the image (2026-10-31)
+
+One authored pass covered both appended chunks (§9.15 is the C08 half). C07 is a
+pure lift-and-shift: the ~330-line values.yaml init body becomes three baked
+files (`containers/strata/files/{fetch_models.sh,hf_fetch.py,byte_pins.env}` →
+`/opt/strata/bin/`), so every law the suite ran over the RENDERED script body
+lost its subject and had to move with the code — a suite that kept grepping the
+render would go falsely red at C07 landing, which is the failure mode the launch
+called the crux of the re-anchor.
+
+Law homes after the move: driver-body laws (no shell HTTP client, guard-before-
+bytes ORDER per pack, marker skip-guards, the orca touch-after-pack ordering,
+sessions mkdir exactly once, checkout/claim guards, `--backend hip`) →
+`test_strata_image_fetch.py` reading `S.FETCH_SH`; downloader-mechanism laws
+(stdlib urllib, two modes, `.part` wedge/resume/rename, the redirect-trust law
+— no-follow handler WIRED into `build_opener`, `redirect_request` returning None
+in its own body, Bearer gated to the token host, 4-hop cap, refusal message) →
+the same file reading `S.HF_FETCH_PY`; byte-literal laws → `S.BYTE_PINS_ENV`
+(name-shaped assignment + exact literal SET, so a 5th byte literal needs a plan);
+the pairing/env-contract/render laws (exec-form command, empty args, the chart-
+side script body + mkdir gone, mounts/resources/image/securityContext byte-
+unchanged, the re-pinned strix exe) → `test_strata_thin_init.py` (11 arms); the
+image-build laws (COPY into `/opt/strata/bin` + exec bit, verify extension
+`sh -n` + `py_compile` + `test -x/-f` trio + the surviving `test -f setup.sh`,
+**the build never executes the driver** — no fetch URL in a RUN, no download at
+build time) and the v0.2.8/0.1.54 re-pin (tags, README ledger rows, clone tag =
+flavor tag, one engine-label fact across Dockerfile/README/values.yaml, stale
+`0.2.x`/`0.1.52` absence over executable lines only) → `containers/strata/tests/
+test_dockerfile.py` (+6 arms).
+
+Library moves: `strata_testlib` gains `FETCH_SH`/`HF_FETCH_PY`/`BYTE_PINS_ENV`/
+`BIN`, `body_lines()` (non-comment lines — comments NAME curl to forbid it) and
+a generalized `staged_paths(script, fn, tier)` shared by the render-era pairing
+arms and the image-era arms (s2/s3 optional, so the C08 2→3 shard drift cannot
+silently vacate the layout law). `live_code_grep` now skips `.pytest_cache` —
+its docstring already claimed caches were excluded; the first sweep-grade
+absence arm (`strata-abliterated`, a live id today) exposed the gap by matching
+pytest's own nodeid cache.
+
+Existing arms re-sourced, not weakened: 7 script-text arms in
+`test_strata_orca_rung.py` (their `_init_script()` now reads the driver; the
+urllib fact moved to `hf_fetch.py`; the byte-pin arms read driver+`byte_pins.env`
+as ONE program with `_unpinned_legs()` accepting a literal OR a pins-assigned
+var; `_orca_download_legs()` resolves pins vars so the profile↔leg pairing law
+survives the literals leaving the leg lines; the marker arm orders against the
+`orca_dl` legs instead of byte literals), and 1 in `test_strata_q4_rung.py` (the
+sessions mkdir). Two wave-neutral facts stay render-side where they belong: the
+env contract (scalars + the one `hf-token` secretKeyRef) and the pod shape.
+
+Wave law inside the file set: C07 lands BEFORE C08, so the image arms pin
+C07-ERA content — BOTH packs staged, four byte literals, the `abl` pseudo-family
+routing present — and every C08 delta (SC117 absence, IQ4_XS trio) lives only in
+the §9.15 file; two guard classes keep the halves from moving early: wave guards
+(green now, red if a table or the profile-file constant flips before its dev)
+and C08-era flip targets (red now).
+
+Deviation / open question for coord: the launch asked the build-verify arms to
+cover "a --help/dry-run of the entrypoint". A verbatim port of the init body has
+no argument parsing, and the chunk pins the verify shape explicitly (`sh -n`,
+`py_compile`, `test -x`/`test -f`), so the arms follow the CHUNK; the launch's
+intent is pinned as the opposite hazard instead — the build must NOT run the
+driver (an executed fetch would attempt ~183 GB inside CI, the storage physics
+DECISIONS already ruled out for pre-baked packs).
+
+Non-vacuity — the port-preview probe (test-session scratch, not committed): the
+CURRENT render body was split mechanically (heredocs → `hf_fetch.py` with mode
+dispatch, byte literals → `byte_pins.env` vars, legs pass vars) and fed to the
+arms through `S.read`. Result: **all 14 image arms PASS a faithful verbatim
+port**, and with the same bodies installed the whole orca/q4/abliterated trio
+runs **0 red at the C07 landing posture** — the lift is law-preserving, and the
+33 designed-red arms below are red for file absence, not for over-specification.
+Ten negative mutations each turned the OWNING arm red (curl replaces the
+downloader; handler defined but not wired into `build_opener`;
+`redirect_request` defers to `super()`; Authorization on every hop; marker
+touched before the pack; a byte literal drifting by 896 B; the token spelled
+into argv; the sessions mkdir dropped; both pack guards moved below the legs;
+`hf_fetch.py` invoked as a relative path / pins never sourced). Two probes
+initially did NOT bite and exposed arm bugs, both fixed before handback: the
+guard arm counted the download invocation itself as a guard (the invocation
+names the venv interpreter too), so it now matches the `[ -x …/.venv/bin/python ]`
+/ `[ -d "$ggufpy" ]` idioms per pack and requires BOTH above the first leg; the
+trust-law arm accepted any `return None` anywhere, so the handler is now pinned
+by class + `build_opener(<Class>())` wiring + a body-scoped `return None` with
+no `super()`.
+
+Scope-guard widening (same class as §9.12/§9.13): C07 makes `containers/strata/`
+a declared serving surface of this ticket, so c8/t14/c7 gained the exact paths
+`chunks/C07.md` names — Dockerfile, README.md, the three `files/` entries one by
+one, and `containers/strata/tests/test_dockerfile.py`. No directory admit. The
+c8 probe loop lost its `containers/strata/Dockerfile` entry (its stated premise,
+"cf-86 builds no image", is superseded by U9.4) and gained two replacements:
+`containers/strata/.dockerignore` and `containers/music-assistant/Dockerfile`.
+Re-proved after the edit: three gates PASS on the dirty tree (19/22/9 ok), an
+unadmitted sibling under `containers/` (fabricated probe file) reddens all three
+by name, and agent-perms stays 15 ok (A9 window-pins intact).
+
+Posture (helm on PATH, per-file discipline — never count-only). New-file reds:
+image_fetch 14/14 red naming the missing files; thin_init 5 red (exec form,
+boot-guard interface freeze, script body, chart-side mkdir, strix 0.1.54) /
+6 green byte-unchanged posture; container test_dockerfile 9 failed / 15 passed
+(6 new arms red + 3 pre-existing pin arms now red on the re-pin — tag pair,
+literal-tag tripwire, README pairing — every message naming 0.2.7-vs-0.2.8);
+re-anchored arms 7 red in orca + 1 in q4. FULL plain **351 passed, 9 skipped,
+41 failed**; FULL armed (`RUN_HF_CHECK=1 RUN_FLAG_AUDIT=1`) **360 passed,
+41 failed, 0 skipped**. The 41 = 14 + 5 + 14 (new-file designed reds, §9.15's
+14 included) + 7 + 1 (re-anchored); no previously-green law weakened, and the
+armed run turns the new C08 live tree arm green. aislop ci --changes: score
+100, 0 errors, 0 warnings.
+
+### 9.15 Revision round 2 — C08 test half: the rung-shift arms and the live-pinned IQ4_XS table (2026-10-31)
+
+`test_strata_c08_rung_shifts.py` (18 arms) asserts the C08 POST-state; it is red
+by design until C08 lands (3 wave guards green now, 1 live arm gated on
+`RUN_HF_CHECK=1`).
+
+Live byte table (anonymous HF tree API, 2026-10-31, flat repo root — the read
+answers the chunk's open flat-vs-per-quant-dir question instead of leaving dev
+to guess): `orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF` →
+`Qwen3.8-Flash-Next-Uncensored-IQ4_XS-00001-of-00003.gguf` = **44,766,155,936**,
+`…-00002-of-00003.gguf` = **44,735,995,008**, `…-00003-of-00003.gguf` =
+**7,971,004,256**, Σ = **97,473,155,200** — identical to the chunk/RESEARCH R4
+[B7] figure, so no render-truth delta to flag. The `-IQ4_XS-MTP-…` sibling
+family (46.66/46.60/6.98 GB) exists in the same tree and is deliberately NOT
+staged, matching C02's experts-only posture. The live arm re-pins the table AND
+re-proves the gating premise the token rests on (resolve/main without a
+credential → 401/403, metadata public, bytes not).
+
+Arms: SC117 absence sweep (arena gone from the inner config, `matrix.vars.c`
+gone, `sets.main` literal `(p | s | o | q)`, the profile file gone from the
+ConfigMap and the template, service env `q3,orca,q4` + `STRATA_MODEL_ORCA=
+orca/IQ4_XS`, peers == the four-id wave, zero `strata-abliterated`/`abliterated-
+iq3_xxs` hits over live surfaces, catalog entry deleted with the orca NAME
+flipped while its frozen id and `modelID` stay, image files lose every
+`abliterated|SC117|abl_pack|abl_dl` leg while orca routing SURVIVES); orca
+IQ4_XS render post-state (profile file key `strata-orca-iq4_xs.json`,
+`model_name`, pack/native/ple-gguf/tokenizer paths with PLE still carried in
+shard 1, conv-cache 8192-only with the 32768-negative and the 92160-cap/cgroup-
+unchanged math, and the other three profiles — q4's FINAL pins especially —
+byte-unchanged); image-side post-state (three IQ4 literals in `byte_pins.env`
+with the Σ comment and an exact-set guard, old pairs gone, three-shard staging
+with exactly three `_dl` legs writing `$s1/$s2/$s3`); and the C01 file's
+retirement receipt. Existence gates precede the C08 image arms so they are
+never vacuously green — they name C07 as the prerequisite (R4's ordering law).
+
+Measured correction to the chunk text (render truth over prose): C08.md's
+frozen-table line ("CATALOG/GPU_ECHO/GPUAI_LOCAL −1; test_config_parity
+34→33/26→25") recomputes to ZERO movement — measured live, no Strata inner id
+appears in `CATALOG_IDS` (60), `GPUAI_LOCAL_IDS` (15), `GPU_ECHO_IDS` (26) or
+`GPUAI_LOCAL_CATALOG_IDS` (22): inner arenas never join the outer matrix, which
+is itself a pinned law in the abliterated suite. The real deltas are all in this
+suite's own tables: `CF86_NEW_CATALOG_IDS` 5→4, `CF86_TRIO_IDS` 3→2,
+`INNER_MATRIX_VARS`/`INNER_PROFILE_FILES` drop `c`, `INNER_IDS` 5→4, and
+`PROFILE_ORCA_FILE` renames to `strata-orca-iq4_xs.json`. The four outer lengths
+are pinned exactly by a wave guard so a mis-motivated "−1" edit reddens instead
+of quietly shrinking a table.
+
+C08-landing flip list (the test session's own mechanical commit, never dev's):
+retire `test_strata_abliterated_rung.py`; the table flips above; append the
+four-id state to `evidence/strata-peers-expected.yaml` `models_states` AND amend
+the monotone-non-decreasing law in `strata_peers_evidence()` in the same edit (a
+shrinking wave violates it as written — the amendment is the recorded shape,
+not a workaround); retire the C07-era-only arms that the C08-era preview proved
+go red at the C08 posture — 4 in `test_strata_orca_rung.py`
+(`…abliterated_stage_keeps_the_byte_pins…`, `…orca_stage_pins_the_orcarouter_byte_sizes`,
+`…orca_profile_serves_exactly_the_staged_paths` (tier+pack literals),
+`…reuse_source_marks_the_pack_only_after_it_builds` (abl_pack ordering)) plus
+three content deltas in `test_strata_image_fetch.py` (the four-literal set → the
+IQ4 trio, the C07-era pack paths/repos arm, the per-pack guard loop dropping
+`abl_pack`). The §9.15 file already carries the replacements, so no law is
+dropped, only re-pinned.
+
+C01 law-retirement ledger (what the deleted file's 15 arms leave behind): the
+arena-side laws (served entry, serve flag surface, third matrix alternative,
+roster/profile agreement, profile validity, IQ3_S-pair envelope, distinct paths,
+frozen inner alias, node-bleed flags on THAT profile, keyless-before-orca) die
+with the arena; the general laws they carried have existing homes — keyless serve
+path (`test_strata_orca_rung.py`, `test_strata_q4_rung.py`,
+`test_strata_thin_init.py`), pre-cf-86 profile preservation against the captured
+fixtures (orca + q4), no `engineProfile*` keys in the inner config
+(`test_strata_config_schema.py`), peers==served-wave (wiring + orca + the lib
+wave table), and per-arena bleed-flag absence (each remaining rung file pins its
+own banned set; the lib carries the shared token lists).
+
+Posture: 14 designed-red (sweep + post-state arms), 3 green wave guards (the
+five-id catalog/peers/inner tables, the four sweep-invariant outer tables), 1
+live arm green armed, and the C08-era image arms green against the synthetic C08
+file edit in the port-preview (with two incomplete-edit mutations reddening
+them — SC117 legs left in, one IQ4 literal missing).

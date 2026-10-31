@@ -67,8 +67,10 @@ def _init_container() -> dict:
 
 
 def _init_script() -> str:
-    ctr = _init_container()
-    return "\n".join([str(x) for x in (ctr.get("command") or [])] + [str(x) for x in (ctr.get("args") or [])])
+    """C07 re-anchor (chunks/C07.md): the driver body lives in the baked image
+    file now, so the staging-dir law follows the code, not the render. Red
+    until the C07 port lands the file."""
+    return S.read(S.FETCH_SH, "cf-86 C07 lift — the staging driver is baked at /opt/strata/bin now")
 
 
 def _init_env() -> dict:

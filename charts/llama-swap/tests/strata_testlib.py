@@ -37,6 +37,14 @@ CUSTOM_VALUES = REPO_ROOT / "custom-values" / "gpu-ai" / "prod-values.yaml"
 RUNBOOK_NOTE = REPO_ROOT / ".agents" / "notes" / "strata-host-prep-gpu-ai.md"
 PARENT_README = CHART_DIR / "README.md"
 CONTAINER_DIR = REPO_ROOT / "containers" / "strata"
+# C07 (U9.4 revision): the model-fetch logic lifts from the values.yaml init
+# into build-context files baked at /opt/strata/bin/. The suite reads the
+# SOURCES here — the laws that used to run over the rendered script body move
+# with the code, one source of truth at every wave (chunks/C07.md).
+FETCH_SH = CONTAINER_DIR / "files" / "fetch_models.sh"
+HF_FETCH_PY = CONTAINER_DIR / "files" / "hf_fetch.py"
+BYTE_PINS_ENV = CONTAINER_DIR / "files" / "byte_pins.env"
+BIN = "/opt/strata/bin"
 STRATA_TEMPLATES_DIR = CHART_DIR / "templates"
 RELEASE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "release.yaml"
 GITIGNORE = REPO_ROOT / ".gitignore"
@@ -634,6 +642,49 @@ def strip_legacy_performance_keys(cfg: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def body_lines(text: str) -> list[tuple[int, str]]:
+    """Numbered script lines that can execute — comment lines carry the
+    staging rationale and NAME forbidden clients to forbid them, so invocation
+    laws run over non-comment lines only (the C01 review's scoping)."""
+    return [(n, ln) for n, ln in enumerate(text.splitlines())
+            if not ln.strip().startswith("#")]
+
+
+def staged_paths(script: str, fn: str, tier: str) -> dict:
+    """The staging layout from one pack function's assignments (dir/pack/stem/
+    shard paths), expanded with the quant tier the loop passes. Shared by the
+    render-era and image-era pairing arms so the pairing law survives the C07
+    lift without being re-derived differently on each side. A missing
+    assignment raises — the layout changing shape must red, never silently
+    vacate the law."""
+    import re as _re
+
+    body = _re.search(rf"^{fn}\(\) \{{\n(.*?)\n\}}$", script, _re.S | _re.M)
+    assert body, f"no {fn} function in the staging script — the pack step is not landed where expected"
+    block = body.group(1)
+
+    def assign(name: str) -> str:
+        m = _re.search(rf"^\s*{name}=(\S+)\s*$", block, _re.M)
+        assert m, f"{fn} assigns no {name} — the staging layout changed shape, re-express this arm"
+        return m.group(1)
+
+    def expand(value: str, seen: dict) -> str:
+        out = value.replace("$tierl", tier.lower()).replace("$tier", tier)
+        for name, val in seen.items():
+            out = out.replace(f"${name}", val)
+        return out
+
+    paths, order = {}, ("dir", "pack", "stem", "s1", "s2", "s3")
+    for name in order:
+        try:
+            paths[name] = expand(assign(name), paths)
+        except AssertionError:
+            if name in ("s2", "s3"):
+                continue  # a two-shard pack has no s3 and a one-shard pack no s2
+            raise
+    return paths
+
+
 def values_region(text: str, key: str) -> str:
     """Raw source of one values key's block — from the key line to the next
     line at shallower-or-equal indent. Used where the WHY-comments THEMSELVES
@@ -678,7 +729,7 @@ def live_code_grep(needle: str) -> list[str]:
                 continue
             s = str(path)
             if (f"{os.sep}tests{os.sep}" in s or "__pycache__" in s
-                    or path.suffix in {".tgz", ".pyc", ".gz"}):
+                    or ".pytest_cache" in s or path.suffix in {".tgz", ".pyc", ".gz"}):
                 continue
             if needle in path.read_text(errors="replace"):
                 hits.append(str(path.relative_to(REPO_ROOT)))
