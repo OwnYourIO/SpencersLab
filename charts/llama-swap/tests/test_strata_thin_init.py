@@ -134,11 +134,12 @@ def test_c07_strix_packaged_engine_legs_move_to_the_re_pinned_build():
 @helm
 def test_c07_only_the_strix_exe_leg_moves_among_the_profiles():
     """C07 touches exactly one packaged exe: the re-pin's chart-side effect is
-    the strix profile; primary/abliterated/orca/q4 run the claim-compiled
-    engine and their exe legs stay byte-equal today's captured literal."""
+    the strix profile; primary/orca/q4 run the claim-compiled engine and their
+    exe legs stay byte-equal today's captured literal. (C08's sweep removed the
+    abliterated profile — its absence is pinned in test_strata_c08_rung_shifts.py.)"""
     docs = S.render_on()[0]
     claim_exe = "/models/strata/Strata/engine/strata"
-    for file in (S.PROFILE_PRIMARY_FILE, S.PROFILE_ABL_FILE, S.PROFILE_ORCA_FILE, S.PROFILE_Q4_FILE):
+    for file in (S.PROFILE_PRIMARY_FILE, S.PROFILE_ORCA_FILE, S.PROFILE_Q4_FILE):
         prof = S.profile_json(docs, file)
         assert prof.get("exe") == claim_exe, (
             f"{file} exe {prof.get('exe')!r} — only the STRIX profile runs a packaged engine root"
@@ -189,19 +190,24 @@ def test_c07_init_image_stays_the_rolling_same_image_pair():
 @helm
 def test_c07_env_scalar_law_survives_the_lift_on_both_renders():
     """Chart default keeps STRATA_QUANTS: "q3" as a scalar; the gpu-ai overlay
-    carries the C07-era four-token set + the three STRATA_MODEL_* scalars +
-    exactly one secretKeyRef (hf-token/token) on the init. The script reads
+    carries the three-token set + the two STRATA_MODEL_* scalars + exactly one
+    secretKeyRef (hf-token/token) on the init. The script reads
     HF_TOKEN from its process env — plumbing must not move or wrap (R-d
-    download-only law). C08 shrinks the set to three tokens; that post-state is
-    pinned in test_strata_c08_rung_shifts.py, NOT here."""
+    download-only law). C08's sweep shrank the set from q3,abl,orca,q4 and
+    deleted STRATA_MODEL_ABL (U9.3): the swept scalar's ABSENCE is part of the
+    law, and the post-state trio is pinned in test_strata_c08_rung_shifts.py."""
     text = _values_text()
     assert re.search(r'STRATA_QUANTS:\s*"q3"\s*$', text, re.M), (
         "chart-side STRATA_QUANTS q3 default must survive the conversion"
     )
     docs = S.render_service_overlay()[0]
     env = {e.get("name"): e for e in (_init(docs).get("env") or []) if isinstance(e, dict)}
-    assert (env.get("STRATA_QUANTS") or {}).get("value") == "q3,abl,orca,q4", env.get("STRATA_QUANTS")
-    for name, want in (("STRATA_MODEL_ABL", "abl/IQ3_XXS"), ("STRATA_MODEL_ORCA", "orca/IQ3_XXS"),
+    assert (env.get("STRATA_QUANTS") or {}).get("value") == "q3,orca,q4", env.get("STRATA_QUANTS")
+    assert "STRATA_MODEL_ABL" not in env, (
+        "the swept abliterated scalar is back — C08 U9.3 deleted it; a revival "
+        "without PROVENANCE is an un-sanctioned re-add"
+    )
+    for name, want in (("STRATA_MODEL_ORCA", "orca/IQ4_XS"),
                        ("STRATA_MODEL_Q4", "unsloth/UD-Q4_K_XL")):
         entry = env.get(name) or {}
         assert entry.get("value") == want, f"{name} = {entry!r}, want scalar {want!r}"

@@ -2095,3 +2095,91 @@ aislop ci --changes 0 errors / 0 warnings.
 
 Deferred to the C08/docs round (dev's other side-notes, not test surfaces):
 stale `services/gpu-ai` comment wording; the host-prep note's home.
+
+### 9.17 C08 landing flip round — the by-name ledger (the undercount-class fix) (2026-10-31)
+
+The zero-red moment of the revision: after this flip commit the whole suite
+carries NO designed-reds (plain 0F/375P/8S, armed 0F/383P/0S — 8S not 9S
+because one hf_live-gated arm retired, see ledger).
+
+Friction class recorded first: **flip-list undercount**. §9.15's mechanical
+flip list named ~10 surfaces; dev's C08 r1 landing produced 34 flip-dependent
+reds. The contract that closed the gap was dev's FLIP ATTRIBUTION — every red
+by NAME with its message — and the convention going forward is exactly that:
+enumerate flips by arm name, never by count ("~N" is how a list goes stale the
+wave it describes lands). The old 10-name list was used only as a cross-check;
+the attribution was worked message-by-message.
+
+Also on the bus: STATE.json arrived broken from the coord edit (handoffs array
+missing its `]`, dangling comma, chunks-object closer eaten — 3 byte-level
+repairs, content untouched, verified with json.load before anything else ran).
+
+Flip ledger (by file):
+
+- `test_strata_abliterated_rung.py` — RETIRED wholesale (14 arms). Law homes
+  were pre-declared in the §9.15 retirement ledger and verified by the
+  retirement receipt arm; the §9.16-era preservation trio had already moved
+  its surviving law into orca + q4.
+- `test_strata_c08_rung_shifts.py` — `test_wave_c07_era_tables_still_carry_
+  the_five_id_state` retired (pre-state guard; its job ended when the tables
+  moved atomically; `test_c08_catalog_wave_tables_shrink_with_the_sweep` is
+  its post-state successor, the outer-tables guard stays).
+- Tables (strata_testlib): `INNER_MATRIX_VARS` drops `c`; `INNER_PROFILE_FILES`
+  drops the abliterated row; `INNER_IDS` 5→4; `PROFILE_ORCA_FILE` →
+  `strata-orca-iq4_xs.json`. `ABL_ID`/`PROFILE_ABL_FILE` constants KEEP —
+  the C08 absence arms pin the swept id/file by name (absence needs the name).
+  Trio truth correction: the launcher's "(strix,q4)" trio text was garbled —
+  render truth (`CF86_TRIO_IDS`, trio-grep law) says `[ORCA, Q4]`; strix
+  predates cf-86 and was never in the trio table.
+- `evidence/strata-peers-expected.yaml` — four-id post-sweep state APPENDED to
+  models_states (history kept verbatim) and models_allowed TRIMMED to four.
+  The trim is not optional: the loader's own law (`last models_states ==
+  models_allowed`) forces it.
+- `strata_testlib.py` wave law amended (the §9.15-declared amendment, the
+  recorded shape): additions remain the rule; the ONLY sanctioned shrink is a
+  removal-only transition dropping exactly {ABL_ID}; history states may name
+  ABL even though it left the final allowed set, every other outside-id is a
+  phantom.
+- `test_strata_thin_init.py` — exe-tuple loop drops the retired abl profile
+  file; scalar law flips to `q3,orca,q4`, `STRATA_MODEL_ORCA` scalar
+  `orca/IQ4_XS`, and a NEW absence arm: `STRATA_MODEL_ABL` must not come back.
+- `test_strata_orca_rung.py` — flipped: frozen-name helper auto-clears 4 arms
+  on the table flip (residency-cmd, pack-paths distinctness, four-profiles);
+  matrix-extend set drops ABL; model_name literal → `…-orca-iq4_xs` (dev
+  moved it with the quant — the frozen-ID law covers the llama-swap arena id,
+  not the profile-internal model_name); envelope-identity law AMENDED for
+  exactly one flag (conv-cache 8192 — the U9.2 arithmetic, c08 file carries
+  the fit proof); staged-paths pairing tier → IQ4_XS with legs s1..s3;
+  byte-sizes arm → live-pinned IQ4 trio (Σ 97,473,155,200).
+  Retired: `abliterated_stage_keeps_the_byte_pins…` and `reuse_source_marks_
+  the_pack_only_after_it_builds` (C01-path content arms, successors in
+  image_fetch pin-set + c08 marker law), and `pack_pins_still_match_the_live_
+  hf_trees` (judgment call: its subject artifacts — SC117 + IQ3_XXS pair —
+  no longer ship; the live law survives in the C08-era live arm, which re-
+  reads the orcarouter IQ4_XS tree AND its 401 gate). Orphans swept with them:
+  `HF_REPO_ABL`, `ABL_SHARD_BYTES`, `_tree`, `hf_live`, urllib/json/os imports.
+- `test_strata_q4_rung.py` — alternation arm renamed five→four arenas (law
+  unchanged); peers arm pins the C08-final four-id card order.
+- `test_catalog_contract.py` — CF86_NEW_CATALOG_IDS 5→4, CF86_TRIO_IDS 3→2,
+  trio-scope guard re-pinned to the new trio (the "law amendment, not a test
+  edit" clause in that guard is what authorizes this flip line).
+- `test_strata_image_fetch.py` — byte-pins arm becomes the exact-era-set law
+  (trio assignments + Σ-comment rides + no extra literal); pack-functions arm
+  flips to the IQ4 3-shard flat-root paths + a POSITIVE absence arm for
+  abl_pack/SC117; guard-ordering loop drops the retired abl_pack; env_contract
+  arm flips the pseudo-family law to orca-ONLY with the abl case-arm absence
+  assert.
+- Auto-cleared by the evidence fix, no arm edits: wiring 2, config_parity
+  [gpu-ai], blast_radius ac2, orca peers-once.
+
+Mutation probes (file copies, restored, tree diff clean): unauthorized wave
+shrink (drop strix) -> amended law raises; final-state != allowed-set ->
+loader law fires; SHARD3 pin deleted -> all three byte-pin families red
+(image_fetch exact-set, orca byte-sizes, c08 trio); synthetic `FAM = abl`
+revival in the driver -> env_contract absence arm red (the c08 image-files
+absence arm pins abliterated-plumbing STRINGS and correctly stays green —
+env_contract is the FAM-routing law carrier).
+
+Carried to the docs/review round (NOT test surfaces): dev's DEVIATION —
+charts/README.md post-sweep false pins (the IQ3_XXS-in-envelope sentence, the
+96Gi×32Gi rows) — and the host-prep note's SC117/96Gi wording (cf-77 route).

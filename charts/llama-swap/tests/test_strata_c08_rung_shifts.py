@@ -279,28 +279,13 @@ def test_c08_c01_test_file_is_retired_and_its_laws_have_surviving_homes():
     )
 
 
-# --- wave guards: the C07-era state of the test-side tables --------------------
-# Green NOW (and at C07); they red if any wave moves a table early, which is
-# the half-moved-logic class R4's ordering law forbids.
-
-
-@helm
-def test_wave_c07_era_tables_still_carry_the_five_id_state():
-    import test_catalog_contract as C
-
-    assert S.ABL_ID in C.CF86_NEW_CATALOG_IDS and S.ABL_ID in C.CF86_TRIO_IDS, (
-        "the catalog wave moved before C08 dev landed — evidence/table flips are a "
-        "C08-landing mechanical action (TEST_SPEC 9.15 flip list), never early"
-    )
-    assert S.strata_peers_evidence()["models_allowed"] == [
-        S.PRIMARY_ID, S.STRIX_ID, S.ABL_ID, S.ORCA_INNER_ID, S.Q4_ID,
-    ], "the peers evidence allowed-set moved early"
-    assert "c" in S.INNER_MATRIX_VARS and S.INNER_PROFILE_FILES[S.ABL_ID] == S.PROFILE_ABL_FILE, (
-        "the strata inner tables moved early (C07 is a pure lift)"
-    )
-    assert S.PROFILE_ORCA_FILE == "strata-orca-iq3_xxs.json", (
-        "the profile-file constant flipped early — the C08 landing carries the rename atomically"
-    )
+# --- wave guards: the C08 landing consumed the C07-era table guard -----------
+# test_wave_c07_era_tables_still_carry_the_five_id_state guarded the pre-state
+# (tables must NOT move before C08 dev lands). C08 landed and the flip commit
+# moved the tables atomically — the guard's job is done; test_c08_catalog_wave_
+# tables_shrink_with_the_sweep below is its post-state successor, and
+# test_wave_outer_frozen_tables_are_sweep_invariant keeps guarding the outer
+# tables (TEST_SPEC 9.15 retirement ledger / 9.17 flip ledger).
 
 
 def test_wave_outer_frozen_tables_are_sweep_invariant():

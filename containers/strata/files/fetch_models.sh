@@ -12,8 +12,8 @@
 # Env contract (set by the chart init container, scalars only):
 #   STRATA_QUANTS          comma-separated quant tokens, default "q3"
 #   STRATA_MODEL_<TOK>     [family/]model mapping for non-q3 tokens; the
-#                          pseudo-families "abl"/"orca" route to the manual
-#                          packs below (no setup.sh catalog entry exists)
+#                          pseudo-family "orca" routes to the manual pack
+#                          below (no setup.sh catalog entry exists)
 #   HF_TOKEN               gated legs ONLY, via process env (R-d
 #                          download-only: the hf-token secretKeyRef sits on
 #                          this init and the token never reaches the serve path)
@@ -72,123 +72,57 @@ command -v python3 >/dev/null 2>&1 \
 command -v git >/dev/null 2>&1 \
   && command -v c++ >/dev/null 2>&1 \
   || fail "image lacks git/c++ for the engine compile - containers/strata must be rebuilt (build-deps RUN, 2026-10-29 contract)"
-# Manual pack for the abliterated GSQ-RCO set (cf-86 C01). The
-# pinned checkout's setup catalog carries NO abliterated family:
-# verified at the v0.2.8 setup.py (image copy at
-# /opt/strata/src/Strata/setup.py) — zero hits for abliterated /
-# SC117, and the qwen family pins the plain ISTA repo — so
-# setup.sh can never fetch this pack. The recipe is SC117's own
-# strata/README.md migration section: stage both shards under
-# their original names in one directory (iq_pack auto-finds
-# shard 2) and build a NEW native pack — the IQ3_S pack's
-# native_experts.txt no longer matches after the ablation moved
-# tensor offsets, and reusing it serves wrong weights under a
-# new id. The pack is public/ungated: the fetch stays
-# anonymous (the C-A keyless posture is untouched — no token
-# appears anywhere in this chain).
-abl_pack() {
-  # $1 = quant tier (IQ3_XXS today). Staging mirrors setup's own
-  # Strata-data layout: models/<tier>/ for shards, packs/<tier>
-  # for the iq_pack output — with an -abliterated suffix because
-  # these are different bytes than the catalog tier of the same
-  # name.
-  tier=$1
-  tierl=$(printf '%s' "$tier" | tr 'A-Z' 'a-z')
-  dir=/models/strata/Strata-data/models/$tier-abliterated
-  pack=/models/strata/Strata-data/packs/abliterated-$tierl
-  stem=Qwen3.8-Flash-Next-GSQ-RCO-abliterated-$tier
-  s1=$dir/$stem-00001-of-00002.gguf
-  # shard 2 is the 28.8 GB n-gram (PLE) table — the IQ3_XXS tier
-  # ships it just like IQ3_S (verified in the HF tree).
-  s2=$dir/$stem-00002-of-00002.gguf
-  # iq_pack needs the checkout venv (numpy) and gguf-py from
-  # setup's pinned llama.cpp source (it also exports the pack's
-  # tokenizer/ itself). Both land with the q3 iteration, which
-  # runs before abl in the same init — name the precondition
-  # loudly instead of booting a half-provisioned arena, and name
-  # it BEFORE staging: the ~76 GB of downloads below must never
-  # start for a pack this init cannot build.
-  [ -x "$SRC/.venv/bin/python" ] \
-    || fail "abl pack: $SRC/.venv missing - the q3 token must provision before abl"
-  ggufpy=$SRC/third_party/llama.cpp/gguf-py
-  [ -d "$ggufpy" ] \
-    || fail "abl pack: no gguf-py at $ggufpy - setup unpacks the pinned llama.cpp source during provisioning"
-  mkdir -p "$dir"
-  # Staging goes through the venv interpreter, NOT curl: the
-  # pinned strata image provably carries no curl binary (the
-  # v0.2.8 runtime apt lists are tini/ca-certificates/libgomp1/
-  # libatomic1/libnuma1/zlib1g + the hip libraries per upstream
-  # docker/Dockerfile (read 2026-10-31), this repo's build adds only
-  # build-essential/git/ccache, and the containers/strata verify step pins
-  # just git and c++ — the bake+verify law forbids assuming a tool
-  # at boot that the build never checks). setup's own downloader
-  # is stdlib urllib, so this reuses the interpreter the pack
-  # step already needs; C02's gated fetch reuses the same path
-  # with an Authorization header. $3 is the HF-tree byte size
-  # (LFS-pointer verified): a .part that finished downloading
-  # between pods gets RENAMED, not re-requested — curl -C - on
-  # a complete file exits non-zero and would wedge every later
-  # boot.
-  abl_dl() {
-    [ -s "$2" ] && { echo "model-fetch: $(basename "$2") already staged"; return 0; }
-    "$SRC/.venv/bin/python" /opt/strata/bin/hf_fetch.py anon "$1" "$2.part" "$3" \
-      || fail "abl pack: download failed for $1 (partial kept as $2.part for a resume)"
-    mv "$2.part" "$2" || fail "abl pack: rename failed for $2"
-  }
-  abl_dl "https://huggingface.co/SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF/resolve/main/$tier/$stem-00001-of-00002.gguf" "$s1" $ABL_IQ3_XXS_SHARD1
-  abl_dl "https://huggingface.co/SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF/resolve/main/$tier/$stem-00002-of-00002.gguf" "$s2" $ABL_IQ3_XXS_SHARD2
-  # setup's own completeness guard (native_experts.txt is
-  # written last by iq_pack): a crash between pack build and the
-  # marker re-enters here instead of serving a partial pack.
-  if [ ! -f "$pack/native_experts.txt" ] || [ ! -f "$pack/tokenizer/vocab.json" ]; then
-    # GSQ-RCO files keep the BF16 hyper-connection projections
-    # the engine reads natively, so this is the plain qwen-family
-    # pack call — NOT ORCA.md's --compat-bf16, which only
-    # quantizers that compressed those projections need.
-    ( cd "$SRC" && STRATA_GGUF_PY="$ggufpy" .venv/bin/python tools/iq_pack.py --gguf "$s1" --out "$pack" ) \
-      || fail "abl pack: iq_pack failed (nothing is marked, the next boot resumes)"
-  fi
-}
-# Manual pack for the gated orcarouter Uncensored IQ3_XXS pair
-# (cf-86 C02, the second ablated rung of the U2 ruling). The
-# catalog gate has two proofs at v0.2.8: setup.py carries no
-# orca family (docs/ORCA.md: "OrcaRouter is not an installer
-# menu entry, and there is no --family orca"), and setup.py has
-# ZERO download-auth support (no HF_TOKEN/Authorization/Bearer
-# path in the whole 640 KB installer) — so even a catalog family
-# could never fetch a gated repo, and branch B is forced. The
-# recipe is ORCA.md verbatim: stage both shards under their
-# original names (iq_pack reads the split pair from one
-# directory), pack with --compat-bf16 (Orca's quantizer, unlike
-# SC117's above, compressed the projections Strata's kernels
-# read as BF16), output to the ORCA.md-named pack dir. The
-# BYTES are gated (resolve/main 401 + Bearer challenge measured
-# 2026-10-30) while the tree metadata is public, so this fetch
-# is the one hf-token Secret consumer the R-d ruling sanctions,
-# strictly DOWNLOAD-ONLY: no token reaches the strata container,
-# the inner config, or any profile (C-A keyless serve posture).
+# Manual pack for the gated orcarouter Uncensored IQ4_XS trio (cf-86 C02's
+# rung, shifted up the orcarouter quant ladder from IQ3_XXS by the U9.2 owner
+# ruling — same frozen arena id, no new provisioning token). The catalog gate
+# has two proofs at v0.2.8: setup.py carries no orca family (docs/ORCA.md:
+# "OrcaRouter is not an installer menu entry, and there is no --family orca"),
+# and setup.py has ZERO download-auth support (no HF_TOKEN/Authorization/Bearer
+# path in the whole 640 KB installer) — so even a catalog family could never
+# fetch a gated repo, and branch B is forced. There is no Strata doc page for
+# this rung (ORCA.md validated IQ3_XXS, ORCA_Q4_K_S.md the Q4_K_S trio), which
+# makes it feasible-with-prep, not validated: plain IQ4_XS experts are already
+# kernel-supported on the q38 path — unsloth's UD-IQ4_XS is catalog-served on
+# AMD since engine 0.1.31/0.1.32 — so zero build flags and zero kernel gap
+# (RESEARCH R4). The recipe is ORCA.md's, tier-swapped: stage the three shards
+# under their original names at the repo root (iq_pack reads the split set
+# from one directory), pack with --compat-bf16 — the same publisher/quantizer
+# pipeline whose IQ3_XXS shards provably compressed the projections Strata's
+# kernels read as BF16 — and output to the tier-named pack dir. If the first
+# IQ4_XS provisioning's iq_pack log shows the Q4 tier shipped BF16 projections
+# after all, the fix is a one-line iq_pack flag flip + pack rebuild at the
+# human on-target gate, decided there, not pre-trimmed here. The BYTES are
+# gated (resolve/main 401 + Bearer challenge measured 2026-10-30) while the
+# tree metadata is public, so this fetch is the one hf-token Secret consumer
+# the R-d ruling sanctions, strictly DOWNLOAD-ONLY: no token reaches the
+# strata container, the inner config, or any profile (C-A keyless serve
+# posture).
 orca_pack() {
-  # $1 = quant tier (IQ3_XXS — the only validated Orca quant).
-  # Same Strata-data staging shape as abl_pack, -orca suffix.
+  # $1 = quant tier (IQ4_XS, from STRATA_MODEL_ORCA). Same Strata-data
+  # staging shape as the catalog tiers, -orca suffix because these are
+  # different bytes than the catalog tier of the same name.
   tier=$1
   tierl=$(printf '%s' "$tier" | tr 'A-Z' 'a-z')
   dir=/models/strata/Strata-data/models/$tier-orca
   pack=/models/strata/Strata-data/packs/orca-$tierl
   stem=Qwen3.8-Flash-Next-Uncensored-$tier
-  s1=$dir/$stem-00001-of-00002.gguf
-  # ORCA.md: this pack's PLE table rides in shard 1 (its example
-  # profile points --native and --ple-gguf at the same shard);
-  # shard 2 still must be staged — iq_pack reads both halves.
-  s2=$dir/$stem-00002-of-00002.gguf
+  s1=$dir/$stem-00001-of-00003.gguf
+  # The IQ4_XS tier splits into three shards at the flat repo root (live
+  # tree read 2026-10-31); ALL of them get staged — iq_pack reads the
+  # whole split set from the one directory. ORCA.md's PLE-rides-inside-
+  # shard-1 pattern is carried to the profile side, with the 3-shard
+  # placement confirmed at the on-target serve --plan gate.
+  s2=$dir/$stem-00002-of-00003.gguf
+  s3=$dir/$stem-00003-of-00003.gguf
   # Guards before any byte moves (C01 review law): never start
-  # 85.20 GB of downloads for a pack this init cannot build.
+  # 97.47 GB of downloads for a pack this init cannot build.
   [ -x "$SRC/.venv/bin/python" ] \
     || fail "orca pack: $SRC/.venv missing - the q3 token must provision before orca"
   ggufpy=$SRC/third_party/llama.cpp/gguf-py
   [ -d "$ggufpy" ] \
     || fail "orca pack: no gguf-py at $ggufpy - setup unpacks the pinned llama.cpp source during provisioning"
   mkdir -p "$dir"
-  # Same downloader as abl_dl, in gated mode: /opt/strata/bin/hf_fetch.py
+  # Gated mode of the baked downloader: /opt/strata/bin/hf_fetch.py
   # (stdlib urllib — the bake+verify RUN proves this image ships no curl).
   # The hop-walk law and its 2026-10-30 measurements live with the code that
   # walks the hops; here the token only ever sits in this function's env.
@@ -199,17 +133,18 @@ orca_pack() {
     mv "$2.part" "$2" || fail "orca pack: rename failed for $2"
   }
   # Byte pins are the HF tree-API literals the pack contract is built on;
-  # the orca pair in byte_pins.env sums to 85202668032 = ORCA.md's 85.20 GB.
-  # The downloader renames a .part only on an exact match.
-  orca_dl "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/resolve/main/$stem-00001-of-00002.gguf" "$s1" $ORCA_IQ3_XXS_SHARD1
-  orca_dl "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/resolve/main/$stem-00002-of-00002.gguf" "$s2" $ORCA_IQ3_XXS_SHARD2
+  # the orca IQ4_XS trio in byte_pins.env sums to 97473155200 = RESEARCH
+  # R4's 97.47 GB. The downloader renames a .part only on an exact match.
+  orca_dl "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/resolve/main/$stem-00001-of-00003.gguf" "$s1" $ORCA_IQ4_XS_SHARD1
+  orca_dl "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/resolve/main/$stem-00002-of-00003.gguf" "$s2" $ORCA_IQ4_XS_SHARD2
+  orca_dl "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF/resolve/main/$stem-00003-of-00003.gguf" "$s3" $ORCA_IQ4_XS_SHARD3
   # setup's own completeness guard (native_experts.txt is
   # written last by iq_pack): a crash between pack build and the
   # marker re-enters here instead of serving a partial pack.
   if [ ! -f "$pack/native_experts.txt" ] || [ ! -f "$pack/tokenizer/vocab.json" ]; then
     # --compat-bf16 is ORCA.md's answer to THIS quantizer: it
     # expands only the hyper-connection/small-attention/PLE
-    # projections Orca compressed but Strata reads as BF16;
+    # projections orcarouter compressed but Strata reads as BF16;
     # experts, native attention, embeddings and the PLE table
     # stay untouched (and the table stays on disk).
     ( cd "$SRC" && STRATA_GGUF_PY="$ggufpy" .venv/bin/python tools/iq_pack.py --gguf "$s1" --out "$pack" --compat-bf16 ) \
@@ -228,9 +163,8 @@ for tok in ${STRATA_QUANTS:-q3}; do
   # STRATA_MODEL_Qx may name another catalog family as
   # "family/model" (e.g. unsloth/UD-Q4_K_XL — the q4/q5 the
   # qwen family does not carry); a bare name stays qwen. The
-  # pseudo-families "abl" and "orca" are deliberately NOT
-  # catalog names: they route the token to the manual packs
-  # above.
+  # pseudo-family "orca" is deliberately NOT a catalog name: it
+  # routes the token to the manual pack above.
   case "$SIZE" in
     */*) FAM=${SIZE%%/*}; SIZE=${SIZE#*/} ;;
   esac
@@ -243,14 +177,8 @@ for tok in ${STRATA_QUANTS:-q3}; do
     echo "model-fetch: $tok already set up, skipping"
     continue
   fi
-  if [ "$FAM" = abl ]; then
-    echo "model-fetch: manual pack for $tok ($SIZE abliterated tier — no setup.sh catalog entry)"
-    abl_pack "$SIZE"
-    touch "$MARK"
-    continue
-  fi
   if [ "$FAM" = orca ]; then
-    # The 85.20 GB gated pack carries its OWN completeness
+    # The 97.47 GB gated pack carries its OWN completeness
     # marker at the chunk-frozen path: touched only after the
     # staged shards AND the pack built (orca_pack fail-exits on
     # any partial), so an interrupted pack re-enters the step

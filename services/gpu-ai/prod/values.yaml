@@ -126,21 +126,20 @@ llama-swap:
       # block's 420 > 180 + 30 grace/unload invariant intact when doing so.
       strata:
         enabled: true
-        # cf-86 C01+C02+C06: the strata provisioning set carries three
-        # routing keys beyond the flagship — "abl" (SC117 GSQ-RCO-abliterated
-        # IQ3_XXS), "orca" (orcarouter Uncensored IQ3_XXS, the U2 ruling's
-        # gated second rung) and "q4" (unsloth UD-Q4_K_XL, C06's Q4 rung).
-        # abl+orca are branch B: the pinned v0.2.7 setup catalog carries
-        # neither family (zero abliterated/SC117 hits in setup.py, and
-        # ORCA.md: "no --family orca"), so the chart's model-fetch args pack
-        # them manually and the env values name the staged tiers.
+        # cf-86 C02+C06: the strata provisioning set carries two routing
+        # keys beyond the flagship — "orca" (orcarouter Uncensored IQ4_XS,
+        # the U2 ruling's gated rung on the U9.2 ladder shift) and "q4"
+        # (unsloth UD-Q4_K_XL, C06's Q4 rung). orca is branch B: the pinned
+        # setup catalog carries no orca family (ORCA.md: "no --family
+        # orca"), so the baked staging driver packs it manually and the env
+        # value names the staged tier.
         # q4 is branch A, and that is an evidenced choice, not a default: the
-        # pinned setup.py@v0.2.7 (628,231 B, sha256 4a786bb8…c280e1) DOES carry
+        # pinned setup.py@v0.2.8 (639,798 B, sha256 0eba1327…c94079ae) DOES carry
         # an "unsloth" family (FAMILIES["unsloth"]: repo unsloth/Qwen3.8-Flash-
         # Next-GGUF, 4-shard file template, UNSLOTH_SHARDS byte+SHA256 pins),
         # MODELS["UD-Q4_K_XL"] lists families ("unsloth",), and RESEARCH Round
         # 2 [A1] records the anonymous catalog fetch — so this rung needs no
-        # manual pack step, only the token + family/model mapping the chart's
+        # manual pack step, only the token + family/model mapping the driver
         # loop already understands ("[family/]model").
         # Token posture (R-d ruling, DECISIONS 2026-10-29): the orca bytes
         # are HF-gated (resolve/main answers 401 + Bearer challenge), so the
@@ -151,14 +150,13 @@ llama-swap:
         # run-config profile; the suite pins both directions. The q4 pack is
         # public, so it takes no token of any kind — the one hf-token entry
         # below stays orca's alone.
-        # Scalars plus the one sanctioned secretKeyRef; the chart keeps the
-        # script, this block sets the env entries.
+        # Scalars plus the one sanctioned secretKeyRef; the staging driver is
+        # baked into the strata image (C07), this block sets the env entries.
         initContainers:
           model-fetch:
             env:
-              STRATA_QUANTS: "q3,abl,orca,q4"
-              STRATA_MODEL_ABL: abl/IQ3_XXS
-              STRATA_MODEL_ORCA: orca/IQ3_XXS
+              STRATA_QUANTS: "q3,orca,q4"
+              STRATA_MODEL_ORCA: orca/IQ4_XS
               STRATA_MODEL_Q4: unsloth/UD-Q4_K_XL
               HF_TOKEN:
                 valueFrom:
@@ -492,11 +490,10 @@ llama-swap:
       strata:
         proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
         # cf-86 wave (evidence/strata-peers-expected.yaml models_states): one
-        # route per landed inner arena — C01 abliterated, C02 orca, C06 q4.
+        # route per landed inner arena — C02 orca, C06 q4.
         models:
           - qwen3.8-flash-next-strata
           - qwen3.8-flash-next-strata-strix
-          - qwen3.8-flash-next-strata-abliterated
           - qwen3.8-flash-next-strata-orca
           - qwen3.8-flash-next-strata-q4
         timeouts:

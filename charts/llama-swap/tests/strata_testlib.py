@@ -220,10 +220,18 @@ def strata_peers_evidence() -> dict:
     for i, ids in enumerate(states):
         if not isinstance(ids, list) or not ids or len(set(ids)) != len(ids):
             raise AssertionError(f"models_states[{i}] must be a non-empty duplicate-free list")
-        if not set(ids) <= set(final):
+        if not set(ids) <= set(final) | {ABL_ID}:
+            # The swept abliterated arena may appear in HISTORY states but not
+            # in the final allowed set (C08 U9.3, TEST_SPEC 9.17); every other
+            # id outside models_allowed is a phantom.
             raise AssertionError(f"models_states[{i}] names a peer outside the final set")
-        if not prev <= set(ids):
-            raise AssertionError(f"models_states[{i}] drops a peer an earlier wave served")
+        if prev:
+            removed = prev - set(ids)
+            if removed and removed != {ABL_ID}:
+                raise AssertionError(
+                    f"models_states[{i}] drops {sorted(removed)} — additions are the rule; "
+                    "the ONE sanctioned shrink is the C08 sweep of the abliterated arena"
+                )
         prev = set(ids)
     return ev
 
@@ -244,21 +252,24 @@ def expected_strata_peers(served_model_ids) -> list:
 
 # --- cf-86 frozen ids / pins (plan 2026-10-29 + DECISIONS "Renumap +
 # final-shape decisions" + C06 FINAL pins) -----------------------------------
-# The five inner-matrix ids frozen by the plan; C05 consumes them verbatim and
-# the peers evidence lists them in this order. Profile filenames are frozen by
-# the chunk cmd literals (C01 "--profile /profile/strata-abliterated-iq3_xxs.json",
-# C02 strata-orca-iq3_xxs.json, C06 strata-q4.json).
-ABL_ID = "qwen3.8-flash-next-strata-abliterated"        # C01
+# The inner ids frozen by the plan; C05 consumes them verbatim and the peers
+# evidence lists them in this order. Profile filenames are frozen by the chunk
+# cmd literals (C02 strata-orca-iq3_xxs.json at authoring; C08's U9.2 ruling
+# renamed it in place to strata-orca-iq4_xs.json — same arena id, new quant),
+# C06 strata-q4.json. ABL_ID stays defined for the C08 absence arms: the swept
+# id must be provably ABSENT from every live surface.
+ABL_ID = "qwen3.8-flash-next-strata-abliterated"        # C01, swept by C08
 ORCA_INNER_ID = "qwen3.8-flash-next-strata-orca"        # C02
 Q4_ID = "qwen3.8-flash-next-strata-q4"                  # C06
-PROFILE_ABL_FILE = "strata-abliterated-iq3_xxs.json"
-PROFILE_ORCA_FILE = "strata-orca-iq3_xxs.json"
+PROFILE_ABL_FILE = "strata-abliterated-iq3_xxs.json"    # swept; absence-pinned
+PROFILE_ORCA_FILE = "strata-orca-iq4_xs.json"
 PROFILE_Q4_FILE = "strata-q4.json"
-INNER_IDS = (PRIMARY_ID, STRIX_ID, ABL_ID, ORCA_INNER_ID, Q4_ID)
+INNER_IDS = (PRIMARY_ID, STRIX_ID, ORCA_INNER_ID, Q4_ID)
 # Inner matrix letters frozen by the chunks: vars grow p|s -> +c (C01) -> +o
-# (C02) -> +q (C06); every set must keep them ALTERNATIVES.
+# (C02) -> +q (C06), and C08's sweep removes c again; every set must keep them
+# ALTERNATIVES.
 INNER_MATRIX_VARS = {
-    "p": PRIMARY_ID, "s": STRIX_ID, "c": ABL_ID, "o": ORCA_INNER_ID, "q": Q4_ID,
+    "p": PRIMARY_ID, "s": STRIX_ID, "o": ORCA_INNER_ID, "q": Q4_ID,
 }
 # C02 gated-pack marker (manual-pack idempotency contract).
 ORCA_PACK_MARKER = "/models/strata/.pack-orca"
@@ -282,7 +293,6 @@ Q4_FORBIDDEN_TOKENS = ("--batch", "--layer-split", "--ple-io")
 INNER_PROFILE_FILES = {
     PRIMARY_ID: PROFILE_PRIMARY_FILE,
     STRIX_ID: PROFILE_STRIX_FILE,
-    ABL_ID: PROFILE_ABL_FILE,
     ORCA_INNER_ID: PROFILE_ORCA_FILE,
     Q4_ID: PROFILE_Q4_FILE,
 }

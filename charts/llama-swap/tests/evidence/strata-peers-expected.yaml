@@ -27,9 +27,16 @@
 # state is an EXACT sanctioned list, listed oldest-first in models_states, so
 # the SAME immutable suite stays wave-correct from the pre-cf-86 pair through
 # C06's five-id final state: a peers list outside these exact ordered lists is
-# a phantom or a lost entry. models_allowed = the C06-final allowed set (the
-# five frozen ids, verbatim per the plan/chunk titles); a list merely INSIDE
+# a phantom or a lost entry. models_allowed = the ruled final allowed set (the
+# four served ids, verbatim per the plan/chunk titles); a list merely INSIDE
 # that set but not one of the states is still red.
+#
+# 2026-10-31 C08 landing flip (test-session mechanical action, TEST_SPEC 9.15/
+# 9.17): the U9.3 SC117 removal sweep is the ONE shrink this chain sanctions —
+# models_states gained the four-id post-sweep state and models_allowed dropped
+# the swept abliterated id. History states keep the abliterated entries (they
+# are exact records of landed waves); the wave law in strata_testlib allows a
+# removal ONLY of that one swept id and ONLY as a removal-only transition.
 strata:
   proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
   timeouts:
@@ -40,7 +47,6 @@ strata:
   models_allowed:
     - qwen3.8-flash-next-strata
     - qwen3.8-flash-next-strata-strix
-    - qwen3.8-flash-next-strata-abliterated
     - qwen3.8-flash-next-strata-orca
     - qwen3.8-flash-next-strata-q4
   models_states:
@@ -52,7 +58,10 @@ strata:
     # cf-86 C02 landed:
     - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
        qwen3.8-flash-next-strata-abliterated, qwen3.8-flash-next-strata-orca]
-    # cf-86 C06 landed (five-id final state):
+    # cf-86 C06 landed (five-id state):
     - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
        qwen3.8-flash-next-strata-abliterated, qwen3.8-flash-next-strata-orca,
        qwen3.8-flash-next-strata-q4]
+    # cf-86 C08 landed (SC117 sweep, U9.3 — final state):
+    - [qwen3.8-flash-next-strata, qwen3.8-flash-next-strata-strix,
+       qwen3.8-flash-next-strata-orca, qwen3.8-flash-next-strata-q4]

@@ -667,23 +667,9 @@
             "context": 262144
           }
         },
-        "qwen3.8-flash-next-strata-abliterated": {
-          "modelID": "qwen3.8-flash-next-strata-abliterated",
-          "name": "Qwen 3.8 Flash Next Abliterated (Strata IQ3_XXS arena, R9700)",
-          "capabilities": {
-            "tools": true,
-            "input": ["text"],
-            "output": ["text"]
-          },
-          // Trained ceiling 262144; the engine refuses past it without rope
-          // scaling (documented experimental toggle in charts/llama-swap).
-          "limit": {
-            "context": 262144
-          }
-        },
         "qwen3.8-flash-next-strata-orca": {
           "modelID": "qwen3.8-flash-next-strata-orca",
-          "name": "Qwen 3.8 Flash Next Uncensored (Strata IQ3_XXS arena, R9700)",
+          "name": "Qwen 3.8 Flash Next Uncensored (Strata IQ4_XS arena, R9700)",
           "capabilities": {
             "tools": true,
             "input": ["text"],
