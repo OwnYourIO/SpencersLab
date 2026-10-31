@@ -32,11 +32,18 @@ never restating the walk. A run pointed at an unlabeled card arrives only
 through a manual launch the user initiates, and it asks which provider
 applies before any Model(s)/provider routing, then requests the human apply
 the matching `Provider:` label (labels stay human-owned). OpenChamber
-hand-offs stay human-owned and one-time (DECISIONS): the Local task's first
-sync needs the loopApprovals approval (its task fingerprint), and
-permissionAutoAccept ("Always Allow") is toggled once per task in the task
-UI — the file format cannot express it, the toggle survives loop re-sync,
-and ledger card L1 tracks removing the need. Run tags are retired for every
+hand-offs stay human-owned (DECISIONS post-research correction, 2026-10-31):
+post-merge BOTH tasks need loopApprovals before either runs. This task's
+provider-round body edits rotated its approved fingerprint (live-approved
+8137741841… vs 9ae4146e… recomputed over the landed body; every later body
+edit — this paragraph included — rotates it again, so approve whatever value
+the task UI shows at merge time), and reconcileLoopTasks pins a
+fingerprint-mismatched task as "outdated" with its enabled flag forced false
+until re-approved: merge day silently stops this hourly walk otherwise. The
+Local sibling needs its first approval likewise. Then permissionAutoAccept
+("Always Allow") is toggled on both — the file format cannot express it, the
+toggle survives loop re-sync, and ledger card L1 tracks removing the need.
+Run tags are retired for every
 flavor (cf-90): each run's surfaces are named by the card's final slug
 alone.
 

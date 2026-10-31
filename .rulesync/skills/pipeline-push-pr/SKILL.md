@@ -31,7 +31,7 @@ Run `gh pr create` for the ticket branch when `gh` is authenticated; otherwise h
 
 What the `-pr` family may count on once it pushes a ticket branch: linting runs automatically (a future plugin runs it for the `-pr` family — ledger card L3), CI performs the builds and the tests, and the PR's lifecycle state selects the tier.
 
-- **Draft PR — the unit tier.** Its CI rides `on: push` (branch) triggers, because GitHub runs NO `pull_request`-triggered workflows while a PR is draft; a unit workflow keyed only to `pull_request` would first fire at ready, not during the draft.
+- **Draft PR — the unit tier.** GitHub runs `pull_request`-triggered workflows while a PR is draft — the ready tier's `draft == false` guard below exists precisely because they do — so the unit tier rides plain `on: pull_request`: its default types (opened, synchronize, reopened) fire during the draft.
 - **Ready PR — the integration tier.** A second workflow keyed `on: pull_request: types: [ready_for_review, synchronize]` with the draft guard `if: github.event.pull_request.draft == false` — `synchronize` keeps it re-running on new commits after the PR leaves draft. Skipped checks can report a stale pass on a draft-to-ready transition, so the required-check list stays aligned with the ready-stage workflow (guidance for the CI cards, not for an agent run).
 
 Coverage shapes per surface:

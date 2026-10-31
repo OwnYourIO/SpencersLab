@@ -17,11 +17,18 @@ runs — its table is that authority, cited not copied. The shipped posture is
 enabled: true with scheduler hygiene human-owned (main 080c9878a precedent,
 same as the API file).
 
-OpenChamber hand-offs, human-owned and one-time (DECISIONS): this task's
-FIRST sync needs the loopApprovals approval (the task fingerprint), and
-permissionAutoAccept ("Always Allow") must be toggled once in the task UI —
-the file format cannot express it, the toggle survives loop re-sync, and
-ledger card L1 tracks removing the need later.
+OpenChamber hand-offs, human-owned (DECISIONS post-research correction,
+2026-10-31): post-merge BOTH tasks need loopApprovals before either runs —
+this task's FIRST approval, and a fresh RE-APPROVAL of the API sibling,
+whose provider-round body edits rotated its approved fingerprint
+(live-approved 8137741841… vs 9ae4146e… recomputed over the landed body;
+every later body edit rotates it again, so approve whatever value the task
+UI shows at merge time) — reconcileLoopTasks pins a fingerprint-mismatched
+task as "outdated" with its enabled flag forced false until re-approved,
+which silently stops the hourly API walk on merge day otherwise. Then
+permissionAutoAccept ("Always Allow") is toggled on both — the file format
+cannot express it, the toggle survives loop re-sync, and ledger card L1
+tracks removing the need later.
 
 Swap target (D30): slash dispatch of a plugin command from loop text is
 unproven on the pinned OpenCode v2.1.4, so the body below is the plain-text

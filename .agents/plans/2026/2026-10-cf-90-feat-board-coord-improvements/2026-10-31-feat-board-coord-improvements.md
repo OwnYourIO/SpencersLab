@@ -76,10 +76,14 @@ RESEARCH.md (Before round done; its F1–F10 findings are the design basis).
   rewording, review checks intent, not just string matches.
 - Local model catalog churns: the pinned `gpu-ai/qwen3.8-flash-next-strata`
   was CONFIRMED in the batched round (2026-10-31) — C04 lands it as-is.
-- RESEARCH contradictions stand: per-swimlane lists (live data beats the
+- RESEARCH contradictions: per-swimlane lists (live data beats the
   wekan.fi sentence) → provisioning always passes swimlane ids and Bucket
-  rules always match swimlaneName; draft-PR CI reality → the -pr section
-  ships the push-trigger reading (C05).
+  rules always match swimlaneName; the draft-PR CI premise RESEARCH F8
+  carried ("draft PRs run no pull_request workflows — unit must ride
+  on: push") was proven FALSE in post-research round 2 — the corrected
+  tier-trigger contract is the DECISIONS post-research entry's (GitHub
+  thread #25722), and the C05 surfaces read it (no mechanics restated
+  here).
 - The card description's truncated AD-88 tail carries NO hidden scope —
   resolved in the batched round (2026-10-31); the bullet list is the
   complete request.
@@ -181,8 +185,9 @@ list in the Backlog swimlane (batched-round ruling — id re-resolved via
   restore as a part of testing services" (Backlog/CICD): locate the kopia
   deployment (absent from this repo — RESEARCH F9), restore the most recent
   production backup into the test namespace, credentials story.
-- **L10 (CREATE) — PR testing flow: k8s charts.** Draft PR = unit tier (CI
-  on push triggers — draft PRs run no pull_request workflows), ready PR =
+- **L10 (CREATE) — PR testing flow: k8s charts.** Draft PR = unit tier
+  (plain `on: pull_request` default types — they FIRE during draft; GitHub
+  thread #25722 per the DECISIONS post-research entry), ready PR =
   integration tier (ready_for_review+synchronize, !draft); unit = chart
   loaded in test env + playwright login/logout walk; integration = + kopia
   restore + data-presence check after login; prefer live playwright-MCP

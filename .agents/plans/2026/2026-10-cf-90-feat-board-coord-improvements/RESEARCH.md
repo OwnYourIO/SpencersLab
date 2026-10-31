@@ -339,3 +339,81 @@ W6 coder.com/docs/admin/templates/extending-templates/environment-variables ·
 W7 registry.terraform.io coder provider: coder_agent/coder_env (search-verified) ·
 W8 kopia.io/docs/reference/command-line/common/restore/ · W9 playwright.dev/docs/getting-started-mcp ·
 W10 helm.sh/docs/topics/chart_tests/ · W11 wekan.fi/docs (board-wide lists sentence)
+
+## Post-Planning round (2026-10-31)
+
+Round 2, agented after C01–C07 landed (tip f5df36226): verify the landed implementation against live
+reality. The Before-Planning findings above stand except where this section corrects them — TL;DR/F1–F10
+are NOT rewritten. Method: local reads, live host probes (opencode/openchamber/project-config/installed
+source), dev-boards READ-ONLY probes, and same-day web re-checks. No board or host writes were made.
+
+### Verdicts — landed facts confirmed (no action)
+
+- **F3 OpenChamber — true, zero version drift.** Host runs @openchamber/web 2.5.2; npm latest 2.5.3
+  (published 2026-10-28) ships `scheduled-tasks/loops.js` and `projects/project-config.js`
+  BYTE-IDENTICAL to 2.5.2 (diffed against the npm tarball). permissionAutoAccept survival re-verified in
+  the installed source: reconcile merges `execution: {...task.execution, ...loop.definition.execution}`
+  so UI-only fields stick across re-syncs. loopFingerprint = sha256{name, schedule, execution}; `enabled`
+  excluded, body INCLUDED (execution.prompt IS the whole markdown body — loops.js parseLoopDefinition).
+- **F4 archive route — true.** Live host openapi (opencode v2.1.4): `PATCH /api/session/{sessionID}`
+  carries `archived` boolean, description verbatim from round 1 ("Repeating the current state is a
+  no-op"), additionalProperties false. The C03 landed text `opencode api patch /api/session/<id>
+  -d '{"archived": true}'` matches the CLI shape (method+path + -d confirmed in --help).
+- **F1/F2 rule vocabulary — true at 12.65.0 and upstream main.** Deployed chart pin unchanged
+  (services/home/prod Chart.yaml wekan 12.65.0). Live AI-Dev rules PROVE the engine's shapes on the
+  deployed build: a production moveCard→addLabel{fixed labelId} rule and the createCard rule carry the
+  full matcher set incl. swimlaneName/listName — exactly what provision-board.py emits. Upstream main
+  rulesHelper.js (re-fetched today): `addLabel` still `card.addLabel(action.labelId)`, NO substitution —
+  per-list rule pairs stand; upstream's new trigger kinds (advancedFilterTrigger, moveCardDirection,
+  textContainsTrigger) are additive, no conflict with the Bucket design.
+- **F6 coder_env — true.** Current docs (v2.38 mainline) name the `coder_env` resource with
+  replace/append/prepend/error merge strategies and `coder_agent.env` final-precedence — matches the
+  landed pipeline-push-pr "k8s Secret plus coder_env" wording exactly.
+- **Board state — exactly what the landed pieces assume.** Inbox in Backlog live at
+  `PjEZ39rXBdpNcpncs` (= the C07 record; engine keys on titles regardless); ALL 8 cf-90 ledger cards
+  present in Inbox (plus one pre-existing unrelated ipwhitelist card); **Provider: API / Provider: Local
+  labels still ABSENT**; Planning still lacks exactly Outside Process + Wekan (first provisioning run
+  creates precisely those, = the committed-fixture plan). Degradation without the labels is sound: the
+  scheduled API walk finds no `Provider: API` card → no-op marker + archive exit; the scheduled Local
+  walk is the planned taker of the unlabeled pool (3 cards currently in Not Started) WITH the
+  ask-at-claim. That is the shipped steady state until the post-merge human-confirmed provisioning run
+  lands the labels — and (see drift 1) nothing runs at all until the human approves the tasks anyway.
+  New human label observed: `Pipeline: Home Assistant` (orange) — additive, rides the Pipeline:
+  derivation with no code change, per the boards skill design.
+- **:v87 pin — unchanged (L4 holds).** services/dev/prod values `ghcr.io/ownyourio/wekan-mcp:v87`
+  untouched on main; live dev-boards catalog = the 26-tool v87-era surface (create_list/create_label/
+  create_swimlane/update_board/list_board_members still absent, as DECISIONS' apply-probe assumes).
+
+### Drift flags — findings that change the plan (replan candidates)
+
+1. **Post-merge BOTH loop tasks need human approval, not just the new Local one.** loopFingerprint
+   includes the body; C04's edits rotate pipeline-worker.md's fingerprint — live-approved
+   `8137741841c2…` vs post-merge `9ae4146e…` (computed with the installed 2.5.2 code itself), and
+   pipeline-worker-local.md is approved-nothing (`89aeb03d…`, new → required). reconcileLoopTasks forces
+   an approved-mismatch `enabled: true` project loop to `enabled: false` (`loopApproval: "outdated"`) —
+   so on merge day the hourly API task SILENTLY STOPS until re-approved. The landed DECISIONS
+   OpenChamber hand-off item and both loop files' comment blocks count only ONE approval (the new Local
+   task). Best-guess fix (text-only, no design change): amend the two loop comment blocks + DECISIONS —
+   after merge the human approves BOTH tasks (API = outdated re-approval, Local = first approval), then
+   toggles Always-Allow on both; ordering vs the provisioning run is unchanged.
+2. **F8's draft-PR premise is FALSE — GitHub DOES run `pull_request`-triggered workflows on draft PRs,
+   and the landed pipeline-push-pr assumed-flow text asserts the false statement.** F8's own cited
+   thread #25722 is a six-year record of people trying to STOP Actions running on drafts: the 2019
+   question, the accepted `if: github.event.pull_request.draft == false` job-guard idiom (which exists
+   ONLY because workflows run while draft), a Jan-2025 user explicitly running CI on a draft PR, Oct-2025
+   billing clarifications ("the workflow isn't skipped, the job is"), and "the obviously correct behavior
+   is still impossible" (Jun 2025). Landed sentence — "GitHub runs NO pull_request-triggered workflows
+   while a PR is draft; a unit workflow keyed only to pull_request would first fire at ready, not during
+   the draft" — misleads exactly where it matters: the L10-L12 ledger cards' tier design. Best-guess fix
+   (text-only): unit tier rides plain `on: pull_request` default types (opened/synchronize/reopened fire
+   DURING draft); integration tier keeps `types: [ready_for_review, synchronize]` + the draft job-guard;
+   drop the "must ride on: push" requirement for draft-era CI. Current events docs confirm the
+   complementary half (default types, ready_for_review opt-in) — that part of F8/C05 stays accurate.
+
+### Post-round adjacent notes
+
+- Live project config now shows the legacy "Hourly Pipeline call" task enabled:false — the
+  pipeline-worker.md comment block's "also enabled" phrasing is stale prose about human-owned scheduler
+  hygiene; harmless, worth one reword if the drift-1 text patch touches that block anyway.
+- F8's stale-pass pitfall note survives correction: with the types+draft-guard reading now recommended,
+  the required-check alignment guidance keeps its force.

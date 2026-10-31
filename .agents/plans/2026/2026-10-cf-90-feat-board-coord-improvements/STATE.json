@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e6f74d6f5ffeUXj2HQl29vGcwf",
   "test_session": "ses_e6d1e15f0ffen3EgDuCAEhq09x",
-  "current_wave": 2,
+  "current_wave": 3,
   "updated_at": "2026-10-31T15:45:00Z",
   "handoffs": [
     "RESULT (plan, 2026-10-31, ses_e6e12ba47ffeDfz9WmIw7RVPrw) status: DONE; 7 chunks/3 waves drafted; RESEARCH.md untouched; batched questions returned (7); friction carried: deployed dev-boards lags repo (:v87 pin, create_label/create_list absent -> REST fallback + L4 ledger card); stale residue forced -2 worktree/branch suffix -> proceed on -2, C03 cleanup prevents recurrence.",
@@ -134,15 +134,27 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C05", "C03"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "dev_session": "ses_e6c38ccadffez28waeJR4s4Xrn",
+      "handoffs": [
+        "RESULT (C06 dev r1, ses_e6c38ccadffez28waeJR4s4Xrn) status: DONE — deploy pair sources+mirrors (byte-parity with dev baselines + documented worktree_remove addition, question allow), pipeline-role-deploy contract skill (broken-deploy expectation, couple-of-options, HITL-or-unmanned split, ~90%/satisfied hand-back, user-cancel question flow, own-worktree close, ledger independence), coord step-8b hook + six-twin roster widening + skill-deny class closure, overview->AGENTS naming; deploy-suite 6/6 green first run; validation_at_fault handed per own header: agent-perms A12/A13/A16 re-pin; matrix move reverted pending board-context t4 (handed to coord).",
+        "RESULT (validation repairs, test session ses_e6d1e15f0ffen3EgDuCAEhq09x continued) status: DONE — agent-perms six-role roster + [-]deploy lookaheads + 24 count; board-context t4 widened to the C06 matrix delta + COORD_PR_SETTLED re-settled; matrix source+mirror edit INSIDE test-role matrix (.rulesync/skills allow) landed sanctioned-way (regen, byte-equal); t6 gate child moved to documented ids-minus-t17; agent-dev-deploy 6/6, agent-perms 16/16, board-context t1..t6; committed itself: 5b89752e3 (tests + matrix). C06 dev surfaces + rosters left uncommitted for coord landing.",
+        "RESULT (C06 review r1, fresh ses_e6c108327ffe9h66CF8dtukvYZ) status: DONE verdict APPROVED — full battery green (deploy 6/6, perms 16, board-context t1..t6, every HOLD; baseline reds message-identical vs clean 0c3b98400 probe kept at /tmp/opencode/cf90-c06-review-base); definition-only fence holds (t5 leak grep + eye check: no launch surface except coord step-8b under checked Lifecycle Deploy); matrix matches real frontmatter; MINOR-1 'commit-only twin' phrasing + MINOR-2 plain-variant survival-path double-reading deferred to final-review sweep; 27-file delta one-concern landing ready."
+      ]
     }
   },
+  "post_research": {
+    "session": "ses_e6c03b82dffeu66xkdpX9b6b8z",
+    "status": "DONE",
+    "verdict": "REPLAN-CANDIDATES: 2 text-only drift fixes (both-approval runbook; GitHub draft-PR CI premise FALSE) — folded via fix round per researcher's own route; no chunk decomposition change. RESEARCH.md post-planning section appended by the session.",
+    "at": "2026-10-31"
+  },
+  "final_review": null,
   "blocked": [],
   "deferred": []
 }
