@@ -39,7 +39,7 @@ CTX = 262144
 # C03/C04 llama.cpp rungs, and C06's own appended entry. C05 must not register
 # anything else that does not serve (the no-phantom arm is the guard).
 CF86_NEW_CATALOG_IDS = [
-    S.ABL_ID, S.ORCA_INNER_ID, S.Q4_ID,
+    S.ORCA_INNER_ID, S.Q4_ID,
     "qwen3.8-flash-next-heretic-q4", "qwen38-heretic",
 ]
 
@@ -47,10 +47,12 @@ CF86_NEW_CATALOG_IDS = [
 # The two llama.cpp family ids have no service surface BY DESIGN: they ride the
 # chart-side family — the gpu-ai overlay carries matrix letters (q38her), never
 # the id — C05's plan forbids it touching services/**, and C04's AC1 arm bans a
-# models-layer entry for qwen38-heretic there. Registration for all five ids is
+# models-layer entry for qwen38-heretic there. Registration for all four ids is
 # AC1's job (CF86_NEW_CATALOG_IDS); their live-serve side is pinned by the
-# C03/C04 files' gpu-ai render arms.
-CF86_TRIO_IDS = [S.ABL_ID, S.ORCA_INNER_ID, S.Q4_ID]
+# C03/C04 files' gpu-ai render arms. The trio shrank 3->2 at C08's U9.3 sweep:
+# the abliterated arena's trio grep is dead (its surfaces are swept — absence
+# pinned in test_strata_c08_rung_shifts.py), orca and q4 remain.
+CF86_TRIO_IDS = [S.ORCA_INNER_ID, S.Q4_ID]
 
 # The card's already-served asks (C05 AC3): verification greps, no edits.
 CARD_ASK_IDS = ["qwen3.8-27b-q4", "qwen3.8-27b-q6", "qwen3.8-flash-next-q4"]
@@ -219,8 +221,9 @@ def test_c05_trio_scope_is_strata_ids_only():
     dragged into the trio law — doing so makes it unsatisfiable and forces a
     cross-chunk AC violation. Moving an id between these lists is a law
     amendment, not a test edit."""
-    assert CF86_TRIO_IDS == [S.ABL_ID, S.ORCA_INNER_ID, S.Q4_ID], (
-        f"trio scope moved: {CF86_TRIO_IDS} — Strata ids only, per chunk C05 AC5"
+    assert CF86_TRIO_IDS == [S.ORCA_INNER_ID, S.Q4_ID], (
+        f"trio scope moved: {CF86_TRIO_IDS} — Strata ids only, per chunk C05 AC5 "
+        "(shrunk 3->2 by C08's U9.3 sweep)"
     )
     for mid in ("qwen3.8-flash-next-heretic-q4", "qwen38-heretic"):
         assert mid in CF86_NEW_CATALOG_IDS and mid not in CF86_TRIO_IDS, (

@@ -33,8 +33,10 @@ helm = pytest.mark.skipif(not _ok, reason=_reason)
 # 2026-10-30 anonymously; provenance recorded in test_strata_orca_rung.py).
 # C07-era byte_pins.env carries all six; C08 rewrites it (SC117 lines die,
 # orca pair becomes the three IQ4_XS literals pinned in the C08 file).
-ABL_BYTES_C07 = (47342144896, 28800138432)
-ORCA_BYTES_C07 = (44637691008, 40564977024)
+# Live-pinned 2026-10-31 U9.2 trio (Σ 97473155200 = RESEARCH R4 [B7]; the c08
+# live arm re-verifies against the tree). The C07-era four — SC117 pair +
+# orcarouter IQ3_XXS pair, Σ 85202668032 — retired at the C08 landing flip.
+ORCA_BYTES_ERA = (44766155936, 44735995008, 7971004256)
 
 # The shell-client ban the render-era arms ran line-scoped (comments NAME curl
 # to forbid it; the image provably carries no curl — bake+verify law).
@@ -119,41 +121,49 @@ def test_c07_hf_fetch_is_one_file_two_modes_anon_and_gated():
 
 
 @helm
-def test_c07_byte_pins_env_carries_the_c07_era_four_literals():
-    """C07-era content: SC117 pair + orca IQ3_XXS pair, each as an assignment,
-    Σ comments riding along (the ORCA.md 85,202,668,032 total). A literal that
-    drifted from the HF-tree read is a silent truncated-shard acceptance."""
+def test_c07_byte_pins_env_carries_the_era_exact_literal_set():
+    """The lift's pin-set law: one assignment per staged shard, the Σ total
+    comment riding along, and the set EXACT — no extra byte literal without a
+    plan. Content is era-dependent: since the C08 sweep only the orcarouter
+    IQ4_XS trio ships (Σ 97,473,155,200 = R4 [B7]); the C07-era four retired at
+    the landing flip (TEST_SPEC 9.17). A literal that drifted from the HF-tree
+    read is a silent truncated-shard acceptance."""
     pins = _pins()
-    for size in ABL_BYTES_C07 + ORCA_BYTES_C07:
+    for size in ORCA_BYTES_ERA:
         assert re.search(rf"^[A-Z][A-Z0-9_]*={size}$", pins, re.M), (
             f"byte_pins.env has no NAME={size} assignment — the pin this pack "
-            "contract was built on (HF tree API 2026-10-30) is missing or renamed"
+            "contract was built on (HF tree API 2026-10-31) is missing or renamed"
         )
-    assert "85202668032" in pins, "the ORCA.md total comment must ride with the orca pair"
+    assert "97473155200" in pins, "the Σ total comment must ride with the orca trio"
     extra = set(re.findall(r"^[A-Z][A-Z0-9_]*=(\d{8,})$", pins, re.M))
-    assert extra == {str(s) for s in ABL_BYTES_C07 + ORCA_BYTES_C07}, (
-        f"byte_pins.env literals {sorted(extra)} != the C07-era four — a 5th byte "
-        "literal needs a plan, C08's rewrite is not early (wave table TEST_SPEC 9.14)"
+    assert extra == {str(s) for s in ORCA_BYTES_ERA}, (
+        f"byte_pins.env literals {sorted(extra)} != the C08-era trio — a 4th byte "
+        "literal needs a plan (wave table TEST_SPEC 9.14/9.17)"
     )
 
 
 @helm
-def test_c07_pack_functions_stage_the_c07_era_paths_and_repos():
-    """C07-era pairing source: abl_pack/orca_pack assignments live in the image
-    script now; the repo literals and 2-shard paths ride with them verbatim."""
+def test_c07_pack_functions_stage_the_era_paths_and_repos():
+    """The lift's pairing source: orca_pack's assignments live in the image
+    script now; the repo literal and the 3-shard IQ4_XS paths ride with them
+    verbatim (U9.2 shift). The abl_pack half retired at the C08 landing flip —
+    its ABSENCE is now the law, pinned positively below and cross-pinned by
+    test_strata_c08_rung_shifts.py::test_c08_image_files_lose_every_abliterated_leg."""
     script = _fetch_sh()
-    abl = S.staged_paths(script, "abl_pack", "IQ3_XXS")
-    orca = S.staged_paths(script, "orca_pack", "IQ3_XXS")
-    assert "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF" in script, (
-        "the SC117 repo literal left the lift — C07 is a PURE port (C08 deletes it)"
-    )
+    orca = S.staged_paths(script, "orca_pack", "IQ4_XS")
     assert "orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF" in script, (
         "the orcarouter repo literal left the lift"
     )
-    assert abl["pack"] == "/models/strata/Strata-data/packs/abliterated-iq3_xxs"
-    assert orca["pack"] == "/models/strata/Strata-data/packs/orca-iq3_xxs"
-    assert abl["s1"].endswith("-00001-of-00002.gguf") and abl["s2"].endswith("-00002-of-00002.gguf")
-    assert orca["s1"].endswith("-00001-of-00002.gguf") and orca["s2"].endswith("-00002-of-00002.gguf")
+    assert orca["pack"] == "/models/strata/Strata-data/packs/orca-iq4_xs"
+    assert (
+        orca["s1"].endswith("-00001-of-00003.gguf")
+        and orca["s2"].endswith("-00002-of-00003.gguf")
+        and orca["s3"].endswith("-00003-of-00003.gguf")
+    ), "the IQ4_XS trio does not stage the flat-root 3-shard family verbatim"
+    assert "abl_pack" not in script and "SC117" not in script, (
+        "abliterated staging came back — C08 U9.3 swept it; a revival without "
+        "PROVENANCE is unsanctioned"
+    )
 
 
 # --- the redirect-trust law, baked (C02 review-adjudicated) --------------------
@@ -255,7 +265,7 @@ def test_c07_guard_before_bytes_ordering_survives_the_lift():
     each manual pack — 76/85 GB must never start for a pack this init cannot
     build. Order-checked, not presence-checked."""
     body = S.body_lines(_fetch_sh())
-    for fn in ("abl_pack", "orca_pack"):
+    for fn in ("orca_pack",):  # abl_pack retired with the C08 U9.3 sweep (absence-pinned)
         start = next((k for k, (_, ln) in enumerate(body) if re.match(rf"^\s*{fn}\(\)", ln)), None)
         assert start is not None, f"no {fn}() definition in the driver"
         tail = body[start:]
@@ -280,17 +290,19 @@ def test_c07_guard_before_bytes_ordering_survives_the_lift():
 @helm
 def test_c07_env_contract_scalars_and_pseudo_family_routing_in_the_script():
     """The env contract lands inside the script now: IFS=, loop over
-    STRATA_QUANTS (default q3), STRATA_MODEL_$TOK mapping, the abl/orca
-    pseudo-family routing (C07-era: BOTH — C08 drops abl), and the verbatim
-    `--backend hip` setup.sh line."""
+    STRATA_QUANTS (default q3), STRATA_MODEL_$TOK mapping, and the pseudo-
+    family routing — since the C08 sweep ORCA-ONLY: the abl case-arm's absence
+    is part of the law (U9.3), alongside the verbatim `--backend hip` setup.sh
+    line."""
     script = _fetch_sh()
     assert re.search(r"IFS=,", script), "the comma-split loop over STRATA_QUANTS is gone"
     assert re.search(r'STRATA_QUANTS:-q3', script), "the chart-side q3 default contract is gone"
     assert re.search(r'STRATA_MODEL_\$TOK|printenv "STRATA_MODEL_\$TOK"', script), (
         "the STRATA_MODEL_$TOK scalar mapping left the loop"
     )
-    assert re.search(r'\[ "\$FAM" = abl \]', script), (
-        "the abl pseudo-family arm is gone — C07 is a PURE lift; C08 owns that deletion"
+    assert not re.search(r'\[ "\$FAM" = abl \]', script), (
+        "the abl pseudo-family arm is back — C08 U9.3 deleted it; a revival "
+        "without PROVENANCE is unsanctioned"
     )
     assert re.search(r'\[ "\$FAM" = orca \]', script), "the orca pseudo-family arm left the lift"
     assert "--backend hip" in script, "the mandatory --backend hip leg (2026-10-29 deploy) left the setup.sh call"

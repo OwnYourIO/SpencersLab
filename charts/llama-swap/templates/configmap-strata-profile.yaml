@@ -20,9 +20,7 @@ data:
     {{- .Values.strata.config.engineProfile | toPrettyJson | nindent 4 }}
   strata-strix-iq3_s.json: |
     {{- .Values.strata.config.engineProfileStrix | toPrettyJson | nindent 4 }}
-  strata-abliterated-iq3_xxs.json: |
-    {{- .Values.strata.config.engineProfileAbliterated | toPrettyJson | nindent 4 }}
-  strata-orca-iq3_xxs.json: |
+  strata-orca-iq4_xs.json: |
     {{- .Values.strata.config.engineProfileOrca | toPrettyJson | nindent 4 }}
   strata-q4.json: |
     {{- .Values.strata.config.engineProfileStrataQ4 | toPrettyJson | nindent 4 }}
