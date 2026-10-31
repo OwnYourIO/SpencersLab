@@ -1,6 +1,6 @@
 ---
 name: boards
-description: WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority), card-driven kickoff where the five standard checklists (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the single slug custom field (combined `[<slug>](<session link>)` value) supply the answers pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Review), the card lifecycle with post-plan write-back (Finished stays human-owned), and the batched question protocol. MUST-loaded by agent-board-coord at run start; load it anywhere else when working the WeKan AI-Dev board card flow.
+description: WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card pickup (a given card id, else the top card walking Rework → Not Started → Low Priority, scheduled walks additionally filtered by Provider label with the Local task the planned taker of unlabeled cards), card-driven kickoff where the five standard checklists (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the single slug custom field (combined `[<slug>](<session link>)` value) supply the answers pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative research-only loop for Research-labelled cards (ending at Review), the card lifecycle with post-plan write-back (Finished stays human-owned), the follow-up-card protocol landing Inbox (Backlog swimlane), the archive-and-never-ask no-cards exit, and the batched question protocol. MUST-loaded by agent-board-coord at run start; load it anywhere else when working the WeKan AI-Dev board card flow.
 targets: ["*"]
 ---
 
@@ -73,13 +73,14 @@ The values the flow writes onto the board. They are a written-onto-the-board con
    the single-card read.
 4. Nothing anywhere → write the no-op marker with reason `no-cards` (the
    No-op marker subsection; a failed write never delays the end), then
-   report no work and stop cleanly: RESULT
-   `status: NEEDS_INFO`, `open_questions: no cards on the AI-Dev board`.
-   Never fabricate a request.
+   archive the session per that subsection's Archive exit step — never a
+   "should I close out?" question — and report no work, stopping cleanly:
+   RESULT `status: NEEDS_INFO`, `open_questions: no cards on the AI-Dev
+   board`. Never fabricate a request.
 
 The card description is the request. Claim the card per the Card lifecycle before kickoff.
 
-The walk never visits **Executing** — a card there is owned by the run holding its pipeline lock set, and one session runs one card — nor **Timeout** (reaper destination; its triage is human-owned). On parallel-pipeline runs the candidate is additionally filtered by lock-set availability per Parallel pipeline loops below.
+The walk never visits **Executing** — a card there is owned by the run holding its pipeline lock set, and one session runs one card — nor **Timeout** (reaper destination; its triage is human-owned). On parallel-pipeline runs the candidate is additionally filtered by lock-set availability per Parallel pipeline loops below. On a scheduled run the launch text's Provider label filters the candidate additionally per Provider filtering below.
 
 Resume vs new run (D11) — before minting anything, read the card's `slug` custom field (parse: a combined `[<slug>](<session link>)` value yields the slug as its bracketed link text; a legacy bare value yields the slug whole):
 
@@ -91,6 +92,15 @@ Resume vs new run (D11) — before minting anything, read the card's `slug` cust
   continues the sequence `<slug>-2`, ….
 - Unset, or no matching folder → fresh kickoff.
 
+### Provider filtering — scheduled pickup by Provider label
+
+OpenChamber's scheduled tasks have no label filter — the Provider split lives in this walk alone. The launch text (the loop task body or the command) names the Provider this run serves, and the walk filters candidates by the board's `Provider: API` / `Provider: Local` labels, resolved exactly like the `Pipeline:` derivation — `get_card`'s `label_ids` against `get_board`'s labels, the single-card read being the source (the by-list projection strips labels; the board-context block's `labels:` section carries these labels automatically — new labels ride it with no code change). Provider labels route work and never lock it: the lock identity stays the `Pipeline:` derivation alone.
+
+- **Scheduled `Provider: API` task** — its walk takes ONLY cards carrying the explicit `Provider: API` label; an unlabeled card is never taken by a scheduled API walk.
+- **Scheduled `Provider: Local` task** — its walk takes `Provider: Local` cards AND cards with NO Provider label: the Local task is the planned steady-state taker of the unlabeled pool (the final-approval ruling — pickup intent, not a lock race).
+- **Ask on every flavor** — a run that takes an unlabeled card MUST ask the user which provider applies — ONE question in the kickoff round, before consuming the Model(s) checklist or any provider routing — and request the user apply the matching `Provider:` label. Labels stay human-owned (D17/D19): the agent never creates or mutates them, so the ask ends with the human labeling. A scheduled run holding the claim waits on the answer (question-notify pushes the ask) — the accepted steady-state trade-off. The API flavor therefore meets an unlabeled card only through a MANUAL run the user initiates — a launch naming a card id, where the user's choice stands — and that run asks under this rule too.
+- **Provider routing, once answered** — a `Provider: Local` run routes EVERY tier through the `pipeline-models` local mapping (treat the Model(s) checklist as `Local`-checked); a `Provider: API` run routes from the checklist as today. `pipeline-models` stays the size-and-mapping authority — cite it, never restate its table.
+
 ## Parallel pipeline loops
 
 The worker iteration one hourly tick drives — C06's tick prompt names exactly this section: run exactly one Parallel pipeline loops iteration, first `pipeline_status`, then follow the skill. One session, one card, one iteration; the card-driven kickoff, Stage map and RESULT machinery all run unchanged underneath it.
@@ -98,7 +108,7 @@ The worker iteration one hourly tick drives — C06's tick prompt names exactly 
 - **Transport (D29/D34).** The four lock tools — `pipeline_claim`, `pipeline_release`, `pipeline_heartbeat`, `pipeline_status` — are plugin tools. On v2.1.4 they are reachable ONLY through Code Mode: call `tools.pipeline_claim` etc. from inside `execute` (flat registry ids). They never appear in the native provider tool snapshot, so nothing here relies on the family's per-tool permission rows — those rows are inert future-proofing and the operative grant is the `execute` allow. The `.pipeline/` runtime dir is plugin-owned: agents never read, write, or delete its files — the four tools are the only surface.
 - **Derive the pipeline set from the card's labels (D17).** `get_card` the candidate → its `label_ids`; resolve names through `get_board`'s labels (the by-list projection strips labels — the single-card read is the source). Every label whose name starts with `Pipeline:` contributes its TRIMMED remainder as one lock name (matching is case-sensitive on the exact `Pipeline:` prefix; an empty remainder is ignored; duplicates dedupe). NO matching label ⇒ the single `default` pipeline. The claim input is (cardId + derived set) — never a typed pipeline id, never a hand-typed set. Card #76 itself carries no `Pipeline:` label, so today every card derives `default` — serialized, exactly yesterday's behavior.
 - **Pick per lock availability.** Call `pipeline_status` first — cheap, and it proves the plugin is alive in this session. Then run the existing pickup walk (Rework → Not Started → Low Priority, top first) but SKIP a candidate whose ENTIRE derived set is not free: any locked member ⇒ skip the card, its set overlaps a live run. Never pick or restart a card in **Executing**; never pick from **Timeout**.
-- **Claim before anything else.** `pipeline_claim(cardId, pipelines, cardTitle)` is all-or-nothing over the derived set and MUST precede the `move_card` to **Executing** and the claim comment — no board move and no code edit happens on an unclaimed card. An `ok:false reason:"locked"` answer names the holder: move to the next candidate, at most 3 claim attempts per session, then write the no-op marker with reason `no-claimable-cards` (No-op marker — a failed write never delays the end), report "no eligible work" and end the session cleanly. The claim comment records the DERIVED PIPELINE SET alongside the session line — a typo'd label silently falls back to `default`, so the set rides on the card to keep label drift visible (plan Risks).
+- **Claim before anything else.** `pipeline_claim(cardId, pipelines, cardTitle)` is all-or-nothing over the derived set and MUST precede the `move_card` to **Executing** and the claim comment — no board move and no code edit happens on an unclaimed card. An `ok:false reason:"locked"` answer names the holder: move to the next candidate, at most 3 claim attempts per session, then write the no-op marker with reason `no-claimable-cards` (No-op marker — a failed write never delays the end), archive the session per its Archive exit step, report "no eligible work" and end the session cleanly. The claim comment records the DERIVED PIPELINE SET alongside the session line — a typo'd label silently falls back to `default`, so the set rides on the card to keep label drift visible (plan Risks).
 - **Heartbeats are automatic.** The engine beats the claimed set on root and subagent activity; `pipeline_heartbeat` only force-beats every lock file of the calling session's root claim — not a routine duty.
 - **Human stops (D20/D21).** The stale clock (2 h) keeps ticking through every stop point — the plan-approval pause is no exception. An answer inside the window resumes ordinary heartbeats and the lock is fine; past it the reaper reaps the set — the card moves to **Timeout** with a Home Assistant alert, or, until the D22 follow-up card lands a deterministic list-creation tool, queues `.pipeline/timeouts.jsonl` plus a card comment: that degrade is the shipped interim, never a failure. The run then stops at its next PIPELINE LOCK LOST signal. No release-at-stop, no re-claim dance — a re-picked card is a fresh claim under the normal Resume-vs-new-run rule.
 - **Exit.** Card to **Review** + summary comment → `pipeline_release(outcome:"done")` — the Review hand-off IS the release point (D6); **Finished** is human-owned and never touches the lock. A blocked card: `add_comment` with the reason, then `pipeline_release(outcome:"abandoned")` — or keep the lock and let it go stale (prefer abandon-release when the card should stay re-pickable for another run, keep-and-stale when THIS run may resume). **PIPELINE LOCK LOST** from any tool answer or hook: stop immediately — no commit, no card move; only a fresh run re-claims.
@@ -134,6 +144,20 @@ inline via `$(date +%s%3N)`. Any leg failing → end cleanly anyway: no marker
 means the alert stands (fail-loud), never a retry loop, never a stall. RESULT
 posture is unchanged — no-op ends still report `status: NEEDS_INFO` and stop
 cleanly; the marker write or its failure rides in `commands_run`.
+
+Archive exit — a no-op end does not idle in the session list: once the
+marker write is attempted, both no-op exits above continue with the same
+session record — `opencode api patch /api/session/<id> -d '{"archived": true}'`
+— OpenCode's native archive, the very route OpenChamber's own archive sends
+(live-verified), on the sessionID the no-op rename already returned. The
+PATCH is a NEW step AFTER the marker recipe, never a rewrite of it: the
+marker write stays first, the archive a single-key PATCH on its own. A
+no-cards end NEVER asks "should I close out?" or any variant of it — it
+writes the marker, archives, and stops. Any PATCH failure → end cleanly
+anyway and record the failure in `commands_run` — the marker's own
+failure posture: fail-loud, never a retry loop, never a stall. The archive
+is an exit-side write, never a RESULT-status change — `status: NEEDS_INFO`
+stands.
 
 ## Card-driven kickoff — replaces pipeline-kickoff Q1–Q2 for board runs
 
@@ -265,9 +289,20 @@ Right after plan approval (research-only cards do the same immediately before th
    this run executes, the surviving Human in the Loop items the stop-point
    record.
 
+## Follow-up cards
+
+Cards often defer work — "we'll need a follow-up card for the mechanics of X". When the initial ask includes follow-up cards, the coordinator creates them itself, under this protocol:
+
+- **Timing** — after the post-research stage and before the test session (the Stage map's `Post Research` and `Test` rows): every deferred card is on the board before this run's implementation work starts, and whoever picks it up later reads a complete parent record.
+- **Destination** — EVERY follow-up/ledger card lands in the **Inbox** list of the **Backlog** swimlane — never Review, never Low Priority. Inbox postdates every prefetched board-context block: re-resolve its id via `list_lists` at use time (the block is a snapshot, never a freeze). The destination keeps the old non-intake guarantee by location: Inbox lives in the Backlog swimlane, which the pickup walk never visits, so follow-up cards queue for the owner instead of entering auto-pickup.
+- **Parent-label inheritance** — a follow-up card carries EVERY label of its parent EXCEPT `Research`: the research-only flow shape must not leak onto work cards; every other label (`Pipeline:`, `Provider:`, `Bucket:`) carries over.
+- **Mechanics** — `create_card` with the title, a description quoting the parent card and the deferred ask, and the parent's swimlane. The deployed wekan-mcp surface cannot set labels on a card, so list the parent's labels as a "labels to apply" line in the card body and cite the existing label-tool ledger card — that line retires to a set-labels call when the label tool lands. Checklist answers ride `default_checked` on `create_card` when the deployed build accepts it (probe once); when it rejects the argument, fall back to `toggle_checklist_item` after creation. NEVER `add_checklist` — the board's createCard rule already adds the five standard checklists (duplicates proven on cards #64–67, 2026-10-28).
+
+Creating these cards is not a run: the creating session claims nothing, moves nothing, and sets no fields beyond the cards it creates — every later move out of Inbox is the owner's alone.
+
 ## Friction follow-up (board override)
 
-On `agent-board-coord` family runs, the coordinator's `pipeline-role-coord` step 10 is overridden: each checked friction item becomes a card landing in **Review**, never an in-session `agent-plan` ticket. Create one card per item with `create_card` into **Review** (title stating the fix, description quoting the full `FRICTION.md` line plus its ticket/chunk context). Review is the destination by design: these cards are records awaiting the owner's call, NOT auto-pickup intake — the pickup walk never visits Review, so a card can only re-enter the pipeline when the owner moves it to Rework (and if the closing session already shipped the fix, the card simply documents it for acceptance). The board's createCard rule adds the five standard checklists automatically — do NOT `add_checklist` (it duplicates them; proven on cards #64–67, 2026-10-28); the rule's checkItem extras stay dormant, so check the answers the friction context already knows via `toggle_checklist_item` (typically Services `agent context`, Type `chore`, Model(s) `Qwen Flash`). This is not a run: the closing session claims nothing, moves nothing out of Review, and sets no fields beyond the card's own — Review → Finished or → Rework is the owner's alone.
+On `agent-board-coord` family runs, the coordinator's `pipeline-role-coord` step 11 is overridden: each checked friction item becomes a card landing in **Inbox**, never an in-session `agent-plan` ticket. Create one card per item with `create_card` into the **Inbox** list of the **Backlog** swimlane — the id re-resolved via `list_lists` exactly as in Follow-up cards above (title stating the fix, description quoting the full `FRICTION.md` line plus its ticket/chunk context). Inbox is the destination by design: these cards are records awaiting the owner's call, NOT auto-pickup intake — the pickup walk never visits the Backlog swimlane where Inbox lives, so a card can only re-enter the pipeline when the owner moves it to Rework (and if the closing session already shipped the fix, the card simply documents it for acceptance). The board's createCard rule adds the five standard checklists automatically — do NOT `add_checklist` (it duplicates them; proven on cards #64–67, 2026-10-28); the rule's checkItem extras stay dormant, so check the answers the friction context already knows via `toggle_checklist_item` (typically Services `agent context`, Type `chore`, Model(s) `Qwen Flash`). This is not a run: the closing session claims nothing, moves nothing off Inbox, and sets no fields beyond the card's own — every later card move is the owner's alone.
 
 ## Batched question protocol
 

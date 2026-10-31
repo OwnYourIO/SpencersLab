@@ -81,13 +81,17 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "dev_session": "ses_e6c9142bfffepjFVIhVSCsV97e",
+      "handoffs": [
+        "RESULT (C03 dev r1, ses_e6c9142bfffepjFVIhVSCsV97e) status: DONE — boards skill: Provider filtering subsection (scheduled API ONLY Provider: API; scheduled Local = Provider: Local + unlabeled planned taker; ask-before-routing + human-apply-label every flavor), Archive exit (marker-first, PATCH {\"archived\":true}, never-ask, failure-clean), Follow-up cards section (Inbox-in-Backlog destination re-resolved live, all parent labels except Research, timing post-research/pre-test-code, labels-in-body degrade citing L5, never add_checklist), Friction follow-up repointed Review→Inbox with non-intake rationale; role-coord step 10 work-complete cleanup (content-based landed check via merge-base diff; ancestry explicitly not the gate; landed→warm→move→remove→delete; not-landed→ask-once default-keep move-home-anyway; -deploy split) + step 0 records kickoff.origin_dir; six coord variants + mirrors get opencode_worktree_remove (naming now five rows, YAML comments fixed) + agents-sync permissions.md matrix + drift entry. All four gates green (N6, c21 c22, i8, A12); HOLDs green; rulesync x2 no-op + --check clean; aislop 100/100; pre-existing red class proven unchanged via baseline clone. deviations: (1) permissions.md edited under A12 duty (t12/i5 carve); (2) warm containment widened for cleanup's own surfaces; (3) origin_dir recorded at kickoff write (coord is STATE writer); (4) boards frontmatter enumerates new surfaces (c9 needle intact); (5) no plan-file writes needed. friction: fifth naming row rides the documented pre-existing-red ladder arms' projected delta (verified class unchanged). open_questions: none. next_suggested: review, then commit; C04 depends on C03.",
+        "RESULT (C03 review r1, fresh ses_e6c7d97dbffeM4T1EAIcOwD92h) status: DONE verdict APPROVED — gates + all HOLDs + full suites re-run green independently; pre-existing reds message-identical vs ef18f7e22 baseline clone (/tmp/opencode/cf90-c03-review-base kept as evidence); six-twin byte-parity verified (md5, pure row inserts); superseded provider shapes absent from live text; run-tag none in added lines; rulesync no-op2 + --check clean; aislop 0e/0w. Findings: MINOR-1 non-blocking plan-inherited wording tension (batched blanket-ban vs ruled live provider ask — decidable as written, follow-up sentence candidate for C04 round or friction, coord's call); NIT-1 pre-C03 STATE folders lack origin_dir (self-heals at step 0). Commit C03 and proceed wave 2 (C04/C07 gated on C03; C05 on C02)."
+      ]
     },
     "C04": {
       "status": "pending",

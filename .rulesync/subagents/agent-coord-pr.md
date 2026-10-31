@@ -361,7 +361,10 @@ opencode:
     # Kickoff naming surface: Code Mode's `execute` is the only transport
     # that exposes the `tools.opencode.*` namespace, and nested calls
     # re-check the agent's allow-list — so the reachable set is pinned by
-    # the four per-tool allows (worktree create/list, session rename/move).
+    # the five per-tool allows (worktree create/list/remove, session
+    # rename/move). The worktree_remove row joins at cf-90 C03 for the
+    # work-complete cleanup; the role contract scopes it to the run's own
+    # ticket worktree.
     - action: execute
       resource: '*'
       effect: allow
@@ -369,6 +372,9 @@ opencode:
       resource: '*'
       effect: allow
     - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_remove
       resource: '*'
       effect: allow
     - action: opencode_session_move

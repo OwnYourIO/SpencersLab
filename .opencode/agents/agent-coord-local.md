@@ -328,6 +328,9 @@ permissions:
   - action: opencode_worktree_list
     resource: '*'
     effect: allow
+  - action: opencode_worktree_remove
+    resource: '*'
+    effect: allow
   - action: opencode_session_move
     resource: '*'
     effect: allow

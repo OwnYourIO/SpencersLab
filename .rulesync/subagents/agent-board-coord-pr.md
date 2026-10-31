@@ -362,13 +362,19 @@ opencode:
       resource: '*'
       effect: allow
     # Kickoff naming surface: nested calls re-check the agent's allow-list,
-    # so the reachable set of `tools.opencode.*` is pinned by the four
-    # per-tool allows (worktree create/list, session rename/move) — nothing
-    # else in the namespace, dev-boards* stays the only MCP server grant.
+    # so the reachable set of `tools.opencode.*` is pinned by the five
+    # per-tool allows (worktree create/list/remove, session rename/move) —
+    # nothing else in the namespace, dev-boards* stays the only MCP server
+    # grant. The worktree_remove row joins at cf-90 C03 for the
+    # work-complete cleanup; the role contract scopes it to the run's own
+    # ticket worktree.
     - action: opencode_worktree_create
       resource: '*'
       effect: allow
     - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_remove
       resource: '*'
       effect: allow
     - action: opencode_session_move
