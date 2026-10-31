@@ -1,6 +1,12 @@
 {
   "feature": "2026/2026-10-cf-86-feat-more-strata-models",
-  "plan_status": "complete",
+  "plan_status": "needs-replan",
+  "rework_round_2026_10_31": {
+    "trigger": "owner review at Review — 4 items; research round R4 completed (RESEARCH.md § R4), NO claim held (Context busy on live run ses_e70be6d0effek6EHNQRYj3x3Fn at 00:02Z; re-claim refused by the lease — correct). Card sits in Review awaiting owner move (Rework for the fresh-tick path) or explicit in-session direction once Context frees.",
+    "owner_items": ["H heretic-on-Strata?", "Q Q4_K_XL for abliterated+orca", "I init-script megascript -> belongs in built image", "S SSD KV caching - where/managed?"],
+    "verdicts_short": "H BLOCKED (all published rungs; arch verified identical, arena 83-90 GiB > liveable 71.7; llama.cpp rung already the better home). Q: orca CAN shift IQ3_XXS->IQ4_XS (97.47 GB, arena ~57.7, fits TODAY's envelope no kernel gap); Q4_K_S possible but needs image build-flag home; SC117 publishes NO Q4 (nearest IQ3_S, +7.7 GB replace, owner election). I AGREED: lift script+downloaders+byte-pins into containers/strata/files/ baked; init = 3-line same-image command; pre-baked packs ruled out by CI physics (14 GB runners); FOLD IN v0.2.8 re-pin (+5-8% R9700 decode, #4518 PLE/conv fix). S session files SHIPPED = the only disk-KV surface but ZERO callers = unmanaged; prompt-cache is RAM-only; /models = k3s local-path hostPath, media unverifiable (dd at HIP gate); management = runbook + watcher-card scope.",
+    "rework_plan_shape": "RW-A image+init restructure + v0.2.8 re-pin (first; CI-primary) -> RW-B rung shifts (orca IQ4_XS replace; SC117->IQ3_S owner election; Q4_K_S behind RW-A's flag home) -> RW-C session-file management runbook + dd measure + watcher card. Heretic/ornith stay record+re-watch with churn-arms as tripwires."
+  },
   "coord_session": "ses_e77776738ffe0o3T6H95UMtL2m",
   "test_session": "ses_e762a6e57ffeKxIM263C9NJN2G",
   "current_wave": 4,
