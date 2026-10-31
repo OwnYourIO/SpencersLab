@@ -1,0 +1,62 @@
+{
+  "feature": "2026-10-cf-11-feat-immich-hugo-pipeline",
+  "plan_status": "complete",
+  "run_kind": "research-only",
+  "coord_session": "ses_e6cf97059ffeZ3eS21acBwATI0",
+  "test_session": null,
+  "current_wave": 0,
+  "updated_at": "2026-10-31T18:45:00Z",
+  "kickoff": {
+    "card": "3wb5ejxZj36juM2a9",
+    "card_number": 11,
+    "slug": "cf-11-feat-immich-hugo-pipeline",
+    "type": "feat",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "derived_pipeline_set": ["default"],
+    "lock_set_id": "bdd9b83d-f361-41b0-8dbd-8948f2535f59",
+    "checklists": {
+      "services": ["gpu", "home"],
+      "type": "feat",
+      "models_checked": ["Qwen Large", "Qwen Flash"],
+      "research_legacy": ["Before Planning", "After Planning"],
+      "human_in_loop": ["PR"]
+    },
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": { "slug": "RaNeqvh9YoT4bnkZ8" },
+      "collected_at": "2026-10-31T17:34:03.217Z"
+    }
+  },
+  "landing": {
+    "date": "2026-10-31",
+    "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/cf-11-feat-immich-to-hugo",
+    "branch": "cf-11-feat-immich-to-hugo",
+    "note": "User-directed: research-only loop has no worktree step, so the ticket folder first existed only as untracked files in the main checkout; landed on the card-11 worktree the user provided (virgin at main HEAD 7e07a6273). Branch name differs from the confirmed slug — folder keeps the slug (see DECISIONS.md)."
+  },
+  "research": {
+    "session": "ses_e6cf6956cffejLq0VsvPNB7gP2",
+    "model": "openrouter/qwen/qwen3.8-2.4t-a95b",
+    "rounds": [
+      { "round": 1, "status": "DONE", "sources": 77, "open_questions": 10 },
+      { "round": 2, "status": "DONE", "sources": 106, "note": "final round; open questions resolved into recommended defaults; batched human round held between rounds" }
+    ]
+  },
+  "chunks": {},
+  "blocked": [],
+  "deferred": []
+}
