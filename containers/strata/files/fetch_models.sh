@@ -12,8 +12,9 @@
 # Env contract (set by the chart init container, scalars only):
 #   STRATA_QUANTS          comma-separated quant tokens, default "q3"
 #   STRATA_MODEL_<TOK>     [family/]model mapping for non-q3 tokens; the
-#                          pseudo-family "orca" routes to the manual pack
-#                          below (no setup.sh catalog entry exists)
+#                          pseudo-families "orca" (gated manual pack) and
+#                          "orn" (public GGUF-direct q36 legs) route to the
+#                          steps below - neither is a setup.sh catalog name
 #   HF_TOKEN               gated legs ONLY, via process env (R-d
 #                          download-only: the hf-token secretKeyRef sits on
 #                          this init and the token never reaches the serve path)
@@ -48,8 +49,95 @@ mkdir -p /models/strata/sessions
 rm -rf /data/install
 ln -sfn /models/strata /data/install
 SRC=/models/strata/Strata
+# Claim-checkout migration (cf-86 C09). The copy below is copy-ONCE, so a live
+# claim keeps whatever tree it first copied: re-pinning the image would leave
+# the node compiling last release's source while the serve profiles name this
+# release's artifacts (the landmine RESEARCH R5 pulled out of our own shipped
+# law). The marker is CONTENT-compared, not existence-tested, and its name
+# carries the image version plus a carry counter — that comparison is what
+# re-arms this step at the next bump.
+# The sync is SOURCE-only: Strata-data/ (weights and packs), the strata-*.json
+# run configs, .venv, engine/ and every .setup-*/.pack-*/.dl-* marker and
+# .done file are the ~290 GB of provisioning state this step must survive;
+# deleting $SRC would re-download and re-pack all of it.
+CHECKOUT_MARKER=/models/strata/.checkout-0.2.9-carry1
+CHECKOUT_MARKER_ID=0.2.9-carry-1
+if [ -d "$SRC" ] && [ "$( [ -f "$CHECKOUT_MARKER" ] && cat "$CHECKOUT_MARKER" )" != "$CHECKOUT_MARKER_ID" ]; then
+  echo "model-fetch: the claim checkout predates the image - syncing sources (the engine recompiles below)"
+  rm -rf "$SRC"/src "$SRC"/include "$SRC"/cmake "$SRC"/tools "$SRC"/setup.py "$SRC"/setup.sh "$SRC"/CMakeLists.txt
+  cp -a /opt/strata/src/Strata/src /opt/strata/src/Strata/include /opt/strata/src/Strata/cmake /opt/strata/src/Strata/tools /opt/strata/src/Strata/setup.py /opt/strata/src/Strata/setup.sh /opt/strata/src/Strata/CMakeLists.txt "$SRC"/
+  # third_party MERGES instead of replacing: setup.py unpacks its pinned
+  # llama.cpp zip into it, so gguf-py and ggml are provisioning artifacts and
+  # wiping the folder would destroy the pack step's own dependencies.
+  cp -a /opt/strata/src/Strata/third_party "$SRC"/
+  # The cache describes the pre-migration tree: it goes before the compile,
+  # because a build over a stale cache is how a half-migrated engine could get
+  # stamped as good.
+  rm -rf "$SRC/build-hip"
+  # Nobody else recompiles a provisioned claim — the .setup-* markers make every
+  # installed quant skip setup.sh — so the recompile lives here: the same
+  # cmake/ninja pair and the same fixed HIP defs setup.py drives at this tag
+  # (its Step 4; 10-20 minutes inside the init's 32 Gi), with the arch and the
+  # ROCm root read back from the claim's own build metadata rather than guessed
+  # here. Nothing compiled yet (a copied-but-never-provisioned claim) means
+  # nothing to recompile: setup.sh compiles the synced tree on first
+  # provisioning, and the marker below records that the sources already match.
+  if [ -f "$SRC/engine/BUILD.json" ]; then
+    # BUILD.json without the venv toolchain is a mixed claim state, not a fresh
+    # copy; failing open here would leave an unpatched engine in place under a
+    # written marker (C09 review r1), so this branch fails loud — the marker
+    # only ever follows a green compile.
+    [ -x "$SRC/.venv/bin/cmake" ] \
+      || fail "checkout migration: $SRC/engine/BUILD.json promises a compiled engine but $SRC/.venv/bin/cmake is missing - fix the claim venv; the marker stays unwritten and the next boot re-enters"
+    archs=$("$SRC/.venv/bin/python" -c 'import json,sys; print(";".join(json.load(open(sys.argv[1]))["archs"]))' "$SRC/engine/BUILD.json") \
+      || fail "checkout migration: cannot read archs from $SRC/engine/BUILD.json"
+    libdirs=$("$SRC/.venv/bin/python" -c 'import json,sys; print(";".join(json.load(open(sys.argv[1])).get("lib_dirs", [])))' "$SRC/engine/BUILD.json") \
+      || fail "checkout migration: cannot read lib_dirs from $SRC/engine/BUILD.json"
+    if [ -x /opt/rocm/bin/hipcc ] && [ -e /opt/rocm/lib/libhipblas.so ]; then
+      rocm=/opt/rocm
+    else
+      rocm=$("$SRC/.venv/bin/rocm-sdk" path --root) \
+        || fail "checkout migration: no ROCm to compile against (no system hipcc, and the venv SDK root is unreadable)"
+    fi
+    # setup.py's own compile environment (its build_engine_hip preamble): cmake
+    # finds the HIP toolchain through these, not through anything baked here.
+    export HIP_PLATFORM=amd HIP_COMPILER=clang HIP_RUNTIME=rocclr ROCM_PATH="$rocm" HIP_PATH="$rocm"
+    LD_LIBRARY_PATH="$rocm/lib$(printf '%s' "$libdirs" | sed 's/^/:/; s/;/:/g')${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH
+    PATH="$SRC/.venv/bin:$rocm/bin:$rocm/llvm/bin:$PATH"
+    jobs=$(( $(nproc) / 2 ))
+    if [ "$jobs" -lt 2 ]; then jobs=2; fi
+    cmake -G Ninja -DCMAKE_MAKE_PROGRAM="$SRC/.venv/bin/ninja" -S "$SRC" -B "$SRC/build-hip" -DCMAKE_BUILD_TYPE=Release \
+      -DSTRATA_ENABLE_HIP=ON -DSTRATA_ENABLE_CUDA=OFF -DSTRATA_BUILD_TESTS=OFF \
+      -DSTRATA_PREFILL_MMQ=ON -DSTRATA_Q6K_EXPERTS=ON -DSTRATA_MMQ_KQUANTS=ON \
+      "-DSTRATA_GGML_DIR=$SRC/third_party/llama.cpp" \
+      "-DCMAKE_HIP_ARCHITECTURES=$archs" "-DCMAKE_HIP_COMPILER=$rocm/llvm/bin/clang++" \
+      "-DCMAKE_HIP_COMPILER_ROCM_ROOT=$rocm" "-DCMAKE_PREFIX_PATH=$rocm${libdirs:+;$libdirs}" \
+      "-DCMAKE_HIP_FLAGS=--rocm-path=$rocm --rocm-device-lib-path=$rocm/lib/llvm/amdgcn/bitcode" \
+      || fail "checkout migration: cmake configure failed - the marker stays unwritten and the next boot re-enters"
+    cmake --build "$SRC/build-hip" --target strata -j "$jobs" \
+      || fail "checkout migration: engine recompile failed - the marker stays unwritten and the next boot re-enters"
+    # The profiles name the version-free claim path, so the fresh binary lands
+    # there. engine/BUILD.json keeps its old source hash, which makes the next
+    # setup.sh recompile once on its own: self-healing, not a wedge.
+    mkdir -p "$SRC/engine"
+    cp -a "$SRC/build-hip/strata" "$SRC/engine/strata" \
+      || fail "checkout migration: could not install the recompiled engine at $SRC/engine/strata"
+  else
+    echo "model-fetch: no compiled engine on this claim yet - setup.sh compiles the synced tree on first provisioning"
+  fi
+  # Written only now: a crash anywhere above re-enters this step instead of
+  # leaving a half-built engine permanently marked as migrated.
+  printf '%s\n' "$CHECKOUT_MARKER_ID" > "$CHECKOUT_MARKER"
+  echo "model-fetch: claim checkout is at $CHECKOUT_MARKER_ID"
+fi
 if [ ! -d "$SRC" ]; then
   cp -a /opt/strata/src/Strata "$SRC"
+  # A fresh claim starts from the image's patched checkout, so the migration
+  # marker is simply recorded here (setup.sh compiles the engine during the
+  # first provisioning; the next bump's marker mismatch re-fires the step
+  # above).
+  printf '%s\n' "$CHECKOUT_MARKER_ID" > "$CHECKOUT_MARKER"
 else
   [ -f "$SRC/setup.sh" ] || fail "$SRC exists without setup.sh - refusing to overwrite"
 fi
@@ -163,8 +251,9 @@ for tok in ${STRATA_QUANTS:-q3}; do
   # STRATA_MODEL_Qx may name another catalog family as
   # "family/model" (e.g. unsloth/UD-Q4_K_XL — the q4/q5 the
   # qwen family does not carry); a bare name stays qwen. The
-  # pseudo-family "orca" is deliberately NOT a catalog name: it
-  # routes the token to the manual pack above.
+  # pseudo-families "orca" and "orn" are deliberately NOT catalog
+  # names: they route the token to the manual pack and the
+  # GGUF-direct legs below, neither of which has a setup.sh entry.
   case "$SIZE" in
     */*) FAM=${SIZE%%/*}; SIZE=${SIZE#*/} ;;
   esac
@@ -175,6 +264,56 @@ for tok in ${STRATA_QUANTS:-q3}; do
   MARK="/models/strata/.setup-$TOK"
   if [ -f "$MARK" ]; then
     echo "model-fetch: $tok already set up, skipping"
+    continue
+  fi
+  if [ "$FAM" = orn ]; then
+    # GGUF-direct q36 rung (cf-86 C09): Ornith-1.5-122B on the engine's
+    # qwen35moe path. There is no setup.sh catalog entry for a third-party
+    # repo, and unlike the orca route above there is nothing to build first —
+    # q36's load() opens the GGUF and joins the shards itself — so this arm
+    # only stages the three files under their ORIGINAL repo names, which is
+    # exactly what the serve profile's --native pointer names.
+    # The bytes are UNGATED (anonymous tree read plus a ranged resolve that
+    # answered 206 with GGUF magic and no Bearer challenge, 2026-10-31), so
+    # every leg rides hf_fetch's anon mode and no token enters this arm: the
+    # DECISIONS 2026-10-31 "keep both modes" decision is what finally pays off
+    # here. Completeness is .dl-ornith, guarded before the legs and written
+    # only after all three landed on an exact byte match, so an interrupted
+    # 79.7 GB set re-enters instead of serving missing weights. The legs are
+    # spelled out instead of looped because the repo paths and the byte pins
+    # are the audited literals — a loop over variables would hide which bytes
+    # land in which file.
+    if [ -f "/models/strata/.dl-ornith" ]; then
+      echo "model-fetch: ornith shard set complete, skipping"
+      continue
+    fi
+    echo "model-fetch: GGUF-direct anon legs for $tok ($SIZE unsloth Ornith-1.5-122B — no setup.sh catalog entry, no pack step)"
+    [ -x "$SRC/.venv/bin/python" ] \
+      || fail "ornith: $SRC/.venv missing - the q3 token must provision before ornith"
+    tier=/models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL
+    mkdir -p "$tier"
+    [ -s "$tier/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf" ] \
+      || { "$SRC/.venv/bin/python" /opt/strata/bin/hf_fetch.py anon "https://huggingface.co/unsloth/Ornith-1.5-122B-GGUF/resolve/main/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf" /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf.part $ORNITH_UD_Q4_K_XL_SHARD1 \
+           && mv /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf.part "$tier/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf"; } \
+      || fail "ornith: shard 1 leg failed (a .part is kept for the next boot's resume)"
+    [ -s "$tier/Ornith-1.5-122B-UD-Q4_K_XL-00002-of-00003.gguf" ] \
+      || { "$SRC/.venv/bin/python" /opt/strata/bin/hf_fetch.py anon "https://huggingface.co/unsloth/Ornith-1.5-122B-GGUF/resolve/main/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00002-of-00003.gguf" /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00002-of-00003.gguf.part $ORNITH_UD_Q4_K_XL_SHARD2 \
+           && mv /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00002-of-00003.gguf.part "$tier/Ornith-1.5-122B-UD-Q4_K_XL-00002-of-00003.gguf"; } \
+      || fail "ornith: shard 2 leg failed (a .part is kept for the next boot's resume)"
+    [ -s "$tier/Ornith-1.5-122B-UD-Q4_K_XL-00003-of-00003.gguf" ] \
+      || { "$SRC/.venv/bin/python" /opt/strata/bin/hf_fetch.py anon "https://huggingface.co/unsloth/Ornith-1.5-122B-GGUF/resolve/main/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00003-of-00003.gguf" /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00003-of-00003.gguf.part $ORNITH_UD_Q4_K_XL_SHARD3 \
+           && mv /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00003-of-00003.gguf.part "$tier/Ornith-1.5-122B-UD-Q4_K_XL-00003-of-00003.gguf"; } \
+      || fail "ornith: shard 3 leg failed (a .part is kept for the next boot's resume)"
+    # The tokenizer the profile points at: setup's own step for a GGUF-direct
+    # family builds ONLY this (its comment: "only the tokenizer: the engine
+    # reads the GGUF itself"), from shard 1, with gguf-py out of the unpacked
+    # llama.cpp source. Guarded on vocab.json so a re-entry does not redo it.
+    if [ ! -f "$tier/tokenizer/vocab.json" ]; then
+      ( cd "$SRC" && STRATA_GGUF_PY="$SRC/third_party/llama.cpp/gguf-py" .venv/bin/python \
+          tools/strata_tokenizer.py --gguf "$tier/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf" --out "$tier" ) \
+        || fail "ornith: tokenizer build failed (nothing is marked, the next boot re-enters)"
+    fi
+    printf '%s\n' "ornith UD-Q4_K_XL 3-shard set staged against the byte_pins.env literals" > "/models/strata/.dl-ornith"
     continue
   fi
   if [ "$FAM" = orca ]; then

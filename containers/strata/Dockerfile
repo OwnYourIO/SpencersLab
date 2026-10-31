@@ -13,17 +13,18 @@
 # ship NO images: the GHCR tag list, not the release list, is the truth of
 # what can be pinned (RESEARCH §1).
 #
-# 0.2.7 -> 0.2.8 (cf-86 C07, U9.4): the release whose engine packages carry
-# #4518 (the conv cache no longer runs short when the PLE table is locked) —
-# exactly the Round-2 tension class on this node — plus #4051 (engine memory
-# handoff) and #4420 (idle-slot prefix keep). Both flavor tags exist at 0.2.8
-# and their digests are the README ledger pair (re-read at this bump).
-FROM ghcr.io/niko1221/strata:0.2.8-rocm-gfx120x AS engine-primary
+# 0.2.8 -> 0.2.9 (cf-86 C09, U10.2): engine packages 0.1.55 bring the chunked
+# DeltaNet prompt kernels on all-gfx12 Radeon (measured +3.5–6.1 % prompts on
+# our card class, decode unchanged — free for every pinned arena) and #4708
+# (q36 warm-up no longer writes past the KV cache), and v0.2.9 is the tag the
+# vendored carry below applies against. Both flavor tags exist at 0.2.9 and
+# their digests are the README ledger pair (re-read at this bump).
+FROM ghcr.io/niko1221/strata:0.2.9-rocm-gfx120x AS engine-primary
 
 # gfx1151 sibling bundled for the Strix-alone fallback C05 supervises; its
 # existence at the same flavor tag is what makes the single-image bundle viable
-# (RESEARCH §1 measured, re-measured at 0.2.8).
-FROM ghcr.io/niko1221/strata:0.2.8-rocm-gfx1151 AS engine-strix
+# (RESEARCH §1 measured, re-measured at 0.2.9).
+FROM ghcr.io/niko1221/strata:0.2.9-rocm-gfx1151 AS engine-strix
 
 # Supervisor stage: the golden release-versioned family the existing chart
 # rides, kept honest by the renovate.json versioning packageRule. Manifest
@@ -37,18 +38,27 @@ FROM ghcr.io/mostlygeek/llama-swap:unified-vulkan-266 AS supervisor
 # checkout, not the desktop installer", docs/LLAMA_SWAP.md) and TERMINAL
 # install error ("this folder has no installer (setup.py)") both require
 # the repo's setup.sh tree, which the packaged images do not carry. The
-# checkout tag tracks the flavor tags (v0.2.8 here), so setup.py's catalog
+# checkout tag tracks the flavor tags (v0.2.9 here), so setup.py's catalog
 # and the bundled engine packages stay one release line; bump it WITH them
 # per the README ledger (manual cadence, ruling (b) — no renovate comment:
 # this image carries zero directives by the C01 contract). No .git: updates
 # land through image rebuilds, not in-place pulls.
+#
+# The checkout also carries the vendored cf-86 C09 constants patch
+# (carry/ornith-q36.patch, upstream issue #3574) — without it the claim-compiled
+# engine refuses Ornith-1.5-122B at load. It patches SOURCE, so it applies here;
+# the packaged engine roots below are upstream binaries and stay UNPATCHED,
+# which is why the ornith profile must name the claim-compiled engine and never
+# a packaged root (charts/llama-swap engineProfileStrataOrnith).
 FROM alpine:3.22 AS strata-src
+COPY carry/ornith-q36.patch /opt/strata/carry/ornith-q36.patch
 RUN apk add --no-cache git ca-certificates \
-    && git clone --depth 1 --branch v0.2.8 https://github.com/Niko1221/Strata /opt/strata/src/Strata \
+    && git clone --depth 1 --branch v0.2.9 https://github.com/Niko1221/Strata /opt/strata/src/Strata \
+    && cd /opt/strata/src/Strata && git apply /opt/strata/carry/ornith-q36.patch \
     && rm -rf /opt/strata/src/Strata/.git
 
 # Runtime base = the gfx120x image: engine root
-# 0.1.54-linux-x86_64-hip-rx9070, the terminal tree at
+# 0.1.55-linux-x86_64-hip-rx9070, the terminal tree at
 # /opt/strata/terminal, and the baked ROCm env/STRATA_COMPONENTS_DIR all
 # arrive laid out once instead of being re-copied; the bundle adds only the
 # second flavor's engine root and the supervisor binary.
@@ -69,7 +79,7 @@ RUN apt-get update \
 # The two flavors install same-named binaries, so the copy plan must keep the
 # label dirs distinct — merging them under one dir would silently shadow the
 # R9700 engine with the halo one (or vice versa) at exe-resolution time.
-COPY --from=engine-strix /opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo /opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo
+COPY --from=engine-strix /opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo /opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo
 
 # The unified image's Vulkan llama.cpp stack, run.sh launcher and /models
 # workingdir stay behind on purpose: ROCm owns this container's GPU path and
@@ -79,8 +89,12 @@ COPY --from=supervisor /usr/local/bin/llama-swap /usr/local/bin/llama-swap
 
 # setup.sh tree for the model-fetch init container (chart contract): copied
 # to the claim at first boot so setup's outputs (run configs, Strata-data)
-# persist on the PVC alongside the weights.
+# persist on the PVC alongside the weights. The carry patch rides along as the
+# build's own evidence: the verify layer below re-applies it in reverse over
+# the tree that actually ships (CI never compiles HIP, so that re-apply plus
+# the two constant greps are the only pre-merge proof of the patched tree).
 COPY --from=strata-src /opt/strata/src/Strata /opt/strata/src/Strata
+COPY --from=strata-src /opt/strata/carry/ornith-q36.patch /opt/strata/carry/ornith-q36.patch
 
 # Weight staging lives in the image, not in the chart (cf-86 C07 lift):
 # files/fetch_models.sh is the driver the strata pod's model-fetch init execs,
@@ -102,8 +116,8 @@ RUN chmod 0755 /opt/strata/bin/fetch_models.sh
 # here would stage ~183 GB of weights inside CI, with no claim and no token.
 RUN set -eux; \
     test -x /opt/strata/terminal/bin/strata; \
-    test -x /opt/strata/components/engine/0.1.54-linux-x86_64-hip-rx9070/strata; \
-    test -x /opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo/strata; \
+    test -x /opt/strata/components/engine/0.1.55-linux-x86_64-hip-rx9070/strata; \
+    test -x /opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo/strata; \
     test -f /opt/strata/src/Strata/setup.sh; \
     test -x /opt/strata/bin/fetch_models.sh; \
     test -f /opt/strata/bin/hf_fetch.py; \
@@ -111,6 +125,10 @@ RUN set -eux; \
     sh -n /opt/strata/bin/fetch_models.sh; \
     /opt/strata/terminal/python/bin/python3 -m py_compile /opt/strata/bin/hf_fetch.py; \
     rm -rf /opt/strata/bin/__pycache__; \
+    cd /opt/strata/src/Strata \
+      && git apply --check --reverse /opt/strata/carry/ornith-q36.patch \
+      && grep -q 'kNativeHBytes = 2048' include/strata/kernels/cpu/native_expert.hpp \
+      && grep -q 'X(12)' src/kernels/cuda/iq_kernels.cu; \
     command -v git >/dev/null; \
     command -v c++ >/dev/null; \
     find /opt/strata/components/engine -mindepth 2 -maxdepth 2 -type f -perm -u+x ! -name '*.so*' -exec ls -l '{}' +

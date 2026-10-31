@@ -2378,3 +2378,83 @@ The dev-round gate rides the q36 surface arms: dev records the setup.py@v0.2.9 +
 engine.hpp read in commands_run; legitimate surface additions come back through
 this test session for a re-pin, never a dev edit of the arena file. No commits
 this round (landing stays user-owned); STATE.json untouched.
+
+### 9.20 C09-landing round — two unsatisfiable-law repairs + the era-3 strix capture (2026-10-31)
+
+C09 dev landed DONE_WITH_CONCERNS (tree dirty: 8 modified + the carry/ dir).
+Landing posture measured first: 6 reds = the two laws unsatisfiable AS AUTHORED
+(both test-side, dev correctly froze — §9.19 authoring bugs) + the four strix
+tether arms the §9.16 pre-announcement said would redden at the 0.1.55 landing
+(and they reddened exactly as designed: orca + q4 byte-freeze arms, the strix
+ties-to-halo-root arm, the thin_init era-pin arm).
+
+Repair ledger BY NAME:
+1. test_strata_c09_ornith_carry.py::test_c09_carry_patch_exists_with_exactly_
+   two_hunks — the §9.19 hunk-header regex `^@@\s+-\d+(?:,\d+)?\s+\d+...`
+   omitted the `+c,d` side and therefore matched NO real unified-diff hunk.
+   The landed patch (git-generated against v0.2.9) carries exactly 2 headers
+   `@@ -15,8 +15,10 @@` / `@@ -846,10 +846,12 @@`; the old pattern counted 0
+   and the arm failed for the wrong reason. **Post-mortem, the sharper lesson:
+   the §9.19 3-hunk drift probe DID fire, but its message read "0 hunks" and I
+   read it as drift teeth — a vacuous law wearing teeth.** Regex-shape laws on
+   absent artifacts must be run against a REAL reference artifact (a git-
+   generated diff here) before authoring, not only against self-authored
+   synthetics. Repaired regex: `^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@.*$`; the
+   EXACTLY-2 law is kept, and dev's hunk-2 technique (X(12) added in BOTH
+   #ifdef branches inside one hunk, because setup.py compiles
+   -DSTRATA_Q6K_EXPERTS=ON and the bare branch must not drift) is legitimate
+   and preserves the count — the law pins the count, the content arms
+   (`+X(12)` per hunk window) stay satisfied.
+2. test_strata_c08_rung_shifts.py::test_c08_byte_pins_env_carries_the_three_
+   iq4_xs_literals_and_sum — its EXACT-SET half (literals == the orca trio)
+   is mutually unsatisfiable with the image_fetch era arm (EXACT-6 since
+   C09 sanctions +3 orn literals; that arm is the era's whole-set law and
+   stays untouched). Repaired to era-invariant form: swept-literal absences
+   (permanent), the trio's own NAME=size assignments, the Σ 97473155200
+   comment, and a NEW arithmetic identity (the trio members sum to their own
+   Σ — the same anti-slip law the carry file's orn arm carries, no blending:
+   each era law owns its trio, the era arm owns the set).
+3. Era-3 STRIX TETHER CAPTURE (the §9.16 pre-announcement; class: sanctioned
+   engine-root re-pin, precedent C07 era-2):
+   - delta verified PROGRAMMATICALLY BEFORE re-capture: render vs era-2
+     fixture — of the 13 keys exactly {exe, lib_dirs} moved, each only in the
+     version segment (0.1.54→0.1.55 halo); double-capture determinism clean.
+   - evidence/strata-profiles-c09-repin/ added: fixture (sha256
+     b0a35bcd95ecfb0ecfa1a8be3ec6a5a4e5866ae7bfe4bd8cc71af0e1bc45d89d) +
+     PROVENANCE.md carrying the 3-row era chain and both delta paragraphs.
+   - strata_testlib.PROFILE_FIXTURE_ERA: strix -> "strata-profiles-c09-repin"
+     (primary stays pre-cf-86 — re-verified: version-free claim-compiled root,
+     zero changed keys).
+   - test_strata_strix.py::test_c07_strix_fixture_era_delta_is_only_the_
+     engine_root_pair rewritten as a CHAIN guard: each era pins its captured
+     root (0.1.52/0.1.54/0.1.55) and every ADJACENT delta == exactly
+     {exe, lib_dirs}; no re-pin era dir may grow a primary file.
+   - test_strata_thin_init.py::test_c07_strix_packaged_engine_legs_move_to_the_
+     re_pinned_build re-pinned to the 0.1.55 era; the stale-pin negative now
+     covers BOTH retired eras (0.1.52/0.1.54) in executable strix lines.
+   - The other three tether arms (orca/q4 byte-freeze, ties-to-halo-root) are
+     era-map consumers and turned green with the map move — verified against
+     the Dockerfile: ONE halo label 0.1.55 (COPY + `test -x`), rx9070 too, and
+     the README ledger pairs the [C2] digests with the 0.1.55 exe rows
+     (containers three-surface arm green, 24P).
+
+Probe record (file copies to /tmp/opencode, fresh backups — last round's
+v.bak predates the C09 dev round and was NOT reused): P1a synthetic 3rd hunk
+-> count law red with 3; P1b malformed header (the `+` removed) -> red with 1
+(proves the repaired regex is non-vacuous BOTH directions); P2 orca literal
+off-by-one -> presence half red; P2b trio value duplicated (presence green) ->
+the new Σ identity reds ("sum to 105444159456"); P3 era-3 fixture exe tampered
+-> chain guard red naming era 3; P4 strix exe held at 0.1.54 -> thin_init era
+law red. All mutated files diffed clean after restore.
+
+Posture (the pre-announced zero-red landing, computed): FULL plain **0F/406P/
+9S**, FULL armed **0F/415P** (live arms green armed: the ungated ornith tree
+still matches the pins), containers 24P, guards 19/22/9/15 rc 0 on the dev-
+round dirty tree — the §9.19 admits already cover the landed carry patch +
+README rows, no third-occurrence extend was needed. aislop ci --changes: 0/0
+over 64 files. All 44 §9.19 designed-reds are cleared by dev's landed
+artifacts; the two test-side unsatisfiables are repaired; the four §9.16
+tethers are era-advanced, not weakened.
+
+No commits; STATE.json untouched. Landing (commit of dev round + this round)
+stays coord/user-owned.

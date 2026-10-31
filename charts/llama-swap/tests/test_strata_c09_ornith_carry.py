@@ -92,10 +92,17 @@ def _body() -> list:
 def test_c09_carry_patch_exists_with_exactly_two_hunks():
     """The two-hunk claim is R5-verified; a third hunk means reality moved
     (dev STOPs and NEEDS_INFO, never improvises), so the hunk COUNT is law,
-    not just the content."""
+    not just the content. The header regex must match REAL unified-diff
+    headers — the `+c,d` side is not optional (§9.19 authored a `+`-less
+    pattern that matched no real header: a vacuous zero-count read as
+    absence; repaired and probe-checked against the landed v0.2.9 patch and
+    a synthetic 3-hunk drift)."""
     text = S.read(CARRY_PATCH, "C09 vendors carry/ornith-q36.patch — exactly 2 hunks")
-    hunks = re.findall(r"^@@\s+-\d+(?:,\d+)?\s+\d+(?:,\d+)?\s+@@.*$", text, re.M)
-    assert len(hunks) == 2, f"patch carries {len(hunks)} hunks, want exactly 2 (a third = re-research, chunks/C09.md Notes)"
+    hunks = re.findall(r"^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@.*$", text, re.M)
+    assert len(hunks) == 2, (
+        f"patch carries {len(hunks)} hunk headers, want exactly 2 "
+        "(a third = re-research, chunks/C09.md Notes; a zero = malformed diff)"
+    )
     targets = set(re.findall(r"^diff --git a/(\S+) b/\S+$", text, re.M))
     assert targets == PATCH_HUNK_TARGETS, f"patch targets {sorted(targets)}, want the two R5 files"
 

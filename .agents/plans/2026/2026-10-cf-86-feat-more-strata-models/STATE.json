@@ -222,12 +222,21 @@
    ]
   },
   "C09": {
-   "status": "pending",
+   "status": "done",
    "wave": 9,
    "depends_on": [
     "C08"
    ],
-   "handoffs": []
+   "dev_rounds": 2,
+   "review_rounds": 1,
+   "last_verdict": "APPROVED",
+   "dev_session": "ses_e6d0486aeffe9jz1cRL9vcLdnY",
+   "handoffs": [
+    "2026-10-31 dev C09 r1 (ses_e6d0486aeffe9jz1cRL9vcLdnY): DONE_WITH_CONCERNS — carry landed: ornith-q36.patch (real git-diff shape, EXACTLY 2 hunks at v0.2.9, hunk2 both #ifdef branches, #3574 provenance; patch-applied live at tag), Dockerfile 0.2.9 pair + verify (--check --reverse + greps = fail-build-not-boot), fetch_models.sh marker-keyed MIGRATION (cp -a source-only, rsync banned, guard<sync<rm build-hip<recompile<marker-after-green, data-state preserved), .dl-ornith GGUF-direct anon leg (3 byte pins, Σ 79,713,771,665 live-re-proven 206+GGUF-magic+ungated), quoted \"n\": matrix key (YAML-1.1 boolean trap), engineProfileStrataOrnith ⊆ q36 surface (setup.py@v0.2.9+engine.hpp read RECORDED), catalog entry, five-id peers/env q3,orca,q4,orn, strix 0.1.55. CONCERNS: 2 validation_at_fault arms (hunk-regex missing '+' side = vacuous; C08 byte-set law vs sanctioned +3) + 4 pre-announced era-2 tethers -> paired landing round.",
+    "2026-10-31 LANDING ROUND (ses_e762a6e57ffeKxIM263C9NJN2G): DONE — both authorship faults repaired vs verified landed artifacts (real-header regex + non-vacuity probes both directions; per-era Σ-identity arms, exact-set law moved not deleted — honest §9.20 ledger: §9.19's drift probe fired but read '0 hunks', law was vacuous from authoring, misread by me); era-3 strix capture executed with pre-capture delta guard (moved=={exe,lib_dirs} version-segment-only; chain 28d0→547b→b0a35bcd; ties now pin 0.1.55 + Dockerfile-halo agreement). POSTURE: plain 0F/406P/9S, armed 0F/415P/0S; containers 24P; guards rc 0; aislop 64 files; §9.20.",
+    "2026-10-31 review C09 r1 (ses_e6cbc3027ffedUzaFStLHcTgrn): APPROVED — everything re-run; 415-vs-412 delta exonerated (3 torch-gated arms, env class); PATCH PROVEN on scratch pristine tree (apply/reverse/perturbed-context all correct; arithmetic vs ggml_row_size + live KV); migration ordering + fail-open analysis; flip coherence (era chain recomputed from git, GHCR read live, five-id render==evidence==testlib); repaired-laws spot-probed biting; security clean (anon orn legs, single secretKeyRef, no dense door anywhere Strata-side = U10.1 record intact). MAJOR (wording, lands in commit): X(12) IS Q4_K not Q3_K_M (case 12 dq_q4_k; census downs∈{Q4_K,Q5_K}) — constants right, name wrong in patch L18/L55 + values:2193. MINOR: migration fail-open (BUILD.json+missing cmake writes marker anyway); hf_fetch header denies anon client (false post-C09). NIT: shard-1 'embeddings+layers' (n_tensors 0). BINDING: era-3 fixture same commit.",
+    "2026-10-31 dev C09 r2 fixes (ses_e6d0486aeffe9jz1cRL9vcLdnY): DONE — all 4 landed: Q4_K rename (constants byte-exact, only comment/+-comment lines), fail-open -> fail-loud no-marker branch (BUILD.json-absent keeps truthful echo+marker for fresh-copy; no test arm pinned old behavior), hf_fetch header both-modes-have-clients truth, byte_pins shard-1 nit. FULL armed 0F/415P/0S (env resolves the 3 torch arms as passes HERE — posture table: this env 415P/0S, review env 412P+3S; both zero-red); carry 17+1S, arena 11, containers 24P, aislop 0/0. Residual test-docstring Q3_K_M wording sweep logged for next test touch (pins nothing)."
+   ]
   }
  },
  "blocked": [],

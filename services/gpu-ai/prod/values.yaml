@@ -150,14 +150,24 @@ llama-swap:
         # run-config profile; the suite pins both directions. The q4 pack is
         # public, so it takes no token of any kind — the one hf-token entry
         # below stays orca's alone.
+        # orn (cf-86 C09) is the GGUF-direct q36 rung: unsloth's Ornith-1.5-122B
+        # UD-Q4_K_XL trio, staged under its original repo names with no pack
+        # step and no setup.sh catalog entry. Its bytes are UNGATED — the
+        # anonymous tree read answered gated=false and a ranged resolve of the
+        # middle shard answered 206 with GGUF magic and no Bearer challenge
+        # (2026-10-31) — so the driver's legs ride hf_fetch's anon mode and the
+        # hf-token secretKeyRef below stays orca's alone.
         # Scalars plus the one sanctioned secretKeyRef; the staging driver is
         # baked into the strata image (C07), this block sets the env entries.
         initContainers:
           model-fetch:
             env:
-              STRATA_QUANTS: "q3,orca,q4"
+              STRATA_QUANTS: "q3,orca,q4,orn"
               STRATA_MODEL_ORCA: orca/IQ4_XS
               STRATA_MODEL_Q4: unsloth/UD-Q4_K_XL
+              # Pseudo-family route like orca's: "orn" is not a setup catalog
+              # name, it selects the GGUF-direct legs in the driver.
+              STRATA_MODEL_ORN: orn/UD-Q4_K_XL
               HF_TOKEN:
                 valueFrom:
                   secretKeyRef:
@@ -490,12 +500,13 @@ llama-swap:
       strata:
         proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
         # cf-86 wave (evidence/strata-peers-expected.yaml models_states): one
-        # route per landed inner arena — C02 orca, C06 q4.
+        # route per landed inner arena — C02 orca, C06 q4, C09 ornith-strata.
         models:
           - qwen3.8-flash-next-strata
           - qwen3.8-flash-next-strata-strix
           - qwen3.8-flash-next-strata-orca
           - qwen3.8-flash-next-strata-q4
+          - ornith-1.5-122b-strata-q4
         timeouts:
           responseHeader: 1800
           connect: 30

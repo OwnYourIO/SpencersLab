@@ -699,6 +699,24 @@
             "context": 262144
           }
         },
+        "ornith-1.5-122b-strata-q4": {
+          "modelID": "ornith-1.5-122b-strata-q4",
+          "name": "Ornith 1.5 122B (Strata q36 UD-Q4_K_XL arena, R9700)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          // Same 262144 trained ceiling as the llama.cpp ornith rungs; on this
+          // path the KV is fp32 (no quantized KV upstream yet), which is a
+          // cost note, not a context limit. Distinct from ornith-1.5-122b-q4:
+          // same weights, different engine — Strata's q36 path over the
+          // GGUF-direct trio (carried constants, charts/llama-swap
+          // strata-ornith-q4 profile), reached by its own route key.
+          "limit": {
+            "context": 262144
+          }
+        },
         "qwen38-ara": {
           "modelID": "qwen38-ara",
           "name": "Qwen3.8 27B heretic-ara (Q6_K-MTP)",

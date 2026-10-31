@@ -241,6 +241,12 @@ def test_c08_image_files_lose_every_abliterated_leg():
 
 @helm
 def test_c08_byte_pins_env_carries_the_three_iq4_xs_literals_and_sum():
+    """The C08 sweep's pin-table law, era-invariant: the swept literals stay
+    absent forever, the IQ4_XS trio rides as sourced assignments, and its OWN
+    Σ identity holds (R4 [B7]). The exact cross-era SET is NOT this arm's law
+    — that lives in test_strata_image_fetch.py's era arm (six literals, two
+    totals, C09 era); pinning both here made the two laws mutually
+    unsatisfiable when C09 sanctioned +3 orn literals (the §9.20 ledger)."""
     assert S.BYTE_PINS_ENV.is_file(), "byte_pins.env missing — C07 gate (see the driver arms)"
     pins = S.BYTE_PINS_ENV.read_text()
     assert not re.search(r"47342144896|28800138432", pins), "SC117 byte literals survived"
@@ -251,9 +257,11 @@ def test_c08_byte_pins_env_carries_the_three_iq4_xs_literals_and_sum():
             "must be a sourced literal, dev copies it verbatim"
         )
     assert "97473155200" in pins, "the Σ total comment must ride with the three literals (R4 [B7])"
-    extra = set(re.findall(r"^[A-Z][A-Z0-9_]*=(\d{8,})$", pins, re.M))
-    assert extra == {str(s) for s in IQ4_SHARD_BYTES.values()}, (
-        f"C08-era byte_pins literals {sorted(extra)} != the pinned IQ4_XS trio"
+    trio = [int(m.group(1)) for m in re.finditer(r"^[A-Z][A-Z0-9_]*=(\d{8,})$", pins, re.M)
+            if int(m.group(1)) in IQ4_SHARD_BYTES.values()]
+    assert sum(trio) == 97473155200, (
+        f"the IQ4_XS literals sum to {sum(trio)}, not the recorded Σ 97,473,155,200 — "
+        "a cited total that is not the sum of its parts is the 398,000 B class"
     )
 
 

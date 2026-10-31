@@ -92,15 +92,16 @@ PROFILE_PRIMARY_FILE = "strata-iq3_s.json"
 PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 
 # Era-mapped frozen captures for the byte-unchanged preservation arms
-# (TEST_SPEC 9.16): the primary's frozen era is still pre-cf-86 (an engine
-# re-pin cannot touch its version-free pack root); C07's sanctioned
-# 0.1.52->0.1.54 halo re-pin moved the strix profile's era. The chain —
-# era1 vs era2 delta == exactly {exe, lib_dirs} — is guarded in
-# test_strata_strix.py, so a whole-file deep-equal here stays a law with
-# no exempt-key hole for later rounds to widen.
+# (TEST_SPEC 9.16/9.20): the primary's frozen era is still pre-cf-86 (an
+# engine re-pin cannot touch its version-free pack root); C07's sanctioned
+# 0.1.52->0.1.54 and C09's 0.1.54->0.1.55 halo re-pins moved the strix
+# profile's era. The chain — every adjacent era delta == exactly
+# {exe, lib_dirs} — is guarded in test_strata_strix.py, so a whole-file
+# deep-equal here stays a law with no exempt-key hole for later rounds to
+# widen.
 PROFILE_FIXTURE_ERA = {
     PROFILE_PRIMARY_FILE: "strata-profiles-pre-cf86",
-    PROFILE_STRIX_FILE: "strata-profiles-c07-repin",
+    PROFILE_STRIX_FILE: "strata-profiles-c09-repin",
 }
 
 

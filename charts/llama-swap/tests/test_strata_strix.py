@@ -183,32 +183,44 @@ def test_c01_strix_exe_is_halo_root_from_container_readme():
 
 
 def test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair():
-    """C07 AC3/U9.4 re-pinned the engine (0.1.52 -> 0.1.54) and PROVENANCE
-    routed the fixture re-pin to the test session. The byte-invariance law
-    survives intact: era 2 may differ from era 1 in ONLY the sanctioned
-    engine-root pair, so the three preservation arms (abliterated/orca/q4)
-    keep whole-file deep-equality with no exempt-key hole."""
+    """C07 AC3/U9.4 re-pinned the engine (0.1.52 -> 0.1.54) and C09 re-pinned
+    it again (0.1.54 -> 0.1.55 with the 0.2.9 flavor image) — each time
+    PROVENANCE routed the fixture re-pin to the test session. The
+    byte-invariance law survives intact across the WHOLE chain: every
+    adjacent era delta is ONLY the sanctioned engine-root pair, and every era
+    pins its captured root exactly, so the three preservation arms
+    (abliterated/orca/q4) keep whole-file deep-equality with no exempt-key
+    hole."""
     era1 = json.loads(
         (S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / S.PROFILE_STRIX_FILE).read_text()
     )
-    era2 = S.profile_fixture(S.PROFILE_STRIX_FILE)
-    root1 = f"{S.ENGINE_ROOT}/0.1.52-linux-x86_64-hip-halo"
-    root2 = f"{S.ENGINE_ROOT}/0.1.54-linux-x86_64-hip-halo"
-    assert era1["exe"] == f"{root1}/strata" and era1["lib_dirs"] == [root1], (
-        "the pre-cf-86 capture must stay byte-frozen — era files are append-only history"
+    era2 = json.loads(
+        (S.EVIDENCE_DIR / "strata-profiles-c07-repin" / S.PROFILE_STRIX_FILE).read_text()
     )
-    moved = {k for k in era1 | era2 if era1.get(k) != era2.get(k)}
-    assert moved == {"exe", "lib_dirs"}, (
-        f"the sanctioned C07 delta is exactly the engine-root pair, got {sorted(moved)} — "
-        "anything else moving is an un-sanctioned re-tune riding the re-pin"
+    era3 = S.profile_fixture(S.PROFILE_STRIX_FILE)
+    captured = (
+        ("era 1", era1, "0.1.52-linux-x86_64-hip-halo"),
+        ("era 2", era2, "0.1.54-linux-x86_64-hip-halo"),
+        ("era 3", era3, "0.1.55-linux-x86_64-hip-halo"),
     )
-    assert era2["exe"] == f"{root2}/strata" and era2["lib_dirs"] == [root2], (
-        "era 2 must pin the re-pinned 0.1.54 halo root exactly — a root moved to a "
-        "different label without PROVENANCE is an unsanctioned re-pin"
-    )
-    assert not (S.EVIDENCE_DIR / "strata-profiles-c07-repin" / S.PROFILE_PRIMARY_FILE).exists(), (
+    for name, era, label in captured:
+        root = f"{S.ENGINE_ROOT}/{label}"
+        assert era["exe"] == f"{root}/strata" and era["lib_dirs"] == [root], (
+            f"{name} must pin its captured root {label!r} exactly — era files are "
+            "append-only history; a root moved without PROVENANCE is an unsanctioned re-pin"
+        )
+    for (na, a, _), (nb, b, _) in zip(captured, captured[1:]):
+        moved = {k for k in a | b if a.get(k) != b.get(k)}
+        assert moved == {"exe", "lib_dirs"}, (
+            f"the sanctioned {na}->{nb} delta is exactly the engine-root pair, got "
+            f"{sorted(moved)} — anything else moving is an un-sanctioned re-tune riding the re-pin"
+        )
+    assert not any(
+        (S.EVIDENCE_DIR / d / S.PROFILE_PRIMARY_FILE).exists()
+        for d in ("strata-profiles-c07-repin", "strata-profiles-c09-repin")
+    ), (
         "the primary profile rides the version-free claim-compiled pack root — an "
-        "engine re-pin cannot move its era; an era-2 primary file is a false pin"
+        "engine re-pin cannot move its era; a re-pin-era primary file is a false pin"
     )
 
 

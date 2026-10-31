@@ -1,11 +1,12 @@
 # The staged-fetch downloader for /opt/strata/bin/fetch_models.sh, lifted
 # verbatim from the chart's model-fetch-init heredocs (C07, U9.4): bodies and
 # their measured facts move with the logic, because build-verify covers a
-# file, not a heredoc. One client consumes it today — the gated legs of the
-# orcarouter pack (cf-86 C02, tier moved to IQ4_XS in C08). The public mode's
-# only client, C01's SC117 pair, was swept in C08; the mode stays as a
-# documented image surface, since deleting it re-opens the source shape the
-# C02 token laws are written against for no gain (DECISIONS 2026-10-31).
+# file, not a heredoc. Both modes have clients today: the gated legs of the
+# orcarouter pack (cf-86 C02, tier moved to IQ4_XS in C08) and the anon legs
+# of C09's ornith GGUF-direct tier. Public mode's first client, C01's SC117
+# pair, was swept in C08 and the mode stayed as a documented image surface —
+# deleting it would have re-opened the source shape the C02 token laws are
+# written against for no gain (DECISIONS 2026-10-31).
 #
 # Call shape (the driver's leg functions are the only callers):
 #
