@@ -108,13 +108,17 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "dev_session": "ses_e6c515386ffeS77ZQKGE5D7rlu",
+      "handoffs": [
+        "RESULT (C05 dev r1, ses_e6c515386ffeS77ZQKGE5D7rlu) status: DONE — pipeline-push-pr gains single-authority '## -pr testing flow (assumed)' (trigger shapes per F5/F8, skip-testing, kopia restore, LAB_TEST_USER/PASSWORD env route per F6, L7-L12+L3 ledger pointers, playwright fallback, assumed-in-place closer); the three -pr agents (sources+mirrors) cite it, zero mechanic restatement; rulesync double-no-op + --check; aislop 0e/0w; pipeline-push-pr 9/9 (P7 P8 were the designed-reds); all sibling suites at/above documented baseline; single-authority greps confined to the push-pr pair. deviations: uniform tail on the three descriptions; per-agent citation placement; L3 pointer for the linting-plugin card frame. no plan-file writes needed.",
+        "RESULT (C05 review r1, fresh ses_e6c45bea9ffeD67R2mLC7U4JPU) status: DONE verdict APPROVED — P7 P8 + full 9 ok; every HOLD re-run green (agent-perms 16 incl A11/A12, rulesync-surface 23, gate minus t17, wekan-mcp create-list t2 + board-provisioning t2/t7 reds byte-identical vs clean 42c97d5b6 worktree = unchanged class); rulesync no-op2 + --check; frontmatter parse; aislop 100/0e/0w; AC3 fence held (exactly 8 text files); L3 pointer ruled card-frame-supported via live get_card L3; forward-reference verified by live board read-back (L7 pointer / L10 inline / L11-L12 cite L10). NIT-1 non-blocking. C05 done gate met."
+      ]
     },
     "C07": {
       "status": "done",

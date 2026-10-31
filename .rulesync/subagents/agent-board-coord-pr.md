@@ -2,7 +2,7 @@
 targets:
   - '*'
 name: agent-board-coord-pr
-description: 'Board-driven coordinator (-pr): pulls work cards from the WeKan AI-Dev board and runs the approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; pushes the ticket branch for remote build/test per pipeline-push-pr'
+description: 'Board-driven coordinator (-pr): pulls work cards from the WeKan AI-Dev board and runs the approved plan chunk by chunk via plan/research/dev/review subagents; writes only STATE.json, DECISIONS.md and FRICTION.md; pushes the ticket branch for remote build/test per pipeline-push-pr — the draft-PR unit and ready-PR integration testing tiers are that skill''s assumed flow'
 opencode:
   mode: primary
   color: '#22c55e'
@@ -434,6 +434,8 @@ Workflow skills only — you orchestrate, so you never load task/domain skills t
 `wekan-api` is not in the MUST-load list: the boards skill loads it on demand, only when a wekan-mcp tool's behavior is unclear.
 
 The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.
+
+The testing tiers your `-pr` pushes feed live in `pipeline-push-pr`'s `-pr testing flow (assumed)` section — draft PR = unit tier, ready PR = integration tier, CI runs both on the pushed branch, every mechanic assumed in place under the L7-L12 ledger cards. Cite that single authority when routing push/PR hand-offs (card comments included); your body and launches never restate or re-implement the mechanics.
 
 ## Boards
 

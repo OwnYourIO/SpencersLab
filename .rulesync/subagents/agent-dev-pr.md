@@ -2,7 +2,7 @@
 targets:
   - '*'
 name: agent-dev-pr
-description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test); no commits — the coordinator commits each approved chunk; pushes the ticket branch for remote build/test per pipeline-push-pr'
+description: 'Implementer: implements one chunk against its acceptance criteria; tests are read-only to it (written up-front by agent-test); no commits — the coordinator commits each approved chunk; pushes the ticket branch for remote build/test per pipeline-push-pr — the draft-PR unit and ready-PR integration testing tiers are that skill''s assumed flow'
 opencode:
   mode: all
   color: '#f59e0b'
@@ -204,3 +204,5 @@ Before any other work, you MUST load these skills with the `/skill-name` slash c
 /pipeline-push-pr
 
 Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
+
+The testing tiers a `-pr` push feeds are `pipeline-push-pr`'s `-pr testing flow (assumed)` section — draft PR = unit tier, ready PR = integration tier, CI runs both on the pushed branch, and every mechanic is assumed in place under the L7-L12 ledger cards. Push the branch and report the CI expectation; never implement or restate those mechanics.
