@@ -17,10 +17,14 @@
 # in-place sentence] P8[AC2 — the three -pr surfaces cite, trigger vocabulary
 # stays single-authority] P9[AC4 — touched agent frontmatter parses].
 #
-# cf-90 red posture: P7/P8 are DESIGNED RED until C05 lands the section +
-# citations (P9 is a green HOLD guard); P1-P6 keep their prior posture. The
-# section names infrastructure the ledger cards L7-L12 IMPLEMENT — nothing
-# here checks CI, playwright, kopia or env plumbing (plan Out of scope).
+# cf-90 red posture: P7/P8 were the DESIGNED RED until C05 landed (they are
+# green since); the draft-unit arm was re-pinned in the post-research drift
+# fix round (2026-10-31, DECISIONS final entry — GitHub runs pull_request
+# workflows on draft PRs; unit tier rides plain on: pull_request default
+# types, the on: push reading VOID). P9 is a green HOLD guard; P1-P6 keep
+# their prior posture. The section names infrastructure the ledger cards
+# L7-L12 IMPLEMENT — nothing here checks CI, playwright, kopia or env
+# plumbing (plan Out of scope).
 #
 # Red posture (base: the cf-58 ticket base, arm-B discipline per the sibling
 # suites — historical arm A=081b57889 / arm B refs stay documented there;
@@ -266,11 +270,16 @@ if want p6; then
 fi
 
 # --- P7: cf-90 C05 single-authority -pr testing flow section (AC1) --------------
-# DESIGNED RED until C05 lands the section on the skill pair. Every needle is
-# a plan-Appendix/C05-Task token: the draft-unit/ready-integration trigger
-# mapping, the three coverage shapes, the credential env names, the
-# fallback-to-live-playwright rule, and the L7-L12 ledger pointers. Mechanics
-# are ASSUMED, never implemented here (AC3 fences the diff to text).
+# GREEN since C05 landed, EXCEPT the draft-unit arm re-pinned in the cf-90
+# post-research drift fix: RESEARCH F8's premise was FALSE — GitHub DOES run
+# pull_request-triggered workflows on draft PRs (DECISIONS final entry; the
+# `draft == false` idiom exists because they run), so the unit tier rides
+# plain on: pull_request default types firing DURING draft, and the old
+# "must ride on: push" reading is void. Every other needle is a
+# plan-Appendix/C05-Task token: the ready-integration trigger mapping, the
+# three coverage shapes, the credential env names, the fallback-to-live-
+# playwright rule, and the L7-L12 ledger pointers. Mechanics are ASSUMED,
+# never implemented here (AC3 fences the diff to text).
 PR_SURF=(
   .rulesync/subagents/agent-dev-pr.md .opencode/agents/agent-dev-pr.md
   .rulesync/subagents/agent-coord-pr.md .opencode/agents/agent-coord-pr.md
@@ -280,8 +289,8 @@ if want p7; then
   for f in "$SRC" "$GEN"; do
     grep -qEi '^#{2,4}[[:space:]].*testing flow' "$f" \
       || fail "P7[C05 AC1]: $f has no testing-flow section heading — C05 adds the single-authority '-pr testing flow (assumed)' section (red before C05 dev)"
-    python3 "$TMP/win.py" --ci "$f" 1200 'draft' 'on: push' \
-      || fail "P7[C05 AC1]: $f never maps the DRAFT/unit tier onto on: push (branch) triggers — draft PRs run NO pull_request workflows (RESEARCH F8; the plan ships the push-trigger reading)"
+    python3 "$TMP/win.py" --ci "$f" 1200 'draft' 'on: pull_request' 'default types' \
+      || fail "P7[C05 AC1, corrected post-research]: $f never maps the DRAFT/unit tier onto plain on: pull_request default types firing during draft — GitHub runs pull_request workflows on draft PRs (DECISIONS drift fix; the old on: push reading is VOID)"
     python3 "$TMP/win.py" --ci "$f" 1200 'ready_for_review' 'synchronize' \
       || fail "P7[C05 AC1]: $f never states the READY/integration trigger shape (pull_request types ready_for_review + synchronize)"
     grep -qE 'draft == false|!draft|not a draft' "$f" \
