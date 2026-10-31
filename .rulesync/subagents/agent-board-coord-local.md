@@ -52,6 +52,9 @@ opencode:
     - action: skill
       resource: pipeline-role-review
       effect: deny
+    - action: skill
+      resource: pipeline-role-deploy
+      effect: deny
     - action: question
       resource: '*'
       effect: allow
@@ -343,6 +346,11 @@ opencode:
     - action: subagent
       resource: agent-research
       effect: allow
+    # cf-90 C06: the step-8b Deploy-stage launch (pipeline-role-coord);
+    # the boards Stage map's Deploy row is the gate, the widened roster the grant.
+    - action: subagent
+      resource: agent-dev-deploy
+      effect: allow
     - action: execute
       resource: '*'
       effect: allow
@@ -417,7 +425,7 @@ Workflow skills only — you orchestrate, so you never load task/domain skills t
 
 `wekan-api` is not in the MUST-load list: the boards skill loads it on demand, only when a wekan-mcp tool's behavior is unclear.
 
-The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.
+The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`/`deploy`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.
 
 ## Boards
 
