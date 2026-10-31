@@ -145,9 +145,9 @@ means the alert stands (fail-loud), never a retry loop, never a stall. RESULT
 posture is unchanged — no-op ends still report `status: NEEDS_INFO` and stop
 cleanly; the marker write or its failure rides in `commands_run`.
 
-## Card-driven kickoff — replaces pipeline-kickoff Q1–Q3 for board runs
+## Card-driven kickoff — replaces pipeline-kickoff Q1–Q2 for board runs
 
-For card-driven runs this section REPLACES the live `pipeline-kickoff` questions (type, models, slug + run tag) and feeds `pipeline-models` routing from the card instead of a live question. `pipeline-kickoff` and `pipeline-models` stay byte-identical and authoritative for `agent-coord`; the override lives here, not in their files (D1).
+For card-driven runs this section REPLACES the live `pipeline-kickoff` questions (type, models, slug) and feeds `pipeline-models` routing from the card instead of a live question. `pipeline-kickoff` and `pipeline-models` stay byte-identical and authoritative for `agent-coord`; the override lives here, not in their files (D1).
 
 Checked checklist items and set custom fields ARE the user's answers: consume them, do not re-ask what the card answers; only genuine gaps join the batched round.
 
@@ -180,10 +180,13 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   restate). Nothing checked = the full standard loop. A card still
   carrying the legacy Research checklist follows the transition rule
   instead — its items time research only, they never gate stages.
-- **slug** — the `slug` custom field if already set; otherwise mint 2–3
-  suggestions and put them in the batched round. The final slug is
-  `cf-<cardNumber>-<type>-<desc>` (`cardNumber` comes from `get_card`).
-  EVERY surface is named from the full slug (D10): feature folder
+- **slug** — the `slug` custom field if already set; otherwise derive
+  `cf-<cardNumber>-<type>-<desc>` from the card's own content (`cardNumber`
+  comes from `get_card`, the type from the checked Type item, the desc from
+  the card title). A slug derived from card content is auto-accepted — it
+  never joins the batched round for confirmation; only a slug that cannot be
+  derived from card content (an unchecked Type leaves it incomplete) goes to
+  the round. EVERY surface is named from the full slug (D10): feature folder
   `2026-10-<cf-slug>`, worktree `<cf-slug>`, branch `<cf-slug>`, and
   `session_rename` to `<cf-slug>`. The branch named there is minted by
   kickoff's `kickoff-mint-branch.sh` step — citation only; the mechanics
@@ -191,9 +194,12 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
 - **In-work mark** — after the `session_rename` returns the sessionID, mark
   the session in-work per `pipeline-kickoff` (citation only — the contract,
   its values and its commands live there, never here).
-- **No run tag** — card-driven runs retire the run tag entirely: STATE.json
-  `kickoff` carries `card` (the id) + `slug` + `session_origin` (the claim-once
-  slot record — Config constants) and omits/nulls `run_tag`.
+- **No run tag** — run tags are retired for every flavor (cf-90): the
+  card-driven and the live-kickoff families mint the run's surfaces from the
+  bare slug alike, and the mint mechanics live in `pipeline-kickoff` —
+  citation only, never restated here. STATE.json `kickoff` carries `card`
+  (the id) + `slug` + `session_origin` (the claim-once slot record — Config
+  constants) and omits/nulls `run_tag`.
 
 ## Board context block (consumer side)
 
@@ -218,8 +224,7 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
    Lifecycle research items (`Pre Research` / `Post Research`), and the
    absolute feature-folder path; the summary lands in `RESEARCH.md` there.
 3. ONE batched `question` round for the user: refine/direct further
-   research — carry every open question from RESEARCH.md plus the slug
-   suggestion when the `slug` custom field is unset.
+   research — carry every open question from RESEARCH.md.
 4. Further research on the answers — continue the SAME `agent-research`
    session via its sessionID so the round-1 context carries.
 5. Terminate: the default is at most one follow-up round, then wrap.
@@ -285,7 +290,7 @@ Until the plan is finalized, no one in this flow calls the `question` tool on th
 
 This REPLACES per-question escalation during the planning phase: questions accumulate, they do not block. (`question` stays allowed in every agent's permissions — the protocol decides when the one batched round happens, it does not revoke the tool.)
 
-The card answers in advance: the planner MUST NOT record a question whose answer the five checklists or the `slug` custom field already gives. The batched round carries only genuine gaps (an unchecked Type item, an unset `slug`), each with its best-guess recommendation first. Research-only cards run the same accumulation rule inside their own single follow-up round (Research-only cards, step 3).
+The card answers in advance: the planner MUST NOT record a question whose answer the five checklists or the `slug` custom field already gives. The batched round carries only genuine gaps (an unchecked Type item, a slug that cannot be derived from card content), each with its best-guess recommendation first. Research-only cards run the same accumulation rule inside their own single follow-up round (Research-only cards, step 3).
 
 ## Launch prompt to agent-plan
 

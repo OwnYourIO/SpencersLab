@@ -239,7 +239,8 @@ role × permission matrix is in the `agents-sync` skill references
   Plan+Test+Code+Review loop), the Model(s) checklist alone
   routes models, `cf-<card-number>-<type>-<desc>` slugs name the feature
   folder, worktree, branch and session alike;
-  card-driven runs carry no run tag (`agent-coord` keeps run tags); the hourly
+  run tags are retired for every flavor (cf-90) — both families name the
+  run's surfaces from the slug alone; the hourly
   gate counts all three board-coord names alike, so no live board run hides
   from it;
   `Research`-labeled cards run the iterative research-only loop and end at

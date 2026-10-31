@@ -35,7 +35,7 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
 ```json
 {
   "feature": "<yyyy>/<yyyy-mm>-<type>-<slug>",
-  "kickoff": { "slug": "<slug>", "run_tag": "<tag>", "worktree": "<slug>-<tag>",
+  "kickoff": { "slug": "<slug>", "worktree": "<slug>", "run_tag": null,
                "models": { "plan": "<planning-tier provider/model>",
                            "code": "<code-tier provider/model>" },
                "local": false },

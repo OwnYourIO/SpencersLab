@@ -66,13 +66,19 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r2; r1 CHANGES_REQUESTED major-1 fixed in dev r2)",
+      "dev_session": "ses_e6cbd0eddffe4YpR0DG0cclGI0",
+      "handoffs": [
+        "RESULT (C02 dev r1, ses_e6cbd0eddffe4YpR0DG0cclGI0) status: DONE — run-tag retirement global (kickoff Q3 deleted, worktree/branch bare <slug>, commands (slug, models), overview->AGENTS retirement sentence, role-plan answer list, agents-sync references); boards slug auto-accept + no-run-tag reword + 4 truth-forced dependent flips; gates agents-md c3 / rulesync-surface c12 c20 / session-origin s3 green, HOLDs green, rulesync --check clean, aislop 100/100. deviations: (1) AC5 DECISIONS write permission-denied -> handed verbatim to coord (same drift class as C01 fixture, logged); (2) 4 unpinned boards flips truth-forced; (3) kickoff retirement note as boards cite target. friction: chunk-steps naming dev writes into plan-ownership files — upstream candidate: name coord as executor. (full detail in RESULT at launch time)",
+        "RESULT (C02 review r1, ses_e6cae840bffefHPK58wt6BvWHb) status: CHANGES_REQUESTED — every gate+HOLD independently green; AC1-4,6,7 pass; AC5 open pending coord append (claim verified evidence-backed); MAJOR-1: slug auto-accept not propagated to agent-board-coord{,-local,-pr} bodies' 'genuine gaps (an unchecked Type item, an unset slug)' phrase (could resurrect the retired slug question); minors/nits deferred; suggested c16 co-pin routed to test session — DEFERRED by coord.",
+        "RESULT (C02 dev r2 = fix round) status: DONE — major-1 applied on 3 twins + 3 mirrors, stale-string zero live hits, byte-equality verified, diff extended by nothing else, all gates + rulesync no-op2 + --check + aislop green.",
+        "RESULT (C02 review r2, fresh ses_e6c986c6fffeyBkXRRKbErDybL) status: DONE verdict APPROVED — fix verified exactly (per-file diffs 1+/1-, md5-identical clause across bodies+skill), AC5 closed via coord-appended DECISIONS entry re-grepped independently, 24-file tree clean, all suites green. Done gate met."
+      ]
     },
     "C03": {
       "status": "pending",
