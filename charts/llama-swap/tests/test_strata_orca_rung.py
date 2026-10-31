@@ -269,13 +269,12 @@ def test_c02_pack_paths_strata_data_shaped_and_distinct():
 
 @helm
 def test_c02_earlier_profiles_still_byte_unchanged():
-    """Preservation for the arenas C02 must not touch, against the pre-cf-86
-    captures. C01's abliterated profile is guarded by that chunk's own frozen
-    pins (envelope/paths/flags) — this suite never re-captures goldens."""
-    fixtures = S.EVIDENCE_DIR / "strata-profiles-pre-cf86"
+    """Preservation for the arenas C02 must not touch, against the frozen-era
+    captures (era map in strata_testlib; strix's C07-era chain is guarded in
+    test_strata_strix). C01's abliterated profile is guarded by that chunk's
+    own frozen pins (envelope/paths/flags) — this suite never re-captures goldens."""
     for file in (S.PROFILE_PRIMARY_FILE, S.PROFILE_STRIX_FILE):
-        before = json.loads((fixtures / file).read_text())
-        assert before == S.profile_json(_docs(), file), f"{file} diverged from the pre-cf-86 capture"
+        assert S.profile_fixture(file) == S.profile_json(_docs(), file), f"{file} diverged from its frozen-era capture"
 
 
 # --- AC3/AC4: the token-placement law ----------------------------------------

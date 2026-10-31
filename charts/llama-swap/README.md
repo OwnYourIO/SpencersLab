@@ -70,9 +70,10 @@ the pod, no Authorization header anywhere in the chain.
 | Surface | Value |
 |---|---|
 | serve CLI entry (what the llama-swap `cmd` execs) | `/opt/strata/terminal/bin/strata` |
-| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata` |
-| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata` |
+| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.54-linux-x86_64-hip-rx9070/strata` |
+| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.54-linux-x86_64-hip-halo/strata` |
 | Engine root layout | both roots live under `/opt/strata/components/engine/<label>/` as **distinct dirs** (same-named binaries per flavor — never merge them) |
+| Weight-staging entrypoint (what the `model-fetch` init execs) | `/opt/strata/bin/fetch_models.sh` — exec form so an image without the baked driver fails at container start; sources `/opt/strata/bin/byte_pins.env` and calls `/opt/strata/bin/hf_fetch.py`. The logic lives in `containers/strata/files/` and is build-verified; this chart states intent + the env contract (`STRATA_QUANTS`, `STRATA_MODEL_<TOK>` scalars, the gated rung's `HF_TOKEN` secretKeyRef on that init only) |
 
 - The engine binaries are referenced **from each profile's run-config `exe`
   key, NOT from the `cmd`** — `serve` picks its engine from the run-config
@@ -141,8 +142,10 @@ them as hypotheses until that output is read on this node.
 
 **Perf expectations — cite the epoch, not just the number.** The
 STRIX_HALO History row of 1,265 prompt / 59.1 decode tok/s @8K is
-engine-0.1.40-era (measured with no §5 env switches); the bundled engine is
-0.1.52-era. The current-epoch §6 row (0.2.3 class, Windows) reads 685/783/749
+engine-0.1.40-era (measured with no §5 env switches); the engine packaged in
+the image is 0.1.54-era (the flavor pin's engine package — the primary arena
+runs whatever engine setup compiled into the claim checkout, which only moves
+when that checkout is refreshed). The current-epoch §6 row (0.2.3 class, Windows) reads 685/783/749
 prompt tok/s @4K/8K/64K — same order of magnitude, different machine class.
 The §5 fast-config is KL-gated: decoded rounds differ from the primary
 profile's output, so never diff the two token-for-token; compare on

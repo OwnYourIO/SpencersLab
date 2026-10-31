@@ -2029,3 +2029,69 @@ five-id catalog/peers/inner tables, the four sweep-invariant outer tables), 1
 live arm green armed, and the C08-era image arms green against the synthetic C08
 file edit in the port-preview (with two incomplete-edit mutations reddening
 them — SC117 legs left in, one IQ4 literal missing).
+
+### 9.16 C07-fixture-repair round — the re-pin-arms-vs-frozen-fixtures class, strix era chain (2026-10-31)
+
+Routed by validation_at_fault: five arms mutually unsatisfiable by dev — the
+three preservation arms (abliterated C01, orca C02, q4 C06) deep-compared the
+strix profile against the era-1 fixture pinning
+`/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo`, while C07 AC3/U9.4
+plus the re-pin arms (image-fetch, container three-surface arm) DEMAND 0.1.54 —
+the 0.1.52 dir is absent from the 0.2.8 image, so the fixture was an ACTIVE
+false pin (a profile exe pointing at a nonexistent path is a runtime strata
+error, by the three-surface arm's own doctrine). PROVENANCE routes a needed
+re-pin coord -> test session.
+
+Adjudication — ERA CHAIN, not scoped arms. The scoped-arm alternative (exempt
+`{exe, lib_dirs}` from the three deep-equals and pin that pair separately) was
+rejected: it cuts an exempt-key hole into three law arms that a later round can
+widen, and it strands era-1's full picture as narrative only. Chosen shape:
+era-1 stays byte-frozen on disk; an era-2 capture is APPENDED in
+`evidence/strata-profiles-c07-repin/` (strix only); the preservation arms read
+the era map `PROFILE_FIXTURE_ERA`/`profile_fixture()` in strata_testlib and stay
+whole-file deep-equals. The law holds transitively: render==era-2 (three arms)
+AND era-2==era-1 modulo the sanctioned pair (new delta arm) => every key except
+that pair stays byte-frozen vs pre-cf-86 — and the chain is machine-re-verifiable
+forever because era-1 is still on disk.
+
+Capture facts (verified programmatically BEFORE re-capture): primary
+`strata-iq3_s.json` 0/15 keys moved — its exe/lib_dirs ride the version-free
+claim-compiled pack root, an engine re-pin cannot touch it, and the delta arm
+asserts no era-2 primary file exists (a false pin otherwise). Strix 2/13 keys
+moved: exactly `exe` + `lib_dirs`, version segment only (0.1.52 -> 0.1.54
+halo). Double-capture clean. shas + era chain in the new dir's PROVENANCE.md
+(era1 `28d0ed389d…`, era2 `547ba10d8e…`), cross-pointer added to era-1's.
+
+New arms (test_strata_strix.py, file-only):
+`test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair` — era-1 pins the
+0.1.52 literals (era files are append-only history), moved set == {exe, lib_dirs},
+era-2 pins the 0.1.54 literals exactly.
+`test_c07_strix_fixture_ties_to_the_built_halo_root` — fixture exe/lib_dirs ==
+THE halo root the containers/strata Dockerfile itself COPYs and test -x-es:
+the fixture cannot silently drift back, and a future image re-pin reddens this
+arm (plus the container three-surface arm) BEFORE any render arm can go stale —
+the era chain then re-runs through the test session.
+
+Mutation probes (restore by file copy, never `git checkout --`): era-2 label
+drift -> both red; silent drift-back to 0.1.52 -> both red (the launcher's
+anti-drift requirement, proved); era-1 edited -> delta arm red, ties arm green
+(correct scoping); Dockerfile re-pinned to 0.1.55 without a fixture move ->
+ties red, delta green (the pending-era-move shape); Dockerfile naming TWO halo
+roots -> ties red. Restored tree diffs clean vs backups.
+
+Probe-gap class (dev's side-note, folded in): the §9.14 port-preview 41-count
+did not anticipate this red. The class is the re-pin-arms-vs-byte-frozen-fixture
+interplay: a chunk that re-pins a rendered path literal ALSO reddens every
+fixture-era capture covering that surface; the preview could see the red, but
+the arithmetic classified the surface as surviving rather than as a routed
+fixture round. No further exposure is expected on this ticket: §9.15's flip
+list already pins the byte_pins content era for C08.
+
+Posture (recomputed — the launch projections 378P/390P predated the +2 new
+arms and the 390 was one off): FULL plain 14F/380P/9S, armed 14F/389P/0S, the
+14 = C08-era arms only, every message read. Per-file: strix 14P, abliterated
+14P, orca 16P+1S, q4 11P+1S; containers suite 24P; gates 19/22/9/15 rc 0;
+aislop ci --changes 0 errors / 0 warnings.
+
+Deferred to the C08/docs round (dev's other side-notes, not test surfaces):
+stale `services/gpu-ai` comment wording; the host-prep note's home.
