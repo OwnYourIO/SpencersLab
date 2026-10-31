@@ -186,7 +186,7 @@ fi
 # --- t3: the Local model line, pinned exactly (AC2, batched-round CONFIRMED) ----
 if want t3; then
   [ -f "$LOCAL" ] || fail "t3[C04 AC2]: $LOCAL missing (red before C04 dev)"
-  grep -qE '^model: gpu-ai/qwen\.3\.8-flash-next-strata$' "$LOCAL" \
+  grep -qE '^model: gpu-ai/qwen3\.8-flash-next-strata$' "$LOCAL" \
     || fail "t3[C04 AC2]: the Local model line is not exactly gpu-ai/qwen3.8-flash-next-strata — confirmed in the batched round 2026-10-31 (OQ3); the catalog churns, so the pin moves only by a fresh user ruling"
   ok "t3[C04 AC2]: Local initial model pinned to gpu-ai/qwen3.8-flash-next-strata"
 fi
