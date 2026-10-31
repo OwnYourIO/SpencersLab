@@ -1,11 +1,11 @@
 {
   "feature": "2026-10-cf-11-feat-immich-hugo-pipeline",
-  "plan_status": "complete",
-  "run_kind": "research-only",
+  "plan_status": "draft",
+  "run_kind": "build",
   "coord_session": "ses_e6cf97059ffeZ3eS21acBwATI0",
   "test_session": null,
   "current_wave": 0,
-  "updated_at": "2026-10-31T18:45:00Z",
+  "updated_at": "2026-10-31T22:55:20Z",
   "kickoff": {
     "card": "3wb5ejxZj36juM2a9",
     "card_number": 11,
@@ -16,14 +16,27 @@
       "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
       "code": "openrouter/qwen/qwen3.8-flash"
     },
-    "derived_pipeline_set": ["default"],
+    "derived_pipeline_set": [
+      "default"
+    ],
     "lock_set_id": "bdd9b83d-f361-41b0-8dbd-8948f2535f59",
     "checklists": {
-      "services": ["gpu", "home"],
+      "services": [
+        "gpu",
+        "home"
+      ],
       "type": "feat",
-      "models_checked": ["Qwen Large", "Qwen Flash"],
-      "research_legacy": ["Before Planning", "After Planning"],
-      "human_in_loop": ["PR"]
+      "models_checked": [
+        "Qwen Large",
+        "Qwen Flash"
+      ],
+      "research_legacy": [
+        "Before Planning",
+        "After Planning"
+      ],
+      "human_in_loop": [
+        "PR"
+      ]
     },
     "board_context": {
       "board_id": "TNQJ2BrXenZovngTS",
@@ -38,7 +51,9 @@
         "Test": "jNYNdCPPkX8Bs95s4",
         "Cancelled": "52dS3k7Kdk9EB5cJj"
       },
-      "custom_fields": { "slug": "RaNeqvh9YoT4bnkZ8" },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8"
+      },
       "collected_at": "2026-10-31T17:34:03.217Z"
     }
   },
@@ -46,7 +61,7 @@
     "date": "2026-10-31",
     "worktree": "/home/coder/.local/share/opencode/worktree/5e680f/cf-11-feat-immich-to-hugo",
     "branch": "cf-11-feat-immich-to-hugo",
-    "note": "User-directed: research-only loop has no worktree step, so the ticket folder first existed only as untracked files in the main checkout; landed on the card-11 worktree the user provided (virgin at main HEAD 7e07a6273). Branch name differs from the confirmed slug — folder keeps the slug (see DECISIONS.md)."
+    "note": "User-directed: research-only loop has no worktree step, so the ticket folder first existed only as untracked files in the main checkout; landed on the card-11 worktree the user provided (virgin at main HEAD 7e07a6273). Branch name differs from the confirmed slug \u2014 folder keeps the slug (see DECISIONS.md)."
   },
   "research": {
     "sessions": {
@@ -57,29 +72,126 @@
     "session": "ses_e6cf6956cffejLq0VsvPNB7gP2",
     "model": "openrouter/qwen/qwen3.8-2.4t-a95b",
     "documents": {
-      "RESEARCH.md": "rounds 1-2 (option space + Netlify delivery + B' companion) — canonical",
-      "RESEARCH-forgejo-runner.md": "round 3 (isolated session, own sources [1]-[55]) — Forgejo runner vs CronJob, Immich webhook reality",
-      "RESEARCH-curatedforest-repo.md": "round 4 (isolated session, own sources [1]-[30]) — CuratedForest.com repo survey + Immich seam + keep-vs-alternatives"
+      "RESEARCH.md": "rounds 1-2 (option space + Netlify delivery + B' companion) \u2014 canonical",
+      "RESEARCH-forgejo-runner.md": "round 3 (isolated session, own sources [1]-[55]) \u2014 Forgejo runner vs CronJob, Immich webhook reality",
+      "RESEARCH-curatedforest-repo.md": "round 4 (isolated session, own sources [1]-[30]) \u2014 CuratedForest.com repo survey + Immich seam + keep-vs-alternatives"
     },
     "rounds": [
-      { "round": 1, "status": "DONE", "sources": 77, "open_questions": 10 },
-      { "round": 2, "status": "DONE", "sources": 106, "note": "final round; open questions resolved into recommended defaults; batched human round held between rounds" },
-      { "round": 3, "status": "DONE", "note": "user-directed isolated follow-up: runner-vs-CronJob + webhook reality", "document": "RESEARCH-forgejo-runner.md" },
-      { "round": 4, "status": "DONE", "note": "user-directed isolated follow-up: CuratedForest.com survey; corrects round-2 LFS-quota figures", "document": "RESEARCH-curatedforest-repo.md" }
+      {
+        "round": 1,
+        "status": "DONE",
+        "sources": 77,
+        "open_questions": 10
+      },
+      {
+        "round": 2,
+        "status": "DONE",
+        "sources": 106,
+        "note": "final round; open questions resolved into recommended defaults; batched human round held between rounds"
+      },
+      {
+        "round": 3,
+        "status": "DONE",
+        "note": "user-directed isolated follow-up: runner-vs-CronJob + webhook reality",
+        "document": "RESEARCH-forgejo-runner.md"
+      },
+      {
+        "round": 4,
+        "status": "DONE",
+        "note": "user-directed isolated follow-up: CuratedForest.com survey; corrects round-2 LFS-quota figures",
+        "document": "RESEARCH-curatedforest-repo.md"
+      }
     ],
-    "state": "direction-locked; planning in progress"
+    "state": "direction-locked; build plan drafted 2026-10-31 (draft; pending approval)"
   },
   "direction_locked": {
     "date": "2026-10-31",
     "spine": "forgejo-runner (PVC + host backend)",
-    "repo_home": "CuratedForest.com → in-cluster Forgejo (owner-driven precondition)",
-    "deploy": "merge→main=curatedforest.com prod deploy; PR→farm curatedforest.farm (last PR wins); runner builds + netlify deploy CLI; Netlify remains host",
+    "repo_home": "CuratedForest.com \u2192 in-cluster Forgejo (owner-driven precondition)",
+    "deploy": "merge\u2192main=curatedforest.com prod deploy; PR\u2192farm curatedforest.farm (last PR wins); runner builds + netlify deploy CLI; Netlify remains host",
     "sync_landing": "PR by the sync job, human review+merge",
     "immich_triggers": "schedule + workflow_dispatch phase 1; album-event shim deferred phase 2",
-    "old_lfs_removal": "separate follow-up card → Low Priority",
-    "claim_at_resume": "contended (default held by card 'Add repos: context and label support filtering.') — owner-directed interactive resume, no lock, card stays in Review"
+    "old_lfs_removal": "separate follow-up card \u2192 Low Priority",
+    "claim_at_resume": "contended (default held by card 'Add repos: context and label support filtering.') \u2014 owner-directed interactive resume, no lock, card stays in Review"
   },
-  "chunks": {},
-  "blocked": [],
-  "deferred": []
+  "chunks": {
+    "C01": {
+      "title": "Immich sync + Forgejo publish tooling (Python stdlib, containers/forgejo-host-runner)",
+      "size": "M",
+      "wave": 1,
+      "depends_on": [],
+      "repo": "SpencersLab",
+      "status": "pending"
+    },
+    "C02": {
+      "title": "forgejo-host-runner toolchain image (runner+hugo+netlify-cli+git-lfs; CI-primary build)",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "repo": "SpencersLab",
+      "status": "pending"
+    },
+    "C03": {
+      "title": "charts/forgejo-runner host-backend mode + home release forgejo-runner-cf wiring",
+      "size": "L",
+      "wave": 1,
+      "depends_on": [],
+      "repo": "SpencersLab",
+      "status": "pending"
+    },
+    "C04": {
+      "title": "charts/forgejo-secret-seed: Bitwarden->Forgejo repo-secret seeder + home wiring",
+      "size": "M",
+      "wave": 1,
+      "depends_on": [],
+      "repo": "SpencersLab",
+      "status": "pending"
+    },
+    "C05": {
+      "title": "charts/forgejo-run-watchdog: schedule-failure watchdog (DEFERRABLE)",
+      "size": "M",
+      "wave": 3,
+      "depends_on": [
+        "C04"
+      ],
+      "repo": "SpencersLab",
+      "status": "pending"
+    },
+    "C06": {
+      "title": "Site-repo artifacts staged in site-staging/ (workflows, archetype, photos section) + hugo render gate",
+      "size": "M",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "repo": "SpencersLab-staged -> CuratedForest.com",
+      "status": "pending"
+    },
+    "C07": {
+      "title": "Apply staged artifacts to CuratedForest.com on Forgejo (branch + PR)",
+      "size": "S",
+      "wave": 3,
+      "depends_on": [
+        "C06"
+      ],
+      "repo": "CuratedForest.com (Forgejo)",
+      "status": "pending",
+      "blocked_on": "owner precondition: repo migrated to Forgejo WITH LFS objects"
+    }
+  },
+  "blocked": [
+    "C07"
+  ],
+  "deferred": [
+    "C05 (optional; owner may cut at plan approval)"
+  ],
+  "plan": {
+    "file": "2026-10-31-feat-immich-hugo-pipeline.md",
+    "drafted_at": "2026-10-31T22:55:20Z",
+    "drafted_by": "agent-plan",
+    "waves": 3,
+    "note": "draft pending the standing plan-approval pause; 10 open questions batched to owner"
+  }
 }
