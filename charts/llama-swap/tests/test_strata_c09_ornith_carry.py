@@ -59,11 +59,6 @@ TAG_DIGEST_029 = {
     "0.2.9-rocm-gfx120x": "sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39",
     "0.2.9-rocm-gfx1151": "sha256:2ac97575713efaa37299d914c628d3f1d40b68b893dd78430f7ea4bd18c5084a",
 }
-# The migration's source-only sync surface (C09 a: dev reads setup.sh for the
-# exact compile-input set; these are the named-inevitable entries the chunk
-# spells — the negative law below is what actually protects the data state).
-SYNC_SOURCES = ("src", "include", "cmake", "third_party", "tools",
-                "setup.py", "setup.sh", "CMakeLists.txt")
 
 
 def _driver() -> str:
@@ -218,17 +213,30 @@ def test_c09_migration_step_is_marker_keyed_and_rearming():
     assert guards, "the marker is only existence-tested, never content-compared — bumps would not re-fire"
 
 
-def test_c09_migration_syncs_source_only_via_cp_a_not_rsync():
-    """Baked-tool law: cp -a (always present), NOT rsync (not baked; adding it
-    would itself need Dockerfile+verify pins). Every named source entry syncs
-    from the image's /opt/strata/src/Strata into the claim's $SRC."""
-    body = _body()
-    cp_lines = [(n, ln) for n, ln in body if re.search(r"\bcp\s+-a\b", ln)]
-    assert cp_lines, "no cp -a sync step — the checkout migration never re-materializes sources"
-    missing = [e for e in SYNC_SOURCES
-               if not any(re.search(rf"(?<!\w){re.escape(e)}\b", ln) for _, ln in cp_lines)]
-    assert not missing, f"cp -a sync list lacks {missing} — the compile-input set is incomplete"
-    assert not re.search(r"^\s*rsync\b", _driver(), re.M), (
+def test_c09_migration_syncs_image_tree_except_claim_data_state():
+    """2026-10-31 second-boot law: the sync ENUMERATES the image checkout — a
+    hard-coded source allowlist goes stale the day upstream adds a build input
+    (v0.2.9's CMakeLists compiles tests/hip/gdn_stage_bench.cpp; the allowlist
+    kept the claim's old tests/ and cmake configure died "Cannot find source
+    file"). Data state is the closed skip-case set; drift there is drift in
+    THIS arm, by design. cp -a stays the tool (rsync is not baked — C09 a),
+    and third_party keeps merging AFTER the loop."""
+    text = _driver()
+    assert re.search(r'for entry in /opt/strata/src/Strata/\*', text), (
+        "sync must enumerate the image tree, not a fixed allowlist"
+    )
+    assert 'case "$b" in data|Strata-data|third_party|engine|build-hip) continue ;;' in text, (
+        "the data-state skip set changed — each member is a claim artifact "
+        "(expert-profile / weights+packs / merged llama.cpp unpack / built "
+        "engine / stale cache); adding or removing one is a contract change"
+    )
+    cp_after_loop = re.search(r'cp -a /opt/strata/src/Strata/third_party "\$SRC"/', text)
+    loop_at = text.index('for entry in /opt/strata/src/Strata/*')
+    assert cp_after_loop and cp_after_loop.start() > loop_at, "third_party must merge after the loop, never inside its rm"
+    assert 'rm -rf "$SRC"/src ' not in text, (
+        "the retired hard-coded allowlist is back — it missed tests/ on 2026-10-31"
+    )
+    assert not re.search(r"^\s*rsync\b", text, re.M), (
         "rsync appears in the driver — not baked into the image (C09 a baked-tool law)"
     )
 

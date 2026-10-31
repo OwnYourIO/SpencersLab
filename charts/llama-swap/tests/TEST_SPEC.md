@@ -2554,3 +2554,26 @@ detached origin/main worktree with clean /tmp/opencode, and observed passing onc
 unproven-repeatably elsewhere. Same-check `coord-inwork` i4 and the `validation-fix`
 cascade fail identically on pristine origin/main. A nondeterministic gate is a louder
 problem than a red one: own debug card recommended.
+
+### 9.23 migration sync allowlist → denylist (2026-10-31 second boot finding)
+
+The venv-heal fix worked — the pod got past line 92 and died deeper: cmake
+configure "Cannot find source file: tests/hip/gdn_stage_bench.cpp" (verified
+v0.2.9 CMakeLists:1081 upstream, HIP-gated block). The migration synced a
+hard-coded SOURCE allowlist (src/include/cmake/tools/setup.*/CMakeLists) and
+left the claim's stale `tests/` under the new CMakeLists — the allowlist
+stale-mates the moment upstream adds a build input, which is exactly what
+0.2.9 did (gfx12 chunked-DeltaNet benches).
+
+Driver law changed: the migration now enumerates the IMAGE tree and skips the
+claim's CLOSED data state — `data|Strata-data|third_party|engine|build-hip`
+(denylist, dotfiles-by-glob) — with third_party still merging after the loop.
+The law arm `test_c09_migration_syncs_image_tree_except_claim_data_state`
+replaces the source-only arm (old `SYNC_SOURCES` constant retired as dead);
+the skip-set string is pinned literally so any change is a visible contract
+change. Behaviour proven by extraction harness (real loop lines, fake
+claim/image trees): new tests/ synced, CMakeLists replaced, stale tests/
+removed, data/expert-profile.bin preserved with the image's data/seed NOT
+copied, third_party merged both ways, markers/engine/.venv/run-configs/
+build-hip untouched, dotfiles not synced. Posture: carry 18P/1S, FULL
+408P/9S/0F, containers 24P, guards rc 0, sh/dash -n clean.

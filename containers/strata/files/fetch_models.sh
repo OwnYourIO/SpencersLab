@@ -68,16 +68,30 @@ SRC=/models/strata/Strata
 # law). The marker is CONTENT-compared, not existence-tested, and its name
 # carries the image version plus a carry counter — that comparison is what
 # re-arms this step at the next bump.
-# The sync is SOURCE-only: Strata-data/ (weights and packs), the strata-*.json
-# run configs, .venv, engine/ and every .setup-*/.pack-*/.dl-* marker and
-# .done file are the ~290 GB of provisioning state this step must survive;
-# deleting $SRC would re-download and re-pack all of it.
+# The sync enumerates the image tree and skips the CLAIM's data state — the
+# data/ expert-profile, Strata-data/ (weights and packs), the strata-*.json run
+# configs, .venv, engine/ and every .setup-*/.pack-*/.dl-* marker and .done
+# file: the ~290 GB of provisioning state this step must survive; deleting
+# $SRC would re-download and re-pack all of it. An allowlist of source dirs
+# was tried first and went stale the moment upstream added a build input.
 CHECKOUT_MARKER=/models/strata/.checkout-0.2.9-carry1
 CHECKOUT_MARKER_ID=0.2.9-carry-1
 if [ -d "$SRC" ] && [ "$( [ -f "$CHECKOUT_MARKER" ] && cat "$CHECKOUT_MARKER" )" != "$CHECKOUT_MARKER_ID" ]; then
   echo "model-fetch: the claim checkout predates the image - syncing sources (the engine recompiles below)"
-  rm -rf "$SRC"/src "$SRC"/include "$SRC"/cmake "$SRC"/tools "$SRC"/setup.py "$SRC"/setup.sh "$SRC"/CMakeLists.txt
-  cp -a /opt/strata/src/Strata/src /opt/strata/src/Strata/include /opt/strata/src/Strata/cmake /opt/strata/src/Strata/tools /opt/strata/src/Strata/setup.py /opt/strata/src/Strata/setup.sh /opt/strata/src/Strata/CMakeLists.txt "$SRC"/
+  # Enumerate the IMAGE tree and sync everything except the claim's closed data
+  # state. The previous hard-coded source allowlist went stale the day upstream
+  # added a build input: v0.2.9's CMakeLists compiles tests/hip/gdn_stage_bench.cpp,
+  # the allowlist left the claim's old tests/ in place, and cmake configure died
+  # with "Cannot find source file" (2026-10-31 boot). Data state is the small,
+  # contract-pinned set; the build tree is the part that legitimately moves.
+  # Dotfiles (the claim's .venv, every .setup-*/.pack-*/.dl-*/.done marker) are
+  # outside the glob by design - they are the idempotency state itself.
+  for entry in /opt/strata/src/Strata/*; do
+    b=${entry##*/}
+    case "$b" in data|Strata-data|third_party|engine|build-hip) continue ;; esac
+    rm -rf "$SRC/$b"
+    cp -a "$entry" "$SRC"/
+  done
   # third_party MERGES instead of replacing: setup.py unpacks its pinned
   # llama.cpp zip into it, so gguf-py and ggml are provisioning artifacts and
   # wiping the folder would destroy the pack step's own dependencies.
