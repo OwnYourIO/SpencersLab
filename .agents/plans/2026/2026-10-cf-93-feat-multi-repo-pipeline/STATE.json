@@ -208,22 +208,58 @@
       ]
     },
     "C07": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": ["C06"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6aeedaa8ffeDzdZx1OvrQZpW8",
+      "handoffs": [
+        {
+          "at": "2026-11-01T05:30:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6aeedaa8ffeDzdZx1OvrQZpW8",
+          "status": "DONE",
+          "summary": "HomeAssistant port replicated from C06 recipe; cost-title.ts + extensions/group-costs survived the swap REAL; Repo identity HomeAssistant non-picker; HA no-harness YAML test law (rulesync --check* + grep; yamllint probed absent); 5 hand-written prompts folded; port-homeassistant 12 ok FIRST run + port-lbf regression 10 ok; protected digests held; 8 declared deviations.",
+          "result": "RESULT status:DONE chunk:C07 next:agent-review C07"
+        },
+        {
+          "at": "2026-11-01T06:00:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6ad5e0c1ffeMBpdsPPM7gvufA",
+          "status": "APPROVED",
+          "summary": "12+10 re-run green; protected set re-derived via suite relative pipelines; HA has 11 worktree rows — traversal proof supplied by review (zero newer files in hazards); all 8 deviations accepted (#5 overview rewrites = 14 surgical keep-current fixes, #6 repairs C06's own nit); nits inherited from C06 noted for FINAL review. Coord ask: fold STATE C06 recording into C07 commit — STATE edits were staged but C07 entry was missed; corrected retroactively here.",
+          "result": "RESULT status:DONE chunk:C07 open_questions:none; next:C08"
+        }
+      ]
     },
     "C08": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": ["C06"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6ac04899ffeXfxHV1aqgj1Yvg",
+      "handoffs": [
+        {
+          "at": "2026-11-01T06:40:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6ac04899ffeXfxHV1aqgj1Yvg",
+          "status": "DONE",
+          "summary": "brother-ptouch port: 62 sources, name-less TEXT-HOLDER fold law (code.md/plan.md load-fail-by-design vs emit-by-basename collision — resolved+probed), RQ-2 resolved by live debug-config probe (one merged jsonc, 4 plugins verbatim, opencode.json removed as unstaged D), pytest/ruff law with honest .venv fallback, 11 ok + regressions 10/12 ok, 16/275/1 icon-failure baseline proven at pristine HEAD; 5 deviations.",
+          "result": "RESULT status:DONE chunk:C08 next:agent-review C08"
+        },
+        {
+          "at": "2026-11-01T07:10:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6a9e75eaffesPQZ7ZNUcpChHX",
+          "status": "APPROVED",
+          "summary": "11+10+12 all green fresh; HEAD/porcelain/worktrees/shas held; RQ-2 end-state runtime-proven; byte-hold divergence ruled FORCED by t1+t4 pin geometry (not stylistic); pytest baseline attribution proven structurally (git diff of src/tests empty + review's own 16/275/1 run); all 5 deviations ACCEPTED; replication byte-audited vs canonical+LBF. Friction added: -qq double-flag capture. Coord asks: STATE C07+C08 entries (done here, C07 retro-flagged honestly), commit, then C09.",
+          "result": "RESULT status:DONE chunk:C08 open_questions:none; next:C09 (deps C06+C07 approved)"
+        }
+      ]
     },
     "C09": {
       "status": "pending",
