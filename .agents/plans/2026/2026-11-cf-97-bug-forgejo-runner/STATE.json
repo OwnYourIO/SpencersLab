@@ -1,0 +1,104 @@
+{
+  "feature": "2026/2026-11-cf-97-bug-forgejo-runner",
+  "plan_status": "approved",
+  "coord_session": "ses_e68292cf1ffeaGQWhT0y6HIHCX",
+  "test_session": "ses_e66e2092fffeT0bryb1FqVdJJu",
+  "current_wave": 1,
+  "updated_at": "2026-11-01T20:55:00Z",
+  "kickoff": {
+    "slug": "cf-97-bug-forgejo-runner",
+    "card": "xJSxCDv3sqqgyHwDq",
+    "worktree": "cf-97-bug-forgejo-runner",
+    "branch": "cf-97-bug-forgejo-runner",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "board_context": {
+      "collected": "2026-11-01T16:00:00.823Z",
+      "server": "dev-boards",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": { "slug": "RaNeqvh9YoT4bnkZ8", "session": "zZw4PwMoLeodJy3eT" },
+      "labels": {
+        "Research": "ysSmS5",
+        "Ready for Work": "mkbxeo",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5",
+        "Pipeline: Context": "3PGnrD",
+        "Bucket Color": "yBfNJJ",
+        "Pipeline: Home Assistant": "urP8pR",
+        "Provider: Local": "PnhFKk",
+        "Provider: OpenRouter": "f3sKNX"
+      },
+      "drift_note": "Live board (get_board, 2026-11-01) has no `Provider: API` label; the API-side Provider label is named `Provider: OpenRouter` (f3sKNX). Card #97 carries it plus `Pipeline: CICD`; the boards Provider-filter reading is recorded in DECISIONS.md."
+    },
+    "run_tag": null
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "owner": "user",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "Record side user-done 2026-11-01 (instance runner found, instance-admin scope per B3). User answer 20:5xZ: uuid is in vault item d3dafd1a-3d88-454e-88d4-b4ec010ae2c2, login USERNAME field, written <1h ago — so the 1h ESO refresh has not necessarily run yet; the absence of a post-15:40:13Z bounce is expected, not a failure. Mapping proven sound (plan Verified facts rework round). Not done until C03 evidence shows the post-write bounce declaring successfully."
+    },
+    "C02": {
+      "status": "dev_done",
+      "wave": 1,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 1,
+      "review_rounds": 0,
+      "dev_session": "ses_e66cf9fd1ffeWN7zwiA4XwqrUc",
+      "last_verdict": null,
+      "handoffs": [
+        {
+          "from": "agent-dev-local",
+          "at": "2026-11-01T21:2xZ",
+          "status": "DONE",
+          "chunk": "C02",
+          "files_changed": ["charts/forgejo-runner/values.yaml", "charts/forgejo-runner/templates/secret-runner.yaml", "charts/forgejo-runner/templates/NOTES.txt", "custom-values/dev/prod-values.yaml"],
+          "commands_run": ["export PATH=$HOME/.local/bin:$PATH => pass", "bash tests/services/dev-forgejo-runner.sh (baseline, pre-edit) => fail-as-designed (aborts at t11 values.yaml site)", "bash tests/services/dev-forgejo-runner.sh (final, post-edit) => pass (exit 0, 44 oks = 40 through t10 + t11's 4)", "t11 heredoc standalone => pass (4 oks)", "helm lint charts/forgejo-runner => pass (pre-existing missing-deps WARNING)", "helm lint+template on /tmp/opencode copy after dependency update => pass", "helm template dev services/dev/prod -f custom-values/dev/prod-values.yaml --set domain=scifi.farm --set clusterName=dev => pass; grep -c OVERRIDE_ => 0", "git diff --stat main => pass (4 payload files + the test file; YAML hunks comment-only)", "npx --yes aislop@0.18.1 ci --changes --base main => pass (score 100, 0 errors/0 warnings)", "service-trio => no-change confirmed"],
+          "deviations": "Standalone `helm template charts/forgejo-runner` needs the suite's copy+dependency-update recipe (gitignored vendored dep); NOTES.txt block also disambiguates vault-item-ID vs runner-UUID (same misnomer class); the deprecated term survives once, only in the negative construction AC2 names.",
+          "friction": "Plan Commands line for standalone helm template needs the copy+dependency-update form; aislop --changes scanned 65 files (not the carried 0-file no-op).",
+          "open_questions": "none"
+        }
+      ]
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "owner": "agent",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "Smoke-test AC removed — user declined (Q6). Read-only MCP evidence + user-eyeball online check only."
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "runner 13.2.0->13.2.1 pin + stale charts/forgejo appVersion 15.0.9 — separate dep ticket (plan Out of scope)",
+    "infra-runner relocation (item b1add65b) — stays OUT per user answer Q5 2026-11-01 (also deferred 2026-10-25)",
+    "2026-10-24 recreation/SecretSyncedError debug — CLOSED as superseded by user answer Q4 2026-11-01; user-owned, nothing executes it"
+  ]
+}

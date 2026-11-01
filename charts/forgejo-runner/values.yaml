@@ -32,9 +32,16 @@
 
 bitwardenIds:
   # The Bitwarden item holding this release's (uuid, token) identity
-  # (username = runner uuid, password = registration token); the real UUID
-  # rides custom-values/dev/prod-values.yaml under the app key. NEVER the
-  # `forgejo-token` item — that one is the Coder workspace access token.
+  # (username = runner uuid, password = runner token — the long-lived
+  # token shown once at record creation, not the deprecated
+  # registration-token exchange). The real UUID rides
+  # custom-values/dev/prod-values.yaml under the app key and the
+  # ExternalSecret fetches by that ID: similarly-named vault items are
+  # invisible to the cluster. NEVER the `forgejo-token` item — that one
+  # is the Coder workspace access token. An empty or non-UUID username
+  # makes the daemon fail-fast (`connection "default" is invalid: 'uuid'
+  # is empty`) and the pod crash-loop — the identity fields must come
+  # from a real server-side runner record.
   runner-token: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Connection URL: chart default so the chart renders standalone — it is a

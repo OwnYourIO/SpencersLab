@@ -21,8 +21,18 @@
 # sentinel leg) are unchanged; the dev-deployed-slice legs (t5/t7-t10) assert
 # the single aliased app.
 #
-# Contract source: chunks/C01.md Tests list (t1-t10) — ONE script stays the
-# runner contract (predecessor ruling, DECISIONS.md).
+# Contract source: chunks/C01.md Tests list (t1-t10) + cf-97 C02's wording
+# leg (t11) — ONE script stays the runner contract (predecessor ruling,
+# DECISIONS.md).
+#
+# C01/C03 acceptance is cluster-only — no leg here can assert it (the vault
+# and the live pod are out-of-repo, and list/event MCP shapes come back
+# empty for agent sessions): the evidence shape is exact-name readonly-dev-
+# kubernetes reads — resources_get StatefulSet + ExternalSecret
+# dev-forgejo-runner-dev, pods_get + pods_log(container runner) pod
+# dev-forgejo-runner-dev-0 — gated on the bounce-window oracle: pod startTime
+# vs the reported C01 write time plus the 1h refreshInterval separates "not
+# synced yet" from "will never sync".
 #
 # The chart is rendered from a COPY under /tmp/opencode after
 # `helm dependency update` there (repo convention: charts/**/charts is
@@ -290,8 +300,11 @@ try:
         dind = next((c for c in ics if (c or {}).get('name') == 'dind'), None)
         if dind is None:
             bad(f't2: {release} — no initContainer named dind (the DinD sidecar is missing)')
-        if dind.get('image') != 'docker:29.9.1-dind':
-            bad(f't2: {release} — dind image is {dind.get("image")!r}, expected docker:29.9.1-dind')
+        # values.yaml's renovate-tracked tag is the authority (RESEARCH
+        # contradiction 5) — a values-only bump must resurface here as
+        # contract drift, not ride silently past the suite.
+        if dind.get('image') != 'docker:29.9.2-dind':
+            bad(f't2: {release} — dind image is {dind.get("image")!r}, expected docker:29.9.2-dind')
         if dind.get('restartPolicy') != 'Always':
             bad(f't2: {release} — dind restartPolicy is {dind.get("restartPolicy")!r}, expected Always (sidecar semantics — without it the pod dies when dockerd exits)')
         if ((dind.get('securityContext') or {}).get('privileged')) is not True:
@@ -302,7 +315,7 @@ try:
                 bad(f't2: {release} — dind has no {probe} (the socket probe keeps the pod observable)')
             if (p.get('exec') or {}).get('command') != ['test', '-S', '/var/run/docker.sock']:
                 bad(f't2: {release} — dind {probe} exec command is {(p.get("exec") or {}).get("command")!r}, expected [test, -S, /var/run/docker.sock]')
-        ok(f't2: {release} — dind sidecar — docker:29.9.1-dind, restartPolicy Always, privileged, socket startup+liveness probes')
+        ok(f't2: {release} — dind sidecar — docker:29.9.2-dind, restartPolicy Always, privileged, socket startup+liveness probes')
 
         cons = pod.get('containers') or []
         runner = next((c for c in cons if (c or {}).get('name') == 'runner'), None)
@@ -1144,6 +1157,151 @@ PY
   else
     exit 1
   fi
+fi
+
+# --- t11: cf-97 C02 wording truthfulness (red-first before the dev reword) --
+# The four misnomer sites of plan Verified facts (values.yaml bitwardenIds
+# block, secret-runner.yaml header, custom-values item comment, NOTES.txt
+# one-time-action block) must read as the runner token shown once at record
+# creation — the deprecated exchange-style registration flow is not what the
+# vault password holds (RESEARCH contradiction 2). Instance-admin scope is the
+# user ruling (B3 reaffirmed): the Admin -> Actions -> Runners path is
+# asserted as PRESENCE only, never as absence of the word "org". What must
+# NOT change is pinned by the render legs above (t2/t3 ESO-contract legs,
+# t5/t7-t10 trio/slice legs) — C02 is comments + NOTES text only, so raw
+# byte equality is deliberately not asserted (template comments ride the
+# helm output).
+if python3 - "$RUNNER/values.yaml" "$RUNNER/templates/secret-runner.yaml" \
+    "$RUNNER/templates/NOTES.txt" "$DEV_CV" "$WORK/t11-count" <<'PY'
+import re, sys
+
+chart_vals, secret_tpl, notes_txt, dev_cv, count_file = sys.argv[1:6]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+# The shipped misnomer wraps across comment lines (custom-values splits
+# "registration"/"token" at 84/85), so every pattern below runs on the
+# whitespace-collapsed site block, never on raw lines.
+def collapse(parts):
+    return ' '.join(' '.join(parts).split())
+
+TOKEN_RE = re.compile(r'registration[\s-]+token', re.I)
+NEG_RE = re.compile(r'\b(?:not|never|deprecated|no longer)\b', re.I)
+MAPPING_OK_RE = re.compile(r'password\s*=\s*runner[\s-]+token', re.I)
+MAPPING_BAD_RE = re.compile(r'password\s*=\s*[^.;]{0,30}registration[\s-]+token', re.I)
+NEG_WINDOW = 100
+
+def excerpt(text, m):
+    return '…' + text[max(0, m.start() - 40):m.end() + 40] + '…'
+
+def stray_positive(text, label):
+    # AC2: any surviving mention of the deprecated flow must be explicitly
+    # negative — a not/never/deprecated cue within the preceding window.
+    for m in TOKEN_RE.finditer(text):
+        if not NEG_RE.search(text[max(0, m.start() - NEG_WINDOW):m.start()]):
+            bad(f't11: {label} — positive "registration token" mention: {excerpt(text, m)} '
+                '(only an explicitly negative reference is allowed — C02 AC2)')
+
+def strip_marker(line):
+    return re.sub(r'^\s*#\s?', '', line)
+
+def comment_block(path, block_re, label):
+    """Comment lines sitting directly above the runner-token key the block documents."""
+    with open(path) as f:
+        lines = f.read().splitlines()
+    start = next((i for i, l in enumerate(lines) if re.match(block_re, l)), None)
+    if start is None:
+        bad(f't11: {label} — no {block_re!r} block in {path} (the site moved; re-derive the leg)')
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        if lines[i].strip() and not lines[i].lstrip().startswith('#') and lines[i][0] not in (' ', '\t'):
+            end = i
+            break
+    key = next((i for i in range(start + 1, end) if re.match(r'^[ \t]+runner-token:', lines[i])), None)
+    if key is None:
+        bad(f't11: {label} — no runner-token key inside the block in {path} '
+            '(the key is contract-pinned by t5/t7/t8 — it must not move or rename)')
+    block, i = [], key - 1
+    while i > start:
+        s = lines[i].strip()
+        if s.startswith('#'):
+            block.insert(0, strip_marker(lines[i]))
+        elif s:
+            break
+        i -= 1
+    if not block:
+        bad(f't11: {label} — no comment block directly above the runner-token key in {path}')
+    return collapse(block)
+
+def header_block(path, label):
+    """Leading template-file comments, up to the first non-comment line."""
+    block = []
+    with open(path) as f:
+        for line in f:
+            s = line.strip()
+            if s.startswith('#'):
+                block.append(strip_marker(line))
+            elif s:
+                break
+    if not block:
+        bad(f't11: {label} — {path} has no leading comment header')
+    return collapse(block)
+
+def check_comment_site(label, text):
+    m = MAPPING_BAD_RE.search(text)
+    if m:
+        bad(f't11: {label} — mapping comment still reads {excerpt(text, m)} (the vault password is '
+            'the runner token shown once at record creation — C02 must reword to `password = runner token`)')
+    stray_positive(text, label)
+    if not MAPPING_OK_RE.search(text):
+        bad(f't11: {label} — no `password = runner token` mapping comment (C02 wording not landed at this site)')
+    ok(f't11: {label} — password = runner token, no positive registration-token mention')
+
+try:
+    check_comment_site('values.yaml bitwardenIds block',
+                       comment_block(chart_vals, r'^bitwardenIds:', 'values.yaml bitwardenIds block'))
+    check_comment_site('secret-runner.yaml header', header_block(secret_tpl, 'secret-runner.yaml header'))
+    check_comment_site('custom-values dev item comment',
+                       comment_block(dev_cv, r'^forgejo-runner-dev:', 'custom-values dev item comment'))
+
+    notes = collapse(open(notes_txt).read().splitlines())
+    # (?<![\w.-]) keeps the key reference `.bitwardenIds.runner-token` from
+    # standing in for the copy-step's prose "runner token".
+    if not re.search(r'(?<![\w.-])runner[\s-]+token\b', notes, re.I):
+        bad('t11: NOTES.txt — the copy step does not name the runner token (C02 wording not landed)')
+    stray_positive(notes, 'NOTES.txt')
+    if not re.search(r'(?i)\b(?:not|never|no longer)\b[^.;]{0,40}ephemeral|ephemeral[^.;]{0,60}\b(?:refus\w*|reject\w*|disallow\w*|unsupport\w*)', notes):
+        bad('t11: NOTES.txt — no ephemeral-refusal warning (the daemon refuses ephemeral records — RESEARCH F2)')
+    if not re.search(r'(?i)(?:shown|displayed)[\s-]*(?:only[\s-]*)?once', notes):
+        bad('t11: NOTES.txt — the shown-once fact is missing (the record token is displayed once at creation)')
+    if not re.search(r'(?i)\blogin\b[^.;]{0,40}\busername\b|\busername\b[^.;]{0,40}\blogin\b', notes):
+        bad('t11: NOTES.txt — the login username/password field mapping is not stated '
+            '(custom fields, notes and the URI are invisible to property: username|password)')
+    if not re.search(r'(?i)\badmin\b[^.;]{0,40}\bactions\b[^.;]{0,40}\brunners\b', notes):
+        bad('t11: NOTES.txt — the Admin -> Actions -> Runners instance path is gone '
+            '(instance-admin is the only path per the user ruling reaffirming B3)')
+    ok('t11: NOTES.txt — runner-token copy step, ephemeral refusal, shown-once, login-field mapping, '
+       'no positive registration-token mention, instance-admin path present')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't11: the wording checks could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+then
+  checks=$((checks + $(cat "$WORK/t11-count")))
+else
+  exit 1
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed
