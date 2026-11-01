@@ -4,19 +4,27 @@
 # OVERTURN, U6 confirmed, U8 rung+tweak) — a deviation here re-opens the gate,
 # so the pin block below is asserted verbatim.
 #
-# FINAL pins asserted: --conversation-cache-mib 8192, --conversation-cache-
-# slots 16, --slot-save-path /models/strata/sessions, --memory-limit-mib 95232
-# with the container cgroup at 100Gi (lockstep pair), UD-Q4_K_XL paths.
-# Negative pins: NO --batch, NO --layer-split, NO --prompt-cache 0, NO
-# --ple-io ram (session files are disabled by the first three; PLE stays mmap
-# per the v0.2.7 +28.8 GiB RAM-resident hazard), and NO --ple-gguf sidecar
-# (setup emits one only for ≤2-shard packs; this family has four shards).
+# Pins asserted since the executed 2026-11-01 on-target gate (owner half-
+# restore ruling): --conversation-cache-mib 16384, --conversation-cache-slots
+# 16, --memory-limit-mib 103680 with the container cgroup at 108Gi (lockstep
+# pair), UD-Q4_K_XL paths. The U8-era conv 8192 + --slot-save-path pair is
+# SUPERSEDED: the claim-compiled HIP engine rejected the session flag at argv
+# (session files are the CUDA trial class; the Round-3 caveat, now measured),
+# which voided the trim's compensation — conv was restored halfway.
+# Negative pins: NO --slot-save-path (the engine refuses it); NO --layer-split
+# and NO --prompt-cache 0 (session-file guard rails retired at the same gate —
+# they stay out as untouched defaults, not as live protection); NO --ple-io
+# ram (PLE stays mmap per the v0.2.7 +28.8 GiB RAM-resident hazard) and NO
+# --ple-gguf sidecar (setup emits one only for ≤2-shard packs; this family has
+# four shards).
 #
-# The Round-2 UD-IQ4_XS fallback (conv 32768 / 108Gi / 102400) is NOT a second
-# passing shape: it is a human-owned on-target outcome (first HIP session
-# save/restore round-trip). If that gate trips, the revert is routed back to
-# the test session for a re-pin with the DECISIONS citation — never a dev edit
-# of this file.
+# The Round-2 UD-IQ4_XS fallback (conv 32768 / cgroup+cap envelope sized for
+# the SMALLER pack) was executed at the owner gate on 2026-11-01 and DECLINED
+# on measurement: on this pack it computes ~116.7 of the 125 GiB node — the
+# Oct-29 OOM-harvest shape. The half-restore above IS the shipped authority;
+# a deviation re-opens that gate. The re-pin itself is test-session property
+# per the cf-77/cf-83 law — this file moved under the gate ruling's citation,
+# not as a dev edit.
 #
 # Cross-referenced arms living elsewhere: the ornith-Strata presence arm
 # (test_catalog_contract.py::test_c05_ornith_strata_id_present_only_where_it_
@@ -130,12 +138,11 @@ def test_c06_final_pin_block_verbatim():
     for flag, want in (
         ("--conversation-cache-mib", str(S.Q4_CONV_CACHE_MIB)),
         ("--conversation-cache-slots", str(S.Q4_CONV_CACHE_SLOTS)),
-        ("--slot-save-path", S.Q4_SLOT_SAVE_PATH),
         ("--memory-limit-mib", str(S.Q4_MEMORY_LIMIT_MIB)),
     ):
         assert args.get(flag) == want, (
-            f"FINAL pin {flag} {want!r} renders as {args.get(flag)!r} — U8/Round-3 authority; "
-            "a deviation re-opens the gate"
+            f"post-gate pin {flag} {want!r} renders as {args.get(flag)!r} — the 2026-11-01 "
+            "owner half-restore ruling; a deviation re-opens the gate"
         )
 
 
@@ -164,23 +171,25 @@ def test_c06_profile_shape_and_ud_q4_k_xl_paths():
 
 @helm
 def test_c06_negative_pins_absent_from_the_q4_arm():
-    """Round-2 findings, executable: --batch / --layer-split / --prompt-cache 0
-    disable session files outright, and --ple-io ram makes the 28.8 GiB n-gram
-    table RAM-resident (the OOM that killed system pods on 2026-10-29). The
-    FINAL shape depends on all four staying out."""
+    """Post-gate pins, executable (2026-11-01): --slot-save-path must be ABSENT
+    — the claim-compiled HIP engine refuses it at argv. --layer-split and
+    --prompt-cache 0 stay out as retired session-file guard rails (now default
+    posture, not protection). --ple-io ram makes the 28.8 GiB n-gram table
+    RAM-resident (the OOM that killed system pods on 2026-10-29). --batch is
+    NOT a profile pin: the arm's parallel 4 reaches the engine as --batch
+    through serve itself (2026-11-01 first-boot argv), so the old session-file
+    rationale for banning it was doubly moot once the feature compiled out."""
     joined = " ".join(S.arg_tokens(_profile()))
     tokens = set(S.cmd_flag_tokens(joined))
-    banned_flags = {"--batch", "--layer-split", "--ple-io"}
+    banned_flags = {"--layer-split", "--ple-io"}
     assert tokens, "the q4 profile renders no flags at all — every negative pin below passes vacuously"
     assert not tokens & banned_flags, f"negative-pinned flags present in strata-q4.json: {sorted(tokens & banned_flags)}"
-    assert "--prompt-cache 0" not in joined, "--prompt-cache 0 in the Q4 arm (disables session files)"
-    # The session path is a VALUE, not a flag: arg_pairs keys are flags, so
-    # membership in the key set can never hold for any correct profile.
+    assert "--prompt-cache 0" not in joined, "--prompt-cache 0 in the Q4 arm (retired guard rail)"
+    # The gate's own artifact: the flag that crashed the first boot stays out.
     pairs = dict(S.arg_pairs(_profile()))
-    assert pairs.get("--slot-save-path") == S.Q4_SLOT_SAVE_PATH, (
-        f"negative pins passed but the session path vanished — --slot-save-path is "
-        f"{pairs.get('--slot-save-path')!r}, want {S.Q4_SLOT_SAVE_PATH!r}; the pair is what "
-        "makes the arm meaningful"
+    assert S.Q4_SESSION_FLAG not in pairs, (
+        f"{S.Q4_SESSION_FLAG} is back in the q4 arm — the HIP engine exits 2 on it "
+        "before it is ready (2026-11-01 first boot); conv 16384 is the compensation, not the flag"
     )
 
 
@@ -205,16 +214,17 @@ def test_c06_existing_profiles_stay_byte_unchanged_iq3_s_keeps_92160():
 
 
 @helm
-def test_c06_cgroup_100gi_and_engine_cap_lockstep():
+def test_c06_cgroup_108gi_and_engine_cap_lockstep():
     ctr = S.strata_container(_docs())
     res = ctr.get("resources") or {}
     limits, requests = res.get("limits") or {}, res.get("requests") or {}
     assert limits.get("memory") == S.Q4_CGROUP_LIMIT, (
-        f"limits {limits} — the Q4 rung needs the 100Gi cgroup; the pair is (100Gi, {S.Q4_MEMORY_LIMIT_MIB})"
+        f"limits {limits} — the q4 arm rides the 108Gi cgroup; the pair is "
+        f"(108Gi, {S.Q4_MEMORY_LIMIT_MIB}) since the 2026-11-01 gate"
     )
     assert requests.get("memory") == "64Gi", f"requests {requests} must stay 64Gi"
     cap = int(dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_Q4_FILE))).get("--memory-limit-mib", "0"))
-    assert cap < 100 * 1024, f"engine cap {cap} MiB is not inside the 100Gi cgroup (#1601 pairing)"
+    assert cap < 108 * 1024, f"engine cap {cap} MiB is not inside the 108Gi cgroup (#1601 pairing)"
     assert cap == S.Q4_MEMORY_LIMIT_MIB
     pod_spec = S.strata_pod(_docs())["spec"]
     assert pod_spec.get("terminationGracePeriodSeconds") == GRACE_SECONDS, (
@@ -250,8 +260,8 @@ def test_c06_init_fetches_the_q4_pack_without_new_secret_material():
     assert "unsloth/UD-Q4_K_XL" in model, (
         f"STRATA_MODEL_Q4 = {model!r} — the Round-2 unsloth family token is the frozen value"
     )
-    assert "mkdir -p " + S.Q4_SLOT_SAVE_PATH in _init_script(), (
-        f"the init script lacks the idempotent 'mkdir -p {S.Q4_SLOT_SAVE_PATH}' (C06 disk gate)"
+    assert "mkdir -p " + S.Q4_SESSION_DIR in _init_script(), (
+        f"the init script lacks the idempotent 'mkdir -p {S.Q4_SESSION_DIR}' (post-gate dir stays, the flag does not)"
     )
 
 

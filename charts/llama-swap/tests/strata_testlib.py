@@ -285,16 +285,23 @@ ORCA_PACK_MARKER = "/models/strata/.pack-orca"
 CHECKOUT_MARKER = "/models/strata/.checkout-0.2.9-carry1"
 ORNITH_DL_MARKER = "/models/strata/.dl-ornith"
 
-# C06 FINAL envelope (U8 + Round-3, DECISIONS authority — a deviation re-opens
-# the gate): the Q4 rung rides its OWN pair (cgroup 100Gi + engine 95232), the
-# IQ3_S/IQ3_XXS rungs keep the 92160/96Gi pair. Round-3 preconditions: session
-# files are disabled by --batch / --layer-split / --prompt-cache 0, and PLE
-# stays mmap (no --ple-io ram) per the v0.2.7 +28.8 GiB RAM-resident hazard.
-Q4_MEMORY_LIMIT_MIB = 95232
-Q4_CGROUP_LIMIT = "100Gi"
-Q4_CONV_CACHE_MIB = 8192
+# C06 FINAL envelope, re-pinned at the executed on-target gate (2026-11-01,
+# owner half-restore ruling): the Q4 rung rides its OWN pair (cgroup 108Gi +
+# engine 103680), the IQ3_S/IQ3_XXS/orca rungs keep their 92160 declared caps
+# — the pair law is per-pair. The conv term moved 8192 -> 16384 when the
+# claim-compiled HIP engine rejected --slot-save-path at argv (session files
+# are CUDA-trial: the Round-3 caveat, now measured), which voided the trim's
+# U8 compensation. --slot-save-path is a NEGATIVE pin (Q4_SESSION_FLAG below).
+# PLE stays mmap (no --ple-io ram) per the v0.2.7 +28.8 GiB RAM-resident hazard.
+Q4_MEMORY_LIMIT_MIB = 103680
+Q4_CGROUP_LIMIT = "108Gi"
+Q4_CONV_CACHE_MIB = 16384
 Q4_CONV_CACHE_SLOTS = 16
-Q4_SLOT_SAVE_PATH = "/models/strata/sessions"
+Q4_SESSION_FLAG = "--slot-save-path"
+# The dir creation STAYS (fetch_models.sh owns it; one home only — the chart
+# must not mkdir it): harmless bookkeeping for a possible future HIP session
+# -files build, asserted by the init/image suites.
+Q4_SESSION_DIR = "/models/strata/sessions"
 Q4_FORBIDDEN_TOKENS = ("--batch", "--layer-split", "--ple-io")
 
 # Inner model id -> the run-config file its cmd's --profile names. The

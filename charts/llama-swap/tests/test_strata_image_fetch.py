@@ -319,8 +319,8 @@ def test_c07_sessions_dir_mkdir_now_lives_in_the_script():
     mkdir, so C06 put it chart-side; the verbatim port moves it INTO the driver
     (idempotent mkdir -p), and the chart-side copy leaves with the script body
     (pinned by test_strata_thin_init.py)."""
-    assert "mkdir -p " + S.Q4_SLOT_SAVE_PATH in _fetch_sh(), (
-        f"fetch_models.sh lacks the idempotent 'mkdir -p {S.Q4_SLOT_SAVE_PATH}' — "
+    assert "mkdir -p " + S.Q4_SESSION_DIR in _fetch_sh(), (
+        f"fetch_models.sh lacks the idempotent 'mkdir -p {S.Q4_SESSION_DIR}' — "
         "the sessions dir law must land exactly once, in the driver"
     )
 

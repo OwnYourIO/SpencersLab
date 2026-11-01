@@ -236,7 +236,7 @@ def test_c02_four_profiles_and_orca_shape():
         )
     assert args.get("--conversation-cache-mib") == "8192", (
         "conv 8 is C08's U9.2 arithmetic trim (32 would put the IQ4_XS arena 108.7 GiB "
-        "over a 100Gi cgroup) — the envelope-identity law was amended at the shift ONLY "
+        "over any pair this node carries) — the envelope-identity law was amended at the shift ONLY "
         "for this flag; the fit proof rides in test_strata_c08_rung_shifts.py"
     )
 

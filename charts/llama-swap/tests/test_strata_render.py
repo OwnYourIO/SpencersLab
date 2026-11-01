@@ -224,7 +224,9 @@ def test_c01_memory_cgroup_and_engine_cap():
     limits = res.get("limits") or {}
     # cf-86 C06 lockstep law (DECISIONS "cf-86 envelope + timing decisions" /
     # U8+Round-3): the cgroup pair is one UNIT — 96Gi with the 92160 engine cap
-    # while the Q4 rung is unwired, 100Gi with 95232 once it lands. Raising one
+    # while the Q4 rung is unwired, the q4 pair (S.Q4_CGROUP_LIMIT with
+    # S.Q4_MEMORY_LIMIT_MIB — 100Gi/95232 at C06, 108Gi/103680 since the
+    # 2026-11-01 post-gate re-pin) once it lands. Raising one
     # leg alone is what #1601 exists to prevent, so only the two sanctioned
     # pairs are legal; the exact final pair is pinned in test_strata_q4_rung.py.
     pair = {
@@ -238,8 +240,9 @@ def test_c01_memory_cgroup_and_engine_cap():
     )
     # The pair leg is PER-ARENA: one cgroup bounds the pod, and the cap that has
     # to equal the pair value is the arena the cgroup was sized for — the Q4 rung
-    # under 100Gi, the IQ3_S primary under 96Gi. Reading the primary's cap under
-    # the 100Gi cgroup would demand the smaller arenas grow to 95232, which the
+    # under the q4 pair, the IQ3_S primary under 96Gi. Reading the primary's cap
+    # under the q4 cgroup would demand the smaller arenas grow to the q4 cap,
+    # which the
     # per-pair law in test_strata_q4_rung.py and the byte-frozen pre-cf-86
     # capture both forbid — the two arms would be mutually unsatisfiable.
     binding = (S.PROFILE_Q4_FILE if limits.get("memory") == S.Q4_CGROUP_LIMIT
@@ -250,7 +253,10 @@ def test_c01_memory_cgroup_and_engine_cap():
         f"rendered profile set {sorted(caps)} lacks the pair-binding profile {binding!r}"
     )
     cap = caps[binding]
-    assert cap and int(cap) <= 100 * 1024, (
+    # The ceiling is the SHIPPED cgroup, not a literal: the q4 pair moved to
+    # 108Gi at the executed 2026-11-01 gate (100Gi was the C06-era figure).
+    cgib = int(str(limits["memory"]).removesuffix("Gi"))
+    assert cap and int(cap) <= cgib * 1024, (
         f"--memory-limit-mib {cap!r}: the engine must be TOLD its cgroup "
         "(#1601 pairing) and size inside it — a limit without the flag "
         "just gets the arena OOM-killed mid-pin"

@@ -208,7 +208,8 @@ generated run-config `Strata/strata-iq3_s.json` is the source of truth;
 RESEARCH §4). Budget the area **135–160 GB** (GGUFs + pack + MTP + headroom).
 That figure is the q3-era area; the cf-86 rungs stack on top of it, and the
 Q4 rung is the biggest of them: its four shards are 111,334,654,784 B before
-`iq_pack` writes its own copy, and its session files land in
+`iq_pack` writes its own copy, and its (currently inactive — the HIP engine
+refuses `--slot-save-path`, so nothing lands here yet) session files would land in
 `/models/strata/sessions` at ~4.7 GiB per full 262k conversation. `df -h
 /models/strata` (human step) before the `q4` token first runs, and again
 after, is the gate on that growth. The ornith rung adds its GGUF-direct
@@ -283,15 +284,19 @@ escape (§4).
   arena read measured 46.84 GiB + the conversation-cache budget (the
   shipped primary declares an explicit 32768 MiB x 16-slot conversation
   cache; the engine's own default ceiling is 8192 MiB) + KV/pack headroom,
-  which the `64Gi` request inside the pod's `100Gi` cgroup encodes
+  which the `64Gi` request inside the pod's `108Gi` cgroup encodes
   (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment — the
   2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with the
   paired 96Gi cgroup + `--memory-limit-mib 92160`; cf-86 C06 raised that
-  cgroup to 100Gi for the UD-Q4_K_XL rung and left the 92160 cap where it
+  cgroup to 100Gi for the UD-Q4_K_XL rung, the 2026-11-01 post-gate re-pin
+  to 108Gi, and left the 92160 cap where it
   was). The UD-Q4_K_XL rung (`qwen3.8-flash-next-strata-q4`) rides the
-  bigger pair: `100Gi` cgroup + `--memory-limit-mib 95232`, conversation
-  cache trimmed to 8192 MiB x 16 — 71.7 GiB pinned experts + 8 GiB cache +
-  ~13 GiB worst-case KV ≈ 92.7 GiB inside the 125 GiB node. MemAvailable
+  bigger pair: `108Gi` cgroup + `--memory-limit-mib 103680`, conversation
+  cache at 16384 MiB x 16 (the executed 2026-11-01 gate: the HIP engine
+  refuses --slot-save-path, so the conv-8 trim lost its session-file
+  compensation and the owner ruled a half-restore; the full 32768 uplift
+  would declare ~116.7) — 71.7 GiB pinned experts + 16 GiB cache +
+  ~13 GiB worst-case KV ≈ 100.7 GiB inside the 125 GiB node. MemAvailable
   before a Q4 request must clear THAT number, not the ~47 GiB IQ3_S figure
   above. The caps table below states the shipped per-rung state.
 - Total pod requests vs node allocatable — the strata pod must schedule
@@ -303,13 +308,16 @@ escape (§4).
   `--memory-limit-mib` — #1601's informed-limit posture, adopted after the
   2026-10-29 node OOM made uncapped pinning an unacceptable failure mode.
   Two pairs are in the history, one cgroup ships: the pre-C06 pair was
-  `96Gi` + `92160`, and C06 raised the pod's cgroup to `100Gi` with the
-  `95232` cap for the UD-Q4_K_XL arena while the smaller rungs kept their
-  `92160`. Never move one leg without the other, and never read one leg as
+  `96Gi` + `92160`, C06 raised the pod's cgroup to `100Gi` with the
+  `95232` cap for the UD-Q4_K_XL arena, and the executed 2026-11-01
+  on-target gate re-pinned that pair to `108Gi` + `103680` while the
+  smaller rungs kept their `92160` untouched. Never move one leg without
+  the other, and never read one leg as
   the whole pod's budget: the cgroup is the pod's, the cap belongs to
   whichever arena is loaded.
 
-As shipped after cf-86 C09 — one pod cgroup (`100Gi`), the cap per rung;
+As shipped after cf-86 C09 and the 2026-11-01 post-gate q4 re-pin — one pod
+cgroup (`108Gi`), the cap per rung;
 `--plan` (§3.4) still finalizes what actually becomes resident:
 
 | Rung (profile) | `--memory-limit-mib` | conversation cache | pinned arena read |
@@ -317,7 +325,7 @@ As shipped after cf-86 C09 — one pod cgroup (`100Gi`), the cap per rung;
 | primary (`strata-iq3_s.json`) | 92160 | 32768 MiB x 16 slots | 46.84 GiB (IQ3_S pair) |
 | strix (`strata-strix-iq3_s.json`) | none declared | engine default | `--expert-cache 24576` + `--resident-budget-gib 55` |
 | orca (`strata-orca-iq4_xs.json`) | 92160 | 8192 MiB x 16 slots | 57.7 GiB experts (90.78 GiB staged) |
-| q4 (`strata-q4.json`) | 95232 | 8192 MiB x 16 slots | 71.7 GiB of the 111,334,654,784 B set |
+| q4 (`strata-q4.json`) | 103680 | 16384 MiB x 16 slots | 71.7 GiB of the 111,334,654,784 B set |
 | ornith (`strata-ornith-q4.json`) | none declared | engine default | ~40–48 GiB class (R5 estimate; the on-target read is 3.6's) |
 
 The strix row carries no `--memory-limit-mib` at all — its bound is the
@@ -332,7 +340,7 @@ three shards at the flat repo root — 44,766,155,936 + 44,735,995,008 +
 R4 [B7]) — gated bytes through model-fetch. It fits 92160 ONLY with the
 cache trimmed to 8192: 57.7 GiB pinned experts + 8 GiB cache + ~13 GiB
 worst-case KV + ~6 GiB supervisor ≈ 84.7, while conv 32 would declare
-108.7, past even the 100Gi cgroup. `iq_pack` writes its own copy under
+108.7, past even the q4 arm's cgroup (108Gi since the 2026-11-01 gate). `iq_pack` writes its own copy under
 `Strata-data/packs/orca-iq4_xs`, so `df -h /models/strata` before and
 after the first `orca` token gates that growth the way the q4 token's does.
 
@@ -390,10 +398,13 @@ What the five runs **finalize** (the shipped values this gate is gated on):
   IQ4_XS trio, and the first `iq_pack --compat-bf16` fidelity read — a BF16
   surprise is a one-line iq_pack flip + pack rebuild as a follow-up commit
   (C08), not an on-node edit.
-- Q4 (`strata-q4.json`): the PLE-mmap pin, and the gate that precedes the
-  **first HIP session save/restore round-trip** — its failure triggers the
-  pre-registered UD-IQ4_XS conv-32 / 108Gi / 102400 fallback, decided by the
-  operator, never by a dev (C06).
+- Q4 (`strata-q4.json`): the PLE-mmap pin. The session save/restore
+  round-trip gate was EXECUTED at first boot (2026-11-01) one step early:
+  the claim-compiled HIP engine refuses `--slot-save-path` at argv, so no
+  round-trip can run — the pre-registered fallback went to the owner gate
+  and the half-restore shipped (conv 16384 with the pair at 108Gi/103680);
+  the full conv-32 / 102400 envelope was declined because, sized for the
+  smaller pack, it declares ~116.7 on this node. Never a dev call (C06).
 - Ornith (`strata-ornith-q4.json`): the memory cap and the
   `--expert-slots` / `--expert-vram` finalization land HERE — R5 sizes the
   expert cache ~10–14 GiB / 300–400 slots class, and the repo deliberately
@@ -488,8 +499,9 @@ preallocation is what harvested the node); the other four Strata arenas are
 bigger or comparable — orca 57.7 GiB, q4 71.7 GiB (the largest), ornith
 ~40–48 GiB class (R5 estimate) — and all five ride the same
 `(p | s | o | q | n)` alternation. The cgroup cap keeps strata's own worst
-case inside its own container (one `100Gi` cgroup; the cap inside it is per
-rung — 92160 primary and orca, 95232 Q4, none declared for strix and ornith
+case inside its own container (one `108Gi` cgroup since the 2026-11-01 gate;
+the cap inside it is per
+rung — 92160 primary and orca, 103680 Q4, none declared for strix and ornith
 until their §3.4 `--plan` finalizes them). Therefore:
 
 - No Strata request while a large trio model is mid-session (cold pin +
@@ -576,9 +588,11 @@ ignore lands (future ticket, STATE.json `deferred`).
   is expected, no action (ladder rung 2).
 - **`--memory-limit-mib` / cgroup handling (#1601)** — CLOSED by the
   2026-10-29 OOM: the container carries a per-rung pair — `limits.memory
-  96Gi` + `--memory-limit-mib 92160` on the IQ3-class arenas, `100Gi` +
-  `95232` on the UD-Q4_K_XL arena (66560 is a superseded figure; §3.3 carries
-  the shipped pairs). The pair is the posture, never one
+  96Gi` + `--memory-limit-mib 92160` on the IQ3-class arenas, `108Gi` +
+  `103680` on the UD-Q4_K_XL arena. Superseded figures: 66560, and the
+  C06-era `100Gi` + `95232` pair, retired when the pair moved at the
+  executed 2026-11-01 gate — §3.3 carries
+  the shipped pairs. The pair is the posture, never one
   leg without the other. The uncapped-arena era lived while strata owned
   the box's rhythm; shared residency ended it.
 

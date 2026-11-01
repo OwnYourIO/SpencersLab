@@ -1275,17 +1275,22 @@ app-template:
             # the ttl:3600 time-share and the cgroup cap are what keep the
             # next collision inside this container instead of the whole
             # node. Raise --memory-limit-mib in lockstep with this number.
-            # cf-86 C06 raises the ceiling to 100Gi for the UD-Q4_K_XL rung:
-            # its declared pair is 95232 MiB inside 100Gi (71.7 GiB pinned
-            # experts + 8 GiB trimmed conversation cache + ~13 GiB worst-case
-            # KV ≈ 92.7, RESEARCH Round 2/3 [A1]) — the pair is PER-RUNG, so
-            # the IQ3_S and orca profiles keep their 92160 cap inside this same
-            # cgroup and ride the smaller arena; nothing about the smaller
-            # rungs' envelope changed. 100Gi is the largest cap this node has
-            # ever carried, which is precisely why the matrix keeps all four
-            # arenas as alternatives and the 420 s grace stays untouched.
+            # cf-86 C06 raised the ceiling to 100Gi for the UD-Q4_K_XL rung;
+            # the 2026-11-01 first boot moved it to 108Gi with the pair's conv
+            # term — 8192 was only affordable because disk session files were
+            # to absorb the big parks, and the HIP engine compiled that feature
+            # out (see the q4 profile's flag note). Declared pair is now
+            # 103680 MiB inside 108Gi (71.7 GiB pinned experts + 16 GiB
+            # conversation cache + ~13 GiB worst-case KV ≈ 100.7, owner-ruled
+            # half-restore at the gate) — the pair is PER-RUNG, so the IQ3_S
+            # and orca profiles keep their 92160 cap inside this same cgroup
+            # and ride the smaller arena; nothing about the smaller rungs'
+            # envelope changed. 108Gi is the largest cap this node has ever
+            # carried (headroom ~17 GiB on the 125 GiB node), which is
+            # precisely why the matrix keeps all four arenas as alternatives
+            # and the 420 s grace stays untouched.
             limits:
-              memory: 100Gi
+              memory: 108Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
             # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
@@ -1597,7 +1602,7 @@ strata:
 
       qwen3.8-flash-next-strata-q4:
         name: Qwen3.8-Flash-Next Unsloth UD-Q4_K_XL (R9700 arena)
-        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena, a conversation-cache trim from 32 to 8 GiB (upstream's own default class) and disk-backed session files in place of RAM parking; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 100Gi/95232 pair; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — half the fleet uplift, since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680/108Gi pair; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
         # Same serve wrapper as the primary, byte-for-byte except the profile
         # file (the suite asserts exactly this equality — the ulimit wrapper is
         # load-bearing, and a per-rung wrapper drift is invisible until fd
@@ -1928,8 +1933,8 @@ strata:
     # (97.47 GB x the 0.635 setup-calibrated expert share, RESEARCH R4) fits
     # this rung's 92160 declared cap ONLY with the conversation cache trimmed
     # to 8192 — 57.7 arena + 8 conv + ~13 worst-case KV + ~6 supervisor ≈
-    # 84.7 GiB, while conv 32 would declare 108.7, past even the 100Gi
-    # cgroup. Slots stay 16 and the cap stays 92160 (the #1601 law is
+    # 84.7 GiB, while conv 32 would declare 108.7, past even the q4 arm's
+    # cgroup (96Gi→100Gi at C06, 108Gi since the 2026-11-01 post-gate pair). Slots stay 16 and the cap stays 92160 (the #1601 law is
     # declared ≤ cgroup, and the cgroup raise was the Q4 arm's lockstep);
     # the trim follows the sibling Q4 arm's U8 precedent and upstream's own
     # default ceiling (DETAILS.md@v0.2.8). Two Orca-specific carry-overs from
@@ -1999,7 +2004,8 @@ strata:
         - --memory-limit-mib 92160
         # Conversation-cache trim 32→8 GiB (slots unchanged at 16) is the
         # arithmetic of the 57.7 GiB arena, not tuning: conv 32 declares
-        # 108.7 GiB, past even the 100Gi cgroup. Same trim the sibling Q4
+        # 108.7 GiB, past even the q4 arm's cgroup (108Gi since the
+        # 2026-11-01 gate). Same trim the sibling Q4
         # arm ships (U8 precedent) and upstream's own default ceiling
         # ("40% of the RAM left above min-free, at most 8192 MiB",
         # DETAILS.md@v0.2.8).
@@ -2088,49 +2094,39 @@ strata:
         # ruling moved only the conversation-cache term.
         - --kv-resident 32768
         - --prefill auto
-        # THE LOCKSTEP PAIR (PR #1601): cgroup limits.memory 100Gi above, this
-        # cap inside it. Round-2/3 envelope: pinned experts 71.7 GiB + trimmed
-        # conversation cache 8 GiB + worst-case 4-slot KV ~13 GiB ≈ 92.7 GiB,
-        # so 95232 MiB (93 GiB) leaves ~25 GiB of node headroom against the
-        # 125 GiB node — vs the IQ3_S pair's 92160/96Gi. The pair is per-rung;
-        # the IQ3_S and orca profiles keep 92160.
-        - --memory-limit-mib 95232
-        # Conversation-cache trim 32→8 GiB (slots unchanged at 16): the price
-        # of the 71.7 GiB arena. Not a novel concession — 8192 MiB is upstream's
-        # OWN default ceiling ("40% of the RAM left above min-free, at most
-        # 8192 MiB", DETAILS.md@v0.2.8 [A11]); the 32 GiB was the owner's
-        # 2026-10-29 uplift. At 8 GiB the fleet's typical 30-50k turns still
-        # park ~12-21 of them; only ≥256k parks go scarce (2), and those
-        # round-trip through the session files below instead of re-prefilling
-        # 1.7-3 min.
-        - --conversation-cache-mib 8192
+        # THE LOCKSTEP PAIR (PR #1601): cgroup limits.memory above, this cap
+        # inside it. cf-86 post-boot revision (2026-11-01): the conv term was
+        # written 8192 because disk session files were supposed to absorb the
+        # big parks (Round 2/3 [A1]: 71.7 pinned experts + 8 conv + ~13
+        # worst-case 4-slot KV ≈ 92.7) — the on-node HIP engine rejected
+        # --slot-save-path at argv (a CUDA-side feature compiled out), so conv
+        # is back to 16384 and the pair to 103680 inside 108Gi
+        # (71.7 + 16 + 13 ≈ 100.7), ~17 GiB node headroom on the 125 GiB node.
+        # The full 32768 restore would ask ~116.7 — the Oct-29 OOM-harvest
+        # shape, refused at the owner gate. The pair is PER-RUNG; the IQ3_S
+        # and orca profiles keep 92160 inside the same cgroup, unchanged.
+        - --memory-limit-mib 103680
+        # Conversation-cache 16384 (slots unchanged at 16). History: the rung
+        # shipped trimmed to 8192 as the price of the 71.7 GiB arena — the
+        # owner's U8 trade, sound ONLY because disk session files were to
+        # absorb the big parks the trim evicted. The on-node HIP engine
+        # compiled that feature out (the flag below, rejected at argv), so the
+        # trim lost its compensation: restored halfway — 16 GiB, inside the
+        # pair raised above — because the full 32768 uplift would put the
+        # envelope at ~116.7 of the 125 GiB node (the Oct-29 OOM shape, refused
+        # at the owner gate 2026-11-01). At 16 GiB the fleet's typical 30-50k
+        # turns park ~24-42 of them; ≥256k parks stay scarce and re-prefill
+        # 1.7-3 min for now.
+        - --conversation-cache-mib 16384
         - --conversation-cache-slots 16
-        # Disk-backed conversation state (Strata 0.2.7 native, text unchanged
-        # at the pinned 0.2.8: --slot-save-path
-        # + POST /slots/N?action=save|restore; DETAILS.md@v0.2.8 "Session files
-        # (disk)" names the flag and its config alias "slot_save_path", so the
-        # pinned checkout needs no rebuild for this rung). On the shared claim,
-        # so files outlive both a ttl unload and a pod Recreate. ~1.2 GB per
-        # 63k tokens → ~4.7 GiB per 262k conversation; restore measures 1-5 s on
-        # NVMe class against 1.7-3 min of re-prefill (Round 3 §3). Runbook shape
-        # from the same section: only slot 0, one request at a time (otherwise
-        # 501/400), and a file is bound to the geometry it was written under
-        # (engine version, --kv, --kv-resident, --max-context, --mtp-window) —
-        # editing those terms on this arm retires the saved files, which is one
-        # more reason the terms below stay stable. Nothing calls save/restore
-        # automatically — upstream's automation (#3341/#3565/#3891/#4306) is
-        # still open at 0.2.8 (issue-state re-read 2026-10-31), so this is a
-        # runbook/orchestration affordance,
-        # not an eviction path. The engine's own --session-min-free-mib 4096
-        # default guards the claim against a zero-free write; the sessions dir
-        # is created by model-fetch.
-        - --slot-save-path /models/strata/sessions
-        # NEGATIVE PINS — the trim's justification depends on all four staying
-        # out of this arm (suite-pinned; RESEARCH Round 3 §4):
-        #   --batch, --layer-split, --prompt-cache 0 each DISABLE session files
-        #   (verbatim at v0.2.8: "Not supported with --layer-split,
-        #   --peer-device, --batch or --prompt-cache 0"), so adding any of them
-        #   would silently void the round-trip the trim bought;
+        # Session files are NOT passed: the claim-compiled HIP engine rejects
+        # --slot-save-path with "unknown argument" (exit 2 before ready,
+        # 2026-11-01 first boot), while the checkout's own DETAILS.md@0.2.9
+        # still documents it — the CUDA trial class the Round-3 caveat predicted
+        # at DECISIONS, now measured rather than assumed. Revisit only if
+        # upstream ships the feature for HIP builds.
+        # NEGATIVE PINS — flags that stay OUT of this arm (suite-pinned;
+        # RESEARCH Round 3 §4):
         #   --ple-io ram would make the 28.8 GiB n-gram table RAM-resident —
         #   the exact +28.8 GiB that blew node RAM and got cluster system pods
         #   OOM-harvested on 2026-10-29. This is a hazard, not a theoretical
@@ -2140,12 +2136,18 @@ strata:
         #   generated config says, THIS file is the serving authority and it
         #   pins the engine's mmap default. PLE-RAM-vs-mmap is confirmed at the
         #   human-owned on-target `strata serve --plan` gate, never from here.
-        # Pre-registered fallback (human-owned on-target gate, DECISIONS):
-        # session files are documented Linux+CUDA and untested on HIP. If the
-        # first HIP save/restore round-trip fails, the trim loses its
-        # justification and this rung reverts to the Round-2 UD-IQ4_XS envelope
-        # (--conversation-cache-mib 32768, cgroup 108Gi, --memory-limit-mib
-        # 102400) — a routed re-pin by the test session, never a dev edit.
+        #   (--layer-split / --prompt-cache 0 were pinned out as session-file
+        #   killers; with the feature compiled out of the HIP build that
+        #   rationale is retired — they stay out as untouched defaults, not as
+        #   guard rails.)
+        # Fallback executed at the owner gate 2026-11-01: the pre-registered
+        # HIP failure arrived one step early — the engine refused the flag at
+        # argv, so no round-trip ever ran. The full Round-2 envelope (conv
+        # 32768) was DECLINED on measurement: sized against the smaller
+        # IQ4_XS pack, on this pack it computes ~116.7 of the 125 GiB node.
+        # The owner chose the half-restore instead — conv 16384 with the pair
+        # raised above. This paragraph is the record of that gate, not an
+        # open option.
       # Person-wins layer (RESEARCH §2), same rule as the other profiles.
       user_args: []
       tokenizer: /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl/tokenizer
@@ -2205,11 +2207,15 @@ strata:
         # 29,731,729,056 (Σ 79,713,771,665) are the byte_pins.env literals the
         # legs verify against.
         - --native /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf
-        # 262K class, same serving envelope as the other arenas. The cost on
-        # this path is fp32 KV (no quantized KV on q36 yet, upstream #3678
-        # open): ~53 KB/token, so ~13.1 GiB at full context, on top of ~10.2
-        # GiB of dense tensors.
-        - --max-context 262144
+        # 131072, not the 262K the other arenas serve: the cost on this path
+        # is fp32 KV (no quantized KV on q36 yet, upstream #3678 open) at
+        # ~53 KB/token — at 262144 the first on-target load died exactly here
+        # ("5088 MiB needed, 3040 MiB free after the weights, the context and
+        # the sessions"): ~13.1 GiB KV + ~10.2 GiB dense leaves no room for
+        # the hybrid experts' buffers and slots. Halving the window frees
+        # ~6.5 GiB against a ~2 GiB deficit; the experts' default sizing stays
+        # unpinned for the serve --plan gate to measure honestly.
+        - --max-context 131072
         # setup's own generated choice for this family (its step 7 writes
         # `--prefill auto`); `auto` lets the engine pick the prefill path for
         # the card instead of freezing a guess here.

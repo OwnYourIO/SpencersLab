@@ -216,7 +216,10 @@ def test_c09_ornith_profile_args_stay_on_the_q36_surface():
     assert not extra, f"ornith profile carries flags outside the q36 surface: {sorted(extra)}"
     missing = Q36_REQUIRED - seen
     assert not missing, f"chunk-pinned q36 members missing: {sorted(missing)}"
-    assert args.get("--max-context") == "262144", f"--max-context {args.get('--max-context')!r}, want the 262K class"
+    # 131072, re-pinned from the chunk's 262144 hypothesis at the executed
+    # first boot (2026-11-01): the on-node load died "5088 MiB needed, 3040
+    # MiB free" — fp32 KV at 262K leaves no room for the expert buffers.
+    assert args.get("--max-context") == "131072", f"--max-context {args.get('--max-context')!r}, want the measured 128K class"
     assert args.get("--mtp") == "2", f"--mtp {args.get('--mtp')!r}, want 2 (blk.48 MTP, types clean)"
 
 

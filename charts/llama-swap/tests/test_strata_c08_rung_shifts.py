@@ -185,14 +185,16 @@ def test_c08_orca_args_are_the_iq4_xs_pack_shape():
 @helm
 def test_c08_orca_envelope_fits_the_92160_cap_ONLY_with_the_conv_trim():
     """R4 [B4] + the U8 conv-8 precedent: 57.7 arena + 8 conv + 13 KV-worst +
-    6 supervisor ≈ 84.7 GiB inside 92160; conv 32 would need 108.7 — over even
-    the 100Gi cgroup. So the trim (32768 -> 8192) is arithmetic, not tuning,
-    and the cap/slots/cgroup must NOT move (U9.2 zero-envelope-growth law)."""
+    6 supervisor ≈ 84.7 GiB inside 92160; conv 32 would need 108.7 — over any
+    pair this node carries (the q4 pair moved to 108Gi/103680 at the 2026-11-01
+    gate; orca never rode it). So the trim (32768 -> 8192) is arithmetic, not
+    tuning, and the cap/slots/cgroup must NOT move for this arm (U9.2 zero-
+    envelope-growth law — the post-gate q4 half-restore did not leak into orca)."""
     prof = S.profile_json(_on(), PROFILE_ORCA_C08_FILE)
     args = dict(S.arg_pairs(prof))
     assert args.get("--conversation-cache-mib") == "8192", args.get("--conversation-cache-mib")
     assert "--conversation-cache-mib 32768" not in " ".join(S.arg_tokens(prof)), (
-        "the pre-shift conv 32 survived on orca — 108.7 GiB over a 100Gi cgroup"
+        "the pre-shift conv 32 survived on orca — 108.7 GiB over any shipped pair"
     )
     assert args.get("--conversation-cache-slots") == "16"
     assert args.get("--memory-limit-mib") == "92160", (
@@ -204,13 +206,16 @@ def test_c08_orca_envelope_fits_the_92160_cap_ONLY_with_the_conv_trim():
 
 @helm
 def test_c08_the_other_three_profiles_stay_byte_unchanged_under_the_shift():
-    """C08 touches ONLY the orca profile among the run-configs; q4's FINAL
-    pins especially (95232 / 8192 / slot-save-path) must be unmoved."""
+    """C08 touches ONLY the orca profile among the run-configs; the q4 arm's
+    values are the POST-GATE pins (103680 / 16384, session flag absent — the
+    2026-11-01 half-restore), asserted here so neither shift can leak."""
     docs = _on()
     q4 = dict(S.arg_pairs(S.profile_json(docs, S.PROFILE_Q4_FILE)))
     assert q4.get("--memory-limit-mib") == str(S.Q4_MEMORY_LIMIT_MIB)
     assert q4.get("--conversation-cache-mib") == str(S.Q4_CONV_CACHE_MIB)
-    assert q4.get("--slot-save-path") == S.Q4_SLOT_SAVE_PATH
+    assert S.Q4_SESSION_FLAG not in q4, (
+        f"{S.Q4_SESSION_FLAG} is back in the q4 arm — the HIP engine refuses it (first boot, exit 2)"
+    )
     primary = S.profile_json(docs, S.PROFILE_PRIMARY_FILE)
     assert dict(S.arg_pairs(primary)).get("--conversation-cache-mib") == "32768", (
         "the primary's conv 32 is its own envelope — the orca trim must not propagate"

@@ -106,8 +106,8 @@ def test_c07_chart_side_sessions_mkdir_leaves_with_the_script():
     the overlay could not hold the script; the lift moves it into the driver
     (pinned in test_strata_image_fetch.py), so the chart copy must not survive
     as a second home."""
-    assert "mkdir -p " + S.Q4_SLOT_SAVE_PATH not in _values_text(), (
-        f"values.yaml still mkdir's {S.Q4_SLOT_SAVE_PATH} chart-side — two homes "
+    assert "mkdir -p " + S.Q4_SESSION_DIR not in _values_text(), (
+        f"values.yaml still mkdir's {S.Q4_SESSION_DIR} chart-side — two homes "
         "for one law is the staleness class the lift exists to kill"
     )
 

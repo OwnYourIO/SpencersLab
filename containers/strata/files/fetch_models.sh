@@ -45,15 +45,12 @@ find_python3() {
 [ -f /opt/strata/src/Strata/setup.sh ] \
   || fail "image carries no source checkout - containers/strata must be rebuilt (strata-src stage, 2026-10-29 contract)"
 mkdir -p /models/strata
-# Session-file landing zone for the Q4 rung's --slot-save-path
-# (strata-q4.json): same claim as the weights, so a saved
-# conversation outlives a ttl unload AND a pod Recreate. Created
-# here, idempotently, because the engine writes only on demand
-# and a missing directory surfaces as a save error at the worst
-# possible moment (an operator trying to free the arena). The
-# engine's own --session-min-free-mib 4096 default guards the
-# claim's free space; the disk gate for this rung's ~4.7 GiB per
-# 262k conversation file is a human on-target check.
+# Session-file landing zone, kept from the q4 rung's retired --slot-save-path
+# arm (the HIP engine compiled session files out, 2026-11-01 first boot). The
+# dir is harmless and lets /models/strata stay the single version-free claim
+# anchor for whatever the CUDA-trial feature becomes upstream. Created
+# here, idempotently, because a missing directory surfaces as a save error
+# at the worst possible moment (an operator trying to free the arena).
 mkdir -p /models/strata/sessions
 # /data/install stays the CLI's install-dir anchor, bound to the
 # claim so discovery tools (models list --install-dir default)

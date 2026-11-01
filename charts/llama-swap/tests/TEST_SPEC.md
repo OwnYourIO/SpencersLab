@@ -1074,14 +1074,17 @@ dev edits surfaces, never these files.
   trio grep (chart+service+catalog) per new id, provider settings/
   `default_agent: plan` byte-stable, the Q6-default absence guard (§9.4), and
   the ornith Shape-B absence-arm.
-* `test_strata_q4_rung.py` (C06) — arena + contract + five-way alternation
-  (no combo with two arenas, all five reachable), the FINAL pin block verbatim
-  (`--conversation-cache-mib 8192`, `…-slots 16`,
-  `--slot-save-path /models/strata/sessions`, `--memory-limit-mib 95232`),
+* `test_strata_q4_rung.py` (C06, pin block re-rendered at the executed
+  2026-11-01 on-target gate) — arena + contract + five-way alternation
+  (no combo with two arenas, all five reachable), the pin block verbatim
+  (`--conversation-cache-mib 16384`, `…-slots 16`,
+  `--memory-limit-mib 103680`),
   UD-Q4_K_XL path markers (shape + "Q4" class marker, names never guessed),
-  negative pins (--batch / --layer-split / --prompt-cache 0 / --ple-io absent,
-  session path present), four earlier profiles byte-unchanged with IQ3_S
-  keeping 92160, the 100Gi↔95232 lockstep (requests stay 64Gi, grace stays
+  negative pins (--slot-save-path / --layer-split / --prompt-cache 0 / --ple-io
+  absent — the session flag was refused by the HIP engine at first boot and the
+  dir mkdir stays as the init's own bookkeeping), four earlier profiles
+  byte-unchanged with IQ3_S
+  keeping 92160, the 108Gi↔103680 lockstep (requests stay 64Gi, grace stays
   420), peers five-id final order, init `q4` token + `STRATA_MODEL_Q4:
   unsloth/UD-Q4_K_XL` + idempotent `mkdir -p /models/strata/sessions`, and no
   new Secret consumer (unsloth ungated).
@@ -1135,7 +1138,9 @@ the C02 test round's additive pack arms and its one author-fault repair
   existing rungs changes co-residency for models this ticket does not own).
   Everything else in that file stays strict.
 * `test_strata_render.py::test_c01_memory_cgroup_and_engine_cap` — the 96Gi
-  pin becomes the sanctioned PAIR set {96Gi ↔ 92160, 100Gi ↔ 95232} with an
+  pin becomes the sanctioned PAIR set {96Gi ↔ 92160, q4 pair ↔ q4 cap —
+  100Gi ↔ 95232 at C06, re-pinned 108Gi ↔ 103680 at the executed 2026-11-01
+  on-target gate; both legs live in `strata_testlib` constants} with an
   explicit lockstep assertion (C06 raises both legs together; either leg
   alone is what #1601 exists to prevent). The exact final pair is pinned
   again in `test_strata_q4_rung.py`.

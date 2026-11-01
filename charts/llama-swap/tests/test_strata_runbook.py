@@ -232,7 +232,9 @@ def test_c04_parent_readme_homes_the_image_contract():
 # --- cf-86 C06 docs round: the shipped PAIRS doctrine, pinned per doc ---------
 #
 # The pod cgroup and the engine's --memory-limit-mib move as one unit (#1601),
-# and C06 put a SECOND pair in play (100Gi + 95232 for the UD-Q4_K_XL arena)
+# and C06 put a SECOND pair in play (the UD-Q4_K_XL arena: 100Gi + 95232 at the
+# U8 ruling, re-pinned 108Gi + 103680 at the executed 2026-11-01 on-target
+# gate — the trim's session-file compensation does not exist on the HIP build)
 # while the render itself shows only one cgroup — so the docs are the only
 # place the two-pair doctrine exists, and a doc drift there is invisible to the
 # render arms. Each doc is pinned AS WRITTEN: the note spells the conversation
@@ -247,7 +249,7 @@ def test_c04_parent_readme_homes_the_image_contract():
 DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
     "runbook note": (
         (r"32768 MiB\s+x 16-slot conversation cache", "note's IQ3-class cache shape (MiB spelling)"),
-        (r"8192 MiB\s+x 16", "note's Q4 cache trim"),
+        (r"16384 MiB\s+x 16", "note's Q4 cache (post-gate half-restore)"),
         (r"135[\u2013-]160\s*GB", "the q3-era area budget, kept (run-1 RESEARCH §4)"),
         (r"111,334,654,784\s*B", "the Q4 family byte total the budget grows by"),
         (r"df -h\s+/models/strata", "the human capacity gate around the first q4 run"),
@@ -257,7 +259,7 @@ DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
     ),
     "parent README": (
         (r"32\s*GiB\s+.\s+16\s*slots", "README's IQ3-class cache shape (GiB spelling)"),
-        (r"8\s*GiB\s+.\s+16", "README's Q4 cache trim"),
+        (r"16\s*GiB\s+.\s+16", "README's Q4 cache (post-gate half-restore)"),
         (r"135[\u2013-]160\s*GB", "the capacity budget survived the pair rewrite"),
         (r"unsloth\s+UD-Q4_K_XL", "the README names the Q4 arena's source family"),
     ),
@@ -268,7 +270,7 @@ DOC_TOKENS: dict[str, tuple[tuple[str, str], ...]] = {
 # when the render carries one cgroup.
 DOC_PAIRS: tuple[tuple[str, str], ...] = (
     (r"96Gi[^.]{0,140}?92160", "the IQ3-class pair: 96Gi cgroup + 92160 engine cap"),
-    (r"100Gi[^.]{0,140}?95232", "the Q4 pair: 100Gi cgroup + 95232 engine cap"),
+    (r"108Gi[^.]{0,140}?103680", "the Q4 pair: 108Gi cgroup + 103680 engine cap (post-gate)"),
 )
 PER_RUNG_DOCTRINE = (
     r"(per-rung|the cgroup is the\s+pod.s|inside (the )?one strata pod|inside the same cgroup)"
@@ -327,23 +329,24 @@ def test_c06_cache_shapes_pinned_per_doc_house_style():
     assert not missing, "doc token missing (label, pattern, rationale):\n" + "\n".join(missing)
 
 
-def test_c06_session_files_path_named_in_both_docs():
-    """The Q4 rung round-trips deep conversations through engine session files;
-    the path is a shipped value (Q4_SLOT_SAVE_PATH) and the docs are the operator's
-    only pointer to it."""
+def test_c06_session_files_doctrine_named_in_both_docs():
+    """Post-gate doctrine (2026-11-01): the flag never executed — the HIP
+    engine rejected it at argv — but the sessions dir stays created by the
+    init. The docs must name the path AND tell the retirement story; a doc
+    still describing round-trips as live is worse than one naming nothing."""
     offenders = []
     for label, path in (("runbook note", S.RUNBOOK_NOTE), ("parent README", S.PARENT_README)):
-        flat = _flat(S.read(path, "cf-86 C06 docs round"))
-        if S.Q4_SLOT_SAVE_PATH not in flat:
-            offenders.append(f"{label}: {S.Q4_SLOT_SAVE_PATH} not named")
+        flat = _flat(S.read(path, "cf-86 q4 post-gate docs round"))
+        if S.Q4_SESSION_DIR not in flat:
+            offenders.append(f"{label}: {S.Q4_SESSION_DIR} not named")
             continue
         linked = re.search(
-            rf"session files?[^.]{{0,160}}{re.escape(S.Q4_SLOT_SAVE_PATH)}"
-            rf"|{re.escape(S.Q4_SLOT_SAVE_PATH)}[^.]{{0,160}}session files?",
+            rf"(retired|compiled out|session files?)[^.。]{{0,240}}{re.escape(S.Q4_SESSION_DIR)}"
+            rf"|{re.escape(S.Q4_SESSION_DIR)}[^.。]{{0,240}}(retired|compiled out|session files?)",
             flat,
         )
         if not linked:
-            offenders.append(f"{label}: {S.Q4_SLOT_SAVE_PATH} named but not tied to session files")
+            offenders.append(f"{label}: {S.Q4_SESSION_DIR} named but not tied to the retirement doctrine")
     assert not offenders, "session-files doctrine missing:\n" + "\n".join(offenders)
 
 
