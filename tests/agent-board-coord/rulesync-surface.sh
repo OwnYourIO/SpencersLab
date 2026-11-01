@@ -619,8 +619,12 @@ fi
 # --- c11: the five standard checklists (C02 AC1, D9 drift detector; cf-58
 #       C05 Lifecycle re-pin + C06 routing clauses) ---------------------------
 # The Services item set regenerates from `ls services/` at run time (D9).
-# cf-58 C05: the third checklist is LIFECYCLE (eight stages, checked-stages-
-# only, nothing-checked = full standard loop). C06: the Model(s) four-option
+# cf-58 C05: the third checklist is LIFECYCLE (checked-stages-only,
+# nothing-checked = the standard loop). cf-96 C07 RE-PIN: the intake eight-
+# stage set became ELEVEN items — the ten stages in card order plus Single
+# Session LAST (OQ6 ruling) — and the nothing-checked default is the seven-
+# stage list (Exploration first, Final Review last, Deployment + Single
+# Session opt-in). The window/HITL/default pins below ride the new list. C06: the Model(s) four-option
 # line stays UNCHANGED while the routing paragraph grows the two combination
 # clauses. The Model(s)/HITL pins hold exactly as before. cf-83 C01 RE-PIN:
 # the Flash+Local combination clause demands flash-next-strata — the route
@@ -641,16 +645,16 @@ if want c11; then
   grep -qE 'Qwen Large.*Qwen 27b.*Qwen Flash.*Local' "$SKILL_GEN" \
     || fail "c11: the Model(s) checklist does not list Qwen Large | Qwen 27b | Qwen Flash | Local (the four-option line stays UNCHANGED — C06 AC2)"
   grep -qE 'Qwen Large.*Flash Next' "$SKILL_GEN" && fail "c11[C06]: a single passage pairing 'Qwen Large' with 'Flash Next' — the Model(s) checklist gained a fifth option; Q6 vetoed it (combination of existing checks is the mechanism)"
-  python3 "$TMP/window.py" "$SKILL_GEN" 900 'Pre Research' 'Plan' 'Post Research' 'Test' 'Code' 'Review' 'Deploy' 'Single Session' \
-    || fail "c11[C05]: the Lifecycle checklist does not carry its eight items in one passage (red before C05)"
-  python3 "$TMP/window.py" --ci "$SKILL_GEN" 800 'Default' 'nothing' 'full standard loop' 'Plan' 'Test' 'Code' 'Review' \
-    || fail "c11[C05]: no nothing-checked default passage (checked items = the stages; nothing checked = the full standard loop Plan+Test+Code+Review — Q5 semantics, red before C05)"
-  grep -qE 'Human in the Loop.*`Research` \| `Plan` \| `PR` \| `Deployment`' "$SKILL_GEN" \
-    || fail "c11: the Human in the Loop checklist does not list Research | Plan | PR | Deployment in one passage"
+  python3 "$TMP/window.py" "$SKILL_GEN" 900 'Exploration' 'Agent Decides Research' 'Pre Research' 'Planning' 'Post Research' 'Test Writing' 'Chunk Development' 'Chunk Review' 'Final Review' 'Deployment' 'Single Session' \
+    || fail "c11[C07]: the Lifecycle checklist does not carry its eleven items in one passage (cf-96 C07 redesign, card order, Single Session LAST; red before C07's text + this re-pin)"
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 800 'default' 'nothing is checked' 'exploration' 'agent decides research' 'final review' \
+    || fail "c11[C07]: no nothing-checked default passage (the Stage map's Blank defaults section: the seven-stage standard default loop, Exploration first, Final Review last; the retired Plan+Test+Code+Review shape)"
+  grep -qE 'Human in the Loop.*`Exploration` \| `Agent Decides Research` \| `Pre Research` \| `Planning` \| `Post Research` \| `Test Writing` \| `Chunk Development` \| `Chunk Review` \| `Final Review` \| `Deployment` \| `Single Session`' "$SKILL_GEN" \
+    || fail "c11[C07]: the Human in the Loop checklist does not mirror the eleven Lifecycle names in one passage (the OQ6-derived exact mirror)"
   grep -qF 'Default selection: `Qwen Flash`' "$SKILL_GEN" \
     || fail "c11: the Model(s) checklist does not state its default selection (Qwen Flash alone)"
-  grep -qF 'Default: `Plan`' "$SKILL_GEN" \
-    || fail "c11: the Human in the Loop checklist does not state its default item (Plan)"
+  grep -qF 'Default: `Final Review`' "$SKILL_GEN" \
+    || fail "c11[C07]: the Human in the Loop checklist does not state its default item (Final Review - the C07 blank-HITL default)"
   # C06: the routing paragraph's two combination clauses (source of truth is
   # the boards skill; tests/pipeline-models runs the same pins on SOURCE).
   # cf-83 C01 re-pin: the Flash+Local needle moved q3 -> strata — this window
@@ -659,7 +663,7 @@ if want c11; then
     || fail "c11[C06/cf-83]: the routing paragraph lacks the Flash+Local → flash-next-strata combination clause (red before C01 dev)"
   python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
     || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
-  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle eight items + nothing-checked full-standard-loop default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items + default; combination clauses present with the cf-83 strata re-pin"
+  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle's eleven items (cf-96 C07) + nothing-checked seven-stage default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items mirror the eleven + Final Review default; combination clauses present with the cf-83 strata re-pin"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
@@ -769,10 +773,10 @@ if want c16; then
   ok "c16: agent body + command mirror the skill's pinned strings (pickup order, research-only exit, cf-slug/no-run-tag, checklist intake)"
 fi
 
-# --- c18: Lifecycle consumption contract (cf-58 C05) ----------------------------
+# --- c18: Lifecycle consumption contract (cf-58 C05; cf-96 C07 re-pin: 11 rows) --
 # The agent-side consumption of the checklist restructure, on source AND
-# mirror: the Stage map section (8 rows, each naming its pipeline agent or
-# action — the single table coords cite, never restate), the transition rule
+# mirror: the Stage map section (11 rows naming each stage's pipeline agent
+# or action — the single table coords cite, never restate), the transition rule
 # for cards still carrying the legacy Research checklist, the human-owned
 # board-side cutover documentation, the reworded label-trigger sentence, the
 # five-checklists enumeration with Lifecycle in board-coord bodies + boards
@@ -796,25 +800,28 @@ rows = [l for l in body.splitlines() if l.strip().startswith('|') and not re.mat
 # early exit masked it before C05 landed.
 _DEV = 'agent-de' + 'v'  # token assembled to stay clean under agent-perms A13's sweep
 stage_tokens = {
+    'Exploration': ['agent-explore'],
+    'Agent Decides Research': ['pipeline-role-coord'],
     'Pre Research': ['agent-research'],
-    'Plan': ['agent-plan'],
+    'Planning': ['agent-plan'],
     'Post Research': ['agent-research'],
-    'Test': ['agent-test'],
-    'Code': [_DEV, 'review'],   # the chunk loop names the dev role + review
-    'Review': ['agent-review'],
-    'Deploy': ['push', 'ready'],
+    'Test Writing': ['agent-test'],
+    'Chunk Development': [_DEV],  # the dev-variant slot; the review lives in the NEXT row
+    'Chunk Review': ['agent-review'],
+    'Final Review': ['agent-review'],
+    'Deployment': ['push', 'ready'],
     'Single Session': [_DEV, 'review'],  # ONE dev-variant session, ONE final review
 }
 missing = []
 for stage, tokens in stage_tokens.items():
-    hit = [r for r in rows if stage in r]
+    hit = [r for r in rows if r.strip().startswith('| `' + stage + '`')]
     if not hit:
         missing.append(f"row '{stage}'")
         continue
     if not all(tok in hit[0] for tok in tokens):
         missing.append(f"row '{stage}' lacks tokens {tokens}")
-if len(rows) < 9:  # 8 stage rows + at least the header row
-    missing.append(f"only {len(rows)} table rows, want 8 stage rows + header")
+if len(rows) < 12:  # 11 stage rows + at least the header row
+    missing.append(f"only {len(rows)} table rows, want 11 stage rows + header")
 if missing:
     print(f"{path}: stage map incomplete: {'; '.join(missing)}"); sys.exit(1)
 PY
@@ -828,16 +835,13 @@ PY
 import sys
 text = open(sys.argv[1]).read()
 bad = []
-for needle in ('Before Planning', 'After Planning', 'Agent Decides'):
-    start = 0
-    while True:
-        i = text.find(needle, start)
-        if i < 0:
-            break
+import re
+for pat in ('Before Planning', 'After Planning', r'Agent Decides(?!\s+Research)'):
+    for m in re.finditer(pat, text):
+        i = m.start()
         ctx = text[max(0, i - 320):i + 320].lower()
         if 'legacy' not in ctx and 'transition' not in ctx:
-            bad.append(f"'{needle}' outside transition context near offset {i}")
-        start = i + 1
+            bad.append(f"'{pat}' outside transition context near offset {i}")
 if bad:
     print('; '.join(bad)); sys.exit(1)
 PY
@@ -854,7 +858,7 @@ PY
       fail "c18[C05]: $f still carries the old slash-enumeration Model(s)/Research/Human in the Loop — C05 replaced it (the Research LABEL mentions stay; the enumeration must not name a retired checklist)"
     fi
   done
-  ok "c18[C05]: Stage map (8 rows naming agents/actions), transition rule, human-owned cutover, never-fires sentence, no residual semantics — on boards source+mirror; the six board-coord bodies + both boards commands enumerate Lifecycle"
+  ok "c18[C05]: Stage map (11 rows naming agents/actions — the cf-96 C07 redesign), transition rule, human-owned cutover, never-fires sentence, no residual semantics — on boards source+mirror; the six board-coord bodies + both boards commands enumerate Lifecycle"
 fi
 
 # --- c17: pipeline-models / pipeline-gates byte-unchanged ----------------------
