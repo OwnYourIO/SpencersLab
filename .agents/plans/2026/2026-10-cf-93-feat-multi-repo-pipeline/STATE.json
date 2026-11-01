@@ -65,13 +65,31 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6b39788ffferqJvHud4RheudT",
+      "handoffs": [
+        {
+          "at": "2026-11-01T02:40:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6b39788ffferqJvHud4RheudT",
+          "status": "DONE",
+          "summary": "Hourly BOARD CHECK repo-filtered (get_card-per-candidate, cites boards step-4 as single authority; >=1-stop/max-5/fail-closed verbatim; 'filtered EMPTY verdict' reword sanctioned), gate header +6 #-only posture lines (OQ-A3 cross-project single-writer; usage-heredoc twin untouched), C01 minors folded (identity derivation = git-common-dir parent; 'whole derived Pipeline: set'), manual /pipeline-boards verified no-edit, attempt-budget untouched per Deferred. hourly-board-check 7 ok, repo-label-filter 10 ok (t3 self-transfer exercised), noop 5 ok, aislop 100.",
+          "result": "RESULT status:DONE chunk:C02 open_questions:budget Q stands deferred; next:agent-review C02"
+        },
+        {
+          "at": "2026-11-01T03:00:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6b2ffd6dffe3ue76vgNg0Rla2",
+          "status": "APPROVED",
+          "summary": "All suites re-run green in-tree; three dirty-bus scope-guard reds (agents-md c7, rulesync-surface c8, gate t14 — dev named the first two) reproduced and independently proven non-attributable via temp worktree at HEAD+7-paths (9 ok/20 ok/gate-only-t17-cf-58). Cite-not-restate holds (nit: gloss drops multi-Repo: conflict branch, conservative direction, recorded no-change). Notes-37 once-only survives. Coord-side asks: commit 7 paths + STATE C02 + FRICTION attribution line (done here).",
+          "result": "RESULT status:DONE chunk:C02 open_questions:none; next:C05 dev (deps approved)"
+        }
+      ]
     },
     "C03": {
       "status": "done",
@@ -109,13 +127,31 @@
       ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6b4c54d1ffepzHtcYq5MELdXe",
+      "handoffs": [
+        {
+          "at": "2026-11-01T01:40:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6b4c54d1ffepzHtcYq5MELdXe",
+          "status": "DONE",
+          "summary": "New charts/mosquitto (Chart.yaml 1.0.0, Chart.lock, values, configmap-mosquitto). Suite 9 ok after one cycle (configmap header reword around t2 banned strings), lint/template green, aislop@0.18.1 100. Declared deviations: createDefaultServiceAccount:false per C03-proven shape; reloader annotation per skill precedent; readOnlyRootFilesystem key omitted.",
+          "result": "RESULT status:DONE chunk:C04 open_questions:none; next:agent-review C04"
+        },
+        {
+          "at": "2026-11-01T02:00:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6b4396d9ffeXwfSDPyBpx5TZ3",
+          "status": "APPROVED",
+          "summary": "All validations re-run green; AC1-5 met incl live re-probe of the 2.0.22 pin rationale (true) and dev-mode naming-law render proven for C05. 4 deviations adjudicated: 3 accepted outright; readOnlyRootFilesystem omission accepted on OUTCOME but its justification rejected (library renders explicit false — no key-pruning; mechanism claim corrected here for future devs). No new asks.",
+          "result": "RESULT status:DONE chunk:C04 next:commit; wave 2 C02+C05 open (C05 deps approved)"
+        }
+      ]
     },
     "C05": {
       "status": "pending",

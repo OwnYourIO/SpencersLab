@@ -290,9 +290,10 @@ detail:
   in the boards skill).
 - One card per session; never pick or restart a card already in **Executing**
   — pickup walks `Rework → Not Started → Low Priority`.
-- `pipeline_claim` BEFORE any board move or code edit (the whole label set or
-  nothing — a contended claim names the holder); validations green → card to
-  Review → `pipeline_release(outcome:"done")`. Finished stays human-owned.
+- `pipeline_claim` BEFORE any board move or code edit (the whole derived
+  `Pipeline:` set or nothing — a contended claim names the holder);
+  validations green → card to Review → `pipeline_release(outcome:"done")`.
+  Finished stays human-owned.
   Blocked → comment + `outcome:"abandoned"`, or let the lock go stale per the
   boards skill.
 - The `pipeline_*` tools are Code-Mode only (`execute` → `tools.pipeline_claim`
