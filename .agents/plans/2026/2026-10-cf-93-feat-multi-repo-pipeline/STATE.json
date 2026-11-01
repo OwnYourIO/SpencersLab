@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-cf-93-feat-multi-repo-pipeline",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e6c3ce207ffebBvrfkKerY5903",
   "test_session": "ses_e6c0356bdffeSfbUfQYDpniYM6",
   "current_wave": 5,
-  "updated_at": "2026-11-01T10:30:00Z",
+  "updated_at": "2026-11-01T12:30:00Z",
   "kickoff": {
     "slug": "cf-93-feat-multi-repo-pipeline",
     "card": "mxnEsiC2SwtLKZE9i",
@@ -262,13 +262,47 @@
       ]
     },
     "C10": {
-      "status": "pending",
+      "status": "done",
       "wave": 6,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e68ab5e71ffeUiS2Bz4lvCpX7y",
+      "handoffs": [
+        {
+          "at": "2026-11-01T11:00:00Z",
+          "agent": "agent-test (C10 repin)",
+          "session": "ses_e6c0356bdffeSfbUfQYDpniYM6",
+          "status": "DONE",
+          "summary": "ha-chart/dev-wiring repinned to the post-C10 contract (golden re-capture as suite's own HA_RECAPTURE one-shot flow, preC10 golden renamed+kept as diff authority; forcing-table + password-only ES legs; t6 1:1 marker leg with filled/unfilled greppable). Contract-red map honest pre-implementation.",
+          "result": "RESULT status:DONE chunk:plan next:C10 dev"
+        },
+        {
+          "at": "2026-11-01T11:30:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e68ab5e71ffeUiS2Bz4lvCpX7y",
+          "status": "BLOCKED",
+          "summary": "All 11 files landed per C10 (7 gates deleted, forcing table honored, slice final exact, custom-values/dev 3 placeholders, TZ-only container, version un-bumped); every AC proven except ha-chart t1 step-5 name-keyed dict lookup (ES/PVC collide at ha-test BY DESIGN) -> validation_at_fault, routed silently. t2-t5 + dev-wiring 10/9 ok already.",
+          "result": "RESULT status:BLOCKED chunk:C10 -> mechanical t1 repair routed to test_session"
+        },
+        {
+          "at": "2026-11-01T11:50:00Z",
+          "agent": "agent-test (t1 repair)",
+          "session": "ses_e6c0356bdffeSfbUfQYDpniYM6",
+          "status": "DONE",
+          "summary": "t1 lookups -> (kind,name) keys per the collision (incl FORCED-table second victim); audit: collision confined to t1; standing rule recorded (render-parsing legs always (kind,name)). Full suites 12/9 ok, golden pending-capture left for review's one-shot.",
+          "result": "RESULT status:DONE chunk:plan next:C10 review"
+        },
+        {
+          "at": "2026-11-01T12:20:00Z",
+          "agent": "agent-review",
+          "session": "ses_e689b2c9dffeUDrD6QpALYPUZL",
+          "status": "APPROVED",
+          "summary": "Authorized HA_RECAPTURE one-shot run FIRST (chain: HEAD golden c4c8c65e -> preC10 file byte-equal + provenance header -> new baseline live whole-set-cmp 12 ok); all ACs verified incl grow-shape NO-Deployment re-probe + interpretation sentence present + f59add53 not copied; 9-suite sweep green; aislop 100. Two test minors -> silent routing (done: rORFS restore + header, d143e71f2). Owner hand-offs stated: dev item id; AC4 grow username-value equivalence assumption (carried in commit 0efc895f0 message per C10 Tasks).",
+          "result": "RESULT status:DONE chunk:C10 open_questions:owner: paste dev Bitwarden LOGIN item id (t6 0/3 filled -> rerun expects 3 filled); confirm f59add53 username == home-assistant"
+        }
+      ]
     },
     "C09": {
       "status": "done",
