@@ -1189,9 +1189,11 @@ def list_board_dependencies(board_id: str) -> list[dict]:
     [{from, fromTitle, fromCardNumber, to, toTitle, toCardNumber, type,
     color, icon}] — the upstream route's own shape, passed through untouched
     (models/dependencies.js walks the cards server-side; archived cards are
-    excluded THERE). Lines are stored on the source card; the board-wide view
-    already contains both directions of an inverse pair (blocks /
-    is-blocked-by), so gate logic reads this list once, not per card.
+    excluded THERE). Each line is the stored spelling from its source card —
+    the board view carries NO synthesized inverse, so consumers must match
+    both blocks and is-blocked-by spellings (type-inverse, consumer-side).
+    The one call still returns every stored edge on the board, so gate
+    logic reads this list once, not per card.
 
     v12.65 route facts (source-checked 2026-11-01): GET
     /api/boards/:boardId/dependencies is dependency-access gated like the
