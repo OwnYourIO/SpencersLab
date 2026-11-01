@@ -1092,6 +1092,9 @@ dev edits surfaces, never these files.
   strata-strix-iq3_s.json}` + `PROVENANCE.md` — the pre-cf-86 run-config
   captures the "existing profiles byte-unchanged" arms compare against
   (branch tip `4f7126689`, parsed-JSON equality: helm re-wrap is not behavior).
+  The primary's era MOVED once since: `evidence/strata-profiles-t03-repin/`
+  (era 2, owner ruling U13, 2026-11-01 prompt-chunk re-pin) — its single-key
+  delta is guarded by `test_t03_primary_fixture_era_delta_is_only_the_prefill_line`.
 * `evidence/strata-peers-expected.yaml` — re-authored with `models_states`:
   the wave table (2→3→4→5 ordered peer lists) that keeps the SAME immutable
   suite correct between chunks. `models_allowed` stays the C06-final five.
@@ -2582,3 +2585,42 @@ removed, data/expert-profile.bin preserved with the image's data/seed NOT
 copied, third_party merged both ways, markers/engine/.venv/run-configs/
 build-hip untouched, dotfiles not synced. Posture: carry 18P/1S, FULL
 408P/9S/0F, containers 24P, guards rc 0, sh/dash -n clean.
+
+### 9.24 prompt-rate round — T0 measurement env + T3 chunk cap + the primary's era move (2026-11-01)
+
+Owner ruling U13 ("go for T0 and T3") after RESEARCH R6. Suite shape per the
+round's own contract: one-line renders + one narrow era move, no envelope
+changes anywhere.
+
+- **T0 arm (new):** `test_strata_config_schema.py::test_t0_request_lines_on_every_arena_model_env`
+  asserts `STRATA_REQUEST_LINES=1` (`strata_testlib.REQUEST_LINES_ENV`) on all
+  FIVE arena model envs and that the primary's profile-layer `env` stays `{}`.
+  Why all five: an unattributable rate is how the ~500-vs-2,800 confusion
+  started, and the alternation ping-pongs arenas inside one pod. The constant
+  lives in the lib so the chart and the arm cannot drift apart.
+- **T3 re-pin:** `strata_testlib.PRIMARY_REQUIRED_PAIRS` — `("--prefill",
+  "auto")` → `("--prefill", "auto:32768")`, comment carries the citation (bare
+  `auto` = 16,384 on gfx12; PR #3636 ran this node class at 32,768; strix row
+  +23% @74K; >8,192 exact on gfx12 → rate knob, no numerics cost).
+- **Primary era move (the delicate half):** `PROFILE_FIXTURE_ERA` primary →
+  `strata-profiles-t03-repin` (fixture sha256 `ce1f66a8…`, PROVENANCE.md
+  carries the 2-row chain, the encoding round-trip proof and the delta
+  paragraph). Capture was verified BEFORE writing: format reproduced era-1
+  byte-for-byte, delta == exactly `["args"]`, double-capture deterministic.
+- **New guard, written to CLOSE a hole rather than widen one:**
+  `test_strata_strix.py::test_t03_primary_fixture_era_delta_is_only_the_prefill_line`
+  pins the era-1→era-2 delta to one key, one flag, one value pair, asserts
+  args *membership* is unchanged (a cap is a value edit, not a flag edit),
+  re-asserts the U12 envelope trio unmoved, and keeps profile `env == {}`. Any
+  second change riding this era goes red. The existing engine-re-pin assert
+  (primary file forbidden in `c07-repin`/`c09-repin`) is left intact — the
+  two laws are different: an ENGINE re-pin may not move the primary's era at
+  all; an OWNER-RULED posture change may, through its own era dir + chain arm.
+- **Not shipped, deliberately, so they stay open menu items:** T2 (`--ple-io
+  mmap`, conditional on the T1 `PLE on …` read — and R6 found the q4 comment's
+  "default is file/mmap" claim conflicting with the v0.2.9 auto-RAM-else-direct
+  policy, which only the node can settle), T4 (ornith chunk 4096, VRAM-tight
+  post-U12.2), T5/T6/T7 (`STRATA_MMQ_KQ`/`STRATA_PF_FUSED`/`STRATA_SELECT_WMMA`
+  on q4/orca), T8 (hipBLASLt table — the venv wheel is 1.2.0-class, expected
+  0–3%, so skip unless a startup line contradicts). No arm was written for a
+  flag that is not shipped; the on-target `--plan`/startup reads decide those.

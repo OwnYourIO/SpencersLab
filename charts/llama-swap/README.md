@@ -234,7 +234,12 @@ kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
 Acceptance gate: within **~10%** of RESEARCH §5's **one-at-a-time** column
 (batch numbers are not the bar — that posture was rejected, Q2): decode ≈80
 tok/s @64K; short 570-token prompts 429–443 tok/s with the CPU share vs 224
-control; 64K/128K/200K prompt ≈2,519 tok/s. Provenance: single machine,
+control; 64K/128K/200K prompt ≈2,519 tok/s. The primary's chunk cap now matches
+that posture (`--prefill auto:32768`, owner T3 ruling 2026-11-01; bare `auto`
+was 16,384 on gfx12), and every arena logs the engine-side rate per request
+(`STRATA_REQUEST_LINES=1`, T0) so the readout is `prefill … tok/s` — fresh
+tokens over engine time — not the progress line, which counts reused prefix
+tokens and clocks from admission. Provenance: single machine,
 2026-10-21 (the fork's `bench/results/2026-10-21-…` dir, RESEARCH §5) — the
 PR machine had 124 GiB vs our 128 GB (R3), so drift is expected; the gate
 applies to OUR reproduction of the same posture, and where the WeKan card's

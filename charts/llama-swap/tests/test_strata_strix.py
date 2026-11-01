@@ -227,6 +227,44 @@ def test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair():
     )
 
 
+def test_t03_primary_fixture_era_delta_is_only_the_prefill_line():
+    """The primary's frozen era moved exactly once, at the 2026-11-01 owner
+    ruling U13 (RESEARCH R6 T3: bare `--prefill auto` = 16,384 chunks on gfx12;
+    32,768 is the chunk PR #3636 measured at ~2,519 tok/s on this node class).
+    This arm is what keeps that move from becoming the exempt-key hole the
+    engine-re-pin law above exists to prevent: the era-1 -> era-2 delta is
+    pinned to ONE key and ONE line. Any second args change, any envelope move
+    (--memory-limit-mib / --conversation-cache-*), any path move — red. The
+    pre-U13 era stays append-only history, so the whole-file deep-equal
+    preservation arms keep their teeth."""
+    era1 = json.loads(
+        (S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / S.PROFILE_PRIMARY_FILE).read_text()
+    )
+    era2 = S.profile_fixture(S.PROFILE_PRIMARY_FILE)
+    moved = {k for k in era1 | era2 if era1.get(k) != era2.get(k)}
+    assert moved == {"args"}, (
+        f"primary era delta must be exactly {{'args'}}, got {sorted(moved)} — "
+        "only the owner-ruled prompt chunk may ride this re-pin (DECISIONS U13)"
+    )
+    old_flags = dict(S.arg_pairs(era1))
+    new_flags = dict(S.arg_pairs(era2))
+    assert set(old_flags) == set(new_flags), (
+        f"args membership changed across the re-pin: only added {sorted(set(new_flags) - set(old_flags))}, "
+        f"only dropped {sorted(set(old_flags) - set(new_flags))} — a chunk cap is a value edit, not a flag edit"
+    )
+    diff = {k for k in old_flags if old_flags[k] != new_flags[k]}
+    assert diff == {"--prefill"}, f"flags other than --prefill moved: {sorted(diff)}"
+    assert old_flags["--prefill"] == "auto" and new_flags["--prefill"] == "auto:32768", (
+        f"--prefill went {old_flags['--prefill']!r} -> {new_flags['--prefill']!r}; the sanctioned delta is "
+        "the auto CAP raise only — a bare number would strip the engine's lawful auto-shrink (#4164)"
+    )
+    for envelope in ("--memory-limit-mib", "--conversation-cache-mib", "--conversation-cache-slots"):
+        assert old_flags[envelope] == new_flags[envelope], (
+            f"{envelope} moved on the primary — the U12 pair law is untouched by the prompt round"
+        )
+    assert era2["env"] == {}, "primary profile-layer env must stay empty (C-A keyless; T0 rides the model env)"
+
+
 def test_c07_strix_fixture_ties_to_the_built_halo_root():
     """Anti-drift tether (the repair's strengthening half): the frozen
     fixture's exe/lib_dirs must name THE halo root the containers/strata

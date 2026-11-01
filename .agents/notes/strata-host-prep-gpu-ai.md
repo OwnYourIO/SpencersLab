@@ -416,6 +416,39 @@ never a template change), re-PR, re-sync. At the first real load also run
 the #2706 startup-log gate on the strix profile (`STRATA_HC_UPMIX` —
 procedure in `charts/llama-swap/README.md`).
 
+**3.4a Prompt-rate round (T0/T1/T3, owner go 2026-11-01; RESEARCH R6).**
+Shipped by this round: `STRATA_REQUEST_LINES=1` on all five arenas' model env
+(T0), and the primary's chunk cap `--prefill auto:32768` (T3 — bare `auto` was
+16,384 on gfx12). Nothing else moved; q4/orca/ornith stay `auto` so the round
+changes one variable. The verification is a **read, not a hope**, because the
+engine silently re-picks a smaller chunk when the prompt buffers do not fit
+(upstream #4164):
+
+1. **Did the cap take?** In the startup block for the primary: the
+   `prompt chunk …` line. `32768` means the tweak is live; anything smaller
+   means VRAM refused it and the round is a **negative result to report, not a
+   flag to push harder on** — the `auto:N` form shrinks lawfully by design.
+2. **Which PLE mode resolved?** The `PLE on …` line (and any
+   slow-direct-read warning under 15K rows/s). No profile passes `--ple-io`,
+   so this is the only way to know; R6 found the chart comment's assumption
+   ("default is file/mmap") conflicting with the v0.2.9 policy (auto-RAM when
+   the table+8 GiB fits, else `direct`) — this line settles H3, and a slow
+   disk here is the T2 `--ple-io mmap` case.
+3. **hipBLASLt**: version/table line. **Silence is expected on gfx1201**
+   (ladder rung 2) — do not chase a table unless it reports 1.2.2-class.
+4. **Then measure**: fresh, unique-tagged prompts at 4K/16K/64K (never reuse a
+   prompt — the cache makes the number meaningless, and the community law says
+   so verbatim), ≥3 per arm, take medians (that box's run-to-run variance is
+   documented up to 2×), and read the engine's own line, not client wall time:
+   `kubectl -n default logs deploy/gpu-ai-llama-swap-strata --since=15m | grep -E 'prefill .* tok/s|^prompt chunk|^PLE on'`
+   Each arena is labelled by the inner ID — attribute the number to the arena.
+   The bar is the README's ladder rung 4: **≈2,519 tok/s @64–200K ±10%**,
+   measured on this node class at the same chunk cap; ~1,100–1,300 is the
+   published band for the heavier quants, and there is **no published
+   gfx1201 + LPDDR5X + OCuLink ×4 number anywhere** — if the gain saturates
+   below 32,768, that is the ×4 link ceiling (H5) being measured for the first
+   time, which is a result worth recording either way.
+
 **3.5 Timed-unload proof (same session, once the engine has loaded).**
 `unloadTimeout: 180` is load-bearing: llama-swap force-kills at the per-model
 unloadTimeout (global default **10 s**) long before the pod's 420 s grace

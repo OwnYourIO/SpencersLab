@@ -91,16 +91,27 @@ STRIX_ID = "qwen3.8-flash-next-strata-strix"
 PROFILE_PRIMARY_FILE = "strata-iq3_s.json"
 PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 
+# T0 (owner ruling 2026-11-01, DECISIONS U13): the engine's per-request
+# accounting line — `request prompt P cached C output O prompt_read R ms total
+# S ms prefill X tok/s decode Y tok/s`. The serve progress chatter counts a
+# reused prefix in its position and clocks from admission, so it is not a rate;
+# this is the measurement the published R9700 numbers are comparable against
+# (RESEARCH R6 [R6-12][R6-21]). Logging-only, and it belongs on EVERY arena —
+# a rate without an arena label is how the ~500-vs-2,800 confusion started.
+REQUEST_LINES_ENV = "STRATA_REQUEST_LINES=1"
+
 # Era-mapped frozen captures for the byte-unchanged preservation arms
-# (TEST_SPEC 9.16/9.20): the primary's frozen era is still pre-cf-86 (an
-# engine re-pin cannot touch its version-free pack root); C07's sanctioned
-# 0.1.52->0.1.54 and C09's 0.1.54->0.1.55 halo re-pins moved the strix
-# profile's era. The chain — every adjacent era delta == exactly
-# {exe, lib_dirs} — is guarded in test_strata_strix.py, so a whole-file
-# deep-equal here stays a law with no exempt-key hole for later rounds to
-# widen.
+# (TEST_SPEC 9.16/9.20): C07's sanctioned 0.1.52->0.1.54 and C09's
+# 0.1.54->0.1.55 halo re-pins moved the strix profile's era. The primary's era
+# moved once, at the 2026-11-01 post-boot T0/T3 round: an engine re-pin could
+# not touch it (version-free claim root), but an OWNER-RULED prompt-chunk
+# re-pin can (DECISIONS U13; delta verified == one --prefill line, see the
+# capture's PROVENANCE.md). The chain — every adjacent era delta == exactly
+# {exe, lib_dirs} for strix — is guarded in test_strata_strix.py, so a
+# whole-file deep-equal here stays a law with no exempt-key hole for later
+# rounds to widen.
 PROFILE_FIXTURE_ERA = {
-    PROFILE_PRIMARY_FILE: "strata-profiles-pre-cf86",
+    PROFILE_PRIMARY_FILE: "strata-profiles-t03-repin",
     PROFILE_STRIX_FILE: "strata-profiles-c09-repin",
 }
 
@@ -141,11 +152,14 @@ PRIMARY_FORBIDDEN_FLAGS = [
     # (2026-10-29 transplant), so it is baseline now, not forbidden.
 ]
 # Baseline = the generated run-config (2026-10-29 transplant) PLUS the
-# owner budget ruling of the same day: --prefill auto (machine-sized),
-# Strata-data paths and --kv-resident required so a revert to the seed
-# guesses goes red; --memory-limit-mib 92160 inside the 96Gi cgroup
-# (#1601 pair); conversation-cache 32768 x 16 explicit. --mtp-window stays
-# absent (toggle); --batch-mtp on neither list (one-at-a-time posture).
+# owner budget ruling of the same day: Strata-data paths and --kv-resident
+# required so a revert to the seed guesses goes red; --memory-limit-mib 92160
+# inside the 96Gi cgroup (#1601 pair); conversation-cache 32768 x 16 explicit.
+# --mtp-window stays absent (toggle); --batch-mtp on neither list
+# (one-at-a-time posture). --prefill moved from setup's `auto` at the 2026-11-01
+# T3 ruling (owner "go"): bare auto = 16,384 chunks on gfx12, 32,768 is the
+# PR #3636 chunk that measured ~2,519 tok/s on this node class — the file's own
+# comment had reserved the override for exactly this --plan/bench evidence.
 PRIMARY_REQUIRED_PAIRS = [
     ("--pack", "/models/strata/Strata-data/packs/iq3_s"),
     ("--native", "/models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf"),
@@ -154,7 +168,7 @@ PRIMARY_REQUIRED_PAIRS = [
     ("--kv", "int8"),
     ("--spec", "4"),
     ("--spec-min-p", "0.5"),
-    ("--prefill", "auto"),
+    ("--prefill", "auto:32768"),
     ("--kv-resident", "32768"),
     # 2026-10-29 OOM pairing: a cgroup limit without the engine knowing it
     # gets the arena killed mid-pin; this pair is the #1601 contract (90 GiB

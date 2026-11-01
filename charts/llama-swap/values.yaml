@@ -1536,6 +1536,16 @@ strata:
         # other answer. The engine ignores ports, so the Service-DNS
         # shapes cover in-cluster callers; localhost always passes.
         env:
+          # Engine-side request accounting (T0, owner ruling 2026-11-01): one
+          # line per finished request — `request prompt P cached C output O
+          # prompt_read R ms total S ms prefill X tok/s decode Y tok/s`. The
+          # progress chatter everyone read as a rate ("reading the prompt:
+          # 63,456 of 63,461 tokens, 10 s so far") counts a REUSED prefix in
+          # its position and times from request admission, so it is not a
+          # measurement; `prefill` here is fresh tokens over engine time, the
+          # same definition the published R9700 numbers use. Logging only —
+          # changes no serving behavior.
+          - "STRATA_REQUEST_LINES=1"
           - "STRATA_PF_FUSED=1"
           - "STRATA_PF_GEMM=1"
           - "STRATA_PA_FAST=1"
@@ -1575,6 +1585,7 @@ strata:
         # non-secret this layer carries is the peers-forwarded Host
         # allow-list (same DNS-rebinding reason as the primary).
         env:
+          - "STRATA_REQUEST_LINES=1"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
         # Rounds differ from the primary's output: the §5 switches are
         # KL-gated (STRIX_HALO §5 "changes bits") — never A/B the two
@@ -1598,6 +1609,7 @@ strata:
         # allow-list; ROCR entry injected by the template from the global
         # index.
         env:
+          - "STRATA_REQUEST_LINES=1"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
 
       qwen3.8-flash-next-strata-q4:
@@ -1620,6 +1632,7 @@ strata:
         # (silicon/recipe-specific), only the peers-forwarded Host allow-list;
         # the ROCR entry is injected by the template from the global index.
         env:
+          - "STRATA_REQUEST_LINES=1"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
 
       ornith-1.5-122b-strata-q4:
@@ -1636,6 +1649,7 @@ strata:
         unloadTimeout: 180
         checkEndpoint: /health
         env:
+          - "STRATA_REQUEST_LINES=1"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
           # q36's dense projections take the int8 MMQ path when this is on:
           # +47-67 % prompts measured on q36 HIP hardware (upstream #3926),
@@ -1740,7 +1754,18 @@ strata:
         # full 256k park costs ~3.3 GiB and the 32768 MiB budget parks
         # roughly 9-10 of those — or dozens of typical 30-50k sessions.
         - --kv-resident 32768
-        - --prefill auto
+        # T3 (owner ruling 2026-11-01): bare `auto` on gfx12 Linux means
+        # 16,384-token chunks; 32,768 is the prompt chunk PR #3636 ran on
+        # THIS node class (~2,519 tok/s @64-200K, the ladder rung-4 bar) and
+        # the strix progression row scored `auto:32768` at +23% @74K. Chunks
+        # above 8,192 are exact on gfx12, so this is a rate knob only — no
+        # numerics change (RESEARCH R6 [R6-1][R6-2]). The form is `auto:N`
+        # rather than bare N so the engine still auto-shrinks when the prompt
+        # buffers do not fit: it silently re-picks a smaller chunk (#4164),
+        # which is why the startup `prompt chunk …` line is a load-bearing
+        # verification step, not decoration. q4/orca/ornith stay at `auto`
+        # for this round — one variable at a time on the arena with headroom.
+        - --prefill auto:32768
         - --memory-limit-mib 92160
         - --conversation-cache-mib 32768
         - --conversation-cache-slots 16
@@ -1761,8 +1786,9 @@ strata:
         # one cache. Verify with a needle probe before trusting recall.
         # Documented deviations/toggles, one values edit away (verbatim
         # provenance kept for the record):
-        # --prefill 32768: the PR #3636 R9700-machine number; setup chose
-        #   `auto` here — override only on --plan/bench evidence.
+        # --prefill 32768: TAKEN above as `auto:32768` (owner T3 ruling
+        #   2026-11-01 — the --plan/bench evidence the override asked for
+        #   arrived: PR #3636's ~2,519 tok/s ran this node class at 32,768).
         # --conversation-cache-mib 24576 / --conversation-cache-slots 16:
         #   the PR's parked budget — superseded by the owner's 32768×16
         #   above; the real home of the guide's "24576" (RESEARCH §5
