@@ -228,16 +228,26 @@ def test_c02_four_profiles_and_orca_shape():
     assert prof.get("user_args") == []
     args = dict(S.arg_pairs(prof))
     primary = dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)))
-    for flag in ("--memory-limit-mib", "--kv-resident",
-                 "--conversation-cache-slots", "--max-context", "--kv"):
+    for flag in ("--kv-resident", "--conversation-cache-slots", "--max-context", "--kv"):
         assert args.get(flag) == primary.get(flag), (
             f"orca {flag} = {args.get(flag)!r} != primary {primary.get(flag)!r} — the arena "
             "rides the same envelope; a trim here is an untracked budget change"
         )
     assert args.get("--conversation-cache-mib") == "8192", (
-        "conv 8 is C08's U9.2 arithmetic trim (32 would put the IQ4_XS arena 108.7 GiB "
-        "over any pair this node carries) — the envelope-identity law was amended at the shift ONLY "
+        "conv 8 is C08's U9.2 arithmetic trim (32 would put the IQ4_XS arena at 108.7 GiB, past "
+        "this rung's own 90 GiB declaration) — the envelope-identity law was amended at the shift ONLY "
         "for this flag; the fit proof rides in test_strata_c08_rung_shifts.py"
+    )
+    # Second sanctioned exception, amended at U14 (2026-11-01): orca keeps its
+    # OWN declared cap. The primary moved 92160 -> 110592 to fit its term-sums
+    # and the pod cgroup moved to 116Gi with it, but caps are PER-RUNG — orca's
+    # arena (57.7 GiB) never bumped against 90, so U9.2's zero-envelope-growth
+    # law holds it there. Mirroring the primary here would silently grant orca
+    # ~20 GiB of budget nobody ruled for it.
+    assert args.get("--memory-limit-mib") == "92160", (
+        f"orca --memory-limit-mib = {args.get('--memory-limit-mib')!r}, want the pinned 92160 — "
+        "the cgroup raise was the primary's; drifting this value into the flagship's number is the "
+        "per-rung law breaking quietly"
     )
 
 

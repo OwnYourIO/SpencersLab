@@ -194,16 +194,25 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
 
 
 @helm
-def test_c06_existing_profiles_stay_byte_unchanged_iq3_s_keeps_92160():
-    """AC2's second half: the four earlier profiles are untouched, and the
-    IQ3_S pair (92160 inside 96Gi-era pins) keeps its numbers — the lockstep
-    law is per-pair, not a global raise. Fixtures are era-mapped in
-    strata_testlib (strix's C07-era chain guarded in test_strata_strix)."""
+def test_c06_existing_profiles_stay_byte_unchanged_caps_are_per_rung():
+    """AC2's second half: the earlier profiles are untouched at their own
+    frozen eras, and every rung keeps ITS OWN declared cap — the lockstep law
+    is per-rung, not a global raise. Fixtures are era-mapped in strata_testlib
+    (strix's C07-era chain and the primary's T3/U14 chain are both guarded in
+    test_strata_strix). Renamed from …_iq3_s_keeps_92160 at U14: the flagship's
+    cap is now 110592 (its term-sum is 91.84 GiB, which 92160 never covered);
+    92160 is orca's live number, pinned below."""
     for file in (S.PROFILE_PRIMARY_FILE, S.PROFILE_STRIX_FILE):
         assert S.profile_fixture(file) == S.profile_json(_docs(), file), f"{file} diverged from its frozen-era capture"
-    iq3s = dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)))
-    assert iq3s.get("--memory-limit-mib") == "92160", (
-        f"IQ3_S engine cap moved to {iq3s.get('--memory-limit-mib')!r} — the Q4 rung rides its OWN pair"
+    primary = dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)))
+    assert primary.get("--memory-limit-mib") == str(S.PRIMARY_MEMORY_LIMIT_MIB), (
+        f"IQ3_S engine cap reads {primary.get('--memory-limit-mib')!r}, want {S.PRIMARY_MEMORY_LIMIT_MIB} — "
+        "U14 raised it to fit the rung's own terms inside what it declares"
+    )
+    orca = dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_ORCA_FILE)))
+    assert orca.get("--memory-limit-mib") == "92160", (
+        f"orca cap moved to {orca.get('--memory-limit-mib')!r} — U9.2's zero-envelope-growth law: "
+        "the U14 cgroup raise does not leak into rungs that were never bumping against the ceiling"
     )
     if S.ABL_ID in S.inner_config(_docs())["models"]:
         abl = dict(S.arg_pairs(S.profile_json(_docs(), S.PROFILE_ABL_FILE)))

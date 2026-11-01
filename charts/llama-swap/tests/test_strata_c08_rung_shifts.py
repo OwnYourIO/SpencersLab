@@ -198,7 +198,8 @@ def test_c08_orca_envelope_fits_the_92160_cap_ONLY_with_the_conv_trim():
     )
     assert args.get("--conversation-cache-slots") == "16"
     assert args.get("--memory-limit-mib") == "92160", (
-        "orca rides the 92160 declared cap — the 100Gi cgroup raise was the Q4 lockstep"
+        "orca rides the 92160 declared cap — every cgroup raise since (100Gi C06, 108Gi U12, "
+        "116Gi U14) was another rung's lockstep, not orca's"
     )
     ctr = S.strata_container(_on())
     assert ctr["resources"]["limits"]["memory"] == S.Q4_CGROUP_LIMIT, "cgroup must not move for orca"

@@ -222,48 +222,37 @@ def test_c01_memory_cgroup_and_engine_cap():
     assert req.get("memory") == "64Gi", f"request {req}"
     assert req.get("cpu") in ("8", 8, "8000m"), f"request {req}"
     limits = res.get("limits") or {}
-    # cf-86 C06 lockstep law (DECISIONS "cf-86 envelope + timing decisions" /
-    # U8+Round-3): the cgroup pair is one UNIT — 96Gi with the 92160 engine cap
-    # while the Q4 rung is unwired, the q4 pair (S.Q4_CGROUP_LIMIT with
-    # S.Q4_MEMORY_LIMIT_MIB — 100Gi/95232 at C06, 108Gi/103680 since the
-    # 2026-11-01 post-gate re-pin) once it lands. Raising one
-    # leg alone is what #1601 exists to prevent, so only the two sanctioned
-    # pairs are legal; the exact final pair is pinned in test_strata_q4_rung.py.
-    pair = {
-        "96Gi": {"--memory-limit-mib": "92160"},
-        S.Q4_CGROUP_LIMIT: {"--memory-limit-mib": str(S.Q4_MEMORY_LIMIT_MIB)},
-    }
-    assert limits.get("memory") in pair, (
+    # cf-86 lockstep law (#1601; DECISIONS "cf-86 envelope + timing decisions",
+    # re-pinned at the U12 first-boot gate and the U14 ruling on 2026-11-01):
+    # the pod carries ONE cgroup — 96Gi → 100Gi at C06 → 108Gi at U12 → 116Gi
+    # at U14 — and the declared --memory-limit-mib values are PER-RUNG inside
+    # it. Neither leg moves alone: the cgroup is the containment, the caps are
+    # what each engine sizes itself to. U14 moved the ceiling for the
+    # flagship's term-sum WITHOUT re-tuning the rungs that were never bumping
+    # against it, so q4 and orca stay pinned at their own numbers.
+    assert limits.get("memory") == S.STRATA_CGROUP_LIMIT, (
         f"limits {limits} — strata MUST be cgroup-bounded (2026-10-29 OOM: "
         "unbounded pin + unbounded trio = kernel harvesting system pods) and "
-        f"only the sanctioned pairs {sorted(pair)} are legal"
+        f"the shipped ceiling is {S.STRATA_CGROUP_LIMIT}"
     )
-    # The pair leg is PER-ARENA: one cgroup bounds the pod, and the cap that has
-    # to equal the pair value is the arena the cgroup was sized for — the Q4 rung
-    # under the q4 pair, the IQ3_S primary under 96Gi. Reading the primary's cap
-    # under the q4 cgroup would demand the smaller arenas grow to the q4 cap,
-    # which the
-    # per-pair law in test_strata_q4_rung.py and the byte-frozen pre-cf-86
-    # capture both forbid — the two arms would be mutually unsatisfiable.
-    binding = (S.PROFILE_Q4_FILE if limits.get("memory") == S.Q4_CGROUP_LIMIT
-               else S.PROFILE_PRIMARY_FILE)
     caps = {f: dict(S.arg_pairs(S.profile_json(_on(), f))).get("--memory-limit-mib")
             for f in sorted(S.profile_files(_on()))}
-    assert binding in caps and caps, (
-        f"rendered profile set {sorted(caps)} lacks the pair-binding profile {binding!r}"
-    )
-    cap = caps[binding]
-    # The ceiling is the SHIPPED cgroup, not a literal: the q4 pair moved to
-    # 108Gi at the executed 2026-11-01 gate (100Gi was the C06-era figure).
+    assert caps, "the render states no profiles at all"
+    for fname, want in ((S.PROFILE_PRIMARY_FILE, str(S.PRIMARY_MEMORY_LIMIT_MIB)),
+                        (S.PROFILE_Q4_FILE, str(S.Q4_MEMORY_LIMIT_MIB)),
+                        (S.PROFILE_ORCA_FILE, "92160")):
+        assert fname in caps, f"{fname} missing from the rendered profile set {sorted(caps)}"
+        assert caps[fname] == want, (
+            f"{fname} declares {caps[fname]!r}, want the pinned {want!r} — caps are per-rung, "
+            "and moving one leg alone is the #1601 failure mode this arm exists to catch"
+        )
+    # The cgroup was DERIVED from the shipped ceiling above, never assumed: an
+    # engine told a cap its container cannot hold gets the arena OOM-killed
+    # mid-pin, so every stated cap must sit inside the real limit.
     cgib = int(str(limits["memory"]).removesuffix("Gi"))
-    assert cap and int(cap) <= cgib * 1024, (
-        f"--memory-limit-mib {cap!r}: the engine must be TOLD its cgroup "
-        "(#1601 pairing) and size inside it — a limit without the flag "
-        "just gets the arena OOM-killed mid-pin"
-    )
-    assert cap == pair[limits["memory"]]["--memory-limit-mib"], (
-        f"lockstep broken: cgroup {limits['memory']} with engine cap {cap!r} "
-        f"(pairing law: {pair[limits['memory']]})"
+    assert int(caps[S.PROFILE_PRIMARY_FILE]) <= cgib * 1024, (
+        f"primary cap {caps[S.PROFILE_PRIMARY_FILE]} MiB is not inside the "
+        f"{limits['memory']} cgroup (#1601 pairing)"
     )
     # Containment is the law's real subject: every cap the render states must sit
     # inside the one cgroup. A profile that states no cap is not covered — the

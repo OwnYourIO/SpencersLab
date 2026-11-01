@@ -2624,3 +2624,60 @@ changes anywhere.
   on q4/orca), T8 (hipBLASLt table — the venv wheel is 1.2.0-class, expected
   0–3%, so skip unless a startup line contradicts). No arm was written for a
   flag that is not shipped; the on-target `--plan`/startup reads decide those.
+
+### 9.25 U14 envelope round — cgroup 116Gi, flagship cap 110592, era-3 primary capture (2026-11-01)
+
+Owner ruling U14 after the post-U13 on-target read. Two shipped values, one
+new era, one amended law, one retirement.
+
+- **Shipped:** pod `limits.memory 116Gi` (was 108Gi) and primary
+  `--memory-limit-mib 110592` (was 92160 — the rung's own term-sums are
+  ~91.84 GiB, so it had never fit). q4 103680 and orca 92160 do NOT move: caps
+  are per-rung, and neither was bumping against the ceiling. `requests` stay
+  64Gi (scheduler packing is not what bounds a pinned arena; the cgroup is).
+- **Primary era chain, now three deep:** `strata-profiles-pre-cf86` →
+  `strata-profiles-t03-repin` (U13, `--prefill`) → `strata-profiles-u14-repin`
+  (U14, `--memory-limit-mib`, sha256 `f1a8d6c8…`). Delta verified BEFORE
+  re-capture: changed keys == `["args"]`, args membership unchanged, exactly
+  one flag value moved, `env` still `{}`; encoding re-validated by reproducing
+  era 2 byte-for-byte. `PROFILE_FIXTURE_ERA` points at era 3.
+- **Law widened, not weakened:** `test_t03_primary_fixture_era_delta_is_only_the_prefill_line`
+  is replaced by `test_primary_fixture_era_chain_is_one_owner_ruled_flag_per_step`
+  — every ADJACENT era step must be args-only, membership-identical, and
+  exactly ONE flag, with conv-cache/KV/max-context never riding an unrelated
+  step; plus the captured era must be the one the map points at, and the newest
+  cap must fit the shipped cgroup. Two eras each moving one owner-ruled flag is
+  still a law; a third riding a second flag is red.
+- **Envelope-identity law amended a second time, explicitly:**
+  `test_strata_orca_rung.py::test_c02_four_profiles_and_orca_shape` no longer
+  mirrors the primary's `--memory-limit-mib` (it pins orca at 92160 instead).
+  The original C02 shape assumed one shared memory declaration; U14 broke that
+  assumption on purpose, and silent mirroring would have handed orca ~20 GiB of
+  budget nobody ruled. `--kv-resident` / `--conversation-cache-slots` /
+  `--max-context` / `--kv` keep mirroring; conv-cache stays the pre-existing
+  sanctioned exception.
+- **Per-rung pins now asserted in two places:** `test_strata_render.py::test_c01_memory_cgroup_and_engine_cap`
+  stopped carrying a pair TABLE (the `96Gi ↔ 92160` / `cgroup ↔ q4-cap` shape
+  implied one binding pair for the whole pod) and now asserts the shipped
+  cgroup equality plus each rung's own cap (`110592` / `103680` / `92160`) and
+  the ≤-cgroup derivation. `test_c06_cgroup_108gi_and_engine_cap_lockstep` is
+  now `…_116gi_…`, deriving its ceiling from the shipped limit rather than a
+  literal. `strata_testlib` renamed the constant to `STRATA_CGROUP_LIMIT`
+  (pod-level) with `Q4_CGROUP_LIMIT` kept as a deprecated alias, and added
+  `PRIMARY_MEMORY_LIMIT_MIB`.
+- **Doc law followed the numbers, not the arm:** DOC_PAIRS now requires
+  `116Gi ↔ 110592`, `116Gi ↔ 103680` and the original `96Gi ↔ 92160` shape in
+  BOTH docs (either word order — the docs state them differently — inside
+  period-free windows). The README regained its explicit doctrine sentence
+  ("the cgroup is the pod's, the cap belongs to whichever arena is loaded"),
+  which a rewrite had dropped; the arm caught it and the arm was right.
+- **Retired, with evidence, so it is not re-litigated:** `--ple-io mmap` (R6's
+  T2). First-boot read: PLE resolved **direct** with the engine's own probe at
+  120,960 rows/s against a 15,000 warning line — no deficit to buy back — and
+  mmap's ~26.8 GiB of page cache would land in the cgroup whose room U14 is
+  buying for parking. `--ple-io ram` remains negative-pinned (2026-10-29 OOM).
+- **Still open, deliberately not in this round:** the chunk A/B (T3's 9.80 GiB
+  expert-cache borrow, 726–844 MiB VRAM free — the small-burst candidate), T5
+  `STRATA_MMQ_KQ=1` (upstream speed unmeasured on AMD), T6 orca fusion, T7
+  `SELECT_WMMA` parity, T4 ornith chunk 4096, and the strix/ornith `--plan`
+  finalizations. No arm was written for a value that is not shipped.

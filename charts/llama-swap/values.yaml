@@ -1262,35 +1262,54 @@ app-template:
             # cgroup stops strata (kernel victims stay inside THIS cgroup)
             # and the engine's --memory-limit-mib (PR #1601 pairing: a
             # cgroup limit must be declared to the engine) sizes arena +
-            # conversation cache + KV inside 90 GiB of it — supervisor and
-            # venv headroom fill the rest. Coexistence is time-shared (ttl
+            # conversation cache + KV inside the rung's declared cap —
+            # supervisor and venv headroom fill the rest of the cgroup.
+            # Coexistence is time-shared (ttl
             # below), not simultaneous residency.
             requests:
               cpu: 8
               memory: 64Gi
-            # 96Gi ceiling = ~50 GiB IQ3_S arena + 32 GiB conversation cache
-            # + ~13 GiB worst-case 4-slot KV + engine/supervisor headroom
+            # The original 96Gi ceiling = ~50 GiB IQ3_S arena + 32 GiB conversation
+            # cache + ~13 GiB worst-case 4-slot KV + engine/supervisor headroom
             # (owner budget ruling 2026-10-29). Node is 125 GiB: a fully
             # warm strata pod leaves the llama.cpp trio NO real headroom —
             # the ttl:3600 time-share and the cgroup cap are what keep the
             # next collision inside this container instead of the whole
-            # node. Raise --memory-limit-mib in lockstep with this number.
+            # node. The direction of the lockstep matters: a rung's declared
+            # cap may never exceed this number, but raising THIS number does
+            # not raise any cap — each rung declares its own (U14 grew the
+            # ceiling to 116Gi and moved only the flagship, whose terms never
+            # fitted 92160; q4 and orca kept their numbers).
             # cf-86 C06 raised the ceiling to 100Gi for the UD-Q4_K_XL rung;
             # the 2026-11-01 first boot moved it to 108Gi with the pair's conv
-            # term — 8192 was only affordable because disk session files were
-            # to absorb the big parks, and the HIP engine compiled that feature
-            # out (see the q4 profile's flag note). Declared pair is now
-            # 103680 MiB inside 108Gi (71.7 GiB pinned experts + 16 GiB
-            # conversation cache + ~13 GiB worst-case KV ≈ 100.7, owner-ruled
-            # half-restore at the gate) — the pair is PER-RUNG, so the IQ3_S
-            # and orca profiles keep their 92160 cap inside this same cgroup
-            # and ride the smaller arena; nothing about the smaller rungs'
-            # envelope changed. 108Gi is the largest cap this node has ever
-            # carried (headroom ~17 GiB on the 125 GiB node), which is
-            # precisely why the matrix keeps all four arenas as alternatives
-            # and the 420 s grace stays untouched.
+            # term (8192 was only affordable because disk session files were to
+            # absorb the big parks, and the HIP engine compiled that feature
+            # out), and the SAME DAY's U14 ruling raised it again to 116Gi so
+            # the flagship's own term-sum fits inside what it declares — the
+            # primary has been declaring 90 GiB against terms of ~91.8 GiB
+            # since 2026-10-29 (see its profile note). Declared caps are
+            # PER-RUNG inside this one cgroup: 110592 primary, 103680 q4
+            # (71.7 pinned experts + 16 conv + ~13 KV ≈ 100.7, the owner-ruled
+            # half-restore), 92160 orca (U9.2 zero-growth law) — each leg stays
+            # ≥ its terms and ≤ this limit, which is the #1601 pairing.
+            # Why 116Gi is safe on this VM, measured rather than assumed
+            # (Grafana/prometheus, 2026-11-01): allocatable 125.1 GiB with the
+            # kubelet reserving effectively nothing, so the gap IS the OS
+            # margin; kube-system containers peak at 0.31 GiB over 7 d, and the
+            # node's own floor (all non-strata workloads running) measured
+            # ~7.3 GiB total — i.e. OS + k3s + containerd + kernel ≈ 2–3 GiB.
+            # 125.1 − 116 leaves ~9 GiB for that, ~6 GiB genuinely spare. Two
+            # standing caveats the operator owns: swap is 2.0 GiB with 1.7 free,
+            # so this cgroup is the ONLY containment; and requests stay 64Gi,
+            # so the scheduler can still pack a neighbour here — the time-share
+            # discipline (ttl 3600 + the matrix alternation) is what keeps the
+            # big llama.cpp rungs off a warm arena, not this number. The
+            # observed worst inside 108Gi was a 99.2 GiB working set during the
+            # 288 GB provisioning boot, with node MemAvailable bottoming at
+            # 17.3 GiB; page cache (54.6 GiB measured now) is reclaimable, so
+            # the kernel takes cache before it takes victims.
             limits:
-              memory: 108Gi
+              memory: 116Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
             # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
@@ -1614,7 +1633,7 @@ strata:
 
       qwen3.8-flash-next-strata-q4:
         name: Qwen3.8-Flash-Next Unsloth UD-Q4_K_XL (R9700 arena)
-        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — half the fleet uplift, since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680/108Gi pair; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — half the fleet uplift, since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680 declaration under the pod's 116Gi cgroup; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
         # Same serve wrapper as the primary, byte-for-byte except the profile
         # file (the suite asserts exactly this equality — the ulimit wrapper is
         # load-bearing, and a per-rung wrapper drift is invisible until fd
@@ -1742,14 +1761,29 @@ strata:
         - --max-context 262144
         # int8 KV: the engine default AND the PR's explicit choice.
         - --kv int8
-        # Machine-tuned by setup, adopted with 2026-10-29 post-OOM edits:
-        # --ple-io ram REMOVED (back to the engine's file/mmap default — the
-        # 28.8 GiB n-gram table reads sparsely; RAM-resident only made sense
-        # on a node with nothing else warm), and --memory-limit-mib declared
-        # so the engine sizes its page-locked arena inside the container's
-        # 96Gi cgroup instead of guessing at free node RAM (PR #1601
-        # pairing; 90 GiB = arena ~50 + conversation cache 32 + worst-case
-        # 4-slot KV ~13, per the owner budget ruling). KV-int8 math here is
+        # Machine-tuned by setup, adopted with the 2026-10-29 post-OOM edits.
+        # --ple-io ram was REMOVED here, and the note written that day called
+        # the fallback "the engine's file/mmap default" — the 2026-11-01 boot
+        # measured the actual resolution instead: `PLE on, table 320001536 rows
+        # of …IQ3_S-00002-of-00002.gguf` in DIRECT mode (320,015,536 × 90 B
+        # ≈ 26.8 GiB read unbuffered), the gfx12 auto-RAM policy having
+        # correctly declined while only ~3.2 GiB sat spare inside the declared
+        # cap. Direct is fine on this disk: the engine's own startup probe read
+        # 120,960 rows/s against its 15,000-row warning line, i.e. 8× clear.
+        # That measurement RETIRES `--ple-io mmap` (R6's T2): its page cache
+        # would live in this same cgroup and eat the parking room below, to buy
+        # a documented ~11% on a device that is not the bottleneck.
+        # --memory-limit-mib is declared so the engine sizes its page-locked
+        # arena inside the container cgroup instead of guessing at free node
+        # RAM (PR #1601 pairing). U14 (2026-11-01) moved 92160 → 110592: the
+        # rung's own terms are arena 46.84 + conversation cache 32 +
+        # worst-case 4-slot KV ~13 ≈ 91.84 GiB, which the old 90 GiB
+        # declaration never covered — the comment here once read "90 GiB =
+        # arena ~50 + conversation cache 32 + KV ~13", an arithmetic slip
+        # summing to 95 — and the engine reported the consequence at its first
+        # parking attempt: "need 1960 MiB plus 2560 MiB floor, 3259 MiB
+        # available". 107.25 GiB declared inside the 116Gi cgroup keeps the
+        # ~9 GiB reserve style the q4 pair already rides. KV-int8 math here is
         # ~13 KiB/token (only 12 of 48 layers carry full attention), so a
         # full 256k park costs ~3.3 GiB and the 32768 MiB budget parks
         # roughly 9-10 of those — or dozens of typical 30-50k sessions.
@@ -1766,7 +1800,7 @@ strata:
         # verification step, not decoration. q4/orca/ornith stay at `auto`
         # for this round — one variable at a time on the arena with headroom.
         - --prefill auto:32768
-        - --memory-limit-mib 92160
+        - --memory-limit-mib 110592
         - --conversation-cache-mib 32768
         - --conversation-cache-slots 16
         # Context-extension toggle (EXPERIMENTAL, off by policy): the
@@ -1959,9 +1993,11 @@ strata:
     # (97.47 GB x the 0.635 setup-calibrated expert share, RESEARCH R4) fits
     # this rung's 92160 declared cap ONLY with the conversation cache trimmed
     # to 8192 — 57.7 arena + 8 conv + ~13 worst-case KV + ~6 supervisor ≈
-    # 84.7 GiB, while conv 32 would declare 108.7, past even the q4 arm's
-    # cgroup (96Gi→100Gi at C06, 108Gi since the 2026-11-01 post-gate pair). Slots stay 16 and the cap stays 92160 (the #1601 law is
-    # declared ≤ cgroup, and the cgroup raise was the Q4 arm's lockstep);
+    # 84.7 GiB, while conv 32 would declare 108.7 — past this rung's own 90
+    # GiB declaration (the pod cgroup has since grown to 116Gi, but the cap is
+    # what bounds an arena, and U9.2 pinned orca's envelope as zero-growth).
+    # Slots stay 16 and the cap stays 92160 (the #1601 law is
+    # declared ≤ cgroup, and the cgroup raises were the Q4 arm's lockstep);
     # the trim follows the sibling Q4 arm's U8 precedent and upstream's own
     # default ceiling (DETAILS.md@v0.2.8). Two Orca-specific carry-overs from
     # docs/ORCA.md, both per-quantizer decisions: the pack is built with
@@ -2030,8 +2066,7 @@ strata:
         - --memory-limit-mib 92160
         # Conversation-cache trim 32→8 GiB (slots unchanged at 16) is the
         # arithmetic of the 57.7 GiB arena, not tuning: conv 32 declares
-        # 108.7 GiB, past even the q4 arm's cgroup (108Gi since the
-        # 2026-11-01 gate). Same trim the sibling Q4
+        # 108.7 GiB, past its own 92160 declaration. Same trim the sibling Q4
         # arm ships (U8 precedent) and upstream's own default ceiling
         # ("40% of the RAM left above min-free, at most 8192 MiB",
         # DETAILS.md@v0.2.8).
@@ -2126,11 +2161,17 @@ strata:
         # big parks (Round 2/3 [A1]: 71.7 pinned experts + 8 conv + ~13
         # worst-case 4-slot KV ≈ 92.7) — the on-node HIP engine rejected
         # --slot-save-path at argv (a CUDA-side feature compiled out), so conv
-        # is back to 16384 and the pair to 103680 inside 108Gi
-        # (71.7 + 16 + 13 ≈ 100.7), ~17 GiB node headroom on the 125 GiB node.
-        # The full 32768 restore would ask ~116.7 — the Oct-29 OOM-harvest
-        # shape, refused at the owner gate. The pair is PER-RUNG; the IQ3_S
-        # and orca profiles keep 92160 inside the same cgroup, unchanged.
+        # is back to 16384 and the pair to 103680 inside the pod cgroup
+        # (71.7 + 16 + 13 ≈ 100.7). The pair value itself is PER-RUNG and does
+        # NOT move when the cgroup does: U14 raised the container to 116Gi the
+        # same day (for the flagship's term-sum, see its profile), and q4 keeps
+        # 103680 — its envelope gains nothing from a ceiling it was never
+        # bumping against, and the reserve above it grows from ~7 to ~12 GiB.
+        # The full 32768 conv restore stays CLOSED, not deferred: at 116Gi it
+        # still computes 71.7 + 32 + 13 = 116.7 — over both the 107.25 GiB
+        # largest declared cap on the pod and the cgroup itself, so U12's
+        # half-restore was never an artifact of a timid ceiling. The orca
+        # profile keeps its 92160 declaration inside the same cgroup.
         - --memory-limit-mib 103680
         # Conversation-cache 16384 (slots unchanged at 16). History: the rung
         # shipped trimmed to 8192 as the price of the 71.7 GiB arena — the

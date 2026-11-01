@@ -100,18 +100,26 @@ PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 # a rate without an arena label is how the ~500-vs-2,800 confusion started.
 REQUEST_LINES_ENV = "STRATA_REQUEST_LINES=1"
 
+# The pod cgroup and the per-rung declared caps. Declared HERE rather than in
+# the envelope block below because PRIMARY_REQUIRED_PAIRS needs the value at
+# definition time. U14 (owner ruling 2026-11-01): the flagship declared 92160
+# against term-sums of ~91.84 GiB — 46.84 arena + 32 conversation cache + ~13
+# worst-case 4-slot KV — so parking was refused inside its own number while the
+# node sat idle; 110592 (107.25 GiB) inside the 116Gi cgroup keeps the reserve
+# style the q4 rung already rides.
+PRIMARY_MEMORY_LIMIT_MIB = 110592
+
 # Era-mapped frozen captures for the byte-unchanged preservation arms
 # (TEST_SPEC 9.16/9.20): C07's sanctioned 0.1.52->0.1.54 and C09's
 # 0.1.54->0.1.55 halo re-pins moved the strix profile's era. The primary's era
-# moved once, at the 2026-11-01 post-boot T0/T3 round: an engine re-pin could
-# not touch it (version-free claim root), but an OWNER-RULED prompt-chunk
-# re-pin can (DECISIONS U13; delta verified == one --prefill line, see the
-# capture's PROVENANCE.md). The chain — every adjacent era delta == exactly
-# {exe, lib_dirs} for strix — is guarded in test_strata_strix.py, so a
-# whole-file deep-equal here stays a law with no exempt-key hole for later
-# rounds to widen.
+# moved twice, both OWNER-RULED posture changes on 2026-11-01: T3 (the prompt
+# chunk cap) and U14 (the declared cap fitting its own term-sums). Each step's
+# delta is pinned by test_strata_strix.py's primary chain guard — one flag per
+# era, membership unchanged — so the whole-file deep-equal here stays a law
+# with no exempt-key hole. The engine-re-pin eras (c07/c09) must never carry a
+# primary file: an engine re-pin cannot move its era (version-free claim root).
 PROFILE_FIXTURE_ERA = {
-    PROFILE_PRIMARY_FILE: "strata-profiles-t03-repin",
+    PROFILE_PRIMARY_FILE: "strata-profiles-u14-repin",
     PROFILE_STRIX_FILE: "strata-profiles-c09-repin",
 }
 
@@ -171,9 +179,12 @@ PRIMARY_REQUIRED_PAIRS = [
     ("--prefill", "auto:32768"),
     ("--kv-resident", "32768"),
     # 2026-10-29 OOM pairing: a cgroup limit without the engine knowing it
-    # gets the arena killed mid-pin; this pair is the #1601 contract (90 GiB
-    # inside the 96Gi cgroup, owner budget ruling same day).
-    ("--memory-limit-mib", "92160"),
+    # gets the arena killed mid-pin; this pair is the #1601 contract. U14
+    # (2026-11-01) moved 92160 -> 110592: the rung's terms are 46.84 arena +
+    # 32 conv + ~13 KV ≈ 91.84 GiB, which the 90 GiB declaration never covered
+    # (first-boot evidence: parking refused at "3259 MiB available"), and the
+    # pod cgroup grew to 116Gi the same day.
+    ("--memory-limit-mib", str(PRIMARY_MEMORY_LIMIT_MIB)),
     # Owner budget ruling 2026-10-29: 32 GiB parked-conversation budget,
     # 16 slots (IQ3_S full-256k park ~= 3.3 GiB of it).
     ("--conversation-cache-mib", "32768"),
@@ -300,15 +311,25 @@ CHECKOUT_MARKER = "/models/strata/.checkout-0.2.9-carry1"
 ORNITH_DL_MARKER = "/models/strata/.dl-ornith"
 
 # C06 FINAL envelope, re-pinned at the executed on-target gate (2026-11-01,
-# owner half-restore ruling): the Q4 rung rides its OWN pair (cgroup 108Gi +
-# engine 103680), the IQ3_S/IQ3_XXS/orca rungs keep their 92160 declared caps
-# — the pair law is per-pair. The conv term moved 8192 -> 16384 when the
-# claim-compiled HIP engine rejected --slot-save-path at argv (session files
-# are CUDA-trial: the Round-3 caveat, now measured), which voided the trim's
-# U8 compensation. --slot-save-path is a NEGATIVE pin (Q4_SESSION_FLAG below).
-# PLE stays mmap (no --ple-io ram) per the v0.2.7 +28.8 GiB RAM-resident hazard.
+# owner half-restore ruling) and raised AGAIN by U14 the same day. The pod
+# cgroup is ONE number for the whole strata container (STRATA_CGROUP_LIMIT —
+# named Q4_* until U14, when the flagship started riding it too), and the
+# declared caps are PER-RUNG inside it: 110592 primary, 103680 q4, 92160 orca.
+# #1601's law is declared <= cgroup, and every leg keeps its own reserve: q4
+# rides ~12 GiB above its terms, primary ~15. The conv term moved 8192 -> 16384
+# when the claim-compiled HIP engine rejected --slot-save-path at argv (session
+# files are CUDA-trial: the Round-3 caveat, now measured), which voided the
+# trim's U8 compensation; --slot-save-path is a NEGATIVE pin (Q4_SESSION_FLAG).
+# PLE: no --ple-io flag anywhere. --ple-io ram stays forbidden (the v0.2.7
+# +28.8 GiB RAM-resident hazard, the 2026-10-29 OOM) and --ple-io mmap was
+# RETIRED at U14 — the first boot measured the resolution as `direct` with the
+# engine's own probe at 120,960 rows/s against a 15,000 warning line, so the
+# documented ~11% would be paid for in page cache inside this same cgroup.
+# (PRIMARY_MEMORY_LIMIT_MIB lives with the contract literals above — the
+# PRIMARY_REQUIRED_PAIRS table needs it at definition time.)
 Q4_MEMORY_LIMIT_MIB = 103680
-Q4_CGROUP_LIMIT = "108Gi"
+STRATA_CGROUP_LIMIT = "116Gi"
+Q4_CGROUP_LIMIT = STRATA_CGROUP_LIMIT  # deprecated alias; the cgroup is pod-level
 Q4_CONV_CACHE_MIB = 16384
 Q4_CONV_CACHE_SLOTS = 16
 Q4_SESSION_FLAG = "--slot-save-path"
