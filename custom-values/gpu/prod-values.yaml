@@ -106,6 +106,23 @@ archon:
     # No sso for Archon yet.
     #archon-sso: OVERRIDE_NEEDED
 
+forgejo-secret-seed:
+  # Delivery path for the seed's chart-level bitwardenIds sentinels: this
+  # app block is projected into the gpu-forgejo-secret-seed Application's
+  # valuesObject by base's charts appset (this file is fetched via the
+  # services.gpu.customValuesUrls cluster annotation). Owner fills each
+  # slot when creating its Bitwarden item; an unfilled OVERRIDE_NEEDED
+  # renders straight into the ExternalSecret remoteRef, so the daily fetch
+  # fails visibly until then.
+  bitwardenIds:
+    # cf-sync-immich LOGIN item (password = the Immich API key).
+    immich-api-key: OVERRIDE_NEEDED
+    # cf-sync-netlify LOGIN item (password = Netlify auth token); its custom
+    # fields site_id_com / site_id_farm carry the two site ids.
+    netlify: OVERRIDE_NEEDED
+    # cf-sync-forgejo LOGIN item (password = write:repository PAT).
+    forgejo-pat: OVERRIDE_NEEDED
+
 seaweedfs-csi-driver:
   volume-count: 8
   seaweedfs-csi-driver:

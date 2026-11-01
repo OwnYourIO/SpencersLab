@@ -1,13 +1,13 @@
 # BitwardenIds moved to cluster secret annotation (metadata.annotations.services.gpu.bitwardenIds)
 # The YAML block is parsed and each key-value pair becomes individual Helm parameters
 # This allows charts to access values like: {{ index .Values "bitwardenIds" "coder-pg" }}
-# Example cluster annotation:
+# Example cluster annotation (one Bitwarden-item uuid per key):
 # metadata.annotations.services.gpu.bitwardenIds: |
-#   open-webui-sso-secret: "12345678-1234-1234-1234-123456789abc"
-#   open-webui-secret: "87654321-4321-4321-4321-cba987654321"
-#   open-webui-pg: "11111111-2222-3333-4444-555555555555"
-#   coder-sso-secret: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-#   coder-pg: "ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"
+#   open-webui-sso-secret: "<item-uuid>"
+#   open-webui-secret: "<item-uuid>"
+#   open-webui-pg: "<item-uuid>"
+#   coder-sso-secret: "<item-uuid>"
+#   coder-pg: "<item-uuid>"
 bitwardenIds:
   open-webui-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
   open-webui-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
@@ -18,6 +18,21 @@ bitwardenIds:
   docling: OVERRIDE_VIA_CLUSTER_ANNOTATION
   neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
   searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
+
+  # charts/forgejo-secret-seed inputs. The real uuids do NOT get added to a
+  # cluster annotation (the services.gpu.bitwardenIds parameter projection
+  # was removed in aa817da6b, 2025-09-28): they are filled per key in the
+  # forgejo-secret-seed app block of custom-values/gpu/prod-values.yaml,
+  # which base's charts appset projects into that Application's valuesObject.
+  # These sentinel lines stay as the chart-level default the block shadows
+  # (fleet practice, searxng/neo4j above).
+  # Bitwarden item cf-sync-immich; login item, password = Immich API key.
+  immich-api-key: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  # Bitwarden item cf-sync-netlify; login password = auth token, custom
+  # fields site_id_com / site_id_farm = the two Netlify site ids.
+  netlify: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  # Bitwarden item cf-sync-forgejo; login password = repo-write PAT.
+  forgejo-pat: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
   # External-auth provider + at-rest token key for coderd (consumed by
   # templates/secrets-coder.yaml). These new keys deliberately use the CURRENT
@@ -73,6 +88,9 @@ charts:
     namespace: default
     ServerSideApply: "false"
   n8n:
+    namespace: default
+    ServerSideApply: "false"
+  forgejo-secret-seed:
     namespace: default
     ServerSideApply: "false"
   # Disabled 2026-09-07: CrashLoopBackOff (neo4j env/config bug — see plan

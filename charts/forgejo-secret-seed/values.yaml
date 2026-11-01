@@ -1,0 +1,102 @@
+# gpu's historical sentinel string, kept as fleet practice (searxng/neo4j
+# carry the same label while resolving elsewhere). These defaults are NOT
+# the delivery path: the real uuids arrive via the forgejo-secret-seed
+# bitwardenIds app block in custom-values/gpu/prod-values.yaml, which base's
+# charts appset projects into this Application's valuesObject (that file is
+# fetched through the services.gpu.customValuesUrls cluster annotation — the
+# gpu annotation that actually feeds uuids; the older
+# services.gpu.bitwardenIds parameter projection was removed fleet-wide).
+# With the app block absent or unfilled, the ExternalSecret renders the
+# sentinel/OVERRIDE_NEEDED literal and its fetch fails visibly daily.
+bitwardenIds:
+  # Bitwarden item cf-sync-immich (login item; password = the API key).
+  immich-api-key: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  # Bitwarden item cf-sync-netlify: login password = auth token, plus custom
+  # fields site_id_com and site_id_farm for the two site ids. Field names are
+  # owner-visible (templates/secret-forgejo-seed.yaml reads them verbatim).
+  netlify: OVERRIDE_VIA_CLUSTER_ANNOTATION
+  # Bitwarden item cf-sync-forgejo (login item; password = repo-write PAT).
+  forgejo-pat: OVERRIDE_VIA_CLUSTER_ANNOTATION
+
+seed:
+  # Canonical Forgejo host (infra instance); the gpu job reaches it over the
+  # same public chain coder-external-auth already uses for Forgejo OAuth.
+  forgejoUrl: https://git.spencerslab.com
+  # Config, not sentinels: renders as-is; the owner confirms the exact org and
+  # repo name when the repo is created and corrects these two keys there.
+  repoOwner: CuratedForest
+  repoName: CuratedForest.com
+
+# Rotation story: update Bitwarden -> ExternalSecret refresh (1h) -> the next
+# daily run re-PUTs; Forgejo's PUT is create-or-update, so unchanged values are
+# harmless churn and no extra machinery is warranted. Execution against the
+# repo is gated on the repo existing (owner precondition); renders and lints
+# regardless.
+app-template:
+  global:
+    nameOverride: forgejo-secret-seed
+
+  controllers:
+    seed:
+      type: cronjob
+      annotations:
+        # Fleet convention. New job pods read the live Secret through the
+        # volume mount anyway; the annotation keeps the pod template honest
+        # about which Secret generation it last started from.
+        reloader.stakater.com/auto: "true"
+      cronjob:
+        # 04:17 UTC daily: an hour ahead of the site sync workflow's 05:17 UTC
+        # cron, so rotated secrets are in place before sync reads them; the
+        # :17 offset dodges on-the-hour scheduler hotspots.
+        schedule: "17 4 * * *"
+        # Overlapping PUTs of the same secrets are pure churn.
+        concurrencyPolicy: Forbid
+        ttlSecondsAfterFinished: 3600
+        # Transient egress blips to the public host are the expected failure
+        # mode; OnFailure retries keep them in one job.
+        backoffLimit: 2
+      pod:
+        # A failed seed must surface in job status/pod logs, not silently restart.
+        restartPolicy: OnFailure
+        securityContext:
+          # curlimages/curl declares a non-numeric USER (curl_user); kubelet
+          # cannot verify runAsNonRoot against a name, so pin the numeric ids
+          # from the image (curl_user = 100:100).
+          runAsNonRoot: true
+          runAsUser: 100
+          runAsGroup: 100
+      containers:
+        seed:
+          image:
+            repository: docker.io/curlimages/curl
+            tag: 8.23.0
+          # The image entrypoint is curl itself; /bin/sh is busybox ash — the
+          # script must not assume bash (no process substitution).
+          command: ["/bin/sh", "/seed/seed.sh"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  persistence:
+    script:
+      type: configMap
+      name: forgejo-secret-seed-script
+      globalMounts:
+        - path: /seed
+    seeds:
+      # Keys arrive as files named after the ExternalSecret target template
+      # keys (immich_api_key, netlify_*, forgejo_pat) — credentials are never
+      # inlined into env or command lines.
+      type: secret
+      name: forgejo-secret-seed
+      globalMounts:
+        - path: /secrets
