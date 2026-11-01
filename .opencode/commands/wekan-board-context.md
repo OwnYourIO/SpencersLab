@@ -14,7 +14,7 @@ Resolve the board structure through the `dev-boards` MCP server, read-only, in e
 4. `list_lists` — keep only the items whose `swimlane_id` equals that swimlane: titles repeat across swimlanes, the items carry the field to filter on.
 5. `list_custom_fields` — items carry `{id, name, type}`; the block keys on `name`, not `title`.
 
-Emit the Board context block EXACTLY per the `wekan-mcp` skill's "Board context block schema" section — that section is the format's single normative home (field list, collection stamp, re-resolve footer all come from it; this command carries no copy of the schema). Wrap the emitted block in a fenced code block so it pastes cleanly. Then print the two usage notes:
+Emit the Board context block EXACTLY per the `wekan-mcp` skill's "Board context block schema" section — that section is the format's single normative home (field list, collection stamp, re-resolve footer all come from it; this command carries no copy of the schema). Produce the collection stamp in the workspace-local ISO-8601 offset form — the same rule the board-context plugin's `collectedAt` follows through its single formatter (cf-96 OQ4), UTC `Z` when `$TZ` names no usable zone. Wrap the emitted block in a fenced code block so it pastes cleanly. Then print the two usage notes:
 
 - Paste the block into the OpenChamber scheduled-task prompt, above or below the `/pipeline-boards-hourly` invocation — a launched board-coord run consumes it instead of re-running the resolution calls (boards skill, Board context block consumer rule).
 - The ids are structural, not frozen: re-collect after any board-structure change, and consumers re-resolve on any id-shaped call error. Card and checklist ids are never pre-collected — they are live per-card data.

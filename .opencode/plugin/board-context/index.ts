@@ -52,6 +52,14 @@
 // DEFAULT_ENABLED and the flip is nothing else. "No half-proven hook ships
 // on" still holds — only the citation's author changed.
 
+// The collection stamp below rides pipeline-locks' single formatter (cf-96
+// OQ4): stamp shape is a contract with one implementation, so a copy here would
+// drift the moment the rule moves. Discovery registers the files it scans — an
+// import of a leaf function adds no plugin entry — which is why this edge is
+// open where pipeline-locks' header keeps its shared MCP mechanics duplicated,
+// never imported.
+import { localIso } from "../pipeline-locks/index.ts";
+
 const MCP_SERVER_KEY = "dev-boards";
 const BOARD_TITLE = "AI-Dev";
 const SWIMLANE_TITLE = "In Process";
@@ -375,7 +383,7 @@ export default {
             boardTitle: BOARD_TITLE,
             swimlaneTitle: SWIMLANE_TITLE,
             serverId,
-            collectedAt: new Date().toISOString(),
+            collectedAt: localIso(),
           },
         );
       },

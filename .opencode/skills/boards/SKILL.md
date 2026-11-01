@@ -86,6 +86,14 @@ The values the flow writes onto the board. They are a written-onto-the-board con
 - Consistency check (the drift check reworded, D23 r2): every link this run writes must equal this run's `Session origin:` value (or the raw-id fallback when it says UNRESOLVED); a mismatch → RESULT flag, never silently re-guess. Historical links are frozen history — card #50's old comments carry the retired literal and its `session` field was re-pointed 2026-10-25 — compare only THIS run's writes. Whichever leg supplied the slot, the comparison baseline is the recorded `kickoff.session_origin` — a later leg re-uses it rather than re-resolving, so cross-leg drift is impossible by construction.
 - `RESEARCH_LABEL = Research` — matched case-insensitively.
 
+## Stamps and instants
+
+Displayed stamps follow the workspace `$TZ` with its explicit UTC offset — the no-op session title `no-op <yyyy-mm-ddThh:mm>`, the claim and summary comment stamps, the board-context collection stamp, and STATE.json `updated_at` all render under that one rule (cf-96 OQ4).
+
+- **Instant values are never reformatted**: epoch-ms fields (the no-op marker's `at`, `scripts/agent-board-coord-gate.sh`'s `date +%s%3N` arithmetic), file mtimes, and WeKan's stored card dates are values, not stamps — only a stamp has a zone to render in.
+- **A fallback is the same instant, not a different clock**: `$TZ` unresolvable — absent, blank, or a zone the runtime cannot name — writes the UTC `Z` spelling instead of an offset. A workspace nobody has reprovisioned since the coder template gained `TZ` therefore stamps byte-identically to before, and mixed-era records coexist because `Date.parse` resolves either spelling to one instant.
+- **Machine-side stamps have one writer**: the plugins format through the single `localIso` helper in `.opencode/plugin/pipeline-locks/index.ts` — lock `claimedAt`/`heartbeatAt`, the audit-JSONL and `timeouts.jsonl` `at`, the reap meta, and board-context's `collectedAt`. A run never rewrites a stamp it only reads, which is why the 2 h staleness window and its `max(heartbeatAt, mtime)` formula carry no comparison-side change (C09 AC2).
+
 ## Card pickup
 
 1. Card id given in the launch → `get_card` it; that card is the request.
