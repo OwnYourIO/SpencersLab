@@ -78,7 +78,8 @@ bash tests/services/dev-forgejo-runner.sh        # EXTENDED red-first to the two
 helm dependency build services/dev/prod
 helm template dev services/dev/prod <sentinel --set list pinned by the test scripts> --debug
 
-# C04/C05 charts (gpu wiring — OVERRIDE_VIA_CLUSTER_ANNOTATION sentinels)
+# C04/C05 charts (gpu wiring — chart-level sentinel strings shadowed by the
+# custom-values/gpu app blocks; C04 shipped, r2 APPROVED)
 helm dependency build charts/forgejo-secret-seed && helm lint charts/forgejo-secret-seed \
   && helm template charts/forgejo-secret-seed --set bitwardenIds.immich-api-key=u --set bitwardenIds.netlify=u --set bitwardenIds.forgejo-pat=u
 helm dependency build services/gpu/prod
@@ -87,9 +88,12 @@ bash tests/services/gpu-forgejo-secret-seed.sh && bash tests/services/gpu-forgej
 
 # Sentinel sweep — two flavors, both matched 1:1:
 grep -rn 'OVERRIDE_' charts/forgejo-runner charts/forgejo-secret-seed charts/forgejo-run-watchdog \
-  services/dev/prod/values.yaml services/gpu/prod/values.yaml custom-values/dev/prod-values.yaml
-# OVERRIDE_VIA_CUSTOM_VALUES <-> custom-values/dev keys; OVERRIDE_VIA_CLUSTER_ANNOTATION <-> gpu
-# cluster-annotation entries (ArgoCD cluster secret — USER ACTION, documented per key)
+  services/dev/prod/values.yaml services/gpu/prod/values.yaml \
+  custom-values/dev/prod-values.yaml custom-values/gpu/prod-values.yaml
+# OVERRIDE_VIA_CUSTOM_VALUES <-> custom-values/dev keys; OVERRIDE_NEEDED app-block slots in
+# custom-values/gpu <-> each gpu chart's bitwardenIds keys (USER ACTION per slot — fill with
+# the Bitwarden item UUID; the OVERRIDE_VIA_CLUSTER_ANNOTATION strings in chart/service values
+# are inert shadowed defaults, fleet practice, NOT delivery instructions)
 
 # C06 staged site artifacts (hugo render gate on a SCRATCH COPY in /tmp/opencode —
 # never the real repo; module cache warm; hugo = site's exact pin)
@@ -129,10 +133,17 @@ npx aislop ci --changes
   `/api/server/ping` only) → API-key clients CANNOT reach Immich cross-cluster
   through the hub → with the prod runner on gpu (answer 8) and validation on
   dev, card #11's E2E is fixture-based; the network path is card #88's item.
-- gpu service wiring uses `OVERRIDE_VIA_CLUSTER_ANNOTATION` sentinels — gpu
-  bitwardenIds resolve from the ArgoCD cluster annotation
-  (`metadata.annotations.services.gpu.bitwardenIds`), NOT custom-values files
-  → C04/C05 sentinel bookkeeping includes a user action per key.
+- gpu bitwardenIds CLUSTER-ANNOTATION mechanism is DEAD since `aa817da6b`
+  (2025-09-28) — DECISIONS "COORD FACT-RULE 2026-11-01" (reviewer live-proof:
+  the deployed gpu Applications resolve uuids from per-app `bitwardenIds:`
+  blocks in `custom-values/gpu/prod-values.yaml`, projected into each
+  Application's valuesObject by base's charts appset; that file is fetched
+  via the `services.gpu.customValuesUrls` cluster annotation — the gpu
+  annotation that actually feeds uuids). C04 shipped exactly this shape
+  (APPROVED r2). The `OVERRIDE_VIA_CLUSTER_ANNOTATION` sentinel STRING stays
+  as the inert chart-level default the app block shadows (live fleet
+  practice, searxng/neo4j) → C04/C05 owner fills are OVERRIDE_NEEDED slot
+  replacements in custom-values/gpu, NOT annotation edits.
 - CuratedForest.com gallery contract: page resources sorted by `Name`; calls
   vary — no-glob `.ByType "image"` (current-grows, `sort="desc"`),
   case-insensitive jpg glob (past-designs), semantic-prefix globs
@@ -157,9 +168,9 @@ npx aislop ci --changes
   (answer 7 note, research §1.1).
 - **k3s MTU / forgejo-runner#1779** may bite action clones in host mode —
   runtime mitigation (hostNetwork/MTU), not chart work.
-- Runner registration + migration (with LFS objects) + tokens + gpu cluster
-  annotation entries are owner preconditions; C07 and live verification
-  depend on them.
+- Runner registration + migration (with LFS objects) + tokens + gpu
+  custom-values/gpu OVERRIDE_NEEDED slot fills are owner preconditions; C07
+  and live verification depend on them.
 - Gallery-call parsing is best-effort regex (C01 notes); the safe failure for
   unparseable calls is the machine-marked block, never an authored rewrite.
 
@@ -198,9 +209,13 @@ posture anywhere (overrides the BG; schema-invalid entries fail loud).
 4. Immich API key (owner account; EXACTLY asset.read/asset.view/album.read/
    tag.read) → Bitwarden `cf-sync-immich`; Netlify token + both site ids →
    `cf-sync-netlify`; Forgejo PAT (write:repository) → `cf-sync-forgejo`.
-5. GPU cluster annotation: add C04/C05 bitwardenIds keys to
-   `services.gpu.bitwardenIds` on the gpu ArgoCD cluster secret (per-sentinel
-   user action; OVERRIDE_VIA_CLUSTER_ANNOTATION pattern).
+5. GPU uuid fills — **NOT annotation edits** (the cluster-annotation mechanism
+   is dead since `aa817da6b`; see Verified facts + DECISIONS COORD FACT-RULE):
+   replace each `OVERRIDE_NEEDED` slot in the `forgejo-secret-seed:` app block
+   of `custom-values/gpu/prod-values.yaml` with its Bitwarden item UUID
+   (immich-api-key / netlify / forgejo-pat — C04 shipped this block), and the
+   same for C05's `forgejo-run-watchdog:` app block when it lands (reuses the
+   same items; no new mandatory items).
 6. After SpencersLab PR merges + ArgoCD syncs: dev runner pod Running + online
    in git.scifi.farm admin UI; trivial host-label workflow completes on a
    scratch dev repo (owner/coord creates e.g. `runner-host-validation`);
@@ -214,3 +229,16 @@ posture anywhere (overrides the BG; schema-invalid entries fail loud).
 - Watchdog upgrade to Immich native album trigger when it ships (phase 2 shim).
 - actions/cache for hugo/LFS warm builds; pin forgejo-host-runner `:main` →
   `:v<run>` once CI publishes; old-LFS removal card.
+
+## Amendment log
+
+- 2026-11-01 · sentinel-delivery premise corrected per DECISIONS "COORD
+  FACT-RULE 2026-11-01": gpu bitwardenIds do NOT resolve from the ArgoCD
+  cluster annotation (mechanism dead since `aa817da6b`, 2025-09-28; reviewer
+  live-proof in chunks/C04.md review r1 MAJOR-1) — real delivery =
+  custom-values/gpu app blocks projected via valuesObject, C04 shipped +
+  APPROVED r2. Amended surfaces: Verified-facts bullet, Commands sweep
+  comment + grep paths, risk-bullet precondition, User action 5, and
+  chunks/C05.md (r1 D-2 propagation, before its dev round). The GPU
+  placement decision (DECISIONS R9) is UNCHANGED — only its mechanism
+  sentence is superseded (DECISIONS PLAN-AMEND line).
