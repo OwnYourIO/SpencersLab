@@ -27,10 +27,14 @@
 # chart-render legs skip LOUD; all other legs are local. PATH export first —
 # FRICTION.
 #
-# Pre-C10 reds (expected until dev lands the delta): t3 (slice comment still
-# carries the superseded SQLite posture), t4 (slice not the final exact
-# shape; CNPG/ES/PVC missing from the slice render), t6 (no dev assistant
-# block yet). C05-era legs t1/t2/t5 stay green — regression pins.
+# Status (2026-11-01, post-C10): ALL legs GREEN against the landed delta —
+# t3's comment posture flipped off SQLite, t4's slice parses to the final
+# exact shape and renders the full dev stack, t6 carries the 1:1 chart↔cv
+# block (the new golden is committed; ha-chart.sh owns the whole-set leg).
+# The one OPEN item lives inside t6's ok message, not in a red leg: the dev
+# bitwardenIds are placeholder markers (0 filled / 3) until the owner's
+# dev-item id hand-off fills them — the filled/unfilled count the leg
+# prints is that state, greppable for review.
 #
 # Usage:
 #   bash tests/multi-repo/dev-wiring.sh           # t1..t6

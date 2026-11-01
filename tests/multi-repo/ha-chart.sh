@@ -324,6 +324,8 @@ if (sc.get('capabilities') or {}).get('drop') != ['ALL']:
     bad(f'securityContext.capabilities.drop is {(sc.get("capabilities") or {}).get("drop")!r}, expected [ALL]')
 if sc.get('allowPrivilegeEscalation') is not False:
     bad('securityContext.allowPrivilegeEscalation is not false')
+if sc.get('readOnlyRootFilesystem') is True:
+    bad('readOnlyRootFilesystem true — HA writes into its install tree (chunk: only when the app tolerates it)')
 mounts = [m for m in ha.get('volumeMounts') or [] if m.get('mountPath') == '/config']
 if len(mounts) != 1:
     bad(f'expected exactly one /config mount, got {ha.get("volumeMounts")}')
