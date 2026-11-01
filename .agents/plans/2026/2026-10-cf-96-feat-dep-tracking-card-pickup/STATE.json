@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e6b2a397effeJoBUoRxc4WVA22",
   "test_session": "ses_e6adaf11bffeOtWerHTHQlYlqj",
-  "current_wave": 1,
-  "updated_at": "2026-11-01T04:05:00Z",
+  "current_wave": 2,
+  "updated_at": "2026-11-01T06:30:00Z",
   "handoffs": [
     "RESULT (agent-test, ses_e6adaf11bffeOtWerHTHQlYlqj, 2026-11-01) status: DONE chunk: plan (tests C01-C10) — 15 test files committed 2b4748847 (tests/** only; STATE churn left coord-owned). Per-chunk gates recorded in suite headers; pinned interfaces fixed as contract (preload_board {swimlanes,lists→cards,dependencies,label_names,field_names} + 7-key card map; set_card_labels(board_id,card_ids,add_label_ids,remove_label_ids); create_card trailing parent_id; schema-2 key checklist_extras + action update_createcard_checklists; single formatter symbol localIso). Baselines green incl node --test 233/0; designed-reds name not-yet-landed surfaces; pre-existing admitted reds enumerated (cf-90 warm family + STATE-churn arms + validation-fix t4 + coder tfbin env for C09). deviations 1-6 recorded. friction: '8 signatures' vs +7 tools -> coord CLOSED (8th = parent_id signature on existing create_card, DECISIONS); coder-*.sh reds = missing /tmp/opencode/tfbin precondition flagged to C09. open_questions Q1/Q2 both RULED by coord into DECISIONS (roster-drift arms stay outside chunk gates; agent-perms in-commit re-pin is C02's own duty).",
     "RESULT (plan, ses_e6b06c6bdffeh06ZkjS1RAOGVc, 2026-11-01) status: DONE chunk: plan — 10 chunks/5 waves: C01 wekan-mcp 7 dep/preload/label tools+docs (L, w1); C02 agent-explore+twins+matrix+AGENTS+EXPLORE.md read-order (L, w1); C03 sibling-I: 77b BOARD_COLORS, 70b typo, 81/78a verifies (Sx4, w1); C04 AD-66 renovate system-upgrade (S, w1); C05 boards dep-gate+preload-at-claim+grouped-sibling (M, w2, dep C01); C06 coord+plan research-split+explore-launch+AD-71 guidance (M, w2, dep C02); C07 Lifecycle 10-stage redesign (M, w3, dep C05); C08 cutover artifacts modify-only (M, w4, dep C07); C09 TZ env+stamp pass OQ5-gated (M, w4, dep C07); C10 HOLD deploy-chain+cutover readback human-executed (S, w5, dep C01,C08). OQ2/3/7/9/10/11/12 closed as DECISIONS; 8 questions returned for the ONE batched round; no-questions rule honored; commands_run: json.tool + baseline suites green + availability probes; deviations none; friction none new.",
@@ -125,24 +125,34 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "title": "sibling asks I: AD-77b BOARD_COLORS + AD-70b typo + AD-81 -pr verify + AD-78a silent-route verify",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit 3cc157472 atop test t6-leg 1b10d3313)",
+      "dev_session": "ses_e6a0d9e04ffeaYfSIkyXI7RYUa",
+      "handoffs": [
+        "RESULT (C03 dev r1, ses_e6a0d9e04ffeaYfSIkyXI7RYUa) status: DONE — T1 BOARD_COLORS row replaced with v12.65 source-checked 25-name list (chain const.js->colors.js->boards.js, default belize, v9.88=19 delta cross-checked cf-89 RESEARCH); T2 specced (plans edit denied); T3/T4 zero-gap verifies w/ line-level evidence (AD-81 four -pr surfaces cite; beyond-v102 = integration-tier execution gated on C10 deploy chain, mechanics L7-L12; AD-78a step 5d + gates L16 silent-route confirmed). Gate: siblings t1/t3/t4 green, t2 red-by-denial; regression battery green; aislop 100 0/0. open_questions: (A) template flip spec (coord applied), (B) rest-overview t6 new-leg spec (routed to test), (C) gates 'step 2.d' stale pointer -> Deferred.",
+        "RESULT (C03 validation add, test session continued ses_e6a006c4fffewfyGq9sqmQfhXF) status: DONE — spec (B) applied verbatim-modulo-idiom (indent normalization + regex-line fail-message range fix, both flagged mechanical), committed 1b10d3313 (tests/** only); rest-overview 7 ok incl t6 green; siblings 4 ok — t2 GREEN on coord's templates/FRICTION.md cord->coord fix; aislop 0/0; stray bare 'ok' line in suite output pre-existing since authoring -> future cosmetic touch.",
+        "RESULT (C03 review r1, fresh ses_e69fc2cc2ffeMAJABcd4fV44v6) status: DONE verdict APPROVED — independent re-fetch of wekan v12.65+v9.88 const.js/colors.js/boards.js: doc row order-exact (fixes old duplicate midnight), delta six names matches cf-89 [9][10], hedge retired scan-clean; AD-81 zero-gap TRUE w/ cite checks; AD-78a trio present; template one-word diff only, second cord seed (templates/DECISIONS.md:3) present+untouched kept Deferred; all suites re-run incl admitted-red message-identity across three probe geometries; finding: doc+template MUST ride one commit (t6 red-at-HEAD window) — honored at 3cc157472. Deferred ledger: gates step 2.d pointer; templates/DECISIONS cord seed; t6 banner-comment cosmetic."
+      ]
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "title": "sibling ask II (AD-66): renovate manages system-upgrade-controller",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit a305a2878 atop [test] drift repair e082d0e66)",
+      "dev_session": "ses_e69eb02f5ffe2jidiopCjUEqby",
+      "handoffs": [
+        "RESULT (C04 dev r1, ses_e69eb02f5ffe2jidiopCjUEqby) status: DONE — renovate.json 13-line additive git-tags custom manager (k3s-family position, field idiom); packageNameTemplate added beyond chunk list (git-tags resolves URLs — argocd precedent, needed or lookup errors); manifest byte-quiet; SUC suite t1/t2 flipped green, t3 held. MCP preview server-side impossible (both renovate MCPs filesystem-isolated, filesWalked:0 recorded) -> substituted real renovate CLI --dry-run=extract diff (exactly +1 dep) + preview-algorithm node sweep (added 1, removed 0, siblings identical); inline validate_config strict valid + lint parity (4 pre-existing warns, zero new). git-write-denied staging workaround: read-only GIT_DIR/GIT_WORK_TREE bridge, gitdir hashes prove untouched. open_questions: k1/k2 pre-existing reds flip spec (NOT C04-introduced — byte-identical at clean HEAD).",
+        "RESULT (C04 validation repair, test session continued) status: DONE — e082d0e66 tests/** only: k1 last-entry arm -> neighbour pin (floor rule after 'Hold kubectl'), k2 count 7->8 + llama-swap baseline byte-pinned; provenance corrected a14c4c8c8; three suites green, mutation-probed teeth kept.",
+        "RESULT (C04 review r1, fresh ses_e69ccd476ffecbL8hjQITiW7EE) status: DONE verdict APPROVED — AC1 inline validate strict + lint zero-delta; AC2 independent real-engine extract @44.181.5 in /tmp staging (bridge ls-files 2352==2352): base->HEAD diff exactly +1 file/+1 dep (git-tags, v0.14.2, replaceString verbatim), zero sibling regressions; lookup proven (git ls-remote anonymous OK, v0.14.2 real, latest v0.20.2 -> bot will PR); AC3 3/8/6 legs green; AC4 manifest zero branch-wide diff; packageNameTemplate KEEP-load-bearing (source-verified GitDatasource _getRawRefs pipes packageName to ls-remote; schema-legal); re-pin audit: pre-existence proven on two probe worktrees (red since a14c4c8c8, ancestor of authoring commit), floor pins not weakened; provenance corrected (dev's 2026-10-25 = the rule description's event date; commit a14c4c8c8 2026-10-26T00:36Z). Full battery green, admitted reds message-identical. friction: inline-transcribe hash slips -> segment-FNV gate; suggested future-chunk gate shape recorded."
+      ]
     },
     "C05": {
       "status": "pending",

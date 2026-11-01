@@ -4,18 +4,21 @@ description: >-
   WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card
   pickup (a given card id, else the top card walking Rework → Not Started → Low
   Priority, scheduled walks additionally filtered by Provider label with the
-  Local task the planned taker of unlabeled cards), card-driven kickoff where
-  the five standard checklists (Services/Type/Model(s)/Lifecycle/Human in the
-  Loop) and the single slug custom field (combined `[<slug>](<session link>)`
-  value) supply the answers pipeline-kickoff would ask live, the
-  checked-stages-only Lifecycle stage gate with its single-authority Stage map,
-  run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative
-  research-only loop for Research-labelled cards (ending at Review), the card
-  lifecycle with post-plan write-back (Finished stays human-owned), the
-  follow-up-card protocol landing Inbox (Backlog swimlane), the
-  archive-and-never-ask no-cards exit, and the batched question protocol.
-  MUST-loaded by agent-board-coord at run start; load it anywhere else when
-  working the WeKan AI-Dev board card flow.
+  Local task the planned taker of unlabeled cards; candidates additionally
+  skipped by the dependency gate over blocking Red Strings edges), the
+  claim-time `preload_board` consumer with its degrade law, the grouped-sibling
+  flow running a card's blocking-edge companions under one claim, card-driven
+  kickoff where the five standard checklists
+  (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the single slug
+  custom field (combined `[<slug>](<session link>)` value) supply the answers
+  pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate
+  with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs
+  naming every surface, the iterative research-only loop for Research-labelled
+  cards (ending at Review), the card lifecycle with post-plan write-back
+  (Finished stays human-owned), the follow-up-card protocol landing Inbox
+  (Backlog swimlane), the archive-and-never-ask no-cards exit, and the batched
+  question protocol. MUST-loaded by agent-board-coord at run start; load it
+  anywhere else when working the WeKan AI-Dev board card flow.
 ---
 # Boards
 
@@ -94,6 +97,8 @@ The values the flow writes onto the board. They are a written-onto-the-board con
 The card description is the request. Claim the card per the Card lifecycle before kickoff.
 
 The walk never visits **Executing** — a card there is owned by the run holding its pipeline lock set, and one session runs one card — nor **Timeout** (reaper destination; its triage is human-owned). On parallel-pipeline runs the candidate is additionally filtered by lock-set availability per Parallel pipeline loops below. On a scheduled run the launch text's Provider label filters the candidate additionally per Provider filtering below.
+
+**Dependency gate — a blocked candidate is skipped.** With the claim-time preload's dependency lines in hand (Board context block section — the consumer rule there), evaluate every walk candidate against them BEFORE its `move_card` to **Executing**: the candidate is SKIPPED when a blocking edge points at it from a card that is neither archived nor sitting in a list titled **Test** or **Finished**. The blocking edge set is EXACTLY the two Red Strings types `blocks` and `is-blocked-by` — `related-to`, `fixes`/`is-fixed-by` and `duplicates`/`is-duplicated-by` never gate pickup. Both spellings mean one thing here, but the board stores only one entry per drawn edge: v12.65 keeps the edge on the card it was drawn FROM and neither the board-wide edge list nor the preload synthesizes an inverse twin — so the gate honors BOTH spellings consumer-side via WeKan's type-inverse map: the house convention's `is-blocked-by` carried by the DEPENDENT toward its blocker, and a `blocks` line pointing at the candidate from a blocker that drew it, are the same relation spelled from either end; a manually drawn edge may arrive as either spelling, and reading only one is the miss the OQ2 both-directions ruling exists to prevent. Test/Finished membership resolves by list TITLE against the runtime id map — the board-context block's `lists:` section, or `list_lists` when no block rode the launch (the preload grouping is id-keyed; its list entries carry no titles) — the plan-time live ids ride the STATE.json claim record for traceability, never this skill. Every reference keys on the card `_id`; `card_number` is display-only identity, never a join key (it re-counters on cross-board moves). A blocker that reads `archived: true` never blocks. On a skip the run releases the held claim with `pipeline_release(outcome:"abandoned")` and walks on — the 3-attempt claim cap still governs; a launch-given card that fails the gate is reported and left, never forced. Every skipped candidate is REPORTED — candidate `_id`, the blocking card's `_id`, and that blocker's list — in the RESULT and in the claim comment of the card the run finally takes, so the walk is auditable.
 
 Resume vs new run (D11) — before minting anything, read the card's `slug` custom field (parse: a combined `[<slug>](<session link>)` value yields the slug as its bracketed link text; a legacy bare value yields the slug whole):
 
@@ -237,6 +242,8 @@ A launch prompt may carry a pre-collected Board context block — structural ids
 - Block absent → normal, not a gap: resolve ids top-down exactly as before.
 - Any id-shaped call error (404, not-found, or an empty projection where the block's ids promised data) → re-resolve the block against the live board before retrying, and note the drift in RESULT. The board structure is human-owned and drifts, so the block is a starting context, never a freeze — the schema's own re-resolve footer binds here too.
 
+**Preload consumer at claim.** The call site is the coordinator at claim — once `pipeline_claim` succeeds for this run's card it calls `preload_board` exactly ONCE and spends nothing else on board reads the payload already answers. It is never the hook: the 8 s board-context prompt-hook budget stays structural-only and prefetches no card data (the plan's OQ3 ruling — the hook would race a whole-board export past its admission budget). The one map serves the rest of the pickup walk — the dependency-gate evaluations, the Provider/`Pipeline:` label derivations for later candidates (each card's `label_ids` against the payload's `label_names` map, no per-candidate `get_card`+`get_board` pair), and the resume-vs-new-run slug check (the preload carries the parsed `slug`). The per-candidate `get_card` confirmation step stays for the CLAIMED card only — its description, custom fields and checklist state are single-card reads the preload deliberately does not carry. From the preload the run records a LEAN stamp — `{preload: {at, tool, cards, degraded}}` — inside that same STATE.json `kickoff` record the block above is written to; the full card map is NOT persisted to STATE.json. Degrade law (the cf-96 family rule): probe `tools/list` first; while the deployed build predates the C10 pin bump, `preload_board` is ABSENT there — the run then keeps today's per-list `list_cards_in_list` reads, SKIPS the dependency gate, and notes the skip in RESULT; never a hard failure, never a stall.
+
 ## Research-only cards — iterative loop
 
 Trigger: the card's labels include the **Research** board label — read board labels via `get_board` and the card's label ids via `get_card`, matched case-insensitively. The label is the ONLY trigger (D14); the Lifecycle checklist never fires this flow — its Pre/Post Research items are stages of normal cards (a legacy-Research card per the transition rule behaves the same: its checklist only times research, it never marks a card research-only).
@@ -281,6 +288,16 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
 - Card picked from **Rework**: read its full comment history (`list_comments`) first; the comments are the rework context.
 - **Resume vs new run**: apply the D11 rule from Card pickup; a resumed run re-claims without re-minting the slug or re-running kickoff.
 
+## Grouped-sibling flow
+
+A card sometimes stands for a group of small companion asks its owner wants run together — cf-96's own card is the pattern's first instance. The flow triggers ONLY on blocking Red Strings edges: the claimed card's `blocks`/`is-blocked-by` edges (from the claim-time preload's `dependencies` list, or `list_board_dependencies` on demand) name the companion cards. Kind-1 follow-up lineage is `parent_id` alone — it is NEVER a grouping trigger, no follow-up edge is drawn and none is expected back (the batched-round ruling). The edges key on card `_id`, never `card_number`.
+
+- **Plan** — the run pulls every sibling's ask into its OWN plan (the plan names each sibling's card `_id` beside the chunk carrying its ask); one plan, one run, one review covers the group.
+- **Moves — coord-owned** — at start, right after the run's own claim, the coordinator moves each sibling to **Executing**; at end, once the sibling's ask landed and the final whole-plan review passed, it moves each sibling to **Review** with one summary comment each (which chunk shipped the ask, the commit range). Siblings are moved exactly like the claimed card — by the coord, never by a subagent.
+- **Ride the claim** — siblings run under the run's OWN `pipeline_claim`; they are never claimed separately (one session, one card). The pickup walk skips **Executing**, so a grouped sibling can never be double-picked by another run.
+- **Never disturb the settled** — grouping only pulls cards the pickup walk could itself have taken: candidates in **Test** or **Finished** (human acceptance phase) and cards **Executing** under another run's lock are never grouped or moved.
+- **Degrade** — until edges exist on the deployed board surface, a run may group from a plan-enumerated id list instead (the same card `_id`s enumerated in its plan's run-protocol section); this ticket's own first instance ran exactly that way, and the degrade follows the family `tools/list` probe law.
+
 ## Post-plan card write-back
 
 Right after plan approval (research-only cards do the same immediately before their Ready-for-Review move, D19):
@@ -309,7 +326,7 @@ Cards often defer work — "we'll need a follow-up card for the mechanics of X".
 - **Timing** — after the post-research stage and before the test session (the Stage map's `Post Research` and `Test` rows): every deferred card is on the board before this run's implementation work starts, and whoever picks it up later reads a complete parent record.
 - **Destination** — EVERY follow-up/ledger card lands in the **Inbox** list of the **Backlog** swimlane — never Review, never Low Priority. Inbox postdates every prefetched board-context block: re-resolve its id via `list_lists` at use time (the block is a snapshot, never a freeze). The destination keeps the old non-intake guarantee by location: Inbox lives in the Backlog swimlane, which the pickup walk never visits, so follow-up cards queue for the owner instead of entering auto-pickup.
 - **Parent-label inheritance** — a follow-up card carries EVERY label of its parent EXCEPT `Research`: the research-only flow shape must not leak onto work cards; every other label (`Pipeline:`, `Provider:`, `Bucket:`) carries over.
-- **Mechanics** — `create_card` with the title, a description quoting the parent card and the deferred ask, and the parent's swimlane. The deployed wekan-mcp surface cannot set labels on a card, so list the parent's labels as a "labels to apply" line in the card body and cite the existing label-tool ledger card — that line retires to a set-labels call when the label tool lands. Checklist answers ride `default_checked` on `create_card` when the deployed build accepts it (probe once); when it rejects the argument, fall back to `toggle_checklist_item` after creation. NEVER `add_checklist` — the board's createCard rule already adds the five standard checklists (duplicates proven on cards #64–67, 2026-10-28).
+- **Mechanics** — `create_card` with the title, a description quoting the parent card and the deferred ask, the parent's swimlane, and `parent_id` set to the parent card's `_id`: parentId is the ONLY follow-up lineage representation (the batched-round ruling — no dependency edge is drawn for a follow-up and none is expected back). Labels: when the deployed build carries `set_card_labels` (probe `tools/list` once, same law as the preload consumer), apply the parent's minus-`Research` label set with one `set_card_labels(board_id, [new card id], add_label_ids=…)` call right after creating the card — this retires AD-74's ledger round-trip. Until that pin bump ships (the C10 deploy chain), keep the pre-deploy degrade: list the same labels as a "labels to apply" line in the card body and cite the existing label-tool ledger card so the owner applies them by hand. Either way, the minus-`Research` rule above IS the label set — what the call applies and what the line asks for are the same list. Checklist answers ride `default_checked` on `create_card` when the deployed build accepts it (probe once); when it rejects the argument, fall back to `toggle_checklist_item` after creation. NEVER `add_checklist` — the board's createCard rule already adds the five standard checklists (duplicates proven on cards #64–67, 2026-10-28).
 
 Creating these cards is not a run: the creating session claims nothing, moves nothing, and sets no fields beyond the cards it creates — every later move out of Inbox is the owner's alone.
 
