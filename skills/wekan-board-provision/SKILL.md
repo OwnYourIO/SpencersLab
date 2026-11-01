@@ -1,15 +1,16 @@
 ---
 name: wekan-board-provision
-description: "Provision or update the AI-Dev WeKan board structure idempotently — mirror Planning's lists from Backlog, ensure one Bucket: <list> label plus a createCard/moveCard rule pair per Planning list, ensure the Provider: API / Provider: Local labels, and ensure Inbox exists in Backlog. Use when asked to (re-)provision the board, when /wekan-board-provision runs, or when the action plan of scripts/provision-board.py must be applied through dev-boards or raw REST."
+description: "Provision or update the AI-Dev WeKan board structure idempotently — mirror Planning's lists from Backlog, ensure one Bucket: <list> label plus a createCard/moveCard rule pair per Planning list, ensure the Provider: API / Provider: Local and Research: Parallel labels, ensure Inbox exists in Backlog, and diff the createCard rule's checklist extras (11-item Lifecycle + Human in the Loop mirror, Model(s) → Qwen Flash default-checked) against the spec via a schema-2 snapshot. Use when asked to (re-)provision the board, when /wekan-board-provision runs, or when the action plan of scripts/provision-board.py must be applied through dev-boards or raw REST."
 ---
 
 # WeKan board provisioning
 
 `scripts/provision-board.py` is the offline engine: a board snapshot goes in
-(`--fixture <snapshot.json>`, schema `wekan-board-snapshot/1`), one ordered,
-idempotent action list comes out. It never touches the network and never
-reads credentials — every board mutation happens in the apply steps below,
-gated by a human-confirmed plan.
+(`--fixture <snapshot.json>`, schema `wekan-board-snapshot/1`, or schema
+`wekan-board-snapshot/2` when the createCard rule's checklist extras were
+captured), one ordered, idempotent action list comes out. It never touches
+the network and never reads credentials — every board mutation happens in
+the apply steps below, gated by a human-confirmed plan.
 
 ## The spec the engine diffs against
 
@@ -27,10 +28,26 @@ gated by a human-confirmed plan.
   substitution, which is why the design is one label and two rules per
   list, not one generic rule.
 - **Provider labels**: `Provider: API` and `Provider: Local` exist.
+- **Research: Parallel label**: the board label the coord's per-ask
+  research split keys on exists, presence judged by name only like the
+  Provider labels; `orange` is the palette default, an owner recolor
+  survives — an ensure never recolors.
 - **Inbox**: `Inbox` is a Backlog-swimlane list the engine ensures
   exists. It is NEVER mirrored into Planning and NEVER receives a
   `Bucket:` label or a rule pair — cards parked in Inbox stay
   unbucketed by design.
+- **createCard checklist extras** (schema `wekan-board-snapshot/2` only):
+  the multi-action createCard rule carries five extras — Services (15
+  items), Type (7), Model(s) (4, arriving with `Qwen Flash` checked),
+  Lifecycle (the 11 stage names in card order, `Single Session` last,
+  unchecked so the blank Lifecycle default governs), and Human in the
+  Loop (the same 11 names, unchecked; the OQ6/OQ13 rulings). Against a
+  schema-2 snapshot the engine diffs the captured extras against this
+  spec and, on drift, emits ONE `update_createcard_checklists` action
+  naming the v2 rules-import artifact
+  `.agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json`.
+  Against a schema-1 snapshot the spec is UNVERIFIABLE and the engine
+  prints only a runbook note on stderr — a note is not an action.
 
 ## Procedure
 
@@ -44,6 +61,14 @@ board labels) → `list_swimlanes` → `list_lists` (each item carries its
 swimlane-id→titles, `labels` as name→color, and rules as
 `{title, trigger, action}` records — omit `"*"` matchers and resolve an
 `addLabel` id to its label name. The engine keys on titles, not ids.
+
+To capture schema `wekan-board-snapshot/2`, read the createCard rule's
+checklist extras with `get_rule` (or the Rules UI export — rule checklists
+are write-restricted to the UI/import path, never REST) and add a
+top-level `checklist_extras` map: checklist name → `{items: [...names in
+order], checked: [...names]}`. If the rule read fails or the extras cannot
+be captured, fall back to schema 1 — the engine then treats the checklist
+spec as unverifiable instead of guessing.
 
 ### 2. Dry run — the engine emits the action plan
 
@@ -62,25 +87,42 @@ Probe the live tool catalog (`tools/list`) before applying anything: the
 deployed build can lag the repo. `create_rule` is present in the deployed
 dev-boards surface; `create_list` and `create_label` are NOT (the `:v87`
 pin — ledger card L4 tracks the bump that makes the MCP path whole).
-Apply through dev-boards when the tool is present, otherwise emit the
-raw-REST fallback recipes below for the human shell (`WEKAN_BASE_URL` +
-`WEKAN_TOKEN`, the wekan-api skill convention) or route them through the
-admin-global-wekan surface, and stop cleanly for human confirmation.
+The repo source now carries `create_list`, `create_label`, and
+`set_card_labels` (cf-89/cf-90 tooling plus the cf-96 C01 block); the
+degrade below retires when the C10 pin-bump deploys — until then treat
+the deployed catalog, not the source, as the truth. Apply through
+dev-boards when the tool is present, otherwise emit the raw-REST fallback
+recipes below for the human shell (`WEKAN_BASE_URL` + `WEKAN_TOKEN`, the
+wekan-api skill convention) or route them through the admin-global-wekan
+surface, and stop cleanly for human confirmation.
 
 Apply the plan in its emitted order — list creations first, then each
-`Bucket:` label immediately followed by that list's rule pair, provider
-labels last — and resolve every title to its live id at apply time
-(re-read structure after creating lists/labels; never trust snapshot
-ids). That order already keeps every label ahead of the rules referencing
-it; do not regroup the plan by action type. Rule titles follow the
-convention `Bucket: <list> — <activityType>` exactly as the engine prints
-them, so the next dry run matches them case-insensitively and reports
-them as done.
+`Bucket:` label immediately followed by that list's rule pair, the
+Provider and Research: Parallel label ensures last — and resolve every
+title to its live id at apply time (re-read structure after creating
+lists/labels; never trust snapshot ids). That order already keeps every
+label ahead of the rules referencing it; do not regroup the plan by
+action type. Rule titles follow the convention
+`Bucket: <list> — <activityType>` exactly as the engine prints them, so
+the next dry run matches them case-insensitively and reports them as done.
 
 - create a list: `POST /api/boards/:id/lists` with
   `{"title": "<list>", "swimlaneId": "<target-swimlane-id>"}`
 - create a label: `POST /api/boards/:id/labels` with
   `{"name": "<label>", "color": "<color>"}`
+
+An `update_createcard_checklists` action in the plan is **HUMAN-EXECUTED,
+never applied here**: checklist extras on a rule are creatable only
+through the WeKan UI wizard or Rules → Import JSON, never through any REST
+or MCP call — that is why this leg exists as a runbook action. The agent
+emits the recipe and stops: the owner takes a board backup FIRST, then
+WeKan UI → Rules → Import JSON of
+`.agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json`,
+which replaces the createCard rule's extras with the five-checklist v2
+shape (`Model(s)` → `Qwen Flash` the only default check). This mirrors the
+boards skill's "Board-side cutover" steps: checklist renames and the
+label ensures stay human-owned too — an agent never mutates board
+checklists or rules.
 
 ### 4. Verify with a zero-action re-run
 
@@ -98,3 +140,6 @@ or the board drifted mid-run — fix the apply, never the diff.
   a human edit, never a provisioning side effect.
 - Inbox contract: ensured in Backlog, never mirrored into Planning, never
   given a `Bucket:` label or a rule pair.
+- The checklist-extras apply is human-executed and backup-gated: no
+  agent path writes checklist extras, and the engine only prints the
+  import runbook.
