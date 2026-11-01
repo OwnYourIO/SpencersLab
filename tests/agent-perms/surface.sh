@@ -28,7 +28,7 @@
 # A16[board-tick-cleanup C01 AC1-AC4: the explicit `ls *` allow on every
 # permission-bearing source and mirror, the effective 'ls -a' verdict, the
 # fabricated-strip/duplicate negative controls, the 22/9 verified counts (re-pinned to
-# 24 by cf-90 C06's deploy pair landing) and the permissions.md matrix + drift move].
+# 25 by cf-96 C02's agent-explore landing) and the permissions.md matrix + drift move].
 #
 # cf-90 RE-PIN (2026-10-31, agent-test; C03): NAMING grew to FIVE rows —
 # opencode_worktree_remove inserted after worktree_list for the work-complete
@@ -42,7 +42,11 @@
 # deploy, the -pr slot agent-dev-deploy-pr — the rulesync-surface c2 form),
 # A13's retired-token lookaheads admit the live [-]deploy pair in both the
 # binding-surface and the AGENTS/rules prose scans, and A16's verified source
-# count moved 22 -> 24 with the deploy pair landing.
+# count moved 22 -> 24 with the deploy pair landing. cf-96 C02 round (this
+# session, 2026-11-01, dev-validated flip): the roster wants grow to SEVEN —
+# agent-explore joins UNCONDITIONALLY after agent-research on all six twins
+# (mirrors verified in the same working tree) — and A16's verified source
+# count moves 24 -> 25 with the agent-explore source landing.
 # SELECTION NOTE: nothing in this suite is pre-existing-red today; the drift
 # reds live in the sibling suites (gate t17/i4/s4/m4 — see gate.sh header).
 #
@@ -361,7 +365,9 @@ cat >"$TMP/family.py" <<'PY'
 #   roster FILE SLOT           — subagent allows == the role set with SLOT
 #                                in the dev position (five roles pre-cf-90-C06;
 #                                six with the class's deploy launch once the
-#                                pipeline-role-deploy skill pair exists),
+#                                pipeline-role-deploy skill pair exists; seven
+#                                with cf-96 C02's agent-explore, unconditional
+#                                once the explore source landed),
 #                                leading '*' deny first.
 #   api FILE                   — exactly the two scoped opencode-api shell
 #                                allows, in order, directly after the single
@@ -610,17 +616,19 @@ def cmd():
         if p[0] != {"action": "*", "resource": "*", "effect": "deny"}:
             fail(f"roster: {path} lost the leading deny-all baseline")
         allows = sorted(r.get("resource") for r in p if r.get("action") == "subagent" and r.get("effect") == "allow")
-        want = sorted(["agent-plan", "agent-test", slot, "agent-review", "agent-research"])
+        want = sorted(["agent-plan", "agent-test", slot, "agent-review", "agent-research", "agent-explore"])
         # cf-90 C06 era-gate (the rulesync-surface c2 plain-class form): once
         # the pipeline-role-deploy skill pair ships, the roster has widened with
         # launches by class — the -local class has agent-dev-deploy, the -pr
-        # slot has agent-dev-deploy-pr. Pre-C06, the 5-role form remains the
-        # contract, so past CHUNK_BASE geometries stay meaningful.
+        # slot has agent-dev-deploy-pr. Pre-C06, the 5-role form was the
+        # contract; the cf-96 C02 round made agent-explore an UNCONDITIONAL
+        # want — it landed on all six twins with its source in one commit, so
+        # post-C02 geometries are the only meaningful ones for this arm.
         import os
         if os.path.exists(".rulesync/skills/pipeline-role-deploy/SKILL.md"):
             want = sorted(want + ["agent-dev-deploy-pr" if slot == "agent-dev-pr" else "agent-dev-deploy"])
         if allows != want:
-            fail(f"roster: {path} subagent allows {allows}, want exactly {want} (deny-all + per-class role roster: five roles pre-cf-90-C06, six with the deploy launch; the leading subagent '*' deny remains)")
+            fail(f"roster: {path} subagent allows {allows}, want exactly {want} (deny-all + per-class role roster: five roles pre-cf-90-C06, six with the deploy launch, seven with the cf-96 C02 explore row riding after agent-research on every twin; the leading subagent '*' deny remains)")
         if not any(r.get("action") == "subagent" and r.get("resource") == "*" and r.get("effect") == "deny" for r in p):
             fail(f"roster: {path} lost the leading 'subagent * deny' row")
     elif op == "api":
@@ -1812,8 +1820,8 @@ fi
 # matrix rows name their unmoved text. HOLD after landing.
 if want a16; then
   mapfile -t permed < <(grep -l 'permissions:' .rulesync/subagents/*.md)
-  [ "${#permed[@]}" -eq 24 ] \
-    || fail "A16[C01 AC1]: ${#permed[@]} sources carry a permissions: block, want the cf-90 C06-re-pinned 24 (board-tick-cleanup's verified 22 + the agent-dev-deploy/-pr pair)"
+  [ "${#permed[@]}" -eq 25 ] \
+    || fail "A16[C01 AC1]: ${#permed[@]} sources carry a permissions: block, want the cf-96 C02-re-pinned 25 (cf-90's 24 + the agent-explore source)"
   no_perm_landing=$(grep -L 'permissions:' .rulesync/subagents/*.md | grep -v '/[0-9]' || true)
   [ -z "$no_perm_landing" ] \
     || fail "A16[C01 fact]: a NON-stage agent lost its permission block: $no_perm_landing (the nine stage agents are the permissionless set — W3 verified)"
@@ -1907,7 +1915,7 @@ PY
     python3 "$TMP/sectgrep.py" "$f" section 'Drift incidents' 'ls *' \
       || fail "A16[C01 matrix]: $f Drift-incidents section has no ls-* entry for the 2026-10-29 ruling (12 sources, re-pinned suites)"
   done
-  ok "A16[C01 AC1-AC5]: 24 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow (22 + the cf-90 C06 deploy pair), every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
+  ok "A16[C01 AC1-AC5]: 25 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow (22 + the cf-90 C06 deploy pair + the cf-96 C02 explore source), every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
 fi
 
 printf 'PASS: agent-perms contract checks (%d ok)\n' "$checks"

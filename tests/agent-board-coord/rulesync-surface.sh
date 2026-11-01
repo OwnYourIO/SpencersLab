@@ -318,6 +318,8 @@ if os.path.exists(".rulesync/skills/pipeline-role-deploy/SKILL.md"):
     want_subs = sorted(want_subs + ["agent-dev-deploy"])
 else:
     want_subs = sorted(want_subs)
+if os.path.exists(".rulesync/subagents/agent-explore.md"):
+    want_subs = sorted(want_subs + ["agent-explore"])
 if subs != want_subs:
     errs.append(f"subagent allows {subs}, want exactly {want_subs}")
 edits = [p.get("resource") for p in perms if p.get("action") == "edit"]
@@ -335,7 +337,7 @@ if not deny_all or not boards_allow or boards_allow[0] < deny_all[0]:
     print("the dev-boards allow does not follow the leading deny-all (last-match-wins would deny it)")
     sys.exit(1)
 EOF
-  ok "c2: generated agent frontmatter (name, distinct color, question + dev-boards* allows, NO broad dev* (D21), five subagent allows, three edit allows only)"
+  ok "c2: generated agent frontmatter (name, distinct color, question + dev-boards* allows, NO broad dev* (D21), the era-gated subagent roster — seven with cf-96 C02's explore row, three edit allows only)"
 
   # cf-58 C02/C03 re-pin: the PORT_REF frozen-permission-walk (the second
   # arm of this check) is RETIRED — the sanctioned delta grew from "the two

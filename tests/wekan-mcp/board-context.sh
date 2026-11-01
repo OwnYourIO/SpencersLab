@@ -248,7 +248,7 @@ if missing:
 # dev-deploy/dev-deploy-pr. Admitted as the exact set, never as a blanket
 # skip: any other gained matcher still reddens.
 added = [x for x in nlabels if x not in blabels]
-admitted = {"board", "agent-board", "dev-deploy", "dev-deploy-pr"}
+admitted = {"board", "agent-board", "dev-deploy", "dev-deploy-pr", "explore"}
 if added and not set(added) <= admitted:
     print(f"unexpected matcher rows added: {added}"); sys.exit(1)
 if "agent-board" not in nlabels and "board" not in nlabels:
@@ -272,7 +272,7 @@ if os.path.exists(".rulesync/subagents/agent-dev-deploy.md"):
 # never as a blanket skip: the TB form still rides (pre-merge trees, via the
 # byte-equal walk below) and the pinned settled form rides; anything else — a
 # dropped ls/probe grant, a reworded tail, any gained row — reddens.
-COORD_PR_SETTLED = """| coord-pr | same as coord | plan/research/test/dev-pr/dev-deploy-pr/review | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
+COORD_PR_SETTLED = """| coord-pr | same as coord | plan/explore/research/test/dev-pr/dev-deploy-pr/review | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
