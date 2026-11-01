@@ -29,6 +29,8 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 
 ## Deferred
 - Post-pod HA setup/onboarding/backup wiring — separate card per owner.
+- C01(review) design Q for the next human touchpoint: mismatched-`Repo:` skips consume the at-most-3-attempt budget — with 3+ worker repos sharing the board, a tick whose top three candidates are foreign cards ends `no-claimable-cards` while an eligible card sits fourth. Current shape is safe (a later tick picks it up; stale clock unaffected while the session heartbeats); fix, if the owner wants "walk past mismatches, cap only CLAIMS", is one clause in the boards step-4 — the cap sentence stays byte-intact. C02 implements the as-written shape.
+- C01(review) minors folded into C02's brief (same surfaces): name the identity derivation channel (`git rev-parse --path-format=absolute --git-common-dir` parent, never the worktree basename); tighten overview/AGENTS "whole label set" → "whole derived `Pipeline:` set".
 - Repo: label creation on the board (owner, WeKan UI) after C01/C02 land; `Pipeline:` track migration is NOT planned (coexist posture).
 - OpenChamber scheduled-task enablement per target repo (owner, per-project sync).
 - Committing the ported machinery in the target repos (owner ruling post-accept).

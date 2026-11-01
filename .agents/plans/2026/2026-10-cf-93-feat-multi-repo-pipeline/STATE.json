@@ -38,13 +38,31 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6bc00f14ffeC50gN0ZoDYhXMD",
+      "handoffs": [
+        {
+          "at": "2026-10-31T23:20:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6bc00f14ffeC50gN0ZoDYhXMD",
+          "status": "DONE",
+          "summary": "boards skill Repo: filter (coexist, pickup-only, never claim-set) + Repo identity section (basename + AGENTS.md cross-check, never-guess) + exact spellings incl lowercase-b; sources + rulesync generate (mirror .opencode + AGENTS.md); suite red->green 10ok; plugin/commands/gate untouched (t3 pins); aislop ci 100/0. Pre-existing reds (cf-58 baseline, 6 suites) flagged not-attributable.",
+          "result": "RESULT status:DONE chunk:C01 deviations:default-picker named once per Notes-37; friction:none; open_questions:none; next:agent-review C01"
+        },
+        {
+          "at": "2026-10-31T23:40:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6bb34dd7ffecXAS25Zy5SGKdV",
+          "status": "APPROVED",
+          "summary": "All validations re-run green (suite 10ok, rulesync --check, generate no-op byte-stable, aislop 100/0, boards-pair/noop/pipeline-models regressions pass). Six red suites proven pre-existing at HEAD in a temp worktree (cf-58 coord-contract baseline). Non-blocking: minor identity-derivation channel (git-common-dir parent, never worktree basename); minor overview.md 'whole label set' wording -> 'whole derived Pipeline: set'; DESIGN Q for coord->user: step-4 mismatch skips consume the 3-attempt budget (foreign cards can park own card 4th); asks C02 fold the two minors + name the cf-58 baseline reds.",
+          "result": "RESULT status:DONE chunk:C01 open_questions:attempt-budget-vs-mismatch-skip design consequence (for the next human touchpoint); next:commit C01, wave-1 C03/C04"
+        }
+      ]
     },
     "C02": {
       "status": "pending",
