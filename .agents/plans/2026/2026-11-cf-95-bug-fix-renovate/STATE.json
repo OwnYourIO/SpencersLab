@@ -1,0 +1,93 @@
+{
+  "feature": "2026/2026-11-cf-95-bug-fix-renovate",
+  "plan_status": "approved",
+  "approval": {
+    "approved_by": "user",
+    "at": "2026-11-01T02:37:50Z",
+    "via": "board-coord question round on card #95 plan (two-chunk plan C01+C02, waves as listed in the plan file)"
+  },
+  "coord_session": "ses_e6b61277bffeGnFKRyyIcfPF9q",
+  "test_session": "ses_e6b04ce9affelqCbamaxHIloO9",
+  "test": {
+    "handoffs": [
+      {
+        "note": "agent-test single session for the whole plan (designed-red, both directions verified against simulated-fix trees then git restore). Distribution deviation accepted: suite split follows the chunk files' authoritative Tests sections. Enumeration gate is the static supported-datasource form (k10 comment records why the fully-dynamic form would falsely redden containers/renovate-mcp/Dockerfile npm RUN-line annotations the plan keeps).",
+        "result": "RESULT\nstatus: DONE\nchunk: test\nfiles_changed: [tests/renovate/dockerfile-pins.sh, tests/renovate/chart-yaml-legs.sh, tests/services/home-dead-image-refs.sh]\ndeviations: \"1) Suite distribution follows the chunk files' Tests sections (authoritative), which differs from the launch summary's grouping. 2) The enumeration gate uses the chunk-AC3 static supported-datasource form; a fully-dynamic form would falsely redden containers/renovate-mcp/Dockerfile's two npm RUN-line annotations, which the plan keeps untouched (rationale comment at k10). 3) Mutual exclusion pinned directly (B extracts 0 from the branch= fixture; A extracts 0 from every tracked Dockerfile), per DECISIONS D7. 4) g7 disjointness compares by renovate's dedupe identity. 5) Tests are red by design; none weakened — red/green shapes verified both directions.\"\nfriction: \"write tool denied outside the repo (prototype scratch under /tmp/opencode) — resolved via shell heredocs; system node on the default PATH is 26.5.0 — suites verified green/red under both v24.22.0 and v26.5.0.\"\nopen_questions: none\nnext_suggested: dev C01 (renovate.json + coder-workspace Dockerfile) then dev C02 (values replacements), each running its suites green; review re-runs them plus the plan Commands dry-run/probe gates — the single fully-clean dry-run stays the final whole-plan review's gate."
+      }
+    ]
+  },
+  "current_wave": 1,
+  "updated_at": "2026-11-01T02:37:50Z",
+  "plan": {
+    "handoffs": [
+      {
+        "round": 1,
+        "note": "agent-plan draft, RESULT verbatim (session ses_e6b5283a8ffecTJceOKI80Q2wl); open_questions answered in the batched coord round",
+        "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [.agents/plans/2026/2026-11-cf-95-bug-fix-renovate/2026-11-01-bug-fix-renovate.md, .agents/plans/2026/2026-11-cf-95-bug-fix-renovate/STATE.json, .agents/plans/2026/2026-11-cf-95-bug-fix-renovate/DECISIONS.md, .agents/plans/2026/2026-11-cf-95-bug-fix-renovate/FRICTION.md, .agents/plans/2026/2026-11-cf-95-bug-fix-renovate/chunks/C01.md, .agents/plans/2026/2026-11-cf-95-bug-fix-renovate/chunks/C02.md]\ndeviations: none\nopen_questions: 7 items (coder-workspace dead pin; .agents silence scope; grafana 16541; tika pin choice; git-refs branch template; mariadb changelog; chrome pin style)\nnext_suggested: batched question round -> relaunch plan with answers -> user approval -> agent-test -> dev C01 -> dev C02 -> per-chunk reviews -> final whole-plan review"
+      },
+      {
+        "round": 2,
+        "note": "agent-plan rework with all 7 user answers folded (2 accepted-rec, 4 overridden, 1 clarified-then-answered). User rulings: dead coder-workspace pin FIXED IN PLAN; .agents/** BLANKET silence; grafana 16541 REPLACED with live successor gnetId 13665 rev 4 (22651 rejected); tika JUMP TO NEWEST apache/tika:2.9.2.1-full; git-refs ADD branch= grammar (default main); mariadb RELY ON sourceUrl; chrome KEEP tag: 124.",
+        "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-11-01-bug-fix-renovate.md, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01.md, chunks/C02.md]\ndeviations: none — all seven answers folded exactly as ruled; superseded draft decisions recorded as retracted in DECISIONS D3/D4/D7/D10 rather than silently rewritten\nfriction: grafana.com search API rejects documented ?q= (409) and deleted 16541 has no Wayback snapshot -> successor via websearch enumeration + per-id detail/download API verification; working probe shape documented in FRICTION.md + plan Commands 6\nopen_questions: none\nnext_suggested: user approval (coord flips plan_status) -> agent-test writes the three suite surfaces as designed-reds -> dev C01 -> dev C02 -> per-chunk reviews -> final whole-plan review re-runs the clean dry-run gate"
+    ],
+    "approval_note": "Plan approved by the user 2026-11-01T02:37:50Z via the board-coord question round; HITL PR stop point remains armed for any PR-gated surface (C02 values edits are deploy-affecting per plan)."
+  },
+  "kickoff": {
+    "card": "eA8hd82XxaxCcdwye",
+    "card_number": 95,
+    "slug": "cf-95-bug-fix-renovate",
+    "type": "bug",
+    "run_tag": null,
+    "worktree": "cf-95-bug-fix-renovate",
+    "branch": "cf-95-bug-fix-renovate",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-flash",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "coord_session": "ses_e6b61277bffeGnFKRyyIcfPF9q",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "services_checklist": "none of 15 checked — affected files taken from the card description (verified fact, not a question)",
+    "type_checklist": "bug checked",
+    "models_checklist": "exactly one checked (Qwen Flash); Provider: API confirmed in kickoff question round -> every tier routes to openrouter Qwen Flash",
+    "lifecycle_consumption": "LEGACY checklist shape — no Lifecycle checklist; legacy Research checklist has `Agent Decides` checked -> per the boards transition rule it only times research around planning, never gates stages; this run executes the DEFAULT full loop: Plan + Test + Code + Review, Deploy off",
+    "human_in_the_loop": "PR checked (pre-existing stop point); the plan-approval pause applies always",
+    "slug_custom_field": "unset — final slug cf-95-bug-fix-renovate derived from card content and auto-accepted",
+    "mints": "branch cf-95-bug-fix-renovate at c241bdaf"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6aeb9e95ffeSK7ZnxMI5oZCle",
+      "review_session": "ses_e6adcc169ffewl0R1dvK5L5J2R",
+      "handoffs": [
+        {
+          "round": 1,
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nverdict: APPROVED\nfiles_changed: [.agents/plans/2026/2026-11-cf-95-bug-fix-renovate/chunks/C01.md (review notes)]\ncommands_run: [validator exit 0; dockerfile-pins.sh 34 passed 0 failed; chart-yaml-legs.sh 12 passed 0 failed; dry-run exit 0 + grep -c '❌' = 0 + 0 ERROR-level records; AC4 forbidden-class grep EMPTY; AC5 disabled-no-lookup shape verified; AC6 helmv3+sourceUrl verified; git-refs digest updates live (5cdad9cb->3582a684); aislop ci --changes 0/0; structural JSON diff + RE2/no-lookahead grep + trailing-byte check]\ndeviations: none\nfriction: none\nopen_questions: none\nnext_suggested: coord commits C01; C02 dev may proceed; before the final whole-plan dry-run fold the 3 forgejo lines into the plan Commands allowlist per the Deferred addendum and hold the AC6 datasource-wording tolerance."
+        },
+        {
+          "round": 1,
+          "role": "dev",
+          "result": "RESULT\nstatus: DONE\nchunk: C01\nfiles_changed: [renovate.json, containers/coder-workspace/Dockerfile]\ncommands_run: [validator exit 0; dockerfile-pins.sh 9/6-red -> 34 passed 0 failed; chart-yaml-legs.sh 7/5-red -> 12 passed 0 failed; home-dead-image-refs.sh 7/13 (C02 designed-red, untouched); dry-run baseline exit 1 w/ cannot-parse-url ERROR -> fixed exit 0, 0 ERROR, 0 forbidden failed lookups, residuals only documented allowlist + 3 pre-existing forgejo lines; AC5/AC6 probes pass; npx aislop ci --changes -> 0 errors 0 warnings]\ndeviations: \"1) AC6 wording 'helm-oci': surviving helmv3 leg logs per-dep datasource 'docker' (GHCR pull-token flow) — every observable AC6 requirement holds, judged wording mismatch. 2) AC4 allowed-residual list omitted 3 pre-existing forgejo no-result lines (proven environment-constant baseline-vs-fixed); coord asked to note them in the plan Commands allowlist before the final dry-run. 3) coder-workspace Dockerfile header sentence already stale; left untouched per AC7.\"\nfriction: \"ERROR records in renovate 44 logs are the literal ❌ ERROR line + exit code, not level:60 JSON (gate shape corrected); before/after evidence taken via stash/pop, never a commit.\"\nopen_questions: none\nnext_suggested: review re-runs both suites + the fixed dry-run gate, then coord commits C01; C02 independent, may proceed in parallel."
+        }
+      ]
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}
