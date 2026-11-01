@@ -399,6 +399,7 @@ if want c7; then
       containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
       containers/strata/carry/ornith-q36.patch|\
       .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
+      .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
       skills/wekan-board-provision/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
