@@ -180,8 +180,9 @@ the deployed build can lag the repo source, so **docs are claims, the live
    - Then the boards skill section "Board-side cutover — human-owned, documented, never agent-executed" steps: rename the `Research`
      checklist to `Lifecycle` with the 11 items (`Single Session` last),
      replace `Human in the Loop` items with the same 11, ensure the
-     `Research: Parallel` label. Agents never mutate board checklists or
-     rules.
+     `Research: Parallel` label (the provision apply usually covers this;
+     the human step is its read-back). Agents never mutate board checklists
+     or rules.
 
 8. **Verify with the zero-action re-run** (the read-back contract of
    `tests/wekan-board-provision/checklist-cutover.sh` and
@@ -230,9 +231,15 @@ is the reading map:
   commit — `main` moves only via owner-created/merged PRs.
 - The values bump itself (step 3) and the ArgoCD apply watch (step 4):
   GitOps reconciles automatically; the owner confirms the read-backs.
-- The board backup + every board mutation (step 7): the rules import,
-  checklist renames, label ensures stay owner-side; agents write card
-  comments only.
+- The board backup + the cutover-specific mutations (step 7): the rules
+  import, checklist renames, and HITL replacements stay owner-side — no
+  agent path writes board checklists or rule extras. The single
+  agent-executed board-write leg is the `/wekan-board-provision` additive
+  apply the owner directs inside step 7: `dev-boards` creates the lists,
+  `Bucket:` labels, rule pairs and the Provider/`Research: Parallel`
+  label ensures after the human confirms the dry-run plan (the skill's
+  own step-3 contract). Everywhere else in this runbook, agents write
+  card comments only.
 - Board bookkeeping: L4's Inbox move-out, card #96's move to **Finished**
   (Finished is human acceptance — no agent moves there), and any **Review**
   / **Timeout** triage.
