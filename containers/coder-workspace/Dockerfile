@@ -54,7 +54,7 @@ ARG HELM_VERSION=v3.22.1
 # kubectl tracks the cluster minor. kubernetes/kubernetes tags carry the same
 # numbers as kubectl releases, so one datasource feeds both.
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-ARG KUBECTL_VERSION=v1.36.5
+ARG KUBECTL_VERSION=v1.36.6
 
 # uv runs the BMad skill tooling, whose setup only works under `uv run`.
 # renovate: datasource=github-releases depName=astral-sh/uv
