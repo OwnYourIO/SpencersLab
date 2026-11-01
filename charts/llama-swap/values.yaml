@@ -1004,7 +1004,7 @@ app-template:
             # -hfd, --spec-type, ...).
             repository: ghcr.io/mostlygeek/llama-swap
             # renovate: datasource=docker depName=ghcr.io/mostlygeek/llama-swap
-            tag: unified-vulkan-266
+            tag: unified-vulkan-268
           env:
             TZ: Etc/UTC
             # Cache downloaded models (-hf flag) on the models PVC
