@@ -154,13 +154,31 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C03", "C04"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6b27d62fffeVqLNuAJQRFOJlk",
+      "handoffs": [
+        {
+          "at": "2026-11-01T03:30:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6b27d62fffeVqLNuAJQRFOJlk",
+          "status": "DONE",
+          "summary": "services/dev/prod/values.yaml only, 3 additive hunks: charts entries (searxng/forgejo-runner-dev shape, mosquitto N/A-proxy comment), ingress.subdomains.home-assistant dev-home-assistant:8123, home-assistant slice flip (HA+persistence on, postgres off, sentinels/local-path why-comment). dev-wiring 7 ok, ha/mosq regressions 9+9, aislop 100. Reported: umbrella lint baseline is TWO warnings, not one (round-2 prose undercount).",
+          "result": "RESULT status:DONE chunk:C05 open_questions:none; next:agent-review C05"
+        },
+        {
+          "at": "2026-11-01T03:50:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6b1e7f66ffe3bB3tW7S2dsBxN",
+          "status": "APPROVED",
+          "summary": "Everything re-proven fresh incl temp-worktree HEAD lint (identical 2 WARNINGs — dev's correction CONFIRMED, no suite encodes it); slice-fed render [Deployment,PVC,Service] zero sentinels; scope single-file additive; two wording nits non-blocking. Coord asks: fold the TWO-warning correction into FRICTION (done), prose lines in plan/C05 Notes stay informational.",
+          "result": "RESULT status:DONE chunk:C05 open_questions:none; next:C06 wave 3"
+        }
+      ]
     },
     "C06": {
       "status": "pending",

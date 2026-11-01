@@ -103,6 +103,20 @@ charts:
     namespace: default
     ServerSideApply: "false"
     chart: forgejo-runner
+  # cf-93 dev sandbox pair (2026-11-01). appName == chart name for both, so
+  # the appset <serviceName>-<appName> law names the releases — and the
+  # release-derived Service names — dev-home-assistant / dev-mosquitto.
+  home-assistant:
+    namespace: default
+    ServerSideApply: "false"
+  # In-cluster MQTT broker for the dev HA instance: dev-home-assistant is
+  # its only consumer, reached at dev-mosquitto:1883 in-cluster, so the
+  # trio's proxy leg is N/A by design, not an oversight — same documented
+  # posture as forgejo-runner-dev above (OQ-C2: ClusterIP-only, no
+  # ingress.subdomains entry).
+  mosquitto:
+    namespace: default
+    ServerSideApply: "false"
 
   # External charts (with version and repository)
   cloudnative-pg:
@@ -131,6 +145,13 @@ ingress:
     searxng:
       service: dev-searxng
       port: 8080
+    # LAN-only host like searxng above: deliberately not clusterBase and not
+    # routed via proxy-remote (cf-93 card #93, 2026-11-01) — the generic
+    # ingress key rule gives home-assistant.<domain>. The backend is the
+    # release-named Service dev-home-assistant, not the bare chart name.
+    home-assistant:
+      service: dev-home-assistant
+      port: 8123
     cluster:
       clusterBase: true
       service: argocd-server
@@ -143,6 +164,23 @@ ingress:
 forgejo-runner-dev:
   runner:
     url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
+
+# Dev-mode flip of charts/home-assistant (cf-93): the same merge-only-the-
+# <appName>-key law above means C03's gating flags must be flipped HERE, not
+# in the chart. The dev instance is empty and runs on SQLite in /config —
+# CNPG plus every pg/app/mcp ExternalSecret template stays grow-only. With
+# postgres off, NO template consumes the chart's bitwardenIds sentinels, so
+# this app deliberately has no custom-values/dev entry (the trio rule's
+# secrets leg is N/A — do not hunt dev UUIDs for it). /config rides k3s
+# local-path with ReclaimPolicy Delete (accepted empty-instance posture,
+# OQ-C3); the 5Gi size stays the chart default, untouched here.
+home-assistant:
+  homeAssistant:
+    enabled: true
+    persistence:
+      enabled: true
+  postgres:
+    enabled: false
 
 # Coder is a wrapper chart (charts/coder): its subchart config, OIDC/PG
 # ExternalSecrets and the pg-coder CNPG cluster live in the chart itself.
