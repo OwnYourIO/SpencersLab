@@ -4,6 +4,11 @@
   "run_kind": "build",
   "coord_session": "ses_e6cf97059ffeZ3eS21acBwATI0",
   "test_session": "ses_e6b68f656ffel2Mc5m4kveEz0q",
+  "test_handback": {
+    "at": "2026-11-01",
+    "status": "DONE",
+    "summary": "C01 t01-t13 (containers/forgejo-host-runner/tests/), C02 static gate (tests/containers/), C03 dev-host contract (tests/services/dev-forgejo-runner.sh extended red-first), C04+C05 gpu contracts (tests/services/gpu-*.sh), C06 site-staging t1-t5 w/ render-shell fixtures; executed, expected-RED states honest; C07 deferred per owner precondition."
+  },
   "current_wave": 0,
   "updated_at": "2026-10-31T23:27:37Z",
   "kickoff": {
@@ -121,8 +126,28 @@
       "wave": 1,
       "depends_on": [],
       "repo": "SpencersLab",
-      "status": "pending",
-      "note": "N1 as-recommended; N2 pinned edit shape in contract section 5 (owner override); N3 page: required, no fallback"
+      "status": "done",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "commit": "see chunks.C01 handoffs[-1] + branch log",
+      "note": "N1 as-recommended; N2 pinned edit shape in contract section 5 (owner override); N3 page: required, no fallback",
+      "dev_session": "ses_e6ae8aee7fferrYk2lgzmxCmyA",
+      "handoffs": [
+        {
+          "at": "2026-11-01",
+          "from": "agent-dev-local",
+          "status": "DONE",
+          "summary": "Implemented sync/ package (immich_sync.py entry, forgejo_publish.py, http_client.py, naming/allowlist/hugo_page helpers + README). pytest containers/forgejo-host-runner/tests/ => 46/46 pass (after red-first baseline 43f/3e). npx aislop ci --changes => pass (score 100, 0/0). Entry-point sanity => pass. Scope check: changes only under containers/forgejo-host-runner/; test files untouched; no commits.",
+          "deviations": "(1) helper modules split (aislop file-too-large gate; conftest grants structure); (2) git add -A -- content/ (literal 'git add content/' cannot stage ledger DELETIONS — would resurrect removed files; pathspec keeps the hard guard); (3) added defensive loud-fails the contract didn't pin: duplicate album names, duplicate allowlist names, unsafe prefix: chars, pagination cap, album-retarget cleanup on old page (block removed + files re-added at new target via ledger diff).",
+          "open_questions": "Album RETARGET semantics (page: changed for a synced album) — dev chose remove-block-then-refetch, not cross-bundle file moves; surface to owner.",
+          "friction": "launch brief contained a wrong feature-folder path variant (worktree basename is cf-11-feat-immich-to-hugo) — dev resolved on disk; aislop reports ruff not installed (engines skipped, quality gates all ran)."
+        },
+        { "at": "2026-11-01", "from": "agent-review(r1, ses_e6ac7b61dffet7GO1Ig55zlH3E)", "status": "CHANGES_REQUESTED", "summary": "pytest 46/46 + aislop 100 green; MAJOR: hasNextPage pagination gate truncates at page 1 vs real v3 (nextPage-only serialization), fixture-faked field hid it; deviations 1/2/3 accepted with minors; full findings appended to C01.md." },
+        { "at": "2026-11-01", "from": "agent-dev-local(fix, same session)", "status": "DONE", "summary": "major-1 pagination now nextPage-only (why-comment pins fixture-only hasNextPage); minor-1 README retarget paragraph; git-add comment wording nit applied. 46/46, aislop 100." },
+        { "at": "2026-11-01", "from": "agent-test(aug, same session)", "status": "DONE", "summary": "t02 +7 parametrized unsafe-prefix pre-network loud-fail cases; fakes.py search envelope made v3-spec-faithful (hasNextPage dropped); suite 53/53 green." },
+        { "at": "2026-11-01", "from": "agent-review(r2, FRESH ses_e6ab1471fffeCcoG3QHP1rtWSD)", "status": "APPROVED", "summary": "53/53 + aislop 100; all four round-1 findings verified closed (live re-check of immich main strengthened albums-envelope acceptance); bare-'..'-prefix accept adjudicated; no collateral change beyond 6 declared files; 2 non-blocking nits recorded for card #88 in C01.md." }
+      ]
     },
     "C02": {
       "title": "forgejo-host-runner toolchain image (runner+hugo+netlify-cli+git-lfs; CI-primary build)",
@@ -188,7 +213,10 @@
   "blocked": [
     "C07"
   ],
-  "deferred": [],
+  "deferred": [
+    "C01 review minor-3: push -f is confined to the bot branch by workflow/default, not enforced in forgejo_publish.py — hardening suggestion beyond C01's pinned mechanics; candidate for C06 (workflow ownership) or the #88 runner card.",
+    "C01 review open question for owner batched round: album-RETARGET semantics (page: changed) — dev+reviewer chose remove-block + ledger-diff re-fetch (old-page files orphan out safely, no cross-bundle moves). Disclose at chunk-done report; owner ruling can override later."
+  ],
   "plan": {
     "file": "2026-10-31-feat-immich-hugo-pipeline.md",
     "drafted_at": "2026-10-31T22:55:20Z",
