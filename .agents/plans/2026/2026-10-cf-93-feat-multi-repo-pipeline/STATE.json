@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-10-cf-93-feat-multi-repo-pipeline",
-  "plan_status": "complete",
+  "plan_status": "approved",
   "coord_session": "ses_e6c3ce207ffebBvrfkKerY5903",
   "test_session": "ses_e6c0356bdffeSfbUfQYDpniYM6",
   "current_wave": 5,
-  "updated_at": "2026-11-01T09:30:00Z",
+  "updated_at": "2026-11-01T10:30:00Z",
   "kickoff": {
     "slug": "cf-93-feat-multi-repo-pipeline",
     "card": "mxnEsiC2SwtLKZE9i",
@@ -261,6 +261,15 @@
         }
       ]
     },
+    "C10": {
+      "status": "pending",
+      "wave": 6,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
     "C09": {
       "status": "done",
       "wave": 5,
@@ -379,6 +388,22 @@
       "status": "APPROVED",
       "summary": "All round-1 items closed from live state: HEAD-shipped suite now green (13 ok, identical to tree, canonical worktree clean); .gitignore blocks x3 verified by check-ignore + porcelain delta (exactly one M each); stale clause zero-residue in 8 files, D17 needles intact, --check green x4; minors all on the bus. Full 9-suite re-run at expected counts (PASS-line method), aislop 0/0, safety sweep clean (main untouched, nothing pushed, no .pipeline paths, plugin byte-identical, loops false x3). plan_status -> complete by coord. 10-item human-owned residual list in open_questions; activation step 1 = the four Repo: labels do NOT yet exist on the board (filter ships inert).",
       "result": "RESULT status:DONE chunk:plan next:Review hand-off comment naming corrected derived set (Home Assistant) + move + release(outcome:done)"
+    },
+    {
+      "at": "2026-11-01T10:05:00Z",
+      "agent": "agent-plan (delta draft)",
+      "session": "ses_e6c2409f1ffeqBuXI7VVR0v1Ka",
+      "status": "DONE",
+      "summary": "Owner delta drafted as chunk C10 (wave 6): remove .Values.postgres guard (6 templates + values key), dev slice -> CNPG on, HA integration owner-side, golden byte-identity re-audit as AC, tests routed to test_session. Open: OQ-E1 UUID sourcing, OQ-E2 approval.",
+      "result": "RESULT status:DONE chunk:plan open_questions:OQ-E1,E2"
+    },
+    {
+      "at": "2026-11-01T10:30:00Z",
+      "agent": "agent-plan (delta FINAL)",
+      "session": "ses_e6c2409f1ffeqBuXI7VVR0v1Ka",
+      "status": "DONE",
+      "summary": "Owner answers folded VERBATIM ('remove the PVC guard as well'; dev-dedicated Bitwarden item, FORCE the PG username per-secret, read only the password). Final shape: 7 gates deleted; surviving gate = HA container only (grow HA is external — interpretation sentence recorded, overrulable); precise render deltas (default = 2 Cluster + 4 ES + 1 PVC; ES differ only by forced-username/target.template) replacing the byte-identity claim; authorized golden RE-CAPTURE at the new baseline by the test session; dev item id NOT in repo (probe rc=1) => placeholder markers land, ONE id hand-offed to owner; mapping table from live template reads (initdb owners home-assistant x2, shared pg-<rel>-secret, dbs home-assistant+sensors, mcp pair already forces readonly); slice final {homeAssistant:{enabled:true}}. plan_status->approved by coord. Grow username-value equivalence flagged as owner-confirmation risk.",
+      "result": "RESULT status:DONE chunk:plan open_questions:hand-off: dev Bitwarden item id; next:test_session repair then C10 dev"
     }
   ]
 }

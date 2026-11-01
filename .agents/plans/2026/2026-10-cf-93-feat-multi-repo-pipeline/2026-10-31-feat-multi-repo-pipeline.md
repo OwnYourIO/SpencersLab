@@ -12,6 +12,7 @@ Extend the board-driven pipeline to more repos: a `Repo:` label pickup filter (f
 - Creating `Repo:` labels on the board (human-owned posture, like `Pipeline:`); OpenChamber scheduled-task enablement per target repo (human-owned scheduler hygiene — target loop files ship `enabled: false`).
 - wekan-mcp label-assignment tooling (card #74's own scope — pickup filtering needs only label READ, proven live, RESEARCH A4).
 - `agent-ha-config`, `agent-pt-*` python overlay, `agent-ha-review` variants — highlighted in C09 Notes, deferred to follow-up cards.
+- C10 scope guard: the HA↔postgres INTEGRATION itself (recorder `db_url` / configuration.yaml in `/config`, any DB env wiring into the HA container) is OWNER-side per the 2026-11-01 verbatim — no chunk wires it.
 
 ## Commands
 All run from this worktree (SpencersLab side) or with `cd`/`-C` per target; `export PATH=$HOME/.local/bin:$PATH` first (helm lives there — FRICTION seeded).
@@ -23,6 +24,7 @@ All run from this worktree (SpencersLab side) or with `cd`/`-C` per target; `exp
 - contract suites: `bash tests/multi-repo/<suite>.sh` (agent-test writes; per-directory basename-dedup rule applies)
 - quality gate: `npx aislop ci --changes` posture on touched files (manual `$aislop` before hand-back)
 - deploy verification (post human-merge, user-owned): `readonly-dev-kubernetes` — HA + mosquitto releases in `default`, pods Running
+- C10 delta validation: default/grow-shape render = 2 Cluster + 4 ExternalSecret + 1 PVC (`grep -c "{{- if" charts/home-assistant/templates/*.yaml` all zero; values `homeAssistant == {enabled: false}`); Cluster docs diff EMPTY vs the old golden, ES docs differ only by the forced-username/target.template shape; `homeAssistant.enabled=true` adds exactly Deployment+Service (container byte-stable, TZ-only env); sentinel↔custom-values/dev 1:1 grep (placeholder markers until ids land); `bash tests/multi-repo/ha-chart.sh` + `dev-wiring.sh` post-repair (incl. authorized golden RE-CAPTURE) + `mosquitto-chart.sh` regression; `helm lint` chart + umbrella (TWO-warning baseline)
 
 ## Chunks
 | id  | title | size | wave | depends_on | why the dependency |
@@ -36,6 +38,7 @@ All run from this worktree (SpencersLab side) or with `cd`/`-C` per target; `exp
 | C07 | port → HomeAssistant (uncommitted; delta: keep cost-title plugin, HA-config services list) | M | 4 | [C06] | C06's port recipe is the interface it copies |
 | C08 | port → brother-ptouch-automation (uncommitted; delta: pytest/ruff test law) | M | 4 | [C06] | same recipe; independent of C07 |
 | C09 | HA overlay agents in LBF + HomeAssistant: `agent-ha-{dev,code,debug}` + `agent-ha-custom-component` + coord roster extension | M | 5 | [C06,C07] | overlay sources need the targets' generated surfaces + skill registry (files) |
+| C10 | OWNER DELTA 2026-11-01 (APPROVED w/ adjust): postgres AND PVC guards removed (container gate stands) + forced-username ES wiring + dev `custom-values` secrets leg | M | 6 | [] | amends LANDED C03/C05 code — no open interfaces; test-suite repair + golden re-capture precedes dev (one concern: de-gating) |
 
 ## Wave order
 1. C01, C03, C04 (independent; id order)
@@ -43,6 +46,7 @@ All run from this worktree (SpencersLab side) or with `cd`/`-C` per target; `exp
 3. C06
 4. C07, C08 (independent; id order)
 5. C09
+6. C10 (owner delta 2026-11-01: ONE test-session repair of ha-chart/dev-wiring guard pins first, then dev, then review)
 
 ## Verified facts (plan session, 2026-10-31 — re-pin at run start, verify-after-apply posture)
 - Target HEADs NOW (the no-commit pins for C06–C09): LBF `2ea63fdecf1b5cfe36f7ac2e1f56ce8d4bbd5e7e`, HomeAssistant `ddd20d587fc6a92186d0cbce6d0d50270d8f4950`, brother-ptouch-automation `381d72f75f7c169edb448dc3c04ea64743d6abf7` — all on `main`, none has `.rulesync/` yet.
@@ -81,6 +85,19 @@ All run from this worktree (SpencersLab side) or with `cd`/`-C` per target; `exp
 - RQ-1 (C03 mechanism): RESOLVED by this fold — R2.2 items are now chunk Tasks requirements; `ha-chart.sh` already pins them (no test-vs-mechanism conflict found).
 - RQ-2 (brother `.opencode/opencode.json` vs `.jsonc` precedence): OPEN MECHANISM, dev-probes once inside C08 and keeps ONE config file (best guess: merge plugins into the jsonc, remove the json) — reported in chunk RESULT, no user question.
 - RQ-3 (plain ported dev/code pins per target): folded as C06/C07/C08 retarget task text per the best guesses (LBF/HA standalone → home-assistant-best-practices + home-assistant-yaml; brother → contract set only; plain pipeline dev-local → executing-plans + contract set everywhere).
+
+## Owner delta 2026-11-01 — RESOLVED + APPROVED (adjust-then-proceed; coord writes STATE)
+Verbatim ruling 1: "Ok, so we do need to enable posgres for home assistant, though I imagine I'll have to handle the actual integration into home assistant. Also, I'm not interested in supporting sqlite, so we should remove the .Values.postgres guard you added to the pg objects."
+Verbatim ruling 2 (OQ-E2 round — owner chose ADJUST over approve-as-drafted): "We should remove the PVC guard as well."
+Verbatim ruling 3 (OQ-E1 secrets): "dev has a dedicated set of credentials it should use. It has a bitwarden ID and you'll have to force the PG username in the externalsecret and just use the password from the uuid."
+FINAL delta shape (chunks/C10.md is the operative text):
+- Guards gone: `postgres.enabled` (six pg/mcp templates + values key) AND `homeAssistant.persistence.enabled` (PVC template gate + values key). The ONLY surviving gate is the HA CONTAINER (`homeAssistant.enabled`, incl. the Chart.yaml dependency `condition:`) — required by fact: grow's live HA is EXTERNAL, an always-on container would deploy a second HA into grow; the always-on PVC therefore also exists on grow as an unused claim (WaitForFirstConsumer-Pending, harmless noise). INTERPRETATION stated for explicit overrule if "PVC guard" meant otherwise.
+- Render re-audit (supersedes the drafted byte-identity line): default/grow shape = the pre-cf-93 always-on DB set RESTORED (2 CNPG Clusters + 4 ExternalSecrets — Cluster docs byte-identical; ES docs change ONLY by the forced-username structure) PLUS one new always-on /config PVC. The golden snapshot `tests/multi-repo/snapshots/ha-chart-default.yaml` is RE-CAPTURED by the test session at this new baseline (authorized — the old snapshot stays in history as the cf-93-era proof; the specific diffs are pinned in C10 AC2, so this is a re-baseline, not a weakening). dev render = full stack (container enabled by slice; postgres+persistence keys dropped from the slice).
+- Secret wiring: the two credential ES templates (`pg-<rel>-secret`, `<rel>`) FORCE the PG username literal `home-assistant` (initdb owner of both clusters, db names `home-assistant` + `sensors`; repo law: item username == initdb owner) and read ONLY the password from the item — copying the in-repo mcp-secrets `target.template` pattern (those two already force `readonly`, unchanged). Grow effect: username VALUE unchanged under the repo-law assumption (owner confirmation item, recorded in C10 AC4).
+- Dev credentials: the dedicated dev item EXISTS per the owner but its Bitwarden id is NOT in the repo (`grep -rn assistant custom-values/dev/` rc=1, 2026-11-01 probed) ⇒ C10 lands `custom-values/dev/prod-values.yaml`'s `home-assistant: bitwardenIds:` block as placeholder markers; the ONE missing id (grow's shape shows a single LOGIN item can serve all three keys) is the hand-off ask — owner pastes, coord routes the fill, deploy-time sentinel consumption completes.
+- HA↔postgres integration stays OWNER-side (no db env in the container — C10 AC3 pins the container block byte-stable).
+Status: delta APPROVED per owner intent (adjust-then-proceed); `plan_status` → approved + the C10 STATE entry are COORD writes. Wave order gains 6. C10 (one test_session repair — ha-chart/dev-wiring repin + golden re-capture — BEFORE dev).
+OQ-E1: RESOLVED (dedicated dev item + forced username + password-only; id hand-off outstanding). OQ-E2: RESOLVED as ADJUST (PVC guard also removed) — the adjustment folded, chunk approved.
 
 ## Follow-up cards (coord-side, not chunks)
 - **Generic uncommitted-dirty-main mode** (from OQ-B1, owner verbatim: "…create another card to track implementing it generically"): ONE card created by coord into **Review** (never an in-session agent-plan ticket — boards skill friction-follow-up posture: `create_card` into Review; the createCard rule adds the five standard checklists; `toggle_checklist_item` the known answers: Services `agent context`, Type `chore`, Model(s) `Qwen Flash`), titled to state the fix and describing: the card-#93 port used a this-card-only uncommitted-dirty-main working mode in the three target repos; the generic mechanism (a per-repo "working mode" ruling in the ported kickoff/gates/dev-role contract text, how it interacts with worktree/branch minting and per-chunk commit discipline, and which repos adopt it) is the follow-up work. Quote this plan's OQ-B1 answer as its context. Human moves Review → Finished/Rework.
