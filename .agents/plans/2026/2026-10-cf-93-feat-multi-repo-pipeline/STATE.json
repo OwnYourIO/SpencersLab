@@ -262,13 +262,39 @@
       ]
     },
     "C09": {
-      "status": "pending",
+      "status": "done",
       "wave": 5,
       "depends_on": ["C06", "C07"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6a8d68d3ffeuvgOPUMMnIoJcY",
+      "handoffs": [
+        {
+          "at": "2026-11-01T07:50:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6a8d68d3ffeuvgOPUMMnIoJcY",
+          "status": "BLOCKED",
+          "summary": "Implementation COMPLETE (8 sources, verbatim permission mirrors proven, pin table live-cross-checked, roster allow-rows x12 coord sources, generate idempotent both targets, nothing in brother/this repo). BLOCKED only on ha-overlay-agents.sh t2: 4 dev-shaped rows demanded of ALL ha agents while the same leg demands verbatim base-twin equality - code/debug bases carry tests-allow by design => arithmetically unsatisfiable. validation_at_fault; routed silently to test_session (C03 precedent). 5 deviations (#1 executing-plans+pipeline-conventions+pipeline-role-dev pinned per plain-dev-local mirror, stale suite 'absent' claim falsified live; #2 systematic-debugging present both targets - inline-fallback not needed; #3 ha-code cross-repo delta follows base-twin delta per verbatim-copy law; #4 roster = allow-rows-only, no prose roster exists; #5 = the BLOCKED-is-validation-only statement itself).",
+          "result": "RESULT status:BLOCKED chunk:C09 -> validation_at_fault mechanical"
+        },
+        {
+          "at": "2026-11-01T08:10:00Z",
+          "agent": "agent-test (repair)",
+          "session": "ses_e6c0356bdffeSfbUfQYDpniYM6",
+          "status": "DONE",
+          "summary": "t2 mechanically scoped: dev-only rows gated to DEV_SHAPED pair; question-allow + verbatim-equality universal; stale pre-port header/t1 comments corrected. Full suite 13 ok exit 0 against the live uncommitted trees. No AC semantics moved. Pre-final suggestion: vocabulary audit of remaining port-suite greps.",
+          "result": "RESULT status:DONE chunk:plan next:C09 review"
+        },
+        {
+          "at": "2026-11-01T08:40:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6a74ecbeffeu1zdR5U4HMn9eU",
+          "status": "APPROVED",
+          "summary": "13+10+12+11 fresh green, port suites byte-identical to HEAD; mtime-split proves each target got exactly the 20 declared writes, brother zero; permission slices order-inclusive byte-equal all 8 pairs; independent pin-closure + prefix-collision sweeps clean; t2 repair ruled VALID/AC-faithful; 'self-released' t6 leg honest (pre-armed test-session code). Deviations #1-#4 accepted. Coord asks: record #5 verbatim (done here) + C09.md Tests-t2 prose lags the repaired shape - chunk file stays the approved record, this STATE note governs. Final whole-plan review next (fold C06-inherited nits + wording minors there).",
+          "result": "RESULT status:DONE chunk:C09 open_questions:none; next:final review then human PR step"
+        }
+      ]
     }
   },
   "blocked": [],
