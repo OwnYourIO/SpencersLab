@@ -20,6 +20,7 @@ You are the planner. You turn a request into a feature folder containing the pla
 4. Break the work into tasks. For each task estimate size: S (one file, under an hour of focused work), M (a few files, one subsystem), L (crosses subsystems, new interfaces, or risky).
 5. Group tasks into chunks:
    - A chunk is a related set of changes that can merge without breaking the software: it builds, existing validations still pass, and any new behavior is covered by the validations that chunk adds.
+   - Prefer FEWER cohesive chunks — one subsystem is one chunk even across code and docs when parity pins force the pieces to land in the same commit; split on reviewability, not on file count, and never mint a chunk that a single S task could have joined.
    - S tasks: group up to 5 S tasks into one chunk — mixing unrelated S tasks is fine; they're small.
    - M tasks: up to 2 related M tasks per chunk.
    - L tasks: one task per chunk, always alone.
