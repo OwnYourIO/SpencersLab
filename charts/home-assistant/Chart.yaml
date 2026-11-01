@@ -6,7 +6,8 @@ dependencies:
 - name: app-template
   version: 5.0.1
   repository: https://bjw-s-labs.github.io/helm-charts/
-  # The grow release (appName assistant) must keep rendering pg+secrets only:
-  # gating the whole subchart on homeAssistant.enabled (default false) is what
-  # makes the flag-off render byte-identical to pre-container behaviour.
+  # The chart's single surviving gate (C10 owner delta 2026-11-01): the HA
+  # container/subchart is flipped on per release (grow's HA is EXTERNAL, so
+  # it stays off there) while the CNPG clusters, ExternalSecrets and the
+  # /config PVC render unconditionally from the parent templates.
   condition: homeAssistant.enabled

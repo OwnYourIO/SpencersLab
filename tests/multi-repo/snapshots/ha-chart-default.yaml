@@ -1,3 +1,7 @@
+# cf-93 C10-era golden (post-delta default render, release ha-test, normalized by the
+# suite pipeline); captured via the AUTHORIZED re-capture flow — see the suite
+# header; the pre-C10 diff authority stays at ha-chart-default-preC10.yaml.
+# previous-file-sha: (none)
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -109,18 +113,12 @@ spec:
   target:
     name: ha-test
     creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        pg_username: home-assistant
+        pg_password: '{{ .pg_password }}'
   data:
-  - secretKey: pg_username
-    sourceRef:
-      storeRef:
-        name: bitwarden-login
-        kind: SecretStore
-    remoteRef:
-      key: OVERRIDE_VIA_CUSTOM_VALUES
-      property: username
-      conversionStrategy: Default
-      decodingStrategy: None
-      metadataPolicy: None
   - secretKey: pg_password
     sourceRef:
       storeRef:
@@ -171,14 +169,12 @@ spec:
   target:
     name: pg-ha-test-secret
     creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: home-assistant
+        password: '{{ .password }}'
   data:
-  - secretKey: username
-    remoteRef:
-      key: OVERRIDE_VIA_CUSTOM_VALUES
-      property: username
-      conversionStrategy: Default
-      decodingStrategy: None
-      metadataPolicy: None
   - secretKey: password
     remoteRef:
       key: OVERRIDE_VIA_CUSTOM_VALUES
@@ -212,3 +208,16 @@ spec:
       conversionStrategy: Default
       decodingStrategy: None
       metadataPolicy: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ha-test
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi

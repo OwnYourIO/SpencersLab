@@ -1,38 +1,29 @@
 bitwardenIds:
   home-assistant-pg: OVERRIDE_VIA_CUSTOM_VALUES
-  # Read-only CNPG role credentials for the ToolHive MCP servers
-  # (postgres-grow-assistant / postgres-grow-assistant-sensors).
+  # Read-only CNPG role credentials for the two pg ToolHive MCP servers.
   mcp-pg-grow-assistant: OVERRIDE_VIA_CUSTOM_VALUES
   mcp-pg-grow-assistant-sensors: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 
-# Gates the CNPG clusters and the pg/app/mcp ExternalSecret templates.
-# Default ON: the live grow release (appName assistant) must keep rendering
-# them unchanged; the dev slice flips it off and runs HA on SQLite in /config.
-postgres:
-  enabled: true
-
-# Doubles as the Chart.yaml app-template dependency condition: off (default)
-# renders the whole subchart nowhere, so grow gets neither the HA Deployment
-# nor its Service. persistence.enabled separately gates the parent /config
-# PVC template, whose name mirrors the subchart's release-derived
-# existingClaim below.
+# The chart's only gate (C10 owner delta 2026-11-01; the CNPG and persistence
+# guards are deleted). Doubles as the Chart.yaml app-template
+# dependency condition, default OFF because grow's live HA is EXTERNAL —
+# an always-on container would deploy a second Home Assistant into grow.
+# The CNPG clusters, the four ExternalSecrets and the parent-template /config
+# PVC render unconditionally; on grow that claim stands unused
+# (WaitForFirstConsumer-Pending, owner-accepted).
 homeAssistant:
   enabled: false
-  persistence:
-    enabled: false
-    # Dev-cluster k3s local-path, ReclaimPolicy Delete — accepted
-    # empty-instance posture (cf-93 OQ-C3).
-    size: 5Gi
 
 app-template:
   global:
     # 5.0.1 creates an unprivileged default ServiceAccount even with zero
-    # controllers; suppressing it keeps the dev-mode render to exactly
-    # [Deployment, Service]. No nameOverride here: app-template self-derives
-    # it from .Release.Name, and a templated string in the parent values is
-    # not evaluated by the subchart (it breaks the render outright).
+    # controllers; suppressing it keeps the subchart's contribution to the
+    # render exactly [Deployment, Service]. No nameOverride here:
+    # app-template self-derives it from .Release.Name, and a templated
+    # string in the parent values is not evaluated by the subchart (it
+    # breaks the render outright).
     createDefaultServiceAccount: false
   controllers:
     home-assistant:
@@ -88,9 +79,9 @@ app-template:
   persistence:
     config:
       # Existing-claim pattern (qdrant/zigbee2mqtt): renders no PVC of its
-      # own — the gated parent template supplies the claim. The library
-      # templates this string, so it resolves to the release name that the
-      # parent PVC uses.
+      # own — the unconditional parent pvc-home-assistant-default.yaml
+      # supplies the claim. The library templates this string, so it
+      # resolves to the release name that the parent PVC uses.
       existingClaim: "{{ .Release.Name }}"
       globalMounts:
         - path: /config

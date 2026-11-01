@@ -165,22 +165,20 @@ forgejo-runner-dev:
   runner:
     url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
 
-# Dev-mode flip of charts/home-assistant (cf-93): the same merge-only-the-
-# <appName>-key law above means C03's gating flags must be flipped HERE, not
-# in the chart. The dev instance is empty and runs on SQLite in /config —
-# CNPG plus every pg/app/mcp ExternalSecret template stays grow-only. With
-# postgres off, NO template consumes the chart's bitwardenIds sentinels, so
-# this app deliberately has no custom-values/dev entry (the trio rule's
-# secrets leg is N/A — do not hunt dev UUIDs for it). /config rides k3s
-# local-path with ReclaimPolicy Delete (accepted empty-instance posture,
-# OQ-C3); the 5Gi size stays the chart default, untouched here.
+# Dev-mode flip of charts/home-assistant (cf-93, owner delta 2026-11-01): the
+# merge-only-the-<appName>-key law above is unchanged, so gates still flip
+# HERE — and the delta leaves exactly one to flip, homeAssistant.enabled,
+# which starts the HA container. The CNPG clusters and the /config PVC are
+# unconditional and render for dev with no flag. The trio's secrets leg is
+# now ACTIVE: the four ExternalSecrets consume the chart's three bitwardenIds
+# keys, resolved from custom-values/dev/prod-values.yaml (placeholder markers
+# until the owner's dedicated dev-item id hand-off lands). The HA↔postgres
+# integration (recorder db_url in configuration.yaml) is owner-side — the
+# container stays TZ-only. /config rides k3s local-path with ReclaimPolicy
+# Delete (accepted empty-instance posture, OQ-C3).
 home-assistant:
   homeAssistant:
     enabled: true
-    persistence:
-      enabled: true
-  postgres:
-    enabled: false
 
 # Coder is a wrapper chart (charts/coder): its subchart config, OIDC/PG
 # ExternalSecrets and the pg-coder CNPG cluster live in the chart itself.
