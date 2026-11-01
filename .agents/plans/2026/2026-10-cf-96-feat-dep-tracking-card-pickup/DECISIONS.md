@@ -143,6 +143,10 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - Kind-1 Red Strings edges (OQ1 rejected alternatives): the 2026-11-01
   batched round ruled parentId-only — revisit only if follow-up lineage proves
   it needs board-visible edges.
+- Shared registry-count source for the three suites carrying the 17+21/38
+  arithmetic (test session tempting-refactor, 2026-11-01): would end the
+  same-commit count chases on every wekan-mcp tool addition; follow-up card
+  material (owner's call).
 
 ## Coord rulings (test session's open questions)
 - 2026-11-01 coord: test-Q1 CLOSED — "8 new signatures" counts the seven new

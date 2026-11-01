@@ -19,6 +19,7 @@ Every feature gets its own folder under the plan root `.agents/plans/`, named `<
 - `STATE.json` — machine state: feature folder, current wave, per-chunk status, retries, verdicts, last handoff. Only coord writes it.
 - `DECISIONS.md` — append-only log of decisions, rejected alternatives, conventions. Read it before acting; add to it only if you are plan or coord.
 - `RESEARCH.md` — optional: the deep-research summary `agent-research` writes on demand, next to the plan file (findings with sources, contradictions, implications for the plan). Everyone reads it at run start if it exists.
+- `EXPLORE.md` — optional: the exploration summary `agent-explore` writes next to the plan file before research and planning (grounded file locations, MCP/cluster ids, call shapes, gotchas). Everyone reads it at run start if it exists.
 - `FRICTION.md` — append-only friction log: what blocked or slowed agents down, each with the resolution used. Everyone reads it at run start so known workarounds are not rediscovered; agents report new items via RESULT `friction:`; only coord appends.
 - `chunks/<chunk-id>.md` — one file per chunk: tasks, files in scope, acceptance criteria, test list, review notes.
 
@@ -32,7 +33,8 @@ You never receive another agent's conversation and you must not assume shared me
 3. the parts of the plan file you need
 4. `DECISIONS.md`
 5. `RESEARCH.md` (if it exists — research grounded upstream of you)
-6. `FRICTION.md` (known workarounds — do not rediscover them)
+6. `EXPLORE.md` (if it exists — exploration grounding from `agent-explore`)
+7. `FRICTION.md` (known workarounds — do not rediscover them)
 
 ## RESULT block
 

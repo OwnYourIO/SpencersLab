@@ -340,6 +340,9 @@ permissions:
     resource: agent-research
     effect: allow
   - action: subagent
+    resource: agent-explore
+    effect: allow
+  - action: subagent
     resource: agent-dev-deploy-pr
     effect: allow
   - action: execute

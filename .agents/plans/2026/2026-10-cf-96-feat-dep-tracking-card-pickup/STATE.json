@@ -95,14 +95,19 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "title": "wekan-mcp: dependency tools + preload_board + set_card_labels + passthroughs + docs re-stamp",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; tests-repair routed to test session cf8e995e8; chunk commit 395c89028)",
+      "dev_session": "ses_e6a9c02beffecBRV47W0DYW8WB",
+      "handoffs": [
+        "RESULT (C01 dev r1, ses_e6a9c02beffecBRV47W0DYW8WB) status: DONE — additive cf-96 block in server.py: 5 dependency tools (7-type client gate pre-request, _write_tool x3, DESTRUCTIVE-marked remove), preload_board (single export?attachments=false&fields=..., exact 7-key card map, slug combined-parse, archived flagged, unresolved-parents tail), set_card_labels (bulk, <=500 + board-membership pre-gates), _slim_card passthroughs, create_card trailing parent_id two-step (parentId-only, OQ1 negative pin held), default_checked early-return restructured to accumulating out dict; README/SKILL/call-shapes/wekan-api 38-tool parity source-only stamps; destructive count 2->3. dependencies.sh 7/7 green; tools/skill-surface/rest-overview/board-provisioning/create-list reds = own count-pin flips (dev tests/** DENIED — spec handed up verbatim, no circumvention); node 233/0; aislop rc=0 @94 errors=0; docker build => no-daemon, CI-deferred designed shape. deviations 1-4 + friction a-c reported (matrix-vs-launch T7 contradiction honored toward matrix; omitted-note 500-char window wording; stale-base arms left alone).",
+        "RESULT (C01 validation repair, test session ses_e6adaf11bffeOtWerHTHQlYlqj continued as ses_e6a75d2b6ffeQVm4AqFpLdWjH0) status: DONE — flips applied per spec + committed cf8e995e8 (tests/** only: tools.sh t2/t5/t9 + header, skill-surface t4 + header, board-provisioning t1/t6, create-list t3 + header); battery: dependencies 7 ok, tools 9 ok, skill-surface 8 ok, rest-overview 6 ok, board-provisioning t1-t6 ok (t7 chain = create-list t2 admitted), create-list t1/t3/t4/t5 ok + t2 admitted stale-base 7-hunks, provision surface 9 ok, agent-perms 16 ok, cf90-ledger 4 ok, node 233/0; nothing failed outside spec; 3 text-only coherence fixes (zero assertion change); tempting-refactor note (shared registry-count source) DEFERRED to DECISIONS/Deferred.",
+        "RESULT (C01 review r1, fresh ses_e6a58cfb5ffeG4Iwhdd83tj46Z) status: DONE verdict APPROVED — every validation re-run independently green; admitted reds verified by ROOT CAUSE on clean-tree probes (create-list t2 stale-base arm; board-context t14/t6 + gate t14/t17 = coord-folder churn + ruled five-vs-six drift, none binds a C01 file); independent AST recount 17+21=38, 7 names unique; stale-31 residue grep zero; aislop rc=0 @94>=failBelow 80, 0 errors verified against .aislop/config.yml (dev's posture confirmed, not trusted). dev deviations 1-4 accepted (restructure behavior-preserving via t9+read; wekan-api retirement = doc-parity duty justified). Deferred candidates: tools.sh t5 symmetric negative pin; empty-string parent_id falsy nit; preload slug-convention consumer line (C05). friction: board-context nested-gate 300s timeout -> gate.sh direct on clean probe (same evidence)."
+      ]
     },
     "C02": {
       "status": "pending",
