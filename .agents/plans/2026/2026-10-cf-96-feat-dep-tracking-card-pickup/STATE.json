@@ -1,0 +1,204 @@
+{
+  "feature": "2026/2026-10-cf-96-feat-dep-tracking-card-pickup",
+  "plan_status": "planned",
+  "coord_session": "ses_e6b2a397effeJoBUoRxc4WVA22",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-01T03:35:00Z",
+  "handoffs": [
+    "RESULT (plan, ses_e6b06c6bdffeh06ZkjS1RAOGVc, 2026-11-01) status: DONE chunk: plan — 10 chunks/5 waves: C01 wekan-mcp 7 dep/preload/label tools+docs (L, w1); C02 agent-explore+twins+matrix+AGENTS+EXPLORE.md read-order (L, w1); C03 sibling-I: 77b BOARD_COLORS, 70b typo, 81/78a verifies (Sx4, w1); C04 AD-66 renovate system-upgrade (S, w1); C05 boards dep-gate+preload-at-claim+grouped-sibling (M, w2, dep C01); C06 coord+plan research-split+explore-launch+AD-71 guidance (M, w2, dep C02); C07 Lifecycle 10-stage redesign (M, w3, dep C05); C08 cutover artifacts modify-only (M, w4, dep C07); C09 TZ env+stamp pass OQ5-gated (M, w4, dep C07); C10 HOLD deploy-chain+cutover readback human-executed (S, w5, dep C01,C08). OQ2/3/7/9/10/11/12 closed as DECISIONS; 8 questions returned for the ONE batched round; no-questions rule honored; commands_run: json.tool + baseline suites green + availability probes; deviations none; friction none new.",
+    "RESULT (pre-research, ses_e6b22875bffen3T6NG1O0mJ7EK, 2026-11-01) status: DONE chunk: research — RESEARCH.md (307 lines) written. Key: WeKan Red Strings card dependencies REAL in lab v12.65 (5 REST routes CRUD, 7 types, stored on source card, same-board; visibility = Member Settings > Show Board Dependencies since #6732 — the owner's 'can't turn on' explained); MCP adds = 5 dep tools + preload_board (one GET export?attachments=false&fields= call) + set_card_labels (bulk route ready, AD-74) + _slim_card passthrough + create_card(parent_id); HARD GATE: deployed dev-boards is :v87 — merge->v<run>->pin bump (L4)->restart before consumers; sibling picks AD-74=MS8e8uoF27R2dk73e (by-list card_number strip blinded kickoff scan), 77b/70b/78a by content, 78a shipped (cf-75), 81 mostly shipped (cf-90), 74->78 renumber means key everything on _id not number; TZ unset in workspace, fix = coder_agent env TZ in charts/coder/coder-templates/kubernetes*/main.tf, emitters all hardcode UTC (human-facing only convert); Lifecycle cutover = biggest text delta (10 stages, blank=all-minus-Deployment w/ Agent-Decides, blank HITL=Final Review, Single Session transition OQ6); provision engine modify-only, human runs post-backup; 12 open questions (OQ1-OQ12) recorded for the batched round. friction: WeKan ConnectError outage 02:12-02:20Z self-recovered; deviations: none (read-only).",
+    "RESULT (plan rework 1, batched answers folded, ses_e6b06c6bdffeh06ZkjS1RAOGVc continued) status: DONE chunk: plan — all 8 rulings in plan/chunks/DECISIONS/STATE: OQ1 parentId-only (C01 T5/AC2 negative pin, C05 grouped-flow on blocking edges only); OQ4 all displayed ISO stamps local incl. machine ISO fields, epoch-ms instants preserved by definition (C09 rewritten vs pipeline-locks source: Date.parse offset-aware => 2h window + max(heartbeatAt,mtime) correct writer-side-only, comparison byte-equal, gate.sh zero-change; 4 pipeline-locks suites re-pinned; node --test tests/opencode added to Commands, baseline green); OQ5 TZ=America/Denver real (no HOLD), reprovision owner-gated; OQ6 Lifecycle = 11 items, Single Session kept LAST (user verbatim in DECISIONS), opt-in, blank default excludes it, HITL mirrors 11 (derived, flagged); OQ8 all-three-tier bump prepared in C10 runbook (v<run> exists only post-merge — deviation note); OQ13 only Model(s)->Qwen Flash checked in createCard-v2; OQ14 Exploration in blank default; OQ15 Chunk Review unchecked = dev-only loop, done-gate carve-out C06 T5 (validations determinism mandatory). deviations: (1) OQ4 literal 'machine fields local' unimplementable for epochs — encoded stamps-vs-instants split per user's own framing; (2) OQ8 prep-location left to planner (C10); (3) HITL 11-item mirror derived from OQ6+card, flagged for owner objection. open_questions: none. next_suggested: coord approval + write-back + siblings-to-Executing + agent-test."
+  ],
+  "pre_research": {
+    "session": "ses_e6b22875bffen3T6NG1O0mJ7EK",
+    "status": "DONE",
+    "at": "2026-11-01"
+  },
+  "batched_round": {
+    "at": "2026-11-01T03:25:00Z",
+    "status": "answered-and-folded",
+    "answers": {
+      "OQ1": "parentId only — no Red Strings edge for kind-1 follow-ups; kinds 2+3 stay Red Strings",
+      "OQ4": "everything incl. machine fields — encoded as displayed-stamps-local (lock ISO fields, audit/timeouts at, board-context stamp, human-facing set) + instants-preserved (epoch-ms, mtimes); reaper parses offset-aware, 2h window untouched writer-side-only",
+      "OQ5": "America/Denver — shipped for real in both coder templates, no HOLD marker",
+      "OQ6": "user verbatim: 'Oh, At the end of Lifecycle leave the Single Session option' — Lifecycle = 11 items (ten stages + Single Session last, semantics preserved, opt-in); HITL mirrors 11; no Single-Session transition rule needed",
+      "OQ8": "all three tiers (dev-boards + gpu wekan-admin + wekan-readonly), one owner commit; values bumps prepared in the C10 runbook; L4 folded",
+      "OQ13": "only Model(s)→Qwen Flash checked; Lifecycle/HITL unchecked (blank defaults govern); Type/Services unchecked",
+      "OQ14": "Exploration IS in the blank-Lifecycle default — every default run starts agent-explore",
+      "OQ15": "Chunk Review unchecked = skipped — dev-only chunk loop, done-gate on validations-green RESULT command evidence; carve-out in pipeline-role-coord + boards Stage map"
+    }
+  },
+  "kickoff": {
+    "card": "iD4WjWQZrCykSe6Aj",
+    "card_number": 96,
+    "slug": "cf-96-feat-dep-tracking-card-pickup",
+    "run_tag": null,
+    "worktree": "cf-96-feat-dep-tracking-card-pickup",
+    "branch": "cf-96-feat-dep-tracking-card-pickup",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "origin_dir": "/home/coder/SpencersLab",
+    "provider": "OpenRouter (API flavor, labeled)",
+    "stages": {
+      "note": "Card carries the LEGACY Research checklist (no Lifecycle): transition rule — checked items time research only (Before AND After Planning), stage list = standard Plan+Test+Code+Review loop. HITL checked: PR (plus the always-applies plan-approval pause).",
+      "research_pre": true,
+      "research_post": true,
+      "deploy": false
+    },
+    "sibling_cards": {
+      "74": "MS8e8uoF27R2dk73e (wekan-mcp label tool — folded as C01 set_card_labels; launch-pinned OQ12)",
+      "66": "t4N5D4eZ9Nc2MoAZd",
+      "71": "v8priYKMuuWLCoFDq",
+      "77_candidate_a": "gCcXSu3DZd6NEp97v (#77 Strata in llama-swap, Test list)",
+      "77_candidate_b": "Ru3CzNiyaEQH7YFcr (#77 Fix rest-api-overview.md, Planning) — CHOSEN (77b)",
+      "70_candidate_a": "fWAw8RKWjcDpmrQf5 (#70 Wekan 12.64 input fields, Finished)",
+      "70_candidate_b": "SouMZ2fbd8vDbz2m3 (#70 FRICTION.md cord typo, Planning) — CHOSEN (70b)",
+      "81": "Q7Sg7H4dicTALAp8q",
+      "78_candidate_a": "jaEe2jfobfboyaM92 (#78 coord route test fixes, Test list) — CHOSEN (78a)",
+      "78_candidate_b": "ttv3k8b45fXXRynM8 (#78 cf-90 ledger L1, Inbox)"
+    },
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Ready for Work": "mkbxeo",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5",
+        "Pipeline: Context": "3PGnrD",
+        "Bucket Color": "yBfNJJ",
+        "Pipeline: Home Assistant": "urP8pR",
+        "Provider: Local": "NFHvzp",
+        "Provider: OpenRouter": "f3sKNX",
+        "Provider: Local (dup)": "PnhFKk"
+      }
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "title": "wekan-mcp: dependency tools + preload_board + set_card_labels + passthroughs + docs re-stamp",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "title": "agent-explore subagent + 6-twin roster + permissions matrix + AGENTS roster + EXPLORE.md read order",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "title": "sibling asks I: AD-77b BOARD_COLORS + AD-70b typo + AD-81 -pr verify + AD-78a silent-route verify",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "title": "sibling ask II (AD-66): renovate manages system-upgrade-controller",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "title": "boards skill: pickup dependency gate + preload consumer at claim + grouped-sibling flow + follow-up label retire",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C02"],
+      "title": "coord+plan skills: per-ask research split (Research: Parallel) + agent-explore launchable + AD-71 guidance + Chunk Review done-gate carve-out (OQ15)",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C07": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C05"],
+      "title": "boards skill: Lifecycle redesign — 11 items (10 stages + Single Session kept) — Stage map, defaults, HITL, transitions, cutover section",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C08": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": ["C07"],
+      "title": "cutover process artifacts: provision-board.py spec + provision skill + board-rules v12.65.json (MODIFY ONLY)",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C09": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": ["C07"],
+      "title": "coder workspace TZ (America/Denver) + timestamp pass — displayed stamps local incl. machine ISO fields, instants preserved (OQ4/OQ5 folded)",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C10": {
+      "status": "pending",
+      "wave": 5,
+      "depends_on": ["C01", "C08"],
+      "title": "HOLD: deploy chain runbook (merge→v<run>→pin bump dev+gpu→probes→L4 absorb) + cutover apply readback — human-executed",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "Wave-parallel dev sessions (AD-71 half 2) — revisit text only; sole-committer model blocks true parallelism; follow-up card material",
+    "Hook-based preload (OQ3 rejected alternative)",
+    "My Dependencies exposure (OQ9 — docs mention only)",
+    "Kind-1 Red Strings edges (OQ1 ruled parentId-only 2026-11-01)"
+  ]
+}
