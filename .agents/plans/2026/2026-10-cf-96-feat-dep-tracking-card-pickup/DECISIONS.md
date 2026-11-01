@@ -147,6 +147,13 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   arithmetic (test session tempting-refactor, 2026-11-01): would end the
   same-commit count chases on every wekan-mcp tool addition; follow-up card
   material (owner's call).
+- C06 review ledger notes (2026-11-01, non-blocking, follow-up candidates):
+  (1) pipeline-role-research parity line for shared-RESEARCH.md append/merge
+  when multiple research sessions write one file; (2) the `Research: Parallel`
+  label's same-file write pressure stays dormant until parallel fires — if
+  enabled, needs append discipline; (3) cf96-coord t5 negative-check (2) is
+  loose — coverage actually held by t4's affirmative pins; a future harness
+  touch may tighten.
 
 ## Coord rulings (test session's open questions)
 - 2026-11-01 coord: test-Q1 CLOSED — "8 new signatures" counts the seven new

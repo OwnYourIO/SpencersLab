@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "coord_session": "ses_e6b2a397effeJoBUoRxc4WVA22",
   "test_session": "ses_e6adaf11bffeOtWerHTHQlYlqj",
-  "current_wave": 2,
+  "current_wave": 3,
   "updated_at": "2026-11-01T06:30:00Z",
   "handoffs": [
     "RESULT (agent-test, ses_e6adaf11bffeOtWerHTHQlYlqj, 2026-11-01) status: DONE chunk: plan (tests C01-C10) — 15 test files committed 2b4748847 (tests/** only; STATE churn left coord-owned). Per-chunk gates recorded in suite headers; pinned interfaces fixed as contract (preload_board {swimlanes,lists→cards,dependencies,label_names,field_names} + 7-key card map; set_card_labels(board_id,card_ids,add_label_ids,remove_label_ids); create_card trailing parent_id; schema-2 key checklist_extras + action update_createcard_checklists; single formatter symbol localIso). Baselines green incl node --test 233/0; designed-reds name not-yet-landed surfaces; pre-existing admitted reds enumerated (cf-90 warm family + STATE-churn arms + validation-fix t4 + coder tfbin env for C09). deviations 1-6 recorded. friction: '8 signatures' vs +7 tools -> coord CLOSED (8th = parent_id signature on existing create_card, DECISIONS); coder-*.sh reds = missing /tmp/opencode/tfbin precondition flagged to C09. open_questions Q1/Q2 both RULED by coord into DECISIONS (roster-drift arms stay outside chunk gates; agent-perms in-commit re-pin is C02's own duty).",
@@ -155,34 +155,54 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C01"],
       "title": "boards skill: pickup dependency gate + preload consumer at claim + grouped-sibling flow + follow-up label retire",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r2; R1 storage-truth fix round r2 green; chunk commit 19ecf6505)",
+      "dev_session": "ses_e69a97e42ffe378CppaLGIo6u5",
+      "handoffs": [
+        "RESULT (C05 dev r1, ses_e69a97e42ffe378CppaLGIo6u5) status: DONE — boards SKILL source+mirror: dependency gate in Card pickup (blocks/is-blocked-by only, title-resolved Test/Finished, archived exempt, _id keying, skipped-candidate reporting, manual reported-and-left), preload consumer at claim (once post-pipeline_claim, never the hook, 3-map duties, lean stamp, tools/list degrade law), grouped-sibling flow (blocking edges ONLY — OQ1 parentId negative stated; coord-owned Executing/Review moves; never-disturb; ride-the-claim; plan-enumerated degrade), follow-up set_card_labels + parent_id sole lineage + pre-C10 degrade line kept, frontmatter description extended. boards-deps 5/5 flipped green; NO flip spec needed — cf90-ledger/rulesync needles survived verbatim (T4 duty dissolved); flags carried to C07: board-facts 'six today' bullet vs Test list. geometry friction recorded.",
+        "RESULT (C05 review r1, fresh ses_e698e6cbdffekOuo8fZjvb64V3) status: CHANGES_REQUESTED — full battery green incl clean-probe-worktree isolation of the four churn reds; FINDING R1: gate sentence 'edge list already carries the inverse twin' FALSE vs v12.65 (source-card-only $push, GET one line per stored entry, preload synthesizes none) — fix spec handed (one-stored-spelling + consumer-side inverse-map equivalence, needles co-spaced). Ledger notes: gate-skip-all vs no-op marker (alert-stands, follow-up candidate); stamp phrasing.",
+        "RESULT (C05 dev r2 fix round, same session continued) status: DONE — sentence replaced per spec (verified against v12.65 route again pre-edit); boards-deps 5 ok incl t1 co-spacing; generate no-op2 + --check; cf90-ledger 4 ok; mirror carries fix. CARRY: same false claim lives in C01's list_board_dependencies docstring + call-shapes row -> coord routed: landed 9bf58afae (C01-carryover, dependencies.sh 7 ok, repo-wide zero carriers).",
+        "RESULT (C05 review r2, fresh ses_e6970690affe8NlPVi4zo3oJAM) status: DONE verdict APPROVED — R1 closed: sentence states storage truth + consumer-side equivalence naming both spellings + the OQ2 miss prevented; archived/title/_id semantics intact; v12.65 re-fetch confirms NEW sentence; source↔mirror byte-identical sentence; boards-deps 5 ok, cf90-ledger 4 ok, generate no-op2+--check, aislop rc0; grep proves no test pinned the old wording and no live carriers remain."
+      ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": ["C02"],
       "title": "coord+plan skills: per-ask research split (Research: Parallel) + agent-explore launchable + AD-71 guidance + Chunk Review done-gate carve-out (OQ15)",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit e73f5f8f1 atop harness fix fe5e08c9c)",
+      "dev_session": "ses_e69645312ffeYvgghG1g8r7GFv",
+      "handoffs": [
+        "RESULT (C06 dev r1, ses_e69645312ffeYvgghG1g8r7GFv) status: DONE — role-coord: per-ask research sessions serial default + case-insensitive human-created Research: Parallel exception + absolute-path duty + shared RESEARCH.md sections; agent-explore in launch roster + Exploration-before-research via Stage-map citation only; step 4 waves-are-order-only one-at-a-time + sole-committer; step 5b/7 OQ15 carve-out (dev-only loop, evidence-judged done-gate, determinism mandatory, checked shape unchanged). role-plan: fewer-cohesive-chunks bullet (one-subsystem-one-chunk, split-on-reviewability), AD-71 half-2 revisit + Deferred cross-ref. T4 zero-re-pin verified; DISCOVERY: cf96-coord win() treated the header-intended '§' separator args as literal needles => t1/t3/t4 unsatisfiable by any prose; +t3 case-sensitive wave-parallel arm — probe /tmp/opencode/cf96-coord-probe proves 6/6 with two mechanical fixes; flip specs A+B handed up.",
+        "RESULT (C06 validation repair, test session continued ses_e6a75d2b6ffeQVm4AqFpLdWjH0) status: DONE — fe5e08c9c tests/cf96-coord/surface.sh only: win() filters '§' group separators + t3 grep -qiE wave-parallel; live byte-identical to dev probe pre-run; 6/6 green in-tree against landed prose; no needle/group/span/fail-text softened; regression spot green (agent-explore 6, tools 9, agent-perms 16, boards-deps 5); lesson recorded: run HOLD-now arms individually, fail-fast hides them.",
+        "RESULT (C06 review r1, fresh ses_e6944de09ffeNeANXUD9z1O1lA) status: DONE verdict APPROVED — cf96-coord 6/6 in-tree; battery green, admitted stale-base/churn reds message-identical & structurally unreachable from C06; fe5e08c9c weakening EXCLUDED (engine-parity diff: removes always-false conjunct; -i aligns sibling grep + DECISIONS record); T1/T2/T3/T5 pins verified line-level incl cite-never-restate (no Stage-map mechanics leaked) and no reading waives the Commands; mirrors md5-stable generated. Three non-blocking ledger notes folded to DECISIONS Deferred (role-research shared-file parity, Parallel-label write pressure dormant, t5 negative looseness)."
+      ]
     },
     "C07": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C05"],
       "title": "boards skill: Lifecycle redesign — 11 items (10 stages + Single Session kept) — Stage map, defaults, HITL, transitions, cutover section",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; Deferred-1 carryover restamped + suite admits landed; fold commit pending wave-4 start)",
+      "dev_session": "ses_e693629c7ffeLAgkjCliJ4O5YU",
+      "handoffs": [
+        "RESULT (C07 dev r1, ses_e693629c7ffeLAgkjCliJ4O5YU) status: DONE — boards SKILL 11-item Lifecycle + HITL 11-mirror w/ AFTER-stop + Default Final Review; Stage map 11 rows (Exploration/agent-explore, ADR citing C06, OQ15 on both chunk rows, renamed Deployment, Single Session kept last); new ### Blank defaults subsection (7 stages, Exploration in, Deployment+Single Session out); transition rewrite (legacy Research timing-only, Lifecycle-wins moved up, legacy-HITL mapping, card #96 self-named, positive no-Single-Session-transition statement); cutover rewrite (11+11, OQ13 Qwen-Flash-only extras v2 path, Research: Parallel ensure, backup-first human-only); enumeration + board-facts Test/Cancelled correction. cf96-lifecycle 7/7 individually then full; rulesync no-op2 + --check; discovered the c11-header mis-attribution (stage_tokens lives in c18) + the prefix-substring collision class; c11/c18 re-pin spec pre-validated at /tmp/opencode/cf96-c07 (patched copy green). deviations: transition re-order + blank-defaults placement geometry-driven; zero dev test edits.",
+        "RESULT (C07 validation repair, test session continued) status: DONE — db2b261ca rulesync-surface c11 (eleven-name windows, HITL mirror, Default: Final Review) + c18 (11-row stage_tokens, first-cell exact row hit, <12 floor, Agent-Decides lookahead scanner) applied verbatim (patch dry-run clean, live byte-equal to dev's verified copy); full suite fail-fast ONLY at c8 churn; subset 22 ok; cf96-lifecycle 7 ok, boards-deps 5 ok, node 233/0.",
+        "RESULT (C07-fold dev, ses_e691022b7ffe8GQNm4AWPIWGgr) status: DONE — .rulesync/rules/overview.md two cites (step-8b hook -> checked Lifecycle `Deployment`; board-coord bullet -> 11-item w/ kept Single Session + Blank-defaults citation) -> AGENTS.md regenerated no-op2 + --check; agents-md 8 ok + c7 churn-red root-caused to the MISSING cf-96 admit (flip spec handed up); zero stage-mechanics restated; NEEDS_INFO stop-condition never arose.",
+        "RESULT (C07-fold test route, continued) status: DONE — agents-md c7 scope-admit for the running ticket's plan folder committed (7a0c11a81-era), agents-md 9/9 green unaided.",
+        "RESULT (C07 review r1, fresh ses_e6906486dffekdn9ZVkaNUr464) status: DONE verdict APPROVED — AC1-AC6 verified in fold-shape probes: 11 items/11 rows + Single Session last + blank-default seven + HITL AFTER/mirror + OQ15 both rows + transition timing-only w/ mapping + no-SS-transition + cutover never-agent unbroken; rulesync-surface full 23/23 in fold-sim probe (in-tree red = pure churn), gate per-arm only known t17, agents-md 9/9, boards-deps 5, cf90-ledger 4, cf96-coord 6, agent-perms 16, provider-loops 7/7 probe, node 233/0, aislop score100 0/0; c18 re-pin verified STRICTER not weakened. Deferred 1: retired `Deploy` cites survive in pipeline-push-pr/role-coord-8b/role-deploy (restamp carryover, verified suite-free). Deferred 2: Cancelled-list blocker still gates pickup (C05-lineage ledger). OQ2: cf-96 admits must ride c8/t14 for the merge-base final-review shape.",
+        "RESULT (C07-carryover dev, ses_e68cea427ffeq1jcQmd3vITBrr) status: DONE — 3 sources + 3 mirrors restamped Deploy->Deployment (push-pr 3 cites + heading + hook label; role-coord step-8b x4 + L56 roster-line; role-deploy L12/L14 x3); cite-only held, no mechanics restated; push-pr 9 ok, agent-dev-deploy 6 ok, cf96-coord 6 ok, cf96-lifecycle 7 ok, agent-perms 16, cf90-ledger 4, boards-deps 5, aislop score100 0/0; rulesync-surface fails ONLY at c8 churn (c1-c7 + c9-c22 individually green = 21 ok), gate t14 same churn. open_questions carried: 3 out-of-scope stragglers (agents-sync permissions.md L38 row — byte-pinned by board-context t4, NOT suite-free; six coord subagent frontmatter comments; agent-dev-deploy pair descriptions) -> final-review vocabulary sweep.",
+        "RESULT (C07 admits test route, continued) status: DONE — 8d23fffcc rulesync-surface c8_admits + gate.sh t14 admit cf-96 plan folder (pipe convention, no other change); board-context has NO t14 arm (verified: id dispatch t1..t6; its t14 lines came from t6's nested gate child) so NOT edited — discharge inherited, suite now 6 ok FULL; rulesync-surface full 23 ok rc0; gate full 18 ok with ONLY the ruled t17 (byte-identical vs recorded baseline); agents-md 9, cf96-lifecycle 7, agent-perms 16, node 233/0. friction recorded: 4th per-ticket admit ritual -> single-admits-file follow-up idea (owner's call)."
+      ]
     },
     "C08": {
       "status": "pending",
