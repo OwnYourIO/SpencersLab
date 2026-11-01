@@ -10,10 +10,12 @@
 # Contract source: chunks/C09.md "## Tests" + Acceptance criteria. AC trace:
 # t1[AC1+AC3] t2[AC4] t3[AC5] t4[AC2+AC6].
 #
-# Skill-pin table comes from DECISIONS (the binding log, newer than the C09
-# Tasks bullet — the Tasks bullet's /executing-plans pin is NOT in either
-# target's installed registry, so the DECISIONS table is the contract; the
-# absent-skill leg below would reject it if landed). Per repo:
+# Skill-pin table comes from DECISIONS (the binding log — the contract for
+# which pins are REQUIRED; dev's C09 round cross-checked live that
+# /executing-plans resolves post-port, so the Tasks bullet's extra pin is
+# not asserted here and is not rejected either — the absent-skill leg below
+# machine-checks that everything landed resolves in the repo's own
+# registry). Per repo:
 #   ha-dev / ha-custom-component -> ha-integration-dev + home-assistant-best-practices
 #                                    (+ labeled-features in LBF ONLY)
 #   ha-code                      -> home-assistant-best-practices + home-assistant-yaml
@@ -158,10 +160,10 @@ for repo, name in ((lbf, 'LBF'), (ha, 'HomeAssistant')):
                 if p in got:
                     bad(f'HomeAssistant {agent} pins /{p} — labeled-features is LBF-only (AC3); it is not in the HomeAssistant registry')
         # Every pin the twin carries must resolve in this repo's registries —
-        # the absent-skill machine-check. (The C09 Tasks bullet's
-        # /executing-plans pin is deliberately NOT part of the DECISIONS
-        # table above because it is absent from both target registries; if
-        # dev lands it anyway, this leg rejects it.)
+        # the absent-skill machine-check. The DECISIONS table above pins the
+        # REQUIRED set; anything extra (e.g. /executing-plans, which resolves
+        # post-port in both targets — dev's live C09 cross-check) passes so
+        # long as it exists in the repo, fails if it does not.
         real_missing = sorted(x for x in got if x not in reg)
         if real_missing:
             bad(f'{name} {agent} pins skills absent from every registry: {real_missing}')
@@ -202,19 +204,31 @@ for ha_agent, base in pairs:
     (h_data, h_set) = perms(hp)
     (_b_data, b_set) = perms(bp)
 
-    # Required dev-shaped rows on every ha agent (chunk t2 + repo hard rule):
-    for row in (('edit', 'tests/**', 'deny'), ('edit', '.agents/plans/**', 'deny'),
-                ('edit', '.rulesync/**', 'ask'), ('question', '*', 'allow')):
-        if row not in h_set:
-            bad(f'{ha_agent} lacks the required row {row} (permission audit vs agents-sync references/permissions.md)')
-    # "copied verbatim from their base twins" — the (action,resource,effect)
+    # Repo hard rule, universal over all four twins: question stays allowed.
+    if ('question', '*', 'allow') not in h_set:
+        bad(f'{ha_agent} lacks the question allow row — repo hard rule on EVERY agent')
+    # AC4 rows scope by shape: the three dev-shaped denies/ask are required
+    # on the dev-shaped overlays (ha-dev + ha-custom-component, base
+    # agent-dev-local). ha-code/ha-debug mirror the STANDALONE code.md /
+    # debug.md twins, whose grant shapes legitimately differ (code.md allows
+    # tests/** by design); demanding the dev rows there would make the
+    # verbatim-equality leg below unsatisfiable without moving base-twin
+    # scope — which C09 forbids (permission blocks copied verbatim from the
+    # approved C06/C07 twins).
+    DEV_SHAPED = ('agent-ha-dev', 'agent-ha-custom-component')
+    if ha_agent in DEV_SHAPED:
+        for row in (('edit', 'tests/**', 'deny'), ('edit', '.agents/plans/**', 'deny'),
+                    ('edit', '.rulesync/**', 'ask')):
+            if row not in h_set:
+                bad(f'{ha_agent} lacks the dev-shaped row {row} (agent-dev-local mirror contract, C09 AC4)')
+    # "copied verbatim from their base twins" — universal, the (action,resource,effect)
     # set must equal the base twin's exactly (color/name/description may
     # differ; grants may not).
     if h_set != b_set:
         extra = sorted(h_set - b_set)
         lost = sorted(b_set - h_set)
         bad(f'{ha_agent} permissions drift from base {base}: extra={extra} lost={lost} (verbatim copy is the audit contract)')
-print(f'ok: t2 — permission rows + verbatim-mirror audit green for all {len(pairs)} ha/base pairs in the repo')
+print(f'ok: t2 — universal question-allow + verbatim-mirror audit green for all {len(pairs)} ha/base pairs; dev-shaped rows asserted on the dev-shaped overlays (C09 AC4)')
 PY
     then checks=$((checks + 1)); else fail "t2: the permission audit failed for $label (reason above)"; fi
   done
