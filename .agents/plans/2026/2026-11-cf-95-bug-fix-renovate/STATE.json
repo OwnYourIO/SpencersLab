@@ -79,13 +79,26 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6ad2a9a5ffeaZwKYSk02PShvS",
+      "review_session": "ses_e6ac730faffeiyew2P7BIRKtWu",
+      "handoffs": [
+        {
+          "round": 1,
+          "role": "review",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nverdict: APPROVED\nfiles_changed: [chunks/C02.md (review notes)]\ndeviations: none (review-side); dev's disclosed block-style DS mapping ACCEPTED per the chunk's 'mirror the sibling' wording\nfriction: background dry-run re-spawned by the harness mid-run (first log lost) — resolved with blocking wait to a single clean 30492-line log; no repo impact\nopen_questions: none\nnext_suggested: coord commits C02 (two values files + tests/services/home-dead-image-refs.sh + AC8 delta in the message); final whole-plan review runs the fully-clean dry-run with the Deferred forgejo allowlist folded and carries the tika 2.9->3.3 major-PR note (human-gated by the PR stop)."
+        },
+        {
+          "round": 1,
+          "role": "dev",
+          "result": "RESULT\nstatus: DONE\nchunk: C02\nfiles_changed: [services/home/prod/values.yaml, services/monitoring/prod/values.yaml]\ncommands_run: [home-dead-image-refs.sh baseline 7/13 red -> post-fix 19 passed 0 failed; dockerfile-pins.sh 34/0; chart-yaml-legs.sh 12/0; yaml.safe_load both values files pass; AC1 old-ref greps 0 + name: datasource=4; AC2 pair counts 1/1/1; TIKA live probe HEAD 2.9.2.1-full => 200 docker-content-digest sha256:ae0b86d3... == pinned digest; CHROME HEAD 124 => 200; GRAFANA 13665 => 200 name=Speedtest-Exporter Dashboard revision=4, 16541 still 404; AC7 dry-run exit 0, ❌=0, Failed-to-look-up only allowlisted (EMAsphere x2, forgejo runner + helm), apache/tika + zenika/alpine-chrome + TWO distinct 13665 deps resolve, no duplicate-dep warning; git diff only the two values files 8+/7-; aislop ci --changes 0/0]\ndeviations: \"1) Hub datasource mapping in the sibling's exact block style rather than AC4's inline flow spelling — chunk says 'mirror the sibling's proven shape', suite (s6) accepts both, green. 2) No new deps, no comments added; (hub) depName is the renovate tool directive itself.\"\nfriction: ad-hoc result-deps extraction marker shape failed against 44.181.5 debug dump — replaced with targeted grep + balanced scan; minor, no repo impact.\nopen_questions: \"Live Renovate may open a tika 2.9->3.3 major PR in future (user ruling #4 bounded the replacement choice, not a going-forward ignore) — human-gated by the PR stop; flag for final review only.\"\nnext_suggested: review re-runs the three suites + AC3/AC6 live probes + AC7 dry-run; coord commits C02 with the AC8 deploy delta in the message; final whole-plan review folds the Deferred forgejo allowlist and runs the fully-clean dry-run."
+        }
+      ]
     }
   },
   "blocked": [],
