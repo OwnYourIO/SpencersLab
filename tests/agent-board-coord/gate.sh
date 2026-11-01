@@ -917,6 +917,7 @@ if want t14; then
       containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
       containers/strata/carry/ornith-q36.patch|\
       .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
+      .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
       skills/wekan-board-provision/*|\
       .rulesync/skills/pipeline-role-plan/*|.opencode/skills/pipeline-role-plan/*|\
       .rulesync/skills/pipeline-role-deploy/*|.opencode/skills/pipeline-role-deploy/*) : ;;
