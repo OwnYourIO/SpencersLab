@@ -37,6 +37,19 @@
       "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
     },
     {
+      "description": "Updates for the system-upgrade-controller (AD-66): the ArgoCD Application in charts/base/templates/k3s-system-upgrade-controller.yaml tracks the repo's git tags (vX.Y.Z), so the datasource is git-tags and packageName must be the git URL the manifest's repoURL names — unlike github-releases, git-tags resolves depNames as URLs, not owner/repo. Renovate PRs targetRevision bumps; the pin itself is never hand-moved.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/k3s-system-upgrade-controller\\.yaml$/"
+      ],
+      "matchStrings": [
+        "targetRevision:\\s*(?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "rancher/system-upgrade-controller",
+      "packageNameTemplate": "https://github.com/rancher/system-upgrade-controller.git",
+      "datasourceTemplate": "git-tags"
+    },
+    {
       "description": "Update Charts - explicit chart field",
       "customType": "regex",
       "managerFilePatterns": [
