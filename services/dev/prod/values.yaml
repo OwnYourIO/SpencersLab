@@ -93,13 +93,18 @@ charts:
   searxng:
     namespace: default
     ServerSideApply: "false"
-  # Client-only service: the runner dials out (forgejo-runner-dev
-  # in-cluster to dev-forgejo-http:3000), so it deliberately gets NO
-  # ingress.subdomains entry — the service trio's proxy leg is N/A by
-  # design, not an oversight. The infra-instance runner was un-wired from
-  # dev by user decision 2026-10-25; its registration relocation is
-  # pending, so the chart keeps the aliased-instance capability.
+  # Client-only services: the runners dial out (forgejo-runner-dev DinD
+  # in-cluster to dev-forgejo-http:3000; forgejo-runner-dev-host host-backend
+  # to the same instance), so they deliberately get NO ingress.subdomains
+  # entry — the service trio's proxy leg is N/A by design, not an oversight.
+  # The infra-instance runner was un-wired from dev by user decision
+  # 2026-10-25; its registration relocation is pending, so the chart keeps
+  # the aliased-instance capability.
   forgejo-runner-dev:
+    namespace: default
+    ServerSideApply: "false"
+    chart: forgejo-runner
+  forgejo-runner-dev-host:
     namespace: default
     ServerSideApply: "false"
     chart: forgejo-runner
@@ -143,6 +148,58 @@ ingress:
 forgejo-runner-dev:
   runner:
     url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
+
+# C03 dev validation release: the SAME chart in host-backend mode (no
+# privileged DinD — jobs execute in the runner container). Helm parses a
+# chart's values.yaml as plain YAML, so the backend toggle cannot gate the
+# chart's own structure; this slice nulls the docker-only keys instead
+# (higher-precedence null removes a default key — the contract documented
+# in charts/forgejo-runner/values.yaml). TRANSPORT CAVEAT: ArgoCD strips
+# nulls from inline valuesObject (argo-cd#16312); the chart then fails the
+# render loudly instead of resurrecting the sidecar — the remedy (an
+# ServerSideApply "true" flip on this entry, which would touch the t5
+# fleet-contract leg, or an external values file) stays with whoever trips
+# the gate. Registration is org-scoped per the
+# owner (a runtime admin-UI step on git.scifi.farm; the chart is
+# scope-agnostic); job routing isolates this runner via the cf-host label,
+# disjoint from the DinD release's act-label set.
+forgejo-runner-dev-host:
+  runner:
+    url: http://dev-forgejo-http:3000   # in-cluster, co-located (same dev-forgejo instance)
+    backend: host
+    # SAME label the future gpu prod runner (card #88) carries — site
+    # workflows' runs-on never changes when validation graduates.
+    labels: ["cf-host:host"]
+  app-template:
+    controllers:
+      runner:
+        initContainers:
+          dind: null
+        statefulset:
+          # Replaces the chart's [data, docker-data] list wholesale (helm
+          # merges maps but swaps lists): one 20Gi data PVC sized for
+          # host-mode workdir + LFS checkouts + action cache + sync state.
+          volumeClaimTemplates:
+            - name: data
+              accessMode: ReadWriteOnce
+              size: 20Gi
+              storageClass: local-path
+              globalMounts:
+                - path: /data
+        containers:
+          runner:
+            env:
+              DOCKER_HOST: null
+            image:
+              # C02 toolchain image (runner binary + hugo + netlify-cli +
+              # git-lfs). No pinned :v<run> build exists yet — :main +
+              # Always is the repo rolling-tag rule until CI publishes one
+              # (pin via renovate then).
+              repository: ghcr.io/ownyourio/forgejo-host-runner
+              tag: main
+              pullPolicy: Always
+    persistence:
+      socket: null
 
 # Coder is a wrapper chart (charts/coder): its subchart config, OIDC/PG
 # ExternalSecrets and the pg-coder CNPG cluster live in the chart itself.

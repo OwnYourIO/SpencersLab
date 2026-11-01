@@ -88,6 +88,15 @@ forgejo-runner-dev:
     # user decision 2026-10-25 — the item stays in the vault for the pending
     # relocation (DECISIONS 2026-10-25), so it gets no dev slot.
 
+forgejo-runner-dev-host:
+  bitwardenIds:
+    # Item dev-forgejo-host-runner (username=runner uuid, password=registration
+    # token; registration scope per owner on the DEV instance — org on
+    # git.scifi.farm's Actions admin UI). MUST-FILL user action before the
+    # release can attach (plan user-action 2); NEVER `forgejo-token` — that is
+    # the Coder workspace access token.
+    runner-token: OVERRIDE_NEEDED
+
 hivetools:
   bitwardenIds:
     mcp-sso: d07b1bec-d02c-4580-8544-b4e2000e1783            # shared dev SSO

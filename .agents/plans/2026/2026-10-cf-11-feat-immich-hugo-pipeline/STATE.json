@@ -130,7 +130,7 @@
       "dev_rounds": 2,
       "review_rounds": 2,
       "last_verdict": "APPROVED",
-      "commit": "see chunks.C01 handoffs[-1] + branch log",
+      "commit": "c1ab8e9a4",
       "note": "N1 as-recommended; N2 pinned edit shape in contract section 5 (owner override); N3 page: required, no fallback",
       "dev_session": "ses_e6ae8aee7fferrYk2lgzmxCmyA",
       "handoffs": [
@@ -165,8 +165,18 @@
       "wave": 1,
       "depends_on": [],
       "repo": "SpencersLab",
-      "status": "pending",
-      "note": "rework R1/R2: home target superseded; prod E2E gated on card #88 (network path + gpu runner)"
+      "status": "done",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED",
+      "note": "rework R1/R2: home target superseded; prod E2E gated on card #88 (network path + gpu runner)",
+      "dev_session": "ses_e6aa82e6fffeoHdIrrSuniYcF8",
+      "handoffs": [
+        { "at": "2026-11-01", "from": "agent-dev-local", "status": "DONE", "summary": "runner.backend + labels added to values; templates/secret-runner.yaml renders backend-appropriate config (docker byte-identical; host = workdir_parent+cache.dir on /data, no container block, labels from values). Dev wiring: forgejo-runner-dev-host aliased entry + top-level slice (url/backend host/cf-host labels/forgejo-host-runner:main@Always/20Gi VCT/null-outs), OVERRIDE_NEEDED runner-token slot naming dev-forgejo-host-runner (user action 2). Suite 49 ok exit 0; AC2 cmp byte-identical; aislop 100.", "deviations": "(1) values.yaml structural conditionals impossible under Helm + app-template 5.0.1 leaf-tpl (verified vs vendored loader source) -> release-slice null-outs + template-level gating; documented as slice contract in values.yaml header. (2) image override via nested app-template path (no chart-level fallback; t10 proves appset merge flow). (3) found template-file header comments render verbatim into manifests -> reverted own header edit byte-exact, mode docs live in values.yaml. (4) Chart.yaml untouched (description still says DinD; version bumps owned by release.yaml).", "open_questions": "none — dev-host release non-attaching until owner registers runner + Bitwarden item + replaces OVERRIDE_NEEDED, then scratch runner-host-validation workflow (user action 2).", "friction": "C03 wording assumed values.yaml conditionals; mechanism note pinned for card #88 gpu slice (same null-out contract). Re-ran full suite after late comment-only edits (template comments are a render surface)." },
+        { "at": "2026-11-01", "from": "agent-review(r1, ses_e6a8c3ec0ffes7PNkyOwbhhRQ5)", "status": "CHANGES_REQUESTED", "summary": "All validations green incl. INDEPENDENT AC2 re-proof (git archive HEAD chart-copy, 4 shapes byte-identical) + host-render shape exact + deviation-1 premise verified TRUE. MAJOR-1: null-outs ride inline valuesObject with ServerSideApply=false through appset->Application; argo-cd#16312 (open) documents null-stripping on that flow -> lost nulls silently resurrect privileged DinD while rendering a valid host config.yaml (unproven hop from worktree, direction-lock inversion unguarded; t9/t10 stop at the helm-render hop). Fix requested: {{ fail }} backend-consistency gate in secret-runner.yaml + transport-caveat comment + post-sync live-check user-action line. MINOR-1: dev handback was not on the file bus (now recorded). If ServerSideApply flip is later chosen for the host entry, t5 hard-asserts 'false' -> route to agent-test." },
+        { "at": "2026-11-01", "from": "agent-dev-local(r2, same session)", "status": "DONE", "summary": "Render-time fail-gate added to templates/secret-runner.yaml: backend==host AND a present-non-empty docker-only structural key (dind initContainer / DOCKER_HOST env / socket persistence) -> {{ fail }} naming argo-cd#16312 + lost-null-outs diagnosis + remedies (serverSideApply:true or explicit empty-but-not-null structures). 4 negative proofs (all-3-stripped, socket-only, --set host w/o slice, env-only) fail loud; positive host render + AC2 standalone/dev-slice cmp byte-identical re-run; suite 49 ok exit 0 on gated tree; aislop 100.", "deviations": "(1) Gate predicate = 'carries content' (present-and-non-empty) not 'present-non-null': absent-after-coalesce + explicit-empty pass, so the empty-but-not-null remedy path is self-consistent while stripped-nulls-become-nonempty-chart-defaults still fail. (2) first impl used sprig dig -> errors on helm chartutil.Values typed map (would have failed every host render); rewritten as default-dict get chains. (3) positive render caught a missing env hop in the DOCKER_HOST check; negative-4 proves it independently now. (4) reviewer's live-check line is a plan-file (user-action 6) item, plan/coord write-grant — documented in chart values.yaml TRANSPORT CAVEAT paragraph instead; ported to plan by coord.", "friction": "none new; dig/chartutil.Values incompatibility + env-hop caught by own positive+negative render proofs pre-handback." },
+        { "at": "2026-11-01", "from": "agent-review(r2, FRESH ses_e6a70f468ffeB9i2gpTSUj6Jdy)", "status": "APPROVED", "summary": "Major-1 closed with own-hand proofs: 3 stripped-slice negatives fail loud naming keys + #16312 + remedies; healthy host render exact; AC2 re-proven byte-identical vs git-archive HEAD copy (gate emits nothing on docker path); suite 49 ok; aislop 100; scope clean.", "coord_note": "MINOR-1 correction: dev r2 deviation-1's 'explicit empty-but-not-null structures' remedy claim is FALSE at map level (helm coalesce no-ops {}, chart defaults survive, gate correctly fires); shipped surfaces advertise only valid remedies — DO NOT carry the phrasing into card #88 handover. Deferred suggestion (non-blocking): agent-test leg pinning the gate's fail behavior; currently triple-proven ad hoc only." }
+      ]
     },
     "C04": {
       "title": "charts/forgejo-secret-seed: Bitwarden->Forgejo repo-secret seeder + GPU wiring (org repo on git.spencerslab.com)",

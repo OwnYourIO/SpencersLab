@@ -1,12 +1,55 @@
 # Forgejo Actions runner — one registration per release.
 #
-# The dev ApplicationSet deploys this chart TWICE (one ArgoCD Application
-# per target Forgejo instance): charts.forgejo-runner-dev and
-# charts.forgejo-runner-infra, both aliased `chart: forgejo-runner`. Each
-# release runs exactly one pod (privileged DinD sidecar + runner container),
-# one headless Service and one ExternalSecret — every resource is named
-# after the release, so the two releases coexist in namespace `default`
-# without colliding.
+# The dev ApplicationSet aliases this chart once per deployed Forgejo
+# runner (each ArgoCD Application carries `chart: forgejo-runner`): today
+# forgejo-runner-dev (docker backend, dev instance) and
+# forgejo-runner-dev-host (host backend, same instance); the infra alias is
+# un-wired pending the 2026-10-25 relocation. Each release runs exactly one
+# pod, one headless Service and one ExternalSecret — every resource is named
+# after the release, so releases coexist in namespace `default` without
+# colliding.
+#
+# Two backends via `runner.backend` (C03, ticket 2026-10-cf-11-feat-immich-
+# hugo-pipeline; docker is the default and the shape this file ships):
+#   docker — the pod below: privileged DinD sidecar + runner container, the
+#            5-label act image set, DOCKER_HOST at the in-pod socket.
+#   host   — jobs run directly in the runner container (the toolchain image,
+#            ghcr.io/ownyourio/forgejo-host-runner). Helm parses values.yaml
+#            as plain YAML, so the toggle cannot gate this file's structure;
+#            a host release's TOP-LEVEL SLICE nulls the docker-only keys at
+#            higher precedence — initContainers.dind, the docker-data VCT
+#            (the whole volumeClaimTemplates LIST is replaced by a `data`
+#            entry sized for workdir/cache, see the dev-host slice in
+#            services/dev/prod/values.yaml), persistence.socket, and
+#            containers.runner.env.DOCKER_HOST — and overrides the image and
+#            runner.labels. templates/secret-runner.yaml renders the
+#            backend-appropriate config.yaml from runner.backend; keep its
+#            file-level comments mode-neutral at all times — template
+#            comments land verbatim in the rendered manifest, so editing
+#            them breaks the docker-render byte-identity (C03 AC2).
+#            TRANSPORT CAVEAT (card #88 inherits this): the null-outs ride
+#            inline valuesObject through ApplicationSet -> Application, and
+#            ArgoCD strips nulls from inline values (argo-cd#16312, open
+#            upstream) — stripped nulls fall back to the docker defaults and
+#            a privileged sidecar would resurrect silently, so
+#            secret-runner.yaml FAILS the render when host mode finds any
+#            docker-only key still carrying content. If a host release ever
+#            trips that gate after a sync: set ServerSideApply "true" on the
+#            host charts: entry (SSA is a repo precedent — zigbee2mqtt; but
+#            t5 of the dev fleet contract pins "false", so the flip is a
+#            test-contract amendment for agent-test, not a solo edit), or
+#            route the slice through an external values file where nulls
+#            survive. After any host-release sync, verify the generated
+#            Application's valuesObject still carries the three null keys
+#            and the pod has no dind container.
+#            Registration itself is scope-AGNOSTIC (repo/org/instance): the
+#            scope is where the OWNER creates the runner record in the target
+#            Forgejo's Actions admin UI; the chart consumes exactly the
+#            release's (uuid, token) Bitwarden item either way. Cross-runner
+#            job hijacking is prevented by LABELS, not scope: labels are
+#            instance-scoped, so each release must advertise a label set
+#            disjoint from every other runner on that instance (the act set
+#            here vs the host release's cf-host).
 #
 # Client-only: the runner dials out, so the chart is host-free — no
 # ingress, no proxy entry, no domain references. The runner.url chart
@@ -27,6 +70,7 @@
 # k3s MTU warning: if a workflow dies during "checking out actions", first
 # suspect forgejo/runner#1779 (runner >= 12.5 intermittently fails action
 # clones on k3s — git-binary cloning, suspected overlay/MTU interaction).
+# The failure class applies in host mode too (the clone is still git-binary).
 # Mitigations: dind `--mtu 1450` dockerd flag or per-job `network: host`;
 # full research in RESEARCH-dind-supplement.md.
 
@@ -41,6 +85,24 @@ bitwardenIds:
 # render-time stand-in, the per-app top-level slice pins the live target.
 runner:
   url: http://dev-forgejo-http.default.svc:3000
+  # Backend mode: docker (privileged DinD sidecar, the stock shape below)
+  # or host (jobs execute in the runner container — see the header for the
+  # slice-side null-out contract). Everything backend-conditional keys off
+  # this value; the default must stay docker so pre-change releases render
+  # unchanged.
+  backend: docker
+  # Advertised runner labels, rendered verbatim into config.yaml's
+  # server.connections.default.labels. The docker default is the
+  # GitHub-parity act-image set (ruling 3 of the per-instance ticket —
+  # only LTS-based act tags exist); host releases override with their own
+  # (labels are how jobs route, so a host runner must never carry act
+  # labels it cannot execute).
+  labels:
+    - ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04
+    - ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04
+    - ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04
+    - docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04
+    - node22:docker://docker.io/library/node:22-bookworm
 
 app-template:
   controllers:
