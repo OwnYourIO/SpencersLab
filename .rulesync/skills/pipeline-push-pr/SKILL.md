@@ -1,6 +1,6 @@
 ---
 name: pipeline-push-pr
-description: Single authority for pushing work to be built and tested remotely — which agents may push, the AGENTS.md hard rules a push obeys, what a push triggers in CI, PR creation and its fallback, the assumed draft/ready PR testing tiers, verify-after-push, and the Deploy-stage hook. MUST-loaded by the `-pr` agent variants; never auto-selected.
+description: Single authority for pushing work to be built and tested remotely — which agents may push, the AGENTS.md hard rules a push obeys, what a push triggers in CI, PR creation and its fallback, the assumed draft/ready PR testing tiers, verify-after-push, and the Deployment-stage hook. MUST-loaded by the `-pr` agent variants; never auto-selected.
 targets: ["*"]
 disable-model-invocation: true
 metadata:
@@ -48,6 +48,6 @@ Mechanics ship under those follow-up ledger cards (L7-L12); this section is the 
 
 Confirm the push landed — `git ls-remote origin <branch>` must show the remote branch — then report the commit range and the CI expectation above in the RESULT handoff (or the board card comment). A failed push is reported, never retried with force: failure usually means the remote moved, and only the user decides the next move.
 
-## Deploy stage hook
+## Deployment stage hook
 
-When a Lifecycle `Deploy` check drives the run, the push/PR of this skill is the Deploy action — the handoff still stops there. `-local` variants answer Deploy with "ready — commits local" and stop: they neither push nor claim deployment, because deploy arrives only after the user merges.
+When a Lifecycle `Deployment` check drives the run, the push/PR of this skill is the Deployment action — the handoff still stops there. `-local` variants answer Deployment with "ready — commits local" and stop: they neither push nor claim deployment, because deploy arrives only after the user merges.
