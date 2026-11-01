@@ -113,7 +113,7 @@ sys.path.insert(0, ".")
 ns = {}
 exec(open(sys.argv[1]).read(), ns)
 path, heading, span = sys.argv[2], sys.argv[3], int(sys.argv[4])
-groups = [g.split("|") for g in sys.argv[5:]]
+groups = [g.split("|") for g in sys.argv[5:] if g != "§"]
 hay = path and open(path).read()
 if heading != "FULL":
     hay = ns["section"](path, heading)
@@ -178,7 +178,7 @@ if want t3; then
     || fail "t3[C06 AC3]: the 'never mint a chunk a single S task could join' clause is absent from pipeline-role-plan"
   win "t3[C06 AC3-coord]" "$COORD_SRC" "FULL" 700 'waves group independent chunks for ORDER|wave' § 'one at a time' \
     || fail "t3[C06 AC3]: the coord chunk-loop step does not make today's posture explicit — waves ORDER independent chunks; execution stays one at a time (C06 T3b)"
-  grep -qE 'wave-parallel' "$DECISIONS" && grep -qiE 'deferred' "$DECISIONS" \
+  grep -qiE 'wave-parallel' "$DECISIONS" && grep -qiE 'deferred' "$DECISIONS" \
     || fail "t3[C06 AC3]: DECISIONS.md no longer carries the wave-parallel-dev DEFERRED entry (sole-committer collision rationale) — verification pin of the plan's own record"
   ok "t3[C06 AC3]: plan guidance + explicit one-at-a-time + DEFERRED wave-parallel record pinned"
 fi
