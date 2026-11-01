@@ -133,7 +133,7 @@ hm = re.search(r"(?ms)(export )?function localIso\(.*?^\}", locks)
 if hm is None:
     print("t2: the localIso definition is not in pipeline-locks/index.ts — the single formatter must live where the four lock stamp sites are (defs==1 counted a definition elsewhere: five sites cannot all import cleanly if the helper lives outside this file's reach)"); sys.exit(1)
 helper = hm.group(0)
-outside = re.sub(r"function localIso\(.*?^\}", "", locks, flags=re.S)
+outside = re.sub(r"function localIso\(.*?^\}", "", locks, flags=re.S | re.M)
 if outside.count("toISOString") != 0:
     print(f"t2: {outside.count('toISOString')} toISOString call(s) remain in pipeline-locks outside localIso — the five-site rewrite is incomplete (the fallback belongs in the helper only)"); sys.exit(1)
 if "toISOString" not in helper:

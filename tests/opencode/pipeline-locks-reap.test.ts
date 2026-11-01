@@ -97,6 +97,9 @@ const HOUR = 3600000;
 // base would make the mkdir guard look stale/fresh by hours depending on
 // when the test runs. Ages are relative to env.clock, seeded via utimesSync.
 const iso = (ms: number) => new Date(ms).toISOString();
+// cf-96 C09: the two legal stamp spellings (workspace offset | UTC Z
+// fallback); mixed-era INPUT fixtures keep building with iso().
+const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
 const secs = (ms: number) => ms / 1000;
 
 function baseEnv(opts: any = {}) {
@@ -242,7 +245,11 @@ describe("R1 stale reap happy path (AC 2)", () => {
     assert.equal(reaped.ageMin, 180);
     assert.equal(reaped.trigger, "tick");
     assert.ok(existsSync(env.metaPath), "meta/lastReap is written");
-    assert.ok(!Number.isNaN(Date.parse(JSON.parse(readFileSync(env.metaPath, "utf8")).at)));
+    {
+      const metaAt = JSON.parse(readFileSync(env.metaPath, "utf8")).at;
+      assert.match(metaAt, STAMP_SHAPE, "the reap meta stamp carries the contract shape (cf-96 AC3)");
+      assert.equal(Date.parse(metaAt), env.clock, "and parses to the pass.now instant it was written at (cf-96 OQ4)");
+    }
     assert.equal(env.claims.has("s1"), false, "cache cleanup for sessions this instance owns");
   });
 
@@ -328,7 +335,8 @@ describe("R3 degrade legs — timeouts.jsonl is the interim contract (AC 4, D22)
       assert.equal(rows[0].sessionID, "s1");
       assert.deepEqual([...rows[0].pipelines].sort(), ["a", "b"], "the degrade row keeps the FULL pipeline list");
       assert.equal(typeof rows[0].reason, "string");
-      assert.ok(!Number.isNaN(Date.parse(rows[0].at)));
+      assert.match(rows[0].at, STAMP_SHAPE, "the queued timeout row carries the contract stamp shape (cf-96 AC3)");
+      assert.equal(Date.parse(rows[0].at), env.clock, "its at parses to the stamping instant (cf-96 OQ4)");
       assert.equal(lockFiles(env).length, 0, "the reap itself still succeeded");
       assert.ok(readEvents(env).some((l) => l.ev === "board_move_err"), `${failing}: the failed leg is audited`);
       assert.ok(existsSync(join(env.locksDir, ".reaped")), "degrade never reverses the file move");
@@ -628,7 +636,8 @@ describe("R10 audit-line shape battery (C05 Tests-list leg, Minor-2 close)", () 
       let obj: any;
       assert.doesNotThrow(() => (obj = JSON.parse(line)), `unparseable JSONL audit line: ${line.slice(0, 120)}`);
       assert.ok(typeof obj.ev === "string" && obj.ev.length > 0, "every audit line carries a non-empty ev");
-      assert.ok(!Number.isNaN(Date.parse(obj.at)), `every audit line carries an ISO at, saw ${JSON.stringify(obj.at)}`);
+      assert.match(String(obj.at), STAMP_SHAPE, `every audit at carries the contract shape, saw ${JSON.stringify(obj.at)} (cf-96 AC3)`);
+      assert.ok(!Number.isNaN(Date.parse(obj.at)), `every audit line parses to a real instant, saw ${JSON.stringify(obj.at)}`);
       evs.push(obj.ev);
     }
     for (const want of expectedEvents) {
@@ -747,5 +756,23 @@ describe("R11 degrade-path card comment (F1 MAJOR close — D22/plan/boards-skil
     assert.match(String(comments[0]?.args?.comment), /d1.*d2|d2.*d1/, "the single comment still names the WHOLE set (union discipline)");
     assert.equal(readTimeouts(env).length, 1, "one queue row per card too");
     assert.deepEqual(lockFiles(env), [], "the reaps themselves landed");
+  });
+});
+
+describe("cf-96 C09 zone coverage — one formatter, both $TZ geometries (AC3)", () => {
+  it("stamps local-with-offset when $TZ resolves and UTC Z when it does not (cf-96 AC3)", () => {
+    const T0 = Date.parse("2026-11-01T12:00:00.000Z");
+    const savedTZ = process.env.TZ;
+    try {
+      process.env.TZ = "America/Denver";
+      const off = seam("localIso")(T0);
+      assert.match(off, STAMP_SHAPE, "offset spelling stays inside the ISO-8601 shape");
+      assert.ok(/[+-]\d{2}:\d{2}$/.test(off), `expected an explicit offset tail for America/Denver, got ${off}`);
+      assert.equal(Date.parse(off), T0, "the offset stamp parses back to the exact instant (the 2 h window reads it offset-aware — OQ4/AC2)");
+      delete process.env.TZ;
+      assert.equal(seam("localIso")(T0), iso(T0), "$TZ unset falls back to the UTC Z spelling byte-for-byte");
+    } finally {
+      if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
+    }
   });
 });

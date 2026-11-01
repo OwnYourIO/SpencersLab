@@ -879,6 +879,7 @@ if want t14; then
       "$FEATURE3"/*|.rulesync/subagents/*|.opencode/agents/*|\
       .rulesync/commands/*|.opencode/commands/*|\
       .rulesync/skills/pipeline-gates/*|.opencode/skills/pipeline-gates/*|\
+      .rulesync/skills/pipeline-conventions/*|.opencode/skills/pipeline-conventions/*|\
       .rulesync/skills/pipeline-role-review/*|.opencode/skills/pipeline-role-review/*|\
       "$KICK_SRC_DIR"/*|"$KICK_GEN_DIR"/*|"$RC_SRC_DIR"/*|"$RC_GEN_DIR"/*|\
       .rulesync/skills/pipeline-push-pr/*|.opencode/skills/pipeline-push-pr/*|\
@@ -889,6 +890,7 @@ if want t14; then
       .rulesync/skills/role-code/*|.opencode/skills/role-code/*|\
       .rulesync/skills/role-debug/*|.opencode/skills/role-debug/*|\
       .opencode/opencode.jsonc|.opencode/plugin/board-context/*|\
+      .opencode/plugin/pipeline-locks/*|\
       .opencode/plugin/question-notify/*|.agents/loops/*|\
       skills/wekan-mcp/*|skills/wekan-api/*|containers/wekan-mcp/*|\
       "$AS_SRC"/references/permissions.md|"$AS_GEN"/references/permissions.md|\
@@ -918,13 +920,14 @@ if want t14; then
       containers/strata/carry/ornith-q36.patch|\
       .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
       .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
+      charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
       skills/wekan-board-provision/*|\
       .rulesync/skills/pipeline-role-plan/*|.opencode/skills/pipeline-role-plan/*|\
       .rulesync/skills/pipeline-role-deploy/*|.opencode/skills/pipeline-role-deploy/*) : ;;
-      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 widenings)" ;;
+      *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits and the cf-90 folder/provision-skill/role-plan/role-deploy admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits and the cf-96 plan-folder + C09 coder-template admits (base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
