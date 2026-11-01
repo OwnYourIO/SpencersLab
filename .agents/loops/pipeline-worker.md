@@ -2,7 +2,7 @@
 name: pipeline-worker
 schedule: 0 * * * *
 enabled: true
-model: openrouter/qwen/qwen3.8-flash
+model: gpu-ai/qwen3.8-flash-next-strata
 agent: agent-board-coord
 ---
 
