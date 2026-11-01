@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e6c3ce207ffebBvrfkKerY5903",
   "test_session": "ses_e6c0356bdffeSfbUfQYDpniYM6",
-  "current_wave": 1,
-  "updated_at": "2026-10-31T22:10:00Z",
+  "current_wave": 5,
+  "updated_at": "2026-11-01T09:30:00Z",
   "kickoff": {
     "slug": "cf-93-feat-multi-repo-pipeline",
     "card": "mxnEsiC2SwtLKZE9i",
@@ -347,6 +347,30 @@
       "status": "DONE",
       "summary": "Round-2 proven facts folded into chunks C03–C09 + plan Verified facts/Key decisions + DECISIONS entry; explicitly NOT a replan — ACs and 9-chunk/5-wave shape unchanged, plan_status stays approved. Suite conflict scan clean: no test encoded the flawed draft; nothing routed to test_session.",
       "result": "RESULT status:DONE chunk:plan open_questions:none; next:wave 1 dev C01/C03/C04"
+    },
+    {
+      "at": "2026-11-01T09:00:00Z",
+      "agent": "agent-review (FINAL whole-plan)",
+      "session": "ses_e6a63fabaffeW2Trq2ANaMXqxD",
+      "status": "CHANGES_REQUESTED",
+      "summary": "Full 9-suite re-run green in the WORKING TREE; verdict drivers: (blocker) the authorized C09 t2 repair was never committed - HEAD shipped a red suite; (major x2) ports shipped pipeline-locks WITHOUT the canonical .pipeline/ + .rulesync/skills/.curated/ ignore rules, and the boards skill's stale 'every card derives default' clause mis-led THIS run's claim (card #93 carries Pipeline: Home Assistant => correct derived set is 'Home Assistant', record said default). minors: aislop floating-gate + plan-file-name deferred items never bussed; STATE header stale. Cross-chunk coherence HELD: one filter semantics x4 repos, OQ-B1 paragraph identical + no dirty-mode rule in machinery, all three card parts covered incl the 4th overlay agent, safety clean (no merges/pushes/main/.pipeline touches, follow-up card live).",
+      "result": "RESULT status:CHANGES_REQUESTED chunk:plan open_questions:10-item human-owned residual list (PR, aislop remedy, Repo: labels, target commits, scheduler enables, derived-set record correction, deploy verify, budget Q, post-pod card, variants+nits); next:coord fix round then re-review"
+    },
+    {
+      "at": "2026-11-01T09:20:00Z",
+      "agent": "coord",
+      "session": "ses_e6c3ce207ffebBvrfkKerY5903",
+      "status": "DONE",
+      "summary": "Blocker cleared first-hand (commit 977e1b42e: t2 repair + final-review notes); FRICTION gained the derived-set, aislop-gate and ok-counting lines; DECISIONS Deferred gained plan-file-name + C09-t2-prose; STATE header current_wave=5; malformed brace from a coord edit repaired.",
+      "result": "coord housekeeping, then dev fix round for the two majors"
+    },
+    {
+      "at": "2026-11-01T09:40:00Z",
+      "agent": "agent-dev-local (fix round)",
+      "session": "ses_e6a2b8a1effeDq2fxUPNtUskyV",
+      "status": "DONE",
+      "summary": "Major1: canonical ignore blocks (.curated/ + .pipeline/ with repo-neutral why-comments) appended to all three ports (uncommitted; check-ignore now rc0 x3; porcelain 20/24/29 -> 21/25/30, exactly one M .gitignore each). Major2: stale 'today every card derives default' clause rewritten to the general rule in canonical + all 3 port sources, generate x2 + --check green in four roots, D17 byte-intact, t2 needles survive. All nine suites re-run green at expected counts (PASS-line method); aislop@0.18.1 100/0.",
+      "result": "RESULT status:DONE chunk:plan open_questions:none; next:final re-review of the fix round"
     }
   ]
 }
