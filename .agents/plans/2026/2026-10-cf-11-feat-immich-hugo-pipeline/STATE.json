@@ -3,7 +3,7 @@
   "plan_status": "approved",
   "run_kind": "build",
   "coord_session": "ses_e6cf97059ffeZ3eS21acBwATI0",
-  "test_session": null,
+  "test_session": "ses_e6b68f656ffel2Mc5m4kveEz0q",
   "current_wave": 0,
   "updated_at": "2026-10-31T23:27:37Z",
   "kickoff": {
