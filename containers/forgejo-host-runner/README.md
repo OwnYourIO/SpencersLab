@@ -1,0 +1,145 @@
+# forgejo-host-runner
+
+Toolchain image for the Immich → CuratedForest Hugo pipeline on an
+in-cluster Forgejo host-backend runner (ticket
+`.agents/plans/2026/2026-10-cf-11-feat-immich-hugo-pipeline/`, chunk C01).
+The Dockerfile arrives with C02; today this directory is the dependency-free
+Python tooling baked into `/usr/local/bin/` by that image.
+
+## Entry points
+
+| Command | Module | Purpose |
+|---|---|---|
+| `immich-hugo-sync` | `sync/immich_sync.py:main()` | sync allowlisted Immich albums INTO existing Hugo page bundles |
+| `immich-hugo-publish` | `sync/forgejo_publish.py:main()` | commit the content/ batch, force-push the bot branch, create-or-update ONE PR on Forgejo |
+
+Stdlib only; the shared `sync/http_client.py` wraps urllib with a timeout,
+exactly one 5xx retry, and clean 4xx errors (`x-api-key` for Immich,
+`Authorization: token <PAT>` for Forgejo).
+
+## immich-hugo-sync
+
+Env config (every var is mirrored by a CLI flag; flags win):
+
+- `IMMICH_URL` (req), `IMMICH_API_KEY` (req)
+- `SITE_DIR` (req) — repo checkout root
+- `ALBUMS_FILE` — allowlist path (default `SITE_DIR/sync-albums.yaml`)
+- `ALBUMS` — comma-separated dispatch override; narrows the allowlist, an
+  entry missing from the file is an error
+- `FORCE=true` — re-sync unchanged albums (bypasses the timestamp probe)
+- `STATE_DIR` — default `/data/state`; state file `curatedforest-sync.json`
+- `OUTPUT_FLAG` — file to write `changed` / `unchanged` into
+
+Allowlist schema (`sync-albums.yaml`, shipped by C06):
+
+```yaml
+albums:
+  - name: "Aeroponics Current"            # Immich album name (exact)
+    page: plants/aeroponics/current-grows # REQUIRED: bundle dir relative to content/
+    prefix: ""                            # optional: fit an authored gallery glob
+```
+
+`page:` is REQUIRED on every entry (owner answer N3) — an entry without it
+is a loud schema error naming the entry. There is no content/photos/
+fallback posture.
+
+Behavior: selection validates the allowlist BEFORE any network call or
+write; the probe skips albums whose `lastModifiedAssetTimestamp` matches
+state unless `FORCE`; targets must be an existing bundle with `index.md` or
+`_index.md` (sync never creates pages); derivatives are named
+`{YYYYMMDD}-{HHMMSS}_{checksum8}_{safeOriginal}.jpg` from
+`GET /assets/{id}/thumbnail?size=preview` (never `size=original`), written
+temp→rename, never overwritten; removals cover ONLY the state-recorded
+machine-file ledger minus the current asset set (state lost → additive
+only). The summary line is
+`SYNC_RESULT albums=<n> added=<n> removed=<n> blocks=<n> changed=yes|no`;
+exit 0 on success, non-zero on error.
+
+### Gallery integration — three outcomes, checked in order (owner answer N2)
+
+- **auto-included**: any gallery call on the page has no `match` arg
+  (`.ByType "image"` takes everything) OR the prospective filenames (incl.
+  an allowlist `prefix:`) satisfy an existing call's glob → files land
+  UNPREFIXED (chronological inside the authored Name-sort); NO page edit.
+- **machine-marked call**: nothing would include the files → sync manages
+  its own block on that page, EXACTLY this shape, one per (page, album),
+  appended after the file's last line:
+
+  ```
+  <!-- immich-sync:album="<Album Name>" slug=<albumslug> -->
+  {{< gallery match="sync-<albumslug>-*" sort="desc" >}}
+  <!-- immich-sync:end:<albumslug> -->
+  ```
+
+  and this album's files carry the matching prefix:
+  `sync-<albumslug>-{YYYYMMDD}-{HHMMSS}_{checksum8}_{safe}.jpg`
+  (fixed prefix → chronological WITHIN the machine call; albumslug =
+  slugified album name, stable via state). Authored calls are NEVER
+  rewritten — the only body edit is this machine block.
+- **block lifecycle (idempotent)**: blocks are recognized by their markers;
+  re-runs update in place, never stack; if integration becomes
+  auto-included later (owner edited the page), sync REMOVES its own block
+  and renames its own prefixed files to unprefixed via ledger ops (machine
+  content managed by the machine; nothing human touched).
+
+Allowlist `prefix:` stays available for the owner who wants files inside an
+AUTHORED glob (zero-edit path) instead of a machine block.
+
+**Album retarget** (when an entry's `page:` changes): sync removes its own
+machine block from the page it managed before, and the album's files are
+re-fetched into the new bundle on the next run. The old bundle's machine
+files fall out of the ledger and are therefore NEVER deleted (the ledger
+rule — sync only removes files its current state records). Consequence for
+the owner: those orphaned files stay page resources of the old page — on a
+no-glob (`.ByType "image"`) page they keep rendering until the owner
+removes them.
+
+### Front matter (owner answer N1)
+
+Existing target pages get append-only machine marker keys if absent:
+
+```yaml
+immich_synced:
+  albums: ["<album>", …]
+  at: <date>
+```
+
+Existing keys are never modified or deleted, and `draft`, `author_reviewed`
+and `editor_reviewed` are never set or flipped — `draft: true` would
+un-publish the page. The gate for photos added to published pages is the PR
++ farm preview.
+
+### Hard guards
+
+Permitted edits to existing files are enumerated: (a) append-only
+`immich_synced` front-matter marker keys, (b) sync's own machine-marked
+gallery blocks. Everything else is forbidden: no writes outside
+`SITE_DIR/content/` (path normalization enforced), no edits to `hugo.yaml`,
+layouts, `netlify.toml`, `.gitattributes` or `.forgejo`, and human files —
+including the manual derivatives in `current-grows` — are protected by the
+ledger rule, not by name special-casing. Albums with zero IMAGE assets are
+skipped.
+
+## immich-hugo-publish
+
+Env: `SITE_DIR`, `BRANCH` (default `immich-sync`), `FORGEJO_URL`,
+`FORGEJO_REPO` (`owner/name`, owner = the Forgejo org), `FORGEJO_PAT`,
+`PR_TITLE` / `PR_BODY` (+ `SUMMARY`), `GIT_IDENTITY_NAME` / `_EMAIL`.
+
+Idempotent create-or-update of ONE PR: `git checkout -B <branch>` → stage
+`content/` → commit (nothing staged → print `PUBLISH_RESULT unchanged`, no
+push) → `git push -f origin <branch>` (bot-owned branch, force-push exempt —
+owner answer 4) → Forgejo API: open PR with head=<branch> exists → update
+body, else create. Prints `PR_URL=...`. Every gallery-block edit lands in
+this same PR, so the farm preview shows it.
+
+## Tests
+
+```
+python3 -m pytest containers/forgejo-host-runner/tests/ -v
+```
+
+No network: the suite binds `FakeImmichServer` / `FakeForgejoServer`
+(stdlib http.server) on localhost and builds scratch site replicas — the
+fixture E2E is the card-#11 posture; the live-Immich E2E belongs to card
+#88 (gpu→Immich network path).
