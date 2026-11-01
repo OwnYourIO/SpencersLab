@@ -13,11 +13,11 @@ Design principles:
       unless a tool's purpose is to return them.
     - Errors are sanitized. No Authorization header, no raw request, no traceback.
     - Entity-level destructive tools (delete_board, delete_card, delete_list,
-      remove_member) are intentionally OMITTED. Two destructive ops ARE
-      exposed — remove_rule and delete_checklist_item — each bounded to a
-      single rule/item and needed for board hygiene; their docstrings mark
-      them as destructive. Add entity deletions back only if you want them,
-      and mark with destructive hints.
+      remove_member) are intentionally OMITTED. Three destructive ops ARE
+      exposed — remove_rule, delete_checklist_item, and remove_card_dependency
+      — each bounded to a single rule/item/card-edge and needed for board
+      hygiene; their docstrings mark them as destructive. Add entity
+      deletions back only if you want them, and mark with destructive hints.
     - WEKAN_MCP_READ_ONLY=true hides every write tool from the catalog
       (they are never registered), for the readonly server tier.
 
@@ -117,6 +117,13 @@ def _slim_card(c: dict) -> dict:
             {"id": cf.get("_id"), "value": cf.get("value")}
             for cf in c.get("customFields", []) if cf
         ],
+        # Same rule for the cf-96 relations (server/models/cards.js): the
+        # edges are stored on the source card as cardDependencies and the
+        # lineage key is parentId — both present on the single-card document,
+        # both stripped by the by-list projection, where they read as [] /
+        # None rather than being invented here.
+        "card_dependencies": c.get("cardDependencies", []),
+        "parent_id": c.get("parentId"),
     }
 
 
@@ -204,9 +211,10 @@ def list_cards_in_list(board_id: str, list_id: str) -> list[dict]:
     """List the cards in a specific list, in board order (leftmost/top first).
 
     WeKan's by-list endpoint returns a projection that omits cardNumber,
-    customFields, labelIds and listId, so here card_number comes back null
-    and custom_fields/label_ids are empty; call get_card per candidate for
-    the full card."""
+    customFields, labelIds, cardDependencies, parentId and listId, so here
+    card_number comes back null, custom_fields/label_ids/card_dependencies
+    are empty, parent_id is null; call get_card per candidate for the full
+    card."""
     raw = _wekan.get(f"/api/boards/{board_id}/lists/{list_id}/cards") or []
     return [_slim_card(c) for c in raw]
 
@@ -447,6 +455,7 @@ def create_card(
     title: str,
     description: str = "",
     default_checked: Optional[dict] = None,
+    parent_id: Optional[str] = None,
 ) -> dict:
     """
     Create a card in a specific list and swimlane. The service user is used
@@ -465,6 +474,16 @@ def create_card(
     "default_checked": {<title>: {checked, missing, failed}}; the card is
     NOT rolled back on any default failure, so callers must read
     "missing"/"failed" instead of assuming.
+
+    parent_id optionally records creation lineage (a follow-up card made
+    from another): the card is created first, then its parentId is set with
+    a PUT on the single-card route — two steps because the single-card POST
+    route ignores a body parentId while the PUT reads it (v12.65
+    server/models/cards.js). A failed lineage step reports
+    "parent_id_set": false + "parent_id_error" and never rolls the card
+    back (the default_checked posture); absent parent_id leaves the create
+    exactly as before. Lineage is parentId-only: this tool never writes a
+    typed card edge as a side effect of setting the parent.
     """
     if default_checked:
         _validate_default_checked(default_checked)
@@ -476,22 +495,36 @@ def create_card(
     }
     resp = _wekan.post(f"/api/boards/{board_id}/lists/{list_id}/cards", json_body=body) or {}
     card_id = resp.get("_id")
+    out: dict = {"id": card_id, "title": title}
     if default_checked:
         if not card_id:
             raise WekanError(
                 f"card create returned no id for {title!r}; cannot apply default_checked"
             )
-        return {
-            "id": card_id,
-            "title": title,
-            "default_checked": {
-                checklist_title: _apply_default_checked(
-                    board_id, card_id, checklist_title, titles or []
-                )
-                for checklist_title, titles in default_checked.items()
-            },
+        out["default_checked"] = {
+            checklist_title: _apply_default_checked(
+                board_id, card_id, checklist_title, titles or []
+            )
+            for checklist_title, titles in default_checked.items()
         }
-    return {"id": card_id, "title": title}
+    if parent_id:
+        out["parent_id"] = parent_id
+        if not card_id:
+            # Same surfacing rule as a default_checked failure: report the
+            # miss, never raise over a card that may exist.
+            out["parent_id_set"] = False
+            out["parent_id_error"] = "card create returned no id; nothing to PUT"
+        else:
+            try:
+                _wekan.put(
+                    f"/api/boards/{board_id}/cards/{card_id}",
+                    json_body={"parentId": parent_id},
+                )
+                out["parent_id_set"] = True
+            except WekanError as e:
+                out["parent_id_set"] = False
+                out["parent_id_error"] = str(e)
+    return out
 
 
 @_write_tool
@@ -1095,6 +1128,389 @@ def create_label(board_id: str, name: str, color: str = "green") -> dict:
         f"create_label: unexpected non-string response for label {name!r} on "
         f"board {board_id}: {resp!r}"
     )
+
+
+# ==============================================================================
+# cf-96 CARD DEPENDENCIES, BOARD PRELOAD, BULK LABELS — deliberately ONE
+# additive block (the cf-89 v102 precedent: the deploy diff stays reviewable as
+# a single hunk). Route facts are grounded on upstream v12.65 reads (ticket
+# RESEARCH.md §1.3/§2 and sources S1/S4/S9/S11, source-checked 2026-11-01); no
+# route in this block was agent-probed live (pipeline sessions hold no bearer),
+# so the doc evidence stamps stay source-only until the C10 runbook's user
+# probe upgrades them. The v9.88 low bound is defended the same way as the
+# v102 block: _embedded_error on 200-shaped error bodies.
+# ==============================================================================
+
+# The seven dependency types of upstream models/metadata/dependencies.js.
+# This tuple is a version pin (same posture as _LABEL_COLORS): a WeKan upgrade
+# that moves the list drifts the client-side gate against the server's own
+# 400, so re-verify on upgrade.
+_DEPENDENCY_TYPES = (
+    "related-to", "blocks", "is-blocked-by", "fixes", "is-fixed-by",
+    "duplicates", "is-duplicated-by",
+)
+
+# The bulk-label route's own bound (server/models/cards.js, v12.65): one call
+# addresses at most 500 cards. Gated client-side so an over-cap batch fails
+# with the cap named instead of a bare 4xx from the server.
+_BULK_LABEL_CARD_CAP = 500
+
+_LAST_SORT = float("inf")
+
+
+def _sort_key(item: dict) -> tuple:
+    """
+    Board walk order for preload reshaping: numeric sort first, a row without
+    a sort value last (None never compares against numbers, and an export row
+    missing sort is surfaced, not crashed on).
+    """
+    s = item.get("sort")
+    return (s is None, _LAST_SORT if s is None else s)
+
+
+def _slug_from_combined_value(value: Optional[str]) -> Optional[str]:
+    """
+    Reduce the combined [<slug>](<session link>) custom-field value to its
+    bracketed text — the single authority for the boards-skill slug format.
+    Anything else (a bare slug, None, a malformed half) passes through
+    untouched: a reader gets the card's own value, never a parse-time guess.
+    """
+    if isinstance(value, str) and value.startswith("["):
+        close = value.find("](")
+        if close > 0 and value.endswith(")"):
+            return value[1:close]
+    return value
+
+
+@mcp.tool
+def list_board_dependencies(board_id: str) -> list[dict]:
+    """
+    List the board's dependency lines (the Red Strings edges) in one call:
+    [{from, fromTitle, fromCardNumber, to, toTitle, toCardNumber, type,
+    color, icon}] — the upstream route's own shape, passed through untouched
+    (models/dependencies.js walks the cards server-side; archived cards are
+    excluded THERE). Lines are stored on the source card; the board-wide view
+    already contains both directions of an inverse pair (blocks /
+    is-blocked-by), so gate logic reads this list once, not per card.
+
+    v12.65 route facts (source-checked 2026-11-01): GET
+    /api/boards/:boardId/dependencies is dependency-access gated like the
+    writes; at the 9.88 low bound an auth failure can arrive as 200 + an
+    embedded error body, guarded below.
+    """
+    raw = _wekan.get(f"/api/boards/{board_id}/dependencies") or []
+    _embedded_error(raw, "list_board_dependencies")
+    return [d for d in raw if isinstance(d, dict)]
+
+
+@mcp.tool
+def list_card_dependencies(board_id: str, card_id: str) -> list[dict]:
+    """
+    List one card's stored dependency entries: [{cardId, type, color, icon}]
+    — the cardDependencies array as stored, passed through untouched. cardId
+    is the TARGET card's id (cross-card references key on ids; card_number is
+    display-only). Only the source card's own edges come back: for the whole
+    board — or the inverse direction — call list_board_dependencies.
+    """
+    raw = _wekan.get(f"/api/boards/{board_id}/cards/{card_id}/dependencies") or []
+    _embedded_error(raw, "list_card_dependencies")
+    return [d for d in raw if isinstance(d, dict)]
+
+
+@_write_tool
+def add_card_dependency(
+    board_id: str,
+    card_id: str,
+    target_card_id: str,
+    type: Optional[str] = None,
+    color: Optional[str] = None,
+    icon: Optional[str] = None,
+) -> dict:
+    """
+    Add one dependency edge on a card, or UPDATE the existing edge to the
+    same target: the POST route is an UPSERT — a repeat add with a new
+    type/color/icon rewrites that edge's properties and NEVER duplicates it
+    (models/dependencies.js normalizes; source-checked 2026-11-01). The
+    target must live on the same board ("Target card is not on this board"
+    answers 400). Edge direction is the caller's convention; the house rule
+    is is-blocked-by stored on the DEPENDENT card toward its blocker.
+
+    type must be one of the seven upstream dependency types (related-to,
+    blocks, is-blocked-by, fixes, is-fixed-by, duplicates, is-duplicated-by);
+    an unknown value is rejected CLIENT-SIDE before any request, naming the
+    allowed list — the create_label color-gate posture, with the server's own
+    clean 400 staying the authority on upgrade drift. Omitted type/color/icon
+    ride the upstream defaults (related-to, #eb144c, link). The route's body
+    also accepts the dependsOn alias for the target key; this tool sends the
+    cardId spelling. Returns the stored edge keyed on the source card.
+    """
+    if type is not None and type not in _DEPENDENCY_TYPES:
+        raise WekanError(
+            f"add_card_dependency: unknown type {type!r}. Allowed types: "
+            f"{', '.join(_DEPENDENCY_TYPES)} — unknown types are never sent; "
+            f"the server would answer 400 naming the same list."
+        )
+    body: dict = {"cardId": target_card_id}
+    if type is not None: body["type"] = type
+    if color is not None: body["color"] = color
+    if icon is not None: body["icon"] = icon
+    resp = _wekan.post(
+        f"/api/boards/{board_id}/cards/{card_id}/dependencies", json_body=body
+    ) or {}
+    _embedded_error(resp, "add_card_dependency")
+    if not isinstance(resp, dict) or "_id" not in resp:
+        # Shape surprise: echo the request's own facts under the normalized
+        # keys rather than pass an unexpected document through the schema.
+        resp = {"_id": card_id}
+    return {
+        "id": resp.get("_id"),
+        "target_card_id": resp.get("cardId") or target_card_id,
+        "type": resp.get("type"),
+        "color": resp.get("color"),
+        "icon": resp.get("icon"),
+    }
+
+
+@_write_tool
+def edit_card_dependency(
+    board_id: str,
+    card_id: str,
+    target_card_id: str,
+    type: Optional[str] = None,
+    color: Optional[str] = None,
+    icon: Optional[str] = None,
+) -> dict:
+    """
+    Re-type or re-style the edge from a card to a target (PUT the
+    target-scoped route): only the supplied properties change, and at least
+    one of type/color/icon MUST be given — an empty change set is rejected
+    here instead of riding the route as a no-op. type goes through the same
+    client-side seven-type gate as add_card_dependency. The edge must exist
+    (the route addresses it by target id); to create one use
+    add_card_dependency.
+    """
+    if type is None and color is None and icon is None:
+        raise WekanError(
+            "edit_card_dependency: at least one of type/color/icon must change"
+        )
+    if type is not None and type not in _DEPENDENCY_TYPES:
+        raise WekanError(
+            f"edit_card_dependency: unknown type {type!r}. Allowed types: "
+            f"{', '.join(_DEPENDENCY_TYPES)} — unknown types are never sent."
+        )
+    body: dict = {}
+    if type is not None: body["type"] = type
+    if color is not None: body["color"] = color
+    if icon is not None: body["icon"] = icon
+    _wekan.put(
+        f"/api/boards/{board_id}/cards/{card_id}/dependencies/{target_card_id}",
+        json_body=body,
+    )
+    return {
+        "updated": True,
+        "card_id": card_id,
+        "target_card_id": target_card_id,
+        "fields": list(body.keys()),
+    }
+
+
+@_write_tool
+def remove_card_dependency(
+    board_id: str,
+    card_id: str,
+    target_card_id: str,
+) -> dict:
+    """
+    DESTRUCTIVE: remove the dependency edge from card_id to target_card_id —
+    the DELETE route $pulls the entry off the source card's stored array and
+    there is no undo (recreate with add_card_dependency, which re-keys the
+    same edge). Only the edge is touched: neither card is archived, moved, or
+    modified. Bounded to one edge per call, the house destructive-op posture
+    shared with remove_rule and delete_checklist_item.
+    """
+    _wekan.delete(
+        f"/api/boards/{board_id}/cards/{card_id}/dependencies/{target_card_id}"
+    )
+    return {"removed": True, "card_id": card_id, "target_card_id": target_card_id}
+
+
+@mcp.tool
+def preload_board(board_id: str) -> dict:
+    """
+    One-call whole-board preload for pickup planning: the swimlane -> list ->
+    cards grouping, the board's dependency lines, and the label/field name
+    maps — instead of a per-card fan-out. Rides a single GET of the board
+    export with attachments=false (base64 file payloads are a must-skip for a
+    preload) and a fields= section trim; the trim vocabulary is upstream
+    models/lib/exportFields.js (board-header, labels, custom-fields,
+    dependencies, sort), and unselected sections — checklists, comments,
+    activities, subtasks — come back as EMPTY arrays, which is what keeps the
+    document small. The exporter never fans out per card: this is ONE request.
+
+    Each card carries EXACTLY the seven fields the pickup flow reasons with:
+    id, card_number, label_ids, slug, archived, sort, parent_id. Card titles
+    and descriptions are not carried (the owner asked for the lean shape).
+    slug comes from the card's customFields entry for the board's slug field:
+    a combined [<slug>](<session link>) value is parsed down to the bracketed
+    text, a bare value passes through unchanged, and a card without the field
+    reads slug: null.
+
+    Archived cards are FLAGGED (archived: true), never silently dropped — the
+    exporter includes them (imports need them) and pickup-side filtering
+    belongs to the consumer. Linked cards never appear at all: the exporter's
+    own card selector filters linkedId, so they are excluded upstream — that
+    exclusion is a route fact, not client-side filtering.
+    """
+    doc = _wekan.get(
+        f"/api/boards/{board_id}/export"
+        "?attachments=false&fields=board-header,labels,custom-fields,dependencies,sort"
+    ) or {}
+    _embedded_error(doc, "preload_board")
+    if not isinstance(doc, dict):
+        raise WekanError(
+            f"preload_board: export for board {board_id} did not answer a "
+            f"board document ({type(doc).__name__})"
+        )
+
+    # The board header rides the export ROOT (models/exporter.js spreads the
+    # board document), so labels are read from there; the name maps let a
+    # consumer resolve label_ids and field ids without a second call.
+    label_names = {
+        l.get("_id"): l.get("name")
+        for l in doc.get("labels", []) if isinstance(l, dict)
+    }
+    field_names = {
+        cf.get("_id"): cf.get("name")
+        for cf in doc.get("customFields", []) if isinstance(cf, dict)
+    }
+    slug_field_ids = {fid for fid, name in field_names.items() if name == "slug"}
+
+    cards_by_list: dict = {}
+    dependencies: list = []
+    for card in doc.get("cards", []):
+        if not isinstance(card, dict):
+            continue
+        # Edge lines are computed from the card documents (they ride along
+        # whether or not a renderer gates them); keyed on source/target ids
+        # mirroring the board route's from/to naming.
+        for edge in card.get("cardDependencies") or []:
+            if isinstance(edge, dict):
+                dependencies.append({
+                    "from_id": card.get("_id"),
+                    "to_id": edge.get("cardId"),
+                    "type": edge.get("type"),
+                    "color": edge.get("color"),
+                    "icon": edge.get("icon"),
+                })
+        slug: Optional[str] = None
+        for entry in card.get("customFields") or []:
+            if isinstance(entry, dict) and entry.get("_id") in slug_field_ids:
+                slug = _slug_from_combined_value(entry.get("value"))
+                break
+        cards_by_list.setdefault(card.get("listId"), []).append({
+            "id": card.get("_id"),
+            "card_number": card.get("cardNumber"),
+            "label_ids": card.get("labelIds", []),
+            "slug": slug,
+            "archived": card.get("archived", False),
+            "sort": card.get("sort"),
+            "parent_id": card.get("parentId"),
+        })
+
+    # Walk order is the board's own sort, everywhere. Lists with no cards are
+    # not emitted (a preload is about cards); anything whose parent row the
+    # document never declared keeps its unresolved id at the tail rather than
+    # vanishing — the flag-not-drop discipline extended to unknown parents.
+    lists_by_swimlane: dict = {}
+    for l in sorted((x for x in doc.get("lists", []) if isinstance(x, dict)),
+                    key=_sort_key):
+        group = cards_by_list.pop(l.get("_id"), None)
+        if group:
+            lists_by_swimlane.setdefault(l.get("swimlaneId"), []).append({
+                "id": l.get("_id"),
+                "cards": sorted(group, key=_sort_key),
+            })
+    if cards_by_list:
+        orphans = [c for group in cards_by_list.values() for c in group]
+        lists_by_swimlane.setdefault(None, []).append(
+            {"id": None, "cards": sorted(orphans, key=_sort_key)}
+        )
+
+    swimlanes: list = []
+    for s in sorted((x for x in doc.get("swimlanes", []) if isinstance(x, dict)),
+                    key=_sort_key):
+        entries = lists_by_swimlane.pop(s.get("_id"), None)
+        if entries:
+            swimlanes.append({"id": s.get("_id"), "lists": entries})
+    for key in sorted(lists_by_swimlane, key=str):
+        swimlanes.append({"id": key, "lists": lists_by_swimlane[key]})
+
+    return {
+        "board_id": board_id,
+        "swimlanes": swimlanes,
+        "dependencies": dependencies,
+        "label_names": label_names,
+        "field_names": field_names,
+    }
+
+
+@_write_tool
+def set_card_labels(
+    board_id: str,
+    card_ids: list[str],
+    add_label_ids: Optional[list[str]] = None,
+    remove_label_ids: Optional[list[str]] = None,
+) -> dict:
+    """
+    Apply and/or remove board labels across cards in ONE bulk POST — the
+    missing piece behind label inheritance for follow-up cards, retiring the
+    rules-engine round-trip previously needed for card labels. An omitted
+    list is a no-op: add-only and remove-only calls are both legal, and each
+    list is applied independently by the route (server/models/cards.js bulk
+    labels route, v12.65: write-access gated, label ids validated against the
+    board, at most 500 cards per call).
+
+    The cap is enforced client-side BEFORE the request (over-cap batches fail
+    with the cap named, not a bare 4xx), and the label ids are checked
+    against the board's own labels first — a typo'd id names itself instead
+    of silently matching nothing. The route's board-membership gate stays the
+    authority; this read only fails fast. Returns the request echo (the route
+    answers an acknowledgement, nothing per-card).
+    """
+    if not card_ids:
+        return {"applied": False, "reason": "no cards listed"}
+    if len(card_ids) > _BULK_LABEL_CARD_CAP:
+        raise WekanError(
+            f"set_card_labels: {len(card_ids)} cards exceeds the bulk route's "
+            f"{_BULK_LABEL_CARD_CAP}-card cap; split the call"
+        )
+    wanted = list(add_label_ids or []) + list(remove_label_ids or [])
+    if wanted:
+        board = _wekan.get(f"/api/boards/{board_id}") or {}
+        _embedded_error(board, "set_card_labels")
+        known = {
+            l.get("_id") for l in board.get("labels", []) if isinstance(l, dict)
+        }
+        unknown = sorted({lid for lid in wanted if lid not in known})
+        if unknown:
+            raise WekanError(
+                f"set_card_labels: label ids not on board {board_id}: "
+                f"{', '.join(unknown)}"
+            )
+    _wekan.post(
+        f"/api/boards/{board_id}/cards/labels",
+        json_body={
+            "cardIds": card_ids,
+            "addLabelIds": add_label_ids or [],
+            "removeLabelIds": remove_label_ids or [],
+        },
+    )
+    return {
+        "applied": True,
+        "card_count": len(card_ids),
+        "add_label_ids": add_label_ids or [],
+        "remove_label_ids": remove_label_ids or [],
+    }
 
 
 # ==============================================================================

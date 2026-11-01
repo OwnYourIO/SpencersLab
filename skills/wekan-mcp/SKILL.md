@@ -1,6 +1,6 @@
 ---
 name: wekan-mcp
-description: Use when an agent calls the lab's wekan-mcp board servers through MCP — dev-boards (AI-Dev board card access for pipeline runs), admin-global-wekan, or readonly-global-wekan — for card create/move/comment/checklist/custom-field work, or when such a call fails on argument shape, a stale list id, a tools/call timeout, a rejected parameter, or a missing server in the session catalog. Raw REST semantics and server internals live in the wekan-api skill.
+description: Use when an agent calls the lab's wekan-mcp board servers through MCP — dev-boards (AI-Dev board card access for pipeline runs), admin-global-wekan, or readonly-global-wekan — for card create/move/comment/checklist/custom-field work, board-wide preloads, card dependency edges, or bulk card labels, or when such a call fails on argument shape, a stale list id, a tools/call timeout, a rejected parameter, or a missing server in the session catalog. Raw REST semantics and server internals live in the wekan-api skill.
 ---
 
 # WeKan MCP board skill
@@ -15,20 +15,39 @@ get rediscovered through validation errors.
 Evidence posture: the rules below and the full table were source-checked
 2026-10-27 against `containers/wekan-mcp/wekan_mcp/server.py` — anchored on
 function names, never line numbers, which drift with every build — and
-live-probed read-only on `dev-boards` the same day. The deployed build can lag
-the repo source, so docs are claims and the live `tools/list` is fact.
+live-probed read-only on `dev-boards` the same day. The cf-96 additions (the
+five dependency tools, `preload_board`, `set_card_labels`, and `create_card`'s
+`parent_id`) were source-checked 2026-11-01 against upstream v12.65 and were
+NEVER live-probed (no bearer in a pipeline session) — their rows carry
+`source-only 2026-11` until the C10 deploy-chain probe upgrades them. The
+deployed build can lag the repo source, so docs are claims and the live
+`tools/list` is fact.
 
 ## Servers and tiers
 
 | Server id | Deployment | Write surface | Credential |
 |---|---|---|---|
-| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 31 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
-| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 31 tools | one long-lived service-user bearer in the pod env |
+| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 38 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
+| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 38 tools | one long-lived service-user bearer in the pod env |
 | `readonly-global-wekan` | gpu `wekan-readonly` deployment | none — with `WEKAN_MCP_READ_ONLY=true` write tools are never registered, so they are absent from `tools/list` and uncallable even by accident | same bearer story as the admin tier |
 
 All three run the image built from `containers/wekan-mcp`, and every read or
 write is scoped to the service user's board membership. Deployment wiring and
 the raw-REST fallback are the `wekan-api` skill's ground.
+
+The cf-96 surface (38 = 17 reads + 21 writes, repo source; NOT deployed until
+the C10 bump — probe `tools/list` before trusting any of it): reads
+`list_board_dependencies` (board-wide Red Strings lines), `list_card_dependencies`
+(one card's stored edges) and `preload_board` (one export call reshaped to
+swimlane→list→cards + dependency lines + label/field name maps, per-card exactly
+`{id, card_number, label_ids, slug, archived, sort, parent_id}`); writes
+`add_card_dependency` (UPSERT — a repeat add updates the edge, never duplicates
+it; the 7 types gate client-side like `create_label`'s colors),
+`edit_card_dependency`, `remove_card_dependency` (the third bounded destructive
+op) and `set_card_labels` (bulk add/remove labels on ≤500 cards — the route that
+retires the rules-engine label round-trip); plus `create_card`'s trailing
+optional `parent_id`, a two-step create→PUT lineage that never rolls back and
+never draws an edge by itself (kind-1 follow-ups are parentId-only).
 
 ## Call-shape rules
 
@@ -124,6 +143,8 @@ schema.
   `references/call-shapes.md`.
 - Intentionally omitted from every tier's surface: attachments, webhooks,
   member/user administration, imports/exports, and entity-level deletion
-  (`delete_board`, `delete_card`, `delete_list`, `remove_member`). Only two
-  destructive ops are exposed, each bounded to one object: `remove_rule`
-  and `delete_checklist_item`.
+  (`delete_board`, `delete_card`, `delete_list`, `remove_member`). The
+  destructive ops that ARE exposed stay bounded to one object each —
+  `remove_rule`, `delete_checklist_item`, and the cf-96 single-card-edge
+  removal — every one docstring-marked; `references/call-shapes.md` carries
+  the row per tool.

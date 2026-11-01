@@ -143,3 +143,19 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
 - Kind-1 Red Strings edges (OQ1 rejected alternatives): the 2026-11-01
   batched round ruled parentId-only — revisit only if follow-up lineage proves
   it needs board-visible edges.
+
+## Coord rulings (test session's open questions)
+- 2026-11-01 coord: test-Q1 CLOSED — "8 new signatures" counts the seven new
+  tool NAMES (5 dependency + preload_board + set_card_labels) PLUS the new
+  `parent_id` signature on the existing create_card = 8 signature changes over
+  +7 registered tools (31→38). The test session's arithmetic is correct; no
+  eighth tool name exists or is expected; runbook step 5 keeps its
+  stop-and-report guard. The suites' 7-names/38-total pin stands.
+- 2026-11-01 coord: test-Q2 RULED — the gate t17 / coord-inwork i4 five-vs-six
+  drift arms are PRE-EXISTING reds binding files C02 does not touch
+  (gate script, inwork plugin text) — they stay OUT of every cf-96 chunk's
+  per-chunk gate under the cf-90/cf-75 baseline-identity rule (a baseline red
+  may only stay message-identical, never grow into a chunk's own suite). C02's
+  own in-commit re-pin duty is limited to what C02 verily changes:
+  agent-perms/surface.sh roster-enumeration arms (six→seven coords' rosters)
+  per the chunk file. Their re-pin belongs to their own drift ticket, not here.
