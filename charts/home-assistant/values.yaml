@@ -7,7 +7,90 @@ bitwardenIds:
 
 domain: OVERRIDE_VIA_APPSET
 
+# Gates the CNPG clusters and the pg/app/mcp ExternalSecret templates.
+# Default ON: the live grow release (appName assistant) must keep rendering
+# them unchanged; the dev slice flips it off and runs HA on SQLite in /config.
+postgres:
+  enabled: true
+
+# Doubles as the Chart.yaml app-template dependency condition: off (default)
+# renders the whole subchart nowhere, so grow gets neither the HA Deployment
+# nor its Service. persistence.enabled separately gates the parent /config
+# PVC template, whose name mirrors the subchart's release-derived
+# existingClaim below.
+homeAssistant:
+  enabled: false
+  persistence:
+    enabled: false
+    # Dev-cluster k3s local-path, ReclaimPolicy Delete — accepted
+    # empty-instance posture (cf-93 OQ-C3).
+    size: 5Gi
+
 app-template:
   global:
-    nameOverride: "{{ .Release.Name }}"
-  # TODO: add home-assistant container.
+    # 5.0.1 creates an unprivileged default ServiceAccount even with zero
+    # controllers; suppressing it keeps the dev-mode render to exactly
+    # [Deployment, Service]. No nameOverride here: app-template self-derives
+    # it from .Release.Name, and a templated string in the parent values is
+    # not evaluated by the subchart (it breaks the render outright).
+    createDefaultServiceAccount: false
+  controllers:
+    home-assistant:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: ghcr.io/home-assistant/home-assistant
+            tag: 2026.10.4
+          env:
+            TZ: Etc/UTC
+          ports:
+            - containerPort: &port 8123
+              name: http
+          probes:
+            # enabled defaults to false on this app-template build; type must
+            # be the uppercase enum value (lowercase tcp fails values.schema).
+            liveness:
+              enabled: true
+              type: TCP
+              port: *port
+            readiness:
+              enabled: true
+              type: TCP
+              port: *port
+            startup:
+              enabled: true
+              type: TCP
+              port: *port
+              # HA cold start takes minutes: 60 * 10s before the kill.
+              spec:
+                failureThreshold: 60
+                periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          # No readOnlyRootFilesystem: HA writes into its install tree.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+  service:
+    home-assistant:
+      controller: home-assistant
+      ports:
+        http:
+          port: *port
+  persistence:
+    config:
+      # Existing-claim pattern (qdrant/zigbee2mqtt): renders no PVC of its
+      # own — the gated parent template supplies the claim. The library
+      # templates this string, so it resolves to the release name that the
+      # parent PVC uses.
+      existingClaim: "{{ .Release.Name }}"
+      globalMounts:
+        - path: /config

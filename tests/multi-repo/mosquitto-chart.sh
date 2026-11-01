@@ -242,9 +242,11 @@ if want t4; then
     ok "t4: helm lint passes ($("$helm_bin" version --short 2>/dev/null || echo helm))"
     deps="$WORK/dep-list.txt"
     "$helm_bin" dependency list "$COPY" >"$deps" 2>&1 || fail 't4: helm dependency list failed'
-    grep -E '^app-template\s+5\.0\.1\s+https://bjw-s-labs\.github\.io/helm-charts/\s+READY' "$deps" >/dev/null \
-      || { cat "$deps" >&2; fail 't4: app-template 5.0.1 row not READY (Chart.lock missing/stale)'; }
-    ok "t4: helm dependency list — app-template 5.0.1 READY"
+    # helm's status vocabulary is ok|missing|outdated (verified against helm
+    # 3.16.4); the `ok` row is what AC1's "dependency list OK" means.
+    grep -E '^app-template\s+5\.0\.1\s+https://bjw-s-labs\.github\.io/helm-charts/\s+ok\s*$' "$deps" >/dev/null \
+      || { cat "$deps" >&2; fail "t4: app-template 5.0.1 row status is not ok (missing/outdated/absent all fail — Chart.lock missing/stale)"; }
+    ok "t4: helm dependency list — app-template 5.0.1 ok"
   fi
   [ -f "$CHART/Chart.lock" ] || fail "t4: $CHART/Chart.lock not committed (dependency-update output lands in git, AC1 hygiene)"
   ok "t4: Chart.lock committed"

@@ -1,3 +1,5 @@
+{{- /* dig default: values predating postgres.enabled render ON (grow release must not change) */}}
+{{- if (.Values.postgres | default dict) | dig "enabled" true }}
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
@@ -134,3 +136,4 @@ spec:
 #  backupOwnerReference: self
 #  cluster:
 #    name: postgres16
+{{- end }}

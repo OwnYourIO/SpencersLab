@@ -1,12 +1,15 @@
-# TODO: Disabled until Home Assistant pod is added.
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: "{{ .Release.Name }}"
-#  namespace: default
-#spec:
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 5Gi
+{{- /* Release-derived name mirrors the subchart's templated existingClaim. */}}
+{{- if ((.Values.homeAssistant | default dict).persistence | default dict).enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .Release.Name }}"
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: {{ ((.Values.homeAssistant | default dict).persistence | default dict).size | default "5Gi" }}
+{{- end }}

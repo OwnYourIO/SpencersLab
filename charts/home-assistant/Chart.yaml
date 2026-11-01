@@ -2,7 +2,11 @@ apiVersion: v2
 name: home-assistant
 version: 1.0.16
 appVersion: 1.0.0
-#dependencies:
-#- name: app-template
-#  version: 4.3.0
-#  repository: https://bjw-s-labs.github.io/helm-charts/
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/
+  # The grow release (appName assistant) must keep rendering pg+secrets only:
+  # gating the whole subchart on homeAssistant.enabled (default false) is what
+  # makes the flag-off render byte-identical to pre-container behaviour.
+  condition: homeAssistant.enabled
