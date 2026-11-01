@@ -5,7 +5,8 @@
 # their non-failing failure arms, the READ_ONLY/_write_tool privilege gate
 # staying byte-stable, the zero-diff posture on existing tools, and the
 # doc-surface count-parity greps (26->27 at authoring, re-pinned to 31 by
-# cf-89 v102 — the four v102 tools land with that flip, cf-68 precedent).
+# cf-89 v102, and to 38 by cf-96 C01 (same precedent) — the four v102 tools
+# land with that flip, cf-68 precedent).
 #
 # Contract source: chunks/C01.md "## Tests" and "## Acceptance criteria".
 # AC trace: t1[AC4] t2[AC5+AC7] t3[AC6] t4[AC2] t5[AC5 gate + D4].
@@ -265,17 +266,17 @@ fi
 
 # --- t3: doc parity across the four surfaces (C01 AC6) -------------------------
 if want t3; then
-  grep -qF '31 typed tools' "$README" \
-    || fail "t3: $README does not state the 31-tool surface (C01 AC6)"
+  grep -qF '38 typed tools' "$README" \
+    || fail "t3: $README does not state the 38-tool surface (C01 AC6)"
   rows=$(awk '/^## Tools exposed/{f=1; next} /^## /{if (f) exit} f && /^\| `[a-z_]+` \|/{n++} END{print n+0}' "$README")
-  [ "$rows" -eq 31 ] \
-    || fail "t3: $README Tools-exposed table has $rows tool rows, expected 31 (create_list row missing, or the table drifted; C01 AC6)"
+  [ "$rows" -eq 38 ] \
+    || fail "t3: $README Tools-exposed table has $rows tool rows, expected 38 (create_list row missing, or the table drifted; C01 AC6)"
   grep -qE '^\| `create_list` \|' "$README" \
     || fail "t3: the $README Tools table has no create_list row (C01 AC6)"
 
-  n=$(grep -cF 'full, 31 tools' "$SKILL_MCP" || true)
+  n=$(grep -cF 'full, 38 tools' "$SKILL_MCP" || true)
   [ "$n" -eq 2 ] \
-    || fail "t3: $SKILL_MCP tier table has $n 'full, 31 tools' cells, expected 2 — dev-boards and admin-global-wekan flip, readonly stays 'none' (C01 AC6)"
+    || fail "t3: $SKILL_MCP tier table has $n 'full, 38 tools' cells, expected 2 — dev-boards and admin-global-wekan flip, readonly stays 'none' (C01 AC6)"
   if grep -qF 'full, 26 tools' "$SKILL_MCP"; then
     fail "t3: $SKILL_MCP still says 'full, 26 tools' somewhere (C01 AC6)"
   fi
@@ -284,16 +285,16 @@ if want t3; then
   cmp -s "$TMP/ro.base" "$TMP/ro.now" \
     || fail "t3: the readonly tier row changed — the _write_tool gate is the whole privilege story, its row must stay byte-identical (D4, C01 AC6)"
 
-  grep -qF 'all 31 tools' "$CALLS" \
-    || fail "t3: $CALLS header does not say 'all 31 tools' (C01 AC6)"
+  grep -qF 'all 38 tools' "$CALLS" \
+    || fail "t3: $CALLS header does not say 'all 38 tools' (C01 AC6)"
   n=$(grep -cE '^\|\s*`create_list`\s*\|' "$CALLS" || true)
   [ "$n" -eq 1 ] \
     || fail "t3: $CALLS has $n create_list rows, expected exactly 1 (C01 AC6)"
   grep -E '^\|\s*`create_list`\s*\|' "$CALLS" | grep -qF 'source-only' \
     || fail "t3: the create_list call-shapes row carries no source-only evidence stamp — the live probe is post-merge/user-owned (D7, C01 AC6)"
 
-  grep -qF '31 typed tools' "$SKILL_API" \
-    || fail "t3: $SKILL_API does not say 31 typed tools (C01 AC6)"
+  grep -qF '38 typed tools' "$SKILL_API" \
+    || fail "t3: $SKILL_API does not say 38 typed tools (C01 AC6)"
   if grep -qF '26 typed tools' "$SKILL_API"; then
     fail "t3: $SKILL_API still says 26 typed tools (C01 AC6)"
   fi
@@ -311,7 +312,7 @@ end = rest.find('\n\n')
 if 'create_list' not in (rest if end < 0 else rest[:end]):
     print('create_list missing from the Write enumeration window'); sys.exit(1)
 PY
-  ok "t3: README (31 + create_list row + 31 table rows), wekan-mcp SKILL tiers (two flips, readonly byte-stable), call-shapes (31 header + one stamped create_list row), wekan-api SKILL (31, create_list in Write bullet, no 25/26 residue) all agree (C01 AC6)"
+  ok "t3: README (38 + create_list row + 38 table rows), wekan-mcp SKILL tiers (two flips, readonly byte-stable), call-shapes (38 header + one stamped create_list row), wekan-api SKILL (38, create_list in Write bullet, no 25/26 residue) all agree (C01 AC6)"
 fi
 
 # --- t4: the flipped sibling suites stay the parity gate (C01 AC2) -------------

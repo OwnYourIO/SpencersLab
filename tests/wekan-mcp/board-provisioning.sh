@@ -79,8 +79,8 @@ import ast, sys
 src = open(sys.argv[1]).read()
 tree = ast.parse(src)
 
-READS = 14
-WRITES = 17
+READS = 17
+WRITES = 21
 NEW_READS = ['list_board_members']
 NEW_WRITES = ['update_board', 'create_swimlane', 'create_label']
 BASE27 = ['list_boards', 'get_board', 'list_lists', 'list_swimlanes',
@@ -120,7 +120,7 @@ if len(writes) != WRITES:
     bad(f't1: {len(writes)} @_write_tool writes, expected exactly {WRITES} (C01 AC1)')
 all_tools = reads + writes
 if len(set(all_tools)) != READS + WRITES:
-    bad(f't1: registered names are {sorted(set(all_tools))}, expected exactly 31 distinct')
+    bad(f't1: registered names are {sorted(set(all_tools))}, expected exactly 38 distinct')
 for name in NEW_WRITES:
     if all_tools.count(name) != 1 or writes.count(name) != 1:
         bad(f't1: {name!r} must be registered exactly once via @_write_tool — @mcp.tool would leak a v102 write onto the readonly tier')
@@ -130,7 +130,7 @@ for name in NEW_READS:
 missing = [n for n in BASE27 if n not in all_tools]
 if missing:
     bad(f't1: pre-v102 tool(s) {missing} lost from the registry (C01 AC1)')
-print('ok: t1 — 14 @mcp.tool + 17 @_write_tool == 31 distinct; update_board/create_swimlane/create_label registered once each under _write_tool (WEKAN_MCP_READ_ONLY hides them), list_board_members under @mcp.tool; all 27 pre-v102 names intact (C01 AC1)')
+print('ok: t1 — 17 @mcp.tool + 21 @_write_tool == 38 distinct; update_board/create_swimlane/create_label registered once each under _write_tool (WEKAN_MCP_READ_ONLY hides them), list_board_members under @mcp.tool; all 27 pre-v102 names intact (C01 AC1)')
 PY
   then
     checks=$((checks + 1))
@@ -452,28 +452,28 @@ PY
   fi
 fi
 
-# --- t6: surface parity at 31 + zero stale-count residue (C01 AC6) --------------
+# --- t6: surface parity at 38 + zero stale-count residue (C01 AC6) --------------
 if want t6; then
-  grep -qF '31 typed tools' "$README" \
-    || fail "t6: $README does not state the 31-tool surface (C01 AC6)"
+  grep -qF '38 typed tools' "$README" \
+    || fail "t6: $README does not state the 38-tool surface (C01 AC6)"
   rows=$(awk '/^## Tools exposed/{f=1; next} /^## /{if (f) exit} f && /^\| `[a-z_]+` \|/{n++} END{print n+0}' "$README")
-  [ "$rows" -eq 31 ] \
-    || fail "t6: $README Tools-exposed table has $rows tool rows, expected 31 — the four v102 rows are missing or the table drifted (C01 AC6)"
+  [ "$rows" -eq 38 ] \
+    || fail "t6: $README Tools-exposed table has $rows tool rows, expected 38 — the four v102 rows are missing or the table drifted (C01 AC6)"
   for n in update_board create_swimlane create_label list_board_members; do
     m=$(grep -cE "^\| \`$n\` \|" "$README" || true)
     [ "$m" -eq 1 ] || fail "t6: $README has $m $n rows, expected exactly 1 (C01 AC6)"
   done
 
-  n=$(grep -cF 'full, 31 tools' "$SKILL_MCP" || true)
+  n=$(grep -cF 'full, 38 tools' "$SKILL_MCP" || true)
   [ "$n" -eq 2 ] \
-    || fail "t6: $SKILL_MCP tier table has $n 'full, 31 tools' cells, expected 2 — dev-boards and admin-global-wekan flip, readonly stays 'none' (C01 AC6)"
+    || fail "t6: $SKILL_MCP tier table has $n 'full, 38 tools' cells, expected 2 — dev-boards and admin-global-wekan flip, readonly stays 'none' (C01 AC6)"
   git show "$BASE:$SKILL_MCP" | grep -F '| `readonly-global-wekan` |' >"$TMP/ro.base" || true
   grep -F '| `readonly-global-wekan` |' "$SKILL_MCP" >"$TMP/ro.now" || true
   cmp -s "$TMP/ro.base" "$TMP/ro.now" \
     || fail "t6: the readonly tier row changed — the _write_tool gate is the whole privilege story, its row must stay byte-identical (C01 AC6)"
 
-  grep -qF 'all 31 tools' "$CALLS" \
-    || fail "t6: $CALLS header does not say 'all 31 tools' (C01 AC6)"
+  grep -qF 'all 38 tools' "$CALLS" \
+    || fail "t6: $CALLS header does not say 'all 38 tools' (C01 AC6)"
   for n in update_board create_swimlane create_label list_board_members; do
     r=$(grep -cE "^\|\s*\`$n\`\s*\|" "$CALLS" || true)
     [ "$r" -eq 1 ] || fail "t6: $CALLS has $r $n rows, expected exactly 1 (C01 AC6)"
@@ -481,8 +481,8 @@ if want t6; then
       || fail "t6: the $n call-shapes row carries no source-only evidence stamp — the live tools/list probe is post-merge/user-owned (wekan-mcp stamp discipline, C01 AC6)"
   done
 
-  grep -qF '31 typed tools' "$SKILL_API" \
-    || fail "t6: $SKILL_API does not say 31 typed tools (C01 AC6)"
+  grep -qF '38 typed tools' "$SKILL_API" \
+    || fail "t6: $SKILL_API does not say 38 typed tools (C01 AC6)"
   python3 - "$SKILL_API" <<'PY' || fail "t6: the four v102 names are not enumerated in the $SKILL_API Read/Write bullets (C01 AC6 — reason above)"
 import sys
 text = open(sys.argv[1]).read()
@@ -516,7 +516,7 @@ PY
   done
   [ -z "$residue" ] || fail "t6: stale 27-count residue outside plan folders:"$'\n'"$residue"
 
-  ok "t6: README (31 typed tools, 31 table rows incl. four new rows), wekan-mcp SKILL tiers (two 31 cells, readonly row byte-stable), call-shapes (all 31 tools + four stamped rows), wekan-api SKILL (31 + four names in the Read/Write bullets) agree; zero stale 27-count literals repo-wide outside plan folders (C01 AC6)"
+  ok "t6: README (38 typed tools, 38 table rows incl. four new rows), wekan-mcp SKILL tiers (two 38 cells, readonly row byte-stable), call-shapes (all 38 tools + four stamped rows), wekan-api SKILL (38 + four names in the Read/Write bullets) agree; zero stale 27-count literals repo-wide outside plan folders (C01 AC6)"
 fi
 
 # --- t7: sibling suites stay mutually consistent with the flips (C01 AC7) -------
