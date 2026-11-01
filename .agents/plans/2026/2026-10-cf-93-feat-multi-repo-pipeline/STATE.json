@@ -181,13 +181,31 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": ["C01", "C02"],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6b1713f9ffe9rrjgQTWg5XRUp",
+      "handoffs": [
+        {
+          "at": "2026-11-01T04:20:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6b1713f9ffe9rrjgQTWg5XRUp",
+          "status": "DONE",
+          "summary": "Full reference port into /home/coder/Home-Assistant-Label-based-Features UNCOMMITTED: 61 authored .rulesync sources (22 plain subagents w/ 5 hand-written prompts folded, 8 commands, 27 skills, rules via proven import verb + Repo identity + pytest/ruff law + exact working-mode paragraph), R2.4.1 swap executed in order root-only (delete:false shipped), 3 plugins (no aislop-gate), 5 scripts, templates, loop enabled:false, opencode.jsonc retargeted. port-lbf 10 ok; pins held pre+post (HEAD 2ea63fd, 25 rows, shas). 6 declared deviations for review.",
+          "result": "RESULT status:DONE chunk:C06 open_questions:none; next:agent-review C06"
+        },
+        {
+          "at": "2026-11-01T04:50:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6afed1a1ffeQ4jsvoTFOdgdEj",
+          "status": "APPROVED",
+          "summary": "All claims re-proven fresh: suite 10 ok on a byte-identical suite; pins green; swap outcome structural; generate provably never traversed worktrees (0 files newer than 2026-10-30 inside .agents/worktrees); AC2 zero GitOps-term leak; question allowed in all 22 (parsed); review's OWN pin-closure sweep over 22+8+27 = 0 unresolved (the trap no machine check covers). All 6 deviations ACCEPTED with reasons. Minor: agents-sync refs phrasing -> coord ruling recorded in DECISIONS (leave verbatim). Nits non-blocking (VENDORED pointer, gpu-ai comment cite, wekan lab refs identical to canonical).",
+          "result": "RESULT status:DONE chunk:C06 open_questions:none; next:wave 4 C07+C08, fold C06 recipe into briefs"
+        }
+      ]
     },
     "C07": {
       "status": "pending",
