@@ -74,13 +74,39 @@
       "handoffs": []
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e6b6401b8ffeWXbaJ9HMzk3sdG",
+      "handoffs": [
+        {
+          "at": "2026-11-01T00:30:00Z",
+          "agent": "agent-dev-local",
+          "session": "ses_e6b6401b8ffeWXbaJ9HMzk3sdG",
+          "status": "BLOCKED",
+          "summary": "Restart-killed predecessor's partial edits audited file-by-file: KEEP ALL, 0 redone (killed session had finished all five task groups). Verification + dep-list + aislop legs run; blocked ONLY on ha-chart.sh t4 READY grep (unsatisfiable vs helm 3.16.4 ok|missing|outdated; same pin mosquitto-chart.sh t4). Implementation meets AC1-5.",
+          "result": "RESULT status:BLOCKED chunk:C03 -> validation_at_fault mechanical, routed silently to test_session"
+        },
+        {
+          "at": "2026-11-01T00:50:00Z",
+          "agent": "agent-test (repair)",
+          "session": "ses_e6c0356bdffeSfbUfQYDpniYM6",
+          "status": "DONE",
+          "summary": "Mechanical READY->ok grep repair in ha-chart.sh t4 + mosquitto-chart.sh t4 (strictly stronger: missing/outdated/absent still fail). ha-chart.sh full green 9 ok in-tree. AC semantics unchanged; author-owned miss acknowledged.",
+          "result": "RESULT status:DONE chunk:plan next:C03 review"
+        },
+        {
+          "at": "2026-11-01T01:10:00Z",
+          "agent": "agent-review",
+          "session": "ses_e6b539c5effeZj8g5jCavOdEkX",
+          "status": "APPROVED",
+          "summary": "Suite 9 ok re-run; golden snapshot untouched (digest c4c8c65e); proven-shape compliance verified item-by-item incl existingClaim pairing probed beyond t2, tgz digest vs live registry index, lock-digest divergence explained (condition field). Non-blocking GATE ITEM for user: aislop floating build exits 1 on 2 pre-existing ESO password-passthrough lines (existing-file-context) in touched mcp-secret templates; CI-pinned 0.18.1 clean; needs gate-side remedy decision before PR. Nit: C03.md Tests t4 prose still says READY.",
+          "result": "RESULT status:DONE chunk:C03 open_questions:user aislop-gate remedy before PR; next:commit C03, launch C04"
+        }
+      ]
     },
     "C04": {
       "status": "pending",

@@ -1,0 +1,95 @@
+# Passed to the ApplicationSet at deploy time (repo shape). No template in
+# this chart consumes it, so it never reaches rendered output: this chart has
+# no ingress and no secrets to build hostnames or credentials from.
+domain: OVERRIDE_VIA_APPSET
+
+app-template:
+  global:
+    nameOverride: mosquitto
+    # The broker never calls the K8s API; 5.0.1 would otherwise add an
+    # unprivileged default ServiceAccount object to every render.
+    createDefaultServiceAccount: false
+
+  defaultPodOptions:
+    # The image runs `User: None` and its entrypoint chowns /mosquitto only
+    # under uid 0, so runAsNonRoot alone admits a treated-as-root pod.
+    # 1883 is the image's own mosquitto uid/gid; fsGroup makes the data and
+    # log emptyDirs group-writable by it.
+    securityContext:
+      runAsUser: 1883
+      runAsGroup: 1883
+      fsGroup: 1883
+      runAsNonRoot: true
+
+  controllers:
+    mosquitto:
+      annotations:
+        # The conf rides a subPath mount, which kubelet never refreshes in
+        # place: restart the pod when the ConfigMap changes.
+        reloader.stakater.com/auto: "true"
+      containers:
+        main:
+          image:
+            repository: docker.io/library/eclipse-mosquitto
+            # Newest tag of the bare release stream: 2.1.x ships only with
+            # the -alpine suffix (latest = 2.1.2-alpine), so the bare pin
+            # stays renovate-annotatable like this repo's other charts.
+            tag: 2.0.22
+          ports:
+            - containerPort: &port 1883
+              name: mqtt
+            # websockets 9001: add a containerPort + service port here when
+            # a real consumer needs it. Unused in dev.
+          probes:
+            # enabled defaults to false on this app-template build; type
+            # must be the uppercase enum value (lowercase tcp fails
+            # values.schema).
+            liveness:
+              enabled: true
+              type: TCP
+              port: *port
+            readiness:
+              enabled: true
+              type: TCP
+              port: *port
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          # The broker writes into /mosquitto beyond its mounted volumes, so
+          # the root filesystem stays writable here.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+  service:
+    mosquitto:
+      controller: mosquitto
+      type: ClusterIP
+      ports:
+        mqtt:
+          port: *port
+
+  persistence:
+    # mosquitto 2.x binds no remote listener without an explicit config: the
+    # ConfigMap below is load-bearing, not decoration.
+    config:
+      type: configMap
+      name: "{{ .Release.Name }}-config"
+      globalMounts:
+        - path: /mosquitto/config/mosquitto.conf
+          subPath: mosquitto.conf
+    # Dev-only broker with persistence off: data and log live and die with
+    # the pod. Revisit with a PVC once a real consumer lands.
+    data:
+      type: emptyDir
+      globalMounts:
+        - path: /mosquitto/data
+    log:
+      type: emptyDir
+      globalMounts:
+        - path: /mosquitto/log
