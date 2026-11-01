@@ -1,6 +1,7 @@
 {
   "feature": "2026/2026-11-cf-95-bug-fix-renovate",
-  "plan_status": "approved",
+  "plan_status": "complete",
+  "complete_at": "2026-11-01T04:05:00Z",
   "approval": {
     "approved_by": "user",
     "at": "2026-11-01T02:37:50Z",
@@ -30,7 +31,12 @@
         "note": "agent-plan rework with all 7 user answers folded (2 accepted-rec, 4 overridden, 1 clarified-then-answered). User rulings: dead coder-workspace pin FIXED IN PLAN; .agents/** BLANKET silence; grafana 16541 REPLACED with live successor gnetId 13665 rev 4 (22651 rejected); tika JUMP TO NEWEST apache/tika:2.9.2.1-full; git-refs ADD branch= grammar (default main); mariadb RELY ON sourceUrl; chrome KEEP tag: 124.",
         "result": "RESULT\nstatus: DONE\nchunk: plan\nfiles_changed: [2026-11-01-bug-fix-renovate.md, STATE.json, DECISIONS.md, FRICTION.md, chunks/C01.md, chunks/C02.md]\ndeviations: none — all seven answers folded exactly as ruled; superseded draft decisions recorded as retracted in DECISIONS D3/D4/D7/D10 rather than silently rewritten\nfriction: grafana.com search API rejects documented ?q= (409) and deleted 16541 has no Wayback snapshot -> successor via websearch enumeration + per-id detail/download API verification; working probe shape documented in FRICTION.md + plan Commands 6\nopen_questions: none\nnext_suggested: user approval (coord flips plan_status) -> agent-test writes the three suite surfaces as designed-reds -> dev C01 -> dev C02 -> per-chunk reviews -> final whole-plan review re-runs the clean dry-run gate"
     ],
-    "approval_note": "Plan approved by the user 2026-11-01T02:37:50Z via the board-coord question round; HITL PR stop point remains armed for any PR-gated surface (C02 values edits are deploy-affecting per plan)."
+    "approval_note": "Plan approved by the user 2026-11-01T02:37:50Z via the board-coord question round; HITL PR stop point remains armed for any PR-gated surface (C02 values edits are deploy-affecting per plan).",
+    "final_review": {
+      "session": "ses_e6ac02a2bffe0rMfGDQcvrLurJ",
+      "verdict": "APPROVED",
+      "result": "RESULT\nstatus: DONE\nchunk: plan (final whole-plan review)\nverdict: APPROVED\ncommands_run: [validator pass; dockerfile-pins.sh 34/0; chart-yaml-legs.sh 12/0; home-dead-image-refs.sh 19/0; dry-run exit 0 + ❌=0 + level:60=0 + cannot-parse-url=0 + all 7 card symptoms absent + residuals only allowlisted (EMAsphere x2, forgejo subset); tika digest probe value-equal; grafana 13665 200/rev4; aislop 0/0; diff scope + clean tree pass]\ndeviations: none\nfriction: debug-dump grep-window misattributes disabled-dep files (packageFile trails deps) — resolved via balanced-brace JSON parse in shell python3\nopen_questions: none — one non-blocking nit recorded in chunk notes: C02.md Tasks cites 'DECISIONS D11', the successor evidence actually stands in D3 (label slip; fix on planner's next file touch)\nnext_suggested: coord commits the chunk-note edits, releases the lock, moves card #95 to Review; user owns the PR merge + deferred watch-items (future tika 2.9->3.3 major PR human-gated by PR stop; stale 16541 object cleanup in Grafana DB)"
+    }
   },
   "kickoff": {
     "card": "eA8hd82XxaxCcdwye",
