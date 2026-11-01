@@ -1,7 +1,7 @@
 {
   "schema": "wekan-board-snapshot/1",
   "collected_at": "2026-10-31",
-  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it.",
+  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08: the grown spec also ensures Research: Parallel — the applied end state carries it (orange).",
   "board": {
     "id": "TNQJ2BrXenZovngTS",
     "title": "AI-Dev"
@@ -71,7 +71,8 @@
     "Bucket: CICD": "darkgreen",
     "Bucket: Wekan": "darkgreen",
     "Provider: API": "purple",
-    "Provider: Local": "yellow"
+    "Provider: Local": "yellow",
+    "Research: Parallel": "orange"
   },
   "rules": [
     {
