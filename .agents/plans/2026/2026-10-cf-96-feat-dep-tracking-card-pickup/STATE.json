@@ -110,14 +110,19 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "title": "agent-explore subagent + 6-twin roster + permissions matrix + AGENTS roster + EXPLORE.md read order",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit f96ba8610 atop test re-pin e7cac9e53)",
+      "dev_session": "ses_e6a42959fffeLfxtRRBUDpxU2U",
+      "handoffs": [
+        "RESULT (C02 dev r1, ses_e6a42959fffeLfxtRRBUDpxU2U) status: DONE — agent-explore source+mirror (plans-only edit per OQ10 EXPLORE.md, question allow, websearch deny, subagent deny, readonly/dev MCP posture), six-twin roster rows sources+mirrors, permissions.md explore row + cells + no-git-write + drift entry + mirror, rules overview + AGENTS.md regenerated, pipeline-conventions EXPLORE.md list+read-order + mirror. agent-explore suite 6/6 flipped green; rulesync x2 no-op + --check; aislop rc0 65 files; agent-perms A12/A16 + board-context t4 + rulesync-surface c2 flip-specced (tests denied, validated on /tmp copies); drift families untouched per test-Q2. deviations: MCP-tier sentence explore clause; pipeline-overview.md NOT touched (out of chunk scope, open question); twin rows minimal.",
+        "RESULT (C02 validation repair, test session continued ses_e6a75d2b6ffeQVm4AqFpLdWjH0) status: DONE — spec (A)(B)(C) applied, committed e7cac9e53 (tests/** only): agent-perms roster want+=agent-explore + 24->25 + hygiene texts; board-context COORD_PR_SETTLED byte vs dev extract (cmp-exact) + admitted-set += explore; rulesync-surface c2 explore era-gate (placement: after full deploy chain; four-era-combos identical want sets — dev-copy inconsistency flagged, live tree is ground, green). agent-explore 6/6, agent-perms 16/16, node 233/0, aislop 0/0 65 files, --check green. Out-of-scope drift families verified untouched-red. deviations: era-gate placement vs dev copy (accepted), A16 texts carry cf-96 attribution, board-context comment narration lacks explore clause (cosmetic, handed up).",
+        "RESULT (C02 review r1, fresh ses_e6a1f2b21ffeMCm9n72yXJ7j9G) status: DONE verdict APPROVED — chunk-first battery green; the two red suite exits (board-context t14/t6, rulesync-surface c8) root-caused to coord UNCOMMITTED plan-folder churn by clean-tree probes (never-red-after-commit); five drift families template-identical vs e7cac9e53 probe worktree (only interpolated sets grow 6->7), git-diff proof C02 surface touches none of their files; grants adjudicated against the CHUNK (plans-only edit is chunk-correct; launch/RESEARCH text predates OQ10 — superseded); six-twin parsed-equality; matrix<->frontmatter parsed both directions; rulesync idempotence + --check; aislop rc0 score100; surface = exactly 20 declared files + 3 test files. Deviations 1-3 accepted; pipeline-overview Deferred ruled stands (file carries pre-existing cf-90 deploy drift). Deferred: board-context admitted-set comment clause (next test touch), pipeline-overview roster (its own drift ticket)."
+      ]
     },
     "C03": {
       "status": "pending",

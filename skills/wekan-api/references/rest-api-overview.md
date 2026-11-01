@@ -117,7 +117,7 @@ Create a board. Admin permission required for arbitrary `owner`; otherwise owner
 }
 ```
 
-Valid colors: `belize`, `nephritis`, `pomegranate`, `pumpkin`, `wisteria`, `midnight`, `moderatepink`, `strongcyan`, `limegreen`, `midnight`, `dark`, `relax`, `corteza`, `clearblue`, `natural`. (Set has grown over time; verify against your version.)
+Valid colors — the 25 names of `ALLOWED_BOARD_COLORS` in upstream `config/const.js` at the v12.65 tag (imported as `BOARD_COLORS` through `models/metadata/colors.js`, enforced as `color.allowedValues` in `models/boards.js`; v12.65, source-checked 2026-11-01): `belize`, `nephritis`, `pomegranate`, `pumpkin`, `wisteria`, `moderatepink`, `strongcyan`, `limegreen`, `midnight`, `dark`, `relax`, `corteza`, `appleglasspastel`, `clearblue`, `cleargreen`, `clearorange`, `clearpink`, `clearpurple`, `clearred`, `natural`, `modern`, `moderndark`, `exodark`, `cleandark`, `cleanlight` — upstream order. Omitted `color` defaults to `BOARD_COLORS[0]` (`belize`) via the schema `autoValue`. This is a **different set** from the 25 label colors (`PUT /api/boards/:id/labels` below) — the equal count is a coincidence. At v9.88 the board set was 19; the six names added by 12.65 are `appleglasspastel`, `cleargreen`, `clearorange`, `clearpink`, `clearpurple`, `clearred` (`clearblue` was already there).
 
 Response: `{ "_id": "<newBoardId>", "defaultSwimlaneId": "..." }`.
 
