@@ -438,6 +438,14 @@
       "status": "DONE",
       "summary": "Owner answers folded VERBATIM ('remove the PVC guard as well'; dev-dedicated Bitwarden item, FORCE the PG username per-secret, read only the password). Final shape: 7 gates deleted; surviving gate = HA container only (grow HA is external — interpretation sentence recorded, overrulable); precise render deltas (default = 2 Cluster + 4 ES + 1 PVC; ES differ only by forced-username/target.template) replacing the byte-identity claim; authorized golden RE-CAPTURE at the new baseline by the test session; dev item id NOT in repo (probe rc=1) => placeholder markers land, ONE id hand-offed to owner; mapping table from live template reads (initdb owners home-assistant x2, shared pg-<rel>-secret, dbs home-assistant+sensors, mcp pair already forces readonly); slice final {homeAssistant:{enabled:true}}. plan_status->approved by coord. Grow username-value equivalence flagged as owner-confirmation risk.",
       "result": "RESULT status:DONE chunk:plan open_questions:hand-off: dev Bitwarden item id; next:test_session repair then C10 dev"
+    },
+    {
+      "at": "2026-11-02T21:30:00Z",
+      "agent": "agent-review (rebase-verify) + agent-test (re-pin)",
+      "session": "ses_e61e0c756ffe93x4GMkd4zfxbg / ses_e6c0356bdffeSfbUfQYDpniYM6",
+      "status": "APPROVED",
+      "summary": "Branch rebased onto moved main eb1ede821 (cf-96 boards redesign + cf-97 runner waves) per owner request; 18/18 commits landed; single C01 conflict fused (cf-96 prose verbatim + Repo: filter coherent). ALL NINE multi-repo suites green as-landed (chart-version re-pin NOT needed — home-assistant chart born in-branch, release.yaml never bumped it). agents-md 9 / rulesync-surface 23 green. Two attributed reds: board-context t6 stale byte-unchanged premise vs APPROVED C02 comment-append -> RE-PINNED to comment-only-invariance (7 ok, mirrors hourly t2); gate t17 PRE-EXISTING at pristine main (proven temp worktree; cf-96/97 merged roster drift un-re-pinned) -> upstream owner-side, not cf-93. Target ports untouched (2ea63fd/ddd20d5/381d72f; porcelain 21/25/30). aislop@0.18.1 65 files 0/0; rulesync --check 0; helm lint x3 baseline-only warnings.",
+      "result": "RESULT status:DONE chunk:rebase-verify open_questions:none; branch integration-ready for the owner's PR"
     }
   ]
 }

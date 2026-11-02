@@ -345,7 +345,25 @@ if want t6; then
     cat "$TMP/gatehits.txt" >&2
     fail "t6: agent-board-coord-gate.sh references agent-board — the hourly gate counts the three board-coord names ONLY (agent-board is not a coordinator; C03 AC6)"
   fi
-  git diff --quiet "$TB" -- "$GATE_SCRIPT" || fail "t6: $GATE_SCRIPT changed since $TB — this ticket touches nothing in it (prove-by-diff, AC6)"
+  # The invariance premise, re-pinned at the cf-93 C10 rebase: C02
+  # legitimately APPENDED a comment-only posture note to this script (OQ-A3 —
+  # deliberate cross-project counting, guarded as comment-only by
+  # tests/multi-repo/hourly-board-check.sh t2, which also pins the untouched
+  # usage-heredoc twin via the D11 sentences + verdict legend). So this leg
+  # proves COMMENT-ONLY invariance vs $TB — the same ^+#-only shape as that
+  # guard: added lines are comments/blank, zero deleted or rewritten lines.
+  gate_diff=$(git diff "$TB" -- "$GATE_SCRIPT" || true)
+  if [ -n "$gate_diff" ]; then
+    if printf '%s\n' "$gate_diff" | grep -E '^-' | grep -vE '^--- ' | grep -q .; then
+      fail "t6: the $GATE_SCRIPT diff vs $TB deletes/rewrites lines — only comment APPENDS are admissible (C02's posture note; deletions would widen the hourly gate, AC6)"
+    fi
+    if printf '%s\n' "$gate_diff" | grep -E '^\+[^+]' | grep -vE '^\+\s*(#|$)' | grep .; then
+      fail "t6: the $GATE_SCRIPT diff adds a non-comment line vs $TB — gate logic, verdicts and flags stay untouched (mirrors hourly-board-check.sh t2)"
+    fi
+    ok "t6: $GATE_SCRIPT vs $TB is comment-only (the cf-93 C02 OQ-A3 posture append; no logic, verdict or flag change — AC6 invariance)"
+  else
+    ok "t6: $GATE_SCRIPT unchanged vs $TB (comment-only invariance, vacuously)"
+  fi
   # env -u CHUNK_BASE: same default-shape containment as validation-fix.sh t7 —
   # an ambient base must not silently re-base these regression children.
   # cf-90 selection note (agent-test, mechanical): gate.sh's child runs as an
@@ -371,7 +389,7 @@ if want t6; then
       fail "t6: bash $s failed (log: $log)"
     fi
   done
-  ok "t6: gate script byte-untouched and free of agent-board references; gate contract (ids minus the known-red t17), agent-perms and standalone-agents suites pass (C03 AC6 regression)"
+  ok "t6: gate script comment-only-invariant vs $TB and free of agent-board references; gate contract (ids minus the known-red t17), agent-perms and standalone-agents suites pass (C03 AC6 regression)"
 fi
 
 printf 'PASS: wekan-mcp board-context checks (%d ok)\n' "$checks"
