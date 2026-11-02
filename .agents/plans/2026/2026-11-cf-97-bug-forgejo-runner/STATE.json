@@ -232,8 +232,6 @@
       ],
       "note": "User ruling verbatim 'Add `runAsGroup: 1000` before the PR'. runAsGroup 1000 at CONTAINER level (pod-level identity would let kubelet FsUserFrom resolve an fs user and recursively re-chown the 12 GiB VCTs; dind keeps no runAs*) + the M1/M2 shipped-comment truthfulness fixes. t13 extended in place. Suite exit 0 / 49 ok; review APPROVED."
     }
-      "note": "Added after the whole-plan review (APPROVED) on the user's Minor 1 disposition, verbatim 'Add `runAsGroup: 1000` before the PR'. Scope: runAsGroup 1000 at CONTAINER level (never pod level - pod-level identity lets kubelet FsUserFrom resolve an fs user and recursively re-chown the 12 GiB VCTs; dind deliberately keeps no runAs*), plus the two shipped-comment truthfulness fixes the review required (M1 values.yaml 'fully specified'/'unambiguous' -> the real no-passwd-entry gid-0 fact; M2 secret-runner.yaml 'authored 2026-10-24 (5853be497)' -> tree-accurate ad7633349 10-22 / 2737069cb 10-23 / R069 rename 10-24, argument resting on the same-day pairing with 582c96488 and on git log -S mergePolicy). t13 extended in place by agent-test (no t14). No other new chunk; the fleet-wide sweep stays board card sLK4MmTxGiaCk3uLq."
-    }
   },
   "blocked": [],
   "deferred": [
