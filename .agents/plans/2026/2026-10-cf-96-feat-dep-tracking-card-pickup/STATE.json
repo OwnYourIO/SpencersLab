@@ -254,7 +254,7 @@
       ]
     },
     "C11": {
-      "status": "pending",
+      "status": "done",
       "wave": 6,
       "depends_on": ["C01", "C05", "C08", "C10"],
       "title": "post-research delta (OQ-P1 FOLD ruling; APPROVED + WIDENED 2nd batched round 2026-11-02): _slim_rule extras+enabled passthrough + docs-parity re-stamp + OQ-P2/P3/P4 text folds + T5 registry-recipe fold (wekan-mcp-ops Deploy/verify loop + container-creation pin recipe, digest leg kept; no suite content-grips either file) + green-on-arrival suite legs incl. cf96-deploy t8 guard",
@@ -262,7 +262,11 @@
       "review_rounds": 0,
       "last_verdict": null,
       "dev_session": null,
-      "handoffs": []
+      "handoffs": [
+        "RESULT (C11 dev, ses_e62a21d1dffeWR3waCgDUN3Zu3) status: DONE — server.py _slim_rule 7-key projection (extra_actions/extra_triggers/enabled ride bare, enabled True only on omission, plain @mcp.tool, registry 38); docs same-commit source-only (README/call-shapes/SKILL, camelCase ban respected); boards folds (present-but-FAILED tools/list = same degrade as absent w/ one retry; gate title-map fallback + unresolvable-edge NON-GATING-and-reported) source+mirror no-op2; recipe widening (wekan-mcp-ops tags/list enumeration bullet appended w/ digest bullet byte-intact; container-creation dead sentence replaced; strata README untouched = tagged digest read class). AC4 capture sentences byte-untouched; runbook step-2+retire-row staged. Flip spec staged verbatim at /tmp/opencode/cf96-c11-dev/flip/ (shas in handoff; all legs GOA-green here / red at d1f674a63). deviations: 3-group fallback leg (2-group green at ORIG), first-ever top-level path class needed the 4-arm scope admits (fifth admit-ritual record).",
+        "RESULT (C11 test route, ses_e6adaf11bffeOtWerHTHQlYlqj continued) status: DONE — e78b6a838 (tests/** only, 8 files): all ten staged shas verified; per-file pre-apply audits show ONLY the enumerated legs (t1-t7/t1-t5/t1-t8 byte-preserved as claimed); green-on-arrival cf96-deploy 8 / dependencies 8 / checklist-cutover 9 / boards-deps 8; red-at-HEAD on a detached d1f674a63 probe for all six new legs (correct named reasons, incl cutover t9 naming the missing _slim_rule passthrough = F5's failure mode); distractor spelling v90/v101/v102 keeps t6's {:v60,:v87} whitelist; full battery incl rulesync-surface 23 (c8 discharges the new admit), agent-perms 16, node 238/0, aislop 100/100; gate 18 ok sole FAIL ruled t17 message-identical. deviation: provenance ok-line extension staged for GATE only — applied as staged, reported.",
+        "RESULT (C11 review r1, fresh ses_e627a6a7dffeD0sRj4orDCMhjE) status: DONE verdict APPROVED — upstream truth re-fetched personally (rules.js v12.65 == main, 11229B byte-identical; serializeRule hydrates enabled always, extraActions/extraTriggers only when non-empty ⇒ routes OMIT, never [] — the bare r.get posture is exactly right; enabled default True only on omission); AST 17+21=38, rule reads parse ['mcp.tool'] plain-tier; live anonymous tags/list re-executed (200; v87/v90/v101/v102/legacy/latest real, no :dev) — registry facts legitimately live-stamped; camelCase zero; degrade fold extends the absent-branch verbatim-aligned (no contradiction); unresolvable-edge judged vs the dangerous reading — transient failure hits the CALL-FAILURE clause (payload-less), a missing far end inside a good payload is structurally deleted/moved and cannot gate: non-gating AND reported, correct as written (linked-card omission recorded as plan-inherited micro-edge, observability preserved); AC4 sentences byte-empty diffs; t6 whitelist protected by construction; six new legs independently reddened at d1f674a63; full battery delivered at expected counts (aislop rc0 100 vs floor 80, 65 files; rulesync no-op2; node 238/0; gate only ruled t17; create-list t2 admitted stale-base count moved 7→9 = C11's two hunks). Ledger notes for final review: linked-card clause, EOF-newline style."
+      ]
     }
   },
   "post_research": {
