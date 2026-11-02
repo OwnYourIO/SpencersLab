@@ -206,16 +206,24 @@ posture anywhere (overrides the BG; schema-invalid entries fail loud).
    `custom-values/dev/prod-values.yaml` (replaces OVERRIDE_NEEDED).
 3. PROD (card #88 scope, listed for completeness): ORG-scoped runner on gpu
    for git.spencerslab.com + gpu→Immich network path resolution.
-4. Immich API key (owner account; EXACTLY asset.read/asset.view/album.read/
-   tag.read) → Bitwarden `cf-sync-immich`; Netlify token + both site ids →
-   `cf-sync-netlify`; Forgejo PAT (write:repository) → `cf-sync-forgejo`.
+4. Bitwarden items (owner naming rule 2026-11-02 — `hugo-build-*`; closed
+   records name the same items under the pre-rename label): Immich API key
+   (owner account; EXACTLY asset.read/asset.view/album.read/tag.read) →
+   `hugo-build-immich` (created); Netlify token +
+   both site ids → `hugo-build-netlify` (created); Forgejo PAT →
+   `hugo-build-forgejo` (PENDING): write:repository + Actions-write if
+   offered, on a CuratedForest.com-writer, minted at git.spencerslab.com
+   Settings→Applications — needed for BOTH seeder API-auth and workflow
+   PR/push (automatic FORGEJO_TOKEN suppresses workflow triggers).
 5. GPU uuid fills — **NOT annotation edits** (the cluster-annotation mechanism
    is dead since `aa817da6b`; see Verified facts + DECISIONS COORD FACT-RULE):
    replace each `OVERRIDE_NEEDED` slot in the `forgejo-secret-seed:` app block
-   of `custom-values/gpu/prod-values.yaml` with its Bitwarden item UUID
-   (immich-api-key / netlify / forgejo-pat — C04 shipped this block), and the
-   same for C05's `forgejo-run-watchdog:` app block when it lands (reuses the
-   same items; no new mandatory items).
+   of `custom-values/gpu/prod-values.yaml` with its Bitwarden item UUID —
+   `immich-api-key` and `netlify` slots are **FILLED**; the `forgejo-pat`
+   slot is PENDING on the `hugo-build-forgejo` item (4). When C05 lands, the
+   same fill passes apply to its `forgejo-run-watchdog:` app block (all of
+   that block's slots are then unfilled — reuses the same items, no new
+   mandatory ones).
 6. After SpencersLab PR merges + ArgoCD syncs: dev runner pod Running + online
    in git.scifi.farm admin UI; trivial host-label workflow completes on a
    scratch dev repo (owner/coord creates e.g. `runner-host-validation`);

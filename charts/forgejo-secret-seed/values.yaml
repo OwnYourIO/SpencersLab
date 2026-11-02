@@ -9,13 +9,13 @@
 # With the app block absent or unfilled, the ExternalSecret renders the
 # sentinel/OVERRIDE_NEEDED literal and its fetch fails visibly daily.
 bitwardenIds:
-  # Bitwarden item cf-sync-immich (login item; password = the API key).
+  # Bitwarden item hugo-build-immich (login item; password = the API key).
   immich-api-key: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  # Bitwarden item cf-sync-netlify: login password = auth token, plus custom
+  # Bitwarden item hugo-build-netlify: login password = auth token, plus custom
   # fields site_id_com and site_id_farm for the two site ids. Field names are
   # owner-visible (templates/secret-forgejo-seed.yaml reads them verbatim).
   netlify: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  # Bitwarden item cf-sync-forgejo (login item; password = repo-write PAT).
+  # Bitwarden item hugo-build-forgejo (login item; password = repo-write PAT).
   forgejo-pat: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
 seed:

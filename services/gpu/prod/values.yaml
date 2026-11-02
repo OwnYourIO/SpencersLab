@@ -26,12 +26,12 @@ bitwardenIds:
   # which base's charts appset projects into that Application's valuesObject.
   # These sentinel lines stay as the chart-level default the block shadows
   # (fleet practice, searxng/neo4j above).
-  # Bitwarden item cf-sync-immich; login item, password = Immich API key.
+  # Bitwarden item hugo-build-immich; login item, password = Immich API key.
   immich-api-key: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  # Bitwarden item cf-sync-netlify; login password = auth token, custom
+  # Bitwarden item hugo-build-netlify; login password = auth token, custom
   # fields site_id_com / site_id_farm = the two Netlify site ids.
   netlify: OVERRIDE_VIA_CLUSTER_ANNOTATION
-  # Bitwarden item cf-sync-forgejo; login password = repo-write PAT.
+  # Bitwarden item hugo-build-forgejo; login password = repo-write PAT.
   forgejo-pat: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
   # External-auth provider + at-rest token key for coderd (consumed by
