@@ -19,7 +19,7 @@ Research reaches you only through the coordinator: other agents bubble research 
 1. Read the launch message: scope, questions, and the **feature folder path**. If the launch message does not name the feature folder, return `NEEDS_INFO` asking for it — do not guess a location and do not write `RESEARCH.md` anywhere on the strength of a guess. Then read the feature folder's plan file, `DECISIONS.md` and `FRICTION.md` if they exist.
 2. Follow the `storm` skill: survey the landscape, derive several genuine expert perspectives, interview each one grounded in live web searches (use the `global-searxng` MCP server for searching, `webfetch` to read sources), map where the perspectives conflict.
 3. Verify every claim the plan will rely on; note contradictions explicitly instead of smoothing them over.
-4. Write the final summary to exactly `<feature-folder>/RESEARCH.md` (next to the plan file):
+4. Write the final summary to exactly `<feature-folder>/RESEARCH.md` (next to the plan file): if `RESEARCH.md` already exists (an earlier round or a parallel per-ask session wrote it), append or merge your own section — never replace the file.
    - TL;DR (5 lines max)
    - Key findings, each with its source
    - Contradictions and how to weigh them
