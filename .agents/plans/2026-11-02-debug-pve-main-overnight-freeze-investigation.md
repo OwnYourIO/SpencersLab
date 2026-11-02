@@ -48,8 +48,11 @@ and a 112 MB/s NIC burst on Oct 29.
   home-lab/grow/media are VMs on pve-main (boots lockstep with host: 00:02Z, 02:50Z, 12:25/12:38Z
   Nov 1; 13:54Z Nov 2). The infra node VM self-rebooted 02:12/03:03/03:23Z Nov 1 while its host
   stayed up — normal MicroOS transactional-update/rebootmgr behavior, not host instability.
-- No ZFS pools active on any host (`node_zfs_arc_size` = 0 everywhere); storage is LVM (dm-*) on
-  NVMe + sda. No smartmontools metrics exported.
+- No ZFS pools active on any host (`node_zfs_arc_size` = 3840 B idle footprint on all four;
+  `node_zfs_zil_zil_commit_count` and `node_zfs_dmu_tx_dmu_tx_assigned` flat zero across 7 days —
+  covering the pre-update Oct 28-31 boot session and all post-update boots); storage is LVM (dm-*)
+  on NVMe + sda. No smartmontools metrics exported. The staff-confirmed -26 ZFS-recv deadlock is
+  therefore NOT the pve-main mechanism; the regression stands on the timing/upstream evidence.
 - Upstream reports on exactly this kernel:
   - Proxmox forum, staff-confirmed: "Kernel 7.0.14-26 makes zfs replication hang on receive"
     (forum.proxmox.com/threads/…187369) — `zfs_rezget()` backport (openzfs/zfs#19013, shipped in
@@ -135,6 +138,41 @@ Side observations:
 - All other clusters (monitoring, proxy-local, gpu, infra, grow, media, home) verified UP at
   14:55Z; grow/home-lab/media journals show the exact 195-min gap (10:40→13:55Z) matching
   pve-main's Nov 2 death, confirming they are its VMs.
+
+## Addendum 2: host-side kernel logs (captured by user on pve-main, Nov 2 ~11:40 MST)
+
+`journalctl --list-boots` + `-k` tails settle the mechanism:
+
+- Boot -1 (Nov 1 05:36:10 → Nov 2 03:34:37 MST) is the session that died in the Nov 2 backup
+  window; its end timestamp matches the last Prometheus sample (10:34Z) to the minute. The final
+  kernel message is `perf: interrupt took too long` at Nov 1 17:39 MST — then ~10 h of silence and
+  death with **no panic, oops, hung_task, RCU stall, MCE, or thermal message**. No auto-reboot
+  (dead 3h17m until manual power cycle).
+- This rules out the ZFS/-26 deadlock and every soft-hang class (hung-task detector prints at
+  120 s; the forum reporter's -26 ZFS deadlock produced full [zfs]/[spl] traces). Verdict:
+  **silent hard lockup** — all-CPU wedge (hard lockup / IERR-CATERR) or instant power/thermal
+  death, under sustained backup IO.
+- Boots -3/-2 (Nov 1 04:54–04:56, 04:59–05:35 MST) are the user's recovery attempts; -2 ends in a
+  clean `systemd-shutdown`. The two Oct 31 sessions (update boot 17:59 MST, crash-#1 boot 20:47
+  MST) are **missing from list-boots** — journals didn't survive those hard freezes.
+- Hardware profile revealed: HP desktop (hp_bioscfg), Coffee Lake, 128 GB non-ECC, NVIDIA GPU on
+  vfio-pci (0000:01:00.0/.1) passthrough, WiFi (0000:70:00.0) passthrough, r8152 USB NIC as
+  primary LAN on bus 4 shared with StreamCam; Bluetooth firmware download fails in a retry loop
+  every boot (-108/-110); Logitech receivers re-enumerate repeatedly; softdog loaded but not
+  petting. Chronic xhci/USB reset storm at every boot.
+- ZFS final state: `zfs-import@backup.service` (dangling unit for a long-gone pool named
+  "backup") disabled by user; `/etc/pve/storage.cfg` has no zfspool entry (leftovers: disabled
+  `backup` dir + `pve` lvm entries); pvesm active: local (dir), local-lvm (lvmthin, 79.3% used),
+  vms (lvmthin, 74.4% used), removable_1/2 (PBS, backup targets).
+- Thin-pool watch item: local-lvm 79.3%, vms 74.4% — 100% would stall all VM IO.
+
+Updated plan: kernel pin (7.0.14-25-pve, fallback 6.17.13-2-pve) is the discriminating experiment
+kernel-vs-hardware; if freezes persist on the old kernel → memtest86+, smartctl -x both disks,
+cooling/repaste, HP BIOS + microcode update, PSU review. Safety nets: iTCO watchdog via
+systemd RuntimeWatchdogSec=60, kdump-tools + crashkernel=256M in /etc/kernel/cmdline +
+proxmox-boot-tool refresh, hung_task/softlockup panic sysctls. Trigger reduction: throttle/pause
+the 2 AM vzdump job (bwlimit), consider moving vmbr0 from the r8152 USB NIC to the idle onboard
+enp0s31f6, BIOS "After Power Loss: Power On".
 
 ## Open questions
 

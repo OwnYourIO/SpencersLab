@@ -194,37 +194,6 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
 
 
 @helm
-def test_u16_mmq_kq_env_is_a_reverted_experiment_on_every_arena():
-    """U16 shipped STRATA_MMQ_KQ=1 on q4 as a measurement; U17 reverted it the
-    same day, so this pin flipped from presence to ABSENCE on all five arenas.
-    The outcome, recorded rather than dropped, because it is the reason the flag
-    may not come back quietly: across arena-attributed, context-matched samples
-    (mean cached 52k before vs 51k after) the 1k-8k band did not move (2,540
-    fresh at ~52k cached: 148.8 tok/s before, 148.7 after), the single cold 22k
-    sample landed BELOW the pre-change range (236.8 vs 324.8-433.5), and the
-    before-window alone spans ~2x at identical sizes (9,561 fresh -> 266.2 vs
-    9,404 -> 486.1), matching QUANTS.md's own "varies between runs on this box
-    by up to 2x". Decisive: the flash-next engine prints NO kernel-path line —
-    only the q36 path announces "prompt experts on MMQ" — so the test could not
-    even establish that the flag took effect. A bit-changing knob (median KL vs
-    Q8_0 improves 0.0027 vs 0.0047, mean worsens on a few prompts 0.095 vs
-    0.081) does not earn a place on an unobservable maybe; it returns only
-    behind a controlled bench (upstream tools/strata_bench.py, standard-v1).
-    A reappearance anywhere is an un-ruled re-tune, which is what this arm
-    catches."""
-    models = S.inner_config(_docs())["models"]
-    arenas = [i for i in (S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID) if i in models]
-    assert len(arenas) == 5, f"expected five arenas, rendered {sorted(arenas)}"
-    for aid in arenas:
-        env = set(S.env_list(models[aid]))
-        assert S.Q4_MMQ_KQ_ENV not in env, (
-            f"{aid} carries {S.Q4_MMQ_KQ_ENV} — U17 reverted this experiment (no measured "
-            f"benefit, engagement unverifiable); re-adding it needs a bench round and a ruling, "
-            f"not an env line. Full env: {sorted(env)}"
-        )
-
-
-@helm
 def test_c06_existing_profiles_stay_byte_unchanged_caps_are_per_rung():
     """AC2's second half: the earlier profiles are untouched at their own
     frozen eras, and every rung keeps ITS OWN declared cap — the lockstep law

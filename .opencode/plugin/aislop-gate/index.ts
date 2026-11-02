@@ -12,9 +12,7 @@
 //   after checking the real shape with `npx aislop scan --changes --json | head`.
 // - Debounce + dedupe stop multi-file edits from spamming the context.
 // - Pinned CLI version via npx --yes (repo has no package.json; the CI gate
-//   pins the same version — the parity is machine-guarded by
-//   tests/opencode/aislop-pin-parity.test.ts). First run pays the download
-//   cost; npx caches it.
+//   pins the same version). First run pays the download; npx caches it.
 //
 // Unverified at write time (watch and adjust):
 // - V2 tool IDs for patch-style edits (patch/apply_patch/multiedit). To check:
@@ -29,7 +27,7 @@ const EDIT_TOOLS = new Set(["edit", "write", "multiedit", "patch", "apply_patch"
 const CODE = /\.(m?[jt]sx?|cjs|py|go|rs|rb|php|cs|c|cc|cpp|h|hpp)$/i;
 const DEBOUNCE_MS = 1500;
 const MAX_CHARS = 4000;
-const AISLOP_VERSION = "0.20.0";
+const AISLOP_VERSION = "0.18.1";
 
 function appendText(result: any, text: string) {
   if (!result) return;

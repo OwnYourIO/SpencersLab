@@ -1650,24 +1650,6 @@ strata:
         # Engine defaults like the other R9700 rungs: no PR/strix switch set
         # (silicon/recipe-specific), only the peers-forwarded Host allow-list;
         # the ROCR entry is injected by the template from the global index.
-        # No STRATA_MMQ_KQ here. It was TRIED on this arena (U16, owner go
-        # 2026-11-02: int8 MMQ prompt experts instead of AMD's FP16/BLAS route,
-        # which reads each expert as ~10 MB of FP16 — q4 looked doubly exposed
-        # with ~2.8x-fatter experts and only 6,889 resident in the VRAM cache
-        # where the primary keeps 11,127) and REVERTED the same day: across
-        # arena-attributed, context-matched samples the 1k-8k band was
-        # unchanged (2,540 fresh at 52k cached: 148.8 tok/s before, 148.7
-        # after), the one cold 22k sample came in BELOW the pre-change range
-        # (236.8 vs 324.8-433.5), and the flash-next path prints no kernel-line
-        # at all — only the q36 path announces "prompt experts on MMQ" — so
-        # engagement was unverifiable. A bit-changing flag (median KL vs Q8_0
-        # improves to 0.0027 from 0.0047; mean worsens on a few prompts, 0.095
-        # vs 0.081) does not earn its place on an unobservable maybe. The
-        # measured q4-vs-primary prompt gap this targeted (-61% cold 22k) is
-        # still open, and the real lead is now the ~10-20 s floor on 300-2,500
-        # token appends, which held across arenas, both chunk sizes and this
-        # flag: see runbook 3.4b and the threshold card. Re-test only behind a
-        # controlled bench (upstream tools/strata_bench.py, standard-v1).
         env:
           - "STRATA_REQUEST_LINES=1"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"

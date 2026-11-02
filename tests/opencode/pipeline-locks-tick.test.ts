@@ -155,7 +155,7 @@ describe("T2 the loop file — OpenChamber shape, shipped disabled (AC 3)", () =
     assert.deepEqual(Object.keys(fields).sort(), ["agent", "enabled", "model", "name", "schedule"], "exactly the verified OpenChamber frontmatter fields");
     assert.equal(fields.name, "pipeline-worker");
     assert.equal(fields.agent, "agent-board-coord", "the tick session runs as the board-coord ALIAS (D15)");
-    assert.equal(fields.model, "gpu-ai/qwen3.8-flash-next-strata", "single authority: the loop-file bytes (OpenChamber syncs from the main checkout), flipped to the local-arena code tier by owner-approved 652ba904c (2026-11-01, cf-86 DECISIONS; supersedes cf-76 Q2) — a deliberate re-flip re-pins this byte rather than deleting the assertion (enabled policy below)");
+    assert.equal(fields.model, "openrouter/qwen/qwen3.8-flash", "Q2 ruling: the loop/worker session runs the code tier");
     assert.equal(fields.schedule, "0 * * * *", "hourly cadence spans the 2 h stale window twice (D21)");
     // The literal tracks the LANDED toggle, not a frozen default: the owner
     // flipped false -> true on main 080c9878a (2026-10-30). The AC-3 duty is

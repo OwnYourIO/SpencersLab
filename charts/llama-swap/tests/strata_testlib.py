@@ -333,12 +333,6 @@ Q4_CGROUP_LIMIT = STRATA_CGROUP_LIMIT  # deprecated alias; the cgroup is pod-lev
 Q4_CONV_CACHE_MIB = 16384
 Q4_CONV_CACHE_SLOTS = 16
 Q4_SESSION_FLAG = "--slot-save-path"
-# The U16 K-quant prompt-expert switch, now a NEGATIVE pin: tried on q4
-# 2026-11-02, measured no benefit (and one below-range cold sample), and left
-# the engine silent about whether it engaged at all. Bit-changing, so it does
-# not return without a controlled bench — see
-# test_u16_mmq_kq_env_is_a_reverted_experiment_on_every_arena.
-Q4_MMQ_KQ_ENV = "STRATA_MMQ_KQ=1"
 # The dir creation STAYS (fetch_models.sh owns it; one home only — the chart
 # must not mkdir it): harmless bookkeeping for a possible future HIP session
 # -files build, asserted by the init/image suites.
