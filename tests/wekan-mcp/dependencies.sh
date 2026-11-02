@@ -27,7 +27,12 @@
 # _slim_card passthroughs + list_cards_in_list stays strip-accurate] t5[AC2 —
 # create_card two-step, non-rollback, OQ1 negative: no auto-edge] t6[AC4 —
 # docs re-stamped, evidence stamps source-only 2026-11, nothing live-claimed]
-# t7[AC3 — wekan.py byte-unchanged (tools.sh t8 posture)].
+# t7[AC3 — wekan.py byte-unchanged (tools.sh t8 posture)]
+# t8[C11 AC1 — _slim_rule 7-key capture projection: extras + enabled ride the
+#     route documents un-reshaped, get_rule/list_rules stay plain @mcp.tool
+#     (readonly tier), docstrings re-stamped. GREEN ON ARRIVAL after C11 dev
+#     lands (red at the pre-C11 tree — the four-key projection structurally
+#     cannot answer the schema-2 capture, RESEARCH F5).
 #
 # Red posture: t1–t5 are DESIGNED RED at authoring — verified 2026-11-01:
 # none of the seven new names exists in server.py; every red names the
@@ -39,7 +44,7 @@
 # user probe.
 #
 # Usage:
-#   bash tests/wekan-mcp/dependencies.sh            # t1..t7
+#   bash tests/wekan-mcp/dependencies.sh            # t1..t8
 #   bash tests/wekan-mcp/dependencies.sh t2 t5      # subset
 #   CF96_BASE=<ref> bash tests/wekan-mcp/dependencies.sh t7
 set -euo pipefail
@@ -61,10 +66,10 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-7])$ ]] || fail "unknown check id '$a' (expected t1..t7)"
+    [[ "$a" =~ ^t([1-8])$ ]] || fail "unknown check id '$a' (expected t1..t8)"
     WANT["$a"]=1
   done
 fi
@@ -434,6 +439,68 @@ if want t7; then
   git diff --quiet "$PIN_BASE" -- "$WEKAN_PY" \
     || fail "t7[C01 AC3]: $WEKAN_PY changed since $PIN_BASE — C01 rides the existing _wekan helpers and must not edit the login-mint client (pass CF96_BASE=<ref> if main legitimately moved it)"
   ok "t7[C01 AC3]: $WEKAN_PY byte-identical to $PIN_BASE (tools.sh t8 companion pin)"
+fi
+
+# --- t8: _slim_rule capture projection — the schema-2 keys (C11 T1 / AC1) ----------
+if want t8; then
+  if ! python3 - "$SERVER" <<'PY'
+import ast, sys
+
+src = open(sys.argv[1]).read()
+tree = ast.parse(src)
+funcs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+fn = funcs.get("_slim_rule")
+if fn is None:
+    print("t8: _slim_rule disappeared from server.py (layout fault, not a C11 red)"); sys.exit(1)
+ret = next((n for n in ast.walk(fn) if isinstance(n, ast.Return)), None)
+if ret is None or not isinstance(ret.value, ast.Dict):
+    print("t8: _slim_rule must return a dict literal — the projection is pinned structurally (C11 T1)"); sys.exit(1)
+d = ret.value
+keys = [k.value for k in d.keys if isinstance(k, ast.Constant)]
+WANT = {"id", "title", "trigger", "action", "extra_actions", "extra_triggers", "enabled"}
+if set(keys) != WANT:
+    print(f"t8: _slim_rule projects {sorted(keys)}, want EXACTLY {sorted(WANT)} (C11 T1 — the schema-2 capture contract keys)"); sys.exit(1)
+WIRE = {"id": "_id", "title": "title", "trigger": "trigger", "action": "action",
+        "extra_actions": "extraActions", "extra_triggers": "extraTriggers", "enabled": "enabled"}
+for k, v in zip(d.keys, d.values):
+    raw = (isinstance(v, ast.Call) and isinstance(v.func, ast.Attribute)
+           and v.func.attr == "get" and isinstance(v.func.value, ast.Name)
+           and v.func.value.id == "r"
+           and v.args and isinstance(v.args[0], ast.Constant)
+           and v.args[0].value == WIRE[k.value])
+    if not raw:
+        print(f"t8: key {k.value!r} must read r.get(\"{WIRE[k.value]}\") — the route value un-reshaped (C11 T1), got {ast.unparse(v)}"); sys.exit(1)
+en = d.values[keys.index("enabled")]
+if not (len(en.args) == 2 and isinstance(en.args[1], ast.Constant) and en.args[1].value is True):
+    print("t8: enabled must be r.get(\"enabled\", True) — True ONLY when the route omits the field; a paused rule must read enabled: false (C11 T1, RESEARCH F6c)"); sys.exit(1)
+for key in ("extra_actions", "extra_triggers"):
+    v = d.values[keys.index(key)]
+    if len(v.args) != 1:
+        print(f"t8: {key} must pass through r.get(\"{WIRE[key]}\") with NO default — an omitted field reads None, never an invented empty list (the _slim_card parent_id posture; absence stays visibly absent)"); sys.exit(1)
+
+def plain_read(name):
+    f = funcs.get(name)
+    if f is None:
+        return False
+    has = any(isinstance(x, ast.Attribute) and x.attr == "tool"
+              and isinstance(x.value, ast.Name) and x.value.id == "mcp"
+              for x in f.decorator_list)
+    gated = any(isinstance(x, ast.Name) and x.id == "_write_tool" for x in f.decorator_list)
+    return has and not gated
+for name in ("get_rule", "list_rules"):
+    if not plain_read(name):
+        print(f"t8: {name} must stay a plain @mcp.tool READ — the READ-ONLY tier keeps exposing the rule projection (C11 T1 registration-unchanged duty)"); sys.exit(1)
+
+d1 = ast.get_docstring(funcs["get_rule"]) or ""
+if "checklist extras" not in d1 or "enabled" not in d1:
+    print("t8: get_rule docstring must re-stamp to the full embedded trigger, action, checklist extras and enabled flag (C11 T1)"); sys.exit(1)
+d2 = ast.get_docstring(funcs["list_rules"]) or ""
+if "extra_actions" not in d2 or "enabled" not in d2:
+    print("t8: list_rules docstring must carry the 7-key shape claim (C11 T1/T2 doc parity)"); sys.exit(1)
+print("ok: t8 — _slim_rule EXACTLY the 7-key capture projection, raw r.get pass-throughs (no reshaping), enabled True-only-on-omission, get_rule/list_rules plain reads, docstrings re-stamped")
+PY
+  then fail "t8[C11 AC1]: the _slim_rule capture-projection contract is not satisfied (reason above)"; fi
+  ok "t8[C11 AC1]: _slim_rule carries extra_actions/extra_triggers/enabled un-reshaped — the schema-2 capture path is executable"
 fi
 
 printf 'PASS: wekan-mcp cf-96 dependency/preload/label-surface checks (%d ok)\n' "$checks"

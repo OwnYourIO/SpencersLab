@@ -37,10 +37,19 @@ the deployed build can lag the repo source, so **docs are claims, the live
 
    **Owner records the run number** — every later step substitutes that
    number for `<run>`. Read it from the docker-build run on `main` (the
-   `#NNN` label on the workflow-runs page) or registry-side per the
-   container-creation skill: `docker buildx imagetools inspect
-   ghcr.io/ownyourio/wekan-mcp` and its tag list. Do NOT invent one here —
-   until the run answers, the tag does not exist anywhere.
+   `#NNN` label on the workflow-runs page) or registry-side through the
+   anonymous recipe in `skills/wekan-api/references/wekan-mcp-ops.md`'s
+   Deploy/verify loop — pull-scoped token, then
+   `GET https://ghcr.io/v2/ownyourio/wekan-mcp/tags/list` (answered
+   cleanly to a read-only anonymous call on 2026-11-01). Do NOT reach for
+   `docker buildx imagetools inspect` WITHOUT a tag to enumerate what the
+   registry holds: untagged it resolves the LEGACY `:latest` publish (a
+   real pre-tag-scheme artifact — `0.0.1`, `0.0.2` and `latest` are live
+   on this image) and cannot enumerate tags at all. And the honesty note:
+   older run tags (v90, v101, v102) already sit in the registry — they are
+   NOT the bump target, which is the cf-96 merge's own run tag. Do NOT
+   invent one here — until the run answers, the tag does not exist
+   anywhere.
 
 3. **Owner — the pin bump, ALL THREE tiers in ONE commit (OQ8 ruling).**
    Same image, same surface lag, three entries — the bump reaches `main`
@@ -220,6 +229,7 @@ is the reading map:
 | Degrade clause (landed text) | Retires at |
 |---|---|
 | boards `Preload consumer at claim` — "while the deployed build predates the C10 pin bump, `preload_board` is ABSENT… keeps per-list reads, SKIPS the dependency gate" | step 5 (dev-boards `tools/list` shows `preload_board`) atop step 4's green digest read-back |
+| boards `Preload consumer at claim` — the call-FAILURE branch (a present-but-failed `preload_board` call — export disabled site-wide, the admin-only-custom-fields 403, an outage, a truncated stream — degrades exactly like absence) | **never retires** — permanent fault tolerance; step 5's flip removes only the ABSENT branch (`tools/list` PRESENCE is not call-successfulness) |
 | boards `Card pickup` dependency-gate skip — same clause, gate half | step 5, and it starts gating FOR REAL at the next run: edges absent ⇒ gate vacuously passes; the moment an edge exists it blocks |
 | boards follow-up `Mechanics` — the "labels to apply" comment-line degrade → the one `set_card_labels(board_id, [new card id], add_label_ids=…)` call retiring AD-74's ledger round-trip | step 5's `set_card_labels` catalog probe (dry-check, not invocation — the first REAL call happens in the next follow-up run) |
 | wekan-board-provision step 3 — `create_list`/`create_label` ABSENT on the `:v87` pin, raw-REST fallback recipes for the human shell | step 3's bump deploying at step 4; the MCP path is whole at step 7's apply |

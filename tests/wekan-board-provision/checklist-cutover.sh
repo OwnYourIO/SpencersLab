@@ -36,7 +36,11 @@
 # equal to C07's landed skill text] t6[C08 T2/AC3 — skill text pins incl.
 # the never-agent-applies negative and the persisted :v87 degrade note]
 # t7[AC4 — artifact validity + five extras + OQ13 check posture + v1-copy
-# equality] t8[AC4 — engine↔artifact item-list equality (drift fails loudly)].
+# equality] t8[AC4 — engine↔artifact item-list equality (drift fails loudly)]
+# t9[C11 — the schema-2 capture path executable end-to-end: skill step 1 names
+#     get_rule AND server.py::_slim_rule passes the checklist extras through
+#     (one leg, reddens where the contract is consumed; GREEN ON ARRIVAL after
+#     C11 dev lands — RESEARCH F5's defect pinned away)].
 #
 # Red posture: t1–t8 (except the flagged HOLD sub-legs) DESIGNED RED at
 # authoring 2026-11-01 — the engine hard-rejects schema 2 (verified: exit 2
@@ -46,12 +50,13 @@
 # ness, :v87 degrade note) are green now.
 #
 # Usage:
-#   bash tests/wekan-board-provision/checklist-cutover.sh           # t1..t8
+#   bash tests/wekan-board-provision/checklist-cutover.sh           # t1..t9
 #   bash tests/wekan-board-provision/checklist-cutover.sh t2 t7     # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 ENGINE="scripts/provision-board.py"
+SERVER="containers/wekan-mcp/wekan_mcp/server.py"
 SKILL="skills/wekan-board-provision/SKILL.md"
 SRC_BOARDS=".rulesync/skills/boards/SKILL.md"
 FXDIR="tests/wekan-board-provision/fixtures"
@@ -71,11 +76,11 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-8]$ ]] || fail "unknown check id '$a' (expected t1..t8)"
+    [[ "$lc" =~ ^t[1-9]$ ]] || fail "unknown check id '$a' (expected t1..t9)"
     WANT["$lc"]=1
   done
 fi
@@ -325,6 +330,31 @@ print("ok")
 PY
   then fail "t8[C08 AC4]: engine↔artifact equality failed (reason above)"; fi
   ok "t8[C08 AC4]: engine spec constants equal the artifact's Lifecycle and HITL item lists"
+fi
+
+# --- t9: the schema-2 capture path is executable end-to-end (C11 T4 / F5 defect) ---
+if want t9; then
+  if ! python3 - "$SKILL" "$SERVER" <<'PY'
+import ast, re, sys
+
+skill = open(sys.argv[1]).read()
+m = re.search(r"(?ms)To capture schema.*?fall back to schema 1", skill)
+if not m:
+    print("t9: the provision skill's schema-2 capture paragraph is gone — step 1 must still name the capture route (C11 AC4: an edit there is a review FAIL)"); sys.exit(1)
+if "get_rule" not in m.group(0):
+    print("t9: the capture sentence no longer names get_rule as the schema-2 capture route (skill step 1)"); sys.exit(1)
+
+src = open(sys.argv[2]).read()
+tree = ast.parse(src)
+fn = next((n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_slim_rule"), None)
+if fn is None:
+    print("t9: _slim_rule missing from server.py"); sys.exit(1)
+if "extraActions" not in ast.unparse(fn):
+    print("t9: server.py::_slim_rule does not pass the checklist extras through — the capture route the skill advertises structurally cannot answer (RESEARCH F5's failure mode pinned away by this leg)"); sys.exit(1)
+print("ok")
+PY
+  then fail "t9[C11]: the schema-2 capture path is not executable end-to-end (reason above)"; fi
+  ok "t9[C11]: capture path pinned end-to-end — provision step 1 names get_rule AND _slim_rule passes extraActions through, one leg where the contract is consumed"
 fi
 
 printf 'PASS: cf-96 cutover artifact checks (%d ok)\n' "$checks"

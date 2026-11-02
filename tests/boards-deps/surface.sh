@@ -30,7 +30,21 @@
 # trigger names blocking edges ONLY (no parentId/kind-1, OQ1 negative)]
 # t4[AC4 — Follow-up cards: set_card_labels with tools/list-gated degrade,
 # parent_id passed on creation] t5[source↔mirror — the regenerated mirror
-# carries every pinned passage; rulesync output never hand-edited].
+# carries every pinned passage; rulesync output never hand-edited]
+# t6[C11 OQ-P2 — degrade law gains the present-but-FAILED branch: a failed
+#     call degrades exactly like absence, at most ONE retry (the read is
+#     idempotent), never a stall. Needle groups tools/list|fails|retry|
+#     idempotent, min-span 261 (plan-sim 238) of 2400, ORIG infeasible on
+#     'fails'.]
+# t7[C11 OQ-P3 — unresolvable edge end never gates: non-gating|REPORT|
+#     deleted/moved away, min-span 117 (plan-sim 105) of 2600, ORIG
+#     infeasible on 'non-gating'.]
+# t8[C11 OQ-P3 — title-map fallback: block|map|swimlane in one Card-pickup
+#     window (the block's map carries only the named swimlane's lists),
+#     min-span 38, ORIG infeasible on 'swimlane' in this section. Chosen
+#     over the plan's literal 2-group shape because 'block'/'map' alone
+#     read green at ORIG (24) — the red/green discipline of this suite
+#     demands the swimlane-scope group.]
 #
 # Red posture: DESIGNED RED until C05 dev lands (verified at authoring
 # 2026-11-01: no dependency-gate / preload / grouped-sibling / set_card_labels
@@ -39,7 +53,7 @@
 # wording belongs to C05's own commit.
 #
 # Usage:
-#   bash tests/boards-deps/surface.sh            # t1..t5
+#   bash tests/boards-deps/surface.sh            # t1..t8
 #   bash tests/boards-deps/surface.sh t3         # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -54,11 +68,11 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-5]$ ]] || fail "unknown check id '$a' (expected t1..t5)"
+    [[ "$lc" =~ ^t[1-8]$ ]] || fail "unknown check id '$a' (expected t1..t8)"
     WANT["$lc"]=1
   done
 fi
@@ -266,6 +280,30 @@ if body(sys.argv[1]) != body(sys.argv[2]):
 print("ok")
 PY
   ok "t5[C05 AC5]: boards source and generated mirror carry the same body (whitespace-normalized)"
+fi
+
+# --- t6: the call-failure degrade branch (C11 OQ-P2) --------------------------------
+if want t6; then
+  check_pair "t6[C11 OQ-P2]" "Board context" 2400 \
+    'tools/list' 'fails' 'retry' 'idempotent' \
+    || fail "t6[C11 OQ-P2]: the degrade law lacks the present-but-FAILED branch — a failed preload_board call (export disabled, admin-fields 403, outage, truncated stream) must degrade EXACTLY like absence: per-list reads, gate skipped, RESULT note, at most ONE retry (the read is idempotent), never a hard failure, never a stall"
+  ok "t6[C11 OQ-P2]: call-failure degrade pinned — tools/list PRESENCE is not call-successfulness, one retry max"
+fi
+
+# --- t7: the unresolvable edge end never gates (C11 OQ-P3) ---------------------------
+if want t7; then
+  check_pair "t7[C11 OQ-P3]" "Card pickup" 2600 \
+    'non-gating' 'REPORT' 'deleted/moved away' \
+    || fail "t7[C11 OQ-P3]: the gate lacks the unresolvable-edge-end clause — an edge whose far end resolves to no card must be NON-GATING, skip-safe, and its endpoints REPORTED; the relation is never assumed either way"
+  ok "t7[C11 OQ-P3]: unresolvable-edge-end clause pinned (skip-safe and reported)"
+fi
+
+# --- t8: the title-map fallback covers swimlane-scoped blocks (C11 OQ-P3) ------------
+if want t8; then
+  check_pair "t8[C11 OQ-P3]" "Card pickup" 2600 \
+    'block' 'map' 'swimlane' \
+    || fail "t8[C11 OQ-P3]: the TITLE fallback lacks the block-map branch — `list_lists` is due when no block rode the launch OR the blocker's list id is not in the block's map (the block carries only the named swimlane's lists; titles repeat across swimlanes)"
+  ok "t8[C11 OQ-P3]: title-map fallback pinned (block's map / named-swimlane scope)"
 fi
 
 printf 'PASS: boards dependency-gate/preload/sibling/follow-up checks (%d ok)\n' "$checks"

@@ -532,7 +532,7 @@ if want c8; then
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
-      skills/wekan-mcp/*|.opencode/plugin/board-context/*|\
+      skills/wekan-mcp/*|skills/container-creation/*|.opencode/plugin/board-context/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\

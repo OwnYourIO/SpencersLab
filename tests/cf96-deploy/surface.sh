@@ -23,15 +23,23 @@
 # cutover apply legs: backup-before-import, artifact path, zero-action
 # re-run, degrade-flip record] t6[AC1 negatives — nothing implies an
 # agent-executed merge/pin/apply; no invented run number] t7[AC2 — the
-# reporting contract: post-deploy legs as production read-backs].
+# reporting contract: post-deploy legs as production read-backs]
+# t8[C11 T5 — dead-sentence guard: the three deploy-recipe surfaces must
+#     NOT carry the killed imagetools-as-tag-list claims (runbook: 'and its
+#     tag list' co-located with imagetools inspect; container-creation: the
+#     'Grab the run number from the workflow run or …' sentence), plus the
+#     affirmative ops-reference half: the Deploy/verify loop carries
+#     'tags/list'. GREEN ON ARRIVAL with the folded runbook; exact dead
+#     sentences, no word-window games against corrected prose that
+#     legitimately MENTIONS imagetools to warn about it.]
 #
 # Usage:
-#   bash tests/cf96-deploy/surface.sh            # t1..t7
+#   bash tests/cf96-deploy/surface.sh            # t1..t8
 #   bash tests/cf96-deploy/surface.sh t6         # just the negatives
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-RUNBOOK="tests/cf96-deploy/readback-runbook.md"
+RUNBOOK="${CF96_RUNBOOK:-tests/cf96-deploy/readback-runbook.md}"
 
 checks=0
 FAILED=0
@@ -40,11 +48,11 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-7]$ ]] || fail "unknown check id '$a' (expected t1..t7)"
+    [[ "$lc" =~ ^t[1-8]$ ]] || fail "unknown check id '$a' (expected t1..t8)"
     WANT["$lc"]=1
   done
 fi
@@ -188,6 +196,32 @@ if want t7; then
   grep -qiE 'never re-apply blindly|stop' "$RUNBOOK" \
     || fail "t7[C10]: the fail-loud posture on a red probe (verify sync landed before assuming — GitOps law) is missing"
   ok "t7[C10 AC2]: reporting contract pinned — probes surface via RESULT, red probes stop the chain"
+fi
+
+# --- t8: dead-sentence guard on the three registry-recipe surfaces (C11 T5) ----------
+if want t8; then
+  OPS="skills/wekan-api/references/wekan-mcp-ops.md"
+  CC="skills/container-creation/SKILL.md"
+  [ -f "$OPS" ] || fail "harness: $OPS missing (C11 T5 host file)"
+  [ -f "$CC" ] || fail "harness: $CC missing (C11 T5 host file)"
+  python3 - "$RUNBOOK" "$OPS" "$CC" <<'PY' || fail "t8[C11 T5]: a killed recipe claim survived (reason above)"
+import re, sys
+
+def flat(path):
+    return re.sub(r"\s+", " ", open(path).read())
+
+run, ops, cc = flat(sys.argv[1]), flat(sys.argv[2]), flat(sys.argv[3])
+for m in re.finditer(r"imagetools", run):
+    w = run[max(0, m.start() - 200):m.end() + 200]
+    if "and its tag list" in w:
+        print(f"t8: the runbook still pairs `imagetools inspect` with a tag list: ...{w[:200]}..."); sys.exit(1)
+if "Grab the run number from the workflow run or" in cc:
+    print("t8: container-creation still carries the dead 'Grab the run number from the workflow run or' hint (the killed sentence)"); sys.exit(1)
+if "tags/list" not in ops:
+    print("t8: the ops Deploy/verify loop lost the anonymous tags/list enumeration half (C11 T5)"); sys.exit(1)
+print("ok")
+PY
+  ok "t8[C11 T5]: imagetools-as-tag-list claims dead in runbook + container-creation; tags/list enumeration live in the ops reference"
 fi
 
 printf 'PASS: cf-96 deploy-runbook pin checks (%d ok)\n' "$checks"
