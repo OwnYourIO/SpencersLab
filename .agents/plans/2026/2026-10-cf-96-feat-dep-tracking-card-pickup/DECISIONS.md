@@ -151,6 +151,16 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   TEXT-ONLY into the C11 delta round. P5 (changing the WeKan service user's
   password invalidates the minted bearer → the deploy needs a re-mint plan) is
   out of this ticket's scope → Inbox follow-up card at close-out.
+- 2026-11-02 human (second batched round, two answers): (a) the C11 delta is
+  APPROVED as planned; (b) the verified anonymous-token + `tags/list` registry
+  recipe is NOT deferred — C11 WIDENS to re-stamp the two adjacent surfaces
+  that still carry the misleading `imagetools inspect` tag hint:
+  `skills/wekan-api/references/wekan-mcp-ops.md` (Deploy/verify loop) and the
+  `container-creation` skill's tag-inspection recipe. Rejected: the coord-
+  recommended close-out follow-up card (the same false-recipe class as OQ-P1:
+  fixing it once, here, is cheaper than a card + a later run). Consequence:
+  C11 gains a docs-surface task and the suites those two files' pins bind may
+  need leg updates — the planner enumerates them in the chunk file.
 - 2026-11-02 coord: post-research verification of record — the seven
   dependency-surface files are byte-identical v12.65↔main and the lab actually
   runs v12.77 (renovate d8b12fd0f), so no assumption in C01/C05/C08 moved;

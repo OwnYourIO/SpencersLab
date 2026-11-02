@@ -15,7 +15,10 @@ delta (C11, human ruling 2026-11-02): the `get_rule`/`_slim_rule` extras +
 `enabled` passthrough that makes the schema-2 snapshot capture the provision
 skill and C10 runbook advertise actually executable, its docs parity re-stamp,
 and three text-only folds (present-but-failed call degrade, dependency-gate
-edge cases, runbook registry recipe).
+edge cases, runbook registry recipe) and — per the second batched round — a
+registry-recipe widening re-stamping the two adjacent surfaces (`wekan-mcp-ops`
+Deploy/verify loop, `container-creation` pin-by-default recipe) that still
+teach the misleading untagged-`imagetools` tag-list flow.
 
 ## Out of scope
 - Running ANY provisioning/cutover step against the live board (owner executes
@@ -32,10 +35,11 @@ edge cases, runbook registry recipe).
   2026-11-02, Inbox follow-up card at close-out.
 - The upstream `checkItem` rule-action typo (RESEARCH F5, [P8]): v2 createCard
   extras stay DORMANT until WeKan fixes it — external, nothing in-ticket acts.
-- C11-adjacent doc recipes: the container-creation skill's `imagetools
-  inspect` tag hint and the wekan-mcp-ops deploy/verify loop's tags/list
-  upgrade (F6(d)) — close-out follow-up material (plan OQ-C11-1), the runbook
-  step-2 fold is self-contained.
+- Tagged digest reads via `imagetools inspect` (e.g.
+  `containers/strata/README.md`'s bump procedure) — the CORRECT class of
+  use; the second-round widening re-stamps only the UNTAGGED tag-list claim
+  in `wekan-mcp-ops.md` + `container-creation` (both now IN C11's scope via
+  T5), nothing else.
 - Unit tests for the Python server: repo posture is statics-only suites
   (cf-intake D8) — no pytest harness is introduced.
 
@@ -69,6 +73,20 @@ edge cases, runbook registry recipe).
   cf96-deploy) is green at HEAD as the delta baseline; boards-deps needle
   windows re-simulated with draft fold text — all survivors hold
   (/tmp/opencode/cf96-c11, 2026-11-02).
+- Second-round audit (2026-11-02, for the T5 widening): a full `tests/` grep
+  shows NO suite content-grips `skills/wekan-api/references/wekan-mcp-ops.md`
+  or `skills/container-creation/SKILL.md` — the only bindings are name
+  pointers on files C11 already keeps pointing at (skill-surface t7 greps
+  `skills/wekan-mcp/SKILL.md` for the ops pointer and bans rules-engine
+  camelCase inside `skills/wekan-mcp/` only; cf96-deploy t3 greps the
+  RUNBOOK for the ops path; board-context.test.ts greps plugin SOURCES).
+  The ops Deploy/verify loop carries the digest-compare half only (untagged
+  enumeration absent — that is what T5 adds, keeping the digest bullet
+  byte-intact); the container-creation false hint is the one sentence
+  "Grab the run number … or `docker buildx imagetools inspect
+  ghcr.io/ownyourio/<name>`" in "Two ways to reference the image — pin by
+  default"; `containers/strata/README.md`'s imagetools use is a TAGGED
+  digest read — correct class, stays.
 
 ## Design decisions taken (full log in DECISIONS.md)
 Pre-round (launch rulings + best guesses):
@@ -144,6 +162,18 @@ DECISIONS "Coord rulings (post-research round)"; all land as chunk C11):
   code+docs+boards-text commit (no designed-red ceremony — the change is purely
   additive, so no existing pin is forced to move).
 
+Second batched round (2026-11-02, human, two answers — DECISIONS):
+- (a) **C11 APPROVED as planned** (T1–T4 stand verbatim).
+- (b) **OQ-C11-1 REJECTED the deferral recommendation — C11 WIDENS**: the two
+  adjacent registry-recipe surfaces — `skills/wekan-api/references/
+  wekan-mcp-ops.md` (Deploy/verify loop) and the `container-creation` skill's
+  tag-inspection recipe — are re-stamped NOW with the verified anonymous-token
+  + `tags/list` flow (untagged `imagetools inspect` resolves the legacy
+  `:latest` and cannot enumerate; the v90–v102 distractor caution goes where a
+  reader would count tags). The digest-compare leg of the deploy/verify loop
+  STAYS (correct + live-proven). Rationale: same false-recipe class as OQ-P1 —
+  one fix here beats a card + a later run. Lands as C11 T5.
+
 ## Commands
 Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 - new suites (agent-test writes before dev; names are agent-test's, per-chunk
@@ -152,7 +182,7 @@ Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 - C11 (post-research delta) adds NO new suite file — its legs join the existing
   cf96 family, authored green-on-arrival AFTER dev's commit (test-route,
   tests/** dev-denied). Delta battery:
-  `python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py && bash tests/wekan-mcp/dependencies.sh && bash tests/boards-deps/surface.sh && bash tests/wekan-board-provision/checklist-cutover.sh && bash tests/cf96-deploy/surface.sh` (new legs green; the HOLD arms — cf96-deploy t1–t7, tools.sh 17+21/38, skill-surface t4 rows/stamps, boards-deps t1–t5 — green UNMODIFIED), plus `rulesync generate` ×2 (2nd no-op) + `rulesync generate --check` (the boards-skill text fold), `node --test 'tests/opencode/*.test.ts'`, `npx aislop ci --changes`. `docker build => no-daemon, CI-deferred` stays the designed passing shape — the passthrough lands pre-merge so the deploy chain's `v<run>` image carries it in the same build.
+  `python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py && bash tests/wekan-mcp/dependencies.sh && bash tests/boards-deps/surface.sh && bash tests/wekan-board-provision/checklist-cutover.sh && bash tests/cf96-deploy/surface.sh` (new legs green; HOLD arms — cf96-deploy t1–t7 UNMODIFIED with the new t8 dead-sentence guard green-on-arrival, tools.sh 17+21/38, skill-surface t4/t7 rows/stamps/pointer, boards-deps t1–t5, rest-overview-v102, cf90-ledger — all green unchanged), plus `rulesync generate` ×2 (2nd no-op) + `rulesync generate --check` (boards-skill text fold only — the two T5 recipe docs under `skills/` are hand-managed, no regeneration), `node --test 'tests/opencode/*.test.ts'`, `npx aislop ci --changes`. `docker build => no-daemon, CI-deferred` stays the designed passing shape — the passthrough lands pre-merge so the deploy chain's `v<run>` image carries it in the same build.
 - regression: `bash tests/wekan-mcp/tools.sh && bash tests/wekan-mcp/skill-surface.sh && bash tests/wekan-mcp/rest-overview-v102.sh && bash tests/wekan-mcp/board-provisioning.sh && bash tests/wekan-mcp/create-list.sh && bash tests/wekan-mcp/board-context.sh && bash tests/agent-perms/surface.sh && bash tests/wekan-board-provision/surface.sh && bash tests/cf90-ledger/surface.sh && bash tests/containers/wekan-mcp-login.sh && node --test 'tests/opencode/*.test.ts'` (re-pins land in the same commits as the changes that move them — doc/parity pins must never be red between commits; the node suite is Node v26 type-stripped, no npm deps — baseline green at plan time).
 - lint: `python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py scripts/provision-board.py`
 - rulesync: `rulesync generate` twice (2nd run a no-op) then `rulesync generate --check` (after any `.rulesync/**` change; sources + generated mirrors commit together).
@@ -176,7 +206,7 @@ Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 | C08 | cutover process artifacts: provision-board.py spec extension + wekan-board-provision skill + board-rules v2 import artifact (MODIFY ONLY — never run live) | M | 4 | [C07] | data: engine constants + rule artifact carry C07's FINAL item list (batch-round answers may move it) |
 | C09 | coder workspace TZ env (both templates) + human-facing stamp pass (plugin, boards prose, conventions) — OQ5-gated | M | 4 | [C07] | same-file prose (boards skill); independent of C08 |
 | C10 | HOLD: deploy chain runbook — merge→v\<run\>→pin bump (dev + gpu per OQ8)→restart→probes→L4 absorb; cutover apply readback (human-executed, post-backup) | S | 5 | [C01, C08] | runbook pins the merged surface + the final artifacts; execution is post-merge, human-owned |
-| C11 | post-research delta (OQ-P1 FOLD ruling): `_slim_rule` extras+enabled passthrough (schema-2 capture executable) + docs-parity re-stamp + OQ-P2/P3/P4 text folds (boards degrade law + gate edge cases; runbook step-2 ghcr recipe + retire row) + green-on-arrival suite legs | S | 6 | [C01, C05, C08, C10] | delta round over landed surfaces: extends C01's undeployed `_slim_rule` (rides the same `v<run>` build), edits C05's gate/degrade-law sections (same-file serial — C07's untouched), corrects C10's runbook step 2 (tests/**, test-route commit), and repairs the capture contract C08 advertises — capture texts themselves stay byte-untouched |
+| C11 | post-research delta (OQ-P1 FOLD ruling, approved + widened 2nd round): `_slim_rule` extras+enabled passthrough (schema-2 capture executable) + docs-parity re-stamp + OQ-P2/P3/P4 text folds + T5 registry-recipe fold of the two adjacent surfaces (`wekan-mcp-ops` Deploy/verify loop, `container-creation` pin recipe) + green-on-arrival suite legs incl. cf96-deploy t8 guard | S | 6 | [C01, C05, C08, C10] | delta round over landed surfaces: extends C01's undeployed `_slim_rule` (rides the same `v<run>` build), edits C05's gate/degrade-law sections (same-file serial — C07's untouched), corrects C10's runbook step 2 (tests/**, test-route commit), and repairs the capture contract C08 advertises — capture texts themselves stay byte-untouched |
 
 ## Wave order
 1. C01, C02, C03, C04 — all independent; run in id order.
@@ -184,7 +214,7 @@ Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 3. C07.
 4. C08, C09 — independent of each other; id order.
 5. C10 — HOLD: agent deliverable is the runbook + its pin suite; every execution step is human-owned (owner merge → CI → bump → backup → apply).
-6. C11 — post-research delta (planned 2026-11-02 after all ten chunks closed): dev lands code+docs+boards-text in one commit (doc-parity law), the test route lands the runbook fold + new pins green-on-arrival immediately after; lands PRE-MERGE so the C10 chain's `v<run>` build carries the passthrough. Nothing deploys; C10's human gate is unchanged.
+6. C11 — post-research delta (planned 2026-11-02 after all ten chunks closed; approved + widened the same day — T5 registry-recipe fold): dev lands code+docs+boards-text+both recipe docs in one commit (doc-parity law), the test route lands the runbook fold + new pins + cf96-deploy t8 green-on-arrival immediately after; lands PRE-MERGE so the C10 chain's `v<run>` build carries the passthrough. Nothing deploys; C10's human gate is unchanged.
 
 ## Run protocol — coord-owned board actions (this ticket's grouped flow, first instance)
 - At start (after claim of #96): move siblings to **Executing**: 74=`MS8e8uoF27R2dk73e`, 66=`t4N5D4eZ9Nc2MoAZd`, 71=`v8priYKMuuWLCoFDq`, 77b=`Ru3CzNiyaEQH7YFcr`, 70b=`SouMZ2fbd8vDbz2m3`, 81=`Q7Sg7H4dicTALAp8q`, 78a=`jaEe2jfobfboyaM92`. They ride #96's claim (never claimed separately); the pickup walk skips Executing, so no double-pick.
@@ -237,5 +267,16 @@ affected chunk:
 4. **OQ-P4 (F4).** RESOLVED by coord: TEXT fold — runbook step 2 to the verified anonymous `tags/list` recipe, legacy-`:latest` hazard + v90–v102 distractors named, digest-verify leg kept; phrasing keeps all cf96-deploy pins green UNMODIFIED. → C11 T3.
 5. **OQ-P5 (F6a — password change kills the static bearer).** RESOLVED by coord: OUT of ticket — Inbox follow-up card at close-out.
 
-Still open (single question, one batched round):
-- **OQ-C11-1** — the tags/list recipe UPGRADE for `skills/wekan-api/references/wekan-mcp-ops.md`'s deploy/verify loop (and the container-creation skill's `imagetools inspect` tag hint, verified still present 2026-11-02) is recorded as F6-adjacent and held OUT of C11 to keep the delta tight. Best guess: fold them into the close-out follow-up batch alongside OQ-P5 rather than grow C11 (they touch suites C11 otherwise leaves byte-quiet). Impact: the owner-side recipes stay one step behind the runbook until that follow-up fires.
+Second round, 2026-11-02 (human, two answers — DECISIONS):
+6. **OQ-C11-1 — adjacent registry-recipe surfaces.** RESOLVED: deferral
+   REJECTED by the user — **C11 WIDENS** and re-stamps both now: the
+   `wekan-mcp-ops.md` Deploy/verify loop gains the anonymous-token `tags/list`
+   enumeration half (the digest-compare bullet stays byte-intact — correct and
+   live-proven) and the `container-creation` skill's `imagetools inspect`
+   run-number hint is replaced with the verified tags/list flow, the legacy
+   `:latest` hazard and the newest-tag-is-not-the-target caution where readers
+   count tags (v90–v102 class). The plan-time audit (Verified facts) shows no
+   suite content-grips either file ⇒ zero re-pins beyond cf96-deploy's new t8
+   dead-sentence guard. → C11 T5.
+   Also ruled: **(a) C11 APPROVED as planned** — T1–T4 stand verbatim.
+   Nothing in the ticket remains open.
