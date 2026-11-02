@@ -22,8 +22,9 @@
 # the single aliased app.
 #
 # Contract source: chunks/C01.md Tests list (t1-t10) + cf-97 C02's wording
-# leg (t11) + C04's mergePolicy leg (t12) + C05's socket-group leg (t13) —
-# ONE script stays the runner contract (predecessor ruling, DECISIONS.md).
+# leg (t11) + C04's mergePolicy leg (t12) + C05's socket-group leg (t13) +
+# C06's identity pin (same leg, extended in place) — ONE script stays the
+# runner contract (predecessor ruling, DECISIONS.md).
 #
 # C01/C03 acceptance is cluster-only — no leg here can assert it (the vault
 # and the live pod are out-of-repo, and list/event MCP shapes come back
@@ -1369,10 +1370,9 @@ PY
   fi
 fi
 
-# --- t13: cf-97 C05 dind-socket group grant (red-first before the SC keys) ---
-# The daemon cleared the uuid gate and died at configCheck: ping to
-# unix:///var/run/docker.sock returns EACCES (masked the chart's whole life
-# behind the uuid fail-fast — plan Risks, masked-gate). Cause is pinned-image
+# --- t13: cf-97 C05 dind-socket group grant + C06 identity pin (red-first) ---
+# The daemon passes uuid/token validation and dies at configCheck: ping to
+# unix:///var/run/docker.sock returns EACCES. Cause is pinned-image
 # arithmetic: docker:29.9.2-dind's base pre-adds group docker at a FIXED gid
 # (upstream 29/cli/Dockerfile addgroup) and dockerd serves the socket
 # root:docker 0660, so the uid-1000 runner needs group membership (DECISIONS
@@ -1382,6 +1382,15 @@ fi
 # NOT asserted: no pod-exec surface; C03's post-merge re-run is the
 # mechanism proof. The posture guards are the reason (a) beat the TCP shapes
 # — a mid-review shape switch must flip them and die here.
+#
+# C06 (user ruling "Add runAsGroup: 1000 before the PR") adds the
+# primary-group assertion: the pinned image config declares User: 1000:1000
+# but ships no /etc/passwd entry for uid 1000, so containerd's bare-runAsUser
+# fallback resolves the primary group as 0 — runAsGroup: 1000 restores the
+# image intent. Identity must also stay container-local: pod-level identity
+# applies to every container, so kubelet's FsUserFrom (which bails to nil
+# while dind carries no uid pin) would resolve a real fs user and recursively
+# re-chown the 12 GiB of VCT volumes at apply.
 if [ "$skip_helm" -eq 1 ]; then
   skip "t13: socket-group leg not run (no chart render — dependency update unavailable)"
 else
@@ -1423,10 +1432,37 @@ try:
     rsc = runner.get('securityContext') or {}
     if rsc.get('runAsUser') != 1000:
         bad(f't13: {release} — runner securityContext.runAsUser is {rsc.get("runAsUser")!r}, '
-            'expected 1000 — the image user made explicit so the pod SCM is fully specified '
-            'and the supplemental-group application is unambiguous (C05 task 2)')
+            'expected 1000 — the pinned image config declares User: 1000:1000, but the image '
+            'ships no /etc/passwd entry for uid 1000, so containerd resolves a bare uid with '
+            'primary group 0; identity is only fully specified with runAsGroup: 1000 beside it, '
+            'at CONTAINER level — a pod-level pin would let FsUserFrom resolve an fs user and '
+            'recursively re-chown the VCTs (C06)')
     ok(f't13: {release} — socket grant in place: pod supplementalGroups carries 2375 '
        '(pod-level only path) + runner runAsUser 1000 explicit')
+
+    # C06 identity block — placement guards first (so a pod-level pin fails
+    # with the re-chown explanation), then the presence check (today's
+    # designed-red: the runner has no runAsGroup yet).
+    for k in ('runAsUser', 'runAsGroup'):
+        if k in psc:
+            bad(f't13: {release} — the POD securityContext carries {k!r}: pod-level identity '
+                'applies to every container including dind, so FsUserFrom resolves an fs user '
+                'and kubelet recursively re-chowns both VCTs (2Gi+10Gi, incl /var/lib/docker) '
+                'at apply — the identity pins belong on the runner container alone (C06)')
+    dsc = dind.get('securityContext') or {}
+    for k in ('runAsUser', 'runAsGroup'):
+        if k in dsc:
+            bad(f't13: {release} — the dind container carries {k!r}: dind must stay without uid '
+                'pins so FsUserFrom keeps bailing to nil (ownership stays root:fsGroup, '
+                'OnRootMismatch intact); volume re-chown is exactly what C06 keeps closed')
+    if rsc.get('runAsGroup') != 1000:
+        bad(f't13: {release} — runner securityContext.runAsGroup is {rsc.get("runAsGroup")!r}, '
+            'expected 1000 — the pinned image has no /etc/passwd entry for uid 1000, so '
+            'containerd resolves a bare runAsUser with primary group 0 (image config declares '
+            'User: 1000:1000); the key restores the image intent (user ruling 2026-11-02, C06)')
+    ok(f't13: {release} — identity fully specified and container-local: runAsGroup 1000 beside '
+       'runAsUser on the runner only; pod SC and dind carry no uid pins, so FsUserFrom bails '
+       'to nil and the 12 GiB VCTs keep their root:1000 expectation')
 
     if (rsc.get('capabilities') or {}).get('drop') != ['ALL']:
         bad(f't13: {release} — runner capabilities.drop is '

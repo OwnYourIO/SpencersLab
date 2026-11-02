@@ -175,6 +175,7 @@
       "review_rounds": 1,
       "dev_session": "ses_e65a51770ffeExmeSK66EpR3Ly",
       "review_session": "ses_e659dc51fffehqax7uhrkxAPiZ",
+      "commit": "ec2b5863f",
       "last_verdict": "APPROVED",
       "handoffs": [
         {
@@ -192,12 +193,23 @@
           "status": "APPROVED",
           "chunk": "C05",
           "evidence": "Re-ran suite exit 0 / 48 ok (t13 x2), helm lint exit 0, aislop 0/0, lane = values.yaml +19 / test +100-2. Reproduced designed-red from git-archive-HEAD (RED: pod supplementalGroups is None) and killed THREE hostile renders: container-level supplementalGroups (renders silently — schema accepts, K8s prunes — t13 is the only guard, caught it), gid 999 (RED 'is [999]'), runAsUser removed (RED 'runAsUser is None'). Placement: values.yaml:203-204 in controllers.runner.pod.securityContext; fsGroup 1000 / OnRootMismatch at :189-190 untouched (diff-context only); single gid site at :204. Comment facts re-verified live upstream: 29/cli/Dockerfile:24 addgroup -g 2375 -S docker, :26 ENV DOCKER_VERSION 29.9.2 == the pin, 29/dind/Dockerfile:7 FROM docker:29-cli.",
-          "identity_finding": "MINOR 1 (open, coord disposition): the image config blob of data.forgejo.org/forgejo/runner:13.2.0 amd64 says User '1000:1000', so the pre-change process was already 1000:1000 and the pin is faithful on UID. But the image has no /etc/passwd entry for uid 1000 (all four layers dumped), and containerd's WithUserID fallback (identical in release/1.7 oci/spec_opts.go:745-756 and release/2.0 pkg/oci/spec_opts.go:744-762) sets GID=0 for a bare runAsUser ⇒ post-merge the runner's PRIMARY group shifts 1000 -> 0 (uid unchanged). Judged functionally harmless: kubelet merges fsGroup AND supplementalGroups into every container's CRI group list (security_context.go:67-73) so g2375 arrives regardless; and kubelet FsUserFrom (pkg/volume/util/util.go:549-562) bails to nil unless every container (dind included, no runAsUser) resolves the same uid, before AND after ⇒ volume expectation stays root:1000, OnRootMismatch still matches, NO recursive re-chown of the 12Gi VCTs at apply. Adding runAsGroup: 1000 would fully specify identity but exceeds the verbatim ruling '(a) supplementalGroups: [2375] on the runner' + AC2 — reviewer recommends accept-as-is; coord put it to the user.",
+          "identity_finding": "MINOR 1 (open, coord disposition): the image config blob of data.forgejo.org/forgejo/runner:13.2.0 amd64 says User '1000:1000', so the pre-change process was already 1000:1000 and the pin is faithful on UID. But the image has no /etc/passwd entry for uid 1000 (all four layers dumped), and containerd's WithUserID fallback (identical in release/1.7 oci/spec_opts.go:745-756 and release/2.0 pkg/oci/spec_opts.go:744-762) sets GID=0 for a bare runAsUser ⇒ post-merge the runner's PRIMARY group shifts 1000 -> 0 (uid unchanged). Judged functionally harmless: kubelet merges fsGroup AND supplementalGroups into every container's CRI group list (security_context.go:67-73) so g2375 arrives regardless; and kubelet FsUserFrom (pkg/volume/util/util.go:549-562) bails to nil unless every container (dind included, no runAsUser) resolves the same uid, before AND after ⇒ volume expectation stays root:1000, OnRootMismatch still matches, NO recursive re-chown of the 12Gi VCTs at apply. Adding runAsGroup: 1000 would fully specify identity but exceeds the verbatim ruling '(a) supplementalGroups: [2375] on the runner' + AC2 — reviewer recommends accept-as-is; coord put it to the user. DISPOSITION 2026-11-02: user ruled 'Add `runAsGroup: 1000` before the PR' -> shipped as chunk C06 (container level, so FsUserFrom stays unresolved and the VCT re-chown cannot fire; dind keeps no runAs*).",
           "apply_time_effect": "Two SC fields only: +g2375 membership for the runner process, primary-gid shift per Minor 1, routine one-pod bounce. No posture change (drop ALL, allowPrivilegeEscalation false, privileged dind pin intact, DOCKER_HOST unix socket, no DOCKER_TLS_CERTDIR, no new mounts/env, no dockerd-config scope creep).",
           "nit": "values.yaml:172-173 'the pod securityContext is fully specified' overstates (dind's SC remains partial); 'the image's actual user' is exact for uid, partial for gid."
         }
       ],
-      "note": "User ruling verbatim '(a) supplementalGroups: [2375] on the runner'. Pod-level supplementalGroups [2375] (gid authority: docker:29.9.2-dind <- docker:29-cli addgroup -g 2375 -S docker) + containers.runner.securityContext.runAsUser 1000. t13 red-first, green by the values change only. Cluster closure = user merge -> ArgoCD apply -> C03 re-run; AC 'runner online in admin UI' stays a user eyeball."
+      "note": "User ruling verbatim '(a) supplementalGroups: [2375] on the runner'. Pod-level supplementalGroups [2375] (gid authority: docker:29.9.2-dind <- docker:29-cli addgroup -g 2375 -S docker) + containers.runner.securityContext.runAsUser 1000. t13 red-first, green by the values change only. Cluster closure = user merge -> ArgoCD apply -> C03 re-run; AC 'runner online in admin UI' stays a user eyeball. CORRECTIONS from the whole-plan review (2026-11-02): the test-file numstat for ec2b5863f is **98/2**, not the +100-2 in the review handoff; fsGroup/OnRootMismatch are at values.yaml **188/189**, not 189/190; the reviewer's own commit also carried DECISIONS.md +3 and chunks/C05.md +99, so its 'lane = values + tests + STATE only' line was a pre-commit snapshot. Minor 1 was ruled into chunk **C06**; C05 is not amended and its history is not rewritten."
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": ["C05"],
+      "owner": "agent",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "Added after the whole-plan review (APPROVED) on the user's Minor 1 disposition, verbatim 'Add `runAsGroup: 1000` before the PR'. Scope: runAsGroup 1000 at CONTAINER level (never pod level - pod-level identity lets kubelet FsUserFrom resolve an fs user and recursively re-chown the 12 GiB VCTs; dind deliberately keeps no runAs*), plus the two shipped-comment truthfulness fixes the review required (M1 values.yaml 'fully specified'/'unambiguous' -> the real no-passwd-entry gid-0 fact; M2 secret-runner.yaml 'authored 2026-10-24 (5853be497)' -> tree-accurate ad7633349 10-22 / 2737069cb 10-23 / R069 rename 10-24, argument resting on the same-day pairing with 582c96488 and on git log -S mergePolicy). t13 extended in place by agent-test (no t14). No other new chunk; the fleet-wide sweep stays board card sLK4MmTxGiaCk3uLq."
     }
   },
   "blocked": [],

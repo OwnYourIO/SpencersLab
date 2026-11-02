@@ -168,10 +168,19 @@ app-template:
               memory: 4Gi
           securityContext:
             allowPrivilegeEscalation: false
-            # The image's actual user, made explicit so the pod
-            # securityContext is fully specified and supplemental-group
-            # application is unambiguous.
+            # The pinned forgejo/runner image's config declares
+            # User: "1000:1000", but the image ships no /etc/passwd entry
+            # for uid 1000, so containerd resolves a bare runAsUser with
+            # primary group 0 — runAsGroup carries the gid the blob
+            # intends. Identity stays on this container alone on purpose:
+            # a pod-level runAsUser would apply to dind too, kubelet's
+            # FsUserFrom would then resolve an fs user, and the 12 GiB of
+            # VCT volumes (including /var/lib/docker) would be recursively
+            # re-chowned at apply. Fallback and hazard audit:
+            # .agents/plans/2026/2026-11-cf-97-bug-forgejo-runner/DECISIONS.md
+            # (final whole-plan review, 2026-11-02).
             runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               drop:
                 - ALL
