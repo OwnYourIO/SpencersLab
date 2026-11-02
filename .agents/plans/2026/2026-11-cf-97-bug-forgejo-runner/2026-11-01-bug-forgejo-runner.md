@@ -1,94 +1,111 @@
 # PLAN: Get Dev Forgejo Runner working
 feature: 2026/2026-11-cf-97-bug-forgejo-runner
+replan: 2026-11-02 r2 (C03 re-run cleared the uuid, exposed the docker-socket gate; C05 added) · `plan_status: needs-replan` — pending the user's C05 fix-shape choice
 
-**Goal (reworked 2026-11-01 with the user's answers + fresh live evidence):** The dev runner (`dev-forgejo-runner-dev`) stops crash-looping on `connection "default" is invalid: 'uuid' is empty` and goes online against git.scifi.farm as the **instance-admin** runner the user has now located. The user has performed the record side (the instance runner record EXISTS — RESEARCH's "never created" sub-inference is superseded) and has put the uuid into vault item `d3dafd1a…` alongside the already-set token. The mapping question the user raised — "the secret doesn't do anything with it?" — is settled with evidence: **the ExternalSecret mapping is structurally sound; the populated fields CAN and DO reach the rendered config.** What remains live is only the write's landing (right item + login-username field) and the ≤1h ESO→reloader bounce, verified by C03. The repo-side work stays truthfulness-only: the "registration token" misnomer at the four shipped sites (instance-admin wording per the B3 ruling) + one stale dind test assertion.
+**Goal:** The dev runner (`dev-forgejo-runner-dev`) stops crash-looping and goes online against git.scifi.farm as the instance-admin runner (B3 scope). Two gates in sequence, both now evidence-characterised: **GATE 1 (uuid) is CLEARED** — C01's probe 2 confirmed V1 (`bw serve` snapshot lag, vault/mapping innocent), the corrected snapshot rendered at the 00:42:15Z refresh (Secret `config.yaml` 1232→1280 = the filled-uuid arithmetic), the pod bounced 00:46:35Z, and uuid+token validation passes. **GATE 2 (current)** — the daemon now dies at the next stage RESEARCH F2 predicted (`configCheck` requires a live Docker): `cannot ping the docker daemon … permission denied … unix:///var/run/docker.sock`. Root cause is a socket-group fact the chart never accounted for: `docker:29.9.2-dind` pre-adds group `docker` at **fixed gid 2375** (upstream `29/cli/Dockerfile`, `addgroup -g 2375 -S docker` — the base of the dind image), dockerd serves the socket `root:docker 0660`, and the uid-1000 runner holds no such group. The masked-gate lesson applies: this defect existed the chart's whole life; every start simply died at uuid validation first. C05 is the repo chunk; C04 (approved, pending) pins the `mergePolicy` intent.
 
-**Architecture:** Three chunks, unchanged shape. Track A (C01, user) is now mostly done — what remains is a 2-minute landing-check (uuid in item **ID `d3dafd1a…`**, **login → username field** — see the bounce-window discriminator) and the bounce itself. Track B (C02) is repo-only: comment/NOTES wording at four sites + agent-test's mechanical t2 dind-pin repair. C03 verifies live via **read-only** cluster MCP after the bounce; depends on C01 (data: a populated, correctly-landed uuid is the precondition for `declared successfully`). No mapping-fix chunk: the mapping is proven sound below — adding one would be speculative.
+**Architecture:** Five chunks. C01 **done** (V1 confirmed — user-run probes), C02 **done** (`e3b18c27f`). C04 (agent, wave 1, independent) pins `spec.target.template.mergePolicy: Merge` — intent + observability, no render-behaviour change. **C05 (agent, wave 1, independent)** gives the runner process the docker group (recommended shape: `pod.securityContext.supplementalGroups: [2375]` + explicit `containers.runner.securityContext.runAsUser: 1000`; **awaiting the user's fix-shape pick — Open question 1**). C03 (agent, wave 2, gates on [C01, C05]) is the closure read: `declared successfully` + STS Ready + user-eyeball online; cluster-side closure of C05 requires the user's PR/merge → ArgoCD apply → C03 re-run. Smoke test stays declined (Q6).
 
-**Tech Stack:** Forgejo 15.0.10 (Actions on by default, no app.ini change — RESEARCH F5), runner v13.2.0 declarative daemon, ESO via the **Vaultwarden-ESO webhook** SecretStore `bitwarden-login` (`http://bitwarden-cli:8087/object/item/{id}`), app-template 5.0.1 chart `charts/forgejo-runner`, ArgoCD ApplicationSet `charts.forgejo-runner-dev` alias, stakater reloader.
+**Tech Stack:** Forgejo 15.0.10 (Actions on by default), runner v13.2.0 declarative daemon, ESO (operator chart v2.14.0, CRD `mergePolicy` default `Replace`) over SecretStore `bitwarden-login` = **official Bitwarden CLI in `bw serve`** (`tangowithfoxtrot/bw-cli:2025.1.2`, jsonPath `$.data.login.<property>`, `charts/external-secrets-bitwarden/templates/bitwarden-secret-store.yaml:10-14`) — NOT a Vaultwarden webhook (RESEARCH's attribution was wrong), app-template 5.0.1 chart `charts/forgejo-runner`, ArgoCD + stakater reloader.
 
-**Spec:** card #97 (`xJSxCDv3sqqgyHwDq`); `RESEARCH.md` is ground truth for the v13 registration contract and failure-mode tree; its "record was never created" sub-inference and the org-scope visibility reading are **superseded by the user's live find + answer** (DECISIONS rework entries). Citations `F1..F6`, `S1..S18` + this section's rework evidence.
+**Spec:** card #97 (`xJSxCDv3sqqgyHwDq`); `RESEARCH.md` for the v13 daemon contract (still valid — F1/F2/F5/F6 stand; its store attribution and "record never created" inference are superseded, see DECISIONS); the coordinator's 2026-11-02 DECISIONS entries (audit verdict `ses_e666db943ffeyb72YaQIutK4rB`, C03 NEEDS_INFO `ses_e66ba4e07ffejesm4lkZNh6TtP`) carry the mapping evidence — cited here, not re-derived.
 
-## Verified facts (planning-round evidence, 2026-11-01, worktree @ branch `cf-97-bug-forgejo-runner` = main tip `6796aa50d`)
+## Verified facts (cumulative; the re-plan blocks supersede what they contradict)
 
-### Original round (unchanged)
-- Baseline suite run (`bash tests/services/dev-forgejo-runner.sh`, `PATH=$HOME/.local/bin:$PATH`): t1 legs green; **suite aborts at the first FAIL of t2**: `dind image is 'docker:29.9.2-dind', expected docker:29.9.1-dind` (fail-fast `bad()` + `set -e` ⇒ all legs after t2 UNVERIFIED until the repair). Authority for 29.9.2: `values.yaml:95` + live pod + renovate `975b9d89d` (touched values only).
-- Misnomer sites (four): `charts/forgejo-runner/values.yaml:35`, `templates/secret-runner.yaml:3`, `custom-values/dev/prod-values.yaml:84-85`, `templates/NOTES.txt:23`.
+### Round 1 (2026-11-01) — still stands
+- Suite baseline: fail-fast `bad()` aborted everything at the stale t2 dind leg (29.9.1 vs values/live 29.9.2, renovate `975b9d89d`) — repaired by agent-test; four misnomer sites (`values.yaml:35`, `secret-runner.yaml:3`, `custom-values/dev/prod-values.yaml:84-85`, `NOTES.txt:23`) — reworded by C02 (`e3b18c27f`), t11 is their contract leg.
+- Misnomer/wording authority: runner token is the long-lived Token shown once at record creation; the `/registration-token` endpoints are deprecated (RESEARCH F1).
 
-### Rework round — the user's "the secret doesn't do anything with it?" hypothesis: FALSE (evidence)
-Repo side (chart→Secret chain, file:line):
-1. `templates/secret-runner.yaml:62-68` maps `secretKey: uuid` ← `remoteRef.key: <bitwardenIds.runner-token>`, **`property: username`**; `:70-77` maps `token` ← same item, **`property: password`**. Per-key `data` — no `dataFrom.extract` anywhere. Live ESO spec confirms the rendered form: both entries carry key `d3dafd1a-3d88-454e-88d4-b4ec010ae2c2` — i.e. the `OVERRIDE_VIA_CUSTOM_VALUES` sentinel (`values.yaml:38`) → `custom-values/dev/prod-values.yaml:86` → deployed ESO flow is proven end-to-end; it points at the RIGHT item.
-2. The target Secret template (`engineVersion: v2`, keys `config.yaml` + `token`) consumes exactly those data keys: `uuid: "{{ .uuid }}"` (`:51`), `token: "{{ .token }}"` (`:33`), `token_url: file:$CREDENTIALS_DIRECTORY/token` (`:52`) with `CREDENTIALS_DIRECTORY=/run/secrets/forgejo-runner` (`values.yaml:150-152`) and the whole Secret volume-mounted there under the release-exact name (`values.yaml:206-212`). Key names match 1:1.
-3. `secretStoreRef: bitwarden-login` (`:23-25`) is the fleet's standard login store: live SecretStore `default/bitwarden-login` is a **webhook** provider with `url: http://bitwarden-cli:8087/object/item/{{ .remoteRef.key }}` (Vaultwarden's ESO endpoint; flat `username`/`password` properties). Repo-wide, **145** ExternalSecret templates use `bitwarden-login` with the same `property: username|password` spelling, including the forgejo chart's OWN working admin/db/token secrets (`charts/forgejo/templates/secret-forgejo-admin.yaml:10,19,27`) — the live server that the user is browsing is bootstrapped through this exact shape. The runner chart's mapping is the proven-correct pattern, not a variant.
+### Round 2 (2026-11-01 rework) — partially CORRECTED (see 2026-11-02 below)
+- Mapping proof core stands: per-key `data` (`secret-runner.yaml:62-77`) with `property: username|password`, key names ↔ template refs, live ESO carries item ID `d3dafd1a…`. The bounce oracle (pod startTime vs write time) worked as designed.
+- Claim "the template consumes exactly those keys" was **incomplete**, and the conclusion "all residual causes are vault-side" was **false** — see the audit facts below. Both superseded (DECISIONS 2026-11-02).
 
-Live side (readonly-dev-kubernetes, 2026-11-01 ~20:45Z, presence/emptiness posture — no secret values read):
-4. ExternalSecret `dev-forgejo-runner-dev`: `refreshInterval: 1h`, Ready=True `SecretSynced` (condition transitioned 2026-11-01T00:55:28Z and held — the webhook path is healthy all day).
-5. Pod `dev-forgejo-runner-dev-0`: `startTime 15:40:13Z`, runner container `restartCount 63`, last termination `20:39:48Z`, current log line still `invalid configuration: ... 'uuid' is empty`; dind sidecar Running. StatefulSet `dev-forgejo-runner-dev`: single revision (`currentRevision == updateRevision == …-659f5b6b57`), `availableReplicas 0`.
-6. **Bounce oracle (the decisive discriminator):** the 15:40:13Z pod replacement was itself an ESO→Secret→reloader bounce (RESEARCH S17: old pod killed 15:40:12, "secret-change bounce consistent with the user editing the vault"). Since then the pod has NOT been replaced (same startTime, same STS revision) ⇒ the target Secret's rendered content has not changed since ~15:40. The hourly refresh guarantees a fetch within ≤1h, so either (i) the uuid write landed LESS than ~1h ago (pending — the bounce WILL come), or (ii) it landed earlier but changed nothing the ESO reads — i.e. the uuid is NOT in item `d3dafd1a…`'s **login → username** field (wrong similar-named item — the repo's own item-name comments disagree, see DECISIONS 2026-10-24 "the UUIDs are the truth" — or a custom field/notes/URI instead of username).
-7. The instance-scope runner record EXISTS (user find) — so RESEARCH's "record never created" is superseded; the uuid-empty fail-fast call stands (log line, live). Pair-match risk: the token was set in the vault earlier ("I've confirmed the secret has the token set") — if it belongs to a DIFFERENT record than the found runner's uuid, the post-bounce failure shape changes from `uuid is empty` to `unregistered runner` on Declare (RESEARCH F2). C01/C03's playbooks handle both.
+### Re-plan round (2026-11-02, from the coordinator log + audit, cited not re-derived)
+- User-run keys-and-lengths read (no values exposed), ns **`default`** (not `dev`): Secret `dev-forgejo-runner-dev` carries `config.yaml=1232`, `token=56`, **no `uuid` key** (`jsonpath {.data.uuid}` → 0) while the user confirms the uuid IS in item `d3dafd1a…`'s login username field.
+- Audit (1): `property: username` delivery is proven working — live counter-example ExternalSecret `forgejo-admin-secret` maps `username ← property: username` from item `47d1d689…` on the same store, consumer Deployment `dev-forgejo` runs 1/1; census 104× `property: password`, 62× `property: username`. The "username never lands" defect class is disproved.
+- Audit (2): the missing-uuid-key observation is true but causally misread: **live `spec.target.template.mergePolicy: "Replace"`** (absent from the repo template — stamped at admission by the v2 CRD, enum Replace|Merge, default Replace) drops every fetched key the template does not re-emit. `template.data` re-emits `token` (and `config.yaml`) only ⇒ Secret keys `{config.yaml, token}` exactly.
+- Audit (3): render inputs are NOT affected by Replace — the same ESO rendered the real 40-byte token — so **the uuid reached the render as an EMPTY string**: byte proof `uuid: ""` ⇒ 924 raw = 1232 b64 == the live length (a filled uuid would be 1280 b64). Corollary: `SecretSynced` green never excluded a delivered-empty value (it says "synced", not "non-empty").
+- Store reality: `bitwarden-cli` Deployment image `tangowithfoxtrot/bw-cli:2025.1.2` = the official Bitwarden CLI in `bw serve`, answering from its **locally synced snapshot**; auto-resync freshness UNVERIFIED (upstream repo 404). ESO `refreshTime 2026-11-01T23:42:15Z` (~2h50m after the ~20:50Z write) produced no bounce and no content change — V1 (snapshot served stale) or V2 (write invisible to the CLI's account/vault view), unresolved.
+- Probe 1 (user-run, 24 h of `deploy/bitwarden-cli` logs): only `Vault unlocked!` + session-key hint, **no sync/login/expiry errors** — weak evidence against V1.
+- Probe 2 (pending, user-run): the item-shape read via `curl :18087/object/item/d3dafd1a… | jq {username_len,password_len,field_names,note_len}` requires port-forward mapping **`18087:8087`** (the user's `18087:18087` attempt → connection refused inside the pod netns; the CLI listens on 8087).
+
+### Round 2, 2026-11-02 (C03 re-run at 02:47–02:52Z + planner upstream-image verification) — supersedes where it contradicts
+- **The uuid defect is CLEARED** (C03 re-run handoff, STATE.json): pod bounced `startTime 2026-11-02T00:46:35Z` (anchor 15:40:13Z retired), STS revision `659f5b6b57 → 78c54694f4`, Secret `config.yaml` **1232 → 1280** b64 — exactly the filled-uuid arithmetic the audit predicted — reloader stamp `reloader.stakater.com/last-reloaded-from.observedAt 1793580135` = 2026-11-02T00:42:15Z (verified epoch conversion). C01 closed DONE: V1 confirmed (`bw serve` snapshot lag); pair provenance question closed (uuid+token validate ⇒ same record).
+- **New blocker, stable across current AND previous logs:** `Error: cannot ping the docker daemon. is it running? permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` — restarts 28→29 climbing. RESEARCH F2's `configCheck` gate, masked for the chart's whole life by the earlier uuid fail-fast.
+- dind sidecar healthy (0 restarts, `Daemon has completed initialization`, `API listen on /var/run/docker.sock` + `[::]:2376` since 00:46:39Z); the socket reaches the runner via the `socket` emptyDir global-mounted at `/var/run` (`values.yaml:192-196`); runner has `DOCKER_HOST=unix:///var/run/docker.sock` (`:154`), `drop:[ALL]`, no supplemental groups (`:162-166`); pod `fsGroup: 1000` (`:177`).
+- **Upstream socket-group fact (fetched 2026-11-02, raw.githubusercontent docker-library/docker master):** the dind image is `FROM docker:29-cli` and the cli Dockerfile **pre-adds group `docker` at fixed gid 2375** (`addgroup -g 2375 -S docker`, comment "pre-add a 'docker' group for socket usage") — NOT the old blog-era 999. dockerd's default `--group docker` then serves the socket `root:docker 0660`; uid-1000 runner holds no 2375 ⇒ EACCES. fsGroup (1000) cannot fix this: it chowns the volume at mount time, while the socket file is created *after* by dockerd with dockerd's own group.
+- **Upstream entrypoint fact (same fetch, `29/dind/dockerd-entrypoint.sh`):** with the image-default `DOCKER_TLS_CERTDIR=/certs`, dockerd is started with `--host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2376 --tlsverify …` — the TCP leg binds **0.0.0.0**, and the plaintext fallback (empty certdir) is `--host=tcp://0.0.0.0:2375` unauthenticated. Pod IP is routable cluster-wide on k3s ⇒ the "plaintext localhost-only" framing of option (b) is FALSE as shipped (C05 Options-rejected + DECISIONS).
+- Schema verification (vendored app-template 5.0.1 `values.schema.json`): `controllers.<c>.pod.securityContext` accepts `supplementalGroups` + `runAsUser`; `containers.<c>.securityContext` accepts `runAsUser`. The recommended fix renders; container-SC `supplementalGroups` does NOT exist (it is a pod-level field).
+- **Dockerd-config surface: ABSENT, field name verified** (replan-2, 2026-11-02: repo grep + fresh `helm pull` of the exact Chart.lock dep — released app-template 5.0.1 has zero `dockerd`-named structures; no `dockerdConfigJson`/`config-docker.json` exists to use). The upstream daemon.json key to pin the socket group is **`group`** (moby `daemon/config/config.go` `SocketGroup` json-tagged `group`; default `docker` via `daemon/listeners/group_unix.go` `const defaultSocketGroup = "docker"`; socket `root:gid 0660` via go-connections `sockets/unix_socket_unix.go` `NewUnixSocket = WithChown(0, gid), WithChmod(0o660)`). Shape (a) needs none of it — dockerd's default lookup already resolves the image's `docker`→2375; a dockerd-side `--group` args override is the rejected M-sized variant. The brief's `fsGroup: 999` shape is falsified twice: wrong gid (2375 ships; 999 is folklore) and wrong mechanism (fsGroup chowns the volume at mount, not the socket dockerd creates afterwards). `docs.docker.com/reference/engine/dockerd/` returns 404 today — upstream code sources are the citations.
+- Live socket mode (`ls -l` on the sock) is NOT agent-checkable (no pod-exec tier) — the 0660/root:docker read is upstream-Dockerfile + EACCES-consistent inference; C03's post-merge re-run is the mechanism proof, and a persistent EACCES after C05 falsifies it (then replan, per triage).
 
 ## Out of scope
 
-- **Smoke test — DECLINED by the user (2026-11-01 answer Q6):** no workflow push, agent- or user-runnable; C03 acceptance is read-only evidence only. (Prior draft's optional smoke AC removed.)
-- Runner image bump 13.2.0→13.2.1 and stale `appVersion: 15.0.9` in `charts/forgejo/Chart.yaml:13` — dep-ticket hygiene (RESEARCH rec 5).
-- Infra-instance runner relocation (item `b1add65b…`) — stays out (user answer Q5).
-- The 2026-10-24 recreation/SecretSyncedError debug — **closed as superseded by user decision Q4**; recorded in STATE `deferred[]` as user-owned, nothing executes it.
-- Org-scoped runner setup anywhere — **superseded: scope = instance-admin** per the user's answer (B3 ruling reaffirmed; the user's own find).
-- app.ini/queue/redis, chart topology, `.runner` PVC, `GITHUB_SERVER_ADDRESS`/`RUNNER_CONFIG` env — verified-not-the-fix (RESEARCH rec 6).
-- Any Bitwarden or cluster mutation by an agent; no `kubectl apply` — ArgoCD owns applies; no chart `version:` bumps; no push/merge to `main` (user-owned).
+- **Fleet-wide `mergePolicy: Replace` key-dropping sweep** (other templated ESOs may silently drop fetched keys since the v2 flip; one-line detector: templated ESO whose `template.data` omits a fetched `secretKey`) — **filed as board follow-up card `sLK4MmTxGiaCk3uLq` (Inbox)**; too big for this card by size, per the coordinator ruling.
+- Custom-field contingency (`runner-uuid` field on item `d3dafd1a…` + uuid entry `sourceRef.storeRef: {kind: SecretStore, name: bitwarden-fields}` — store exists at `bitwarden-secret-store.yaml:29-31`): written as a **contingency, not a chunk**; promoted only by replan if probe 2 shows `username_len=0` with a healthy sync.
+- Smoke test — DECLINED by the user (Q6); no workflow push anywhere.
+- Runner pin 13.2.0→13.2.1, stale `charts/forgejo/Chart.yaml` appVersion — dep ticket (STATE `deferred[]`).
+- Infra-runner relocation — stays out (Q5).
+- 2026-10-24 recreation/SecretSyncedError debug — CLOSED as superseded (Q4).
+- app.ini/topology/env changes (RESEARCH rec 6), the token leg, the uuid `data` entry's `property: username` spelling (sound — audit), `Chart.yaml version`, image pins, `bitwardenIds` — all explicitly untouched.
+- Agent-side Bitwarden/cluster mutations; no `kubectl apply`; no push/merge (user-owned; commit-only coordinator).
 
 ## Commands (repo validation — AGENTS.md "Pipeline specifics")
 
 ```bash
-export PATH=$HOME/.local/bin:$PATH          # MANDATORY: helm lives here; without it helm-guarded legs misshape
+export PATH=$HOME/.local/bin:$PATH          # MANDATORY: helm lives here
 cd "$(git rev-parse --show-toplevel)"
 
-bash tests/services/dev-forgejo-runner.sh   # THE runner contract suite (fail-fast — green == every leg ran)
-helm lint charts/forgejo-runner
-helm template dev-forgejo-runner-dev charts/forgejo-runner            # standalone render (sentinels stand in)
+bash tests/services/dev-forgejo-runner.sh   # THE runner contract suite, fail-fast; t11 is C02's
+                                            # wording leg; agent-test adds t12 (mergePolicy pin)
+helm lint charts/forgejo-runner             # standalone template needs the suite's
+                                            # copy+dependency-update recipe (gitignored vendor)
 helm template dev services/dev/prod -f custom-values/dev/prod-values.yaml \
-  --set domain=scifi.farm --set clusterName=dev | grep -c OVERRIDE_ || true
-  # umbrella render must exit 0 and print count 0 (grep exits 1 on zero matches — the
-  # COUNT is the signal, not grep's status)
-
-# C02 blast radius: only comments + NOTES.txt change — every YAML diff hunk touches comment
-# lines only (template-file comments DO ride raw helm-template output; semantic identity is
-# asserted by the suite's ESO legs, not byte equality):
-git diff --stat main
-npx --yes aislop@0.18.1 ci --changes --base main   # quality gate (YAML/MD-only diffs scope 0 — known no-op, FRICTION-ported)
+  --set domain=scifi.farm --set clusterName=dev | grep -c OVERRIDE_ || true   # exit 0, count 0
+git diff --stat HEAD                          # C04: secret-runner.yaml (+ test file); C05: values.yaml (+ test file)
+npx --yes aislop@0.18.1 ci --changes --base main
 ```
 
-Service-trio check (AGENTS.md): chart entry ✓ + ApplicationSet values entry ✓ + proxy leg N/A-BY-DESIGN (client-only dials-out, documented at `services/dev/prod/values.yaml` runner comment) — C02 adds no service, no-change confirmation only.
-
-Cluster-side verification (C03 only, `readonly-dev-kubernetes` MCP — no shell equivalent, labelled cluster-only): `resources_get` ExternalSecret/StatefulSet `dev-forgejo-runner-dev`, `pods_get`/`pods_log` `dev-forgejo-runner-dev-0` (container `runner`). Exact-name reads only — `pods_list`/`events_list`/`resources_list` shapes come back empty/redacted for agent sessions (re-confirmed this round; carried FRICTION).
+Service-trio: unchanged (client-only, proxy leg N/A-by-design). Cluster-side (C03): exact-name `resources_get`/`pods_get`/`pods_log` via `readonly-dev-kubernetes` (list/event shapes redact; re-confirmed). **Reloader-stamp oracle** (agent-readable; dates an RBAC-invisible Secret change — verified 2026-11-02: pod annotation `reloader.stakater.com/last-reloaded-from` carries `{SECRET dev-forgejo-runner-dev, observedAt 1793580135}` = 00:42:15Z, matching the bounce at 00:46:35Z): read `pods_get` annotations + `startTime` + STS `currentRevision/updateRevision` together before any "not synced / will never sync" call. Secret key dumps are **user-run** `kubectl -n default get secret dev-forgejo-runner-dev -o jsonpath …` (RBAC: agents cannot read Secrets) — presence/lengths only, never values.
 
 ## Chunks
 
-| id  | title | size | wave | owner | depends_on | why the dependency |
-|-----|-------|------|------|-------|------------|--------------------|
-| C01 | Confirm the uuid's landing + the bounce (record side already done by user) | S | 1 | **user** | [] | — (starts immediately; independent of repo chunks) |
-| C02 | Comment/NOTES truthfulness (instance-admin wording) + test dind-pin repair | S | 1 | agent | [] | independent of C01: pure repo wording + contract sync |
-| C03 | Live read-only verification of the online runner (no smoke test) | S | 2 | agent | [C01] | data: `declared successfully` requires the correctly-landed uuid + a bounce; C02 does not affect runtime |
+| id  | title | size | wave | owner | depends_on | status |
+|-----|-------|------|------|-------|------------|--------|
+| C01 | Probe 2: settle V1 vs V2 on the bw-serve snapshot | S | 1 | **user** | [] | **done** — V1 confirmed 2026-11-02; uuid renders filled, pair validates |
+| C02 | Comment/NOTES truthfulness (instance-admin wording) + test dind-pin repair | S | 1 | agent | [] | **done — `e3b18c27f`, APPROVED** |
+| C03 | Live read-only verification of the online runner (no smoke test) | S | 2 | agent | [C01, C05] | blocked — re-gate: C05 landed + user merge → ArgoCD apply → socket gate clears |
+| C04 | Pin `mergePolicy: Merge` on the runner ExternalSecret + why-comment | S | 1 | agent | [] | pending — approved ("Approve — mergePolicy: Merge"); test/dev rounds outstanding |
+| C05 | Give the runner process the dind socket group (fix docker-socket EACCES) | S | 1 | agent | [] | pending — **fix shape awaits the user's pick** (Open question 1) |
 
-C01 ∥ C02 in wave 1 (run in id order); C03 gates on C01 only.
+C01 ∥ C04 ∥ C05 in wave 1; C03 runs when its gate closes (C01 done + C05's live effect via the user's merge). C04 changes no render behaviour (intent + observability); C05 changes pod securityContext only — the uuid gate is already cleared, so the post-merge C03 re-run tests the socket mechanism end-to-end. C04 vs C05 share no lines (template block vs controller/pod SC) — order-independent.
 
 ## Wave order
 
-1. **C01 (user, minutes away)** — landing-check + bounce window. **C02 (agent)** — after the agent-test round, dev runs the amended suite green.
-2. **C03 (agent)** — read-only MCP evidence that the runner declared; user-eyeball AC: the runner shows **online** under Admin → Actions → Runners.
+1. **C04 (agent)** — test round adds t12 (red-first), dev pins `mergePolicy: Merge`, suite green. **C05 (agent)** — after the user picks the fix shape: test round adds t13 (red-first), dev lands it, suite green. (C01 done, C02 done.)
+2. **C03 (agent)** — gated on C05's live effect (user PR/merge → ArgoCD apply → reloader/revision bounce) plus C01's proven filled-uuid render; evidence sequence unchanged.
 
 ## Risks / assumptions
 
-- **Pair mismatch is the top live risk:** token set earlier + uuid from the found record may belong to different records → post-bounce `unregistered runner` instead of success. Handled by C01's playbook (recreate/verify one record, copy its shown-once pair as a set). Not a plan change.
-- If the landing-check finds the uuid in a custom field / the wrong item, the fix is vault-side (re-paste to item `d3dafd1a…` login-username); still no repo change. If — after a confirmed correct landing >1h old with no bounce — the crash line persists, the structural verdict above is wrong; that outcome reopens this plan (NEEDS_INFO) instead of ad-hoc chart edits.
-- ESO refresh ≤1h + reloader bounce means C03 must not conclude failure before the bounce window elapsed (check pod `startTime` vs the reported write time first).
-- Scope wording in NOTES.txt follows instance-admin as the only path (user answer) — the org alternative is dropped, not demoted.
+- **The socket-group read is upstream-verified but not agent-exec-verified** (no pod-exec tier): `root:docker(2375) 0660` is read from the pinned image's Dockerfile pre-add line + the observed EACCES. C03's post-merge re-run is the mechanism proof; a PERSISTENT EACCES after C05 lands falsifies the inference → replan, no improvised chart edits.
+- **gid 2375 is a pin-coupled constant:** the dind image pre-adds `docker` at fixed gid 2375 today (verified upstream 2026-11-02; the blog-era 999 is WRONG for 29.x). A future renovate dind bump that moves the gid would silently re-break socket access while everything still renders — C05's why-comment names the authority and its suite leg pins the pairing so a bump forces a re-check at review.
+- **Sequential-gate masking — this ticket's standing lesson:** each fail-fast stage of the daemon start (validate → configCheck → Declare) hid the next; the uuid gate masked the socket gate for the chart's whole life. After C05 clears configCheck, the Declare gate runs live for the first time (13.2.x ↔ 15.0.10 is the source-verified supported pairing, RESEARCH F2/F5) — budget honestly for one more C03 round if a new shape emerges.
+- **ESO cadence ≤ `bw sync` freshness** (C01's V1 lesson): “no bounce after write” may mean the sidecar snapshot is stale, not the operator. The reloader-stamp oracle (`reloader.stakater.com/last-reloaded-from.observedAt` on the pod, agent-readable) dates an RBAC-invisible Secret change — use it before any “will never sync” call.
+- C05's cluster effect rides the user's PR/merge (nothing in this repo applies). The rejected TCP shapes (C05 Notes) would need NetworkPolicy conversations; if the user nevertheless picks one, its posture question reopens.
+- C04's deploy is post-merge user-owne­d; locally its proof is render-only. Under `Merge` the fetched `uuid` also appears as a Secret key (extra file at `CREDENTIALS_DIRECTORY` the daemon never reads — accepted; it is the accepted alternative to the rejected `uuid` re-emit).
+- The live CRD-default stamping (`Replace`) is invisible to repo renders — anything asserting Secret *contents* indirectly (bounce oracle, byte lengths) is the compensating control; C03 keeps it.
+- Pair provenance CLOSED by C01 (2026-11-02): uuid+token validate together → same record. `unregistered runner` is off the live-risk table; the branch stays in the C01/C03 playbooks only for a future record recreation.
 
 ## Open questions
 
-Resolved by the 2026-11-01 batched round: Q2 → **instance-admin** (B3 reaffirmed, user find); Q3 → moot (`git.scifi.farm`, no org); Q4 → closed-superseded (deferred[]); Q5 → out; Q6 → **no smoke test**; Q1/Q7 → accepted/obsolete (vault state now user-confirmed: token set, uuid written).
+Resolved by live evidence 2026-11-02: rounds 1–2 answers stand (scope instance-admin per B3; no smoke test; Q4 closed; Q5 out); landing + V1/V2 settled by C01 (the uuid was always in item `d3dafd1a…`'s login username; `bw serve` snapshot lag was the blocker; pair provenance closed).
 
-Still open (must reach the user before/at C01 completion — none block PLAN APPROVAL):
+Genuinely open — exactly one, and it blocks C05 dev only (C04 and the rest of the plan proceed regardless):
 
-1. **Where and when did the uuid write land?** Item **ID `d3dafd1a-3d88-454e-88d4-b4ec010ae2c2`** (not a similar-named item), **login → username** field (not a custom field/notes/URI), and at what UTC time? The pod has not bounced since 15:40:13Z: a write older than ~1h that changed nothing the ESO reads means wrong item or wrong field — re-paste accordingly. A write within the last hour needs only the ≤1h wait (or a forced ESO resync). Best guess: within the last hour OR a similar-named item's username. Impact: C01 completion timestamp only; chunk shape unchanged either way.
-2. **Token provenance** (only if C03 later sees `unregistered runner`): does the vault token come from the SAME instance-runner record whose uuid was copied? If not: delete/recreate the record, copy the shown-once uuid+token as one pair. Impact: a second pass through C01, no repo change.
+1. **C05 fix shape — a security-posture pick** (coordinator batches; recommendation = (a)):
+   - **(a) RECOMMENDED — docker-group supplemental:** `controllers.runner.pod.securityContext.supplementalGroups: [2375]` + explicit `containers.runner.securityContext.runAsUser: 1000` (both schema-verified on app-template 5.0.1). Cost: the runner process joins gid 2375 = full control of the POD-LOCAL dind daemon — already the designed capability (`DOCKER_HOST` is wired precisely so the runner drives this daemon to spawn jobs); adds no listener, no world-writable object, no new mount; stays inside the pod's existing trust boundary.
+   - (b1) plaintext TCP (`DOCKER_TLS_CERTDIR: ""` + `DOCKER_HOST=tcp://localhost:2375`) — REJECTED on fact: the entrypoint binds `tcp://0.0.0.0:2375`; pod IP is cluster-routable on k3s, so this is an unauthenticated cluster-reachable daemon port, NOT “localhost-only”.
+   - (b2) TLS TCP 2376 (share sidecar-generated `/certs/client`, upstream 0644-key by design, via a new emptyDir + runner TLS env) — REJECTED: act_runner v13 TLS-env support UNVERIFIED (RESEARCH F2 env sweep confirmed only DOCKER_HOST), new mount pair, and cert-ready-vs-daemon-ready ordering the socket probe does not cover.
+   - (a') initContainer chgrp/chmod the socket — REJECTED: races dockerd's socket lifecycle (recreated on daemon restart); consumer-side group membership is the race-free equivalent.
+   - (d) `dockerd --group ""` (socket 0666) or the dind-rootless image variant — REJECTED: world-writable is broader than the need; rootless changes job-execution architecture and image family for a gid problem.
+   Best guess if execution starts unanswered: **(a)**. Impact: C05 tasks + t13 leg shape; (a)/(a')/(d) are pod-SC/args-only, (b*) add env + mounts.

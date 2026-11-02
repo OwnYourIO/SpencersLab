@@ -1,10 +1,16 @@
 {
   "feature": "2026/2026-11-cf-97-bug-forgejo-runner",
   "plan_status": "approved",
+  "approval": {
+    "approved_by": "user",
+    "at": "2026-11-02",
+    "via": "replan approval question, verbatim answer: \"Approve — mergePolicy: Merge\" (chooses the explicit mergePolicy pin over the re-emit alternative; C04 shape as planned). Replan-2 (C05) approved 2026-11-02 by verbatim fix-shape answer: \"(a) supplementalGroups: [2375] on the runner\", plus \"Trust the inference\" on the upstream-derived socket shape (no pre-merge pod-exec probe).",
+    "note": "plan-session record; coordinator owns amendments to the remaining bookkeeping fields"
+  },
   "coord_session": "ses_e68292cf1ffeaGQWhT0y6HIHCX",
   "test_session": "ses_e66e2092fffeT0bryb1FqVdJJu",
   "current_wave": 1,
-  "updated_at": "2026-11-01T20:55:00Z",
+  "updated_at": "2026-11-02T03:20:00Z",
   "kickoff": {
     "slug": "cf-97-bug-forgejo-runner",
     "card": "xJSxCDv3sqqgyHwDq",
@@ -50,25 +56,35 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "owner": "user",
       "dev_rounds": 0,
       "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": [],
-      "note": "Record side user-done 2026-11-01 (instance runner found, instance-admin scope per B3). User answer 20:5xZ: uuid is in vault item d3dafd1a-3d88-454e-88d4-b4ec010ae2c2, login USERNAME field, written <1h ago — so the 1h ESO refresh has not necessarily run yet; the absence of a post-15:40:13Z bounce is expected, not a failure. Mapping proven sound (plan Verified facts rework round). Not done until C03 evidence shows the post-write bounce declaring successfully."
+      "last_verdict": "DONE",
+      "handoffs": [
+        {
+          "from": "user (probes, cluster-side)",
+          "at": "2026-11-02T02:0xZ",
+          "status": "DONE",
+          "evidence": "Served item via bw serve: `type: 1` (Login), `username_len: 36`, `password_len: 40`, `field_names: []`, `note_len: 0`. Live ExternalSecret `dev-forgejo-runner-dev` spec is faithful to the repo template (uuid ← d3dafd1a… property: username; token ← same property: password; store bitwarden-login; engineVersion v2; mergePolicy Replace). Target Secret `config.yaml` length **1232 → 1280** b64 after the content-changing refresh at 00:42:15Z. Pod bounce `startTime 2026-11-02T00:46:35Z`, reloader stamp `observedAt 1793580135` = 00:42:15Z.",
+          "verdict": "V1 CONFIRMED — `bw serve` snapshot lag. The vault write (~2026-11-01T20:50Z) was correct and in the login username all along; the empty renders were an un-synced snapshot, and the missing `uuid` Secret key was the `mergePolicy: Replace` artifact, not a mapping defect. V2 dead (username served non-empty). Pair provenance question closed: uuid validation now passes, so uuid+token are from the same record."
+        }
+      ],
+      "note": "CLOSED 2026-11-02 by the probe evidence above. Bookkeeping correction: the content-changing ESO tick was 00:42:15Z; 01:42:15Z re-rendered identical content (correctly no second bounce)."
     },
     "C02": {
-      "status": "dev_done",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "owner": "agent",
       "dev_rounds": 1,
-      "review_rounds": 0,
+      "review_rounds": 1,
       "dev_session": "ses_e66cf9fd1ffeWN7zwiA4XwqrUc",
-      "last_verdict": null,
+      "review_session": "ses_e66c43782ffeWRlR5EQNy0wJ7B",
+      "last_verdict": "APPROVED",
+      "commit": "e3b18c27f",
       "handoffs": [
         {
           "from": "agent-dev-local",
@@ -84,15 +100,81 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "blocked",
       "wave": 2,
-      "depends_on": ["C01"],
+      "depends_on": ["C01", "C05"],
+      "owner": "agent",
+      "dev_rounds": 1,
+      "review_rounds": 0,
+      "dev_session": "ses_e66ba4e07ffejesm4lkZNh6TtP",
+      "last_verdict": "NEEDS_INFO",
+      "handoffs": [
+        {
+          "from": "agent-dev-local",
+          "at": "2026-11-01T22:48Z",
+          "status": "NEEDS_INFO",
+          "chunk": "C03",
+          "evidence": "STS dev-forgejo-runner-dev replicas 1/updated 1/available 0, single revision dev-forgejo-runner-dev-659f5b6b57; pod -0 startTime 15:40:13Z unchanged across two reads, runner CrashLoopBackOff, restartCount 86→87 (24 starts after the ~20:50Z write, every one still reading an empty uuid from the mounted Secret); runner log verbatim unchanged `connection \"default\" is invalid: uuid is empty` (current + previous); ExternalSecret refreshInterval 1h, Ready=True SecretSynced (consistency only, never acceptance); SecretStore bitwarden-login Valid.",
+          "bounce_oracle": "Write ~20:50Z (user-confirmed, username field, item d3dafd1a-3d88-454e-88d4-b4ec010ae2c2); reads at 22:42:31Z/22:48:36Z show no bounce and no content change ⇒ window exhausted ⇒ shape \"will never sync / landed elsewhere\" = vault-side wrong item or wrong field, NOT repo/chart.",
+          "regression": "bash tests/services/dev-forgejo-runner.sh => exit 0, 44 ok — C02's contract stands at verification time.",
+          "next_step_user": "Re-land the uuid in the item BY ID (beware similarly-named items), login→username field, token in password from the SAME runner record; then wait ≤1h or force the ESO refresh (user-owned), then re-run the C03 read sequence. Remaining human AC: runner shows online at git.scifi.farm/admin/actions/runners.",
+          "open_questions": "pair provenance (uuid+token from the same record?); forced ESO refresh is a user-owned mutation; org/site-admin UI online check stays a human eyeball."
+        },
+        {
+          "from": "agent-dev-local (C03 re-run)",
+          "at": "2026-11-02T02:52Z",
+          "status": "NEEDS_INFO",
+          "chunk": "C03",
+          "evidence": "Pod dev-forgejo-runner-dev-0 bounced: startTime 2026-11-02T00:46:35Z (anchor 15:40:13Z retired), STS revision 659f5b6b57→78c54694f4, reloader stamp reloader.stakater.com/last-reloaded-from {SECRET dev-forgejo-runner-dev, observedAt 1793580135 = 00:42:15Z}. Runner log (current + previous, verbatim): 'Starting runner daemon' then 'cannot ping the docker daemon. is it running? permission denied while trying to connect to the docker API at unix:///var/run/docker.sock'. dind: 'API listen on /var/run/docker.sock' since 00:46:39Z, ready, 0 restarts. Runner spec: DOCKER_HOST unix socket, shared socket emptyDir at /var/run, drop:[ALL], no supplemental groups, pod fsGroup 1000. STS replicas 1/updated 1/available 0, restarts 28→29 climbing.",
+          "ac_map": "AC1 bounce-after-write PASS (00:46:35Z > 20:50Z write); AC1 'declared successfully' FAIL (new blocker); AC2 STS-available/restart-stable FAIL; AC3 no uuid/unregistered/token/ephemeral lines PASS (superseded); AC4 UI online pending-human; AC5 suite PASS (exit 0, 44 ok @ 02:49:40Z); AC6 smoke N/A (declined).",
+          "next_step": "Replan a repo chunk (C05) for the runner→dind unix-socket permission denial; fix choice (socket group vs socket mode vs TCP/TLS listener) is planner-side, NOT an improvised dev edit. Then user PR/merge → ArgoCD apply → C03 re-run.",
+          "friction": "The reloader stamp is the only observable that dates an RBAC-invisible Secret change; the ESO condition/refreshTime never shows which tick changed content."
+        }
+      ],
+      "note": "Smoke-test AC removed (Q6, user declined). 2026-11-02 re-run (same dev session): C01's landing is CONFIRMED (V1 snapshot lag) — pod bounced 00:46:35Z (reloader stamp observedAt 00:42:15Z), revision 659f5b6b57→78c54694f4, and the runner log no longer carries `uuid is empty`; uuid+token validation passes. NEW BLOCKER, verbatim: `cannot ping the docker daemon. is it running? permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` — dind sidecar healthy (Docker API on the shared socket since 00:46:39Z, 0 restarts), socket shared by emptyDir at /var/run, runner container non-root (fsGroup 1000) with drop:[ALL] and no docker-group membership ⇒ EACCES. Latent all along: every start failed uuid validation BEFORE reaching this gate. Stays blocked pending the C05 replan; AC 'runner online in the admin UI' remains a user eyeball and is moot until the daemon declares. Regression: suite exit 0 / 44 ok at 02:49:40Z."
+    },
+    "C04": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e65c05f2effedliUiipXpNwEIb",
+      "review_session": "ses_e65b73afeffe93J9AsiaT0UxCk",
+      "last_verdict": "APPROVED",
+      "handoffs": [
+        {
+          "from": "agent-dev-local",
+          "at": "2026-11-02T03:1xZ",
+          "status": "DONE",
+          "chunk": "C04",
+          "files_changed": ["charts/forgejo-runner/templates/secret-runner.yaml"],
+          "commands_run": "baseline suite exit 1 designed-red (44 ok, aborts at t12 mergePolicy is None); post-change suite exit 0 / 46 ok (ok-line delta = t12's 2 legs only); standalone chart render before/after via the copy+dependency-update recipe, diff = comment block + mergePolicy only, parsed diff one added key, template.data keys unchanged {config.yaml, token}; helm lint exit 0 (known missing-app-template WARNING); umbrella render exit 0, OVERRIDE_ count 0; aislop ci --changes score 100, 0 errors/0 warnings; git diff --stat -- charts/ = 1 file +13",
+          "open_questions": "AC3's third clause cannot hold of the umbrella render (services/dev/prod renders no chart dependencies; the runner ESO renders at the ArgoCD Application level) — proven by the reviewer."
+        },
+        {
+          "from": "agent-review",
+          "at": "2026-11-02T03:3xZ",
+          "status": "APPROVED",
+          "chunk": "C04",
+          "evidence": "Independently re-ran: suite exit 0 / 46 ok; helm lint exit 0; aislop clean. Placement verified at spec(22)>target(27)>template(30) → `secret-runner.yaml:44`; keys still {config.yaml, token} (:47,:48); line 65 uuid is the pre-existing config.yaml placeholder, not a re-emit. t12 fairness proven in four states on reviewer-built overlay renders (/tmp/opencode/cf97-c04-review/): working tree PASS; `git archive HEAD` pre-C04 chart RED (mergePolicy None); mergePolicy moved to spec.target → RED (path-chained assertion at test :1338-1339); uuid re-emitted in template.data → RED on the keys pin (:1352). Provenance commits verified in-repo: 5853be497 (creates secret-runner.yaml, 2026-10-24), 582c96488 (external-secrets v2.14.0, 2026-10-24). Why-comment passes comment-slop: every sentence an external-system fact, no `{{`, no YAML restatement.",
+          "apply_time_effect": "Live ESO goes from admission-stamped Replace to explicit Merge; the Secret GAINS the fetched `uuid` key beside {config.yaml, token} (the point of the chunk; cost = one extra CREDENTIALS_DIRECTORY file the daemon never reads). config.yaml bytes unchanged (stays 1280); token value unchanged; one reloader bounce, harmless (crash-loops anyway, C05 rides the same merge). C04 does NOT fix the crash.",
+          "finding_minor": "AC3 wording: attach the mergePolicy-visibility clause to the chart-level render (suite t2 path), keep exit-0/zero-OVERRIDE_ for the umbrella. Accepted by coord; the re-word itself is queued for the next agent-plan round (chunk files are not coordinator-writable — coord edit permission-denied). No repo change."
+        }
+      ],
+      "note": "Added in the 2026-11-02 replan; user approval verbatim 'Approve — mergePolicy: Merge'. Pin spec.target.template.mergePolicy: Merge in charts/forgejo-runner/templates/secret-runner.yaml + why-comment; agent-test adds t12 (red-first on the current chart) to tests/services/dev-forgejo-runner.sh (one-script rule). No render-behaviour change; does not fix the crash (C01 does, C05 clears the next gate)."
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
       "owner": "agent",
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
       "handoffs": [],
-      "note": "Smoke-test AC removed — user declined (Q6). Read-only MCP evidence + user-eyeball online check only."
+      "note": "Added 2026-11-02 replan-2 (C03 re-run exposed the docker-socket EACCES after the uuid gate cleared). USER RULING 2026-11-02 verbatim '(a) supplementalGroups: [2375] on the runner' — pod.securityContext.supplementalGroups [2375] (upstream dind pre-adds docker gid 2375, verified docker-library 29/cli Dockerfile `addgroup -g 2375 -S docker`) + containers.runner.securityContext.runAsUser 1000; agent-test t13 red-first. The coordinator's earlier 'gid 999' figure was WRONG and unverified (blog-era folklore) — corrected by the planner's read of the pinned image lineage before any code was written. User also ruled 'Trust the inference' on the root:docker 0660 socket shape (no pod-exec tier; no pre-merge probe), so C03's re-run is the proof-of-fix. Rejected with evidence: plaintext TCP (dind entrypoint binds 0.0.0.0:2375 when TLS off), TLS 2376 (cert volume + unverified v13 TLS-env support), initContainer chmod (races dockerd's socket lifecycle), --group '' 0666 / rootless swap. Closes via user merge -> ArgoCD apply -> C03 re-run."
     }
   },
   "blocked": [],

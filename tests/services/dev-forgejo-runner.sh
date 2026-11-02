@@ -22,8 +22,8 @@
 # the single aliased app.
 #
 # Contract source: chunks/C01.md Tests list (t1-t10) + cf-97 C02's wording
-# leg (t11) — ONE script stays the runner contract (predecessor ruling,
-# DECISIONS.md).
+# leg (t11) + C04's mergePolicy leg (t12) — ONE script stays the runner
+# contract (predecessor ruling, DECISIONS.md).
 #
 # C01/C03 acceptance is cluster-only — no leg here can assert it (the vault
 # and the live pod are out-of-repo, and list/event MCP shapes come back
@@ -1302,6 +1302,71 @@ then
   checks=$((checks + $(cat "$WORK/t11-count")))
 else
   exit 1
+fi
+
+# --- t12: cf-97 C04 mergePolicy pin (red-first against the unpinned chart) ---
+# The ESO operator chart went v2.14.0 (582c96488) the same day this chart was
+# authored under the pre-v2 Merge assumption (5853be497); the v2 CRD defaults
+# template.mergePolicy to Replace at admission — invisible to repo renders —
+# and Replace drops every fetched key the template does not re-emit, which
+# hid the uuid key from the live Secret and blinded the card #97 diagnosis
+# (DECISIONS 2026-11-02). C04 pins the intent. Cluster-side proof stays in
+# C03 — no leg here reads live state.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t12: mergePolicy leg not run (no chart render — dependency update unavailable)"
+else
+  if python3 - "$runner_out_dev" "$RELEASE_DEV" "$WORK/t12-count" <<'PY'
+import sys, yaml
+
+render, release, count_file = sys.argv[1:4]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    docs = [d for d in yaml.safe_load_all(open(render)) if d]
+    es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+    if len(es) != 1:
+        bad(f't12: {release} — the render has {len(es)} ExternalSecret(s), expected exactly one')
+    template = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {})
+    mp = template.get('mergePolicy')
+    if mp != 'Merge':
+        bad(f't12: {release} — spec.target.template.mergePolicy is {mp!r}, expected Merge '
+            '(unpinned lets the v2 CRD default Replace at admission, silently dropping the '
+            'fetched uuid key C04 documents — add the pin in secret-runner.yaml)')
+    ok(f't12: {release} — mergePolicy pinned to Merge under spec.target.template '
+       '(reading this exact path is what rejects an incidental placement)')
+
+    if template.get('engineVersion') != 'v2':
+        bad(f't12: {release} — template.engineVersion is {template.get("engineVersion")!r}, '
+            'expected v2 (C04 is one added field — it must not restyle the template)')
+    keys = set((template.get('data') or {}))
+    if keys != {'config.yaml', 'token'}:
+        bad(f't12: {release} — template.data keys are {sorted(keys)}, expected exactly '
+            '[config.yaml, token] — the re-emit-the-uuid alternative the user rejected must '
+            'not sneak in; Merge adds fetched keys beside the template output, not inside it')
+    ok(f't12: {release} — engineVersion v2 + template.data keys exactly config.yaml+token '
+       '(the chosen shape holds even with the policy pinned)')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't12: the mergePolicy check could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+  then
+    checks=$((checks + $(cat "$WORK/t12-count")))
+  else
+    exit 1
+  fi
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed
