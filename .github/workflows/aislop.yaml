@@ -3,9 +3,10 @@
 # Gate model (bootstrap): PRs gate only the files they change
 # (`--changes --base origin/main`), so legacy debt doesn't block adoption —
 # the score floor and error-severity rule apply to every touched file.
-# Full-repo debt is tracked by running `npx aislop@0.18.1 ci` locally.
+# Full-repo debt is tracked by running `npx aislop@0.20.0 ci` locally.
 # The CLI version is pinned here and in .opencode/plugin/aislop-gate/index.ts
-# — bump both together.
+# — bump both together; the parity is machine-guarded by
+# tests/opencode/aislop-pin-parity.test.ts.
 name: aislop
 on:
   pull_request:
@@ -25,4 +26,4 @@ jobs:
           node-version: 24
 
       - name: Run aislop quality gate on changed files
-        run: npx --yes aislop@0.18.1 ci --changes --base origin/main --human
+        run: npx --yes aislop@0.20.0 ci --changes --base origin/main --human

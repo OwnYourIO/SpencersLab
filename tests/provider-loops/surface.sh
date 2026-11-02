@@ -146,10 +146,13 @@ if want t1; then
   [ -f "$API" ] || fail "t1[C04]: $API missing (harness fault)"
   [ -f "$LOCAL" ] \
     || fail "t1[C04 AC2]: $LOCAL does not exist yet — the duplicated Provider: Local loop file is C04's second task (designed red before C04 dev; file edits ONLY, the task itself is approved by the human in OpenChamber)"
+  # The API model pin follows the loop-file bytes — the single authority
+  # (OpenChamber syncs from the main checkout); owner-approved 652ba904c
+  # (2026-11-01, cf-86 DECISIONS; supersedes cf-76 Q2) moved it to the local arena.
   fm_check "$API" \
     "name=pipeline-worker" "schedule=0 * * * *" "enabled=true" \
-    "model=openrouter/qwen/qwen3.8-flash" "agent=agent-board-coord" \
-    || fail "t1[C04 AC1]: $API frontmatter drifted — byte-stable except comments is the contract (model openrouter/qwen/qwen3.8-flash, hourly :00, enabled true, agent agent-board-coord)"
+    "model=gpu-ai/qwen3.8-flash-next-strata" "agent=agent-board-coord" \
+    || fail "t1[C04 AC1]: $API frontmatter drifted — byte-stable except comments is the contract (model gpu-ai/qwen3.8-flash-next-strata, hourly :00, enabled true, agent agent-board-coord)"
   fm_check "$LOCAL" \
     "name=pipeline-worker-local" "schedule=30 * * * *" "enabled=true" \
     "model=gpu-ai/qwen3.8-flash-next-strata" "agent=agent-board-coord" \
