@@ -168,6 +168,33 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   createCard extras stay DORMANT (the landed "dormant until upstream fix"
   wording is honest as written); rule extras remain import-only (no REST path).
 
+## Close-out (coord, 2026-11-02)
+- Final review r2 APPROVED → `plan_status: complete`; card #96 moved to Review
+  with the full summary comment; the grouped siblings (AD-74/66/71/77b/70b/81/78a)
+  each got a per-card outcome comment and moved to Review; `pipeline_release
+  (outcome:"done")` released the `Context` lock set.
+- Surfaces: branch + worktree KEPT per the owner's answer (35 local commits,
+  never pushed — landing on main is theirs alone; the HITL `PR` stop held all
+  run). Work did NOT land in main, so nothing was deleted.
+- Inbox cards minted at close-out (Backlog/Inbox, five standard checklists
+  auto-added by the board rule — never `add_checklist`; Services `agent
+  context` + Type `chore` + Model(s) `Qwen Flash` checked, Lifecycle-side left
+  to the defaults; parent labels listed in each body because the deployed
+  surface has no label tool until cf-96 C01's `set_card_labels` deploys):
+  1. `T2AXwrGLRb5yowQM9` — WeKan service-user password rotation signs out the
+     static gpu-tier bearers → re-mint/rotation runbook (OQ-P5, mandated).
+  2. `XRG8uTY2JkD8xEMkn` — one scope-admits file the four arms read (the
+     per-ticket admit ritual, recorded 6× this run; mandated by RESEARCH F6).
+  3. `S78iY2FCGzeuogHM9` — wave-parallel dev / commit-ownership redesign
+     (AD-71 half 2) — the only one of the 11 offered items the owner selected.
+- Not minted (owner declined for now, ledger stands): Provider-label naming
+  drift (`Provider: API` in text vs `Provider: OpenRouter` on the board — the
+  most operationally significant of the remainder; raise it again if a
+  scheduled walk ever comes up empty), the five-vs-six roster-drift re-pin
+  family, shared registry-count source, pipeline-overview roster drift,
+  Cancelled-blocker semantics + stale step pointer, gate-skip-all vs the no-op
+  marker, offset-INPUT reap leg, test-hygiene bundle, dev-mcp-fleet pin drift.
+
 ## Deferred
 - Wave-parallel dev sessions (AD-71 half 2): coord is the sole committer — one
   chunk = one commit it makes; concurrent devs collide at commit time. C06
