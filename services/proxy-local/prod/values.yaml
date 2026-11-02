@@ -331,6 +331,13 @@ proxy:
 external-dns-external:
   interval: 2m
   provider: cloudflare
+  # external-dns >= v0.22 defaults to the GA prefix external-dns.kubernetes.io/
+  # with no fallback; the hub ingresses carry legacy
+  # external-dns.alpha.kubernetes.io/target annotations. Without this, targets
+  # go unread and policy=sync republishes every public name as an A record
+  # pointing at the internal LB (outage of 2026-10-25). Drop this only after
+  # migrating the annotations to the GA prefix.
+  annotationPrefix: "external-dns.alpha.kubernetes.io/"
   env:
     - name: CF_API_EMAIL
       valueFrom:

@@ -197,3 +197,83 @@ no service in this repo.
   ESO-less cluster hosting hivetools hits the same discovery failure).
 - Part-1 follow-up above (nil guards in the sibling ingress templates) stands.
 
+---
+
+# Update 2026-11-02 (part 3): public DNS pointed at internal IPs since Oct 25
+
+## Symptom
+
+Edge traefik healthy (pod Ready, endpoints populated, LB 5.78.101.168) but
+zero access-log traffic; `login.spencerslab.com` resolves to an RFC1918
+address from the public internet; `llama-moe-cert` HTTP-01 challenge stuck.
+
+## Root cause (verified)
+
+external-dns chart 1.20.0 -> 1.23.0 (renovate `02254db7d`, Oct 24) bumped the
+image v0.20.0 -> v0.23.0, crossing the documented v0.22.0 breaking change:
+**default annotation prefix became `external-dns.kubernetes.io/` with no
+fallback** ("This change can delete all your DNS records" — upstream release
+notes, #6424). The hub ingresses carry the legacy
+`external-dns.alpha.kubernetes.io/target: proxy-remote.<domain>` annotations
+(47 of them), so v0.23 stopped seeing any targets and fell back to the
+ingresses' LoadBalancer addresses — proxy-local's internal MetalLB IPs. With
+`policy: sync` it then republished every public hostname as an A record into
+RFC1918 space (Oct 25, when proxy-local synced). Since then all internet
+traffic for *.spencerslab.com hub names black-holes — hence the silent edge,
+and Let's Encrypt reaching dead addresses for llama-moe's HTTP-01 challenge.
+
+Ruled out along the way (all verified by rendering): chart 1.23.0 config
+regression (args identical, incl. `--label-filter`; only quoting + RBAC verb
+narrow), helm-v4 annotation loss (old/new renders both carry 47 targets),
+traefik-zerotrust chart regression (old/new renders identical except image
+3.6.15->3.7.16 + geoblock 0.3.6->0.3.8), edge readiness (pod 1/1).
+
+## Change
+
+`services/proxy-local/prod/values.yaml` — `external-dns-external` block gains
+the chart's first-class key:
+
+```yaml
+annotationPrefix: "external-dns.alpha.kubernetes.io/"
+```
+
+with a comment recording the v0.22 prefix switch and the outage. This is the
+upstream-prescribed remedy; the alternative (migrating all annotations to the
+GA prefix) is a repo-wide sweep that can follow later, after which this key
+gets removed.
+
+## Validation
+
+- helm 4.2.1 render of the proxy-local umbrella: deployment args now include
+  `--annotation-prefix=external-dns.alpha.kubernetes.io/`; rest of the render
+  unchanged (only doc-order noise on the qbittorrent service pair).
+- `helm lint services/proxy-local/prod` passes.
+
+## Recovery (after merge; user-owned)
+
+1. proxy-local umbrella auto-syncs -> external-dns v0.23 rolls with the flag.
+2. Within ~2m (`interval: 2m`) policy=sync rewrites the records back to
+   CNAME -> proxy-remote.spencerslab.com. Watch:
+   `kubectl -n default logs deploy/proxy-local-external-dns-external --since=10m | grep -iE "updat|creat|delet"`.
+3. Verify publicly: `dig +short login.spencerslab.com @1.1.1.1` → expect
+   `proxy-remote.spencerslab.com`; `dig +short proxy-remote.spencerslab.com
+   @1.1.1.1` → `5.78.101.168`. Spot-check the rest of the ~47 hub names in
+   the Cloudflare dashboard.
+4. Then: external HTTPS requests should appear in the edge traefik access
+   logs, and llama-moe-cert's HTTP-01 challenge should complete (the
+   "secret default/llama-moe-cert does not exist" errors stop).
+5. Check edge cert renewals that came due during the outage window:
+   `kubectl -n default get certificates` — any NotReady/expiring ones renew
+   once DNS is restored.
+
+## Side observations (not changed)
+
+- `charts/traefik-zerotrust/values.yaml` redirects `web` to a non-existent
+  entrypoint `https` (pre-existing since before the v42 bump; traefik drops
+  the redirect). Fix would be `to=:443`.
+- `services/proxy-local/prod/values.yaml` top-level
+  `bitwardenIds.traefik-mqtt: OVERRIDE_VIA_CUSTOM_VALUES` is a dead sentinel
+  (no template reads it; the live one is `traefik.bitwardenIds.traefik-mqtt`,
+  properly overridden in custom-values).
+
+
