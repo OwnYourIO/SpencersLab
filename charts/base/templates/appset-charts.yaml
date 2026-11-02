@@ -14,6 +14,9 @@ spec:
           - list:
               elements:
                 {{- range $appName, $chartConfig := .Values.charts }}
+                {{- /* Per-cluster opt-out (charts.<name>.enabled=false) — same
+                       nil-safe gate pattern as charts/hivetools generic-mcpserver. */}}
+                {{- if and $chartConfig (ne ($chartConfig.enabled | toString) "false") }}
                 - appName: {{ $appName }}
                   {{- if hasKey $chartConfig "version" }}
                   version: {{ $chartConfig.version }}
@@ -32,6 +35,7 @@ spec:
                   {{- end }}
                   values: {{ merge $extraValues (index $.Values $appName) | toJson }}
                   serviceName: {{ index $.Values "serviceName" }}
+                {{- end }}
                 {{- end }}
   template:
     metadata:

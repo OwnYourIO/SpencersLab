@@ -7,6 +7,12 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: kube-system
     ServerSideApply: "true"
+  # Overrides the base chart's default charts.hivetools entry. This cluster has
+  # no external-secrets operator (see custom-values/proxy-remote): hivetools
+  # renders an unconditional ExternalSecret, and its MCP servers currently have
+  # no OIDC — neither belongs on the public zero-trust edge.
+  hivetools:
+    enabled: false
 
 proxy:
   middlewares: 

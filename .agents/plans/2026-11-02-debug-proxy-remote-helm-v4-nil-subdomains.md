@@ -104,3 +104,96 @@ and the ten `services/*/prod/templates/generic-ingress.yaml` files. None of
 their values files contain nil entries today (verified by the sweep), so
 nothing else is broken — but a future value-less key would take that cluster
 down the same way. One-line `kindIs "map"` guards would harden the family.
+
+---
+
+# Update 2026-11-02 (part 2): ESO discovery error after the helm-v4 fix landed
+
+## Symptom
+
+With source 3 rendering again (fix above merged as `1dab94e7d`), sync fails:
+
+```
+one or more synchronization tasks are not valid: failed to discover server
+resources for group version external-secrets.io/v1
+```
+
+## Root cause (verified)
+
+The ExternalSecret comes from source 4 (base chart). Base gates its
+external-secrets/cert-manager-DNS01 resources on the presence of
+`bitwardenIds.cert-manager-solver-token` — the knob that makes them optional.
+History:
+
+- 2025-12-21 `0da74e01a` "Remove externalsecrets from proxy-remote": the
+  UUIDs were deliberately removed from `custom-values/proxy-remote/` — this
+  cluster runs WITHOUT the external-secrets operator (zero-trust edge; base
+  does not install ESO, it arrives per-cluster via `external-secrets*` chart
+  entries, which proxy-remote has never had).
+- 2026-09-06 `bea8128cd` "Add MCP platform to base" (bot, blanket edit across
+  all clusters) re-added `bitwardenIds.cert-manager-solver-token` + a
+  `hivetools:` block to proxy-remote's custom-values, re-opening the gate.
+- Syncs since then applied everything EXCEPT the undiscoverable
+  ExternalSecret task: ArgoCD 3.5.6 (helm 4.2.1) is live on the cluster, and
+  the two wildcard Certificates + DNS-01 ClusterIssuer (cert-manager APIs
+  exist) were applied and are tracked — the Certificates permanently NotReady
+  since their solver secret can never materialize without ESO.
+- Base's default `charts:` map (`hivetools`, `reloader`) also feeds
+  `appset-charts.yaml`, which had NO disable knob: a `proxy-remote-hivetools`
+  child app would deploy ToolHive + the default `kubernetes` MCP server to the
+  public edge, with an UNCONDITIONAL ExternalSecret
+  (`charts/hivetools/templates/secret-mcp-keycloak-oidc.yaml`) and, per the
+  chart's own NOTE, no OIDC on the MCP servers yet.
+
+Audit: proxy-remote is the only umbrella cluster with the solver-token gate
+open and no ESO installed (all of dev/gpu/gpu-ai/grow/home/infra/media/
+monitoring/proxy-backup/proxy-local install `external-secrets*`; backups/
+personal carry no token). `custom-values/cherry` also carries a token but has
+no service in this repo.
+
+## Changes (part 2)
+
+1. `custom-values/proxy-remote/prod-values.yaml` — removed the `bitwardenIds:`
+   and `hivetools:` blocks (restores the `0da74e01a` intent); comment records
+   the invariant so the next blanket sweep doesn't re-add them.
+2. `charts/base/templates/appset-charts.yaml` — per-entry opt-out gate
+   `{{- if and $chartConfig (ne ($chartConfig.enabled | toString) "false") }}`
+   (same nil-safe pattern as hivetools' `generic-mcpserver.yaml`).
+3. `services/proxy-remote/prod/values.yaml` — `charts.hivetools.enabled: false`
+   (overrides base's default entry for this cluster only).
+
+## Validation (part 2)
+
+- Base render (helm 4.2.1 AND 3.16.4) with edited values: 0 occurrences of
+  `external-secrets.io`; no `appName: hivetools` element (`reloader` +
+  `traefik-zerotrust` intact); no wildcard Certificates; ClusterIssuer
+  letsencrypt-prod falls back to the HTTP-01 branch (`else if` in
+  cert-manager-issuer.yaml) — the exact shape live from 2025-12 to 2026-09.
+- No-op proof: published base 1.0.202 vs gated local chart render
+  BYTE-IDENTICAL for gpu, home, proxy-local, monitoring, infra.
+- Before→after resource census (proxy-remote): exactly −2 Certificate,
+  −1 ExternalSecret, issuer DNS-01→HTTP-01, −hivetools element.
+- Source 3 re-render (both helms): passes; only diff = embedded appset values
+  JSON (token gone, hivetools.enabled added).
+- `helm lint`: charts/base and services/proxy-remote/prod both pass.
+
+## Landing (user-owned)
+
+1. Merge the three-file change; `release.yaml` publishes base v1.0.203.
+2. Merge the renovate "Update Helm release base to v1.0.203" pin bump (same
+   flow as `18976eb7f`). Until then the umbrella syncs on 1.0.202 — valid
+   (no ESO resources), but the old charts-appset still creates the child
+   `proxy-remote-hivetools` app, which sits unsyncable-but-inert (its
+   ExternalSecret can't apply) until the bump removes the element and the
+   appset controller prunes it.
+3. First successful sync will prune the 2 NotReady Certificates and rewrite
+   the ClusterIssuer to HTTP-01 — restoring the Dec-2025 steady state; edge
+   TLS is unaffected (it never depended on those).
+
+## Follow-up (optional, not done)
+
+- Gate `charts/hivetools/templates/secret-mcp-keycloak-oidc.yaml` on the
+  presence of `bitwardenIds.mcp-sso` (it is unconditional today — any
+  ESO-less cluster hosting hivetools hits the same discovery failure).
+- Part-1 follow-up above (nil guards in the sibling ingress templates) stands.
+
