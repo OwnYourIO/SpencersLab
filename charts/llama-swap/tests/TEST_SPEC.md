@@ -2744,3 +2744,28 @@ No fixture moved: model env is not part of the profile ConfigMap captures, the
 primary's era chain is untouched, and the golden config carries no strata model
 env (the arenas live in the inner config). 411 passed / 9 skipped: +1 arm,
 baseline skip count unchanged.
+
+### 9.28 U17 T5 reverted — presence pin flipped to an absence pin (2026-11-02)
+
+One sync of `STRATA_MMQ_KQ=1` on the q4 arena, measured, reverted (owner ruling
+U17). Suite change is a **flip, not an addition**:
+`test_u16_mmq_kq_env_is_a_q4_only_experiment` (required presence on q4, absence
+elsewhere, plus a non-inertness check on the driver's
+`STRATA_MMQ_KQUANTS=ON` build def) becomes
+`test_u16_mmq_kq_env_is_a_reverted_experiment_on_every_arena`, asserting the env
+is absent from all five arenas and quoting the measured outcome in its message.
+The build-def assertion was dropped with it: with no consumer for the kernels,
+requiring the flag to stay compiled would be a pin on nothing.
+
+Why keep an arm at all rather than delete the test: the flag is bit-changing and
+plausible-looking (it halves the bytes read per expert on the K-quant path), so
+the failure mode next month is someone re-adding one env line because the
+comment in values.yaml explains the theory well. The absence pin turns that into
+a red test that cites the bench requirement. Coverage of the five arenas is
+asserted in the same arm (all five must render), so the pin cannot be satisfied
+by a roster shrinking.
+
+`Q4_MMQ_KQ_ENV` stays in strata_testlib as the negative-pin literal (same role
+as `Q4_SESSION_FLAG` from U12), with its comment carrying the outcome.
+411 passed / 9 skipped — unchanged count from 9.27, because presence became
+absence rather than a test being added.

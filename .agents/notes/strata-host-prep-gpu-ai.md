@@ -456,16 +456,18 @@ engine silently re-picks a smaller chunk when the prompt buffers do not fit
    below 32,768, that is the ×4 link ceiling (H5) being measured for the first
    time, which is a result worth recording either way.
 
-**3.4b T5 — the K-quant prompt-expert experiment on q4 (owner go 2026-11-02).**
-`STRATA_MMQ_KQ=1` now rides the **q4 model env only** (pinned q4-only by
-`test_u16_mmq_kq_env_is_a_q4_only_experiment`). Reason it exists: on AMD the
-K-quant prompt path is the un-fused one — QUANTS.md@v0.2.9 says the FP16 route
-"reads each expert as ~10 MB of FP16" — and q4 is doubly exposed (experts ~2.8×
-IQ3_S's size, and only 6,889 fit the VRAM expert cache where the primary keeps
-11,127, so a prompt streams about twice the expert volume over the OCuLink ×4
-link). **Baseline it is judged against** (first minute of real q4 traffic,
-2026-11-02 19:38-19:42, engine-side `prefill` lines, q4 vs the primary at equal
-size and equal position):
+**3.4b T5 — the K-quant prompt-expert experiment on q4: TRIED and REVERTED (U16→U17, both 2026-11-02).**
+`STRATA_MMQ_KQ=1` rode the **q4 model env only** for one sync and is now gone,
+pinned absent on every arena by
+`test_u16_mmq_kq_env_is_a_reverted_experiment_on_every_arena`. Reason it existed:
+on AMD the K-quant prompt path is the un-fused one — QUANTS.md@v0.2.9 says the
+FP16 route "reads each expert as ~10 MB of FP16" — and q4 looked doubly exposed
+(experts ~2.8× IQ3_S's size, only 6,889 fit the VRAM expert cache where the
+primary keeps 11,127, so a prompt streams about twice the expert volume over the
+OCuLink ×4 link). **The baseline that motivated it** (first minute of real q4
+traffic, 2026-11-02 19:38-19:42, engine-side `prefill` lines, q4 vs the primary
+at equal size and equal position — kept, because it is the measurement the next
+round inherits):
 
 | prompt (fresh tokens) | q4 | primary IQ3_S |
 |---|---|---|
@@ -474,27 +476,52 @@ size and equal position):
 | 9.4k | 486.1 | 530.4 |
 | decode | 46.1–59.9 | 69.0–80.3 |
 
-Decode is inside the −10…−30% U8 accepted; the −61% prompt gap is NOT (the
-docs' own quant-to-quant gap is −15…−28%), so this is the anomaly being probed.
-Read it the same way as T0/T1 — unique-tagged fresh prompts at 16K and 32K, ≥3
-per arm, medians, and compare against the table above (the earlier numbers, not
-each other):
+Decode landed inside the −10…−30% U8 accepted; the −61% prompt gap did not (the
+docs' own quant-to-quant gap is −15…−28%), so the flag went out to probe that gap.
+**It measured nothing, and that is the recorded result.** Arena-attributed,
+context-matched (mean cached 52k before vs 51k after, q4 only, n=42 before /
+n=17 after): the 1k-8k band did not move — `2,540 fresh at ~52k cached →
+148.8 tok/s` before vs `148.7` after — while the *before* window alone spans ~2×
+at identical sizes (`9,561→266.2` vs `9,404→486.1`), exactly QUANTS.md's "varies
+between runs on this box by up to 2×", and the one cold 22k sample landed BELOW
+the pre-change range (`236.8` vs `324.8`-`433.5`). Decisive for the revert: the
+flash-next engine prints **no** kernel-path line at all — only the q36/ornith
+path announces `prompt experts on MMQ (int8)` — so the test could not establish
+that the switch engaged. A bit-changing knob (median KL vs Q8_0 improves to
+0.0027 from FP16's 0.0047, mean worsens on a few prompts 0.095 vs 0.081) does
+not earn its place on an unobservable maybe. Any re-test needs a controlled
+bench — upstream ships one (`tools/strata_bench.py`, the standard-v1 protocol in
+BENCHMARK_PROTOCOL.md: fresh tokens only, cached never in the numerator, unique
+tags, frozen corpus) — not another observational A/B, because production
+traffic cannot resolve ±30% against 2× noise. Same read command, still the
+fastest way to see what any arena is actually doing:
 
 ```bash
 kubectl -n default logs deploy/gpu-ai-llama-swap-strata --since=30m \
   | grep -oE "prompt [0-9]+ cached [0-9]+.*prefill [0-9.]+ tok/s" | tail -20
 ```
 
-Three outcomes, all worth recording: **faster** → upstream has an unmeasured AMD
-win and the same switch is a candidate for orca's IQ4_XS path too (different
-rung, so it needs its own A/B — do not carry it over on this result); **same** →
-the gap is the ×4 link and the expert-slot shortage, not the kernel (T5 stays
-off-out-of-harm's-way, and the real fix is on the B ticket's pool math or a
-bigger VRAM expert cache); **slower** → delete the env line, and the measurement
-itself is the first published AMD MMQ_KQ number either way. Rates are the
-comparison, never token diffs: the switch changes bits (upstream's own numbers —
-median KL vs Q8_0 IMPROVES to 0.0027 from FP16's 0.0047, while the mean WORSENS
-on a few prompts, 0.095 vs 0.081).
+**What the T5 round left behind, and it is bigger than T5.** The per-turn cost
+table below held across arenas (q4 and primary), both chunk settings (`auto`
+16,384 vs `auto:32768`) and with and without this flag — so the dominant latency
+in agent traffic is NOT a kernel choice, NOT the chunk, and NOT the disk:
+
+| fresh tokens in the turn | engine `prompt_read` | note |
+|---|---|---|
+| ~30 | **0.2–0.4 s** (~90-104 tok/s) | the cheap case |
+| ~330–760 | **10–20 s** (17–49 tok/s) | 50× the wall time of a 30-token turn |
+| ~1,050–2,540 | **17–18 s** (59–149 tok/s) | flat: no proportional gain from more tokens |
+| ~8,050–16,690 | **19–35 s** (409–474 tok/s) | |
+| ~22,300 cold | **51–94 s** (237–434 tok/s) | |
+
+A step between ~40 and ~330 fresh tokens, then a ~17 s floor until ~8k, is a
+**threshold**, not a rate. The named candidates to test next live in the q36/
+AMD docs — `STRATA_PF_SWITCH_MIN_T` (fused-path floor, default 1,024, "keeps
+short prompts on default numerics"), the per-chunk expert sweep law ("a prompt
+chunk streams every layer's experts over PCIe once, so the cost is paid per
+chunk, not per token", #4332), and `--prefill-pipe` / `STRATA_PREFILL_RING` —
+but none of them explains a 40→330 token step cleanly, so it is an open
+question for a controlled round, tracked as its own card, not another guess here.
 
 **3.5 Timed-unload proof (same session, once the engine has loaded).**
 `unloadTimeout: 180` is load-bearing: llama-swap force-kills at the per-model

@@ -194,35 +194,34 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
 
 
 @helm
-def test_u16_mmq_kq_env_is_a_q4_only_experiment():
-    """U16: STRATA_MMQ_KQ=1 (int8 MMQ prompt experts on the K-quant path) is
-    shipped as a MEASUREMENT on the q4 arena, so the pin is two-sided: the line
-    must be present where the experiment runs, and provably ABSENT everywhere
-    else. Why the scoping matters more than the presence: the switch changes
-    bits (median KL vs Q8_0 improves, mean worsens on a few prompts per
-    QUANTS.md@v0.2.9), and the other R9700 rungs already take fused int8 prompt
-    experts — spreading it would silently re-tune rungs nobody measured."""
+def test_u16_mmq_kq_env_is_a_reverted_experiment_on_every_arena():
+    """U16 shipped STRATA_MMQ_KQ=1 on q4 as a measurement; U17 reverted it the
+    same day, so this pin flipped from presence to ABSENCE on all five arenas.
+    The outcome, recorded rather than dropped, because it is the reason the flag
+    may not come back quietly: across arena-attributed, context-matched samples
+    (mean cached 52k before vs 51k after) the 1k-8k band did not move (2,540
+    fresh at ~52k cached: 148.8 tok/s before, 148.7 after), the single cold 22k
+    sample landed BELOW the pre-change range (236.8 vs 324.8-433.5), and the
+    before-window alone spans ~2x at identical sizes (9,561 fresh -> 266.2 vs
+    9,404 -> 486.1), matching QUANTS.md's own "varies between runs on this box
+    by up to 2x". Decisive: the flash-next engine prints NO kernel-path line —
+    only the q36 path announces "prompt experts on MMQ" — so the test could not
+    even establish that the flag took effect. A bit-changing knob (median KL vs
+    Q8_0 improves 0.0027 vs 0.0047, mean worsens on a few prompts 0.095 vs
+    0.081) does not earn a place on an unobservable maybe; it returns only
+    behind a controlled bench (upstream tools/strata_bench.py, standard-v1).
+    A reappearance anywhere is an un-ruled re-tune, which is what this arm
+    catches."""
     models = S.inner_config(_docs())["models"]
-    q4_env = set(S.env_list(models[S.Q4_ID]))
-    assert S.Q4_MMQ_KQ_ENV in q4_env, (
-        f"{S.Q4_MMQ_KQ_ENV} missing from the q4 model env ({sorted(q4_env)}) — the "
-        "prompt-rate experiment silently reverted, so the next measurement means nothing"
-    )
-    for aid in (S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.ORNITH_ID):
-        if aid not in models:
-            continue
-        other = set(S.env_list(models[aid]))
-        assert S.Q4_MMQ_KQ_ENV not in other, (
-            f"{aid} carries {S.Q4_MMQ_KQ_ENV} — this switch is a q4-scoped experiment "
-            "(bit-changing, and only the K-quant path is un-fused on AMD)"
+    arenas = [i for i in (S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID) if i in models]
+    assert len(arenas) == 5, f"expected five arenas, rendered {sorted(arenas)}"
+    for aid in arenas:
+        env = set(S.env_list(models[aid]))
+        assert S.Q4_MMQ_KQ_ENV not in env, (
+            f"{aid} carries {S.Q4_MMQ_KQ_ENV} — U17 reverted this experiment (no measured "
+            f"benefit, engagement unverifiable); re-adding it needs a bench round and a ruling, "
+            f"not an env line. Full env: {sorted(env)}"
         )
-    # The engine-side precondition: without the build flag the env does nothing
-    # (or, worse, is refused), and the flag lives in the migration recompile line.
-    driver = S.read(S.CONTAINER_DIR / "files" / "fetch_models.sh", "the C09 migration recompile")
-    assert "STRATA_MMQ_KQUANTS=ON" in driver, (
-        "the migration cmake no longer compiles the K-quant MMQ kernels — the q4 "
-        "MMQ_KQ env would be inert; either restore the build def or drop the env line"
-    )
 
 
 @helm
