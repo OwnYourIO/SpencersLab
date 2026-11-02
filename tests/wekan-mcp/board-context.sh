@@ -244,9 +244,9 @@ missing = [x for x in blabels if nlabels.count(x) < 1]
 if missing:
     print(f"base matchers lost: {missing}"); sys.exit(1)
 # cf-90 C06 widening: the sanctioned row ADDITIONS are the cf-75 agent-board
-# row (era-gated: post-merge it rides the base too) and the deploy PAIR —
-# dev-deploy/dev-deploy-pr. Admitted as the exact set, never as a blanket
-# skip: any other gained matcher still reddens.
+# row (era-gated: post-merge it rides the base too), the cf-96 C02 explore
+# row and the deploy PAIR — dev-deploy/dev-deploy-pr. Admitted as the exact
+# set, never as a blanket skip: any other gained matcher still reddens.
 added = [x for x in nlabels if x not in blabels]
 admitted = {"board", "agent-board", "dev-deploy", "dev-deploy-pr", "explore"}
 if added and not set(added) <= admitted:
@@ -273,6 +273,12 @@ if os.path.exists(".rulesync/subagents/agent-dev-deploy.md"):
 # byte-equal walk below) and the pinned settled form rides; anything else — a
 # dropped ls/probe grant, a reworded tail, any gained row — reddens.
 COORD_PR_SETTLED = """| coord-pr | same as coord | plan/explore/research/test/dev-pr/dev-deploy-pr/review | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
+# cf-96 final-review vocabulary sweep (Deploy -> Deployment, C11 fold
+# round): the dev-deploy row's launch-surface cell moved once — the
+# retired `Deploy` stage cite now reads `Deployment`. Admitted EXACTLY,
+# never as a blanket skip: the TB form still rides (pre-merge trees)
+# and the pinned settled form rides; anything else reddens.
+DEV_DEPLOY_SETTLED = """| dev-deploy | everything EXCEPT the test paths (`charts/**/tests/**`, `containers/**/tests/**`, top-level `tests/**`) and `.agents/plans/**`, plus the context-file rules below — the block mirrors `agent-dev-local` verbatim plus the cleanup grant (cf-90 C06) | none — and nothing launches them either yet: the pair ships DEFINITION ONLY (cf-90), the coord step-8b Deployment-stage hook under a checked Lifecycle `Deployment` is the only future launch surface (the boards Stage map governs) | as dev-local — git reads, `git add`/`git commit`/`git push` denied (the coordinator commits), trailing `ls *` allow, `helm lint/template` | as plan, plus the workspace-isolation trio (`opencode_worktree_create`/`opencode_worktree_list`/`opencode_session_move`) AND the cleanup row `opencode_worktree_remove` (the deploy fixer closes its OWN worktree at hand-back; branch stays coord-owned, landing-gated) — still NO `execute` row (no deny baseline: interactive runs approve Code Mode once, unattended pipeline runs stay blocked from minting coordinator-owned surfaces) |"""
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
@@ -292,7 +298,12 @@ for r in b:
             if len(cur) == 1 and cur[0] == COORD_PR_SETTLED:
                 continue
             print(f"coord-pr row is neither the TB form nor the pinned settled form (cf-72 T-7 tail + the cf-88 union rider + the cf-90 C06 launch-cell widen) — got {cur}; the admission is byte-exact: dropping a grant, rewording the tail or any other gain is unadmitted drift"); sys.exit(1)
-        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, cf-90 C06's deploy-pair rows + coord roster cell, and the byte-exact coord-pr settled admission; nothing else may drift"); sys.exit(1)
+        if label == "dev-deploy":
+            cur = [x for x in n if x.split("|")[1].strip() == "dev-deploy"]
+            if len(cur) == 1 and cur[0] == DEV_DEPLOY_SETTLED:
+                continue
+            print(f"dev-deploy row is neither the TB form nor the pinned settled form (cf-96 final-review Deploy->Deployment vocabulary sweep) — got {cur}; the admission is byte-exact"); sys.exit(1)
+        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, cf-90 C06's deploy-pair rows + coord roster cell, the byte-exact coord-pr settled admission, and the cf-96 dev-deploy Deploy->Deployment re-pin; nothing else may drift"); sys.exit(1)
 PY
   ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, cf-90 C06's deploy-pair rows + coord roster cell + the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too); with the deploy pair shipped, both dev-deploy matchers must be present"
 fi

@@ -190,8 +190,9 @@ the deployed build can lag the repo source, so **docs are claims, the live
      checklist to `Lifecycle` with the 11 items (`Single Session` last),
      replace `Human in the Loop` items with the same 11, ensure the
      `Research: Parallel` label (the provision apply usually covers this;
-     the human step is its read-back). Agents never mutate board checklists
-     or rules.
+     the human step is its read-back). Agents never mutate board
+     checklists or rule extras — the additive rule-pair creates ride the
+     provision apply leg named in the human-owned section below.
 
 8. **Verify with the zero-action re-run** (the read-back contract of
    `tests/wekan-board-provision/checklist-cutover.sh` and
