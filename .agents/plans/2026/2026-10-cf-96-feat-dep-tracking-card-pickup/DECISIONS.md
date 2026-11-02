@@ -133,6 +133,31 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
      its "validations gate chunk done" statement remains true under both
      shapes. Rejected: the plan's still-runs best guess.
 
+## Coord rulings (post-research round)
+- 2026-11-02 human (via coord question round): **OQ-P1 = FOLD THE CODE** — add the
+  `get_rule`/`_slim_rule` passthrough (rule extras: `extraActions` + the rule's
+  `enabled` field) to the UNDEPLOYED C01 surface in `containers/wekan-mcp`,
+  re-stamp its docs/call-shapes row, and let the zero-action schema-2 read-back
+  work as written. Rejected: re-pointing to UI-export-only capture (leaves the
+  agent path broken), and deferring to a follow-up card (the defect makes
+  C10's step 8 silently degrade — worse than the fix). Consequence: the plan
+  gains a delta chunk (C11) and C10's runbook/provision-skill capture
+  instructions become true without text change.
+- 2026-11-02 coord: OQ-P2/P3/P4/P5 dispositions — P2 (a present-but-failed
+  `tools/list` answer degrades like absence, one retry) and P3 (title-map
+  fallback + unresolvable-edge-end wording) and P4 (runbook step-2 ghcr recipe:
+  anonymous `tags/list` is the truth, `imagetools inspect` resolves the legacy
+  `:latest` and would mislead; note the v90–v102 distractor tags) fold as
+  TEXT-ONLY into the C11 delta round. P5 (changing the WeKan service user's
+  password invalidates the minted bearer → the deploy needs a re-mint plan) is
+  out of this ticket's scope → Inbox follow-up card at close-out.
+- 2026-11-02 coord: post-research verification of record — the seven
+  dependency-surface files are byte-identical v12.65↔main and the lab actually
+  runs v12.77 (renovate d8b12fd0f), so no assumption in C01/C05/C08 moved;
+  the upstream `checkItem` rule-action typo is NOT fixed on main, so the v2
+  createCard extras stay DORMANT (the landed "dormant until upstream fix"
+  wording is honest as written); rule extras remain import-only (no REST path).
+
 ## Deferred
 - Wave-parallel dev sessions (AD-71 half 2): coord is the sole committer — one
   chunk = one commit it makes; concurrent devs collide at commit time. C06

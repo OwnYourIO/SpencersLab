@@ -4,7 +4,7 @@
   "coord_session": "ses_e6b2a397effeJoBUoRxc4WVA22",
   "test_session": "ses_e6adaf11bffeOtWerHTHQlYlqj",
   "current_wave": 3,
-  "updated_at": "2026-11-01T06:30:00Z",
+  "updated_at": "2026-11-02T14:12:00Z",
   "handoffs": [
     "RESULT (agent-test, ses_e6adaf11bffeOtWerHTHQlYlqj, 2026-11-01) status: DONE chunk: plan (tests C01-C10) — 15 test files committed 2b4748847 (tests/** only; STATE churn left coord-owned). Per-chunk gates recorded in suite headers; pinned interfaces fixed as contract (preload_board {swimlanes,lists→cards,dependencies,label_names,field_names} + 7-key card map; set_card_labels(board_id,card_ids,add_label_ids,remove_label_ids); create_card trailing parent_id; schema-2 key checklist_extras + action update_createcard_checklists; single formatter symbol localIso). Baselines green incl node --test 233/0; designed-reds name not-yet-landed surfaces; pre-existing admitted reds enumerated (cf-90 warm family + STATE-churn arms + validation-fix t4 + coder tfbin env for C09). deviations 1-6 recorded. friction: '8 signatures' vs +7 tools -> coord CLOSED (8th = parent_id signature on existing create_card, DECISIONS); coder-*.sh reds = missing /tmp/opencode/tfbin precondition flagged to C09. open_questions Q1/Q2 both RULED by coord into DECISIONS (roster-drift arms stay outside chunk gates; agent-perms in-commit re-pin is C02's own duty).",
     "RESULT (plan, ses_e6b06c6bdffeh06ZkjS1RAOGVc, 2026-11-01) status: DONE chunk: plan — 10 chunks/5 waves: C01 wekan-mcp 7 dep/preload/label tools+docs (L, w1); C02 agent-explore+twins+matrix+AGENTS+EXPLORE.md read-order (L, w1); C03 sibling-I: 77b BOARD_COLORS, 70b typo, 81/78a verifies (Sx4, w1); C04 AD-66 renovate system-upgrade (S, w1); C05 boards dep-gate+preload-at-claim+grouped-sibling (M, w2, dep C01); C06 coord+plan research-split+explore-launch+AD-71 guidance (M, w2, dep C02); C07 Lifecycle 10-stage redesign (M, w3, dep C05); C08 cutover artifacts modify-only (M, w4, dep C07); C09 TZ env+stamp pass OQ5-gated (M, w4, dep C07); C10 HOLD deploy-chain+cutover readback human-executed (S, w5, dep C01,C08). OQ2/3/7/9/10/11/12 closed as DECISIONS; 8 questions returned for the ONE batched round; no-questions rule honored; commands_run: json.tool + baseline suites green + availability probes; deviations none; friction none new.",
@@ -252,7 +252,24 @@
         "RESULT (C10 r2 fix, test session continued) status: DONE — MAJOR landed BYTE-EXACT from the reviewer's own suite-simulated artifact (zero paraphrase); MINOR applied from the reviewer's quoted half-line (honest note: it was NOT inside their patched copy — post-edit diff vs their copy == exactly that half-line). cf96-deploy 7 ok unmodified incl t6 agent-execution negatives against the new sentences; checklist-cutover 8, provision surface 9, lifecycle 7, node 238/0; committed e158169b4 (12+/5−, tests/** only). Actor-agreement read-back: step 7 bullet 2 names the agent apply leg, bullet 4 marks the human step its read-back, the scoped bullet names exactly one agent-write leg; no residual contradiction INSIDE the runbook.",
         "RESULT (C10 review r2, fresh ses_e6804b235ffeWOuEzLsOEPl5OW) status: DONE verdict APPROVED — MAJOR CLOSED: bullet byte-identical to the r1 spec (md5-equal) and verified against skills/wekan-board-provision/SKILL.md step 3 (enumeration matches, extras ban matches, exactly one agent-write leg, 'everywhere else card comments only' exhaustive); MINOR CLOSED verbatim (no write assigned to two actors); typo scan clean ('read-bank' zero hits); r1 non-blocking items intact; suite re-run all green incl t6 negatives; nothing executed (chain touches tests/cf96-deploy only; both values files empty-diff vs merge-base — the bump stays prepared text). LEDGER DISPOSITION for final review: the boards-cutover-vs-provision-skill sentence tension = a final-review vocabulary-sweep item (NOT an Inbox card, NOT acceptable-as-written — the boards section self-contradicts at its step 4), one-clause fix with a verbatim donor in the runbook, fold with C07's retired-Deploy stragglers, widen bullet 4's 'or rules' clause."
       ]
+    },
+    "C11": {
+      "status": "pending",
+      "wave": 6,
+      "depends_on": ["C01", "C05", "C08", "C10"],
+      "title": "post-research delta (OQ-P1 FOLD ruling): _slim_rule extras+enabled passthrough + docs-parity re-stamp + OQ-P2/P3/P4 text folds + green-on-arrival suite legs",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "dev_session": null,
+      "handoffs": []
     }
+  },
+  "post_research": {
+    "session": "ses_e67fd5856ffe6Rmlp7o7xg4JqD",
+    "status": "DONE",
+    "verdict": "REPLAN-CANDIDATES: 1 CODE (schema-2 extras capture instructs get_rule, but _slim_rule structurally drops extraActions -> the agent capture path can never work; step-8 read-back silently degrades to schema-1. Recommended fix: small _slim_rule passthrough on the undeployed C01 surface, pre-merge. Alternative: re-point both texts to UI-export-only capture). Folds OQ-P2/P3/P4 text-only (call-failure-vs-absent degrade, title-map fallback/unresolvable edge end, runbook step-2 imagetools->tags/list recipe + v90-v102 distractor note). OQ-P5 (password change kills bearer) -> follow-up. VERIFIED TRUE: 7 dependency-surface files byte-identical v12.65<->main (cards.js six commits all validation/logging; bulk-labels route present AT 12.65); lab actually runs v12.77 (renovate d8b12fd0f post-merge-base) with zero assumption risk; AST recount 17+21=38; checkItem typo NOT fixed on main (extras stay DORMANT — landed text honest); rule extras import-only confirmed; pickup walk executable w/ 3-cap consistent; readonly catalog = 13 tools live (degrade law proven). RESEARCH.md post-planning section appended (pure append, 450 lines, 17 [P#] sources).",
+    "at": "2026-11-01"
   },
   "blocked": [],
   "deferred": [

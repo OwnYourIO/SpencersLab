@@ -305,3 +305,455 @@ The card's move protocol for the group: coordinator moves the chosen siblings to
 - [S-plugin-locks] repo `.opencode/plugin/pipeline-locks/index.ts` (grep): ISO-UTC + epoch-ms stamp sites.
 - [S-gate] repo `scripts/agent-board-coord-gate.sh` L205: epoch-ms fallback.
 - [L4] Live card `r3ghE7qGj75HTnghH` "[cf-90 ledger L4] Bump dev-boards wekan-mcp pin to a v102+ build": v102 tools live-probed absent 2026-10-31 on :v87.
+
+---
+---
+
+# POST-PLANNING ROUND — landed implementation vs reality (After-Planning timing, executed 2026-11-01)
+
+Appended by the cf-96 post-research session after all 10 chunks landed. The
+pre-planning part above is untouched (its claims are re-verified here, not
+edited). Method: v12.65-tag ↔ main byte-diffs of every upstream file the landed
+surface assumes, GitHub commit-history queries, live read-only cluster and
+registry probes, and re-reads of the landed repo surfaces (server.py cf-96
+block, boards skill, C10 runbook, provision engine + skill, values pins,
+docker-build.yaml, renovate.json). No writes anywhere but this section.
+Evidence stamps `source-only 2026-11` stay source-only: still no live CALL of
+any new tool (the catalog probes below confirm the deploy gap, not route
+behavior — that stays C10 step 5's job).
+
+## TL;DR
+
+1. **Nothing moved under us.** The five REST dependency routes, the 7 types,
+   the export `?fields=` vocabulary, the bulk-labels route and the
+   parentId/linkedId regions are BYTE-IDENTICAL between the lab's 12.65 pin and
+   current main, with zero commits touching those files since 2026-10-20
+   [P1][P3][P4][P12]. Every landed C01 server-side assumption re-verified true.
+2. The lab now runs WeKan **v12.77** (chart 12.77.0 landed on main
+   2026-11-01 04:12Z, after this worktree's merge-base) — zero risk to any
+   assumption, because the byte-identity finding covers 12.65→12.77→main
+   [P13][P14][P15].
+3. The preload field set is **correct and minimal**; `rules`/`triggers`/
+   `actions`/`users` sections turn out to be UN-trimmable by `?fields=`, and two
+   call-failure kill-switches exist (`disableAllExport` site setting; the
+   admin-only-custom-fields export gate) that the degrade law does not yet
+   cover [P5][P10][P11].
+4. **One genuine defect**: schema-2 extras capture says "read the extras with
+   `get_rule`", but `_slim_rule` structurally drops `extraActions` — the agent
+   capture path cannot work; only the Rules-UI-export half of the parenthetical
+   is executable → the ticket's single REPLAN-CANDIDATE [P9].
+5. The checkItem rule-action typo is **NOT fixed on main** — v2 extras stay
+   DORMANT (landed text honest) [P8]; the C10 runbook fails at exactly one step
+   as written (the `imagetools inspect` tag-list hint; the correct anonymous
+   tags/list recipe is verified live) [P12][P16].
+
+## F1 — Dependency-shapes re-check: nothing moved (task 1)
+
+Compared 2026-11-01, tag v12.65 ↔ main:
+
+- `server/models/dependencies.js`, `models/metadata/dependencies.js`,
+  `models/lib/exportFields.js`, `models/exporter.js`, `models/export.js`,
+  `server/rulesHelper.js`, `models/checklistItems.js`: **byte-identical**
+  end-to-end, and the GitHub commits API shows **no commits touching any of
+  them since 2026-10-20** — i.e. no drift inside v12.66→v12.77 either [P1][P3].
+- `server/models/cards.js`: six commits since v12.65 (2026-10-21…27, shipped in
+  v12.66–v12.68). Diff audit of all nine hunks: AuthBleed security logging on
+  two Meteor methods, a recurrence-job index, the #6815 per-board cardNumber
+  uniqueness `before.insert` hook, the linked-card double-activity fix, and
+  `restPlacementError` added to the single POST-create and bulk-create routes
+  (list/swimlane must belong to the URL's board). **The bulk-labels route, the
+  by-list projection, the single-card GET and the PUT-`parentId` block are
+  untouched by the diff** [P12].
+- Landed C01 assumptions re-verified against main as of today: same-board
+  constraint ("Target card is not on this board" → 400) ✓; source-card-only
+  storage (`$push`, or positional `$set` on the source) ✓; **no twin synthesis**
+  (`DEPENDENCY_TYPE_INVERSE` is not referenced anywhere in the server REST
+  file — exactly what the C05 R1-fix sentence states) ✓; POST UPSERT merge
+  semantics (omitted props keep the existing edge's values) ✓; `dependsOn`
+  alias ✓; board-wide GET filters `archived: false` while the export's card
+  selector filters only `linkedId` (archived included) ✓; bulk-labels route
+  present at v12.65 already (cap 500, `addLabelIds` board-validated, write-
+  access gate) ✓ [P1][P5][P12].
+- Bearer auth on the export route (preload's assumption) holds structurally:
+  the global `parseBearerToken` middleware resolves `Authorization: Bearer` →
+  `activeUserByToken` → `req.userId`, which the export handler consumes via
+  `checkLoggedIn(req.userId)` + `canExport` (board visibility) [P6][P7].
+- New-but-benign strictness worth one doc line: POST-create (and bulk-create)
+  now 400 on a foreign-board listId/swimlaneId, and the single POST-create
+  asserts visibility on its (always-undefined) route-param parentId — no landed
+  wekan-mcp flow sends those shapes, so zero impact; future bulk/parent
+  variants must keep ids same-board [P12].
+
+## F2 — Preload correctness vs the real exporter (task 2)
+
+- The five requested keys (`board-header,labels,custom-fields,dependencies,sort`)
+  are all ∈ `BOARD_EXPORT_FIELD_KEYS`, so `parseExportFields` keeps them (an
+  un-allowlisted key would be silently stripped) [P4].
+- **What `?fields=` actually gates in the JSON board export** — and it IS the
+  streaming path: the route calls `streamJsonBoardExport` → `buildStream(res)`;
+  the buffered `build()` remains only for the single-attachment shape [P5][P6].
+  Gated keys: `custom-fields` (on ⇒ the `customFields` section — load-bearing
+  for the slug map), and every OFF section ⇒ EMPTY ARRAY for `comments`,
+  `activities`, `checklists`+`checklistItems`, `subtasks`, `scrum`,
+  `attachments`. `lists`, `swimlanes`, `cards`, **`rules` + their
+  `triggers`/`actions`**, and `users` are NEVER trimmable by any field key.
+  `labels`/`board-header` ride the board root; `cardDependencies`, `sort`,
+  `parentId`, `cardNumber`, `labelIds`, `customFields` ride the full card
+  documents regardless of whether the keys name them. Verdict: the set is
+  **correct for a pickup decision — nothing the gate needs is dropped** — and
+  the `dependencies`/`sort`/`labels`/`board-header` keys are intent-
+  documenting (future-proof if upstream ever gates them), not currently
+  load-bearing. The landed docstring's "unselected sections come back as EMPTY
+  arrays" is exact. The unclaimed caveat: the raw body still carries
+  title/description/dates per card and the WHOLE rule set — the LEAN shape is
+  achieved by the tool's projection, not by the wire payload; a rules-heavy
+  board grows the raw body with board CONFIG, not cards.
+- `sort` arrives as expected: numeric on every card/list/swimlane document;
+  `_sort_key`'s None-last handling covers a missing row; ascending = top-first
+  matches the by-list read's documented order ✓.
+- Streaming/timeout: the server writes chunk-by-chunk (flat memory); the client
+  (httpx, 30.0 s default, whole-body `resp.json()`) is not streaming-aware —
+  fine at AI-Dev size (O(few-hundred KB)); the known `tools/call` timeout
+  family in the wekan-mcp playbook is the mitigation and a re-attempt on a READ
+  is harmless. A truncated stream body raises out of the JSON parse —
+  **fail-loud, never a silently partial map**, the right safety half; the
+  missing half is text (F3 fold-1).
+- Live-version question: chart pin 12.65.0 on this branch vs **v12.77 running
+  on home** (deployments `home-wekan` + `home-boards`, image
+  `ghcr.io/wekan/wekan:v12.77`) — resolved as branch staleness, NOT GitOps
+  drift: renovate commit `d8b12fd0f` (wekan chart 12.77.0, 2026-11-01T04:12Z)
+  landed on main AFTER this worktree's merge-base `c241bdaff` [P14][P15]. Risk
+  to every assumption above: **zero** (F1's byte-identity spans
+  12.65→12.77→main). The pre-round changelog read of "v12.77 on the lab" is
+  confirmed current; the C10 probes will run against 12.77 and every route
+  fact holds there.
+- Two call-failure kill-switches the landed text does not cover (verified in
+  the byte-identical files — they apply to 12.65, 12.77 and main alike):
+  `assertExportEnabled()` throws `export-disabled` when the site setting
+  `disableAllExport` is on [P11], and `assertFieldExport(boardId, viewer)`
+  refuses the export with 403 "This export requires board administrator
+  access" for a NON-admin caller on any board that has an `adminOnly` custom
+  field — or even orphaned customField values on cards whose definitions
+  vanished [P10]. AI-Dev today (one plain `slug` field; service user with
+  move/write rights) is unaffected; a board admin later marking the slug field
+  admin-only would silently break `preload_board` at runtime → fold (F3
+  fold-1) + a note in the provision skill (do not mark board custom fields
+  admin-only while the preload depends on the export).
+
+## F3 — Pipeline-consumer readiness walk (task 3)
+
+Hypothetical hourly scheduled run on the landed 38-tool contract — card #102
+(say), top of Not Started, walked claim → gate → decision:
+
+1. Pick candidate, `get_card` confirm ✓ (pickup facts are single-card reads).
+2. `pipeline_claim` (3-attempt cap per the Card-lifecycle bullet L130) —
+   consistent with the gate text's "the 3-attempt claim cap still governs":
+   every gate-skip is a claim+release(`abandoned`) cycle consuming one attempt;
+   the no-op exit at the cap is unchanged ✓; a launch-given card is reported
+   and left, never forced ✓.
+3. `preload_board(board_id)` once → the map serves the rest of the walk.
+   Gate inputs all present in the payload shape: edges `{from_id,to_id,type}`;
+   candidate blocked ⇔ (`to_id==C && type=='blocks'`) ∨ (`from_id==C &&
+   type=='is-blocked-by'`) — both spellings decidable consumer-side exactly as
+   the (post-R1-fix) sentence says; the blocker's archived flag and list
+   membership from the same cards map (archived included, flagged);
+   Test/Finished by TITLE via the board-context block's lists map; the
+   Provider/`Pipeline:` derivations for later candidates via `label_ids` ×
+   `label_names`; resume-vs-new-run via the parsed `slug` ✓. Executable as
+   written, with three text folds:
+   - **fold-1 (degrade coverage)**: the consumer law keys the degrade ONLY on
+     "tool ABSENT from `tools/list`". A PRESENT tool whose CALL fails —
+     export-disabled, admin-fields 403 (F2), the 02:12Z-family outage, a
+     truncated stream — has no written handling; the run would stall or
+     hard-fail a claim. One clause closes it: "a failed call degrades exactly
+     like absence — per-list reads, gate skipped, RESULT note; at most one
+     retry (the read is idempotent)." Fold in the boards skill (source +
+     mirror) + one retire-table row in the runbook.
+   - **fold-2 (title-resolution coverage)**: "Test/Finished membership
+     resolves by list TITLE … `list_lists` when no block rode the launch" —
+     incomplete for a blocker sitting in a list NOT in the block's map (the
+     block carries only the named swimlane's lists; titles repeat across
+     swimlanes). Wording fix: "…or the list id is not in the block's map".
+     Rare; never unsafe (worst case one candidate mis-skipped or
+     mis-taken-once, reported either way).
+   - **fold-3 (unresolvable edge end)**: an `is-blocked-by` edge whose TO card
+     no longer resolves (deleted/moved) leaves the blocker's archived/list
+     undecidable. Edges self-clean on cross-board move/archive server-side
+     (pre-round 1.2 [S9]); deletion cleanup was not re-verified this round; one
+     clause ("an unresolvable blocker end never blocks; report it") completes
+     the law.
+4. Grouped-sibling triggers: blocking edges FROM the claimed card name
+   companions by `_id`; never-disturb + ride-the-claim + coord-owned moves all
+   decidable from the same map ✓ (companions' current lists are in the
+   grouping; siblings are never separately claimed, and the walk's Executing
+   skip prevents double-pick ✓). The degrade to plan-enumerated ids follows the
+   family probe law ✓.
+5. Degrade law when `tools/list` lacks `preload_board` but has the older
+   per-card reads: live-verified as the CURRENT deployed reality — the readonly
+   tier's session catalog answers exactly **13 tools, none of the new reads**
+   [P17], dev-boards is the same `:v87` build (L4 live-probed absent
+   2026-10-31). The walk above under today's catalog: steps 3–5 collapse to
+   per-list reads + gate-skip + RESULT note — executable verbatim ✓.
+
+## F4 — Runbook vs the real deploy chain (task 4)
+
+Verified true against repo + live:
+
+- dev `boards` pin + `:v60` comment quoted BYTE-accurate at line 406; gpu pins
+  at 697 `wekan-readonly` (stale narration at 692–694 as quoted) and 734
+  `wekan-admin` ✓.
+- `docker-build.yaml` tag mechanics (`v<run_number>` immutable + `:main`
+  rolling, PR builds never push) ✓.
+- ToolHive two-pod shape confirmed LIVE on dev (`mcp-boards-0` +
+  `mcp-boards-66df4f74c4-2h5nb`) ✓ — step 4's pod-naming expectations are
+  exact [P14].
+- The manifest-diff recreation mechanism is sound — the services appset renders
+  `syncPolicy.automated: prune + selfHeal` by default, so the bump commit
+  auto-reconciles; step 4's "reconcile, pods recreate" needs no manual Sync ✓.
+- imageID-digest-vs-ghcr comparison matches the ops-reference anonymous-token
+  recipe; the flow was EXECUTED read-only this round against the real registry
+  and works anonymously (pull-scoped token + manifest GET) ✓ [P16].
+- The "8 signatures" resolution (seven new names + the `parent_id` inputSchema
+  spot-check on existing `create_card`, stop-and-report guard, never square a
+  number) is exactly what step 5 says; an independent AST recount of the landed
+  server.py confirms 17 reads + 21 writes = 38, the three new reads plain-
+  registered (readonly-present) and the four new writes behind `_write_tool` —
+  the readonly-tier expectations (17 reads, no new writes) hold by
+  construction ✓.
+- Renovate DOES track the image (the "Plain image: lines … ToolHive MCPServer
+  specs" custom manager; `wekan` already rides the non-critical automerge rule)
+  — step 3's close-the-bot-PRs line is grounded ✓.
+
+**One step fails or misleads as written (fold):** step 2's registry-side run-
+number read — `docker buildx imagetools inspect ghcr.io/ownyourio/wekan-mcp`
+without a tag resolves **`:latest`**, which EXISTS on this image as a legacy
+pre-tag-scheme publish (`0.0.1/0.0.2/latest` are live in the registry) → the
+owner gets an ancient manifest, not a tag list; `imagetools` cannot enumerate
+tags at all [P16]. Correct, verified-live recipe: the anonymous-token flow
+already in the ops reference, plus
+`GET https://ghcr.io/v2/ownyourio/wekan-mcp/tags/list` with the pull token
+(answered cleanly this round). Companion honesty line worth adding: v90/v101/
+v102 tags ALREADY exist (the v102-era builds — what L4 means by "v102+"), so
+the bump target must be the cf-96 merge's own run tag; step 2's "until the run
+answers the tag does not exist" already says this — naming the distractors
+makes the stop-and-report crisper. (`:dev` is absent from this image —
+harmless; only `:main` rolling.)
+
+Cutover legs (steps 7–8): actor split reads clean post-r2 (exactly one agent
+write leg, extras import human-only, read-back human step) ✓; the zero-action
+re-run arithmetic matches the engine's guards (schema-2-without-map HARD-FAILS
+the load — no fabricated drift plan; schema-1 earns the stderr note only) ✓.
+**But see F5's defect**: step 8's "(get_rule or the Rules UI export)" — only
+the second half is executable through the current surface.
+
+## F5 — Lifecycle cutover feasibility (task 5)
+
+- **Extras import-only: STILL TRUE on current main.** `server/models/rules.js`
+  has had NO commits since v12.65; POST `/rules` accepts exactly one trigger +
+  one action (extraActionIds is never written); PUT replaces the PRIMARY action
+  document only; every rules mutation is `checkBoardAdmin`-gated. The
+  multi-action `extraActions` shape of the C08 artifact is creatable only via
+  the UI wizard or Rules→Import JSON — the cutover's human-executed-by-
+  construction claim stands [P9].
+- **checkItem typo: NOT FIXED on main.** `rulesHelper.js` L1049/L1060 still
+  query `getChecklistItem({title, checkListId: …})` while the ChecklistItems
+  schema field is `checklistId` — the lookup can never match; file
+  byte-identical v12.65↔main [P8]. So the v2 artifact's OQ13 extra
+  (`checkItem Model(s) → Qwen Flash`) can never auto-check until an upstream
+  fix; the boards skill's DORMANT note + "kickoff routes from the default
+  selection without mutating the card" is the honest, correct posture, and the
+  artifact stays worth importing (it fires the day upstream fixes the typo).
+- **Extras survive the upgrade**: rules/triggers/actions are plain Mongo docs
+  with no migration touch in v12.66→v12.77 (no rules-file commits in the range;
+  ImportPlacementBleed v12.69 concerns CARD placement import, a different path)
+  [P3][P13]; corroborated: the createCard rule still answers with its v1 title
+  through the 12.65→12.77 boundary today (C08 AC5 read-only probe + this
+  round's catalog reads) ✓.
+- **DEFECT (the ticket's one replan-relevant finding): schema-2 capture is not
+  executable through `get_rule`.** Upstream's rule GETs hydrate
+  `extraActions`/`extraTriggers`/`enabled` (serializeRule) [P9], but the landed
+  `_slim_rule` (predates cf-96, untouched by it) passes through only
+  `{id, title, trigger, action}` — checklist extras CANNOT surface through
+  `get_rule`/`list_rules` on ANY tier, ever. Both the provision skill's capture
+  text ("read the createCard rule's checklist extras with `get_rule` (or the
+  Rules UI export …)") and the runbook steps 7–8 instruct a path that
+  structurally cannot answer. Failure mode: the collector falls back to
+  schema-1 → the checklist drift legs read UNVERIFIABLE forever → the step-8
+  zero-action read-back only ever verifies the list/label/rule legs. The
+  owner-facing Rules-UI-export half of the parenthetical still works, so the
+  chain is completable — but the AGENT-executable capture the text advertises
+  does not exist. Two fix shapes: **(i)** a small additive `_slim_rule`
+  passthrough (`extra_actions` + `extra_triggers` + `enabled`) + doc-row
+  re-stamp + one suite pin — cheap, PRE-DEPLOY (the C10 chain has not fired, so
+  it rides the same image build and the step-6 stamping); **(ii)** text fold:
+  both capture texts name the Rules UI export (or the owner's raw-REST GET,
+  which DOES carry `extraActions`) as the only capture leg. (i) is strictly
+  better and the branch is still unmerged; flagged as REPLAN-CANDIDATE for the
+  final review, not silently implemented (it edits a C01-landed file beyond the
+  landed chunk scopes).
+
+## F6 — Newly-relevant upstream facts for the follow-up ideas (task 6)
+
+- **Hook-based preload (Deferred)**: two additions from this round argue harder
+  for the claim-time decision — the export carries two admin-side kill-switches
+  (F2: `disableAllExport`, admin-only-fields 403) whose failures a never-throw
+  8 s prompt hook would swallow invisibly, and the un-trimmable
+  `rules/triggers/actions/users` sections make the payload grow with board
+  CONFIG, not cards — the very size coupling the hook budget can't tolerate.
+  No change to the Deferred disposition; fold-1 makes the claim-time path
+  failure-tolerant either way.
+- **Single admits-file / shared registry-count source / offset-input reap leg /
+  wave-parallel dev**: all repo-side; nothing upstream touches them. The F5
+  fix, if taken, touches the SAME count/stamp surfaces again — strengthening
+  the shared-registry-source case; FRICTION L15's four-arms admit ritual argues
+  the single-admits-file Inbox card should be surfaced at close-out (its own
+  recommendation, now three-times-recorded by C09/C07 rounds).
+- **New ops facts worth a future line somewhere** (adjacent, not cf-96 scope):
+  (a) v12.75/76 changed a long-lived-token assumption — changing an account's
+  password now signs out ALL its sessions [P13]; the gpu tiers' static
+  `WEKAN_TOKEN` dies on a bot-password rotation (dev-boards self-heals via
+  login-mint's 401 re-mint); the wekan-api skill's token section should record
+  the difference from #1437's re-login case. (b) v12.66's cardNumber-
+  uniqueness hook reinforces the display-only-numbers rule (C2 stands) [P12].
+  (c) Rule GET responses hydrate `enabled` too — `_slim_rule` drops it (a
+  paused rule reads active); fold it in with the F5 fix if taken. (d) GHCR
+  anonymous `tags/list` works for this image — a recipe upgrade for
+  wekan-mcp-ops' deploy/verify loop.
+
+## Contradictions (this round)
+
+- "Lab runs 12.65 (chart pin)" vs "v12.77 running": both were true at their
+  read times — the pin moved on main 04:12Z today (renovate automerge under the
+  non-critical-services rule, the same mechanism that carried 12.64→12.65).
+  Weigh: live pods + main > branch-merge-base staleness; this worktree simply
+  predates it. No assumption flips (byte-identity across the whole range).
+- The pre-round [S11-exportFields] said the trim vocabulary "includes" the
+  keys — true; the deeper read is that for the JSON board export only
+  `custom-fields` gates on the include side [P5]. The plan's chosen field set
+  survives the refinement unscathed (it names exactly the needed combination);
+  no landed text claimed more than "unselected sections come back as EMPTY
+  arrays", which is exact.
+- Nothing else: the C05 R1 storage-truth sentence, the 7-type/5-route pins, the
+  38-tool registry arithmetic and the `source-only 2026-11` stamps all
+  re-verified true against today's upstream — the stamps remain honest (no
+  live CALL has happened; this round's catalog/registry probes confirm the
+  DEPLOY gap, not route behavior).
+
+## Implications for the landed plan (what final review should do)
+
+1. **Take the F5 fix (the sole replan-candidate)**: `_slim_rule` gains
+   `extra_actions` + `extra_triggers` + `enabled` passthrough (additive,
+   pre-deploy), C08 capture text and C10 steps 7–8 then execute as written;
+   one call-shapes row re-pin. Declining it MUST flip BOTH texts to
+   UI-export-only capture (fold-ii) — do not leave the advertised-but-
+   impossible path in either.
+2. Fold-1/2/3 (F3) + the runbook step-2 registry-recipe correction (F4) are
+   text-only; they can ride the same pre-merge commit as the F5 fix or a
+   final-review fold — none changes any chunk's structure or any decision
+   (OQ1–OQ15 all still land as ruled).
+3. General rule to encode wherever the degrade law lives: `tools/list`
+   PRESENCE is not call-successfulness (fold-1 is the family-wide clause).
+
+## Open questions (no-questions round — best guess + impact recorded here)
+
+- **OQ-P1** (F5): code fold on `_slim_rule` before merge, or text-only capture
+  re-point? Best guess: code fold — a few lines, undeployed surface, restores
+  the advertised contract. Impact: decides whether step-8 read-back is
+  agent-executable and whether schema-2 EVER becomes producible from the MCP
+  surface.
+- **OQ-P2** (fold-1): add the "present-but-failed ⇒ same degrade as absent, one
+  retry max" clause? Best guess: yes, one sentence + retire-table row. Impact:
+  export-disabled/admin-fields/outage/timeout stop being stall modes.
+- **OQ-P3** (folds-2/3): title-map fallback wording + unresolvable-blocker-end
+  never-blocks? Best guess: yes (two clauses). Impact: gate determinism at the
+  edges.
+- **OQ-P4** (F4): replace the runbook step-2 imagetools hint with the verified
+  anonymous tags/list recipe + "v90–v102 exist, are not the target"? Best
+  guess: yes. Impact: the owner cannot be fooled by the legacy `:latest`.
+- **OQ-P5** (F6): record the password-change-kills-bearers fact in the
+  wekan-api skill/config-reference now, or follow-up card? Best guess:
+  follow-up card (credential hygiene, not this ticket's surface). Impact: gpu-
+  tier token survival across the next bot-password rotation.
+
+## REPLAN-CANDIDATES
+
+One: **F5-defect** (schema-2 extras capture impossible through `get_rule` —
+the fix is a small code fold to the undeployed C01 surface, or both texts must
+change; "replan" here means fold-before-merge, no chunk restructure).
+Everything else this round produced is TEXT-ONLY fold (folds 1–4, the retire-
+table row, the adjacent F6 notes). No landed decision, field set, route pin,
+claim-cap semantics, or version assumption flips: **the landed implementation
+matches current upstream reality, including the v12.77 the lab actually runs.**
+
+## Sources (post-planning round; every URL read 2026-11-01)
+
+- [P1] wekan main `server/models/dependencies.js` (full read; five routes, POST
+  UPSERT/same-board/type-gate, board GET `archived: false`; no
+  `DEPENDENCY_TYPE_INVERSE` reference; byte-identical to tag v12.65).
+- [P2] wekan main `models/metadata/dependencies.js` (7 types L23-31, inverse
+  map L45-53, normalization; byte-identical to v12.65).
+- [P3] GitHub commits API `since=2026-10-20` per path: dependencies.js (both),
+  exportFields.js, exporter.js, export.js, rulesHelper.js, server/models/
+  rules.js: NONE; `server/models/cards.js`: six (314c153c9b, c355926767,
+  5f3b211b37, e9440d503e, f2908f34e7, 696b5b073f).
+- [P4] wekan main `models/lib/exportFields.js` (full read;
+  `BOARD_EXPORT_FIELD_KEYS`, `parseExportFields` allowlist + null-everything
+  rule).
+- [P5] wekan main `models/exporter.js` (build()/buildStream() reads; per-
+  section `hasField` gates; card selector `{boardId, linkedId $in ['',null]}`;
+  rules/triggers/actions/users/lists/swimlanes/cards never field-trimmed;
+  unselected ⇒ empty array; byte-identical to v12.65).
+- [P6] wekan main `models/export.js` (route `GET /api/boards/:boardId/export`:
+  `attachments=false`, `fields=` allowlist parse, `streamJsonBoardExport` →
+  `buildStream`, Bearer path via `checkLoggedIn(req.userId)` + `canExport`;
+  byte-identical to v12.65).
+- [P7] wekan main `server/apiMiddleware.js` (parseBearerToken → req.userId via
+  activeUserByToken; `redactFields` admin-only-field redaction on
+  sendJsonResult bodies).
+- [P8] wekan main `server/rulesHelper.js` L1042-1062 (`checkListId` typo in the
+  checkItem/uncheckItem lookups) + `models/checklistItems.js` schema
+  `checklistId` L48; both byte-identical to v12.65 — typo NOT fixed on main.
+- [P9] wekan main `server/models/rules.js` (serializeRule hydrates
+  extraActions/extraTriggers/enabled; POST writes ONE trigger + ONE action;
+  PUT replaces the primary action only; all mutations `checkBoardAdmin`-gated).
+- [P10] wekan main `server/lib/adminOnlyCustomFields.js` (`assertFieldExport`:
+  non-admin ⇒ refusal when the board has an adminOnly field or orphaned card
+  values).
+- [P11] wekan main `models/lib/importExportSecurity.js` (`assertExportEnabled`
+  ⇐ site setting `disableAllExport`).
+- [P12] wekan tag v12.65 ↔ main full diff of `server/models/cards.js` (nine
+  hunks; bulk-labels route present at v12.65 L2176, cap 500, addLabelIds
+  board-validation, archived cards land in notFound; PUT parentId block
+  identical 1658-1673 ↔ 1762-1777; restPlacementError / cardNumber-uniqueness
+  hook / AuthBleed logging / recurrence index / linked-activity fix).
+- [P13] wekan `CHANGELOG-big.md` + Releases API (v12.66→v12.77 published
+  2026-10-28…10-31; password policy, sign-out-everywhere-after-password-change,
+  compulsory 2FA, audit log, HSTS, S3 at-rest, ImportPlacementBleed v12.69;
+  nothing touching the dependency/export/label/rules surface).
+- [P14] Live `readonly-home-kubernetes`: deployments `home-wekan` +
+  `home-boards` (ns default) image `ghcr.io/wekan/wekan:v12.77`; live
+  `readonly-dev-kubernetes`: running pods `mcp-boards-0` +
+  `mcp-boards-66df4f74c4-2h5nb`.
+- [P15] Repo `origin/main`: `services/home/prod/Chart.yaml` wekan `12.77.0`
+  (d8b12fd0f "Update Helm release wekan to v12.77.0", 2026-11-01T04:12:44Z;
+  prior 12.65.0 bump c96a6a824); this branch's merge-base `c241bdaff`.
+- [P16] Live ghcr anonymous flow executed read-only:
+  `GET /token?scope=repository:ownyourio/wekan-mcp:pull` →
+  `GET /v2/ownyourio/wekan-mcp/tags/list` ⇒ 14 v-tags, max v102, `v87` present,
+  branch tags `main`/`latest`/`0.0.1`/`0.0.2`, no `:dev`.
+- [P17] Live session catalog `readonly-global-wekan` tools ⇒ 13 READ tools,
+  none of the cf-96 reads (deployed-build-lag law confirmed current; write
+  tools hidden by `WEKAN_MCP_READ_ONLY` construction).
+- Repo reads (landed surface, this worktree @ HEAD 420581ffb):
+  `containers/wekan-mcp/wekan_mcp/server.py` (cf-96 block L1134-1516,
+  `_slim_card`/`_slim_rule`/`get_rule`, independent AST recount 17+21=38),
+  `wekan.py` (httpx client, 30 s timeout, Bearer + 401 re-mint),
+  `.rulesync/skills/boards/SKILL.md` (gate L102, claim bullet L130, preload
+  consumer L249, grouped-sibling L295-303, Stage map/defaults/transitions/
+  cutover L20-58, follow-up mechanics L333),
+  `skills/wekan-board-provision/SKILL.md` (schema-2 capture text),
+  `scripts/provision-board.py` (schema-2 guards + CHECKLIST_SPEC),
+  `tests/cf96-deploy/readback-runbook.md`, `.github/workflows/docker-build.yaml`,
+  `services/{dev,gpu}/prod/values.yaml` pins (lines 406/697/734),
+  `services/dev/prod/templates/appset.yaml` (syncPolicy automated default),
+  `renovate.json` (plain-image custom manager + `wekan` automerge rule).

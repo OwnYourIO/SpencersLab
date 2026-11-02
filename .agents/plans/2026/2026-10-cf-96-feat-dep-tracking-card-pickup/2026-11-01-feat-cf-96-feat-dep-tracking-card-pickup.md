@@ -10,7 +10,12 @@ under this card. Ride the same ticket: the Lifecycle checklist redesign — 11
 items (the ten stages + Single Session kept last) — with its (modify-only,
 human-executed) board cutover process, the read-only
 `agent-explore` scouting stage, per-ask research sessions, grouped-sibling flow,
-and coder-workspace timezone handling for human-facing timestamps.
+and coder-workspace timezone handling for human-facing timestamps. Post-research
+delta (C11, human ruling 2026-11-02): the `get_rule`/`_slim_rule` extras +
+`enabled` passthrough that makes the schema-2 snapshot capture the provision
+skill and C10 runbook advertise actually executable, its docs parity re-stamp,
+and three text-only folds (present-but-failed call degrade, dependency-gate
+edge cases, runbook registry recipe).
 
 ## Out of scope
 - Running ANY provisioning/cutover step against the live board (owner executes
@@ -22,6 +27,15 @@ and coder-workspace timezone handling for human-facing timestamps.
 - The board-context prompt HOOK growing card data (preload stays
   coord-at-claim; the 8 s hook budget is untouched, OQ3 decided).
 - Wave-parallel dev sessions (AD-71 half 2 — revisit-text only, Deferred).
+- OQ-P5 credential hygiene (v12.75+: a service-user password change invalidates
+  its static bearer → the gpu tiers need a re-mint plan) — OUT by coord ruling
+  2026-11-02, Inbox follow-up card at close-out.
+- The upstream `checkItem` rule-action typo (RESEARCH F5, [P8]): v2 createCard
+  extras stay DORMANT until WeKan fixes it — external, nothing in-ticket acts.
+- C11-adjacent doc recipes: the container-creation skill's `imagetools
+  inspect` tag hint and the wekan-mcp-ops deploy/verify loop's tags/list
+  upgrade (F6(d)) — close-out follow-up material (plan OQ-C11-1), the runbook
+  step-2 fold is self-contained.
 - Unit tests for the Python server: repo posture is statics-only suites
   (cf-intake D8) — no pytest harness is introduced.
 
@@ -42,6 +56,19 @@ and coder-workspace timezone handling for human-facing timestamps.
   wekan-board-provision/surface.sh; 2026-11-01 ≈02:52Z).
 - `renovate.json` carries `"timezone": "America/Denver"` — the grounding for the
   OQ5 best guess.
+- C11 delta-round verification (re-read of the LANDED code at this branch HEAD,
+  2026-11-02, agreeing with RESEARCH post-planning F1–F5): `_slim_rule` returns
+  exactly `{id, title, trigger, action}` — `extraActions`/`extraTriggers`/
+  `enabled` are structurally dropped; `get_rule` + `list_rules` are plain
+  `@mcp.tool` (READ-ONLY tier exposes both; a `_slim_rule` change serves both);
+  the provision engine's schema-2 contract is a collector-built
+  `checklist_extras` map (name → `{items, checked}`) and its skill step 1 +
+  runbook steps 7–8 name `get_rule` as the capture route — the defect (and the
+  fix's target) confirmed in-tree; every suite C11 moves or must survive
+  (dependencies, tools, skill-surface, boards-deps, checklist-cutover,
+  cf96-deploy) is green at HEAD as the delta baseline; boards-deps needle
+  windows re-simulated with draft fold text — all survivors hold
+  (/tmp/opencode/cf96-c11, 2026-11-02).
 
 ## Design decisions taken (full log in DECISIONS.md)
 Pre-round (launch rulings + best guesses):
@@ -94,11 +121,38 @@ Batched-round rulings (2026-11-01, user — all 8 questions resolved):
   (determinism mandatory); checked-stages-only carve-out lands in
   pipeline-role-coord (C06) + boards Stage map (C07).
 
+Post-research round (2026-11-02, human ruling + coord dispositions — full log in
+DECISIONS "Coord rulings (post-research round)"; all land as chunk C11):
+- OQ-P1 (the sole REPLAN-CANDIDATE, F5): **FOLD THE CODE** — C11 T1 extends
+  `_slim_rule` with the `extra_actions`/`extra_triggers`/`enabled` passthrough on
+  C01's UNDEPLOYED surface, so the schema-2 capture the provision skill + C10
+  runbook already describe becomes executable WITHOUT touching either capture
+  text. Rejected: UI-export-only re-point (leaves the advertised agent path
+  broken) and deferral (C10 step 8 silently degrades). Consequence: the fix
+  lands pre-merge so the deploy chain's single `v<run>` build carries it.
+- OQ-P2 (fold-1) + OQ-P3 (folds-2/3): TEXT-ONLY folds into the boards skill —
+  a PRESENT-but-FAILED call degrades exactly like absence (one retry, never a
+  stall) + a never-retires row in the runbook retire table; title-map fallback
+  and unresolvable-edge-end wording (skip-safe: non-gating + REPORT, never
+  assume).
+- OQ-P4: runbook step-2 registry recipe corrected to the verified anonymous
+  ghcr `tags/list` flow (`imagetools inspect` resolves the legacy `:latest` and
+  cannot enumerate; v90–v102-era builds named as distractors), digest-verify leg
+  kept — phrased so every `tests/cf96-deploy/surface.sh` pin survives UNMODIFIED.
+- OQ-P5: out of the ticket → Inbox follow-up card at close-out (coord).
+- Ordering ruling: C11's test duties land GREEN-ON-ARRIVAL after dev's
+  code+docs+boards-text commit (no designed-red ceremony — the change is purely
+  additive, so no existing pin is forced to move).
+
 ## Commands
 Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 - new suites (agent-test writes before dev; names are agent-test's, per-chunk
   files list them): one suite per chunk C01–C10 under `tests/` (statics-only,
   section-windowed greps — the cf-89/cf-90 posture).
+- C11 (post-research delta) adds NO new suite file — its legs join the existing
+  cf96 family, authored green-on-arrival AFTER dev's commit (test-route,
+  tests/** dev-denied). Delta battery:
+  `python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py && bash tests/wekan-mcp/dependencies.sh && bash tests/boards-deps/surface.sh && bash tests/wekan-board-provision/checklist-cutover.sh && bash tests/cf96-deploy/surface.sh` (new legs green; the HOLD arms — cf96-deploy t1–t7, tools.sh 17+21/38, skill-surface t4 rows/stamps, boards-deps t1–t5 — green UNMODIFIED), plus `rulesync generate` ×2 (2nd no-op) + `rulesync generate --check` (the boards-skill text fold), `node --test 'tests/opencode/*.test.ts'`, `npx aislop ci --changes`. `docker build => no-daemon, CI-deferred` stays the designed passing shape — the passthrough lands pre-merge so the deploy chain's `v<run>` image carries it in the same build.
 - regression: `bash tests/wekan-mcp/tools.sh && bash tests/wekan-mcp/skill-surface.sh && bash tests/wekan-mcp/rest-overview-v102.sh && bash tests/wekan-mcp/board-provisioning.sh && bash tests/wekan-mcp/create-list.sh && bash tests/wekan-mcp/board-context.sh && bash tests/agent-perms/surface.sh && bash tests/wekan-board-provision/surface.sh && bash tests/cf90-ledger/surface.sh && bash tests/containers/wekan-mcp-login.sh && node --test 'tests/opencode/*.test.ts'` (re-pins land in the same commits as the changes that move them — doc/parity pins must never be red between commits; the node suite is Node v26 type-stripped, no npm deps — baseline green at plan time).
 - lint: `python3 -m py_compile containers/wekan-mcp/wekan_mcp/server.py scripts/provision-board.py`
 - rulesync: `rulesync generate` twice (2nd run a no-op) then `rulesync generate --check` (after any `.rulesync/**` change; sources + generated mirrors commit together).
@@ -122,6 +176,7 @@ Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 | C08 | cutover process artifacts: provision-board.py spec extension + wekan-board-provision skill + board-rules v2 import artifact (MODIFY ONLY — never run live) | M | 4 | [C07] | data: engine constants + rule artifact carry C07's FINAL item list (batch-round answers may move it) |
 | C09 | coder workspace TZ env (both templates) + human-facing stamp pass (plugin, boards prose, conventions) — OQ5-gated | M | 4 | [C07] | same-file prose (boards skill); independent of C08 |
 | C10 | HOLD: deploy chain runbook — merge→v\<run\>→pin bump (dev + gpu per OQ8)→restart→probes→L4 absorb; cutover apply readback (human-executed, post-backup) | S | 5 | [C01, C08] | runbook pins the merged surface + the final artifacts; execution is post-merge, human-owned |
+| C11 | post-research delta (OQ-P1 FOLD ruling): `_slim_rule` extras+enabled passthrough (schema-2 capture executable) + docs-parity re-stamp + OQ-P2/P3/P4 text folds (boards degrade law + gate edge cases; runbook step-2 ghcr recipe + retire row) + green-on-arrival suite legs | S | 6 | [C01, C05, C08, C10] | delta round over landed surfaces: extends C01's undeployed `_slim_rule` (rides the same `v<run>` build), edits C05's gate/degrade-law sections (same-file serial — C07's untouched), corrects C10's runbook step 2 (tests/**, test-route commit), and repairs the capture contract C08 advertises — capture texts themselves stay byte-untouched |
 
 ## Wave order
 1. C01, C02, C03, C04 — all independent; run in id order.
@@ -129,6 +184,7 @@ Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 3. C07.
 4. C08, C09 — independent of each other; id order.
 5. C10 — HOLD: agent deliverable is the runbook + its pin suite; every execution step is human-owned (owner merge → CI → bump → backup → apply).
+6. C11 — post-research delta (planned 2026-11-02 after all ten chunks closed): dev lands code+docs+boards-text in one commit (doc-parity law), the test route lands the runbook fold + new pins green-on-arrival immediately after; lands PRE-MERGE so the C10 chain's `v<run>` build carries the passthrough. Nothing deploys; C10's human gate is unchanged.
 
 ## Run protocol — coord-owned board actions (this ticket's grouped flow, first instance)
 - At start (after claim of #96): move siblings to **Executing**: 74=`MS8e8uoF27R2dk73e`, 66=`t4N5D4eZ9Nc2MoAZd`, 71=`v8priYKMuuWLCoFDq`, 77b=`Ru3CzNiyaEQH7YFcr`, 70b=`SouMZ2fbd8vDbz2m3`, 81=`Q7Sg7H4dicTALAp8q`, 78a=`jaEe2jfobfboyaM92`. They ride #96's claim (never claimed separately); the pickup walk skips Executing, so no double-pick.
@@ -139,6 +195,10 @@ Run from the worktree root; `export PATH=$HOME/.local/bin:$PATH` first (helm).
 ## Risks / assumptions
 - HARD deploy gate: every consumer of the new tools degrades until the C10 chain
   lands (degrade law above); no answer in the batched round removes this gate.
+- C11 rides the same undeployed build: the passthrough must land BEFORE the
+  owner's pin bump, or the deployed `v<run>` ships the broken capture path and
+  step-8 read-back degrades to schema-1 (RESEARCH F5) — order: C11 → merge → CI
+  → bump. The C10 chain stays the only human gate; C11 adds no new one.
 - OQ5 resolved: C09 ships `TZ = "America/Denver"`; the residual risk is the
   owner-gated workspace reprovision (template change ⇒ rebuild) — until then
   the emitters keep the UTC fallback (`$TZ` unset).
@@ -169,3 +229,13 @@ affected chunk:
 6. **OQ13 — v2 createCard rule defaults.** RESOLVED: **only Model(s)→Qwen Flash checked**; Lifecycle/HITL unchecked (blank defaults govern); Type/Services unchecked. → C08.
 7. **OQ14 — Exploration in the blank default.** RESOLVED: **yes** — every default run starts agent-explore. → C07 T3.
 8. **OQ15 — Chunk Review unchecked.** RESOLVED: **skipped when unchecked** (deviated from the still-runs best guess) — dev-only chunk loop; done-gate = dev DONE + validations-green RESULT evidence; determinism mandatory; checked-stages-only carve-out in coord contract + Stage map. → C06 T5, C07 T2.
+
+### Post-research round (2026-11-02) — RESOLVED (human ruling + coord dispositions, DECISIONS)
+1. **OQ-P1 (F5 defect — schema-2 capture impossible through `get_rule`).** RESOLVED by the human: **FOLD THE CODE** — `_slim_rule` passthrough on the undeployed C01 surface, docs re-stamp, capture texts untouched (they become true by construction); the ruling's refinement per RESEARCH fix-shape (i): `extra_actions` + `extra_triggers` + `enabled`. → C11 T1/T2.
+2. **OQ-P2 (fold-1).** RESOLVED by coord: TEXT fold — present-but-failed call degrades exactly like absence, one retry, never a stall; + the never-retires retire-table row. → C11 T3.
+3. **OQ-P3 (folds-2/3).** RESOLVED by coord: TEXT fold — title-map fallback wording + unresolvable-edge-end = non-gating and REPORTED (skip-safe, never assume). → C11 T3.
+4. **OQ-P4 (F4).** RESOLVED by coord: TEXT fold — runbook step 2 to the verified anonymous `tags/list` recipe, legacy-`:latest` hazard + v90–v102 distractors named, digest-verify leg kept; phrasing keeps all cf96-deploy pins green UNMODIFIED. → C11 T3.
+5. **OQ-P5 (F6a — password change kills the static bearer).** RESOLVED by coord: OUT of ticket — Inbox follow-up card at close-out.
+
+Still open (single question, one batched round):
+- **OQ-C11-1** — the tags/list recipe UPGRADE for `skills/wekan-api/references/wekan-mcp-ops.md`'s deploy/verify loop (and the container-creation skill's `imagetools inspect` tag hint, verified still present 2026-11-02) is recorded as F6-adjacent and held OUT of C11 to keep the delta tight. Best guess: fold them into the close-out follow-up batch alongside OQ-P5 rather than grow C11 (they touch suites C11 otherwise leaves byte-quiet). Impact: the owner-side recipes stay one step behind the runbook until that follow-up fires.
