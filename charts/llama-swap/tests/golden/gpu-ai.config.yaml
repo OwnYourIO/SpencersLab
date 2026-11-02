@@ -3,10 +3,15 @@ globalTTL: 0
 healthCheckTimeout: 3600
 # 2026-10-29 OOM ruling (cf-77 strata): qwen3.8-27b-q8 dropped from preload —
 # llama.cpp lives on unified RAM the strata arena now shares; lazy-load only.
+# 2026-11-02 owner ruling, same law taken to its end: the embedding model left
+# too, so the pod boots with NOTHING resident. On a unified-RAM node a
+# llama.cpp model is plain system RAM, llama-swap cannot evict across
+# instances, and a strata cold-pin needs 46.84-71.73 GiB of it. Re-pinned here
+# exactly as the q8 drop was; the preload VALUE is policed by
+# llama_swap_testlib.C04_PRELOAD_PINNED, not by this fixture.
 hooks:
   on_startup:
-    preload:
-    - qwen3-embedding-0.6b
+    preload: []
 includeAliasesInList: true
 logLevel: info
 logToStdout: proxy,http

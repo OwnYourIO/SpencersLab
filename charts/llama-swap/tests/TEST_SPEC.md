@@ -2681,3 +2681,42 @@ new era, one amended law, one retirement.
   `STRATA_MMQ_KQ=1` (upstream speed unmeasured on AMD), T6 orca fusion, T7
   `SELECT_WMMA` parity, T4 ornith chunk 4096, and the strix/ornith `--plan`
   finalizations. No arm was written for a value that is not shipped.
+
+### 9.26 U15 zero-preload round — constant flip, golden re-pin, and the carve-out coupling (2026-11-02)
+
+Owner ruling: nothing may preload; the pod boots at 0 RAM so either engine can
+be called first.
+
+- `llama_swap_testlib.C04_PRELOAD_PINNED` → `[]`. It is the single source for
+  the preload VALUE, asserted by `test_new_roster::test_c04_1_no_new_model_preloaded`,
+  `test_heretic_rungs_27b::test_c04_no_preload_and_no_models_layer_entry` and
+  `test_heretic_rungs_flashnext::test_c03_no_preload_and_no_models_layer_override`,
+  so the flip lands in all three at once and each still fails if a model is ever
+  added back. `hooks` must remain a dict (test_config_schema arm), so the block
+  is kept with an empty list, not deleted.
+- `golden/gpu-ai.config.yaml` re-pinned to `preload: []` with a header entry.
+  Why the golden may move here and the frozen baseline may not: the golden is the
+  maintained expectation and its own header already carries the 2026-10-29
+  preload re-pin (q8 dropped) — same fixture, same ritual, same reason.
+  `evidence/flashnext-pre-chunk-baseline/` stays byte-frozen: it is history, and
+  the arm that reads it now scopes the one key that history legitimately changed.
+- **Carve-out coupling (the trap this round hit):**
+  `_cf77_peers_carved` returns False if ANY key outside models/macros/peers/
+  matrix differs, so editing `hooks.preload` revoked the cf-77 peers carve-out
+  and the test reported *"peers delta present but NOT the pinned cf-77 evidence
+  shape"* — a red that misattributes an authorized change to an unauthorized
+  one. Fixed with `_hooks_scoped`, applied to BOTH the carve-out's `others`
+  check and the arm's own baseline diff (the arm's message had always claimed
+  "hooks.preload is off-scope"; the code hadn't implemented its own scope).
+  Scope is exactly `hooks.on_startup.preload`. Probes confirm a new hook type or
+  an `on_startup.profile` still diverges. Declared limitation of the scope rule:
+  a hooks block that is ABSENT on one side and a block containing nothing but
+  `preload` on the other both normalize to `{}`, so that one shape is invisible
+  to the baseline diff — covered instead by `test_config_schema::test_c02_macros_
+  matrix_hooks_stay_top_level_single_source` (hooks must be a dict in the gpu-ai
+  overlay) and by the C04 preload pins. The
+  peers shape is still validated against the evidence file, never a copy.
+- Division of labour preserved: preload legality lives in the C04 pins, peers
+  exactness lives in the evidence file, matrix growth lives in
+  `_cf86_matrix_violations`. Nothing new was added; one stated scope was finally
+  implemented.

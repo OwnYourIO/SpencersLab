@@ -565,7 +565,13 @@ def baseline_config(cluster: str) -> dict:
 # it" carries over): the list is embedding-only — q8 went lazy with the
 # strata arena sharing the node's RAM — and flash-next q5/q6 must appear in
 # NO matrix set at all.
-C04_PRELOAD_PINNED = ["qwen3-embedding-0.6b"]
+# 2026-11-02 (owner ruling): EMPTY. Nothing may hold RAM on this node before a
+# request names it, because every warm llama.cpp model is system RAM that a
+# strata cold-pin (46.84-71.73 GiB page-locked arena) cannot evict — llama-swap
+# has no cross-instance lifecycle control, so the boot-time claim has to be
+# zero. Single source: the preload arms in test_new_roster / test_heretic_rungs_*
+# all compare against this constant.
+C04_PRELOAD_PINNED = []
 
 
 def all_models_of(cfg: dict) -> dict:

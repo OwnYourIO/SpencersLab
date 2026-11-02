@@ -477,10 +477,19 @@ llama-swap:
     # eager preload was the OOM's warm half. It lazy-loads on request (1-3
     # min). Only the sub-GiB embedding model stays preloaded; restore q8 here
     # only on a node without strata enabled.
+    # 2026-11-02 (owner ruling): the embedding model is OUT too — the pod now
+    # boots with NOTHING resident. The reason is the shared-RAM law, not the
+    # size: on this node every warm llama.cpp model is plain system RAM
+    # competing with a strata cold-pin (46.84-71.73 GiB page-locked arenas),
+    # and llama-swap cannot evict across instances ("It cannot start, stop or
+    # TTL-unload anything on the other side" — upstream peers doc), so the only
+    # side that can guarantee a clean slate is the one that never claims RAM
+    # first. Cost: the first embedding request after a (re)start pays a
+    # sub-10 s load instead of 0 s. `hooks` stays a dict — the schema arm
+    # requires the key to exist, and the render layer asserts it.
     hooks:
       on_startup:
-        preload:
-          - qwen3-embedding-0.6b
+        preload: []
     # cf-77: routes the internal strata pod's models through this surface —
     # since the run-2 consolidation the pod is a controller of THIS release,
     # so the proxy is the in-app cluster-internal Service name (app-template

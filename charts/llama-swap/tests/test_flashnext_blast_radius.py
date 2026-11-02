@@ -135,6 +135,28 @@ def test_c03_ac2_non_flashnext_models_identical_gpu_ai():
 _STRATA_PEERS_EVIDENCE = L.TESTS_DIR / "evidence" / "strata-peers-expected.yaml"
 
 
+def _hooks_scoped(h: dict) -> dict:
+    """hooks.on_startup.preload, off-scope for every BASELINE diff in this file.
+    The value is pinned positively instead (llama_swap_testlib.C04_PRELOAD_PINNED,
+    asserted by test_new_roster and both heretic arms), and the list has moved
+    three times since this capture — 2026-10-20 dropped the MoE q8, 2026-10-29
+    dropped the dense q8, 2026-11-02 dropped the embedding sidecar — so
+    re-diffing it against a frozen baseline would make the baseline veto the very
+    rulings recorded on its own header. The scope is the ONE key: a new hook
+    type or an on_startup.profile stays strict here. Declared blind spot: a
+    hooks block absent on one side versus a preload-only block on the other both
+    normalize to {}, so that shape is invisible to this diff — it is covered by
+    test_config_schema's hooks-is-a-dict arm and the C04 preload pins, not here.
+    Scoping also keeps the peers carve-out earnable (see _cf77_peers_carved)."""
+    out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in (h or {}).items()}
+    st = out.get("on_startup")
+    if isinstance(st, dict):
+        st = dict(st)
+        st.pop("preload", None)
+        out["on_startup"] = st
+    return out
+
+
 def _cf77_peers_carved(base: dict, cur: dict) -> bool:
     """True iff the ONLY top-level base→cur differences are the pinned cf-77
     peers delta plus (from cf-86 on) matrix growth that is itself inside the
@@ -147,8 +169,14 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
         return False
     if cur.get("peers") is None:
         return False
-    others = [k for k in (set(base) | set(cur)) - {"models", "macros", "peers", "matrix"}
-              if base.get(k) != cur.get(k)]
+    # `hooks` is compared through _hooks_scoped: a sanctioned preload change must
+    # not revoke the peers carve-out, because revoking it turns an authorised
+    # preload edit into a bogus "unauthorised peers delta" red.
+    b_cmp, c_cmp = dict(base), dict(cur)
+    if "hooks" in b_cmp or "hooks" in c_cmp:
+        b_cmp["hooks"], c_cmp["hooks"] = _hooks_scoped(b_cmp.get("hooks")), _hooks_scoped(c_cmp.get("hooks"))
+    others = [k for k in (set(b_cmp) | set(c_cmp)) - {"models", "macros", "peers", "matrix"}
+              if b_cmp.get(k) != c_cmp.get(k)]
     if others:
         return False
     # matrix joins the carve ONLY while the cf-86 guard below reports nothing:
@@ -217,6 +245,8 @@ def test_c03_ac2_matrix_hooks_scalars_identical():
     for key in sorted((set(base) | set(cur)) - {"models", "macros", "matrix"} -
                       ({"peers"} if carved else set())):
         b, c = base.get(key), cur.get(key)
+        if key == "hooks":
+            b, c = _hooks_scoped(b), _hooks_scoped(c)
         if b != c:
             diffs.append(f"{key}: {b!r} -> {c!r}")
     diffs += _cf86_matrix_violations(base, cur)
