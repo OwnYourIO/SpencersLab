@@ -1,6 +1,6 @@
 {
   "feature": "2026/2026-10-cf-96-feat-dep-tracking-card-pickup",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e6b2a397effeJoBUoRxc4WVA22",
   "test_session": "ses_e6adaf11bffeOtWerHTHQlYlqj",
   "current_wave": 3,
@@ -274,6 +274,22 @@
     "status": "DONE",
     "verdict": "REPLAN-CANDIDATES: 1 CODE (schema-2 extras capture instructs get_rule, but _slim_rule structurally drops extraActions -> the agent capture path can never work; step-8 read-back silently degrades to schema-1. Recommended fix: small _slim_rule passthrough on the undeployed C01 surface, pre-merge. Alternative: re-point both texts to UI-export-only capture). Folds OQ-P2/P3/P4 text-only (call-failure-vs-absent degrade, title-map fallback/unresolvable edge end, runbook step-2 imagetools->tags/list recipe + v90-v102 distractor note). OQ-P5 (password change kills bearer) -> follow-up. VERIFIED TRUE: 7 dependency-surface files byte-identical v12.65<->main (cards.js six commits all validation/logging; bulk-labels route present AT 12.65); lab actually runs v12.77 (renovate d8b12fd0f post-merge-base) with zero assumption risk; AST recount 17+21=38; checkItem typo NOT fixed on main (extras stay DORMANT — landed text honest); rule extras import-only confirmed; pickup walk executable w/ 3-cap consistent; readonly catalog = 13 tools live (degrade law proven). RESEARCH.md post-planning section appended (pure append, 450 lines, 17 [P#] sources).",
     "at": "2026-11-01"
+  },
+  "final_review": {
+    "r1": {
+      "session": "ses_e626d7ed3ffeKW0CEK4HekLjOY",
+      "tier": "planning (openrouter/qwen/qwen3.8-2.4t-a95b)",
+      "verdict": "CHANGES_REQUESTED",
+      "at": "2026-11-02",
+      "summary": "All 11 chunks' substance, cross-chunk coherence, card-ask coverage and the owner-chain texts approved-quality; ZERO NEW REDS across the whole battery (ruled t17/i4/s4/m4 PROVEN red at merge-base on a detached probe; stale-base create-list/board-provisioning t2 at the predicted 9 hunks; validation-fix t4 + bare-ok echoes + dev-mcp-fleet t7 pre-existing/out-of-scope). MAJOR = the ruled vocabulary sweep (C10 r2's own ledger disposition: not an Inbox card, not acceptable-as-written), 6 verbatim-spec'd edits in chunks/C11.md: (a) boards cutover 'Agents never mutate board checklists, labels, or rules' vs its own step (4) + the provision apply leg; (b) runbook bullet 4's 'or rules' widening (phrasing audited vs cf96-deploy t6 FORBIDs); (c) agents-sync permissions.md L38 retired-Deploy cite (the ONE non-suite-free item — board-context t4 byte-pins the row => test re-pin); (d) six coord subagent frontmatter comments; (e) agent-dev-deploy pair descriptions (suite-free); (f) role-research shared-RESEARCH.md parity line (C06 note 1, suite-free). Live re-probes: card #96 Executing + slug set; zero-apply confirmed; values quotes byte-exact; 100-file diff scope clean.",
+      "handoff": "full RESULT in the session; review notes appended to all 11 chunk files (consolidated in chunks/C11.md). commands_run: the entire plan Commands battery enumerated pass/fail/admitted (node 238/0 BOTH TZ geometries, rulesync no-op2 + --check, aislop rc0 0/0 65 files, helm/terraform/py_compile, renovate trio incl inline validate/lint parity, live read-only dev-boards + global-renovate probes); deviations none; open_questions none blocking.",
+      "fold_round": {
+        "dev_sweep": "ses_e624018bfffe3POpWmuTD7PHbV (agent-dev-local on the DEFAULT code model qwen3.8-27b — the run's routed Flash tier returned provider errors 3x; routing deviation recorded) — DONE: (a) boards cutover sentence scoped to cutover mutations naming the one sanctioned agent-write leg; (c) permissions.md L38 Deploy->Deployment (+mirror); (d) six coord subagent step-8b comments (YAML comments stripped at generation, mirrors unchanged); (e) agent-dev-deploy{,-pr} descriptions (+mirrors); (f) role-research shared-RESEARCH.md append/merge parity line (+mirror); rulesync x2 no-op + --check; 14 suites green, board-context t4 + gate t14 reddened as predicted and specced for the [test] half (5th admit-ritual record). Committed 826e49b46.",
+        "coord_routing_deviation": "2026-11-02 coord: C11/final-sweep rounds ran on openrouter/qwen/qwen3.8-27b instead of the kickoff-routed openrouter/qwen/qwen3.8-flash after three consecutive 'Provider returned error' failures at the Flash tier (two dev launches + the long-lived test session). The pipeline-models DEFAULT code tier; rigor unchanged (every battery re-run by reviewers). Recorded for the model-churn ledger.",
+        "test_sweep": "ses_e6232ddb2ffeKTiFxRyvZ2NkSp (fresh agent-test session, 27b fallback) — DONE: shas verified; board-context t4 DEV_DEPLOY_SETTLED settled-byte re-pin (byte-identical to the .patched ref) + gate t14 research-pair admit + runbook bullet-4 verbatim widening (t6 {:v60,:v87} whitelist + t8 guard re-verified intact) + the OPTIONAL admitted-set comment clause taken. board-context 6 ok FULL, gate 21 ok ids-minus-t17. Committed 5fe3bc8dc.",
+        "recheck": "ses_e621a8807ffeys9cqeJ5rIXZX8 (planning tier, scoped r2) — verdict APPROVED: all six sweep items closed byte-verified; gate t14 negative probe shows the scope guard NOT weakened (5 un-admitted paths still rejected); retired-Deploy survivors are historical/negative-only; full battery re-run independently green with message-identical admitted reds; ledger items dispositioned (linked-card micro-edge + EOF-newline = recorded, no Inbox card needed; admitted-set clause taken). 'NOTHING remains that must be fixed before the card goes to Review.'"
+      }
+    }
   },
   "blocked": [],
   "deferred": [
