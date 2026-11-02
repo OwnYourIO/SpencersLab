@@ -2,7 +2,7 @@
 
 Append-only. Never delete entries — re-status them: open → fixed (cause repaired) or ignored (accepted). Agents read this at run start so known workarounds are not rediscovered.
 
-Friction = anything an agent could not find or had no access to, crashes/tool/MCP failures, stale docs/plans, forced repeats or workarounds — each with the resolution actually used. Agents report via RESULT `friction:`; cord appends (its own items included).
+Friction = anything an agent could not find or had no access to, crashes/tool/MCP failures, stale docs/plans, forced repeats or workarounds — each with the resolution actually used. Agents report via RESULT `friction:`; coord appends (its own items included).
 
 - YYYY-MM-DD · <role>(<chunk>) · <what happened + impact> · resolution: <what the agent did> · open
 - 2026-11-01 · test(C04-review) · kubernetes-mcp-version-floor k1/k2 red pre-existing since a14c4c8c8 (2026-10-26), absent from the 2b4748847 admitted-reds enumeration · resolution: drift-repair routed to test session, e082d0e66, reviewer proved pre-existence on two probe worktrees · fixed
