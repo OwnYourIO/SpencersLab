@@ -871,6 +871,13 @@ fi
 # cf-96 final-review fold round (2026-11-02): the pipeline-role-research pair
 # (sweep item (f) — the first cf-96 edit to that surface) joins the per-contract
 # enumeration beside the cf-90 role-plan/role-deploy pairs.
+# 2026-11-02 bug-pipeline-locks-tick-pin T-5 (agent-test round 2; user ruling
+# in that ticket's DECISIONS): its plan folder joins on the D9 bookkeeping rule
+# (cf-85/cf-72/cf-90 precedent), and .opencode/plugin/aislop-gate/ +
+# .github/workflows/aislop.yaml join as the exact files its chunk's T-3 bumps
+# (cf-86 chunk-declared-files precedent) — the aislop-pin parity guard and the
+# provider-loops t6 nesting must stay green across that bump, not red on the
+# ticket performing it.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -927,7 +934,9 @@ if want t14; then
       skills/wekan-board-provision/*|\
       .rulesync/skills/pipeline-role-plan/*|.opencode/skills/pipeline-role-plan/*|\
       .rulesync/skills/pipeline-role-deploy/*|.opencode/skills/pipeline-role-deploy/*|\
-      .rulesync/skills/pipeline-role-research/*|.opencode/skills/pipeline-role-research/*) : ;;
+      .rulesync/skills/pipeline-role-research/*|.opencode/skills/pipeline-role-research/*|\
+      .agents/plans/2026/2026-11-bug-pipeline-locks-tick-pin/*|\
+      .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill widenings)" ;;
     esac
   done <"$TMP/changed.txt"
