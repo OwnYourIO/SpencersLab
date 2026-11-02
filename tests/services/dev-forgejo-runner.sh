@@ -22,8 +22,8 @@
 # the single aliased app.
 #
 # Contract source: chunks/C01.md Tests list (t1-t10) + cf-97 C02's wording
-# leg (t11) + C04's mergePolicy leg (t12) — ONE script stays the runner
-# contract (predecessor ruling, DECISIONS.md).
+# leg (t11) + C04's mergePolicy leg (t12) + C05's socket-group leg (t13) —
+# ONE script stays the runner contract (predecessor ruling, DECISIONS.md).
 #
 # C01/C03 acceptance is cluster-only — no leg here can assert it (the vault
 # and the live pod are out-of-repo, and list/event MCP shapes come back
@@ -1364,6 +1364,102 @@ except Exception as ex:
 PY
   then
     checks=$((checks + $(cat "$WORK/t12-count")))
+  else
+    exit 1
+  fi
+fi
+
+# --- t13: cf-97 C05 dind-socket group grant (red-first before the SC keys) ---
+# The daemon cleared the uuid gate and died at configCheck: ping to
+# unix:///var/run/docker.sock returns EACCES (masked the chart's whole life
+# behind the uuid fail-fast — plan Risks, masked-gate). Cause is pinned-image
+# arithmetic: docker:29.9.2-dind's base pre-adds group docker at a FIXED gid
+# (upstream 29/cli/Dockerfile addgroup) and dockerd serves the socket
+# root:docker 0660, so the uid-1000 runner needs group membership (DECISIONS
+# 2026-11-02, user ruling shape (a)). supplementalGroups exists only at the
+# pod level (container SC has no such field) — the exact chained reads below
+# are the placement enforcement, per the C04 t12 lesson. Live socket mode is
+# NOT asserted: no pod-exec surface; C03's post-merge re-run is the
+# mechanism proof. The posture guards are the reason (a) beat the TCP shapes
+# — a mid-review shape switch must flip them and die here.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t13: socket-group leg not run (no chart render — dependency update unavailable)"
+else
+  if python3 - "$runner_out_dev" "$RELEASE_DEV" "$WORK/t13-count" <<'PY'
+import sys, yaml
+
+render, release, count_file = sys.argv[1:4]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    docs = [d for d in yaml.safe_load_all(open(render)) if d]
+    sts = [d for d in docs if d.get('kind') == 'StatefulSet']
+    if len(sts) != 1:
+        bad(f't13: {release} — the render has {len(sts)} StatefulSet(s), expected exactly one')
+    pod = ((sts[0].get('spec') or {}).get('template') or {}).get('spec') or {}
+    ics = pod.get('initContainers') or []
+    cons = pod.get('containers') or []
+    dind = next((c for c in ics if (c or {}).get('name') == 'dind'), None)
+    runner = next((c for c in cons if (c or {}).get('name') == 'runner'), None)
+    if dind is None or runner is None:
+        bad(f't13: {release} — rendered pod lacks the dind or runner container (t2 also pins them)')
+
+    psc = pod.get('securityContext') or {}
+    sgs = psc.get('supplementalGroups')
+    if not (isinstance(sgs, list) and 2375 in sgs):
+        bad(f't13: {release} — pod spec.securityContext.supplementalGroups is {sgs!r}, expected to '
+            'contain 2375 — the pinned docker:29.9.2-dind pre-adds group docker at that fixed gid '
+            'and serves the socket root:docker 0660 (upstream 29/cli addgroup line); without the '
+            'membership the uid-1000 runner gets EACCES on ping — C05 adds the key')
+    rsc = runner.get('securityContext') or {}
+    if rsc.get('runAsUser') != 1000:
+        bad(f't13: {release} — runner securityContext.runAsUser is {rsc.get("runAsUser")!r}, '
+            'expected 1000 — the image user made explicit so the pod SCM is fully specified '
+            'and the supplemental-group application is unambiguous (C05 task 2)')
+    ok(f't13: {release} — socket grant in place: pod supplementalGroups carries 2375 '
+       '(pod-level only path) + runner runAsUser 1000 explicit')
+
+    if (rsc.get('capabilities') or {}).get('drop') != ['ALL']:
+        bad(f't13: {release} — runner capabilities.drop is '
+            f'{(rsc.get("capabilities") or {}).get("drop")!r}, expected [ALL] — C05 grants the '
+            'socket group WITHOUT dropping hardening (shape (a), not a widening)')
+    if rsc.get('allowPrivilegeEscalation') is not False:
+        bad(f't13: {release} — runner allowPrivilegeEscalation is not false (C05 must keep it)')
+    if dind.get('image') != 'docker:29.9.2-dind':
+        bad(f't13: {release} — dind image is {dind.get("image")!r}, expected docker:29.9.2-dind — '
+            'the 2375 grant is coupled to THIS pin\'s pre-added group; a pin bump must re-check '
+            'upstream before either side changes')
+    if ((dind.get('securityContext') or {}).get('privileged')) is not True:
+        bad(f't13: {release} — dind is no longer privileged (the sidecar pair shape stands; C05 is SC keys only)')
+    renv = {(e or {}).get('name'): (e or {}).get('value') for e in runner.get('env') or []}
+    if renv.get('DOCKER_HOST') != 'unix:///var/run/docker.sock':
+        bad(f't13: {release} — runner DOCKER_HOST is {renv.get("DOCKER_HOST")!r}, expected the in-pod '
+            'unix socket — a TCP transport here is the rejected shape (b), not C05')
+    denames = {(e or {}).get('name') for e in dind.get('env') or []}
+    if 'DOCKER_TLS_CERTDIR' in denames:
+        bad(f't13: {release} — dind now carries a DOCKER_TLS_CERTDIR env — the TLS TCP shape (b2) '
+            'sneaking in behind the unix socket (C05 Notes: dind container untouched)')
+    ok(f't13: {release} — posture intact: drop-ALL, no privilege escalation, privileged dind at the '
+       '29.9.2 pin, DOCKER_HOST on the unix socket, no TLS-certdir env (still shape (a))')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't13: the socket-group checks could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+  then
+    checks=$((checks + $(cat "$WORK/t13-count")))
   else
     exit 1
   fi

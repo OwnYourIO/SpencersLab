@@ -168,6 +168,10 @@ app-template:
               memory: 4Gi
           securityContext:
             allowPrivilegeEscalation: false
+            # The image's actual user, made explicit so the pod
+            # securityContext is fully specified and supplemental-group
+            # application is unambiguous.
+            runAsUser: 1000
             capabilities:
               drop:
                 - ALL
@@ -183,6 +187,21 @@ app-template:
           # mismatch and the runner fails on writes.
           fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
+          # The runner must hold the group that owns the docker socket.
+          # dockerd serves /var/run/docker.sock root:docker 0660 (moby's
+          # default socket group is `docker`). The pinned docker:29.9.2-dind
+          # pre-adds that group at fixed gid 2375 — its base docker:29-cli
+          # Dockerfile runs `addgroup -g 2375 -S docker` — not the blog-era
+          # 999; a future dind pin bump must re-check this gid against the
+          # new image's Dockerfile. fsGroup cannot cover the socket: it
+          # chowns the volume at mount, while dockerd creates the file
+          # afterwards under its own group. The daemon control this grants
+          # is pod-local and already implied by DOCKER_HOST — driving this
+          # sidecar is the runner's job. Ruling and full gid audit:
+          # .agents/plans/2026/2026-11-cf-97-bug-forgejo-runner/DECISIONS.md
+          # (2026-11-02).
+          supplementalGroups:
+            - 2375
 
   service:
     # Headless — a StatefulSet requires one for its per-ordinal DNS names.
