@@ -10,7 +10,7 @@
   "coord_session": "ses_e68292cf1ffeaGQWhT0y6HIHCX",
   "test_session": "ses_e66e2092fffeT0bryb1FqVdJJu",
   "current_wave": 1,
-  "updated_at": "2026-11-02T03:20:00Z",
+  "updated_at": "2026-11-02T05:30:00Z",
   "kickoff": {
     "slug": "cf-97-bug-forgejo-runner",
     "card": "xJSxCDv3sqqgyHwDq",
@@ -201,14 +201,37 @@
       "note": "User ruling verbatim '(a) supplementalGroups: [2375] on the runner'. Pod-level supplementalGroups [2375] (gid authority: docker:29.9.2-dind <- docker:29-cli addgroup -g 2375 -S docker) + containers.runner.securityContext.runAsUser 1000. t13 red-first, green by the values change only. Cluster closure = user merge -> ArgoCD apply -> C03 re-run; AC 'runner online in admin UI' stays a user eyeball. CORRECTIONS from the whole-plan review (2026-11-02): the test-file numstat for ec2b5863f is **98/2**, not the +100-2 in the review handoff; fsGroup/OnRootMismatch are at values.yaml **188/189**, not 189/190; the reviewer's own commit also carried DECISIONS.md +3 and chunks/C05.md +99, so its 'lane = values + tests + STATE only' line was a pre-commit snapshot. Minor 1 was ruled into chunk **C06**; C05 is not amended and its history is not rewritten."
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": ["C05"],
       "owner": "agent",
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e6364e750ffetDw4akpE6yY57K",
+      "review_session": "ses_e63590bdaffeYqg0PrRkhoCSDU",
+      "last_verdict": "APPROVED",
+      "commit": "8a986c69f",
+      "handoffs": [
+        {
+          "from": "agent-dev-local",
+          "at": "2026-11-02T05:0xZ",
+          "status": "DONE",
+          "chunk": "C06",
+          "files_changed": ["charts/forgejo-runner/values.yaml", "charts/forgejo-runner/templates/secret-runner.yaml"],
+          "commands_run": "precondition check (HEAD ec2b5863f, C06.md present, extended t13 in tree) => pass; baseline suite exit 1 AS DESIGNED at 47 ok, verbatim 't13: runner securityContext.runAsGroup is None, expected 1000'; final suite exit 0 / 49 ok 0 skip (t13 2->3 oks); helm lint exit 0; BEFORE/AFTER parsed render diff = EXACTLY one added leaf containers[0].securityContext.runAsGroup=1000, object set identical, pod SC runAs* present: [], dind byte-identical; umbrella render exit 0 / 0 OVERRIDE_; aislop exit 0 0/0 with per-engine JSON showing format+lint SKIPPED (missing ruff); git diff --stat = 2 chart files, Chart.yaml/lock 0 lines, 0 image/tag lines; comment-slop self-pass",
+          "deviations": "none — M2 facts re-verified by dev itself (git log --diff-filter=A, git show -M --summary) rather than taken from the dispatch prose; t13 message echo left to the test session per scope."
+        },
+        {
+          "from": "agent-review",
+          "at": "2026-11-02T05:2xZ",
+          "status": "APPROVED",
+          "chunk": "C06",
+          "evidence": "Re-ran suite exit 0 / 49 ok with the leg split provenance (t1x3 t2x19 t3x1 t4x1 t5x4 t6x2 t7x2 t8x1 t9x5 t10x2 t11x4 t12x2 t13x3 = 49, t13 +1) and t11/t12 still green. Reproduced designed-red from git-archive-HEAD and killed all three hostiles: pod-level runAsGroup => RED on the pod-placement guard, runAsGroup:0 => RED, runAsUser/runAsGroup on dind => RED on the dind guard (NO validation gap — the case I asked it to try if the leg missed it). Parsed before/after = one added leaf, nothing removed or changed. M2 independently re-proven against the tree including that 5853be497 is also the last pre-pin SPEC edit (52 non-comment lines) with only comment-only e3b18c27f after it; git log -S mergePolicy still single-hit 5a8d655b7.",
+          "bookkeeping_note": "Coordinator surfaces, no action requested of the chunk: after C06's +9 comment lines the fsGroup/OnRootMismatch citations resolve to values.yaml:197/198 (my :195 quote of ':189-190' and my :201 '188/189' correction are BOTH now historical), and :195 still carries the superseded 'test +100-2' string. Corrected in this round's STATE edit."
+        }
+      ],
+      "note": "User ruling verbatim 'Add `runAsGroup: 1000` before the PR'. runAsGroup 1000 at CONTAINER level (pod-level identity would let kubelet FsUserFrom resolve an fs user and recursively re-chown the 12 GiB VCTs; dind keeps no runAs*) + the M1/M2 shipped-comment truthfulness fixes. t13 extended in place. Suite exit 0 / 49 ok; review APPROVED."
+    }
       "note": "Added after the whole-plan review (APPROVED) on the user's Minor 1 disposition, verbatim 'Add `runAsGroup: 1000` before the PR'. Scope: runAsGroup 1000 at CONTAINER level (never pod level - pod-level identity lets kubelet FsUserFrom resolve an fs user and recursively re-chown the 12 GiB VCTs; dind deliberately keeps no runAs*), plus the two shipped-comment truthfulness fixes the review required (M1 values.yaml 'fully specified'/'unambiguous' -> the real no-passwd-entry gid-0 fact; M2 secret-runner.yaml 'authored 2026-10-24 (5853be497)' -> tree-accurate ad7633349 10-22 / 2737069cb 10-23 / R069 rename 10-24, argument resting on the same-day pairing with 582c96488 and on git log -S mergePolicy). t13 extended in place by agent-test (no t14). No other new chunk; the fleet-wide sweep stays board card sLK4MmTxGiaCk3uLq."
     }
   },
