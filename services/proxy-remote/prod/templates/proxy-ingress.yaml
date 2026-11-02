@@ -1,4 +1,9 @@
 {{- range $name, $config := .Values.proxy.subdomains }}
+{{- /* Subdomain keys may be value-less (nil) to keep them as documented
+       placeholders. Helm v3 dropped nil keys when merging values files, but
+       helm v4 (bundled with ArgoCD >= 3.5) preserves them, so skip non-map
+       entries here or the field accesses below evaluate on nil. */}}
+{{- if kindIs "map" $config }}
 {{- $subDomain := "" }} {{/* Initialize the variable */}}
 {{- if $config.clusterBase | default false}}
 {{- $subDomain = printf "%s.%s" $name $.Values.clusterName }}
@@ -45,4 +50,5 @@ spec:
                 port:
                   number: {{ $config.port | default 443 }}
         {{- end }}
+{{- end }}
 {{- end }}
