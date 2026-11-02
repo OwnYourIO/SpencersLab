@@ -150,11 +150,21 @@ def _slim_rule(r: dict) -> dict:
     # WeKan's rules API already embeds the trigger and action inline with
     # internal fields (_id, boardId, timestamps) stripped server-side, so the
     # documents pass through as-is — they ARE the rule the model reasons about.
+    # The cf-96 keys ride that same as-is posture, but they are load-bearing,
+    # not cosmetic: the schema-2 snapshot capture contract reads a rule's
+    # checklist extras and enabled flag through this projection, and without
+    # them the get_rule capture path can never answer (RESEARCH F5).
+    # serializeRule hydrates all three on the rule GET routes; the enabled
+    # default guards legacy documents only — a paused rule must read
+    # enabled: false, never a silent active.
     return {
         "id": r.get("_id"),
         "title": r.get("title"),
         "trigger": r.get("trigger"),
         "action": r.get("action"),
+        "extra_actions": r.get("extraActions"),
+        "extra_triggers": r.get("extraTriggers"),
+        "enabled": r.get("enabled", True),
     }
 
 
@@ -262,17 +272,20 @@ def get_checklist(board_id: str, card_id: str, checklist_id: str) -> dict:
 
 @mcp.tool
 def list_rules(board_id: str) -> list[dict]:
-    """List the automation rules of a board. Each rule embeds its trigger and
-    action inline (e.g. trigger {activityType: moveCard, listName: Doing} +
-    action {actionType: addMember, username: ...}). Rule ids are required by
-    get_rule, update_rule and remove_rule."""
+    """List the automation rules of a board. Each rule carries
+    {id, title, trigger, action, extra_actions, extra_triggers, enabled} —
+    trigger and action embed inline (e.g. trigger {activityType: moveCard,
+    listName: Doing} + action {actionType: addMember, username: ...}), the
+    checklist extras and the enabled flag pass through as the route returns
+    them. Rule ids are required by get_rule, update_rule and remove_rule."""
     raw = _wekan.get(f"/api/boards/{board_id}/rules") or []
     return [_slim_rule(r) for r in raw]
 
 
 @mcp.tool
 def get_rule(board_id: str, rule_id: str) -> dict:
-    """Get one automation rule with its full embedded trigger and action."""
+    """Get one automation rule with its full embedded trigger, action,
+    checklist extras and enabled flag."""
     return _slim_rule(_wekan.get(f"/api/boards/{board_id}/rules/{rule_id}") or {})
 
 

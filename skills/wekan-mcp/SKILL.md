@@ -16,8 +16,10 @@ Evidence posture: the rules below and the full table were source-checked
 2026-10-27 against `containers/wekan-mcp/wekan_mcp/server.py` — anchored on
 function names, never line numbers, which drift with every build — and
 live-probed read-only on `dev-boards` the same day. The cf-96 additions (the
-five dependency tools, `preload_board`, `set_card_labels`, and `create_card`'s
-`parent_id`) were source-checked 2026-11-01 against upstream v12.65 and were
+five dependency tools, `preload_board`, `set_card_labels`, `create_card`'s
+`parent_id`, and the C11 rule-projection extension — `get_rule`/`list_rules`
+carrying the checklist extras and the enabled flag) were source-checked
+2026-11-01 (the extension 2026-11-02) against upstream v12.65 and were
 NEVER live-probed (no bearer in a pipeline session) — their rows carry
 `source-only 2026-11` until the C10 deploy-chain probe upgrades them. The
 deployed build can lag the repo source, so docs are claims and the live

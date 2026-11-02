@@ -12,9 +12,10 @@ survive. One row per registered tool, one evidence stamp per row:
   only; it was not exercised by that probe. Facts earlier runs observed live
   are noted inline with their date.
 - `source-only 2026-11` — the cf-96 rows (dependency tools, `preload_board`,
-  `set_card_labels`): repo-source and upstream-v12.65 facts only, never
-  probed — no pipeline session holds a bearer; the C10 deploy-chain user
-  probe upgrades these stamps after the pin bump.
+  `set_card_labels`, and — since C11 — the re-stamped `list_rules`/`get_rule`
+  projection): repo-source and upstream-v12.65 facts only, never probed — no
+  pipeline session holds a bearer; the C10 deploy-chain user probe upgrades
+  these stamps after the pin bump.
 
 The deployed build can lag the repo source (observed 2026-10-26: the
 `default_checked` parameter was rejected on a v4.1.3 deployment while the repo
@@ -35,8 +36,8 @@ parameter; the direct-probe recipe is in
 | `list_comments` | `board_id`, `card_id` | — | `[{id, comment, author_id, created_at}]` — the body key is `comment`; live runs observed `created_at: null` (2026-10-26), so treat listing order as time order. | source-only |
 | `list_checklists` | `board_id`, `card_id` | — | `[{id, title}]` only — card-scoped, so checklist ids cannot be pre-collected board-wide; item ids come from `get_checklist`. | source-only |
 | `get_checklist` | `board_id`, `card_id`, `checklist_id` | — | `{id, title, items: [{id, title, finished}]}` — `finished` is the read-side name of the REST `isFinished` flag; the item ids are what `toggle_checklist_item` and `delete_checklist_item` require. | source-only |
-| `list_rules` | `board_id` | — | `[{id, title, trigger, action}]` — trigger and action embed inline; rule ids feed `get_rule`, `update_rule`, `remove_rule`. Key vocabulary and recipes: `skills/wekan-api/references/wekan-mcp-ops.md`. | source-only |
-| `get_rule` | `board_id`, `rule_id` | — | one rule document, same shape as a `list_rules` item. | source-only |
+| `list_rules` | `board_id` | — | `[{id, title, trigger, action, extra_actions, extra_triggers, enabled}]` — trigger and action embed inline; since cf-96 C11 the checklist extras and the enabled flag pass through as the routes return them; rule ids feed `get_rule`, `update_rule`, `remove_rule`. Key vocabulary and recipes: `skills/wekan-api/references/wekan-mcp-ops.md`. | source-only 2026-11 |
+| `get_rule` | `board_id`, `rule_id` | — | one rule document, same shape as a `list_rules` item — full embedded trigger, action, checklist extras and enabled flag. | source-only 2026-11 |
 | `list_custom_fields` | `board_id` | — | `[{id, name, type}]` — the name key is `name`, not `title` (the board-level list route projects to these three; verified on the deployed v9.99 API). | live probe 2026-10-27 |
 | `get_custom_field` | `board_id`, `custom_field_id` | — | `{id, name, type, settings, show_on_card, automatically_on_card, always_on_card}` — dropdown options live in `settings.dropdownItems`; `always_on_card` is read-only through this server (see `create_custom_field`). | source-only |
 | `list_board_members` | `board_id` | — | `{board_id, title, members: [{user_id, username, is_admin, is_active, is_no_comments, is_comment_only, is_worker, is_normal_assigned_only, is_comment_assigned_only, is_read_only, is_read_assigned_only}], username_resolution}` — nine normalized booleans (present⇒true, absent⇒false); `username` is always null because usernames ride only site-admin-gated REST routes, and the `username_resolution` note says so; ownership is the entry with `is_admin=true`; `grantedBy` provenance is omitted. | source-only (v12.65 source-check 2026-10-30; live tools/list probe post-merge, user-owned) |

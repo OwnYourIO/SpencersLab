@@ -116,8 +116,8 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `list_comments` | read | Comments on a card |
 | `list_checklists` | read | Checklists on a card |
 | `get_checklist` | read | Checklist with item ids (needed to toggle items) |
-| `list_rules` | read | Automation rules of a board (trigger+action embedded) |
-| `get_rule` | read | One automation rule with full trigger and action |
+| `list_rules` | read | Automation rules of a board — each rule passes through `{id, title, trigger, action, extra_actions, extra_triggers, enabled}`; trigger+action embed inline and the checklist extras + enabled flag ride the route documents un-reshaped (since cf-96 C11) |
+| `get_rule` | read | One automation rule with its full embedded trigger, action, checklist extras and enabled flag (same shape as a `list_rules` item) |
 | `list_custom_fields` | read | Custom fields defined on a board (id/name/type) |
 | `get_custom_field` | read | One custom field with settings + placement flags |
 | `list_board_members` | read | Board members: `user_id` + nine normalized role booleans; `username` is always null (usernames ride site-admin-gated REST only) and `username_resolution` says why |
