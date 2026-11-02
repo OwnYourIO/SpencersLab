@@ -121,10 +121,11 @@ forgejo-secret-seed:
     # fields site_id_com / site_id_farm carry the two site ids.
     netlify: 6dc0c671-1a5d-4501-b593-b4f60161144a
     # hugo-build-forgejo LOGIN item (password = write:repository PAT).
-    # Still unfilled by design — the owner has not created the PAT yet; the
-    # seeder's ESO fetch stays loudly failing (remoteRef renders the marker)
-    # until this slot is filled, the repo exists, and gpu reaches Forgejo.
-    forgejo-pat: OVERRIDE_NEEDED
+    # All three slots are filled, so the unfilled-marker posture above only
+    # guards future changes. Convergence now gates on the external
+    # preconditions — the site repo existing and gpu egress reaching this
+    # host; until those land the daily PUT 404s and the job fails loudly.
+    forgejo-pat: 88722c5b-ebf5-44f8-b6bf-b4f60167bb38
 
 seaweedfs-csi-driver:
   volume-count: 8
