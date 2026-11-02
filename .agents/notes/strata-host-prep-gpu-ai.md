@@ -456,6 +456,46 @@ engine silently re-picks a smaller chunk when the prompt buffers do not fit
    below 32,768, that is the ×4 link ceiling (H5) being measured for the first
    time, which is a result worth recording either way.
 
+**3.4b T5 — the K-quant prompt-expert experiment on q4 (owner go 2026-11-02).**
+`STRATA_MMQ_KQ=1` now rides the **q4 model env only** (pinned q4-only by
+`test_u16_mmq_kq_env_is_a_q4_only_experiment`). Reason it exists: on AMD the
+K-quant prompt path is the un-fused one — QUANTS.md@v0.2.9 says the FP16 route
+"reads each expert as ~10 MB of FP16" — and q4 is doubly exposed (experts ~2.8×
+IQ3_S's size, and only 6,889 fit the VRAM expert cache where the primary keeps
+11,127, so a prompt streams about twice the expert volume over the OCuLink ×4
+link). **Baseline it is judged against** (first minute of real q4 traffic,
+2026-11-02 19:38-19:42, engine-side `prefill` lines, q4 vs the primary at equal
+size and equal position):
+
+| prompt (fresh tokens) | q4 | primary IQ3_S |
+|---|---|---|
+| ~22.3k cold, first after pin | **433.5 tok/s** (51.5 s) | **1,105.2 tok/s** (20.1 s) |
+| 15.5k / 11.6k next | 717.4 | 1,047.9 |
+| 9.4k | 486.1 | 530.4 |
+| decode | 46.1–59.9 | 69.0–80.3 |
+
+Decode is inside the −10…−30% U8 accepted; the −61% prompt gap is NOT (the
+docs' own quant-to-quant gap is −15…−28%), so this is the anomaly being probed.
+Read it the same way as T0/T1 — unique-tagged fresh prompts at 16K and 32K, ≥3
+per arm, medians, and compare against the table above (the earlier numbers, not
+each other):
+
+```bash
+kubectl -n default logs deploy/gpu-ai-llama-swap-strata --since=30m \
+  | grep -oE "prompt [0-9]+ cached [0-9]+.*prefill [0-9.]+ tok/s" | tail -20
+```
+
+Three outcomes, all worth recording: **faster** → upstream has an unmeasured AMD
+win and the same switch is a candidate for orca's IQ4_XS path too (different
+rung, so it needs its own A/B — do not carry it over on this result); **same** →
+the gap is the ×4 link and the expert-slot shortage, not the kernel (T5 stays
+off-out-of-harm's-way, and the real fix is on the B ticket's pool math or a
+bigger VRAM expert cache); **slower** → delete the env line, and the measurement
+itself is the first published AMD MMQ_KQ number either way. Rates are the
+comparison, never token diffs: the switch changes bits (upstream's own numbers —
+median KL vs Q8_0 IMPROVES to 0.0027 from FP16's 0.0047, while the mean WORSENS
+on a few prompts, 0.095 vs 0.081).
+
 **3.5 Timed-unload proof (same session, once the engine has loaded).**
 `unloadTimeout: 180` is load-bearing: llama-swap force-kills at the per-model
 unloadTimeout (global default **10 s**) long before the pod's 420 s grace

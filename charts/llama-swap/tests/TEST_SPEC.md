@@ -2720,3 +2720,27 @@ be called first.
   exactness lives in the evidence file, matrix growth lives in
   `_cf86_matrix_violations`. Nothing new was added; one stated scope was finally
   implemented.
+
+### 9.27 U16 q4 prompt-rate experiment — q4-scoped env + two-sided pin (2026-11-02)
+
+`STRATA_MMQ_KQ=1` (int8 MMQ prompt experts on the K-quant path) shipped on the
+q4 arena only, as a measurement against the recorded baseline (cold 22.3k fresh:
+q4 433.5 tok/s vs primary 1,105.2 at equal size/position; decode inside U8's
+accepted band). New arm
+`test_strata_q4_rung.py::test_u16_mmq_kq_env_is_a_q4_only_experiment` does three
+jobs no existing arm could:
+
+- **presence** on the q4 model env (`strata_testlib.Q4_MMQ_KQ_ENV`, single
+  source so the chart and the arm cannot drift);
+- **absence** on primary, strix, orca and ornith — this is the load-bearing
+  half. The switch changes bits and only the K-quant path is un-fused on AMD, so
+  a spread to the int8-native rungs would be an unmeasured re-tune of four
+  arenas hiding inside a one-line env edit;
+- **non-inertness**: re-reads `containers/strata/files/fetch_models.sh` and
+  requires `STRATA_MMQ_KQUANTS=ON` in the migration recompile line, because an
+  env naming a kernel the binary does not compile is a silently dead experiment.
+
+No fixture moved: model env is not part of the profile ConfigMap captures, the
+primary's era chain is untouched, and the golden config carries no strata model
+env (the arenas live in the inner config). 411 passed / 9 skipped: +1 arm,
+baseline skip count unchanged.

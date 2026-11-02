@@ -333,6 +333,12 @@ Q4_CGROUP_LIMIT = STRATA_CGROUP_LIMIT  # deprecated alias; the cgroup is pod-lev
 Q4_CONV_CACHE_MIB = 16384
 Q4_CONV_CACHE_SLOTS = 16
 Q4_SESSION_FLAG = "--slot-save-path"
+# U16 (owner go 2026-11-02): the int8-MMQ prompt-expert switch rides the Q4
+# MODEL env and nowhere else — it addresses the K-quant prompt path, which only
+# this rung uses (primary/orca are int8-native, strix/ornith are other engines).
+# Baseline it is judged against is recorded in values.yaml beside the line and
+# in DECISIONS U16; upstream has no published AMD speed number for it.
+Q4_MMQ_KQ_ENV = "STRATA_MMQ_KQ=1"
 # The dir creation STAYS (fetch_models.sh owns it; one home only — the chart
 # must not mkdir it): harmless bookkeeping for a possible future HIP session
 # -files build, asserted by the init/image suites.

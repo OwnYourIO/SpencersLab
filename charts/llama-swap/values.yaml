@@ -1650,8 +1650,31 @@ strata:
         # Engine defaults like the other R9700 rungs: no PR/strix switch set
         # (silicon/recipe-specific), only the peers-forwarded Host allow-list;
         # the ROCR entry is injected by the template from the global index.
+        # ONE documented exception, q4 only (U16, owner go 2026-11-02):
+        # int8 MMQ for the K-quant PROMPT experts. Without it the UD-Q4_K_XL
+        # prompt path takes AMD's FP16/BLAS route, which materialises each
+        # expert as ~10 MB of FP16 per pass (QUANTS.md@v0.2.9), and q4 pays
+        # twice more than the other rungs for it: its experts are ~2.8x the
+        # size of IQ3_S's, and only 6,889 fit the VRAM expert cache where the
+        # primary keeps 11,127, so a prompt streams roughly double the expert
+        # volume over the OCuLink x4 link. First on-node measurement after the
+        # arena started serving (2026-11-02 19:38-19:42, this is the BASELINE
+        # the flip is judged against): cold 22,311-fresh prompt 433.5 tok/s
+        # vs the primary's 1,105.2 at the same size and same position
+        # (-61%); published gap for this quant on the docs' R9700 is
+        # -15..-28%. Decode 46.1-59.9 vs primary 69-80, inside the -10..-30%
+        # U8 accepted. Upstream has NEVER published an AMD speed number for
+        # this switch ("its speed and KL are measured before it becomes a
+        # default"), so this is an experiment, not a tuning win: read the
+        # prefill medians at 16K/32K fresh and report either way. Kernels are
+        # already compiled into the claim-built engine (build def
+        # STRATA_MMQ_KQUANTS=ON in the migration cmake line) — no rebuild.
+        # Quality is bit-changing: median KL vs Q8_0 improves (0.0027 vs
+        # 0.0047), mean worsens on a few prompts (0.095 vs 0.081), so compare
+        # RATES, never token diffs. Revert = delete this line (or =0).
         env:
           - "STRATA_REQUEST_LINES=1"
+          - "STRATA_MMQ_KQ=1"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
 
       ornith-1.5-122b-strata-q4:

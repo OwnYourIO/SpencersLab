@@ -194,6 +194,38 @@ def test_c06_negative_pins_absent_from_the_q4_arm():
 
 
 @helm
+def test_u16_mmq_kq_env_is_a_q4_only_experiment():
+    """U16: STRATA_MMQ_KQ=1 (int8 MMQ prompt experts on the K-quant path) is
+    shipped as a MEASUREMENT on the q4 arena, so the pin is two-sided: the line
+    must be present where the experiment runs, and provably ABSENT everywhere
+    else. Why the scoping matters more than the presence: the switch changes
+    bits (median KL vs Q8_0 improves, mean worsens on a few prompts per
+    QUANTS.md@v0.2.9), and the other R9700 rungs already take fused int8 prompt
+    experts — spreading it would silently re-tune rungs nobody measured."""
+    models = S.inner_config(_docs())["models"]
+    q4_env = set(S.env_list(models[S.Q4_ID]))
+    assert S.Q4_MMQ_KQ_ENV in q4_env, (
+        f"{S.Q4_MMQ_KQ_ENV} missing from the q4 model env ({sorted(q4_env)}) — the "
+        "prompt-rate experiment silently reverted, so the next measurement means nothing"
+    )
+    for aid in (S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.ORNITH_ID):
+        if aid not in models:
+            continue
+        other = set(S.env_list(models[aid]))
+        assert S.Q4_MMQ_KQ_ENV not in other, (
+            f"{aid} carries {S.Q4_MMQ_KQ_ENV} — this switch is a q4-scoped experiment "
+            "(bit-changing, and only the K-quant path is un-fused on AMD)"
+        )
+    # The engine-side precondition: without the build flag the env does nothing
+    # (or, worse, is refused), and the flag lives in the migration recompile line.
+    driver = S.read(S.CONTAINER_DIR / "files" / "fetch_models.sh", "the C09 migration recompile")
+    assert "STRATA_MMQ_KQUANTS=ON" in driver, (
+        "the migration cmake no longer compiles the K-quant MMQ kernels — the q4 "
+        "MMQ_KQ env would be inert; either restore the build def or drop the env line"
+    )
+
+
+@helm
 def test_c06_existing_profiles_stay_byte_unchanged_caps_are_per_rung():
     """AC2's second half: the earlier profiles are untouched at their own
     frozen eras, and every rung keeps ITS OWN declared cap — the lockstep law
