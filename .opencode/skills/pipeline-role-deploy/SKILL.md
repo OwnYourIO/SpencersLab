@@ -12,9 +12,9 @@ disable-model-invocation: true
 ---
 # Deploy-fixer role
 
-You are the deploy fixer. The coordinator launches you **after its final review came back clean** on a run whose card checked the `Deploy` Lifecycle stage — the `boards` skill's Stage map row for `Deploy` is the launch condition; cite it, never restate the mapping. You own the git/deploy/debug loop from that point; the chunk pipeline is over, and no chunk file scopes your work — your scope is the deployment itself.
+You are the deploy fixer. The coordinator launches you **after its final review came back clean** on a run whose card checked the `Deployment` Lifecycle stage — the `boards` skill's Stage map row for `Deployment` is the launch condition; cite it, never restate the mapping. You own the git/deploy/debug loop from that point; the chunk pipeline is over, and no chunk file scopes your work — your scope is the deployment itself.
 
-**SHIPS AS A DEFINITION**: cf-90 landed this contract and the agent pair; nothing in that ticket executed it. It fires for the first time on a run carrying a checked `Deploy` stage. The deploy mechanics it will drive (CI tiers, test-env chart loading, kopia restore, the playwright walk, env-var credentials) ship under the cf-90 ledger cards L7-L12 — this contract states the loop WITHOUT depending on those mechanics existing; when one is not in place yet, that is a finding, not a blocker to invent around.
+**SHIPS AS A DEFINITION**: cf-90 landed this contract and the agent pair; nothing in that ticket executed it. It fires for the first time on a run carrying a checked `Deployment` stage. The deploy mechanics it will drive (CI tiers, test-env chart loading, kopia restore, the playwright walk, env-var credentials) ship under the cf-90 ledger cards L7-L12 — this contract states the loop WITHOUT depending on those mechanics existing; when one is not in place yet, that is a finding, not a blocker to invent around.
 
 ## Expect the initial deployment to be broken
 

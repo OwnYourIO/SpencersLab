@@ -40,8 +40,10 @@
 //     throws. Reads startDir/.git through deps.readFile.
 //   newLockRecord(input) -> object   (handoff B.1 shape + D18 identity, v1)
 //     input = { pipeline, cardId, sessionID, setId, pipelineSet, cardTitle?,
-//     now? }; version: 1; claimedAt/heartbeatAt ISO-8601 UTC from now;
-//     pipelineSet stored sorted.
+//     now? }; version: 1; claimedAt/heartbeatAt ISO-8601 with the workspace
+//     offset, UTC Z when $TZ is unresolvable (cf-96 OQ4 — displayed stamps,
+//     instant-preserving: Date.parse(stamp) recovers the epoch-ms it came
+//     from); pipelineSet stored sorted.
 //   Lock/store seams — the injected env (deps) is the same object across a
 //   session's calls; its fs member is a node:fs/promises subset (open,
 //   readFile, writeFile, rename, rm, mkdir, readdir, stat, utimes); tests
@@ -124,6 +126,9 @@ const PLUGIN_SRC = readFileSync(".opencode/plugin/pipeline-locks/index.ts", "utf
 
 const T0 = Date.parse("2026-10-29T12:00:00Z");
 const iso = (ms: number) => new Date(ms).toISOString();
+// cf-96 C09: both stamp spellings are contract — a workspace-offset tail or
+// the UTC Z fallback; mixed-era INPUT fixtures keep building with iso().
+const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
 
 // Real-tmp-dir env: the offline store is exercised against actual O_EXCL and
 // rename semantics — a fake fs would only prove the fake. Single fs members
@@ -346,7 +351,8 @@ describe("K4 claimLockSet — identity, normalization, storage and pin legs (AC 
       assert.equal(r.sessionID, "s1");
       assert.equal(r.setId, res.setId);
       assert.deepEqual(r.pipelineSet, ["a", "b"], "the full sorted pipelineSet rides in every member file");
-      assert.ok(!Number.isNaN(Date.parse(r.heartbeatAt)), "heartbeatAt is ISO-8601");
+      assert.match(r.heartbeatAt, STAMP_SHAPE, "heartbeatAt carries the stamped shape (cf-96 AC3)");
+      assert.equal(Date.parse(r.heartbeatAt), T0, "and parses back to its env.now instant — shape and instant, not a spelling (cf-96 OQ4)");
     }
     assert.equal(JSON.parse(readFileSync(join(env.locksDir, "a.json"), "utf8")).pipeline, "a");
     assert.deepEqual(res.lockPaths.map((p: string) => p.split("/").pop()).sort(), ["a.json", "b.json"]);
@@ -508,7 +514,8 @@ describe("K6 writeLockAtomic / readLock / appendEvent / newLockRecord (AC 6)", (
     const lines = readEvents(env);
     assert.equal(lines.length, 1);
     assert.equal(lines[0].ev, "claim");
-    assert.ok(!Number.isNaN(Date.parse(lines[0].at)), "appendEvent stamps at");
+    assert.match(lines[0].at, STAMP_SHAPE, "appendEvent stamps the contract shape (cf-96 AC3)");
+    assert.equal(Date.parse(lines[0].at), T0, "the audit at parses to the env.now instant the line was written at (cf-96 OQ4)");
     const broken = { ...env, eventsPath: join(env.runtimeDir, "no-such-dir", "events.log") };
     await seam("appendEvent")(broken, { ev: "audit-should-not-throw" });
   });
@@ -526,8 +533,10 @@ describe("K6 writeLockAtomic / readLock / appendEvent / newLockRecord (AC 6)", (
     assert.equal(rec.cardId, "c1");
     assert.equal(rec.setId, "set-9");
     assert.deepEqual(rec.pipelineSet, ["a", "b"], "the record stores the set sorted");
-    assert.equal(rec.heartbeatAt, iso(T0));
-    assert.equal(rec.claimedAt, iso(T0));
+    assert.match(rec.heartbeatAt, STAMP_SHAPE, "the claim stamp carries the contract shape (cf-96 AC3)");
+    assert.equal(rec.heartbeatAt, rec.claimedAt, "both fields stamp from the one now (D25)");
+    assert.equal(Date.parse(rec.heartbeatAt), T0, "instant-preservation: the stamp parses back to its epoch-ms (cf-96 OQ4 — string equality against iso() was the pre-C09 spelling pin)");
+    assert.equal(Date.parse(rec.claimedAt), T0);
   });
 });
 
@@ -564,7 +573,8 @@ describe("K7 releaseLockSet — owner checks and the set delete (AC 7)", () => {
     assert.equal(rel.setId, res.setId);
     assert.equal(rel.cardId, "c1");
     assert.deepEqual(rel.pipelineSet, ["a", "b"]);
-    assert.ok(!Number.isNaN(Date.parse(rel.at)));
+    assert.match(rel.at, STAMP_SHAPE, "audit stamps carry the contract shape (cf-96 AC3)");
+    assert.equal(Date.parse(rel.at), T0, "and the release audit parses to its env.now instant (cf-96 OQ4)");
     const abandoned = await seam("claimLockSet")(env, { cardId: "c2", pipelines: ["a"], sessionID: "s2" });
     await seam("releaseLockSet")(env, { sessionID: "s2", outcome: "abandoned" });
     const rel2 = readEvents(env).filter((l) => l.ev === "release").pop();
@@ -633,5 +643,22 @@ describe("K9 setup — plain-object shape, visible tool names, degrade path (AC 
     const cleanup = await setupBounded({});
     assert.equal(typeof cleanup, "function", "setup must always return a cleanup fn (the host calls it unconditionally)");
     cleanup();
+  });
+});
+
+describe("cf-96 C09 zone coverage — one formatter, both $TZ geometries (AC3)", () => {
+  it("stamps local-with-offset when $TZ resolves and UTC Z when it does not (cf-96 AC3)", () => {
+    const savedTZ = process.env.TZ;
+    try {
+      process.env.TZ = "America/Denver";
+      const off = seam("localIso")(T0);
+      assert.match(off, STAMP_SHAPE, "offset spelling stays inside the ISO-8601 shape");
+      assert.ok(/[+-]\d{2}:\d{2}$/.test(off), `expected an explicit offset tail for America/Denver, got ${off}`);
+      assert.equal(Date.parse(off), T0, "the offset stamp parses back to the exact instant (the reaper's 2 h window depends on it — OQ4/AC2)");
+      delete process.env.TZ;
+      assert.equal(seam("localIso")(T0), iso(T0), "$TZ unset falls back to the UTC Z spelling byte-for-byte (today's behavior, fail-safe)");
+    } finally {
+      if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
+    }
   });
 });

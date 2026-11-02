@@ -29,7 +29,7 @@
 # others). Dev MUST re-probe and regenerate ai-dev-live-2026-10-31.json for
 # realism (C01 Files-in-scope note); if the regenerated live state drifts from
 # AC1's recorded action set (2 create_list / 8 bucket labels / 16 rules /
-# 2 provider labels), the EXPECTED SET below re-pins via the test owner —
+# 2 provider labels + 1 Research: Parallel ensure since the cf-96 C08 spec grew), the EXPECTED SET below re-pins via the test owner —
 # never by relaxing a count here.
 #
 # Red posture: everything here is designed-red until C01 dev lands
@@ -180,11 +180,12 @@ for t in planning_after:
                     "label": f"Bucket: {t}"})
 exp.append({"action": "create_label", "name": "Provider: API", "color": None})
 exp.append({"action": "create_label", "name": "Provider: Local", "color": None})
+exp.append({"action": "create_label", "name": "Research: Parallel", "color": None})
 key = lambda a: json.dumps(a, sort_keys=True)
 norm = sorted(map(key, got))
 # provider-label colors are NOT pinned (the spec fixes only the bucket color):
 # mask them, and reject empty/non-string colors while doing so.
-for want_mask in ("Provider: API", "Provider: Local"):
+for want_mask in ("Provider: API", "Provider: Local", "Research: Parallel"):
     for i, s in enumerate(norm):
         a = json.loads(s)
         if a.get("action") == "create_label" and a.get("name") == want_mask:
@@ -192,6 +193,7 @@ for want_mask in ("Provider: API", "Provider: Local"):
             assert isinstance(c, str) and c, f"{want_mask}: create_label needs a non-empty string color, got {c!r}"
             a["color"] = None
             norm[i] = key(a)
+norm.sort()  # masking rewrites the sort key; the pre-mask order is stale
 expn = sorted(map(key, exp))
 if norm != expn:
     extra = [json.loads(s) for s in norm if s not in expn]
@@ -203,15 +205,15 @@ if norm != expn:
 lists = [a for a in got if a["action"] == "create_list"]
 labels = [a for a in got if a["action"] == "create_label"]
 rules = [a for a in got if a["action"] == "create_rule"]
-assert (len(lists), len(labels), len(rules)) == (2, 10, 16), \
-    f"AC1 shape: want 2 create_list + 8 bucket + 2 provider create_label + 16 create_rule, got {len(lists)}+{len(labels)}+{len(rules)}"
+assert (len(lists), len(labels), len(rules)) == (2, 11, 16), \
+    f"AC1 shape: want 2 create_list + 8 bucket + 2 provider + 1 Research: Parallel create_label + 16 create_rule, got {len(lists)}+{len(labels)}+{len(rules)}"
 for a in labels:
-    assert a["name"].startswith("Provider:") or a["color"] == "darkgreen", \
+    assert a["name"].startswith(("Provider:", "Research: Parallel")) or a["color"] == "darkgreen", \
         f"bucket label {a['name']!r} carries color {a['color']!r}, want the Bucket Color swatch 'darkgreen'"
 print("exact")
 PY
-  then fail "t2[C01 AC1]: live-fixture action set differs from the AC1 contract above (got 28 actions: 2 create_list + 8 Bucket + 2 Provider labels + 16 rules)"; fi
-  ok "t2[C01 AC1]: live fixture -> EXACTLY 2 create_list(Planning) + 8 Bucket(darkgreen) + 2 Provider labels + 16 rule records, nothing else"
+  then fail "t2[C01 AC1]: live-fixture action set differs from the AC1 contract above (got 29 actions: 2 create_list + 8 Bucket + 2 Provider labels + 1 Research: Parallel ensure + 16 rules)"; fi
+  ok "t2[C01 AC1]: live fixture -> EXACTLY 2 create_list(Planning) + 8 Bucket(darkgreen) + 2 Provider labels + 1 Research: Parallel ensure + 16 rule records, nothing else"
 fi
 
 # --- t2b control (runs with t2): titles-only — ids are for realism alone -------

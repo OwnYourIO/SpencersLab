@@ -1,8 +1,8 @@
 ---
 description: >-
   Definition-only deploy fixer (-deploy-pr): runs after the final review comes
-  back clean on a run whose card checked the Lifecycle Deploy stage; loops the
-  broken initial deployment - a couple of options per issue, user picks when
+  back clean on a run whose card checked the Lifecycle Deployment stage; loops
+  the broken initial deployment - a couple of options per issue, user picks when
   Deployment is in the loop, own recommendation otherwise; hands back to the
   coordinator for reintegration and re-review and closes its own worktree at
   hand-back; no commits; pushes the ticket branch for remote build/test per

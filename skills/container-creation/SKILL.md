@@ -210,10 +210,18 @@ app-template:
 Two ways to reference the image — **pin by default**:
 
 - **`:v<run_number>`** (default) — an immutable point-in-time tag; pin to the
-  newest published one. This is the repo standard: reproducible deploys and
-  Renovate-managed upgrades (see the pinned-image rule in the
-  `helm-chart-creation` skill). Grab the run number from the workflow run or
-  `docker buildx imagetools inspect ghcr.io/ownyourio/<name>`.
+  newest published one — but check that the newest is YOURS: the registry
+  maximum is not automatically the right bump target, because a build that
+  predates the merge you ship can already occupy a higher run number. Name
+  your own build's run number. This is the repo standard: reproducible
+  deploys and Renovate-managed upgrades (see the pinned-image rule in the
+  `helm-chart-creation` skill). Grab the run number from the workflow run's
+  `#NNN` label, or registry-side anonymously: the pull-scoped token
+  (`GET https://ghcr.io/token?scope=repository:ownyourio/<name>:pull`) plus
+  `GET https://ghcr.io/v2/ownyourio/<name>/tags/list`. Do NOT enumerate
+  with an untagged `docker buildx imagetools inspect` — untagged, it
+  resolves `:latest` (a real tag that on some images is a legacy
+  pre-tag-scheme publish) and lists nothing.
 - **`:main` + `pullPolicy: Always`** — the mutable rolling tag. Use it only for
   a brand-new container that has no pinned tag yet (or when explicitly asked),
   and leave a note to pin it once a versioned build exists.

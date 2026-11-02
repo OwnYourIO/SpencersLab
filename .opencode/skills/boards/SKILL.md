@@ -4,18 +4,21 @@ description: >-
   WeKan AI-Dev board flow for the agent-board-coord pipeline variant — card
   pickup (a given card id, else the top card walking Rework → Not Started → Low
   Priority, scheduled walks additionally filtered by Provider label with the
-  Local task the planned taker of unlabeled cards), card-driven kickoff where
-  the five standard checklists (Services/Type/Model(s)/Lifecycle/Human in the
-  Loop) and the single slug custom field (combined `[<slug>](<session link>)`
-  value) supply the answers pipeline-kickoff would ask live, the
-  checked-stages-only Lifecycle stage gate with its single-authority Stage map,
-  run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative
-  research-only loop for Research-labelled cards (ending at Review), the card
-  lifecycle with post-plan write-back (Finished stays human-owned), the
-  follow-up-card protocol landing Inbox (Backlog swimlane), the
-  archive-and-never-ask no-cards exit, and the batched question protocol.
-  MUST-loaded by agent-board-coord at run start; load it anywhere else when
-  working the WeKan AI-Dev board card flow.
+  Local task the planned taker of unlabeled cards; candidates additionally
+  skipped by the dependency gate over blocking Red Strings edges), the
+  claim-time `preload_board` consumer with its degrade law, the grouped-sibling
+  flow running a card's blocking-edge companions under one claim, card-driven
+  kickoff where the five standard checklists
+  (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the single slug
+  custom field (combined `[<slug>](<session link>)` value) supply the answers
+  pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate
+  with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs
+  naming every surface, the iterative research-only loop for Research-labelled
+  cards (ending at Review), the card lifecycle with post-plan write-back
+  (Finished stays human-owned), the follow-up-card protocol landing Inbox
+  (Backlog swimlane), the archive-and-never-ask no-cards exit, and the batched
+  question protocol. MUST-loaded by agent-board-coord at run start; load it
+  anywhere else when working the WeKan AI-Dev board card flow.
 ---
 # Boards
 
@@ -24,15 +27,15 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 ## Board facts
 
 - Instance: `https://wekan.spencerslab.com`; board **AI-Dev**; swimlane **In Process**.
-- Lists (six today, seven once the D22 follow-up card lands): **Not Started**, **Executing**, **Review**, **Rework**, **Finished**, **Low Priority** (deprioritised work — picked up last), **Timeout** (reaper destination, created via the D22 follow-up card — never a pickup source; its triage is human-owned like **Review**'s).
+- Lists — the board structure is human-owned and DRIFTS; this enumeration is context, never a freeze — resolve list ids live (the board-context block's `lists:` section, else `list_lists`). Captured 2026-11-01, the **In Process** swimlane holds: **Not Started**, **Executing**, **Review**, **Rework**, **Finished** (human acceptance — the agent never moves there, and the dependency gate counts a blocker here as satisfied), **Low Priority** (deprioritised work — picked up last), plus two human-owned non-intake lists the flow READS: **Test** (acceptance-holding — a blocker sitting here also satisfies the dependency gate; never a pickup or grouping source) and **Cancelled** (human shelving — never picked). Pickup walks only **Rework → Not Started → Low Priority**. **Timeout** (reaper destination, still landing via the D22 follow-up card — never a pickup source; its triage is human-owned like **Review**'s; until it exists the reaper degrades per Parallel pipeline loops).
 - Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned). Labels whose name starts with `Pipeline:` mark the pipelines a card blocks on the lease-lock surface (Parallel pipeline loops): the TRIMMED remainder of the label name is one pipeline/lock name, ONE card may carry several, and a card with no such label runs on the single `default` pipeline. `Pipeline:` labels are human-created in the WeKan UI and never agent-created or agent-mutated — the same posture as **Research** (D17/D19).
 - Custom fields: exactly ONE board-level text field — `slug`, carrying the combined `[<slug>](<session link>)` link value — resolved by name with `list_custom_fields`; the legacy `session` field may linger on the live board but is retired: never read, never written (its board-level removal is human-owned). There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field. Nor a `pipeline` field — that route was retired with D19: pipeline identity is LABELS, never a third field.
 - The five standard checklists on every card (future cards via the multi-action createCard rule — imported per the upgrade-ticket runbook — existing cards via backfill; the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
   - **Model(s)** — `Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local` (gpu-ai). Default selection: `Qwen Flash`. How the check lands: agents creating cards pass `default_checked` to `create_card` (race-free by construction); the board's multi-action createCard rule carries the checkItem extras, but they are DORMANT until WeKan fixes the broken checkItem rule action upstream (`checkListId` field typo, present v12.64→main — details in the wekan-v12-upgrade ticket). A card that arrives with the default unchecked routes from the default selection WITHOUT mutating the card (see kickoff).
-  - **Lifecycle** — `Pre Research` | `Plan` | `Post Research` | `Test` | `Code` | `Review` | `Deploy` | `Single Session`: the stages THIS card runs — only the checked items execute, and the Stage map section below is the single stage→pipeline mapping (coords cite it, never restate it). Default when nothing is checked: the full standard loop — `Plan` + `Test` + `Code` + `Review`, research stages and Deploy off — a card picked up for work cannot mean "run no stages". An unchecked Lifecycle checklist is a valid answer, not a gap: it runs that default WITHOUT mutating the card (the createCard rule's checklist extras stay DORMANT until the upstream WeKan fix — see the Model(s) note).
-  - **Human in the Loop** — `Research` | `Plan` | `PR` | `Deployment`: the stages AFTER which the agent must STOP and wait for human input on that card; the checked items are the active stop points. Default: `Plan` — every run pauses for human approval after planning regardless of the checked state (that pause is a pipeline gate, not a card bit); the visible check follows the same situation as Model(s).
+  - **Lifecycle** — `Exploration` | `Agent Decides Research` | `Pre Research` | `Planning` | `Post Research` | `Test Writing` | `Chunk Development` | `Chunk Review` | `Final Review` | `Deployment` | `Single Session`: the stages THIS card runs, in card order (`Single Session` last, kept by the OQ6 ruling) — only the checked items execute, and the Stage map section below is the single stage→pipeline mapping (coords cite it, never restate it). Nothing checked runs the standard default loop — the Stage map's Blank defaults section names its seven stages; a card picked up for work cannot mean "run no stages". An unchecked Lifecycle checklist is a valid answer, not a gap: it runs that default WITHOUT mutating the card (the createCard rule's checklist extras stay DORMANT until the upstream WeKan fix — see the Model(s) note).
+  - **Human in the Loop** — `Exploration` | `Agent Decides Research` | `Pre Research` | `Planning` | `Post Research` | `Test Writing` | `Chunk Development` | `Chunk Review` | `Final Review` | `Deployment` | `Single Session`: the SAME eleven names as Lifecycle — the checklists mirror each other, so a stop point can only name a stage the run's own vocabulary has. The checked items are the active stop points: each one stops the run AFTER that step completes (even if a later stage is skipped). Default: `Final Review` — the run pauses at the whole-plan review hand-off before continuing. The plan-approval pause is separate doctrine and always applies regardless of the checked state (that pause is a pipeline gate, not a card bit — see the Stage map's `Planning` row); the visible check follows the same situation as Model(s).
 - Access: the `dev-boards` MCP server — the wekan-mcp tool set (`get_card`, `list_cards_in_list`, `move_card`, `add_comment`, `list_comments`, `list_checklists`, `get_checklist`, `list_custom_fields`, `set_card_custom_field`, `delete_checklist_item`, …), write-capable; it is the agent's single MCP permission (narrow `dev-boards*`, D21 — server-name spelling: MCP tool ids keep the hyphen).
 - `dev-boards` authenticates SERVER-SIDE via login-mint: `WEKAN_USERNAME` + `WEKAN_PASSWORD` arrive from the `wekan-mcp` Bitwarden LOGIN item and the instance URL rides that item's URI field (data, not values-config). The agent never handles credentials.
 - Tool behavior unclear → load the `wekan-api` skill for WeKan API semantics (on demand, never at run start).
@@ -40,26 +43,35 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 
 ## Stage map — what each checked Lifecycle item runs
 
-The single authority for the Lifecycle consumption; `pipeline-role-coord` and the board-coord bodies cite this table, never restate it. Checked-stages-only: unchecked stages are skipped end to end; nothing checked runs the full standard loop (the checklist default above).
+The single authority for the Lifecycle consumption; `pipeline-role-coord` and the board-coord bodies cite this table, never restate it. Checked-stages-only: unchecked stages are skipped end to end; nothing checked runs the standard default loop (the Blank defaults subsection below) — never zero stages.
 
 | Stage | What runs |
 |---|---|
+| `Exploration` | ONE `agent-explore` session — the read-only scout runs BEFORE research and planning; its summary lands in `EXPLORE.md` next to the plan file (the `pipeline-conventions` read order) |
+| `Agent Decides Research` | the coord's own research loop per `pipeline-role-coord`'s Research section (cited, never restated here): one `agent-research` session per distinct research ask, serial unless the card carries the human-created `Research: Parallel` label; findings into the shared `RESEARCH.md` |
 | `Pre Research` | `agent-research` round BEFORE planning — findings land in `RESEARCH.md` next to the plan file |
-| `Plan` | `agent-plan` + the plan-approval gate (the default pause always applies regardless of checks) |
+| `Planning` | `agent-plan` + the plan-approval gate (the plan-approval pause is a pipeline gate, not a card bit — it always applies regardless of checks) |
 | `Post Research` | `agent-research` AFTER planning — findings that change the plan go back for a replan |
-| `Test` | the ONE `agent-test` session writing every chunk's tests before implementation |
-| `Code` | the chunk loop: the coord's `agent-dev-local`/`agent-dev-pr` variant implements, `agent-review` reviews, one chunk at a time |
-| `Review` | the final whole-plan review — one fresh `agent-review` session over all chunks |
-| `Deploy` | the `-pr` variants: push the ticket branch + open the PR per `pipeline-push-pr` (the explicit-user-request rule still governs); the `-local` variants incl. the alias: report "ready — commits local" and stop; merge and ArgoCD sync stay human-owned either way; a checked `Deploy` additionally launches the coord's deploy fixer per `pipeline-role-coord` step 8b — definition-only until first fire |
-| `Single Session` | replaces the Test/Code fan-out: ONE session of the coord's `agent-dev-local`/`agent-dev-pr` variant implements the whole approved plan (running the plan's Commands itself — no chunk loop, no separate test session), then ONE final `agent-review`; `Plan` still runs when checked |
+| `Test Writing` | the ONE `agent-test` session writing every chunk's tests before implementation |
+| `Chunk Development` | the chunk loop's implementation: the coord's `agent-dev-local`/`agent-dev-pr` variant implements, one chunk at a time. With `Chunk Review` also checked the loop alternates dev→review per chunk; with `Chunk Review` unchecked the loop runs DEV-ONLY — a chunk completes on the dev's DONE plus validations-green `commands_run` evidence, judged by the coord from the command list itself (never on the dev's word); the dev still runs every command, determinism mandatory |
+| `Chunk Review` | the per-chunk fresh-session `agent-review` step — validations first, then review. Checked-stages-only: unchecked it is SKIPPED end to end (the OQ15 ruling), never silently absorbed into `Chunk Development`'s gate |
+| `Final Review` | the whole-plan review — one fresh `agent-review` session over all chunks, on the planning-tier model |
+| `Deployment` | the `-pr` variants: push the ticket branch + open the PR per `pipeline-push-pr` (the explicit-user-request rule still governs); the `-local` variants incl. the alias: report "ready — commits local" and stop; merge and ArgoCD sync stay human-owned either way; a checked `Deployment` additionally launches the coord's deploy fixer per `pipeline-role-coord` step 8b — definition-only until first fire |
+| `Single Session` | OPT-IN run-shape (never in the blank default; OQ6 keeps it in the checklist): replaces the Test Writing/Chunk Development/Chunk Review run-shape — ONE session of the coord's `agent-dev-local`/`agent-dev-pr` variant implements the whole approved plan (running the plan's Commands itself — no chunk loop, no separate test session, no per-chunk reviews), then ONE final `agent-review`; the other checked stages still run, in card order |
+
+### Blank defaults
+
+A blank checklist is an answer, not a gap, consumed WITHOUT mutating the card. Default when nothing is checked: the Lifecycle stage list is the standard default loop — `Exploration`, `Agent Decides Research`, `Planning`, `Test Writing`, `Chunk Development`, `Chunk Review`, `Final Review` — so every default run starts with the read-only scout (the OQ14 ruling) and closes with the whole-plan review. The blank Human in the Loop default is `Final Review`: the run pauses for the human at that hand-off.
+
+Two members never enter the default stage list: `Deployment` and `Single Session` are OPT-IN, only what an explicitly checked box runs. And the default's `Agent Decides Research` replaces the two named rounds — a blank run leaves research timing to the coord's loop above rather than fixing a round before or after planning; `Pre Research` and `Post Research` appear only when the card checks them.
 
 ### Transition — cards still carrying the legacy Research checklist
 
-Until the cutover below lands, the live board still ships the old **Research** checklist (`None` | `Before Planning` | `After Planning` | `Agent Decides`). A card carrying only that legacy checklist is consumed with today's semantics: its checked items only time the research around planning and cancel it (`None`) — they never gate the other stages, and the Lifecycle stage gate does not apply to such a card. A card carrying BOTH the legacy checklist and Lifecycle: Lifecycle wins — the stage list comes from the Lifecycle checks alone. The Research board LABEL is untouched by all of this — it stays the only research-only trigger.
+Until the cutover below lands, the live board still ships the old **Research** checklist (`None` | `Before Planning` | `After Planning` | `Agent Decides`) — this ticket's own card #96 rode this rule at kickoff. A card carrying BOTH the legacy checklist and Lifecycle: Lifecycle wins — the stage list comes from the Lifecycle checks alone. A card carrying only that legacy checklist is consumed with timing-only semantics: its checked items TIME the research around planning and never gate the other stages — Before Planning runs a `Pre Research` round, After Planning runs a `Post Research` round, Agent Decides runs the `Agent Decides Research` stage, None runs no research round. Such a card's stage list is the standard default loop in the new names (the Blank defaults section above) — the legacy checklist carries no stage vocabulary of its own. The same rule maps legacy Human in the Loop checks: Plan → Planning, PR → Deployment, Research → Pre Research (the best-guess mapping stands per this ticket's DECISIONS). The Research board LABEL is untouched by all of this — it stays the only research-only trigger. No Single-Session transition rule is needed: `Single Session` stays in the checklist (the OQ6 ruling kept it) and the v1 8-item cutover never landed on the live board, so no card carries a retired vocabulary to migrate away from.
 
 ### Board-side cutover — human-owned, documented, never agent-executed
 
-Renaming the checklist on the live AI-Dev board is runbook work: (1) rename the **Research** checklist to **Lifecycle**, (2) replace its items with the eight stages above, in card order, (3) update the multi-action createCard rule's checklist extras to match. Agents never mutate board checklists, labels, or rules — the existing labels-are-human-owned posture extends to checklists. Until a human lands steps 1–3, the transition rule above keeps old-shaped cards consumable, and no agent may rename anything on the board.
+Aligning the live AI-Dev board with the 11-item design is runbook work, in this order: (1) rename the **Research** checklist to **Lifecycle** and replace its items with the 11 names above, in card order, `Single Session` last; (2) replace the **Human in the Loop** items with the same 11 names; (3) update the multi-action createCard rule's checklist extras via the v2 rules-import artifact `.agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json` — C08 produces it modify-only (never run against the live board by an agent); per the OQ13 ruling it checks ONLY `Model(s)` → `Qwen Flash`, Lifecycle and Human in the Loop arriving unchecked so the blank defaults govern; (4) ensure the human-created `Research: Parallel` board label exists (the C08 provision-engine label ensure). Agents never mutate board checklists or rule extras — the existing labels-are-human-owned posture extends to checklists; the owner applies the artifact and the renames POST-BACKUP, backup first, read back after. The one sanctioned agent-executed board-write leg is the `/wekan-board-provision` additive apply the owner directs: `dev-boards` creates the lists, `Bucket:` labels, rule pairs and the Provider/`Research: Parallel` label ensures after the human confirms the dry-run plan (the wekan-board-provision skill's step-3 contract governs; step (4)'s ensure rides it). Until a human lands steps 1–4, the transition rule above keeps old-shaped cards consumable, and no agent may rename anything on the board.
 
 ## Config constants
 
@@ -73,6 +85,14 @@ The values the flow writes onto the board. They are a written-onto-the-board con
 - Session links are exactly `$(SESSION_URL_BASE)/?session=<sessionID>` whenever this run's origin resolves — the `/?session=` form is OpenChamber's own router format (its integrations build the identical URL). Never a raw session id (D13) — that rule governs the resolved branch; the UNRESOLVED branch writes the raw id BY RULE, not by drift.
 - Consistency check (the drift check reworded, D23 r2): every link this run writes must equal this run's `Session origin:` value (or the raw-id fallback when it says UNRESOLVED); a mismatch → RESULT flag, never silently re-guess. Historical links are frozen history — card #50's old comments carry the retired literal and its `session` field was re-pointed 2026-10-25 — compare only THIS run's writes. Whichever leg supplied the slot, the comparison baseline is the recorded `kickoff.session_origin` — a later leg re-uses it rather than re-resolving, so cross-leg drift is impossible by construction.
 - `RESEARCH_LABEL = Research` — matched case-insensitively.
+
+## Stamps and instants
+
+Displayed stamps follow the workspace `$TZ` with its explicit UTC offset — the no-op session title `no-op <yyyy-mm-ddThh:mm>`, the claim and summary comment stamps, the board-context collection stamp, and STATE.json `updated_at` all render under that one rule (cf-96 OQ4).
+
+- **Instant values are never reformatted**: epoch-ms fields (the no-op marker's `at`, `scripts/agent-board-coord-gate.sh`'s `date +%s%3N` arithmetic), file mtimes, and WeKan's stored card dates are values, not stamps — only a stamp has a zone to render in.
+- **A fallback is the same instant, not a different clock**: `$TZ` unresolvable — absent, blank, or a zone the runtime cannot name — writes the UTC `Z` spelling instead of an offset. A workspace nobody has reprovisioned since the coder template gained `TZ` therefore stamps byte-identically to before, and mixed-era records coexist because `Date.parse` resolves either spelling to one instant.
+- **Machine-side stamps have one writer**: the plugins format through the single `localIso` helper in `.opencode/plugin/pipeline-locks/index.ts` — lock `claimedAt`/`heartbeatAt`, the audit-JSONL and `timeouts.jsonl` `at`, the reap meta, and board-context's `collectedAt`. A run never rewrites a stamp it only reads, which is why the 2 h staleness window and its `max(heartbeatAt, mtime)` formula carry no comparison-side change (C09 AC2).
 
 ## Card pickup
 
@@ -94,6 +114,8 @@ The values the flow writes onto the board. They are a written-onto-the-board con
 The card description is the request. Claim the card per the Card lifecycle before kickoff.
 
 The walk never visits **Executing** — a card there is owned by the run holding its pipeline lock set, and one session runs one card — nor **Timeout** (reaper destination; its triage is human-owned). On parallel-pipeline runs the candidate is additionally filtered by lock-set availability per Parallel pipeline loops below. On a scheduled run the launch text's Provider label filters the candidate additionally per Provider filtering below.
+
+**Dependency gate — a blocked candidate is skipped.** With the claim-time preload's dependency lines in hand (Board context block section — the consumer rule there), evaluate every walk candidate against them BEFORE its `move_card` to **Executing**: the candidate is SKIPPED when a blocking edge points at it from a card that is neither archived nor sitting in a list titled **Test** or **Finished**. The blocking edge set is EXACTLY the two Red Strings types `blocks` and `is-blocked-by` — `related-to`, `fixes`/`is-fixed-by` and `duplicates`/`is-duplicated-by` never gate pickup. Both spellings mean one thing here, but the board stores only one entry per drawn edge: v12.65 keeps the edge on the card it was drawn FROM and neither the board-wide edge list nor the preload synthesizes an inverse twin — so the gate honors BOTH spellings consumer-side via WeKan's type-inverse map: the house convention's `is-blocked-by` carried by the DEPENDENT toward its blocker, and a `blocks` line pointing at the candidate from a blocker that drew it, are the same relation spelled from either end; a manually drawn edge may arrive as either spelling, and reading only one is the miss the OQ2 both-directions ruling exists to prevent. Test/Finished membership resolves by list TITLE against the runtime id map — the board-context block's `lists:` section, or `list_lists` when no block rode the launch or the blocker's list id is not in the block's map (the block carries only the named swimlane's lists and titles repeat across swimlanes; the preload grouping is id-keyed; its list entries carry no titles) — the plan-time live ids ride the STATE.json claim record for traceability, never this skill. Every reference keys on the card `_id`; `card_number` is display-only identity, never a join key (it re-counters on cross-board moves). A blocker that reads `archived: true` never blocks. On a skip the run releases the held claim with `pipeline_release(outcome:"abandoned")` and walks on — the 3-attempt claim cap still governs; a launch-given card that fails the gate is reported and left, never forced. Every skipped candidate is REPORTED — candidate `_id`, the blocking card's `_id`, and that blocker's list — in the RESULT and in the claim comment of the card the run finally takes, so the walk is auditable. An edge whose far end resolves to no card in the payload (deleted/moved away) is NON-GATING: it never gates, and the relation is never assumed either way — skip it safely and REPORT the edge's endpoint ids like a skipped candidate (claim comment and RESULT).
 
 Resume vs new run (D11) — before minting anything, read the card's `slug` custom field (parse: a combined `[<slug>](<session link>)` value yields the slug as its bracketed link text; a legacy bare value yields the slug whole):
 
@@ -196,17 +218,20 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   duplicate its table. Record the resolved tiers in STATE.json
   `kickoff.models` and in the claim comment — never as a custom field.
 - **human-in-the-loop** — the checked Human in the Loop items are THIS
-  run's stop stages: after each checked stage the agent pauses and waits
-  for human input before continuing. `Plan` (the default) = pause for plan
-  approval; `Research` = pause with the research findings before planning;
-  `PR` / `Deployment` = pause before those actions. Nothing checked =
-  route from the default (`Plan`) WITHOUT mutating the card — the
-  plan-approval pause still happens.
+  run's stop stages: each checked item stops the run AFTER that step
+  completes (even if a later stage is skipped) and waits for human input
+  before continuing. A card still carrying the legacy HITL items follows
+  the transition mapping (Plan → Planning, PR → Deployment,
+  Research → Pre Research). Nothing checked = route from the default
+  (`Final Review`) WITHOUT mutating the card — and the plan-approval
+  pause still happens whatever the checks: it is a pipeline gate, not a
+  card bit (the Stage map's `Planning` row).
 - **lifecycle** — the checked Lifecycle items are THIS run's stage list;
   what each stage runs is the Stage map's table alone (cite it, never
-  restate). Nothing checked = the full standard loop. A card still
-  carrying the legacy Research checklist follows the transition rule
-  instead — its items time research only, they never gate stages.
+  restate). Nothing checked = the standard default loop (the Stage map's
+  Blank defaults section). A card still carrying the legacy Research
+  checklist follows the transition rule instead — its items time research
+  only, they never gate stages.
 - **slug** — the `slug` custom field if already set; otherwise derive
   `cf-<cardNumber>-<type>-<desc>` from the card's own content (`cardNumber`
   comes from `get_card`, the type from the checked Type item, the desc from
@@ -236,6 +261,8 @@ A launch prompt may carry a pre-collected Board context block — structural ids
 - At claim the coordinator records the block as STATE.json `kickoff.board_context` (alongside `card`, `slug`, `session_origin`).
 - Block absent → normal, not a gap: resolve ids top-down exactly as before.
 - Any id-shaped call error (404, not-found, or an empty projection where the block's ids promised data) → re-resolve the block against the live board before retrying, and note the drift in RESULT. The board structure is human-owned and drifts, so the block is a starting context, never a freeze — the schema's own re-resolve footer binds here too.
+
+**Preload consumer at claim.** The call site is the coordinator at claim — once `pipeline_claim` succeeds for this run's card it calls `preload_board` exactly ONCE and spends nothing else on board reads the payload already answers. It is never the hook: the 8 s board-context prompt-hook budget stays structural-only and prefetches no card data (the plan's OQ3 ruling — the hook would race a whole-board export past its admission budget). The one map serves the rest of the pickup walk — the dependency-gate evaluations, the Provider/`Pipeline:` label derivations for later candidates (each card's `label_ids` against the payload's `label_names` map, no per-candidate `get_card`+`get_board` pair), and the resume-vs-new-run slug check (the preload carries the parsed `slug`). The per-candidate `get_card` confirmation step stays for the CLAIMED card only — its description, custom fields and checklist state are single-card reads the preload deliberately does not carry. From the preload the run records a LEAN stamp — `{preload: {at, tool, cards, degraded}}` — inside that same STATE.json `kickoff` record the block above is written to; the full card map is NOT persisted to STATE.json. Degrade law (the cf-96 family rule): probe `tools/list` first; while the deployed build predates the C10 pin bump, `preload_board` is ABSENT there — the run then keeps today's per-list `list_cards_in_list` reads, SKIPS the dependency gate, and notes the skip in RESULT; never a hard failure, never a stall. A PRESENT-but-failed call degrades exactly like absence: a `preload_board` call that FAILS — export disabled site-wide, an admin-only-custom-fields 403, an outage, a truncated stream — gets the same per-list reads, the same skipped gate, the same RESULT note, and at most ONE retry (the read is idempotent); never a hard failure, never a stall. `tools/list` PRESENCE is not call-successfulness.
 
 ## Research-only cards — iterative loop
 
@@ -281,6 +308,16 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
 - Card picked from **Rework**: read its full comment history (`list_comments`) first; the comments are the rework context.
 - **Resume vs new run**: apply the D11 rule from Card pickup; a resumed run re-claims without re-minting the slug or re-running kickoff.
 
+## Grouped-sibling flow
+
+A card sometimes stands for a group of small companion asks its owner wants run together — cf-96's own card is the pattern's first instance. The flow triggers ONLY on blocking Red Strings edges: the claimed card's `blocks`/`is-blocked-by` edges (from the claim-time preload's `dependencies` list, or `list_board_dependencies` on demand) name the companion cards. Kind-1 follow-up lineage is `parent_id` alone — it is NEVER a grouping trigger, no follow-up edge is drawn and none is expected back (the batched-round ruling). The edges key on card `_id`, never `card_number`.
+
+- **Plan** — the run pulls every sibling's ask into its OWN plan (the plan names each sibling's card `_id` beside the chunk carrying its ask); one plan, one run, one review covers the group.
+- **Moves — coord-owned** — at start, right after the run's own claim, the coordinator moves each sibling to **Executing**; at end, once the sibling's ask landed and the final whole-plan review passed, it moves each sibling to **Review** with one summary comment each (which chunk shipped the ask, the commit range). Siblings are moved exactly like the claimed card — by the coord, never by a subagent.
+- **Ride the claim** — siblings run under the run's OWN `pipeline_claim`; they are never claimed separately (one session, one card). The pickup walk skips **Executing**, so a grouped sibling can never be double-picked by another run.
+- **Never disturb the settled** — grouping only pulls cards the pickup walk could itself have taken: candidates in **Test** or **Finished** (human acceptance phase) and cards **Executing** under another run's lock are never grouped or moved.
+- **Degrade** — until edges exist on the deployed board surface, a run may group from a plan-enumerated id list instead (the same card `_id`s enumerated in its plan's run-protocol section); this ticket's own first instance ran exactly that way, and the degrade follows the family `tools/list` probe law.
+
 ## Post-plan card write-back
 
 Right after plan approval (research-only cards do the same immediately before their Ready-for-Review move, D19):
@@ -306,10 +343,10 @@ Right after plan approval (research-only cards do the same immediately before th
 
 Cards often defer work — "we'll need a follow-up card for the mechanics of X". When the initial ask includes follow-up cards, the coordinator creates them itself, under this protocol:
 
-- **Timing** — after the post-research stage and before the test session (the Stage map's `Post Research` and `Test` rows): every deferred card is on the board before this run's implementation work starts, and whoever picks it up later reads a complete parent record.
+- **Timing** — after the post-research stage and before the `Test Writing` session (the Stage map's `Post Research` and `Test Writing` rows): every deferred card is on the board before this run's implementation work starts, and whoever picks it up later reads a complete parent record.
 - **Destination** — EVERY follow-up/ledger card lands in the **Inbox** list of the **Backlog** swimlane — never Review, never Low Priority. Inbox postdates every prefetched board-context block: re-resolve its id via `list_lists` at use time (the block is a snapshot, never a freeze). The destination keeps the old non-intake guarantee by location: Inbox lives in the Backlog swimlane, which the pickup walk never visits, so follow-up cards queue for the owner instead of entering auto-pickup.
 - **Parent-label inheritance** — a follow-up card carries EVERY label of its parent EXCEPT `Research`: the research-only flow shape must not leak onto work cards; every other label (`Pipeline:`, `Provider:`, `Bucket:`) carries over.
-- **Mechanics** — `create_card` with the title, a description quoting the parent card and the deferred ask, and the parent's swimlane. The deployed wekan-mcp surface cannot set labels on a card, so list the parent's labels as a "labels to apply" line in the card body and cite the existing label-tool ledger card — that line retires to a set-labels call when the label tool lands. Checklist answers ride `default_checked` on `create_card` when the deployed build accepts it (probe once); when it rejects the argument, fall back to `toggle_checklist_item` after creation. NEVER `add_checklist` — the board's createCard rule already adds the five standard checklists (duplicates proven on cards #64–67, 2026-10-28).
+- **Mechanics** — `create_card` with the title, a description quoting the parent card and the deferred ask, the parent's swimlane, and `parent_id` set to the parent card's `_id`: parentId is the ONLY follow-up lineage representation (the batched-round ruling — no dependency edge is drawn for a follow-up and none is expected back). Labels: when the deployed build carries `set_card_labels` (probe `tools/list` once, same law as the preload consumer), apply the parent's minus-`Research` label set with one `set_card_labels(board_id, [new card id], add_label_ids=…)` call right after creating the card — this retires AD-74's ledger round-trip. Until that pin bump ships (the C10 deploy chain), keep the pre-deploy degrade: list the same labels as a "labels to apply" line in the card body and cite the existing label-tool ledger card so the owner applies them by hand. Either way, the minus-`Research` rule above IS the label set — what the call applies and what the line asks for are the same list. Checklist answers ride `default_checked` on `create_card` when the deployed build accepts it (probe once); when it rejects the argument, fall back to `toggle_checklist_item` after creation. NEVER `add_checklist` — the board's createCard rule already adds the five standard checklists (duplicates proven on cards #64–67, 2026-10-28).
 
 Creating these cards is not a run: the creating session claims nothing, moves nothing, and sets no fields beyond the cards it creates — every later move out of Inbox is the owner's alone.
 

@@ -95,6 +95,8 @@ function seam(name: string): (...args: any[]) => any {
 const PLUGIN_SRC = readFileSync(".opencode/plugin/pipeline-locks/index.ts", "utf8");
 
 const T0 = Date.parse("2026-10-29T12:00:00Z");
+// cf-96 C09: the two legal stamp spellings (workspace offset | UTC Z fallback).
+const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
 
 function fakeTimers() {
   const intervals: any[] = [];
@@ -827,6 +829,23 @@ describe("E9 setup restart-resume rebuild from ctx.storage (C04 Minor-2 close, D
       // leg contracts; pinning it would freeze a non-rebuild concern.
     } finally {
       cleanup();
+    }
+  });
+});
+
+describe("cf-96 C09 zone coverage — one formatter, both $TZ geometries (AC3)", () => {
+  it("stamps local-with-offset when $TZ resolves and UTC Z when it does not (cf-96 AC3)", () => {
+    const savedTZ = process.env.TZ;
+    try {
+      process.env.TZ = "America/Denver";
+      const off = seam("localIso")(T0);
+      assert.match(off, STAMP_SHAPE, "offset spelling stays inside the ISO-8601 shape");
+      assert.ok(/[+-]\d{2}:\d{2}$/.test(off), `expected an explicit offset tail for America/Denver, got ${off}`);
+      assert.equal(Date.parse(off), T0, "the offset stamp parses back to the exact instant (heartbeat windows read it offset-aware — OQ4/AC2)");
+      delete process.env.TZ;
+      assert.equal(seam("localIso")(T0), new Date(T0).toISOString(), "$TZ unset falls back to the UTC Z spelling byte-for-byte");
+    } finally {
+      if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
     }
   });
 });

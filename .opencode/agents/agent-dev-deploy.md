@@ -1,12 +1,12 @@
 ---
 description: >-
   Definition-only deploy fixer (-deploy): runs after the final review comes back
-  clean on a run whose card checked the Lifecycle Deploy stage; loops the broken
-  initial deployment - a couple of options per issue, user picks when Deployment
-  is in the loop, own recommendation otherwise; hands back to the coordinator
-  for reintegration and re-review and closes its own worktree at hand-back; no
-  commits, never pushes; cf-90 ships this definition only - no run of that
-  ticket executes it
+  clean on a run whose card checked the Lifecycle Deployment stage; loops the
+  broken initial deployment - a couple of options per issue, user picks when
+  Deployment is in the loop, own recommendation otherwise; hands back to the
+  coordinator for reintegration and re-review and closes its own worktree at
+  hand-back; no commits, never pushes; cf-90 ships this definition only - no run
+  of that ticket executes it
 mode: all
 name: agent-dev-deploy
 color: '#f59e0b'

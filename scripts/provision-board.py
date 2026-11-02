@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """provision-board.py — offline board-provisioning engine for the AI-Dev board.
 
-Reads a board snapshot (wekan-board-snapshot/1 JSON: swimlanes, lists,
-labels, rules) and prints the ordered, idempotent action list that brings
-the board to the built-in spec: the Backlog→Planning list mirror, one
-`Bucket: <list>` label plus a createCard/moveCard rule pair per Planning
-list, the Provider: API / Provider: Local labels, and the Inbox ensure.
-Printing the plan IS the dry run (C01 AC5): this engine never applies —
-no network module, no credential argument, no environment read (C01 AC4) —
-because agent sessions hold no board credentials and every mutation is
-gated by the wekan-board-provision skill's human confirmation.
+Reads a board snapshot (schema `wekan-board-snapshot/1`: swimlanes, lists,
+labels, rules; schema `wekan-board-snapshot/2` additionally carries the
+createCard rule's `checklist_extras`) and prints the ordered, idempotent
+action list that brings the board to the built-in spec: the Backlog→Planning
+list mirror, one `Bucket: <list>` label plus a createCard/moveCard rule pair
+per Planning list, the Provider: API / Provider: Local and Research: Parallel
+labels, the Inbox ensure, and — schema 2 only — the createCard checklist
+spec diff. Printing the plan IS the dry run (C01 AC5): this engine never
+applies — no network module, no credential argument, no environment read
+(C01 AC4) — because agent sessions hold no board credentials and every
+mutation is gated by the wekan-board-provision skill's human confirmation.
 
 Why one label and two rules per list: WeKan rule actions take a fixed
 labelId with no variable substitution, so no generic "Bucket: {listname}"
@@ -17,6 +19,16 @@ rule exists, and a created card fires createCard, not moveCard (RESEARCH
 F1). The `swimlaneName: Planning` matcher in every emitted trigger is
 load-bearing: identical list titles exist as separate list documents in
 Backlog and Farm, and an unscoped rule would cross-fire into them.
+
+Why the checklist diff emits a runbook entry instead of an applicable
+action: WeKan rule checklist extras are creatable only through the UI
+wizard or Rules → Import JSON — never REST (v12-upgrade research) — so the
+cutover's apply leg belongs to a human taking a board backup first, and the
+engine's role ends at naming the artifact. Against a schema-1 snapshot the
+extras cannot be verified at all: the engine prints an UNVERIFIABLE note on
+stderr instead of an action, because a note is not an action — idempotence
+of the zero-action re-run must not depend on what a snapshot failed to
+capture.
 
 Everything keys on titles: snapshot ids are realism for the apply step,
 which resolves them live. Matching is case-insensitive and the engine only
@@ -39,11 +51,76 @@ BUCKET_COLOR = "darkgreen"
 # Provider colors are palette defaults, not pinned intent: presence is
 # judged by name only, so an apply never recolors a label an owner changed.
 PROVIDER_LABELS = (("Provider: API", "purple"), ("Provider: Local", "yellow"))
+# Same posture for the parallel-research label the coord loop keys on
+# (C06's per-ask research split); orange is the palette default — the owner
+# may recolor, the plan only ensures existence by name.
+PARALLEL_LABEL = ("Research: Parallel", "orange")
 RULE_ACTIVITIES = ("createCard", "moveCard")
 # U+2014 separator: the rule-title convention the board's bucket rules use,
 # e.g. "Bucket: Context — createCard".
 RULE_TITLE_SEP = " — "
 SNAPSHOT_SCHEMA = "wekan-board-snapshot/1"
+SNAPSHOT_SCHEMA_V2 = "wekan-board-snapshot/2"
+
+# The Lifecycle stage names exactly as C07 landed them in the boards skill
+# (`.rulesync/skills/boards/SKILL.md`) — that text is the authority, copied
+# not retyped (the cf96 cutover suite pins the equality and fails loudly on
+# drift). Ten stages plus Single Session LAST (OQ6 ruling), Human in the
+# Loop mirrors the same eleven names (OQ6 derived), and the createCard
+# extras arrive with ONLY Model(s) → Qwen Flash checked (OQ13 ruling) so
+# blank Lifecycle/HITL defaults govern. Services/Type/Model(s) carry the
+# v1 rule's item sets (`.agents/plans/2026/2026-10-dep-wekan-v12-upgrade/
+# board-rules-v12.64.json`).
+LIFECYCLE_ITEMS = [
+    "Exploration",
+    "Agent Decides Research",
+    "Pre Research",
+    "Planning",
+    "Post Research",
+    "Test Writing",
+    "Chunk Development",
+    "Chunk Review",
+    "Final Review",
+    "Deployment",
+    "Single Session",
+]
+CHECKLIST_SPEC = {
+    "Services": {
+        "items": [
+            "backups",
+            "dev",
+            "gpu",
+            "gpu-ai",
+            "grow",
+            "home",
+            "infra",
+            "media",
+            "monitoring",
+            "personal",
+            "proxy-backup",
+            "proxy-local",
+            "proxy-remote",
+            "home-assistant",
+            "agent context",
+        ],
+        "checked": [],
+    },
+    "Type": {
+        "items": ["feat", "bug", "debug", "dep", "refactor", "chore", "docs"],
+        "checked": [],
+    },
+    "Model(s)": {
+        "items": ["Qwen Large", "Qwen 27b", "Qwen Flash", "Local (gpu-ai)"],
+        "checked": ["Qwen Flash"],
+    },
+    "Lifecycle": {"items": LIFECYCLE_ITEMS, "checked": []},
+    "Human in the Loop": {"items": LIFECYCLE_ITEMS, "checked": []},
+}
+# The v2 rules-import artifact the drift action points the human at; C08
+# produces it modify-only and no agent applies it (C10's runbook executes).
+RULES_ARTIFACT = (
+    ".agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json"
+)
 
 
 def fail(message):
@@ -60,11 +137,20 @@ def load_snapshot(path):
     except json.JSONDecodeError as exc:
         fail(f"fixture {path} is not valid JSON: {exc}")
     if not isinstance(snapshot, dict):
-        fail(f"fixture {path} must be a wekan-board-snapshot/1 object")
-    if snapshot.get("schema") != SNAPSHOT_SCHEMA:
-        fail(f"fixture {path} has schema {snapshot.get('schema')!r}, "
-             f"want {SNAPSHOT_SCHEMA!r} — the engine reads one snapshot shape; "
-             "a schema change needs deliberate support here, not a silently misread diff")
+        fail("fixture must be a wekan-board-snapshot object")
+    schema = snapshot.get("schema")
+    if schema not in (SNAPSHOT_SCHEMA, SNAPSHOT_SCHEMA_V2):
+        fail(f"fixture {path} has schema {schema!r}, "
+             f"want {SNAPSHOT_SCHEMA!r} or {SNAPSHOT_SCHEMA_V2!r} — the engine reads pinned "
+             "snapshot shapes; a schema change needs deliberate support here, not a "
+             "silently misread diff")
+    if schema == SNAPSHOT_SCHEMA_V2 and not isinstance(snapshot.get("checklist_extras"), dict):
+        # A schema-2 snapshot without the map is a collector bug: guessing "no
+        # extras" would emit a full drift plan from a snapshot that merely
+        # failed to look.
+        fail(f"fixture {path} declares {SNAPSHOT_SCHEMA_V2} but has no "
+             "`checklist_extras` object — collect the createCard rule's extras "
+             "or capture a schema-1 snapshot")
     return snapshot
 
 
@@ -130,6 +216,47 @@ def existing_rule_keys(rules):
     return keys
 
 
+def checklist_extras_drift(extras):
+    """Every createCard-extras difference between the snapshot and the spec.
+
+    Item ORDER is part of the spec (the Lifecycle names are "in card
+    order"), so items compare as lists; checked-state is a bag, so those
+    compare sorted. One entry per drifted checklist, deterministic order.
+    """
+    drift = []
+    for name in sorted(CHECKLIST_SPEC):
+        want = CHECKLIST_SPEC[name]
+        got = extras.get(name)
+        if not isinstance(got, dict):
+            drift.append(f"{name}: absent from the rule")
+            continue
+        got_items = [str(item) for item in (got.get("items") or [])]
+        got_checked = [str(item) for item in (got.get("checked") or [])]
+        if got_items != want["items"]:
+            drift.append(f"{name}: items {got_items} want {want['items']}")
+        if sorted(got_checked) != sorted(want["checked"]):
+            drift.append(f"{name}: checked {got_checked} want {want['checked']}")
+    for name in sorted(set(extras) - set(CHECKLIST_SPEC)):
+        drift.append(f"{name}: on the rule but outside the spec (v2 dropped it)")
+    return drift
+
+
+def print_checklist_note(snapshot):
+    """Schema-1 snapshots cannot verify the checklist spec — say so on stderr.
+
+    The note never rides the action list: an unread property must not make
+    every fresh schema-1 plan non-empty and break the zero-action verify.
+    """
+    if snapshot.get("schema") == SNAPSHOT_SCHEMA:
+        print(
+            "provision-board: schema-1 snapshot captures no checklist_extras, so the "
+            f"createCard checklist spec is UNVERIFIABLE from it — the runbook stays the "
+            f"human-executed WeKan UI → Rules → Import JSON of {RULES_ARTIFACT} "
+            "(board backup first; the engine never applies)",
+            file=sys.stderr,
+        )
+
+
 def plan_actions(snapshot):
     backlog_titles = swimlane_titles(snapshot, SOURCE_SWIMLANE)
     planning_titles = swimlane_titles(snapshot, TARGET_SWIMLANE)
@@ -159,9 +286,18 @@ def plan_actions(snapshot):
                 "trigger": {"activityType": activity, "listName": title, "swimlaneName": TARGET_SWIMLANE},
                 "label": bucket_label,
             })
-    for name, color in PROVIDER_LABELS:
+    for name, color in (*PROVIDER_LABELS, PARALLEL_LABEL):
         if name.lower() not in label_seen:
             actions.append({"action": "create_label", "name": name, "color": color})
+
+    if snapshot.get("schema") == SNAPSHOT_SCHEMA_V2:
+        drift = checklist_extras_drift(snapshot["checklist_extras"])
+        if drift:
+            actions.append({
+                "action": "update_createcard_checklists",
+                "artifact": RULES_ARTIFACT,
+                "drift": drift,
+            })
     return actions
 
 
@@ -171,6 +307,10 @@ def render_text(action):
         return f'create_list "{action["title"]}" into {action["swimlane"]}'
     if kind == "create_label":
         return f'create_label "{action["name"]}" ({action["color"]})'
+    if kind == "update_createcard_checklists":
+        return (f'HUMAN-EXECUTED: WeKan UI → Rules → Import JSON {action["artifact"]} '
+                f'(backup first) — createCard checklist extras drift: '
+                f'{"; ".join(action["drift"])}')
     trigger = action["trigger"]
     return (f'create_rule "{action["title"]}": on {trigger["activityType"]} in list '
             f'"{trigger["listName"]}" ({trigger["swimlaneName"]} swimlane) add label "{action["label"]}"')
@@ -182,7 +322,8 @@ def parse_args():
         "the idempotent action plan. Printing the plan IS the dry run; applying belongs to the "
         "wekan-board-provision skill.",
     )
-    parser.add_argument("--fixture", required=True, help="Path to a wekan-board-snapshot/1 JSON file")
+    parser.add_argument("--fixture", required=True,
+                        help=f"Path to a {SNAPSHOT_SCHEMA} or {SNAPSHOT_SCHEMA_V2} JSON file")
     parser.add_argument("--format", choices=("json", "text"), default="json", help="Plan output shape")
     parser.add_argument(
         "--dry-run",
@@ -194,7 +335,9 @@ def parse_args():
 
 def main():
     args = parse_args()
-    actions = plan_actions(load_snapshot(args.fixture))
+    snapshot = load_snapshot(args.fixture)
+    print_checklist_note(snapshot)
+    actions = plan_actions(snapshot)
     if args.format == "json":
         print(json.dumps(actions, indent=2, ensure_ascii=False))
     elif actions:

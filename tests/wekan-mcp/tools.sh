@@ -26,6 +26,18 @@
 # lands the tools (cf-68 precedent: docs/tests pin the registry);
 # tests/wekan-mcp/board-provisioning.sh carries the four tools' own contract.
 #
+# cf-96 C01 (2026-11): the seven dependency/preload/label tools
+# (list_board_dependencies, list_card_dependencies, add_card_dependency,
+# edit_card_dependency, remove_card_dependency, preload_board,
+# set_card_labels) land in the same commit as this suite's re-pin —
+# registry arithmetic 14+17 -> 17+21 (38 distinct), the seven names added
+# to the t2 name set, and the t5 literals moved to the 38-tool count. t9's
+# slot pins shift with the extension: create_card's tail is now
+# default_checked followed by parent_id (dependencies.sh t5 pins
+# parent_id last). Half the change is red until dev lands the tools
+# (cf-68 precedent); tests/wekan-mcp/dependencies.sh carries the seven
+# tools' own contract.
+#
 # Statics-only by design (D8): the image has no pytest harness and none is
 # introduced; the live 25-tool round-trip is user acceptance after M1-M3.
 #
@@ -91,11 +103,14 @@ import ast, re, sys
 src = open(sys.argv[1]).read()
 tree = ast.parse(src)
 
-READS = 14
-WRITES = 17
+READS = 17
+WRITES = 21
 NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
        'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item',
-       'update_board', 'create_swimlane', 'create_label', 'list_board_members']
+       'update_board', 'create_swimlane', 'create_label', 'list_board_members',
+       'list_board_dependencies', 'list_card_dependencies', 'add_card_dependency',
+       'edit_card_dependency', 'remove_card_dependency', 'preload_board',
+       'set_card_labels']
 BASE20 = ['list_boards', 'get_board', 'list_lists', 'list_swimlanes',
           'list_cards_in_list', 'get_card', 'list_comments', 'list_checklists',
           'get_checklist', 'list_rules', 'get_rule', 'create_card',
@@ -129,7 +144,7 @@ if len(writes) != WRITES:
     bad(f't2: {len(writes)} @_write_tool writes, expected exactly {WRITES} (C01 AC2)')
 all_tools = reads + writes
 if len(set(all_tools)) != READS + WRITES:
-    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly 31 distinct')
+    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly 38 distinct')
 for name in NEW:
     if all_tools.count(name) != 1:
         bad(f't2: new tool {name!r} registered {all_tools.count(name)} times, expected exactly once (names are the C02/C03 contract, D2)')
@@ -142,7 +157,7 @@ allowed = {'WEKAN_MCP_LOG_LEVEL', 'WEKAN_MCP_READ_ONLY', 'WEKAN_MCP_HOST', 'WEKA
 extra = envs - allowed
 if extra:
     bad(f't2: new env vars read in server.py: {sorted(extra)} — C01 AC3 forbids new env vars (only {sorted(allowed)})')
-print('ok: t2 — 14 @mcp.tool + 17 @_write_tool == 31 distinct names, the 10 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item + cf-89 v102 extension)')
+print('ok: t2 — 17 @mcp.tool + 21 @_write_tool == 38 distinct names, the 17 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item + cf-89 v102 + cf-96 extension)')
 PY
   then
     checks=$((checks + 1))
@@ -294,8 +309,8 @@ NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
        'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item',
        'create_list']
 
-if '31 typed tools' not in readme:
-    bad('t5: README must state the 31-tool surface (cf-89 v102 parity)')
+if '38 typed tools' not in readme:
+    bad('t5: README must state the 38-tool surface (cf-96 C01 parity)')
 for stale in ('26 typed tools', '25 typed tools', '20 typed tools'):
     if stale in readme:
         bad(f't5: README still claims the stale tool count ({stale!r})')
@@ -311,8 +326,8 @@ for stale in ('bumped by CI', 'semver source of truth', ':latest', 'v<version>')
 if 'run_number' not in readme:
     bad('t5: README must describe the actual tag scheme (:v<run_number> + :<branch>) it already links to')
 
-if '31 typed tools' not in skill:
-    bad('t5: wekan-api SKILL must say 31 typed tools')
+if '38 typed tools' not in skill:
+    bad('t5: wekan-api SKILL must say 38 typed tools')
 for stale in ('26 typed tools', '25 typed tools', '20 typed tools', '20-tool'):
     if stale in skill:
         bad(f't5: wekan-api SKILL still claims the stale tool count ({stale!r})')
@@ -329,7 +344,7 @@ if i < 0:
 window = skill[i:i + 400]
 if 'custom field' in window.lower():
     bad('t5: custom fields are no longer on the omitted surface — 25 tools include the five custom-field/checklist-delete tools (C01 AC5)')
-print('ok: t5 — README + wekan-api SKILL agree with the 31-tool surface, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5 + cf-89 v102 re-pin)')
+print('ok: t5 — README + wekan-api SKILL agree with the 38-tool surface, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5 + cf-89 v102 + cf-96 C01 re-pin)')
 PY
   then
     checks=$((checks + 1))
@@ -424,21 +439,23 @@ def seg(name):
         bad(f't9: {name!r} is not defined in server.py')
     return ast.get_source_segment(src, fn)
 
-# 1) create_card signature: default_checked is the trailing parameter,
-#    Optional[dict] (dict keeps the FastMCP schema like create_rule's), None default.
+# 1) create_card signature: the tail is default_checked followed by
+#    parent_id (dependencies.sh t5 pins parent_id last); default_checked
+#    stays Optional[dict] (dict keeps the FastMCP schema like create_rule's)
+#    with a None default.
 cc = funcs.get('create_card')
 if cc is None:
     bad('t9: create_card disappeared')
 argnames = [a.arg for a in cc.args.args]
-if argnames[-1] != 'default_checked':
-    bad(f't9: create_card must end with the optional default_checked parameter, got {argnames}')
+if argnames[-1] != 'parent_id' or argnames[-2] != 'default_checked':
+    bad(f't9: create_card must end with default_checked then the optional parent_id — the trailing slot moved by the dependencies.sh t5 contract, got {argnames}')
 if not cc.args.defaults:
     bad('t9: default_checked must carry a default (defaults align to the tail args)')
-dc_arg = cc.args.args[-1]
+dc_arg = cc.args.args[-2]
 if ast.unparse(dc_arg.annotation) != 'Optional[dict]':
     bad(f't9: default_checked must be Optional[dict], got {ast.unparse(dc_arg.annotation)!r}')
-if ast.unparse(cc.args.defaults[-1]) != 'None':
-    bad('t9: default_checked must default to None (absent = existing create behavior unchanged)')
+if [ast.unparse(d) for d in cc.args.defaults[-2:]] != ['None', 'None']:
+    bad('t9: the default_checked + parent_id tail must both default to None (absent = existing create behavior unchanged)')
 
 cc_src = seg('create_card')
 if 'if default_checked:' not in cc_src:

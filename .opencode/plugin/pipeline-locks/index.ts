@@ -173,6 +173,51 @@ const defaultTimers = {
   clearTimeout: (handle: any) => clearTimeout(handle),
 };
 
+// The one formatter behind every displayed ISO stamp this pipeline writes: the
+// lock, audit, timeouts and reap-meta sites below, plus board-context's
+// collection stamp, which imports it. Stamp shape is a contract, so exactly
+// one implementation moves when the rule does (cf-96 OQ4; C09 note: two
+// implementations WILL drift), and it is exported rather than local for that
+// importer. The cross-plugin import is deliberate — the one exception to this
+// file's "duplicated, never imported" precedent above, which covers transport
+// mechanics: plugin discovery loads the FILES it scans (opencode.ai/docs/plugins,
+// "From local files"; board-context.test.ts's header records the same), so
+// importing a leaf function registers nothing a second time.
+export function localIso(ms?: number): string {
+  // Workspace-local ISO-8601 with an explicit offset while `$TZ` names a zone
+  // this runtime resolves; the UTC `Z` spelling of the SAME instant otherwise.
+  // Unset, blank, and an unresolvable zone all land on that fallback, so a bad
+  // `$TZ` costs a shape and never a write. Milliseconds ride through so
+  // `Date.parse(localIso(x)) === x` holds and either spelling parses back to
+  // the instant it was stamped from.
+  const date = new Date(typeof ms === "number" && Number.isFinite(ms) ? ms : Date.now());
+  const zone = typeof process.env.TZ === "string" ? process.env.TZ.trim() : "";
+  if (!zone) return date.toISOString();
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: zone,
+      timeZoneName: "longOffset",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(date);
+    const field = (type: string): string => parts.find((part) => part.type === type)?.value ?? "";
+    // longOffset answers "GMT-07:00"; an empty remainder or a zero offset is
+    // UTC, and `Z` is that offset's own ISO-8601 designator — one spelling per
+    // instant, so a TZ=UTC workspace and the fallback never look like two
+    // different eras of the same contract.
+    let offset = field("timeZoneName").replace(/^GMT/, "");
+    if (offset === "" || offset === "+00:00" || offset === "-00:00") offset = "Z";
+    return `${field("year")}-${field("month")}-${field("day")}T${field("hour")}:${field("minute")}:${field("second")}.${String(date.getMilliseconds()).padStart(3, "0")}${offset}`;
+  } catch {
+    return date.toISOString();
+  }
+}
+
 export function sanitizePipelineKey(name: string): string {
   // Lock files are named after the key, so everything outside
   // [A-Za-z0-9._-] folds to "-" and the 100-char filesystem-safe bound holds;
@@ -309,9 +354,12 @@ export async function resolveLockRoot(deps: any, startDir: string): Promise<stri
 
 export function newLockRecord(input: any): any {
   // Handoff B.1 shape, version 1, plus the D18 shared claim identity. Every
-  // timestamp is an ISO-8601 UTC string (D25) — epoch-ms in lock files is a
-  // contract violation; the age math downstream parses these against env.now.
-  const at = new Date(input?.now ?? Date.now()).toISOString();
+  // timestamp is an offset-bearing ISO-8601 stamp of one instant (D25,
+  // restamped by cf-96 OQ4): the local-with-offset form while `$TZ` resolves,
+  // the UTC fallback when it does not — epoch-ms in a lock stamp field stays
+  // a contract violation, because epochs belong to instants, not to stamps.
+  // The age math downstream parses either form with the same result.
+  const at = localIso(input?.now ?? Date.now());
   const record: any = {
     version: 1,
     pipeline: input?.pipeline,
@@ -394,7 +442,7 @@ export async function readLock(env: any, path: string): Promise<any | null> {
 export async function appendEvent(env: any, obj: any): Promise<void> {
   // JSONL audit. Fire-and-forget semantics: a broken path logs one line and
   // resolves — an audit write must never fail or block the action it records.
-  const line = JSON.stringify({ at: new Date(env?.now?.() ?? Date.now()).toISOString(), ...obj }) + "\n";
+  const line = JSON.stringify({ at: localIso(env?.now?.() ?? Date.now()), ...obj }) + "\n";
   try {
     await storeFs(env).writeFile(String(env?.eventsPath), line, { encoding: "utf8", flag: "a" });
   } catch (err: any) {
@@ -730,7 +778,7 @@ export async function heartbeatSet(env: any, rootID: any, source: any, force: an
 
   const now = env?.now?.() ?? Date.now();
   const throttle = Number(env?.config?.hookThrottleMs) || DEFAULT_HOOK_THROTTLE_MS;
-  const stamp = new Date(now).toISOString();
+  const stamp = localIso(now);
   for (const pipeline of set) {
     const last = env?.lastBeat?.get(pipeline);
     if (!force && typeof last === "number" && now - last <= throttle) continue;
@@ -1246,7 +1294,7 @@ async function clearDeadHolders(env: any, reaped: any[]): Promise<void> {
 async function writeReapMeta(env: any, fsx: any, now: number, trigger: string, reaped: any[]): Promise<void> {
   try {
     await fsx.mkdir(dirname(env.metaPath), { recursive: true });
-    await fsx.writeFile(env.metaPath, JSON.stringify({ at: new Date(now).toISOString(), trigger, reaped: reaped.map((r) => r.pipeline) }));
+    await fsx.writeFile(env.metaPath, JSON.stringify({ at: localIso(now), trigger, reaped: reaped.map((r) => r.pipeline) }));
   } catch (err: any) {
     logNote(env, `lastReap meta write failed: ${String(err?.code ?? err)}`);
   }
@@ -1350,7 +1398,7 @@ export async function reapStale(env: any, input: any = {}): Promise<{ reaped: an
 // held pipeline.
 async function queueTimeoutRow(env: any, info: any, reason: string): Promise<void> {
   const row = {
-    at: new Date(env?.now?.() ?? Date.now()).toISOString(),
+    at: localIso(env?.now?.() ?? Date.now()),
     cardId: info?.cardId ?? null,
     setId: info?.setId ?? null,
     pipelines: Array.isArray(info?.pipelines) ? info.pipelines : [],

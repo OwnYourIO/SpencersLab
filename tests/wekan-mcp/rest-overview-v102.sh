@@ -8,7 +8,7 @@
 # nine-boolean members[] shape with the site-admin username note.
 #
 # Contract source: chunks/C02.md "## Tests" + "## Acceptance criteria".
-# AC trace: t1[AC1] t2[AC2] t3[AC3] t4[AC4] t5[AC5+AC6].
+# AC trace: t1[AC1] t2[AC2] t3[AC3] t4[AC4] t5[AC5+AC6] t6[C03 AD-77b re-pin].
 #
 # Statics-only (same posture as the sibling suites): section-windowed greps,
 # no network. Assertions cite endpoint paths and section headings, never line
@@ -24,7 +24,7 @@
 # half-change, not a C02 harness fault.
 #
 # Usage:
-#   bash tests/wekan-mcp/rest-overview-v102.sh          # t1..t5
+#   bash tests/wekan-mcp/rest-overview-v102.sh          # t1..t6
 #   bash tests/wekan-mcp/rest-overview-v102.sh t1 t2    # subset
 set -euo pipefail
 
@@ -41,10 +41,10 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t[1-5]$ ]] || fail "unknown test id '$a' (expected t1..t5)"
+    [[ "$a" =~ ^t[1-6]$ ]] || fail "unknown test id '$a' (expected t1..t6)"
     WANT["$a"]=1
   done
 fi
@@ -203,6 +203,20 @@ PY
 ) && [ -z "$missing" ] \
   || fail "t4: the members section violates the shape contract: ${missing:-see above} — it must list all nine role booleans (isAdmin/isActive required + the seven optional flags, replacing the stale four-flag body), the userId-keyed object shape, the no-usernames-at-board-privilege note (/api/users routes are site-admin-only), v12.65-stamped (C02 AC4+AC6)"
   ok "t4: Board members section lists the nine booleans (2 required + 7 optional) on the userId-keyed members[] objects, keeps no bare-ids claim, carries the site-admin username note, v12.65-stamped (C02 AC4)"
+fi
+
+if want t6; then
+  sec=$(extract_section "POST /api/boards") || fail "t6: rest-api-overview.md lost its POST /api/boards section (C03 AD-77b re-pin)"
+  missing=$(python3 - "$sec" <<'PY'
+import sys
+sec = sys.argv[1]
+need = ('BOARD_COLORS', 'v12.65', 'source-checked', 'config/const.js')
+print(' '.join(t for t in need if t not in sec))
+PY
+)
+  [ -z "$missing" ] || fail "t6: the POST /api/boards window lacks: $missing — the v12.65 source-checked BOARD_COLORS stamp is now a load-bearing fact of this suite (C03)"
+  case "$sec" in *"Set has grown over time"*) fail "t6: the unsourced hedge survived the re-pin";; esac
+  ok "t6: BOARD_COLORS window pinned — list + v12.65 + source-checked + config/const.js attribution, hedge retired (C03 AD-77b)"
 fi
 
 # --- t5: header re-stamp + inertness to the sibling suites (AC5+AC6) -------------

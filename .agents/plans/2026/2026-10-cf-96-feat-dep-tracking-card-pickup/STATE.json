@@ -1,0 +1,301 @@
+{
+  "feature": "2026/2026-10-cf-96-feat-dep-tracking-card-pickup",
+  "plan_status": "complete",
+  "coord_session": "ses_e6b2a397effeJoBUoRxc4WVA22",
+  "test_session": "ses_e6adaf11bffeOtWerHTHQlYlqj",
+  "current_wave": 3,
+  "updated_at": "2026-11-02T14:42:00Z",
+  "handoffs": [
+    "RESULT (agent-test, ses_e6adaf11bffeOtWerHTHQlYlqj, 2026-11-01) status: DONE chunk: plan (tests C01-C10) — 15 test files committed 2b4748847 (tests/** only; STATE churn left coord-owned). Per-chunk gates recorded in suite headers; pinned interfaces fixed as contract (preload_board {swimlanes,lists→cards,dependencies,label_names,field_names} + 7-key card map; set_card_labels(board_id,card_ids,add_label_ids,remove_label_ids); create_card trailing parent_id; schema-2 key checklist_extras + action update_createcard_checklists; single formatter symbol localIso). Baselines green incl node --test 233/0; designed-reds name not-yet-landed surfaces; pre-existing admitted reds enumerated (cf-90 warm family + STATE-churn arms + validation-fix t4 + coder tfbin env for C09). deviations 1-6 recorded. friction: '8 signatures' vs +7 tools -> coord CLOSED (8th = parent_id signature on existing create_card, DECISIONS); coder-*.sh reds = missing /tmp/opencode/tfbin precondition flagged to C09. open_questions Q1/Q2 both RULED by coord into DECISIONS (roster-drift arms stay outside chunk gates; agent-perms in-commit re-pin is C02's own duty).",
+    "RESULT (plan, ses_e6b06c6bdffeh06ZkjS1RAOGVc, 2026-11-01) status: DONE chunk: plan — 10 chunks/5 waves: C01 wekan-mcp 7 dep/preload/label tools+docs (L, w1); C02 agent-explore+twins+matrix+AGENTS+EXPLORE.md read-order (L, w1); C03 sibling-I: 77b BOARD_COLORS, 70b typo, 81/78a verifies (Sx4, w1); C04 AD-66 renovate system-upgrade (S, w1); C05 boards dep-gate+preload-at-claim+grouped-sibling (M, w2, dep C01); C06 coord+plan research-split+explore-launch+AD-71 guidance (M, w2, dep C02); C07 Lifecycle 10-stage redesign (M, w3, dep C05); C08 cutover artifacts modify-only (M, w4, dep C07); C09 TZ env+stamp pass OQ5-gated (M, w4, dep C07); C10 HOLD deploy-chain+cutover readback human-executed (S, w5, dep C01,C08). OQ2/3/7/9/10/11/12 closed as DECISIONS; 8 questions returned for the ONE batched round; no-questions rule honored; commands_run: json.tool + baseline suites green + availability probes; deviations none; friction none new.",
+    "RESULT (pre-research, ses_e6b22875bffen3T6NG1O0mJ7EK, 2026-11-01) status: DONE chunk: research — RESEARCH.md (307 lines) written. Key: WeKan Red Strings card dependencies REAL in lab v12.65 (5 REST routes CRUD, 7 types, stored on source card, same-board; visibility = Member Settings > Show Board Dependencies since #6732 — the owner's 'can't turn on' explained); MCP adds = 5 dep tools + preload_board (one GET export?attachments=false&fields= call) + set_card_labels (bulk route ready, AD-74) + _slim_card passthrough + create_card(parent_id); HARD GATE: deployed dev-boards is :v87 — merge->v<run>->pin bump (L4)->restart before consumers; sibling picks AD-74=MS8e8uoF27R2dk73e (by-list card_number strip blinded kickoff scan), 77b/70b/78a by content, 78a shipped (cf-75), 81 mostly shipped (cf-90), 74->78 renumber means key everything on _id not number; TZ unset in workspace, fix = coder_agent env TZ in charts/coder/coder-templates/kubernetes*/main.tf, emitters all hardcode UTC (human-facing only convert); Lifecycle cutover = biggest text delta (10 stages, blank=all-minus-Deployment w/ Agent-Decides, blank HITL=Final Review, Single Session transition OQ6); provision engine modify-only, human runs post-backup; 12 open questions (OQ1-OQ12) recorded for the batched round. friction: WeKan ConnectError outage 02:12-02:20Z self-recovered; deviations: none (read-only).",
+    "RESULT (plan rework 1, batched answers folded, ses_e6b06c6bdffeh06ZkjS1RAOGVc continued) status: DONE chunk: plan — all 8 rulings in plan/chunks/DECISIONS/STATE: OQ1 parentId-only (C01 T5/AC2 negative pin, C05 grouped-flow on blocking edges only); OQ4 all displayed ISO stamps local incl. machine ISO fields, epoch-ms instants preserved by definition (C09 rewritten vs pipeline-locks source: Date.parse offset-aware => 2h window + max(heartbeatAt,mtime) correct writer-side-only, comparison byte-equal, gate.sh zero-change; 4 pipeline-locks suites re-pinned; node --test tests/opencode added to Commands, baseline green); OQ5 TZ=America/Denver real (no HOLD), reprovision owner-gated; OQ6 Lifecycle = 11 items, Single Session kept LAST (user verbatim in DECISIONS), opt-in, blank default excludes it, HITL mirrors 11 (derived, flagged); OQ8 all-three-tier bump prepared in C10 runbook (v<run> exists only post-merge — deviation note); OQ13 only Model(s)->Qwen Flash checked in createCard-v2; OQ14 Exploration in blank default; OQ15 Chunk Review unchecked = dev-only loop, done-gate carve-out C06 T5 (validations determinism mandatory). deviations: (1) OQ4 literal 'machine fields local' unimplementable for epochs — encoded stamps-vs-instants split per user's own framing; (2) OQ8 prep-location left to planner (C10); (3) HITL 11-item mirror derived from OQ6+card, flagged for owner objection. open_questions: none. next_suggested: coord approval + write-back + siblings-to-Executing + agent-test."
+  ],
+  "pre_research": {
+    "session": "ses_e6b22875bffen3T6NG1O0mJ7EK",
+    "status": "DONE",
+    "at": "2026-11-01"
+  },
+  "batched_round": {
+    "at": "2026-11-01T03:25:00Z",
+    "status": "answered-and-folded",
+    "answers": {
+      "OQ1": "parentId only — no Red Strings edge for kind-1 follow-ups; kinds 2+3 stay Red Strings",
+      "OQ4": "everything incl. machine fields — encoded as displayed-stamps-local (lock ISO fields, audit/timeouts at, board-context stamp, human-facing set) + instants-preserved (epoch-ms, mtimes); reaper parses offset-aware, 2h window untouched writer-side-only",
+      "OQ5": "America/Denver — shipped for real in both coder templates, no HOLD marker",
+      "OQ6": "user verbatim: 'Oh, At the end of Lifecycle leave the Single Session option' — Lifecycle = 11 items (ten stages + Single Session last, semantics preserved, opt-in); HITL mirrors 11; no Single-Session transition rule needed",
+      "OQ8": "all three tiers (dev-boards + gpu wekan-admin + wekan-readonly), one owner commit; values bumps prepared in the C10 runbook; L4 folded",
+      "OQ13": "only Model(s)→Qwen Flash checked; Lifecycle/HITL unchecked (blank defaults govern); Type/Services unchecked",
+      "OQ14": "Exploration IS in the blank-Lifecycle default — every default run starts agent-explore",
+      "OQ15": "Chunk Review unchecked = skipped — dev-only chunk loop, done-gate on validations-green RESULT command evidence; carve-out in pipeline-role-coord + boards Stage map"
+    }
+  },
+  "kickoff": {
+    "card": "iD4WjWQZrCykSe6Aj",
+    "card_number": 96,
+    "slug": "cf-96-feat-dep-tracking-card-pickup",
+    "run_tag": null,
+    "worktree": "cf-96-feat-dep-tracking-card-pickup",
+    "branch": "cf-96-feat-dep-tracking-card-pickup",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "origin_dir": "/home/coder/SpencersLab",
+    "provider": "OpenRouter (API flavor, labeled)",
+    "stages": {
+      "note": "Card carries the LEGACY Research checklist (no Lifecycle): transition rule — checked items time research only (Before AND After Planning), stage list = standard Plan+Test+Code+Review loop. HITL checked: PR (plus the always-applies plan-approval pause).",
+      "research_pre": true,
+      "research_post": true,
+      "deploy": false
+    },
+    "sibling_cards": {
+      "74": "MS8e8uoF27R2dk73e (wekan-mcp label tool — folded as C01 set_card_labels; launch-pinned OQ12)",
+      "66": "t4N5D4eZ9Nc2MoAZd",
+      "71": "v8priYKMuuWLCoFDq",
+      "77_candidate_a": "gCcXSu3DZd6NEp97v (#77 Strata in llama-swap, Test list)",
+      "77_candidate_b": "Ru3CzNiyaEQH7YFcr (#77 Fix rest-api-overview.md, Planning) — CHOSEN (77b)",
+      "70_candidate_a": "fWAw8RKWjcDpmrQf5 (#70 Wekan 12.64 input fields, Finished)",
+      "70_candidate_b": "SouMZ2fbd8vDbz2m3 (#70 FRICTION.md cord typo, Planning) — CHOSEN (70b)",
+      "81": "Q7Sg7H4dicTALAp8q",
+      "78_candidate_a": "jaEe2jfobfboyaM92 (#78 coord route test fixes, Test list) — CHOSEN (78a)",
+      "78_candidate_b": "ttv3k8b45fXXRynM8 (#78 cf-90 ledger L1, Inbox)"
+    },
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Ready for Work": "mkbxeo",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5",
+        "Pipeline: Context": "3PGnrD",
+        "Bucket Color": "yBfNJJ",
+        "Pipeline: Home Assistant": "urP8pR",
+        "Provider: Local": "NFHvzp",
+        "Provider: OpenRouter": "f3sKNX",
+        "Provider: Local (dup)": "PnhFKk"
+      }
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "title": "wekan-mcp: dependency tools + preload_board + set_card_labels + passthroughs + docs re-stamp",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; tests-repair routed to test session cf8e995e8; chunk commit 395c89028)",
+      "dev_session": "ses_e6a9c02beffecBRV47W0DYW8WB",
+      "handoffs": [
+        "RESULT (C01 dev r1, ses_e6a9c02beffecBRV47W0DYW8WB) status: DONE — additive cf-96 block in server.py: 5 dependency tools (7-type client gate pre-request, _write_tool x3, DESTRUCTIVE-marked remove), preload_board (single export?attachments=false&fields=..., exact 7-key card map, slug combined-parse, archived flagged, unresolved-parents tail), set_card_labels (bulk, <=500 + board-membership pre-gates), _slim_card passthroughs, create_card trailing parent_id two-step (parentId-only, OQ1 negative pin held), default_checked early-return restructured to accumulating out dict; README/SKILL/call-shapes/wekan-api 38-tool parity source-only stamps; destructive count 2->3. dependencies.sh 7/7 green; tools/skill-surface/rest-overview/board-provisioning/create-list reds = own count-pin flips (dev tests/** DENIED — spec handed up verbatim, no circumvention); node 233/0; aislop rc=0 @94 errors=0; docker build => no-daemon, CI-deferred designed shape. deviations 1-4 + friction a-c reported (matrix-vs-launch T7 contradiction honored toward matrix; omitted-note 500-char window wording; stale-base arms left alone).",
+        "RESULT (C01 validation repair, test session ses_e6adaf11bffeOtWerHTHQlYlqj continued as ses_e6a75d2b6ffeQVm4AqFpLdWjH0) status: DONE — flips applied per spec + committed cf8e995e8 (tests/** only: tools.sh t2/t5/t9 + header, skill-surface t4 + header, board-provisioning t1/t6, create-list t3 + header); battery: dependencies 7 ok, tools 9 ok, skill-surface 8 ok, rest-overview 6 ok, board-provisioning t1-t6 ok (t7 chain = create-list t2 admitted), create-list t1/t3/t4/t5 ok + t2 admitted stale-base 7-hunks, provision surface 9 ok, agent-perms 16 ok, cf90-ledger 4 ok, node 233/0; nothing failed outside spec; 3 text-only coherence fixes (zero assertion change); tempting-refactor note (shared registry-count source) DEFERRED to DECISIONS/Deferred.",
+        "RESULT (C01 review r1, fresh ses_e6a58cfb5ffeG4Iwhdd83tj46Z) status: DONE verdict APPROVED — every validation re-run independently green; admitted reds verified by ROOT CAUSE on clean-tree probes (create-list t2 stale-base arm; board-context t14/t6 + gate t14/t17 = coord-folder churn + ruled five-vs-six drift, none binds a C01 file); independent AST recount 17+21=38, 7 names unique; stale-31 residue grep zero; aislop rc=0 @94>=failBelow 80, 0 errors verified against .aislop/config.yml (dev's posture confirmed, not trusted). dev deviations 1-4 accepted (restructure behavior-preserving via t9+read; wekan-api retirement = doc-parity duty justified). Deferred candidates: tools.sh t5 symmetric negative pin; empty-string parent_id falsy nit; preload slug-convention consumer line (C05). friction: board-context nested-gate 300s timeout -> gate.sh direct on clean probe (same evidence)."
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "title": "agent-explore subagent + 6-twin roster + permissions matrix + AGENTS roster + EXPLORE.md read order",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit f96ba8610 atop test re-pin e7cac9e53)",
+      "dev_session": "ses_e6a42959fffeLfxtRRBUDpxU2U",
+      "handoffs": [
+        "RESULT (C02 dev r1, ses_e6a42959fffeLfxtRRBUDpxU2U) status: DONE — agent-explore source+mirror (plans-only edit per OQ10 EXPLORE.md, question allow, websearch deny, subagent deny, readonly/dev MCP posture), six-twin roster rows sources+mirrors, permissions.md explore row + cells + no-git-write + drift entry + mirror, rules overview + AGENTS.md regenerated, pipeline-conventions EXPLORE.md list+read-order + mirror. agent-explore suite 6/6 flipped green; rulesync x2 no-op + --check; aislop rc0 65 files; agent-perms A12/A16 + board-context t4 + rulesync-surface c2 flip-specced (tests denied, validated on /tmp copies); drift families untouched per test-Q2. deviations: MCP-tier sentence explore clause; pipeline-overview.md NOT touched (out of chunk scope, open question); twin rows minimal.",
+        "RESULT (C02 validation repair, test session continued ses_e6a75d2b6ffeQVm4AqFpLdWjH0) status: DONE — spec (A)(B)(C) applied, committed e7cac9e53 (tests/** only): agent-perms roster want+=agent-explore + 24->25 + hygiene texts; board-context COORD_PR_SETTLED byte vs dev extract (cmp-exact) + admitted-set += explore; rulesync-surface c2 explore era-gate (placement: after full deploy chain; four-era-combos identical want sets — dev-copy inconsistency flagged, live tree is ground, green). agent-explore 6/6, agent-perms 16/16, node 233/0, aislop 0/0 65 files, --check green. Out-of-scope drift families verified untouched-red. deviations: era-gate placement vs dev copy (accepted), A16 texts carry cf-96 attribution, board-context comment narration lacks explore clause (cosmetic, handed up).",
+        "RESULT (C02 review r1, fresh ses_e6a1f2b21ffeMCm9n72yXJ7j9G) status: DONE verdict APPROVED — chunk-first battery green; the two red suite exits (board-context t14/t6, rulesync-surface c8) root-caused to coord UNCOMMITTED plan-folder churn by clean-tree probes (never-red-after-commit); five drift families template-identical vs e7cac9e53 probe worktree (only interpolated sets grow 6->7), git-diff proof C02 surface touches none of their files; grants adjudicated against the CHUNK (plans-only edit is chunk-correct; launch/RESEARCH text predates OQ10 — superseded); six-twin parsed-equality; matrix<->frontmatter parsed both directions; rulesync idempotence + --check; aislop rc0 score100; surface = exactly 20 declared files + 3 test files. Deviations 1-3 accepted; pipeline-overview Deferred ruled stands (file carries pre-existing cf-90 deploy drift). Deferred: board-context admitted-set comment clause (next test touch), pipeline-overview roster (its own drift ticket)."
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "title": "sibling asks I: AD-77b BOARD_COLORS + AD-70b typo + AD-81 -pr verify + AD-78a silent-route verify",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit 3cc157472 atop test t6-leg 1b10d3313)",
+      "dev_session": "ses_e6a0d9e04ffeaYfSIkyXI7RYUa",
+      "handoffs": [
+        "RESULT (C03 dev r1, ses_e6a0d9e04ffeaYfSIkyXI7RYUa) status: DONE — T1 BOARD_COLORS row replaced with v12.65 source-checked 25-name list (chain const.js->colors.js->boards.js, default belize, v9.88=19 delta cross-checked cf-89 RESEARCH); T2 specced (plans edit denied); T3/T4 zero-gap verifies w/ line-level evidence (AD-81 four -pr surfaces cite; beyond-v102 = integration-tier execution gated on C10 deploy chain, mechanics L7-L12; AD-78a step 5d + gates L16 silent-route confirmed). Gate: siblings t1/t3/t4 green, t2 red-by-denial; regression battery green; aislop 100 0/0. open_questions: (A) template flip spec (coord applied), (B) rest-overview t6 new-leg spec (routed to test), (C) gates 'step 2.d' stale pointer -> Deferred.",
+        "RESULT (C03 validation add, test session continued ses_e6a006c4fffewfyGq9sqmQfhXF) status: DONE — spec (B) applied verbatim-modulo-idiom (indent normalization + regex-line fail-message range fix, both flagged mechanical), committed 1b10d3313 (tests/** only); rest-overview 7 ok incl t6 green; siblings 4 ok — t2 GREEN on coord's templates/FRICTION.md cord->coord fix; aislop 0/0; stray bare 'ok' line in suite output pre-existing since authoring -> future cosmetic touch.",
+        "RESULT (C03 review r1, fresh ses_e69fc2cc2ffeMAJABcd4fV44v6) status: DONE verdict APPROVED — independent re-fetch of wekan v12.65+v9.88 const.js/colors.js/boards.js: doc row order-exact (fixes old duplicate midnight), delta six names matches cf-89 [9][10], hedge retired scan-clean; AD-81 zero-gap TRUE w/ cite checks; AD-78a trio present; template one-word diff only, second cord seed (templates/DECISIONS.md:3) present+untouched kept Deferred; all suites re-run incl admitted-red message-identity across three probe geometries; finding: doc+template MUST ride one commit (t6 red-at-HEAD window) — honored at 3cc157472. Deferred ledger: gates step 2.d pointer; templates/DECISIONS cord seed; t6 banner-comment cosmetic."
+      ]
+    },
+    "C04": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "title": "sibling ask II (AD-66): renovate manages system-upgrade-controller",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit a305a2878 atop [test] drift repair e082d0e66)",
+      "dev_session": "ses_e69eb02f5ffe2jidiopCjUEqby",
+      "handoffs": [
+        "RESULT (C04 dev r1, ses_e69eb02f5ffe2jidiopCjUEqby) status: DONE — renovate.json 13-line additive git-tags custom manager (k3s-family position, field idiom); packageNameTemplate added beyond chunk list (git-tags resolves URLs — argocd precedent, needed or lookup errors); manifest byte-quiet; SUC suite t1/t2 flipped green, t3 held. MCP preview server-side impossible (both renovate MCPs filesystem-isolated, filesWalked:0 recorded) -> substituted real renovate CLI --dry-run=extract diff (exactly +1 dep) + preview-algorithm node sweep (added 1, removed 0, siblings identical); inline validate_config strict valid + lint parity (4 pre-existing warns, zero new). git-write-denied staging workaround: read-only GIT_DIR/GIT_WORK_TREE bridge, gitdir hashes prove untouched. open_questions: k1/k2 pre-existing reds flip spec (NOT C04-introduced — byte-identical at clean HEAD).",
+        "RESULT (C04 validation repair, test session continued) status: DONE — e082d0e66 tests/** only: k1 last-entry arm -> neighbour pin (floor rule after 'Hold kubectl'), k2 count 7->8 + llama-swap baseline byte-pinned; provenance corrected a14c4c8c8; three suites green, mutation-probed teeth kept.",
+        "RESULT (C04 review r1, fresh ses_e69ccd476ffecbL8hjQITiW7EE) status: DONE verdict APPROVED — AC1 inline validate strict + lint zero-delta; AC2 independent real-engine extract @44.181.5 in /tmp staging (bridge ls-files 2352==2352): base->HEAD diff exactly +1 file/+1 dep (git-tags, v0.14.2, replaceString verbatim), zero sibling regressions; lookup proven (git ls-remote anonymous OK, v0.14.2 real, latest v0.20.2 -> bot will PR); AC3 3/8/6 legs green; AC4 manifest zero branch-wide diff; packageNameTemplate KEEP-load-bearing (source-verified GitDatasource _getRawRefs pipes packageName to ls-remote; schema-legal); re-pin audit: pre-existence proven on two probe worktrees (red since a14c4c8c8, ancestor of authoring commit), floor pins not weakened; provenance corrected (dev's 2026-10-25 = the rule description's event date; commit a14c4c8c8 2026-10-26T00:36Z). Full battery green, admitted reds message-identical. friction: inline-transcribe hash slips -> segment-FNV gate; suggested future-chunk gate shape recorded."
+      ]
+    },
+    "C05": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "title": "boards skill: pickup dependency gate + preload consumer at claim + grouped-sibling flow + follow-up label retire",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r2; R1 storage-truth fix round r2 green; chunk commit 19ecf6505)",
+      "dev_session": "ses_e69a97e42ffe378CppaLGIo6u5",
+      "handoffs": [
+        "RESULT (C05 dev r1, ses_e69a97e42ffe378CppaLGIo6u5) status: DONE — boards SKILL source+mirror: dependency gate in Card pickup (blocks/is-blocked-by only, title-resolved Test/Finished, archived exempt, _id keying, skipped-candidate reporting, manual reported-and-left), preload consumer at claim (once post-pipeline_claim, never the hook, 3-map duties, lean stamp, tools/list degrade law), grouped-sibling flow (blocking edges ONLY — OQ1 parentId negative stated; coord-owned Executing/Review moves; never-disturb; ride-the-claim; plan-enumerated degrade), follow-up set_card_labels + parent_id sole lineage + pre-C10 degrade line kept, frontmatter description extended. boards-deps 5/5 flipped green; NO flip spec needed — cf90-ledger/rulesync needles survived verbatim (T4 duty dissolved); flags carried to C07: board-facts 'six today' bullet vs Test list. geometry friction recorded.",
+        "RESULT (C05 review r1, fresh ses_e698e6cbdffekOuo8fZjvb64V3) status: CHANGES_REQUESTED — full battery green incl clean-probe-worktree isolation of the four churn reds; FINDING R1: gate sentence 'edge list already carries the inverse twin' FALSE vs v12.65 (source-card-only $push, GET one line per stored entry, preload synthesizes none) — fix spec handed (one-stored-spelling + consumer-side inverse-map equivalence, needles co-spaced). Ledger notes: gate-skip-all vs no-op marker (alert-stands, follow-up candidate); stamp phrasing.",
+        "RESULT (C05 dev r2 fix round, same session continued) status: DONE — sentence replaced per spec (verified against v12.65 route again pre-edit); boards-deps 5 ok incl t1 co-spacing; generate no-op2 + --check; cf90-ledger 4 ok; mirror carries fix. CARRY: same false claim lives in C01's list_board_dependencies docstring + call-shapes row -> coord routed: landed 9bf58afae (C01-carryover, dependencies.sh 7 ok, repo-wide zero carriers).",
+        "RESULT (C05 review r2, fresh ses_e6970690affe8NlPVi4zo3oJAM) status: DONE verdict APPROVED — R1 closed: sentence states storage truth + consumer-side equivalence naming both spellings + the OQ2 miss prevented; archived/title/_id semantics intact; v12.65 re-fetch confirms NEW sentence; source↔mirror byte-identical sentence; boards-deps 5 ok, cf90-ledger 4 ok, generate no-op2+--check, aislop rc0; grep proves no test pinned the old wording and no live carriers remain."
+      ]
+    },
+    "C06": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C02"],
+      "title": "coord+plan skills: per-ask research split (Research: Parallel) + agent-explore launchable + AD-71 guidance + Chunk Review done-gate carve-out (OQ15)",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; chunk commit e73f5f8f1 atop harness fix fe5e08c9c)",
+      "dev_session": "ses_e69645312ffeYvgghG1g8r7GFv",
+      "handoffs": [
+        "RESULT (C06 dev r1, ses_e69645312ffeYvgghG1g8r7GFv) status: DONE — role-coord: per-ask research sessions serial default + case-insensitive human-created Research: Parallel exception + absolute-path duty + shared RESEARCH.md sections; agent-explore in launch roster + Exploration-before-research via Stage-map citation only; step 4 waves-are-order-only one-at-a-time + sole-committer; step 5b/7 OQ15 carve-out (dev-only loop, evidence-judged done-gate, determinism mandatory, checked shape unchanged). role-plan: fewer-cohesive-chunks bullet (one-subsystem-one-chunk, split-on-reviewability), AD-71 half-2 revisit + Deferred cross-ref. T4 zero-re-pin verified; DISCOVERY: cf96-coord win() treated the header-intended '§' separator args as literal needles => t1/t3/t4 unsatisfiable by any prose; +t3 case-sensitive wave-parallel arm — probe /tmp/opencode/cf96-coord-probe proves 6/6 with two mechanical fixes; flip specs A+B handed up.",
+        "RESULT (C06 validation repair, test session continued ses_e6a75d2b6ffeQVm4AqFpLdWjH0) status: DONE — fe5e08c9c tests/cf96-coord/surface.sh only: win() filters '§' group separators + t3 grep -qiE wave-parallel; live byte-identical to dev probe pre-run; 6/6 green in-tree against landed prose; no needle/group/span/fail-text softened; regression spot green (agent-explore 6, tools 9, agent-perms 16, boards-deps 5); lesson recorded: run HOLD-now arms individually, fail-fast hides them.",
+        "RESULT (C06 review r1, fresh ses_e6944de09ffeNeANXUD9z1O1lA) status: DONE verdict APPROVED — cf96-coord 6/6 in-tree; battery green, admitted stale-base/churn reds message-identical & structurally unreachable from C06; fe5e08c9c weakening EXCLUDED (engine-parity diff: removes always-false conjunct; -i aligns sibling grep + DECISIONS record); T1/T2/T3/T5 pins verified line-level incl cite-never-restate (no Stage-map mechanics leaked) and no reading waives the Commands; mirrors md5-stable generated. Three non-blocking ledger notes folded to DECISIONS Deferred (role-research shared-file parity, Parallel-label write pressure dormant, t5 negative looseness)."
+      ]
+    },
+    "C07": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": ["C05"],
+      "title": "boards skill: Lifecycle redesign — 11 items (10 stages + Single Session kept) — Stage map, defaults, HITL, transitions, cutover section",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; fold commits 794122300 + carryover 37dfc3253; re-pins db2b261ca + admits 7a0c11a81/8d23fffcc)",
+      "dev_session": "ses_e693629c7ffeLAgkjCliJ4O5YU",
+      "handoffs": [
+        "RESULT (C07 dev r1, ses_e693629c7ffeLAgkjCliJ4O5YU) status: DONE — boards SKILL 11-item Lifecycle + HITL 11-mirror w/ AFTER-stop + Default Final Review; Stage map 11 rows (Exploration/agent-explore, ADR citing C06, OQ15 on both chunk rows, renamed Deployment, Single Session kept last); new ### Blank defaults subsection (7 stages, Exploration in, Deployment+Single Session out); transition rewrite (legacy Research timing-only, Lifecycle-wins moved up, legacy-HITL mapping, card #96 self-named, positive no-Single-Session-transition statement); cutover rewrite (11+11, OQ13 Qwen-Flash-only extras v2 path, Research: Parallel ensure, backup-first human-only); enumeration + board-facts Test/Cancelled correction. cf96-lifecycle 7/7 individually then full; rulesync no-op2 + --check; discovered the c11-header mis-attribution (stage_tokens lives in c18) + the prefix-substring collision class; c11/c18 re-pin spec pre-validated at /tmp/opencode/cf96-c07 (patched copy green). deviations: transition re-order + blank-defaults placement geometry-driven; zero dev test edits.",
+        "RESULT (C07 validation repair, test session continued) status: DONE — db2b261ca rulesync-surface c11 (eleven-name windows, HITL mirror, Default: Final Review) + c18 (11-row stage_tokens, first-cell exact row hit, <12 floor, Agent-Decides lookahead scanner) applied verbatim (patch dry-run clean, live byte-equal to dev's verified copy); full suite fail-fast ONLY at c8 churn; subset 22 ok; cf96-lifecycle 7 ok, boards-deps 5 ok, node 233/0.",
+        "RESULT (C07-fold dev, ses_e691022b7ffe8GQNm4AWPIWGgr) status: DONE — .rulesync/rules/overview.md two cites (step-8b hook -> checked Lifecycle `Deployment`; board-coord bullet -> 11-item w/ kept Single Session + Blank-defaults citation) -> AGENTS.md regenerated no-op2 + --check; agents-md 8 ok + c7 churn-red root-caused to the MISSING cf-96 admit (flip spec handed up); zero stage-mechanics restated; NEEDS_INFO stop-condition never arose.",
+        "RESULT (C07-fold test route, continued) status: DONE — agents-md c7 scope-admit for the running ticket's plan folder committed (7a0c11a81-era), agents-md 9/9 green unaided.",
+        "RESULT (C07 review r1, fresh ses_e6906486dffekdn9ZVkaNUr464) status: DONE verdict APPROVED — AC1-AC6 verified in fold-shape probes: 11 items/11 rows + Single Session last + blank-default seven + HITL AFTER/mirror + OQ15 both rows + transition timing-only w/ mapping + no-SS-transition + cutover never-agent unbroken; rulesync-surface full 23/23 in fold-sim probe (in-tree red = pure churn), gate per-arm only known t17, agents-md 9/9, boards-deps 5, cf90-ledger 4, cf96-coord 6, agent-perms 16, provider-loops 7/7 probe, node 233/0, aislop score100 0/0; c18 re-pin verified STRICTER not weakened. Deferred 1: retired `Deploy` cites survive in pipeline-push-pr/role-coord-8b/role-deploy (restamp carryover, verified suite-free). Deferred 2: Cancelled-list blocker still gates pickup (C05-lineage ledger). OQ2: cf-96 admits must ride c8/t14 for the merge-base final-review shape.",
+        "RESULT (C07-carryover dev, ses_e68cea427ffeq1jcQmd3vITBrr) status: DONE — 3 sources + 3 mirrors restamped Deploy->Deployment (push-pr 3 cites + heading + hook label; role-coord step-8b x4 + L56 roster-line; role-deploy L12/L14 x3); cite-only held, no mechanics restated; push-pr 9 ok, agent-dev-deploy 6 ok, cf96-coord 6 ok, cf96-lifecycle 7 ok, agent-perms 16, cf90-ledger 4, boards-deps 5, aislop score100 0/0; rulesync-surface fails ONLY at c8 churn (c1-c7 + c9-c22 individually green = 21 ok), gate t14 same churn. open_questions carried: 3 out-of-scope stragglers (agents-sync permissions.md L38 row — byte-pinned by board-context t4, NOT suite-free; six coord subagent frontmatter comments; agent-dev-deploy pair descriptions) -> final-review vocabulary sweep.",
+        "RESULT (C07 admits test route, continued) status: DONE — 8d23fffcc rulesync-surface c8_admits + gate.sh t14 admit cf-96 plan folder (pipe convention, no other change); board-context has NO t14 arm (verified: id dispatch t1..t6; its t14 lines came from t6's nested gate child) so NOT edited — discharge inherited, suite now 6 ok FULL; rulesync-surface full 23 ok rc0; gate full 18 ok with ONLY the ruled t17 (byte-identical vs recorded baseline); agents-md 9, cf96-lifecycle 7, agent-perms 16, node 233/0. friction recorded: 4th per-ticket admit ritual -> single-admits-file follow-up idea (owner's call)."
+      ]
+    },
+    "C08": {
+      "status": "done",
+      "wave": 4,
+      "depends_on": ["C07"],
+      "title": "cutover process artifacts: provision-board.py spec + provision skill + board-rules v12.65.json (MODIFY ONLY)",
+      "dev_rounds": 1,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r1+r2; chunk commit 85bfa4af6 atop [test] 3a182f19c)",
+      "dev_session": "ses_e68b0cd7affeWb1VNEzkUvdX5L",
+      "handoffs": [
+        "RESULT (C08 dev r1) status: DONE — engine schema-2: LIFECYCLE_ITEMS copied from the landed C07 boards text, five-checklist CHECKLIST_SPEC (only Model(s)->Qwen Flash checked), Research: Parallel (orange) ensure, extras drift => exactly ONE update_createcard_checklists action naming the artifact (zero when matching), schema-1 UNVERIFIABLE note on STDERR only, HUMAN-EXECUTED render line w/ backup-first; provision skill spec/steps/invariants updated + :v87 degrade restamped (source-landed, retires at C10); board-rules-v12.65.json generated programmatically from engine constants (legacy Research extra dropped). checklist-cutover 8/8 flipped green with NO suite change; AC5 zero live-board contact; surface.sh t2/t3 grown-spec flip specced + prevalidated (/tmp/opencode/cf96-c08-flip 9/9) incl a LATENT norm.sort() order bug in my own authored suite. deviations: fuller five-checklist coverage (matching/drift fixtures prove intent); tests re-pin physically denied -> spec handed.",
+        "RESULT (C08 validation, test session continued) status: DONE — spec already landed verbatim at 3a182f19c (audited item-by-item, zero deltas; no duplicate/no-op commit invented; flip-copy cd/FXDIR lines were scaffolding, excluded). Re-runs: surface 9 ok, checklist-cutover 8 ok, board-provisioning t1-t6+own-t2 green (t7 red ONLY via nested create-list t2 stale-base 7-hunks = C01 server.py block, not C08), create-list t3 pass, node 233/0, aislop 100/0. Engine arithmetic read DIRECTLY: live fixture => total 29 {create_list 2, create_label 11, create_rule 16}, labels end Provider: API, Provider: Local, Research: Parallel — flip-spec matches landed engine EXACTLY. FINDING (cosmetic, unfixed): board-provisioning t7 ok-line prose still says 'agree at 31' while nested pins pass at 38.",
+        "RESULT (C08 test-route re-run #10) status: DONE (zero edits) — cf96-lifecycle 7 ok + boards-deps 5 ok re-audited vs CURRENT boards text; Deploy-exact audit: the three 'Deploy' strings in cf96-lifecycle = history comment + the INTENTIONAL negative tuple (^\\|\\s*`Deploy`\\s*\\| — re-pointing would INVERT intent); rulesync-surface full 23 ok (c8 discharged incl untracked artifact), gate 18 ok only ruled t17, provider-loops full pass, agent-dev-deploy 6 ok, node 233/0; tests/** diff EMPTY.",
+        "RESULT (C08 review r2, fresh ses_e68971504ffeQx7cV6iEaoCPz3 + ses_e68791837ffeawgzHt8mcWpw4h line) status: DONE verdict APPROVED — EQUALITY mechanical (engine list byte-equal name+order to boards@794122300, Single Session LAST; HITL same list object); OQ13 exactly-one checkItem; posture AST-clean (argparse/json/sys only, id-independent, zero live ids, stderr-only note); artifact re-derived from module = five comma-joins byte-equal, Services/Type/Model(s) byte-equal to v12.64; AC5 proven by READ-ONLY live probe (board still 10 labels, createCard rule still v1 title = nothing applied) + zero network/credential calls; :v87 honesty (values.yaml v87 all three tiers; C10 holds bump unexecuted); 3a182f19c TIGHTENED not weakened, fixture flip legitimate (controls: old@HEAD=0 actions, new@HEAD=0, old@NEW would fail t2 — t3 not gamed). Carried: t2 filename-only artifact pin; manual regeneration (red t7/t8 => regenerate from CHECKLIST_SPEC, never hand-edit); stale 'lands in C08 dev commit' header sentence; load_snapshot fail-msg lost {path}."
+      ]
+    },
+    "C09": {
+      "status": "done",
+      "wave": 4,
+      "depends_on": ["C07"],
+      "title": "coder workspace TZ (America/Denver) + timestamp pass — displayed stamps local incl. machine ISO fields, instants preserved (OQ4/OQ5 folded)",
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; dev + spec-F carryover; chunk commit 4f7007246 atop [test] 2c1f10875)",
+      "dev_session": "ses_e686cc349ffe7Q6duCSAkrXcJL",
+      "handoffs": [
+        "RESULT (C09 dev r1) status: DONE — TZ=America/Denver in both coder templates (fmt clean); exported localIso single formatter in pipeline-locks (Intl longOffset; $TZ unset/blank/unparseable => UTC Z) routed through ALL SIX displayed-stamp sites (4 specced + writeReapMeta forced by the file-wide zero-toISOString pin + queueTimeoutRow); board-context collectedAt via deliberate cross-plugin static import (one implementation, export surface unchanged; spec-G residual risk = live host fire); boards/pipeline-conventions/collector prose declare stamps-vs-instants; STATE updated_at declared offset stamp. Probes: 6 sites x 2 geometries correct; 12k instants x 6 zones Date.parse(localIso(x))===x zero mismatches; mixed-era reap pass reaps exactly the two 3-h-old locks w/ equal ages. cf96-tz t1/t3/t4/t5 green, t2 red = UNSATISFIABLE harness bug (re.M missing — cf96-coord win class). tfbin precondition provisioned per PLAN.md => coder-hardened 41 pass/coder-move 9 pass incl real validate. node 233/0 TZ-unset; one string-equality leg geometry-sensitive (spec A). deviations 1-7 incl static-import exception + ms kept for exact instant asserts.",
+        "RESULT (C09 validation, test session continued) status: DONE — specs A-E applied, committed 2c1f10875 (9 files, tests/** only): core SEAM CONTRACT text + shape/instant pair + STAMP_SHAPE; zone-coverage legs once per suite (core/engine/reap/tick, finally-restore); strengthens at core L349/511/567 + reap L245/331/631; tick old-Z inputs kept as mixed-era proof; board-context +1 leg importing localIso (fixed own STAMP_SHAPE composition mid-run); cf96-tz re.M repair (STRENGTHENS an unsatisfiable strip); scope admits for both coder templates + two extra classes the dev hadn't enumerated (plugin dir, conventions pair — extension flagged honestly). Battery: cf96-tz 5 ok; node 238/0 BOTH geometries (equal totals = AC2 proof at suite scale); gate 18 ok only ruled t17; board-context/provider-loops/agents-md/rulesync-surface full pass; templates + coder-workspace green unaided. deviations: provider-loops needed no own admits (its t14 came via the gate child).",
+        "RESULT (C09-carryover dev) status: DONE — plan-and-result.md L46 STATE schema example => '<local ISO-8601 with offset; UTC Z when $TZ unresolvable>' (source + regenerated mirror byte-identical; THH:MM:SSZ zero hits after; L94 date-only legitimately untouched). gate red ONLY at ruled t17 (t12 carve + t14 admits green); cf96-coord 6, cf96-tz 5, aislop 0 err.",
+        "RESULT (C09 review r1, fresh ses_e6832cbf7ffeRNQQqx4JmlPVEC) status: DONE verdict APPROVED — dual-geometry node battery 238/0 EQUAL totals both geometries; reviewer's own mixed-era comparator probe over the verbatim max(Date.parse(hb), mtimeMs) formula: identical aging; instants byte-untouched vs merge-base (Date.now/mtimeMs/inline epoch/gate.sh); terraform fmt clean + tfbin precondition AUTHENTIC (real 1.9.8 + provider cache; missing-binary arm FAILS not skips) + coder suites + helm lint/template rc0; cf96-tz 5 ok; aislop rc0 99 vs failBelow 80 (1 size warning accepted per config); 2c1f10875 weakening EXCLUDED; cross-plugin import accepted with live-host reload evidence (0 local-file load failures). Ledger follow-ups: offset-INPUT reap leg upgrade; AC3 wording says four sites where code+suite+prose carry six (align at next plan touch)."
+      ]
+    },
+    "C10": {
+      "status": "done",
+      "wave": 5,
+      "depends_on": ["C01", "C08"],
+      "title": "HOLD: deploy chain runbook (merge→v<run>→pin bump dev+gpu→probes→L4 absorb) + cutover apply readback — human-executed",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r2; deliverable fc1a7c456 + r2 fix e158169b4; r1 CHANGES_REQUESTED human-owned-bullet over-reach closed byte-exact)",
+      "dev_session": "ses_e681f0703ffeXvIrnSA2WKvXFX",
+      "handoffs": [
+        "RESULT (C10 dev r1) status: DONE — 250-line deploy-chain runbook authored (deliverable lives under tests/** = dev-denied; staged verbatim at /tmp/opencode/cf96-c10/readback-runbook.md, sha256 2eb83ae7…6e1c, ZERO flip spec: all seven cf96-deploy pins pass unmodified, validated on a /tmp suite copy). Coverage: build tag shape (v<run_number> + :main; how to read the number), three-tier pin bump (dev boards L406 + gpu wekan-admin L734 + wekan-readonly L697, stale :v60 narration rewrite, Chart-version guard, :main trap), ArgoCD manifest-diff recreation + imageID digest verify, read-only-first probe battery (38 tools + seven names + ruled parent_id inputSchema spot-check + readonly-tier expectations + preload shape + get_card cross-check + first-ever list_board_dependencies + set_card_labels catalog-only), cutover apply AFTER owner backup (/wekan-board-provision dry-run->confirmed apply, UI Rules->Import JSON of the C08 artifact byte-path, zero-action re-run + regenerate-from-CHECKLIST_SPEC discipline), un-degrade map (which clause retires at which step), what-stays-human-owned set, L4 absorb. honesty repairs: dropped an unverifiable ':v87 = 31 tools' claim, attributed the provision run read-only-collect + owner-confirmed apply, conditioned the empty-edge-list expectation.",
+        "RESULT (C10 landing + audit, test session continued) status: DONE — sha verified (2eb83ae7… exact), byte-copied over the scaffold, committed fc1a7c456 (214+/78−, surface.sh untouched — dev's zero-flip-spec claim confirmed). Audit: (a) artifact path + boards heading + all three values.yaml quote-lines re-read in tree, verbatim-accurate; (c) probe battery READ-ONLY-first + docs-are-claims law verbatim; (d) step 5 mirrors the DECISIONS test-Q1 ruling (7 names + parent_id spot-check + stop-and-report, never square a number); (e) step 8 readback matches checklist-cutover's real pins + regenerate discipline. FINDING (b): the 'what stays human-owned' bullet blanket-claims agents write comments only while step 7 invokes /wekan-board-provision whose skill performs additive applies — over-reach, handed to review for adjudication (not patched silently). Note: route said 251 lines, file is 250 by wc — trusted the sha, reported the slip.",
+        "RESULT (C10 review r1, fresh ses_e680faa08ffelT8OcWbl2WJK34) status: CHANGES_REQUESTED — validations ALL green (cf96-deploy 7, checklist-cutover 8, provision surface 9, lifecycle 7, boards-deps 5, tools 9/skill-surface 8/rest-overview 7/dependencies 7, rulesync-surface 23, gate 18-only-t17, agents-md 9, node 238/0 both geometries, aislop 0/0): no validation_at_fault. Repo-fact audit TRUE: three values pins verbatim-exact incl the :v60 comment; docker-build tag shape; Chart-version + ArgoCD-only (zero kubectl); server.py AST census 17 @mcp.tool + 21 @_write_tool = 38 with the 3 new reads plain-registered (readonly-present) and 4 new writes behind _write_tool (READ_ONLY identity no-op -> never registered) exactly as step 5 claims; preload 7-key map; test-Q1 quote right; nothing executed (diff = one runbook file). MAJOR (blocking): the human-owned bullet forbids the very additive APPLY step 7 schedules + the skill's own contract (lists/Bucket labels/rule pairs/Provider+Research:Parallel ensures go through dev-boards after human confirmation; only the extras import is HUMAN-EXECUTED) — two readers would disagree on writes in the chunk's only deliverable. MINOR: bullet 4 assigns the Research: Parallel ensure to two actors. Verbatim fix specced + simulated through the suite (7 ok over the patched copy). Ledger: same tension between boards-cutover sentence and provision skill.",
+        "RESULT (C10 r2 fix, test session continued) status: DONE — MAJOR landed BYTE-EXACT from the reviewer's own suite-simulated artifact (zero paraphrase); MINOR applied from the reviewer's quoted half-line (honest note: it was NOT inside their patched copy — post-edit diff vs their copy == exactly that half-line). cf96-deploy 7 ok unmodified incl t6 agent-execution negatives against the new sentences; checklist-cutover 8, provision surface 9, lifecycle 7, node 238/0; committed e158169b4 (12+/5−, tests/** only). Actor-agreement read-back: step 7 bullet 2 names the agent apply leg, bullet 4 marks the human step its read-back, the scoped bullet names exactly one agent-write leg; no residual contradiction INSIDE the runbook.",
+        "RESULT (C10 review r2, fresh ses_e6804b235ffeWOuEzLsOEPl5OW) status: DONE verdict APPROVED — MAJOR CLOSED: bullet byte-identical to the r1 spec (md5-equal) and verified against skills/wekan-board-provision/SKILL.md step 3 (enumeration matches, extras ban matches, exactly one agent-write leg, 'everywhere else card comments only' exhaustive); MINOR CLOSED verbatim (no write assigned to two actors); typo scan clean ('read-bank' zero hits); r1 non-blocking items intact; suite re-run all green incl t6 negatives; nothing executed (chain touches tests/cf96-deploy only; both values files empty-diff vs merge-base — the bump stays prepared text). LEDGER DISPOSITION for final review: the boards-cutover-vs-provision-skill sentence tension = a final-review vocabulary-sweep item (NOT an Inbox card, NOT acceptable-as-written — the boards section self-contradicts at its step 4), one-clause fix with a verbatim donor in the runbook, fold with C07's retired-Deploy stragglers, widen bullet 4's 'or rules' clause."
+      ]
+    },
+    "C11": {
+      "status": "done",
+      "wave": 6,
+      "depends_on": ["C01", "C05", "C08", "C10"],
+      "title": "post-research delta (OQ-P1 FOLD ruling; APPROVED + WIDENED 2nd batched round 2026-11-02): _slim_rule extras+enabled passthrough + docs-parity re-stamp + OQ-P2/P3/P4 text folds + T5 registry-recipe fold (wekan-mcp-ops Deploy/verify loop + container-creation pin recipe, digest leg kept; no suite content-grips either file) + green-on-arrival suite legs incl. cf96-deploy t8 guard",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "dev_session": null,
+      "handoffs": [
+        "RESULT (C11 dev, ses_e62a21d1dffeWR3waCgDUN3Zu3) status: DONE — server.py _slim_rule 7-key projection (extra_actions/extra_triggers/enabled ride bare, enabled True only on omission, plain @mcp.tool, registry 38); docs same-commit source-only (README/call-shapes/SKILL, camelCase ban respected); boards folds (present-but-FAILED tools/list = same degrade as absent w/ one retry; gate title-map fallback + unresolvable-edge NON-GATING-and-reported) source+mirror no-op2; recipe widening (wekan-mcp-ops tags/list enumeration bullet appended w/ digest bullet byte-intact; container-creation dead sentence replaced; strata README untouched = tagged digest read class). AC4 capture sentences byte-untouched; runbook step-2+retire-row staged. Flip spec staged verbatim at /tmp/opencode/cf96-c11-dev/flip/ (shas in handoff; all legs GOA-green here / red at d1f674a63). deviations: 3-group fallback leg (2-group green at ORIG), first-ever top-level path class needed the 4-arm scope admits (fifth admit-ritual record).",
+        "RESULT (C11 test route, ses_e6adaf11bffeOtWerHTHQlYlqj continued) status: DONE — e78b6a838 (tests/** only, 8 files): all ten staged shas verified; per-file pre-apply audits show ONLY the enumerated legs (t1-t7/t1-t5/t1-t8 byte-preserved as claimed); green-on-arrival cf96-deploy 8 / dependencies 8 / checklist-cutover 9 / boards-deps 8; red-at-HEAD on a detached d1f674a63 probe for all six new legs (correct named reasons, incl cutover t9 naming the missing _slim_rule passthrough = F5's failure mode); distractor spelling v90/v101/v102 keeps t6's {:v60,:v87} whitelist; full battery incl rulesync-surface 23 (c8 discharges the new admit), agent-perms 16, node 238/0, aislop 100/100; gate 18 ok sole FAIL ruled t17 message-identical. deviation: provenance ok-line extension staged for GATE only — applied as staged, reported.",
+        "RESULT (C11 review r1, fresh ses_e627a6a7dffeD0sRj4orDCMhjE) status: DONE verdict APPROVED — upstream truth re-fetched personally (rules.js v12.65 == main, 11229B byte-identical; serializeRule hydrates enabled always, extraActions/extraTriggers only when non-empty ⇒ routes OMIT, never [] — the bare r.get posture is exactly right; enabled default True only on omission); AST 17+21=38, rule reads parse ['mcp.tool'] plain-tier; live anonymous tags/list re-executed (200; v87/v90/v101/v102/legacy/latest real, no :dev) — registry facts legitimately live-stamped; camelCase zero; degrade fold extends the absent-branch verbatim-aligned (no contradiction); unresolvable-edge judged vs the dangerous reading — transient failure hits the CALL-FAILURE clause (payload-less), a missing far end inside a good payload is structurally deleted/moved and cannot gate: non-gating AND reported, correct as written (linked-card omission recorded as plan-inherited micro-edge, observability preserved); AC4 sentences byte-empty diffs; t6 whitelist protected by construction; six new legs independently reddened at d1f674a63; full battery delivered at expected counts (aislop rc0 100 vs floor 80, 65 files; rulesync no-op2; node 238/0; gate only ruled t17; create-list t2 admitted stale-base count moved 7→9 = C11's two hunks). Ledger notes for final review: linked-card clause, EOF-newline style."
+      ]
+    }
+  },
+  "post_research": {
+    "session": "ses_e67fd5856ffe6Rmlp7o7xg4JqD",
+    "status": "DONE",
+    "verdict": "REPLAN-CANDIDATES: 1 CODE (schema-2 extras capture instructs get_rule, but _slim_rule structurally drops extraActions -> the agent capture path can never work; step-8 read-back silently degrades to schema-1. Recommended fix: small _slim_rule passthrough on the undeployed C01 surface, pre-merge. Alternative: re-point both texts to UI-export-only capture). Folds OQ-P2/P3/P4 text-only (call-failure-vs-absent degrade, title-map fallback/unresolvable edge end, runbook step-2 imagetools->tags/list recipe + v90-v102 distractor note). OQ-P5 (password change kills bearer) -> follow-up. VERIFIED TRUE: 7 dependency-surface files byte-identical v12.65<->main (cards.js six commits all validation/logging; bulk-labels route present AT 12.65); lab actually runs v12.77 (renovate d8b12fd0f post-merge-base) with zero assumption risk; AST recount 17+21=38; checkItem typo NOT fixed on main (extras stay DORMANT — landed text honest); rule extras import-only confirmed; pickup walk executable w/ 3-cap consistent; readonly catalog = 13 tools live (degrade law proven). RESEARCH.md post-planning section appended (pure append, 450 lines, 17 [P#] sources).",
+    "at": "2026-11-01"
+  },
+  "final_review": {
+    "r1": {
+      "session": "ses_e626d7ed3ffeKW0CEK4HekLjOY",
+      "tier": "planning (openrouter/qwen/qwen3.8-2.4t-a95b)",
+      "verdict": "CHANGES_REQUESTED",
+      "at": "2026-11-02",
+      "summary": "All 11 chunks' substance, cross-chunk coherence, card-ask coverage and the owner-chain texts approved-quality; ZERO NEW REDS across the whole battery (ruled t17/i4/s4/m4 PROVEN red at merge-base on a detached probe; stale-base create-list/board-provisioning t2 at the predicted 9 hunks; validation-fix t4 + bare-ok echoes + dev-mcp-fleet t7 pre-existing/out-of-scope). MAJOR = the ruled vocabulary sweep (C10 r2's own ledger disposition: not an Inbox card, not acceptable-as-written), 6 verbatim-spec'd edits in chunks/C11.md: (a) boards cutover 'Agents never mutate board checklists, labels, or rules' vs its own step (4) + the provision apply leg; (b) runbook bullet 4's 'or rules' widening (phrasing audited vs cf96-deploy t6 FORBIDs); (c) agents-sync permissions.md L38 retired-Deploy cite (the ONE non-suite-free item — board-context t4 byte-pins the row => test re-pin); (d) six coord subagent frontmatter comments; (e) agent-dev-deploy pair descriptions (suite-free); (f) role-research shared-RESEARCH.md parity line (C06 note 1, suite-free). Live re-probes: card #96 Executing + slug set; zero-apply confirmed; values quotes byte-exact; 100-file diff scope clean.",
+      "handoff": "full RESULT in the session; review notes appended to all 11 chunk files (consolidated in chunks/C11.md). commands_run: the entire plan Commands battery enumerated pass/fail/admitted (node 238/0 BOTH TZ geometries, rulesync no-op2 + --check, aislop rc0 0/0 65 files, helm/terraform/py_compile, renovate trio incl inline validate/lint parity, live read-only dev-boards + global-renovate probes); deviations none; open_questions none blocking.",
+      "fold_round": {
+        "dev_sweep": "ses_e624018bfffe3POpWmuTD7PHbV (agent-dev-local on the DEFAULT code model qwen3.8-27b — the run's routed Flash tier returned provider errors 3x; routing deviation recorded) — DONE: (a) boards cutover sentence scoped to cutover mutations naming the one sanctioned agent-write leg; (c) permissions.md L38 Deploy->Deployment (+mirror); (d) six coord subagent step-8b comments (YAML comments stripped at generation, mirrors unchanged); (e) agent-dev-deploy{,-pr} descriptions (+mirrors); (f) role-research shared-RESEARCH.md append/merge parity line (+mirror); rulesync x2 no-op + --check; 14 suites green, board-context t4 + gate t14 reddened as predicted and specced for the [test] half (5th admit-ritual record). Committed 826e49b46.",
+        "coord_routing_deviation": "2026-11-02 coord: C11/final-sweep rounds ran on openrouter/qwen/qwen3.8-27b instead of the kickoff-routed openrouter/qwen/qwen3.8-flash after three consecutive 'Provider returned error' failures at the Flash tier (two dev launches + the long-lived test session). The pipeline-models DEFAULT code tier; rigor unchanged (every battery re-run by reviewers). Recorded for the model-churn ledger.",
+        "test_sweep": "ses_e6232ddb2ffeKTiFxRyvZ2NkSp (fresh agent-test session, 27b fallback) — DONE: shas verified; board-context t4 DEV_DEPLOY_SETTLED settled-byte re-pin (byte-identical to the .patched ref) + gate t14 research-pair admit + runbook bullet-4 verbatim widening (t6 {:v60,:v87} whitelist + t8 guard re-verified intact) + the OPTIONAL admitted-set comment clause taken. board-context 6 ok FULL, gate 21 ok ids-minus-t17. Committed 5fe3bc8dc.",
+        "recheck": "ses_e621a8807ffeys9cqeJ5rIXZX8 (planning tier, scoped r2) — verdict APPROVED: all six sweep items closed byte-verified; gate t14 negative probe shows the scope guard NOT weakened (5 un-admitted paths still rejected); retired-Deploy survivors are historical/negative-only; full battery re-run independently green with message-identical admitted reds; ledger items dispositioned (linked-card micro-edge + EOF-newline = recorded, no Inbox card needed; admitted-set clause taken). 'NOTHING remains that must be fixed before the card goes to Review.'"
+      }
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "Wave-parallel dev sessions (AD-71 half 2) — revisit text only; sole-committer model blocks true parallelism; follow-up card material",
+    "Hook-based preload (OQ3 rejected alternative)",
+    "My Dependencies exposure (OQ9 — docs mention only)",
+    "Kind-1 Red Strings edges (OQ1 ruled parentId-only 2026-11-01)"
+  ]
+}

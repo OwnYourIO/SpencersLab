@@ -346,8 +346,11 @@ opencode:
     - action: subagent
       resource: agent-research
       effect: allow
-    # cf-90 C06: the step-8b Deploy-stage launch (pipeline-role-coord);
-    # the boards Stage map's Deploy row is the gate, the widened roster the grant.
+    - action: subagent
+      resource: agent-explore
+      effect: allow
+    # cf-90 C06: the step-8b Deployment-stage launch (pipeline-role-coord);
+    # the boards Stage map's Deployment row is the gate, the widened roster the grant.
     - action: subagent
       resource: agent-dev-deploy
       effect: allow

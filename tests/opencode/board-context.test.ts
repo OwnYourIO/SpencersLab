@@ -55,6 +55,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import * as plugin from "../../.opencode/plugin/board-context/index.ts";
+// The single formatter the hook's collectedAt now rides (cf-96 C09 T2) — the
+// test imports it directly to prove both geometries flow through it.
+import { localIso } from "../../.opencode/plugin/pipeline-locks/index.ts";
 
 const mod = plugin as Record<string, any>;
 
@@ -563,5 +566,24 @@ describe("S10 enable-as-is scope guards (C03 AC 4, OQ-N1/N2 shape)", () => {
       "the flip needs the runbook-shaped proof citation (C03 Citation line: 'live-fire <stamp> (worktree probes)') — no half-proven hook ships on");
     assert.match(source, /worktree probes/,
       "the citation must claim exactly what ran: worktree-instance evidence, not main-checkout proof (C03 Notes for dev: do not claim location proof the run never had)");
+  });
+});
+
+describe("cf-96 C09 zone coverage — the collection stamp header in both geometries (AC3)", () => {
+  it("stamps local-with-offset when $TZ resolves and UTC Z when it does not (cf-96 AC3)", () => {
+    const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
+    // The shape's own anchors must not survive embedding mid-pattern.
+    const headerRe = new RegExp(`^Board context \\(collected ${STAMP_SHAPE.source.slice(1, -1)}, dev-boards\\)$`);
+    const savedTZ = process.env.TZ;
+    try {
+      process.env.TZ = "America/Denver";
+      assert.match(seam("formatBlock")({ ...FIELDS, collectedAt: localIso() }).split("\n")[0], headerRe,
+        "the offset stamp keeps the header sentence true — an offset IS ISO-8601 (C09 T2)");
+      delete process.env.TZ;
+      assert.match(seam("formatBlock")({ ...FIELDS, collectedAt: localIso() }).split("\n")[0], headerRe,
+        "$TZ unset: the Z-fallback stamp renders the same header shape");
+    } finally {
+      if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
+    }
   });
 });

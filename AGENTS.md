@@ -124,14 +124,17 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,research,test,dev-pr,dev-local,dev-deploy,dev-deploy-pr,review,fuser,board-coord,board-coord-local,board-coord-pr}.md`;
+- `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,explore,research,test,dev-pr,dev-local,dev-deploy,dev-deploy-pr,review,fuser,board-coord,board-coord-local,board-coord-pr}.md`;
   the implementer ships as `agent-dev-local`/`agent-dev-pr` — no commits (the
   coordinator commits each approved chunk; the pr variant additionally pushes
   the ticket branch); coords launch their matching dev; the deploy pair
   `agent-dev-deploy`/`agent-dev-deploy-pr` is the post-final-review deploy
   fixer and ships as DEFINITION ONLY (cf-90) — nothing in that ticket executes
-  it; the only launch surface is the coordinator's step-8b Deploy-stage hook
-  under a checked Lifecycle `Deploy`, the `boards` Stage map governing) —
+  it; the only launch surface is the coordinator's step-8b hook under a
+  checked Lifecycle `Deployment`, the `boards` Stage map governing;
+  `agent-explore` is the read-only scout the `Exploration` stage launches
+  before research and planning — it grounds file locations and MCP/cluster
+  ids and writes `EXPLORE.md` next to the plan file) —
   chunk-based pipeline: `agent-coord` (primary) runs an approved plan through
   fresh `agent-plan`/`agent-test`/`agent-dev-local`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only
@@ -241,8 +244,10 @@ role × permission matrix is in the `agents-sync` skill references
   `slug` custom field's combined `[<slug>](<session link>)` value supply the
   kickoff answers — the
   checked Lifecycle items are the stages the run executes
-  (checked-stages-only; nothing checked = the standard
-  Plan+Test+Code+Review loop), the Model(s) checklist alone
+  (checked-stages-only; the 11-item checklist ends with the kept
+  `Single Session` opt-in, and nothing checked runs the standard
+  default loop — the `boards` Stage map's Blank defaults section
+  names its seven stages), the Model(s) checklist alone
   routes models, `cf-<card-number>-<type>-<desc>` slugs name the feature
   folder, worktree, branch and session alike;
   run tags are retired for every flavor (cf-90) — both families name the
