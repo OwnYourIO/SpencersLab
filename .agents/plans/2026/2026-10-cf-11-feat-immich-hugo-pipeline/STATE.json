@@ -157,14 +157,16 @@
         "C01"
       ],
       "repo": "SpencersLab",
-      "status": "in_progress",
+      "status": "done",
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "commit": "2ef0db61e",
       "dev_session": "ses_e5cec3ce7ffeRzW1SUoOF1AV4S",
       "model_deviation": "dev ran on openrouter/qwen/qwen3.8-27b (pipeline-models default code tier) after 2x flash provider errors — coord-disclosed substitution",
       "handoffs": [
-        { "at": "2026-11-03", "from": "agent-dev-local", "status": "DONE", "summary": "Dockerfile (multi-stage: data.forgejo.org/forgejo/runner:13.2.1 static-ELF binary donor -> node:22-bookworm-slim + apt toolchain + hugo extended 0.151.0 digest-verified + netlify-cli 27.16.2 + C01 package under /opt/immich-hugo-sync/sync/ + bin/ wrappers + ENV HOME=/data + USER node uid 1000 matching chart fsGroup), .dockerignore, README freshness fix. All base-image facts verified live without daemon (registry tags, layer tars, apt package index, hugo sha256 vs release checksums, npm engines, renovate custom-manager simulation). docker build => no-daemon, CI-deferred (cf-77 designed shape).", "commands": "tests/containers 10 ok exit 0; hadolint 0 errors; C01 suite 53/53; aislop 100.", "deviations": "(1) package at /opt/immich-hugo-sync/sync/ subdir (relative imports require importable `sync` package; t5 substring regex accepts). (2) ARG HUGO_SHA256 baked digest coupled to HUGO_VERSION (fail-loud on renovate version-only bumps). (3) README two-line freshness fix. (4) .dockerignore +bytecode/README hygiene. (5) mkdir/chown /data before ENV HOME (bare-run HOME writability).", "friction": "hadolint DL4006/SC3040 pipe interplay resolved by sha256sum -c on written digest file; `file` binary absent (od+strings instead)." }
+        { "at": "2026-11-03", "from": "agent-dev-local", "status": "DONE", "summary": "Dockerfile (multi-stage: data.forgejo.org/forgejo/runner:13.2.1 static-ELF binary donor -> node:22-bookworm-slim + apt toolchain + hugo extended 0.151.0 digest-verified + netlify-cli 27.16.2 + C01 package under /opt/immich-hugo-sync/sync/ + bin/ wrappers + ENV HOME=/data + USER node uid 1000 matching chart fsGroup), .dockerignore, README freshness fix. All base-image facts verified live without daemon (registry tags, layer tars, apt package index, hugo sha256 vs release checksums, npm engines, renovate custom-manager simulation). docker build => no-daemon, CI-deferred (cf-77 designed shape).", "commands": "tests/containers 10 ok exit 0; hadolint 0 errors; C01 suite 53/53; aislop 100.", "deviations": "(1) package at /opt/immich-hugo-sync/sync/ subdir (relative imports require importable `sync` package; t5 substring regex accepts). (2) ARG HUGO_SHA256 baked digest coupled to HUGO_VERSION (fail-loud on renovate version-only bumps). (3) README two-line freshness fix. (4) .dockerignore +bytecode/README hygiene. (5) mkdir/chown /data before ENV HOME (bare-run HOME writability).", "friction": "hadolint DL4006/SC3040 pipe interplay resolved by sha256sum -c on written digest file; `file` binary absent (od+strings instead)." },
+        { "at": "2026-11-03", "from": "agent-review(r1, FRESH ses_e5cd6a977ffeAZvj2HPKbkxql4)", "status": "APPROVED", "summary": "All validations re-run fresh: 10-leg contract ok, 53/53 C01 guard, hadolint 0 errors (full-severity: DL3008 warn + DL3066 info only, fleet bar via containers/strata), aislop 100, docker build no-daemon CI-deferred verified as genuinely absent daemon (designed shape, cf-77). Independent live re-verification: hugo 0.151.0 sha256 byte-exact vs release checksums; netlify-cli 27.16.2 real + current npm latest + engines >=22.13.0; runner:13.2.1 donor User 1000:1000/HOME=/data/static ELF; node base 22.23.4 node:x:1000:1000; dumb-init in bookworm; all renovate annotations bind live managers; manual-pin digest deliberately unbound (fail-loud coupling). C03 chart contract satisfied (dumb-init path, /bin/forgejo-runner daemon command, fsGroup 1000, :main+Always); no secrets in any layer; test mtime predates dev (contract-first, no weakening). 5 dev deviations all ACCEPTED. 2 record-only nits: NIT-1 renovate comment registryUrl ordering (order-insensitive); NIT-2 'resolves to 22.23.4' is a point-in-time snapshot of floating 22.x tag. Review notes appended to C02.md; no edits." }
       ]
     },
     "C03": {
@@ -223,8 +225,9 @@
         "C01"
       ],
       "repo": "SpencersLab-staged -> CuratedForest.com",
-      "status": "pending",
-      "note": "render-gate fixtures cover gallery-call extension pre/post (N2); archetype and photos-section artifacts dropped (N3)"
+      "status": "in_progress",
+      "dev_session": "ses_e5cbe3ba7ffexQqaXcwsm1hEnB",
+      "note": "render-gate fixtures cover gallery-call extension pre/post (N2); archetype and photos-section artifacts dropped (N3). 2026-11-03: a background dev launch was lost to a server restart before it wrote anything (disk-verified clean) — relaunch recorded with its session id when it returns.",
     },
     "C07": {
       "title": "Apply staged artifacts to CuratedForest.com on Forgejo (branch + PR)",
