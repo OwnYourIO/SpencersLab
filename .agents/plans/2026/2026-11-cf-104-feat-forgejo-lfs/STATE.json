@@ -1,0 +1,179 @@
+{
+  "feature": "2026/2026-11-cf-104-feat-forgejo-lfs",
+  "plan_status": "approved",
+  "coord_session": "ses_e617615eaffeXr8WZ36TGpQsP9",
+  "test_session": null,
+  "current_wave": 1,
+  "updated_at": "2026-11-03T17:33:00+0000",
+  "approval": {
+    "state": "approved-with-scope-deltas",
+    "answered_at": "2026-11-03T17:15:03+0000",
+    "plan_approval": "APPROVED as written (C01 inert chart plumbing → C02 dev → C03 infra on-branch gated on dev verification; C04 runner leg; UA1–UA4/PF0–PF2 stay User actions).",
+    "q10_runner_scope": "USER CHOSE: a NEW runner INSTANCE on the gpu cluster — not the dev-resident runner chart. This widens the plan beyond C04: the plan needs a gpu runner chunk (services/gpu ApplicationSet `charts:` alias + top-level `runner.url` slice + `custom-values/gpu/prod-values.yaml` runner token + its own tests/services suite), and the runner RECORD stays a User action (EXPLORE §R5 lists the exact file set; the reserved `dev-forgejo-prod-runner` vault item may be reusable). REQUIRES one plan rework pass before Test Writing.",
+    "q11_actions_checkout_proof": "USER CHOSE: no research round — C04 stays comment+test only.",
+    "q12_node22_image": "USER CHOSE: swap the node22 job image now (it has no git-lfs) — this is now a FUNCTIONAL change, not documentation-only, so C04 (or a new chunk) carries the ACT_LABELS/job-image edit red-first, with the pinned `forgejo-ssh-gateway.sh:1601` and `dev-wiring.sh:252-253` couplings respected.",
+    "card_handoff": "User said \"just work the card\" — an explicit in-session instruction to keep working card #104 rather than hand it back. The re-claim attempt that follows is therefore user-authorized, not a unilateral re-claim.",
+    "commit_authorization": "User authorized exactly one commit of the planning record (plan, EXPLORE.md, RESEARCH.md, STATE/DECISIONS/FRICTION, chunks) onto branch cf-104-feat-forgejo-lfs — no chart changes in it."
+  },
+  "claim_attempts": [
+    {
+      "at": "2026-11-03T17:14:05+0000",
+      "result": "ok:false reason:locked — the `Local` pipeline was taken by another run while this session's claim was reaped: cardId rQCRHsLB86Ci6oJki (\"Repair the cf-58 coord-contract baseline (six shell suites red at pristine HEAD)\"), holder ses_e5df7e9beffelLhk6dRP78rcyZ, setId 689f0df1-5230-4797-a4a4-fb1e8442f9bf, claimedAt 2026-11-03T16:32:54.817Z, heartbeatAt 2026-11-03T17:14:05.319Z, state failed.",
+      "action": "NOT forced. Card #104 work is blocked on the `Local` pipeline until that claim ends or goes stale (2 h)."
+    }
+  ],
+  "run_state": {
+    "phase": "plan-approved — implementation blocked on the contended `Local` lock",
+    "stop_reason": "PIPELINE LOCK LOST — the plugin reaped this run's `Local` lock set at 2026-11-03T15:33:09Z (pipeline_status lastReap reaped:[\"Local\"]; pipeline_heartbeat answers no_claim) after the workspace location shut down and restarted mid-approval-pause. Per the boards skill a lock-lost run stops: no commit, no card move; only a fresh run re-claims.",
+    "done": [
+      "Exploration — EXPLORE.md, two rounds (round 2 = `## Runner surface (gpu) — round 2`, R0–R7)",
+      "Research — RESEARCH.md (pre-planning round; the card's own briefing is superseded by it)",
+      "Planning — plan of record + chunks/C01–C04, reworked once with the nine batched answers (Q1–Q9)"
+    ],
+    "pending_approval_round": "ANSWERED 2026-11-03T17:15Z: plan APPROVED as written; Q10 = a NEW runner instance on gpu (widened scope → chunk C05); Q11 = no research round; Q12 = swap the node22 job image now (C04 became functional). The two scope deltas were folded by a third plan pass, so `plan_status` is `approved`. Three further questions (Q13 gpu-runner target instance, Q14 Node-22 guarantee loss, Q15 new vault item vs the reserved `dev-forgejo-prod-runner`) are recorded in the plan and do NOT block wave 1.",
+    "blocked_on": "Re-claim refused at 2026-11-03T17:14Z: the `Local` pipeline is held by card rQCRHsLB86Ci6oJki (\"Repair the cf-58 coord-contract baseline (six shell suites red at pristine HEAD)\"), holder ses_e5df7e9beffelLhk6dRP78rcyZ, setId 689f0df1-5230-4797-a4a4-fb1e8442f9bf, claimedAt 16:32:54Z (its own state reads `failed`, so it will go stale and be reaped if it beats no more heartbeats). Card #104 is therefore left unforced: no chunk work, no board write (the `dev-boards` namespace is also absent from the tool catalog post-restart).",
+    "resume_protocol": "A resuming run must (1) re-resolve the board ids, (2) `pipeline_claim(cardId uDTEEpnqEahASJjJN, pipelines [\"Local\"])` — derived from the `Pipeline: Local` label, NOT `default`; if `Local` is still held, the card waits, (3) RESUME this folder rather than mint a new one: the card's `slug` custom field is still EMPTY (the post-plan write-back never ran), so the D11 resume rule cannot find this folder from the card alone — point the run at this folder / branch / worktree explicitly, and do the post-plan write-back (slug `[cf-104-feat-forgejo-lfs](<session link>)` + delete the unchecked checklist items) as its first board act. Then Test Writing: ONE agent-test session for `tests/services/forgejo-lfs.sh` (t1–t11), `tests/services/gpu-forgejo-runner.sh` (g1–g7) and the `dev-forgejo-runner.sh` edits (red-first ACT_LABELS entry + t14 placed before the pinned-red t5). Then wave 1 (C01, C04), wave 2 (C02, C05 — C05 waits on UA5/UA6), wave 3 (C03).",
+    "untracked_record": "The whole ticket folder is UNTRACKED on branch cf-104-feat-forgejo-lfs (plan/explore/research roles cannot commit; the coord's commit right is suspended by the lock loss). Nothing of this run exists outside the worktree `/home/coder/.local/share/opencode/worktree/5e680f/cf-104-feat-forgejo-lfs` — a forced worktree removal destroys the plan, EXPLORE.md and RESEARCH.md. Committing it needs an explicit user instruction (lock loss bans commits by rule)."
+  },
+  "kickoff": {
+    "slug": "cf-104-feat-forgejo-lfs",
+    "card": "uDTEEpnqEahASJjJN",
+    "card_number": 104,
+    "card_title": "Add LFS support to forgejo",
+    "type": "feat",
+    "worktree": "cf-104-feat-forgejo-lfs",
+    "branch": "cf-104-feat-forgejo-lfs",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata",
+      "code": "gpu-ai/qwen3.8-flash-next-strata"
+    },
+    "local": true,
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "run_tag": null,
+    "run_shape": "standard default loop: Exploration (done, EXPLORE.md — ran twice: round 2 covers the runner surface §R0–R7), Agent-Decides-Research (done, RESEARCH.md), Planning (round 2 rework + round 3 approval-delta rework done; plan_status approved), Test Writing (must cover forgejo-lfs.sh, the dev-forgejo-runner.sh t14 + red-first ACT_LABELS edit, and gpu-forgejo-runner.sh), Chunk Development, Chunk Review, Final Review",
+    "stop_points": [
+      "plan-approval pause (after the batched question round)",
+      "PR/Deployment hand-off — commit-only coord: 'ready — commits local' (Human in the Loop: PR)"
+    ],
+    "checklists": {
+      "services": ["dev", "gpu"],
+      "services_note": "Resolved across two rounds: Q1 answer — 'gpu' means the Forgejo runner; Q10 approval answer (2026-11-03) — the user chose a NEW runner INSTANCE on the gpu cluster → chunk C05 (dials out HTTPS to the dev instance per D17/Q13). The dev runner remains (C04 record + node22 swap on the shared runner chart).",
+      "type": "feat",
+      "models": ["Qwen Flash"],
+      "lifecycle": null,
+      "lifecycle_note": "No Lifecycle checklist; the card carries the legacy Research checklist with 'Before Planning' checked — consumed as timing only, stage list is the standard default loop.",
+      "human_in_the_loop": ["PR"],
+      "slug_cf": "was empty; resolved to cf-104-feat-forgejo-lfs (cardNumber 104)"
+    },
+    "board_context": {
+      "server": "dev-boards",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "lists_note": "Executing/swimlane/board verified by EXPLORE 2026-11-02; the remaining list ids are carried from the cf-97 kickoff preload (verified 2026-11-01) — re-read at card pickup before any move.",
+      "labels": ["Provider: Local", "Pipeline: Local"],
+      "labels_note": "CORRECTED by coord 2026-11-03 — the original note was wrong and would send a resuming run to the wrong lock. get_card label_ids PnhFKk + G7mzkC resolve to `Provider: Local` and `Pipeline: Local`, so the derived claim set is [\"Local\"] (the set this run claimed), NOT default; the card carries no `Repo:` label, so SpencersLab is the default picker that owns it; `Provider: Local` is why the scheduled Local walk was allowed to take it.",
+      "labels_note_orig": "No Pipeline:, Repo: or Research: Parallel labels → single default pipeline lock, this repo."
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "owner": "agent",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": ["C02"],
+      "owner": "agent",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "Functional (Q12): node22 -> ghcr.io/catthehacker/ubuntu:act-24.04. agent-test must edit ACT_LABELS (tests/services/dev-forgejo-runner.sh:252-258) red-first — the suite's stop moves t5->t2 until C04 lands, then back to the pinned t5 red (ok-count 27 + t14). Pod restarts at next sync (reloader annotation on config Secret)."
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": [],
+      "note": "Repo-side has no chunk dependency; hard preconditions are User actions UA5 (runner record on the Q13-target instance, best guess dev) + UA6 (Bitwarden pair, report UUID) — C05 stops NEEDS_INFO without a real UUID. Land after C04 so the gpu release registers with the post-swap labels map."
+    }
+  },
+  "claim": {
+    "card": "uDTEEpnqEahASJjJN",
+    "derived_pipeline_set": ["Local"],
+    "set_id": "ffb8569f-ce32-4440-9f02-3c2e6e06c28d",
+    "claimed_at": "2026-11-02T23:20:00+0000",
+    "outcome": "reaped — the plugin's stale-lock reaper took the `Local` set at 2026-11-03T15:33:09Z (workspace down through the approval pause); `pipeline_release` was never callable (no claim to release). Card #104 was moved to Executing (list qZ9CLZqCRbv7NQQ6R) with the claim comment at pickup and is still there with no live holder — Timeout-style triage is human-owned.",
+    "board_writes_after_reap": "none — `dev-boards` is absent from the Code Mode catalog after the restart (search over the namespace returns 0 tools), so no summary comment and no follow-up card could be written; recorded here instead."
+  },
+  "blocked": [],
+  "deferred": [
+    "SeaweedFS chart 4.50.0 -> 4.52.0 bump (carries the #12177 fix; RESEARCH §Q2 — separate dep ticket)",
+    "in-job Actions LFS checkout proof (Q11 approval answer: NO research round this ticket — revisit only if Actions gets used; §R6 lists the unknowns)",
+    "runner job-image bump posture: renovate manager for the `- <label>:docker://` lines (job images are NOT renovate-tracked today; bumps = manual + red-first ACT_LABELS + V6) + a proper Node-22+git-lfs image if the Q14 guarantee is ever needed",
+    "infra runner relocation (forgejo-runner-infra re-wire via the reserved dev-forgejo-prod-runner item) — stays deferred from prior tickets; a Q15 decision to reuse that item for gpu strands it",
+    "Tighten gateway IAM: drop the List grant if proven unnecessary; prove attached-policy role maps cover PutBucket before ever using s3.user.provision",
+    "SERVE_DIRECT=true evaluation (moves gateway reachability to every git client)",
+    "attachments/avatars/packages to S3 via [storage] (explicitly out of scope)",
+    "fix the pre-existing red suites: forgejo-ssh-gateway.sh t1 + forgejo-ssh-audit-trail.sh t1 (tracked storm-runs/ at repo root), dev-forgejo-runner.sh t5 (cf-93 comment-window false positive)",
+    "renovate coverage for the OCI forgejo-helm dependency (carried from 2026-10-feat-forgejo-infra-and-runner)"
+  ],
+  "user_actions_outstanding": [
+    "UA1 inventory the gateway IAM + buckets (weed shell: s3.config.show, s3.user.list, s3.bucket.list, s3.iam.export)",
+    "UA2 s3.user.create -name forgejo-lfs (capture both printed keys; 4.50 has no -access flag)",
+    "UA3 s3.bucket.create -name git-lfs -owner forgejo-lfs + s3.bucket.access -name git-lfs -user forgejo-lfs -access Read,Write,List,Admin + re-read (Q9 owner grant)",
+    "UA4 Bitwarden item forgejo-s3 + report the UUID to the pipeline",
+    "UA5 persistent server-side runner RECORD on the Q13-target instance (best guess dev/git.scifi.farm) — capture uuid + token; one record = one pod",
+    "UA6 Bitwarden Login item for the gpu runner pair (recommended new `gpu-forgejo-runner`; reuse of reserved dev-forgejo-prod-runner = Q15 user call) + report the UUID to the pipeline",
+    "PF0 confirm no existing LFS objects",
+    "PF1 forgejo migrate-storage pre-flight (dev endpoint, no --minio-checksum-algorithm flag) before merge",
+    "PF2 same for infra before the sync that restarts infra (Q8: C03 rides the branch, gated on dev verification)",
+    "V2/V3 push+clone byte verification and object placement (human)",
+    "V6 docker run ghcr.io/catthehacker/ubuntu:act-24.04 git lfs version (settles the §R2b installer-pin caveat; + act-22.04, + node:22-bookworm negative control, + node -v Q14 check)",
+    "V4 ArgoCD sync + ExternalSecret SecretSynced (user-owned); V7 gpu registration oracle (pods_log forgejo-runner-gpu-0 'declared successfully' + runners view online)",
+    "PR creation and merge (user-owned)",
+    "Answer plan Q13-Q15 while waves run (gpu runner target instance dev vs infra? Node-22 guarantee acceptable loss? new vault item vs reuse dev-forgejo-prod-runner?)"
+  ]
+}
