@@ -53,5 +53,16 @@
     }
   },
   "blocked": [],
-  "deferred": []
+  "deferred": [],
+  "landing": {
+    "at": "2026-11-03",
+    "branch": "bug-pipeline-locks-tick-pin",
+    "base": "d500b614c (local main)",
+    "commits": [
+      "7487a1826 fix(pipeline-locks): align loop-model and aislop version pins (replayed c63ca181e via --reapply-cherry-picks; gate.sh t14 UNION resolution)",
+      "68d1e9f60 docs(pipeline-locks): owner ruling — 532170b3c revert was collateral; restore rebased onto main with t14 union"
+    ],
+    "safety_net_ref": "bug-pipeline-locks-tick-pin-recovered @ c63ca181e (delete after the PR merges)",
+    "verified_on_replayed_tree": "node --test 243/243 exit 0 (tick T2 13/13 re-pinned gpu-ai/qwen3.8-flash-next-strata; aislop-pin-parity 5/5); provider-loops surface.sh 7 ok exit 0; agent-perms surface.sh 16 ok exit 0 (A9 vs union); tests/agent-board-coord/gate.sh exit 1 with ONLY the documented pre-existing t17 (main-side, unrelated); pins: 0.18.1 absent, AISLOP_VERSION=0.20.0 + workflow 0.20.0; t6 byte-check is scripts/agent-board-coord-gate.sh (untouched) — NOT the unioned tests/ suite; nothing pushed; PR sequence user-owned: locks PR first (retires the T2/t1 reds sitting on main), then feat/ha-lifecycle-notify @ 22cd9a604 (C05), then OpenChamber restart + live one-push test + pod-stdout 'first lifecycle event keys' id-check (C06 contingency)"
+  }
 }
