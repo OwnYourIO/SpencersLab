@@ -23,8 +23,10 @@
 #
 # Contract source: chunks/C01.md Tests list (t1-t10) + cf-97 C02's wording
 # leg (t11) + C04's mergePolicy leg (t12) + C05's socket-group leg (t13) +
-# C06's identity pin (same leg, extended in place) — ONE script stays the
-# runner contract (predecessor ruling, DECISIONS.md).
+# C06's identity pin (same leg, extended in place) + cf-104 C04's LFS-
+# capability record (t14, written BEFORE the pinned-red t5 because the harness
+# stops at the first failing leg and an appended leg would never run) — ONE
+# script stays the runner contract (predecessor ruling, DECISIONS.md).
 #
 # C01/C03 acceptance is cluster-only — no leg here can assert it (the vault
 # and the live pod are out-of-repo, and list/event MCP shapes come back
@@ -248,13 +250,16 @@ def bad(msg):
     sys.exit(1)
 
 # GitHub-parity act-image label set (conflict ruling 3) — the exact set the
-# single connection must advertise.
+# single connection must advertise. The node22 entry carries the act family
+# deliberately: the node:22-bookworm image ships no git-lfs, and job images
+# are not renovate-tracked, so bumps are manual + red-first here (the t2 stop
+# until charts/forgejo-runner matches).
 ACT_LABELS = {
     'ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
     'ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
     'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
     'docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-    'node22:docker://docker.io/library/node:22-bookworm',
+    'node22:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
 }
 # Chart default runner.url — the standalone-render stand-in; the per-app
 # top-level slices override it at deploy time.
@@ -606,6 +611,133 @@ else
       ok "t4: renovate dry-run (bundled 44.115.13 CLI, minimal repo) extracts both image pins via the built-in helm-values manager"
     fi
   fi
+fi
+# --- t14: cf-104 C04 LFS-capability record beside the labels map (red-first) -
+# Job images are not renovate-tracked and their git-lfs comes from the act
+# images' upstream installer, so nothing in a render proves a job can run
+# `git lfs`: the record next to the labels map is the only repo-visible
+# statement of it (plus t2 for the map itself). This leg asserts the RECORD
+# only — the labels map stays t2's (ACT_LABELS), and the dev trio-exemption
+# comment window stays t5's (widening that window is the false-positive class
+# this suite already carries), so neither is re-checked here.
+if python3 - "$RUNNER/templates/secret-runner.yaml" "$WORK/t14-count" <<'PY'
+import re, sys
+
+tpl, count_file = sys.argv[1:3]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+# The shipped caveat wraps across comment lines, so every pattern runs on the
+# whitespace-collapsed record, never on raw lines (t11's precedent).
+def collapse(parts):
+    return ' '.join(' '.join(parts).split())
+
+def strip_marker(line):
+    return re.sub(r'^\s*#\s?', '', line)
+
+def near(text, a, b, window=200):
+    # True if some match of `a` has a match of `b` within `window` chars.
+    ar, br = re.compile(a, re.I), re.compile(b, re.I)
+    for m in ar.finditer(text):
+        lo = max(0, m.start() - window)
+        if br.search(text[lo:m.end() + window]):
+            return True
+    return False
+
+try:
+    with open(tpl) as f:
+        lines = f.read().splitlines()
+    labels_idx = next((i for i, l in enumerate(lines) if re.match(r'^\s*labels:\s*$', l)), None)
+    if labels_idx is None:
+        bad(f't14: no `labels:` key in {tpl} — the record is pinned beside the labels map; re-derive the leg if the config moved')
+
+    block = []
+    i = labels_idx - 1
+    while i >= 0:
+        s = lines[i].strip()
+        if s.startswith('#'):
+            block.insert(0, strip_marker(lines[i]))
+        elif s:
+            break
+        i -= 1
+    j = labels_idx + 1
+    while j < len(lines):
+        s = lines[j].strip()
+        if s.startswith('#'):
+            block.append(strip_marker(lines[j]))
+        elif s.startswith('-') and 'docker://' in s:
+            pass
+        elif not s:
+            pass
+        else:
+            break
+        j += 1
+    if not block:
+        bad(f't14: {tpl} has no comment beside the labels map — the five labels are only provably LFS-capable if the map documents what its images ship (cf-104 C04)')
+    record = collapse(block)
+
+    if 'sha256:' in record:
+        bad(f't14: the record embeds an image digest ({record[record.index("sha256:"):][:40]}…) — the act tags are rolling, so a digest here goes stale silently; the verified digests live in the ticket EXPLORE note, not in the chart')
+    ok('t14: a comment block sits beside the labels map and carries no pinned digest (rolling tags go stale silently)')
+
+    if not re.search(r'git[\s-]*lfs', record, re.I):
+        bad('t14: the record never names git-lfs — the fact being recorded is that the job images can run `git lfs` (EXPLORE R2b; the node22 swap to act-24.04 is the change)')
+    if not near(record, r'label', r'git[\s-]*lfs'):
+        bad('t14: git-lfs is not tied to the label set — the record has to say that every advertised label maps to an image carrying git-lfs, not just that LFS exists somewhere')
+    ok('t14: the record states that the label set maps to git-lfs-bearing images')
+
+    if not (re.search(r'installer|act\.sh', record, re.I)
+            and re.search(r'\bpin|verif|not (?:the|from) the tag|in-job|image build', record, re.I)):
+        bad('t14: no installer-pin caveat — the act images get git-lfs from the upstream installer (act.sh), NOT from the tagged build, so the tag alone does not prove LFS presence; the plan verifies it in-job (V6)')
+    ok('t14: the git-lfs install is recorded as installer-pinned (act.sh), not implied by the tag')
+
+    # Window-based, not one fixed phrase: the fact ships as "Node 20/24",
+    # "Node 20 and 24", "Node in act-24.04 is 20/24" — all record it.
+    node_versions_ok = False
+    for m in re.finditer(r'\bnode\b', record, re.I):
+        window = record[max(0, m.start() - 60):m.end() + 80]
+        if re.search(r'\b20\b', window) and re.search(r'\b24\b', window):
+            node_versions_ok = True
+            break
+    if not node_versions_ok:
+        bad('t14: the record omits the Node versions act-24.04 actually ships (20/24) — that is the fact that makes the node22 label name misleading')
+    ok('t14: act-24.04 records Node 20/24')
+
+    for m in re.finditer(r'node[\s-]*22', record, re.I):
+        window = record[max(0, m.start() - 160):m.end() + 160]
+        if not re.search(r'slot|label name|name,?\s*(?:not|but)|no longer|guarantee|misnomer|despite', window, re.I):
+            bad(f't14: node22 is mentioned without stating it is a slot name, not a Node-22 guarantee: …{window}… (Q14 answer: the guarantee is dropped, and a reader must not re-add it or file the label as a bug)')
+    ok('t14: node22 is recorded as a label/slot name, not a Node-22 guarantee (Q14)')
+
+    if not near(record, r'daemon', r'\b(?:no|not|never|without)\b[^.;]{0,60}git[\s-]*lfs|git[\s-]*lfs[^.;]{0,60}\b(?:no|not|never|without)\b', 160):
+        bad('t14: the record does not state that the runner DAEMON image needs no git-lfs — otherwise a reader "fixes" the daemon image too, which changes nothing (EXPLORE R2a)')
+    ok('t14: the daemon image is recorded as needing no git-lfs (only job images run git lfs)')
+
+    if not near(record, r'clone|checkout', r'https|url', 160):
+        bad('t14: the record does not say the runner clones over HTTPS from the connection url — that is why job LFS depends on the instance, not on the job image')
+    if not near(record, r'lfs', r'iff|only if|only while|works only|depends|requires|serves|enabled', 200):
+        bad('t14: the record does not record the coupling: LFS inside a job works only while the Forgejo instance serves an [lfs] store (EXPLORE R2) — otherwise a job LFS failure reads as a runner bug')
+    ok('t14: the HTTPS clone + instance-serves-[lfs] coupling is recorded')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't14: the wording checks could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+then
+  checks=$((checks + $(cat "$WORK/t14-count")))
+else
+  exit 1
 fi
 # --- t5: chart sentinel + aliased charts entries + top-level slices --------
 if python3 - "$RUNNER/values.yaml" "$DEV_VALUES" "$WORK/t5-count" <<'PY'

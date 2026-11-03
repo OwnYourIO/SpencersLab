@@ -1047,10 +1047,15 @@ else
   fi
 
   r1="$WORK/fj-render.yaml"
+  # The sweep below scans the whole render, so every bitwardenIds key the CHART
+  # declares has to be supplied here — an unresolved key prints its sentinel
+  # (the s3 pair prints it twice), which makes a --set list that lags the chart's
+  # map fail on the chart's newest key instead of on a defect (cf-104 C01).
   if ! "$helm_bin" template forgejo "$fj_copy" \
       --set domain=test.example.com \
       --set bitwardenIds.forgejo=u --set bitwardenIds.forgejo-admin=u \
       --set bitwardenIds.forgejo-pg=u --set bitwardenIds.forgejo-sso=u \
+      --set bitwardenIds.forgejo-s3=u \
       >"$r1" 2>"$WORK/fj-render.err"; then
     tail -n 30 "$WORK/fj-render.err" >&2
     fail "t6: helm template of $FORGEJO failed (log kept at $WORK/fj-render.err)"
