@@ -163,6 +163,22 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   **1** (measured umbrella render: legacy `OVERRIDE_VIA_CLUSTER_ANNOTATION`
   trio on one values-JSON line) and `tests/multi-repo/dev-wiring.sh` baseline
   pinned at **exit 0 / 9 ok** — both measured, not assumed.
+- 2026-11-03 coord (measured during C01): **the plan's Commands carry three
+  numeric defects**, corrected in STATE.json `measured_baselines` rather than by
+  editing an approved plan: infra's sentinel baseline is **1** not 0 (the plan
+  measured an in-place `services/infra/prod` render where helm aborts on
+  unvendored deps and the grep saw an empty stream), C04's runner-suite target
+  is exit 1 / **34** ok not 28, and C01 AC7's "t7 green" is unreachable in a
+  C01-only run (the suite exits at t5). Rejected: leaving the numbers only in a
+  card comment — every later session reads STATE.json first. Fix the plan file
+  at the next plan pass.
+- 2026-11-03 coord: **chart-sentinel changes must update the suites that
+  enumerate ids** — C01's fifth `bitwardenIds` key silently broke
+  `forgejo-ssh-gateway.sh` t6 (hard-coded four-id `--set` render) and
+  `infra-forgejo.sh:587` (exact four-key set). Both repaired by the test author
+  (mechanical, routed back per the gates, no functionality change). Rejected:
+  letting dev touch test files. Accepted as a follow-up card for a repo-wide
+  guard.
 
 ## Coord decisions (2026-11-03, board run — run ended at the approval pause)
 - 2026-11-03 coord: **model routing for a `Provider: Local` card** — the Model(s)
@@ -211,3 +227,56 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   `run_state` instead. Rejected: re-claiming inside the lock-lost session, and
   committing the untracked plan folder to "save" it — both are exactly what the
   rule forbids; the commit is the human's call.
+
+## Round-3 answer deltas (2026-11-03 coord-relay, user answers — the human chose these, not the planner)
+
+Supersedes the "best guess dev (`https://git.scifi.farm`, D17)" line in the
+Q10 delta entry above; that was the planner's guess and the human overrode it.
+
+- 2026-11-03 coord-relay (user answer): **plan Q13 → the gpu runner serves the
+  INFRA instance**, not dev. `forgejo-runner-gpu.runner.url:
+  https://git.spencerslab.com`; **UA5 registers the runner record on infra**.
+  Rejected: the plan's round-3 best guess (dev / `git.scifi.farm`).
+  Grounding verified in-repo this pass: `services/infra/prod/values.yaml:84-91`
+  routes `git` (canonical — DOMAIN/ROOT_URL) and `forgejo` (alias) both to
+  `infra-forgejo-http:3000`; `custom-values/infra/prod-values.yaml:55-56` sets
+  `DOMAIN: git.spencerslab.com` / `ROOT_URL: https://git.spencerslab.com/`;
+  the proxy-local hub (`services/proxy-local/prod/values.yaml:114-131`) mirrors
+  both hostnames with `target: infra`, crowdsec-only (no hub forward-auth —
+  it breaks git-over-HTTPS); gpu's coderd already authenticates against this
+  exact host in production (`services/gpu/prod/templates/secrets-coder.yaml:
+  31-42`). **No contradiction** with EXPLORE §R3 beyond one nuance worth
+  keeping: the `forgejo.spencerslab.com` ban is about **live behaviour, not
+  route absence** — the alias route exists repo-side and targets infra, but
+  from gpu its name resolves to the public edge (5.78.101.168) where the TLS
+  handshake fails a cert name-mismatch, while split DNS carries
+  `git.spencerslab.com` → 10.0.77.59 (200, `15.0.10`). So the runner URL is
+  the canonical host, never the alias.
+- 2026-11-03 coord-relay (user answer): **the Q13 ordering consequence is a
+  gate, not a caveat.** Serving infra means the gpu runner's LFS clones depend
+  on infra's LFS, which only activates in **C03** (wave 3, gated on the user's
+  dev verification). Chosen posture: **C05's live step (the gpu Application's
+  ArgoCD sync) rides after C03 + V1/V5-on-infra** (plan rollout step 7, C05
+  acceptance 8, C03 acceptance 9). Rejected: "register early and keep
+  LFS-bearing repos away from the gpu runner" — a runner that registers,
+  clones plain repos fine and fails every LFS fetch (batch endpoint 404, §R3
+  before-state) is a half-capable runner nobody can reason about. UA5's record
+  may exist early regardless: a registered runner with no pod takes no jobs.
+- 2026-11-03 coord-relay (user answer): **plan Q15 → a NEW Bitwarden item
+  `gpu-forgejo-runner`** for the gpu runner's uuid/token pair (UA6), per the
+  repo's one-item-per-concern naming. Rejected: reusing the reserved
+  `dev-forgejo-prod-runner` — that item stays free for the pending infra-runner
+  relocation (DECISIONS 2026-10-25). Consequence: `custom-values/gpu/
+  prod-values.yaml` carries the new item's UUID against the chart's
+  `runner-token: OVERRIDE_VIA_CUSTOM_VALUES` sentinel; the reserved UUID is
+  never pasted on gpu.
+- 2026-11-03 coord-relay (user answer): **plan Q14 → the Node-22 guarantee is
+  accepted as dropped** — `node22` keeps its label name while
+  `act-24.04` ships Node 20/24 (zero Actions consumers today). The user's bare
+  follow-up **"26?"** is recorded as **Q14b**, open, blocking nothing: facts
+  verified at the registry this pass are that `act-26.04` is **not published**
+  (manifest 404; the upstream build matrix already lists `26.04`, so the tag
+  may appear later) and that in the act family a "26" tag means **Ubuntu
+  26.04, not Node 26** (`Dockerfile:14` still `ARG NODE_VERSION="20 24"`) —
+  i.e. not available in the incumbent family; a Node-26+git-lfs image needs
+  vetting outside it, in a follow-up. **C04's image is unchanged by this pass.**

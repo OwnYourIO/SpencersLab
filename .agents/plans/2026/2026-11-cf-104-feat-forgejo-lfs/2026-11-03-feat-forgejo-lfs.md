@@ -94,6 +94,8 @@ themselves (all re-verified 2026-11-03 in this worktree):
 | The `act-*` job images' toolchain, at source (supports the Q12 swap): `act.sh` installs git (git-core PPA) + **git-lfs** (packagecloud) and Node **20 and 24** (`Dockerfile` `ARG NODE_VERSION="20 24"`, act tools dir on PATH) — i.e. `act-24.04` is LFS-capable but is **not** a Node-22 image | `catthehacker/docker_images@master`: `linux/ubuntu/scripts/act.sh:72,80-82,123-144`, `linux/ubuntu/Dockerfile:14`, `.github/workflows/build-ubuntu.yml:122-126` (fetched this round) |
 | Replacement-tag existence (Q12): `ghcr.io/catthehacker/ubuntu:act-24.04` and `:act-22.04` exist; act-24.04 index `sha256:62d572b9…` with amd64 manifest `sha256:dff4ec57…` — the same amd64 digest §R2 probed on 2026-11-02 (tag unmoved). GHCR manifest GET returns **404 without an `Accept` header** for multi-arch tags — a false-negative probe trap | registry probe this round (R7 probe shape, corrected with `Accept: …image.index.v1+json…`) |
 | gpu cluster repo/cluster ground for C05: `charts:` block at `services/gpu/prod/values.yaml:52`; top-level app slices live beside it; gpu StorageClasses are `local-path` (default) + `seaweedfs-storage`, so the chart's `local-path` VCTs need no override; gpu umbrella sentinel baseline measured at **1** (three legacy `OVERRIDE_VIA_CLUSTER_ANNOTATION` entries on one ApplicationSet values-JSON line) | files read this round + `helm template gpu services/gpu/prod -f custom-values/gpu/prod-values.yaml --set domain=spencerslab.com --set clusterName=gpu \| grep -c OVERRIDE_` → 1 |
+| Infra host grounding for the Q13 answer: `services/infra/prod/values.yaml:84-91` routes `git` (**canonical** — DOMAIN/ROOT_URL) and `forgejo` (alias) both to `infra-forgejo-http:3000`; the proxy-local hub (`services/proxy-local/prod/values.yaml:114-131`) mirrors both, crowdsec-only (git clients auth at Forgejo; hub forward-auth would break git-over-HTTPS). The §R3 ban of `forgejo.spencerslab.com` is therefore about **live behaviour, not route absence**: the alias route exists repo-side, but from gpu its name resolves to the public edge (5.78.101.168) where the TLS handshake fails a cert name-mismatch — and LAN split DNS only carries `git.spencerslab.com` → 10.0.77.59 (200, 15.0.10). No contradiction between §R3 and the repo beyond that nuance | files read this pass + §R3 probes |
+| Q14b registry facts ("26?" — verified before writing them down): act-family tag `act-26.04` does **not** exist in `ghcr.io/catthehacker/ubuntu` (manifest 404 with the corrected Accept-header probe) although the current build workflow matrix lists `26.04` + `LATEST_TAG: 26.04`; upstream `Dockerfile:14` still has `ARG NODE_VERSION="20 24"` (no Node 26 in any act image); family tag names encode **Ubuntu** releases, not Node versions. Note: the GHCR `tags/list` endpoint is **paginated** (`Link: rel="next"`; the first `n=200` page is all-2021 tags — existence must be proven per-tag via the manifests endpoint) | registry + `catthehacker/docker_images@master` probes this pass |
 | Live infra shapes for the user commands | LIVE infra 2026-11-03: `statefulset/seaweedfs-master`, `statefulset/seaweedfs-filer`, `deployment/seaweedfs-s3`, `deployment/infra-forgejo`; services `seaweedfs-master:9333`, `seaweedfs-filer(-client):8888` |
 | The forgejo pod's main container is named `forgejo` (exec target for the pre-flight) | render `Deployment/dev-forgejo` containers: `init-app-ini`, `configure-gitea`, `forgejo` |
 | The LFS batch route is live-off on both instances today (the before-state oracle) | EXPLORE §R3: `POST /<owner>/<repo>.git/info/lfs` (`Accept: application/vnd.git-lfs+json`) → 404 `Not found.` on dev and infra hosts; an *enabled* endpoint answering 401 for an unauthenticated batch is an upstream **hypothesis**, not yet observed — V5 tests it |
@@ -143,7 +145,7 @@ marked *(r2)*.
 | D14 *(r2, amended r3)* | Runner job images: **Q12 answer — swap the `node22` image now** (the only label whose image lacks git-lfs, §R2b); the swap is a functional C04 change with the `ACT_LABELS` coupling edited **red-first by agent-test**; the daemon image still needs no git-lfs (§R2a) | Rejected at the pause: round-2's leave-documented recommendation. Rejected: renaming the label (same test cost, breaks label compatibility for future workflows) |
 | D15 *(r2)* | Runner-side verification is live probes (V5 batch route, V6 in-job `git lfs version`), not suite legs | the runner suite's own header (`tests/services/dev-forgejo-runner.sh:29-36`) rules that cluster acceptance is proven by exact-name readonly reads, not legs; the batch-route probe is a plain `curl` any session can run from this worktree |
 | D16 *(r2)* | Pre-flight flags omit `--minio-checksum-algorithm` entirely (flag default == `default`) | keeps PF1/PF2 aligned with D5 without naming a value the code treats as its own special case |
-| D17 *(r3)* | The gpu runner serves the **dev** instance: top-level `forgejo-runner-gpu.runner.url: https://git.scifi.farm` | best guess for Q13 — dev activates LFS first (Q8), already hosts a registered runner, and gpu pods reach `git.scifi.farm` → 10.0.77.12, 200 on `/api/v1/version` (§R3). HTTPS is mandatory (gpu has no in-cluster Forgejo, §R5); **never** `forgejo.spencerslab.com` (TLS name mismatch, §R3). Flip to infra is a one-line slice change if Q13 says otherwise |
+| D17 *(r3, superseded by user Q13 answer)* | The gpu runner serves the **infra** instance: top-level `forgejo-runner-gpu.runner.url: https://git.spencerslab.com` | **Q13 coord-relay user answer — the planner's round-3 best guess (dev / `git.scifi.farm`) is superseded.** Grounding: `git.spencerslab.com` is the infra instance's canonical host (`services/infra/prod/values.yaml:84-91`: `git` = canonical DOMAIN/ROOT_URL, `forgejo` = alias, both → `infra-forgejo-http:3000`), §R3 probed it from a gpu pod at 10.0.77.59 answering 200 `15.0.10`, and gpu's coderd already authenticates against this exact host in production (`services/gpu/prod/templates/secrets-coder.yaml:31-42`). **Never** `forgejo.spencerslab.com`: the alias ingress exists repo-side, but §R3's live probe shows its public-edge path (5.78.101.168) failing TLS with a cert name-mismatch, and LAN split DNS resolves it there — banned on live behaviour, not on route absence. Ordering consequence: infra LFS activates only in C03 → rollout step 7 gates the gpu runner's sync (its first job) behind C03's sync |
 | D18 *(r3)* | `node22` replacement image: `ghcr.io/catthehacker/ubuntu:act-24.04` — incumbent LFS-capable family, tag + digests re-verified this round (Authority); the label name stays `node22` | §R2 + source-verified toolchain (Node 20/24, **not** 22 → Q14 caveat recorded, not hidden). Update posture: the tag is **rolling** and **not renovate-tracked** (the repo's template-file custom manager yields 0 hits on `- <label>:docker://…` lines, §R5) → manual bump + red-first `ACT_LABELS` edit + V6 probe; a renovate manager for the label lines is a follow-up chore |
 
 ## Questions
@@ -170,13 +172,19 @@ marked *(r2)*.
 | Q11 | Prove in-job Actions LFS checkout this ticket (needs a research round)? | **No research round** — C04/C05 stay record/labels/instance-level; V5/V6 stand as the only probes |
 | Q12 | `node22` image (no git-lfs): leave documented or swap now? | **Swap now** — C04 becomes a functional change (red-first `ACT_LABELS` edit), replacement pinned per D18 |
 
-### Round-3 open questions (answer while waves run; none blocks wave 1)
+### Round-3 batched round — answers received (binding; do not re-ask)
+
+| # | Question | Answer (verbatim intent) |
+|---|---|---|
+| Q13 | gpu runner target: dev or infra? | **INFRA** — `runner.url: https://git.spencerslab.com`, UA5 registers the record on the infra instance; **supersedes the plan's round-3 dev best guess** (recorded as a coord-relay user answer in DECISIONS.md). Ordering consequence (infra LFS only activates in C03) taken into rollout step 7 + C05 acceptance |
+| Q14 | Accept that `node22` no longer guarantees Node 22? | **Accepted** for the current version (act-24.04 = Node 20/24); the user added a fresh **"26?"** → Q14b below |
+| Q15 | New vault item vs reusing `dev-forgejo-prod-runner`? | **NEW item `gpu-forgejo-runner`** (one-item-per-concern naming); the reserved `dev-forgejo-prod-runner` stays free for the infra-runner relocation |
+
+### Round-4 open question (answer anytime; blocks nothing)
 
 | # | Question | Best guess taken in this plan | Impact if the answer differs | Who |
 |---|---|---|---|---|
-| Q13 | **Which Forgejo does the gpu runner serve — dev (`https://git.scifi.farm`) or infra (`https://git.spencerslab.com`)?** No gpu-side Forgejo exists, so this is a genuine gap; both hosts answered 200 from a gpu pod (§R3) | **dev** (D17): dev activates LFS first (Q8), already hosts a registered runner, and the `runner.url` slice is a one-liner | Flip = change the one slice value in `services/gpu/prod/values.yaml` (and the suite's URL pin); the UA5 runner **record must then be created on the other instance** — pick before UA5 to avoid a dead registration | user |
-| Q14 | The `node22` label no longer guarantees a **Node 22** toolchain: `act-24.04` ships Node **20 and 24** (source-verified, Authority). Accept, or do you need a real Node-22-with-LFS image? | **Accept** — zero Actions consumers today (§R5); future Node-22 workflows pin their own version (`actions/setup-node` / `.node-version` — upstream behaviour, unproven here per Q11) | A Node-22 guarantee = swap to a proper node+git-lfs image (needs registry vetting — e.g. CI-flavoured node images, unprobed) + red-first `ACT_LABELS` edit; follow-up ticket either way | user |
-| Q15 | Bitwarden item for the gpu runner's uuid/token pair: **new item** (recommended name `gpu-forgejo-runner`) or **reuse the reserved `dev-forgejo-prod-runner`**? | **New item** — the reserved one is held for the *infra* relocation (custom-values/dev comment: "the item stays in the vault for the pending relocation", DECISIONS 2026-10-25); reusing it for gpu strands that purpose and misnames the secret | UA6 records the choice; only the UUID pasted into `custom-values/gpu/prod-values.yaml` differs — no chunk-shape change | user |
+| Q14b | The user's **"26?"** — is there an LFS-capable job image on a newer Node? Facts verified at the registry this pass (write down only these): act-family **`act-26.04` does not exist yet** (manifest 404; the upstream build matrix *lists* `26.04`, so the tag may appear later); in that family a "26" tag means **Ubuntu 26.04, not Node 26**; the current `Dockerfile` still builds every act image with `ARG NODE_VERSION="20 24"` — **no act image ships Node 26 today**. Any Node-26-with-git-lfs image would come from elsewhere (`cimg/node` and friends — unvetted) | **No change**: C04 stays on `act-24.04` (the swap was about git-lfs, which it has); Q14b is a registry-vetting follow-up, not a chunk | A vetted newer image = a future labels bump (manual + red-first `ACT_LABELS` edit — job images remain renovate-untracked) | user + follow-up |
 
 Questions the plan **resolves** without asking: RESEARCH OQ4 (bare host → 443,
 verified in minio-go), OQ5 (4.50 shell verbs — grammar now verified verb-by-verb
@@ -329,7 +337,7 @@ HTTPS (ROOT_URL-derived), so LFS works in jobs iff the instance serves
 (`:52`):
 
 ```yaml
-  # Client-only service: the gpu runner dials out over the dev instance's
+  # Client-only service: the gpu runner dials out over the infra instance's
   # public route (gpu has no in-cluster Forgejo), so it deliberately gets NO
   # ingress.subdomains entry — the service trio's proxy leg is N/A by
   # design, not an oversight (same documented posture as forgejo-runner-dev).
@@ -345,7 +353,7 @@ contents of the top-level `<appName>:`, `appset-charts.yaml:32-36`):
 ```yaml
 forgejo-runner-gpu:
   runner:
-    url: https://git.scifi.farm   # dev instance over HTTPS — gpu has no in-cluster Forgejo (D17/Q13); never the forgejo. alias (TLS name mismatch, §R3)
+    url: https://git.spencerslab.com   # infra instance over HTTPS (Q13 answer) — canonical DOMAIN/ROOT_URL host; never the forgejo. alias (live TLS fails on its public path, §R3), never an in-cluster URL (dead on gpu)
 ```
 
 `custom-values/gpu/prod-values.yaml` (C05):
@@ -353,15 +361,20 @@ forgejo-runner-gpu:
 ```yaml
 forgejo-runner-gpu:
   bitwardenIds:
-    # Item <UA6 name> (username = runner uuid, password = runner token) from
-    # the dev-instance runner record created in UA5. Real UUID — an
-    # unresolved/placeholder id crashloops the daemon (`'uuid' is empty`).
+    # Item gpu-forgejo-runner (UA6 — Q15 answer: a NEW item, one item per
+    # concern; the reserved dev-forgejo-prod-runner stays free for the infra
+    # runner relocation). username = runner uuid, password = runner token,
+    # from the INFRA-instance runner record created in UA5
+    # (git.spencerslab.com — Q13 answer). Real UUID — an unresolved/placeholder
+    # id crashloops the daemon (`'uuid' is empty`).
     runner-token: <UUID from UA6>
 ```
 
 (`charts/forgejo-runner/values.yaml` already carries the
-`runner-token: OVERRIDE_VIA_CUSTOM_VALUES` chart sentinel — C05 supplies the
-real UUID, the standard sentinel→UUID recipe. No proxy values entry: the
+`runner-token: OVERRIDE_VIA_CUSTOM_VALUES` chart sentinel — C05 replaces it
+with the real UUID of the **new `gpu-forgejo-runner` item** (Q15), the standard
+sentinel→UUID recipe; reusing the reserved `dev-forgejo-prod-runner` UUID is
+forbidden — it is held for the infra relocation. No proxy values entry: the
 trio's third leg is N/A for a dial-out-only runner — no ingress, no service
 any client contacts; the exemption comment above is what the repo's trio-grep
 readers expect, mirroring `services/dev/prod/values.yaml:96-101`.)
@@ -373,7 +386,7 @@ readers expect, mirroring `services/dev/prod/values.yaml:96-101`.)
 | C01 | Chart plumbing: `forgejo-s3` secret path + inert `[lfs]` shape | M | 1 | [] | Owns `charts/forgejo/**`; nothing else can be validated before the chart interface (secret name, env names, `[lfs]` keys) exists |
 | C04 | Runner LFS-readiness: `node22`→`act-24.04` swap + record + runner-suite t14 (red-first `ACT_LABELS` edit) | S | 1 | [] | Independent of C01–C03: owns `charts/forgejo-runner/templates/secret-runner.yaml` and the runner suite; its red-first precondition (agent-test editing `ACT_LABELS` at `:252-258`) belongs to the test-writing session, not to a chunk |
 | C02 | dev activation (public HTTPS endpoint) | S | 2 | [C01] | Writes the values that merge with C01's chart keys; a dev render is meaningless without C01 |
-| C05 | gpu runner instance (trio + own suite) | M | 2 | [] | Repo-side depends on no other chunk; its **hard precondition is User actions UA5/UA6** (server-side runner record + Bitwarden item + reported UUID) — enforced in C05's acceptance criteria (NEEDS_INFO without a real UUID), deliberately not a fake chunk dependency |
+| C05 | gpu runner instance (trio + own suite), serving **infra** (Q13) | M | 2 | [] | Repo-side depends on no other chunk; its **hard preconditions** are User actions UA5 (runner record on the **infra** instance) + UA6 (new `gpu-forgejo-runner` item, UUID reported) — enforced in C05's acceptance criteria (NEEDS_INFO without a real UUID), deliberately not a fake chunk dependency. Its **sync** additionally rides after C03 in rollout step 7 (infra LFS must be live before the runner takes LFS-bearing jobs) |
 | C03 | infra activation (in-cluster endpoint) | S | 3 | [C02] | Deliberate rollout order (RESEARCH §6: dev first); Q8 answer keeps it on the branch, gated on dev verification, independently revertable |
 
 Mergeable grouping: **C01 + C02** is a complete, dev-only change; **C03** is a
@@ -391,9 +404,12 @@ separate revertable commit pair (values + suite) with zero effect on dev.
 2. **C02** — dev. Its *activation* is gated behind UA1–UA4 + PF1 (the
    pre-flight), which must be done before the merge, not before the chunk.
    **C05** — gpu runner instance, in parallel; gated for *completion* on
-   UA5/UA6 (record + item + UUID), and its live registration is gated on C04
+   UA5/UA6 (runner record on **infra** + the new `gpu-forgejo-runner` item +
+   reported UUID), and its live registration is gated on C04
    having landed (the gpu release renders the same labels map — swapping
-   first avoids registering a Node-less-LFS runner).
+   first avoids registering a Node-less-LFS runner). Its **sync** rides after
+   **C03** (rollout step 7): infra's LFS must be live before this runner can
+   take LFS-bearing jobs.
 3. **C03** — infra. On the same branch (Q8); its live effect additionally
    gated on V1–V3 + V5 having passed on dev, and PF2 before the sync that
    restarts infra.
@@ -417,15 +433,22 @@ separate revertable commit pair (values + suite) with zero effect on dev.
    → ArgoCD sync → the config lands → the pods restart.
 6. dev verified (V1–V3 + V5) before infra's sync is trusted (Q8); PF2 runs
    against infra before its restart.
-7. **gpu runner (C05), own sequence, parallel to 1–6:** UA5 create the
-   server-side runner record on the **target instance** (Q13 — best guess dev;
-   decide before creating so no dead registration) → UA6 Bitwarden pair item +
-   report the UUID → C05 commits the trio with the real UUID → merge/sync →
-   V7: pod `forgejo-runner-gpu-0` log shows the
-   `runner: … declared successfully` line with the labels list, and the
-   registration shows online on the instance. C05 must land **after** C04 so
-   the gpu release registers with the LFS-capable labels map (single replica
-   only — one record == one pod, chart decision B1).
+7. **gpu runner (C05) — commit early, sync last (Q13 answer's ordering
+   consequence, made concrete).** UA5 creates the persistent runner record on
+   the **infra** instance (`git.spencerslab.com`) → UA6 creates the **new**
+   Bitwarden item `gpu-forgejo-runner` + reports the UUID → C05 commits the
+   trio on the branch (its wave-2 repo work may land any time after C04).
+   **But the gpu Application must not sync before C03 has synced and infra's
+   LFS is verified (V1 + V5 on the infra host):** the runner would otherwise
+   register and take jobs against an instance whose LFS batch endpoint still
+   404s (§R3 before-state), so cloning any LFS-bearing repo fails at the LFS
+   fetch while plain repos work — a confusing half-capable runner. The chosen
+   ordering is therefore: **C05 live step rides after C03** in this rollout;
+   no "register early and keep LFS repos away from the gpu runner" posture.
+   V7 after that sync: pod `forgejo-runner-gpu-0` log shows the
+   `runner: … declared successfully` line with the labels list (agent-
+   readable), and the registration shows online on **infra** (human). Single
+   replica only — one record == one pod, chart decision B1.
 
 ## Commands
 
@@ -491,19 +514,23 @@ python3 -c 'import yaml,sys; d=yaml.safe_load(open(sys.argv[1])); \
   custom-values/gpu/prod-values.yaml /tmp/opencode/runner-gpu-slice.yaml
 # The URL lives in the SERVICES file's top-level slice (dev pattern), assert separately:
 python3 -c 'import yaml; print(yaml.safe_load(open("services/gpu/prod/values.yaml"))["forgejo-runner-gpu"]["runner"]["url"])'
-#   want https://git.scifi.farm  (no trailing slash, dev-slice shape; never the forgejo. alias, §R3)
+#   want https://git.spencerslab.com  (Q13 answer: infra instance, canonical DOMAIN/ROOT_URL host;
+#   no trailing slash, dev-slice shape; NEVER forgejo.spencerslab.com — §R3 live TLS failure)
 helm dependency update charts/forgejo-runner          # app-template dep is an https repo (not OCI)
 helm template forgejo-runner-gpu charts/forgejo-runner -f /tmp/opencode/runner-gpu-slice.yaml \
-  --set runner.url=https://git.scifi.farm
+  --set runner.url=https://git.spencerslab.com
 # assert: exactly one SA/STS/Service/ExternalSecret named forgejo-runner-gpu,
 #         no Deployment; replicas 1; VCTs data 2Gi + docker-data 10Gi RWO
 #         local-path (gpu default SC — no override needed, Authority);
 #         config.yaml labels map == ACT_LABELS (post-C04 set);
 #         ExternalSecret remoteRef key == the UUID from the slice (no OVERRIDE_*);
-#         NO `http://dev-forgejo-http` anywhere in the gpu render (dead on gpu).
+#         NO `http://dev-forgejo-http` or `http://infra-forgejo-http` anywhere
+#         (in-cluster URLs dead on gpu) and NO `forgejo.spencerslab.com` (banned alias).
 helm template gpu services/gpu/prod -f custom-values/gpu/prod-values.yaml \
   --set domain=spencerslab.com --set clusterName=gpu | grep -c OVERRIDE_   # BASELINE 1 (measured this round: legacy OVERRIDE_VIA_CLUSTER_ANNOTATION trio on one values-JSON line) — must stay 1
 bash tests/services/gpu-forgejo-runner.sh             # NEW suite (agent-test), red until C05
+grep -c 'gpu-forgejo-runner' custom-values/gpu/prod-values.yaml        # want >=1 (Q15 answer: the new item is named in the comment)
+grep -c 'dev-forgejo-prod-runner' custom-values/gpu/prod-values.yaml   # want 0 (that item stays reserved for the infra relocation)
 git diff main -- services/dev custom-values/dev | grep -cE '^[+-].*forgejo-runner'   # want 0 — dev runner trio/comments byte-untouched
 
 # ---- sentinel sweep (baselines are pinned, not 0) ----
@@ -602,10 +629,10 @@ edits, both by agent-test, both before any dev:
 | leg | Asserts | Red until |
 |---|---|---|
 | g1 | harness: `helm dependency update` of a copy of `charts/forgejo-runner` (app-template 5.0.1 from the https repo) — skip-not-fail when the repo is unreachable | — |
-| g2 | standalone render (extracted `forgejo-runner-gpu` slice + `--set runner.url=https://git.scifi.farm`): exactly one SA/STS/Service/ExternalSecret named `forgejo-runner-gpu`, no Deployment; replicas 1; VCTs data 2Gi + docker-data 10Gi RWO `local-path`; config.yaml labels map == the (post-swap) `ACT_LABELS` set | C05 |
-| g3 | the SERVICES file carries the **top-level** `forgejo-runner-gpu:` slice with `runner.url` exactly `https://git.scifi.farm`, and no `http://dev-forgejo-http` string anywhere in the gpu slice or render (an in-cluster URL is dead on gpu — §R5) | C05 |
+| g2 | standalone render (extracted `forgejo-runner-gpu` slice + `--set runner.url=https://git.spencerslab.com`): exactly one SA/STS/Service/ExternalSecret named `forgejo-runner-gpu`, no Deployment; replicas 1; VCTs data 2Gi + docker-data 10Gi RWO `local-path`; config.yaml labels map == the (post-swap) `ACT_LABELS` set | C05 |
+| g3 | the SERVICES file carries the **top-level** `forgejo-runner-gpu:` slice with `runner.url` exactly `https://git.spencerslab.com` (infra instance — Q13 answer), and neither `http://dev-forgejo-http`/`http://infra-forgejo-http` (in-cluster URLs are dead on gpu, §R5) nor `forgejo.spencerslab.com` (banned alias, §R3 live-TLS failure) appears anywhere in the gpu slice or render | C05 |
 | g4 | `charts:` entry `forgejo-runner-gpu` with `chart: forgejo-runner`, `namespace: default`, `ServerSideApply: "false"`, **plus a trio-exemption comment** naming the N/A proxy leg "by design, not an oversight" (client-only/dial-out), and gpu `ingress.subdomains` gains NO runner entry | C05 |
-| g5 | `custom-values/gpu/prod-values.yaml` `forgejo-runner-gpu.bitwardenIds.runner-token` is UUID-shaped — no `OVERRIDE_NEEDED`/placeholder (an empty or non-UUID id crashloops the daemon: `'uuid' is empty`) | C05 |
+| g5 | `custom-values/gpu/prod-values.yaml` `forgejo-runner-gpu.bitwardenIds.runner-token` is UUID-shaped — no `OVERRIDE_NEEDED`/placeholder (an empty or non-UUID id crashloops the daemon: `'uuid' is empty`); its comment names the **`gpu-forgejo-runner`** item (Q15 answer) and the reserved `dev-forgejo-prod-runner` UUID appears nowhere under `custom-values/gpu` | C05 |
 | g6 | gpu umbrella sentinel sweep at the **pinned baseline 1** (measured: legacy `OVERRIDE_VIA_CLUSTER_ANNOTATION` trio on one values-JSON line) and zero `OVERRIDE_*` inside the `forgejo-runner-gpu` Application's values JSON | C05 |
 | g7 | blast radius: dev runner trio and comments byte-untouched (`git diff` shows no `±.*forgejo-runner` line under `services/dev`/`custom-values/dev`), `services/gpu/prod/values.yaml` `charts.forgejo` still absent (no gpu Forgejo), `charts/forgejo-runner/**` untouched by C05 (C04 owns it) | — (regression) |
 
@@ -662,20 +689,21 @@ it): item `forgejo-s3` (Login: username = access key id, password = secret
 access key), one item for both instances (Q3). Real UUID only —
 `OVERRIDE_NEEDED` is forbidden for this key (D11).
 
-**UA5 — Create the gpu runner's server-side record** (Q10 answer; on the
-**target instance** — Q13 says dev = `git.scifi.farm` unless the user flips
-it; decide before creating so no dead registration exists). Instance-level
-Actions runner record (same shape as `dev-forgejo-dev-runner`, per
+**UA5 — Create the gpu runner's server-side record on the INFRA instance**
+(`git.spencerslab.com` — Q13 answer). Instance-level Actions runner record
+(same shape as `dev-forgejo-dev-runner`, per
 `charts/forgejo-runner/templates/NOTES.txt`): create it **persistent**, capture
 the uuid + registration token. The single registration maps to exactly one
-pod — never scale the gpu STS past 1.
+pod — never scale the gpu STS past 1. Timing: the record may exist early
+(harmless — a registered runner takes no jobs until its pod runs), but per
+rollout step 7 the **pod sync waits for C03**.
 
 **UA6 — Bitwarden item for the pair**, then report the UUID to the pipeline
-(C05 pastes it): Login item, username = runner uuid, password = runner token.
-Recommended **new** item (`gpu-forgejo-runner`); reusing the reserved
-`dev-forgejo-prod-runner` is the user's call only (Q15 — that item is held for
-the infra relocation, DECISIONS 2026-10-25). Real UUID before any C05 commit —
-the daemon fail-fasts (`'uuid' is empty`) and crash-loops without it.
+(C05 pastes it): **new** Login item `gpu-forgejo-runner` (Q15 answer —
+one-item-per-concern naming), username = runner uuid, password = runner token.
+The reserved `dev-forgejo-prod-runner` item stays untouched for the infra
+runner relocation. Real UUID before any C05 commit — the daemon fail-fasts
+(`'uuid' is empty`) and crash-loops without it.
 
 **PF0 — Confirm there is nothing to migrate** (sanity check on the D9
 assumption):
@@ -762,12 +790,13 @@ docker run --rm ghcr.io/catthehacker/ubuntu:act-24.04 node -v           # Q14 ca
 ```
 
 **V7 — gpu runner registration (agent-readable + human)** — after the C05
-sync: `pods_log({name:"forgejo-runner-gpu-0", namespace:"default"})` on
+sync (which rollout step 7 gates behind C03): `pods_log({name:"forgejo-runner-gpu-0", namespace:"default"})` on
 **gpu** shows the `runner: … declared successfully` line with the labels list
-(§R7 oracle); the UA5 registration shows **online** on the target instance's
-Actions runners view (human — the API needs a token). A `connection
+(§R7 oracle); the UA5 registration shows **online** on the **infra**
+instance's Actions runners view (human — the API needs a token). A `connection
 "default" is invalid` or repeated re-register loop = uuid/token mismatch
-(UA5↔UA6 pairing or the Q13 target instance wrong).
+(UA5↔UA6 pairing) or the slice URL pointing at the wrong instance — the
+record lives on infra (`git.spencerslab.com`), so the slice must too.
 
 ## Risks / assumptions
 
@@ -833,14 +862,22 @@ Actions runners view (human — the API needs a token). A `connection
   In-job dependencies beyond the image (job networking/DNS, checkout-token
   LFS scope, checkout action `lfs:` default, §R6) stay unproven by the Q11
   answer; V5/V6 settle the settleable parts.
-- **gpu runner dials out (C05).** Registration and job clones ride the target
-  instance's **public** route (`git.scifi.farm` → dev Traefik LB 10.0.77.12,
-  §R3), not an in-cluster service: availability inherits dev's ingress and
-  middleware posture; precedent that gpu pods do this in production is coderd
-  SSO against `git.spencerslab.com` (§R3). A cold `act-24.04` pull on gpu's
-  nodes also re-exposes the k3s-MTU / forgejo-runner#1779 clone-failure risk
-  the chart itself flags (`charts/forgejo-runner/values.yaml:27-31`) — watch
-  the first job; no config re-plan up front.
+- **gpu runner dials out (C05).** Registration and job clones ride the infra
+  instance's **public** route (`git.spencerslab.com` → infra Traefik LB
+  10.0.77.59, §R3), not an in-cluster service: availability inherits infra's
+  ingress and crowdsec posture — and gpu's coderd already authenticates
+  against this **exact host** in production (`services/gpu/prod/templates/
+  secrets-coder.yaml:31-42`), so the reachability pattern is same-host
+  precedent, not hope. A cold `act-24.04` pull on gpu's nodes also re-exposes
+  the k3s-MTU / forgejo-runner#1779 clone-failure risk the chart itself flags
+  (`charts/forgejo-runner/values.yaml:27-31`) — watch the first job; no config
+  re-plan up front.
+- **Half-capable gpu runner if sync order slips (C05×C03).** Serving infra
+  (Q13) means the runner's LFS clones depend on infra's LFS, which activates
+  only in C03; rollout step 7 gates the gpu sync behind C03. A sync that
+  jumps the gate yields a runner that registers and clones plain repos fine
+  but fails LFS fetches (batch endpoint 404, §R3 before-state) — pin V5-on-
+  infra as the precondition, and g-suite/RESULT must say so.
 - **One record == one pod.** The gpu STS stays at 1 replica (chart decision
   B1); scaling the gpu runner means a new UA5 record + UA6 item, not replicas.
 - **`node22` label semantics shifted (Q14).** The label name promises Node 22;
@@ -858,15 +895,20 @@ Actions runners view (human — the API needs a token). A `connection
 
 - Renovate coverage for the runner **job-image** label lines (a custom-manager
   regex for `- <label>:docker://…` in `charts/*/templates/` — today's manager
-  yields 0 hits, §R5) so act-image bumps stop being manual; plus a proper
-  Node-22+git-lfs image if the Q14 guarantee is ever needed.
+  yields 0 hits, §R5) so act-image bumps stop being manual.
+- **Q14b follow-up (user's "26?")**: registry-vet a newer/Node-26-capable
+  LFS-bearing job image. Facts pinned this pass: `act-26.04` is not published
+  yet (upstream matrix already lists `26.04` — worth re-checking when it
+  lands, but it would still ship Node 20/24 until upstream changes the ARG);
+  a true Node-26+git-lfs image needs vetting outside the act family. C04's
+  `act-24.04` stands this ticket.
 - If Actions gets used for real: an `agent-research` round (checkout token
   scope, `lfs:` input default, §R6) before any behavioural runner work (Q11
   answer deferred this, deliberately).
 - Infra runner relocation (`forgejo-runner-infra` re-wire via the reserved
   `dev-forgejo-prod-runner` item) stays deferred from the previous tickets —
-  this ticket does not revive it; note that a Q15 decision to **reuse** that
-  item for gpu strands the relocation plan.
+  untouched by this ticket: Q15's new-item answer (`gpu-forgejo-runner`)
+  keeps that vault item free for the relocation.
 - SeaweedFS chart `4.50.0` → `4.52.0` (`dep` ticket; carries the #12177 fix plus
   ~217 other PRs — its own validation).
 - Tighten gateway IAM if the `List` grant turns out unnecessary for Forgejo (it
