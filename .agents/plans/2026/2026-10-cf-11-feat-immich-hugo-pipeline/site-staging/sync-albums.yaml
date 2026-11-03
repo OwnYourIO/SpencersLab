@@ -1,0 +1,15 @@
+# Immich albums → EXISTING site pages. `page:` (bundle dir relative to
+# content/) is REQUIRED on every entry — there is no fallback section; an
+# entry without it fails the sync loudly. Sync is additive-only: derivative
+# files + append-only front-matter markers, and — only when the page's
+# gallery call(s) would not include them — ONE machine-marked gallery call
+# per album (idempotent; sync manages its own marked blocks). `prefix:`
+# optional: fit an authored gallery glob to avoid a machine block. Order is
+# cosmetic (sidebar weights are page-owned). Ships EMPTY — nothing syncs
+# until the owner curates.
+albums: []
+#  - name: "Aeroponics Current"
+#    page: plants/aeroponics/current-grows      # no-glob gallery: files join as-is
+#  - name: "Past Designs Archive"
+#    page: plants/aeroponics/past-designs/grow-environments
+#    prefix: v7-web                             # fits an authored glob → zero page edits

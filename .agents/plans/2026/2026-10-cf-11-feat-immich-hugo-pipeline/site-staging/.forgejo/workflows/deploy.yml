@@ -1,0 +1,58 @@
+# deploy.yml — CuratedForest.com delivery (ticket cf-11, chunk C06 §1).
+#
+# merge -> main = prod curatedforest.com (plain build); PR -> main = farm
+# curatedforest.farm (drafts, -D). The farm is ONE review slot: concurrency
+# queues runs per event class and cancels none, so the LAST queued PR is the
+# one that deploys last — last PR wins by construction.
+# Explicit hugo build + netlify digest deploy (--no-build): the runner is the
+# only build path, netlify.toml stays in the repo vestigially, and no PR run
+# ever writes main. Secrets are referenced by name only; values are seeded
+# from Bitwarden by the forgejo-secret-seed CronJob (chunk C04).
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.event_name }}-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: cf-host
+    timeout-minutes: 30
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      NETLIFY_SITE_ID_FARM: ${{ secrets.NETLIFY_SITE_ID_FARM }}
+      # /data is the runner PVC: processed images survive between deploys
+      # instead of every build re-decoding every original twice (320+1600).
+      HUGO_CACHEDIR: /data/hugo-cache
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # enableGitInfo in hugo.yaml feeds .Lastmod/.GitInfo from real
+          # history — a shallow clone would move the drafts/recent rollups.
+          fetch-depth: 0
+          # Real bytes: the gallery shortcode's .Resize fails on the
+          # 130-byte LFS pointer files a non-lfs checkout leaves behind.
+          lfs: true
+
+      - name: Prod — build and deploy curatedforest.com (merge -> main)
+        if: github.event_name == 'push'
+        run: |
+          hugo --gc --minify -b https://curatedforest.com
+          netlify deploy --prod --no-build --dir public --site $NETLIFY_SITE_ID --message "deploy $(git rev-parse --short HEAD)"
+
+      - name: Farm — build and deploy curatedforest.farm (PR -> main)
+        if: github.event_name == 'pull_request'
+        run: |
+          hugo -D --gc --minify -b https://curatedforest.farm
+          # --prod on both legs: curatedforest.farm is a real site (the
+          # drafts/review surface), not a Netlify draft deploy — only a prod
+          # deploy of the -D build keeps its stable URL current.
+          netlify deploy --prod --no-build --dir public --site $NETLIFY_SITE_ID_FARM --message "preview $(git rev-parse --short HEAD)"

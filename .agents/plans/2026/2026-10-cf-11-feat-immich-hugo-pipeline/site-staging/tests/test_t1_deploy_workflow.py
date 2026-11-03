@@ -51,8 +51,11 @@ def test_build_and_deploy_commands(deploy):
     runs = all_run_text(job)
     assert re.search(r"hugo --gc --minify -b https://curatedforest\.com\b", runs), runs
     assert re.search(r"hugo -D --gc --minify -b https://curatedforest\.farm\b", runs), runs
+    # --prod is required on BOTH legs: a netlify deploy without it is an
+    # ephemeral draft that never updates the stable site URL, so the farm
+    # review surface would go stale on every PR (last-PR-wins contract).
     assert re.search(r"netlify deploy --prod --no-build --dir public --site (\$NETLIFY_SITE_ID|\$\{NETLIFY_SITE_ID\})\b", runs), runs
-    assert re.search(r"--site (\$NETLIFY_SITE_ID_FARM|\$\{NETLIFY_SITE_ID_FARM\})\b", runs), runs
+    assert re.search(r"netlify deploy --prod --no-build --dir public --site (\$NETLIFY_SITE_ID_FARM|\$\{NETLIFY_SITE_ID_FARM\})\b", runs), runs
     assert "--build" not in runs.replace("--no-build", ""), "a netlify --build flag appears — deploys are --no-build (P7)"
     assert "auto-merge" not in runs.lower()
 
