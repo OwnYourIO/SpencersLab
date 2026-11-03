@@ -215,7 +215,9 @@
         "C04"
       ],
       "repo": "SpencersLab",
-      "status": "pending"
+      "status": "in_progress",
+      "dev_session": "ses_e5c824c54ffen4vM2GQOPXnL06",
+      "handoffs": []
     },
     "C06": {
       "title": "Site-repo artifacts staged: deploy+sync workflows (daily cron), sync-albums.yaml page-mapping schema (no archetype/section - N3) + hugo render gate",
@@ -229,7 +231,7 @@
       "dev_rounds": 2,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
-      "commit": null,
+      "commit": "990bc3c6e",
       "dev_session": "ses_e5cbe3ba7ffexQqaXcwsm1hEnB",
       "note": "render-gate fixtures cover gallery-call extension pre/post (N2); archetype and photos-section artifacts dropped (N3).",
       "concurrent_writer_incident": "CORRECTION to the 2026-11-03 'lost to a server restart' entry (commit 4159ea51f): the original C06 dev session (ses_e5cc1956effeIqfFuEQ1kCx4rk) was NOT dead — the restart killed my RECORD of it (context), not the session. The relaunch therefore created a concurrent second writer (mtimes interleaved 21:20:36-21:24:23 UTC). Coord arbitration: canonical tree = the four site-staging artifact files AS OF the original's DONE handback (relaunch session's prose + the original's farm-leg `--prod` fix on deploy.yml); both implementations independently passed the full t1-t5 suite. Lesson pinned: never relaunch a 'lost' session without disk-mtime evidence of zero writes.",
