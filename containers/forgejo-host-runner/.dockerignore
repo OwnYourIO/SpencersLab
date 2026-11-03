@@ -1,0 +1,7 @@
+# Keep the build context minimal (faster sync, no accidental test fixtures
+# or local bytecode in a layer): the image bakes only sync/ and the
+# bin/ wrappers.
+tests/
+__pycache__/
+*.pyc
+README.md

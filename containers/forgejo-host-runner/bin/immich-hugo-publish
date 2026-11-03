@@ -1,0 +1,7 @@
+#!/bin/sh
+# Publish-side twin of immich-hugo-sync; its comment carries the
+# PYTHONPATH reasoning.
+set -eu
+PYTHONPATH="/opt/immich-hugo-sync${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH
+exec python3 -m sync.forgejo_publish "$@"

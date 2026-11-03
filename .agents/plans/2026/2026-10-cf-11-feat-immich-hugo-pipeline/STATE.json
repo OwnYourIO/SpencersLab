@@ -157,7 +157,15 @@
         "C01"
       ],
       "repo": "SpencersLab",
-      "status": "pending"
+      "status": "in_progress",
+      "dev_rounds": 1,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "dev_session": "ses_e5cec3ce7ffeRzW1SUoOF1AV4S",
+      "model_deviation": "dev ran on openrouter/qwen/qwen3.8-27b (pipeline-models default code tier) after 2x flash provider errors — coord-disclosed substitution",
+      "handoffs": [
+        { "at": "2026-11-03", "from": "agent-dev-local", "status": "DONE", "summary": "Dockerfile (multi-stage: data.forgejo.org/forgejo/runner:13.2.1 static-ELF binary donor -> node:22-bookworm-slim + apt toolchain + hugo extended 0.151.0 digest-verified + netlify-cli 27.16.2 + C01 package under /opt/immich-hugo-sync/sync/ + bin/ wrappers + ENV HOME=/data + USER node uid 1000 matching chart fsGroup), .dockerignore, README freshness fix. All base-image facts verified live without daemon (registry tags, layer tars, apt package index, hugo sha256 vs release checksums, npm engines, renovate custom-manager simulation). docker build => no-daemon, CI-deferred (cf-77 designed shape).", "commands": "tests/containers 10 ok exit 0; hadolint 0 errors; C01 suite 53/53; aislop 100.", "deviations": "(1) package at /opt/immich-hugo-sync/sync/ subdir (relative imports require importable `sync` package; t5 substring regex accepts). (2) ARG HUGO_SHA256 baked digest coupled to HUGO_VERSION (fail-loud on renovate version-only bumps). (3) README two-line freshness fix. (4) .dockerignore +bytecode/README hygiene. (5) mkdir/chown /data before ENV HOME (bare-run HOME writability).", "friction": "hadolint DL4006/SC3040 pipe interplay resolved by sha256sum -c on written digest file; `file` binary absent (od+strings instead)." }
+      ]
     },
     "C03": {
       "title": "charts/forgejo-runner host-backend MODE + DEV validation release forgejo-runner-dev-host (gpu prod = card #88)",

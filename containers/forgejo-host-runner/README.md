@@ -2,9 +2,11 @@
 
 Toolchain image for the Immich → CuratedForest Hugo pipeline on an
 in-cluster Forgejo host-backend runner (ticket
-`.agents/plans/2026/2026-10-cf-11-feat-immich-hugo-pipeline/`, chunk C01).
-The Dockerfile arrives with C02; today this directory is the dependency-free
-Python tooling baked into `/usr/local/bin/` by that image.
+`.agents/plans/2026/2026-10-cf-11-feat-immich-hugo-pipeline/`, chunks C01 +
+C02). The Dockerfile (C02) bakes this dependency-free Python tooling as the
+package `/opt/immich-hugo-sync/sync/` plus the forgejo-runner daemon, hugo
+extended, netlify-cli and the job-surface tools; `bin/` holds the two
+`/usr/local/bin/` wrappers this README documents.
 
 ## Entry points
 
