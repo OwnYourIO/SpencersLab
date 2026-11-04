@@ -4,7 +4,7 @@
   "coord_session": "ses_e5d47a7a9ffeNrogAo9PF2VYez",
   "test_session": "ses_e5c56c5defferyjeGtb6YMn05v",
   "current_wave": 1,
-  "updated_at": "2026-11-04T03:45:13+00:00",
+  "updated_at": "2026-11-04T07:40:00+00:00",
   "kickoff": {
     "card": "ZPP55zX4GEfesPbnL",
     "card_number": 106,
@@ -153,7 +153,7 @@
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
-      "commit": "in-flight — the chunk commit that carries this record (sha written into this field at the next STATE write; the wave's previous commit is 1259d636e)",
+      "commit": "625d7843d",
       "handoffs": [
         {
           "role": "dev", "status": "DONE", "chunk": "C01",
@@ -181,7 +181,7 @@
       "review_rounds": 1,
       "validation_repairs": 1,
       "last_verdict": "APPROVED",
-      "commit": "in-flight — sha written at the next STATE write (prevails over 625d7843d)",
+      "commit": "b6f3292d2",
       "handoffs": [
         {
           "role": "dev", "status": "BLOCKED (validation_at_fault)", "chunk": "C02",
@@ -206,13 +206,40 @@
       ]
     },
     "C03a": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e5aea85ceffeO8hdgRTVFdK7jr",
+      "review_session": "ses_e5abca4bfffeHTCb283NKaDDb7 (r1), ses_e5a8ccfafffeO8SLq37j3LLN7t (r2)",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "79693c016",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE (round 2; round 1 first returned silently with no RESULT, then BLOCKED validation_at_fault)", "chunk": "C03a",
+          "files_changed": ["scripts/session-noop-audit.sh (new)"],
+          "commands_run": ["read-only store probe (PRAGMA table_info) => pass — fixture schema matches the real session_v2/session_message columns", "bash scripts/session-noop-audit.sh --since 2026-11-02 --until 2026-11-04 => pass (41 rows: marked-archived 33, abnormal-end 3, did-work 3, mcp-surface-absent 1, marked-unarchived 1) — AC1 ran against the REAL store, not not-run", "bash tests/cf106-noop/surface.sh => round 1 fail at N2 only; round 2 pass exit 0 (7 ok, then 8 ok after the test round)", "flag smoke --json/--limit/--help/bad-date/missing-db => honest exits 0/0/0/1/1", "TZ shapes unset|Mars/Phobos|UTC|Europe/Berlin => Z/Z/Z/+01:00 (authority parity)", "scratch store: no message rows / malformed data => did-work turns=0; tool-call-only tail => abnormal-end turns=3", "bash -n + py_compile + aislop ci --changes => pass", "helm => N/A", "noop-marker n1 n5 => pass (whole red at N2 = C03b); agent-perms => red A12 = C04 (A17 = C04, A15 = C08 per corrected attribution); gate t14 admit arm green (whole red t17 pre-existing); rulesync-surface c23 = C09; agents-md c10 = C03b"],
+          "round1_findings_fixed": "classifier contract mismatch (unreadable transcripts landed abnormal-end while the header promised did-work) — split into turns==0 → did-work vs cut/empty tail → abnormal-end; model column renders model.id when the store value is the live JSON object; sort by time_created not the displayed stamp; local_iso mirrors the pipeline-locks localIso (unnameable zone → Z) instead of claiming it; --help prints the whole header",
+          "blockers": "round 1: tests/cf106-noop N2's bare `execute(` needle is unsatisfiable on python 3.14.4 (exec_driver_sql removed) — escalated, test_session re-cut it to write-target needles with five fabricated-write controls; ticket-folder writes are dev-denied, so the evidence block and FRICTION lines were replayed inline and applied by coord/plan",
+          "deviations": "--repo defaults apply to the host-store read only (an explicit --db fixture is unfiltered unless --repo says otherwise), stated in the script header; a tool-call-only assistant tail still reads abnormal-end (follows the agreed rule; flagged as a C03b rule question, not silently changed)",
+          "friction": "version-sensitive test needle; store prunes sessions (two artifact-named ids vanished mid-run); coord cannot read scripts/** or /tmp/opencode"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C03a-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/cf106-noop/surface.sh", "tests/cf106-noop/readback.md"],
+          "what": "N2 re-cut: bans write OPERATIONS (CLI/HTTP verbs, client imports, /session/<id>/{move,archive,update}, DML) instead of the sqlite entry point; N4 builds its own base store (was reading N1's temp); N1 adds the classifier fall-through controls (no message rows, malformed data, malformed metadata, tool-call-only tail) with a FIXTURE-FAULT guard and four fabricated-output controls; model column seeded as the live object / bare string / NULL; readback's vacuous gate-stop arm replaced by a flavor-labelled marker-column judgement plus the excerpt caution",
+          "commands_run": ["tests/cf106-noop/surface.sh whole => pass exit 0 (8 ok)", "N1..N6 each alone => exit 0", "out-of-suite bite proof: clean fixture pass; unreadable-as-abnormal, tail-as-didwork, model_raw, model_dropped all rejected", "noop-marker n1 n5 => pass (whole red at N2 = C03b)"]
+        },
+        {
+          "role": "review", "status": "CHANGES REQUESTED (r1) → APPROVED (r2)", "chunk": "C03a",
+          "r1_session": "ses_e5abca4bfffeHTCb283NKaDDb7", "r2_session": "ses_e5a8ccfafffeO8SLq37j3LLN7t",
+          "r1_findings": ["BLOCKER: evidence artifact explained the zero gate-stop count as sampling when it is an instrument blind spot (0 of 49 window / 0 of 123 store-wide gate-line user messages; 101 of 123 first prompts start at the loop body; the verdict enters a transcript only via .rulesync/commands/pipeline-boards-hourly.md:11) — it also made tests/cf106-noop/readback.md's judgement arm unfireable", "MAJOR: classifier contradicted AC2's unparseable→did-work fall-through (scratch proof: no message rows / malformed data / tool-only tail all landed abnormal-end)", "minor: 10/10 claim (9 matches + 2 pruned + 1 changed); 33 = 32 + ses_e5c776275f arithmetic; model column renders the JSON object; local_iso comment claims unnameable-zone parity it does not implement (TZ=Mars/Phobos → +00:00); sort on the displayed stamp violates the epoch-value rule; --help cuts the header mid-sentence"],
+          "r2_commands_run": ["tests/cf106-noop/surface.sh whole => pass (8 ok); N1..N6 each alone => pass", "3 script mutations on a /tmp copy each reddened N1 (fall-through, cut-tail branch, model_label) — the arms bite the real script", "noop-marker n1 n5 => pass (whole N2 = C03b); agent-perms a13/a14/a16/a18/a19 => pass, A12 => C04, A15 => C08, A17 => C04 (attribution confirmed at output level)", "gate t1-t16,t18-t21 => pass (22 ok, t14 admits the untracked script); rulesync-surface c1-c22 => pass (c23 = C09); agents-md c7 => pass (c10 = C03b)", "host-store read => pass (41 rows, tally unchanged, per-id verdicts stable); TZ=Mars/Phobos => Z", "aislop ci --changes => pass (100 vs floor 80) with the honest note that aislop does not parse bash, so N2 is the only machine check on the deliverable", "node --test tests/opencode/*.test.ts => 243 pass / 43 fail, all C07/C08/C09/C10 arms, no C03a collateral"],
+          "r2_findings": ["all ACs met; AC1 honest per-id (9 match / 2 store-side losses / 1 legitimate change), coverage-limit bullet reproducible from a fresh read (125 sessions, 0 gate-line, 103 loop-body first prompts)", "non-blocking routed: chunks/C03b.md:34 AC8 still phrases PASS as zero gate-stop rows → coord rewrites it onto the marker columns before C03b's dev; readback.md:71-76 calls a --repo-filtered count store-wide → test_session; four C03a-dev nits (header line break at :51-52, timespec seconds vs authority .SSS, unstated abnormal-end > mcp-surface-absent > gate-stop precedence, artifact :113 should cite :32) and one test nit (fixture duplicates TURN_FLOOR, so a floor bump moves no verdict)"]
+        }
+      ]
     },
     "C03b": {
       "status": "pending",
