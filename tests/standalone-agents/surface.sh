@@ -12,6 +12,18 @@
 # S7[AC5-code/byte-unchanged/no-variants] S8[AC4+matrix-rows]
 # S9[overview dev-family entry] S10[AC5-mirrors/regen] S11[cf-106 C04 code/code-pr twin].
 #
+# cf-106 C04 round 2 re-pin (2026-11-04, agent-test; reviewer B1): S5's role-code leg
+# stopped grepping for pipeline-* TOKENS and started reading the contract — the shipped
+# clause is qualified (user-handed work refused, a coordinator launch naming the chunk
+# implemented under the second-implementer grant, `/pipeline-push-pr` scoped to the
+# `code-pr` twin), so a token ban would have pinned the pre-C04 wording and made the
+# corrected contract unsatisfiable. What is forbidden is an affirmative LOAD line
+# (`pipeline-conventions`, any `pipeline-role-*`), a merge-main habit, and the stale
+# claim that the git write verbs are ask-permissioned; the git posture (add/commit/
+# branch allow, main-advancing denied, push ask on `code` / contract-gated allow on the
+# twin, rebase-not-merge) is pinned positively. Six fabricated drifts, one per leg,
+# prove the arm reddens for the right reason.
+#
 # Red posture: S1-S4, S6 (dev-family arms), S8, S9, S10 are red before C04
 # (dev*.md and role-dev absent — every red names the missing file/contract).
 # S3's pinned-copy arm reconstructs the implementer block from the ticket
@@ -447,16 +459,178 @@ if want s5; then
     python3 "$TMP/win.py" --ci "$f" 500 'pipeline' 'recommend' \
       || fail "S5[AC3]: $f lacks the pipeline-handoff rule (multi-session / cross-subsystem / new-interface work → recommend the agent-* pipeline)"
   done
+  # cf-106 C04 round 2 (reviewer B1's test half): the no-pipeline clause is now
+  # QUALIFIED — it scopes the posture to user-handed work and names the coordinator's
+  # second-implementer grant — so the old "no pipeline-conventions token anywhere"
+  # needle made the correct contract unsatisfiable. What must stay forbidden is
+  # role-code INSTRUCTING a load of the pipeline machinery; everything else is pinned
+  # positively, over source and mirror, with fabricated mutants that each have to
+  # redden for the named leg.
+  cat >"$TMP/contract.py" <<'PY'
+"""Load-directive and merge-habit probes over a role skill.
+
+A mention is a prohibition when its own clause carries a negation; only an
+affirmative directive (a load line, a merge-main habit) breaches the contract.
+"""
+import re
+import sys
+
+NEG = ("never", "not ", "no ", "none", "avoid", "without", "forbid", "denied", "deny")
+BREAK = re.compile(r"[.;:!?]")
+# Markdown wraps, so a line break is a clause boundary only where one starts a new
+# list item or heading — otherwise a prohibition split across wrapped lines reads as a
+# directive.
+NEW_BLOCK = re.compile(r"^\s*([-*#>|]|\d+\.)")
+
+
+def clause(text, start):
+    i = start
+    while i > 0 and i > start - 300:
+        if BREAK.search(text[i - 1]) or (text[i - 1] == "\n" and NEW_BLOCK.match(text[i:])):
+            break
+        i -= 1
+    return text[i:start]
+
+
+def sentence(text, lo, hi):
+    a = max(text.rfind(".", 0, lo) + 1, text.rfind("\n", 0, lo) + 1)
+    b = text.find(".", hi)
+    return text[a:hi if b < 0 else b + 1]
+
+
+def hits_load(text):
+    hits = []
+    for m in re.finditer(r"`?(?:pipeline-conventions|pipeline-role-[a-z-]*)`?", text):
+        if not any(n in clause(text, m.start()) for n in NEG):
+            hits.append(f"affirmative mention of {m.group(0).strip('`')} — "
+                        + text[max(0, m.start() - 50):m.end() + 10].replace("\n", " ").strip())
+    for m in re.finditer(r"\b(?:MUST[- ]load|must load|loads|load)\b[^.\n]{0,40}?pipeline-[a-z*][a-z*-]*", text, re.I):
+        if not any(n in clause(text, m.start()) for n in NEG):
+            hits.append("affirmative load line — " + m.group(0).replace("\n", " ").strip())
+    return hits
+
+
+def hits_merge(text):
+    hits = []
+    for m in re.finditer(r"merg\w*[^.\n]{0,40}?\bmain\b[^.\n]{0,25}?into", text, re.I):
+        if not any(n in sentence(text, m.start(), m.end()) for n in NEG):
+            hits.append("merge-main habit — " + " ".join(sentence(text, m.start(), m.end()).split())[:90])
+    return hits
+
+
+def hits_askclaim(text):
+    hits = []
+    for m in re.finditer(r"permissioned as `?ask`?", text):
+        win = text[max(0, m.start() - 300):m.end() + 40]
+        if re.search(r"git (add|commit|checkout|switch|branch)", win) \
+                and not any(n in clause(text, m.start()) for n in NEG):
+            hits.append("stale ask-posture claim — " + " ".join(win.replace("`", "").split())[-110:])
+    return hits
+
+
+def hits_pushscope(text):
+    hits = []
+    for m in re.finditer(r"`?/pipeline-push-pr`?", text):
+        win = text[max(0, m.start() - 120):m.end() + 120]
+        if re.search(r"\bon the `?code`?(?!-pr)\b", win) or re.search(r"\bfor the `?code`?(?!-pr)\b", win):
+            hits.append("push authority bound to the plain code variant — "
+                        + " ".join(win.replace("`", "").split())[:110])
+    return hits
+
+
+mode, path = sys.argv[1], sys.argv[2]
+body = open(path, encoding="utf-8").read()
+probes = {"load": hits_load, "merge": hits_merge, "pushscope": hits_pushscope,
+          "askclaim": hits_askclaim}
+for h in probes[mode](body):
+    print(h)
+sys.exit(1)
+PY
+  role_code_legs() {
+    local f=$1 out="" why
+    grep -qF 'No pipeline context:' "$f" \
+      || out+="LEG opener: no verbatim 'No pipeline context:' clause"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 500 'ticket folder' 'by a user' 'stop' 'dev' >/dev/null 2>&1 \
+      || out+="LEG user-handed-redirect: the ticket-folder/chunk-id refusal is not scoped to a request handed by a user and does not hand it to the dev family"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 700 'coordinator' 'second implementer' 'implement' >/dev/null 2>&1 \
+      || out+="LEG coordinator-exception: no clause making a coordinator launch that names the chunk the sanctioned second-implementer work"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 400 'never' 'pipeline-role-' >/dev/null 2>&1 \
+      || out+="LEG machinery-prohibition: role-code no longer forbids itself a pipeline-role-* contract"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 260 'pipeline-push-pr' 'code-pr' >/dev/null 2>&1 \
+      || out+="LEG push-authority-pin: the /pipeline-push-pr exception is not named next to the code-pr twin"$'\n'
+    why=$(python3 "$TMP/contract.py" askclaim "$f" | head -1)
+    [ -z "$why" ] || out+="LEG git-posture-ask-claim: $why"$'\n'
+    why=$(python3 "$TMP/contract.py" pushscope "$f" | head -1)
+    [ -z "$why" ] || out+="LEG push-authority-scope: $why"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 400 'git add' 'allow' >/dev/null 2>&1 \
+      || out+="LEG git-posture-allows: staging/committing/branching is not stated as allow (the shipped rows)"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 600 'main-advancing' 'denied' >/dev/null 2>&1 \
+      || out+="LEG git-posture-floor: the main-advancing forms are not stated as denied outright"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 800 'git push' 'ask' 'pipeline-push-pr' >/dev/null 2>&1 \
+      || out+="LEG git-posture-push: the twins' push split (ask on code, contract-gated allow on code-pr) is not stated"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 500 'rebasing' 'git merge' >/dev/null 2>&1 \
+      || out+="LEG git-posture-pickup: pickups are not stated as rebase-onto-main with git merge denied (never merge main into the branch)"$'\n'
+    why=$(python3 "$TMP/contract.py" load "$f" | head -1)
+    [ -z "$why" ] || out+="LEG load-prohibition: $why"$'\n'
+    why=$(python3 "$TMP/contract.py" merge "$f" | head -1)
+    [ -z "$why" ] || out+="LEG merge-prohibition: $why"$'\n'
+    printf '%s' "$out"
+  }
   for f in "$RC_SRC" "$RC_GEN"; do
     [ -f "$f" ] || fail "S5[AC3]: $f missing"
-    grep -qF 'No pipeline context:' "$f" \
-      || fail "S5[AC3]: $f lacks the verbatim-greppable 'No pipeline context:' clause (C04 pins the opener — red before C04)"
-    python3 "$TMP/win.py" --ci "$f" 500 'ticket folder' 'stop' \
-      || fail "S5[AC3]: $f's no-pipeline-context clause does not say to STOP when handed a pipeline ticket folder"
-    if grep -qF 'pipeline-conventions' "$f"; then
-      fail "S5[AC3]: $f references pipeline-conventions — role-code must never load pipeline-* skills"
-    fi
+    reasons=$(role_code_legs "$f")
+    [ -z "$reasons" ] \
+      || fail "S5[AC3]: $f does not carry the qualified no-pipeline clause and the shipped git posture — $(printf '%s' "$reasons" | tr '\n' '|')"
   done
+  for ctl in unconditional-never drop-exception merge-main code-loads-pushpr affirmative-load stale-ask-posture; do
+    python3 - "$RC_SRC" "$TMP/rc-$ctl.md" "$ctl" <<'PY'
+import re, sys
+src, dst, ctl = sys.argv[1], sys.argv[2], sys.argv[3]
+text = open(src, encoding="utf-8").read()
+if ctl == "unconditional-never":
+    old = re.sub(r"- No pipeline context:.*?\n\n## Method",
+                 "- No pipeline context: you never load `pipeline-*` skills. Handed a pipeline ticket\n"
+                 "  folder (`.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`) or a chunk id, stop and say\n"
+                 "  the work belongs to the `dev` agent or the `agent-*` pipeline — do not implement it.\n\n## Method",
+                 text, flags=re.S)
+elif ctl == "drop-exception":
+    old = re.sub(r"The one qualified exception.*?second implementer\.", "", text, flags=re.S)
+elif ctl == "merge-main":
+    old = text.replace("Commit to your\nown branch/worktree,",
+                       "Pick up updates by merging `main` into your branch.\nCommit to your\nown branch/worktree,")
+elif ctl == "code-loads-pushpr":
+    old = text.replace("`/pipeline-push-pr` on the `code-pr` twin", "`/pipeline-push-pr` on the `code` variant")
+elif ctl == "affirmative-load":
+    old = text.replace("## Method", "- MUST-load: `pipeline-conventions` for any ticket work.\n\n## Method")
+elif ctl == "stale-ask-posture":
+    old = text.replace("## Method",
+                       "**Branch handling is yours; `main` is not.** `git checkout`, `git switch`,\n"
+                       "`git commit`, and `git push` are permissioned as `ask` in your permission rules.\n\n"
+                       "## Method")
+else:
+    raise SystemExit(2)
+if old == text:
+    print(f"no '{ctl}' anchor in {src}")
+    raise SystemExit(2)
+open(dst, "w", encoding="utf-8").write(old)
+PY
+    [ $? -eq 0 ] || fail "S5[C04 control]: could not fabricate the '$ctl' role-code mutant (fixture fault — the wording the control edits moved)"
+    case "$ctl" in
+      unconditional-never|drop-exception) want="coordinator-exception" ;;
+      merge-main) want="merge-prohibition" ;;
+      code-loads-pushpr) want="push-authority-scope" ;;
+      affirmative-load) want="load-prohibition" ;;
+      stale-ask-posture) want="git-posture-ask-claim" ;;
+    esac
+    reasons=$(role_code_legs "$TMP/rc-$ctl.md")
+    [ -n "$reasons" ] \
+      || fail "S5[C04 control]: the '$ctl' mutant passed every role-code leg — the arm cannot detect that drift"
+    case "$reasons" in
+      *"$want"*) ;;
+      *) fail "S5[C04 control]: the '$ctl' mutant reddened for the wrong reason ($reasons) — the $want leg must fire" ;;
+    esac
+  done
+  ok "S5[C04 control]: all six fabricated role-code drifts redden for their named leg — the unconditional never-load wording, the dropped coordinator exception, a merge-main habit, the push skill scoped to code instead of the twin, an affirmative pipeline-conventions load line, and the stale claim that the git write verbs are ask-permissioned"
   for f in "$RD_SRC" "$RD_GEN"; do
     [ -f "$f" ] || fail "S5[AC3]: $f missing"
     for title in 'Method' 'Repo validation discipline' 'Quality gate' 'Git hygiene' 'Scope tripwire' 'Reporting'; do
@@ -487,7 +661,7 @@ if want s5; then
     'shell|git push origin feature-x|deny' \
     'shell|git add foo|ask' 'shell|git commit -m x|ask' \
     || fail "S5[AC3]: debug's effective git policy is not [push deny, add/commit at ask baseline] — interactive agent, push never"
-  ok "S5[AC3]: planner mandatory ## Commands + handoff rule; code 'No pipeline context:' clause; debug full rewrite (six sections, old form gone) + push deny + ask-baseline add/commit"
+  ok "S5[AC3]: planner mandatory ## Commands + handoff rule; code's qualified no-pipeline clause (user-handed redirect, the coordinator's second-implementer exception, the twin-scoped push authority, the shipped git posture) with no load directive and no merge-main habit; debug full rewrite (six sections, old form gone) + push deny + ask-baseline add/commit"
 fi
 
 # --- S6: the card's git-write matrix audit (AC4) ----------------------------------

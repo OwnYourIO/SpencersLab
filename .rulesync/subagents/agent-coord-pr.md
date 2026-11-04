@@ -355,6 +355,18 @@ opencode:
     - action: subagent
       resource: agent-dev-pr
       effect: allow
+    # cf-106 C04 (owner ruling OQ-10): the coordinator's sanctioned second
+    # implementer — the standalone `code` family, for a chunk that needs file
+    # edits AND branch handling in one session. The dev variant stays the
+    # default; launching code-pr is the escape hatch, and the chunk plus the
+    # reason are recorded in DECISIONS.md. Subagent grants match whole values,
+    # so the family split is what keeps the push route on the `-pr` side.
+    # The push-capable twin: it MAY push the ticket branch, only under
+    # pipeline-push-pr (explicit user request, ticket branch only, never main,
+    # never force) — the coordinator still owns the chunk commit itself.
+    - action: subagent
+      resource: code-pr
+      effect: allow
     - action: subagent
       resource: agent-review
       effect: allow

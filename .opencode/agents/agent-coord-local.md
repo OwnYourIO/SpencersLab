@@ -317,6 +317,9 @@ permissions:
     resource: agent-dev-local
     effect: allow
   - action: subagent
+    resource: code
+    effect: allow
+  - action: subagent
     resource: agent-review
     effect: allow
   - action: subagent

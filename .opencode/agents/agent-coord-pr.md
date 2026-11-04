@@ -334,6 +334,9 @@ permissions:
     resource: agent-dev-pr
     effect: allow
   - action: subagent
+    resource: code-pr
+    effect: allow
+  - action: subagent
     resource: agent-review
     effect: allow
   - action: subagent

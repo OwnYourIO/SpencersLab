@@ -30,7 +30,34 @@
 # A16[board-tick-cleanup C01 AC1-AC4: the explicit `ls *` allow on every
 # permission-bearing source and mirror, the effective 'ls -a' verdict, the
 # fabricated-strip/duplicate negative controls, the 22/9 verified counts (re-pinned to
-# 25 by cf-96 C02's agent-explore landing) and the permissions.md matrix + drift move].
+# 25 by cf-96 C02's agent-explore landing, 26 by cf-106 C04's code-pr twin) and the
+# permissions.md matrix + drift move].
+# A17[cf-106 C04 AC2/AC3: the `code`/`code-pr` git verdict matrices re-evaluated through
+#   family.py's shipped last-match projection — add/commit/checkout/switch/branch allow,
+#   the main-advancing floor deny (checkout/switch on main, update-ref, symbolic-ref,
+#   branch -f/--force/rename, worktree add, merge, pull, config alias), push ASK on
+#   `code` vs the twin's push allow with the main/force/-C-force denies winning in tail
+#   order — every AC2/AC3 shape pinned on both variants, plus the never-allow sweep, the
+#   /pipeline-push-pr skeleton delta, and the AC4 leg re-verdicting the dev family's
+#   git writes as deny]
+# A18[cf-106 C04 AC7 first half: every agent-* source AND mirror answers question=allow,
+#   with a stripped-row control]
+# A19[cf-106 C04 AC7 second half: the validation battery stays ungranted — zero battery
+#   allow rows across sources and mirrors (both row shapes), the global array still leads
+#   with its universal default, fabricated battery rows caught. The consequence C04 is
+#   told to record rather than solve: in an unattended run that universal `ask` resolves
+#   to DENY, so the battery and `bash scripts/*` instruments keep prompting — the fix is
+#   the owner's permissionAutoAccept toggle, not a widened shell surface].
+#
+# cf-106 C04 rounds (2026-11-04, agent-test; OQ-10/OQ-11). Round 1 grew A12's roster arm
+# with the family's second implementer (`code` on the plain/-local class, `code-pr` on the
+# -pr class) and its same-position rule, moved A16's verified source count 25 -> 26 with
+# the code-pr twin, and landed A17/A18/A19. Round 2 closed the reviewer's test advisories:
+# every fixture and sweep in those arms reads rows through the SHAPE-AWARE accessor
+# (sources nest under `opencode:`, mirrors do not — a top-level read made the A12/A17
+# controls inert and left A19's source half blind), a fabricated roster mutant is pinned to
+# the reason it must redden for (position, not any red), and A17 carries every AC2/AC3
+# shape on both variants.
 #
 # cf-90 RE-PIN (2026-10-31, agent-test; C03): NAMING grew to FIVE rows —
 # opencode_worktree_remove inserted after worktree_list for the work-complete
@@ -1441,34 +1468,56 @@ AC6
   # (a fabricated `code` row in the sanctioned position passes the widened
   # roster) and position-sensitive (the same row at the block tail fails) —
   # otherwise "same position, right after the dev slot" is prose.
+  # The fixtures splice through the shape-aware accessor the sources use: rows live
+  # under `opencode:`, so a top-level write is inert against family.py's perms(). They
+  # MOVE the row rather than add a copy — post-C04 the source already carries it, and a
+  # blind insert would red a duplicate-roster defect instead of proving the arm.
   python3 - .rulesync/subagents/agent-coord-local.md "$TMP/coord-code-row.md" <<'PY'
 import re, sys, yaml
 src, dst = sys.argv[1], sys.argv[2]
 m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
 assert m, "no frontmatter"
 fm = yaml.safe_load(m.group(1)) or {}
-rows = fm.get("permissions") or []
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+rows = [r for r in (target.get("permissions") or [])
+        if not (r.get("action") == "subagent" and r.get("resource") == "code")]
 at = next(i for i, r in enumerate(rows)
           if r.get("action") == "subagent" and r.get("resource") == "agent-dev-local")
 rows.insert(at + 1, {"action": "subagent", "resource": "code", "effect": "allow"})
-fm["permissions"] = rows
+target["permissions"] = rows
+if key:
+    fm["opencode"] = target
 open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
 PY
-  python3 "$TMP/family.py" roster "$TMP/coord-code-row.md" agent-dev-local code >/dev/null 2>&1 \
-    || fail "A12[C04 AC1]: NEGATIVE CONTROL FAILED — a fabricated compliant roster (code directly after the dev slot) is rejected, so the widened arm could never go green when C04 lands"
+  out=$(python3 "$TMP/family.py" roster "$TMP/coord-code-row.md" agent-dev-local code 2>&1) \
+    || fail "A12[C04 AC1]: NEGATIVE CONTROL FAILED — a compliant roster (code moved to directly after the dev slot) is rejected, so the widened arm could never go green when C04 lands: $out"
+  # The tail mutant leaves the row set identical, so only the position rule can red it;
+  # the reason is pinned below to keep that from passing for the wrong reason.
   python3 - .rulesync/subagents/agent-coord-local.md "$TMP/coord-code-tail.md" <<'PY'
 import re, sys, yaml
 src, dst = sys.argv[1], sys.argv[2]
 m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
 fm = yaml.safe_load(m.group(1)) or {}
-rows = fm.get("permissions") or []
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+rows = [r for r in (target.get("permissions") or [])
+        if not (r.get("action") == "subagent" and r.get("resource") == "code")]
 last = max(i for i, r in enumerate(rows) if r.get("action") == "subagent" and r.get("effect") == "allow")
 rows.insert(last + 1, {"action": "subagent", "resource": "code", "effect": "allow"})
-fm["permissions"] = rows
+target["permissions"] = rows
+if key:
+    fm["opencode"] = target
 open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
 PY
-  python3 "$TMP/family.py" roster "$TMP/coord-code-tail.md" agent-dev-local code >/dev/null 2>&1 \
-    && fail "A12[C04 AC1]: NEGATIVE CONTROL FAILED — a code row appended at the subagent tail passes the roster check, so the same-position rule is not enforced"
+  out=$(python3 "$TMP/family.py" roster "$TMP/coord-code-tail.md" agent-dev-local code 2>&1) \
+    && fail "A12[C04 AC1]: NEGATIVE CONTROL FAILED — a code row moved to the subagent tail passes the roster check, so the same-position rule is not enforced"
+  case "$out" in
+    *"want immediately after"*) ;;
+    *) fail "A12[C04 AC1]: the tail mutant reddened for the wrong reason ($out) — the control must prove the same-position rule bites, not a duplicate-row or missing-row rule" ;;
+  esac
 
   # MUST-load wiring: /pipeline-push-pr ONLY on the -pr pair (sources + mirrors)
   for f in "${CF_SRC[2]}" "${CF_GEN[2]}" "${CF_SRC[5]}" "${CF_GEN[5]}"; do
@@ -2016,8 +2065,8 @@ fi
 # matrix rows name their unmoved text. HOLD after landing.
 if want a16; then
   mapfile -t permed < <(grep -l 'permissions:' .rulesync/subagents/*.md)
-  [ "${#permed[@]}" -eq 25 ] \
-    || fail "A16[C01 AC1]: ${#permed[@]} sources carry a permissions: block, want the cf-96 C02-re-pinned 25 (cf-90's 24 + the agent-explore source)"
+  [ "${#permed[@]}" -eq 26 ] \
+    || fail "A16[C01 AC1]: ${#permed[@]} sources carry a permissions: block, want the cf-106 C04-re-pinned 26 (cf-90's 24 + cf-96 C02's agent-explore + this chunk's code-pr twin). The count is a PIN: adding or retiring a permission-bearing source moves it deliberately, in the chunk that does it."
   no_perm_landing=$(grep -L 'permissions:' .rulesync/subagents/*.md | grep -v '/[0-9]' || true)
   [ -z "$no_perm_landing" ] \
     || fail "A16[C01 fact]: a NON-stage agent lost its permission block: $no_perm_landing (the nine stage agents are the permissionless set — W3 verified)"
@@ -2111,7 +2160,7 @@ PY
     python3 "$TMP/sectgrep.py" "$f" section 'Drift incidents' 'ls *' \
       || fail "A16[C01 matrix]: $f Drift-incidents section has no ls-* entry for the 2026-10-29 ruling (12 sources, re-pinned suites)"
   done
-  ok "A16[C01 AC1-AC5]: 25 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow (22 + the cf-90 C06 deploy pair + the cf-96 C02 explore source), every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
+  ok "A16[C01 AC1-AC5]: 26 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow (22 + the cf-90 C06 deploy pair + the cf-96 C02 explore source + the cf-106 C04 code-pr twin), every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
 fi
 
 # --- A17: cf-106 C04 AC2/AC3 — the standalone `code` family git matrix --------
@@ -2128,7 +2177,8 @@ if want a17; then
 # an interactive human can still authorize an ad-hoc push, no pipeline run can)
 # and gains the main-advancing deny floor; `code-pr` reproduces the shipped
 # agent-dev-pr push tail with the main/force denies sitting AFTER the push
-# allow — the tail order is what keeps main closed.
+# allow — the tail order is what keeps main closed. Every AC2/AC3 shape is pinned on
+# BOTH variants: a cell missing from one variant is a cell nobody checked.
 code	allow	git add .
 code	allow	git add -A
 code	allow	git commit -m w
@@ -2162,6 +2212,10 @@ code-pr	deny	git branch -f main x
 code-pr	deny	git worktree add /tmp/w main
 code-pr	deny	git merge feature-x
 code-pr	deny	git pull
+code-pr	deny	git symbolic-ref refs/heads/main refs/heads/other
+code-pr	deny	git branch --force main x
+code-pr	deny	git merge main
+code-pr	allow	git switch -c feat/x
 code-pr	deny	git config alias.p push
 code-pr	allow	git push
 code-pr	allow	git push origin feature-x
@@ -2240,9 +2294,14 @@ src, dst = sys.argv[1], sys.argv[2]
 m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
 assert m, "no frontmatter"
 fm = yaml.safe_load(m.group(1)) or {}
-rows = fm.get("permissions") or []
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+rows = list(target.get("permissions") or [])
 rows.append({"action": "shell", "resource": "git push*", "effect": "allow"})
-fm["permissions"] = rows
+target["permissions"] = rows
+if key:
+    fm["opencode"] = target
 open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
 PY
   v=$(python3 "$TMP/family.py" policy "$TMP/code-push-allow.md" "git push origin feature-x" 2>/dev/null || true)
@@ -2252,14 +2311,19 @@ import re, sys, yaml
 src, dst = sys.argv[1], sys.argv[2]
 m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
 fm = yaml.safe_load(m.group(1)) or {}
-rows = fm.get("permissions") or []
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+rows = list(target.get("permissions") or [])
 push = [r for r in rows if r.get("action") == "shell" and str(r.get("resource", "")).startswith("git push")]
 assert any(r["effect"] == "allow" for r in push) and any(r["effect"] == "deny" for r in push), "fixture: dev-pr push tail not found"
 at = min(i for i, r in enumerate(rows) if r in push)
 rest = [r for r in rows if r not in push]
 tail = [r for r in push if r["effect"] == "deny"] + [r for r in push if r["effect"] == "allow"]
 rest[at:at] = tail
-fm["permissions"] = rest
+target["permissions"] = rest
+if key:
+    fm["opencode"] = target
 open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
 PY
   v=$(python3 "$TMP/family.py" policy "$TMP/pr-flipped-tail.md" "git push origin main" 2>/dev/null || true)
@@ -2339,7 +2403,11 @@ m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(path).read(), re.S)
 if not m:
     sys.exit(0)
 fm = yaml.safe_load(m.group(1)) or {}
-rows = fm.get("permissions") or []
+# Shape-aware: sources nest rows under `opencode:`, mirrors do not. Reading only the
+# top level left the whole source half of this sweep inert (cf-106 C04 review A1).
+outer = fm.get("opencode")
+rows = (outer.get("permissions") or []) if isinstance(outer, dict) and "permissions" in outer \
+    else (fm.get("permissions") or [])
 battery = ["node --test", "bun test", "pytest", "bash tests", "sh tests", "npx aislop", "aislop",
            "rulesync generate", "rulesync", "py_compile", "npm test", "pnpm test", "yarn test", "make test"]
 bad = []
@@ -2377,15 +2445,23 @@ PY
   [ $? -eq 0 ] || fail "A19[C04 AC7]: .opencode/opencode.jsonc no longer leads its permissions array with the universal default (the plan's 'the battery still prompts' claim rests on that leading row)"
   # Controls: the sweep must fire on a fabricated widening, and must NOT fire
   # on the leading universal row it deliberately skips.
+  # Fixtures splice in the SHAPE the target really has (source: nested; mirror: top
+  # level), otherwise the fabricated row is invisible to the sweep and the control
+  # proves only that the fixture wrote what it read.
   python3 - .rulesync/subagents/agent-test.md "$TMP/widened.md" <<'PY'
 import re, sys, yaml
 src, dst = sys.argv[1], sys.argv[2]
 m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
 assert m, "no frontmatter"
 fm = yaml.safe_load(m.group(1)) or {}
-rows = fm.get("permissions") or []
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+rows = list(target.get("permissions") or [])
 rows.append({"action": "shell", "resource": "bash tests/*", "effect": "allow"})
-fm["permissions"] = rows
+target["permissions"] = rows
+if key:
+    fm["opencode"] = target
 open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
 PY
   hits=$(battery_sweep "$TMP/widened.md")
@@ -2395,13 +2471,38 @@ import re, sys, yaml
 src, dst = sys.argv[1], sys.argv[2]
 m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
 fm = yaml.safe_load(m.group(1)) or {}
-rows = fm.get("permissions") or []
+outer = fm.get("opencode")
+key = "opencode" if isinstance(outer, dict) and "permissions" in outer else None
+target = outer if key else fm
+rows = list(target.get("permissions") or [])
 rows.append({"action": "shell", "resource": "node --test *", "effect": "allow"})
-fm["permissions"] = rows
+target["permissions"] = rows
+if key:
+    fm["opencode"] = target
 open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
 PY
   hits=$(battery_sweep "$TMP/widened-node.md")
   [ -n "$hits" ] || fail "A19[C04 AC7]: NEGATIVE CONTROL FAILED — a fabricated 'node --test *' allow row is not caught either"
+  # The mirror shape is the other half of the sweep's claim (mirrors carry rows at top
+  # level); a widening there must read too, or the fix would have just moved the blind
+  # spot instead of closing it.
+  python3 - .opencode/agents/agent-test.md "$TMP/widened-mirror.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode")
+if isinstance(outer, dict) and "permissions" in outer:
+    print("fixture: this mirror nests its rows — the mirror-shape control has no target")
+    raise SystemExit(2)
+rows = list(fm.get("permissions") or [])
+rows.append({"action": "shell", "resource": "aislop ci --changes", "effect": "allow"})
+fm["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  [ $? -eq 0 ] || fail "A19[C04 AC7]: the mirror-shape fixture could not be built (the mirror's row shape drifted — report, do not blame dev)"
+  hits=$(battery_sweep "$TMP/widened-mirror.md")
+  [ -n "$hits" ] || fail "A19[C04 AC7]: NEGATIVE CONTROL FAILED — a fabricated 'aislop ci --changes' allow row in the mirror's top-level row shape is not caught (the sweep is shape-blind)"
   ok "A19[C04 AC7]: no subagent source or generated mirror allow-lists the validation battery (node --test, pytest, bash tests/, aislop, py_compile, rulesync generate), the global array still leads with its universal ask default, and fabricated battery rows are caught"
 fi
 

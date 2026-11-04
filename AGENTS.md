@@ -104,9 +104,17 @@ container images (`containers/`). **ArgoCD applies everything — never
   records verified facts with evidence, and recommends the pipeline over
   mega-plans; read-only git — no commits.
 - `code` (`.agents/agents/code.md`) — executes plans. Runs in fresh sessions:
-  the plan file tells it which skills and MCP servers to load. Explicitly no
-  pipeline context: a ticket folder or chunk id is redirected to the `dev`
-  family.
+  the plan file tells it which skills and MCP servers to load. Carries real git
+  writes (`add`/`commit` plus non-main branch verbs, every main-advancing form
+  denied; its push row stays `ask`, so only an interactive human can authorize
+  an ad-hoc one). Explicitly no pipeline context when a user hands it work: a
+  ticket folder or chunk id in that shape is redirected to the `dev` family.
+  `code-pr` (`.agents/agents/code-pr.md`) is its twin on the dev/dev-pr
+  precedent — the same surface with the push allow closed by the shipped
+  `agent-dev-pr` main/force deny floor, under `pipeline-push-pr`. The
+  coordinators roster `code` (plain/`-local` class) or `code-pr` (`-pr` class)
+  as their sanctioned second implementer, the dev variant staying the default,
+  and the coordinator stays the sole chunk committer (cf-106 OQ-10).
 - `dev` family (`.agents/agents/dev.md`, `dev-local.md`, `dev-pr.md`) —
   standalone one-session-sized implementers carrying the pipeline's
   discipline: `dev-local` commits, never pushes; `dev-pr` additionally
@@ -154,8 +162,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   `/pipeline-boards-hourly` on the alias, and the gate counts all three
   board-coord names): pulls work from
   the WeKan AI-Dev board via the `dev-boards` MCP server, takes its intake from
-  the card's standard checklists plus the `slug` custom field (combined
-  `[<slug>](<session link>)` link value)
+  the card's standard checklists plus the `slug` custom field (an append-only
+  stack of combined `[<slug>](<session link>)` link values, newest LAST)
   instead of the live kickoff questions, and defers user questions to a single
   batched plan-question round; launch with `/pipeline-boards`. Artifacts
   live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
@@ -241,7 +249,8 @@ role × permission matrix is in the `agents-sync` skill references
   AI-Dev board replaces the live kickoff — pickup walks
   `Rework → Not Started → Low Priority` (top card first), the
   Services/Type/Model(s)/Lifecycle/Human in the Loop checklists plus the
-  `slug` custom field's combined `[<slug>](<session link>)` value supply the
+  `slug` custom field's append-only stack of combined `[<slug>](<session link>)`
+  values (newest LAST — this run's slug is its last non-empty line) supply the
   kickoff answers — the
   checked Lifecycle items are the stages the run executes
   (checked-stages-only; the 11-item checklist ends with the kept

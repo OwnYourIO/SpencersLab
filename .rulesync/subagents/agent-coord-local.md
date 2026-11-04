@@ -340,6 +340,15 @@ opencode:
     - action: subagent
       resource: agent-dev-local
       effect: allow
+    # cf-106 C04 (owner ruling OQ-10): the coordinator's sanctioned second
+    # implementer — the standalone `code` family, for a chunk that needs file
+    # edits AND branch handling in one session. The dev variant stays the
+    # default; launching code is the escape hatch, and the chunk plus the
+    # reason are recorded in DECISIONS.md. Subagent grants match whole values,
+    # so the family split is what keeps the push route on the `-pr` side.
+    - action: subagent
+      resource: code
+      effect: allow
     - action: subagent
       resource: agent-review
       effect: allow

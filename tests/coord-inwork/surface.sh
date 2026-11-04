@@ -342,10 +342,29 @@ if others:
 if not any(p.get("action") == "shell" and p.get("resource") == "date *" and p.get("effect") == "allow" for p in perms):
     errs.append("the `date *` allow is gone (the in-work mark's epoch subcommand would fall back to the deny baseline — the global date allow never reaches it)")
 slot = "agent-dev-pr" if cls == "pr" else "agent-dev-local"
-subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
-want_subs = sorted(["agent-plan", "agent-test", slot, "agent-review", "agent-research"])
-if subs != want_subs:
-    errs.append(f"subagent allows {subs}, want the five roles with dev slot {slot}")
+subs = [p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow"]
+# R14/C04 RE-PIN (2026-11-04, agent-test): same roster the gate.sh t17 guard carries —
+# cf-106 C04 admits the sanctioned second-implementer pair (`code` plain-class,
+# `code-pr` -pr-class) to the coord launch roster (OQ-10). Exact set per class, so a
+# missing or extra agent still reds; only the dev slot stays the class's dev implementer.
+# Keep in step with tests/agent-board-coord/gate.sh cfpins.py (self-contained copies).
+codeslot = "code-pr" if cls == "pr" else "code"
+deployslot = "agent-dev-deploy-pr" if cls == "pr" else "agent-dev-deploy"
+# The roster is pinned as an ORDERED list, not a set: the subagent block is
+# last-match-wins and the plan puts the second-implementer row directly after the
+# class dev slot, so a duplicated row or a re-ordered block is drift here too
+# (A12's parity/roster arms see order as well — the guard must not be weaker here).
+want_order = ["agent-plan", "agent-test", slot, codeslot, "agent-review", "agent-research",
+              "agent-explore", deployslot]
+dups = sorted({r for r in subs if subs.count(r) > 1})
+missing, extra = sorted(set(want_order) - set(subs)), sorted(set(subs) - set(want_order))
+if missing or extra or dups:
+    errs.append(f"subagent allows {subs}, want exactly the coord launch roster for class "
+                f"{cls} (dev slot {slot}; missing {missing}, extra {extra}, duplicated {dups})")
+elif subs != want_order:
+    errs.append(f"subagent allows {subs} are the sanctioned set in the wrong block order — want "
+                f"{want_order} ({codeslot} sits directly after {slot}; the block is last-match-wins, "
+                f"so order is part of the contract)")
 edits = sorted(p.get("resource") for p in perms if p.get("action") == "edit")
 if edits != sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"]):
     errs.append(f"edit allows are {edits}, want only the three plan-state files")

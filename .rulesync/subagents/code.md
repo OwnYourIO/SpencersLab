@@ -71,18 +71,212 @@ opencode:
     - action: shell
       resource: git diff*
       effect: allow
+    # Git writes (cf-106 OQ-10): a human supervises this role directly, so it
+    # stages, commits and branches its own work. The pipeline implementer family
+    # keeps add/commit denied — the coordinator stays its sole committer.
     - action: shell
-      resource: git checkout*
-      effect: ask
-    - action: shell
-      resource: git switch*
-      effect: ask
+      resource: git add*
+      effect: allow
     - action: shell
       resource: git commit*
-      effect: ask
+      effect: allow
+    - action: shell
+      resource: git checkout*
+      effect: allow
+    - action: shell
+      resource: git switch*
+      effect: allow
+    - action: shell
+      resource: git branch*
+      effect: allow
+    # main-advancing deny floor, same shape as the coord family's: moving main
+    # needs make-main-HEAD, ref plumbing, a merge, a pull or an alias, and every
+    # leg is denied. Order is load-bearing — last match wins, so the floor sits
+    # AFTER the allows it closes, and each in-command rule ships as a prefix
+    # form plus a `git *` twin because the matcher anchors at the command start.
+    - action: shell
+      resource: git checkout main*
+      effect: deny
+    - action: shell
+      resource: git * checkout main*
+      effect: deny
+    - action: shell
+      resource: git checkout * main*
+      effect: deny
+    - action: shell
+      resource: git * checkout * main*
+      effect: deny
+    - action: shell
+      resource: git switch main*
+      effect: deny
+    - action: shell
+      resource: git * switch main*
+      effect: deny
+    - action: shell
+      resource: git switch * main*
+      effect: deny
+    - action: shell
+      resource: git * switch * main*
+      effect: deny
+    - action: shell
+      resource: git update-ref*
+      effect: deny
+    - action: shell
+      resource: git * update-ref*
+      effect: deny
+    - action: shell
+      resource: git symbolic-ref*
+      effect: deny
+    - action: shell
+      resource: git * symbolic-ref*
+      effect: deny
+    - action: shell
+      resource: git branch -f main*
+      effect: deny
+    - action: shell
+      resource: git * branch -f main*
+      effect: deny
+    - action: shell
+      resource: git branch --force main*
+      effect: deny
+    - action: shell
+      resource: git * branch --force main*
+      effect: deny
+    - action: shell
+      resource: git branch -d main*
+      effect: deny
+    - action: shell
+      resource: git branch -d * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -d main*
+      effect: deny
+    - action: shell
+      resource: git branch -D main*
+      effect: deny
+    - action: shell
+      resource: git branch -D * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -D main*
+      effect: deny
+    - action: shell
+      resource: git branch -m main*
+      effect: deny
+    - action: shell
+      resource: git branch -m * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -m main*
+      effect: deny
+    - action: shell
+      resource: git branch -M main*
+      effect: deny
+    - action: shell
+      resource: git branch -M * main*
+      effect: deny
+    - action: shell
+      resource: git * branch -M main*
+      effect: deny
+    - action: shell
+      resource: git worktree add * main*
+      effect: deny
+    - action: shell
+      resource: git * worktree add * main*
+      effect: deny
+    - action: shell
+      resource: git pull*
+      effect: deny
+    - action: shell
+      resource: git * pull*
+      effect: deny
+    # merge stays wholly denied here: unlike the coord family this role owns no
+    # landing, so it needs no `git merge main`-into-work-branch exception.
+    - action: shell
+      resource: git merge *
+      effect: deny
+    - action: shell
+      resource: git * merge *
+      effect: deny
+    - action: shell
+      resource: git config alias*
+      effect: deny
+    - action: shell
+      resource: git * config alias*
+      effect: deny
+    # The floor's exceptions: creating a branch FROM main is not main-advancing,
+    # so the -b/-B/-c/-C forms re-allow after the floor.
+    - action: shell
+      resource: git checkout -b * main*
+      effect: allow
+    - action: shell
+      resource: git * checkout -b * main*
+      effect: allow
+    - action: shell
+      resource: git checkout -B * main*
+      effect: allow
+    - action: shell
+      resource: git * checkout -B * main*
+      effect: allow
+    - action: shell
+      resource: git switch -c * main*
+      effect: allow
+    - action: shell
+      resource: git * switch -c * main*
+      effect: allow
+    - action: shell
+      resource: git switch -C * main*
+      effect: allow
+    - action: shell
+      resource: git * switch -C * main*
+      effect: allow
+    - action: shell
+      resource: git worktree add -b * main*
+      effect: allow
+    - action: shell
+      resource: git * worktree add -b * main*
+      effect: allow
+    # Push is NOT this role's route: `ask` keeps an interactive human as the only
+    # one who can authorize an ad-hoc push, while an unattended run is blocked
+    # (ask resolves to deny there). The main-leg and force forms are denied
+    # outright, after the ask row so last-match-wins keeps them closed. The
+    # `git *`-prefixed deny twins match the substring `push` anywhere in the
+    # command string — paths and commit messages included, so `git commit -m
+    # "fix push to main"` denies; keep that word out of git strings on a
+    # ticket branch.
     - action: shell
       resource: git push*
       effect: ask
+    - action: shell
+      resource: git push*main*
+      effect: deny
+    - action: shell
+      resource: git * push*main*
+      effect: deny
+    - action: shell
+      resource: git push --force*
+      effect: deny
+    - action: shell
+      resource: git push -f*
+      effect: deny
+    - action: shell
+      resource: git push * --force*
+      effect: deny
+    - action: shell
+      resource: git push * -f*
+      effect: deny
+    - action: shell
+      resource: git * push --force*
+      effect: deny
+    - action: shell
+      resource: git * push -f*
+      effect: deny
+    - action: shell
+      resource: git * push * --force*
+      effect: deny
+    - action: shell
+      resource: git * push * -f*
+      effect: deny
     - action: shell
       resource: ls *
       effect: allow
