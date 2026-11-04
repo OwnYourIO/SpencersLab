@@ -13,7 +13,7 @@ One authority for the push/PR operation. `-local` and plain agents never load th
 
 ## Applies to
 
-Only the `-pr` variants: `agent-coord-pr`, `agent-board-coord-pr`, `agent-dev-pr`, standalone `dev-pr`, and standalone `code-pr` — the `code` family's push twin, governed here because it is the only standalone agent allowed to push (cf-106 OQ-10). A `-local` or plain-alias agent that finds this skill in its load list has drifted — it must stop and report instead of pushing.
+Only the `-pr` variants: `agent-coord-pr`, `agent-board-coord-pr`, `agent-dev-pr`, standalone `dev-pr`, and standalone `code-pr` — the `code` family's push twin, governed here on the same footing as standalone `dev-pr`: those two are the whole set of standalone agents holding a push allow (cf-106 OQ-10). A `-local` or plain-alias agent that finds this skill in its load list has drifted — it must stop and report instead of pushing.
 
 ## Push rules
 

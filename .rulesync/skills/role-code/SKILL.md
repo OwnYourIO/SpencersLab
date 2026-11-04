@@ -39,7 +39,12 @@ pasted into chat.
   pipeline — do not implement it. The one qualified exception (cf-106
   OQ-10): a launch by an `agent-*` coordinator naming the chunk under its
   roster's second-implementer grant — there you implement that chunk as the
-  coordinator's sanctioned second implementer. Even then you load no
+  coordinator's sanctioned second implementer. The ticket folder's own
+  bookkeeping stays the coordinator's: never edit its `STATE.json`,
+  `DECISIONS.md`, `FRICTION.md` or `chunks/*` — those files are how the
+  coordinator records your hand-off, and rewriting them from a launched
+  session destroys the run's memory. Your `.agents/plans/**` write stays what
+  it always was: the dated plan file of standalone work. Even then you load no
   pipeline machinery for yourself: never `pipeline-conventions`, never a
   `pipeline-role-*` contract. The only `pipeline-*` skill in play is
   `/pipeline-push-pr` on the `code-pr` twin, the contract that gates its
@@ -77,20 +82,28 @@ uncommitted for review on the main branch if asked.
 `git checkout`, `git switch` and `git branch` are `allow` — you stage,
 commit and branch your own work, and creating a branch *from* `main`
 (`-b`/`-B`/`-c`/`-C` naming an off-main branch) is not main-advancing.
-Every main-advancing form is denied outright — checkout/switch on `main`,
-`update-ref`, `symbolic-ref`, force/delete/rename of `main` through `branch`,
-`worktree add … main`, `merge`, `pull`, `config alias` — the coord family's
-floor shape. The twins part at `git push`: on `code` it stays `ask`, so an
-interactive human remains the only one who can authorize an ad-hoc push and
-an unattended run is blocked; on `code-pr` it is `allow` **only under the
-`pipeline-push-pr` contract** — explicit user request, ticket branch only,
-never main, never force — and every such push is reported in your RESULT for
-the coordinator. Two matcher facts to keep: the deny twins match the
-substring `push` wherever it lands, so keep that word out of git command
-strings and commit messages on a ticket branch (`git commit -m "fix push to
-main"` is denied); and on `code-pr` a `-C`-prefixed plain push stays `ask`
-by design — byte-parity with the shipped `agent-dev-pr`, which grants no
-wider push route — so do not "fix" that with a `git * push*` allow.
+Every main-advancing form the floor enumerates is denied outright —
+checkout/switch on `main`, `update-ref`, `symbolic-ref`, `branch` on `main`
+with `-f`/`--force`/`-d`/`-D`/`-m`/`-M`, `worktree add … main`, `merge`,
+`pull`, `config alias` — each with its `git *` twin; the `code` row of the
+`agents-sync` permissions matrix is the enumeration of record. An
+enumeration is not a closure: `branch -B`/`-C`/`-c` and
+`--move`/`--copy`/`--delete` on `main` fall through to the `git branch*`
+allow, and this floor is narrower than the coord family's (that one also
+denies `-c`/`-C` and carries the broad `git * --force*` rows). So the rule
+is the intent, not the matcher: never move `main`, by an enumerated spelling
+or by one the rows have not closed yet. The twins part at `git push`: on
+`code` it stays `ask`, so an interactive human remains the only one who can
+authorize an ad-hoc push and an unattended run is blocked; on `code-pr` it is
+`allow` **only under the `pipeline-push-pr` contract** — explicit user
+request, ticket branch only, never main, never force — and every such push
+is reported in your RESULT for the coordinator. Two matcher facts to keep:
+the deny twins match the substring `push` wherever it lands, so keep that
+word out of git command strings and commit messages on a ticket branch
+(`git commit -m "fix push to main"` is denied); and on `code-pr` a
+`-C`-prefixed plain push stays `ask` by design — byte-parity with the shipped
+`agent-dev-pr`, which grants no wider push route — so do not "fix" that with
+a `git * push*` allow.
 Read-only git (`status`, `log`, `diff`) needs no confirmation.
 
 ## MCP server privilege rule (hard)

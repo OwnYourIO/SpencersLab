@@ -253,13 +253,41 @@
       "handoffs": []
     },
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e5a7226b3ffeUdUa37D0i1jOa3",
+      "review_session": "ses_e5a296944ffe5i72HNcX04vcOn (r1), ses_e59f27ac7ffeLD2tHT7i0er1bp (r2)",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "validation_repairs": 2,
+      "last_verdict": "APPROVED",
+      "commit": "36a65d26f",
+      "files_in_scope_widened": "+ .rulesync/rules/overview.md + AGENTS.md (DECISIONS-routed slug-stack sweep) + tests/agent-board-coord/gate.sh + tests/coord-inwork/surface.sh (test_session roster re-pins) — accepted by review r1 deviation (a) and r2 R2-N1",
+      "handoffs": [
+        {
+          "role": "dev", "status": "BLOCKED (test-side fixtures) r1 → DONE r2", "chunk": "C04",
+          "files_changed": [".rulesync/subagents/{agent-coord,agent-coord-local,agent-coord-pr,agent-board-coord,agent-board-coord-local,agent-board-coord-pr,code}.md", ".rulesync/subagents/code-pr.md (new)", ".rulesync/skills/{pipeline-role-coord,pipeline-push-pr,role-code}/SKILL.md", ".rulesync/skills/agents-sync/references/permissions.md", ".rulesync/rules/overview.md", "AGENTS.md", "regenerated .opencode/agents/** (incl. code-pr.md) + .opencode/skills/**"],
+          "commands_run": ["rulesync generate x2 (2nd no-op) + generate --check => pass", "standalone-agents => pass (11 ok, S7/S10/S11 flipped green)", "pipeline-push-pr => pass (10 ok, P3/P10)", "rulesync-surface c1..c22 + c24 => pass (whole red only c23 = C09)", "agent-perms a12/a16/a17/a18/a19 => pass (whole red at A15 = C08)", "gate t1..t16 t18..t21 => pass (t17 pre-existing, proven at base clone b6bcb00af)", "coord-inwork i1 i2 i3 i5..i8 => pass (i4 pre-existing)", "agents-md c10 / kickoff-branch m4 / session-origin s4 / validation-fix t4 => red at base clone too (not C04)", "baseline clone at b6bcb00af re-ran all six red suites => all six red at base => none introduced by C04", "family.py before/after probe across the A5 comment move => parsed permissions byte-identical", "aislop ci --changes => r1 exit 1 (score 82, errors in services/gpu/prod/values.yaml from a reverse-diff artifact because the branch sat behind origin/main) → r2 exit 0 (100/100) after the role-code fix", "drift audit (permissions.md steps) => clean: 17 agent-* sources all carry question allow, ask baseline leads, MCP prefixes match live servers"],
+          "round1_blocker_fixed": "B1: role-code forbade any pipeline context while the roster now launches code/code-pr with a chunk id, and code-pr MUST-loads a pipeline-* skill — plus role-code's git paragraph was stale (everything described as ask) and told the agent to merge main into its branch (a command the new floor denies). Fixed with a qualified coordinator-launch exception, the shipped git posture, and rebase-onto-main; mirror moved with the source.",
+          "deviations": ["(a) .rulesync/rules/overview.md + AGENTS.md amended outside Files-in-scope (required for c24/agents-md arms + the routed slug sweep) — accepted by review", "(b) git *-prefixed deny twins added because the shell matcher anchors at command start and the shipped `* git push …` form misses -C-prefixed commands — accepted as required (shipped agent-dev-pr answers ask, not deny, for git -C x push --force)", "(c) git -C <path> push origin feature-x stays ask on code-pr by byte-parity with agent-dev-pr (allow only via the plain form) — accepted, no re-cut", "round 2: the exception clause deliberately names pipeline-conventions inside a prohibition, which reddened S5's blanket token ban → routed to test_session as a re-cut, not reverted", "A5: the misplaced twin comment exists in exactly two -pr roster sources, not three (grep-verified)"],
+          "friction": "agent-perms fixture builders use a top-level permissions accessor while sources nest under opencode: (A12 crash, A17 inert controls); A16's count literal stale at 25; aislop ci --changes pulls main-only files into the reverse diff on a branch behind origin/main"
+        },
+        {
+          "role": "test-repair", "status": "DONE x2", "chunk": "C04-validation-repairs", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/agent-perms/surface.sh", "tests/standalone-agents/surface.sh", "tests/agent-board-coord/gate.sh", "tests/coord-inwork/surface.sh"],
+          "what": "round 1: A12/A17 fixture builders re-cut to the nested opencode: accessor with reason-pinned mutants, A16 25→26, t17/i4 roster literals re-pinned per class. round 2: S5's token ban replaced by binding probes + six reason-pinned drift controls (unconditional-never, drop-exception, merge-main, code-loads-push-pr, affirmative-load, stale-ask-posture); A19 battery sweep made shape-aware (bites on a source); A17 code-pr matrix completed (symbolic-ref, branch --force main, merge main, switch -c); t17/i4 roster guards restored to ordered-LIST pins with missing/extra/duplicated naming; agent-perms header AC trace + ask-as-deny note",
+          "commands_run": ["standalone-agents whole => pass (12 ok + 1 pre-existing skip)", "agent-perms whole => 1 red = A15 (C08); a1..a14 a16..a19 => pass (18 ok)", "pipeline-push-pr => pass (10 ok)", "rulesync-surface => red only at c23 (C09); c24 => pass", "gate.sh => red only at t17; subset => pass (22 ok)", "coord-inwork => red only at i4; subset => pass (7 ok)", "cf106-noop => pass, noop-marker n1 n5 => pass, slug-stack => pass", "out-of-suite mutant proofs for every re-cut (extracted checkers, /tmp copies)"],
+          "honest_note": "t17 and i4 stay red for the PRE-EXISTING sanctioned-scripts cause (main 7e07a6273 added `bash scripts/kickoff-warm-location.sh *`, tracked on its own Review card, not cf-106); the roster leg is proven satisfied by running each suite's shipped cfpins.py over all six coord sources with only that row stripped => all six exit 0. The allowlist was not patched here."
+        },
+        {
+          "role": "review", "status": "CHANGES REQUESTED (r1) → APPROVED (r2)", "chunk": "C04",
+          "r1_session": "ses_e5a296944ffe5i72HNcX04vcOn", "r2_session": "ses_e59f27ac7ffeLD2tHT7i0er1bp",
+          "r1_findings": ["BLOCKER B1: role-code:35-37 (mirror :36-38) contractually forbids the escape-hatch launch the roster just created, and code-pr's MUST-load of pipeline-push-pr contradicts the same clause; role-code:66-72 stale git posture; :62-63 instructs a merge-main the new floor denies — nothing in the suites caught it (S5 pinned the clause AND the negative)", "A1 A19's battery sweep reads top-level permissions → inert on sources; A2 A17 code-pr cells a subset of AC3; A3 no C04 round note / AC trace stops at A16; A4 the roster re-cut moved list→set equality, losing duplicate/order detection; A5 twin comment mispositioned; A6 the push-substring deny friction and the -C-push ask asymmetry undocumented", "Deferred: git branch -B main <sha> is allow on all six coord agents at HEAD and git push --all/--mirror allow on agent-coord-pr — composes into move-local-main + publish, pre-existing, extended to two more roles"],
+          "r2_commands_run": ["standalone-agents => pass (12 ok + skip); s5 => pass", "agent-perms whole => only A15 = C08; a1..a14 a16..a19 => pass; a15 => C08 only", "pipeline-push-pr => pass; rulesync-surface => only c23, c24 pass", "gate.sh => only t17 (proven pre-existing, roster leg clean across all 12 coord files via the suites' own cfpins.py); coord-inwork => only i4", "rulesync generate --check + generate x2 with identical git status (31 entries) => pass", "aislop ci --changes => pass (100 vs floor 80)", "slug-stack / cf106-noop / noop-marker n1 n5 / pipeline-models => all pass", "node --test tests/opencode/*.test.ts => 243 pass / 43 fail, identical to the C03a baseline, C07–C10 only", "independent re-derivations: family.py policy/policybatch/parity/roster, contract.py probes, battery_sweep source fixture, four roster mutants"],
+          "r2_findings": ["B1 landed and the contradiction is closed everywhere (grep across role-code, pipeline-role-coord, pipeline-push-pr, pipeline-conventions, executing-plans); AC1–AC7 re-derived on source and mirror; AC8 arm-level (whole-suite exit 0 unreachable in this tree while A15/c23/t17/i4/m4/s4/c10/t4 stay red)", "non-blocking: R2-A1 three sentences over-claim the main-advance floor (git branch -B main ⇒ allow on code/code-pr AND the six coord agents; git branch -C main ⇒ allow on code only) — soften the prose or land the hardening card; R2-A2 pipeline-push-pr:16 calls code-pr the only standalone agent allowed to publish, contradicting permissions.md:71 (dev-pr) and AGENTS.md:121; R2-A3 code keeps edit .agents/plans/** allow with no clause reserving STATE/DECISIONS/FRICTION/chunks to coord; R2-A4/N2 stale suite comments; R2-N1 Files-in-scope widening", "Deferred → recommended Inbox card: close the -B/-C/long-form main-advance spellings and push --all/--mirror across the coord, dev-pr and code families before runs routinely launch code-pr"]
+        }
+      ]
     },
     "C05": {
       "status": "pending",

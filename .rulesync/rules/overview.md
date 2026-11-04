@@ -104,9 +104,11 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `code` (`.agents/agents/code.md`) — executes plans. Runs in fresh sessions:
   the plan file tells it which skills and MCP servers to load. Carries real git
   writes (`add`/`commit` plus non-main branch verbs, every main-advancing form
-  denied; its push row stays `ask`, so only an interactive human can authorize
-  an ad-hoc one). Explicitly no pipeline context when a user hands it work: a
-  ticket folder or chunk id in that shape is redirected to the `dev` family.
+  its floor enumerates denied — `-B`/`-C`/`-c`/`--move` on `main` stay open
+  spellings, so never move `main` by any route; its push row stays `ask`, so
+  only an interactive human can authorize an ad-hoc one). Explicitly no
+  pipeline context when a user hands it work: a ticket folder or chunk id in
+  that shape is redirected to the `dev` family.
   `code-pr` (`.agents/agents/code-pr.md`) is its twin on the dev/dev-pr
   precedent — the same surface with the push allow closed by the shipped
   `agent-dev-pr` main/force deny floor, under `pipeline-push-pr`. The

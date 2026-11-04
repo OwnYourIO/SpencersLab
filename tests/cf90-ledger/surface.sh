@@ -21,7 +21,9 @@
 # deliverable; the appendix is approved plan content) and HOLD; t3 is
 # DESIGNED RED until C03 lands (C07 executes in wave 2, after C03, so its
 # gate sees t3 green — red for anyone running C07's gate early means the
-# dependency order was violated).
+# dependency order was violated). t5/t6/t7 were designed red until cf-106
+# C05's skill edits landed (they are green in this tree); t8 is a HOLD pin
+# that C05 must not move.
 #
 # AC trace: t1[chunk Tests: the read-back checklist exists and covers AC1-AC5]
 # t2[AC1/AC2 content guards — 12 entries, CREATE/CITE split, each CREATE
@@ -30,13 +32,31 @@
 # parent labels EXCEPT Research, never add_checklist, default_checked-or-
 # toggle degrade] t4[AC2 negatives — no Low-Priority/Review destination for
 # ledger cards; Inbox is never CREATED by this chunk].
+# t5[cf-106 C05 AC1: the five follow-up modes (new session / current session /
+#   plan only / Inbox card / none) with none-means-stop semantics, in the role
+#   contract AND the boards override, sources + mirrors; fabricated sixth-mode
+#   control] t6[C05 AC1 family preference — role contract recommends `new
+#   session`, boards recommends `Inbox card`, never both] t7[C05 AC3 — the
+#   current-session bound stated once in the role contract (never re-opens a done
+#   chunk; new work = a recorded chunk in STATE.json + DECISIONS.md, or a
+#   separate ticket) and CITED, not restated, by boards] t8[C05 AC4 HOLD — the
+#   standing follow-up rules survive the C05 edit (Inbox in Backlog, list_lists
+#   re-resolution, never add_checklist, not-a-run) with a destination-rewrite
+#   control].
+#
+# cf-106 C05 harness repair (2026-11-04, agent-test; dev-proven read-only): t5's
+# sixth-mode control ran a sed whose BRE group was never closed, so GNU sed died at
+# parse time on any input and the whole suite exited 1 with no assertion having failed.
+# The group is closed; no assertion, mode vocabulary, or HOLD leg changed. t8's rename
+# fixture also stopped dumping the rewritten skill to stdout (it buried the report in
+# ~400 lines of skill prose); it keeps its strip-target guard.
 #
 # Offline-deterministic: text pins over the repo tree only. No dev-boards
 # call, no OpenChamber, no network — the live read-back legs run in
 # production during the coord-executed C07 pass, per this runbook.
 #
 # Usage:
-#   bash tests/cf90-ledger/surface.sh            # t1..t4
+#   bash tests/cf90-ledger/surface.sh            # t1..t8
 #   bash tests/cf90-ledger/surface.sh t3         # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -292,8 +312,11 @@ if want t5; then
     python3 "$TMP/friction.py" "$f" vocab \
       || fail "t5[cf-106 C05 AC1]: $f does not carry the five-mode vocabulary with the none-means-stop semantics (red before C05's skill edit; source and mirror must move together)"
   done
-  # Control: a fabricated sixth option reddens the same checker.
-  sed 's/^\(11\..*stop\./\1\n   6. **defer to owner** — hand the item to the owner./' "$RC_SRC" >"$TMP/sixth.md"
+  # Control: a fabricated sixth option reddens the same checker. The BRE group must
+  # close — an unterminated `\(…` kills sed at parse time on ANY input, which read as
+  # a suite failure rather than as a broken fixture (cf-106 C05 dev round).
+  sed 's/^\(11\..*stop\.\)/\1\n   6. **defer to owner** — hand the item to the owner./' "$RC_SRC" >"$TMP/sixth.md" \
+    || fail "t5[cf-106 C05]: the sixth-mode fabricator itself failed (fixture fault — a broken sed/awk expression reads as a suite failure, not as a broken control)"
   grep -q 'defer to owner' "$TMP/sixth.md" \
     || fail "t5[cf-106 C05]: NEGATIVE CONTROL FAILED — could not fabricate a sixth mode in the copy (the control proves nothing)"
   python3 "$TMP/friction.py" "$TMP/sixth.md" vocab >/dev/null 2>&1 \
@@ -336,10 +359,11 @@ if want t8; then
   python3 - "$BOARDS_SRC" <<'PY'
 import re, sys
 text = open(sys.argv[1]).read()
+# Guard only: the rename control below needs a destination token to rewrite. Writing
+# the renamed copy to stdout would bury the suite's own report in skill prose.
 out, n = re.subn(r"Inbox", "Review", text, count=1)
 if n == 0:
     print("fixture: no Inbox mention to strip in the real skill (the live arm reddens first)"); sys.exit(1)
-open("/dev/stdout", "w").write(out)
 PY
   python3 - "$BOARDS_SRC" "$TMP/boards-no-inbox.md" <<'PY'
 import re, sys

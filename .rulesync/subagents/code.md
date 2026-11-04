@@ -89,11 +89,17 @@ opencode:
     - action: shell
       resource: git branch*
       effect: allow
-    # main-advancing deny floor, same shape as the coord family's: moving main
-    # needs make-main-HEAD, ref plumbing, a merge, a pull or an alias, and every
-    # leg is denied. Order is load-bearing — last match wins, so the floor sits
-    # AFTER the allows it closes, and each in-command rule ships as a prefix
-    # form plus a `git *` twin because the matcher anchors at the command start.
+    # main-advancing deny floor — narrower than the coord family's, not its
+    # mirror: it enumerates the checkout/switch forms, update-ref, symbolic-ref,
+    # branch on main with -f/--force/-d/-D/-m/-M, worktree add, pull, merge and
+    # config alias. Unenumerated spellings still answer allow through the
+    # `git branch*` row above (read through the matcher 2026-11-04: -B/-C/-c and
+    # --move on main are allow here; -C/-c are deny on the coord family, which
+    # also carries the broad `git * --force*` rows this floor lacks). Never move
+    # main, whichever way the rows read. Order is load-bearing — last match wins,
+    # so the floor sits AFTER the allows it closes, and each in-command rule
+    # ships as a prefix form plus a `git *` twin because the matcher anchors at
+    # the command start.
     - action: shell
       resource: git checkout main*
       effect: deny
