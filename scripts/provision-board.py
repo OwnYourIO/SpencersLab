@@ -67,10 +67,12 @@ SNAPSHOT_SCHEMA_V2 = "wekan-board-snapshot/2"
 # not retyped (the cf96 cutover suite pins the equality and fails loudly on
 # drift). Ten stages plus Single Session LAST (OQ6 ruling), Human in the
 # Loop mirrors the same eleven names (OQ6 derived), and the createCard
-# extras arrive with ONLY Model(s) → Qwen Flash checked (OQ13 ruling) so
-# blank Lifecycle/HITL defaults govern. Services/Type/Model(s) carry the
-# v1 rule's item sets (`.agents/plans/2026/2026-10-dep-wekan-v12-upgrade/
-# board-rules-v12.64.json`).
+# extras arrive with ONLY Model(s) → Qwen Dense checked (OQ13's single-check
+# posture, Dense default by the cf-106 OQ-7 ruling) so blank
+# Lifecycle/HITL defaults govern. Services/Type carry the v1 rule's item
+# sets (`.agents/plans/2026/2026-10-dep-wekan-v12-upgrade/
+# board-rules-v12.64.json`); Model(s) carries the current vocabulary
+# generation — cf-106 renamed the dense label only, no model id moved.
 LIFECYCLE_ITEMS = [
     "Exploration",
     "Agent Decides Research",
@@ -110,16 +112,19 @@ CHECKLIST_SPEC = {
         "checked": [],
     },
     "Model(s)": {
-        "items": ["Qwen Large", "Qwen 27b", "Qwen Flash", "Local (gpu-ai)"],
-        "checked": ["Qwen Flash"],
+        "items": ["Qwen Large", "Qwen Dense", "Qwen Flash", "Local (gpu-ai)"],
+        "checked": ["Qwen Dense"],
     },
     "Lifecycle": {"items": LIFECYCLE_ITEMS, "checked": []},
     "Human in the Loop": {"items": LIFECYCLE_ITEMS, "checked": []},
 }
-# The v2 rules-import artifact the drift action points the human at; C08
-# produces it modify-only and no agent applies it (C10's runbook executes).
+# The rules-import artifact the drift action points the human at: the CURRENT
+# vocabulary generation, re-issued by the ticket that moved the vocabulary
+# (cf-106's Dense generation). Modify-only and never applied by an agent —
+# the owner imports it after a board backup (the boards runbook governs); the
+# cf-96 board-rules-v12.65.json it re-issues stays as the applied history.
 RULES_ARTIFACT = (
-    ".agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json"
+    ".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json"
 )
 
 

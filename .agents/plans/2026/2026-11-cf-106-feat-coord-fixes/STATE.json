@@ -172,13 +172,38 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e5b21ab56ffeEo2sZseRpE23wS",
+      "review_session": "ses_e5b00905effeInvnVLI0y17BMM",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "in-flight — sha written at the next STATE write (prevails over 625d7843d)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "BLOCKED (validation_at_fault)", "chunk": "C02",
+          "files_changed": [".rulesync/skills/boards/SKILL.md", ".rulesync/skills/pipeline-kickoff/SKILL.md", ".rulesync/skills/pipeline-models/SKILL.md", ".rulesync/skills/agents-sync/references/pipeline-overview.md", "4 generated .opencode/skills mirrors", "scripts/provision-board.py", "skills/wekan-board-provision/SKILL.md", ".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json"],
+          "commands_run": ["rulesync generate x2 (2nd no-op) + --check => pass", "pipeline-models/surface.sh => pass exit 0 (M1-M8)", "rulesync-surface.sh => fail at c23 (C09 designed); subset c8 c11 => pass", "wekan-board-provision/surface.sh => pass exit 0 (11 ok)", "checklist-cutover.sh => FAIL at t2 control + t7 $V1 (test-side)", "provision dry-run matching => [] pass; drift => one update_createcard_checklists naming Dense want => pass", "py_compile => pass", "cf96-lifecycle/surface.sh => pass exit 0", "aislop ci --changes => pass (100, 0/0)", "collateral matches the test wave's recorded after-state", "git grep 'Qwen 27b' survivor audit => M7 exception set exactly", "helm => N/A"],
+          "validation_at_fault": "tests/wekan-board-provision/checklist-cutover.sh — (1) t2's non-vacuity POSITIVE control fed a `board-rules-v12.64.json` pointer while the same checker requires the `board-rules-v12.65` substring, so the control failed by construction; (2) t7's `$V1` named `.agents/plans/2026/2026-10-dep-wekan-v12-upgrade/board-rules-v12.65-dense.json`, a path existing in no revision. Dev proved both test-side by extracting the suite's own checkers; no tests/** edited.",
+          "deviations": "(a) hand-managed provision skill's import citations re-pointed at the cf-106 Dense artifact, keeping the literal `board-rules-v12.65.json` token as applied history (cutover t6 pins it); (b) boards cutover runbook gained step (3) for the Model(s) rename so the alias's owner-rename citation resolves, phrased inside M5's one-mention budget; (c) kickoff picker keeps four options in place, `Local` recommendation lands in the boards Provider-filtering question",
+          "open_questions": "t7 copy-source choice (cf-96 v12.65 vs v12.64) — coord ruled cf-96 v12.65; whether the runbook step or a plan-step citation is the alias's home — coord ruled the runbook"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C02-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/wekan-board-provision/checklist-cutover.sh (+118/-10)"],
+          "commands_run": ["checklist-cutover.sh whole => pass exit 0 (11 ok, t1-t10)", "each leg individually => exit 0", "surface.sh => pass exit 0", "cf96-lifecycle => pass exit 0", "pipeline-models => pass exit 0", "rulesync-surface => fail at c23 (C09)", "bash -n => clean"],
+          "what": "t2 controls now mutate the ENGINE's own drift payload (positive: artifact field re-point only, with a built-in assertion that nothing else moved; negatives: stale generation, retired name, missing action, duplicated action, absent artifact field). t7 `$V1` → cf-96 `board-rules-v12.65.json` with a copy-source generation guard (must carry `Qwen 27b` + exactly one Model(s)→Qwen Flash checkItem) and seven fabricated-defect controls. No assertion about artifact content or engine functionality changed.",
+          "friction": "law learned: a non-vacuity control must be derived from the same real payload the dev-facing half consumes (hand-written controls hid the contradiction); `agent-test` cannot write the ticket folder it annotates, so after-state truth returns in RESULT (coordinator records it here)"
+        },
+        {
+          "role": "review", "status": "APPROVED", "chunk": "C02",
+          "commands_run": ["pipeline-models => pass exit 0", "rulesync-surface => whole fail at c23, c1-c22 green incl c8/c11/c19", "provision surface => pass exit 0", "checklist-cutover => pass exit 0 (t1-t10)", "dry-runs matching/drift => pass", "cf96-lifecycle => pass exit 0", "generate --check => clean", "py_compile => pass", "aislop ci --changes => pass (0 errors 0 warnings, 67 files)", "collateral reds all attributed (noop-marker N2=C03b, cf90-ledger t5=C05, boards-deps t2=C06, agents-md c10=C03b, tools t2/skill-surface t4=C07) — no unattributable red", "C01 integrity: slug-stack exit 0, agent-perms A15 roster arm green, session-origin s1/s2/s3 green (s4 pre-existing)", "helm => N/A", "git grep 'Qwen 27b' audit => M7 set exactly"],
+          "findings": ["repaired legs judged SOUND (t2 negatives hit distinct checker arms; t7 re-point verified byte-equal Services/Type across v12.64→v12.65→Dense, and cf-96's file is the only generation satisfying the pre-Dense guard)", "minor: boards:231 (+mirror :248) alias says the cutover section is 'below' — it is above (:56)", "minor: boards:219 hard-codes 'Qwen Dense on the local provider' for blank Model(s) while :148 routes a `Provider: API` card 'from the checklist as today' — one clause closes the double reading", "minor (test-side): checklist-cutover t2 pointer pin never asserts the named file exists — add os.path.exists + a nonexistent-pointer negative", "nit: boards :227-232 wrap break", "reviewer ruled (a) the cf-96 token wording honest, (b) the runbook the right home for the Model(s) rename step", "deferred: 0-pipeline…7b-docs-dev frontmatter still pins openrouter models (per-stage choices, no C02 AC reaches it); rule title drifts across artifact generations — owner read-back should confirm exactly one createCard rule survives the import"]
+        }
+      ]
     },
     "C03a": {
       "status": "pending",

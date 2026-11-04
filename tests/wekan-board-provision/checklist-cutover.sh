@@ -83,7 +83,7 @@ FX_MATCH="$FXDIR/ai-dev-schema2-matching.json"
 FX_NOLABEL="$FXDIR/ai-dev-schema2-no-parallel-label.json"
 FX_CASE="$FXDIR/ai-dev-schema2-labelcase.json"
 ARTIFACT=".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json"
-V1=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade/board-rules-v12.65-dense.json"
+V1=".agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json"
 # cf-106 C02: the createCard rule-extra artifact is re-issued per vocabulary
 # generation, so the CURRENT-state artifact lives in the cf-106 ticket folder
 # (the cf-96 file stays as the applied history). Any `board-rules-v12.65*` name
@@ -195,12 +195,59 @@ PY
   if ! python3 "$TMP/artifact_ptr.py" "$TMP/drift.out" "$ARTIFACT_DIR"; then
     fail "t2[C02 AC6]: the drifted schema-2 plan's artifact pointer failed the pins above — the pointer still names a previous generation's artifact (designed red until C02 re-points the engine at its own folder's Dense artifact)"; fi
   # Non-vacuity controls for the pointer pin (the suite's own checker decides).
-  printf '%s' '[{"action":"update_createcard_checklists","artifact":".agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json","drift":["Model(s)"]}]' >"$TMP/ctl-old.json"
-  printf '%s' '[{"action":"update_createcard_checklists","artifact":".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.64.json","drift":["Model(s)"]}]' >"$TMP/ctl-new.json"
-  python3 "$TMP/artifact_ptr.py" "$TMP/ctl-old.json" "$ARTIFACT_DIR" >/dev/null 2>&1 \
-    && fail "t2 control: a pointer at the retired cf-96 artifact PASSED the pointer pin — the control is vacuous, fix the pin (not the engine)"
-  python3 "$TMP/artifact_ptr.py" "$TMP/ctl-new.json" "$ARTIFACT_DIR" >/dev/null 2>&1 \
-    || fail "t2 control: the cf-106-folder Dense artifact pointer FAILED its own pin — the checker is broken"
+  # Every control is the ENGINE's own drift payload mutated in one way, never a
+  # hand-written minimal dict: a fabricated payload could pass or fail for shape
+  # reasons and would prove nothing about the real plan output.
+  # POSITIVE: the real payload with only the artifact field rewritten to another
+  # v12.65-generation name in the ticket folder — the pin accepts any name in that
+  # generation, and the payload keeps its full drift list, so the checker is proven
+  # satisfiable by genuine engine output (not merely by a name-shaped string).
+  python3 - "$TMP/drift.out" "$TMP/ctl-good.json" <<'PPOS'
+import json, sys
+payload = json.load(open(sys.argv[1]))
+assert payload, "no engine drift payload to derive the positive control from (harness fault)"
+rewritten = []
+for act in payload:
+    if act.get("action") == "update_createcard_checklists":
+        act = dict(act, artifact=".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65.json")
+    rewritten.append(act)
+json.dump(rewritten, open(sys.argv[2], "w"))
+base = json.load(open(sys.argv[1]))
+same = [a for a, b in zip(base, rewritten) if a is not b]
+assert len(same) == 1 and set(same[0]) == set(base[0]), "positive control mutated more than the artifact field"
+PPOS
+  python3 "$TMP/artifact_ptr.py" "$TMP/ctl-good.json" "$ARTIFACT_DIR" >/dev/null 2>&1 \
+    || fail "t2 control: the real engine payload with a v12.65 pointer into the ticket folder FAILED its own pin — the checker is broken (not the engine)"
+  # NEGATIVES: one defect per arm, each a mutation of the real payload. A name-only
+  # control would leave the count/type arms untested, so the missing-action,
+  # duplicate-action and absent-artifact defects are fed too.
+  cat >"$TMP/mutate.py" <<'PDEF'
+# One defect per arm, each a single mutation of the engine's own drift payload.
+import json, sys
+payload, defect = json.load(open(sys.argv[1])), sys.argv[3]
+out = []
+for act in payload:
+    if act.get("action") != "update_createcard_checklists":
+        out.append(act); continue
+    if defect == "stale":        # pointer at the applied, previous-generation artifact
+        act = dict(act, artifact=".agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json")
+    elif defect == "oldgen":     # right folder, retired v12.64 generation name
+        act = dict(act, artifact=".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.64.json")
+    elif defect == "noartifact": # the human is told nothing about what to import
+        act = {k: v for k, v in act.items() if k != "artifact"}
+    out.append(act)
+if defect == "missing":          # the drift is reported with no import action at all
+    out = [a for a in out if a.get("action") != "update_createcard_checklists"]
+if defect == "double":           # two import actions for one drifted rule-extra set
+    out = out + [a for a in payload if a.get("action") == "update_createcard_checklists"]
+json.dump(out, open(sys.argv[2], "w"))
+PDEF
+  for defect in stale oldgen missing double noartifact; do
+    python3 "$TMP/mutate.py" "$TMP/drift.out" "$TMP/ctl-$defect.json" "$defect" \
+      || fail "t2 control: could not fabricate the '$defect' defect from the engine payload (harness fault)"
+    python3 "$TMP/artifact_ptr.py" "$TMP/ctl-$defect.json" "$ARTIFACT_DIR" >/dev/null 2>&1 \
+      && fail "t2 control: the fabricated '$defect' defect still PASSED the pointer pin — the guard is inert, fix the pin (not the engine)"
+  done
   ok "t2[C02 AC6/C08 AC1]: drifted schema-2 -> exactly one update_createcard_checklists naming a board-rules-v12.65 artifact inside the cf-106 folder, control-proven pointer pin"
 fi
 
@@ -314,7 +361,7 @@ if want t7; then
   [ -f "$ARTIFACT" ] \
     || fail "t7[C02 AC6]: $ARTIFACT does not exist yet — C02 re-issues the createCard rule-extra artifact for the Dense vocabulary generation (modify-only, never applied by an agent; the owner applies it). Designed red until C02 dev writes it; the cf-96 file stays as applied history."
   [ -f "$V1" ] || fail "harness: the v1 artifact $V1 is the Services/Type/Model(s) copy-source and must exist"
-  if ! python3 - "$ARTIFACT" "$V1" "$SRC_BOARDS" <<'PY'
+  cat >"$TMP/artifact_pins.py" <<'PY'
 import json, re, sys
 
 rules = json.load(open(sys.argv[1]))
@@ -362,8 +409,69 @@ assert all(c["checkItemName"] == "Qwen Dense" for c in checks), (
 assert len(checks) == 1, f"exactly one checkItem expected (Model(s) default only); got {len(checks)}"
 print("ok")
 PY
-  then fail "t7[C02 AC6]: the artifact pins failed (reason above)"; fi
-  ok "t7[C02 AC6]: artifact valid — five extras, Services/Type copied from v1, Model(s) on the Dense four labels (v1 copy explicitly rejected), Lifecycle+HITL byte-equal to C07's text, exactly one checkItem = Model(s) → Qwen Dense, retired label absent"
+  if ! python3 "$TMP/artifact_pins.py" "$ARTIFACT" "$V1" "$SRC_BOARDS"; then
+    fail "t7[C02 AC6]: the artifact pins failed (reason above)"; fi
+  # The copy-source must itself be the PRE-Dense generation: repointing V1 at a
+  # Dense-era file would make the Model(s) anti-copy arm vacuous by construction.
+  if ! python3 - "$V1" <<'PCOPY'
+import json, sys
+v1 = json.load(open(sys.argv[1]))[0]
+acts = [v1["action"]] + list(v1.get("extraActions") or [])
+adds = {a["checklistName"]: a["checklistItems"].split(",") for a in acts if a.get("actionType") == "addChecklistWithItems"}
+checks = [a for a in acts if a.get("actionType") == "checkItem"]
+bad = []
+if "Qwen 27b" not in adds.get("Model(s)", []):
+    bad.append(f"the copy-source Model(s) extras {adds.get('Model(s)')} carry no retired label — it is not the pre-Dense generation")
+if [c.get("checkItemName") for c in checks] != ["Qwen Flash"]:
+    bad.append(f"the copy-source checkItems are {[c.get('checkItemName') for c in checks]}, want the applied generation's single Model(s) → Qwen Flash")
+print("; ".join(bad)); sys.exit(1 if bad else 0)
+PCOPY
+  then fail "t7 control: the copy-source $V1 is not the pre-Dense generation — the anti-copy arm would be vacuous (re-point V1, never relax the leg)"; fi
+  # Non-vacuity: seven defects fabricated into a COPY of the real artifact, one per
+  # arm the leg claims (wrong vocabulary, wrong copy, missing extra, wrong and
+  # duplicated checkItem, Lifecycle drift). The suite's own checker decides; every
+  # one must be rejected or the leg is inert.
+  cat >"$TMP/mutate_art.py" <<'PART'
+import json, sys
+src, defect, v1path = json.load(open(sys.argv[1])), sys.argv[3], sys.argv[4]
+rule = src[0]
+acts = [rule["action"]] + list(rule.get("extraActions") or [])
+def find(name, kind):
+    return [a for a in acts if a.get("actionType") == kind and a.get("checklistName") == name]
+if defect == "model_v1":          # Model(s) copied verbatim from the pre-Dense generation
+    v1 = json.load(open(v1path))[0]
+    v1acts = [v1["action"]] + list(v1.get("extraActions") or [])
+    src_items = next(a["checklistItems"] for a in v1acts
+                     if a.get("actionType") == "addChecklistWithItems" and a.get("checklistName") == "Model(s)")
+    find("Model(s)", "addChecklistWithItems")[0]["checklistItems"] = src_items
+elif defect == "sixth_label":     # a fifth option joins the vocabulary generation
+    tgt = find("Model(s)", "addChecklistWithItems")[0]
+    tgt["checklistItems"] = tgt["checklistItems"] + ",Qwen Mini"
+elif defect == "services_typed":  # Services retyped here instead of copied from v1
+    tgt = find("Services", "addChecklistWithItems")[0]
+    items = tgt["checklistItems"].split(",")
+    items[3] = "item-not-in-v1"
+    tgt["checklistItems"] = ",".join(items)
+elif defect == "missing_extra":   # the HITL mirror extra is dropped
+    rule["extraActions"] = [a for a in (rule.get("extraActions") or [])
+                            if not (a.get("actionType") == "addChecklistWithItems" and a.get("checklistName") == "Human in the Loop")]
+elif defect == "checkitem_flash": # the default-check target stays the retired generation's
+    for c in find("Model(s)", "checkItem"):
+        c["checkItemName"] = "Qwen Flash"
+elif defect == "second_check":    # a second checklist pre-arrives checked (OQ13: Model(s) only)
+    rule.setdefault("extraActions", []).append({"actionType": "checkItem", "checklistName": "Type", "checkItemName": "feat"})
+elif defect == "lifecycle_short": # Lifecycle drifts from the boards skill's 11 names
+    tgt = find("Lifecycle", "addChecklistWithItems")[0]
+    tgt["checklistItems"] = ",".join(tgt["checklistItems"].split(",")[:-1])
+json.dump(src, open(sys.argv[2], "w"))
+PART
+  for defect in model_v1 sixth_label services_typed missing_extra checkitem_flash second_check lifecycle_short; do
+    python3 "$TMP/mutate_art.py" "$ARTIFACT" "$TMP/art-$defect.json" "$defect" "$V1" \
+      || fail "t7 control: could not fabricate the '$defect' defect from $ARTIFACT (harness fault)"
+    python3 "$TMP/artifact_pins.py" "$TMP/art-$defect.json" "$V1" "$SRC_BOARDS" >/dev/null 2>&1 \
+      && fail "t7 control: the fabricated '$defect' defect still PASSED the artifact pins — the leg is inert, fix the checker (not the artifact)"
+  done
+  ok "t7[C02 AC6]: artifact valid — five extras, Services/Type copied from v1, Model(s) on the Dense four labels (v1 copy explicitly rejected), Lifecycle+HITL byte-equal to C07's text, exactly one checkItem = Model(s) → Qwen Dense, retired label absent — control-proven: the copy-source is the pre-Dense generation and seven fabricated defects (v1-copied Model(s), fifth label, retyped Services, missing HITL extra, Qwen Flash target, second checkItem, short Lifecycle) are all rejected"
 fi
 
 # --- t8: engine↔artifact equality, one more angle (AC4 + cf-106 C02 AC5) ---------------
