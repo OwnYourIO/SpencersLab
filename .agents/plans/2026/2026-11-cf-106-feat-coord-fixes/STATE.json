@@ -145,13 +145,31 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e5b5580f9ffeuQbHa3M1l822T7",
+      "review_session": "ses_e5b3662e5ffeOXITM8LMyInee7",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "commit": "in-flight — the chunk commit that carries this record (sha written into this field at the next STATE write; the wave's previous commit is 1259d636e)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C01",
+          "files_changed": [".rulesync/skills/boards/SKILL.md", ".opencode/skills/boards/SKILL.md", "containers/wekan-mcp/wekan_mcp/server.py", "skills/wekan-mcp/SKILL.md", "skills/wekan-mcp/references/call-shapes.md"],
+          "commands_run": ["PATH export => pass", "npx --yes rulesync@37.0.0 generate x2 (2nd = no-op) => pass", "generate --check => pass", "bash tests/wekan-mcp/slug-stack.sh => pass (S1-S5)", "tools.sh => fail (t2 = C07 tool-count pin; subset t1 t3 t4 t6 t8 t9 pass)", "skill-surface.sh => fail (t4 = C07; subset t1 t2 t3 t6 t7 t8 pass)", "session-origin/surface.sh => fail (s2 in-window byte pin; s1 s3 s5 s6 s7 pass; s4 pre-existing)", "session-origin/script.sh => pass", "agent-perms/surface.sh => fail (stops at A12 = C04; A15 cf-106 roster arm GREEN, A15 C08 sub-arm + A17 designed red)", "gate.sh => fail (t17 pre-existing); subset minus t17 => pass incl. t14 admits", "agents-md.sh c7 => pass", "rulesync-surface.sh c8 => pass, c19 => pass", "provider-loops/surface.sh => fail (t1 = C10 designed); t5 t6 => pass (plan-time t6 red cleared)", "py_compile server.py => pass", "npx --yes aislop@0.20.0 ci --changes => pass (score 94, 0 errors, 10 pre-existing warnings)", "helm lint/template => N/A (no chart in blast radius)", "docker build => no-daemon, CI-deferred"],
+          "deviations": "none on scope; two wording choices flagged: (1) roster bullet keeps a scoped 'the roster has exactly one such entry' because rulesync-surface c19 (cf-85 HOLD pin, not re-pinned by the test wave) requires the token while slug-stack S5/A15 forbid a board-count claim; (2) the token `backfill` cannot appear in the boards skill (S4 greps it even negated) so the posture reads 'frozen history — tolerated on read, never rewritten'",
+          "friction": "slug-stack S4 grep punishes negated 'backfill' prose; session-origin s2 byte-pins against HEAD so any legitimate in-flight rewrite is red until coord commits; c19-vs-S5/A15 near-collision on the roster wording",
+          "open_questions": "none"
+        },
+        {
+          "role": "review", "status": "APPROVED", "chunk": "C01",
+          "commands_run": ["slug-stack.sh => pass exit 0 (S1-S5)", "gate.sh whole => fail (only t17 pre-existing); gate.sh t1-t16,t18-t21 => pass exit 0 (22 ok, both t14 arms)", "provider-loops whole => fail (only t1 = C10); t5 t6 => pass exit 0", "tools.sh => fail t2 (C07); skill-surface.sh => fail t4 (C07)", "session-origin/surface.sh => fail s2 (HEAD-relative byte pin); with CHUNK_BASE=$(git stash create) s2 => pass, s4 => fail (pre-existing)", "session-origin/script.sh => pass (7 ok)", "agent-perms whole => fail at A12 (C04); A15 => roster arm pass, aborts at the C08 co-tenancy sub-arm", "rulesync-surface.sh c8 c19 => pass exit 0; whole => fail at c11 (C02)", "agents-md.sh c7 => pass", "wekan-mcp/dependencies.sh => fail t2 (C06); boards-deps t2 => fail (C06); coord-inwork i4 => fail (pre-existing)", "rulesync generate --check => pass", "py_compile => pass", "aislop ci --changes => pass (94, 0 errors, warnings all existing-file-context, none on added lines)", "helm => N/A", "python3 AST re-run of the AC3 cell table => pass (8/8 cells, exactly one parser def)"],
+          "findings": ["AC1-AC6 fully met (source:340-354 append with literal `<existing>\\n[<slug>](<session link>)`, idempotent same-slug, never-drop; :129 last-non-empty-line + mixed-shape tolerance; server.py:1184-1206 single newest-last parser, one call site; set_card_custom_field untouched + docs row says consumer-side append; no backfill; roster wording clears S5 + A15 and the frontmatter claim was removed too)", "AC7 met at ARM level only and cannot be whole-suite in this tree: gate t14 + provider-loops t6 green; whole-suite blocked by gate t17 (pre-existing) and provider-loops t1 (C10) — the plan's own header encodes the id-subset convention", "session-origin s2 adjudicated: HEAD-relative byte pin, red in any edit window, PROVEN green post-commit via `git stash create` base — NOT validation_at_fault", "the scoped 'exactly one such entry' clause is truthful (subject = the agent-facing roster) and should be accepted; it is redundant ornament kept for the stale c19 token pin — recommend test_session re-cuts c19's needle, then the clause is dropped", "non-blocking: agent-board-coord{,-local,-pr}.md:443/443/461 + AGENTS.md:157-158/244 still describe the slug field in single-value framing -> sweep in C04's alias-twin commit (.rulesync/subagents/** is ask-denied to dev, so C01 was right to leave it)", "non-blocking: chunks/C01.md:44 calls s2 'green-on-arrival' when its honest posture is green-at-HEAD -> red-in-window -> green-at-commit; AC7's exit-0 reading is arm-level", "micro-slop: :129 repeats the tolerated-on-read clause twice — trim when C02/C06 next touch the file"],
+          "deviations": "none — dev's hand-back verified claim by claim; the 'gate.sh + provider-loops reach exit 0' claim needs the arm-level footnote"
+        }
+      ]
     },
     "C02": {
       "status": "pending",

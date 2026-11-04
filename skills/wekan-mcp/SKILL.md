@@ -42,7 +42,8 @@ the C10 bump — probe `tools/list` before trusting any of it): reads
 `list_board_dependencies` (board-wide Red Strings lines), `list_card_dependencies`
 (one card's stored edges) and `preload_board` (one export call reshaped to
 swimlane→list→cards + dependency lines + label/field name maps, per-card exactly
-`{id, card_number, label_ids, slug, archived, sort, parent_id}`); writes
+`{id, card_number, label_ids, slug, archived, sort, parent_id}`, `slug` reduced by the single parse
+authority to the newest entry of the field's append-only combined-value stack); writes
 `add_card_dependency` (UPSERT — a repeat add updates the edge, never duplicates
 it; the 7 types gate client-side like `create_label`'s colors),
 `edit_card_dependency`, `remove_card_dependency` (the third bounded destructive

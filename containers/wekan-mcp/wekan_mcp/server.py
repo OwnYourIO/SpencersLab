@@ -1183,15 +1183,24 @@ def _sort_key(item: dict) -> tuple:
 
 def _slug_from_combined_value(value: Optional[str]) -> Optional[str]:
     """
-    Reduce the combined [<slug>](<session link>) custom-field value to its
-    bracketed text — the single authority for the boards-skill slug format.
-    Anything else (a bare slug, None, a malformed half) passes through
+    Reduce the [<slug>](<session link>) custom-field value to its bracketed
+    text — the single authority for the boards-skill slug format. The field
+    is an append-only STACK of combined lines and the newest run appends the
+    LAST line, so the scan walks lines from the end and answers the first one
+    carrying a [<slug>](<session link>) pair: a multi-line value yields the
+    newest entry, never the oldest. Lines with no bracket pair (a trailing
+    prose note) are skipped, not crashed on. A value with no bracketed line
+    at all — a bare legacy slug, prose, a malformed half — passes through
     untouched: a reader gets the card's own value, never a parse-time guess.
+    None and the empty string both read as unset.
     """
-    if isinstance(value, str) and value.startswith("["):
-        close = value.find("](")
-        if close > 0 and value.endswith(")"):
-            return value[1:close]
+    if value is None or value == "":
+        return None
+    for line in reversed(value.splitlines()):
+        line = line.strip()
+        close = line.find("](")
+        if close > 0 and line.startswith("[") and line.endswith(")"):
+            return line[1:close]
     return value
 
 
@@ -1365,10 +1374,12 @@ def preload_board(board_id: str) -> dict:
     Each card carries EXACTLY the seven fields the pickup flow reasons with:
     id, card_number, label_ids, slug, archived, sort, parent_id. Card titles
     and descriptions are not carried (the owner asked for the lean shape).
-    slug comes from the card's customFields entry for the board's slug field:
-    a combined [<slug>](<session link>) value is parsed down to the bracketed
-    text, a bare value passes through unchanged, and a card without the field
-    reads slug: null.
+    slug comes from the card's customFields entry for the board's slug field,
+    reduced by _slug_from_combined_value — the single parse authority: the
+    field is an append-only stack of combined [<slug>](<session link>) lines
+    (newest LAST), so a multi-line value yields the newest entry's bracketed
+    text, a bare legacy value passes through unchanged, and a card without
+    the field reads slug: null.
 
     Archived cards are FLAGGED (archived: true), never silently dropped — the
     exporter includes them (imports need them) and pickup-side filtering

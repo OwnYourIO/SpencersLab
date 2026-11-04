@@ -9,16 +9,17 @@ description: >-
   claim-time `preload_board` consumer with its degrade law, the grouped-sibling
   flow running a card's blocking-edge companions under one claim, card-driven
   kickoff where the five standard checklists
-  (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the single slug
-  custom field (combined `[<slug>](<session link>)` value) supply the answers
-  pipeline-kickoff would ask live, the checked-stages-only Lifecycle stage gate
-  with its single-authority Stage map, run-tag-free cf-<cardNumber>- slugs
-  naming every surface, the iterative research-only loop for Research-labelled
-  cards (ending at Review), the card lifecycle with post-plan write-back
-  (Finished stays human-owned), the follow-up-card protocol landing Inbox
-  (Backlog swimlane), the archive-and-never-ask no-cards exit, and the batched
-  question protocol. MUST-loaded by agent-board-coord at run start; load it
-  anywhere else when working the WeKan AI-Dev board card flow.
+  (Services/Type/Model(s)/Lifecycle/Human in the Loop) and the active slug field
+  (an append-only stack of combined `[<slug>](<session link>)` values, newest
+  last) supply the answers pipeline-kickoff would ask live, the
+  checked-stages-only Lifecycle stage gate with its single-authority Stage map,
+  run-tag-free cf-<cardNumber>- slugs naming every surface, the iterative
+  research-only loop for Research-labelled cards (ending at Review), the card
+  lifecycle with post-plan write-back (Finished stays human-owned), the
+  follow-up-card protocol landing Inbox (Backlog swimlane), the
+  archive-and-never-ask no-cards exit, and the batched question protocol.
+  MUST-loaded by agent-board-coord at run start; load it anywhere else when
+  working the WeKan AI-Dev board card flow.
 ---
 # Boards
 
@@ -29,7 +30,7 @@ Board-driven intake and exit for `agent-board-coord`. The pipeline machinery (pl
 - Instance: `https://wekan.spencerslab.com`; board **AI-Dev**; swimlane **In Process**.
 - Lists — the board structure is human-owned and DRIFTS; this enumeration is context, never a freeze — resolve list ids live (the board-context block's `lists:` section, else `list_lists`). Captured 2026-11-01, the **In Process** swimlane holds: **Not Started**, **Executing**, **Review**, **Rework**, **Finished** (human acceptance — the agent never moves there, and the dependency gate counts a blocker here as satisfied), **Low Priority** (deprioritised work — picked up last), plus two human-owned non-intake lists the flow READS: **Test** (acceptance-holding — a blocker sitting here also satisfies the dependency gate; never a pickup or grouping source) and **Cancelled** (human shelving — never picked). Pickup walks only **Rework → Not Started → Low Priority**. **Timeout** (reaper destination, still landing via the D22 follow-up card — never a pickup source; its triage is human-owned like **Review**'s; until it exists the reaper degrades per Parallel pipeline loops).
 - Board label **Research** marks a research-only card; matched case-insensitively by name. The agent never creates or mutates labels (human-owned). Labels whose name starts with `Pipeline:` mark the pipelines a card blocks on the lease-lock surface (Parallel pipeline loops): the TRIMMED remainder of the label name is one pipeline/lock name, ONE card may carry several, and a card with no such label runs on the single `default` pipeline. `Pipeline:` labels are human-created in the WeKan UI and never agent-created or agent-mutated — the same posture as **Research** (D17/D19). Labels whose name starts with `Repo:` name the owning repo of a card for PICKUP filtering (Card pickup): the TRIMMED remainder of the label name is the owning repo's name, matched case-sensitively on the exact `Repo:` prefix, and a card may carry AT MOST ONE `Repo:` label — one carrying more is claimed by none of its conflicting repos, so the walk skips it and the run records the conflict in its RESULT. A card with NO `Repo:` label at all belongs to the DEFAULT PICKER repo (Repo identity below). `Repo:` labels are human-created in the WeKan UI and never agent-created or agent-mutated — the same posture as `Pipeline:` and **Research** (OQ-A1 COEXIST). `Repo:` is a pickup filter, not a lock: it NEVER contributes to the claim set (Parallel pipeline loops, derivation bullet), while `Pipeline:` keeps its lock meaning unchanged — the two prefixes coexist on one card.
-- Custom fields: exactly ONE board-level text field — `slug`, carrying the combined `[<slug>](<session link>)` link value — resolved by name with `list_custom_fields`; the legacy `session` field may linger on the live board but is retired: never read, never written (its board-level removal is human-owned). There is no `models` custom field (D12) — model routing rides the Model(s) checklist, never a field. Nor a `pipeline` field — that route was retired with D19: pipeline identity is LABELS, never a third field.
+- Custom fields: `slug` is the only active agent-facing field — the roster has exactly one such entry — carrying the append-only stack of combined `[<slug>](<session link>)` values (newest LAST, one line per run), resolved by name with `list_custom_fields`. Other live board fields sit outside the agent's read/write surface: the retired `session` field is never read, never written (its board-level removal is human-owned); no third field joins this roster (D19 — pipeline identity is LABELS, never a field), and there is no `models` field (D12 — model routing rides the Model(s) checklist).
 - The five standard checklists on every card (future cards via the multi-action createCard rule — imported per the upgrade-ticket runbook — existing cards via backfill; the runbook owns their maintenance):
   - **Services** — the 13 `services/` folders: `backups` `dev` `gpu` `gpu-ai` `grow` `home` `infra` `media` `monitoring` `personal` `proxy-backup` `proxy-local` `proxy-remote`, plus the two non-folder work targets `home-assistant` (the HA instance itself) and `agent context` (the agent/pipeline machinery). Re-derive the folder set live from `ls services/`; the surface test regenerates it from the repo, so drift here fails loudly (D9).
   - **Type** — `feat` | `bug` | `debug` | `dep` | `refactor` | `chore` | `docs`.
@@ -142,14 +143,16 @@ The walk never visits **Executing** — a card there is owned by the run holding
 
 **Dependency gate — a blocked candidate is skipped.** With the claim-time preload's dependency lines in hand (Board context block section — the consumer rule there), evaluate every walk candidate against them BEFORE its `move_card` to **Executing**: the candidate is SKIPPED when a blocking edge points at it from a card that is neither archived nor sitting in a list titled **Test** or **Finished**. The blocking edge set is EXACTLY the two Red Strings types `blocks` and `is-blocked-by` — `related-to`, `fixes`/`is-fixed-by` and `duplicates`/`is-duplicated-by` never gate pickup. Both spellings mean one thing here, but the board stores only one entry per drawn edge: v12.65 keeps the edge on the card it was drawn FROM and neither the board-wide edge list nor the preload synthesizes an inverse twin — so the gate honors BOTH spellings consumer-side via WeKan's type-inverse map: the house convention's `is-blocked-by` carried by the DEPENDENT toward its blocker, and a `blocks` line pointing at the candidate from a blocker that drew it, are the same relation spelled from either end; a manually drawn edge may arrive as either spelling, and reading only one is the miss the OQ2 both-directions ruling exists to prevent. Test/Finished membership resolves by list TITLE against the runtime id map — the board-context block's `lists:` section, or `list_lists` when no block rode the launch or the blocker's list id is not in the block's map (the block carries only the named swimlane's lists and titles repeat across swimlanes; the preload grouping is id-keyed; its list entries carry no titles) — the plan-time live ids ride the STATE.json claim record for traceability, never this skill. Every reference keys on the card `_id`; `card_number` is display-only identity, never a join key (it re-counters on cross-board moves). A blocker that reads `archived: true` never blocks. On a skip the run releases the held claim with `pipeline_release(outcome:"abandoned")` and walks on — the 3-attempt claim cap still governs; a launch-given card that fails the gate is reported and left, never forced. Every skipped candidate is REPORTED — candidate `_id`, the blocking card's `_id`, and that blocker's list — in the RESULT and in the claim comment of the card the run finally takes, so the walk is auditable. An edge whose far end resolves to no card in the payload (deleted/moved away) is NON-GATING: it never gates, and the relation is never assumed either way — skip it safely and REPORT the edge's endpoint ids like a skipped candidate (claim comment and RESULT).
 
-Resume vs new run (D11) — before minting anything, read the card's `slug` custom field (parse: a combined `[<slug>](<session link>)` value yields the slug as its bracketed link text; a legacy bare value yields the slug whole):
+Resume vs new run (D11) — before minting anything, read the card's `slug` custom field. The field is an append-only STACK of combined `[<slug>](<session link>)` lines, newest LAST (Post-plan card write-back): this run's slug is the bracketed link text of the **last non-empty line**; a legacy bare value yields the slug whole. Mixed live shapes are TOLERATED on read, never rewritten — pre-flip cards hold a split value (bare slug in `slug`, the session link in the retired `session` field) and some carry duplicated combined lines; those stored values are frozen history — the parse rule tolerates them on read and never rewrites them.
 
 - It names an existing feature folder whose `STATE.json` `plan_status` is not
   `complete` → RESUME that run: no kickoff minting, no new slug — continue
   the chunk loop where it stopped.
 - The run it names is `complete` (card re-picked, e.g. sent back to Rework)
   → start a new sequential run `<slug>-1`; each further completed re-pick
-  continues the sequence `<slug>-2`, ….
+  continues the sequence `<slug>-2`, …. The sequence keys on the stack's
+  NEWEST (last) line: a card whose newest line names a `complete` run
+  follows this rule even when older lines name earlier runs.
 - Unset, or no matching folder → fresh kickoff.
 
 ### Provider filtering — scheduled pickup by Provider label
@@ -172,7 +175,7 @@ The worker iteration one hourly tick drives — C06's tick prompt names exactly 
 - **Heartbeats are automatic.** The engine beats the claimed set on root and subagent activity; `pipeline_heartbeat` only force-beats every lock file of the calling session's root claim — not a routine duty.
 - **Human stops (D20/D21).** The stale clock (2 h) keeps ticking through every stop point — the plan-approval pause is no exception. An answer inside the window resumes ordinary heartbeats and the lock is fine; past it the reaper reaps the set — the card moves to **Timeout** with a Home Assistant alert, or, until the D22 follow-up card lands a deterministic list-creation tool, queues `.pipeline/timeouts.jsonl` plus a card comment: that degrade is the shipped interim, never a failure. The run then stops at its next PIPELINE LOCK LOST signal. No release-at-stop, no re-claim dance — a re-picked card is a fresh claim under the normal Resume-vs-new-run rule.
 - **Exit.** Card to **Review** + summary comment → `pipeline_release(outcome:"done")` — the Review hand-off IS the release point (D6); **Finished** is human-owned and never touches the lock. A blocked card: `add_comment` with the reason, then `pipeline_release(outcome:"abandoned")` — or keep the lock and let it go stale (prefer abandon-release when the card should stay re-pickable for another run, keep-and-stale when THIS run may resume). **PIPELINE LOCK LOST** from any tool answer or hook: stop immediately — no commit, no card move; only a fresh run re-claims.
-- **Board-side prerequisites — human-owned, never agent-executed (cf-76).** (1) `Pipeline:<name>` labels are created in the WeKan UI as parallel tracks are wanted; until then every card runs the single `default` pipeline. (2) The **Timeout** list lands via the coordinator-created follow-up card requesting a `create_list` tool for the wekan-mcp surface; until it does, the reaper degrades as above and nothing else is needed. Lists, checklists, labels and rules stay human-owned: this flow only READS labels (`get_card` + `get_board` are the sole board calls the lock surface adds) and mutates nothing — the custom-field roster stays the single `slug` field above.
+- **Board-side prerequisites — human-owned, never agent-executed (cf-76).** (1) `Pipeline:<name>` labels are created in the WeKan UI as parallel tracks are wanted; until then every card runs the single `default` pipeline. (2) The **Timeout** list lands via the coordinator-created follow-up card requesting a `create_list` tool for the wekan-mcp surface; until it does, the reaper degrades as above and nothing else is needed. Lists, checklists, labels and rules stay human-owned: this flow only READS labels (`get_card` + `get_board` are the sole board calls the lock surface adds) and mutates nothing — the agent-facing custom-field roster above stays `slug` alone.
 
 ### No-op marker (alert suppression)
 
@@ -257,7 +260,9 @@ Checked checklist items and set custom fields ARE the user's answers: consume th
   Blank defaults section). A card still carrying the legacy Research
   checklist follows the transition rule instead — its items time research
   only, they never gate stages.
-- **slug** — the `slug` custom field if already set; otherwise derive
+- **slug** — the `slug` custom field if already set (parsed per Resume vs
+  new run: the bracketed text of the stack's last non-empty line);
+  otherwise derive
   `cf-<cardNumber>-<type>-<desc>` from the card's own content (`cardNumber`
   comes from `get_card`, the type from the checked Type item, the desc from
   the card title). A slug derived from card content is auto-accepted — it
@@ -309,9 +314,10 @@ Research-only cards never go to `agent-plan`/`agent-test`/`agent-dev-local`/`age
 5. Terminate: the default is at most one follow-up round, then wrap.
    Residual unknowns ride along in the final comment for the human's
    Finished-vs-Rework call — do not spin a second round.
-6. Write-back exactly as in Post-plan card write-back (D19):
-   `set_card_custom_field` for the `slug` combined `[<slug>](<session link>)`
-   value, then
+6. Write-back exactly as in Post-plan card write-back (D19): the `slug`
+   stack read-modify-write of its step 2 — this run's combined
+   `[<slug>](<session link>)` line appended per that rule, never a blind
+   overwrite — then
    `delete_checklist_item` for every unchecked item of the five checklists.
 7. `add_comment` on the card: the research session link — this run's
    `Session origin:` URL, or the RAW session id on UNRESOLVED with the
@@ -348,14 +354,29 @@ A card sometimes stands for a group of small companion asks its owner wants run 
 Right after plan approval (research-only cards do the same immediately before their Ready-for-Review move, D19):
 
 1. `list_custom_fields` on the AI-Dev board → the id of the `slug` field.
-2. `set_card_custom_field` (upsert): `slug` = the combined value
-   `[<slug>](<session link>)` — the final `cf-<cardNumber>-<type>-<desc>` as
-   the link text, and the `<session link>` half exactly as the Config
-   constants define it: `$(SESSION_URL_BASE)/?session=<sessionID>` when this
-   run's `Session origin:` resolved, or the RAW session id when it said
-   UNRESOLVED (fallback recorded in RESULT) — never a raw id when an origin
-   resolves, never a remembered host. This first write-back performs the
-   Config constants consistency check.
+2. `set_card_custom_field` (upsert): the server stores the value VERBATIM —
+   no server-side append exists — so the stack growth is this skill's
+   read-modify-write. Read the field's current value (the `get_card` this
+   run already did at claim carries it), then write the `slug` field's
+   append-only STACK of combined `[<slug>](<session link>)` lines — newest
+   LAST, one line per run, the final `cf-<cardNumber>-<type>-<desc>` as the
+   link text:
+   - current value empty/unset → write this run's line
+     `[<slug>](<session link>)`;
+   - the last line's bracketed text is the same slug as this run's →
+     rewrite that line in place (idempotent refresh of the link half — never
+     append a duplicate line);
+   - a different slug is present → append: write
+     `<existing value>\n[<slug>](<session link>)` — never drop or reorder an
+     existing line, the stack only gains a final line.
+   The `<session link>` half is exactly as the Config constants define it:
+   `$(SESSION_URL_BASE)/?session=<sessionID>` when this run's `Session
+   origin:` resolved, or the RAW session id when it said UNRESOLVED
+   (fallback recorded in RESULT) — never a raw id when an origin resolves,
+   never a remembered host. Existing cards' split or duplicated legacy
+   values are frozen history — tolerated on read, never rewritten; the
+   retired `session` field stays never read, never written. This first
+   write-back performs the Config constants consistency check.
 3. `delete_checklist_item` for EVERY unchecked item of the Services / Type /
    Model(s) / Lifecycle / Human in the Loop checklists (checklist ids from
    `list_checklists`, item ids from `get_checklist`). The surviving checked
