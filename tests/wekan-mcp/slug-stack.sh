@@ -7,7 +7,8 @@
 # authority (`_slug_from_combined_value`) shared by the preload tool and the
 # skill contract, and `set_card_custom_field` staying a verbatim upsert (the
 # append lives consumer-side). AC trace:
-#   S1[AC3]  parser cases over the REAL function body in server.py
+#   S1[AC3]  parser cases over the REAL function body in server.py, the
+#            one-walk/only-scanner law, and the ruled legacy + pairing shape
 #   S2[AC1,AC2] boards source+mirror: append shape, idempotent same-slug branch,
 #            never-drop/never-reorder, "last non-empty line" parse + tolerance
 #   S3[AC4,AC5] call-shapes.md rows: verbatim upsert AND consumer-side append
@@ -34,13 +35,32 @@
 # Offline-deterministic: the tree + an AST-extracted copy of the parser run in
 # the harness's own python (no `mcp` package here, no board, no network).
 #
+# cf-106 C07 test round (2026-11-04, agent-test): S1 execs the parser in a
+# namespace holding every module-level `_slug*` def, not one function per
+# namespace — the isolated shape NameErrors on a helper that delegates to its
+# sibling, so it forced C07's dev to write a second line-walk instead of sharing
+# the authority (server.py's own get_card_details docstring cites this leg).
+# With the coordinator's ruling landed (one walk, the scalar delegating, a legacy
+# bare value reading as a one-entry stack of itself), the spelling-based copy
+# guard is replaced by the behaviour-based single-walk check it always needed:
+# exactly one module-level def may scan lines for the `](` pair (docstrings
+# excluded — they quote the format) and every other `_slug*` def must delegate to
+# it. The ruled legacy shape is pinned HERE, in S1, rather than only in
+# card-details.sh t3, because it is a property of the parser: the stack carries a
+# bare value as its single entry, a bare line inside a bracketed stack is not an
+# entry, and `current_slug == slug_stack[-1]` for every value, so a card never
+# reports an empty stack next to a non-empty current slug. Arms are named
+# (structural / scalar / stack / pairing) so the five fabricated copies prove
+# which arm bites instead of passing by accident.
+#
 # Usage:
 #   bash tests/wekan-mcp/slug-stack.sh             # S1..S5
 #   bash tests/wekan-mcp/slug-stack.sh S1 S3       # subset
+#   WEKAN_SERVER=<path> bash tests/wekan-mcp/slug-stack.sh S1   # scratch-copy probe
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-SERVER="containers/wekan-mcp/wekan_mcp/server.py"
+SERVER="${WEKAN_SERVER:-containers/wekan-mcp/wekan_mcp/server.py}"
 BD_SRC=".rulesync/skills/boards/SKILL.md"
 BD_GEN=".opencode/skills/boards/SKILL.md"
 CALLS="skills/wekan-mcp/references/call-shapes.md"
@@ -109,40 +129,92 @@ if best is None or best > span:
     print(f'no window of {span} chars covers all needles (min span {best})'); sys.exit(1)
 PY
 
-# --- S1: the parser — one authority, newest-LAST (AC3) --------------------------
+# --- S1: the parser — ONE walk, newest-LAST, ruled legacy shape (AC3) -----------
+# Reusable checker so the fabricated controls exercise the SAME arms as the live
+# file (the A10/A14 non-vacuity discipline). Arms are named so a control proves
+# which arm bites: --arms takes a comma list.
+#   structural — exactly one module-level def may scan lines for the "](" pair,
+#                and every other _slug* def must call one (no second walk, not
+#                even a behaviour-preserving private copy);
+#   scalar     — the current-slug answers (AC3 cell table);
+#   stack      — the stack shape, including the ruled legacy bare value
+#                (one-entry stack of itself) and the stack+legacy-line mix;
+#   pairing    — current_slug == slug_stack[-1] for every value, so a card can
+#                never report an empty stack with a non-empty current slug.
+# The legacy shape is pinned here (the ask's Q1 ruling) rather than only in
+# card-details.sh t3, because it is a property of the parser, not of the read.
 if want s1; then
   [ -f "$SERVER" ] || fail "S1[AC3]: $SERVER missing (harness fault)"
-  python3 - "$SERVER" <<'PY' || fail "S1[AC3]: _slug_from_combined_value no longer satisfies the stack contract (reason above)"
+  cat >"$TMP/slugparse.py" <<'PY'
 import ast, sys, typing
 
-src = open(sys.argv[1]).read()
+arms = "structural,scalar,stack,pairing"
+args = sys.argv[1:]
+for i, a in enumerate(args):
+    if a == "--arms":
+        arms = args[i + 1]
+        del args[i:i + 2]
+        break
+path = args[0]
+arms = [a.strip() for a in arms.split(",") if a.strip()]
+
+src = open(path).read()
 tree = ast.parse(src)
-fn = next((n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_slug_from_combined_value"), None)
-if fn is None:
-    print("S1: _slug_from_combined_value is gone from server.py — the ask's single parse authority must stay ONE function (rename is forbidden by chunks/C01.md Notes)"); sys.exit(1)
-# Second-parser guard: a second bracket-scanning function in the module means
-# the authority was duplicated, which is exactly what the ask forbids.
-others = []
-for n in tree.body:
-    if isinstance(n, ast.FunctionDef) and n.name != "_slug_from_combined_value":
-        b = ast.get_source_segment(src, n) or ""
-        if "](" in b and ".find(" in b and "startswith(\"[\")" in b:
-            others.append(n.name)
-if others:
-    print(f"S1: a second combined-value parser appeared in server.py: {others} — C01 Notes forbid a second parser; preload's docstring must REFERENCE this one"); sys.exit(1)
+defs = [n for n in tree.body if isinstance(n, ast.FunctionDef)]
+SCALAR = "_slug_from_combined_value"
+if not any(n.name == SCALAR for n in defs):
+    print(f"structural: {SCALAR} is gone from {path} — the boards skill and preload point at that name "
+          "(rename is forbidden by chunks/C01.md Notes)"); sys.exit(1)
 
-# Run the REAL function body (not a re-implementation): exec the extracted
-# module-level def with the module's typing imports supplied.
-body = ast.get_source_segment(src, fn)
+# --- arm: structural — one walk of the combined value, everyone else delegates.
+# "Scans" is behavioural, not spelling-matched against one implementation: a
+# module-level def scans when it holds a string constant with "](" OUTSIDE its
+# docstring (docstrings legitimately quote the [<slug>](<session link>) format).
+def scans_pair(fn):
+    doc = set()
+    if fn.body and isinstance(fn.body[0], ast.Expr) and isinstance(fn.body[0].value, ast.Constant) \
+            and isinstance(fn.body[0].value.value, str):
+        doc.add(id(fn.body[0].value))
+    return any(isinstance(c, ast.Constant) and isinstance(c.value, str) and "](" in c.value
+               and id(c) not in doc for c in ast.walk(fn))
+
+
+scanners = [n.name for n in defs if scans_pair(n)]
+if "structural" in arms:
+    if len(scanners) != 1:
+        print(f"structural: {len(scanners)} module-level defs scan lines for the ]( pair: {scanners} — "
+              f"the combined slug value has exactly ONE walk (C07 single-authority ruling)"); sys.exit(1)
+    for n in defs:
+        if not n.name.startswith("_slug") or scans_pair(n):
+            continue
+        callees = {c.func.id for c in ast.walk(n) if isinstance(c, ast.Call) and isinstance(c.func, ast.Name)}
+        if not any(c.startswith("_slug") and c != n.name for c in callees):
+            print(f"structural: {n.name} scans nothing and calls no _slug* helper — every _slug* def besides "
+                  f"the one scanner must delegate to it, never reimplement the walk"); sys.exit(1)
+
+# The stack authority is the single scanner when there is exactly one (the ruled
+# shape); with the structural arm switched off, fall back to its name so the
+# behaviour arms stay meaningful on a mutated copy.
+stack_name = scanners[0] if len(scanners) == 1 else "_slug_stack_from_combined_value"
+
+# Run the REAL bodies, not re-implementations, in ONE shared namespace: the
+# delegating scalar is undefined in an isolated one, and per-function exec would
+# force the duplication this arm exists to forbid.
 ns = {"Optional": typing.Optional}
-exec(body, ns)
-parse = ns["_slug_from_combined_value"]
+for n in defs:
+    if n.name.startswith("_slug"):
+        exec(ast.get_source_segment(src, n), ns)
+parse = ns[SCALAR]
+stackfn = ns.get(stack_name)
+if not callable(stackfn):
+    print(f"stack: no one-argument stack parser ({stack_name}) in {path} (harness: the arm's assumption "
+          f"about its name broke)"); sys.exit(1)
 
-# AC3 cell table: (input, expected). None is the literal None.
+# AC3 cell table for the current slug: (input, expected). None is the literal None.
 CASES = [
     ("[old](u1)\n[new](u2)", "new"),      # stack -> the LAST entry (the ask)
     ("[only](u)", "only"),                # single combined line (HOLD)
-    ("cf-1-x", "cf-1-x"),                 # legacy bare value (HOLD)
+    ("cf-1-x", "cf-1-x"),                 # legacy bare value (HOLD, ruled: its own stack entry)
     (None, None),                          # unset (HOLD)
     ("", None),                            # empty value reads as unset (AC3)
     ("[a](u1)\n[b](u2)\n[c](u3)", "c"),    # three runs, newest last
@@ -151,20 +223,142 @@ CASES = [
     ("just prose, no brackets", "just prose, no brackets"),  # documented passthrough, never a crash
     ("[old](u1)\n[old](u2)", "old"),       # idempotent same-slug rewrite reads back the same slug
 ]
-errs = []
-for value, want in CASES:
-    try:
-        got = parse(value)
-    except Exception as e:  # a crash is never an acceptable answer
-        errs.append(f"{value!r} raised {type(e).__name__}: {e}")
-        continue
-    if got != want:
-        errs.append(f"{value!r} -> {got!r}, want {want!r}")
-if errs:
-    print("S1 parse drift: " + "; ".join(errs)); sys.exit(1)
-print("ok: S1")
+# The stack side, ruled by the coordinator for cf-106 C07: a value with no
+# bracket pair at all is a ONE-entry stack of the stripped value (never []),
+# because every card must satisfy current_slug == slug_stack[-1]; a bare line
+# INSIDE a bracketed stack is not an entry; only a missing/blank value is [].
+STACKS = [
+    (None, []),                            # unset field -> no stack
+    ("", []),                              # empty -> no stack
+    ("   \n \n", []),                      # blank lines -> no stack, not a [""] entry
+    ("cf-1-x", ["cf-1-x"]),                # the ruled legacy bare shape
+    ("just prose, no brackets", ["just prose, no brackets"]),
+    ("cf-1-x\n", ["cf-1-x"]),              # trailing newline keeps one entry
+    ("[only](u)", ["only"]),
+    ("[old](u1)\n[new](u2)", ["old", "new"]),      # oldest first
+    ("[a](u1)\nnotes without brackets", ["a"]),     # bare tail line is NOT an entry
+    ("[a](u1)\n[b](u2)\nlegacy-bare-line", ["a", "b"]),  # stack + legacy line: newest wins
+    ("legacy-bare\n[a](u1)", ["a"]),       # legacy line below a stack entry: the entry wins
+    ("[old](u1)\n[old](u2)", ["old", "old"]),
+]
+
+def check(table, fn, arm):
+    errs = []
+    for value, want in table:
+        try:
+            got = fn(value)
+        except Exception as e:  # a crash is never an acceptable answer
+            errs.append(f"{value!r} raised {type(e).__name__}: {e}")
+            continue
+        if got != want:
+            errs.append(f"{value!r} -> {got!r}, want {want!r}")
+    if errs:
+        print(f"{arm}: " + "; ".join(errs)); sys.exit(1)
+
+if "scalar" in arms:
+    check(CASES, parse, "scalar")
+if "stack" in arms:
+    check(STACKS, stackfn, "stack")
+if "pairing" in arms:
+    # The ruling in invariant form: the scalar is always the stack's last entry,
+    # and an empty stack never carries a non-empty current slug.
+    errs = []
+    for value in {v for v, _ in CASES} | {v for v, _ in STACKS}:
+        st, cu = stackfn(value), parse(value)
+        if cu != (st[-1] if st else None):
+            errs.append(f"{value!r}: current_slug {cu!r} != slug_stack[-1] of {st!r}")
+        if not st and cu is not None:
+            errs.append(f"{value!r}: slug_stack [] with non-empty current_slug {cu!r}")
+    if errs:
+        print("pairing: " + "; ".join(errs)); sys.exit(1)
+sys.exit(0)
 PY
-  ok "S1[AC3]: _slug_from_combined_value (exec'd from server.py itself) answers the LAST bracketed entry for a 2- and 3-line stack, keeps the single-combined/bare-legacy/None HOLDs, reads \"\" as unset, ignores a prose tail, never crashes, and no second parser exists in the module"
+  python3 "$TMP/slugparse.py" "$SERVER" || fail "S1[AC3]: the single-walk slug parser no longer satisfies the stack contract (reason above)"
+
+  # Controls: fabricated copies of the live module, each breaking ONE arm. Built
+  # from the live source (not hand-written) so they track it; a mutation that can
+  # no longer be applied is a harness fault (exit 2), never a silent pass.
+  cat >"$TMP/mutants.py" <<'PY'
+import re, sys
+
+src = open(sys.argv[1]).read()
+out = {}
+
+def seg(name):
+    m = re.search(rf"^def {name}\(.*?(?=\n\ndef |\n@|\Z)", src, re.S | re.M)
+    if not m:
+        print(f"control {name}: could not locate def {name} in the live source (harness fault)"); sys.exit(2)
+    return m.group(0)
+
+stack_src = seg("_slug_stack_from_combined_value").rstrip("\n")
+scalar_src = seg("_slug_from_combined_value").rstrip("\n")
+
+# 1) second scanner: a duplicate of the walk under another name (behaviours all
+#    unchanged — only the structural arm can see it).
+out["second-scanner"] = src + "\n\n" + stack_src.replace(
+    "def _slug_stack_from_combined_value(", "def _slug_pair_scan_duplicate(", 1) + "\n"
+
+# 2) behaviour-preserving private walk: the scalar recomputes the same answers
+#    (marker built at runtime, so the "](" literal scan stays clean) instead of
+#    delegating — again only the structural arm can see it.
+private_scalar = '''def _slug_from_combined_value(value: Optional[str]) -> Optional[str]:
+    pair = "]" + "("
+    for raw in reversed((value or "").splitlines()):
+        line = raw.strip()
+        if line.startswith("[") and pair in line and line.endswith(")"):
+            return line[1:line.index(pair)]
+    return (value or "").strip() or None'''
+out["no-delegate"] = src.replace(scalar_src, private_scalar, 1)
+
+# 3) drift: the scalar delegates but reduces to the OLDEST entry (pre-C07
+#    newest-first confusion) — the behaviour arms, not the structural one, bite.
+out["drift-oldest"] = src.replace(scalar_src, '''def _slug_from_combined_value(value: Optional[str]) -> Optional[str]:
+    stack = _slug_stack_from_combined_value(value)
+    return stack[0] if stack else None''', 1)
+
+# 4) legacy regression: the stack parser answers [] for a bare value again
+#    (the pre-ruling shape).
+ruled = """    if entries:
+        return entries
+    bare = value.strip()
+    return [bare] if bare else []"""
+if ruled not in stack_src:
+    print("control legacy-empty: the ruled bare-value fallback is no longer spelled as expected (harness fault)"); sys.exit(2)
+out["legacy-empty"] = src.replace(ruled, "    return entries", 1)
+
+# 5) the whole pre-ruling shape back: a stack parser that answers [] for a bare
+#    value AND a scalar with its own walk that passes the value through — i.e.
+#    an empty stack next to a non-empty current slug (the ruling's violation).
+out["pre-ruling"] = out["legacy-empty"].replace(scalar_src, private_scalar, 1)
+
+for name, text in out.items():
+    if text == src:
+        print(f"control {name}: mutation was a no-op against the live source (harness fault)"); sys.exit(2)
+    open(sys.argv[1 + list(out).index(name) + 1], "w").write(text)
+print(" ".join(out))
+PY
+  python3 "$TMP/mutants.py" "$SERVER" "$TMP/m-second-scanner.py" "$TMP/m-no-delegate.py" \
+    "$TMP/m-drift-oldest.py" "$TMP/m-legacy-empty.py" "$TMP/m-pre-ruling.py" >/dev/null \
+    || fail "S1[AC3]: a control copy could not be built from $SERVER (harness fault)"
+  # Each control reddens the named arm, and with the other arms switched off
+  # nothing else can be credited for catching it (attribution, not incidental).
+  ctl_red() {
+    if python3 "$TMP/slugparse.py" --arms "$2" "$TMP/m-$1.py" >"$TMP/m-$1.out" 2>&1; then
+      fail "S1[AC3]: control '$1' passes the '$2' arm — that arm no longer bites (non-vacuity)"
+    fi
+    msg=$(head -1 "$TMP/m-$1.out")
+    case "$msg" in
+      "$2:"*) ;;
+      *) fail "S1[AC3]: control '$1' was caught by the wrong arm: $(printf '%.140s' "$msg")" ;;
+    esac
+  }
+  ctl_red second-scanner structural   # a second walk, behaviours unchanged
+  ctl_red no-delegate structural      # a private walk reproducing the answers
+  ctl_red drift-oldest pairing        # the scalar reducing to the oldest entry
+  ctl_red legacy-empty stack          # the bare value no longer its own entry
+  ctl_red pre-ruling pairing          # empty stack next to a non-empty current
+  ctl_red pre-ruling structural
+  ok "S1[AC3]: one module-level def scans the ]( pair and every other _slug* def delegates to it; the current slug is the LAST bracketed entry (2-, 3-line stacks), the legacy bare value is a one-entry stack of itself, a bare line inside a bracketed stack is not an entry, stack+legacy resolves to the newest entry, None/empty/blank are [], and current_slug always equals slug_stack[-1] — plus five fabricated copies (second scanner, private non-delegating walk, oldest-entry drift, bare-value-returns-[], the whole pre-ruling shape) each reddening the intended arm"
 fi
 
 # --- S2: boards source + mirror carry the stack rule (AC1, AC2) -----------------

@@ -232,6 +232,130 @@ def get_card(board_id: str, card_id: str) -> dict:
 
 
 @mcp.tool
+def get_card_details(board_id: str, card_id: str) -> dict:
+    """
+    Everything a pipeline run needs from its claimed card in one read, in
+    the shape the claim-time context block is written from: the card's own
+    fields (incl. sort and parentId), its labels named from the board, its
+    custom-field raw values named from the board's field list, EVERY
+    checklist with its items in stored order, its dependency lines, and the
+    slug field read both ways — slug_stack (the append-only history, oldest
+    first) and current_slug (the newest entry, the one a run names its
+    surfaces with).  A follow-up card's inherited Lifecycle answers are
+    already its own checklist items, so no parent fetch is needed; archived
+    cards come back with the archived flag set rather than being dropped.
+
+    One MCP call, several REST reads: the card document carries no label or
+    field names, and its checklists come as headers on the card-scoped
+    collection route, so the names and the items are hydrated from the board
+    document, the board's field list and the per-checklist route.  A card
+    that cannot be read fails the call — an empty details payload would be
+    indistinguishable from a card with nothing on it.  A checklist whose
+    items cannot be read fails the call the same way: the run decides its
+    Lifecycle stages from that item list, so an empty item list has to mean
+    the checklist genuinely has no items.  Read only: writes nothing.
+    """
+    card = _wekan.get(f"/api/cards/{card_id}") or {}
+    _embedded_error(card, "get_card_details")
+    if not isinstance(card, dict) or not card:
+        raise WekanError(
+            f"get_card_details: card {card_id} did not read as a card document "
+            f"(got {type(card).__name__}) — an empty payload here is not an empty card"
+        )
+
+    board = _wekan.get(f"/api/boards/{board_id}") or {}
+    label_names = {
+        l.get("_id"): l.get("name")
+        for l in board.get("labels", []) if isinstance(l, dict)
+    }
+    fields = _wekan.get(f"/api/boards/{board_id}/custom-fields") or []
+    field_names = {
+        cf.get("_id"): cf.get("name")
+        for cf in fields if isinstance(cf, dict)
+    }
+    # The slug field is found by NAME, like preload_board does: the board's
+    # field id is not stable across boards, the vocabulary is.
+    slug_field_ids = {fid for fid, name in field_names.items() if name == "slug"}
+
+    custom_fields: dict = {}
+    slug_stack: list = []
+    current_slug: Optional[str] = None
+    for entry in card.get("customFields") or []:
+        if not isinstance(entry, dict):
+            continue
+        field_id = entry.get("_id")
+        # A field the board no longer defines keeps its id as the key: an
+        # orphaned value is surfaced, not dropped with its name.
+        custom_fields[field_names.get(field_id) or field_id] = entry.get("value")
+        if field_id in slug_field_ids:
+            slug_stack = _slug_stack_from_combined_value(entry.get("value"))
+            current_slug = _slug_from_combined_value(entry.get("value"))
+
+    checklists: list = []
+    for header in _wekan.get(
+        f"/api/boards/{board_id}/cards/{card_id}/checklists"
+    ) or []:
+        if not isinstance(header, dict):
+            continue
+        cl_id = header.get("_id")
+        # No fallback and no swallow here: items: [] is the shape of a checklist
+        # that genuinely has no items, so a read that failed has to reach the
+        # caller — its degrade arm can only fire on a call that actually failed.
+        full = _wekan.get(
+            f"/api/boards/{board_id}/cards/{card_id}/checklists/{cl_id}"
+        )
+        _embedded_error(full, "get_card_details")
+        checklists.append({
+            "id": cl_id,
+            "title": header.get("title"),
+            "items": [
+                {"title": i.get("title"), "finished": bool(i.get("isFinished"))}
+                for i in sorted(
+                    (x for x in (full.get("items") or []) if isinstance(x, dict)),
+                    key=_sort_key,
+                )
+            ],
+        })
+
+    return {
+        "id": card.get("_id"),
+        "card_number": card.get("cardNumber"),
+        "title": card.get("title"),
+        "description": card.get("description"),
+        "list_id": card.get("listId"),
+        "swimlane_id": card.get("swimlaneId"),
+        "archived": bool(card.get("archived", False)),
+        "sort": card.get("sort"),
+        "parent_id": card.get("parentId"),
+        "label_ids": card.get("labelIds", []),
+        # id -> name: the card carries only ids and the block reads as a
+        # lookup, so the names ride beside them rather than as a second list.
+        "labels": {
+            lid: label_names.get(lid)
+            for lid in card.get("labelIds", []) if lid
+        },
+        # field name -> value exactly as stored: the run quotes the card's
+        # own values, only the slug stack is additionally parsed.
+        "custom_fields": custom_fields,
+        "slug_stack": slug_stack,
+        "current_slug": current_slug,
+        "checklists": checklists,
+        # Edges are stored on the source card (models/cards.js), so they ride
+        # the card document already in hand.  cardId is the TARGET id; the
+        # block never needs the icon, so it is not carried.
+        "dependencies": [
+            {
+                "to_id": edge.get("cardId"),
+                "type": edge.get("type"),
+                "color": edge.get("color"),
+            }
+            for edge in (card.get("cardDependencies") or [])
+            if isinstance(edge, dict)
+        ],
+    }
+
+
+@mcp.tool
 def list_comments(board_id: str, card_id: str) -> list[dict]:
     """List the comments on a card."""
     raw = _wekan.get(f"/api/boards/{board_id}/cards/{card_id}/comments") or []
@@ -1182,27 +1306,47 @@ def _sort_key(item: dict) -> tuple:
     return (s is None, _LAST_SORT if s is None else s)
 
 
-def _slug_from_combined_value(value: Optional[str]) -> Optional[str]:
+def _slug_stack_from_combined_value(value: Optional[str]) -> list[str]:
     """
-    Reduce the [<slug>](<session link>) custom-field value to its bracketed
-    text — the single authority for the boards-skill slug format. The field
-    is an append-only STACK of combined lines and the newest run appends the
-    LAST line, so the scan walks lines from the end and answers the first one
-    carrying a [<slug>](<session link>) pair: a multi-line value yields the
-    newest entry, never the oldest. Lines with no bracket pair (a trailing
-    prose note) are skipped, not crashed on. A value with no bracketed line
-    at all — a bare legacy slug, prose, a malformed half — passes through
-    untouched: a reader gets the card's own value, never a parse-time guess.
-    None and the empty string both read as unset.
+    Every [<slug>](<session link>) line of a combined slug-field value,
+    oldest first — the whole append-only history, and the only walk of that
+    line shape in this module: `_slug_from_combined_value` reduces its last
+    entry, so the current slug can never disagree with the stack it came from.
+    A value with no bracket pair at all — a bare legacy slug, prose — is a
+    one-entry stack of that value rather than an empty one: pre-flip cards
+    carry a bare slug, and every card must satisfy
+    `current_slug == slug_stack[-1]`.  A line with no bracket pair inside a
+    bracketed stack (a trailing prose note) is not an entry; a missing or
+    empty value is an empty stack, which is "this card carries no stack", not
+    a failed read.
     """
     if value is None or value == "":
-        return None
-    for line in reversed(value.splitlines()):
-        line = line.strip()
-        close = line.find("](")
-        if close > 0 and line.startswith("[") and line.endswith(")"):
-            return line[1:close]
-    return value
+        return []
+    entries: list[str] = []
+    for raw in value.splitlines():
+        line = raw.strip()
+        link = line.index("](") if "](" in line else -1
+        # The bracket pair has to sit inside the line: index 0 would mean the
+        # line opens with the link, i.e. there is no bracketed text.
+        if link > 0 and line[0] == "[" and line.endswith(")"):
+            entries.append(line[1:link])
+    if entries:
+        return entries
+    bare = value.strip()
+    return [bare] if bare else []
+
+
+def _slug_from_combined_value(value: Optional[str]) -> Optional[str]:
+    """
+    The newest entry of a combined slug-field value — the single authority the
+    boards skill points at for the [<slug>](<session link>) format, and the
+    card's current slug. The field is an append-only STACK and the newest run
+    appends the LAST line, so the newest entry is the stack parser's last one;
+    a bare legacy slug or prose value is that one-entry stack, so it reads
+    back as the value itself. None and the empty string both read as unset.
+    """
+    stack = _slug_stack_from_combined_value(value)
+    return stack[-1] if stack else None
 
 
 @mcp.tool

@@ -65,13 +65,14 @@ the deployed build can lag the repo source, so **docs are claims, the live
      Bump the `image:` line to the exact shape
      `image: ghcr.io/ownyourio/wekan-mcp:v<run>`
      AND rewrite the stale comment to the new build's surface, e.g.
-     `# :v<run> = the cf-96 38-tool build (dependency/preload/label tools).`
+     `# :v<run> = the cf-96 + cf-106 C07 39-tool build (dependency/preload/label
+     + single-card detail tools).`
      — the values comment must keep telling the truth about what is
      deployed. It currently narrates the 25-tool build while pinning
      `:v87`, whose real surface only the step-5 probe settles (the cf-90
      ledger live-probed :v87 WITHOUT the v102-era additions — docs are
-     claims, `tools/list` is fact; after the bump, `:v<run>` = 38 is the
-     claim step 5 verifies).
+     claims, `tools/list` is fact; after the bump, `:v<run>` = the 39-tool
+     surface step 5 names is the claim it verifies).
    - `services/gpu/prod/values.yaml` — the `wekan-admin:` entry (line 734
      at authoring) and the `wekan-readonly:` entry (line 697), each bumped
      with the identical line shape `image: ghcr.io/ownyourio/wekan-mcp:v<run>`.
@@ -116,7 +117,7 @@ the deployed build can lag the repo source, so **docs are claims, the live
 5. **User-owned live probes — READ-ONLY first** (recipe:
    `skills/wekan-api/references/wekan-mcp-ops.md`; the ordering below is
    the law: catalog before call, catalog over docs):
-   - `tools/list` on `dev-boards` = **38 tools** (17 reads + 21 writes)
+   - `tools/list` on `dev-boards` = **39 tools** (18 reads + 21 writes)
      including the seven new names: `list_board_dependencies`,
      `list_card_dependencies`, `add_card_dependency`,
      `edit_card_dependency`, `remove_card_dependency`, `preload_board`,

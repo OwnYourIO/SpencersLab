@@ -16,10 +16,14 @@
 # Live smoke [AC5] is dev+review run, not asserted here — D8: no network in
 # suites.
 #
-# Red before C03: every check fails on a missing file/row, naming the absent
-# contract. The rulesync-surface c8 / agents-md c7 / gate t14 scope admits for
-# this ticket landed at the test phase (agent-test's prerogative, cf-50
-# precedent), so HOLD posture after C01/C02 land.
+# Red posture (cf-106 C07 test wave 2): t1-t5 are green against the tree. t6
+# runs its nested suites as id-subsets, the way it already trims gate.sh's
+# pre-existing t17: agent-perms runs minus A15, because A15's cf-106 legs — the
+# pipeline_claim `shared` override input (C08 AC6) and the boards skill's
+# co-tenancy posture (C08 AC7) — are cf-106 C08's work and stay red through
+# C07. A15 still runs, as its own arm: it must either be green or fail naming
+# C08, so an unrelated A15 breakage still reads as this suite's. Every other
+# agent-perms leg is C07's blast radius and must be green.
 #
 # Usage:
 #   bash tests/wekan-mcp/board-context.sh            # t1..t6
@@ -272,7 +276,11 @@ if os.path.exists(".rulesync/subagents/agent-dev-deploy.md"):
 # never as a blanket skip: the TB form still rides (pre-merge trees, via the
 # byte-equal walk below) and the pinned settled form rides; anything else — a
 # dropped ls/probe grant, a reworded tail, any gained row — reddens.
-COORD_PR_SETTLED = """| coord-pr | same as coord | plan/explore/research/test/dev-pr/dev-deploy-pr/review | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
+# The byte below is the landed row at .rulesync/skills/agents-sync/
+# references/permissions.md:27 — re-pinned in the cf-106 C07 test wave 2
+# because C06 widened the cell (the standalone `code-pr` roster class,
+# cf-106 OQ-10); the previous 762-char literal went stale by design.
+COORD_PR_SETTLED = """| coord-pr | same as coord | plan/explore/research/test/dev-pr/dev-deploy-pr/review + standalone `code-pr` (cf-106 C04: the push-capable second implementer — it MAY push the ticket branch, only under `pipeline-push-pr`) | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
 # cf-96 final-review vocabulary sweep (Deploy -> Deployment, C11 fold
 # round): the dev-deploy row's launch-surface cell moved once — the
 # retired `Deploy` stage cite now reads `Deployment`. Admitted EXACTLY,
@@ -371,8 +379,13 @@ if want t6; then
   # pre-existing warm-location permissions drift tracked outside cf-90 (the
   # gate.sh cf-90 header note); running it whole would attribute that drift
   # red to this ticket and to every later chunk gate. The same subset
-  # discipline tests/provider-loops/surface.sh t6 ships. The other children
-  # run whole: agent-perms + standalone-agents must be fully green here.
+  # discipline tests/provider-loops/surface.sh t6 ships. agent-perms runs the
+  # same way: A15 is cf-106 C08's leg (the pipeline_claim `shared` override
+  # input + the boards skill's co-tenancy posture) and stays red until C08
+  # lands, so it runs as its own arm — its red is admitted BY NAME and its
+  # output must name C08, so a new A15 failure for another reason still reads
+  # as t6's. Every other agent-perms leg is this chunk's blast radius.
+  AP_ALL=$(seq 1 19 | grep -v '^15$' | sed 's/^/A/' | tr '\n' ' ')
   for s in tests/agent-board-coord/gate.sh tests/agent-perms/surface.sh tests/standalone-agents/surface.sh; do
     log="$TMP/$(basename "$s").log"
     if [ "$s" = "tests/agent-board-coord/gate.sh" ]; then
@@ -382,6 +395,21 @@ if want t6; then
         || { tail -n 20 "$log" >&2; fail "t6: bash $s (ids minus the pre-existing t17) failed (log: $log)"; }
       continue
     fi
+    if [ "$s" = "tests/agent-perms/surface.sh" ]; then
+      # shellcheck disable=SC2086
+      env -u CHUNK_BASE timeout 600 bash "$s" $AP_ALL >"$log" 2>&1 \
+        || { tail -n 20 "$log" >&2; fail "t6: bash $s (ids minus A15, cf-106 C08's leg) failed (log: $log)"; }
+      a15log="$TMP/agent-perms-A15.log"
+      if env -u CHUNK_BASE timeout 300 bash "$s" A15 >"$a15log" 2>&1; then
+        ok "t6: agent-perms A15 reads green — cf-106 C08's permission legs have landed, fold A15 back into the subset run above"
+      elif grep -qF 'C08' "$a15log"; then
+        ok "t6: agent-perms A15 red, and red on cf-106 C08's contract (the pipeline_claim `shared` input + the boards-skill co-tenancy posture) — recorded as C08's designed red, not a C07 regression (log: $a15log)"
+      else
+        tail -n 20 "$a15log" >&2
+        fail "t6: agent-perms A15 failed for a reason other than cf-106 C08's legs (log: $a15log)"
+      fi
+      continue
+    fi
     if env -u CHUNK_BASE timeout 600 bash "$s" >"$log" 2>&1; then
       :
     else
@@ -389,7 +417,7 @@ if want t6; then
       fail "t6: bash $s failed (log: $log)"
     fi
   done
-  ok "t6: gate script comment-only-invariant vs $TB and free of agent-board references; gate contract (ids minus the known-red t17), agent-perms and standalone-agents suites pass (C03 AC6 regression)"
+  ok "t6: gate script comment-only-invariant vs $TB and free of agent-board references; gate contract (ids minus the known-red t17), agent-perms (ids minus A15 = C08's leg, which is admitted by name) and standalone-agents suites pass (C03 AC6 regression)"
 fi
 
 printf 'PASS: wekan-mcp board-context checks (%d ok)\n' "$checks"

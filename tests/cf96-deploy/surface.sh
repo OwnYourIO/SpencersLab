@@ -17,8 +17,11 @@
 #
 # AC trace: t1[C10 AC1 — steps 1–9 present, in order, actor-named]
 # t2[AC1/AC3 — bump scope: dev + gpu per OQ8, exact file paths + image:
-# line shape + the stale-:v60 comment rewrite] t3[AC2 — probe pins: 38
-# tools, the seven names, the readonly-tier shape, the ops recipe]
+# line shape + the stale-:v60 comment rewrite] t3[AC2 — probe pins: the
+# registry-derived surface counts, checked per claim line (cf-106 C07 N5:
+# re-pinned to content AND scoped — a stale count elsewhere on the page can no
+# longer satisfy the arm), the eight names, the readonly-tier shape, the ops
+# recipe]
 # t4[AC1 — L4 absorption line + owner-owned Inbox move-out] t5[AC2 —
 # cutover apply legs: backup-before-import, artifact path, zero-action
 # re-run, degrade-flip record] t6[AC1 negatives — nothing implies an
@@ -108,11 +111,71 @@ fi
 
 # --- t3: the probe arms ------------------------------------------------------------------
 if want t3; then
-  grep -qE '39 tools|39-tool' "$RUNBOOK" || fail "t3[C10 T1-5 + cf-106 C07 AC6]: the runbook does not state the 39-tool surface (cf-96's 38 + get_card_details) — the probe count follows the registry, and the ledger must move with it (red before the C07 doc row lands)"
+  # N5 (cf-106 C07 round 2): the probe counts are registry-derived and the claim
+  # must hold on the line that makes it — a grep-anywhere for '39' let a stale
+  # '38 tools (17 reads + 21 writes)' sit on the probe line while a correct
+  # '39-tool' line three lines away satisfied the arm. Scope: the lines that
+  # state what the NEW build carries (the :v<run> bump narration and the
+  # tools/list probe lines). The quoted narration of the build deployed TODAY
+  # (":v60 = the 25-tool custom-field build") is history the runbook orders
+  # rewritten, not a surface claim, so it stays out of scope.
+  T3=$(mktemp -d /tmp/opencode/cf96-t3.XXXXXX) || fail "harness: mktemp failed"
+  cat >"$T3/counts.py" <<'PY'
+import re, subprocess, sys
+
+runbook = sys.argv[1]
+proc = subprocess.run([sys.executable, "tests/wekan-mcp/registry-parity.py", "counts",
+                       "containers/wekan-mcp/wekan_mcp/server.py"],
+                      capture_output=True, text=True)
+if proc.returncode != 0:
+    print(f"registry-parity counts failed ({proc.returncode}): {proc.stderr.strip()}")
+    sys.exit(2)
+reads, writes, total = (int(x) for x in proc.stdout.split()[:3])
+WANT = {"tools": total, "reads": reads, "writes": writes}
+CLAIM = re.compile(r"(?P<n>\d{1,3})(?P<k>[ -]tools?\b|-tool\b| reads\b| writes\b)")
+BARE = re.compile(r":v<run>`?\s*=\s*(?P<n>\d{2,3})\b(?!\s*(?:tools?\b|reads\b|writes\b))")
+
+bad, seen_tools, seen_reads = [], 0, 0
+for no, line in enumerate(open(runbook).read().splitlines(), 1):
+    if ":v<run>" not in line and "tools/list" not in line:
+        continue
+    for m in CLAIM.finditer(line):
+        kind = "tools" if "tool" in m.group("k") else m.group("k").strip()
+        got = int(m.group("n"))
+        if got != WANT[kind]:
+            bad.append(f"line {no} claims {got} {kind}; the registry says {WANT[kind]} ({reads} reads + {writes} writes = {total})")
+        seen_tools += kind == "tools"
+        seen_reads += kind == "reads"
+    for m in BARE.finditer(line):
+        if int(m.group("n")) != total:
+            bad.append(f"line {no} claims the new build = {m.group('n')}; the registry says {total}")
+        seen_tools += 1
+if not seen_tools:
+    bad.append("no scoped line states the new build's tool count — the probe count must be pinned, not left to the catalog alone")
+if not seen_reads:
+    bad.append("no scoped line states the read count — the readonly-tier probe (reads only, no new writes) is the _write_tool gating proof")
+if bad:
+    print("; ".join(bad))
+    sys.exit(1)
+PY
+  counts_rc=0; counts_out=$(python3 "$T3/counts.py" "$RUNBOOK" 2>&1) || counts_rc=$?
+  if [ "$counts_rc" -eq 2 ]; then
+    printf '%s\n' "$counts_out" >&2
+    fail "t3[harness]: the count checker could not run (registry-parity counts) — not a C07 red"
+  elif [ "$counts_rc" -ne 0 ]; then
+    printf '%s\n' "$counts_out" >&2
+    fail "t3[C10 T1-5 + cf-106 C07 AC6]: the runbook's surface counts disagree with the tool registry (per-line, OQ-13: counts are content-pinned) — the probe count follows the registry, and the ledger must move with it"
+  fi
+  sed 's/\*\*39 tools\*\*/**38 tools**/' "$RUNBOOK" >"$T3/stale-total.md"
+  cmp -s "$RUNBOOK" "$T3/stale-total.md" && fail "t3[cf-106 C07 N5]: harness — the stale-total control copy is identical to $RUNBOOK (the probe line lost its count claim)"
+  python3 "$T3/counts.py" "$T3/stale-total.md" >/dev/null 2>&1 && fail "t3[cf-106 C07 N5]: NEGATIVE CONTROL FAILED — a runbook claiming 38 tools on the dev-boards probe line still passes: the per-line count arm is decoration"
+  sed 's/(18 reads + 21 writes)/(17 reads + 21 writes)/' "$RUNBOOK" >"$T3/stale-reads.md"
+  cmp -s "$RUNBOOK" "$T3/stale-reads.md" && fail "t3[cf-106 C07 N5]: harness — the stale-reads control copy is identical to $RUNBOOK (the read/write breakdown claim is gone)"
+  python3 "$T3/counts.py" "$T3/stale-reads.md" >/dev/null 2>&1 && fail "t3[cf-106 C07 N5]: NEGATIVE CONTROL FAILED — a runbook claiming 17 reads still passes: the read-count half of the arm is decoration"
   for n in list_board_dependencies list_card_dependencies add_card_dependency edit_card_dependency remove_card_dependency preload_board set_card_labels get_card_details; do
     grep -qF "$n" "$RUNBOOK" || fail "t3[C10 T1-5 / cf-106 C07 AC6]: the new-tool probe list is missing $n"
   done
-  grep -qE '18 reads, NO new writes|17 reads, NO new writes|no new writes' "$RUNBOOK" \
+  grep -qE 'NO new writes|no new writes' "$RUNBOOK" \
     || fail "t3[C10 T1-5]: the readonly-tier probe (reads only, no new writes) is missing — _write_tool gating proof"
   grep -qF 'wekan-mcp-ops.md' "$RUNBOOK" \
     || fail "t3[C10 T1-5]: the probe recipe reference (skills/wekan-api/references/wekan-mcp-ops.md) is missing"

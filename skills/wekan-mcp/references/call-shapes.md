@@ -1,6 +1,6 @@
 # wekan-mcp tool call shapes — the full table
 
-Tool → args → response shape for all 38 tools registered by
+Tool → args → response shape for all 39 tools registered by
 `containers/wekan-mcp/wekan_mcp/server.py`. Rows are anchored on the server's
 **function names**, never line numbers — lines drift with every build, names
 survive. One row per registered tool, one evidence stamp per row:
@@ -13,7 +13,8 @@ survive. One row per registered tool, one evidence stamp per row:
   are noted inline with their date.
 - `source-only 2026-11` — the cf-96 rows (dependency tools, `preload_board`,
   `set_card_labels`, and — since C11 — the re-stamped `list_rules`/`get_rule`
-  projection): repo-source and upstream-v12.65 facts only, never probed — no
+  projection) plus cf-106 C07's `get_card_details`: repo-source and
+  upstream-v12.65 facts only, never probed — no
   pipeline session holds a bearer; the C10 deploy-chain user probe upgrades
   these stamps after the pin bump.
 
@@ -33,6 +34,7 @@ parameter; the direct-probe recipe is in
 | `list_swimlanes` | `board_id` | — | `[{id, title}]` — every board has at least one. | live probe 2026-10-27 |
 | `list_cards_in_list` | `board_id`, `list_id` | — | cards in board order, top first; the by-list projection strips `card_number` (null), `custom_fields` and `label_ids` (empty) and — since cf-96 — `card_dependencies` (empty) and `parent_id` (null); `get_card` per candidate for those. Both ids are required together (observed live 2026-10-26). | source-only |
 | `get_card` | `board_id`, `card_id` | — | the full slim card: only source of `card_number`, `custom_fields` `[{id, value}]`, `label_ids`, and — since cf-96 — `card_dependencies` (the raw stored `[{cardId, type, color, icon}]` entries on the source card) and `parent_id` (creation lineage). `board_id` is interface-consistency only — the route is `/api/cards/{card_id}` and WeKan enforces board access via the card's own board. Returns archived cards too; check `archived`. | source-only |
+| `get_card_details` | `board_id`, `card_id` | — | the single-card preload the claim-time block is written from: `{id, card_number, title, description, list_id, swimlane_id, archived, sort, parent_id, label_ids, labels: {label id: name}, custom_fields: {field name: raw value}, slug_stack: [oldest … newest], current_slug, checklists: [{id, title, items: [{title, finished}]}], dependencies: [{to_id, type, color}]}` — EVERY checklist with its items in stored order (no kickoff-vocabulary filter, unlike `preload_board`, so a follow-up card's inherited answers are readable without touching the parent), label names from the board document and field names from the board's field list (the card document carries only ids; an orphaned field keeps its id as the key), edges from the card's own `cardDependencies` (`to_id` is the target card id, no icon), `slug_stack`/`current_slug` both from the single combined-value authority — the stack oldest first, the current slug its newest entry; archived cards come back FLAGGED, never dropped; a card that does not read as a card document RAISES (an empty payload would be indistinguishable from an empty card), and a checklist whose items route cannot be read RAISES the same way — the C06 fail-the-call ruling covers this sub-read, so an empty `items` list always means the checklist genuinely has no items. Block format home: the Card details block section of `SKILL.md`. | source-only 2026-11 (cf-106 C07; `/api/cards/{card_id}` + board + custom-fields + per-checklist routes as pinned by the `get_card`/`list_checklists`/`get_checklist` rows) |
 | `list_comments` | `board_id`, `card_id` | — | `[{id, comment, author_id, created_at}]` — the body key is `comment`; live runs observed `created_at: null` (2026-10-26), so treat listing order as time order. | source-only |
 | `list_checklists` | `board_id`, `card_id` | — | `[{id, title}]` only — card-scoped, so checklist ids cannot be pre-collected board-wide; item ids come from `get_checklist`. | source-only |
 | `get_checklist` | `board_id`, `card_id`, `checklist_id` | — | `{id, title, items: [{id, title, finished}]}` — `finished` is the read-side name of the REST `isFinished` flag; the item ids are what `toggle_checklist_item` and `delete_checklist_item` require. | source-only |

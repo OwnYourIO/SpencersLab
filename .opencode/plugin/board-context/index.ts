@@ -275,6 +275,7 @@ export function createPromptHandler(deps: any, opts: any = {}) {
       const block = await withinBudget(
         Promise.resolve(deps.resolve(MCP_SERVER_KEY)),
         deps.fetchTimeoutMs ?? FETCH_TIMEOUT_MS,
+        "prompt board context",
       );
       if (typeof block !== "string" || !block.startsWith(CANONICAL_HEADER)) {
         deps.log("board context unresolved — prompt left untouched");
@@ -291,8 +292,10 @@ export function createPromptHandler(deps: any, opts: any = {}) {
 
 // The race never rejects with an unhandled rejection: the work promise is
 // wrapped into a settled-marker so a late board-fetch failure cannot crash the
-// server process after the budget already fired.
-async function withinBudget<T>(work: Promise<T>, ms: number): Promise<T> {
+// server process after the budget already fired. `leg` names the caller's own
+// leg in the breach text: each leg has its own budget constant and its own
+// consumer, so a shared label would blame the wrong one in the log line.
+async function withinBudget<T>(work: Promise<T>, ms: number, leg = "board fetch"): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const settled = work.then(
     (value) => ({ state: "done" as const, value }),
@@ -307,10 +310,188 @@ async function withinBudget<T>(work: Promise<T>, ms: number): Promise<T> {
     ]);
     if (outcome.state === "done") return outcome.value;
     if (outcome.state === "failed") throw outcome.error;
-    throw new Error(`board fetch exceeded the ${ms} ms admission-latency budget`);
+    throw new Error(`${leg} exceeded its ${ms} ms budget`);
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Claim-time single-card leg (cf-106 C07).
+//
+// The prompt hook can only carry whole-board shape; the card a run works is
+// not known until pipeline_claim succeeds, which is mid-session. So this leg
+// hangs on the tool hook instead and amends the claim answer itself: the run
+// reads the card's description, labels, field values, checklist state and
+// dependency lines in the same turn it took the lock, instead of paying
+// get_card + list_checklists + N x get_checklist + a dependency read after the
+// fact. The block format has one normative home — the "Card details block"
+// section of skills/wekan-mcp/SKILL.md; formatCardBlock below mirrors its
+// field lines (tests/opencode/card-details.test.ts pins the parity).
+//
+// A tool hook is the only reachable surface for this (a second prompt hook is
+// forbidden: AC4 keeps the prompt path byte-unchanged, and the block is
+// card-scoped, not prompt-scoped). What the offline suites cannot prove is
+// that v2.1.4 fires tool hooks for a Code-Mode `execute` of a tool another
+// plugin registered — probe leg LF10 proves the deployed tool exists, and the
+// first real board-coord claim proves the hook; the degrade path (no block,
+// one stderr line) is what an unreachable hook costs.
+
+export const CARD_DETAILS_TOOL = "get_card_details";
+
+// This leg's own latency bound, deliberately NOT FETCH_TIMEOUT_MS: that 8 s
+// constant is a ruling about prompt-ADMISSION latency, and this leg runs after
+// admission. It is larger because get_card_details fans out over the card's
+// checklists server-side, and because breaching it may only cost the block —
+// never the claim answer, which is the lock-identity channel (pipeline-locks
+// D28) and must reach the model unchanged.
+export const CARD_DETAILS_BUDGET_MS = 12_000;
+
+// The claim tool under both spellings: flat as the registry registers it,
+// `tools.`-qualified as Code Mode calls it (pipeline-locks D29).
+const CLAIM_TOOLS = new Set(["pipeline_claim", "tools.pipeline_claim"]);
+
+// One collection stamp per payload object, so re-rendering the same read is
+// byte-stable (the doc-parity test and any later re-format see one block)
+// while a fresh read still stamps fresh.
+const blockStamps = new WeakMap<object, string>();
+
+function collectedAt(payload: any): string {
+  if (payload && typeof payload === "object") {
+    const seen = blockStamps.get(payload);
+    if (seen) return seen;
+    const stamp = localIso();
+    blockStamps.set(payload, stamp);
+    return stamp;
+  }
+  return localIso();
+}
+
+// Multi-line and padded values would break the line-per-field format the doc
+// home and the parity pin read, so every value lands on one line.
+function oneLine(value: any): string {
+  if (value === null || value === undefined) return "";
+  return String(value).replace(/\s+/g, " ").trim();
+}
+
+// Tolerant of both shapes the field maps arrive in: an object keyed on the
+// label/field name (the tool's answer) or a list of entries (a hand-pasted or
+// older payload).
+function pairs(value: any, key: string, val: string): string[] {
+  if (Array.isArray(value)) {
+    return value.map((entry: any) => `${entry?.[key] ?? entry}=${entry?.[val] ?? ""}`);
+  }
+  if (value && typeof value === "object") {
+    return Object.entries(value).map(([name, v]) => `${name}=${oneLine(v)}`);
+  }
+  return [];
+}
+
+export function formatCardBlock(payload: any, opts: { collectedAt?: string } = {}): string {
+  const checklists = Array.isArray(payload?.checklists) ? payload.checklists : [];
+  const dependencies = Array.isArray(payload?.dependencies) ? payload.dependencies : [];
+  const lines = [
+    `card_details: ${oneLine(payload?.title)} (#${payload?.card_number ?? ""})`,
+    `id: ${payload?.id ?? ""}`,
+    `card_number: ${payload?.card_number ?? ""}`,
+    `title: ${oneLine(payload?.title)}`,
+    `description: ${oneLine(payload?.description)}`,
+    `list_id: ${payload?.list_id ?? ""}`,
+    `swimlane_id: ${payload?.swimlane_id ?? ""}`,
+    `archived: ${payload?.archived === true}`,
+    `sort: ${payload?.sort ?? ""}`,
+    `parent_id: ${oneLine(payload?.parent_id)}`,
+    `label_ids: ${(Array.isArray(payload?.label_ids) ? payload.label_ids : []).join(", ")}`,
+    `labels: ${pairs(payload?.labels, "id", "name").join(", ")}`,
+    `custom_fields: ${pairs(payload?.custom_fields, "name", "raw").join(", ")}`,
+    `slug_stack: ${(Array.isArray(payload?.slug_stack) ? payload.slug_stack : []).map(oneLine).join(", ")}`,
+    `current_slug: ${oneLine(payload?.current_slug)}`,
+    `checklists: ${checklists.map((cl: any) => oneLine(cl?.title)).join(", ")}`,
+  ];
+  for (const cl of checklists) {
+    lines.push(`  checklist: ${oneLine(cl?.title)}`);
+    for (const item of Array.isArray(cl?.items) ? cl.items : []) {
+      lines.push(`    item: ${oneLine(item?.title)} [${item?.finished ? "x" : " "}]`);
+    }
+  }
+  lines.push(
+    `dependencies: ${dependencies
+      .map((d: any) => [d?.to_id, d?.type, d?.color].filter(Boolean).join(" "))
+      .join(", ")}`,
+  );
+  for (const d of dependencies) {
+    lines.push(`  dependency: ${[d?.to_id, d?.type, d?.color].filter(Boolean).join(" ")}`);
+  }
+  lines.push(`collected: ${opts.collectedAt ?? collectedAt(payload)}, from ${CARD_DETAILS_TOOL}`);
+  return lines.join("\n");
+}
+
+// A claim answer is amendable only when the claim SUCCEEDED: the tool answers
+// refusals as { ok:false, reason } and the no-card walk as { ok:true,
+// reason:"no_work" } (pipeline-locks), and `content` is the JSON string the
+// 2.1.4 host renders. undefined here means "leave the answer byte-unchanged".
+function claimAnswer(answer: any): string | undefined {
+  if (typeof answer === "string") return answer.trim() ? answer : undefined;
+  if (!answer || typeof answer !== "object") return undefined;
+  if (answer.ok !== true || answer.reason !== undefined) return undefined;
+  return typeof answer.content === "string" ? answer.content : JSON.stringify(answer);
+}
+
+// Which field the host renders for a tool answer is not settled on v2.1.4 —
+// aislop-gate's header records the same open question — so the amended answer
+// goes into whichever field the original answer already sits in rather than
+// betting on one name. A claim answer is text-only (pipeline-locks' respond()
+// stringifies it), so the parts shape keeps the whole amended answer in one
+// text entry.
+function amendAnswer(result: any, amended: string): void {
+  if (!result) return;
+  if (typeof result.content === "string") result.content = amended;
+  else if (Array.isArray(result.content)) result.content = [{ type: "text", text: amended }];
+  else if (typeof result.output === "string") result.output = amended;
+  else result.content = amended;
+}
+
+// deps = { callTool, getAgent, log, budgetMs?, boardId? }; boardId is the
+// extra the live wiring needs (get_card_details is board-scoped while the
+// claim only names the card), and its absence is what the offline suites run.
+export function createClaimHandler(deps: any, opts: any = {}) {
+  const budgetMs = deps?.budgetMs ?? opts?.budgetMs ?? CARD_DETAILS_BUDGET_MS;
+  // Once per claimed card: the worker beats and re-claims the same card over
+  // one run, and a re-read would pay the fan-out again for the same bytes.
+  const claimed = new Set<string>();
+
+  return async (event: any): Promise<string | undefined> => {
+    try {
+      const tool = String(event?.tool ?? "");
+      if (!CLAIM_TOOLS.has(tool)) return undefined;
+      const agent =
+        typeof event?.agent === "string" ? event.agent : await deps.getAgent(event?.sessionID);
+      if (!isBoardCoordAgent(agent)) return undefined;
+      const answer = claimAnswer(event?.result);
+      if (answer === undefined) return undefined;
+      const cardId = event?.args?.cardId ?? event?.args?.card_id;
+      if (typeof cardId !== "string" || !cardId || claimed.has(cardId)) return undefined;
+      claimed.add(cardId);
+      const payload = await withinBudget(
+        Promise.resolve(
+          deps.callTool(CARD_DETAILS_TOOL, {
+            board_id: deps.boardId ? await deps.boardId() : undefined,
+            card_id: cardId,
+          }),
+        ),
+        budgetMs,
+        `${CARD_DETAILS_TOOL} for card ${cardId}`,
+      );
+      if (!payload || typeof payload !== "object") {
+        deps.log("claim-time card details unresolved — claim answer left untouched");
+        return undefined;
+      }
+      return `${answer}\n\n${formatCardBlock(payload)}`;
+    } catch (err: any) {
+      // Degrade law, same shape as the prompt leg: untouched answer, one line.
+      deps.log(`claim-time card details degraded: ${err?.message ?? err}`);
+      return undefined;
+    }
+  };
 }
 
 async function projectConfigText(ctx: any): Promise<string | null> {
@@ -369,16 +550,19 @@ function makeCallTool(url: string): (name: string, args: any) => Promise<any> {
 export default {
   id: "local.board-context",
   async setup(ctx: any) {
+    const discoverUrl = async (): Promise<string> => {
+      const url = await resolveMcpUrl({
+        mcpList: async () => ctx.mcp?.list?.(),
+        readConfig: () => projectConfigText(ctx),
+      });
+      if (!url) throw new Error(`no URL discovered for ${MCP_SERVER_KEY}`);
+      return url;
+    };
     const handler = createPromptHandler({
       getAgent: async (sessionID: string) => (await ctx.session.get({ sessionID }))?.agent,
       resolve: async (serverId: string) => {
-        const url = await resolveMcpUrl({
-          mcpList: async () => ctx.mcp?.list?.(),
-          readConfig: () => projectConfigText(ctx),
-        });
-        if (!url) throw new Error(`no URL discovered for ${serverId}`);
         return resolveBoardContext(
-          { callTool: makeCallTool(url) },
+          { callTool: makeCallTool(await discoverUrl()) },
           {
             boardTitle: BOARD_TITLE,
             swimlaneTitle: SWIMLANE_TITLE,
@@ -390,5 +574,58 @@ export default {
       log: (message: string) => console.error(`[board-context] ${message}`),
     });
     await ctx.session.hook("prompt", handler);
+
+    // The claim leg's board-id read is cached for the process: the board the
+    // pipeline works is one board, and re-resolving it per claim pays a
+    // list_boards round trip for a value that does not move. A failed lookup
+    // clears the cache so a later claim can still resolve it.
+    let boardId: Promise<string> | undefined;
+    const resolveBoardId = (): Promise<string> => {
+      if (!boardId) {
+        boardId = (async () => {
+          const call = makeCallTool(await discoverUrl());
+          const boards = asArray(await call("list_boards", {}));
+          const board = boards.find((b: any) => b?.title === BOARD_TITLE);
+          if (!board?.id) throw new Error(`board not found: ${BOARD_TITLE}`);
+          return String(board.id);
+        })();
+        boardId.catch(() => {
+          boardId = undefined;
+        });
+      }
+      return boardId;
+    };
+
+    const claimHandler = createClaimHandler({
+      getAgent: async (sessionID: string) => (await ctx.session.get({ sessionID }))?.agent,
+      callTool: async (name: string, args: any) => makeCallTool(await discoverUrl())(name, args),
+      boardId: resolveBoardId,
+      log: (message: string) => console.error(`[board-context] ${message}`),
+    });
+    if (typeof ctx?.tool?.hook === "function") {
+      // execute.after, never before: blocking a claim call would take the
+      // lock down with the card read (pipeline-locks C01 fact 2). Whether the
+      // block then reaches the model is not settled offline — see amendAnswer
+      // for the field-shape tolerance and the probe/first-claim legs for the
+      // delivery proof — so the leg may cost the block, never the answer.
+      await ctx.tool.hook("execute.after", async (event: any) => {
+        try {
+          const amended = await claimHandler({
+            agent: typeof event?.agent === "string" ? event.agent : undefined,
+            tool: event?.tool,
+            args: event?.input,
+            result: event?.result,
+            sessionID: event?.sessionID ?? event?.context?.sessionID,
+          });
+          if (typeof amended === "string") amendAnswer(event?.result, amended);
+        } catch (err: any) {
+          // createClaimHandler never throws; this belt only covers the host
+          // shape, and it must never break the tool call it is watching.
+          console.error(`[board-context] claim hook failed: ${err?.message ?? err}`);
+        }
+      });
+    } else {
+      console.error("[board-context] degraded: no ctx.tool.hook — claim-time card block disabled");
+    }
   },
 };

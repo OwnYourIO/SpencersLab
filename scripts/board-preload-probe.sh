@@ -39,10 +39,15 @@
 #        swimlane/list titles — the claim-time per-card fan-out stays dead.
 #   LF9  swimlane_titles (cf-106 C06): the filter bound is accepted and answers
 #        exactly the named swimlane.
-#        LF8/LF9 answer `degraded` when the deployed image predates the preload
-#        surface (today's pin is wekan-mcp :v87, 26 tools); they are NOT part of
-#        `all` — the board-context citation run must not go red on an image pin
-#        the owner has not bumped yet.
+#   LF10 get_card_details (cf-106 C07): the single-card read answers with the
+#        documented card fields — card_number and the identity fields, every
+#        checklist with finished-flagged items, and the slug stack
+#        (slug_stack + current_slug) — so the claim-time block has a live
+#        answer behind it.
+#        LF8/LF9/LF10 answer `degraded` when the deployed image predates the
+#        preload surface (today's pin is wekan-mcp :v87, 26 tools); they are NOT
+#        part of `all` — the board-context citation run must not go red on an
+#        image pin the owner has not bumped yet.
 #
 # Launch topology (the location reality the chunk records): LF1/LF2/LF7 prove
 # the BRANCH code through `opencode run --standalone` from this worktree, so
@@ -61,11 +66,11 @@
 #
 # Side effects: probe sessions are throwaway top-level `agent-board-coord`
 # runs titled board-preload-probe-<leg>-* (zero claims, zero board writes —
-# they never touch a real card; LF8/LF9 only ever call read tools). Every probe
+# they never touch a real card; LF8/LF9/LF10 only ever call read tools). Every probe
 # run that finishes successfully produces an "OpenCode: agent-board-coord
 # finished" push from the question plugin of the instance that served it
 # (manual shape keeps alerting — LF5's safe direction), so expect one per
-# successful LF1/LF2/LF4/LF8/LF9 leg, with LF4's the pre-announced LF5 test push.
+# successful LF1/LF2/LF4/LF8/LF9/LF10 leg, with LF4's the pre-announced LF5 test push.
 
 set -euo pipefail
 
@@ -80,6 +85,14 @@ STRUCTURAL_TOOLS="list_boards get_board list_lists list_swimlanes list_custom_fi
 # The cf-106 C06 payload legs (LF8/LF9) probe the deployed dev-boards answer,
 # so the claim-time fan-out they are supposed to kill has a live-fire answer.
 PRELOAD_TOOL="preload_board"
+# The cf-106 C07 card leg (LF10): the single-card read the claim-time block is
+# written from, probed for its identity fields and its parsed slug stack.
+CARD_TOOL="get_card_details"
+# LF10 reads the card a real pickup would take (In Process swimlane, pickup
+# order), not the board's first list: a card outside those lists can carry no
+# checklists legitimately, and lf10_shape's checklist expectations would then
+# red the owner's readback on a valid payload.
+PICKUP_LISTS=("Not Started" "Rework" "Low Priority")
 PROMPT_TIMEOUT=900
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 RUN_DIR="/tmp/opencode/board-preload-probe/$STAMP"
@@ -88,7 +101,7 @@ mkdir -p "$RUN_DIR"
 OVERALL=0
 
 usage() {
-  printf 'usage: bash scripts/%s all | bash scripts/%s <leg>...   (legs: lf1 lf2 lf3 lf4 lf5 lf6 lf7, plus lf8 lf9 which `all` excludes until the owner bumps the image pin)\n' \
+  printf 'usage: bash scripts/%s all | bash scripts/%s <leg>...   (legs: lf1 lf2 lf3 lf4 lf5 lf6 lf7, plus lf8 lf9 lf10 which `all` excludes until the owner bumps the image pin)\n' \
     "$SCRIPT_NAME" "$SCRIPT_NAME"
 }
 
@@ -112,10 +125,10 @@ for arg in "$@"; do
   case "$lc" in
     all) LEGS=(lf1 lf2 lf4 lf5 lf6 lf7) ;;
     lf1|lf2|lf3|lf4|lf5|lf6|lf7) LEGS+=("$lc") ;;
-    # lf8/lf9 read the deployed payload, so they answer against the owner's
+    # lf8/lf9/lf10 read the deployed payload, so they answer against the owner's
     # image pin; excluded from `all` (the board-context citation stays green
     # while the pin still predates the preload surface).
-    lf8|lf9) LEGS+=("$lc") ;;
+    lf8|lf9|lf10) LEGS+=("$lc") ;;
     *)
       usage >&2
       verdict usage fail
@@ -431,9 +444,11 @@ run_lf6() {
 # The `degraded` token is only for a confirmed absent surface: the deployed
 # wekan-mcp pin (v87 today) has no preload_board at all, so the enrichment
 # cannot be judged from it. Anything else that is not the documented payload
-# answers fail.
+# answers fail — including a server that died mid-call: a crash is a failed
+# call the runbook must see as fail (a restart is the owner's action), never as
+# the sanctioned `degraded` of a surface that simply does not exist yet.
 preload_absent() {
-  grep -qiE 'not found|no such tool|invalid tool|died unexpectedly' "$1"
+  grep -qiE 'not found|no such tool|invalid tool' "$1"
 }
 
 # LF8 verdict: `ok` when the answer carries checklist items with their finished
@@ -588,6 +603,95 @@ PY
   esac
 }
 
+run_lf10() {
+  local prompt sid ctxf callsf lastf shape token detail
+  prompt="Load the boards skill. PROBE WRAPPER (leg LF10, single-card read probe, not a board run): claim nothing, move nothing, write nothing, launch no subagent, edit no file. Make exactly four dev-boards MCP calls: list_boards; list_lists for the AI-Dev board id; list_cards_in_list for that board and the list titled '${PICKUP_LISTS[0]}' in the In Process swimlane (read its id from list_lists); get_card_details for that board id and the FIRST card of that list. If that list answers no cards, read the next list of the pickup order '${PICKUP_LISTS[*]}' instead and take its first card — that is the card a real claim takes, and it carries the five standard checklists. Reply with exactly: PROBE-ACK"
+  sid=$(launch_standalone lf10 "$prompt")
+  ctxf="$RUN_DIR/lf10-context.json"
+  if ! fetch_context "$sid" "$ctxf"; then
+    fail_leg LF10 "session $sid context unreadable — no card-read evidence"
+    return 0
+  fi
+  callsf="$RUN_DIR/lf10-card-calls.txt"
+  ctx_tool_calls "$ctxf" "$CARD_TOOL" >"$callsf"
+  if [ ! -s "$callsf" ]; then
+    fail_leg LF10 "session $sid never called get_card_details — wrapper non-compliance, the card read was never issued"
+    return 0
+  fi
+  ev "LF10: session $sid, get_card_details calls: $(cut -f1 "$callsf" | paste -sd, -), last read args: $(tail -n1 "$callsf" | cut -f2), context saved to $ctxf"
+  lastf="$RUN_DIR/lf10-last-answer.txt"
+  tail -n1 "$callsf" | cut -f3 >"$lastf"
+  if preload_absent "$lastf"; then
+    verdict LF10 degraded
+    ev "LF10: the deployed dev-boards answer is not a card-details payload ($(head -c 160 "$lastf")) — image pin predates get_card_details; re-run after the owner's bump"
+    return 0
+  fi
+  shape=$(lf10_shape "$lastf")
+  token="${shape%%|*}"; detail="${shape#*|}"
+  case "$token" in
+    ok)
+      verdict LF10 pass
+      ev "LF10: the single-card read answers the identity fields, the checklist state and the slug stack — $detail (the claim-time block has a live answer behind it)"
+      ;;
+    thin) fail_leg LF10 "card-details answer is missing enrichment: $detail" ;;
+    *) fail_leg LF10 "card-details answer unparseable: $detail" ;;
+  esac
+}
+
+# LF10 verdict: `ok` when the answer carries the card identity (card_number
+# included), checklists with finished-flagged items, and the slug stack read
+# both ways; `thin` when the read exists but a part of the documented shape is
+# missing (the claim block would still need a fan-out); `err` when the call
+# itself failed. The leg reads a pickup-list card, so an absent checklist
+# section here is a gap in the read, not a card that never had checklists.
+lf10_shape() {
+  python3 - "$1" <<'PY'
+import json, sys
+answer = open(sys.argv[1]).read().strip()
+try:
+    doc = json.loads(answer)
+except ValueError:
+    print("err|" + answer[:160])
+    raise SystemExit(0)
+if not isinstance(doc, dict) or "checklists" not in doc:
+    print("err|" + answer[:160])
+    raise SystemExit(0)
+missing = []
+for key in ("id", "card_number", "title", "description", "list_id",
+            "swimlane_id", "archived", "label_ids", "labels", "custom_fields",
+            "slug_stack", "current_slug", "dependencies"):
+    if key not in doc:
+        missing.append(f"no {key} key")
+checklists = doc.get("checklists") or []
+items = [i for cl in checklists for i in (cl.get("items") or [])]
+if not checklists:
+    missing.append("no checklists")
+if not any(i.get("title") for i in items):
+    missing.append("checklist items without titles")
+if items and not all(isinstance(i.get("finished"), bool) for i in items):
+    missing.append("items without a boolean finished flag")
+for cl in checklists:
+    if not cl.get("title"):
+        missing.append("a checklist without a title")
+stack = doc.get("slug_stack")
+if not isinstance(stack, list):
+    missing.append("slug_stack is not an ordered list")
+elif stack and doc.get("current_slug") != stack[-1]:
+    missing.append(f"current_slug disagrees with the stack tail ({doc.get('current_slug')!r})")
+for edge in doc.get("dependencies") or []:
+    if not isinstance(edge, dict) or "to_id" not in edge or "type" not in edge:
+        missing.append("a dependency line without to_id/type")
+        break
+if missing:
+    print("thin|" + "; ".join(missing))
+else:
+    print(f"ok|card_number={doc.get('card_number')}, "
+          f"slug_stack={stack}, current_slug={doc.get('current_slug')}, "
+          f"{len(checklists)} checklists/{len(items)} items, "
+          f"{len(doc.get('dependencies') or [])} edges")
+PY
+}
+
 run_lf7() {
   local hit=0 line
   local logs=(lf1 lf2)
@@ -629,6 +733,7 @@ for leg in "${LEGS[@]}"; do
     lf7) run_lf7 ;;
     lf8) run_lf8 ;;
     lf9) run_lf9 ;;
+    lf10) run_lf10 ;;
   esac
 done
 

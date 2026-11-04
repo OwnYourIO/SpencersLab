@@ -38,6 +38,16 @@
 # (cf-68 precedent); tests/wekan-mcp/dependencies.sh carries the seven
 # tools' own contract.
 #
+# cf-106 C07 test round (2026-11-04, agent-test): t5 was UNRUNNABLE at every
+# tree state — its process referenced t2's READS/WRITES (a different python
+# process), so it died with NameError: name 'READS' is not defined, which read as
+# a doc-parity failure and reddened skill-surface t5, board-provisioning t7 and
+# create-list t4 through the suite chain. The counts are now read out of
+# server.py inside t5, and every count claim in README/wekan-api must EQUAL that
+# registry count instead of being matched against an enumerator of past counts —
+# a sanctioned +1 can no longer leave a doc that quietly disagrees with the
+# registry (the cf-68 FRICTION "missed parity literal" trap, made structural).
+#
 # Statics-only by design (D8): the image has no pytest harness and none is
 # introduced; the live 25-tool round-trip is user acceptance after M1-M3.
 #
@@ -52,16 +62,22 @@
 # Usage:
 #   bash tests/wekan-mcp/tools.sh              # t1..t6 + t8 + t9
 #   bash tests/wekan-mcp/tools.sh t2 t4        # subset
+#   WEKAN_SERVER=<path> bash tests/wekan-mcp/tools.sh t5   # re-derive the
+#       doc-parity arms against a scratch copy of server.py (non-vacuity probe)
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-SERVER="containers/wekan-mcp/wekan_mcp/server.py"
+SERVER="${WEKAN_SERVER:-containers/wekan-mcp/wekan_mcp/server.py}"
 WEKAN_PY="containers/wekan-mcp/wekan_mcp/wekan.py"
 README="containers/wekan-mcp/README.md"
 SKILL_API="skills/wekan-api/SKILL.md"
 LOGIN_TESTS="tests/containers/wekan-mcp-login.sh"
 PIN_BASE="${C01_BASE:-5e35ba6da}"
+# One parity implementation for every wekan-mcp suite (claims = doc counts,
+# rows = doc tables vs the registered name set); counts feeds the ok lines so no
+# suite restates the registry size as a literal.
+PARITY="tests/wekan-mcp/registry-parity.py"
 
 checks=0
 
@@ -85,6 +101,10 @@ else
   done
 fi
 want() { [ -n "${WANT[$1]:-}" ]; }
+
+# The registry count the doc pins are compared against (exit 2 = harness fault).
+read -r REG_READS REG_WRITES REG_TOTAL < <(python3 "$PARITY" counts "$SERVER") \
+  || fail "harness: $PARITY could not read the registry out of $SERVER"
 
 # --- t1: py_compile both modules (C01 AC1) -------------------------------------
 if want t1; then
@@ -159,7 +179,7 @@ allowed = {'WEKAN_MCP_LOG_LEVEL', 'WEKAN_MCP_READ_ONLY', 'WEKAN_MCP_HOST', 'WEKA
 extra = envs - allowed
 if extra:
     bad(f't2: new env vars read in server.py: {sorted(extra)} — C01 AC3 forbids new env vars (only {sorted(allowed)})')
-print(f'ok: t2 — {READS} @mcp.tool + {WRITES} @_write_tool == {READS + WRITES} distinct names, the 17 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item + cf-89 v102 + cf-96 extension)')
+print(f'ok: t2 — {READS} @mcp.tool + {WRITES} @_write_tool == {READS + WRITES} distinct names, every pinned new name registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item + cf-89 v102 + cf-96 extension + cf-106 C07)')
 PY
   then
     checks=$((checks + 1))
@@ -296,8 +316,13 @@ PY
 fi
 
 # --- t5: README + wekan-api SKILL parity (C01 AC5) -----------------------------
+# Counts come out of server.py through $PARITY, not from this process: an earlier
+# shape referenced t2's READS/WRITES (a different python process), so this arm
+# died with NameError and was unrunnable at any tree state (cf-106 C07 round).
 if want t5; then
-  if python3 - "$README" "$SKILL_API" <<'PY'
+  python3 "$PARITY" claims "$SERVER" "$README" "$SKILL_API" \
+    || fail "t5: a tool-count claim in README/wekan-api no longer matches the registry ($REG_TOTAL = $REG_READS reads + $REG_WRITES writes) — the count follows server.py, it is not a literal to re-pin (reason above)"
+  if python3 - "$README" "$SKILL_API" "$REG_TOTAL" "$REG_READS" "$REG_WRITES" <<'PY'
 import sys
 
 def bad(msg):
@@ -306,16 +331,12 @@ def bad(msg):
 
 readme = open(sys.argv[1]).read()
 skill = open(sys.argv[2]).read()
+TOTAL, READS, WRITES = (int(x) for x in sys.argv[3:6])
 
 NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
        'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item',
-       'create_list']
+       'create_list', 'preload_board', 'get_card_details']
 
-if f'{READS + WRITES} typed tools' not in readme:
-    bad(f't5: README must state the {READS + WRITES}-tool surface (cf-96 C01 parity + cf-106 C07 +1)')
-for stale in ('26 typed tools', '25 typed tools', '20 typed tools'):
-    if stale in readme:
-        bad(f't5: README still claims the stale tool count ({stale!r})')
 for n in NEW:
     if n not in readme:
         bad(f't5: README tool list is missing {n}')
@@ -328,11 +349,8 @@ for stale in ('bumped by CI', 'semver source of truth', ':latest', 'v<version>')
 if 'run_number' not in readme:
     bad('t5: README must describe the actual tag scheme (:v<run_number> + :<branch>) it already links to')
 
-if f'{READS + WRITES} typed tools' not in skill:
-    bad(f't5: wekan-api SKILL must say {READS + WRITES} typed tools')
-for stale in ('26 typed tools', '25 typed tools', '20 typed tools', '20-tool'):
-    if stale in skill:
-        bad(f't5: wekan-api SKILL still claims the stale tool count ({stale!r})')
+if f'{TOTAL} typed tools' not in skill:
+    bad(f't5: wekan-api SKILL must say {TOTAL} typed tools')
 if 'two privilege tiers sharing one image' in skill:
     bad('t5: the SKILL still says all tiers share one WEKAN_TOKEN — dev boards login-mints from WEKAN_USERNAME/WEKAN_PASSWORD (D23 wiring)')
 if 'WEKAN_USERNAME' not in skill:
@@ -345,8 +363,8 @@ if i < 0:
     bad('t5: SKILL lost its intentionally-omitted note (the omitted-surface list must shrink, not vanish)')
 window = skill[i:i + 400]
 if 'custom field' in window.lower():
-    bad('t5: custom fields are no longer on the omitted surface — 25 tools include the five custom-field/checklist-delete tools (C01 AC5)')
-print('ok: t5 — README + wekan-api SKILL agree with the 38-tool surface, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5 + cf-89 v102 + cf-96 C01 + cf-106 C07 re-pin)')
+    bad('t5: custom fields are no longer on the omitted surface — the registry includes the five custom-field/checklist-delete tools (C01 AC5)')
+print(f'ok: t5 — README + wekan-api SKILL state the live registry count ({TOTAL} = {READS} reads + {WRITES} writes) and no other count, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5 + cf-89 v102 + cf-96 C01 + cf-106 C07 re-pin)')
 PY
   then
     checks=$((checks + 1))

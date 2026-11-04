@@ -50,9 +50,18 @@
 # grouping is contractually an empty board, so a pickup walk would mark
 # no-cards, write the no-op marker and archive silently)].
 # t11's fail-the-call leg is DESIGNED RED until C06 round 2 replaces the
-# `doc = {}` swallow; the compliant fixture (filter kept + guarded transport
-# raise) proves the leg is satisfiable, and preload-filter-raise.py proves the
-# raise ban is scoped to the filter path rather than blanket.
+# `doc = {}` swallow (landed in ec31b2e50 — GREEN at this tree); the compliant
+# fixture (filter kept + guarded transport raise) proves the leg is satisfiable,
+# and preload-filter-raise.py proves the raise ban is scoped to the filter path
+# rather than blanket.
+#
+# cf-106 C07 test round (2026-11-04, agent-test) — leg re-pinned from cf-96-era
+# literals: t6's "38 typed tools" / "full, 38 tools" / "all 38 tools" greps and
+# its 31/30 stale-enumeration negatives now compare the docs against the count
+# read out of server.py (tests/wekan-mcp/registry-parity.py), so the leg asserts
+# doc↔registry parity instead of a third hard-coded number and cannot be reddened
+# by a sanctioned +1 that docs followed. Its red at this tree is real:
+# skills/wekan-api/SKILL.md still calls the surface "38-tool" (C07's AC6 gap).
 #
 # cf-106 C06 test round (2026-11-04, agent-test; reviewer N1 + N2): t11's raise
 # ban was blanket (any Raise in preload_board), which over-implemented AC3 and is
@@ -86,6 +95,7 @@ SKILL_MCP="skills/wekan-mcp/SKILL.md"
 SHAPES="skills/wekan-mcp/references/call-shapes.md"
 SKILL_API="skills/wekan-api/SKILL.md"
 PIN_BASE="${CF96_BASE:-$(git merge-base main HEAD)}"
+PARITY="tests/wekan-mcp/registry-parity.py"
 
 checks=0
 FAILED=0
@@ -104,6 +114,13 @@ fi
 want() { [ -n "${WANT[$1]:-}" ]; }
 
 [ -f "$SERVER" ] || fail "harness: $SERVER missing (repo layout fault, not a C01 red)"
+[ -f "$PARITY" ] || fail "harness: $PARITY missing (repo layout fault, not a C01 red)"
+
+# Doc↔registry parity compares against the LIVE registry (exit 2 from the helper
+# is a harness fault, never a contract red), so a sanctioned +1 cannot leave a
+# suite green on prose that no longer describes server.py.
+read -r REG_READS REG_WRITES REG_TOTAL < <(python3 "$PARITY" counts "$SERVER") \
+  || fail "harness: $PARITY could not read the registry out of $SERVER"
 
 # --- t1: the five dependency tools (C01 T1) --------------------------------------
 if want t1; then
@@ -407,10 +424,13 @@ fi
 
 # --- t6: doc re-stamp parity (C01 T6 + AC4) ----------------------------------------
 if want t6; then
-  if ! python3 - "$README" "$SKILL_MCP" "$SHAPES" "$SKILL_API" <<'PY'
+  python3 "$PARITY" claims "$SERVER" "$README" "$SKILL_MCP" "$SHAPES" "$SKILL_API" \
+    || fail "t6[C01 AC4]: a tool-count claim in README/SKILL/call-shapes/wekan-api no longer matches the live registry — the cf-96-era 38/31 literals here reddened on cf-106 C07's sanctioned +1 while asserting nothing the sibling suites' parity gate does not (reason above)"
+  if ! python3 - "$README" "$SKILL_MCP" "$SHAPES" "$SKILL_API" "$REG_TOTAL" <<'PY'
 import re, sys
 
 readme, skill, shapes, api = (open(p).read() for p in sys.argv[1:5])
+REG_TOTAL = int(sys.argv[5])
 def bad(m):
     print(f"t6: {m} — the C01 docs re-stamp (README/skill/call-shapes) must land in the SAME commit as the tools (DECISIONS doc-parity convention)")
     sys.exit(1)
@@ -418,21 +438,14 @@ def bad(m):
 NEW = ["list_board_dependencies", "list_card_dependencies", "add_card_dependency",
        "edit_card_dependency", "remove_card_dependency", "preload_board", "set_card_labels"]
 
-if "38 typed tools" not in readme:
-    bad("README still carries the pre-cf-96 tool count (must state the 38-tool surface)")
-for stale in ("31 typed tools", "30 typed tools"):
-    if stale in readme:
-        bad(f"README still claims a stale tool count ({stale!r})")
 for n in NEW:
     if n not in readme:
         bad(f"README tool section is missing {n}")
 
 # tier table counts (both full tiers) + the write-surface list + the
 # intentionally-omitted note staying true with dependencies NOT omitted
-if skill.count("full, 38 tools") < 2:
-    bad("the wekan-mcp SKILL tier table must state 'full, 38 tools' on both full tiers (dev-boards + gpu admin)")
-if "full, 31 tools" in skill:
-    bad("the SKILL tier table still says 'full, 31 tools'")
+if skill.count(f"full, {REG_TOTAL} tools") < 2:
+    bad(f"the wekan-mcp SKILL tier table must state 'full, {REG_TOTAL} tools' on both full tiers (dev-boards + gpu admin)")
 for n in NEW:
     if n not in skill:
         bad(f"SKILL surface list is missing {n}")
@@ -443,8 +456,8 @@ window = skill[i:i + 500].lower()
 if "dependen" in window:
     bad("the intentionally-omitted window now names dependencies — wrong direction: the dependency tools SHIP, the omission list must stay dependency-free")
 
-if "all 38 tools" not in shapes and "38 tools" not in shapes:
-    bad("call-shapes.md still counts 31 tools in its header")
+if f"all {REG_TOTAL} tools" not in shapes:
+    bad(f"call-shapes.md header does not state the live registry count ({REG_TOTAL} tools)")
 for n in NEW:
     rows = [l for l in shapes.splitlines() if re.match(rf"^\| `{n}` \|", l)]
     if len(rows) != 1:
@@ -455,12 +468,12 @@ for n in NEW:
     if "live probe" in rows[0]:
         bad(f"call-shapes.md row {n} claims a live probe — the routes were never agent-probed (no bearer); the C10 runbook upgrades the stamp AFTER the user probe")
 
-if "38 typed tools" not in api:
-    bad("wekan-api SKILL still enumerates the stale tool count (C01 T6: count mentions update)")
-print("ok: t6 — README 38 + names, tier table 38x2, omitted-note intact, call-shapes rows stamped source-only 2026-11, wekan-api count current")
+if f"{REG_TOTAL} typed tools" not in api:
+    bad(f"wekan-api SKILL does not state the live registry count ({REG_TOTAL} typed tools)")
+print(f"ok: t6 — README + names, tier table {REG_TOTAL}x2, omitted-note intact, call-shapes rows stamped source-only 2026-11, wekan-api count current ({REG_TOTAL})")
 PY
   then fail "t6[C01 AC4]: the documentation-parity re-stamp is not satisfied (reason above)"; fi
-  ok "t6[C01 T6/AC4]: docs re-stamped to 38 tools with honest source-only evidence stamps"
+  ok "t6[C01 T6/AC4]: docs re-stamped to the live registry count ($REG_TOTAL tools) with honest source-only evidence stamps"
 fi
 
 # --- t7: wekan.py byte-unchanged (C01 AC3, tools.sh t8 posture) --------------------

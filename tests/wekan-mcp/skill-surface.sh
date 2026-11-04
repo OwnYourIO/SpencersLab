@@ -2,15 +2,23 @@
 # skills/wekan-mcp surface contract (2026/2026-10-cf-75-bug-wekan-mcp-skill,
 # C01): the new generic MCP board skill — frontmatter, the three server ids,
 # the ten call-shape rule tokens, the one normative Board context block schema
-# (repo-wide single owner outside plan folders), the 38-tool call-shapes
+# (repo-wide single owner outside plan folders), the full-tool call-shapes
 # reference with per-entry evidence stamps anchored on server.py FUNCTION
-# names (re-pinned from 27 by cf-89 v102, whose tools land with it; re-pinned
-# 31->38 by cf-96 C01, whose seven tools land with that flip), the
+# names (row count read live out of server.py, never restated here: re-pinned
+# from 27 by cf-89 v102, whose tools land with it; 31->38 by cf-96 C01, whose
+# seven tools land with that flip), the
 # wekan-api pointer without duplication, and the AGENTS.md
 # self-written-skills line.
 #
 # Contract source: chunks/C01.md "## Tests". AC trace:
 # t1[AC1] t2[AC1] t3[AC2] t4[AC3] t5[AC4] t6[AC5] t7[AC6] t8[AC7].
+#
+# cf-106 C07 test round (2026-11-04, agent-test): t5 is the chain that re-runs
+# tools.sh, so tools.sh's NameError-in-t5 defect showed up HERE as a
+# skills/wekan-mcp contract red; fixing tools.sh is what clears it. t4's only
+# re-pin is its own registry literal (39) and its ok wording, both replaced by
+# the live AST walk plus the shared registry-parity row check — the absolute
+# registry size stays pinned once, in tools.sh t2.
 #
 # Statics-only by design (D8 precedent: no network in suites — the live
 # dev-boards smoke is C03's, dev+run side). Red before C01: t1-t4/t7 fail on
@@ -27,13 +35,16 @@
 # Usage:
 #   bash tests/wekan-mcp/skill-surface.sh            # t1..t8
 #   bash tests/wekan-mcp/skill-surface.sh t2 t4      # subset
+#   WEKAN_SERVER=<path> bash tests/wekan-mcp/skill-surface.sh t4   # re-derive the
+#       call-shapes row parity against a scratch copy of server.py (bite probe)
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
 SKILL="skills/wekan-mcp/SKILL.md"
 CALLS="skills/wekan-mcp/references/call-shapes.md"
-SERVER="containers/wekan-mcp/wekan_mcp/server.py"
+SERVER="${WEKAN_SERVER:-containers/wekan-mcp/wekan_mcp/server.py}"
+PARITY="tests/wekan-mcp/registry-parity.py"
 TOOLS_SUITE="tests/wekan-mcp/tools.sh"
 AGENTS="AGENTS.md"
 RULES_SRC=".rulesync/rules/overview.md"
@@ -126,10 +137,12 @@ if want t3; then
   ok "t3: the Board context schema header is owned solely by $SKILL (C01 AC2)"
 fi
 
-# --- t4: call-shapes.md — 38 live-extracted tool rows, stamps, no line refs -----
+# --- t4: call-shapes.md — one stamped row per registered tool, no line refs ----
 if want t4; then
   [ -f "$CALLS" ] || fail "t4: $CALLS does not exist (C01 Task 2: the full tool->args->shape table)"
-  python3 - "$SERVER" "$CALLS" <<'PY' || fail "t4: call-shapes.md violates the 38-row/stamp/no-line-numbers contract (reason above)"
+  python3 "$PARITY" rows "$SERVER" "$CALLS" \
+    || fail "t4: $CALLS must carry exactly one row per registered tool name and no row for an unregistered one (C01 AC3; reason above)"
+  python3 - "$SERVER" "$CALLS" <<'PY' || fail "t4: call-shapes.md violates the one-row-per-registered-tool/stamp/no-line-numbers contract (reason above)"
 import ast, re, sys
 
 tree = ast.parse(open(sys.argv[1]).read())
@@ -141,8 +154,8 @@ for node in tree.body:
                 names.append(node.name)
             elif isinstance(d, ast.Name) and d.id == "_write_tool":
                 names.append(node.name)
-if len(names) != 39:
-    print(f"server.py registers {len(names)} tools, expected 39 (cf-96's 38 + cf-106 C07's get_card_details) — re-read the registry, the test follows server.py"); sys.exit(1)
+if not names:
+    print("the server.py decorator walk found no registered tools — the walk is broken, the surface is not empty"); sys.exit(1)
 
 text = open(sys.argv[2]).read()
 bad = []
@@ -164,7 +177,7 @@ hits = re.findall(r"\bL\d+\b", text)
 if hits:
     print(f"line-number refs present: {hits[:5]} — DECISIONS: cite server.py function names, never line numbers"); sys.exit(1)
 PY
-  ok "t4: call-shapes.md has exactly one stamped row per @mcp.tool function in server.py (38, names read live) and zero L<digits> refs (C01 AC3)"
+  ok "t4: call-shapes.md has exactly one stamped row per registered tool in server.py (names and count read live out of the AST, never restated here) and zero L<digits> refs (C01 AC3)"
 fi
 
 # --- t5: regression — the tools.sh suite still pins wekan-api (C01 AC4) ---------

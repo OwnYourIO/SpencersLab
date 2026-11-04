@@ -29,15 +29,15 @@ deployed build can lag the repo source, so docs are claims and the live
 
 | Server id | Deployment | Write surface | Credential |
 |---|---|---|---|
-| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 38 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
-| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 38 tools | one long-lived service-user bearer in the pod env |
+| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 39 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
+| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 39 tools | one long-lived service-user bearer in the pod env |
 | `readonly-global-wekan` | gpu `wekan-readonly` deployment | none — with `WEKAN_MCP_READ_ONLY=true` write tools are never registered, so they are absent from `tools/list` and uncallable even by accident | same bearer story as the admin tier |
 
 All three run the image built from `containers/wekan-mcp`, and every read or
 write is scoped to the service user's board membership. Deployment wiring and
 the raw-REST fallback are the `wekan-api` skill's ground.
 
-The cf-96 surface (38 = 17 reads + 21 writes, repo source; NOT deployed until
+The cf-96 surface plus cf-106 C07's `get_card_details` (39 = 18 reads + 21 writes, repo source; NOT deployed until
 the C10 bump — probe `tools/list` before trusting any of it): reads
 `list_board_dependencies` (board-wide Red Strings lines), `list_card_dependencies`
 (one card's stored edges) and `preload_board` (one export call reshaped to
@@ -133,6 +133,54 @@ human-owned and drifts (a non-pipeline list appeared in the AI-Dev
 "In Process" swimlane during 2026-10), so the block is a snapshot with its
 collection stamp, never a freeze — the re-resolve footer is part of the
 schema.
+
+## Card details block schema
+
+The single normative home of this format. The producer is the board-context
+plugin's claim-time leg: on a successful `pipeline_claim` from a board-coord
+agent it calls `get_card_details` and appends this block to the claim answer,
+so the run reads the card it just took in the same turn. `formatCardBlock` in
+`.opencode/plugin/board-context/index.ts` mirrors these bytes.
+
+```text
+card_details: <title> (#<cardNumber>)
+id: <card id>
+card_number: <n>
+title: <title>
+description: <description, folded to one line>
+list_id: <id>
+swimlane_id: <id>
+archived: <true|false>
+sort: <n>
+parent_id: <id, empty when the card has no parent>
+label_ids: <id>, <id>
+labels: <label id>=<label name>, …
+custom_fields: <field name>=<raw value>, …
+slug_stack: <slug>, <slug>
+current_slug: <slug>
+checklists: <checklist title>, <checklist title>
+  checklist: <checklist title>
+    item: <item title> [x]
+    item: <item title> [ ]
+dependencies: <to id> <type> <color>, …
+  dependency: <to id> <type> <color>
+collected: <ISO-8601>, from get_card_details
+```
+
+An empty value after a colon means the card carries nothing there (no parent,
+no slug field, no edges) — absence is spelled by the empty field, never by
+dropping the line. `slug_stack` is the whole `slug` custom-field stack,
+oldest first; `current_slug` is its newest entry, the one a run names its
+surfaces with — always `slug_stack[-1]`, because a pre-flip card carrying a
+bare slug (no link form) reads as a one-entry stack of that value. Only an
+unset or empty field reads as an empty stack. `checklists` lists every checklist the card carries with its
+items in stored order and tick state — all of them, not the kickoff
+vocabulary, which is what makes a follow-up card's inherited Lifecycle answers
+readable without touching the parent. An empty `items` list means that
+checklist has no items: an items read that fails fails the whole call, so the
+block never shows an unreadable checklist as an empty one. `dependencies` are
+the card's own stored edges (`to_id` is the target card id). The footer stamp
+is part of the block: an old block in a long-running session is visible as one.
 
 ## Failure-mode playbook
 

@@ -6,10 +6,12 @@ token stays out of the model's context.
 
 ## What this gives you
 
-- **38 typed tools** covering the high-frequency WeKan operations:
+- **39 typed tools** covering the high-frequency WeKan operations:
   read (boards, lists, swimlanes, cards, comments, checklists, automation
   rules, board custom fields, board members, card dependency lines, whole-board
-  preload) and write (create lists, rename a board title, create swimlanes,
+  preload, one-card details — `get_card_details` answers a single card with its
+  labels named, its field values raw, every checklist with item titles and tick
+  state, its dependency lines and the parsed `slug` stack) and write (create lists, rename a board title, create swimlanes,
   create board labels,
   create/update/move cards, add comments, add checklists, toggle or delete
   items, create/update/remove automation rules, create board custom
@@ -113,6 +115,7 @@ API facts (token semantics, `WITH_API`, endpoint reference).
 | `list_swimlanes` | read | Rows on a board |
 | `list_cards_in_list` | read | Cards in a list |
 | `get_card` | read | Full card details |
+| `get_card_details` | read | One card's whole pipeline context in one call, the shape the claim-time context block is written from: the card's own fields (`sort` + `parent_id` included), `labels` as `{label id: name}` and `custom_fields` as `{field name: raw value}` hydrated from the board, `slug_stack`/`current_slug` read from the combined slug value (oldest-first history and its newest entry), EVERY checklist with `items: [{title, finished}]` in stored order (no kickoff-vocabulary filter, unlike `preload_board`), and the card's own `dependencies` as `[{to_id, type, color}]`; archived cards come back flagged, a card that does not read as a card document raises, and a checklist whose items route cannot be read raises too — an empty `items` list always means the checklist has no items |
 | `list_comments` | read | Comments on a card |
 | `list_checklists` | read | Checklists on a card |
 | `get_checklist` | read | Checklist with item ids (needed to toggle items) |
