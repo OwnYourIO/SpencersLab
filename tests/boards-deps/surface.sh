@@ -68,11 +68,11 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-8]$ ]] || fail "unknown check id '$a' (expected t1..t8)"
+    [[ "$lc" =~ ^t([1-9]|1[0-2])$ ]] || fail "unknown check id '$a' (expected t1..t12)"
     WANT["$lc"]=1
   done
 fi
@@ -215,7 +215,19 @@ PY
   check_pair "t2[C05 AC2]" "Board context" 2400 \
     'tools/list' 'absent' 'get_card' \
     || fail "t2[C05 AC2]: the degrade law is missing — probe tools/list first; preload_board absent ⇒ today's per-list reads unchanged + the gate skipped with a RESULT note, and the per-candidate get_card confirmation stays for the CLAIMED card only"
-  ok "t2[C05 AC2]: preload consumer pinned — claim-time call site, hook exclusion, lean stamp, degrade law"
+  # cf-106 C06 AC5: the consumer text must name the new payload fields (the
+  # checklist state + the swimlane/list titles) next to the tool they describe,
+  # and keep the claimed-card get_card carve-out visible.
+  check_pair "t2[cf-106 C06 AC5]" "Board context" 1800 \
+    'preload_board' 'checklists' \
+    || fail "t2[cf-106 C06 AC5]: the boards consumer passage never names the checklists state the enriched preload carries — the skill must teach what the run can stop re-reading (red before C06's skill edit)"
+  check_pair "t2[cf-106 C06 AC5]" "Board context" 1800 \
+    'preload_board' 'swimlane|title' \
+    || fail "t2[cf-106 C06 AC5]: the consumer passage does not mention that swimlane/list TITLES ride the preload (the membership tests stop needing a separate list_lists round-trip)"
+  check_pair "t2[cf-106 C06 AC5]" "Board context" 1400 \
+    'get_card' 'claimed card' \
+    || fail "t2[cf-106 C06 AC5]: the claimed-card get_card carve-out is not visible next to the preload text — the per-card read stays for the claimed card only, and the skill has to say so"
+  ok "t2[C05 AC2 + cf-106 C06 AC5]: preload consumer pinned — claim-time call site, hook exclusion, lean stamp, degrade law, and the new-field + claimed-card carve-out wording"
 fi
 
 # --- t3: the grouped-sibling flow section (C05 T3 / AC3) ------------------------------
@@ -304,6 +316,28 @@ if want t8; then
     'block' 'map' 'swimlane' \
     || fail "t8[C11 OQ-P3]: the TITLE fallback lacks the block-map branch — `list_lists` is due when no block rode the launch OR the blocker's list id is not in the block's map (the block carries only the named swimlane's lists; titles repeat across swimlanes)"
   ok "t8[C11 OQ-P3]: title-map fallback pinned (block's map / named-swimlane scope)"
+fi
+
+# --- t9: cf-106 C07 — the claim-time card block in the boards skill -----------
+# The skill is the contract the coordinator reads, so the arrival of the
+# single-card preload on the claim answer has to be stated there — with the
+# degrade law and, critically, the clause that keeps the two hooks distinct:
+# the PROMPT hook stays structural (cf-96 OQ3), this is a TOOL hook with its
+# own budget. Red before C07's skill edit; a HOLD posture pin afterwards.
+if want t9; then
+  check_pair "t9[cf-106 C07 AC4]" "Board context" 1800 \
+    'get_card_details' 'claim' \
+    || fail "t9[cf-106 C07 AC4]: the boards skill never says a card-details block arrives on the claim answer (red before C07's skill edit — the skill is where the coordinator learns it does not have to fan out)"
+  check_pair "t9[cf-106 C07 AC4]" "Board context" 1800 \
+    'get_card_details' 'get_card' \
+    || fail "t9[cf-106 C07 AC4]: the skill does not state the degrade family for the new tool — absent tool / failed call / no block ⇒ the coordinator does its own get_card plus the checklist fan-out and notes it in RESULT"
+  check_pair "t9[cf-106 C07 AC4]" "Board context" 900 \
+    'tool hook|tool-call hook' 'prompt' \
+    || fail "t9[cf-106 C07 AC4]: the clause separating the claim-time TOOL hook from the PROMPT prefetch is missing — without it the pinned 'never the hook' sentence and the new leg read as a contradiction (and the 8 s budget ruling reads as broken)"
+  check_pair "t9[cf-106 C07 AC4]" "Board context" 1800 \
+    'get_card_details' 'checklist' \
+    || fail "t9[cf-106 C07 AC4]: the skill never names what the block replaces for THIS card (the kickoff checklist consumption and the dependency reads)"
+  ok "t9[cf-106 C07 AC4]: the boards skill states the claim-time card block, what it replaces, its degrade family, and the tool-hook-not-prompt-prefetch clause"
 fi
 
 printf 'PASS: boards dependency-gate/preload/sibling/follow-up checks (%d ok)\n' "$checks"

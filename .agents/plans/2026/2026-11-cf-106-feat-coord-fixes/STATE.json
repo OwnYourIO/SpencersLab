@@ -1,0 +1,261 @@
+{
+  "feature": "2026/2026-11-cf-106-feat-coord-fixes",
+  "plan_status": "approved",
+  "coord_session": "ses_e5d47a7a9ffeNrogAo9PF2VYez",
+  "test_session": "ses_e5c56c5defferyjeGtb6YMn05v",
+  "current_wave": 1,
+  "updated_at": "2026-11-04T03:45:13+00:00",
+  "kickoff": {
+    "card": "ZPP55zX4GEfesPbnL",
+    "card_number": 106,
+    "card_title": "Coord fixes",
+    "slug": "cf-106-feat-coord-fixes",
+    "type": "feat",
+    "worktree": "cf-106-feat-coord-fixes",
+    "branch": "cf-106-feat-coord-fixes",
+    "origin_dir": "/home/coder/SpencersLab",
+    "run_tag": null,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "session_origin_leg": "leg 2 — bash scripts/session-origin.sh at claim (resolved live 2026-11-03)",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata",
+      "code": "gpu-ai/qwen3.8-flash-next-strata"
+    },
+    "local": true,
+    "models_deviation": "Card Model(s) checklist blank -> routed default Qwen Flash (openrouter/qwen/qwen3.8-flash); openrouter answered 'Provider returned error' twice this run (agent-explore failed twice), so the documented local flash route gpu-ai/qwen3.8-flash-next-strata carries every tier. See DECISIONS.md 2026-11-03.",
+    "human_in_the_loop": [
+      "Final Review"
+    ],
+    "stages": [
+      "Exploration",
+      "Agent Decides Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "all five checklists unchecked (card carries the LEGACY Research checklist in place of Lifecycle + the legacy 4-item Human in the Loop) -> boards Blank defaults; Agent Decides Research resolved NO research round",
+    "checklist_answers": {
+      "Services": [
+        "agent context",
+        "dev"
+      ],
+      "Type": [],
+      "Model(s)": [],
+      "Lifecycle": null,
+      "Human in the Loop": [],
+      "note": "Lifecycle checklist absent on this card (legacy Research checklist present, all items unchecked) -> consumed as blank = standard default loop, no card mutation at kickoff. Answers landed in the batched plan round and were written onto the card at the post-plan write-back: Services agent context + dev, Type feat, Model(s) Qwen Flash + Local (gpu-ai) (this run's routing record), Research Agent Decides, Human in the Loop Plan"
+    },
+    "slug_custom_field": "[cf-106-feat-coord-fixes](https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com/?session=ses_e5d47a7a9ffeNrogAo9PF2VYez)",
+    "approval": {
+      "at": "2026-11-03T23:02:29+00:00",
+      "by": "owner, in-session question after the batched round",
+      "verdict": "Approve — run all waves",
+      "approval_comment": "SKoFcXhutMznbDHTP"
+    },
+    "card_write_back": {
+      "at": "2026-11-03T23:02:29+00:00",
+      "slug_field": "set (upsert, attached=true) on card ZPP55zX4GEfesPbnL",
+      "consistency_check": "link host equals kickoff.session_origin — pass",
+      "surviving_checklist_items": {
+        "Model(s)": ["Qwen Flash", "Local (gpu-ai)"],
+        "Services": ["dev", "agent context"],
+        "Type": ["feat"],
+        "Research (legacy Lifecycle stand-in)": ["Agent Decides"],
+        "Human in the Loop": ["Plan"]
+      },
+      "deleted_unchecked_items": 27,
+      "note": "Model(s)/Research/HITL survivors record this run's actual routing and stop point (blank checklists were consumed WITHOUT mutation for kickoff; the write-back then collapsed each checklist to the answered record, matching the shipped precedent on cards #89/#95/#96/#97)"
+    },
+    "claim": {
+      "pipelines": [
+        "Context"
+      ],
+      "derived_from": "board label 'Pipeline: Context' on card #106",
+      "claimed_at": "2026-11-03",
+      "card_move": "Not Started -> Executing",
+      "claim_comment": "rzJfinJj9CyTdAf7Q",
+      "provider_label_consumed": "Provider: API"
+    },
+    "board_context": {
+      "collectedAt": "2026-11-03T18:42:32Z",
+      "source": "launch block; ids per EXPLORE.md §0 live reads (this session carries the stamp, not the raw block text)",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlanes": {
+        "In Process": "jLzy39L7djCRr67SF",
+        "Backlog": "MoZHQz3C4dSW4Atya",
+        "Farm": "BkNBQgMLJBvmCgMAQ",
+        "Planning": "hFgncuRJ8Pkvpt8ki"
+      },
+      "lists_In_Process": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "lists_Backlog": {
+        "Inbox": "PjEZ39rXBdpNcpncs"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "session": "zZw4PwMoLeodJy3eT (retired: never read, never written)",
+        "Priority": "fp5vnD5YrA7oAxPiK (human-owned, outside the boards roster claim)"
+      },
+      "labels_note": "label ids not carried into this session; names verified live per EXPLORE §0: Pipeline: Context / CICD / Local in real use, Provider: API + Provider: Local, Repo: SpencersLab, Research, Research: Parallel, Bucket: *"
+    },
+    "preload": {
+      "at": "2026-11-03T18:42:32Z",
+      "tool": "preload_board",
+      "cards": 0,
+      "degraded": true,
+      "reason": "deployed dev-boards catalog (wekan-mcp :v87, live tools/list = 26 tools) has NO preload_board -> dependency gate SKIPPED this run, per-list list_cards_in_list reads used"
+    },
+    "question_round": {
+      "at": "2026-11-03",
+      "shape": "single batched plan-question round (boards law); owner answered all 15 items, rulings final, no re-ask",
+      "recorded_in": "DECISIONS.md 2026-11-03 rulings + plan 'Open questions' section annotated RESOLVED",
+      "shape_changes": [
+        "C03 split into C03a (audit instrument + classification) then C03b (contract change)",
+        "C04 reshaped: code gains add/commit, new code-pr twin pushes under pipeline-push-pr; validation-battery shell allows DROPPED (toggle stays)",
+        "C05 reshaped: five follow-up modes in both coord families, Inbox preferred on board runs",
+        "C10 gains the runner model switch to gpu-ai/qwen3.8-27b-q4 + tick/provider-loops re-pins",
+        "C01 gains the custom-field roster wording fix (slug only active field; Priority not declared)"
+      ]
+    }
+  },
+  "test_wave": {
+    "at": "2026-11-04T03:45:13+00:00 (coord record time; the wave ran overnight on wall-clock, subagent heartbeats kept the Context claim live)",
+    "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+    "status": "DONE",
+    "files": "31 modified tests/** + new tests/cf106-noop/{surface.sh,readback.md}, tests/wekan-mcp/{card-details.sh,slug-stack.sh}, tests/opencode/card-details.test.ts; every chunk file annotated '### Written (agent-test, 2026-11-04)'",
+    "after_state": "designed reds per chunk (agent-perms A12/A15/A17, standalone-agents S7/S10/S11, pipeline-push-pr P3/P10, rulesync-surface c11/c23/c24, agents-md c10/c11, noop-marker N2/N4/N7, cf106-noop N1/N2/N4/N6, provider-loops t1-t4/t7/t8, pipeline-models M1/M2/M5/M7/M8, provision t9, cutover t2/t3/t7/t8/t10, cf96-lifecycle t6, boards-deps t2/t9, wekan-mcp dependencies t2/t9-t11 + tools t2/t5 + skill-surface t4/t5, card-details t1-t4, slug-stack S1, board-preload-probe b6, cf90-ledger t5/t6/t7, locks core 28/10 · engine 34/7 · reap 26/6 · tick 13/2, card-details TS 1/18); greens held: provider-loops t5/t6, gate t14/t21, question-notify 48/48, board-context 32/32, cf96-deploy 8/8, multi-repo hourly-board-check 8/8",
+    "pre_existing_reds": "gate.sh t17, coord-inwork i4, kickoff-branch m4, session-origin s4, wekan-mcp/create-list t2, pipeline-gates/validation-fix t4 — not this ticket's doing",
+    "coord_verification": "the wave's git-incident claim is a FALSE ALARM (see FRICTION 2026-11-04 re-status): the only branch reflog entry is the kickoff mint; no worktree commit ever existed; wave files verified present by git status before commit",
+    "coord_routing": [
+      "B6 ownership gap: scripts/board-preload-probe.sh is pinned by tests/board-preload-probe/surface.sh B6 for the new probe names but sits in no chunk's file list → widened into C06's scope at dev hand-off (probe legs are the preload surface C06 changes); if dev cannot run it (ask-denied), it lands as an owner step",
+      ".rulesync/skills/agents-sync/references/pipeline-overview.md still says 'Qwen 27b' with no suite owning it → folded into C02's sweep list",
+      "board-rules-v12.65-dense.json intentionally absent → cutover t7/t8 + cf96-lifecycle t6 stay red until the owner's /wekan-board-provision apply produces it (USER-owned step 1, already in the plan)",
+      "C08 inferences (per-(pipelineKey,session) beat throttle, file-level state:'failed') → confirmed with the dev round's ACs, not silently accepted",
+      "mirror arms (rulesync-surface c23/c24, agents-md t5) stay red until the .rulesync regen lands with the source commit — the regen is part of each skill-touching chunk's dev Commands"
+    ]
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03a": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03b": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C03a"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C07": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C06"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C08": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C09": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C08"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C10": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": [
+        "C03b",
+        "C06",
+        "C07"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

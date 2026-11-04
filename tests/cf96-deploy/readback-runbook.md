@@ -120,25 +120,37 @@ the deployed build can lag the repo source, so **docs are claims, the live
      including the seven new names: `list_board_dependencies`,
      `list_card_dependencies`, `add_card_dependency`,
      `edit_card_dependency`, `remove_card_dependency`, `preload_board`,
-     `set_card_labels`. The plan's "8 new signatures" is ruled (DECISIONS
+     `set_card_labels`, `get_card_details` (cf-106 C07's single-card preload
+     read). The plan's "8 new signatures" is ruled (DECISIONS
      coord-rulings): seven new tool NAMES plus the new `parent_id` argument
      on the existing `create_card` — additionally spot-check
      `create_card.inputSchema` in the same catalog for `parent_id`. A
      documented surface missing from the live catalog = stop the chain and
      report; never square a number.
-   - `tools/list` on `readonly-global-wekan` = 17 reads, NO new writes —
+   - `tools/list` on `readonly-global-wekan` = 18 reads, NO new writes —
      the four new WRITE tools must be absent (`_write_tool` gating by
-     construction) and the three new READS (`list_board_dependencies`,
-     `list_card_dependencies`, `preload_board`) must be present.
-   - `tools/list` on `admin-global-wekan` = the full 38-tool surface, same
+     construction) and the four new READS (`list_board_dependencies`,
+     `list_card_dependencies`, `preload_board`, `get_card_details`) must be
+     present.
+   - `tools/list` on `admin-global-wekan` = the full 39-tool surface, same
      as dev-boards (same image, same build).
    - One `preload_board` call-shape check on AI-Dev `TNQJ2BrXenZovngTS`
      (this also closes RESEARCH §1.5's agent-probe gap): ONE call returns
      `{swimlanes, lists→cards, dependencies, label_names, field_names}`
-     with per-card dicts EXACTLY `{id, card_number, label_ids, slug,
-     archived, sort, parent_id}` — `card_number`s present (the projection
+     with swimlane and list entries carrying `title` beside `id`, and
+     per-card dicts EXACTLY `{id, card_number, label_ids, slug, archived,
+     sort, parent_id, checklists}` — `card_number`s present (the projection
      the by-list read strips), `archived` cards FLAGGED not dropped
-     (RESEARCH C5), dependency lines present.
+     (RESEARCH C5), dependency lines present, and `checklists` filtered to
+     the five standard checklists plus the legacy `Research` spelling with
+     items as `{title, finished}` (cf-106 C06: still ONE request — a
+     checklist fan-out is a defect, not a detail).
+   - One `get_card_details` call-shape check on the same card: ONE call
+     returns the documented sixteen keys including `title`, `description`,
+     `slug_stack` + `current_slug` (newest last), `checklists` with
+     `{title, finished}` items and the card's own `dependencies` — and
+     `get_card` on the same id still returns its old projection unchanged
+     (cf-106 C07 is additive).
    - `get_card` passthrough spot-check: take one card from that payload
      and `get_card` it — its `card_number`, label ids, combined `slug`
      value and parent link must equal the preload's entry for the same
@@ -185,7 +197,9 @@ the deployed build can lag the repo source, so **docs are claims, the live
      (the C08 artifact — checklist extras are UI/Import-JSON-creatable,
      never REST, which is exactly why this step is human-executed). It
      replaces the createCard rule's five-checklist shape (`Model(s)` →
-     Qwen Flash the only default check, per OQ13).
+     Qwen Flash the only default check, per OQ13 — the cf-106 Dense generation
+     re-issues this artifact with `Qwen Dense` as the one default check; the cf-96
+     file above is the generation this runbook recorded).
    - Then the boards skill section "Board-side cutover — human-owned, documented, never agent-executed" steps: rename the `Research`
      checklist to `Lifecycle` with the 11 items (`Single Session` last),
      replace `Human in the Loop` items with the same 11, ensure the

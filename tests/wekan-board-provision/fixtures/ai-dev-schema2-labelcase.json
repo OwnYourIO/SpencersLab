@@ -1,7 +1,7 @@
 {
   "schema": "wekan-board-snapshot/2",
   "collected_at": "2026-10-31",
-  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08 agent-test synthetic schema-2 variant (checklist_extras per the tests/wekan-board-provision/checklist-cutover.sh ENGINE JSON CONTRACT)",
+  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08 agent-test synthetic schema-2 variant (checklist_extras per the tests/wekan-board-provision/checklist-cutover.sh ENGINE JSON CONTRACT) | cf-106 C02 agent-test re-pin: the Model(s) items and checked here read `Qwen Dense` (checked [Qwen Dense]) — the applied state AFTER the USER-owned live checklist rename; boards' transition alias covers the live `Qwen 27b` items until then, so zero actions holds only once the engine spec flips Dense too (designed red before C02 dev). The drift fixture deliberately keeps the retired vocabulary so the engine's drift list must name Model(s).",
   "board": {
     "id": "TNQJ2BrXenZovngTS",
     "title": "AI-Dev"
@@ -313,12 +313,12 @@
     "Model(s)": {
       "items": [
         "Qwen Large",
-        "Qwen 27b",
+        "Qwen Dense",
         "Qwen Flash",
         "Local (gpu-ai)"
       ],
       "checked": [
-        "Qwen Flash"
+        "Qwen Dense"
       ]
     },
     "Services": {

@@ -6,7 +6,8 @@
 # logic-unchanged (comment-only diff). Command text + comments only.
 #
 # Contract source: chunks/C02.md "## Tests" + Acceptance criteria. AC trace:
-# t1[AC1] t2[AC2] t3[AC3+AC4].
+# t1[AC1] t2[AC2] t3[AC3+AC4]; t4 is the cf-106 C10 HOLD (single-runner wording on the
+# hourly entry, gate verdicts + boards-skill authority intact).
 #
 # Red before C02 lands: t1 (the pre-change BOARD CHECK block has no Repo:/
 # filter/get_card-per-card procedure). Green-at-base by design: t3's manual-
@@ -19,7 +20,7 @@
 # the script.
 #
 # Usage:
-#   bash tests/multi-repo/hourly-board-check.sh          # t1..t3
+#   bash tests/multi-repo/hourly-board-check.sh          # t1..t4
 #   bash tests/multi-repo/hourly-board-check.sh t2       # subset
 # Env: GATE_DIFF_BASE, RUNSYNC_BIN.
 set -euo pipefail
@@ -51,10 +52,10 @@ ok() { checks=$((checks + 1)); printf 'ok: %s\n' "$1"; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3; do WANT["t$i"]=1; done
+  for i in 1 2 3 4; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t[1-3]$ ]] || fail "unknown test id '$a' (expected t1..t3)"
+    [[ "$a" =~ ^t[1-4]$ ]] || fail "unknown test id '$a' (expected t1..t4)"
     WANT["$a"]=1
   done
 fi
@@ -186,6 +187,30 @@ PY
     fi
   done
   ok "t3: neither manual /pipeline-boards command carries a BOARD CHECK block (manual path stays ungated by design)"
+fi
+
+# --- t4: cf-106 C10 HOLD — the hourly text still matches the single-runner shape --
+# C10 collapses the pair of scheduled loop tasks into one runner; the hourly
+# command is the documented fallback ENTRY, so its wording must stay compatible
+# with a single task and must never grow the retired Provider-split posture.
+# Green-at-base by design: this arm is a regression gate that rotates only if the
+# C10 rewrite pulls the scheduler split into the command text.
+if want t4; then
+  for f in "$HOURLY_SRC" "$HOURLY_GEN"; do
+    [ -f "$f" ] || fail "t4[cf-106 C10]: $f missing (harness fault)"
+    for tok in 'GATE: RUN' 'GATE: SKIP' 'GATE: LIVE'; do
+      grep -qF "$tok" "$f" || fail "t4[cf-106 C10]: $f lost the '$tok' verdict token — the gate contract stays byte-unchanged through the single-runner collapse (C10 Notes)"
+    done
+    grep -qEi 'boards skill' "$f" \
+      || fail "t4[cf-106 C10]: $f no longer names the boards skill as the flow authority — the run's iteration contract lives there for the loop task and this fallback alike"
+    strays=$(grep -inE 'provider: (api|local) task|pipeline-worker-local|two (loop|scheduled) (files|tasks)|the (api|local) task' "$f" || true)
+    [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "t4[cf-106 C10 AC3]: $f teaches the retired two-task / Provider-split posture — one runner, Provider routes per card inside the run"; }
+  done
+  # The loop file (the front door) and this fallback must describe ONE runner —
+  # the file-count duty itself is provider-loops t1/t8's; here the HOLD is that
+  # the fallback's wording keeps matching a single-runner world.
+  [ -f .agents/loops/pipeline-worker.md ] || fail "t4[cf-106 C10 AC1]: .agents/loops/pipeline-worker.md missing — the surviving task is the entry this command falls back to"
+  ok "t4[cf-106 C10]: the hourly command keeps the three gate verdicts, cites the boards skill as the flow authority, teaches no Provider split, and still matches the single-runner entry"
 fi
 
 printf 'PASS: cf-93 C02 hourly-board-check contract (%d ok)\n' "$checks"

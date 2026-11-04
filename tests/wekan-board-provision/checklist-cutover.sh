@@ -42,15 +42,31 @@
 #     (one leg, reddens where the contract is consumed; GREEN ON ARRIVAL after
 #     C11 dev lands — RESEARCH F5's defect pinned away)].
 #
+# AC trace (cf-106 C02 re-pin): t2[C02 AC6 — the drift action's artifact pointer
+# must name a board-rules-v12.65 file inside the cf-106 folder; old-pointer and
+# new-pointer controls] t3[C02 AC5 — zero actions against the Dense-vocabulary
+# applied-state fixtures] t7[C02 AC6 — the Dense artifact's Model(s) four labels
+# (v1 copy rejected), exactly one checkItem = Model(s) → Qwen Dense, retired label
+# absent] t8[C02 AC5 — engine↔artifact equality now also on the Model(s)
+# items/checked pair] t10[C02 AC1/AC3/AC5 — Model(s) vocabulary generation
+# coherent across engine spec, applied-state fixtures and the drift alarm, with a
+# fabricated-Dense positive control and a fabricated fifth-option negative
+# control].
+#
 # Red posture: t1–t8 (except the flagged HOLD sub-legs) DESIGNED RED at
 # authoring 2026-11-01 — the engine hard-rejects schema 2 (verified: exit 2
 # "want wekan-board-snapshot/1"), the artifact does not exist, the skill
 # carries no checklist spec. The reds name those surfaces, never a harness
 # fault. The HOLD sub-legs (schema-1 action-set cleanliness, engine offline-
 # ness, :v87 degrade note) are green now.
+# Red posture (cf-106 C02, current): t7/t8 red — the Dense artifact does not
+# exist in the cf-106 folder yet; t2's pointer sub-leg, t3 and t10's engine/
+# fixture/drift pins red — the engine spec still carries the retired label while
+# the fixtures are re-pinned to the Dense generation on purpose. t1/t4/t5/t6/t9
+# and t10's two controls are green now.
 #
 # Usage:
-#   bash tests/wekan-board-provision/checklist-cutover.sh           # t1..t9
+#   bash tests/wekan-board-provision/checklist-cutover.sh           # t1..t10
 #   bash tests/wekan-board-provision/checklist-cutover.sh t2 t7     # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -66,8 +82,13 @@ FX_DRIFT="$FXDIR/ai-dev-schema2-drift.json"
 FX_MATCH="$FXDIR/ai-dev-schema2-matching.json"
 FX_NOLABEL="$FXDIR/ai-dev-schema2-no-parallel-label.json"
 FX_CASE="$FXDIR/ai-dev-schema2-labelcase.json"
-ARTIFACT=".agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json"
-V1=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade/board-rules-v12.64.json"
+ARTIFACT=".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json"
+V1=".agents/plans/2026/2026-10-dep-wekan-v12-upgrade/board-rules-v12.65-dense.json"
+# cf-106 C02: the createCard rule-extra artifact is re-issued per vocabulary
+# generation, so the CURRENT-state artifact lives in the cf-106 ticket folder
+# (the cf-96 file stays as the applied history). Any `board-rules-v12.65*` name
+# is accepted there — the folder is the pin, the suffix records the vocabulary.
+ARTIFACT_DIR=".agents/plans/2026/2026-11-cf-106-feat-coord-fixes"
 
 checks=0
 FAILED=0
@@ -76,11 +97,11 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8 9; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9 10; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-9]$ ]] || fail "unknown check id '$a' (expected t1..t9)"
+    [[ "$lc" =~ ^t(1[0-9]|[1-9])$ ]] || fail "unknown check id '$a' (expected t1..t10)"
     WANT["$lc"]=1
   done
 fi
@@ -148,21 +169,39 @@ if want t2; then
       && fail "t2[C08 T1c]: the engine still hard-rejects wekan-board-snapshot/2 ('$FX_DRIFT' refused: $(head -1 "$TMP/drift.err")) — schema-2 support is C08 T1c's first task (designed red before C08 dev, not a harness fault)" \
       || { cat "$TMP/drift.err" >&2; fail "t2: engine nonzero on the drifted schema-2 fixture (reason above)"; }
   fi
-  if ! python3 - "$TMP/drift.out" "$ARTIFACT" <<'PY'
+  cat >"$TMP/artifact_ptr.py" <<'PY'
+# The drift action must point the human at the CURRENT-generation rule-extra
+# artifact: a board-rules-v12.65 file inside the ticket folder that re-issued the
+# vocabulary generation (cf-106 C02 moves engine pointer and runbook citation
+# together). Written as a reusable checker so the fabricated controls below prove
+# the pin is not vacuous.
 import json, sys
-try:
-    got = json.load(open(sys.argv[1]))
-except Exception:
-    print("engine schema-2 stdout is not the JSON action array"); sys.exit(1)
-cc = [a for a in got if a.get("action") == "update_createcard_checklists"]
+payload = json.load(open(sys.argv[1]))
+acts = payload if isinstance(payload, list) else [payload]
+cc = [a for a in acts if a.get("action") == "update_createcard_checklists"]
 if len(cc) != 1:
-    print(f"the drifted fixture must yield EXACTLY ONE update_createcard_checklists action, got {len(cc)} (full plan: {json.dumps(got)[:400]})"); sys.exit(1)
-blob = json.dumps(cc[0])
-if "board-rules-v12.65.json" not in blob:
-    print(f"the action must NAME the v2 artifact path (C08 T1c: naming the artifact is part of the runbook render); got {blob[:200]}"); sys.exit(1)
+    print(f"exactly ONE update_createcard_checklists action expected, got {len(cc)}: {json.dumps(payload)[:300]}"); sys.exit(1)
+path = cc[0].get("artifact")
+if not isinstance(path, str):
+    print(f"the action must carry an artifact path string, got {path!r}"); sys.exit(1)
+if "board-rules-v12.65" not in path:
+    print(f"the artifact path must name the v2 rules file (board-rules-v12.65*), got {path}"); sys.exit(1)
+if not path.startswith(sys.argv[2] + "/"):
+    print(f"the artifact must live in the ticket folder that re-issued this vocabulary "
+          f"generation ({sys.argv[2]}/), got {path} — cf-106 C02 moves the engine pointer "
+          f"and the boards runbook citation to the Dense artifact together"); sys.exit(1)
+print("ok")
 PY
-  then fail "t2[C08 AC1]: the drifted-schema-2 leg failed (reason above)"; fi
-  ok "t2[C08 AC1/T1c]: drifted schema-2 snapshot -> exactly one update_createcard_checklists action naming the v2 artifact"
+  if ! python3 "$TMP/artifact_ptr.py" "$TMP/drift.out" "$ARTIFACT_DIR"; then
+    fail "t2[C02 AC6]: the drifted schema-2 plan's artifact pointer failed the pins above — the pointer still names a previous generation's artifact (designed red until C02 re-points the engine at its own folder's Dense artifact)"; fi
+  # Non-vacuity controls for the pointer pin (the suite's own checker decides).
+  printf '%s' '[{"action":"update_createcard_checklists","artifact":".agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/board-rules-v12.65.json","drift":["Model(s)"]}]' >"$TMP/ctl-old.json"
+  printf '%s' '[{"action":"update_createcard_checklists","artifact":".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.64.json","drift":["Model(s)"]}]' >"$TMP/ctl-new.json"
+  python3 "$TMP/artifact_ptr.py" "$TMP/ctl-old.json" "$ARTIFACT_DIR" >/dev/null 2>&1 \
+    && fail "t2 control: a pointer at the retired cf-96 artifact PASSED the pointer pin — the control is vacuous, fix the pin (not the engine)"
+  python3 "$TMP/artifact_ptr.py" "$TMP/ctl-new.json" "$ARTIFACT_DIR" >/dev/null 2>&1 \
+    || fail "t2 control: the cf-106-folder Dense artifact pointer FAILED its own pin — the checker is broken"
+  ok "t2[C02 AC6/C08 AC1]: drifted schema-2 -> exactly one update_createcard_checklists naming a board-rules-v12.65 artifact inside the cf-106 folder, control-proven pointer pin"
 fi
 
 # --- t3: matching schema-2 → zero actions (the applied-state fixture) -----------------
@@ -174,11 +213,22 @@ if want t3; then
   if ! python3 - "$TMP/match.out" <<'PY'
 import json, sys
 got = json.load(open(sys.argv[1]))
-if got:
-    print(f"the fully-applied schema-2 fixture produced {len(got)} actions: {json.dumps(got)[:300]} — zero actions once applied (C08 T1c)"); sys.exit(1)
+if not got:
+    print("ok"); sys.exit(0)
+drifts = [d for a in got if a.get("action") == "update_createcard_checklists" for d in (a.get("drift") or [])]
+model = [d for d in drifts if d.startswith("Model(s)")]
+if model:
+    # cf-106 C02's designed red: the applied-state fixtures carry the Dense
+    # vocabulary (the post-rename board state), the engine spec still names the
+    # retired label. The pair goes green only when the spec flips.
+    print(f"Model(s) vocabulary drift against the applied-state fixture: {model} — the "
+          f"fixture reads the Dense generation (cf-106 C02 re-pin) while the engine's "
+          f"CHECKLIST_SPEC still carries the retired label; zero actions needs both sides "
+          f"on Dense (designed red before C02 dev, not a fixture fault)"); sys.exit(1)
+print(f"the fully-applied schema-2 fixture produced {len(got)} actions: {json.dumps(got)[:300]} — zero actions once applied (C08 T1c)"); sys.exit(1)
 PY
-  then fail "t3[C08 AC1]: the zero-actions leg failed (reason above)"; fi
-  ok "t3[C08 AC1]: matching extras + present label -> zero actions (idempotent applied state)"
+  then fail "t3[C02 AC5/C08 AC1]: the zero-actions leg failed (reason above)"; fi
+  ok "t3[C02 AC5/C08 AC1]: matching extras (Dense vocabulary) + present label -> zero actions (idempotent applied state)"
 fi
 
 # --- t4: Research: Parallel ensure only when absent; case-insensitive (AC2) -----------
@@ -262,7 +312,7 @@ fi
 # --- t7: the v2 artifact itself (C08 T3 / AC4) -------------------------------------------
 if want t7; then
   [ -f "$ARTIFACT" ] \
-    || fail "t7[C08 T3]: $ARTIFACT does not exist yet — the v2 rules-import artifact is C08's third task (designed red before C08 dev; C10 step 7 hands it to the owner)"
+    || fail "t7[C02 AC6]: $ARTIFACT does not exist yet — C02 re-issues the createCard rule-extra artifact for the Dense vocabulary generation (modify-only, never applied by an agent; the owner applies it). Designed red until C02 dev writes it; the cf-96 file stays as applied history."
   [ -f "$V1" ] || fail "harness: the v1 artifact $V1 is the Services/Type/Model(s) copy-source and must exist"
   if ! python3 - "$ARTIFACT" "$V1" "$SRC_BOARDS" <<'PY'
 import json, re, sys
@@ -284,7 +334,13 @@ v1adds = {a["checklistName"]: a["checklistItems"].split(",") for a in v1acts if 
 assert adds["Services"] == v1adds["Services"], "Services must be COPIED from v1 (15 items), not retyped"
 assert len(adds["Services"]) == 15, f"Services has {len(adds['Services'])} items, want 15"
 assert set(adds["Type"]) == {"feat","bug","debug","dep","refactor","chore","docs"}, "Type drifted from the 7"
-assert adds["Model(s)"] == v1adds["Model(s)"], "Model(s) must be copied from v1"
+# cf-106 C02 replaces v1's "Model(s) is COPIED from v1" rule: this artifact IS the
+# Dense generation, so Model(s) must carry the canonical four labels — a fifth
+# option, or v1's retired label, fails the chunk (AC1/AC3).
+assert adds["Model(s)"] == ["Qwen Large", "Qwen Dense", "Qwen Flash", "Local (gpu-ai)"], (
+    f"Model(s) extras must be the Dense generation's four labels in order; got {adds['Model(s)']} "
+    f"(v1 carries {v1adds['Model(s)']} — copying it verbatim is the failure this leg exists for)")
+assert "Qwen 27b" not in json.dumps(rule), "the current-generation artifact may not carry the retired label — it belongs to the applied history (v1/cf-96) and the boards alias sentence only"
 
 text = open(sys.argv[3]).read()
 m = re.search(r"(?ms)^\s*- \*\*Lifecycle\*\*(.*?)(?=^\s*- \*\*|^#|\Z)", text)
@@ -298,14 +354,19 @@ assert run == ["Exploration","Agent Decides Research","Pre Research","Planning",
 
 named = {c["checklistName"] for c in checks}
 assert named == {"Model(s)"}, f"OQ13: ONLY Model(s) may arrive checked — checkItems found on {sorted(named)}"
-assert all(c["checkItemName"] == "Qwen Flash" for c in checks), "the one checkItem is Model(s) → Qwen Flash"
+# cf-106 C02 (OQ-7 ruling): the checklist default flips with the vocabulary, so the
+# one checkItem target is Dense — and the retired label must not be the target.
+assert all(c["checkItemName"] == "Qwen Dense" for c in checks), (
+    f"the one checkItem must be Model(s) -> Qwen Dense (the Dense default-check this artifact exists for); "
+    f"got {[c['checkItemName'] for c in checks]}")
+assert len(checks) == 1, f"exactly one checkItem expected (Model(s) default only); got {len(checks)}"
 print("ok")
 PY
-  then fail "t7[C08 AC4/T3]: the artifact pins failed (reason above)"; fi
-  ok "t7[C08 AC4]: artifact valid — five extras, Services/Type/Model(s) copied from v1, Lifecycle+HITL byte-equal to C07's text, only Qwen Flash checked"
+  then fail "t7[C02 AC6]: the artifact pins failed (reason above)"; fi
+  ok "t7[C02 AC6]: artifact valid — five extras, Services/Type copied from v1, Model(s) on the Dense four labels (v1 copy explicitly rejected), Lifecycle+HITL byte-equal to C07's text, exactly one checkItem = Model(s) → Qwen Dense, retired label absent"
 fi
 
-# --- t8: engine↔artifact equality, one more angle (AC4) ---------------------------------
+# --- t8: engine↔artifact equality, one more angle (AC4 + cf-106 C02 AC5) ---------------
 if want t8; then
   [ -f "$ARTIFACT" ] || fail "t8[C08 AC4]: no artifact yet to compare the engine against (same designed red as t7)"
   if ! python3 - "$ENGINE" "$ARTIFACT" <<'PY'
@@ -320,16 +381,44 @@ for node in ast.walk(tree):
             lists.append(vals)
 if not lists:
     print("t8: the engine carries no 11-item spec constant — the equality pin needs the spec landed (C08 T1b; designed red before C08 dev)"); sys.exit(1)
+
+# The engine's inline Model(s) items/checked constants (LIFECYCLE_ITEMS rides a
+# name, so only inline string lists are readable here — which is exactly the
+# vocabulary generation this leg cares about).
+spec_node = next((n for n in ast.walk(tree) if isinstance(n, ast.Assign)
+                  and any(isinstance(t, ast.Name) and t.id == "CHECKLIST_SPEC" for t in n.targets)), None)
+spec = {}
+if spec_node is not None:
+    for d in ast.walk(spec_node.value):
+        if not isinstance(d, ast.Dict):
+            continue
+        for k, v in zip(d.keys, d.values):
+            if not (isinstance(k, ast.Constant) and k.value == "Model(s)" and isinstance(v, ast.Dict)):
+                continue
+            for k2, v2 in zip(v.keys, v.values):
+                if isinstance(k2, ast.Constant) and k2.value in ("items", "checked") and isinstance(v2, ast.List):
+                    vals = [e.value for e in v2.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)]
+                    if len(vals) == len(v2.elts):
+                        spec[k2.value] = vals
+
 rule = json.load(open(sys.argv[2]))[0]
 acts = [rule["action"]] + list(rule.get("extraActions") or [])
 adds = {a["checklistName"]: a["checklistItems"].split(",") for a in acts if a.get("actionType") == "addChecklistWithItems"}
 for name in ("Lifecycle", "Human in the Loop"):
     if adds[name] not in lists:
         print(f"t8: the artifact's {name} list is not equal to ANY engine spec constant — engine and artifact drift (AC4 fails loudly by design)"); sys.exit(1)
+if not spec.get("items"):
+    print("t8: no inline Model(s) items constant readable in the engine — the vocabulary equality leg needs the spec's items list inline (cf-106 C02 keeps it inline)"); sys.exit(1)
+if spec["items"] != adds["Model(s)"]:
+    print(f"t8: engine Model(s) spec {spec['items']} != artifact Model(s) extras {adds['Model(s)']} — the engine and the rule-extra artifact must carry the SAME vocabulary generation (cf-106 C02 AC5: the drift action's own plan must not drift from the artifact it points at)"); sys.exit(1)
+targets = sorted(c["checkItemName"] for c in acts if c.get("actionType") == "checkItem")
+want_checked = sorted(spec.get("checked", []))
+if targets != want_checked:
+    print(f"t8: the artifact checks {targets} but the engine spec declares checked {want_checked} — the default-check generation drifts between engine and artifact (cf-106 C02 flips both together)"); sys.exit(1)
 print("ok")
 PY
-  then fail "t8[C08 AC4]: engine↔artifact equality failed (reason above)"; fi
-  ok "t8[C08 AC4]: engine spec constants equal the artifact's Lifecycle and HITL item lists"
+  then fail "t8[C02 AC5/C08 AC4]: engine↔artifact equality failed (reason above)"; fi
+  ok "t8[C02 AC5/C08 AC4]: engine spec equals the artifact on Lifecycle/HITL lists AND the Model(s) items/checked pair (one vocabulary generation on both sides)"
 fi
 
 # --- t9: the schema-2 capture path is executable end-to-end (C11 T4 / F5 defect) ---
@@ -355,6 +444,114 @@ print("ok")
 PY
   then fail "t9[C11]: the schema-2 capture path is not executable end-to-end (reason above)"; fi
   ok "t9[C11]: capture path pinned end-to-end — provision step 1 names get_rule AND _slim_rule passes extraActions through, one leg where the contract is consumed"
+fi
+
+# --- t10: Model(s) vocabulary generation coherent across engine, fixtures and the
+#     drift alarm (cf-106 C02 AC1/AC5) --------------------------------------------------
+if want t10; then
+  cat >"$TMP/vocab.py" <<'PY'
+# Engine spec ↔ fixture vocabulary coherence, plus the claim that the RETIRED
+# vocabulary is itself drift. One checker, run against the real surfaces (the
+# dev-facing pins) and against fabricated copies (the controls), so a green run
+# proves the checker can fail.
+import ast, json, sys
+
+engine, mode, path = sys.argv[1], sys.argv[2], sys.argv[3]
+CANON = ["Qwen Large", "Qwen Dense", "Qwen Flash", "Local (gpu-ai)"]
+
+
+def spec_model(src):
+    tree = ast.parse(src)
+    node = next((n for n in ast.walk(tree) if isinstance(n, ast.Assign)
+                 and any(isinstance(t, ast.Name) and t.id == "CHECKLIST_SPEC" for t in n.targets)), None)
+    out = {}
+    if node is None:
+        return out
+    for d in ast.walk(node.value):
+        if not isinstance(d, ast.Dict):
+            continue
+        for k, v in zip(d.keys, d.values):
+            if not (isinstance(k, ast.Constant) and k.value == "Model(s)" and isinstance(v, ast.Dict)):
+                continue
+            for k2, v2 in zip(v.keys, v.values):
+                if isinstance(k2, ast.Constant) and k2.value in ("items", "checked") and isinstance(v2, ast.List):
+                    vals = [e.value for e in v2.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)]
+                    if len(vals) == len(v2.elts):
+                        out[k2.value] = vals
+    return out
+
+
+if mode == "engine":
+    s = spec_model(open(engine).read())
+    if s.get("items") != CANON:
+        print(f"engine Model(s) items {s.get('items')} != the Dense generation {CANON} — the "
+              f"provisioning spec still carries the retired label (cf-106 C02 renames it; "
+              f"the ids are untouched, only the label moves)"); sys.exit(1)
+    if s.get("checked") != ["Qwen Dense"]:
+        print(f"engine Model(s) checked {s.get('checked')} != ['Qwen Dense'] — the checklist "
+              f"default flips with the vocabulary (OQ-7: BOTH defaults flip)"); sys.exit(1)
+    sys.exit(0)
+if mode == "fixture":
+    got = (json.load(open(path)).get("checklist_extras") or {}).get("Model(s)", {})
+    want = spec_model(open(engine).read())
+    if got.get("items") != want.get("items") or sorted(got.get("checked", [])) != sorted(want.get("checked", [])):
+        print(f"applied-state fixture Model(s) {got} disagrees with the engine spec {want} — one "
+              f"side is still on the other vocabulary generation (AC5: the drift scan must report "
+              f"zero actions on the applied state once both sides read Dense)"); sys.exit(1)
+    sys.exit(0)
+if mode == "drift":
+    entries = [d for a in json.load(open(path)) if a.get("action") == "update_createcard_checklists"
+               for d in (a.get("drift") or [])]
+    if not any(e.startswith("Model(s)") for e in entries):
+        print(f"the pre-cutover fixture (live board still reads the retired label) produced no "
+              f"Model(s) drift entry — got {entries}. Retired vocabulary IS drift once the spec is "
+              f"Dense (AC5); the transition alias governs card consumption, NOT the provisioning spec"); sys.exit(1)
+    sys.exit(0)
+print(f"harness: unknown vocab mode '{mode}'"); sys.exit(2)
+PY
+  # Controls FIRST: they must hold whatever dev does, and they prove the three
+  # dev-facing pins below are not vacuous.
+  python3 - "$ENGINE" "$TMP/engine-fabricated.py" <<'PY'
+import sys
+text = open(sys.argv[1], encoding="utf-8").read()
+i = text.index('"Model(s)"'); k = text.index("{", i)
+depth, end = 0, k
+for p in range(k, len(text)):
+    if text[p] == "{": depth += 1
+    elif text[p] == "}":
+        depth -= 1
+        if depth == 0:
+            end = p; break
+block = text[k:end + 1].replace('"Qwen 27b"', '"Qwen Dense"').replace('"checked": ["Qwen Flash"]', '"checked": ["Qwen Dense"]')
+open(sys.argv[2], "w", encoding="utf-8").write(text[:k] + block + text[end + 1:])
+PY
+  python3 "$TMP/vocab.py" "$TMP/engine-fabricated.py" engine _ >/dev/null 2>&1 \
+    || fail "t10 control: a fabricated Dense-generation engine spec FAILED the vocabulary pin — the pin is broken, not dev"
+  python3 - "$FX_MATCH" "$TMP/fx-fifth-option.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1], encoding="utf-8"))
+d["checklist_extras"]["Model(s)"]["items"] = d["checklist_extras"]["Model(s)"]["items"] + ["Qwen Flash Next"]
+json.dump(d, open(sys.argv[2], "w", encoding="utf-8"))
+PY
+  python3 "$TMP/vocab.py" "$TMP/engine-fabricated.py" fixture "$TMP/fx-fifth-option.json" >/dev/null 2>&1 \
+    && fail "t10 control: a fixture carrying a FIFTH Model(s) option passed the coherence pin — the pin is vacuous (AC3's four-option closure must be enforced here)"
+  ok "t10[C02 AC3 control]: the vocabulary checker fails a fabricated fifth option and accepts a fabricated Dense spec — the dev-facing pins below are non-vacuous"
+  # (a) dev-facing: the engine spec must read the Dense generation.
+  if ! python3 "$TMP/vocab.py" "$ENGINE" engine _ >/dev/null 2>&1; then
+    python3 "$TMP/vocab.py" "$ENGINE" engine _ || fail "t10[C02 AC1/AC5]: the engine's Model(s) vocabulary/default pin failed (reason above; designed red until C02 flips the spec)"
+  fi
+  # (b) dev-facing: every applied-state fixture must agree with the engine spec.
+  for fx in "$FX_MATCH" "$FX_CASE" "$FX_NOLABEL"; do
+    if ! python3 "$TMP/vocab.py" "$ENGINE" fixture "$fx" >/dev/null 2>&1; then
+      python3 "$TMP/vocab.py" "$ENGINE" fixture "$fx" || fail "t10[C02 AC5]: engine↔fixture Model(s) vocabulary coherence failed for $fx (reason above; designed red until C02 flips the spec — the fixtures are re-pinned to the Dense generation on purpose)"
+    fi
+  done
+  # (c) dev-facing: the pre-cutover fixture must ALARM on the retired vocabulary.
+  run_engine vocab-drift "$FX_DRIFT" || { cat "$TMP/vocab-drift.err" >&2; fail "t10[C02 AC5]: engine nonzero on the drifted schema-2 fixture (reason above)"; }
+  if ! python3 "$TMP/vocab.py" _ drift "$TMP/vocab-drift.out" >/dev/null 2>&1; then
+    python3 "$TMP/vocab.py" _ drift "$TMP/vocab-drift.out" || fail "t10[C02 AC5]: the drift alarm did not name Model(s) (reason above; designed red until the spec flips Dense — the retired label must be drift, not a tolerated state)"
+  fi
+  ok "t10[C02 AC1/AC3/AC5]: Model(s) vocabulary generation coherent across engine spec, applied-state fixtures and the drift alarm"
 fi
 
 printf 'PASS: cf-96 cutover artifact checks (%d ok)\n' "$checks"

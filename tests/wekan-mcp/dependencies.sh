@@ -66,10 +66,10 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; FAILED=1; exit 1; }
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9 10 11; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-8])$ ]] || fail "unknown check id '$a' (expected t1..t8)"
+    [[ "$a" =~ ^t([1-9]|1[01])$ ]] || fail "unknown check id '$a' (expected t1..t11)"
     WANT["$a"]=1
   done
 fi
@@ -194,8 +194,8 @@ for d in fn.decorator_list:
     if isinstance(d, ast.Name) and d.id == "_write_tool":
         print("t2: preload_board is a READ (bare @mcp.tool) — registered via _write_tool it would vanish from the readonly tier"); sys.exit(1)
 argn = [a.arg for a in fn.args.args]
-if argn != ["board_id"]:
-    print(f"t2: preload_board args {argn}, want (board_id)"); sys.exit(1)
+if argn != ["board_id", "swimlane_titles"]:
+    print(f"t2: preload_board args {argn}, want (board_id, swimlane_titles) - cf-106 C06 adds the optional swimlane filter (red before C06 dev)"); sys.exit(1)
 b = ast.get_source_segment(src, fn)
 
 if "/api/boards/{board_id}/export" not in b:
@@ -204,14 +204,14 @@ if "attachments" not in b or "false" not in b:
     print("t2: the export call must pass attachments=false — base64 payloads are a MUST-skip for preload (RESEARCH S11)"); sys.exit(1)
 if "fields" not in b:
     print("t2: the export call must trim sections via ?fields= (unselected sections arrive as empty arrays — S11-exportFields)"); sys.exit(1)
-for sec in ("board-header", "labels", "custom-fields", "dependencies", "sort"):
+for sec in ("board-header", "labels", "custom-fields", "dependencies", "sort", "checklists"):
     if sec not in b:
         print(f"t2: the fields= vocabulary must include '{sec}' (C01 T2 trimmed section list)"); sys.exit(1)
 
 # per-card key set EXACTLY the seven pinned fields: find the card-map dict
 # literal by anchor keys and assert its full key set — an extra "title" or a
 # dropped "sort" fails here (the AC2 "EXACTLY" wording is the contract).
-KEYS = {"id", "card_number", "label_ids", "slug", "archived", "sort", "parent_id"}
+KEYS = {"id", "card_number", "label_ids", "slug", "archived", "sort", "parent_id", "checklists"}
 card_dicts = []
 for n in ast.walk(fn):
     if isinstance(n, ast.Dict):
@@ -253,7 +253,7 @@ if "linked" not in d.lower():
 print("ok: t2 — preload_board: one export call, attachments=false + fields trim, exact 7-key card map, no title/description, flag-not-drop archived, grouped map + dependencies + name maps")
 PY
   then fail "t2[C01 AC2]: the preload_board reshape contract is not satisfied (reason above)"; fi
-  ok "t2[C01 AC2]: preload_board one-call export reshape contract satisfied"
+  ok "t2[C01 AC2 + cf-106 C06]: preload_board one-call export reshape contract satisfied (the trim carries checklists, the card map is the 8-key set, the signature carries the swimlane filter)"
 fi
 
 # --- t3: set_card_labels — the bulk route wrapper (C01 T3, AD-74) -----------------
@@ -501,6 +501,217 @@ print("ok: t8 — _slim_rule EXACTLY the 7-key capture projection, raw r.get pas
 PY
   then fail "t8[C11 AC1]: the _slim_rule capture-projection contract is not satisfied (reason above)"; fi
   ok "t8[C11 AC1]: _slim_rule carries extra_actions/extra_triggers/enabled un-reshaped — the schema-2 capture path is executable"
+fi
+
+# --- t9/t10/t11: cf-106 C06 — the preload payload the pickup walk reasons with --
+# One shipped checker, three modes, run against the real server source AND
+# against synthetic sources (a compliant one and degraded ones) so each arm is
+# proven satisfiable AND responsive — the cf-52 non-vacuity rule, kept while the
+# live legs stay USER-owned (C06 AC7: all proof here is offline).
+TMP="${TMP:-$(mktemp -d /tmp/opencode/wekan-deps-test.XXXXXX)}"
+if want t9 || want t10 || want t11; then
+cat >"$TMP/preloadshape.py" <<'PYEOF'
+import ast, sys
+
+path, mode = sys.argv[1], sys.argv[2]
+fname = sys.argv[3] if len(sys.argv) > 3 else "preload_board"
+src = open(path).read()
+tree = ast.parse(src)
+fn = next((n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == fname), None)
+if fn is None:
+    print(f"{fname} is not defined in {path} (designed red before C06 dev, not a harness fault)")
+    sys.exit(1)
+body = ast.get_source_segment(src, fn) or ast.unparse(fn)
+doc = ast.get_docstring(fn) or ""
+STD = ["Services", "Type", "Model(s)", "Lifecycle", "Human in the Loop"]
+LEGACY = "Research"
+
+def dicts_with(keys):
+    out = []
+    for n in ast.walk(fn):
+        if isinstance(n, ast.Dict):
+            ks = {k.value for k in n.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)}
+            if keys <= ks:
+                out.append(ks)
+    return out
+
+bad = []
+if mode == "checklists":
+    if "checklists" not in body:
+        bad.append("the export call never names the `checklists` section — checklist state cannot ride the single request")
+    if any("checklist" in ast.unparse(n).lower() and "get_checklist" in ast.unparse(n) for n in ast.walk(fn) if isinstance(n, ast.Call)):
+        bad.append("the tool fans out to a checklist endpoint — C06 keeps this ONE request (the OQ3 budget ruling)")
+    vocabs = []
+    # The vocabulary may live at module level (a named constant is the cleaner
+    # shape) — what the contract requires is that the set is spelled out and
+    # that the TOOL filters by it.
+    for n in list(ast.walk(tree)) + list(ast.walk(fn)):
+        if isinstance(n, (ast.Set, ast.List, ast.Tuple)):
+            consts = {e.value for e in n.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)}
+            if all(s in consts for s in STD) and LEGACY in consts:
+                vocabs.append(consts)
+    if not vocabs:
+        bad.append("no literal checklist vocabulary naming the five standard checklists + 'Research' — the filter set is a documented contract, not an implicit one")
+    filtered = False
+    for n in ast.walk(fn):
+        if isinstance(n, ast.Compare) and any(isinstance(op, ast.In) for op in n.ops):
+            left, right = ast.unparse(n.left).lower(), ast.unparse(n.comparators[0])
+            if ("title" in left or "name" in left) and ("std" in right.upper() or "checklist" in right.upper() or "keep" in right.upper()):
+                filtered = True
+        if isinstance(n, ast.comprehension) and "title" in ast.unparse(n).lower() and "checklist" in ast.unparse(n).lower():
+            filtered = True
+    if not filtered:
+        bad.append("the vocabulary is never used in a membership test — every checklist on the board would ride the payload (C06's 'improve / filter' half)")
+    item_dicts = dicts_with({"title", "finished"})
+    if not item_dicts:
+        bad.append("no checklist-item projection carrying {title, finished} — item state is what the kickoff consumption reads")
+    for ks in item_dicts:
+        if ks - {"title", "finished"}:
+            bad.append(f"checklist-item projection carries extra keys {sorted(ks)} — want EXACTLY title + finished")
+    if "legacy" not in (body + doc).lower():
+        bad.append("neither the code nor the docstring mentions the legacy checklist spelling (the 8-item Lifecycle variant must be recognised, not guessed)")
+    for tok in ("checklists",) + tuple(STD):
+        if tok not in doc:
+            bad.append(f"the docstring never names '{tok}' — AC1 wants the docstring to enumerate the field set and the checklist filter set")
+elif mode == "titles":
+    lanes = dicts_with({"id", "lists"})
+    if not lanes:
+        bad.append("no swimlane entry literal carrying {id, lists} — titles must sit next to the ids (C06 AC2)")
+    if not any("title" in ks for ks in lanes):
+        bad.append("swimlane entries carry id but no title — the consumer's membership tests would still need a list_lists round-trip")
+    lists = dicts_with({"id", "cards"})
+    if not lists:
+        bad.append("no list entry literal carrying {id, cards}")
+    if not any("title" in ks for ks in lists):
+        bad.append("list entries carry id but no title")
+    comp_ifs = [g for n in ast.walk(fn) if isinstance(n, (ast.ListComp, ast.DictComp, ast.GeneratorExp))
+                for g in ast.walk(n) if isinstance(g, ast.comprehension) and g.ifs]
+    if_statements = [n for n in ast.walk(fn) if isinstance(n, ast.If)]
+    empty_guard = any("lists" in ast.unparse(n.test) or "cards" in ast.unparse(n.test) for n in if_statements) \
+        or any(("lists" in ast.unparse(g.ifs[0]) or "cards" in ast.unparse(g.ifs[0])) for g in comp_ifs)
+    if not empty_guard:
+        bad.append("no emptiness guard on the grouped entries — empty lists/swimlanes must not be emitted (the cf-96 posture C06 keeps)")
+    for n in ast.walk(fn):
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "sorted":
+            key_txt = " ".join(ast.unparse(kw.value) for kw in n.keywords)
+            if "sort" not in key_txt:
+                bad.append(f"sorted(...) without the board's sort field as the key ({key_txt or 'no key'}) — the payload keeps the board's own order")
+    if '"description"' in body or "'description'" in body:
+        bad.append("a description key appears in the preload body — the payload stays description-free (AC4)")
+elif mode == "filter":
+    argn = [a.arg for a in fn.args.args]
+    if argn[:2] != ["board_id", "swimlane_titles"]:
+        bad.append(f"signature is {argn}, want (board_id, swimlane_titles) — C06's payload-bound filter")
+    defaults = fn.args.defaults
+    if not defaults:
+        bad.append("swimlane_titles has no default — the documented default is every swimlane")
+    elif ast.unparse(defaults[-1]) not in ("None", "[]", "list()", "tuple()"):
+        bad.append(f"swimlane_titles defaults to {ast.unparse(defaults[-1])}, want None (all swimlanes)")
+    if len([n for n in ast.walk(fn) if isinstance(n, ast.Name) and n.id == "swimlane_titles"]) < 2:
+        bad.append("swimlane_titles is never used in the body — the filter argument is decorative")
+    if_statements = [n for n in ast.walk(fn) if isinstance(n, ast.If)]
+    comp_ifs = [g for n in ast.walk(fn) if isinstance(n, (ast.ListComp, ast.DictComp, ast.GeneratorExp))
+                for g in ast.walk(n) if isinstance(g, ast.comprehension) and g.ifs]
+    filter_site = any("swimlane_titles" in ast.unparse(n.test) for n in if_statements) \
+        or any("swimlane_titles" in ast.unparse(g.ifs[0]) for g in comp_ifs) \
+        or any("swimlane_titles" in ast.unparse(kw.value) for n in ast.walk(fn) if isinstance(n, ast.Call) for kw in n.keywords)
+    if not filter_site:
+        bad.append("no filter branch keyed on swimlane_titles — the argument cannot bound the payload")
+    if any(isinstance(n, ast.Raise) for n in ast.walk(fn)):
+        bad.append("the tool raises — an unknown swimlane title must yield the documented empty grouping, not an error (AC3)")
+    if "swimlane" not in doc.lower() or not any(w in doc.lower() for w in ("all", "every", "default")):
+        bad.append("the docstring does not state the default (every swimlane) — AC3's documented default is part of the contract")
+else:
+    print(f"unknown mode {mode}"); sys.exit(2)
+
+if bad:
+    print("; ".join(bad))
+    sys.exit(1)
+PYEOF
+
+cat >"$TMP/preload-compliant.py" <<'PYEOF'
+from typing import Optional
+
+STD = {"Services", "Type", "Model(s)", "Lifecycle", "Human in the Loop", "Research"}
+
+
+def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) -> dict:
+    """One export request. Each card carries id, card_number, label_ids, slug,
+    archived, sort, parent_id and checklists. Checklists are filtered to the
+    standard checklists (Services, Type, Model(s), Lifecycle, Human in the Loop)
+    plus the legacy Research spelling; every swimlane by default, and an
+    unknown swimlane title yields an empty grouping."""
+    doc = client.get("/api/boards/{board_id}/export",
+                     params={"attachments": "false",
+                             "fields": "board-header,labels,custom-fields,dependencies,sort,checklists"})
+    keep = [c for c in doc.get("checklists", [])
+            if c.get("title") in STD or len(c.get("tasks", [])) == 8]
+    items = {c.get("_id"): [{"title": t.get("title"), "finished": bool(t.get("done"))}
+                            for t in c.get("tasks", [])] for c in keep}
+    cards = [{ "id": c.get("_id"), "card_number": c.get("cardNumber"),
+               "label_ids": c.get("labelIds", []), "slug": slug_of(c),
+               "archived": c.get("archived", False), "sort": c.get("sort"),
+               "parent_id": c.get("parentId"),
+               "checklists": [{"id": x.get("_id"), "title": x.get("title"),
+                               "items": items.get(x.get("_id"), [])} for x in keep] }
+              for c in sorted(doc["cards"], key=lambda c: (c.get("sort") or 0))]
+    lists = [{"id": l.get("_id"), "title": l.get("title"),
+              "cards": [c for c in cards if c["id"] in {x for x in ids_of(l)}]} for l in doc.get("lists", [])]
+    swimlanes = [{"id": s.get("_id"), "title": s.get("title"),
+                  "lists": [l for l in lists if l["id"] in {x.get("_id") for x in s.get("lists", [])}]}
+                 for s in doc.get("swimlanes", [])]
+    if swimlane_titles is not None:
+        swimlanes = [s for s in swimlanes if s["title"] in swimlane_titles]
+    return {"board_id": board_id, "swimlanes": [s for s in swimlanes if s["lists"]],
+            "lists": [l for l in lists if l["cards"]],
+            "dependencies": [], "label_names": {}, "field_names": {}}
+PYEOF
+
+python3 - "$TMP/preload-compliant.py" "$TMP" <<'PY'
+import sys
+# Degraded copies: one degradation per mode, so each control reddens exactly one
+# arm (and proves that arm is responsive, not decoration).
+text = open(sys.argv[1]).read()
+tmp = sys.argv[2]
+open(tmp + "/preload-degraded-1.py", "w").write(
+    text.replace('if c.get("title") in STD or len(c.get("tasks", [])) == 8', "if True"))
+open(tmp + "/preload-degraded-2.py", "w").write(
+    text.replace('"id": l.get("_id"), "title": l.get("title"),', '"id": l.get("_id"),'))
+open(tmp + "/preload-degraded-3.py", "w").write(
+    text.replace('    if swimlane_titles is not None:\n        swimlanes = [s for s in swimlanes if s["title"] in swimlane_titles]',
+                 '    raise ValueError("unsupported filter")'))
+PY
+
+fi
+
+if want t9; then
+  python3 "$TMP/preloadshape.py" "$SERVER" checklists \
+    || fail "t9[C06 AC1/AC4]: the preload checklist contract is not satisfied (reason above; designed red until C06 lands the checklists section in the one-request trim, the filter vocabulary and the {title, finished} item shape)"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-compliant.py" checklists \
+    || fail "t9[C06]: NEGATIVE CONTROL FAILED — the shipped checker rejects a compliant preload (the arm above is unsatisfiable)"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-degraded-1.py" checklists >/dev/null 2>&1 \
+    && fail "t9[C06]: NEGATIVE CONTROL FAILED — an unfiltered preload (every checklist rides the payload) still passes the checklist arms"
+  ok "t9[C06 AC1]: the export trim carries \`checklists\` in the same single request, the standard five + legacy Research filter set is a named vocabulary wired through a membership test, items project to exactly {title, finished}, and the docstring enumerates the field set (compliant and degraded fixtures both behave)"
+fi
+
+if want t10; then
+  python3 "$TMP/preloadshape.py" "$SERVER" titles \
+    || fail "t10[C06 AC2/AC4]: the grouped-shape contract is not satisfied (reason above; designed red until swimlane/list entries carry titles with the empty-group posture kept)"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-compliant.py" titles \
+    || fail "t10[C06]: NEGATIVE CONTROL FAILED — the checker rejects a compliant grouped payload"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-degraded-2.py" titles >/dev/null 2>&1 \
+    && fail "t10[C06]: NEGATIVE CONTROL FAILED — a payload whose list entries carry no title still passes (the title pin is decoration)"
+  ok "t10[C06 AC2/AC4]: swimlane and list entries carry title next to id, empty groups stay unemitted, any re-ordering goes through the board's sort field, and no description key appears"
+fi
+
+if want t11; then
+  python3 "$TMP/preloadshape.py" "$SERVER" filter \
+    || fail "t11[C06 AC3]: the swimlane_titles contract is not satisfied (reason above; designed red until the optional filter argument lands)"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-compliant.py" filter \
+    || fail "t11[C06]: NEGATIVE CONTROL FAILED — the checker rejects a compliant swimlane_titles implementation"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-degraded-3.py" filter >/dev/null 2>&1 \
+    && fail "t11[C06]: NEGATIVE CONTROL FAILED — a tool that raises instead of filtering still passes the AC3 arms"
+  ok "t11[C06 AC3]: swimlane_titles is an optional argument defaulting to every swimlane, actually filters the grouping, yields the documented empty answer for an unknown title (no raise), and the docstring states the default"
 fi
 
 printf 'PASS: wekan-mcp cf-96 dependency/preload/label-surface checks (%d ok)\n' "$checks"

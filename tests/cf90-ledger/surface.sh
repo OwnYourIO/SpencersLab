@@ -56,11 +56,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-4]$ ]] || fail "unknown check id '$a' (expected t1..t4)"
+    [[ "$lc" =~ ^t[1-8]$ ]] || fail "unknown check id '$a' (expected t1..t8)"
     WANT["$lc"]=1
   done
 fi
@@ -189,6 +189,168 @@ if 'cite-only' not in t and 'never' not in t:
     print("the never-mutate-existing-cards posture vanished"); sys.exit(1)
 PY
   ok "t4[C07 AC2]: no superseded destination leaks into the ledger runbook; cite-only posture present"
+fi
+
+# --- t5-t8: cf-106 C05 — the five follow-up modes in both coordinator families --
+# The plan's F1-F4 land as these ids (this suite numbers its legs t-n). One
+# shipped checker, four modes, plus fabricated controls for the vocabulary and
+# the recommendation arms.
+cat >"$TMP/friction.py" <<'PYEOF'
+import re, sys
+
+_re = re
+path, mode = sys.argv[1], sys.argv[2]
+text = open(path).read()
+FIVE = ["new session", "current session", "plan only", "Inbox card", "none"]
+SIXTH = ["defer to owner", "do it here", "owner card", "later", "record only", "ticket only"]
+
+def passage(t):
+    # the friction-follow-up passage: role-coord's step 11, or the boards
+    # override section, whichever exists — both are the contract surfaces.
+    m = re.search(r"(?ms)^11\.[^\n]*Friction follow-up.*?(?=^\d+\.\s|\Z)", t)
+    if m:
+        return m.group(0)
+    m = re.search(r"(?ms)^#+[^\n]*Friction follow-up[^\n]*\n.*?(?=^#+ |\Z)", t)
+    if m:
+        return m.group(0)
+    return ""
+
+body = passage(text)
+if not body:
+    print(f"{path}: no friction-follow-up passage (step 11 or the boards override section) — nothing to check")
+    sys.exit(1)
+
+bad = []
+if mode == "vocab":
+    missing = [m for m in FIVE if m not in body]
+    if missing:
+        bad.append(f"modes absent: {missing}")
+    found = [s for s in SIXTH if s in body]
+    if found:
+        bad.append(f"a sixth mode appears ({found}) — the offer carries EXACTLY five options")
+    numbered = re.findall(r"(?m)^\s*(?:\d+[\.)]|[-*])\s+\*\*?(new session|current session|plan only|Inbox card|none)\b", body)
+    if len(set(numbered)) and len(set(numbered)) != 5:
+        bad.append(f"the mode enumeration lists {sorted(set(numbered))} — want all five")
+    if not re.search(r"\bnone\b[^\n]{0,160}(stop|nothing)", body, re.I):
+        bad.append("the `none` option's semantics (check nothing → stop) are not stated next to the option")
+elif mode == "recommend":
+    want = sys.argv[3]
+    other = "Inbox card" if want == "new session" else "new session"
+    # The recommendation is a property of a MODE ENTRY, not of the passage: the
+    # entry that carries the word "recommend" must be the family's own mode, and
+    # the other family's mode must not be the recommended one here.
+    items = _re.split(r"(?m)^\s*(?:\d+[.)]|[-*])\s+", body)
+    rec_items = [it for it in items if _re.search(r"recommend", it, _re.I)]
+    if not rec_items:
+        bad.append("the passage never says which mode is recommended")
+    else:
+        def lead(t):
+            hits = [(t.find(f), f) for f in FIVE if f in t]
+            return min(hits)[1] if hits else None
+        leads = [lead(it) for it in rec_items]
+        if want not in leads:
+            bad.append(f"no recommended entry names {want!r} (recommended entries lead with {leads})")
+        if any(l == other and want not in it for l, it in zip(leads, rec_items)):
+            bad.append(f"the recommended entry is {other!r} — this family recommends {want!r}")
+elif mode == "bound":
+    if "current session" not in body:
+        bad.append("the `current session` mode is not described")
+    at = body.find("current session")
+    window = body[at:at + 1400]
+    if "done" not in window or not re.search(r"never[^\n]{0,120}(re-?open)", window, re.I):
+        bad.append("the `current session` bound is missing: it must state it never re-opens a done chunk of the current plan")
+    if not re.search(r"STATE\.json|DECISIONS\.md|separate ticket|new chunk", window):
+        bad.append("the bound is incomplete: new work must be recorded as a new chunk in STATE.json (+ DECISIONS.md) or become a separate ticket")
+elif mode == "cite":
+    at = body.find("current session")
+    if at < 0:
+        bad.append("the boards override never mentions the `current session` mode")
+    window = body[at:at + 900]
+    if not re.search(r"pipeline-role-coord|role contract|step 11|bound", window, re.I):
+        bad.append("the boards override restates instead of citing the role contract's bound for `current session`")
+elif mode == "hold":
+    if "Inbox" not in body:
+        bad.append("the Inbox destination is gone")
+    if "list_lists" not in text:
+        bad.append("the Inbox id re-resolution via list_lists is gone")
+    if not re.search(r"(never|do NOT|don't)[^\n]{0,40}`?add_checklist", body, re.I):
+        bad.append("the never-add_checklist prohibition is gone")
+    if not re.search(r"not a run", body, re.I):
+        bad.append("the 'this is not a run' posture is gone")
+else:
+    print(f"unknown mode {mode}"); sys.exit(2)
+
+if bad:
+    print("; ".join(bad)); sys.exit(1)
+PYEOF
+
+RC_SRC=".rulesync/skills/pipeline-role-coord/SKILL.md"
+RC_GEN=".opencode/skills/pipeline-role-coord/SKILL.md"
+
+if want t5; then
+  for f in "$RC_SRC" "$RC_GEN" "$BOARDS_SRC" "$BOARDS_GEN"; do
+    python3 "$TMP/friction.py" "$f" vocab \
+      || fail "t5[cf-106 C05 AC1]: $f does not carry the five-mode vocabulary with the none-means-stop semantics (red before C05's skill edit; source and mirror must move together)"
+  done
+  # Control: a fabricated sixth option reddens the same checker.
+  sed 's/^\(11\..*stop\./\1\n   6. **defer to owner** — hand the item to the owner./' "$RC_SRC" >"$TMP/sixth.md"
+  grep -q 'defer to owner' "$TMP/sixth.md" \
+    || fail "t5[cf-106 C05]: NEGATIVE CONTROL FAILED — could not fabricate a sixth mode in the copy (the control proves nothing)"
+  python3 "$TMP/friction.py" "$TMP/sixth.md" vocab >/dev/null 2>&1 \
+    && fail "t5[cf-106 C05]: NEGATIVE CONTROL FAILED — a passage with a sixth mode still passes the exactly-five arm"
+  ok "t5[cf-106 C05 AC1]: the five modes (new session / current session / plan only / Inbox card / none) with the none-means-stop semantics are stated in the role contract and the boards override, sources and mirrors alike (a fabricated sixth mode reddens the arm)"
+fi
+
+if want t6; then
+  for f in "$RC_SRC" "$RC_GEN"; do
+    python3 "$TMP/friction.py" "$f" recommend "new session" \
+      || fail "t6[cf-106 C05 AC1]: $f does not recommend \`new session\` for the plain agent-coord family (red before C05's skill edit)"
+  done
+  for f in "$BOARDS_SRC" "$BOARDS_GEN"; do
+    python3 "$TMP/friction.py" "$f" recommend "Inbox card" \
+      || fail "t6[cf-106 C05 AC1]: $f does not recommend \`Inbox card\` on board-family runs (red before C05's skill edit)"
+  done
+  python3 "$TMP/friction.py" "$BOARDS_SRC" recommend "new session" >/dev/null 2>&1 \
+    && python3 "$TMP/friction.py" "$BOARDS_SRC" recommend "Inbox card" >/dev/null 2>&1 \
+    && fail "t6[cf-106 C05]: NEGATIVE CONTROL FAILED — the boards override recommends BOTH families' defaults, so the family-preference arm cannot fail"
+  ok "t6[cf-106 C05 AC1]: the recommendation is family-differentiated — new session leads in the role contract, Inbox card leads in the boards override"
+fi
+
+if want t7; then
+  for f in "$RC_SRC" "$RC_GEN"; do
+    python3 "$TMP/friction.py" "$f" bound \
+      || fail "t7[cf-106 C05 AC3]: $f does not bound the \`current session\` mode (never re-opens a done chunk; new work is a recorded chunk in STATE.json plus a DECISIONS.md line, or a separate ticket) — red before C05's skill edit"
+  done
+  for f in "$BOARDS_SRC" "$BOARDS_GEN"; do
+    python3 "$TMP/friction.py" "$f" cite \
+      || fail "t7[cf-106 C05 AC3]: $f never cites the role contract's bound for \`current session\` (the boards override cites, it does not restate)"
+  done
+  ok "t7[cf-106 C05 AC3]: the current-session bound is stated once in the role contract and cited by the boards override"
+fi
+
+if want t8; then
+  for f in "$BOARDS_SRC" "$BOARDS_GEN"; do
+    python3 "$TMP/friction.py" "$f" hold \
+      || fail "t8[cf-106 C05 AC4]: $f lost one of the standing follow-up rules (Inbox destination, the list_lists re-resolution, the never-add_checklist prohibition, or the not-a-run posture) — C05 changes the question and the mode branches only"
+  done
+  python3 - "$BOARDS_SRC" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+out, n = re.subn(r"Inbox", "Review", text, count=1)
+if n == 0:
+    print("fixture: no Inbox mention to strip in the real skill (the live arm reddens first)"); sys.exit(1)
+open("/dev/stdout", "w").write(out)
+PY
+  python3 - "$BOARDS_SRC" "$TMP/boards-no-inbox.md" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+out, n = re.subn(r"Inbox", "Low Priority", text)
+assert n, "fixture: no Inbox mention to strip"
+open(sys.argv[2], "w").write(out)
+PY
+  python3 "$TMP/friction.py" "$TMP/boards-no-inbox.md" hold >/dev/null 2>&1 \
+    && fail "t8[cf-106 C05]: NEGATIVE CONTROL FAILED — a boards override with every Inbox destination renamed still passes the HOLD arm"
+  ok "t8[cf-106 C05 AC4]: the standing follow-up rules survive in both boards trees (Inbox in Backlog, list_lists re-resolution, never add_checklist, not a run), and a destination rewrite is caught"
 fi
 
 printf 'PASS: cf-90 C07 ledger policy/runbook checks (%d ok)\n' "$checks"

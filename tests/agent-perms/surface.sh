@@ -24,7 +24,9 @@
 # A13[C02 AC5/C03 AC7 rename sweep + command→agent pairing]
 # A14[bug-board-coord-dev-boards-allow AC6: MCP action-glob vs registered server-name spelling]
 # A15[cf-76 C07: pipeline_* lock-tool rows on the board-coord trio + tool/label-constant
-# parity across plugin ↔ permission rows ↔ boards skill];
+#   parity; cf-106 C01: the agent-facing custom-field roster fence; cf-106 C08:
+#   the pipeline_claim `shared` override input + the boards skill's co-tenancy
+#   posture (AC6/AC7)]
 # A16[board-tick-cleanup C01 AC1-AC4: the explicit `ls *` allow on every
 # permission-bearing source and mirror, the effective 'ls -a' verdict, the
 # fabricated-strip/duplicate negative controls, the 22/9 verified counts (re-pinned to
@@ -203,11 +205,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 16); do WANT["a$i"]=1; done
+  for i in $(seq 1 19); do WANT["a$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^a([1-9]|1[0-6])$ ]] || fail "unknown check id '$a' (expected A1..A16)"
+    [[ "$lc" =~ ^a([1-9]|1[0-9])$ ]] || fail "unknown check id '$a' (expected A1..A19)"
     WANT["$lc"]=1
   done
 fi
@@ -612,6 +614,11 @@ def cmd():
         print(f"policybatch({cls}): {path} all {n} matrix cells green")
     elif op == "roster":
         path, slot = sys.argv[2], sys.argv[3]
+        # cf-106 C04 AC1: the coordinator's sanctioned second implementer. The
+        # plain/-local class launches `code`, the -pr class launches `code-pr`
+        # — OpenCode subagent grants are exact-match per agent, so the family
+        # split is the only mechanical way to keep push on the -pr side.
+        codeslot = sys.argv[4] if len(sys.argv) > 4 else None
         p = perms(path)
         if p[0] != {"action": "*", "resource": "*", "effect": "deny"}:
             fail(f"roster: {path} lost the leading deny-all baseline")
@@ -627,10 +634,25 @@ def cmd():
         import os
         if os.path.exists(".rulesync/skills/pipeline-role-deploy/SKILL.md"):
             want = sorted(want + ["agent-dev-deploy-pr" if slot == "agent-dev-pr" else "agent-dev-deploy"])
+        if codeslot:
+            want = sorted(want + [codeslot])
         if allows != want:
-            fail(f"roster: {path} subagent allows {allows}, want exactly {want} (deny-all + per-class role roster: five roles pre-cf-90-C06, six with the deploy launch, seven with the cf-96 C02 explore row riding after agent-research on every twin; the leading subagent '*' deny remains)")
+            fail(f"roster: {path} subagent allows {allows}, want exactly {want} (deny-all + the class role roster: the plan-era role set plus the deploy launch and the cf-96 explore row, and since cf-106 C04 the code-family second implementer; the leading subagent '*' deny remains)")
         if not any(r.get("action") == "subagent" and r.get("resource") == "*" and r.get("effect") == "deny" for r in p):
             fail(f"roster: {path} lost the leading 'subagent * deny' row")
+        if codeslot:
+            # Position is part of the contract ("same position, right after the
+            # class's dev slot"): the block is last-match-wins ordered, so a
+            # stray row elsewhere is a different launch surface, and a reader
+            # scanning the block reads the roster as an ordered list.
+            sub = [r.get("resource") for r in p
+                   if r.get("action") == "subagent" and r.get("effect") == "allow"]
+            if slot not in sub:
+                fail(f"roster: {path} has no dev slot row to position {codeslot} after")
+            if codeslot not in sub:
+                fail(f"roster: {path} launches {sub}, want the second implementer {codeslot} present (cf-106 C04 AC1)")
+            if sub.index(codeslot) != sub.index(slot) + 1:
+                fail(f"roster: {path} places {codeslot} at {sub.index(codeslot)}, want immediately after {slot} at {sub.index(slot)} (the plan's same-position rule)")
     elif op == "api":
         path = sys.argv[2]
         p = perms(path)
@@ -1384,10 +1406,11 @@ AC6
     # unsatisfiable for correct content AND blind to a stale -pr roster
     # (validation_at_fault round 3).
     case "$f" in
-      *-pr.md) slot=agent-dev-pr; cls=pr;;
-      *)       slot=agent-dev-local; cls=local;;
+      *-pr.md) slot=agent-dev-pr; cls=pr; codeslot=code-pr;;
+      *)       slot=agent-dev-local; cls=local; codeslot=code;;
     esac
-    python3 "$TMP/family.py" roster "$f" "$slot" || fail "A12[C03]: $f roster dev slot wrong (want $slot)"
+    python3 "$TMP/family.py" roster "$f" "$slot" "$codeslot" \
+      || fail "A12[C03 + C04 AC1]: $f roster wrong — want the class dev slot ($slot) AND the family's second implementer ($codeslot) right after it: the plain/-local trio launches code, the -pr trio launches code-pr (red before C04 lands the row)"
     python3 "$TMP/family.py" gitrows "$f" "$cls"  || fail "A12[C03]: $f git block wrong for class $cls"
     python3 "$TMP/family.py" policybatch "$f" "$cls" <"$TMP/ac6.matrix" >/dev/null \
       || fail "A12[AC6-matrix]: $f (class $cls) verdicts a cf-72 matrix cell differently than declared — the broad allow, the floor's ORDER, the re-allows or the push tail drifted from the chunk contract (failing cells named above; table = $TMP/ac6.matrix)"
@@ -1414,6 +1437,39 @@ AC6
   stale=$(grep -rinE 'four[^.]*(per-tool|naming|`opencode_)' .rulesync/subagents/agent-coord.md .rulesync/subagents/agent-coord-local.md .rulesync/subagents/agent-coord-pr.md .rulesync/subagents/agent-board-coord.md .rulesync/subagents/agent-board-coord-local.md .rulesync/subagents/agent-board-coord-pr.md "$PERM_SRC" "$PERM_GEN" 2>/dev/null \
           | grep -vE 'four (force-flag )?denies' || true)
   [ -z "$stale" ] || { printf '%s\n' "$stale" >&2; fail "A12[C03]: the four-allows wording survives above — the coord naming surface is FIVE per-tool allows since cf-90 C03's worktree_remove grant (red before C03 dev)"; }
+  # cf-106 C04 AC1 controls: the second-implementer arm must be satisfiable
+  # (a fabricated `code` row in the sanctioned position passes the widened
+  # roster) and position-sensitive (the same row at the block tail fails) —
+  # otherwise "same position, right after the dev slot" is prose.
+  python3 - .rulesync/subagents/agent-coord-local.md "$TMP/coord-code-row.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+assert m, "no frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+rows = fm.get("permissions") or []
+at = next(i for i, r in enumerate(rows)
+          if r.get("action") == "subagent" and r.get("resource") == "agent-dev-local")
+rows.insert(at + 1, {"action": "subagent", "resource": "code", "effect": "allow"})
+fm["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  python3 "$TMP/family.py" roster "$TMP/coord-code-row.md" agent-dev-local code >/dev/null 2>&1 \
+    || fail "A12[C04 AC1]: NEGATIVE CONTROL FAILED — a fabricated compliant roster (code directly after the dev slot) is rejected, so the widened arm could never go green when C04 lands"
+  python3 - .rulesync/subagents/agent-coord-local.md "$TMP/coord-code-tail.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+rows = fm.get("permissions") or []
+last = max(i for i, r in enumerate(rows) if r.get("action") == "subagent" and r.get("effect") == "allow")
+rows.insert(last + 1, {"action": "subagent", "resource": "code", "effect": "allow"})
+fm["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  python3 "$TMP/family.py" roster "$TMP/coord-code-tail.md" agent-dev-local code >/dev/null 2>&1 \
+    && fail "A12[C04 AC1]: NEGATIVE CONTROL FAILED — a code row appended at the subagent tail passes the roster check, so the same-position rule is not enforced"
+
   # MUST-load wiring: /pipeline-push-pr ONLY on the -pr pair (sources + mirrors)
   for f in "${CF_SRC[2]}" "${CF_GEN[2]}" "${CF_SRC[5]}" "${CF_GEN[5]}"; do
     grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' "$f" \
@@ -1726,33 +1782,66 @@ PY
       grep -q "$CFN" "$f" \
         && fail "A15[C07]: $f references $CFN — the custom-field route was retired with D19; the worker only READS Pipeline: labels"
     done
-    # cf-85 RE-PIN of cf-76's roster fence (AC1/AC3): the flow's roster is now
-    # exactly ONE board-level text field — `slug`, carrying the combined
-    # `[<slug>](<session link>)` link — with the legacy `session` field named
-    # only as retired and never read or written. cf-76's intent is unchanged:
-    # the count is pinned, the sentence must keep naming the field the fence
-    # protects, and neither the `models` route nor a third field may sneak
-    # back in through a wording rewrite. Red until the flip commit lands.
+    # cf-85 RE-PIN of cf-76's roster fence (AC1/AC3), re-cut again by cf-106
+    # C01 (owner ruling OQ-15, 2026-11-03): the live board carries THREE custom
+    # fields (slug, retired session, human-owned Priority), so the shipped
+    # "exactly ONE board-level text field" claim is falsified by live drift —
+    # FRICTION 2026-11-03 records it as falsifiable rather than silently
+    # "fixing" the roster. The fence's MEANING is unchanged and is now pinned on
+    # the agent-facing surface instead of the board's field count: `slug` is the
+    # only ACTIVE agent-facing field, the retired `session` field is named as
+    # never read / never written, and Priority stays undeclared (another
+    # ticket owns it — DECISIONS OQ-15). Red until the C01 wording lands; the
+    # fabricated-restoration control below keeps it non-vacuous.
     roster=$(grep -m1 -Ei '^[-*][[:space:]]+Custom fields:' .rulesync/skills/boards/SKILL.md || true)
     [ -n "$roster" ] \
-      || fail "A15[cf-85 AC3]: the boards skill has no 'Custom fields:' roster bullet — the fence's anchor moved (harness fault, report it)"
+      || fail "A15[cf-106 C01 AC6]: the boards skill has no 'Custom fields:' roster bullet — the fence's anchor moved (harness fault, report it)"
     if echo "$roster" | grep -Eiq 'exactly (two|three)'; then
-      fail "A15[cf-85 AC3]: the roster still counts the retired session field — the flow's roster is the single slug field (red until the flip lands)"
+      fail "A15[cf-106 C01 AC6]: the roster counts the retired session field into the agent's roster — the fence is about the agent-facing surface, not the live field count"
     fi
-    echo "$roster" | grep -Eiq 'exactly one' \
-      || fail "A15[cf-85 AC3]: the boards skill lost its 'Custom fields: exactly one' roster pin"
+    echo "$roster" | grep -Eiq 'exactly one board-level|exactly one (text |custom )?field' \
+      && fail "A15[cf-106 C01 AC6]: the roster still claims the board holds exactly one custom field — live drift (Priority, retired session) falsifies it; the claim must be about the AGENT-FACING set (red before C01 lands)"
+    echo "$roster" | grep -Eiq 'agent-facing|for the agent' \
+      || fail "A15[cf-106 C01 AC6]: the roster bullet does not scope itself to the agent-facing field set — the cf-106 rewording has not landed"
     echo "$roster" | grep -qF '`slug`' \
-      || fail "A15[cf-85 AC3]: the roster sentence does not name the slug field"
+      || fail "A15[cf-106 C01 AC6]: the roster sentence does not name the slug field"
+    echo "$roster" | grep -Eiq 'only[^.]*active' \
+      || fail "A15[cf-106 C01 AC6]: the roster does not name slug the only ACTIVE agent-facing field"
     echo "$roster" | grep -Eq '\[<slug>\]\(' \
-      || fail "A15[cf-85 AC3]: the roster does not state the combined [<slug>](<session link>) value the one field carries"
+      || fail "A15[cf-106 C01 AC6]: the roster does not state the combined [<slug>](<session link>) value the field carries"
     echo "$roster" | grep -qF '`session`' \
-      || fail "A15[cf-85 AC3]: the roster does not name the retired session field — the retirement belongs where the roster is stated"
-    echo "$roster" | grep -Eiq 'retired|never (read|written|reads|writes)' \
-      || fail "A15[cf-85 AC3]: the roster does not mark the session field retired / never read or written"
+      || fail "A15[cf-106 C01 AC6]: the roster does not name the retired session field — the retirement belongs where the roster is stated"
+    echo "$roster" | grep -Eiq 'never[ ,]+read|never read' \
+      || fail "A15[cf-106 C01 AC6]: the roster lost the never-read clause for the retired session field"
+    echo "$roster" | grep -Eiq 'never[ ,]+written|never written' \
+      || fail "A15[cf-106 C01 AC6]: the roster lost the never-written clause for the retired session field"
     echo "$roster" | grep -qF 'third field' \
       || fail "A15[C07 AC2]: the roster lost the third-field negation — the fence this guard exists for"
     echo "$roster" | grep -qF 'models' \
       || fail "A15[C07 AC2]: the roster lost the D12 no-models-field negation"
+    # cf-106 OQ-15 negative: Priority is another ticket's surface. The roster
+    # must not declare it, and no current-state sentence may teach the agent to
+    # read or write it as a custom field. (Scoped on purpose: "Low Priority" is
+    # a LIST name and appears legitimately — the pin is the field context, not
+    # the word.)
+    echo "$roster" | grep -qF 'Priority' \
+      && fail "A15[cf-106 OQ-15]: the Custom fields roster declares the live Priority field — owner ruling: only slug is agent-facing, Priority lands with another ticket"
+    stray_priority=$(grep -nEi 'Priority' .rulesync/skills/boards/SKILL.md | grep -Ei 'custom.?field|set_card_custom_field|list_custom_fields' || true)
+    [ -z "$stray_priority" ] || fail "A15[cf-106 OQ-15]: the boards skill wires Priority into the custom-field surface: $stray_priority — the field is undeclared by ruling"
+    # Fabricated-restoration control (A10/A14 discipline): put the falsified
+    # "exactly ONE board-level text field" claim back into a TMP copy of the
+    # roster bullet and require THIS fence to reject it.
+    python3 - .rulesync/skills/boards/SKILL.md "$TMP/roster-restored.md" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+m = re.search(r"(?m)^[-*][ \t]+Custom fields:[^\n]*", text)
+assert m, "fixture: no 'Custom fields:' bullet found"
+open(sys.argv[2], "w").write(text[:m.start()] + "- Custom fields: exactly ONE board-level text field — `slug`, carrying the combined `[<slug>](<session link>)` link value, never read or written for the retired `session` field, no third field, no `models` field." + text[m.end():])
+PY
+    restored=$(grep -m1 -Ei '^[-*][[:space:]]+Custom fields:' "$TMP/roster-restored.md" || true)
+    echo "$restored" | grep -Eiq 'exactly one board-level' \
+      || fail "A15[cf-106 C01 AC6]: NEGATIVE CONTROL FAILED — the fabricated roster did not restore the falsified claim, so the guard below proves nothing"
+    ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, the plugin constants match the permission rows and the boards-skill call strings, and the roster fence holds the cf-106 agent-facing slug roster (slug the only active field, session never read/written, Priority undeclared)"
     # Fabricated-row control (A10/A14 discipline): drop one row from a TMP
     # copy and require the locktools guard to reject the crippled file.
     python3 - "${CF_SRC[3]}" "$TMP/lock-dropped.md" <<'PY'
@@ -1803,6 +1892,113 @@ PY
       fail "A15[C07]: plugin/permission/skill three-way parity broken — one of the single sources drifted"
     fi
     ok "A15[C07]: the four pipeline_* allow rows carry across the board-coord trio (sources + mirrors, same block), no other agent granted, the negative verdicts hold, a fabricated row-drop is rejected, the plugin constants match the permission rows and the boards-skill call strings, and the roster fence holds the cf-85 one-field slug roster"
+    # cf-106 C08 AC6/AC7: the override input is part of the tool spec the A15
+    # parity fence governs — the schema row and the skill's posture must move
+    # together. Red until C08 lands the `shared` input and the reworded section.
+    if ! python3 - .opencode/plugin/pipeline-locks/index.ts .rulesync/skills/boards/SKILL.md <<'PY'
+import re, sys
+
+src, skill = open(sys.argv[1]).read(), open(sys.argv[2]).read()
+
+def claim_block(text):
+    at = text.find('"tools.pipeline_claim"')
+    assert at >= 0, "fixture: no tools.pipeline_claim spec in the plugin"
+    end = text.find('callAs: "tools.pipeline_release"')
+    return text[at:end if end > at else len(text)]
+
+def check(src_text, skill_text):
+    cb = claim_block(src_text)
+    out = []
+    m = re.search(r"pipelines:\s*\{[^}]*\}", cb)
+    if not m:
+        out.append("the claim tool's schema lost its pipelines property")
+        return out
+    if not re.search(r'shared[":]', cb):
+        out.append("the pipeline_claim input schema lacks the `shared` override (C08 AC6: the human override is a per-claim input, not a site-wide setting)")
+    sec_at = skill_text.find("## Parallel pipeline loops")
+    if sec_at < 0:
+        out.append("the boards skill has no Parallel pipeline loops section")
+        return out
+    sec_end = skill_text.find("\n## ", sec_at + 1)
+    sec = skill_text[sec_at:sec_end if sec_end > 0 else len(skill_text)]
+    if "shared" not in sec:
+        out.append("the boards skill's Parallel pipeline loops section never names `shared` — the engine answers the override but the skill does not teach it (C08 AC7: same posture on both sides)")
+    if not re.search(r"live foreign holders|foreign holder|not free", sec):
+        out.append("the section lost the availability rule the claim now enforces")
+    if re.search(r'reason\s*:\s*"locked"', sec):
+        out.append('the section still teaches reason:"locked" — C08 retires that answer for the emptiness rule (reason:"occupied"), and AC7 wants the skill to describe what the engine answers')
+    if "pipeline_claim" not in sec:
+        out.append("the section no longer names the tool the posture is exercised through")
+    return out
+
+bad = check(src, skill)
+if bad:
+    print("; ".join(bad))
+    sys.exit(1)
+PY
+    then
+      fail "A15[cf-106 C08 AC6/AC7]: the claim tool's override input and the boards skill's co-tenancy posture are not aligned (reason printed above; red before C08 lands)"
+    fi
+    # Controls (A10/A14 discipline): a fabricated COMPLIANT pair must read
+    # clean through the same checker — otherwise the needles above prove
+    # nothing and C08 could not turn them green.
+    python3 - .opencode/plugin/pipeline-locks/index.ts "$TMP/claim-with-shared.ts" <<'PY'
+import sys
+src = open(sys.argv[1]).read()
+at = src.find('"tools.pipeline_claim"')
+end = src.find('callAs: "tools.pipeline_release"')
+block = src[at:end]
+patched = block.replace(
+    'cardTitle: { type: "string"',
+    'shared: { type: "boolean", description: "sanctioned co-tenancy override" },\n          cardTitle: { type: "string"',
+    1,
+)
+assert patched != block, "fixture: could not patch the claim schema"
+open(sys.argv[2], "w").write(src[:at] + patched + src[end:])
+PY
+    python3 - .rulesync/skills/boards/SKILL.md "$TMP/boards-coexist.md" <<'PY'
+import re, sys
+src = open(sys.argv[1]).read()
+at = src.find("## Parallel pipeline loops")
+assert at >= 0, "fixture: no Parallel pipeline loops section"
+end = src.find("\n## ", at + 1)
+sec = src[at:end if end > 0 else len(src)]
+fixed = (sec
+         .replace('SKIP a candidate whose ENTIRE derived set is not free',
+                  'SKIP a candidate whose pipeline set has live foreign holders')
+         .replace('reason:"locked"', 'reason:"occupied"')
+         + "\n- Sanctioned override: when the human tells this run to share, claim with `shared: true`.\n")
+open(sys.argv[2], "w").write(src[:at] + fixed + src[end if end > 0 else len(src):])
+PY
+    if ! python3 - "$TMP/claim-with-shared.ts" "$TMP/boards-coexist.md" <<'PY'
+import re, sys
+src, skill = open(sys.argv[1]).read(), open(sys.argv[2]).read()
+at = src.find('"tools.pipeline_claim"')
+end = src.find('callAs: "tools.pipeline_release"')
+cb = src[at:end]
+sec_at = skill.find("## Parallel pipeline loops")
+sec_end = skill.find("\n## ", sec_at + 1)
+sec = skill[sec_at:sec_end if sec_end > 0 else len(skill)]
+bad = []
+if not re.search(r'shared[":]', cb):
+    bad.append("schema")
+if not re.search(r"pipelines:\s*\{[^}]*\}", cb):
+    bad.append("pipelines-property")
+if "shared" not in sec:
+    bad.append("skill-shared")
+if not re.search(r"live foreign holders|foreign holder|not free", sec):
+    bad.append("skill-availability")
+if re.search(r'reason\s*:\s*"locked"', sec):
+    bad.append("skill-retired-reason")
+if "pipeline_claim" not in sec:
+    bad.append("skill-tool")
+print(",".join(bad))
+sys.exit(1 if bad else 0)
+PY
+    then
+      fail "A15[cf-106 C08]: NEGATIVE CONTROL FAILED — a fabricated compliant claim schema + co-tenancy section still read dirty (the needles above are unsatisfiable or inert)"
+    fi
+    ok "A15[cf-106 C08 AC6/AC7]: the pipeline_claim schema carries the `shared` override the engine enforces, the boards skill teaches the same posture (live foreign holders + the sanctioned override), the constants and permission rows are unchanged, and a fabricated compliant pair proves the needles respond"
   fi
 fi
 
@@ -1916,6 +2112,297 @@ PY
       || fail "A16[C01 matrix]: $f Drift-incidents section has no ls-* entry for the 2026-10-29 ruling (12 sources, re-pinned suites)"
   done
   ok "A16[C01 AC1-AC5]: 25 permission-bearing sources + mirrors each carry exactly one shell 'ls *' allow (22 + the cf-90 C06 deploy pair + the cf-96 C02 explore source), every one evaluates 'ls -a' => allow (agent-board placement proven by the misplaced-row control), strip/duplicate controls reject, the nine stage agents verified permissionless, permissions.md rows + drift entry moved"
+fi
+
+# --- A17: cf-106 C04 AC2/AC3 — the standalone `code` family git matrix --------
+# `code` exists today; `code-pr` is the twin C04 creates. Every cell below is
+# the chunk's AC2/AC3 verdict table re-evaluated through the shipped last-match
+# projection (the cf-72 convention A12 runs), so quoted arguments and
+# `git -C <path>` prefixes are decided the way the runtime decides them — a
+# grep of row text would not prove the ordering. Red until C04 lands: code's
+# add/commit/checkout cells are still `ask`, its main floor does not exist, and
+# code-pr.md is absent (the missing file names the red, it is not a skip).
+if want a17; then
+  cat >"$TMP/cf106-code.matrix" <<'AC23'
+# cf-106 chunks/C04.md AC2/AC3. `code` keeps every push shape at ask (the plan:
+# an interactive human can still authorize an ad-hoc push, no pipeline run can)
+# and gains the main-advancing deny floor; `code-pr` reproduces the shipped
+# agent-dev-pr push tail with the main/force denies sitting AFTER the push
+# allow — the tail order is what keeps main closed.
+code	allow	git add .
+code	allow	git add -A
+code	allow	git commit -m w
+code	allow	git commit -m "quoted message"
+code	allow	git checkout -b feat/x
+code	allow	git switch -c feat/x
+code	allow	git branch x
+code	deny	git checkout main
+code	deny	git -C x checkout main
+code	deny	git switch main
+code	deny	git update-ref refs/heads/main abc123
+code	deny	git symbolic-ref refs/heads/main refs/heads/other
+code	deny	git branch -f main x
+code	deny	git branch --force main x
+code	deny	git worktree add /tmp/w main
+code	deny	git merge feature-x
+code	deny	git merge main
+code	deny	git pull
+code	deny	git config alias.p push
+code	ask	git push
+code	ask	git push origin feature-x
+code-pr	allow	git add .
+code-pr	allow	git commit -m "quoted message"
+code-pr	allow	git checkout -b feat/x
+code-pr	allow	git branch x
+code-pr	deny	git checkout main
+code-pr	deny	git -C x checkout main
+code-pr	deny	git switch main
+code-pr	deny	git update-ref refs/heads/main abc123
+code-pr	deny	git branch -f main x
+code-pr	deny	git worktree add /tmp/w main
+code-pr	deny	git merge feature-x
+code-pr	deny	git pull
+code-pr	deny	git config alias.p push
+code-pr	allow	git push
+code-pr	allow	git push origin feature-x
+code-pr	deny	git push origin main
+code-pr	deny	git push HEAD:main
+code-pr	deny	git push origin HEAD:main
+code-pr	deny	git push --force origin feature-x
+code-pr	deny	git push -f origin feature-x
+code-pr	deny	git -C x push --force origin feature-x
+AC23
+  for cls in code code-pr; do
+    src=".rulesync/subagents/$cls.md"
+    gen=".opencode/agents/$cls.md"
+    [ -f "$src" ] || fail "A17[C04 AC3]: $src does not exist — C04 creates the code-pr twin (absence is the red state, not a skip)"
+    [ -f "$gen" ] || fail "A17[C04 AC3]: generated mirror $gen missing — sources and generated files land in one rulesync generate commit"
+    for f in "$src" "$gen"; do
+      python3 "$TMP/family.py" policybatch "$f" "$cls" <"$TMP/cf106-code.matrix" >/dev/null \
+        || fail "A17[C04 AC2/AC3]: $f answers a declared cell differently (cells named above; table = $TMP/cf106-code.matrix) — the AC2 floor, the -pr push tail, or the tail ORDER drifted"
+    done
+    # AC2/AC3 invariant, stated as a sweep so a widening cannot hide between
+    # the declared cells: no main-targeted or force push is ever allow.
+    python3 - "$TMP/family.py" "$src" "$gen" <<'PY'
+import sys, subprocess
+fam = sys.argv[1]
+cmds = ["git push origin main", "git push HEAD:main", "git push origin HEAD:main",
+        "git push --force origin feature-x", "git push -f origin feature-x",
+        "git -C x push --force origin feature-x", "git push origin --force main"]
+for path in sys.argv[2:]:
+    for c in cmds:
+        v = subprocess.run(["python3", fam, "policy", path, c],
+                           capture_output=True, text=True).stdout.strip()
+        if v == "allow":
+            print(f"{path}: '{c}' answers allow — main-advancing and force pushes are never an agent answer"); sys.exit(1)
+PY
+    [ $? -eq 0 ] || fail "A17[C04 AC2/AC3/AC5]: a main-targeted or force push answers allow on the code family above"
+  done
+  # AC3 twin shape: name/description plus the push contract is the ONLY delta
+  # in the skill skeleton (/pipeline-push-pr next to /role-code), and the
+  # commit-only variant must not carry it.
+  python3 - .rulesync/subagents/code.md .rulesync/subagents/code-pr.md <<'PY'
+import re, sys
+def loads(path):
+    body = open(path).read().split("---", 2)[2]
+    return [l.strip() for l in body.splitlines() if re.match(r"^\s*/[a-z0-9-]+\s*$", l)]
+c, p = loads(sys.argv[1]), loads(sys.argv[2])
+bad = []
+if "/pipeline-push-pr" not in p:
+    bad.append("code-pr skeleton does not load /pipeline-push-pr")
+if "/pipeline-push-pr" in c:
+    bad.append("code (the commit-only variant) loads the push contract")
+if "/role-code" not in c or "/role-code" not in p:
+    bad.append("the role-code skill is not MUST-loaded on both")
+if "/role-code" in p and "/pipeline-push-pr" in p:
+    if abs(p.index("/pipeline-push-pr") - p.index("/role-code")) != 1:
+        bad.append(f"/pipeline-push-pr is not next to /role-code in the skeleton: {p}")
+if [s for s in p if s != "/pipeline-push-pr"] != c:
+    bad.append(f"skill skeletons differ beyond the push contract: code={c} code-pr={p}")
+if bad:
+    print("; ".join(bad)); sys.exit(1)
+PY
+  [ $? -eq 0 ] || fail "A17[C04 AC3]: the code/code-pr skill-skeleton delta is not exactly the push contract (reason above)"
+  # A16 discipline, reused for the new twin: sources and their generated
+  # mirrors must parse equal (rule list AND MUST-load order).
+  for cls in code code-pr; do
+    python3 "$TMP/family.py" parity ".rulesync/subagents/$cls.md" ".opencode/agents/$cls.md" >/dev/null 2>&1 \
+      || fail "A17[C04 AC3/AC8]: .rulesync/subagents/$cls.md and .opencode/agents/$cls.md disagree in parsed rules or MUST-load order — regenerate, never hand-edit .opencode/"
+  done
+  # Negative controls (the arm must be falsifiable, not decoration):
+  #  (a) a fabricated `git push*` allow on code flips the push verdict — the
+  #      matrix answers to rows, not to the AC text;
+  #  (b) the same rows in the WRONG order (push allow last, main deny first)
+  #      reddens the matrix — the dev note's "reordering silently opens main".
+  python3 - .rulesync/subagents/code.md "$TMP/code-push-allow.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+assert m, "no frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+rows = fm.get("permissions") or []
+rows.append({"action": "shell", "resource": "git push*", "effect": "allow"})
+fm["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  v=$(python3 "$TMP/family.py" policy "$TMP/code-push-allow.md" "git push origin feature-x" 2>/dev/null || true)
+  [ "$v" = "allow" ] || fail "A17[C04]: NEGATIVE CONTROL FAILED — a fabricated 'git push*: allow' row on code does not flip the verdict (the matcher is inert; every cell above would pass on drift)"
+  python3 - .rulesync/subagents/agent-dev-pr.md "$TMP/pr-flipped-tail.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+rows = fm.get("permissions") or []
+push = [r for r in rows if r.get("action") == "shell" and str(r.get("resource", "")).startswith("git push")]
+assert any(r["effect"] == "allow" for r in push) and any(r["effect"] == "deny" for r in push), "fixture: dev-pr push tail not found"
+at = min(i for i, r in enumerate(rows) if r in push)
+rest = [r for r in rows if r not in push]
+tail = [r for r in push if r["effect"] == "deny"] + [r for r in push if r["effect"] == "allow"]
+rest[at:at] = tail
+fm["permissions"] = rest
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  v=$(python3 "$TMP/family.py" policy "$TMP/pr-flipped-tail.md" "git push origin main" 2>/dev/null || true)
+  [ "$v" = "allow" ] || fail "A17[C04]: NEGATIVE CONTROL FAILED — moving the main/force denies BEFORE the push allow does not open main (the tail-order pin proves nothing)"
+  out=$(python3 "$TMP/family.py" policybatch "$TMP/pr-flipped-tail.md" code-pr <"$TMP/cf106-code.matrix" 2>&1 || true)
+  case "$out" in
+    *"git push origin main"*) ;;
+    *) fail "A17[C04]: NEGATIVE CONTROL FAILED — the cf-106 matrix does not name 'git push origin main' when the deny floor sits in front of the push allow (output: $out)" ;;
+  esac
+  # AC4: the dev family gains nothing. Its git-write denies are re-pinned here
+  # (not just in A11's row table) so a C04 that touched a dev block reddens
+  # the verdicts, which is what a reviewer actually reads.
+  for f in .rulesync/subagents/agent-dev-local.md .rulesync/subagents/agent-dev-pr.md .opencode/agents/agent-dev-local.md .opencode/agents/agent-dev-pr.md; do
+    for c in "git add ." "git commit -m w"; do
+      v=$(python3 "$TMP/family.py" policy "$f" "$c" 2>/dev/null || true)
+      [ "$v" = "deny" ] || fail "A17[C04 AC4]: $f answers '$c' with '$v', want deny — the coordinator stays the pipeline's sole chunk committer (C04 grants writes to the standalone code family only)"
+    done
+  done
+  ok "A17[C04 AC2/AC3/AC4/AC5]: the code table (add/commit/checkout allow, the main-advancing floor deny, push ask) and the code-pr table (the shipped dev-pr push tail with main/force deny after the allow) both answer through the shipped matcher on sources and mirrors; no main or force push is allow on either variant; the skill-skeleton delta is exactly /pipeline-push-pr next to /role-code on code-pr only; fabricated push-allow and flipped-tail fixtures both redden; the dev family still denies git writes"
+fi
+
+# --- A18: cf-106 C04 AC7 (first half) — every agent-* states question: allow --
+# The AGENTS.md hard rule the plan asks to machine-assert: a question that
+# falls through to the default posture silently kills the batched question
+# round and every stage gate. Pinned as the EFFECTIVE verdict (a row that
+# exists but is shadowed is the same failure) on sources AND generated mirrors.
+# Green today (verified at plan time, drift audit only) — it is a posture pin
+# that C04 must not break while it moves the git and roster rows.
+if want a18; then
+  mapfile -t qsrc < <(ls .rulesync/subagents/agent-*.md)
+  [ "${#qsrc[@]}" -ge 17 ] || fail "A18[C04 AC7]: only ${#qsrc[@]} agent-* sources found — check the glob before blaming a missing question row"
+  for f in "${qsrc[@]}"; do
+    for t in "$f" ".opencode/agents/$(basename "$f")"; do
+      [ -f "$t" ] || fail "A18[C04 AC7]: $t missing (every subagent and every launched stage must answer the question)"
+      v=$(python3 "$TMP/family.py" action "$t" question 2>/dev/null || true)
+      [ "$v" = "allow" ] || fail "A18[C04 AC7]: $t answers the question action with '$v', want an explicit question: allow — without it the default posture denies it and stage gates and escalations fail silently"
+    done
+  done
+  # Control: stripping the row from a real source must change the answer.
+  python3 - .rulesync/subagents/agent-coord-local.md "$TMP/no-question.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+assert m, "no frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+outer = fm.get("opencode")
+tgt = outer if isinstance(outer, dict) and "permissions" in outer else fm
+rows = tgt.get("permissions") or []
+before = len(rows)
+rows[:] = [r for r in rows if r.get("action") != "question"]
+assert len(rows) < before, "fixture: no question row to strip (the live loop reddens first)"
+tgt["permissions"] = rows
+if outer is not tgt:
+    fm["opencode"] = outer
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  v=$(python3 "$TMP/family.py" question "$TMP/no-question.md" 2>/dev/null || true)
+  [ "$v" != "allow" ] || fail "A18[C04 AC7]: NEGATIVE CONTROL FAILED — the question verdict stays allow with every question row stripped (the arm is decoration)"
+  ok "A18[C04 AC7]: every agent-* source and generated mirror answers the question action allow, and the verdict answers to the row (the stripped fixture falls out of allow)"
+fi
+
+# --- A19: cf-106 C04 AC7 (second half) — the battery stays ungranted ----------
+# The owner's answer 11: the OpenChamber permissionAutoAccept toggle stays the
+# interim, so C04 adds NO validation-battery shell allow. This arm pins the
+# posture itself (not just the diff): zero allow rows for the battery in any
+# role block, sources and generated surfaces alike, and the hand-managed global
+# array still LEADS with its universal default (the agents-sync lesson: the
+# leading row is what makes everything unlisted prompt). In an unattended run
+# `ask` resolves to deny — the consequence C04 is told to record in prose, not
+# to solve by widening.
+if want a19; then
+  battery_sweep() {
+    python3 - "$1" <<'PY'
+import re, sys, yaml
+path = sys.argv[1]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(path).read(), re.S)
+if not m:
+    sys.exit(0)
+fm = yaml.safe_load(m.group(1)) or {}
+rows = fm.get("permissions") or []
+battery = ["node --test", "bun test", "pytest", "bash tests", "sh tests", "npx aislop", "aislop",
+           "rulesync generate", "rulesync", "py_compile", "npm test", "pnpm test", "yarn test", "make test"]
+bad = []
+for r in rows:
+    if r.get("effect") != "allow":
+        continue
+    res = str(r.get("resource", ""))
+    stem = res.rstrip("*").rstrip()
+    if not stem:
+        continue
+    for b in battery:
+        if b.startswith(stem) or stem.startswith(b):
+            bad.append(f"{r.get('action')}: {res}")
+            break
+print("; ".join(bad))
+PY
+  }
+  for f in .rulesync/subagents/*.md .opencode/agents/*.md; do
+    hits=$(battery_sweep "$f")
+    [ -z "$hits" ] || fail "A19[C04 AC7]: $f allow-lists a validation-battery command ($hits) — the ruling is that the battery keeps prompting (answer 11); if this fires, a chunk widened the shell surface instead of recording the consequence"
+  done
+  python3 - .opencode/opencode.jsonc <<'PY'
+import re, sys
+# Positional, not parsed: the file is JSONC with comments and URLs, and what
+# the rule is about is the ORDER of the top-level array's first entry.
+text = open(sys.argv[1]).read()
+m = re.search(r'"permissions"\s*:\s*\[\s*\{(.*?)\}', text, re.S)
+if not m:
+    print("no top-level \"permissions\": [ array in .opencode/opencode.jsonc"); sys.exit(1)
+first = m.group(1)
+for want in ('"action": "*"', '"resource": "*"', '"effect": "ask"'):
+    if want not in first:
+        print(f"the permissions array's leading entry lacks {want} — entry: {first.strip()}"); sys.exit(1)
+PY
+  [ $? -eq 0 ] || fail "A19[C04 AC7]: .opencode/opencode.jsonc no longer leads its permissions array with the universal default (the plan's 'the battery still prompts' claim rests on that leading row)"
+  # Controls: the sweep must fire on a fabricated widening, and must NOT fire
+  # on the leading universal row it deliberately skips.
+  python3 - .rulesync/subagents/agent-test.md "$TMP/widened.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+assert m, "no frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+rows = fm.get("permissions") or []
+rows.append({"action": "shell", "resource": "bash tests/*", "effect": "allow"})
+fm["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  hits=$(battery_sweep "$TMP/widened.md")
+  [ -n "$hits" ] || fail "A19[C04 AC7]: NEGATIVE CONTROL FAILED — a fabricated 'bash tests/*' allow row is not caught by the sweep"
+  python3 - .rulesync/subagents/agent-test.md "$TMP/widened-node.md" <<'PY'
+import re, sys, yaml
+src, dst = sys.argv[1], sys.argv[2]
+m = re.match(r"^---\n(.*?)\n---\n(.*)$", open(src).read(), re.S)
+fm = yaml.safe_load(m.group(1)) or {}
+rows = fm.get("permissions") or []
+rows.append({"action": "shell", "resource": "node --test *", "effect": "allow"})
+fm["permissions"] = rows
+open(dst, "w").write("---\n" + yaml.safe_dump(fm, sort_keys=False, width=10**6) + "---\n" + m.group(2))
+PY
+  hits=$(battery_sweep "$TMP/widened-node.md")
+  [ -n "$hits" ] || fail "A19[C04 AC7]: NEGATIVE CONTROL FAILED — a fabricated 'node --test *' allow row is not caught either"
+  ok "A19[C04 AC7]: no subagent source or generated mirror allow-lists the validation battery (node --test, pytest, bash tests/, aislop, py_compile, rulesync generate), the global array still leads with its universal ask default, and fabricated battery rows are caught"
 fi
 
 printf 'PASS: agent-perms contract checks (%d ok)\n' "$checks"

@@ -11,7 +11,11 @@
 # ids-resolve-at-apply] t3[AC2 idempotence] t4[AC4 offline/credential-free]
 # t5[AC5 skill text pins] t6[command trio generated+parses, AGENTS discover-
 # ability] t7[swimlaneName:Planning cross-fire guard — RESEARCH F1]
-# t8[AC3 Inbox contract both variants].
+# t8[AC3 Inbox contract both variants] t9[cf-106 C02 AC1/AC3 — the hand-managed
+# provision skill's three Model(s) default-check citations move to the current
+# vocabulary generation (Qwen Dense), the retired label stays out of this
+# current-state surface, and the Model(s) four-item closure holds — with a
+# Dense-free-copy and a fifth-item-copy control].
 #
 # ENGINE JSON CONTRACT (dev implements to this — fixed here because the
 # assertions below are the interface): stdout is a JSON array of objects,
@@ -46,7 +50,7 @@
 # no credentials, anywhere in this suite either.
 #
 # Usage:
-#   bash tests/wekan-board-provision/surface.sh           # t1..t8
+#   bash tests/wekan-board-provision/surface.sh           # t1..t9
 #   bash tests/wekan-board-provision/surface.sh t2 t8     # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -71,11 +75,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8; do WANT["t$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9; do WANT["t$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^t[1-8]$ ]] || fail "unknown check id '$a' (expected t1..t8)"
+    [[ "$lc" =~ ^t[1-9]$ ]] || fail "unknown check id '$a' (expected t1..t9)"
     WANT["$lc"]=1
   done
 fi
@@ -421,6 +425,55 @@ if bad:
 PY
   then fail "t8[C01 AC3]: Inbox-absent variant must emit exactly one create_list(Inbox, Backlog) and still never mirror/label/rule Inbox (reason above)"; fi
   ok "t8[C01 AC3]: Inbox present -> silent; absent -> exactly one Backlog create, never mirrored/labeled/ruled"
+fi
+
+# --- t10: the hand-managed skill's Model(s) default-check citations follow the
+#     vocabulary generation (cf-106 C02 AC1/AC3) ----------------------------------------
+if want t9; then
+  [ -f "$SKILL" ] || fail "t9[cf-106 C02]: $SKILL missing — the hand-managed provision skill is a landed surface (cf-90 C01)"
+  cat >"$TMP/skillvocab.py" <<'PY'
+# skills/wekan-board-provision/SKILL.md is hand-managed: it never regenerates, so
+# a missed vocabulary place is a PERMANENT drift. Hence the pins are a count plus a
+# closure check, not a presence grep.
+import re, sys
+text = open(sys.argv[1]).read()
+dense = text.count("Qwen Dense")
+if dense < 3:
+    print(f"the skill names 'Qwen Dense' in {dense} places — three default-check citations "
+          f"(frontmatter description, the checklist-spec paragraph, the artifact-shape "
+          f"sentence) must all read the current vocabulary generation"); sys.exit(1)
+if "Qwen 27b" in text:
+    print("the retired label is still in the hand-managed provision skill — it is a current-state "
+          "surface with no alias sentence, so the sweep must reach it"); sys.exit(1)
+hits = [m.group(0) for m in re.finditer(r"Model\(s\)[^\n]{0,90}", text)]
+if not hits:
+    print("no Model(s) citation left in the provision skill"); sys.exit(1)
+if any("Next" in h for h in hits):
+    print(f"a Model(s) citation gained a 'Next' option: {hits}"); sys.exit(1)
+if not re.search(r"Model\(s\)[^\n]{0,10}\(4", text):
+    print(f"the Model(s) four-item count is gone — the Model(s) checklist stays four items: {hits}"); sys.exit(1)
+print("ok")
+PY
+  # Controls first: a fabricated skill copy that drops the Dense label must FAIL,
+  # and a fabricated fifth-item copy must FAIL — proving the dev-facing pin bites.
+  python3 - "$SKILL" "$TMP/skill-flat.md" <<'PY'
+import sys
+open(sys.argv[2], "w", encoding="utf-8").write(open(sys.argv[1], encoding="utf-8").read().replace("Qwen Dense", "Qwen Something"))
+PY
+  python3 "$TMP/skillvocab.py" "$TMP/skill-flat.md" >/dev/null 2>&1 \
+    && fail "t9 control: a skill copy with no 'Qwen Dense' anywhere passed the vocabulary pin — the pin is vacuous"
+  python3 - "$SKILL" "$TMP/skill-fifth.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+open(sys.argv[2], "w", encoding="utf-8").write(t.replace("Model(s) (4,", "Model(s) (5,", 1))
+PY
+  python3 "$TMP/skillvocab.py" "$TMP/skill-fifth.md" >/dev/null 2>&1 \
+    && fail "t9 control: a skill copy claiming a FIFTH Model(s) item passed the closure pin — AC3's four-option law is not enforced here"
+  ok "t9[cf-106 C02 AC3 control]: the skill vocabulary pin fails a Dense-free copy and a fifth-item copy — the dev-facing pin is non-vacuous"
+  if ! python3 "$TMP/skillvocab.py" "$SKILL" >/dev/null 2>&1; then
+    python3 "$TMP/skillvocab.py" "$SKILL" || fail "t9[cf-106 C02 AC1]: the hand-managed provision skill's Model(s) default-check citations did not all move to the Dense generation (reason above; designed red until C02's three literal edits — this skill never regenerates)"
+  fi
+  ok "t9[cf-106 C02 AC1/AC3]: all three provision-skill default-check citations read Qwen Dense, the retired label is absent, and Model(s) stays four items"
 fi
 
 printf 'PASS: board-provisioning engine/skill/command contract checks (%d ok)\n' "$checks"

@@ -38,12 +38,17 @@
 //     chain: canonical -> worktree `.git` file gitdir: <root>/.git/worktrees/
 //     <name> (strip the suffix) -> startDir; every miss falls through; never
 //     throws. Reads startDir/.git through deps.readFile.
-//   newLockRecord(input) -> object   (handoff B.1 shape + D18 identity, v1)
+//   newLockRecord(input) -> object   (handoff B.1 shape + D18 identity, v2)
 //     input = { pipeline, cardId, sessionID, setId, pipelineSet, cardTitle?,
-//     now? }; version: 1; claimedAt/heartbeatAt ISO-8601 with the workspace
-//     offset, UTC Z when $TZ is unresolvable (cf-96 OQ4 — displayed stamps,
-//     instant-preserving: Date.parse(stamp) recovers the epoch-ms it came
-//     from); pipelineSet stored sorted.
+//     now? }; version: 2; the D18 identity rides in a `holders` entry —
+//     holders[0] = {cardId, sessionID, setId, claimedAt, heartbeatAt,
+//     cardTitle?} — while claimedAt/heartbeatAt ALSO exist at file level as
+//     the last-writer-wins stamps the staleness formula and the reaper's
+//     max(heartbeatAt, mtime) rule read (cf-106 C08, OQ-8 ruling: one file
+//     per pipeline, N holders, stamps last-writer-wins). Stamps are ISO-8601
+//     with the workspace offset, UTC Z when $TZ is unresolvable (cf-96 OQ4 —
+//     displayed stamps, instant-preserving: Date.parse(stamp) recovers the
+//     epoch-ms it came from); pipelineSet stored sorted.
 //   Lock/store seams — the injected env (deps) is the same object across a
 //   session's calls; its fs member is a node:fs/promises subset (open,
 //   readFile, writeFile, rename, rm, mkdir, readdir, stat, utimes); tests
@@ -63,33 +68,51 @@
 //     older-schema tolerance contract).
 //   appendEvent(env, obj) -> Promise<void>  one JSONL line {at, ...obj} onto
 //     env.eventsPath (fire-and-forget: a broken path logs, never rejects).
-//   claimLockSet(env, {cardId, pipelines?, cardTitle?, sessionID})
-//     -> Promise<{ok:true, setId, lockPaths}|{ok:false, reason:"locked",
-//        pipeline, holder}|{ok:false, reason:"already_held", ...}>  (D18)
+//   claimLockSet(env, {cardId, pipelines?, cardTitle?, sessionID, shared?})
+//     -> Promise<{ok:true, setId, lockPaths}|{ok:false, reason:"occupied",
+//        pipeline, holders}|{ok:false, reason:"already_held", ...}>  (D18 +
+//     cf-106 C08 co-tenancy)
 //     normalizes empty/missing pipelines to [DEFAULT_PIPELINE], sanitizes,
 //     sorts, awaits env.reapStale({trigger:"claim"}) first, refuses a second
-//     claim from a session that already holds one, then acquires every key
-//     with O_EXCL ("wx") in sorted order; on any EEXIST reads the holder,
-//     unlinks everything already taken (audit claim_rollback), returns
-//     reason:"locked" naming the contended pipeline and the holder record.
-//     Success: one file locksDir/<key>.json per member carrying the shared
-//     identity (same setId/cardId/sessionID, full sorted pipelineSet), the
-//     claim bookkeeping in env.claims AND env.storage when present, the
-//     "pipeline-lock" instruction pin when env.pin is present, audit claim.
+//     claim from a session that already holds one, then walks the keys in
+//     sorted order: a FREE key is taken with O_EXCL ("wx" — the exclusive
+//     create is what makes C08's "do not start on a non-empty pipeline" rule
+//     enforceable, it must not be weakened for the no-override path); a key
+//     whose file has live FOREIGN holders is refused with reason:"occupied"
+//     naming the pipeline and `holders:[{cardId, sessionID, age}]`, writing
+//     NOTHING; the same situation with `shared: true` in the input appends
+//     our holder through the atomic tmp+rename and answers ok:true with the
+//     co-tenant list. On any contention the already-taken keys are unlinked
+//     (audit claim_rollback). A torn/unreadable file fails CLOSED — refuse,
+//     never merge. Success: one file locksDir/<key>.json per member carrying
+//     the shared identity (same setId/cardId/sessionID in every holder, full
+//     sorted pipelineSet), the claim bookkeeping in env.claims AND env.storage
+//     when present, the "pipeline-lock" instruction pin when env.pin is
+//     present, audit claim.
+//     cf-106 C09 takeover: when the claimed set is exactly `[<cardId>]` and a
+//     reap record for that card exists under locks/.reaped/, the claim is
+//     tagged `takeover: "after_reap"` in the lock record and in the claim
+//     audit line — evidence, not permission. The engine NEVER claims on the
+//     run's behalf, and the original pipeline file stays untouched (the
+//     takeover lives under the card-id key).
 //   releaseLockSet(env, {sessionID, outcome}) -> Promise<{ok:true}|
-//     {ok:false, reason:"not_owner", pipeline}>  (AC7)
+//     {ok:false, reason:"not_owner", pipeline}>  (AC7 + cf-106 C08)
 //     resolves the session's claim from storage/claims, owner-checks EVERY
-//     member file, deletes the whole set only when all owners match, audit
-//     release with outcome, clears claims/storage, removes the pin.
+//     member file for OUR holder entry, removes only our holder entries, and
+//     deletes a file only when its holder list empties; all-or-nothing per
+//     holder set — a mismatch on any member touches nothing. Audit release
+//     with outcome, clears claims/storage, removes the pin.
 //   lockStatus(env, {sessionID?}) -> Promise<{groups: Array<{setId, cardId,
-//     holder, pipelineSet, ageMs, state}>, session, lastReap}>  (C03 status)
-//     one group per claim (grouped by setId/card), age from env.now,
-//     lastReap read from env.metaPath (null when absent; C05 writes it).
+//     holders, shared, pipelineSet, ageMs, state}>, session, lastReap}>
+//     (C03 status + cf-106 C08: `holders` names every live holder — cardId,
+//     sessionID, age, state — and `shared` is the fact a run reads before
+//     claiming: true when the key holds more than one holder)
 //   setup(ctx) registers exactly the TOOL_NAMES tools through
 //     ctx.tool.transform(editor.add({name, description, inputSchema,
 //     execute(args, context)})) — the VISIBLE names are pipeline_claim etc.
 //     (C01 fact 1 fallback: flat names). The claim tool's input schema names
-//     cardId and pipelines; the release tool's names outcome.
+//     cardId, pipelines and the `shared` override (cf-106 C08 AC6); the
+//     release tool's names outcome.
 //   default export: { id: "local.pipeline-locks", async setup(ctx) } — the
 //   plain-object shape of the two shipped plugins (NOT Plugin.define);
 //   setup never throws (every ctx member optional-chained with a stderr
@@ -123,6 +146,18 @@ function constVal(name: string): any {
 }
 
 const PLUGIN_SRC = readFileSync(".opencode/plugin/pipeline-locks/index.ts", "utf8");
+
+// cf-106 C08 (OQ-8 ruling): one lock file per pipeline, N holders inside it.
+// The arms that predate v2 pin the VERDICT, so they read identity through
+// these helpers instead of a file-level field; the v2 arms pin the shape.
+function holdersOf(rec: any): any[] {
+  assert.ok(Array.isArray(rec?.holders), `the lock record must carry a holders list (cf-106 C08 record v2), saw ${JSON.stringify(rec)}`);
+  return rec.holders;
+}
+
+function holderOf(rec: any, sessionID: string): any {
+  return holdersOf(rec).find((h: any) => h.sessionID === sessionID);
+}
 
 const T0 = Date.parse("2026-10-29T12:00:00Z");
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -343,16 +378,21 @@ describe("K4 claimLockSet — identity, normalization, storage and pin legs (AC 
     assert.equal(res.ok, true, JSON.stringify(res));
     assert.deepEqual(lockFiles(env), ["a.json", "b.json"]);
     const recs = lockFiles(env).map((f) => JSON.parse(readFileSync(join(env.locksDir, f), "utf8")));
-    const setIds = new Set(recs.map((r) => r.setId));
-    assert.equal(setIds.size, 1, "every file of one claim carries the same setId (D18)");
-    assert.equal(recs[0].cardId, "card1");
+    const setIds = new Set(recs.flatMap((r) => holdersOf(r).map((h: any) => h.setId)));
+    assert.equal(setIds.size, 1, "every file of one claim carries the same setId in its holder (D18)");
+    assert.equal(holderOf(recs[0], "s1")?.cardId, "card1", "the card id rides in the holder entry (cf-106 C08 record v2)");
+    assert.equal(holderOf(recs[0], "s1")?.cardTitle, "cf-76", "the optional cardTitle rides in the same holder entry, never at file level where a co-tenant would read someone else's title");
     for (const r of recs) {
-      assert.equal(r.version, 1);
-      assert.equal(r.sessionID, "s1");
-      assert.equal(r.setId, res.setId);
+      assert.equal(r.version, 2, "lock records are version 2 — the holder-list shape (cf-106 C08)");
+      const h = holderOf(r, "s1");
+      assert.ok(h, `one holder must name the claiming session, saw ${JSON.stringify(r.holders)}`);
+      assert.equal(h.setId, res.setId);
+      assert.match(h.heartbeatAt, STAMP_SHAPE, "the holder's heartbeatAt carries the stamped shape (cf-96 AC3)");
+      assert.equal(Date.parse(h.heartbeatAt), T0, "and parses back to its env.now instant — shape and instant, not a spelling (cf-96 OQ4)");
+      assert.equal(h.claimedAt, h.heartbeatAt, "a fresh holder stamps claimedAt and heartbeatAt from the one now (D25)");
+      assert.match(r.heartbeatAt, STAMP_SHAPE, "the file-level stamp survives v2 — the staleness formula reads it (cf-106 C08)");
+      assert.equal(Date.parse(r.heartbeatAt), T0, "the file stamp is last-writer-wins but instant-preserving (OQ-8 ruling)");
       assert.deepEqual(r.pipelineSet, ["a", "b"], "the full sorted pipelineSet rides in every member file");
-      assert.match(r.heartbeatAt, STAMP_SHAPE, "heartbeatAt carries the stamped shape (cf-96 AC3)");
-      assert.equal(Date.parse(r.heartbeatAt), T0, "and parses back to its env.now instant — shape and instant, not a spelling (cf-96 OQ4)");
     }
     assert.equal(JSON.parse(readFileSync(join(env.locksDir, "a.json"), "utf8")).pipeline, "a");
     assert.deepEqual(res.lockPaths.map((p: string) => p.split("/").pop()).sort(), ["a.json", "b.json"]);
@@ -418,9 +458,12 @@ describe("K5 claim races — all-or-nothing over intersecting sets (AC 2, AC 3)"
       const loser = r1.ok ? r2 : r1;
       const winner = r1.ok ? r1 : r2;
       assert.equal(oks.length, 1, `round ${round}: exactly one claim may win, saw ${JSON.stringify([r1, r2])}`);
-      assert.equal(loser.reason, "locked");
+      assert.equal(loser.reason, "occupied", "a live foreign holder on a pipeline key refuses the claim — the emptiness rule is the engine's answer (cf-106 C08 AC1)");
       assert.equal(loser.pipeline, "b", "the error names the contended pipeline");
-      assert.equal(loser.holder?.sessionID, winner === r1 ? "s1" : "s2", "the loser reports the winner as holder");
+      assert.ok(Array.isArray(loser.holders) && loser.holders.length >= 1, `the refusal names the live holders, saw ${JSON.stringify(loser.holders)}`);
+      assert.equal(loser.holders[0].sessionID, winner === r1 ? "s1" : "s2", "the loser reports the winner as holder");
+      assert.equal(loser.holders[0].cardId, winner === r1 ? "c1" : "c2", "and the card it is holding, so the run can tell an occupied pipeline from a contended one (cf-106 C08 AC1)");
+      assert.equal(typeof loser.holders[0].age, "number", "and the holder's age, so a human override decision has the input it needs");
       const files = lockFiles(env);
       const winnerKeys = winner === r1 ? ["a.json", "b.json"] : ["b.json", "c.json"];
       assert.deepEqual(files, winnerKeys, `round ${round}: the loser must leave zero partial lock files`);
@@ -455,7 +498,15 @@ describe("K5 claim races — all-or-nothing over intersecting sets (AC 2, AC 3)"
 });
 
 describe("K6 writeLockAtomic / readLock / appendEvent / newLockRecord (AC 6)", () => {
-  const record = (extra: any = {}) => ({ version: 1, pipeline: "a", cardId: "c", sessionID: "s", setId: "set1", pipelineSet: ["a"], heartbeatAt: iso(T0), ...extra });
+  const record = (extra: any = {}) => ({
+    version: 2,
+    pipeline: "a",
+    pipelineSet: ["a"],
+    claimedAt: iso(T0),
+    heartbeatAt: iso(T0),
+    holders: [{ cardId: "c", sessionID: "s", setId: "set1", claimedAt: iso(T0), heartbeatAt: iso(T0) }],
+    ...extra,
+  });
 
   it("leaves no .tmp behind on success and touches the file (AC 6)", async () => {
     const env = baseEnv();
@@ -520,22 +571,28 @@ describe("K6 writeLockAtomic / readLock / appendEvent / newLockRecord (AC 6)", (
     await seam("appendEvent")(broken, { ev: "audit-should-not-throw" });
   });
 
-  it("newLockRecord builds the v1 record with the D18 identity and ISO stamps", () => {
+  it("newLockRecord builds the v2 record: D18 identity in a holder entry, file-level stamps (cf-106 C08 AC 1)", () => {
     const rec = seam("newLockRecord")({
       pipeline: "a",
       cardId: "c1",
       sessionID: "s1",
       setId: "set-9",
       pipelineSet: ["b", "a"],
+      cardTitle: "cf-106",
       now: T0,
     });
-    assert.equal(rec.version, 1);
-    assert.equal(rec.cardId, "c1");
-    assert.equal(rec.setId, "set-9");
+    assert.equal(rec.version, 2, "record v2 is the shape co-tenancy needs (cf-106 C08)");
     assert.deepEqual(rec.pipelineSet, ["a", "b"], "the record stores the set sorted");
-    assert.match(rec.heartbeatAt, STAMP_SHAPE, "the claim stamp carries the contract shape (cf-96 AC3)");
-    assert.equal(rec.heartbeatAt, rec.claimedAt, "both fields stamp from the one now (D25)");
-    assert.equal(Date.parse(rec.heartbeatAt), T0, "instant-preservation: the stamp parses back to its epoch-ms (cf-96 OQ4 — string equality against iso() was the pre-C09 spelling pin)");
+    const holders = holdersOf(rec);
+    assert.equal(holders.length, 1, "a single claim starts as a one-holder list");
+    assert.equal(holders[0].cardId, "c1");
+    assert.equal(holders[0].sessionID, "s1");
+    assert.equal(holders[0].setId, "set-9");
+    assert.equal(holders[0].cardTitle, "cf-106", "the optional title rides in the holder that supplied it");
+    assert.match(holders[0].heartbeatAt, STAMP_SHAPE, "the holder stamp carries the contract shape (cf-96 AC3)");
+    assert.equal(holders[0].heartbeatAt, holders[0].claimedAt, "both holder fields stamp from the one now (D25)");
+    assert.equal(Date.parse(holders[0].heartbeatAt), T0, "instant-preservation: the stamp parses back to its epoch-ms (cf-96 OQ4 — string equality against iso() was the pre-C09 spelling pin)");
+    assert.equal(Date.parse(rec.heartbeatAt), T0, "the file-level stamps exist so the staleness formula and the reaper keep working unchanged (cf-106 C08)");
     assert.equal(Date.parse(rec.claimedAt), T0);
   });
 });
@@ -547,7 +604,7 @@ describe("K7 releaseLockSet — owner checks and the set delete (AC 7)", () => {
     assert.equal(res.ok, true);
     const bPath = join(env.locksDir, "b.json");
     const bRec = JSON.parse(readFileSync(bPath, "utf8"));
-    bRec.sessionID = "thief";
+    holderOf(bRec, "s1").sessionID = "thief";
     writeFileSync(bPath, JSON.stringify(bRec));
     const out = await seam("releaseLockSet")(env, { sessionID: "s1", outcome: "done" });
     assert.equal(out.ok, false);
@@ -593,7 +650,12 @@ describe("K8 lockStatus — set-grouped view, session claim, lastReap meta", () 
     assert.equal(status.groups.length, 2, "two claims read as two groups");
     const g1 = status.groups.find((g: any) => g.cardId === "c1");
     assert.deepEqual(g1.pipelineSet, ["a", "b"], "a multi-pipeline claim reads as one unit (D18)");
-    assert.equal(g1.holder, "s1");
+    assert.ok(Array.isArray(g1.holders) && g1.holders.length === 1, `status reports the claim's holders, saw ${JSON.stringify(g1.holders)}`);
+    assert.equal(g1.holders[0].sessionID, "s1");
+    assert.equal(g1.holders[0].cardId, "c1", "each holder row names its card so a run can read emptiness per card (cf-106 C08)");
+    assert.equal(typeof g1.holders[0].age, "number", "and its age (cf-106 C08: cardId, sessionID, age, state)");
+    assert.equal(typeof g1.holders[0].state, "string");
+    assert.equal(g1.shared, false, "a lone holder is not a shared set — emptiness reads true (cf-106 C08 AC2)");
     assert.equal(g1.setId, r1.setId);
     assert.ok(typeof g1.ageMs === "number" && g1.ageMs >= 0);
     assert.equal(typeof g1.state, "string");
@@ -660,5 +722,101 @@ describe("cf-96 C09 zone coverage — one formatter, both $TZ geometries (AC3)",
     } finally {
       if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cf-106 C08 — co-tenancy on one pipeline lock (chunks/C08.md AC 1-3, 6).
+// Red until C08 lands: the claim tree still answers reason:"locked" with one
+// holder, there is no `shared` input, and release deletes the whole file.
+// Each arm names the behavior it is waiting for.
+// ---------------------------------------------------------------------------
+describe("V1 claimLockSet co-tenancy — the emptiness rule and the override (cf-106 C08 AC 1-2)", () => {
+  it("a live foreign holder on the key refuses the claim with reason:\"occupied\" and writes NOTHING (AC 1)", async () => {
+    const env = baseEnv();
+    const first = await seam("claimLockSet")(env, { cardId: "card-A", pipelines: ["alpha"], cardTitle: "A", sessionID: "ses-A" });
+    assert.equal(first.ok, true, JSON.stringify(first));
+    const filesBefore = lockFiles(env);
+    const second = await seam("claimLockSet")(env, { cardId: "card-B", pipelines: ["alpha"], sessionID: "ses-B" });
+    assert.equal(second.ok, false);
+    assert.equal(second.reason, "occupied", "\"do not start unless the pipeline is empty\" is the engine's answer, not a pipeline_status guess (C08 Goal)");
+    assert.equal(second.pipeline, "alpha", "the refusal names the occupied pipeline");
+    assert.deepEqual(second.holders.map((h: any) => [h.cardId, h.sessionID]), [["card-A", "ses-A"]], "the refusal answers WHO holds it — card, session, age");
+    assert.ok(second.holders[0].age >= 0, "the holder row carries its age so the override decision has its input");
+    assert.deepEqual(lockFiles(env), filesBefore, "a refused claim writes nothing — no tmp, no second file, no merged holder");
+    assert.equal(JSON.parse(readFileSync(join(env.locksDir, "alpha.json"), "utf8")).holders.length, 1, "the occupied file still names exactly its own holder — a silent merge is the failure mode this AC exists to prevent");
+  });
+
+  it("shared:true on an occupied key appends OUR holder and reports the co-tenants (AC 2)", async () => {
+    const env = baseEnv();
+    assert.equal((await seam("claimLockSet")(env, { cardId: "card-A", pipelines: ["alpha"], sessionID: "ses-A" })).ok, true);
+    const res = await seam("claimLockSet")(env, { cardId: "card-B", pipelines: ["alpha"], sessionID: "ses-B", shared: true });
+    assert.equal(res.ok, true, JSON.stringify(res), "the sanctioned human override lets a second card hold the same pipeline (OQ-8 ruling)");
+    assert.deepEqual(lockFiles(env), ["alpha.json"], "ONE file per pipeline key — co-tenancy is a holder list, not a second file");
+    const rec = JSON.parse(readFileSync(join(env.locksDir, "alpha.json"), "utf8"));
+    assert.deepEqual(rec.holders.map((h: any) => h.sessionID).sort(), ["ses-A", "ses-B"], "both holders live in the same record");
+    assert.ok(rec.holders.every((h: any) => h.cardId && h.setId && h.claimedAt && h.heartbeatAt), "every holder entry carries its own identity and stamps");
+    assert.ok(JSON.stringify(res).includes("ses-A"), "the ok answer reports the co-tenant list, so the run can log the sharing in its claim comment");
+    const status = await seam("lockStatus")(env, {});
+    const onAlpha = status.groups.filter((g: any) => JSON.stringify(g.pipelineSet).includes("alpha"));
+    assert.equal(onAlpha.length, 1, "two cards sharing one key still read as one lock unit");
+    assert.equal(onAlpha[0].holders.length, 2, "status shows both holders (AC 2)");
+    assert.equal(onAlpha[0].shared, true, "status reports the shared fact (AC 2)");
+  });
+
+  it("the shared override does NOT bypass the one-claim-per-root rule (AC 1 guardrail)", async () => {
+    const env = baseEnv();
+    assert.equal((await seam("claimLockSet")(env, { cardId: "card-A", pipelines: ["alpha"], sessionID: "ses-A" })).ok, true);
+    const dup = await seam("claimLockSet")(env, { cardId: "card-A2", pipelines: ["alpha"], sessionID: "ses-A", shared: true });
+    assert.equal(dup.reason, "already_held", "shared:true widens WHO may share a pipeline, it does not let one session hold two claims");
+    assert.deepEqual(lockFiles(env), ["alpha.json"]);
+    assert.equal(JSON.parse(readFileSync(join(env.locksDir, "alpha.json"), "utf8")).holders.length, 1, "the refused duplicate appended nothing");
+  });
+
+  it("an unreadable lock file fails CLOSED — refuse, never merge (C08 Notes for dev)", async () => {
+    const env = baseEnv();
+    mkdirSync(env.locksDir, { recursive: true });
+    writeFileSync(join(env.locksDir, "alpha.json"), "{ not json");
+    const res = await seam("claimLockSet")(env, { cardId: "card-B", pipelines: ["alpha"], sessionID: "ses-B", shared: true });
+    assert.equal(res.ok, false, "a torn read must not be treated as free — shared:true appends to a parsed record, not to a guess");
+    assert.equal(lockFiles(env).length, 1, "the refused claim leaves the corrupt file alone for the reaper — no silent overwrite of an unknown lock");
+  });
+
+  it("a card id is a legal pipeline key — the key C09's takeover claim runs under (C08 Tests: pin it)", async () => {
+    const cardId = "cf-106-card-abc123";
+    assert.equal(seam("sanitizePipelineKey")(cardId), cardId, "the card id passes sanitizePipelineKey unchanged");
+    const env = baseEnv();
+    const res = await seam("claimLockSet")(env, { cardId, pipelines: [cardId], sessionID: "ses-takeover" });
+    assert.equal(res.ok, true, JSON.stringify(res));
+    assert.deepEqual(lockFiles(env), [`${cardId}.json`], "the card-id key locks like any other key");
+  });
+});
+
+describe("V2 releaseLockSet per holder (cf-106 C08 AC 3)", () => {
+  it("one card's release removes only ITS holder and leaves the file and the co-tenant", async () => {
+    const env = baseEnv();
+    assert.equal((await seam("claimLockSet")(env, { cardId: "card-A", pipelines: ["alpha", "beta"], sessionID: "ses-A" })).ok, true);
+    assert.equal((await seam("claimLockSet")(env, { cardId: "card-B", pipelines: ["alpha", "beta"], sessionID: "ses-B", shared: true })).ok, true);
+    const out = await seam("releaseLockSet")(env, { sessionID: "ses-A", outcome: "done" });
+    assert.equal(out.ok, true, JSON.stringify(out));
+    assert.deepEqual(lockFiles(env), ["alpha.json", "beta.json"], "a co-tenant still holds the set — the files must survive (AC 3)");
+    for (const f of ["alpha.json", "beta.json"]) {
+      const rec = JSON.parse(readFileSync(join(env.locksDir, f), "utf8"));
+      assert.deepEqual(rec.holders.map((h: any) => h.sessionID), ["ses-B"], "only the caller's holder entries are removed — never a co-tenant's (C08 Goal)");
+    }
+    const out2 = await seam("releaseLockSet")(env, { sessionID: "ses-B", outcome: "done" });
+    assert.equal(out2.ok, true);
+    assert.deepEqual(lockFiles(env), [], "the file disappears only after the LAST holder releases");
+  });
+
+  it("a release by a session that is not a holder of the file still refuses and touches nothing (AC 3 owner check)", async () => {
+    const env = baseEnv();
+    assert.equal((await seam("claimLockSet")(env, { cardId: "card-A", pipelines: ["alpha"], sessionID: "ses-A" })).ok, true);
+    assert.equal((await seam("claimLockSet")(env, { cardId: "card-B", pipelines: ["alpha"], sessionID: "ses-B", shared: true })).ok, true);
+    env.claims.set("ses-C", { setId: "setC", cardId: "card-C", pipelineSet: ["alpha"] });
+    const out = await seam("releaseLockSet")(env, { sessionID: "ses-C", outcome: "done" });
+    assert.equal(out.ok, false);
+    assert.equal(out.reason, "not_owner", "a bookkeeping claim without a holder entry is not an owner");
+    assert.equal(JSON.parse(readFileSync(join(env.locksDir, "alpha.json"), "utf8")).holders.length, 2, "the refused release removed nobody's hold");
   });
 });

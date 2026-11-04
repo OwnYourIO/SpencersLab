@@ -126,10 +126,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 22); do WANT["c$i"]=1; done
+  for i in $(seq 1 24); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-2])$ ]] || fail "unknown check id '$a' (expected c1..c22)"
+    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-4])$ ]] || fail "unknown check id '$a' (expected c1..c24)"
     WANT["$a"]=1
   done
 fi
@@ -320,6 +320,18 @@ else:
     want_subs = sorted(want_subs)
 if os.path.exists(".rulesync/subagents/agent-explore.md"):
     want_subs = sorted(want_subs + ["agent-explore"])
+# cf-106 C04 era-gate: the code-family second implementer. The alias carries
+# -local semantics, so its slot is the commit-only `code` (the -pr twin is
+# code-pr, pinned on that family by tests/agent-perms A12). Era-gated on the
+# SOURCE row so the mirror arm reddens exactly when a landing forgets to
+# regenerate — before C04 the wave stays green.
+src_txt = ""
+try:
+    src_txt = open(".rulesync/subagents/agent-board-coord.md").read()
+except OSError:
+    pass
+if re.search(r"resource: code\b", src_txt) or os.path.exists(".rulesync/subagents/code-pr.md"):
+    want_subs = sorted(want_subs + ["code"])
 if subs != want_subs:
     errs.append(f"subagent allows {subs}, want exactly {want_subs}")
 edits = [p.get("resource") for p in perms if p.get("action") == "edit"]
@@ -337,7 +349,7 @@ if not deny_all or not boards_allow or boards_allow[0] < deny_all[0]:
     print("the dev-boards allow does not follow the leading deny-all (last-match-wins would deny it)")
     sys.exit(1)
 EOF
-  ok "c2: generated agent frontmatter (name, distinct color, question + dev-boards* allows, NO broad dev* (D21), the era-gated subagent roster — seven with cf-96 C02's explore row, three edit allows only)"
+  ok "c2: generated agent frontmatter (name, distinct color, question + dev-boards* allows, NO broad dev* (D21), the era-gated subagent roster — eight with cf-106 C04's code slot, three edit allows only)"
 
   # cf-58 C02/C03 re-pin: the PORT_REF frozen-permission-walk (the second
   # arm of this check) is RETIRED — the sanctioned delta grew from "the two
@@ -511,6 +523,17 @@ fi
 # enumerated per contract, exactly as wekan-mcp was admitted). Loop and test
 # edits ride the .agents/loops/*, tests/*, .rulesync/skills/*, .opencode/* and
 # AGENTS.md admits already in this set.
+# cf-106 widening (2026-11-03, agent-test; chunks/C01.md "Scope admits"): the
+# running ticket's own plan folder, admitted ONCE for all eleven chunks (plan
+# DECISIONS 2026-11-03, the cf-96 "admits cost a line in FOUR arms" friction
+# paid once). Its declared surfaces already ride this set: .rulesync/* +
+# .opencode/{agents,commands,skills}/* + AGENTS.md (skills/subagents/commands/
+# rules), scripts/* (C03a's session-noop-audit.sh), tests/* (tests/cf106-noop/**
+# and every re-pin), containers/wekan-mcp/*, skills/{wekan-mcp,wekan-board-
+# provision}/*, .opencode/plugin/*, .opencode/opencode.jsonc and .agents/loops/*.
+# Any file a replan adds joins THIS line — same rule as the cf-86 exact-file
+# precedent, and the probe loop below keeps the widening from becoming a
+# catch-all.
 if want c8; then
   c8_admits() {
     case "$1" in
@@ -554,7 +577,8 @@ if want c8; then
       .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
       charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
       skills/wekan-board-provision/*|\
-      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore) return 0 ;;
+      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore|\
+      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*) return 0 ;;
       *) return 1 ;;
     esac
   }
@@ -644,8 +668,16 @@ if want c11; then
   done
   grep -qE 'feat.*bug.*debug.*dep.*refactor.*chore.*docs' "$SKILL_GEN" \
     || fail "c11: the Type checklist does not list feat|bug|debug|dep|refactor|chore|docs in one passage"
-  grep -qE 'Qwen Large.*Qwen 27b.*Qwen Flash.*Local' "$SKILL_GEN" \
-    || fail "c11: the Model(s) checklist does not list Qwen Large | Qwen 27b | Qwen Flash | Local (the four-option line stays UNCHANGED — C06 AC2)"
+  grep -qE 'Qwen Large.*Qwen Dense.*Qwen Flash.*Local' "$SKILL_GEN" \
+    || fail "c11[cf-106 C02]: the Model(s) checklist does not list Qwen Large | Qwen Dense | Qwen Flash | Local — the four-option line keeps its shape with the renamed middle label (red until C02 renames and regenerates)"
+n27="$(grep -c 'Qwen 27b' "$SKILL_GEN")"
+if [ "$n27" -gt 1 ]; then
+    fail "c11[cf-106 C02]: the generated boards mirror mentions 'Qwen 27b' $n27 times — only the alias sentence may carry the retired label (regenerate the mirror, never hand-edit it)"
+fi
+   # source↔mirror parity for the same claim (c11's posture: mirror work, but a
+   # source that disagrees with its mirror is a rulesync lie)
+   grep -qE 'Qwen Large.*Qwen Dense.*Qwen Flash.*Local' "$SKILL_SRC" \
+     || fail "c11[cf-106 C02 AC1]: the boards SOURCE Model(s) line is not the four-label Dense set — the source and its generated mirror must carry the same vocabulary"
   grep -qE 'Qwen Large.*Flash Next' "$SKILL_GEN" && fail "c11[C06]: a single passage pairing 'Qwen Large' with 'Flash Next' — the Model(s) checklist gained a fifth option; Q6 vetoed it (combination of existing checks is the mechanism)"
   python3 "$TMP/window.py" "$SKILL_GEN" 900 'Exploration' 'Agent Decides Research' 'Pre Research' 'Planning' 'Post Research' 'Test Writing' 'Chunk Development' 'Chunk Review' 'Final Review' 'Deployment' 'Single Session' \
     || fail "c11[C07]: the Lifecycle checklist does not carry its eleven items in one passage (cf-96 C07 redesign, card order, Single Session LAST; red before C07's text + this re-pin)"
@@ -653,8 +685,12 @@ if want c11; then
     || fail "c11[C07]: no nothing-checked default passage (the Stage map's Blank defaults section: the seven-stage standard default loop, Exploration first, Final Review last; the retired Plan+Test+Code+Review shape)"
   grep -qE 'Human in the Loop.*`Exploration` \| `Agent Decides Research` \| `Pre Research` \| `Planning` \| `Post Research` \| `Test Writing` \| `Chunk Development` \| `Chunk Review` \| `Final Review` \| `Deployment` \| `Single Session`' "$SKILL_GEN" \
     || fail "c11[C07]: the Human in the Loop checklist does not mirror the eleven Lifecycle names in one passage (the OQ6-derived exact mirror)"
-  grep -qF 'Default selection: `Qwen Flash`' "$SKILL_GEN" \
-    || fail "c11: the Model(s) checklist does not state its default selection (Qwen Flash alone)"
+  # cf-106 C02 AC2: the default selection is pinned on SOURCE and MIRROR alike —
+  # the flip must be identical on both (a hand-edited or stale mirror fails here).
+  for f in "$SKILL_SRC" "$SKILL_GEN"; do
+    grep -qF 'Default selection: `Qwen Dense`' "$f" \
+      || fail "c11[cf-106 C02 AC2]: $f does not state the Model(s) default selection as Qwen Dense — the checklist default flips with the vocabulary (OQ-7: BOTH defaults flip) and source+mirror must agree; red until C02 + regenerate"
+  done
   grep -qF 'Default: `Final Review`' "$SKILL_GEN" \
     || fail "c11[C07]: the Human in the Loop checklist does not state its default item (Final Review - the C07 blank-HITL default)"
   # C06: the routing paragraph's two combination clauses (source of truth is
@@ -665,7 +701,7 @@ if want c11; then
     || fail "c11[C06/cf-83]: the routing paragraph lacks the Flash+Local → flash-next-strata combination clause (red before C01 dev)"
   python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
     || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
-  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle's eleven items (cf-96 C07) + nothing-checked seven-stage default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items mirror the eleven + Final Review default; combination clauses present with the cf-83 strata re-pin"
+  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle's eleven items (cf-96 C07) + nothing-checked seven-stage default; Model(s) four options with Qwen Dense as the default selection, source and mirror agreeing and the retired label surviving only as the alias; HITL items mirror the eleven + Final Review default; combination clauses present with the cf-83 strata re-pin"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
@@ -1141,6 +1177,236 @@ for path in sys.argv[1:]:
         print(f"{path}: the friction destination still reads Review — the batched-round ruling repointed it to Inbox"); sys.exit(1)
 PY
   ok "c22[C03 AC1+AC3]: follow-up protocol pins (timing, Inbox destination + list_lists re-resolve, except-Research parent labels, default_checked-or-toggle, never-add_checklist, labels-in-body degrade citing the label-tool card) and the friction section flipped to Inbox with the Backlog non-intake rationale"
+fi
+
+# --- c23: cf-106 C09 — the rewritten Human-stops/Exit posture, source ↔ mirror --
+# C09 turns the PIPELINE LOCK LOST posture from "stop forever" into "stop the
+# step, ONE sanctioned question, then a resume under the card-id lock". The
+# chunk's Tests duty is the source↔mirror arms for the rewritten section plus
+# the one-sided-edit control: rulesync mirrors the skill, so a source-only edit
+# is a lie about the generated surface. Dev-facing needles are RED until C09
+# lands the wording; the parity arms are green today and rotate with either side.
+if want c23; then
+  if ! python3 - "$SKILL_SRC" "$SKILL_GEN" <<'PY'
+import re, sys
+
+def bullet(text, anchor):
+    m = re.search(r"(?m)^[-*][ \t]+\*\*" + anchor, text)
+    if not m:
+        return None
+    rest = text[m.start():]
+    stop = re.search(r"\n[-*][ \t]+\*\*|\n##", rest[1:])
+    return rest[:stop.start() + 1] if stop else rest
+
+NEEDLES = [
+    ("Human stops", r"PIPELINE LOCK LOST", "the signal the posture is stated on"),
+    ("Human stops", r"one sanctioned question|exactly one question|ONE sanctioned question",
+     "C09: stop, then exactly ONE sanctioned question in this run"),
+    ("Human stops", r"pipelines\s*:\s*\[?\s*<cardId>|pipelines\s*:\s*\[card",
+     "C09: the resume re-claims under pipelines:[<cardId>]"),
+    ("Human stops", r"asks[^.]{0,80}(move|Timeout)|before any move",
+     "C09: moving a card OUT of Timeout is the owner's call — the run asks first"),
+    ("Human stops", r"comment[^.]{0,120}(takeover|lock key)|(takeover|lock key)[^.]{0,120}comment",
+     "C09: the resume appends a comment naming the takeover and the lock key"),
+    ("Human stops", r"kickoff\.claim", "C09: the takeover is recorded in STATE.json kickoff.claim"),
+    ("Human stops", r"never a silent resume|no silent resume",
+     "C09: no answer inside the session takes the abandoned exit — never a silent resume"),
+    ("Human stops", r"second question", "C09: and never a second question"),
+    ("Exit", r'outcome:"abandoned"|abandon-release', "the blocked-card exit keeps its wording"),
+    ("Exit", r"keep-and-stale|keep the lock", "including the keep-and-stale alternative"),
+    ("Exit", r"takeover|continue anyway", "C09: the human-gated takeover branch is named in the Exit choice"),
+]
+
+def check(src_path, gen_path):
+    src, gen = open(src_path).read(), open(gen_path).read()
+    errs = []
+    for anchor in ("Human stops", "Exit"):
+        b_src, b_gen = bullet(src, anchor), bullet(gen, anchor)
+        if b_src is None or b_gen is None:
+            errs.append(f"{src_path if b_src is None else gen_path}: the '{anchor}' bullet is gone — the section C09 rewrites lost its anchor")
+            continue
+        if b_src != b_gen:
+            errs.append(f"source and mirror DIFFER on the '{anchor}' bullet — edit .rulesync/ and regenerate, never the mirror")
+    for anchor, pat, why in NEEDLES:
+        for label, text in (("source", src), ("mirror", gen)):
+            b = bullet(text, anchor)
+            if b and not re.search(pat, b, re.I | re.S):
+                errs.append(f"{label}/{anchor}: missing {why} (/{pat}/)")
+    for anchor in ("Human stops", "Exit"):
+        b = bullet(gen, anchor)
+        if not b:
+            continue
+        take = re.search(r"takeover|continue anyway", b, re.I)
+        blocked = re.search(r'outcome:"abandoned"|abandon-release', b, re.I)
+        if take and blocked and take.start() > blocked.start():
+            errs.append(f"mirror/{anchor}: the takeover branch must be named AHEAD of the blocked abandon/keep choice (C09 task)")
+    return errs
+
+errs = check(*sys.argv[1:3])
+if errs:
+    print("; ".join(errs))
+    sys.exit(1)
+PY
+  then
+    fail "c23[cf-106 C09 AC1-AC5]: the boards Human-stops/Exit posture is not the sanctioned-question + card-id-takeover contract on BOTH the source and its generated mirror (reason printed above; red before C09 lands)"
+  fi
+  # Control 1 (satisfiability): a fabricated COMPLIANT pair must read clean.
+  python3 - "$SKILL_SRC" "$TMP/boards-c09-src.md" <<'PY'
+import re, sys
+src = open(sys.argv[1]).read()
+m = re.search(r"(?m)^[-*][ \t]+\*\*Human stops.*?(?=\n[-*][ \t]+\*\*|\n##)", src)
+assert m, "fixture: no Human stops bullet"
+addition = (m.group(0).rstrip()
+            + " On that signal: stop the step, then ask the user exactly ONE sanctioned question in this run — "
+              "on yes, re-claim with `pipeline_claim(pipelines:[<cardId>])` (the card-id key), keep the card where it is, "
+              "asks before any move out of **Timeout**, append a comment naming the takeover and the lock key, and record "
+              "the takeover in STATE.json `kickoff.claim`; on no or silence take the blocked/abandoned exit — never a "
+              "silent resume, never a second question.\n")
+out = src[:m.start()] + addition + src[m.end():]
+me = re.search(r"(?m)^[-*][ \t]+\*\*Exit.*?(?=\n[-*][ \t]+\*\*|\n##)", out)
+assert me, "fixture: no Exit bullet"
+fixed = me.group(0).replace('A blocked card:', 'Takeover (the human-gated branch): continue anyway only after the one sanctioned question. A blocked card:')
+out = out[:me.start()] + fixed + out[me.end():]
+open(sys.argv[2], "w").write(out)
+PY
+  cp "$TMP/boards-c09-src.md" "$TMP/boards-c09-gen.md"
+  if ! python3 - "$TMP/boards-c09-src.md" "$TMP/boards-c09-gen.md" <<'PY'
+import re, sys
+def bullet(text, anchor):
+    m = re.search(r"(?m)^[-*][ \t]+\*\*" + anchor, text)
+    if not m:
+        return None
+    rest = text[m.start():]
+    stop = re.search(r"\n[-*][ \t]+\*\*|\n##", rest[1:])
+    return rest[:stop.start() + 1] if stop else rest
+src, gen = open(sys.argv[1]).read(), open(sys.argv[2]).read()
+pats = [r"PIPELINE LOCK LOST", r"one sanctioned question|exactly one question",
+        r"pipelines\s*:\s*\[?\s*<cardId>|pipelines\s*:\s*\[card", r"asks[^.]{0,80}(move|Timeout)|before any move",
+        r"comment[^.]{0,120}(takeover|lock key)|(takeover|lock key)[^.]{0,120}comment", r"kickoff\.claim",
+        r"never a silent resume|no silent resume", r"second question"]
+bad = []
+for p in pats:
+    if not re.search(p, bullet(src, "Human stops") or "", re.I):
+        bad.append(p)
+b = bullet(src, "Exit") or ""
+if not re.search(r"takeover|continue anyway", b, re.I) or not re.search(r'outcome:"abandoned"|abandon-release', b, re.I):
+    bad.append("exit-branch")
+print(",".join(bad))
+sys.exit(1 if bad else 0)
+PY
+  then
+    fail "c23[cf-106 C09]: NEGATIVE CONTROL FAILED — the fabricated compliant wording did not satisfy the needles (the pins above are unsatisfiable)"
+  fi
+  # Control 2 (parity is live): a SOURCE-only edit must redden the mirror arms.
+  if ! python3 - "$TMP/boards-c09-src.md" "$SKILL_GEN" <<'PY'
+import re, sys
+def bullet(text, anchor):
+    m = re.search(r"(?m)^[-*][ \t]+\*\*" + anchor, text)
+    if not m:
+        return None
+    rest = text[m.start():]
+    stop = re.search(r"\n[-*][ \t]+\*\*|\n##", rest[1:])
+    return rest[:stop.start() + 1] if stop else rest
+src, gen = open(sys.argv[1]).read(), open(sys.argv[2]).read()
+sys.exit(0 if bullet(src, "Human stops") != bullet(gen, "Human stops") else 1)
+PY
+  then
+    fail "c23[cf-106 C09]: NEGATIVE CONTROL FAILED — a source-only rewrite of the Human-stops bullet did not read as source/mirror drift"
+  fi
+  ok "c23[cf-106 C09 AC1-AC5]: the Human-stops and Exit bullets carry the sanctioned one-question posture, the card-id takeover shape (pipelines:[<cardId>], asks-before-move out of Timeout, takeover comment, kickoff.claim) and the never-silent-resume/never-second-question boundary on source AND mirror, the takeover branch is named ahead of the blocked choice, and both controls respond (a compliant pair reads clean, a source-only edit reads as drift)"
+fi
+
+# --- c24: cf-106 C04 — the code-pr mirror and the two contract mirrors --------
+# The generated-surface half of the permission change this chunk makes: the new
+# twin must have an honest rulesync mirror, the two skills that govern it must
+# have moved on BOTH trees, and the agents-sync permissions matrix must have
+# moved with the block (the drift lesson this suite exists to enforce). Red
+# before C04 lands the twin; a HOLD pair afterwards.
+if want c24; then
+  RC_SRC=".rulesync/skills/pipeline-role-coord/SKILL.md"
+  RC_GEN=".opencode/skills/pipeline-role-coord/SKILL.md"
+  PP_SRC=".rulesync/skills/pipeline-push-pr/SKILL.md"
+  PP_GEN=".opencode/skills/pipeline-push-pr/SKILL.md"
+  if [ ! -f .rulesync/subagents/code-pr.md ]; then
+    fail "c24[cf-106 C04 AC3]: .rulesync/subagents/code-pr.md does not exist — these mirror arms engage when the twin lands (this run's red names the missing file)"
+  fi
+  [ -f .opencode/agents/code-pr.md ] \
+    || fail "c24[cf-106 C04 AC8]: .opencode/agents/code-pr.md is missing — rulesync generates the twin's runtime surface, so a launchable agent with no mirror is a stale generated tree"
+  python3 - .rulesync/subagents/code-pr.md .opencode/agents/code-pr.md <<'PY'
+import re, sys, yaml
+def fm(path):
+    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+    assert m, f"{path}: no frontmatter"
+    f = yaml.safe_load(m.group(1)) or {}
+    return f, ((f.get("opencode") or {}).get("permissions") or f.get("permissions") or [])
+src_f, src_p = fm(sys.argv[1])
+gen_f, gen_p = fm(sys.argv[2])
+bad = []
+if src_f.get("name") != gen_f.get("name"):
+    bad.append(f"name differs ({src_f.get('name')} vs {gen_f.get('name')})")
+if str(src_f.get("description")) != str(gen_f.get("description")):
+    bad.append("description differs between source and mirror")
+if src_p != gen_p:
+    i = next((i for i, (x, y) in enumerate(zip(src_p, gen_p)) if x != y), min(len(src_p), len(gen_p)))
+    bad.append(f"parsed permission lists differ at index {i} (lengths {len(src_p)}/{len(gen_p)}) — last-match-wins makes ORDER part of the mirror contract")
+if bad:
+    print("; ".join(bad)); sys.exit(1)
+PY
+  [ $? -eq 0 ] || fail "c24[cf-106 C04 AC8]: code-pr source and generated mirror are not honest twins (reason above) — regenerate, never hand-edit .opencode/"
+  # The governing skills moved on both trees, stated as passages (window.py is
+  # this suite's shipped co-location helper — scattered hits do not pass).
+  for f in "$RC_SRC" "$RC_GEN"; do
+    python3 "$TMP/window.py" --ci "$f" 900 'roster' 'code' 'code-pr' \
+      || fail "c24[cf-106 C04 AC6]: $f never states the roster gain (code on the plain/-local class, code-pr on -pr) as one passage"
+    python3 "$TMP/window.py" --ci "$f" 700 'dev variant' 'decisions.md' \
+      || fail "c24[cf-106 C04 AC6]: $f never states the dev-first preference with the DECISIONS.md record duty (AC6's preference rule)"
+    python3 "$TMP/window.py" --ci "$f" 900 'sole committer' 'ticket branch' 'never main' \
+      || fail "c24[cf-106 C04 AC6]: $f's Git section does not keep the sole-committer rule while bounding the sanctioned code-pr push to the ticket branch, never main"
+    python3 "$TMP/window.py" --ci "$f" 500 'ask' 'deny' 'validation' \
+      || fail "c24[cf-106 C04 AC6]: $f never records the consequence the chunk was told to record: in an unattended run ask behaves as deny for chunk validation commands"
+  done
+  for f in "$PP_SRC" "$PP_GEN"; do
+    python3 "$TMP/window.py" --ci "$f" 200 'code-pr' 'push' \
+      || fail "c24[cf-106 C04 AC5]: $f does not bring code-pr into the push contract's governed set as one passage (the mirror must move with the source)"
+  done
+  # The agents-sync drift lesson, machine-checked: a permission-block change is
+  # only done when the matrix moved with it — code/code-pr rows plus a dated entry.
+  for f in "$PERM_SRC" "$PERM_GEN"; do
+    python3 "$TMP/window.py" --ci "$f" 900 'code-pr' 'push' \
+      || fail "c24[cf-106 C04 AC1]: $f has no matrix passage carrying the code-pr push row — the permissions matrix moves with every block change"
+    python3 "$TMP/window.py" --ci "$f" 300 'cf-106' \
+      || fail "c24[cf-106 C04 AC1]: $f has no cf-106 drift entry for this permission change"
+  done
+  # Non-vacuity both ways: the needles must be satisfiable (a synthetic
+  # compliant skill passes them) and responsive (stripping the sole-committer
+  # sentence from the real skill reddens the same call).
+  cat >"$TMP/role-coord-compliant.md" <<'MD'
+# Roster
+Launch by class: the dev variant is the default implementer; the roster also
+allows the standalone `code` (plain/-local class) and `code-pr` (-pr class) as
+the second implementer, recorded per chunk in DECISIONS.md.
+## Git
+You are the pipeline's sole committer for chunk commits. On the -pr family a
+code-pr session may push the ticket branch only under pipeline-push-pr:
+explicit user request, ticket branch only, never main, never force.
+Chunk validation commands run under an `ask` baseline that resolves to deny
+unattended, so an unattended run reports the validation gap instead of
+widening the surface.
+MD
+  for needles in "900:roster:code:code-pr" "700:dev variant:decisions.md" "900:sole committer:ticket branch:never main" "500:ask:deny:validation"; do
+    IFS=':' read -r span n1 n2 n3 <<<"$needles"
+    if [ -z "${n3:-}" ]; then
+      python3 "$TMP/window.py" --ci "$TMP/role-coord-compliant.md" "$span" "$n1" "$n2" \
+        || fail "c24[cf-106 C04]: NEGATIVE CONTROL FAILED — the AC6 wording needles ('$n1' '$n2') are unsatisfiable even for a skill that states them"
+    else
+      python3 "$TMP/window.py" --ci "$TMP/role-coord-compliant.md" "$span" "$n1" "$n2" "$n3" \
+        || fail "c24[cf-106 C04]: NEGATIVE CONTROL FAILED — the AC6 wording needles ('$n1' '$n2' '$n3') are unsatisfiable even for a skill that states them"
+    fi
+  done
+  sed 's/[Ss]ole committer/one of the committers/' "$RC_SRC" >"$TMP/role-coord-hollow.md"
+  python3 "$TMP/window.py" --ci "$TMP/role-coord-hollow.md" 900 'sole committer' 'ticket branch' 'never main' >/dev/null 2>&1 \
+    && fail "c24[cf-106 C04]: NEGATIVE CONTROL FAILED — a role-coord copy whose sole-committer sentence was stripped still passes the window"
+  ok "c24[cf-106 C04 AC1/AC3/AC5/AC6/AC8]: the code-pr twin has an honest parsed mirror; pipeline-role-coord (source + mirror) states the roster gain, the dev-first preference with the DECISIONS record, the bounded push under the sole-committer rule and the ask-as-deny consequence; pipeline-push-pr brings code-pr into the governed set on both trees; permissions.md carries the code-pr matrix row and a cf-106 drift entry; the wording needles are satisfiable (synthetic compliant skill) and responsive (stripped copy rejected)"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"

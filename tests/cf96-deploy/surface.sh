@@ -108,17 +108,21 @@ fi
 
 # --- t3: the probe arms ------------------------------------------------------------------
 if want t3; then
-  grep -qE '38 tools' "$RUNBOOK" || fail "t3[C10 T1-5]: the 38-tool probe count is not pinned in step 5"
-  for n in list_board_dependencies list_card_dependencies add_card_dependency edit_card_dependency remove_card_dependency preload_board set_card_labels; do
-    grep -qF "$n" "$RUNBOOK" || fail "t3[C10 T1-5]: the new-tool probe list is missing $n"
+  grep -qE '39 tools|39-tool' "$RUNBOOK" || fail "t3[C10 T1-5 + cf-106 C07 AC6]: the runbook does not state the 39-tool surface (cf-96's 38 + get_card_details) — the probe count follows the registry, and the ledger must move with it (red before the C07 doc row lands)"
+  for n in list_board_dependencies list_card_dependencies add_card_dependency edit_card_dependency remove_card_dependency preload_board set_card_labels get_card_details; do
+    grep -qF "$n" "$RUNBOOK" || fail "t3[C10 T1-5 / cf-106 C07 AC6]: the new-tool probe list is missing $n"
   done
-  grep -qE '17 reads, NO new writes|no new writes' "$RUNBOOK" \
-    || fail "t3[C10 T1-5]: the readonly-tier probe (17 reads, no new writes) is missing — _write_tool gating proof"
+  grep -qE '18 reads, NO new writes|17 reads, NO new writes|no new writes' "$RUNBOOK" \
+    || fail "t3[C10 T1-5]: the readonly-tier probe (reads only, no new writes) is missing — _write_tool gating proof"
   grep -qF 'wekan-mcp-ops.md' "$RUNBOOK" \
     || fail "t3[C10 T1-5]: the probe recipe reference (skills/wekan-api/references/wekan-mcp-ops.md) is missing"
   grep -qF 'TNQJ2BrXenZovngTS' "$RUNBOOK" \
     || fail "t3[C10 T1-5]: the first-ever dependency round-trip probe must name the AI-Dev board id (the RESEARCH §1.5 no-agent-probe gap closes here)"
-  ok "t3[C10 T1-5]: probe arms pinned — 38 tools, seven names, readonly shape, recipe, live round-trip"
+  grep -qE 'checklists' "$RUNBOOK" \
+    || fail "t3[cf-106 C06 AC6]: the preload readback line never mentions the checklist state the enriched payload carries — the live check has to look for what C06 adds"
+  grep -qE 'slug_stack' "$RUNBOOK" \
+    || fail "t3[cf-106 C07 AC2]: the get_card_details readback line never names slug_stack/current_slug — the stack is the C01 contract the new tool carries"
+  ok "t3[C10 T1-5 + cf-106 C06/C07]: probe arms pinned — 39 tools, eight names, readonly shape, the C06 preload field set and the C07 card-details stack, recipe, live round-trip"
 fi
 
 # --- t4: L4 absorption ----------------------------------------------------------------------

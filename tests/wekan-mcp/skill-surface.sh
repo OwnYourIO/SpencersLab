@@ -141,8 +141,8 @@ for node in tree.body:
                 names.append(node.name)
             elif isinstance(d, ast.Name) and d.id == "_write_tool":
                 names.append(node.name)
-if len(names) != 38:
-    print(f"server.py registers {len(names)} tools, expected 38 — re-read the registry, the test follows server.py"); sys.exit(1)
+if len(names) != 39:
+    print(f"server.py registers {len(names)} tools, expected 39 (cf-96's 38 + cf-106 C07's get_card_details) — re-read the registry, the test follows server.py"); sys.exit(1)
 
 text = open(sys.argv[2]).read()
 bad = []

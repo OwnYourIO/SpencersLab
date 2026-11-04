@@ -44,7 +44,9 @@ read-back never mutates).
   line conflicts on L4/L7, appendix `dev` vs Tasks `agent context`; the
   coord rules this BEFORE creating those cards and records the ruling in
   the ledger comment). Type per entry (L1–L3 `chore`, L4 `dep`,
-  L7/L10–L12 `feat`), Model(s) default `Qwen Flash`.
+  L7/L10–L12 `feat`), Model(s) default `Qwen Flash` as created in the cf-90
+  generation — from the cf-106 Dense generation the checked default is `Qwen Dense`
+  (boards' transition alias covers a card still carrying the retired item name).
 - L7/L10/L11/L12 bodies add the ledger cross-references (L8/L9) and the
   -pr-flow pointer (pipeline-push-pr's assumed-flow section). Wave order
   runs C07 FIRST in wave 2 (the card's timing rule), so C05 has NOT landed
@@ -69,7 +71,8 @@ read-back never mutates).
 3. `list_checklists` + `get_checklist` on the samples: the five standard
    checklists exist (Services/Type/Model(s)/Lifecycle/Human in the Loop)
    with the chunk's answers CHECKED (Services per entry, Type per entry,
-   Model(s) = Qwen Flash).
+   Model(s) = Qwen Flash in these cf-90-era cards; a card created from the cf-106
+   Dense generation onward reads Qwen Dense).
 4. `list_comments` on card #90: the single ledger comment exists and its
    id table covers all twelve rows (created ids for the eight CREATEs,
    cited ids for L5/L6/L8/L9).

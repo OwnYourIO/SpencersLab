@@ -1,7 +1,7 @@
 {
   "schema": "wekan-board-snapshot/2",
   "collected_at": "2026-10-31",
-  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08 agent-test synthetic schema-2 variant (checklist_extras per the tests/wekan-board-provision/checklist-cutover.sh ENGINE JSON CONTRACT)",
+  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08 agent-test synthetic schema-2 variant (checklist_extras per the tests/wekan-board-provision/checklist-cutover.sh ENGINE JSON CONTRACT) | cf-106 C02: the Model(s) extras here deliberately KEEP the retired `Qwen 27b` items and checked [Qwen Flash] — the fixture models the live board as probed 2026-11-03 (EXPLORE 0/6: the live checklist still reads Qwen 27b, and the rename is USER-owned). So once the engine spec flips Dense, this fixture's drift list must also name Model(s): the retired vocabulary IS drift (AC5), and boards' transition alias governs card consumption, not the provisioning spec.",
   "board": {
     "id": "TNQJ2BrXenZovngTS",
     "title": "AI-Dev"

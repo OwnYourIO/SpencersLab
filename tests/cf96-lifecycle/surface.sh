@@ -255,16 +255,24 @@ fi
 
 # --- t6: the board-side cutover section names the 11+11+v2 artifact (C07 T6 / AC5) -----
 if want t6; then
-  python3 - "$SRC" <<'PY' || fail "t6[C07 AC5]: the cutover-section pins failed (reason above)"
+  python3 - "$SRC" <<'PY' || fail "t6[C07 AC5 + cf-106 C02 AC6]: the cutover-section pins failed (reason above)"
 import re, sys
 text = open(sys.argv[1]).read()
 sec = re.search(r"(?ms)^#{2,3}[^\n]*cutover[^\n]*\n(.*?)(?=^#{1,4} |\Z)", text)
 if not sec:
     print("t6: no Board-side cutover section"); sys.exit(1)
 s = re.sub(r"\s+", " ", sec.group(0))
-for tok in ("11", "Lifecycle", "Human in the Loop", "board-rules-v12.65.json", "backup", "createCard"):
+for tok in ("11", "Lifecycle", "Human in the Loop", "board-rules-v12.65", "backup", "createCard"):
     if tok not in s:
         print(f"t6: the cutover section does not name {tok!r} — T6: 11-item Lifecycle + matching 11-item HITL + the v2 rules-import artifact (C08 produces it) + backup-first, human-only apply (designed red before C07 dev)"); sys.exit(1)
+# cf-106 C02 re-issue: the citation is suffix-tolerant on purpose (the Dense
+# generation's artifact is board-rules-v12.65-dense.json in the cf-106 folder) —
+# but the folder pin below is not: the runbook must cite the CURRENT generation.
+m = re.search(r"([.\w/-]*board-rules-v12\.65[\w.-]*\.json)", s)
+if not m:
+    print("t6[cf-106 C02 AC6]: no board-rules-v12.65 artifact path in the cutover section"); sys.exit(1)
+if "/2026-11-cf-106-feat-coord-fixes/" not in m.group(1):
+    print(f"t6[cf-106 C02 AC6]: the cutover section cites {m.group(1)!r} — C02 re-issues the rule-extra artifact for the Dense vocabulary generation and repoints this citation into its own ticket folder (.agents/plans/2026/2026-11-cf-106-feat-coord-fixes/); the cf-96 file stays as applied history (designed red until C02 dev)"); sys.exit(1)
 if not re.search(r"never agent|human-only|human owned|human-owned", s, re.I):
     print("t6: the never-agent-executed posture must survive the update"); sys.exit(1)
 print("ok")

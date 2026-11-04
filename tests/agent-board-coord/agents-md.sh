@@ -101,10 +101,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 9); do WANT["c$i"]=1; done
+  for i in $(seq 1 11); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-8]|9)$ ]] || fail "unknown check id '$a' (expected c1..c9)"
+    [[ "$a" =~ ^c(1[0-1]|[1-9])$ ]] || fail "unknown check id '$a' (expected c1..c11)"
     WANT["$a"]=1
   done
 fi
@@ -356,6 +356,12 @@ fi
 # cf-90 widening (2026-10-31, agent-test): the running ticket's plan folder +
 # the hand-written skills/wekan-board-provision dir (C01); its skill/command/
 # agent/AGENTS/tests/loops/scripts edits ride the wildcards already in this set.
+# cf-106 widening (2026-11-03, agent-test; chunks/C01.md "Scope admits"): the
+# running ticket's own plan folder, admitted ONCE for the whole ticket (plan
+# DECISIONS 2026-11-03) — its content surfaces already ride this set's
+# .rulesync/*, .opencode/{agents,commands,skills}/*, AGENTS.md, tests/*,
+# scripts/*, containers/wekan-mcp/*, skills/*, .opencode/plugin/* and
+# .agents/loops/* admits. A replan-added file joins THIS line.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -402,11 +408,12 @@ if want c7; then
       .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
       .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
       charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
-      skills/wekan-board-provision/*) : ;;
+      skills/wekan-board-provision/*|\
+      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
@@ -475,6 +482,70 @@ sys.exit(0 if standalone else 1)
 PY
   done
   ok "c9: AGENTS.md + rules carry the Lifecycle wording, the retired Research-checklist enumeration is gone, and the standalone dev family has its own entry"
+fi
+
+# --- c10: the worker alert sentence covers every stop path (cf-106 C03b AC6/AC7) -------
+if want c10; then
+  # The alert sentence is the one place AGENTS.md states when a scheduled tick
+  # stays quiet. C03b extends it from "the coord marked it no-work" to "EVERY stop
+  # path marks and archives, including the gate/tick stops" — the generated file
+  # and the rules source must both carry it (rulesync parity is c1's job; here the
+  # claim itself is pinned on both surfaces so neither drifts alone).
+  for f in "$RULES_SRC" AGENTS.md; do
+    [ -f "$f" ] || fail "c10[cf-106 C03b AC6]: $f missing (harness fault)"
+    python3 "$TMP/negwin.py" --ci "$f" 400 'scheduled' 'no-work' \
+      || fail "c10[cf-106 C03b AC6]: $f lost the silence-rule clause (the scheduled finished push happens unless the coord marked the session no-work) — HOLD arm, it must survive C03b's edit"
+    python3 "$TMP/negwin.py" --ci "$f" 400 'no-op marker' 'stop' 'mark' \
+      || fail "c10[cf-106 C03b AC6]: $f's alert sentence never pairs the no-op marker with the STOP paths in one passage — C03b's point is that a tick ending on a gate SKIP / LIVE-with-cards / board-check stop marks and archives too, and the generated rule must say so or AGENTS.md contradicts the boards skill (red until C03b edits the rules source and regenerates)"
+  done
+  # Negative control: the pin must not be satisfied by today's marker sentence —
+  # the coverage words must actually be next to it. A copy with the stop-path
+  # wording moved 1200 chars away must fail.
+  python3 - "$RULES_SRC" "$TMP/rules-moved.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+i = t.find("no-op marker")
+pad = " ".join(f"filler {k}" for k in range(240))
+open(sys.argv[2], "w", encoding="utf-8").write(t[:i] + "no-op marker " + pad + "marks every stop path" + t[i + len("no-op marker"):])
+PY
+  if python3 "$TMP/negwin.py" --ci "$TMP/rules-moved.md" 400 'no-op marker' 'stop' 'mark' >/dev/null 2>&1; then
+    fail "c10 control: the coverage wording separated from the marker sentence by 1200 chars of filler still passed — the window pin does not require the coverage to ride the alert sentence"
+  fi
+  ok "c10[cf-106 C03b AC6/AC7]: the silence clause survives and the alert sentence gains the stop-path coverage on rules source and generated AGENTS.md alike"
+fi
+
+# --- c11: the worker paragraph — one loop file, the ruled model, per-card Provider (cf-106 C10 AC4) ---
+if want c11; then
+  # C10's rules edit lands here: the pipeline-worker paragraph names ONE loop
+  # file, the owner-ruled runner model, and Provider routing per card. Both
+  # surfaces are pinned (rulesync regenerates AGENTS.md from the source; the
+  # claim must be present on each so a one-sided edit reddens).
+  for f in "$RULES_SRC" AGENTS.md; do
+    [ -f "$f" ] || fail "c11[cf-106 C10 AC4]: $f missing (harness fault)"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'gpu-ai/qwen3.8-27b-q4' \
+      || fail "c11[cf-106 C10 AC4]: $f does not pair the loop/worker paragraph with the owner-ruled runner model gpu-ai/qwen3.8-27b-q4 (OQ-14, 2026-11-03) — red until C10 edits the rules source and regenerates"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'one' 'pipeline-worker.md' \
+      || fail "c11[cf-106 C10 AC4]: $f still describes the loop surface as a pair — the paragraph must name the single pipeline-worker.md runner"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'per-card|per card|rout' \
+      || fail "c11[cf-106 C10 AC4]: $f never says Provider is per-card routing inside the run — the scheduler split is retired"
+    strays=$(grep -inE 'pipeline-worker-local|two loop (files|tasks)|both loop tasks' "$f" || true)
+    [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "c11[cf-106 C10 AC4]: $f still names the retired second loop task in current-state prose"; }
+    # The gate/LIVE/Timeout sentences stay accurate through the rewrite (C10 task).
+    for tok in 'LIVE' 'Timeout'; do
+      grep -qF "$tok" "$f" || fail "c11[cf-106 C10 AC4]: $f lost the '$tok' sentence — the gate/Timeout wording stays accurate, C10 does not rewrite it"
+    done
+  done
+  # Fabricated-drift control: restoring the pair sentence must redden the sweep.
+  python3 - "$RULES_SRC" "$TMP/rules-pair.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+open(sys.argv[2], "w", encoding="utf-8").write(
+    t + "\nThe two loop tasks, pipeline-worker.md and pipeline-worker-local.md, split the hourly ticks.\n")
+PY
+  if ! grep -qiE 'pipeline-worker-local|two loop (files|tasks)' "$TMP/rules-pair.md"; then
+    fail "c11 control: the fabricated pair sentence was not caught by the sweep (the guard is inert)"
+  fi
+  ok "c11[cf-106 C10 AC4]: the worker paragraph names one loop file, the ruled gpu-ai/qwen3.8-27b-q4 model and per-card Provider routing on rules source and generated AGENTS.md, keeps the gate/Timeout sentences, and a fabricated pair sentence is rejected"
 fi
 
 printf 'PASS: agent-board-coord agents-md checks (%d ok)\n' "$checks"

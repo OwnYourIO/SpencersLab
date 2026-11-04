@@ -103,14 +103,16 @@ import ast, re, sys
 src = open(sys.argv[1]).read()
 tree = ast.parse(src)
 
-READS = 17
+READS = 18
 WRITES = 21
 NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
        'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item',
        'update_board', 'create_swimlane', 'create_label', 'list_board_members',
        'list_board_dependencies', 'list_card_dependencies', 'add_card_dependency',
        'edit_card_dependency', 'remove_card_dependency', 'preload_board',
-       'set_card_labels']
+       # cf-106 C07: the single-card preload read. Additive and read-only, so it
+       # joins the READS side (+1 -> 18) and the 39-tool ledger.
+       'set_card_labels', 'get_card_details']
 BASE20 = ['list_boards', 'get_board', 'list_lists', 'list_swimlanes',
           'list_cards_in_list', 'get_card', 'list_comments', 'list_checklists',
           'get_checklist', 'list_rules', 'get_rule', 'create_card',
@@ -144,7 +146,7 @@ if len(writes) != WRITES:
     bad(f't2: {len(writes)} @_write_tool writes, expected exactly {WRITES} (C01 AC2)')
 all_tools = reads + writes
 if len(set(all_tools)) != READS + WRITES:
-    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly 38 distinct')
+    bad(f't2: registered names are {sorted(set(all_tools))}, expected exactly {READS + WRITES} distinct')
 for name in NEW:
     if all_tools.count(name) != 1:
         bad(f't2: new tool {name!r} registered {all_tools.count(name)} times, expected exactly once (names are the C02/C03 contract, D2)')
@@ -157,7 +159,7 @@ allowed = {'WEKAN_MCP_LOG_LEVEL', 'WEKAN_MCP_READ_ONLY', 'WEKAN_MCP_HOST', 'WEKA
 extra = envs - allowed
 if extra:
     bad(f't2: new env vars read in server.py: {sorted(extra)} — C01 AC3 forbids new env vars (only {sorted(allowed)})')
-print('ok: t2 — 17 @mcp.tool + 21 @_write_tool == 38 distinct names, the 17 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item + cf-89 v102 + cf-96 extension)')
+print(f'ok: t2 — {READS} @mcp.tool + {WRITES} @_write_tool == {READS + WRITES} distinct names, the 17 new names registered once each, the base 20 intact, no new env vars (C01 AC2+AC3 + add_checklist_item + cf-89 v102 + cf-96 extension)')
 PY
   then
     checks=$((checks + 1))
@@ -309,8 +311,8 @@ NEW = ['list_custom_fields', 'get_custom_field', 'create_custom_field',
        'set_card_custom_field', 'add_checklist_item', 'delete_checklist_item',
        'create_list']
 
-if '38 typed tools' not in readme:
-    bad('t5: README must state the 38-tool surface (cf-96 C01 parity)')
+if f'{READS + WRITES} typed tools' not in readme:
+    bad(f't5: README must state the {READS + WRITES}-tool surface (cf-96 C01 parity + cf-106 C07 +1)')
 for stale in ('26 typed tools', '25 typed tools', '20 typed tools'):
     if stale in readme:
         bad(f't5: README still claims the stale tool count ({stale!r})')
@@ -326,8 +328,8 @@ for stale in ('bumped by CI', 'semver source of truth', ':latest', 'v<version>')
 if 'run_number' not in readme:
     bad('t5: README must describe the actual tag scheme (:v<run_number> + :<branch>) it already links to')
 
-if '38 typed tools' not in skill:
-    bad('t5: wekan-api SKILL must say 38 typed tools')
+if f'{READS + WRITES} typed tools' not in skill:
+    bad(f't5: wekan-api SKILL must say {READS + WRITES} typed tools')
 for stale in ('26 typed tools', '25 typed tools', '20 typed tools', '20-tool'):
     if stale in skill:
         bad(f't5: wekan-api SKILL still claims the stale tool count ({stale!r})')
@@ -344,7 +346,7 @@ if i < 0:
 window = skill[i:i + 400]
 if 'custom field' in window.lower():
     bad('t5: custom fields are no longer on the omitted surface — 25 tools include the five custom-field/checklist-delete tools (C01 AC5)')
-print('ok: t5 — README + wekan-api SKILL agree with the 38-tool surface, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5 + cf-89 v102 + cf-96 C01 re-pin)')
+print('ok: t5 — README + wekan-api SKILL agree with the 38-tool surface, the login-mint wording landed, and the stale VERSION/semver claims are gone (C01 AC5 + cf-89 v102 + cf-96 C01 + cf-106 C07 re-pin)')
 PY
   then
     checks=$((checks + 1))

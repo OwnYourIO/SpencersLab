@@ -205,10 +205,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 20); do WANT["t$i"]=1; done
+  for i in $(seq 1 21); do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-9]|1[0-9]|20)$ ]] || fail "unknown check id '$a' (expected t1..t20)"
+    [[ "$a" =~ ^t([1-9]|1[0-9]|2[0-2])$ ]] || fail "unknown check id '$a' (expected t1..t21)"
     WANT["$a"]=1
   done
 fi
@@ -878,6 +878,19 @@ fi
 # (cf-86 chunk-declared-files precedent) — the aislop-pin parity guard and the
 # provider-loops t6 nesting must stay green across that bump, not red on the
 # ticket performing it.
+# cf-106 (2026-11-03, agent-test; chunks/C01.md "Scope admits"): the running
+# ticket's own plan folder joins on the same D9 rule — paid ONCE for the whole
+# ticket (plan DECISIONS 2026-11-03: "the per-ticket scope admits … so later
+# chunks run green without re-opening these arms"). Everything else cf-106
+# declares already rides this set: scripts/* covers C03a's
+# scripts/session-noop-audit.sh, tests/* covers tests/cf106-noop/**, and
+# .opencode/plugin/{pipeline-locks,question-notify,board-context}/*,
+# .agents/loops/*, containers/wekan-mcp/*, skills/{wekan-mcp,wekan-board-provision}/*,
+# .rulesync/* + .opencode/{agents,commands,skills}/* and AGENTS.md cover the
+# remaining chunk file lists. Red posture: this arm is the plan-time red —
+# t14 rejects this ticket's EXPLORE.md/plan file until this line lands, and
+# provider-loops t6 reddens as its consumer (plan Grounding, FRICTION
+# 2026-11-03). Any replan-added file joins THIS line, not a new arm.
 if want t14; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -936,11 +949,12 @@ if want t14; then
       .rulesync/skills/pipeline-role-deploy/*|.opencode/skills/pipeline-role-deploy/*|\
       .rulesync/skills/pipeline-role-research/*|.opencode/skills/pipeline-role-research/*|\
       .agents/plans/2026/2026-11-bug-pipeline-locks-tick-pin/*|\
+      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*|\
       .opencode/plugin/aislop-gate/*|.github/workflows/aislop.yaml) : ;;
       *) fail "t14: path outside the ticket's Files in scope: $p (base: $BASE, C02 AC4 + C03 AC5 scope + cf-52 + tests-edit-perms D4/D9 + cf-58 + cf-75 + cf-86 + cf-90 + cf-96 C09 coder-template + cf-96 C11 T5 container-creation-skill + cf-96 final-sweep role-research-skill widenings)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits and the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits (base: $BASE)"
+  ok "t14: changed paths limited to the ticket's Files in scope, round-2 surfaces, the cf-52 coord-pair widening, the tests-edit-perms D4/D9 widening (three 2026-10-bug-* folders), the kickoff-mints scripts/* admit, the cf-58 agent-surface widening, the cf-75 skill/plugin/gates/review/plan-and-result admits, the cf-75/cf-85/cf-72/board-tick-cleanup own-folder admits, the cf-86 plan-folder/serving-files/docs/image-build-surface admits, the cf-90 folder/provision-skill/role-plan/role-deploy admits, the cf-96 plan-folder + C09 coder-template + C11 T5 container-creation + final-sweep role-research-skill admits and the cf-106 own-folder admit (whole-ticket scope union; base: $BASE)"
 
   RS=""
   if command -v rulesync >/dev/null 2>&1; then
@@ -1238,6 +1252,34 @@ if want t19; then
       || fail "t19: $f RESEARCH_LABEL line changed vs $BASE — only SESSION_URL_BASE's provenance moves (D18 r2)"
   done
   ok "t19: boards skill (src + gen) free of host literals, dynamic Session-origin definition with all three UNRESOLVED branches, raw-id+RESULT fallback, never-re-guess, consistency check, preserved link shape and verbatim RESEARCH_LABEL (C03 AC2)"
+fi
+
+# --- t21: the gate SCRIPT stays byte-exact on its verdicts and marker-blind (cf-106 C03b AC3) ---
+if want t21; then
+  [ -f "$GATE" ] || fail "t21[cf-106 C03b AC3]: $GATE missing — the gate is landed machinery"
+  cat >"$TMP/verdicts.txt" <<'VERDICTS'
+say_run() { printf 'GATE: RUN %s\n' "$1"; exit 0; }
+say_skip() { printf 'GATE: SKIP %s\n' "$1"; exit 1; }
+printf 'GATE: LIVE %s (%ss) %s\n' "$id" "$age" "$title"
+VERDICTS
+  while IFS= read -r line; do
+    grep -qxF -- "$line" "$GATE" \
+      || fail "t21[cf-106 C03b AC3]: $GATE lost the byte-exact verdict emission [$line] — C03b makes the RUN that reads a SKIP / LIVE-with-cards / board-check verdict mark and archive; the script's own output contract must not move"
+  done <"$TMP/verdicts.txt"
+  if hits=$(grep -nE 'pipelineNoop|archiv|opencode api (patch|post)' "$GATE"); then
+    printf '%s\n' "$hits" >&2
+    fail "t21[cf-106 C03b AC3]: the gate script grew marker/archive/session-write text — the script prints a verdict and touches no session; the run does the marking"
+  fi
+  # Control: a fabricated copy with one verdict truncated must be caught, or the
+  # byte-exact pin above is vacuous.
+  python3 - "$GATE" "$TMP/gate-mod.sh" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+open(sys.argv[2], "w", encoding="utf-8").write(t.replace("GATE: LIVE %s (%ss) %s", "GATE: LIVE %s (%ss)", 1))
+PY
+  grep -qxF -- "printf 'GATE: LIVE %s (%ss) %s\n' "\$id" "\$age" "\$title"" "$TMP/gate-mod.sh" \
+    && fail "t21 control: a gate copy with the LIVE verdict truncated still matched the byte-exact pin — the pin is vacuous"
+  ok "t21[cf-106 C03b AC3]: the gate script's three verdict emissions are byte-exact (control-proven) and it carries no marker/archive/session-write text"
 fi
 
 printf 'PASS: agent-board-coord gate contract checks (%d ok)\n' "$checks"

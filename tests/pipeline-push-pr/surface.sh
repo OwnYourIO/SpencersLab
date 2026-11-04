@@ -63,11 +63,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7 8 9; do WANT["p$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9 10; do WANT["p$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^p[1-9]$ ]] || fail "unknown check id '$a' (expected P1..P9)"
+    [[ "$lc" =~ ^p([1-9]|10)$ ]] || fail "unknown check id '$a' (expected P1..P10)"
     WANT["$lc"]=1
   done
 fi
@@ -201,7 +201,10 @@ if want p3; then
   for f in "$SRC" "$GEN"; do
     [ -f "$f" ] || fail "P3[AC3]: $f missing (red before C01)"
     # 1. Applies-to — the four -pr consumers named; a -local/plain loader is drift.
-    contract applies-to 0 400 "$f" 'agent-coord-pr' 'agent-board-coord-pr' 'agent-dev-pr' 'dev-pr'
+    # cf-106 C04 AC5 grows the governed set with the standalone code-pr twin:
+    # the contract is the single push authority, so an agent that can push has
+    # to sit inside it (red until C04 edits the skill on both trees).
+    contract applies-to 0 400 "$f" 'agent-coord-pr' 'agent-board-coord-pr' 'agent-dev-pr' 'dev-pr' 'code-pr'
     contract drift-stop 1 300 "$f" 'drift' 'stop'
     # 2. Push rules — the AGENTS.md hard-rule citations + the standing-request basis.
     contract push-rules 1 900 "$f" 'AGENTS.md' 'main' 'force-push' 'self-remediat' 'human-owned'
@@ -341,6 +344,26 @@ assert (fm.get("description") or "").strip(), "empty description"
 PY
   done
   ok "P9[C05 AC4]: the three -pr agents (sources + mirrors) parse with non-empty descriptions"
+fi
+
+# --- P10: cf-106 C04 AC5 — the standalone code-pr twin joins the governed set --
+# The push contract governs every agent that can push and none that cannot. Red
+# before C04 (the Applies-to list does not name code-pr, and the twin does not
+# exist); once the twin lands it is a HOLD pair: the twin loads the contract,
+# the plain variant stays out.
+if want p10; then
+  for f in "$SRC" "$GEN"; do
+    grep -qF 'code-pr' "$f" \
+      || fail "P10[cf-106 C04 AC5]: $f never names code-pr in its Applies-to — the contract is the single push authority, so the twin C04 creates has to be governed by it (red before C04 edits the skill on both trees)"
+  done
+  grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' .rulesync/subagents/code.md \
+    && fail "P10[cf-106 C04 AC5]: .rulesync/subagents/code.md (the commit-only variant) MUST-loads the push contract — a plain/-local loader is the drift this skill's own rule names"
+  if [ ! -f .rulesync/subagents/code-pr.md ]; then
+    fail "P10[cf-106 C04 AC5]: .rulesync/subagents/code-pr.md does not exist — the governed-set flip engages once C04 creates the twin (this run's red names it)"
+  fi
+  grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' .rulesync/subagents/code-pr.md \
+    || fail "P10[cf-106 C04 AC5]: code-pr.md exists but does not MUST-load /pipeline-push-pr — a push-capable agent outside the contract (HOLD once the twin lands)"
+  ok "P10[cf-106 C04 AC5]: Applies-to names code-pr on source and mirror, the plain code variant stays outside the governed set, and the code-pr twin MUST-loads the push contract"
 fi
 
 printf 'PASS: pipeline-push-pr surface checks (%d ok)\n' "$checks"
