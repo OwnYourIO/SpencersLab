@@ -15,10 +15,10 @@
 # Pinned response-shape names (C01 T2/T3 interface): preload_board returns
 # keys {"board_id","swimlanes","lists","cards"? no — grouped: "swimlanes"
 # (each with "lists", each with "cards"), "dependencies", "label_names",
-# "field_names"}; per-card dict EXACTLY {id, card_number, label_ids, slug,
-# archived, sort, parent_id}; set_card_labels args (board_id, card_ids,
-# add_label_ids=None, remove_label_ids=None); create_card's parent_id is the
-# TRAILING parameter after default_checked.
+# "field_names"}; EVERY per-card dict EXACTLY {id, card_number, label_ids,
+# slug, archived, sort, parent_id, checklists}; set_card_labels args (board_id,
+# card_ids, add_label_ids=None, remove_label_ids=None); create_card's parent_id
+# is the TRAILING parameter after default_checked.
 #
 # AC trace: t1[C01 AC2 — dep signatures, 7-type client gate, upsert doc,
 # DESTRUCTIVE mark, registration kinds] t2[AC2 — preload reshape contract
@@ -39,19 +39,47 @@
 # missing tool/shape, never a harness fault. t6 red until the same-commit
 # re-stamp; t7 green at base, HOLD (turns red the moment dev edits wekan.py).
 #
+# AC trace (cf-106 C06): t9[AC1/AC4 — one request carries `checklists`, the
+# standard-five + legacy Research vocabulary, {title, finished} items, docstring
+# enumerates the sets] t10[AC2/AC4 — title beside id on swimlane and list
+# entries, empty groups unemitted, sort-field re-ordering, no description key]
+# t11[AC3 + review N1 — swimlane_titles optional, None = every swimlane, a real
+# filter branch, unknown title = the documented empty grouping with NO raise on
+# the filter path, and a malformed non-dict export answer FAILS the call (the
+# boards degrade law's present-but-failed branch needs a failed call: an empty
+# grouping is contractually an empty board, so a pickup walk would mark
+# no-cards, write the no-op marker and archive silently)].
+# t11's fail-the-call leg is DESIGNED RED until C06 round 2 replaces the
+# `doc = {}` swallow; the compliant fixture (filter kept + guarded transport
+# raise) proves the leg is satisfiable, and preload-filter-raise.py proves the
+# raise ban is scoped to the filter path rather than blanket.
+#
+# cf-106 C06 test round (2026-11-04, agent-test; reviewer N1 + N2): t11's raise
+# ban was blanket (any Raise in preload_board), which over-implemented AC3 and is
+# what pushed the round-1 dev into swallowing a malformed export answer into the
+# empty grouping — contractually identical to an empty board, so a pickup walk
+# would mark no-cards, write the no-op marker and archive. The ban is now scoped
+# to the filter arm and t11 additionally requires the malformed answer to fail
+# the call. t2's card-key arm is `all` (a compliant map no longer masks a decoy
+# carrying `title`) and its stale "seven fields" wording says eight. No assertion
+# vocabulary elsewhere changed; the fixture fabricator now fails loudly (a
+# non-matching anchor used to build a copy identical to the compliant source).
+#
 # Statics-only by design (D8 / DECISIONS convention): AST + grep over the
 # source, no server, no network. The live round-trip is the C10 runbook's
 # user probe.
 #
 # Usage:
-#   bash tests/wekan-mcp/dependencies.sh            # t1..t8
+#   bash tests/wekan-mcp/dependencies.sh            # t1..t11
 #   bash tests/wekan-mcp/dependencies.sh t2 t5      # subset
 #   CF96_BASE=<ref> bash tests/wekan-mcp/dependencies.sh t7
+#   WEKAN_SERVER=<path> bash tests/wekan-mcp/dependencies.sh t11   # re-derive an
+#       arm against a patched copy of server.py (out-of-tree proof of satisfiability)
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-SERVER="containers/wekan-mcp/wekan_mcp/server.py"
+SERVER="${WEKAN_SERVER:-containers/wekan-mcp/wekan_mcp/server.py}"
 WEKAN_PY="containers/wekan-mcp/wekan_mcp/wekan.py"
 README="containers/wekan-mcp/README.md"
 SKILL_MCP="skills/wekan-mcp/SKILL.md"
@@ -208,9 +236,11 @@ for sec in ("board-header", "labels", "custom-fields", "dependencies", "sort", "
     if sec not in b:
         print(f"t2: the fields= vocabulary must include '{sec}' (C01 T2 trimmed section list)"); sys.exit(1)
 
-# per-card key set EXACTLY the seven pinned fields: find the card-map dict
-# literal by anchor keys and assert its full key set — an extra "title" or a
-# dropped "sort" fails here (the AC2 "EXACTLY" wording is the contract).
+# Per-card key set EXACTLY the eight pinned fields: find every card-map dict
+# literal by anchor keys and assert each one's full key set — an extra "title" or
+# a dropped "sort" fails here (the AC2 "EXACTLY" wording is the contract). The
+# quantifier is `all`, not `any`: with `any`, one compliant map masks a decoy map
+# carrying `title` (cf-106 C06 review N2).
 KEYS = {"id", "card_number", "label_ids", "slug", "archived", "sort", "parent_id", "checklists"}
 card_dicts = []
 for n in ast.walk(fn):
@@ -219,9 +249,10 @@ for n in ast.walk(fn):
         if {"card_number", "parent_id"} <= ks:
             card_dicts.append(ks)
 if not card_dicts:
-    print("t2: no card-map dict literal carrying card_number + parent_id inside preload_board — the pinned per-card reshape (id/card_number/label_ids/slug/archived/sort/parent_id) has not landed"); sys.exit(1)
-if not any(ks == KEYS for ks in card_dicts):
-    print(f"t2: the preloaded card map keys are {sorted(card_dicts[0])}, want EXACTLY {sorted(KEYS)} (C01 T2 field set — titles/descriptions are NOT carried, per-card field set is pinned exactly)"); sys.exit(1)
+    print("t2: no card-map dict literal carrying card_number + parent_id inside preload_board — the pinned per-card reshape (id/card_number/label_ids/slug/archived/sort/parent_id/checklists) has not landed"); sys.exit(1)
+if not all(ks == KEYS for ks in card_dicts):
+    off = sorted({tuple(sorted(ks)) for ks in card_dicts if ks != KEYS})
+    print(f"t2: card map(s) {[' '.join(k) for k in off]}, want EVERY card map EXACTLY {sorted(KEYS)} (C01 T2 field set — titles/descriptions are NOT carried, per-card field set is pinned exactly)"); sys.exit(1)
 if '"description"' in b:
     print("t2: preload_board must not carry descriptions — the payload drops them (C01 T2)"); sys.exit(1)
 
@@ -250,7 +281,7 @@ if "slug" not in d or ("[" not in d and "link" not in d.lower()):
     print("t2: preload_board docstring must document the combined [<slug>](<link>) value parsing (bracketed text; bare value passes through)"); sys.exit(1)
 if "linked" not in d.lower():
     print("t2: preload_board docstring must state that linked cards are excluded by the exporter itself (S11 — documented, not filtered here)"); sys.exit(1)
-print("ok: t2 — preload_board: one export call, attachments=false + fields trim, exact 7-key card map, no title/description, flag-not-drop archived, grouped map + dependencies + name maps")
+print("ok: t2 — preload_board: one export call, attachments=false + fields trim, every card map the exact 8-key set, no title/description, flag-not-drop archived, grouped map + dependencies + name maps")
 PY
   then fail "t2[C01 AC2]: the preload_board reshape contract is not satisfied (reason above)"; fi
   ok "t2[C01 AC2 + cf-106 C06]: preload_board one-call export reshape contract satisfied (the trim carries checklists, the card map is the 8-key set, the signature carries the swimlane filter)"
@@ -617,8 +648,90 @@ elif mode == "filter":
         or any("swimlane_titles" in ast.unparse(kw.value) for n in ast.walk(fn) if isinstance(n, ast.Call) for kw in n.keywords)
     if not filter_site:
         bad.append("no filter branch keyed on swimlane_titles — the argument cannot bound the payload")
-    if any(isinstance(n, ast.Raise) for n in ast.walk(fn)):
-        bad.append("the tool raises — an unknown swimlane title must yield the documented empty grouping, not an error (AC3)")
+    # AC3's "no error" rule belongs to the FILTER arm only: an unknown/empty/None
+    # swimlane title must yield the documented empty grouping. A malformed
+    # transport answer is a different arm — and there failing the call is
+    # REQUIRED below (cf-106 C06 review N1: the swallow-into-empty-grouping shape
+    # is the hazard). So the ban is scoped to raises reachable from the
+    # swimlane_titles path: unconditional in the body, under a title-keyed guard,
+    # or about titles.
+    parents = {}
+    for n in ast.walk(fn):
+        for c in ast.iter_child_nodes(n):
+            parents[c] = n
+
+    def filter_path(r):
+        if parents.get(r) is fn:
+            return True  # unconditional in the body: fires on the unknown-title call too
+        node = parents.get(r)
+        while node is not None and node is not fn:
+            if isinstance(node, ast.If) and "swimlane_titles" in ast.unparse(node.test):
+                return True
+            if isinstance(node, (ast.ListComp, ast.DictComp, ast.GeneratorExp, ast.SetComp)) and any(
+                    "swimlane_titles" in ast.unparse(i) for i in node.ifs):
+                return True
+            node = parents.get(node)
+        return False
+
+    raises = [n for n in ast.walk(fn) if isinstance(n, ast.Raise)]
+    banned_nodes = [r for r in raises if filter_path(r) or "swimlane" in ast.unparse(r).lower()]
+    banned = [ast.unparse(r).replace("\n", " ") for r in banned_nodes]
+    if banned:
+        bad.append(f"the swimlane_titles filter arm raises ({banned}) — an unknown swimlane title must yield the documented empty grouping, not an error (AC3)")
+    # N1 mechanism pin (C06 round 2), two halves. A malformed / bodyless export
+    # answer must never be folded into the empty grouping: an empty grouping is
+    # contractually identical to an empty board, so a pickup walk would conclude
+    # "no claimable cards", write the no-op marker and archive the session
+    # silently. The boards degrade law (present-but-failed: one retry, then the
+    # per-list fallbacks) can only fire on a call that ACTUALLY fails.
+    def emptyish(e):
+        if isinstance(e, ast.Dict):
+            return not e.keys
+        if isinstance(e, (ast.List, ast.Tuple, ast.Set)):
+            return not e.elts
+        return isinstance(e, ast.Constant) and e.value in (None, "")
+
+    def transport_call(v):
+        if isinstance(v, ast.Call):
+            return True
+        if isinstance(v, ast.BoolOp):
+            return any(transport_call(x) for x in v.values)
+        return False
+
+    ans_assigns = [n for n in ast.walk(fn) if isinstance(n, (ast.Assign, ast.AnnAssign))
+                   and n.value is not None and transport_call(n.value)
+                   and "/export" in ast.unparse(n.value)]
+    if not ans_assigns:
+        bad.append("no export-route call assignment in preload_board — the answer the N1 pin guards cannot be identified")
+    answer = next((n.targets[0].id for n in ans_assigns
+                   if n.targets and isinstance(n.targets[0], ast.Name)), None)
+    if answer:
+        for n in ans_assigns:
+            if isinstance(n.value, ast.BoolOp) and isinstance(n.value.op, ast.Or) \
+                    and any(emptyish(v) for v in n.value.values[1:]):
+                bad.append(f"the export answer falls back to an empty container (`{answer} = … or {{}}`) — a bodyless or malformed export body becomes the empty grouping, which is indistinguishable from an empty board; the call must fail so the degrade law's present-but-failed branch runs (cf-106 C06 N1)")
+        for n in if_statements:
+            test = ast.unparse(n.test)
+            if "isinstance" not in test or "dict" not in test:
+                continue
+            for st in n.body:
+                if isinstance(st, ast.Assign):
+                    tgt, val = st.targets, st.value
+                elif isinstance(st, ast.AnnAssign):
+                    tgt, val = [st.target], st.value
+                else:
+                    continue
+                if val is None:
+                    continue
+                if any(isinstance(t, ast.Name) and t.id == answer for t in tgt) and emptyish(val):
+                    bad.append(f"the malformed-answer guard reassigns `{answer}` to an empty container — silent-empty ≡ empty-board: a pickup walk would mark no-cards, write the no-op marker and archive; a non-dict export answer must fail the call (cf-106 C06 N1)")
+    failure_signal = any(r not in banned_nodes for r in raises) or any(
+        isinstance(n.func, ast.Name)
+        and any(tok in n.func.id.lower() for tok in ("error", "raise", "fail", "abort", "invalid", "malformed"))
+        and answer is not None and any(answer in ast.unparse(a) for a in n.args)
+        for n in ast.walk(fn) if isinstance(n, ast.Call))
+    if not failure_signal:
+        bad.append("no failure signal for a malformed export answer (a guarded raise, or a failure-signalling call over the answer such as _embedded_error) — the boards degrade law cannot see a call that answers with the empty grouping (cf-106 C06 N1)")
     if "swimlane" not in doc.lower() or not any(w in doc.lower() for w in ("all", "every", "default")):
         bad.append("the docstring does not state the default (every swimlane) — AC3's documented default is part of the contract")
 else:
@@ -640,10 +753,14 @@ def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) ->
     archived, sort, parent_id and checklists. Checklists are filtered to the
     standard checklists (Services, Type, Model(s), Lifecycle, Human in the Loop)
     plus the legacy Research spelling; every swimlane by default, and an
-    unknown swimlane title yields an empty grouping."""
+    unknown swimlane title yields an empty grouping. A malformed (non-dict)
+    export answer fails the call — an empty grouping must stay distinguishable
+    from an empty board."""
     doc = client.get("/api/boards/{board_id}/export",
                      params={"attachments": "false",
                              "fields": "board-header,labels,custom-fields,dependencies,sort,checklists"})
+    if not isinstance(doc, dict):
+        raise ValueError("wekan export answer is not a dict")
     keep = [c for c in doc.get("checklists", [])
             if c.get("title") in STD or len(c.get("tasks", [])) == 8]
     items = {c.get("_id"): [{"title": t.get("title"), "finished": bool(t.get("done"))}
@@ -667,19 +784,42 @@ def preload_board(board_id: str, swimlane_titles: Optional[list[str]] = None) ->
             "dependencies": [], "label_names": {}, "field_names": {}}
 PYEOF
 
-python3 - "$TMP/preload-compliant.py" "$TMP" <<'PY'
+python3 - "$TMP/preload-compliant.py" "$TMP" <<'PY' || { echo "t9/t10/t11: the fixture fabricator itself failed (fixture fault — a broken fixture edit reads as a contract red)" >&2; exit 1; }
 import sys
-# Degraded copies: one degradation per mode, so each control reddens exactly one
-# arm (and proves that arm is responsive, not decoration).
+# Degraded copies: one degradation per copy, so each control reddens exactly one
+# arm (and proves that arm is responsive, not decoration). Every edit is asserted
+# to have applied — a silently non-matching replace would build a copy identical to
+# the compliant source and the control would pass for the wrong reason.
 text = open(sys.argv[1]).read()
 tmp = sys.argv[2]
-open(tmp + "/preload-degraded-1.py", "w").write(
-    text.replace('if c.get("title") in STD or len(c.get("tasks", [])) == 8', "if True"))
-open(tmp + "/preload-degraded-2.py", "w").write(
-    text.replace('"id": l.get("_id"), "title": l.get("title"),', '"id": l.get("_id"),'))
-open(tmp + "/preload-degraded-3.py", "w").write(
-    text.replace('    if swimlane_titles is not None:\n        swimlanes = [s for s in swimlanes if s["title"] in swimlane_titles]',
-                 '    raise ValueError("unsupported filter")'))
+
+def sub(name, old, new):
+    if text.count(old) != 1:
+        sys.exit(f"fixture fault: {name} anchor found {text.count(old)} times (want 1)")
+    out = text.replace(old, new)
+    open(f"{tmp}/preload-{name}.py", "w").write(out)
+    return out
+
+FILTER_ARM = ('    if swimlane_titles is not None:\n'
+              '        swimlanes = [s for s in swimlanes if s["title"] in swimlane_titles]')
+TRANSPORT_GUARD = ('    if not isinstance(doc, dict):\n'
+                   '        raise ValueError("wekan export answer is not a dict")')
+
+sub("degraded-1", 'if c.get("title") in STD or len(c.get("tasks", [])) == 8', "if True")
+sub("degraded-2", '"id": l.get("_id"), "title": l.get("title"),', '"id": l.get("_id"),')
+# filter arm, raised unconditionally in the body (the filter branch is gone)
+sub("degraded-3", FILTER_ARM, '    raise ValueError("unsupported filter")')
+# filter arm, raise nested inside the title-keyed guard — the scoped ban must catch
+# this shape too, so the ban is not just a "no raise at body level" rule
+sub("filter-raise", FILTER_ARM,
+    '    if swimlane_titles is not None:\n'
+    '        raise ValueError(f"unsupported swimlane titles: {sorted(swimlane_titles)}")')
+# the cf-106 C06 round-1 defect: a malformed export answer swallowed into the
+# empty grouping — the positive leg must redden this, not the ban leg
+sub("swallow", TRANSPORT_GUARD, '    if not isinstance(doc, dict):\n        doc = {}')
+# the other swallow shape: a bodyless answer folded in at the call site
+sub("orfallback", '"fields": "board-header,labels,custom-fields,dependencies,sort,checklists"})',
+    '"fields": "board-header,labels,custom-fields,dependencies,sort,checklists"}) or {}')
 PY
 
 fi
@@ -706,12 +846,18 @@ fi
 
 if want t11; then
   python3 "$TMP/preloadshape.py" "$SERVER" filter \
-    || fail "t11[C06 AC3]: the swimlane_titles contract is not satisfied (reason above; designed red until the optional filter argument lands)"
+    || fail "t11[C06 AC3 + N1]: the swimlane_titles contract is not satisfied (reason above; the filter argument must be optional with every-swimlane as the documented default and must not raise for an unknown title, AND a malformed/non-dict export answer must fail the call — designed red until C06 round 2 replaces the empty-grouping swallow)"
   python3 "$TMP/preloadshape.py" "$TMP/preload-compliant.py" filter \
-    || fail "t11[C06]: NEGATIVE CONTROL FAILED — the checker rejects a compliant swimlane_titles implementation"
+    || fail "t11[C06]: NEGATIVE CONTROL FAILED — the checker rejects a compliant swimlane_titles implementation (filter kept, transport guard raise kept): the N1 arm is unsatisfiable as written"
   python3 "$TMP/preloadshape.py" "$TMP/preload-degraded-3.py" filter >/dev/null 2>&1 \
     && fail "t11[C06]: NEGATIVE CONTROL FAILED — a tool that raises instead of filtering still passes the AC3 arms"
-  ok "t11[C06 AC3]: swimlane_titles is an optional argument defaulting to every swimlane, actually filters the grouping, yields the documented empty answer for an unknown title (no raise), and the docstring states the default"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-filter-raise.py" filter >/dev/null 2>&1 \
+    && fail "t11[C06]: NEGATIVE CONTROL FAILED — a raise nested inside the swimlane_titles guard passes the AC3 arms (the raise ban is not scoped to the filter path, or the scope test is broken)"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-swallow.py" filter >/dev/null 2>&1 \
+    && fail "t11[C06 N1]: NEGATIVE CONTROL FAILED — a malformed export answer swallowed into the empty grouping still passes: the fail-the-call arm is decoration, and silent-empty ≡ empty-board (a pickup walk would mark no-cards, write the no-op marker and archive silently)"
+  python3 "$TMP/preloadshape.py" "$TMP/preload-orfallback.py" filter >/dev/null 2>&1 \
+    && fail "t11[C06 N1]: NEGATIVE CONTROL FAILED — an export answer with an \`or {}\` fallback still passes: the no-swallow half of the pin is decoration (a bodyless answer becomes the empty grouping)"
+  ok "t11[C06 AC3 + N1]: swimlane_titles is optional, defaults to every swimlane, actually filters the grouping, yields the documented empty answer for an unknown title (no raise on the filter path), the docstring states the default, and a malformed non-dict export answer fails the call instead of returning the empty grouping (silent-empty ≡ empty-board is the hazard the degrade law must see)"
 fi
 
 printf 'PASS: wekan-mcp cf-96 dependency/preload/label-surface checks (%d ok)\n' "$checks"

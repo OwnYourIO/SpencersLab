@@ -34,6 +34,15 @@
 #   LF7  budget watch over the LF1/LF2 evidence of the same run: fail-loud if
 #        a launched instance logged a FETCH_TIMEOUT_MS budget breach or a
 #        degrade line, fail if the structural legs left no evidence to watch.
+#   LF8  preload payload (cf-106 C06): the deployed preload_board answer carries
+#        the checklist state (items with their finished flag) and the
+#        swimlane/list titles — the claim-time per-card fan-out stays dead.
+#   LF9  swimlane_titles (cf-106 C06): the filter bound is accepted and answers
+#        exactly the named swimlane.
+#        LF8/LF9 answer `degraded` when the deployed image predates the preload
+#        surface (today's pin is wekan-mcp :v87, 26 tools); they are NOT part of
+#        `all` — the board-context citation run must not go red on an image pin
+#        the owner has not bumped yet.
 #
 # Launch topology (the location reality the chunk records): LF1/LF2/LF7 prove
 # the BRANCH code through `opencode run --standalone` from this worktree, so
@@ -52,11 +61,11 @@
 #
 # Side effects: probe sessions are throwaway top-level `agent-board-coord`
 # runs titled board-preload-probe-<leg>-* (zero claims, zero board writes —
-# they never touch a real card). Every probe run that finishes successfully
-# produces an "OpenCode: agent-board-coord finished" push from the question
-# plugin of the instance that served it (manual shape keeps alerting — LF5's
-# safe direction), so expect one per successful LF1/LF2/LF4 leg, with LF4's
-# the pre-announced LF5 test push.
+# they never touch a real card; LF8/LF9 only ever call read tools). Every probe
+# run that finishes successfully produces an "OpenCode: agent-board-coord
+# finished" push from the question plugin of the instance that served it
+# (manual shape keeps alerting — LF5's safe direction), so expect one per
+# successful LF1/LF2/LF4/LF8/LF9 leg, with LF4's the pre-announced LF5 test push.
 
 set -euo pipefail
 
@@ -68,6 +77,9 @@ INJECT_HEADER="Board context (collected"
 # The prefetch's structural surface (RESEARCH W1 F4): a board-coord first turn
 # reading any of these consumed what the injection was supposed to spare.
 STRUCTURAL_TOOLS="list_boards get_board list_lists list_swimlanes list_custom_fields"
+# The cf-106 C06 payload legs (LF8/LF9) probe the deployed dev-boards answer,
+# so the claim-time fan-out they are supposed to kill has a live-fire answer.
+PRELOAD_TOOL="preload_board"
 PROMPT_TIMEOUT=900
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 RUN_DIR="/tmp/opencode/board-preload-probe/$STAMP"
@@ -76,7 +88,7 @@ mkdir -p "$RUN_DIR"
 OVERALL=0
 
 usage() {
-  printf 'usage: bash scripts/%s all | bash scripts/%s <leg>...   (legs: lf1 lf2 lf3 lf4 lf5 lf6 lf7)\n' \
+  printf 'usage: bash scripts/%s all | bash scripts/%s <leg>...   (legs: lf1 lf2 lf3 lf4 lf5 lf6 lf7, plus lf8 lf9 which `all` excludes until the owner bumps the image pin)\n' \
     "$SCRIPT_NAME" "$SCRIPT_NAME"
 }
 
@@ -100,6 +112,10 @@ for arg in "$@"; do
   case "$lc" in
     all) LEGS=(lf1 lf2 lf4 lf5 lf6 lf7) ;;
     lf1|lf2|lf3|lf4|lf5|lf6|lf7) LEGS+=("$lc") ;;
+    # lf8/lf9 read the deployed payload, so they answer against the owner's
+    # image pin; excluded from `all` (the board-context citation stays green
+    # while the pin still predates the preload surface).
+    lf8|lf9) LEGS+=("$lc") ;;
     *)
       usage >&2
       verdict usage fail
@@ -199,6 +215,35 @@ for i in items:
             st = (part.get("state") or {}).get("status") or "?"
             seen.append(f"{part.get('name')}:{st}")
 print(",".join(seen))
+PY
+}
+
+# One line per call of <tool> in the session: status<TAB>input-JSON<TAB>answer
+# text. The LF8/LF9 legs read what the deployed dev-boards server actually
+# answered — the payload shape is the point, so the answer text is carried
+# verbatim instead of being reduced to a status token.
+ctx_tool_calls() {
+  python3 - "$1" "$2" <<'PY'
+import json, sys
+items = json.load(open(sys.argv[1])).get("data") or []
+name = sys.argv[2]
+for i in items:
+    if i.get("type") != "assistant":
+        continue
+    for part in i.get("content") or []:
+        if part.get("type") != "tool" or part.get("name") != name:
+            continue
+        st = part.get("state") or {}
+        texts = [c.get("text") or "" for c in (st.get("content") or [])
+                 if isinstance(c, dict)]
+        answer = "\n".join(texts)
+        if st.get("error"):
+            answer += "\n" + json.dumps(st["error"])
+        print("\t".join([
+            str(st.get("status") or "?"),
+            json.dumps(st.get("input") or {}),
+            answer.replace("\n", " "),
+        ]))
 PY
 }
 
@@ -383,6 +428,166 @@ run_lf6() {
   ev "LF6: pre-merge ceiling (OQ-N2 approved 2026-10-29): kind:'scheduled' is stamped by OpenChamber's own scheduler and the shared server loads main-checkout plugins until merge, so the full scheduled-side silence leg is unit-pinned by C02's both-direction matrix (T9/T10) — the first post-merge real hourly fire is the optional user-side belt"
 }
 
+# The `degraded` token is only for a confirmed absent surface: the deployed
+# wekan-mcp pin (v87 today) has no preload_board at all, so the enrichment
+# cannot be judged from it. Anything else that is not the documented payload
+# answers fail.
+preload_absent() {
+  grep -qiE 'not found|no such tool|invalid tool|died unexpectedly' "$1"
+}
+
+# LF8 verdict: `ok` when the answer carries checklist items with their finished
+# flag plus the swimlane/list titles; `thin` when the payload is there but a
+# part of the enrichment is missing (the claim would still fan out per card);
+# `err` when the call itself failed.
+lf8_shape() {
+  python3 - "$1" <<'PY'
+import json, sys
+answer = open(sys.argv[1]).read().strip()
+try:
+    doc = json.loads(answer)
+except ValueError:
+    print("err|" + answer[:160])
+    raise SystemExit(0)
+if not isinstance(doc, dict) or "swimlanes" not in doc:
+    print("err|" + answer[:160])
+    raise SystemExit(0)
+cards = [c for g in doc.get("swimlanes") or [] for l in g.get("lists") or []
+         for c in l.get("cards") or []]
+cl = [c["checklists"] for c in cards if c.get("checklists")]
+items = [i for group in cl for i in group if i.get("items")]
+flags = all(isinstance(i.get("finished"), bool)
+            for group in cl for ch in group for i in ch.get("items") or [])
+lanes = doc.get("swimlanes") or []
+# The id-less tail group (unresolved parents) has no title by contract, so only
+# rows with a real id are held to the title rule.
+unnamed = [g.get("id") for g in lanes if g.get("id") and not g.get("title")]
+unnamed += [l.get("id") for g in lanes for l in (g.get("lists") or [])
+            if l.get("id") and not l.get("title")]
+missing = []
+if not cl:
+    missing.append("no checklists section")
+if not items:
+    missing.append("no checklist items")
+elif not flags:
+    missing.append("items without a boolean finished flag")
+if unnamed:
+    missing.append(f"titled-group contract broken for {unnamed[:3]}")
+if not cards:
+    missing.append("no cards in the grouping")
+if missing:
+    print("thin|" + "; ".join(missing))
+else:
+    print(f"ok|{len(cards)} cards, {len(cl)} with checklists, "
+          f"{len(lanes)} swimlanes")
+PY
+}
+
+run_lf8() {
+  local prompt sid ctxf callsf lastf shape token detail
+  prompt="Load the boards skill. PROBE WRAPPER (leg LF8, payload capability probe, not a board run): claim nothing, move nothing, write nothing, launch no subagent, edit no file. Make exactly two dev-boards MCP calls: list_boards, then preload_board for the AI-Dev board id. Reply with exactly: PROBE-ACK"
+  sid=$(launch_standalone lf8 "$prompt")
+  ctxf="$RUN_DIR/lf8-context.json"
+  if ! fetch_context "$sid" "$ctxf"; then
+    fail_leg LF8 "session $sid context unreadable — no payload evidence"
+    return 0
+  fi
+  callsf="$RUN_DIR/lf8-preload-calls.txt"
+  ctx_tool_calls "$ctxf" "$PRELOAD_TOOL" >"$callsf"
+  if [ ! -s "$callsf" ]; then
+    fail_leg LF8 "session $sid never called preload_board — wrapper non-compliance, payload never fetched"
+    return 0
+  fi
+  ev "LF8: session $sid, preload_board calls: $(cut -f1 "$callsf" | paste -sd, -), context saved to $ctxf"
+  lastf="$RUN_DIR/lf8-last-answer.txt"
+  tail -n1 "$callsf" | cut -f3 >"$lastf"
+  if preload_absent "$lastf"; then
+    verdict LF8 degraded
+    ev "LF8: the deployed dev-boards answer is not a preload payload ($(head -c 160 "$lastf")) — image pin predates the preload surface; re-run after the owner's bump"
+    return 0
+  fi
+  shape=$(lf8_shape "$lastf")
+  token="${shape%%|*}"; detail="${shape#*|}"
+  case "$token" in
+    ok)
+      verdict LF8 pass
+      ev "LF8: payload carries the checklist state with finished flags and the swimlane/list titles — $detail (claim-time fan-out stays dead)"
+      ;;
+    thin) fail_leg LF8 "preload answer is missing enrichment: $detail" ;;
+    *) fail_leg LF8 "preload answer unparseable: $detail" ;;
+  esac
+}
+
+run_lf9() {
+  local prompt sid ctxf callsf token detail
+  prompt="Load the boards skill. PROBE WRAPPER (leg LF9, filter capability probe, not a board run): claim nothing, move nothing, write nothing, launch no subagent, edit no file. Make exactly three dev-boards MCP calls: list_boards; preload_board for the AI-Dev board id (read one swimlane title from its answer); preload_board again for the same board with swimlane_titles set to exactly that one title. Reply with exactly: PROBE-ACK"
+  sid=$(launch_standalone lf9 "$prompt")
+  ctxf="$RUN_DIR/lf9-context.json"
+  if ! fetch_context "$sid" "$ctxf"; then
+    fail_leg LF9 "session $sid context unreadable — no filter evidence"
+    return 0
+  fi
+  callsf="$RUN_DIR/lf9-preload-calls.txt"
+  ctx_tool_calls "$ctxf" "$PRELOAD_TOOL" >"$callsf"
+  if [ ! -s "$callsf" ]; then
+    fail_leg LF9 "session $sid never called preload_board — wrapper non-compliance"
+    return 0
+  fi
+  if ! grep -q 'swimlane_titles' "$callsf"; then
+    fail_leg LF9 "no preload_board call carried a swimlane_titles argument — the filter bound was never exercised"
+    return 0
+  fi
+  ev "LF9: session $sid, filtered call inputs: $(grep -o 'swimlane_titles[^}]*' "$callsf" | head -3 | paste -sd' | ' -)"
+  local filtered="$RUN_DIR/lf9-filtered-answer.txt"
+  grep 'swimlane_titles' "$callsf" | tail -n1 | cut -f3 >"$filtered"
+  if preload_absent "$filtered"; then
+    verdict LF9 degraded
+    ev "LF9: the deployed server never accepted the call ($(head -c 160 "$filtered")) — image pin predates the preload surface"
+    return 0
+  fi
+  shape=$(python3 - "$callsf" "$filtered" <<'PY'
+import json, sys
+wanted, answer = None, open(sys.argv[2]).read()
+for line in open(sys.argv[1]):
+    parts = (line.rstrip("\n").split("\t") + ["", "", ""])[:3]
+    try:
+        args = json.loads(parts[1])
+    except ValueError:
+        continue
+    if args.get("swimlane_titles"):
+        wanted = args["swimlane_titles"]
+if wanted is None:
+    print("err|no call carried swimlane_titles")
+    raise SystemExit(0)
+try:
+    doc = json.loads(answer)
+except ValueError:
+    print("err|" + answer[:160])
+    raise SystemExit(0)
+if not isinstance(doc, dict) or "swimlanes" not in doc:
+    print("err|" + answer[:160])
+    raise SystemExit(0)
+got = [g.get("title") for g in doc.get("swimlanes") or []]
+if not got:
+    print(f"empty|{wanted}")
+elif sorted(got) != sorted(wanted):
+    print(f"widened|{got} vs {wanted}")
+else:
+    print(f"ok|{got}")
+PY
+)
+  token="${shape%%|*}"; detail="${shape#*|}"
+  case "$token" in
+    ok)
+      verdict LF9 pass
+      ev "LF9: the swimlane_titles bound is accepted and answers exactly the named swimlane — $detail"
+      ;;
+    empty) fail_leg LF9 "the filtered call answered no swimlanes for $detail — an unmatched title is documented as swimlanes: [], so the probe's title did not exist or the filter over-narrowed" ;;
+    widened) fail_leg LF9 "the filtered answer is not confined to the named swimlane: $detail" ;;
+    *) fail_leg LF9 "filtered answer unparseable: $detail" ;;
+  esac
+}
+
 run_lf7() {
   local hit=0 line
   local logs=(lf1 lf2)
@@ -422,6 +627,8 @@ for leg in "${LEGS[@]}"; do
     lf5) run_lf5 ;;
     lf6) run_lf6 ;;
     lf7) run_lf7 ;;
+    lf8) run_lf8 ;;
+    lf9) run_lf9 ;;
   esac
 done
 

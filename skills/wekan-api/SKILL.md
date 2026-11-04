@@ -55,10 +55,14 @@ The server exposes 38 typed tools:
   carries `username: null` + a `username_resolution` note),
   `list_board_dependencies` / `list_card_dependencies` (the board's Red
   Strings lines board-wide / one card's stored edges, passed through as the
-  route answers), `preload_board` (ONE board-export GET reshaped to
-  swimlane→list→cards with per-card `{id, card_number, label_ids, slug,
-  archived, sort, parent_id}` + dependency lines + label/field name maps;
-  archived flagged not dropped, titles/descriptions not carried)
+  route answers), `preload_board` (ONE board-export GET — `attachments=false`
+  plus a `fields=` selection — reshaped to swimlane→list→cards with per-card
+  `{id, card_number, label_ids, slug, archived, sort, parent_id, checklists}`
+  (`checklists` = `[{id, title, items: [{title, finished}]}]`, kickoff
+  vocabulary only; `checklists` is itself a `fields=` section) + dependency
+  lines + label/field name maps, and a `title` on every swimlane/list entry;
+  archived flagged not dropped, card titles/descriptions not carried;
+  optional `swimlane_titles` bounds the read client-side)
 - **Write** (every tier except `wekan-readonly`): `create_card` (optional
   `default_checked` map — checklist title → item titles to arrive CHECKED;
   bounded-polls the rules-created checklist, then PUTs the exact-title

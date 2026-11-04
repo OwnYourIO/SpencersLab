@@ -41,9 +41,20 @@ The cf-96 surface (38 = 17 reads + 21 writes, repo source; NOT deployed until
 the C10 bump — probe `tools/list` before trusting any of it): reads
 `list_board_dependencies` (board-wide Red Strings lines), `list_card_dependencies`
 (one card's stored edges) and `preload_board` (one export call reshaped to
-swimlane→list→cards + dependency lines + label/field name maps, per-card exactly
-`{id, card_number, label_ids, slug, archived, sort, parent_id}`, `slug` reduced by the single parse
-authority to the newest entry of the field's append-only combined-value stack); writes
+swimlane→list→cards, each group carrying its `title` beside its `id`, +
+dependency lines + label/field name maps, per-card exactly
+`{id, card_number, label_ids, slug, archived, sort, parent_id, checklists}` —
+checklists being `[{id, title, items: [{title, finished}]}]` filtered to the
+kickoff vocabulary (Services, Type, Model(s), Lifecycle, Human in the Loop,
+plus the legacy `Research` and 8-item Lifecycle spellings) and riding the same
+request via the `checklists` section of the `fields=` trim, so no checklist
+fan-out is ever needed; `slug` reduced by the single parse
+authority to the newest entry of the field's append-only combined-value stack;
+the optional `swimlane_titles` argument bounds the grouping to the named
+swimlanes, default every swimlane, an unknown title answering `swimlanes: []`
+while a malformed or bodyless export answer raises instead — the empty grouping
+means an empty board, never an outage);
+writes
 `add_card_dependency` (UPSERT — a repeat add updates the edge, never duplicates
 it; the 7 types gate client-side like `create_label`'s colors),
 `edit_card_dependency`, `remove_card_dependency` (the third bounded destructive
