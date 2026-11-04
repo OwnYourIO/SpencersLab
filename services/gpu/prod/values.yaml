@@ -19,12 +19,14 @@ bitwardenIds:
   neo4j: OVERRIDE_VIA_CLUSTER_ANNOTATION
   searxng: OVERRIDE_VIA_CLUSTER_ANNOTATION
 
-  # charts/forgejo-secret-seed inputs. The real uuids do NOT get added to a
-  # cluster annotation (the services.gpu.bitwardenIds parameter projection
-  # was removed in aa817da6b, 2025-09-28): they are filled per key in the
-  # forgejo-secret-seed app block of custom-values/gpu/prod-values.yaml,
-  # which base's charts appset projects into that Application's valuesObject.
-  # These sentinel lines stay as the chart-level default the block shadows
+  # charts/forgejo-secret-seed + charts/forgejo-run-watchdog inputs (the
+  # watchdog reuses netlify + forgejo-pat; no new mandatory items). The real
+  # uuids do NOT get added to a cluster annotation (the
+  # services.gpu.bitwardenIds parameter projection was removed in aa817da6b,
+  # 2025-09-28): they are filled per key in the forgejo-secret-seed /
+  # forgejo-run-watchdog app blocks of custom-values/gpu/prod-values.yaml,
+  # which base's charts appset projects into each Application's valuesObject.
+  # These sentinel lines stay as the chart-level default the blocks shadow
   # (fleet practice, searxng/neo4j above).
   # Bitwarden item hugo-build-immich; login item, password = Immich API key.
   immich-api-key: OVERRIDE_VIA_CLUSTER_ANNOTATION
@@ -91,6 +93,9 @@ charts:
     namespace: default
     ServerSideApply: "false"
   forgejo-secret-seed:
+    namespace: default
+    ServerSideApply: "false"
+  forgejo-run-watchdog:
     namespace: default
     ServerSideApply: "false"
   # Disabled 2026-09-07: CrashLoopBackOff (neo4j env/config bug — see plan

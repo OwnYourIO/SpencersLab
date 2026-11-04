@@ -127,6 +127,23 @@ forgejo-secret-seed:
     # host; until those land the daily PUT 404s and the job fails loudly.
     forgejo-pat: 88722c5b-ebf5-44f8-b6bf-b4f60167bb38
 
+forgejo-run-watchdog:
+  # Delivery path for the watchdog's chart-level bitwardenIds sentinels,
+  # same mechanism as the seeder block above: this app block is projected
+  # into the gpu-forgejo-run-watchdog Application's valuesObject by base's
+  # charts appset (this file is fetched via the services.gpu.customValuesUrls
+  # cluster annotation). Owner fills each slot with the SAME item uuid as the
+  # matching slot above (the watchdog reuses both hugo-build items; no new
+  # Bitwarden items). An unfilled OVERRIDE_NEEDED renders straight into the
+  # ExternalSecret remoteRef, so the hourly fetch fails visibly until then.
+  bitwardenIds:
+    # hugo-build-netlify LOGIN item (password = Netlify auth token); its
+    # site_id_com custom field feeds the fallback leg's deploys lookup.
+    netlify: OVERRIDE_NEEDED
+    # hugo-build-forgejo LOGIN item (password = write:repository PAT —
+    # covers the runs-API reads and the stale-run dispatch).
+    forgejo-pat: OVERRIDE_NEEDED
+
 seaweedfs-csi-driver:
   volume-count: 8
   seaweedfs-csi-driver:

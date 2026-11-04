@@ -1,0 +1,179 @@
+# The watchdog check script (mounted at /watchdog, run by the CronJob
+# container). The repo/org pair, Forgejo URL and workflow file come from
+# watchdog.* values at render time, so correcting them after the repo is
+# created is a values edit — the script itself is edit-free.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgejo-run-watchdog-script
+data:
+  check.sh: |
+    #!/bin/sh
+    set -eu
+
+    # Hourly freshness check for the CuratedForest.com immich-sync workflow —
+    # the compensating control for the daily schedule trigger (schedule
+    # triggers are the fragile leg of Actions-type systems; at one shot/day
+    # a silent disable costs a stale day before anything else notices).
+    #
+    # Legs, in preference order:
+    #   1. Forgejo runs API — newest successful sync run within
+    #      MAX_AGE_HOURS. Response shape pinned to the Gitea-1.22 API
+    #      baseline the target Forgejo embeds — field names verified
+    #      against the instance's /swagger.v1.json (its
+    #      /api/v1/swagger.json path 404s) — and the first run's log
+    #      lines are the live verification.
+    #   2. Netlify deploys fallback — entered ONLY when the runs endpoint
+    #      404s (the run-list API may need a newer Forgejo than the target
+    #      proves to be); newest ready/current deploy within MAX_AGE_DAYS.
+    #
+    # Stale => notify the owner-supplied NOTIFY_URL and re-dispatch the sync
+    # workflow, exiting non-zero when either action fails (including a
+    # skipped notify); healthy => exit 0. No state between runs: while
+    # stale, every hourly run re-alerts and re-dispatches — simpler than
+    # persistence and safe (the site's concurrency group queues a dispatched
+    # run behind a running one).
+
+    FORGEJO_URL="{{ .Values.watchdog.forgejoUrl }}"
+    REPO_OWNER="{{ .Values.watchdog.repoOwner }}"
+    REPO_NAME="{{ .Values.watchdog.repoName }}"
+    SYNC_WORKFLOW="{{ .Values.watchdog.syncWorkflow }}"
+    DISPATCH_REF="{{ .Values.watchdog.dispatchRef }}"
+
+    REPO_API="$FORGEJO_URL/api/v1/repos/$REPO_OWNER/$REPO_NAME"
+    RUNS_API="$REPO_API/actions/runs?limit=50"
+    DISPATCH_API="$REPO_API/actions/workflows/$SYNC_WORKFLOW/dispatches"
+    ACTIONS_UI="$FORGEJO_URL/$REPO_OWNER/$REPO_NAME/actions"
+    NETLIFY_DEPLOYS_API="https://api.netlify.com/api/v1/sites/$(cat /secrets/netlify_site_id)/deploys?per_page=100"
+
+    # Command substitution trims the trailing newline the Secret files may carry.
+    PAT=$(cat /secrets/forgejo_pat)
+    NETLIFY_TOKEN=$(cat /secrets/netlify_auth_token)
+
+    NOW=$(date +%s)
+    newest_success_epoch=0
+
+    to_epoch() {
+        # RFC3339 UTC ("2026-11-03T05:17:12Z") -> epoch seconds; busybox
+        # date parses "YYYY-MM-DD HH:MM:SS", -u keeps the comparison in UTC.
+        cleaned=$(printf '%s' "$1" | sed -e 's/T/ /' -e 's/Z$//')
+        date -u -d "$cleaned" +%s
+    }
+
+    scan_runs() {
+        # One run record per line: the response is one object whose
+        # workflow_runs array carries the records, so splitting on "},{"
+        # isolates them (no JSON tooling in the curl image). The tr pass
+        # normalizes any pretty-print variance (space after colon) so the
+        # quoted-pair matches hold. If the shape ever drifts the scan finds
+        # nothing and the watchdog alerts — the failure mode biases to
+        # noise, never to silence.
+        tr -d ' \t\r' < /tmp/runs.json | sed 's/},{/}\n{/g' > /tmp/runs.records
+        wf_stem=${SYNC_WORKFLOW%.yml}
+        # "|| [ -n "$rec" ]": the final record carries no trailing newline
+        # (the response ends in "],"total_count":N}), and read would drop it.
+        while IFS= read -r rec || [ -n "$rec" ]; do
+            case "$rec" in *'"status":"success"'*) ;; *) continue ;; esac
+            case "$rec" in
+                *'"workflow_id":"'"$SYNC_WORKFLOW"'"'*) ;;
+                *'"workflow_id":"'"$wf_stem"'"'*) ;;
+                *) continue ;;
+            esac
+            # The Gitea-1.22 ActionRun record has no created_at key — that
+            # key belongs to the nested repository object, whose match
+            # would measure the repo's birth date instead of run
+            # freshness. Freshness is the run's own completion time
+            # "stopped", falling back to its "created" time if a future
+            # serialization drops it (older floor = alert bias).
+            ts=$(printf '%s' "$rec" | grep -o '"stopped":"[^"]*"' | head -n 1 | cut -d '"' -f 4)
+            [ -n "$ts" ] || ts=$(printf '%s' "$rec" | grep -o '"created":"[^"]*"' | head -n 1 | cut -d '"' -f 4)
+            [ -n "$ts" ] || continue
+            epoch=$(to_epoch "$ts") || continue
+            if [ "$epoch" -gt "$newest_success_epoch" ]; then
+                newest_success_epoch=$epoch
+            fi
+        done < /tmp/runs.records
+    }
+
+    scan_deploys() {
+        # One deploy object per line (the response is a bare JSON array);
+        # same normalization as the runs leg.
+        tr -d ' \t\r' < /tmp/deploys.json | sed 's/},{/}\n{/g' > /tmp/deploys.records
+        # Same trailing-newline guard as the runs leg.
+        while IFS= read -r rec || [ -n "$rec" ]; do
+            case "$rec" in
+                *'"state":"ready"'* | *'"state":"current"'*) ;;
+                *) continue ;;
+            esac
+            # published_at is null on deploys that never went live; grep
+            # only matches the quoted form, so null falls through to the
+            # created_at leg.
+            ts=$(printf '%s' "$rec" | grep -o '"published_at":"[^"]*"' | head -n 1 | cut -d '"' -f 4)
+            [ -n "$ts" ] || ts=$(printf '%s' "$rec" | grep -o '"created_at":"[^"]*"' | head -n 1 | cut -d '"' -f 4)
+            [ -n "$ts" ] || continue
+            epoch=$(to_epoch "$ts") || continue
+            if [ "$epoch" -gt "$newest_success_epoch" ]; then
+                newest_success_epoch=$epoch
+            fi
+        done < /tmp/deploys.records
+    }
+
+    runs_status=$(curl -sS -o /tmp/runs.json -w '%{http_code}' \
+        -H "Authorization: token $PAT" "$RUNS_API")
+    if [ "$runs_status" = 200 ]; then
+        MAX_AGE_SECONDS=$((MAX_AGE_HOURS * 3600))
+        leg="Forgejo runs API"
+        scan_runs
+    elif [ "$runs_status" = 404 ]; then
+        echo "runs API returned 404 — falling back to the Netlify deploys leg" >&2
+        curl -fsS -H "Authorization: Bearer $NETLIFY_TOKEN" \
+            -o /tmp/deploys.json "$NETLIFY_DEPLOYS_API"
+        MAX_AGE_SECONDS=$((MAX_AGE_DAYS * 86400))
+        leg="Netlify deploys API"
+        scan_deploys
+    else
+        echo "runs API returned HTTP $runs_status — neither leg can judge freshness" >&2
+        exit 1
+    fi
+
+    if [ "$newest_success_epoch" -gt 0 ] && [ $((NOW - newest_success_epoch)) -le "$MAX_AGE_SECONDS" ]; then
+        echo "fresh: newest successful sync run ($leg) is $(((NOW - newest_success_epoch) / 3600))h old"
+        exit 0
+    fi
+
+    if [ "$newest_success_epoch" -gt 0 ]; then
+        detail="last successful sync run is $(((NOW - newest_success_epoch) / 3600))h old (threshold $((MAX_AGE_SECONDS / 3600))h)"
+    else
+        detail="no successful sync run found via the $leg"
+    fi
+    echo "stale: $detail" >&2
+
+    failed=0
+
+    if [ -z "${NOTIFY_URL:-}" ]; then
+        echo "NOTIFY_URL is unset: notification SKIPPED loudly — set watchdog.notify.url to receive stale-sync alerts" >&2
+        failed=1
+    else
+        notify_body='{"source":"forgejo-run-watchdog","workflow":"'"$SYNC_WORKFLOW"'","status":"stale","detail":"'"$detail"'","actions_url":"'"$ACTIONS_UI"'"}'
+        # -o /dev/null keeps arbitrary receiver response bodies out of the
+        # pod logs; the exit code carries success.
+        if curl -fsS -X POST -H 'Content-Type: application/json' \
+            -o /dev/null --data-binary "$notify_body" "$NOTIFY_URL"; then
+            echo "notified the receiver"
+        else
+            echo "notify POST failed" >&2
+            failed=1
+        fi
+    fi
+
+    if curl -fsS -X POST -H "Authorization: token $PAT" \
+        -H 'Content-Type: application/json' \
+        --data-binary '{"ref":"'"$DISPATCH_REF"'"}' "$DISPATCH_API"; then
+        echo "dispatched $SYNC_WORKFLOW (ref $DISPATCH_REF)"
+    else
+        echo "dispatch of $SYNC_WORKFLOW failed" >&2
+        failed=1
+    fi
+
+    [ "$failed" = 0 ] || exit 1
+    echo "stale run handled: notified and dispatched"
