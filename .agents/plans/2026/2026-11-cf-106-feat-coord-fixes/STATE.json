@@ -290,13 +290,39 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e59cffdb8ffe2FelirDL4wqV32",
+      "review_session": "ses_e599fdc3affe5rkZAu2cwIOluz",
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "b68d49bf8",
+      "files_in_scope_widened": "+ .rulesync/skills/role-code/SKILL.md, .rulesync/skills/pipeline-push-pr/SKILL.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/subagents/{code,code-pr}.md (comments only), .rulesync/rules/overview.md, AGENTS.md (the C04 review's R2-A1/A2/A3 prose routed here for one regeneration cycle) + tests/cf90-ledger/surface.sh (test_session harness repair)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "BLOCKED (validation_at_fault) r1 → DONE r2 (post-review amend)", "chunk": "C05",
+          "files_changed": [".rulesync/skills/{pipeline-role-coord,boards,role-code,pipeline-push-pr}/SKILL.md", ".rulesync/skills/agents-sync/references/permissions.md", ".rulesync/subagents/{code,code-pr}.md (comment lines only)", ".rulesync/rules/overview.md", "AGENTS.md", ".opencode/skills/** mirrors"],
+          "commands_run": ["rulesync generate x2 (2nd no-op) + generate --check => pass", "cf90-ledger whole => r1 FAIL at t5's fabricator (sed unterminated BRE), r2 => pass (8 ok)", "cf90-ledger t6 t7 t8 => pass", "validation-fix whole => red at t4 (pre-existing, replayed at HEAD by review); t1 t2 t3 t5 t6 => pass", "slug-stack => pass; rulesync-surface c1..c22 c24 => pass (whole red only c23 = C09); noop-marker n1 n5 => pass (whole N2 = C03b); boards-deps red only at t2 = C06 (t9 = C07)", "agent-perms a12 a16 a17 a18 a19 => pass (no grant row moved)", "standalone-agents => pass (12 ok); pipeline-push-pr => pass (10 ok); cf96-coord/siblings/lifecycle => pass", "agents-md whole => red only at c10 (C03b); c11 red = C10", "aislop ci --changes => pass (100, 0/0)", "landmine scan: step-11→EOF window 12.8 KB, zero hits for the six banned tokens"],
+          "shipped": "step 11 = one items multi-select + one mode question (two questions max, per-item overrides over one global default), exactly five modes with the family's preferred first; current-session bound stated once and cited by boards; plan-only now names agent-plan and requires a complete resumable ticket folder; boards keeps Inbox destination, list_lists re-resolution, never-add_checklist, Qwen Dense, not-a-run",
+          "deviations": ["(a) Files-in-scope widened by the routed C04 prose items (accepted pattern, same regeneration cycle)", "(b) later → subsequent forced by the t5 sixth-mode token ban (substring, step 11 → EOF)", "(c) the chunk's inline-implementation hedge resolved to 'always a launch' because the coord contract denies file writes (review scoped the wording to 'writes no code, tests or docs itself')", "(d) rulesync drops frontmatter YAML comments, so the code/code-pr comment edits have no mirror counterpart — parsed-list equality proven by A12/A17/S11/c24", "amend round: boards:394 plan-only clause rewritten to cite role-coord rather than contradict the new actor"],
+          "friction": "cf90-ledger t5 fabricator fatal on any input; the step-11→EOF substring ban (12.8 KB, ~50% of the role contract) as a standing landmine; rulesync-surface c24's sole-committer window is 899/900 chars so inserting a clause inside role-coord's Git paragraph reddens it"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C05-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/cf90-ledger/surface.sh (+29/−5)"],
+          "what": "t5's sixth-mode fabricator BRE group was unterminated (`s/^\\(11\\..*stop\\./` with no `\\)`), so GNU sed died at parse time on ANY input including the pristine HEAD blob — the arm could never reach its ok line and whole-suite exit 0 was unreachable; fixed at :316 and a fabricator guard added (`sed … || fail '…(fixture fault)'`) because `set -e` aborted before the existing content guard. t8's fixture wrote 417 lines of skill prose to /dev/stdout, burying the suite report — dump dropped, guard kept. Header AC trace extended to t1..t8 with the round note.",
+          "commands_run": ["cf90-ledger whole => pass (8 ok, 9 stdout lines); t1..t8 each alone => pass", "out-of-suite proof: shipped friction.py vocab passes on all four surfaces, reddens the fabricated sixth mode (names ['defer to owner']), reddens pre-C05 HEAD (modes absent + ['later'])", "collateral: validation-fix t1 t2 t3 t5 t6 => pass; rulesync-surface c23 the only red; agent-perms A15 the only red; noop-marker N2 = C03b; slug-stack/standalone-agents/pipeline-push-pr => pass"],
+          "judgement": "the sixth-mode ban's span (step 11 → EOF, 12,309 chars) is wider than the contract it protects; a dedicated test round should bound it at the next `## ` heading and replace the token list with a structural 'exactly five mode-shaped items' arm — flagged, not applied"
+        },
+        {
+          "role": "review", "status": "APPROVED", "chunk": "C05", "session": "ses_e599fdc3affe5rkZAu2cwIOluz",
+          "commands_run": ["cf90-ledger whole => pass (8 ok) + t1..t8 each => pass", "validation-fix whole => red at t4 only, re-derived as pre-existing by replaying the suite's own checker over a `git archive HEAD` tree", "rulesync-surface whole red only c23; c1..c22 c24 green; agents-md red only c10 (c11 = C10); boards-deps t2 = C06, t9 = C07; noop-marker N2/N4/N7 = C03b; agent-perms whole red only A15", "standalone-agents 12 ok, pipeline-push-pr 10 ok, cf96-coord/siblings/lifecycle green, slug-stack green", "rulesync generate x2 identical status (17 entries) + --check clean; aislop ci --changes 100/0/0 with the honest caveat that it parses no markdown", "full collateral sweep + node --test tests/opencode/*.test.ts => 243/43 byte-equal to the C03a/C04 baseline", "HEAD-clone runs at 36a65d26f: gate t17, coord-inwork i4, repo-label-filter t3, hivetools-mcp-docs d4, coder-workspace/image-structure, renovate legs, templates legs — all red at HEAD, none is C05 collateral", "friction.py extracted to /tmp with six of the reviewer's own fabrications; family.py policy battery + parity + comment-only diff filter + push-allow row census"],
+          "findings": ["AC1–AC4 PASS re-derived (five modes in all four trees, family recommendations visible, bound grep-checkable and cited not restated, Inbox/never-add_checklist/list_lists/not-a-run intact with Qwen Dense and the only remaining Qwen 27b being C02's sanctioned alias at boards:228); AC5 stated honestly (cf90-ledger whole green, validation-fix arm-level)", "R2-A1/A2/A3 PASS; no permission row changed (parity 0 + comment-only diff)", "advisories routed: permissions.md:154-155 false '-C/-c allow on both families' and role-coord:40 over-claim — both landed as the round-2 amend; friction.py 'exactly five' is present+blacklist so a differently-named sixth mode passes, and `cite` anchors on the mode list so a restating copy passes → test_session; `plan only` actor/folder gap → closed in the amend; C09 forward note — its 'exactly ONE sanctioned question' pin must scope to the takeover branch or it will read as banning step 11's two questions; AGENTS.md:152/overview.md:150 'offers to plan fixes' → rides C03b/C10", "landmine measured: ban window = 49% of the role contract, six ordinary substrings banned; already forced two renames while the same words survive outside the span"]
+        }
+      ]
     },
     "C06": {
       "status": "pending",
