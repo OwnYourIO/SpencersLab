@@ -17,6 +17,8 @@
 #     no board call, no .pipeline/ write, no session write.
 #   * schema it joins (verified against the live store 2026-11-04):
 #       session_v2(id, slug, directory, title, agent, model, metadata,
+#                  -- `model` is a JSON OBJECT in the live store ({"id":…,"provider":…});
+#                  -- older rows and fixtures hold a bare string. Both shapes appear.
 #                  time_created, time_archived, idle_outcome)
 #       session_message(session_id, type, seq, time_created, data)  -- type in
 #                  user|assistant|system|synthetic|idle|…, data is JSON:
@@ -36,16 +38,24 @@
 #     never a total-count equality (the live store keeps growing).
 #
 # AC trace (chunks/C03a.md): N1[AC2 classification — every class derived exactly
-# once over a fixture store] N2[AC3 read-only posture, machine-checked, with a
+# once over a fixture store, INCLUDING the fall-through shapes the vocabulary must
+# not reinterpret (no message rows, malformed message rows, malformed metadata →
+# neutral; tool-call-only tail → abnormal-end via the cut-tail branch) and both
+# model-column spellings (live JSON object and legacy bare string), with a fixture
+# shape guard and four fabricated-output controls] N2[AC3 read-only posture, machine-checked (write TARGETS
+#    only — the SQL entry point itself is legal since python 3.14 dropped
+#    exec_driver_sql), with a
 # fabricated write control] N3[AC4 no new shell grant anywhere] N4[AC1 baseline
 # parity per named session id over a seeded fixture + the newer-session control]
 # N5[HOLD — the marker contract's own legs keep passing untouched: this chunk
 # changes no contract text] N6[cf-106 C03b HOLD/GREEN pair — a gate-stop session
-# that marks reads marked-archived, which is how the fix is judged].
+# that marks and archives reads marked-archived: the instrument side of the pair,
+# while the live judgement is the marker columns (see readback.md)].
 #
-# Red posture: the script does not exist yet — N1, N2, N4 and N6 are designed red
-# and each names the missing surface, never a harness fault. N3 and N5 are green
-# now and must stay green (C03a adds no permission; C03b owns the contract text).
+# Posture since C03a dev landed the script: all six legs green. Nothing here is
+# designed red — a red is a defect, either in the script (N1/N2/N4/N6) or in the
+# fixture itself (N1's shape guard says so explicitly rather than blaming dev).
+# N3 and N5 are HOLDs: C03a adds no permission, C03b owns the contract text.
 #
 # Usage:
 #   bash tests/cf106-noop/surface.sh            # N1..N6
@@ -87,16 +97,24 @@ import json, sqlite3, sys
 
 T0 = 1_762_100_000_000  # 2026-11-03T00:00Z-ish, epoch ms
 
+# The live store's model column is a JSON object; seeding that shape by default keeps
+# the fixture honest about what the readback table actually reads.
+# Key spelling taken from the live store: {"id":…,"providerID":…}, and the id carries
+# no provider prefix there — the readback's model column is only as honest as the shape.
+LIVE_MODEL = json.dumps({"id": "qwen3.8-27b-q4", "providerID": "gpu-ai"})
+
 
 def session(cur, sid, *, agent="agent-board-coord", directory="/repo", metadata=None,
-            archived_at=None, title="scheduled tick", model="gpu-ai/qwen3.8-27b-q4",
+            raw_metadata=None,
+            archived_at=None, title="scheduled tick", model=LIVE_MODEL,
             slug="cf-42-feat-x", created=None, idle_outcome=None):
     cur.execute(
         "insert into session_v2 (id, project_id, slug, directory, title, agent, model,"
         " metadata, time_created, time_updated, time_archived, idle_outcome)"
         " values (?,?,?,?,?,?,?,?,?,?,?,?)",
         (sid, "proj", slug, directory, title, agent, model,
-         json.dumps(metadata) if metadata is not None else None,
+         raw_metadata if raw_metadata is not None
+         else (json.dumps(metadata) if metadata is not None else None),
          created or T0, created or T0, archived_at, idle_outcome),
     )
 
@@ -109,6 +127,14 @@ def msg(cur, sid, typ, text, seq):
     cur.execute("insert into session_message (id, session_id, type, seq, time_created, time_updated, data)"
                 " values (?,?,?,?,?,?,?)", (f"msg_{sid}_{seq}", sid, typ, seq, T0 + seq * 1000,
                                             T0 + seq * 1000, json.dumps(data)))
+
+
+def msg_raw(cur, sid, typ, data_text, seq):
+    """A message row whose `data` is left exactly as given — malformed JSON or a
+    content list with no text part, i.e. the unreadable shapes a store change can bring."""
+    cur.execute("insert into session_message (id, session_id, type, seq, time_created, time_updated, data)"
+                " values (?,?,?,?,?,?,?)", (f"msg_{sid}_{seq}", sid, typ, seq, T0 + seq * 1000,
+                                            T0 + seq * 1000, data_text))
 
 
 def turns(cur, sid, n=6):
@@ -140,7 +166,8 @@ def marker(reason="no-cards", at=None):
 
 
 def all_classes(cur):
-    # one session per verdict class, in the fixed vocabulary's order
+    # one session per verdict class, in the fixed vocabulary's order, then the
+    # unreadable-transcript shapes and both model-column spellings
     session(cur, "ses_marked_arch", metadata=marker("no-cards", T0), archived_at=T0 + 9000)
     turns(cur, "ses_marked_arch", 4)
     session(cur, "ses_marked_unarch", metadata=marker("no-claimable-cards", T0))
@@ -162,6 +189,35 @@ def all_classes(cur):
     session(cur, "ses_did_work", metadata={"openchamber": {"kind": "scheduled"}},
             idle_outcome=0)
     turns(cur, "ses_did_work", 8)
+    # Unreadable-transcript shapes: none of these may land in abnormal-end. A session
+    # with no message rows, or only unparseable ones, or malformed metadata says
+    # nothing about how the run ended — only a store-shape change would read them as
+    # "died before any exit".
+    session(cur, "ses_no_messages", metadata={"openchamber": {"kind": "scheduled"}})
+    session(cur, "ses_bad_messages", metadata={"openchamber": {"kind": "scheduled"}})
+    for seq in (1, 2, 3):
+        msg_raw(cur, "ses_bad_messages", "assistant", "{ truncated at the page boundary", seq)
+    session(cur, "ses_bad_metadata", raw_metadata='{"openchamber": {"kind": "schedul')
+    turns(cur, "ses_bad_metadata", 4)
+    session(cur, "ses_toolcall_tail", metadata={"openchamber": {"kind": "scheduled"}})
+    msg(cur, "ses_toolcall_tail", "user", "tick", 1)
+    for seq in (2, 3, 4):
+        msg_raw(cur, "ses_toolcall_tail", "assistant",
+                json.dumps({"time": {"created": T0 + seq * 1000},
+                            "content": [{"type": "tool-call", "toolName": "list_boards",
+                                        "input": {"board": "AI-Dev"}}]}), seq)
+    # model-column shapes, both seeded on purpose: the readback's model column and
+    # C10's runner-model readback read it, and the store carries both spellings.
+    session(cur, "ses_model_object", model=json.dumps({"id": "qwen3.8-27b-q4",
+                                                       "providerID": "gpu-ai"}),
+            metadata={"openchamber": {"kind": "scheduled"}})
+    turns(cur, "ses_model_object", 6)
+    session(cur, "ses_model_null", model=None,
+            metadata={"openchamber": {"kind": "scheduled"}})
+    turns(cur, "ses_model_null", 6)
+    session(cur, "ses_model_string", model="gpu-ai/qwen3.8-flash-next-strata",
+            metadata={"openchamber": {"kind": "scheduled"}})
+    turns(cur, "ses_model_string", 6)
 
 
 if __name__ == "__main__":
@@ -227,15 +283,80 @@ PY
 }
 
 # --- N1: every verdict class derived exactly once (AC2) -------------------------
+# The fall-through branches matter as much as the seven named classes: a session
+# with no message rows, with unparseable message rows, or with malformed metadata
+# carries NO evidence about how the run ended, so it must read neutral. Reading
+# those as abnormal-end would convert store-schema drift into a wave of runs that
+# "die before any exit" — the class the plan's risk register treats as a gap.
 if want n1; then
   [ -f "$AUDIT" ] \
     || fail "N1[C03a AC2]: $AUDIT does not exist — the audit script is C03a's first task (designed red before C03a dev, not a harness fault)"
   python3 "$TMP/mkstore.py" all "$TMP/store-all.db" || fail "harness: fixture builder failed (report, do not blame dev)"
+  # Fixture self-validation before blaming dev: an arm that pins a shape is only
+  # honest while the seeded store still carries that shape.
+  if ! python3 - "$TMP/store-all.db" <<'PFIX'
+"""Every shape the classifier arms pin must really be in the seeded store."""
+import json, sqlite3, sys
+con = sqlite3.connect("file:" + sys.argv[1] + "?mode=ro", uri=True)
+con.row_factory = sqlite3.Row
+
+
+def parses(text):
+    try:
+        json.loads(text)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def msgs(sid):
+    return list(con.execute("select type, data from session_message where session_id=?", (sid,)))
+
+
+def col(sid, name):
+    row = con.execute("select " + name + " from session_v2 where id=?", (sid,)).fetchone()
+    return row[name] if row else None
+
+
+bad = []
+if msgs("ses_no_messages"):
+    bad.append("ses_no_messages has message rows — the no-transcript shape is gone")
+bm = msgs("ses_bad_messages")
+if not bm or any(parses(r["data"]) for r in bm):
+    bad.append("ses_bad_messages rows parse — the malformed-data shape is gone")
+tt = msgs("ses_toolcall_tail")
+if len([r for r in tt if r["type"] == "assistant"]) < 3:
+    bad.append(f"ses_toolcall_tail has {len(tt)} rows — the cut-tail arm must sit above the turn floor")
+if tt and any((c.get("text") or "") for r in tt for c in (json.loads(r["data"]).get("content") or [])
+               if c.get("type") == "text"):
+    bad.append("ses_toolcall_tail carries a text part — the tool-call-only tail shape is gone")
+if parses(col("ses_bad_metadata", "metadata")):
+    bad.append("ses_bad_metadata metadata parses — the malformed-metadata shape is gone")
+mo = col("ses_model_object", "model")
+if not (parses(mo) and isinstance(json.loads(mo), dict) and json.loads(mo).get("id")):
+    bad.append("ses_model_object's model column is not a JSON object with an id — the live shape is gone")
+if parses(col("ses_model_string", "model")):
+    bad.append("ses_model_string's model column parses as JSON — the bare-string shape is gone")
+if col("ses_model_null", "model") is not None:
+    bad.append("ses_model_null's model column is not NULL — the absent-model shape is gone")
+if not (parses(col("ses_marked_arch", "model")) and isinstance(json.loads(col("ses_marked_arch", "model")), dict)):
+    bad.append("the fixture's default model column is not the live object shape — the fixture drifted off the store it mirrors")
+print("; ".join(bad))
+sys.exit(1 if bad else 0)
+PFIX
+  then fail "N1[C03a AC2]: FIXTURE FAULT (reason above) — the seeded store no longer carries a shape the classifier arms pin (harness, not dev)"; fi
   if ! run_audit "$TMP/store-all.db" n1; then
     fail "N1[C03a AC2]: the audit run over the fixture store failed (reason above) — the script must classify a fixture store through --db"
   fi
-  if ! python3 - "$TMP/n1.json" <<'PY'
+  cat >"$TMP/classes.py" <<'PY'
+"""Verdict classes over the fixture store (AC2), plus the row shapes the readback reads.
+
+`abnormal-end` is reserved for evidence of a death (too few turns, or a turn cut off
+mid-stream). Unreadable transcripts — no rows, unparseable rows, malformed metadata —
+decide neutral, or a store-schema change would manufacture "died before any exit".
+"""
 import json, sys
+
 WANT = {
     "ses_marked_arch": "marked-archived",
     "ses_marked_unarch": "marked-unarchived",
@@ -244,7 +365,30 @@ WANT = {
     "ses_abnormal": "abnormal-end",
     "ses_mcp_absent": "mcp-surface-absent",
     "ses_did_work": "did-work",
+    "ses_no_messages": "did-work",
+    "ses_bad_messages": "did-work",
+    "ses_bad_metadata": "did-work",
+    "ses_toolcall_tail": "abnormal-end",
+    "ses_model_object": "did-work",
+    "ses_model_string": "did-work",
+    "ses_model_null": "did-work",
 }
+# Per-id row shape, so an arm cannot pass by accident: turns/excerpt decide WHICH
+# fall-through branch fired, model decides whether the column rendered usefully.
+SHAPES = {
+    "ses_no_messages": {"turns": 0, "excerpt": ""},
+    "ses_bad_messages": {"turns": 0, "excerpt": ""},
+    "ses_toolcall_tail": {"turns": 4, "excerpt": ""},
+    "ses_bad_metadata": {"turns": 8},
+    "ses_model_object": {"model": "qwen3.8-27b-q4"},
+    "ses_model_string": {"model": "gpu-ai/qwen3.8-flash-next-strata"},
+    "ses_model_null": {"model": None},
+    "ses_marked_arch": {"model": "qwen3.8-27b-q4"},
+}
+KEYS = ("verdict", "archived", "kind", "title", "excerpt", "model", "turns")
+VOCAB = set(WANT.values())
+TURN_FLOOR = 3
+
 try:
     rows = json.load(open(sys.argv[1]))
 except Exception as exc:
@@ -252,26 +396,70 @@ except Exception as exc:
 if not isinstance(rows, list):
     print(f"--json must print a JSON array, got {type(rows).__name__}"); sys.exit(1)
 got = {r.get("id"): r for r in rows}
+problems = []
 for sid, verdict in WANT.items():
     row = got.get(sid)
     if row is None:
-        print(f"fixture session {sid} is missing from the output (every session in the window gets exactly one row)"); sys.exit(1)
+        problems.append(f"fixture session {sid} is missing from the output (every session in the window gets exactly one row)")
+        continue
     if row.get("verdict") != verdict:
-        print(f"{sid}: verdict {row.get('verdict')!r}, want {verdict!r} — the fixed vocabulary is machine-derived, not a guess"); sys.exit(1)
-    for key in ("verdict", "archived", "kind", "title", "excerpt"):
+        problems.append(f"{sid}: verdict {row.get('verdict')!r}, want {verdict!r} — the fixed vocabulary is machine-derived, not a guess")
+    for key in KEYS:
         if key not in row:
-            print(f"{sid}: row lacks the pinned key {key!r}: {json.dumps(row)[:200]}"); sys.exit(1)
+            problems.append(f"{sid}: row lacks the pinned key {key!r}: {json.dumps(row)[:200]}")
+    for key, want in SHAPES.get(sid, {}).items():
+        if row.get(key) != want:
+            problems.append(f"{sid}: {key}={row.get(key)!r}, want {want!r}"
+                            + (" — the model column must render as one id (object → its id, string → itself)" if key == "model" else ""))
+tail = got.get("ses_toolcall_tail")
+if tail is not None and tail.get("turns", 0) < TURN_FLOOR:
+    problems.append("ses_toolcall_tail is below the turn floor — that arm would pin the low-turn branch, not the cut-tail branch")
 extra = sorted(set(got) - set(WANT))
 if extra:
-    print(f"the fixture emitted rows outside the seeded sessions: {extra}"); sys.exit(1)
-classes = [r.get("verdict") for r in rows]
-bad = [c for c in classes if c not in set(WANT.values())]
+    problems.append(f"the fixture emitted rows outside the seeded sessions: {extra}")
+bad = [c for c in (r.get("verdict") for r in rows) if c not in VOCAB]
 if bad:
-    print(f"verdict(s) outside the fixed vocabulary: {bad}"); sys.exit(1)
-print("ok")
+    problems.append(f"verdict(s) outside the fixed vocabulary: {bad}")
+for p in problems:
+    print(p)
+sys.exit(1 if problems else 0)
 PY
-  then fail "N1[C03a AC2]: the classification leg failed (reason above)"; fi
-  ok "N1[C03a AC2]: each fixture session lands in exactly one verdict class, all seven derived, every row carries the pinned keys"
+  if ! python3 "$TMP/classes.py" "$TMP/n1.json"; then
+    fail "N1[C03a AC2]: the classification leg failed (reason above)"; fi
+  ok "N1[C03a AC2]: all fourteen fixture sessions land in their class — the seven named classes plus the unreadable trio (no rows, malformed rows, malformed metadata → neutral), the tool-call-only tail (→ abnormal-end on the cut-tail branch, not the turn floor), and both model shapes rendering as one id"
+  # Controls: fabricated audit outputs, one per arm. Each must be rejected by the
+  # same checker the dev-facing run uses, or that arm is inert.
+  cat >"$TMP/corrupt.py" <<'PMUT'
+import json, sys
+rows, defect = json.load(open(sys.argv[1])), sys.argv[3]
+
+
+def setv(sid, key, value):
+    for r in rows:
+        if r.get("id") == sid:
+            r[key] = value
+            return True
+    return False
+
+
+FIXED = {
+    "unreadable_as_abnormal": lambda: setv("ses_no_messages", "verdict", "abnormal-end"),
+    "tail_as_didwork": lambda: setv("ses_toolcall_tail", "verdict", "did-work"),
+    "model_raw": lambda: setv("ses_model_object", "model",
+                              json.dumps({"id": "qwen3.8-27b-q4", "providerID": "gpu-ai"})),
+    "model_dropped": lambda: setv("ses_model_string", "model", None),
+}[defect]()
+if not FIXED:
+    print("the fixture output has no row for the fabricated defect"); sys.exit(2)
+json.dump(rows, open(sys.argv[2], "w"))
+PMUT
+  for defect in unreadable_as_abnormal tail_as_didwork model_raw model_dropped; do
+    python3 "$TMP/corrupt.py" "$TMP/n1.json" "$TMP/classes-$defect.json" "$defect" \
+      || fail "N1 control: could not fabricate the '$defect' output (harness fault)"
+    python3 "$TMP/classes.py" "$TMP/classes-$defect.json" >/dev/null 2>&1 \
+      && fail "N1 control: the fabricated '$defect' output still passed the classifier contract — that arm is inert"
+  done
+  ok "N1[C03a AC2 control]: four fabricated outputs are each rejected — unreadable read as abnormal-end, cut-tail read as did-work, model column left raw, model column dropped"
 fi
 
 # --- N2: read-only by construction (AC3) ----------------------------------------
@@ -292,7 +480,19 @@ forbidden = {
     r"move_card|add_comment|toggle_checklist_item|set_card_custom_field": "a board write from a read-only instrument",
     r"pipeline_claim|pipeline_release|pipeline_heartbeat": "a lock-tool call from a diagnostic (it must not claim)",
     r"\.pipeline/": "a lock-file touch — the plugin owns .pipeline/, agents and scripts never do",
-    r"execute\(|subprocess\.(run|Popen)\(\s*[\"']opencode": "shelling out to the opencode CLI from a diagnostic",
+    # The SQL entry point is NOT the forbidden thing: python 3.14 removed
+    # sqlite3's exec_driver_sql, so a store-reading script must call execute().
+    # What is forbidden is a call whose TARGET mutates state — a subprocess spawn
+    # (how a CLI write would arrive), an HTTP client or write verb, a session
+    # mutation endpoint, or a DML statement against the store.
+    r"subprocess\.(run|Popen|call|check_output|check_call|getoutput|open)\b": "a subprocess spawn — this diagnostic reads sqlite; a CLI write would arrive through here",
+    r"\b(curl|wget)\b[^\n]*(opencode|/api/|/session/)": "an HTTP call out of a diagnostic that must only read the store",
+    r"\b(curl|wget)\b[^\n]*(-X\s*(POST|PATCH|PUT|DELETE)|--request\s*(POST|PATCH|PUT|DELETE)|--data|--form|-d\s)": "an HTTP write verb via curl",
+    r"\b(import|from)\s+(urllib|http\.client|requests|httpx|aiohttp)\b": "an HTTP client imported into a store-reading diagnostic — no session-API call is legitimate here, aliased or not",
+    r"urllib\.request|http\.client\.|requests\.(get|post|patch|put|delete)|httpx\.|aiohttp\.": "an HTTP client call in a store-reading diagnostic",
+    r"os\.(system|popen)\(|popen\(": "a shell-out vector in a diagnostic that only needs sqlite3",
+    r"/session/[A-Za-z0-9_\"'{]+/(move|archive|update)": "a session mutation endpoint named in the audit",
+    r"\bexecute(script)?\s*\(\s*[\"'](insert|update|delete|replace|create|drop|alter|pragma)\b": "a DML statement — the audit issues SELECTs only",
     r"mode=ro": None,  # required, inverted below
     r"sqlite3\.connect\(\s*['\"](?!file:)": "a sqlite connect without the file: URI — that opens for write",
 }
@@ -313,15 +513,29 @@ sys.exit(1 if problems else 0)
 PY
   python3 "$TMP/readonly.py" "$AUDIT" \
     || fail "N2[C03a AC3]: the audit script's read-only posture failed (reason above) — AC3 is machine-checked on purpose"
-  # Control: a fabricated copy that PATCHes a session must be caught.
-  python3 - "$AUDIT" "$TMP/audit-write.sh" <<'PY'
+  # Controls: fabricated write shapes, one per arm of the posture. Each is the real
+  # script plus one injected line; every one must redden the same checker, or the
+  # arm it covers is inert. (The old bare-execute needle reddened the real script
+  # itself instead — an unimplementable pin, not a posture proof.)
+  cat >"$TMP/inject.py" <<'PINJ'
 import sys
-t = open(sys.argv[1], encoding="utf-8").read()
-open(sys.argv[2], "w", encoding="utf-8").write(t + "\n# control\nopencode api patch --session \"$SID\" '{\"archived\": true}'\n")
-PY
-  python3 "$TMP/readonly.py" "$TMP/audit-write.sh" >/dev/null 2>&1 \
-    && fail "N2 control: a copy of the audit that PATCHes a session passed the read-only posture check — the check is vacuous"
-  ok "N2[C03a AC3]: the audit script opens the store read-only and carries no session, board, or lock write (fabricated-PATCH control proves the check bites)"
+text = open(sys.argv[1], encoding="utf-8").read()
+DEFECTS = {
+    "api_patch": "\nopencode api patch --session \"$SID\" '{\"archived\": true}'\n",
+    "cli_post": "\ncurl -X POST https://api.example/session/x\n",
+    "http_client": "\nimport urllib.request as _u; _u.urlopen(_u.Request(url, method=\"PATCH\"))\n",
+    "move_endpoint": "\npath = \"/session/ses_1/archive\"\n",
+    "store_write": "\ncur.execute(\"update session_v2 set idle_outcome=? where id=?\", (1, sid))\n",
+}
+open(sys.argv[3], "w", encoding="utf-8").write(text + DEFECTS[sys.argv[2]])
+PINJ
+  for defect in api_patch cli_post http_client move_endpoint store_write; do
+    python3 "$TMP/inject.py" "$AUDIT" "$defect" "$TMP/audit-$defect.sh" \
+      || fail "N2 control: could not fabricate the '$defect' write shape (harness fault)"
+    python3 "$TMP/readonly.py" "$TMP/audit-$defect.sh" >/dev/null 2>&1 \
+      && fail "N2 control: a copy of the audit carrying the '$defect' write shape passed the read-only posture check — that arm is vacuous"
+  done
+  ok "N2[C03a AC3]: the audit script opens the store read-only and carries no session, board, lock or store write — five fabricated write shapes (session PATCH, curl PATCH, aliased urllib PATCH, archive endpoint path, sqlite DML) are each rejected"
 fi
 
 # --- N3: no new shell grant anywhere (AC4) ---------------------------------------
@@ -402,14 +616,23 @@ PY
   ok "N4[C03a AC1]: the fixture store seeded with the artifact's named sessions reproduces the recorded classes (32 marked+archived, 6 unmarked, the manual control), per id"
   # Control: a NEWER session added to the store must not move any recorded verdict
   # (the arm that keeps the live-store read from going flaky).
+  # Self-sufficient base: the control builds its own base store (the same fixture
+  # mode N1 uses) instead of reusing N1's output, so N4 runs as an id-subset — a leg
+  # that only passes after another leg is un diagnosable in a battery that aborts red.
+  python3 "$TMP/mkstore.py" all "$TMP/store-n4base.db" || fail "harness: no-drift base fixture build failed"
+  if ! run_audit "$TMP/store-n4base.db" n4base; then
+    fail "N4[C03a AC1]: audit run over the no-drift base fixture failed (reason above)"
+  fi
   python3 "$TMP/mkstore.py" late "$TMP/store-late.db" || fail "harness: late-session fixture build failed"
   if ! run_audit "$TMP/store-late.db" n4late; then
     fail "N4[C03a AC1]: audit run over the late-session fixture failed (reason above)"
   fi
-  python3 - "$TMP/store-all.db" "$TMP/n1.json" "$TMP/n4late.json" <<'PY' || fail "N4[C03a AC1]: the newer-session control failed (reason above)"
+  python3 - "$TMP/n4base.json" "$TMP/n4late.json" <<'PY' || fail "N4[C03a AC1]: the newer-session control failed (reason above)"
 import json, sys
-base = {r["id"]: r["verdict"] for r in json.load(open(sys.argv[2]))}
-late = {r["id"]: r for r in json.load(open(sys.argv[3]))}
+base = {r["id"]: r["verdict"] for r in json.load(open(sys.argv[1]))}
+late = {r["id"]: r for r in json.load(open(sys.argv[2]))}
+if not base:
+    print("the base fixture produced no rows — the control compares nothing"); sys.exit(1)
 drift = {sid: (v, late[sid]["verdict"]) for sid, v in base.items() if sid in late and late[sid]["verdict"] != v}
 if drift:
     print(f"a newer session changed existing verdicts: {drift} — classification is per-id and window-independent (AC1's non-flaky-by-construction rule)"); sys.exit(1)

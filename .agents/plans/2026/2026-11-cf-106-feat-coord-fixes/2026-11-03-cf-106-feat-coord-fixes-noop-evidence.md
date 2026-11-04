@@ -67,3 +67,70 @@ Consequences carried into the plan (no re-ask, no interpretation change):
 1. **The mechanism claim is stronger, not weaker** — 55/55 marked scheduled runs are archived, so the archive call is definitively fine and C03b must not touch it.
 2. **The coverage claim is live** — the failing population is runs that die before any exit; C03b fixes the stop-path half and states the mid-turn limit instead of guessing at a plugin-side marker writer.
 3. **The baseline must not be a count** — the store is live, so C03a's parity acceptance is per session id against a fixture seeded from this table (plus a later-row control), never a total that any new tick can move.
+
+---
+
+## C03a script readback — the instrument reproduces this table (run 2026-11-04T06:05Z)
+
+`bash scripts/session-noop-audit.sh --since 2026-11-02 --until 2026-11-04` (default `--repo` = the canonical root
+`/home/coder/SpencersLab`, default `--db` = the host store, read through `file:…?mode=ro`): 41 board-coord rows —
+`marked-archived` 33, `abnormal-end` 3, `mcp-surface-absent` 1, `did-work` 3, `marked-unarchived` 1; scheduled rows 37,
+of which 4 carry no marker. The 33 is the artifact's 32 **plus** `ses_e5c776275f…`, which had not yet run its exit recipe
+at the 22:45Z read and completed it afterwards — the count moved because the population moved, which is why the check below
+is per id.
+
+Per the AC1 rule the check is **per named id**, and the artifact's rows are the target:
+
+| session (artifact's abbreviation) | created | artifact class | script verdict | marker | archived | reads |
+|---|---|---|---|---|---|---|
+| `ses_e5cae562ff…` | 11-03 21:30 | `marked-archived` | `marked-archived` | `no-claimable-cards` | yes | match |
+| `ses_e5d00b9b2f…` | 11-03 20:00 | `marked-archived` | `marked-archived` | `no-claimable-cards` | yes | match |
+| `ses_e5d37a4caf…` | 11-03 19:00 | `marked-archived` | `marked-archived` | `no-claimable-cards` | yes | match |
+| `ses_e5dc0fbf8f…` | 11-03 16:30 | `marked-archived` | `marked-archived` | `no-claimable-cards` | yes | match |
+| `ses_e5ddc7612f…` | 11-03 16:00 | `marked-archived` | `marked-archived` | `no-claimable-cards` | yes | match |
+| `ses_e5d1c2cabf…` | 11-03 19:30 | `mcp-surface-absent` | `mcp-surface-absent` | none | no | match — the live defect keeps its own class |
+| `ses_e5c92db19f…` | 11-03 22:00 | unmarked + raw `<tool_call>` tail | `abnormal-end` | none | no | match |
+| `ses_e5ce54255f…` | 11-03 20:30 | unmarked + mid-turn death | `abnormal-end` | none | no | match (tail is empty: the turn was cut off) |
+| `ses_e5cc9c99af…` | 11-03 21:00 | unmarked + raw `<tool_call>` tail | **no row** | — | — | the session is gone from the store (id-prefix and title reads both empty) |
+| `ses_e5ce065e2f…` | 11-03 20:35 | unmarked + raw `<tool_call>` tail | **no row** | — | — | same — pruned since the 22:45Z read |
+| `ses_e5c776275f…` | 11-03 22:30 | unmarked + mid-turn death | `marked-archived` | `no-claimable-cards` | yes | the 22:45Z read caught it mid-turn; it then ran the exit recipe (title is now `no-op 2026-11-03T22:42`, marker + archive present) |
+| `ses_e5cfa57d6f…` | 11-03 20:06 | marked, unarchived, manual control | `marked-unarchived` | `no-cards` | no | match; its `openchamber.kind` is **absent** in the record, so the row reads `kind: null` — which is exactly why the reader's conjunction alerts it |
+
+What the readback settles, with no re-interpretation:
+
+- **The instrument's classification matches the hand table** for every artifact-named session still in the store:
+  **9 verdicts match** (the five `marked-archived` rows, the `mcp-surface-absent` run, the two `abnormal-end` rows and the
+  manual control), **2 ids are store-side losses** (pruned between the 22:45Z read and this run — no row either way), and
+  **1 verdict legitimately changed** (`ses_e5c776275f…`: mid-turn at the earlier read, `marked-archived` now). Nothing in
+  the table contradicts the instrument.
+- **The store prunes.** Two of the six unmarked rows this artifact named no longer exist, so "6 unmarked" was a count
+  of a live population, not a durable record. Any later readback must compare per id — AC1's rule, now demonstrated
+  on the real store rather than only on the fixture (`tests/cf106-noop/surface.sh` N4's control arm pins the other
+  half: a newer session moves no existing verdict).
+- **One recorded death was not a death.** `ses_e5c776275f…` continued after the read and marked + archived, so the
+  addendum's "roughly every other tick of the current pair ends unmarked" overstates the rate: in this window **4 of 37**
+  scheduled rows carry no marker — 19:30 `mcp-surface-absent`, 20:30 and 22:00 `abnormal-end`, and 23:30 `did-work`.
+- **The absent `gate-stop` row is an instrument coverage limit, not a clean sample** (review C03a, blocker 1 — this
+  corrects the earlier "no sample in this window" wording, which read a blind spot as a finding). The class is
+  **structurally unobservable** for the loop-launched population: review measured **0 of 49** board-coord sessions in the
+  11-02…11-04 window and **0 of 123** store-wide with any user-message line matching the gate-line pattern, because the
+  gate verdict reaches a transcript **only** through the `/pipeline-boards-hourly` command expansion
+  (`.rulesync/commands/pipeline-boards-hourly.md:11`), while the live scheduled runs are launched by
+  `.agents/loops/pipeline-worker.md` / `pipeline-worker-local.md`, whose prompt carries no gate block — **101 of 123**
+  first prompts start with the loop body's `<!--`. `test_session`'s own readback measures the same thing on the script's
+  row shape: window 11-02…11-05 → 64 rows, 0 `gate-stop`; store-wide → 93 rows, 0 `gate-stop`. (Row counts differ across
+  the two reads by window and store filter, not by disagreement.)
+  Therefore the post-merge readback does **not** judge a `gate-stop` row count: it judges the **marker columns** — a
+  scheduled row that ended on a stop path with neither marker nor archive — per the flavor-labelled judgement in
+  `tests/cf106-noop/readback.md`. C03b's target population stays unmeasured by this baseline either way.
+- **Vocabulary mapping, stated once:** the artifact's "mid-turn death after the lock-state check" is not a class of the
+  fixed vocabulary. The instrument reports it as `abnormal-end` when the tail is empty or carries raw call XML, and it
+  falls through to `did-work` when a cut-off turn left a normal-looking last text — the 23:30 row (8 turns, last text
+  reports it is still probing the MCP surface) is that case, and the artifact counts it among the broken runs. That
+  resolution limit is the instrument's, not the evidence's; C03b's done-claim is judged on the marker columns, not on
+  this class.
+- **The two transcript heuristics over-match on quotes** (same limit, stated once so a future read is not over-trusted):
+  `GATE_LINE` scans **any** user line, so a later message that merely *quotes* `GATE: LIVE` classifies a session that never
+  stopped at the gate; `RAW_CALL` likewise over-matches an unmarked run that quotes `<tool_call>` while *explaining* the
+  defect (exactly what this ticket's own evidence reads do). Both classes are therefore evidence-grade hints, never
+  verdicts — which is another reason the marker columns carry the done-claim.

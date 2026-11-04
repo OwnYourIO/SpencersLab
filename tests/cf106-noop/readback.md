@@ -37,6 +37,14 @@ Verdict vocabulary — exactly one class per row, marker classes winning over st
 shapes: `marked-archived`, `marked-unarchived`, `unmarked-archived`, `gate-stop`,
 `abnormal-end`, `mcp-surface-absent`, `did-work`.
 
+Two reading rules that keep the table honest. `abnormal-end` means *evidence* of a
+death — fewer turns than the floor (3), or a last turn with no text; a transcript the
+audit cannot read at all (no `session_message` rows, unparseable `data`, malformed
+`metadata`) decides `did-work` instead, so a store-schema change never masquerades as a
+wave of runs that died before any exit. And an empty `turns` on a row that has session
+data is the tell that the store shape moved: re-check the instrument before believing
+any class distribution.
+
 ## Baseline parity (C03a AC1)
 
 For the artifact's window (`--since 2026-11-02 --until 2026-11-04`), the audit must
@@ -52,21 +60,48 @@ count — the store is live, and a newer session must not move an older verdict
 Read the table for the window that starts at the first scheduled tick *after* the
 merge (at least two ticks, so a single lucky run cannot carry the claim):
 
-1. **Zero `gate-stop` rows without a marker and an archive.** Every run that ended
-   on `GATE: SKIP`, `GATE: LIVE` with filtered-in Executing cards, or a failed board
-   check must read `marked-archived` — that is the coverage C03b adds. A row showing
-   `gate-stop` means the run stopped without marking: the contract leg failed.
-2. **No new `unmarked-archived` scheduled rows.** A marker without an archive (or the
-   reverse) means the exit recipe ran half — the read-merge-write mandate or the
-   `{"archived": true}` PATCH was dropped.
-3. **`abnormal-end` and `mcp-surface-absent` rows may remain.** That is the honest
+Two launch flavors, and they do not prove the same thing. Only one of them ever puts
+gate text into a transcript:
+
+| flavor | started by | gate verdict in the prompt? | what a stop-path run looks like |
+|---|---|---|---|
+| scheduled loop | `.agents/loops/pipeline-worker.md` and `pipeline-worker-local.md` — the live hourly population (C10 collapses them to one) | **no**: neither loop prompt carries a gate block (0 `GATE:` lines in either file, read 2026-11-04) | never `gate-stop`; after C03b a stop-path tick reads `marked-archived`, a half-run reads `marked-unarchived`/`unmarked-archived`, a death reads `abnormal-end` |
+| `/pipeline-boards-hourly` | the command whose expansion runs the gate (the verdict block enters at `.rulesync/commands/pipeline-boards-hourly.md:11`) | **yes** | `gate-stop` while it stops on a gate verdict without marking |
+
+Measured through the instrument rather than recalled (read-only, `--json`,
+2026-11-04): window `--since 2026-11-02 --until 2026-11-05` → 64 rows, **0
+`gate-stop`**; store-wide → 93 rows, **0 `gate-stop`**. Review measured the same shape
+differently sized (0 of 49 in the window, 0 of 123 store-wide match the gate line). So
+the live scheduled population cannot produce a `gate-stop` row at all, and an arm that
+waits for one can never fire.
+
+Judge C03b on the **marker columns**, and label the flavor of every row you paste:
+
+1. **No scheduled row that ended on a stop path is missing both a marker and an
+   archive.** The failure pairs are `unmarked-archived` (archived without marking) and
+   a `marked-unarchived` still unarchived an hour later (marker written, the
+   `{"archived": true}` PATCH dropped). Those pairs are observable in **both** flavors,
+   which is why they are the judge.
+2. **A `gate-stop` row proves the failure outright — for the hourly flavor only.** Zero
+   such rows proves nothing about the loop flavor; write which flavor each row came from
+   and, when the row cannot tell you (`kind`, `title` and the excerpt are the only
+   clues), write `flavor: unknown` rather than guessing.
+3. **No new `unmarked-archived` scheduled rows** against the artifact's baseline for the
+   same window.
+4. **`abnormal-end` and `mcp-surface-absent` rows may remain.** That is the honest
    limit stated once in the boards skill: a run that dies before reaching an exit
    cannot mark itself. Their alert standing is accepted for this ticket; if the
    engine-side close-out was shipped, C03b's RESULT says so and these rows should
    start carrying markers — if it was deferred, a follow-up card exists on the owner's
    board instead.
-4. **`marked-archived` stays the dominant class for scheduled no-ops** — 13/13 in the
-   baseline read. A regression there means the two legacy exits broke, not the new ones.
+5. **`marked-archived` stays the dominant class for scheduled no-ops** — 32 of the 38
+   scheduled rows in the artifact's read. A regression there means the two legacy exits
+   broke, not the new ones.
+
+**Excerpt caution (USER-owned step 5):** `excerpt` is the last assistant text collapsed
+and cut at 160 characters, so a pasted row can end mid-token — attribute a row's class
+from `verdict`/`turns`, and quote the session id, never the excerpt, when an excerpt
+looks truncated.
 
 ## The alert-silence claim, checked against a column
 
