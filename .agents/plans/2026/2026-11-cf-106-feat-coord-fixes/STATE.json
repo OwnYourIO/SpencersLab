@@ -153,7 +153,7 @@
       "dev_rounds": 1,
       "review_rounds": 1,
       "last_verdict": "APPROVED",
-      "commit": "625d7843d",
+      "commit": "78c6c0ef3 (rebased onto origin/main d193510c8 at 2026-11-04; was 625d7843d)",
       "handoffs": [
         {
           "role": "dev", "status": "DONE", "chunk": "C01",
@@ -181,7 +181,7 @@
       "review_rounds": 1,
       "validation_repairs": 1,
       "last_verdict": "APPROVED",
-      "commit": "b6f3292d2",
+      "commit": "cdd848293 (rebased; was b6f3292d2)",
       "handoffs": [
         {
           "role": "dev", "status": "BLOCKED (validation_at_fault)", "chunk": "C02",
@@ -215,7 +215,7 @@
       "review_rounds": 2,
       "validation_repairs": 1,
       "last_verdict": "APPROVED",
-      "commit": "79693c016",
+      "commit": "932bb1279 (rebased; was 79693c016)",
       "handoffs": [
         {
           "role": "dev", "status": "DONE (round 2; round 1 first returned silently with no RESULT, then BLOCKED validation_at_fault)", "chunk": "C03a",
@@ -262,7 +262,7 @@
       "review_rounds": 2,
       "validation_repairs": 2,
       "last_verdict": "APPROVED",
-      "commit": "36a65d26f",
+      "commit": "b987ce12c (rebased; was 36a65d26f)",
       "files_in_scope_widened": "+ .rulesync/rules/overview.md + AGENTS.md (DECISIONS-routed slug-stack sweep) + tests/agent-board-coord/gate.sh + tests/coord-inwork/surface.sh (test_session roster re-pins) — accepted by review r1 deviation (a) and r2 R2-N1",
       "handoffs": [
         {
@@ -299,7 +299,7 @@
       "review_rounds": 1,
       "validation_repairs": 1,
       "last_verdict": "APPROVED",
-      "commit": "b68d49bf8",
+      "commit": "a444de0fd (rebased; was b68d49bf8)",
       "files_in_scope_widened": "+ .rulesync/skills/role-code/SKILL.md, .rulesync/skills/pipeline-push-pr/SKILL.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/subagents/{code,code-pr}.md (comments only), .rulesync/rules/overview.md, AGENTS.md (the C04 review's R2-A1/A2/A3 prose routed here for one regeneration cycle) + tests/cf90-ledger/surface.sh (test_session harness repair)",
       "handoffs": [
         {
@@ -325,15 +325,40 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
-      "depends_on": [
-        "C01"
-      ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "depends_on": ["C01"],
+      "dev_session": "ses_e5965c19affewfw3qYuEKUCoEi",
+      "review_session": "ses_e592677e3ffeCDCyrri295qQD5 (r1), ses_e58dffed0ffe93j0CS5zfSM4eb (r2)",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "ec31b2e50",
+      "files_in_scope_widened": "+ scripts/board-preload-probe.sh (the B6 ownership gap, coord-widened per the test wave's note), containers/wekan-mcp/README.md, skills/wekan-api/SKILL.md (doc parity), tests/wekan-mcp/dependencies.sh (test_session t11 re-scope + N2 fix)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (arm-level) → DONE r2 (M1 mechanism as ruled)", "chunk": "C06",
+          "files_changed": ["containers/wekan-mcp/wekan_mcp/server.py", ".rulesync/skills/boards/SKILL.md + .opencode/skills/boards/SKILL.md", "skills/wekan-mcp/SKILL.md", "skills/wekan-mcp/references/call-shapes.md", "containers/wekan-mcp/README.md", "skills/wekan-api/SKILL.md", "scripts/board-preload-probe.sh"],
+          "commands_run": ["tests/wekan-mcp/dependencies.sh => r1 whole exit 0 (t1-t11) with the old t11; r2 whole exit 0 with the re-cut t11 (11 ok, t2/t9/t10/t11 each 0)", "boards-deps whole => red only at t9 (C07); t1..t8 => pass (t2 flipped green, HOLD arms green)", "cf96-deploy => pass; slug-stack => pass (C01 parser unmoved); cf106-noop => pass; board-provisioning t6 => pass", "tools.sh red only t2 (17 reads want 18 = C07); skill-surface red only t4 (38 want 39 = C07); card-details t1 = C07; board-preload-probe B1-B5 green, B6 red only on the get_card_details needle (C07)", "create-list t2 red = pre-existing hunk-count pin (2 hunks at HEAD → 6 → 16 as this branch grows)", "py_compile server.py => pass; bash -n probe => pass; rulesync generate --check => clean", "/tmp behavior harness exec'ing the real preload_board body => pass: one request, 8-key cards, checklist filter (five standard + legacy Research + 8-item legacy, QA notes excluded), {title,finished} items, titles + board sort order, newest slug from the stack, archived flag-not-drop, dependency lines, name maps, tail groups, all three swimlane_titles arms", "round 2 arms: None/str/empty-object/200-error-body export answers => raise; empty BOARD document with cards: [] => swimlanes: [] no raise; unknown title => [] no raise; swimlane_titles=[] => the bound not everything", "aislop ci --changes => r1 93/80 with 11 warnings 9 fixable; r2 99/80, 0 errors, 2 warnings, 0 fixable (the two size findings accepted)", "helm => N/A; docker build => no-daemon, CI-deferred (repo rule); AC7 proof is offline-only — the deployed dev-boards is still a 26-tool surface with no preload_board (re-checked live at 2026-11-04: no preload_board, no get_card_details, no dependency/label/list tools)"],
+          "upstream_verification": "WeKan export vocabulary checked against upstream: `checklists` is a real `?fields=` section and buildStream() opens with the board header (`{_format: 'wekan-board-1.0.0', …board}`), so a real board document is never `{}` — the premise of the fail-the-call guard",
+          "deviations": ["docs widened to README + wekan-api SKILL + call-shapes for the new failure semantics (accepted)", "LF8/LF9 probe legs deliberately excluded from the probe's `all` set until the owner's image pin bump lands (accepted)", "round 1's swallow of a non-dict export answer replaced by a raise per the coord ruling (M1)", "tail-group ordering changed from id-sort to walk order (reviewer-found, accepted as more faithful to board sort)", "nine decorative separator comments removed (all 9 fixable aislop findings); none was pinned — the only grep hit in tests/ is a failure-message string"],
+          "friction": "aislop flags preload_board as function-too-long (188→200 lines) — unfixable without blinding t2/t9-t11, which AST-walk that single FunctionDef; create-list t2's hunk-count pin is hostile to any later additive change in server.py; two tool reads returned bytes that did not match disk (a 73-line probe variant, a nonexistent tests/containers/surface.sh) — re-read from disk and re-derived"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C06-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/wekan-mcp/dependencies.sh (+175/−29)"],
+          "what": "t11's ban on ANY ast.Raise inside preload_board was over-implementation of 'unknown title ⇒ empty grouping', and it pushed the dev into a semantically worse implementation (silent-empty ≡ empty-board). Re-scoped: a Raise is banned only when it is unconditional or reachable from the swimlane_titles filter; a transport-path raise is permitted. New positive arm (N1): the export answer must not be folded into an empty container (`or {}` at the call site, or `doc = {}` under an isinstance guard) and the failure must be signalled (guarded raise or a failure-signalling call over the answer). N2: t2's card-keys arm any() → all() with the 8-key set named, stale 'seven fields' comment fixed. Fixture builder now asserts its own anchors (`sub()` + `|| fail 'fixture fault'`), and a WEKAN_SERVER=<path> override lets a reviewer prove satisfiability without touching the repo.",
+          "commands_run": ["dependencies.sh whole => exit 1 with 17 ok, red ONLY at t11 (designed red naming the round-2 fix); against a compliant /tmp copy => exit 0, 18 ok", "t2/t9/t10 => 0; t11 => 1 then 0 with the compliant copy", "fabrication matrix: compliant (transport raise) green; body-level raise red; filter-arm raise red; swallow red; `or {}` red; decoy card map with title red — every direction proven, fixture faults now self-named", "collateral: boards-deps red only t9; tools.sh only t2; skill-surface only t4; board-preload-probe only B6; card-details t1; create-list t2 (pre-existing, count grew)"]
+        },
+        {
+          "role": "review", "status": "CHANGES REQUESTED (r1) → APPROVED (r2)", "chunk": "C06",
+          "r1_session": "ses_e592677e3ffeCDCyrri295qQD5", "r2_session": "ses_e58dffed0ffe93j0CS5zfSM4eb",
+          "r1_findings": ["MAJOR M1: the payload signalled degradation with nothing — an empty grouping is contractually identical to an empty board, and the boards degrade law covers ABSENT and FAILED only, so a swallowed malformed answer skips the per-list fallback and the one retry; a pickup walk could conclude 'no cards', write the no-op marker and archive silently. The comment claiming the caller falls back to per-list reads was false against the contract. Mechanism routed to coord (who ruled fail-the-call), comment fixed in-chunk", "dev deviations 1 and 4 accepted; N2 (t2 any→all, stale comment) and N3 (probe preload_absent needle is a server crash, not a confirmed-absent surface → C07) and N4 (restated clause) routed", "create-list t2 proven red at a clean HEAD worktree (2 hunks), so C06 grew a pre-existing pin rather than breaking it"],
+          "r2_commands_run": ["dependencies.sh whole => pass (t1-t11) + t2/t9/t10/t11 each => pass", "boards-deps whole red only t9 (C07), t1-t8 pass; cf96-depass => pass; slug-stack => pass; cf106-noop => pass", "tools.sh / skill-surface / card-details / board-preload-probe: only the C07 needles red", "rulesync generate --check clean; py_compile; bash -n; aislop ci --changes => 99 vs 80, 0 errors, 2 warnings, 0 fixable", "node --test tests/opencode/*.test.ts => 243/43 unchanged baseline; a full 69-suite sweep at the delta and at clean HEAD => identical except dependencies.sh 1→0 (C06 going green) and one dirty-tree trip reproduced on clean HEAD", "semantics harness exec'ing the real function (None/str/list/0/{}/200-error → raise; empty board doc → []; unknown title → []; [] → bound) => pass; mutation runs (or {}, doc = {}, filter-arm raise, decoy card map) each red with the intended reason", "upstream re-verification of the guard's premise at v12.65 (buildStream opens with the board header)"],
+          "r2_findings": ["M1 closed; exactly one Raise, hanging off the transport guard; AC1–AC5 all hold; Qwen Dense everywhere with Qwen 27b only in the sanctioned alias clause; separator cleanup unpinned and harmless", "A3 ruling: fold the 'an answered-empty preload means an empty board, not an outage' clause + N5's over-promise ('no guessing which checklist generation') into C07's boards edit — same paragraph, one regeneration cycle; a filtered empty answer is a title miss, so a run must re-check titles before declaring no candidates", "N6/N7 nits to final review: the raise message dropped the board id; the guard comment's last sentence names the consumer's law"]
+        }
+      ]
     },
     "C07": {
       "status": "pending",
