@@ -1,7 +1,7 @@
 {
   "feature": "2026/2026-11-cf-105-feat-implement-vllm",
   "plan_status": "approved",
-  "coord_session": "ses_e5c5bec6dffebVkbqg5j2BDR52",
+  "coord_session": "ses_e53bbc1d5ffepUTUiAWeRg001r",
   "test_session": {
     "note": "the single original agent-test session (ses_e587db2c1ffewHuz1AOwWENhpy) and its immediate retry (ses_e58158663ffezQg176HMOunRUs) BOTH died on harness compaction errors after the first wrote partial suites to disk (its retry wrote nothing). Test writing was therefore split into per-chunk test sessions with minimal context; each session's id is recorded per chunk below and routes that chunk's faulty-test fixes",
     "dead": ["ses_e587db2c1ffewHuz1AOwWENhpy", "ses_e58158663ffezQg176HMOunRUs"],
@@ -13,7 +13,7 @@
     "C06": "id not captured by coord (session completed; a faulty-test repair for C06 launches a FRESH agent-test session per the gates contract)"
   },
   "current_wave": 1,
-  "updated_at": "2026-11-04T15:50:00Z",
+  "updated_at": "2026-11-05T15:36:00+00:00",
   "kickoff": {
     "slug": "cf-105-feat-implement-vllm",
     "type": "feat",
@@ -104,13 +104,39 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "in-progress",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_rounds": 1,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e53780a73ffen5vXPydAMd234c",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e53780a73ffen5vXPydAMd234c",
+          "status": "BLOCKED (validation_at_fault — implementation DONE, left in tree; 26/27 green, the one red is a test defect)",
+          "files_changed": ["charts/vllm/Chart.yaml (stub rewritten: two deps — common + app-template, no-trailing-slash repo URL)", "charts/vllm/Chart.lock (generated, commit)", "charts/vllm/values.yaml (new)", "charts/vllm/templates/common.yaml (new, one-line loader)", "charts/vllm/templates/NOTES.txt (new)", "charts/vllm/templates/pvc-vllm-cache.yaml (new)", "services/gpu-ai/prod/values.yaml (charts.vllm entry + subdomains skip-ruling comment + top-level vllm: block)", ".github/workflows/vllm-render-tests.yaml (new)", "charts/vllm/charts/{common,app-template}-5.0.1.tgz on disk, gitignored/untracked per repo convention"],
+          "commands_run": ["helm dependency update charts/vllm => pass", "helm lint charts/vllm => pass (0 failed, icon INFO only)", "helm template chart-defaults (domain/clusterName sets) => pass (PVC+Service+Deployment, 0 OVERRIDE_ sentinels)", "python3 extract-subtree services/gpu-ai/prod/values.yaml['vllm'] => /tmp/vllm-vals.yaml => pass", "helm template service-level -f render => pass (0 sentinels)", "grep OVERRIDE_ both renders => empty", "python3 -m pytest charts/vllm/tests -v => 26 passed / 1 failed (test_ac6_chart_lock_and_vendored_dependency — test defect, see friction)", "trio greps: services/gpu-ai 7 vllm hits (charts entry + skip comment + block) / services/proxy-local empty / custom-values empty / services/gpu empty => pass", "workflow yaml.safe_load => pass (also asserted in-suite)", "npx aislop ci --changes => pass (0 errors, 0 warnings, 70 files)"],
+          "deviations": "(1) Chart.yaml declares TWO deps: common (functional — parent-side loader's values.init normalizes the render context only when .Values.common is populated by the common subchart's defaults; without it the library's pod-options dig panics on this helm build, empirically verified) plus app-template (the repo-standard pin test_ac6 asserts; renders nothing since no values sit under its namespace); both tgz vendored on disk (gitignored, llama-swap precedent). (2) --model value rides serveArgs via a YAML anchor to chart-level modelPath (app-template 5.0.1 args renders verbatim, no tpl); service block re-pins the identical literal; a C06 snapshot-hash retarget stays values-only. (3) enableSleepMode: true is a documented D5/Q6 values key, not a mechanical gate — the args list cannot be conditionally templated by the library; toggling is a serveArgs edit (stated in the values comment). (4) global.createDefaultServiceAccount: false (home-assistant/mosquitto precedent — the engine pod never calls the K8s API; avoids an orphan ServiceAccount object in the parent render).",
+          "friction": "one faulty test blocks the gate — charts/vllm/tests/test_contract.py test_ac6_chart_lock_and_vendored_dependency runs json.loads() on Chart.lock, which helm 3.16.4 writes as YAML (proven 3 ways: llama-swap's committed lock, the dev-regenerated lock, a scratch chart's lock — all JSONDecodeError at char 0; the CI workflow regenerates the lock via helm dependency update before pytest, so a hand-written JSON lock cannot survive either). Repair is one line: json.loads -> yaml.safe_load; all other assertions in that test are already met. Also: recurring harness display truncation/garbling of tool output this run — resolved with file-backed re-reads (awk/python asserts), same workaround as the plan/coord friction entries.",
+          "open_questions": "none",
+          "next_suggested": "route the one-line test repair to the C02 test session (test_session.C02 = ses_e57aa288affeFv7IrIgEUfMUkZ); the implementation is complete — after the test lands, re-run pytest charts/vllm/tests -v (expect 27/27) then proceed to agent-review and the coord commit (Chart.lock + all new files; tgz stays untracked)."
+        },
+        {
+          "role": "test",
+          "round": "repair-1",
+          "session": "ses_e531983faffex3HTZqnAxlUbyx (fresh session — the original C02 test session ses_e57aa288affeFv7IrIgEUfMUkZ is not reachable as a child of this coord; recorded as test_session.C02 repair-route)",
+          "status": "DONE",
+          "files_changed": ["charts/vllm/tests/test_contract.py (test_ac6_chart_lock_and_vendored_dependency: json.loads -> yaml.safe_load on Chart.lock; now-dead import json removed; 3-line why-comment)"],
+          "commands_run": ["export PATH=$HOME/.local/bin:$PATH + helm version --short => pass (v3.16.4)", "json.loads on committed Chart.lock => fail (JSONDecodeError char 0 — defect reproduced fresh)", "yaml.safe_load on committed Chart.lock => pass (dict; deps common 5.0.1 + app-template 5.0.1)", "helm dependency update on scratch chart => pass (fresh lock is YAML)", "pytest charts/vllm/tests -v pre-repair => 26 passed / 1 failed (only the ac6 test)", "pytest charts/vllm/tests -v post-repair => pass (27 passed in 0.72s, no skips — helm-guarded tests actually ran)", "aislop-gate on both edits => pass (100/100, 0 issues)"],
+          "deviations": "none — repair exactly as routed; all other assertions byte-intact; zero edits outside tests/",
+          "friction": "none — dev's three-way unsatisfiability proof independently re-verified (committed lock + fresh scratch regeneration with the local binary)",
+          "open_questions": "none",
+          "next_suggested": "launch C02 agent-review (re-runs the chunk suite first; 27/27 expected), then coord commits the C02 set (charts/vllm/ incl. Chart.lock + values/templates + tests, services/gpu-ai/prod/values.yaml, .github/workflows/vllm-render-tests.yaml; vendored tgz stays untracked per the llama-swap precedent)"
+        }
+      ]
     },
     "C03": {
       "status": "pending",
@@ -161,6 +187,24 @@
       "handoffs": []
     }
   },
+  "handoffs": [
+    {
+    "at": "2026-11-05T09:56:00Z",
+    "by": "coord session ses_e5622dbd2ffe1lipbEtMS4MWaK",
+    "reason": "harness failure, not a pipeline failure — the OpenCode server restarted four times during this tick and every `agent-dev-local` launch for C02 died with it (child session ses_e559e9e8cffefna6s6Glvnge2n plus two earlier launches; a continuation of that session was aborted too). The run stopped instead of a fifth retry; FRICTION.md carries both entries",
+    "truth_from_files": "C01 done + committed (6afec2d44). C02-C06 pending, no implementation code exists for them. Branch `cf-105-feat-implement-vllm` at 6afec2d44 (one commit ahead of main `ceb9a8ed6`, nothing pushed). Uncommitted working tree: STATE.json (bookkeeping), `charts/vllm/Chart.yaml` (170-byte stub from the first killed dev attempt — unverified, the next dev verifies or rewrites it), `charts/vllm/tests/` (C02 suite, designed-RED), `charts/llama-swap/tests/test_vllm_peer.py` (C03), `tests/notes/` (C06), `tests/services/vllm-dashboards.sh` (C05), `tests/pipeline-models/surface.sh` (M, C04)",
+    "next_chunk": "C02 (wave 1, depends_on []) — `charts/vllm` chart + gpu-ai ApplicationSet trio: verify/rewrite the Chart.yaml stub, then the rest of Files in scope; agent-dev-local → agent-review → commit",
+    "note": "the `AI` set was released with outcome `abandoned`, so a fresh run can re-claim. The card sits in **Executing** — an agent cannot move it back to Rework (that move is owner-owned), so the next run needs either an owner **Executing → Rework** move or a manual launch naming card `R4EjaHtDeHMjAkDpf`. D11 unchanged: slug set + plan_status approved ⇒ resume this folder, no new slug."
+    },
+    {
+    "at": "2026-11-04T18:30:00Z",
+    "by": "coord session ses_e5c5bec6dffebVkbqg5j2BDR52",
+    "reason": "owner ruling 2026-11-04 \u2014 resume in a FRESH session: the coord session compacted heavily and was observed confabulating git history (recalling C02/C03 commits that do not exist); the owner directed a fresh session to avoid risking the run on a degraded context",
+    "truth_from_files": "C01 done + committed (6afec2d44). C02-C06 pending. Branch cf-105-feat-implement-vllm is at 6afec2d44 (one commit ahead of ceb9a8ed6). Uncommitted working-tree changes (bookkeeping + test-only; NO implementation code): STATE.json (this file), chunks/C02.md (stray notes), charts/llama-swap/tests/golden/gpu-ai-config.yaml (test re-capture), tests/pipeline-models/surface.sh (test surface change) \u2014 commit or stash these alongside C02's commit; NONE are implementation code, so nothing implementation-related is lost",
+    "next_chunk": "C02 (wave 1, depends_on []) \u2014 the charts/vllm chart + gpu-ai ApplicationSet trio; launch agent-dev-local, then agent-review, then commit",
+    "note": "a fresh agent-board-coord session should re-claim the AI set and resume from C02; no re-kickoff, no new slug (D11)"
+    }
+  ],
   "blocked": [],
   "deferred": [
     "follow-up card: ROCm Device Metrics Exporter (R5 GPU-side gap)",
@@ -175,11 +219,22 @@
     "via": "board-coord batched question round (card cf-105) \u2014 'Approve as written' + 7 rulings folded (HR1\u2013HR7 in DECISIONS.md)"
   },
   "resume": {
-    "at": "2026-11-04T15:50:00Z",
-    "trigger": "owner triage ruling \u2014 re-claim + resume in-session (the AI lock was reaped 2026-11-04T08:47:30Z and the reaper's degrade path left the card in Executing; the walk never visits that list, so the owner directed the recovery)",
-    "claim_set_id": "27a7dc32-0da9-418b-b381-b7f375615c3d",
-    "resumed_at_stage": "Post Research",
-    "note": "D11 \u2014 slug set + plan_status approved \u21d2 no re-kickoff, no new slug"
+    "at": "2026-11-05T04:25:00Z",
+    "trigger": "scheduled `Provider: API` worker tick picked the card from Rework (the owner's hand-back move) and re-claimed the `AI` set in a FRESH coord session, per the owner's ruling recorded in the previous handoff",
+    "claim_set_id": "c28bf948-fdd7-4c05-9f7f-ea7c318ce331",
+    "coord_session": "ses_e5622dbd2ffe1lipbEtMS4MWaK",
+    "resumed_at_stage": "Chunk Development (wave 1, C02)",
+    "note": "D11 \\u2014 slug set + plan_status approved \\u21d2 no re-kickoff, no new slug. The run warmed and moved into the EXISTING worktree (branch `cf-105-feat-implement-vllm` already present, so no mint). Session origin re-resolved through the sanctioned script leg and matches kickoff.session_origin. Working tree verified test-only (charts/vllm/tests, charts/llama-swap/tests/test_vllm_peer.py, tests/notes, tests/services/vllm-dashboards.sh, tests/pipeline-models/surface.sh) \\u2014 matches the hand-back."
+  },
+  "resume2": {
+    "at": "2026-11-05T15:36:00+00:00",
+    "trigger": "owner-directed manual /pipeline-resume naming the feature folder (the forwarded hand-back is the 2026-11-04 owner-ruling one; the 2026-11-05T04:22 scheduled re-claim leg had since run, died on the restart storm, and left the card in Executing)",
+    "session": "ses_e53bbc1d5ffepUTUiAWeRg001r (plain agent-coord, /pipeline-resume flavor — commit-only, never push)",
+    "card_state": "live-verified in Executing (list qZ9CLZqCRbv7NQQ6R); labels Provider: API + Pipeline: AI; slug field set",
+    "lock_state": "AI set free — reaped by the timer per the newest card comment ('Timed out: no heartbeat for 2h', ses_e5622dbd2ffe1lipbEtMS4MWaK); the 09:56 leg's pipeline_release did not land. No formal re-claim possible from this leg: pipeline_* plugin tools and dev-boards MCP absent from plain agent-coord's Code Mode catalog (verified: opencode + browser only). Board access via the documented MCP-over-HTTP fallback; Executing keeps the card out of the hourly pickup walk",
+    "board_comment": "resume-claim comment G2EFnTBADpCPksMt2 posted 2026-11-05T15:35+00:00",
+    "resumed_at_stage": "Chunk Development (wave 1, C02)",
+    "note": "D11: slug set + plan_status approved => no re-kickoff, no new slug. Git re-verified at resume: HEAD 6afec2d44 (C01), main ceb9a8ed6, 1 ahead; uncommitted tree = test artifacts + unverified 170-byte charts/vllm/Chart.yaml stub + STATE.json/FRICTION.md bookkeeping. Previous blocked[] entry (restart storm) closed as history by this owner-directed resume."
   },
   "preplan_handoffs": [
     {

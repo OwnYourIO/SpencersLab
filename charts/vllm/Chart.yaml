@@ -1,0 +1,17 @@
+apiVersion: v2
+name: vllm
+version: 1.0.0
+appVersion: "0.33.0"
+dependencies:
+# common is the functional dependency: its values.yaml defaults populate
+# .Values.common, which the parent-side loader (templates/common.yaml)
+# requires to normalize the render context before the pod-options dig.
+# app-template (the thin wrapper around common) is the repo-standard pin
+# the suite asserts (charts/vllm/tests/test_contract.py); it renders
+# nothing because no values are given under its app-template: namespace.
+- name: common
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts

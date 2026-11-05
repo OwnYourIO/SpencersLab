@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vllm-cache
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Triton JIT + HF hub cache scratch; the weights themselves live on
+      # the shared llama-swap claim (mounted read-only at /models).
+      storage: {{ .Values.cachePvcSize | default "10Gi" }}

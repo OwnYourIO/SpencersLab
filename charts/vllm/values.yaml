@@ -1,0 +1,188 @@
+# vLLM (cf-105 C02): the qwen3.8-27b dense engine on the gpu-ai R9700.
+# Cluster-internal only (D7/Q4) — the sole client route is the llama-swap
+# peers.vllm hop; there is no ingress and no public host.
+
+# --model value: the Q4 GGUF the live qwen3.8-27b-q4 rung references
+# (unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL), auto-fetched into the HF hub-cache
+# layout under the shared 500Gi llama-swap PVC (LLAMA_CACHE=/models). The
+# snapshot <commit> segment resolves on target — the C06 step-2 `find` is
+# the path authority, so a wrong path is an operator-visible startup error
+# fixed here (values), never in a template.
+modelPath: &modelPath /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
+
+# ROCr device index of the R9700 (D2). The index itself is confirmed at
+# the C06 rocminfo gate — retarget this key, never the template.
+rocrVisibleDevices: "0"
+
+# D5/Q6: --enable-sleep-mode ON by default (the operator time-sharing
+# lever with Strata). The app-template args field renders verbatim (no
+# tpl), so the flag rides serveArgs below; this key records the default
+# and the C06 runbook surface, and toggling it is a serveArgs edit.
+enableSleepMode: true
+
+# D8: the two k8s.grafana.com/* pod annotations, gated. 60 s scrape
+# interval is the k8s-monitoring v4 annotationAutodiscovery feature
+# default — NO metrics.scrapeInterval annotation (Q5 ruling).
+monitoring:
+  annotations: true
+
+# Size of the hand-written vllm-cache PVC (templates/pvc-vllm-cache.yaml).
+cachePvcSize: 10Gi
+
+# The D4 serve recipe (HR3: 262144 = the model's native ceiling). Rendered
+# VERBATIM from this list (app-template 5.0.1's args field is not
+# templated), with the --model value spliced from *modelPath; the service
+# block re-pins modelPath, so a values edit — chart or service — is the
+# whole retarget surface. Flag order is contract-pinned by the test suite.
+serveArgs: &serveArgs
+  - "--model"
+  - *modelPath
+  - "--served-model-name"
+  - "qwen3.8-27b-vllm"
+  - "--scheduling-policy"
+  - "priority"
+  - "--max-model-len"
+  - "262144"
+  - "--max-num-seqs"
+  - "4"
+  - "--kv-cache-dtype"
+  - "fp8"
+  - "--gpu-memory-utilization"
+  - "0.95"
+  - "--enable-prefix-caching"
+  - "--language-model-only"
+  - "--enforce-eager"
+  - "--watermark"
+  - "0.05"
+  - "--enable-sleep-mode"
+  - "--disable-access-log-for-endpoints"
+  - "/health,/metrics,/ping"
+
+global:
+  nameOverride: &chartName vllm
+  # The engine pod never calls the K8s API, so no ServiceAccount object is
+  # created (home-assistant/mosquitto precedent); the pod runs tokenless on
+  # the namespace default SA (5.x automount default false).
+  createDefaultServiceAccount: false
+
+defaultPodOptions:
+  # AMD pod shape (R1 Q5): the HIP runtime needs the host IPC namespace.
+  hostIPC: true
+  # D8: exactly two k8s.grafana.com/* annotations (scrape + port). Values
+  # are ternary-templated on the monitoring.annotations gate; the map is
+  # tpl'd as a whole by app-template 5.0.1, so gate-OFF keeps the keys
+  # with inert (empty) values instead of dropping them — an empty value
+  # is what disables the scrape.
+  annotations:
+    k8s.grafana.com/scrape: '{{ .Values.monitoring.annotations | ternary "true" "" }}'
+    k8s.grafana.com/metrics.portNumber: '{{ .Values.monitoring.annotations | ternary "8000" "" }}'
+
+controllers:
+  vllm:
+    annotations:
+      reloader.stakater.com/auto: "true"
+    containers:
+      vllm:
+        image:
+          # In-repo overlay over vllm/vllm-openai-rocm:v0.33.0-rocm100
+          # (containers/vllm-rocm — the GGUF plugin overlay, C01).
+          repository: ghcr.io/ownyourio/vllm-rocm
+          # PIN-ME: the image has no versioned build yet — pin to the
+          # first :v<run> once containers/vllm-rocm's docker-build CI has
+          # run on main (C06 step 10), then drop pullPolicy Always.
+          tag: main
+          pullPolicy: Always
+        args: *serveArgs
+        env:
+          # String values are tpl'd by the library, so the chip index
+          # splices from the values key — the template never changes when
+          # the R9700 index changes (D2).
+          ROCR_VISIBLE_DEVICES: '{{ .Values.rocrVisibleDevices }}'
+          TRITON_CACHE_DIR: /data/triton
+          HUGGINGFACE_HUB_CACHE: /data/hf
+          # v0.33.0 attaches /sleep, /wake_up, /is_sleeping and
+          # /release_kv_cache_memory only when this env is true — without
+          # it --enable-sleep-mode has no HTTP surface (Post Research V5).
+          VLLM_SERVER_DEV_MODE: "1"
+        ports:
+          - name: http
+            containerPort: 8000
+            protocol: TCP
+        probes:
+          startup:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 8000
+              initialDelaySeconds: 60
+              periodSeconds: 10
+              failureThreshold: 90
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 8000
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              httpGet:
+                path: /health
+                port: 8000
+        resources:
+          # RAM law (EXPLORE 8.6): the 32Gi limit is the cap that keeps
+          # the 125Gi node undisturbed while Strata's pod coexists.
+          requests:
+            cpu: 4
+            memory: 16Gi
+          limits:
+            memory: 32Gi
+            amd.com/gpu: "1"
+        securityContext:
+          # Upstream AMD pod shape (R1 Q5): the ROCm runtime needs the
+          # full ioctl surface (Unconfined seccomp), the video group for
+          # /dev/dri, and SYS_PTRACE for the HIP debugger path — the
+          # approved deviation from the repo drop-ALL standard, confined
+          # to this pod (strata precedent, EXPLORE 8.7).
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: Unconfined
+          runAsGroup: 44
+          capabilities:
+            add:
+              - SYS_PTRACE
+
+service:
+  vllm:
+    controller: *chartName
+    ports:
+      http:
+        port: 8000
+
+persistence:
+  # Weights: the EXISTING 500Gi llama-swap claim mounted whole and
+  # read-only — the vLLM pod reads the same GGUF the llama.cpp rungs
+  # serve (HR7). RWO same-node double mount is the single-node pattern.
+  models:
+    existingClaim: llama-swap
+    globalMounts:
+      - path: /models
+        readOnly: true
+  # Triton + HF caches: the hand-written vllm-cache claim
+  # (templates/pvc-vllm-cache.yaml) — the library renders no PVC for
+  # existingClaim entries, so the claim itself is hand-written.
+  cache:
+    existingClaim: vllm-cache
+    globalMounts:
+      - path: /data
+  # HIP shared memory for the single GPU worker (R1 Q5 shm sizing).
+  shm:
+    type: emptyDir
+    medium: Memory
+    sizeLimit: 8Gi
+    globalMounts:
+      - path: /dev/shm
