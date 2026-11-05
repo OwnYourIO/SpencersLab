@@ -410,13 +410,27 @@
       ]
     },
     "C08": {
-      "status": "pending",
+      "status": "in_progress",
       "wave": 2,
       "depends_on": [],
-      "dev_rounds": 0,
+      "dev_session": "ses_e570319cfffes6i6c0BQu0Pf68",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "review_session": null,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "commit": null,
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C08",
+          "files_changed": [".opencode/plugin/pipeline-locks/index.ts (v2 record: version 2 + holders[] with per-holder stamps, file-level last-writer-wins stamps kept; viewHolders lens; TornLockError/OccupiedError; beatKey per (pipeline,session); acquireSetWithRollback(env, claim, shared) keeping the wx exclusive create for the no-override path and appendLockHolder for the shared path; holder-scoped undo(); per-holder release/lock-lost/beats/markSetFailed; pruneStaleHolders + per-holder reap entries + deduped lastReap meta; pipeline_claim schema gains shared; /pipeline-status shared list)", ".rulesync/skills/boards/SKILL.md + mirror (reason:occupied taught in the availability and claim bullets; new bullets 'Co-tenancy is the human's call, never the run's' and 'Holders, not files')", ".rulesync/rules/overview.md + AGENTS.md (claim bullet: availability is the engine's answer + human-word-only shared:true; reap bullet: holder granularity)"],
+          "commands_run": ["pipeline-locks-core => exit 0 (38/0)", "-engine => exit 1 (41, 38 pass / 3 fail = U3x3 C09)", "-reap => exit 1 (32, 29/3 = V4x3 C09)", "-tick => exit 1 (15, 13/2 = T2x2 C10)", "whole TS battery (glob form) => exit 1 (293, 285 pass / 8 fail = the same 8)", "agent-perms A15 standalone => exit 0 (3 ok) and whole => exit 0 (21 ok) - the standing C08 red cleared", "pipeline-push-pr 0, board-context 0 (8 ok), cf96-tz 0, boards-deps 0, slug-stack 0", "coord-inwork 1 at i4 (pre-existing), gate.sh 1 at t17 (pre-existing), noop-marker 1 at N2 (C03b), rulesync-surface 1 at c23 (C09), agents-md 1 at c10 (C03b) with c11 standalone still red (C10), provider-loops 1 at t1 (C10), repo-label-filter 1 at t3 (red at HEAD too, and now also its plugin-vs-pinned-commit leg)", "rulesync generate => 0 (wrote 2), 2nd run no-op, --check => 0", "aislop ci --changes => 0 (99/100, 0 errors, 1 pre-existing size warning)", "helm => N/A"],
+          "live_proof": "the plugin reloaded live: pipeline_claim's registered schema now carries `shared`, and this run's own v1 claim reads back through pipeline_status as holders:[{cardId, sessionID, age, state, cardTitle}] with shared:false, heartbeat intact (coord read-only check at 2026-11-05)",
+          "deviations": ["seven ruled contract inferences recorded in chunks/C08.md: composite beat key; state:'failed' stays file-level; holder-level staleness only for files with >=2 holders (a lone holder keeps the shipped max(heartbeatAt, mtime) rescue); lockStatus union-find (setId union file) with holders collapsed per claim so shared = >1 claim; the legacy-identity lens (a record with file-level sessionID/setId reads as a pre-co-tenancy single-holder record, flat fields win, stray holders[] ignored) which is what keeps R10(b)/K7 green; occupied/torn answer shapes; per-holder reap audit plus card legs", "a comment-ordering repair in newLockRecord was needed because the dev's own comment placement reddened cf96-tz t2's window (a green arm), fixed rather than re-pinned"],
+          "friction": "agent-perms A15's own ok message runs backticked `shared` through bash (stderr 'shared: command not found'), verdict unaffected; repo-label-filter t3's plugin-unchanged pin is unsatisfiable for any lock-surface chunk",
+          "open_questions": ["is inference 5 (the legacy lens) a DECISIONS item?", "re-pin or advance repo-label-filter t3's pinned commit?"]
+        }
+      ]
     },
     "C09": {
       "status": "pending",
