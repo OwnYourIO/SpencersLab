@@ -1,6 +1,7 @@
 # PLAN: Coord fixes — slug linking, preload, locks, model defaults, permissions, scheduled-runner hygiene
 feature: 2026/2026-11-cf-106-feat-coord-fixes
 revised: 2026-11-03 (post-batched-question-round — all 15 open questions RESOLVED by the owner; C03 split into C03a evidence + C03b contract)
+revised: 2026-11-05 (scoped amendment, **C03b only**: its done-claim is judged on the audit's **marker columns**, never a `gate-stop` row count — that class is structurally unobservable for loop-launched runs (DECISIONS 2026-11-04), so a zero count is a coverage limit, not a finding. Chunk ids, sizes, waves and the eleven-chunk map unchanged)
 
 ## Goal
 Fix the fourteen coordination-machinery defects the owner listed on WeKan card #106: make the `slug` custom field an append-only `[slug](session-link)` stack, give the board-coord flow a real card-level preload (whole-board by swimlane/list, and one automatic single-card read), make the lease-lock engine support co-tenant cards and a user-ruled takeover after a reap, land the `Qwen Dense` vocabulary + local-first default, keep git writes with the coordinator while letting it reach the `code` agent (with push on the `-pr` family), make no-work scheduled ticks mark-and-archive instead of alerting-and-idling, offer five friction follow-up modes in both coordinator families, and collapse the scheduled worker to one runner that sets agent + provider/model and starts with card info in hand.
