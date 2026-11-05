@@ -1,0 +1,59 @@
+# Render-contract tests for the vllm chart plus lint/template for the
+# chart (chart defaults and the gpu-ai service values):
+#   - pytest suite in charts/vllm/tests (D4 serve recipe verbatim, env
+#     set, probes, pod shape, exactly-two scrape annotations, Service
+#     naming, persistence legs, Chart metadata, the trio greps)
+#   - helm lint + helm template for charts/vllm
+name: vllm render tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/vllm/**'
+      - 'containers/vllm-rocm/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - '.github/workflows/vllm-render-tests.yaml'
+  pull_request:
+    paths:
+      - 'charts/vllm/**'
+      - 'containers/vllm-rocm/**'
+      - 'services/gpu-ai/prod/values.yaml'
+      - '.github/workflows/vllm-render-tests.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.15'
+
+      - name: Install Python dependencies
+        run: pip install pytest pyyaml
+
+      - name: Fetch chart dependencies
+        run: helm dependency update charts/vllm
+
+      - name: Run test suite
+        run: pytest charts/vllm/tests -v
+
+      - name: helm lint (chart)
+        run: helm lint charts/vllm
+
+      - name: helm template (chart defaults)
+        run: helm template vllm charts/vllm --set domain=spencerslab.com --set clusterName=gpu-ai
+
+      - name: helm template (service-level values)
+        run: |
+          python3 -c "import yaml; d=yaml.safe_load(open('services/gpu-ai/prod/values.yaml')); yaml.safe_dump(d['vllm'], open('/tmp/vllm-vals.yaml','w'))"
+          helm template vllm charts/vllm -f /tmp/vllm-vals.yaml --set domain=spencerslab.com --set clusterName=gpu-ai

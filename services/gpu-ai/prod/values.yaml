@@ -32,6 +32,9 @@ charts:
     #repository: https://ownyourio.github.io/SpencersLab/
     namespace: default
     ServerSideApply: "true"
+  vllm:
+    namespace: default
+    ServerSideApply: "false"
 
   # External charts (with version and repository)
   amd-gpu:
@@ -42,6 +45,11 @@ charts:
 
 ingress:
   subdomains:
+    # cf-105 (D7/Q4 ruling): deliberately NO vllm host — the trio rule's
+    # proxy leg is skipped, cluster-internal only: the engine is reached
+    # only through the llama-swap peers.vllm hop (C03) on the existing
+    # llama host below. A host of its own would publish the surface the
+    # peers hop exists to keep private.
     # cf-77: deliberately NO strata host — the trio rule's proxy leg is
     # skipped by the operator's Q4 ruling (DECISIONS 2026-10-27): the engine
     # pod is cluster-internal, reached only through the llama-swap peers
@@ -558,3 +566,17 @@ llama-swap:
         # blow the node budget (the suite pins that law on the --fit off leg).
         # flash-next q5/q6 are deliberately in NO set at all (see vars note).
         solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnher | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+
+# cf-105 C02: charts/vllm — the vLLM engine (qwen3.8-27b dense) on the
+# R9700. Cluster-internal by the Q4 ruling — no host of its own (see the
+# subdomains skip note above); C03 wires the llama-swap peers.vllm hop on
+# the llama host as the sole client route.
+vllm:
+  # The q4 GGUF the qwen3.8-27b-q4 rung already serves (RESEARCH Post
+  # Research V3), in the HF hub-cache layout under the shared 500Gi
+  # llama-swap PVC. The snapshot <commit> segment resolves on target —
+  # the C06 step-2 find is the path authority; a mismatch is a values-only
+  # fix here.
+  modelPath: /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
+  # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
+  rocrVisibleDevices: "0"
