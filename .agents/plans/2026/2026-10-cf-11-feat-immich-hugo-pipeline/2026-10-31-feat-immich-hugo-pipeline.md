@@ -113,13 +113,15 @@ npx aislop ci --changes
 | C04 | `charts/forgejo-secret-seed` — Bitwarden→Forgejo repo-secret seeder, **gpu wiring** | M | 1 | [] | independent chart; secrets rule compliance |
 | C05 | `charts/forgejo-run-watchdog` — schedule-failure watchdog (INCLUDED phase 1, answer 3), **gpu wiring** | M | 3 | [C04] | reuses C04's PAT/URL values pattern |
 | C06 | Site-repo artifacts staged: deploy+sync workflows (daily cron), sync-albums.yaml page-mapping schema (no archetype/section — N3) | M | 2 | [C01] | workflows call C01's tool contract |
-| C07 | Apply staged artifacts to CuratedForest.com on Forgejo (branch+PR) | S | 3 | [C06] | blocked on owner precondition (repo migrated to Forgejo) |
+| C07 | Apply staged artifacts to CuratedForest.com on Forgejo (branch+PR) | S | 3 | [C06] | blocked on owner precondition (repo migrated to Forgejo — RESOLVED 2026-11-05, live-verified incl. LFS) |
+| C08 | `forgejo-host-runner` image: pinned Go toolchain (hugo module download on the runner) | S | 4 | [C02] | C07 dev r1 live finding: site imports hugo modules, image has no go → first runner build red (added 2026-11-05) |
 
 ## Wave order
 
 1. C01, C03, C04 — independent (different file sets).
 2. C02 (needs C01), C06 (needs C01's contract).
 3. C05 (included, owner-locked), C07 (blocked until the repo lives in Forgejo).
+4. C08 (needs C02; added 2026-11-05 per C07 dev r1 live finding — must land before the first live runner build and before the C07 PR opens).
 
 ## Verified facts (planning + rework sessions)
 
@@ -211,7 +213,7 @@ posture anywhere (overrides the BG; schema-invalid entries fail loud).
    (owner account; EXACTLY asset.read/asset.view/album.read/tag.read) →
    `hugo-build-immich` (created); Netlify token +
    both site ids → `hugo-build-netlify` (created); Forgejo PAT →
-   `hugo-build-forgejo` (PENDING): write:repository + Actions-write if
+   `hugo-build-forgejo` (MINTED+STORED 2026-11-05, owner confirmed): write:repository + Actions-write if
    offered, on a CuratedForest.com-writer, minted at git.spencerslab.com
    Settings→Applications — needed for BOTH seeder API-auth and workflow
    PR/push (automatic FORGEJO_TOKEN suppresses workflow triggers).
@@ -220,10 +222,11 @@ posture anywhere (overrides the BG; schema-invalid entries fail loud).
    replace each `OVERRIDE_NEEDED` slot in the `forgejo-secret-seed:` app block
    of `custom-values/gpu/prod-values.yaml` with its Bitwarden item UUID —
    `immich-api-key` and `netlify` slots are **FILLED**; the `forgejo-pat`
-   slot is PENDING on the `hugo-build-forgejo` item (4). When C05 lands, the
+   slot was filled 2026-11-02 (c0388eb37); the `hugo-build-forgejo` item is
+   MINTED+STORED per the owner's 2026-11-05 confirmation. When C05 lands, the
    same fill passes apply to its `forgejo-run-watchdog:` app block (all of
    that block's slots are then unfilled — reuses the same items, no new
-   mandatory ones).
+   mandatory ones). (filled by the C08 dev session 2026-11-05 per user action 5)
 6. After SpencersLab PR merges + ArgoCD syncs: dev runner pod Running + online
    in git.scifi.farm admin UI; trivial host-label workflow completes on a
    scratch dev repo (owner/coord creates e.g. `runner-host-validation`);
@@ -250,3 +253,4 @@ posture anywhere (overrides the BG; schema-invalid entries fail loud).
   chunks/C05.md (r1 D-2 propagation, before its dev round). The GPU
   placement decision (DECISIONS R9) is UNCHANGED — only its mechanism
   sentence is superseded (DECISIONS PLAN-AMEND line).
+- 2026-11-05 · C07 dev r1 live finding: the forgejo-host-runner image (C02) carries no go binary, but the live site's hugo.yaml imports two hugo modules (lkhrs/hugo-dark-visitors, onweru/compose) → the first runner build of deploy.yml (both legs) fails at module download ("binary with name go not found in PATH" — reproduced clone-side at a hugo -D --gc stop). Added chunk C08 (S, wave 4, depends C02): pinned sha256-verified Go toolchain in the image; sequenced before the first live run and before the C07 PR opens. Also noted: the C05 watchdog app-block uuid fills (user action 5) ride the C08 dev session with suite re-validation (values = the two hugo-build-* item uuids already in the adjacent seeder block). Amended surfaces: Chunks table (C08 row + C07 precondition cell), Wave order (4), chunks/C08.md (new), STATE.json (C07 handoff + C08 entry).

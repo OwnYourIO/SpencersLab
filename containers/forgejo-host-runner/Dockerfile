@@ -3,7 +3,7 @@
 # Runner daemon plus the whole job surface for the Immich -> CuratedForest
 # Hugo pipeline: git/git-lfs (LFS derivatives), curl/jq (API work), zstd
 # (actions cache), python3 (sync tooling), hugo extended (site build),
-# node + netlify-cli (deploys).
+# go (hugo module download), node + netlify-cli (deploys).
 #
 # amd64 only (lab nodes); arm64 is a follow-up if nodes ever go arm.
 
@@ -25,6 +25,15 @@ ARG HUGO_VERSION=0.151.0
 # hugo_${HUGO_VERSION}_checksums.txt; bump with HUGO_VERSION — a stale
 # digest must fail the build, not get auto-trusted.
 ARG HUGO_SHA256=f2fe3b4ef90bf053d93c713eca1d4d5a467d8d2d5da858a448d55eb71ad44ddf
+# hugo downloads the site's modules with a `go` binary on PATH, so the
+# toolchain ships pinned from the official tarball; the URL expands from
+# this ARG, so a version-only bump fails the digest check below loudly.
+# renovate: datasource=golang-version depName=golang
+ARG GO_VERSION=1.27.3
+# manual-pin: sha256 of go${GO_VERSION}.linux-amd64.tar.gz (official
+# dl.google.com .sha256); bump with GO_VERSION — a stale digest must fail
+# the build, not get auto-trusted.
+ARG GO_SHA256=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
 # Deploy CLI. Requires Node >=22.13.0; the pinned base resolves to 22.23.4,
 # so the engine floor holds while the 22.x line stays at/above 22.13.
 # renovate: datasource=npm depName=netlify-cli
@@ -53,6 +62,19 @@ RUN set -eux; \
     tar -xzf /tmp/hugo.tar.gz -C /usr/local/bin hugo; \
     rm -f /tmp/hugo.tar.gz /tmp/hugo.expected; \
     /usr/local/bin/hugo version
+
+RUN set -eux; \
+    curl -fsSL -o /tmp/go.tar.gz \
+        "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"; \
+    printf '%s  %s\n' "${GO_SHA256}" "/tmp/go.tar.gz" > /tmp/go.expected; \
+    sha256sum -c /tmp/go.expected; \
+    tar -xzf /tmp/go.tar.gz -C /usr/local; \
+    rm -f /tmp/go.tar.gz /tmp/go.expected; \
+    /usr/local/go/bin/go version
+
+# Build-time root install, runtime read: uid 1000 needs go on PATH for hugo
+# module download.
+ENV PATH=/usr/local/go/bin:$PATH
 
 RUN npm install -g netlify-cli@${NETLIFY_CLI_VERSION} && npm cache clean --force
 

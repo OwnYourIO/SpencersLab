@@ -10,13 +10,17 @@
 # t3[AC5 USER/HOME] t4[AC3+image contract hugo extended 0.151.0] t5[AC5
 # binary paths — the C03 chart command contract] t6[AC2 no secrets, no COPY
 # . .] t7[.dockerignore excludes tests] t8[C01 regression guard] t9[AC1
-# hadolint] t10[designed docker-build shape].
+# hadolint] t10[designed docker-build shape] t11[C08 go toolchain: pinned
+# GO_VERSION ARG + official tarball URL + sha256sum -c digest-file
+# verification + ENV PATH /usr/local/go/bin + build-time 'go version'
+# assertion — red-first against the current go-less Dockerfile, added
+# 2026-11-05 per chunks/C08.md].
 #
 # Structure follows tests/containers/wekan-mcp-login.sh (fail/ok/skip +
 # per-leg subset args) and the tests/services render-from-copy convention.
 #
 # Run from the repo root:
-#   bash tests/containers/forgejo-host-runner.sh          # t1..t10
+#   bash tests/containers/forgejo-host-runner.sh          # t1..t11
 #   bash tests/containers/forgejo-host-runner.sh t4 t9    # subset
 set -euo pipefail
 
@@ -44,10 +48,10 @@ skip() {
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 10); do WANT["t$i"]=1; done
+  for i in $(seq 1 11); do WANT["t$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^t([1-9]|10)$ ]] || fail "unknown test id '$a' (expected t1..t10)"
+    [[ "$a" =~ ^t([1-9]|1[01])$ ]] || fail "unknown test id '$a' (expected t1..t11)"
     WANT["$a"]=1
   done
 fi
@@ -225,6 +229,50 @@ if want t10; then
     # contract above is this session's share of AC2.
     ok "t10: docker build => no-daemon, CI-deferred (designed passing shape)"
   fi
+fi
+
+# --- t11: C08 go toolchain pin (red-first: the image ships no go today) -------
+# hugo 0.151.0 downloads the site's hugo modules with a `go` binary on PATH;
+# C08 ships one pinned, digest-verified toolchain. Static checks only — the
+# runtime proof is the CI build log (cf-77 no-daemon shape).
+if want t11; then
+  # Backslash-joined logical lines, so multi-line RUNs read as one (t5 idiom).
+  flat=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\\\n[[:space:]]*/ /g' "$DF")
+  gover=$(grep -E '^ARG GO_VERSION=' "$DF" | head -n 1 | cut -d= -f2 | sed -E 's/[[:space:]]+$//' || true)
+  if [ -z "$gover" ] || ! printf '%s' "$gover" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+    fail "t11: no GO_VERSION ARG pinned to a concrete X.Y.Z — the latest stable at implementation time (C08); a floating tag would let the toolchain drift out from under the digest"
+  fi
+  apt_line=$(printf '%s\n' "$flat" | grep -oE 'apt(-get)? install[^&|;]*' | head -n 1 || true)
+  if [ -n "$apt_line" ] && printf '%s' "$apt_line" | grep -qE '(^|[[:space:]])golang'; then
+    fail "t11: golang is apt-installed — the toolchain must come from the official pinned tarball (distro go floats; C08 Notes-for-dev)"
+  fi
+  url_ln=$(grep -nE 'https://(go\.dev|golang\.org)/dl/go(\$\{?GO_VERSION\}?|[0-9]+\.[0-9]+(\.[0-9]+)?)\.linux-(amd64|arm64)\.tar\.gz' "$DF" | head -n 1 | cut -d: -f1 || true)
+  [ -n "$url_ln" ] ||
+    fail "t11: no official go tarball URL (https://go.dev/dl/go<ver>.linux-<arch>.tar.gz or the golang.org/dl mirror, same shape — C08)"
+  url_ver=$(sed -n "${url_ln}p" "$DF" | grep -oE 'go(\$\{?GO_VERSION\}?|[0-9]+\.[0-9]+(\.[0-9]+)?)\.linux' | head -n 1 | sed -E 's/^go//; s/\.linux$//' || true)
+  case "$url_ver" in
+    *GO_VERSION*) : ;;
+    *) [ "$url_ver" = "$gover" ] ||
+       fail "t11: the tarball URL hardcodes $url_ver but ARG GO_VERSION is $gover — the pin and the URL must name one toolchain" ;;
+  esac
+  # Pipe-based verification (…tarball… | sha256sum / | tar) is the hadolint
+  # footgun C02 resolved with the digest-file pattern — no exception for go.
+  if grep -nE 'go[0-9][0-9.]*\.linux-[^ ]*\.tar\.gz[^|]*\|[[:space:]]*(sha256sum|tar)' "$DF"; then
+    fail "t11: pipe-based go tarball checksum/extraction — use the sha256sum -c-on-written-digest-file pattern (C02 precedent, C08 Notes-for-dev)"
+  fi
+  lo=$((url_ln > 15 ? url_ln - 15 : 1)); hi=$((url_ln + 15))
+  window=$(sed -n "${lo},${hi}p" "$DF")
+  if ! printf '%s' "$window" | grep -qE 'sha256sum -c'; then
+    fail "t11: no sha256sum -c verification within the go install block (±15 lines of the tarball URL) — an unverified download is C08 AC1's fault class"
+  fi
+  if ! printf '%s' "$window" | grep -qE '(^|[[:space:];&|])tar[[:space:]]'; then
+    fail "t11: no tar extraction within the go install block — the toolchain must land at /usr/local/go (the ENV PATH contract below)"
+  fi
+  grep -qE '^ENV PATH[ =][^ ]*/usr/local/go/bin' "$DF" ||
+    fail "t11: no ENV PATH carrying /usr/local/go/bin — the runtime user (uid 1000) needs go on PATH for hugo module download (C08 AC2; build-time root install, runtime read)"
+  printf '%s\n' "$flat" | grep -qE '^RUN .*go version' ||
+    fail "t11: no build-time 'go version' RUN assertion — a broken toolchain must fail the build loudly, not the first runner deploy (C08 AC1)"
+  ok "t11: go toolchain pinned ($gover, official tarball, sha256sum -c verified, on the runtime PATH, build-time go version asserted)"
 fi
 
 printf 'PASS: forgejo-host-runner container checks (%d ok)\n' "$checks"
