@@ -159,6 +159,7 @@
       "last_verdict": "APPROVED",
       "dev_session": "ses_e530450f7ffeekCqwwNx5AT9uJ",
       "review_session": "ses_e52893544ffexrtvRWcddHsJR4",
+      "commit": "71e9116b0",
       "handoffs": [
         {
           "role": "dev",
@@ -194,17 +195,40 @@
         }
       ]
     },
-    "C03_status_note": "C03 done: dev-1 + test repins-1 + review r1 APPROVED; commit sha recorded by coord after the commit (circular-inclusion avoidance)",
     "C04": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C03"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e526ea1fdffefz3NEpgDhARZEL",
+      "review_session": "ses_e525531b6ffeJmB4pAEqIxp1qP",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e526ea1fdffefz3NEpgDhARZEL",
+          "status": "DONE",
+          "files_changed": [".rulesync/skills/boards/SKILL.md (two-field roster + D12 carve-out + priority kickoff bullet + record-fields bullet + launch-prompt Priority + frontmatter two-field phrasing)", ".rulesync/skills/pipeline-kickoff/SKILL.md (board-runs-only priority: {raw, class} slot in the handoff record; live Questions untouched)", ".rulesync/skills/pipeline-models/SKILL.md (single-authority Priority class table + polarity sentence + peer-filter-floor note + two favorited qwen3.8-27b-vllm rows)", ".opencode/skills/{boards,pipeline-kickoff,pipeline-models}/SKILL.md (regenerated twins; boards twin shows the generator's YAML-fold rewrap of the description — confined to the pair)"],
+          "commands_run": ["rulesync generate => pass (exactly the 3 twins written, no other churn; full generated diff read)", "bash tests/pipeline-models/surface.sh M1..M7 FULL => pass (7 ok, exit 0; M7 designed-red -> green; M1-M6 stayed green; re-run fresh at end)", "rulesync generate --check => pass (exit 0, all files up to date; M6 re-runs it in-suite + second-generate no-op)", "AC1 scope: git diff 71e9116b0 --stat => pass (exactly the six skill files + pre-existing STATE.json bookkeeping; zero other .opencode/ files; zero .rulesync/ files outside the three)", "AC4 single-authority greps => pass (the 1-3 / 4+ boundary text exists ONLY in the pipeline-models pair src+gen; literal '4+' absent from boards+kickoff; boards cites twice, kickoff once)", "AC5 cross-file => pass (node JSONC parse: qwen3.8-27b-vllm body.priority 10 + -urgent body.priority 1, both limit.context 262144, shared wire modelID — equal to the table rows; grep: 'priority?' floor = 10 at services/gpu-ai/prod/values.yaml:556)", "AC6 diff review => pass (five standard checklists, Post-plan slug write-back, Research-only loop, legacy session retired / no models field / no pipeline field, D12/D19 citations all intact; live kickoff Questions still exactly two)", "npx aislop ci --changes => pass (0 errors, 0 warnings, 0 fixable, 70 files)"],
+          "deviations": "none material — HR2 (batched-round Q2) confirmed the chunk's class table as written (no override recorded in DECISIONS); the boards generated-twin description YAML-fold rewrap is the generator's own formatting of the one-paragraph source text (anticipated by the chunk's rulesync-reformat note)",
+          "friction": "edit tool rejected two multi-line oldStrings whose transcription mis-counted continuation-line indentation (2 spaces in the source, not 3) — resolved with single-line unique anchors; no semantic impact",
+          "open_questions": "none",
+          "next_suggested": "launch C04 agent-review (re-runs FULL M1..M7 + rulesync generate --check + aislop first, then AC1-AC6 review), then coord commits the C04 set (six skill files + bookkeeping), marks C04 done, posts the card comment, and launches C05 (wave 2, depends_on C02 only)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e525531b6ffeJmB4pAEqIxp1qP",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (surface M1..M7 full: 7 ok, M7 green + M1-M6 stayed green; rulesync generate --check exit 0 + second generate a no-op (idempotent); aislop 0/0/0 70 files; AC1 scope = six skill files + STATE.json bookkeeping only; AC3 roster two-field + D12 carve-out + priority bullet + launch-prompt all in src and gen; AC4 single-authority bidirectional — the 1-3/4+ boundary text only in pipeline-models, boards cites twice, kickoff once, zero vllm row IDs in boards/kickoff; AC5 cross-file — node JSONC rows equal the table, 'priority?' floor 10 at services/gpu-ai/prod/values.yaml:556; AC6 five checklists + write-back + Research loop + Stage map byte-unchanged, live kickoff still exactly two questions; AC7 comment-slop three-clause pass on every new bullet). Dev's flagged deviation (boards twin description YAML-fold rewrap) adjudicated JUSTIFIED — generator formatting, token-multiset identical, confined to the pair. DECISIONS HR2/Q2 confirmed: no batched-round override, table cell-for-cell as D6/HR2.",
+          "minors": "non-blocking nit -> DECISIONS Deferred: the rewritten boards roster line contains a 'third field' phrasing that should read 'field' (semantics preserved); info: the q4 favorited row's background-leg cross-reference stays inside the single-authority file (no action). Full notes appended to chunks/C04.md Review notes.",
+          "next_suggested": "coord commits the C04 set; mark C04 done; post the card comment; launch C05 (wave 2, depends_on C02 only)"
+        }
+      ]
     },
     "C05": {
       "status": "pending",

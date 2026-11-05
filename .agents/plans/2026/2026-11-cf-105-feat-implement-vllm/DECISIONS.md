@@ -29,6 +29,7 @@ Append-only. Newest at the bottom. Format: date, who (plan|cord|human), decision
 - llama-swap v267–v269 post-pin niceties (per-upstream usage extraction, capacity router) — renovate will surface them; no plan dependency (R3 version-drift note).
 - 2026-11-05 coord (C02 review minor, non-blocking): the retarget-surface comments (charts/vllm/values.yaml L34-36 + the service-block comment in services/gpu-ai/prod/values.yaml) overstate — a service-only `modelPath` edit does NOT change the rendered `--model` (review probe: the serveArgs YAML anchor splices the chart-level key). Reword to the dual-edit surface (chart-level modelPath/serveArgs + the service re-pin) at the next touch of these files. Related nit: the app-template dependency repository URL omits the trailing slash every other bjw-s dep carries — functionally identical, matches the chunk text + test, left as-is.
 - 2026-11-05 coord (C03 review minor, non-blocking): charts/llama-swap/tests/TEST_SPEC.md §10 says the pre/post-C03 render delta is a "15-line diff" where the review-measured insertion is 10 lines (substance correct, count wrong) — fix at the next test-session touch of TEST_SPEC.
+- 2026-11-05 coord (C04 review minor, non-blocking): the rewritten boards roster line (.rulesync/skills/boards/SKILL.md + regenerated twin) carries a "third field" phrasing that should read "field" — the roster is the two-field roster; semantics preserved, reword at the next touch of that line.
 
 ## Human rulings — batched question round, 2026-11-04 (card cf-105)
 
