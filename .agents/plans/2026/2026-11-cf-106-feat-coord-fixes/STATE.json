@@ -34,6 +34,7 @@
     },
     "local": true,
     "models_deviation": "Card Model(s) checklist blank -> routed default Qwen Flash (openrouter/qwen/qwen3.8-flash); openrouter answered 'Provider returned error' twice this run (agent-explore failed twice), so the documented local flash route gpu-ai/qwen3.8-flash-next-strata carries every tier. See DECISIONS.md 2026-11-03.",
+    "models_override": "2026-11-05 owner ruling: from the C08 review round 1 launch onward, every subagent tier runs gpu-ai/qwen3.8-27b-q4 (27B Dense). Earlier rounds on gpu-ai/qwen3.8-flash-next-strata stand.",
     "human_in_the_loop": [
       "Final Review"
     ],
@@ -428,7 +429,7 @@
       "dev_session": "ses_e570319cfffes6i6c0BQu0Pf68",
       "dev_variant": "agent-dev-local",
       "dev_rounds": 1,
-      "review_session": "ses_e53b2c5bbffetvZFY167WrNejz (r1; an earlier launch ses_e54da8863ffellSenpxO2YFgXz died with a server restart before writing anything)",
+      "review_session": "ses_e539364f8ffeKC3DF1WNSkVx4F (r1; two earlier launches, ses_e54da8863ffellSenpxO2YFgXz and ses_e53b2c5bbffetvZFY167WrNejz, died with server restarts before writing anything)",
       "review_rounds": 0,
       "last_verdict": null,
       "commit": null,
