@@ -507,7 +507,7 @@
           "commit_readiness": "git add exactly three files: .opencode/plugin/pipeline-locks/index.ts, .rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md; NOT: tests/** (zero in diff), AGENTS.md, .rulesync/rules/overview.md, ticket docs"
         },
         {
-          "role": "review", "status": "APPROVED (r1, second parallel instance)", "chunk": "C09", "session": "ses_e52da4e55ffeUczqUVK9rvlu8b (openrouter/qwen/qwen3.8-27b)",
+          "role": "review", "status": "APPROVED (r1, second parallel instance)", "chunk": "C09", "session": "ses_e52dbce29ffeUjhlLeWlC13gAZ (openrouter/qwen/qwen3.8-27b)",
           "note": "a second C09 review instance ran concurrently (the launch family doubled, as C08 did); verdicts converge APPROVED and C09 was committed (2c2542cf6) byte-identical to what both verified; this instance's own 58/58 probe harness superseded the first's 16/16 on disk (shared /tmp path, last writer wins) and its findings are recorded here",
           "additive_findings": ["M1 (minor, joins the owner's follow-up-card batch): the pre-existing 240-char D21 comment slice can truncate the takeover hint on a pathological multi-label card comment - the unbounded timeouts.jsonl line retains it", "M2 = the first instance's M-A (converged): on a shared-append, the takeover tag lands on the holder line rather than record level while the audit is always tagged - propagate the earned tag in appendLockHolder or soften the 'record and audit must agree' comment", "N-2 (nit): two comment wordings with drifted subjects"],
           "count_correction": "cf96-tz's authoritative summary is 5 ok / exit 0 (raw line-grep over-counts one nested unlabeled sub-arm); the first instance's '13 ok' table cell stands corrected by this note",
