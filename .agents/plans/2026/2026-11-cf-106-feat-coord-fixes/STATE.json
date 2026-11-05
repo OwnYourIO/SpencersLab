@@ -15,6 +15,17 @@
     "branch": "cf-106-feat-coord-fixes",
     "origin_dir": "/home/coder/SpencersLab",
     "run_tag": null,
+    "claim": {
+      "cardId": "ZPP55zX4GEfesPbnL",
+      "pipelines": ["Context"],
+      "setId": "53d501c4-4a5b-4086-ba17-66e69ac866c6",
+      "history": [
+        "2026-11-03 claimed at pickup (setId 15ae31e2-13ad-45cb-bdbc-a272cead75bc, v1 record shape)",
+        "2026-11-05 claim LOST silently across three server restarts: pipeline_heartbeat answered no_claim, pipeline_status answered groups [] with no reap entry naming Context; no commit or card move happened in the gap",
+        "2026-11-05 re-claimed with pipeline_claim(cardId, pipelines:[Context]) under the C08 v2 record shape (setId 53d501c4-4a5b-4086-ba17-66e69ac866c6); card verified untouched (Executing, Provider: API + Pipeline: Context, slug field intact); audit comment HStskaFEduNrT7vaT on the card; disposition of the observability gap routed to C09/C10 rather than fixed ad hoc"
+      ],
+      "lock_store": "/home/coder/SpencersLab/.pipeline/locks/Context.json (the plugin store lives in the origin checkout and is shared by every worktree)"
+    },
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
     "session_origin_leg": "leg 2 — bash scripts/session-origin.sh at claim (resolved live 2026-11-03)",
     "models": {
@@ -250,6 +261,7 @@
       "dev_rounds": 0,
       "review_rounds": 0,
       "last_verdict": null,
+      "amendment": "2026-11-05, agent-plan session ses_e54c7cf50ffer3u12XONO12A7G (commit 34503254f): AC8 re-keyed from a gate-stop row count onto the marker columns (a scheduled stop-path row missing both the pipelineNoop marker and the archive stamp), judged per named session id over at least two ticks, flavor-labelled; a zero gate-stop count is recorded as the instrument's blind spot, not a finding or a clean sample; cf106-noop N6 demoted to an instrument-precedence HOLD that reads no live store; AC6 now names its own observables (noop-marker N4, agents-md c10). agent-plan refused to widen scope - scripts/session-noop-audit.sh (class precedence, the GATE_LINE/RAW_CALL heuristics) and the loop files stay out, and an engine-side marker would need an explicit coordinator amendment. Notes for dev gained the N4 attribution warning (N4 is red for a C10 reason too, and its cf-106 arm is labeled AC3 while pinning AC6 - a comment-only re-pin for test_session).",
       "handoffs": []
     },
     "C04": {
@@ -416,7 +428,7 @@
       "dev_session": "ses_e570319cfffes6i6c0BQu0Pf68",
       "dev_variant": "agent-dev-local",
       "dev_rounds": 1,
-      "review_session": null,
+      "review_session": "ses_e53b2c5bbffetvZFY167WrNejz (r1; an earlier launch ses_e54da8863ffellSenpxO2YFgXz died with a server restart before writing anything)",
       "review_rounds": 0,
       "last_verdict": null,
       "commit": null,
