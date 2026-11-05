@@ -300,8 +300,13 @@ detail:
 - One card per session; never pick or restart a card already in **Executing**
   — pickup walks `Rework → Not Started → Low Priority`.
 - `pipeline_claim` BEFORE any board move or code edit (the whole derived
-  `Pipeline:` set or nothing — a contended claim names the holder);
-  validations green → card to Review → `pipeline_release(outcome:"done")`.
+  `Pipeline:` set or nothing — availability is the engine's answer: a key with
+  live foreign holders answers `reason:"occupied"` and names them). Two runs
+  share a pipeline only on the human's explicit word for that one claim — the
+  per-claim `shared: true` override, posture in the boards skill; a run never
+  decides to share on its own, and sharing never widens one session's one-card
+  claim.
+  Validations green → card to Review → `pipeline_release(outcome:"done")`.
   Finished stays human-owned.
   Blocked → comment + `outcome:"abandoned"`, or let the lock go stale per the
   boards skill.
@@ -310,7 +315,10 @@ detail:
 - `PIPELINE LOCK LOST` = stop immediately: no commit, no card move — only a
   fresh run re-claims. The plugin owns `.pipeline/` files; agents never
   read, write, or delete them.
-- Stale locks (no heartbeat for 2 h) are reaped: the card moves to the
+- Stale locks (no heartbeat for 2 h) are reaped at holder granularity: a silent
+  holder is pruned out of a shared key while its co-tenants keep holding, and
+  the lock file itself only goes when its last holder goes stale. The card
+  moves to the
   **Timeout** list (or queues in `.pipeline/timeouts.jsonl` until that list
   exists) with a Home Assistant alert; Timeout triage is human-owned, like
   Review.
