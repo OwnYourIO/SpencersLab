@@ -280,14 +280,20 @@ managed) serializes board work per pipeline: a card's `Pipeline:<name>`
 board labels name the locks it takes — no such label means the single
 `default` pipeline, and several labels block all of those pipelines
 all-or-nothing. Cards with disjoint sets run as parallel
-`agent-board-coord` iterations; the hourly entry point is the live OpenChamber
-loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as synced and
-enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo file ships
-`enabled: true` — the owner's own toggle, landed via main 080c9878a;
-scheduler hygiene stays human-owned — and `/pipeline-boards-hourly` + its
-gate stay the documented fallback). The
-top-level "finished" push reaches the phone unless the coord marked the
-session no-work AND the launch was of the scheduled kind — the `boards`
+`agent-board-coord` iterations; the hourly entry point is the one live
+OpenChamber loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as
+synced and enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo
+file ships `enabled: true` — the owner's own toggle, landed via main
+080c9878a; scheduler hygiene stays human-owned) running the owner-ruled
+runner model `gpu-ai/qwen3.8-27b-q4` (cf-106 OQ-14, 2026-11-03 — the
+catalog churns, so the literal moves only by a fresh user ruling), and
+`/pipeline-boards-hourly` + its gate stay the documented fallback. The
+Provider label is per-card routing inside the run: the one task serves both
+flavors and the card's `Provider:` label routes the model, so the walk
+applies no provider filter (the `boards` skill's Provider filtering section
+owns the routing + the unlabeled-card ask). The top-level
+"finished" push reaches the phone unless the coord marked the session
+no-work AND the launch was of the scheduled kind — the `boards`
 skill's no-op marker, read by `question-notify`. Every no-work end is a
 marked, archived exit: the two claim-free exits and the three tick stops
 (a gate SKIP verdict, a LIVE verdict with a filtered-in card, or an
@@ -317,8 +323,11 @@ detail:
   boards skill.
 - The `pipeline_*` tools are Code-Mode only (`execute` → `tools.pipeline_claim`
   etc., flat names) — on v2.1.4 they never appear in the native tool snapshot.
-- `PIPELINE LOCK LOST` = stop immediately: no commit, no card move — only a
-  fresh run re-claims. The plugin owns `.pipeline/` files; agents never
+- `PIPELINE LOCK LOST` = stop the step immediately: no commit, no card move.
+  Then exactly ONE sanctioned question — "may I continue anyway?"; on yes,
+  re-claim under the card-id lock and record the takeover; on no or silence,
+  the abandoned exit (the `boards` skill's Parallel pipeline loops section is
+  the authority — C09). The plugin owns `.pipeline/` files; agents never
   read, write, or delete them.
 - Stale locks (no heartbeat for 2 h) are reaped at holder granularity: a silent
   holder is pruned out of a shared key while its co-tenants keep holding, and

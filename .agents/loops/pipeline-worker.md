@@ -2,16 +2,24 @@
 name: pipeline-worker
 schedule: 0 * * * *
 enabled: true
-model: gpu-ai/qwen3.8-flash-next-strata
+model: gpu-ai/qwen3.8-27b-q4
 agent: agent-board-coord
 ---
 
 <!--
-cf-76 pipeline worker loop. OpenChamber syncs loop files from the project
-tree; schedule is a cron — hourly spans the 2 h stale window twice (D21);
-timezone is omitted so the server default applies; the model is the code
-tier by the Q2 ruling and the agent is the board-coord ALIAS (D15 — the
-command/gate/saved-approval continuity name).
+Single scheduled runner (cf-106 C10). OpenChamber syncs loop files from the
+project tree; schedule is a cron — hourly spans the 2 h stale window twice
+(D21); timezone is omitted so the server default applies; the agent is the
+board-coord ALIAS (D15 — the command/gate/saved-approval continuity name).
+The model is the owner-ruled runner literal `gpu-ai/qwen3.8-27b-q4` (cf-106
+OQ-14, 2026-11-03): the runner rides the Dense/local default C02 landed
+instead of the old flash literal. The catalog churns, so the pin moves only
+by a fresh user ruling — if a later tick finds the arena not serving it, the
+fix is a fresh owner ruling plus a re-pin, never a silent literal change.
+The recognized frontmatter set is name/schedule/enabled/model/agent/
+timezone — there is no `provider:` key: the provider rides the model:
+string (provider/model), while per-card provider choice stays coord-side
+(the card's `Provider:` label routes models, not pickups).
 
 Live state, verified 2026-10-29 against OpenChamber scheduledTasks (RESEARCH
 W2 F5 in .agents/plans/2026/2026-10-chore-board-tick-cleanup/): this file
@@ -23,29 +31,30 @@ enabled: true is the owner's own toggle as landed on main (080c9878a,
 The legacy "Hourly Pipeline call" daily task (also enabled, runs no gate) is
 human-owned scheduler hygiene — retiring or repointing it is the owner's call.
 
-cf-90 Provider round: this scheduled task serves `Provider: API` — its walk
-takes only cards explicitly labeled `Provider: API`, never unlabeled cards;
-the Local sibling pipeline-worker-local.md (hourly :30) is the planned taker
-of cards without a Provider label. The pickup-filter semantics live in the
-boards skill's Provider filtering section — this file names the provider,
-never restating the walk. A run pointed at an unlabeled card arrives only
-through a manual launch the user initiates, and it asks which provider
-applies before any Model(s)/provider routing, then requests the human apply
-the matching `Provider:` label (labels stay human-owned). OpenChamber
-hand-offs stay human-owned (DECISIONS post-research correction, 2026-10-31):
-post-merge BOTH tasks need loopApprovals before either runs. This task's
-provider-round body edits rotated its approved fingerprint (live-approved
-8137741841… vs 9ae4146e… recomputed over the landed body; every later body
-edit — this paragraph included — rotates it again, so approve whatever value
-the task UI shows at merge time), and reconcileLoopTasks pins a
-fingerprint-mismatched task as "outdated" with its enabled flag forced false
-until re-approved: merge day silently stops this hourly walk otherwise. The
-Local sibling needs its first approval likewise. Then permissionAutoAccept
-("Always Allow") is toggled on both — the file format cannot express it, the
-toggle survives loop re-sync, and ledger card L1 tracks removing the need.
-Run tags are retired for every
-flavor (cf-90): each run's surfaces are named by the card's final slug
-alone.
+Single-runner hand-off (cf-106 C10, OQ-14): this ONE task serves both
+Provider flavors; the run routes from the card's `Provider:` label per the
+boards skill's Provider filtering section, which owns the routing and the
+unlabeled-card ask. The :30 staggered twin is retired — its live task's
+removal is the owner's step (USER-owned step 4). OpenChamber hand-offs stay
+human-owned (DECISIONS post-research correction, 2026-10-31): this body
+edit rotated the task's approved loopApprovals fingerprint, and every later
+body edit — this paragraph included — rotates it again, so approve whatever
+value the task UI shows at merge time; reconcileLoopTasks pins a
+fingerprint-mismatched task as "outdated" with its enabled flag forced
+false until re-approved, which silently stops the hourly walk on merge day
+otherwise. Then permissionAutoAccept ("Always Allow") is toggled on — the
+file format cannot express it, the toggle survives loop re-sync, and ledger
+card L1 tracks removing the need. Run tags are retired for every flavor
+(cf-90): each run's surfaces are named by the card's final slug alone.
+
+Known failure the preload legs degrade around (cf-106 C10): the 2026-11-03
+19:30Z scheduled run reported the `dev-boards` MCP tools missing from its
+own session while the board-context prefetch hook reached the same server
+(evidence artifact 2026-11-03-cf-106-feat-coord-fixes-noop-evidence.md,
+class `mcp-surface-absent`). A run must probe `tools/list` and, when the
+surface is absent, degrade per the boards law instead of stalling; the
+defect itself is out of this ticket's file set and rides the owner's
+follow-up card.
 
 Swap target (checklist item 3): slash dispatch of a plugin command from loop
 text is unproven on the pinned OpenCode v2.1.4 (D30 — opencode run sent a
@@ -58,4 +67,4 @@ here, and determinism still holds: the same guarded reap passes at every
 claim and on the reap timer.
 -->
 
-Load the boards skill and run exactly one Parallel pipeline loops iteration. First call pipeline_status, then follow the skill.
+Load the boards skill and run exactly one Parallel pipeline loops iteration. First call pipeline_status, then follow the skill. This one scheduled task serves both Provider flavors — the card's `Provider: API` or `Provider: Local` label routes the model inside the run, per the boards skill's Provider filtering section, and a run that takes an unlabeled card asks the user which provider applies before any routing. The run starts with the structural board-context block and receives the claimed card's details on the claim answer, so the first turn does not spend round-trips; a no-work tick takes the marked, archived exit the boards skill's No-op marker section defines.
