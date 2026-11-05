@@ -37,7 +37,7 @@ in-repo server (`containers/wekan-mcp`), published as
   (Keycloak OIDC audience `wekan-readonly`): read tools only; write tools are
   never registered (`WEKAN_MCP_READ_ONLY=true`).
 - **`wekan-admin`** — `https://mcp.gpu.spencerslab.com/wekan-admin/mcp`
-  (audience `wekan-admin`): the full 38-tool surface. The two gpu tiers share
+  (audience `wekan-admin`): the full 39-tool surface. The two gpu tiers share
   one long-lived `WEKAN_TOKEN`.
 - **`boards`** on the dev cluster — the pipeline board-intake endpoint. It
   authenticates by login-mint instead: the pod gets `WEKAN_USERNAME` +
@@ -45,7 +45,7 @@ in-repo server (`containers/wekan-mcp`), published as
   item's URI field) and the client exchanges the pair for a bearer at
   startup, re-minting once on a 401.
 
-The server exposes 38 typed tools:
+The server exposes 39 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
@@ -62,7 +62,17 @@ The server exposes 38 typed tools:
   vocabulary only; `checklists` is itself a `fields=` section) + dependency
   lines + label/field name maps, and a `title` on every swimlane/list entry;
   archived flagged not dropped, card titles/descriptions not carried;
-  optional `swimlane_titles` bounds the read client-side)
+  optional `swimlane_titles` bounds the read client-side),
+  `get_card_details` (ONE card, shaped for the claim-time context block: the
+  card fields incl. `sort`/`parent_id`, `labels` as `{label id: name}`,
+  `custom_fields` as `{field name: raw value}`, EVERY checklist as
+  `[{id, title, items: [{title, finished}]}]` in stored order (no kickoff
+  vocabulary filter, so a follow-up card's inherited checklist answers read
+  without touching the parent), the card's own edges as
+  `[{to_id, type, color}]`, and the `slug` field both ways — `slug_stack`
+  oldest-first plus `current_slug` (newest); archived cards flagged not
+  dropped, and a card that does not read as a card document raises rather
+  than answering empty)
 - **Write** (every tier except `wekan-readonly`): `create_card` (optional
   `default_checked` map — checklist title → item titles to arrive CHECKED;
   bounded-polls the rules-created checklist, then PUTs the exact-title

@@ -1,0 +1,197 @@
+{
+  "ticket": "2026/2026-11-cf-106-feat-coord-fixes",
+  "chunk": "C07",
+  "owner": "test_session ses_e5c56c5defferyjeGtb6YMn05v",
+  "note": "Created in wave 2 (no such file existed for wave 1). Every exit code below was observed on this tree; the prose record is chunks/C07.md '## Test notes'.",
+  "waves": [
+    {
+      "id": "W1",
+      "date": "2026-11-04",
+      "base": "b64bb31ad",
+      "scope": "authored the C07 test surface (tests/wekan-mcp/card-details.sh, tests/opencode/card-details.test.ts) and re-pinned the count-bearing suites to the registry through tests/wekan-mcp/registry-parity.py",
+      "designed_red": [
+        "card-details.sh t1-t4 (tool absent at authoring)",
+        "card-details.test.ts 18 of 19 arms (seam contract unlanded)"
+      ],
+      "recorded_in": "chunks/C07.md, '### Written (agent-test, 2026-11-04)'"
+    },
+    {
+      "id": "W2",
+      "date": "2026-11-04",
+      "base": "b64bb31ad",
+      "trigger": "C07 review round 2 (ses_e57cab707ffesq3VPsRrg3aQ34, REJECTED): test-owned R2-B1, M1, N4, N5, N6 + the board-context.sh containment debt",
+      "changed": [
+        {
+          "file": "tests/opencode/card-details.test.ts",
+          "ids": [
+            "R2-B1",
+            "M1"
+          ],
+          "what": "symmetric doc<->output field-token parity predicate over the bytes the loaded plugin appends to a live claim answer + four fabricated-doc controls; new describe driving the registered execute.after hook through default.setup with a fake ctx and a loopback JSON-RPC MCP stub (registration, result.content rewrite, one board-scoped read, untouched answer + zero reads for ok:false and for a non-board-coord session)"
+        },
+        {
+          "file": "tests/wekan-mcp/card-details.sh",
+          "ids": [
+            "N4",
+            "N6"
+          ],
+          "what": "new t5: executed + mechanism halves of the fail-the-call ruling on the per-checklist items route, with a fabricated swallow-free copy as the green-side control and four degraded synthetics as red controls; repo-wide sole-home scan in t4 with a fabricated second home; header/ids updated"
+        },
+        {
+          "file": "tests/cf96-deploy/readback-runbook.md",
+          "ids": [
+            "N5"
+          ],
+          "what": "stale 38/17 literals re-pinned to content (39-tool build; 39 tools = 18 reads + 21 writes)"
+        },
+        {
+          "file": "tests/cf96-deploy/surface.sh",
+          "ids": [
+            "N5"
+          ],
+          "what": "t3 counts derived from registry-parity.py counts and checked on the line that makes the claim, scoped to the :v<run> bump narration and the tools/list probe lines; two stale-count controls; the '17 reads' alternative removed"
+        },
+        {
+          "file": "tests/wekan-mcp/board-context.sh",
+          "ids": [
+            "containment"
+          ],
+          "what": "COORD_PR_SETTLED byte-pin 762 -> 898 chars with its source cited (permissions.md:27); t6 runs agent-perms as an id-subset with A15 as its own C08-attributed arm; header red posture rewritten"
+        },
+        {
+          "file": "tests/wekan-mcp/README.md",
+          "ids": [
+            "OQ-13 note"
+          ],
+          "what": "new: the count law (registry-derived 18+21=39) and the currently-expected designed reds"
+        }
+      ],
+      "untouched_by_design": [
+        "tests/agent-perms/surface.sh (A15 stays red and unweakened, C08's leg)",
+        "every implementation file: containers/wekan-mcp/**, .opencode/plugin/**, skills/**, .rulesync/**"
+      ],
+      "proofs_executed": [
+        "plugin copied to /tmp with the execute.after registration unreachable -> 7 arms red; with only 'event.result.content = amended' dropped -> 6 arms red",
+        "SKILL.md copied to /tmp carrying each reviewer-named doc edit -> exactly the parity arm reddens (25 pass / 1 fail each)",
+        "t5 green side: WEKAN_SERVER=<AST-fabricated swallow-free copy> bash tests/wekan-mcp/card-details.sh t5 -> exit 0, controls still biting",
+        "t5 red side on this tree: the static arms name the try/except handler, the 'or {}' fallback and the docstring claim; the executed leg shows the failed route answering the payload an empty checklist answers",
+        "shape-evasion probe: a variant with the swallow hoisted into a module-level helper reddens the EXECUTED half (exit 1) and the static half names 'no per-checklist items-route call' rather than passing silently \u2014 the pin does not depend on the read staying inline in get_card_details"
+      ],
+      "commands": [
+        {
+          "cmd": "node --test tests/opencode/card-details.test.ts",
+          "exit": 0,
+          "note": "26/26 (was 19 arms)"
+        },
+        {
+          "cmd": "node --test tests/opencode/board-context.test.ts",
+          "exit": 0,
+          "note": "32/32"
+        },
+        {
+          "cmd": "node --test tests/opencode/*.test.ts",
+          "exit": 1,
+          "note": "293 tests, 268 pass, 25 fail = the unchanged C08-C10 designed reds; none in a C07 file"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/card-details.sh",
+          "exit": 1,
+          "note": "NEW DESIGNED RED: t5 only (N4), awaits the dev's R2-B2 round"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/card-details.sh t1 t2 t3 t4",
+          "exit": 0,
+          "note": "4 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/slug-stack.sh",
+          "exit": 0,
+          "note": "5 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/tools.sh",
+          "exit": 0,
+          "note": "9 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/skill-surface.sh",
+          "exit": 0,
+          "note": "8 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/dependencies.sh",
+          "exit": 0,
+          "note": "11 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/create-list.sh",
+          "exit": 0,
+          "note": "6 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/board-provisioning.sh",
+          "exit": 0,
+          "note": "9 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/rest-overview-v102.sh",
+          "exit": 0,
+          "note": "7 ok"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/board-context.sh",
+          "exit": 0,
+          "note": "8 ok; t4 re-pinned and t6's A15 admitted by name"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/board-context.sh t1 (then t2..t6, each alone)",
+          "exit": 0,
+          "note": "every leg green; corrects the earlier 't5 unrunnable' claim"
+        },
+        {
+          "cmd": "bash tests/agent-perms/surface.sh",
+          "exit": 1,
+          "note": "one FAIL: A15[cf-106 C08 AC6/AC7]"
+        },
+        {
+          "cmd": "bash tests/agent-perms/surface.sh A16 A17 A18 A19",
+          "exit": 0,
+          "note": "the legs the whole-suite abort hides"
+        },
+        {
+          "cmd": "bash tests/boards-deps/surface.sh",
+          "exit": 0,
+          "note": "9 ok"
+        },
+        {
+          "cmd": "bash tests/cf96-deploy/surface.sh",
+          "exit": 0,
+          "note": "8 ok with the per-line count arm"
+        },
+        {
+          "cmd": "bash tests/board-preload-probe/surface.sh",
+          "exit": 0,
+          "note": "6 ok"
+        },
+        {
+          "cmd": "bash tests/cf106-noop/surface.sh",
+          "exit": 0,
+          "note": "8 ok"
+        },
+        {
+          "cmd": "npx aislop check (diff-scoped via the edit gate)",
+          "exit": 0,
+          "note": "98/100, 0 errors, 3 warnings: the implementation's file/function size findings already on the deferred list"
+        }
+      ],
+      "newly_red_awaiting_dev": [
+        "tests/wekan-mcp/card-details.sh t5 (both halves)"
+      ],
+      "handoff": [
+        "git add tests/wekan-mcp/registry-parity.py tests/wekan-mcp/README.md test_results.json in the C07 commit (N10) - all three untracked",
+        "dev round: t5's printed reasons name each banned shape; the green-side probe is WEKAN_SERVER=<swallow-free copy> bash tests/wekan-mcp/card-details.sh t5",
+        "coord FRICTION correction: tests/wekan-mcp/board-context.sh takes positional ids (t5 runs and is green); the earlier 't5 unrunnable' note was wrong - t5 was only hidden by t4's abort"
+      ]
+    }
+  ]
+}
