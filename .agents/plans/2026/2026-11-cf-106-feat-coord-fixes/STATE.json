@@ -34,7 +34,7 @@
     },
     "local": true,
     "models_deviation": "Card Model(s) checklist blank -> routed default Qwen Flash (openrouter/qwen/qwen3.8-flash); openrouter answered 'Provider returned error' twice this run (agent-explore failed twice), so the documented local flash route gpu-ai/qwen3.8-flash-next-strata carries every tier. See DECISIONS.md 2026-11-03.",
-    "models_override": "2026-11-05 owner ruling: from the C08 review round 1 launch onward, every subagent tier runs gpu-ai/qwen3.8-27b-q4 (27B Dense). Earlier rounds on gpu-ai/qwen3.8-flash-next-strata stand.",
+    "models_override": "2026-11-05 owner ruling: from the C08 review round 1 launch onward, every subagent tier runs the 27B Dense model. The local gpu-ai/llama-swap endpoint is down (503 'no available server'), so it is taken from openrouter as openrouter/qwen/qwen3.8-27b; if llama-swap recovers and the owner wants the local gpu-ai/qwen3.8-27b-q4 route, that is a fresh ruling. Earlier rounds on gpu-ai/qwen3.8-flash-next-strata stand.",
     "human_in_the_loop": [
       "Final Review"
     ],
@@ -423,15 +423,15 @@
       ]
     },
     "C08": {
-      "status": "in_progress",
+      "status": "done",
       "wave": 2,
       "depends_on": [],
       "dev_session": "ses_e570319cfffes6i6c0BQu0Pf68",
       "dev_variant": "agent-dev-local",
       "dev_rounds": 1,
-      "review_session": "ses_e539364f8ffeKC3DF1WNSkVx4F (r1; two earlier launches, ses_e54da8863ffellSenpxO2YFgXz and ses_e53b2c5bbffetvZFY167WrNejz, died with server restarts before writing anything)",
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_session": "openrouter/qwen/qwen3.8-27b (local gpu-ai down, 503). CANONICAL r1 = ses_e5386ec1effeFTp4Cfx8uA1N4C. Duplicate launch ses_e538677bdffesC06jy65eECqxX: the coordinator double-launched, issued it a STOP (do-not-write) instruction, and it confirmed clean — nothing written to any file, only the mandatory skill loads. Earlier dead launches: ses_e54da8863ffellSenpxO2YFgXz + ses_e53b2c5bbffetvZFY167WrNejz (server restarts, nothing written), ses_e539364f8ffeKC3DF1WNSkVx4F (503 on the dead local endpoint).",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "commit": null,
       "handoffs": [
         {
@@ -442,6 +442,13 @@
           "deviations": ["seven ruled contract inferences recorded in chunks/C08.md: composite beat key; state:'failed' stays file-level; holder-level staleness only for files with >=2 holders (a lone holder keeps the shipped max(heartbeatAt, mtime) rescue); lockStatus union-find (setId union file) with holders collapsed per claim so shared = >1 claim; the legacy-identity lens (a record with file-level sessionID/setId reads as a pre-co-tenancy single-holder record, flat fields win, stray holders[] ignored) which is what keeps R10(b)/K7 green; occupied/torn answer shapes; per-holder reap audit plus card legs", "a comment-ordering repair in newLockRecord was needed because the dev's own comment placement reddened cf96-tz t2's window (a green arm), fixed rather than re-pinned"],
           "friction": "agent-perms A15's own ok message runs backticked `shared` through bash (stderr 'shared: command not found'), verdict unaffected; repo-label-filter t3's plugin-unchanged pin is unsatisfiable for any lock-surface chunk",
           "open_questions": ["is inference 5 (the legacy lens) a DECISIONS item?", "re-pin or advance repo-label-filter t3's pinned commit?"]
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C08", "session": "ses_e5386ec1effeFTp4Cfx8uA1N4C (openrouter/qwen/qwen3.8-27b, per the owner's model override)",
+          "commands_run": ["node --test core => 0 (38/38)", "-engine => 1 (38/3 = U3x3 C09)", "-reap => 1 (29/3 = V4x3 C09)", "-tick => 1 (13/2 = T2x2 C10)", "whole TS battery => 1 (293: 285 pass / 8 fail, the 8 = U3x3+V4x3+T2x2, no C08 arm)", "agent-perms => 0 (21 ok; A15 standalone 3 ok) - the standing C08 red cleared", "pipeline-push-pr 0, board-context 0, cf96-tz 0, boards-deps 0, slug-stack 0", "coord-inwork 1 (i4 pre-existing), gate 1 (t17 pre-existing), noop-marker 1 (N2=C03b, N4 standalone=C10), rulesync-surface 1 (c23=C09; c19 c24 standalone 0), agents-md 1 (c10=C03b; c11 standalone=C10), provider-loops 1 (t1=C10), repo-label-filter 1 (t3 red at clean HEAD proven; content legs green in isolation)", "69-suite sweep => 46 green / 23 red, red set = C07 baseline minus agent-perms (newly green); media-slskd t3 proven a transient dirty-tree trip (green in a scratch clean-HEAD worktree, clears at the commit)", "rulesync generate --check => 0", "aislop ci --changes => 0 (99, 0 errors, 1 pre-existing size warning)", "helm => N/A (no chart in diff)", "own probe harness /tmp/opencode/c08-review/probe.ts => 67/67 pass (real module, tmp lock stores, two plugin instances over one shared store, back-dated stamps/mtimes)"],
+          "findings": ["all seven dev contract inferences adjudicated and ACCEPTED (recorded per-inference in chunks/C08.md): composite beat key, file-level state:'failed', holder-level staleness only at >=2 holders, lockStatus union-find, the legacy-identity lens, occupied/torn answer shapes, per-holder reap audit", "the >=2-holders asymmetry is INTENDED, proven by fabricated clock cases: E1 (a silent co-tenant is pruned while mtime+file-hb stay fresh via the busy co-tenant's beats) vs E2/E2b (identical silence on a LONE holder is rescued by fresh mtime / reaped only when both clocks stale) - a live co-tenant beats its own row, so only a 2h-silent run is pruned, and its own session is the one that sees PIPELINE LOCK LOST; the survivor's guarded calls pass and the loser's cleanup writes nothing to the co-held file", "fail-closed proven: occupied refusal leaves the file byte- AND mtime-identical; two racing exclusive claims -> exactly one lands; the EEXIST-race loser names the winner; torn JSON / empty file / identity-less record all refuse (unreadable:true where the record parses) and merge nothing", "legacy lens is an honest migration: the live v1 file (this run's own claim) reads back as one holder; v1+stray-holders[] resolves flat-wins; a half-written v2 can never masquerade as v1 (the writer emits no flat identity)", "M1 (non-blocking): dedupe the claim-audit + pin-text co-tenant lists to match the answer - test-neutral cosmetic", "M2 (non-blocking, fail-safe edge): a shared claim onto a flat-identity (v1) record writes hybrid bytes then refuses - the claimant holds nothing and the owner is untouched; an optional pre-write refusal (one guard) removes the inert scar", "M3: torn files are absent from pipeline_status - routed to C09 (takeover) / C10 (observability) alongside the pre-C08 silent lapse", "repo-label-filter t3: content-pin is the law-compliant shape (its content leg is green under C08 with PLUGIN_DIFF_BASE=HEAD); re-pin/advance is whack-a-mole through C09 - recut belongs to test_session/owner, not a cf-106 dev write", "comment-slop clean: every new comment carries a keep-table fact in the file's ruling-citation idiom; the cf96-tz t2 window repair verified as the honest minimal fix (test file untouched)", "deviation accepted: the boards 'Exit bullets gain per-holder wording' task landed in a new dedicated bullet with Human-stops/Exit byte-identical (keeps c23's C09 needles clean, substance stated once)"],
+          "commit_readiness": "git add exactly five files: .opencode/plugin/pipeline-locks/index.ts, .rulesync/skills/boards/SKILL.md, .rulesync/rules/overview.md, AGENTS.md (mirror), .opencode/skills/boards/SKILL.md (mirror); STATE/DECISIONS/C08.md ride the coordinator's docs commit; nothing untracked, no tests/** touched",
+          "hygiene": "removed a dead worktree registration (/tmp/opencode/c08-head from an earlier died r1 launch) that was blocking scratch worktree creation (git worktree prune + removal, registration only)"
         }
       ]
     },
