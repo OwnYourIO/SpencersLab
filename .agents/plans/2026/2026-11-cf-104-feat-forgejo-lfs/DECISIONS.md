@@ -179,6 +179,37 @@ Append-only. Newest at the bottom. Format: date, who (plan|coord|human), decisio
   (mechanical, routed back per the gates, no functionality change). Rejected:
   letting dev touch test files. Accepted as a follow-up card for a repo-wide
   guard.
+- 2026-11-04 coord-relay (user answer): **UA6's item name is the user's, not
+  the plan's.** The plan's Q15 best guess was `gpu-forgejo-runner`; the user
+  created the item as **`forgejo-runner`** (uuid 22a71ee4-1b7e-4ad2-ad5c-b4f80175a400)
+  together with the infra runner record (UA5) and the `forgejo-s3` item
+  (06a65037-29d3-48de-978c-b3b6002d3978, UA4). All three User actions are done;
+  C02/C03/C05 are unblocked. The name flows into the custom-values slot comment
+  and the g5 suite leg, which now asserts the standalone token `forgejo-runner`
+  (the values key `forgejo-runner-gpu` and the old guess must not satisfy it).
+  Rejected: silently keeping the plan's name — the vault item the ExternalSecret
+  maps to has one real name.
+- 2026-11-05 coord: **ruling on the g5 reserved-name conflict** the plan delta
+  surfaced: the plan's config-of-record comment for `custom-values/gpu` printed
+  the reserved item's literal name, while the g5 leg (whole-file zero-count for
+  `dev-forgejo-prod-runner`) forbids any occurrence in that file — a dev copying
+  the recipe verbatim would fail g5. The **zero-count leg stays as written**
+  (strict, simple, and already proven in simulation); the **config-of-record
+  comment is reworded** so the gpu file never prints the reserved name — the
+  "stays free" fact already lives in UA6's done-note and here. Rejected:
+  scoping the zero-count to the slot comment (allows the reserved name to
+  reappear in other comments, weakening the guard) and dropping the leg.
+- 2026-11-04 coord-relay (user answer): **landing shape = one PR after all
+  chunks.** The C01 `secretKeyRef` and the custom-values UUIDs therefore land in
+  the same branch/PR, so no ArgoCD sync ever sees the chart without the vault
+  key (the CreateContainerConfigError window the review flagged is closed by
+  ordering, not by a chart change). Rejected: landing wave 1 early — it would
+  force the UUID to main before the activation chunks exist, or the sync to be
+  held by hand.
+- 2026-11-04 coord-relay (user answer): **Q14b gets a card.** Filed in Inbox as
+  `N7FZ5GysqyGhnBBmM` ("Vet an LFS-capable runner job image on a newer Node")
+  — registry check for `act-26.04`-class images, or rename the `node22` slot to
+  a name that stops promising a Node version.
 
 ## Coord decisions (2026-11-03, board run — run ended at the approval pause)
 - 2026-11-03 coord: **model routing for a `Provider: Local` card** — the Model(s)

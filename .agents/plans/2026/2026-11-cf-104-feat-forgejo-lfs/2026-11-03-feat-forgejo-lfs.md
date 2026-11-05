@@ -178,7 +178,7 @@ marked *(r2)*.
 |---|---|---|
 | Q13 | gpu runner target: dev or infra? | **INFRA** — `runner.url: https://git.spencerslab.com`, UA5 registers the record on the infra instance; **supersedes the plan's round-3 dev best guess** (recorded as a coord-relay user answer in DECISIONS.md). Ordering consequence (infra LFS only activates in C03) taken into rollout step 7 + C05 acceptance |
 | Q14 | Accept that `node22` no longer guarantees Node 22? | **Accepted** for the current version (act-24.04 = Node 20/24); the user added a fresh **"26?"** → Q14b below |
-| Q15 | New vault item vs reusing `dev-forgejo-prod-runner`? | **NEW item `gpu-forgejo-runner`** (one-item-per-concern naming); the reserved `dev-forgejo-prod-runner` stays free for the infra-runner relocation |
+| Q15 | New vault item vs reusing `dev-forgejo-prod-runner`? | **NEW item** (one-item-per-concern naming), created 2026-11-04 under the user's own name **`forgejo-runner`** — the plan's `gpu-forgejo-runner` best guess is superseded, DECISIONS.md 2026-11-04; the reserved `dev-forgejo-prod-runner` stays free for the infra-runner relocation |
 
 ### Round-4 open question (answer anytime; blocks nothing)
 
@@ -281,7 +281,10 @@ valid YAML before substitution — repo ESO rule.)
 `custom-values/dev/prod-values.yaml` (C02) — under the existing `forgejo:` key:
 
 ```yaml
-    forgejo-s3: <UUID of item forgejo-s3>     # real UUID, never OVERRIDE_NEEDED (D11)
+    forgejo-s3: <UUID of item forgejo-s3>     # real UUID, never OVERRIDE_NEEDED (D11).
+                                              # UA4 DONE 2026-11-04: item forgejo-s3 exists;
+                                              # its UUID (STATE.json user_actions) is pasted
+                                              # here by C02
   forgejo:
     gitea:
       config:
@@ -296,7 +299,8 @@ valid YAML before substitution — repo ESO rule.)
 `custom-values/infra/prod-values.yaml` (C03) — same shape, in-cluster endpoint:
 
 ```yaml
-    forgejo-s3: <UUID of item forgejo-s3>
+    forgejo-s3: <UUID of item forgejo-s3>     # ONE item serves both instances (Q3);
+                                              # UA4 DONE 2026-11-04, UUID pasted by C03
   forgejo:
     gitea:
       config:
@@ -361,20 +365,21 @@ forgejo-runner-gpu:
 ```yaml
 forgejo-runner-gpu:
   bitwardenIds:
-    # Item gpu-forgejo-runner (UA6 — Q15 answer: a NEW item, one item per
-    # concern; the reserved dev-forgejo-prod-runner stays free for the infra
-    # runner relocation). username = runner uuid, password = runner token,
-    # from the INFRA-instance runner record created in UA5
+    # Item forgejo-runner (UA6 — Q15 answer: a NEW item, one item per
+    # concern; the vault item reserved for the infra-runner relocation stays
+    # free — it is not this slot). username = runner uuid, password = runner
+    # token, from the INFRA-instance runner record created in UA5
     # (git.spencerslab.com — Q13 answer). Real UUID — an unresolved/placeholder
     # id crashloops the daemon (`'uuid' is empty`).
-    runner-token: <UUID from UA6>
+    runner-token: <UA6 UUID — recorded in STATE.json user_actions, pasted here by C05>
 ```
 
 (`charts/forgejo-runner/values.yaml` already carries the
 `runner-token: OVERRIDE_VIA_CUSTOM_VALUES` chart sentinel — C05 replaces it
-with the real UUID of the **new `gpu-forgejo-runner` item** (Q15), the standard
-sentinel→UUID recipe; reusing the reserved `dev-forgejo-prod-runner` UUID is
-forbidden — it is held for the infra relocation. No proxy values entry: the
+with the real UUID of the **new `forgejo-runner` item** (Q15, named by the user
+at creation) via the standard sentinel→UUID recipe; reusing the reserved
+`dev-forgejo-prod-runner` UUID is forbidden — it is held for the infra
+relocation. No proxy values entry: the
 trio's third leg is N/A for a dial-out-only runner — no ingress, no service
 any client contacts; the exemption comment above is what the repo's trio-grep
 readers expect, mirroring `services/dev/prod/values.yaml:96-101`.)
@@ -386,7 +391,7 @@ readers expect, mirroring `services/dev/prod/values.yaml:96-101`.)
 | C01 | Chart plumbing: `forgejo-s3` secret path + inert `[lfs]` shape | M | 1 | [] | Owns `charts/forgejo/**`; nothing else can be validated before the chart interface (secret name, env names, `[lfs]` keys) exists |
 | C04 | Runner LFS-readiness: `node22`→`act-24.04` swap + record + runner-suite t14 (red-first `ACT_LABELS` edit) | S | 1 | [] | Independent of C01–C03: owns `charts/forgejo-runner/templates/secret-runner.yaml` and the runner suite; its red-first precondition (agent-test editing `ACT_LABELS` at `:252-258`) belongs to the test-writing session, not to a chunk |
 | C02 | dev activation (public HTTPS endpoint) | S | 2 | [C01] | Writes the values that merge with C01's chart keys; a dev render is meaningless without C01 |
-| C05 | gpu runner instance (trio + own suite), serving **infra** (Q13) | M | 2 | [] | Repo-side depends on no other chunk; its **hard preconditions** are User actions UA5 (runner record on the **infra** instance) + UA6 (new `gpu-forgejo-runner` item, UUID reported) — enforced in C05's acceptance criteria (NEEDS_INFO without a real UUID), deliberately not a fake chunk dependency. Its **sync** additionally rides after C03 in rollout step 7 (infra LFS must be live before the runner takes LFS-bearing jobs) |
+| C05 | gpu runner instance (trio + own suite), serving **infra** (Q13) | M | 2 | [] | Repo-side depends on no other chunk; its **hard preconditions** are User actions UA5 (runner record on the **infra** instance) + UA6 (new Bitwarden item **`forgejo-runner`**, UUID reported) — **both DONE by the user 2026-11-04**, so C05 is unblocked; enforced in C05's acceptance criteria (NEEDS_INFO without a real UUID), deliberately not a fake chunk dependency. Its **sync** additionally rides after C03 in rollout step 7 (infra LFS must be live before the runner takes LFS-bearing jobs) |
 | C03 | infra activation (in-cluster endpoint) | S | 3 | [C02] | Deliberate rollout order (RESEARCH §6: dev first); Q8 answer keeps it on the branch, gated on dev verification, independently revertable |
 
 Mergeable grouping: **C01 + C02** is a complete, dev-only change; **C03** is a
@@ -403,13 +408,15 @@ separate revertable commit pair (values + suite) with zero effect on dev.
    test-writing session onward** — see Commands' transitional-baseline note).
 2. **C02** — dev. Its *activation* is gated behind UA1–UA4 + PF1 (the
    pre-flight), which must be done before the merge, not before the chunk.
-   **C05** — gpu runner instance, in parallel; gated for *completion* on
-   UA5/UA6 (runner record on **infra** + the new `gpu-forgejo-runner` item +
-   reported UUID), and its live registration is gated on C04
-   having landed (the gpu release renders the same labels map — swapping
-   first avoids registering a Node-less-LFS runner). Its **sync** rides after
-   **C03** (rollout step 7): infra's LFS must be live before this runner can
-   take LFS-bearing jobs.
+   UA1–UA4 are DONE (UA4's `forgejo-s3` item 2026-11-04); PF1 stays a user
+   action before dev's sync.
+   **C05** — gpu runner instance, in parallel; its *completion* gate,
+   UA5/UA6 (runner record on **infra** + the new `forgejo-runner` item +
+   reported UUID), is **DONE by the user 2026-11-04**. Its live registration
+   is gated on C04 having landed (the gpu release renders the same labels
+   map — swapping first avoids registering a Node-less-LFS runner). Its
+   **sync** rides after **C03** (rollout step 7): infra's LFS must be live
+   before this runner can take LFS-bearing jobs.
 3. **C03** — infra. On the same branch (Q8); its live effect additionally
    gated on V1–V3 + V5 having passed on dev, and PF2 before the sync that
    restarts infra.
@@ -417,27 +424,35 @@ separate revertable commit pair (values + suite) with zero effect on dev.
 ## Binding rollout order (RESEARCH TL;DR 5 + §Q1 handshake, Q9 shape)
 
 1. Identity exists: `s3.user.create -name forgejo-lfs` (capture both printed
-   keys).
+   keys). **DONE** (UA2 — inferred from UA4: the vault item the user created
+   2026-11-04 holds exactly those printed keys; no agent re-ran the verb).
 2. Bucket exists **owned by it**: `s3.bucket.create -name git-lfs -owner
    forgejo-lfs`, then the bucket-scoped grant `s3.bucket.access -name git-lfs
    -user forgejo-lfs -access Read,Write,List,Admin` and a re-read to confirm.
    The grant is what makes `Read`-at-boot succeed *and* lets Forgejo's own
    `MakeBucket` self-heal a missing bucket (D7) — the round-1 "missing bucket
    ⇒ whole instance down" leg is gone, replaced by "deleted bucket returns
-   empty".
+   empty". **DONE** (UA3 — same inference from UA4: the identity + bucket its
+   keys authenticate to exist; the grant itself is what PF1's HeadBucket/PUT
+   probe proves, and PF1 stays pending).
 3. `forgejo migrate-storage --type lfs …` with the target config as flags —
    a near-read-only proof of exactly that init path (30 s init ceiling), before
-   any pod restarts.
-4. Bitwarden item + real UUID in both custom-values files (D11).
+   any pod restarts. **PENDING** (PF1 on dev before dev's sync, PF2 on infra
+   before infra's sync — user-run, no agent has pod exec).
+4. Bitwarden item + real UUID in both custom-values files (D11). **Item DONE**
+   (UA4: `forgejo-s3`, one item for both instances — its UUID lives in
+   `custom-values/{dev,infra}/prod-values.yaml` from C02/C03 onward, never in
+   this plan's prose); the *UUID pasting* is the chunks' work.
 5. Only then: merge (C01+C02; C03 may ride the same branch as its own commit)
    → ArgoCD sync → the config lands → the pods restart.
 6. dev verified (V1–V3 + V5) before infra's sync is trusted (Q8); PF2 runs
    against infra before its restart.
 7. **gpu runner (C05) — commit early, sync last (Q13 answer's ordering
    consequence, made concrete).** UA5 creates the persistent runner record on
-   the **infra** instance (`git.spencerslab.com`) → UA6 creates the **new**
-   Bitwarden item `gpu-forgejo-runner` + reports the UUID → C05 commits the
-   trio on the branch (its wave-2 repo work may land any time after C04).
+   the **infra** instance (`git.spencerslab.com`) — **DONE 2026-11-04** →
+   UA6 creates the **new** Bitwarden item **`forgejo-runner`** + reports the
+   UUID — **DONE 2026-11-04** → C05 commits the trio on the branch (its
+   wave-2 repo work may land any time after C04).
    **But the gpu Application must not sync before C03 has synced and infra's
    LFS is verified (V1 + V5 on the infra host):** the runner would otherwise
    register and take jobs against an instance whose LFS batch endpoint still
@@ -449,6 +464,14 @@ separate revertable commit pair (values + suite) with zero effect on dev.
    `runner: … declared successfully` line with the labels list (agent-
    readable), and the registration shows online on **infra** (human). Single
    replica only — one record == one pod, chart decision B1.
+
+**Live-sync ordering after the 2026-11-04 user actions: unchanged.** UA4/UA5/UA6
+being done removes preconditions, it does not re-order the rollout: **dev sync →
+V1–V3 + V5 verified on dev (the user's action note names the V1/V2/V5 core; V3
+is object placement) → PF2 → infra sync → gpu Application sync (step 7)**. The
+landing decision is one PR after all chunks, and V4 (sync) is user-owned — so
+PF0–PF2 and V2/V3 stay user-run gates on those live steps, not gates on the
+chunk work.
 
 ## Commands
 
@@ -529,7 +552,12 @@ helm template forgejo-runner-gpu charts/forgejo-runner -f /tmp/opencode/runner-g
 helm template gpu services/gpu/prod -f custom-values/gpu/prod-values.yaml \
   --set domain=spencerslab.com --set clusterName=gpu | grep -c OVERRIDE_   # BASELINE 1 (measured this round: legacy OVERRIDE_VIA_CLUSTER_ANNOTATION trio on one values-JSON line) — must stay 1
 bash tests/services/gpu-forgejo-runner.sh             # NEW suite (agent-test), red until C05
-grep -c 'gpu-forgejo-runner' custom-values/gpu/prod-values.yaml        # want >=1 (Q15 answer: the new item is named in the comment)
+# The Bitwarden item is named `forgejo-runner` (the user's name, UA6 DONE 2026-11-04).
+# The pattern is anchored so a STANDALONE token is required — same rule as the g5
+# leg's Python regex (?<![\w-])forgejo-runner(?![\w-]): the values key
+# forgejo-runner-gpu, and the superseded guess gpu-forgejo-runner, both score 0.
+grep -cE '(^|[^-[:alnum:]])forgejo-runner([^[:alnum:]-]|$)' custom-values/gpu/prod-values.yaml   # want >=1 (the slot comment names the item)
+grep -c 'gpu-forgejo-runner' custom-values/gpu/prod-values.yaml        # want 0 (the Q15 best guess must not survive anywhere)
 grep -c 'dev-forgejo-prod-runner' custom-values/gpu/prod-values.yaml   # want 0 (that item stays reserved for the infra relocation)
 git diff main -- services/dev custom-values/dev | grep -cE '^[+-].*forgejo-runner'   # want 0 — dev runner trio/comments byte-untouched
 
@@ -632,11 +660,16 @@ edits, both by agent-test, both before any dev:
 | g2 | standalone render (extracted `forgejo-runner-gpu` slice + `--set runner.url=https://git.spencerslab.com`): exactly one SA/STS/Service/ExternalSecret named `forgejo-runner-gpu`, no Deployment; replicas 1; VCTs data 2Gi + docker-data 10Gi RWO `local-path`; config.yaml labels map == the (post-swap) `ACT_LABELS` set | C05 |
 | g3 | the SERVICES file carries the **top-level** `forgejo-runner-gpu:` slice with `runner.url` exactly `https://git.spencerslab.com` (infra instance — Q13 answer), and neither `http://dev-forgejo-http`/`http://infra-forgejo-http` (in-cluster URLs are dead on gpu, §R5) nor `forgejo.spencerslab.com` (banned alias, §R3 live-TLS failure) appears anywhere in the gpu slice or render | C05 |
 | g4 | `charts:` entry `forgejo-runner-gpu` with `chart: forgejo-runner`, `namespace: default`, `ServerSideApply: "false"`, **plus a trio-exemption comment** naming the N/A proxy leg "by design, not an oversight" (client-only/dial-out), and gpu `ingress.subdomains` gains NO runner entry | C05 |
-| g5 | `custom-values/gpu/prod-values.yaml` `forgejo-runner-gpu.bitwardenIds.runner-token` is UUID-shaped — no `OVERRIDE_NEEDED`/placeholder (an empty or non-UUID id crashloops the daemon: `'uuid' is empty`); its comment names the **`gpu-forgejo-runner`** item (Q15 answer) and the reserved `dev-forgejo-prod-runner` UUID appears nowhere under `custom-values/gpu` | C05 |
+| g5 | `custom-values/gpu/prod-values.yaml` `forgejo-runner-gpu.bitwardenIds.runner-token` is UUID-shaped — no `OVERRIDE_NEEDED`/placeholder (an empty or non-UUID id crashloops the daemon: `'uuid' is empty`); its comment names the **`forgejo-runner`** item (UA6 — the user's name) as a **standalone token**: `(?<![\w-])forgejo-runner(?![\w-])` in the suite, equivalently `grep -cE '(^\|[^-[:alnum:]])forgejo-runner([^[:alnum:]-]\|$)'` ≥ 1 in Commands — so neither the values key `forgejo-runner-gpu` nor the superseded `gpu-forgejo-runner` satisfies the leg (`grep -c gpu-forgejo-runner` == 0), and the reserved `dev-forgejo-prod-runner` UUID appears nowhere under `custom-values/gpu` | C05 |
 | g6 | gpu umbrella sentinel sweep at the **pinned baseline 1** (measured: legacy `OVERRIDE_VIA_CLUSTER_ANNOTATION` trio on one values-JSON line) and zero `OVERRIDE_*` inside the `forgejo-runner-gpu` Application's values JSON | C05 |
 | g7 | blast radius: dev runner trio and comments byte-untouched (`git diff` shows no `±.*forgejo-runner` line under `services/dev`/`custom-values/dev`), `services/gpu/prod/values.yaml` `charts.forgejo` still absent (no gpu Forgejo), `charts/forgejo-runner/**` untouched by C05 (C04 owns it) | — (regression) |
 
 ## User actions (never chunks)
+
+**Status 2026-11-04:** UA1–UA4 and UA5–UA6 are DONE by the user (UA1–UA3
+inferred from UA4's completed item — see the rollout section); the UUIDs are in
+STATE.json `user_actions`. **PF0–PF2 stay PENDING** — they gate the live syncs,
+not the chunk work, and no agent can run them (no pod exec).
 
 ### Blocking, before the merge
 
@@ -689,6 +722,12 @@ it): item `forgejo-s3` (Login: username = access key id, password = secret
 access key), one item for both instances (Q3). Real UUID only —
 `OVERRIDE_NEEDED` is forbidden for this key (D11).
 
+> **DONE 2026-11-04.** The `forgejo-s3` Login item exists and is the **same
+> item for both instances** (Q3). Its UUID is recorded in STATE.json
+> `user_actions.ua4_forgejo_s3`; by repo convention it lives in
+> `custom-values/{dev,infra}/prod-values.yaml` (pasted there by C02/C03), not
+> in this plan's prose. C02 and C03 are unblocked.
+
 **UA5 — Create the gpu runner's server-side record on the INFRA instance**
 (`git.spencerslab.com` — Q13 answer). Instance-level Actions runner record
 (same shape as `dev-forgejo-dev-runner`, per
@@ -698,15 +737,29 @@ pod — never scale the gpu STS past 1. Timing: the record may exist early
 (harmless — a registered runner takes no jobs until its pod runs), but per
 rollout step 7 the **pod sync waits for C03**.
 
+> **DONE 2026-11-04.** The persistent record exists on the **infra** instance
+> (git.spencerslab.com); its uuid + registration token were captured into the
+> UA6 item. The "exists early" posture is what actually happened, so rollout
+> step 7's sync gate — not the record's existence — is what keeps the gpu
+> runner away from infra's pre-C03 404.
+
 **UA6 — Bitwarden item for the pair**, then report the UUID to the pipeline
-(C05 pastes it): **new** Login item `gpu-forgejo-runner` (Q15 answer —
+(C05 pastes it): **new** Login item **`forgejo-runner`** (Q15 answer —
 one-item-per-concern naming), username = runner uuid, password = runner token.
 The reserved `dev-forgejo-prod-runner` item stays untouched for the infra
 runner relocation. Real UUID before any C05 commit — the daemon fail-fasts
 (`'uuid' is empty`) and crash-loops without it.
 
+> **DONE 2026-11-04.** The user created the item under the name
+> **`forgejo-runner`** — that name supersedes this plan's Q15 best guess
+> `gpu-forgejo-runner` (the user's name wins; DECISIONS.md 2026-11-04 records
+> it, and every instruction-bearing surface — C05 AC4, the g5 suite leg, the
+> Commands greps — now asserts the standalone token). Its UUID is recorded in
+> STATE.json `user_actions.ua6_runner_item` and belongs in
+> `custom-values/gpu/prod-values.yaml`, pasted there by C05. C05 is unblocked.
+
 **PF0 — Confirm there is nothing to migrate** (sanity check on the D9
-assumption):
+assumption) — **PENDING (user-run; gates the syncs, not the chunk work)**:
 
 ```bash
 kubectl -n default exec -it deploy/dev-forgejo -c forgejo -- \
@@ -714,7 +767,7 @@ kubectl -n default exec -it deploy/dev-forgejo -c forgejo -- \
 ```
 
 **PF1 — Pre-flight of the exact boot path, dev endpoint** (user-run; agents
-have no pod exec):
+have no pod exec) — **PENDING**, runs before **dev's** sync:
 
 ```bash
 kubectl -n default exec -it deploy/dev-forgejo -c forgejo -- sh -c \
@@ -739,7 +792,9 @@ on PATH in that container, use `/usr/bin/forgejo`; the container already
 exports `GITEA_APP_INI`/`GITEA_CUSTOM`, so the flags alone define the target.
 
 **PF2 — Same pre-flight for infra** (Q8: C03 rides the branch; run this before
-the sync that restarts infra): identical command from `deploy/infra-forgejo -c
+the sync that restarts infra) — **PENDING**, gates **infra's** sync, which
+itself rides after dev's verification (V1–V3 + V5) and before the gpu Application
+sync (rollout step 7): identical command from `deploy/infra-forgejo -c
 forgejo` with `--minio-endpoint
 seaweedfs-s3.default.svc.cluster.local:8333` and without `--minio-use-ssl`.
 
@@ -907,8 +962,8 @@ record lives on infra (`git.spencerslab.com`), so the slice must too.
   answer deferred this, deliberately).
 - Infra runner relocation (`forgejo-runner-infra` re-wire via the reserved
   `dev-forgejo-prod-runner` item) stays deferred from the previous tickets —
-  untouched by this ticket: Q15's new-item answer (`gpu-forgejo-runner`)
-  keeps that vault item free for the relocation.
+  untouched by this ticket: Q15's new-item answer (the item the user created as
+  `forgejo-runner`) keeps that vault item free for the relocation.
 - SeaweedFS chart `4.50.0` → `4.52.0` (`dep` ticket; carries the #12177 fix plus
   ~217 other PRs — its own validation).
 - Tighten gateway IAM if the `List` grant turns out unnecessary for Forgejo (it
