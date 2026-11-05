@@ -206,6 +206,7 @@
       "last_verdict": "APPROVED",
       "dev_session": "ses_e526ea1fdffefz3NEpgDhARZEL",
       "review_session": "ses_e525531b6ffeJmB4pAEqIxp1qP",
+      "commit": "01317f447",
       "handoffs": [
         {
           "role": "dev",
@@ -231,15 +232,38 @@
       ]
     },
     "C05": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C02"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e5248a6bfffeKknLloiqzhAL2L",
+      "review_session": "ses_e52455addffe7bPjURe6PS5c7G",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e5248a6bfffeKknLloiqzhAL2L",
+          "status": "DONE",
+          "files_changed": ["services/monitoring/prod/values.yaml (two grafana.dashboards.default entries: vllm-performance-statistics + vllm-query-statistics, url-pinned to vllm repo tag v0.33.0 + tag-coupling comments + datasource: Prometheus; placed at the folder's alphabetical position between unpackerr and volsync)"],
+          "commands_run": ["bash tests/services/vllm-dashboards.sh => pass (5 ok, exit 0; t1, t2, t3 LIVE both URLs 200 + panels array (egress available, NOT skipped), t4 pin-coupling vs C01 README ledger line 3)", "AC1 verbatim python yaml key dump => pass (both vllm-* keys in grafana.dashboards.default, 44 keys, order intact)", "AC4 independent curl probe => pass (200 + panels len=20 performance / len=18 query)", "AC5 git diff => pass (single hunk, 10 insertions / 0 deletions; all sibling entries byte-identical)", "npx aislop ci --changes => pass (0/0/0, 70 files)"],
+          "deviations": "none — byte-exact per the chunk spec (em dash U+2014 + straight apostrophe verified via od -c / cat -A; no CRLF, no trailing whitespace); placement at the existing alphabetical position since the chunk names none",
+          "friction": "one display-only truncation of a verification line (known repo display-garbling item) — resolved by file-backed cat -A re-read; no semantic impact",
+          "open_questions": "none",
+          "next_suggested": "launch C05 agent-review (re-runs bash tests/services/vllm-dashboards.sh first incl. the t3 live probe — expect 5 ok; AC4 probe fresh), then coord commits the C05 set (services/monitoring/prod/values.yaml + tests/services/vllm-dashboards.sh + bookkeeping) and proceeds to C06 (wave 3)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e52455addffe7bPjURe6PS5c7G",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (suite 5 ok: t1/t2 + t3 LIVE both URLs 200 + panels (egress available) + t4 pin-coupling vs C01 committed ledger vllm/vllm-openai-rocm:v0.33.0-rocm100; AC1 verbatim 44 keys; reviewer's own AC4 curl: 200, 20/18 panels, schemaVersion 40, __inputs null on both; R5 Q3 single-engine-safety verified against the fetched JSONs — DS_PROMETHEUS type=datasource query=prometheus, Deployment_id label_values on model_name, zero dp_rank, no engine-filter keys, so datasource: Prometheus is conventional parity per the __inputs-no-op ruling; AC5 single hunk 10 insertions / 0 deletions, all siblings byte-identical, alphabetical placement between unpackerr and volsync accepted; full-tree scope audit: R5 'Nothing else' holds — no PrometheusRule / wrapper-chart / central-Prometheus / Loki changes, no new dashboardProviders block; test file verified unmodified in spirit (test-owned, pre-dates dev); aislop 0/0/0). No minors.",
+          "next_suggested": "coord commits the C05 set; mark C05 done; post the card comment; launch C06 (wave 3, the final chunk)"
+        }
+      ]
     },
     "C06": {
       "status": "pending",

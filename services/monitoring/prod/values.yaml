@@ -656,6 +656,16 @@ grafana:
         datasource:
           - name: DS_PROMETHEUS
             value: Prometheus
+      vllm-performance-statistics:
+        # Pinned to the vllm repo TAG v0.33.0 — the same tag as the
+        # containers/vllm-rocm base image (C01 ledger + charts/vllm values).
+        # renovate can't track a raw URL: bump this WITH the image pin.
+        url: https://raw.githubusercontent.com/vllm-project/vllm/v0.33.0/examples/observability/dashboards/grafana/performance_statistics.json
+        datasource: Prometheus
+      vllm-query-statistics:
+        # Same tag-coupling as above.
+        url: https://raw.githubusercontent.com/vllm-project/vllm/v0.33.0/examples/observability/dashboards/grafana/query_statistics.json
+        datasource: Prometheus
       volsync:
         # renovate: depName="VolSync Dashboard"
         gnetId: 21356
