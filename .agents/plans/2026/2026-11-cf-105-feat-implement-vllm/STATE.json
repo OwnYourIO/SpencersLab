@@ -242,6 +242,7 @@
       "last_verdict": "APPROVED",
       "dev_session": "ses_e5248a6bfffeKknLloiqzhAL2L",
       "review_session": "ses_e52455addffe7bPjURe6PS5c7G",
+      "commit": "d0670e031",
       "handoffs": [
         {
           "role": "dev",
@@ -266,7 +267,7 @@
       ]
     },
     "C06": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C01",
@@ -275,10 +276,34 @@
         "C04",
         "C05"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e523de0acffeMJ1rPAOPT0NcSg",
+      "review_session": "ses_e522db181ffeR43dQwxsrdoozd",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e523de0acffeMJ1rPAOPT0NcSg",
+          "status": "DONE",
+          "files_changed": [".agents/notes/vllm-on-target-acceptance.md (new, 552 lines — provenance/ground-rules header + honest D4/HR3 envelope + all eleven step groups 0-10 + the public-host follow-up section, strata-runbook shape)"],
+          "commands_run": ["bash tests/notes/vllm-runbook.sh => pass (T1-T5 all ok, exit 0; re-run fresh at end: T1 eleven headers in order + 552 lines, T2 no mutation tokens, T3 constants match values, T4 all citations resolve, T5 step content present)", "independent byte-level T2 scan => 0 mutation-token lines", "independent T4 citation grep => all 24 citation sites resolve (R1 OQ4/OQ5, R1 §3/§4, R3 OQ3/OQ4/Q5, R4 Q1/OQ6, R5 Q2/Q3/OQ6, Post Research V1/V2/V3/V5)", "npx aislop ci --changes => pass (score 100, 70 files, 0/0/0)", "git status => only change is the new runbook + pre-existing STATE.json bookkeeping; tests/notes/ untouched"],
+          "deviations": "none",
+          "friction": "display-garbling recurred once (T2 grep line numbers) — resolved with the known file-backed byte-level re-verification",
+          "open_questions": "none",
+          "next_suggested": "launch C06 agent-review (re-runs bash tests/notes/vllm-runbook.sh first — expect T1-T5 green — then AC1-AC5 review against the chunk), then coord commits the C06 set (runbook + tests/notes/vllm-runbook.sh + bookkeeping); this is the final chunk — after it, the final whole-plan review per the run protocol"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e522db181ffeR43dQwxsrdoozd",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (T1-T5 5 ok; aislop 0/0/0; diff base d0670e031 confirmed; test-owned suite unmodified in spirit). AC1 eleven step groups in order, strata house shape matched. AC2 met — ~20 citations verified to exist AND support the claim (R1 OQ4/OQ5, R1 §3/§4 cell-for-cell, R3 OQ3/OQ4 + weakest SSE, R4 acceptance 1/2 + OQ6 + medium-confidence (a), R5 OQ6 + job-label + dashboard-import, Post Research V1/V2/V3/V5 with the 2x-peak cuMemCreate caveat quoted accurately) — one mis-citation found (runbook 4.3 cites R3 Q5; the peer-listing evidence is R3 Q3 at RESEARCH.md:950). AC3 independent sweep: zero kubectl mutation commands / zero helm / zero argocd; node one-shots are ctr/docker run; 5.2/10 git-only. AC4 no 256k-x-4 anywhere; envelope constants match D4 exactly. AC5 all constants agree with charts/vllm/values.yaml, services/gpu-ai/prod/values.yaml, the C01 README ledger, and both opencode.jsonc rows; scrapeInterval absence asserted both ways. Step-8 sleep/wake sequence in the exact documented order with the do-not-wake gate-fail branch + VLLM_SERVER_DEV_MODE coupling; 5.2 clearly OPTIONAL; public-host section correctly unnumbered.",
+          "minors": "two non-blocking (DECISIONS Deferred, ride the pre-PR doc touch or the next touch): (1) runbook 2.2 'values no-op touch' cannot restart the pod — a comment-only values change renders identical manifests so ArgoCD never redeploys; (2) runbook 4.3 mis-citation R3 Q5 -> R3 Q3. Nits (no action): 1.2 '15-minute envelope' vs its own 60 s + 90x10 s = 16 min arithmetic (inherited plan shorthand); 4.3/5.1 lack explicit if-fails lines; 6.1 no hint how to construct a 262144-token prompt; 1.1 calls amd.com/gpu a 'request' though the chart declares it under limits. Full notes appended to chunks/C06.md Review notes.",
+          "next_suggested": "coord commits the C06 set; mark C06 done (all six chunks done); post the card comment; run the final whole-plan review"
+        }
+      ]
     }
   },
   "handoffs": [
