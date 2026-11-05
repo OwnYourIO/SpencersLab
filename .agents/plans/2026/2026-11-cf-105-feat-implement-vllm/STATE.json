@@ -104,13 +104,15 @@
       ]
     },
     "C02": {
-      "status": "in-progress",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
       "dev_rounds": 1,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
       "dev_session": "ses_e53780a73ffen5vXPydAMd234c",
+      "review_session": "ses_e53176802ffeYB1PFQYHvCJON6",
+      "commit": "925a2c62b",
       "handoffs": [
         {
           "role": "dev",
@@ -135,20 +137,64 @@
           "friction": "none — dev's three-way unsatisfiability proof independently re-verified (committed lock + fresh scratch regeneration with the local binary)",
           "open_questions": "none",
           "next_suggested": "launch C02 agent-review (re-runs the chunk suite first; 27/27 expected), then coord commits the C02 set (charts/vllm/ incl. Chart.lock + values/templates + tests, services/gpu-ai/prod/values.yaml, .github/workflows/vllm-render-tests.yaml; vendored tgz stays untracked per the llama-swap precedent)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e53176802ffeYB1PFQYHvCJON6",
+          "verdict": "APPROVED",
+          "summary": "all validations re-run fresh (gate 27/27, 0 skipped; both renders 0 sentinels, service-level byte-identical to chart-defaults; AC3 peer URL http://gpu-ai-vllm.default.svc.cluster.local:8000; AC6 metadata + tag main/Always/PIN-ME; exactly two k8s.grafana.com annotations, no scrapeInterval; trio greps pass; AC5 custom-values/ + services/gpu/ byte-unchanged; aislop 0/0; scratch-chart reproduction of the two-deps common requirement). Four dev deviations adjudicated: two-deps JUSTIFIED (reproduced + mechanism verified in vendored values.init), serveArgs anchor JUSTIFIED, enableSleepMode documented-key ACCEPTED, createDefaultServiceAccount false JUSTIFIED. Test repair verified strictness-neutral (JSON subset of YAML; assertions byte-intact). Minor (non-blocking) -> DECISIONS Deferred: retarget-surface comment overstates (service-only modelPath edit does not change rendered --model). Nit: dep repository URL omits the trailing slash of other bjw-s deps (functionally identical; matches chunk text + test).",
+          "next_suggested": "coord commits the C02 set; mark C02 done; proceed to wave 2 (C03 first — its golden re-capture runs against the post-C02 tree)"
         }
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C02"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e530450f7ffeekCqwwNx5AT9uJ",
+      "review_session": "ses_e52893544ffexrtvRWcddHsJR4",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e530450f7ffeekCqwwNx5AT9uJ",
+          "status": "BLOCKED (validation_at_fault — implementation DONE, left in tree; 6 reds are test-side re-pins that no correct C03 implementation can clear)",
+          "files_changed": ["services/gpu-ai/prod/values.yaml (peers.vllm block, additive-only)", ".opencode/opencode.jsonc (two gpu-ai catalog rows, pure 12-line insertion)", "charts/llama-swap/tests/golden/gpu-ai.config.yaml (re-captured 33688->39159 B, 60 models, peers {strata,vllm}; gpu golden untouched)", "charts/llama-swap/tests/TEST_SPEC.md (dated capture note + corrected Posture paragraph)"],
+          "commands_run": ["export PATH + helm version => pass (v3.16.4)", "pytest charts/llama-swap/tests -v (C03 tree) => 6 failed / 409 passed / 9 skipped (the 6 = by-name ledger in next_suggested; T1-T4 = 5/5 green)", "pytest charts/llama-swap/tests -v (baseline worktree @925a2c62b, tgz copied in) => pass (410 passed / 9 skipped / 0 failed — every red arm proven green pre-C03)", "bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M6 => pass (6 ok; M7 excluded as C04 designed-red)", "plan-commands C03 leg: extract gpu-ai llama-swap subtree + helm template --show-only configmap => pass (peers.vllm exact per task spec)", "AC4 trio greps => pass (all empty)", "AC5 python byte-identity vs 925a2c62b => pass (strata peer, matrix, models, hooks byte-identical; vllm block pure insertion)", "AC3 node JSONC parse + row-shape via M3 => pass (both rows, shared wire modelID, limit.context 262144, body.priority 10/1; git diff = 12 added lines only)", "npx aislop ci --changes => pass (0 errors, 0 warnings, 70 files)"],
+          "deviations": "(1) golden re-capture + TEST_SPEC note written via shell (python) — agent-dev-local denies edit on charts/**/tests/**; the chunk assigns both to dev as test assets C03 owns to re-capture; no test .py touched. (2) The prior session's TEST_SPEC §10 Posture paragraph was inaccurate (claimed two arms 'now pass') — rewritten to the verified 6-item ledger with base/handoff suite counts. (3) Baseline proof ran in a temporary detached worktree @925a2c62b with the gitignored app-template-5.0.1.tgz copied in; both scratch worktrees removed afterwards.",
+          "friction": "heredoc wrote literal \\u2014 escape sequences into the TEST_SPEC note (caught on re-read, fixed with a targeted unicode replace — no semantic change); recurring harness display garbling persisted, mitigated with file-backed outputs + re-reads as in prior rounds",
+          "open_questions": "none",
+          "next_suggested": "route the 6 test re-pins to the C03 test session (test_session.C03 = ses_e5741efdbffetfnoAMN4FAUFM3; if unreachable, a FRESH agent-test per the C02 repair precedent) with the by-name ledger: (1) test_config_parity.py::test_c02_2[gpu-ai] — _assert_strata_peers pin set(peers)=={'strata'} -> admit vllm (cf-86 peer wave-law); (2) test_config_parity.py::test_repl_tables_match_frozen_decisions — CF86_NEW_IDS now inside the re-captured golden (era-chain; CATALOG identity still holds); (3) test_config_parity.py::test_c02_3 — union law ai_ids==gpu_ids|GPUAI_LOCAL_IDS calibrated at 55, golden is now 60 (era-chain); (4) test_flashnext_blast_radius.py::test_c03_ac2_matrix_hooks_scalars_identical — peers delta None->{strata,vllm} not the pinned cf-77 evidence shape (test's own message routes this to the test session); (5) test_strata_wiring.py::test_c03_extract_and_render_yields_on_shape_keyless — single-peer pin -> 2 peers; (6) test_catalog_contract.py::test_c05_no_phantom_catalog_entries — admit qwen3.8-27b-vllm (vllm-peer-served) + the -urgent class alias of the same wire ID. Then dev re-run (expect 415 passed / 9 skipped / 0 failed + surface M1-M6 green), agent-review, coord commit of the C03 set (4 files + test_vllm_peer.py + surface.sh; tgz stays untracked)."
+        },
+        {
+          "role": "test",
+          "round": "repins-1",
+          "session": "ses_e52a4c89cffeQo7Xr8HpuKSszF (fresh agent-test — the original C03 test session ses_e5741efdbffetfnoAMN4FAUFM3 is unreachable as a child of this coord; recorded as the C03 test-repair route)",
+          "status": "DONE",
+          "files_changed": ["charts/llama-swap/tests/test_config_parity.py", "charts/llama-swap/tests/test_flashnext_blast_radius.py", "charts/llama-swap/tests/test_strata_wiring.py", "charts/llama-swap/tests/test_catalog_contract.py", "charts/llama-swap/tests/llama_swap_testlib.py (PEER_VLLM single source)", "charts/llama-swap/tests/test_vllm_peer.py (aliases L.PEER_VLLM; T1 assertions byte-intact)"],
+          "commands_run": ["pytest C03 tree pre-repair => 6 failed / 409 passed / 9 skipped (matches dev ledger)", "pytest post-repair => pass (415 passed / 9 skipped / 0 failed; twice fresh)", "pytest -k the six ledger arms => pass (7 — parity arm parametrized over 2 clusters)", "bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M6 => pass (6 ok; twice; M7 untouched, still C04 designed-red)", "git diff golden/gpu.config.yaml => pass (0 bytes — gpu golden byte-identical)", "python set-arithmetic pre-verification of the era laws vs goldens + frozen tables => pass (golden ai == CATALOG 60; (55-13+18)==60; REMOVED subset law holds)", "8 mutation/drift probes P1-P6 => pass (8/8 RED-OK, each restored + sha256-verified; /tmp dir deleted)", "aislop per-edit gate => pass (100/100, 0 findings on every edit)"],
+          "deviations": "(1) Arm 2's ledger entry undercounted: test_repl_tables_match_frozen_decisions carries a SECOND red hidden behind the listed line-107 failure — the REMOVED subset witness assert (the 4 gpu-ai-local REMOVED ids existed only in the pre-capture golden). Re-pinned in the same pass (witness = gpu golden ∪ GPUAI_LOCAL_IDS plan inventory); same era-chain class, no functionality change, CATALOG identity assert untouched. (2) PEER_VLLM literal moved to llama_swap_testlib as L.PEER_VLLM — single source shared by the three arms pinning the block; zero edits outside tests/**. (3) Three stale comments corrected inside blocks already being extended. No assertion outside the six arms touched.",
+          "friction": "arm-2 hidden second red found by pre-verifying every assert of the arm, not just the first failing one — the ledger's single-line attribution masked it; recurring harness display truncation (known repo friction) mitigated with file-backed outputs + re-reads",
+          "open_questions": "none",
+          "next_suggested": "launch C03 agent-review (re-runs the chunk suite first; 415 passed / 9 skipped / 0 failed + surface M1-M6 green expected, M7 still designed-red), then coord commits the C03 set (dev-owned: services/gpu-ai/prod/values.yaml, .opencode/opencode.jsonc, gpu-ai golden + TEST_SPEC note; test-side: the six files above; vendored tgz stays untracked)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e52893544ffexrtvRWcddHsJR4",
+          "verdict": "APPROVED",
+          "summary": "all gates re-run fresh (plan C03 leg render: peers.vllm exact per spec, no /v1, 1800/30, {\"priority?\": 10}, no apiKey; pre-C03 vs post-C03 render diff = single hunk, exactly the 10-line vllm insertion; golden fidelity: re-captured golden minus 8 preserved annotation lines == fresh render line-for-line, and the committed-HEAD golden is 798 lines stale vs base — full re-capture justified; pytest 415 passed / 9 skipped / 0 failed; surface M1-M6 6 ok; M7 red on its first C04 needle with both C03-dependent cross-file legs passing in isolation — confirmed C04's, not C03's; AC3 JSONC 12+/0- pure insertion; AC4 trio greps empty; AC5 strata peer + matrix byte-identical; aislop 100/0/0 70 files; comment-slop pass keep-all; reviewer's own 3 mutation probes (phantom id / 1-byte port drift / peer removal) all bite). Both test-session deviations adjudicated: arm-2 hidden second red = era-chain-class (witness re-pin verified, CATALOG identity untouched); PEER_VLLM single-source move = T1 assertions byte-intact alias, three arms share the one literal. Minors (non-blocking): STATE.json lacked the repins-1 entry (coord bookkeeping — closed by this record); TEST_SPEC §10 says 15-line diff where the actual pre/post render delta is 10 lines (count fix rides the next test touch, DECISIONS Deferred).",
+          "next_suggested": "coord commits the C03 set; mark C03 done; launch C04 (M7 turns green on the C04 dev edit; the final review runs full M1-M7)"
+        }
+      ]
     },
+    "C03_status_note": "C03 done: dev-1 + test repins-1 + review r1 APPROVED; commit sha recorded by coord after the commit (circular-inclusion avoidance)",
     "C04": {
       "status": "pending",
       "wave": 2,

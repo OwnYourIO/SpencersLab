@@ -116,20 +116,24 @@ def test_c03_ac2_non_flashnext_models_identical_gpu_ai():
 # baseline predates — sanctioned, so it gets an EXACT exception instead of a
 # baseline re-capture (the fixture stays byte-intact; history keeps the delta
 # visible). Tolerated shape, pinned to evidence/strata-peers-expected.yaml as
-# the single source: peers absent from the base; peers == {"strata": {proxy,
-# models, timeouts}} with the evidence's proxy/timeouts and models equal to
-# one of the evidence's two sanctioned lists. Anything else — another
-# top-level key, a second peer, apiKey/filters, a byte off proxy/timeouts, or
-# a models list outside the sanctioned states — stays RED. The helper READS
-# THE EVIDENCE LIVE, so the run-2 re-author of that file (proxy URL flipping
-# from gpu-ai-strata to the consolidated gpu-ai-llama-swap-strata name)
-# re-aligns the sanctioned state automatically: between the re-author and
-# r2-C03 flipping the service values, this test is RED BY DESIGN — the red
-# names run-2's C03, never a license to touch the evidence or this guard.
-# C05 grows the models list by appending the strix id: that flows through the
-# evidence file's models_allowed state, and the evidence update is TEST-SESSION
-# property — dev routes any peers-shape change via RESULT/coord, never edits
-# the evidence itself.
+# the single source for the strata entry: peers absent from the base;
+# strata == {proxy, models, timeouts} with the evidence's proxy/timeouts and
+# models equal to one of the evidence's sanctioned states. cf-105 C03 (2026-
+# 11-05) grew the sanctioned delta by the vllm peer: it is pinned to the
+# RE-CAPTURED gpu-ai golden's peers.vllm, read live and never hand-copied —
+# T4 keeps that fixture byte-equal to a fresh render, so a later re-capture
+# re-aligns this carve automatically. Anything else — another top-level key,
+# a third peer, an apiKey on the strata entry, a byte off strata
+# proxy/timeouts, or a models list outside the sanctioned states — stays RED.
+# The helper READS THE EVIDENCE LIVE, so the run-2 re-author of that file
+# (proxy URL flipping from gpu-ai-strata to the consolidated
+# gpu-ai-llama-swap-strata name) re-aligns the sanctioned state automatically:
+# between the re-author and r2-C03 flipping the service values, this test was
+# RED BY DESIGN — the red named run-2's C03, never a license to touch the
+# evidence or this guard. C05 grows the models list by appending the strix
+# id: that flows through the evidence file's models_allowed state, and the
+# evidence update is TEST-SESSION property — dev routes any peers-shape
+# change via RESULT/coord, never edits the evidence itself.
 
 
 _STRATA_PEERS_EVIDENCE = L.TESTS_DIR / "evidence" / "strata-peers-expected.yaml"
@@ -158,11 +162,13 @@ def _hooks_scoped(h: dict) -> dict:
 
 
 def _cf77_peers_carved(base: dict, cur: dict) -> bool:
-    """True iff the ONLY top-level base→cur differences are the pinned cf-77
-    peers delta plus (from cf-86 on) matrix growth that is itself inside the
-    sanctioned additive shape (then callers carve `peers` and stay strict on
-    everything else). Exactness lives here: key sets and values compared against
-    the evidence file, never against a copy of its contents."""
+    """True iff the ONLY top-level base→cur differences are the pinned peers
+    delta (cf-77's strata evidence shape + cf-105 C03's vllm peer, the latter
+    deep-equal to the re-captured golden's) plus (from cf-86 on) matrix growth
+    that is itself inside the sanctioned additive shape (then callers carve
+    `peers` and stay strict on everything else). Exactness lives here: key
+    sets and values compared against the evidence file and the re-captured
+    golden, never against a copy of either's contents."""
     import yaml
 
     if "peers" in base or base.get("peers") is not None:
@@ -188,7 +194,9 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
         return False
     evidence = yaml.safe_load(_STRATA_PEERS_EVIDENCE.read_text())["strata"]
     peers = cur["peers"]
-    if not isinstance(peers, dict) or set(peers) != {"strata"}:
+    # cf-105 C03: the sanctioned delta grew from strata-only to strata+vllm
+    # (vllm pinned below to the re-captured golden's block).
+    if not isinstance(peers, dict) or set(peers) != {"strata", "vllm"}:
         return False
     entry = peers["strata"]
     if not isinstance(entry, dict) or set(entry) != {"proxy", "models", "timeouts"}:
@@ -197,7 +205,15 @@ def _cf77_peers_carved(base: dict, cur: dict) -> bool:
         return False
     # cf-86 wave table: the models list must equal one sanctioned intermediate
     # or final state exactly (ordered), not merely a subset of the final five.
-    return entry["models"] in evidence["models_states"]
+    if entry["models"] not in evidence["models_states"]:
+        return False
+    # cf-105 C03: the vllm peer is pinned to the RE-CAPTURED gpu-ai golden,
+    # read live — never a copy of its contents, so a later re-capture
+    # re-aligns this carve automatically (T4 keeps the fixture fresh).
+    golden_vllm = (L.golden_config("gpu-ai").get("peers") or {}).get("vllm")
+    if not isinstance(golden_vllm, dict) or peers.get("vllm") != golden_vllm:
+        return False
+    return True
 
 
 def _cf86_matrix_violations(base: dict, cur: dict) -> list[str]:
@@ -251,8 +267,9 @@ def test_c03_ac2_matrix_hooks_scalars_identical():
             diffs.append(f"{key}: {b!r} -> {c!r}")
     diffs += _cf86_matrix_violations(base, cur)
     if not carved and cur.get("peers") != base.get("peers"):
-        diffs.append("peers delta present but NOT the pinned cf-77 evidence shape — "
-                     "see the carve-out comment; evidence changes route through the test session")
+        diffs.append("peers delta present but NOT the pinned shape (cf-77 strata "
+                     "evidence + cf-105 C03 vllm golden pin) — see the carve-out "
+                     "comment; peers-shape changes route through the test session")
     assert not diffs, (
         "gpu-ai: non-models config surface diverged (matrix sets/vars guard the solo-"
         "matrix membership and no-preload rules C03 must keep; hooks.preload and the "

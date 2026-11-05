@@ -42,6 +42,15 @@ BACKCOMPAT_ALIASES = {
 # a single /bin/sh -c invocation whose script is one echo-to-stderr + exit 1.
 _FAILFAST = re.compile(r'^/bin/sh -c "echo \'.*\' >&2; exit 1"\n?$')
 
+# cf-105 C03 era chain (2026-11-05 gpu-ai golden re-capture, TEST_SPEC §10):
+# the re-captured gpu-ai golden is the FULL 60-ID catalog, not the pre-change
+# 55. Additive-only law: the 55 (40 chart + 15 gpu-ai-local) loses exactly
+# the 13 ruled REMOVED ids it still carried and gains exactly the 18 rungs
+# that had landed in service values before the capture — the cf-86 pair plus
+# the C04-era gpu-ai set. Derived from the frozen tables, never a re-typed
+# list, so a table drift or a golden id-swap at constant 60 stays red.
+C03_GOLDEN_ERA_ADDITIONS = set(L.CF86_NEW_IDS) | set(L.C04_NEW_IDS["gpu-ai"])
+
 
 def _first_diff_key(a, b, prefix=""):
     if a == b:
@@ -99,15 +108,26 @@ def test_repl_tables_match_frozen_decisions():
     handoff by design; it fails only if a table drifts from the rulings.
     cf-86 amendment (2026-10-29): the two new heretic rungs postdate the
     goldens, so the identity is golden-union − removed + CF86_NEW_IDS and the
-    partition is 34+26 (DECISIONS 'cf-86 model/source decisions')."""
+    partition is 34+26 (DECISIONS 'cf-86 model/source decisions').
+    cf-105 C03 era chain (2026-11-05 re-capture): the gpu-ai golden IS the
+    full catalog now, so the cf-86 rungs sit inside it — the "new relative to
+    the goldens" sanity flips to containment, and the CATALOG identity below
+    keeps biting both ways."""
     g = set(L.all_models_of(L.golden_config("gpu")))
     a = set(L.all_models_of(L.golden_config("gpu-ai")))
     c04_new = set(L.C04_NEW_IDS["gpu-ai"]) - set(L.C04_LADDER_35B_IDS) | set(L.C04_LADDER_35B_IDS)
     derived = (g | a | c04_new) - set(L.REMOVED_IDS)
-    assert not set(L.CF86_NEW_IDS) & (g | a), "a cf-86 rung predates the goldens — table wrong"
+    assert set(L.CF86_NEW_IDS) <= a, "cf-86 rungs missing from the re-captured gpu-ai golden — era chain broken"
     assert derived | set(L.CF86_NEW_IDS) == set(L.CATALOG_IDS), f"CATALOG drift: {derived | set(L.CF86_NEW_IDS) ^ set(L.CATALOG_IDS)}"
     assert len(L.REMOVED_IDS) == 13
-    assert set(L.REMOVED_IDS) <= (g | a), "a REMOVED id never existed in the goldens"
+    # era chain: the re-captured gpu-ai golden is post-deletion, so the 4
+    # REMOVED ids that lived only in the pre-capture gpu-ai golden are now
+    # witnessed by the gpu-ai-local plan inventory; the 9 chart-side ones
+    # still sit in the unchanged gpu golden.
+    assert set(L.REMOVED_IDS) <= g | set(L.GPUAI_LOCAL_IDS), (
+        "a REMOVED id is witnessed by neither golden nor the gpu-ai-local "
+        "plan inventory — table wrong"
+    )
     assert len(L.GPU_ENABLED_IDS) == 34 and len(L.GPU_ECHO_IDS) == 26
     assert set(L.ENABLEMENT["gpu-ai"]["enabled"]) == set(L.CATALOG_IDS)
     assert not L.ENABLEMENT["gpu-ai"]["echo"]
@@ -278,9 +298,13 @@ def test_c02_2_config_layer_macros_matrix_hooks_scalars(cluster):
     # `peers` is the one additive top-level delta the golden tolerates, and
     # only on gpu-ai — popping it here keeps the pre-existing strict equality
     # for everything else while _assert_strata_peers pins the delta exactly.
-    # Run-2 (Q-C consolidation) re-authored the evidence's proxy URL: the
-    # delta is now RED until r2-C03 flips the service values to match.
-    _assert_strata_peers(cluster, f_scalars.pop("peers", None))
+    # Run-2 (Q-C consolidation) re-authored the evidence's proxy URL; r2-C03
+    # has since flipped the service values to match it.
+    # cf-105 C03: the re-captured golden CARRIES peers too, so both sides are
+    # popped — the golden block is the era pin, deep-equal in the helper.
+    g_peers = g_scalars.pop("peers", None)
+    f_peers = f_scalars.pop("peers", None)
+    _assert_strata_peers(cluster, f_peers, g_peers)
     assert g_scalars == f_scalars, (
         f"{cluster}: top-level config keys diverged: {_first_diff_key(g_scalars, f_scalars)}"
     )
@@ -289,15 +313,23 @@ def test_c02_2_config_layer_macros_matrix_hooks_scalars(cluster):
 _STRATA_PEERS_EVIDENCE = L.TESTS_DIR / "evidence" / "strata-peers-expected.yaml"
 
 
-def _assert_strata_peers(cluster: str, peers) -> None:
+def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
     import yaml
 
     expected = yaml.safe_load(_STRATA_PEERS_EVIDENCE.read_text())["strata"]
     if cluster != "gpu-ai":
         assert peers is None, f"{cluster}: peers rendered where the plan keeps the box peer-less"
+        assert golden_peers is None, f"{cluster}: golden gained peers where the plan keeps the box peer-less"
         return
     assert peers is not None, "gpu-ai: config.peers missing — C03 wiring not landed"
-    assert set(peers) == {"strata"}, f"peer entries: {sorted(peers)}"
+    # cf-105 C03 peer wave (additive on the cf-77/cf-86 strata-only pin):
+    # vllm is the second and final sanctioned peer; the re-captured golden
+    # must mirror the fresh block exactly (era pin).
+    assert set(peers) == {"strata", "vllm"}, f"peer entries: {sorted(peers)}"
+    assert golden_peers == peers, (
+        f"peers block {None if golden_peers is None else sorted(golden_peers)} "
+        f"!= fresh {sorted(peers)} — the re-captured golden must mirror both peers"
+    )
     p = peers["strata"]
     assert "apiKey" not in p, "inner apiKeys: [] is the quarantine posture — a key here contradicts Q4/Q5"
     assert p.get("proxy") == expected["proxy"], (
@@ -316,6 +348,13 @@ def _assert_strata_peers(cluster: str, peers) -> None:
         f"{expected['models_states']} — cf-86 grows this list per chunk; "
         "wave changes route through the test session, never a dev edit"
     )
+    # cf-105 C03: the vllm hop, exactly the C03 task-spec block — keyless
+    # in-cluster proxy (no /v1), explicit models list, the deep-prefill
+    # timeout, the set-if-undefined priority floor 10 (D6 default class).
+    v = peers["vllm"]
+    assert v == L.PEER_VLLM, (
+        f"vllm peer is {v}, want {L.PEER_VLLM} — cf-105 C03 pins the exact hop"
+    )
 
 
 # --- criterion 3: consumer-critical surface ----------------------------------
@@ -326,15 +365,21 @@ def test_c02_3_golden_baselines_match_plan_inventory():
     gpu = chart 40 IDs; gpu-ai = the 40 + its gpu-ai-local block keys.
     (Chunk text says '16 local'; the merged service block holds 20 keys of
     which 5 override chart IDs -> 15 net-local. TEST_SPEC records the count;
-    the golden is ground truth for what existed pre-change.)"""
+    the golden is ground truth for what existed pre-change.)
+    cf-105 C03 era chain (2026-11-05 re-capture): the gpu-ai golden is the
+    full 60-ID catalog now — the pre-cf-86 55 rebased additively: minus the
+    13 ruled REMOVED ids (deletions the ruling sanctioned, frozen in the
+    table), plus exactly the C03_GOLDEN_ERA_ADDITIONS rungs that had landed
+    before the capture. Any other removal or addition still fails."""
     gpu_ids = set(L.all_models_of(L.golden_config("gpu")))
     ai_ids = set(L.all_models_of(L.golden_config("gpu-ai")))
     assert gpu_ids == set(L.CHART_MODEL_IDS), (
         f"golden gpu set != chart inventory: +{sorted(ai_ids - gpu_ids)} -{sorted(gpu_ids - ai_ids)}"
     )
     assert len(gpu_ids) == 40
-    assert ai_ids == gpu_ids | set(L.GPUAI_LOCAL_IDS)
-    assert len(ai_ids) == 55
+    assert ai_ids == ((gpu_ids | set(L.GPUAI_LOCAL_IDS)) - set(L.REMOVED_IDS)
+                      | set(C03_GOLDEN_ERA_ADDITIONS))
+    assert len(ai_ids) == 60
 
 
 @pytest.mark.parametrize("cluster", CLUSTERS)

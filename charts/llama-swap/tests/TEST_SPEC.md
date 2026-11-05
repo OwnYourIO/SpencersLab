@@ -2720,3 +2720,67 @@ be called first.
   exactness lives in the evidence file, matrix growth lives in
   `_cf86_matrix_violations`. Nothing new was added; one stated scope was finally
   implemented.
+
+## 10. cf-105 C03 — gpu-ai golden re-capture note (dev session, 2026-11-05)
+
+`golden/gpu-ai.config.yaml` re-captured per the §1 command pattern (extract the
+`services/gpu-ai/prod/values.yaml` `llama-swap:` subtree → `helm template
+llama-swap charts/llama-swap -f <subtree> --set domain=spencerslab.com --set
+clusterName=gpu-ai --set bitwardenIds.hf-token=test-uuid --show-only
+templates/configmap-llama-swap.yaml` → `.data["config.yaml"]` verbatim; helm
+v3.16.4, app-template 5.0.1). Reason = cf-105 C03: the `peers.vllm` block
+changed the rendered gpu-ai llama-swap config (T4's re-capture obligation).
+Captured at branch tip `925a2c62b` (C02 commit; the C03 edit uncommitted in
+the tree at capture time). Sizes: gpu-ai 33688 B → 39159 B (60 models, 2
+peers: strata + vllm). The gpu-cluster golden is UNTOUCHED (the block is
+gpu-ai-only; T3's hold bar).
+
+The re-capture is a FULL §1 capture, not a one-block append: the committed
+golden was stale — its last full capture predates the strata peer and the
+cf-86 catalog growth (its U15-era re-pin was an in-place `preload: []` flip +
+header comment, not a §1 re-capture). The stale body is exactly what T4's
+"pre-C03 catalog drift" named. Fidelity: the post-C03 render differs from the
+pre-C03 render by EXACTLY the added `peers.vllm` block (15-line diff, all
+additions — verified before capture). The §9.26 column-0 preload-ruling
+annotation (8 lines, 2026-10-29 + 2026-11-02) is preserved verbatim at its
+anchor — T4 exempts exactly that layer; indented `#` lines are block-scalar
+macro CONTENT and are byte-pinned as data.
+
+Posture at handoff (re-verified 2026-11-05, fresh runs): `test_vllm_peer.py`
+T1–T4 all green (5 tests). Full suite at the C03 base `925a2c62b`: 410
+passed / 9 skipped / 0 failed. With the C03 change in the tree: 6 failed /
+409 passed / 9 skipped. All six reds are pre-existing arms whose pins
+predate this capture — test-session-owned re-pins, none a dev
+implementation fault:
+
+1. `test_config_parity.py::test_c02_2_config_layer_macros_matrix_hooks_scalars[gpu-ai]`
+   — fails inside `_assert_strata_peers` at `assert set(peers) == {"strata"}`:
+   the vllm peer makes it `{strata, vllm}`. Peer-set re-pin (cf-86's peer
+   wave-law precedent applies).
+2. `test_config_parity.py::test_repl_tables_match_frozen_decisions` —
+   "a cf-86 rung predates the goldens": `CF86_NEW_IDS`
+   ({qwen3.8-flash-next-heretic-q4, qwen38-heretic}) is now inside the
+   re-captured golden. Era-chain re-pin; the CATALOG identity (golden-union
+   − REMOVED + C04-new + CF86-new == CATALOG) still holds against the
+   re-captured body.
+3. `test_config_parity.py::test_c02_3_golden_baselines_match_plan_inventory`
+   — fails at `assert ai_ids == gpu_ids | set(L.GPUAI_LOCAL_IDS)`: that
+   union law was calibrated pre-cf-86 (55 IDs); the re-captured golden is
+   the full 60-ID catalog (the cf-86 rungs are the extras). Era-chain
+   re-pin.
+4. `test_flashnext_blast_radius.py::test_c03_ac2_matrix_hooks_scalars_identical`
+   — the non-models-surface carve-out pins the cf-77 evidence shape; the
+   peers delta is now `None -> {strata, vllm}`, which its own message
+   declares NOT the pinned shape and routes through the test session.
+   Evidence re-pin.
+5. `test_strata_wiring.py::test_c03_extract_and_render_yields_on_shape_keyless`
+   — single-peer pin `set(cfg["peers"]) == {S.PEER_NAME}`; now 2 peers.
+   Peer-set re-pin.
+6. `test_catalog_contract.py::test_c05_no_phantom_catalog_entries` — the
+   no-phantom allowlist does not admit the two new C03 catalog rows
+   (`qwen3.8-27b-vllm` is served via the vllm peer; `-urgent` is a class
+   alias of the same wire ID). Allowlist re-pin.
+
+The 9 skips are the standing RUN_HF_CHECK / RUN_FLAG_AUDIT evidence gates
+(unchanged at base). Route: the six re-pins belong to the C03 test session
+(STATE.json `test_session.C03`); dev is read-only on test files.

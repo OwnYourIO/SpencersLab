@@ -74,32 +74,34 @@ macros:
     -t 10
 matrix:
   sets:
-    main: (q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | coderq6 | coderq8 |
-      q38orca | q38ara | q38rana | q38hum | q8bq4 | q8bq8 | homegpu) & (q35q8 | q35q8v
-      | q35q6 | q36her | q36hui | q30q4 | q30q8) & emb06 & homecpu
-    solo: (q35bf16 | q35b1m | q38f16 | q38bf16 | katq4 | katq6 | katq8 | q38q81m |
-      katq41m | katq61m | katq81m | cnxabl | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8
-      | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 |
-      v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu
+    main: (q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | q38orca | q38ara | q38rana
+      | q38hum | q38her | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | orniq2
+      | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu
+    solo: (q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnher | fnorca
+      | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4
+      | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf |
+      v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu
   vars:
-    cnxabl: coder-next-ablit
-    coderq6: qwen3-coder-next-q6
-    coderq8: qwen3-coder-next-q8
     emb06: qwen3-embedding-0.6b
+    fnher: qwen3.8-flash-next-heretic-q4
+    fnorca: qwen3.8-flash-next-orca-q6
+    fnq3: qwen3.8-flash-next-q3
+    fnq4: qwen3.8-flash-next-q4
     homecpu: home-3b-v3
     homegpu: home-3b-v3-gpu
-    katq4: kat-coder-q4
-    katq6: kat-coder-q6
-    katq8: kat-coder-q8
-    katq41m: kat-coder-q4-1m
-    katq61m: kat-coder-q6-1m
-    katq81m: kat-coder-q8-1m
-    q8bq4: qwen3-8b-q4
-    q8bq8: qwen3-8b-q8
+    o122q3: ornith-1.5-122b-q3
+    o122q4: ornith-1.5-122b-q4
+    o122q5: ornith-1.5-122b-q5
+    o122q6: ornith-1.5-122b-q6
+    orniq2: ornith-1.5-35b-a3b-iq2xxs
+    ornq3: ornith-1.5-35b-a3b-q3
+    ornq4: ornith-1.5-35b-a3b-q4
+    ornq5: ornith-1.5-35b-a3b-q5
+    ornq6: ornith-1.5-35b-a3b-q6
+    ornq8: ornith-1.5-35b-a3b-q8
+    ornqbf: ornith-1.5-35b-a3b-bf16
     q27bq6: qwen3.6-27b-q6
     q27bq8: qwen3.6-27b-q8
-    q30q4: qwen3-30b-a3b-q4
-    q30q8: qwen3-30b-a3b-q8
     q35b1m: qwen3.6-35b-a3b-1m
     q35bf16: qwen3.6-35b-a3b-bf16
     q35q6: qwen3.6-35b-a3b-q6
@@ -110,6 +112,7 @@ matrix:
     q38ara: qwen38-ara
     q38bf16: qwen3.8-27b-bf16
     q38f16: qwen38-orca-f16
+    q38her: qwen38-heretic
     q38hum: qwen38-humanlike
     q38orca: qwen38-orca
     q38q4: qwen3.8-27b-q4
@@ -138,32 +141,11 @@ matrix:
     vl30bq8: qwen3-vl-30b-a3b-q8
     wsp: whisper-large-v3
 models:
-  coder-next-ablit:
-    cmd: |
-      ${server-cmd}
-      ${threads}
-      -hf bartowski/huihui-ai_Qwen3-Coder-Next-abliterated-GGUF:Q4_K_M
-      -c 262144
-      ${moe}
-      --flash-attn on
-      --cache-type-k q8_0
-      --cache-type-v q8_0
-      --cache-reuse 1
-      --no-context-shift
-      -np 1
-      -b 2048
-      -ub 2048
-      --temp 0.2 --top-p 0.95 --top-k 20
-    description: huihui abliteration, bartowski GGUF; experts-on-CPU; non-thinking,
-      tight sampling; 256k ctx
-    name: Qwen3-Coder-Next 80B A3B abliterated (Q4_K_M)
-    proxy: http://localhost:${PORT}
-    ttl: 300
   home-3b-v3:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf acon96/Home-3B-v3-GGUF:Q4_K_M
+      ${threads}
       -ngl 0
       -c 8192
     description: Home Assistant 3B v3 model on CPU, Q4_K_M quant; runs in parallel
@@ -174,172 +156,239 @@ models:
   home-3b-v3-gpu:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf acon96/Home-3B-v3-GGUF:Q8_0
+      ${threads}
       -ngl 99
       -c 8192
     description: Home Assistant 3B v3 model on GPU, Q8_0 quant
     name: Home 3B v3 (Q8_0) - GPU
     proxy: http://localhost:${PORT}
     ttl: 0
-  kat-coder-q4:
+  ornith-1.5-35b-a3b-bf16:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf ornith-ai/Ornith-1.5-35B-A3B-GGUF:BF16
       ${threads}
-      -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q4_K_M
-      ${ctx-256k}
       ${moe}
+      ${ctx-256k}
       ${flash-and-q8}
-    description: Kwaipilot KAT-Coder V2.5 Dev coding model (MoE), Q4_K_M quant
-    name: KAT Coder V2.5 Dev (Q4_K_M)
+    description: Ornith 1.5 35B with 3B active parameters (MoE), BF16 (no quant);
+      66.2 GiB weights, experts on CPU, 256k ctx
+    name: Ornith 1.5 35B A3B (BF16)
     proxy: http://localhost:${PORT}
     ttl: 0
-  kat-coder-q4-1m:
+  ornith-1.5-35b-a3b-iq2xxs:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf bartowski/Ornith-1.5-35B-A3B-GGUF:IQ2_XXS
       ${threads}
-      -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q4_K_M
-      ${ctx-1m}
       ${moe}
+      ${ctx-256k}
       ${flash-and-q8}
-      --no-kv-offload
-    description: Kwaipilot KAT-Coder V2.5 Dev (MoE), Q4_K_M; 1M ctx (YaRN x4), experts
-      + KV in system RAM
-    name: KAT Coder V2.5 Dev (Q4_K_M) - 1M
+    description: Ornith 1.5 35B with 3B active parameters (MoE), IQ2_XXS quant; 9.6
+      GiB weights, experts on CPU, 256k ctx
+    name: Ornith 1.5 35B A3B (IQ2_XXS)
     proxy: http://localhost:${PORT}
     ttl: 0
-  kat-coder-q6:
+  ornith-1.5-35b-a3b-q3:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf bartowski/Ornith-1.5-35B-A3B-GGUF:Q3_K_XL
       ${threads}
-      -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q6_K
-      ${ctx-256k}
       ${moe}
+      ${ctx-256k}
       ${flash-and-q8}
-    description: Kwaipilot KAT-Coder V2.5 Dev coding model (MoE), Q6_K quant
-    name: KAT Coder V2.5 Dev (Q6_K)
+    description: Ornith 1.5 35B with 3B active parameters (MoE), Q3_K_XL quant; 16.6
+      GiB weights, experts on CPU, 256k ctx
+    name: Ornith 1.5 35B A3B (Q3_K_XL)
     proxy: http://localhost:${PORT}
     ttl: 0
-  kat-coder-q6-1m:
+  ornith-1.5-35b-a3b-q4:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q4_K_M
       ${threads}
-      -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q6_K
-      ${ctx-1m}
       ${moe}
+      ${ctx-256k}
       ${flash-and-q8}
-      --no-kv-offload
-    description: Kwaipilot KAT-Coder V2.5 Dev (MoE), Q6_K; 1M ctx (YaRN x4), experts
-      + KV in system RAM
-    name: KAT Coder V2.5 Dev (Q6_K) - 1M
+    description: Ornith 1.5 35B with 3B active parameters (MoE), Q4_K_M quant; 20.2
+      GiB weights, experts on CPU, 256k ctx
+    name: Ornith 1.5 35B A3B (Q4_K_M)
     proxy: http://localhost:${PORT}
     ttl: 0
-  kat-coder-q8:
+  ornith-1.5-35b-a3b-q5:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q5_K_M
       ${threads}
-      -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q8_0
-      ${ctx-256k}
       ${moe}
+      ${ctx-256k}
       ${flash-and-q8}
-    description: Kwaipilot KAT-Coder V2.5 Dev coding model (MoE), Q8_0 quant
-    name: KAT Coder V2.5 Dev (Q8_0)
+    description: Ornith 1.5 35B with 3B active parameters (MoE), Q5_K_M quant; 23.6
+      GiB weights, experts on CPU, 256k ctx
+    name: Ornith 1.5 35B A3B (Q5_K_M)
     proxy: http://localhost:${PORT}
     ttl: 0
-  kat-coder-q8-1m:
+  ornith-1.5-35b-a3b-q6:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q6_K
       ${threads}
-      -hf bartowski/Kwaipilot_KAT-Coder-V2.5-Dev-GGUF:Q8_0
-      ${ctx-1m}
       ${moe}
-      ${flash-and-q8}
-      --no-kv-offload
-    description: Kwaipilot KAT-Coder V2.5 Dev (MoE), Q8_0; 1M ctx (YaRN x4), experts
-      + KV in system RAM
-    name: KAT Coder V2.5 Dev (Q8_0) - 1M
-    proxy: http://localhost:${PORT}
-    ttl: 0
-  qwen3-8b-q4:
-    cmd: |
-      ${server-cmd}
-      ${threads}
-      -hf unsloth/Qwen3-8B-GGUF:Q4_K_M
       ${ctx-256k}
       ${flash-and-q8}
-    description: Qwen 3 8B dense model, Q4_K_M quant
-    name: Qwen 3 8B (Q4_K_M)
+    description: Ornith 1.5 35B with 3B active parameters (MoE), Q6_K quant; 27.2
+      GiB weights, experts on CPU, 256k ctx
+    name: Ornith 1.5 35B A3B (Q6_K)
     proxy: http://localhost:${PORT}
     ttl: 0
-  qwen3-8b-q8:
+  ornith-1.5-35b-a3b-q8:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q8_0
       ${threads}
-      -hf unsloth/Qwen3-8B-GGUF:Q8_0
-      ${ctx-256k}
-      ${flash-and-q8}
-    description: Qwen 3 8B dense model, Q8_0 quant
-    name: Qwen 3 8B (Q8_0)
-    proxy: http://localhost:${PORT}
-    ttl: 0
-  qwen3-30b-a3b-q4:
-    cmd: |
-      ${server-cmd}
-      ${threads}
-      -hf unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q4_K_M
-      ${ctx-256k}
       ${moe}
+      ${ctx-256k}
       ${flash-and-q8}
-    description: Qwen 3 30B with 3B active parameters (MoE), Q4_K_M quant
-    name: Qwen 3 30B A3B Instruct (Q4_K_M)
+    description: Ornith 1.5 35B with 3B active parameters (MoE), Q8_0 quant; 35.2
+      GiB weights, experts on CPU, 256k ctx
+    name: Ornith 1.5 35B A3B (Q8_0)
     proxy: http://localhost:${PORT}
     ttl: 0
-  qwen3-30b-a3b-q8:
+  ornith-1.5-122b-q3:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf unsloth/Ornith-1.5-122B-GGUF:UD-Q3_K_XL
       ${threads}
-      -hf unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q8_0
-      ${ctx-256k}
       ${moe}
-      ${flash-and-q8}
-    description: Qwen 3 30B with 3B active parameters (MoE), Q8_0 quant
-    name: Qwen 3 30B A3B Instruct (Q8_0)
-    proxy: http://localhost:${PORT}
-    ttl: 0
-  qwen3-coder-next-q6:
-    cmd: |
-      ${server-cmd}
-      ${threads}
-      -hf unsloth/Qwen3-Coder-Next-GGUF:Q6_K
       ${ctx-256k}
       ${flash-and-q8}
-    description: Qwen 3 Coder Next coding model, Q6_K quant
-    name: Qwen 3 Coder Next (Q6_K)
+    description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+      UD-Q3_K_XL quant; 55.7 GiB weights, experts on CPU, 256k ctx; SOLO; no MTP draft
+      published (see the C04 family note)
+    name: Ornith 1.5 122B (UD-Q3_K_XL)
     proxy: http://localhost:${PORT}
-    ttl: 0
-  qwen3-coder-next-q8:
+    ttl: 300
+  ornith-1.5-122b-q4:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
     cmd: |
       ${server-cmd}
+      -hf unsloth/Ornith-1.5-122B-GGUF:UD-Q4_K_XL
       ${threads}
-      -hf unsloth/Qwen3-Coder-Next-GGUF:Q8_0
+      ${moe}
       ${ctx-256k}
       ${flash-and-q8}
-    description: Qwen 3 Coder Next coding model, Q8_0 quant
-    name: Qwen 3 Coder Next (Q8_0)
+    description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+      UD-Q4_K_XL quant; 74.2 GiB weights, experts on CPU, 256k ctx; SOLO; no MTP draft
+      published (see the C04 family note)
+    name: Ornith 1.5 122B (UD-Q4_K_XL)
     proxy: http://localhost:${PORT}
-    ttl: 0
+    ttl: 300
+  ornith-1.5-122b-q5:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf unsloth/Ornith-1.5-122B-GGUF:UD-Q5_K_XL
+      ${threads}
+      ${moe}
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+      UD-Q5_K_XL quant; 88.1 GiB weights, experts on CPU, 256k ctx; SOLO; no MTP draft
+      published (see the C04 family note)
+    name: Ornith 1.5 122B (UD-Q5_K_XL)
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  ornith-1.5-122b-q6:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf unsloth/Ornith-1.5-122B-GGUF:UD-Q6_K_XL
+      ${threads}
+      ${moe}
+      ${ctx-256k}
+      ${flash-and-q8}
+    description: Ornith 1.5 122B MoE (qwen35moe, 256 experts/top-8, ~92% routed),
+      UD-Q6_K_XL quant; 106.4 GiB weights, marginal against the ~125 GiB budget -
+      SOLO only; no MTP draft published (see the C04 family note)
+    name: Ornith 1.5 122B (UD-Q6_K_XL)
+    proxy: http://localhost:${PORT}
+    ttl: 300
   qwen3-embedding-0.6b:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf Qwen/Qwen3-Embedding-0.6B-GGUF:Q8_0
+      ${threads}
       --embeddings
       -c 8192
       -np 2
       --cache-ram 0
       -ngl 99
-    description: Text embeddings via /v1/embeddings; Qwen3-Embedding 0.6B Q8_0, always-ready
-      sidecar
+    description: Qwen3-Embedding 0.6B text embeddings via /v1/embeddings, Q8_0 quant;
+      always-ready sidecar
     name: Qwen3 Embedding 0.6B (Q8_0)
     proxy: http://localhost:${PORT}
     ttl: 0
@@ -352,9 +401,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:BF16
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, BF16 (no quant);
       faster processing for simpler descriptions
@@ -381,9 +429,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q4_K_M
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, Q4_K_M quant; faster
       processing for simpler descriptions
@@ -410,9 +457,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-2B-Instruct-GGUF:Q8_0
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, Q8_0 quant; faster
       processing for simpler descriptions
@@ -439,9 +485,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:BF16
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, BF16 (no quant)
     filters:
@@ -469,9 +514,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q4_K_M
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, Q4_K_M quant
     filters:
@@ -497,9 +541,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-4B-Instruct-GGUF:Q8_0
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, Q8_0 quant
     filters:
@@ -525,9 +568,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:BF16
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Reasoning vision-language model for Immich image analysis, BF16 (no
       quant); good balance of speed and accuracy
@@ -543,9 +585,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q4_K_M
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Reasoning vision-language model for Immich image analysis, Q4_K_M
       quant; good balance of speed and accuracy
@@ -561,9 +602,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-4B-Thinking-GGUF:Q8_0
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Reasoning vision-language model for Immich image analysis, Q8_0 quant;
       good balance of speed and accuracy
@@ -579,9 +619,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:BF16
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, BF16 (no quant)
     filters:
@@ -609,9 +648,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q4_K_M
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, Q4_K_M quant
     filters:
@@ -637,9 +675,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-8B-Instruct-GGUF:Q8_0
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       -c 16384
     description: Vision-language model for Immich image analysis, Q8_0 quant
     filters:
@@ -665,9 +702,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:BF16
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       ${moe}
       ${flash-and-q8}
       -c 16384
@@ -698,9 +734,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q4_K_M
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       ${moe-vl-q4}
       ${flash-and-q8}
       ${big-ub}
@@ -730,9 +765,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF:Q8_0
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       ${moe-vl-q8}
       ${flash-and-q8}
       ${big-ub}
@@ -762,9 +796,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:BF16
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       ${moe}
       ${flash-and-q8}
       -c 16384
@@ -782,9 +815,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q4_K_M
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       ${moe-vl-q4}
       ${flash-and-q8}
       ${big-ub}
@@ -803,9 +835,8 @@ models:
       - text
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3-VL-30B-A3B-Thinking-GGUF:Q8_0
-      # mmproj auto-downloads from the -hf repo (hf:// in --mmproj is a literal path, not a hub ref)
+      ${threads}
       ${moe-vl-q8}
       ${flash-and-q8}
       ${big-ub}
@@ -818,8 +849,8 @@ models:
   qwen3.6-27b-q6:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3.6-27B-GGUF:Q6_K
+      ${threads}
       ${ctx-256k}
       ${flash-and-q8}
     description: Qwen 3.6 27B general purpose model, Q6_K quant
@@ -829,8 +860,8 @@ models:
   qwen3.6-27b-q8:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3.6-27B-GGUF:Q8_0
+      ${threads}
       ${flash-and-q8}
       ${ctx-256k}
     description: Qwen 3.6 27B general purpose model, Q8_0 quant
@@ -840,8 +871,8 @@ models:
   qwen3.6-35b-a3b-1m:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+      ${threads}
       ${ctx-1m}
       ${moe}
       ${flash-and-q8}
@@ -852,8 +883,8 @@ models:
   qwen3.6-35b-a3b-bf16:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3.6-35B-A3B-GGUF:BF16
+      ${threads}
       ${ctx-256k}
       ${moe}
       ${flash-and-q8}
@@ -864,8 +895,8 @@ models:
   qwen3.6-35b-a3b-q6:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K
+      ${threads}
       ${ctx-256k}
       ${flash-and-q8}
     description: Qwen 3.6 35B with 3B active parameters (MoE), UD-Q6_K quant
@@ -875,8 +906,8 @@ models:
   qwen3.6-35b-a3b-q8:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+      ${threads}
       ${ctx-256k}
       ${moe}
       ${flash-and-q8}
@@ -893,8 +924,8 @@ models:
   qwen3.6-35b-a3b-q8-visual:
     cmd: |
       ${server-cmd}
-      ${threads}
       -hf unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0
+      ${threads}
       ${ctx-256k}
       ${moe}
       ${flash-and-q8}
@@ -908,9 +939,9 @@ models:
       ${server-cmd}
       -hf ggml-org/Qwen3.8-27B-GGUF:BF16
       -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q38-common}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: Reference BF16 build; ggml-org Q8_0 MTP draft, 256k ctx
     name: Qwen 3.8 27B (BF16, MTP)
     proxy: http://localhost:${PORT}
@@ -920,9 +951,9 @@ models:
       ${server-cmd}
       -hf unsloth/Qwen3.8-27B-GGUF:UD-Q4_K_XL
       -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q38-common}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: Plain Qwen 3.8 27B, UD-Q4_K_XL; ggml-org Q8_0 MTP draft, 256k ctx
     name: Qwen 3.8 27B (UD-Q4_K_XL, MTP)
     proxy: http://localhost:${PORT}
@@ -932,9 +963,9 @@ models:
       ${server-cmd}
       -hf unsloth/Qwen3.8-27B-GGUF:UD-Q6_K_XL
       -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q38-common}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: Plain Qwen 3.8 27B, UD-Q6_K_XL; ggml-org Q8_0 MTP draft, 256k ctx
     name: Qwen 3.8 27B (UD-Q6_K_XL, MTP)
     proxy: http://localhost:${PORT}
@@ -944,9 +975,9 @@ models:
       ${server-cmd}
       -hf unsloth/Qwen3.8-27B-GGUF:Q8_0
       -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q38-common}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
       --no-mmproj
       --cache-reuse 256
       -np 1
@@ -979,12 +1010,176 @@ models:
       ${server-cmd}
       -hf unsloth/Qwen3.8-27B-GGUF:Q8_0
       -hfd ggml-org/Qwen3.8-27B-GGUF:mtp-Qwen3.8-27B-Q8_0.gguf
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q38-common}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: Plain Qwen 3.8 27B, Q8_0; MTP draft, vision on (auto mmproj), 256k
       ctx; cache_reuse disabled by llama.cpp in multimodal mode
     name: Qwen 3.8 27B (Q8_0, MTP) - Visual
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  qwen3.8-flash-next-heretic-q4:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M
+      ${threads}
+      ${ctx-256k}
+      ${flash-and-q8}
+      ${q38-sampling}
+      ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -ngl 99
+      -ot "\.ffn_.*_exps\.=CPU"
+      --load-mode mmap
+      --fit off
+    description: Qwen 3.8 Flash Next Heretic, Q4_K_M quant; 130.8 GiB weights, experts
+      on CPU (mmap placement), 256k ctx; heretic-style abliteration (KLD ~0.02-0.035
+      from the original against 0.204 huihui-style); over the ~125 GiB node budget
+      like orca-q6 - SOLO, never preloaded, may OOM
+    name: Qwen 3.8 Flash Next Heretic (Q4_K_M, MTP)
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  qwen3.8-flash-next-orca-q6:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF:Q6_K
+      ${threads}
+      ${ctx-256k}
+      ${flash-and-q8}
+      ${q38-sampling}
+      ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -ngl 99
+      -ot "\.ffn_.*_exps\.=CPU"
+      --load-mode mmap
+      --fit off
+    description: orcarouter uncensored Flash Next (gated, HF_TOKEN), 156.1 GiB weights;
+      experts on CPU (mmap placement), 256k ctx; over the ~125 GiB node budget like
+      flash-next q6 - SOLO, never preloaded, may OOM; C04 gate-2 spec re-added, embedded-MTP
+      expected per the qwen38-orca pattern (miss-path note above)
+    name: Qwen 3.8 Flash Next Uncensored (Q6_K, MTP)
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  qwen3.8-flash-next-q3:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q3_K_XL
+      -hfd unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+      ${threads}
+      ${ctx-256k}
+      ${flash-and-q8}
+      ${q38-sampling}
+      ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -ngl 99
+      -ot "\.ffn_.*_exps\.=CPU"
+      --load-mode mmap
+      --fit off
+    description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q3_K_XL
+      quant; 83.8 GiB weights, experts on CPU, 256k ctx; SOLO - largest resident this
+      node has attempted (RESEARCH §4A regime test)
+    name: Qwen 3.8 Flash Next (UD-Q3_K_XL, MTP)
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  qwen3.8-flash-next-q4:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q4_K_XL
+      -hfd unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+      ${threads}
+      ${ctx-256k}
+      ${flash-and-q8}
+      ${q38-sampling}
+      ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -ngl 99
+      -ot "\.ffn_.*_exps\.=CPU"
+      --load-mode mmap
+      --fit off
+    description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q4_K_XL
+      quant; 103.7 GiB weights, experts on CPU, 256k ctx; tight against the ~125 GiB
+      node budget - SOLO only
+    name: Qwen 3.8 Flash Next (UD-Q4_K_XL, MTP)
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  qwen3.8-flash-next-q5:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q5_K_XL
+      -hfd unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+      ${threads}
+      ${ctx-256k}
+      ${flash-and-q8}
+      ${q38-sampling}
+      ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -ngl 99
+      -ot "\.ffn_.*_exps\.=CPU"
+      --load-mode mmap
+      --fit off
+    description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q5_K_XL
+      quant; 147.4 GiB weights, experts on CPU; OVER the ~125 GiB node budget - enabled
+      by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix),
+      never preloaded
+    name: Qwen 3.8 Flash Next (UD-Q5_K_XL, MTP)
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  qwen3.8-flash-next-q6:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf unsloth/Qwen3.8-Flash-Next-GGUF:UD-Q6_K_XL
+      -hfd unsloth/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0
+      ${threads}
+      ${ctx-256k}
+      ${flash-and-q8}
+      ${q38-sampling}
+      ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -ngl 99
+      -ot "\.ffn_.*_exps\.=CPU"
+      --load-mode mmap
+      --fit off
+    description: Qwen 3.8 Flash Next 180B-class MoE (512 experts/top-10), UD-Q6_K_XL
+      quant; 157.5 GiB weights, experts on CPU; OVER the ~125 GiB node budget - enabled
+      by accepted operator decision 2026-10-22, may OOM on load; run-alone (no matrix),
+      never preloaded
+    name: Qwen 3.8 Flash Next (UD-Q6_K_XL, MTP)
     proxy: http://localhost:${PORT}
     ttl: 300
   qwen36-heretic:
@@ -997,11 +1192,11 @@ models:
     cmd: |
       ${server-cmd}
       -hf mradermacher/Qwen3.6-35B-A3B-uncensored-heretic-Native-MTP-Preserved-GGUF:Q4_K_M
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q36-common}
       ${q36-sampling}
       ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: llmfan46 heretic abliteration, native MTP preserved; mradermacher
       mirror; experts-on-CPU; 256k ctx
     name: Qwen3.6 35B A3B heretic (Q4_K_M, MTP)
@@ -1017,11 +1212,11 @@ models:
     cmd: |
       ${server-cmd}
       -hf huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF:Q4_K
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q36-common}
       ${q36-sampling}
       ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: huihui-ai classic abliteration, dedicated MTP GGUF; experts-on-CPU;
       256k ctx
     name: Qwen3.6 35B A3B huihui abliterated (Q4_K, MTP)
@@ -1037,22 +1232,42 @@ models:
     cmd: |
       ${server-cmd}
       -hf cygnal/Qwen3.8-27B-heretic-ara-Q4_K_M-MTP-GGUF:Q6_K-MTP
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 3
       ${q38-common}
       ${q38-sampling}
       ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 3
+      -c 262144
     description: Max-quality/coding build; draft-MTP n-max 3, 256k ctx
     name: Qwen3.8 27B heretic-ara (Q6_K-MTP)
+    proxy: http://localhost:${PORT}
+    ttl: 300
+  qwen38-heretic:
+    capabilities:
+      in:
+      - text
+      - image
+      out:
+      - text
+    cmd: |
+      ${server-cmd}
+      -hf 0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp
+      ${q38-common}
+      ${q38-sampling}
+      ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
+    description: Qwen3.8 27B Heretic Uncensored, Q4_K_M-mtp quant; 15.8 GiB weights
+      (embedded MTP), heretic-style uncensored abliteration in the Q4_K_M size class
+    name: Qwen3.8 27B Heretic Uncensored (Q4_K_M-mtp, MTP)
     proxy: http://localhost:${PORT}
     ttl: 300
   qwen38-humanlike:
     cmd: |
       ${server-cmd}
       -hf LessThanThreeAI/Qwen3.8-27B-Humanlike-Chat-GGUF:Q6_K
-      -c 131072
       ${q38-common}
       ${q38-sampling}
+      -c 131072
       --reasoning on
       --reasoning-effort low
     description: Text-only humanlike chat; low reasoning effort, 128k ctx
@@ -1072,13 +1287,13 @@ models:
     cmd: |
       ${server-cmd}
       -hf orcarouter/Qwen3.8-27B-Uncensored-GGUF:Q6_K
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q38-common}
       ${q38-sampling}
       ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: Qwen3.8 27B daily driver; draft-MTP speculative decoding, 256k ctx
-    name: Qwen3.8 27B Uncensored (Orca Q6_K, MTP)
+    name: Qwen3.8 27B Uncensored (Q6_K, MTP)
     proxy: http://localhost:${PORT}
     ttl: 300
   qwen38-orca-f16:
@@ -1091,13 +1306,13 @@ models:
     cmd: |
       ${server-cmd}
       -hf orcarouter/Qwen3.8-27B-Uncensored-GGUF:F16
-      -c 262144
-      --spec-type draft-mtp --spec-draft-n-max 2
       ${q38-common}
       ${q38-sampling}
       ${q38-think}
+      --spec-type draft-mtp --spec-draft-n-max 2
+      -c 262144
     description: Reference F16 build; ttl 180 so it evicts fast
-    name: Qwen3.8 27B Uncensored (Orca F16 reference, MTP)
+    name: Qwen3.8 27B Uncensored (F16, MTP)
     proxy: http://localhost:${PORT}
     ttl: 180
   qwen38-rana:
@@ -1141,6 +1356,28 @@ models:
     name: Whisper Large v3
     proxy: http://localhost:${PORT}
     ttl: 0
+peers:
+  strata:
+    models:
+    - qwen3.8-flash-next-strata
+    - qwen3.8-flash-next-strata-strix
+    - qwen3.8-flash-next-strata-orca
+    - qwen3.8-flash-next-strata-q4
+    - ornith-1.5-122b-strata-q4
+    proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
+    timeouts:
+      connect: 30
+      responseHeader: 1800
+  vllm:
+    filters:
+      setParams:
+        priority?: 10
+    models:
+    - qwen3.8-27b-vllm
+    proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000
+    timeouts:
+      connect: 30
+      responseHeader: 1800
 performance:
   enable: true
   every: 5s

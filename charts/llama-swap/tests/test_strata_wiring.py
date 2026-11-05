@@ -167,7 +167,9 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
         "objects take the release prefix"
     )
     cfg = yaml.safe_load(outer[0]["data"]["config.yaml"])
-    assert set(cfg["peers"]) == {S.PEER_NAME}
+    # cf-105 C03: the vllm hop joins the peers block — exactly the sanctioned
+    # two (strata stays the original peer; a third or a missing one is drift).
+    assert set(cfg["peers"]) == {S.PEER_NAME, "vllm"}
     # cf-86 wave law: the peers models list equals the sanctioned list for the
     # inner arenas this render actually serves (evidence models_states), so the
     # assertion stays correct at three, four and five ids.
@@ -178,6 +180,13 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
     )
     assert cfg["peers"][S.PEER_NAME]["proxy"] == S.PEERS_PROXY, (
         "service-overlay render must carry the consolidated peers URL"
+    )
+    # cf-105 C03: the vllm hop is keyless in-cluster with an explicit models
+    # list — exactly the C03 task-spec block (no apiKey, no /v1 suffix, the
+    # one served name, the deep-prefill timeout, the priority floor).
+    vllm_peer = cfg["peers"]["vllm"]
+    assert vllm_peer == L.PEER_VLLM, (
+        f"vllm peer is {vllm_peer}, want {L.PEER_VLLM} — cf-105 C03 pins the exact hop"
     )
 
 

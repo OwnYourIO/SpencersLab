@@ -527,6 +527,33 @@ llama-swap:
         timeouts:
           responseHeader: 1800
           connect: 30
+      # cf-105 C03: the vLLM engine (charts/vllm, C02) is reached
+      # through this surface only (D7 — no ingress of its own, HR4).
+      # proxy carries NO /v1 suffix: the request path is appended
+      # verbatim, a suffix would double-prefix every route (EXPLORE
+      # §8.9 — the strata peer's own law). models lists the served
+      # name explicitly (peers is not a blanket URL proxy, R3 Q3) and
+      # is deliberately new, so it cannot shadow a local rung (local
+      # IDs beat unqualified peer IDs — D10, R3 Q5.2). responseHeader
+      # 1800 = the deep-prefill first-byte knob (Strata precedent,
+      # R3 Q5.1 — 100k+ prefills took 131 s even under llama.cpp).
+      # setParams "priority?" = the set-if-undefined floor 10 (the
+      # default class): a client-sent priority wins, so the C04 class
+      # rows' values pass through untouched (R4 Q2 — the `?` is part
+      # of the key string). No apiKey: keyless in-cluster (R3 Q5.3,
+      # the strata C-A ruling). The peer model stays OUT of the
+      # matrix below: invisible to the solver, so R9700 coexistence
+      # with Strata remains operator discipline (D5, HR6).
+      vllm:
+        proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000
+        models:
+          - qwen3.8-27b-vllm
+        timeouts:
+          responseHeader: 1800
+          connect: 30
+        filters:
+          setParams:
+            "priority?": 10
     matrix:
       # vars moved chart-side with the catalog (CA2): one var per catalog
       # rung, names kept identical so the set expressions below resolve
