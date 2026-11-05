@@ -17,14 +17,15 @@
     "run_tag": null,
     "claim": {
       "cardId": "ZPP55zX4GEfesPbnL",
-      "pipelines": ["Context"],
-      "setId": "53d501c4-4a5b-4086-ba17-66e69ac866c6",
+      "pipelines": ["ZPP55zX4GEfesPbnL"],
+      "setId": "c1022816-beb3-401c-a6c1-7a0af5856c7b",
       "history": [
         "2026-11-03 claimed at pickup (setId 15ae31e2-13ad-45cb-bdbc-a272cead75bc, v1 record shape)",
         "2026-11-05 claim LOST silently across three server restarts: pipeline_heartbeat answered no_claim, pipeline_status answered groups [] with no reap entry naming Context; no commit or card move happened in the gap",
-        "2026-11-05 re-claimed with pipeline_claim(cardId, pipelines:[Context]) under the C08 v2 record shape (setId 53d501c4-4a5b-4086-ba17-66e69ac866c6); card verified untouched (Executing, Provider: API + Pipeline: Context, slug field intact); audit comment HStskaFEduNrT7vaT on the card; disposition of the observability gap routed to C09/C10 rather than fixed ad hoc"
+        "2026-11-05 re-claimed with pipeline_claim(cardId, pipelines:[Context]) under the C08 v2 record shape (setId 53d501c4-4a5b-4086-ba17-66e69ac866c6); card verified untouched (Executing, Provider: API + Pipeline: Context, slug field intact); audit comment HStskaFEduNrT7vaT on the card; disposition of the observability gap routed to C09/C10 rather than fixed ad hoc",
+        "2026-11-05 claim LOST AGAIN silently across a server restart (same class: heartbeat ok:false, then no_claim; the on-disk Context holder row stayed state:failed at ~28 min age, never reaped); recovered via C09's sanctioned card-id key: pipeline_claim(cardId, pipelines:[ZPP55zX4GEfesPbnL]) -> setId c1022816-beb3-401c-a6c1-7a0af5856c7b, untagged because no .reaped record names this card (the after_reap tag is correctly absent); heartbeat ok:true on the card-id key; the Context.json orphan holder row stays on disk and ages out, untouched by this run"
       ],
-      "lock_store": "/home/coder/SpencersLab/.pipeline/locks/Context.json (the plugin store lives in the origin checkout and is shared by every worktree)"
+      "lock_store": "/home/coder/SpencersLab/.pipeline/locks/ (the plugin store lives in the origin checkout and is shared by every worktree); current lock file: ZPP55zX4GEfesPbnL.json (the card-id key); Context.json retains the orphan holder row from the lapsed 53d501c4 claim"
     },
     "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
     "session_origin_leg": "leg 2 — bash scripts/session-origin.sh at claim (resolved live 2026-11-03)",
@@ -512,9 +513,7 @@
           "additive_findings": ["M1 (minor, joins the owner's follow-up-card batch): the pre-existing 240-char D21 comment slice can truncate the takeover hint on a pathological multi-label card comment - the unbounded timeouts.jsonl line retains it", "M2 = the first instance's M-A (converged): on a shared-append, the takeover tag lands on the holder line rather than record level while the audit is always tagged - propagate the earned tag in appendLockHolder or soften the 'record and audit must agree' comment", "N-2 (nit): two comment wordings with drifted subjects"],
           "count_correction": "cf96-tz's authoritative summary is 5 ok / exit 0 (raw line-grep over-counts one nested unlabeled sub-arm); the first instance's '13 ok' table cell stands corrected by this note",
           "m3_adjudication": "the reaped-set observability gap is closed to the extent C09's scope allows (durable stamped .reaped forensics + per-holder audit + hint-laden degrade lines + capability-gated pin); the residue (torn live files / .reaped contents not surfaced in pipeline_status, and the restart/reaper-priority silent-lapse class) is genuinely C10's - consistent with the ruling's own boundary"
-        }
-      ]
-    },
+        },
         {
           "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C09", "session": "ses_e52ed5aadffe0Vv3QdhNvi07Tf",
           "files_changed": [".opencode/plugin/pipeline-locks/index.ts (LOCK_LOST_STOP constant extended in place - the phrase now occurs exactly once; takeover hint + session-pin evidence {cardId, pipelines, reapedAt} on handleLockLost and the reap-of-our-own-set path; claimLockSet marks takeover:'after_reap' when the claimed set is exactly [<cardId>] for this run's card AND a reap record for that card exists (hasReapRecordFor scans all .reaped/ records through the viewHolders lens, matching on card not pipeline); reaper stamps reapedAt onto the confirmed-reap .reaped copy with filename-ts fallback; reapCommentBody + the timeouts.jsonl degrade row carry the one-line takeover hint; the .reaped record itself stays untouched)", ".rulesync/skills/boards/SKILL.md + mirror (Human stops D20/D21 + Exit bullets: the PIPELINE LOCK LOST posture is now stop-the-step + exactly ONE sanctioned question, answer gates the resume; resume shape = re-claim pipelines:[<cardId>], card stays where it is, comment names the takeover + lock key, STATE kickoff.claim records it, no-answer = abandoned exit, never a second question)"],
@@ -527,17 +526,31 @@
       ]
     },
     "C10": {
-      "status": "pending",
+      "status": "in_progress",
       "wave": 4,
       "depends_on": [
         "C03b",
         "C06",
         "C07"
       ],
-      "dev_rounds": 0,
+      "dev_session": "ses_e52cca495ffeV1QgarZN9Q1uVI",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "review_session": null,
       "review_rounds": 0,
       "last_verdict": null,
-      "handoffs": []
+      "commit": null,
+      "coord_notes": "The .agents/loops/pipeline-worker-local.md deletion was committed EARLY in 0f00ecc72 (its staged git rm was swept into that docs commit - see FRICTION 2026-11-05 C10 entry); the pending C10 diff is the five remaining files: .agents/loops/pipeline-worker.md, .rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md, .rulesync/rules/overview.md, AGENTS.md. One validation-at-fault (agents-md.sh c11 arm 3, alternation passed to a literal str.find helper) is routed to test_session and being re-cut in parallel with the review.",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C10", "session": "ses_e52cca495ffeV1QgarZN9Q1uVI",
+          "files_changed": [".agents/loops/pipeline-worker.md (rewritten: frontmatter model: gpu-ai/qwen3.8-27b-q4 per OQ-14 + agent: agent-board-coord + single schedule 0 * * * * + enabled: true, recognized keys only, comment block to the live facts - OQ-14 ruling + catalog-churns/no-silent-flip convention, single-task posture, mcp-surface-absent 19:30Z finding with probe-tools-list + degrade-never-stall law; body = verbatim TICK_PROMPT + C10 extensions, slash-free D30)", ".agents/loops/pipeline-worker-local.md (git rm - already committed early in 0f00ecc72)", ".rulesync/skills/boards/SKILL.md + mirror (Provider filtering -> one scheduled walk / per-card routing: label routes models, never pickups or locks; ask-on-unlabeled kept, Local first; Card-pickup remnant reworded; frontmatter description clause retired)", ".rulesync/rules/overview.md + AGENTS.md (worker paragraph: one loop file + ruled model literal + per-card Provider routing; the C09-routed PIPELINE LOCK LOST bullet -> summary-plus-point-back to the boards skill; gate/LIVE/Timeout sentences untouched)"],
+          "battery": "provider-loops 8 ok exit 0 (t1-t8 all green) / pipeline-locks-tick 15/15 (T2x2 flipped) / noop-marker 9 ok (N4 finally green) / multi-repo hourly-board-check 8 ok (t4 HOLD green) / whole TS glob 299/299/0 exit 0 - FIRST ALL-GREEN TS BATTERY OF THE TICKET / gate.sh red only pre-existing t17 (subset t1-t16 t18-t21: 22 ok) / coord-inwork red only pre-existing i4 / cf90-ledger 8 ok / agent-perms 21 ok / rulesync-surface 25 ok (c21 Provider needles hold) / agents-md c1-c10 ok, c11 red on arm 3 only (validation-at-fault) / rulesync generate x2 + --check 0 / aislop 100 vs 80, 0 errors, 0 warnings / gate script byte-unchanged (empty diff proven) / helm N/A",
+          "validation_at_fault": "tests/agent-board-coord/agents-md.sh c11 arm 3 passes the grep-E alternation 'per-card|per card|rout' to the suite's literal str.find window helper (negwin.py) - only satisfiable by the literal pipe string, which no honest sentence contains; proven with the suite's own checker on /tmp copies (a natural 'per-card routing inside the run' passage fails with exactly that missing needle; the same passage plus the literal pipe string passes). Suggested re-cut: shell-level || between separate window calls. Routed to test_session; no test was re-pinned or weakened by dev.",
+          "deviations": ["none on scope or hard rules; one edit-tool false negative on the boards SKILL.md pickup-line (fuzzy retry applied despite the error report; re-derived byte-exact from git diff - same class as the C03b record)"],
+          "open_questions": ["mcp-surface-absent follow-up card -> the owner's follow-up-card batch (named in the loop comment; the scheduled-launch MCP catalog provisioning defect is outside this ticket's file set)", "USER-owned step 4 at merge: re-approve the surviving pipeline-worker task's loopApprovals fingerprint (this body edit rotated it), retire the pipeline-worker-local task in OpenChamber, keep permissionAutoAccept on (ledger L1)", "model-serving note: gpu-ai/qwen3.8-27b-q4 is written exactly as ruled (OQ-14) even though the local llama-swap endpoint is down today - a routing decision, not a serving guarantee; if the first tick shows the arena not serving it, the fix is a fresh owner ruling + re-pin, never a silent literal change"]
+        }
+      ]
     }
   },
   "blocked": [],
