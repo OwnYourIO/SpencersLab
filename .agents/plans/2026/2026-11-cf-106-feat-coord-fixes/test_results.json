@@ -75,7 +75,7 @@
         "SKILL.md copied to /tmp carrying each reviewer-named doc edit -> exactly the parity arm reddens (25 pass / 1 fail each)",
         "t5 green side: WEKAN_SERVER=<AST-fabricated swallow-free copy> bash tests/wekan-mcp/card-details.sh t5 -> exit 0, controls still biting",
         "t5 red side on this tree: the static arms name the try/except handler, the 'or {}' fallback and the docstring claim; the executed leg shows the failed route answering the payload an empty checklist answers",
-        "shape-evasion probe: a variant with the swallow hoisted into a module-level helper reddens the EXECUTED half (exit 1) and the static half names 'no per-checklist items-route call' rather than passing silently \u2014 the pin does not depend on the read staying inline in get_card_details"
+        "shape-evasion probe: a variant with the swallow hoisted into a module-level helper reddens the EXECUTED half (exit 1) and the static half names 'no per-checklist items-route call' rather than passing silently — the pin does not depend on the read staying inline in get_card_details"
       ],
       "commands": [
         {
@@ -265,7 +265,7 @@
         {
           "cmd": "bash tests/wekan-mcp/card-details.sh",
           "exit": 0,
-          "note": "5 ok \u2014 t5 now pins the shipped fail-the-call + the legal guard spelling"
+          "note": "5 ok — t5 now pins the shipped fail-the-call + the legal guard spelling"
         },
         {
           "cmd": "bash tests/wekan-mcp/board-context.sh",
@@ -275,17 +275,17 @@
         {
           "cmd": "bash tests/agent-perms/surface.sh",
           "exit": 0,
-          "note": "21 ok \u2014 whole-suite green; no more 'shared: command not found' on stderr"
+          "note": "21 ok — whole-suite green; no more 'shared: command not found' on stderr"
         },
         {
           "cmd": "bash tests/multi-repo/repo-label-filter.sh",
           "exit": 0,
-          "note": "9 ok \u2014 t3 green now (was red at clean HEAD)"
+          "note": "9 ok — t3 green now (was red at clean HEAD)"
         },
         {
           "cmd": "bash tests/cf90-ledger/surface.sh",
           "exit": 0,
-          "note": "8 ok \u2014 the standing C05 reds are cleared"
+          "note": "8 ok — the standing C05 reds are cleared"
         },
         {
           "cmd": "node --test tests/opencode/card-details.test.ts",
@@ -305,8 +305,80 @@
       ],
       "newly_red_awaiting_dev": [],
       "deferred": [
-        "C03b amendment item: tests/noop-marker/surface.sh N4 comment-only label re-pin (AC3 -> AC6) \u2014 deferred to the next wave per the concurrency constraint"
+        "C03b amendment item: tests/noop-marker/surface.sh N4 comment-only label re-pin (AC3 -> AC6) — deferred to the next wave per the concurrency constraint"
       ]
+    },
+    {
+      "id": "W4",
+      "date": "2026-11-05",
+      "base": "b27297e4b",
+      "trigger": "three queued C10 legs: c11 arm 3 validation-at-fault re-cut (C10 dev handoff, chunks/C10.md line 61), the N4 comment-only label re-pin deferred from W3 (C03b amendment, DECISIONS 2026-11-05), and C09 review N-1 (stale $-anchored add_comment seam header)",
+      "concurrency_constraint": "C10 review round running in parallel (re-runs agents-md.sh, noop-marker/surface.sh, pipeline-locks-reap.test.ts and the whole TS glob): each of the three files edited in single small changes, suite verified green immediately after each edit landed; no other surface touched",
+      "changed": [
+        {
+          "file": "tests/agent-board-coord/agents-md.sh",
+          "ids": [
+            "C10-c11-arm3"
+          ],
+          "what": "c11 arm 3 re-cut: the grep-E-style alternation 'per-card|per card|rout' was passed as ONE literal needle to negwin.py (a str.find window helper), so the arm was only satisfiable by the pipe string itself, which no honest sentence contains. Now a shell-level three-way alternation: one negwin.py window call per honest spelling (per-card / per card / rout), ||-short-circuited, same 900-char span, same fail label. Arm purpose and arms 1, 2, 4, 5 (and all other c-ids) byte-unchanged. New negative control: a fabricated /tmp copy of the rules source with the routing sentence deleted must fail the disjunction AND its failure must name one of the three alternatives via 'missing needle' (a control that only asserts 'fails' cannot see a dead branch). ok message extended to record the new control."
+        },
+        {
+          "file": "tests/noop-marker/surface.sh",
+          "ids": [
+            "C03b-N4-label"
+          ],
+          "what": "comment-only re-pin per the C03b amendment (deferred from W3): the N4 no-work-silence arm's fail label said 'cf-106 C03b AC3' while pinning AC6's own observable leg (no-work + archiv inside one 600-char window in AGENTS.md and the rules source, per C03b AC6's text: assertion correct, label drifted). 'AC3' -> 'AC6' in the fail string only; the win.py call is byte-identical, zero behavioral change (proved: whole-suite exit 0 with 9 ok both before and after). The N3 gate-script arm keeps its (correct) AC3 label."
+        },
+        {
+          "file": "tests/opencode/pipeline-locks-reap.test.ts",
+          "ids": [
+            "C09-N-1"
+          ],
+          "what": "SEAM-CONTRACT header refresh (C09 review N-1): the add_comment shape was documented pre-hint with a $ anchor (/^Timed out: no heartbeat for 2h \\(session .+, pipelines .+\\)$/), stale because reapCommentBody now appends ' — <TAKEOVER_HINT>' and slices to 240 (MAX_OUTBOUND_MESSAGE). The header now documents the current shape: 'Timed out: no heartbeat for 2h (session <id>, pipelines: <a>, <b>) — <takeover hint>', hint last, with the slice-boundary fact (a pathological pipeline set can drop the hint off the on-board comment; the uncapped timeouts.jsonl row keeps it — the C09-accepted N-3 boundary). No functional arm pins the header (the operative arms at :547/:577/:740/:913 use the unanchored prefix); no arm-logic change."
+        }
+      ],
+      "proofs_executed": [
+        "c11 re-cut, both directions: C10's landed text passes (whole suite 11 ok, exit 0; the pre-wave baseline was exit 1 at arm 3 only, 'missing needle: per-card|per card|rout'); the /tmp copy with the routing sentence deleted fails all three alternations, its output naming 'missing needle: per-card' and 'missing needle: per card' (the 'rout' alternative reports both words present, min span 1426 > 900)",
+        "c11 arm bite (scratch tree, routing sentence deleted from BOTH docs): the suite reddens at arm 3 with the fail label naming the three alternative spellings",
+        "c11 control bite (scratch suite mutations, each reddening its own guard): control disjunction neutered to always-pass -> 'the alternation is inert'; control missing-needle grep blinded -> 'the failure is not the arm's'",
+        "N4 label re-pin: whole-suite exit identical before and after (0, 9 ok); the diff is exactly one label token; the N3[cf-106 C03b AC3] gate-script arm (genuinely AC3's leg) is untouched",
+        "N4 green-causality: .agents/loops/ holds exactly one file (pipeline-worker.md; n_loop -eq 1) and 'pipeline-worker-local' is absent from both AGENTS.md and .rulesync/rules/overview.md — both direct consequences of C10's loop collapse (git rm + the doc rewordings)",
+        "reap header: 32/32 both before and after; the diff is comment lines only"
+      ],
+      "commands": [
+        {
+          "cmd": "bash tests/agent-board-coord/agents-md.sh",
+          "exit": 0,
+          "note": "11 ok — c11 green after the re-cut (pre-wave baseline: exit 1, c11 arm 3 only)"
+        },
+        {
+          "cmd": "bash tests/noop-marker/surface.sh",
+          "exit": 0,
+          "note": "9 ok — identical before and after the label re-pin"
+        },
+        {
+          "cmd": "node --test tests/opencode/pipeline-locks-reap.test.ts",
+          "exit": 0,
+          "note": "32/32 — identical before and after the header refresh"
+        },
+        {
+          "cmd": "node --test tests/opencode/*.test.ts (glob)",
+          "exit": 0,
+          "note": "299 tests, 299 pass, 0 fail — no deviations"
+        },
+        {
+          "cmd": "bash tests/provider-loops/surface.sh",
+          "exit": 0,
+          "note": "8 ok (C10 collateral the reviewer is also running)"
+        },
+        {
+          "cmd": "bash tests/agent-board-coord/rulesync-surface.sh",
+          "exit": 0,
+          "note": "25 ok (C10 collateral the reviewer is also running)"
+        }
+      ],
+      "newly_red_awaiting_dev": [],
+      "deferred": []
     }
   ]
 }
