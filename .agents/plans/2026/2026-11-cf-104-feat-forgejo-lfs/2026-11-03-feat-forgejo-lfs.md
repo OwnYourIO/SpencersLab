@@ -460,10 +460,22 @@ separate revertable commit pair (values + suite) with zero effect on dev.
    fetch while plain repos work — a confusing half-capable runner. The chosen
    ordering is therefore: **C05 live step rides after C03** in this rollout;
    no "register early and keep LFS repos away from the gpu runner" posture.
-   V7 after that sync: pod `forgejo-runner-gpu-0` log shows the
-   `runner: … declared successfully` line with the labels list (agent-
-   readable), and the registration shows online on **infra** (human). Single
-   replica only — one record == one pod, chart decision B1.
+   **That gate is observational, not mechanical.** The appset gives every
+   generated Application `syncPolicy.automated: {prune: true, selfHeal: true}`
+   (`charts/base/templates/appset-charts.yaml:132-138`), so under the one-PR
+   landing the runner Application is created **and auto-synced at merge** — it
+   registers before infra's LFS is verified. It sits idle (no Actions workflows
+   in the mirrors), so plain-repo jobs work and only LFS-backed jobs 404 until
+   infra's sync lands. If the ordered posture is wanted anyway, the lever is
+   the cluster-annotation override the gpu umbrella already uses
+   (`OVERRIDE_VIA_CLUSTER_ANNOTATION`), applied to this Application and set by
+   the user against their ArgoCD — a `charts:` entry carries no per-app sync
+   field.
+   V7 once the gpu Application has synced: the pod
+   `gpu-forgejo-runner-gpu-0` log shows the `runner: … declared successfully`
+   line with the labels list (agent-readable), and the registration shows
+   online on **infra** (human). Single replica only — one record == one pod,
+   chart decision B1.
 
 **Live-sync ordering after the 2026-11-04 user actions: unchanged.** UA4/UA5/UA6
 being done removes preconditions, it does not re-order the rollout: **dev sync →
@@ -845,9 +857,13 @@ docker run --rm ghcr.io/catthehacker/ubuntu:act-24.04 node -v           # Q14 ca
 ```
 
 **V7 — gpu runner registration (agent-readable + human)** — after the C05
-sync (which rollout step 7 gates behind C03): `pods_log({name:"forgejo-runner-gpu-0", namespace:"default"})` on
-**gpu** shows the `runner: … declared successfully` line with the labels list
-(§R7 oracle); the UA5 registration shows **online** on the **infra**
+sync (which rollout step 7 gates behind C03): `pods_log({name:"gpu-forgejo-runner-gpu-0", namespace:"default"})`
+on **gpu** shows the `runner: … declared successfully` line with the labels
+list (§R7 oracle). The appset names live objects `<serviceName>-<appName>`
+(`charts/base/templates/appset-charts.yaml:42`), so the Application is
+`gpu-forgejo-runner-gpu` and its pod carries that prefix — the bare
+`forgejo-runner-gpu` of the standalone render is the release name, not a pod
+that exists; the UA5 registration shows **online** on the **infra**
 instance's Actions runners view (human — the API needs a token). A `connection
 "default" is invalid` or repeated re-register loop = uuid/token mismatch
 (UA5↔UA6 pairing) or the slice URL pointing at the wrong instance — the
