@@ -132,17 +132,17 @@ forgejo-run-watchdog:
   # same mechanism as the seeder block above: this app block is projected
   # into the gpu-forgejo-run-watchdog Application's valuesObject by base's
   # charts appset (this file is fetched via the services.gpu.customValuesUrls
-  # cluster annotation). Owner fills each slot with the SAME item uuid as the
-  # matching slot above (the watchdog reuses both hugo-build items; no new
-  # Bitwarden items). An unfilled OVERRIDE_NEEDED renders straight into the
-  # ExternalSecret remoteRef, so the hourly fetch fails visibly until then.
+  # cluster annotation). Both slots are filled with the SAME item uuid as
+  # the matching slot above (the watchdog reuses both hugo-build items; no
+  # new Bitwarden items), so the unfilled-marker posture only guards future
+  # changes.
   bitwardenIds:
     # hugo-build-netlify LOGIN item (password = Netlify auth token); its
     # site_id_com custom field feeds the fallback leg's deploys lookup.
-    netlify: OVERRIDE_NEEDED
+    netlify: 6dc0c671-1a5d-4501-b593-b4f60161144a
     # hugo-build-forgejo LOGIN item (password = write:repository PAT —
     # covers the runs-API reads and the stale-run dispatch).
-    forgejo-pat: OVERRIDE_NEEDED
+    forgejo-pat: 88722c5b-ebf5-44f8-b6bf-b4f60167bb38
 
 seaweedfs-csi-driver:
   volume-count: 8
