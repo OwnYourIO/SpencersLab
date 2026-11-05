@@ -21,15 +21,14 @@
 # suite guards that surface from then on). Subagents stay pinned for the
 # whole run — no chunk of this plan touches this repo's agent sources.
 #
-# Red before C01 lands: t1, t2(Repo: leg), t4 identity legs. Green-at-base
-# regression gates by design: t2 Pipeline: wording, t3 plugin byte-pin, t5.
+# Red before C01 lands: t1, t2(Repo: leg), t4 identity legs. t3 re-cut to
+# content pins in cf-106 wave 3 (2026-11-05): the cf-93-era commit-diff legs
+# are unsatisfiable for any lock-surface chunk (C08 landed, C09 next).
 #
 # Usage:
 #   bash tests/multi-repo/repo-label-filter.sh          # t1..t5
 #   bash tests/multi-repo/repo-label-filter.sh t3 t4    # subset
-# Env: PLUGIN_DIFF_BASE (default: git merge-base HEAD main) re-points the
-#    byte-pin when main legitimately moved the plugin.
-#    RUNSYNC_BIN overrides the rulesync binary discovery.
+# Env: RUNSYNC_BIN overrides the rulesync binary discovery.
 set -euo pipefail
 
 export PATH=$HOME/.local/bin:$PATH   # helm/rulesync PATH recipe, FRICTION seed
@@ -44,7 +43,8 @@ PLUGIN=.opencode/plugin/pipeline-locks/index.ts
 HOURLY_GEN=.opencode/commands/pipeline-boards-hourly.md
 GATE_SCRIPT=scripts/agent-board-coord-gate.sh
 
-DIFF_BASE="${PLUGIN_DIFF_BASE:-$(git merge-base HEAD main)}"
+TMP=$(mktemp -d /tmp/opencode/repo-label-filter-test.XXXXXX) || { echo "harness: mktemp failed" >&2; exit 2; }
+trap 'rm -rf "$TMP"' EXIT
 
 find_rulesync() {
   if [ -n "${RUNSYNC_BIN:-}" ] && [ -x "${RUNSYNC_BIN}" ]; then printf '%s' "$RUNSYNC_BIN"; return 0; fi
@@ -182,18 +182,14 @@ PY
   then checks=$((checks + 1)); else fail 't2: the coexistence contract is not satisfied (reason printed above)'; fi
 fi
 
-# --- t3: lock surface untouched (C01 AC3) -------------------------------------
+# --- t3: the lock surface is Pipeline:-only (C01 AC3) ------------------------
+# Re-cut in cf-106 wave 3 (2026-11-05, per the C08 review ruling): the cf-93-era
+# commit-diff legs (plugin byte-identical to the base commit, subagents
+# unchanged since base) pinned "no change since a commit", which no lock-surface
+# chunk of cf-106 can ever satisfy (C08 landed, C09 is next). The permanent
+# contract is the content: the label/lock behaviour those legs exist to protect.
 if want t3; then
-  changed=$(git diff --name-only "$DIFF_BASE" -- "$PLUGIN" | wc -l)
-  [ "$changed" -eq 0 ] || fail "t3: $PLUGIN differs from $DIFF_BASE — C01 forbids any plugin change (plan Out-of-scope, RESEARCH A2)"
-  disk_sha=$(sha256sum "$PLUGIN" | awk '{print $1}')
-  base_sha=$(git show "$DIFF_BASE:$PLUGIN" | sha256sum | awk '{print $1}')
-  [ "$disk_sha" = "$base_sha" ] || fail "t3: $PLUGIN working copy ($disk_sha) is not byte-identical to $DIFF_BASE ($base_sha)"
-  ok "t3: $PLUGIN byte-unchanged vs $DIFF_BASE (AC3: no lock-surface change anywhere)"
-
-  # derivePipelineSet keeps matching ONLY the exact Pipeline: prefix; a Repo:
-  # string anywhere in the plugin would mean a dev invented a second lock path.
-  if python3 - "$PLUGIN" <<'PY'
+  cat >"$TMP/lock-surface.py" <<'PY'
 import re, sys
 src = open(sys.argv[1]).read()
 def bad(msg):
@@ -205,26 +201,48 @@ if 'derivePipelineSet' not in src or '.startsWith(LABEL_PREFIX)' not in src:
     bad('derivePipelineSet lost its Pipeline:-prefix filter')
 if re.search(r'Repo:', src):
     bad('the plugin mentions Repo: at all — Repo: is invisible to the lock surface by construction (RESEARCH A2)')
-print('ok: t3 — derivePipelineSet still filters on the exact Pipeline: prefix only, zero Repo: awareness in the plugin (C01 AC3)')
+print('ok')
 PY
-  then checks=$((checks + 1)); else fail 't3: the plugin-source contract is not satisfied (reason printed above)'; fi
-
-  # No subagent surface changes in this repo for the whole plan (C09 authors
-  # overlays in the TARGET repos only — DECISIONS placement ruling).
-  if git diff --name-only "$DIFF_BASE" -- .rulesync/subagents .opencode/agents | grep -q .; then
-    fail "t3: agent sources/generated agents changed under $DIFF_BASE — no chunk of this plan edits this repo's subagents"
+  if ! python3 "$TMP/lock-surface.py" "$PLUGIN" >"$TMP/t3-live.out" 2>&1; then
+    cat "$TMP/t3-live.out" >&2
+    fail "t3[AC3]: the plugin-source contract is not satisfied (reason above)"
   fi
-  ok "t3: no .rulesync/subagents or .opencode/agents change vs $DIFF_BASE (AC3 no-subagent leg)"
+  # Satisfiable in both directions: every content arm bites on a fabricated
+  # degradation, and the real plugin passes all three.
+  sed 's/export const LABEL_PREFIX = "Pipeline:";/export const LABEL_PREFIX = "Pipeline:"\nexport const REPO_PREFIX = "Repo:";/' "$PLUGIN" >"$TMP/pl-repo-aware.ts"
+  cmp -s "$PLUGIN" "$TMP/pl-repo-aware.ts" && fail "t3[AC3]: harness — the repo-aware control copy is identical to $PLUGIN"
+  python3 "$TMP/lock-surface.py" "$TMP/pl-repo-aware.ts" >/dev/null 2>&1 \
+    && fail "t3[AC3]: NEGATIVE CONTROL FAILED — a plugin that mentions Repo: still passes the zero-awareness arm"
+  sed 's/export const LABEL_PREFIX = "Pipeline:";/export const LABEL_PREFIX = "Pipeline ";/' "$PLUGIN" >"$TMP/pl-wrong-prefix.ts"
+  cmp -s "$PLUGIN" "$TMP/pl-wrong-prefix.ts" && fail "t3[AC3]: harness — the wrong-prefix control copy is identical to $PLUGIN"
+  python3 "$TMP/lock-surface.py" "$TMP/pl-wrong-prefix.ts" >/dev/null 2>&1 \
+    && fail "t3[AC3]: NEGATIVE CONTROL FAILED — a re-pinned LABEL_PREFIX still passes the exact-literal arm"
+  sed 's/\.startsWith(LABEL_PREFIX)/.startsWith("default")/' "$PLUGIN" >"$TMP/pl-no-filter.ts"
+  cmp -s "$PLUGIN" "$TMP/pl-no-filter.ts" && fail "t3[AC3]: harness — the no-filter control copy is identical to $PLUGIN"
+  python3 "$TMP/lock-surface.py" "$TMP/pl-no-filter.ts" >/dev/null 2>&1 \
+    && fail "t3[AC3]: NEGATIVE CONTROL FAILED — derivePipelineSet without the prefix filter still passes"
+  ok "t3[AC3]: $PLUGIN keeps the exact Pipeline: literal, the derivePipelineSet prefix filter and zero Repo: awareness, with three fabricated degradations each reddening its own arm"
 
-  # Command files belong to C01 until C02 lands (C01 Tasks: "do NOT touch any
-  # command file"); once the hourly command carries Repo: text, C02 owns it.
+  # This repo's agent surface carries no Repo: pickup semantics: the filter's
+  # single home is the boards skill (t1 pins it there); a second prose home in
+  # an agent definition is a second schema the pickup walk could read.
+  repo_hits=$(grep -rl 'Repo:' .rulesync/subagents .opencode/agents 2>/dev/null || true)
+  [ -z "$repo_hits" ] \
+    || fail "t3[AC3]: agent surfaces carry Repo: pickup semantics ($repo_hits) — the boards skill is the filter's single home"
+  # Control: the same scan over a tree that carries a fabricated Repo: agent must find it.
+  mkdir -p "$TMP/agents"
+  printf -- '- Cards may carry a human-created Repo: label naming the owning repo\n' >"$TMP/agents/agent-x.md"
+  [ "$(grep -rl 'Repo:' "$TMP/agents" | grep -c .)" -eq 1 ] \
+    || fail "t3[AC3]: NEGATIVE CONTROL FAILED — the fabricated Repo: agent went undetected (the sole-home scan is decoration)"
+  ok "t3[AC3]: no .rulesync/subagents or .opencode/agents surface carries Repo: pickup semantics (a fabricated one reddens the scan)"
+
+  # The hourly command's Repo: text is C02's surface, guarded from the day it
+  # landed by tests/multi-repo/hourly-board-check.sh; this leg only keeps the
+  # two suites from silently going blind at once.
   if grep -q 'Repo:' "$HOURLY_GEN" 2>/dev/null; then
-    ok "t3: hourly command already carries Repo: text — C02 landed, its untouched-for-C01 leg transfers to tests/multi-repo/hourly-board-check.sh"
+    ok "t3[AC3]: hourly command carries Repo: text — its surface is guarded by tests/multi-repo/hourly-board-check.sh (scope-transferred)"
   else
-    if git diff --name-only "$DIFF_BASE" -- .rulesync/commands .opencode/commands "$GATE_SCRIPT" | grep -q .; then
-      fail "t3: command files or the gate script changed while the hourly command still lacks the C02 Repo: text — C01 must not touch them (C02 scope)"
-    fi
-    ok "t3: no command/gate-script change vs $DIFF_BASE (C01 commands-untouched leg)"
+    fail "t3[AC3]: the hourly command lost its Repo: pickup text — C02's surface regressed; its guard is tests/multi-repo/hourly-board-check.sh"
   fi
 fi
 

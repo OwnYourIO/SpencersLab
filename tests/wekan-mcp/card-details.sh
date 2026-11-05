@@ -34,12 +34,15 @@
 # fabricated copies too (raw current_slug read, split field reads), so neither
 # arm is vacuous; slug-stack.sh S1 pins the same ruling on the parsers themselves.
 #
-# Red posture: t1-t4 are green against the C07 tree (the tool, its payload
-# shape, the slug pair and the doc home have landed). t5's fail-the-call arms
-# are DESIGNED RED until the dev round drops the items-route swallow
-# (review round 2 R2-B1, per the DECISIONS 2026-11-04 ruling C07 inherits from
-# C06): today a failed items route answers `items: []`, byte-identical to a
-# checklist with no items. Nothing here fails on a harness fault.
+# Red posture (wave 3, 2026-11-05): t1-t5 are green against the shipped tree —
+# the dev round landed the fail-the-call (a failed checklist-items route raises
+# per the DECISIONS 2026-11-04 ruling, inherited from C06), so t5 pins a
+# shipped behaviour, not a designed red: its executed half runs the tool offline
+# and distinguishes a failed items read from a genuinely empty checklist, and
+# its mechanism half bans the swallow shapes with a swallow-free /tmp copy as
+# the green-side control and four fabricated degradations (swallow, or-empty,
+# fold-to-empty guard, drop-the-checklist guard) plus the legal typed-guard
+# spelling as the controls. Nothing here fails on a harness fault.
 #
 # Usage:
 #   bash tests/wekan-mcp/card-details.sh          # t1..t5
@@ -488,8 +491,15 @@ for n in ast.walk(fn):
     if not any(name in test for name in items_targets):
         continue
     for st in n.body:
-        tgt, val = ([t for t in st.targets], st.value) if isinstance(st, ast.Assign) \
-            else ([st.target], getattr(st, "value", None))
+        # Only Assign/AnnAssign carry a target; a Raise here is the house
+        # fail-the-call spelling (isinstance check + raise) and must stay legal,
+        # so the other statement shapes get no target instead of a crash (R3-M1).
+        if isinstance(st, ast.Assign):
+            tgt, val = list(st.targets), st.value
+        elif isinstance(st, ast.AnnAssign):
+            tgt, val = [st.target], st.value
+        else:
+            tgt, val = [], None
         if val is not None and emptyish(val) \
                 and any(isinstance(t, ast.Name) and t.id in items_targets for t in tgt):
             bad.append(f"the items-route answer is folded to an empty container by a guard ({test}) — a malformed or bodyless answer becomes items: [], the same silent-empty ≡ no-items hazard the swallow has (cf-106 C07 N4)")
@@ -719,11 +729,11 @@ PYEOF
 
   if ! python3 "$TMP/fail-call.py" "$SERVER" >"$TMP/t5-live.out" 2>&1; then
     cat "$TMP/t5-live.out" >&2
-    fail "t5[cf-106 C07 N4]: a failed checklist-items route is not failed by the call (reason above) — DESIGNED RED until the dev round drops the swallow"
+    fail "t5[cf-106 C07 N4]: a failed checklist-items route does not fail the call (reason above) — the C06 N1 ruling, inherited by C07, requires it to fail the call"
   fi
   if ! python3 "$TMP/fail-call-exec.py" "$SERVER" >"$TMP/t5-exec.out" 2>&1; then
     cat "$TMP/t5-exec.out" >&2
-    fail "t5[cf-106 C07 N4]: the executed distinction does not hold offline (reason above) — DESIGNED RED until the dev round drops the swallow"
+    fail "t5[cf-106 C07 N4]: the executed distinction does not hold offline (reason above) — a failed items read must not answer the payload an empty checklist answers"
   fi
 
   # Green side, fabricated from the real file: the same two checkers must pass
@@ -735,6 +745,40 @@ PYEOF
     || { cat "$TMP/t5-fixed.out" >&2; fail "t5[cf-106 C07 N4]: NEGATIVE CONTROL FAILED — a get_card_details without the swallow (and with the matching docstring) still fails the pin: the arm is unsatisfiable as written"; }
   python3 "$TMP/fail-call-exec.py" "$TMP/t5-fixed.py" >"$TMP/t5-fixed-exec.out" 2>&1 \
     || { cat "$TMP/t5-fixed-exec.out" >&2; fail "t5[cf-106 C07 N4]: NEGATIVE CONTROL FAILED — the fixed copy does not fail the call offline: the executed leg is broken, not the tool"; }
+
+  # Satisfiability on the LEGAL spelling at file level: a /tmp copy of $SERVER
+  # carrying the typed isinstance-guard + raise (the R2-B2 fix the hardening
+  # item ships) must pass both halves — the arm must accept the house
+  # fail-the-call form, not only the current tree's shape.
+  if ! python3 - "$SERVER" "$TMP/t5-guarded.py" <<'PYGUARD'
+import re, sys
+src = open(sys.argv[1]).read()
+route = re.compile(r'full = _wekan\.get\(\s*f"/api/boards/\{board_id\}/cards/\{card_id\}/checklists/\{cl_id\}"\s*\)')
+m = route.search(src)
+if not m:
+    print("guard-copy: the items-route read is not in the expected shape — cannot fabricate the guard copy (harness)")
+    sys.exit(1)
+# Insert the typed guard unless it already lands right after the items read.
+# (A whole-source string test is wrong: other tools already use isinstance on
+# a `full` of their own.) The target is written either way, so the checkers
+# always have a file to run on.
+rest = src[m.end():]
+if rest.lstrip().startswith("if not isinstance(full, dict):"):
+    open(sys.argv[2], "w").write(src)
+    sys.exit(0)
+guard = (
+    '        if not isinstance(full, dict):\n'
+    '            raise WekanError("get_card_details: the checklist items route did not answer a dict")\n'
+)
+open(sys.argv[2], "w").write(src[:m.end()] + "\n" + guard + rest)
+PYGUARD
+  then
+    fail "t5[cf-106 C07 R3-M1]: the guard-bearing copy could not be fabricated from $SERVER (harness fault)"
+  fi
+  python3 "$TMP/fail-call.py" "$TMP/t5-guarded.py" >"$TMP/t5-guarded.out" 2>&1 \
+    || { cat "$TMP/t5-guarded.out" >&2; fail "t5[cf-106 C07 R3-M1]: the guard-bearing file is rejected by the mechanism half — the arm is unsatisfiable on the legal spelling"; }
+  python3 "$TMP/fail-call-exec.py" "$TMP/t5-guarded.py" >"$TMP/t5-guarded-exec.out" 2>&1 \
+    || { cat "$TMP/t5-guarded-exec.out" >&2; fail "t5[cf-106 C07 R3-M1]: the guard-bearing file does not fail the call offline — the executed half is broken on the legal spelling"; }
 
   # Degraded synthetics: each shape must redden its own arm, so no arm is
   # decoration and the ban is not spelled for one implementation only.
@@ -765,9 +809,16 @@ VARIANTS = {
     "swallow": f'        try:\n            full = {ROUTE}\n        except WekanError as exc:\n            log.warning("items unreadable: %s", exc)\n            full = {{}}',
     "or-empty": f'        full = {ROUTE} or {{}}',
     "guard-empty": f'        full = {ROUTE}\n        if not isinstance(full, dict):\n            full = {{}}',
+    "guard-continue": f'        full = {ROUTE}\n        if not isinstance(full, dict):\n            continue',
 }
 for name, read in VARIANTS.items():
     open(f"{tmp}/s-{name}.py", "w").write(BASE.replace("__ITEMS_READ__", read))
+# The house fail-the-call spelling (isinstance guard + raise): must PASS the
+# checker — the R3-M1 fix is that the typed guard is a legal spelling, and a
+# checker that still rejects it means the scan is over-strict again.
+open(f"{tmp}/s-guard-raise.py", "w").write(
+    BASE.replace("__ITEMS_READ__",
+                 f'        full = {ROUTE}\n        if not isinstance(full, dict):\n            raise WekanError("items route did not answer a dict")'))
 open(f"{tmp}/s-doc-swallow.py", "w").write(
     BASE.replace("__ITEMS_READ__", f"        full = {ROUTE}")
         .replace("always means the checklist genuinely has no items.",
@@ -781,12 +832,26 @@ PYEOF
       fail "t5[cf-106 C07 N4]: control '$1' was caught by the wrong arm: $(head -1 "$TMP/s-$1.out")"
     fi
   }
+  ctl_green() {  # $1 = control name: a LEGAL spelling that must pass the checker
+    if ! python3 "$TMP/fail-call.py" "$TMP/s-$1.py" >"$TMP/s-$1.out" 2>&1; then
+      cat "$TMP/s-$1.out" >&2
+      fail "t5[cf-106 C07 R3-M1]: control '$1' fails the checker — the scan rejects a legal fail-the-call spelling (over-strict scan regressed)"
+    fi
+  }
+  # The legal spelling must PASS the checker (R3-M1: the old scan crashed on a
+  # Raise in the guard body and thereby banned the house fail-the-call form).
+  if ! python3 "$TMP/fail-call.py" "$TMP/s-guard-raise.py" >"$TMP/s-guard-raise.out" 2>&1; then
+    cat "$TMP/s-guard-raise.out" >&2
+    fail "t5[cf-106 C07 R3-M1]: the typed isinstance-guard + raise spelling (the house fail-the-call form) is rejected by the mechanism half — the scan over-strictness is back"
+  fi
   ctl_red swallow "handler never raises"
   ctl_red or-empty "falls back to an empty container"
   ctl_red guard-empty "folded to an empty container"
+  ctl_red guard-continue "drops the checklist from the block"
   ctl_red doc-swallow "docstring promises a silent empty"
+  ctl_green guard-raise
 
-  ok "t5[cf-106 C07 N4]: a failed checklist-items route fails the call — executed offline (a raising items route never answers the payload an empty checklist answers) and pinned on the mechanism (no handler without a raise, no or-empty fallback, no guard folding the answer to empty or dropping the checklist, no docstring promising a silent empty), with the swallow-free copy of $SERVER passing every arm and four fabricated degradations each reddening its own arm"
+  ok "t5[cf-106 C07 N4/R3-M1]: a failed checklist-items route fails the call — executed offline (a raising items route never answers the payload an empty checklist answers) and pinned on the mechanism (no handler without a raise, no or-empty fallback, no guard folding the answer to empty or dropping the checklist, no docstring promising a silent empty), with the swallow-free copy of $SERVER passing every arm, five fabricated degradations each reddening its own arm, and the typed guard spelling accepted at synthetic AND file level"
 fi
 
 printf 'PASS: wekan-mcp get_card_details checks (%d ok)\n' "$checks"

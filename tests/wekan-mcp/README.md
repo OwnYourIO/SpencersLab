@@ -38,14 +38,15 @@ Two consequences worth knowing before editing a suite:
   subset, not the surface. The count-presence arms require one house-spelling
   claim per doc, so a doc cannot dodge the scan by rewording.
 
-## Designed reds currently expected in this tree
+## Red posture in this tree (2026-11-05, after C01-C08)
 
-Red for a chunk that has not landed yet is a passing state for the *other*
-chunks — attribute it before reading it as this chunk's defect (FRICTION
-2026-11-04: these bash batteries abort at the first red, so run id-subsets).
+Every wekan-mcp suite in this folder is green; the designed reds the table
+used to carry have landed. When a suite reddens again, attribute it before
+reading it as a defect here (FRICTION 2026-11-04: these bash batteries abort
+at the first red, so run id-subsets).
 
-| Leg | Red until | Why |
+| Leg | Status | Why |
 |---|---|---|
-| `card-details.sh` t5 | cf-106 C07 dev round | `get_card_details` still swallows a failed checklist-items route into `items: []`; the C06 fail-the-call ruling (DECISIONS 2026-11-04) makes it fail the call |
-| `agent-perms/surface.sh` A15 (run via `board-context.sh` t6) | cf-106 C08 | the pipeline_claim `shared` override input (AC6) and the boards skill's co-tenancy posture (AC7) |
-| `agent-board-coord/gate.sh` t17 | tracked outside cf-106 | pre-existing warm-location permissions drift; every t6-style id-subset already excludes it |
+| `card-details.sh` t5 | green — C07's dev round landed the fail-the-call | a shipped-behaviour pin now: the executed half distinguishes a failed items read from a genuinely empty checklist offline; the mechanism half bans the swallow shapes, with a swallow-free /tmp copy as the green-side control, five fabricated degradations as red controls, and the typed `isinstance`-guard + raise spelling accepted at synthetic and file level (round-3 R3-M1) |
+| `agent-perms/surface.sh` A15 | green — C08 landed | `board-context.sh` t6 still runs A15 as its own arm and prints a fold-back note when it is green |
+| `agent-board-coord/gate.sh` t17 | red — tracked outside cf-106 | pre-existing warm-location permissions drift; every t6-style id-subset already excludes it |

@@ -403,7 +403,7 @@ if want t6; then
       if env -u CHUNK_BASE timeout 300 bash "$s" A15 >"$a15log" 2>&1; then
         ok "t6: agent-perms A15 reads green — cf-106 C08's permission legs have landed, fold A15 back into the subset run above"
       elif grep -qF 'C08' "$a15log"; then
-        ok "t6: agent-perms A15 red, and red on cf-106 C08's contract (the pipeline_claim `shared` input + the boards-skill co-tenancy posture) — recorded as C08's designed red, not a C07 regression (log: $a15log)"
+        ok "t6: agent-perms A15 red, and red on cf-106 C08's contract (the pipeline_claim \`shared\` input + the boards-skill co-tenancy posture) — recorded as C08's designed red, not a C07 regression (log: $a15log)"
       else
         tail -n 20 "$a15log" >&2
         fail "t6: agent-perms A15 failed for a reason other than cf-106 C08's legs (log: $a15log)"

@@ -266,6 +266,44 @@ describe("the block format has one home (AC5)", () => {
   }
 });
 
+describe("the collection stamp pins observable content (N15)", () => {
+  // The footer stamp is the block's staleness marker: its shape and position
+  // are the content, and the per-payload byte-stability is what makes an old
+  // block in a long session readable as old. A pinned-to-nothing arm cannot
+  // see either, so all three assertions run on the real formatter output.
+  const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
+  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+  const stampOf = (block: string): string | undefined =>
+    /^collected: (.+), from get_card_details$/.exec(block.split("\n").at(-1) ?? "")?.[1];
+
+  it("stamps the footer at the block's last line, in the localIso shape", () => {
+    requireSeam("formatCardBlock");
+    const block = seam("formatCardBlock")(PAYLOAD);
+    const m = /^collected: (.+), from get_card_details$/.exec(block.split("\n").at(-1) ?? "");
+    assert.ok(m, `the block's last line must be 'collected: <stamp>, from get_card_details' — got ${JSON.stringify(block.split("\n").at(-1))}; a stale block is only visible if its stamp sits there`);
+    assert.ok(STAMP_SHAPE.test(m[1]),
+      `the stamp must be a localIso instant (workspace offset or Z, with milliseconds) — got ${JSON.stringify(m[1])}`);
+  });
+
+  it("re-renders a read byte-stably across time: one stamp per payload object", async () => {
+    requireSeam("formatCardBlock");
+    const first = seam("formatCardBlock")(PAYLOAD);
+    await sleep(10);
+    const again = seam("formatCardBlock")(PAYLOAD);
+    assert.equal(again, first,
+      "re-rendering the same read must not re-stamp it — without the per-payload stamp, two blocks for one read would differ millisecond by millisecond and the staleness footer would be meaningless");
+  });
+
+  it("stamps a fresh read fresh", async () => {
+    requireSeam("formatCardBlock");
+    const first = seam("formatCardBlock")(PAYLOAD);
+    await sleep(10);
+    const fresh = seam("formatCardBlock")({ ...PAYLOAD, id: "another-card", title: "a different card" });
+    assert.notEqual(stampOf(fresh), stampOf(first),
+      "a fresh read must carry its own stamp — a single global stamp would hide which read an old block came from");
+  });
+});
+
 // ── the live wiring: setup() → tool.hook("execute.after") ──────────────────
 // The seam arms above can stay green with the registration deleted, so these
 // arms load the plugin the way the server does (default export → setup(fake
@@ -428,6 +466,73 @@ describe("the claim-time block reaches the answer through the registered hook", 
     }
   });
 
+  // amendAnswer writes the block into whichever field the answer already sits
+  // in — the host's answer field is unsettled on 2.1.4, so every documented
+  // shape gets its own arm on a fabricated answer: a branch that stops
+  // delivering the block reddens here, not at first live claim (N13).
+  it("folds a content-parts answer into one text part carrying the block", async () => {
+    const run = await loadedPlugin({ list_boards: BOARD_ANSWER(), get_card_details: PAYLOAD });
+    try {
+      const answer: any = { ok: true, cardId: CARD_ID, content: [{ type: "text", text: CLAIM_ANSWER }, { type: "text", text: "a second part" }] };
+      const expectedAnswer = JSON.stringify(answer);
+      const event = hookEvent("agent-board-coord", CLAIM_TOOL, answer);
+      await run.executeAfter?.(event);
+      assert.ok(Array.isArray(event.result.content),
+        "a parts answer must stay a parts answer — the host renders content, so a different field would lose the block");
+      assert.equal(event.result.content.length, 1,
+        "the parts array is replaced by one text entry, not appended to — the block is one deliverable");
+      assert.equal(event.result.content[0].type, "text");
+      assert.ok(event.result.content[0].text.startsWith(`${expectedAnswer}\n\n`),
+        "the fabricated answer must survive, JSON-encoded, as the part's prefix");
+      assert.match(event.result.content[0].text, /^card_details: feat: coord fixes \(#106\)$/m,
+        "the part must carry the block");
+      assert.ok(!event.result.content.some((p: any) => p.text === "a second part"),
+        "control: the input parts are replaced, not kept — an append-only amendment would leave the second part behind");
+    } finally {
+      await run.close();
+    }
+  });
+
+  it("lands in an output string when the answer carries no content field", async () => {
+    const run = await loadedPlugin({ list_boards: BOARD_ANSWER(), get_card_details: PAYLOAD });
+    try {
+      const answer: any = { ok: true, cardId: CARD_ID, output: CLAIM_ANSWER };
+      const expectedAnswer = JSON.stringify(answer);
+      const event = hookEvent("agent-board-coord", CLAIM_TOOL, answer);
+      await run.executeAfter?.(event);
+      assert.equal(typeof event.result.output, "string",
+        "a host that answers in output must have the block land in output — this is the branch that decides whether the block reaches the model at all");
+      assert.ok(event.result.output.startsWith(`${expectedAnswer}\n\n`),
+        "the fabricated answer must survive as the amended text's prefix");
+      assert.match(event.result.output, /^card_details: feat: coord fixes \(#106\)$/m,
+        "the output must carry the block");
+      assert.equal(event.result.content, undefined,
+        "control: content must not be created when output already answers — only the field the answer sits in is amended");
+    } finally {
+      await run.close();
+    }
+  });
+
+  it("creates content for an answer that carries neither documented field", async () => {
+    const run = await loadedPlugin({ list_boards: BOARD_ANSWER(), get_card_details: PAYLOAD });
+    try {
+      const answer: any = { ok: true, cardId: CARD_ID };
+      const expectedAnswer = JSON.stringify(answer);
+      const event = hookEvent("agent-board-coord", CLAIM_TOOL, answer);
+      await run.executeAfter?.(event);
+      assert.equal(typeof event.result.content, "string",
+        "an answer with no content and no output must still receive the block — the else branch is the delivery fallback");
+      assert.ok(event.result.content.startsWith(`${expectedAnswer}\n\n`),
+        "the fabricated answer must survive as the created content's prefix");
+      assert.match(event.result.content, /^card_details: feat: coord fixes \(#106\)$/m,
+        "the created content must carry the block");
+      assert.equal(event.result.output, undefined,
+        "control: the fallback writes content, never output");
+    } finally {
+      await run.close();
+    }
+  });
+
   it("leaves the answer byte-unchanged for a refused claim", async () => {
     const run = await loadedPlugin({ list_boards: BOARD_ANSWER(), get_card_details: PAYLOAD });
     try {
@@ -478,3 +583,5 @@ describe("the prompt-hook path stays as it is (AC4)", () => {
     assert.equal((plugin as any).FETCH_TIMEOUT_MS, 8_000, "FETCH_TIMEOUT_MS moved — the 8 s board-context budget is a standing ruling");
   });
 });
+
+

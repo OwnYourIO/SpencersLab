@@ -227,7 +227,12 @@ SIXTH = ["defer to owner", "do it here", "owner card", "later", "record only", "
 def passage(t):
     # the friction-follow-up passage: role-coord's step 11, or the boards
     # override section, whichever exists — both are the contract surfaces.
-    m = re.search(r"(?ms)^11\.[^\n]*Friction follow-up.*?(?=^\d+\.\s|\Z)", t)
+    # Step 11 is the last numbered step, so the span is bounded at the next
+    # `## ` heading: unbounded it ran line 35 -> EOF (12.3 KB, ~49% of the
+    # contract) and the sixth-mode ban policed the Stage-gate/Research/Git
+    # prose for ordinary words like `later` (C05 landmine, narrowed in
+    # cf-106 wave 3).
+    m = re.search(r"(?ms)^11\.[^\n]*Friction follow-up.*?(?=^\d+\.\s|^## |\Z)", t)
     if m:
         return m.group(0)
     m = re.search(r"(?ms)^#+[^\n]*Friction follow-up[^\n]*\n.*?(?=^#+ |\Z)", t)
@@ -240,17 +245,63 @@ if not body:
     print(f"{path}: no friction-follow-up passage (step 11 or the boards override section) — nothing to check")
     sys.exit(1)
 
+# The mode list: the maximal run of consecutive same-kind list items (all
+# numbered or all bulleted) that leads with at least four of the five known
+# mode names. A marker-kind switch (bullets -> numbered) starts a new list,
+# so the question bullets above the mode list do not dilute the count.
+NUM = re.compile(r"(?m)^\s*\d+[\.)]\s+")
+BUL = re.compile(r"(?m)^\s*[-*]\s+")
+
+def mode_run(b):
+    lines = b.split("\n")
+    kind = []
+    for ln in lines:
+        if NUM.match(ln):
+            kind.append("n")
+        elif BUL.match(ln):
+            kind.append("b")
+        else:
+            kind.append(None)
+    seqs = []
+    for i, k in enumerate(kind):
+        if k is None:
+            continue
+        if seqs and seqs[-1][1] == k and i == seqs[-1][0][-1] + 1:
+            seqs[-1][0].append(i)
+        else:
+            seqs.append(([i], k))
+    def lead(i):
+        txt = (NUM if kind[i] == "n" else BUL).sub("", lines[i], count=1).lstrip("*").strip()
+        return txt
+    best = None
+    for idxs, _k in seqs:
+        known = sum(1 for i in idxs if any(lead(i).startswith(f) for f in FIVE))
+        if known >= 4 and (best is None or known > best[1]):
+            best = (idxs, known)
+    if best is None:
+        return None, "no mode-list run carries at least four of the five known mode names — the enumeration cannot be counted"
+    return best[0], None
+
+run, run_err = mode_run(body)
+
 bad = []
 if mode == "vocab":
     missing = [m for m in FIVE if m not in body]
     if missing:
         bad.append(f"modes absent: {missing}")
-    found = [s for s in SIXTH if s in body]
-    if found:
-        bad.append(f"a sixth mode appears ({found}) — the offer carries EXACTLY five options")
-    numbered = re.findall(r"(?m)^\s*(?:\d+[\.)]|[-*])\s+\*\*?(new session|current session|plan only|Inbox card|none)\b", body)
-    if len(set(numbered)) and len(set(numbered)) != 5:
-        bad.append(f"the mode enumeration lists {sorted(set(numbered))} — want all five")
+    if run_err:
+        bad.append(run_err)
+    elif len(run) != 5:
+        bad.append(f"the mode enumeration carries {len(run)} items — the offer is EXACTLY five options; count the listed entries, not just the known names (C05 N3)")
+    # Token belt, scoped to the mode run: a stray `later` in prose outside the
+    # list is not a sixth mode, and `collateral`/`bilateral` must not trip the
+    # ban (word-boundary match for `later`, C05 landmine).
+    region_lines = body.split("\n")
+    region = "\n".join(region_lines[run[0]:run[-1] + 1]) if run else body
+    for s in SIXTH:
+        hit = re.search(r"\blater\b", region, re.I) if s == "later" else re.search(_re.escape(s), region, re.I)
+        if hit:
+            bad.append(f"a sixth mode appears ({[s]}) — the offer carries EXACTLY five options")
     if not re.search(r"\bnone\b[^\n]{0,160}(stop|nothing)", body, re.I):
         bad.append("the `none` option's semantics (check nothing → stop) are not stated next to the option")
 elif mode == "recommend":
@@ -282,12 +333,22 @@ elif mode == "bound":
     if not re.search(r"STATE\.json|DECISIONS\.md|separate ticket|new chunk", window):
         bad.append("the bound is incomplete: new work must be recorded as a new chunk in STATE.json (+ DECISIONS.md) or become a separate ticket")
 elif mode == "cite":
-    at = body.find("current session")
-    if at < 0:
-        bad.append("the boards override never mentions the `current session` mode")
-    window = body[at:at + 900]
-    if not re.search(r"pipeline-role-coord|role contract|step 11|bound", window, re.I):
-        bad.append("the boards override restates instead of citing the role contract's bound for `current session`")
+    # Entry-scoped, exactly as `recommend`: the citation is a property of the
+    # `current session` mode ENTRY. Anchoring on the first mention (the mode
+    # list in the intro) let an entry that restates the bound pass while the
+    # intro kept citing (C05 N4).
+    items = _re.split(r"(?m)^\s*(?:\d+[.)]|[-*])\s+", body)
+    def lead(it):
+        hits = [(it.find(f), f) for f in FIVE if f in it]
+        return min(hits)[1] if hits else None
+    entry = next((it for it in items if lead(it) == "current session"), None)
+    if entry is None:
+        bad.append("no mode entry for `current session` — the boards override must name every mode it asks about")
+    else:
+        if not _re.search(r"pipeline-role-coord|role contract|step 11|cite", entry, re.I):
+            bad.append(f"the `current session` entry never cites the role contract's bound ({entry.strip()[:100]!r}) — cite, do not drop the pointer")
+        if _re.search(r"never[^\n]{0,120}(re-?open)|STATE\.json|DECISIONS\.md line|separate ticket", entry, re.I):
+            bad.append("the `current session` entry restates the bound's content — the boards override cites, it does not restate (AC3)")
 elif mode == "hold":
     if "Inbox" not in body:
         bad.append("the Inbox destination is gone")
@@ -314,14 +375,45 @@ if want t5; then
   done
   # Control: a fabricated sixth option reddens the same checker. The BRE group must
   # close — an unterminated `\(…` kills sed at parse time on ANY input, which read as
-  # a suite failure rather than as a broken fixture (cf-106 C05 dev round).
-  sed 's/^\(11\..*stop\.\)/\1\n   6. **defer to owner** — hand the item to the owner./' "$RC_SRC" >"$TMP/sixth.md" \
+  # a suite failure rather than as a broken fixture (cf-106 C05 dev round). The
+  # mutant is planted IN the mode list (after the `none` entry): the count arm sees
+  # a sixth item, the scoped token belt sees its name.
+  sed 's/^\([[:space:]]*5\.[[:space:]]\*\*none\*\*.*\)$/\1\n      6. **defer to owner** — hand the item to the owner./' "$RC_SRC" >"$TMP/sixth.md" \
     || fail "t5[cf-106 C05]: the sixth-mode fabricator itself failed (fixture fault — a broken sed/awk expression reads as a suite failure, not as a broken control)"
-  grep -q 'defer to owner' "$TMP/sixth.md" \
+  grep -q 'hand the item to the owner' "$TMP/sixth.md" \
     || fail "t5[cf-106 C05]: NEGATIVE CONTROL FAILED — could not fabricate a sixth mode in the copy (the control proves nothing)"
-  python3 "$TMP/friction.py" "$TMP/sixth.md" vocab >/dev/null 2>&1 \
+  python3 "$TMP/friction.py" "$TMP/sixth.md" vocab >"$TMP/sixth.out" 2>&1 \
     && fail "t5[cf-106 C05]: NEGATIVE CONTROL FAILED — a passage with a sixth mode still passes the exactly-five arm"
-  ok "t5[cf-106 C05 AC1]: the five modes (new session / current session / plan only / Inbox card / none) with the none-means-stop semantics are stated in the role contract and the boards override, sources and mirrors alike (a fabricated sixth mode reddens the arm)"
+  grep -qE "carries 6 items|a sixth mode appears" "$TMP/sixth.out" \
+    || fail "t5[cf-106 C05]: control 'sixth' was caught by the wrong arm: $(head -1 "$TMP/sixth.out")"
+  # C05 N3: a sixth mode with an UNCATALOGUED name passes the token belt by
+  # construction — only the structural count catches it, and the count must be
+  # the arm that bites.
+  sed 's/^\([[:space:]]*5\.[[:space:]]\*\*none\*\*.*\)$/\1\n      6. **escalate to the steering group** — hand the item up the chain./' "$RC_SRC" >"$TMP/sixth-uncat.md" \
+    || fail "t5[cf-106 C05 N3]: the uncatalogued sixth-mode fabricator itself failed (fixture fault)"
+  grep -q 'hand the item up the chain' "$TMP/sixth-uncat.md" \
+    || fail "t5[cf-106 C05 N3]: NEGATIVE CONTROL FAILED — could not fabricate the uncatalogued sixth mode (the control proves nothing)"
+  python3 "$TMP/friction.py" "$TMP/sixth-uncat.md" vocab >"$TMP/sixth-uncat.out" 2>&1 \
+    && fail "t5[cf-106 C05 N3]: NEGATIVE CONTROL FAILED — a sixth mode with an uncatalogued name still passes: 'exactly five' is present-plus-token-blacklist, not a count"
+  grep -qF "carries 6 items" "$TMP/sixth-uncat.out" \
+    || fail "t5[cf-106 C05 N3]: control 'sixth-uncat' was caught by the wrong arm: $(head -1 "$TMP/sixth-uncat.out")"
+  # C05 landmine (narrowed, cf-106 wave 3): legitimate prose OUTSIDE the mode
+  # run must not redden the ban — a `later` in the Stage-gate paragraph, and
+  # `collateral` (an embedded, non-word `later`) inside a mode entry, both pass
+  # the vocab arm.
+  sed '/^\*\*Stage gate /s/$/ The later chunks may extend this gate./' "$RC_SRC" >"$TMP/later-outside.md" \
+    || fail "t5[cf-106 C05]: the outside-span fabricator itself failed (fixture fault)"
+  grep -q 'The later chunks' "$TMP/later-outside.md" \
+    || fail "t5[cf-106 C05]: NEGATIVE CONTROL FAILED — could not fabricate the outside-span `later` (the control proves nothing)"
+  python3 "$TMP/friction.py" "$TMP/later-outside.md" vocab >/dev/null 2>&1 \
+    || fail "t5[cf-106 C05]: a legitimate `later` in the Stage-gate paragraph (outside the mode run) reddens the sixth-mode ban — the span is still not narrowed"
+  sed 's/^\([[:space:]]*1\.[[:space:]]\*\*new session\*\*.*\)$/\1 A collateral mode never exists./' "$RC_SRC" >"$TMP/collateral-in.md" \
+    || fail "t5[cf-106 C05]: the collateral fabricator itself failed (fixture fault)"
+  grep -q 'A collateral mode' "$TMP/collateral-in.md" \
+    || fail "t5[cf-106 C05]: NEGATIVE CONTROL FAILED — could not fabricate the embedded `later` (the control proves nothing)"
+  python3 "$TMP/friction.py" "$TMP/collateral-in.md" vocab >/dev/null 2>&1 \
+    || fail 't5[cf-106 C05]: `collateral` (an embedded, non-word `later`) inside a mode entry reddens the ban — the ban must match the word, not the substring'
+  ok "t5[cf-106 C05 AC1]: the five modes (new session / current session / plan only / Inbox card / none) with the none-means-stop semantics are stated in the role contract and the boards override, sources and mirrors alike — the mode list is COUNTED (a sixth entry under any name reddens), the token belt is scoped to that run, and \`later\`/\`collateral\` outside and inside it pass"
 fi
 
 if want t6; then
@@ -348,7 +440,18 @@ if want t7; then
     python3 "$TMP/friction.py" "$f" cite \
       || fail "t7[cf-106 C05 AC3]: $f never cites the role contract's bound for \`current session\` (the boards override cites, it does not restate)"
   done
-  ok "t7[cf-106 C05 AC3]: the current-session bound is stated once in the role contract and cited by the boards override"
+  # C05 N4 control: an entry that restates the bound (while the intro keeps
+  # citing) must redden the entry-scoped cite arm — the old first-mention
+  # window anchored on the mode list and let exactly this shape pass.
+  sed 's/states for that mode (cite; this section does not restate it)\./states for that mode (cite; this section does not restate it). The bound: it never re-opens a done chunk of the current plan, and new work lands as a recorded chunk in STATE.json plus a DECISIONS.md line, or a separate ticket./' "$BOARDS_SRC" >"$TMP/cite-restate.md" \
+    || fail "t7[cf-106 C05 N4]: the restate-cite fabricator itself failed (fixture fault)"
+  grep -q 'never re-opens a done chunk' "$TMP/cite-restate.md" \
+    || fail "t7[cf-106 C05 N4]: NEGATIVE CONTROL FAILED — could not fabricate the restating entry (the control proves nothing)"
+  python3 "$TMP/friction.py" "$TMP/cite-restate.md" cite >"$TMP/cite-restate.out" 2>&1 \
+    && fail "t7[cf-106 C05 N4]: NEGATIVE CONTROL FAILED — a boards copy restating the bound in the entry still passes: the cite arm anchors on the list, not the entry"
+  grep -qF "restates the bound's content" "$TMP/cite-restate.out" \
+    || fail "t7[cf-106 C05 N4]: control 'cite-restate' was caught by the wrong arm: $(head -1 "$TMP/cite-restate.out")"
+  ok "t7[cf-106 C05 AC3]: the current-session bound is stated once in the role contract and cited by the boards override — entry-scoped, with a restating-entry mutant reddening the arm"
 fi
 
 if want t8; then

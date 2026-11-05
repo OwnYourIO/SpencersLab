@@ -2047,7 +2047,7 @@ PY
     then
       fail "A15[cf-106 C08]: NEGATIVE CONTROL FAILED — a fabricated compliant claim schema + co-tenancy section still read dirty (the needles above are unsatisfiable or inert)"
     fi
-    ok "A15[cf-106 C08 AC6/AC7]: the pipeline_claim schema carries the `shared` override the engine enforces, the boards skill teaches the same posture (live foreign holders + the sanctioned override), the constants and permission rows are unchanged, and a fabricated compliant pair proves the needles respond"
+    ok "A15[cf-106 C08 AC6/AC7]: the pipeline_claim schema carries the \`shared\` override the engine enforces, the boards skill teaches the same posture (live foreign holders + the sanctioned override), the constants and permission rows are unchanged, and a fabricated compliant pair proves the needles respond"
   fi
 fi
 
