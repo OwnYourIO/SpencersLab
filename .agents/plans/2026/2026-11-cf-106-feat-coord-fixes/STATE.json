@@ -487,15 +487,37 @@
       ]
     },
     "C09": {
-      "status": "pending",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C08"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_session": "ses_e52ed5aadffe0Vv3QdhNvi07Tf",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "review_session": "ses_e52da4e55ffeUczqUVK9rvlu8b (r1, openrouter/qwen/qwen3.8-27b; also appends the dev's floor-denied Implementation notes to chunks/C09.md per the C03b precedent)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "commit": "2c2542cf6",
+      "handoffs": [
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C09", "session": "ses_e52da4e55ffeUczqUVK9rvlu8b (openrouter/qwen/qwen3.8-27b)",
+          "commands_run": ["pipeline-locks-core 38/38", "-engine 41/41 (U3x3 green)", "-reap 32/32 (V4x3 green)", "-tick 13/15 (T2x2 = C10 only)", "whole glob 299/297/2 = exactly T2x2, no C09 arm", "agent-perms 21 ok", "rulesync-surface 25 ok (c23 flipped)", "board-context 8 ok, cf96-tz 13 ok, slug-stack 8 ok, cf106-noop 8 ok, cf90-ledger 8 ok, repo-label-filter 9 ok, provider-loops t5/t6 ok, agents-md c1-c10 ok, session-origin s1-s3 ok", "coord-inwork 1 (i4 pre-existing), gate.sh 1 (t17 pre-existing, 18 ok), noop-marker 1 (N4 = C10 reason only)", "rulesync generate --check 0", "aislop ci --changes 99 with 0 errors 1 standing size warning", "own probe harness => 16/16 (two plugin instances over one shared tmp store, live store untouched)", "live pipeline_status (read-only) => coordinator's Context claim intact, no lockLost/takeover key in the live answer", "helm N/A"],
+          "findings": ["AC1/AC2 literal discipline: PIPELINE LOCK LOST occurs exactly once in the plugin source (the extended constant); both stop sites throw that one constant; the strict-guard rethrow keys on err.message === LOCK_LOST_STOP identity - in-place growth, no fork", "AC2 no-self-reclaim proven structurally and by probe: a forced beat after loss recreates nothing; guarded edit/write/bash keep refusing until the session's own successful claimLockSet; release and occupied-refused claims do NOT clear the stop; per-root isolation holds (the co-running instance is never stopped)", "AC3/AC4 takeover evidence: tagged in record AND audit iff the whole set is exactly [cardId] and a .reaped/ record names that card - proven card-not-pipeline (pipeline-name-trap negative, v1-legacy-lens positive, two-key-set negative); the takeover claim leaves a fresh foreign holder on the original pipeline byte- AND mtime-identical even with the claim-time reap sweep armed", "AC5: hint verbatim on both the reapCommentBody move-success leg (inside the 240-char bound) and the timeouts.jsonl degrade row; not scope-crept into the D11 HA alert", "AC6: A15 21 ok, c23 25 ok (source/mirror bodies byte-identical, no second prose home, TICK_PROMPT parity green); inferences 1-3 all match the implementation (marker keying sound because resolveRoot returns the claim entry's own sessionID; reapedAt stamped post-race-check with proven filename-ts fallback; hasReapRecordFor matches on card through viewHolders)", "AGENTS.md/overview gap confirmed honest: both still carry the pre-C09 'only a fresh run re-claims' bullet, byte-unchanged by C09, no suite pins the old sentence against the new boards bullet - C10 owns the fix", "M-A (minor, routed to the owner's follow-up-card batch with C08 M1/M2): shared-append record/audit tag divergence - propagate the earned tag in appendLockHolder or soften the index.ts:804 comment 'the record and the audit must agree'", "N-1 (next test wave): stale $-anchored add_comment regex in tests/opencode/pipeline-locks-reap.test.ts:51 SEAM-CONTRACT header - no functional arm pins it"],
+          "commit_readiness": "git add exactly three files: .opencode/plugin/pipeline-locks/index.ts, .rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md; NOT: tests/** (zero in diff), AGENTS.md, .rulesync/rules/overview.md, ticket docs"
+        }
+      ]
+    },
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C09", "session": "ses_e52ed5aadffe0Vv3QdhNvi07Tf",
+          "files_changed": [".opencode/plugin/pipeline-locks/index.ts (LOCK_LOST_STOP constant extended in place - the phrase now occurs exactly once; takeover hint + session-pin evidence {cardId, pipelines, reapedAt} on handleLockLost and the reap-of-our-own-set path; claimLockSet marks takeover:'after_reap' when the claimed set is exactly [<cardId>] for this run's card AND a reap record for that card exists (hasReapRecordFor scans all .reaped/ records through the viewHolders lens, matching on card not pipeline); reaper stamps reapedAt onto the confirmed-reap .reaped copy with filename-ts fallback; reapCommentBody + the timeouts.jsonl degrade row carry the one-line takeover hint; the .reaped record itself stays untouched)", ".rulesync/skills/boards/SKILL.md + mirror (Human stops D20/D21 + Exit bullets: the PIPELINE LOCK LOST posture is now stop-the-step + exactly ONE sanctioned question, answer gates the resume; resume shape = re-claim pipelines:[<cardId>], card stays where it is, comment names the takeover + lock key, STATE kickoff.claim records it, no-answer = abandoned exit, never a second question)"],
+          "commands_run": ["pipeline-locks-core 38/0", "-engine 41/0 (U3x3 flipped green)", "-reap 32/0 (V4x3 flipped green)", "-tick 13/2 (T2x2 = C10, both TICK_PROMPT parity arms green)", "whole opencode glob 299/297/2 = exactly T2x2 only", "agent-perms whole exit 0 (21 ok - A15 incl. the C08 sub-block green; retired reason:locked did not reappear)", "rulesync-surface exit 0 (25 ok - c23 flipped; c19/c24 no bite)", "slug-stack 0, coord-inwork red only i4 (pre-existing), gate.sh red only t17 (pre-existing)", "rulesync generate wrote 1 (boards mirror, 2nd run no-op) + --check 0", "aislop ci --changes exit 0 (99, 0 errors, 1 standing pre-existing size warning on the 2535-line plugin, 0 fixable)", "collateral: boards-deps 0, cf96-tz 0 (t5 proves the 2h constant + byte-pinned reap comparison intact), noop-marker N1-N3/N5-N7 ok (N4 = C10), provider-loops t5 t6 0, agents-md c1-c10 ok (c11 = C10), cf90-ledger 0 (8 ok - the substring-ban window did not bite), pipeline-push-pr 0, repo-label-filter 0 (t3 content legs hold over the edited plugin), cf106-noop 0, session-origin s1-s3 ok (s4 pre-existing), board-context.sh 0", "helm N/A"],
+          "deviations": ["none on scope or hard rules: no tests/** touched, no question channel in the plugin, the constant extended in place (never forked), 2h clock + max(heartbeatAt,mtime) untouched, every human-facing leg rides the timeouts.jsonl degrade", "FLAGGED GAP: AGENTS.md/.rulesync/rules/overview.md are outside C09's Files in scope, so the worker bullet still summarizes the pre-C09 'only a fresh run re-claims' posture while the boards skill teaches the one-question takeover - routed by coord to C10's observability pass (C10 rewrites that paragraph anyway)"],
+          "contract_inferences": ["1: the in-process per-root env.lockLost stop marker is cleared only by that root's next successful claimLockSet and is NOT surfaced in pipeline_status (the status shape stays C08-pinned; the restart-lapse observability stays C10's)", "2: the reaper stamps reapedAt onto the confirmed-reap .reaped copy post-race-check, with a filename-ts fallback for pre-C09 copies", "3: hasReapRecordFor matches on card, not pipeline, and scans all .reaped/ records through the viewHolders lens"],
+          "friction": "aislop-gate churn (transient unused-symbol warnings after intermediate saves read like regressions; final state clean); one self-inflicted edit wound (a dropped if-line) caught by the gate's syntax error on the spot and restored before any test ran; the chunk-file Implementation-notes append was floor-denied (C03b precedent) - notes delivered in RESULT",
+          "live_safety": "all TS suites ran on their own /tmp stores; no real pipeline_claim/release/heartbeat; post-edit read-only pipeline_status corroborates the coordinator's live Context claim still reads back in the C08 v2 holder shape with lastReap meta intact"
+        }
+      ]
     },
     "C10": {
       "status": "pending",
