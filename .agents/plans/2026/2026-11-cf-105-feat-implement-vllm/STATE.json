@@ -1,0 +1,266 @@
+{
+  "feature": "2026/2026-11-cf-105-feat-implement-vllm",
+  "plan_status": "approved",
+  "coord_session": "ses_e5c5bec6dffebVkbqg5j2BDR52",
+  "test_session": {
+    "note": "the single original agent-test session (ses_e587db2c1ffewHuz1AOwWENhpy) and its immediate retry (ses_e58158663ffezQg176HMOunRUs) BOTH died on harness compaction errors after the first wrote partial suites to disk (its retry wrote nothing). Test writing was therefore split into per-chunk test sessions with minimal context; each session's id is recorded per chunk below and routes that chunk's faulty-test fixes",
+    "dead": ["ses_e587db2c1ffewHuz1AOwWENhpy", "ses_e58158663ffezQg176HMOunRUs"],
+    "C01": "ses_e57b384cfffeRNBDHS34eR6DSW",
+    "C02": "ses_e57aa288affeFv7IrIgEUfMUkZ",
+    "C03": "ses_e5741efdbffetfnoAMN4FAUFM3",
+    "C04": "ses_e5733963bffeDjofNTn7z4lzpJ",
+    "C05": "ses_e571e33aaffem65mehSZjZ9guS",
+    "C06": "id not captured by coord (session completed; a faulty-test repair for C06 launches a FRESH agent-test session per the gates contract)"
+  },
+  "current_wave": 1,
+  "updated_at": "2026-11-04T15:50:00Z",
+  "kickoff": {
+    "slug": "cf-105-feat-implement-vllm",
+    "type": "feat",
+    "card": "R4EjaHtDeHMjAkDpf",
+    "card_number": 105,
+    "card_title": "Implement vLLM",
+    "worktree": "cf-105-feat-implement-vllm",
+    "branch": "cf-105-feat-implement-vllm",
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-27b",
+      "code": "openrouter/qwen/qwen3.8-27b"
+    },
+    "local": false,
+    "pipelines": [
+      "AI"
+    ],
+    "board_context": {
+      "collected": "2026-11-03T23:00:01.587Z",
+      "server": "dev-boards",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "session": "zZw4PwMoLeodJy3eT (legacy, retired — never read or written)",
+        "Priority": "fp5vnD5YrA7oAxPiK"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Ready for Work": "mkbxeo",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5",
+        "Bucket Color": "yBfNJJ",
+        "Pipeline: Context": "3PGnrD",
+        "Pipeline: Home Assistant": "urP8pR",
+        "Provider: Local": "PnhFKk",
+        "Provider: API": "f3sKNX",
+        "Pipeline: AI": "ezGduq"
+      }
+    },
+    "preload": {
+      "at": "2026-11-04T12:50:00Z",
+      "tool": "dev-boards",
+      "cards": 1,
+      "degraded": true,
+      "note": "tools/list probe at claim returned 26 tools on the deployed wekan-mcp 4.1.3 build: no preload_board, no dependency tools, no set_card_labels, and create_card carries no parent_id. Per the cf-96 degrade law the run kept per-list list_cards_in_list reads and SKIPPED the dependency gate; follow-up cards will carry their label/lineage intent in the body instead."
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "id not captured by coord (a fix round launches a fresh agent-dev-local session per the gates contract)",
+      "handoffs": [
+        {
+          "role": "dev",
+          "status": "DONE",
+          "files_changed": ["containers/vllm-rocm/Dockerfile", "containers/vllm-rocm/README.md", "containers/vllm-rocm/carry/qwen35-import-compat.patch"],
+          "commands_run": ["bash -n Dockerfile/patch sanity => pass", "bash tests/containers/vllm-rocm.sh => pass (t1-t6 all ok; t3 live digest check, not skipped)", "python3 -c \"import yaml; yaml.safe_load(open('containers/vllm-rocm/carry/qwen35-import-compat.patch'))\"-style structural checks => pass", "npx aislop ci --changes => pass (0 errors, 0 warnings)", "docker build containers/vllm-rocm => no-daemon, CI-deferred (designed gate shape; docker CLI present, daemon UNREACHABLE; docker-build.yaml on the pushed branch is authoritative)", "GHCR/GHCR-proxy probes: base image digest re-verified => sha256:4fcd39b7... matches ledger", "git rev-parse vllm-gguf-plugin e454affe0ca23c9dc8754ec3033270cb30622ed5 => pass (commit exists, 2026-10-24, '[BugFix] Flatten batched inputs in the GGUF linear method (#149)')"],
+          "deviations": ["pip install line carries --no-cache-dir --no-build-isolation (REQUIRED: the plugin compiles vllm_gguf_plugin._C_gguf via torch cpp_extension; an isolated build would fetch CUDA torch, and the image has only hipcc)", "precheck added: python3 -c \"import setuptools, torch; assert torch.version.hip\" so a base that loses ROCm torch fails loudly at build time", "base image has no non-root user (config User: null) so the overlay creates uid 65532 with getent guards + numeric USER 65532", "no ENTRYPOINT directive added — the base's [\"vllm\",\"serve\"] is inherited unchanged (AC4: overlay adds plugin + env only); EXPOSE 8000 added since the base declares no ExposedPorts"],
+          "friction": "none blocking — /tmp/opencode held a stale patched/ dir from an earlier session that silently no-op'd the first diff generation; resolved by using a fresh vllm-patch/ path",
+          "open_questions": "watch-item recorded in README: a vllm-gguf-plugin release v0.0.6? or main ref carrying PR #98 + the #60623 import fix → point the ARG at it and drop the carry patch"
+        },
+        {
+          "role": "review",
+          "status": "APPROVED",
+          "verdict": "APPROVED - all 5 ACs met and covered, both in-repo precedents matched, scope clean, all four dev deviations checked out as justified; no blocker/major/minor findings; only carry = the documented watch-item (a plugin release or main ref with the upstream #60623 import fix -> re-point ARG, drop carry)",
+          "files_changed": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C01.md (review notes only)"],
+          "commands_run": ["bash tests/containers/vllm-rocm.sh => pass (t1-t6 ok, exit 0; t3 live, digest match)", "npx aislop ci containers/vllm-rocm => pass (exit 0, 0 scoreable files, 0 findings)", "npx aislop ci --changes => pass (score 100, 70 files, 0 errors/0 warnings)", "docker build containers/vllm-rocm => no-daemon, CI-deferred (daemon socket absent - designed AC1 gate shape)", "curl hub.docker.com tags/v0.33.0-rocm100 => pass (digest sha256:4fcd39b7...83fba, full_size 18038402058, pushed 2026-11-02T02:45:27Z - matches ledger)", "curl api.github.com commits/e454affe... => pass (exists, 2026-10-24T03:46:01Z, msg matches)", "curl api.github.com branches/main => pass (main HEAD == pinned SHA)", "shallow fetch plugin @ e454affe + tree-wide grep + pyproject/setup.py => pass (hunk context exact; only 2 lines touch removed module; installed layout matches patch path; entry point vllm.general_plugins confirmed)", "raw fetch plugin weights_adapter/qwen3_5.py @ ref => pass (lines 11-18 == patch context)", "raw fetch vllm v0.33.0 models/qwen3_5.py + configs/qwen3_5{,_moe}.py => pass (imports from transformers; vendored modules 404)", "Docker Hub registry config blob => pass (User null, Entrypoint [vllm,serve], no ExposedPorts, SITE_PACKAGES set, AITER gfx942;gfx950, PYTORCH_ROCM_ARCH incl. gfx1201+gfx1151, env pins not pre-set)", "find containers/vllm-rocm -type f => pass (exactly the 3 in-scope files)", "grep -rin renovate containers/vllm-rocm/ => pass (exactly 1 hit: the sanctioned git-refs comment)"],
+          "friction": "none",
+          "open_questions": "none"
+        }
+      ]
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C04": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C03"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C05": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C02"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C06": {
+      "status": "pending",
+      "wave": 3,
+      "depends_on": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": [
+    "follow-up card: ROCm Device Metrics Exporter (R5 GPU-side gap)",
+    "follow-up card: PrometheusRule alert convention + vLLM alert set (R5 Q4)",
+    "follow-up card: 8060S vLLM-flash re-evaluation watch-item (R2)",
+    "follow-up card: llama-swap selectors unified 27B ID (R3 OQ2)",
+    "follow-up card: Open WebUI \u2014 only if batched-round Q1 answer is yes"
+  ],
+  "approval": {
+    "approved_by": "user",
+    "at": "2026-11-04T12:46:31Z",
+    "via": "board-coord batched question round (card cf-105) \u2014 'Approve as written' + 7 rulings folded (HR1\u2013HR7 in DECISIONS.md)"
+  },
+  "resume": {
+    "at": "2026-11-04T15:50:00Z",
+    "trigger": "owner triage ruling \u2014 re-claim + resume in-session (the AI lock was reaped 2026-11-04T08:47:30Z and the reaper's degrade path left the card in Executing; the walk never visits that list, so the owner directed the recovery)",
+    "claim_set_id": "27a7dc32-0da9-418b-b381-b7f375615c3d",
+    "resumed_at_stage": "Post Research",
+    "note": "D11 \u2014 slug set + plan_status approved \u21d2 no re-kickoff, no new slug"
+  },
+  "preplan_handoffs": [
+    {
+      "stage": "Exploration",
+      "session": "ses_e5c42c321ffeGSawDed8O9GcCT",
+      "status": "DONE",
+      "files": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/EXPLORE.md"],
+      "substance": "EXPLORE.md §1-§8 (AMD-only clusters, 8060S gfx1151 = the '32 GB card', R9700 gfx1201 = Strata's card, chart/peers/monitoring/agent-context surfaces, validation commands, 12 gotchas)",
+      "friction": "none",
+      "open_questions": "R1-R5 research asks + OQ1-OQ4 plan-owned (all resolved downstream)"
+    },
+    {
+      "stage": "Pre Research",
+      "sessions": {
+        "R1": "ses_e5b5f9a7affeGzMOUTnf4Ac3Ib",
+        "R2": "ses_e5b4559a4ffekI1ZTLrS4xrkK1",
+        "R3": "ses_e5b394c87ffePEhhb2EFHFwAiu",
+        "R4": "ses_e5b166418ffe329w9Y5gNwkT78",
+        "R5": "ses_e5aff3994ffeDXL5MHR8UeZyDh"
+      },
+      "status": "DONE",
+      "files": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/RESEARCH.md"],
+      "substance": "RESEARCH.md R1-R5 (sources 1-139): R1 conditional GO on R9700 / MARGINAL 8060S / 4x256k impossible; R2 the 50 tok/s condition FAILS for the flash MoE \u2192 Strata keeps it; R3 no vLLM UI \u2192 llama-swap peers.vllm as FE; R4 vLLM request-level priority + OpenCode model-row body carrier (option E); R5 annotation-based scrape + official dashboards, GPU exporter out of scope",
+      "friction": "searxng engine degradation (duckduckgo CAPTCHA, wolframalpha timeout) \u2014 compensated multi-engine; write tool denied on /tmp/opencode \u2014 shell heredoc used for scratch only",
+      "open_questions": "carried into the batched round (Q1-Q7) and the plan's Risks section; on-target verification items live in the C06 runbook"
+    },
+    {
+      "stage": "Planning",
+      "session": "ses_e5ace4738ffeveIzniTYi90fkM",
+      "status": "DONE (round 2: answers folded, plan approved)",
+      "files": [
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/2026-11-04-feat-cf-105-feat-implement-vllm.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/STATE.json",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/DECISIONS.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C01.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C02.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C03.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C04.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C05.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C06.md"
+      ],
+      "verdict": "6 chunks (C01 image, C02 chart+trio, C03 peers+catalog, C04 agent-context Priority, C05 dashboards, C06 on-target runbook); Needs research: no",
+      "friction": "planner reported intermittent tool-output display garbling mid-session; resolved by grep -c integer counts + file-backed re-reads",
+      "open_questions": "none (Q1-Q7 answered by the user; HR1-HR7 in DECISIONS.md)"
+    },
+    {
+      "stage": "Post Research",
+      "session": "ses_e58bf2142ffeFVjrzwsi1GA556",
+      "status": "DONE",
+      "files": [".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/RESEARCH.md"],
+      "verdict": "plan_impact: none — no locked decision D1-D12/HR1-HR7 overturned (the GDN-hybrid qwen3.8-27b family IS natively registered in vLLM v0.33.0, so no pin bump/model/format change). Three REQUIRED chunk-level corrections: C01 pin the vllm-gguf-plugin to a git ref (main >= e454affe0ca23c9dc8754ec3033270cb30622ed5, or the first release carrying PR #98) + a 2-line transformers import patch in the overlay (plugin main imports vllm.transformers_utils.configs.qwen3_5, removed in vLLM #60623 and absent from v0.33.0) + update AC3/t5; C02 add env VLLM_SERVER_DEV_MODE: \"1\" (the /sleep + /wake_up endpoints are dev-gated); C06 add probe gates (patched-plugin import probe + GGUF serve + 1 token, find /models -name 'Qwen3.8-27B-UD-Q4_K_XL.gguf', sleep -> verify VRAM reclamation -> wake -> Strata re-pin sequencing against the documented ROCm 2x-peak OOM caveat). Confirmed facts: ROCR_VISIBLE_DEVICES still correct under ROCm 10 (index or UUID, coexists with the amd-gpu plugin on this node per the live strata pod); the Q4 weight is literally on the PVC — Qwen3.8-27B-UD-Q4_K_XL.gguf (16.35 GiB, unsloth/Qwen3.8-27B-GGUF, llama.cpp -hf auto-fetch into /models); FP8 fallback EXISTS — Qwen/Qwen3.8-27B-FP8 (28.77 GiB, W8A8 e4m3, stock-loadable on gfx1201)",
+      "friction": "global-searxng engine degradation recurred this round (duckduckgo CAPTCHA, wolframalpha timeout) — compensated with multi-engine + direct versioned fetches, same as the R1-R5 friction entry",
+      "open_questions": "on-target only (C06 gates): patched plugin loading the qwen3_5 GGUF on gfx1201; R9700 ROCr index under the v0.33.0-rocm100 image; VRAM reclamation after level-1 sleep on this amdgpu driver; watch for a vllm-gguf-plugin v0.0.6 or an upstream import fix"
+    },
+    {
+      "stage": "Planning (round 3 — post-research fold)",
+      "session": "ses_e5893120affeOseym76WCzkBBO",
+      "status": "DONE",
+      "files": [
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/2026-11-04-feat-cf-105-feat-implement-vllm.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/DECISIONS.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C01.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C02.md",
+        ".agents/plans/2026/2026-11-cf-105-feat-implement-vllm/chunks/C06.md"
+      ],
+      "verdict": "three post-research corrections folded in place (C01: plugin pinned to git ref e454affe0ca23c9dc8754ec3033270cb30622ed5 + renovate git-refs ARG + 2-line import patch for the vLLM #60623 layout, AC3/t5 updated; C02: env VLLM_SERVER_DEV_MODE: \"1\" for the dev-gated /sleep + /wake_up; C06: four probe gates — plugin import+serve+first-token, find /models -name 'Qwen3.8-27B-UD-Q4_K_XL.gguf', sleep→VRAM-reclamation-verify→wake→Strata re-pin, rocminfo R9700 index) + stale-constant alignments (C06 step 3 131072→262144, ten→eleven step groups, 30 s→60 s v4 default wording); consistency scans clean; plan_status stays approved (no replan)",
+      "friction": "the original plan session (ses_e5ace4738ffeveIzniTYi90fkM) died on continuation — 'Compaction produced no summary' — its context was too large; a fresh agent-plan session was launched with the full brief (the folder is the shared memory). The fresh session also hit edit-tool exact-match failures (line-number prefix misread as indentation) and shell display truncation — resolved via od -c byte inspection and writing scan reports to /tmp/opencode",
+      "open_questions": "none"
+    }
+  ],
+  "follow_up_cards": {
+    "created_at": "2026-11-04T17:01:00Z",
+    "destination": "Backlog/Inbox (list PjEZ39rXBdpNcpncs, swimlane MoZHQz3C4dSW4Atya)",
+    "cards": [
+      { "id": "pvJsE8WcHHJEDuKSL", "title": "ROCm Device Metrics Exporter on ai-gpu" },
+      { "id": "qCgmQZJbPKdFhHxFw", "title": "PrometheusRule alert convention + vLLM alert set" },
+      { "id": "saLixJw3vnvzfhGmW", "title": "8060S vLLM-flash re-evaluation (watch-item)" },
+      { "id": "urCQQ7xWkxDHK894Z", "title": "llama-swap selectors: unified 27B model ID (vLLM peer + llama.cpp rungs)" }
+    ],
+    "checklists": "Services/Type/Model(s) checked on all four via toggle_checklist_item (createCard rule adds the five standard checklists; the deployed build rejects default_checked, so the answers ride toggles)",
+    "degrade": "deployed wekan-mcp 4.1.3: no create_card parent_id (parent lineage recorded in each card body) and no set_card_labels (labels-to-apply line in each body citing the AD-74 ledger card: Provider: API + Pipeline: AI). Card #5 (Open WebUI) DECLINED per HR1 — not created",
+    "note": "every move out of Inbox is the owner's alone"
+  }
+}
