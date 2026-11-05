@@ -19,6 +19,13 @@
 // setting. Everything downstream — beats, release, lock-lost, the reaper — acts
 // on the CALLER's holder row and never on, or against, a co-tenant's.
 //
+// A lost set's stop is also its resume door (cf-106 C09, OQ-9 ruling): the
+// plugin signals only. handleLockLost arms a per-root stop marker that keeps
+// guarded tools blocked until the session makes its OWN new claim — no
+// self-reclaim, ever — and a claim whose whole set is exactly the card's id,
+// made with a .reaped/ record naming that card, is tagged after_reap in the
+// record and the claim audit as evidence, not as a new permission.
+//
 // Why disk locks instead of an in-process mutex: one server process loads
 // this plugin once per location dir (D27, probed on v2.1.4), so no object in
 // memory can serialize claims across worktrees; O_EXCL creates and atomic
@@ -135,6 +142,11 @@ const BOARD_DEFAULTS = { boardTitle: "AI-Dev", swimlaneTitle: "In Process", time
 // The user-facing reap texts: D21's 2 h window is what the card comment
 // says, D11 pins the alert title verbatim.
 const TIMEOUT_COMMENT = "Timed out: no heartbeat for 2h";
+// C09: the reaper's second sentence — the Timeout triage note the reaped card's
+// owner reads (the card comment and the timeouts.jsonl degrade row carry it).
+// The resume holds the card-id lock, so the triage human knows it will not
+// fight the reaped pipeline label.
+const TAKEOVER_HINT = "A fresh run may continue this card if the owner approves; it will hold the card-id lock.";
 const REAP_ALERT_TITLE = "OpenCode: pipeline lock reaped";
 const NOTIFY_DOMAIN = "notify";
 const HA_NOTIFY_SERVICE = "mobile_app_pixel_6";
@@ -156,11 +168,19 @@ const BEAT_AUDIT_EVERY = 10;
 // restart the session graph rebuilds through the setup-time scan.
 const CHILD_KEY_PREFIX = "child/";
 
-// The D16/D28 stop signal. v2.1.4 has no instruction API, so this exact text
-// reaches callers through the strict execute.before throw and the tool
-// responses; the boards skill tells the agent: on PIPELINE LOCK LOST stop —
-// no commit, no card move.
-const LOCK_LOST_STOP = "PIPELINE LOCK LOST — stop; do not commit or move the card";
+// The D16/D28 stop signal, now carrying C09's sanctioned resume: the plugin
+// has no question channel, so the strict execute.before throw, the tool
+// responses and the session pin all carry this ONE text — stop the step, ask
+// the user once, and on yes re-claim under the card-id key instead of the
+// reaped pipeline label. The phrase and the do-not-commit / do-not-move
+// prohibition stay verbatim (the suites pin the literal, engine U3); only
+// the guidance sentence around them may drift.
+const LOCK_LOST_STOP = "PIPELINE LOCK LOST — do not commit or move the card; stop the step, ask the user once whether to continue anyway, and on yes re-claim with pipelines:[<cardId>] instead of the reaped pipeline label — on no or silence, take the blocked/abandoned exit";
+
+// C09: the tag the sanctioned post-reap resume earns — evidence in the lock
+// record and the claim audit, never a permission: a card-id claim without a
+// .reaped/ record naming that card is an ordinary, untagged claim.
+const TAKEOVER_AFTER_REAP = "after_reap";
 
 // The tools that can land a commit or move a card — the strict guard blocks
 // only these. Read-side tools stay available so a stopped run can still
@@ -384,7 +404,7 @@ export function newLockRecord(input: any): any {
     heartbeatAt: at,
   };
   if (input?.cardTitle) holder.cardTitle = input.cardTitle;
-  return {
+  const record: any = {
     version: 2,
     pipeline: input?.pipeline,
     pipelineSet: [...(input?.pipelineSet ?? [])].sort(),
@@ -393,6 +413,10 @@ export function newLockRecord(input: any): any {
     heartbeatAt: at,
     holders: [holder],
   };
+  // C09: the takeover tag rides the record only when the claim earned it —
+  // absent otherwise, so an ordinary card-id claim carries no forensics.
+  if (input?.takeover) record.takeover = input.takeover;
+  return record;
 }
 
 // The single lens every holder-scoped rule reads through (beats, release,
@@ -686,6 +710,27 @@ async function acquireSetWithRollback(
   return { ok: true, coTenants };
 }
 
+// C09 AC3: the evidence a takeover claim is earned by — a .reaped/ record that
+// names this card. Read-only over the reaper's own forensics dir; it never
+// touches the original pipeline's LIVE lock file (AC4: that key may already
+// belong to another run).
+async function hasReapRecordFor(env: any, cardId: string): Promise<boolean> {
+  const dir = join(env.locksDir, REAPED_SUBDIR);
+  let names: string[] = [];
+  try {
+    names = await storeFs(env).readdir(dir);
+  } catch {
+    return false;
+  }
+  for (const name of names) {
+    if (!name.endsWith(".json")) continue;
+    const rec = await readLock(env, join(dir, name));
+    if (!rec) continue;
+    if (viewHolders(rec).some((row: any) => String(row?.cardId ?? "") === cardId)) return true;
+  }
+  return false;
+}
+
 export async function claimLockSet(env: any, input: any): Promise<any> {
   const sessionID = String(input?.sessionID ?? "") || "unknown";
   const set = normalizePipelineSet(input?.pipelines);
@@ -711,7 +756,14 @@ export async function claimLockSet(env: any, input: any): Promise<any> {
   await storeFs(env).mkdir(env.locksDir, { recursive: true });
 
   const setId = randomUUID();
-  const claim = { cardId, sessionID, setId, cardTitle: input?.cardTitle, pipelineSet: set };
+  // C09: the sanctioned post-reap resume is the claim whose whole set is
+  // exactly the card's own id AND whose card a .reaped/ record names — tagged
+  // as evidence in the record and the audit, never as a permission. Any other
+  // card-id claim stays ordinary; the engine never re-claims on the run's
+  // behalf (the lost-set stop marker clears only on this explicit claim).
+  const isTakeoverKey = cardId != null && String(cardId).length > 0 && set.length === 1 && set[0] === String(cardId);
+  const takeover = isTakeoverKey ? await hasReapRecordFor(env, String(cardId)) : false;
+  const claim = { cardId, sessionID, setId, cardTitle: input?.cardTitle, pipelineSet: set, ...(takeover ? { takeover: TAKEOVER_AFTER_REAP } : {}) };
   const acquisition = await acquireSetWithRollback(env, claim, shared);
   if (!acquisition.ok) {
     env?.claims?.delete(sessionID);
@@ -720,6 +772,9 @@ export async function claimLockSet(env: any, input: any): Promise<any> {
 
   const entry = { setId, cardId, pipelineSet: set, sessionID };
   env?.claims?.set(sessionID, entry);
+  // A new claim is the run's own sanctioned resume: the stop marker handleLockLost
+  // armed dies with it (C09 AC2 — no self-reclaim, but a re-claim is legal).
+  env?.lockLost?.delete?.(sessionID);
   try {
     // ctx.storage is durable and shared across worktree locations (D26) —
     // the restart-resume rebuild C04 relies on starts here. A storage miss
@@ -746,6 +801,9 @@ export async function claimLockSet(env: any, input: any): Promise<any> {
     sessionID,
     pipelineSet: set,
     ...(shared ? { shared: true, coTenants: acquisition.coTenants.map((c: any) => c.sessionID ?? null) } : {}),
+    // The tag rides the audit so the takeover trail survives the lock file
+    // (C09 AC3 — the record and the audit must agree).
+    ...(takeover ? { takeover: TAKEOVER_AFTER_REAP } : {}),
   });
   // The co-tenant list rides the answer so the run can log the sharing in its
   // claim comment (boards skill) instead of re-reading the lock dir. One row
@@ -963,6 +1021,57 @@ async function checkMember(env: any, path: string, root: string): Promise<{ stat
   }
 }
 
+// C09 AC1: the reap stamp the lost session's pin evidence reads back. The
+// newest .reaped/ copy of any lost pipeline names the instant the hold died —
+// the record's own reapedAt stamp when the reaper wrote one, else the pass
+// timestamp its file name carries (the rename is the atomic claim, so the
+// name IS the reap). Read-only: the hint never touches the forensics.
+async function reapedStampFor(env: any, pipelines: string[]): Promise<string | null> {
+  const dir = join(env.locksDir, REAPED_SUBDIR);
+  let names: string[] = [];
+  try {
+    names = await storeFs(env).readdir(dir);
+  } catch {
+    return null;
+  }
+  let bestTs = Number.NEGATIVE_INFINITY;
+  let bestStamp: string | null = null;
+  for (const name of names) {
+    for (const pipeline of pipelines) {
+      const prefix = `${pipeline}.`;
+      if (!name.startsWith(prefix) || !name.endsWith(".json")) continue;
+      const mid = name.slice(prefix.length, name.length - ".json".length);
+      if (!/^\d+$/.test(mid)) continue;
+      const ts = Number(mid);
+      if (ts < bestTs) continue;
+      const rec = await readLock(env, join(dir, name));
+      bestTs = ts;
+      bestStamp = rec && typeof rec.reapedAt === "string" && rec.reapedAt ? rec.reapedAt : localIso(ts);
+    }
+  }
+  return bestStamp;
+}
+
+// C09 AC1: the pin half of the lost-set signal — the STOP instruction beside
+// the takeover evidence (the lost card, the lost set, the reap stamp read
+// from locks/.reaped/). Capability-gated per D28: on v2.1.4 the strict
+// before-guard throw and the tool responses carry the same sentence; a pin
+// write failure degrades to the log — the stop itself never does.
+async function pinLostStop(env: any, root: string, entry: any, set: string[]): Promise<void> {
+  try {
+    const stamp = await reapedStampFor(env, set);
+    const stampPart = stamp ? `; reap stamp ${stamp}` : "";
+    if (env?.pin)
+      await env.pin.put(
+        root,
+        PIN_KEY,
+        `${LOCK_LOST_STOP} — the claim (setId=${String(entry?.setId ?? "")}, card=${String(entry?.cardId ?? "")}) lost pipelines:[${set.join(",")}]${stampPart}`,
+      );
+  } catch (err: any) {
+    logNote(env, `lock-lost pin update failed (guard + tool responses still carry the stop): ${String(err?.code ?? err)}`);
+  }
+}
+
 async function handleLockLost(env: any, root: string, entry: any, detail: any): Promise<void> {
   // D18: losing ANY member loses the WHOLE claim, and a lost set is gone —
   // nothing here can ever recreate a file, and nothing here acts on another
@@ -1006,6 +1115,12 @@ async function handleLockLost(env: any, root: string, entry: any, detail: any): 
     }
   }
   env?.claims?.delete(root);
+  // C09 AC2: the lost set stays stopped for guarded tools until this root makes
+  // its OWN new claim (the sanctioned takeover or a fresh card) — the engine
+  // never re-claims on the run's behalf. claimLockSet clears the marker;
+  // nothing else does, so a no-answer run keeps the stop armed to its exit.
+  if (!env?.lockLost || !(env.lockLost instanceof Map)) env.lockLost = new Map();
+  env.lockLost.set(root, { at: localIso(env?.now?.() ?? Date.now()), setId: entry?.setId ?? null, cardId: entry?.cardId ?? null, pipelineSet: set });
   if (env?.executing && env?.sessToRoot) {
     for (const sid of env.executing) if (String(env.sessToRoot.get(sid) ?? "") === root) env.executing.delete(sid);
     for (const [sid, mapped] of env.sessToRoot) if (mapped === root) env.sessToRoot.delete(sid);
@@ -1029,14 +1144,7 @@ async function handleLockLost(env: any, root: string, entry: any, detail: any): 
     lostPipeline: detail?.pipeline ?? null,
     cause: detail?.cause ?? "missing",
   });
-  try {
-    // Capability-gated per D28: the pin UPDATE to the STOP text is what a
-    // future release with the instructions API reads; on v2.1.4 the strict
-    // before-guard throw and the tool responses carry the same sentence.
-    if (env?.pin) await env.pin.put(root, PIN_KEY, `${LOCK_LOST_STOP} — the claim (setId=${String(entry?.setId ?? "")}) is gone; only a fresh run may re-claim.`);
-  } catch (err: any) {
-    logNote(env, `lock-lost pin update failed (guard + tool responses still carry the stop): ${String(err?.code ?? err)}`);
-  }
+  await pinLostStop(env, root, entry, set);
 }
 
 // Beats are throttled per (pipeline, session): with co-tenants one run's beat
@@ -1248,17 +1356,28 @@ export async function toolBefore(env: any, event: any): Promise<void> {
   // The pipeline_* tools beat through their own executors; hooking them
   // here would double-write on every claim/status call.
   let root = "";
-  let claimed = false;
+  let entry: any = null;
   try {
     root = await resolveRoot(env, sessionID);
-    const entry = await findClaim(env, root);
-    if (!entry) return;
-    claimed = true;
+    entry = await findClaim(env, root);
+  } catch (err: any) {
+    logNote(env, `before-hook claim read failed: ${String(err?.message ?? err)}`);
+  }
+  const guarded = GUARDED_TOOLS.includes(tool) && env?.config?.strictLockLoss !== false;
+  if (!entry) {
+    // No live claim: the stop is armed only while a lock was LOST in this
+    // root (C09) — the sanctioned resume is a NEW claim this session makes
+    // itself, which clears the marker; the engine never re-claims on its
+    // behalf. A session that never claimed, or released cleanly, has nothing
+    // to stop; read-side and beat-through tools stay open.
+    if (guarded && env?.lockLost?.has?.(root)) throw new Error(LOCK_LOST_STOP);
+    return;
+  }
+  try {
     await heartbeatSet(env, root, "hook", false);
   } catch (err: any) {
     logNote(env, `before-hook beat failed: ${String(err?.message ?? err)}`);
   }
-  if (!claimed) return;
   let still = null;
   try {
     still = await findClaim(env, root);
@@ -1270,9 +1389,7 @@ export async function toolBefore(env: any, event: any): Promise<void> {
   // tool call (C01 fact 2) and its text IS the stop signal on v2.1.4 (D28 —
   // execute.after never fires for before-blocked calls, so the beat that
   // detected the loss is also the last activity this set ever records).
-  if (GUARDED_TOOLS.includes(tool) && env?.config?.strictLockLoss !== false) {
-    throw new Error(LOCK_LOST_STOP);
-  }
+  if (guarded) throw new Error(LOCK_LOST_STOP);
 }
 
 export async function toolAfter(env: any, event: any): Promise<void> {
@@ -1627,6 +1744,17 @@ async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise
   }
   // One audit entry and one card group PER HOLDER: a co-tenant's card is not
   // dragged through the Timeout leg for someone else's silence (C08 AC5).
+  // C09 AC1: stamp the copy with its own reap instant — the pin evidence the
+  // lost session reads back (reapedStampFor) and the takeover trail key on
+  // the RECORD, not on this pass's memory. A copy that failed to parse keeps
+  // its raw forensics: re-stamping it would invent fields around unknown bytes.
+  if (copy) {
+    try {
+      await writeLockAtomic(env, reapedPath, { ...copy, reapedAt: localIso(pass.now) });
+    } catch (err: any) {
+      logNote(env, `reap stamp write failed for ${pipeline}: ${String(err?.code ?? err)}`);
+    }
+  }
   const rows = viewHolders(copy ?? rec);
   const entries = (rows.length > 0 ? rows : [{}]).map((row: any) => {
     const rowMs = holderInstant(row, null);
@@ -1786,6 +1914,10 @@ async function queueTimeoutRow(env: any, info: any, reason: string): Promise<voi
     pipelines: Array.isArray(info?.pipelines) ? info.pipelines : [],
     sessionID: info?.sessionID ?? null,
     reason,
+    // C09 AC5: the D22 interim row keeps the same fields plus the takeover
+    // hint — until the Timeout list exists live, this jsonl line is where the
+    // triage human reads the continue-anyway affordance.
+    takeover: TAKEOVER_HINT,
   };
   try {
     await storeFs(env).writeFile(String(env?.timeoutsPath), JSON.stringify(row) + "\n", { encoding: "utf8", flag: "a" });
@@ -1797,12 +1929,12 @@ async function queueTimeoutRow(env: any, info: any, reason: string): Promise<voi
 
 // One builder for every path that owes the card the reap marker — the
 // move-success leg and the degrade legs alike — so the D21 sentence, the
-// holder, and the full named set cannot drift between arms. The named set
-// arrives already unioned upstream (a legacy record without pipelineSet
-// reads as just its own pipeline).
+// holder, the full named set and the C09 takeover note cannot drift between
+// arms. The named set arrives already unioned upstream (a legacy record
+// without pipelineSet reads as just its own pipeline).
 function reapCommentBody(info: any): string {
   const pipelines = Array.isArray(info?.pipelines) ? info.pipelines : [];
-  return `${TIMEOUT_COMMENT} (session ${String(info?.sessionID ?? "")}, pipelines: ${pipelines.join(", ")})`.slice(0, MAX_OUTBOUND_MESSAGE);
+  return `${TIMEOUT_COMMENT} (session ${String(info?.sessionID ?? "")}, pipelines: ${pipelines.join(", ")}) — ${TAKEOVER_HINT}`.slice(0, MAX_OUTBOUND_MESSAGE);
 }
 
 export async function moveCardToTimeout(env: any, info: any): Promise<void> {
