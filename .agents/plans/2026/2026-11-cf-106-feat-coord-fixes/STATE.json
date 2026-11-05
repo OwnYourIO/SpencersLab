@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-11-cf-106-feat-coord-fixes",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e5d47a7a9ffeNrogAo9PF2VYez",
   "test_session": "ses_e5c56c5defferyjeGtb6YMn05v",
-  "current_wave": 1,
-  "updated_at": "2026-11-04T07:40:00+00:00",
+  "current_wave": 4,
+  "updated_at": "2026-11-05T21:45:00+00:00",
   "kickoff": {
     "card": "ZPP55zX4GEfesPbnL",
     "card_number": 106,
@@ -409,7 +409,7 @@
       ]
     },
     "C07": {
-      "status": "in_progress",
+      "status": "done",
       "wave": 3,
       "depends_on": [
         "C06"
@@ -467,7 +467,7 @@
       "review_session": "openrouter/qwen/qwen3.8-27b (local gpu-ai down, 503). CANONICAL r1 = ses_e5386ec1effeFTp4Cfx8uA1N4C. Duplicate launch ses_e538677bdffesC06jy65eECqxX: the coordinator double-launched, issued it a STOP (do-not-write) instruction, and it confirmed clean — nothing written to any file, only the mandatory skill loads. Earlier dead launches: ses_e54da8863ffellSenpxO2YFgXz + ses_e53b2c5bbffetvZFY167WrNejz (server restarts, nothing written), ses_e539364f8ffeKC3DF1WNSkVx4F (503 on the dead local endpoint).",
       "review_rounds": 1,
       "last_verdict": "APPROVED",
-      "commit": null,
+      "commit": "debeb8366 (implementation, five files) + 0d222bfc9 (record commit - its subject line reads feat(pipeline-locks) although it carries only docs; noted in FRICTION 2026-11-05)",
       "handoffs": [
         {
           "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C08",
@@ -526,7 +526,7 @@
       ]
     },
     "C10": {
-      "status": "in_progress",
+      "status": "done",
       "wave": 4,
       "depends_on": [
         "C03b",
@@ -562,6 +562,13 @@
         }
       ]
     }
+  },
+  "final_review": {
+    "session": "ses_e526b90adffebWZR3yDtwIfmOZ (openrouter/qwen/qwen3.8-27b, per the owner's model override)",
+    "verdict": "APPROVED",
+    "at": "2026-11-05",
+    "notes": "Whole-branch re-derivation at HEAD 395526051 (merge-base ceb9a8ed6): 14/14 defects fixed and behaviorally spot-checked on the final tree; cross-surface prose (boards skill, AGENTS.md, overview, loop file, pipeline-locks, question-notify) is one coherent story with no second home and no contradiction; full battery re-run (TS glob 299/299/0; 69-suite sweep 54 green / 15 red - every red reproduced identically at clean merge-base in a scratch worktree, zero branch-introduced reds, in-ticket reds = the documented pre-existing t17 + i4 warm-location class only); rulesync generate --check 0; aislop 100/0/0; py_compile + bash -n clean; helm N/A. No test weakening anywhere (all waves tests-only; every re-pin a broken/vacuous-control repair or an adjudicated ruling). The two provenance anomalies (the 0f00ecc72 loop-deletion sweep, the b27297e4b STATE corruption repair) verified recorded in FRICTION 2026-11-05 and the final tree matches the record. Nits (fixed in the same pass): C07/C10 stale status, C08 commit null. chunks/C01.md Review notes remain empty (C01's review lives in the STATE hand-off - accepted). The USER-owned steps list (8 items) verified complete and accurate, recorded in the plan file's Final whole-plan review section. The orphaned Context holder from this run's lapsed claim was naturally timer-reaped at 21:08Z and left alone.",
+    "record_in": "## Final whole-plan review section of the plan file (appended by the reviewer, +74 lines)"
   },
   "blocked": [],
   "deferred": []
