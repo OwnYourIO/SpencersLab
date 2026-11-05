@@ -166,19 +166,17 @@ The worker iteration one hourly tick drives — C06's tick prompt names exactly 
 
 A run that ends without ever claiming marks its OWN session record so the
 finished push can stay quiet on scheduled ticks: top-level `metadata.pipelineNoop =
-{ at: <epoch-ms>, reason: "no-cards" | "no-claimable-cards" }` — never nested
-under `openchamber.*` (the app owns that namespace; the run only reads
-`openchamber.kind` there). Writer predicate, conjunctive, observable from the
-session's own tool calls: ZERO successful `pipeline_claim` (a `locked`/`ok:false`
-answer is not a claim; a held lock means work — never mark, the alert stays)
-AND zero board writes. Mark ONLY at the two exits citing this subsection —
-the gate's SKIP/LIVE replies stay unmarked (OQ5) — and regardless of launcher:
-suppression is the READER's conjunction (question-notify), which additionally
-requires the record's OpenChamber launch kind to be the scheduled one, so a
-marked manual run keeps alerting — there the marker is forensic evidence, not
-a mute button (OQ4). Well-formedness for the reader is a non-empty string
-`reason`; `at` is the audit stamp, never a gate (OQ2).
-
+{ at: <epoch-ms>, reason: "no-cards" | "no-claimable-cards" | "gate-skip" |
+"gate-live" | "board-check-unavailable" }` — never nested under `openchamber.*`
+(the app owns that namespace; the run only reads `openchamber.kind` there).
+Exactly five marked exits cite this subsection and run it: the Card pickup
+step-5 empty walk (reason `no-cards`), the Parallel-pipeline-loops claim-cap
+stop (reason `no-claimable-cards`), and the three tick stops the hourly gate
+reaches — a `GATE: SKIP` verdict (reason `gate-skip`), a `GATE: LIVE` verdict
+with a filtered-in card (reason `gate-live`), and a board check that failed
+closed (reason `board-check-unavailable`). Writer predicate, conjunctive:
+ZERO successful `pipeline_claim` (a `locked`/`ok:false` answer is not a claim;
+a held lock means work — never mark, the alert stays) AND zero board writes.
 Recipe — the whole-metadata mandate of the `pipeline-kickoff` in-work mark
 applies verbatim (citation only: PATCH replaces `metadata` whole, so
 read-merge-write or the siblings the reader and OpenChamber depend on die);
@@ -193,19 +191,47 @@ means the alert stands (fail-loud), never a retry loop, never a stall. RESULT
 posture is unchanged — no-op ends still report `status: NEEDS_INFO` and stop
 cleanly; the marker write or its failure rides in `commands_run`.
 
+The gate SCRIPT stays marker-blind — it prints a verdict and touches no
+session; the RUN that reads a SKIP / LIVE-with-filtered-in-cards /
+board-check-failed verdict is what marks and archives before ending (OQ5,
+reconciled). Suppression is the READER's conjunction (question-notify): the
+record's OpenChamber launch kind must be the scheduled one, so a marked manual
+run keeps alerting — there the marker is forensic evidence, not a mute button
+(OQ4). Well-formedness is a non-empty string `reason`; `at` is the audit
+stamp, never a gate (OQ2).
+
 Archive exit — a no-op end does not idle in the session list: once the
-marker write is attempted, both no-op exits above continue with the same
+marker write is attempted, all five no-op exits above continue with the same
 session record — `opencode api patch /api/session/<id> -d '{"archived": true}'`
 — OpenCode's native archive, the very route OpenChamber's own archive sends
 (live-verified), on the sessionID the no-op rename already returned. The
 PATCH is a NEW step AFTER the marker recipe, never a rewrite of it: the
-marker write stays first, the archive a single-key PATCH on its own. A
-no-cards end NEVER asks "should I close out?" or any variant of it — it
-writes the marker, archives, and stops. Any PATCH failure → end cleanly
-anyway and record the failure in `commands_run` — the marker's own
-failure posture: fail-loud, never a retry loop, never a stall. The archive
-is an exit-side write, never a RESULT-status change — `status: NEEDS_INFO`
-stands.
+marker write stays first, the archive a single-key PATCH on its own. A no-op
+end NEVER asks "should I close out?" or any variant of it — it writes the
+marker, archives, and stops. Any PATCH failure → end cleanly anyway and
+record the failure in `commands_run` — the marker's own failure posture:
+fail-loud, never a retry loop, never a stall. The archive is an exit-side
+write, never a RESULT-status change — `status: NEEDS_INFO` stands. Marker
+and archive are session-API writes on the run's own record, not board
+writes — the tick-stop exits run them under their no-board-writes bans.
+
+Honest limit — a run that dies before reaching an exit (a malformed model
+turn, a missing MCP surface, a crash) cannot mark itself: with no turn left
+to run the recipe, its alert and its idle row stand, accepted for this
+ticket (the audit's `abnormal-end` / `mcp-surface-absent` rows). The mute
+stays that narrow: the no-work mute reaches only the finished push of a
+scheduled launch — a crash push is never suppressed, and the pipeline-locks
+reap alert stays as-is, gated only by `haNotify` (owner's answer 13). The
+candidate close-out is engine-side — the `pipeline-locks` plugin knows which
+roots never claimed, and `question-notify` already reads the session record
+— and the mechanism it needs is proven, not assumed: the v2.1.4 plugin
+context carries `ctx.session.update`, a typed session write whose input
+accepts `metadata` and `archived` in one call, so a plugin may write and
+archive session records from inside the server process; the read it would
+pair with is the same `ctx.session.get` `question-notify` already uses live.
+The engine-side marker is therefore shippable as a separate, small,
+DECISIONS-ruled addition — it is not this wording's file, so until it lands
+the limit stands.
 
 ## Card-driven kickoff — replaces pipeline-kickoff Q1–Q2 for board runs
 

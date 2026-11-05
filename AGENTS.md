@@ -290,7 +290,12 @@ scheduler hygiene stays human-owned — and `/pipeline-boards-hourly` + its
 gate stay the documented fallback). The
 top-level "finished" push reaches the phone unless the coord marked the
 session no-work AND the launch was of the scheduled kind — the `boards`
-skill's no-op marker, read by `question-notify`; manual no-ops always push.
+skill's no-op marker, read by `question-notify`. Every no-work end is a
+marked, archived exit: the two claim-free exits and the three tick stops
+(a gate SKIP verdict, a LIVE verdict with a filtered-in card, or an
+unavailable board check) all run the same marker + archive recipe, so a
+no-work tick leaves no alert and no idle row; manual no-ops and any crash
+still push.
 `/pipeline-tick` (plugin command) reaps stale locks
 first, then prompts the worker; the loop body ships the plain-text
 equivalent (D30). Rules for worker sessions — the `boards` skill owns the
