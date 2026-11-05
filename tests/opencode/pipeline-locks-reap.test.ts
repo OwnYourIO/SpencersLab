@@ -47,8 +47,11 @@
 //     timeoutListTitle whose swimlane_id equals the card's CURRENT swimlane
 //     (the human-created list lives in the same swimlane as the working
 //     lists — "In Process"). move_card({board_id, card_id?, from_list_id,
-//     to_list_id}); add_comment text matches
-//     /^Timed out: no heartbeat for 2h \(session .+, pipelines .+\)$/.
+//     to_list_id}); add_comment text is
+//     `Timed out: no heartbeat for 2h (session <id>, pipelines: <a>, <b>) —
+//     <takeover hint>`, the hint last so the <= 240-char slice can drop it
+//     on a pathological pipeline set (the uncapped timeouts.jsonl row keeps
+//     it).
 //     ANY leg failing — including a Timeout list that does not exist yet
 //     (the normal state pre-D22-follow-up) and a null client — appends
 //     {at, cardId, setId, pipelines, sessionID, reason} to timeouts.jsonl

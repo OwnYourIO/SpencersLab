@@ -526,8 +526,16 @@ if want c11; then
       || fail "c11[cf-106 C10 AC4]: $f does not pair the loop/worker paragraph with the owner-ruled runner model gpu-ai/qwen3.8-27b-q4 (OQ-14, 2026-11-03) — red until C10 edits the rules source and regenerates"
     python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'one' 'pipeline-worker.md' \
       || fail "c11[cf-106 C10 AC4]: $f still describes the loop surface as a pair — the paragraph must name the single pipeline-worker.md runner"
-    python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'per-card|per card|rout' \
-      || fail "c11[cf-106 C10 AC4]: $f never says Provider is per-card routing inside the run — the scheduler split is retired"
+    # Shell-level alternation: negwin.py's needles are literal (str.find),
+    # so a grep-E-style 'per-card|per card|rout' string was satisfiable only
+    # by the pipe string itself — one honest spelling per window call.
+    if ! { python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'per-card' \
+        || python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'per card' \
+        || python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'rout'; } \
+        >"$TMP/c11-route.out" 2>&1; then
+      cat "$TMP/c11-route.out" >&2
+      fail "c11[cf-106 C10 AC4]: $f never says Provider is per-card routing inside the run (no per-card / per card / rout spelling within 900 chars of provider) — the scheduler split is retired"
+    fi
     strays=$(grep -inE 'pipeline-worker-local|two loop (files|tasks)|both loop tasks' "$f" || true)
     [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "c11[cf-106 C10 AC4]: $f still names the retired second loop task in current-state prose"; }
     # The gate/LIVE/Timeout sentences stay accurate through the rewrite (C10 task).
@@ -545,7 +553,31 @@ PY
   if ! grep -qiE 'pipeline-worker-local|two loop (files|tasks)' "$TMP/rules-pair.md"; then
     fail "c11 control: the fabricated pair sentence was not caught by the sweep (the guard is inert)"
   fi
-  ok "c11[cf-106 C10 AC4]: the worker paragraph names one loop file, the ruled gpu-ai/qwen3.8-27b-q4 model and per-card Provider routing on rules source and generated AGENTS.md, keeps the gate/Timeout sentences, and a fabricated pair sentence is rejected"
+  # Negative control for the routing arm: with the routing sentence deleted
+  # the disjunction must fail, and its failure must name one of the three
+  # alternatives — a control that only asserts "fails" cannot see a dead
+  # branch of the alternation.
+  if ! python3 - "$RULES_SRC" "$TMP/rules-noroute.md" <<'PY'
+import re, sys
+t = open(sys.argv[1], encoding="utf-8").read()
+m = re.search(r"The\s+Provider label is per-card routing.*?unlabeled-card ask\)\.\s", t, re.S)
+if not m:
+    sys.exit("c11 control: the routing sentence is not in the expected shape in " + sys.argv[1])
+open(sys.argv[2], "w", encoding="utf-8").write(t[:m.start()] + t[m.end():])
+PY
+  then
+    fail "c11 control: the routing-deleted copy could not be fabricated (fixture fault)"
+  fi
+  if { python3 "$TMP/negwin.py" --ci "$TMP/rules-noroute.md" 900 'provider' 'per-card' \
+      || python3 "$TMP/negwin.py" --ci "$TMP/rules-noroute.md" 900 'provider' 'per card' \
+      || python3 "$TMP/negwin.py" --ci "$TMP/rules-noroute.md" 900 'provider' 'rout'; } >"$TMP/noroute.out" 2>&1; then
+    fail "c11 control: the routing-passage-deleted copy still satisfies the per-card routing arm — the alternation is inert"
+  fi
+  if ! grep -qE 'missing needle: (per-card|per card|rout)' "$TMP/noroute.out"; then
+    cat "$TMP/noroute.out" >&2
+    fail "c11 control: the deleted copy failed the arm without a missing-needle naming one of the three alternatives — the failure is not the arm's"
+  fi
+  ok "c11[cf-106 C10 AC4]: the worker paragraph names one loop file, the ruled gpu-ai/qwen3.8-27b-q4 model and per-card Provider routing on rules source and generated AGENTS.md, keeps the gate/Timeout sentences, a fabricated pair sentence is rejected, and deleting the routing sentence reddens the routing arm"
 fi
 
 printf 'PASS: agent-board-coord agents-md checks (%d ok)\n' "$checks"

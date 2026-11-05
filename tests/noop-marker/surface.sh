@@ -342,7 +342,7 @@ if want n4; then
   # "marked" while the archive half is unmentioned understate the silence path.
   for f in AGENTS.md "$RULES_SRC"; do
     python3 "$TMP/win.py" --ci "$f" 600 'no-work' 'archiv' \
-      || fail "N4[cf-106 C03b AC3]: $f states the no-work silence without the archived-exit half (mark AND archive, per the boards skill's Exit step) — red until the C03b wording lands"
+      || fail "N4[cf-106 C03b AC6]: $f states the no-work silence without the archived-exit half (mark AND archive, per the boards skill's Exit step) — red until the C03b wording lands"
   done
   ok "N4[C02 AC6 + cf-106 C03b/C10]: stale current-tense claims gone, one authoritative settled enabled: row, live state + human-owned hygiene + silence clause recorded, ONE loop file named by the scheduler docs, and the no-work silence stated as the marked+archived exit"
 fi
