@@ -46,6 +46,14 @@ forgejo:
     forgejo: ed858a27-1882-42ce-bcbd-b4ec010ab7bc        # item infra-forgejo (password = SECRET_KEY)
     forgejo-admin: f7b628ec-2544-4c28-a476-b1a501487d99  # item infra-forgejo-admin (initial admin)
     forgejo-pg: 96fb70d4-d0ec-4167-964a-b4ec010b404f     # item infra-forgejo-pg (password = DB password)
+    # forgejo-s3 — the SeaweedFS S3 gateway identity whose bucket holds this
+    # instance's Git LFS objects. The same LOGIN item serves the dev instance
+    # (username = access key id, password = secret access key): both instances
+    # write the one git-lfs bucket. A real UUID is mandatory here (no
+    # sentinel, no placeholder): the credentials reach app.ini through a
+    # secretKeyRef on the init container, so an id that cannot resolve stops
+    # the forgejo pod from starting.
+    forgejo-s3: 06a65037-29d3-48de-978c-b3b6002d3978
     forgejo-sso: aaa94e81-aa39-4962-961f-b4ec010ba0c9    # item infra-forgejo-sso (lab Keycloak client infra-forgejo)
   forgejo:
     gitea:
@@ -54,6 +62,22 @@ forgejo:
         server:
           DOMAIN: git.spencerslab.com
           ROOT_URL: "https://git.spencerslab.com/"
+          # Forgejo defaults this to false — with it unset the LFS batch
+          # endpoint stays 404 even once [lfs] resolves a bucket.
+          LFS_START_SERVER: true
+        # Activation is per-instance. The chart ships the bucket-shape keys
+        # once for both instances, so they are not repeated here — a copy
+        # would let dev and infra drift silently.
+        lfs:
+          STORAGE_TYPE: minio
+          # The gateway runs on this cluster, so use its ClusterIP service.
+          # s3.spencerslab.com is served by this cluster's own Traefik
+          # (LB 10.0.77.59), so reaching it would hairpin through the ingress
+          # back to this same pod, adding a TLS hop for no gain. The gateway
+          # serves plain HTTP on 8333 — TLS ends at that route — hence
+          # MINIO_USE_SSL false.
+          MINIO_ENDPOINT: seaweedfs-s3.default.svc.cluster.local:8333
+          MINIO_USE_SSL: false
         mailer:
           ENABLED: true
           SMTP_ADDR: "smtp-relay-mail"
