@@ -14,7 +14,7 @@
 #   g4  charts: alias entry + trio-exemption comment + no new
 #       ingress.subdomains entry                                   C05 AC3
 #   g5  custom-values UUID for the runner token, naming the new
-#       gpu-forgejo-runner item; the reserved dev item never here   C05 AC4
+#       forgejo-runner item; the reserved dev item never here       C05 AC4
 #   g6  gpu umbrella sentinel sweep at the pinned baseline 1 and a
 #       sentinel-free forgejo-runner-gpu values JSON                C05 AC5
 #   g7  blast radius: dev runner trio untouched, no gpu Forgejo or
@@ -480,8 +480,9 @@ else
 fi
 
 # --- g5: the vault slot names the NEW item (C05 AC4) ------------------------
-# Q15 answer: gpu gets its own Bitwarden item `gpu-forgejo-runner`; the
-# reserved `dev-forgejo-prod-runner` item stays free for the pending infra
+# gpu gets its OWN Bitwarden item, named `forgejo-runner` — the name the user
+# created it under, superseding the `gpu-forgejo-runner` the Q15 round guessed;
+# the reserved `dev-forgejo-prod-runner` item stays free for the pending infra
 # runner relocation, so it must not be pasted onto gpu.
 if python3 - "$GPU_CV" "$WORK/g5-count" <<'PY'
 import json, re, sys, yaml
@@ -541,9 +542,14 @@ try:
             break
         i -= 1
     blob = ' '.join(block)
-    if 'gpu-forgejo-runner' not in blob:
-        bad(f'g5: the comment above {gpu_cv} runner-token does not name the Bitwarden item gpu-forgejo-runner (Q15 answer: a dedicated gpu item, one item per concern — the dev precedent documents the item name at the slot)')
-    ok('g5: the slot comment names the gpu-forgejo-runner item')
+    # Standalone-token match: the values key forgejo-runner-gpu (this file's own
+    # app name, i.e. forgejo-runner followed by a hyphen) documents nothing about
+    # the vault, and neither does the superseded gpu-forgejo-runner name (a word
+    # char precedes it). Backticks, spaces, quotes, parens and line ends are all
+    # valid boundaries.
+    if not re.search(r'(?<![\w-])forgejo-runner(?![\w-])', blob):
+        bad(f'g5: the comment above {gpu_cv} runner-token does not name the Bitwarden item forgejo-runner (the item name the user created it under, superseding the Q15 best guess — one item per concern, documented at the slot as the dev precedent does; the values key forgejo-runner-gpu and the superseded gpu-forgejo-runner do not name it)')
+    ok('g5: the slot comment names the forgejo-runner item')
 
     reserved = raw.count('dev-forgejo-prod-runner')
     if reserved:
