@@ -192,6 +192,121 @@
         "dev round: t5's printed reasons name each banned shape; the green-side probe is WEKAN_SERVER=<swallow-free copy> bash tests/wekan-mcp/card-details.sh t5",
         "coord FRICTION correction: tests/wekan-mcp/board-context.sh takes positional ids (t5 runs and is green); the earlier 't5 unrunnable' note was wrong - t5 was only hidden by t4's abort"
       ]
+    },
+    {
+      "id": "W3",
+      "date": "2026-11-05",
+      "base": "0d222bfc9",
+      "trigger": "batched wave across C05/C07/C08 reviews + the C03b amendment (reviewer ids kept): R3-M1, R3-M2, R3-M3, N13, N15 (C07); repo-label-filter t3 (C08); friction.py softness + substring-ban narrowing (C05)",
+      "concurrency_constraint": "C03b dev round running concurrently: did NOT touch or run tests/noop-marker/surface.sh, tests/agent-board-coord/{gate,agents-md}.sh, tests/opencode/question-notify.test.ts, or rulesync generate on the boards/overview/command sources. C03b's queued item (noop-marker N4 comment-only label re-pin, AC3->AC6) is DEFERRED to the next wave.",
+      "changed": [
+        {
+          "file": "tests/wekan-mcp/card-details.sh",
+          "ids": [
+            "R3-M1",
+            "R3-M2"
+          ],
+          "what": "R3-M1: the t5 guard scan no longer crashes on Raise/Continue inside an items-variable guard body (shape-safe tgt/val extraction) so the typed isinstance-guard + raise is a LEGAL spelling; new synthetics: guard-raise (must PASS the checker) and guard-continue (must redden 'drops the checklist'); new file-level proof: a /tmp copy of $SERVER with the guard inserted must pass both halves (the fabricator writes the target either way). R3-M2: header red-posture + the two fail() texts updated to the shipped state (no more 'DESIGNED RED until the dev round drops the swallow')"
+        },
+        {
+          "file": "tests/wekan-mcp/README.md",
+          "ids": [
+            "R3-M2"
+          ],
+          "what": "designed-reds table -> 'Red posture in this tree (2026-11-05, after C01-C08)': card-details t5 green (shipped-behaviour pin), agent-perms A15 green (C08 landed), gate.sh t17 still the only red (tracked outside cf-106)"
+        },
+        {
+          "file": "tests/wekan-mcp/board-context.sh",
+          "ids": [
+            "R3-M3"
+          ],
+          "what": "the t6 ok message's backticked `shared` escaped (\\`shared\\`) so the ok line no longer command-substitutes (stderr was 'shared: command not found')"
+        },
+        {
+          "file": "tests/agent-perms/surface.sh",
+          "ids": [
+            "R3-M3"
+          ],
+          "what": "the A15 ok message's backticked `shared` escaped the same way"
+        },
+        {
+          "file": "tests/opencode/card-details.test.ts",
+          "ids": [
+            "N13",
+            "N15"
+          ],
+          "what": "N13: three new hook arms driving amendAnswer's undocumented shapes through the registered execute.after hook (the only in-repo path to the private function): content-parts answer folds to one text part carrying the block; output-string answer is amended in place with content left undefined; neither-field answer gets content created (the else fallback). Each arm uses a fabricated answer + a control assertion. N15: new 'collection stamp pins observable content' describe: footer at the block's last line in the localIso shape + tool name; re-render of the SAME payload object byte-stable across a 10ms gap (the WeakMap cache's observable effect); a fresh object stamps fresh. HOME NOTE: these landed in card-details.test.ts, not board-context.test.ts as named in the review, because the registered-hook machinery (loadedPlugin/hookEvent/BoardStub) lives in card-details.test.ts and board-context.test.ts has no path to the private amendAnswer/blockStamps; duplicating the machinery would be the worse home."
+        },
+        {
+          "file": "tests/multi-repo/repo-label-filter.sh",
+          "ids": [
+            "C08-t3"
+          ],
+          "what": "t3 re-cut from commit-diff legs to the content pins the C08 review ruled: (a) the plugin keeps the exact Pipeline: literal + the derivePipelineSet prefix filter + zero Repo: awareness, checked through a $TMP checker with three fabricated degradations (repo-aware, wrong-prefix, no-filter) each reddening its own arm; (b) this repo's subagent surfaces carry no Repo: pickup semantics (the boards skill is the single home) with a fabricated-Repo-agent control; (c) the hourly command's Repo: text stays scope-transferred to tests/multi-repo/hourly-board-check.sh. PLUGIN_DIFF_BASE/DIFF_BASE retired; TMP added; header + usage updated."
+        },
+        {
+          "file": "tests/cf90-ledger/surface.sh",
+          "ids": [
+            "C05-N3",
+            "C05-N4",
+            "C05-landmine"
+          ],
+          "what": "friction.py: (N3) vocab now COUNTS the mode-list run (maximal consecutive same-kind list items leading with >=4 known names; a sixth entry under ANY name reddens 'carries 6 items') with the token belt kept as a second layer; (N4) cite is entry-scoped exactly as recommend (the current-session ENTRY must cite AND must not restate the bound's content); (landmine) passage() for role-coord is bounded at the next '## ' heading instead of running step 11 -> EOF (12.3 KB, 49% of the contract), the token belt is scoped to the mode run, and 'later' matches on word boundaries so collateral/bilateral no longer trip it. New controls: steering-group sixth-mode (must be caught by the count arm), restate-cite mutant (must be caught by the cite arm), a bare 'later' outside the mode run and 'collateral' inside it (both must PASS)."
+        }
+      ],
+      "proofs_executed": [
+        "R3-M1 both directions: in-tree server.py (no guard) t5 exit 0; a /tmp copy with the typed guard inserted t5 exit 0 (fabricated by the suite's own guard-copy step); the guard-raise synthetic passes and guard-continue reddens 'drops the checklist from the block' on the live controls",
+        "N13 bite: scratch plugin with the content-parts branch neutered -> 'folds a content-parts answer' arm red (31/1); with the output branch removed -> 'lands in an output string' arm red (31/1); restored -> 32/32",
+        "N15 bite: scratch plugin with the blockStamps cache neutered -> 're-renders a read byte-stably' arm red; with the footer renamed -> 'stamps the footer' + doc-parity arms red; restored -> 32/32",
+        "repo-label-filter t3: all three fabricated plugin degradations redden their named arm; the fabricated Repo: agent reddens the sole-home scan; clean tree exits 0 (was red at clean HEAD before the re-cut)",
+        "friction.py: the steering-group sixth-mode mutant reddens 'carries 6 items'; the restate-cite mutant reddens 'restates the bound\\'s content'; a 'later' in the Stage-gate paragraph and 'collateral' inside a mode entry both PASS; no-op-checker meta-proof: with friction.py replaced by an always-pass stub, the suite's own negative control fires (NEGATIVE CONTROL FAILED on the sixth-mode control)"
+      ],
+      "commands": [
+        {
+          "cmd": "bash tests/wekan-mcp/card-details.sh",
+          "exit": 0,
+          "note": "5 ok \u2014 t5 now pins the shipped fail-the-call + the legal guard spelling"
+        },
+        {
+          "cmd": "bash tests/wekan-mcp/board-context.sh",
+          "exit": 0,
+          "note": "8 ok"
+        },
+        {
+          "cmd": "bash tests/agent-perms/surface.sh",
+          "exit": 0,
+          "note": "21 ok \u2014 whole-suite green; no more 'shared: command not found' on stderr"
+        },
+        {
+          "cmd": "bash tests/multi-repo/repo-label-filter.sh",
+          "exit": 0,
+          "note": "9 ok \u2014 t3 green now (was red at clean HEAD)"
+        },
+        {
+          "cmd": "bash tests/cf90-ledger/surface.sh",
+          "exit": 0,
+          "note": "8 ok \u2014 the standing C05 reds are cleared"
+        },
+        {
+          "cmd": "node --test tests/opencode/card-details.test.ts",
+          "exit": 0,
+          "note": "32/32 (was 26: +3 N13 +3 N15)"
+        },
+        {
+          "cmd": "node --test tests/opencode/board-context.test.ts",
+          "exit": 0,
+          "note": "32/32 (unchanged)"
+        },
+        {
+          "cmd": "node --test tests/opencode/*.test.ts",
+          "exit": 1,
+          "note": "299 tests, 291 pass, 8 fail = exactly U3x3 + V4x3 (C09) + T2x2 (C10) designed reds; zero in the two C07 files"
+        }
+      ],
+      "newly_red_awaiting_dev": [],
+      "deferred": [
+        "C03b amendment item: tests/noop-marker/surface.sh N4 comment-only label re-pin (AC3 -> AC6) \u2014 deferred to the next wave per the concurrency constraint"
+      ]
     }
   ]
 }

@@ -155,6 +155,17 @@
       "mirror arms (rulesync-surface c23/c24, agents-md t5) stay red until the .rulesync regen lands with the source commit — the regen is part of each skill-touching chunk's dev Commands"
     ]
   },
+  "test_wave_3": {
+    "at": "2026-11-05 (ran in parallel with C03b's dev + review rounds)",
+    "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+    "status": "DONE",
+    "commit": "8c745c401",
+    "model": "openrouter/qwen/qwen3.8-27b (owner's override; the local gpu-ai endpoint was down)",
+    "legs": "R3-M1 card-details.sh guard scan shape-safe (raise legal, continue reds); R3-M2 stale designed-red claims re-worded; R3-M3 backticked shared escaped (board-context.sh + agent-perms); N13 amendAnswer content-parts + output-string arms; N15 blockStamps footer + byte-stability arms (both in card-details.test.ts - the only in-repo registered-hook harness); C08 t3 repo-label-filter recut to content pins (pinned-commit leg retired); C05 friction.py vocab counts the mode-list run + cite entry-scoped + sixth-mode ban bounded at the next ## heading with word-anchored later",
+    "after_state": "no newly red: whole opencode glob 299 tests / 291 pass / 8 fail = exactly C09 U3x3 + V4x3 and C10 T2x2; card-details.sh 5 ok, board-context.sh 8 ok, agent-perms 21 ok, repo-label-filter 9 ok (whole green, was red at HEAD), cf90-ledger 8 ok (whole green - standing C05 reds cleared); cf106-noop HOLD re-run 8 ok",
+    "concurrency": "the wave's required final battery conflicted with its own off-limits constraint (board-context t6 nests gate.sh -> rulesync generate x2; the opencode glob includes question-notify) - it ran them as demanded, all green, generate proved idempotent against C03b's final sources; the noop-marker N4 AC3->AC6 comment re-pin stays DEFERRED to the next wave",
+    "hand_off": "chunks/C07.md '## Test notes — wave 3' + cross-reference notes in chunks/C08.md and chunks/C05.md + test_results.json W3"
+  },
   "chunks": {
     "C01": {
       "status": "done",
@@ -254,16 +265,39 @@
       ]
     },
     "C03b": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C03a"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
+      "dev_session": "ses_e53512918ffeONOzdEtKrZCTjO",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "commit": "100c0b72b",
+      "review_session": "ses_e5329492effeh3exnYVEIjQYZ5 (r1, openrouter/qwen/qwen3.8-27b per the owner's model override; running in parallel with the test wave - wave-attributed reds in tests/wekan-mcp/{card-details,board-context}.sh, tests/agent-perms, tests/repo-label-filter, tests/cf90-ledger, tests/opencode/board-context.test.ts are expected; C03b's own gate surfaces are wave-off-limits)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "ac5_ruling": "2026-11-05 coord: engine-side marker = SHIPPABLE (proven on v2.1.4, not a mechanism rejection) but DEFERRED to the follow-up card per plan USER-owned step 6 (the run proposes, the owner creates) - DECISIONS.md 2026-11-05 C03b AC5 entry carries the four reasons (contract-half scope, C09/C10 entanglement on the same plugin file, crash-push-accepted posture, its own test surface owed). The marker must NOT appear in C03b's diff; the skill's honest-limit paragraph records the proven mechanism either way.",
+      "commit_policy": "hold the C03b commit until the test wave settles; then coord re-runs the full C03b arm-level gate + the wave-touched collateral (agent-perms whole, board-context t4, card-details whole) on the stable tree before committing (the dev's explicit ask, since tests/** moved mid-round)",
+      "review_handoff_r1": {
+        "role": "review", "status": "APPROVED (r1)", "session": "ses_e5329492effeh3exnYVEIjQYZ5 (openrouter/qwen/qwen3.8-27b)",
+        "gate_rederived": "noop-marker n1 n2 n3 n5 n6 n7 exit 0 (8 ok); n4 red ONLY at the C10 n_loop leg - the hidden cf-106 no-work+archiv window re-derived by the reviewer: min span 21 chars in AGENTS.md and overview.md (cap 600), green; question-notify.test.ts 48/48; permission-ask-notify 41/41; gate.sh t1-t16 t18-t21 = 20/20 (whole red only t17, proven pre-existing at HEAD+main); agents-md c1-c10 = 10/10 with c10 flipped green (whole red only c11 = C10)",
+        "c08_collateral": "slug-stack 8 ok, agent-perms 21 ok whole, board-context t4 green, tick 13/2 (both fails = C10 T2, TICK_PROMPT parity green), rulesync c24 green (c23 stays C09), cf106-noop 8 ok; rulesync generate --check 0; aislop 99 / 0 errors / 1 pre-existing question-notify size warning; helm N/A",
+        "ac_rederived": "AC1-AC4: five exits + five tokens in source and mirror (bodies byte-equal), both writer-predicate conjuncts intact, one shared recipe + one {\"archived\": true} PATCH + never-ask, OQ5 script-blind/run-marks stated, gate script 0-byte diff, question-notify 0 non-comment lines with every comment claim verified against the code (noWorkSuppressed token-agnostic, FINISHED-only consult, reap alert haNotify-gated); AC5: no engine-side marker anywhere in the diff (pipeline-locks 0-byte diff), honest-limit paragraph carries the proven mechanism + shippable-not-shipped disposition; AC6: single-passage coverage + blind-spot framing in rules source and AGENTS.md; AC7: arm-level gate green per the DECISIONS ruling; AC8: wording landed exactly as amended (marker columns, per-id, flavor-labelled, >=2 ticks, USER-owned step 5, zero-gate-stop = instrument blind spot with the 0/49 + 0/123 counts), no automated arm counts a live gate-stop row",
+        "deviations_adjudicated": "all four faithful - in particular (c): dropping no session_rename from the SKIP ban is REQUIRED (the recipe's rename is the exit's sanctioned self-identification on the session's own record); token-by-token ban-list diff shows nothing else dropped",
+        "nits": "the dropped 'observable from the session's own tool calls' aside (no AC/arm pins it); N7's negative arm prints 'missing needle: sendhareapalert' to stdout - the control working, worth knowing when re-running",
+        "commit_readiness": "exactly the 7 source/mirror files (.rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md, .rulesync/commands/pipeline-boards-hourly.md, .opencode/commands/pipeline-boards-hourly.md, .rulesync/rules/overview.md, AGENTS.md, .opencode/plugin/question-notify/index.ts); no tests/** (the wave's), no scripts/agent-board-coord-gate.sh, no pipeline-locks; ticket docs ride the coordinator's record commit"
+      },
       "amendment": "2026-11-05, agent-plan session ses_e54c7cf50ffer3u12XONO12A7G (commit 34503254f): AC8 re-keyed from a gate-stop row count onto the marker columns (a scheduled stop-path row missing both the pipelineNoop marker and the archive stamp), judged per named session id over at least two ticks, flavor-labelled; a zero gate-stop count is recorded as the instrument's blind spot, not a finding or a clean sample; cf106-noop N6 demoted to an instrument-precedence HOLD that reads no live store; AC6 now names its own observables (noop-marker N4, agents-md c10). agent-plan refused to widen scope - scripts/session-noop-audit.sh (class precedence, the GATE_LINE/RAW_CALL heuristics) and the loop files stay out, and an engine-side marker would need an explicit coordinator amendment. Notes for dev gained the N4 attribution warning (N4 is red for a C10 reason too, and its cf-106 arm is labeled AC3 while pinning AC6 - a comment-only re-pin for test_session).",
-      "handoffs": []
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted; arm-level gate green)", "chunk": "C03b", "session": "ses_e53512918ffeONOzdEtKrZCTjO",
+          "files_changed": [".rulesync/skills/boards/SKILL.md (No-op marker subsection: five-token reason shape, five marked exits incl the three tick stops, OQ5 script-blind/run-marks, alert posture, honest-limit with proven engine mechanism)", ".rulesync/commands/pipeline-boards-hourly.md (three stop branches name the marker+archive exit)", ".rulesync/rules/overview.md (worker alert sentence gains mark-AND-archive / tick-stop coverage)", ".opencode/plugin/question-notify/index.ts (header comment only, 0 non-comment lines changed)", "regenerated .opencode/skills/boards/SKILL.md + .opencode/commands/pipeline-boards-hourly.md + AGENTS.md", "scripts/agent-board-coord-gate.sh byte-unchanged (verified empty diff)"],
+          "gate": "arm-level per the DECISIONS ruling: noop-marker n1/n2/n3/n5/n6/n7 exit 0 (n4 red ONLY at the C10 n_loop arm, cf-106 windows verified green directly); question-notify.test.ts 48/48; gate.sh t1-t16 t18-t21 = 22 ok (t17 pre-existing); agents-md c1-c10 = 10 ok, c10 flipped green (c11 = C10); C08 pins held (slug-stack 0, agent-perms 21 ok, board-context t4 0, tick 13/2 = C10 only, rulesync c24 0 / c23 = C09, cf106-noop 8 ok); rulesync generate x2 + --check 0; aislop 99/0/1 pre-existing warning",
+          "friction": "test_session batched wave writing tests/** concurrently (card-details t5 mid-recut, agent-perms/board-context/README 17:41-42Z) - not this chunk's work; re-run the battery at commit time. One edit-tool false-negative on overview.md (fuzzy-retry applied despite error) - re-derived +6/-1 byte-exact. The chunk-file Implementation-notes append was permission-rejected by the dev floor (.agents/plans/** deny) - notes delivered in RESULT for the coordinator to append",
+          "ac5_verdict": "engine-side marker = SHIPPABLE (mechanism proven on opencode v2.1.4: ctx.session.update typed for metadata+archived, sibling reads live, C03a HTTP-proves the write 55/55) but NOT shipped - pipeline-locks is out of Files in scope per the amendment; coordinator routes (scope amendment vs follow-up card)"
+        }
+      ]
     },
     "C04": {
       "status": "done",
