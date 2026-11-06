@@ -51,15 +51,15 @@ def test_ac6_chart_metadata():
         f"Chart.yaml version is {meta.get('version')!r}, want 1.0.0 (new-chart rule)"
     )
     assert str(meta.get("appVersion")) == "0.33.0", f"appVersion is {meta.get('appVersion')!r}, want 0.33.0"
+    # Exactly one dep: app-template bundles the common chart internally (zero
+    # k8s objects of its own), so the C07 owner ruling voids C02's two-dep
+    # shape — a second entry (common) re-introduces it.
     deps = meta.get("dependencies") or []
-    app = [d for d in deps if d.get("name") == "app-template"]
-    assert app, f"C02 AC6: no app-template dependency declared; deps: {deps}"
-    dep = app[0]
-    assert str(dep.get("version")) == "5.0.1", (
-        f"C02 AC6: app-template version is {dep.get('version')!r}, want 5.0.1 (repo standard — no 5.1.x jump)"
-    )
-    assert dep.get("repository") == "https://bjw-s-labs.github.io/helm-charts", (
-        f"C02 AC6: app-template repository is {dep.get('repository')!r}"
+    assert deps == [{"name": "app-template",
+                     "version": "5.0.1",
+                     "repository": "https://bjw-s-labs.github.io/helm-charts/"}], (
+        "C07 AC1: Chart.yaml dependencies must be EXACTLY one entry — app-template 5.0.1 on the "
+        f"sibling repository form with the trailing slash (charts/llama-swap); deps: {deps}"
     )
 
 
@@ -70,12 +70,19 @@ def test_ac6_chart_lock_and_vendored_dependency():
     # a JSON lock can never survive the workflow's `helm dependency update`
     # step, so the criterion parses through yaml (TEST-FAULTY repair).
     deps = yaml.safe_load(lock.read_text()).get("dependencies", [])
-    app = [d for d in deps if d.get("name") == "app-template"]
-    assert app and str(app[0].get("version")) == "5.0.1", (
+    assert len(deps) == 1, (
+        "C07 AC1: Chart.lock must pin EXACTLY one dependency — [app-template 5.0.1] (the common "
+        f"dep is void under the repo app-template idiom); deps: {deps}"
+    )
+    assert deps[0].get("name") == "app-template" and str(deps[0].get("version")) == "5.0.1", (
         f"C02 AC6: Chart.lock must pin app-template 5.0.1, got {deps}"
     )
     assert list(CHART_DIR.glob("charts/app-template-5.0.1.tgz")), (
         "C02 AC6: the vendored charts/app-template-5.0.1.tgz is missing (helm dependency update output)"
+    )
+    assert not list(CHART_DIR.glob("charts/common-*.tgz")), (
+        "C07 AC1: a vendored charts/common-*.tgz survived — dropping the common dep must delete the "
+        "stale tgz (helm dependency update does it; the tgz dir is gitignored, Chart.lock is the committed artifact)"
     )
 
 
@@ -117,12 +124,14 @@ def test_ac6_image_pin_is_first_build_shape():
 
 
 def test_serveargs_values_carry_the_d4_recipe():
-    """The values-level serveArgs list is what the template renders VERBATIM
-    (C02 task): the D4 flags present in the D4 order. The rendered-args
-    equality (order, values, --model splice) is asserted at render level in
-    test_render.py."""
-    serve = V.chart_values().get("serveArgs")
-    assert isinstance(serve, list) and serve, "C02: charts/vllm/values.yaml must carry a serveArgs list"
+    """The values-level serveArgs list (under the app-template: subtree, the
+    C07 idiom location) is what the template renders VERBATIM (C02 task): the
+    D4 flags present in the D4 order. The rendered-args equality (order,
+    values, --model splice) is asserted at render level in test_render.py."""
+    serve = (V.chart_values().get("app-template") or {}).get("serveArgs")
+    assert isinstance(serve, list) and serve, (
+        "C02: charts/vllm/values.yaml must carry the serveArgs list under the app-template: subtree"
+    )
     flags = [a for a in serve if isinstance(a, str) and a.startswith("--")]
     want_flags = [flag for flag, _ in V.D4_RECIPE]
     assert flags == want_flags, (
@@ -134,9 +143,9 @@ def test_serveargs_values_carry_the_d4_recipe():
 
 
 def test_monitoring_gate_default_on():
-    gate = (V.chart_values().get("monitoring") or {}).get("annotations")
+    gate = ((V.chart_values().get("app-template") or {}).get("monitoring") or {}).get("annotations")
     assert gate, (
-        "C02: values key monitoring.annotations must default ON (D8) — the pod ships the two scrape annotations by default"
+        "C02: the app-template.monitoring.annotations values key must default ON (D8) — the pod ships the two scrape annotations by default"
     )
 
 
@@ -151,12 +160,20 @@ def test_monitoring_gate_off_disables_scrape():
     implementation; the functional contract instead is that no k8s.grafana.com/*
     annotation is enabled ('true'), so k8s-monitoring's annotationAutodiscovery
     does not scrape the pod. A key-dropping implementation would pass too —
-    the bar checks the property, not the mechanism."""
-    docs, _ = V.render(release="vllm", service=False, extra_set="--set monitoring.annotations=false")
+    the bar checks the property, not the mechanism.
+
+    C07 idiom rework (owner ruling 2026-11-06): the gate key moved one level
+    down under app-template:, so the --set path is a layout pin re-pinned
+    with the move. The planning probe (2026-11-06, helm v3.16.4) shows the
+    OLD top-level path no longer gates: --set monitoring.annotations=false
+    still renders k8s.grafana.com/scrape 'true' and metrics.portNumber
+    '8000' — a test left on the old path would false-green, so it must read
+    the new path to be a real gate check."""
+    docs, _ = V.render(release="vllm", service=False, extra_set="--set app-template.monitoring.annotations=false")
     grafana = V.grafana_annotations(V.deployment(docs))
     assert "true" not in grafana.values(), (
-        f"C02: with monitoring.annotations=false no k8s.grafana.com/* annotation may be "
-        f"enabled (value 'true') — the gate must disable the scrape, got {grafana!r}"
+        f"C02: with app-template.monitoring.annotations=false no k8s.grafana.com/* annotation "
+        f"may be enabled (value 'true') — the gate must disable the scrape, got {grafana!r}"
     )
 
 
@@ -164,11 +181,30 @@ def test_monitoring_gate_off_disables_scrape():
 
 
 def test_scaffold_common_loader_and_notes():
-    common = CHART_DIR / "templates" / "common.yaml"
-    assert common.is_file(), "C02: templates/common.yaml missing (the one-line bjw-s loader include)"
-    assert "bjw-s.common.loader.all" in common.read_text(), (
-        "C02: templates/common.yaml must be the one-line {{ include \"bjw-s.common.loader.all\" . }}"
+    """C07 flip of the C02 loader bar (owner ruling 2026-11-06): the repo
+    app-template idiom renders the workload from the chart's own
+    app-template: values — no parent-side loader file, no second dep, no
+    bjw-s.common.* invocation in any parent-context template (the vendored
+    app-template tgz bundles common internally; it generates no k8s objects
+    of its own). NOTES.txt stays: the install-hint surface is chart-owned."""
+    assert not (CHART_DIR / "templates" / "common.yaml").is_file(), (
+        "C07 AC1: templates/common.yaml (the one-line bjw-s loader include) must be ABSENT — "
+        "the repo app-template idiom renders without a parent-side loader"
     )
+    # AC1's zero-common grep, text-only: exclude tests/ (this file carries the
+    # needle literal in this absence-assert) and the gitignored vendored
+    # charts/ tgz dir. Fixed-string needle — every real invocation starts with
+    # bjw-s.common.*, and the regex-dot form of the needle would also match
+    # prose like 'bjw-s common'.
+    for path in sorted(CHART_DIR.rglob("*")):
+        if not path.is_file():
+            continue
+        if path.relative_to(CHART_DIR).parts[0] in ("tests", "charts"):
+            continue
+        assert "bjw-s.common" not in path.read_text(), (
+            f"C07 AC1: {path.relative_to(CHART_DIR)} still invokes the common chart "
+            "(bjw-s.common.*) — the zero-common surface allows no parent-template include"
+        )
     assert (CHART_DIR / "templates" / "NOTES.txt").is_file(), "C02: templates/NOTES.txt missing"
 
 

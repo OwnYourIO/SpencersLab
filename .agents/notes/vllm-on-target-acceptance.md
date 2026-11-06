@@ -96,9 +96,9 @@ kubectl -n default logs -l app.kubernetes.io/name=vllm | grep -i -m 5 'gfx\|devi
 
 Expected: the log names exactly one chip — `gfx1201` (the R9700).
 If it fails: if the env was ignored, the pod sees BOTH chips and the run is
-aborted — fix the values key (`rocrVisibleDevices` in
-`charts/vllm/values.yaml` and `services/gpu-ai/prod/values.yaml`), not the
-template. The variable's semantics (device index or UUID, ROCm 10) are
+aborted — fix the values key (`rocrVisibleDevices`, under `app-template:`
+in `charts/vllm/values.yaml` and `services/gpu-ai/prod/values.yaml`),
+not the template. The variable's semantics (device index or UUID, ROCm 10)
 confirmed (Post Research V2); only the index is target-verified.
 
 **1.4 — Image-side `rocminfo` (the C01 image's OWN ROCr enumeration).**
@@ -289,10 +289,10 @@ temporary flip; belt-and-braces for the R4 pass-through claim (the step-4
 chain smoke already exercises the body merge for both class rows). Run it
 only if the owner wants the negative proof:
 
-1. GIT values change (human-run): in `charts/vllm/values.yaml` `serveArgs`,
-   flip `--scheduling-policy` from `priority` to `fcfs`; commit on the
-   ticket branch; ArgoCD's own reconciliation picks it up (no manual
-   sync — sync is not a runbook step).
+1. GIT values change (human-run): in `charts/vllm/values.yaml`'s
+   `app-template.serveArgs`, flip `--scheduling-policy` from `priority`
+   to `fcfs`; commit on the ticket branch; ArgoCD's own reconciliation
+   picks it up (no manual sync — sync is not a runbook step).
 2. Re-run the 5.1 request.
    Expected: vLLM REJECTS it with the non-zero-priority error (the fcfs
    gate, R4 Q1) — proving the body field survived both OpenCode's merge
@@ -435,7 +435,7 @@ k8s-monitoring v4 annotationAutodiscovery feature default; the absence is
 the contract).
 If it fails: a third `k8s.grafana.com/*` key = an annotation crept into
 `charts/vllm/values.yaml`; an enabled value that is not `"true"`/`"8000"` =
-the `monitoring.annotations` gate is mis-rendered.
+the `app-template.monitoring.annotations` gate is mis-rendered.
 
 ## 8. Sleep-mode check + the R9700 time-sharing sequence (D5/HR6)
 

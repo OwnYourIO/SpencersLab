@@ -149,7 +149,7 @@ except yaml.YAMLError as ex:
     print(f"a values file does not parse as YAML: {ex}", file=sys.stderr)
     sys.exit(2)
 
-args = (cv or {}).get("serveArgs") or []
+args = ((cv or {}).get("app-template") or {}).get("serveArgs") or []
 
 # The D4 envelope flags the chart must ship (locked decision D4; --model is
 # spliced from the service modelPath at render time, so its values-level

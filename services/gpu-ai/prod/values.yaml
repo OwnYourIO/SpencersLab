@@ -599,11 +599,16 @@ llama-swap:
 # subdomains skip note above); C03 wires the llama-swap peers.vllm hop on
 # the llama host as the sole client route.
 vllm:
-  # The q4 GGUF the qwen3.8-27b-q4 rung already serves (RESEARCH Post
-  # Research V3), in the HF hub-cache layout under the shared 500Gi
-  # llama-swap PVC. The snapshot <commit> segment resolves on target —
-  # the C06 step-2 find is the path authority; a mismatch is a values-only
-  # fix here.
-  modelPath: /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
-  # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
-  rocrVisibleDevices: "0"
+  app-template:
+    # The q4 GGUF the qwen3.8-27b-q4 rung already serves (RESEARCH Post
+    # Research V3), in the HF hub-cache layout under the shared 500Gi
+    # llama-swap PVC. The snapshot <commit> segment resolves on target —
+    # the C06 step-2 find is the path authority. A retarget is the dual
+    # edit of the chart's modelPath/serveArgs with this re-pin kept in
+    # sync — the chart's anchored serveArgs splices the chart-level
+    # modelPath (anchors resolve per-document), so this key alone does
+    # not change the rendered --model; the suite's --model == service
+    # modelPath assert guards the divergence.
+    modelPath: /models/hub/models--unsloth--Qwen3.8-27B-GGUF/snapshots/<commit>/Qwen3.8-27B-UD-Q4_K_XL.gguf
+    # R9700 (D2) — the C06 rocminfo gate retargets this key, never a template.
+    rocrVisibleDevices: "0"

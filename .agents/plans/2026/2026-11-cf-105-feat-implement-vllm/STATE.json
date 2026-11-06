@@ -316,16 +316,52 @@
       ]
     },
     "C07": {
-      "status": "pending",
+      "status": "done",
       "wave": 4,
       "depends_on": [
         "C02",
         "C03"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e4e874241ffehHmkpt33jhl1lz",
+      "review_session": "ses_e4e68cdaaffe9zi6Tkj840ZDH4",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e4e874241ffehHmkpt33jhl1lz",
+          "status": "DONE (implementation complete; the 7 suite reds + runbook T3 red are exactly the chunk ledger's layout pins — test-session re-pins owed, then review)",
+          "files_changed": ["charts/vllm/Chart.yaml (single app-template 5.0.1 dep, trailing-slash URL, idiom comment)", "charts/vllm/Chart.lock (regenerated — digest sha256:0ea7893a… identical to charts/llama-swap/Chart.lock; stale common tgz auto-deleted)", "charts/vllm/values.yaml (schema + render-consumed custom keys under app-template: subtree; cachePvcSize parent-only; anchors valid; retarget-surface comment rewritten to the actual dual-edit surface)", "charts/vllm/templates/common.yaml (DELETED)", "charts/vllm/templates/NOTES.txt (llama-swap idiom: .Release.Name + fullname-dedup note; peer URL + port-forward strings preserved)", "services/gpu-ai/prod/values.yaml (vllm: block only — re-nested under app-template:, single hunk L599-609; charts.vllm entry + skip-ruling comment + entire llama-swap: block byte-identical)"],
+          "commands_run": ["oracle capture pre-edit, 4 legs (brief's 3 + CI release-vllm form) to /tmp/opencode/cf105-c07-oracle => pass (Deployment+Service+PVC; leg1==leg2; 0 sentinels)", "helm dependency update charts/vllm => pass (lock digest == llama-swap's; common tgz deleted; app-template tgz remains gitignored)", "helm lint charts/vllm => pass (icon INFO only)", "re-render 4 legs + diff vs oracle => pass (full diff identical on all legs: 2x # Source comment + helm.sh/chart vllm-1.0.0 -> app-template-5.0.1 + app.kubernetes.io/version dropped — exactly the planning-side expectation)", "spec-critical python byte-check (Service gpu-ai-vllm + ClusterIP + http:8000 + selector, PVC doc, full pod template) => pass (identical old vs new)", "gate probe: --set app-template.monitoring.annotations=false => both annotations ''; old path no longer gates => pass (the ledger's docstring evidence)", "grep OVERRIDE_ all 4 new renders => 0", "pytest charts/vllm/tests -v (helm on PATH, 0 skips) => 7 failed / 20 passed — the 7 reds ARE the ledger's by-name layout pins and no other red; env test passes VACUOUSLY as predicted; lock test passes unmodified as predicted; every rendered-output assert green", "bash tests/notes/vllm-runbook.sh => T3 red with exactly the six D4 flags (top-level serveArgs read yields []) per the ledger; T1/T2/T4/T5 ok", "pytest charts/llama-swap/tests => pass (415/9/0 — llama-swap: block byte-untouched)", "bash tests/pipeline-models/surface.sh M1-M7 => pass (7 ok)", "bash tests/services/vllm-dashboards.sh => pass (5 ok, t3 LIVE)", "npx aislop ci --changes => pass (0/0/0, 70 files)", "AC1 greps => pass (zero bjw-s.common hits regex + fixed-string; deps exactly [app-template 5.0.1] in Chart.yaml and Chart.lock; templates/common.yaml absent)", "CI-recipe extract-subtree + -f render on the new block shape => pass (workflow unchanged)"],
+          "deviations": "(1) four oracle legs instead of three (additive CI-leg evidence, no scope change); (2) first Chart.yaml comment draft said 'bjw-s common' (space) which the AC1 regex needle 'bjw-s.common' matches — caught by own verification, reworded to 'the common chart'",
+          "friction": "AC1 grep needle is a regex and bites comment prose (deviation 2); helm install --dry-run=client fails in this workspace on cluster RBAC (PVC get forbidden, pre-existing environmental) — NOTES grounded via lint render + both-release-name renders + the byte-identical llama-swap idiom instead",
+          "open_questions": "runbook old-shape key-location wording flagged for the rework commit (NOT edited per the chunk): .agents/notes/vllm-on-target-acceptance.md L99 (rocrVisibleDevices location), L292 (step-5.2 'charts/vllm/values.yaml serveArgs' GIT-values line), L438 (monitoring.annotations gate reference) — the keys moved one level down under app-template:",
+          "next_suggested": "route the by-name re-pin ledger to the C07 test session (chunk Tests section + this entry), then dev re-run (expect 27/27 + runbook T1-T5), then agent-review, then coord commits the C07 set + the three flagged runbook lines"
+        },
+        {
+          "role": "test",
+          "round": "repins-1",
+          "session": "ses_e4e79f669ffeDDkcubMJ5lAgAn (fresh agent-test)",
+          "status": "DONE",
+          "files_changed": ["charts/vllm/tests/test_contract.py (6 arms re-pinned per the ledger)", "charts/vllm/tests/test_render.py (modelPath lookup subtree; the vacuous env read restored to a live read)", "charts/vllm/tests/test_trio.py (both overrides read from block[app-template])", "tests/notes/vllm-runbook.sh (T3 serveArgs read to the app-template subtree)"],
+          "commands_run": ["pytest pre-re-pin baseline => 7 failed / 20 passed / 0 skipped (ledger reproduced exactly; gate-off old-path values captured 'true'/'8000')", "runbook T3 pre-pin => red with exactly the six D4 flags, all other T3 reads green (layout-free reads verified)", "10 mutation/drift probes (in /tmp/opencode/cf105-c07-test, cleaned) => each re-pinned arm bites on a wrong implementation, restored green", "pytest charts/vllm/tests -v => pass (27 passed, 0 skipped)", "bash tests/notes/vllm-runbook.sh => pass (T1-T5 5 ok)", "pytest charts/llama-swap/tests => pass (415 / 9 skipped / 0 failed)", "bash tests/pipeline-models/surface.sh M1-M7 => pass (7 ok)", "bash tests/services/vllm-dashboards.sh => pass (5 ok, t3 LIVE)", "npx aislop ci --changes => pass (0/0/0, 70 files)"],
+          "deviations": "one precision edit beyond the ledger letter: the gate-OFF assert message now names the live app-template.monitoring.annotations=false path (it named the dead old path); the bar itself is unchanged",
+          "friction": "none — all 10 re-pins mechanical, first pass; pre-verified every assert of every arm (C03 lesson), no hidden co-reds",
+          "open_questions": "none",
+          "next_suggested": "launch C07 agent-review (re-runs the full battery first; AC1-6 + the render-equivalence diff adjudication), then coord commits the C07 set incl. the three flagged runbook doc lines from the dev handoff (L99, L292, L438)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e4e68cdaaffe9zi6Tkj840ZDH4",
+          "verdict": "APPROVED",
+          "summary": "full battery fresh (vllm 27/0 skipped; llama-swap 415/9/0; surface M1-M7 7 ok; dashboards 5 ok t3 LIVE; runbook T1-T5; lint 0 failed; 4-leg renders 0 sentinels, service-level == chart-defaults; aislop 0/0/0). AC1 idiom match side-by-side (deps exactly [app-template 5.0.1] in Chart.yaml + Chart.lock, common.yaml absent, zero bjw-s.common non-test, cachePvcSize parent-only, sibling trailing-slash URL, service block nesting equals the llama-swap:/langflow: idiom). AC2 render equivalence independently re-derived from git (scratch worktree @ spec commit re-rendered: 4/4 legs BYTE-IDENTICAL to the dev oracle — provenance verified; post-rework diff = only # Source comments + helm.sh/chart flip + version label drop, all spec-critical pod/Service/PVC fields byte-identical). Metadata diff adjudicated the accepted idiom form (fresh llama-swap render carries the exact same label shape; scrape targeting is annotation-driven and pod annotations are byte-identical; the C03 peer URL's Service name/port untouched). Test-session gate-OFF message deviation strictness-neutral (bar byte-unchanged, both --set paths re-probed). 4 teeth probes confirm the re-pinned arms bite. Trio greps: gpu-ai 10 hits, proxy-local/custom-values/services-gpu empty (scope law holds).",
+          "carry": "the three dev-flagged stale runbook key-location lines (rocrVisibleDevices ~L99, serveArgs ~L292, monitoring.annotations ~L438) verified stale — fixed by a follow-up doc-only dev session (ses_e4e61db86ffeg322bHjT2Cro6U: wording-only, 3 hunks, line count unchanged at 552, T1-T5 + aislop re-verified green) and folded into this commit per the chunk's flag-instead-of-edit rule.",
+          "next_suggested": "coord commits the C07 set; mark C07 done; post the card comment (rework complete, branch back with the owner for re-review — card stays in Review); the plan record stands: plan_status complete, C01-C07 all done/APPROVED"
+        }
+      ]
     }
   },
   "handoffs": [

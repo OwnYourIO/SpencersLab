@@ -42,11 +42,13 @@ def test_ac2_serve_args_are_the_d4_recipe_verbatim():
     docs, _ = _service_render()
     container = V.main_container(V.deployment(docs))
     block = V.service_vllm_block()
-    assert "modelPath" in block, (
-        "C02 AC2: the service vllm: block carries no modelPath (the --model splice source — "
-        "pinned to the actual q4 GGUF path on the PVC, C02 task)"
+    sub = block.get("app-template")
+    assert isinstance(sub, dict) and "modelPath" in sub, (
+        "C07 AC2: the service vllm: block must carry modelPath under its app-template: subtree "
+        "(the repo app-template idiom — the --model splice source, pinned to the actual q4 GGUF "
+        "path on the PVC, C02 task)"
     )
-    model_path = block["modelPath"]
+    model_path = sub["modelPath"]
     V.assert_model_path_shape(model_path, "service values")
     got = V.flag_pairs(container.get("args", []))
     want = V.expected_recipe(model_path)
@@ -63,8 +65,19 @@ def test_ac2_container_env_is_exactly_the_contract_set():
     --enable-sleep-mode (Post Research V5)."""
     docs, _ = _service_render()
     env = V.env_map(V.main_container(V.deployment(docs)))
+    block = V.service_vllm_block()
+    sub = block.get("app-template")
+    # Hard read (no .get default): the C02 top-level key is dead on the C07
+    # block shape, and a fallback to a default that happens to equal the
+    # rendered value would make the want-set a test-internal constant — the
+    # service-coupling of the assert (rendered env follows the operator
+    # re-pin surface) is what this arm pins.
+    assert isinstance(sub, dict) and "rocrVisibleDevices" in sub, (
+        "C07 AC2: the service vllm: block must carry rocrVisibleDevices under its app-template: "
+        "subtree (the chip-targeting values key, D2)"
+    )
     want = {
-        "ROCR_VISIBLE_DEVICES": str(V.service_vllm_block().get("rocrVisibleDevices", "0")),
+        "ROCR_VISIBLE_DEVICES": str(sub["rocrVisibleDevices"]),
         "TRITON_CACHE_DIR": "/data/triton",
         "HUGGINGFACE_HUB_CACHE": "/data/hf",
         "VLLM_SERVER_DEV_MODE": "1",
