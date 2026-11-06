@@ -375,6 +375,11 @@
         "one workflow file, two event-gated jobs — the owner's 'combine them' ruling; nothing else references the old filenames."
       ],
       "record": "plan user action 8 now names 5 secrets + 1 variable; C06 row + amendment bullet + chunks/C06.md round-3 appendix amended (dev session, read-back verified)."
+    },
+    "owner_review_round4": {
+      "at": "2026-11-06",
+      "ruling": "After round-3.5 deliberation (the owner had started to drop the import), the owner re-kept the album import: 'I see the value in the album import. It should be on it's own job, with a schedule to run and create a PR if there are changes at midnight.' The round-3 pipeline.yml shape (sync job = schedule+dispatch-gated import with PR-on-change; deploy job = push/PR-gated build+ship; IMMICH_URL repo variable) is UNCHANGED except the import cron: 05:17 UTC -> 06:00 UTC = the owner's local Denver midnight (zone confirmed when asked; Forgejo cron is UTC, no DST — exact midnight Nov–Mar/MST, 11 PM Apr–Oct/MDT). Deploy job, sync-albums.yaml, and the variable untouched.",
+      "record": "pipeline.yml (owner checkout, uncommitted) cron line + cadence comment; plan amendment bullet (round 4); chunks/C06.md schedule-ruling note."
     }
   },
   "deferred": [
