@@ -3,9 +3,9 @@
 # Reviewer notes:
 # - Cadence is DAILY (cron 17 5 * * * UTC = 05:17 UTC, about 23:17 MDT
 #   overnight; off-the-hour :17 dodges the scheduler hotspots). One missed
-#   schedule means one stale day and there is no catch-up: the
-#   forgejo-run-watchdog (chunk C05) is the compensating control, and
-#   workflow_dispatch (albums / force inputs) is the manual override.
+#   schedule means one stale day and there is no catch-up or standing
+#   schedule watchdog: coverage is the commit history + Immich webhooks,
+#   and workflow_dispatch (albums / force inputs) is the manual override.
 # - Where a target page's authored gallery calls would not include the
 #   synced files, the sync tool extends that page with ONE machine-marked
 #   gallery call of its own (owner N2; idempotent, authored content is
@@ -15,8 +15,9 @@
 #   branch is an ephemeral single-commit batch and the documented
 #   force-push exemption (owner answer 4), never a human branch. One open
 #   PR per batch: the tool creates-or-updates on head=immich-sync.
-# - Secrets are seeded from Bitwarden by the forgejo-secret-seed CronJob
-#   (chunk C04); this file references their NAMES only.
+# - The repo secrets are seeded one-shot, manually, from the hugo-build-*
+#   Bitwarden items into the repo settings on Forgejo; this file references
+#   their NAMES only.
 name: sync
 
 on:

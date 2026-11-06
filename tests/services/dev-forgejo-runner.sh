@@ -21,27 +21,21 @@
 # sentinel leg) are unchanged; the dev-deployed-slice legs (t5/t7-t10) assert
 # the single aliased app.
 #
-# EXTENDED 2026-11-01 by ticket 2026-10-cf-11-feat-immich-hugo-pipeline C03
-# to the TWO-RELEASE dev contract (host-backend mode + the
-# forgejo-runner-dev-host validation release; gpu prod = card #88, NOT here).
-# Leg map (chunks/C03.md Tests -> script legs):
-#   chunk t1-t4 chart legs UNCHANGED            -> script t1-t4
-#   chunk t5 dev umbrella both releases         -> script t5 (static),
-#                                                  t9 (umbrella render),
-#                                                  t10 (base ground-truth)
-#   chunk t6 host release render                -> script t11 (NEW)
-#   chunk t7 client-only both releases          -> script t2/t5/t7/t9 + t11
-#   chunk t8 sentinel parity incl. new slot     -> script t7/t8
-#   chunk t9 infra-forgejo regression           -> script t12 (NEW)
-#   (script t6 is the predecessor's doc-port leg, kept untouched — the
-#   fusion precedent keeps ONE script as the dev runner-fleet contract.)
-# The dind tag literal in t2 was synced to the live main pin (29.9.2-dind,
-# renovate bump) by the ticket test session 2026-11-01 — the fleet contract
-# had drifted red on it (the pin guards byte-identity of the docker render;
-# an unsynced literal would have frozen an outdated value into C03 AC2).
+# Contract source: chunks/C01.md Tests list (t1-t10) + cf-97 C02's wording
+# leg (t11) + C04's mergePolicy leg (t12) + C05's socket-group leg (t13) +
+# C06's identity pin (same leg, extended in place) + cf-104 C04's LFS-
+# capability record (t14, written BEFORE the pinned-red t5 because the harness
+# stops at the first failing leg and an appended leg would never run) — ONE
+# script stays the runner contract (predecessor ruling, DECISIONS.md).
 #
-# Contract source: chunks/C01.md Tests list (t1-t10) + chunks/C03.md Tests
-# (t1-t9) — ONE script stays the runner contract (predecessor ruling).
+# C01/C03 acceptance is cluster-only — no leg here can assert it (the vault
+# and the live pod are out-of-repo, and list/event MCP shapes come back
+# empty for agent sessions): the evidence shape is exact-name readonly-dev-
+# kubernetes reads — resources_get StatefulSet + ExternalSecret
+# dev-forgejo-runner-dev, pods_get + pods_log(container runner) pod
+# dev-forgejo-runner-dev-0 — gated on the bounce-window oracle: pod startTime
+# vs the reported C01 write time plus the 1h refreshInterval separates "not
+# synced yet" from "will never sync".
 #
 # The chart is rendered from a COPY under /tmp/opencode after
 # `helm dependency update` there (repo convention: charts/**/charts is
@@ -97,10 +91,8 @@ SUPP_PTR="> DinD supplement (run 1, ported 2026-10-23): RESEARCH-dind-supplement
 # rendered ExternalSecret to that release's --set item.
 TEST_UUID_DEV="00000000-0000-0000-0000-000000000000"
 TEST_UUID_INFRA="00000000-0000-0000-0000-000000000001"
-TEST_UUID_HOST="00000000-0000-0000-0000-000000000002"
 RELEASE_DEV="dev-forgejo-runner-dev"
 RELEASE_INFRA="dev-forgejo-runner-infra"
-RELEASE_HOST="forgejo-runner-dev-host"
 
 checks=0
 
@@ -258,13 +250,16 @@ def bad(msg):
     sys.exit(1)
 
 # GitHub-parity act-image label set (conflict ruling 3) — the exact set the
-# single connection must advertise.
+# single connection must advertise. The node22 entry carries the act family
+# deliberately: the node:22-bookworm image ships no git-lfs, and job images
+# are not renovate-tracked, so bumps are manual + red-first here (the t2 stop
+# until charts/forgejo-runner matches).
 ACT_LABELS = {
     'ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
     'ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
     'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
     'docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-    'node22:docker://docker.io/library/node:22-bookworm',
+    'node22:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
 }
 # Chart default runner.url — the standalone-render stand-in; the per-app
 # top-level slices override it at deploy time.
@@ -311,8 +306,11 @@ try:
         dind = next((c for c in ics if (c or {}).get('name') == 'dind'), None)
         if dind is None:
             bad(f't2: {release} — no initContainer named dind (the DinD sidecar is missing)')
+        # values.yaml's renovate-tracked tag is the authority (RESEARCH
+        # contradiction 5) — a values-only bump must resurface here as
+        # contract drift, not ride silently past the suite.
         if dind.get('image') != 'docker:29.9.2-dind':
-            bad(f't2: {release} — dind image is {dind.get("image")!r}, expected docker:29.9.2-dind (the live main pin; synced 2026-11-01 with the renovate bump — this literal guards the docker render staying byte-identical)')
+            bad(f't2: {release} — dind image is {dind.get("image")!r}, expected docker:29.9.2-dind')
         if dind.get('restartPolicy') != 'Always':
             bad(f't2: {release} — dind restartPolicy is {dind.get("restartPolicy")!r}, expected Always (sidecar semantics — without it the pod dies when dockerd exits)')
         if ((dind.get('securityContext') or {}).get('privileged')) is not True:
@@ -614,6 +612,133 @@ else
     fi
   fi
 fi
+# --- t14: cf-104 C04 LFS-capability record beside the labels map (red-first) -
+# Job images are not renovate-tracked and their git-lfs comes from the act
+# images' upstream installer, so nothing in a render proves a job can run
+# `git lfs`: the record next to the labels map is the only repo-visible
+# statement of it (plus t2 for the map itself). This leg asserts the RECORD
+# only — the labels map stays t2's (ACT_LABELS), and the dev trio-exemption
+# comment window stays t5's (widening that window is the false-positive class
+# this suite already carries), so neither is re-checked here.
+if python3 - "$RUNNER/templates/secret-runner.yaml" "$WORK/t14-count" <<'PY'
+import re, sys
+
+tpl, count_file = sys.argv[1:3]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+# The shipped caveat wraps across comment lines, so every pattern runs on the
+# whitespace-collapsed record, never on raw lines (t11's precedent).
+def collapse(parts):
+    return ' '.join(' '.join(parts).split())
+
+def strip_marker(line):
+    return re.sub(r'^\s*#\s?', '', line)
+
+def near(text, a, b, window=200):
+    # True if some match of `a` has a match of `b` within `window` chars.
+    ar, br = re.compile(a, re.I), re.compile(b, re.I)
+    for m in ar.finditer(text):
+        lo = max(0, m.start() - window)
+        if br.search(text[lo:m.end() + window]):
+            return True
+    return False
+
+try:
+    with open(tpl) as f:
+        lines = f.read().splitlines()
+    labels_idx = next((i for i, l in enumerate(lines) if re.match(r'^\s*labels:\s*$', l)), None)
+    if labels_idx is None:
+        bad(f't14: no `labels:` key in {tpl} — the record is pinned beside the labels map; re-derive the leg if the config moved')
+
+    block = []
+    i = labels_idx - 1
+    while i >= 0:
+        s = lines[i].strip()
+        if s.startswith('#'):
+            block.insert(0, strip_marker(lines[i]))
+        elif s:
+            break
+        i -= 1
+    j = labels_idx + 1
+    while j < len(lines):
+        s = lines[j].strip()
+        if s.startswith('#'):
+            block.append(strip_marker(lines[j]))
+        elif s.startswith('-') and 'docker://' in s:
+            pass
+        elif not s:
+            pass
+        else:
+            break
+        j += 1
+    if not block:
+        bad(f't14: {tpl} has no comment beside the labels map — the five labels are only provably LFS-capable if the map documents what its images ship (cf-104 C04)')
+    record = collapse(block)
+
+    if 'sha256:' in record:
+        bad(f't14: the record embeds an image digest ({record[record.index("sha256:"):][:40]}…) — the act tags are rolling, so a digest here goes stale silently; the verified digests live in the ticket EXPLORE note, not in the chart')
+    ok('t14: a comment block sits beside the labels map and carries no pinned digest (rolling tags go stale silently)')
+
+    if not re.search(r'git[\s-]*lfs', record, re.I):
+        bad('t14: the record never names git-lfs — the fact being recorded is that the job images can run `git lfs` (EXPLORE R2b; the node22 swap to act-24.04 is the change)')
+    if not near(record, r'label', r'git[\s-]*lfs'):
+        bad('t14: git-lfs is not tied to the label set — the record has to say that every advertised label maps to an image carrying git-lfs, not just that LFS exists somewhere')
+    ok('t14: the record states that the label set maps to git-lfs-bearing images')
+
+    if not (re.search(r'installer|act\.sh', record, re.I)
+            and re.search(r'\bpin|verif|not (?:the|from) the tag|in-job|image build', record, re.I)):
+        bad('t14: no installer-pin caveat — the act images get git-lfs from the upstream installer (act.sh), NOT from the tagged build, so the tag alone does not prove LFS presence; the plan verifies it in-job (V6)')
+    ok('t14: the git-lfs install is recorded as installer-pinned (act.sh), not implied by the tag')
+
+    # Window-based, not one fixed phrase: the fact ships as "Node 20/24",
+    # "Node 20 and 24", "Node in act-24.04 is 20/24" — all record it.
+    node_versions_ok = False
+    for m in re.finditer(r'\bnode\b', record, re.I):
+        window = record[max(0, m.start() - 60):m.end() + 80]
+        if re.search(r'\b20\b', window) and re.search(r'\b24\b', window):
+            node_versions_ok = True
+            break
+    if not node_versions_ok:
+        bad('t14: the record omits the Node versions act-24.04 actually ships (20/24) — that is the fact that makes the node22 label name misleading')
+    ok('t14: act-24.04 records Node 20/24')
+
+    for m in re.finditer(r'node[\s-]*22', record, re.I):
+        window = record[max(0, m.start() - 160):m.end() + 160]
+        if not re.search(r'slot|label name|name,?\s*(?:not|but)|no longer|guarantee|misnomer|despite', window, re.I):
+            bad(f't14: node22 is mentioned without stating it is a slot name, not a Node-22 guarantee: …{window}… (Q14 answer: the guarantee is dropped, and a reader must not re-add it or file the label as a bug)')
+    ok('t14: node22 is recorded as a label/slot name, not a Node-22 guarantee (Q14)')
+
+    if not near(record, r'daemon', r'\b(?:no|not|never|without)\b[^.;]{0,60}git[\s-]*lfs|git[\s-]*lfs[^.;]{0,60}\b(?:no|not|never|without)\b', 160):
+        bad('t14: the record does not state that the runner DAEMON image needs no git-lfs — otherwise a reader "fixes" the daemon image too, which changes nothing (EXPLORE R2a)')
+    ok('t14: the daemon image is recorded as needing no git-lfs (only job images run git lfs)')
+
+    if not near(record, r'clone|checkout', r'https|url', 160):
+        bad('t14: the record does not say the runner clones over HTTPS from the connection url — that is why job LFS depends on the instance, not on the job image')
+    if not near(record, r'lfs', r'iff|only if|only while|works only|depends|requires|serves|enabled', 200):
+        bad('t14: the record does not record the coupling: LFS inside a job works only while the Forgejo instance serves an [lfs] store (EXPLORE R2) — otherwise a job LFS failure reads as a runner bug')
+    ok('t14: the HTTPS clone + instance-serves-[lfs] coupling is recorded')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't14: the wording checks could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+then
+  checks=$((checks + $(cat "$WORK/t14-count")))
+else
+  exit 1
+fi
 # --- t5: chart sentinel + aliased charts entries + top-level slices --------
 if python3 - "$RUNNER/values.yaml" "$DEV_VALUES" "$WORK/t5-count" <<'PY'
 import re, sys, yaml
@@ -634,10 +759,9 @@ SENTINEL = 'OVERRIDE_VIA_CUSTOM_VALUES'
 # Deployed slice (amended 2026-10-25, user decision): dev aliases the chart
 # once. UNWIRED_KEY must be absent from services/dev — its standalone render
 # (t2/t3) is chart-capability proof, not a deployed state.
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-dev-host')
+APP_KEYS = ('forgejo-runner-dev',)
 UNWIRED_KEY = 'forgejo-runner-infra'
-URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000',
-        'forgejo-runner-dev-host': 'http://dev-forgejo-http:3000'}
+URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000'}
 
 def load(path):
     # REDEFINED anchors are legal YAML (helm/Go accept them; PyYAML raises
@@ -677,7 +801,7 @@ try:
             bad(f't5: {dev_vals} charts.{key}.namespace is {e.get("namespace")!r}, expected default')
         if str(e.get('ServerSideApply')) != 'false':
             bad(f't5: {dev_vals} charts.{key}.ServerSideApply is {e.get("ServerSideApply")!r}, expected "false"')
-    ok(f't5: dev values carry {"/".join("charts." + k for k in APP_KEYS)} entries (chart: forgejo-runner, namespace default, ServerSideApply "false") and no charts.forgejo-runner or charts.{UNWIRED_KEY}')
+    ok('t5: dev values carry charts.forgejo-runner-dev (chart: forgejo-runner, namespace default, ServerSideApply "false") and no charts.forgejo-runner or charts.forgejo-runner-infra')
 
     for key in APP_KEYS:
         sl = sv.get(key)
@@ -688,55 +812,7 @@ try:
             bad(f't5: the top-level {key} slice has runner.url {url!r}, expected {URLS[key]!r} (load-bearing: the only place the per-app URL flows)')
     if UNWIRED_KEY in sv:
         bad(f't5: {dev_vals} still has the top-level {UNWIRED_KEY}: slice — with no charts.{UNWIRED_KEY} entry it would ride the merged values to no Application (un-wired 2026-10-25)')
-    ok('t5: both top-level slices carry the dev in-cluster URL http://dev-forgejo-http:3000 and no infra slice remains')
-
-    # C03 host-release slice (the dev validation release). The IMAGE
-    # placement is checked leniently — the chunk documents the chart-level
-    # runner.image* fallback if the appset merge cannot flow the nested
-    # app-template override ("dev decides + records"); the composed render
-    # (t11) is the load-bearing proof. The VCT size has no documented
-    # fallback path, so it is pinned where the chunk pins it.
-    host_slice = sv.get('forgejo-runner-dev-host') or {}
-    hr = host_slice.get('runner') or {}
-    if hr.get('backend') != 'host':
-        bad(f"t5: the forgejo-runner-dev-host slice has runner.backend {hr.get('backend')!r}, expected host (the mode toggle — everything backend-conditional keys off it)")
-    if hr.get('labels') != ['cf-host:host']:
-        bad(f"t5: the dev-host slice runner.labels is {hr.get('labels')!r}, expected ['cf-host:host'] — the SAME label the gpu prod runner (card #88) will carry so site workflows' runs-on never changes")
-    dumped = yaml.safe_dump(host_slice)
-    for needle, why in (
-        ('ghcr.io/ownyourio/forgejo-host-runner', 'the C02 image (AC5)'),
-        ('main', ':main tag until CI publishes a :v<run> pin (image-tag rule)'),
-        ('Always', 'pullPolicy: Always with the rolling :main tag'),
-    ):
-        if needle not in dumped:
-            bad(f't5: the dev-host slice does not pin {needle!r} ({why})')
-    vcts = ((host_slice.get('app-template') or {}).get('controllers') or {}).get('runner', {}).get('statefulset', {}).get('volumeClaimTemplates') or []
-    data_vct = next((v for v in vcts if isinstance(v, dict) and v.get('name') == 'data'), None)
-    if not data_vct or data_vct.get('size') != '20Gi' or data_vct.get('storageClass') != 'local-path':
-        bad(f't5: the dev-host slice must override the data VCT to 20Gi local-path (workdir + LFS checkouts + hugo cache + sync state), got {data_vct!r}')
-
-    dev_slice = sv.get('forgejo-runner-dev') or {}
-    dr = dev_slice.get('runner') or {}
-    if dr.get('backend') not in (None, 'docker'):
-        bad(f"t5: the forgejo-runner-dev (DinD) slice sets runner.backend {dr.get('backend')!r} — the live dev release must stay on the docker default (AC2 regression)")
-
-    cv = load(chart_vals)
-    runner_vals = cv.get('runner') or {}
-    if runner_vals.get('backend') != 'docker':
-        bad(f"t5: {chart_vals} runner.backend default is {runner_vals.get('backend')!r}, expected docker (the toggle's safe side — pre-change renders must not flip mode)")
-    ACT = {
-        'ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-        'ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-        'ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04',
-        'docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04',
-        'node22:docker://docker.io/library/node:22-bookworm',
-    }
-    if set(runner_vals.get('labels') or []) != ACT:
-        bad(f't5: {chart_vals} runner.labels default must be the 5-label act set moved from the template (the docker render stays byte-identical); got {runner_vals.get("labels")!r}')
-    stock = ((cv.get('app-template') or {}).get('controllers') or {}).get('runner', {}).get('containers', {}).get('runner', {}).get('image') or {}
-    if stock.get('repository') != 'data.forgejo.org/forgejo/runner' or stock.get('tag') != '13.2.0':
-        bad(f't5: the chart-default runner image must stay stock data.forgejo.org/forgejo/runner:13.2.0 (host releases override in their slice), got {stock!r}')
-    ok('t5: dev-host slice = host mode + cf-host:host label + forgejo-host-runner:main@Always + 20Gi data VCT; dev slice and chart defaults stay stock docker')
+    ok('t5: the top-level slice carries the dev in-cluster URL http://dev-forgejo-http:3000 and no infra slice remains')
 
     # The client-only rationale must be documented adjacent to the aliased
     # entry, or the next reader assumes the missing ingress leg is an
@@ -779,17 +855,17 @@ try:
     block_text = '\n'.join(comments)
     if not any(re.search(r'ingress|proxy', c, re.IGNORECASE) for c in comments):
         bad(f't5: the aliased charts entry has no comment explaining the deliberately missing ingress/proxy leg (client-only service)')
-    # Two client-only runners since C03 (this ticket): BOTH deployed release
-    # names must appear in the rationale comment, and the un-wired infra
-    # instance must still read as relocation-pending so its absence is never
-    # re-filed as an oversight.
-    if not re.search(r'forgejo-runner-dev\b', block_text):
-        bad('t5: the client-only comment does not name forgejo-runner-dev')
-    if 'forgejo-runner-dev-host' not in block_text:
-        bad('t5: the client-only comment does not name forgejo-runner-dev-host (C03 adds it — a reader must see both dial out)')
+    # Single client-only runner since 2026-10-25 (user decision): the old
+    # wording claiming BOTH dial out must fail, the deployed one must be
+    # named, and the un-wired infra instance must read as relocation-pending
+    # so its absence is never re-filed as an oversight.
+    if re.search(r'\bboth\b', block_text, re.IGNORECASE):
+        bad('t5: the trio-exemption comment still claims BOTH runners dial out — dev deploys forgejo-runner-dev only since 2026-10-25')
+    if not re.search(r'forgejo-runner-dev', block_text):
+        bad('t5: the trio-exemption comment does not name the single deployed runner (forgejo-runner-dev)')
     if not (re.search(r'infra', block_text, re.IGNORECASE) and re.search(r'relocat|pending', block_text, re.IGNORECASE)):
         bad('t5: the trio-exemption comment does not record the infra runner as un-wired with relocation pending (user decision 2026-10-25)')
-    ok('t5: the aliased entries carry the client-only comment naming both dev releases (infra relocation pending noted; still no ingress entry)')
+    ok('t5: the aliased entry carries the client-only comment for the single runner (infra relocation pending noted; still no ingress entry)')
 
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -854,7 +930,7 @@ def bad(msg):
 
 SENTINEL = 'OVERRIDE_VIA_CUSTOM_VALUES'
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-dev-host')
+APP_KEYS = ('forgejo-runner-dev',)
 UNWIRED_KEY = 'forgejo-runner-infra'
 
 def load(path):
@@ -883,23 +959,6 @@ try:
         bad(f't7: {dev_cv} still wires {UNWIRED_KEY} ({(cv[UNWIRED_KEY] or {}).get("bitwardenIds")}) — dev no longer deploys the infra runner (user decision 2026-10-25: relocation pending); the vault item stays, the dev slot must not')
     if 'forgejo-runner' in cv:
         bad(f't7: {dev_cv} still has the old top-level forgejo-runner: block (the per-app blocks replace it — it would keep riding the values of the app the appset prunes)')
-    # C03's new slot must document its Bitwarden item IN the slot block —
-    # the OVERRIDE_NEEDED state is a user action (plan user-action 2: item
-    # dev-forgejo-host-runner, username=uuid password=registration token),
-    # and an undocumented placeholder never gets filled.
-    with open(dev_cv) as f:
-        cv_lines = f.read().splitlines()
-    start = next((i for i, l in enumerate(cv_lines) if re.match(r'^forgejo-runner-dev-host:\s*$', l)), None)
-    if start is None:
-        bad(f't7: {dev_cv} has no top-level forgejo-runner-dev-host: block (the host release would have no Bitwarden item to sync)')
-    block = []
-    for l in cv_lines[start + 1:]:
-        if l.strip() and not l.startswith((' ', '\t')):
-            break
-        block.append(l)
-    if not re.search(r'dev-forgejo-host-runner', '\n'.join(block)):
-        bad('t7: the forgejo-runner-dev-host slot block does not name its Bitwarden item (dev-forgejo-host-runner) — the must-fill is undocumented')
-    ok('t7: the dev-host slot exists and its block names the dev-forgejo-host-runner item to create')
     ok(f't7: {dev_cv} no longer carries the old top-level forgejo-runner: block or the un-wired {UNWIRED_KEY}: block')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
@@ -932,7 +991,7 @@ def bad(msg):
 
 SENTINEL = 'OVERRIDE_VIA_CUSTOM_VALUES'
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-dev-host')
+APP_KEYS = ('forgejo-runner-dev',)
 UNWIRED_KEY = 'forgejo-runner-infra'
 
 def load(path):
@@ -963,7 +1022,7 @@ try:
             bad(f't8: {dev_cv} {key}.runner-token still carries the service sentinel {SENTINEL} — parity requires a real UUID or OVERRIDE_NEEDED')
         elif not (v == 'OVERRIDE_NEEDED' or (isinstance(v, str) and UUID_RE.match(v))):
             bad(f't8: {dev_cv} {key}.runner-token is {v!r} — not a UUID and not the documented OVERRIDE_NEEDED placeholder')
-    ok('t8: sentinel parity — the single chart sentinel resolves once per install and matches exactly each deployed custom-values slot (UUID or OVERRIDE_NEEDED, never the service sentinel); the infra app stays un-wired pending relocation')
+    ok('t8: sentinel parity 1<->1 — the single chart sentinel matches exactly the one deployed custom-values slot (UUID or OVERRIDE_NEEDED, never the service sentinel); the infra app stays un-wired pending relocation')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
@@ -1009,10 +1068,9 @@ def bad(msg):
     sys.exit(1)
 
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-dev-host')
+APP_KEYS = ('forgejo-runner-dev',)
 UNWIRED_KEY = 'forgejo-runner-infra'
-URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000',
-        'forgejo-runner-dev-host': 'http://dev-forgejo-http:3000'}
+URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000'}
 
 def load(path):
     # Same lenient anchor handling as the other loaders (see t5).
@@ -1050,21 +1108,15 @@ try:
         bad('t9: the dev-appset values blob still has a charts.forgejo-runner entry (it must be replaced by the aliased entry — the old app would not be pruned)')
     if UNWIRED_KEY in charts:
         bad(f't9: the dev-appset values blob still has charts.{UNWIRED_KEY} — ArgoCD would deploy a second runner against the un-wired slot (user decision 2026-10-25: dev deploys runner-dev only)')
-    ok('t9: dev-appset values blob carries charts entries for BOTH dev runner releases (chart: forgejo-runner) and no charts.forgejo-runner or charts.forgejo-runner-infra')
+    ok('t9: dev-appset values blob carries charts.forgejo-runner-dev (chart: forgejo-runner) and no charts.forgejo-runner or charts.forgejo-runner-infra')
 
     for key in APP_KEYS:
         got = ((vals.get(key) or {}).get('runner') or {}).get('url')
         if got != URLS[key]:
             bad(f't9: the dev-appset values blob has no top-level {key} slice with runner.url {URLS[key]!r} (got {got!r} — the per-app URL slice is missing or wrong)')
-        r = ((vals.get(key) or {}).get('runner') or {})
-        if key.endswith('-host'):
-            if r.get('backend') != 'host' or r.get('labels') != ['cf-host:host']:
-                bad(f't9: the {key} blob has runner {r!r} — expected backend host + labels [cf-host:host] flowing through the appset merge (the mode is load-bearing for the render, not just the static file)')
-        elif r.get('backend') not in (None, 'docker'):
-            bad(f't9: the {key} (DinD) blob sets runner.backend {r.get("backend")!r} — the live dev release must keep the docker default')
     if UNWIRED_KEY in vals:
         bad(f't9: the dev-appset values blob still has a top-level {UNWIRED_KEY} slice (un-wired 2026-10-25)')
-    ok('t9: dev-appset values blob carries both top-level runner slices with the dev in-cluster URL, host mode + cf-host:host only on the host release, no infra slice')
+    ok('t9: dev-appset values blob carries the top-level forgejo-runner-dev slice with the dev in-cluster URL, no infra slice')
 
     # "Resolved" = equal to what custom-values/dev carries for that app key —
     # the test asserts the flow, never the UUID value itself.
@@ -1075,7 +1127,7 @@ try:
             bad(f't9: the dev-appset values blob has {key}.bitwardenIds.runner-token {got!r}, expected the custom-values value {want!r}')
         if got != 'OVERRIDE_NEEDED' and not (isinstance(got, str) and UUID_RE.match(got)):
             bad(f't9: the dev-appset values blob {key}.bitwardenIds.runner-token {got!r} is not a resolved UUID (and not the documented OVERRIDE_NEEDED placeholder)')
-    ok('t9: dev-appset values blob carries a resolved (UUID or documented OVERRIDE_NEEDED) runner-token under each app key')
+    ok('t9: dev-appset values blob carries the resolved dev runner-token UUID under its app key')
 
     subs = (vals.get('ingress') or {}).get('subdomains') or {}
     # Re-ruled by 2026/2026-10-feat-dev-mcp-fleet C01 AC5 (user ruling
@@ -1086,7 +1138,7 @@ try:
     base4 = {'coder', 'git', 'research', 'cluster'}
     if not base4 <= set(subs):
         bad(f't9: dev ingress.subdomains lost {sorted(base4 - set(subs))} — expected at least coder/git/research/cluster')
-    runners = sorted(set(subs) & {'forgejo-runner-dev', 'forgejo-runner-dev-host', 'forgejo-runner-infra'})
+    runners = sorted(set(subs) & {'forgejo-runner-dev', 'forgejo-runner-infra'})
     if runners:
         bad(f't9: dev ingress.subdomains carries runner entries {runners} — the runners are client-only, so they get NO ingress entry')
     unapproved = sorted(set(subs) - (base4 | {'searxng'}))
@@ -1178,10 +1230,9 @@ def bad(msg):
     sys.exit(1)
 
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-APP_KEYS = ('forgejo-runner-dev', 'forgejo-runner-dev-host')
+APP_KEYS = ('forgejo-runner-dev',)
 UNWIRED_KEY = 'forgejo-runner-infra'
-URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000',
-        'forgejo-runner-dev-host': 'http://dev-forgejo-http:3000'}
+URLS = {'forgejo-runner-dev': 'http://dev-forgejo-http:3000'}
 
 def load(path):
     # Same lenient anchor handling as the other loaders (see t5).
@@ -1212,7 +1263,7 @@ try:
         bad('t10: the generator still has an appName forgejo-runner element (the aliased entry replaces it — the old app would not be pruned)')
     if UNWIRED_KEY in by_app:
         bad(f't10: the generator still has an appName {UNWIRED_KEY} element (charts.{UNWIRED_KEY} was un-wired from services/dev — user decision 2026-10-25)')
-    ok('t10: generator elements include both dev runner releases (chart: forgejo-runner) and no plain forgejo-runner or forgejo-runner-infra element')
+    ok('t10: generator elements include forgejo-runner-dev (chart: forgejo-runner) and no plain forgejo-runner or forgejo-runner-infra element')
     for key in APP_KEYS:
         blob = by_app[key].get('values')
         if not isinstance(blob, dict):
@@ -1220,15 +1271,6 @@ try:
         got_url = ((blob.get('runner') or {}).get('url'))
         if got_url != URLS[key]:
             bad(f't10: element {key} values blob runner.url is {got_url!r}, expected {URLS[key]!r} — per-app values flow ONLY from the top-level {key}: slice (the appset merge), never from the charts: entry')
-        r = (blob.get('runner') or {})
-        if key.endswith('-host'):
-            if r.get('backend') != 'host' or r.get('labels') != ['cf-host:host']:
-                bad(f't10: element {key} blob carries runner {r!r} — host mode + cf-host:host must survive the merge (the render consumes exactly this blob)')
-            dump = yaml.safe_dump(blob)
-            if '20Gi' not in dump or 'ghcr.io/ownyourio/forgejo-host-runner' not in dump:
-                bad(f't10: element {key} blob lost the 20Gi data VCT or the forgejo-host-runner image override — the slice that carries them did not flow through (index $.Values $appName)')
-        elif r.get('backend') not in (None, 'docker'):
-            bad(f't10: element {key} (DinD) blob sets runner.backend {r.get("backend")!r} — the live dev release must keep the docker default')
         want = (((cv.get(key) or {}).get('bitwardenIds') or {}).get('runner-token'))
         got = ((blob.get('bitwardenIds') or {}).get('runner-token'))
         if got != want:
@@ -1250,56 +1292,166 @@ PY
   fi
 fi
 
-# --- t11: host-mode chart render (C03 chunk t6) --------------------------------
-# Renders the chart through the REAL dev-host top-level slice (extracted
-# from services/dev/prod/values.yaml and fed as -f), so the leg proves the
-# composed release, not a hand-copied values file: the slice is exactly what
-# the appset merge will flow at deploy time. Registry-skipped with the helm
-# ladder like t1-t3.
-if [ "$skip_helm" -eq 1 ]; then
-  skip "t11: host-mode render not run (no helm binary / registry unreachable)"
-elif [ ! -d "$RUNNER" ]; then
-  fail "t11: $RUNNER does not exist"
-else
-  host_slice_file="$WORK/host-slice.yaml"
-  if ! python3 - "$DEV_VALUES" "$host_slice_file" <<'PY'
-import re, sys, yaml
+# --- t11: cf-97 C02 wording truthfulness (red-first before the dev reword) --
+# The four misnomer sites of plan Verified facts (values.yaml bitwardenIds
+# block, secret-runner.yaml header, custom-values item comment, NOTES.txt
+# one-time-action block) must read as the runner token shown once at record
+# creation — the deprecated exchange-style registration flow is not what the
+# vault password holds (RESEARCH contradiction 2). Instance-admin scope is the
+# user ruling (B3 reaffirmed): the Admin -> Actions -> Runners path is
+# asserted as PRESENCE only, never as absence of the word "org". What must
+# NOT change is pinned by the render legs above (t2/t3 ESO-contract legs,
+# t5/t7-t10 trio/slice legs) — C02 is comments + NOTES text only, so raw
+# byte equality is deliberately not asserted (template comments ride the
+# helm output).
+if python3 - "$RUNNER/values.yaml" "$RUNNER/templates/secret-runner.yaml" \
+    "$RUNNER/templates/NOTES.txt" "$DEV_CV" "$WORK/t11-count" <<'PY'
+import re, sys
 
-dev_vals, out = sys.argv[1:3]
+chart_vals, secret_tpl, notes_txt, dev_cv, count_file = sys.argv[1:6]
+ok_n = 0
 
-def load(path):
-    # Same lenient anchor handling as the other loaders (see t5).
-    lines = []
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+# The shipped misnomer wraps across comment lines (custom-values splits
+# "registration"/"token" at 84/85), so every pattern below runs on the
+# whitespace-collapsed site block, never on raw lines.
+def collapse(parts):
+    return ' '.join(' '.join(parts).split())
+
+TOKEN_RE = re.compile(r'registration[\s-]+token', re.I)
+NEG_RE = re.compile(r'\b(?:not|never|deprecated|no longer)\b', re.I)
+MAPPING_OK_RE = re.compile(r'password\s*=\s*runner[\s-]+token', re.I)
+MAPPING_BAD_RE = re.compile(r'password\s*=\s*[^.;]{0,30}registration[\s-]+token', re.I)
+NEG_WINDOW = 100
+
+def excerpt(text, m):
+    return '…' + text[max(0, m.start() - 40):m.end() + 40] + '…'
+
+def stray_positive(text, label):
+    # AC2: any surviving mention of the deprecated flow must be explicitly
+    # negative — a not/never/deprecated cue within the preceding window.
+    for m in TOKEN_RE.finditer(text):
+        if not NEG_RE.search(text[max(0, m.start() - NEG_WINDOW):m.start()]):
+            bad(f't11: {label} — positive "registration token" mention: {excerpt(text, m)} '
+                '(only an explicitly negative reference is allowed — C02 AC2)')
+
+def strip_marker(line):
+    return re.sub(r'^\s*#\s?', '', line)
+
+def comment_block(path, block_re, label):
+    """Comment lines sitting directly above the runner-token key the block documents."""
+    with open(path) as f:
+        lines = f.read().splitlines()
+    start = next((i for i, l in enumerate(lines) if re.match(block_re, l)), None)
+    if start is None:
+        bad(f't11: {label} — no {block_re!r} block in {path} (the site moved; re-derive the leg)')
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        if lines[i].strip() and not lines[i].lstrip().startswith('#') and lines[i][0] not in (' ', '\t'):
+            end = i
+            break
+    key = next((i for i in range(start + 1, end) if re.match(r'^[ \t]+runner-token:', lines[i])), None)
+    if key is None:
+        bad(f't11: {label} — no runner-token key inside the block in {path} '
+            '(the key is contract-pinned by t5/t7/t8 — it must not move or rename)')
+    block, i = [], key - 1
+    while i > start:
+        s = lines[i].strip()
+        if s.startswith('#'):
+            block.insert(0, strip_marker(lines[i]))
+        elif s:
+            break
+        i -= 1
+    if not block:
+        bad(f't11: {label} — no comment block directly above the runner-token key in {path}')
+    return collapse(block)
+
+def header_block(path, label):
+    """Leading template-file comments, up to the first non-comment line."""
+    block = []
     with open(path) as f:
         for line in f:
-            line = re.sub(r':[ \t]+&[A-Za-z0-9_-]+', ':', line)
-            line = re.sub(r':[ \t]+\*[A-Za-z0-9_-]+', ': ANCHOR_REF', line)
-            lines.append(line)
-    return yaml.safe_load(''.join(lines)) or {}
+            s = line.strip()
+            if s.startswith('#'):
+                block.append(strip_marker(line))
+            elif s:
+                break
+    if not block:
+        bad(f't11: {label} — {path} has no leading comment header')
+    return collapse(block)
 
-sl = load(dev_vals).get('forgejo-runner-dev-host')
-if not isinstance(sl, dict):
-    print('FAIL: t11: services/dev/prod/values.yaml has no top-level forgejo-runner-dev-host: slice (C03 has not wired the host release — the render contract has nothing to flow)', file=sys.stderr)
-    sys.exit(1)
-open(out, 'w').write(yaml.safe_dump(sl))
+def check_comment_site(label, text):
+    m = MAPPING_BAD_RE.search(text)
+    if m:
+        bad(f't11: {label} — mapping comment still reads {excerpt(text, m)} (the vault password is '
+            'the runner token shown once at record creation — C02 must reword to `password = runner token`)')
+    stray_positive(text, label)
+    if not MAPPING_OK_RE.search(text):
+        bad(f't11: {label} — no `password = runner token` mapping comment (C02 wording not landed at this site)')
+    ok(f't11: {label} — password = runner token, no positive registration-token mention')
+
+try:
+    check_comment_site('values.yaml bitwardenIds block',
+                       comment_block(chart_vals, r'^bitwardenIds:', 'values.yaml bitwardenIds block'))
+    check_comment_site('secret-runner.yaml header', header_block(secret_tpl, 'secret-runner.yaml header'))
+    check_comment_site('custom-values dev item comment',
+                       comment_block(dev_cv, r'^forgejo-runner-dev:', 'custom-values dev item comment'))
+
+    notes = collapse(open(notes_txt).read().splitlines())
+    # (?<![\w.-]) keeps the key reference `.bitwardenIds.runner-token` from
+    # standing in for the copy-step's prose "runner token".
+    if not re.search(r'(?<![\w.-])runner[\s-]+token\b', notes, re.I):
+        bad('t11: NOTES.txt — the copy step does not name the runner token (C02 wording not landed)')
+    stray_positive(notes, 'NOTES.txt')
+    if not re.search(r'(?i)\b(?:not|never|no longer)\b[^.;]{0,40}ephemeral|ephemeral[^.;]{0,60}\b(?:refus\w*|reject\w*|disallow\w*|unsupport\w*)', notes):
+        bad('t11: NOTES.txt — no ephemeral-refusal warning (the daemon refuses ephemeral records — RESEARCH F2)')
+    if not re.search(r'(?i)(?:shown|displayed)[\s-]*(?:only[\s-]*)?once', notes):
+        bad('t11: NOTES.txt — the shown-once fact is missing (the record token is displayed once at creation)')
+    if not re.search(r'(?i)\blogin\b[^.;]{0,40}\busername\b|\busername\b[^.;]{0,40}\blogin\b', notes):
+        bad('t11: NOTES.txt — the login username/password field mapping is not stated '
+            '(custom fields, notes and the URI are invisible to property: username|password)')
+    if not re.search(r'(?i)\badmin\b[^.;]{0,40}\bactions\b[^.;]{0,40}\brunners\b', notes):
+        bad('t11: NOTES.txt — the Admin -> Actions -> Runners instance path is gone '
+            '(instance-admin is the only path per the user ruling reaffirming B3)')
+    ok('t11: NOTES.txt — runner-token copy step, ephemeral refusal, shown-once, login-field mapping, '
+       'no positive registration-token mention, instance-admin path present')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't11: the wording checks could not be evaluated ({type(ex).__name__}: {ex})')
 PY
-  then
-    exit 1
-  fi
-  host_out="$WORK/host-render.yaml"
-  host_err="$WORK/host-render.err"
-  if ! "$helm_bin" template "$RELEASE_HOST" "$runner_copy" \
-      -f "$host_slice_file" \
-      --set "bitwardenIds.runner-token=$TEST_UUID_HOST" \
-    >"$host_out" 2>"$host_err"; then
-    tail -n 30 "$host_err" >&2
-    fail "t11: helm template of the host render failed (log kept at $host_err)"
-  fi
-  [ -s "$host_out" ] || fail "t11: the host render produced no output"
-  if python3 - "$host_out" "$RELEASE_HOST" "$TEST_UUID_HOST" "$WORK/host-count" <<'PY'
+then
+  checks=$((checks + $(cat "$WORK/t11-count")))
+else
+  exit 1
+fi
+
+# --- t12: cf-97 C04 mergePolicy pin (red-first against the unpinned chart) ---
+# The ESO operator chart went v2.14.0 (582c96488) the same day this chart was
+# authored under the pre-v2 Merge assumption (5853be497); the v2 CRD defaults
+# template.mergePolicy to Replace at admission — invisible to repo renders —
+# and Replace drops every fetched key the template does not re-emit, which
+# hid the uuid key from the live Secret and blinded the card #97 diagnosis
+# (DECISIONS 2026-11-02). C04 pins the intent. Cluster-side proof stays in
+# C03 — no leg here reads live state.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t12: mergePolicy leg not run (no chart render — dependency update unavailable)"
+else
+  if python3 - "$runner_out_dev" "$RELEASE_DEV" "$WORK/t12-count" <<'PY'
 import sys, yaml
 
-render, release, uuid, count_file = sys.argv[1:5]
+render, release, count_file = sys.argv[1:4]
 ok_n = 0
 
 def ok(msg):
@@ -1313,141 +1465,172 @@ def bad(msg):
 
 try:
     docs = [d for d in yaml.safe_load_all(open(render)) if d]
-    kinds = {}
-    for d in docs:
-        kinds.setdefault(d.get('kind'), []).append((d.get('metadata') or {}).get('name'))
-    for kind in ('StatefulSet', 'Service', 'ExternalSecret', 'ServiceAccount'):
-        got = kinds.get(kind) or []
-        if len(got) != 1 or got[0] != release:
-            bad(f't11: {kind} names are {got}, expected exactly one named {release!r} (single-runner per release contract holds in host mode too)')
-    if kinds.get('Deployment'):
-        bad(f't11: Deployment rendered: {kinds["Deployment"]}')
-    if kinds.get('Ingress'):
-        bad(f't11: Ingress rendered: {kinds["Ingress"]} — client-only')
-    svc = next(d for d in docs if d.get('kind') == 'Service')
-    if (svc.get('spec') or {}).get('type') == 'LoadBalancer':
-        bad('t11: LoadBalancer Service — client-only')
-    ok('t11: one STS/Service/ES/SA named after the release; no Deployment/Ingress/LoadBalancer')
+    es = [d for d in docs if d.get('kind') == 'ExternalSecret']
+    if len(es) != 1:
+        bad(f't12: {release} — the render has {len(es)} ExternalSecret(s), expected exactly one')
+    template = (((es[0].get('spec') or {}).get('target') or {}).get('template') or {})
+    mp = template.get('mergePolicy')
+    if mp != 'Merge':
+        bad(f't12: {release} — spec.target.template.mergePolicy is {mp!r}, expected Merge '
+            '(unpinned lets the v2 CRD default Replace at admission, silently dropping the '
+            'fetched uuid key C04 documents — add the pin in secret-runner.yaml)')
+    ok(f't12: {release} — mergePolicy pinned to Merge under spec.target.template '
+       '(reading this exact path is what rejects an incidental placement)')
 
-    sts = next(d for d in docs if d.get('kind') == 'StatefulSet')
-    spec = sts.get('spec') or {}
-    pod = ((spec.get('template') or {}).get('spec')) or {}
-    if pod.get('initContainers'):
-        bad(f't11: host mode renders initContainers {[(c or {}).get("name") for c in pod["initContainers"]]} — the dind sidecar is docker-only')
-    cons = pod.get('containers') or []
-    if [c.get('name') for c in cons] != ['runner']:
-        bad(f't11: containers are {[c.get("name") for c in cons]}, expected exactly [runner]')
-    runner = cons[0]
-    if runner.get('image') != 'ghcr.io/ownyourio/forgejo-host-runner:main':
-        bad(f't11: runner image is {runner.get("image")!r}, expected ghcr.io/ownyourio/forgejo-host-runner:main (C02 contract; :main until CI publishes a :v<run> pin)')
-    if runner.get('imagePullPolicy') != 'Always':
-        bad(f't11: imagePullPolicy is {runner.get("imagePullPolicy")!r}, expected Always (rolling :main tag rule)')
-    toks = (runner.get('command') or []) + (runner.get('args') or [])
-    joined = ' '.join(toks)
-    for needle in ('/usr/bin/dumb-init', '/bin/forgejo-runner', 'daemon'):
-        if needle not in joined:
-            bad(f't11: command "{joined}" lost {needle!r} — the image contract must keep the chart command valid for BOTH backends (C02 AC5)')
-    env = {(e or {}).get('name'): e for e in runner.get('env') or []}
-    if 'DOCKER_HOST' in env:
-        bad('t11: DOCKER_HOST present in host mode — it is docker-only')
-    if not (env.get('CREDENTIALS_DIRECTORY') or {}).get('value'):
-        bad('t11: CREDENTIALS_DIRECTORY missing — token_url depends on it in BOTH modes')
-    ok('t11: single runner container, no dind initContainer, no DOCKER_HOST, CREDENTIALS_DIRECTORY kept, dumb-init command intact')
+    if template.get('engineVersion') != 'v2':
+        bad(f't12: {release} — template.engineVersion is {template.get("engineVersion")!r}, '
+            'expected v2 (C04 is one added field — it must not restyle the template)')
+    keys = set((template.get('data') or {}))
+    if keys != {'config.yaml', 'token'}:
+        bad(f't12: {release} — template.data keys are {sorted(keys)}, expected exactly '
+            '[config.yaml, token] — the re-emit-the-uuid alternative the user rejected must '
+            'not sneak in; Merge adds fetched keys beside the template output, not inside it')
+    ok(f't12: {release} — engineVersion v2 + template.data keys exactly config.yaml+token '
+       '(the chosen shape holds even with the policy pinned)')
 
-    vcts = {(v.get('metadata') or {}).get('name'): (v.get('spec') or {}) for v in spec.get('volumeClaimTemplates') or []}
-    if set(vcts) != {'data'}:
-        bad(f't11: VCTs are {sorted(vcts)}, expected exactly [data] (no docker-data in host mode)')
-    req = ((vcts['data'].get('resources') or {}).get('requests') or {}).get('storage')
-    if not req or not str(req).endswith(('Gi', 'Ti')) or (str(req).endswith('Gi') and int(str(req)[:-2]) < 20):
-        bad(f't11: data VCT requests {req!r}, expected >= 20Gi (workdir + LFS checkouts + hugo cache + sync state)')
-    if vcts['data'].get('storageClassName') != 'local-path':
-        bad(f't11: data VCT storageClassName {vcts["data"].get("storageClassName")!r}, expected local-path')
-    mounts = [(v or {}).get('name') for v in pod.get('volumes') or [] if (v or {}).get('emptyDir')]
-    if any(m == 'socket' for m in mounts):
-        bad('t11: the socket emptyDir persisted into host mode')
-    for c in cons:
-        for m in c.get('volumeMounts') or []:
-            if (m or {}).get('mountPath') == '/var/run':
-                bad('t11: a /var/run mount persisted from the docker path')
-    ok(f't11: one VCT data ({req}, local-path), no docker-data, no socket emptyDir')
-
-    es = next(d for d in docs if d.get('kind') == 'ExternalSecret')
-    text = yaml.safe_dump(es)
-    if 'bitwarden-login' not in text:
-        bad('t11: ExternalSecret lost the bitwarden-login store')
-    tname = (((es.get('spec') or {}).get('target') or {}).get('name'))
-    if tname != release:
-        bad(f't11: ExternalSecret target is {tname!r}, expected {release!r}')
-    data = ((((es.get('spec') or {}).get('target') or {}).get('template') or {}).get('data')) or {}
-    cfg = yaml.safe_load(data.get('config.yaml') or '')
-    conn = (((cfg or {}).get('server') or {}).get('connections') or {}).get('default') or {}
-    if conn.get('url') != 'http://dev-forgejo-http:3000':
-        bad(f't11: connection url is {conn.get("url")!r}, expected the dev in-cluster URL from the slice')
-    if conn.get('token_url') != 'file:$CREDENTIALS_DIRECTORY/token':
-        bad(f't11: token_url is {conn.get("token_url")!r}')
-    if conn.get('labels') != ['cf-host:host']:
-        bad(f't11: config labels are {conn.get("labels")!r}, expected exactly [cf-host:host] (the gpu card-#88 label parity)')
-    runner_cfg = (cfg or {}).get('runner') or {}
-    if runner_cfg.get('capacity') != 1 or runner_cfg.get('timeout') != '30m' or runner_cfg.get('shutdown_timeout') != '5m':
-        bad(f't11: runner capacity/timeout/shutdown_timeout drifted: {runner_cfg!r}')
-    if 'container' in (cfg or {}):
-        bad('t11: config.yaml still carries a container: block — host mode runs jobs directly, the privileged:false stand-in is docker-mode syntax')
-    host_cfg = (cfg or {}).get('host') or {}
-    if host_cfg.get('workdir_parent') != '/data/workdir':
-        bad(f't11: host.workdir_parent is {host_cfg.get("workdir_parent")!r}, expected /data/workdir (PVC contract)')
-    cache_cfg = (cfg or {}).get('cache') or {}
-    if cache_cfg.get('enabled') is not True or cache_cfg.get('dir') != '/data/cache':
-        bad(f't11: cache must be {{enabled: true, dir: /data/cache}} in host mode, got {cache_cfg!r}')
-    pairs = set()
-    keys = set()
-    def walk(node):
-        if isinstance(node, dict):
-            if 'remoteRef' in node and 'secretKey' in node:
-                pairs.add((node['secretKey'], (node.get('remoteRef') or {}).get('property')))
-                keys.add((node.get('remoteRef') or {}).get('key'))
-            for v in node.values():
-                walk(v)
-        elif isinstance(node, list):
-            for v in node:
-                walk(v)
-    walk(es)
-    if pairs != {('uuid', 'username'), ('token', 'password')}:
-        bad(f't11: ExternalSecret remoteRefs are {sorted(pairs)}, expected uuid<-username + token<-password')
-    if keys != {uuid}:
-        bad(f't11: remoteRef keys {sorted(keys)}, expected exactly the single runner-token sentinel after --set')
-    ok('t11: config.yaml host block pinned (workdir_parent, cache.dir, no container:), cf-host:host labels, 30m/5m/capacity 1, one ES with the release-named target')
-
-    podsc = pod.get('securityContext') or {}
-    if podsc.get('fsGroup') != 1000:
-        bad(f't11: pod fsGroup is {podsc.get("fsGroup")!r}, expected 1000 (uid-1000 image + node-owned local-path volumes)')
-    if pod.get('terminationGracePeriodSeconds') != 300:
-        bad(f't11: terminationGracePeriodSeconds is {pod.get("terminationGracePeriodSeconds")!r}, expected 300')
-    if 'OVERRIDE_' in open(render).read():
-        bad('t11: the host render still carries an OVERRIDE_* sentinel')
-    ok('t11: fsGroup 1000, grace 300, zero OVERRIDE_* in the host render')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
     raise
 except Exception as ex:
-    bad(f't11: the host render could not be evaluated ({type(ex).__name__}: {ex})')
+    bad(f't12: the mergePolicy check could not be evaluated ({type(ex).__name__}: {ex})')
 PY
   then
-    checks=$((checks + $(cat "$WORK/host-count")))
+    checks=$((checks + $(cat "$WORK/t12-count")))
   else
     exit 1
   fi
 fi
 
-# --- t12: infra-forgejo regression (C03 chunk t9) -----------------------------
-# The infra instance shares charts/forgejo through charts/forgejo (wrapper);
-# C03 must not disturb it. Its own script already skips registry-bound legs
-# gracefully, so a green exit IS the unchanged-sibling signal.
-if ! bash tests/services/infra-forgejo.sh >/tmp/opencode/infra-forgejo-regression.log 2>&1; then
-  tail -n 30 /tmp/opencode/infra-forgejo-regression.log >&2
-  fail "t12: tests/services/infra-forgejo.sh is no longer green (log kept at /tmp/opencode/infra-forgejo-regression.log)"
+# --- t13: cf-97 C05 dind-socket group grant + C06 identity pin (red-first) ---
+# The daemon passes uuid/token validation and dies at configCheck: ping to
+# unix:///var/run/docker.sock returns EACCES. Cause is pinned-image
+# arithmetic: docker:29.9.2-dind's base pre-adds group docker at a FIXED gid
+# (upstream 29/cli/Dockerfile addgroup) and dockerd serves the socket
+# root:docker 0660, so the uid-1000 runner needs group membership (DECISIONS
+# 2026-11-02, user ruling shape (a)). supplementalGroups exists only at the
+# pod level (container SC has no such field) — the exact chained reads below
+# are the placement enforcement, per the C04 t12 lesson. Live socket mode is
+# NOT asserted: no pod-exec surface; C03's post-merge re-run is the
+# mechanism proof. The posture guards are the reason (a) beat the TCP shapes
+# — a mid-review shape switch must flip them and die here.
+#
+# C06 (user ruling "Add runAsGroup: 1000 before the PR") adds the
+# primary-group assertion: the pinned image config declares User: 1000:1000
+# but ships no /etc/passwd entry for uid 1000, so containerd's bare-runAsUser
+# fallback resolves the primary group as 0 — runAsGroup: 1000 restores the
+# image intent. Identity must also stay container-local: pod-level identity
+# applies to every container, so kubelet's FsUserFrom (which bails to nil
+# while dind carries no uid pin) would resolve a real fs user and recursively
+# re-chown the 12 GiB of VCT volumes at apply.
+if [ "$skip_helm" -eq 1 ]; then
+  skip "t13: socket-group leg not run (no chart render — dependency update unavailable)"
 else
-  ok "t12: tests/services/infra-forgejo.sh green unchanged (C03 coexistence with the pending infra relocation)"
+  if python3 - "$runner_out_dev" "$RELEASE_DEV" "$WORK/t13-count" <<'PY'
+import sys, yaml
+
+render, release, count_file = sys.argv[1:4]
+ok_n = 0
+
+def ok(msg):
+    global ok_n
+    ok_n += 1
+    print(f'ok: {msg}')
+
+def bad(msg):
+    print(f'FAIL: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+try:
+    docs = [d for d in yaml.safe_load_all(open(render)) if d]
+    sts = [d for d in docs if d.get('kind') == 'StatefulSet']
+    if len(sts) != 1:
+        bad(f't13: {release} — the render has {len(sts)} StatefulSet(s), expected exactly one')
+    pod = ((sts[0].get('spec') or {}).get('template') or {}).get('spec') or {}
+    ics = pod.get('initContainers') or []
+    cons = pod.get('containers') or []
+    dind = next((c for c in ics if (c or {}).get('name') == 'dind'), None)
+    runner = next((c for c in cons if (c or {}).get('name') == 'runner'), None)
+    if dind is None or runner is None:
+        bad(f't13: {release} — rendered pod lacks the dind or runner container (t2 also pins them)')
+
+    psc = pod.get('securityContext') or {}
+    sgs = psc.get('supplementalGroups')
+    if not (isinstance(sgs, list) and 2375 in sgs):
+        bad(f't13: {release} — pod spec.securityContext.supplementalGroups is {sgs!r}, expected to '
+            'contain 2375 — the pinned docker:29.9.2-dind pre-adds group docker at that fixed gid '
+            'and serves the socket root:docker 0660 (upstream 29/cli addgroup line); without the '
+            'membership the uid-1000 runner gets EACCES on ping — C05 adds the key')
+    rsc = runner.get('securityContext') or {}
+    if rsc.get('runAsUser') != 1000:
+        bad(f't13: {release} — runner securityContext.runAsUser is {rsc.get("runAsUser")!r}, '
+            'expected 1000 — the pinned image config declares User: 1000:1000, but the image '
+            'ships no /etc/passwd entry for uid 1000, so containerd resolves a bare uid with '
+            'primary group 0; identity is only fully specified with runAsGroup: 1000 beside it, '
+            'at CONTAINER level — a pod-level pin would let FsUserFrom resolve an fs user and '
+            'recursively re-chown the VCTs (C06)')
+    ok(f't13: {release} — socket grant in place: pod supplementalGroups carries 2375 '
+       '(pod-level only path) + runner runAsUser 1000 explicit')
+
+    # C06 identity block — placement guards first (so a pod-level pin fails
+    # with the re-chown explanation), then the presence check (today's
+    # designed-red: the runner has no runAsGroup yet).
+    for k in ('runAsUser', 'runAsGroup'):
+        if k in psc:
+            bad(f't13: {release} — the POD securityContext carries {k!r}: pod-level identity '
+                'applies to every container including dind, so FsUserFrom resolves an fs user '
+                'and kubelet recursively re-chowns both VCTs (2Gi+10Gi, incl /var/lib/docker) '
+                'at apply — the identity pins belong on the runner container alone (C06)')
+    dsc = dind.get('securityContext') or {}
+    for k in ('runAsUser', 'runAsGroup'):
+        if k in dsc:
+            bad(f't13: {release} — the dind container carries {k!r}: dind must stay without uid '
+                'pins so FsUserFrom keeps bailing to nil (ownership stays root:fsGroup, '
+                'OnRootMismatch intact); volume re-chown is exactly what C06 keeps closed')
+    if rsc.get('runAsGroup') != 1000:
+        bad(f't13: {release} — runner securityContext.runAsGroup is {rsc.get("runAsGroup")!r}, '
+            'expected 1000 — the pinned image has no /etc/passwd entry for uid 1000, so '
+            'containerd resolves a bare runAsUser with primary group 0 (image config declares '
+            'User: 1000:1000); the key restores the image intent (user ruling 2026-11-02, C06)')
+    ok(f't13: {release} — identity fully specified and container-local: runAsGroup 1000 beside '
+       'runAsUser on the runner only; pod SC and dind carry no uid pins, so FsUserFrom bails '
+       'to nil and the 12 GiB VCTs keep their root:1000 expectation')
+
+    if (rsc.get('capabilities') or {}).get('drop') != ['ALL']:
+        bad(f't13: {release} — runner capabilities.drop is '
+            f'{(rsc.get("capabilities") or {}).get("drop")!r}, expected [ALL] — C05 grants the '
+            'socket group WITHOUT dropping hardening (shape (a), not a widening)')
+    if rsc.get('allowPrivilegeEscalation') is not False:
+        bad(f't13: {release} — runner allowPrivilegeEscalation is not false (C05 must keep it)')
+    if dind.get('image') != 'docker:29.9.2-dind':
+        bad(f't13: {release} — dind image is {dind.get("image")!r}, expected docker:29.9.2-dind — '
+            'the 2375 grant is coupled to THIS pin\'s pre-added group; a pin bump must re-check '
+            'upstream before either side changes')
+    if ((dind.get('securityContext') or {}).get('privileged')) is not True:
+        bad(f't13: {release} — dind is no longer privileged (the sidecar pair shape stands; C05 is SC keys only)')
+    renv = {(e or {}).get('name'): (e or {}).get('value') for e in runner.get('env') or []}
+    if renv.get('DOCKER_HOST') != 'unix:///var/run/docker.sock':
+        bad(f't13: {release} — runner DOCKER_HOST is {renv.get("DOCKER_HOST")!r}, expected the in-pod '
+            'unix socket — a TCP transport here is the rejected shape (b), not C05')
+    denames = {(e or {}).get('name') for e in dind.get('env') or []}
+    if 'DOCKER_TLS_CERTDIR' in denames:
+        bad(f't13: {release} — dind now carries a DOCKER_TLS_CERTDIR env — the TLS TCP shape (b2) '
+            'sneaking in behind the unix socket (C05 Notes: dind container untouched)')
+    ok(f't13: {release} — posture intact: drop-ALL, no privilege escalation, privileged dind at the '
+       '29.9.2 pin, DOCKER_HOST on the unix socket, no TLS-certdir env (still shape (a))')
+
+    with open(count_file, 'w') as f:
+        f.write(str(ok_n))
+except SystemExit:
+    raise
+except Exception as ex:
+    bad(f't13: the socket-group checks could not be evaluated ({type(ex).__name__}: {ex})')
+PY
+  then
+    checks=$((checks + $(cat "$WORK/t13-count")))
+  else
+    exit 1
+  fi
 fi
 
 # A successful run is the only moment the /tmp workspace can go — a failed

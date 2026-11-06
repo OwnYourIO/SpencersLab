@@ -3,9 +3,12 @@ Contract points: cron 17 5 * * * (answer 7 DAILY, off-the-hour :17),
 workflow_dispatch override inputs, checkout lfs:false + git lfs install
 --local, the sync step's env block matching the C01 contract key-for-key,
 the publish step gated on the changed flag with the PAT secret (P5: a PAT
-so the PR event fires the farm deploy), and the two reviewer notes (daily
-cadence = watchdog is the compensating control; gallery-call extensions
-ship in the SAME PR — N2-c). C06 AC2/AC3."""
+so the PR event fires the farm deploy), and the N2-c reviewer note
+(gallery-call extensions ship in the SAME PR). The chunk's second note pin
+— the daily-cadence watchdog as compensating control — was voided with the
+C05 drop (owner review 2026-11-06): no schedule watchdog exists, so there
+is no comment to pin; coverage is the sync's commits/PRs + Immich
+webhooks + run history. C06 AC2/AC3."""
 
 import re
 
@@ -136,11 +139,12 @@ def test_no_changes_fallback(sync):
 
 
 def test_reviewer_notes_present(sync_text):
-    """C06 AC3: the daily-cadence watchdog note (one missed schedule = one
-    stale day; C05 is the compensating control) and the N2-c same-PR gallery
-    note are REQUIRED text for reviewers."""
-    assert re.search(r"(?i)watchdog", sync_text), "no watchdog/cadence-fragility note in sync.yml"
-    assert re.search(r"(?i)(stale day|missed schedule|compensating)", sync_text), sync_text[:200]
+    """C06 AC3: the N2-c same-PR gallery-extension note is REQUIRED
+    reviewer text. The chunk's other note pin (the C05 daily-cadence
+    watchdog as compensating control) was voided with C05's drop, owner
+    review 2026-11-06 — no schedule watchdog exists, so no watchdog
+    comment is pinned: t2's contract is the cron, dispatch inputs, PR
+    mechanics and the env surface, not commentary."""
     assert re.search(r"(?i)same (PR|pull request)", sync_text), "no same-PR gallery-extension note"
     assert re.search(r"(?i)gallery", sync_text)
 

@@ -106,44 +106,6 @@ archon:
     # No sso for Archon yet.
     #archon-sso: OVERRIDE_NEEDED
 
-forgejo-secret-seed:
-  # Delivery path for the seed's chart-level bitwardenIds sentinels: this
-  # app block is projected into the gpu-forgejo-secret-seed Application's
-  # valuesObject by base's charts appset (this file is fetched via the
-  # services.gpu.customValuesUrls cluster annotation). Owner fills each
-  # slot when creating its Bitwarden item; an unfilled OVERRIDE_NEEDED
-  # renders straight into the ExternalSecret remoteRef, so the daily fetch
-  # fails visibly until then.
-  bitwardenIds:
-    # hugo-build-immich LOGIN item (password = the Immich API key).
-    immich-api-key: 8ef66a15-3efb-4854-85b1-b4bf0030a214
-    # hugo-build-netlify LOGIN item (password = Netlify auth token); its custom
-    # fields site_id_com / site_id_farm carry the two site ids.
-    netlify: 6dc0c671-1a5d-4501-b593-b4f60161144a
-    # hugo-build-forgejo LOGIN item (password = write:repository PAT).
-    # All three slots are filled, so the unfilled-marker posture above only
-    # guards future changes. Convergence now gates on the external
-    # preconditions — the site repo existing and gpu egress reaching this
-    # host; until those land the daily PUT 404s and the job fails loudly.
-    forgejo-pat: 88722c5b-ebf5-44f8-b6bf-b4f60167bb38
-
-forgejo-run-watchdog:
-  # Delivery path for the watchdog's chart-level bitwardenIds sentinels,
-  # same mechanism as the seeder block above: this app block is projected
-  # into the gpu-forgejo-run-watchdog Application's valuesObject by base's
-  # charts appset (this file is fetched via the services.gpu.customValuesUrls
-  # cluster annotation). Both slots are filled with the SAME item uuid as
-  # the matching slot above (the watchdog reuses both hugo-build items; no
-  # new Bitwarden items), so the unfilled-marker posture only guards future
-  # changes.
-  bitwardenIds:
-    # hugo-build-netlify LOGIN item (password = Netlify auth token); its
-    # site_id_com custom field feeds the fallback leg's deploys lookup.
-    netlify: 6dc0c671-1a5d-4501-b593-b4f60161144a
-    # hugo-build-forgejo LOGIN item (password = write:repository PAT —
-    # covers the runs-API reads and the stale-run dispatch).
-    forgejo-pat: 88722c5b-ebf5-44f8-b6bf-b4f60167bb38
-
 seaweedfs-csi-driver:
   volume-count: 8
   seaweedfs-csi-driver:

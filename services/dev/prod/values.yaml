@@ -93,21 +93,30 @@ charts:
   searxng:
     namespace: default
     ServerSideApply: "false"
-  # Client-only services: the runners dial out (forgejo-runner-dev DinD
-  # in-cluster to dev-forgejo-http:3000; forgejo-runner-dev-host host-backend
-  # to the same instance), so they deliberately get NO ingress.subdomains
-  # entry — the service trio's proxy leg is N/A by design, not an oversight.
-  # The infra-instance runner was un-wired from dev by user decision
-  # 2026-10-25; its registration relocation is pending, so the chart keeps
-  # the aliased-instance capability.
+  # Client-only service: the runner dials out (forgejo-runner-dev
+  # in-cluster to dev-forgejo-http:3000), so it deliberately gets NO
+  # ingress.subdomains entry — the service trio's proxy leg is N/A by
+  # design, not an oversight. The infra-instance runner was un-wired from
+  # dev by user decision 2026-10-25; its registration relocation is
+  # pending, so the chart keeps the aliased-instance capability.
   forgejo-runner-dev:
     namespace: default
     ServerSideApply: "false"
     chart: forgejo-runner
-  forgejo-runner-dev-host:
+  # cf-93 dev sandbox pair (2026-11-01). appName == chart name for both, so
+  # the appset <serviceName>-<appName> law names the releases — and the
+  # release-derived Service names — dev-home-assistant / dev-mosquitto.
+  home-assistant:
     namespace: default
     ServerSideApply: "false"
-    chart: forgejo-runner
+  # In-cluster MQTT broker for the dev HA instance: dev-home-assistant is
+  # its only consumer, reached at dev-mosquitto:1883 in-cluster, so the
+  # trio's proxy leg is N/A by design, not an oversight — same documented
+  # posture as forgejo-runner-dev above (OQ-C2: ClusterIP-only, no
+  # ingress.subdomains entry).
+  mosquitto:
+    namespace: default
+    ServerSideApply: "false"
 
   # External charts (with version and repository)
   cloudnative-pg:
@@ -136,6 +145,13 @@ ingress:
     searxng:
       service: dev-searxng
       port: 8080
+    # LAN-only host like searxng above: deliberately not clusterBase and not
+    # routed via proxy-remote (cf-93 card #93, 2026-11-01) — the generic
+    # ingress key rule gives home-assistant.<domain>. The backend is the
+    # release-named Service dev-home-assistant, not the bare chart name.
+    home-assistant:
+      service: dev-home-assistant
+      port: 8123
     cluster:
       clusterBase: true
       service: argocd-server
@@ -149,57 +165,20 @@ forgejo-runner-dev:
   runner:
     url: http://dev-forgejo-http:3000   # in-cluster, co-located (dev-forgejo runs in default on the same cluster — live-verified)
 
-# C03 dev validation release: the SAME chart in host-backend mode (no
-# privileged DinD — jobs execute in the runner container). Helm parses a
-# chart's values.yaml as plain YAML, so the backend toggle cannot gate the
-# chart's own structure; this slice nulls the docker-only keys instead
-# (higher-precedence null removes a default key — the contract documented
-# in charts/forgejo-runner/values.yaml). TRANSPORT CAVEAT: ArgoCD strips
-# nulls from inline valuesObject (argo-cd#16312); the chart then fails the
-# render loudly instead of resurrecting the sidecar — the remedy (an
-# ServerSideApply "true" flip on this entry, which would touch the t5
-# fleet-contract leg, or an external values file) stays with whoever trips
-# the gate. Registration is org-scoped per the
-# owner (a runtime admin-UI step on git.scifi.farm; the chart is
-# scope-agnostic); job routing isolates this runner via the cf-host label,
-# disjoint from the DinD release's act-label set.
-forgejo-runner-dev-host:
-  runner:
-    url: http://dev-forgejo-http:3000   # in-cluster, co-located (same dev-forgejo instance)
-    backend: host
-    # SAME label the future gpu prod runner (card #88) carries — site
-    # workflows' runs-on never changes when validation graduates.
-    labels: ["cf-host:host"]
-  app-template:
-    controllers:
-      runner:
-        initContainers:
-          dind: null
-        statefulset:
-          # Replaces the chart's [data, docker-data] list wholesale (helm
-          # merges maps but swaps lists): one 20Gi data PVC sized for
-          # host-mode workdir + LFS checkouts + action cache + sync state.
-          volumeClaimTemplates:
-            - name: data
-              accessMode: ReadWriteOnce
-              size: 20Gi
-              storageClass: local-path
-              globalMounts:
-                - path: /data
-        containers:
-          runner:
-            env:
-              DOCKER_HOST: null
-            image:
-              # C02 toolchain image (runner binary + hugo + netlify-cli +
-              # git-lfs). No pinned :v<run> build exists yet — :main +
-              # Always is the repo rolling-tag rule until CI publishes one
-              # (pin via renovate then).
-              repository: ghcr.io/ownyourio/forgejo-host-runner
-              tag: main
-              pullPolicy: Always
-    persistence:
-      socket: null
+# Dev-mode flip of charts/home-assistant (cf-93, owner delta 2026-11-01): the
+# merge-only-the-<appName>-key law above is unchanged, so gates still flip
+# HERE — and the delta leaves exactly one to flip, homeAssistant.enabled,
+# which starts the HA container. The CNPG clusters and the /config PVC are
+# unconditional and render for dev with no flag. The trio's secrets leg is
+# now ACTIVE: the four ExternalSecrets consume the chart's three bitwardenIds
+# keys, resolved from custom-values/dev/prod-values.yaml (placeholder markers
+# until the owner's dedicated dev-item id hand-off lands). The HA↔postgres
+# integration (recorder db_url in configuration.yaml) is owner-side — the
+# container stays TZ-only. /config rides k3s local-path with ReclaimPolicy
+# Delete (accepted empty-instance posture, OQ-C3).
+home-assistant:
+  homeAssistant:
+    enabled: true
 
 # Coder is a wrapper chart (charts/coder): its subchart config, OIDC/PG
 # ExternalSecrets and the pg-coder CNPG cluster live in the chart itself.
@@ -460,7 +439,7 @@ hivetools:
     boards:
       enabled: true
       # :v60 = the 25-tool custom-field build (ticket 2026-10-feat-board-coord-intake, D17/M2).
-      image: ghcr.io/ownyourio/wekan-mcp:v87
+      image: ghcr.io/ownyourio/wekan-mcp:v148
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.

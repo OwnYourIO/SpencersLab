@@ -2,8 +2,7 @@
 #
 # The dev ApplicationSet aliases this chart once per deployed Forgejo
 # runner (each ArgoCD Application carries `chart: forgejo-runner`): today
-# forgejo-runner-dev (docker backend, dev instance) and
-# forgejo-runner-dev-host (host backend, same instance); the infra alias is
+# forgejo-runner-dev (docker backend, dev instance); the infra alias is
 # un-wired pending the 2026-10-25 relocation. Each release runs exactly one
 # pod, one headless Service and one ExternalSecret — every resource is named
 # after the release, so releases coexist in namespace `default` without
@@ -19,8 +18,9 @@
 #            a host release's TOP-LEVEL SLICE nulls the docker-only keys at
 #            higher precedence — initContainers.dind, the docker-data VCT
 #            (the whole volumeClaimTemplates LIST is replaced by a `data`
-#            entry sized for workdir/cache, see the dev-host slice in
-#            services/dev/prod/values.yaml), persistence.socket, and
+#            entry sized for workdir/cache — a host release is card #88's
+#            gpu prod runner, or the separate-ask dev instance),
+#            persistence.socket, and
 #            containers.runner.env.DOCKER_HOST — and overrides the image and
 #            runner.labels. templates/secret-runner.yaml renders the
 #            backend-appropriate config.yaml from runner.backend; keep its
@@ -76,9 +76,16 @@
 
 bitwardenIds:
   # The Bitwarden item holding this release's (uuid, token) identity
-  # (username = runner uuid, password = registration token); the real UUID
-  # rides custom-values/dev/prod-values.yaml under the app key. NEVER the
-  # `forgejo-token` item — that one is the Coder workspace access token.
+  # (username = runner uuid, password = runner token — the long-lived
+  # token shown once at record creation, not the deprecated
+  # registration-token exchange). The real UUID rides
+  # custom-values/dev/prod-values.yaml under the app key and the
+  # ExternalSecret fetches by that ID: similarly-named vault items are
+  # invisible to the cluster. NEVER the `forgejo-token` item — that one
+  # is the Coder workspace access token. An empty or non-UUID username
+  # makes the daemon fail-fast (`connection "default" is invalid: 'uuid'
+  # is empty`) and the pod crash-loop — the identity fields must come
+  # from a real server-side runner record.
   runner-token: OVERRIDE_VIA_CUSTOM_VALUES
 
 # Connection URL: chart default so the chart renders standalone — it is a
@@ -102,7 +109,7 @@ runner:
     - ubuntu-24.04:docker://ghcr.io/catthehacker/ubuntu:act-24.04
     - ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04
     - docker:docker://ghcr.io/catthehacker/ubuntu:act-24.04
-    - node22:docker://docker.io/library/node:22-bookworm
+    - node22:docker://ghcr.io/catthehacker/ubuntu:act-24.04
 
 app-template:
   controllers:
@@ -223,6 +230,19 @@ app-template:
               memory: 4Gi
           securityContext:
             allowPrivilegeEscalation: false
+            # The pinned forgejo/runner image's config declares
+            # User: "1000:1000", but the image ships no /etc/passwd entry
+            # for uid 1000, so containerd resolves a bare runAsUser with
+            # primary group 0 — runAsGroup carries the gid the blob
+            # intends. Identity stays on this container alone on purpose:
+            # a pod-level runAsUser would apply to dind too, kubelet's
+            # FsUserFrom would then resolve an fs user, and the 12 GiB of
+            # VCT volumes (including /var/lib/docker) would be recursively
+            # re-chowned at apply. Fallback and hazard audit:
+            # .agents/plans/2026/2026-11-cf-97-bug-forgejo-runner/DECISIONS.md
+            # (final whole-plan review, 2026-11-02).
+            runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               drop:
                 - ALL
@@ -238,6 +258,21 @@ app-template:
           # mismatch and the runner fails on writes.
           fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
+          # The runner must hold the group that owns the docker socket.
+          # dockerd serves /var/run/docker.sock root:docker 0660 (moby's
+          # default socket group is `docker`). The pinned docker:29.9.2-dind
+          # pre-adds that group at fixed gid 2375 — its base docker:29-cli
+          # Dockerfile runs `addgroup -g 2375 -S docker` — not the blog-era
+          # 999; a future dind pin bump must re-check this gid against the
+          # new image's Dockerfile. fsGroup cannot cover the socket: it
+          # chowns the volume at mount, while dockerd creates the file
+          # afterwards under its own group. The daemon control this grants
+          # is pod-local and already implied by DOCKER_HOST — driving this
+          # sidecar is the runner's job. Ruling and full gid audit:
+          # .agents/plans/2026/2026-11-cf-97-bug-forgejo-runner/DECISIONS.md
+          # (2026-11-02).
+          supplementalGroups:
+            - 2375
 
   service:
     # Headless — a StatefulSet requires one for its per-ordinal DNS names.

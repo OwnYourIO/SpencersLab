@@ -8,7 +8,8 @@
 #
 # AC trace (chunks/C02.md): t1[AC3 FROM pins] t2[AC3 renovate annotations]
 # t3[AC5 USER/HOME] t4[AC3+image contract hugo extended 0.151.0] t5[AC5
-# binary paths — the C03 chart command contract] t6[AC2 no secrets, no COPY
+# binary paths — the C03 chart command contract; wrappers RUN-generated
+# (repo bin/ dropped) per rework 2026-11-06] t6[AC2 no secrets, no COPY
 # . .] t7[.dockerignore excludes tests] t8[C01 regression guard] t9[AC1
 # hadolint] t10[designed docker-build shape] t11[C08 go toolchain: pinned
 # GO_VERSION ARG + official tarball URL + sha256sum -c digest-file
@@ -156,10 +157,17 @@ if want t5; then
     fail "t5: netlify-cli is not npm-installed global (the /usr/local/bin/netlify contract)"
   printf '%s\n' "$flat" | grep -qE 'COPY +sync/ /opt/immich-hugo-sync/' ||
     fail "t5: C01's sync/ package is not COPYed to /opt/immich-hugo-sync/ (no code duplication — AC4)"
-  printf '%s\n' "$flat" | grep -q '/usr/local/bin/immich-hugo-sync' ||
-    fail "t5: the immich-hugo-sync entry point is not created under /usr/local/bin"
-  printf '%s\n' "$flat" | grep -q '/usr/local/bin/immich-hugo-publish' ||
-    fail "t5: the immich-hugo-publish entry point is not created under /usr/local/bin"
+  # Rework 2026-11-06 (owner branch review): the wrappers are no longer
+  # repo-carried bin/ artifacts — the Dockerfile GENERATES both at build
+  # time, in a RUN step (heredoc or printf into the /usr/local/bin paths).
+  # Those paths are the site workflows' call surface, so they stay put.
+  if grep -qE '^[[:space:]]*COPY[[:space:]]+bin/' "$DF"; then
+    fail "t5: a COPY bin/ line survives — the repo-carried wrappers are dropped (owner rework 2026-11-06: they get built into the container)"
+  fi
+  for wrap in immich-hugo-sync immich-hugo-publish; do
+    printf '%s\n' "$flat" | grep -qE "^RUN .*>[[:space:]]*/usr/local/bin/$wrap([^/A-Za-z0-9_-]|$)" ||
+      fail "t5: no RUN step generates /usr/local/bin/$wrap (heredoc or printf into the path — the reworked build-time wrapper contract; the path is what the site workflows call)"
+  done
   for tool in git git-lfs curl jq zstd python3 ca-certificates; do
     printf '%s' "$apt_line" | grep -qE "(^|[[:space:]])$tool($|[[:space:]])" ||
       fail "t5: apt install list lacks $tool (job-surface contract)"

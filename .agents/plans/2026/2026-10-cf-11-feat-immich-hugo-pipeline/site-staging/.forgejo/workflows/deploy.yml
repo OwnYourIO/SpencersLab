@@ -6,8 +6,9 @@
 # one that deploys last — last PR wins by construction.
 # Explicit hugo build + netlify digest deploy (--no-build): the runner is the
 # only build path, netlify.toml stays in the repo vestigially, and no PR run
-# ever writes main. Secrets are referenced by name only; values are seeded
-# from Bitwarden by the forgejo-secret-seed CronJob (chunk C04).
+# ever writes main. Secrets are referenced by name only; the values are
+# seeded one-shot, manually, from the hugo-build-* Bitwarden items into the
+# repo settings on Forgejo.
 name: deploy
 
 on:

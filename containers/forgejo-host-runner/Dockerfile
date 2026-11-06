@@ -86,9 +86,37 @@ COPY --from=runner-src /bin/forgejo-runner /bin/forgejo-runner
 # workflows call. node owns /opt/immich-hugo-sync so runtime bytecode
 # caches can land there.
 COPY sync/ /opt/immich-hugo-sync/sync/
-COPY bin/immich-hugo-sync /usr/local/bin/immich-hugo-sync
-COPY bin/immich-hugo-publish /usr/local/bin/immich-hugo-publish
 RUN chown -R node:node /opt/immich-hugo-sync
+
+# The two entry-point wrappers, generated at build time instead of
+# repo-carried scripts: one single-quoted printf line per script line keeps
+# the $@/${PYTHONPATH} bytes literal (in-shell heredocs die in the
+# Dockerfile line-join; native BuildKit heredocs fail the fleet's hadolint
+# parse).
+RUN set -eux; \
+    printf '%s\n' \
+        '#!/bin/sh' \
+        '# The package uses relative imports, so it only resolves as' \
+        '# `sync.<module>` with its root on PYTHONPATH; the node base has no site' \
+        '# slot for it. The runner'\''s HOME is /data (a PVC in the release), so' \
+        '# anything the tool writes under $HOME lands on the volume, not the image —' \
+        '# do not set HOME here.' \
+        'set -eu' \
+        'PYTHONPATH="/opt/immich-hugo-sync${PYTHONPATH:+:${PYTHONPATH}}"' \
+        'export PYTHONPATH' \
+        'exec python3 -m sync.immich_sync "$@"' \
+        > /usr/local/bin/immich-hugo-sync; \
+    chmod 755 /usr/local/bin/immich-hugo-sync; \
+    printf '%s\n' \
+        '#!/bin/sh' \
+        '# Publish-side twin of immich-hugo-sync; its comment carries the' \
+        '# PYTHONPATH reasoning.' \
+        'set -eu' \
+        'PYTHONPATH="/opt/immich-hugo-sync${PYTHONPATH:+:${PYTHONPATH}}"' \
+        'export PYTHONPATH' \
+        'exec python3 -m sync.forgejo_publish "$@"' \
+        > /usr/local/bin/immich-hugo-publish; \
+    chmod 755 /usr/local/bin/immich-hugo-publish
 
 # /data is the runner's home on the release PVC: workdir, actions cache,
 # sync state and dotfiles all land there (the donor image declares it too).

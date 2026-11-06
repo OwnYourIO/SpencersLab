@@ -59,9 +59,11 @@ user's decision alone.
 
 The repo secrets `IMMICH_API_KEY`, `NETLIFY_AUTH_TOKEN`,
 `NETLIFY_SITE_ID`, `NETLIFY_SITE_ID_FARM` and `FORGEJO_SYNC_PAT` are
-seeded from Bitwarden by the `forgejo-secret-seed` CronJob (chunk C04);
-the workflows reference them by name only. Until the seed has run, a
-dispatched `sync.yml` fails loud at its first secret use.
+seeded ONE-SHOT, manually, into the CuratedForest.com repo settings on
+Forgejo, from the hugo-build-* Bitwarden items (owner action; plan user
+action 8). The workflows reference the secrets by name only. Until that
+seed is in place the first workflow run fails loud at its first secret
+use (rotation = manual re-seed).
 
 ## Verification (scratch render — never the live checkout)
 
