@@ -1,6 +1,0 @@
-baseURL: https://render-contract.invalid/
-title: render contract shell
-timezone: UTC
-outputs:
-  home:
-    - HTML

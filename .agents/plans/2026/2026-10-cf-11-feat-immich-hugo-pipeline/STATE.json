@@ -270,7 +270,8 @@
       "depends_on": [
         "C01"
       ],
-      "repo": "SpencersLab-staged -> CuratedForest.com",
+      "repo": "CuratedForest.com (site repo)",
+      "staging_deleted": "site-staging/ transport folder REMOVED from the branch per owner PR review 2026-11-06: the 3 delivered artifacts live in the site repo only (owner checkout /home/coder/CuratedForest.com -> site PR); the staging test suite + APPLY-INSTRUCTIONS were removed with it. C06's deliverable (the artifacts) is unchanged — only the in-repo transport copy + its suite go.",
       "status": "done",
       "dev_rounds": 2,
       "review_rounds": 1,
@@ -297,7 +298,7 @@
       "dev_session": "ses_e524be62dffeRXgl56VlnmS0dP",
       "precondition": "RESOLVED 2026-11-05 and PROVEN by dev r1: owner migrated CuratedForest.com to git.spencerslab.com WITH LFS. Coord live-verified pre-launch (unauthenticated API): instance 15.0.10+gitea-1.22.0 up; repo public, default main, 398193 KB, updated 2026-11-05T21:45:31Z. Dev r1 re-verified from a fresh clone: 74/74 LFS objects present, git lfs fsck OK, 3 magic-byte spot checks (real JPEG/JPEG/PNG, no pointer form). Matches C04 seed values + C05 watchdog syncWorkflow=sync.yml — C05 open question (repo + workflow file vs C06 deliverable) closed.",
       "blocked_on": "owner write credential for push+PR (hugo-build-forgejo PAT — plan user action 4 mint+store, or a session-provided token). Local porting work is COMPLETE.",
-      "local_state": "/tmp/opencode/cf11-site-clone on branch cf-11-site-artifacts @ 6b69726 (== origin/main), the 3 staged files UNTRACKED/byte-identical (dev commit-denied by its matrix; ready commit recipe in the handoff). Recovery if /tmp wiped: re-clone + re-copy from site-staging/ (byte-identical source of record). REWORK NOTE 2026-11-06: site-staging deploy.yml + sync.yml were comment-reworked AFTER the clone (dropped seeder/watchdog references removed; sync-albums.yaml untouched) — the /tmp clone holds pre-rework copies; the remote leg must re-copy those two files from the CURRENT site-staging before the commit+push (or re-clone + re-apply all three).",
+      "local_state": "RELOCATED 2026-11-06 per owner direction ('remove that junk and leave the work uncommitted in /home/coder/CuratedForest.com'): the 3 POST-REWORK staged files now sit UNTRACKED/UNCOMMITTED in the owner's real checkout /home/coder/CuratedForest.com (branch main @ 6b69726, [ahead 2] — the owner's pre-existing dirty state, proven otherwise unchanged: before/after porcelain diff = additions-only, HEAD sha identical). Byte proofs (sha256): .forgejo/workflows/deploy.yml 0d75be21…, .forgejo/workflows/sync.yml a3022e00…, sync-albums.yaml dc2fb2de… (all cmp-identical to the committed site-staging/ source of record in this worktree). Both /tmp clones were already absent at relocation time — nothing removed. Commit+push+PR are the owner's from that checkout (post-rework PR body handed in the 2026-11-06 coord message). Recovery if the checkout is reset: re-copy the 3 files from site-staging/.",
       "note": "staging set per final fold: workflows + sync-albums.yaml only (no archetype, no _index, no hugo.yaml edit). Clone-side hugo -D --gc stop (go binary absent from agent envs by design — t5 tier B parity) is environment-blocked, NOT a port defect: the LFS/gitInfo intent of AC2 is proven by lfs fsck + magic-byte spot checks + the build reaching module load on real bytes; the runner-side remediation is C08. C07 dev r1 also produced the live finding that spawned C08 (no go in the runner image).",
       "handoffs": [
         {
@@ -349,7 +350,15 @@
       "6. Confirmed: the job that imports data into the hugo site and deploys it IS a forgejo job — C06's site-repo workflows are that architecture, unchanged."
     ],
     "status": "complete — rounds: test-surface (t5 rewrite + main-state revert + 2 suite deletions + verbatim bookkeeping) -> dev surgery (deletions + values surgery + Dockerfile generated wrappers + staging truth) -> coord ruling option (b): C03 host mode re-landed onto main's current chart (docker path byte-identical re-proven; services/dev + custom-values/dev fully reverted to main) -> test micro-round (voided stale watchdog pins) -> plan coherence pass (MAJOR-1, 12 verbatim edits) -> review r1 CHANGES_REQUESTED (MAJOR-1 only; V1-V6+V8 all PASS) -> review r2 APPROVED. Committed as 82e04fc41 (36 files, 1112 insertions / 2271 deletions) on the same branch; owner re-pushes for re-review.",
-    "main_side_note": "tests/services/dev-forgejo-runner.sh t5 + t9 are RED ON MAIN ITSELF (cf-93 drift, pure-main controls proven) — NOT branch-fixable; FRICTION entry routes to cf-93 owner / main hygiene."
+    "main_side_note": "tests/services/dev-forgejo-runner.sh t5 + t9 are RED ON MAIN ITSELF (cf-93 drift, pure-main controls proven) — NOT branch-fixable; FRICTION entry routes to cf-93 owner / main hygiene.",
+    "owner_review_round2": {
+      "at": "2026-11-06",
+      "rulings": [
+        "seeder: owner question 'why is there a seeder job in the workflow?' — confirmed none exists in the branch code diff (the chart was deleted on-branch in 82e04fc41; the name survives only in the commit list + ticket-record docs); the workflows carry a single sync/deploy job each; the five repo secrets remain a one-time manual owner seed (user action 8) — the floor of Forgejo's job-secret model.",
+        "runner image: owner asked why the runner image is built in this repo ('a separate ask?') — after the entanglement explanation (the C01 sync tooling ships inside the image's build context), the owner chose to KEEP containers/forgejo-host-runner/ + the charts/forgejo-runner host-mode delta in this PR. Not moved.",
+        "site-staging/: REMOVED from the branch — 'it's and has bits I don't want in there': the 3 site files live in the site repo only (owner checkout /home/coder/CuratedForest.com -> site PR); the staging test suite + APPLY-INSTRUCTIONS were removed with it. Ticket record amended (plan map/rows/Commands + amendment bullet, C06/C07 chunk notes)."
+      ]
+    }
   },
   "deferred": [
     "C01 review minor-3: push -f is confined to the bot branch by workflow/default, not enforced in forgejo_publish.py — hardening suggestion beyond C01's pinned mechanics; candidate for C06 (workflow ownership) or the #88 runner card.",
