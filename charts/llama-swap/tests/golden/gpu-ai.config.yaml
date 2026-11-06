@@ -1371,7 +1371,7 @@ peers:
   vllm:
     filters:
       setParams:
-        priority?: 10
+        priority?: 5
     models:
     - qwen3.8-27b-vllm
     proxy: http://gpu-ai-vllm.default.svc.cluster.local:8000

@@ -537,7 +537,7 @@ llama-swap:
       # IDs beat unqualified peer IDs — D10, R3 Q5.2). responseHeader
       # 1800 = the deep-prefill first-byte knob (Strata precedent,
       # R3 Q5.1 — 100k+ prefills took 131 s even under llama.cpp).
-      # setParams "priority?" = the set-if-undefined floor 10 (the
+      # setParams "priority?" = the set-if-undefined floor 5 (the
       # default class): a client-sent priority wins, so the C04 class
       # rows' values pass through untouched (R4 Q2 — the `?` is part
       # of the key string). No apiKey: keyless in-cluster (R3 Q5.3,
@@ -553,7 +553,7 @@ llama-swap:
           connect: 30
         filters:
           setParams:
-            "priority?": 10
+            "priority?": 5
     matrix:
       # vars moved chart-side with the catalog (CA2): one var per catalog
       # rung, names kept identical so the set expressions below resolve

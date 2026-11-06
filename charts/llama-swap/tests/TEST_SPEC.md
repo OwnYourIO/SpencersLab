@@ -2740,7 +2740,7 @@ golden was stale — its last full capture predates the strata peer and the
 cf-86 catalog growth (its U15-era re-pin was an in-place `preload: []` flip +
 header comment, not a §1 re-capture). The stale body is exactly what T4's
 "pre-C03 catalog drift" named. Fidelity: the post-C03 render differs from the
-pre-C03 render by EXACTLY the added `peers.vllm` block (15-line diff, all
+pre-C03 render by EXACTLY the added `peers.vllm` block (10-line diff, all
 additions — verified before capture). The §9.26 column-0 preload-ruling
 annotation (8 lines, 2026-10-29 + 2026-11-02) is preserved verbatim at its
 anchor — T4 exempts exactly that layer; indented `#` lines are block-scalar
@@ -2784,3 +2784,38 @@ implementation fault:
 The 9 skips are the standing RUN_HF_CHECK / RUN_FLAG_AUDIT evidence gates
 (unchanged at base). Route: the six re-pins belong to the C03 test session
 (STATE.json `test_session.C03`); dev is read-only on test files.
+
+## 11. cf-105-vllm-followup C01 — gpu-ai golden re-capture note (dev session, 2026-11-06)
+
+`golden/gpu-ai.config.yaml` re-captured per the §1 command pattern (extract the
+`services/gpu-ai/prod/values.yaml` `llama-swap:` subtree → `helm template
+llama-swap charts/llama-swap -f <subtree> --set domain=spencerslab.com --set
+clusterName=gpu-ai --set bitwardenIds.hf-token=test-uuid --show-only
+templates/configmap-llama-swap.yaml` → `.data["config.yaml"]` verbatim; helm
+v3.16.4, app-template 5.0.1). Reason = cf-105-vllm-followup C01: the
+four-class priority amendment moves the default class 10 → 5 and the peer
+floor follows the default class (its D2; cf-105 D6/HR2 superseded), so the
+rendered gpu-ai llama-swap config changed by EXACTLY one line —
+`priority?: 10` → `priority?: 5` in the `peers.vllm.filters.setParams`
+block (T4's re-capture obligation). Captured at branch tip `6a432b751`
+(approved plan + up-front test re-pins; the C01 wire edits uncommitted in
+the tree at capture time). Sizes: gpu-ai 39159 B → 39158 B (60 models,
+2 peers: strata + vllm). The gpu-cluster golden is UNTOUCHED (the block is
+gpu-ai-only; T3's hold bar).
+
+Fidelity: the pre-C01 render vs the post-C01 render differ by EXACTLY that
+one line (data-string line 1366 — verified before capture), so the `strata`
+peer block, the matrix, and every other rendered surface are byte-identical
+(§10's one-hunk proof, now a one-line change). The §9.26 column-0
+preload-ruling annotation (8 lines, 2026-10-29 + 2026-11-02) is preserved
+verbatim at its anchor — T4 exempts exactly that layer; indented `#` lines
+are block-scalar macro CONTENT and are byte-pinned as data. Route: shell
+write of the re-captured fixture — the edit tool is denied on
+`charts/**/tests/**` in dev sessions (the cf-105 C03 precedent's route for
+dev-owned test assets); the §1 commands ran verbatim except the
+data-extraction step, as in the original capture.
+
+While touching this file: §10's fidelity count is corrected 15-line →
+10-line (the cf-105 C03 review measured the `peers.vllm` block's pre/post
+render delta as exactly 10 inserted lines, `1362a1363,1372` — the cf-105
+deferred item that rides this test touch).
