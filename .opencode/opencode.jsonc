@@ -1076,5 +1076,13 @@
     "/home/coder/CuratedForest.com/content/tech/home-assistant",
     "./.agents/skills",
     "skills/"
-  ]
+  ],
+  // Tool-output truncation budget. OpenCode's built-in default is 51200 bytes,
+  // which is under the boards skill's ~75 KB body — every `skill boards` load
+  // truncated mid-contract (marker "[showing lines 1-307 of 467; full output
+  // saved to ...]"). 100000 clears the largest current tool result with
+  // headroom; max_lines stays at its 2000 default (boards is 480 lines).
+  "tool_output": {
+    "max_bytes": 100000
+  }
 }
