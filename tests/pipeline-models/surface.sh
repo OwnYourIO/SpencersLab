@@ -44,6 +44,17 @@
 # boards alias excepted); M8 closes the Model(s) vocabulary at exactly the
 # canonical four. M7 and M8 are red until C02 lands the rename.
 #
+# cf-105-vllm-followup (2026-11-06, four-class priority amendment — supersedes
+# cf-105 D6/HR2): M3 re-pinned by C01 — the vLLM class rows go 2 -> 3 (default
+# row body.priority 10 -> 5; NEW qwen3.8-27b-vllm-low row 9; the shared wire
+# modelID + 262144 pins carry). M7 re-pinned by C02 — the class table 3 -> 4
+# rows (1-3/1, unset+4-7/5, 8-9/9, 10+/background), the favorited table gains
+# the -low row, the floor prose 10 -> 5, and the single-authority absence
+# guard's marker 4+ -> 10+. Red posture (cf-83): M3 red until C01's wire
+# lands; M7 red until C02 — its cross-file legs are C01's (floor 5 + the three
+# catalog rows) and turn green with the wire, its skills-text legs are C02's.
+# M4's wire-id list is unchanged (the wire id is not new).
+#
 # Red posture (cf-83): M1, M2 and M5 are red before the C01 dev edit — the
 # sources still route Flash+Local to q3, so the strata route needles and the
 # q3/strix absence guards name the missing re-route (never a harness fault).
@@ -369,12 +380,13 @@ for (const k of ['qwen3.8-flash-next-q3', 'qwen3.8-flash-next-q4', 'qwen3.8-flas
   if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context not 262144`);
   if (!e.name) errs.push(`${k}: no descriptive name`);
 }
-// cf-105 C03: the two vLLM class rows — D10 keeps the wire modelID
-// (qwen3.8-27b-vllm) identical on both rows; only body.priority differs
-// (10 default / 1 urgent), and the HR3 context pin is 262144 on both.
-for (const [k, prio] of [['qwen3.8-27b-vllm', 10], ['qwen3.8-27b-vllm-urgent', 1]]) {
+// cf-105 C03 + cf-105-vllm-followup C01: the three vLLM class rows — D10
+// keeps the wire modelID (qwen3.8-27b-vllm) identical on all rows; only
+// body.priority differs (5 default / 1 urgent / 9 low), and the HR3 context
+// pin is 262144 on all three.
+for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1], ['qwen3.8-27b-vllm-low', 9]]) {
   const e = cur[k];
-  if (!e) { errs.push(`${k}: catalog row missing (C03 adds the two class rows)`); continue; }
+  if (!e) { errs.push(`${k}: catalog row missing (cf-105 C03 adds the default/urgent pair, cf-105-vllm-followup C01 adds the low row)`); continue; }
   if (e.modelID !== 'qwen3.8-27b-vllm') errs.push(`${k}: modelID is ${e.modelID}, want the shared wire value qwen3.8-27b-vllm`);
   if (!e.limit || e.limit.context !== 262144) errs.push(`${k}: limit.context is ${JSON.stringify((e.limit || {}).context)}, want 262144 (HR3)`);
   if (!e.body || e.body.priority !== prio) errs.push(`${k}: body.priority is ${JSON.stringify((e.body || {}).priority)}, want ${prio}`);
@@ -383,7 +395,7 @@ for (const [k, prio] of [['qwen3.8-27b-vllm', 10], ['qwen3.8-27b-vllm-urgent', 1
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/catalog.js" "$CAT" \
-    || fail "M3: gpu-ai catalog presence contract violated — the red names the missing/reshaped entry (HOLD rows never reshaped; the vllm rows are C03's additive re-pin)"
+    || fail "M3: gpu-ai catalog presence contract violated — the red names the missing/reshaped entry (HOLD rows never reshaped; the vllm class rows are cf-105 C03 / cf-105-vllm-followup C01's additive re-pin)"
   # The peer hop only works while the wire name is not also a local model id
   # (llama-swap precedence: local IDs beat unqualified peer IDs, R3 Q5.2).
   python3 - <<'PY' \
@@ -403,7 +415,7 @@ ids = model_ids(chart.get("config") or {})
 ids |= model_ids((svc.get("llama-swap") or {}).get("config") or {})
 assert "qwen3.8-27b-vllm" not in ids, "qwen3.8-27b-vllm is a local model id in the chart or gpu-ai overlay config"
 PY
-  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the two vLLM class rows exist with the shared wire modelID, 262144 context and body.priority 10/1 (cf-105 C03 re-pin); the peer wire name is shadow-free (R3 Q5.2)"
+  ok "M3: catalog parses; q4 declares tools; flash-next q3/q4/strata exist with modelID/name/tools/262144 (HOLD); the three vLLM class rows exist with the shared wire modelID, 262144 context and body.priority 5/1/9 (cf-105 C03 + cf-105-vllm-followup C01 re-pin); the peer wire name is shadow-free (R3 Q5.2)"
 fi
 
 # --- M4: serving-fact cross-check (AC8) -------------------------------------------
@@ -520,6 +532,13 @@ fi
 # needed a C04 re-pin (they stay byte-untouched above); the only M1..M6
 # re-pins in this suite are M3's two vLLM catalog rows + shadow-free bar and
 # M4's vllm wire id, both C03's (suite header, cf-105 handoff posture).
+# Re-pin note (cf-105-vllm-followup C02, 2026-11-06): the four-class
+# amendment supersedes cf-105 D6/HR2 cell-for-cell — the default row's cell
+# 10 -> 5, a low row (8-9 / 9) joins the table, the background marker 4+ ->
+# 10+, the floor prose 10 -> 5, and the favorited table gains the -low row.
+# The boards/kickoff halves' NEEDLES stay byte-untouched (D6: cite-only —
+# only the absence guard's marker moves, 4+ -> 10+); M3's C01 catalog
+# re-pin feeds the cross-file leg below.
 if want m7; then
   for f in "$BD_SRC" "$BD_GEN"; do
     [ -f "$f" ] || fail "M7[AC3]: $f missing"
@@ -568,12 +587,12 @@ open(sys.argv[2], "w").write(m.group(0))
     python3 "$TMP/win.py" --ci "$TMP/lp.md" 400 'slug' 'priority' 'cardnumber' \
       || fail "M7[AC3]: $f's launch-prompt block does not name the Priority value alongside the slug value and cardNumber"
     # Single-authority guard (cite-don't-restate): the background leg's
-    # literal '4+' marker is pipeline-models' text alone — a bare absence
+    # literal '10+' marker is pipeline-models' text alone — a bare absence
     # grep (the contract's "grep must be empty"), the same discipline as the
     # q3/strix bars. The word "background" itself is allowed: the D12
     # carve-out sentence names the background leg without the marker.
-    grep -qF '4+' "$f" \
-      && fail "M7[AC4]: $f carries the literal '4+' marker — the class table's background leg lives ONLY in pipeline-models"
+    grep -qF '10+' "$f" \
+      && fail "M7[AC4]: $f carries the literal '10+' marker — the class table's background leg lives ONLY in pipeline-models"
   done
   for f in "$PK_SRC" "$PK_GEN"; do
     [ -f "$f" ] || fail "M7[AC3]: $f missing"
@@ -592,10 +611,10 @@ assert len(nums) == 2, f"the live Questions list must carry exactly two numbered
 low = m.group(0).lower()
 assert "slug" in low and "models" in low, "the two questions must be the slug and the models questions"
 ' "$f" || fail "M7[AC3]: $f's live Questions list no longer carries exactly its two questions (slug + models)"
-    # Single-authority guard (kickoff half): the literal '4+' marker is
+    # Single-authority guard (kickoff half): the literal '10+' marker is
     # pipeline-models' text alone — same bare absence bar as the boards half.
-    grep -qF '4+' "$f" \
-      && fail "M7[AC4]: $f carries the literal '4+' marker — the class table's background leg lives ONLY in pipeline-models"
+    grep -qF '10+' "$f" \
+      && fail "M7[AC4]: $f carries the literal '10+' marker — the class table's background leg lives ONLY in pipeline-models"
   done
   for f in "$PM_SRC" "$PM_GEN"; do
     [ -f "$f" ] || fail "M7[AC4]: $f missing"
@@ -620,13 +639,17 @@ def find(cells, rx=None, must_not=()):
 r1 = find(["urgent", "qwen3.8-27b-vllm-urgent"], rx=r"1\s*[–\-—]\s*3")
 assert r1, "class table: no urgent row (1-3 / urgent / qwen3.8-27b-vllm-urgent / 1)"
 assert re.search(r"\|\s*1\s*\|", r1), f"class table: urgent row lacks the vLLM priority cell 1: {r1}"
-r2 = find(["default", "qwen3.8-27b-vllm", "10", "unset"], must_not=["-urgent"])
-assert r2, "class table: no default row (unset / default / qwen3.8-27b-vllm / 10)"
-assert re.search(r"\|\s*10\s*\|", r2), f"class table: default row lacks the vLLM priority cell 10: {r2}"
+r2 = find(["default", "qwen3.8-27b-vllm", "5", "unset"], must_not=["-urgent"])
+assert r2, "class table: no default row (unset / default / qwen3.8-27b-vllm / 5)"
+assert re.search(r"\|\s*5\s*\|", r2), f"class table: default row lacks the vLLM priority cell 5: {r2}"
+r_low = find(["low", "qwen3.8-27b-vllm-low"], rx=r"8\s*[–\-—]\s*9")
+assert r_low, "class table: no low row (8-9 / low / qwen3.8-27b-vllm-low / 9)"
+assert re.search(r"\|\s*9\s*\|", r_low), f"class table: low row lacks the vLLM priority cell 9: {r_low}"
 r3 = find(["background", "qwen3.8-27b-q4", "n/a"]) or find(["background", "qwen3.8-27b-q4", "n-a"])
-assert r3, "class table: no background row (4+ / background / qwen3.8-27b-q4 / n-a)"
-assert re.search(r"\b4\s*\+", r3), f"class table: background row lacks the 4+ card-Priority marker: {r3}"
-# Polarity sentence: 1:1 passthrough, lower = more urgent (vLLM convention).
+assert r3, "class table: no background row (10+ / background / qwen3.8-27b-q4 / n-a)"
+assert re.search(r"\b10\s*\+", r3), f"class table: background row lacks the 10+ card-Priority marker: {r3}"
+# Polarity + snap-interval sentence: lower = more urgent (vLLM convention);
+# the discrete values ride the resolved body.priority 1:1.
 text = open(sys.argv[1]).read().lower()
 i = text.find("more urgent")
 assert i >= 0, "no polarity sentence (lower = more urgent)"
@@ -642,10 +665,11 @@ def favrow(cell):
     return None
 assert favrow("qwen3.8-27b-vllm"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm"
 assert favrow("qwen3.8-27b-vllm-urgent"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm-urgent"
-' "$f" || fail "M7[AC4/AC5]: $f lacks the single-authority class table (rows + polarity + the two favorited rows)"
+assert favrow("qwen3.8-27b-vllm-low"), "favorited models: no gpu-ai row keyed qwen3.8-27b-vllm-low"
+' "$f" || fail "M7[AC4/AC5]: $f lacks the single-authority four-class table (rows + polarity + the three favorited vLLM rows)"
   done
   # Cross-file (M4 style): the class table's row IDs appear in a serving
-  # authority, and the floor 10 equals the peer filter value.
+  # authority, and the floor 5 equals the peer filter value.
   python3 -c '
 import sys, yaml
 svc = yaml.safe_load(open("services/gpu-ai/prod/values.yaml"))
@@ -653,19 +677,20 @@ peer = ((svc.get("llama-swap") or {}).get("config") or {}).get("peers", {}).get(
 assert peer is not None, "services/gpu-ai: no llama-swap.config.peers.vllm block (C03)"
 assert peer.get("models") == ["qwen3.8-27b-vllm"], f"peers.vllm.models must be exactly [qwen3.8-27b-vllm], got {peer.get('models')!r}"
 floor = ((peer.get("filters") or {}).get("setParams") or {}).get("priority?")
-assert floor == 10, f"the peer priority? floor must be 10 (the default class), got {floor!r}"
-' || fail "M7[AC5]: the peers.vllm serving authority (models list + priority? floor 10) is absent or wrong in services/gpu-ai/prod/values.yaml"
+assert floor == 5, f"the peer priority? floor must be 5 (the floor follows the default class — cf-105-vllm-followup D2), got {floor!r}"
+' || fail "M7[AC5]: the peers.vllm serving authority (models list + priority? floor 5) is absent or wrong in services/gpu-ai/prod/values.yaml"
   cat >"$TMP/vllm-catalog.js" <<'JS'
-// cf-105 C04 cross-file leg: the class table's row IDs exist in the gpu-ai
-// provider catalog with the shared wire modelID, the HR3 context pin and the
-// class body.priority values (1 urgent / 10 default).
+// cf-105 C04 cross-file leg (re-pinned cf-105-vllm-followup C02): the class
+// table's row IDs exist in the gpu-ai provider catalog with the shared wire
+// modelID, the HR3 context pin and the class body.priority values
+// (1 urgent / 5 default / 9 low).
 const fs = require('fs');
 function load(p) { return eval('(' + fs.readFileSync(p, 'utf8') + ')'); }
 const o = load(process.argv[2]);
 const provs = o.providerMetas || o.providers || {};
 const models = (provs['gpu-ai'] || {}).models || {};
 const errs = [];
-for (const [k, prio] of [['qwen3.8-27b-vllm', 10], ['qwen3.8-27b-vllm-urgent', 1]]) {
+for (const [k, prio] of [['qwen3.8-27b-vllm', 5], ['qwen3.8-27b-vllm-urgent', 1], ['qwen3.8-27b-vllm-low', 9]]) {
   const e = models[k];
   if (!e) { errs.push(`${k}: row missing`); continue; }
   if (e.modelID !== 'qwen3.8-27b-vllm') errs.push(`${k}: modelID ${e.modelID}, want the wire value qwen3.8-27b-vllm`);
@@ -675,11 +700,11 @@ for (const [k, prio] of [['qwen3.8-27b-vllm', 10], ['qwen3.8-27b-vllm-urgent', 1
 if (errs.length) { console.log(errs.join('; ')); process.exit(1); }
 JS
   node "$TMP/vllm-catalog.js" "$CAT" \
-    || fail "M7[AC5]: the gpu-ai provider catalog rows do not match the class table (shared wire modelID, 262144 context, body.priority 1/10)"
+    || fail "M7[AC5]: the gpu-ai provider catalog rows do not match the class table (shared wire modelID, 262144 context, body.priority 5/1/9)"
   grep -qF 'qwen3.8-27b-q4' charts/llama-swap/values.yaml \
     || grep -qF 'qwen3.8-27b-q4' services/gpu-ai/prod/values.yaml \
     || fail "M7[AC5]: the background-leg rung qwen3.8-27b-q4 is absent from the serving authorities (chart catalog or gpu-ai overlay)"
-  ok "M7[cf-105 C04]: boards roster names both fields + the D12 carve-out with the retired semantics intact, the priority kickoff bullet and launch-prompt value are present, the kickoff slot is board-scoped with the two-question list intact, the class table + polarity + favorited rows live in pipeline-models alone, the serving authorities agree (floor 10, wire model, background rung), and no 4+/background leg text leaks into boards/kickoff"
+  ok "M7[cf-105 C04, re-pinned cf-105-vllm-followup C02]: boards roster names both fields + the D12 carve-out with the retired semantics intact, the priority kickoff bullet and launch-prompt value are present, the kickoff slot is board-scoped with the two-question list intact, the four-class table + polarity + the three favorited vLLM rows live in pipeline-models alone, the serving authorities agree (floor 5, wire model, catalog body.priority 1/5/9, background rung), and no 10+/background leg text leaks into boards/kickoff"
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"
