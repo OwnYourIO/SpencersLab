@@ -1,10 +1,10 @@
 {
   "feature": "2026/2026-11-cf-105-vllm-followup",
-  "plan_status": "approved",
+  "plan_status": "complete",
   "coord_session": "ses_e4d84ad2cffe6CXlIOWwPkXOJh",
   "test_session": "ses_e4d343a6fffeHEkps7Zr2onRaW (single re-pin session for all chunks C01+C02+C03 per cf-83 posture; faulty-test repairs route back here)",
   "current_wave": 2,
-  "updated_at": "2026-11-06T22:25:00+00:00",
+  "updated_at": "2026-11-06T22:55:00+00:00",
   "approval": {
     "approved_by": "user",
     "at": "2026-11-06T21:10:00+00:00",
@@ -23,6 +23,13 @@
     },
     "local": false,
     "model_note": "the blank-card default gpu-ai/qwen3.8-27b-q4 answered 503 'no available server' twice at launch; the run fell back to the hosted dense route per pipeline-models (same route cf-105's own run used) — DECISIONS 2026-11-06 coord entry"
+  },
+  "final_review": {
+    "at": "2026-11-06T22:55:00+00:00",
+    "session": "ses_e4cf6234bffeMz4dkrWBdCDSC4",
+    "verdict": "APPROVED",
+    "summary": "whole-plan review at branch tip 588d6d858 (base 28a64cfe1, four linear ticket commits 6a432b751/f6346bc47/481055427/588d6d858): every validation re-run fresh and green (chart suite 415 passed / 9 skipped / 0 failed, skips = standing evidence gates; FULL surface M1..M7 9 ok incl. both 10+ absence guards; runbook T1-T5 5 ok; aislop 0/0/0 91 files; rulesync --check + fresh generate no-op; helm lint/template clean). Four-class contract cell-for-cell consistent across services floor+comment, three catalog rows, pipeline-models pair (src==gen mirror), golden priority?: 5, runbook constants, and all re-pinned tests; stale-remnant greps zero outside dated re-pin provenance notes. Single-authority law holds; plan negatives all verified (charts/vllm untouched, gpu golden blob-identical, strata/matrix byte-identical, no proxy/custom-values/gpu vllm entries, machine-global config clean, q4 row unchanged). Test integrity: five re-pinned test files changed only in 6a432b751; golden diff = exactly the floor line. Bookkeeping matches the commit log; main untouched; no push; untracked = gitignored tgz only. No blocker/major/minor findings — nothing fell between chunks.",
+    "notes": "review notes appended to chunks/C01.md, C02.md, C03.md under 'Final whole-plan review'; one subtlety chased and cleared: M7's 10+ marker binds the background row via backtick-stripped matching, pin is meaningful"
   },
   "chunks": {
     "C01": {
@@ -144,7 +151,7 @@
       "last_verdict": "APPROVED",
       "dev_session": "ses_e4cfe65e5ffeqEko7mBM2cP7f1",
       "review_session": "ses_e4cfb387dffeR0mlSt5hucnSvP",
-      "commit": "PENDING-COORD",
+      "commit": "588d6d858",
       "handoffs": [
         {
           "role": "dev",
