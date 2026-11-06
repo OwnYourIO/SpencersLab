@@ -36,8 +36,9 @@ step 6 are pre-registered against this, not vibes:**
 `app.kubernetes.io/name=vllm`, namespace `default`, release `gpu-ai-vllm`,
 node `ai-gpu`. Engine service `gpu-ai-vllm.default.svc.cluster.local:8000`.
 Public FE chain `https://llama.spencerslab.com/v1`. Served model name
-`qwen3.8-27b-vllm`; urgent class row `qwen3.8-27b-vllm-urgent`. Image
-`ghcr.io/ownyourio/vllm-rocm:main` until step 10 pins the first `:v<run>`.
+`qwen3.8-27b-vllm`; urgent class row `qwen3.8-27b-vllm-urgent`, low class
+row `qwen3.8-27b-vllm-low`. Image `ghcr.io/ownyourio/vllm-rocm:main`
+until step 10 pins the first `:v<run>`.
 Central stack: Prometheus `prometheus.spencerslab.com`, Grafana
 `grafana.spencerslab.com`, Loki `loki.spencerslab.com`.
 
@@ -269,9 +270,13 @@ row / peer name is wrong in `.opencode/opencode.jsonc` or the peer block.
 
 The engine runs `--scheduling-policy priority` (C02 serveArgs), so a
 non-zero body priority is legal; the peer floor `filters.setParams
-"priority?": 10` puts non-priority clients in the default class. Class
-rows (D6): urgent class row `qwen3.8-27b-vllm-urgent` (priority 1),
-default class row `qwen3.8-27b-vllm` (priority 10).
+"priority?": 5` puts non-priority clients in the default class. The class
+rows (the four-class contract, cf-105-vllm-followup D1): urgent class row
+`qwen3.8-27b-vllm-urgent` (priority 1), default class row
+`qwen3.8-27b-vllm` (priority 5), low class row `qwen3.8-27b-vllm-low`
+(priority 9). The background class (card `Priority` 10+) is OFF vLLM
+entirely — the llama.cpp `qwen3.8-27b-q4` leg, no vLLM row, no preemption
+surface.
 
 **5.1 — Explicit `priority: 5` through the full chain.**
 
@@ -286,8 +291,8 @@ priority policy and the body field reached vLLM.
 
 **5.2 — OPTIONAL: fcfs negative proof.** The only step that requires a
 temporary flip; belt-and-braces for the R4 pass-through claim (the step-4
-chain smoke already exercises the body merge for both class rows). Run it
-only if the owner wants the negative proof:
+chain smoke already exercises the body merge for the default and urgent
+rows). Run it only if the owner wants the negative proof:
 
 1. GIT values change (human-run): in `charts/vllm/values.yaml`'s
    `app-template.serveArgs`, flip `--scheduling-policy` from `priority`
@@ -312,7 +317,10 @@ histogram_quantile(0.5, sum by (le) (rate(vllm:request_num_preemptions_bucket[30
 
 Expected: the urgent class shows NO preemptions while the default class
 does. A PASS is the priority split holding — preemption under exhaustion
-is the design (D4), not a fault.
+is the design (D4), not a fault. Under KV exhaustion the four-class victim
+order is low(9) → default(5), never urgent(1): vLLM force-preempts the
+highest-numbered priority first (R4 Q1: victim = `max (priority,
+arrival_time)`).
 If it fails: urgent-class preemptions mean the class values did not reach
 the engine (check 4.4 and the row's `body` merge); zero preemptions
 anywhere = the pool never saturated (drive longer contexts).
