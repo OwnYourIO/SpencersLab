@@ -34,6 +34,7 @@
       "last_verdict": "APPROVED",
       "dev_session": "ses_e4d1dc6d7ffeBgK1MfpZ4P3I0w",
       "review_session": "ses_e4d150ba2ffebb1dYZVnUjggh1",
+      "commit": "f6346bc47",
       "handoffs": [
         {
           "role": "dev",
@@ -82,15 +83,55 @@
       ]
     },
     "C02": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e4d0aa361ffeJ7EwPA5gPa5PeF",
+      "review_session": "ses_e4d0764efffe0FqmxedsESSrYr",
+      "commit": "PENDING-COORD",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e4d0aa361ffeJ7EwPA5gPa5PeF",
+          "status": "DONE",
+          "files_changed": [
+            ".rulesync/skills/pipeline-models/SKILL.md (4-row class table with verbatim plan cells; polarity/floor paragraph re-pinned — floor = 5, 1:1 discrete-value claim, midpoint snap intervals 1-3→1, 4-7→5, 8-9→9, 10+→10; favorited default row re-pinned to unset/null/4-7 + body.priority 5; NEW favorited qwen3.8-27b-vllm-low row after its -urgent sibling, local-first order preserved)",
+            ".opencode/skills/pipeline-models/SKILL.md (regenerated twin — the ONLY file rulesync generate wrote)"
+          ],
+          "commands_run": [
+            "rulesync generate => pass (exit 0; Written 1 skill .opencode/skills/pipeline-models/SKILL.md — no other generated surface churned)",
+            "rulesync generate --check => pass (All files are up to date); second rulesync generate => pass (no-op: git status byte-identical pre/post)",
+            "bash tests/pipeline-models/surface.sh (FULL M1..M7) => pass (9 ok, exit 0 — M7 fully green: four-class table rows + polarity + three favorited vLLM rows in pipeline-models alone, floor 5, catalog body.priority 1/5/9, no 10+/background leg text leaks into boards/kickoff; M1-M6 stayed green)",
+            "npx aislop ci --changes => pass (exit 0; 0 errors / 0 warnings / 0 fixable, 91 files)",
+            "manual single-authority greps over .rulesync/skills + .opencode/skills => pass (10+ marker, 4-7 interval, all three vllm row ids: ONLY the pipeline-models pair; boards/kickoff src AND gen zero git diff vs HEAD; their Priority text cite-only, class-name-agnostic)",
+            "git diff scope check => pass (source diff = table + polarity/floor paragraph + favorited re-pin/addition ONLY — roles table, provider posture, picker mapping, other favorited rows byte-unchanged; generated diff mirrors it exactly)",
+            "AC4 cross-file node/python verify => pass (catalog: qwen3.8-27b-vllm p5 / -urgent p1 / -low p9, shared wire modelID, limit.context 262144 all three; services peers.vllm.models = [qwen3.8-27b-vllm], priority? floor = 5)"
+          ],
+          "deviations": "one deliberate wording choice in the snap sentence — the chunk's parenthetical trailing clause '— plan D4, the OQ1 best guess' was NOT written into the skill: the skill text never cites plan decisions, OQ1 is user-CONFIRMED at approval so 'best guess' would be a stale statement in shipped prose, and comment-slop bars provenance narration. The mandated interval content (midpoint boundaries 1-3→1, 4-7→5, 8-9→9, 10+→10) is present. Flagged for review adjudication.",
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "coord records the handoff, launches C02 agent-review (AC4 re-verify + the snap-sentence deviation adjudication), then commits the C02 set (two skill files) and launches C03"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e4d0764efffe0FqmxedsESSrYr",
+          "verdict": "APPROVED",
+          "summary": "all validations re-run fresh: rulesync generate writes ONLY the pipeline-models twin (--check pass, second generate no-op); FULL surface M1..M7 green (9 ok); aislop 0/0/0. Four-class table cell-for-cell equal to the plan AND the C01 committed wire (row ids, priorities 1/5/9, intervals 1-3/unset+4-7/8-9/10+, floor 5); single-authority law holds (boundary text only in the pipeline-models pair; boards + pipeline-kickoff byte-identical to HEAD in src AND gen); -low favorited row next to its siblings, local-first order intact; src/gen mirror exact (frontmatter-only constant delta). Dev's flagged snap-sentence deviation adjudicated SUSTAINED-CORRECT: the omitted trailing clause is planning provenance, not contract content, and 'best guess' would be stale-false in shipped prose since OQ1 is user-confirmed; interval content shipped verbatim; provenance durable in DECISIONS.md D4. No blocker/major/minor/nit findings.",
+          "files_changed": [
+            ".agents/plans/2026/2026-11-cf-105-vllm-followup/chunks/C02.md (review notes appended — reviewer surface only)"
+          ],
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "coord commits the C02 set (two pipeline-models files + bookkeeping) and launches C03 (runbook + vllm-runbook.sh T3/T5)"
+        }
+      ]
     },
     "C03": {
       "status": "pending",
