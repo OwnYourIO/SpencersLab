@@ -43,10 +43,11 @@ The single authority for the board `Priority` → serving-class mapping; `boards
 | Card `Priority` | Class | Model row (this lab) | vLLM `body.priority` |
 |---|---|---|---|
 | `1`–`3` | urgent | `gpu-ai/qwen3.8-27b-vllm-urgent` | 1 |
-| unset / `null` | default | `gpu-ai/qwen3.8-27b-vllm` | 10 |
-| `4`+ | background | `gpu-ai/qwen3.8-27b-q4` (llama.cpp — off vLLM, keeps KV headroom) | n/a |
+| unset / `null`, `4`–`7` | default | `gpu-ai/qwen3.8-27b-vllm` | 5 |
+| `8`–`9` | low | `gpu-ai/qwen3.8-27b-vllm-low` | 9 |
+| `10`+ | background | `gpu-ai/qwen3.8-27b-q4` (llama.cpp — off vLLM, keeps KV headroom) | n/a |
 
-Polarity is a 1:1 passthrough with lower = more urgent — vLLM's own convention, so the card value rides the resolved model row's `body.priority` unchanged. The peer filter floor (`peers.vllm.filters.setParams "priority?" = 10`) is set-if-undefined: it gives non-priority clients the default class instead of letting them outrank it.
+Polarity is lower = more urgent (vLLM's own convention); the discrete values 1/5/9 ride the resolved row's `body.priority` 1:1. The board field is a free NUMBER, so intermediate values snap to the class interval (midpoint boundaries: 1–3→1, 4–7→5, 8–9→9, 10+→10). The peer filter floor (`peers.vllm.filters.setParams "priority?" = 5`) is set-if-undefined: non-priority clients land in the default class, never outrank it, and a client-sent `priority` still wins.
 
 ## Favorited models in this lab
 
@@ -57,8 +58,9 @@ Local first: the self-hosted `gpu-ai`/`gpu-moe` rows are the default provider's 
 | `gpu-ai` | `qwen3.8-2.4t-a95b-q6` | local planning (kickoff `Local` option; q6 assumed, not catalog-verified — pre-existing) |
 | `gpu-ai` | `qwen3.8-flash-next-strata` | local fast for the Flash+Local combo — 180B-class MoE served by the dedicated Strata pod through the outer llama-swap `peers` seam (IQ3_S arena on the R9700; the first request pays a minutes-long arena pin, so cold start is expected; the `-strix` sibling is a manual/secondary fallback only, never an agent route) |
 | `gpu-ai` | `qwen3.8-27b-q4` | local code default (UD-Q4_K_XL + MTP; verified served in the chart catalog and the provider catalog) — also the Priority class table's background leg |
-| `gpu-ai` | `qwen3.8-27b-vllm` | local vLLM 27B default class (board `Priority` unset/`null`; `body.priority` 10, served through the llama-swap `peers.vllm` hop) |
+| `gpu-ai` | `qwen3.8-27b-vllm` | local vLLM 27B default class (board `Priority` unset/`null`/`4`–`7`; `body.priority` 5, served through the llama-swap `peers.vllm` hop) |
 | `gpu-ai` | `qwen3.8-27b-vllm-urgent` | local vLLM 27B urgent class (board `Priority` 1–3; `body.priority` 1) |
+| `gpu-ai` | `qwen3.8-27b-vllm-low` | local vLLM 27B low class (board `Priority` 8–9; `body.priority` 9) |
 | `gpu-ai` | `qwen3.8-27b-q6` | local verified alternate quant (UD-Q6_K_XL + MTP — only on explicit request) |
 | `gpu-ai` | `qwen3.8-27b-q8` | local code fallback (self-hosted, 262k ctx) |
 | `gpu-ai` | `qwen3.8-27b-q8-1m` | local code fallback, long context (1M ctx) |
