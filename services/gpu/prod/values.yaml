@@ -1,13 +1,13 @@
 # BitwardenIds moved to cluster secret annotation (metadata.annotations.services.gpu.bitwardenIds)
 # The YAML block is parsed and each key-value pair becomes individual Helm parameters
 # This allows charts to access values like: {{ index .Values "bitwardenIds" "coder-pg" }}
-# Example cluster annotation:
+# Example cluster annotation (one Bitwarden-item uuid per key):
 # metadata.annotations.services.gpu.bitwardenIds: |
-#   open-webui-sso-secret: "12345678-1234-1234-1234-123456789abc"
-#   open-webui-secret: "87654321-4321-4321-4321-cba987654321"
-#   open-webui-pg: "11111111-2222-3333-4444-555555555555"
-#   coder-sso-secret: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-#   coder-pg: "ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"
+#   open-webui-sso-secret: "<item-uuid>"
+#   open-webui-secret: "<item-uuid>"
+#   open-webui-pg: "<item-uuid>"
+#   coder-sso-secret: "<item-uuid>"
+#   coder-pg: "<item-uuid>"
 bitwardenIds:
   open-webui-sso-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
   open-webui-secret: OVERRIDE_VIA_CLUSTER_ANNOTATION
