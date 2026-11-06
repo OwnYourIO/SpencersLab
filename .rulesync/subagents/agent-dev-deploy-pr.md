@@ -1,0 +1,211 @@
+---
+targets:
+  - '*'
+name: agent-dev-deploy-pr
+description: 'Definition-only deploy fixer (-deploy-pr): runs after the final review comes back clean on a run whose card checked the Lifecycle Deployment stage; loops the broken initial deployment - a couple of options per issue, user picks when Deployment is in the loop, own recommendation otherwise; hands back to the coordinator for reintegration and re-review and closes its own worktree at hand-back; no commits; pushes the ticket branch for remote build/test per pipeline-push-pr - the testing tiers are that skill''s assumed flow; cf-90 ships this definition only - no run of that ticket executes it'
+opencode:
+  mode: all
+  color: '#f59e0b'
+  permissions:
+    - action: edit
+      resource: '*'
+      effect: allow
+    - action: edit
+      resource: charts/**/tests/**
+      effect: deny
+    - action: edit
+      resource: containers/**/tests/**
+      effect: deny
+    - action: edit
+      resource: tests/**
+      effect: deny
+    - action: edit
+      resource: .agents/plans/**
+      effect: deny
+      # Context files dev may update when a chunk needs it — report under deviations
+    - action: edit
+      resource: skills/**
+      effect: allow
+      # Agent machinery (rulesync sources/config, fleet config, registry lock):
+      # explicit user approval (unattended runs treat ask as blocked)
+    - action: edit
+      resource: .rulesync/**
+      effect: ask
+    - action: edit
+      resource: .opencode/opencode.jsonc
+      effect: ask
+    - action: edit
+      resource: skills-lock.json
+      effect: ask
+    - action: edit
+      resource: rulesync.jsonc
+      effect: ask
+      # Repo context sources dev may update (they generate AGENTS.md / skills)
+    - action: edit
+      resource: .rulesync/rules/**
+      effect: allow
+    - action: edit
+      resource: .rulesync/skills/**
+      effect: allow
+      # Generated surfaces: never hand-edit — `rulesync generate` owns them
+    - action: edit
+      resource: AGENTS.md
+      effect: deny
+    - action: edit
+      resource: .opencode/agents/**
+      effect: deny
+    - action: edit
+      resource: .opencode/commands/**
+      effect: deny
+    - action: edit
+      resource: .opencode/skills/**
+      effect: deny
+      # Agent machinery (ticket plans, synced third-party skills, agent and
+      # command definitions) stays closed — order: these denies are last.
+      # .kilo is denied wholesale: it symlinks into .agents and is slated
+      # for removal — no subtree grading. .agents/notes/** is free-form repo
+      # content (AGENTS.md): the former blanket .agents/** deny over-reached
+      # it and forced shell-channel runbook writes twice (cf-77 FRICTION
+      # 2026-10-27/28).
+    - action: edit
+      resource: .kilo/**
+      effect: deny
+    - action: edit
+      resource: .agents/skills/**
+      effect: deny
+    - action: edit
+      resource: .agents/agents/**
+      effect: deny
+    - action: edit
+      resource: .agents/commands/**
+      effect: deny
+    - action: edit
+      resource: .agents/notes/**
+      effect: allow
+    - action: read
+      resource: '*'
+      effect: allow
+    - action: read
+      resource: .opencode/skills/**
+      effect: allow
+    - action: read
+      resource: .agents/skills/**
+      effect: allow
+    - action: read
+      resource: skills/**
+      effect: allow
+    - action: glob
+      resource: '*'
+      effect: allow
+    - action: grep
+      resource: '*'
+      effect: allow
+    - action: skill
+      resource: '*'
+      effect: allow
+    - action: question
+      resource: '*'
+      effect: allow
+    - action: subagent
+      resource: '*'
+      effect: deny
+    - action: shell
+      resource: '*'
+      effect: ask
+    - action: shell
+      resource: git status *
+      effect: allow
+    - action: shell
+      resource: git diff *
+      effect: allow
+    - action: shell
+      resource: git log *
+      effect: allow
+      # Git writes: add/commit denied — the coordinator commits the chunk
+      # once review approves (cf-76 D7, loud-denial parity with the push
+      # denies below); push stays allowed for remote build/test, main/force
+      # still never
+    - action: shell
+      resource: git add *
+      effect: deny
+    - action: shell
+      resource: git commit *
+      effect: deny
+    - action: shell
+      resource: git push*
+      effect: allow
+    - action: shell
+      resource: git push*main*
+      effect: deny
+    - action: shell
+      resource: 'git push --force*'
+      effect: deny
+    - action: shell
+      resource: 'git push -f*'
+      effect: deny
+    - action: shell
+      resource: 'git push * --force*'
+      effect: deny
+    - action: shell
+      resource: 'git push * -f*'
+      effect: deny
+    - action: shell
+      resource: ls *
+      effect: allow
+    - action: shell
+      resource: helm lint *
+      effect: allow
+    - action: shell
+      resource: helm template *
+      effect: allow
+    - action: admin*
+      resource: '*'
+      effect: deny
+    - action: readonly*
+      resource: '*'
+      effect: allow
+    - action: global*
+      resource: '*'
+      effect: allow
+    - action: dev*
+      resource: '*'
+      effect: allow
+      # Workspace isolation surface: a run with no worktree can mint one and
+      # move its session in via the opencode MCP tools (the native-tool path
+      # executing-plans / using-git-worktrees expect). No execute row: these
+      # roles have no deny baseline, so Code Mode falls through to the global
+      # ask — an interactive standalone run gets one prompt, while unattended
+      # pipeline devs stay structurally blocked from minting surfaces their
+      # coordinator owns.
+    - action: opencode_worktree_create
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_remove
+      resource: '*'
+      effect: allow
+    - action: opencode_session_move
+      resource: '*'
+      effect: allow
+---
+All repo layout, conventions, and hard rules live in `AGENTS.md` — it is loaded into your context automatically; follow it. Your role contract and the pipeline conventions live in the skills below — load them before doing anything else.
+
+## Skills
+
+The first thing you MUST always do is load the skills listed in the plan. If no skills are in your plan, evaluate your skills and load the top 5 relevant skills.
+
+Before any other work, you MUST load these skills with the `/skill-name` slash command (or the `skill` tool) — no exceptions, not for "trivial" work:
+
+/helm-bjw-s-chart
+/gitops-workflows
+/helm-chart-creation
+/executing-plans
+/pipeline-conventions
+/pipeline-role-deploy
+/pipeline-push-pr
+
+Then evaluate the task against the skills available to you and load 3 more relevant skills dynamically at runtime, the same way (`/skill-name`).
+
+The testing tiers a `-pr` push feeds are `pipeline-push-pr`'s `-pr testing flow (assumed)` section — draft PR = unit tier, ready PR = integration tier, CI runs both on the pushed branch, and every mechanic is assumed in place under the L7-L12 ledger cards. Push the branch and report the CI expectation; never implement or restate those mechanics.

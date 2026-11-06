@@ -106,6 +106,17 @@ archon:
     # No sso for Archon yet.
     #archon-sso: OVERRIDE_NEEDED
 
+forgejo-runner-gpu:
+  bitwardenIds:
+    # Item `forgejo-runner`: username = the runner uuid, password = its token,
+    # from the runner record created on the INFRA instance (git.spencerslab.com).
+    # The pair is instance-specific — a record from another instance never
+    # authenticates here. gpu has its own item (user decision 2026-11-04); the
+    # vault item held for the infra runner's relocation stays free, so it is
+    # not this slot. No placeholder: an unresolved id crash-loops the daemon
+    # (`connection "default" is invalid: 'uuid' is empty`).
+    runner-token: 22a71ee4-1b7e-4ad2-ad5c-b4f80175a400
+
 seaweedfs-csi-driver:
   volume-count: 8
   seaweedfs-csi-driver:

@@ -1,0 +1,224 @@
+# cf-93 C03-era golden (captured 2026-10-31 @ 7e07a6273e, helm v3.16.4, release
+# ha-test, normalized): 2 CNPG Clusters + 4 ExternalSecrets — the byte-identity
+# proof C03's AC1 ran green on. SUPERSEDED as the live baseline by C10 (owner
+# delta 2026-11-01): the postgres + PVC guards are deleted and the two
+# credential ExternalSecrets gain forced-username target.template shape, so the
+# DEFAULT render now legitimately differs. Kept as AC2's diff authority: the
+# Cluster docs must stay byte-identical and each ExternalSecret may differ ONLY
+# by that forcing — tests/multi-repo/ha-chart.sh t1 pins it. The new-baseline
+# golden re-capture lands at snapshots/ha-chart-default.yaml (authorized,
+# HA_RECAPTURE=1 flow in the suite header).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-ha-test
+spec:
+  instances: 1
+  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:17-3.5
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 20Gi
+    storageClass: local-path
+  monitoring:
+    enablePodMonitor: true
+  postgresql:
+    parameters:
+      max_connections: '600'
+      shared_buffers: 512MB
+  bootstrap:
+    initdb:
+      database: home-assistant
+      owner: home-assistant
+      secret:
+        name: pg-ha-test-secret
+  managed:
+    roles:
+    - name: readonly
+      ensure: present
+      login: true
+      inherit: true
+      inRoles:
+      - pg_read_all_data
+      connectionLimit: 5
+      passwordSecret:
+        name: pg-ha-test-mcp-secret
+    services:
+      additional:
+      - selectorType: rw
+        updateStrategy: patch
+        serviceTemplate:
+          metadata:
+            name: pg-ha-test-external
+          spec:
+            type: LoadBalancer
+            externalTrafficPolicy: Local
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-ha-test-sensors
+spec:
+  instances: 1
+  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:17-3.5
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 500Gi
+    storageClass: local-path
+  monitoring:
+    enablePodMonitor: true
+  postgresql:
+    parameters:
+      max_locks_per_transaction: '1024'
+      max_connections: '600'
+      shared_buffers: 2048MB
+    shared_preload_libraries:
+    - timescaledb
+  bootstrap:
+    initdb:
+      database: sensors
+      owner: home-assistant
+      secret:
+        name: pg-ha-test-secret
+      postInitTemplateSQL:
+      - CREATE EXTENSION timescaledb;
+      - CREATE EXTENSION postgis;
+      - CREATE EXTENSION postgis_topology;
+  managed:
+    roles:
+    - name: readonly
+      ensure: present
+      login: true
+      inherit: true
+      inRoles:
+      - pg_read_all_data
+      connectionLimit: 5
+      passwordSecret:
+        name: pg-ha-test-sensors-mcp-secret
+    services:
+      additional:
+      - selectorType: rw
+        updateStrategy: patch
+        serviceTemplate:
+          metadata:
+            name: pg-ha-test-tsdb-external
+          spec:
+            type: LoadBalancer
+            ports:
+            - name: postgres
+              port: 5433
+              targetPort: 5432
+              protocol: TCP
+            externalTrafficPolicy: Local
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ha-test
+spec:
+  refreshInterval: 1h
+  target:
+    name: ha-test
+    creationPolicy: Owner
+  data:
+  - secretKey: pg_username
+    sourceRef:
+      storeRef:
+        name: bitwarden-login
+        kind: SecretStore
+    remoteRef:
+      key: OVERRIDE_VIA_CUSTOM_VALUES
+      property: username
+      conversionStrategy: Default
+      decodingStrategy: None
+      metadataPolicy: None
+  - secretKey: pg_password
+    sourceRef:
+      storeRef:
+        name: bitwarden-login
+        kind: SecretStore
+    remoteRef:
+      key: OVERRIDE_VIA_CUSTOM_VALUES
+      property: password
+      conversionStrategy: Default
+      decodingStrategy: None
+      metadataPolicy: None
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: pg-ha-test-mcp-secret
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: bitwarden-login
+    kind: SecretStore
+  target:
+    name: pg-ha-test-mcp-secret
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: readonly
+        password: '{{ .password }}'
+  data:
+  - secretKey: password
+    remoteRef:
+      key: OVERRIDE_VIA_CUSTOM_VALUES
+      property: password
+      conversionStrategy: Default
+      decodingStrategy: None
+      metadataPolicy: None
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: pg-ha-test-secret
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: bitwarden-login
+    kind: SecretStore
+  target:
+    name: pg-ha-test-secret
+    creationPolicy: Owner
+  data:
+  - secretKey: username
+    remoteRef:
+      key: OVERRIDE_VIA_CUSTOM_VALUES
+      property: username
+      conversionStrategy: Default
+      decodingStrategy: None
+      metadataPolicy: None
+  - secretKey: password
+    remoteRef:
+      key: OVERRIDE_VIA_CUSTOM_VALUES
+      property: password
+      conversionStrategy: Default
+      decodingStrategy: None
+      metadataPolicy: None
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: pg-ha-test-sensors-mcp-secret
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: bitwarden-login
+    kind: SecretStore
+  target:
+    name: pg-ha-test-sensors-mcp-secret
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        username: readonly
+        password: '{{ .password }}'
+  data:
+  - secretKey: password
+    remoteRef:
+      key: OVERRIDE_VIA_CUSTOM_VALUES
+      property: password
+      conversionStrategy: Default
+      decodingStrategy: None
+      metadataPolicy: None

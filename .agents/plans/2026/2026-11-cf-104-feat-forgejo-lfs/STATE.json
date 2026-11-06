@@ -1,0 +1,409 @@
+{
+  "feature": "2026/2026-11-cf-104-feat-forgejo-lfs",
+  "plan_status": "complete",
+  "coord_session": "ses_e617615eaffeXr8WZ36TGpQsP9",
+  "test_session": "ses_e5d5812dbffeSMq6PxIib2zs2O",
+  "current_wave": 3,
+  "updated_at": "2026-11-05T10:45:00+0000",
+  "models_note": "From 2026-11-05 ~20:30Z every remaining subagent tier runs on openrouter/qwen/qwen3.8-27b, on the user's explicit instruction ('I've moved you to qwen3.8 27b. Please continue all work with this model.') — the card's Provider: Local routing (gpu-ai/qwen3.8-flash-next-strata) began failing launches with HTTP 503 'no available server' at the C03 round-2 review. Earlier tiers (plan/test/dev/review through C03 round 1) all ran on the local model.",
+  "rebase": {
+    "at": "2026-11-05T10:40:00+0000",
+    "onto": "ceb9a8ed6 (main)",
+    "why": "C02 review flag: main was 24 commits ahead of the fork point, which would have polluted C03 AC7's `git diff --name-only main`. Branch is unpushed, so a plain rebase.",
+    "result": "Clean — 9 branch commits replayed, 19 pre-fork commits skipped as already applied (main's history was rewritten since the fork). Verified main's 24 commits touch NONE of tests/services, charts/forgejo, charts/forgejo-runner, custom-values, services, tests/multi-repo; the only chart-area delta is charts/base Chart.yaml/Chart.lock (version + one dep digest) and the music-assistant image tag. Pinned baselines therefore still hold; the C05 dev re-verifies the posture on the rebased tree as part of its Commands.",
+    "new_shas": "bc2572494 planning record · 95c5dae48 test contract · 4b7e957da C01 · 157ba69f3 plan deltas · 80829ee8f C04 · a2fe41445 wave-1 closeout · f7cece5ff C02 · fe2eff41c g5 item rename · 69d251abb plan C02 fold"
+  },
+  "lock_posture": {
+    "state": "CLAIM RE-ACQUIRED 2026-11-05 ~20:25Z — the contending cf-58 run's `Local` lease ended, `pipeline_claim` accepted (setId 9d06a307-f611-42e6-af0d-432143aaeed1), heartbeat ok. The earlier unclaimed posture (user's 'continue regardless of lock') covered 2026-11-03T17:54Z → 2026-11-05T20:25Z; everything committed in that window was done on explicit user instruction and stays valid. Posture is now normal: heartbeat keeps the lock live; `pipeline_release(outcome: done)` closes it when the card moves to Review after the final whole-plan review.",
+    "why_no_claim": "pipeline_claim(uDTEEpnqEahASJjJN, [\"Local\"]) returns ok:false reason:locked; `Local` is held by a LIVE run (card rQCRHsLB86Ci6oJki \"Repair the cf-58 coord-contract baseline\", holder ses_e5df7e9beffelLhk6dRP78rcyZ, claimedAt 16:32:54Z, heartbeatAt 17:54:05Z). The engine refuses the claim and `.pipeline/` is plugin-owned, so an agent cannot take the lease; the user chose to continue anyway.",
+    "risk_note": "Bounded: this run touches only its own worktree/branch, never the other card, and no board move or write is possible in any case (dev-boards absent from the tool catalog post-restart). The double-run risk the lease guards cannot arise for card #104, since the pickup walk never visits Executing.",
+    "consequences": "No heartbeat protection for this run; nothing to release at the end; this session cannot move the card to Review, so the Review hand-off and the post-plan write-back (slug field + unchecked-item cleanup) stay outstanding for a run that has the board surface."
+  },
+  "q13_q15_answers": {
+    "answered_at": "2026-11-03T17:56:00+0000",
+    "q13_runner_target": "USER CHOSE the INFRA instance for the gpu runner → C05's `runner.url` is https://git.spencerslab.com, and UA5 registers the runner record on the INFRA Forgejo. Ordering consequence, resolved to a concrete gate (not a caveat): C05's repo work stays wave 2, but the gpu Application's ArgoCD **sync rides after C03** (plan rollout step 7; C05 AC 8, C03 AC 9) — before infra's LFS is verified, the runner would register and take jobs whose LFS fetches 404. Rejected alternative: 'register early, keep LFS-bearing repos away from the gpu runner'. UA5's record may exist early — a registered runner with no pod takes no jobs.",
+    "q13_grounding": "Repo-verified this pass; no contradiction with EXPLORE §R3 beyond one nuance. `services/infra/prod/values.yaml:84-91` routes `git` (canonical — DOMAIN/ROOT_URL) and `forgejo` (alias) to `infra-forgejo-http:3000`; `custom-values/infra/prod-values.yaml:55-56` sets DOMAIN=git.spencerslab.com / ROOT_URL=https://git.spencerslab.com/; the proxy-local hub (`services/proxy-local/prod/values.yaml:114-131`) mirrors both hostnames with `target: infra`, crowdsec-only (hub forward-auth breaks git-over-HTTPS); gpu's coderd already authenticates against this exact host (`services/gpu/prod/templates/secrets-coder.yaml:31-42`). Nuance to keep: the `forgejo.spencerslab.com` ban is about live behaviour, not route absence — the alias route exists repo-side and targets infra, but from gpu it resolves to the public edge (5.78.101.168) where TLS fails a cert name-mismatch, while split DNS carries `git.spencerslab.com` → 10.0.77.59 (200, 15.0.10).",
+    "q14_node22": "USER ACCEPTED dropping the Node-22 guarantee for the current version (act-24.04 ships Node 20/24). The user added an open \"26?\" — i.e. whether a newer Node is available instead; NOT answered on this pass — recorded as open question **Q14b** (is there an LFS-capable job image on a newer Node?), with the registry facts verified 2026-11-03: `act-26.04` is unpublished (the upstream build matrix lists 26.04) and in the act family a '26' tag means Ubuntu 26.04, not Node 26 (`ARG NODE_VERSION='20 24'`) — best guess: not available in the incumbent family, needs a registry check in a follow-up. C04's image is unchanged.",
+    "q15_vault": "USER CHOSE a NEW Bitwarden item for UA6; the reserved `dev-forgejo-prod-runner` item stays free for the infra-runner relocation. Renamed by the user at creation (2026-11-04): the item is **`forgejo-runner`**, not the planned `gpu-forgejo-runner` — see user_actions.ua6_runner_item; plan UA6 / C05 AC4 / g5 leg follow the user's name.",
+    "folded_at": "2026-11-03T18:22:00+0000 (plan delta pass): plan of record (Authority facts rows, D17, answers table + Q14b, config of record incl. the custom-values sentinel→UUID instruction naming the new item, chunk table, Wave order step 2, rollout step 7, Commands C05 block incl. the item-name greps, test legs g2/g3/g5, UA5/UA6, V7, Risks, Follow-ups) + chunks/C04.md (Q14 accepted, Q14b), chunks/C05.md (infra target, UA6 item, AC 4 item-name leg, AC 8/9 sync-after-C03), chunks/C03.md (AC 9: C03's sync unblocks the gpu sync), DECISIONS.md ('Round-3 answer deltas' — coord-relay user answers). C04's image and C05's wave are unchanged; `plan_status` stays approved."
+  },
+  "user_actions": {
+    "provided_at": "2026-11-04T22:42:00+0000",
+    "landing_decision": "USER CHOSE: one PR after all chunks — C01's new secretKeyRef and the custom-values UUIDs land together, so no sync ever sees the chart without the vault key (the CreateContainerConfigError hazard is neutralised by the ordering). Branch stays unpushed; the PR is the user's call.",
+    "ua4_forgejo_s3": "DONE by the user — Bitwarden Login item `forgejo-s3`, UUID 06a65037-29d3-48de-978c-b3b6002d3978, same item for both instances (Q3). Unblocks C02 and C03. UA1–UA3 (gateway inventory, `s3.user.create forgejo-lfs`, owned bucket + bucket-scoped grant) are presumed done by construction — the vault item holds the keys those commands print — and PF1/PF2 remain the user's live pre-flight before each sync.",
+    "ua5_runner_record": "DONE by the user — persistent instance-level runner record on the INFRA instance (git.spencerslab.com); its uuid + registration token were captured into the item below.",
+    "ua6_runner_item": "DONE by the user — Bitwarden Login item **`forgejo-runner`** (NAMING DELTA vs the Q15 plan wording `gpu-forgejo-runner` — the user's name wins; plan UA6, C05 AC4 and the g5 suite leg are updated to the standalone name), UUID 22a71ee4-1b7e-4ad2-ad5c-b4f80175a400. Unblocks C05.",
+    "q14b_card": "USER CHOSE to file it — Inbox card created 2026-11-04 (see deferred)."
+  },
+  "approval": {
+    "state": "approved-with-scope-deltas",
+    "answered_at": "2026-11-03T17:15:03+0000",
+    "plan_approval": "APPROVED as written (C01 inert chart plumbing → C02 dev → C03 infra on-branch gated on dev verification; C04 runner leg; UA1–UA4/PF0–PF2 stay User actions).",
+    "q10_runner_scope": "USER CHOSE: a NEW runner INSTANCE on the gpu cluster — not the dev-resident runner chart. This widens the plan beyond C04: the plan needs a gpu runner chunk (services/gpu ApplicationSet `charts:` alias + top-level `runner.url` slice + `custom-values/gpu/prod-values.yaml` runner token + its own tests/services suite), and the runner RECORD stays a User action (EXPLORE §R5 lists the exact file set; the reserved `dev-forgejo-prod-runner` vault item may be reusable). REQUIRES one plan rework pass before Test Writing.",
+    "q11_actions_checkout_proof": "USER CHOSE: no research round — C04 stays comment+test only.",
+    "q12_node22_image": "USER CHOSE: swap the node22 job image now (it has no git-lfs) — this is now a FUNCTIONAL change, not documentation-only, so C04 (or a new chunk) carries the ACT_LABELS/job-image edit red-first, with the pinned `forgejo-ssh-gateway.sh:1601` and `dev-wiring.sh:252-253` couplings respected.",
+    "card_handoff": "User said \"just work the card\" — an explicit in-session instruction to keep working card #104 rather than hand it back. The re-claim attempt that follows is therefore user-authorized, not a unilateral re-claim.",
+    "commit_authorization": "User authorized exactly one commit of the planning record (plan, EXPLORE.md, RESEARCH.md, STATE/DECISIONS/FRICTION, chunks) onto branch cf-104-feat-forgejo-lfs — no chart changes in it."
+  },
+  "claim_attempts": [
+    {
+      "at": "2026-11-03T17:14:05+0000",
+      "result": "ok:false reason:locked — the `Local` pipeline was taken by another run while this session's claim was reaped: cardId rQCRHsLB86Ci6oJki (\"Repair the cf-58 coord-contract baseline (six shell suites red at pristine HEAD)\"), holder ses_e5df7e9beffelLhk6dRP78rcyZ, setId 689f0df1-5230-4797-a4a4-fb1e8442f9bf, claimedAt 2026-11-03T16:32:54.817Z, heartbeatAt 2026-11-03T17:14:05.319Z, state failed.",
+      "action": "NOT forced. Card #104 work is blocked on the `Local` pipeline until that claim ends or goes stale (2 h)."
+    },
+    {
+      "at": "2026-11-04T22:44:05+0000",
+      "result": "ok:false reason:locked — the same holder, still beating its heartbeat (claimedAt 2026-11-03T16:32:54.817Z, heartbeatAt 2026-11-04T22:44:05.389Z, state failed). The contending run is ~30 h old but its lock stays live as long as it heartbeats.",
+      "action": "NOT forced. The user's standing instruction ('Continue regardless of lock', 'continue all work') covers the unclaimed posture; the card move to Review at the end of the run remains the one board act that stays outstanding until either the lock frees or the user decides."
+    }
+  ],
+  "run_state": {
+    "phase": "COMPLETE 2026-11-05 — all five chunks review-approved and committed; final whole-plan review APPROVED (session ses_e5298962affeC6yUa5PrnlmbB1, no blocking findings); plan_status complete; card moved to Review; the branch is 12 commits ahead of main ceb9a8ed6 and unpushed — the one-PR landing is the user's act, with PF0–PF2 + V1–V7 as the recorded live gates.",
+    "stop_reason": "RESOLVED — the 2026-11-03 lock-loss stop (reaped 15:33:09Z) was covered 2026-11-03T17:54Z → 2026-11-05T20:25Z by the user's explicit 'continue regardless of lock' instruction; the claim was re-acquired 2026-11-05 when the contending cf-58 lease ended (see claim.reclaimed) and released done at closeout.",
+    "done": [
+      "Exploration — EXPLORE.md, two rounds (round 2 = `## Runner surface (gpu) — round 2`, R0–R7)",
+      "Research — RESEARCH.md (pre-planning round; the card's own briefing is superseded by it)",
+      "Planning — plan of record + chunks/C01–C05, reworked with the nine batched answers (Q1–Q9), the approval-round scope deltas (Q10–Q12) and the Q13–Q15 answers; plan_status approved",
+      "Test Writing — forgejo-lfs.sh (t1–t11), gpu-forgejo-runner.sh (g1–g7), dev-forgejo-runner.sh edits (red-first ACT_LABELS + t14 before the pinned-red t5); committed a2e9b0b8b",
+      "Wave 1 — C01 (efed44a61 pre-rebase / 4b7e957da post) and C04 (e5efd1d32 / 80829ee8f), both review-approved after their validation contract; two mechanical test repairs in the C01 window",
+      "Wave 2 — C02 dev activation (f7cece5ff; UA4 UUID landed) + C05 gpu runner instance (e171bcd42; UA5/UA6 landed, vault item under the user's name `forgejo-runner`)",
+      "Wave 3 — C03 infra activation (5b9abad2b, APPROVED round 2) — the LFS master contract fully green: forgejo-lfs 0/34 all t1–t11, infra-forgejo 0/33, ssh-gateway 1/63 red only at the pinned t11",
+      "Rebase onto main ceb9a8ed6 (2026-11-05) — main's 24 commits touched none of the ticket's paths",
+      "Final whole-plan review — APPROVED 2026-11-05 (record-hygiene minor closed in the plan_status-complete commit)"
+    ],
+    "pending_approval_round": "ANSWERED 2026-11-03T17:15Z: plan APPROVED as written; Q10 = a NEW runner instance on gpu (widened scope → chunk C05); Q11 = no research round; Q12 = swap the node22 job image now (C04 became functional). The two scope deltas were folded by a third plan pass, so `plan_status` is `approved`. Three further questions (Q13 gpu-runner target instance, Q14 Node-22 guarantee loss, Q15 new vault item vs the reserved `dev-forgejo-prod-runner`) are recorded in the plan and do NOT block wave 1.",
+    "blocked_on": "RESOLVED 2026-11-04 — the user provided both vault UUIDs (see `user_actions`): `forgejo-s3` 06a65037-… unblocked C02/C03; the infra runner record + the `forgejo-runner` item 22a71ee4-… unblocked C05. All five chunks are now review-approved and committed; the only remaining gates are user-owned: the one-PR landing, PF0–PF2 pre-flights, the V1–V7 live verifications, and the ArgoCD syncs (dev → infra → gpu Application per rollout step 7; the gpu gate is observational, the strict-ordering lever is the cluster-annotation override — see the plan's rollout step 7 note).",
+    "wave1_result": "C01 (chart plumbing, inert) and C04 (runner job-label LFS capability + the record) both APPROVED and committed. Measured posture after wave 1 on this branch: forgejo-lfs.sh exit 1 / 9 ok at t5; dev-forgejo-runner.sh exit 1 / 34 ok at the pinned t5; infra-forgejo.sh exit 1 / 21 ok at t6; forgejo-ssh-gateway.sh exit 1 / 55 ok at t8; gpu-forgejo-runner.sh exit 1 / 1 ok at g2; dev-git-auth.sh 0 / 36 ok; forgejo-ssh-audit-trail.sh 1 / 0 ok (pinned).",
+    "resume_protocol": "NO RESUME EXPECTED — the card is in Review and the claim released done. If the card is later sent back for rework, a fresh run re-picks it (the `slug` field carries this session's link, so D11 resume finds this folder), re-claims with pipelines [\"Local\"], and reads this folder; test repairs route to the test session `ses_e5d5812dbffeSMq6PxIib2zs2O`. The branch is unpushed — landing is the user's call.",
+    "untracked_record": "RESOLVED — the ticket folder was committed at bc2572494 (planning record) and every later state is committed on the branch (12 commits ahead of main ceb9a8ed6 at closeout); nothing of this run exists only in the worktree anymore.",
+    "final_review": "APPROVED 2026-11-05 (session ses_e5298962affeC6yUa5PrnlmbB1, openrouter/qwen/qwen3.8-27b per the user's model instruction): plan coverage complete (all five chunks + every user scope delta reflected in the diff), final tree posture re-measured and matching measured_baselines with zero mismatches (forgejo-lfs 0/34 all legs, infra-forgejo 0/33, gpu-forgejo-runner 0/18, ssh-gateway 1/63 red only t11, all pinned regressions intact, sentinel sweeps 1/1/1, aislop 0/0/0), blast radius exactly the ticket's 23 paths with both charts' Chart.yaml/Chart.lock byte-identical to main, D11 satisfied (real UUIDs only), one-PR landing closes the CreateContainerConfigError window, no cluster mutation anywhere in the record, the three deferred Inbox cards verified live on the board. Single non-blocking finding (stale run_state) closed in the plan_status-complete commit."
+  },
+  "kickoff": {
+    "slug": "cf-104-feat-forgejo-lfs",
+    "card": "uDTEEpnqEahASJjJN",
+    "card_number": 104,
+    "card_title": "Add LFS support to forgejo",
+    "type": "feat",
+    "worktree": "cf-104-feat-forgejo-lfs",
+    "branch": "cf-104-feat-forgejo-lfs",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata",
+      "code": "gpu-ai/qwen3.8-flash-next-strata"
+    },
+    "local": true,
+    "origin_dir": "/home/coder/SpencersLab",
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "run_tag": null,
+    "run_shape": "standard default loop: Exploration (done, EXPLORE.md — ran twice: round 2 covers the runner surface §R0–R7), Agent-Decides-Research (done, RESEARCH.md), Planning (round 2 rework + round 3 approval-delta rework done; plan_status approved), Test Writing (must cover forgejo-lfs.sh, the dev-forgejo-runner.sh t14 + red-first ACT_LABELS edit, and gpu-forgejo-runner.sh), Chunk Development, Chunk Review, Final Review",
+    "stop_points": [
+      "plan-approval pause (after the batched question round)",
+      "PR/Deployment hand-off — commit-only coord: 'ready — commits local' (Human in the Loop: PR)"
+    ],
+    "checklists": {
+      "services": ["dev", "gpu"],
+      "services_note": "Resolved across two rounds: Q1 answer — 'gpu' means the Forgejo runner; Q10 approval answer (2026-11-03) — the user chose a NEW runner INSTANCE on the gpu cluster → chunk C05. Q13 answer (2026-11-03) supersedes the round-3 best guess: the gpu runner dials out HTTPS to the INFRA instance (https://git.spencerslab.com), not dev. The dev runner remains (C04 record + node22 swap on the shared runner chart). infra was toggled on the card's Services checklist at the post-plan write-back to match.",
+      "type": "feat",
+      "models": ["Qwen Flash"],
+      "lifecycle": null,
+      "lifecycle_note": "No Lifecycle checklist; the card carries the legacy Research checklist with 'Before Planning' checked — consumed as timing only, stage list is the standard default loop.",
+      "human_in_the_loop": ["PR"],
+      "slug_cf": "was empty; resolved to cf-104-feat-forgejo-lfs (cardNumber 104)"
+    },
+    "board_context": {
+      "server": "dev-boards",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "lists_note": "Executing/swimlane/board verified by EXPLORE 2026-11-02; the remaining list ids are carried from the cf-97 kickoff preload (verified 2026-11-01) — re-read at card pickup before any move.",
+      "labels": ["Provider: Local", "Pipeline: Local"],
+      "labels_note": "CORRECTED by coord 2026-11-03 — the original note was wrong and would send a resuming run to the wrong lock. get_card label_ids PnhFKk + G7mzkC resolve to `Provider: Local` and `Pipeline: Local`, so the derived claim set is [\"Local\"] (the set this run claimed), NOT default; the card carries no `Repo:` label, so SpencersLab is the default picker that owns it; `Provider: Local` is why the scheduled Local walk was allowed to take it.",
+      "labels_note_orig": "No Pipeline:, Repo: or Research: Parallel labels → single default pipeline lock, this repo."
+    }
+  },
+  "measured_baselines": {
+    "note": "COORD-PINNED, authoritative over the plan file's Commands numbers where they disagree (the plan is approved, so its numbers are corrected here rather than rewritten; fix them at the next plan pass). All measured twice by independent sessions.",
+    "sentinel_sweeps": "dev umbrella 1 (pre-existing home-assistant), INFRA 1 — CORRECTED source at the C03 review: `charts/samba/values.yaml:5` `samba-users: OVERRIDE_NEEDED` (a CHART DEFAULT inside the samba Application's values JSON, not a `bitwardenIds` slot — the infra custom-values file has no samba key at all; the old \"samba.bitwardenIds\" label pointed at the wrong file), GPU 1. The plan's 'infra 0' was wrong: it came from rendering `services/infra/prod` in place where helm aborts on unvendored deps and the grep saw an empty stream; measured through the repo's copy + `helm dependency build` harness it is 1.",
+    "transitions": {
+      "forgejo-lfs.sh": "1 ok (pre-C01) -> exit 1 / 9 ok at t5 (after C01) -> exit 1 / 13 ok at t6 (after C02: t5 green, t8 dev half green — proven by isolated-leg run, infra half stays red until C03) -> exit 0 / 34 ok (after C03)",
+      "infra-forgejo.sh": "exit 1 / 21 ok stopping at t6 (after C01) -> exit 1 / 22 ok at t6's infra-side sweep leg (after C02; the dev-side leg now emits its ok) -> exit 0 / 33 ok (after C02+C03); REQUIRES the :587 five-key extension now in the tree. C02 AC7's 'exit 0 / 33 ok' is the C02+C03 target, NOT a C02-alone target.",
+      "forgejo-ssh-gateway.sh": "exit 1 / 55 ok at t8 (after C01) -> exit 1 / 56 ok at t8's infra-side sweep leg (after C02) -> exit 1 / 63 ok post-C02+C03, legs t1-t10 green (t8 emits 8), **red only at t11** — CORRECTED by the C04 review: gateway t1 is GREEN (it is the gitSshPort structural gate, no storm-runs dependency); the `storm-runs/ at repo root` red belongs to `audit-trail.sh` and `forgejo-ssh-audit-trail.sh`, and it reaches gateway only through t11 (`:1606` runs audit-trail first and tails its stderr, whose last line reads `FAIL: t1: storm-runs/ still exists at the repo root` — that is where the 't1 red' attribution came from). t11 stays red even after C04/C05 because dev-forgejo-runner.sh's pinned t5 red sits in the same t11 loop.",
+      "dev-forgejo-runner.sh": "exit 1 / 10 ok at t2 (red-first ACT_LABELS, C04 pending) -> exit 1 / 34 ok at the pinned t5 after C04 (t14 emits 7 oks; the plan's 28 was wrong)",
+      "gpu-forgejo-runner.sh": "exit 1 / 1 ok at g2 (C05 pending) -> exit 0 / 18 ok after C05"
+    },
+    "plan_defects_to_fix_next_plan_pass": [
+      "C01 AC7 't7 green' is unreachable inside one C01 run — the suite sys.exit(1)s at t5, so t7 never executes; AC7 must be stated as an isolated-render check, not a suite leg.",
+      "infra sentinel baseline: 1, not 0.",
+      "C04 runner-suite target: exit 1 / 34 ok, not 28.",
+      "C02 AC7 'infra-forgejo.sh exit 0 / 33 ok' is the post-C02+C03 target; C02 alone measures exit 1 / 22 ok at the t6 infra-side sweep leg (dev-side leg turns green).",
+      "C02 AC8 't5, t8, t9 green' is unreachable in a C02-only run (forgejo-lfs.sh exits at t6); t8 is a both-files leg — 'green' means 'dev half green' until C03 writes the infra UUID.",
+      "C03 AC4 'infra umbrella stays 0' is the third copy of the sentinel-baseline defect — measured 1 (samba.bitwardenIds), per the C02 review.",
+      "C03 AC7's file-set enumeration omits the two suite files the ticket's own test-repair rounds changed (tests/services/forgejo-ssh-gateway.sh +5, tests/services/infra-forgejo.sh +2/-2); the measured diff carries them, nothing under the forbidden paths.",
+      "dev-mcp-fleet.sh pin is in flux (C02 review: red at t7 / 18 ok; C03 dev: red at t13 / 22 ok) — belongs to the cf-58 baseline-repair card, not this ticket; neither measurement chased."
+    ]
+  },
+  "chunks": {
+    "C01": {
+      "status": "review-approved",
+      "wave": 1,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e5cd4cc77ffeKCOFvermXnACne",
+      "review_session": "ses_e5ca19fa9ffe5T0cUT9ot4CmWP",
+      "last_verdict": "APPROVED (2026-11-03) — inert confirmed (0 STORAGE_TYPE, no [storage]/[attachment]/[picture]), ExternalSecret shape per the repo Bitwarden recipe with sentinel only, Chart.yaml unmodified / Chart.lock sha256 4f73365a… byte-identical, one new render object, env legs via committed values, seaweedfs + proxy untouched",
+      "handoffs": [
+        {
+          "at": "2026-11-03T18:10:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE",
+          "chunk": "C01",
+          "files_changed": ["charts/forgejo/values.yaml", "charts/forgejo/templates/secret-forgejo-s3.yaml (new)"],
+          "commands_run_headline": "helm lint pass (0 failed); isolated render => lfs stringData == the 4 inert shape keys, 0 STORAGE_TYPE, no [storage]/[attachment]/[picture], ExternalSecret forgejo-s3-secret exactly as specified, 4 init-app-ini FORGEJO__ legs / 0 on the main container; forgejo-lfs.sh exit 1 / 9 ok stopping at t5 = the designed C01 posture; sentinel sweeps unchanged (dev 1 / infra 1 / gpu 1); workload-surface grep 0; Chart.yaml/Chart.lock byte-untouched; aislop ci --changes 0/0",
+          "deviations": "AC7's 't7 green' is unreachable inside one C01 run (the suite sys.exit(1)s at t5); used `helm dependency build` on /tmp/opencode copies instead of `helm dependency update charts/forgejo` to keep the tracked Chart.lock byte-untouched.",
+          "friction": "Two pre-existing suites move red in the C01 window (see FRICTION); `cp -R charts/forgejo $dir` nests the chart and gave a false 0-count probe.",
+          "open_questions": "validation_at_fault on tests/services/forgejo-ssh-gateway.sh t6 (hard-coded four-id --set list predates the fifth bitwardenIds key); infra-forgejo.sh t6's 1:1 sentinel leg is CORRECT and stays red until C02/C03 land the UUIDs; deploy caveat — the new secretKeyRef sits on init-app-ini, so syncing C01 to a cluster whose custom-values lacks the forgejo-s3 UUID gives CreateContainerConfigError (UA4 before any sync)."
+        },
+        {
+          "at": "2026-11-03T18:20:00+0000",
+          "role": "agent-test",
+          "status": "DONE (mechanical repair, routed silently per the gates)",
+          "chunk": "C01 — validation_at_fault repair",
+          "files_changed": ["tests/services/forgejo-ssh-gateway.sh (+5/-0, inside the t6 chart render only)"],
+          "finding": "t6 hard-coded a four-id bitwardenIds --set list, so the no-OVERRIDE_* assertion could never pass once the chart grew a fifth sentinel — for C02/C03 too. Repaired by supplying `bitwardenIds.forgejo-s3=u` in that render plus a 4-line WHY comment recording the invariant. No assertion, message, harness or leg placement touched.",
+          "commands_run_headline": "before repair: exit 1 / 31 ok, died at t6, legs t6b-t11 never ran; after: exit 1 / 55 ok (stops at the pinned t8 static sweep); causality re-measured independently (main chart vs branch chart, 0 vs 2 OVERRIDE_ lines)",
+          "second_fault_reported_not_applied": "tests/services/infra-forgejo.sh:587 pins an exact four-key bitwardenIds set — same latent fault class. Coord approved it; applied in the follow-up repair round."
+        },
+        {
+          "at": "2026-11-03T18:30:00+0000",
+          "role": "agent-test",
+          "status": "DONE (approved repair #2)",
+          "chunk": "C01 — validation contract extension",
+          "files_changed": ["tests/services/infra-forgejo.sh (+2/-2: :587 want-set gains forgejo-s3, :593 message 4 keys -> 5 keys)"],
+          "commands_run_headline": "real tree: infra-forgejo.sh exit 1 / 21 ok (unchanged — the 1:1 sweep fires before the exact-set check); forgejo-ssh-gateway.sh still exit 1 / 55 ok; forgejo-lfs.sh still exit 1 / 9 ok at t5; in the C01-C05 simulation infra-forgejo.sh returns to the pinned exit 0 / 33 ok",
+          "coord_note": "One-line rule proposed by the test session and accepted for a follow-up card: any suite that sweeps OVERRIDE_* over a CHART-level render, or pins 'exactly N bitwardenIds keys', must be updated in the same change that adds a chart sentinel."
+        },
+        {
+          "at": "2026-11-03T18:40:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED",
+          "chunk": "C01",
+          "verdict": "All five judged points pass: (1) INERT — [lfs] renders exactly the four shape keys, STORAGE_TYPE 0x in the whole chart render, no storage/attachment/picture section or env leg; (2) ExternalSecret/forgejo-s3-secret matches the repo Bitwarden recipe (bitwarden-login store, access_key_id<-username, secret_access_key<-password, creationPolicy Owner, refreshInterval 1h), diff carries a sentinel only (0 UUID-shaped strings); (3) Chart.yaml unmodified, Chart.lock sha256 4f73365a… byte-identical to main, workload-surface grep 0, exactly one new render object, security contexts untouched; (4) env legs appended via committed values, no indexed --set; (5) charts/seaweedfs and the proxy legs untouched.",
+          "commands_run_headline": "validation re-run independently (helm v3.16.4, chart + umbrella copied to /tmp/opencode with helm dependency build there so the tracked Chart.lock stayed byte-identical)",
+          "deploy_hazard_confirmed": "The reviewer confirms the plan's rollout ordering covers the CreateContainerConfigError window ONLY IF UA4 (the real forgejo-s3 UUID in custom-values) lands before any sync — both forgejo Applications read the chart from `main` by path with no automated sync, so C01 merging alone is safe, but a sync of C02/C03 without the UUID is not."
+        }
+      ]
+    },
+    "C02": {
+      "status": "review-approved",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "owner": "agent",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e5714b5c9ffeVlqbQnXZtSc1O7",
+      "review_session": "ses_e56f2e8bbffe1SGHS4fL67JXAG",
+      "last_verdict": "APPROVED (round 1, no validation_at_fault) — effective render [lfs] exactly the 7 keys of record, ExternalSecret remoteRef == the UA4 UUID, 0 OVERRIDE_ in the render, dev/infra umbrella sweeps unchanged (1/1), one-file diff (21/0, pure insertions), DB-password env leg intact (no list replacement), t5 guard teeth proven (7 of 8 hostile mutations caught; the 1 uncaught is an identical-value no-op). AC7/AC8 numbers adjudicated as post-C02+C03 targets and confirmed by the reviewer's own C02+C03 simulation (forgejo-lfs 0/34, infra-forgejo 0/33, ssh-gateway 1/63 red only at t11). Committed as 3a89e587c pre-rebase, f7cece5ff post-rebase.",
+      "handoffs": [
+        {
+          "at": "2026-11-05T09:40:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE",
+          "chunk": "C02",
+          "files_changed": ["custom-values/dev/prod-values.yaml (+21/-0: forgejo-s3 real UUID 06a65037-… with the item/mapping comment, LFS_START_SERVER: true, the three per-instance lfs keys)"],
+          "commands_run_headline": "effective render (chart + extracted dev slice, dependency-built /tmp copies): [lfs] == exactly the 7 keys of record, [server] LFS_START_SERVER=true beside unchanged identity keys, no storage/attachment/picture, ExternalSecret remoteRef == the UUID, 4 init-app-ini FORGEJO__ legs (DB-password leg intact, list not replaced); dev umbrella OVERRIDE_ count == 1 (pinned), forgejo app JSON sentinel-free; infra umbrella == 1 (samba, unchanged); forgejo-lfs.sh exit 1 / 13 ok stopping at t6 (infra) — designed pre-C03 stop, t5 green; t8 dev half green / infra half red (isolated-leg proof); t9 green (isolated); infra-forgejo.sh exit 1 / 22 ok (was 21, dev-side sweep leg now ok) at the t6 infra-side leg; ssh-gateway exit 1 / 56 ok (was 55) at t8 infra-side; dev-git-auth 0/36, dev-wiring 0/9, runner 1/34 at pinned t5, audit-trail 1/0, gpu-runner 1/1 at g2; aislop 100; live probe: dev LFS batch endpoint still 404 (nothing deployed)",
+          "deviations": "bitwardenIds comment sits as a block above the key (the file's own precedent for multi-fact entries; the trailing column is ~22 chars), not trailing it; AC8's t8/t9 proven by isolated-leg runs because the suite exits at t6",
+          "open_questions": "AC7's 'exit 0 / 33 ok' and AC8's 't8, t9 green' are unreachable with C02 alone — both are post-C02+C03 targets (the infra-side sweep legs stay red until C03 writes the infra UUID); new intermediate ok-counts (infra-forgejo 21->22, ssh-gateway 55->56) now pinned in measured_baselines"
+        },
+        {
+          "at": "2026-11-05T10:20:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED (round 1)",
+          "chunk": "C02",
+          "verdict": "All ACs pass on the reviewer's own measurements: 7-key [lfs], LFS_START_SERVER in [server], no storage/attachment/picture, remoteRef == UA4 UUID, 0 OVERRIDE_ in render, dev 1 / infra 1 umbrella sweeps unchanged, one-file 21/0 pure-insertion diff with every old line preserved in order, DB-password env leg intact. Hostile-mutation proof on the t5 guard: 7 of 8 caught (identical-value repeat is a benign no-op). AC7/AC8 adjudicated as post-C02+C03 targets by measurement; the reviewer's own C02+C03 simulation confirmed forgejo-lfs 0/34, infra-forgejo 0/33, ssh-gateway 1/63 (red only at t11).",
+          "coord_flags": "(1) commit the uncommitted g5 test edit as a test-side change (done, 0be8155b9); (2) main is 24 commits ahead of the fork point — rebase before C03 so C03 AC7's git diff --name-only main is not polluted; (3) C03 AC4 'infra umbrella stays 0' is the third sentinel-baseline defect (measured 1, samba) — recorded in measured_baselines.plan_defects."
+        }
+      ]
+    },
+    "C03": {
+      "status": "review-approved",
+      "wave": 3,
+      "depends_on": ["C02"],
+      "owner": "agent",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "dev_session": "ses_e564ed0a6ffe6SBYYqls9n4ak8",
+      "review_session": "ses_e55a5e82dffecaC7mF3cBaEX7Z (round 1) / ses_e529a6e2cffeuHtrlgFtcirs6L (round 2 — on openrouter/qwen/qwen3.8-27b per the user's model instruction; gpu-ai was 503ing)",
+      "last_verdict": "APPROVED (round 2) — the single round-1 major (false topology clause in the endpoint comment) closed: new clause live-re-verified on infra (traefik LB 10.0.77.59 = s3-ingress ADDRESS, not the hub 10.0.77.54), diff still +24/−0 pure insertions over the ticket's 23 paths, infra-forgejo 0/33 and forgejo-lfs 0/34 re-run solo, aislop clean, LB-address nit judged keep (auditable in one kubectl call).",
+      "handoffs": [
+        {
+          "at": "2026-11-05T12:20:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE (round 1)",
+          "chunk": "C03",
+          "files_changed": ["custom-values/infra/prod-values.yaml (+24/−0 pure insertions: forgejo-s3 real UUID identical to dev's, LFS_START_SERVER: true, the three per-instance lfs keys with the in-cluster endpoint + MINIO_USE_SSL: false)"],
+          "commands_run_headline": "the LFS master contract completed: forgejo-lfs.sh 1/13@t6 -> exit 0 / 34 ok (t1–t11 all green); infra-forgejo.sh 1/22 -> exit 0 / 33 ok; ssh-gateway 1/56 -> exit 1 / 63 ok red only at t11 (pinned); pinned regressions unchanged (dev-runner 1/34@t5, gpu-runner 0/18, dev-git-auth 0/36, dev-wiring 0/9, gpu-coder-sso 0/15, audit-trail 1/0); hairpin guard: https://s3.spencerslab.com 0 hits in the infra render; parity asserted (identical chart-owned keys, only endpoint + USE_SSL + identity differ); live: infra LFS batch endpoint still 404 (config inert), seaweedfs-s3 Deployment 1/1 + Service ClusterIP 8333 grounded via readonly MCP; aislop 66 files clean; git diff --name-only main = the ticket's file set",
+          "friction": "(a) concurrent helm renders degraded ssh-gateway to 56 ok with registry skips — suites must run solo; (b) dev-mcp-fleet.sh now red at t13 (22 ok) instead of t7 (18 ok) — in flux under the cf-58 card, not chased; (c) AC7's file-set enumeration omits the two test-repair suites — recorded as plan defect"
+        },
+        {
+          "at": "2026-11-05T13:10:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE (round 2 — review finding resolved)",
+          "chunk": "C03",
+          "files_changed": ["custom-values/infra/prod-values.yaml (comment clause only: 'the name resolves to the lab edge, not to this cluster … hairpin out and back in' -> 'served by this cluster's own Traefik (LB 10.0.77.59), so reaching it would hairpin through the ingress back to this same pod, adding a TLS hop for no gain' + 'TLS ends at that route'; still +24/−0 vs main)"],
+          "commands_run_headline": "facts re-verified live on INFRA before writing (Service/kube-system/traefik EXTERNAL-IP 10.0.77.59, Ingress s3-ingress ADDRESS 10.0.77.59); infra-forgejo.sh exit 0 / 33 ok; forgejo-lfs.sh exit 0 / 34 ok; aislop clean; numstat 24/0; comment never reaches the render (render hits 0)",
+          "root_cause_recorded": "the false clause came from grounding a cluster-scoped topology claim with a DNS read inside this worktree, which runs as a GPU pod — the answer is identical lab-wide but the meaning is cluster-specific. Recipe pinned: any 'public route' topology claim about cluster X must be measured against cluster X's MCP surface."
+        },
+        {
+          "at": "2026-11-05T13:40:00+0000",
+          "role": "agent-review",
+          "status": "CHANGES_REQUESTED (round 1 — full notes in chunks/C03.md)",
+          "chunk": "C03",
+          "verdict": "One major (the false topology clause, comment-only); validation_at_fault none; every value correct as written. Round-1 measurements all green: effective render [lfs] exactly 7 keys, [server] + mailer untouched, 0 hairpin-string hits (stronger than AC3: 0 hits for the bare host), dev/infra parity asserted on own renders (exactly two differing values), AC4 as-measured (infra umbrella 1 = samba chart default, not a bitwardenIds slot — source corrected to charts/samba/values.yaml:5), t6 guard teeth proven (dev-keys-pasted-in copy FAILs), AC7 23 paths, AC8/AC9 live-gate honesty re-verified (both batch endpoints still 404), live grounding (Service ClusterIP 8333/TCP, Deployment 1/1 4.50), comment keep-table 3 keep + 1 false clause.",
+          "coord_flags": "(1) fix the clause then C03 is approvable round 2 with no re-measurement risk; (2) measured_baselines sentinel source restated (charts/samba/values.yaml:5, chart default inside the samba app's values JSON — applied to STATE); (3) AC7 omission confirmed wording-only; (4) AC9's gpu-sync ordering is user/ArgoCD-side, not repo-enforced (automated {prune, selfHeal} on every generated Application) — the lever is the cluster-annotation override; surface before the PR."
+        },
+        {
+          "at": "2026-11-05T20:45:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED (round 2 — delta)",
+          "chunk": "C03",
+          "verdict": "The single round-1 major is closed: the corrected clause ('served by this cluster's own Traefik (LB 10.0.77.59) … adding a TLS hop for no gain') is live-true — re-spot-checked on infra (traefik LB EXTERNAL-IP 10.0.77.59 == s3-ingress ADDRESS 10.0.77.59; the hub is 10.0.77.54, not described). Diff still +24/−0 pure insertions, 23 ticket paths, forbidden sweep empty; infra-forgejo.sh exit 0 / 33 ok and forgejo-lfs.sh exit 0 / 34 ok re-run solo (0 skips); aislop 0/0/0 over 66 files. Nit (keep the LB address): it makes the claim auditable in one kubectl call; if it drifts only the parenthetical goes stale while 'this cluster's own Traefik' stays true. Round-2 notes appended to chunks/C03.md.",
+          "note": "Ran on openrouter/qwen/qwen3.8-27b (user instruction) after the card's local model began 503ing at launch."
+        }
+      ]
+    },
+    "C04": {
+      "status": "review-approved",
+      "wave": 1,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "dev_session": "ses_e5c6b1f8dffe9lwgN1qdJvOY8f",
+      "review_session": "ses_e5c485db7ffek5IkUeOLRE1Asn",
+      "last_verdict": "APPROVED (round 2) — round-1 major (the false 'only job images run git' clause) fixed and true against EXPLORE §R2a + the cf-97 dind supplement; both nits taken; dev-forgejo-runner.sh exit 1 / 34 ok at the pinned t5 with t14's 7 oks; helm lint 0 failed; aislop 100; render diff = 16 comment lines + the one labels line; Chart.lock byte-untouched. Committed as e5efd1d32 pre-rebase, 80829ee8f post-rebase.",
+      "handoffs": [
+        {
+          "at": "2026-11-04T00:05:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE (round 1)",
+          "chunk": "C04",
+          "files_changed": ["charts/forgejo-runner/templates/secret-runner.yaml (+16/-1: the one node22 labels line + the record block)"],
+          "commands_run_headline": "dev-forgejo-runner.sh pre-change exit 1 / 10 ok at t2 (the designed red-first state) -> exit 1 / 34 ok at the pinned t5 with t14's 7 oks after the swap; helm lint 0 failed; dev-wiring.sh exit 0 / 9 ok (the :252-253 citation survives); aislop ci --changes score 100, 0 errors; AC1 greps pass (values.yaml empty, exactly 2 docker:// deltas)",
+          "deviations": "AC2's 'comments do not render' is false for this template — the labels map sits in a block scalar, so the comment text ships in the Secret payload.",
+          "open_questions": "AC4's gateway numbers (63, 't1 + t11') do not describe the current tree — reported as the same stale-number class; resolved by the review (see STATE measured_baselines, corrected)."
+        },
+        {
+          "at": "2026-11-04T00:15:00+0000",
+          "role": "agent-review",
+          "status": "CHANGES_REQUESTED (round 1)",
+          "chunk": "C04",
+          "finding_major": "secret-runner.yaml:82 — false claim that the daemon runs no git. Sources: EXPLORE §R2a daemon build line, 2026-10-feat-forgejo-infra-and-runner/RESEARCH-dind-supplement.md:107. One-word class of fix; t14's daemon↔no-git-lfs window unaffected.",
+          "nits": [":73-74 restates the map", ":81 states a build-time fact about a rolling tag without a hedge"],
+          "keep_verdicts": "4 of 5 comment facts keep as written (installer-sourced git-lfs + verify-in-job; rolling tags/no renovate — independently re-verified, the only manager matching charts/*/templates/*.yaml needs `^\\s*image: <name>:<tag>` and hits 0 lines here; Node 20/24 vs the slot name; HTTPS-clone/[lfs] precondition); the daemon fact keeps only with the rewrite.",
+          "baseline_resolution": "gateway t1 GREEN; storm-runs/ IS tracked on main (15 files, added by 576fc4fa5); the red belongs to audit-trail.sh + forgejo-ssh-audit-trail.sh and reaches gateway via t11 (:1606 tails the sub-suite's stderr). Post-C02/C03 gateway = exit 1 / 63 ok, red only at t11, measured in a /tmp sim clone. Also: gateway's stdout is block-buffered into a file, so grep-based ok/FAIL ordering over merged stdout+stderr mis-orders legs.",
+          "validation_note": "AC2's '(comments do not render)' is wrong (payload 947 -> 1828 B); the substance holds."
+        },
+        {
+          "at": "2026-11-04T09:50:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE (round 2 — finding resolved)",
+          "chunk": "C04",
+          "files_changed": ["charts/forgejo-runner/templates/secret-runner.yaml (+17/-1)"],
+          "commands_run_headline": "sources re-verified before writing (EXPLORE.md:551 daemon build line; dind-supplement:107); dev-forgejo-runner.sh exit 1 / 34 ok at the pinned t5, t14 7 oks, t2 green; helm lint 0 failed; aislop score 100; render diff = comment lines + the one labels line; AC1 greps hold (2 docker:// deltas); block max width 79 cols",
+          "nits_taken": "both — :73-74 reduced (comment-slop verdict 'reduce', no rationale lost), :81 hedged 'as built today' (same silent-staleness class the block bans digests for)"
+        },
+        {
+          "at": "2026-11-04T10:05:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED (round 2)",
+          "chunk": "C04",
+          "verdict": "Major resolved: the record now says the daemon image carries no git-lfs and needs none because the LFS filter only runs in job checkouts, naming the daemon's own git use (action-definition clones) — accurate against both sources. Keep-table passes on the final block; longest new line 79 cols (file ceiling 80), no trailing whitespace, no ticket narration (grep sha256|now we|C0x|cf-x|round-N on added lines = 0).",
+          "commands_run_headline": "dev-forgejo-runner.sh exit 1 / 34 ok at the pinned t5 (t14 7 ok, t2 19 ok green); helm lint 0 failed in place and on the dependency-built copy; aislop ci --changes 0 errors / 0 warnings over 65 files; AC1 greps (=2 docker:// deltas, values.yaml empty); git diff --stat -- tests EMPTY; render 282 -> 298 lines = 16 comment lines + the single labels line, labels == ACT_LABELS, mergePolicy Merge; only test consumer of this file is dev-forgejo-runner.sh",
+          "ac6_live_effect": "Config payload 947 -> 1897 B (the comments live inside a block scalar, so they ship in the Secret); StatefulSet carries reloader.stakater.com/auto: \"true\" (render :53) so dev-forgejo-runner-dev-0 restarts at the next sync — idle runner, queued jobs re-queue."
+        }
+      ]
+    },
+    "C05": {
+      "status": "review-approved",
+      "wave": 2,
+      "depends_on": [],
+      "owner": "agent",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "dev_session": "ses_e56b5d849ffe4cATY6rhOJQIGu",
+      "review_session": "ses_e569ab6ccffeXt6cpZUeUrGb4e",
+      "last_verdict": "APPROVED (round 1, no validation_at_fault) — two in-scope files (+18/+11); AC1-AC9 all re-measured green by the reviewer: one SA/STS/Service/ExternalSecret named forgejo-runner-gpu, replicas 1, VCTs 2Gi/10Gi RWO local-path (SC verified live on gpu), remoteRef == UA6 UUID, labels == post-C04 set (C04 landed), URL exact + banned hosts 0, present in charts: AND top-level (umbrella values JSON carries both — merge path proven end-to-end), umbrella sweep pinned 1, dev blast radius 0, leaf-key diff 5 added / 0 removed / 0 changed, gpu-forgejo-runner.sh exit 0 / 18 ok. Committed as e171bcd42.",
+      "handoffs": [
+        {
+          "at": "2026-11-05T11:10:00+0000",
+          "role": "agent-dev-local",
+          "status": "DONE",
+          "chunk": "C05",
+          "files_changed": ["services/gpu/prod/values.yaml (+18)", "custom-values/gpu/prod-values.yaml (+12)"],
+          "commands_run_headline": "rebase first-check: all 9 pinned suites matched measured_baselines exactly on the rebased tree (main's base-chart bump + music-assistant tag changed nothing); gpu-forgejo-runner.sh exit 0 / 18 ok post-change; standalone render asserted AC1 facts independently; umbrella sweep pinned 1 + app JSON sentinel-free; AC4 greps (standalone=1, superseded name=0, reserved name=0); AC6 blast radius (dev diff 0, runner values 0, docker:// 2 = C04 only); live probes from a gpu pod: git.spencerslab.com 200 via 10.0.77.59, infra LFS batch still 404 (C03 not synced — the AC8 hazard, measured); aislop 66 files clean; all 8 regression suites unchanged",
+          "deviations": "dependency build on /tmp copies (not the plan's `helm dependency update` on the tracked chart); slot comment drops the Q15/UA6 planning labels for the repo's own citation form (comment-slop) and adds the instance-coupling reason; charts: entry placed at the end of gpu's internal-charts group to keep comment-to-entry pairings intact",
+          "open_questions": "none"
+        },
+        {
+          "at": "2026-11-05T11:40:00+0000",
+          "role": "agent-review",
+          "status": "APPROVED (round 1)",
+          "chunk": "C05",
+          "verdict": "All ACs re-measured green; all three comment blocks are keeps with every claim source-verified (merge semantics vs appset-charts.yaml:36, render-time stand-in vs values.yaml:47-50, coderd same-host precedent vs secrets-coder.yaml:41); zero ticket narration or card-question ids on added lines; local-path SC + dev-twin naming verified live via readonly MCP.",
+          "coord_findings": "(1) V7's oracle names a pod that will not exist — the umbrella names objects <serviceName>-<appName>, so it is gpu-forgejo-runner-gpu-0 (proven on the dev twin dev-forgejo-runner-dev-0); plan V7 + rollout step 7 wording corrected in the follow-up plan micro-pass. (2) NOTHING in the repo enforces 'gpu syncs after C03' — appset-charts.yaml:132-138 gives every generated Application automated {prune, selfHeal}, so the runner Application auto-syncs at merge; the only lever is the in-cluster cluster-annotation override (the gpu umbrella's OVERRIDE_VIA_CLUSTER_ANNOTATION mechanism) set by the user. Both relayed to the user at hand-off; the ordered posture is observational, not mechanical (idle runner — no Actions workflows in the mirrors — so the merge-time window costs only LFS-backed jobs queued immediately, until the infra sync)."
+        }
+      ],
+      "note": "Q13 answer: serves the INFRA instance (https://git.spencerslab.com). Precondition User actions: UA5 = runner record on INFRA (DONE by the user 2026-11-04), UA6 = Bitwarden item **`forgejo-runner`** — the user named it that, superseding the planned `gpu-forgejo-runner` (see user_actions.ua6_runner_item), UUID 22a71ee4-1b7e-4ad2-ad5c-b4f80175a400 PROVIDED → C05 unblocked. Repo work lands in wave 2 after C04 (post-swap labels map); the gpu Application's SYNC rides after C03 (rollout step 7) so its LFS clones never face the 404 before-state."
+    }
+  },
+  "claim": {
+    "card": "uDTEEpnqEahASJjJN",
+    "derived_pipeline_set": ["Local"],
+    "set_id": "ffb8569f-ce32-4440-9f02-3c2e6e06c28d",
+    "claimed_at": "2026-11-02T23:20:00+0000",
+    "outcome": "reaped — the plugin's stale-lock reaper took the `Local` set at 2026-11-03T15:33:09Z (workspace down through the approval pause); `pipeline_release` was never callable (no claim to release). Card #104 was moved to Executing (list qZ9CLZqCRbv7NQQ6R) with the claim comment at pickup and is still there with no live holder — Timeout-style triage is human-owned.",
+    "board_writes_after_reap": "the `dev-boards` namespace came back in the tool catalog on 2026-11-03 ~18:00, so the outstanding writes WERE made post-reap: the slug custom field (`[cf-104-feat-forgejo-lfs](<session link>)`), the unchecked-item cleanup (27 deleted; survivors Qwen Flash / dev+gpu+infra / feat / Before Planning / PR — infra toggled on first because Q13 named the infra instance), the plan-approved comment, and two Inbox follow-up cards (RMyFYks8FdnNzniiZ, iWn6xs7rtzbbbtZkL). The card MOVE to Review became possible again when the run re-claimed on 2026-11-05 (see claim_attempts).",
+    "reclaimed": "2026-11-05T20:25Z — the contending cf-58 run's `Local` lease ended (gone from pipeline_status), the claim engine accepted this session: ok:true, setId 9d06a307-f611-42e6-af0d-432143aaeed1, lock file /home/coder/SpencersLab/.pipeline/locks/Local.json. Posture is back to normal: heartbeat keeps it live; `pipeline_release(outcome: done)` closes it when the card moves to Review."
+  },
+  "blocked": [
+    "RESOLVED 2026-11-04 — the user provided both UUIDs (see user_actions): `forgejo-s3` 06a65037-29d3-48de-978c-b3b6002d3978 unblocks C02 + C03; the infra runner record + `forgejo-runner` item 22a71ee4-1b7e-4ad2-ad5c-b4f80175a400 unblock C05. Remaining user-owned gate: C03's LIVE sync waits on PF2 + the dev-side verification (V1/V2/V5 on dev after its sync), and the gpu Application sync rides after the infra sync (rollout step 7). Nothing blocks the chunk work itself."
+  ],
+  "deferred": [
+    "SeaweedFS chart 4.50.0 -> 4.52.0 bump (carries the #12177 fix; RESEARCH §Q2 — separate dep ticket) — FILED 2026-11-03 as Inbox card RMyFYks8FdnNzniiZ",
+    "in-job Actions LFS checkout proof (Q11 approval answer: NO research round this ticket — revisit only if Actions gets used; §R6 lists the unknowns)",
+    "runner job-image bump posture: renovate manager for the `- <label>:docker://` lines (job images are NOT renovate-tracked today; bumps = manual + red-first ACT_LABELS + V6)",
+    "Q14b (user's '26?'): registry-vet a newer/Node-26 LFS-capable job image — facts 2026-11-03: act-26.04 unpublished (upstream matrix lists 26.04), act family ships Node 20/24 (ARG NODE_VERSION=\"20 24\"); Q14 (dropping the Node-22 guarantee) ACCEPTED by the user, C04 stays act-24.04 — USER CHOSE a card 2026-11-04: filed as Inbox card N7FZ5GysqyGhnBBmM",
+    "infra runner relocation (forgejo-runner-infra re-wire via the reserved dev-forgejo-prod-runner item) — stays deferred from prior tickets; Q15's new gpu-forgejo-runner item keeps that vault item free",
+    "Tighten gateway IAM: drop the List grant if proven unnecessary; prove attached-policy role maps cover PutBucket before ever using s3.user.provision",
+    "SERVE_DIRECT=true evaluation (moves gateway reachability to every git client)",
+    "attachments/avatars/packages to S3 via [storage] (explicitly out of scope)",
+    "fix the pre-existing red suites: forgejo-ssh-gateway.sh t1 + forgejo-ssh-audit-trail.sh t1 (tracked storm-runs/ at repo root), dev-forgejo-runner.sh t5 (cf-93 comment-window false positive) — already owned by card rQCRHsLB86Ci6oJki (\"Repair the cf-58 coord-contract baseline\"), do not duplicate; the related sentinel-enumeration guard is FILED as Inbox card iWn6xs7rtzbbbtZkL",
+    "renovate coverage for the OCI forgejo-helm dependency (carried from 2026-10-feat-forgejo-infra-and-runner)"
+  ],
+  "user_actions_outstanding": [
+    "UA1 inventory the gateway IAM + buckets (weed shell: s3.config.show, s3.user.list, s3.bucket.list, s3.iam.export)",
+    "UA2 s3.user.create -name forgejo-lfs (capture both printed keys; 4.50 has no -access flag)",
+    "UA3 s3.bucket.create -name git-lfs -owner forgejo-lfs + s3.bucket.access -name git-lfs -user forgejo-lfs -access Read,Write,List,Admin + re-read (Q9 owner grant)",
+    "UA4 Bitwarden item forgejo-s3 + report the UUID to the pipeline",
+    "UA5 persistent server-side runner RECORD on the INFRA instance (git.spencerslab.com, Q13 answer) — capture uuid + token; one record = one pod; the record may exist early, the pod sync waits for C03 (rollout step 7)",
+    "UA6 NEW Bitwarden Login item gpu-forgejo-runner (Q15 answer; username=runner uuid, password=runner token; dev-forgejo-prod-runner stays reserved for the infra relocation) + report the UUID to the pipeline",
+    "PF0 confirm no existing LFS objects",
+    "PF1 forgejo migrate-storage pre-flight (dev endpoint, no --minio-checksum-algorithm flag) before merge",
+    "PF2 same for infra before the sync that restarts infra (Q8: C03 rides the branch, gated on dev verification)",
+    "V2/V3 push+clone byte verification and object placement (human)",
+    "V6 docker run ghcr.io/catthehacker/ubuntu:act-24.04 git lfs version (settles the §R2b installer-pin caveat; + act-22.04, + node:22-bookworm negative control, + node -v Q14 check)",
+    "V4 ArgoCD sync + ExternalSecret SecretSynced (user-owned); V7 gpu registration oracle (pods_log forgejo-runner-gpu-0 'declared successfully' + runners view online)",
+    "PR creation and merge (user-owned)",
+    "Q14b (open, blocks nothing): is there an LFS-capable job image on a newer Node? Verified 2026-11-03: act-26.04 unpublished (upstream matrix lists 26.04; would still ship Node 20/24); no act image ships Node 26; any Node-26+git-lfs image needs vetting outside the act family — follow-up only, C04 unchanged"
+  ]
+}

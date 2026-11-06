@@ -1,0 +1,75 @@
+{
+  "schema": "wekan-board-snapshot/1",
+  "collected_at": "2026-10-31",
+  "provenance": "AI-Dev live state per the 2026-10-31 read-only dev-boards probe (RESEARCH.md F2 / L16) plus the user's mid-planning Inbox creation in the Backlog swimlane (plan Risks). In-Process swimlane id and label roster are the planning-prefetch values (STATE.json kickoff.board_context); the other swimlane ids are synthetic fixtures — the engine keys on titles and names, ids resolve at apply time.",
+  "board": { "id": "TNQJ2BrXenZovngTS", "title": "AI-Dev" },
+  "swimlanes": {
+    "In Process": "jLzy39L7djCRr67SF",
+    "Backlog": "swBacklogFIXTUREID",
+    "Farm": "swFarmFIXTUREID0001",
+    "Planning": "swPlanningFIXTURE01"
+  },
+  "lists": {
+    "jLzy39L7djCRr67SF": [
+      "Not Started",
+      "Executing",
+      "Review",
+      "Rework",
+      "Finished",
+      "Low Priority",
+      "Test",
+      "Cancelled"
+    ],
+    "swBacklogFIXTUREID": [
+      "Context",
+      "Features",
+      "Research",
+      "Outside Process",
+      "Dev Env",
+      "Home Assistant",
+      "CICD",
+      "Wekan",
+      "Inbox"
+    ],
+    "swFarmFIXTUREID0001": [
+      "Context",
+      "Features",
+      "Research",
+      "Outside Proccess",
+      "Dev Env",
+      "Home Assistant",
+      "CICD",
+      "Wekan"
+    ],
+    "swPlanningFIXTURE01": [
+      "Context",
+      "CICD",
+      "Home Assistant",
+      "Dev Env",
+      "Research",
+      "Features"
+    ]
+  },
+  "labels": {
+    "Research": "green",
+    "Ready for Work": "purple",
+    "Pipeline: Local": "blue",
+    "Pipeline: CICD": "orange",
+    "Pipeline: Context": "yellow",
+    "Bucket Color": "darkgreen"
+  },
+  "rules": [
+    {
+      "title": "Standard checklists on new cards",
+      "trigger": { "activityType": "createCard" },
+      "action": {
+        "addChecklists": ["Services", "Type", "Model(s)", "Lifecycle", "Human in the Loop"]
+      }
+    },
+    {
+      "title": "Label cards moved to Review",
+      "trigger": { "activityType": "moveCard", "listName": "Review" },
+      "action": { "addLabel": "Ready for Work" }
+    }
+  ]
+}

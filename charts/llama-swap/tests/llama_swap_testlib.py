@@ -565,7 +565,13 @@ def baseline_config(cluster: str) -> dict:
 # it" carries over): the list is embedding-only — q8 went lazy with the
 # strata arena sharing the node's RAM — and flash-next q5/q6 must appear in
 # NO matrix set at all.
-C04_PRELOAD_PINNED = ["qwen3-embedding-0.6b"]
+# 2026-11-02 (owner ruling): EMPTY. Nothing may hold RAM on this node before a
+# request names it, because every warm llama.cpp model is system RAM that a
+# strata cold-pin (46.84-71.73 GiB page-locked arena) cannot evict — llama-swap
+# has no cross-instance lifecycle control, so the boot-time claim has to be
+# zero. Single source: the preload arms in test_new_roster / test_heretic_rungs_*
+# all compare against this constant.
+C04_PRELOAD_PINNED = []
 
 
 def all_models_of(cfg: dict) -> dict:
@@ -602,7 +608,10 @@ REMOVED_IDS = [
 ]
 
 # CR2: the full post-replan rendered catalog — every cluster render must carry
-# EXACTLY these IDs (P1). gpu side = chart survivors, gpu-ai-local 20 added.
+# EXACTLY these IDs (P1). gpu side = chart survivors, gpu-ai-local added.
+# cf-86 growth (2026-10-29): +qwen3.8-flash-next-heretic-q4 (C03) and
+# +qwen38-heretic (C04) — both gpu-ai-only, so the partition moves to
+# 60 = gpu 34+26 / gpu-ai 60+0 (card ask; the gpu side only echoes them, P5).
 CATALOG_IDS = [
     "home-3b-v3",
     "home-3b-v3-gpu",
@@ -649,6 +658,7 @@ CATALOG_IDS = [
     "qwen3.8-27b-q8",
     "qwen3.8-27b-q8-1m",
     "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-heretic-q4",
     "qwen3.8-flash-next-orca-q6",
     "qwen3.8-flash-next-q3",
     "qwen3.8-flash-next-q4",
@@ -657,6 +667,7 @@ CATALOG_IDS = [
     "qwen36-heretic",
     "qwen36-huihui",
     "qwen38-ara",
+    "qwen38-heretic",
     "qwen38-humanlike",
     "qwen38-orca",
     "qwen38-orca-f16",
@@ -664,8 +675,8 @@ CATALOG_IDS = [
     "whisper-large-v3",
 ]
 
-# gpu-ai-enabled catalog rungs after removals (20): these render as catalog
-# echoes on gpu (CA1 isolation flip: absent -> present-as-echo).
+# gpu-ai-enabled catalog rungs (22 after the cf-86 pair): these render as
+# catalog echoes on gpu (CA1 isolation flip: absent -> present-as-echo).
 GPUAI_LOCAL_CATALOG_IDS = [
     "ornith-1.5-122b-q3",
     "ornith-1.5-122b-q4",
@@ -675,6 +686,7 @@ GPUAI_LOCAL_CATALOG_IDS = [
     "qwen3.6-35b-a3b-q8-visual",
     "qwen3.8-27b-q8-1m",
     "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-heretic-q4",
     "qwen3.8-flash-next-orca-q6",
     "qwen3.8-flash-next-q3",
     "qwen3.8-flash-next-q4",
@@ -683,14 +695,16 @@ GPUAI_LOCAL_CATALOG_IDS = [
     "qwen36-heretic",
     "qwen36-huihui",
     "qwen38-ara",
+    "qwen38-heretic",
     "qwen38-humanlike",
     "qwen38-orca",
     "qwen38-orca-f16",
     "qwen38-rana",
 ]
 
-# gpu renders exactly these 24 as fail-fast echoes: the 3 surviving golden
-# byte-pinned echoes + the C04 ornith bf16 echo + 20 gpu-ai-local catalog IDs.
+# gpu renders these as fail-fast echoes: the 3 surviving golden byte-pinned
+# echoes + the C04 ornith bf16 echo + the gpu-ai-local catalog IDs (22 after
+# the cf-86 pair land, C03/C04).
 GPU_ECHO_IDS = [
     "ornith-1.5-122b-q3",
     "ornith-1.5-122b-q4",
@@ -704,6 +718,7 @@ GPU_ECHO_IDS = [
     "qwen3.6-35b-a3b-q8-visual",
     "qwen3.8-27b-q8-1m",
     "qwen3.8-27b-q8-visual",
+    "qwen3.8-flash-next-heretic-q4",
     "qwen3.8-flash-next-orca-q6",
     "qwen3.8-flash-next-q3",
     "qwen3.8-flash-next-q4",
@@ -712,6 +727,7 @@ GPU_ECHO_IDS = [
     "qwen36-heretic",
     "qwen36-huihui",
     "qwen38-ara",
+    "qwen38-heretic",
     "qwen38-humanlike",
     "qwen38-orca",
     "qwen38-orca-f16",
@@ -719,8 +735,10 @@ GPU_ECHO_IDS = [
 ]
 
 # Enablement matrix (CA1 freeze; DECISIONS arithmetic "58 = gpu 34+24 /
-# gpu-ai 58+0"). GPU_ENABLED_IDS derives from the frozen partition — CATALOG
-# minus the echoes — so the two lists cannot drift apart silently.
+# gpu-ai 58+0", cf-86 moves the partition to 60 = gpu 34+26 / gpu-ai 60+0 —
+# the two new rungs are gpu-ai-only, gpu only echoes them). GPU_ENABLED_IDS
+# derives from the frozen partition — CATALOG minus the echoes — so the two
+# lists cannot drift apart silently.
 GPU_ENABLED_IDS = [i for i in CATALOG_IDS if i not in set(GPU_ECHO_IDS)]
 ENABLEMENT = {
     "gpu": {"enabled": GPU_ENABLED_IDS, "echo": GPU_ECHO_IDS},
@@ -757,6 +775,175 @@ LADDER_QUANT_KEYS = {"q3", "q4", "q5", "q6", "q8", "bf16"}
 # grammar cannot carry. Their NAME still faces the parenthesized-TAG rule;
 # the before/after display table (CR5 bar 2) is the human review of their text.
 DESC_PROSE_EXEMPT_FAMILIES = {"qwen3.8-flash-next-orca"}
+
+# ---------------------------------------------------------------------------
+# cf-86 frozen tables (plan 2026-10-29 + DECISIONS "Renumap + final-shape
+# decisions"). The two llama.cpp rungs C03/C04 land as chart-family data;
+# both render LIVE on gpu-ai and as catalog ECHOES on gpu (their families are
+# default-disabled chart-side, gpu-ai-only BY ENABLEMENT like the orca family).
+# ---------------------------------------------------------------------------
+
+CF86_NEW_IDS = ["qwen3.8-flash-next-heretic-q4", "qwen38-heretic"]
+CF86_NEW_FAMILY = {  # rendered ID -> (family, quant key) per the CR1.1 grammar
+    "qwen3.8-flash-next-heretic-q4": ("qwen3.8-flash-next-heretic", "q4"),
+    "qwen38-heretic": ("qwen38", "heretic"),
+}
+# -hf refs verified live against the HF API by the cf-86 test session
+# (2026-10-29): spiritfather's heretic-2 republish carries Q4_K_M shards +
+# Q4_K_M/MTP + mtp/mtp-* draft + mmproj/*; 0bserverx's 27B heretic ladder
+# carries the embedded-MTP RVN-Q4_K_M-mtp.gguf at 16,998,720,736 B (~17.0 GB,
+# RESEARCH [S22]). A source-gate deviation re-pins THIS table via the test
+# session, never a silent dev edit.
+CF86_HF_REFS = {
+    "qwen3.8-flash-next-heretic-q4": "spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M",
+    "qwen38-heretic": "0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp",
+}
+# Matrix vars the chunks add, letter -> rendered id. fnher joins the gpu-ai
+# SOLO alternation (service overlay); q38her joins the CHART-level main dense
+# alternation, which the gpu box and every default render ride (C04 task 3),
+# while gpu-ai narrows main with its own overlay expression.
+CF86_MATRIX_VARS = {
+    "fnher": "qwen3.8-flash-next-heretic-q4",
+    "q38her": "qwen38-heretic",
+}
+CF86_SET_ADDITIONS = {  # set name -> the ONLY vars its expression may gain
+    "solo": {"fnher"},
+    "main": {"q38her"},
+}
+# The mmap-regime literals C03 copies verbatim from the flash-next/orca
+# families (the -ot string is byte-exact contract, TEST_SPEC §8 lineage).
+CF86_MOE_OFFLOAD_LEG = '-ot "\\.ffn_.*_exps\\.=CPU"'
+
+
+# --- HF loader-pick simulation (llama.cpp common/download.cpp@889edf43) -----
+# The `-hf repo:QUANT` legs in this chart are resolved by llama-server's own
+# downloader, so a catalog ref can name a repo whose best-match pick is a
+# partial split family and every chart-side arm stays green. These functions
+# mirror find_best_model / get_gguf_split_info / get_split_files faithfully:
+# the sidecar filter is a CASE-SENSITIVE substring test on the file NAME, while
+# the QUANT search is case-INSENSITIVE over the FULL PATH (a directory name can
+# satisfy it), and only shard 1 of a split family is ever picked.
+
+HF_SIDECAR_TOKENS = ("mmproj", "imatrix", "mtp-", "eagle3-", "dflash-", "dspark-")
+_HF_SPLIT_RE = re.compile(r"^(.+)-([0-9]{5})-of-([0-9]{5})$", re.IGNORECASE)
+
+
+def hf_split_info(path: str) -> tuple[str, int, int]:
+    """(prefix, index, count) for a GGUF path. An unsplit file has index ==
+    count == 1 and prefix == the path minus its .gguf suffix."""
+    stem = path[: -len(".gguf")] if path.endswith(".gguf") else path
+    m = _HF_SPLIT_RE.match(stem)
+    if m:
+        return m.group(1), int(m.group(2)), int(m.group(3))
+    return stem, 1, 1
+
+
+def hf_is_model_file(path: str) -> bool:
+    """True unless the file name carries a sidecar token (mmproj/imatrix/draft
+    heads). Case-sensitive, as in the loader: an uppercase -MTP- in a file name
+    does NOT exclude it from being picked as the model."""
+    if not path.endswith(".gguf"):
+        return False
+    name = path.rsplit("/", 1)[-1]
+    return not any(tok in name for tok in HF_SIDECAR_TOKENS)
+
+
+def hf_pick(paths: list[str], tag: str) -> str | None:
+    """The file llama.cpp selects for `-hf repo:tag`, in listing order: the
+    first model file whose PATH matches `tag[.-]` case-insensitively, skipping
+    any non-first shard of a split family. None means no match (the loader then
+    errors out unless the tag was empty)."""
+    pat = re.compile(re.escape(tag) + r"[.-]", re.IGNORECASE)
+    for path in paths:
+        if not hf_is_model_file(path) or not pat.search(path):
+            continue
+        _, index, count = hf_split_info(path)
+        if count > 1 and index != 1:
+            continue
+        return path
+    return None
+
+
+def hf_split_family(paths: list[str], picked: str) -> list[str]:
+    """Every listed file the loader would download for `picked`: same split
+    prefix and same declared shard count. A single-file pick returns itself.
+    The loader never verifies the count is satisfied — a family shipping 2 of
+    6 shards downloads 2 files and then fails to load, which is what the
+    completeness assertion in the cf-86 arms is for."""
+    prefix, _, count = hf_split_info(picked)
+    if count <= 1:
+        return [picked]
+    return [p for p in paths if hf_split_info(p)[:1] == (prefix,) and hf_split_info(p)[2] == count]
+
+
+def hf_tree(repo: str, path: str = "", recursive: bool = True) -> list[dict]:
+    """Live file listing of an HF repo subtree as [{path, size}], in API order —
+    the order llama.cpp iterates, so a repo re-organization can change the pick.
+    Sends no credential: an arm that sent one could not tell a public repo from a
+    gated one, and both cf-86 packs list anonymously (gated: False)."""
+    import json
+    import urllib.request
+
+    url = f"https://huggingface.co/api/models/{repo}/tree/main" + (f"/{path}" if path else "")
+    if recursive:
+        url += "?recursive=true"
+    with urllib.request.urlopen(url, timeout=60) as resp:  # noqa: S310 - fixed HF host
+        entries = json.loads(resp.read())
+    return [
+        {"path": e["path"], "size": e.get("size") or (e.get("lfs") or {}).get("size")}
+        for e in entries
+        if e.get("type") == "file"
+    ]
+
+
+def cf86_matrix_growth_violations(base: dict, cur: dict) -> list[str]:
+    """The confined shape of sanctioned cf-86 matrix growth in a render where
+    the new rungs are NOT enabled: existing vars stay byte-equal, additions are
+    only the pinned letters at their pinned ids, and an expression may gain a
+    letter only for the (set, var) pairs in CF86_SET_ADDITIONS — C04's `q38her`
+    joins the CHART-level main alternation, so the gpu box and every default-OFF
+    render legitimately gain combos with it (the rung stays an echo there).
+    A gained combo must be a baseline combo with exactly one member swapped for
+    that new id: the new rung takes an existing alternation slot and never opens
+    a new co-residency class. Baseline combos never disappear. Expansions are
+    compared, not expressions, so values or helm re-wrapping cannot hide a
+    pairing change."""
+    import strata_testlib as S
+
+    out = []
+    b_vars = (base.get("matrix") or {}).get("vars") or {}
+    c_vars = (cur.get("matrix") or {}).get("vars") or {}
+    for name, val in sorted(b_vars.items()):
+        if c_vars.get(name) != val:
+            out.append(f"matrix.vars.{name}: {val!r} -> {c_vars.get(name)!r}")
+    for name in sorted(set(c_vars) - set(b_vars)):
+        if CF86_MATRIX_VARS.get(name) != c_vars[name]:
+            out.append(f"matrix.vars.{name} = {c_vars[name]!r}: not a cf-86 pinned letter/value")
+    new_ids = set(CF86_NEW_IDS)
+    b_exp, c_exp = S.matrix_expansions(base), S.matrix_expansions(cur)
+    for name in sorted(set(b_exp) | set(c_exp)):
+        b_combos = {frozenset(c) for c in b_exp.get(name, [])}
+        c_combos = {frozenset(c) for c in c_exp.get(name, [])}
+        lost = sorted(sorted(c) for c in b_combos - c_combos)
+        if lost:
+            out.append(f"matrix.sets.{name}: baseline combos lost: {lost}")
+        allowed_ids = {CF86_MATRIX_VARS[v] for v in CF86_SET_ADDITIONS.get(name, ())}
+        for combo in sorted(map(sorted, c_combos - b_combos)):
+            combo_f = frozenset(combo)
+            picked = sorted(combo_f & new_ids)
+            if len(picked) != 1:
+                out.append(f"matrix.sets.{name}: new combo {combo} pairs {len(picked)} cf-86 rungs")
+                continue
+            if picked[0] not in allowed_ids:
+                allowed = sorted(CF86_SET_ADDITIONS.get(name, ()))
+                out.append(f"matrix.sets.{name}: new combo {combo} adds {picked[0]!r}; "
+                           f"only {allowed} may join this set")
+                continue
+            if not any((b - {drop}) | {picked[0]} == combo_f
+                       for b in b_combos for drop in b - new_ids):
+                out.append(f"matrix.sets.{name}: new combo {combo} opens a co-residency class "
+                           "no baseline combo has (the new id must take an existing slot)")
+    return out
 
 
 def rung_effective_ref(chart_cfg: dict, fam: str, spec: dict, quant: str) -> str | None:

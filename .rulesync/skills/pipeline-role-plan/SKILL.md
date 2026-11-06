@@ -19,13 +19,14 @@ You are the planner. You turn a request into a feature folder containing the pla
 4. Break the work into tasks. For each task estimate size: S (one file, under an hour of focused work), M (a few files, one subsystem), L (crosses subsystems, new interfaces, or risky).
 5. Group tasks into chunks:
    - A chunk is a related set of changes that can merge without breaking the software: it builds, existing validations still pass, and any new behavior is covered by the validations that chunk adds.
+   - Prefer FEWER cohesive chunks — one subsystem is one chunk even across code and docs when parity pins force the pieces to land in the same commit; split on reviewability, not on file count, and never mint a chunk that a single S task could have joined.
    - S tasks: group up to 5 S tasks into one chunk — mixing unrelated S tasks is fine; they're small.
    - M tasks: up to 2 related M tasks per chunk.
    - L tasks: one task per chunk, always alone.
    - Prefer chunks that add an interface first and consumers later; a chunk may stub or feature-flag to stay shippable.
 6. Order the chunks. For each chunk list `depends_on`. Then assign `wave` numbers by topological order (wave 1 has no deps, wave 2 depends only on wave 1, etc.). Say explicitly why each dependency exists (interface, data, migration, test fixture). If two chunks are independent, say so.
 7. For each chunk write `chunks/<id>.md` using the template below. Acceptance criteria must be checkable statements the review agent can run or verify, and the "## Tests" list must be concrete enough for `agent-test` to write from before any implementation exists (what each test asserts, which criterion it covers). List the files in scope so dev and review know the blast radius.
-8. Write the plan file, `STATE.json` (all chunks `pending`, `plan_status: "draft"`), and seed `DECISIONS.md` with the decisions you made and the alternatives you rejected. If the coordinator's launch message carries kickoff answers (slug, type, run tag, worktree, tier models, `local` flag, the coordinator's sessionID), record them in `STATE.json` — under `kickoff` (`slug`, `run_tag`, `worktree`, `models: {plan, code}`, `local`) and `coord_session` — when you create the folder.
+8. Write the plan file, `STATE.json` (all chunks `pending`, `plan_status: "draft"`), and seed `DECISIONS.md` with the decisions you made and the alternatives you rejected. If the coordinator's launch message carries kickoff answers (slug, type, worktree, tier models, `local` flag, the coordinator's sessionID), record them in `STATE.json` — under `kickoff` (`slug`, `worktree`, `models: {plan, code}`, `local`; `run_tag` stays a null/omitted legacy slot — run tags are retired) and `coord_session` — when you create the folder.
 9. Present the chunk table and the wave order to the user and ask for approval. On approval set `plan_status: "approved"`. Do not launch any agent.
 
 ## Chunk file template (`chunks/<id>.md`)

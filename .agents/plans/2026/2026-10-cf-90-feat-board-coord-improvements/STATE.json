@@ -1,0 +1,179 @@
+{
+  "feature": "2026/2026-10-cf-90-feat-board-coord-improvements",
+  "plan_status": "complete",
+  "coord_session": "ses_e6f74d6f5ffeUXj2HQl29vGcwf",
+  "test_session": "ses_e6d1e15f0ffen3EgDuCAEhq09x",
+  "current_wave": 3,
+  "updated_at": "2026-10-31T15:45:00Z",
+  "handoffs": [
+    "RESULT (plan, 2026-10-31, ses_e6e12ba47ffeDfz9WmIw7RVPrw) status: DONE; 7 chunks/3 waves drafted; RESEARCH.md untouched; batched questions returned (7); friction carried: deployed dev-boards lags repo (:v87 pin, create_label/create_list absent -> REST fallback + L4 ledger card); stale residue forced -2 worktree/branch suffix -> proceed on -2, C03 cleanup prevents recurrence.",
+    "RESULT (plan rework 1, batched answers folded): answers 1-3,7 confirmed; 4 (unlabeled), 5 (Inbox), 6 (content-based cleanup) corrected planner guesses across plan/C01/C03/C04/C06/C07/DECISIONS; open_questions none.",
+    "RESULT (plan rework 2, final approval edit): user ruling verbatim in DECISIONS — Local task is the planned scheduled taker of unlabeled cards (with ask-at-claim); API scheduled walk takes ONLY Provider: API; ask instruction on every flavor; negative pins (API-never-takes-unlabeled) in C03/C04 tests; STATE plan_status flip left to coord. status: DONE, deviations: none, friction: none, open_questions: none, next_suggested: coord approves, write-back, agent-test.",
+    "RESULT (agent-test, ses_e6d1e15f0ffen3EgDuCAEhq09x, 2026-10-31T17:2xZ) status: DONE chunk: plan — all chunks' tests written, committed (0bb48a2e9), every new/extended id passes its HOLD duty or fails with a designed-red message naming the not-yet-landed surface; sibling pre-existing reds excluded by documented per-id selection (baseline reds: gate t17, coord-inwork i4, session-origin s4, kickoff-branch m4, wekan-mcp create-list t2 + board-provisioning t2/t7 cascade — warm-location perms drift / merged cf-68 base, outside cf-90). Gate id lists per chunk in suite headers (C01: wekan-board-provision t1..t8; C02: agents-md c3 + rulesync-surface c12 c20 + session-origin s3; C03: noop-marker N6 + rulesync-surface c21 c22 + coord-inwork i8 + agent-perms A12; C04: provider-loops t1 with t6 gate-subset minus t17; C05: pipeline-push-pr P7 P8; C06: agent-dev-deploy t1 + A16 22->24 TODO; C07: cf90-ledger t1 t2 t4 now, t3 in wave 2). commands_run: harness bash -n all suites => pass; rulesync generate --check => pass; npx aislop ci --changes => pass 0e/0w; commit => pass. deviations: (1) C07 runbook at tests/cf90-ledger/readback-runbook.md not chunk-file notes (chunk files plan/coord-owned) — coord cites in C07 Review notes; (2) kickoff-branch/pipeline-models hold NO run-tag pins, shape negatives live in rulesync-surface c20(b) tree-wide; (3) C03 pins distributed into existing suites (rulesync-surface c21/c22, coord-inwork i8, agent-perms A12, noop-marker N6); (4) s6/m6 freeze-list admits for pipeline.md/pipeline-pr.md + wekan-board-provision.md per cf-85 merge-window precedent; (5) all listed reds are designed; (6) baseline respected; (7) provider-loops t6 runs ids t1..t16+t18..t20. friction: mawk multi-byte regex silent fail -> ASCII-only patterns; set -e post-heredoc aborts -> if!/||fail convention; YAML bools vs strings -> lower-cased frontmatter compare. open_questions: C07 Services for L4+L7 — chunk says agent context, plan appendix (authority) says dev — coord rules before wave 2. next_suggested: coord starts wave 1 (C01, C02, C03); C07 Services ruling recorded before its wave-2 pass."
+  ],
+  "kickoff": {
+    "card": "sYoFwL73kZzZH55dQ",
+    "card_number": 90,
+    "slug": "cf-90-feat-board-coord-improvements",
+    "run_tag": null,
+    "worktree": "cf-90-feat-board-coord-improvements-2",
+    "branch": "cf-90-feat-board-coord-improvements-2",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-2.4t-a95b",
+      "code": "openrouter/qwen/qwen3.8-flash"
+    },
+    "local": false,
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "origin_dir": "/home/coder/SpencersLab",
+    "board_context": {
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlane_id": "jLzy39L7djCRr67SF",
+      "lists": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Low Priority": "M4JS9LfaypJbB97At",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8"
+      },
+      "labels": {
+        "Research": "ysSmS5",
+        "Ready for Work": "mkbxeo",
+        "Pipeline: Local": "G7mzkC",
+        "Pipeline: CICD": "NHvBk5",
+        "Pipeline: Context": "3PGnrD",
+        "Bucket Color": "yBfNJJ"
+      }
+    }
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; coord-directed minor+nits fixed in dev round 2, suite green after)",
+      "dev_session": "ses_e6cd69a82ffeHivgPYniE2MHSe",
+      "handoffs": [
+        "RESULT (C01 dev round 1, ses_e6cd69a82ffeHivgPYniE2MHSe, 2026-10-31T17:5xZ) status: DONE chunk: C01 — AC1-AC8 verified; suite t1..t8 9/9 green; engine: 28-action live-fixture plan + zero-action full-provisioned plan + clean failure paths; rulesync double-generate no-op + --check green; aislop ci --changes 100/100 0e/0w (ruff engines absent locally, CI covers); zero live board writes (5 read-only probes only). files_changed: scripts/provision-board.py, skills/wekan-board-provision/SKILL.md, .rulesync/commands/wekan-board-provision.md + generated .opencode/commands mirror, .rulesync/rules/overview.md + regenerated AGENTS.md; re-probed fixture staged outside repo at /tmp/opencode/cf-90-c01/. deviations: (1) fixture regenerate NOTE collides with dev tests/** deny — staged + plan-equivalence proven; COORD RULING: keep committed fixture (already Inbox-carrying, byte-identical engine plan), staged file dropped; (2) skill also named in overview.md skills list (keep-lists-current duty); (3) ruff-backed aislop engines skipped locally. friction: tests-deny-vs-chunk-note (resolved: staging+adjudication); SKILL.md frontmatter YAML colon-quote gotcha (fixed in-chunk, t5 caught; upstream note). open_questions: none. next_suggested: coord commits C01 after review; C02 next.",
+        "RESULT (C01 review r1, fresh session ses_e6cc99919ffeTzgJPPfkxVRcuO) status: DONE verdict APPROVED — validations re-run green (suite 9/9, rulesync --check + double-generate no-op, aislop 100/100, AC1/AC2 dry-run sets exact, failure probes pass, coord ruling (b) byte-identical re-verified). Findings: minor — provision-board.py existing_rule_keys canonical fallback trigger-only match (human non-bucket Planning rule would suppress pair); nits — schema key unversioned; SKILL.md apply-order wording. None blocking; coord directed fix now (pre-merge live provisioning is the ticket's core deliverable). No test edits, no special-casing found in suite audit.",
+        "RESULT (C01 dev round 2 = fix round, ses_e6cd69a82ffeHivgPYniE2MHSe continued) status: DONE — all three findings applied: canonical key now requires action.addLabel == 'Bucket: <listName>' (case-insensitive), SNAPSHOT_SCHEMA constant + exit-2 on drift, SKILL.md reword preserves every t5 pin. suite t1..t8 9 ok exit 0; aislop 100/100; probes A-D pass; tests/fixture untouched. C01 done gate met (dev DONE + review APPROVED + commands green in review commands_run)."
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "last_verdict": "APPROVED (r2; r1 CHANGES_REQUESTED major-1 fixed in dev r2)",
+      "dev_session": "ses_e6cbd0eddffe4YpR0DG0cclGI0",
+      "handoffs": [
+        "RESULT (C02 dev r1, ses_e6cbd0eddffe4YpR0DG0cclGI0) status: DONE — run-tag retirement global (kickoff Q3 deleted, worktree/branch bare <slug>, commands (slug, models), overview->AGENTS retirement sentence, role-plan answer list, agents-sync references); boards slug auto-accept + no-run-tag reword + 4 truth-forced dependent flips; gates agents-md c3 / rulesync-surface c12 c20 / session-origin s3 green, HOLDs green, rulesync --check clean, aislop 100/100. deviations: (1) AC5 DECISIONS write permission-denied -> handed verbatim to coord (same drift class as C01 fixture, logged); (2) 4 unpinned boards flips truth-forced; (3) kickoff retirement note as boards cite target. friction: chunk-steps naming dev writes into plan-ownership files — upstream candidate: name coord as executor. (full detail in RESULT at launch time)",
+        "RESULT (C02 review r1, ses_e6cae840bffefHPK58wt6BvWHb) status: CHANGES_REQUESTED — every gate+HOLD independently green; AC1-4,6,7 pass; AC5 open pending coord append (claim verified evidence-backed); MAJOR-1: slug auto-accept not propagated to agent-board-coord{,-local,-pr} bodies' 'genuine gaps (an unchecked Type item, an unset slug)' phrase (could resurrect the retired slug question); minors/nits deferred; suggested c16 co-pin routed to test session — DEFERRED by coord.",
+        "RESULT (C02 dev r2 = fix round) status: DONE — major-1 applied on 3 twins + 3 mirrors, stale-string zero live hits, byte-equality verified, diff extended by nothing else, all gates + rulesync no-op2 + --check + aislop green.",
+        "RESULT (C02 review r2, fresh ses_e6c986c6fffeyBkXRRKbErDybL) status: DONE verdict APPROVED — fix verified exactly (per-file diffs 1+/1-, md5-identical clause across bodies+skill), AC5 closed via coord-appended DECISIONS entry re-grepped independently, 24-file tree clean, all suites green. Done gate met."
+      ]
+    },
+    "C03": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "dev_session": "ses_e6c9142bfffepjFVIhVSCsV97e",
+      "handoffs": [
+        "RESULT (C03 dev r1, ses_e6c9142bfffepjFVIhVSCsV97e) status: DONE — boards skill: Provider filtering subsection (scheduled API ONLY Provider: API; scheduled Local = Provider: Local + unlabeled planned taker; ask-before-routing + human-apply-label every flavor), Archive exit (marker-first, PATCH {\"archived\":true}, never-ask, failure-clean), Follow-up cards section (Inbox-in-Backlog destination re-resolved live, all parent labels except Research, timing post-research/pre-test-code, labels-in-body degrade citing L5, never add_checklist), Friction follow-up repointed Review→Inbox with non-intake rationale; role-coord step 10 work-complete cleanup (content-based landed check via merge-base diff; ancestry explicitly not the gate; landed→warm→move→remove→delete; not-landed→ask-once default-keep move-home-anyway; -deploy split) + step 0 records kickoff.origin_dir; six coord variants + mirrors get opencode_worktree_remove (naming now five rows, YAML comments fixed) + agents-sync permissions.md matrix + drift entry. All four gates green (N6, c21 c22, i8, A12); HOLDs green; rulesync x2 no-op + --check clean; aislop 100/100; pre-existing red class proven unchanged via baseline clone. deviations: (1) permissions.md edited under A12 duty (t12/i5 carve); (2) warm containment widened for cleanup's own surfaces; (3) origin_dir recorded at kickoff write (coord is STATE writer); (4) boards frontmatter enumerates new surfaces (c9 needle intact); (5) no plan-file writes needed. friction: fifth naming row rides the documented pre-existing-red ladder arms' projected delta (verified class unchanged). open_questions: none. next_suggested: review, then commit; C04 depends on C03.",
+        "RESULT (C03 review r1, fresh ses_e6c7d97dbffeM4T1EAIcOwD92h) status: DONE verdict APPROVED — gates + all HOLDs + full suites re-run green independently; pre-existing reds message-identical vs ef18f7e22 baseline clone (/tmp/opencode/cf90-c03-review-base kept as evidence); six-twin byte-parity verified (md5, pure row inserts); superseded provider shapes absent from live text; run-tag none in added lines; rulesync no-op2 + --check clean; aislop 0e/0w. Findings: MINOR-1 non-blocking plan-inherited wording tension (batched blanket-ban vs ruled live provider ask — decidable as written, follow-up sentence candidate for C04 round or friction, coord's call); NIT-1 pre-C03 STATE folders lack origin_dir (self-heals at step 0). Commit C03 and proceed wave 2 (C04/C07 gated on C03; C05 on C02)."
+      ]
+    },
+    "C04": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C03"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1, after routed t3 test-repair)",
+      "dev_session": "ses_e6c684dceffec3GfyxXXYXZ6k4",
+      "handoffs": [
+        "RESULT (C04 dev r1, ses_e6c684dceffec3GfyxXXYXZ6k4) status: BLOCKED-on-validation, files DONE — both loop files complete per AC1-AC3/AC7 (API provider contract + ask + sibling/hand-off + retirement lines in pipeline-worker.md comment block lines 26-41; pipeline-worker-local.md new with pinned frontmatter, planned-taker body, D30 prompt); gate script byte-unchanged; no OpenChamber ops; aislop 0e/0w; HOLDs green (noop-marker 6 ok, gate minus t17 21 ok, pipeline-locks-tick node --test 12/12). Blocker = validation_at_fault on tests/provider-loops/surface.sh t3 (grep 'qwen\\.3\\.8' mis-escaped; t1 and t3 mutually unsatisfiable — normative spelling qwen3.8-flash-next-strata). deviations: (1) API provider sentences placed in comment block — prose verbatim-pinned to plugin TICK_PROMPT by pipeline-locks-tick.test.ts HOLD; body-incl-comments is the prompt (RESEARCH F3) so instruction reaches scheduled runs; t2/t5 needles pass; COORD ACCEPTED, recorded in DECISIONS; (2) C07 NIT-1 'run-tag absent' wording disproven in pipeline-worker.md (blob identical main/HEAD, zero git -S hits) — retirement line folded anyway, Local file verified clean; (3) no DECISIONS writes by dev (matrix deny, C01/C02 class). Route: t3 mechanical repair to test session (silent per gates 2.d).",
+        "RESULT (validation repair, test session ses_e6d1e15f0ffen3EgDuCAEhq09x continued) status: DONE — t3 dot moved (qwen\\.3\\.8 -> qwen3\\.8, single mis-escape site enumerated across sibling suites: t1 pin, t3 messages, rulesync c11, pipeline-models M1/M2/M4/M5, noop-marker — all normative); provider-loops now 7/7, noop N1..N6, gate minus t17 green; aislop 0e/0w. Item-2 finding: NO prose-placement pin existed (t2/t5 use whole-file co-location windows incl. comments; t7 strips only frontmatter) — placement satisfies the suite as designed, nothing relaxed. Committed by test session itself: 4c80e4881.",
+        "RESULT (C04 review r1, fresh ses_e6c596e4effegQZMJ2Ie1N0xa6) status: DONE verdict APPROVED — all seven validations re-run independently green (provider-loops 7/7, noop-marker N1..N6, gate subset, TICK_PROMPT HOLD 12/12, gate script byte-unchanged vs two baselines, frontmatter exact, aislop 0e/0w); final-approval semantics verified in both bodies incl. negative-shape zero-hits; deviations 1-2 mechanically verified as adjudicated; t3 repair integrity confirmed (one-line, fully anchored). MINOR-1: DECISIONS entry for the placement acceptance was claimed-but-absent -> appended by coord at commit time (done). Loop files commit-ready."
+      ]
+    },
+    "C05": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C02"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "dev_session": "ses_e6c515386ffeS77ZQKGE5D7rlu",
+      "handoffs": [
+        "RESULT (C05 dev r1, ses_e6c515386ffeS77ZQKGE5D7rlu) status: DONE — pipeline-push-pr gains single-authority '## -pr testing flow (assumed)' (trigger shapes per F5/F8, skip-testing, kopia restore, LAB_TEST_USER/PASSWORD env route per F6, L7-L12+L3 ledger pointers, playwright fallback, assumed-in-place closer); the three -pr agents (sources+mirrors) cite it, zero mechanic restatement; rulesync double-no-op + --check; aislop 0e/0w; pipeline-push-pr 9/9 (P7 P8 were the designed-reds); all sibling suites at/above documented baseline; single-authority greps confined to the push-pr pair. deviations: uniform tail on the three descriptions; per-agent citation placement; L3 pointer for the linting-plugin card frame. no plan-file writes needed.",
+        "RESULT (C05 review r1, fresh ses_e6c45bea9ffeD67R2mLC7U4JPU) status: DONE verdict APPROVED — P7 P8 + full 9 ok; every HOLD re-run green (agent-perms 16 incl A11/A12, rulesync-surface 23, gate minus t17, wekan-mcp create-list t2 + board-provisioning t2/t7 reds byte-identical vs clean 42c97d5b6 worktree = unchanged class); rulesync no-op2 + --check; frontmatter parse; aislop 100/0e/0w; AC3 fence held (exactly 8 text files); L3 pointer ruled card-frame-supported via live get_card L3; forward-reference verified by live board read-back (L7 pointer / L10 inline / L11-L12 cite L10). NIT-1 non-blocking. C05 done gate met."
+      ]
+    },
+    "C07": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C03"],
+      "dev_rounds": 0,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1 read-back; coord-executed board action, no dev)",
+      "dev_session": null,
+      "handoffs": [
+        "C07 executed by COORD 2026-10-31T18:2xZ: Inbox re-resolved live (PjEZ39rXBdpNcpncs @ Backlog MoZHQz3C4dSW4Atya — NOT the prefetched block, per NOTE); six cite targets identity-confirmed via get_card (#74/#87/#68/#62/#60/#61) before citing; 8 CREATE cards placed in Inbox with appendix content + Parent card #90 line + parent-labels-in-body line (Bucket Color, Pipeline: CICD — minus Research, citing label-tool cards #74/#87, the deployed-surface degrade); create_card took no default_checked (probe: deployed build) -> toggle_checklist_item fallback for Services/Type/Model(s) on all 8 per plan-appendix answers under coord ruling (a); five checklists auto-added by the board createCard rule (never add_checklist); single ledger comment nQSXJ4A8W4BJHRfct on card #90 with the full L1..L12 table; DECISIONS id-table appended.",
+        "RESULT (C07 review r1, fresh ses_e6c6fc3e1ffeYUqUdOn2xCcB2C) status: DONE verdict APPROVED — suite surface.sh t1..t4 4 ok (t3 green post-C03); AC1 recomputed on live board: exactly 8 expected titles in Inbox each once, ids 1:1 with DECISIONS table, card numbers 78-85; AC2 six cite cards identity-confirmed, unmoved, no ledger-era comments; AC3 samples L1+L12 bodies carry the three required lines, checklist answers per ruling (a) incl. L7 correction, Qwen Flash checked, five checklists no dups; AC4 exactly one ledger comment; AC5 id table verified on the board. Non-blocking: MINOR-1 forward-reference (C05 pointer in L7/L10-L12 bodies) self-marked in bodies, DECISIONS half-line added by coord at commit time (done); NIT-1 'no run tag' comment line stale in both loop files after C02 — ROUTED INTO C04 (its own file scope); NIT-2 legacy Research checklist 4th-slot on new cards (human-owned Lifecycle cutover not landed — transition rule covers). Read-only throughout."
+      ]
+    },
+    "C06": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": ["C05", "C03"],
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "dev_session": "ses_e6c38ccadffez28waeJR4s4Xrn",
+      "handoffs": [
+        "RESULT (C06 dev r1, ses_e6c38ccadffez28waeJR4s4Xrn) status: DONE — deploy pair sources+mirrors (byte-parity with dev baselines + documented worktree_remove addition, question allow), pipeline-role-deploy contract skill (broken-deploy expectation, couple-of-options, HITL-or-unmanned split, ~90%/satisfied hand-back, user-cancel question flow, own-worktree close, ledger independence), coord step-8b hook + six-twin roster widening + skill-deny class closure, overview->AGENTS naming; deploy-suite 6/6 green first run; validation_at_fault handed per own header: agent-perms A12/A13/A16 re-pin; matrix move reverted pending board-context t4 (handed to coord).",
+        "RESULT (validation repairs, test session ses_e6d1e15f0ffen3EgDuCAEhq09x continued) status: DONE — agent-perms six-role roster + [-]deploy lookaheads + 24 count; board-context t4 widened to the C06 matrix delta + COORD_PR_SETTLED re-settled; matrix source+mirror edit INSIDE test-role matrix (.rulesync/skills allow) landed sanctioned-way (regen, byte-equal); t6 gate child moved to documented ids-minus-t17; agent-dev-deploy 6/6, agent-perms 16/16, board-context t1..t6; committed itself: 5b89752e3 (tests + matrix). C06 dev surfaces + rosters left uncommitted for coord landing.",
+        "RESULT (C06 review r1, fresh ses_e6c108327ffe9h66CF8dtukvYZ) status: DONE verdict APPROVED — full battery green (deploy 6/6, perms 16, board-context t1..t6, every HOLD; baseline reds message-identical vs clean 0c3b98400 probe kept at /tmp/opencode/cf90-c06-review-base); definition-only fence holds (t5 leak grep + eye check: no launch surface except coord step-8b under checked Lifecycle Deploy); matrix matches real frontmatter; MINOR-1 'commit-only twin' phrasing + MINOR-2 plain-variant survival-path double-reading deferred to final-review sweep; 27-file delta one-concern landing ready."
+      ]
+    }
+  },
+  "post_research": {
+    "session": "ses_e6c03b82dffeu66xkdpX9b6b8z",
+    "status": "DONE",
+    "verdict": "REPLAN-CANDIDATES: 2 text-only drift fixes (both-approval runbook; GitHub draft-PR CI premise FALSE) — folded via fix round per researcher's own route; no chunk decomposition change. RESEARCH.md post-planning section appended by the session.",
+    "at": "2026-10-31"
+  },
+  "final_review": {
+    "r1": {
+      "session": "ses_e6bdf5d71ffefkNZTqWp5kk29z",
+      "verdict": "CHANGES_REQUESTED",
+      "at": "2026-10-31",
+      "summary": "All validations re-run: no cf-90-attributable reds (full suite incl. chart-smoke baseline-identity at 7e07a6273). Card-ask walk: all bullets SHIPPED or DEFERRED-BY-DESIGN with the card's own scoping as license. Cross-chunk coherence verified (boards internal, step-8b/step-10/exit, run-tag completeness, loop-skill-stagemap, six-twin parity, matrix-frontmatter parity post-5b89752e3, C01/C03/live-board Inbox agreement). FINDINGS: MAJOR L10 card body carried the void F8 premise without pointer -> FIXED by coord via update_card (corrected contract + assumed-flow pointer; DECISIONS fold entry). MINOR boards batched-protocol exception sentence + C06 wording folds (commit-less variant, minted-vs-inherited, survival path, optional Stage-map Deploy clause) -> dev-variant fix round r1. MINOR C07 timing bookkeeping -> DECISIONS line done. NITs: stale '(also enabled, runs no gate)' prose RULED IGNORED; -2-residue FRICTION item closeable fixed; origin_dir recorded. HUMAN post-merge runbook: approve BOTH loop tasks (API fingerprint rotated + Local first-time), Always-Allow toggles both, one live /wekan-board-provision run, card Finished call.",
+      "handoff": "full RESULT verbatim captured in chunks review-notes appends + this summary; commands_run: every suite green or documented-baseline-red (gate t17, s4, m4, i4, create-list t2, board-provisioning t2/t7 cascade); rulesync x2+--check; aislop 0e/0w; node --test 12/12; dev-boards live spot-checks incl. L10 staleness discovery.",
+      "fold_round": {
+        "dev_sweep": "ses_e6bbca6aaffeCpwb0puzJYK3Lm — DONE: boards batched-protocol exception sentence (verbatim, precedes the ban), role-deploy commit-less-variant + minted-vs-inherited + survival-path, Stage-map Deploy pointer clause (agent-name-free per c18/t5); rulesync x2+--check clean; gate subset (rulesync-surface 23, agents-md 9, noop 6, provider-loops 7, deploy 6, push-pr 9, gate minus t17 21) + aislop 0e/0w all green; tests untouched.",
+        "coord_folds": "L10 card body corrected via update_card (corrected tier contract + assumed-flow pointer); DECISIONS final-review fold entry + C07 timing substance line + nit rulings; origin_dir recorded; FRICTION -2-residue and MINOR-1 closed fixed."
+      }
+    },
+    "r2": {
+      "session": "ses_e6bb56fc6ffekvp0qoFiVj755h",
+      "verdict": "APPROVED",
+      "at": "2026-10-31",
+      "summary": "All r1 findings verified closed (L10 board body corrected + pointer, L11/L12 anchors hold, boards exception + stage-map clause, role-deploy folds, bookkeeping, STATE valid JSON); gate subset + aislop + TICK parity all green at f62b66ae6; fold commits one-concern each. plan_status complete; card to Review; human runbook rides the summary comment."
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

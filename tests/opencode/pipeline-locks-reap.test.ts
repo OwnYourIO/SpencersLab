@@ -47,8 +47,11 @@
 //     timeoutListTitle whose swimlane_id equals the card's CURRENT swimlane
 //     (the human-created list lives in the same swimlane as the working
 //     lists — "In Process"). move_card({board_id, card_id?, from_list_id,
-//     to_list_id}); add_comment text matches
-//     /^Timed out: no heartbeat for 2h \(session .+, pipelines .+\)$/.
+//     to_list_id}); add_comment text is
+//     `Timed out: no heartbeat for 2h (session <id>, pipelines: <a>, <b>) —
+//     <takeover hint>`, the hint last so the <= 240-char slice can drop it
+//     on a pathological pipeline set (the uncapped timeouts.jsonl row keeps
+//     it).
 //     ANY leg failing — including a Timeout list that does not exist yet
 //     (the normal state pre-D22-follow-up) and a null client — appends
 //     {at, cardId, setId, pipelines, sessionID, reason} to timeouts.jsonl
@@ -97,6 +100,9 @@ const HOUR = 3600000;
 // base would make the mkdir guard look stale/fresh by hours depending on
 // when the test runs. Ages are relative to env.clock, seeded via utimesSync.
 const iso = (ms: number) => new Date(ms).toISOString();
+// cf-96 C09: the two legal stamp spellings (workspace offset | UTC Z
+// fallback); mixed-era INPUT fixtures keep building with iso().
+const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
 const secs = (ms: number) => ms / 1000;
 
 function baseEnv(opts: any = {}) {
@@ -139,24 +145,55 @@ function baseEnv(opts: any = {}) {
 // Hand-write a lock file the way a heartbeat left it: ISO heartbeatAt plus a
 // matching mtime (the reaper's max(heartbeatAt, mtime) rule needs BOTH under
 // the stale threshold — a fresh mtime legitimately rescues the file).
+// cf-106 C08: the shipped shape is the v2 record — identity in a holder
+// entry, stamps also at file level. Flat cardId/sessionID/setId arguments
+// keep meaning "the single holder", so every pre-v2 call site stays intact;
+// `holderList` overrides the list (co-tenancy) and `legacy: true` writes a
+// pre-v2 record for the older-schema tolerance legs.
 function seedLock(env: any, rec: any, ageMs: number, extra: Record<string, any> = {}) {
   mkdirSync(env.locksDir, { recursive: true });
   const path = join(env.locksDir, `${rec.pipeline}.json`);
+  const claimedAt = iso(env.clock - Math.max(ageMs, 0));
+  const heartbeatAt = iso(env.clock - ageMs);
+  const holder = (h: any) => ({
+    cardId: h.cardId ?? "c1",
+    sessionID: h.sessionID ?? "s1",
+    setId: h.setId ?? "set1",
+    claimedAt: h.claimedAt ?? iso(env.clock - Math.max(h.ageMs ?? ageMs, 0)),
+    heartbeatAt: h.heartbeatAt ?? iso(env.clock - (h.ageMs ?? ageMs)),
+    ...(h.extra ?? {}),
+  });
+  const holders = (rec.holderList ?? [{}]).map(holder);
   const full = {
-    version: 1,
-    cardId: "c1",
-    sessionID: "s1",
-    setId: "set1",
+    version: rec.legacy ? 1 : 2,
+    pipeline: rec.pipeline,
     pipelineSet: [rec.pipeline],
     state: "live",
-    claimedAt: iso(env.clock - Math.max(ageMs, 0)),
-    heartbeatAt: iso(env.clock - ageMs),
+    claimedAt,
+    heartbeatAt,
+    ...(rec.legacy
+      ? { cardId: holders[0].cardId, sessionID: holders[0].sessionID, setId: holders[0].setId }
+      : { holders }),
     ...rec,
     ...extra,
   };
+  if (rec.legacy) {
+    delete full.holders;
+    full.version = 1;
+  }
+  for (const junk of ["holderList", "legacy"]) delete full[junk];
   writeFileSync(path, JSON.stringify(full));
   utimesSync(path, secs(env.clock - ageMs), secs(env.clock - ageMs));
   return full;
+}
+
+// v2 read helpers: the reaper's verdicts are about HOLDERS, not file fields.
+function holdersOf(rec: any): any[] {
+  return Array.isArray(rec?.holders) ? rec.holders : [];
+}
+
+function holderIds(rec: any): string[] {
+  return holdersOf(rec).map((h: any) => h.sessionID);
 }
 
 function lockFiles(env: any): string[] {
@@ -242,7 +279,11 @@ describe("R1 stale reap happy path (AC 2)", () => {
     assert.equal(reaped.ageMin, 180);
     assert.equal(reaped.trigger, "tick");
     assert.ok(existsSync(env.metaPath), "meta/lastReap is written");
-    assert.ok(!Number.isNaN(Date.parse(JSON.parse(readFileSync(env.metaPath, "utf8")).at)));
+    {
+      const metaAt = JSON.parse(readFileSync(env.metaPath, "utf8")).at;
+      assert.match(metaAt, STAMP_SHAPE, "the reap meta stamp carries the contract shape (cf-96 AC3)");
+      assert.equal(Date.parse(metaAt), env.clock, "and parses to the pass.now instant it was written at (cf-96 OQ4)");
+    }
     assert.equal(env.claims.has("s1"), false, "cache cleanup for sessions this instance owns");
   });
 
@@ -251,7 +292,7 @@ describe("R1 stale reap happy path (AC 2)", () => {
     mkdirSync(env.locksDir, { recursive: true });
     writeFileSync(join(env.locksDir, "junk.json"), "{ broken");
     utimesSync(join(env.locksDir, "junk.json"), secs(env.clock - 4 * HOUR), secs(env.clock - 4 * HOUR));
-    seedLock(env, { pipeline: "old" }, 5 * HOUR, { heartbeatAt: undefined });
+    seedLock(env, { pipeline: "old", legacy: true }, 5 * HOUR, { heartbeatAt: undefined });
     const p = join(env.locksDir, "old.json");
     const rec = JSON.parse(readFileSync(p, "utf8"));
     delete rec.heartbeatAt;
@@ -299,7 +340,7 @@ describe("R2 set-grouped card legs (AC 3)", () => {
 
   it("a legacy record without pipelineSet contributes just its own pipeline name", async () => {
     const env = baseEnv();
-    const rec = seedLock(env, { pipeline: "solo", cardId: "c9", setId: "set9", sessionID: "s9", pipelineSet: ["solo"] }, 3 * HOUR);
+    const rec = seedLock(env, { pipeline: "solo", cardId: "c9", setId: "set9", sessionID: "s9", pipelineSet: ["solo"], legacy: true }, 3 * HOUR);
     delete (rec as any).pipelineSet;
     writeFileSync(join(env.locksDir, "solo.json"), JSON.stringify(rec));
     // The rewrite stamps mtime to the real wall clock; the pinned
@@ -328,7 +369,8 @@ describe("R3 degrade legs — timeouts.jsonl is the interim contract (AC 4, D22)
       assert.equal(rows[0].sessionID, "s1");
       assert.deepEqual([...rows[0].pipelines].sort(), ["a", "b"], "the degrade row keeps the FULL pipeline list");
       assert.equal(typeof rows[0].reason, "string");
-      assert.ok(!Number.isNaN(Date.parse(rows[0].at)));
+      assert.match(rows[0].at, STAMP_SHAPE, "the queued timeout row carries the contract stamp shape (cf-96 AC3)");
+      assert.equal(Date.parse(rows[0].at), env.clock, "its at parses to the stamping instant (cf-96 OQ4)");
       assert.equal(lockFiles(env).length, 0, "the reap itself still succeeded");
       assert.ok(readEvents(env).some((l) => l.ev === "board_move_err"), `${failing}: the failed leg is audited`);
       assert.ok(existsSync(join(env.locksDir, ".reaped")), "degrade never reverses the file move");
@@ -367,15 +409,13 @@ describe("R4 heartbeat race restore (AC 5)", () => {
     seedLock(env, { pipeline: "a", cardId: "c1", setId: "set1", sessionID: "s1", pipelineSet: ["a"] }, 3 * HOUR);
     const realFs = await import("node:fs/promises");
     const FRESH = JSON.stringify({
-      version: 1,
+      version: 2,
       pipeline: "a",
-      cardId: "c1",
-      sessionID: "s1",
-      setId: "set1",
       pipelineSet: ["a"],
       state: "live",
       claimedAt: iso(env.clock - 4 * HOUR),
       heartbeatAt: iso(env.clock),
+      holders: [{ cardId: "c1", sessionID: "s1", setId: "set1", claimedAt: iso(env.clock - 4 * HOUR), heartbeatAt: iso(env.clock) }],
     });
     env.fs = {
       ...realFs,
@@ -628,7 +668,8 @@ describe("R10 audit-line shape battery (C05 Tests-list leg, Minor-2 close)", () 
       let obj: any;
       assert.doesNotThrow(() => (obj = JSON.parse(line)), `unparseable JSONL audit line: ${line.slice(0, 120)}`);
       assert.ok(typeof obj.ev === "string" && obj.ev.length > 0, "every audit line carries a non-empty ev");
-      assert.ok(!Number.isNaN(Date.parse(obj.at)), `every audit line carries an ISO at, saw ${JSON.stringify(obj.at)}`);
+      assert.match(String(obj.at), STAMP_SHAPE, `every audit at carries the contract shape, saw ${JSON.stringify(obj.at)} (cf-96 AC3)`);
+      assert.ok(!Number.isNaN(Date.parse(obj.at)), `every audit line parses to a real instant, saw ${JSON.stringify(obj.at)}`);
       evs.push(obj.ev);
     }
     for (const want of expectedEvents) {
@@ -747,5 +788,177 @@ describe("R11 degrade-path card comment (F1 MAJOR close — D22/plan/boards-skil
     assert.match(String(comments[0]?.args?.comment), /d1.*d2|d2.*d1/, "the single comment still names the WHOLE set (union discipline)");
     assert.equal(readTimeouts(env).length, 1, "one queue row per card too");
     assert.deepEqual(lockFiles(env), [], "the reaps themselves landed");
+  });
+});
+
+describe("cf-96 C09 zone coverage — one formatter, both $TZ geometries (AC3)", () => {
+  it("stamps local-with-offset when $TZ resolves and UTC Z when it does not (cf-96 AC3)", () => {
+    const T0 = Date.parse("2026-11-01T12:00:00.000Z");
+    const savedTZ = process.env.TZ;
+    try {
+      process.env.TZ = "America/Denver";
+      const off = seam("localIso")(T0);
+      assert.match(off, STAMP_SHAPE, "offset spelling stays inside the ISO-8601 shape");
+      assert.ok(/[+-]\d{2}:\d{2}$/.test(off), `expected an explicit offset tail for America/Denver, got ${off}`);
+      assert.equal(Date.parse(off), T0, "the offset stamp parses back to the exact instant (the 2 h window reads it offset-aware — OQ4/AC2)");
+      delete process.env.TZ;
+      assert.equal(seam("localIso")(T0), iso(T0), "$TZ unset falls back to the UTC Z spelling byte-for-byte");
+    } finally {
+      if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cf-106 C08/C09 — holder-level reaping and the sanctioned takeover
+// (chunks/C08.md AC 4-5, chunks/C09.md AC 2-5). Red until C08/C09 land: the
+// reaper still decides per FILE and neither the hint nor the takeover tag
+// exists. Each arm names the behavior it is waiting for.
+// ---------------------------------------------------------------------------
+describe("V3 reapStale at holder granularity (cf-106 C08 AC 4-5)", () => {
+  it("one stale holder among fresh ones is PRUNED — the file survives and only the pruned card gets the card legs (AC 5)", async () => {
+    const env = baseEnv();
+    seedLock(env, {
+      pipeline: "shared",
+      pipelineSet: ["shared"],
+      holderList: [
+        { cardId: "card-dead", sessionID: "ses-dead", setId: "set-dead", ageMs: 3 * HOUR },
+        { cardId: "card-live", sessionID: "ses-live", setId: "set-live", ageMs: 60000 },
+      ],
+    }, 3 * HOUR);
+    const moves: any[] = [];
+    const alerts: any[] = [];
+    env.moveCardToTimeout = async (info: any) => void moves.push(info);
+    env.notify = async (info: any) => void alerts.push(info);
+    env.claims.set("ses-live", { setId: "set-live", cardId: "card-live", pipelineSet: ["shared"] });
+    const res = await seam("reapStale")(env, { trigger: "tick" });
+    assert.ok(existsSync(join(env.locksDir, "shared.json")), "the file survives while one holder is fresh — a co-tenant must not lose its lock to someone else's silence (C08 AC 5)");
+    const rec = JSON.parse(readFileSync(join(env.locksDir, "shared.json"), "utf8"));
+    assert.deepEqual(holderIds(rec), ["ses-live"], "only the stale holder is pruned (C08 Goal: never release, kill or reap another run's hold)");
+    assert.equal(reapedFiles(env).length, 0, "the file is not moved to .reaped/ while a holder survives");
+    assert.ok(res.reaped.some((r: any) => r.cardId === "card-dead"), `the reap summary names the pruned holder's card, saw ${JSON.stringify(res.reaped)}`);
+    const evs = readEvents(env);
+    const reaped = evs.filter((l) => l.ev === "reaped");
+    assert.equal(reaped.length, 1, "one audit line for the one pruned holder");
+    assert.equal(reaped[0].cardId, "card-dead", "the audit carries cardId granularity, not just the pipeline (C08 task: reap meta gains the pruned cardId)");
+    assert.equal(reaped[0].sessionID, "ses-dead");
+    assert.equal(moves.length, 1, "one card leg — for the dead card only");
+    assert.equal(moves[0].cardId, "card-dead", "the survivor's card is never moved to Timeout (AC 4)");
+    assert.equal(alerts.length, 1);
+    const alertText = JSON.stringify(alerts[0]);
+    assert.ok(!alertText.includes("card-live") && !alertText.includes("ses-live"), `the alert never names the co-tenant, saw ${alertText}`);
+    assert.ok(env.claims.has("ses-live"), "the survivor's in-process claim is untouched");
+  });
+
+  it("the file moves to .reaped/ only when its LAST holder goes stale (AC 5)", async () => {
+    const env = baseEnv();
+    seedLock(env, {
+      pipeline: "shared",
+      pipelineSet: ["shared"],
+      holderList: [
+        { cardId: "card-A", sessionID: "ses-A", setId: "set-A", ageMs: 3 * HOUR },
+        { cardId: "card-B", sessionID: "ses-B", setId: "set-B", ageMs: 4 * HOUR },
+      ],
+    }, 4 * HOUR);
+    env.moveCardToTimeout = async () => {};
+    env.notify = async () => {};
+    const res = await seam("reapStale")(env, { trigger: "tick" });
+    assert.equal(lockFiles(env).length, 0, "the last holder going stale reaps the file");
+    assert.equal(reapedFiles(env).length, 1, "one file moved, and it is the whole co-tenant record");
+    const reapedRows = readEvents(env).filter((l) => l.ev === "reaped");
+    assert.equal(reapedRows.length, 2, "each pruned holder is audited with its own cardId (card granularity)");
+    assert.deepEqual(reapedRows.map((l: any) => l.cardId).sort(), ["card-A", "card-B"]);
+    assert.equal(res.reaped.length, 2, "the summary counts holders, so a human reading /pipeline-reap can tell two cards went down together");
+  });
+
+  it("a stale holder among two, with the board down: the timeouts.jsonl row names the PRUNED card only (AC 5 granularity)", async () => {
+    const env = baseEnv({ client: null });
+    seedLock(env, {
+      pipeline: "shared",
+      pipelineSet: ["shared"],
+      holderList: [
+        { cardId: "card-dead", sessionID: "ses-dead", setId: "set-dead", ageMs: 3 * HOUR },
+        { cardId: "card-live", sessionID: "ses-live", setId: "set-live", ageMs: 60000 },
+      ],
+    }, 3 * HOUR);
+    env.notify = async () => {};
+    await seam("reapStale")(env, { trigger: "tick" });
+    const rows = readTimeouts(env);
+    assert.equal(rows.length, 1, "one queue row — for the pruned card");
+    assert.equal(rows[0].cardId, "card-dead", "the degrade row keeps cardId granularity of the pruned holder (C08 task)");
+    assert.ok(existsSync(join(env.locksDir, "shared.json")), "the fresh co-tenant keeps its lock through a degraded board leg");
+    assert.deepEqual(holderIds(JSON.parse(readFileSync(join(env.locksDir, "shared.json"), "utf8"))), ["ses-live"]);
+  });
+});
+
+describe("V4 the sanctioned takeover after a reap (cf-106 C09 AC 2-5)", () => {
+  const seedReaped = (env: any, pipeline: string, cardId: string, sessionID: string, setId: string) => {
+    const dir = join(env.locksDir, ".reaped");
+    mkdirSync(dir, { recursive: true });
+    const at = env.clock - 3 * HOUR;
+    writeFileSync(join(dir, `${pipeline}.${at}.json`), JSON.stringify({
+      version: 2,
+      pipeline,
+      pipelineSet: [pipeline],
+      state: "live",
+      claimedAt: iso(at),
+      heartbeatAt: iso(at),
+      reapedAt: iso(at),
+      holders: [{ cardId, sessionID, setId, claimedAt: iso(at), heartbeatAt: iso(at) }],
+    }));
+    return at;
+  };
+
+  it("the Timeout comment and the timeouts.jsonl row carry the continue-anyway hint (AC 5)", async () => {
+    const env = baseEnv({ client: recordingClient() });
+    await seam("moveCardToTimeout")(env, { cardId: "c1", pipelines: ["a"], sessionID: "s1", setId: "set1" });
+    const comment = String(env.client.calls.find((c: any) => c.name === "add_comment")?.args?.comment ?? "");
+    assert.match(comment, /fresh run may continue/i, "the Timeout triage note must say the card can be resumed with the owner's approval (C09 task)");
+    assert.match(comment, /card[- ]id lock|card-id/i, "and that the resume holds the card-id lock, so the triage human knows it will not fight the pipeline label");
+    assert.ok(comment.length <= 240, `the hint must fit the outbound 240-char bound, saw ${comment.length}`);
+  });
+
+  it("the degraded row keeps its fields plus the takeover hint (AC 5, the .pipeline/timeouts.jsonl degrade)", async () => {
+    const env = baseEnv({ client: null });
+    seedLock(env, { pipeline: "a", cardId: "c1", setId: "set1", sessionID: "s1" }, 3 * HOUR);
+    env.notify = async () => {};
+    await seam("reapStale")(env, { trigger: "tick" });
+    const row = readTimeouts(env)[0];
+    assert.equal(row.cardId, "c1", "the existing row fields are unchanged");
+    assert.equal(row.sessionID, "s1");
+    assert.ok(JSON.stringify(row).match(/continue|takeover/i), "the degrade row carries the same hint the comment does — the jsonl is the triage mechanism until the Timeout list exists (D22)");
+  });
+
+  it("a re-claim under the card-id key after a reap is tagged takeover:after_reap in the record AND the audit (AC 3)", async () => {
+    const env = baseEnv();
+    const cardId = "cf-106-card-77";
+    seedReaped(env, "alpha", cardId, "ses-dead", "set-dead");
+    const res = await seam("claimLockSet")(env, { cardId, pipelines: [cardId], sessionID: "ses-fresh" });
+    assert.equal(res.ok, true, JSON.stringify(res));
+    const rec = JSON.parse(readFileSync(join(env.locksDir, `${cardId}.json`), "utf8"));
+    assert.equal(rec.takeover, "after_reap", "the takeover is evidence in the record — not a new permission (C09 task)");
+    const claim = readEvents(env).filter((l) => l.ev === "claim").pop();
+    assert.equal(claim.takeover, "after_reap", "and in the events audit line, so the trail survives the file");
+  });
+
+  it("a card-id claim with NO reap record is an ordinary claim — no takeover tag (AC 3: no auto-reclaim, no fake evidence)", async () => {
+    const env = baseEnv();
+    const cardId = "cf-106-card-78";
+    const res = await seam("claimLockSet")(env, { cardId, pipelines: [cardId], sessionID: "ses-new" });
+    assert.equal(res.ok, true, JSON.stringify(res));
+    const rec = JSON.parse(readFileSync(join(env.locksDir, `${cardId}.json`), "utf8"));
+    assert.ok(rec.takeover === undefined, "the tag is earned by a real reap record, never asserted by the shape of the key");
+  });
+
+  it("the takeover leaves the reaped record of the original pipeline untouched (AC 4)", async () => {
+    const env = baseEnv();
+    const cardId = "cf-106-card-79";
+    seedReaped(env, "alpha", cardId, "ses-dead", "set-dead");
+    const before = readFileSync(join(env.locksDir, ".reaped", readdirSync(join(env.locksDir, ".reaped"))[0]), "utf8");
+    const res = await seam("claimLockSet")(env, { cardId, pipelines: [cardId], sessionID: "ses-fresh" });
+    assert.equal(res.ok, true, JSON.stringify(res));
+    assert.deepEqual(lockFiles(env), [`${cardId}.json`], "the run holds ONLY the card-id key — the reclaimed pipeline label is not silently retaken");
+    const after = readFileSync(join(env.locksDir, ".reaped", readdirSync(join(env.locksDir, ".reaped"))[0]), "utf8");
+    assert.equal(after, before, "the .reaped record stays the audit trail — a takeover does not restore or rewrite it");
   });
 });

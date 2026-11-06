@@ -103,10 +103,15 @@ try:
     hits = [(i, r) for i, r in enumerate(rules)
             if isinstance(r.get('matchPackageNames'), list) and r['matchPackageNames'] == EXPECT_NAMES]
     if len(hits) != 1:
-        bad(f'k1: {len(hits)} packageRules carry matchPackageNames == {EXPECT_NAMES!r}, expected exactly 1 — AC1 uniqueness, and today the floor rule does not exist at all (the missing-fix state this test is red for)')
+        bad(f'k1: {len(hits)} packageRules carry matchPackageNames == {EXPECT_NAMES!r}, expected exactly 1 — AC1 uniqueness')
     i, rule = hits[0]
-    if i != len(rules) - 1:
-        bad(f'k1: the floor rule is at index {i}, expected the LAST entry of packageRules (interface contract: appended after the kubectl-hold rule)')
+    hold_idx = [j for j, r in enumerate(rules)
+                if isinstance(r.get('description'), str)
+                and r['description'].startswith('Hold kubectl')]
+    if len(hold_idx) != 1:
+        bad(f'k1: {len(hold_idx)} rules whose description starts with "Hold kubectl", expected exactly 1 — it is the neighbour pin anchor of the interface contract')
+    if i != hold_idx[0] + 1:
+        bad(f'k1: the floor rule is at index {i}, expected immediately after the kubectl-hold rule at index {hold_idx[0]} (interface contract: appended after the kubectl-hold rule — a neighbour pin, not a last-entry check: unrelated rules may legitimately be appended after the floor, as the llama-swap scope rule was)')
     if set(rule) != {'description', 'matchPackageNames', 'allowedVersions'}:
         bad(f'k1: the floor rule keys are {sorted(rule)}, expected exactly [allowedVersions, description, matchPackageNames] — an extra matcher (e.g. matchUpdateTypes) would narrow the floor past the patch-type bumps that actually carried this incident')
     if rule.get('allowedVersions') != EXPECT_ALLOWED:
@@ -114,7 +119,7 @@ try:
     desc = rule.get('description')
     if not (isinstance(desc, str) and desc.strip() and 'v0.0.68' in desc):
         bad(f'k1: description must be non-empty and mention v0.0.68 (the boundary the floor encodes), got {desc!r}')
-    ok('k1: exactly one floor rule, last entry, exact keyset, byte-exact matchPackageNames + allowedVersions, v0.0.68 in description (C02 AC1)')
+    ok('k1: exactly one floor rule, pinned as the kubectl-hold rule\'s immediate neighbour, exact keyset, byte-exact matchPackageNames + allowedVersions, v0.0.68 in description (C02 AC1)')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:
@@ -129,8 +134,11 @@ PY
   fi
 fi
 
-# k2 [AC2] — rule count == 7 and the six originals byte-intact.
-# The six rule bodies are embedded as literals: today's renovate.json IS the
+# k2 [AC2] — rule count == 8 and the seven baseline bodies byte-intact at
+# their positions around the floor (the six C02-era originals plus the
+# llama-swap scope rule, appended after authoring by the llama-swap
+# echo-proxy ticket's pin chunk at a14c4c8c8).
+# The rule bodies are embedded as literals: today's renovate.json IS the
 # baseline, and "no other rule lost or changed" is provable only against it
 # (same convention as dev-mcp-fleet.sh's pinned literals; if an unrelated
 # renovate.json change lands via main first, the red line names the drifted
@@ -156,6 +164,8 @@ def load_cfg(path):
     raw = open(path).read()
     stripped = '\n'.join(l for l in raw.splitlines() if not re.match(r'^\s*//', l))
     return json.loads(stripped)
+
+TARGET = 'ghcr.io/containers/kubernetes-mcp-server'
 
 ORIG_RULES = [
     {
@@ -208,23 +218,35 @@ ORIG_RULES = [
         "matchPackageNames": ["kubernetes/kubernetes"],
         "allowedVersions": "/^v1\\.36\\./"
     },
+    {
+        "description": "Scope the llama-swap image pin (extracted by the built-in helm-values manager from the repository:/tag: pair in charts/llama-swap/values.yaml) to llama-swap's release-versioned unified-vulkan-<N> tag family. Under the manager's default docker versioning the tag never parses as semver, so no update was ever proposed (the unified-vulkan-262 in-place rebuild of 2026-10-25, which crash-looped the gpu box, passed through unnoticed). A non-slash-wrapped regex would be an invalid semver range, hence versioning (not allowedVersions).",
+        "matchPackageNames": ["ghcr.io/mostlygeek/llama-swap"],
+        "matchDatasources": ["docker"],
+        "versioning": "regex:^unified-vulkan-(?<major>\\d+)$"
+    },
 ]
 
 try:
     rules = load_cfg(cfg_path).get('packageRules') or []
-    if len(rules) != 7:
-        bad(f'k2: packageRules count is {len(rules)}, expected 7 (the six originals + exactly the new floor rule) — today it is {len(rules)} because the floor is missing (the missing-fix state)')
-    for i, want_rule in enumerate(ORIG_RULES):
+    if len(rules) != 8:
+        bad(f'k2: packageRules count is {len(rules)}, expected 8 (the seven baseline rules + exactly the new floor rule)')
+    floor_idx = [i for i, r in enumerate(rules)
+                 if isinstance(r.get('matchPackageNames'), list) and r['matchPackageNames'] == [TARGET]]
+    if len(floor_idx) != 1:
+        bad(f'k2: {len(floor_idx)} rules carry matchPackageNames == [{TARGET!r}], expected exactly 1 — the floor is this leg\'s position-shift anchor')
+    fi = floor_idx[0]
+    for j, want_rule in enumerate(ORIG_RULES):
+        i = j if j < fi else j + 1
         if rules[i] != want_rule:
             bad(f'k2: packageRules[{i}] drifted from the baseline body (description {want_rule["description"][:40]!r}...): C02 forbids touching any other rule — got {rules[i]!r}')
-    ok('k2: exactly 7 packageRules; the six original rule bodies are byte-intact at their positions (C02 AC2)')
+    ok('k2: exactly 8 packageRules; the seven baseline rule bodies are byte-intact at their positions around the floor (C02 AC2)')
 
     descs = [r.get('description') for r in rules]
     for want_rule in ORIG_RULES:
         n = descs.count(want_rule['description'])
         if n != 1:
-            bad(f'k2: original description {want_rule["description"][:60]!r}... occurs {n} times, expected exactly once')
-    ok('k2: each of the six original descriptions is present exactly once (C02 AC2)')
+            bad(f'k2: baseline description {want_rule["description"][:60]!r}... occurs {n} times, expected exactly once')
+    ok('k2: each of the seven baseline descriptions is present exactly once (C02 AC2)')
     with open(count_file, 'w') as f:
         f.write(str(ok_n))
 except SystemExit:

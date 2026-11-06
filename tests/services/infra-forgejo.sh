@@ -584,13 +584,13 @@ fbw = (icv.get('forgejo') or {}).get('bitwardenIds')
 if not isinstance(fbw, dict):
     bad('t6: custom-values/infra/prod-values.yaml has no forgejo.bitwardenIds block')
 else:
-    want = {'forgejo', 'forgejo-admin', 'forgejo-pg', 'forgejo-sso'}
+    want = {'forgejo', 'forgejo-admin', 'forgejo-pg', 'forgejo-sso', 'forgejo-s3'}
     if set(fbw) != want:
         bad(f't6: custom-values/infra forgejo.bitwardenIds keys are {sorted(fbw)}, expected exactly {sorted(want)}')
     for k, v in fbw.items():
         if v == SENTINEL:
             bad(f't6: custom-values/infra forgejo.bitwardenIds.{k} is still the service sentinel {SENTINEL} (must be a real UUID or the OVERRIDE_NEEDED placeholder)')
-    ok('t6: custom-values/infra forgejo.bitwardenIds has exactly the 4 expected keys')
+    ok('t6: custom-values/infra forgejo.bitwardenIds has exactly the 5 expected keys')
 
 # --- deletions (criterion 7) -----------------------------------------------
 # The leftovers are the bitwardenIds.gitea/-admin KEYS, the two

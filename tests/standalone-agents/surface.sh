@@ -10,7 +10,19 @@
 # AC trace: S1[AC1-files] S2[AC1-alias-parity] S3[AC1-block-equality]
 # S4[AC2-role-dev] S5[AC3-planner/code/debug] S6[AC4-git-audit]
 # S7[AC5-code/byte-unchanged/no-variants] S8[AC4+matrix-rows]
-# S9[overview dev-family entry] S10[AC5-mirrors/regen].
+# S9[overview dev-family entry] S10[AC5-mirrors/regen] S11[cf-106 C04 code/code-pr twin].
+#
+# cf-106 C04 round 2 re-pin (2026-11-04, agent-test; reviewer B1): S5's role-code leg
+# stopped grepping for pipeline-* TOKENS and started reading the contract — the shipped
+# clause is qualified (user-handed work refused, a coordinator launch naming the chunk
+# implemented under the second-implementer grant, `/pipeline-push-pr` scoped to the
+# `code-pr` twin), so a token ban would have pinned the pre-C04 wording and made the
+# corrected contract unsatisfiable. What is forbidden is an affirmative LOAD line
+# (`pipeline-conventions`, any `pipeline-role-*`), a merge-main habit, and the stale
+# claim that the git write verbs are ask-permissioned; the git posture (add/commit/
+# branch allow, main-advancing denied, push ask on `code` / contract-gated allow on the
+# twin, rebase-not-merge) is pinned positively. Six fabricated drifts, one per leg,
+# prove the arm reddens for the right reason.
 #
 # Red posture: S1-S4, S6 (dev-family arms), S8, S9, S10 are red before C04
 # (dev*.md and role-dev absent — every red names the missing file/contract).
@@ -79,11 +91,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 10); do WANT["s$i"]=1; done
+  for i in $(seq 1 11); do WANT["s$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^s([1-9]|10)$ ]] || fail "unknown check id '$a' (expected S1..S10)"
+    [[ "$lc" =~ ^s([1-9]|1[01])$ ]] || fail "unknown check id '$a' (expected S1..S11)"
     WANT["$lc"]=1
   done
 fi
@@ -447,16 +459,178 @@ if want s5; then
     python3 "$TMP/win.py" --ci "$f" 500 'pipeline' 'recommend' \
       || fail "S5[AC3]: $f lacks the pipeline-handoff rule (multi-session / cross-subsystem / new-interface work → recommend the agent-* pipeline)"
   done
+  # cf-106 C04 round 2 (reviewer B1's test half): the no-pipeline clause is now
+  # QUALIFIED — it scopes the posture to user-handed work and names the coordinator's
+  # second-implementer grant — so the old "no pipeline-conventions token anywhere"
+  # needle made the correct contract unsatisfiable. What must stay forbidden is
+  # role-code INSTRUCTING a load of the pipeline machinery; everything else is pinned
+  # positively, over source and mirror, with fabricated mutants that each have to
+  # redden for the named leg.
+  cat >"$TMP/contract.py" <<'PY'
+"""Load-directive and merge-habit probes over a role skill.
+
+A mention is a prohibition when its own clause carries a negation; only an
+affirmative directive (a load line, a merge-main habit) breaches the contract.
+"""
+import re
+import sys
+
+NEG = ("never", "not ", "no ", "none", "avoid", "without", "forbid", "denied", "deny")
+BREAK = re.compile(r"[.;:!?]")
+# Markdown wraps, so a line break is a clause boundary only where one starts a new
+# list item or heading — otherwise a prohibition split across wrapped lines reads as a
+# directive.
+NEW_BLOCK = re.compile(r"^\s*([-*#>|]|\d+\.)")
+
+
+def clause(text, start):
+    i = start
+    while i > 0 and i > start - 300:
+        if BREAK.search(text[i - 1]) or (text[i - 1] == "\n" and NEW_BLOCK.match(text[i:])):
+            break
+        i -= 1
+    return text[i:start]
+
+
+def sentence(text, lo, hi):
+    a = max(text.rfind(".", 0, lo) + 1, text.rfind("\n", 0, lo) + 1)
+    b = text.find(".", hi)
+    return text[a:hi if b < 0 else b + 1]
+
+
+def hits_load(text):
+    hits = []
+    for m in re.finditer(r"`?(?:pipeline-conventions|pipeline-role-[a-z-]*)`?", text):
+        if not any(n in clause(text, m.start()) for n in NEG):
+            hits.append(f"affirmative mention of {m.group(0).strip('`')} — "
+                        + text[max(0, m.start() - 50):m.end() + 10].replace("\n", " ").strip())
+    for m in re.finditer(r"\b(?:MUST[- ]load|must load|loads|load)\b[^.\n]{0,40}?pipeline-[a-z*][a-z*-]*", text, re.I):
+        if not any(n in clause(text, m.start()) for n in NEG):
+            hits.append("affirmative load line — " + m.group(0).replace("\n", " ").strip())
+    return hits
+
+
+def hits_merge(text):
+    hits = []
+    for m in re.finditer(r"merg\w*[^.\n]{0,40}?\bmain\b[^.\n]{0,25}?into", text, re.I):
+        if not any(n in sentence(text, m.start(), m.end()) for n in NEG):
+            hits.append("merge-main habit — " + " ".join(sentence(text, m.start(), m.end()).split())[:90])
+    return hits
+
+
+def hits_askclaim(text):
+    hits = []
+    for m in re.finditer(r"permissioned as `?ask`?", text):
+        win = text[max(0, m.start() - 300):m.end() + 40]
+        if re.search(r"git (add|commit|checkout|switch|branch)", win) \
+                and not any(n in clause(text, m.start()) for n in NEG):
+            hits.append("stale ask-posture claim — " + " ".join(win.replace("`", "").split())[-110:])
+    return hits
+
+
+def hits_pushscope(text):
+    hits = []
+    for m in re.finditer(r"`?/pipeline-push-pr`?", text):
+        win = text[max(0, m.start() - 120):m.end() + 120]
+        if re.search(r"\bon the `?code`?(?!-pr)\b", win) or re.search(r"\bfor the `?code`?(?!-pr)\b", win):
+            hits.append("push authority bound to the plain code variant — "
+                        + " ".join(win.replace("`", "").split())[:110])
+    return hits
+
+
+mode, path = sys.argv[1], sys.argv[2]
+body = open(path, encoding="utf-8").read()
+probes = {"load": hits_load, "merge": hits_merge, "pushscope": hits_pushscope,
+          "askclaim": hits_askclaim}
+for h in probes[mode](body):
+    print(h)
+sys.exit(1)
+PY
+  role_code_legs() {
+    local f=$1 out="" why
+    grep -qF 'No pipeline context:' "$f" \
+      || out+="LEG opener: no verbatim 'No pipeline context:' clause"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 500 'ticket folder' 'by a user' 'stop' 'dev' >/dev/null 2>&1 \
+      || out+="LEG user-handed-redirect: the ticket-folder/chunk-id refusal is not scoped to a request handed by a user and does not hand it to the dev family"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 700 'coordinator' 'second implementer' 'implement' >/dev/null 2>&1 \
+      || out+="LEG coordinator-exception: no clause making a coordinator launch that names the chunk the sanctioned second-implementer work"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 400 'never' 'pipeline-role-' >/dev/null 2>&1 \
+      || out+="LEG machinery-prohibition: role-code no longer forbids itself a pipeline-role-* contract"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 260 'pipeline-push-pr' 'code-pr' >/dev/null 2>&1 \
+      || out+="LEG push-authority-pin: the /pipeline-push-pr exception is not named next to the code-pr twin"$'\n'
+    why=$(python3 "$TMP/contract.py" askclaim "$f" | head -1)
+    [ -z "$why" ] || out+="LEG git-posture-ask-claim: $why"$'\n'
+    why=$(python3 "$TMP/contract.py" pushscope "$f" | head -1)
+    [ -z "$why" ] || out+="LEG push-authority-scope: $why"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 400 'git add' 'allow' >/dev/null 2>&1 \
+      || out+="LEG git-posture-allows: staging/committing/branching is not stated as allow (the shipped rows)"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 600 'main-advancing' 'denied' >/dev/null 2>&1 \
+      || out+="LEG git-posture-floor: the main-advancing forms are not stated as denied outright"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 800 'git push' 'ask' 'pipeline-push-pr' >/dev/null 2>&1 \
+      || out+="LEG git-posture-push: the twins' push split (ask on code, contract-gated allow on code-pr) is not stated"$'\n'
+    python3 "$TMP/win.py" --ci "$f" 500 'rebasing' 'git merge' >/dev/null 2>&1 \
+      || out+="LEG git-posture-pickup: pickups are not stated as rebase-onto-main with git merge denied (never merge main into the branch)"$'\n'
+    why=$(python3 "$TMP/contract.py" load "$f" | head -1)
+    [ -z "$why" ] || out+="LEG load-prohibition: $why"$'\n'
+    why=$(python3 "$TMP/contract.py" merge "$f" | head -1)
+    [ -z "$why" ] || out+="LEG merge-prohibition: $why"$'\n'
+    printf '%s' "$out"
+  }
   for f in "$RC_SRC" "$RC_GEN"; do
     [ -f "$f" ] || fail "S5[AC3]: $f missing"
-    grep -qF 'No pipeline context:' "$f" \
-      || fail "S5[AC3]: $f lacks the verbatim-greppable 'No pipeline context:' clause (C04 pins the opener — red before C04)"
-    python3 "$TMP/win.py" --ci "$f" 500 'ticket folder' 'stop' \
-      || fail "S5[AC3]: $f's no-pipeline-context clause does not say to STOP when handed a pipeline ticket folder"
-    if grep -qF 'pipeline-conventions' "$f"; then
-      fail "S5[AC3]: $f references pipeline-conventions — role-code must never load pipeline-* skills"
-    fi
+    reasons=$(role_code_legs "$f")
+    [ -z "$reasons" ] \
+      || fail "S5[AC3]: $f does not carry the qualified no-pipeline clause and the shipped git posture — $(printf '%s' "$reasons" | tr '\n' '|')"
   done
+  for ctl in unconditional-never drop-exception merge-main code-loads-pushpr affirmative-load stale-ask-posture; do
+    python3 - "$RC_SRC" "$TMP/rc-$ctl.md" "$ctl" <<'PY'
+import re, sys
+src, dst, ctl = sys.argv[1], sys.argv[2], sys.argv[3]
+text = open(src, encoding="utf-8").read()
+if ctl == "unconditional-never":
+    old = re.sub(r"- No pipeline context:.*?\n\n## Method",
+                 "- No pipeline context: you never load `pipeline-*` skills. Handed a pipeline ticket\n"
+                 "  folder (`.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`) or a chunk id, stop and say\n"
+                 "  the work belongs to the `dev` agent or the `agent-*` pipeline — do not implement it.\n\n## Method",
+                 text, flags=re.S)
+elif ctl == "drop-exception":
+    old = re.sub(r"The one qualified exception.*?second implementer\.", "", text, flags=re.S)
+elif ctl == "merge-main":
+    old = text.replace("Commit to your\nown branch/worktree,",
+                       "Pick up updates by merging `main` into your branch.\nCommit to your\nown branch/worktree,")
+elif ctl == "code-loads-pushpr":
+    old = text.replace("`/pipeline-push-pr` on the `code-pr` twin", "`/pipeline-push-pr` on the `code` variant")
+elif ctl == "affirmative-load":
+    old = text.replace("## Method", "- MUST-load: `pipeline-conventions` for any ticket work.\n\n## Method")
+elif ctl == "stale-ask-posture":
+    old = text.replace("## Method",
+                       "**Branch handling is yours; `main` is not.** `git checkout`, `git switch`,\n"
+                       "`git commit`, and `git push` are permissioned as `ask` in your permission rules.\n\n"
+                       "## Method")
+else:
+    raise SystemExit(2)
+if old == text:
+    print(f"no '{ctl}' anchor in {src}")
+    raise SystemExit(2)
+open(dst, "w", encoding="utf-8").write(old)
+PY
+    [ $? -eq 0 ] || fail "S5[C04 control]: could not fabricate the '$ctl' role-code mutant (fixture fault — the wording the control edits moved)"
+    case "$ctl" in
+      unconditional-never|drop-exception) want="coordinator-exception" ;;
+      merge-main) want="merge-prohibition" ;;
+      code-loads-pushpr) want="push-authority-scope" ;;
+      affirmative-load) want="load-prohibition" ;;
+      stale-ask-posture) want="git-posture-ask-claim" ;;
+    esac
+    reasons=$(role_code_legs "$TMP/rc-$ctl.md")
+    [ -n "$reasons" ] \
+      || fail "S5[C04 control]: the '$ctl' mutant passed every role-code leg — the arm cannot detect that drift"
+    case "$reasons" in
+      *"$want"*) ;;
+      *) fail "S5[C04 control]: the '$ctl' mutant reddened for the wrong reason ($reasons) — the $want leg must fire" ;;
+    esac
+  done
+  ok "S5[C04 control]: all six fabricated role-code drifts redden for their named leg — the unconditional never-load wording, the dropped coordinator exception, a merge-main habit, the push skill scoped to code instead of the twin, an affirmative pipeline-conventions load line, and the stale claim that the git write verbs are ask-permissioned"
   for f in "$RD_SRC" "$RD_GEN"; do
     [ -f "$f" ] || fail "S5[AC3]: $f missing"
     for title in 'Method' 'Repo validation discipline' 'Quality gate' 'Git hygiene' 'Scope tripwire' 'Reporting'; do
@@ -487,7 +661,7 @@ if want s5; then
     'shell|git push origin feature-x|deny' \
     'shell|git add foo|ask' 'shell|git commit -m x|ask' \
     || fail "S5[AC3]: debug's effective git policy is not [push deny, add/commit at ask baseline] — interactive agent, push never"
-  ok "S5[AC3]: planner mandatory ## Commands + handoff rule; code 'No pipeline context:' clause; debug full rewrite (six sections, old form gone) + push deny + ask-baseline add/commit"
+  ok "S5[AC3]: planner mandatory ## Commands + handoff rule; code's qualified no-pipeline clause (user-handed redirect, the coordinator's second-implementer exception, the twin-scoped push authority, the shipped git posture) with no load directive and no merge-main habit; debug full rewrite (six sections, old form gone) + push deny + ask-baseline add/commit"
 fi
 
 # --- S6: the card's git-write matrix audit (AC4) ----------------------------------
@@ -528,12 +702,17 @@ PY
   ok "S6[AC4]: git-write audit — no-write roster clean; dev/dev-local commit-allow push-deny; dev-pr push-allow with main/force denies; merge at ask"
 fi
 
-# --- S7: code.md pipeline-clean, no code variants, byte-unchanged fold-free files --
+# --- S7: code.md pipeline-clean, the sanctioned variant set, byte-freeze ------
 if want s7; then
   grep -qE '^[[:space:]]*/pipeline' .rulesync/subagents/code.md \
     && fail "S7[AC5]: code.md MUST-loads a pipeline-* skill — the standalone code agent runs WITHOUT pipeline context"
+  # cf-106 C04 re-pin: the cf-58 card's "NO variants for code" is lifted for
+  # exactly ONE name. The owner's ruling gives the family a -pr twin on the dev
+  # / dev-pr precedent, so the sanctioned set is {code-pr.md}; any other variant
+  # is the drift the original card forbade and C04 did not lift.
   variants=$(ls .rulesync/subagents/code-*.md 2>/dev/null || true)
-  [ -z "$variants" ] || fail "S7[AC5]: code variants exist ($variants) — the card is explicit: NO variants for code"
+  [ "$variants" = ".rulesync/subagents/code-pr.md" ] \
+    || fail "S7[AC5 + cf-106 C04 AC3]: code variants are [$variants] — want exactly .rulesync/subagents/code-pr.md (red before C04 creates the twin; a code-local/code-deploy variant would re-break the cf-58 no-variants rule)"
   # code.md left the byte-freeze with the isolation landing (2026-10-27,
   # bug-coord-opencode-perms): its sanctioned delta is the three opencode_*
   # workspace-isolation rows, pinned present below; the pipeline-MUST-load
@@ -545,7 +724,7 @@ if want s7; then
     grep -qF "action: $row" .rulesync/subagents/code.md \
       || fail "S7[AC5]: code.md lost the workspace-isolation row '$row' (sanctioned 2026-10-27; execute deliberately ungranted — Code Mode falls to the global ask)"
   done
-  ok "S7[AC5]: code.md clean of pipeline MUST-loads and unvarianted, carrying the sanctioned isolation rows; ask/review/planner subagent files byte-unchanged vs $TB"
+  ok "S7[AC5 + cf-106 C04 AC3]: code.md clean of pipeline MUST-loads, carrying the sanctioned isolation rows; the code variant set is exactly the cf-106 -pr twin; ask/review/planner subagent files byte-unchanged vs $TB"
 fi
 
 # --- S8: permissions.md Standalone-agents subsection + mirror integrity -----------
@@ -578,7 +757,9 @@ fi
 if want s10; then
   for p in "$DEV|$DEV_GEN|agent" "$DEV_LOCAL|$DEV_LOCAL_GEN|agent" "$DEV_PR|$DEV_PR_GEN|agent" \
            "$RDEV_SRC|$RDEV_GEN|skill" "$RP_SRC|$RP_GEN|skill" "$RC_SRC|$RC_GEN|skill" \
-           "$RD_SRC|$RD_GEN|skill"; do
+           "$RD_SRC|$RD_GEN|skill" \
+           ".rulesync/subagents/code.md|.opencode/agents/code.md|agent" \
+           ".rulesync/subagents/code-pr.md|.opencode/agents/code-pr.md|agent"; do
     IFS='|' read -r s g k <<<"$p"
     [ -f "$s" ] && [ -f "$g" ] || fail "S10[AC5]: pair incomplete ($s / $g) — red before C04 (sources + generated land together)"
     python3 "$TMP/pairsync.py" "$s" "$g" "$k" \
@@ -606,6 +787,100 @@ if want s10; then
     [ "$before" = "$after" ] || fail "S10[AC5]: the second rulesync generate is not a no-op"
     ok "S10[AC5]: seven standalone pairs honest; generate --check clean; second generate a no-op (via $RS)"
   fi
+fi
+
+# --- S11: cf-106 C04 AC2/AC3 — the code/code-pr twin pair --------------------
+# The standalone side of the git matrix (agent-perms A17 decides the same cells
+# through its own matcher; this arm pins what the STANDALONE suite owns: the
+# twin exists as a file pair, its frontmatter delta is name/description only,
+# its skill skeleton carries the push contract next to the role skill, and the
+# deny floor actually wins over the push allow in the last-match order.
+# Red before C04: code-pr.md and its generated mirror do not exist, and code's
+# git rows have not moved.
+CODE_SRC=".rulesync/subagents/code.md"
+CODE_PR=".rulesync/subagents/code-pr.md"
+CODE_GEN=".opencode/agents/code.md"
+CODE_PR_GEN=".opencode/agents/code-pr.md"
+if want s11; then
+  for f in "$CODE_PR" "$CODE_PR_GEN" "$CODE_GEN"; do
+    [ -f "$f" ] || fail "S11[cf-106 C04 AC3]: $f missing — code-pr is a source + generated-mirror pair in one rulesync generate commit (this is the red state, not a skip)"
+  done
+  python3 - "$CODE_SRC" "$CODE_PR" <<'PY'
+import re, sys, yaml
+def fm(path):
+    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+    assert m, f"{path}: no frontmatter"
+    return yaml.safe_load(m.group(1)) or {}
+c, p = fm(sys.argv[1]), fm(sys.argv[2])
+bad = []
+if p.get("name") != "code-pr":
+    bad.append(f"name is {p.get('name')!r}, want 'code-pr'")
+if c.get("name") != "code":
+    bad.append(f"the plain variant's name moved to {c.get('name')!r}")
+if not p.get("description") or p.get("description") == c.get("description"):
+    bad.append("description is not the twin's own text (the dev/dev-pr precedent: the description says push)")
+if "push" not in str(p.get("description", "")).lower():
+    bad.append("code-pr's description never says push — a launcher picking agents by description cannot tell the twins apart")
+for key in ("targets",):
+    if c.get(key) != p.get(key):
+        bad.append(f"{key} differs between the twins ({c.get(key)} vs {p.get(key)}) — only name/description/permissions may differ")
+oc, op = c.get("opencode") or {}, p.get("opencode") or {}
+for key in ("mode", "color"):
+    if oc.get(key) != op.get(key):
+        bad.append(f"opencode.{key} differs ({oc.get(key)} vs {op.get(key)}) — mode: all stays as it is")
+if not oc.get("permissions") or not op.get("permissions"):
+    bad.append("a twin lost its permission block")
+if bad:
+    print("; ".join(bad)); sys.exit(1)
+PY
+  [ $? -eq 0 ] || fail "S11[cf-106 C04 AC3]: the code/code-pr frontmatter delta is not name+description (+permissions) as the dev/dev-pr precedent requires (reason above)"
+  # Skill skeleton: the push contract is MUST-loaded next to /role-code on the
+  # twin only (agent-perms A17 pins the same delta through the pair).
+  for f in "$CODE_PR" "$CODE_PR_GEN"; do
+    grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' "$f" \
+      || fail "S11[cf-106 C04 AC3]: $f does not MUST-load /pipeline-push-pr"
+    grep -qE '^[[:space:]]*/role-code[[:space:]]*$' "$f" \
+      || fail "S11[cf-106 C04 AC3]: $f does not MUST-load /role-code"
+    python3 - "$f" <<'PY'
+import re, sys
+body = open(sys.argv[1]).read().split("---", 2)[2]
+loads = [l.strip() for l in body.splitlines() if re.match(r"^\s*/[a-z0-9-]+\s*$", l)]
+if "/role-code" not in loads or "/pipeline-push-pr" not in loads:
+    print(f"skill skeleton is {loads}"); sys.exit(1)
+if abs(loads.index("/pipeline-push-pr") - loads.index("/role-code")) != 1:
+    print(f"/pipeline-push-pr is not adjacent to /role-code: {loads}"); sys.exit(1)
+PY
+    [ $? -eq 0 ] || fail "S11[cf-106 C04 AC3]: $f loads the push contract somewhere other than next to /role-code"
+  done
+  # The git delta, decided as effective verdicts (an allow that the floor does
+  # not outrank is the widening the chunk forbids; the plan's AC2/AC3 cells).
+  python3 "$TMP/policy.py" "$CODE_SRC" \
+    'shell|git add .|allow' 'shell|git commit -m w|allow' 'shell|git checkout -b feat/x|allow' \
+    'shell|git branch x|allow' \
+    'shell|git checkout main|deny' 'shell|git switch main|deny' 'shell|git update-ref refs/heads/main abc|deny' \
+    'shell|git branch -f main x|deny' 'shell|git worktree add /tmp/w main|deny' 'shell|git merge feature-x|deny' \
+    'shell|git pull|deny' 'shell|git config alias.p push|deny' \
+    || fail "S11[cf-106 C04 AC2]: code.md's git rows have not moved — add/commit/branch-creation allow and the main-advancing deny floor are the chunk's edit (red before C04 dev)"
+  python3 "$TMP/policy.py" "$CODE_SRC" 'shell|git push|ask' 'shell|git push origin feature-x|ask' \
+    || fail "S11[cf-106 C04 AC2]: code.md's push is not ask-effect — the plan keeps an interactive human as the only push authorizer; an allow here is the widening C04 forbids"
+  python3 "$TMP/policy.py" "$CODE_PR" \
+    'shell|git push|allow' 'shell|git push origin feature-x|allow' \
+    'shell|git push origin main|deny' 'shell|git push HEAD:main|deny' 'shell|git push origin HEAD:main|deny' \
+    'shell|git push --force origin feature-x|deny' 'shell|git push -f origin feature-x|deny' \
+    'shell|git -C x push --force origin feature-x|deny' \
+    || fail "S11[cf-106 C04 AC3]: code-pr's push tail is not the shipped dev-pr shape — branch push allow closed by main/force denies that WIN in last-match order (the -C force shape needs the plan's -prefixed twins)"
+  # Parsed equality with the generated mirrors (the pair the runtime reads).
+  python3 "$TMP/eq.py" "$CODE_SRC" "$CODE_GEN" \
+    || fail "S11[cf-106 C04 AC8]: code.md source and generated mirror disagree in parsed rules or order"
+  python3 "$TMP/eq.py" "$CODE_PR" "$CODE_PR_GEN" \
+    || fail "S11[cf-106 C04 AC8]: code-pr.md source and generated mirror disagree — regenerate, never hand-edit .opencode/"
+  # Non-vacuity: the twin must differ from the plain variant in the git tail,
+  # and a twin built from code.md WITHOUT the push allow must redden the pins
+  # above (proves the push cells answer to rows, not to file names).
+  python3 "$TMP/policy.py" "$CODE_SRC" 'shell|git push|ask' >/dev/null 2>&1 \
+    && python3 "$TMP/policy.py" "$CODE_PR" 'shell|git push|allow' >/dev/null 2>&1 \
+    || fail "S11[cf-106 C04]: NEGATIVE CONTROL FAILED — the plain variant and the twin do not answer 'git push' differently (no real git delta between the twins)"
+  ok "S11[cf-106 C04 AC2/AC3/AC8]: code-pr exists as a source+mirror twin whose frontmatter delta is name/description, MUST-loads /pipeline-push-pr next to /role-code, allows branch pushes with main/force/-C-force denies winning in last-match order; code's rows moved to allow add/commit/branch with the main floor deny and push kept at ask"
 fi
 
 printf 'PASS: standalone-agents contract checks (%d ok)\n' "$checks"

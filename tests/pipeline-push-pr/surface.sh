@@ -9,7 +9,22 @@
 # wording is dev's; the needle sets below are the contracts C01 pins.
 #
 # AC trace: P1[AC1-existence] P2[AC1-frontmatter] P3[AC3-contracts]
-# P4[AC4-no-refs-yet / C02-flip] P5[AC2-mirror-integrity] P6[AC2-regen].
+# P4[AC4-no-refs-yet / C02-flip] P5[AC2-mirror-integrity] P6[AC2-regen];
+# cf-90 C05 joins: P7[AC1 — the single-authority -pr testing flow section:
+# both trigger shapes, draft guard, skip-testing, kopia restore,
+# LAB_TEST_USER/LAB_TEST_PASSWORD, L7-L12 ledger pointers, playwright
+# fallback, container testing/ shape, docker-build routing, the assumed-
+# in-place sentence] P8[AC2 — the three -pr surfaces cite, trigger vocabulary
+# stays single-authority] P9[AC4 — touched agent frontmatter parses].
+#
+# cf-90 red posture: P7/P8 were the DESIGNED RED until C05 landed (they are
+# green since); the draft-unit arm was re-pinned in the post-research drift
+# fix round (2026-10-31, DECISIONS final entry — GitHub runs pull_request
+# workflows on draft PRs; unit tier rides plain on: pull_request default
+# types, the on: push reading VOID). P9 is a green HOLD guard; P1-P6 keep
+# their prior posture. The section names infrastructure the ledger cards
+# L7-L12 IMPLEMENT — nothing here checks CI, playwright, kopia or env
+# plumbing (plan Out of scope).
 #
 # Red posture (base: the cf-58 ticket base, arm-B discipline per the sibling
 # suites — historical arm A=081b57889 / arm B refs stay documented there;
@@ -48,11 +63,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6; do WANT["p$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8 9 10; do WANT["p$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^p[1-6]$ ]] || fail "unknown check id '$a' (expected P1..P6)"
+    [[ "$lc" =~ ^p([1-9]|10)$ ]] || fail "unknown check id '$a' (expected P1..P10)"
     WANT["$lc"]=1
   done
 fi
@@ -186,7 +201,10 @@ if want p3; then
   for f in "$SRC" "$GEN"; do
     [ -f "$f" ] || fail "P3[AC3]: $f missing (red before C01)"
     # 1. Applies-to — the four -pr consumers named; a -local/plain loader is drift.
-    contract applies-to 0 400 "$f" 'agent-coord-pr' 'agent-board-coord-pr' 'agent-dev-pr' 'dev-pr'
+    # cf-106 C04 AC5 grows the governed set with the standalone code-pr twin:
+    # the contract is the single push authority, so an agent that can push has
+    # to sit inside it (red until C04 edits the skill on both trees).
+    contract applies-to 0 400 "$f" 'agent-coord-pr' 'agent-board-coord-pr' 'agent-dev-pr' 'dev-pr' 'code-pr'
     contract drift-stop 1 300 "$f" 'drift' 'stop'
     # 2. Push rules — the AGENTS.md hard-rule citations + the standing-request basis.
     contract push-rules 1 900 "$f" 'AGENTS.md' 'main' 'force-push' 'self-remediat' 'human-owned'
@@ -252,6 +270,100 @@ if want p6; then
     [ "$snap_before" = "$snap_after" ] || fail "P6[AC2]: the second rulesync generate is not a no-op (sources and generated have drifted)"
     ok "P6[AC2]: generate --check clean and the second generate is a no-op (via $RS)"
   fi
+fi
+
+# --- P7: cf-90 C05 single-authority -pr testing flow section (AC1) --------------
+# GREEN since C05 landed, EXCEPT the draft-unit arm re-pinned in the cf-90
+# post-research drift fix: RESEARCH F8's premise was FALSE — GitHub DOES run
+# pull_request-triggered workflows on draft PRs (DECISIONS final entry; the
+# `draft == false` idiom exists because they run), so the unit tier rides
+# plain on: pull_request default types firing DURING draft, and the old
+# "must ride on: push" reading is void. Every other needle is a
+# plan-Appendix/C05-Task token: the ready-integration trigger mapping, the
+# three coverage shapes, the credential env names, the fallback-to-live-
+# playwright rule, and the L7-L12 ledger pointers. Mechanics are ASSUMED,
+# never implemented here (AC3 fences the diff to text).
+PR_SURF=(
+  .rulesync/subagents/agent-dev-pr.md .opencode/agents/agent-dev-pr.md
+  .rulesync/subagents/agent-coord-pr.md .opencode/agents/agent-coord-pr.md
+  .rulesync/subagents/agent-board-coord-pr.md .opencode/agents/agent-board-coord-pr.md
+)
+if want p7; then
+  for f in "$SRC" "$GEN"; do
+    grep -qEi '^#{2,4}[[:space:]].*testing flow' "$f" \
+      || fail "P7[C05 AC1]: $f has no testing-flow section heading — C05 adds the single-authority '-pr testing flow (assumed)' section (red before C05 dev)"
+    python3 "$TMP/win.py" --ci "$f" 1200 'draft' 'on: pull_request' 'default types' \
+      || fail "P7[C05 AC1, corrected post-research]: $f never maps the DRAFT/unit tier onto plain on: pull_request default types firing during draft — GitHub runs pull_request workflows on draft PRs (DECISIONS drift fix; the old on: push reading is VOID)"
+    python3 "$TMP/win.py" --ci "$f" 1200 'ready_for_review' 'synchronize' \
+      || fail "P7[C05 AC1]: $f never states the READY/integration trigger shape (pull_request types ready_for_review + synchronize)"
+    grep -qE 'draft == false|!draft|not a draft' "$f" \
+      || fail "P7[C05 AC1]: $f lacks the draft-guard on the ready-stage workflow (draft == false / !draft)"
+    grep -qiE 'skip.?testing' "$f" \
+      || fail "P7[C05 AC1]: the skip-testing annotation (settable in Chart.yaml) is not named — the playwright walker's exclusion switch (ledger L7 defines the exact key)"
+    python3 "$TMP/win.py" --ci "$f" 900 'kopia' 'restore' \
+      || fail "P7[C05 AC1]: the integration tier never names the kopia backup restore (+ data-presence after login)"
+    grep -qF 'LAB_TEST_USER' "$f" && grep -qF 'LAB_TEST_PASSWORD' "$f" \
+      || fail "P7[C05 AC1]: the single shared dev/test account env names ($LAB_TEST_USER/$LAB_TEST_PASSWORD) are absent"
+    grep -qE 'L7' "$f" && grep -qE 'L8' "$f" && grep -qE 'L9' "$f" && grep -qE 'L1[0-2]' "$f" \
+      || fail "P7[C05 AC1]: the section does not point every mechanic at its ledger card (L7-L12 numbering per the plan appendix)"
+    python3 "$TMP/win.py" --ci "$f" 1500 'playwright' 'reachable' \
+      || fail "P7[C05 AC1]: the no-tests-yet rule is missing — prefer live playwright-MCP actions when the app is reachable, else write tests from research"
+    python3 "$TMP/win.py" --ci "$f" 600 'app-template' 'testing/' \
+      || fail "P7[C05 AC1]: the containers coverage shape (each container's testing/ values.yaml app-template defines the run) is absent"
+    grep -qiE 'docker-build' "$f" \
+      || fail "P7[C05 AC1]: container builds are not routed to the existing docker-build.yaml PR validation (merge = publish stays the split)"
+    python3 "$TMP/win.py" --ci "$f" 1200 'assumed' 'follow-up' \
+      || fail "P7[C05 AC1]: the closing posture sentence is absent — mechanics SHIP UNDER the follow-up cards; this section is the contract ASSUMING them in place"
+  done
+  ok "P7[C05 AC1]: the single-authority section carries both trigger shapes, the draft guard, skip-testing, kopia restore, the env-credential names, L7-L12 pointers, the playwright fallback, the container shape, the docker-build routing and the assumed-in-place sentence — source AND mirror"
+fi
+
+# --- P8: the three -pr surfaces CITE the section, never restate (AC2) -----------
+if want p8; then
+  for f in "${PR_SURF[@]}"; do
+    python3 "$TMP/win.py" --ci "$f" 600 'tier' 'pipeline-push-pr' \
+      || fail "P8[C05 AC2]: $f has no testing-tier paragraph citing pipeline-push-pr (red before C05 dev)"
+  done
+  # single-authority grep: the ready-stage trigger vocabulary lives in the
+  # push-pr SKILL pair ONLY (C05 Tests' words) — not copied into bodies.
+  copies=$(grep -rln 'ready_for_review' .rulesync .opencode 2>/dev/null \
+           | grep -v -x -e "$SRC" -e "$GEN" || true)
+  [ -z "$copies" ] || { printf '%s\n' "$copies" >&2; fail "P8[C05 AC2/Tests]: the ready_for_review trigger phrase leaked outside the pipeline-push-pr pair above — the mechanics live in ONE file; agents cite it"; }
+  ok "P8[C05 AC2]: all six -pr surfaces cite the section; the trigger vocabulary stays single-authority"
+fi
+
+# --- P9: touched agent frontmatter parses, descriptions non-empty (AC4) --------
+if want p9; then
+  for f in "${PR_SURF[@]}"; do
+    python3 - "$f" <<'PY' || fail "P9[C05 AC4]: $f frontmatter broke or its description went empty"
+import re, sys, yaml
+m = re.match(r"^---\n(.*?)\n---\n", open(sys.argv[1]).read(), re.S)
+assert m, "no YAML frontmatter"
+fm = yaml.safe_load(m.group(1)) or {}
+assert (fm.get("description") or "").strip(), "empty description"
+PY
+  done
+  ok "P9[C05 AC4]: the three -pr agents (sources + mirrors) parse with non-empty descriptions"
+fi
+
+# --- P10: cf-106 C04 AC5 — the standalone code-pr twin joins the governed set --
+# The push contract governs every agent that can push and none that cannot. Red
+# before C04 (the Applies-to list does not name code-pr, and the twin does not
+# exist); once the twin lands it is a HOLD pair: the twin loads the contract,
+# the plain variant stays out.
+if want p10; then
+  for f in "$SRC" "$GEN"; do
+    grep -qF 'code-pr' "$f" \
+      || fail "P10[cf-106 C04 AC5]: $f never names code-pr in its Applies-to — the contract is the single push authority, so the twin C04 creates has to be governed by it (red before C04 edits the skill on both trees)"
+  done
+  grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' .rulesync/subagents/code.md \
+    && fail "P10[cf-106 C04 AC5]: .rulesync/subagents/code.md (the commit-only variant) MUST-loads the push contract — a plain/-local loader is the drift this skill's own rule names"
+  if [ ! -f .rulesync/subagents/code-pr.md ]; then
+    fail "P10[cf-106 C04 AC5]: .rulesync/subagents/code-pr.md does not exist — the governed-set flip engages once C04 creates the twin (this run's red names it)"
+  fi
+  grep -qE '^[[:space:]]*/pipeline-push-pr[[:space:]]*$' .rulesync/subagents/code-pr.md \
+    || fail "P10[cf-106 C04 AC5]: code-pr.md exists but does not MUST-load /pipeline-push-pr — a push-capable agent outside the contract (HOLD once the twin lands)"
+  ok "P10[cf-106 C04 AC5]: Applies-to names code-pr on source and mirror, the plain code variant stays outside the governed set, and the code-pr twin MUST-loads the push contract"
 fi
 
 printf 'PASS: pipeline-push-pr surface checks (%d ok)\n' "$checks"

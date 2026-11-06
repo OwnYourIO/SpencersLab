@@ -136,7 +136,7 @@ describe("T1 loadConfig — defaults, overrides, malformed, wrong-type (AC 4, D8
   });
 });
 
-describe("T2 the loop file — OpenChamber shape, shipped disabled (AC 3)", () => {
+describe("T2 the loop file — OpenChamber shape, one scheduled task (C10)", () => {
   const LOOP = ".agents/loops/pipeline-worker.md";
 
   function parseFrontmatter(text: string): { fields: Record<string, string>; body: string } {
@@ -150,27 +150,38 @@ describe("T2 the loop file — OpenChamber shape, shipped disabled (AC 3)", () =
     return { fields, body: m[2] };
   }
 
-  it("carries exactly the five documented fields with the decided values", () => {
+  it("carries exactly the documented fields with the decided values (cf-106 C10 re-pin)", () => {
     const { fields } = parseFrontmatter(readFileSync(LOOP, "utf8"));
-    assert.deepEqual(Object.keys(fields).sort(), ["agent", "enabled", "model", "name", "schedule"], "exactly the verified OpenChamber frontmatter fields");
-    assert.equal(fields.name, "pipeline-worker");
+    const recognized = ["agent", "enabled", "model", "name", "schedule", "timezone"];
+    const unknown = Object.keys(fields).filter((k) => !recognized.includes(k));
+    assert.deepEqual(unknown, [], `frontmatter carries a key OpenChamber does not recognize (${unknown}) — the syncer ignores it silently, so the file cannot show the drift`);
+    for (const k of ["agent", "enabled", "model", "name", "schedule"]) {
+      assert.ok(k in fields, `the loop frontmatter lost ${k} — the five decided fields stay present (timezone is the only optional sixth)`);
+    }
+    assert.equal(fields.name, "pipeline-worker", "ONE scheduled runner: the surviving task keeps this name (C10 retires pipeline-worker-local)");
     assert.equal(fields.agent, "agent-board-coord", "the tick session runs as the board-coord ALIAS (D15)");
-    assert.equal(fields.model, "openrouter/qwen/qwen3.8-flash", "Q2 ruling: the loop/worker session runs the code tier");
-    assert.equal(fields.schedule, "0 * * * *", "hourly cadence spans the 2 h stale window twice (D21)");
+    assert.equal(fields.model, "gpu-ai/qwen3.8-27b-q4", "single authority: the loop-file bytes (OpenChamber syncs from the main checkout). cf-106 OQ-14 owner ruling 2026-11-03 moved the runner to the Dense/local default (supersedes cf-86 652ba904c's flash-next-strata); the catalog churns, so this byte moves only by a fresh user ruling — a re-flip re-pins it, never deletes the assertion");
+    assert.equal(fields.schedule, "0 * * * *", "hourly cadence spans the 2 h stale window twice (D21); C10's single task means ONE schedule, not a staggered pair");
     // The literal tracks the LANDED toggle, not a frozen default: the owner
     // flipped false -> true on main 080c9878a (2026-10-30). The AC-3 duty is
     // unchanged — an unsynchronized flip must fail loudly — so the byte
     // stays pinned and a future deliberate flip re-pins it rather than
     // deleting the assertion.
     assert.match(readFileSync(LOOP, "utf8"), /^enabled:\s*true$/m, "the bytes carry the literal `enabled: true` — the settled owner toggle (080c9878a); an unsynchronized flip must fail loudly (AC 3)");
+    const raw = readFileSync(LOOP, "utf8");
+    assert.equal((raw.match(/^model:/gm) ?? []).length, 1, "exactly one model row — a duplicate would make the YAML silently take the last");
+    assert.equal((raw.match(/^schedule:/gm) ?? []).length, 1, "exactly one schedule row (C10: one task, one cadence)");
   });
 
-  it("ships the D30 plain-text worker body as the DEFAULT (fact 4 live-deferred on v2.1.4)", () => {
+  it("ships the D30 plain-text worker body, extended per C10 — never a slash command (fact 4 live-deferred on v2.1.4)", () => {
     // D30 (C01 fact 4: opencode run "/cmd" sent the literal text): slash
     // dispatch from a loop body is unproven, so the SHIPPED body is the
     // verbatim worker sentence; the /pipeline-tick bare-command swap is the
     // live-smoke checklist item 3 — human-gated, and deliberately NOT
     // asserted beyond its presence as documented swap target here.
+    // cf-106 C10 extends that sentence (both Provider flavors, the preload
+    // expectation, the marked+archived no-work exit) — the TICK_PROMPT half
+    // must still arrive verbatim, or the skill-parity arm loses its anchor.
     const raw = readFileSync(LOOP, "utf8");
     const { body } = parseFrontmatter(raw);
     const prose = body
@@ -179,11 +190,18 @@ describe("T2 the loop file — OpenChamber shape, shipped disabled (AC 3)", () =
       .map((l) => l.trim())
       .filter(Boolean)
       .join(" ");
-    const D30_BODY =
-      "Load the boards skill and run exactly one Parallel pipeline loops iteration. First call pipeline_status, then follow the skill.";
-    assert.equal(prose, D30_BODY, "the shipped prompt is the D30 sentence verbatim — dev may not paraphrase the worker text into a drift the skill-parity tests cannot see");
+    const TICK_PROMPT = String(mod.TICK_PROMPT ?? mod.default?.TICK_PROMPT ?? "");
+    assert.ok(TICK_PROMPT.length > 0, "TICK_PROMPT is exported — the body's worker sentence and the executor's prompt are one string");
+    assert.ok(prose.includes(TICK_PROMPT), `the shipped body must contain the TICK_PROMPT sentence verbatim, saw ${JSON.stringify(prose.slice(0, 160))} — dev may not paraphrase the worker text into a drift the skill-parity tests cannot see`);
     assert.ok(!prose.includes("/pipeline-tick"), "a slash command in the SHIPPED body would arrive as literal text until the live-smoke gate proves dispatch");
     assert.ok(raw.includes("/pipeline-tick"), "the bare-command swap target stays documented in the file's header docs (checklist item 3)");
+    const low = prose.toLowerCase();
+    for (const needle of ["provider: api", "provider: local", "label"]) {
+      assert.ok(low.includes(needle), `the single-task body must name ${needle} — one task serves both Provider flavors and routes from the card's label (C10 task (b))`);
+    }
+    assert.ok(low.includes("board-context") || low.includes("board context"), "the body must name the structural board-context block the run starts with (C10 task (c): the first turn must not spend round-trips)");
+    assert.ok(low.includes("card") && (low.includes("preload") || low.includes("claim answer") || low.includes("claimed card")), "and the claimed card's details arriving on the claim answer (C06/C07 preload)");
+    assert.ok(/archived|archive/.test(low) && /no-work|no work|no-op|noop/.test(low), "and the marked+archived no-work exit as a citation (C10 task (d), C03b's contract)");
   });
 });
 
@@ -329,6 +347,63 @@ describe("T4 structural — config reads go through the seam (C06 Tests)", () =>
     } finally {
       if (typeof cleanup === "function") cleanup();
       rmSync(runtimeRoot, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("cf-106 C08 — TICK_PROMPT ↔ boards section parity (chunk Tests: the pin that has bitten before)", () => {
+  // The tick prompt and the skill section it commands are ONE contract read
+  // from two files; either side moving alone must redden here. Vocabulary
+  // tokens are the prompt's own claims about what the section says.
+  const VOCAB = ["Parallel pipeline loops", "iteration", "pipeline_status"];
+
+  function boardsSection(): string {
+    const src = readFileSync(".rulesync/skills/boards/SKILL.md", "utf8");
+    const at = src.indexOf("## Parallel pipeline loops");
+    assert.ok(at >= 0, "the boards skill keeps a `Parallel pipeline loops` section for the tick prompt to name");
+    const next = src.indexOf("\n## ", at + 1);
+    return src.slice(at, next === -1 ? src.length : next);
+  }
+
+  function drift(prompt: string, section: string): string[] {
+    const miss = (where: string, text: string) =>
+      VOCAB.filter((tok) => !text.includes(tok)).map((tok) => `${where} lacks "${tok}"`);
+    return [...miss("the tick prompt", prompt), ...miss("the boards section", section)];
+  }
+
+  it("every vocabulary token of TICK_PROMPT is present in the section it commands", () => {
+    const prompt = String(mod.TICK_PROMPT ?? mod.default?.TICK_PROMPT ?? "");
+    assert.ok(prompt.length > 0, "TICK_PROMPT ships as an exported constant (C06 Notes: both contract sides pin it)");
+    const bad = drift(prompt, boardsSection());
+    assert.deepEqual(bad, [], `the tick prompt and the boards section it names disagree on: ${bad.join(", ")} — fix BOTH sides or neither (C08 rewrote this section)`);
+    assert.match(prompt, /boards skill/, "the prompt still points at the boards skill by name");
+    assert.match(prompt, /one[^.]*iteration/i, "and at exactly one iteration, the section's own framing");
+  });
+
+  it("a one-sided edit of either side reddens the parity check (negative control)", () => {
+    const prompt = String(mod.TICK_PROMPT ?? mod.default?.TICK_PROMPT ?? "");
+    const oneSidedSection = boardsSection().replace(/pipeline_status/g, "the lock read");
+    assert.ok(drift(prompt, oneSidedSection).some((d) => d.startsWith("the boards section")), "the checker must catch the skill side moving alone — that is the drift this arm exists for");
+    const oneSidedPrompt = "Load the boards skill and run a full sweep of the board.";
+    assert.ok(drift(oneSidedPrompt, boardsSection()).some((d) => d.startsWith("the tick prompt")), "and the prompt side moving alone (the fabricated prompt drops the iteration contract)");
+  });
+});
+
+describe("cf-96 C09 zone coverage — one formatter, both $TZ geometries (AC3)", () => {
+  it("stamps local-with-offset when $TZ resolves and UTC Z when it does not (cf-96 AC3)", () => {
+    const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
+    const T0 = Date.parse("2026-11-01T12:00:00.000Z");
+    const savedTZ = process.env.TZ;
+    try {
+      process.env.TZ = "America/Denver";
+      const off = seam("localIso")(T0);
+      assert.match(off, STAMP_SHAPE, "offset spelling stays inside the ISO-8601 shape");
+      assert.ok(/[+-]\d{2}:\d{2}$/.test(off), `expected an explicit offset tail for America/Denver, got ${off}`);
+      assert.equal(Date.parse(off), T0, "the offset stamp parses back to the exact instant (the tick's staleness arms read it offset-aware — OQ4/AC2)");
+      delete process.env.TZ;
+      assert.equal(seam("localIso")(T0), new Date(T0).toISOString(), "$TZ unset falls back to the UTC Z spelling byte-for-byte");
+    } finally {
+      if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
     }
   });
 });

@@ -17,10 +17,12 @@ digests below rather than trusting a mutable tag.
 |---|---|
 | Entrypoint | `llama-swap` (exec form); effective command `llama-swap -config /app/config/config.yaml` — the chart injects the args and mounts the rendered ConfigMap **as a directory** at `/app/config` (a `subPath` file mount never receives ConfigMap updates, so reloads would silently stop) |
 | serve CLI entry (what the llama-swap `cmd` execs) | `/opt/strata/terminal/bin/strata` |
-| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata` |
-| Engine exe — fallback (Strix / gfx1151, C05) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata` |
+| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-rx9070/strata` |
+| Engine exe — fallback (Strix / gfx1151, C05) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo/strata` |
 | Engine root layout | both roots live under `/opt/strata/components/engine/<label>/` as **distinct dirs** (same-named binaries per flavor — never merge them) |
-| Source checkout (headless provisioning) | `/opt/strata/src/Strata` — shallow clone at `v0.2.7`, `.git` removed. The packaged tree carries NO installer (`strata install` is a shim for the checkout's setup.py), and upstream's llama-swap doc is explicit: the integration "needs a source checkout, not the desktop installer" — so the chart's `model-fetch` init copies this tree to the claim and runs `./setup.sh` there |
+| Weight-staging entrypoint (what the chart's `model-fetch` init execs) | `/opt/strata/bin/fetch_models.sh` — exec form, mode 0755, with its siblings `/opt/strata/bin/hf_fetch.py` (anon + gated downloader) and `/opt/strata/bin/byte_pins.env` (shard byte literals) baked from `containers/strata/files/` (C07 lift). The chart keeps intent + the env contract only; `sh -n`, `py_compile` and the `test -x`/`-f` trio run in the verify layer, so a broken fetch path fails the BUILD. The build never RUNS the driver — that would stage ~183 GB with no claim and no token |
+| Source checkout (headless provisioning) | `/opt/strata/src/Strata` — shallow clone at `v0.2.9`, `.git` removed, with `carry/ornith-q36.patch` applied in the build (see the carry row below). The packaged tree carries NO installer (`strata install` is a shim for the checkout's setup.py), and upstream's llama-swap doc is explicit: the integration "needs a source checkout, not the desktop installer" — so `/opt/strata/bin/fetch_models.sh` copies this tree to the claim and runs `./setup.sh` there |
+| Vendored carry patch (build-time, source-only) | `/opt/strata/carry/ornith-q36.patch` — two constants-only hunks over the checkout (upstream issue #3574: the pool's `kNativeHBytes` buffer and the `STRATA_D_FMTS` down list), the only thing that lets an Ornith-1.5-122B GGUF load on the q36 path. It patches SOURCE, so it reaches the engine through the claim-side compile; the packaged engine roots above are upstream binaries and do NOT carry it, which is why the ornith profile names `/models/strata/Strata/engine/strata` and never a packaged root. The verify layer re-applies it in reverse and greps both constants: patch drift fails the BUILD |
 | Compile toolchain (baked, not runtime-installed) | `build-essential` + `git` via apt in the runtime stage — setup.sh Step 4 compiles the checkout's AMD engine once onto the claim; the verify RUN fails the BUILD if either tool goes missing (owner ruling 2026-10-29: no pod-start apt) |
 
 - The engine binaries are referenced **from each profile's run-config `exe`
@@ -33,7 +35,11 @@ digests below rather than trusting a mutable tag.
   profile is the packaged-path consumer (halo root, gfx1151).
 - Binary names are measured, not invented: captured from the pinned upstream
   layers via registry tar-listing (2026-10-27/28) and re-printed to every CI
-  build log by the verify step in `Dockerfile`. `strata-vision` and
+  build log by the verify step in `Dockerfile`. The label DIRS follow the
+  flavor tags: at 0.2.9 both images' `com.strata.engine` OCI label reads
+  `0.1.55-linux-x86_64-hip-rx9070` / `-hip-halo` (manifest config read
+  2026-10-31), which is what the exe rows above name and what the chart's
+  strix profile pins as its packaged engine root. `strata-vision` and
   `strata-vision-hip` sit beside `strata` in both dirs; vision is OFF for v1
   (R2 ruling) — the binaries' presence is not an invitation to enable it.
 - `/usr/local/bin/strata` on PATH is the base image's own shim into the
@@ -45,14 +51,25 @@ digests below rather than trusting a mutable tag.
   Upgrading is a commit: change both FROM tags + the ledger, CI rebuilds.
 - Not baked, by AC4: no secrets, no model weights, no prepared packs.
   Provisioning is runtime work on the shared claim: the `model-fetch` init
-  container (charts/llama-swap, strata controller) copies the source checkout
-  to `/models/strata/Strata` and runs the documented
+  container (charts/llama-swap, strata controller) execs
+  `/opt/strata/bin/fetch_models.sh`, which copies the source checkout to
+  `/models/strata/Strata` and runs the documented
   `./setup.sh --family qwen --model <id> --no-start --yes` per quant token —
   setup owns fetching shards, tokenizer, packs and draft data (into
   `Strata-data` beside the checkout) and writes `strata-<model>.json` run
   configs there. The serve profiles must then match those artifacts, not
   hand-seeded paths (the first deploy's seed-path failure is the evidence
   trail; reconcile with `strata models list --install-dir /data/install`).
+  Because the copy of the checkout to the claim is copy-ONCE, a re-pin does not
+  by itself refresh a live claim: `/opt/strata/bin/fetch_models.sh` carries a
+  marker-keyed migration step (`.checkout-<image>-carryN`, content-compared so a
+  bump re-fires) that syncs SOURCE paths only — `src/`, `include/`, `cmake/`,
+  `tools/`, `third_party/`, `setup.py`, `setup.sh`, `CMakeLists.txt` — wipes
+  `build-hip`, recompiles the engine, and writes the marker only on a green
+  compile. Weights (`Strata-data/`), packs, run configs, `.venv` and every
+  `.setup-*`/`.pack-*`/`.dl-*` marker survive it; the ornith rung is GGUF-direct
+  (no pack step, no token), so it downloads under its original repo names and
+  the profile points at those files.
 
 ## Pin ledger — literal tags + recorded digests (coord ruling shape (b))
 
@@ -65,17 +82,19 @@ Every bump re-verifies the digest **before** it ships and re-benches after.
 
 | FROM tag (literal in Dockerfile) | Manifest digest |
 |---|---|
-| `ghcr.io/niko1221/strata:0.2.7-rocm-gfx120x` | `sha256:703efd51c040152e9fceb993688b01ca0374535a5bfd86c14a60b5e60c96407a` (measured 2026-10-27, RESEARCH §1) |
-| `ghcr.io/niko1221/strata:0.2.7-rocm-gfx1151` | `sha256:29ecd5cf8b0e21525dbb5c0191d7743d62fa356da646cb6aaf0546e5a31a8b3f` (measured 2026-10-27, RESEARCH §1) |
+| `ghcr.io/niko1221/strata:0.2.9-rocm-gfx120x` | `sha256:a0536d4b9e734a1d06b9b630362b95d01108382a4a39785e6abdc1dfe8326c39` (re-read 2026-10-31 at the C09 re-pin, anonymous token + manifest HEAD; engine label `0.1.55-linux-x86_64-hip-rx9070`) |
+| `ghcr.io/niko1221/strata:0.2.9-rocm-gfx1151` | `sha256:2ac97575713efaa37299d914c628d3f1d40b68b893dd78430f7ea4bd18c5084a` (same read; engine label `0.1.55-linux-x86_64-hip-halo`) |
 
 Supervisor stage: `ghcr.io/mostlygeek/llama-swap:unified-vulkan-266` =
 `sha256:0cc42f1024b54be3de100ae7a7a2730047ca5c27cf7a354f8a9f63142f00c045`
 (RESEARCH §3; re-verified 2026-10-28 against the registry manifest HEAD).
 
-Source stage: `github.com/Niko1221/Strata` clone at tag `v0.2.7` — bump
+Source stage: `github.com/Niko1221/Strata` clone at tag `v0.2.9` — bump
 WITH the flavor tags (same release line; `strata doctor`/setup expectations
-assume checkout≈engine coherence). Alpine builder base `alpine:3.22` is a
-build-time-only fetch, not a runtime surface.
+assume checkout≈engine coherence), then `carry/ornith-q36.patch` is applied to
+that clone before `.git` is removed (cf-86 C09, upstream issue #3574 — drop the
+patch when upstream ships the support, see the file's own header). Alpine
+builder base `alpine:3.22` is a build-time-only fetch, not a runtime surface.
 
 Renovate posture under the ruling: **no `# renovate:` comment names the
 strata depName** — no repo manager extracts a `datasource=docker` ARG-pin

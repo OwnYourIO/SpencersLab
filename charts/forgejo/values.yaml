@@ -28,6 +28,10 @@ bitwardenIds:
   # (dev: shared dev SSO client, infra: client infra-forgejo; read as
   # username/password).
   forgejo-sso: OVERRIDE_VIA_CUSTOM_VALUES
+  # Git LFS object store on the SeaweedFS S3 gateway. Login item: username =
+  # S3 access key id, password = secret access key. Both instances deploy the
+  # same item, so the same UUID goes into dev's and infra's custom-values.
+  forgejo-s3: OVERRIDE_VIA_CUSTOM_VALUES
 
 domain: OVERRIDE_VIA_APPSET
 
@@ -81,6 +85,28 @@ forgejo:
       # so the external port has to be pinned here.
       server:
         SSH_PORT: 22222
+      # Git LFS object store: the instance-independent shape only. The
+      # activation switch ([lfs] STORAGE_TYPE=minio) and the endpoint pair
+      # (MINIO_ENDPOINT, MINIO_USE_SSL) are per-instance, so a cluster whose
+      # gateway has no bucket keeps LFS on the data PVC.
+      # Every LFS key stays in this one section: Forgejo reads the S3
+      # credentials from the section that declares STORAGE_TYPE, so a
+      # [storage] section would leave [lfs] unconfigured and move attachments,
+      # avatars and packages to S3 with it.
+      lfs:
+        # Set explicitly — the code default is `gitea`, a bucket this lab does
+        # not create.
+        MINIO_BUCKET: git-lfs
+        # `auto` decides from the endpoint, and an AWS-shaped endpoint gets
+        # virtual-host; the virtual-host form needs git-lfs.<endpoint>, a name
+        # no certificate covers.
+        MINIO_BUCKET_LOOKUP: path
+        # `default` is what an unset key does — only `md5` sends Content-MD5 —
+        # written out so the choice is visible instead of inherited.
+        MINIO_CHECKSUM_ALGORITHM: default
+        # false keeps every LFS download behind Forgejo, so no git client ever
+        # has to reach the storage endpoint.
+        SERVE_DIRECT: false
       # Local sign-up stays closed; ALLOW_ONLY_EXTERNAL_REGISTRATION lets
       # Keycloak OIDC users get accounts (created on first SSO login).
       service:
@@ -117,6 +143,22 @@ forgejo:
           secretKeyRef:
             name: forgejo-secret
             key: SECRET_KEY
+      # Git LFS S3 credentials from ExternalSecret forgejo-s3-secret.
+      # environment-to-ini lower-cases the section of a
+      # FORGEJO__<SECTION>__<KEY> name, so these land in the [lfs] section
+      # above. Unlike the secrets config_environment.sh generates itself, these
+      # legs survive an existing app.ini, so they still apply on a running
+      # instance's next start.
+      - name: FORGEJO__LFS__MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-s3-secret
+            key: access_key_id
+      - name: FORGEJO__LFS__MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: forgejo-s3-secret
+            key: secret_access_key
 
     # Initial admin user from ExternalSecret forgejo-admin-secret
     # (keys: username/password). passwordMode keepUpdated (chart default)

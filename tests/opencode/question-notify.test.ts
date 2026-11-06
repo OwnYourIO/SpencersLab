@@ -581,6 +581,20 @@ describe("T9 noWorkSuppressed — the reader conjunction (C02 OQ2/OQ4, AC 2)", (
     }
   });
 
+  // cf-106 C03b extends the WRITER's vocabulary to five reason tokens (two
+  // existing + gate-skip, gate-live, board-check-unavailable). The reader is
+  // token-agnostic by design — well-formedness is "non-empty string reason" —
+  // so the new tokens must already mute with NO plugin change (AC4). Green now,
+  // and it stays green only while nobody adds a token allow-list here: a token
+  // allow-list would silently un-mute the three new stops.
+  it("every cf-106 reason token suppresses with no plugin change (C03b AC4)", () => {
+    const p = seam("noWorkSuppressed");
+    for (const reason of ["no-cards", "no-claimable-cards", "gate-skip", "gate-live", "board-check-unavailable"]) {
+      assert.equal(p({ metadata: scheduled({ pipelineNoop: { reason } }) }), true,
+        `reason '${reason}' on a scheduled tick must suppress — the reader must not grow a token allow-list`);
+    }
+  });
+
   it("absent, null or non-object metadata alerts; no shape throws", () => {
     const p = seam("noWorkSuppressed");
     for (const info of [undefined, null, {}, { metadata: undefined }, { metadata: null }, "session", 42]) {

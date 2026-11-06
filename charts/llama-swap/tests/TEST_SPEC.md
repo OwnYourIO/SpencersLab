@@ -1015,3 +1015,1708 @@ EVIDENCE.md §13 section they gate on has landed).
 * C04-1..5 -> procedure A-layer ×7 (hard now) + post-fix B-layer validators ×5
   (gated) — the recorded-attempt half is exactly "review re-runs criteria 1-5
   read-only against recorded artifacts"
+
+## 9. cf-86 feat-more-strata-models — C01..C06 contracts (test session, 2026-10-29/30)
+
+Ticket: `.agents/plans/2026/2026-10-cf-86-feat-more-strata-models` (branch
+`cf-86-feat-more-strata-models`). Two ablated Strata arenas (C01 SC117
+abliterated IQ3_XXS, C02 gated orcarouter IQ3_XXS), two llama.cpp heretic
+rungs (C03 flash-next Q4_K_M, C04 27B Q4_K_M-MTP), the provider catalog
+(C05) and the FINAL Shape-A-tweak Strata Q4 arena (C06). Frozen ids/files come
+from DECISIONS "Renumap + final-shape decisions" + the C06 FINAL pin block;
+the peers evidence and every golden/frozen table are test-writer property —
+dev edits surfaces, never these files.
+
+### 9.1 Files written
+
+* `test_strata_abliterated_rung.py` (C01) — arena + residency-contract
+  equality with the primary, serve-flag surface ⊆ {--profile,--host,--port},
+  matrix ⊇ {p,s,c} with the no-two-arenas-per-combo law, profile ConfigMap
+  key set == the profiles the served arenas name, run-config shape
+  (`model_name: qwen3.8-flash-next-abliterated-iq3_xxs`, `api_key "none"`,
+  `user_args []`, exe/cwd/backend identity = primary's), envelope equality
+  with the primary (#1601 pair + conversation-cache arms), Strata-data path
+  SHAPE + distinctness from the IQ3_S pair, node-bleed flag absence
+  (--ple-io/--batch/--layer-split/--prompt-cache/--vision), strip-list arm,
+  keyless-serve guard, peers-wave equality.
+* `test_strata_orca_rung.py` (C02) — arena + contract, inner alias
+  `qwen3.8-flash-next-orca` unique across model aliases AND profile
+  `swappabel_alias` and never equal to the outer `…-orca-q6`, matrix `o` +
+  alternation, four-profile ConfigMap + IQ3_XXS-orca shape with the primary's
+  memory declaration verbatim, pack-path shape/distinctness, **token-placement
+  law** (`HF_TOKEN` via `secretKeyRef: hf-token` on the model-fetch init — and
+  ONLY there; serve path/inner `apiKeys`/every profile stays keyless),
+  manual-pack invariants (`.pack-orca` marker named, `fail()` helper kept, no
+  `rm -rf` of Strata-data), peers four-id wave.
+* `test_heretic_rungs_flashnext.py` (C03) — exact expansion id
+  `qwen3.8-flash-next-heretic-q4` (no sibling variant), mmap-regime legs
+  compared against the DONOR's rendered legs (`-ngl 99`, the byte-exact `-ot`
+  string, `--load-mode mmap`, `--fit off`) rather than restated, 262144 only,
+  gate-verified `-hf`, draft-mtp n-max 2 (the pack carries MTP), no preload and
+  no services models-layer override, `fnher` in `solo` only, the two-mmap-
+  rungs-never-co-load law, gpu echo macro-free, chart-default render family-
+  off, RUN_HF_CHECK-armed liveness for BOTH cf-86 refs in one network pass.
+* `test_heretic_rungs_27b.py` (C04) — exact id `qwen38-heretic`, dense regime
+  (-ngl 999 / --load-mode none / -np 1, compared against sibling `qwen38-ara`)
+  with the MoE/mmap legs asserted ABSENT (the regime-difference proof the chunk
+  demands), `-c 262144`, gate-verified `-hf`, embedded-MTP (no `-hfd` draft)
+  with draft-mtp n-max 2, ttl 300, `q38her` in `main` only + never-two-dense-
+  per-combo, no preload / no models-layer entry, gpu echo, no second raw-cmd
+  escape hatch.
+* `test_catalog_contract.py` (C05) — a comment-respecting JSONC loader (URLs
+  carry `//`), presence+shape (modelID==key, `limit.context` 262144,
+  `capabilities.tools: true`, no invented `limit.output`) for the cf-86 new
+  ids; the hygiene half read from the RENDER (enabled `ornith-1.5-122b-*` +
+  `qwen3.8-flash-next-orca-q6` + `qwen3.6-35b-a3b-q6`), the card's already-
+  served asks verified, the **no-phantom arm** (catalog key ⊆ render models ∪
+  render aliases ∪ peers-routed arenas ∪ `:tags`/`:caption` workload aliases —
+  the allow-list is explicit so review counts it), the ruled 13 never return,
+  trio grep (chart+service+catalog) per new id, provider settings/
+  `default_agent: plan` byte-stable, the Q6-default absence guard (§9.4), and
+  the ornith Shape-B absence-arm.
+* `test_strata_q4_rung.py` (C06, pin block re-rendered at the executed
+  2026-11-01 on-target gate) — arena + contract + five-way alternation
+  (no combo with two arenas, all five reachable), the pin block verbatim
+  (`--conversation-cache-mib 16384`, `…-slots 16`,
+  `--memory-limit-mib 103680`),
+  UD-Q4_K_XL path markers (shape + "Q4" class marker, names never guessed),
+  negative pins (--slot-save-path / --layer-split / --prompt-cache 0 / --ple-io
+  absent — the session flag was refused by the HIP engine at first boot and the
+  dir mkdir stays as the init's own bookkeeping), four earlier profiles
+  byte-unchanged with IQ3_S
+  keeping 92160, the 108Gi↔103680 lockstep (requests stay 64Gi, grace stays
+  420), peers five-id final order, init `q4` token + `STRATA_MODEL_Q4:
+  unsloth/UD-Q4_K_XL` + idempotent `mkdir -p /models/strata/sessions`, and no
+  new Secret consumer (unsloth ungated).
+* `evidence/strata-profiles-pre-cf86/{strata-iq3_s.json,
+  strata-strix-iq3_s.json}` + `PROVENANCE.md` — the pre-cf-86 run-config
+  captures the "existing profiles byte-unchanged" arms compare against
+  (branch tip `4f7126689`, parsed-JSON equality: helm re-wrap is not behavior).
+  The primary's era MOVED once since: `evidence/strata-profiles-t03-repin/`
+  (era 2, owner ruling U13, 2026-11-01 prompt-chunk re-pin) — its single-key
+  delta is guarded by `test_t03_primary_fixture_era_delta_is_only_the_prefill_line`.
+* `evidence/strata-peers-expected.yaml` — re-authored with `models_states`:
+  the wave table (2→3→4→5 ordered peer lists) that keeps the SAME immutable
+  suite correct between chunks. `models_allowed` stays the C06-final five.
+* `strata_testlib.py` — cf-86 constants (ABL/ORCA/Q4 ids, profile files,
+  `INNER_MATRIX_VARS`, `ORCA_PACK_MARKER`, the Q4 envelope + negative-pin
+  tuple) plus `strata_peers_evidence`/`expected_strata_peers` (the wave law,
+  validated on load), `INNER_PROFILE_FILES`/`expected_profile_files`/
+  `profile_files`/`profile_file_of`, and `serve_path_secret_hits` (the
+  keyless law scoped to the serve path, §9.2). Additions only.
+* `llama_swap_testlib.py` — `CF86_NEW_IDS`/`CF86_NEW_FAMILY`/`CF86_HF_REFS`
+  (the two refs verified against the live HF API by this session) /
+  `CF86_MATRIX_VARS` (letter→id) / `CF86_SET_ADDITIONS` /
+  `CF86_MOE_OFFLOAD_LEG`, and the frozen roster tables grown by exactly the
+  two new ids (CATALOG 58→60, GPU_ECHO 24→26, GPUAI_LOCAL 20→22 — partition
+  60 = gpu 34+26 / gpu-ai 60+0).
+
+### 9.2 Amendments to existing files (never weaken; re-expression ledger)
+
+Author-side validation faults found by the C01 dev round (and the mechanical
+repairs applied to them, incl. the latent C02/C06 twins) are ledgered in §9.6;
+the C02 test round's additive pack arms and its one author-fault repair
+(`test_c02_peers_carries_the_orca_arena_once` unpack) are in §9.7.
+
+* `test_config_parity.py::test_repl_tables_match_frozen_decisions` — the
+  frozen-table identity is now golden-union − REMOVED + `CF86_NEW_IDS` (the
+  two rungs postdate the byte-untouched goldens, which stay byte-untouched)
+  and the partition assertion moves to 34+26. New arm: a cf-86 id may not
+  predate the goldens.
+* `test_config_parity.py::_assert_strata_peers` and
+  `test_flashnext_blast_radius.py::_cf77_peers_carved` and
+  `test_strata_wiring.py` peers arms — subset-of-final semantics replaced by
+  exact ordered equality against a sanctioned `models_states` wave (a subset
+  of the five would let a phantom or a dropped `strix` through).
+* `test_strata_wiring.py::test_c03_extract_and_render_yields_on_shape_keyless`
+  and the outer-shadow/preload arms — pinned pair {primary,strix} → the wave
+  law / `S.INNER_IDS` (five arenas), so the guards cover C01/C02/C06 without
+  being re-written per chunk.
+* `test_flashnext_blast_radius.py` — cf-86 delta allowances: the gpu-ai model
+  additions must be exactly `CF86_NEW_IDS` (each live, not echo), the gpu
+  roster may gain exactly those two as fail-fast echoes, and `matrix` moves
+  from byte-equality to `_cf86_matrix_violations`: baseline vars byte-equal,
+  new vars ⊆ the pinned letters with pinned ids, no baseline DNF combo lost,
+  and every NEW combo must actually pair a cf-86 rung (a re-pairing of
+  existing rungs changes co-residency for models this ticket does not own).
+  Everything else in that file stays strict.
+* `test_strata_render.py::test_c01_memory_cgroup_and_engine_cap` — the 96Gi
+  pin becomes the sanctioned PAIR set {96Gi ↔ 92160, q4 pair ↔ q4 cap —
+  100Gi ↔ 95232 at C06, re-pinned 108Gi ↔ 103680 at the executed 2026-11-01
+  on-target gate; both legs live in `strata_testlib` constants} with an
+  explicit lockstep assertion (C06 raises both legs together; either leg
+  alone is what #1601 exists to prevent). The exact final pair is pinned
+  again in `test_strata_q4_rung.py`.
+* C01's "no HF_TOKEN/secretKeyRef anywhere in the strata pod chain" is
+  re-expressed as two arms, not relaxed: the SERVE path (containers, inner
+  config, profiles) is keyless unconditionally (`serve_path_secret_hits`),
+  and while the orca arena is unserved the init chain must be token-free too.
+  From C02 on, `test_strata_orca_rung.py` owns the R-d download-only
+  exception and pins its placement. Contract preserved; scope made explicit.
+* Model-dir/pack dir NAMES are not pinned (C01/C02/C06 gates parameterize
+  them: "never guessed"). The executable part is path SHAPE (under
+  `/models/strata/Strata-data/`, Q4-class marker) + distinctness from the
+  IQ3_S primary's files — an arena pointing at another arena's weights is the
+  failure those arms catch.
+
+### 9.3 Red/green at write time (helm on PATH, gates off) — superseded by §9.6
+
+`python3 -m pytest charts/llama-swap/tests -q` → **59 failed, 274 passed,
+3 skipped** (baseline before this session's work: 264 passed / 2 skipped — no
+previously green test was weakened).
+
+RED (implementation-missing; each message names its chunk/id): C01 7,
+C02 8, C03 6, C04 7, C06 7, C05 13 (5 new-id presence + 5 trio greps +
+hygiene + no-phantom + removed-13), and 11 from pre-existing files that the
+frozen-table growth turns red by design: `test_config_parity`
+model-id-sets/echo-shape/CR5-display ×8, `test_new_roster` roster-exactness
+×2, `test_config_schema` families-composition audit ×1 — all clear when
+C03/C04 land the rungs (AC3 "roster/schema approved-ID tables").
+
+GREEN (preservation, must stay green): pre-cf-86 profile deep-equality (C01/
+C02/C06), serve-path keyless (C01/C02/C06), inner-config strip list, profile/
+arena agreement, peers-wave law at the current two-arena state, matrix no-co-
+load laws, chart-default family-off, gpu echo macro-free, no-preload and no-
+models-layer arms, catalog card-ask greps (27B Q4/Q6, flash-next Q4 at
+262144 — already served today), provider-settings stability, the Q6-default
+absence guard and the ornith Shape-B absence arm.
+
+ARMED evidence (run by this session, not in the default suite):
+`RUN_HF_CHECK=1 pytest test_heretic_rungs_flashnext.py::test_c03_hf_pack_
+resolves_live` → passed (both cf-86 refs resolve through the loader mirror:
+`spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M`,
+`0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp`);
+`RUN_HF_CHECK=1 pytest test_hf_liveness.py` → passed (no existing ref moved).
+
+### 9.4 Conditionals NOT executed
+
+* C05's Q4-default routing flip (U6): no user approval recorded, so the arm
+  is a non-asserted conditional (§5.5 lineage). Its executable half is the
+  absence guard: the pipeline-models combination bullet and the gpu-ai
+  favorites row must still route to `gpu-ai/qwen3.8-flash-next-strata`. If
+  the user rules the flip in, the re-pin of `tests/pipeline-models/surface.sh`
+  + `tests/agent-board-coord/rulesync-surface.sh` + `rulesync generate` is a
+  test-session step — those two scripts were not touched or run by this
+  session.
+* C06's UD-IQ4_XS fallback (conv 32768 / 108Gi / 102400) is deliberately NOT
+  a second passing shape: it triggers only from the on-target HIP session
+  save/restore gate, and the revert is a test-session re-pin with the
+  DECISIONS citation.
+* On-target human gates stay out of the suite (never agent commands): the
+  `strata serve --plan` PLE-mmap confirmation, the models-PVC capacity spot
+  check, the first HIP save/restore round-trip, and the `--pack`/native path
+  existence on the claim.
+
+### 9.5 Trace: acceptance criteria -> tests
+
+* C01-2/-3/-4/-5/-6 -> `test_strata_abliterated_rung.py` (entry/matrix,
+  profile+envelope, strip list, keyless, peers wave) +
+  `evidence/strata-peers-expected.yaml` states.
+* C02-2/-3/-4/-5/-6 -> `test_strata_orca_rung.py` (arena/alias/matrix/
+  profiles, token placement both directions, pack-step invariants, peers).
+* C03-1/-2/-3/-4 -> `test_heretic_rungs_flashnext.py` (id/legs/-hf/MTP,
+  fnher-solo-only, mmap co-load law, gpu echo + chart-default off); C03-5 ->
+  the armed liveness arm.
+* C04-1/-2/-3/-4 -> `test_heretic_rungs_27b.py` (id/regime-difference proof/
+  -hf/embedded MTP/ttl, q38her-main-only + dense co-load law, no preload or
+  models-layer entry, gpu echo, rana escape hatch intact).
+* C05-1/-2/-3/-5 -> `test_catalog_contract.py` (presence+shape, no-phantom +
+  removed-13, card-ask greps, trio grep + provider stability); C05-4 ->
+  §9.4 conditional guard.
+* C06-1/-2/-3/-4/-5/-6 -> `test_strata_q4_rung.py` (arena + five-way
+  alternation, FINAL pins + negative pins, lockstep + grace + requests, init
+  token/dir/no-new-secret, peers five-id) + `test_catalog_contract.py`
+  (q4 entry via the C05 presence list, no-phantom, ornith absence-arm).
+
+### 9.6 Coord-ordered validation repair (C01 dev round 1, 2026-10-30)
+
+C01 dev round 1 returned NEEDS_INFO(validation_at_fault): the implementation
+was complete and render-verified, two §9 arms were author-side faults. Both
+verified against the pinned-checkout vocabulary before editing — mechanical
+(ACs and intent unchanged), so the test session repaired them rather than
+re-opening the chunk.
+
+Faults + resolutions:
+
+* `arenas = set(S.INNER_MATRIX_VARS)` collects the matrix LETTERS while
+  `strata_testlib.matrix_expansions` returns combos of resolved MODEL IDs →
+  the no-co-load arm was vacuous and the reachability arm unsatisfiable for
+  any render. Fixed to `set(S.INNER_MATRIX_VARS.values())` in
+  `test_strata_abliterated_rung.py`, and in the latent twins
+  `test_strata_orca_rung.py` / `test_strata_q4_rung.py` (those files were red
+  for other reasons, so the fault was invisible until C02/C06).
+* `--tokenizer` is not an engine arg. The run-config vocabulary
+  (setup.py@v0.2.7 `SETUP_KEYS`) and both serving profiles spell `tokenizer`
+  as a TOP-LEVEL profile key beside `args`, resolving to the tokenizer
+  DIRECTORY inside each pack. Re-expressed in C01 + the C02 twin as: the
+  profile-level `tokenizer` exists, is under `/models/strata/Strata-data/`,
+  appears in NO engine arg, and differs from the IQ3_S primary's — same
+  resolution law, now pinned on the right surface.
+* Proactive same-class latent fix (no dev round needed yet): the inner alias
+  surface is the profile's `aliases` LIST (the shipped primary/strix pair both
+  declare the family alias `qwen3.8-flash-next`; there is no `swappabel_alias`
+  key in this chart). `test_c02_inner_alias_unique_and_not_the_outer_orca_id`
+  now reads model-level and profile-level `aliases` and pins per-key
+  uniqueness of the FROZEN alias (one route key → one arena) plus the ≠
+  outer-`…-orca-q6` law; global alias uniqueness is NOT the shipped shape and
+  was never the chunk's intent.
+* Coverage gaps closed in the same pass (additive, AC-backed):
+  `test_c01_inner_alias_is_frozen_and_does_not_shadow_the_family` pins the
+  frozen alias `qwen3.8-flash-next-abliterated` present on the new arena and
+  `qwen3.8-flash-next` NOT claimed by it (chunk C01 task 2 — the two serving
+  arenas already share that key);
+  `test_c01_init_env_stages_the_abliterated_set` pins AC6's other half — the
+  model-fetch init renders `STRATA_QUANTS` carrying `abl` and a non-empty
+  `STRATA_MODEL_ABL`, both as literal scalars (no `valueFrom`), so an arena
+  that routes but never stages its pack cannot pass C01.
+
+Post-repair posture (helm on PATH, gates off, dev's C01 implementation in the
+tree UNCOMMITTED): `python3 -m pytest charts/llama-swap/tests -q` → **52
+failed, 283 passed, 3 skipped** (was 59/274/3). `test_strata_abliterated_rung.py`
+is fully green (14 passed, including the two new arms) and exactly the 7 C01
+reds §9.3 listed are gone; the residual 52 are the §9.3 designed pendings
+unchanged — C02 8, C03 6, C04 7, C05 13, C06 7 = 41 new-file reds, plus the
+11 frozen-table-growth reds (`test_config_parity` ×8, `test_new_roster` ×2,
+`test_config_schema` ×1) that clear when C03/C04 land the rungs. No
+previously green test moved (test total 336 → 338 = the two added arms; skips
+unchanged at 3); the repaired C02/C06 reds now fail with their designed
+"chunk not landed" messages instead of harness-shaped ones;
+`RUN_HF_CHECK=1` arms still pass; `npx aislop ci --changes` clean
+(0 errors / 0 warnings).
+
+### 9.7 C02 test round — pack-script arms (C01 review deferral, 2026-10-30)
+
+C01 reached APPROVED (r2, f0b29ccc7) with one deferred item: no suite arm pinned
+the manual-pack script's invariants — downloader mechanism, byte pins, marker
+ordering. C02 stages its 85.20 GB gated pack through that same init and the same
+downloader, so a regression there is C02 acceptance. Six additive arms landed in
+`test_strata_orca_rung.py`; no existing arm was touched.
+
+Pinned literals, read 2026-10-30 with no credential in the request:
+
+| object | bytes | source |
+| --- | --- | --- |
+| SC117 …-abliterated IQ3_XXS shard 1 / 2 | 47342144896 / 28800138432 | `/api/models/…/tree/main/IQ3_XXS` → 200 |
+| orcarouter …-Uncensored IQ3_XXS shard 1 / 2 | 44637691008 / 40564977024 | `/api/models/…/tree/main` → 200 (sum 85202668032 = RESEARCH [S23]'s 85.20 GB) |
+
+Measured with the same anonymous requests: the orcarouter **tree metadata** is
+public, while `resolve/main` on the shard answers **401 + `WWW-Authenticate:
+Bearer`** (repo `gated: "auto"`) — that is the fact AC3's download-only token
+rests on, and SC117's equivalent answers 206 with a Range header (why C01 stays
+keyless). C02 dev: the gate is on the bytes, not the listing.
+
+New arms (`test_strata_orca_rung.py`, law → posture before C02 dev):
+
+* `test_c02_downloader_reuses_the_venv_urllib_path_not_a_shell_client` — no
+  `curl`/`wget`/`aria2c`/`axel` invocation on any executable script line (the
+  rationale comments name curl to forbid it, hence the comment-stripped scan),
+  and the fetch stays `$SRC/.venv/bin/python` + stdlib `urllib.request` — the
+  mechanism C01 review finding 1 forced. GREEN today.
+* `test_c02_abliterated_stage_keeps_the_byte_pins_the_orca_stage_copies` — both
+  SC117 literals present and every `resolve/main` invocation carries a ≥8-digit
+  byte pin. GREEN today; it is the shape C02 must copy, so dropping a pin is
+  caught even if only the C01 half is edited.
+* `test_c02_reuse_source_marks_the_pack_only_after_it_builds` — C01's
+  `.setup-$TOK` marker sits behind a `-f` skip guard and is `touch`ed only after
+  `abl_pack` returns (variable name derived from the assignment, so a rename
+  cannot false-fail it). GREEN today; it pins the pattern C02 copies.
+* `test_c02_orca_stage_pins_the_orcarouter_byte_sizes` — the init names
+  `orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF` and pins both IQ3_XXS sizes on
+  the invocation lines. RED until C02 lands (designed pending).
+* `test_c02_orca_marker_is_touched_only_after_the_pack_completes` — the chunk's
+  `/models/strata/.pack-orca` marker (or a variable assigned to it) needs a `-f`
+  skip guard, a `touch`, and the touch must follow the byte-pinned downloads in
+  script order — a marker written early would make a partial 85 GB pack
+  permanent. RED until C02 lands.
+* `test_c02_pack_pins_still_match_the_live_hf_trees` (`RUN_HF_CHECK=1`, skipped
+  by default) — re-reads both trees anonymously and asserts the literals still
+  match, plus the 401-on-`resolve/main` gating fact. It deliberately never reads
+  `HF_TOKEN`: an arm that sent the token could not tell a public repo from a
+  gated one.
+
+Also repaired in this pass (author fault, §9.6 class): `test_c02_peers_carries_
+the_orca_arena_once` did `docs, _raw = _service_docs()`, but the local wrapper
+already indexes `[0]`, so the arm died on `ValueError: too many values to
+unpack` and was counted among C02's designed reds for the wrong reason. Now
+`docs = _service_docs()`; it fails with its designed "C02 not landed" message.
+No other file carries that mistake (grep over the suite).
+
+Deliberately NOT pinned: C01's two r2 nits — read the declared total
+(`Content-Range`/`Content-Length`) and exit before re-downloading on a pin
+mismatch, and size-check the `[ -s … ]` skip arm. Both are laws over
+already-APPROVED C01 code; pinning them now would put an approved chunk in the
+red and reopen it. If coord wants them, they are a C01-scoped follow-up change
+that C02's reuse benefits from — not C02 acceptance.
+
+Post-repair posture (helm on PATH, gates off): `python3 -m pytest
+charts/llama-swap/tests -q` → **54 failed, 286 passed, 4 skipped** (was
+52/283/3; 338 → 344 collected = the six new arms). `test_strata_orca_rung.py` =
+10 failed / 5 passed / 1 skipped, i.e. its designed reds 8 → 10 by exactly the
+two orca-specific arms; `test_strata_abliterated_rung.py` still 14/14; every
+other file's red count is unchanged (catalog 13, parity 8, q4 7, heretic-27B 7,
+heretic-fn 6, new_roster 2, schema 1). Skips 3 → 4 = the new `RUN_HF_CHECK`
+arm. Armed pass: `RUN_HF_CHECK=1 pytest test_strata_orca_rung.py::
+test_c02_pack_pins_still_match_the_live_hf_trees test_hf_liveness.py …
+test_c03_hf_pack_resolves_live` → 3 passed. `npx aislop ci --changes` clean.
+
+### 9.8 C03 test-repair round — four routed arms + the OFF-fixture cadence (2026-10-30)
+
+C03 dev round 1 cleared its 6 designed reds (44/296/4 → 42/298/4) and routed
+four previously-green arms back as authorship faults. All four verified against
+primary sources first; all four MECHANICAL — no AC in `chunks/C03.md` weakened,
+re-expressed or dropped, so the test session repaired them rather than
+re-opening the chunk. Dev touched no test file.
+
+Adjudication (claim → verification → ruling):
+
+1. `test_c03_chart_default_render_has_no_heretic_rung` — UNSATISFIABLE as
+   written, confirmed from the chart's own established law: CR1.4/P5 renders
+   EVERY catalog id in EVERY render as the id-prefixed fail-fast echo
+   (`test_boot_safety.py` documents the bare render as entirely echo entries,
+   and this file's gpu-echo positive arm requires echo existence). Absence is
+   not the chart's mechanism for "not enabled". Re-expressed as
+   `test_c03_chart_default_render_keeps_the_rung_echo_only`: entry present,
+   `is_echo_cmd`, id-prefixed, macro- and flag-free. Same intent (no servable
+   process chart-side), executable shape.
+2. `test_c03_ac2_matrix_hooks_scalars_identical` — real author fault:
+   `_cf77_peers_carved` demanded `others == {models, macros, peers}`, so the
+   sanctioned cf-86 `matrix` key disabled the peers carve-out and guaranteed
+   red for ANY sanctioned matrix growth. Fix: `matrix` joins the carve only
+   while `_cf86_matrix_violations(base, cur) == []`, so the peers wave and the
+   matrix wave stay ONE change and any matrix edit outside the pinned additive
+   shape still refuses the carve and goes red together with it. Negative cases
+   verified live: wrong letter value, unpinned letter, rewritten `sets` — all
+   three still refuse the carve and name the violation.
+3. `test_c03_ac3_gpu_render_preserved` — same class, gpu side. Verified diff is
+   exactly `matrix.vars` + `fnher` with every set expansion identical. New
+   shared helper `llama_swap_testlib.cf86_matrix_growth_violations` confines the
+   allowance: existing vars byte-equal, additions only the pinned
+   `CF86_MATRIX_VARS` letters at their pinned ids, and every set's DNF
+   EXPANSION unchanged (expansions, not expressions — helm re-wrapping cannot
+   hide a pairing change). The gpu set expressions never grow: only the gpu-ai
+   overlay puts a new letter into a set, so co-residency must not move
+   anywhere else.
+4. `test_c01_off_render_byte_identical_to_baseline` — legit catalog growth, and
+   the sanctioned PROVENANCE route (test-session re-capture) taken. Because
+   C04 grows the default render again, the file now splits the gate: the new
+   chunk-independent structural arm
+   `test_c01_off_render_changed_only_by_sanctioned_catalog_growth` pins what may
+   move — object set identical, every non-config object byte-identical, config
+   identical outside `models`/`matrix`, gained ids ⊆ `CF86_NEW_IDS` arriving as
+   id-prefixed echoes, existing entries frozen, matrix confined by the same
+   helper — and the byte arm stays pinned to the fixture. **Cadence (authorship
+   call, recorded in PROVENANCE.md):** the test session re-captures the fixture
+   in the LANDING chunk's test round, and only while the structural arm is
+   green; red there means dev changed the default-OFF render and re-capturing
+   would bake the leak into the baseline. Era chain 1 `451c149ad…` (run-2 base)
+   → era 2 `0aa2241c2c…` (C03), delta verified before re-capture: models gained
+   exactly `qwen3.8-flash-next-heretic-q4` as an echo, `matrix.vars` gained
+   exactly `fnher`, nothing else moved (double-capture diff clean, 6 kinds, zero
+   "strata" strings).
+
+New arms (additive):
+
+* `test_c03_hf_pack_bytes_still_match_the_source_gate` (`RUN_HF_CHECK=1`) —
+   answers the C03 friction that the source gate's byte evidence was recorded
+   but not pinned. Anonymous tree reads only (no `Authorization` header on
+   purpose: an ungated pack's evidence must stay re-checkable without a token):
+   `Q4_K_M` trunk a complete 1..5 shard set at 10945472 / 682434912 /
+   54400261312 / 47643214976 / 37673027808 (sum 140409884480 = the gate's
+   130.8 GiB) and `mtp/mtp-…-Q8_0.gguf` at 4137429280. Re-upload or
+   re-organization goes red instead of silently changing what the node pulls.
+* `test_c02_orca_profile_serves_exactly_the_staged_paths` — the C02 review
+   path-pairing deferral. Derives `dir`/`pack`/`stem`/`s1`/`s2` from the
+   rendered `orca_pack` body and the tier from the rendered
+   `STRATA_MODEL_ORCA`, then requires the arena's `--pack`, `--native`,
+   `--ple-gguf` and `tokenizer` to be exactly those staged paths (this pack's
+   PLE table rides in shard 1 per ORCA.md, so `--native == --ple-gguf == s1`),
+   and that both shard halves are actually `orca_dl` destinations with a byte
+   pin in `ORCA_SHARD_BYTES`. Derived on both sides, so a rename on one side
+   goes red instead of a literal drifting with it.
+* C04-era message class (deferred §9.6 item): the 5 bare-`KeyError` arms in
+   `test_heretic_rungs_27b.py` (via a new `_model()` guard) and the 4 in
+   `test_config_parity.py` (`test_cr5_display_presence`,
+   `test_cr5_display_name_grammar` now assert absent ids "— awaiting CA2/CA3")
+   fail with their designed message. A count-only residual map cannot tell a
+   KeyError arm from suite breakage — the C02 round showed that costs a dev
+   round to untangle.
+
+Recorded, NOT asserted: the `-hf` loader hazard. `Q4_K_M/MTP/` holds only
+shards 1+6-of-6 and spells them uppercase `-MTP-`, which defeats hf_check's
+case-sensitive `-mtp-` skip and sorts ahead of the trunk, so llama.cpp's
+`find_best_model` first-hit (case-insensitive `Q4_K_M[.-]`) would pick an
+incomplete 2/6 set. It is a live-loader behavior question (MTP also needs
+unmerged llama.cpp PR #27836), outside AC5's "resolves" wording — filed for
+coord, asserted nowhere.
+
+Posture (helm on PATH, gates off, C03 implementation UNCOMMITTED in the tree):
+`python3 -m pytest charts/llama-swap/tests -q` → **38 failed, 304 passed,
+5 skipped** (was 42/298/4; 344 → 347 collected = the two new always-on/gated
+arms plus the orca pairing arm). Exactly the four routed arms moved red→green;
+the counts differ from the coord's quoted 38/302/4 only by the added arms.
+Fully green: `test_heretic_rungs_flashnext.py` 9+2sk (11 armed),
+`test_flashnext_blast_radius.py` 5/5, `test_strata_off_parity.py` 3/3,
+`test_strata_orca_rung.py` 16+1sk. Residual 38, all designed pendings, every
+message read: C04 7 (`test_heretic_rungs_27b`), C04-era frozen-table growth 11
+(`test_config_parity` 8, `test_new_roster` 2, `test_config_schema` 1), C05 13
+(`test_catalog_contract`), C06 7 (`test_strata_q4_rung`). Armed pass
+`RUN_HF_CHECK=1 pytest test_heretic_rungs_flashnext.py test_strata_orca_rung.py
+test_hf_liveness.py` → 29 passed, 0 skipped. `npx --yes aislop@latest ci
+--changes` clean.
+
+### 9.9 C04 test round — source gate, loader-pick guard, C04-era matrix law (2026-10-30)
+
+Run before C04 dev starts; covers STATE deferred[0] items (a)–(d). No existing
+arm weakened.
+
+**(a) C04 source gate re-verified live, no re-pin needed.** Anonymous recursive
+tree read of `0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF`
+(`gated: False`, 182 files): the ladder is FLAT and SINGLE-FILE, MTP embedded in
+the file name — `RVN-Q4_K_M-mtp.gguf` **16,998,720,736 B** (exactly the number
+recorded in `CF86_HF_REFS`' comment and RESEARCH [S22]), so the ref
+`…:Q4_K_M-mtp` is correct and C04 needs no `draft:` sidecar and no split-family
+exposure. Two neighbours are pinned alongside it because they are what makes the
+suffix load-bearing: `RVN-Q4_K_M.gguf` = 16,547,399,968 B and
+`Qwen3.8-27B-Heretic-Q4_K_M.gguf` = 16,547,400,032 B — a suffix-less ref does not
+resolve to a slightly different build, it resolves to a *different file*. New
+arm: `test_c04_hf_pack_bytes_still_match_the_source_gate` (`RUN_HF_CHECK=1`).
+
+**(c) Loader-ordering churn guard, with the C03 finding as its provenance.**
+`find_best_model`/`get_gguf_split_info`/`get_split_files` read from
+`common/download.cpp@889edf43`: the sidecar filter is a **case-sensitive** name
+test (`mmproj`, `imatrix`, `mtp-`, `eagle3-`, `dflash-`, `dspark-`), the QUANT
+search is **case-insensitive over the full path** (a directory name can satisfy
+it), only shard 1 of a split family is ever picked, and `get_split_files`
+collects whatever shards exist **without checking the declared count**.
+`llama_swap_testlib.hf_tree/hf_split_info/hf_is_model_file/hf_pick/hf_split_family`
+mirror that faithfully; `test_c04_hf_pick_resolves_to_a_complete_file_set`
+(`RUN_HF_CHECK=1`) runs the pick for every cf-86 ref:
+
+* `qwen38-heretic` → `RVN-Q4_K_M-mtp.gguf`, single file, complete ✓ (this is the
+  arm that, run against spiritfather at C03 authoring time, would have caught
+  the hazard).
+* `qwen3.8-flash-next-heretic-q4` → `Q4_K_M/MTP/…-MTP-00001-of-00006.gguf`,
+  family = shards **1+6 of 6** — the C03 hazard, reproduced live and pinned as
+  the known-broken shape (`C03_PACK_PICK`: exact pick path + exact family +
+  declared count). Upstream fixing or re-shuffling that tree turns the arm red
+  and re-pins through the test session, which is also the signal that coord can
+  retire the C03 runbook note. The C03 file's hazard comment now points here
+  instead of saying "needs verification".
+
+Probes: helper faithfulness (split parsing, `mtp-` skip vs uppercase `-MTP-`
+non-skip, shard-1-only pick), and the arm's non-vacuity — mutating the pinned
+family, or pointing `qwen38-heretic`'s ref at the heretic-2 repo, both go red
+with named messages.
+
+**(b) `test_strata_off_parity` NameError repaired.** The §9.8 structural arm's
+ConfigMap-metadata assertion referenced the deleted local `target`, so that
+failure path raised `NameError` instead of the designed message. Now
+`the {name} ConfigMap metadata diverged` (verified by mutating a copied fixture:
+designed AssertionError). Suite-wide re-scan for the same class: symtable walk
+over all 29 files flagging global lookups absent from the module namespace and
+builtins → only `__file__`/`__conditional_annotations__` (runtime/compiler
+dunders). Detector non-vacuity proven by re-injecting `{target}` into a scratch
+copy: reported at the exact function and line.
+
+**(d) C04-era matrix law corrected — the §9.8 version would have blocked C04.**
+`cf86_matrix_growth_violations` forbade ALL combo change and asserted "only the
+gpu-ai service overlay may put a letter into a set". False for C04: `q38her`
+joins the **chart-level** `sets.main` (chunk task 3), which the gpu box and
+every default-OFF render ride, so a sanctioned C04 render would have gone red
+there and in `test_c03_ac3_gpu_render_preserved` — a false red costing a dev
+round. Confined replacement, driven by `CF86_SET_ADDITIONS`
+(`solo` ← fnher, `main` ← q38her):
+
+* no baseline combo may disappear;
+* a set may only gain letters its `CF86_SET_ADDITIONS` entry names;
+* each gained combo must contain exactly one cf-86 id, and it must be one that
+  this set is allowed to gain;
+* the gained combo must be a baseline combo with exactly one member swapped for
+  that id — the new rung takes an existing alternation slot and never opens a
+  new co-residency class.
+
+Probes (in-memory on the parsed OFF config): sanctioned C04 delta → clean;
+`fnher` into chart main → named refusal; unpinned letter → refusal; pinned
+letter with the wrong id → refusal; baseline combo dropped → refusal; `q38her`
+gaining a `vl2bq4` partner → refusal.gpu-ai's own
+`_cf86_matrix_violations` keeps its looser "new combo must pair a cf-86 rung"
+rule: it guards the overlay's surface, it is green, and tightening it now is
+churn, not a repair — the asymmetry is deliberate.
+
+Cadence through C04 (for review): **no fixture re-capture before C04 lands** —
+the structural arm is green today and must still be green immediately after the
+C04 commit; the byte arm going red at that commit is expected and is the trigger
+for the test-session re-capture, never for a dev edit. Expected C04-era delta of
+the default-OFF render, and nothing else: `models` +`qwen38-heretic` as an
+id-prefixed fail-fast echo (~17 lines), `matrix.vars` +`q38her: qwen38-heretic`
+(1 line), `matrix.sets.main` expression +`| q38her` (same line, expansions gain
+only `{qwen38-heretic, home-3b-v3}`-shaped pairs). The structural arm cannot be
+exercised end-to-end before the chart edit exists (it renders the chart itself),
+so the law was verified at helper level by simulation; the arm runs for real in
+C04's round. Goldens: `tests/golden/{gpu,gpu-ai}.config.yaml` stay
+byte-untouched — the approved-ID arms derive `golden-union − REMOVED_IDS +
+CF86_NEW_IDS` (`test_config_parity::test_c02_1`) and the blast-radius arms allow
+gained ids ⊆ `CF86_NEW_IDS`, so C04 requires no golden re-pin under this
+lineage (chunk AC4's "goldens re-pinned" wording is flagged to coord).
+
+Authorship-internal dedup (no assertion changed): the §9.8 C03 byte arm fetched
+its own HF listing; it now calls `llama_swap_testlib.hf_tree`, so every cf-86
+evidence arm reads the same listing the pick guard reasons about. Re-ran that arm
+unarmed (skip), armed (pass) and negative (mutation still red).
+
+Posture (helm on PATH, gates off, C04 not yet landed): `python3 -m pytest
+charts/llama-swap/tests -q` → **38 failed, 304 passed, 7 skipped** — identical
+failure set to §9.8 (C04 7 + frozen-table 11 + C05 13 + C06 7, every message
+read), skips +2 = the two new `RUN_HF_CHECK` arms. Armed: `RUN_HF_CHECK=1
+test_heretic_rungs_flashnext.py test_strata_orca_rung.py test_hf_liveness.py` →
+29 passed; the two C04 evidence arms → 2 passed. `npx --yes aislop@latest ci
+--changes` clean.
+
+### 9.10 C04 test-repair round — census-key fault class + era-3 OFF re-capture (2026-10-30)
+
+C04 dev round 1 cleared 17 reds (38/304/7 → 22/320/7, implementation complete
+and uncommitted) and routed one validation fault back. Verified against the
+landed render before editing; ruling MECHANICAL — the AC2 law and its intent are
+unchanged, only the census discriminator was wrong.
+
+**Fault 1 — `test_c04_never_two_dense_rungs_in_one_combo` census.** The arm
+classed dense rungs by `-np 1`, which `${q36-common}` also injects, so
+`qwen36-heretic`/`qwen36-huihui` (MoE: `-ngl 99` + `-ot "\.ffn_.*_exps\.=CPU"`)
+joined the dense census and the law became unsatisfiable: 18 sanctioned
+dense×q36 co-loads exist on the landed render (16 on HEAD, legal since
+2026-10-18). Re-keyed on `-ngl 999`, the leg AC2 names: census = 12 ids, exactly
+the `qwen38` dense family, `qwen38-heretic` included, MoE overlap empty, 0
+clashes across all 165 combos. `NEW_ID ∈ dense_ids` and the ≤1-dense-per-combo
+law are kept, and the arm now refuses to pass vacuously (census non-empty,
+combos present, at least one combo actually containing a dense rung) — the
+green side had never been exercised at authoring because the `NEW_ID` guard
+aborted first.
+
+**Fault class named, second instance.** *Domain-mismatched census* — instance 1
+is §9.6's `arenas = set(INNER_MATRIX_VARS)` (matrix LETTERS collected where the
+DNF parser yields model IDs: one arm vacuous, its twin unsatisfiable); instance
+2 is this macro-shared flag. Its enabling class, the *early-abort guard that
+masks the green side* (§9.8 FRICTION), recurs here too: an arm that stops at a
+"chunk not landed" assert never runs the loop whose unsatisfiability would have
+exposed the census fault while the file was still unwritten.
+
+Discipline this implies, and the guard that now enforces it —
+`test_c04_regime_censuses_are_mutually_exclusive`: a census key must (a) belong
+to one regime family only — check the rendered `macros` map, where `-np 1` is in
+BOTH `q36-common` and `q38-common` while `-ngl 999` is only in `q38-common`;
+(b) be substring-safe against longer values (`-ngl 99` is a prefix of `-ngl 999`
+and must never be a census key; `-ngl 999` is the longest `-ngl` value and also
+catches the raw-cmd hatch `qwen38-rana`, which token-exact matching via
+`cmd_flag_value` would miss); (c) be paired, in the same file, with a
+mutual-exclusion assert over the two regimes so the misclassification goes red at
+the census, not as an unsatisfiable law elsewhere; (d) sit in an arm that asserts
+its own non-vacuity. Suite sweep for other censuses
+(`grep 'in L.effective_cmd'` → 3 sites): the C03 file's `--fit off` census is
+clean (that leg appears in no macro).
+
+Probes: injecting a real `qwen38-heretic × qwen3.8-27b-q4` combo → named clash;
+reverting the key to `-np 1` → the law goes red AND the new guard catches it
+("the census keys are not regime-exclusive").
+
+**Era-3 OFF re-capture (authorized by the §9.9 cadence).** Structural arm green
+on the landed render (dev verified, re-verified here), so the byte fixture moved.
+Delta verified before capture and again line-by-line at capture: models gained
+exactly `qwen38-heretic` as an id-prefixed echo (15 lines), `matrix.vars` gained
+exactly `q38her: qwen38-heretic`, `matrix.sets.main` gained exactly the `q38her`
+alternative — one gained pair `{qwen38-heretic, home-3b-v3}`, a baseline pair
+with one member swapped; every other object, entry and key byte-identical,
+double-capture deterministic, 6 kinds, zero "strata" strings. Capture artifact
+worth knowing when reading the diff: the `main` line shows 5 lines removed / 5
+added because the inserted token moved helm's YAML fold — the expression string
+differs only by `| q38her` (string-compare and expansion-compare both confirm).
+Era chain: `451c149ad…` → `0aa2241c2…` → `dba1c075d2582b7512b073461d95c85b2d0f66ab0867d43a048f0037737e045f`.
+C06 adds no llama.cpp catalog id, so era 3 should be this ticket's last
+catalog-driven move.
+
+Posture (helm on PATH, gates off, C04 implementation uncommitted in the tree):
+`python3 -m pytest charts/llama-swap/tests -q` → **20 failed, 323 passed,
+7 skipped**. The residual is exactly the two pending chunks — `test_catalog_contract`
+13 (C05) + `test_strata_q4_rung` 7 (C06), every message read; parity 34/34,
+roster 30/30, schema 22/22, blast-radius 5/5, off-parity 3/3, heretic-27B
+10 passed + 2 gated skips. Armed: `RUN_HF_CHECK=1` across the four HF-bearing
+files → 41 passed / 0 skipped; `RUN_FLAG_AUDIT=1 test_flashnext_regime.py` → 23
+passed. Passed count is 323, not the projected 322, because of the one new guard
+arm. `npx --yes aislop@latest ci --changes` clean (0 errors / 0 warnings); the
+undefined-global symtable scan re-run over 29 files → dunder hits only.
+
+### 9.11 Same round, second repair — C05 trio-scope (found by test-side sweep, not by dev)
+
+While reading the C05 residual messages, the trio arm was found over-scoped at
+authoring: `test_c05_trio_grep_three_surfaces` was parametrized over
+`CF86_NEW_CATALOG_IDS` (5), but the plan Commands line and chunk C05 AC5 both
+scope the trio grep to the NEW **Strata** ids (chart `strata.config.models` +
+service `peers.strata.models` + catalog). The two llama.cpp family ids have no
+service surface BY DESIGN — the gpu-ai overlay enables families, carrying matrix
+letters (`q38her`) rather than ids; chunk C05 FORBIDS `services/**`, and C04's
+own AC1 arm bans a models-layer entry for `qwen38-heretic` there. Left as
+written, C05 dev would have been forced to violate C04 to go green — a third
+instance of the unsatisfiable-law class (§9.6 letter-vs-ID census, §9.10
+macro-shared census key; this one is scope, not membership, and it was latent:
+the two params were red at the catalog assert, so the unsatisfiable service
+assert had never been reached).
+
+Repair: `CF86_TRIO_IDS` (3 Strata ids) drives the trio arm; registration for all
+five ids stays AC1's job (`test_c05_new_ids_registered` already parametrizes the
+full 5-id list, so no coverage is lost), and the family ids' live-serve side is
+pinned by the C03/C04 gpu- render arms. New guard
+`test_c05_trio_scope_is_strata_ids_only` pins the split — moving an id between
+the lists now requires a law amendment. Probe: appending `qwen38-heretic` to the
+trio list → guard red ("trio scope moved").
+
+Posture after the repair: **18 failed, 324 passed, 7 skipped** — residual
+exactly C05 11 (5 registration + hygiene + phantom + removed-return + 3 trio,
+every message read; trio arms red at the catalog/chart assert = correct
+pre-dev posture) + C06 7. Earlier §9.10 counts (20/323) include the 2 unsatisfiable
+trio params and predate the +1 guard arm: 20−2=18, 323−2+1=324.
+
+### 9.12 C06 test round — keys-vs-values (class instance 3), the per-arena pairing selector, and the scope-guard widening (2026-10-30)
+
+C06 dev round 1 landed the implementation (4 files) and routed two reds as
+validation faults. Both verified against the landed render before editing; both
+MECHANICAL — the AC and its intent survive, only the validation expression was
+wrong. Off-parity 3/3 green on the C06 render: no era-4 OFF re-capture is owed
+(the q4 arena is a Strata inner arena; CR1.4/P5 echoes llama.cpp catalog ids
+only, and the OFF byte arm proves the render did not move).
+
+**Repair 1 — `test_c06_negative_pins_absent_from_the_q4_arm` (keys vs values).**
+The arm asked `S.Q4_SLOT_SAVE_PATH in dict(S.arg_pairs(_profile()))`:
+`arg_pairs` yields `(flag, value)` pairs, so the dict's KEYS are flags, and a
+path value can never be a member — the arm was unsatisfiable for any correct
+profile (`--slot-save-path /models/strata/sessions` renders exactly as pinned).
+Repaired to assert the pair itself (`pairs.get("--slot-save-path") ==
+Q4_SLOT_SAVE_PATH`) and added the self-non-vacuity assert the arm lacked
+(`tokens` non-empty, else every negative pin in it passes on an empty profile).
+Census-class instance 3: instance 1 §9.6 (matrix letters collected where the
+parser yields model ids), instance 2 §9.10 (macro-shared flag as census key),
+instance 3 this one (value tested for membership in a key set). All three are
+the same underlying slip — a collection read at the wrong side of a pair — and
+all three were invisible at authoring because an earlier guard aborted first.
+Probes: session path removed from the profile → red naming the value; the old
+keys-form re-tested on the landed render → still False.
+
+**Repair 2 — `test_c01_memory_cgroup_and_engine_cap` (per-arena pairing).**
+The pairing table read the engine cap from `PROFILE_PRIMARY_FILE`
+unconditionally, so once the sanctioned cgroup pair moved to 100Gi it demanded
+the IQ3_S arena grow to 95232 — contradicted by the per-pair law in
+`test_c06_existing_profiles_stay_byte_unchanged_iq3_s_keeps_92160` and by the
+byte-frozen pre-cf-86 capture of `strata-iq3_s.json`. Three arms, mutually
+unsatisfiable under C06's five-arena shape. Repaired by keying the pair leg on
+the cgroup: the profile that must equal the pair value is the arena the cgroup
+was sized for (`PROFILE_Q4_FILE` under 100Gi, `PROFILE_PRIMARY_FILE` under
+96Gi), and the law's real subject — containment — is now asserted directly for
+every cap the render states (`cap <= cgroup MiB`).
+Scope of the containment law matters: a universal "every profile must state a
+cap" version of the intent would have been its own unsatisfiable arm — the
+strix run shape states `--expert-cache`/`--resident-budget-gib` instead of
+`--memory-limit-mib`, and its file is byte-frozen by the pre-cf-86 capture, so
+adding a cap there is not this ticket's call. Probes: 96Gi + IQ3_S 92160 shape
+still legal (selector covers both pair shapes); q4 cap forced to 92160 under
+100Gi → "lockstep broken"; an IQ3_XXS cap of 103000 under 100Gi → containment
+red; IQ3_S byte-pin vs the pre-cf-86 capture → green (92160 unmoved).
+
+**Additive arms written this round (no AC changed).**
+`test_c06_pack_profile_carries_no_ple_gguf_line` — setup.py@v0.2.7 emits
+`--ple-gguf` only for ≤2-shard packs; the unsloth family has four shards, so a
+hand-written sidecar would be wrong weights. Probe: injected sidecar → red.
+`test_c06_q4_shard_family_is_the_four_shard_pack_it_stages_from`
+(RUN_HF_CHECK) — no such arm existed: the q4 file had no live-HF coverage, so
+the pack source was unpinned while the C03/C04 llama.cpp packs are pinned. It
+reads the live HF tree with no credential (the anonymous listing IS the evidence
+behind AC4's "no new secret material") and pins the four shard names+bytes, the
+total, a complete 4-of-4 pick under the mirrored loader rule, and that the
+profile's `--native` is that primary shard. Probes: shard 4 removed → red; one
+shard's bytes shifted → red.
+
+**Byte-total discrepancy (dev handoff vs live tree).** Dev's round-1 ledger
+reports "Live tree: exactly 4 files, 111,334,256,784 B == setup pins
+byte-identical". The live tree read here gives per-shard sizes
+10,946,624 / 49,859,583,136 / 49,376,141,504 / 12,087,983,520 — all four match
+the chart's pack comment — summing to **111,334,654,784**, i.e. 398,000 B above
+the total the chart comment cites (values.yaml ~L2406). So the per-shard facts
+hold and the cited SUM is a transcription slip (the 111.3 GB figure is setup's
+rounded `download_gb`), not upstream churn. The suite pins the per-shard values
+and the true total; the comment waits on the deferred docs round (README L41
+96Gi + the host-prep note are stale for the Q4 pair too, and
+`test_strata_runbook.py` pins that literal — docs and arm must move together).
+Restating dev's own lesson: a baseline/live claim in a ledger carries the proof
+triple (ref, tree state, verbatim numbers) or it is a citation, not a
+measurement.
+
+**Scope guards: c8 widened, and its twins were red too.** c8 admits no serving
+surface at all, so any dirty chart/services tree reddened it mid-chunk, and a
+range base (`CHUNK_BASE=merge-base`) reddened it on cf-86's own committed test
+tree. Chosen design: **literal per-file admits** for exactly what cf-86's
+chunks declare (`charts/llama-swap/values.yaml`,
+`charts/llama-swap/templates/configmap-strata-profile.yaml`,
+`services/gpu-ai/prod/values.yaml`, `charts/llama-swap/tests/*`) — no directory
+admits — behind a `c8_admits()` function plus a **standing negative probe loop**
+(`containers/strata/Dockerfile`,
+`charts/llama-swap/templates/deployment.yaml`, `charts/home-assistant/values.yaml`,
+`services/home/agents/prod/values.yaml`, `.github/workflows/ci.yaml` must stay
+outside), so a widening cannot silently become a catch-all. **Manifest-driven
+admits rejected**: the plan folder is itself admitted and rewritten mid-run, so
+reading "Files in scope" would let the scoped party grow its own allow-list, and
+agent-perms A9 window-greps literal admits inside the if-want block, which a
+parsed loop cannot satisfy without re-pinning A9.
+Same-class reds the routed item did not name, found by running the family:
+`gate.sh` t14 and `agents-md.sh` c7 lack the same admits (dirty C06 tree: both
+red on the cf-86 plan folder; `pipeline-gates/validation-fix.sh` t7 then fails
+transitively because it runs agents-md.sh). Widened identically — plan folder +
+the three serving files + the chart tests tree, literals only, gate.sh's "infra
+dirs stay OUTSIDE the allow-set" sentence amended to name the exception. The
+standing probe loop lives in c8 only (one copy of the machinery; t14/c7 keep
+their own A9-windowed literals).
+Probe evidence for all three: dirty C06 tree → rc 0 (rulesync-surface 19 ok,
+gate 22 ok, agents-md 9 ok); dirty unadmitted `configmap-strata.yaml` → all
+three rc 1; tampered c8 admit to `charts/**` → the probe loop itself fires
+("a serving widening grew into a catch-all"); whole-ticket range
+(`CHUNK_BASE=617e18488`) → all three rc 0; clean HEAD with the edited gate files
+→ 19/22/9 ok and agent-perms 15 ok (A9 window-pins intact).
+Environment note for anyone repeating the clean-HEAD comparison: a fresh
+worktree cannot run the strata pytest suites — the `app-template` subchart
+dependency is absent there and every render errors ("found in Chart.yaml, but
+missing in charts/ directory"), so clean-HEAD pytest numbers are meaningless;
+the gate suites do not render and do compare.
+
+**Posture (helm on PATH; C06 implementation uncommitted in the tree).**
+Per-file: q4_rung 11 passed + 1 gated skip, strata_render 25, blast-radius 5,
+off-parity 3, catalog contract 18, orca 16+1, abliterated 14, heretic-27B
+10+2, heretic-flashnext 9+2, config parity 34, new_roster 30, config_schema 22.
+FULL plain: **343 passed, 8 skipped, 0 failed**. FULL armed
+(`RUN_HF_CHECK=1 RUN_FLAG_AUDIT=1`): **351 passed, 0 failed, 0 skipped** — the
+first fully-armed zero-red run of the ticket. The 2 above dev's projected 349
+are the additive arms in this section, not a counting difference.
+
+### 9.13 C06 docs round, test half — the shipped PAIRS doctrine pinned per doc (2026-10-30)
+
+The docs (runbook note + parent README) are the only surface where the two-pair
+doctrine exists: the render carries ONE cgroup (100Gi; 96Gi is the superseded-era
+value), so render arms cannot see a doc that drops or un-pairs a leg. Seven arms
+added to test_strata_runbook.py (file 11 → 18 tests), pinning the docs AS WRITTEN
+— the note spells the conversation cache `32768 MiB x 16-slot`/`8192 MiB x 16`,
+the README `32 GiB × 16 slots`/`8 GiB × 16`; house style, so token sets are
+per-file and no doc was edited to unify them.
+
+Pinned truths (per doc unless noted): both pairs as PAIRS (`96Gi` within a
+bounded, period-free window of `92160`; `100Gi` of `95232`) in BOTH docs; the
+per-rung/one-pod distinction (without it "two pairs" asserts two live cgroups,
+which the render contradicts — the doctrine is pinned, not the wording); each
+doc's cache spellings; `/models/strata/sessions` in both docs AND tied to
+session files (path alone passes nothing); the 135–160 GB budget in both, and
+in the note qualified by the Q4 shard total `111,334,654,784` beside it; the
+`66560` figure carrying a supersession marker on its own line; and byte
+arithmetic — the note's total and the chart-comment total must equal the
+live-pinned `Q4_PACK_TOTAL` (imported from test_strata_q4_rung, which reads the
+HF tree), all four shard byte counts stay in the chart comment, and the
+superseded slip `111,334,256,784` must not return (it already fired once on the
+pre-round values.yaml — the real-world proof the arm matters).
+
+Honest absences (reported, not manufactured): the README does not state the
+111,334,654,784 total — the note and the chart comment carry it, so the
+budget-qualification assert is note-scoped. `_flat` joins hard-wrapped lines but
+keeps blank-line paragraph breaks, and pair windows exclude `.` — a match cannot
+bridge sentences; patterns use `\s+` wherever a doc may have wrapped.
+
+Non-vacuity: 24 mutation probes via monkeypatched S.read (docs never touched on
+disk) — drop either cap, either cache spelling, the sessions path or its
+session-files link, the 111 GB total, the 135–160 budget, unlabel 66560, or
+re-introduce the byte slip in values.yaml → the owning arm goes RED naming the
+cause; substituted HEAD text turns all seven arms RED. One probe initially
+self-missed (double-escaped `\\s` in the probe regex, not the arm) — corrected
+and re-proved.
+
+Render unmoved: `helm template gpu-ai-llama-swap` (7-flag set) byte-identical
+HEAD vs dirty tree (sha 37692703… on both), values.yaml delta verified
+comments-only; goldens/off-parity untouched (3/3 green).
+
+Scope-guard widening follow-on (same class as §9.12, same KEEP pattern): the
+docs round dirtied two never-admitted files — the runbook note and the parent
+README — reddening c8/t14/c7 on the docs round's own tree. Widened with exact
+file literals (never a directory) in all three, and the c8 standing probe loop
+gained `.agents/notes/strata-remediation-plan.md` to prove the notes admit
+cannot silently grow to `.agents/notes/*`. Probes: dirty tree 19/22/9 ok;
+unadmitted configmap-strata.yaml and the sibling note both still rc 1 in all
+three; whole-ticket range rc 0; agent-perms 15 ok (A9 window-pins intact).
+
+Posture (helm on PATH): per-file runbook 18, q4_rung 11+1, render 25,
+off-parity 3, blast-radius 5, catalog 18. FULL plain **350 passed, 8 skipped,
+0 failed**; FULL armed **358 passed, 0 failed, 0 skipped** — exactly the §9.12
+counts +7 arms, render byte-unchanged underneath. aislop ci --changes: score
+100, 0 errors, 0 warnings.
+
+### 9.14 Revision round 2 — C07 test half: the staging laws RE-HOMED from the render to the image (2026-10-31)
+
+One authored pass covered both appended chunks (§9.15 is the C08 half). C07 is a
+pure lift-and-shift: the ~330-line values.yaml init body becomes three baked
+files (`containers/strata/files/{fetch_models.sh,hf_fetch.py,byte_pins.env}` →
+`/opt/strata/bin/`), so every law the suite ran over the RENDERED script body
+lost its subject and had to move with the code — a suite that kept grepping the
+render would go falsely red at C07 landing, which is the failure mode the launch
+called the crux of the re-anchor.
+
+Law homes after the move: driver-body laws (no shell HTTP client, guard-before-
+bytes ORDER per pack, marker skip-guards, the orca touch-after-pack ordering,
+sessions mkdir exactly once, checkout/claim guards, `--backend hip`) →
+`test_strata_image_fetch.py` reading `S.FETCH_SH`; downloader-mechanism laws
+(stdlib urllib, two modes, `.part` wedge/resume/rename, the redirect-trust law
+— no-follow handler WIRED into `build_opener`, `redirect_request` returning None
+in its own body, Bearer gated to the token host, 4-hop cap, refusal message) →
+the same file reading `S.HF_FETCH_PY`; byte-literal laws → `S.BYTE_PINS_ENV`
+(name-shaped assignment + exact literal SET, so a 5th byte literal needs a plan);
+the pairing/env-contract/render laws (exec-form command, empty args, the chart-
+side script body + mkdir gone, mounts/resources/image/securityContext byte-
+unchanged, the re-pinned strix exe) → `test_strata_thin_init.py` (11 arms); the
+image-build laws (COPY into `/opt/strata/bin` + exec bit, verify extension
+`sh -n` + `py_compile` + `test -x/-f` trio + the surviving `test -f setup.sh`,
+**the build never executes the driver** — no fetch URL in a RUN, no download at
+build time) and the v0.2.8/0.1.54 re-pin (tags, README ledger rows, clone tag =
+flavor tag, one engine-label fact across Dockerfile/README/values.yaml, stale
+`0.2.x`/`0.1.52` absence over executable lines only) → `containers/strata/tests/
+test_dockerfile.py` (+6 arms).
+
+Library moves: `strata_testlib` gains `FETCH_SH`/`HF_FETCH_PY`/`BYTE_PINS_ENV`/
+`BIN`, `body_lines()` (non-comment lines — comments NAME curl to forbid it) and
+a generalized `staged_paths(script, fn, tier)` shared by the render-era pairing
+arms and the image-era arms (s2/s3 optional, so the C08 2→3 shard drift cannot
+silently vacate the layout law). `live_code_grep` now skips `.pytest_cache` —
+its docstring already claimed caches were excluded; the first sweep-grade
+absence arm (`strata-abliterated`, a live id today) exposed the gap by matching
+pytest's own nodeid cache.
+
+Existing arms re-sourced, not weakened: 7 script-text arms in
+`test_strata_orca_rung.py` (their `_init_script()` now reads the driver; the
+urllib fact moved to `hf_fetch.py`; the byte-pin arms read driver+`byte_pins.env`
+as ONE program with `_unpinned_legs()` accepting a literal OR a pins-assigned
+var; `_orca_download_legs()` resolves pins vars so the profile↔leg pairing law
+survives the literals leaving the leg lines; the marker arm orders against the
+`orca_dl` legs instead of byte literals), and 1 in `test_strata_q4_rung.py` (the
+sessions mkdir). Two wave-neutral facts stay render-side where they belong: the
+env contract (scalars + the one `hf-token` secretKeyRef) and the pod shape.
+
+Wave law inside the file set: C07 lands BEFORE C08, so the image arms pin
+C07-ERA content — BOTH packs staged, four byte literals, the `abl` pseudo-family
+routing present — and every C08 delta (SC117 absence, IQ4_XS trio) lives only in
+the §9.15 file; two guard classes keep the halves from moving early: wave guards
+(green now, red if a table or the profile-file constant flips before its dev)
+and C08-era flip targets (red now).
+
+Deviation / open question for coord: the launch asked the build-verify arms to
+cover "a --help/dry-run of the entrypoint". A verbatim port of the init body has
+no argument parsing, and the chunk pins the verify shape explicitly (`sh -n`,
+`py_compile`, `test -x`/`test -f`), so the arms follow the CHUNK; the launch's
+intent is pinned as the opposite hazard instead — the build must NOT run the
+driver (an executed fetch would attempt ~183 GB inside CI, the storage physics
+DECISIONS already ruled out for pre-baked packs).
+
+Non-vacuity — the port-preview probe (test-session scratch, not committed): the
+CURRENT render body was split mechanically (heredocs → `hf_fetch.py` with mode
+dispatch, byte literals → `byte_pins.env` vars, legs pass vars) and fed to the
+arms through `S.read`. Result: **all 14 image arms PASS a faithful verbatim
+port**, and with the same bodies installed the whole orca/q4/abliterated trio
+runs **0 red at the C07 landing posture** — the lift is law-preserving, and the
+33 designed-red arms below are red for file absence, not for over-specification.
+Ten negative mutations each turned the OWNING arm red (curl replaces the
+downloader; handler defined but not wired into `build_opener`;
+`redirect_request` defers to `super()`; Authorization on every hop; marker
+touched before the pack; a byte literal drifting by 896 B; the token spelled
+into argv; the sessions mkdir dropped; both pack guards moved below the legs;
+`hf_fetch.py` invoked as a relative path / pins never sourced). Two probes
+initially did NOT bite and exposed arm bugs, both fixed before handback: the
+guard arm counted the download invocation itself as a guard (the invocation
+names the venv interpreter too), so it now matches the `[ -x …/.venv/bin/python ]`
+/ `[ -d "$ggufpy" ]` idioms per pack and requires BOTH above the first leg; the
+trust-law arm accepted any `return None` anywhere, so the handler is now pinned
+by class + `build_opener(<Class>())` wiring + a body-scoped `return None` with
+no `super()`.
+
+Scope-guard widening (same class as §9.12/§9.13): C07 makes `containers/strata/`
+a declared serving surface of this ticket, so c8/t14/c7 gained the exact paths
+`chunks/C07.md` names — Dockerfile, README.md, the three `files/` entries one by
+one, and `containers/strata/tests/test_dockerfile.py`. No directory admit. The
+c8 probe loop lost its `containers/strata/Dockerfile` entry (its stated premise,
+"cf-86 builds no image", is superseded by U9.4) and gained two replacements:
+`containers/strata/.dockerignore` and `containers/music-assistant/Dockerfile`.
+Re-proved after the edit: three gates PASS on the dirty tree (19/22/9 ok), an
+unadmitted sibling under `containers/` (fabricated probe file) reddens all three
+by name, and agent-perms stays 15 ok (A9 window-pins intact).
+
+Posture (helm on PATH, per-file discipline — never count-only). New-file reds:
+image_fetch 14/14 red naming the missing files; thin_init 5 red (exec form,
+boot-guard interface freeze, script body, chart-side mkdir, strix 0.1.54) /
+6 green byte-unchanged posture; container test_dockerfile 9 failed / 15 passed
+(6 new arms red + 3 pre-existing pin arms now red on the re-pin — tag pair,
+literal-tag tripwire, README pairing — every message naming 0.2.7-vs-0.2.8);
+re-anchored arms 7 red in orca + 1 in q4. FULL plain **351 passed, 9 skipped,
+41 failed**; FULL armed (`RUN_HF_CHECK=1 RUN_FLAG_AUDIT=1`) **360 passed,
+41 failed, 0 skipped**. The 41 = 14 + 5 + 14 (new-file designed reds, §9.15's
+14 included) + 7 + 1 (re-anchored); no previously-green law weakened, and the
+armed run turns the new C08 live tree arm green. aislop ci --changes: score
+100, 0 errors, 0 warnings.
+
+### 9.15 Revision round 2 — C08 test half: the rung-shift arms and the live-pinned IQ4_XS table (2026-10-31)
+
+`test_strata_c08_rung_shifts.py` (18 arms) asserts the C08 POST-state; it is red
+by design until C08 lands (3 wave guards green now, 1 live arm gated on
+`RUN_HF_CHECK=1`).
+
+Live byte table (anonymous HF tree API, 2026-10-31, flat repo root — the read
+answers the chunk's open flat-vs-per-quant-dir question instead of leaving dev
+to guess): `orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF` →
+`Qwen3.8-Flash-Next-Uncensored-IQ4_XS-00001-of-00003.gguf` = **44,766,155,936**,
+`…-00002-of-00003.gguf` = **44,735,995,008**, `…-00003-of-00003.gguf` =
+**7,971,004,256**, Σ = **97,473,155,200** — identical to the chunk/RESEARCH R4
+[B7] figure, so no render-truth delta to flag. The `-IQ4_XS-MTP-…` sibling
+family (46.66/46.60/6.98 GB) exists in the same tree and is deliberately NOT
+staged, matching C02's experts-only posture. The live arm re-pins the table AND
+re-proves the gating premise the token rests on (resolve/main without a
+credential → 401/403, metadata public, bytes not).
+
+Arms: SC117 absence sweep (arena gone from the inner config, `matrix.vars.c`
+gone, `sets.main` literal `(p | s | o | q)`, the profile file gone from the
+ConfigMap and the template, service env `q3,orca,q4` + `STRATA_MODEL_ORCA=
+orca/IQ4_XS`, peers == the four-id wave, zero `strata-abliterated`/`abliterated-
+iq3_xxs` hits over live surfaces, catalog entry deleted with the orca NAME
+flipped while its frozen id and `modelID` stay, image files lose every
+`abliterated|SC117|abl_pack|abl_dl` leg while orca routing SURVIVES); orca
+IQ4_XS render post-state (profile file key `strata-orca-iq4_xs.json`,
+`model_name`, pack/native/ple-gguf/tokenizer paths with PLE still carried in
+shard 1, conv-cache 8192-only with the 32768-negative and the 92160-cap/cgroup-
+unchanged math, and the other three profiles — q4's FINAL pins especially —
+byte-unchanged); image-side post-state (three IQ4 literals in `byte_pins.env`
+with the Σ comment and an exact-set guard, old pairs gone, three-shard staging
+with exactly three `_dl` legs writing `$s1/$s2/$s3`); and the C01 file's
+retirement receipt. Existence gates precede the C08 image arms so they are
+never vacuously green — they name C07 as the prerequisite (R4's ordering law).
+
+Measured correction to the chunk text (render truth over prose): C08.md's
+frozen-table line ("CATALOG/GPU_ECHO/GPUAI_LOCAL −1; test_config_parity
+34→33/26→25") recomputes to ZERO movement — measured live, no Strata inner id
+appears in `CATALOG_IDS` (60), `GPUAI_LOCAL_IDS` (15), `GPU_ECHO_IDS` (26) or
+`GPUAI_LOCAL_CATALOG_IDS` (22): inner arenas never join the outer matrix, which
+is itself a pinned law in the abliterated suite. The real deltas are all in this
+suite's own tables: `CF86_NEW_CATALOG_IDS` 5→4, `CF86_TRIO_IDS` 3→2,
+`INNER_MATRIX_VARS`/`INNER_PROFILE_FILES` drop `c`, `INNER_IDS` 5→4, and
+`PROFILE_ORCA_FILE` renames to `strata-orca-iq4_xs.json`. The four outer lengths
+are pinned exactly by a wave guard so a mis-motivated "−1" edit reddens instead
+of quietly shrinking a table.
+
+C08-landing flip list (the test session's own mechanical commit, never dev's):
+retire `test_strata_abliterated_rung.py`; the table flips above; append the
+four-id state to `evidence/strata-peers-expected.yaml` `models_states` AND amend
+the monotone-non-decreasing law in `strata_peers_evidence()` in the same edit (a
+shrinking wave violates it as written — the amendment is the recorded shape,
+not a workaround); retire the C07-era-only arms that the C08-era preview proved
+go red at the C08 posture — 4 in `test_strata_orca_rung.py`
+(`…abliterated_stage_keeps_the_byte_pins…`, `…orca_stage_pins_the_orcarouter_byte_sizes`,
+`…orca_profile_serves_exactly_the_staged_paths` (tier+pack literals),
+`…reuse_source_marks_the_pack_only_after_it_builds` (abl_pack ordering)) plus
+three content deltas in `test_strata_image_fetch.py` (the four-literal set → the
+IQ4 trio, the C07-era pack paths/repos arm, the per-pack guard loop dropping
+`abl_pack`). The §9.15 file already carries the replacements, so no law is
+dropped, only re-pinned.
+
+C01 law-retirement ledger (what the deleted file's 15 arms leave behind): the
+arena-side laws (served entry, serve flag surface, third matrix alternative,
+roster/profile agreement, profile validity, IQ3_S-pair envelope, distinct paths,
+frozen inner alias, node-bleed flags on THAT profile, keyless-before-orca) die
+with the arena; the general laws they carried have existing homes — keyless serve
+path (`test_strata_orca_rung.py`, `test_strata_q4_rung.py`,
+`test_strata_thin_init.py`), pre-cf-86 profile preservation against the captured
+fixtures (orca + q4), no `engineProfile*` keys in the inner config
+(`test_strata_config_schema.py`), peers==served-wave (wiring + orca + the lib
+wave table), and per-arena bleed-flag absence (each remaining rung file pins its
+own banned set; the lib carries the shared token lists).
+
+Posture: 14 designed-red (sweep + post-state arms), 3 green wave guards (the
+five-id catalog/peers/inner tables, the four sweep-invariant outer tables), 1
+live arm green armed, and the C08-era image arms green against the synthetic C08
+file edit in the port-preview (with two incomplete-edit mutations reddening
+them — SC117 legs left in, one IQ4 literal missing).
+
+### 9.16 C07-fixture-repair round — the re-pin-arms-vs-frozen-fixtures class, strix era chain (2026-10-31)
+
+Routed by validation_at_fault: five arms mutually unsatisfiable by dev — the
+three preservation arms (abliterated C01, orca C02, q4 C06) deep-compared the
+strix profile against the era-1 fixture pinning
+`/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo`, while C07 AC3/U9.4
+plus the re-pin arms (image-fetch, container three-surface arm) DEMAND 0.1.54 —
+the 0.1.52 dir is absent from the 0.2.8 image, so the fixture was an ACTIVE
+false pin (a profile exe pointing at a nonexistent path is a runtime strata
+error, by the three-surface arm's own doctrine). PROVENANCE routes a needed
+re-pin coord -> test session.
+
+Adjudication — ERA CHAIN, not scoped arms. The scoped-arm alternative (exempt
+`{exe, lib_dirs}` from the three deep-equals and pin that pair separately) was
+rejected: it cuts an exempt-key hole into three law arms that a later round can
+widen, and it strands era-1's full picture as narrative only. Chosen shape:
+era-1 stays byte-frozen on disk; an era-2 capture is APPENDED in
+`evidence/strata-profiles-c07-repin/` (strix only); the preservation arms read
+the era map `PROFILE_FIXTURE_ERA`/`profile_fixture()` in strata_testlib and stay
+whole-file deep-equals. The law holds transitively: render==era-2 (three arms)
+AND era-2==era-1 modulo the sanctioned pair (new delta arm) => every key except
+that pair stays byte-frozen vs pre-cf-86 — and the chain is machine-re-verifiable
+forever because era-1 is still on disk.
+
+Capture facts (verified programmatically BEFORE re-capture): primary
+`strata-iq3_s.json` 0/15 keys moved — its exe/lib_dirs ride the version-free
+claim-compiled pack root, an engine re-pin cannot touch it, and the delta arm
+asserts no era-2 primary file exists (a false pin otherwise). Strix 2/13 keys
+moved: exactly `exe` + `lib_dirs`, version segment only (0.1.52 -> 0.1.54
+halo). Double-capture clean. shas + era chain in the new dir's PROVENANCE.md
+(era1 `28d0ed389d…`, era2 `547ba10d8e…`), cross-pointer added to era-1's.
+
+New arms (test_strata_strix.py, file-only):
+`test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair` — era-1 pins the
+0.1.52 literals (era files are append-only history), moved set == {exe, lib_dirs},
+era-2 pins the 0.1.54 literals exactly.
+`test_c07_strix_fixture_ties_to_the_built_halo_root` — fixture exe/lib_dirs ==
+THE halo root the containers/strata Dockerfile itself COPYs and test -x-es:
+the fixture cannot silently drift back, and a future image re-pin reddens this
+arm (plus the container three-surface arm) BEFORE any render arm can go stale —
+the era chain then re-runs through the test session.
+
+Mutation probes (restore by file copy, never `git checkout --`): era-2 label
+drift -> both red; silent drift-back to 0.1.52 -> both red (the launcher's
+anti-drift requirement, proved); era-1 edited -> delta arm red, ties arm green
+(correct scoping); Dockerfile re-pinned to 0.1.55 without a fixture move ->
+ties red, delta green (the pending-era-move shape); Dockerfile naming TWO halo
+roots -> ties red. Restored tree diffs clean vs backups.
+
+Probe-gap class (dev's side-note, folded in): the §9.14 port-preview 41-count
+did not anticipate this red. The class is the re-pin-arms-vs-byte-frozen-fixture
+interplay: a chunk that re-pins a rendered path literal ALSO reddens every
+fixture-era capture covering that surface; the preview could see the red, but
+the arithmetic classified the surface as surviving rather than as a routed
+fixture round. No further exposure is expected on this ticket: §9.15's flip
+list already pins the byte_pins content era for C08.
+
+Posture (recomputed — the launch projections 378P/390P predated the +2 new
+arms and the 390 was one off): FULL plain 14F/380P/9S, armed 14F/389P/0S, the
+14 = C08-era arms only, every message read. Per-file: strix 14P, abliterated
+14P, orca 16P+1S, q4 11P+1S; containers suite 24P; gates 19/22/9/15 rc 0;
+aislop ci --changes 0 errors / 0 warnings.
+
+Deferred to the C08/docs round (dev's other side-notes, not test surfaces):
+stale `services/gpu-ai` comment wording; the host-prep note's home.
+
+### 9.17 C08 landing flip round — the by-name ledger (the undercount-class fix) (2026-10-31)
+
+The zero-red moment of the revision: after this flip commit the whole suite
+carries NO designed-reds (plain 0F/375P/8S, armed 0F/383P/0S — 8S not 9S
+because one hf_live-gated arm retired, see ledger).
+
+Friction class recorded first: **flip-list undercount**. §9.15's mechanical
+flip list named ~10 surfaces; dev's C08 r1 landing produced 34 flip-dependent
+reds. The contract that closed the gap was dev's FLIP ATTRIBUTION — every red
+by NAME with its message — and the convention going forward is exactly that:
+enumerate flips by arm name, never by count ("~N" is how a list goes stale the
+wave it describes lands). The old 10-name list was used only as a cross-check;
+the attribution was worked message-by-message.
+
+Also on the bus: STATE.json arrived broken from the coord edit (handoffs array
+missing its `]`, dangling comma, chunks-object closer eaten — 3 byte-level
+repairs, content untouched, verified with json.load before anything else ran).
+
+Flip ledger (by file):
+
+- `test_strata_abliterated_rung.py` — RETIRED wholesale (14 arms). Law homes
+  were pre-declared in the §9.15 retirement ledger and verified by the
+  retirement receipt arm; the §9.16-era preservation trio had already moved
+  its surviving law into orca + q4.
+- `test_strata_c08_rung_shifts.py` — `test_wave_c07_era_tables_still_carry_
+  the_five_id_state` retired (pre-state guard; its job ended when the tables
+  moved atomically; `test_c08_catalog_wave_tables_shrink_with_the_sweep` is
+  its post-state successor, the outer-tables guard stays).
+- Tables (strata_testlib): `INNER_MATRIX_VARS` drops `c`; `INNER_PROFILE_FILES`
+  drops the abliterated row; `INNER_IDS` 5→4; `PROFILE_ORCA_FILE` →
+  `strata-orca-iq4_xs.json`. `ABL_ID`/`PROFILE_ABL_FILE` constants KEEP —
+  the C08 absence arms pin the swept id/file by name (absence needs the name).
+  Trio truth correction: the launcher's "(strix,q4)" trio text was garbled —
+  render truth (`CF86_TRIO_IDS`, trio-grep law) says `[ORCA, Q4]`; strix
+  predates cf-86 and was never in the trio table.
+- `evidence/strata-peers-expected.yaml` — four-id post-sweep state APPENDED to
+  models_states (history kept verbatim) and models_allowed TRIMMED to four.
+  The trim is not optional: the loader's own law (`last models_states ==
+  models_allowed`) forces it.
+- `strata_testlib.py` wave law amended (the §9.15-declared amendment, the
+  recorded shape): additions remain the rule; the ONLY sanctioned shrink is a
+  removal-only transition dropping exactly {ABL_ID}; history states may name
+  ABL even though it left the final allowed set, every other outside-id is a
+  phantom.
+- `test_strata_thin_init.py` — exe-tuple loop drops the retired abl profile
+  file; scalar law flips to `q3,orca,q4`, `STRATA_MODEL_ORCA` scalar
+  `orca/IQ4_XS`, and a NEW absence arm: `STRATA_MODEL_ABL` must not come back.
+- `test_strata_orca_rung.py` — flipped: frozen-name helper auto-clears 4 arms
+  on the table flip (residency-cmd, pack-paths distinctness, four-profiles);
+  matrix-extend set drops ABL; model_name literal → `…-orca-iq4_xs` (dev
+  moved it with the quant — the frozen-ID law covers the llama-swap arena id,
+  not the profile-internal model_name); envelope-identity law AMENDED for
+  exactly one flag (conv-cache 8192 — the U9.2 arithmetic, c08 file carries
+  the fit proof); staged-paths pairing tier → IQ4_XS with legs s1..s3;
+  byte-sizes arm → live-pinned IQ4 trio (Σ 97,473,155,200).
+  Retired: `abliterated_stage_keeps_the_byte_pins…` and `reuse_source_marks_
+  the_pack_only_after_it_builds` (C01-path content arms, successors in
+  image_fetch pin-set + c08 marker law), and `pack_pins_still_match_the_live_
+  hf_trees` (judgment call: its subject artifacts — SC117 + IQ3_XXS pair —
+  no longer ship; the live law survives in the C08-era live arm, which re-
+  reads the orcarouter IQ4_XS tree AND its 401 gate). Orphans swept with them:
+  `HF_REPO_ABL`, `ABL_SHARD_BYTES`, `_tree`, `hf_live`, urllib/json/os imports.
+- `test_strata_q4_rung.py` — alternation arm renamed five→four arenas (law
+  unchanged); peers arm pins the C08-final four-id card order.
+- `test_catalog_contract.py` — CF86_NEW_CATALOG_IDS 5→4, CF86_TRIO_IDS 3→2,
+  trio-scope guard re-pinned to the new trio (the "law amendment, not a test
+  edit" clause in that guard is what authorizes this flip line).
+- `test_strata_image_fetch.py` — byte-pins arm becomes the exact-era-set law
+  (trio assignments + Σ-comment rides + no extra literal); pack-functions arm
+  flips to the IQ4 3-shard flat-root paths + a POSITIVE absence arm for
+  abl_pack/SC117; guard-ordering loop drops the retired abl_pack; env_contract
+  arm flips the pseudo-family law to orca-ONLY with the abl case-arm absence
+  assert.
+- Auto-cleared by the evidence fix, no arm edits: wiring 2, config_parity
+  [gpu-ai], blast_radius ac2, orca peers-once.
+
+Mutation probes (file copies, restored, tree diff clean): unauthorized wave
+shrink (drop strix) -> amended law raises; final-state != allowed-set ->
+loader law fires; SHARD3 pin deleted -> all three byte-pin families red
+(image_fetch exact-set, orca byte-sizes, c08 trio); synthetic `FAM = abl`
+revival in the driver -> env_contract absence arm red (the c08 image-files
+absence arm pins abliterated-plumbing STRINGS and correctly stays green —
+env_contract is the FAM-routing law carrier).
+
+Carried to the docs/review round (NOT test surfaces): dev's DEVIATION —
+charts/README.md post-sweep false pins (the IQ3_XXS-in-envelope sentence, the
+96Gi×32Gi rows) — and the host-prep note's SC117/96Gi wording (cf-77 route).
+
+### 9.18 Docs round, law half — the runbook note's orca-quant block pinned (2026-10-31)
+
+Tree: dev's docs round dirty (host-prep note §3.3/§3.4/§4 post-C08 rewrite,
+hf_fetch.py header wording, fetch_models.sh git mode 100755 staged) + this
+law half. Runbook suite 18→19 arms.
+
+Law additions:
+- `DOC_TOKENS["runbook note"]` +2 windowed tokens — the trio Σ
+  `97,473,155,200 B` and the pack path `packs/orca-iq4_xs` (ride the existing
+  token arm; all pre-existing windows kept byte-identical).
+- New arm `test_c08_note_arithmetic_and_cleanup_trio_agree_with_the_pinned_
+  ship` (the 19th): the note's orca block must SUM to the live-pinned trio —
+  Σ imported from `test_strata_c08_rung_shifts.IQ4_PACK_TOTAL` (with the
+  pin-sum guard mirrored from the q4 totals arm) and all three per-shard
+  comma-groups cited, so the cited total stays hand-re-derivable — plus the
+  cleanup trio law (`rm -f /models/strata/.pack-orca` named, marker-line-FIRST
+  window, `tier-INDEPENDENT` WHY, `.setup-ABL` spelled as the driver writes
+  it) and strix's honest no-cap shape (prose + table cell).
+- Law-design note: table-cell windows bound on PIPES, not periods — the first
+  draft's period-bounded window died on the dot inside `…strix-iq3_s.json`
+  and reddened the law, not the doc. Fixed the law; the note was never touched.
+
+Record truth — dev's two corrections of coord-draft errors, now law-pinned:
+- **strix-no-cap**: the caps table's strix cap cell is `none declared` and the
+  prose names the bound as the `--expert-cache 24576`/`--resident-budget-gib
+  55` hypothesis pair + the pod cgroup — #1601's pairing covers THREE rungs,
+  not four. A falsified cap cell (the coord draft said four) reddens the arm.
+- **marker-path**: the cleanup trio names `/models/strata/.setup-ABL` — the
+  driver's own `MARK="/models/strata/.setup-$TOK"` shape — not the coord
+  draft's invented path. Probe D3 (.setup-ABLITERATED revival) reddens it.
+
+No new law needed for fetch_models.sh git mode: the image's exec bit comes
+from the Dockerfile's own `chmod 0755 /opt/strata/bin/fetch_models.sh`
+(build-side law, containers suite); the git mode 100755 is repo hygiene,
+consistent with intent, and nothing test-side should depend on git bits.
+The earlier-deferred "stale services/gpu-ai comment wording" item is CLOSED —
+the C08 impl sweep took that surface with it (zero strata-flavoured abl/
+IQ3_XXS/96Gi wording left; the c08 absence arm pins the surfaces by grep).
+
+Probes (file copies, restored, note diff-clean): D1 Σ last-digit drift ->
+token arm + arithmetic arm both red; D2 pack-path drift -> token arm red;
+D3 falsified `.setup-ABL` line -> arithmetic arm red; D4 strix cap cell ->
+92160 -> arithmetic arm red. (First probe round's sed/argv anchors were
+mis-specified — nothing mutated, caught by the helper's own assert, re-run
+clean; §9.16 file-copy discipline held.)
+
+Posture: per-file runbook 19P/0F; FULL plain 0F/376P/8S, armed 0F/384P/0S
+(+1 arm exactly vs §9.17 posture); containers 24P; gates 19/22/9/15 rc 0 on
+the dirty tree; aislop ci --changes 100, 0/0/0. STATE.json untouched this
+round. No commits.
+
+### 9.19 C09 test round (pre-C09-dev) — ornith carry + arena, the by-name flip ledger (2026-10-31)
+
+Wave 9 kickoff (U11: owner proceeds C09). This round authors EVERY designed-red
+C09 arm before dev touches anything, applies the §9.17 by-name flip list, extends
+the gate admits (pre-authorized admit-lag class, third occurrence), and probes
+non-vacuity. Baseline entering the round: 0F/376P/8S plain, 0F/384P/0S armed,
+containers 24P, gates 19/22/9/15.
+
+New files (the C09 pair):
+- **test_strata_c09_ornith_carry.py** — image/driver side, 17 arms + 1 live arm:
+  patch 2-hunk shape law (hunk COUNT is law — a third hunk = re-research per the
+  chunk Notes), per-hunk content (kNativeHBytes 1024→2048 removal+addition;
+  X(12) into STRATA_D_FMTS), >=2 comment lines citing #3574 + the drop trigger,
+  build COPY + git apply before the .git rm, verify layer (`git apply --check
+  --reverse` + both grep assertions — the ONLY pre-merge proof since CI never
+  compiles HIP), README [C2] digest pair + 0.1.55 exe rows; the claim-checkout
+  migration laws (marker-keyed + content-compared + carry-N re-arming, cp -a
+  source-only sync list, rsync ban (baked-tool law), build-hip wipe before
+  recompile, guard<sync<recompile<marker ordering = loud-fail law, and the
+  whole-script data-state negative: bare `rm -rf "$SRC"` + any rm touching
+  Strata-data/packs/.venv/strata-*.json/.dl-/.pack-/.setup-/.done/engine/ are
+  offenders); the GGUF-direct orn legs (three anon hf_fetch calls with the
+  verbatim repo paths, DECISIONS citation in the orn arm, .dl-ornith skip-guard
+  before / write after the complete set, NO pack and NO HF_TOKEN in the window,
+  original repo names under Strata-data); byte_pins three literals + the Σ==sum
+  anti-slip law; and the live arm (RUN_HF_CHECK=1): tree paths+sizes == the
+  constants, ranged resolve of shard 2 answers 206 with GGUF magic and NO Bearer
+  challenge — the ungated premise proven live 2026-10-31 (gated=false), the
+  mirror-image of orca's gated-trio law.
+- **test_strata_c09_ornith_arena.py** — chart side, 11 helm arms: residency
+  contract (ttl/unloadTimeout/checkEndpoint equality, ulimit-wrapped cmd
+  byte-mirroring the primary except the profile file, keyless api_key), env arms
+  (ALLOWED_HOSTS + STRATA_DENSE_MMQ=1 per #3926 — chunk-declared, absence is
+  drift), alias anti-split parameterized (chunk freezes the ARENA id, not the
+  alias), matrix letter **n** with the QUOTING law (see law fixes), five-arena
+  alternation + explicit ornith×q4 never-co-load (the two biggest pinned arenas),
+  q36 closed-world ⊆ Q36_SURFACE + REQUIRED {--native,--max-context 262144,--mtp
+  2} (PARAMETERIZED per the chunk dev-round gate: dev's setup.py@v0.2.9 +
+  engine.hpp read is the authority; legitimate generated additions re-pin
+  through the test session, never a silent dev edit), flash-next-only flag-class
+  negatives (--conversation-cache*/--slot-save-path/--memory-limit-mib cannot
+  parse on the q36 surface), --native original-names/Strata-data/no-pack,
+  model_name honesty (names ornith, never borrows flash-next, admits the q4
+  class), claim-compiled-engine exe law (packaged halo roots are UNPATCHED —
+  the gfx120x-only caveat made executable), configmap +strata-ornith-q4.json.
+
+Flip ledger BY NAME (the §9.17 discipline):
+- strata_testlib.py: +ORNITH_ID/PROFILE_ORNITH_FILE/CHECKOUT_MARKER/
+  ORNITH_DL_MARKER/HF_REPO_ORNITH/ORNITH_SHARD_PATHS/ORNITH_SHARD_BYTES/
+  ORNITH_TOTAL_BYTES; INNER_IDS 4->5, INNER_MATRIX_VARS +n, INNER_PROFILE_FILES
+  +ornith. No wave-loader law amendment was needed (growth-only chain).
+- evidence/strata-peers-expected.yaml: models_allowed 4->5 (+ the frozen id),
+  models_states appended (C09-landed state; the monotone chain holds — C09
+  grows, no law change).
+- test_catalog_contract.py: CF86_NEW_CATALOG_IDS 4->5, CF86_TRIO_IDS 2->3
+  (+ornith; trio grep 3/3 per the chunk), trio-scope guard literal re-pinned,
+  **absence->presence flip**: test_c05_ornith_strata_id_absent_everywhere ->
+  test_c05_ornith_strata_id_present_only_where_it_should_be (teeth both ways:
+  no-hits reds, phantom-home reds, ladder-survival leg, peers-route leg).
+- test_strata_thin_init.py: STRATA_QUANTS literal "q3,orca,q4" -> "q3,orca,q4,orn".
+- test_strata_q4_rung.py: test_c06_matrix_alternatives_over_all_four_arenas ->
+  ..._over_the_full_arena_set (name follows the table, not the era); peers
+  literal grown to the five-id wave; header cross-ref re-pointed at the new
+  presence arm.
+- test_strata_c08_rung_shifts.py: C08_PEERS_ORDER -> FINAL_PEERS_ORDER (five
+  ids); test_c08_sets_main_expression_is_the_shrunk_alternation_literal ->
+  ..._current_alternation_literal ("(p | s | o | q | n)");
+  test_c08_service_env_and_peers_shrink_to_the_three_token_state ->
+  ..._track_the_current_wave_state (four-token env + five-id peers; the swept-
+  token ABSENCE half stays permanent); test_c08_catalog_wave_tables_shrink_with_
+  the_sweep successor arm: trio SIZE check relaxed to Strata-projection + head==
+  orca + ABL-absence (the sweep halves stay permanent, the size is a wave
+  companion — the exact trio literal is now held by test_c05_trio_scope_is_
+  strata_ids_only).
+- test_strata_image_fetch.py: byte_pins era law 3->6 literals + two Σ totals
+  (orca trio + ornith trio, two named totals); env_contract law gains the
+  `[ "$FAM" = orn ]` pseudo-family presence.
+- containers/strata/tests/test_dockerfile.py: STRATA_VERSION 0.2.8->0.2.9,
+  FLAVOR_PINS digests -> the R5 [C2] pair verbatim, ENGINE_VERSION 0.1.54->
+  0.1.55, STALE_STRATA_TAGS +0.2.8, STALE_ENGINE_VERSION 0.1.52->0.1.54.
+- gates: gate.sh t14 + services/gpu-ai admit literal `containers/strata/carry/
+  ornith-q36.patch` (note added); rulesync-surface.sh c8 admit same literal +
+  TWO new negative probes (containers/strata/carry/ornith-strata-fixups.patch —
+  a second patch file stays out; containers/gemma/serve.Dockerfile — sibling
+  images stay out); agents-md.sh c7 admit same literal.
+
+NOT flipped (deliberate, by name): the §9.16 strix era-2 tether arms
+(test_strata_strix.py re-pin fixtures vs 0.1.54) stay green THIS round and
+redden at dev's 0.1.55 landing — the era-3 capture pairs with that landing per
+the chunk Tests note ("strix 0.1.55 arms flip only at dev, paired"), in the
+C09-LANDING test round. No doc-red arms: the host-prep note wording is not in
+C09's Files in scope, so authoring a red there would invent scope. The outer
+CF86_MATRIX_VARS/CF86_SET_ADDITIONS tables (flashnext matrices) are untouched —
+inner-letter growth rides the strata INNER tables + the arena combo laws.
+
+Law-design fixes caught by probes (law fixed, never the doc/driver):
+1. cp -a sync-list per-entry regex: `(^|[\s/"'])tools([\s"'/]|$)` missed
+   `tools;` (semicolon not in the class) -> word-boundary form `(?<!\w)e\b`.
+2. Marker laws were literal-grepped; the C01 marker-law shape (variable-
+   extracted, accepts printf > "$VAR") is what a real driver writes — both
+   migration arms rewritten to extract the marker var and match through it.
+3. Presence arm render leg: Strata arenas NEVER enter the outer models map (they
+   route via peers.strata.models, same posture as orca/q4) — the leg was reading
+   the wrong surface; rewritten against the peer route.
+4. NEW CHART-SIDE TRAP, probe-caught (G/H): helm's YAML-1.1 parser resolves a
+   BARE matrix letter `n:` to the boolean False — an unquoted `n: ornith-...`
+   renders vars {"false": ...} and sets.main "(... | n)" fails to resolve at
+   RUNTIME, not just in the test reader. The matrix arm now pins the quoted
+   `"n": <id>` form directly (bare `n:` reddens naming the hazard); a testlib
+   normalizer that would have hidden this was written and REVERTED.
+
+Probes (file copies to /tmp/opencode, restored, diffs clean): patch 3-hunk drift
+-> count law red, content arms green on good constants; #3574 per-hunk comment
+teeth; c8 admit rc 0 with the untracked patch present (admit positive) and the
+two negative probes green; migration law A-satisfiability (correctly ordered
+synthetic block -> all five laws green), B early-marker write -> ordering law red
+with the line numbers, C1 bare `rm -rf "$SRC"` red, C2 `rm -rf "$SRC/Strata-data"`
+red; presence arm D phantom-home red / E no-hits red / H2 satisfaction green
+(chart+services injection only); F1 co-load `(p q n | s | o)` -> arena combo law
+AND the q4 cross-file alternation law both red; F2b well-shaped synthetic with a
+SMUGGLED --conversation-cache-mib -> exactly the two smuggle arms red, 9
+satisfaction arms green; J six-literal byte_pins -> carry Σ arm + image_fetch era
+arm both green, J2 Σ comment off-by-one -> carry Σ leg red. Probe-anchor slips
+caught BEFORE mutation: a `set -u` anchor (the driver line is `set -eu`), a
+4-space arena injection (models keys are 6-space), an ambiguous template
+`{{- end -}}` anchor — helper asserts fired, nothing mutated; and the final
+per-file recount initially mis-ran WITHOUT `PATH=$HOME/.local/bin` (the AGENTS.md
+recipe — helm-guarded arms skipped instead of running; re-ran green-of-green).
+
+Posture (final, this round): per-file carry 16F/1P/1S (the P = the never_deletes
+negative, green before dev BY DESIGN; the S = the live arm), arena 11F, catalog
+3F, q4 2F, c08 2F, thin_init 1F, image_fetch 2F, wiring/orca/strix/parity/blast/
+runbook all green; FULL plain 37F/369P/9S, armed 37F/378P/0S (live arms green
+armed: the ungated premise holds today); containers 7F/17P; gates 19/22/9/15 rc
+0 on the dirty tree; aislop ci --changes 0 errors/0 warnings over 64 files.
+
+Expected red dev clears at C09 landing: **44 = 37 charts + 7 containers**, every
+red C09-named (designed), zero accidental. Plus the §9.16 strix tether reddening
+at dev's 0.1.55 landing (era-3 capture is the LANDING test round's job, paired).
+The dev-round gate rides the q36 surface arms: dev records the setup.py@v0.2.9 +
+engine.hpp read in commands_run; legitimate surface additions come back through
+this test session for a re-pin, never a dev edit of the arena file. No commits
+this round (landing stays user-owned); STATE.json untouched.
+
+### 9.20 C09-landing round — two unsatisfiable-law repairs + the era-3 strix capture (2026-10-31)
+
+C09 dev landed DONE_WITH_CONCERNS (tree dirty: 8 modified + the carry/ dir).
+Landing posture measured first: 6 reds = the two laws unsatisfiable AS AUTHORED
+(both test-side, dev correctly froze — §9.19 authoring bugs) + the four strix
+tether arms the §9.16 pre-announcement said would redden at the 0.1.55 landing
+(and they reddened exactly as designed: orca + q4 byte-freeze arms, the strix
+ties-to-halo-root arm, the thin_init era-pin arm).
+
+Repair ledger BY NAME:
+1. test_strata_c09_ornith_carry.py::test_c09_carry_patch_exists_with_exactly_
+   two_hunks — the §9.19 hunk-header regex `^@@\s+-\d+(?:,\d+)?\s+\d+...`
+   omitted the `+c,d` side and therefore matched NO real unified-diff hunk.
+   The landed patch (git-generated against v0.2.9) carries exactly 2 headers
+   `@@ -15,8 +15,10 @@` / `@@ -846,10 +846,12 @@`; the old pattern counted 0
+   and the arm failed for the wrong reason. **Post-mortem, the sharper lesson:
+   the §9.19 3-hunk drift probe DID fire, but its message read "0 hunks" and I
+   read it as drift teeth — a vacuous law wearing teeth.** Regex-shape laws on
+   absent artifacts must be run against a REAL reference artifact (a git-
+   generated diff here) before authoring, not only against self-authored
+   synthetics. Repaired regex: `^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@.*$`; the
+   EXACTLY-2 law is kept, and dev's hunk-2 technique (X(12) added in BOTH
+   #ifdef branches inside one hunk, because setup.py compiles
+   -DSTRATA_Q6K_EXPERTS=ON and the bare branch must not drift) is legitimate
+   and preserves the count — the law pins the count, the content arms
+   (`+X(12)` per hunk window) stay satisfied.
+2. test_strata_c08_rung_shifts.py::test_c08_byte_pins_env_carries_the_three_
+   iq4_xs_literals_and_sum — its EXACT-SET half (literals == the orca trio)
+   is mutually unsatisfiable with the image_fetch era arm (EXACT-6 since
+   C09 sanctions +3 orn literals; that arm is the era's whole-set law and
+   stays untouched). Repaired to era-invariant form: swept-literal absences
+   (permanent), the trio's own NAME=size assignments, the Σ 97473155200
+   comment, and a NEW arithmetic identity (the trio members sum to their own
+   Σ — the same anti-slip law the carry file's orn arm carries, no blending:
+   each era law owns its trio, the era arm owns the set).
+3. Era-3 STRIX TETHER CAPTURE (the §9.16 pre-announcement; class: sanctioned
+   engine-root re-pin, precedent C07 era-2):
+   - delta verified PROGRAMMATICALLY BEFORE re-capture: render vs era-2
+     fixture — of the 13 keys exactly {exe, lib_dirs} moved, each only in the
+     version segment (0.1.54→0.1.55 halo); double-capture determinism clean.
+   - evidence/strata-profiles-c09-repin/ added: fixture (sha256
+     b0a35bcd95ecfb0ecfa1a8be3ec6a5a4e5866ae7bfe4bd8cc71af0e1bc45d89d) +
+     PROVENANCE.md carrying the 3-row era chain and both delta paragraphs.
+   - strata_testlib.PROFILE_FIXTURE_ERA: strix -> "strata-profiles-c09-repin"
+     (primary stays pre-cf-86 — re-verified: version-free claim-compiled root,
+     zero changed keys).
+   - test_strata_strix.py::test_c07_strix_fixture_era_delta_is_only_the_
+     engine_root_pair rewritten as a CHAIN guard: each era pins its captured
+     root (0.1.52/0.1.54/0.1.55) and every ADJACENT delta == exactly
+     {exe, lib_dirs}; no re-pin era dir may grow a primary file.
+   - test_strata_thin_init.py::test_c07_strix_packaged_engine_legs_move_to_the_
+     re_pinned_build re-pinned to the 0.1.55 era; the stale-pin negative now
+     covers BOTH retired eras (0.1.52/0.1.54) in executable strix lines.
+   - The other three tether arms (orca/q4 byte-freeze, ties-to-halo-root) are
+     era-map consumers and turned green with the map move — verified against
+     the Dockerfile: ONE halo label 0.1.55 (COPY + `test -x`), rx9070 too, and
+     the README ledger pairs the [C2] digests with the 0.1.55 exe rows
+     (containers three-surface arm green, 24P).
+
+Probe record (file copies to /tmp/opencode, fresh backups — last round's
+v.bak predates the C09 dev round and was NOT reused): P1a synthetic 3rd hunk
+-> count law red with 3; P1b malformed header (the `+` removed) -> red with 1
+(proves the repaired regex is non-vacuous BOTH directions); P2 orca literal
+off-by-one -> presence half red; P2b trio value duplicated (presence green) ->
+the new Σ identity reds ("sum to 105444159456"); P3 era-3 fixture exe tampered
+-> chain guard red naming era 3; P4 strix exe held at 0.1.54 -> thin_init era
+law red. All mutated files diffed clean after restore.
+
+Posture (the pre-announced zero-red landing, computed): FULL plain **0F/406P/
+9S**, FULL armed **0F/415P** (live arms green armed: the ungated ornith tree
+still matches the pins), containers 24P, guards 19/22/9/15 rc 0 on the dev-
+round dirty tree — the §9.19 admits already cover the landed carry patch +
+README rows, no third-occurrence extend was needed. aislop ci --changes: 0/0
+over 64 files. All 44 §9.19 designed-reds are cleared by dev's landed
+artifacts; the two test-side unsatisfiables are repaired; the four §9.16
+tethers are era-advanced, not weakened.
+
+No commits; STATE.json untouched. Landing (commit of dev round + this round)
+stays coord/user-owned.
+
+### 9.21 FINAL3 round-3 law closes — presence home, four-surface label law, runbook pin law (2026-10-31)
+
+REVIEW-FINAL3-2026-10-31.md §6/§7 routed three record/docs defects; dev's docs round
+landed uncommitted (chart README 0.1.55 rows + five-id inner table; host-prep note
+runbook rewrite). This round closes the test-surface obligations by name:
+
+1. **The named red** — `test_catalog_contract.py::test_c05_ornith_strata_id_present_only_
+   where_it_should_be`: `allowed_homes` widened to three surfaces, adding
+   `charts/llama-swap/README.md` (the mandated five-id inner-models table is the §9.15
+   presence-era roster row — operators read the chart README as truth). Negative teeth
+   unchanged: any other live_code_grep hit is a phantom home.
+2. **Label law widened to FOUR surfaces** — renamed
+   `test_dockerfile.py::test_c07_engine_package_labels_are_one_fact_across_four_surfaces`
+   (was `_three_surfaces`); `charts/llama-swap/README.md`'s engine-exe table joins the
+   Dockerfile, the containers README and the chart's values.yaml strix profile. Pair-
+   expected like the other prose surfaces; values.yaml stays the halo-only surface.
+   This is the FINAL3 §2 drift root cause pinned as law: a stale label in the table
+   operators read reddens the suite. The era-2 (C07) PROVENANCE keeps the OLD arm name —
+   frozen history; era-3's PROVENANCE carries the new name plus the rename note.
+3. **NEW runbook pin law** — `test_strata_runbook.py::test_c09_runbook_alternation_ties_
+   to_the_rendered_sets_main`: the note carries the strata matrix alternation TWICE
+   (§3.8 preload warning, §4 RAM law); the regex finds exactly-2 lowercase-pipe-
+   alternations and each must equal the rendered sets.main `(p | s | o | q | n)`. The
+   count==2 half reddens if a docs rewrite silently drops an anchor — the §3.8 text
+   pre-declared this law ("that string is the alternation the runbook pin law ties to
+   the live render"), so values edits and docs lines must land together.
+4. **Peers-evidence header era-honest rewrite** (`evidence/strata-peers-expected.yaml`
+   header prose only — chain data untouched, its states already end at five): the C01/
+   C02/C06/C09 growth chain named; `models_states` = APPEND-ONLY history (six states, the
+   C08 sweep the one sanctioned shrink); `models_allowed` = the CURRENT ruled set — five
+   served ids since C09.
+5. **Carry-over wording** (era-honest labels, no law weakened):
+   - `test_strata_c09_ornith_carry.py` hunk-2 docstring: Q3_K_M → **Q4_K (fmt 12)**,
+     routed downs ∈ {Q4_K(12), Q5_K(13)}, no Q3_K anywhere — the r1-finding-1 correction
+     the landing commit carried in the patch/values prose. (`chunks/C09.md` still says
+     Q3_K_M in its prose — coord/plan surface, not mine.)
+   - `strata_testlib.py` DSL comment + `test_strata_strix.py::test_c01_strix_matrix_
+     alternation_never_co_loads` docstring: era-LABELLED — the era-1 `(p | s)` founding-
+     pair check stays what the arm is; today's five-letter alternation's all-arenas law
+     lives in `test_strata_c09_ornith_arena.py::test_c09_alternation_expands_five_arenas_
+     and_ornith_only_swaps` (verified before deciding: that arm already enforces ≤1 arena
+     per combo AND all-five reachable, so no substance gap exists to widen into).
+
+Probe record (fresh file copies to /tmp/opencode — the previous round's backups were NOT
+reused): P-A stray `ornith-1.5-122b-strata` needle appended to
+`.github/workflows/aislop.yaml` -> presence arm red NAMING the stray file; P-B
+0.1.55→0.1.56 halo label in the chart README -> four-surface arm red naming
+"chart README engine labels … lack …"; P-C §4 anchor shortened to `(p | s | o | q)` ->
+runbook law red ("drifted from the rendered sets.main"); P-C2 a docs rewrite dropping the
+§3.8 anchor -> the count half red ("want exactly 2", 1 found). All mutated files diffed
+clean after restore.
+
+Posture truth (measured, both envs, after 1–4 landed): FULL plain **0F / 407P / 9S**,
+FULL armed (`RUN_HF_CHECK=1 RUN_FLAG_AUDIT=1`) **0F / 416P / 0S** — both exactly +1
+against the FINAL3 §1 pair (406/415): the runbook pin arm is NEW. 9 plain skips unchanged
+and named (7× RUN_HF_CHECK + RUN_FLAG_AUDIT); containers 24P (the rename is not an
+addition); guards rulesync-surface 19 / gate 22 / agents-md 9 / agent-perms 15 all rc 0 ON
+THE DIRTY TREE incl. dev's docs round — the three §9.19 admit files already carry
+`.agents/notes/strata-host-prep-gpu-ai.md` and `charts/llama-swap/README.md`, no extend
+was needed; `aislop ci --changes` 0 errors / 0 warnings over 64 files.
+
+No commits; STATE.json untouched. Everything (dev docs round + this round) lands via
+coord.
+
+### 9.22 first-boot defect round — dangling claim-venv python across image swaps (2026-10-31)
+
+Pod log (gpu-ai-llama-swap-strata, first boot on the merged 0.2.9 image): migration
+fired correctly, then `line 92: /models/strata/Strata/.venv/bin/python: not found`.
+Root cause: the claim venv's `bin/python` is a symlink into the *provisioning* image's
+interpreter — an image swap can dangle it while wheel-installed `cmake`/`ninja` binaries
+keep working; setup.sh never re-runs on a marker-provisioned claim, so nothing rebuilds
+it. The C09 migration (written before that world existed) shelled the claim venv python
+unguarded for BUILD.json metadata; the download-step guards (207/291) would fail next
+boot on the same claim.
+
+Fix (branch `bug-strata-claim-venv-heal` off main): (1) `find_python3()` resolver
+(PATH python3, then terminal candidates — now the single home for that list); (2)
+migration HEALS the venv when `! -x .venv/bin/python` and the image interpreter's minor
+matches the venv's `lib/pythonX.Y/site-packages` — `ln -sfn` on python+python3 only,
+venv content untouched (data-state law intact); (3) `$PY` = healed venv python else
+image python, fail-loud when neither; metadata reads go through `$PY`.
+New law arm `test_c09_migration_heals_a_claim_venv_whose_python_dangles_at_the_image`
+(one-executable-home for the candidate list, executable-test heal, both symlinks,
+minor gate, bare-venv-`-c` reads forbidden, $PY resolution present). Behaviour proven
+by extraction harnesses run from the real script text: main path (dangling → re-pointed
+→ ARCHS/LIBDIRS read clean, rc 0) and minor-mismatch fallback (no heal, image python
+carries the reads, rc 0). Posture: carry file 18P+1S, FULL 408P/9S/0F, containers 24P,
+lint + both renders pass.
+
+Pre-existing, NOT this round: `gate.sh` t17[C03] (`.rulesync/subagents/agent-coord.md`
+coord-family contract) is FLAKY on `origin/main` itself — reproduced failing in a fresh
+detached origin/main worktree with clean /tmp/opencode, and observed passing once
+unproven-repeatably elsewhere. Same-check `coord-inwork` i4 and the `validation-fix`
+cascade fail identically on pristine origin/main. A nondeterministic gate is a louder
+problem than a red one: own debug card recommended.
+
+### 9.23 migration sync allowlist → denylist (2026-10-31 second boot finding)
+
+The venv-heal fix worked — the pod got past line 92 and died deeper: cmake
+configure "Cannot find source file: tests/hip/gdn_stage_bench.cpp" (verified
+v0.2.9 CMakeLists:1081 upstream, HIP-gated block). The migration synced a
+hard-coded SOURCE allowlist (src/include/cmake/tools/setup.*/CMakeLists) and
+left the claim's stale `tests/` under the new CMakeLists — the allowlist
+stale-mates the moment upstream adds a build input, which is exactly what
+0.2.9 did (gfx12 chunked-DeltaNet benches).
+
+Driver law changed: the migration now enumerates the IMAGE tree and skips the
+claim's CLOSED data state — `data|Strata-data|third_party|engine|build-hip`
+(denylist, dotfiles-by-glob) — with third_party still merging after the loop.
+The law arm `test_c09_migration_syncs_image_tree_except_claim_data_state`
+replaces the source-only arm (old `SYNC_SOURCES` constant retired as dead);
+the skip-set string is pinned literally so any change is a visible contract
+change. Behaviour proven by extraction harness (real loop lines, fake
+claim/image trees): new tests/ synced, CMakeLists replaced, stale tests/
+removed, data/expert-profile.bin preserved with the image's data/seed NOT
+copied, third_party merged both ways, markers/engine/.venv/run-configs/
+build-hip untouched, dotfiles not synced. Posture: carry 18P/1S, FULL
+408P/9S/0F, containers 24P, guards rc 0, sh/dash -n clean.
+
+### 9.24 prompt-rate round — T0 measurement env + T3 chunk cap + the primary's era move (2026-11-01)
+
+Owner ruling U13 ("go for T0 and T3") after RESEARCH R6. Suite shape per the
+round's own contract: one-line renders + one narrow era move, no envelope
+changes anywhere.
+
+- **T0 arm (new):** `test_strata_config_schema.py::test_t0_request_lines_on_every_arena_model_env`
+  asserts `STRATA_REQUEST_LINES=1` (`strata_testlib.REQUEST_LINES_ENV`) on all
+  FIVE arena model envs and that the primary's profile-layer `env` stays `{}`.
+  Why all five: an unattributable rate is how the ~500-vs-2,800 confusion
+  started, and the alternation ping-pongs arenas inside one pod. The constant
+  lives in the lib so the chart and the arm cannot drift apart.
+- **T3 re-pin:** `strata_testlib.PRIMARY_REQUIRED_PAIRS` — `("--prefill",
+  "auto")` → `("--prefill", "auto:32768")`, comment carries the citation (bare
+  `auto` = 16,384 on gfx12; PR #3636 ran this node class at 32,768; strix row
+  +23% @74K; >8,192 exact on gfx12 → rate knob, no numerics cost).
+- **Primary era move (the delicate half):** `PROFILE_FIXTURE_ERA` primary →
+  `strata-profiles-t03-repin` (fixture sha256 `ce1f66a8…`, PROVENANCE.md
+  carries the 2-row chain, the encoding round-trip proof and the delta
+  paragraph). Capture was verified BEFORE writing: format reproduced era-1
+  byte-for-byte, delta == exactly `["args"]`, double-capture deterministic.
+- **New guard, written to CLOSE a hole rather than widen one:**
+  `test_strata_strix.py::test_t03_primary_fixture_era_delta_is_only_the_prefill_line`
+  pins the era-1→era-2 delta to one key, one flag, one value pair, asserts
+  args *membership* is unchanged (a cap is a value edit, not a flag edit),
+  re-asserts the U12 envelope trio unmoved, and keeps profile `env == {}`. Any
+  second change riding this era goes red. The existing engine-re-pin assert
+  (primary file forbidden in `c07-repin`/`c09-repin`) is left intact — the
+  two laws are different: an ENGINE re-pin may not move the primary's era at
+  all; an OWNER-RULED posture change may, through its own era dir + chain arm.
+- **Not shipped, deliberately, so they stay open menu items:** T2 (`--ple-io
+  mmap`, conditional on the T1 `PLE on …` read — and R6 found the q4 comment's
+  "default is file/mmap" claim conflicting with the v0.2.9 auto-RAM-else-direct
+  policy, which only the node can settle), T4 (ornith chunk 4096, VRAM-tight
+  post-U12.2), T5/T6/T7 (`STRATA_MMQ_KQ`/`STRATA_PF_FUSED`/`STRATA_SELECT_WMMA`
+  on q4/orca), T8 (hipBLASLt table — the venv wheel is 1.2.0-class, expected
+  0–3%, so skip unless a startup line contradicts). No arm was written for a
+  flag that is not shipped; the on-target `--plan`/startup reads decide those.
+
+### 9.25 U14 envelope round — cgroup 116Gi, flagship cap 110592, era-3 primary capture (2026-11-01)
+
+Owner ruling U14 after the post-U13 on-target read. Two shipped values, one
+new era, one amended law, one retirement.
+
+- **Shipped:** pod `limits.memory 116Gi` (was 108Gi) and primary
+  `--memory-limit-mib 110592` (was 92160 — the rung's own term-sums are
+  ~91.84 GiB, so it had never fit). q4 103680 and orca 92160 do NOT move: caps
+  are per-rung, and neither was bumping against the ceiling. `requests` stay
+  64Gi (scheduler packing is not what bounds a pinned arena; the cgroup is).
+- **Primary era chain, now three deep:** `strata-profiles-pre-cf86` →
+  `strata-profiles-t03-repin` (U13, `--prefill`) → `strata-profiles-u14-repin`
+  (U14, `--memory-limit-mib`, sha256 `f1a8d6c8…`). Delta verified BEFORE
+  re-capture: changed keys == `["args"]`, args membership unchanged, exactly
+  one flag value moved, `env` still `{}`; encoding re-validated by reproducing
+  era 2 byte-for-byte. `PROFILE_FIXTURE_ERA` points at era 3.
+- **Law widened, not weakened:** `test_t03_primary_fixture_era_delta_is_only_the_prefill_line`
+  is replaced by `test_primary_fixture_era_chain_is_one_owner_ruled_flag_per_step`
+  — every ADJACENT era step must be args-only, membership-identical, and
+  exactly ONE flag, with conv-cache/KV/max-context never riding an unrelated
+  step; plus the captured era must be the one the map points at, and the newest
+  cap must fit the shipped cgroup. Two eras each moving one owner-ruled flag is
+  still a law; a third riding a second flag is red.
+- **Envelope-identity law amended a second time, explicitly:**
+  `test_strata_orca_rung.py::test_c02_four_profiles_and_orca_shape` no longer
+  mirrors the primary's `--memory-limit-mib` (it pins orca at 92160 instead).
+  The original C02 shape assumed one shared memory declaration; U14 broke that
+  assumption on purpose, and silent mirroring would have handed orca ~20 GiB of
+  budget nobody ruled. `--kv-resident` / `--conversation-cache-slots` /
+  `--max-context` / `--kv` keep mirroring; conv-cache stays the pre-existing
+  sanctioned exception.
+- **Per-rung pins now asserted in two places:** `test_strata_render.py::test_c01_memory_cgroup_and_engine_cap`
+  stopped carrying a pair TABLE (the `96Gi ↔ 92160` / `cgroup ↔ q4-cap` shape
+  implied one binding pair for the whole pod) and now asserts the shipped
+  cgroup equality plus each rung's own cap (`110592` / `103680` / `92160`) and
+  the ≤-cgroup derivation. `test_c06_cgroup_108gi_and_engine_cap_lockstep` is
+  now `…_116gi_…`, deriving its ceiling from the shipped limit rather than a
+  literal. `strata_testlib` renamed the constant to `STRATA_CGROUP_LIMIT`
+  (pod-level) with `Q4_CGROUP_LIMIT` kept as a deprecated alias, and added
+  `PRIMARY_MEMORY_LIMIT_MIB`.
+- **Doc law followed the numbers, not the arm:** DOC_PAIRS now requires
+  `116Gi ↔ 110592`, `116Gi ↔ 103680` and the original `96Gi ↔ 92160` shape in
+  BOTH docs (either word order — the docs state them differently — inside
+  period-free windows). The README regained its explicit doctrine sentence
+  ("the cgroup is the pod's, the cap belongs to whichever arena is loaded"),
+  which a rewrite had dropped; the arm caught it and the arm was right.
+- **Retired, with evidence, so it is not re-litigated:** `--ple-io mmap` (R6's
+  T2). First-boot read: PLE resolved **direct** with the engine's own probe at
+  120,960 rows/s against a 15,000 warning line — no deficit to buy back — and
+  mmap's ~26.8 GiB of page cache would land in the cgroup whose room U14 is
+  buying for parking. `--ple-io ram` remains negative-pinned (2026-10-29 OOM).
+- **Still open, deliberately not in this round:** the chunk A/B (T3's 9.80 GiB
+  expert-cache borrow, 726–844 MiB VRAM free — the small-burst candidate), T5
+  `STRATA_MMQ_KQ=1` (upstream speed unmeasured on AMD), T6 orca fusion, T7
+  `SELECT_WMMA` parity, T4 ornith chunk 4096, and the strix/ornith `--plan`
+  finalizations. No arm was written for a value that is not shipped.
+
+### 9.26 U15 zero-preload round — constant flip, golden re-pin, and the carve-out coupling (2026-11-02)
+
+Owner ruling: nothing may preload; the pod boots at 0 RAM so either engine can
+be called first.
+
+- `llama_swap_testlib.C04_PRELOAD_PINNED` → `[]`. It is the single source for
+  the preload VALUE, asserted by `test_new_roster::test_c04_1_no_new_model_preloaded`,
+  `test_heretic_rungs_27b::test_c04_no_preload_and_no_models_layer_entry` and
+  `test_heretic_rungs_flashnext::test_c03_no_preload_and_no_models_layer_override`,
+  so the flip lands in all three at once and each still fails if a model is ever
+  added back. `hooks` must remain a dict (test_config_schema arm), so the block
+  is kept with an empty list, not deleted.
+- `golden/gpu-ai.config.yaml` re-pinned to `preload: []` with a header entry.
+  Why the golden may move here and the frozen baseline may not: the golden is the
+  maintained expectation and its own header already carries the 2026-10-29
+  preload re-pin (q8 dropped) — same fixture, same ritual, same reason.
+  `evidence/flashnext-pre-chunk-baseline/` stays byte-frozen: it is history, and
+  the arm that reads it now scopes the one key that history legitimately changed.
+- **Carve-out coupling (the trap this round hit):**
+  `_cf77_peers_carved` returns False if ANY key outside models/macros/peers/
+  matrix differs, so editing `hooks.preload` revoked the cf-77 peers carve-out
+  and the test reported *"peers delta present but NOT the pinned cf-77 evidence
+  shape"* — a red that misattributes an authorized change to an unauthorized
+  one. Fixed with `_hooks_scoped`, applied to BOTH the carve-out's `others`
+  check and the arm's own baseline diff (the arm's message had always claimed
+  "hooks.preload is off-scope"; the code hadn't implemented its own scope).
+  Scope is exactly `hooks.on_startup.preload`. Probes confirm a new hook type or
+  an `on_startup.profile` still diverges. Declared limitation of the scope rule:
+  a hooks block that is ABSENT on one side and a block containing nothing but
+  `preload` on the other both normalize to `{}`, so that one shape is invisible
+  to the baseline diff — covered instead by `test_config_schema::test_c02_macros_
+  matrix_hooks_stay_top_level_single_source` (hooks must be a dict in the gpu-ai
+  overlay) and by the C04 preload pins. The
+  peers shape is still validated against the evidence file, never a copy.
+- Division of labour preserved: preload legality lives in the C04 pins, peers
+  exactness lives in the evidence file, matrix growth lives in
+  `_cf86_matrix_violations`. Nothing new was added; one stated scope was finally
+  implemented.

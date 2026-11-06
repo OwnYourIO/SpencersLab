@@ -1,0 +1,16 @@
+# The name pairs with persistence.config.name in values.yaml: the library
+# tpl's that string against the same release, so both must stay
+# {{ .Release.Name }}-config. The listener mirrors the image's shipped
+# /mosquitto-no-auth.conf, adding the 0.0.0.0 bind and persistence off.
+# allow_anonymous is safe ONLY behind the ClusterIP-only, no-ingress
+# envelope: any future exposure must add auth first — mosquitto's own
+# password_file fed from the repo's per-service secrets templates.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  mosquitto.conf: |
+    listener 1883 0.0.0.0
+    allow_anonymous true
+    persistence false

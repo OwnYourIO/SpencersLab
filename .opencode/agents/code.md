@@ -69,17 +69,191 @@ permissions:
     resource: git diff*
     effect: allow
   - action: shell
-    resource: git checkout*
-    effect: ask
-  - action: shell
-    resource: git switch*
-    effect: ask
+    resource: git add*
+    effect: allow
   - action: shell
     resource: git commit*
-    effect: ask
+    effect: allow
+  - action: shell
+    resource: git checkout*
+    effect: allow
+  - action: shell
+    resource: git switch*
+    effect: allow
+  - action: shell
+    resource: git branch*
+    effect: allow
+  - action: shell
+    resource: git checkout main*
+    effect: deny
+  - action: shell
+    resource: git * checkout main*
+    effect: deny
+  - action: shell
+    resource: git checkout * main*
+    effect: deny
+  - action: shell
+    resource: git * checkout * main*
+    effect: deny
+  - action: shell
+    resource: git switch main*
+    effect: deny
+  - action: shell
+    resource: git * switch main*
+    effect: deny
+  - action: shell
+    resource: git switch * main*
+    effect: deny
+  - action: shell
+    resource: git * switch * main*
+    effect: deny
+  - action: shell
+    resource: git update-ref*
+    effect: deny
+  - action: shell
+    resource: git * update-ref*
+    effect: deny
+  - action: shell
+    resource: git symbolic-ref*
+    effect: deny
+  - action: shell
+    resource: git * symbolic-ref*
+    effect: deny
+  - action: shell
+    resource: git branch -f main*
+    effect: deny
+  - action: shell
+    resource: git * branch -f main*
+    effect: deny
+  - action: shell
+    resource: git branch --force main*
+    effect: deny
+  - action: shell
+    resource: git * branch --force main*
+    effect: deny
+  - action: shell
+    resource: git branch -d main*
+    effect: deny
+  - action: shell
+    resource: git branch -d * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -d main*
+    effect: deny
+  - action: shell
+    resource: git branch -D main*
+    effect: deny
+  - action: shell
+    resource: git branch -D * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -D main*
+    effect: deny
+  - action: shell
+    resource: git branch -m main*
+    effect: deny
+  - action: shell
+    resource: git branch -m * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -m main*
+    effect: deny
+  - action: shell
+    resource: git branch -M main*
+    effect: deny
+  - action: shell
+    resource: git branch -M * main*
+    effect: deny
+  - action: shell
+    resource: git * branch -M main*
+    effect: deny
+  - action: shell
+    resource: git worktree add * main*
+    effect: deny
+  - action: shell
+    resource: git * worktree add * main*
+    effect: deny
+  - action: shell
+    resource: git pull*
+    effect: deny
+  - action: shell
+    resource: git * pull*
+    effect: deny
+  - action: shell
+    resource: git merge *
+    effect: deny
+  - action: shell
+    resource: git * merge *
+    effect: deny
+  - action: shell
+    resource: git config alias*
+    effect: deny
+  - action: shell
+    resource: git * config alias*
+    effect: deny
+  - action: shell
+    resource: git checkout -b * main*
+    effect: allow
+  - action: shell
+    resource: git * checkout -b * main*
+    effect: allow
+  - action: shell
+    resource: git checkout -B * main*
+    effect: allow
+  - action: shell
+    resource: git * checkout -B * main*
+    effect: allow
+  - action: shell
+    resource: git switch -c * main*
+    effect: allow
+  - action: shell
+    resource: git * switch -c * main*
+    effect: allow
+  - action: shell
+    resource: git switch -C * main*
+    effect: allow
+  - action: shell
+    resource: git * switch -C * main*
+    effect: allow
+  - action: shell
+    resource: git worktree add -b * main*
+    effect: allow
+  - action: shell
+    resource: git * worktree add -b * main*
+    effect: allow
   - action: shell
     resource: git push*
     effect: ask
+  - action: shell
+    resource: git push*main*
+    effect: deny
+  - action: shell
+    resource: git * push*main*
+    effect: deny
+  - action: shell
+    resource: git push --force*
+    effect: deny
+  - action: shell
+    resource: git push -f*
+    effect: deny
+  - action: shell
+    resource: git push * --force*
+    effect: deny
+  - action: shell
+    resource: git push * -f*
+    effect: deny
+  - action: shell
+    resource: git * push --force*
+    effect: deny
+  - action: shell
+    resource: git * push -f*
+    effect: deny
+  - action: shell
+    resource: git * push * --force*
+    effect: deny
+  - action: shell
+    resource: git * push * -f*
+    effect: deny
   - action: shell
     resource: ls *
     effect: allow

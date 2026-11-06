@@ -112,6 +112,14 @@ charts:
   #langgraph:
   #  namespace: default
   #  ServerSideApply: "false"
+  # Client-only service: forgejo-runner-gpu dials out over HTTPS to the infra
+  # instance's public route (gpu has no in-cluster Forgejo), so it deliberately
+  # gets NO ingress.subdomains entry — the service trio's proxy leg is N/A by
+  # design, not an oversight (same documented posture as forgejo-runner-dev).
+  forgejo-runner-gpu:
+    namespace: default
+    ServerSideApply: "false"
+    chart: forgejo-runner
 
   # External charts (with version and repository)
   cloudnative-pg:
@@ -253,6 +261,16 @@ ingress:
     #  namespace: kube-system
     #  service: traefik
     #  port: 8080
+
+# appset-charts.yaml merges ONLY the contents of the top-level <appName>: key
+# into each release (nothing under charts.<appName> ever reaches it), so the
+# runner's connection target rides here — the chart's runner.url default is a
+# render-time stand-in. It must be a public route: gpu runs no Forgejo of its
+# own, so an in-cluster URL is dead on this cluster. gpu workloads already
+# reach this host — coderd authenticates against it (templates/secrets-coder.yaml).
+forgejo-runner-gpu:
+  runner:
+    url: https://git.spencerslab.com
 
 llama-swap:
   # gpu working set (CA2 catalog enablement; frozen ENABLEMENT table
@@ -694,7 +712,7 @@ hivetools:
     # docker manager tracks future :v<run> bumps (renovate-mcp:v31 precedent).
     wekan-readonly:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:v87
+      image: ghcr.io/ownyourio/wekan-mcp:v148
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.
@@ -731,7 +749,7 @@ hivetools:
                     - ALL
     wekan-admin:
       enabled: true
-      image: ghcr.io/ownyourio/wekan-mcp:v87
+      image: ghcr.io/ownyourio/wekan-mcp:v148
       transport: streamable-http
       mcpPort: 8080
       # OIDC temporarily disabled (2026-09) — uncomment to re-enable.

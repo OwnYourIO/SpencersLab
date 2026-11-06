@@ -1075,8 +1075,11 @@ if want m6; then
   notb="$BASE"
   if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then notb=$(git rev-parse MERGE_HEAD); fi
   moved=$( { git diff --name-only "$notb" -- "${NOTOUCH[@]}" 2>/dev/null || true;
-             git ls-files --others --exclude-standard -- "${NOTOUCH[@]}"; } | sort -u || true )
-  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "m6: a no-touch path moved vs $notb — commands dirs/the gate script/pipeline-models/pipeline-gates stay untouched (C02 AC6, i5/c17 dependency)"; }
+             git ls-files --others --exclude-standard -- "${NOTOUCH[@]}"; } | sort -u \
+           | grep -v -E -e '^\.rulesync/commands/(pipeline|pipeline-pr|wekan-board-provision)\.md$' \
+                       -e '^\.opencode/commands/(pipeline|pipeline-pr|wekan-board-provision)\.md$' \
+           || true )
+  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "m6: a no-touch path moved vs $notb — commands dirs/the gate script/pipeline-models/pipeline-gates stay untouched (C02 AC6, i5/c17 dependency). The admitted command trio is cf-90-sanctioned: pipeline.md/pipeline-pr.md (C02 run-tag retirement sentence) + the new wekan-board-provision.md (C01)."; }
   RS6=""
   if command -v rulesync >/dev/null 2>&1; then
     RS6="rulesync"

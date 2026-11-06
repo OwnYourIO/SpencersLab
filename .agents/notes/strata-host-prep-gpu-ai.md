@@ -124,9 +124,9 @@ commit of the still-open #2399 — RESEARCH §2, contradiction #5), so the
 engine cannot reach the fd count HIP pinned-memory creation needs, and the
 container's `ulimit -n 524288` cmd wrapper can only raise the soft limit up
 to this inherited hard ceiling. `LimitMEMLOCK=infinity` is the host half of
-DOCKER.md's `--ulimit memlock=-1:-1`: the arena page-locks ~47 GiB and a
-capped memlock fails the pin at load. The restart bounces k3s and every pod
-on the node — schedule it.
+DOCKER.md's `--ulimit memlock=-1:-1`: a strata arena page-locks ~47 GiB
+(IQ3_S) up to 71.7 GiB (q4) and a capped memlock fails the pin at load. The
+restart bounces k3s and every pod on the node — schedule it.
 
 ### 1.6 Transparent huge pages
 
@@ -206,6 +206,15 @@ generated run-config `Strata/strata-iq3_s.json` is the source of truth;
 (`ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF` IQ3_S, two shards, revision
 `ed59f920…`; sha256s recorded in the upstream repo's `model-manifest.json` —
 RESEARCH §4). Budget the area **135–160 GB** (GGUFs + pack + MTP + headroom).
+That figure is the q3-era area; the cf-86 rungs stack on top of it, and the
+Q4 rung is the biggest of them: its four shards are 111,334,654,784 B before
+`iq_pack` writes its own copy, and its (currently inactive — the HIP engine
+refuses `--slot-save-path`, so nothing lands here yet) session files would land in
+`/models/strata/sessions` at ~4.7 GiB per full 262k conversation. `df -h
+/models/strata` (human step) before the `q4` token first runs, and again
+after, is the gate on that growth. The ornith rung adds its GGUF-direct
+trio — 79,713,771,665 B across three shards, no `iq_pack` copy behind it
+(C09) — under the same `df -h` gate before the `orn` token first runs.
 
 Human verification (the old staging duty shrinks to watching): the init log
 runs `model-fetch: setup.sh for q3 as IQ3_S …` through
@@ -218,6 +227,18 @@ claim disk doubles as the IQ3_S page-cache floor — cached model bytes read as
 used RAM but are reclaimable; under pressure
 `sync && echo 1 > /proc/sys/vm/drop_caches` on the host frees them without
 evicting anything live.
+
+**Never delete `/models/strata/Strata`** — the C07-era "delete the checkout
+to refresh the engine" instruction is SUPERSEDED (DECISIONS 2026-10-31,
+coord routing-1 entry). The compiled engine, the `.venv` ROCm `lib_dirs`
+every profile names, `Strata/data/expert-profile.bin` and the `strata-*.json`
+run configs all live INSIDE that checkout while the `.setup-*`/`.pack-*`/
+`.dl-*` markers live outside it: after a deletion the driver re-copies the
+checkout, but the surviving markers suppress every recompile, and each
+claim-compiled arena then fails at serve time. The refresh is the driver's
+own step: a `.checkout-0.2.9-carry1` marker mismatch fires the first-boot
+migration (source sync → `build-hip` wipe → recompile → engine install →
+marker only after a green compile).
 
 ## 3. Enablement gate sequence (numbered; the first accepted request is 3.6)
 
@@ -248,7 +269,7 @@ NOTES.txt):
 ```
 kubectl -n default port-forward svc/gpu-ai-llama-swap-strata 18080:8080
 curl -s http://127.0.0.1:18080/health       # supervisor — answers while the arena is cold
-curl -s http://127.0.0.1:18080/v1/models    # lists BOTH inner IDs
+curl -s http://127.0.0.1:18080/v1/models    # lists all FIVE inner IDs (the matrix alternation — §3.8/§4)
 curl -s http://127.0.0.1:18080/running      # EMPTY — engine NOT loaded; lazy is the design (Q2)
 ```
 
@@ -260,23 +281,96 @@ escape (§4).
 
 - `grep MemAvailable /proc/meminfo` plus `free -g` with the llama.cpp trio
   idle: MemAvailable must cover the shipped profile's implied budget —
-  arena read measured 46.84 GiB + the conversation-cache budget (the engine
-  default cap 8 GiB on this node; the PR's 24576 MiB x 16 slots is a
-  documented toggle — how it actually splits is `--plan`'s answer) +
-  KV/pack headroom, which together the `64Gi` request / `96Gi` cgroup cap
-  encode (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment —
-  the 2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with
-  the paired 96Gi cap + `--memory-limit-mib 92160` + explicit 32768 MiB
-  x 16-slot conversation cache).
+  arena read measured 46.84 GiB + the conversation-cache budget (the
+  shipped primary declares an explicit 32768 MiB x 16-slot conversation
+  cache; the engine's own default ceiling is 8192 MiB) + KV/pack headroom,
+  which the `64Gi` request inside the pod's `116Gi` cgroup encodes
+  (RESEARCH §4; `charts/llama-swap/values.yaml` resources comment — the
+  2026-10-29 OOM replaced the old uncapped `96Gi`-request shape with the
+  paired 96Gi cgroup + `--memory-limit-mib 92160`; cf-86 C06 raised the cgroup
+  to 100Gi for the UD-Q4_K_XL rung, the first-boot gate to 108Gi, and U14 the
+  same day to 116Gi — where the primary's OWN cap moved too, because 92160
+  never covered its term-sums: 46.84 arena + 32 conv + ~13 KV ≈ 91.84 GiB
+  against a 90.00 GiB declaration, which the engine reported as a parking
+  refusal (`3259 MiB available, source flag`) while the node's MemAvailable
+  read 40 GiB. Primary now declares `--memory-limit-mib 110592`). The
+  UD-Q4_K_XL rung (`qwen3.8-flash-next-strata-q4`) rides its own cap under the
+  same cgroup: `--memory-limit-mib 103680`, conversation
+  cache at 16384 MiB x 16 (the executed 2026-11-01 gate: the HIP engine
+  refuses --slot-save-path, so the conv-8 trim lost its session-file
+  compensation and the owner ruled a half-restore; the full 32768 uplift
+  would declare ~116.7) — 71.7 GiB pinned experts + 16 GiB cache +
+  ~13 GiB worst-case KV ≈ 100.7 GiB inside the 125 GiB node. MemAvailable
+  before a Q4 request must clear THAT number, not the ~47 GiB IQ3_S figure
+  above. The caps table below states the shipped per-rung state.
 - Total pod requests vs node allocatable — the strata pod must schedule
   alongside llama-swap's 4Gi:
   `kubectl describe node <gpu-ai-node>` → Allocatable block and the
   Requests summary; 64Gi + 4Gi under allocatable-minus-daemonsets, nothing
   else claiming the balance.
-- The container's memory **limit** (96Gi) ships PAIRED with the engine's
-  `--memory-limit-mib 92160` — #1601's informed-limit posture, adopted
-  after the 2026-10-29 node OOM made uncapped pinning an unacceptable
-  failure mode. Never move one without the other.
+- The container's memory **limit** ships PAIRED with the engine's
+  `--memory-limit-mib` — #1601's informed-limit posture, adopted after the
+  2026-10-29 node OOM made uncapped pinning an unacceptable failure mode.
+  The cgroup has moved four times and the caps move PER-RUNG inside it. The
+  pre-C06 pair was `96Gi` + `92160`; C06 raised the pod's cgroup to `100Gi`
+  with a `95232` cap for the UD-Q4_K_XL arena (both since superseded figures);
+  the 2026-11-01 first-boot gate re-pinned that rung to `108Gi` + `103680`; and
+  U14 the same day raised the cgroup to `116Gi` while moving ONLY the
+  flagship's cap, `92160` → `110592`, because its terms never fitted the number
+  it declared. So today: one cgroup `116Gi`, caps `110592` primary / `103680`
+  Q4 / `92160` orca. Never move one leg without the other, and never read one leg as
+  the whole pod's budget: the cgroup is the pod's, the cap belongs to
+  whichever arena is loaded.
+
+As shipped after cf-86 C09 and the 2026-11-01 post-gate q4 re-pin — one pod
+cgroup (`116Gi`), the cap per rung;
+`--plan` (§3.4) still finalizes what actually becomes resident:
+
+| Rung (profile) | `--memory-limit-mib` | conversation cache | pinned arena read |
+|---|---|---|---|
+| primary (`strata-iq3_s.json`) | 110592 | 32768 MiB x 16 slots | 46.84 GiB (IQ3_S pair) |
+| strix (`strata-strix-iq3_s.json`) | none declared | engine default | `--expert-cache 24576` + `--resident-budget-gib 55` |
+| orca (`strata-orca-iq4_xs.json`) | 92160 | 8192 MiB x 16 slots | 57.7 GiB experts (90.78 GiB staged) |
+| q4 (`strata-q4.json`) | 103680 | 16384 MiB x 16 slots | 71.7 GiB of the 111,334,654,784 B set |
+| ornith (`strata-ornith-q4.json`) | none declared | engine default | ~40–48 GiB class (R5 estimate; the on-target read is 3.6's) |
+
+The strix row carries no `--memory-limit-mib` at all — its bound is the
+`--expert-cache 24576` / `--resident-budget-gib 55` hypothesis pair (§3.4)
+plus the pod cgroup, and the ornith row carries none either (the q36 run
+surface knows no cap/cache/slot-save flag class — its `--plan` finalizes what
+lands), so #1601's pairing covers three of the five rungs. The
+orca row is the tier the U9.2 owner ruling moved to IQ4_XS under the
+unchanged ID `qwen3.8-flash-next-strata-orca`: `strata-data/orca` IQ4_XS,
+three shards at the flat repo root — 44,766,155,936 + 44,735,995,008 +
+7,971,004,256 B, Σ 97,473,155,200 B (90.78 GiB; the 97.47 GB of RESEARCH
+R4 [B7]) — gated bytes through model-fetch. It fits 92160 ONLY with the
+cache trimmed to 8192: 57.7 GiB pinned experts + 8 GiB cache + ~13 GiB
+worst-case KV + ~6 GiB supervisor ≈ 84.7, while conv 32 would declare
+108.7, past its own 92160 declaration. `iq_pack` writes its own copy under
+`Strata-data/packs/orca-iq4_xs`, so `df -h /models/strata` before and
+after the first `orca` token gates that growth the way the q4 token's does.
+
+Claim cleanup, needed on any claim that already ran the pre-shift boot. The marker
+line goes FIRST or nothing gets reclaimed: `/models/strata/.pack-orca` is
+tier-INDEPENDENT, so with an IQ3_XXS pack on disk the C08-era driver prints
+"orca pack complete, skipping" and never stages the IQ4_XS trio the profile
+now points at (coord ruling 2026-10-31: "FIRST claim-cleanup step:
+`rm -f /models/strata/.pack-orca`"). Nothing is deployed on-target today,
+so this binds the first post-landing provisioning:
+
+```
+rm -f  /models/strata/.pack-orca                # FIRST: the marker is tier-independent
+rm -rf /models/strata/.setup-ABL                # marker of the swept abl token
+rm -rf /models/strata/Strata-data/models/IQ3_XXS-abliterated
+rm -rf /models/strata/Strata-data/packs/abliterated-iq3_xxs
+rm -rf /models/strata/Strata-data/models/IQ3_XXS-orca
+rm -rf /models/strata/Strata-data/packs/orca-iq3_xxs
+```
+
+The swept shards are 76,142,283,328 B (SC117 IQ3_XXS pair, 76.14 GB) plus
+85,202,668,032 B (orca IQ3_XXS pair, 85.20 GB) — ~161 GB of claim area,
+against the new trio's 97.47 GB of staged shards (its own `iq_pack` copy
+lands beside them); `df -h /models/strata` before and after is the record.
 
 **3.4 R1 gate: `--plan` reconciliation (human step 3), before the first
 accepted request.** The on-target finalizer, run per profile; repo numbers
@@ -287,12 +381,18 @@ kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
   /opt/strata/terminal/bin/strata serve --profile /profile/strata-iq3_s.json --plan --output json
 kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
   /opt/strata/terminal/bin/strata serve --profile /profile/strata-strix-iq3_s.json --plan --output json
+kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
+  /opt/strata/terminal/bin/strata serve --profile /profile/strata-orca-iq4_xs.json --plan --output json
+kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
+  /opt/strata/terminal/bin/strata serve --profile /profile/strata-q4.json --plan --output json
+kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
+  /opt/strata/terminal/bin/strata serve --profile /profile/strata-ornith-q4.json --plan --output json
 ```
 
-What the two runs **finalize** (the shipped values this gate is gated on):
+What the five runs **finalize** (the shipped values this gate is gated on):
 
 - Primary (`strata-iq3_s.json`): `--expert-cache auto` → the resolved slot
-  count for this node; the `--conversation-cache-mib 24576` × 16 slots
+  count for this node; the `--conversation-cache-mib 32768` × 16 slots
   budget against real 128 GB RAM (C02 sizing, R3); the tokenizer-shard and
   packaged-`lib_dirs` VERIFY markers (C02 declared them hypotheses for this
   gate).
@@ -300,6 +400,22 @@ What the two runs **finalize** (the shipped values this gate is gated on):
   --resident-budget-gib 55` hypothesis pair — no upstream source; the edit
   point is the VERIFY-marked block in `strata.config.engineProfileStrix.args`
   (RESEARCH §7, R1).
+- Orca (`strata-orca-iq4_xs.json`): the 3-shard PLE placement across the
+  IQ4_XS trio, and the first `iq_pack --compat-bf16` fidelity read — a BF16
+  surprise is a one-line iq_pack flip + pack rebuild as a follow-up commit
+  (C08), not an on-node edit.
+- Q4 (`strata-q4.json`): the PLE-mmap pin. The session save/restore
+  round-trip gate was EXECUTED at first boot (2026-11-01) one step early:
+  the claim-compiled HIP engine refuses `--slot-save-path` at argv, so no
+  round-trip can run — the pre-registered fallback went to the owner gate
+  and the half-restore shipped (conv 16384 with the q4 cap at 103680; U14 the
+  same day moved the pod cgroup 108Gi → 116Gi without touching that cap);
+  the full conv-32 / 102400 envelope was declined because, sized for the
+  smaller pack, it declares ~116.7 on this node. Never a dev call (C06).
+- Ornith (`strata-ornith-q4.json`): the memory cap and the
+  `--expert-slots` / `--expert-vram` finalization land HERE — R5 sizes the
+  expert cache ~10–14 GiB / 300–400 slots class, and the repo deliberately
+  declares neither (C09: nothing guessed around an unmeasured q36 run).
 
 Deltas land as values edits in `charts/llama-swap/values.yaml`
 (`strata.config.engineProfile*` renders verbatim to the profile ConfigMap —
@@ -307,11 +423,44 @@ never a template change), re-PR, re-sync. At the first real load also run
 the #2706 startup-log gate on the strix profile (`STRATA_HC_UPMIX` —
 procedure in `charts/llama-swap/README.md`).
 
+**3.4a Prompt-rate round (T0/T1/T3, owner go 2026-11-01; RESEARCH R6).**
+Shipped by this round: `STRATA_REQUEST_LINES=1` on all five arenas' model env
+(T0), and the primary's chunk cap `--prefill auto:32768` (T3 — bare `auto` was
+16,384 on gfx12). Nothing else moved; q4/orca/ornith stay `auto` so the round
+changes one variable. The verification is a **read, not a hope**, because the
+engine silently re-picks a smaller chunk when the prompt buffers do not fit
+(upstream #4164):
+
+1. **Did the cap take?** In the startup block for the primary: the
+   `prompt chunk …` line. `32768` means the tweak is live; anything smaller
+   means VRAM refused it and the round is a **negative result to report, not a
+   flag to push harder on** — the `auto:N` form shrinks lawfully by design.
+2. **Which PLE mode resolved?** The `PLE on …` line (and any
+   slow-direct-read warning under 15K rows/s). No profile passes `--ple-io`,
+   so this is the only way to know; R6 found the chart comment's assumption
+   ("default is file/mmap") conflicting with the v0.2.9 policy (auto-RAM when
+   the table+8 GiB fits, else `direct`) — this line settles H3, and a slow
+   disk here is the T2 `--ple-io mmap` case.
+3. **hipBLASLt**: version/table line. **Silence is expected on gfx1201**
+   (ladder rung 2) — do not chase a table unless it reports 1.2.2-class.
+4. **Then measure**: fresh, unique-tagged prompts at 4K/16K/64K (never reuse a
+   prompt — the cache makes the number meaningless, and the community law says
+   so verbatim), ≥3 per arm, take medians (that box's run-to-run variance is
+   documented up to 2×), and read the engine's own line, not client wall time:
+   `kubectl -n default logs deploy/gpu-ai-llama-swap-strata --since=15m | grep -E 'prefill .* tok/s|^prompt chunk|^PLE on'`
+   Each arena is labelled by the inner ID — attribute the number to the arena.
+   The bar is the README's ladder rung 4: **≈2,519 tok/s @64–200K ±10%**,
+   measured on this node class at the same chunk cap; ~1,100–1,300 is the
+   published band for the heavier quants, and there is **no published
+   gfx1201 + LPDDR5X + OCuLink ×4 number anywhere** — if the gain saturates
+   below 32,768, that is the ×4 link ceiling (H5) being measured for the first
+   time, which is a result worth recording either way.
+
 **3.5 Timed-unload proof (same session, once the engine has loaded).**
 `unloadTimeout: 180` is load-bearing: llama-swap force-kills at the per-model
 unloadTimeout (global default **10 s**) long before the pod's 420 s grace
-matters, and a ~47 GiB page-locked stop needs a wide window (RESEARCH §3,
-contradiction #4). A `--plan` run does not load the engine — this proof needs
+matters, and a page-locked stop in the ~47–72 GiB class needs a wide window
+(RESEARCH §3, contradiction #4). A `--plan` run does not load the engine — this proof needs
 one real pin, so run it in a maintenance slot or fold it into 3.6's warm
 session:
 
@@ -342,7 +491,7 @@ of §3.7) is one document: `charts/llama-swap/README.md`, "Validation
 ladder".
 
 **3.7 Keyless confirmation (replaces the retired enforcement probe).** No
-secret exists for this workload and none is sent: both run-config profiles
+secret exists for this workload and none is sent: all five run-config profiles
 ship `api_key: "none"` and the inner supervisor runs the outer surface's
 `apiKeys: []` posture. Prove the posture as a CHECK with §3.2's port-forward
 still open — no Authorization header anywhere:
@@ -368,9 +517,11 @@ ladder's rung 6).
   instance (port-forward above) — the only escape once the arena is warm.
 - Preload flip (boot-pinned arena instead of lazy): the commented toggle in
   `charts/llama-swap/values.yaml` (`strata.config` model
-  `hooks.on_startup.preload`). Never preload BOTH models — the `(p | s)`
-  matrix alternatives swap-load each other
-  (RESEARCH §3).
+  `hooks.on_startup.preload`). Never preload more than ONE model — the
+  rendered `main: "(p | s | o | q | n)"` matrix alternatives swap-load each
+  other (RESEARCH §3); that string is the alternation the runbook pin law
+  ties to the live render, so a values edit that changes it must land
+  together with the docs line.
 - `--kv-grow`: deferred per R4 — flip recipe §5.
 - Strix mode selection: request the strix ID; when-to-use, perf epochs and
   the LPDDR5X budget law: `charts/llama-swap/README.md` (Strix-alone fallback).
@@ -384,8 +535,15 @@ follows from the arena: once `qwen3.8-flash-next-strata` takes a request its
 ~47 GiB page-locked arena stays resident for up to an hour of idle
 (`ttl: 3600`; time-share adopted after the 2026-10-29 node OOM — the old
 `ttl: 0` permanent pin beside the llama.cpp trio's ~90–119 GiB
-preallocation is what harvested the node), and the 96Gi cgroup now keeps
-strata's own worst case inside its own container. Therefore:
+preallocation is what harvested the node); the other four Strata arenas are
+bigger or comparable — orca 57.7 GiB, q4 71.7 GiB (the largest), ornith
+~40–48 GiB class (R5 estimate) — and all five ride the same
+`(p | s | o | q | n)` alternation. The cgroup cap keeps strata's own worst
+case inside its own container (one `116Gi` cgroup since U14 on the 2026-11-01
+gate day;
+the cap inside it is per
+rung — 110592 primary, 92160 orca, 103680 Q4, none declared for strix and ornith
+until their §3.4 `--plan` finalizes them). Therefore:
 
 - No Strata request while a large trio model is mid-session (cold pin +
   warm trio exceeds 125 GB even capped); no large trio request while the
@@ -393,6 +551,11 @@ strata's own worst case inside its own container. Therefore:
   unloads now do real RAM arithmetic on this node.
 - Peer models are invisible to the OUTER matrix (peers are not roster
   entries) — nothing enforces this automatically; it is operator discipline.
+- The collision C09 adds: the llama.cpp `ornith-1.5-122b-q4` rung and the
+  Strata `ornith-1.5-122b-strata-q4` arena want the same 32 GB R9700 —
+  NEVER both resident. The decode A/B runs with the other one **unloaded**
+  (peers are invisible to the outer solver, so this too is discipline, not
+  enforcement).
 - Escape when the RAM is needed back: `POST /api/models/unload/<id>` on the
   inner instance (timed-proven at §3.5); the strix arena returns by itself
   after `ttl: 1800`.
@@ -465,10 +628,18 @@ ignore lands (future ticket, STATE.json `deferred`).
   7.14.1/hipBLASLt 1.4.1 fine without a table — table ABSENCE on this arch
   is expected, no action (ladder rung 2).
 - **`--memory-limit-mib` / cgroup handling (#1601)** — CLOSED by the
-  2026-10-29 OOM: the container now carries `limits.memory 96Gi` paired
-  with the engine's `--memory-limit-mib 66560` (see §3.3; the pair is the
-  posture, never one without the other). The uncapped-arena era lived
-  while strata owned the box's rhythm; shared residency ended it.
+  2026-10-29 OOM: the container carries ONE cgroup, `limits.memory 116Gi`, and
+  the engine's declared cap is PER-RUNG inside it — `--memory-limit-mib 110592`
+  on the IQ3_S flagship, `103680` on the UD-Q4_K_XL arena, `92160` on orca;
+  strix and ornith declare none (their §3.4 `--plan` gates finalize them).
+  Superseded shapes, kept for provenance: the original `96Gi` + `92160` pair,
+  the C06-era `100Gi` + `95232` pair, and the first-boot `108Gi` + `103680`
+  pair, retired when U14 moved the cgroup to 116Gi and the flagship's cap to
+  110592 — 92160 never covered its own
+  46.84 + 32 + ~13 ≈ 91.84 GiB term-sum. §3.3 carries
+  the shipped pairs. The pair is the posture, never one
+  leg without the other. The uncapped-arena era lived while strata owned
+  the box's rhythm; shared residency ended it.
 
 ## 8. Resolved-question ledger (where each ruling landed)
 
@@ -481,7 +652,7 @@ there):
 | Q3 | existing shared `llama-swap` claim via `existingClaim`, no new PVC | §2; chart persistence |
 | Q4 | internal-only through `peers:` — no ingress (the deliberate trio deviation) | §3.6, §9; C03 wiring |
 | Q8 | Strix-alone fallback IN SCOPE | C05; `charts/llama-swap/README.md` fallback section |
-| C-A (r2) | keyless shipped default: `api_key: "none"` in both profiles; no secret prerequisite exists | §3.2 (ungated sync), §3.7 (proof) |
+| C-A (r2) | keyless shipped default: `api_key: "none"` in both profiles (five today); no secret prerequisite exists | §3.2 (ungated sync), §3.7 (proof) |
 | C-B/Q-C (r2) | one Application owns both pods — in-chart second controller; standalone app prunes | §3.2; `charts/llama-swap/values.yaml` |
 | Q-B (r2) | one-sync strata-route blip accepted (llama.cpp never blips) | §3.2 |
 

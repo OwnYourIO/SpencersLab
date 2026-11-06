@@ -13,7 +13,15 @@
 # i3[AC4 boards citation + key-path non-leak] i4[AC1 scoped shell grants —
 # forms ladder SHELL2|SHELL3 after kickoff-mints C02, widened to
 # SHELL2|SHELL3|SHELL4 by session-origin C02] i5[AC5 freeze set]
-# i6[AC6 regeneration contract].
+# i6[AC6 regeneration contract] i8[cf-90 C03 work-complete cleanup step].
+#
+# cf-90 RE-PIN (2026-10-31, agent-test): i8 is DESIGNED RED until C03 lands
+# the cleanup step on the RC pair. SELECTION NOTE: i4 is red at pristine
+# main HEAD — the sanctioned shell-forms ladder never admitted main
+# 7e07a6273's warm-location fifth allow (pre-existing permissions-matrix
+# drift tracked on its own Review card; see gate.sh's cf-90 header note).
+# cf-90 chunk gates run this suite as i1 i2 i3 i5 i6 i7 i8 — never whole,
+# never reading i4's red as cf-90's.
 #
 # Red before C01: i1–i4 and i6 (its pair-carry component) — the contract text
 # and the two shell allows are simply absent from both trees yet; every red
@@ -165,10 +173,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5 6 7; do WANT["i$i"]=1; done
+  for i in 1 2 3 4 5 6 7 8; do WANT["i$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^i[1-7]$ ]] || fail "unknown check id '$a' (expected i1..i7)"
+    [[ "$a" =~ ^i[1-8]$ ]] || fail "unknown check id '$a' (expected i1..i8)"
     WANT["$a"]=1
   done
 fi
@@ -334,10 +342,29 @@ if others:
 if not any(p.get("action") == "shell" and p.get("resource") == "date *" and p.get("effect") == "allow" for p in perms):
     errs.append("the `date *` allow is gone (the in-work mark's epoch subcommand would fall back to the deny baseline — the global date allow never reaches it)")
 slot = "agent-dev-pr" if cls == "pr" else "agent-dev-local"
-subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow")
-want_subs = sorted(["agent-plan", "agent-test", slot, "agent-review", "agent-research"])
-if subs != want_subs:
-    errs.append(f"subagent allows {subs}, want the five roles with dev slot {slot}")
+subs = [p.get("resource") for p in perms if p.get("action") == "subagent" and p.get("effect") == "allow"]
+# R14/C04 RE-PIN (2026-11-04, agent-test): same roster the gate.sh t17 guard carries —
+# cf-106 C04 admits the sanctioned second-implementer pair (`code` plain-class,
+# `code-pr` -pr-class) to the coord launch roster (OQ-10). Exact set per class, so a
+# missing or extra agent still reds; only the dev slot stays the class's dev implementer.
+# Keep in step with tests/agent-board-coord/gate.sh cfpins.py (self-contained copies).
+codeslot = "code-pr" if cls == "pr" else "code"
+deployslot = "agent-dev-deploy-pr" if cls == "pr" else "agent-dev-deploy"
+# The roster is pinned as an ORDERED list, not a set: the subagent block is
+# last-match-wins and the plan puts the second-implementer row directly after the
+# class dev slot, so a duplicated row or a re-ordered block is drift here too
+# (A12's parity/roster arms see order as well — the guard must not be weaker here).
+want_order = ["agent-plan", "agent-test", slot, codeslot, "agent-review", "agent-research",
+              "agent-explore", deployslot]
+dups = sorted({r for r in subs if subs.count(r) > 1})
+missing, extra = sorted(set(want_order) - set(subs)), sorted(set(subs) - set(want_order))
+if missing or extra or dups:
+    errs.append(f"subagent allows {subs}, want exactly the coord launch roster for class "
+                f"{cls} (dev slot {slot}; missing {missing}, extra {extra}, duplicated {dups})")
+elif subs != want_order:
+    errs.append(f"subagent allows {subs} are the sanctioned set in the wrong block order — want "
+                f"{want_order} ({codeslot} sits directly after {slot}; the block is last-match-wins, "
+                f"so order is part of the contract)")
 edits = sorted(p.get("resource") for p in perms if p.get("action") == "edit")
 if edits != sorted([".agents/plans/**/STATE.json", ".agents/plans/**/DECISIONS.md", ".agents/plans/**/FRICTION.md"]):
     errs.append(f"edit allows are {edits}, want only the three plan-state files")
@@ -774,6 +801,37 @@ if want i7; then
     fi
   done
   ok "i7: role-coord carries the Git section, the alias convention, the corrected shell posture, and a citation-only Stage-gate bullet (source + mirror)"
+fi
+
+# --- i8: cf-90 C03 work-complete cleanup step (designed red before C03 dev) -----
+# The new coord step AFTER the step-9 report, pinned on the RC pair (source +
+# mirror). Content-based landing is the whole point: squash-merged branches
+# stay "awful" in ancestry while their code is in main, so the recipe is a
+# changed-paths diff — `git branch --merged` is explicitly NOT the gate
+# (batched-round refinement, DECISIONS). Landed: warm → session_move home →
+# worktree_remove → branch delete. Not landed: ask ONCE, default KEEP, never
+# force, move home anyway. The -deploy variant closes only its OWN worktree.
+if want i8; then
+  for f in "$RC_SRC" "$RC_GEN"; do
+    [ -f "$f" ] || fail "i8: $f missing (harness fault)"
+    grep -qiE 'work-complete cleanup' "$f" \
+      || fail "i8[C03 AC2]: $f has no work-complete cleanup step (red before C03 dev)"
+    grep -qF 'merge-base' "$f" && grep -qF 'name-only' "$f" \
+      || fail "i8[C03 AC2]: $f lacks the content-based landed check recipe (merge-base + changed-paths `--name-only` diff vs main)"
+    python3 "$TMP/win.py" --ci "$f" 1200 'branch --merged' 'not the gate' \
+      || fail "i8[C03 AC2]: $f never rejects ancestry as the landing gate — `git branch --merged main` NOT being the gate is the ruled shape (squash landings count)"
+    python3 "$TMP/win.py" --ci "$f" 1500 'landed' 'warm' 'session_move' 'worktree_remove' \
+      || fail "i8[C03 AC2]: the landed path is not the pinned sequence warm → session_move home → worktree_remove → branch delete (warm-first is the kickoff lesson, cited not restated)"
+    grep -qF 'origin_dir' "$f" \
+      || fail "i8[C03 AC2]: $f never names STATE.json kickoff.origin_dir as the session_move-home destination"
+    python3 "$TMP/win.py" --ci "$f" 1200 'once' 'default keep' 'never force' \
+      || fail "i8[C03 AC2]: the not-landed path is missing — ask ONCE whether to delete, default KEEP, obey never force"
+    python3 "$TMP/win.py" --ci "$f" 700 'deploy' 'own worktree' \
+      || fail "i8[C03 AC2]: the split is not stated — the -deploy variant closes its OWN worktree; this step owns the ticket run's surfaces (branch stays coord-owned, landing-gated)"
+    python3 "$TMP/win.py" --ci "$f" 900 'worktree_remove' 'session_move' 'opencode tool' \
+      || fail "i8[C03 Tasks]: the hard-rule sentence was not widened — the scoped worktree_remove + session_move-home use must ride inside the never-any-other-opencode-tool containment, not beside it"
+  done
+  ok "i8[C03 AC2]: RC pair carries the work-complete cleanup step — content-based landed check (ancestry rejected), landed sequence, origin_dir destination, ask-once-default-keep not-landed path, deploy-surface split, and the widened opencode-tool containment"
 fi
 
 printf 'PASS: coord-inwork surface checks (%d ok)\n' "$checks"

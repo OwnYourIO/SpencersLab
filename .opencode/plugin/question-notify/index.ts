@@ -40,10 +40,16 @@
 // The finished push has exactly one suppression (OQ4 ruling, 2026-10-29): a
 // scheduled OpenChamber launch whose coord marked the session no-work — the
 // boards skill's marker contract is the writer authority and noWorkSuppressed
-// reads both legs off the session record the lookup already fetched. What
-// keeps alerting: crash, question and approval pushes, scheduled runs that
-// did work, and manual /pipeline-boards ends even when marked — every
-// unknown or malformed shape alerts (fail-loud).
+// reads both legs off the session record the lookup already fetched. The
+// writer's vocabulary is the five marked-exit reason values `no-cards`,
+// `no-claimable-cards`, `gate-skip`, `gate-live`, `board-check-unavailable`;
+// the reader stays token-agnostic (any non-empty string reason). What keeps
+// alerting: crash, question and approval pushes, scheduled runs that did
+// work, and manual /pipeline-boards ends even when marked — every unknown or
+// malformed shape alerts (fail-loud). A crash push is never suppressed:
+// handleLifecycle consults noWorkSuppressed on the FINISHED event only. The
+// pipeline-locks plugin's reap alert stays gated only by haNotify — the
+// marker never reaches it.
 // The approval trigger is the durable permission.asked event, re-grounded
 // on the v2.1.4 binary: the server publishes it only when the
 // ruleset effect resolves to `ask` and exactly once per request id. The push

@@ -1,0 +1,357 @@
+{
+  "schema": "wekan-board-snapshot/2",
+  "collected_at": "2026-10-31",
+  "provenance": "Fully-provisioned end state for the C01 idempotence gate (AC2): the live snapshot of 2026-10-31 after the engine's 28-action plan (Planning synced from Backlog minus Inbox, Bucket: labels + createCard/moveCard rule pairs per Planning list, Provider: API + Provider: Local labels) has been applied. The engine must emit ZERO actions on it. | cf-96 C08 agent-test synthetic schema-2 variant (checklist_extras per the tests/wekan-board-provision/checklist-cutover.sh ENGINE JSON CONTRACT) | cf-106 C02 agent-test re-pin: the Model(s) items and checked here read `Qwen Dense` (checked [Qwen Dense]) — the applied state AFTER the USER-owned live checklist rename; boards' transition alias covers the live `Qwen 27b` items until then, so zero actions holds only once the engine spec flips Dense too (designed red before C02 dev). The drift fixture deliberately keeps the retired vocabulary so the engine's drift list must name Model(s).",
+  "board": {
+    "id": "TNQJ2BrXenZovngTS",
+    "title": "AI-Dev"
+  },
+  "swimlanes": {
+    "In Process": "jLzy39L7djCRr67SF",
+    "Backlog": "swBacklogFIXTUREID",
+    "Farm": "swFarmFIXTUREID0001",
+    "Planning": "swPlanningFIXTURE01"
+  },
+  "lists": {
+    "jLzy39L7djCRr67SF": [
+      "Not Started",
+      "Executing",
+      "Review",
+      "Rework",
+      "Finished",
+      "Low Priority",
+      "Test",
+      "Cancelled"
+    ],
+    "swBacklogFIXTUREID": [
+      "Context",
+      "Features",
+      "Research",
+      "Outside Process",
+      "Dev Env",
+      "Home Assistant",
+      "CICD",
+      "Wekan",
+      "Inbox"
+    ],
+    "swFarmFIXTUREID0001": [
+      "Context",
+      "Features",
+      "Research",
+      "Outside Proccess",
+      "Dev Env",
+      "Home Assistant",
+      "CICD",
+      "Wekan"
+    ],
+    "swPlanningFIXTURE01": [
+      "Context",
+      "Features",
+      "Research",
+      "Outside Process",
+      "Dev Env",
+      "Home Assistant",
+      "CICD",
+      "Wekan"
+    ]
+  },
+  "labels": {
+    "Research": "green",
+    "Ready for Work": "purple",
+    "Pipeline: Local": "blue",
+    "Pipeline: CICD": "orange",
+    "Pipeline: Context": "yellow",
+    "Bucket Color": "darkgreen",
+    "Bucket: Context": "darkgreen",
+    "Bucket: Features": "darkgreen",
+    "Bucket: Research": "darkgreen",
+    "Bucket: Outside Process": "darkgreen",
+    "Bucket: Dev Env": "darkgreen",
+    "Bucket: Home Assistant": "darkgreen",
+    "Bucket: CICD": "darkgreen",
+    "Bucket: Wekan": "darkgreen",
+    "Provider: API": "purple",
+    "Provider: Local": "yellow",
+    "Research: Parallel": "orange"
+  },
+  "rules": [
+    {
+      "title": "Standard checklists on new cards",
+      "trigger": {
+        "activityType": "createCard"
+      },
+      "action": {
+        "addChecklists": [
+          "Services",
+          "Type",
+          "Model(s)",
+          "Lifecycle",
+          "Human in the Loop"
+        ]
+      }
+    },
+    {
+      "title": "Label cards moved to Review",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Review"
+      },
+      "action": {
+        "addLabel": "Ready for Work"
+      }
+    },
+    {
+      "title": "Bucket: Context — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "Context",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Context"
+      }
+    },
+    {
+      "title": "Bucket: Context — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Context",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Context"
+      }
+    },
+    {
+      "title": "Bucket: Features — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "Features",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Features"
+      }
+    },
+    {
+      "title": "Bucket: Features — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Features",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Features"
+      }
+    },
+    {
+      "title": "Bucket: Research — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "Research",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Research"
+      }
+    },
+    {
+      "title": "Bucket: Research — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Research",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Research"
+      }
+    },
+    {
+      "title": "Bucket: Outside Process — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "Outside Process",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Outside Process"
+      }
+    },
+    {
+      "title": "Bucket: Outside Process — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Outside Process",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Outside Process"
+      }
+    },
+    {
+      "title": "Bucket: Dev Env — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "Dev Env",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Dev Env"
+      }
+    },
+    {
+      "title": "Bucket: Dev Env — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Dev Env",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Dev Env"
+      }
+    },
+    {
+      "title": "Bucket: Home Assistant — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "Home Assistant",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Home Assistant"
+      }
+    },
+    {
+      "title": "Bucket: Home Assistant — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Home Assistant",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Home Assistant"
+      }
+    },
+    {
+      "title": "Bucket: CICD — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "CICD",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: CICD"
+      }
+    },
+    {
+      "title": "Bucket: CICD — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "CICD",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: CICD"
+      }
+    },
+    {
+      "title": "Bucket: Wekan — createCard",
+      "trigger": {
+        "activityType": "createCard",
+        "listName": "Wekan",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Wekan"
+      }
+    },
+    {
+      "title": "Bucket: Wekan — moveCard",
+      "trigger": {
+        "activityType": "moveCard",
+        "listName": "Wekan",
+        "swimlaneName": "Planning"
+      },
+      "action": {
+        "addLabel": "Bucket: Wekan"
+      }
+    }
+  ],
+  "checklist_extras": {
+    "Lifecycle": {
+      "items": [
+        "Exploration",
+        "Agent Decides Research",
+        "Pre Research",
+        "Planning",
+        "Post Research",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review",
+        "Deployment",
+        "Single Session"
+      ],
+      "checked": []
+    },
+    "Human in the Loop": {
+      "items": [
+        "Exploration",
+        "Agent Decides Research",
+        "Pre Research",
+        "Planning",
+        "Post Research",
+        "Test Writing",
+        "Chunk Development",
+        "Chunk Review",
+        "Final Review",
+        "Deployment",
+        "Single Session"
+      ],
+      "checked": []
+    },
+    "Model(s)": {
+      "items": [
+        "Qwen Large",
+        "Qwen Dense",
+        "Qwen Flash",
+        "Local (gpu-ai)"
+      ],
+      "checked": [
+        "Qwen Dense"
+      ]
+    },
+    "Services": {
+      "items": [
+        "backups",
+        "dev",
+        "gpu",
+        "gpu-ai",
+        "grow",
+        "home",
+        "infra",
+        "media",
+        "monitoring",
+        "personal",
+        "proxy-backup",
+        "proxy-local",
+        "proxy-remote",
+        "home-assistant",
+        "agent context"
+      ],
+      "checked": []
+    },
+    "Type": {
+      "items": [
+        "feat",
+        "bug",
+        "debug",
+        "dep",
+        "refactor",
+        "chore",
+        "docs"
+      ],
+      "checked": []
+    }
+  }
+}

@@ -37,16 +37,37 @@ with NO `/v1` suffix — the request path appends verbatim (RESEARCH §3).
 Pod shape: privileged + hostPath `/dev/kfd` + `/dev/dri`, `strategy:
 Recreate` (a RollingUpdate overlap would double-pin the arena — the #2257
 class), grace 420 s > `unloadTimeout` 180 s + drain 30 s, shm 2 GiB.
-Memory is a PAIRED cap, not the DOCKER.md default of none: `limits.memory
-96Gi` cgroup + `--memory-limit-mib 92160` declared to the engine (#1601's
-informed-limit posture) — the 2026-10-29 node OOM harvest ended the
-uncapped-pinning era on a node the trio also lives on. Conversation cache:
-32 GiB × 16 slots (IQ3_S parks ~3.3 GiB per full 256k conversation).
+Memory is a PAIRED cap, not the DOCKER.md default of none: the pod cgroup and
+the engine's `--memory-limit-mib` move as one unit (#1601's informed-limit
+posture) — the 2026-10-29 node OOM harvest ended the uncapped-pinning era on a
+node the trio also lives on. ONE cgroup bounds the pod — `limits.memory 116Gi`
+since U14, 2026-11-01 — and the declared cap is per-rung inside it: the cgroup is the
+pod's, the cap belongs to whichever arena is loaded, so raising the ceiling does
+not enlarge any rung's budget. The
+`qwen3.8-flash-next-strata-q4` arena (unsloth UD-Q4_K_XL) declares `103680`
+under that `116Gi` cgroup — 71.7 GiB
+pinned experts + 16 GiB conversation cache + ~13 GiB worst-case KV (its pair
+moved 100Gi/95232 → 108Gi/103680 at the executed 2026-11-01 first-boot gate;
+U14 later raised the cgroup to 116Gi without touching this rung's cap) — and
+the flagship declares `110592` inside the same `116Gi`: U14 moved it off the
+original `96Gi` + `92160` shape because 92160 never covered the primary's own
+term-sums (46.84 arena + 32 conv + ~13 KV ≈ 91.84 GiB), so parking was being
+refused inside its own declaration while the node's MemAvailable read 40 GiB.
+Orca keeps `92160` (the
+`qwen3.8-flash-next-strata-orca` IQ4_XS arena: 57.7 GiB
+experts only fit under its own 8 GiB conversation trim, and caps do not drift
+with the cgroup). Conversation cache: 32 GiB × 16 slots
+on the IQ3-class flagship (IQ3_S parks ~3.3 GiB per full 256k conversation);
+the orca arena trims it to 8 GiB × 16 — arena arithmetic, not tuning — while
+the Q4 rung holds 16 GiB × 16 (half-restore at the 2026-11-01 gate): engine
+session files under `/models/strata/sessions` were the other half of that
+trade, but the claim-compiled HIP engine refuses the flag, so deep parks
+re-prefill until HIP session files exist upstream.
 
 ### Keyless posture
 
 Engine and inner supervisor run unauthenticated in-cluster, mirroring the
-outer llama-swap's own `apiKeys: []`: both run-config profiles ship
+outer llama-swap's own `apiKeys: []`: all five run-config profiles ship
 `api_key: "none"` and the inner config carries `apiKeys: []`. The engine
 binds 127.0.0.1 via serve's `--host`, so the supervisor proxy is its only
 client. Because llama-swap passes the client `Host` header through, the
@@ -62,9 +83,10 @@ the pod, no Authorization header anywhere in the chain.
 | Surface | Value |
 |---|---|
 | serve CLI entry (what the llama-swap `cmd` execs) | `/opt/strata/terminal/bin/strata` |
-| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-rx9070/strata` |
-| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata` |
+| Engine exe — primary (R9700 / gfx120x) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-rx9070/strata` |
+| Engine exe — fallback (Strix / gfx1151) | `/opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo/strata` |
 | Engine root layout | both roots live under `/opt/strata/components/engine/<label>/` as **distinct dirs** (same-named binaries per flavor — never merge them) |
+| Weight-staging entrypoint (what the `model-fetch` init execs) | `/opt/strata/bin/fetch_models.sh` — exec form so an image without the baked driver fails at container start; sources `/opt/strata/bin/byte_pins.env` and calls `/opt/strata/bin/hf_fetch.py`. The logic lives in `containers/strata/files/` and is build-verified; this chart states intent + the env contract (`STRATA_QUANTS`, `STRATA_MODEL_<TOK>` scalars, the gated rung's `HF_TOKEN` secretKeyRef on that init only) |
 
 - The engine binaries are referenced **from each profile's run-config `exe`
   key, NOT from the `cmd`** — `serve` picks its engine from the run-config
@@ -103,10 +125,15 @@ on-target `strata serve --plan` re-check (runbook §3.4) → re-bench.
 |---|---|---|---|
 | `qwen3.8-flash-next-strata` | checkout-compiled gfx1201 engine | R9700 via OCuLink | lazy, `ttl: 3600` — time-shared (unloads 1h idle; set `ttl: 0` to pin for dedicated windows) |
 | `qwen3.8-flash-next-strata-strix` | gfx1151 (`hip-halo` root) | 8060S iGPU | lazy, `ttl: 1800` — idle-released |
+| `qwen3.8-flash-next-strata-orca` | checkout-compiled gfx1201 engine (same claim binary) | R9700 via OCuLink | lazy, `ttl: 3600` |
+| `qwen3.8-flash-next-strata-q4` | checkout-compiled gfx1201 engine (same claim binary) | R9700 via OCuLink | lazy, `ttl: 3600` |
+| `ornith-1.5-122b-strata-q4` | checkout-compiled gfx1201 engine — the carry-patched one | R9700 via OCuLink | lazy, `ttl: 3600` |
 
-The inner `matrix` set `main: "(p | s)"` makes the two **alternatives**: the
-solver evicts the resident arena before starting the other, so they are
-never co-loadable (arenas are additive on the 128 GB node).
+The inner `matrix` set `main: "(p | s | o | q | n)"` makes the five
+**alternatives**: the solver evicts the resident arena before starting the
+other, so no two are ever co-loadable (arenas are additive on the 128 GB
+node — q4's 71.7 GiB pinned experts is the largest, ornith's ~40–48 GiB
+class the second).
 
 ### Strix-alone fallback (`qwen3.8-flash-next-strata-strix`)
 
@@ -133,8 +160,11 @@ them as hypotheses until that output is read on this node.
 
 **Perf expectations — cite the epoch, not just the number.** The
 STRIX_HALO History row of 1,265 prompt / 59.1 decode tok/s @8K is
-engine-0.1.40-era (measured with no §5 env switches); the bundled engine is
-0.1.52-era. The current-epoch §6 row (0.2.3 class, Windows) reads 685/783/749
+engine-0.1.40-era (measured with no §5 env switches); the engine packaged in
+the image is 0.1.55-era (the flavor pin's engine package — the primary arena
+runs whatever engine setup compiled into the claim checkout, which moves when
+the driver's marker-keyed migration recompiles it on first boot after a pin
+bump). The current-epoch §6 row (0.2.3 class, Windows) reads 685/783/749
 prompt tok/s @4K/8K/64K — same order of magnitude, different machine class.
 The §5 fast-config is KL-gated: decoded rounds differ from the primary
 profile's output, so never diff the two token-for-token; compare on
@@ -212,7 +242,12 @@ kubectl -n default exec deploy/gpu-ai-llama-swap-strata -- \
 Acceptance gate: within **~10%** of RESEARCH §5's **one-at-a-time** column
 (batch numbers are not the bar — that posture was rejected, Q2): decode ≈80
 tok/s @64K; short 570-token prompts 429–443 tok/s with the CPU share vs 224
-control; 64K/128K/200K prompt ≈2,519 tok/s. Provenance: single machine,
+control; 64K/128K/200K prompt ≈2,519 tok/s. The primary's chunk cap now matches
+that posture (`--prefill auto:32768`, owner T3 ruling 2026-11-01; bare `auto`
+was 16,384 on gfx12), and every arena logs the engine-side rate per request
+(`STRATA_REQUEST_LINES=1`, T0) so the readout is `prefill … tok/s` — fresh
+tokens over engine time — not the progress line, which counts reused prefix
+tokens and clocks from admission. Provenance: single machine,
 2026-10-21 (the fork's `bench/results/2026-10-21-…` dir, RESEARCH §5) — the
 PR machine had 124 GiB vs our 128 GB (R3), so drift is expected; the gate
 applies to OUR reproduction of the same posture, and where the WeKan card's

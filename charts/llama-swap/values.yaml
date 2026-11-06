@@ -647,6 +647,28 @@ config:
           description: Reference F16 build; ttl 180 so it evicts fast
           capabilities: {in: [text, image], out: [text]}
           ttl: 180
+        # cf-86 C04 (2026-10-30): 0bserverx heretic-style abliteration of the
+        # 27B line - chosen by the measured ablation ranking (heretic-style
+        # stays ~0.019-0.035 KLD from the original where huihui-style sits at
+        # 0.204 with +8-10% perplexity, RESEARCH [S17][S18]). Distinct from
+        # ara above: ara is the heretic-ara Q6_K-MTP build; this is the
+        # 0bserverx uncensored rung in the Q4_K_M size class (~17 GB, dense
+        # weight class the main-set trio math already budgets). MTP head is
+        # EMBEDDED in the RVN-Q4_K_M-mtp.gguf single file (source gate live,
+        # 16,998,720,736 B, flat ladder, ungated) - no draft: sidecar unlike
+        # rana's borrowed ggml-org draft. mmproj ships flat beside the
+        # quants, so the sibling search resolves it: vision declared.
+        heretic:
+          hf: "0bserverx/Qwen3.8-27B-Heretic-Abliterated-Uncensored-GGUF:Q4_K_M-mtp"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [q38-common, q38-sampling, q38-think]
+          flags: |
+            -c 262144
+          disp: Qwen3.8 27B Heretic Uncensored
+          size: 15.8 GiB
+          descTail: "; {size} weights (embedded MTP), heretic-style uncensored abliteration in the Q4_K_M size class"
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 300
 
     # Always-ready embedding sidecar (2026-10-16, gpu-ai): coexists with
     # the dense + MoE trio via the matrix main set there, so RAG
@@ -798,6 +820,54 @@ config:
           capabilities: {in: [text, image], out: [text]}
           ttl: 300
 
+    # heretic-style coding ablation of Flash Next (cf-86 C03): trohrbaugh's
+    # heretic-2 (custom Heretic fork) republished as static quants by
+    # spiritfather. Why this ablation and not another: the measured ranking
+    # (RESEARCH [S17][S18]) puts heretic-style ~0.019-0.035 KLD from the
+    # original where huihui-style sits at 0.204 with +8-10% perplexity, and a
+    # second orcarouter rung is already served as orca/ara. Ungated repo, so
+    # unlike the orca family the download path needs no HF_TOKEN; gpu-ai-only
+    # BY ENABLEMENT, everywhere else it is the catalog echo.
+    # Rides the same mmap regime as the unsloth/orca families - see the
+    # flash-next header for why the placement leg is a literal and not a
+    # macro. 130.8 GiB of trunk weights is over the ~125 GiB node budget like
+    # orca-q6, so SOLO in the matrix, never preloaded, may still OOM on load.
+    # MTP, two-gate shape (the orca family's miss-path note applies the same
+    # way): the pack ships the NextN head both as mtp/mtp-*-Q8_0.gguf and as a
+    # pre-grafted <QUANT>/MTP/ shard pair. Source-gate measurement, do not
+    # re-derive: llama.cpp find_best_model (common/download.cpp, mirrored by
+    # tests/hf_check.py) takes the FIRST case-insensitive "Q4_K_M[.-]" hit in
+    # the tree listing; the MTP pair sorts before the trunk, its basename
+    # carries uppercase "MTP-" which the case-sensitive sidecar filter does
+    # NOT skip, and the repo publishes only shards 1 and 6 of that 6-shard
+    # split (its README has users clone trunk shards 2..5 into the -MTP-
+    # pattern by hand). A load that dies on missing -MTP- shards is escaped by
+    # pinning a trunk shard with --hf-file in the models layer.
+    # The head also needs llama.cpp PR #27836, unmerged at the pinned image -
+    # a stock build ignores head tensors, so treat spec decode as expected-off
+    # until the image carries it.
+    # mmproj ships too (mmproj/), hence vision declared - but llama.cpp's
+    # sibling search only accepts a sidecar sharing the model file's directory,
+    # and here projector and quants live in different folders: image input
+    # needs the projector staged on-target, text is what the routing uses.
+    qwen3.8-flash-next-heretic:
+      enabled: false
+      dispName: Qwen 3.8 Flash Next Heretic
+      flags: |
+        -ngl 99
+        -ot "\.ffn_.*_exps\.=CPU"
+        --load-mode mmap
+        --fit off
+      quants:
+        q4:
+          hf: "spiritfather/Qwen3.8-Flash-Next-heretic-2-GGUF:Q4_K_M"
+          spec: {type: draft-mtp, draft_n_max: 2}
+          use: [threads, ctx-256k, flash-and-q8, q38-sampling, q38-think]
+          size: 130.8 GiB
+          descTail: "; {size} weights, experts on CPU (mmap placement), 256k ctx; heretic-style abliteration (KLD ~0.02-0.035 from the original against 0.204 huihui-style); over the ~125 GiB node budget like orca-q6 - SOLO, never preloaded, may OOM"
+          capabilities: {in: [text, image], out: [text]}
+          ttl: 300
+
 
   # Concurrency matrix (replaces legacy groups routing).
   # One GPU model at a time; homecpu (CPU) may run alongside any GPU model.
@@ -856,6 +926,10 @@ config:
       q38rana: qwen38-rana
       q38hum: qwen38-humanlike
       q38f16: qwen38-orca-f16
+      # cf-86 C04: 0bserverx heretic Q4_K_M-MTP (~17 GB) - the dense class
+      # sits inside the one-dense-resident assumption the main-set trio math
+      # already budgets, so it joins the dense alternation below.
+      q38her: qwen38-heretic
       # 1M context + visual variants (2026-10-13/15): the base q38q8/q35q8
       # IDs are the text-only caching versions on gpu-ai (--no-mmproj +
       # cache_reuse), these siblings keep the mmproj / 1M ctx.
@@ -870,6 +944,9 @@ config:
       fnq3: qwen3.8-flash-next-q3
       fnq4: qwen3.8-flash-next-q4
       fnorca: qwen3.8-flash-next-orca-q6
+      # cf-86 C03: heretic-2 Q4_K_M ablation, same solo weight class (130.8
+      # GiB trunk) as the other flash-next rungs - solo, never preloaded.
+      fnher: qwen3.8-flash-next-heretic-q4
       o122q3: ornith-1.5-122b-q3
       o122q4: ornith-1.5-122b-q4
       o122q5: ornith-1.5-122b-q5
@@ -882,7 +959,7 @@ config:
       # default the gpu box rides). ornqbf is routable but fail-fast on gpu
       # (services/gpu disabled override) - matrix membership of a disabled
       # echo is the established pattern on that box.
-      main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q35q6 | q35q8 | q35bf16 | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf | wsp) & homecpu"
+      main: "(q38q4 | q38q6 | q38q8 | q38bf16 | q27bq6 | q27bq8 | q38her | q35q6 | q35q8 | q35bf16 | q35b1m | homegpu | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8 | ornqbf | wsp) & homecpu"
 
 app-template:
   global:
@@ -1044,101 +1121,54 @@ app-template:
       # folder has no installer", first deploy 2026-10-28) and docs/
       # LLAMA_SWAP.md says the integration "needs a source checkout, not the
       # desktop installer". So the image embeds the pinned checkout
-      # (containers/strata Dockerfile, strata-src stage) and this init copies
-      # it onto the claim and runs the documented
+      # (containers/strata Dockerfile, strata-src stage) and the staging
+      # driver copies it onto the claim and runs the documented
       # `./setup.sh --family qwen --model <id> --no-start --yes`: setup owns
       # the whole artifact story (shards, tokenizer, pack, draft data, its
       # own engine fetch) and writes strata-<model>.json run configs beside
       # the checkout — hence the checkout lives under /models/strata, so
       # every output persists on the shared claim. --no-start keeps the RAM
       # law untouched (setup never serves); markers make it idempotent.
+      #
+      # WHERE that staging logic lives (cf-86 C07): all of it — the checkout
+      # copy, the per-token setup.sh loop, the manual packs for the rungs the
+      # pinned catalog has no entry for, the byte-pinned resumable downloads
+      # and the idempotency markers — is
+      # containers/strata/files/{fetch_models.sh,hf_fetch.py,byte_pins.env},
+      # baked to /opt/strata/bin/ by the image build and verified there
+      # (`sh -n`, `py_compile`, `test -x`/`-f`). This block states intent and
+      # the env contract only; a ~330-line heredoc here was logic no build
+      # ever parsed and no review could run.
+      #
+      # THE boot guard is the exec-form command: a pod replaced under this
+      # chart against an image that predates the bake fails at container
+      # START ("no such file"), with zero script executed and the claim's
+      # markers untouched — loud, never half-provisioned. pullPolicy Always
+      # plus restart backoff re-pull, so the attempt after docker-build's
+      # :main push completes re-enters and finishes: one commit carrying
+      # chart + image is bounded and self-healing by design. A chart-side
+      # "[ -f new ] && new || old" fallback is the rejected alternative —
+      # preferring stale logic at boot is exactly what the bake+verify law
+      # forbids. Merge timing (or holding the sync) is the operator's call.
       initContainers:
         model-fetch:
           image:
             repository: ghcr.io/ownyourio/strata
-            # Same rolling tag + PIN-ME habit as the main container of this
-            # pod (brand-new in-repo image; :v<run> pin lands with the first
-            # docker-build.yaml merge).
+            # Same rolling tag + pullPolicy as the main container of this
+            # pod: the boot guard above rests on Always re-pulling, so the
+            # next attempt after the CI build pushes :main is the one that
+            # runs the baked driver. :v<run> pins exist for this image now;
+            # switching to one is a Renovate chores decision, never a
+            # hand-bump here (repo law).
             tag: main
             pullPolicy: Always
+          # The baked driver: containers/strata/files/fetch_models.sh lands
+          # at /opt/strata/bin/ (mode 0755). Exec form, one element, no
+          # /bin/sh -c wrapper — a wrapper starts fine and quietly costs the
+          # boot guard half its loudness. The driver's own header comment
+          # carries the quant/marker/env contract it implements.
           command:
-            - /bin/sh
-            - -c
-          args:
-            - |
-              set -eu
-              fail() { echo "model-fetch: $*" >&2; exit 1; }
-              [ -f /opt/strata/src/Strata/setup.sh ] \
-                || fail "image carries no source checkout - containers/strata must be rebuilt (strata-src stage, 2026-10-29 contract)"
-              mkdir -p /models/strata
-              # /data/install stays the CLI's install-dir anchor, bound to the
-              # claim so discovery tools (models list --install-dir default)
-              # see what setup produced.
-              rm -rf /data/install
-              ln -sfn /models/strata /data/install
-              SRC=/models/strata/Strata
-              if [ ! -d "$SRC" ]; then
-                cp -a /opt/strata/src/Strata "$SRC"
-              else
-                [ -f "$SRC/setup.sh" ] || fail "$SRC exists without setup.sh - refusing to overwrite"
-              fi
-              # setup.sh needs a python3 on PATH; this image ships only the
-              # terminal's bundled interpreter — find it, else self-diagnose.
-              if ! command -v python3 >/dev/null 2>&1; then
-                for c in /opt/strata/terminal/bin/python3 /opt/strata/terminal/bin/python \
-                         /opt/strata/terminal/usr/bin/python3 /opt/strata/terminal/python/bin/python3; do
-                  if [ -x "$c" ]; then ln -sf "$c" /usr/local/bin/python3; break; fi
-                done
-              fi
-              command -v python3 >/dev/null 2>&1 \
-                || fail "no python3 to drive setup.sh; terminal layout: $(find /opt/strata/terminal -maxdepth 3 -name 'python*' 2>/dev/null | tr '\n' ' ')"
-              # setup.sh Step 4 compiles the AMD engine for the checkout.
-              # git + a C++ compiler are BAKED into the image (2026-10-29
-              # owner ruling: runtime apt in an init container = pod-start
-              # mirror dependency + non-reproducible layer); the Dockerfile
-              # verify step pins the same two commands, so a missing tool
-              # fails the build, not the boot.
-              command -v git >/dev/null 2>&1 \
-                && command -v c++ >/dev/null 2>&1 \
-                || fail "image lacks git/c++ for the engine compile - containers/strata must be rebuilt (build-deps RUN, 2026-10-29 contract)"
-              IFS=,
-              for tok in ${STRATA_QUANTS:-q3}; do
-                [ -n "$tok" ] || continue
-                TOK=$(printf '%s' "$tok" | tr 'a-z' 'A-Z')
-                FAM=qwen
-                case "$TOK" in
-                  Q3) SIZE=IQ3_S ;;
-                  *)  SIZE=$(printenv "STRATA_MODEL_$TOK" || true) ;;
-                esac
-                # STRATA_MODEL_Qx may name another catalog family as
-                # "family/model" (e.g. unsloth/UD-Q4_K_XL — the q4/q5 the
-                # qwen family does not carry); a bare name stays qwen.
-                case "$SIZE" in
-                  */*) FAM=${SIZE%%/*}; SIZE=${SIZE#*/} ;;
-                esac
-                if [ -z "$SIZE" ]; then
-                  echo "model-fetch: no model id mapped for quant '$tok' - set env STRATA_MODEL_$TOK=[family/]model (catalog: ./setup.sh --help in $SRC)" >&2
-                  exit 1
-                fi
-                MARK="/models/strata/.setup-$TOK"
-                if [ -f "$MARK" ]; then
-                  echo "model-fetch: $tok already set up, skipping"
-                  continue
-                fi
-                echo "model-fetch: setup.sh for $tok as $FAM/$SIZE (downloads start here)"
-                # --backend hip is mandatory, not a preference: setup.sh probes
-                # NVIDIA by default and hard-stops "no NVIDIA GPU found" on this
-                # AMD node (deploy 2026-10-29); SOURCE_INSTALL.md AMD section
-                # names the explicit selector. The init container therefore
-                # mounts /dev/kfd + /dev/dri (persistence advancedMounts below)
-                # — the HIP probe must see the card, or it fails the same lie
-                # in the other direction.
-                ( cd "$SRC" && ./setup.sh --backend hip --family "$FAM" --model "$SIZE" --context 262144 --vision no --no-start --yes )
-                touch "$MARK"
-              done
-              ls -la "$SRC"/strata-*.json 2>/dev/null \
-                || echo "model-fetch: WARNING no strata-*.json run config found - inspect $SRC before serving"
-              echo "model-fetch: quants [${STRATA_QUANTS:-q3}] provisioned via checkout on the claim"
+            - /opt/strata/bin/fetch_models.sh
           env:
             # Quant set, comma-separated: "q3" today. Only q3=IQ3_S carries
             # a built-in mapping (qwen family); further tokens need
@@ -1232,21 +1262,54 @@ app-template:
             # cgroup stops strata (kernel victims stay inside THIS cgroup)
             # and the engine's --memory-limit-mib (PR #1601 pairing: a
             # cgroup limit must be declared to the engine) sizes arena +
-            # conversation cache + KV inside 90 GiB of it — supervisor and
-            # venv headroom fill the rest. Coexistence is time-shared (ttl
+            # conversation cache + KV inside the rung's declared cap —
+            # supervisor and venv headroom fill the rest of the cgroup.
+            # Coexistence is time-shared (ttl
             # below), not simultaneous residency.
             requests:
               cpu: 8
               memory: 64Gi
-            # 96Gi ceiling = ~50 GiB IQ3_S arena + 32 GiB conversation cache
-            # + ~13 GiB worst-case 4-slot KV + engine/supervisor headroom
+            # The original 96Gi ceiling = ~50 GiB IQ3_S arena + 32 GiB conversation
+            # cache + ~13 GiB worst-case 4-slot KV + engine/supervisor headroom
             # (owner budget ruling 2026-10-29). Node is 125 GiB: a fully
             # warm strata pod leaves the llama.cpp trio NO real headroom —
             # the ttl:3600 time-share and the cgroup cap are what keep the
             # next collision inside this container instead of the whole
-            # node. Raise --memory-limit-mib in lockstep with this number.
+            # node. The direction of the lockstep matters: a rung's declared
+            # cap may never exceed this number, but raising THIS number does
+            # not raise any cap — each rung declares its own (U14 grew the
+            # ceiling to 116Gi and moved only the flagship, whose terms never
+            # fitted 92160; q4 and orca kept their numbers).
+            # cf-86 C06 raised the ceiling to 100Gi for the UD-Q4_K_XL rung;
+            # the 2026-11-01 first boot moved it to 108Gi with the pair's conv
+            # term (8192 was only affordable because disk session files were to
+            # absorb the big parks, and the HIP engine compiled that feature
+            # out), and the SAME DAY's U14 ruling raised it again to 116Gi so
+            # the flagship's own term-sum fits inside what it declares — the
+            # primary has been declaring 90 GiB against terms of ~91.8 GiB
+            # since 2026-10-29 (see its profile note). Declared caps are
+            # PER-RUNG inside this one cgroup: 110592 primary, 103680 q4
+            # (71.7 pinned experts + 16 conv + ~13 KV ≈ 100.7, the owner-ruled
+            # half-restore), 92160 orca (U9.2 zero-growth law) — each leg stays
+            # ≥ its terms and ≤ this limit, which is the #1601 pairing.
+            # Why 116Gi is safe on this VM, measured rather than assumed
+            # (Grafana/prometheus, 2026-11-01): allocatable 125.1 GiB with the
+            # kubelet reserving effectively nothing, so the gap IS the OS
+            # margin; kube-system containers peak at 0.31 GiB over 7 d, and the
+            # node's own floor (all non-strata workloads running) measured
+            # ~7.3 GiB total — i.e. OS + k3s + containerd + kernel ≈ 2–3 GiB.
+            # 125.1 − 116 leaves ~9 GiB for that, ~6 GiB genuinely spare. Two
+            # standing caveats the operator owns: swap is 2.0 GiB with 1.7 free,
+            # so this cgroup is the ONLY containment; and requests stay 64Gi,
+            # so the scheduler can still pack a neighbour here — the time-share
+            # discipline (ttl 3600 + the matrix alternation) is what keeps the
+            # big llama.cpp rungs off a warm arena, not this number. The
+            # observed worst inside 108Gi was a 99.2 GiB working set during the
+            # 288 GB provisioning boot, with node MemAvailable bottoming at
+            # 17.3 GiB; page cache (54.6 GiB measured now) is reclaimable, so
+            # the kernel takes cache before it takes victims.
             limits:
-              memory: 96Gi
+              memory: 116Gi
           securityContext:
             # DECISIONS 2026-10-27 device-access ruling: privileged +
             # hostPath /dev/kfd + /dev/dri, NOT the amd-gpu device plugin —
@@ -1407,6 +1470,10 @@ strata:
   # enumeration (dGPU first, chip second) — VERIFY at the same rocminfo
   # gate; on a chip-only node (the fallback's main scenario) the chip is 0,
   # so set "0" or "" to inherit there.
+  # New R9700 rungs (the orca Uncensored arena, the Q4 rung) get NO
+  # entry here on purpose: they target the same dGPU as the primary and
+  # inherit the global index — per-rung entries would multiply the
+  # retargeting surface at the rocminfo gate without naming a difference.
   rocrVisibleDevicesByModel:
     qwen3.8-flash-next-strata-strix: "1"
 
@@ -1488,6 +1555,16 @@ strata:
         # other answer. The engine ignores ports, so the Service-DNS
         # shapes cover in-cluster callers; localhost always passes.
         env:
+          # Engine-side request accounting (T0, owner ruling 2026-11-01): one
+          # line per finished request — `request prompt P cached C output O
+          # prompt_read R ms total S ms prefill X tok/s decode Y tok/s`. The
+          # progress chatter everyone read as a rate ("reading the prompt:
+          # 63,456 of 63,461 tokens, 10 s so far") counts a REUSED prefix in
+          # its position and times from request admission, so it is not a
+          # measurement; `prefill` here is fresh tokens over engine time, the
+          # same definition the published R9700 numbers use. Logging only —
+          # changes no serving behavior.
+          - "STRATA_REQUEST_LINES=1"
           - "STRATA_PF_FUSED=1"
           - "STRATA_PF_GEMM=1"
           - "STRATA_PA_FAST=1"
@@ -1527,24 +1604,104 @@ strata:
         # non-secret this layer carries is the peers-forwarded Host
         # allow-list (same DNS-rebinding reason as the primary).
         env:
+          - "STRATA_REQUEST_LINES=1"
           - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
         # Rounds differ from the primary's output: the §5 switches are
         # KL-gated (STRIX_HALO §5 "changes bits") — never A/B the two
         # profiles token-for-token, compare on the bench suite instead.
 
+      qwen3.8-flash-next-strata-orca:
+        name: Qwen3.8-Flash-Next Uncensored IQ4_XS (R9700 arena)
+        description: Strata engine on the gated orcarouter Uncensored pack at IQ4_XS via the ORCA.md-shape manual pack — plain IQ4_XS experts are kernel-supported on the q38 path (unsloth's UD-IQ4_XS is catalog-served on AMD since engine 0.1.31/0.1.32), so the U9.2 ladder shift from IQ3_XXS changed rung, not flags; 57.7 GiB pinned-expert arena inside the 90 GiB engine cap with the conversation-cache trimmed to 8 GiB; first request pays the cold pin (minutes), then residency is time-shared — the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        # Same serve wrapper as the primary (C01 interface freeze); the pack
+        # switch lives entirely in the profile file.
+        cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-orca-iq4_xs.json --host 127.0.0.1 --port ${PORT}'
+        # Residency contract copied from the primary verbatim (same law as
+        # the q4 rung): ttl/unloadTimeout/checkEndpoint equality
+        # keeps the time-share discipline and the 420 s grace invariant
+        # rung-wide.
+        ttl: 3600
+        unloadTimeout: 180
+        checkEndpoint: /health
+        # Engine defaults like the other R9700 rungs: no PR/strix switch
+        # set (silicon/recipe-specific), only the peers-forwarded Host
+        # allow-list; ROCR entry injected by the template from the global
+        # index.
+        env:
+          - "STRATA_REQUEST_LINES=1"
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
+
+      qwen3.8-flash-next-strata-q4:
+        name: Qwen3.8-Flash-Next Unsloth UD-Q4_K_XL (R9700 arena)
+        description: Strata engine on the public unsloth UD-Q4_K_XL pack — the wave's quality rung at 93.1% Q8_0 top-token match against the IQ3_S flagship's 87.7%, paid for with a 71.7 GiB pinned-expert arena and a conversation cache held at 16 GiB — half the fleet uplift, since the HIP engine compiles the disk session files out and the full 32 GiB restore would not fit the node; ~10-30% slower decode than IQ3_S on this card class is the cost the U8 ruling accepts knowingly. Experts pinned in the page-locked RAM arena on the R9700 inside its own 103680 declaration under the pod's 116Gi cgroup; the arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        # Same serve wrapper as the primary, byte-for-byte except the profile
+        # file (the suite asserts exactly this equality — the ulimit wrapper is
+        # load-bearing, and a per-rung wrapper drift is invisible until fd
+        # exhaustion): the pack/quant/memory switch lives entirely in the
+        # profile file; serve takes no tuning flags.
+        cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-q4.json --host 127.0.0.1 --port ${PORT}'
+        # Residency contract copied from the primary verbatim (rung-wide law,
+        # same as the orca rung): ttl/unloadTimeout/checkEndpoint
+        # equality keeps the time-share discipline and the 420 s grace
+        # invariant, which C06 must not touch.
+        ttl: 3600
+        unloadTimeout: 180
+        checkEndpoint: /health
+        # Engine defaults like the other R9700 rungs: no PR/strix switch set
+        # (silicon/recipe-specific), only the peers-forwarded Host allow-list;
+        # the ROCR entry is injected by the template from the global index.
+        env:
+          - "STRATA_REQUEST_LINES=1"
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
+
+      ornith-1.5-122b-strata-q4:
+        name: Ornith-1.5-122B Unsloth UD-Q4_K_XL (R9700 arena, Strata q36 path)
+        description: Strata engine on the public unsloth Ornith-1.5-122B UD-Q4_K_XL trio through its Qwen3.6 (qwen35moe) engine path — GGUF-direct, no pack, no token, the three shards joined by the loader itself. Runs on the vendored two-hunk constants carry (containers/strata carry/ornith-q36.patch, upstream issue #3574, closed not_planned): upstream does not support this model, so the claim-compiled engine carries the fix and the packaged engines do not — R9700 only, a Strix-only node cannot serve this rung. Weights stream from the file into VRAM expert slots (flat routing, unlike Flash-Next's ~92% pinned arena), so decode is CPU-pool-dominated and honestly UNMEASURED against our llama.cpp ornith UD-Q4 rung; the on-target A/B decides preference, the rung's presence is not in question. The arena unloads after 1h idle so the llama.cpp trio gets its RAM back.
+        # Same serve wrapper as the other arenas, byte-for-byte except the
+        # profile file (the suite asserts that equality): the model/quant/
+        # engine-path switch lives entirely in the profile, and the q36
+        # surface carries no serve-side tuning flags.
+        cmd: bash -c 'ulimit -n 524288; exec /opt/strata/terminal/bin/strata serve --profile /profile/strata-ornith-q4.json --host 127.0.0.1 --port ${PORT}'
+        # Residency contract equal to the other R9700 rungs (the time-share
+        # discipline and the 420 s grace are rung-wide, C06 law).
+        ttl: 3600
+        unloadTimeout: 180
+        checkEndpoint: /health
+        env:
+          - "STRATA_REQUEST_LINES=1"
+          - "STRATA_ALLOWED_HOSTS=gpu-ai-llama-swap-strata,gpu-ai-llama-swap-strata.default.svc,gpu-ai-llama-swap-strata.default.svc.cluster.local"
+          # q36's dense projections take the int8 MMQ path when this is on:
+          # +47-67 % prompts measured on q36 HIP hardware (upstream #3926),
+          # which is the same prompt path this rung's flat routing leans on.
+          # It is an engine env var, not a profile flag — nothing here touches
+          # the other arenas.
+          - STRATA_DENSE_MMQ=1
+
     matrix:
-      # The two engines are ALTERNATIVES, never co-loadable: the arenas pin
+      # The engines are ALTERNATIVES, never co-loadable: the arenas pin
       # RAM additively on the 128 GB node and co-residency recreates #1715's
-      # global OOM (RESEARCH §7). "(p | s)" expands to one-model combos, so
-      # the solver evicts the resident arena before starting the other —
-      # the preload-empty hook alone would not stop a request-driven
-      # co-load. vars name model IDs, not aliases (llama-swap matrix
-      # semantics). Both stay lazily reachable; nothing preloads.
+      # global OOM (RESEARCH §7). "(p | s | o | q | n)" expands to one-model
+      # combos, so the solver evicts the resident arena before starting the
+      # other — the preload-empty hook alone would not stop a request-driven
+      # co-load. The Q4 arena is the largest of the five (71.7 GiB pinned
+      # experts), which is exactly why it rides the alternation instead of a
+      # slot of its own; ornith (~40-48 GiB class) is the second largest, so
+      # the two biggest never co-load either. vars name model IDs, not aliases
+      # (llama-swap matrix semantics). All stay lazily reachable; nothing
+      # preloads.
       vars:
         p: qwen3.8-flash-next-strata
         s: qwen3.8-flash-next-strata-strix
+        o: qwen3.8-flash-next-strata-orca
+        q: qwen3.8-flash-next-strata-q4
+        # QUOTED on purpose: helm parses values as YAML 1.1, where a bare `n:`
+        # is the boolean False — the ConfigMap would carry vars {"false": …}
+        # and the set token n would never resolve (probe-proven, TEST_SPEC
+        # §9.19). The C08-retired letter c is NOT reused (frozen-table hygiene:
+        # a fresh letter names a fresh rung).
+        "n": ornith-1.5-122b-strata-q4
       sets:
-        main: "(p | s)"
+        main: "(p | s | o | q | n)"
 
     # -----------------------------------------------------------------------
     # The run-config JSON rendered VERBATIM to /profile/strata-iq3_s.json
@@ -1604,20 +1761,46 @@ strata:
         - --max-context 262144
         # int8 KV: the engine default AND the PR's explicit choice.
         - --kv int8
-        # Machine-tuned by setup, adopted with 2026-10-29 post-OOM edits:
-        # --ple-io ram REMOVED (back to the engine's file/mmap default — the
-        # 28.8 GiB n-gram table reads sparsely; RAM-resident only made sense
-        # on a node with nothing else warm), and --memory-limit-mib declared
-        # so the engine sizes its page-locked arena inside the container's
-        # 96Gi cgroup instead of guessing at free node RAM (PR #1601
-        # pairing; 90 GiB = arena ~50 + conversation cache 32 + worst-case
-        # 4-slot KV ~13, per the owner budget ruling). KV-int8 math here is
+        # Machine-tuned by setup, adopted with the 2026-10-29 post-OOM edits.
+        # --ple-io ram was REMOVED here, and the note written that day called
+        # the fallback "the engine's file/mmap default" — the 2026-11-01 boot
+        # measured the actual resolution instead: `PLE on, table 320001536 rows
+        # of …IQ3_S-00002-of-00002.gguf` in DIRECT mode (320,015,536 × 90 B
+        # ≈ 26.8 GiB read unbuffered), the gfx12 auto-RAM policy having
+        # correctly declined while only ~3.2 GiB sat spare inside the declared
+        # cap. Direct is fine on this disk: the engine's own startup probe read
+        # 120,960 rows/s against its 15,000-row warning line, i.e. 8× clear.
+        # That measurement RETIRES `--ple-io mmap` (R6's T2): its page cache
+        # would live in this same cgroup and eat the parking room below, to buy
+        # a documented ~11% on a device that is not the bottleneck.
+        # --memory-limit-mib is declared so the engine sizes its page-locked
+        # arena inside the container cgroup instead of guessing at free node
+        # RAM (PR #1601 pairing). U14 (2026-11-01) moved 92160 → 110592: the
+        # rung's own terms are arena 46.84 + conversation cache 32 +
+        # worst-case 4-slot KV ~13 ≈ 91.84 GiB, which the old 90 GiB
+        # declaration never covered — the comment here once read "90 GiB =
+        # arena ~50 + conversation cache 32 + KV ~13", an arithmetic slip
+        # summing to 95 — and the engine reported the consequence at its first
+        # parking attempt: "need 1960 MiB plus 2560 MiB floor, 3259 MiB
+        # available". 107.25 GiB declared inside the 116Gi cgroup keeps the
+        # ~9 GiB reserve style the q4 pair already rides. KV-int8 math here is
         # ~13 KiB/token (only 12 of 48 layers carry full attention), so a
         # full 256k park costs ~3.3 GiB and the 32768 MiB budget parks
         # roughly 9-10 of those — or dozens of typical 30-50k sessions.
         - --kv-resident 32768
-        - --prefill auto
-        - --memory-limit-mib 92160
+        # T3 (owner ruling 2026-11-01): bare `auto` on gfx12 Linux means
+        # 16,384-token chunks; 32,768 is the prompt chunk PR #3636 ran on
+        # THIS node class (~2,519 tok/s @64-200K, the ladder rung-4 bar) and
+        # the strix progression row scored `auto:32768` at +23% @74K. Chunks
+        # above 8,192 are exact on gfx12, so this is a rate knob only — no
+        # numerics change (RESEARCH R6 [R6-1][R6-2]). The form is `auto:N`
+        # rather than bare N so the engine still auto-shrinks when the prompt
+        # buffers do not fit: it silently re-picks a smaller chunk (#4164),
+        # which is why the startup `prompt chunk …` line is a load-bearing
+        # verification step, not decoration. q4/orca/ornith stay at `auto`
+        # for this round — one variable at a time on the arena with headroom.
+        - --prefill auto:32768
+        - --memory-limit-mib 110592
         - --conversation-cache-mib 32768
         - --conversation-cache-slots 16
         # Context-extension toggle (EXPERIMENTAL, off by policy): the
@@ -1637,8 +1820,9 @@ strata:
         # one cache. Verify with a needle probe before trusting recall.
         # Documented deviations/toggles, one values edit away (verbatim
         # provenance kept for the record):
-        # --prefill 32768: the PR #3636 R9700-machine number; setup chose
-        #   `auto` here — override only on --plan/bench evidence.
+        # --prefill 32768: TAKEN above as `auto:32768` (owner T3 ruling
+        #   2026-11-01 — the --plan/bench evidence the override asked for
+        #   arrived: PR #3636's ~2,519 tok/s ran this node class at 32,768).
         # --conversation-cache-mib 24576 / --conversation-cache-slots 16:
         #   the PR's parked budget — superseded by the owner's 32768×16
         #   above; the real home of the guide's "24576" (RESEARCH §5
@@ -1703,8 +1887,29 @@ strata:
       # C01 interface freeze (containers/strata README): halo label = the
       # gfx1151 root. Pointing the rx9070 exe at the 8060S loads the wrong
       # arch kernels; exe is the ONLY flavor switch (same image, same
-      # terminal entry, same weights).
-      exe: /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo/strata
+      # terminal entry, same weights). The label dir follows the image's
+      # flavor pin (containers/strata README ledger; the packaged dirs are
+      # what that build's verify step test -x's — a root that drifts from
+      # the image is a profile pointing at a path that does not exist).
+      #
+      # The engine package version is the IMAGE pin, not a knob: the 0.2.9
+      # flavor bump (cf-86 C09) is what makes this dir 0.1.55, because that
+      # release's engine packages carry #4708 (the q36 warm-up no longer
+      # writes past the KV cache) and the chunked DeltaNet prompt kernels
+      # default-on for all-gfx12 Radeon (+3.5-6.1 % prompts on our card
+      # class), on top of what 0.2.8 already brought (#4518 conv cache vs the
+      # locked PLE table, #4051 engine memory handoff, #4420 idle-slot prefix
+      # keep). The off-unless-you-turn-it-on flag list is unchanged across the
+      # bump, so no profile args move with it. Only THIS profile runs a
+      # packaged root: the other arenas exec the engine setup compiles into
+      # the claim checkout, and since cf-86 C09 that checkout is refreshed by
+      # the image's own marker-keyed migration step on first boot after a bump
+      # (sources synced, build-hip wiped, engine recompiled), so the
+      # claim-compiled arenas follow the image pin without an operator step.
+      # That recompiled engine is also the only one carrying the vendored
+      # #3574 constants, which is why the ornith arena names it and this
+      # packaged halo root cannot serve that rung.
+      exe: /opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo/strata
       # RESEARCH §7 verbatim eight-set — the spellings ARE upstream literals
       # (normalizing case or names silently no-ops the engine's env parsing,
       # AC2's bar). gfx1151 auto-enables much of this from §4; §5 sets them
@@ -1765,7 +1970,7 @@ strata:
       # The matching halo engine root for lib_dirs (the exe's ROCm runtime
       # ships inside it — same packaged-engine VERIFY as the primary).
       lib_dirs:
-        - /opt/strata/components/engine/0.1.52-linux-x86_64-hip-halo
+        - /opt/strata/components/engine/0.1.55-linux-x86_64-hip-halo
       backend: hip
       aliases:
         - qwen3.8-flash-next
@@ -1777,3 +1982,345 @@ strata:
       # reviews it for the chip too.
       parallel: 4
       host: "127.0.0.1"
+
+    # -----------------------------------------------------------------------
+    # The gated orcarouter Uncensored IQ4_XS swap rung's run-config, rendered
+    # VERBATIM to /profile/strata-orca-iq4_xs.json by the same profile
+    # ConfigMap (the U9.2 owner ruling moved this arena up the orcarouter
+    # quant ladder — same frozen id, rung replace, no matrix growth). Shape:
+    # data paths on the three IQ4_XS shards staged by model-fetch's gated
+    # orca step, and the memory pair MOVED: the 57.7 GiB pinned-expert arena
+    # (97.47 GB x the 0.635 setup-calibrated expert share, RESEARCH R4) fits
+    # this rung's 92160 declared cap ONLY with the conversation cache trimmed
+    # to 8192 — 57.7 arena + 8 conv + ~13 worst-case KV + ~6 supervisor ≈
+    # 84.7 GiB, while conv 32 would declare 108.7 — past this rung's own 90
+    # GiB declaration (the pod cgroup has since grown to 116Gi, but the cap is
+    # what bounds an arena, and U9.2 pinned orca's envelope as zero-growth).
+    # Slots stay 16 and the cap stays 92160 (the #1601 law is
+    # declared ≤ cgroup, and the cgroup raises were the Q4 arm's lockstep);
+    # the trim follows the sibling Q4 arm's U8 precedent and upstream's own
+    # default ceiling (DETAILS.md@v0.2.8). Two Orca-specific carry-overs from
+    # docs/ORCA.md, both per-quantizer decisions: the pack is built with
+    # --compat-bf16 (this is the same publisher/quantizer pipeline whose
+    # IQ3_XXS shards provably compressed the BF16 hyper-connections — the
+    # first IQ4_XS provisioning's iq_pack log plus serve --plan is the human
+    # fidelity gate; a flag flip + repack there is a follow-up, not a
+    # pre-trim here), and the PLE lookup table rides INSIDE shard 1 (its
+    # example config points --native and --ple-gguf at the same file) — the
+    # placement across three shards is confirmed at that same on-target
+    # gate. There is no Strata doc page for this tier: ORCA.md validated
+    # IQ3_XXS and ORCA_Q4_K_S.md the Q4_K_S trio, but plain IQ4_XS experts
+    # are kernel-supported on the q38 path since engine 0.1.31/0.1.32
+    # (RESEARCH R4) — zero build flags. The IQ3_S pair's files stay off this
+    # arena (serving the flagship's weights under an uncensored id is the
+    # failure the distinctness arms catch).
+    # -----------------------------------------------------------------------
+    engineProfileOrca:
+      # Keyless SERVE posture, identical to the other profiles (C-A): the
+      # hf-token Secret the R-d ruling sanctions is consumed by the model-
+      # fetch INIT for the gated download and stops there — this profile
+      # carries no secret reference of any kind.
+      api_key: "none"
+      # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
+      # backend/gpu/parallel/host to the primary and the Q4 rung.
+      exe: /models/strata/Strata/engine/strata
+      env: {}
+      cwd: /models/strata/Strata
+      # Own progress log on the claim (the --plan-gate and unload-timing
+      # evidence trail for THIS rung).
+      log: /models/strata/Strata/strata-orca-iq4_xs.log
+      args:
+        # Fresh iq_pack --compat-bf16 pack built from the Orca shards by
+        # model-fetch (pack dir named by the tier, ORCA.md's scheme); the
+        # tokenizer directory rides inside it.
+        - --pack /models/strata/Strata-data/packs/orca-iq4_xs
+        # ORCA.md's pattern carried to the 3-shard tier: both file pointers
+        # take the SAME first shard — this pack family's PLE lookup table
+        # lives inside shard 1 and stays on disk (unchanged by
+        # --compat-bf16). The 3-shard placement is confirmed at the
+        # on-target serve --plan gate; a PLE-not-found in the plan output
+        # flips the pointer there as a follow-up, never improvisationally.
+        - --native /models/strata/Strata-data/models/IQ4_XS-orca/Qwen3.8-Flash-Next-Uncensored-IQ4_XS-00001-of-00003.gguf
+        - --ple-gguf /models/strata/Strata-data/models/IQ4_XS-orca/Qwen3.8-Flash-Next-Uncensored-IQ4_XS-00001-of-00003.gguf
+        # Same qwen-architecture expert profile as the other profiles.
+        - --expert-profile /models/strata/Strata/data/expert-profile.bin
+        - --expert-cache auto
+        - --spec 4
+        - --spec-min-p 0.5
+        # Shared stock draft-head runtime staged by the q3 provisioning —
+        # ORCA.md's own Preparation section uses the ORIGINAL model's MTP rt
+        # for this foreign pack ("the target model verifies every proposal");
+        # the ablation never touched the draft head.
+        - --mtp /models/strata/Strata-data/mtp/rt
+        - --max-context 262144
+        - --kv int8
+        # KV-streaming RAM budget byte-equal to the serving rungs: the
+        # budget already counts the worst-case ~13 GiB 4-slot KV; the rung
+        # shift moved only the conversation-cache term below.
+        - --kv-resident 32768
+        - --prefill auto
+        # THE DECLARED CAP stays 92160 for this rung (the #1601 law is
+        # declared ≤ cgroup, not equal — the 100Gi cgroup raise was the Q4
+        # arm's pair). Fit math (RESEARCH R4): 57.7 GiB arena + 8 conv +
+        # ~13 worst-case KV + ~6 supervisor ≈ 84.7 GiB inside 92160.
+        - --memory-limit-mib 92160
+        # Conversation-cache trim 32→8 GiB (slots unchanged at 16) is the
+        # arithmetic of the 57.7 GiB arena, not tuning: conv 32 declares
+        # 108.7 GiB, past its own 92160 declaration. Same trim the sibling Q4
+        # arm ships (U8 precedent) and upstream's own default ceiling
+        # ("40% of the RAM left above min-free, at most 8192 MiB",
+        # DETAILS.md@v0.2.8).
+        - --conversation-cache-mib 8192
+        - --conversation-cache-slots 16
+      # Person-wins layer (RESEARCH §2), same rule as the other profiles.
+      user_args: []
+      tokenizer: /models/strata/Strata-data/packs/orca-iq4_xs/tokenizer
+      model_name: qwen3.8-flash-next-orca-iq4_xs
+      lib_dirs:
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib
+      backend: hip
+      # UNIQUE inner alias per the frozen-id rule: NOT the family alias
+      # (primary/strix hold that legitimately together) and NOT the OUTER
+      # llama.cpp id qwen3.8-flash-next-orca-q6 — one name on two engines
+      # would split the orca family across surfaces invisibly.
+      aliases:
+        - qwen3.8-flash-next-orca
+      gpu: [0]
+      parallel: 4
+      host: "127.0.0.1"
+
+    # -----------------------------------------------------------------------
+    # The unsloth UD-Q4_K_XL Q4 rung's run-config, rendered VERBATIM to
+    # /profile/strata-q4.json by the same profile ConfigMap (cf-86 C06).
+    # Shape: the primary's engine/paths layer byte-unchanged, data paths and
+    # the memory pair moved — this is the wave's only Shape-A TWEAK rather than
+    # a Shape-A copy. Authority for every number: DECISIONS "Research verdicts
+    # + final rulings" (R-b OVERTURN: it fits; U8: this rung + this trim),
+    # RESEARCH Rounds 2-3 [A1][A2][A11].
+    # Paths are setup v0.2.8's own naming for a catalog family install (read at
+    # the pinned tag, 639,798 B, sha256 0eba1327…c94079ae): family tag "unsloth-" prefixes
+    # BOTH the staged-shard dir and the lowercased pack dir, and step 7 of the
+    # installer emits --pack + --native(shard 1) ONLY — for a 4-shard pack it
+    # deliberately writes no --ple-gguf, because the engine finds the PLE
+    # table's shard itself from shard 1. The MTP runtime is the shared one the
+    # q3 provisioning already staged.
+    # -----------------------------------------------------------------------
+    engineProfileStrataQ4:
+      # Keyless serve posture (C-A), identical to the other three profiles:
+      # unsloth's files are public/ungated, so C02's download-only hf-token
+      # exception must NOT spread here — no secret reference anywhere in this
+      # arm.
+      api_key: "none"
+      # Per-node engine, not per-rung: byte-identical exe/cwd/lib_dirs/
+      # backend/gpu/parallel/host to the primary and the orca rung (the
+      # suite asserts this equality; only data paths may differ).
+      exe: /models/strata/Strata/engine/strata
+      env: {}
+      cwd: /models/strata/Strata
+      # Own progress log on the claim (the on-target --plan gate and the
+      # session round-trip gate both read this file).
+      log: /models/strata/Strata/strata-q4.log
+      args:
+        # Pack iq_pack built by setup from the four unsloth shards with
+        # --compat-bf16 (the unsloth family's own pack_args — unlike SC117's
+        # GSQ-RCO files, unsloth's quants compress the projections Strata's
+        # kernels read as BF16); the tokenizer directory rides inside it.
+        - --pack /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl
+        # Shard 1 of four: 10,946,624 B (embeddings + first layers); shards 2-3
+        # are the 49,859,583,136 B and 49,376,141,504 B expert halves, shard 4
+        # the 12,087,983,520 B tail. Those four byte counts are setup's own
+        # UNSLOTH_SHARDS pins, and they sum to 111,334,654,784 B — the total
+        # the RAM envelope is sized against. Sum them from the shards rather
+        # than trusting a label: setup's `download_gb: 111.3` is a rounded
+        # figure. No --ple-gguf line here on purpose: setup's step 7 emits it
+        # only for ≤2-shard packs (verified in setup.py@v0.2.8:
+        # `["--ple-gguf", ple] if len(shards) <= 2 else []`), and pointing one
+        # at a guessed shard would be the wrong-weights failure.
+        - --native /models/strata/Strata-data/models/unsloth-UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf
+        # Same qwen-architecture expert profile (the unsloth family carries no
+        # family-specific profile file of its own).
+        - --expert-profile /models/strata/Strata/data/expert-profile.bin
+        - --expert-cache auto
+        - --spec 4
+        - --spec-min-p 0.5
+        # Shared stock draft-head runtime staged by the q3 provisioning — the
+        # unsloth quantization never touched the draft head, and the target
+        # model verifies every proposal.
+        - --mtp /models/strata/Strata-data/mtp/rt
+        - --max-context 262144
+        - --kv int8
+        # KV-streaming RAM budget byte-equal to the serving rungs: the budget
+        # below already counts the worst-case ~13 GiB 4-slot KV, and C06's
+        # ruling moved only the conversation-cache term.
+        - --kv-resident 32768
+        - --prefill auto
+        # THE LOCKSTEP PAIR (PR #1601): cgroup limits.memory above, this cap
+        # inside it. cf-86 post-boot revision (2026-11-01): the conv term was
+        # written 8192 because disk session files were supposed to absorb the
+        # big parks (Round 2/3 [A1]: 71.7 pinned experts + 8 conv + ~13
+        # worst-case 4-slot KV ≈ 92.7) — the on-node HIP engine rejected
+        # --slot-save-path at argv (a CUDA-side feature compiled out), so conv
+        # is back to 16384 and the pair to 103680 inside the pod cgroup
+        # (71.7 + 16 + 13 ≈ 100.7). The pair value itself is PER-RUNG and does
+        # NOT move when the cgroup does: U14 raised the container to 116Gi the
+        # same day (for the flagship's term-sum, see its profile), and q4 keeps
+        # 103680 — its envelope gains nothing from a ceiling it was never
+        # bumping against, and the reserve above it grows from ~7 to ~12 GiB.
+        # The full 32768 conv restore stays CLOSED, not deferred: at 116Gi it
+        # still computes 71.7 + 32 + 13 = 116.7 — over both the 107.25 GiB
+        # largest declared cap on the pod and the cgroup itself, so U12's
+        # half-restore was never an artifact of a timid ceiling. The orca
+        # profile keeps its 92160 declaration inside the same cgroup.
+        - --memory-limit-mib 103680
+        # Conversation-cache 16384 (slots unchanged at 16). History: the rung
+        # shipped trimmed to 8192 as the price of the 71.7 GiB arena — the
+        # owner's U8 trade, sound ONLY because disk session files were to
+        # absorb the big parks the trim evicted. The on-node HIP engine
+        # compiled that feature out (the flag below, rejected at argv), so the
+        # trim lost its compensation: restored halfway — 16 GiB, inside the
+        # pair raised above — because the full 32768 uplift would put the
+        # envelope at ~116.7 of the 125 GiB node (the Oct-29 OOM shape, refused
+        # at the owner gate 2026-11-01). At 16 GiB the fleet's typical 30-50k
+        # turns park ~24-42 of them; ≥256k parks stay scarce and re-prefill
+        # 1.7-3 min for now.
+        - --conversation-cache-mib 16384
+        - --conversation-cache-slots 16
+        # Session files are NOT passed: the claim-compiled HIP engine rejects
+        # --slot-save-path with "unknown argument" (exit 2 before ready,
+        # 2026-11-01 first boot), while the checkout's own DETAILS.md@0.2.9
+        # still documents it — the CUDA trial class the Round-3 caveat predicted
+        # at DECISIONS, now measured rather than assumed. Revisit only if
+        # upstream ships the feature for HIP builds.
+        # NEGATIVE PINS — flags that stay OUT of this arm (suite-pinned;
+        # RESEARCH Round 3 §4):
+        #   --ple-io ram would make the 28.8 GiB n-gram table RAM-resident —
+        #   the exact +28.8 GiB that blew node RAM and got cluster system pods
+        #   OOM-harvested on 2026-10-29. This is a hazard, not a theoretical
+        #   worry: setup's own installer AUTO-ADDS --ple-io ram here, because
+        #   its SSD-path test is `ram >= ram_gb(48) + table_gb(28.8) + 16`
+        #   = 92.8 GB and this node has 128 — so whatever the claim's setup-
+        #   generated config says, THIS file is the serving authority and it
+        #   pins the engine's mmap default. PLE-RAM-vs-mmap is confirmed at the
+        #   human-owned on-target `strata serve --plan` gate, never from here.
+        #   (--layer-split / --prompt-cache 0 were pinned out as session-file
+        #   killers; with the feature compiled out of the HIP build that
+        #   rationale is retired — they stay out as untouched defaults, not as
+        #   guard rails.)
+        # Fallback executed at the owner gate 2026-11-01: the pre-registered
+        # HIP failure arrived one step early — the engine refused the flag at
+        # argv, so no round-trip ever ran. The full Round-2 envelope (conv
+        # 32768) was DECLINED on measurement: sized against the smaller
+        # IQ4_XS pack, on this pack it computes ~116.7 of the 125 GiB node.
+        # The owner chose the half-restore instead — conv 16384 with the pair
+        # raised above. This paragraph is the record of that gate, not an
+        # open option.
+      # Person-wins layer (RESEARCH §2), same rule as the other profiles.
+      user_args: []
+      tokenizer: /models/strata/Strata-data/packs/unsloth-ud-q4_k_xl/tokenizer
+      model_name: qwen3.8-flash-next-unsloth-ud-q4_k_xl
+      lib_dirs:
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib
+      backend: hip
+      # UNIQUE inner alias per the frozen-id rule: NOT the family alias
+      # (primary/strix hold that legitimately together) and NOT the outer
+      # llama.cpp ids of the same quant class (qwen3.8-flash-next-q4 /
+      # qwen3.8-flash-next-heretic-q4) — one name on two engines would split
+      # the flash-next Q4 family across surfaces invisibly. The name is
+      # setup's own family name for this repo (fam["name"] =
+      # qwen3.8-flash-next-unsloth), so a direct/debug hit reads as the
+      # quantization source, which is the distinction an operator needs.
+      aliases:
+        - qwen3.8-flash-next-unsloth
+      gpu: [0]
+      parallel: 4
+      host: "127.0.0.1"
+
+    # -----------------------------------------------------------------------
+    # Ornith-1.5-122B on the engine's Qwen3.6 (qwen35moe) path — a DIFFERENT
+    # engine surface from the four flash-next profiles above, so the shape
+    # here follows what setup.py@v0.2.9 GENERATES for the qwen36 family
+    # (install_own_path step 7): `--native <gguf> --max-context N --prefill
+    # auto --mtp N` plus a tokenizer DIRECTORY and no pack. The flash-next
+    # profile grammar deliberately does NOT appear here:
+    # --conversation-cache*/--slot-save-path/--memory-limit-mib and the pack/
+    # PLE/expert-cache family are qwen4exp-only flags (engine.hpp's q36 list
+    # is --native/--serve/--max-context/--prefill/--chunk/--mtp/--pool-workers/
+    # --expert-vram/--expert-slots/--hybrid-rows/--cpu-threads), and passing a
+    # flag the parser does not know would look like tuning discipline while
+    # being noise. No --serve here either: serve/server.py adds it to the
+    # child's argv itself.
+    # -----------------------------------------------------------------------
+    engineProfileStrataOrnith:
+      # Keyless posture, same as the other four: unsloth's Ornith files are
+      # public (the anonymous tree read + ranged resolve proved it), so no
+      # secret reference belongs anywhere on this arm.
+      api_key: "none"
+      # The CLAIM-COMPILED engine, deliberately: the carry patch is a source
+      # patch, so only the engine this checkout compiles carries the widened
+      # pool buffer and the Q4_K (fmt 12) down instantiation. The packaged
+      # /opt/strata/components/engine roots are upstream binaries and refuse
+      # this model — pointing here is the gfx120x-only law made executable.
+      exe: /models/strata/Strata/engine/strata
+      env: {}
+      cwd: /models/strata/Strata
+      log: /models/strata/Strata/strata-ornith-q4.log
+      args:
+        # Shard 1 of three, staged under the repo's ORIGINAL names by the
+        # model-fetch driver's GGUF-direct leg: q36's load() opens the GGUF and
+        # walks the shards from the first file itself, so this pointer is a
+        # join entry, not a merged file. Bytes 10,942,929 / 49,971,099,680 /
+        # 29,731,729,056 (Σ 79,713,771,665) are the byte_pins.env literals the
+        # legs verify against.
+        - --native /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf
+        # 131072, not the 262K the other arenas serve: the cost on this path
+        # is fp32 KV (no quantized KV on q36 yet, upstream #3678 open) at
+        # ~53 KB/token — at 262144 the first on-target load died exactly here
+        # ("5088 MiB needed, 3040 MiB free after the weights, the context and
+        # the sessions"): ~13.1 GiB KV + ~10.2 GiB dense leaves no room for
+        # the hybrid experts' buffers and slots. Halving the window frees
+        # ~6.5 GiB against a ~2 GiB deficit; the experts' default sizing stays
+        # unpinned for the serve --plan gate to measure honestly.
+        - --max-context 131072
+        # setup's own generated choice for this family (its step 7 writes
+        # `--prefill auto`); `auto` lets the engine pick the prefill path for
+        # the card instead of freezing a guess here.
+        - --prefill auto
+        # Draft count, not a path — on this engine path the MTP layer rides
+        # inside the GGUF (blk.48, types clean per the shard-3 scan) and setup
+        # writes the same 2, its comment: "measured best on the R9700".
+        - --mtp 2
+        # NOT pinned here, on purpose: --expert-slots/--expert-vram are sized
+        # against real VRAM+RAM at the human on-target `serve --plan` gate
+        # (RESEARCH R5 sizes the slots budget at ~10-14 GiB / 300-400 slots on
+        # this node; a guessed number would be a fake pin). The engine's
+        # defaults stay in force until that measurement lands.
+      user_args: []
+      # Built by the driver with setup's own tool (its GGUF-direct step builds
+      # ONLY the tokenizer, because the engine reads the weights from the
+      # GGUF); pointing at a pack path here would name a directory that does
+      # not exist on this rung.
+      tokenizer: /models/strata/Strata-data/unsloth/Ornith-1.5-122B-GGUF/UD-Q4_K_XL/tokenizer
+      # Honest about the rung (frozen arena id is the routing name; this is
+      # what the engine reports): ornith, q4 class, and NOT a flash-next
+      # family name.
+      model_name: ornith-1.5-122b-unsloth-ud-q4_k_xl
+      # UNIQUE inner alias: the distinguishing fact for an operator is the
+      # ENGINE, not the quant — the outer llama.cpp ladder already serves
+      # ornith-1.5-122b-q4 from the same unsloth files, so a quant-named alias
+      # here would split one model across two engines invisibly. Not equal to
+      # any model id on either surface.
+      aliases:
+        - ornith-1.5-122b-strata
+      gpu: [0]
+      # One request at a time until the on-target gate measures it: q36 keeps a
+      # full fp32 KV per slot (~13.1 GiB at 262K), so the parallel 4 the
+      # flash-next q4 arena runs (int8 KV) would multiply a KV cost this path
+      # cannot pay yet.
+      parallel: 1
+      host: "127.0.0.1"
+      lib_dirs:
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_devel/lib
+        - /models/strata/Strata/.venv/lib/python3.12/site-packages/_rocm_sdk_libraries_gfx120X_all/lib
+      backend: hip

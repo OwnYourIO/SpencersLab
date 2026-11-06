@@ -162,6 +162,13 @@ resource "coder_agent" "main" {
     OPENCODE_BINARY          = "/usr/local/bin/opencode"
     OPENCODE_SERVER_USERNAME = "opencode"
     OPENCODE_SERVER_PASSWORD = random_password.opencode_server.result
+    # The owner's IANA zone (cf-96 OQ5, grounded in renovate.json's
+    # `timezone`). The agent exports its env to every process it launches, so
+    # the OpenCode server and its plugin host stamp human-facing times
+    # workspace-local. A template change lands only on the owner's workspace
+    # reprovision; until then $TZ is absent and the emitters keep their UTC
+    # fallback, which is the same instant in the other allowed spelling.
+    TZ = "America/Denver"
   }
 
   startup_script = <<-EOT

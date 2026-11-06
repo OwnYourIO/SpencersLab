@@ -42,6 +42,18 @@
 # rename sweep — agent-perms A13). c9 (new): AGENTS.md + rules carry the
 # Lifecycle wording (C05) and a standalone dev-family entry (C04).
 #
+# cf-90 RE-PIN (2026-10-31, agent-test; C02 naming round): c3's 'agent-coord
+# keeps run tags' presence pin FLIPS to the global-retirement posture — the
+# keeps-wording becomes the defect and the every-flavor window is DESIGNED
+# RED until C02 lands the overview.md replacement sentence; c6's comment +
+# verdict reword to the retirement-compatible framing its three arms always
+# had (they grep surviving structure, never the run-tag sentence); c7 admits
+# the cf-90 plan folder + skills/wekan-board-provision (C01).
+# KNOWN REDS in sibling suites (gate t17, coord-inwork i4, session-origin s4,
+# kickoff-branch m4, wekan-mcp create-list t2) are pre-existing
+# permissions-matrix/base drift tracked OUTSIDE cf-90 — cf-90 chunk gates
+# never run those ids (the selection notes live in gate.sh's cf-90 header).
+#
 # c1 runs rulesync generate twice via the PATH/npx ladder; the first run may
 # materialize pending generation, so the gate is that the SECOND run changes
 # nothing. rulesync is ask-gated in unattended subagent shells, so an
@@ -89,10 +101,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 9); do WANT["c$i"]=1; done
+  for i in $(seq 1 11); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-8]|9)$ ]] || fail "unknown check id '$a' (expected c1..c9)"
+    [[ "$a" =~ ^c(1[0-1]|[1-9])$ ]] || fail "unknown check id '$a' (expected c1..c11)"
     WANT["$a"]=1
   done
 fi
@@ -233,15 +245,23 @@ if want c3; then
       || fail "c3: $f does not route models from the Model(s) checklist alone (D12)"
     grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag' "$f" \
       || fail "c3: $f never retires the run tag for card-driven runs"
-    grep -qF 'keeps run tags' "$f" \
-      || fail "c3: $f must state agent-coord KEEPS run tags — AGENTS.md does not globally retire them"
+    # cf-90 C02 FLIP (2026-10-31): GLOBAL retirement replaces the old
+    # 'agent-coord keeps run tags' posture — the keeps-wording is now the
+    # defect, and the summary surfaces must state both-family scope with the
+    # slug naming all four surfaces. Designed red until C02 lands.
+    if grep -qF 'keeps run tags' "$f"; then
+      fail "c3[C02 AC4]: $f still says agent-coord KEEPS run tags — the retirement is global (cf-90 C02); flip the sentence in the rules source, never by hand-editing AGENTS.md"
+    fi
+    if python3 "$TMP/negwin.py" --ci "$f" 1200 'run tag' 'retir' 'worktree' 'branch'; then :;
+    elif python3 "$TMP/negwin.py" --ci "$f" 1200 'run tag' 'retir' 'session'; then :;
+    else fail "c3[C02 AC4]: $f lacks the global retirement passage (run tag + retired + slug names worktree/branch/session) (red before C02 dev)"; fi
   done
   awk '/^## Agents/{f=1; next} /^## /{if (f) exit} f' AGENTS.md >"$TMP/agents-section.md"
   awk '/^## Feature pipeline/{f=1; next} /^## /{if (f) exit} f' AGENTS.md >"$TMP/fp-section.md"
   cat "$TMP/agents-section.md" "$TMP/fp-section.md" >"$TMP/new-text.md"
   python3 "$TMP/neg12.py" "$TMP/new-text.md" \
     || fail "c3: the new AGENTS.md text pairs 'models' with 'custom field' without negating it (D12)"
-  ok "c3: pickup order, research-only -> Review, slug/session cf intake, cf- slug, no-run-tag-for-card-runs + agent-coord keeps them, cf-85 combined [<slug>](<session link>) value; D12 negative holds in the new sections"
+  ok "c3: pickup order, research-only -> Review, slug/session cf intake, cf- slug, GLOBAL run-tag retirement (cf-90 C02 flip: keeps-run-tags rejected), cf-85 combined [<slug>](<session link>) value; D12 negative holds in the new sections"
 fi
 
 # --- c4: main's combined dev-<service> row preserved verbatim (C04 AC2) --------
@@ -274,9 +294,13 @@ if want c5; then
   ok "c5: permissions.md (source + generated) carries the board-coord row with narrow dev-boards*, coord row intact"
 fi
 
-# --- c6: the agent-coord (non-board) text C04 must leave alone (C04 AC4) -------
-# Run tags and the live kickoff questions stay for the plain flow; these are
-# main's own sentences, pinned as byte-presence so a global rewrite fails.
+# --- c6: the agent-coord text C04 must leave alone (C04 AC4) -------------------
+# The live kickoff QUESTIONS and the pipeline-kickoff/pipeline-gates
+# references stay (cf-90 C02 retires only the run tag, not the question
+# flow — Q1 slug suggestions remain for cardless runs). Post-C02 the
+# ok-note reads retirement-compatible: these arms never pinned the run-tag
+# sentence itself, only the surviving structure (see c3 for the flipped
+# run-tag pins).
 if want c6; then
   for f in AGENTS.md "$RULES_SRC"; do
     grep -qF 'pipeline-kickoff' "$f" \
@@ -285,7 +309,7 @@ if want c6; then
       || fail "c6: $f reworded the pipeline-skills sentence (the coord-side kickoff/model-routing description is out of C04's scope)"
     grep -qF 'Launch with' "$f" || fail "c6[cf-58 relaxed]: $f lost the /pipeline launch sentence — C03 may reword it (alias/-pr pairing), but launch guidance must exist"
   done
-  ok "c6: the agent-coord kickoff/gates/launch sentences still present in source + AGENTS.md (no global run-tag retirement)"
+  ok "c6: the agent-coord kickoff/gates/launch sentences still present in source + AGENTS.md (cf-90 C02: questions stand, only the run tag retired — c3 pins the new posture)"
 fi
 
 # --- c7: scope — only C04's files changed (C04 AC3) -----------------------------
@@ -315,6 +339,29 @@ fi
 # on another ticket's already-landed folder buries every later check (same class as
 # the own-folder admits above). containers/wekan-mcp/* joins per the c8 union —
 # cf-68's create_list landed the container surface on this branch.
+# cf-86 widening (C06 test round, 2026-10-30): cf-86's plan folder plus the
+# exact serving files its chunks declare (chart values, the strata profile
+# ConfigMap template, the gpu-ai overlay, the two docs pinned by
+# test_strata_runbook.py (the runbook note and the parent
+# README — added by the docs round) and that chart's tests
+# tree — no
+# directory admits, and no other chart or service. Why not manifest-driven:
+# the c8 block of tests/agent-board-coord/rulesync-surface.sh.
+# cf-86 C07 round (2026-10-31, owner U9.4): chunks/C07.md declares the strata
+# image surfaces (Dockerfile, README, the three files/ entries, its test file) —
+# admitted one path at a time, same reasoning as the chart trio above.
+# cf-86 C09 round (2026-10-31, owner U11): + one exact path — the vendored
+# carry/ornith-q36.patch chunks/C09.md declares (same one-path-at-a-time rule;
+# rulesync-surface c8's probe loop keeps carry/ itself out).
+# cf-90 widening (2026-10-31, agent-test): the running ticket's plan folder +
+# the hand-written skills/wekan-board-provision dir (C01); its skill/command/
+# agent/AGENTS/tests/loops/scripts edits ride the wildcards already in this set.
+# cf-106 widening (2026-11-03, agent-test; chunks/C01.md "Scope admits"): the
+# running ticket's own plan folder, admitted ONCE for the whole ticket (plan
+# DECISIONS 2026-11-03) — its content surfaces already ride this set's
+# .rulesync/*, .opencode/{agents,commands,skills}/*, AGENTS.md, tests/*,
+# scripts/*, containers/wekan-mcp/*, skills/*, .opencode/plugin/* and
+# .agents/loops/* admits. A replan-added file joins THIS line.
 if want c7; then
   { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
   while IFS= read -r p; do
@@ -339,7 +386,8 @@ if want c7; then
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
-      skills/wekan-mcp/*|skills/wekan-api/*|containers/wekan-mcp/*|.opencode/plugin/board-context/*|\
+      skills/wekan-mcp/*|skills/wekan-api/*|containers/wekan-mcp/*|skills/container-creation/*|.opencode/plugin/board-context/*|\
+      .opencode/plugin/pipeline-locks/*|\
       .opencode/plugin/question-notify/*|.agents/loops/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
@@ -348,11 +396,24 @@ if want c7; then
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
       .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
-      .agents/plans/2026-10-30-chore-coord-surface-grants.md) : ;;
+      .agents/plans/2026-10-30-chore-coord-surface-grants.md|\
+      .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
+      charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
+      services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*|\
+      .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md|\
+      containers/strata/Dockerfile|containers/strata/README.md|\
+      containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
+      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
+      containers/strata/carry/ornith-q36.patch|\
+      .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
+      .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
+      charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
+      skills/wekan-board-provision/*|\
+      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*) : ;;
       *) fail "c7: path outside C04's in-scope set: $p (base: $BASE)" ;;
     esac
   done <"$TMP/changed.txt"
-  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc; base: $BASE)"
+  ok "c7: changed paths limited to the in-scope files (C04 set + cf-50/cf-52 + tests-edit-perms D4/D9 + cf-58 agent-surface + cf-75 wekan-mcp/board-context/plan-folder + cf-85/cf-72/board-tick-cleanup plan-folder widenings + cf-88 surface-grants root plan doc + cf-86 plan-folder/serving-files/docs/image-build-surface widenings + cf-96 plan-folder and C09 coder-template admits + cf-106 own-folder admit; base: $BASE)"
 fi
 
 # --- c8: no other AGENTS.md section changed (C04 AC4) ---------------------------
@@ -421,6 +482,102 @@ sys.exit(0 if standalone else 1)
 PY
   done
   ok "c9: AGENTS.md + rules carry the Lifecycle wording, the retired Research-checklist enumeration is gone, and the standalone dev family has its own entry"
+fi
+
+# --- c10: the worker alert sentence covers every stop path (cf-106 C03b AC6/AC7) -------
+if want c10; then
+  # The alert sentence is the one place AGENTS.md states when a scheduled tick
+  # stays quiet. C03b extends it from "the coord marked it no-work" to "EVERY stop
+  # path marks and archives, including the gate/tick stops" — the generated file
+  # and the rules source must both carry it (rulesync parity is c1's job; here the
+  # claim itself is pinned on both surfaces so neither drifts alone).
+  for f in "$RULES_SRC" AGENTS.md; do
+    [ -f "$f" ] || fail "c10[cf-106 C03b AC6]: $f missing (harness fault)"
+    python3 "$TMP/negwin.py" --ci "$f" 400 'scheduled' 'no-work' \
+      || fail "c10[cf-106 C03b AC6]: $f lost the silence-rule clause (the scheduled finished push happens unless the coord marked the session no-work) — HOLD arm, it must survive C03b's edit"
+    python3 "$TMP/negwin.py" --ci "$f" 400 'no-op marker' 'stop' 'mark' \
+      || fail "c10[cf-106 C03b AC6]: $f's alert sentence never pairs the no-op marker with the STOP paths in one passage — C03b's point is that a tick ending on a gate SKIP / LIVE-with-cards / board-check stop marks and archives too, and the generated rule must say so or AGENTS.md contradicts the boards skill (red until C03b edits the rules source and regenerates)"
+  done
+  # Negative control: the pin must not be satisfied by today's marker sentence —
+  # the coverage words must actually be next to it. A copy with the stop-path
+  # wording moved 1200 chars away must fail.
+  python3 - "$RULES_SRC" "$TMP/rules-moved.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+i = t.find("no-op marker")
+pad = " ".join(f"filler {k}" for k in range(240))
+open(sys.argv[2], "w", encoding="utf-8").write(t[:i] + "no-op marker " + pad + "marks every stop path" + t[i + len("no-op marker"):])
+PY
+  if python3 "$TMP/negwin.py" --ci "$TMP/rules-moved.md" 400 'no-op marker' 'stop' 'mark' >/dev/null 2>&1; then
+    fail "c10 control: the coverage wording separated from the marker sentence by 1200 chars of filler still passed — the window pin does not require the coverage to ride the alert sentence"
+  fi
+  ok "c10[cf-106 C03b AC6/AC7]: the silence clause survives and the alert sentence gains the stop-path coverage on rules source and generated AGENTS.md alike"
+fi
+
+# --- c11: the worker paragraph — one loop file, the ruled model, per-card Provider (cf-106 C10 AC4) ---
+if want c11; then
+  # C10's rules edit lands here: the pipeline-worker paragraph names ONE loop
+  # file, the owner-ruled runner model, and Provider routing per card. Both
+  # surfaces are pinned (rulesync regenerates AGENTS.md from the source; the
+  # claim must be present on each so a one-sided edit reddens).
+  for f in "$RULES_SRC" AGENTS.md; do
+    [ -f "$f" ] || fail "c11[cf-106 C10 AC4]: $f missing (harness fault)"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'gpu-ai/qwen3.8-27b-q4' \
+      || fail "c11[cf-106 C10 AC4]: $f does not pair the loop/worker paragraph with the owner-ruled runner model gpu-ai/qwen3.8-27b-q4 (OQ-14, 2026-11-03) — red until C10 edits the rules source and regenerates"
+    python3 "$TMP/negwin.py" --ci "$f" 900 'loop' 'one' 'pipeline-worker.md' \
+      || fail "c11[cf-106 C10 AC4]: $f still describes the loop surface as a pair — the paragraph must name the single pipeline-worker.md runner"
+    # Shell-level alternation: negwin.py's needles are literal (str.find),
+    # so a grep-E-style 'per-card|per card|rout' string was satisfiable only
+    # by the pipe string itself — one honest spelling per window call.
+    if ! { python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'per-card' \
+        || python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'per card' \
+        || python3 "$TMP/negwin.py" --ci "$f" 900 'provider' 'rout'; } \
+        >"$TMP/c11-route.out" 2>&1; then
+      cat "$TMP/c11-route.out" >&2
+      fail "c11[cf-106 C10 AC4]: $f never says Provider is per-card routing inside the run (no per-card / per card / rout spelling within 900 chars of provider) — the scheduler split is retired"
+    fi
+    strays=$(grep -inE 'pipeline-worker-local|two loop (files|tasks)|both loop tasks' "$f" || true)
+    [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "c11[cf-106 C10 AC4]: $f still names the retired second loop task in current-state prose"; }
+    # The gate/LIVE/Timeout sentences stay accurate through the rewrite (C10 task).
+    for tok in 'LIVE' 'Timeout'; do
+      grep -qF "$tok" "$f" || fail "c11[cf-106 C10 AC4]: $f lost the '$tok' sentence — the gate/Timeout wording stays accurate, C10 does not rewrite it"
+    done
+  done
+  # Fabricated-drift control: restoring the pair sentence must redden the sweep.
+  python3 - "$RULES_SRC" "$TMP/rules-pair.md" <<'PY'
+import sys
+t = open(sys.argv[1], encoding="utf-8").read()
+open(sys.argv[2], "w", encoding="utf-8").write(
+    t + "\nThe two loop tasks, pipeline-worker.md and pipeline-worker-local.md, split the hourly ticks.\n")
+PY
+  if ! grep -qiE 'pipeline-worker-local|two loop (files|tasks)' "$TMP/rules-pair.md"; then
+    fail "c11 control: the fabricated pair sentence was not caught by the sweep (the guard is inert)"
+  fi
+  # Negative control for the routing arm: with the routing sentence deleted
+  # the disjunction must fail, and its failure must name one of the three
+  # alternatives — a control that only asserts "fails" cannot see a dead
+  # branch of the alternation.
+  if ! python3 - "$RULES_SRC" "$TMP/rules-noroute.md" <<'PY'
+import re, sys
+t = open(sys.argv[1], encoding="utf-8").read()
+m = re.search(r"The\s+Provider label is per-card routing.*?unlabeled-card ask\)\.\s", t, re.S)
+if not m:
+    sys.exit("c11 control: the routing sentence is not in the expected shape in " + sys.argv[1])
+open(sys.argv[2], "w", encoding="utf-8").write(t[:m.start()] + t[m.end():])
+PY
+  then
+    fail "c11 control: the routing-deleted copy could not be fabricated (fixture fault)"
+  fi
+  if { python3 "$TMP/negwin.py" --ci "$TMP/rules-noroute.md" 900 'provider' 'per-card' \
+      || python3 "$TMP/negwin.py" --ci "$TMP/rules-noroute.md" 900 'provider' 'per card' \
+      || python3 "$TMP/negwin.py" --ci "$TMP/rules-noroute.md" 900 'provider' 'rout'; } >"$TMP/noroute.out" 2>&1; then
+    fail "c11 control: the routing-passage-deleted copy still satisfies the per-card routing arm — the alternation is inert"
+  fi
+  if ! grep -qE 'missing needle: (per-card|per card|rout)' "$TMP/noroute.out"; then
+    cat "$TMP/noroute.out" >&2
+    fail "c11 control: the deleted copy failed the arm without a missing-needle naming one of the three alternatives — the failure is not the arm's"
+  fi
+  ok "c11[cf-106 C10 AC4]: the worker paragraph names one loop file, the ruled gpu-ai/qwen3.8-27b-q4 model and per-card Provider routing on rules source and generated AGENTS.md, keeps the gate/Timeout sentences, a fabricated pair sentence is rejected, and deleting the routing sentence reddens the routing arm"
 fi
 
 printf 'PASS: agent-board-coord agents-md checks (%d ok)\n' "$checks"

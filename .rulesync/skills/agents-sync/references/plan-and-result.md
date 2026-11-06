@@ -35,7 +35,7 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
 ```json
 {
   "feature": "<yyyy>/<yyyy-mm>-<type>-<slug>",
-  "kickoff": { "slug": "<slug>", "run_tag": "<tag>", "worktree": "<slug>-<tag>",
+  "kickoff": { "slug": "<slug>", "worktree": "<slug>", "run_tag": null,
                "models": { "plan": "<planning-tier provider/model>",
                            "code": "<code-tier provider/model>" },
                "local": false },
@@ -43,7 +43,7 @@ The pipeline's living state. Everything here is per-ticket; there is no global s
   "coord_session": null,
   "test_session": null,
   "current_wave": 1,
-  "updated_at": "YYYY-MM-DDTHH:MM:SSZ",
+  "updated_at": "<local ISO-8601 with offset; UTC Z when $TZ unresolvable>",
   "chunks": {
     "C01": { "status": "pending | in-progress | done | blocked",
              "wave": 1, "depends_on": [], "dev_rounds": 0, "review_rounds": 0,

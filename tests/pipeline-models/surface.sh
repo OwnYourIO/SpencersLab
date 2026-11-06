@@ -23,6 +23,17 @@
 # M3[catalog HOLD — DECISIONS D5] M4[AC8 serving facts] M5[AC1–AC3 boards
 # routing + Model(s) stability] M6[AC5 mirrors/regen].
 #
+# AC trace (cf-106 C02 re-pin, OQ-6/OQ-7 rulings): M1 re-pins the label to
+# `Qwen Dense` and forbids it in current-state prose, adds the local-first
+# blank-Model(s) default (gpu-ai/qwen3.8-27b-q4, both tiers) and the
+# local-first favorited-table order; M2 keeps the option ids byte-pinned with
+# the label renamed and the retired label not an option; M5 re-pins the boards
+# Model(s) line and requires the temporary alias sentence there (boards is the
+# alias home — no board label changes, no new option); M7 sweeps the retired
+# label out of every current-state surface (dated changelog rows and the single
+# boards alias excepted); M8 closes the Model(s) vocabulary at exactly the
+# canonical four. M7 and M8 are red until C02 lands the rename.
+#
 # Red posture (cf-83): M1, M2 and M5 are red before the C01 dev edit — the
 # sources still route Flash+Local to q3, so the strata route needles and the
 # q3/strix absence guards name the missing re-route (never a harness fault).
@@ -73,7 +84,7 @@ if [ "$#" -eq 0 ]; then
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^m[1-6]$ ]] || fail "unknown check id '$a' (expected M1..M6)"
+    [[ "$lc" =~ ^m[1-8]$ ]] || fail "unknown check id '$a' (expected M1..M8)"
     WANT["$lc"]=1
   done
 fi
@@ -147,12 +158,17 @@ PY
 if want m1; then
   for f in "$PM_SRC" "$PM_GEN"; do
     [ -f "$f" ] || fail "M1[AC1]: $f missing"
-    # the picker option set is unchanged (no fifth option)
-    python3 "$TMP/win.py" "$f" 400 'Qwen Large' 'Qwen 27b' 'Qwen Flash' 'Local' \
-      || fail "M1[AC1]: $f lost the four-option picker line (Q6: the option set stays Qwen Large / Qwen 27b / Qwen Flash / Local — no fifth option)"
-    if grep -nE 'Qwen Large.*Qwen 27b.*Qwen Flash.*Local' "$f" | grep -q 'Flash Next'; then
+    # The picker option set stays FOUR (no fifth option) — cf-106 C02 renames
+    # the middle label `Qwen 27b` -> `Qwen Dense` (a vocabulary change: no
+    # model id carries "Dense"), so the needle moves with the label while the
+    # veto and the id rows below HOLD.
+    python3 "$TMP/win.py" "$f" 400 'Qwen Large' 'Qwen Dense' 'Qwen Flash' 'Local' \
+      || fail "M1[AC1,AC3 cf-106 C02]: $f lost the four-option picker line (the option set stays Qwen Large / Qwen Dense / Qwen Flash / Local — no fifth option; Qwen Dense replaces Qwen 27b by the cf-106 OQ-6 ruling — red before C02 lands the rename)"
+    if grep -nE 'Qwen Large.*Qwen (27b|Dense).*Qwen Flash.*Local' "$f" | grep -q 'Flash Next'; then
       fail "M1[AC1]: a picker option line gained 'Flash Next' — Q6 vetoed a fifth option; the combination of the two existing checks is the whole mechanism"
     fi
+    grep -qE 'Qwen 27b' "$f" \
+      && fail "M1[AC1 cf-106 C02]: $f still names the retired vocabulary label 'Qwen 27b' in current-state prose — C02 renames it to Qwen Dense (the transition ALIAS sentence is the only sanctioned survivor, and it lives in the boards skill, not here)"
     # 27b + Local → q4 with the explicit escape
     grep -qF 'gpu-ai/qwen3.8-27b-q4' "$f" \
       || fail "M1[AC1]: $f never routes 27b+Local to gpu-ai/qwen3.8-27b-q4 (red before C06)"
@@ -205,22 +221,54 @@ if want m1; then
       && fail "M1[AC3]: $f names strix outside the strata row's operations clause (Q3: that clause is strix's one location)"
     python3 "$TMP/win.py" --ci "$f" 400 'qwen3.8-27b-q6' 'alternate' \
       || fail "M1[AC1]: $f's q6 row was not re-labelled the verified alternate (C06 Tasks)"
+    # cf-106 C02 (OQ-7 ruling, ask 10): the ROUTING default flips local-first —
+    # a blank Model(s) resolves to the dense local route for BOTH tiers, and
+    # openrouter becomes the documented explicit-choice/fallback provider.
+    python3 "$TMP/win.py" --ci "$f" 700 'no model' 'both tiers' 'qwen3.8-27b-q4' \
+      || fail "M1[AC4 cf-106 C02]: $f never resolves a BLANK Model(s) to gpu-ai/qwen3.8-27b-q4 for BOTH tiers — the default flip is C02's second half (red before C02: the table still defaults both tiers to openrouter)"
+    python3 "$TMP/win.py" --ci "$f" 700 'gpu-ai' 'default' 'openrouter' 'fallback' \
+      || fail "M1[AC4 cf-106 C02]: $f never states the local-first provider posture (gpu-ai is the default, openrouter the documented explicit-choice/fallback) — red before C02 lands it"
+    # An explicit Qwen Dense check WITHOUT Local still routes openrouter — the
+    # flip changes the default, not the label's own mapping (chunk AC4).
+    python3 "$TMP/win.py" --ci "$f" 500 'dense' 'openrouter/qwen/qwen3.8-27b' \
+      || fail "M1[AC4 cf-106 C02]: $f no longer maps an explicit Qwen Dense check (no Local) to openrouter/qwen/qwen3.8-27b — the rename keeps the id, only the label moves"
+    # Favorited-models table order (cf-106 C02, OQ-7): local rows FIRST, ids and
+    # verification notes unchanged — the re-order IS the posture, so it is
+    # pinned structurally (first gpu-ai/gpu-moe row precedes the first
+    # openrouter row) instead of by prose.
+    if ! python3 - "$f" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+rows = [l for l in text.splitlines() if re.match(r"^\|\s*`(gpu-ai|gpu-moe|openrouter)`\s*\|", l)]
+if not rows:
+    print("no favorited-models table rows found"); sys.exit(1)
+first_local = next((i for i, l in enumerate(rows) if "`gpu-ai`" in l or "`gpu-moe`" in l), None)
+first_or = next((i for i, l in enumerate(rows) if "`openrouter`" in l), None)
+if first_local is None or first_or is None:
+    print("the favorited table lost one of the two providers"); sys.exit(1)
+if first_local > first_or:
+    print(f"first local row at {first_local}, first openrouter row at {first_or} — the local rows must come FIRST (OQ-7 local-first default)"); sys.exit(1)
+PY
+    then fail "M1[AC4 cf-106 C02]: $f's favorited-models table does not lead with the local rows (ids and verification notes unchanged — only the order moves)"; fi
   done
-  ok "M1[AC1–AC3]: pipeline-models carries the four-option picker (no fifth), q4 27b+Local route with the unless-escape, the pinned combination bullet now routing Flash+Local to flash-next-strata with the old q3 route string gone and q3 documented as the explicit-request alternate, Local-only q4, stale q6 routes gone, and the single strata favorited row with the peers/arena clause (no solo claim; strix confined to that clause)"
+  ok "M1[AC1–AC4]: pipeline-models carries the four-option picker with Qwen Dense replacing Qwen 27b (no fifth option, no stale 27b label), the q4 27b+Local route with the unless-escape, the pinned combination bullet routing Flash+Local to flash-next-strata with the old q3 route string gone and q3 documented as the explicit-request alternate, Local-only q4, stale q6 routes gone, the single strata favorited row with the peers/arena clause, the blank-Model(s) → gpu-ai/qwen3.8-27b-q4 both-tiers default with the local-first posture and an explicit Dense check still mapping to openrouter, and a favorited table that leads with the local rows"
 fi
 
 # --- M2: pipeline-kickoff — four options, cites, strata derivation (AC1–AC3) -----
 if want m2; then
   for f in "$PK_SRC" "$PK_GEN"; do
     [ -f "$f" ] || fail "M2[AC2]: $f missing"
-    # the option list itself is unchanged — byte-pinned per C06 Tasks
+    # the option list itself is unchanged — byte-pinned per C06 Tasks, with the
+    # cf-106 C02 (OQ-6) rename of the middle label: ids byte-identical, only the
+    # label moves
     for o in '`Qwen Large` — `openrouter/qwen/qwen3.8-2.4t-a95b`' \
-             '`Qwen 27b` — `openrouter/qwen/qwen3.8-27b`' \
+             '`Qwen Dense` — `openrouter/qwen/qwen3.8-27b`' \
              '`Qwen Flash` — `openrouter/qwen/qwen3.8-flash`'; do
-      grep -qF "$o" "$f" || fail "M2[AC2]: $f lost the pinned option '$o' (option set UNCHANGED)"
+      grep -qF "$o" "$f" || fail "M2[AC2 cf-106 C02]: $f lost the pinned option '$o' (option set UNCHANGED apart from the Qwen Dense rename — red before C02 lands the label)"
     done
     grep -qF '`Local (gpu-ai)`' "$f" || fail "M2[AC2]: $f lost the Local option"
     grep -qF '`Qwen Flash Next`' "$f" && fail "M2[AC2]: $f gained a 'Qwen Flash Next' option — Q6 veto"
+    grep -qF '`Qwen 27b`' "$f" && fail "M2[AC1,AC3 cf-106 C02]: $f still offers the retired 'Qwen 27b' label — the picker's only dense row must read Qwen Dense (OQ-6)"
     grep -qF 'pipeline-models' "$f" || fail "M2[AC2]: $f no longer cites pipeline-models as the mapping authority"
     # derivation updated: routes to the new ids
     grep -qF 'qwen3.8-27b-q4' "$f" \
@@ -306,20 +354,38 @@ if want m4; then
   ok "M4[AC8]: every id the contract names (27b-q4 + flash-next-strata defaults, flash-next-q3 documented alternate) appears in the serving authority (HOLD invariant)"
 fi
 
-# --- M5: boards skill — Model(s) line stable, routing clauses re-pinned (AC1) -----
+# --- M5: boards skill — Model(s) line re-pinned, routing clauses re-pinned (AC1, AC3) --
 if want m5; then
   for f in "$BD_SRC" "$BD_GEN"; do
     [ -f "$f" ] || fail "M5[AC2]: $f missing"
-    grep -qF '`Qwen Large` | `Qwen 27b` | `Qwen Flash` | `Local`' "$f" \
-      || fail "M5[AC2]: $f's Model(s) checklist option line changed — it stays byte-stable (four options)"
-    grep -qF 'Default selection: `Qwen Flash`' "$f" \
-      || fail "M5[AC2]: $f lost the Model(s) default selection (Qwen Flash stays)"
+    grep -qF '`Qwen Large` | `Qwen Dense` | `Qwen Flash` | `Local`' "$f" \
+      || fail "M5[AC1,AC3 cf-106 C02]: $f's Model(s) checklist option line is not 'Qwen Large | Qwen Dense | Qwen Flash | Local' — the middle label renames per the cf-106 OQ-6 ruling (still exactly four options; red before C02 lands the rename)"
+    grep -qF 'Default selection: `Qwen Dense`' "$f" \
+      || fail "M5[AC2 cf-106 C02]: $f's Model(s) line does not state 'Default selection: Qwen Dense' — the checklist default flips with the vocabulary (OQ-7: BOTH defaults flip); red until C02 lands it"
     python3 - "$f" <<'PY' || fail "M5[AC2]: the Model(s) checklist line gained a 'Flash Next' item — the checklist gains NO option (Q6); the combination of the existing checks is the mechanism"
 import sys
 for l in open(sys.argv[1]):
     if 'Qwen Large' in l and 'Qwen Flash' in l and 'Next' in l:
         sys.exit(1)
 PY
+    # cf-106 C02 (OQ-6/OQ-12 ruling): boards is the ALIAS HOME — the current
+    # board spec must say out loud that a card checked `Qwen 27b` is consumed as
+    # `Qwen Dense`, mark the alias temporary, and name WHY (the planned
+    # provider-catalog rename). The sentence is new, so this leg is red until
+    # C02 writes it.
+    if ! python3 "$TMP/win.py" --ci "$f" 700 'Qwen 27b' 'Qwen Dense' 'alias' \
+      || ! python3 "$TMP/win.py" --ci "$f" 1100 'alias' 'temporar' 'rename' \
+      || ! python3 "$TMP/win.py" --ci "$f" 1100 'alias' 'catalog' \
+      || ! python3 "$TMP/win.py" --ci "$f" 1100 'alias' 'retire'; then
+      fail "M5[AC3 cf-106 C02]: $f carries no current-state alias sentence binding board-spec `Qwen 27b` to `Qwen Dense` that is marked temporary and cites the planned provider-catalog rename it retires with (OQ-6 ruling: no board label is touched, no new option — the alias is written prose; red until C02 writes it)"
+    fi
+    # Exactly one retired-vocabulary mention stays on the pair: the alias itself.
+    # Anything else is current-state prose C02 missed.
+    n27="$(grep -c 'Qwen 27b' "$f")"
+    if [ "$n27" -gt 1 ]; then
+      fail "M5[AC1 cf-106 C02]: $f mentions 'Qwen 27b' $n27 times — only the alias sentence may carry the retired label, every other current-state use must read Qwen Dense"
+    fi
+    ok "M5[AC3 cf-106 C02]: $f's only 'Qwen 27b' mention is the alias (alias sentence present, temporary-cited, and the retired label appears nowhere else)"
     # routing paragraph combination clauses (cf-83 re-pin: strata route)
     python3 "$TMP/win.py" --ci "$f" 600 'flash' 'local' 'flash-next-strata' 'assume' \
       || fail "M5[AC1]: $f's routing paragraph lacks the Flash+Local → flash-next-strata 'assume' clause (red before C01: boards still names q3)"
@@ -334,7 +400,7 @@ PY
       || fail "M5[AC2]: $f's routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
     grep -qF 'qwen3.8-27b-q6' "$f" && fail "M5[AC2]: $f still routes only-Local to qwen3.8-27b-q6 (stale default after C06)"
   done
-  ok "M5[AC1–AC3]: boards Model(s) line byte-stable (four options, Qwen Flash default, no fifth); routing paragraph carries the strata combination clause and the 27b+Local q4 unless-clause with no q3/strix restatement"
+  ok "M5[AC1–AC3]: boards Model(s) line names the canonical four with Qwen Dense as the default selection (no fifth); the temporary alias sentence binds a live Qwen 27b check and is the retired label's only survivor on the pair; the routing paragraph carries the strata combination clause and the 27b+Local q4 unless-clause with no q3/strix restatement"
 fi
 
 # --- M6: mirror integrity + regeneration contract (AC5) ----------------------------
@@ -364,6 +430,88 @@ if want m6; then
     [ "$before" = "$after" ] || fail "M6[AC5]: the second rulesync generate is not a no-op"
     ok "M6[AC5]: three skill pairs honest; generate --check clean; second generate a no-op (via $RS)"
   fi
+fi
+
+# --- M7: retired-vocabulary sweep over current-state surfaces (AC3) ---------------
+# C02 renames the label wherever the contract speaks it today. The sweep set is the
+# current-state surfaces the plan names (skill sources + their generated mirrors +
+# the provision engine + the hand-maintained wekan-board-provision skill tree).
+# The only sanctioned survivors: (a) dated changelog rows, which record what a past
+# run did (AC3 lets history keep it), and (b) the boards alias sentence, which must
+# name the retired label in order to bind it. The exception budget is pinned, so a
+# surface that goes Dense again but grows a second alias mention also fails.
+if want m7; then
+  if python3 - . <<'PY'
+import json, pathlib, re, sys
+repo = pathlib.Path(sys.argv[1])
+exceptions = {".rulesync/skills/boards/SKILL.md": 1, ".opencode/skills/boards/SKILL.md": 1}
+surfaces = [".rulesync/skills", ".opencode/skills", "scripts/provision-board.py",
+            "skills/wekan-board-provision"]
+hits = []
+for s in surfaces:
+    p = repo / s
+    if not p.exists():
+        print(f"sweep surface missing: {s}"); sys.exit(1)
+    files = [p] if p.is_file() else sorted(x for x in p.rglob("*") if x.is_file())
+    for f in files:
+        rel = str(f.relative_to(repo))
+        try:
+            lines = f.read_text().splitlines()
+        except UnicodeDecodeError:
+            continue
+        for i, l in enumerate(lines, 1):
+            if "Qwen 27b" in l:
+                hits.append((rel, i, l.strip()))
+# A line opening with a '- **YYYY-MM-DD' stamp is a changelog row: history, not
+# current state, so it is sanctioned wherever it lives.
+DATED = re.compile(r"^[-*]?\s*\*\*20[0-9]{2}-[0-9]{2}-[0-9]{2}")
+unaccounted, per_file = [], {}
+for rel, i, text in hits:
+    per_file[rel] = per_file.get(rel, 0) + 1
+    if DATED.match(text):
+        continue
+    if exceptions.get(rel, 0) > 0:
+        exceptions[rel] -= 1
+    else:
+        unaccounted.append(f"{rel}:{i}: {text[:90]}")
+if unaccounted:
+    print("current-state 'Qwen 27b' outside the sanctioned exception set:")
+    print("\n".join(unaccounted))
+    sys.exit(1)
+print(f"swept {len(hits)} mentions; every survivor is a dated changelog row or the "
+      f"single boards alias: {json.dumps(per_file)}")
+PY
+  then ok "M7[AC3 cf-106 C02]: no current-state surface names the retired 'Qwen 27b' label — only the boards alias (one mention) and dated changelog rows keep it"
+  else fail "M7[AC3 cf-106 C02]: a current-state surface still names the retired 'Qwen 27b' label outside the sanctioned set — the rename must reach every live contract surface, including the agents-sync pipeline-overview flow prose (red until C02 sweeps it)"; fi
+fi
+
+# --- M8: model-label vocabulary closure — exactly four options everywhere (AC1) ---
+# AC1's "no new option" is a whole-contract invariant, so it is pinned as a set
+# comparison rather than per-file prose: every surface that enumerates the Model(s)
+# vocabulary must enumerate EXACTLY the four canonical labels, and the retired label
+# must never appear as an option.
+if want m8; then
+  for f in "$BD_SRC" "$BD_GEN"; do
+    [ -f "$f" ] || fail "M8[AC1]: $f missing"
+    if python3 - "$f" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read()
+canon = {"Qwen Large", "Qwen Dense", "Qwen Flash", "Local"}
+lines = [l for l in text.splitlines() if all(k in l for k in ("Qwen Large", "Qwen Flash", "Local"))]
+if not lines:
+    print("no Model(s) option enumeration line found"); sys.exit(1)
+for l in lines:
+    opts = set(re.findall(r"Qwen (?:Large|Dense|Flash|27b)(?: Next)?", l))
+    if "Qwen 27b" in opts:
+        print(f"the retired label is still an OPTION: {l.strip()[:110]}"); sys.exit(1)
+    if extra := {o for o in opts if o not in canon}:
+        print(f"a fifth model option appears ({sorted(extra)}) — AC1 forbids a new option"); sys.exit(1)
+    if not {"Qwen Large", "Qwen Dense", "Qwen Flash"} <= opts:
+        print(f"the option set is not the canonical four: {sorted(opts)}"); sys.exit(1)
+PY
+    then ok "M8[AC1 cf-106 C02]: $f enumerates exactly the canonical four Model(s) labels (Qwen Dense replaces Qwen 27b, no fifth option)"
+    else fail "M8[AC1 cf-106 C02]: $f's Model(s) option set is not the canonical four (Qwen Large / Qwen Dense / Qwen Flash / Local) — AC1's no-new-option rule holds across the whole contract, not one file at a time"; fi
+  done
 fi
 
 printf 'PASS: pipeline-models contract checks (%d ok)\n' "$checks"

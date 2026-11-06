@@ -29,17 +29,30 @@
 # wave), green when registry + docs land together (cf-68 precedent).
 # wekan.py's byte-pin rides tools.sh t8 through t7, not re-implemented here.
 #
+# cf-106 C07 test round (2026-11-04, agent-test) — legs re-pinned from cf-96-era
+# literals to registry-derived parity: t1 dropped its own 17-reads/21-writes/
+# "exactly 38 distinct" arithmetic (it duplicated tools.sh t2's registry-size gate
+# and reddened on get_card_details while asserting nothing else) and now pins only
+# what t1 owns: which tier registers the four v102 names, the 27 pre-v102 names
+# surviving, and no name registered twice. t6 replaced every 38 literal with the
+# shared registry-parity helper (claims + rows + a count-presence arm, so deleting
+# a count cannot slip past a claims-only scan) plus the 27-count residue scan.
+# t7 lost its stale "at 31" wording. The absolute registry size (18 + 21) is now
+# pinned exactly once, in tools.sh t2.
+#
 # CF89_BASE=<ref> re-points the base blob the readonly-tier row pin diffs
 # against (default: merge-base of main and HEAD — the pre-ticket state).
 #
 # Usage:
 #   bash tests/wekan-mcp/board-provisioning.sh          # t1..t7
 #   bash tests/wekan-mcp/board-provisioning.sh t1 t2    # subset
+#   WEKAN_SERVER=<path> bash tests/wekan-mcp/board-provisioning.sh t6   # re-derive
+#       the doc-parity arms against a scratch copy of server.py (non-vacuity probe)
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-SERVER="containers/wekan-mcp/wekan_mcp/server.py"
+SERVER="${WEKAN_SERVER:-containers/wekan-mcp/wekan_mcp/server.py}"
 README="containers/wekan-mcp/README.md"
 SKILL_MCP="skills/wekan-mcp/SKILL.md"
 CALLS="skills/wekan-mcp/references/call-shapes.md"
@@ -47,6 +60,7 @@ SKILL_API="skills/wekan-api/SKILL.md"
 TOOLS_SUITE="tests/wekan-mcp/tools.sh"
 SURFACE_SUITE="tests/wekan-mcp/skill-surface.sh"
 CREATELIST_SUITE="tests/wekan-mcp/create-list.sh"
+PARITY="tests/wekan-mcp/registry-parity.py"
 BASE="${CF89_BASE:-$(git merge-base main HEAD)}"
 
 checks=0
@@ -71,6 +85,13 @@ else
 fi
 want() { [ -n "${WANT[$1]:-}" ]; }
 
+# Doc parity compares against the LIVE registry, never against a literal this
+# suite would have to re-pin on every sanctioned +1 (cf-106 C07: the 17/38
+# literals here reddened on get_card_details while asserting nothing tools.sh t2
+# does not already pin). Exit 2 from the helper is a harness fault, not a red.
+read -r REG_READS REG_WRITES REG_TOTAL < <(python3 "$PARITY" counts "$SERVER") \
+  || fail "harness: $PARITY could not read the registry out of $SERVER"
+
 # --- t1: registry arithmetic + registration decorators (C01 AC1) ---------------
 if want t1; then
   if python3 - "$SERVER" <<'PY'
@@ -79,8 +100,6 @@ import ast, sys
 src = open(sys.argv[1]).read()
 tree = ast.parse(src)
 
-READS = 14
-WRITES = 17
 NEW_READS = ['list_board_members']
 NEW_WRITES = ['update_board', 'create_swimlane', 'create_label']
 BASE27 = ['list_boards', 'get_board', 'list_lists', 'list_swimlanes',
@@ -114,13 +133,15 @@ def bad(msg):
     print(f'FAIL: {msg}', file=sys.stderr)
     sys.exit(1)
 
-if len(reads) != READS:
-    bad(f't1: {len(reads)} @mcp.tool reads, expected exactly {READS} (C01 AC1)')
-if len(writes) != WRITES:
-    bad(f't1: {len(writes)} @_write_tool writes, expected exactly {WRITES} (C01 AC1)')
 all_tools = reads + writes
-if len(set(all_tools)) != READS + WRITES:
-    bad(f't1: registered names are {sorted(set(all_tools))}, expected exactly 31 distinct')
+# The arithmetic itself is pinned once, in tools.sh t2 (the sanctioned registry
+# count gate). This arm's own contract is WHICH tier registers the v102 names and
+# that the pre-v102 set survived, so it asserts no count of its own: a hard-coded
+# 17/38 here reddened on cf-106 C07's sanctioned +1 while asserting nothing the
+# sibling gate did not already assert.
+if len(set(all_tools)) != len(all_tools):
+    dupes = sorted({n for n in all_tools if all_tools.count(n) > 1})
+    bad(f't1: a tool name is registered more than once: {dupes}')
 for name in NEW_WRITES:
     if all_tools.count(name) != 1 or writes.count(name) != 1:
         bad(f't1: {name!r} must be registered exactly once via @_write_tool — @mcp.tool would leak a v102 write onto the readonly tier')
@@ -130,7 +151,7 @@ for name in NEW_READS:
 missing = [n for n in BASE27 if n not in all_tools]
 if missing:
     bad(f't1: pre-v102 tool(s) {missing} lost from the registry (C01 AC1)')
-print('ok: t1 — 14 @mcp.tool + 17 @_write_tool == 31 distinct; update_board/create_swimlane/create_label registered once each under _write_tool (WEKAN_MCP_READ_ONLY hides them), list_board_members under @mcp.tool; all 27 pre-v102 names intact (C01 AC1)')
+print(f'ok: t1 — {len(reads)} @mcp.tool + {len(writes)} @_write_tool == {len(set(all_tools))} distinct; update_board/create_swimlane/create_label registered once each under _write_tool (WEKAN_MCP_READ_ONLY hides them), list_board_members under @mcp.tool; all 27 pre-v102 names intact (C01 AC1)')
 PY
   then
     checks=$((checks + 1))
@@ -452,37 +473,24 @@ PY
   fi
 fi
 
-# --- t6: surface parity at 31 + zero stale-count residue (C01 AC6) --------------
+# --- t6: doc↔registry parity + zero stale-count residue (C01 AC6) ---------------
 if want t6; then
-  grep -qF '31 typed tools' "$README" \
-    || fail "t6: $README does not state the 31-tool surface (C01 AC6)"
-  rows=$(awk '/^## Tools exposed/{f=1; next} /^## /{if (f) exit} f && /^\| `[a-z_]+` \|/{n++} END{print n+0}' "$README")
-  [ "$rows" -eq 31 ] \
-    || fail "t6: $README Tools-exposed table has $rows tool rows, expected 31 — the four v102 rows are missing or the table drifted (C01 AC6)"
+  python3 "$PARITY" claims "$SERVER" "$README" "$SKILL_MCP" "$CALLS" "$SKILL_API" \
+    || fail "t6: a tool-count claim across README/SKILL/call-shapes/wekan-api no longer matches the registry ($REG_TOTAL = $REG_READS reads + $REG_WRITES writes) — parity is doc↔server.py, not a literal to re-pin (C01 AC6; reason above)"
+  python3 "$PARITY" rows "$SERVER" "$README" "$CALLS" \
+    || fail "t6: README's Tools-exposed table and the call-shapes ledger must carry exactly one row per registered tool name (C01 AC6 — a missing row is an undocumented tool, a duplicate or an unregistered name is drift; reason above)"
   for n in update_board create_swimlane create_label list_board_members; do
-    m=$(grep -cE "^\| \`$n\` \|" "$README" || true)
-    [ "$m" -eq 1 ] || fail "t6: $README has $m $n rows, expected exactly 1 (C01 AC6)"
-  done
-
-  n=$(grep -cF 'full, 31 tools' "$SKILL_MCP" || true)
-  [ "$n" -eq 2 ] \
-    || fail "t6: $SKILL_MCP tier table has $n 'full, 31 tools' cells, expected 2 — dev-boards and admin-global-wekan flip, readonly stays 'none' (C01 AC6)"
-  git show "$BASE:$SKILL_MCP" | grep -F '| `readonly-global-wekan` |' >"$TMP/ro.base" || true
-  grep -F '| `readonly-global-wekan` |' "$SKILL_MCP" >"$TMP/ro.now" || true
-  cmp -s "$TMP/ro.base" "$TMP/ro.now" \
-    || fail "t6: the readonly tier row changed — the _write_tool gate is the whole privilege story, its row must stay byte-identical (C01 AC6)"
-
-  grep -qF 'all 31 tools' "$CALLS" \
-    || fail "t6: $CALLS header does not say 'all 31 tools' (C01 AC6)"
-  for n in update_board create_swimlane create_label list_board_members; do
-    r=$(grep -cE "^\|\s*\`$n\`\s*\|" "$CALLS" || true)
-    [ "$r" -eq 1 ] || fail "t6: $CALLS has $r $n rows, expected exactly 1 (C01 AC6)"
     grep -E "^\|\s*\`$n\`\s*\|" "$CALLS" | grep -qF 'source-only' \
       || fail "t6: the $n call-shapes row carries no source-only evidence stamp — the live tools/list probe is post-merge/user-owned (wekan-mcp stamp discipline, C01 AC6)"
   done
 
-  grep -qF '31 typed tools' "$SKILL_API" \
-    || fail "t6: $SKILL_API does not say 31 typed tools (C01 AC6)"
+  n=$(grep -cF "full, $REG_TOTAL tools" "$SKILL_MCP" || true)
+  [ "$n" -eq 2 ] \
+    || fail "t6: $SKILL_MCP tier table has $n 'full, $REG_TOTAL tools' cells, expected 2 — dev-boards and admin-global-wekan flip, readonly stays 'none' (C01 AC6)"
+  git show "$BASE:$SKILL_MCP" | grep -F '| `readonly-global-wekan` |' >"$TMP/ro.base" || true
+  grep -F '| `readonly-global-wekan` |' "$SKILL_MCP" >"$TMP/ro.now" || true
+  cmp -s "$TMP/ro.base" "$TMP/ro.now" \
+    || fail "t6: the readonly tier row changed — the _write_tool gate is the whole privilege story, its row must stay byte-identical (C01 AC6)"
   python3 - "$SKILL_API" <<'PY' || fail "t6: the four v102 names are not enumerated in the $SKILL_API Read/Write bullets (C01 AC6 — reason above)"
 import sys
 text = open(sys.argv[1]).read()
@@ -505,7 +513,12 @@ if errs:
     print('; '.join(errs)); sys.exit(1)
 PY
 
-  # Repo-wide stale-count scan (cf-68 FRICTION: missed parity literals are the
+  for f in "$README" "$SKILL_MCP" "$CALLS" "$SKILL_API"; do
+    grep -Eq "($REG_TOTAL typed tools|full, $REG_TOTAL tools|all $REG_TOTAL tools)" "$f" \
+      || fail "t6: $f states no tool count at all — a doc that dropped the count silently passes a claims scan, so the count must be present and equal $REG_TOTAL (C01 AC6)"
+  done
+
+  # Repo-wide stale-count residue scan (cf-68 FRICTION: missed parity literals are the
   # classic trap). Split-digit patterns so the scan cannot match its own grep
   # text; plan-folder prose and historical notes legitimately keep the old
   # count, so .agents/plans/ is out of scope.
@@ -516,18 +529,35 @@ PY
   done
   [ -z "$residue" ] || fail "t6: stale 27-count residue outside plan folders:"$'\n'"$residue"
 
-  ok "t6: README (31 typed tools, 31 table rows incl. four new rows), wekan-mcp SKILL tiers (two 31 cells, readonly row byte-stable), call-shapes (all 31 tools + four stamped rows), wekan-api SKILL (31 + four names in the Read/Write bullets) agree; zero stale 27-count literals repo-wide outside plan folders (C01 AC6)"
+  # The same scan derived from the LIVE count: the count one below the registry
+  # is exactly what a half-applied +1 leaves behind, and the claims scan only
+  # reads the four canonical docs. Scoped to the doc surfaces — scripts/ and
+  # tests/ narrate the DEPLOYED image's count, which legitimately lags the repo.
+  prev=$((REG_TOTAL - 1))
+  prev_hi=${prev%?}
+  prev_lo=${prev#"$prev_hi"}
+  residue=""
+  for p in "$prev_hi[$prev_lo] typed tools" "all $prev_hi[$prev_lo] tools" "full, $prev_hi[$prev_lo] tools" "$prev_hi[$prev_lo]-tool"; do
+    hits=$(grep -rn --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.kilo -E "$p" skills containers AGENTS.md .rulesync/rules 2>/dev/null || true)
+    [ -z "$hits" ] || residue="${residue}${hits}"$'\n'
+  done
+  [ -z "$residue" ] || fail "t6: stale tool-count residue in the doc surfaces — a doc left on the pre-cf-106 count while the registry says $REG_TOTAL (cf-68 missed-parity trap):"$'\n'"$residue"
+
+  ok "t6: README, wekan-mcp SKILL tiers, call-shapes and wekan-api SKILL all state the live registry count ($REG_TOTAL = $REG_READS reads + $REG_WRITES writes) with one stamped row per registered name, the readonly tier row is byte-stable, no doc surface carries the count below it, and zero stale 27-count literals survive outside plan folders (C01 AC6)"
 fi
 
 # --- t7: sibling suites stay mutually consistent with the flips (C01 AC7) -------
-# The 27->31 (now 31) pins live in three suites plus two skills plus README;
-# this t is the cross-check that they moved together — a half-flipped surface
-# fails here even if each file looks right alone.
+# The count-parity pins live in three suites plus two skills plus README; this t
+# is the cross-check that they moved together — a half-flipped surface fails
+# here even if each file looks right alone. It carries no count of its own: the
+# registry size is pinned in tools.sh t2 and the doc↔registry equality arms live
+# in the siblings, so re-pinning history numbers here (27->31) only made this leg
+# redder on each sanctioned +1 without asserting anything new.
 if want t7; then
   for suite in "$TOOLS_SUITE" "$SURFACE_SUITE" "$CREATELIST_SUITE"; do
     log="/tmp/opencode/board-provisioning.$(basename "$suite" .sh).log"
     if bash "$suite" >"$log" 2>&1; then
-      ok "t7: bash $suite green — registry, docs and test pins agree at 31 (C01 AC7)"
+      ok "t7: bash $suite green — registry, docs and test pins move together (C01 AC7)"
     else
       tail -n 20 "$log" >&2
       fail "t7: $suite is not green — the count-parity flip must be mutually consistent (log: $log)"

@@ -37,6 +37,14 @@ CUSTOM_VALUES = REPO_ROOT / "custom-values" / "gpu-ai" / "prod-values.yaml"
 RUNBOOK_NOTE = REPO_ROOT / ".agents" / "notes" / "strata-host-prep-gpu-ai.md"
 PARENT_README = CHART_DIR / "README.md"
 CONTAINER_DIR = REPO_ROOT / "containers" / "strata"
+# C07 (U9.4 revision): the model-fetch logic lifts from the values.yaml init
+# into build-context files baked at /opt/strata/bin/. The suite reads the
+# SOURCES here — the laws that used to run over the rendered script body move
+# with the code, one source of truth at every wave (chunks/C07.md).
+FETCH_SH = CONTAINER_DIR / "files" / "fetch_models.sh"
+HF_FETCH_PY = CONTAINER_DIR / "files" / "hf_fetch.py"
+BYTE_PINS_ENV = CONTAINER_DIR / "files" / "byte_pins.env"
+BIN = "/opt/strata/bin"
 STRATA_TEMPLATES_DIR = CHART_DIR / "templates"
 RELEASE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "release.yaml"
 GITIGNORE = REPO_ROOT / ".gitignore"
@@ -83,6 +91,43 @@ STRIX_ID = "qwen3.8-flash-next-strata-strix"
 PROFILE_PRIMARY_FILE = "strata-iq3_s.json"
 PROFILE_STRIX_FILE = "strata-strix-iq3_s.json"
 
+# T0 (owner ruling 2026-11-01, DECISIONS U13): the engine's per-request
+# accounting line — `request prompt P cached C output O prompt_read R ms total
+# S ms prefill X tok/s decode Y tok/s`. The serve progress chatter counts a
+# reused prefix in its position and clocks from admission, so it is not a rate;
+# this is the measurement the published R9700 numbers are comparable against
+# (RESEARCH R6 [R6-12][R6-21]). Logging-only, and it belongs on EVERY arena —
+# a rate without an arena label is how the ~500-vs-2,800 confusion started.
+REQUEST_LINES_ENV = "STRATA_REQUEST_LINES=1"
+
+# The pod cgroup and the per-rung declared caps. Declared HERE rather than in
+# the envelope block below because PRIMARY_REQUIRED_PAIRS needs the value at
+# definition time. U14 (owner ruling 2026-11-01): the flagship declared 92160
+# against term-sums of ~91.84 GiB — 46.84 arena + 32 conversation cache + ~13
+# worst-case 4-slot KV — so parking was refused inside its own number while the
+# node sat idle; 110592 (107.25 GiB) inside the 116Gi cgroup keeps the reserve
+# style the q4 rung already rides.
+PRIMARY_MEMORY_LIMIT_MIB = 110592
+
+# Era-mapped frozen captures for the byte-unchanged preservation arms
+# (TEST_SPEC 9.16/9.20): C07's sanctioned 0.1.52->0.1.54 and C09's
+# 0.1.54->0.1.55 halo re-pins moved the strix profile's era. The primary's era
+# moved twice, both OWNER-RULED posture changes on 2026-11-01: T3 (the prompt
+# chunk cap) and U14 (the declared cap fitting its own term-sums). Each step's
+# delta is pinned by test_strata_strix.py's primary chain guard — one flag per
+# era, membership unchanged — so the whole-file deep-equal here stays a law
+# with no exempt-key hole. The engine-re-pin eras (c07/c09) must never carry a
+# primary file: an engine re-pin cannot move its era (version-free claim root).
+PROFILE_FIXTURE_ERA = {
+    PROFILE_PRIMARY_FILE: "strata-profiles-u14-repin",
+    PROFILE_STRIX_FILE: "strata-profiles-c09-repin",
+}
+
+
+def profile_fixture(file: str) -> dict:
+    """Parsed JSON of a profile's frozen-era capture (era map above)."""
+    return json.loads((EVIDENCE_DIR / PROFILE_FIXTURE_ERA[file] / file).read_text())
+
 # C01 interface contract (containers/strata/README.md freezes these; the
 # container itself is untouched by run 2 — RESEARCH §1).
 SERVE_ENTRY = "/opt/strata/terminal/bin/strata"
@@ -115,11 +160,14 @@ PRIMARY_FORBIDDEN_FLAGS = [
     # (2026-10-29 transplant), so it is baseline now, not forbidden.
 ]
 # Baseline = the generated run-config (2026-10-29 transplant) PLUS the
-# owner budget ruling of the same day: --prefill auto (machine-sized),
-# Strata-data paths and --kv-resident required so a revert to the seed
-# guesses goes red; --memory-limit-mib 92160 inside the 96Gi cgroup
-# (#1601 pair); conversation-cache 32768 x 16 explicit. --mtp-window stays
-# absent (toggle); --batch-mtp on neither list (one-at-a-time posture).
+# owner budget ruling of the same day: Strata-data paths and --kv-resident
+# required so a revert to the seed guesses goes red; --memory-limit-mib 92160
+# inside the 96Gi cgroup (#1601 pair); conversation-cache 32768 x 16 explicit.
+# --mtp-window stays absent (toggle); --batch-mtp on neither list
+# (one-at-a-time posture). --prefill moved from setup's `auto` at the 2026-11-01
+# T3 ruling (owner "go"): bare auto = 16,384 chunks on gfx12, 32,768 is the
+# PR #3636 chunk that measured ~2,519 tok/s on this node class — the file's own
+# comment had reserved the override for exactly this --plan/bench evidence.
 PRIMARY_REQUIRED_PAIRS = [
     ("--pack", "/models/strata/Strata-data/packs/iq3_s"),
     ("--native", "/models/strata/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf"),
@@ -128,12 +176,15 @@ PRIMARY_REQUIRED_PAIRS = [
     ("--kv", "int8"),
     ("--spec", "4"),
     ("--spec-min-p", "0.5"),
-    ("--prefill", "auto"),
+    ("--prefill", "auto:32768"),
     ("--kv-resident", "32768"),
     # 2026-10-29 OOM pairing: a cgroup limit without the engine knowing it
-    # gets the arena killed mid-pin; this pair is the #1601 contract (90 GiB
-    # inside the 96Gi cgroup, owner budget ruling same day).
-    ("--memory-limit-mib", "92160"),
+    # gets the arena killed mid-pin; this pair is the #1601 contract. U14
+    # (2026-11-01) moved 92160 -> 110592: the rung's terms are 46.84 arena +
+    # 32 conv + ~13 KV ≈ 91.84 GiB, which the 90 GiB declaration never covered
+    # (first-boot evidence: parking refused at "3259 MiB available"), and the
+    # pod cgroup grew to 116Gi the same day.
+    ("--memory-limit-mib", str(PRIMARY_MEMORY_LIMIT_MIB)),
     # Owner budget ruling 2026-10-29: 32 GiB parked-conversation budget,
     # 16 slots (IQ3_S full-256k park ~= 3.3 GiB of it).
     ("--conversation-cache-mib", "32768"),
@@ -165,6 +216,193 @@ SECRET_CHAIN_TOKENS = [
 # evidence/strata-peers-expected.yaml — this constant mirrors it, and the
 # wiring tests assert render==evidence, so drift between the two is loud.
 PEERS_PROXY = f"http://{STRATA_OBJECT_NAME}.{NAMESPACE}.svc.cluster.local:8080"
+
+# Peers evidence is a WAVE TABLE, not one list: cf-86 grew the outer
+# models_allowed one id per landed Strata rung (C01 → C02 → C06), and the
+# suite must stay correct at every intermediate wave because dev lands the
+# chunks in order. models_allowed is the C08-final set (four ids — the
+# abliterated arena was swept by U9.3); models_states pins every sanctioned
+# wave list, oldest first, history included. The one sanctioned SHRINK is a
+# removal-only transition dropping exactly the swept abliterated id (the
+# law below); a peers list that matches no state is still a phantom or a
+# lost entry.
+def strata_peers_evidence() -> dict:
+    if not PEERS_EVIDENCE.exists():
+        raise AssertionError(f"{PEERS_EVIDENCE.name} evidence is missing")
+    data = yaml.safe_load(PEERS_EVIDENCE.read_text())
+    if not isinstance(data, dict) or not isinstance(data.get("strata"), dict):
+        raise AssertionError(f"{PEERS_EVIDENCE.name} must carry a strata: mapping")
+    ev = data["strata"]
+    states = ev.get("models_states")
+    if not isinstance(states, list) or not states:
+        raise AssertionError(
+            f"{PEERS_EVIDENCE.name} needs models_states — every wave's exact "
+            "ordered peer list is pinned so consumers stay wave-correct"
+        )
+    final = ev.get("models_allowed")
+    if not isinstance(final, list) or not final or states[-1] != final:
+        raise AssertionError(
+            f"{PEERS_EVIDENCE.name}: last models_states must equal models_allowed "
+            "(the ruled final peer set)"
+        )
+    prev: set = set()
+    for i, ids in enumerate(states):
+        if not isinstance(ids, list) or not ids or len(set(ids)) != len(ids):
+            raise AssertionError(f"models_states[{i}] must be a non-empty duplicate-free list")
+        if not set(ids) <= set(final) | {ABL_ID}:
+            # The swept abliterated arena may appear in HISTORY states but not
+            # in the final allowed set (C08 U9.3, TEST_SPEC 9.17); every other
+            # id outside models_allowed is a phantom.
+            raise AssertionError(f"models_states[{i}] names a peer outside the final set")
+        if prev:
+            removed = prev - set(ids)
+            if removed and removed != {ABL_ID}:
+                raise AssertionError(
+                    f"models_states[{i}] drops {sorted(removed)} — additions are the rule; "
+                    "the ONE sanctioned shrink is the C08 sweep of the abliterated arena"
+                )
+        prev = set(ids)
+    return ev
+
+
+def expected_strata_peers(served_model_ids) -> list:
+    """The sanctioned ordered peers list for the strata rungs this render
+    actually serves (wave lookup against models_states)."""
+    ev = strata_peers_evidence()
+    served = set(served_model_ids)
+    for ids in ev["models_states"]:
+        if set(ids) <= served and served <= set(ev["models_allowed"]):
+            if set(ids) == (served & set(ev["models_allowed"])):
+                return ids
+    raise AssertionError(
+        f"served strata ids {sorted(served)} match no sanctioned peers wave — "
+        f"states {[sorted(s) for s in ev['models_states']]}"
+    )
+
+# --- cf-86 frozen ids / pins (plan 2026-10-29 + DECISIONS "Renumap +
+# final-shape decisions" + C06 FINAL pins) -----------------------------------
+# The inner ids frozen by the plan; C05 consumes them verbatim and the peers
+# evidence lists them in this order. Profile filenames are frozen by the chunk
+# cmd literals (C02 strata-orca-iq3_xxs.json at authoring; C08's U9.2 ruling
+# renamed it in place to strata-orca-iq4_xs.json — same arena id, new quant),
+# C06 strata-q4.json. ABL_ID stays defined for the C08 absence arms: the swept
+# id must be provably ABSENT from every live surface.
+ABL_ID = "qwen3.8-flash-next-strata-abliterated"        # C01, swept by C08
+ORCA_INNER_ID = "qwen3.8-flash-next-strata-orca"        # C02
+Q4_ID = "qwen3.8-flash-next-strata-q4"                  # C06
+ORNITH_ID = "ornith-1.5-122b-strata-q4"                 # C09 (fresh id family)
+PROFILE_ABL_FILE = "strata-abliterated-iq3_xxs.json"    # swept; absence-pinned
+PROFILE_ORCA_FILE = "strata-orca-iq4_xs.json"
+PROFILE_Q4_FILE = "strata-q4.json"
+PROFILE_ORNITH_FILE = "strata-ornith-q4.json"
+INNER_IDS = (PRIMARY_ID, STRIX_ID, ORCA_INNER_ID, Q4_ID, ORNITH_ID)
+# Inner matrix letters frozen by the chunks: vars grow p|s -> +c (C01) -> +o
+# (C02) -> +q (C06), C08's sweep removes c again, and C09 adds n. The retired
+# c is NEVER reused (frozen-table hygiene — a fresh letter names a fresh rung).
+INNER_MATRIX_VARS = {
+    "p": PRIMARY_ID, "s": STRIX_ID, "o": ORCA_INNER_ID, "q": Q4_ID, "n": ORNITH_ID,
+}
+# C02 gated-pack marker (manual-pack idempotency contract).
+ORCA_PACK_MARKER = "/models/strata/.pack-orca"
+# C09 claim-checkout migration: marker carries image-version + carry-N so a
+# future bump re-fires; the completeness marker for the GGUF-direct ornith
+# leg (no .pack-* equivalent — q36 has no iq_pack step).
+CHECKOUT_MARKER = "/models/strata/.checkout-0.2.9-carry1"
+ORNITH_DL_MARKER = "/models/strata/.dl-ornith"
+
+# C06 FINAL envelope, re-pinned at the executed on-target gate (2026-11-01,
+# owner half-restore ruling) and raised AGAIN by U14 the same day. The pod
+# cgroup is ONE number for the whole strata container (STRATA_CGROUP_LIMIT —
+# named Q4_* until U14, when the flagship started riding it too), and the
+# declared caps are PER-RUNG inside it: 110592 primary, 103680 q4, 92160 orca.
+# #1601's law is declared <= cgroup, and every leg keeps its own reserve: q4
+# rides ~12 GiB above its terms, primary ~15. The conv term moved 8192 -> 16384
+# when the claim-compiled HIP engine rejected --slot-save-path at argv (session
+# files are CUDA-trial: the Round-3 caveat, now measured), which voided the
+# trim's U8 compensation; --slot-save-path is a NEGATIVE pin (Q4_SESSION_FLAG).
+# PLE: no --ple-io flag anywhere. --ple-io ram stays forbidden (the v0.2.7
+# +28.8 GiB RAM-resident hazard, the 2026-10-29 OOM) and --ple-io mmap was
+# RETIRED at U14 — the first boot measured the resolution as `direct` with the
+# engine's own probe at 120,960 rows/s against a 15,000 warning line, so the
+# documented ~11% would be paid for in page cache inside this same cgroup.
+# (PRIMARY_MEMORY_LIMIT_MIB lives with the contract literals above — the
+# PRIMARY_REQUIRED_PAIRS table needs it at definition time.)
+Q4_MEMORY_LIMIT_MIB = 103680
+STRATA_CGROUP_LIMIT = "116Gi"
+Q4_CGROUP_LIMIT = STRATA_CGROUP_LIMIT  # deprecated alias; the cgroup is pod-level
+Q4_CONV_CACHE_MIB = 16384
+Q4_CONV_CACHE_SLOTS = 16
+Q4_SESSION_FLAG = "--slot-save-path"
+# The dir creation STAYS (fetch_models.sh owns it; one home only — the chart
+# must not mkdir it): harmless bookkeeping for a possible future HIP session
+# -files build, asserted by the init/image suites.
+Q4_SESSION_DIR = "/models/strata/sessions"
+Q4_FORBIDDEN_TOKENS = ("--batch", "--layer-split", "--ple-io")
+
+# Inner model id -> the run-config file its cmd's --profile names. The
+# strata-profile ConfigMap's key set must equal exactly this table for the
+# arenas the inner config serves — a profile with no arena (or an arena with
+# no profile) is a render bug, and the count grows one per landed rung.
+INNER_PROFILE_FILES = {
+    PRIMARY_ID: PROFILE_PRIMARY_FILE,
+    STRIX_ID: PROFILE_STRIX_FILE,
+    ORCA_INNER_ID: PROFILE_ORCA_FILE,
+    Q4_ID: PROFILE_Q4_FILE,
+    ORNITH_ID: PROFILE_ORNITH_FILE,
+}
+
+# C09 GGUF-direct ornith leg — live-verified tree read 2026-10-31 (anonymous):
+# ungated repo (tree 200, gated=false), ranged resolve of a shard answers 206
+# with GGUF magic and no Bearer challenge — the exact opposite premise of
+# orca's gated trio, which is why the orn legs ride hf_fetch's ANON mode and
+# HF_TOKEN must never touch them. Paths and sizes verbatim from that read.
+HF_REPO_ORNITH = "unsloth/Ornith-1.5-122B-GGUF"
+ORNITH_SHARD_PATHS = (
+    "UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00001-of-00003.gguf",
+    "UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00002-of-00003.gguf",
+    "UD-Q4_K_XL/Ornith-1.5-122B-UD-Q4_K_XL-00003-of-00003.gguf",
+)
+ORNITH_SHARD_BYTES = (10942929, 49971099680, 29731729056)
+ORNITH_TOTAL_BYTES = 79713771665  # == sum(ORNITH_SHARD_BYTES), R5 [C7]
+
+
+def expected_profile_files(inner_ids) -> set:
+    served = set(inner_ids)
+    unknown = served - set(INNER_PROFILE_FILES)
+    assert not unknown, f"inner arena ids outside the frozen profile table: {sorted(unknown)}"
+    return {INNER_PROFILE_FILES[i] for i in served}
+
+
+def profile_files(docs) -> set:
+    """Key set of the rendered strata-profile ConfigMap (the run-config files
+    the supervisor mounts)."""
+    cm = by_name_kind(docs, "ConfigMap", CM_PROFILE)
+    return set(cm.get("data") or {})
+
+
+def profile_file_of(model: dict) -> str:
+    """The /profile/<file> name a serve cmd points at ('' when absent)."""
+    m = re.search(r"--profile\s+(\S+)", str(model.get("cmd") or ""))
+    return m.group(1).rsplit("/", 1)[-1] if m else ""
+
+
+def serve_path_secret_hits(docs) -> list[str]:
+    """The C-A keyless law, scoped to the SERVE path: strata main container,
+    the inner supervisor config, and every rendered run-config profile. cf-86
+    C02 (R-d ruling) sanctions the hf-token Secret as a DOWNLOAD-ONLY consumer
+    on the model-fetch init, so initContainers are deliberately NOT part of
+    this scan — test_strata_orca_rung.py pins that exception's placement."""
+    hits = []
+    pod = strata_pod(docs)
+    for ctr in pod["spec"].get("containers") or []:
+        blob = yaml.safe_dump(ctr)
+        hits += [f"container {ctr.get('name')}: {tok}" for tok in SECRET_CHAIN_TOKENS + ["HF_TOKEN"]
+                 if tok in blob]
+    cm_profile = by_name_kind(docs, "ConfigMap", CM_PROFILE)
+    blob = yaml.safe_dump(cm_profile.get("data") or {})
+    hits += [f"{CM_PROFILE}: {tok}" for tok in SECRET_CHAIN_TOKENS if tok in blob]
+    hits += [f"inner config: {tok}" for tok in SECRET_CHAIN_TOKENS if tok in yaml.safe_dump(inner_config(docs))]
+    return hits
 
 
 # ---------------------------------------------------------------------------
@@ -392,8 +630,9 @@ def engine_exe_paths(text: str) -> set[str]:
 # combo, '|' alternates combos, '+name' inlines another set (skill: "(g | q |
 # m) & v" → [g,v],[q,v],[m,v]; a combo listing two models admits their
 # co-residency, only the requested model starts). Flat membership of the var
-# references is the wrong bar for the (p | s) contract — that expression
-# mentions both arenas while no combo may ever hold both.
+# references is the wrong bar for the C01-era "(p | s)" contract, and stays
+# wrong for today's five-letter sets.main: the alternation names every arena
+# while no combo may ever hold more than one.
 
 
 _M_DSL_TOKEN = re.compile(r"&|\||\(|\)|\+[A-Za-z0-9_]+|[A-Za-z0-9_]+")
@@ -499,6 +738,49 @@ def strip_legacy_performance_keys(cfg: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def body_lines(text: str) -> list[tuple[int, str]]:
+    """Numbered script lines that can execute — comment lines carry the
+    staging rationale and NAME forbidden clients to forbid them, so invocation
+    laws run over non-comment lines only (the C01 review's scoping)."""
+    return [(n, ln) for n, ln in enumerate(text.splitlines())
+            if not ln.strip().startswith("#")]
+
+
+def staged_paths(script: str, fn: str, tier: str) -> dict:
+    """The staging layout from one pack function's assignments (dir/pack/stem/
+    shard paths), expanded with the quant tier the loop passes. Shared by the
+    render-era and image-era pairing arms so the pairing law survives the C07
+    lift without being re-derived differently on each side. A missing
+    assignment raises — the layout changing shape must red, never silently
+    vacate the law."""
+    import re as _re
+
+    body = _re.search(rf"^{fn}\(\) \{{\n(.*?)\n\}}$", script, _re.S | _re.M)
+    assert body, f"no {fn} function in the staging script — the pack step is not landed where expected"
+    block = body.group(1)
+
+    def assign(name: str) -> str:
+        m = _re.search(rf"^\s*{name}=(\S+)\s*$", block, _re.M)
+        assert m, f"{fn} assigns no {name} — the staging layout changed shape, re-express this arm"
+        return m.group(1)
+
+    def expand(value: str, seen: dict) -> str:
+        out = value.replace("$tierl", tier.lower()).replace("$tier", tier)
+        for name, val in seen.items():
+            out = out.replace(f"${name}", val)
+        return out
+
+    paths, order = {}, ("dir", "pack", "stem", "s1", "s2", "s3")
+    for name in order:
+        try:
+            paths[name] = expand(assign(name), paths)
+        except AssertionError:
+            if name in ("s2", "s3"):
+                continue  # a two-shard pack has no s3 and a one-shard pack no s2
+            raise
+    return paths
+
+
 def values_region(text: str, key: str) -> str:
     """Raw source of one values key's block — from the key line to the next
     line at shallower-or-equal indent. Used where the WHY-comments THEMSELVES
@@ -543,7 +825,7 @@ def live_code_grep(needle: str) -> list[str]:
                 continue
             s = str(path)
             if (f"{os.sep}tests{os.sep}" in s or "__pycache__" in s
-                    or path.suffix in {".tgz", ".pyc", ".gz"}):
+                    or ".pytest_cache" in s or path.suffix in {".tgz", ".pyc", ".gz"}):
                 continue
             if needle in path.read_text(errors="replace"):
                 hits.append(str(path.relative_to(REPO_ROOT)))

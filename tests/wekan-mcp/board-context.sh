@@ -16,10 +16,14 @@
 # Live smoke [AC5] is dev+review run, not asserted here — D8: no network in
 # suites.
 #
-# Red before C03: every check fails on a missing file/row, naming the absent
-# contract. The rulesync-surface c8 / agents-md c7 / gate t14 scope admits for
-# this ticket landed at the test phase (agent-test's prerogative, cf-50
-# precedent), so HOLD posture after C01/C02 land.
+# Red posture (cf-106 C07 test wave 2): t1-t5 are green against the tree. t6
+# runs its nested suites as id-subsets, the way it already trims gate.sh's
+# pre-existing t17: agent-perms runs minus A15, because A15's cf-106 legs — the
+# pipeline_claim `shared` override input (C08 AC6) and the boards skill's
+# co-tenancy posture (C08 AC7) — are cf-106 C08's work and stay red through
+# C07. A15 still runs, as its own arm: it must either be green or fail naming
+# C08, so an unrelated A15 breakage still reads as this suite's. Every other
+# agent-perms leg is C07's blast radius and must be green.
 #
 # Usage:
 #   bash tests/wekan-mcp/board-context.sh            # t1..t6
@@ -243,15 +247,27 @@ nlabels = [r.split("|")[1].strip() for r in n]
 missing = [x for x in blabels if nlabels.count(x) < 1]
 if missing:
     print(f"base matchers lost: {missing}"); sys.exit(1)
+# cf-90 C06 widening: the sanctioned row ADDITIONS are the cf-75 agent-board
+# row (era-gated: post-merge it rides the base too), the cf-96 C02 explore
+# row and the deploy PAIR — dev-deploy/dev-deploy-pr. Admitted as the exact
+# set, never as a blanket skip: any other gained matcher still reddens.
 added = [x for x in nlabels if x not in blabels]
-if added and not (len(added) == 1 and added[0] in ("board", "agent-board")):
+admitted = {"board", "agent-board", "dev-deploy", "dev-deploy-pr", "explore"}
+if added and not set(added) <= admitted:
     print(f"unexpected matcher rows added: {added}"); sys.exit(1)
 if "agent-board" not in nlabels and "board" not in nlabels:
     print("no agent-board matcher row found"); sys.exit(1)
-# The coord-pr cell moved thrice: cf-72's main-side T-7 tail rewrite, the
+import os
+if os.path.exists(".rulesync/subagents/agent-dev-deploy.md"):
+    for dep in ("dev-deploy", "dev-deploy-pr"):
+        if dep not in nlabels:
+            print(f"cf-90 C06 era: the deploy pair shipped but the '{dep}' matcher row is absent — the matrix must carry the new roles"); sys.exit(1)
+# The coord-pr cell moved four times: cf-72's main-side T-7 tail rewrite, the
 # scoped-read re-seat rider (in-family ls/preload-probe — the 2026-10-30
-# admission this constant replaces), and cf-88's union wording ("the probe row
-# and the cf-88 surface block ride it too"), landed 2026-10-31 (merge2). The
+# admission this constant replaces), cf-88's union wording ("the probe row
+# and the cf-88 surface block ride it too"), landed 2026-10-31 (merge2), and
+# cf-90 C06's launch-cell widen (the roster names the class's deploy variant
+# — the agents-sync law of the matrix moving with every permission change). The
 # constant below is the landed byte, pinned like the TB form — a future cell
 # edit must arrive with a re-pin, not silently pass. The cf-88 wording also
 # carries the owner's round-2 zero-arg-push ruling inline:
@@ -260,7 +276,17 @@ if "agent-board" not in nlabels and "board" not in nlabels:
 # never as a blanket skip: the TB form still rides (pre-merge trees, via the
 # byte-equal walk below) and the pinned settled form rides; anything else — a
 # dropped ls/probe grant, a reworded tail, any gained row — reddens.
-COORD_PR_SETTLED = """| coord-pr | same as coord | plan/research/test/dev-pr/review | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
+# The byte below is the landed row at .rulesync/skills/agents-sync/
+# references/permissions.md:27 — re-pinned in the cf-106 C07 test wave 2
+# because C06 widened the cell (the standalone `code-pr` roster class,
+# cf-106 OQ-10); the previous 762-char literal went stale by design.
+COORD_PR_SETTLED = """| coord-pr | same as coord | plan/explore/research/test/dev-pr/dev-deploy-pr/review + standalone `code-pr` (cf-106 C04: the push-capable second implementer — it MAY push the ticket branch, only under `pipeline-push-pr`) | as coord-local — same scoped-read family (the probe row and the cf-88 surface block ride it too) — but the T-7 push tail replaces T-2: feature push lives through the broad `git *` allow, denied back on the LAST rows for every main-token form (`git push*main*`, `git * push *main*` — covers `push :main`), the zero-arg `-C` footgun (`git * push`; bare `git push` in the own worktree stays ALLOWED per the owner's round-2 ruling) and all force spellings (`git push -f*`/`git push -P*` + their `git *` twins, over the floor-wide `--force`/`-f`/`-P` rows) — pushes the ticket branch for remote build/test under the `pipeline-push-pr` contract: never main, never force | as coord |"""
+# cf-96 final-review vocabulary sweep (Deploy -> Deployment, C11 fold
+# round): the dev-deploy row's launch-surface cell moved once — the
+# retired `Deploy` stage cite now reads `Deployment`. Admitted EXACTLY,
+# never as a blanket skip: the TB form still rides (pre-merge trees)
+# and the pinned settled form rides; anything else reddens.
+DEV_DEPLOY_SETTLED = """| dev-deploy | everything EXCEPT the test paths (`charts/**/tests/**`, `containers/**/tests/**`, top-level `tests/**`) and `.agents/plans/**`, plus the context-file rules below — the block mirrors `agent-dev-local` verbatim plus the cleanup grant (cf-90 C06) | none — and nothing launches them either yet: the pair ships DEFINITION ONLY (cf-90), the coord step-8b Deployment-stage hook under a checked Lifecycle `Deployment` is the only future launch surface (the boards Stage map governs) | as dev-local — git reads, `git add`/`git commit`/`git push` denied (the coordinator commits), trailing `ls *` allow, `helm lint/template` | as plan, plus the workspace-isolation trio (`opencode_worktree_create`/`opencode_worktree_list`/`opencode_session_move`) AND the cleanup row `opencode_worktree_remove` (the deploy fixer closes its OWN worktree at hand-back; branch stays coord-owned, landing-gated) — still NO `execute` row (no deny baseline: interactive runs approve Code Mode once, unattended pipeline runs stay blocked from minting coordinator-owned surfaces) |"""
 for r in b:
     label = r.split("|")[1].strip()
     # The review row's wording is C02's sanctioned contract move (validated by
@@ -279,10 +305,15 @@ for r in b:
             cur = [x for x in n if x.split("|")[1].strip() == "coord-pr"]
             if len(cur) == 1 and cur[0] == COORD_PR_SETTLED:
                 continue
-            print(f"coord-pr row is neither the TB form nor the pinned settled form (cf-72 T-7 tail + the cf-88 union rider) — got {cur}; the admission is byte-exact: dropping a grant, rewording the tail or any other gain is unadmitted drift"); sys.exit(1)
-        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, and the byte-exact coord-pr settled admission; nothing else may drift"); sys.exit(1)
+            print(f"coord-pr row is neither the TB form nor the pinned settled form (cf-72 T-7 tail + the cf-88 union rider + the cf-90 C06 launch-cell widen) — got {cur}; the admission is byte-exact: dropping a grant, rewording the tail or any other gain is unadmitted drift"); sys.exit(1)
+        if label == "dev-deploy":
+            cur = [x for x in n if x.split("|")[1].strip() == "dev-deploy"]
+            if len(cur) == 1 and cur[0] == DEV_DEPLOY_SETTLED:
+                continue
+            print(f"dev-deploy row is neither the TB form nor the pinned settled form (cf-96 final-review Deploy->Deployment vocabulary sweep) — got {cur}; the admission is byte-exact"); sys.exit(1)
+        print(f"base row '{label}' changed byte-wise — the sanctioned matrix moves are the cf-75 agent-board insertion, the cf-76 review row, board-tick-cleanup C01's five shell-cell updates, cf-90 C06's deploy-pair rows + coord roster cell, the byte-exact coord-pr settled admission, and the cf-96 dev-deploy Deploy->Deployment re-pin; nothing else may drift"); sys.exit(1)
 PY
-  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too)"
+  ok "t4: role matrix (source + mirror) keeps every base row byte-identical except the sanctioned moves (C02 review row, board-tick-cleanup C01's five shell cells, cf-90 C06's deploy-pair rows + coord roster cell + the byte-exact coord-pr settled admission) and carries the agent-board row (era-gated presence — post-landing it rides the base too); with the deploy pair shipped, both dev-deploy matchers must be present"
 fi
 
 # --- t5: regen no-op + --check, and same-commit source/generated shape (AC6) ----
@@ -322,11 +353,63 @@ if want t6; then
     cat "$TMP/gatehits.txt" >&2
     fail "t6: agent-board-coord-gate.sh references agent-board — the hourly gate counts the three board-coord names ONLY (agent-board is not a coordinator; C03 AC6)"
   fi
-  git diff --quiet "$TB" -- "$GATE_SCRIPT" || fail "t6: $GATE_SCRIPT changed since $TB — this ticket touches nothing in it (prove-by-diff, AC6)"
+  # The invariance premise, re-pinned at the cf-93 C10 rebase: C02
+  # legitimately APPENDED a comment-only posture note to this script (OQ-A3 —
+  # deliberate cross-project counting, guarded as comment-only by
+  # tests/multi-repo/hourly-board-check.sh t2, which also pins the untouched
+  # usage-heredoc twin via the D11 sentences + verdict legend). So this leg
+  # proves COMMENT-ONLY invariance vs $TB — the same ^+#-only shape as that
+  # guard: added lines are comments/blank, zero deleted or rewritten lines.
+  gate_diff=$(git diff "$TB" -- "$GATE_SCRIPT" || true)
+  if [ -n "$gate_diff" ]; then
+    if printf '%s\n' "$gate_diff" | grep -E '^-' | grep -vE '^--- ' | grep -q .; then
+      fail "t6: the $GATE_SCRIPT diff vs $TB deletes/rewrites lines — only comment APPENDS are admissible (C02's posture note; deletions would widen the hourly gate, AC6)"
+    fi
+    if printf '%s\n' "$gate_diff" | grep -E '^\+[^+]' | grep -vE '^\+\s*(#|$)' | grep .; then
+      fail "t6: the $GATE_SCRIPT diff adds a non-comment line vs $TB — gate logic, verdicts and flags stay untouched (mirrors hourly-board-check.sh t2)"
+    fi
+    ok "t6: $GATE_SCRIPT vs $TB is comment-only (the cf-93 C02 OQ-A3 posture append; no logic, verdict or flag change — AC6 invariance)"
+  else
+    ok "t6: $GATE_SCRIPT unchanged vs $TB (comment-only invariance, vacuously)"
+  fi
   # env -u CHUNK_BASE: same default-shape containment as validation-fix.sh t7 —
   # an ambient base must not silently re-base these regression children.
+  # cf-90 selection note (agent-test, mechanical): gate.sh's child runs as an
+  # ID SUBSET excluding t17 — t17 is red at pristine main HEAD from the
+  # pre-existing warm-location permissions drift tracked outside cf-90 (the
+  # gate.sh cf-90 header note); running it whole would attribute that drift
+  # red to this ticket and to every later chunk gate. The same subset
+  # discipline tests/provider-loops/surface.sh t6 ships. agent-perms runs the
+  # same way: A15 is cf-106 C08's leg (the pipeline_claim `shared` override
+  # input + the boards skill's co-tenancy posture) and stays red until C08
+  # lands, so it runs as its own arm — its red is admitted BY NAME and its
+  # output must name C08, so a new A15 failure for another reason still reads
+  # as t6's. Every other agent-perms leg is this chunk's blast radius.
+  AP_ALL=$(seq 1 19 | grep -v '^15$' | sed 's/^/A/' | tr '\n' ' ')
   for s in tests/agent-board-coord/gate.sh tests/agent-perms/surface.sh tests/standalone-agents/surface.sh; do
     log="$TMP/$(basename "$s").log"
+    if [ "$s" = "tests/agent-board-coord/gate.sh" ]; then
+      gate_ids=$(seq 1 20 | grep -v '^17$' | sed 's/^/t/' | tr '\n' ' ')
+      # shellcheck disable=SC2086
+      env -u CHUNK_BASE timeout 600 bash "$s" $gate_ids >"$log" 2>&1 \
+        || { tail -n 20 "$log" >&2; fail "t6: bash $s (ids minus the pre-existing t17) failed (log: $log)"; }
+      continue
+    fi
+    if [ "$s" = "tests/agent-perms/surface.sh" ]; then
+      # shellcheck disable=SC2086
+      env -u CHUNK_BASE timeout 600 bash "$s" $AP_ALL >"$log" 2>&1 \
+        || { tail -n 20 "$log" >&2; fail "t6: bash $s (ids minus A15, cf-106 C08's leg) failed (log: $log)"; }
+      a15log="$TMP/agent-perms-A15.log"
+      if env -u CHUNK_BASE timeout 300 bash "$s" A15 >"$a15log" 2>&1; then
+        ok "t6: agent-perms A15 reads green — cf-106 C08's permission legs have landed, fold A15 back into the subset run above"
+      elif grep -qF 'C08' "$a15log"; then
+        ok "t6: agent-perms A15 red, and red on cf-106 C08's contract (the pipeline_claim \`shared\` input + the boards-skill co-tenancy posture) — recorded as C08's designed red, not a C07 regression (log: $a15log)"
+      else
+        tail -n 20 "$a15log" >&2
+        fail "t6: agent-perms A15 failed for a reason other than cf-106 C08's legs (log: $a15log)"
+      fi
+      continue
+    fi
     if env -u CHUNK_BASE timeout 600 bash "$s" >"$log" 2>&1; then
       :
     else
@@ -334,7 +417,7 @@ if want t6; then
       fail "t6: bash $s failed (log: $log)"
     fi
   done
-  ok "t6: gate script byte-untouched and free of agent-board references; gate/agent-perms/standalone-agents suites pass (C03 AC6 regression)"
+  ok "t6: gate script comment-only-invariant vs $TB and free of agent-board references; gate contract (ids minus the known-red t17), agent-perms (ids minus A15 = C08's leg, which is admitted by name) and standalone-agents suites pass (C03 AC6 regression)"
 fi
 
 printf 'PASS: wekan-mcp board-context checks (%d ok)\n' "$checks"

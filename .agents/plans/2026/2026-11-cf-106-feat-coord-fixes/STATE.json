@@ -1,0 +1,575 @@
+{
+  "feature": "2026/2026-11-cf-106-feat-coord-fixes",
+  "plan_status": "complete",
+  "coord_session": "ses_e5d47a7a9ffeNrogAo9PF2VYez",
+  "test_session": "ses_e5c56c5defferyjeGtb6YMn05v",
+  "current_wave": 4,
+  "updated_at": "2026-11-05T21:45:00+00:00",
+  "kickoff": {
+    "card": "ZPP55zX4GEfesPbnL",
+    "card_number": 106,
+    "card_title": "Coord fixes",
+    "slug": "cf-106-feat-coord-fixes",
+    "type": "feat",
+    "worktree": "cf-106-feat-coord-fixes",
+    "branch": "cf-106-feat-coord-fixes",
+    "origin_dir": "/home/coder/SpencersLab",
+    "run_tag": null,
+    "claim": {
+      "cardId": "ZPP55zX4GEfesPbnL",
+      "pipelines": ["ZPP55zX4GEfesPbnL"],
+      "setId": "c1022816-beb3-401c-a6c1-7a0af5856c7b",
+      "history": [
+        "2026-11-03 claimed at pickup (setId 15ae31e2-13ad-45cb-bdbc-a272cead75bc, v1 record shape)",
+        "2026-11-05 claim LOST silently across three server restarts: pipeline_heartbeat answered no_claim, pipeline_status answered groups [] with no reap entry naming Context; no commit or card move happened in the gap",
+        "2026-11-05 re-claimed with pipeline_claim(cardId, pipelines:[Context]) under the C08 v2 record shape (setId 53d501c4-4a5b-4086-ba17-66e69ac866c6); card verified untouched (Executing, Provider: API + Pipeline: Context, slug field intact); audit comment HStskaFEduNrT7vaT on the card; disposition of the observability gap routed to C09/C10 rather than fixed ad hoc",
+        "2026-11-05 claim LOST AGAIN silently across a server restart (same class: heartbeat ok:false, then no_claim; the on-disk Context holder row stayed state:failed at ~28 min age, never reaped); recovered via C09's sanctioned card-id key: pipeline_claim(cardId, pipelines:[ZPP55zX4GEfesPbnL]) -> setId c1022816-beb3-401c-a6c1-7a0af5856c7b, untagged because no .reaped record names this card (the after_reap tag is correctly absent); heartbeat ok:true on the card-id key; the Context.json orphan holder row stays on disk and ages out, untouched by this run"
+      ],
+      "lock_store": "/home/coder/SpencersLab/.pipeline/locks/ (the plugin store lives in the origin checkout and is shared by every worktree); current lock file: ZPP55zX4GEfesPbnL.json (the card-id key); Context.json retains the orphan holder row from the lapsed 53d501c4 claim"
+    },
+    "session_origin": "https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com",
+    "session_origin_leg": "leg 2 — bash scripts/session-origin.sh at claim (resolved live 2026-11-03)",
+    "models": {
+      "plan": "gpu-ai/qwen3.8-flash-next-strata",
+      "code": "gpu-ai/qwen3.8-flash-next-strata"
+    },
+    "local": true,
+    "models_deviation": "Card Model(s) checklist blank -> routed default Qwen Flash (openrouter/qwen/qwen3.8-flash); openrouter answered 'Provider returned error' twice this run (agent-explore failed twice), so the documented local flash route gpu-ai/qwen3.8-flash-next-strata carries every tier. See DECISIONS.md 2026-11-03.",
+    "models_override": "2026-11-05 owner ruling: from the C08 review round 1 launch onward, every subagent tier runs the 27B Dense model. The local gpu-ai/llama-swap endpoint is down (503 'no available server'), so it is taken from openrouter as openrouter/qwen/qwen3.8-27b; if llama-swap recovers and the owner wants the local gpu-ai/qwen3.8-27b-q4 route, that is a fresh ruling. Earlier rounds on gpu-ai/qwen3.8-flash-next-strata stand.",
+    "human_in_the_loop": [
+      "Final Review"
+    ],
+    "stages": [
+      "Exploration",
+      "Agent Decides Research",
+      "Planning",
+      "Test Writing",
+      "Chunk Development",
+      "Chunk Review",
+      "Final Review"
+    ],
+    "stages_basis": "all five checklists unchecked (card carries the LEGACY Research checklist in place of Lifecycle + the legacy 4-item Human in the Loop) -> boards Blank defaults; Agent Decides Research resolved NO research round",
+    "checklist_answers": {
+      "Services": [
+        "agent context",
+        "dev"
+      ],
+      "Type": [],
+      "Model(s)": [],
+      "Lifecycle": null,
+      "Human in the Loop": [],
+      "note": "Lifecycle checklist absent on this card (legacy Research checklist present, all items unchecked) -> consumed as blank = standard default loop, no card mutation at kickoff. Answers landed in the batched plan round and were written onto the card at the post-plan write-back: Services agent context + dev, Type feat, Model(s) Qwen Flash + Local (gpu-ai) (this run's routing record), Research Agent Decides, Human in the Loop Plan"
+    },
+    "slug_custom_field": "[cf-106-feat-coord-fixes](https://openchamber--main--spencerslab-claud--thehackmeister-coder.spencerslab.com/?session=ses_e5d47a7a9ffeNrogAo9PF2VYez)",
+    "approval": {
+      "at": "2026-11-03T23:02:29+00:00",
+      "by": "owner, in-session question after the batched round",
+      "verdict": "Approve — run all waves",
+      "approval_comment": "SKoFcXhutMznbDHTP"
+    },
+    "card_write_back": {
+      "at": "2026-11-03T23:02:29+00:00",
+      "slug_field": "set (upsert, attached=true) on card ZPP55zX4GEfesPbnL",
+      "consistency_check": "link host equals kickoff.session_origin — pass",
+      "surviving_checklist_items": {
+        "Model(s)": ["Qwen Flash", "Local (gpu-ai)"],
+        "Services": ["dev", "agent context"],
+        "Type": ["feat"],
+        "Research (legacy Lifecycle stand-in)": ["Agent Decides"],
+        "Human in the Loop": ["Plan"]
+      },
+      "deleted_unchecked_items": 27,
+      "note": "Model(s)/Research/HITL survivors record this run's actual routing and stop point (blank checklists were consumed WITHOUT mutation for kickoff; the write-back then collapsed each checklist to the answered record, matching the shipped precedent on cards #89/#95/#96/#97)"
+    },
+    "claim": {
+      "pipelines": [
+        "Context"
+      ],
+      "derived_from": "board label 'Pipeline: Context' on card #106",
+      "claimed_at": "2026-11-03",
+      "card_move": "Not Started -> Executing",
+      "claim_comment": "rzJfinJj9CyTdAf7Q",
+      "provider_label_consumed": "Provider: API"
+    },
+    "board_context": {
+      "collectedAt": "2026-11-03T18:42:32Z",
+      "source": "launch block; ids per EXPLORE.md §0 live reads (this session carries the stamp, not the raw block text)",
+      "board_id": "TNQJ2BrXenZovngTS",
+      "swimlanes": {
+        "In Process": "jLzy39L7djCRr67SF",
+        "Backlog": "MoZHQz3C4dSW4Atya",
+        "Farm": "BkNBQgMLJBvmCgMAQ",
+        "Planning": "hFgncuRJ8Pkvpt8ki"
+      },
+      "lists_In_Process": {
+        "Not Started": "XhDyShvuwhGWzWH2z",
+        "Executing": "qZ9CLZqCRbv7NQQ6R",
+        "Review": "2B6wWGJ8Tetp5QWDJ",
+        "Rework": "y9tsvb3AguKWhzCoF",
+        "Finished": "DHw56fMKy3qyfudz4",
+        "Test": "jNYNdCPPkX8Bs95s4",
+        "Cancelled": "52dS3k7Kdk9EB5cJj"
+      },
+      "lists_Backlog": {
+        "Inbox": "PjEZ39rXBdpNcpncs"
+      },
+      "custom_fields": {
+        "slug": "RaNeqvh9YoT4bnkZ8",
+        "session": "zZw4PwMoLeodJy3eT (retired: never read, never written)",
+        "Priority": "fp5vnD5YrA7oAxPiK (human-owned, outside the boards roster claim)"
+      },
+      "labels_note": "label ids not carried into this session; names verified live per EXPLORE §0: Pipeline: Context / CICD / Local in real use, Provider: API + Provider: Local, Repo: SpencersLab, Research, Research: Parallel, Bucket: *"
+    },
+    "preload": {
+      "at": "2026-11-03T18:42:32Z",
+      "tool": "preload_board",
+      "cards": 0,
+      "degraded": true,
+      "reason": "deployed dev-boards catalog (wekan-mcp :v87, live tools/list = 26 tools) has NO preload_board -> dependency gate SKIPPED this run, per-list list_cards_in_list reads used"
+    },
+    "question_round": {
+      "at": "2026-11-03",
+      "shape": "single batched plan-question round (boards law); owner answered all 15 items, rulings final, no re-ask",
+      "recorded_in": "DECISIONS.md 2026-11-03 rulings + plan 'Open questions' section annotated RESOLVED",
+      "shape_changes": [
+        "C03 split into C03a (audit instrument + classification) then C03b (contract change)",
+        "C04 reshaped: code gains add/commit, new code-pr twin pushes under pipeline-push-pr; validation-battery shell allows DROPPED (toggle stays)",
+        "C05 reshaped: five follow-up modes in both coord families, Inbox preferred on board runs",
+        "C10 gains the runner model switch to gpu-ai/qwen3.8-27b-q4 + tick/provider-loops re-pins",
+        "C01 gains the custom-field roster wording fix (slug only active field; Priority not declared)"
+      ]
+    }
+  },
+  "test_wave": {
+    "at": "2026-11-04T03:45:13+00:00 (coord record time; the wave ran overnight on wall-clock, subagent heartbeats kept the Context claim live)",
+    "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+    "status": "DONE",
+    "files": "31 modified tests/** + new tests/cf106-noop/{surface.sh,readback.md}, tests/wekan-mcp/{card-details.sh,slug-stack.sh}, tests/opencode/card-details.test.ts; every chunk file annotated '### Written (agent-test, 2026-11-04)'",
+    "after_state": "designed reds per chunk (agent-perms A12/A15/A17, standalone-agents S7/S10/S11, pipeline-push-pr P3/P10, rulesync-surface c11/c23/c24, agents-md c10/c11, noop-marker N2/N4/N7, cf106-noop N1/N2/N4/N6, provider-loops t1-t4/t7/t8, pipeline-models M1/M2/M5/M7/M8, provision t9, cutover t2/t3/t7/t8/t10, cf96-lifecycle t6, boards-deps t2/t9, wekan-mcp dependencies t2/t9-t11 + tools t2/t5 + skill-surface t4/t5, card-details t1-t4, slug-stack S1, board-preload-probe b6, cf90-ledger t5/t6/t7, locks core 28/10 · engine 34/7 · reap 26/6 · tick 13/2, card-details TS 1/18); greens held: provider-loops t5/t6, gate t14/t21, question-notify 48/48, board-context 32/32, cf96-deploy 8/8, multi-repo hourly-board-check 8/8",
+    "pre_existing_reds": "gate.sh t17, coord-inwork i4, kickoff-branch m4, session-origin s4, wekan-mcp/create-list t2, pipeline-gates/validation-fix t4 — not this ticket's doing",
+    "coord_verification": "the wave's git-incident claim is a FALSE ALARM (see FRICTION 2026-11-04 re-status): the only branch reflog entry is the kickoff mint; no worktree commit ever existed; wave files verified present by git status before commit",
+    "coord_routing": [
+      "B6 ownership gap: scripts/board-preload-probe.sh is pinned by tests/board-preload-probe/surface.sh B6 for the new probe names but sits in no chunk's file list → widened into C06's scope at dev hand-off (probe legs are the preload surface C06 changes); if dev cannot run it (ask-denied), it lands as an owner step",
+      ".rulesync/skills/agents-sync/references/pipeline-overview.md still says 'Qwen 27b' with no suite owning it → folded into C02's sweep list",
+      "board-rules-v12.65-dense.json intentionally absent → cutover t7/t8 + cf96-lifecycle t6 stay red until the owner's /wekan-board-provision apply produces it (USER-owned step 1, already in the plan)",
+      "C08 inferences (per-(pipelineKey,session) beat throttle, file-level state:'failed') → confirmed with the dev round's ACs, not silently accepted",
+      "mirror arms (rulesync-surface c23/c24, agents-md t5) stay red until the .rulesync regen lands with the source commit — the regen is part of each skill-touching chunk's dev Commands"
+    ]
+  },
+  "test_wave_3": {
+    "at": "2026-11-05 (ran in parallel with C03b's dev + review rounds)",
+    "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+    "status": "DONE",
+    "commit": "8c745c401",
+    "model": "openrouter/qwen/qwen3.8-27b (owner's override; the local gpu-ai endpoint was down)",
+    "legs": "R3-M1 card-details.sh guard scan shape-safe (raise legal, continue reds); R3-M2 stale designed-red claims re-worded; R3-M3 backticked shared escaped (board-context.sh + agent-perms); N13 amendAnswer content-parts + output-string arms; N15 blockStamps footer + byte-stability arms (both in card-details.test.ts - the only in-repo registered-hook harness); C08 t3 repo-label-filter recut to content pins (pinned-commit leg retired); C05 friction.py vocab counts the mode-list run + cite entry-scoped + sixth-mode ban bounded at the next ## heading with word-anchored later",
+    "after_state": "no newly red: whole opencode glob 299 tests / 291 pass / 8 fail = exactly C09 U3x3 + V4x3 and C10 T2x2; card-details.sh 5 ok, board-context.sh 8 ok, agent-perms 21 ok, repo-label-filter 9 ok (whole green, was red at HEAD), cf90-ledger 8 ok (whole green - standing C05 reds cleared); cf106-noop HOLD re-run 8 ok",
+    "concurrency": "the wave's required final battery conflicted with its own off-limits constraint (board-context t6 nests gate.sh -> rulesync generate x2; the opencode glob includes question-notify) - it ran them as demanded, all green, generate proved idempotent against C03b's final sources; the noop-marker N4 AC3->AC6 comment re-pin stays DEFERRED to the next wave",
+    "hand_off": "chunks/C07.md '## Test notes — wave 3' + cross-reference notes in chunks/C08.md and chunks/C05.md + test_results.json W3"
+  },
+  "chunks": {
+    "C01": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e5b5580f9ffeuQbHa3M1l822T7",
+      "review_session": "ses_e5b3662e5ffeOXITM8LMyInee7",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "commit": "78c6c0ef3 (rebased onto origin/main d193510c8 at 2026-11-04; was 625d7843d)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE", "chunk": "C01",
+          "files_changed": [".rulesync/skills/boards/SKILL.md", ".opencode/skills/boards/SKILL.md", "containers/wekan-mcp/wekan_mcp/server.py", "skills/wekan-mcp/SKILL.md", "skills/wekan-mcp/references/call-shapes.md"],
+          "commands_run": ["PATH export => pass", "npx --yes rulesync@37.0.0 generate x2 (2nd = no-op) => pass", "generate --check => pass", "bash tests/wekan-mcp/slug-stack.sh => pass (S1-S5)", "tools.sh => fail (t2 = C07 tool-count pin; subset t1 t3 t4 t6 t8 t9 pass)", "skill-surface.sh => fail (t4 = C07; subset t1 t2 t3 t6 t7 t8 pass)", "session-origin/surface.sh => fail (s2 in-window byte pin; s1 s3 s5 s6 s7 pass; s4 pre-existing)", "session-origin/script.sh => pass", "agent-perms/surface.sh => fail (stops at A12 = C04; A15 cf-106 roster arm GREEN, A15 C08 sub-arm + A17 designed red)", "gate.sh => fail (t17 pre-existing); subset minus t17 => pass incl. t14 admits", "agents-md.sh c7 => pass", "rulesync-surface.sh c8 => pass, c19 => pass", "provider-loops/surface.sh => fail (t1 = C10 designed); t5 t6 => pass (plan-time t6 red cleared)", "py_compile server.py => pass", "npx --yes aislop@0.20.0 ci --changes => pass (score 94, 0 errors, 10 pre-existing warnings)", "helm lint/template => N/A (no chart in blast radius)", "docker build => no-daemon, CI-deferred"],
+          "deviations": "none on scope; two wording choices flagged: (1) roster bullet keeps a scoped 'the roster has exactly one such entry' because rulesync-surface c19 (cf-85 HOLD pin, not re-pinned by the test wave) requires the token while slug-stack S5/A15 forbid a board-count claim; (2) the token `backfill` cannot appear in the boards skill (S4 greps it even negated) so the posture reads 'frozen history — tolerated on read, never rewritten'",
+          "friction": "slug-stack S4 grep punishes negated 'backfill' prose; session-origin s2 byte-pins against HEAD so any legitimate in-flight rewrite is red until coord commits; c19-vs-S5/A15 near-collision on the roster wording",
+          "open_questions": "none"
+        },
+        {
+          "role": "review", "status": "APPROVED", "chunk": "C01",
+          "commands_run": ["slug-stack.sh => pass exit 0 (S1-S5)", "gate.sh whole => fail (only t17 pre-existing); gate.sh t1-t16,t18-t21 => pass exit 0 (22 ok, both t14 arms)", "provider-loops whole => fail (only t1 = C10); t5 t6 => pass exit 0", "tools.sh => fail t2 (C07); skill-surface.sh => fail t4 (C07)", "session-origin/surface.sh => fail s2 (HEAD-relative byte pin); with CHUNK_BASE=$(git stash create) s2 => pass, s4 => fail (pre-existing)", "session-origin/script.sh => pass (7 ok)", "agent-perms whole => fail at A12 (C04); A15 => roster arm pass, aborts at the C08 co-tenancy sub-arm", "rulesync-surface.sh c8 c19 => pass exit 0; whole => fail at c11 (C02)", "agents-md.sh c7 => pass", "wekan-mcp/dependencies.sh => fail t2 (C06); boards-deps t2 => fail (C06); coord-inwork i4 => fail (pre-existing)", "rulesync generate --check => pass", "py_compile => pass", "aislop ci --changes => pass (94, 0 errors, warnings all existing-file-context, none on added lines)", "helm => N/A", "python3 AST re-run of the AC3 cell table => pass (8/8 cells, exactly one parser def)"],
+          "findings": ["AC1-AC6 fully met (source:340-354 append with literal `<existing>\\n[<slug>](<session link>)`, idempotent same-slug, never-drop; :129 last-non-empty-line + mixed-shape tolerance; server.py:1184-1206 single newest-last parser, one call site; set_card_custom_field untouched + docs row says consumer-side append; no backfill; roster wording clears S5 + A15 and the frontmatter claim was removed too)", "AC7 met at ARM level only and cannot be whole-suite in this tree: gate t14 + provider-loops t6 green; whole-suite blocked by gate t17 (pre-existing) and provider-loops t1 (C10) — the plan's own header encodes the id-subset convention", "session-origin s2 adjudicated: HEAD-relative byte pin, red in any edit window, PROVEN green post-commit via `git stash create` base — NOT validation_at_fault", "the scoped 'exactly one such entry' clause is truthful (subject = the agent-facing roster) and should be accepted; it is redundant ornament kept for the stale c19 token pin — recommend test_session re-cuts c19's needle, then the clause is dropped", "non-blocking: agent-board-coord{,-local,-pr}.md:443/443/461 + AGENTS.md:157-158/244 still describe the slug field in single-value framing -> sweep in C04's alias-twin commit (.rulesync/subagents/** is ask-denied to dev, so C01 was right to leave it)", "non-blocking: chunks/C01.md:44 calls s2 'green-on-arrival' when its honest posture is green-at-HEAD -> red-in-window -> green-at-commit; AC7's exit-0 reading is arm-level", "micro-slop: :129 repeats the tolerated-on-read clause twice — trim when C02/C06 next touch the file"],
+          "deviations": "none — dev's hand-back verified claim by claim; the 'gate.sh + provider-loops reach exit 0' claim needs the arm-level footnote"
+        }
+      ]
+    },
+    "C02": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e5b21ab56ffeEo2sZseRpE23wS",
+      "review_session": "ses_e5b00905effeInvnVLI0y17BMM",
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "cdd848293 (rebased; was b6f3292d2)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "BLOCKED (validation_at_fault)", "chunk": "C02",
+          "files_changed": [".rulesync/skills/boards/SKILL.md", ".rulesync/skills/pipeline-kickoff/SKILL.md", ".rulesync/skills/pipeline-models/SKILL.md", ".rulesync/skills/agents-sync/references/pipeline-overview.md", "4 generated .opencode/skills mirrors", "scripts/provision-board.py", "skills/wekan-board-provision/SKILL.md", ".agents/plans/2026/2026-11-cf-106-feat-coord-fixes/board-rules-v12.65-dense.json"],
+          "commands_run": ["rulesync generate x2 (2nd no-op) + --check => pass", "pipeline-models/surface.sh => pass exit 0 (M1-M8)", "rulesync-surface.sh => fail at c23 (C09 designed); subset c8 c11 => pass", "wekan-board-provision/surface.sh => pass exit 0 (11 ok)", "checklist-cutover.sh => FAIL at t2 control + t7 $V1 (test-side)", "provision dry-run matching => [] pass; drift => one update_createcard_checklists naming Dense want => pass", "py_compile => pass", "cf96-lifecycle/surface.sh => pass exit 0", "aislop ci --changes => pass (100, 0/0)", "collateral matches the test wave's recorded after-state", "git grep 'Qwen 27b' survivor audit => M7 exception set exactly", "helm => N/A"],
+          "validation_at_fault": "tests/wekan-board-provision/checklist-cutover.sh — (1) t2's non-vacuity POSITIVE control fed a `board-rules-v12.64.json` pointer while the same checker requires the `board-rules-v12.65` substring, so the control failed by construction; (2) t7's `$V1` named `.agents/plans/2026/2026-10-dep-wekan-v12-upgrade/board-rules-v12.65-dense.json`, a path existing in no revision. Dev proved both test-side by extracting the suite's own checkers; no tests/** edited.",
+          "deviations": "(a) hand-managed provision skill's import citations re-pointed at the cf-106 Dense artifact, keeping the literal `board-rules-v12.65.json` token as applied history (cutover t6 pins it); (b) boards cutover runbook gained step (3) for the Model(s) rename so the alias's owner-rename citation resolves, phrased inside M5's one-mention budget; (c) kickoff picker keeps four options in place, `Local` recommendation lands in the boards Provider-filtering question",
+          "open_questions": "t7 copy-source choice (cf-96 v12.65 vs v12.64) — coord ruled cf-96 v12.65; whether the runbook step or a plan-step citation is the alias's home — coord ruled the runbook"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C02-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/wekan-board-provision/checklist-cutover.sh (+118/-10)"],
+          "commands_run": ["checklist-cutover.sh whole => pass exit 0 (11 ok, t1-t10)", "each leg individually => exit 0", "surface.sh => pass exit 0", "cf96-lifecycle => pass exit 0", "pipeline-models => pass exit 0", "rulesync-surface => fail at c23 (C09)", "bash -n => clean"],
+          "what": "t2 controls now mutate the ENGINE's own drift payload (positive: artifact field re-point only, with a built-in assertion that nothing else moved; negatives: stale generation, retired name, missing action, duplicated action, absent artifact field). t7 `$V1` → cf-96 `board-rules-v12.65.json` with a copy-source generation guard (must carry `Qwen 27b` + exactly one Model(s)→Qwen Flash checkItem) and seven fabricated-defect controls. No assertion about artifact content or engine functionality changed.",
+          "friction": "law learned: a non-vacuity control must be derived from the same real payload the dev-facing half consumes (hand-written controls hid the contradiction); `agent-test` cannot write the ticket folder it annotates, so after-state truth returns in RESULT (coordinator records it here)"
+        },
+        {
+          "role": "review", "status": "APPROVED", "chunk": "C02",
+          "commands_run": ["pipeline-models => pass exit 0", "rulesync-surface => whole fail at c23, c1-c22 green incl c8/c11/c19", "provision surface => pass exit 0", "checklist-cutover => pass exit 0 (t1-t10)", "dry-runs matching/drift => pass", "cf96-lifecycle => pass exit 0", "generate --check => clean", "py_compile => pass", "aislop ci --changes => pass (0 errors 0 warnings, 67 files)", "collateral reds all attributed (noop-marker N2=C03b, cf90-ledger t5=C05, boards-deps t2=C06, agents-md c10=C03b, tools t2/skill-surface t4=C07) — no unattributable red", "C01 integrity: slug-stack exit 0, agent-perms A15 roster arm green, session-origin s1/s2/s3 green (s4 pre-existing)", "helm => N/A", "git grep 'Qwen 27b' audit => M7 set exactly"],
+          "findings": ["repaired legs judged SOUND (t2 negatives hit distinct checker arms; t7 re-point verified byte-equal Services/Type across v12.64→v12.65→Dense, and cf-96's file is the only generation satisfying the pre-Dense guard)", "minor: boards:231 (+mirror :248) alias says the cutover section is 'below' — it is above (:56)", "minor: boards:219 hard-codes 'Qwen Dense on the local provider' for blank Model(s) while :148 routes a `Provider: API` card 'from the checklist as today' — one clause closes the double reading", "minor (test-side): checklist-cutover t2 pointer pin never asserts the named file exists — add os.path.exists + a nonexistent-pointer negative", "nit: boards :227-232 wrap break", "reviewer ruled (a) the cf-96 token wording honest, (b) the runbook the right home for the Model(s) rename step", "deferred: 0-pipeline…7b-docs-dev frontmatter still pins openrouter models (per-stage choices, no C02 AC reaches it); rule title drifts across artifact generations — owner read-back should confirm exactly one createCard rule survives the import"]
+        }
+      ]
+    },
+    "C03a": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e5aea85ceffeO8hdgRTVFdK7jr",
+      "review_session": "ses_e5abca4bfffeHTCb283NKaDDb7 (r1), ses_e5a8ccfafffeO8SLq37j3LLN7t (r2)",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "932bb1279 (rebased; was 79693c016)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE (round 2; round 1 first returned silently with no RESULT, then BLOCKED validation_at_fault)", "chunk": "C03a",
+          "files_changed": ["scripts/session-noop-audit.sh (new)"],
+          "commands_run": ["read-only store probe (PRAGMA table_info) => pass — fixture schema matches the real session_v2/session_message columns", "bash scripts/session-noop-audit.sh --since 2026-11-02 --until 2026-11-04 => pass (41 rows: marked-archived 33, abnormal-end 3, did-work 3, mcp-surface-absent 1, marked-unarchived 1) — AC1 ran against the REAL store, not not-run", "bash tests/cf106-noop/surface.sh => round 1 fail at N2 only; round 2 pass exit 0 (7 ok, then 8 ok after the test round)", "flag smoke --json/--limit/--help/bad-date/missing-db => honest exits 0/0/0/1/1", "TZ shapes unset|Mars/Phobos|UTC|Europe/Berlin => Z/Z/Z/+01:00 (authority parity)", "scratch store: no message rows / malformed data => did-work turns=0; tool-call-only tail => abnormal-end turns=3", "bash -n + py_compile + aislop ci --changes => pass", "helm => N/A", "noop-marker n1 n5 => pass (whole red at N2 = C03b); agent-perms => red A12 = C04 (A17 = C04, A15 = C08 per corrected attribution); gate t14 admit arm green (whole red t17 pre-existing); rulesync-surface c23 = C09; agents-md c10 = C03b"],
+          "round1_findings_fixed": "classifier contract mismatch (unreadable transcripts landed abnormal-end while the header promised did-work) — split into turns==0 → did-work vs cut/empty tail → abnormal-end; model column renders model.id when the store value is the live JSON object; sort by time_created not the displayed stamp; local_iso mirrors the pipeline-locks localIso (unnameable zone → Z) instead of claiming it; --help prints the whole header",
+          "blockers": "round 1: tests/cf106-noop N2's bare `execute(` needle is unsatisfiable on python 3.14.4 (exec_driver_sql removed) — escalated, test_session re-cut it to write-target needles with five fabricated-write controls; ticket-folder writes are dev-denied, so the evidence block and FRICTION lines were replayed inline and applied by coord/plan",
+          "deviations": "--repo defaults apply to the host-store read only (an explicit --db fixture is unfiltered unless --repo says otherwise), stated in the script header; a tool-call-only assistant tail still reads abnormal-end (follows the agreed rule; flagged as a C03b rule question, not silently changed)",
+          "friction": "version-sensitive test needle; store prunes sessions (two artifact-named ids vanished mid-run); coord cannot read scripts/** or /tmp/opencode"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C03a-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/cf106-noop/surface.sh", "tests/cf106-noop/readback.md"],
+          "what": "N2 re-cut: bans write OPERATIONS (CLI/HTTP verbs, client imports, /session/<id>/{move,archive,update}, DML) instead of the sqlite entry point; N4 builds its own base store (was reading N1's temp); N1 adds the classifier fall-through controls (no message rows, malformed data, malformed metadata, tool-call-only tail) with a FIXTURE-FAULT guard and four fabricated-output controls; model column seeded as the live object / bare string / NULL; readback's vacuous gate-stop arm replaced by a flavor-labelled marker-column judgement plus the excerpt caution",
+          "commands_run": ["tests/cf106-noop/surface.sh whole => pass exit 0 (8 ok)", "N1..N6 each alone => exit 0", "out-of-suite bite proof: clean fixture pass; unreadable-as-abnormal, tail-as-didwork, model_raw, model_dropped all rejected", "noop-marker n1 n5 => pass (whole red at N2 = C03b)"]
+        },
+        {
+          "role": "review", "status": "CHANGES REQUESTED (r1) → APPROVED (r2)", "chunk": "C03a",
+          "r1_session": "ses_e5abca4bfffeHTCb283NKaDDb7", "r2_session": "ses_e5a8ccfafffeO8SLq37j3LLN7t",
+          "r1_findings": ["BLOCKER: evidence artifact explained the zero gate-stop count as sampling when it is an instrument blind spot (0 of 49 window / 0 of 123 store-wide gate-line user messages; 101 of 123 first prompts start at the loop body; the verdict enters a transcript only via .rulesync/commands/pipeline-boards-hourly.md:11) — it also made tests/cf106-noop/readback.md's judgement arm unfireable", "MAJOR: classifier contradicted AC2's unparseable→did-work fall-through (scratch proof: no message rows / malformed data / tool-only tail all landed abnormal-end)", "minor: 10/10 claim (9 matches + 2 pruned + 1 changed); 33 = 32 + ses_e5c776275f arithmetic; model column renders the JSON object; local_iso comment claims unnameable-zone parity it does not implement (TZ=Mars/Phobos → +00:00); sort on the displayed stamp violates the epoch-value rule; --help cuts the header mid-sentence"],
+          "r2_commands_run": ["tests/cf106-noop/surface.sh whole => pass (8 ok); N1..N6 each alone => pass", "3 script mutations on a /tmp copy each reddened N1 (fall-through, cut-tail branch, model_label) — the arms bite the real script", "noop-marker n1 n5 => pass (whole N2 = C03b); agent-perms a13/a14/a16/a18/a19 => pass, A12 => C04, A15 => C08, A17 => C04 (attribution confirmed at output level)", "gate t1-t16,t18-t21 => pass (22 ok, t14 admits the untracked script); rulesync-surface c1-c22 => pass (c23 = C09); agents-md c7 => pass (c10 = C03b)", "host-store read => pass (41 rows, tally unchanged, per-id verdicts stable); TZ=Mars/Phobos => Z", "aislop ci --changes => pass (100 vs floor 80) with the honest note that aislop does not parse bash, so N2 is the only machine check on the deliverable", "node --test tests/opencode/*.test.ts => 243 pass / 43 fail, all C07/C08/C09/C10 arms, no C03a collateral"],
+          "r2_findings": ["all ACs met; AC1 honest per-id (9 match / 2 store-side losses / 1 legitimate change), coverage-limit bullet reproducible from a fresh read (125 sessions, 0 gate-line, 103 loop-body first prompts)", "non-blocking routed: chunks/C03b.md:34 AC8 still phrases PASS as zero gate-stop rows → coord rewrites it onto the marker columns before C03b's dev; readback.md:71-76 calls a --repo-filtered count store-wide → test_session; four C03a-dev nits (header line break at :51-52, timespec seconds vs authority .SSS, unstated abnormal-end > mcp-surface-absent > gate-stop precedence, artifact :113 should cite :32) and one test nit (fixture duplicates TURN_FLOOR, so a floor bump moves no verdict)"]
+        }
+      ]
+    },
+    "C03b": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [
+        "C03a"
+      ],
+      "dev_session": "ses_e53512918ffeONOzdEtKrZCTjO",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "commit": "100c0b72b",
+      "review_session": "ses_e5329492effeh3exnYVEIjQYZ5 (r1, openrouter/qwen/qwen3.8-27b per the owner's model override; running in parallel with the test wave - wave-attributed reds in tests/wekan-mcp/{card-details,board-context}.sh, tests/agent-perms, tests/repo-label-filter, tests/cf90-ledger, tests/opencode/board-context.test.ts are expected; C03b's own gate surfaces are wave-off-limits)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1)",
+      "ac5_ruling": "2026-11-05 coord: engine-side marker = SHIPPABLE (proven on v2.1.4, not a mechanism rejection) but DEFERRED to the follow-up card per plan USER-owned step 6 (the run proposes, the owner creates) - DECISIONS.md 2026-11-05 C03b AC5 entry carries the four reasons (contract-half scope, C09/C10 entanglement on the same plugin file, crash-push-accepted posture, its own test surface owed). The marker must NOT appear in C03b's diff; the skill's honest-limit paragraph records the proven mechanism either way.",
+      "commit_policy": "hold the C03b commit until the test wave settles; then coord re-runs the full C03b arm-level gate + the wave-touched collateral (agent-perms whole, board-context t4, card-details whole) on the stable tree before committing (the dev's explicit ask, since tests/** moved mid-round)",
+      "review_handoff_r1": {
+        "role": "review", "status": "APPROVED (r1)", "session": "ses_e5329492effeh3exnYVEIjQYZ5 (openrouter/qwen/qwen3.8-27b)",
+        "gate_rederived": "noop-marker n1 n2 n3 n5 n6 n7 exit 0 (8 ok); n4 red ONLY at the C10 n_loop leg - the hidden cf-106 no-work+archiv window re-derived by the reviewer: min span 21 chars in AGENTS.md and overview.md (cap 600), green; question-notify.test.ts 48/48; permission-ask-notify 41/41; gate.sh t1-t16 t18-t21 = 20/20 (whole red only t17, proven pre-existing at HEAD+main); agents-md c1-c10 = 10/10 with c10 flipped green (whole red only c11 = C10)",
+        "c08_collateral": "slug-stack 8 ok, agent-perms 21 ok whole, board-context t4 green, tick 13/2 (both fails = C10 T2, TICK_PROMPT parity green), rulesync c24 green (c23 stays C09), cf106-noop 8 ok; rulesync generate --check 0; aislop 99 / 0 errors / 1 pre-existing question-notify size warning; helm N/A",
+        "ac_rederived": "AC1-AC4: five exits + five tokens in source and mirror (bodies byte-equal), both writer-predicate conjuncts intact, one shared recipe + one {\"archived\": true} PATCH + never-ask, OQ5 script-blind/run-marks stated, gate script 0-byte diff, question-notify 0 non-comment lines with every comment claim verified against the code (noWorkSuppressed token-agnostic, FINISHED-only consult, reap alert haNotify-gated); AC5: no engine-side marker anywhere in the diff (pipeline-locks 0-byte diff), honest-limit paragraph carries the proven mechanism + shippable-not-shipped disposition; AC6: single-passage coverage + blind-spot framing in rules source and AGENTS.md; AC7: arm-level gate green per the DECISIONS ruling; AC8: wording landed exactly as amended (marker columns, per-id, flavor-labelled, >=2 ticks, USER-owned step 5, zero-gate-stop = instrument blind spot with the 0/49 + 0/123 counts), no automated arm counts a live gate-stop row",
+        "deviations_adjudicated": "all four faithful - in particular (c): dropping no session_rename from the SKIP ban is REQUIRED (the recipe's rename is the exit's sanctioned self-identification on the session's own record); token-by-token ban-list diff shows nothing else dropped",
+        "nits": "the dropped 'observable from the session's own tool calls' aside (no AC/arm pins it); N7's negative arm prints 'missing needle: sendhareapalert' to stdout - the control working, worth knowing when re-running",
+        "commit_readiness": "exactly the 7 source/mirror files (.rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md, .rulesync/commands/pipeline-boards-hourly.md, .opencode/commands/pipeline-boards-hourly.md, .rulesync/rules/overview.md, AGENTS.md, .opencode/plugin/question-notify/index.ts); no tests/** (the wave's), no scripts/agent-board-coord-gate.sh, no pipeline-locks; ticket docs ride the coordinator's record commit"
+      },
+      "amendment": "2026-11-05, agent-plan session ses_e54c7cf50ffer3u12XONO12A7G (commit 34503254f): AC8 re-keyed from a gate-stop row count onto the marker columns (a scheduled stop-path row missing both the pipelineNoop marker and the archive stamp), judged per named session id over at least two ticks, flavor-labelled; a zero gate-stop count is recorded as the instrument's blind spot, not a finding or a clean sample; cf106-noop N6 demoted to an instrument-precedence HOLD that reads no live store; AC6 now names its own observables (noop-marker N4, agents-md c10). agent-plan refused to widen scope - scripts/session-noop-audit.sh (class precedence, the GATE_LINE/RAW_CALL heuristics) and the loop files stay out, and an engine-side marker would need an explicit coordinator amendment. Notes for dev gained the N4 attribution warning (N4 is red for a C10 reason too, and its cf-106 arm is labeled AC3 while pinning AC6 - a comment-only re-pin for test_session).",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted; arm-level gate green)", "chunk": "C03b", "session": "ses_e53512918ffeONOzdEtKrZCTjO",
+          "files_changed": [".rulesync/skills/boards/SKILL.md (No-op marker subsection: five-token reason shape, five marked exits incl the three tick stops, OQ5 script-blind/run-marks, alert posture, honest-limit with proven engine mechanism)", ".rulesync/commands/pipeline-boards-hourly.md (three stop branches name the marker+archive exit)", ".rulesync/rules/overview.md (worker alert sentence gains mark-AND-archive / tick-stop coverage)", ".opencode/plugin/question-notify/index.ts (header comment only, 0 non-comment lines changed)", "regenerated .opencode/skills/boards/SKILL.md + .opencode/commands/pipeline-boards-hourly.md + AGENTS.md", "scripts/agent-board-coord-gate.sh byte-unchanged (verified empty diff)"],
+          "gate": "arm-level per the DECISIONS ruling: noop-marker n1/n2/n3/n5/n6/n7 exit 0 (n4 red ONLY at the C10 n_loop arm, cf-106 windows verified green directly); question-notify.test.ts 48/48; gate.sh t1-t16 t18-t21 = 22 ok (t17 pre-existing); agents-md c1-c10 = 10 ok, c10 flipped green (c11 = C10); C08 pins held (slug-stack 0, agent-perms 21 ok, board-context t4 0, tick 13/2 = C10 only, rulesync c24 0 / c23 = C09, cf106-noop 8 ok); rulesync generate x2 + --check 0; aislop 99/0/1 pre-existing warning",
+          "friction": "test_session batched wave writing tests/** concurrently (card-details t5 mid-recut, agent-perms/board-context/README 17:41-42Z) - not this chunk's work; re-run the battery at commit time. One edit-tool false-negative on overview.md (fuzzy-retry applied despite error) - re-derived +6/-1 byte-exact. The chunk-file Implementation-notes append was permission-rejected by the dev floor (.agents/plans/** deny) - notes delivered in RESULT for the coordinator to append",
+          "ac5_verdict": "engine-side marker = SHIPPABLE (mechanism proven on opencode v2.1.4: ctx.session.update typed for metadata+archived, sibling reads live, C03a HTTP-proves the write 55/55) but NOT shipped - pipeline-locks is out of Files in scope per the amendment; coordinator routes (scope amendment vs follow-up card)"
+        }
+      ]
+    },
+    "C04": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e5a7226b3ffeUdUa37D0i1jOa3",
+      "review_session": "ses_e5a296944ffe5i72HNcX04vcOn (r1), ses_e59f27ac7ffeLD2tHT7i0er1bp (r2)",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "validation_repairs": 2,
+      "last_verdict": "APPROVED",
+      "commit": "b987ce12c (rebased; was 36a65d26f)",
+      "files_in_scope_widened": "+ .rulesync/rules/overview.md + AGENTS.md (DECISIONS-routed slug-stack sweep) + tests/agent-board-coord/gate.sh + tests/coord-inwork/surface.sh (test_session roster re-pins) — accepted by review r1 deviation (a) and r2 R2-N1",
+      "handoffs": [
+        {
+          "role": "dev", "status": "BLOCKED (test-side fixtures) r1 → DONE r2", "chunk": "C04",
+          "files_changed": [".rulesync/subagents/{agent-coord,agent-coord-local,agent-coord-pr,agent-board-coord,agent-board-coord-local,agent-board-coord-pr,code}.md", ".rulesync/subagents/code-pr.md (new)", ".rulesync/skills/{pipeline-role-coord,pipeline-push-pr,role-code}/SKILL.md", ".rulesync/skills/agents-sync/references/permissions.md", ".rulesync/rules/overview.md", "AGENTS.md", "regenerated .opencode/agents/** (incl. code-pr.md) + .opencode/skills/**"],
+          "commands_run": ["rulesync generate x2 (2nd no-op) + generate --check => pass", "standalone-agents => pass (11 ok, S7/S10/S11 flipped green)", "pipeline-push-pr => pass (10 ok, P3/P10)", "rulesync-surface c1..c22 + c24 => pass (whole red only c23 = C09)", "agent-perms a12/a16/a17/a18/a19 => pass (whole red at A15 = C08)", "gate t1..t16 t18..t21 => pass (t17 pre-existing, proven at base clone b6bcb00af)", "coord-inwork i1 i2 i3 i5..i8 => pass (i4 pre-existing)", "agents-md c10 / kickoff-branch m4 / session-origin s4 / validation-fix t4 => red at base clone too (not C04)", "baseline clone at b6bcb00af re-ran all six red suites => all six red at base => none introduced by C04", "family.py before/after probe across the A5 comment move => parsed permissions byte-identical", "aislop ci --changes => r1 exit 1 (score 82, errors in services/gpu/prod/values.yaml from a reverse-diff artifact because the branch sat behind origin/main) → r2 exit 0 (100/100) after the role-code fix", "drift audit (permissions.md steps) => clean: 17 agent-* sources all carry question allow, ask baseline leads, MCP prefixes match live servers"],
+          "round1_blocker_fixed": "B1: role-code forbade any pipeline context while the roster now launches code/code-pr with a chunk id, and code-pr MUST-loads a pipeline-* skill — plus role-code's git paragraph was stale (everything described as ask) and told the agent to merge main into its branch (a command the new floor denies). Fixed with a qualified coordinator-launch exception, the shipped git posture, and rebase-onto-main; mirror moved with the source.",
+          "deviations": ["(a) .rulesync/rules/overview.md + AGENTS.md amended outside Files-in-scope (required for c24/agents-md arms + the routed slug sweep) — accepted by review", "(b) git *-prefixed deny twins added because the shell matcher anchors at command start and the shipped `* git push …` form misses -C-prefixed commands — accepted as required (shipped agent-dev-pr answers ask, not deny, for git -C x push --force)", "(c) git -C <path> push origin feature-x stays ask on code-pr by byte-parity with agent-dev-pr (allow only via the plain form) — accepted, no re-cut", "round 2: the exception clause deliberately names pipeline-conventions inside a prohibition, which reddened S5's blanket token ban → routed to test_session as a re-cut, not reverted", "A5: the misplaced twin comment exists in exactly two -pr roster sources, not three (grep-verified)"],
+          "friction": "agent-perms fixture builders use a top-level permissions accessor while sources nest under opencode: (A12 crash, A17 inert controls); A16's count literal stale at 25; aislop ci --changes pulls main-only files into the reverse diff on a branch behind origin/main"
+        },
+        {
+          "role": "test-repair", "status": "DONE x2", "chunk": "C04-validation-repairs", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/agent-perms/surface.sh", "tests/standalone-agents/surface.sh", "tests/agent-board-coord/gate.sh", "tests/coord-inwork/surface.sh"],
+          "what": "round 1: A12/A17 fixture builders re-cut to the nested opencode: accessor with reason-pinned mutants, A16 25→26, t17/i4 roster literals re-pinned per class. round 2: S5's token ban replaced by binding probes + six reason-pinned drift controls (unconditional-never, drop-exception, merge-main, code-loads-push-pr, affirmative-load, stale-ask-posture); A19 battery sweep made shape-aware (bites on a source); A17 code-pr matrix completed (symbolic-ref, branch --force main, merge main, switch -c); t17/i4 roster guards restored to ordered-LIST pins with missing/extra/duplicated naming; agent-perms header AC trace + ask-as-deny note",
+          "commands_run": ["standalone-agents whole => pass (12 ok + 1 pre-existing skip)", "agent-perms whole => 1 red = A15 (C08); a1..a14 a16..a19 => pass (18 ok)", "pipeline-push-pr => pass (10 ok)", "rulesync-surface => red only at c23 (C09); c24 => pass", "gate.sh => red only at t17; subset => pass (22 ok)", "coord-inwork => red only at i4; subset => pass (7 ok)", "cf106-noop => pass, noop-marker n1 n5 => pass, slug-stack => pass", "out-of-suite mutant proofs for every re-cut (extracted checkers, /tmp copies)"],
+          "honest_note": "t17 and i4 stay red for the PRE-EXISTING sanctioned-scripts cause (main 7e07a6273 added `bash scripts/kickoff-warm-location.sh *`, tracked on its own Review card, not cf-106); the roster leg is proven satisfied by running each suite's shipped cfpins.py over all six coord sources with only that row stripped => all six exit 0. The allowlist was not patched here."
+        },
+        {
+          "role": "review", "status": "CHANGES REQUESTED (r1) → APPROVED (r2)", "chunk": "C04",
+          "r1_session": "ses_e5a296944ffe5i72HNcX04vcOn", "r2_session": "ses_e59f27ac7ffeLD2tHT7i0er1bp",
+          "r1_findings": ["BLOCKER B1: role-code:35-37 (mirror :36-38) contractually forbids the escape-hatch launch the roster just created, and code-pr's MUST-load of pipeline-push-pr contradicts the same clause; role-code:66-72 stale git posture; :62-63 instructs a merge-main the new floor denies — nothing in the suites caught it (S5 pinned the clause AND the negative)", "A1 A19's battery sweep reads top-level permissions → inert on sources; A2 A17 code-pr cells a subset of AC3; A3 no C04 round note / AC trace stops at A16; A4 the roster re-cut moved list→set equality, losing duplicate/order detection; A5 twin comment mispositioned; A6 the push-substring deny friction and the -C-push ask asymmetry undocumented", "Deferred: git branch -B main <sha> is allow on all six coord agents at HEAD and git push --all/--mirror allow on agent-coord-pr — composes into move-local-main + publish, pre-existing, extended to two more roles"],
+          "r2_commands_run": ["standalone-agents => pass (12 ok + skip); s5 => pass", "agent-perms whole => only A15 = C08; a1..a14 a16..a19 => pass; a15 => C08 only", "pipeline-push-pr => pass; rulesync-surface => only c23, c24 pass", "gate.sh => only t17 (proven pre-existing, roster leg clean across all 12 coord files via the suites' own cfpins.py); coord-inwork => only i4", "rulesync generate --check + generate x2 with identical git status (31 entries) => pass", "aislop ci --changes => pass (100 vs floor 80)", "slug-stack / cf106-noop / noop-marker n1 n5 / pipeline-models => all pass", "node --test tests/opencode/*.test.ts => 243 pass / 43 fail, identical to the C03a baseline, C07–C10 only", "independent re-derivations: family.py policy/policybatch/parity/roster, contract.py probes, battery_sweep source fixture, four roster mutants"],
+          "r2_findings": ["B1 landed and the contradiction is closed everywhere (grep across role-code, pipeline-role-coord, pipeline-push-pr, pipeline-conventions, executing-plans); AC1–AC7 re-derived on source and mirror; AC8 arm-level (whole-suite exit 0 unreachable in this tree while A15/c23/t17/i4/m4/s4/c10/t4 stay red)", "non-blocking: R2-A1 three sentences over-claim the main-advance floor (git branch -B main ⇒ allow on code/code-pr AND the six coord agents; git branch -C main ⇒ allow on code only) — soften the prose or land the hardening card; R2-A2 pipeline-push-pr:16 calls code-pr the only standalone agent allowed to publish, contradicting permissions.md:71 (dev-pr) and AGENTS.md:121; R2-A3 code keeps edit .agents/plans/** allow with no clause reserving STATE/DECISIONS/FRICTION/chunks to coord; R2-A4/N2 stale suite comments; R2-N1 Files-in-scope widening", "Deferred → recommended Inbox card: close the -B/-C/long-form main-advance spellings and push --all/--mirror across the coord, dev-pr and code families before runs routinely launch code-pr"]
+        }
+      ]
+    },
+    "C05": {
+      "status": "done",
+      "wave": 1,
+      "depends_on": [],
+      "dev_session": "ses_e59cffdb8ffe2FelirDL4wqV32",
+      "review_session": "ses_e599fdc3affe5rkZAu2cwIOluz",
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "a444de0fd (rebased; was b68d49bf8)",
+      "files_in_scope_widened": "+ .rulesync/skills/role-code/SKILL.md, .rulesync/skills/pipeline-push-pr/SKILL.md, .rulesync/skills/agents-sync/references/permissions.md, .rulesync/subagents/{code,code-pr}.md (comments only), .rulesync/rules/overview.md, AGENTS.md (the C04 review's R2-A1/A2/A3 prose routed here for one regeneration cycle) + tests/cf90-ledger/surface.sh (test_session harness repair)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "BLOCKED (validation_at_fault) r1 → DONE r2 (post-review amend)", "chunk": "C05",
+          "files_changed": [".rulesync/skills/{pipeline-role-coord,boards,role-code,pipeline-push-pr}/SKILL.md", ".rulesync/skills/agents-sync/references/permissions.md", ".rulesync/subagents/{code,code-pr}.md (comment lines only)", ".rulesync/rules/overview.md", "AGENTS.md", ".opencode/skills/** mirrors"],
+          "commands_run": ["rulesync generate x2 (2nd no-op) + generate --check => pass", "cf90-ledger whole => r1 FAIL at t5's fabricator (sed unterminated BRE), r2 => pass (8 ok)", "cf90-ledger t6 t7 t8 => pass", "validation-fix whole => red at t4 (pre-existing, replayed at HEAD by review); t1 t2 t3 t5 t6 => pass", "slug-stack => pass; rulesync-surface c1..c22 c24 => pass (whole red only c23 = C09); noop-marker n1 n5 => pass (whole N2 = C03b); boards-deps red only at t2 = C06 (t9 = C07)", "agent-perms a12 a16 a17 a18 a19 => pass (no grant row moved)", "standalone-agents => pass (12 ok); pipeline-push-pr => pass (10 ok); cf96-coord/siblings/lifecycle => pass", "agents-md whole => red only at c10 (C03b); c11 red = C10", "aislop ci --changes => pass (100, 0/0)", "landmine scan: step-11→EOF window 12.8 KB, zero hits for the six banned tokens"],
+          "shipped": "step 11 = one items multi-select + one mode question (two questions max, per-item overrides over one global default), exactly five modes with the family's preferred first; current-session bound stated once and cited by boards; plan-only now names agent-plan and requires a complete resumable ticket folder; boards keeps Inbox destination, list_lists re-resolution, never-add_checklist, Qwen Dense, not-a-run",
+          "deviations": ["(a) Files-in-scope widened by the routed C04 prose items (accepted pattern, same regeneration cycle)", "(b) later → subsequent forced by the t5 sixth-mode token ban (substring, step 11 → EOF)", "(c) the chunk's inline-implementation hedge resolved to 'always a launch' because the coord contract denies file writes (review scoped the wording to 'writes no code, tests or docs itself')", "(d) rulesync drops frontmatter YAML comments, so the code/code-pr comment edits have no mirror counterpart — parsed-list equality proven by A12/A17/S11/c24", "amend round: boards:394 plan-only clause rewritten to cite role-coord rather than contradict the new actor"],
+          "friction": "cf90-ledger t5 fabricator fatal on any input; the step-11→EOF substring ban (12.8 KB, ~50% of the role contract) as a standing landmine; rulesync-surface c24's sole-committer window is 899/900 chars so inserting a clause inside role-coord's Git paragraph reddens it"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C05-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/cf90-ledger/surface.sh (+29/−5)"],
+          "what": "t5's sixth-mode fabricator BRE group was unterminated (`s/^\\(11\\..*stop\\./` with no `\\)`), so GNU sed died at parse time on ANY input including the pristine HEAD blob — the arm could never reach its ok line and whole-suite exit 0 was unreachable; fixed at :316 and a fabricator guard added (`sed … || fail '…(fixture fault)'`) because `set -e` aborted before the existing content guard. t8's fixture wrote 417 lines of skill prose to /dev/stdout, burying the suite report — dump dropped, guard kept. Header AC trace extended to t1..t8 with the round note.",
+          "commands_run": ["cf90-ledger whole => pass (8 ok, 9 stdout lines); t1..t8 each alone => pass", "out-of-suite proof: shipped friction.py vocab passes on all four surfaces, reddens the fabricated sixth mode (names ['defer to owner']), reddens pre-C05 HEAD (modes absent + ['later'])", "collateral: validation-fix t1 t2 t3 t5 t6 => pass; rulesync-surface c23 the only red; agent-perms A15 the only red; noop-marker N2 = C03b; slug-stack/standalone-agents/pipeline-push-pr => pass"],
+          "judgement": "the sixth-mode ban's span (step 11 → EOF, 12,309 chars) is wider than the contract it protects; a dedicated test round should bound it at the next `## ` heading and replace the token list with a structural 'exactly five mode-shaped items' arm — flagged, not applied"
+        },
+        {
+          "role": "review", "status": "APPROVED", "chunk": "C05", "session": "ses_e599fdc3affe5rkZAu2cwIOluz",
+          "commands_run": ["cf90-ledger whole => pass (8 ok) + t1..t8 each => pass", "validation-fix whole => red at t4 only, re-derived as pre-existing by replaying the suite's own checker over a `git archive HEAD` tree", "rulesync-surface whole red only c23; c1..c22 c24 green; agents-md red only c10 (c11 = C10); boards-deps t2 = C06, t9 = C07; noop-marker N2/N4/N7 = C03b; agent-perms whole red only A15", "standalone-agents 12 ok, pipeline-push-pr 10 ok, cf96-coord/siblings/lifecycle green, slug-stack green", "rulesync generate x2 identical status (17 entries) + --check clean; aislop ci --changes 100/0/0 with the honest caveat that it parses no markdown", "full collateral sweep + node --test tests/opencode/*.test.ts => 243/43 byte-equal to the C03a/C04 baseline", "HEAD-clone runs at 36a65d26f: gate t17, coord-inwork i4, repo-label-filter t3, hivetools-mcp-docs d4, coder-workspace/image-structure, renovate legs, templates legs — all red at HEAD, none is C05 collateral", "friction.py extracted to /tmp with six of the reviewer's own fabrications; family.py policy battery + parity + comment-only diff filter + push-allow row census"],
+          "findings": ["AC1–AC4 PASS re-derived (five modes in all four trees, family recommendations visible, bound grep-checkable and cited not restated, Inbox/never-add_checklist/list_lists/not-a-run intact with Qwen Dense and the only remaining Qwen 27b being C02's sanctioned alias at boards:228); AC5 stated honestly (cf90-ledger whole green, validation-fix arm-level)", "R2-A1/A2/A3 PASS; no permission row changed (parity 0 + comment-only diff)", "advisories routed: permissions.md:154-155 false '-C/-c allow on both families' and role-coord:40 over-claim — both landed as the round-2 amend; friction.py 'exactly five' is present+blacklist so a differently-named sixth mode passes, and `cite` anchors on the mode list so a restating copy passes → test_session; `plan only` actor/folder gap → closed in the amend; C09 forward note — its 'exactly ONE sanctioned question' pin must scope to the takeover branch or it will read as banning step 11's two questions; AGENTS.md:152/overview.md:150 'offers to plan fixes' → rides C03b/C10", "landmine measured: ban window = 49% of the role contract, six ordinary substrings banned; already forced two renames while the same words survive outside the span"]
+        }
+      ]
+    },
+    "C06": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": ["C01"],
+      "dev_session": "ses_e5965c19affewfw3qYuEKUCoEi",
+      "review_session": "ses_e592677e3ffeCDCyrri295qQD5 (r1), ses_e58dffed0ffe93j0CS5zfSM4eb (r2)",
+      "dev_rounds": 2,
+      "review_rounds": 2,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "ec31b2e50",
+      "files_in_scope_widened": "+ scripts/board-preload-probe.sh (the B6 ownership gap, coord-widened per the test wave's note), containers/wekan-mcp/README.md, skills/wekan-api/SKILL.md (doc parity), tests/wekan-mcp/dependencies.sh (test_session t11 re-scope + N2 fix)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (arm-level) → DONE r2 (M1 mechanism as ruled)", "chunk": "C06",
+          "files_changed": ["containers/wekan-mcp/wekan_mcp/server.py", ".rulesync/skills/boards/SKILL.md + .opencode/skills/boards/SKILL.md", "skills/wekan-mcp/SKILL.md", "skills/wekan-mcp/references/call-shapes.md", "containers/wekan-mcp/README.md", "skills/wekan-api/SKILL.md", "scripts/board-preload-probe.sh"],
+          "commands_run": ["tests/wekan-mcp/dependencies.sh => r1 whole exit 0 (t1-t11) with the old t11; r2 whole exit 0 with the re-cut t11 (11 ok, t2/t9/t10/t11 each 0)", "boards-deps whole => red only at t9 (C07); t1..t8 => pass (t2 flipped green, HOLD arms green)", "cf96-deploy => pass; slug-stack => pass (C01 parser unmoved); cf106-noop => pass; board-provisioning t6 => pass", "tools.sh red only t2 (17 reads want 18 = C07); skill-surface red only t4 (38 want 39 = C07); card-details t1 = C07; board-preload-probe B1-B5 green, B6 red only on the get_card_details needle (C07)", "create-list t2 red = pre-existing hunk-count pin (2 hunks at HEAD → 6 → 16 as this branch grows)", "py_compile server.py => pass; bash -n probe => pass; rulesync generate --check => clean", "/tmp behavior harness exec'ing the real preload_board body => pass: one request, 8-key cards, checklist filter (five standard + legacy Research + 8-item legacy, QA notes excluded), {title,finished} items, titles + board sort order, newest slug from the stack, archived flag-not-drop, dependency lines, name maps, tail groups, all three swimlane_titles arms", "round 2 arms: None/str/empty-object/200-error-body export answers => raise; empty BOARD document with cards: [] => swimlanes: [] no raise; unknown title => [] no raise; swimlane_titles=[] => the bound not everything", "aislop ci --changes => r1 93/80 with 11 warnings 9 fixable; r2 99/80, 0 errors, 2 warnings, 0 fixable (the two size findings accepted)", "helm => N/A; docker build => no-daemon, CI-deferred (repo rule); AC7 proof is offline-only — the deployed dev-boards is still a 26-tool surface with no preload_board (re-checked live at 2026-11-04: no preload_board, no get_card_details, no dependency/label/list tools)"],
+          "upstream_verification": "WeKan export vocabulary checked against upstream: `checklists` is a real `?fields=` section and buildStream() opens with the board header (`{_format: 'wekan-board-1.0.0', …board}`), so a real board document is never `{}` — the premise of the fail-the-call guard",
+          "deviations": ["docs widened to README + wekan-api SKILL + call-shapes for the new failure semantics (accepted)", "LF8/LF9 probe legs deliberately excluded from the probe's `all` set until the owner's image pin bump lands (accepted)", "round 1's swallow of a non-dict export answer replaced by a raise per the coord ruling (M1)", "tail-group ordering changed from id-sort to walk order (reviewer-found, accepted as more faithful to board sort)", "nine decorative separator comments removed (all 9 fixable aislop findings); none was pinned — the only grep hit in tests/ is a failure-message string"],
+          "friction": "aislop flags preload_board as function-too-long (188→200 lines) — unfixable without blinding t2/t9-t11, which AST-walk that single FunctionDef; create-list t2's hunk-count pin is hostile to any later additive change in server.py; two tool reads returned bytes that did not match disk (a 73-line probe variant, a nonexistent tests/containers/surface.sh) — re-read from disk and re-derived"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C06-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/wekan-mcp/dependencies.sh (+175/−29)"],
+          "what": "t11's ban on ANY ast.Raise inside preload_board was over-implementation of 'unknown title ⇒ empty grouping', and it pushed the dev into a semantically worse implementation (silent-empty ≡ empty-board). Re-scoped: a Raise is banned only when it is unconditional or reachable from the swimlane_titles filter; a transport-path raise is permitted. New positive arm (N1): the export answer must not be folded into an empty container (`or {}` at the call site, or `doc = {}` under an isinstance guard) and the failure must be signalled (guarded raise or a failure-signalling call over the answer). N2: t2's card-keys arm any() → all() with the 8-key set named, stale 'seven fields' comment fixed. Fixture builder now asserts its own anchors (`sub()` + `|| fail 'fixture fault'`), and a WEKAN_SERVER=<path> override lets a reviewer prove satisfiability without touching the repo.",
+          "commands_run": ["dependencies.sh whole => exit 1 with 17 ok, red ONLY at t11 (designed red naming the round-2 fix); against a compliant /tmp copy => exit 0, 18 ok", "t2/t9/t10 => 0; t11 => 1 then 0 with the compliant copy", "fabrication matrix: compliant (transport raise) green; body-level raise red; filter-arm raise red; swallow red; `or {}` red; decoy card map with title red — every direction proven, fixture faults now self-named", "collateral: boards-deps red only t9; tools.sh only t2; skill-surface only t4; board-preload-probe only B6; card-details t1; create-list t2 (pre-existing, count grew)"]
+        },
+        {
+          "role": "review", "status": "CHANGES REQUESTED (r1) → APPROVED (r2)", "chunk": "C06",
+          "r1_session": "ses_e592677e3ffeCDCyrri295qQD5", "r2_session": "ses_e58dffed0ffe93j0CS5zfSM4eb",
+          "r1_findings": ["MAJOR M1: the payload signalled degradation with nothing — an empty grouping is contractually identical to an empty board, and the boards degrade law covers ABSENT and FAILED only, so a swallowed malformed answer skips the per-list fallback and the one retry; a pickup walk could conclude 'no cards', write the no-op marker and archive silently. The comment claiming the caller falls back to per-list reads was false against the contract. Mechanism routed to coord (who ruled fail-the-call), comment fixed in-chunk", "dev deviations 1 and 4 accepted; N2 (t2 any→all, stale comment) and N3 (probe preload_absent needle is a server crash, not a confirmed-absent surface → C07) and N4 (restated clause) routed", "create-list t2 proven red at a clean HEAD worktree (2 hunks), so C06 grew a pre-existing pin rather than breaking it"],
+          "r2_commands_run": ["dependencies.sh whole => pass (t1-t11) + t2/t9/t10/t11 each => pass", "boards-deps whole red only t9 (C07), t1-t8 pass; cf96-depass => pass; slug-stack => pass; cf106-noop => pass", "tools.sh / skill-surface / card-details / board-preload-probe: only the C07 needles red", "rulesync generate --check clean; py_compile; bash -n; aislop ci --changes => 99 vs 80, 0 errors, 2 warnings, 0 fixable", "node --test tests/opencode/*.test.ts => 243/43 unchanged baseline; a full 69-suite sweep at the delta and at clean HEAD => identical except dependencies.sh 1→0 (C06 going green) and one dirty-tree trip reproduced on clean HEAD", "semantics harness exec'ing the real function (None/str/list/0/{}/200-error → raise; empty board doc → []; unknown title → []; [] → bound) => pass; mutation runs (or {}, doc = {}, filter-arm raise, decoy card map) each red with the intended reason", "upstream re-verification of the guard's premise at v12.65 (buildStream opens with the board header)"],
+          "r2_findings": ["M1 closed; exactly one Raise, hanging off the transport guard; AC1–AC5 all hold; Qwen Dense everywhere with Qwen 27b only in the sanctioned alias clause; separator cleanup unpinned and harmless", "A3 ruling: fold the 'an answered-empty preload means an empty board, not an outage' clause + N5's over-promise ('no guessing which checklist generation') into C07's boards edit — same paragraph, one regeneration cycle; a filtered empty answer is a title miss, so a run must re-check titles before declaring no candidates", "N6/N7 nits to final review: the raise message dropped the board id; the guard comment's last sentence names the consumer's law"]
+        }
+      ]
+    },
+    "C07": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": [
+        "C06"
+      ],
+      "dev_session": "ses_e58c07d22ffe5WnN13QudDFdgs",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 3,
+      "review_session": "ses_e57cab707ffesq3VPsRrg3aQ34 (r1 + r2; an earlier session ses_e57f02943ffe... died mid-turn, its Round-1 notes are in chunks/C07.md)",
+      "review_rounds": 2,
+      "validation_repairs": 1,
+      "last_verdict": "APPROVED",
+      "commit": "ab4b43e70",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r2 (uncommitted)", "chunk": "C07",
+          "files_changed": ["containers/wekan-mcp/wekan_mcp/server.py (get_card_details + _card_details)", ".opencode/plugin/board-context/index.ts (claim-time details block)", ".rulesync/skills/boards/SKILL.md + .opencode/skills/boards/SKILL.md (claim-time consumption clauses + the C06 A3/N5 clauses)", "skills/wekan-mcp/SKILL.md + references/call-shapes.md", "containers/wekan-mcp/README.md", "scripts/board-preload-probe.sh (LF10)", "tests: card-details.sh, slug-stack.sh, tools.sh, skill-surface.sh, dependencies.sh, create-list.sh, board-provisioning.sh, rest-overview-v102.sh, tests/opencode/card-details.test.ts, tests/wekan-mcp/registry-parity.py (NEW, untracked - must be git added)"],
+          "commands_run": ["tools/skill-surface/dependencies/create-list/board-provisioning/rest-overview-v102/card-details/slug-stack => exit 0", "board-context.sh => red at t4 (stale COORD_PR_SETTLED literal) + t6 (agent-perms A15 = C08)", "agent-perms => red only A15; boards-deps exit 0 (t9 flipped green); cf96-deploy, board-preload-probe, cf106-noop => exit 0", "card-details.test.ts 19/19, board-context.test.ts 32/32; whole tests/opencode battery 261 pass / 25 fail (all C08-C10)", "aislop ci --changes => 98 vs floor 80, 0 errors, 3 size warnings, 0 fixable"],
+          "deviations": [],
+          "friction": []
+        },
+        {
+          "role": "review", "status": "CHANGES REQUESTED (r1)", "chunk": "C07", "session": "ses_e57cab707ffesq3VPsRrg3aQ34",
+          "commands_run": ["all eight wekan-mcp suites => pass; board-context.sh => t4 + t6 red (proven not C07's); agent-perms => only A15; boards-deps, cf96-deploy, board-preload-probe, cf106-noop => pass; TS: card-details 19/19, board-context 32/32, whole battery 261/25 unchanged", "own harnesses: AST diff vs merge-base (get_card 512 B / _slim_card 1356 B byte-identical), exec of the real get_card_details + slug parsers over a stub _wekan (16 keys exact, slug invariant in every shape), parity.ts for the AC5 arm, grep single-walk check (splitlines once at server.py:1326)", "rulesync generate --check => pass; aislop ci --changes => 98, 0 errors, 3 warnings, 0 fixable; registry-parity.py counts => 18 21 39"],
+          "findings": ["BLOCKER R2-B1 (validation-at-fault, routed to test_session): tests/opencode/card-details.test.ts:243 + :247-261 — the doc/formatter parity arm is one-directional with one line of slack and its responsiveness control asserts notDeepEqual on two lists already unequal on the clean doc, so it can never fail; proven by renaming the doc's current_slug line, deleting parent_id, inventing assignees", "BLOCKER R2-B2 (code): server.py:303-308 keeps a checklist with items: [] behind a log.warning when its items route fails — executed proof that it is byte-identical to a genuinely empty checklist with no payload signal; the blank Lifecycle checklist is an answer, so this is the C06-M1 class in the stage-deciding field, against DECISIONS 2026-11-04 'C07 inherits the ruling ... fails loudly too'", "MAJOR M1: the plugin's execute.after registration and adapter (:588-601, incl. event.result.content = amended) are reached by no test — deleting them keeps 19/19 green; precedents question-notify.test.ts:216 and pipeline-locks-engine.test.ts:696", "MINOR N2 oneLine skips the slug lines (stray unprefixed line, comment contradicts code); N4 nothing pins either checklist arm; N5 tests/cf96-deploy/readback-runbook.md :68 claims 38 tools and :119 claims 17, and cf96-deploy t3 passes on a grep-anywhere 39; N6 the sole-home arm is scoped to one file; N1 :589-590 over-claims vs the sibling's hedge; N8 withinBudget's admission-latency text is wrong-layer; N9 LF10 card choice; N3 an empty custom-fields map empties the slug pair (preload_board:415 twin) - one hardening item", "Verified clean: AC1 (bare read tool, get_card/_slim_card byte-identical), AC2 (exactly 16 keys, slug pair per the ruled shapes), AC4 (prompt path untouched, FETCH_TIMEOUT_MS 8000), AC6 (18+21=39 pinned once in tools.sh t2); one slug scanner with two surfaces; count bumps correct and no assertion weakened"],
+          "coord_next": "test wave (R2-B1, M1, N4 arms, N5, N6, board-context t4 re-pin) then dev round 3 (B2 + N1/N2/N8/N9) then re-review; registry-parity.py must be git added with the chunk"
+        },
+        {
+          "role": "test-repair", "status": "DONE", "chunk": "C07-validation-repair", "session": "ses_e5c56c5defferyjeGtb6YMn05v",
+          "files_changed": ["tests/opencode/card-details.test.ts", "tests/wekan-mcp/card-details.sh (+leg t5)", "tests/wekan-mcp/board-context.sh (COORD_PR_SETTLED 762 to 898 re-pin, t6 as an id-subset with A15 its own named arm)", "tests/cf96-deploy/surface.sh + readback-runbook.md", "tests/wekan-mcp/README.md (new)", "test_results.json (new)"],
+          "what": "R2-B1: one symmetric indent+label-token predicate comparing the SKILL.md fenced example against the bytes the loaded plugin appends to a live claim answer, deepEqual both directions, no slack, plus four fabricated-doc controls, and no plugin-side symbol named. M1: a describe driving default.setup(ctx) to the captured execute.after handler over a loopback JSON-RPC MCP stub (registration present, execute.before absent, prompt hook intact, content rewritten with the claim answer as prefix, exactly list_boards then get_card_details, ok:false and non-board-coord untouched). N4/t5: executed half (faked transport: a failed items route must not answer the empty-checklist payload; an empty checklist must still read) plus a static half with an AST-surgery green-side control. N5: runbook re-pinned to content, t3 derives counts from registry-parity.py and checks each claim on the line that makes it. N6: sole-home scan repo-wide with a fabricated second home.",
+          "commands_run": ["card-details.test.ts => exit 0 (26/26, was 19 arms)", "board-context.test.ts => exit 0 (32/32)", "node --test tests/opencode/*.test.ts => exit 1 (293 tests, 268 pass / 25 fail, unchanged C08-C10 set)", "card-details.sh => exit 1 with t5 the only red (designed, awaiting dev); t1 t2 t3 t4 => 0", "slug-stack 0, tools 0, skill-surface 0, dependencies 0, create-list 0, board-provisioning 0, rest-overview-v102 0", "board-context.sh whole => exit 0, per-leg t1..t6 each 0", "agent-perms => exit 1 only A15 (unweakened); A16-A19 subset => 0", "boards-deps 0, cf96-deploy 0, board-preload-probe 0, cf106-noop 0", "own proofs: registration unreachable => 7 arms red; only the content=amended write dropped => 6 red; each named doc edit reddens exactly the parity arm; WEKAN_SERVER=<swallow-free copy> card-details.sh t5 => 0"]
+        },
+        {
+          "role": "dev", "status": "DONE r3", "chunk": "C07",
+          "files_changed": ["containers/wekan-mcp/wekan_mcp/server.py (items leg propagates; swallow, `or {}` and log.warning gone; docstring rewritten to the fail-the-call contract)", ".opencode/plugin/board-context/index.ts (N2 slug lines through oneLine, N8 withinBudget text + the (#undefined) fix, N1 hedged registration comment)", "scripts/board-preload-probe.sh (N9 PICKUP_LISTS, rewritten LF10 prompt, ev prints last read args)", "skills/wekan-mcp/SKILL.md + references/call-shapes.md + containers/wekan-mcp/README.md (empty-items clause removed, raises on the items read)"],
+          "commands_run": ["card-details.sh whole => 0 (t5 green, both halves)", "slug-stack 0, tools 0, skill-surface 0, dependencies 0 (18 ok), create-list 0, board-provisioning 0, rest-overview-v102 0, board-context 0", "agent-perms => 1 (only A15 = C08)", "boards-deps 0, cf96-deploy 0, board-preload-probe 0, cf106-noop 0", "card-details.test.ts 26/26, board-context.test.ts 32/32, whole TS battery 293 tests 268 pass / 25 fail (pipeline-locks 10/7/6/2 = C08-C10)", "py_compile 0, bash -n 0, aislop ci --changes => 98 vs 80, 0 errors, 3 pre-existing size warnings, 0 fixable", "rulesync generate --check => 0 (no .rulesync touched)", "helm => N/A (no chart in blast radius)"],
+          "deviations": ["round 3 deviation, ACCEPTED by review r2: the dev wrote an explicit isinstance/raise guard, then dropped it because the suite's own guard scan (fail-call.py:68, `else ([st.target], getattr(st, 'value', None))`) assumes every statement in an items-variable guard body is an Assign/Expr and crashes on exactly the fail-the-call spelling the ruling requires — the arm forbade its own contract. Consequence: a 200-with-empty-body items answer still fails the call, but through an unnamed AttributeError. Review r2 found the harness defect is wider (it also dies on Continue, so the suite's own drops-the-checklist arm is unreachable-by-crash) and proved that patching to `getattr(st, 'target', None)` lets the typed guard land while both fabricated degradations stay red → the guard rides the test fix (R3-M1)."],
+          "friction": "aislop reports missingTools: [ruff] — python formatting/lint is not machine-checked here, py_compile only"
+        },
+        {
+          "role": "review", "status": "APPROVED (r2)", "chunk": "C07", "session": "ses_e57cab707ffesq3VPsRrg3aQ34",
+          "commands_run": ["all nine wekan-mcp suites => 0 (incl. t5 and the re-pinned board-context t4/t6)", "agent-perms => only A15 (C08); A16-A19 subset => 0", "boards-deps, cf96-deploy, board-preload-probe, cf106-noop, cf90-ledger => 0", "card-details.test.ts 26/26, board-context.test.ts 32/32, TS battery 293/268/25 (pipeline-locks only)", "py_compile x2 0, bash -n 0, aislop ci --changes 98 with 0 errors 0 fixable, rulesync generate --check 0, helm N/A", "own proofs: four self-made doc fabrications each redden the parity arm; four plugin mutations redden (registration 7 arms, write-back 6, prompt hook 2, agent gate 2); server-side failure table re-derived; AST diff shows get_card/_slim_card identical to merge-base ceb9a8ed6; 16 keys, no flag; current_slug == slug_stack[-1] over 10 shapes with 0 violations", "full 69-suite sweep => 45 green / 24 red, zero newly red, one newly green (board-context.sh)"],
+          "findings": ["R2-B2, R2-B1 and M1 all closed with independent mutation evidence; N1/N2/N5/N6/N8/N9 landed", "routed non-blocking: R3-M1 (fail-call.py guard scan dies on Raise and Continue — the typed guard rides this fix), R3-M2 (three stale t5-designed-red claims plus a fail() text that mislabels real crashes), R3-M3 (board-context.sh:406 executes backticked `shared` through command substitution), N11 (hydration reads still fold: `board … or {}`, `fields … or []`, the checklist collection `… or []`, none with _embedded_error — folds into the existing N3 hardening item), N12 (LF10 pickup-list order vs the boards walk; the fallback does not cover a checklist-free card while createCard extras stay dormant), N13 (amendAnswer's parts/output branches untested in-repo), N14 (STATE/FRICTION counter bookkeeping), N15 (blockStamps pins nothing)"],
+          "commit_readiness": "git add the three untracked (tests/wekan-mcp/registry-parity.py, tests/wekan-mcp/README.md, test_results.json) plus the 24 modified; nothing else untracked"
+        }
+      ]
+    },
+    "C08": {
+      "status": "done",
+      "wave": 2,
+      "depends_on": [],
+      "dev_session": "ses_e570319cfffes6i6c0BQu0Pf68",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "review_session": "openrouter/qwen/qwen3.8-27b (local gpu-ai down, 503). CANONICAL r1 = ses_e5386ec1effeFTp4Cfx8uA1N4C. Duplicate launch ses_e538677bdffesC06jy65eECqxX: the coordinator double-launched, issued it a STOP (do-not-write) instruction, and it confirmed clean — nothing written to any file, only the mandatory skill loads. Earlier dead launches: ses_e54da8863ffellSenpxO2YFgXz + ses_e53b2c5bbffetvZFY167WrNejz (server restarts, nothing written), ses_e539364f8ffeKC3DF1WNSkVx4F (503 on the dead local endpoint).",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "commit": "debeb8366 (implementation, five files) + 0d222bfc9 (record commit - its subject line reads feat(pipeline-locks) although it carries only docs; noted in FRICTION 2026-11-05)",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C08",
+          "files_changed": [".opencode/plugin/pipeline-locks/index.ts (v2 record: version 2 + holders[] with per-holder stamps, file-level last-writer-wins stamps kept; viewHolders lens; TornLockError/OccupiedError; beatKey per (pipeline,session); acquireSetWithRollback(env, claim, shared) keeping the wx exclusive create for the no-override path and appendLockHolder for the shared path; holder-scoped undo(); per-holder release/lock-lost/beats/markSetFailed; pruneStaleHolders + per-holder reap entries + deduped lastReap meta; pipeline_claim schema gains shared; /pipeline-status shared list)", ".rulesync/skills/boards/SKILL.md + mirror (reason:occupied taught in the availability and claim bullets; new bullets 'Co-tenancy is the human's call, never the run's' and 'Holders, not files')", ".rulesync/rules/overview.md + AGENTS.md (claim bullet: availability is the engine's answer + human-word-only shared:true; reap bullet: holder granularity)"],
+          "commands_run": ["pipeline-locks-core => exit 0 (38/0)", "-engine => exit 1 (41, 38 pass / 3 fail = U3x3 C09)", "-reap => exit 1 (32, 29/3 = V4x3 C09)", "-tick => exit 1 (15, 13/2 = T2x2 C10)", "whole TS battery (glob form) => exit 1 (293, 285 pass / 8 fail = the same 8)", "agent-perms A15 standalone => exit 0 (3 ok) and whole => exit 0 (21 ok) - the standing C08 red cleared", "pipeline-push-pr 0, board-context 0 (8 ok), cf96-tz 0, boards-deps 0, slug-stack 0", "coord-inwork 1 at i4 (pre-existing), gate.sh 1 at t17 (pre-existing), noop-marker 1 at N2 (C03b), rulesync-surface 1 at c23 (C09), agents-md 1 at c10 (C03b) with c11 standalone still red (C10), provider-loops 1 at t1 (C10), repo-label-filter 1 at t3 (red at HEAD too, and now also its plugin-vs-pinned-commit leg)", "rulesync generate => 0 (wrote 2), 2nd run no-op, --check => 0", "aislop ci --changes => 0 (99/100, 0 errors, 1 pre-existing size warning)", "helm => N/A"],
+          "live_proof": "the plugin reloaded live: pipeline_claim's registered schema now carries `shared`, and this run's own v1 claim reads back through pipeline_status as holders:[{cardId, sessionID, age, state, cardTitle}] with shared:false, heartbeat intact (coord read-only check at 2026-11-05)",
+          "deviations": ["seven ruled contract inferences recorded in chunks/C08.md: composite beat key; state:'failed' stays file-level; holder-level staleness only for files with >=2 holders (a lone holder keeps the shipped max(heartbeatAt, mtime) rescue); lockStatus union-find (setId union file) with holders collapsed per claim so shared = >1 claim; the legacy-identity lens (a record with file-level sessionID/setId reads as a pre-co-tenancy single-holder record, flat fields win, stray holders[] ignored) which is what keeps R10(b)/K7 green; occupied/torn answer shapes; per-holder reap audit plus card legs", "a comment-ordering repair in newLockRecord was needed because the dev's own comment placement reddened cf96-tz t2's window (a green arm), fixed rather than re-pinned"],
+          "friction": "agent-perms A15's own ok message runs backticked `shared` through bash (stderr 'shared: command not found'), verdict unaffected; repo-label-filter t3's plugin-unchanged pin is unsatisfiable for any lock-surface chunk",
+          "open_questions": ["is inference 5 (the legacy lens) a DECISIONS item?", "re-pin or advance repo-label-filter t3's pinned commit?"]
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C08", "session": "ses_e5386ec1effeFTp4Cfx8uA1N4C (openrouter/qwen/qwen3.8-27b, per the owner's model override)",
+          "commands_run": ["node --test core => 0 (38/38)", "-engine => 1 (38/3 = U3x3 C09)", "-reap => 1 (29/3 = V4x3 C09)", "-tick => 1 (13/2 = T2x2 C10)", "whole TS battery => 1 (293: 285 pass / 8 fail, the 8 = U3x3+V4x3+T2x2, no C08 arm)", "agent-perms => 0 (21 ok; A15 standalone 3 ok) - the standing C08 red cleared", "pipeline-push-pr 0, board-context 0, cf96-tz 0, boards-deps 0, slug-stack 0", "coord-inwork 1 (i4 pre-existing), gate 1 (t17 pre-existing), noop-marker 1 (N2=C03b, N4 standalone=C10), rulesync-surface 1 (c23=C09; c19 c24 standalone 0), agents-md 1 (c10=C03b; c11 standalone=C10), provider-loops 1 (t1=C10), repo-label-filter 1 (t3 red at clean HEAD proven; content legs green in isolation)", "69-suite sweep => 46 green / 23 red, red set = C07 baseline minus agent-perms (newly green); media-slskd t3 proven a transient dirty-tree trip (green in a scratch clean-HEAD worktree, clears at the commit)", "rulesync generate --check => 0", "aislop ci --changes => 0 (99, 0 errors, 1 pre-existing size warning)", "helm => N/A (no chart in diff)", "own probe harness /tmp/opencode/c08-review/probe.ts => 67/67 pass (real module, tmp lock stores, two plugin instances over one shared store, back-dated stamps/mtimes)"],
+          "findings": ["all seven dev contract inferences adjudicated and ACCEPTED (recorded per-inference in chunks/C08.md): composite beat key, file-level state:'failed', holder-level staleness only at >=2 holders, lockStatus union-find, the legacy-identity lens, occupied/torn answer shapes, per-holder reap audit", "the >=2-holders asymmetry is INTENDED, proven by fabricated clock cases: E1 (a silent co-tenant is pruned while mtime+file-hb stay fresh via the busy co-tenant's beats) vs E2/E2b (identical silence on a LONE holder is rescued by fresh mtime / reaped only when both clocks stale) - a live co-tenant beats its own row, so only a 2h-silent run is pruned, and its own session is the one that sees PIPELINE LOCK LOST; the survivor's guarded calls pass and the loser's cleanup writes nothing to the co-held file", "fail-closed proven: occupied refusal leaves the file byte- AND mtime-identical; two racing exclusive claims -> exactly one lands; the EEXIST-race loser names the winner; torn JSON / empty file / identity-less record all refuse (unreadable:true where the record parses) and merge nothing", "legacy lens is an honest migration: the live v1 file (this run's own claim) reads back as one holder; v1+stray-holders[] resolves flat-wins; a half-written v2 can never masquerade as v1 (the writer emits no flat identity)", "M1 (non-blocking): dedupe the claim-audit + pin-text co-tenant lists to match the answer - test-neutral cosmetic", "M2 (non-blocking, fail-safe edge): a shared claim onto a flat-identity (v1) record writes hybrid bytes then refuses - the claimant holds nothing and the owner is untouched; an optional pre-write refusal (one guard) removes the inert scar", "M3: torn files are absent from pipeline_status - routed to C09 (takeover) / C10 (observability) alongside the pre-C08 silent lapse", "repo-label-filter t3: content-pin is the law-compliant shape (its content leg is green under C08 with PLUGIN_DIFF_BASE=HEAD); re-pin/advance is whack-a-mole through C09 - recut belongs to test_session/owner, not a cf-106 dev write", "comment-slop clean: every new comment carries a keep-table fact in the file's ruling-citation idiom; the cf96-tz t2 window repair verified as the honest minimal fix (test file untouched)", "deviation accepted: the boards 'Exit bullets gain per-holder wording' task landed in a new dedicated bullet with Human-stops/Exit byte-identical (keeps c23's C09 needles clean, substance stated once)"],
+          "commit_readiness": "git add exactly five files: .opencode/plugin/pipeline-locks/index.ts, .rulesync/skills/boards/SKILL.md, .rulesync/rules/overview.md, AGENTS.md (mirror), .opencode/skills/boards/SKILL.md (mirror); STATE/DECISIONS/C08.md ride the coordinator's docs commit; nothing untracked, no tests/** touched",
+          "hygiene": "removed a dead worktree registration (/tmp/opencode/c08-head from an earlier died r1 launch) that was blocking scratch worktree creation (git worktree prune + removal, registration only)"
+        }
+      ]
+    },
+    "C09": {
+      "status": "done",
+      "wave": 3,
+      "depends_on": [
+        "C08"
+      ],
+      "dev_session": "ses_e52ed5aadffe0Vv3QdhNvi07Tf",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "review_session": "ses_e52da4e55ffeUczqUVK9rvlu8b (r1, openrouter/qwen/qwen3.8-27b; also appends the dev's floor-denied Implementation notes to chunks/C09.md per the C03b precedent)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "commit": "2c2542cf6",
+      "handoffs": [
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C09", "session": "ses_e52da4e55ffeUczqUVK9rvlu8b (openrouter/qwen/qwen3.8-27b)",
+          "commands_run": ["pipeline-locks-core 38/38", "-engine 41/41 (U3x3 green)", "-reap 32/32 (V4x3 green)", "-tick 13/15 (T2x2 = C10 only)", "whole glob 299/297/2 = exactly T2x2, no C09 arm", "agent-perms 21 ok", "rulesync-surface 25 ok (c23 flipped)", "board-context 8 ok, cf96-tz 13 ok, slug-stack 8 ok, cf106-noop 8 ok, cf90-ledger 8 ok, repo-label-filter 9 ok, provider-loops t5/t6 ok, agents-md c1-c10 ok, session-origin s1-s3 ok", "coord-inwork 1 (i4 pre-existing), gate.sh 1 (t17 pre-existing, 18 ok), noop-marker 1 (N4 = C10 reason only)", "rulesync generate --check 0", "aislop ci --changes 99 with 0 errors 1 standing size warning", "own probe harness => 16/16 (two plugin instances over one shared tmp store, live store untouched)", "live pipeline_status (read-only) => coordinator's Context claim intact, no lockLost/takeover key in the live answer", "helm N/A"],
+          "findings": ["AC1/AC2 literal discipline: PIPELINE LOCK LOST occurs exactly once in the plugin source (the extended constant); both stop sites throw that one constant; the strict-guard rethrow keys on err.message === LOCK_LOST_STOP identity - in-place growth, no fork", "AC2 no-self-reclaim proven structurally and by probe: a forced beat after loss recreates nothing; guarded edit/write/bash keep refusing until the session's own successful claimLockSet; release and occupied-refused claims do NOT clear the stop; per-root isolation holds (the co-running instance is never stopped)", "AC3/AC4 takeover evidence: tagged in record AND audit iff the whole set is exactly [cardId] and a .reaped/ record names that card - proven card-not-pipeline (pipeline-name-trap negative, v1-legacy-lens positive, two-key-set negative); the takeover claim leaves a fresh foreign holder on the original pipeline byte- AND mtime-identical even with the claim-time reap sweep armed", "AC5: hint verbatim on both the reapCommentBody move-success leg (inside the 240-char bound) and the timeouts.jsonl degrade row; not scope-crept into the D11 HA alert", "AC6: A15 21 ok, c23 25 ok (source/mirror bodies byte-identical, no second prose home, TICK_PROMPT parity green); inferences 1-3 all match the implementation (marker keying sound because resolveRoot returns the claim entry's own sessionID; reapedAt stamped post-race-check with proven filename-ts fallback; hasReapRecordFor matches on card through viewHolders)", "AGENTS.md/overview gap confirmed honest: both still carry the pre-C09 'only a fresh run re-claims' bullet, byte-unchanged by C09, no suite pins the old sentence against the new boards bullet - C10 owns the fix", "M-A (minor, routed to the owner's follow-up-card batch with C08 M1/M2): shared-append record/audit tag divergence - propagate the earned tag in appendLockHolder or soften the index.ts:804 comment 'the record and the audit must agree'", "N-1 (next test wave): stale $-anchored add_comment regex in tests/opencode/pipeline-locks-reap.test.ts:51 SEAM-CONTRACT header - no functional arm pins it"],
+          "commit_readiness": "git add exactly three files: .opencode/plugin/pipeline-locks/index.ts, .rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md; NOT: tests/** (zero in diff), AGENTS.md, .rulesync/rules/overview.md, ticket docs"
+        },
+        {
+          "role": "review", "status": "APPROVED (r1, second parallel instance)", "chunk": "C09", "session": "ses_e52dbce29ffeUjhlLeWlC13gAZ (openrouter/qwen/qwen3.8-27b)",
+          "note": "a second C09 review instance ran concurrently (the launch family doubled, as C08 did); verdicts converge APPROVED and C09 was committed (2c2542cf6) byte-identical to what both verified; this instance's own 58/58 probe harness superseded the first's 16/16 on disk (shared /tmp path, last writer wins) and its findings are recorded here",
+          "additive_findings": ["M1 (minor, joins the owner's follow-up-card batch): the pre-existing 240-char D21 comment slice can truncate the takeover hint on a pathological multi-label card comment - the unbounded timeouts.jsonl line retains it", "M2 = the first instance's M-A (converged): on a shared-append, the takeover tag lands on the holder line rather than record level while the audit is always tagged - propagate the earned tag in appendLockHolder or soften the 'record and audit must agree' comment", "N-2 (nit): two comment wordings with drifted subjects"],
+          "count_correction": "cf96-tz's authoritative summary is 5 ok / exit 0 (raw line-grep over-counts one nested unlabeled sub-arm); the first instance's '13 ok' table cell stands corrected by this note",
+          "m3_adjudication": "the reaped-set observability gap is closed to the extent C09's scope allows (durable stamped .reaped forensics + per-holder audit + hint-laden degrade lines + capability-gated pin); the residue (torn live files / .reaped contents not surfaced in pipeline_status, and the restart/reaper-priority silent-lapse class) is genuinely C10's - consistent with the ruling's own boundary"
+        },
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C09", "session": "ses_e52ed5aadffe0Vv3QdhNvi07Tf",
+          "files_changed": [".opencode/plugin/pipeline-locks/index.ts (LOCK_LOST_STOP constant extended in place - the phrase now occurs exactly once; takeover hint + session-pin evidence {cardId, pipelines, reapedAt} on handleLockLost and the reap-of-our-own-set path; claimLockSet marks takeover:'after_reap' when the claimed set is exactly [<cardId>] for this run's card AND a reap record for that card exists (hasReapRecordFor scans all .reaped/ records through the viewHolders lens, matching on card not pipeline); reaper stamps reapedAt onto the confirmed-reap .reaped copy with filename-ts fallback; reapCommentBody + the timeouts.jsonl degrade row carry the one-line takeover hint; the .reaped record itself stays untouched)", ".rulesync/skills/boards/SKILL.md + mirror (Human stops D20/D21 + Exit bullets: the PIPELINE LOCK LOST posture is now stop-the-step + exactly ONE sanctioned question, answer gates the resume; resume shape = re-claim pipelines:[<cardId>], card stays where it is, comment names the takeover + lock key, STATE kickoff.claim records it, no-answer = abandoned exit, never a second question)"],
+          "commands_run": ["pipeline-locks-core 38/0", "-engine 41/0 (U3x3 flipped green)", "-reap 32/0 (V4x3 flipped green)", "-tick 13/2 (T2x2 = C10, both TICK_PROMPT parity arms green)", "whole opencode glob 299/297/2 = exactly T2x2 only", "agent-perms whole exit 0 (21 ok - A15 incl. the C08 sub-block green; retired reason:locked did not reappear)", "rulesync-surface exit 0 (25 ok - c23 flipped; c19/c24 no bite)", "slug-stack 0, coord-inwork red only i4 (pre-existing), gate.sh red only t17 (pre-existing)", "rulesync generate wrote 1 (boards mirror, 2nd run no-op) + --check 0", "aislop ci --changes exit 0 (99, 0 errors, 1 standing pre-existing size warning on the 2535-line plugin, 0 fixable)", "collateral: boards-deps 0, cf96-tz 0 (t5 proves the 2h constant + byte-pinned reap comparison intact), noop-marker N1-N3/N5-N7 ok (N4 = C10), provider-loops t5 t6 0, agents-md c1-c10 ok (c11 = C10), cf90-ledger 0 (8 ok - the substring-ban window did not bite), pipeline-push-pr 0, repo-label-filter 0 (t3 content legs hold over the edited plugin), cf106-noop 0, session-origin s1-s3 ok (s4 pre-existing), board-context.sh 0", "helm N/A"],
+          "deviations": ["none on scope or hard rules: no tests/** touched, no question channel in the plugin, the constant extended in place (never forked), 2h clock + max(heartbeatAt,mtime) untouched, every human-facing leg rides the timeouts.jsonl degrade", "FLAGGED GAP: AGENTS.md/.rulesync/rules/overview.md are outside C09's Files in scope, so the worker bullet still summarizes the pre-C09 'only a fresh run re-claims' posture while the boards skill teaches the one-question takeover - routed by coord to C10's observability pass (C10 rewrites that paragraph anyway)"],
+          "contract_inferences": ["1: the in-process per-root env.lockLost stop marker is cleared only by that root's next successful claimLockSet and is NOT surfaced in pipeline_status (the status shape stays C08-pinned; the restart-lapse observability stays C10's)", "2: the reaper stamps reapedAt onto the confirmed-reap .reaped copy post-race-check, with a filename-ts fallback for pre-C09 copies", "3: hasReapRecordFor matches on card, not pipeline, and scans all .reaped/ records through the viewHolders lens"],
+          "friction": "aislop-gate churn (transient unused-symbol warnings after intermediate saves read like regressions; final state clean); one self-inflicted edit wound (a dropped if-line) caught by the gate's syntax error on the spot and restored before any test ran; the chunk-file Implementation-notes append was floor-denied (C03b precedent) - notes delivered in RESULT",
+          "live_safety": "all TS suites ran on their own /tmp stores; no real pipeline_claim/release/heartbeat; post-edit read-only pipeline_status corroborates the coordinator's live Context claim still reads back in the C08 v2 holder shape with lastReap meta intact"
+        }
+      ]
+    },
+    "C10": {
+      "status": "done",
+      "wave": 4,
+      "depends_on": [
+        "C03b",
+        "C06",
+        "C07"
+      ],
+      "dev_session": "ses_e52cca495ffeV1QgarZN9Q1uVI",
+      "dev_variant": "agent-dev-local",
+      "dev_rounds": 1,
+      "review_session": "ses_e5295b311ffetdU8UVJqtvYCEk (r1, openrouter/qwen/qwen3.8-27b; running in parallel with test wave W4 (ses_e5c56c5defferyjeGtb6YMn05v) which re-cuts agents-md.sh c11 arm 3 - the documented validation-at-fault - plus the comment-only N4 label re-pin and the reap-suite seam header; c11 arm-3 reds during the review are attributed to the wave, not C10)",
+      "review_rounds": 1,
+      "last_verdict": "APPROVED (r1; zero findings)",
+      "commit": "5c5b2e42d (the five files; the pipeline-worker-local.md deletion is in 0f00ecc72)",
+      "coord_notes": "The .agents/loops/pipeline-worker-local.md deletion was committed EARLY in 0f00ecc72 (its staged git rm was swept into that docs commit - see FRICTION 2026-11-05 C10 entry); the pending C10 diff is the five remaining files: .agents/loops/pipeline-worker.md, .rulesync/skills/boards/SKILL.md, .opencode/skills/boards/SKILL.md, .rulesync/rules/overview.md, AGENTS.md. One validation-at-fault (agents-md.sh c11 arm 3, alternation passed to a literal str.find helper) is routed to test_session and being re-cut in parallel with the review.",
+      "handoffs": [
+        {
+          "role": "dev", "status": "DONE r1 (uncommitted)", "chunk": "C10", "session": "ses_e52cca495ffeV1QgarZN9Q1uVI",
+          "files_changed": [".agents/loops/pipeline-worker.md (rewritten: frontmatter model: gpu-ai/qwen3.8-27b-q4 per OQ-14 + agent: agent-board-coord + single schedule 0 * * * * + enabled: true, recognized keys only, comment block to the live facts - OQ-14 ruling + catalog-churns/no-silent-flip convention, single-task posture, mcp-surface-absent 19:30Z finding with probe-tools-list + degrade-never-stall law; body = verbatim TICK_PROMPT + C10 extensions, slash-free D30)", ".agents/loops/pipeline-worker-local.md (git rm - already committed early in 0f00ecc72)", ".rulesync/skills/boards/SKILL.md + mirror (Provider filtering -> one scheduled walk / per-card routing: label routes models, never pickups or locks; ask-on-unlabeled kept, Local first; Card-pickup remnant reworded; frontmatter description clause retired)", ".rulesync/rules/overview.md + AGENTS.md (worker paragraph: one loop file + ruled model literal + per-card Provider routing; the C09-routed PIPELINE LOCK LOST bullet -> summary-plus-point-back to the boards skill; gate/LIVE/Timeout sentences untouched)"],
+          "battery": "provider-loops 8 ok exit 0 (t1-t8 all green) / pipeline-locks-tick 15/15 (T2x2 flipped) / noop-marker 9 ok (N4 finally green) / multi-repo hourly-board-check 8 ok (t4 HOLD green) / whole TS glob 299/299/0 exit 0 - FIRST ALL-GREEN TS BATTERY OF THE TICKET / gate.sh red only pre-existing t17 (subset t1-t16 t18-t21: 22 ok) / coord-inwork red only pre-existing i4 / cf90-ledger 8 ok / agent-perms 21 ok / rulesync-surface 25 ok (c21 Provider needles hold) / agents-md c1-c10 ok, c11 red on arm 3 only (validation-at-fault) / rulesync generate x2 + --check 0 / aislop 100 vs 80, 0 errors, 0 warnings / gate script byte-unchanged (empty diff proven) / helm N/A",
+          "validation_at_fault": "tests/agent-board-coord/agents-md.sh c11 arm 3 passes the grep-E alternation 'per-card|per card|rout' to the suite's literal str.find window helper (negwin.py) - only satisfiable by the literal pipe string, which no honest sentence contains; proven with the suite's own checker on /tmp copies (a natural 'per-card routing inside the run' passage fails with exactly that missing needle; the same passage plus the literal pipe string passes). Suggested re-cut: shell-level || between separate window calls. Routed to test_session; no test was re-pinned or weakened by dev.",
+          "deviations": ["none on scope or hard rules; one edit-tool false negative on the boards SKILL.md pickup-line (fuzzy retry applied despite the error report; re-derived byte-exact from git diff - same class as the C03b record)"],
+          "open_questions": ["mcp-surface-absent follow-up card -> the owner's follow-up-card batch (named in the loop comment; the scheduled-launch MCP catalog provisioning defect is outside this ticket's file set)", "USER-owned step 4 at merge: re-approve the surviving pipeline-worker task's loopApprovals fingerprint (this body edit rotated it), retire the pipeline-worker-local task in OpenChamber, keep permissionAutoAccept on (ledger L1)", "model-serving note: gpu-ai/qwen3.8-27b-q4 is written exactly as ruled (OQ-14) even though the local llama-swap endpoint is down today - a routing decision, not a serving guarantee; if the first tick shows the arena not serving it, the fix is a fresh owner ruling + re-pin, never a silent literal change"]
+        },
+        {
+          "role": "review", "status": "APPROVED (r1)", "chunk": "C10", "session": "ses_e5295b311ffetdU8UVJqtvYCEk (openrouter/qwen/qwen3.8-27b)",
+          "findings": "NONE (no blocker, no major, no minor, no nit)",
+          "ac_rederived": "AC1: exactly one file under .agents/loops, recognized keys only, agent + model + one schedule + enabled; scratch-tree mutants (twin restored from 0f00ecc72^ -> t1/t4/t8 red; bogus key -> t1 + tick T2 arm 1 red; wrong model -> t1/t3 red naming the OQ-14 convention) all bite. AC2: body line starts with the plugin's TICK_PROMPT verbatim (constant diffed at index.ts:80 by the reviewer, plugin untouched); both flavors, label routing, unlabeled-card ask, preload expectation, no-work exit CITED not restated; zero / in body (D30), /pipeline-tick in the comment block only. AC3: Provider section = one scheduled walk, per-card routing; ask-on-unlabeled strengthened ('never weakened'); the dev's Card-pickup remnant rewrite adjudicated FAITHFUL (it WAS a current-state split claim); planted retired wording reddens t7. AC4: rulesync generate --check clean x2; AGENTS.md matches the overview source; the C09-routed lock-lost bullet is summary-plus-point-back with no contradiction of the committed C08/C09 bullets; gate/LIVE/Timeout sentences accurate (Timeout degrades to timeouts.jsonl; USER step 3 open). AC5: gate script empty diff vs HEAD and vs merge-base ceb9a8ed6; t17 = the same pre-existing warm-location allowlist red C04 documented; C03b marker-blindness holds structurally. AC6: both re-pins biting (tick T2 five-fields + verbatim body; provider-loops t1/t3 with the OQ-14 convention comment); provider-loops 8 ok, tick 15/15, noop-marker 9 ok (N4 finally green via the loop collapse), hourly-board-check 8 ok (t4 HOLD). AC7: the USER-owned steps restated in the dev hand-off and the loop comment block.",
+          "gate": "reviewer's own run: core 38/38, engine 41/41, reap 32/32, tick 15/15, glob 299/299/0 (first all-green TS battery of the ticket, re-confirmed after W4's reap-header write), agent-perms 21 ok, rulesync-surface 25 ok, slug-stack 5 ok, boards-deps 9 ok, cf96-tz 5 ok, cf90-ledger 8 ok, repo-label-filter 9 ok, cf106-noop 8 ok, board-context 8 ok, provider-loops 8 ok, noop-marker 9 ok, hourly-board-check 8 ok, gate.sh t17-only, coord-inwork i4-only, rulesync --check x2, aislop 100/0/0 (67 files), helm N/A, bash -n N/A",
+          "attribution": "c11 arm-3 red at first run = the documented validation-at-fault (mechanism re-derived in the suite source: a grep-E alternation passed to the literal str.find helper); wave W4's re-cut (shell-level || + deletion negative control) landed on disk DURING the review and the final re-run was 11 ok exit 0; no other red in the wave's files attributable to C10",
+          "live_safety": "read-only pipeline_status corroborates the coordinator's card-id claim (c1022816..., card ZPP55zX4GEfesPbnL, state live) plus the orphaned Context failed-holder group aging out untouched; no claim/release/heartbeat/reap; every tmp-store harness ran in a scratch worktree",
+          "comment_slop": "clean - the loop comment block carries live facts (the OQ-14 re-pin discipline, the recognized-key/provider-key absence, the fingerprint-rotation law with its merge-day consequence, the 19:30Z finding as the degrade-around target); the kept 'Live state, verified 2026-10-29' paragraph is a stamped verification N4's arm requires, not narrated history",
+          "commit_readiness": "exactly the five files, committed as 5c5b2e42d after the staged W4 test files were committed separately as b36a417c6 (the index-hazard law, FRICTION 2026-11-05, applied)"
+        }
+      ]
+    }
+  },
+  "final_review": {
+    "session": "ses_e526b90adffebWZR3yDtwIfmOZ (openrouter/qwen/qwen3.8-27b, per the owner's model override)",
+    "verdict": "APPROVED",
+    "at": "2026-11-05",
+    "notes": "Whole-branch re-derivation at HEAD 395526051 (merge-base ceb9a8ed6): 14/14 defects fixed and behaviorally spot-checked on the final tree; cross-surface prose (boards skill, AGENTS.md, overview, loop file, pipeline-locks, question-notify) is one coherent story with no second home and no contradiction; full battery re-run (TS glob 299/299/0; 69-suite sweep 54 green / 15 red - every red reproduced identically at clean merge-base in a scratch worktree, zero branch-introduced reds, in-ticket reds = the documented pre-existing t17 + i4 warm-location class only); rulesync generate --check 0; aislop 100/0/0; py_compile + bash -n clean; helm N/A. No test weakening anywhere (all waves tests-only; every re-pin a broken/vacuous-control repair or an adjudicated ruling). The two provenance anomalies (the 0f00ecc72 loop-deletion sweep, the b27297e4b STATE corruption repair) verified recorded in FRICTION 2026-11-05 and the final tree matches the record. Nits (fixed in the same pass): C07/C10 stale status, C08 commit null. chunks/C01.md Review notes remain empty (C01's review lives in the STATE hand-off - accepted). The USER-owned steps list (8 items) verified complete and accurate, recorded in the plan file's Final whole-plan review section. The orphaned Context holder from this run's lapsed claim was naturally timer-reaped at 21:08Z and left alone.",
+    "record_in": "## Final whole-plan review section of the plan file (appended by the reviewer, +74 lines)"
+  },
+  "blocked": [],
+  "deferred": []
+}

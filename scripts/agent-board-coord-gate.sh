@@ -18,6 +18,12 @@
 # directory/project scope — smaller walks, but rejected: a manual or worktree
 # launch must stay visible to the main-checkout hourly run and the other way
 # around (D11: interactive launches count).
+# With several worker repos sharing one OpenCode server the cross-project
+# count stays deliberately unscoped (OQ-A3, DECISIONS 2026-10-31): hourly
+# launches serialize across repos — counting every project is the conservative
+# single-writer answer. Per-repo gate scoping is a human decision, not a
+# silent fix; the board operand's repo filtering lives in the hourly command's
+# BOARD CHECK, not here.
 #
 # Callers run `bash scripts/agent-board-coord-gate.sh` from the active project
 # location; nothing here resolves against $0, so any cwd works.

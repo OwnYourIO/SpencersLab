@@ -52,11 +52,11 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in 1 2 3 4 5; do WANT["b$i"]=1; done
+  for i in 1 2 3 4 5 6; do WANT["b$i"]=1; done
 else
   for a in "$@"; do
     lc=$(printf '%s' "$a" | tr 'A-Z' 'a-z')
-    [[ "$lc" =~ ^b[1-5]$ ]] || fail "unknown check id '$a' (expected B1..B5)"
+    [[ "$lc" =~ ^b[1-6]$ ]] || fail "unknown check id '$a' (expected B1..B6)"
     WANT["$lc"]=1
   done
 fi
@@ -213,6 +213,28 @@ if want b5; then
       && fail "B5[OQ-N1]: $f grew raw 'opencode run' — purpose-bound script only"
   done
   ok "B5[OQ-N1]: grant scoped to the six coord variants; no api-post or opencode-run shape anywhere in the family"
+fi
+
+# --- B6: cf-106 C06/C07 — the live-fire legs name the enriched payload --------
+# The probe script is the only place the deployed build is actually looked at,
+# so its legs have to name what the two chunks add: the checklist state and the
+# swimlane/list titles (C06), the swimlane_titles filter bound (C06), and the
+# single-card read with its slug stack (C07). Shape pins only — the legs mint
+# live sessions and stay USER-owned until the owner's image-pin bump.
+# NOTE for the coordinator (recorded in the chunk's Tests annotation): the plan
+# does not put scripts/board-preload-probe.sh in any chunk's file list, so this
+# arm has no dev owner — someone has to land the script edit (dev under a
+# widened file list, or the owner) or this leg stays red by ownership, not by
+# defect.
+if want b6; then
+  [ -f "$SCRIPT" ] || fail "B6[cf-106 C06/C07]: $SCRIPT missing (harness: the probe capability has no script to hold the new legs)"
+  for needle in checklists swimlane_titles get_card_details; do
+    grep -qF "$needle" "$SCRIPT" \
+      || fail "B6[cf-106 C06/C07]: $SCRIPT never probes '$needle' — the live-fire cannot confirm the enriched preload or the claim-time card read if the script does not name them (see the ownership note above)"
+  done
+  grep -qE 'card_number|slug_stack' "$SCRIPT" \
+    || fail "B6[cf-106 C07 AC2]: $SCRIPT has no card-identity/stack probe line — the get_card_details leg must answer with the ids and the slug stack, not just a tool name"
+  ok "B6[cf-106 C06/C07]: the probe script names the checklist state, the swimlane_titles filter and the get_card_details card read (leg shape; the live runs stay owner-owned)"
 fi
 
 printf 'PASS: board-preload-probe contract checks (%d ok)\n' "$checks"

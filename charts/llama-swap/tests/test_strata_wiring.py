@@ -110,7 +110,13 @@ def test_c03_peers_clauses_unchanged_by_the_flip():
     )
     models = peer["models"]
     assert models and models[0] == ev["models_must_include"][0], f"models: {models}"
-    assert set(models) <= {S.PRIMARY_ID, S.STRIX_ID}, f"unknown peer models: {models}"
+    # cf-86: this list grows one id per landed Strata rung (C01 +ablated,
+    # C02 +orca, C06 +q4). Exact ordered equality with a sanctioned wave is
+    # the law — a subset of the final five would hide a phantom or a drop.
+    assert models in ev["models_states"], (
+        f"peers models {models} is not a sanctioned wave {ev['models_states']} — "
+        "wave changes are test-session property (evidence), not a dev edit"
+    )
     text = S.SERVICE_VALUES.read_text()
     block = text[text.index("peers:"):]
     listed = re.findall(r"^\s*-\s+(qwen3\.8-flash-next-strata[\w-]*)\s*$", block, re.M)
@@ -162,7 +168,14 @@ def test_c03_extract_and_render_yields_on_shape_keyless():
     )
     cfg = yaml.safe_load(outer[0]["data"]["config.yaml"])
     assert set(cfg["peers"]) == {S.PEER_NAME}
-    assert set(cfg["peers"][S.PEER_NAME]["models"]) == {S.PRIMARY_ID, S.STRIX_ID}
+    # cf-86 wave law: the peers models list equals the sanctioned list for the
+    # inner arenas this render actually serves (evidence models_states), so the
+    # assertion stays correct at three, four and five ids.
+    served = set(S.inner_config(docs)["models"])
+    assert cfg["peers"][S.PEER_NAME]["models"] == S.expected_strata_peers(served), (
+        f"peers models {cfg['peers'][S.PEER_NAME]['models']} diverge from the wave "
+        f"for served arenas {sorted(served)}"
+    )
     assert cfg["peers"][S.PEER_NAME]["proxy"] == S.PEERS_PROXY, (
         "service-overlay render must carry the consolidated peers URL"
     )
@@ -262,12 +275,15 @@ def test_c03_strata_ids_never_join_the_outer_roster():
     cfg = L.rendered_config("gpu-ai")
     ids = set(L.all_models_of(cfg))
     aliases = {a for m in L.all_models_of(cfg).values() for a in (m.get("aliases") or [])}
-    shadowed = ({S.PRIMARY_ID, S.STRIX_ID} & ids) | ({S.PRIMARY_ID, S.STRIX_ID} & aliases)
+    # cf-86 grows the inner family to five ids (C01/C02/C06); none of them is
+    # ever an outer roster/alias/matrix entry.
+    inner = set(S.INNER_IDS)
+    shadowed = (inner & ids) | (inner & aliases)
     assert not shadowed, f"outer surface shadows inner IDs: {sorted(shadowed)}"
     vars_vals = set(((cfg.get("matrix") or {}).get("vars") or {}).values())
-    assert not vars_vals & {S.PRIMARY_ID, S.STRIX_ID}, "outer matrix.vars references a strata id"
+    assert not vars_vals & inner, "outer matrix.vars references a strata id"
     preload = ((cfg.get("hooks") or {}).get("on_startup") or {}).get("preload") or []
-    assert not set(preload) & {S.PRIMARY_ID, S.STRIX_ID}
+    assert not set(preload) & set(S.INNER_IDS)
     L.assert_matrix_closure(cfg, "gpu-ai")
 
 

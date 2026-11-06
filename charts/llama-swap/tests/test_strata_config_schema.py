@@ -116,6 +116,27 @@ def test_c01_ac4_ulimit_wrapper_stays_mandatory():
 
 
 @helm
+def test_t0_request_lines_on_every_arena_model_env():
+    """T0 (owner ruling 2026-11-01, RESEARCH R6): every Strata arena carries
+    the engine's request-accounting line. Logging-only — the arm guards the
+    ONE thing the prompt-rate round depends on: a rate number that is
+    attributable to an arena. Measured client-side wall math is not that
+    number (the progress line counts reused prefix tokens and clocks from
+    admission), and the profile layer stays env-free by the C-A keyless shape."""
+    models = S.inner_config(_docs())["models"]
+    arenas = [i for i in (S.PRIMARY_ID, S.STRIX_ID, S.ORCA_INNER_ID, S.Q4_ID, S.ORNITH_ID) if i in models]
+    assert len(arenas) == 5, f"expected five arenas, rendered {sorted(arenas)}"
+    for aid in arenas:
+        env = set(S.env_list(models[aid]))
+        assert S.REQUEST_LINES_ENV in env, f"{aid} model env lacks {S.REQUEST_LINES_ENV} — its rates are unmeasurable"
+    primary_profile = S.profile_json(_docs(), S.PROFILE_PRIMARY_FILE)
+    assert primary_profile.get("env") == {}, (
+        f"primary profile-layer env grew ({primary_profile.get('env')!r}) — T0 rides the model env, "
+        "and the frozen-era capture asserts this layer stays empty"
+    )
+
+
+@helm
 def test_c01_ac4_env_contract_keyless():
     m = _primary_model(_docs())
     env = set(S.env_list(m))

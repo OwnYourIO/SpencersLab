@@ -37,7 +37,7 @@ in-repo server (`containers/wekan-mcp`), published as
   (Keycloak OIDC audience `wekan-readonly`): read tools only; write tools are
   never registered (`WEKAN_MCP_READ_ONLY=true`).
 - **`wekan-admin`** — `https://mcp.gpu.spencerslab.com/wekan-admin/mcp`
-  (audience `wekan-admin`): the full 31-tool surface. The two gpu tiers share
+  (audience `wekan-admin`): the full 39-tool surface. The two gpu tiers share
   one long-lived `WEKAN_TOKEN`.
 - **`boards`** on the dev cluster — the pipeline board-intake endpoint. It
   authenticates by login-mint instead: the pod gets `WEKAN_USERNAME` +
@@ -45,17 +45,40 @@ in-repo server (`containers/wekan-mcp`), published as
   item's URI field) and the client exchanges the pair for a bearer at
   startup, re-minting once on a 401.
 
-The server exposes 31 typed tools:
+The server exposes 39 typed tools:
 
 - **Read:** `list_boards`, `get_board`, `list_lists`, `list_swimlanes`,
   `list_cards_in_list`, `get_card`, `list_comments`, `list_checklists`,
   `get_checklist`, `list_rules`, `get_rule`, `list_custom_fields`,
   `get_custom_field`, `list_board_members` (user ids + nine normalized
   role booleans; usernames are site-admin-gated REST, so each entry
-  carries `username: null` + a `username_resolution` note)
+  carries `username: null` + a `username_resolution` note),
+  `list_board_dependencies` / `list_card_dependencies` (the board's Red
+  Strings lines board-wide / one card's stored edges, passed through as the
+  route answers), `preload_board` (ONE board-export GET — `attachments=false`
+  plus a `fields=` selection — reshaped to swimlane→list→cards with per-card
+  `{id, card_number, label_ids, slug, archived, sort, parent_id, checklists}`
+  (`checklists` = `[{id, title, items: [{title, finished}]}]`, kickoff
+  vocabulary only; `checklists` is itself a `fields=` section) + dependency
+  lines + label/field name maps, and a `title` on every swimlane/list entry;
+  archived flagged not dropped, card titles/descriptions not carried;
+  optional `swimlane_titles` bounds the read client-side),
+  `get_card_details` (ONE card, shaped for the claim-time context block: the
+  card fields incl. `sort`/`parent_id`, `labels` as `{label id: name}`,
+  `custom_fields` as `{field name: raw value}`, EVERY checklist as
+  `[{id, title, items: [{title, finished}]}]` in stored order (no kickoff
+  vocabulary filter, so a follow-up card's inherited checklist answers read
+  without touching the parent), the card's own edges as
+  `[{to_id, type, color}]`, and the `slug` field both ways — `slug_stack`
+  oldest-first plus `current_slug` (newest); archived cards flagged not
+  dropped, and a card that does not read as a card document raises rather
+  than answering empty)
 - **Write** (every tier except `wekan-readonly`): `create_card` (optional
   `default_checked` map — checklist title → item titles to arrive CHECKED;
-  bounded-polls the rules-created checklist, then PUTs the exact-title items),
+  bounded-polls the rules-created checklist, then PUTs the exact-title
+  items; optional trailing `parent_id` — two-step create→PUT lineage, a miss
+  reports `parent_id_set: false` and never rolls back, and no typed edge is
+  drawn for it),
   `update_card`, `move_card`, `add_comment`, `add_checklist`,
   `add_checklist_item`, `toggle_checklist_item`, `delete_checklist_item` (destructive, scoped to
   one item), `create_rule`, `update_rule`, `remove_rule` (marked
@@ -67,9 +90,13 @@ The server exposes 31 typed tools:
   `update_board` (title-only rename via the dedicated title route — board id
   and the cardNumber sequence survive by construction; board-admin gate),
   `create_swimlane` (optional explicit `sort`, else appends at max+1; the
-  hydrated echo carries the actual `sort`), and `create_label` ((name, color)
+  hydrated echo carries the actual `sort`), `create_label` ((name, color)
   idempotent, 25 named colors validated client-side — hex rejected with the
-  allowed list before any request)
+  allowed list before any request), `add_card_dependency` (UPSERT a typed
+  card→card edge — a repeat add updates, never duplicates; the 7 types gate
+  client-side like `create_label`'s colors), `edit_card_dependency`,
+  `remove_card_dependency` (marked destructive, one edge), and
+  `set_card_labels` (bulk add/remove board labels on ≤500 cards in one POST)
 
 Using it keeps the credential (bearer or login pair) entirely out of model
 context — it lives only in the server pod, injected via ExternalSecret +
@@ -85,9 +112,11 @@ Fall back to this skill's raw REST workflow only when:
 - the MCP server is unavailable, or the task targets a different WeKan
   instance than the lab's.
 
-Some gaps have MCP-native workarounds instead — card label assignment (no
-label tool; rules-engine round-trip) and per-card custom-field writes
-(upsert tool) are documented in `references/wekan-mcp-ops.md`.
+Some gaps have MCP-native workarounds instead — per-card custom-field
+writes (upsert tool) are documented in `references/wekan-mcp-ops.md`; card
+label assignment rode a rules-engine round-trip there until cf-96 shipped
+`set_card_labels` (the recipe stays the degrade path on deploys older than
+the cf-96 image bump).
 
 For deploying or modifying the MCP server itself, see
 `skills/helm-chart-creation/references/mcp-servers.md` (platform wiring) and

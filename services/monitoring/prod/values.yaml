@@ -425,11 +425,12 @@ grafana:
         revision: 3
         datasource: Prometheus
       speedtest-exporter-hub:
-        # renovate: depName="Speedtest Exporter"
-        gnetId: 16541
-        revision: 1
+        # renovate: depName="Speedtest-Exporter Dashboard (hub)"
+        gnetId: 13665
+        revision: 4
         datasource:
-          - { name: datasource, value: Prometheus }
+          - name: DS_PROMETHEUS
+            value: Prometheus
       unbound:
         # renovate: depName="Unbound"
         gnetId: 18077

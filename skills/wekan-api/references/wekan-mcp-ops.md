@@ -142,3 +142,13 @@ parameter and no label tool on the MCP surface. Workaround (proven):
   then `GET https://ghcr.io/v2/ownyourio/wekan-mcp/manifests/<ref>` with
   `Accept` listing OCI index/manifest + docker v2 types and compare
   `docker-content-digest` between the tag and `:main`.
+- **Which tags exist**: the same pull-scoped token, then
+  `GET https://ghcr.io/v2/ownyourio/wekan-mcp/tags/list` — answered
+  cleanly to a read-only anonymous call on 2026-11-01. Do NOT enumerate
+  with an untagged `docker buildx imagetools inspect`: untagged, it
+  resolves the LEGACY `:latest` publish (this image really carries a
+  pre-tag-scheme publish — `0.0.1`, `0.0.2` and `latest` are live) and
+  cannot list tags at all. Caution for readers counting tags: a v-tag
+  newer than your pin can predate the build you ship — v90-, v101- and
+  v102-era builds already sit above the running pin — so the bump target
+  is your merge's own run tag, never the registry maximum.

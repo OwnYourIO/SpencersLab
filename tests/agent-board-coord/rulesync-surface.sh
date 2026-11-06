@@ -29,7 +29,17 @@
 # cf-52 RE-PIN drops kickoff/role-coord from the frozen set; cf-75 C02 RE-PIN
 # drops gates — content now guarded by tests/pipeline-gates/validation-fix.sh]
 # c19[cf-85 AC2/AC3/AC4/AC6/AC7/AC10 — the single `slug` field carrying
-# `[<slug>](<session link>)`].
+# `[<slug>](<session link>)`]; cf-90 joins as c20[C02 naming round: global
+# run-tag retirement + mint-shape negatives + slug auto-accept] c21[C03
+# Provider filtering — final-approval pickup split + ask-on-every-flavor]
+# c22[C03 follow-up-card protocol + friction destination flipped to Inbox].
+#
+# cf-90 posture (2026-10-31): c20-c22 are DESIGNED RED until their chunks
+# land — C02 owns c20's wording flips (its Tests list names THIS suite's
+# c12/c16), C03 owns c21/c22. c12/c16 gained the flipped arms + HOLD
+# negatives with them; everything else is a HOLD regression as before.
+# The pre-existing reds of sibling suites (gate t17 etc.) are listed in
+# gate.sh's header — nothing here invokes those suites.
 #
 # Red before C02/C03 (the ported skill is still the old two-list pickup and
 # live-question intake); c1-c5, c7, c9, c17 are already green and hold as
@@ -49,6 +59,15 @@
 # body/command deltas all stay satisfiable under the new wording (slug,
 # session and custom field all still occur; the reworded command sentence
 # still names both substrings).
+# cf-86 posture: c8-only widenings. This round-1 posture line (C05 era) admitted
+# the ticket's plan folder only; the C06 test round added the rest of its
+# declared surface — the serving trio (chart values, strata profile ConfigMap
+# template, gpu-ai overlay) plus charts/llama-swap/tests/**, none of which the
+# contract-built admit list covered, so c8 reddened on any dirty serving tree
+# mid-chunk and over the whole-ticket range (CHUNK_BASE=merge-base). The docs
+# round added the runbook note and the parent README as exact files (both docs'
+# doctrine is pinned by test_strata_runbook.py). See the c8 block for why the
+# admits stayed literal rather than manifest-driven.
 #
 # CHUNK_BASE=<ref> narrows the scope checks to "since that commit"; default
 # HEAD = uncommitted working tree. PORT_REF is retained only for c1's
@@ -57,7 +76,7 @@
 # coord-inwork i4 + gate t17 are the frontmatter contract now).
 #
 # Usage:
-#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c19
+#   bash tests/agent-board-coord/rulesync-surface.sh            # c1..c22
 #   bash tests/agent-board-coord/rulesync-surface.sh c1 c4 c10 # subset
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -107,10 +126,10 @@ trap '[ "$FAILED" -eq 1 ] || rm -rf "$TMP"' EXIT
 
 declare -A WANT=()
 if [ "$#" -eq 0 ]; then
-  for i in $(seq 1 19); do WANT["c$i"]=1; done
+  for i in $(seq 1 24); do WANT["c$i"]=1; done
 else
   for a in "$@"; do
-    [[ "$a" =~ ^c([1-9]|1[0-9])$ ]] || fail "unknown check id '$a' (expected c1..c19)"
+    [[ "$a" =~ ^c([1-9]|1[0-9]|2[0-4])$ ]] || fail "unknown check id '$a' (expected c1..c24)"
     WANT["$a"]=1
   done
 fi
@@ -286,7 +305,33 @@ subs = sorted(p.get("resource") for p in perms if p.get("action") == "subagent" 
 # board-coord is -local semantics, so its dev slot is agent-dev-local, and
 # the set is asserted EXACT (a retired bare slot would re-launch the
 # pre-split agent).
-want_subs = sorted(["agent-plan", "agent-test", "agent-dev-local", "agent-review", "agent-research"])
+# cf-90 C06 era-gate (agent-test): once the pipeline-role-deploy skill pair
+# exists, the coord family's roster has widened with its class's launch
+# (the alias carries plain agent-dev-deploy; tests/agent-dev-deploy t6
+# enforces the per-class rule across all twelve family files). Before C06
+# lands, the skill is absent and the 5-role set stays the contract — the
+# same era-gating discipline as the pipeline_* arms above, so waves 1-2
+# keep a green HOLD and a C06 that ships the hook WITHOUT the roster reddens here.
+import os
+want_subs = ["agent-plan", "agent-test", "agent-dev-local", "agent-review", "agent-research"]
+if os.path.exists(".rulesync/skills/pipeline-role-deploy/SKILL.md"):
+    want_subs = sorted(want_subs + ["agent-dev-deploy"])
+else:
+    want_subs = sorted(want_subs)
+if os.path.exists(".rulesync/subagents/agent-explore.md"):
+    want_subs = sorted(want_subs + ["agent-explore"])
+# cf-106 C04 era-gate: the code-family second implementer. The alias carries
+# -local semantics, so its slot is the commit-only `code` (the -pr twin is
+# code-pr, pinned on that family by tests/agent-perms A12). Era-gated on the
+# SOURCE row so the mirror arm reddens exactly when a landing forgets to
+# regenerate — before C04 the wave stays green.
+src_txt = ""
+try:
+    src_txt = open(".rulesync/subagents/agent-board-coord.md").read()
+except OSError:
+    pass
+if re.search(r"resource: code\b", src_txt) or os.path.exists(".rulesync/subagents/code-pr.md"):
+    want_subs = sorted(want_subs + ["code"])
 if subs != want_subs:
     errs.append(f"subagent allows {subs}, want exactly {want_subs}")
 edits = [p.get("resource") for p in perms if p.get("action") == "edit"]
@@ -304,7 +349,7 @@ if not deny_all or not boards_allow or boards_allow[0] < deny_all[0]:
     print("the dev-boards allow does not follow the leading deny-all (last-match-wins would deny it)")
     sys.exit(1)
 EOF
-  ok "c2: generated agent frontmatter (name, distinct color, question + dev-boards* allows, NO broad dev* (D21), five subagent allows, three edit allows only)"
+  ok "c2: generated agent frontmatter (name, distinct color, question + dev-boards* allows, NO broad dev* (D21), the era-gated subagent roster — eight with cf-106 C04's code slot, three edit allows only)"
 
   # cf-58 C02/C03 re-pin: the PORT_REF frozen-permission-walk (the second
   # arm of this check) is RETIRED — the sanctioned delta grew from "the two
@@ -453,11 +498,45 @@ fi
 # folders ride the changed-paths walk; guards red on landed folders bury later checks.
 # merge2 round (2026-10-31): cf-88 lands a ROOT plan doc, not a folder — admitted
 # whole like the folders; question-notify stays admitted for CHUNK_BASE runs.
+# cf-86 widening (2026-10-30, same D6 precedent): the more-strata-models
+# ticket's plan folder joins the admit list — its bookkeeping commits (STATE
+# handoffs, approved chunk files) land on this branch like every ticket since
+# cf-58, and any untracked/dirty plan-folder state reddened c8 before then.
+# Inline literal per the A9 window-grep convention (agent-perms A9's pinned
+# slug loop does NOT demand this slug: cf-86 lands no t14/c7 block admits).
+# cf-86 serving-surface widening (2026-10-30 C06 test round, same prerogative
+# as every widening above): the admit list was assembled from CONTRACT tickets,
+# so it carried no serving surface at all — a model ticket's own chart/services
+# edits reddened c8 on any dirty tree mid-chunk, and its chart test tree
+# reddened over a range base (CHUNK_BASE=merge-base). Admits are the exact
+# files cf-86's chunks declare (chart values, the strata profile ConfigMap
+# template, the gpu-ai overlay) plus that chart's tests tree — deliberately NOT
+# charts/** or services/**, so a stray serving edit still goes red, and the
+# probe loop below keeps that true without a human remembering to check.
+# Manifest-driven admits (reading each chunk's "Files in scope") were rejected:
+# the plan folder is itself admitted and rewritten mid-run, so dev would grow
+# its own allow-list — a scope guard that trusts the scoped party is not a
+# guard — and agent-perms A9 window-greps literal admits inside the if-want
+# block, which a parsed loop cannot satisfy (it would need re-pinning too).
+# cf-90 widening (2026-10-31, agent-test): the running ticket's plan folder +
+# the hand-written skills/wekan-board-provision dir (C01; skills/* stays
+# enumerated per contract, exactly as wekan-mcp was admitted). Loop and test
+# edits ride the .agents/loops/*, tests/*, .rulesync/skills/*, .opencode/* and
+# AGENTS.md admits already in this set.
+# cf-106 widening (2026-11-03, agent-test; chunks/C01.md "Scope admits"): the
+# running ticket's own plan folder, admitted ONCE for all eleven chunks (plan
+# DECISIONS 2026-11-03, the cf-96 "admits cost a line in FOUR arms" friction
+# paid once). Its declared surfaces already ride this set: .rulesync/* +
+# .opencode/{agents,commands,skills}/* + AGENTS.md (skills/subagents/commands/
+# rules), scripts/* (C03a's session-noop-audit.sh), tests/* (tests/cf106-noop/**
+# and every re-pin), containers/wekan-mcp/*, skills/{wekan-mcp,wekan-board-
+# provision}/*, .opencode/plugin/*, .opencode/opencode.jsonc and .agents/loops/*.
+# Any file a replan adds joins THIS line — same rule as the cf-86 exact-file
+# precedent, and the probe loop below keeps the widening from becoming a
+# catch-all.
 if want c8; then
-  { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
-  while IFS= read -r p; do
-    [ -n "$p" ] || continue
-    case "$p" in
+  c8_admits() {
+    case "$1" in
       "$SKILL_SRC"|"$AGENT_SRC"|"$CMD_SRC"|"$PERM_SRC"|"$RULES_SRC"|\
       "$SKILL_GEN"|"$AGENT_GEN"|"$CMD_GEN"|"$PERM_GEN"|AGENTS.md|\
       containers/wekan-mcp/*|skills/wekan-api/*|tests/*|"$FEATURE"/*|\
@@ -476,21 +555,67 @@ if want c8; then
       .rulesync/skills/*|.opencode/skills/*|.opencode/opencode.jsonc|\
       .agents/plans/2026/2026-10-cf-58-feat-standalone-agent-merge/*|\
       .agents/plans/2026/2026-10-bug-board-coord-dev-boards-allow/*|\
-      skills/wekan-mcp/*|.opencode/plugin/board-context/*|\
+      skills/wekan-mcp/*|skills/container-creation/*|.opencode/plugin/board-context/*|\
       .agents/plans/2026/2026-10-cf-75-bug-wekan-mcp-skill/*|\
       .agents/plans/2026/2026-10-docs-wekan-mcp-arg-ergonomics/*|\
       .agents/plans/2026/2026-10-cf-76-feat-parallel-pipeline-loops/*|\
       .agents/plans/2026/2026-10-cf-83-refactor-strata-flash/*|\
+      .agents/plans/2026/2026-10-cf-86-feat-more-strata-models/*|\
       .agents/plans/2026/2026-10-cf-68-feat-wekan-mcp-create-list/*|\
       .agents/plans/2026/2026-10-cf-85-refactor-wekan-slug-session-link/*|\
       .agents/plans/2026/2026-10-cf-72-chore-coord-git-read-globs/*|\
       .agents/plans/2026/2026-10-chore-board-tick-cleanup/*|\
       .agents/plans/2026-10-30-chore-coord-surface-grants.md|\
-      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore) : ;;
-      *) fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)" ;;
+      charts/llama-swap/values.yaml|charts/llama-swap/templates/configmap-strata-profile.yaml|\
+      services/gpu-ai/prod/values.yaml|charts/llama-swap/tests/*|\
+      .agents/notes/strata-host-prep-gpu-ai.md|charts/llama-swap/README.md|\
+      containers/strata/Dockerfile|containers/strata/README.md|\
+      containers/strata/files/fetch_models.sh|containers/strata/files/hf_fetch.py|\
+      containers/strata/files/byte_pins.env|containers/strata/tests/test_dockerfile.py|\
+      containers/strata/carry/ornith-q36.patch|\
+      .agents/plans/2026/2026-10-cf-90-feat-board-coord-improvements/*|\
+      .agents/plans/2026/2026-10-cf-96-feat-dep-tracking-card-pickup/*|\
+      charts/coder/coder-templates/kubernetes/main.tf|charts/coder/coder-templates/kubernetes-hardened/main.tf|\
+      skills/wekan-board-provision/*|\
+      .opencode/plugin/pipeline-locks/*|.opencode/plugin/question-notify/*|.agents/loops/*|.gitignore|\
+      .agents/plans/2026/2026-11-cf-106-feat-coord-fixes/*) return 0 ;;
+      *) return 1 ;;
     esac
+  }
+  { git diff --name-only "$BASE" || true; git ls-files --others --exclude-standard; } | sort -u >"$TMP/changed.txt"
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    c8_admits "$p" || fail "c8: path outside the ticket's in-scope files: $p (base: $BASE)"
   done <"$TMP/changed.txt"
-  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder) and cf-72 (own plan folder) widenings (base: $BASE)"
+  # Widening, not a catch-all: paths no ticket on this branch has ever declared
+  # must stay outside the admit list. A probe path need not exist on disk — the
+  # check is on the pattern set.
+  # cf-86 docs round (2026-10-30): the runbook NOTE and the parent README join
+  # the admits as exact files — test_strata_runbook.py pins both docs'
+  # doctrine, so a docs round that moves the doctrine must move them.
+  # cf-86 C07 round (2026-10-31, owner U9.4): the image lift makes the strata
+  # image a cf-86 serving surface after all — the admits are the four paths
+  # chunks/C07.md declares (Dockerfile, README, files/, its test file), still
+  # never containers/** or containers/strata/* as a whole; the earlier probe
+  # entry (containers/strata/Dockerfile, "cf-86 builds no image") is retired
+  # with that premise, and its teeth move to the sibling-image probes below.
+  # cf-86 C09 round (2026-10-31, owner U11): one more exact build-context
+  # file joins the admits — the vendored carry patch chunks/C09.md declares.
+  # The carry/ DIRECTORY and any second patch file stay OUT (probe below):
+  # a third hunk would mean re-research, not a new file, and the scope guard
+  # keeps that expensive.
+  # .agents/notes/* and charts/llama-swap/* as wholes are NOT admitted
+  # (next loop proves the neighbours stay out).
+  for p in containers/strata/.dockerignore containers/music-assistant/Dockerfile \
+           containers/strata/carry/ornith-strata-fixups.patch containers/gemma/serve.Dockerfile \
+           charts/llama-swap/templates/deployment.yaml \
+           charts/home-assistant/values.yaml services/home/agents/prod/values.yaml \
+           .github/workflows/ci.yaml .agents/notes/strata-remediation-plan.md; do
+    if c8_admits "$p"; then
+      fail "c8: the admit list admits $p — a serving widening grew into a catch-all (scope teeth lost)"
+    fi
+  done
+  ok "c8: changed paths limited to the ticket's in-scope files incl. the tests-edit-perms D4/D9, cf-75 (skills/wekan-mcp, board-context plugin, own plan folder), cf-83 D6 (plan folder), cf-85 (own plan folder), cf-72 (own plan folder), the merge-round own-folder admits (cf-68, board-tick-cleanup, cf-88 surface-grants doc), cf-86 (plan folder + declared serving trio + its chart tests tree + its two pinned docs + its C07 image-build surfaces), cf-90 (plan folder + skills/wekan-board-provision admits) and cf-96 (plan folder + C09 coder-template pair) widenings; undeclared serving paths still rejected (base: $BASE)"
 fi
 
 # --- c9: skill self-declaration + agent skeleton loads (C02 AC5, C03 AC4) -----
@@ -520,8 +645,12 @@ fi
 # --- c11: the five standard checklists (C02 AC1, D9 drift detector; cf-58
 #       C05 Lifecycle re-pin + C06 routing clauses) ---------------------------
 # The Services item set regenerates from `ls services/` at run time (D9).
-# cf-58 C05: the third checklist is LIFECYCLE (eight stages, checked-stages-
-# only, nothing-checked = full standard loop). C06: the Model(s) four-option
+# cf-58 C05: the third checklist is LIFECYCLE (checked-stages-only,
+# nothing-checked = the standard loop). cf-96 C07 RE-PIN: the intake eight-
+# stage set became ELEVEN items — the ten stages in card order plus Single
+# Session LAST (OQ6 ruling) — and the nothing-checked default is the seven-
+# stage list (Exploration first, Final Review last, Deployment + Single
+# Session opt-in). The window/HITL/default pins below ride the new list. C06: the Model(s) four-option
 # line stays UNCHANGED while the routing paragraph grows the two combination
 # clauses. The Model(s)/HITL pins hold exactly as before. cf-83 C01 RE-PIN:
 # the Flash+Local combination clause demands flash-next-strata — the route
@@ -539,19 +668,31 @@ if want c11; then
   done
   grep -qE 'feat.*bug.*debug.*dep.*refactor.*chore.*docs' "$SKILL_GEN" \
     || fail "c11: the Type checklist does not list feat|bug|debug|dep|refactor|chore|docs in one passage"
-  grep -qE 'Qwen Large.*Qwen 27b.*Qwen Flash.*Local' "$SKILL_GEN" \
-    || fail "c11: the Model(s) checklist does not list Qwen Large | Qwen 27b | Qwen Flash | Local (the four-option line stays UNCHANGED — C06 AC2)"
+  grep -qE 'Qwen Large.*Qwen Dense.*Qwen Flash.*Local' "$SKILL_GEN" \
+    || fail "c11[cf-106 C02]: the Model(s) checklist does not list Qwen Large | Qwen Dense | Qwen Flash | Local — the four-option line keeps its shape with the renamed middle label (red until C02 renames and regenerates)"
+n27="$(grep -c 'Qwen 27b' "$SKILL_GEN")"
+if [ "$n27" -gt 1 ]; then
+    fail "c11[cf-106 C02]: the generated boards mirror mentions 'Qwen 27b' $n27 times — only the alias sentence may carry the retired label (regenerate the mirror, never hand-edit it)"
+fi
+   # source↔mirror parity for the same claim (c11's posture: mirror work, but a
+   # source that disagrees with its mirror is a rulesync lie)
+   grep -qE 'Qwen Large.*Qwen Dense.*Qwen Flash.*Local' "$SKILL_SRC" \
+     || fail "c11[cf-106 C02 AC1]: the boards SOURCE Model(s) line is not the four-label Dense set — the source and its generated mirror must carry the same vocabulary"
   grep -qE 'Qwen Large.*Flash Next' "$SKILL_GEN" && fail "c11[C06]: a single passage pairing 'Qwen Large' with 'Flash Next' — the Model(s) checklist gained a fifth option; Q6 vetoed it (combination of existing checks is the mechanism)"
-  python3 "$TMP/window.py" "$SKILL_GEN" 900 'Pre Research' 'Plan' 'Post Research' 'Test' 'Code' 'Review' 'Deploy' 'Single Session' \
-    || fail "c11[C05]: the Lifecycle checklist does not carry its eight items in one passage (red before C05)"
-  python3 "$TMP/window.py" --ci "$SKILL_GEN" 800 'Default' 'nothing' 'full standard loop' 'Plan' 'Test' 'Code' 'Review' \
-    || fail "c11[C05]: no nothing-checked default passage (checked items = the stages; nothing checked = the full standard loop Plan+Test+Code+Review — Q5 semantics, red before C05)"
-  grep -qE 'Human in the Loop.*`Research` \| `Plan` \| `PR` \| `Deployment`' "$SKILL_GEN" \
-    || fail "c11: the Human in the Loop checklist does not list Research | Plan | PR | Deployment in one passage"
-  grep -qF 'Default selection: `Qwen Flash`' "$SKILL_GEN" \
-    || fail "c11: the Model(s) checklist does not state its default selection (Qwen Flash alone)"
-  grep -qF 'Default: `Plan`' "$SKILL_GEN" \
-    || fail "c11: the Human in the Loop checklist does not state its default item (Plan)"
+  python3 "$TMP/window.py" "$SKILL_GEN" 900 'Exploration' 'Agent Decides Research' 'Pre Research' 'Planning' 'Post Research' 'Test Writing' 'Chunk Development' 'Chunk Review' 'Final Review' 'Deployment' 'Single Session' \
+    || fail "c11[C07]: the Lifecycle checklist does not carry its eleven items in one passage (cf-96 C07 redesign, card order, Single Session LAST; red before C07's text + this re-pin)"
+  python3 "$TMP/window.py" --ci "$SKILL_GEN" 800 'default' 'nothing is checked' 'exploration' 'agent decides research' 'final review' \
+    || fail "c11[C07]: no nothing-checked default passage (the Stage map's Blank defaults section: the seven-stage standard default loop, Exploration first, Final Review last; the retired Plan+Test+Code+Review shape)"
+  grep -qE 'Human in the Loop.*`Exploration` \| `Agent Decides Research` \| `Pre Research` \| `Planning` \| `Post Research` \| `Test Writing` \| `Chunk Development` \| `Chunk Review` \| `Final Review` \| `Deployment` \| `Single Session`' "$SKILL_GEN" \
+    || fail "c11[C07]: the Human in the Loop checklist does not mirror the eleven Lifecycle names in one passage (the OQ6-derived exact mirror)"
+  # cf-106 C02 AC2: the default selection is pinned on SOURCE and MIRROR alike —
+  # the flip must be identical on both (a hand-edited or stale mirror fails here).
+  for f in "$SKILL_SRC" "$SKILL_GEN"; do
+    grep -qF 'Default selection: `Qwen Dense`' "$f" \
+      || fail "c11[cf-106 C02 AC2]: $f does not state the Model(s) default selection as Qwen Dense — the checklist default flips with the vocabulary (OQ-7: BOTH defaults flip) and source+mirror must agree; red until C02 + regenerate"
+  done
+  grep -qF 'Default: `Final Review`' "$SKILL_GEN" \
+    || fail "c11[C07]: the Human in the Loop checklist does not state its default item (Final Review - the C07 blank-HITL default)"
   # C06: the routing paragraph's two combination clauses (source of truth is
   # the boards skill; tests/pipeline-models runs the same pins on SOURCE).
   # cf-83 C01 re-pin: the Flash+Local needle moved q3 -> strata — this window
@@ -560,7 +701,7 @@ if want c11; then
     || fail "c11[C06/cf-83]: the routing paragraph lacks the Flash+Local → flash-next-strata combination clause (red before C01 dev)"
   python3 "$TMP/window.py" --ci "$SKILL_GEN" 600 '27b' 'local' 'qwen3.8-27b-q4' 'unless' \
     || fail "c11[C06]: the routing paragraph lacks the 27b+Local → q4 unless-another-quant clause (red before C06)"
-  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle eight items + nothing-checked full-standard-loop default; Model(s) four options + Qwen Flash default (UNCHANGED); HITL items + default; combination clauses present with the cf-83 strata re-pin"
+  ok "c11: five checklist titles with full item sets — Services regenerated from ls services/; Lifecycle's eleven items (cf-96 C07) + nothing-checked seven-stage default; Model(s) four options with Qwen Dense as the default selection, source and mirror agreeing and the retired label surviving only as the alias; HITL items mirror the eleven + Final Review default; combination clauses present with the cf-83 strata re-pin"
 fi
 
 # --- c12: slug/session custom fields, cf- slugs, session-origin URL, no run tag (C02 AC1, cf-50 r2 re-pin) --
@@ -591,9 +732,20 @@ if want c12; then
     || fail "c12: the session-link path format (OpenChamber router, research §10) is missing"
   grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag|omits/nulls' "$SKILL_GEN" \
     || fail "c12: the skill never retires the run tag for card-driven runs (D10/retirement rule)"
+  # cf-90 C02 FLIP (2026-10-31): the card-driven-only posture is retired
+  # globally — the boards retirement bullet now states BOTH-family scope and
+  # cites pipeline-kickoff for the mechanics. Designed red before C02 dev;
+  # the or-form accepts either global wording ('every flavor' or
+  # 'both families' — the plan's two phrasings across the chunk table).
+  if grep -qF 'keeps run tag' "$SKILL_GEN"; then
+    fail "c12[C02 AC4]: the boards skill still says agent-coord KEEPS run tags — the retirement is global now (cf-90 C02), supersede this wording"
+  fi
+  if python3 "$TMP/window.py" --ci "$SKILL_GEN" 1200 'run tag' 'retir' 'flavor'; then :;
+  elif python3 "$TMP/window.py" --ci "$SKILL_GEN" 1200 'run tag' 'retir' 'famil'; then :;
+  else fail "c12[C02 AC1/AC4]: the boards retirement bullet does not name the GLOBAL scope in one passage (run tag + retire + 'every flavor'/'both families') citing pipeline-kickoff (red before C02 dev)"; fi
   python3 "$TMP/neg12.py" "$SKILL_GEN" \
     || fail "c12: a line pairs 'models' with 'custom field' without negating it — D12 dropped the models field (phrase the negation explicitly, e.g. 'no third field; routing rides the Model(s) checklist')"
-  ok "c12: slug/session custom fields + cf- slug rule + dead-literal ABSENCE + dynamic Session-origin phrases + run-tag retirement; no models/custom-field pairing"
+  ok "c12: slug/session custom fields + cf- slug rule + dead-literal ABSENCE + dynamic Session-origin phrases + GLOBAL run-tag retirement (cf-90 C02 flip: no 'keeps run tags', scope named with the kickoff cite); no models/custom-field pairing"
 fi
 
 # --- c13: research-only iterative loop (C02 AC1, D14/D15/D19) ------------------
@@ -648,6 +800,10 @@ if want c16; then
     || fail "c16: the agent body does not route models from the Model(s) checklist (D12 — the sole routing input)"
   grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag' "$TMP/agent-body.md" \
     || fail "c16: the agent body never retires the run tag for card-driven runs"
+  # cf-90 C02 HOLD negative: the body keeps the retirement sentence true —
+  # the keeps-run-tags era must not sneak back through a body restatement.
+  grep -qF 'keeps run tag' "$TMP/agent-body.md" \
+    && fail "c16[C02 AC4]: the agent body re-adopts 'keeps run tags' — retirement is global (cf-90 C02), the card-runs sentence must stay the retire-shape"
   python3 "$TMP/neg12.py" "$TMP/agent-body.md" \
     || fail "c16: agent body pairs 'models' with 'custom field' without negating it (D12)"
   grep -qE 'slug' "$CMD_GEN" && grep -qE 'session' "$CMD_GEN" \
@@ -655,10 +811,10 @@ if want c16; then
   ok "c16: agent body + command mirror the skill's pinned strings (pickup order, research-only exit, cf-slug/no-run-tag, checklist intake)"
 fi
 
-# --- c18: Lifecycle consumption contract (cf-58 C05) ----------------------------
+# --- c18: Lifecycle consumption contract (cf-58 C05; cf-96 C07 re-pin: 11 rows) --
 # The agent-side consumption of the checklist restructure, on source AND
-# mirror: the Stage map section (8 rows, each naming its pipeline agent or
-# action — the single table coords cite, never restate), the transition rule
+# mirror: the Stage map section (11 rows naming each stage's pipeline agent
+# or action — the single table coords cite, never restate), the transition rule
 # for cards still carrying the legacy Research checklist, the human-owned
 # board-side cutover documentation, the reworded label-trigger sentence, the
 # five-checklists enumeration with Lifecycle in board-coord bodies + boards
@@ -682,25 +838,28 @@ rows = [l for l in body.splitlines() if l.strip().startswith('|') and not re.mat
 # early exit masked it before C05 landed.
 _DEV = 'agent-de' + 'v'  # token assembled to stay clean under agent-perms A13's sweep
 stage_tokens = {
+    'Exploration': ['agent-explore'],
+    'Agent Decides Research': ['pipeline-role-coord'],
     'Pre Research': ['agent-research'],
-    'Plan': ['agent-plan'],
+    'Planning': ['agent-plan'],
     'Post Research': ['agent-research'],
-    'Test': ['agent-test'],
-    'Code': [_DEV, 'review'],   # the chunk loop names the dev role + review
-    'Review': ['agent-review'],
-    'Deploy': ['push', 'ready'],
+    'Test Writing': ['agent-test'],
+    'Chunk Development': [_DEV],  # the dev-variant slot; the review lives in the NEXT row
+    'Chunk Review': ['agent-review'],
+    'Final Review': ['agent-review'],
+    'Deployment': ['push', 'ready'],
     'Single Session': [_DEV, 'review'],  # ONE dev-variant session, ONE final review
 }
 missing = []
 for stage, tokens in stage_tokens.items():
-    hit = [r for r in rows if stage in r]
+    hit = [r for r in rows if r.strip().startswith('| `' + stage + '`')]
     if not hit:
         missing.append(f"row '{stage}'")
         continue
     if not all(tok in hit[0] for tok in tokens):
         missing.append(f"row '{stage}' lacks tokens {tokens}")
-if len(rows) < 9:  # 8 stage rows + at least the header row
-    missing.append(f"only {len(rows)} table rows, want 8 stage rows + header")
+if len(rows) < 12:  # 11 stage rows + at least the header row
+    missing.append(f"only {len(rows)} table rows, want 11 stage rows + header")
 if missing:
     print(f"{path}: stage map incomplete: {'; '.join(missing)}"); sys.exit(1)
 PY
@@ -714,16 +873,13 @@ PY
 import sys
 text = open(sys.argv[1]).read()
 bad = []
-for needle in ('Before Planning', 'After Planning', 'Agent Decides'):
-    start = 0
-    while True:
-        i = text.find(needle, start)
-        if i < 0:
-            break
+import re
+for pat in ('Before Planning', 'After Planning', r'Agent Decides(?!\s+Research)'):
+    for m in re.finditer(pat, text):
+        i = m.start()
         ctx = text[max(0, i - 320):i + 320].lower()
         if 'legacy' not in ctx and 'transition' not in ctx:
-            bad.append(f"'{needle}' outside transition context near offset {i}")
-        start = i + 1
+            bad.append(f"'{pat}' outside transition context near offset {i}")
 if bad:
     print('; '.join(bad)); sys.exit(1)
 PY
@@ -740,7 +896,7 @@ PY
       fail "c18[C05]: $f still carries the old slash-enumeration Model(s)/Research/Human in the Loop — C05 replaced it (the Research LABEL mentions stay; the enumeration must not name a retired checklist)"
     fi
   done
-  ok "c18[C05]: Stage map (8 rows naming agents/actions), transition rule, human-owned cutover, never-fires sentence, no residual semantics — on boards source+mirror; the six board-coord bodies + both boards commands enumerate Lifecycle"
+  ok "c18[C05]: Stage map (11 rows naming agents/actions — the cf-96 C07 redesign), transition rule, human-owned cutover, never-fires sentence, no residual semantics — on boards source+mirror; the six board-coord bodies + both boards commands enumerate Lifecycle"
 fi
 
 # --- c17: pipeline-models / pipeline-gates byte-unchanged ----------------------
@@ -876,6 +1032,381 @@ PY
     fi
   done
   ok "c19: cf-85 one-field write-back holds across the boards pair, the three twins (+ mirrors) and the two commands (+ mirrors) — combined [<slug>](<session link>) form present, one upsert with no session assignment, single-field roster clause, legacy-bare resume parse, twins identical, retired pair wording absent from .rulesync/.opencode/AGENTS.md"
+fi
+
+# --- c20: cf-90 C02 naming round — global run-tag retirement + auto-accept ------
+# Designed red before C02 dev lands; the retirement scan (arm a) is the
+# AC1 authority: every surviving run-tag mention in the named surfaces must
+# be retirement wording or the null-record convention.
+KICK_SRC20=".rulesync/skills/pipeline-kickoff/SKILL.md"
+KICK_GEN20=".opencode/skills/pipeline-kickoff/SKILL.md"
+C20_SURF=(
+  "$KICK_SRC20" "$KICK_GEN20"
+  .rulesync/commands/pipeline.md .opencode/commands/pipeline.md
+  .rulesync/commands/pipeline-pr.md .opencode/commands/pipeline-pr.md
+  "$RULES_SRC" AGENTS.md
+  .rulesync/skills/pipeline-role-plan/SKILL.md .opencode/skills/pipeline-role-plan/SKILL.md
+  .rulesync/skills/agents-sync/references/plan-and-result.md .opencode/skills/agents-sync/references/plan-and-result.md
+  .rulesync/skills/agents-sync/references/pipeline-overview.md .opencode/skills/agents-sync/references/pipeline-overview.md
+)
+if want c20; then
+  for f in "${C20_SURF[@]}"; do
+    offenders=$(grep -inE 'run.?tag' "$f" 2>/dev/null | grep -viE 'retir|null|omitted' || true)
+    [ -z "$offenders" ] || { printf '%s\n' "$offenders" >&2; fail "c20[C02 AC1]: $f keeps run-tag text outside retirement/null wording (red before C02 dev — run tags are retired for EVERY flavor; only retirement sentences and the STATE null-record convention may name them)"; }
+  done
+  # (b) mint-shape negatives: no <slug>-<run tag> / <slug>-<tag> surface
+  # survives anywhere (the D11 sequential <slug>-1 form is a different rule).
+  hits=$(grep -rn -F -e '<slug>-<run tag>' -e '<slug>-<tag>' .rulesync .opencode AGENTS.md 2>/dev/null || true)
+  [ -z "$hits" ] || { printf '%s\n' "$hits" >&2; fail "c20[C02 Tests, negative pin]: a <slug>-<run tag> or <slug>-<tag> worktree-shape assertion survives above — C02's Tests list REQUIRES it gone (red before C02 dev)"; }
+  # (c) bare-slug minting (AC2): the kickoff line now names worktree/branch
+  # as the bare slug. Two tolerated renderings of the same contract.
+  for f in "$KICK_SRC20" "$KICK_GEN20"; do
+    if grep -qF 'name `<slug>`' "$f" || grep -qiE 'bare `<slug>`' "$f"; then :; else
+      fail "c20[C02 AC2]: $f never mints worktree/branch as the BARE <slug> (the 'name \`<slug>\`' contract — red before C02 dev)"
+    fi
+  done
+  # (d) the STATE example follows the null-record convention (AC1).
+  for f in .rulesync/skills/agents-sync/references/plan-and-result.md .opencode/skills/agents-sync/references/plan-and-result.md; do
+    grep -qF '"worktree": "<slug>"' "$f" \
+      || fail "c20[C02]: $f's STATE kickoff example does not show worktree = the bare <slug> (red before C02 dev)"
+  done
+  # (e) HOLD: the questions sentence still enumerates slug + models (C02 only
+  # drops the run-tag member — a wholesale deletion reddens here).
+  for f in .rulesync/commands/pipeline.md .opencode/commands/pipeline.md \
+           .rulesync/commands/pipeline-pr.md .opencode/commands/pipeline-pr.md; do
+    python3 "$TMP/window.py" --ci "$f" 300 'kickoff questions' 'slug' 'models' \
+      || fail "c20[C02 AC1/HOLD]: $f lost the slug+models enumeration of the kickoff questions sentence"
+  done
+  # (f) overview.md + AGENTS.md state the global retirement + slug-names-all
+  # (the replacement sentence the C02 Tasks pin).
+  for f in "$RULES_SRC" AGENTS.md; do
+    python3 "$TMP/window.py" --ci "$f" 1200 'run tag' 'retir' 'worktree' 'branch' \
+      || fail "c20[C02 AC4]: $f does not state the retirement AND the slug-names-folder/worktree/branch/session rule in one passage (red before C02 dev)"
+  done
+  # (g) slug auto-accept (AC3): the boards pair carries the sentence.
+  for f in "$SKILL_SRC" "$SKILL_GEN"; do
+    grep -qiE 'auto.?accept' "$f" \
+      || fail "c20[C02 AC3]: $f has no auto-accept wording — a slug derived from card content is auto-accepted (red before C02 dev)"
+    python3 "$TMP/window.py" --ci "$f" 900 'auto-accept' 'batched' \
+      || fail "c20[C02 AC3]: $f's auto-accept sentence does not name the batched round it never joins (red before C02 dev)"
+  done
+  # (h) ls/pwd verify-and-close (AC5) — GREEN NOW: the six generated coord
+  # copies must each carry the four cf-88 diagnostic rows exactly once, so
+  # review's evidence for the DECISIONS.md verdict is this passing arm, not
+  # a hand-run grep. A drifted copy (or a silent permission edit) reddens.
+  for f in .opencode/agents/agent-coord.md .opencode/agents/agent-coord-local.md \
+           .opencode/agents/agent-coord-pr.md .opencode/agents/agent-board-coord.md \
+           .opencode/agents/agent-board-coord-local.md .opencode/agents/agent-board-coord-pr.md; do
+    for row in 'ls' 'ls \*' 'pwd' 'pwd \*'; do
+      c=$(grep -cE "^[[:space:]]+resource: ${row}$" "$f" || true)
+      [ "$c" -eq 1 ] \
+        || fail "c20[C02 AC5/HOLD]: $f carries $c 'resource: $row' rows, want exactly 1 — the ls/pwd close is VERIFY-only: the grants exist, no code change is expected (a red here means drift, fix via source + regenerate)"
+    done
+  done
+  ok "c20[C02 AC1-AC4]: run-tag retirement scan, mint-shape negatives, bare-<slug> kickoff + STATE example, questions sentence holds, global wording in rules+AGENTS, boards auto-accept"
+fi
+
+# --- c21: cf-90 C03 provider filtering (final-approval ruling) -------------------
+if want c21; then
+  grep -qE '^#{2,4}[[:space:]].*[Pp]rovider [Ff]iltering' "$SKILL_SRC" \
+    || fail "c21[C03 AC1]: $SKILL_SRC has no 'Provider filtering' subsection heading (red before C03 dev)"
+  python3 - "$SKILL_SRC" "$SKILL_GEN" <<'PY' || fail "c21[C03 AC1]: the Provider filtering section pins fail (detail above; both boards trees must carry them)"
+import re, sys
+def section(path, title):
+    text = open(path).read()
+    m = re.search(r'(?ms)^#+[^\n]*' + title + r'[^\n]*\n(.*?)(?=^#{1,4}[^\n]*$|\Z)', text)
+    return (m.group(1) if m else None)
+for path in sys.argv[1:]:
+    s = section(path, 'Provider filtering')
+    if s is None:
+        print(f"{path}: 'Provider filtering' section not found"); sys.exit(1)
+    t = s.lower()
+    def need(*needles):
+        for n in needles:
+            if n not in t:
+                print(f"{path}: section lacks needle {n!r}"); sys.exit(1)
+    # per-flavor pickup rule (POSITIVE: Local = planned taker of unlabeled;
+    # NEGATIVE: API scheduled walk takes ONLY explicit Provider: API)
+    need('provider: api', 'only', 'provider: local', 'unlabeled', 'planned', 'taker')
+    # ask-before-routing + human-labeling request on EVERY flavor
+    need('which provider', 'routing', 'apply', 'human-owned')
+    # cite, never restate
+    need('pipeline-models')
+    # API meets unlabeled only via a user-initiated manual run
+    need('manual')
+    if 'claimable by both' in t or 'whichever claims' in t or 'either may take' in t:
+        print(f"{path}: superseded batched-round shape survived in the section"); sys.exit(1)
+PY
+  strays=$(grep -rinE 'claimable by both|whichever claims (the )?first|either may take' .rulesync/skills .opencode/skills 2>/dev/null || true)
+  [ -z "$strays" ] || { printf '%s\n' "$strays" >&2; fail "c21[C03 Tests]: the superseded unlabeled posture survives in a skill surface — the final-approval ruling named ONE planned scheduled taker"; }
+  ok "c21[C03 AC1]: Provider filtering pins — API-only/Local+unlabeled planned taker, ask-before-routing + human-owned labeling on every flavor, pipeline-models cite, manual-only API exception, superseded shapes absent"
+fi
+
+# --- c22: cf-90 C03 follow-up-card protocol + friction destination flip ----------
+if want c22; then
+  grep -qE '^#{2,4}[[:space:]].*Follow-?up cards' "$SKILL_SRC" \
+    || fail "c22[C03 AC1]: $SKILL_SRC has no 'Follow-up cards' subsection heading (red before C03 dev)"
+  python3 - "$SKILL_SRC" "$SKILL_GEN" <<'PY' || fail "c22[C03 AC1 + AC3]: follow-up/friction pins fail (detail above)"
+import re, sys
+def section(text, title):
+    m = re.search(r'(?ms)^#+[^\n]*' + title + r'[^\n]*\n(.*?)(?=^#{1,4}[^\n]*$|\Z)', text)
+    return (m.group(1) if m else None)
+def need(path, t, *needles):
+    for n in needles:
+        if n not in t:
+            print(f"{path}: passage lacks needle {n!r}"); sys.exit(1)
+for path in sys.argv[1:]:
+    text = open(path).read()
+    s = section(text, 'Follow-?up cards')
+    if s is None:
+        print(f"{path}: 'Follow-up cards' section not found"); sys.exit(1)
+    t = s.lower()
+    if not (t.count('post-research') or (t.count('post research'))):
+        print(f"{path}: timing sentence missing"); sys.exit(1)
+    need(path, t, 'before', 'test', 'inbox', 'backlog', 'list_lists',
+         'except', 'research', 'default_checked', 'toggle_checklist_item',
+         'add_checklist', 'never', 'labels to apply', 'body')
+    if not re.search(r'label[ -]tool', t):
+        print(f"{path}: the labels-in-body degrade does not cite the label-tool card"); sys.exit(1)
+    f = section(text, 'Friction follow-up')
+    if f is None:
+        print(f"{path}: 'Friction follow-up' section lost"); sys.exit(1)
+    ft = f.lower()
+    need(path, ft, 'inbox', 'backlog', 'never visits')
+    if re.search(r'(landing in|into|to)\s*\*\*review\*\*', ft):
+        print(f"{path}: the friction destination still reads Review — the batched-round ruling repointed it to Inbox"); sys.exit(1)
+PY
+  ok "c22[C03 AC1+AC3]: follow-up protocol pins (timing, Inbox destination + list_lists re-resolve, except-Research parent labels, default_checked-or-toggle, never-add_checklist, labels-in-body degrade citing the label-tool card) and the friction section flipped to Inbox with the Backlog non-intake rationale"
+fi
+
+# --- c23: cf-106 C09 — the rewritten Human-stops/Exit posture, source ↔ mirror --
+# C09 turns the PIPELINE LOCK LOST posture from "stop forever" into "stop the
+# step, ONE sanctioned question, then a resume under the card-id lock". The
+# chunk's Tests duty is the source↔mirror arms for the rewritten section plus
+# the one-sided-edit control: rulesync mirrors the skill, so a source-only edit
+# is a lie about the generated surface. Dev-facing needles are RED until C09
+# lands the wording; the parity arms are green today and rotate with either side.
+if want c23; then
+  if ! python3 - "$SKILL_SRC" "$SKILL_GEN" <<'PY'
+import re, sys
+
+def bullet(text, anchor):
+    m = re.search(r"(?m)^[-*][ \t]+\*\*" + anchor, text)
+    if not m:
+        return None
+    rest = text[m.start():]
+    stop = re.search(r"\n[-*][ \t]+\*\*|\n##", rest[1:])
+    return rest[:stop.start() + 1] if stop else rest
+
+NEEDLES = [
+    ("Human stops", r"PIPELINE LOCK LOST", "the signal the posture is stated on"),
+    ("Human stops", r"one sanctioned question|exactly one question|ONE sanctioned question",
+     "C09: stop, then exactly ONE sanctioned question in this run"),
+    ("Human stops", r"pipelines\s*:\s*\[?\s*<cardId>|pipelines\s*:\s*\[card",
+     "C09: the resume re-claims under pipelines:[<cardId>]"),
+    ("Human stops", r"asks[^.]{0,80}(move|Timeout)|before any move",
+     "C09: moving a card OUT of Timeout is the owner's call — the run asks first"),
+    ("Human stops", r"comment[^.]{0,120}(takeover|lock key)|(takeover|lock key)[^.]{0,120}comment",
+     "C09: the resume appends a comment naming the takeover and the lock key"),
+    ("Human stops", r"kickoff\.claim", "C09: the takeover is recorded in STATE.json kickoff.claim"),
+    ("Human stops", r"never a silent resume|no silent resume",
+     "C09: no answer inside the session takes the abandoned exit — never a silent resume"),
+    ("Human stops", r"second question", "C09: and never a second question"),
+    ("Exit", r'outcome:"abandoned"|abandon-release', "the blocked-card exit keeps its wording"),
+    ("Exit", r"keep-and-stale|keep the lock", "including the keep-and-stale alternative"),
+    ("Exit", r"takeover|continue anyway", "C09: the human-gated takeover branch is named in the Exit choice"),
+]
+
+def check(src_path, gen_path):
+    src, gen = open(src_path).read(), open(gen_path).read()
+    errs = []
+    for anchor in ("Human stops", "Exit"):
+        b_src, b_gen = bullet(src, anchor), bullet(gen, anchor)
+        if b_src is None or b_gen is None:
+            errs.append(f"{src_path if b_src is None else gen_path}: the '{anchor}' bullet is gone — the section C09 rewrites lost its anchor")
+            continue
+        if b_src != b_gen:
+            errs.append(f"source and mirror DIFFER on the '{anchor}' bullet — edit .rulesync/ and regenerate, never the mirror")
+    for anchor, pat, why in NEEDLES:
+        for label, text in (("source", src), ("mirror", gen)):
+            b = bullet(text, anchor)
+            if b and not re.search(pat, b, re.I | re.S):
+                errs.append(f"{label}/{anchor}: missing {why} (/{pat}/)")
+    for anchor in ("Human stops", "Exit"):
+        b = bullet(gen, anchor)
+        if not b:
+            continue
+        take = re.search(r"takeover|continue anyway", b, re.I)
+        blocked = re.search(r'outcome:"abandoned"|abandon-release', b, re.I)
+        if take and blocked and take.start() > blocked.start():
+            errs.append(f"mirror/{anchor}: the takeover branch must be named AHEAD of the blocked abandon/keep choice (C09 task)")
+    return errs
+
+errs = check(*sys.argv[1:3])
+if errs:
+    print("; ".join(errs))
+    sys.exit(1)
+PY
+  then
+    fail "c23[cf-106 C09 AC1-AC5]: the boards Human-stops/Exit posture is not the sanctioned-question + card-id-takeover contract on BOTH the source and its generated mirror (reason printed above; red before C09 lands)"
+  fi
+  # Control 1 (satisfiability): a fabricated COMPLIANT pair must read clean.
+  python3 - "$SKILL_SRC" "$TMP/boards-c09-src.md" <<'PY'
+import re, sys
+src = open(sys.argv[1]).read()
+m = re.search(r"(?m)^[-*][ \t]+\*\*Human stops.*?(?=\n[-*][ \t]+\*\*|\n##)", src)
+assert m, "fixture: no Human stops bullet"
+addition = (m.group(0).rstrip()
+            + " On that signal: stop the step, then ask the user exactly ONE sanctioned question in this run — "
+              "on yes, re-claim with `pipeline_claim(pipelines:[<cardId>])` (the card-id key), keep the card where it is, "
+              "asks before any move out of **Timeout**, append a comment naming the takeover and the lock key, and record "
+              "the takeover in STATE.json `kickoff.claim`; on no or silence take the blocked/abandoned exit — never a "
+              "silent resume, never a second question.\n")
+out = src[:m.start()] + addition + src[m.end():]
+me = re.search(r"(?m)^[-*][ \t]+\*\*Exit.*?(?=\n[-*][ \t]+\*\*|\n##)", out)
+assert me, "fixture: no Exit bullet"
+fixed = me.group(0).replace('A blocked card:', 'Takeover (the human-gated branch): continue anyway only after the one sanctioned question. A blocked card:')
+out = out[:me.start()] + fixed + out[me.end():]
+open(sys.argv[2], "w").write(out)
+PY
+  cp "$TMP/boards-c09-src.md" "$TMP/boards-c09-gen.md"
+  if ! python3 - "$TMP/boards-c09-src.md" "$TMP/boards-c09-gen.md" <<'PY'
+import re, sys
+def bullet(text, anchor):
+    m = re.search(r"(?m)^[-*][ \t]+\*\*" + anchor, text)
+    if not m:
+        return None
+    rest = text[m.start():]
+    stop = re.search(r"\n[-*][ \t]+\*\*|\n##", rest[1:])
+    return rest[:stop.start() + 1] if stop else rest
+src, gen = open(sys.argv[1]).read(), open(sys.argv[2]).read()
+pats = [r"PIPELINE LOCK LOST", r"one sanctioned question|exactly one question",
+        r"pipelines\s*:\s*\[?\s*<cardId>|pipelines\s*:\s*\[card", r"asks[^.]{0,80}(move|Timeout)|before any move",
+        r"comment[^.]{0,120}(takeover|lock key)|(takeover|lock key)[^.]{0,120}comment", r"kickoff\.claim",
+        r"never a silent resume|no silent resume", r"second question"]
+bad = []
+for p in pats:
+    if not re.search(p, bullet(src, "Human stops") or "", re.I):
+        bad.append(p)
+b = bullet(src, "Exit") or ""
+if not re.search(r"takeover|continue anyway", b, re.I) or not re.search(r'outcome:"abandoned"|abandon-release', b, re.I):
+    bad.append("exit-branch")
+print(",".join(bad))
+sys.exit(1 if bad else 0)
+PY
+  then
+    fail "c23[cf-106 C09]: NEGATIVE CONTROL FAILED — the fabricated compliant wording did not satisfy the needles (the pins above are unsatisfiable)"
+  fi
+  # Control 2 (parity is live): a SOURCE-only edit must redden the mirror arms.
+  if ! python3 - "$TMP/boards-c09-src.md" "$SKILL_GEN" <<'PY'
+import re, sys
+def bullet(text, anchor):
+    m = re.search(r"(?m)^[-*][ \t]+\*\*" + anchor, text)
+    if not m:
+        return None
+    rest = text[m.start():]
+    stop = re.search(r"\n[-*][ \t]+\*\*|\n##", rest[1:])
+    return rest[:stop.start() + 1] if stop else rest
+src, gen = open(sys.argv[1]).read(), open(sys.argv[2]).read()
+sys.exit(0 if bullet(src, "Human stops") != bullet(gen, "Human stops") else 1)
+PY
+  then
+    fail "c23[cf-106 C09]: NEGATIVE CONTROL FAILED — a source-only rewrite of the Human-stops bullet did not read as source/mirror drift"
+  fi
+  ok "c23[cf-106 C09 AC1-AC5]: the Human-stops and Exit bullets carry the sanctioned one-question posture, the card-id takeover shape (pipelines:[<cardId>], asks-before-move out of Timeout, takeover comment, kickoff.claim) and the never-silent-resume/never-second-question boundary on source AND mirror, the takeover branch is named ahead of the blocked choice, and both controls respond (a compliant pair reads clean, a source-only edit reads as drift)"
+fi
+
+# --- c24: cf-106 C04 — the code-pr mirror and the two contract mirrors --------
+# The generated-surface half of the permission change this chunk makes: the new
+# twin must have an honest rulesync mirror, the two skills that govern it must
+# have moved on BOTH trees, and the agents-sync permissions matrix must have
+# moved with the block (the drift lesson this suite exists to enforce). Red
+# before C04 lands the twin; a HOLD pair afterwards.
+if want c24; then
+  RC_SRC=".rulesync/skills/pipeline-role-coord/SKILL.md"
+  RC_GEN=".opencode/skills/pipeline-role-coord/SKILL.md"
+  PP_SRC=".rulesync/skills/pipeline-push-pr/SKILL.md"
+  PP_GEN=".opencode/skills/pipeline-push-pr/SKILL.md"
+  if [ ! -f .rulesync/subagents/code-pr.md ]; then
+    fail "c24[cf-106 C04 AC3]: .rulesync/subagents/code-pr.md does not exist — these mirror arms engage when the twin lands (this run's red names the missing file)"
+  fi
+  [ -f .opencode/agents/code-pr.md ] \
+    || fail "c24[cf-106 C04 AC8]: .opencode/agents/code-pr.md is missing — rulesync generates the twin's runtime surface, so a launchable agent with no mirror is a stale generated tree"
+  python3 - .rulesync/subagents/code-pr.md .opencode/agents/code-pr.md <<'PY'
+import re, sys, yaml
+def fm(path):
+    m = re.match(r"^---\n(.*?)\n---\n", open(path).read(), re.S)
+    assert m, f"{path}: no frontmatter"
+    f = yaml.safe_load(m.group(1)) or {}
+    return f, ((f.get("opencode") or {}).get("permissions") or f.get("permissions") or [])
+src_f, src_p = fm(sys.argv[1])
+gen_f, gen_p = fm(sys.argv[2])
+bad = []
+if src_f.get("name") != gen_f.get("name"):
+    bad.append(f"name differs ({src_f.get('name')} vs {gen_f.get('name')})")
+if str(src_f.get("description")) != str(gen_f.get("description")):
+    bad.append("description differs between source and mirror")
+if src_p != gen_p:
+    i = next((i for i, (x, y) in enumerate(zip(src_p, gen_p)) if x != y), min(len(src_p), len(gen_p)))
+    bad.append(f"parsed permission lists differ at index {i} (lengths {len(src_p)}/{len(gen_p)}) — last-match-wins makes ORDER part of the mirror contract")
+if bad:
+    print("; ".join(bad)); sys.exit(1)
+PY
+  [ $? -eq 0 ] || fail "c24[cf-106 C04 AC8]: code-pr source and generated mirror are not honest twins (reason above) — regenerate, never hand-edit .opencode/"
+  # The governing skills moved on both trees, stated as passages (window.py is
+  # this suite's shipped co-location helper — scattered hits do not pass).
+  for f in "$RC_SRC" "$RC_GEN"; do
+    python3 "$TMP/window.py" --ci "$f" 900 'roster' 'code' 'code-pr' \
+      || fail "c24[cf-106 C04 AC6]: $f never states the roster gain (code on the plain/-local class, code-pr on -pr) as one passage"
+    python3 "$TMP/window.py" --ci "$f" 700 'dev variant' 'decisions.md' \
+      || fail "c24[cf-106 C04 AC6]: $f never states the dev-first preference with the DECISIONS.md record duty (AC6's preference rule)"
+    python3 "$TMP/window.py" --ci "$f" 900 'sole committer' 'ticket branch' 'never main' \
+      || fail "c24[cf-106 C04 AC6]: $f's Git section does not keep the sole-committer rule while bounding the sanctioned code-pr push to the ticket branch, never main"
+    python3 "$TMP/window.py" --ci "$f" 500 'ask' 'deny' 'validation' \
+      || fail "c24[cf-106 C04 AC6]: $f never records the consequence the chunk was told to record: in an unattended run ask behaves as deny for chunk validation commands"
+  done
+  for f in "$PP_SRC" "$PP_GEN"; do
+    python3 "$TMP/window.py" --ci "$f" 200 'code-pr' 'push' \
+      || fail "c24[cf-106 C04 AC5]: $f does not bring code-pr into the push contract's governed set as one passage (the mirror must move with the source)"
+  done
+  # The agents-sync drift lesson, machine-checked: a permission-block change is
+  # only done when the matrix moved with it — code/code-pr rows plus a dated entry.
+  for f in "$PERM_SRC" "$PERM_GEN"; do
+    python3 "$TMP/window.py" --ci "$f" 900 'code-pr' 'push' \
+      || fail "c24[cf-106 C04 AC1]: $f has no matrix passage carrying the code-pr push row — the permissions matrix moves with every block change"
+    python3 "$TMP/window.py" --ci "$f" 300 'cf-106' \
+      || fail "c24[cf-106 C04 AC1]: $f has no cf-106 drift entry for this permission change"
+  done
+  # Non-vacuity both ways: the needles must be satisfiable (a synthetic
+  # compliant skill passes them) and responsive (stripping the sole-committer
+  # sentence from the real skill reddens the same call).
+  cat >"$TMP/role-coord-compliant.md" <<'MD'
+# Roster
+Launch by class: the dev variant is the default implementer; the roster also
+allows the standalone `code` (plain/-local class) and `code-pr` (-pr class) as
+the second implementer, recorded per chunk in DECISIONS.md.
+## Git
+You are the pipeline's sole committer for chunk commits. On the -pr family a
+code-pr session may push the ticket branch only under pipeline-push-pr:
+explicit user request, ticket branch only, never main, never force.
+Chunk validation commands run under an `ask` baseline that resolves to deny
+unattended, so an unattended run reports the validation gap instead of
+widening the surface.
+MD
+  for needles in "900:roster:code:code-pr" "700:dev variant:decisions.md" "900:sole committer:ticket branch:never main" "500:ask:deny:validation"; do
+    IFS=':' read -r span n1 n2 n3 <<<"$needles"
+    if [ -z "${n3:-}" ]; then
+      python3 "$TMP/window.py" --ci "$TMP/role-coord-compliant.md" "$span" "$n1" "$n2" \
+        || fail "c24[cf-106 C04]: NEGATIVE CONTROL FAILED — the AC6 wording needles ('$n1' '$n2') are unsatisfiable even for a skill that states them"
+    else
+      python3 "$TMP/window.py" --ci "$TMP/role-coord-compliant.md" "$span" "$n1" "$n2" "$n3" \
+        || fail "c24[cf-106 C04]: NEGATIVE CONTROL FAILED — the AC6 wording needles ('$n1' '$n2' '$n3') are unsatisfiable even for a skill that states them"
+    fi
+  done
+  sed 's/[Ss]ole committer/one of the committers/' "$RC_SRC" >"$TMP/role-coord-hollow.md"
+  python3 "$TMP/window.py" --ci "$TMP/role-coord-hollow.md" 900 'sole committer' 'ticket branch' 'never main' >/dev/null 2>&1 \
+    && fail "c24[cf-106 C04]: NEGATIVE CONTROL FAILED — a role-coord copy whose sole-committer sentence was stripped still passes the window"
+  ok "c24[cf-106 C04 AC1/AC3/AC5/AC6/AC8]: the code-pr twin has an honest parsed mirror; pipeline-role-coord (source + mirror) states the roster gain, the dev-first preference with the DECISIONS record, the bounded push under the sole-committer rule and the ask-as-deny consequence; pipeline-push-pr brings code-pr into the governed set on both trees; permissions.md carries the code-pr matrix row and a cf-106 drift entry; the wording needles are satisfiable (synthetic compliant skill) and responsive (stripped copy rejected)"
 fi
 
 printf 'PASS: agent-board-coord rulesync-surface checks (%d ok)\n' "$checks"

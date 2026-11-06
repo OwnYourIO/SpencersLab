@@ -2,7 +2,12 @@ apiVersion: v2
 name: home-assistant
 version: 1.0.16
 appVersion: 1.0.0
-#dependencies:
-#- name: app-template
-#  version: 4.3.0
-#  repository: https://bjw-s-labs.github.io/helm-charts/
+dependencies:
+- name: app-template
+  version: 5.0.1
+  repository: https://bjw-s-labs.github.io/helm-charts/
+  # The chart's single surviving gate (C10 owner delta 2026-11-01): the HA
+  # container/subchart is flipped on per release (grow's HA is EXTERNAL, so
+  # it stays off there) while the CNPG clusters, ExternalSecrets and the
+  # /config PVC render unconditionally from the parent templates.
+  condition: homeAssistant.enabled

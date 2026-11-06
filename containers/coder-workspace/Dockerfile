@@ -26,7 +26,6 @@
 # No ENTRYPOINT: the Coder template supplies the agent bootstrap and calls
 # /usr/local/bin/workspace-startup.sh itself.
 
-# renovate: datasource=docker depName=debian
 FROM debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
 
 # pipefail matters here: the build-time version asserts pipe each CLI into

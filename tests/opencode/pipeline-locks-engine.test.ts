@@ -72,10 +72,23 @@
 //     env.reapStale({trigger:"timer"})) through env.timers; stop() clears
 //     every handle. setup's returned cleanup calls the same stop path and
 //     aborts the event subscription.
+//
+// cf-106 C08/C09 deltas on that contract (the arms below pin them):
+//   heartbeatSet beats the CALLING session's holder entry plus the file-level
+//     stamp; the 30 s throttle is per (pipelineKey, session) — a co-tenant's
+//     beat must never suppress ours, or AC2 ("each run's beats keep its own
+//     holder fresh") cannot hold.
+//   Lock-lost is per OUR holder: our entry absent or foreign => PIPELINE
+//     LOCK LOST for us; a co-tenant's presence, beat or reap is not. The
+//     STOP text (LOCK_LOST_STOP) gains the takeover instruction while the
+//     phrase "PIPELINE LOCK LOST" and the do-not-commit/do-not-move meaning
+//     stay — the literal is one constant, never a forked near-clone.
+//   On lock-lost the pin payload also carries the takeover hint: the reaped
+//     cardId, the pipeline set and a reap stamp read from locks/.reaped/.
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import * as plugin from "../../.opencode/plugin/pipeline-locks/index.ts";
@@ -95,6 +108,8 @@ function seam(name: string): (...args: any[]) => any {
 const PLUGIN_SRC = readFileSync(".opencode/plugin/pipeline-locks/index.ts", "utf8");
 
 const T0 = Date.parse("2026-10-29T12:00:00Z");
+// cf-96 C09: the two legal stamp spellings (workspace offset | UTC Z fallback).
+const STAMP_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$/;
 
 function fakeTimers() {
   const intervals: any[] = [];
@@ -184,6 +199,19 @@ function lockFiles(env: any): string[] {
 
 function readRecord(env: any, key: string): any {
   return JSON.parse(readFileSync(join(env.locksDir, `${key}.json`), "utf8"));
+}
+
+// cf-106 C08: the guard's subject is OUR holder entry inside the file, not
+// the file itself — so the arms read holders, and a co-tenant's presence must
+// never be mistaken for ours (or for a loss of ours).
+function holderIds(rec: any): string[] {
+  return Array.isArray(rec?.holders) ? rec.holders.map((h: any) => h.sessionID) : [];
+}
+
+function holderOf(rec: any, sessionID: string): any {
+  const h = (rec?.holders ?? []).find((x: any) => x.sessionID === sessionID);
+  assert.ok(h, `the lock record must carry a holder entry for ${sessionID} (cf-106 C08 record v2), saw ${JSON.stringify(rec)}`);
+  return h;
 }
 
 function readEvents(env: any): any[] {
@@ -304,10 +332,11 @@ describe("E2 lock-lost is SET-wide (AC 3, D18/D16)", () => {
     const { env } = baseEnv();
     await claimed(env, "s1", ["a", "b"]);
     const rec = readRecord(env, "b");
-    rec.sessionID = "s-thief";
+    holderOf(rec, "s1").sessionID = "s-thief";
     writeFileSync(join(env.locksDir, "b.json"), JSON.stringify(rec));
     await seam("toolBefore")(env, { tool: "read", sessionID: "s1" });
-    assert.deepEqual(lockFiles(env), [], "a stolen member loses the WHOLE set");
+    const left = lockFiles(env).map((f: string) => [f, holderIds(readRecord(env, f.replace(/\.json$/, "")))] as const);
+    assert.ok(left.every(([, ids]) => !ids.includes("s1")), `a stolen member loses our claim on the WHOLE set — our holder must be gone from every member, saw ${JSON.stringify(left)}`);
     assert.ok(readEvents(env).some((l) => l.ev === "lock_lost"));
   });
 
@@ -828,5 +857,133 @@ describe("E9 setup restart-resume rebuild from ctx.storage (C04 Minor-2 close, D
     } finally {
       cleanup();
     }
+  });
+});
+
+describe("cf-96 C09 zone coverage — one formatter, both $TZ geometries (AC3)", () => {
+  it("stamps local-with-offset when $TZ resolves and UTC Z when it does not (cf-96 AC3)", () => {
+    const savedTZ = process.env.TZ;
+    try {
+      process.env.TZ = "America/Denver";
+      const off = seam("localIso")(T0);
+      assert.match(off, STAMP_SHAPE, "offset spelling stays inside the ISO-8601 shape");
+      assert.ok(/[+-]\d{2}:\d{2}$/.test(off), `expected an explicit offset tail for America/Denver, got ${off}`);
+      assert.equal(Date.parse(off), T0, "the offset stamp parses back to the exact instant (heartbeat windows read it offset-aware — OQ4/AC2)");
+      delete process.env.TZ;
+      assert.equal(seam("localIso")(T0), new Date(T0).toISOString(), "$TZ unset falls back to the UTC Z spelling byte-for-byte");
+    } finally {
+      if (savedTZ === undefined) delete process.env.TZ; else process.env.TZ = savedTZ;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cf-106 C08/C09 — holder-scoped guard, per-holder beats, the takeover hint
+// (chunks/C08.md AC 2-4, chunks/C09.md AC 1-2). Red until C08 lands: the
+// heartbeat throttle is keyed by pipeline alone, the guard still reads the
+// whole file as "ours", and the STOP text has no takeover sentence.
+// ---------------------------------------------------------------------------
+const HOUR_E = 3600000;
+const isoE = (ms: number) => new Date(ms).toISOString();
+
+async function sharedPair(env: any) {
+  await claimed(env, "ses-A", ["a"], "card-A");
+  const res = await seam("claimLockSet")(env, { cardId: "card-B", pipelines: ["a"], sessionID: "ses-B", shared: true });
+  assert.equal(res.ok, true, `the co-tenancy fixture needs C08's shared claim, saw ${JSON.stringify(res)}`);
+}
+
+describe("U1 beats are per holder (cf-106 C08 AC 2)", () => {
+  it("a co-tenant's beat inside the throttle window does not suppress OURS, and neither rewrites the other's stamp", async () => {
+    const { env } = baseEnv();
+    await sharedPair(env);
+    const before = { A: holderOf(readRecord(env, "a"), "ses-A").heartbeatAt, B: holderOf(readRecord(env, "a"), "ses-B").heartbeatAt };
+    env.advance(5000);
+    await seam("heartbeatSet")(env, "ses-A", "hook", false);
+    const afterA = holderOf(readRecord(env, "a"), "ses-A").heartbeatAt;
+    assert.notEqual(afterA, before.A, "A's beat writes A's holder stamp");
+    env.advance(5000);
+    await seam("heartbeatSet")(env, "ses-B", "hook", false);
+    const afterB = holderOf(readRecord(env, "a"), "ses-B").heartbeatAt;
+    assert.notEqual(afterB, before.B, "B's beat must not be throttled by A's beat 5 s earlier — a shared throttle key would starve one holder's freshness (C08 AC 2)");
+    assert.equal(holderOf(readRecord(env, "a"), "ses-A").heartbeatAt, afterA, "and B's beat leaves A's stamp alone (only the file-level stamp is last-writer-wins)");
+  });
+});
+
+describe("U2 the guard reads OUR holder, not the file (cf-106 C08 AC 4)", () => {
+  it("a reaped co-tenant holder leaves the survivor fully guarded-clean, and the survivor is never touched by the loser's lock-lost", async () => {
+    const { env } = baseEnv();
+    await sharedPair(env);
+    const rec = readRecord(env, "a");
+    rec.holders = rec.holders.filter((h: any) => h.sessionID !== "ses-A");
+    writeFileSync(join(env.locksDir, "a.json"), JSON.stringify(rec));
+    await seam("toolBefore")(env, { tool: "edit", sessionID: "ses-B" });
+    await seam("heartbeatSet")(env, "ses-B", "hook", true);
+    assert.ok(existsSync(join(env.locksDir, "a.json")), "the file survives while its holder is fresh");
+    await assert.rejects(seam("toolBefore")(env, { tool: "edit", sessionID: "ses-A" }), /PIPELINE LOCK LOST/, "only the dead holder's session sees the stop");
+    assert.deepEqual(holderIds(readRecord(env, "a")), ["ses-B"], "the loser's lock-lost must not prune, delete or rewrite the co-tenant's hold (C08 Goal)");
+  });
+
+  it("a co-tenant's execution failure does not invalidate our holder", async () => {
+    const { env } = baseEnv();
+    await sharedPair(env);
+    await seam("handleEvent")(env, { type: "session.execution.failed", data: { sessionID: "ses-A" } });
+    await seam("toolBefore")(env, { tool: "bash", sessionID: "ses-B" });
+    assert.ok(holderOf(readRecord(env, "a"), "ses-B"), "state:failed marks the FAILED holder's situation, it is not a co-tenant's lock loss");
+  });
+});
+
+describe("U3 the takeover signal on lock-lost (cf-106 C09 AC 1-2)", () => {
+  it("the lock-lost pin carries the takeover instruction plus the reaped card, set and stamp — and the PIPELINE LOCK LOST phrase survives", async () => {
+    const pin = fakePin();
+    const { env } = baseEnv({ pin: pin.api });
+    await claimed(env, "ses-A", ["alpha"], "card-take");
+    const reapedAt = env.clock - 3 * HOUR_E;
+    mkdirSync(join(env.locksDir, ".reaped"), { recursive: true });
+    writeFileSync(join(env.locksDir, ".reaped", `alpha.${reapedAt}.json`), JSON.stringify({
+      version: 2, pipeline: "alpha", pipelineSet: ["alpha"], state: "live",
+      claimedAt: isoE(reapedAt), heartbeatAt: isoE(reapedAt), reapedAt: isoE(reapedAt),
+      holders: [{ cardId: "card-take", sessionID: "ses-A", setId: "set-a", claimedAt: isoE(reapedAt), heartbeatAt: isoE(reapedAt) }],
+    }));
+    rmSync(join(env.locksDir, "alpha.json"));
+    await seam("toolBefore")(env, { tool: "read", sessionID: "ses-A" });
+    const stop = pin.puts.filter((p: any[]) => p[1] === "pipeline-lock").pop();
+    assert.ok(stop, "the pin is still updated to the STOP instruction");
+    const text = String(stop[2]);
+    assert.match(text, /PIPELINE LOCK LOST/, "the literal every suite and agent depends on");
+    assert.match(text, /commit/i, "the do-not-commit meaning stays intact (C09 task)");
+    assert.match(text, /move/i, "and the do-not-move meaning");
+    assert.match(text, /\bnot\b|\bnever\b|\bno\b/i, "carried by the same prohibition, not a softened suggestion");
+    assert.match(text, /once/i, "the sanctioned continue-anyway question is asked ONCE in the run");
+    assert.match(text, /pipelines:\s*\[/, "the text spells the takeover re-claim shape, pipelines:[<cardId>]");
+    const payload = JSON.stringify(pin.puts);
+    assert.ok(payload.includes("card-take"), "the pin payload names the reaped cardId");
+    assert.ok(payload.includes("alpha"), "and the pipeline set it lost");
+    assert.ok(new RegExp(STAMP_SHAPE.source.slice(1, -1)).test(payload), "and a reap stamp from the locks/.reaped/ record");
+  });
+
+  it("no self-reclaim: the lost run stays blocked until a claim it explicitly makes under the card-id key", async () => {
+    const { env } = baseEnv();
+    await claimed(env, "ses-A", ["alpha"], "card-take2");
+    rmSync(join(env.locksDir, "alpha.json"));
+    await seam("toolBefore")(env, { tool: "read", sessionID: "ses-A" });
+    env.advance(60000);
+    await seam("heartbeatSet")(env, "ses-A", "hook", true);
+    assert.ok(!existsSync(join(env.locksDir, "alpha.json")), "a forced beat after the loss recreates nothing — the engine never claims on the run's behalf (C09 task)");
+    await assert.rejects(seam("toolBefore")(env, { tool: "bash", sessionID: "ses-A" }), /PIPELINE LOCK LOST/, "the resume is gated on the human answer + a claim, never automatic");
+    const fresh = await seam("claimLockSet")(env, { cardId: "card-take2", pipelines: ["card-take2"], sessionID: "ses-A" });
+    assert.equal(fresh.ok, true, JSON.stringify(fresh));
+    await seam("toolBefore")(env, { tool: "edit", sessionID: "ses-A" });
+    assert.ok(holderOf(readRecord(env, "card-take2"), "ses-A"), "after the sanctioned takeover the guard passes again — under the card-id key");
+  });
+
+  it("the STOP literal is one constant, extended — never a forked near-clone (C09 Notes; partial-drift arm)", () => {
+    const decl = PLUGIN_SRC.match(/(?:const|let)\s+LOCK_LOST_STOP\s*=\s*"((?:[^"\\]|\\.)*)"|(?:const|let)\s+LOCK_LOST_STOP\s*=\s*'((?:[^'\\]|\\.)*)'/);
+    assert.ok(decl, "LOCK_LOST_STOP stays a named constant — throw and comparison ride the same literal");
+    const text = (decl[1] ?? decl[2] ?? "").replace(/\\"/g, '"').replace(/\\'/g, "'");
+    assert.match(text, /PIPELINE LOCK LOST/, "the phrase survives whatever the guidance sentence around it becomes");
+    assert.match(text, /do not commit/i, "with the do-not-commit/do-not-move meaning");
+    assert.match(text, /once/i, "and the new single-question takeover instruction");
+    const phraseSites = (PLUGIN_SRC.match(/PIPELINE LOCK LOST/g) ?? []).length;
+    assert.equal(phraseSites, 1, `the phrase lives in exactly one literal (saw ${phraseSites}) — a second near-identical string forks the guard contract`);
   });
 });

@@ -126,6 +126,53 @@ llama-swap:
       # block's 420 > 180 + 30 grace/unload invariant intact when doing so.
       strata:
         enabled: true
+        # cf-86 C02+C06: the strata provisioning set carries two routing
+        # keys beyond the flagship — "orca" (orcarouter Uncensored IQ4_XS,
+        # the U2 ruling's gated rung on the U9.2 ladder shift) and "q4"
+        # (unsloth UD-Q4_K_XL, C06's Q4 rung). orca is branch B: the pinned
+        # setup catalog carries no orca family (ORCA.md: "no --family
+        # orca"), so the baked staging driver packs it manually and the env
+        # value names the staged tier.
+        # q4 is branch A, and that is an evidenced choice, not a default: the
+        # pinned setup.py@v0.2.8 (639,798 B, sha256 0eba1327…c94079ae) DOES carry
+        # an "unsloth" family (FAMILIES["unsloth"]: repo unsloth/Qwen3.8-Flash-
+        # Next-GGUF, 4-shard file template, UNSLOTH_SHARDS byte+SHA256 pins),
+        # MODELS["UD-Q4_K_XL"] lists families ("unsloth",), and RESEARCH Round
+        # 2 [A1] records the anonymous catalog fetch — so this rung needs no
+        # manual pack step, only the token + family/model mapping the driver
+        # loop already understands ("[family/]model").
+        # Token posture (R-d ruling, DECISIONS 2026-10-29): the orca bytes
+        # are HF-gated (resolve/main answers 401 + Bearer challenge), so the
+        # gated fetch consumes the EXISTING hf-token Secret via
+        # secretKeyRef — DOWNLOAD-ONLY, on this init container alone. The
+        # keyless C-A serve posture is untouched: no token, key or secret
+        # reference reaches the strata container, the inner config or any
+        # run-config profile; the suite pins both directions. The q4 pack is
+        # public, so it takes no token of any kind — the one hf-token entry
+        # below stays orca's alone.
+        # orn (cf-86 C09) is the GGUF-direct q36 rung: unsloth's Ornith-1.5-122B
+        # UD-Q4_K_XL trio, staged under its original repo names with no pack
+        # step and no setup.sh catalog entry. Its bytes are UNGATED — the
+        # anonymous tree read answered gated=false and a ranged resolve of the
+        # middle shard answered 206 with GGUF magic and no Bearer challenge
+        # (2026-10-31) — so the driver's legs ride hf_fetch's anon mode and the
+        # hf-token secretKeyRef below stays orca's alone.
+        # Scalars plus the one sanctioned secretKeyRef; the staging driver is
+        # baked into the strata image (C07), this block sets the env entries.
+        initContainers:
+          model-fetch:
+            env:
+              STRATA_QUANTS: "q3,orca,q4,orn"
+              STRATA_MODEL_ORCA: orca/IQ4_XS
+              STRATA_MODEL_Q4: unsloth/UD-Q4_K_XL
+              # Pseudo-family route like orca's: "orn" is not a setup catalog
+              # name, it selects the GGUF-direct legs in the driver.
+              STRATA_MODEL_ORN: orn/UD-Q4_K_XL
+              HF_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: hf-token
+                    key: token
     service:
       strata:
         enabled: true
@@ -203,7 +250,7 @@ llama-swap:
       # q38-sampling's 0.7): per Qwen3.6 card guidance from the STORM run.
       q36-sampling: |
         --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.0
-    # gpu-ai runs the ENTIRE catalog live (frozen ENABLEMENT table: 58 enabled,
+    # gpu-ai runs the ENTIRE catalog live (frozen ENABLEMENT table: 60 enabled,
     # zero echoes). Overrides at family level; per-rung data and tuned variants
     # stay chart-side / in the models layer below. flash-next q5/q6 are ENABLED
     # here per the operator's accepted OOM-churn decision 2026-10-22 (never
@@ -236,6 +283,8 @@ llama-swap:
       qwen3.8-27b:
         enabled: true
       qwen3.8-flash-next:
+        enabled: true
+      qwen3.8-flash-next-heretic:
         enabled: true
       qwen3.8-flash-next-orca:
         enabled: true
@@ -428,10 +477,19 @@ llama-swap:
     # eager preload was the OOM's warm half. It lazy-loads on request (1-3
     # min). Only the sub-GiB embedding model stays preloaded; restore q8 here
     # only on a node without strata enabled.
+    # 2026-11-02 (owner ruling): the embedding model is OUT too — the pod now
+    # boots with NOTHING resident. The reason is the shared-RAM law, not the
+    # size: on this node every warm llama.cpp model is plain system RAM
+    # competing with a strata cold-pin (46.84-71.73 GiB page-locked arenas),
+    # and llama-swap cannot evict across instances ("It cannot start, stop or
+    # TTL-unload anything on the other side" — upstream peers doc), so the only
+    # side that can guarantee a clean slate is the one that never claims RAM
+    # first. Cost: the first embedding request after a (re)start pays a
+    # sub-10 s load instead of 0 s. `hooks` stays a dict — the schema arm
+    # requires the key to exist, and the render layer asserts it.
     hooks:
       on_startup:
-        preload:
-          - qwen3-embedding-0.6b
+        preload: []
     # cf-77: routes the internal strata pod's models through this surface —
     # since the run-2 consolidation the pod is a controller of THIS release,
     # so the proxy is the in-app cluster-internal Service name (app-template
@@ -450,9 +508,14 @@ llama-swap:
     peers:
       strata:
         proxy: http://gpu-ai-llama-swap-strata.default.svc.cluster.local:8080
+        # cf-86 wave (evidence/strata-peers-expected.yaml models_states): one
+        # route per landed inner arena — C02 orca, C06 q4, C09 ornith-strata.
         models:
           - qwen3.8-flash-next-strata
           - qwen3.8-flash-next-strata-strix
+          - qwen3.8-flash-next-strata-orca
+          - qwen3.8-flash-next-strata-q4
+          - ornith-1.5-122b-strata-q4
         timeouts:
           responseHeader: 1800
           connect: 30
@@ -476,7 +539,11 @@ llama-swap:
         # 2026-10-23 (C04): the Ornith 1.5 35B A3B ladder (qwen35moe, same
         # expert-offload class as the q35* entries - header-verified) joins
         # the MoE alternation; it stays ONE MoE resident, IQ2..Q8 rungs.
-        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | q38orca | q38ara | q38rana | q38hum | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu"
+        # 2026-10-30 (cf-86 C04): q38her (0bserverx heretic Q4_K_M-MTP,
+        # ~17 GB) joins the dense alternation - another member of the ~38 GiB
+        # dense weight class the trio math above budgets, never two dense
+        # residents in one combo.
+        main: "(q38q4 | q38q6 | q38q8 | q38q8v | q27bq6 | q27bq8 | q38orca | q38ara | q38rana | q38hum | q38her | homegpu) & (q35q8 | q35q8v | q35q6 | q36her | q36hui | orniq2 | ornq3 | ornq4 | ornq5 | ornq6 | ornq8) & emb06 & homecpu"
         # Heavy / special models run alone (+ homecpu): requesting one evicts
         # the trio; requesting a trio member afterwards reloads it (weights
         # stay PVC-cached). F16 + 1M variants carry 34+ GiB KV of their own;
@@ -485,5 +552,9 @@ llama-swap:
         # 2026-10-23 (C04): flash-next q3/q4 + orca-q6 + the 122B UD ladder
         # join here (55.7-156.1 GiB weight classes); ornqbf (Ornith 35B BF16,
         # 66.2 GiB) is solo - dense-weight resident too big for the trio.
+        # 2026-10-30 (cf-86 C03): fnher (heretic-2 Q4_K_M, 130.8 GiB trunk)
+        # joins the same alternation - another mmap/fit-off flash-next-class
+        # rung, so it must stay an ALTERNATIVE: two of them resident at once
+        # blow the node budget (the suite pins that law on the --fit off leg).
         # flash-next q5/q6 are deliberately in NO set at all (see vars note).
-        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"
+        solo: "(q35bf16 | q35b1m | q38f16 | q38bf16 | q38q81m | fnq3 | fnq4 | fnher | fnorca | o122q3 | o122q4 | o122q5 | o122q6 | ornqbf | vl2bq8 | vl2bq4 | vl2bbf | vl4bq4 | vl4bq8 | vl4bbf | vl8bq4 | vl8bq8 | vl8bbf | vl30bq4 | vl30bq8 | vl30bbf | v4tq8 | v4tq4 | v4tbf | v30tq8 | v30tq4 | v30tbf | wsp) & homecpu"

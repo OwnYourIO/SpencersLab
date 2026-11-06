@@ -1,12 +1,18 @@
-# TODO: Disabled until Home Assistant pod is added.
-#apiVersion: v1
-#kind: PersistentVolumeClaim
-#metadata:
-#  name: "{{ .Release.Name }}"
-#  namespace: default
-#spec:
-#  accessModes:
-#    - ReadWriteOnce
-#  resources:
-#    requests:
-#      storage: 5Gi
+{{- /* Always-on /config claim (C10 owner delta): release-derived name
+mirrors the subchart's templated existingClaim. On grow the claim sits unused
+(external HA) — accepted cost of the unconditional posture, do not re-gate.
+local-path is ReclaimPolicy Delete (OQ-C3 empty-instance acceptance). The
+dig-safe size read keeps a 5Gi default while leaving the removed
+homeAssistant.persistence.size overridable rather than hardcoded. */}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .Release.Name }}"
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: {{ ((.Values.homeAssistant | default dict).persistence | default dict).size | default "5Gi" }}

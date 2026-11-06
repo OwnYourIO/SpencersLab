@@ -52,6 +52,9 @@ opencode:
     - action: skill
       resource: pipeline-role-review
       effect: deny
+    - action: skill
+      resource: pipeline-role-deploy
+      effect: deny
     - action: question
       resource: '*'
       effect: allow
@@ -337,16 +340,36 @@ opencode:
     - action: subagent
       resource: agent-dev-local
       effect: allow
+    # cf-106 C04 (owner ruling OQ-10): the coordinator's sanctioned second
+    # implementer — the standalone `code` family, for a chunk that needs file
+    # edits AND branch handling in one session. The dev variant stays the
+    # default; launching code is the escape hatch, and the chunk plus the
+    # reason are recorded in DECISIONS.md. Subagent grants match whole values,
+    # so the family split is what keeps the push route on the `-pr` side.
+    - action: subagent
+      resource: code
+      effect: allow
     - action: subagent
       resource: agent-review
       effect: allow
     - action: subagent
       resource: agent-research
       effect: allow
+    - action: subagent
+      resource: agent-explore
+      effect: allow
+    # cf-90 C06: the step-8b Deployment-stage launch (pipeline-role-coord);
+    # the boards Stage map's Deployment row is the gate, the widened roster the grant.
+    - action: subagent
+      resource: agent-dev-deploy
+      effect: allow
     # Kickoff naming surface: Code Mode's `execute` is the only transport
     # that exposes the `tools.opencode.*` namespace, and nested calls
     # re-check the agent's allow-list — so the reachable set is pinned by
-    # the four per-tool allows (worktree create/list, session rename/move).
+    # the five per-tool allows (worktree create/list/remove, session
+    # rename/move). The worktree_remove row joins at cf-90 C03 for the
+    # work-complete cleanup; the role contract scopes it to the run's own
+    # ticket worktree.
     - action: execute
       resource: '*'
       effect: allow
@@ -354,6 +377,9 @@ opencode:
       resource: '*'
       effect: allow
     - action: opencode_worktree_list
+      resource: '*'
+      effect: allow
+    - action: opencode_worktree_remove
       resource: '*'
       effect: allow
     - action: opencode_session_move
@@ -387,4 +413,4 @@ Workflow skills only — you orchestrate, so you never load task/domain skills t
 /pipeline-gates
 /pipeline-role-coord
 
-The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the user's request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.
+The single exception to "no task skills": at intake you load exactly the 3 skills most relevant to the user's request, purely to judge whether it is ready for planning (`pipeline-role-coord` describes this) — never to do the work yourself. Never load another pipeline role's contract skill (`pipeline-role-plan`/`research`/`test`/`dev`/`review`/`deploy`): they are denied to you on purpose, because you are not permitted to act as those roles. If the plan lists further *workflow* skills, load those too.

@@ -9,6 +9,23 @@
 // (sessionID + cardId + setId + full pipelineSet) so release, status, the
 // C05 reaper and the board/alert legs can correlate the set.
 //
+// One lock file holds N holders (cf-106 C08, OQ-8 ruling): record v2 keeps the
+// identity in a `holders` list and the staleness stamps at file level, where
+// they are last-writer-wins. O_EXCL stays the no-override path, which is what
+// makes "do not start unless the pipeline is empty" enforceable — a key with
+// live foreign holders answers reason:"occupied" and names them, so the rule is
+// the engine's answer rather than a pipeline_status guess. Sharing a key is a
+// per-claim input the human supplies (`shared: true`), never a deployment
+// setting. Everything downstream — beats, release, lock-lost, the reaper — acts
+// on the CALLER's holder row and never on, or against, a co-tenant's.
+//
+// A lost set's stop is also its resume door (cf-106 C09, OQ-9 ruling): the
+// plugin signals only. handleLockLost arms a per-root stop marker that keeps
+// guarded tools blocked until the session makes its OWN new claim — no
+// self-reclaim, ever — and a claim whose whole set is exactly the card's id,
+// made with a .reaped/ record naming that card, is tagged after_reap in the
+// record and the claim audit as evidence, not as a new permission.
+//
 // Why disk locks instead of an in-process mutex: one server process loads
 // this plugin once per location dir (D27, probed on v2.1.4), so no object in
 // memory can serialize claims across worktrees; O_EXCL creates and atomic
@@ -125,6 +142,11 @@ const BOARD_DEFAULTS = { boardTitle: "AI-Dev", swimlaneTitle: "In Process", time
 // The user-facing reap texts: D21's 2 h window is what the card comment
 // says, D11 pins the alert title verbatim.
 const TIMEOUT_COMMENT = "Timed out: no heartbeat for 2h";
+// C09: the reaper's second sentence — the Timeout triage note the reaped card's
+// owner reads (the card comment and the timeouts.jsonl degrade row carry it).
+// The resume holds the card-id lock, so the triage human knows it will not
+// fight the reaped pipeline label.
+const TAKEOVER_HINT = "A fresh run may continue this card if the owner approves; it will hold the card-id lock.";
 const REAP_ALERT_TITLE = "OpenCode: pipeline lock reaped";
 const NOTIFY_DOMAIN = "notify";
 const HA_NOTIFY_SERVICE = "mobile_app_pixel_6";
@@ -146,11 +168,19 @@ const BEAT_AUDIT_EVERY = 10;
 // restart the session graph rebuilds through the setup-time scan.
 const CHILD_KEY_PREFIX = "child/";
 
-// The D16/D28 stop signal. v2.1.4 has no instruction API, so this exact text
-// reaches callers through the strict execute.before throw and the tool
-// responses; the boards skill tells the agent: on PIPELINE LOCK LOST stop —
-// no commit, no card move.
-const LOCK_LOST_STOP = "PIPELINE LOCK LOST — stop; do not commit or move the card";
+// The D16/D28 stop signal, now carrying C09's sanctioned resume: the plugin
+// has no question channel, so the strict execute.before throw, the tool
+// responses and the session pin all carry this ONE text — stop the step, ask
+// the user once, and on yes re-claim under the card-id key instead of the
+// reaped pipeline label. The phrase and the do-not-commit / do-not-move
+// prohibition stay verbatim (the suites pin the literal, engine U3); only
+// the guidance sentence around them may drift.
+const LOCK_LOST_STOP = "PIPELINE LOCK LOST — do not commit or move the card; stop the step, ask the user once whether to continue anyway, and on yes re-claim with pipelines:[<cardId>] instead of the reaped pipeline label — on no or silence, take the blocked/abandoned exit";
+
+// C09: the tag the sanctioned post-reap resume earns — evidence in the lock
+// record and the claim audit, never a permission: a card-id claim without a
+// .reaped/ record naming that card is an ordinary, untagged claim.
+const TAKEOVER_AFTER_REAP = "after_reap";
 
 // The tools that can land a commit or move a card — the strict guard blocks
 // only these. Read-side tools stay available so a stopped run can still
@@ -172,6 +202,51 @@ const defaultTimers = {
   setTimeout: (fn: any, ms: number) => setTimeout(fn, ms),
   clearTimeout: (handle: any) => clearTimeout(handle),
 };
+
+// The one formatter behind every displayed ISO stamp this pipeline writes: the
+// lock, audit, timeouts and reap-meta sites below, plus board-context's
+// collection stamp, which imports it. Stamp shape is a contract, so exactly
+// one implementation moves when the rule does (cf-96 OQ4; C09 note: two
+// implementations WILL drift), and it is exported rather than local for that
+// importer. The cross-plugin import is deliberate — the one exception to this
+// file's "duplicated, never imported" precedent above, which covers transport
+// mechanics: plugin discovery loads the FILES it scans (opencode.ai/docs/plugins,
+// "From local files"; board-context.test.ts's header records the same), so
+// importing a leaf function registers nothing a second time.
+export function localIso(ms?: number): string {
+  // Workspace-local ISO-8601 with an explicit offset while `$TZ` names a zone
+  // this runtime resolves; the UTC `Z` spelling of the SAME instant otherwise.
+  // Unset, blank, and an unresolvable zone all land on that fallback, so a bad
+  // `$TZ` costs a shape and never a write. Milliseconds ride through so
+  // `Date.parse(localIso(x)) === x` holds and either spelling parses back to
+  // the instant it was stamped from.
+  const date = new Date(typeof ms === "number" && Number.isFinite(ms) ? ms : Date.now());
+  const zone = typeof process.env.TZ === "string" ? process.env.TZ.trim() : "";
+  if (!zone) return date.toISOString();
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: zone,
+      timeZoneName: "longOffset",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(date);
+    const field = (type: string): string => parts.find((part) => part.type === type)?.value ?? "";
+    // longOffset answers "GMT-07:00"; an empty remainder or a zero offset is
+    // UTC, and `Z` is that offset's own ISO-8601 designator — one spelling per
+    // instant, so a TZ=UTC workspace and the fallback never look like two
+    // different eras of the same contract.
+    let offset = field("timeZoneName").replace(/^GMT/, "");
+    if (offset === "" || offset === "+00:00" || offset === "-00:00") offset = "Z";
+    return `${field("year")}-${field("month")}-${field("day")}T${field("hour")}:${field("minute")}:${field("second")}.${String(date.getMilliseconds()).padStart(3, "0")}${offset}`;
+  } catch {
+    return date.toISOString();
+  }
+}
 
 export function sanitizePipelineKey(name: string): string {
   // Lock files are named after the key, so everything outside
@@ -308,23 +383,93 @@ export async function resolveLockRoot(deps: any, startDir: string): Promise<stri
 }
 
 export function newLockRecord(input: any): any {
-  // Handoff B.1 shape, version 1, plus the D18 shared claim identity. Every
-  // timestamp is an ISO-8601 UTC string (D25) — epoch-ms in lock files is a
-  // contract violation; the age math downstream parses these against env.now.
-  const at = new Date(input?.now ?? Date.now()).toISOString();
-  const record: any = {
-    version: 1,
-    pipeline: input?.pipeline,
+  // Every timestamp is an offset-bearing ISO-8601 stamp of one instant (D25,
+  // restamped by cf-96 OQ4): the local-with-offset form while `$TZ` resolves,
+  // the UTC fallback when it does not — epoch-ms in a lock stamp field stays
+  // a contract violation, because epochs belong to instants, not to stamps.
+  // The age math downstream parses either form with the same result.
+  // Handoff B.1 shape at version 2 (cf-106 C08, OQ-8 ruling), plus the D18
+  // shared claim identity: the identity rides in a `holders` entry, while
+  // claimedAt/heartbeatAt ALSO sit at file level as the last-writer-wins
+  // stamps the staleness formula and the reaper's max(heartbeatAt, mtime) rule
+  // read. Co-tenants therefore overwrite each other's file stamp — accepted by
+  // the owner — which is why every holder carries its OWN stamps: a silent
+  // holder still ages out while a busy co-tenant keeps the file fresh.
+  const at = localIso(input?.now ?? Date.now());
+  const holder: any = {
     cardId: input?.cardId,
     sessionID: input?.sessionID,
     setId: input?.setId,
+    claimedAt: at,
+    heartbeatAt: at,
+  };
+  if (input?.cardTitle) holder.cardTitle = input.cardTitle;
+  const record: any = {
+    version: 2,
+    pipeline: input?.pipeline,
     pipelineSet: [...(input?.pipelineSet ?? [])].sort(),
     state: "live",
     claimedAt: at,
     heartbeatAt: at,
+    holders: [holder],
   };
-  if (input?.cardTitle) record.cardTitle = input.cardTitle;
+  // C09: the takeover tag rides the record only when the claim earned it —
+  // absent otherwise, so an ordinary card-id claim carries no forensics.
+  if (input?.takeover) record.takeover = input.takeover;
   return record;
+}
+
+// The single lens every holder-scoped rule reads through (beats, release,
+// lock-lost, the reaper, status), so one shape is handled everywhere. A record
+// that carries file-level identity fields is a pre-co-tenancy (v1) record: its
+// flat fields ARE its one holder, and it has exactly one — co-tenancy begins
+// with the `holders` list, which `newLockRecord` writes without any flat
+// identity. The synthetic row is never written back: an older record survives
+// rewrites unchanged until a claim or a shared append v2-ifies it.
+function viewHolders(record: any): any[] {
+  if (!record || typeof record !== "object") return [];
+  if (record.sessionID != null || record.setId != null) {
+    const row: any = {
+      cardId: record.cardId,
+      sessionID: record.sessionID,
+      setId: record.setId,
+      claimedAt: record.claimedAt,
+      heartbeatAt: record.heartbeatAt,
+    };
+    if (record.cardTitle) row.cardTitle = record.cardTitle;
+    return [row];
+  }
+  return Array.isArray(record.holders) ? record.holders : [];
+}
+
+function isOurHolder(row: any, sessionID: string): boolean {
+  return String(row?.sessionID ?? "") === sessionID;
+}
+
+function ourHolders(record: any, sessionID: string): any[] {
+  return viewHolders(record).filter((row: any) => isOurHolder(row, sessionID));
+}
+
+function holderInstant(row: any, fallback: any): number {
+  const at = Date.parse(String(row?.heartbeatAt ?? fallback?.heartbeatAt ?? ""));
+  return Number.isFinite(at) ? at : Number.NEGATIVE_INFINITY;
+}
+
+function holderAgeMs(row: any, record: any, now: number): number {
+  const at = holderInstant(row, record);
+  return Number.isFinite(at) ? Math.max(0, now - at) : 0;
+}
+
+// The refusal/diagnostic row shape: who holds this key and for how long. The
+// age is the input a human weighs before approving a shared claim (C08 AC1).
+function holderReport(row: any, record: any, now: number): any {
+  const out: any = {
+    cardId: row?.cardId ?? null,
+    sessionID: row?.sessionID ?? null,
+    age: holderAgeMs(row, record, now),
+  };
+  if (row?.cardTitle) out.cardTitle = row.cardTitle;
+  return out;
 }
 
 function storeFs(env: any): any {
@@ -394,7 +539,7 @@ export async function readLock(env: any, path: string): Promise<any | null> {
 export async function appendEvent(env: any, obj: any): Promise<void> {
   // JSONL audit. Fire-and-forget semantics: a broken path logs one line and
   // resolves — an audit write must never fail or block the action it records.
-  const line = JSON.stringify({ at: new Date(env?.now?.() ?? Date.now()).toISOString(), ...obj }) + "\n";
+  const line = JSON.stringify({ at: localIso(env?.now?.() ?? Date.now()), ...obj }) + "\n";
   try {
     await storeFs(env).writeFile(String(env?.eventsPath), line, { encoding: "utf8", flag: "a" });
   } catch (err: any) {
@@ -419,49 +564,180 @@ async function readHolder(env: any, path: string): Promise<any | null> {
   return null;
 }
 
+// A lock file that exists but names no holder (torn write, half-created record,
+// or an older shape without identity) is unreadable state, not free state:
+// merging into it would invent a holder list around whoever wrote those bytes.
+class TornLockError extends Error {
+  pipeline: string;
+  constructor(pipeline: string) {
+    super(`lock ${pipeline} is unreadable`);
+    this.pipeline = pipeline;
+  }
+}
+
+// Contended key with live foreign holders and no override — the emptiness rule
+// as an engine answer (C08 AC1). Carries the holder rows for the refusal.
+class OccupiedError extends Error {
+  pipeline: string;
+  rows: any[];
+  constructor(pipeline: string, rows: any[]) {
+    super(`pipeline ${pipeline} is held`);
+    this.pipeline = pipeline;
+    this.rows = rows;
+  }
+}
+
+// Shared append (C08 AC2): read the live record, add OUR holder, publish
+// through the same tmp+rename the beats use. Two simultaneous shared claims of
+// one key race on the read-modify-write, so the merged list is re-read after
+// the write and the append retried while our row is missing — a dropped
+// co-tenant would otherwise take a false lock-lost.
+async function appendLockHolder(env: any, pipeline: string, path: string, holder: any): Promise<any[]> {
+  const now = env?.now?.() ?? Date.now();
+  for (const delay of HOLDER_READ_DELAYS_MS) {
+    if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+    const existing = await readLock(env, path);
+    const rows = viewHolders(existing);
+    if (!existing || rows.length === 0) throw new TornLockError(pipeline);
+    const stamped = { ...holder, claimedAt: localIso(now), heartbeatAt: localIso(now) };
+    await writeLockAtomic(env, path, {
+      ...existing,
+      version: 2,
+      heartbeatAt: localIso(now),
+      holders: [...rows, stamped],
+    });
+    const afterRows = viewHolders(await readLock(env, path));
+    if (afterRows.some((row: any) => isOurHolder(row, String(stamped.sessionID)))) {
+      return afterRows.filter((row: any) => !isOurHolder(row, String(stamped.sessionID)));
+    }
+  }
+  throw new TornLockError(pipeline);
+}
+
 // Acquisition and rollback in one seam: walking the sorted keys is the
-// deadlock argument between overlapping claims, and the first EEXIST (or any
-// other fs failure) unlinks every file this pass already took before
-// returning — the walk order and its undo can never drift apart (D18).
-async function acquireSetWithRollback(env: any, claim: any): Promise<{ ok: true } | { ok: false; reason: string; pipeline: string; holder?: any; error?: string }> {
+// deadlock argument between overlapping claims, and the first contention (a
+// foreign holder, a torn record, or any fs failure) undoes every key this pass
+// already took before returning — the walk order and its undo can never drift
+// apart (D18). Undo is holder-scoped too: a key this claim only APPENDED to is
+// rewritten without our row, never deleted, so a co-tenant's hold outlives a
+// failed claim (C08 Goal).
+async function acquireSetWithRollback(
+  env: any,
+  claim: any,
+  shared: boolean,
+): Promise<{ ok: true; coTenants: any[] } | { ok: false; reason: string; pipeline: string; holders?: any[]; error?: string; unreadable?: boolean }> {
   const fsx = storeFs(env);
-  const taken: string[] = [];
+  const taken: { path: string; appended: boolean }[] = [];
+  const coTenants: any[] = [];
+  const undo = async (): Promise<void> => {
+    for (const t of taken) {
+      try {
+        if (!t.appended) {
+          await fsx.rm(t.path, { force: true });
+          continue;
+        }
+        const rec = await readLock(env, t.path);
+        const rows = viewHolders(rec);
+        if (rows.length === 0) continue; // unreadable: leave it for the reaper
+        const keep = rows.filter((row: any) => !isOurHolder(row, claim.sessionID));
+        if (keep.length === rows.length) continue;
+        if (keep.length === 0) await fsx.rm(t.path, { force: true });
+        else await writeLockAtomic(env, t.path, { ...rec, holders: keep });
+      } catch {
+        // best-effort: a file this pass took that cannot be removed reads
+        // to the reaper as any other orphan and ages out
+      }
+    }
+  };
   for (const pipeline of claim.pipelineSet) {
     const path = lockPathOf(env, pipeline);
     try {
+      const existing = await readLock(env, path);
+      if (existing) {
+        const rows = viewHolders(existing);
+        if (rows.length === 0) throw new TornLockError(pipeline);
+        const foreign = rows.filter((row: any) => !isOurHolder(row, claim.sessionID));
+        if (foreign.length > 0 && !shared) throw new OccupiedError(pipeline, foreign);
+        if (shared) {
+          coTenants.push(...(await appendLockHolder(env, pipeline, path, { ...claim, pipeline })));
+          taken.push({ path, appended: true });
+          continue;
+        }
+        // Our own rows on a key this session no longer holds a claim for
+        // (a lost storage row, a restart): not free, and re-taking it with
+        // O_EXCL is exactly what the takeover rule forbids — refuse and let
+        // the human path re-claim.
+        throw new OccupiedError(pipeline, rows);
+      }
       const handle = await fsx.open(path, "wx");
       try {
         await handle.writeFile(JSON.stringify(newLockRecord({ ...claim, pipeline, now: env?.now?.() ?? Date.now() }), null, 2));
       } finally {
         await handle.close();
       }
-      taken.push(path);
+      taken.push({ path, appended: false });
     } catch (err: any) {
-      for (const p of taken) {
-        try {
-          await fsx.rm(p, { force: true });
-        } catch {
-          // best-effort: a file this pass took that cannot be removed reads
-          // to the reaper as any other orphan and ages out
+      await undo();
+      if (err instanceof OccupiedError) {
+        if (taken.length > 0) {
+          await appendEvent(env, { ev: "claim_rollback", ...claim, rolledBack: taken.map((t) => basename(t.path, ".json")), pipeline });
         }
+        return { ok: false, reason: "occupied", pipeline, holders: err.rows.map((row: any) => holderReport(row, null, env?.now?.() ?? Date.now())) };
+      }
+      if (err instanceof TornLockError) {
+        return { ok: false, reason: "occupied", pipeline, holders: [], unreadable: true, error: "the lock record is unreadable — refusing to merge into it" };
       }
       if (err?.code !== "EEXIST") {
         return { ok: false, reason: "store_error", pipeline, error: String(err?.code ?? err) };
       }
+      // The O_EXCL race lost to a claim that won the key between our read and
+      // our create: answer with the same shape the probe answers, naming the
+      // winner this run must not displace.
       const holder = await readHolder(env, path);
       if (taken.length > 0) {
-        await appendEvent(env, { ev: "claim_rollback", ...claim, rolledBack: taken.map((p) => basename(p, ".json")), pipeline });
+        await appendEvent(env, { ev: "claim_rollback", ...claim, rolledBack: taken.map((t) => basename(t.path, ".json")), pipeline });
       }
-      return { ok: false, reason: "locked", pipeline, holder };
+      const rows = viewHolders(holder);
+      const reported = rows.length > 0 ? rows : [holder ?? null];
+      return {
+        ok: false,
+        reason: "occupied",
+        pipeline,
+        holders: reported.map((row: any) => holderReport(row, holder, env?.now?.() ?? Date.now())),
+      };
     }
   }
-  return { ok: true };
+  return { ok: true, coTenants };
+}
+
+// C09 AC3: the evidence a takeover claim is earned by — a .reaped/ record that
+// names this card. Read-only over the reaper's own forensics dir; it never
+// touches the original pipeline's LIVE lock file (AC4: that key may already
+// belong to another run).
+async function hasReapRecordFor(env: any, cardId: string): Promise<boolean> {
+  const dir = join(env.locksDir, REAPED_SUBDIR);
+  let names: string[] = [];
+  try {
+    names = await storeFs(env).readdir(dir);
+  } catch {
+    return false;
+  }
+  for (const name of names) {
+    if (!name.endsWith(".json")) continue;
+    const rec = await readLock(env, join(dir, name));
+    if (!rec) continue;
+    if (viewHolders(rec).some((row: any) => String(row?.cardId ?? "") === cardId)) return true;
+  }
+  return false;
 }
 
 export async function claimLockSet(env: any, input: any): Promise<any> {
   const sessionID = String(input?.sessionID ?? "") || "unknown";
   const set = normalizePipelineSet(input?.pipelines);
   const cardId = input?.cardId;
+  // The co-tenancy override is a per-claim input the human supplies (C08 AC1
+  // guardrail): nothing here may widen it into a deployment-wide setting.
+  const shared = input?.shared === true;
 
   try {
     // Reap-before-claim: a dead run's stale lock must not starve a fresh
@@ -480,8 +756,15 @@ export async function claimLockSet(env: any, input: any): Promise<any> {
   await storeFs(env).mkdir(env.locksDir, { recursive: true });
 
   const setId = randomUUID();
-  const claim = { cardId, sessionID, setId, cardTitle: input?.cardTitle, pipelineSet: set };
-  const acquisition = await acquireSetWithRollback(env, claim);
+  // C09: the sanctioned post-reap resume is the claim whose whole set is
+  // exactly the card's own id AND whose card a .reaped/ record names — tagged
+  // as evidence in the record and the audit, never as a permission. Any other
+  // card-id claim stays ordinary; the engine never re-claims on the run's
+  // behalf (the lost-set stop marker clears only on this explicit claim).
+  const isTakeoverKey = cardId != null && String(cardId).length > 0 && set.length === 1 && set[0] === String(cardId);
+  const takeover = isTakeoverKey ? await hasReapRecordFor(env, String(cardId)) : false;
+  const claim = { cardId, sessionID, setId, cardTitle: input?.cardTitle, pipelineSet: set, ...(takeover ? { takeover: TAKEOVER_AFTER_REAP } : {}) };
+  const acquisition = await acquireSetWithRollback(env, claim, shared);
   if (!acquisition.ok) {
     env?.claims?.delete(sessionID);
     return acquisition;
@@ -489,6 +772,9 @@ export async function claimLockSet(env: any, input: any): Promise<any> {
 
   const entry = { setId, cardId, pipelineSet: set, sessionID };
   env?.claims?.set(sessionID, entry);
+  // A new claim is the run's own sanctioned resume: the stop marker handleLockLost
+  // armed dies with it (C09 AC2 — no self-reclaim, but a re-claim is legal).
+  env?.lockLost?.delete?.(sessionID);
   try {
     // ctx.storage is durable and shared across worktree locations (D26) —
     // the restart-resume rebuild C04 relies on starts here. A storage miss
@@ -502,13 +788,33 @@ export async function claimLockSet(env: any, input: any): Promise<any> {
     // below is the primary identity channel) and the pin lights up silently
     // when a newer server exposes the instructions entry API.
     if (env?.pin) {
-      await env.pin.put(sessionID, PIN_KEY, `PIPELINE LOCK card=${String(cardId ?? "")} pipelines=${set.join(",")} setId=${setId} — release with pipeline_release when the card moves to Review.`);
+      const sharing = acquisition.coTenants.length > 0 ? ` shared-with=${acquisition.coTenants.map((c: any) => String(c.sessionID ?? "?")).join(",")}` : "";
+      await env.pin.put(sessionID, PIN_KEY, `PIPELINE LOCK card=${String(cardId ?? "")} pipelines=${set.join(",")} setId=${setId}${sharing} — release with pipeline_release when the card moves to Review.`);
     }
   } catch (err: any) {
     logNote(env, `instruction pin failed (tool-response channel still authoritative): ${String(err?.code ?? err)}`);
   }
-  await appendEvent(env, { ev: "claim", setId, cardId, sessionID, pipelineSet: set });
-  return { ok: true, setId, lockPaths: set.map((pipeline) => lockPathOf(env, pipeline)) };
+  await appendEvent(env, {
+    ev: "claim",
+    setId,
+    cardId,
+    sessionID,
+    pipelineSet: set,
+    ...(shared ? { shared: true, coTenants: acquisition.coTenants.map((c: any) => c.sessionID ?? null) } : {}),
+    // The tag rides the audit so the takeover trail survives the lock file
+    // (C09 AC3 — the record and the audit must agree).
+    ...(takeover ? { takeover: TAKEOVER_AFTER_REAP } : {}),
+  });
+  // The co-tenant list rides the answer so the run can log the sharing in its
+  // claim comment (boards skill) instead of re-reading the lock dir. One row
+  // per co-tenant session: a shared multi-pipeline set repeats the same holder.
+  const coTenants = [...new Map(acquisition.coTenants.map((c: any) => [String(c.sessionID ?? ""), c])).values()];
+  return {
+    ok: true,
+    setId,
+    lockPaths: set.map((pipeline) => lockPathOf(env, pipeline)),
+    ...(coTenants.length > 0 ? { shared: true, coTenants } : {}),
+  };
 }
 
 async function findClaim(env: any, sessionID: string): Promise<any | null> {
@@ -532,23 +838,35 @@ export async function releaseLockSet(env: any, input: any): Promise<any> {
   if (!entry) return { ok: true, released: [] };
   const set: string[] = Array.isArray(entry.pipelineSet) ? entry.pipelineSet : [];
 
-  // Owner-check the WHOLE set first — a release that deletes half of a set
-  // whose other member was stolen would free one pipeline under a thief.
+  // Owner-check the WHOLE set first, per HOLDER: a bookkeeping claim row is not
+  // ownership — the caller must hold a holder entry in every member file
+  // (C08 AC3). A release that deleted half of a set whose other member was
+  // stolen would free one pipeline under a thief, so a mismatch touches nothing.
   const records = new Map<string, any>();
   for (const pipeline of set) {
     const rec = await readLock(env, lockPathOf(env, pipeline));
-    if (rec && String(rec.sessionID) !== sessionID) {
+    if (!rec) {
+      records.set(pipeline, null);
+      continue;
+    }
+    if (ourHolders(rec, sessionID).length === 0) {
       return { ok: false, reason: "not_owner", pipeline };
     }
     records.set(pipeline, rec);
   }
 
+  // Then remove only OUR holder entries; a file disappears once its holder list
+  // empties, which is the last co-tenant's own release (C08 AC3).
   const fsx = storeFs(env);
   for (const pipeline of set) {
+    const rec = records.get(pipeline);
     try {
-      await fsx.rm(lockPathOf(env, pipeline), { force: true });
+      if (!rec) continue; // already gone: nothing to unhold
+      const keep = viewHolders(rec).filter((row: any) => !isOurHolder(row, sessionID));
+      if (keep.length > 0) await writeLockAtomic(env, lockPathOf(env, pipeline), { ...rec, holders: keep });
+      else await fsx.rm(lockPathOf(env, pipeline), { force: true });
     } catch (err: any) {
-      logNote(env, `release could not remove ${pipeline}: ${String(err?.code ?? err)}`);
+      logNote(env, `release could not unhold ${pipeline}: ${String(err?.code ?? err)}`);
     }
   }
   await appendEvent(env, {
@@ -573,10 +891,101 @@ export async function releaseLockSet(env: any, input: any): Promise<any> {
   return { ok: true, released: set, setId: entry.setId };
 }
 
+// One row per (lock file, holder). A record of an unknown shape still reads as
+// one anonymous hold: the view must never hide a pipeline that is taken.
+async function lockRows(env: any, names: string[], now: number): Promise<any[]> {
+  const rows: any[] = [];
+  for (const name of names) {
+    const rec = await readLock(env, join(env.locksDir, name));
+    if (!rec) continue;
+    const stamp = Date.parse(String(rec.heartbeatAt ?? rec.claimedAt ?? ""));
+    const fileAgeMs = Number.isFinite(stamp) ? Math.max(0, now - stamp) : 0;
+    const held = viewHolders(rec);
+    for (const holder of held.length > 0 ? held : [{}]) {
+      rows.push({ file: name, rec, holder, setId: holder.setId ?? rec.setId ?? null, fileAgeMs, state: String(rec.state ?? "live") });
+    }
+  }
+  return rows;
+}
+
+// Merge rows into lock units with a union-find over two equivalence legs:
+// holders of one claim (the setId D18 stamps into every member file) and
+// holders of one pipeline key (co-tenancy). Both legs are needed — the first
+// keeps a multi-pipeline claim as one unit, the second keeps N cards on one key
+// as one unit, which is what a run reads to answer "is this pipeline empty, and
+// who is on it" before claiming.
+function lockUnits(rows: any[], now: number): any[] {
+  const parent = rows.map((_row, i) => i);
+  const find = (i: number): number => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  };
+  const byClaim = new Map<string, number>();
+  const byFile = new Map<string, number>();
+  rows.forEach((row, i) => {
+    if (row.setId != null) {
+      const prior = byClaim.get(String(row.setId));
+      if (prior == null) byClaim.set(String(row.setId), i);
+      else parent[find(i)] = find(prior);
+    }
+    const priorFile = byFile.get(row.file);
+    if (priorFile == null) byFile.set(row.file, i);
+    else parent[find(i)] = find(priorFile);
+  });
+  const perUnit = new Map<number, number[]>();
+  rows.forEach((_row, i) => {
+    const unit = find(i);
+    const list = perUnit.get(unit);
+    if (list) list.push(i);
+    else perUnit.set(unit, [i]);
+  });
+  return [...perUnit.values()].map((indexes) => {
+    const unitRows = indexes.map((i) => rows[i]);
+    const first = unitRows[0];
+    const members = [...new Set(unitRows.map((row) => row.rec.pipeline).filter(Boolean))].sort();
+    const declared = unitRows.flatMap((row) => (Array.isArray(row.rec.pipelineSet) ? row.rec.pipelineSet : []));
+    // The unit is as fresh as its freshest member: a silent holder must not make
+    // a busy co-tenant's lock look older than it is.
+    const ageMs = unitRows.reduce((min, row) => Math.min(min, row.fileAgeMs), Number.POSITIVE_INFINITY);
+    // One claim holding several pipelines is ONE holder of this unit, not one
+    // per member file — emptiness is a claim fact, and `shared` is the fact a
+    // run reads before claiming: more than one claim on this set (C08 AC2).
+    const claims = new Map<string, any>();
+    for (const row of unitRows) {
+      const key = `${String(row.setId ?? "")}\u0000${String(row.holder?.sessionID ?? "")}\u0000${String(row.holder?.cardId ?? "")}`;
+      const holder = {
+        cardId: row.holder?.cardId ?? null,
+        sessionID: row.holder?.sessionID ?? null,
+        age: row.holder && row.holder.heartbeatAt != null ? holderAgeMs(row.holder, row.rec, now) : row.fileAgeMs,
+        state: row.state,
+        ...(row.holder?.cardTitle ? { cardTitle: row.holder.cardTitle } : {}),
+      };
+      const prior = claims.get(key);
+      if (!prior) claims.set(key, holder);
+      else {
+        prior.age = Math.min(prior.age, holder.age);
+        if (holder.state === "failed") prior.state = "failed";
+      }
+    }
+    const holders = [...claims.values()];
+    return {
+      setId: first.setId ?? null,
+      cardId: first.holder?.cardId ?? null,
+      holder: first.holder?.sessionID ?? null,
+      holders,
+      shared: holders.length > 1,
+      pipelineSet: [...new Set([...declared, ...members])].sort(),
+      pipelines: members,
+      state: unitRows.some((row) => row.state === "failed") ? "failed" : first.state,
+      ageMs: Number.isFinite(ageMs) ? ageMs : 0,
+    };
+  });
+}
+
 export async function lockStatus(env: any, input: any = {}): Promise<any> {
-  // Every lock file, grouped by setId/card so a multi-pipeline claim reads as
-  // ONE unit (D18). lastReap is the reaper's meta file — null until the first
-  // reap writes it.
   const fsx = storeFs(env);
   let names: string[] = [];
   try {
@@ -584,63 +993,93 @@ export async function lockStatus(env: any, input: any = {}): Promise<any> {
   } catch {
     // no locks dir yet = nothing held
   }
-
-  const groups = new Map<string, any>();
-  for (const name of names) {
-    const rec = await readLock(env, join(env.locksDir, name));
-    if (!rec) continue;
-    const key = String(rec.setId ?? `${String(rec.cardId)}|${String(rec.sessionID)}`);
-    let group = groups.get(key);
-    if (!group) {
-      const stamp = Date.parse(String(rec.heartbeatAt ?? rec.claimedAt ?? ""));
-      group = {
-        setId: rec.setId ?? null,
-        cardId: rec.cardId,
-        holder: rec.sessionID,
-        pipelineSet: Array.isArray(rec.pipelineSet) ? [...rec.pipelineSet] : [],
-        pipelines: [] as string[],
-        state: String(rec.state ?? "live"),
-        ageMs: Number.isFinite(stamp) ? Math.max(0, (env?.now?.() ?? Date.now()) - stamp) : 0,
-      };
-      groups.set(key, group);
-    }
-    if (rec.pipeline && !group.pipelines.includes(rec.pipeline)) group.pipelines.push(rec.pipeline);
-  }
-  const groupList = [...groups.values()];
-  for (const group of groupList) {
-    // A legacy record without pipelineSet still reads complete through its
-    // observed members; the union keeps the set view honest either way.
-    group.pipelineSet = [...new Set([...group.pipelineSet, ...group.pipelines])].sort();
-  }
+  const groupList = lockUnits(await lockRows(env, names, env?.now?.() ?? Date.now()), env?.now?.() ?? Date.now());
 
   let session: any = null;
   if (input?.sessionID) {
     const entry = await findClaim(env, String(input.sessionID));
-    const group = groupList.find((g) => String(g.holder) === String(input.sessionID)) ?? null;
+    const group =
+      groupList.find((g) => g.holders.some((h: any) => String(h.sessionID) === String(input.sessionID))) ?? null;
     session = entry && group ? { ...group, ...entry } : entry ?? group;
   }
   return { groups: groupList, session: session ?? null, lastReap: await readLock(env, env?.metaPath) };
 }
 
 async function checkMember(env: any, path: string, root: string): Promise<{ state: string; rec?: any }> {
-  // Missing (reaped/hand-deleted) or foreign-owned is the D18 lock-lost
-  // signal. Any other read failure is indistinguishable from "present but
-  // momentarily unreadable" and must never delete a live set, so it reports
-  // unreadable and the caller skips the beat instead of guessing.
+  // Missing (reaped/hand-deleted) or OUR holder entry absent is the D18
+  // lock-lost signal — read per holder, not per file (C08 AC4): a co-tenant's
+  // presence never means ours, and a co-tenant's reap never means ours either.
+  // Any other read failure is indistinguishable from "present but momentarily
+  // unreadable" and must never delete a live set, so it reports unreadable and
+  // the caller skips the beat instead of guessing.
   try {
     const parsed = JSON.parse(await storeFs(env).readFile(path, "utf8"));
     if (!parsed || typeof parsed !== "object") return { state: "unreadable" };
-    return String(parsed.sessionID) === root ? { state: "live", rec: parsed } : { state: "stolen", rec: parsed };
+    return ourHolders(parsed, root).length > 0 ? { state: "live", rec: parsed } : { state: "stolen", rec: parsed };
   } catch (err: any) {
     return { state: err?.code === "ENOENT" ? "missing" : "unreadable" };
   }
 }
 
+// C09 AC1: the reap stamp the lost session's pin evidence reads back. The
+// newest .reaped/ copy of any lost pipeline names the instant the hold died —
+// the record's own reapedAt stamp when the reaper wrote one, else the pass
+// timestamp its file name carries (the rename is the atomic claim, so the
+// name IS the reap). Read-only: the hint never touches the forensics.
+async function reapedStampFor(env: any, pipelines: string[]): Promise<string | null> {
+  const dir = join(env.locksDir, REAPED_SUBDIR);
+  let names: string[] = [];
+  try {
+    names = await storeFs(env).readdir(dir);
+  } catch {
+    return null;
+  }
+  let bestTs = Number.NEGATIVE_INFINITY;
+  let bestStamp: string | null = null;
+  for (const name of names) {
+    for (const pipeline of pipelines) {
+      const prefix = `${pipeline}.`;
+      if (!name.startsWith(prefix) || !name.endsWith(".json")) continue;
+      const mid = name.slice(prefix.length, name.length - ".json".length);
+      if (!/^\d+$/.test(mid)) continue;
+      const ts = Number(mid);
+      if (ts < bestTs) continue;
+      const rec = await readLock(env, join(dir, name));
+      bestTs = ts;
+      bestStamp = rec && typeof rec.reapedAt === "string" && rec.reapedAt ? rec.reapedAt : localIso(ts);
+    }
+  }
+  return bestStamp;
+}
+
+// C09 AC1: the pin half of the lost-set signal — the STOP instruction beside
+// the takeover evidence (the lost card, the lost set, the reap stamp read
+// from locks/.reaped/). Capability-gated per D28: on v2.1.4 the strict
+// before-guard throw and the tool responses carry the same sentence; a pin
+// write failure degrades to the log — the stop itself never does.
+async function pinLostStop(env: any, root: string, entry: any, set: string[]): Promise<void> {
+  try {
+    const stamp = await reapedStampFor(env, set);
+    const stampPart = stamp ? `; reap stamp ${stamp}` : "";
+    if (env?.pin)
+      await env.pin.put(
+        root,
+        PIN_KEY,
+        `${LOCK_LOST_STOP} — the claim (setId=${String(entry?.setId ?? "")}, card=${String(entry?.cardId ?? "")}) lost pipelines:[${set.join(",")}]${stampPart}`,
+      );
+  } catch (err: any) {
+    logNote(env, `lock-lost pin update failed (guard + tool responses still carry the stop): ${String(err?.code ?? err)}`);
+  }
+}
+
 async function handleLockLost(env: any, root: string, entry: any, detail: any): Promise<void> {
-  // D18: losing ANY member loses the WHOLE claim. Our surviving members are
-  // deleted at once so those pipelines free up for other cards; nothing here
-  // can ever recreate a file — a lost set is gone and re-claimed only by a
-  // fresh run.
+  // D18: losing ANY member loses the WHOLE claim, and a lost set is gone —
+  // nothing here can ever recreate a file, and nothing here acts on another
+  // session's hold (C08 Goal). A member that holds ONLY our row is deleted so
+  // that pipeline frees up for other cards at once; a member another run still
+  // holds is rewritten without OUR rows, leaving the co-tenant's lock and its
+  // own beat cadence untouched — the orphaned row of a dead run ages out to the
+  // holder-level reaper, which is the party allowed to remove it.
   const set: string[] = Array.isArray(entry?.pipelineSet) ? [...entry.pipelineSet].sort() : [];
   const fsx = storeFs(env);
   const setId = entry?.setId;
@@ -651,26 +1090,37 @@ async function handleLockLost(env: any, root: string, entry: any, detail: any): 
       // belong to a FRESH healthy claim — our file was reaped (C05 renames
       // it away), another card re-claimed the freed pipeline with its own
       // sessionID and setId — and deleting that file would kill the live
-      // new claimant in a cascade. Re-read each member path and delete only
-      // what is ours: ours by sessionID, or ours by the setId D18 stamped
-      // into every file of this claim. Foreign-owned and unreadable member
-      // paths are left untouched (a corrupt one ages out to the reaper, the
-      // designed floor for that class); missing is nothing to clear.
+      // new claimant in a cascade. Re-read each member path and act only on
+      // what is ours: ours by a holder row naming this session, or ours by
+      // the setId D18 stamped into every file of this claim. Foreign-owned
+      // and unreadable member paths are left untouched (a corrupt one ages
+      // out to the reaper, the designed floor for that class); missing is
+      // nothing to clear.
       const check = await checkMember(env, path, root);
       if (check.state === "missing") continue;
-      const ours =
-        check.state === "live" ||
-        (setId != null && check.rec != null && String(check.rec.setId) === String(setId));
-      if (ours) {
-        await fsx.rm(path, { force: true });
-      } else {
-        logNote(env, `lock-lost left ${pipeline}.json untouched (${check.state}) — an unowned member path belongs to its claimant, not to this dead set`);
+      const oursBySet =
+        setId != null &&
+        check.rec != null &&
+        (viewHolders(check.rec).some((row: any) => String(row.setId ?? "") === String(setId)) ||
+          String(check.rec.setId ?? "") === String(setId));
+      if (check.state !== "live" && !oursBySet) {
+        logNote(env, `lock-lost left ${pipeline}.json untouched (no holder of ours) — an unowned member path belongs to its claimant, not to this dead set`);
+        continue;
       }
+      const keep = viewHolders(check.rec).filter((row: any) => !isOurHolder(row, root));
+      if (keep.length > 0) await writeLockAtomic(env, path, { ...check.rec, holders: keep });
+      else await fsx.rm(path, { force: true });
     } catch (err: any) {
       logNote(env, `lock-lost cleanup failed for ${pipeline}: ${String(err?.code ?? err)}`);
     }
   }
   env?.claims?.delete(root);
+  // C09 AC2: the lost set stays stopped for guarded tools until this root makes
+  // its OWN new claim (the sanctioned takeover or a fresh card) — the engine
+  // never re-claims on the run's behalf. claimLockSet clears the marker;
+  // nothing else does, so a no-answer run keeps the stop armed to its exit.
+  if (!env?.lockLost || !(env.lockLost instanceof Map)) env.lockLost = new Map();
+  env.lockLost.set(root, { at: localIso(env?.now?.() ?? Date.now()), setId: entry?.setId ?? null, cardId: entry?.cardId ?? null, pipelineSet: set });
   if (env?.executing && env?.sessToRoot) {
     for (const sid of env.executing) if (String(env.sessToRoot.get(sid) ?? "") === root) env.executing.delete(sid);
     for (const [sid, mapped] of env.sessToRoot) if (mapped === root) env.sessToRoot.delete(sid);
@@ -678,8 +1128,7 @@ async function handleLockLost(env: any, root: string, entry: any, detail: any): 
   for (const pipeline of set) {
     // Drop the throttle stamps too: a later claim of the same pipeline must
     // not be silently throttled by this dead set's last beat.
-    env?.lastBeat?.delete(pipeline);
-    env?.beatSeq?.delete(pipeline);
+    clearBeatStamps(env, pipeline, root);
   }
   try {
     if (env?.storage) await env.storage.remove(claimKeyOf(root));
@@ -695,14 +1144,39 @@ async function handleLockLost(env: any, root: string, entry: any, detail: any): 
     lostPipeline: detail?.pipeline ?? null,
     cause: detail?.cause ?? "missing",
   });
-  try {
-    // Capability-gated per D28: the pin UPDATE to the STOP text is what a
-    // future release with the instructions API reads; on v2.1.4 the strict
-    // before-guard throw and the tool responses carry the same sentence.
-    if (env?.pin) await env.pin.put(root, PIN_KEY, `${LOCK_LOST_STOP} — the claim (setId=${String(entry?.setId ?? "")}) is gone; only a fresh run may re-claim.`);
-  } catch (err: any) {
-    logNote(env, `lock-lost pin update failed (guard + tool responses still carry the stop): ${String(err?.code ?? err)}`);
+  await pinLostStop(env, root, entry, set);
+}
+
+// Beats are throttled per (pipeline, session): with co-tenants one run's beat
+// must never suppress another's, or "each run's beats keep its own holder
+// fresh" (C08 AC2) cannot hold on a shared key.
+function beatKey(pipeline: string, sessionID: string): string {
+  return `${pipeline}\u0000${sessionID}`;
+}
+
+function clearBeatStamps(env: any, pipeline: string, sessionID?: string): void {
+  if (sessionID) {
+    env?.lastBeat?.delete(beatKey(pipeline, sessionID));
+    env?.beatSeq?.delete(beatKey(pipeline, sessionID));
+    return;
   }
+  // Whole-pipeline clearing (a reaped or freed key) drops every holder's stamp.
+  for (const map of [env?.lastBeat, env?.beatSeq]) {
+    if (!(map instanceof Map)) continue;
+    for (const key of map.keys()) if (String(key).split("\u0000")[0] === pipeline) map.delete(key);
+  }
+}
+
+// A beat moves the CALLER's holder stamps and the file-level stamp; a
+// co-tenant's stamps are copied through untouched, so sharing a key never
+// makes another run's lock look silent (or fresh).
+function beatRecord(record: any, sessionID: string, stamp: string): any {
+  if (!Array.isArray(record?.holders)) return { ...record, heartbeatAt: stamp };
+  return {
+    ...record,
+    heartbeatAt: stamp,
+    holders: record.holders.map((row: any) => (isOurHolder(row, sessionID) ? { ...row, heartbeatAt: stamp } : row)),
+  };
 }
 
 export async function heartbeatSet(env: any, rootID: any, source: any, force: any): Promise<void> {
@@ -730,18 +1204,19 @@ export async function heartbeatSet(env: any, rootID: any, source: any, force: an
 
   const now = env?.now?.() ?? Date.now();
   const throttle = Number(env?.config?.hookThrottleMs) || DEFAULT_HOOK_THROTTLE_MS;
-  const stamp = new Date(now).toISOString();
+  const stamp = localIso(now);
   for (const pipeline of set) {
-    const last = env?.lastBeat?.get(pipeline);
+    const key = beatKey(pipeline, root);
+    const last = env?.lastBeat?.get(key);
     if (!force && typeof last === "number" && now - last <= throttle) continue;
     try {
       // Rewrite from the re-read record: fields the reaper or another writer
       // added survive the beat, and heartbeatAt is the only thing moved.
-      await writeLockAtomic(env, lockPathOf(env, pipeline), { ...verified.get(pipeline), heartbeatAt: stamp });
-      env?.lastBeat?.set(pipeline, now);
+      await writeLockAtomic(env, lockPathOf(env, pipeline), beatRecord(verified.get(pipeline), root, stamp));
+      env?.lastBeat?.set(key, now);
       if (!env?.beatSeq) env.beatSeq = new Map();
-      const seq = Number(env.beatSeq.get(pipeline) ?? 0) + 1;
-      env.beatSeq.set(pipeline, seq);
+      const seq = Number(env.beatSeq.get(key) ?? 0) + 1;
+      env.beatSeq.set(key, seq);
       if (force === true || seq % BEAT_AUDIT_EVERY === 0) {
         await appendEvent(env, { ev: "beat", pipeline, setId: entry.setId, cardId: entry.cardId, sessionID: root, source: String(source ?? "") });
       }
@@ -780,12 +1255,16 @@ async function markSetFailed(env: any, root: string, entry: any, cause: string):
   // receives no further beats (runBeatTick only follows executing), and ages
   // out to the C05 reaper. A member already missing/stolen is left to the
   // next heartbeatSet pass — the lost path is that one's job, not this.
+  // `state` is a FILE-level field (cf-106 C08 ruling: the holder list carries
+  // no state), so a crashed tenant marks the record failed while the file's
+  // staleness and its other holders stay per holder — a co-tenant keeps its
+  // hold and its beats, it is not declared lost (only its own guard can say that).
   const set: string[] = Array.isArray(entry?.pipelineSet) ? entry.pipelineSet : [];
   for (const pipeline of set) {
     try {
       const path = lockPathOf(env, pipeline);
       const rec = await readLock(env, path);
-      if (!rec || String(rec.sessionID) !== root) continue;
+      if (!rec || ourHolders(rec, root).length === 0) continue;
       await writeLockAtomic(env, path, { ...rec, state: "failed" });
     } catch (err: any) {
       logNote(env, `failed-state stamp could not write ${pipeline}: ${String(err?.code ?? err)}`);
@@ -877,17 +1356,28 @@ export async function toolBefore(env: any, event: any): Promise<void> {
   // The pipeline_* tools beat through their own executors; hooking them
   // here would double-write on every claim/status call.
   let root = "";
-  let claimed = false;
+  let entry: any = null;
   try {
     root = await resolveRoot(env, sessionID);
-    const entry = await findClaim(env, root);
-    if (!entry) return;
-    claimed = true;
+    entry = await findClaim(env, root);
+  } catch (err: any) {
+    logNote(env, `before-hook claim read failed: ${String(err?.message ?? err)}`);
+  }
+  const guarded = GUARDED_TOOLS.includes(tool) && env?.config?.strictLockLoss !== false;
+  if (!entry) {
+    // No live claim: the stop is armed only while a lock was LOST in this
+    // root (C09) — the sanctioned resume is a NEW claim this session makes
+    // itself, which clears the marker; the engine never re-claims on its
+    // behalf. A session that never claimed, or released cleanly, has nothing
+    // to stop; read-side and beat-through tools stay open.
+    if (guarded && env?.lockLost?.has?.(root)) throw new Error(LOCK_LOST_STOP);
+    return;
+  }
+  try {
     await heartbeatSet(env, root, "hook", false);
   } catch (err: any) {
     logNote(env, `before-hook beat failed: ${String(err?.message ?? err)}`);
   }
-  if (!claimed) return;
   let still = null;
   try {
     still = await findClaim(env, root);
@@ -899,9 +1389,7 @@ export async function toolBefore(env: any, event: any): Promise<void> {
   // tool call (C01 fact 2) and its text IS the stop signal on v2.1.4 (D28 —
   // execute.after never fires for before-blocked calls, so the beat that
   // detected the loss is also the last activity this set ever records).
-  if (GUARDED_TOOLS.includes(tool) && env?.config?.strictLockLoss !== false) {
-    throw new Error(LOCK_LOST_STOP);
-  }
+  if (guarded) throw new Error(LOCK_LOST_STOP);
 }
 
 export async function toolAfter(env: any, event: any): Promise<void> {
@@ -1161,7 +1649,48 @@ async function restoreRacedLock(env: any, fsx: any, path: string, reapedPath: st
   logNote(env, `heartbeat-race restore skipped for ${pipeline}: the lock path is ${destination}`);
 }
 
-async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise<any | null> {
+async function auditReaped(env: any, entry: any, trigger: string): Promise<void> {
+  await appendEvent(env, {
+    ev: "reaped",
+    pipeline: entry.pipeline,
+    setId: entry.setId,
+    cardId: entry.cardId,
+    sessionID: entry.sessionID,
+    ageMin: entry.ageMin,
+    trigger,
+  });
+}
+
+// Holder-granularity prune (C08 AC5): a silent holder among fresh ones ages out
+// on its OWN stamps while the file and its busy co-tenants stay. The reaper is
+// the only party that removes a holder it does not own, and it removes only the
+// silent one — never the file another run still holds.
+async function pruneStaleHolders(env: any, target: any, pass: any): Promise<any[]> {
+  const { path, pipeline, rec, held, dead } = target;
+  const kept = held.filter((row: any) => !dead.includes(row));
+  try {
+    // Last-writer-wins on the holder list: a beat racing this write can briefly
+    // resurrect a pruned row, and the next pass prunes it again — the same
+    // overwrite posture the owner accepted for co-tenant stamps.
+    await writeLockAtomic(env, path, { ...rec, holders: kept });
+  } catch (err: any) {
+    logNote(env, `holder prune could not write ${pipeline}: ${String(err?.code ?? err)}`);
+    return [];
+  }
+  const entries = dead.map((row: any) => ({
+    pipeline,
+    setId: row?.setId ?? null,
+    cardId: row?.cardId ?? null,
+    sessionID: row?.sessionID ?? null,
+    pipelineSet: Array.isArray(rec?.pipelineSet) ? rec.pipelineSet : [],
+    ageMin: Math.max(0, Math.round((pass.now - holderInstant(row, null)) / 60000)),
+    pruned: true,
+  }));
+  for (const entry of entries) await auditReaped(env, entry, pass.trigger);
+  return entries;
+}
+
+async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise<any[] | null> {
   // BOTH clock and disk must say dead: stale iff pass.now − max(heartbeatAt,
   // mtime) ≥ staleMs, so a hand-touched or freshly-beat mtime legitimately
   // rescues a file. Older-schema tolerance: unknown keys survive the
@@ -1178,6 +1707,20 @@ async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise
   }
   const hbMs = rec ? Date.parse(String(rec.heartbeatAt ?? "")) : Number.NaN;
   const lastMs = Math.max(Number.isFinite(hbMs) ? hbMs : Number.NEGATIVE_INFINITY, mtimeMs);
+
+  // Co-tenancy: the file-level stamp is last-writer-wins, so a busy holder
+  // keeps the record fresh while a silent one must still age out of it. With
+  // one holder the two rules read the same instant, so the mtime rescue above
+  // stays exactly as shipped — holder stamps only take over where a co-tenant's
+  // write would otherwise vouch for a run that stopped beating.
+  const held = viewHolders(rec);
+  if (held.length > 1) {
+    const dead = held.filter((row: any) => pass.now - holderInstant(row, null) >= pass.staleMs);
+    if (dead.length === 0) return null;
+    if (dead.length < held.length) return pruneStaleHolders(env, { path, pipeline, rec, held, dead }, pass);
+    // Every holder is silent: the record itself goes, below, as one file.
+  }
+
   if (pass.now - lastMs < pass.staleMs) return null;
   // The rename is the atomic claim: two reapers (or a racing release)
   // cannot both move one file.
@@ -1194,28 +1737,38 @@ async function reapOneLock(env: any, fsx: any, name: string, pass: any): Promise
   // put it back and run no card leg for it.
   const copy = await readLock(env, reapedPath);
   const copyHbMs = copy ? Date.parse(String(copy.heartbeatAt ?? "")) : Number.NaN;
-  if (Number.isFinite(copyHbMs) && pass.now - copyHbMs < pass.staleMs) {
+  const copyHoldersMs = viewHolders(copy).reduce((max: number, row: any) => Math.max(max, holderInstant(row, null)), Number.NEGATIVE_INFINITY);
+  if ((Number.isFinite(copyHbMs) && pass.now - copyHbMs < pass.staleMs) || (Number.isFinite(copyHoldersMs) && pass.now - copyHoldersMs < pass.staleMs)) {
     await restoreRacedLock(env, fsx, path, reapedPath, copy, pass);
     return null;
   }
-  const entry = {
-    pipeline,
-    setId: rec?.setId ?? null,
-    cardId: rec?.cardId ?? null,
-    sessionID: rec?.sessionID ?? null,
-    pipelineSet: Array.isArray(rec?.pipelineSet) ? rec.pipelineSet : [],
-    ageMin: Math.max(0, Math.round((pass.now - lastMs) / 60000)),
-  };
-  await appendEvent(env, {
-    ev: "reaped",
-    pipeline: entry.pipeline,
-    setId: entry.setId,
-    cardId: entry.cardId,
-    sessionID: entry.sessionID,
-    ageMin: entry.ageMin,
-    trigger: pass.trigger,
+  // One audit entry and one card group PER HOLDER: a co-tenant's card is not
+  // dragged through the Timeout leg for someone else's silence (C08 AC5).
+  // C09 AC1: stamp the copy with its own reap instant — the pin evidence the
+  // lost session reads back (reapedStampFor) and the takeover trail key on
+  // the RECORD, not on this pass's memory. A copy that failed to parse keeps
+  // its raw forensics: re-stamping it would invent fields around unknown bytes.
+  if (copy) {
+    try {
+      await writeLockAtomic(env, reapedPath, { ...copy, reapedAt: localIso(pass.now) });
+    } catch (err: any) {
+      logNote(env, `reap stamp write failed for ${pipeline}: ${String(err?.code ?? err)}`);
+    }
+  }
+  const rows = viewHolders(copy ?? rec);
+  const entries = (rows.length > 0 ? rows : [{}]).map((row: any) => {
+    const rowMs = holderInstant(row, null);
+    return {
+      pipeline,
+      setId: row?.setId ?? null,
+      cardId: row?.cardId ?? null,
+      sessionID: row?.sessionID ?? null,
+      pipelineSet: Array.isArray((copy ?? rec)?.pipelineSet) ? (copy ?? rec).pipelineSet : [],
+      ageMin: Math.max(0, Math.round((pass.now - (Number.isFinite(rowMs) ? rowMs : lastMs)) / 60000)),
+    };
   });
-  return entry;
+  for (const entry of entries) await auditReaped(env, entry, pass.trigger);
+  return entries;
 }
 
 async function clearDeadHolders(env: any, reaped: any[]): Promise<void> {
@@ -1237,16 +1790,19 @@ async function clearDeadHolders(env: any, reaped: any[]): Promise<void> {
       }
     }
     // A dead pipeline's throttle stamps must not make its next claimant's
-    // first beats silent (lock-lost cleanup precedent).
-    env?.lastBeat?.delete(r.pipeline);
-    env?.beatSeq?.delete(r.pipeline);
+    // first beats silent (lock-lost cleanup precedent). A pruned holder clears
+    // only its OWN stamp — the co-tenant that keeps the file keeps its cadence.
+    if (r.pruned === true) clearBeatStamps(env, r.pipeline, sid || undefined);
+    else clearBeatStamps(env, r.pipeline);
   }
 }
 
 async function writeReapMeta(env: any, fsx: any, now: number, trigger: string, reaped: any[]): Promise<void> {
   try {
     await fsx.mkdir(dirname(env.metaPath), { recursive: true });
-    await fsx.writeFile(env.metaPath, JSON.stringify({ at: new Date(now).toISOString(), trigger, reaped: reaped.map((r) => r.pipeline) }));
+    // The meta names the pipelines that freed up — a holder prune and a whole
+    // file reap of the same key must not repeat the name.
+    await fsx.writeFile(env.metaPath, JSON.stringify({ at: localIso(now), trigger, reaped: [...new Set(reaped.map((r) => r.pipeline))] }));
   } catch (err: any) {
     logNote(env, `lastReap meta write failed: ${String(err?.code ?? err)}`);
   }
@@ -1320,8 +1876,10 @@ export async function reapStale(env: any, input: any = {}): Promise<{ reaped: an
       // no locks dir: nothing is held, nothing to reap
     }
     for (const name of names) {
-      const entry = await reapOneLock(env, fsx, name, pass);
-      if (entry) reaped.push(entry);
+      // One file can yield several dead holders (C08 AC5); the summary counts
+      // holders, so /pipeline-reap tells a human how many cards went down.
+      const entries = await reapOneLock(env, fsx, name, pass);
+      if (entries) reaped.push(...entries);
     }
     if (reaped.length > 0) {
       await clearDeadHolders(env, reaped);
@@ -1350,12 +1908,16 @@ export async function reapStale(env: any, input: any = {}): Promise<{ reaped: an
 // held pipeline.
 async function queueTimeoutRow(env: any, info: any, reason: string): Promise<void> {
   const row = {
-    at: new Date(env?.now?.() ?? Date.now()).toISOString(),
+    at: localIso(env?.now?.() ?? Date.now()),
     cardId: info?.cardId ?? null,
     setId: info?.setId ?? null,
     pipelines: Array.isArray(info?.pipelines) ? info.pipelines : [],
     sessionID: info?.sessionID ?? null,
     reason,
+    // C09 AC5: the D22 interim row keeps the same fields plus the takeover
+    // hint — until the Timeout list exists live, this jsonl line is where the
+    // triage human reads the continue-anyway affordance.
+    takeover: TAKEOVER_HINT,
   };
   try {
     await storeFs(env).writeFile(String(env?.timeoutsPath), JSON.stringify(row) + "\n", { encoding: "utf8", flag: "a" });
@@ -1367,12 +1929,12 @@ async function queueTimeoutRow(env: any, info: any, reason: string): Promise<voi
 
 // One builder for every path that owes the card the reap marker — the
 // move-success leg and the degrade legs alike — so the D21 sentence, the
-// holder, and the full named set cannot drift between arms. The named set
-// arrives already unioned upstream (a legacy record without pipelineSet
-// reads as just its own pipeline).
+// holder, the full named set and the C09 takeover note cannot drift between
+// arms. The named set arrives already unioned upstream (a legacy record
+// without pipelineSet reads as just its own pipeline).
 function reapCommentBody(info: any): string {
   const pipelines = Array.isArray(info?.pipelines) ? info.pipelines : [];
-  return `${TIMEOUT_COMMENT} (session ${String(info?.sessionID ?? "")}, pipelines: ${pipelines.join(", ")})`.slice(0, MAX_OUTBOUND_MESSAGE);
+  return `${TIMEOUT_COMMENT} (session ${String(info?.sessionID ?? "")}, pipelines: ${pipelines.join(", ")}) — ${TAKEOVER_HINT}`.slice(0, MAX_OUTBOUND_MESSAGE);
 }
 
 export async function moveCardToTimeout(env: any, info: any): Promise<void> {
@@ -1459,7 +2021,7 @@ async function toolClaim(env: any, args: any, context: any): Promise<any> {
   const cardId = typeof args?.cardId === "string" && args.cardId ? args.cardId : null;
   if (!cardId) return { ok: false, reason: "invalid_input", error: "cardId is required" };
   const root = await resolveRoot(env, context?.sessionID);
-  return await claimLockSet(env, { cardId, pipelines: args?.pipelines, cardTitle: args?.cardTitle, sessionID: root });
+  return await claimLockSet(env, { cardId, pipelines: args?.pipelines, cardTitle: args?.cardTitle, shared: args?.shared === true, sessionID: root });
 }
 
 async function toolRelease(env: any, args: any, context: any): Promise<any> {
@@ -1494,12 +2056,13 @@ function buildToolSpecs(env: any): any[] {
   const definitions = [
     {
       callAs: "tools.pipeline_claim",
-      blurb: "Acquire the lease-lock set for a board card, all-or-nothing over every pipeline the card's labels name: every pipeline is taken or none is (a contended claim rolls back and names the holder). cardId required; pipelines is the derived Pipeline:-label set (omit it or pass an empty list for the default pipeline).",
+      blurb: "Acquire the lease-lock set for a board card, all-or-nothing over every pipeline the card's labels name: every pipeline is taken or none is (a contended claim rolls back and names the holders). A pipeline key that already has live foreign holders answers ok:false reason:\"occupied\" with those holders — the emptiness rule, asked of the engine. cardId required; pipelines is the derived Pipeline:-label set (omit it or pass an empty list for the default pipeline).",
       schema: {
         type: "object",
         properties: {
           cardId: { type: "string", description: "WeKan card id the claim is held for" },
           pipelines: { type: "array", items: { type: "string" }, description: "Pipeline names derived from the card's Pipeline: labels (D17); empty or omitted means the single default pipeline" },
+          shared: { type: "boolean", description: "sanctioned co-tenancy override, per claim: append this claim's holder to a key that already has live holders. Only when the human told this run to share — it widens WHO may share a pipeline, never one session's claim count" },
           cardTitle: { type: "string", description: "Card title, recorded in the lock for status and alert text" },
         },
         required: ["cardId"],
@@ -1594,18 +2157,20 @@ function buildCommandSpecs(env: any, ctx: any): any[] {
     {
       name: "pipeline-status",
       description:
-        "Answer the lock state: every held claim grouped by setId with card, holder, state, heartbeat age and pipeline names, plus the last reap. Takes no arguments.",
+        "Answer the lock state: every held claim grouped by setId with card, holder, state, heartbeat age and pipeline names — plus the holder list whenever a key is shared — plus the last reap. Takes no arguments.",
       execute: async (input: any) => {
         let text: string;
         try {
           const st = await lockStatus(env, { sessionID: input?.sessionID });
           const groups: any[] = Array.isArray(st?.groups) ? st.groups : [];
-          const lines = groups.map(
-            (g: any) =>
-              `claim ${String(g.setId ?? "?")} card=${String(g.cardId ?? "?")} holder=${String(g.holder ?? "?")} state=${String(
-                g.state ?? "live",
-              )} age=${Math.max(0, Math.round((Number(g.ageMs) || 0) / 60000))}min pipelines: ${[...(g.pipelines ?? [])].sort().join(", ")}`,
-          );
+          const lines = groups.map((g: any) => {
+            const who = (Array.isArray(g.holders) ? g.holders : [])
+              .map((h: any) => `${String(h.cardId ?? "?")}=${String(h.sessionID ?? "?")}(idle=${Math.max(0, Math.round((Number(h.age) || 0) / 60000))}min)`)
+              .join(" + ");
+            return `claim ${String(g.setId ?? "?")} card=${String(g.cardId ?? "?")} holder=${String(g.holder ?? "?")}${g.shared ? ` shared[${who}]` : ""} state=${String(
+              g.state ?? "live",
+            )} age=${Math.max(0, Math.round((Number(g.ageMs) || 0) / 60000))}min pipelines: ${[...(g.pipelines ?? [])].sort().join(", ")}`;
+          });
           const last = st?.lastReap;
           const lastLine =
             last && typeof last.at === "string"

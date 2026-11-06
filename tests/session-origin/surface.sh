@@ -122,6 +122,17 @@
 #     resolution-leg text and the `slug`/`session`/`custom field` substrings
 #     intact, so a red there names an out-of-scope edit.
 #
+# cf-90 RE-PIN (2026-10-31, agent-test; 2026/2026-10-cf-90-feat-board-coord-
+# improvements C02): s3 gains the GLOBAL run-tag retirement window (the card-
+# runs-only posture is superseded — designed red until C02's boards edit
+# lands). SELECTION NOTE: s4 is red at pristine main HEAD — the ladder's
+# "no fifth shell row" arm meets the sanctioned fifth allow that main
+# 7e07a6273 (kickoff warm-destination fix) shipped without re-pinning this
+# suite; that pre-existing permissions-matrix drift is tracked on its own
+# Review card OUTSIDE cf-90 (see gate.sh's matching t17 note). cf-90 chunk
+# gates run: bash tests/session-origin/surface.sh s1 s2 s3 s5 s6 s7 — never
+# the whole suite, never read s4's red as cf-90's.
+#
 # Usage (harness convention from tests/coord-inwork/surface.sh):
 #   bash tests/session-origin/surface.sh             # s1..s7
 #   bash tests/session-origin/surface.sh s4          # subset (designed-red inventory runs per check)
@@ -1010,6 +1021,13 @@ if want s3; then
       || fail "s3: $f lost the consistency-vs-mismatch window (t19; 2.3 extends this bullet, never scatters it)"
     grep -qiE 'no run tag|run tag[^.]{0,60}retir|retir[^.]{0,60}run tag|omits/nulls' "$f" \
       || fail "s3: $f lost the run-tag retirement phrase (c12 regex)"
+    # cf-90 C02 FLIP (2026-10-31): card-runs-only retirement is the SUPERSEDED
+    # posture — the bullet now states the global scope (every flavor / both
+    # families) and cites pipeline-kickoff for the mechanics. Designed red
+    # until C02 lands; the phrase regex above stays as the HOLD base.
+    if python3 "$TMP/win.py" --ci "$f" 1200 'run tag' 'retir' 'flavor'; then :;
+    elif python3 "$TMP/win.py" --ci "$f" 1200 'run tag' 'retir' 'famil'; then :;
+    else fail "s3[C02 AC4]: $f's retirement wording does not name the GLOBAL scope in one passage (run tag + retire + every-flavor/both-families) (red before C02 dev)"; fi
     python3 "$TMP/neg12.py" "$f" || fail "s3: $f pairs 'models' with 'custom field' without negating it (c12 neg12)"
     if grep -qF 'openchamber--dev-thehackmeister-coder' "$f"; then
       fail "s3: $f re-introduces the proven-dead host literal (c12/t19/i3: absence is correctness)"
@@ -1033,7 +1051,7 @@ if want s3; then
   done
   neg=$(grep -rn -e 'in-work:' -e 'done:' .rulesync/skills .opencode/skills 2>/dev/null || true)
   [ -z "$neg" ] || fail "s3: withdrawn title-convention strings under the skill trees (i1 negative, tree-wide): $neg"
-  ok "s3: full t19/c12/i3 carry inventory holds in both boards trees (strings, windows, section window, key-path + dead-literal + title negatives, RESEARCH_LABEL byte) + the cf-85 AC5 link-half slot re-point"
+  ok "s3: full t19/c12/i3 carry inventory holds in both boards trees (strings, windows, section window, key-path + dead-literal + title negatives, RESEARCH_LABEL byte) + the cf-85 AC5 link-half slot re-point + the cf-90 C02 global-retirement window"
 fi
 
 # --- s4: the FOURTH scoped allow — absolute presence duty (C02 AC4) ----------------
@@ -1204,8 +1222,11 @@ if want s6; then
   cmdbase="$BASE"
   if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then cmdbase=$(git rev-parse MERGE_HEAD); fi
   moved=$( { git diff --name-only "$cmdbase" -- .rulesync/commands .opencode/commands 2>/dev/null || true;
-             git ls-files --others --exclude-standard -- .rulesync/commands .opencode/commands; } | sort -u || true )
-  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "s6: a command file moved vs $cmdbase — the commands stay byte-frozen to this ticket (t11/t13/t18 + plan Out of scope; the script is the 5th copy, never a 6th block edit)"; }
+             git ls-files --others --exclude-standard -- .rulesync/commands .opencode/commands; } | sort -u \
+           | grep -v -E -e '^\.rulesync/commands/(pipeline|pipeline-pr|wekan-board-provision)\.md$' \
+                       -e '^\.opencode/commands/(pipeline|pipeline-pr|wekan-board-provision)\.md$' \
+           || true )
+  [ -z "$moved" ] || { printf '%s\n' "$moved" >&2; fail "s6: a command file moved vs $cmdbase — the commands stay byte-frozen to this ticket (t11/t13/t18 + plan Out of scope; the script is the 5th copy, never a 6th block edit). The admitted trio is cf-90-sanctioned: pipeline.md/pipeline-pr.md (C02's kickoff-sentence run-tag drop) + the NEW wekan-board-provision.md (C01's command), sources AND generated mirrors only."; }
   # the five-surface fragment-parity ladder, both trees (belt to script.sh b6:
   # plan Commands names it HERE too — it guards C02 from touching commands or
   # the landed C01 script between the chunks):

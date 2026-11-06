@@ -46,7 +46,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   `/pipeline-resume`); a symlink to `.opencode/commands/`, which rulesync
   generates from `.rulesync/commands/`.
 - `skills/` — self-written skills (`helm-chart-creation`, `container-creation`,
-  `llama-swap`, `wekan-mcp`, `wekan-api`). `.agents/skills/` — third-party skills,
+  `llama-swap`, `wekan-mcp`, `wekan-api`, `wekan-board-provision`).
+  `.agents/skills/` — third-party skills,
   tracked in git and synced from their GitHub sources (provenance + integrity
   hashes in the root `skills-lock.json`); don't hand-edit those.
 - `.kilo` — tracked symlink to `.agents/`, so kilo loads the same agents,
@@ -103,9 +104,19 @@ container images (`containers/`). **ArgoCD applies everything — never
   records verified facts with evidence, and recommends the pipeline over
   mega-plans; read-only git — no commits.
 - `code` (`.agents/agents/code.md`) — executes plans. Runs in fresh sessions:
-  the plan file tells it which skills and MCP servers to load. Explicitly no
-  pipeline context: a ticket folder or chunk id is redirected to the `dev`
-  family.
+  the plan file tells it which skills and MCP servers to load. Carries real git
+  writes (`add`/`commit` plus non-main branch verbs, every main-advancing form
+  its floor enumerates denied — `-B`/`-C`/`-c`/`--move` on `main` stay open
+  spellings, so never move `main` by any route; its push row stays `ask`, so
+  only an interactive human can authorize an ad-hoc one). Explicitly no
+  pipeline context when a user hands it work: a ticket folder or chunk id in
+  that shape is redirected to the `dev` family.
+  `code-pr` (`.agents/agents/code-pr.md`) is its twin on the dev/dev-pr
+  precedent — the same surface with the push allow closed by the shipped
+  `agent-dev-pr` main/force deny floor, under `pipeline-push-pr`. The
+  coordinators roster `code` (plain/`-local` class) or `code-pr` (`-pr` class)
+  as their sanctioned second implementer, the dev variant staying the default,
+  and the coordinator stays the sole chunk committer (cf-106 OQ-10).
 - `dev` family (`.agents/agents/dev.md`, `dev-local.md`, `dev-pr.md`) —
   standalone one-session-sized implementers carrying the pipeline's
   discipline: `dev-local` commits, never pushes; `dev-pr` additionally
@@ -123,10 +134,17 @@ container images (`containers/`). **ArgoCD applies everything — never
 - `0-pipeline` + stages `1-`…`7b-` (`.agents/agents/0-pipeline.md` …
   `.agents/agents/7b-docs-dev.md`) — gated 7-stage SDLC pipeline for large
   features. Start at `0-pipeline`.
-- `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,research,test,dev-pr,dev-local,review,fuser,board-coord,board-coord-local,board-coord-pr}.md`;
+- `agent-*` (`.agents/agents/agent-{coord,coord-local,coord-pr,plan,explore,research,test,dev-pr,dev-local,dev-deploy,dev-deploy-pr,review,fuser,board-coord,board-coord-local,board-coord-pr}.md`;
   the implementer ships as `agent-dev-local`/`agent-dev-pr` — no commits (the
   coordinator commits each approved chunk; the pr variant additionally pushes
-  the ticket branch); coords launch their matching dev) —
+  the ticket branch); coords launch their matching dev; the deploy pair
+  `agent-dev-deploy`/`agent-dev-deploy-pr` is the post-final-review deploy
+  fixer and ships as DEFINITION ONLY (cf-90) — nothing in that ticket executes
+  it; the only launch surface is the coordinator's step-8b hook under a
+  checked Lifecycle `Deployment`, the `boards` Stage map governing;
+  `agent-explore` is the read-only scout the `Exploration` stage launches
+  before research and planning — it grounds file locations and MCP/cluster
+  ids and writes `EXPLORE.md` next to the plan file) —
   chunk-based pipeline: `agent-coord` (primary) runs an approved plan through
   fresh `agent-plan`/`agent-test`/`agent-dev-local`/`agent-review` subagents (plus
   `agent-research` on demand), one chunk at a time, with files as the only
@@ -146,8 +164,8 @@ container images (`containers/`). **ArgoCD applies everything — never
   `/pipeline-boards-hourly` on the alias, and the gate counts all three
   board-coord names): pulls work from
   the WeKan AI-Dev board via the `dev-boards` MCP server, takes its intake from
-  the card's standard checklists plus the `slug` custom field (combined
-  `[<slug>](<session link>)` link value)
+  the card's standard checklists plus the `slug` custom field (an append-only
+  stack of combined `[<slug>](<session link>)` link values, newest LAST)
   instead of the live kickoff questions, and defers user questions to a single
   batched plan-question round; launch with `/pipeline-boards`. Artifacts
   live in `.agents/plans/<yyyy>/<yyyy-mm>-<type>-<slug>/`. Launch with the
@@ -157,6 +175,10 @@ container images (`containers/`). **ArgoCD applies everything — never
   MCP surface (its only MCP grant, no `admin-global-wekan` fallback). Not a
   pipeline coordinator — it launches no subagents and writes no files; the
   `/wekan-board-context` collector command runs as it.
+- `/wekan-board-provision` (default agent) — board-structure provisioning
+  entry: runs the `wekan-board-provision` skill over the offline engine
+  `scripts/provision-board.py` (idempotent action plan, dry-run-first,
+  additive-only, `Inbox` never mirrored into Planning).
 
 ## Feature pipeline (agent-*)
 
@@ -229,14 +251,18 @@ role × permission matrix is in the `agents-sync` skill references
   AI-Dev board replaces the live kickoff — pickup walks
   `Rework → Not Started → Low Priority` (top card first), the
   Services/Type/Model(s)/Lifecycle/Human in the Loop checklists plus the
-  `slug` custom field's combined `[<slug>](<session link>)` value supply the
+  `slug` custom field's append-only stack of combined `[<slug>](<session link>)`
+  values (newest LAST — this run's slug is its last non-empty line) supply the
   kickoff answers — the
   checked Lifecycle items are the stages the run executes
-  (checked-stages-only; nothing checked = the standard
-  Plan+Test+Code+Review loop), the Model(s) checklist alone
+  (checked-stages-only; the 11-item checklist ends with the kept
+  `Single Session` opt-in, and nothing checked runs the standard
+  default loop — the `boards` Stage map's Blank defaults section
+  names its seven stages), the Model(s) checklist alone
   routes models, `cf-<card-number>-<type>-<desc>` slugs name the feature
   folder, worktree, branch and session alike;
-  card-driven runs carry no run tag (`agent-coord` keeps run tags); the hourly
+  run tags are retired for every flavor (cf-90) — both families name the
+  run's surfaces from the slug alone; the hourly
   gate counts all three board-coord names alike, so no live board run hides
   from it;
   `Research`-labeled cards run the iterative research-only loop and end at
@@ -256,33 +282,59 @@ managed) serializes board work per pipeline: a card's `Pipeline:<name>`
 board labels name the locks it takes — no such label means the single
 `default` pipeline, and several labels block all of those pipelines
 all-or-nothing. Cards with disjoint sets run as parallel
-`agent-board-coord` iterations; the hourly entry point is the live OpenChamber
-loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as synced and
-enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo file ships
-`enabled: true` — the owner's own toggle, landed via main 080c9878a;
-scheduler hygiene stays human-owned — and `/pipeline-boards-hourly` + its
-gate stay the documented fallback). The
-top-level "finished" push reaches the phone unless the coord marked the
-session no-work AND the launch was of the scheduled kind — the `boards`
-skill's no-op marker, read by `question-notify`; manual no-ops always push.
+`agent-board-coord` iterations; the hourly entry point is the one live
+OpenChamber loop `.agents/loops/pipeline-worker.md` (verified 2026-10-29 as
+synced and enabled at `0 * * * *` in OpenChamber's scheduledTasks; the repo
+file ships `enabled: true` — the owner's own toggle, landed via main
+080c9878a; scheduler hygiene stays human-owned) running the owner-ruled
+runner model `gpu-ai/qwen3.8-27b-q4` (cf-106 OQ-14, 2026-11-03 — the
+catalog churns, so the literal moves only by a fresh user ruling), and
+`/pipeline-boards-hourly` + its gate stay the documented fallback. The
+Provider label is per-card routing inside the run: the one task serves both
+flavors and the card's `Provider:` label routes the model, so the walk
+applies no provider filter (the `boards` skill's Provider filtering section
+owns the routing + the unlabeled-card ask). The top-level
+"finished" push reaches the phone unless the coord marked the session
+no-work AND the launch was of the scheduled kind — the `boards`
+skill's no-op marker, read by `question-notify`. Every no-work end is a
+marked, archived exit: the two claim-free exits and the three tick stops
+(a gate SKIP verdict, a LIVE verdict with a filtered-in card, or an
+unavailable board check) all run the same marker + archive recipe, so a
+no-work tick leaves no alert and no idle row; manual no-ops and any crash
+still push.
 `/pipeline-tick` (plugin command) reaps stale locks
 first, then prompts the worker; the loop body ships the plain-text
 equivalent (D30). Rules for worker sessions — the `boards` skill owns the
 detail:
 
+- Repo identity: SpencersLab (default picker — no-Repo:-label cards and
+  `Repo: SpencersLab` cards are this repo's pickups; `Repo:` semantics live
+  in the boards skill).
 - One card per session; never pick or restart a card already in **Executing**
   — pickup walks `Rework → Not Started → Low Priority`.
-- `pipeline_claim` BEFORE any board move or code edit (the whole label set or
-  nothing — a contended claim names the holder); validations green → card to
-  Review → `pipeline_release(outcome:"done")`. Finished stays human-owned.
+- `pipeline_claim` BEFORE any board move or code edit (the whole derived
+  `Pipeline:` set or nothing — availability is the engine's answer: a key with
+  live foreign holders answers `reason:"occupied"` and names them). Two runs
+  share a pipeline only on the human's explicit word for that one claim — the
+  per-claim `shared: true` override, posture in the boards skill; a run never
+  decides to share on its own, and sharing never widens one session's one-card
+  claim.
+  Validations green → card to Review → `pipeline_release(outcome:"done")`.
+  Finished stays human-owned.
   Blocked → comment + `outcome:"abandoned"`, or let the lock go stale per the
   boards skill.
 - The `pipeline_*` tools are Code-Mode only (`execute` → `tools.pipeline_claim`
   etc., flat names) — on v2.1.4 they never appear in the native tool snapshot.
-- `PIPELINE LOCK LOST` = stop immediately: no commit, no card move — only a
-  fresh run re-claims. The plugin owns `.pipeline/` files; agents never
+- `PIPELINE LOCK LOST` = stop the step immediately: no commit, no card move.
+  Then exactly ONE sanctioned question — "may I continue anyway?"; on yes,
+  re-claim under the card-id lock and record the takeover; on no or silence,
+  the abandoned exit (the `boards` skill's Parallel pipeline loops section is
+  the authority — C09). The plugin owns `.pipeline/` files; agents never
   read, write, or delete them.
-- Stale locks (no heartbeat for 2 h) are reaped: the card moves to the
+- Stale locks (no heartbeat for 2 h) are reaped at holder granularity: a silent
+  holder is pruned out of a shared key while its co-tenants keep holding, and
+  the lock file itself only goes when its last holder goes stale. The card
+  moves to the
   **Timeout** list (or queues in `.pipeline/timeouts.jsonl` until that list
   exists) with a Home Assistant alert; Timeout triage is human-owned, like
   Review.

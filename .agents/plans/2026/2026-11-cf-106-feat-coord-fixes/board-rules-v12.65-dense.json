@@ -1,0 +1,40 @@
+[
+ {
+  "title": "Std checklists + defaults (Model(s): Qwen Dense, 11-item Lifecycle + HITL mirror)",
+  "trigger": {
+   "activityType": "createCard"
+  },
+  "action": {
+   "actionType": "addChecklistWithItems",
+   "checklistName": "Model(s)",
+   "checklistItems": "Qwen Large,Qwen Dense,Qwen Flash,Local (gpu-ai)"
+  },
+  "extraActions": [
+   {
+    "actionType": "checkItem",
+    "checklistName": "Model(s)",
+    "checkItemName": "Qwen Dense"
+   },
+   {
+    "actionType": "addChecklistWithItems",
+    "checklistName": "Services",
+    "checklistItems": "backups,dev,gpu,gpu-ai,grow,home,infra,media,monitoring,personal,proxy-backup,proxy-local,proxy-remote,home-assistant,agent context"
+   },
+   {
+    "actionType": "addChecklistWithItems",
+    "checklistName": "Type",
+    "checklistItems": "feat,bug,debug,dep,refactor,chore,docs"
+   },
+   {
+    "actionType": "addChecklistWithItems",
+    "checklistName": "Lifecycle",
+    "checklistItems": "Exploration,Agent Decides Research,Pre Research,Planning,Post Research,Test Writing,Chunk Development,Chunk Review,Final Review,Deployment,Single Session"
+   },
+   {
+    "actionType": "addChecklistWithItems",
+    "checklistName": "Human in the Loop",
+    "checklistItems": "Exploration,Agent Decides Research,Pre Research,Planning,Post Research,Test Writing,Chunk Development,Chunk Review,Final Review,Deployment,Single Session"
+   }
+  ]
+ }
+]

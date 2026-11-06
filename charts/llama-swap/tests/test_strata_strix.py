@@ -9,6 +9,9 @@
 
 from __future__ import annotations
 
+import json
+import re
+
 import pytest
 
 import llama_swap_testlib as L
@@ -70,12 +73,15 @@ def test_c01_strix_cmds_share_terminal_entry_per_model_profiles():
 
 @helm
 def test_c01_strix_matrix_alternation_never_co_loads():
-    """The (p|s) set guards that the inner solver never admits both arenas —
-    preload-empty alone would not stop a request-driven co-load. Checked on
-    the DNF COMBOS, not var membership: the contract expression "(p | s)"
-    mentions both arenas while the alternation must expand to one-model
-    combos ([p],[s]); a combo holding both recreates #1715 (arenas add up on
-    the 128 GB node, run-1 RESEARCH §7)."""
+    """The era-1 "(p | s)" set guards that the inner solver never admits both
+    arenas — preload-empty alone would not stop a request-driven co-load.
+    Checked on the DNF COMBOS, not var membership: the expression mentions
+    both arenas while the alternation must expand to one-model combos
+    ([p],[s]); a combo holding both recreates #1715 (arenas add up on the
+    128 GB node, run-1 RESEARCH §7). Today's sets.main is the five-letter
+    alternation — its all-arenas law is test_strata_c09_ornith_arena.py::
+    test_c09_alternation_expands_five_arenas_and_ornith_only_swaps; this arm
+    stays the founding p/s pair check."""
     cfg = S.inner_config(_docs())
     matrix = cfg.get("matrix") or {}
     assert "groups" not in cfg, "llama-swap hard-errors when matrix and groups coexist"
@@ -174,6 +180,122 @@ def test_c01_strix_exe_is_halo_root_from_container_readme():
         "wrong-arch kernels against the 8060S"
     )
     assert exe != _primary_profile(_docs())["exe"], "strix and primary must not share one exe path"
+
+
+# --- C07 re-pin era chain (TEST_SPEC 9.16): the fixture law survived the move ----
+
+
+def test_c07_strix_fixture_era_delta_is_only_the_engine_root_pair():
+    """C07 AC3/U9.4 re-pinned the engine (0.1.52 -> 0.1.54) and C09 re-pinned
+    it again (0.1.54 -> 0.1.55 with the 0.2.9 flavor image) — each time
+    PROVENANCE routed the fixture re-pin to the test session. The
+    byte-invariance law survives intact across the WHOLE chain: every
+    adjacent era delta is ONLY the sanctioned engine-root pair, and every era
+    pins its captured root exactly, so the three preservation arms
+    (abliterated/orca/q4) keep whole-file deep-equality with no exempt-key
+    hole."""
+    era1 = json.loads(
+        (S.EVIDENCE_DIR / "strata-profiles-pre-cf86" / S.PROFILE_STRIX_FILE).read_text()
+    )
+    era2 = json.loads(
+        (S.EVIDENCE_DIR / "strata-profiles-c07-repin" / S.PROFILE_STRIX_FILE).read_text()
+    )
+    era3 = S.profile_fixture(S.PROFILE_STRIX_FILE)
+    captured = (
+        ("era 1", era1, "0.1.52-linux-x86_64-hip-halo"),
+        ("era 2", era2, "0.1.54-linux-x86_64-hip-halo"),
+        ("era 3", era3, "0.1.55-linux-x86_64-hip-halo"),
+    )
+    for name, era, label in captured:
+        root = f"{S.ENGINE_ROOT}/{label}"
+        assert era["exe"] == f"{root}/strata" and era["lib_dirs"] == [root], (
+            f"{name} must pin its captured root {label!r} exactly — era files are "
+            "append-only history; a root moved without PROVENANCE is an unsanctioned re-pin"
+        )
+    for (na, a, _), (nb, b, _) in zip(captured, captured[1:]):
+        moved = {k for k in a | b if a.get(k) != b.get(k)}
+        assert moved == {"exe", "lib_dirs"}, (
+            f"the sanctioned {na}->{nb} delta is exactly the engine-root pair, got "
+            f"{sorted(moved)} — anything else moving is an un-sanctioned re-tune riding the re-pin"
+        )
+    assert not any(
+        (S.EVIDENCE_DIR / d / S.PROFILE_PRIMARY_FILE).exists()
+        for d in ("strata-profiles-c07-repin", "strata-profiles-c09-repin")
+    ), (
+        "the primary profile rides the version-free claim-compiled pack root — an "
+        "engine re-pin cannot move its era; a re-pin-era primary file is a false pin"
+    )
+
+
+def test_primary_fixture_era_chain_is_one_owner_ruled_flag_per_step():
+    """The primary's frozen era has moved twice, both times by owner ruling on
+    2026-11-01 — U13/T3 (prompt chunk: bare `auto` = 16,384 on gfx12, 32,768 is
+    what PR #3636 measured at ~2,519 tok/s on this node class) and U14 (the
+    declared cap: 92160 never covered the rung's own 46.84 + 32 + ~13 ≈ 91.84
+    GiB, so parking was refused inside its own number while the node sat idle).
+    This arm is what stops either move becoming the exempt-key hole the
+    engine-re-pin law above exists to prevent: EVERY adjacent era step must be
+    args-only, membership-identical, and exactly ONE flag value. An era step
+    with two flags, a dropped flag, a conv-cache move or a non-empty env is
+    red, and the pre-ruling eras stay append-only history."""
+    eras = (
+        ("era 1 pre-cf86", S.EVIDENCE_DIR / "strata-profiles-pre-cf86",
+         {"--prefill": "auto", "--memory-limit-mib": "92160"}),
+        ("era 2 U13/T3", S.EVIDENCE_DIR / "strata-profiles-t03-repin",
+         {"--prefill": "auto:32768", "--memory-limit-mib": "92160"}),
+        ("era 3 U14", S.EVIDENCE_DIR / "strata-profiles-u14-repin",
+         {"--prefill": "auto:32768", "--memory-limit-mib": str(S.PRIMARY_MEMORY_LIMIT_MIB)}),
+    )
+    loaded = []
+    for name, dirpath, expect in eras:
+        era = json.loads((dirpath / S.PROFILE_PRIMARY_FILE).read_text())
+        flags = dict(S.arg_pairs(era))
+        assert era["env"] == {}, f"{name}: primary profile-layer env must stay empty (C-A keyless; T0 rides the model env)"
+        for flag, want in expect.items():
+            assert flags.get(flag) == want, f"{name}: {flag} reads {flags.get(flag)!r}, captured era says {want!r}"
+        loaded.append((name, flags))
+    for (na, a), (nb, b) in zip(loaded, loaded[1:]):
+        assert set(a) == set(b), (
+            f"{na}->{nb}: args membership changed ({sorted(set(b) ^ set(a))}) — an era step is a "
+            "value ruling, not a flag add/remove"
+        )
+        diff = {k for k in a if a[k] != b[k]}
+        assert len(diff) == 1, (
+            f"{na}->{nb} moved {sorted(diff)}; every sanctioned era step is exactly ONE flag "
+            "(U13 = --prefill, U14 = --memory-limit-mib)"
+        )
+        for untouched in ("--conversation-cache-mib", "--conversation-cache-slots", "--kv-resident", "--max-context"):
+            assert a[untouched] == b[untouched], f"{na}->{nb}: {untouched} rode an unrelated era step"
+    final = loaded[-1][1]
+    cgroup_mib = int(str(S.STRATA_CGROUP_LIMIT).removesuffix("Gi")) * 1024
+    assert int(final["--memory-limit-mib"]) <= cgroup_mib, (
+        f"the captured primary cap {final['--memory-limit-mib']} MiB exceeds the {S.STRATA_CGROUP_LIMIT} "
+        "cgroup — the #1601 pairing would be unshippable"
+    )
+    assert S.profile_fixture(S.PROFILE_PRIMARY_FILE) == json.loads(
+        (S.EVIDENCE_DIR / "strata-profiles-u14-repin" / S.PROFILE_PRIMARY_FILE).read_text()
+    ), "PROFILE_FIXTURE_ERA must point at the newest primary era this chain ends in"
+
+
+def test_c07_strix_fixture_ties_to_the_built_halo_root():
+    """Anti-drift tether (the repair's strengthening half): the frozen
+    fixture's exe/lib_dirs must name THE halo root the containers/strata
+    Dockerfile itself COPYs and test -x-es. The fixture cannot silently
+    drift back toward 0.1.52, and a future image re-pin reddens this arm
+    (plus the container three-surface arm) before any render arm can go
+    stale — the era chain then re-runs through the test session."""
+    dockerfile = S.read(S.CONTAINER_DIR / "Dockerfile", "the C07 build's engine COPY/verify lines")
+    labels = {m.group(0) for m in re.finditer(r"\d+\.\d+\.\d+-linux-x86_64-hip-halo", dockerfile)}
+    assert len(labels) == 1, (
+        f"the Dockerfile names {sorted(labels)} halo roots — one era builds exactly one; "
+        "a mid-re-pin half-edit must not let the fixture chase whichever it reads first"
+    )
+    root = f"{S.ENGINE_ROOT}/{next(iter(labels))}"
+    era2 = S.profile_fixture(S.PROFILE_STRIX_FILE)
+    assert era2["exe"] == f"{root}/strata" and era2["lib_dirs"] == [root], (
+        f"strix fixture exe/lib_dirs ({era2.get('exe')!r}, {era2.get('lib_dirs')!r}) "
+        f"drifted from the build-verified halo root {root!r}"
+    )
 
 
 @helm

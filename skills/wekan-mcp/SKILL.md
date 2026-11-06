@@ -1,6 +1,6 @@
 ---
 name: wekan-mcp
-description: Use when an agent calls the lab's wekan-mcp board servers through MCP — dev-boards (AI-Dev board card access for pipeline runs), admin-global-wekan, or readonly-global-wekan — for card create/move/comment/checklist/custom-field work, or when such a call fails on argument shape, a stale list id, a tools/call timeout, a rejected parameter, or a missing server in the session catalog. Raw REST semantics and server internals live in the wekan-api skill.
+description: Use when an agent calls the lab's wekan-mcp board servers through MCP — dev-boards (AI-Dev board card access for pipeline runs), admin-global-wekan, or readonly-global-wekan — for card create/move/comment/checklist/custom-field work, board-wide preloads, card dependency edges, or bulk card labels, or when such a call fails on argument shape, a stale list id, a tools/call timeout, a rejected parameter, or a missing server in the session catalog. Raw REST semantics and server internals live in the wekan-api skill.
 ---
 
 # WeKan MCP board skill
@@ -15,20 +15,53 @@ get rediscovered through validation errors.
 Evidence posture: the rules below and the full table were source-checked
 2026-10-27 against `containers/wekan-mcp/wekan_mcp/server.py` — anchored on
 function names, never line numbers, which drift with every build — and
-live-probed read-only on `dev-boards` the same day. The deployed build can lag
-the repo source, so docs are claims and the live `tools/list` is fact.
+live-probed read-only on `dev-boards` the same day. The cf-96 additions (the
+five dependency tools, `preload_board`, `set_card_labels`, `create_card`'s
+`parent_id`, and the C11 rule-projection extension — `get_rule`/`list_rules`
+carrying the checklist extras and the enabled flag) were source-checked
+2026-11-01 (the extension 2026-11-02) against upstream v12.65 and were
+NEVER live-probed (no bearer in a pipeline session) — their rows carry
+`source-only 2026-11` until the C10 deploy-chain probe upgrades them. The
+deployed build can lag the repo source, so docs are claims and the live
+`tools/list` is fact.
 
 ## Servers and tiers
 
 | Server id | Deployment | Write surface | Credential |
 |---|---|---|---|
-| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 31 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
-| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 31 tools | one long-lived service-user bearer in the pod env |
+| `dev-boards` | dev cluster `mcp.dev.scifi.farm/boards` — the pipeline board-intake endpoint | full, 39 tools | login-minted server-side: `WEKAN_USERNAME` + `WEKAN_PASSWORD` from a Bitwarden LOGIN item (the base URL rides that item's URI field) — the agent never handles credentials |
+| `admin-global-wekan` | gpu `wekan-admin` deployment | full, 39 tools | one long-lived service-user bearer in the pod env |
 | `readonly-global-wekan` | gpu `wekan-readonly` deployment | none — with `WEKAN_MCP_READ_ONLY=true` write tools are never registered, so they are absent from `tools/list` and uncallable even by accident | same bearer story as the admin tier |
 
 All three run the image built from `containers/wekan-mcp`, and every read or
 write is scoped to the service user's board membership. Deployment wiring and
 the raw-REST fallback are the `wekan-api` skill's ground.
+
+The cf-96 surface plus cf-106 C07's `get_card_details` (39 = 18 reads + 21 writes, repo source; NOT deployed until
+the C10 bump — probe `tools/list` before trusting any of it): reads
+`list_board_dependencies` (board-wide Red Strings lines), `list_card_dependencies`
+(one card's stored edges) and `preload_board` (one export call reshaped to
+swimlane→list→cards, each group carrying its `title` beside its `id`, +
+dependency lines + label/field name maps, per-card exactly
+`{id, card_number, label_ids, slug, archived, sort, parent_id, checklists}` —
+checklists being `[{id, title, items: [{title, finished}]}]` filtered to the
+kickoff vocabulary (Services, Type, Model(s), Lifecycle, Human in the Loop,
+plus the legacy `Research` and 8-item Lifecycle spellings) and riding the same
+request via the `checklists` section of the `fields=` trim, so no checklist
+fan-out is ever needed; `slug` reduced by the single parse
+authority to the newest entry of the field's append-only combined-value stack;
+the optional `swimlane_titles` argument bounds the grouping to the named
+swimlanes, default every swimlane, an unknown title answering `swimlanes: []`
+while a malformed or bodyless export answer raises instead — the empty grouping
+means an empty board, never an outage);
+writes
+`add_card_dependency` (UPSERT — a repeat add updates the edge, never duplicates
+it; the 7 types gate client-side like `create_label`'s colors),
+`edit_card_dependency`, `remove_card_dependency` (the third bounded destructive
+op) and `set_card_labels` (bulk add/remove labels on ≤500 cards — the route that
+retires the rules-engine label round-trip); plus `create_card`'s trailing
+optional `parent_id`, a two-step create→PUT lineage that never rolls back and
+never draws an edge by itself (kind-1 follow-ups are parentId-only).
 
 ## Call-shape rules
 
@@ -101,6 +134,54 @@ human-owned and drifts (a non-pipeline list appeared in the AI-Dev
 collection stamp, never a freeze — the re-resolve footer is part of the
 schema.
 
+## Card details block schema
+
+The single normative home of this format. The producer is the board-context
+plugin's claim-time leg: on a successful `pipeline_claim` from a board-coord
+agent it calls `get_card_details` and appends this block to the claim answer,
+so the run reads the card it just took in the same turn. `formatCardBlock` in
+`.opencode/plugin/board-context/index.ts` mirrors these bytes.
+
+```text
+card_details: <title> (#<cardNumber>)
+id: <card id>
+card_number: <n>
+title: <title>
+description: <description, folded to one line>
+list_id: <id>
+swimlane_id: <id>
+archived: <true|false>
+sort: <n>
+parent_id: <id, empty when the card has no parent>
+label_ids: <id>, <id>
+labels: <label id>=<label name>, …
+custom_fields: <field name>=<raw value>, …
+slug_stack: <slug>, <slug>
+current_slug: <slug>
+checklists: <checklist title>, <checklist title>
+  checklist: <checklist title>
+    item: <item title> [x]
+    item: <item title> [ ]
+dependencies: <to id> <type> <color>, …
+  dependency: <to id> <type> <color>
+collected: <ISO-8601>, from get_card_details
+```
+
+An empty value after a colon means the card carries nothing there (no parent,
+no slug field, no edges) — absence is spelled by the empty field, never by
+dropping the line. `slug_stack` is the whole `slug` custom-field stack,
+oldest first; `current_slug` is its newest entry, the one a run names its
+surfaces with — always `slug_stack[-1]`, because a pre-flip card carrying a
+bare slug (no link form) reads as a one-entry stack of that value. Only an
+unset or empty field reads as an empty stack. `checklists` lists every checklist the card carries with its
+items in stored order and tick state — all of them, not the kickoff
+vocabulary, which is what makes a follow-up card's inherited Lifecycle answers
+readable without touching the parent. An empty `items` list means that
+checklist has no items: an items read that fails fails the whole call, so the
+block never shows an unreadable checklist as an empty one. `dependencies` are
+the card's own stored edges (`to_id` is the target card id). The footer stamp
+is part of the block: an old block in a long-running session is visible as one.
+
 ## Failure-mode playbook
 
 | Symptom | Likely cause | Recovery |
@@ -124,6 +205,8 @@ schema.
   `references/call-shapes.md`.
 - Intentionally omitted from every tier's surface: attachments, webhooks,
   member/user administration, imports/exports, and entity-level deletion
-  (`delete_board`, `delete_card`, `delete_list`, `remove_member`). Only two
-  destructive ops are exposed, each bounded to one object: `remove_rule`
-  and `delete_checklist_item`.
+  (`delete_board`, `delete_card`, `delete_list`, `remove_member`). The
+  destructive ops that ARE exposed stay bounded to one object each —
+  `remove_rule`, `delete_checklist_item`, and the cf-96 single-card-edge
+  removal — every one docstring-marked; `references/call-shapes.md` carries
+  the row per tool.
