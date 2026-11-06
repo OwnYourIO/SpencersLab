@@ -1,0 +1,62 @@
+{
+  "feature": "2026/2026-11-cf-105-vllm-followup",
+  "plan_status": "approved",
+  "coord_session": "ses_e4d84ad2cffe6CXlIOWwPkXOJh",
+  "test_session": "ses_e4d343a6fffeHEkps7Zr2onRaW (single re-pin session for all chunks C01+C02+C03 per cf-83 posture; faulty-test repairs route back here)",
+  "current_wave": 1,
+  "updated_at": "2026-11-06T22:01:00+00:00",
+  "approval": {
+    "approved_by": "user",
+    "at": "2026-11-06T21:10:00+00:00",
+    "via": "chat plan-approval round: 'Approve as written' + OQ1 confirmed as midpoint snap (1–3→1, 4–7→5, 8–9→9, 10+→10); OQ2/OQ3 adopted as written — human entry in DECISIONS.md"
+  },
+  "kickoff": {
+    "slug": "cf-105-vllm-followup",
+    "type": "feat",
+    "worktree": "cf-105-vllm-followup",
+    "branch": "cf-105-vllm-followup",
+    "branch_note": "pre-existing (coord ruling): branch on the main tip with cf-105 merged (fcd5e35e3); not re-minted or moved",
+    "origin_dir": "/home/coder/SpencersLab",
+    "models": {
+      "plan": "openrouter/qwen/qwen3.8-27b",
+      "code": "openrouter/qwen/qwen3.8-27b"
+    },
+    "local": false,
+    "model_note": "the blank-card default gpu-ai/qwen3.8-27b-q4 answered 503 'no available server' twice at launch; the run fell back to the hosted dense route per pipeline-models (same route cf-105's own run used) — DECISIONS 2026-11-06 coord entry"
+  },
+  "chunks": {
+    "C01": {
+      "status": "pending",
+      "wave": 1,
+      "depends_on": [],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C02": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    },
+    "C03": {
+      "status": "pending",
+      "wave": 2,
+      "depends_on": [
+        "C01"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
+    }
+  },
+  "blocked": [],
+  "deferred": []
+}

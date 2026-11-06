@@ -350,7 +350,8 @@ def _assert_strata_peers(cluster: str, peers, golden_peers) -> None:
     )
     # cf-105 C03: the vllm hop, exactly the C03 task-spec block — keyless
     # in-cluster proxy (no /v1), explicit models list, the deep-prefill
-    # timeout, the set-if-undefined priority floor 10 (D6 default class).
+    # timeout, the set-if-undefined priority floor 5 (the floor follows the
+    # default class — cf-105-vllm-followup C01 re-pin).
     v = peers["vllm"]
     assert v == L.PEER_VLLM, (
         f"vllm peer is {v}, want {L.PEER_VLLM} — cf-105 C03 pins the exact hop"

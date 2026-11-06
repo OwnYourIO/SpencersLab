@@ -22,6 +22,13 @@
 # Designed-RED until C06 lands: the runbook file is absent, so T1/T2/T4/T5
 # fail naming the file and T3 fails on the absent C01/C02/C06 artifacts.
 #
+# cf-105-vllm-followup C03 re-pin (2026-11-06): the four-class priority
+# amendment supersedes cf-105 D6/HR2 — T3's class-value sweep goes
+# ("1", "10") -> ("1", "5", "9") and its floor leg 10 -> 5 (the floor
+# follows the default class, D2); T5 gains the qwen3.8-27b-vllm-low
+# names-block needle. T1/T2/T4 stay byte-untouched (the runbook edit is
+# text-only, no structural change).
+#
 # Path overrides (fixture probe): each artifact path honours an env var so a
 # conforming fixture set in a scratch dir can be verified without touching
 # the tree. The defaults are the real repo paths.
@@ -209,17 +216,18 @@ def scrape_keys(node, path=""):
 for p in scrape_keys(cv):
     errs.append(f"charts/vllm/values.yaml carries a scrapeInterval key at {p} — the Q5 ruling forbids it (C02)")
 
-# Priority class values: the runbook names urgent=1 and default=10; the peer
-# floor in the values is the set-if-undefined default-class value 10.
+# Priority class values: the runbook names urgent=1, default=5, low=9 (the
+# four-class amendment, cf-105-vllm-followup C03); the peer floor in the
+# values is the set-if-undefined default-class value 5.
 def prio_named(value):
     return any(re.search(rf"priority[^\n]{{0,40}}\b{value}\b", ln, re.I)
                for ln in rb.splitlines())
-for v in ("1", "10"):
+for v in ("1", "5", "9"):
     if not prio_named(v):
-        errs.append(f"the runbook never names the vLLM priority value {v} (the urgent/default class constants, C06 AC5)")
+        errs.append(f"the runbook never names the vLLM priority value {v} (the urgent/default/low class constants, C06 AC5 — cf-105-vllm-followup C03 re-pin)")
 floor = (((peer.get("filters") or {}).get("setParams")) or {}).get("priority?")
-if floor != 10:
-    errs.append(f"services peers.vllm.filters.setParams['priority?'] is {floor!r}, want 10 (the C03 D6 default-class floor)")
+if floor != 5:
+    errs.append(f"services peers.vllm.filters.setParams['priority?'] is {floor!r}, want 5 (the default-class floor — the floor follows the default class, cf-105-vllm-followup D2)")
 
 # Base tag: the runbook and the C01 ledger both name the bare base tag. The
 # ledger is a tag->digest table, so the bare tag (not the full image:tag
@@ -238,7 +246,7 @@ PY
   elif [ "$rc" -ne 0 ]; then
     fail "T3: runbook constants do not match the shipped values (C06 AC5 — diagnostics above)"
   fi
-  ok "T3: runbook constants match the shipped values (served name, D4 envelope, scrapeInterval absence, priority 1/10 + floor, base tag)"
+  ok "T3: runbook constants match the shipped values (served name, D4 envelope, scrapeInterval absence, priority 1/5/9 + floor 5, base tag)"
 fi
 
 # --- T4: research citations resolve into RESEARCH.md ---------------------------
@@ -351,9 +359,11 @@ need("1-token", "step 3c (the GGUF serve + first-token proof completion)", case=
 # RESEARCH Post Research V1 — so the runbook must mark this gate).
 need_re(r"first[ \t-]+engine[ \t-]+gate", "step 3 (the gate is the first on-RDNA engine proof)", re.I)
 
-# FE chain + the urgent model row (the D6 class rows the priority work ships).
+# FE chain + the vLLM class rows (the four-class contract's carrier rows —
+# cf-105-vllm-followup C03 names the low row in the runbook's names block).
 need("llama.spencerslab.com/v1", "step 4 (the FE chain the runbook smokes)")
 need("qwen3.8-27b-vllm-urgent", "step 4 (the urgent OpenCode row whose body merge is live)")
+need("qwen3.8-27b-vllm-low", "the names block (the low class row the 4-class contract adds)")
 
 # Priority proof (step 5): the policy flag the engine must run, the explicit
 # body value, and the preemption metric.

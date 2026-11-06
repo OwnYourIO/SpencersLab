@@ -12,6 +12,12 @@
 # green: the gpu render carries no vllm peer and the gpu golden stays
 # vllm-free (the block is gpu-ai-only; the gpu golden is untouched by C03).
 #
+# cf-105-vllm-followup C01 re-pin (2026-11-06): T1's floor constant moves
+# 10 -> 5 with the default class (the four-class amendment — the peer floor
+# follows the default class, D2), so T1's block-equality leg is
+# designed-red until the wire change + golden re-capture land; T2 (schema),
+# T3 and T4 carry over unchanged.
+#
 # Run with the suite (per-directory): python3 -m pytest charts/llama-swap/tests -v
 
 from __future__ import annotations
@@ -27,7 +33,7 @@ pytestmark = pytest.mark.skipif(not _ok, reason=_reason)
 # The peer block exactly per the C03 task spec: proxy carries NO /v1 suffix
 # (path appended verbatim, EXPLORE §8.9), models lists the served name
 # explicitly, responseHeader 1800 is the deep-prefill first-byte knob
-# (Strata precedent), setParams "priority?" is the set-if-undefined floor 10
+# (Strata precedent), setParams "priority?" is the set-if-undefined floor 5
 # (a client-sent priority wins, so the C04 class rows pass through untouched).
 # No apiKey: keyless in-cluster (R3 Q5.3). The literal itself lives in the
 # testlib (L.PEER_VLLM) — the single source shared with the parity and
@@ -66,7 +72,7 @@ def test_t1_peers_vllm_block_exact():
     )
     assert peer.get("filters") == PEER_VLLM["filters"], (
         f"C03 T1: peer filters is {peer.get('filters')!r}, want {PEER_VLLM['filters']!r} "
-        '(the "priority?" set-if-undefined floor 10 — default class, client-sent value wins)'
+        '(the "priority?" set-if-undefined floor 5 — default class, client-sent value wins)'
     )
     assert peer == PEER_VLLM, (
         f"C03 T1: the peers.vllm block must be EXACTLY the task spec (no apiKey, no extra keys)\n"

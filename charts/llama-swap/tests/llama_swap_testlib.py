@@ -821,13 +821,17 @@ CF86_MOE_OFFLOAD_LEG = '-ot "\\.ffn_.*_exps\\.=CPU"'
 # _assert_strata_peers, the strata-wiring overlay arm); the blast-radius
 # carve pins it from the ERA side (the re-captured golden) instead, so a
 # later re-capture re-aligns that guard automatically.
+# cf-105-vllm-followup C01 re-pin (2026-11-06): the floor 10 -> 5 — the
+# four-class amendment moves the default class 10 -> 5 and the peer floor
+# follows the default class (its D2; cf-105 D6/HR2 superseded). No other
+# block key moves.
 # ---------------------------------------------------------------------------
 
 PEER_VLLM = {
     "proxy": "http://gpu-ai-vllm.default.svc.cluster.local:8000",
     "models": ["qwen3.8-27b-vllm"],
     "timeouts": {"responseHeader": 1800, "connect": 30},
-    "filters": {"setParams": {"priority?": 10}},
+    "filters": {"setParams": {"priority?": 5}},
 }
 
 
