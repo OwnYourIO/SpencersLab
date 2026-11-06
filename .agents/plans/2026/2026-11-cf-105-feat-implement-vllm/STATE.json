@@ -314,6 +314,18 @@
           "next_suggested": "coord commits the C06 set; mark C06 done (all six chunks done); post the card comment; run the final whole-plan review"
         }
       ]
+    },
+    "C07": {
+      "status": "pending",
+      "wave": 4,
+      "depends_on": [
+        "C02",
+        "C03"
+      ],
+      "dev_rounds": 0,
+      "review_rounds": 0,
+      "last_verdict": null,
+      "handoffs": []
     }
   },
   "handoffs": [
