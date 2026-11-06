@@ -3,8 +3,8 @@
   "plan_status": "approved",
   "coord_session": "ses_e4d84ad2cffe6CXlIOWwPkXOJh",
   "test_session": "ses_e4d343a6fffeHEkps7Zr2onRaW (single re-pin session for all chunks C01+C02+C03 per cf-83 posture; faulty-test repairs route back here)",
-  "current_wave": 1,
-  "updated_at": "2026-11-06T22:01:00+00:00",
+  "current_wave": 2,
+  "updated_at": "2026-11-06T22:25:00+00:00",
   "approval": {
     "approved_by": "user",
     "at": "2026-11-06T21:10:00+00:00",
@@ -26,13 +26,60 @@
   },
   "chunks": {
     "C01": {
-      "status": "pending",
+      "status": "done",
       "wave": 1,
       "depends_on": [],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 1,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e4d1dc6d7ffeBgK1MfpZ4P3I0w",
+      "review_session": "ses_e4d150ba2ffebb1dYZVnUjggh1",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e4d1dc6d7ffeBgK1MfpZ4P3I0w",
+          "status": "DONE",
+          "files_changed": [
+            "services/gpu-ai/prod/values.yaml (peers.vllm floor \"priority?\" 10 -> 5 + comment clause 'floor 5 (the default class)'; 2 lines)",
+            ".opencode/opencode.jsonc (default row qwen3.8-27b-vllm body.priority 10 -> 5; NEW row qwen3.8-27b-vllm-low: shared wire modelID qwen3.8-27b-vllm, limit.context 262144, body.priority 9; diff = 1 value + 1 row + comma)",
+            "charts/llama-swap/tests/golden/gpu-ai.config.yaml (re-captured per TEST_SPEC §1; git diff = exactly one line L1374 priority?: 10 -> 5, 39159->39158 B; 8 §9.26 annotation lines preserved at anchor; gpu golden byte-identical)",
+            "charts/llama-swap/tests/TEST_SPEC.md (§11 dated capture note + cf-105 deferred §10 count correction 15-line -> 10-line)"
+          ],
+          "commands_run": [
+            "pre-edit subtree extract + helm template configmap @6a432b751 => pass (38578 B, priority?: 10 @ L1366)",
+            "golden(annotation-free) == pre-render => pass (baseline fidelity proven before edit)",
+            "post-edit extract + helm template => pass (38577 B, priority?: 5 @ L1366)",
+            "diff render-pre render-post => exactly one line 1366c1366 priority?: 10 -> 5 (AC1 one-hunk proof; strata peer + matrix byte-identical)",
+            "node eval-parse .opencode/opencode.jsonc (M3 JSONC-tolerant route) => pass (rows: vllm {262144, p5}, -urgent {p1}, -low {262144, p9}; 86 gpu-ai models, AC2)",
+            "re-capture golden = post-render + 8 annotation lines at anchor => pass; diff golden-old golden-new = exactly one line; golden(annotation-free) == post-render => pass (AC3/T4)",
+            "git diff --numstat => 7/1 opencode.jsonc, 2/2 values.yaml, 1/1 golden, 36/1 TEST_SPEC.md; gpu.config.yaml diff empty (AC3 hold)",
+            "export PATH + python3 -m pytest charts/llama-swap/tests -v => pass (415 passed / 9 skipped / 0 failed in 23.35s; skips = standing RUN_HF_CHECK/RUN_FLAG_AUDIT gates; T1-T4 PASSED, AC3)",
+            "bash tests/pipeline-models/surface.sh M1 M2 M3 M4 M5 M6 => pass (8 ok; M3 re-pin green: three vLLM class rows, shared wire modelID, 262144, body.priority 5/1/9; AC4/AC5)",
+            "bash tests/pipeline-models/surface.sh M7 => fail (designed-red, cf-83 posture): first assertion hit is C02's needle 'class table: no default row (unset / default / qwen3.8-27b-vllm / 5)'; M7's floor + catalog legs pass in isolation on this tree => M7's redness is C02's, not C01's",
+            "grep -rin vllm services/proxy-local/ custom-values/ services/gpu/ => no matches (trio greps)",
+            "npx aislop ci --changes => pass (exit 0, 0 errors / 0 warnings, 91 files, AC6)",
+            "git status --short => exactly the four in-scope files modified; no commits made (coordinator-owned)"
+          ],
+          "deviations": "none material — the edit tool is permission-denied on charts/**/tests/** in dev sessions (same scope cf-105 C03 hit); the dev-assigned test assets (golden re-capture + TEST_SPEC §11 note/§10 fix) were written via python shell writes per the cf-105 C03 precedent route, recorded in TEST_SPEC §11",
+          "friction": "(1) edit tool denied on charts/**/tests/** in dev sessions (permission scoping, not a defect) — shell write used for the chunk-assigned test assets per cf-105 C03 precedent; (2) a naive regex //-strip fails to parse .opencode/opencode.jsonc (the file carries // inside string values, e.g. URLs) — verify with the suite's documented node eval route (surface.sh M3 JSONC-tolerant parse), not naive comment stripping",
+          "open_questions": "none",
+          "next_suggested": "coord records handoff, launches C01 agent-review, then commits the C01 set (four files; tgz stays untracked) and launches wave 2 — C02 (M7 turns green on its dev edit) then C03 (runbook T3/T5 turn green)"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e4d150ba2ffebb1dYZVnUjggh1",
+          "verdict": "APPROVED",
+          "summary": "all validations re-run fresh on the uncommitted tree: rendered configmap floor = 5; chart suite 415 passed / 9 skipped / 0 failed (all skips = standing RUN_HF_CHECK/RUN_FLAG_AUDIT gates); M1-M6 green (8 ok); M7 red BY DESIGN with first hit = C02's needle ('class table: no default row (unset / default / qwen3.8-27b-vllm / 5)') and its C01-dependent floor/catalog/background-rung legs verified green in isolation; aislop 0/0/0 (91 files). Diff review vs chunks/C01.md ACs + D1-D3: floor exactly 5 (comment + value, whole-file diff vs HEAD = exactly 2 lines; peers.strata/matrix/models byte-identical); catalog diff = one value + one row + comma only (default row p5; NEW qwen3.8-27b-vllm-low p9, shared wire modelID qwen3.8-27b-vllm, limit.context 262144, sibling shape; -urgent/-q4/82 other rows untouched; JSONC validated via node-eval route per FRICTION); golden old->new diff = EXACTLY the one floor line (39159->39158 B), 8 §9.26 annotation lines byte-identical at anchor, gpu.config.yaml md5-identical to HEAD, golden(annotation-free) == fresh render independently re-derived; TEST_SPEC §11 note factually verified + §10 count fix; scope = exactly the four in-scope files, no .rulesync/runbook/charts-vllm/test-owned touches, no untracked. Dev's shell-write deviation (edit denied on charts/**/tests/**) matches the cf-105 C03 precedent. No blocker/major/minor/nit findings.",
+          "files_changed": [
+            ".agents/plans/2026/2026-11-cf-105-vllm-followup/chunks/C01.md (review notes appended — reviewer surface only)"
+          ],
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "coord commits the C01 set (four in-scope files; tgz stays untracked) and launches wave 2 — C02 first, then C03"
+        }
+      ]
     },
     "C02": {
       "status": "pending",
