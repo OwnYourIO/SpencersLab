@@ -93,7 +93,7 @@
       "last_verdict": "APPROVED",
       "dev_session": "ses_e4d0aa361ffeJ7EwPA5gPa5PeF",
       "review_session": "ses_e4d0764efffe0FqmxedsESSrYr",
-      "commit": "PENDING-COORD",
+      "commit": "481055427",
       "handoffs": [
         {
           "role": "dev",
@@ -134,15 +134,81 @@
       ]
     },
     "C03": {
-      "status": "pending",
+      "status": "done",
       "wave": 2,
       "depends_on": [
         "C01"
       ],
-      "dev_rounds": 0,
-      "review_rounds": 0,
-      "last_verdict": null,
-      "handoffs": []
+      "dev_rounds": 2,
+      "review_rounds": 1,
+      "last_verdict": "APPROVED",
+      "dev_session": "ses_e4cfe65e5ffeqEko7mBM2cP7f1",
+      "review_session": "ses_e4cfb387dffeR0mlSt5hucnSvP",
+      "commit": "PENDING-COORD",
+      "handoffs": [
+        {
+          "role": "dev",
+          "round": 1,
+          "session": "ses_e4d02cc9fffev0KgRzi1CoQKHB",
+          "status": "DONE",
+          "files_changed": [
+            ".agents/notes/vllm-on-target-acceptance.md (four-class constant sync within the 3 named hunks: names block + §5 preamble floor/class values + §5.3 four-class victim-order line; TEXT-only, no command/curl-body/flag/step-numbering change; 560 lines)"
+          ],
+          "commands_run": [
+            "export PATH => pass",
+            "bash tests/notes/vllm-runbook.sh => pass (5 ok, exit 0 — T1-T5 all green; T3 green on v='9' leg + floor 5, T5 green on -low names-block needle)",
+            "bash tests/notes/vllm-runbook.sh T3 / T5 alone => pass each",
+            "python3 T3 value-sweep leg check => pass (v=1 on 2 lines, v=5 on 5 lines, v=9 on 1 line, each within 40 chars after 'priority'; live services floor = 5)",
+            "grep qwen3.8-27b-vllm-low runbook => pass (L40 names block + L276 preamble)",
+            "npx aislop ci --changes => pass (0/0/0, 91 files)",
+            "git diff scope => pass (runbook TEXT-only within the 3 named hunks; 5.1 body priority:5 + 5.2 fcfs flag untouched; tests/notes/vllm-runbook.sh UNMODIFIED)",
+            "CRLF/trailing-ws/final-newline => pass (0 CR, no trailing ws, final newline, 560 lines)",
+            "catalog cross-check vs shipped wire => pass (opencode.jsonc L795-812: default p5 / urgent p1 / low p9, shared modelID, context 262144 — matches runbook constants)"
+          ],
+          "deviations": "(1) §5 preamble: replaced the stale '(D6)' citation (cf-105's superseded 3-class decision) with '(the four-class contract, cf-105-vllm-followup D1)' — leaving (D6) would cite the 3-class decision for the now-4-class statement (parent C06 AC2 law: a citation must support the claim); text-only, inside the named hunk; flagged for review adjudication (one-token revert possible). (2) 5.1 left byte-identical per the chunk conditional (label does not claim 'non-default'; curl body stays priority: 5). (3) Scope note: git status shows STATE.json modified = coordinator's pre-existing C02 bookkeeping (mtime 22:31:11 predates dev's first edit; dev only read STATE.json).",
+          "friction": "none new",
+          "open_questions": "none",
+          "next_suggested": "coord records handoff, launches C03 agent-review (full suite re-run, AC2/AC3, adjudicate the D6→D1 citation swap), then commits the C03 set (runbook + bookkeeping)"
+        },
+        {
+          "role": "dev",
+          "round": 2,
+          "session": "ses_e4cfe65e5ffeqEko7mBM2cP7f1",
+          "status": "DONE",
+          "note": "post-restart relaunch found the round-1 3-hunk edits already in the tree; audited them against every AC with fresh runs instead of re-authoring, and made exactly ONE new edit",
+          "files_changed": [
+            ".agents/notes/vllm-on-target-acceptance.md (ONE new hunk: 5.2 stale three-class reference 'exercises the body merge for both class rows' -> 'for the default and urgent rows'; round-1 hunks audited + sustained, incl. the D6->cf-105-vllm-followup D1 citation swap)"
+          ],
+          "commands_run": [
+            "git log/status/diff scope audit on arrival => pass (C01 f6346bc47 + C02 481055427 committed; tree carried the 3 named-hunk runbook edits from round 1)",
+            "bash tests/notes/vllm-runbook.sh => pass (5 ok, exit 0 — T1-T5 all green, fresh)",
+            "bash tests/notes/vllm-runbook.sh T3 / T5 (after the 5.2 edit) => pass",
+            "npx aislop ci --changes => pass (0/0/0, 91 files)",
+            "live-wire cross-check => pass (services floor 5 @ L556; opencode.jsonc L795-812 p5/p1/p9 shared wire modelID 262144; pipeline-models four-class table + floor 5; parent RESEARCH.md R4 Q1 citation resolves)",
+            "T3 value-sweep leg python re-check => pass (v=1: 2 lines, v=5: 5 lines, v=9: 1 line)",
+            "hygiene => pass (0 CR, 0 trailing-ws, final newline, 560 lines)",
+            "git diff tests/notes/vllm-runbook.sh => empty (suite UNMODIFIED)",
+            "git diff runbook => exactly 4 hunks, all TEXT-only (3 round-1 + the 5.2 reword); no command/curl/flag/step-numbering change; 5.1 curl body priority: 5 byte-identical"
+          ],
+          "deviations": "(1) audited-not-re-authored round-1 edits (post-restart relaunch); (2) ONE new 5.2 reword (stale three-class reference — inside the coord brief's 'any other stale two/three-class references' sweep, outside a chunk-named hunk; flagged for review); (3) sustained the round-1 D6→cf-105-vllm-followup D1 citation swap (bare D6 resolves to the SUPERSEDED cf-105 three-class decision; parent C06 citation law)",
+          "friction": "none new",
+          "open_questions": "none — both flagged wording choices are review-adjudication items, not user rulings",
+          "next_suggested": "coord launches C03 agent-review (fresh full-suite re-run, AC2/AC3 line-by-line, adjudicate the 5.2 reword + the D6→D1 citation), then commits the C03 set"
+        },
+        {
+          "role": "review",
+          "round": 1,
+          "session": "ses_e4cfb387dffeR0mlSt5hucnSvP",
+          "verdict": "APPROVED",
+          "summary": "all validations re-run fresh on the uncommitted tree: vllm-runbook.sh T1-T5 5 ok; aislop 0/0/0 (91 files); suite file byte-identical to HEAD (blob 7fe20342f); 5.1 block (label + curl body priority:5) byte-identical via block-level diff. AC1-AC4 met: diff = exactly 4 TEXT-only hunks (names block low row; §5 preamble floor 10→5 + three vLLM class rows + background-off-vLLM statement; 5.2 reword; §5.3 victim-order line), no command/curl/flag/step-numbering change, hygiene intact (560 lines, 0 CR, 0 trailing-ws, final newline). Constants cross-checked 1:1 against the live wire independently (services floor 5 @ L556/L540; catalog p5/p1/p9 shared modelID 262144 @ L795-811; pipeline-models four-class table L43-50). OQ3 honored: §5.3 keeps the two-class saturation proof verbatim + adds the one four-class victim-order line (low(9) → default(5), never urgent(1)). Citation law: new '(R4 Q1: victim = max (priority, arrival_time))' resolves to parent RESEARCH.md R4 Q1, faithful paraphrase of the preempted_req rule; T4 green. Both flagged deviations adjudicated SUSTAINED: (a) D6→cf-105-vllm-followup D1 citation swap (bare D6 resolves to the superseded cf-105 3-class ruling; ticket-qualified D1 correct); (b) 5.2 'both class rows'→'the default and urgent rows' (step-4 smoke exercises exactly those two rows; coord-directed text-only accuracy fix; disjoint from cf-105's deferred 4.3 R3 Q5 fix, untouched @ L252). No blocker/major/minor/nit findings.",
+          "files_changed": [
+            ".agents/plans/2026/2026-11-cf-105-vllm-followup/chunks/C03.md (review notes round 1 appended — reviewer surface only)"
+          ],
+          "friction": "none",
+          "open_questions": "none",
+          "next_suggested": "coord commits the C03 set (runbook + bookkeeping; tgz stays untracked), then runs the final whole-plan review (all three suites + aislop per the plan's final-review Commands)"
+        }
+      ]
     }
   },
   "blocked": [],
