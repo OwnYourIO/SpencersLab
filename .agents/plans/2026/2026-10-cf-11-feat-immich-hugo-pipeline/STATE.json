@@ -358,6 +358,23 @@
         "runner image: owner asked why the runner image is built in this repo ('a separate ask?') — after the entanglement explanation (the C01 sync tooling ships inside the image's build context), the owner chose to KEEP containers/forgejo-host-runner/ + the charts/forgejo-runner host-mode delta in this PR. Not moved.",
         "site-staging/: REMOVED from the branch — 'it's and has bits I don't want in there': the 3 site files live in the site repo only (owner checkout /home/coder/CuratedForest.com -> site PR); the staging test suite + APPLY-INSTRUCTIONS were removed with it. Ticket record amended (plan map/rows/Commands + amendment bullet, C06/C07 chunk notes)."
       ]
+    },
+    "main_pull": {
+      "at": "2026-11-06",
+      "merged": "eaa1a2c5b (main tip; 195 commits past the branch point: cf-97 runner rollout, cf-104 Forgejo LFS, cf-106, board/pipeline work, renovate)",
+      "merge_commit": "b95889564",
+      "conflict": "exactly one true conflict — charts/forgejo-runner/templates/secret-runner.yaml (our C03 host-mode label templatization vs main's hardcoded act lines). Resolved as OUR content: main made zero commits to that file between our re-land base (010e387fb) and its tip, so our stage-2 subsumes main (the cf-97/cf-104 wording + LFS record are carried verbatim inside the docker branch).",
+      "invariants_re_proven": "docker-path render byte-identical to main's chart (10,411 B cmp); host shape exact; 4 fail-gate negatives fail loud; main-state dev-forgejo suite green modulo the two known main-side cf-93 stale legs (t5 'both', t9 home-assistant); containers gate 11 ok.",
+      "routing": "main's tests/services/gpu-forgejo-runner.sh g7 (cf-104) is RED BY CONSTRUCTION on this branch: it asserts the runner chart values stay untouched-vs-main, while the owner ruling keeps the C03 host-mode values delta in this PR — route to cf-104 owner / agent-test (admit the delta or scope the assertion to the renovate-tracked pin lines). cf-93 t5/t9 main-side staleness stands."
+    },
+    "owner_review_round3": {
+      "at": "2026-11-06",
+      "site_files": "owner's checkout /home/coder/CuratedForest.com/.forgejo/workflows/: deploy.yml + sync.yml COMBINED into a single pipeline.yml (8211 B; old files rm'd; untracked/uncommitted per the standing instruction; the checkout's dirty/2-ahead state otherwise untouched, HEAD 6b69726 unchanged). Behavior preserved: PyYAML deep-comparison of re-created originals vs pipeline.yml 22/22; event partitioning disjoint (sync if = schedule||workflow_dispatch; deploy if = push||pull_request; union = all 4 triggers); dispatch inputs referenced only in the sync job.",
+      "rulings": [
+        "IMMICH_URL leaves the workflow content: now a Forgejo repo VARIABLE referenced as ${{ vars.IMMICH_URL }} (Settings → Actions variables, non-secret/unmasked; gpu value per the cf-88 probe: https://immich.spencerslab.com; rotation = one settings edit). The placeholder http://home-immich-server:2283 is gone from the file (grep 0).",
+        "one workflow file, two event-gated jobs — the owner's 'combine them' ruling; nothing else references the old filenames."
+      ],
+      "record": "plan user action 8 now names 5 secrets + 1 variable; C06 row + amendment bullet + chunks/C06.md round-3 appendix amended (dev session, read-back verified)."
     }
   },
   "deferred": [
